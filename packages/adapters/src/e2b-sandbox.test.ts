@@ -118,6 +118,38 @@ describe("E2B computer backend", () => {
     );
   });
 
+  it("releases control without allocating an extra display", async () => {
+    const run = vi.fn(async (command: string) => {
+      if (String(command).includes("allocate") || String(command).includes("Xvfb")) {
+        throw Object.assign(new Error("cannot allocate another screen"), {
+          result: { exitCode: 1, stdout: "", stderr: "cannot allocate", error: "cannot allocate" },
+        });
+      }
+      return { exitCode: 0, stdout: "", stderr: "", error: undefined };
+    });
+    const desktop = {
+      sandboxId: "release-e2b-box",
+      display: ":0",
+      commands: { run },
+    } as unknown as Sandbox;
+    const sdk: E2BSandboxSdk = {
+      create: vi.fn(async () => desktop),
+      connect: vi.fn(async () => desktop),
+      pause: vi.fn().mockResolvedValue(undefined),
+    };
+    const provider = new E2BSandboxProvider("test-key", sdk);
+    const computer = {
+      id: "release-e2b-box",
+      botId: "bot-1",
+      kind: "e2b" as const,
+      providerRef: "release-e2b-box",
+      fresh: false,
+    };
+
+    await expect(provider.setScreenControl(computer, false, context, "lease-1")).resolves.toBeUndefined();
+    expect(run.mock.calls.some(([value]) => String(value).includes("allocate"))).toBe(false);
+  });
+
   it("prepares a reused computer idempotently", async () => {
     let profilesConfigured = false;
     const command = vi.fn(async (value: string) => {

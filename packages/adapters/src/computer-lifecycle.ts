@@ -377,6 +377,45 @@ function isUniqueConstraintError(error: unknown) {
 
 export type ComputerReplaceMode = "recover" | "reset" | "update";
 
+/**
+ * User-initiated recover/reset/update must not 409 just because this bot
+ * already holds the desktop or a waiting_takeover run. Drop our control,
+ * cancel active runs on this computer, and free execution leases first.
+ */
+export async function prepareUserComputerReplace(
+  prisma: PrismaClient,
+  input: { computerId: string; botId: string },
+): Promise<{ cancelledRunIds: string[] }> {
+  const now = new Date();
+  await prisma.computer.updateMany({
+    where: { id: input.computerId },
+    data: {
+      controlHolder: "none",
+      controlLeaseId: null,
+      controlLeaseExpiresAt: null,
+      controlBotId: null,
+      controlRunId: null,
+    },
+  });
+  await prisma.computerExecutionLease.deleteMany({
+    where: { computerId: input.computerId },
+  });
+  const active = await prisma.run.findMany({
+    where: {
+      status: { in: [...ACTIVE_RUN_STATUSES] },
+      bot: { computerId: input.computerId },
+    },
+    select: { id: true },
+  });
+  if (active.length > 0) {
+    await prisma.run.updateMany({
+      where: { id: { in: active.map((run) => run.id) } },
+      data: { status: "cancelled", finishedAt: now },
+    });
+  }
+  return { cancelledRunIds: active.map((run) => run.id) };
+}
+
 export function computerSupportsUpdate(kind: string): boolean {
   return kind !== "desktop";
 }

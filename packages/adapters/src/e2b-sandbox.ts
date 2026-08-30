@@ -435,23 +435,21 @@ export class E2BSandboxProvider implements SandboxProvider {
   ): Promise<void> {
     const desktop = await this.box(computer);
     const screenKey = screenSessionKey(context);
+    if (!interactive) {
+      // I'm done / Release must not allocate extra displays just to tear down a
+      // stream that never started (Team Computer + E2B).
+      await this.stopControlStream(desktop, controlToken, screenKey).catch(() => undefined);
+      return;
+    }
     const layout = await this.resolveLayout(desktop, screenKey, context.screenLeaseId);
     if (layout.isPrimary) {
-      if (interactive) {
-        if (!controlToken) throw new Error("interactive screen requires a control token");
-        await this.startControlStream(desktop, controlToken, screenKey);
-      } else {
-        await this.stopControlStream(desktop, controlToken, screenKey);
-      }
+      if (!controlToken) throw new Error("interactive screen requires a control token");
+      await this.startControlStream(desktop, controlToken, screenKey);
       return;
     }
     await this.ensureExtraDisplay(desktop, layout, context);
-    if (interactive) {
-      if (!controlToken) throw new Error("interactive screen requires a control token");
-      await this.startControlStream(desktop, controlToken, screenKey, layout);
-    } else {
-      await this.stopControlStream(desktop, controlToken, screenKey, layout);
-    }
+    if (!controlToken) throw new Error("interactive screen requires a control token");
+    await this.startControlStream(desktop, controlToken, screenKey, layout);
   }
 
   async sendInput(

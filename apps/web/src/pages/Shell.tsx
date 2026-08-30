@@ -2151,8 +2151,18 @@ export function ShellPage() {
 
   async function releaseComputer(reason?: ComputerReleaseReason) {
     if (!active) return;
+    const current = computerRef.current;
+    if (current?.controlHolder === "user") {
+      commitComputer({
+        ...current,
+        controlHolder: "none",
+        controlBotId: null,
+        takeoverRequested: false,
+      });
+    }
+    await rpc.computer.release({ botId: active.id, reason });
     setComputerOpen(false);
-    await rpc.computer.release({ botId: active.id, reason }).catch(() => undefined);
+    setComputerError(null);
     await refreshThread(active.id);
   }
 
@@ -4569,21 +4579,51 @@ function ComputerReleaseActions({
   takeoverRequested: boolean;
   onRelease: (reason?: ComputerReleaseReason) => Promise<void>;
 }) {
-  if (!takeoverRequested) {
-    return (
-      <Button type="button" variant="outline" size="sm" onClick={() => void onRelease()}>
-        <Trans>Release</Trans>
-      </Button>
-    );
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function release(reason?: ComputerReleaseReason) {
+    if (pending) return;
+    setPending(true);
+    setError(null);
+    try {
+      await onRelease(reason);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t`Could not release`);
+    } finally {
+      setPending(false);
+    }
   }
+
   return (
-    <div className="flex items-center gap-2">
-      <Button type="button" variant="outline" size="sm" onClick={() => void onRelease("skipped")}>
-        <Trans>Skip</Trans>
-      </Button>
-      <Button type="button" size="sm" onClick={() => void onRelease("done")}>
-        <Trans>I’m done</Trans>
-      </Button>
+    <div className="flex flex-col items-end gap-1">
+      {takeoverRequested ? (
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={pending}
+            onClick={() => void release("skipped")}
+          >
+            {pending ? <Trans>Working…</Trans> : <Trans>Skip</Trans>}
+          </Button>
+          <Button type="button" size="sm" disabled={pending} onClick={() => void release("done")}>
+            {pending ? <Trans>Working…</Trans> : <Trans>I’m done</Trans>}
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={() => void release()}
+        >
+          {pending ? <Trans>Working…</Trans> : <Trans>Release</Trans>}
+        </Button>
+      )}
+      {error ? <p className="max-w-[220px] text-right text-[12px] text-[#E65707]">{error}</p> : null}
     </div>
   );
 }

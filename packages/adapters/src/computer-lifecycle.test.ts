@@ -16,6 +16,7 @@ import {
   provisionComputer,
   releaseComputerExecutionLease,
   renewComputerExecutionLease,
+  prepareUserComputerReplace,
   replaceComputer,
   screenLeaseIdForRun,
 } from "./computer-lifecycle.js";
@@ -1116,5 +1117,39 @@ describe("computer replacement", () => {
       await rm(dataDir, { recursive: true, force: true });
       await rm(homeRoot, { recursive: true, force: true });
     }
+  });
+});
+
+describe("prepareUserComputerReplace", () => {
+  it("drops control, frees leases, and cancels runs on the computer", async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const deleteMany = vi.fn().mockResolvedValue({ count: 1 });
+    const findMany = vi.fn().mockResolvedValue([{ id: "run-1" }, { id: "run-2" }]);
+    const cancelRuns = vi.fn().mockResolvedValue({ count: 2 });
+    const prisma = {
+      computer: { updateMany },
+      computerExecutionLease: { deleteMany },
+      run: { findMany, updateMany: cancelRuns },
+    } as unknown as PrismaClient;
+
+    await expect(
+      prepareUserComputerReplace(prisma, { computerId: "computer-1", botId: "bot-1" }),
+    ).resolves.toEqual({ cancelledRunIds: ["run-1", "run-2"] });
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: "computer-1" },
+      data: {
+        controlHolder: "none",
+        controlLeaseId: null,
+        controlLeaseExpiresAt: null,
+        controlBotId: null,
+        controlRunId: null,
+      },
+    });
+    expect(deleteMany).toHaveBeenCalledWith({ where: { computerId: "computer-1" } });
+    expect(cancelRuns).toHaveBeenCalledWith({
+      where: { id: { in: ["run-1", "run-2"] } },
+      data: { status: "cancelled", finishedAt: expect.any(Date) },
+    });
   });
 });

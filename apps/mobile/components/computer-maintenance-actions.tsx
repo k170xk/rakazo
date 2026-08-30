@@ -19,7 +19,7 @@ export function ComputerMaintenanceActions({
 
   if (!computer) return null;
 
-  const busy = Boolean(computer.busyBotName) || computer.state === "booting";
+  const blocked = computer.state === "booting" || pending !== null;
 
   async function run(action: Action) {
     setPending(action);
@@ -50,18 +50,18 @@ export function ComputerMaintenanceActions({
   return (
     <View style={{ marginTop: 16, gap: 10 }}>
       <Pressable
-        disabled={busy || pending !== null}
+        disabled={blocked}
         onPress={() => void run("recover")}
-        style={{ opacity: busy || pending !== null ? 0.4 : 1 }}
+        style={{ opacity: blocked ? 0.4 : 1 }}
       >
         <Text style={{ color: "#85858A", fontSize: 14 }}>
           {pending === "recover" ? "Recovering…" : "Recover computer"}
         </Text>
       </Pressable>
       <Pressable
-        disabled={busy || pending !== null}
+        disabled={blocked}
         onPress={confirmReset}
-        style={{ opacity: busy || pending !== null ? 0.4 : 1 }}
+        style={{ opacity: blocked ? 0.4 : 1 }}
       >
         <Text style={{ color: "#85858A", fontSize: 14 }}>
           {pending === "reset" ? "Resetting…" : "Reset computer"}
@@ -69,9 +69,9 @@ export function ComputerMaintenanceActions({
       </Pressable>
       {computer.updateAvailable ? (
         <Pressable
-          disabled={busy || pending !== null}
+          disabled={blocked}
           onPress={() => void run("update")}
-          style={{ opacity: busy || pending !== null ? 0.4 : 1 }}
+          style={{ opacity: blocked ? 0.4 : 1 }}
         >
           <Text style={{ color: "#85858A", fontSize: 14 }}>
             {pending === "update" ? "Updating…" : "Update computer"}

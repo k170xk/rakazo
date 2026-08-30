@@ -49,6 +49,7 @@ import {
   planLiveConnectionSync,
   prepareApiInstall,
   prepareMemoryProviderConnection,
+  prepareUserComputerReplace,
   probeOpenAiCompatibleModels,
   provisionComputer,
   type RemoteConnectorDependencies,
@@ -1445,12 +1446,21 @@ export function createRouter(deps: RouterDeps) {
           return { ok: true as const };
         }
         if (bot.computer.providerRef) {
-          await deps.sandbox.setScreenControl?.(
-            toComputerRef(bot.computer),
-            false,
-            computerContext(context.actor, controlBotId, "screen.release"),
-            controlLeaseId,
-          );
+          try {
+            await Promise.race([
+              deps.sandbox.setScreenControl?.(
+                toComputerRef(bot.computer),
+                false,
+                computerContext(context.actor, controlBotId, "screen.release"),
+                controlLeaseId,
+              ) ?? Promise.resolve(),
+              new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error("screen release timed out")), 8_000);
+              }),
+            ]);
+          } catch (error) {
+            console.error("computer release screen", error);
+          }
         }
 
         const released = await deps.events.finalizeComputerControlRelease({
@@ -3414,6 +3424,15 @@ async function runComputerReplace(
       message: "Computer update is not available on this device",
     });
   }
+  const prepared = await prepareUserComputerReplace(deps.prisma, {
+    computerId: bot.computer.id,
+    botId: bot.id,
+  });
+  await Promise.all(
+    prepared.cancelledRunIds.map((runId) =>
+      deps.jobs.cancel(runJobKey(runId)).catch(() => undefined),
+    ),
+  );
   const manualRunId = `${mode}:${randomUUID()}`;
   let lease: ComputerExecutionLease | null;
   try {
