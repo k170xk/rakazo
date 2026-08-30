@@ -269,6 +269,14 @@ describe("loadEnv", () => {
     ).toThrow(/SANDBOX_SUPERVISOR_TOKEN/);
   });
 
+  it("leaves Evolve Computer SSO unset unless a dedicated secret is provided", () => {
+    expect(loadEnv(base).evolveSsoSecret).toBeUndefined();
+    expect(
+      loadEnv({ ...base, EVOLVE_COMPUTER_SSO_SECRET: "  evolve-sso-secret-for-tests  " })
+        .evolveSsoSecret,
+    ).toBe("evolve-sso-secret-for-tests");
+  });
+
   it("exposes a deployed git revision when GIT_SHA is set", () => {
     expect(loadEnv(base).gitSha).toBeUndefined();
     expect(loadEnv({ ...base, GIT_SHA: "  3c6e209  " }).gitSha).toBe("3c6e209");

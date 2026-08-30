@@ -62,6 +62,19 @@ export {
 } from "./plugin-submission-email.js";
 export { referralEmail } from "./referral-email.js";
 export { welcomeEmail } from "./welcome-email.js";
+export {
+  EVOLVE_SSO_AUD,
+  EVOLVE_SSO_ISS,
+  EVOLVE_SSO_TTL_SEC,
+  EvolveSsoInvalidTokenError,
+  EvolveSsoReplayError,
+  EvolveSsoSignupsClosedError,
+  exchangeEvolveSso,
+  signEvolveComputerSsoToken,
+  verifyEvolveComputerSsoToken,
+} from "./evolve-sso.js";
+export type { EvolveComputerSsoClaims, SignEvolveComputerSsoInput } from "./evolve-sso.js";
+export { resolveSignupPolicy } from "./signup-policy.js";
 
 export interface AuthEnv {
   analytics?: ProductAnalytics;

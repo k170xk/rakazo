@@ -175,6 +175,8 @@ export interface AppEnv {
     | undefined;
   /** Crisp chat on the paywall, for the hosted service; self-hosted installs leave it unset. */
   crispWebsiteId?: string | null;
+  /** Shared HMAC secret with Evolve `evolve-computer-sso-start`. Unset disables GET /api/auth/evolve. */
+  evolveSsoSecret: string | undefined;
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
@@ -347,6 +349,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     minimumClientBuilds: parseMinimumClientBuilds(source.RAKAZO_MIN_CLIENT_BUILD),
     browserMonitoring: browserMonitoringFromEnv(source),
     crispWebsiteId: parseCrispWebsiteId(source.CRISP_WEBSITE_ID),
+    evolveSsoSecret: optional(source.EVOLVE_COMPUTER_SSO_SECRET),
   };
 }
 

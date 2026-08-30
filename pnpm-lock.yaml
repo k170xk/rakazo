@@ -1124,6 +1124,9 @@ importers:
       '@rakazo/adapters':
         specifier: workspace:*
         version: link:../adapters
+      '@rakazo/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@rakazo/contracts':
         specifier: workspace:*
         version: link:../contracts

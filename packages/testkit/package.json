@@ -14,6 +14,7 @@
     "@hono/node-server": "2.1.6",
     "@rakazo/adapter-kit": "workspace:*",
     "@rakazo/adapters": "workspace:*",
+    "@rakazo/auth": "workspace:*",
     "@rakazo/contracts": "workspace:*",
     "@rakazo/core": "workspace:*",
     "@rakazo/db": "workspace:*",
