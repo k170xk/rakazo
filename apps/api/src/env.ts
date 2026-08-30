@@ -54,6 +54,8 @@ export interface AppEnv {
   updaterToken: string | undefined;
   /** Current application image tag; used for compose manual-upgrade command selection. */
   imageTag: string | undefined;
+  /** Shared HMAC secret with Evolve `evolve-computer-sso-start`. Unset disables GET /api/auth/evolve. */
+  evolveSsoSecret: string | undefined;
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
@@ -111,6 +113,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     updaterUrl,
     updaterToken,
     imageTag: optional(source.RAKAZO_IMAGE_TAG),
+    evolveSsoSecret: optional(source.EVOLVE_COMPUTER_SSO_SECRET),
   };
 }
 

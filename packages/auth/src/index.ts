@@ -1,9 +1,24 @@
-import { emailAllowed, parseAllowlist, signupPolicyFromEnv } from "@rakazo/core";
+import { emailAllowed } from "@rakazo/core";
 import { bootstrapUserWorkspace, type PrismaClient } from "@rakazo/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError } from "better-auth/api";
 import { bearer, organization } from "better-auth/plugins";
+import { resolveSignupPolicy } from "./signup-policy.js";
+
+export { resolveSignupPolicy } from "./signup-policy.js";
+export {
+  EVOLVE_SSO_AUD,
+  EVOLVE_SSO_ISS,
+  EVOLVE_SSO_TTL_SEC,
+  EvolveSsoInvalidTokenError,
+  EvolveSsoReplayError,
+  EvolveSsoSignupsClosedError,
+  exchangeEvolveSso,
+  signEvolveComputerSsoToken,
+  verifyEvolveComputerSsoToken,
+} from "./evolve-sso.js";
+export type { EvolveComputerSsoClaims, SignEvolveComputerSsoInput } from "./evolve-sso.js";
 
 export interface AuthEnv {
   secret: string;
@@ -13,23 +28,6 @@ export interface AuthEnv {
   signupAllowlist: string | undefined;
   extraOrigins?: string[];
   beforeDeleteUser?: (userId: string) => Promise<void>;
-}
-
-export async function resolveSignupPolicy(
-  prisma: Pick<PrismaClient, "deploymentSettings">,
-  env: Pick<AuthEnv, "signupsEnabled" | "signupAllowlist">,
-): Promise<{ enabled: boolean; allowlist: string[] }> {
-  const settings = await prisma.deploymentSettings.findUnique({
-    where: { id: "default" },
-    select: { signupsEnabled: true, signupAllowlist: true, signupPolicyInitialized: true },
-  });
-  if (settings?.signupPolicyInitialized) {
-    return {
-      enabled: settings.signupsEnabled,
-      allowlist: parseAllowlist(settings.signupAllowlist),
-    };
-  }
-  return signupPolicyFromEnv(env);
 }
 
 export function createAuth(prisma: PrismaClient, env: AuthEnv) {

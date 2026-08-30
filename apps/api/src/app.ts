@@ -48,7 +48,11 @@ import {
   sendBlueConfigFromEnv,
   WorkspaceMemoryProviderResolver,
 } from "@rakazo/adapters";
-import { blockedAuthPaths, createAuth } from "@rakazo/auth";
+import {
+  blockedAuthPaths,
+  createAuth,
+  exchangeEvolveSso,
+} from "@rakazo/auth";
 import { signupPolicyFromEnv } from "@rakazo/core";
 import {
   createDb,
@@ -58,7 +62,8 @@ import {
   requireMembership,
 } from "@rakazo/db";
 import { MarkdownMemoryStore } from "@rakazo/memory";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
+import { setSignedCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { type AppEnv, loadEnv } from "./env.js";
 import { createPhoneInboundHandler } from "./phone-inbound.js";
@@ -324,6 +329,9 @@ export async function createApp(
   );
   app.on(["GET", "POST"], "/api/auth/*", async (c) => {
     const path = new URL(c.req.url).pathname.replace("/api/auth", "");
+    if (path === "/evolve") {
+      return handleEvolveSso(c, env, prisma);
+    }
     if (blockedAuthPaths.some((blocked) => path.startsWith(blocked))) {
       return c.json({ error: "Not available in version 1" }, 404);
     }
@@ -422,6 +430,39 @@ export async function createApp(
       await created.pool?.end().catch(() => undefined);
     },
   };
+}
+
+async function handleEvolveSso(
+  c: Context,
+  env: AppEnv,
+  prisma: PrismaClient,
+): Promise<Response> {
+  if (!env.evolveSsoSecret) {
+    return c.json({ error: "Not found" }, 404);
+  }
+  const token = c.req.query("token") ?? "";
+  try {
+    const session = await exchangeEvolveSso({
+      prisma,
+      secret: env.evolveSsoSecret,
+      token,
+      signupsEnabled: env.signupsEnabled,
+      signupAllowlist: env.signupAllowlist,
+    });
+    const secure = env.webOrigin.startsWith("https:") || env.authUrl.startsWith("https:");
+    const maxAge = Math.max(0, Math.floor((session.expiresAt.getTime() - Date.now()) / 1000));
+    await setSignedCookie(c, "better-auth.session_token", session.token, env.authSecret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "Lax",
+      secure,
+      maxAge,
+      ...(secure ? { prefix: "secure" as const } : {}),
+    });
+    return c.redirect(session.created ? `${env.webOrigin}/onboarding` : `${env.webOrigin}/app`, 302);
+  } catch {
+    return c.redirect(`${env.webOrigin}/sign-in?error=evolve_sso`, 302);
+  }
 }
 
 function isTrustedOrigin(origin: string, env: AppEnv) {

@@ -150,6 +150,14 @@ describe("loadEnv", () => {
     expect(loadEnv({ ...base, RAKAZO_GIT_SHA: "abc1234" }).gitSha).toBe("abc1234");
   });
 
+  it("leaves Evolve Computer SSO unset unless a dedicated secret is provided", () => {
+    expect(loadEnv(base).evolveSsoSecret).toBeUndefined();
+    expect(
+      loadEnv({ ...base, EVOLVE_COMPUTER_SSO_SECRET: "  evolve-sso-secret-for-tests  " })
+        .evolveSsoSecret,
+    ).toBe("evolve-sso-secret-for-tests");
+  });
+
   it("loads optional updater sidecar wiring without requiring the token at boot", () => {
     expect(loadEnv(base).updaterUrl).toBeUndefined();
     expect(loadEnv(base).updaterToken).toBeUndefined();
