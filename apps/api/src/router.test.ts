@@ -18,9 +18,15 @@ describe("account preferences", () => {
       },
       userModelCredential: { findFirst: vi.fn().mockResolvedValue(null) },
       deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
+      member: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ organization: { id: "workspace-1", name: "Personal" } }]),
+      },
     } as unknown as PrismaClient;
     const deps = {
       prisma,
+      secrets: { load: vi.fn(), put: vi.fn() },
       env: {
         defaultProvider: "fake",
         defaultModel: "fake-model",
@@ -301,9 +307,15 @@ describe("updater owner gate", () => {
       },
       userModelCredential: { findFirst: vi.fn().mockResolvedValue(null) },
       deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
+      member: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ organization: { id: "workspace-1", name: "Personal" } }]),
+      },
     } as unknown as PrismaClient;
     const deps = {
       prisma,
+      secrets: { load: vi.fn(), put: vi.fn() },
       env: {
         defaultProvider: "fake",
         defaultModel: "fake-model",
@@ -467,6 +479,18 @@ describe("computer screen url", () => {
     logError.mockRestore();
   });
 
+  it("returns a same-origin screen proxy for a live E2B desktop", async () => {
+    const { response } = await callScreenUrl(async () => ({
+      url: "https://6080-desktop.e2b.app/vnc.html?autoconnect=true",
+      mimeType: "text/html",
+      close: async () => undefined,
+    }));
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { json: { url: string } };
+    expect(body.json.url).toContain("http://127.0.0.1:5173/novnc/remote/view/");
+    expect(body.json.url).not.toContain("e2b.app");
+  });
+
   it("keeps a transport blip an error and leaves the row alone", async () => {
     const logError = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const { response, updateMany } = await callScreenUrl(() =>
@@ -475,5 +499,178 @@ describe("computer screen url", () => {
     expect(response.status).toBe(500);
     expect(updateMany).not.toHaveBeenCalled();
     logError.mockRestore();
+  });
+});
+
+describe("deployment model key", () => {
+  const owner = {
+    workspaceId: "workspace-1",
+    userId: "user-1",
+    email: "owner@rakazo.test",
+    isDeploymentOwner: true,
+  } satisfies Actor;
+
+  it("stores an encrypted key and never returns it", async () => {
+    const upsert = vi.fn().mockResolvedValue({});
+    const put = vi.fn().mockResolvedValue({ id: "deployment-model", ciphertext: "sealed" });
+    const prisma = {
+      deploymentSettings: {
+        findUnique: vi.fn().mockResolvedValue({
+          ownerUserId: "user-1",
+          signupsEnabled: true,
+          signupAllowlist: "",
+          deploymentModelCredentialCipher: "sealed",
+          defaultModelProvider: "openai",
+          defaultModelId: "gpt-4.1",
+        }),
+        upsert,
+      },
+    } as unknown as PrismaClient;
+    const handler = new RPCHandler(
+      createRouter({
+        prisma,
+        secrets: { put, load: vi.fn() },
+        env: {
+          defaultProvider: "fake",
+          defaultModel: "fake-model",
+          webOrigin: "http://127.0.0.1:5173",
+          screenProxySecret: "fake-test-secret",
+          sandboxProvider: "e2b",
+        },
+        dataDir: "/tmp/rakazo-router-test",
+      } as unknown as RouterDeps),
+    );
+
+    const { response } = await handler.handle(
+      new Request("http://127.0.0.1/rpc/deployment/update", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          json: { modelProvider: "openai", modelId: "gpt-4.1", modelApiKey: "sk-test-key-1" },
+        }),
+      }),
+      { prefix: "/rpc", context: { actor: owner } },
+    );
+
+    expect(response.status).toBe(200);
+    expect(put).toHaveBeenCalledWith(
+      "sk-test-key-1",
+      expect.objectContaining({ operationId: "deployment-model" }),
+      "deployment-model",
+    );
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          defaultModelProvider: "openai",
+          defaultModelId: "gpt-4.1",
+          deploymentModelCredentialCipher: "sealed",
+        }),
+      }),
+    );
+    const body = (await response.json()) as { json: Record<string, unknown> };
+    expect(body.json.hasDeploymentModelCredential).toBe(true);
+    expect(JSON.stringify(body)).not.toContain("sk-test-key-1");
+    expect(JSON.stringify(body)).not.toContain("sealed");
+  });
+
+  it("forbids staff from setting the server key", async () => {
+    const upsert = vi.fn();
+    const handler = new RPCHandler(
+      createRouter({
+        prisma: { deploymentSettings: { upsert } } as unknown as PrismaClient,
+        env: {
+          defaultProvider: "fake",
+          defaultModel: "fake-model",
+          webOrigin: "http://127.0.0.1:5173",
+          screenProxySecret: "fake-test-secret",
+          sandboxProvider: "e2b",
+        },
+        dataDir: "/tmp/rakazo-router-test",
+      } as unknown as RouterDeps),
+    );
+    const { response } = await handler.handle(
+      new Request("http://127.0.0.1/rpc/deployment/update", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ json: { modelApiKey: "sk-test-key-1" } }),
+      }),
+      {
+        prefix: "/rpc",
+        context: {
+          actor: { ...owner, isDeploymentOwner: false, email: "staff@rakazo.test" },
+        },
+      },
+    );
+    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe("personal workspaces", () => {
+  const actor = {
+    workspaceId: "workspace-1",
+    userId: "user-1",
+    email: "user@rakazo.test",
+    isDeploymentOwner: true,
+  } satisfies Actor;
+
+  it("switches the active workspace on the user's sessions", async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const prisma = {
+      member: {
+        findFirst: vi.fn().mockResolvedValue({ id: "member-2" }),
+        findMany: vi
+          .fn()
+          .mockResolvedValue([
+            { organization: { id: "workspace-1", name: "Personal" } },
+            { organization: { id: "workspace-2", name: "OCSC" } },
+          ]),
+      },
+      session: { updateMany },
+      user: {
+        findUniqueOrThrow: vi.fn().mockResolvedValue({
+          email: "user@rakazo.test",
+          name: "Keith",
+          avatarStyle: "robot",
+        }),
+      },
+      userModelCredential: { findFirst: vi.fn().mockResolvedValue(null) },
+      deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
+    } as unknown as PrismaClient;
+    const handler = new RPCHandler(
+      createRouter({
+        prisma,
+        secrets: { load: vi.fn(), put: vi.fn() },
+        env: {
+          defaultProvider: "fake",
+          defaultModel: "fake-model",
+          webOrigin: "http://127.0.0.1:5173",
+          screenProxySecret: "fake-test-secret",
+          sandboxProvider: "e2b",
+        },
+        dataDir: "/tmp/rakazo-router-test",
+      } as unknown as RouterDeps),
+    );
+
+    const { response } = await handler.handle(
+      new Request("http://127.0.0.1/rpc/workspaces/switch", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ json: { workspaceId: "workspace-2" } }),
+      }),
+      { prefix: "/rpc", context: { actor } },
+    );
+
+    expect(response.status).toBe(200);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+      data: { activeOrganizationId: "workspace-2" },
+    });
+    await expect(response.json()).resolves.toEqual({
+      json: expect.objectContaining({
+        workspaceId: "workspace-2",
+        workspaceName: "OCSC",
+      }),
+    });
   });
 });

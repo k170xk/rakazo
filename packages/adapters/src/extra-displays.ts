@@ -75,6 +75,42 @@ export function releaseExtraDisplayCommand(screenKey: string, leaseId?: string):
   ].join("; ");
 }
 
+const EXTRA_DISPLAY_TEARDOWN = [
+  'display_number=$((index + 1))',
+  "view_port=$((6080 + index * 2))",
+  "control_port=$((6081 + index * 2))",
+  "view_vnc_port=$((5900 + index * 2))",
+  "control_vnc_port=$((5901 + index * 2))",
+  'pkill -f "Xvfb :$display_number -screen" || true',
+  'pkill -f "HOME=/tmp/fluxbox-home-$display_number DISPLAY=:$display_number fluxbox" || true',
+  'pkill -f -- "chromium-screen-$display_number" || true',
+  'pkill -f "(^|/)x11vnc .* -rfbport $view_vnc_port" || true',
+  'pkill -f "(^|/)x11vnc .* -rfbport $control_vnc_port" || true',
+  'pkill -f "^/usr/bin/python3 .*websockify.*$view_port" || true',
+  'pkill -f "novnc_proxy.*--listen $view_port" || true',
+  'pkill -f "^/usr/bin/python3 .*websockify.*$control_port" || true',
+  'pkill -f "novnc_proxy.*--listen $control_port" || true',
+  'rm -f "/tmp/.X$display_number-lock" "/tmp/.X11-unix/X$display_number" "/tmp/rakazo/control-token-$display_number" "/tmp/rakazo/view-password-$display_number" "/tmp/rakazo-view-$display_number.vncpass" "/tmp/rakazo-control-$display_number.vncpass" "/tmp/rakazo/screen-$display_number.lock"',
+].join("; ");
+
+/** Drop every extra-display claim so the next allocate can take the shared primary. */
+export function resetScreenAssignmentsCommand(): string {
+  return [
+    "set -eu",
+    `dir=${shellQuote(SCREEN_REGISTRY)}`,
+    'mkdir -p "$dir"',
+    'exec 9>"$dir/.lock"',
+    "flock 9",
+    'for slot in "$dir"/*.slot; do',
+    '  [ -f "$slot" ] || continue',
+    '  index=$(sed -n "1p" "$slot")',
+    '  case "$index" in \'\'|0) ;; *) ' + EXTRA_DISPLAY_TEARDOWN + " ;; esac",
+    '  rm -f "$slot"',
+    "done",
+    "printf 'RAKAZO_SCREEN_RESET=ok\\n'",
+  ].join("\n");
+}
+
 export function parseAllocatedExtraDisplay(output: string): number {
   const index = Number(output.match(/RAKAZO_SCREEN_INDEX=(\d+)/)?.[1]);
   if (!Number.isInteger(index) || index < 0 || index >= TEAM_EXTRA_DISPLAY_LIMIT) {
@@ -300,9 +336,138 @@ export function extraDisplayActionCommand(
     return `DISPLAY=${layout.display} xdotool mousemove ${action.x} ${action.y} click ${button}`;
   }
   if (action.kind === "open") {
-    return `DISPLAY=${layout.display} xdg-open ${shellQuote(action.path)}`;
+    const open = `DISPLAY=${layout.display} xdg-open ${shellQuote(action.path)}`;
+    return /^https?:\/\//i.test(action.path)
+      ? `${open}; ${raiseDesktopBrowserCommand(layout.display)}`
+      : open;
   }
   return `DISPLAY=${layout.display} ${shellQuote(action.application)}${action.uri ? ` ${shellQuote(action.uri)}` : ""}`;
+}
+
+const CHROME_KIOSK_FLAGS =
+  "--kiosk --no-first-run --no-default-browser-check --disable-session-crashed-bubble --disable-infobars";
+
+/** E2B's wrapper execs away; the live process is often `/opt/google/chrome/chrome`. */
+export function chromeIsRunningCommand(): string {
+  return [
+    "pgrep -f '[g]oogle-chrome' >/dev/null 2>&1",
+    "|| pgrep -f '/opt/google/chrome/chrome' >/dev/null 2>&1",
+    "|| pgrep -x chrome >/dev/null 2>&1",
+  ].join(" ");
+}
+
+/** Close extra Chrome windows so a spawn loop cannot cover the desktop. */
+export function trimDesktopBrowserWindowsCommand(display = ":0"): string {
+  const env = `DISPLAY=${display}`;
+  return [
+    "set +e",
+    dismissXfceErrorDialogsCommand(display),
+    `ids=$(${env} xdotool search --onlyvisible --class google-chrome 2>/dev/null; ${env} xdotool search --onlyvisible --class Google-chrome 2>/dev/null)`,
+    'first=$(printf "%s\\n" $ids | awk "NF && !seen[\\$0]++" | head -n 1)',
+    'printf "%s\\n" $ids | awk "NF && !seen[\\$0]++" | tail -n +2 | while read -r id; do',
+    `  [ -n "$id" ] && [ "$id" != "$first" ] && ${env} xdotool windowclose "$id" || true`,
+    "done",
+    "true",
+  ].join("\n");
+}
+
+/** Close leftover XFCE dialogs. `xfce4-panel -q` pops these when the panel is already gone. */
+export function dismissXfceErrorDialogsCommand(display = ":0"): string {
+  const env = `DISPLAY=${display}`;
+  return [
+    `${env} wmctrl -c "Failed to quit the panel" || true`,
+    `${env} xdotool search --onlyvisible --name "Failed to quit the panel" windowclose || true`,
+  ].join("; ");
+}
+
+/** Hide the XFCE panel. Do not kill xfdesktop or paint the root black — that is the blank preview. */
+export function hideDesktopChromeCommand(display = ":0"): string {
+  const env = `DISPLAY=${display}`;
+  return [
+    'mkdir -p "$HOME/.config/autostart"',
+    'printf \'[Desktop Entry]\\nHidden=true\\n\' > "$HOME/.config/autostart/xfce4-panel.desktop"',
+    dismissXfceErrorDialogsCommand(display),
+    `pgrep -x xfce4-panel >/dev/null 2>&1 && killall -q xfce4-panel || true`,
+    `pgrep -x xfdesktop >/dev/null 2>&1 || ${env} xfdesktop >/dev/null 2>&1 &`,
+  ].join("; ");
+}
+
+function chromeWindowSearch(display: string): string {
+  const env = `DISPLAY=${display}`;
+  return [
+    `${env} xdotool search --onlyvisible --class google-chrome`,
+    `${env} xdotool search --onlyvisible --class Google-chrome`,
+    `${env} xdotool search --onlyvisible --class Chrome`,
+  ].join("; ");
+}
+
+/** Stretch the Chrome window over the whole X display. */
+export function fillDisplayWithChromeCommand(display = ":0"): string {
+  const env = `DISPLAY=${display}`;
+  return [
+    hideDesktopChromeCommand(display),
+    `geom=$(${env} xdpyinfo 2>/dev/null | awk '/dimensions/{print $2}')`,
+    'w=${geom%x*}; h=${geom#*x}',
+    `ids=$(${chromeWindowSearch(display)} 2>/dev/null)`,
+    `[ -n "$w" ] && [ -n "$h" ] && [ -n "$ids" ] && ${env} xdotool windowmove $(printf '%s\\n' $ids | head -n 1) 0 0 windowsize $(printf '%s\\n' $ids | head -n 1) "$w" "$h" || true`,
+    `${env} wmctrl -xa google-chrome || ${env} wmctrl -xa Google-chrome || ${env} wmctrl -xa Chrome || true`,
+    `${env} wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz,fullscreen || true`,
+  ].join("; ");
+}
+
+/** Unminimize and raise Chrome so a later screenshot is not the empty desktop. */
+export function raiseDesktopBrowserCommand(display = ":0"): string {
+  return fillDisplayWithChromeCommand(display);
+}
+
+/** Install Google Chrome when the stock desktop image does not ship it. */
+export function ensureGoogleChromeCommand(): string {
+  return [
+    "set -eu",
+    "command -v google-chrome-stable >/dev/null 2>&1 && exit 0",
+    "command -v google-chrome >/dev/null 2>&1 && exit 0",
+    "curl -fsSL -o /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb",
+    "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y /tmp/google-chrome.deb",
+    "rm -f /tmp/google-chrome.deb",
+  ].join("\n");
+}
+
+/** Keep Chrome up and covering the display. Never pkill it — checkpoints used to. */
+export function lockDesktopBrowserCommand(display = ":0"): string {
+  const env = `DISPLAY=${display}`;
+  return [
+    "set +e",
+    'CHROME=$(command -v google-chrome-stable || command -v google-chrome || true)',
+    '[ -n "$CHROME" ] || exit 1',
+    `if ! ${chromeIsRunningCommand()}; then`,
+    `  ${env} nohup "$CHROME" ${CHROME_KIOSK_FLAGS} about:blank >/dev/null 2>&1 &`,
+    "  disown || true",
+    "  sleep 1",
+    "fi",
+    trimDesktopBrowserWindowsCommand(display),
+    fillDisplayWithChromeCommand(display),
+    "true",
+  ].join("\n");
+}
+
+/** Open an http(s) URL in Chrome without killing the existing window. */
+export function openDesktopUrlCommand(url: string, display = ":0"): string {
+  const env = `DISPLAY=${display}`;
+  const quoted = shellQuote(url);
+  return [
+    "set +e",
+    'CHROME=$(command -v google-chrome-stable || command -v google-chrome || true)',
+    '[ -n "$CHROME" ] || exit 1',
+    `if ${chromeIsRunningCommand()}; then`,
+    `  ${env} "$CHROME" ${quoted} >/dev/null 2>&1 || true`,
+    "else",
+    `  ${env} nohup "$CHROME" ${CHROME_KIOSK_FLAGS} ${quoted} >/dev/null 2>&1 &`,
+    "  disown || true",
+    "  sleep 1",
+    "fi",
+    fillDisplayWithChromeCommand(display),
+    "true",
+  ].join("\n");
 }
 
 export function extraDisplayInputCommand(layout: ExtraDisplayLayout, input: ComputerInput): string {
@@ -330,6 +495,18 @@ export function primaryStreamCleanupCommand(primaryViewPort = 6080): string {
     "pkill -f '(^|/)x11vnc .* -R viewonly' || true",
     `pkill -f '[n]ovnc_proxy.*${primaryViewPort}' || true`,
     `pkill -f '[w]ebsockify.*${primaryViewPort}' || true`,
+  ].join("; ");
+}
+
+/** Kill the vendor E2B desktop stream so this API process can start one it has the password for. */
+export function primaryStreamResetCommand(primaryViewPort = 6080, primaryVncPort = 5900): string {
+  return [
+    "pkill x11vnc || true",
+    `pkill -f '(^|/)x11vnc .* -rfbport ${primaryVncPort}' || true`,
+    "pkill -f '(^|/)x11vnc .* -R viewonly' || true",
+    `pkill -f '[n]ovnc_proxy.*${primaryViewPort}' || true`,
+    `pkill -f '[w]ebsockify.*${primaryViewPort}' || true`,
+    `for i in $(seq 1 50); do (echo >/dev/tcp/127.0.0.1/${primaryVncPort}) >/dev/null 2>&1 || break; sleep 0.1; done`,
   ].join("; ");
 }
 

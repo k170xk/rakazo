@@ -19,6 +19,45 @@ export function executionBlocksUserTakeover(input: {
   return leaseActive || runActive;
 }
 
+export async function resolveBusyBot(
+  prisma: PrismaClient,
+  input: {
+    computerId: string | null | undefined;
+    botId: string;
+    botName: string;
+  },
+): Promise<{ botId: string; name: string } | null> {
+  if (!input.computerId) return null;
+  const now = new Date();
+  const leases = await prisma.computerExecutionLease.findMany({
+    where: { computerId: input.computerId, expiresAt: { gt: now } },
+    select: { botId: true, runId: true, expiresAt: true },
+    orderBy: { updatedAt: "desc" },
+  });
+  if (leases.length === 0) return null;
+  const runs = await prisma.run.findMany({
+    where: { id: { in: leases.map((lease) => lease.runId) } },
+    select: { id: true, status: true },
+  });
+  const statusByRun = new Map(runs.map((run) => [run.id, run.status]));
+  const blocking = leases.filter((lease) =>
+    executionBlocksUserTakeover({
+      hasLease: true,
+      leaseExpiresAt: lease.expiresAt,
+      runStatus: statusByRun.get(lease.runId),
+    }),
+  );
+  const holder =
+    blocking.find((lease) => statusByRun.get(lease.runId) === "running") ?? blocking[0];
+  if (!holder) return null;
+  if (holder.botId === input.botId) return { botId: input.botId, name: input.botName };
+  const bot = await prisma.bot.findUnique({
+    where: { id: holder.botId },
+    select: { name: true },
+  });
+  return { botId: holder.botId, name: bot?.name ?? input.botName };
+}
+
 export async function resolveBusyBotName(
   prisma: PrismaClient,
   input: {
@@ -27,23 +66,7 @@ export async function resolveBusyBotName(
     botName: string;
   },
 ): Promise<string | null> {
-  if (!input.computerId) return null;
-  const lease = await prisma.computerExecutionLease.findUnique({
-    where: { computerId_botId: { computerId: input.computerId, botId: input.botId } },
-    select: { expiresAt: true, runId: true },
-  });
-  if (!lease) return null;
-  const run = await prisma.run.findUnique({
-    where: { id: lease.runId },
-    select: { status: true },
-  });
-  return executionBlocksUserTakeover({
-    hasLease: true,
-    leaseExpiresAt: lease.expiresAt,
-    runStatus: run?.status,
-  })
-    ? input.botName
-    : null;
+  return (await resolveBusyBot(prisma, input))?.name ?? null;
 }
 
 export function toComputerStatus(
@@ -58,6 +81,7 @@ export function toComputerStatus(
     homeRevision: string;
   } | null,
   busyBotName: string | null = null,
+  busyBotId: string | null = null,
 ): ComputerStatus {
   const state =
     computer?.state === "suspending"
@@ -84,6 +108,7 @@ export function toComputerStatus(
     screenHeight: screen.height,
     homeRevision: computer?.homeRevision ?? null,
     busyBotName,
+    busyBotId,
     updateAvailable: kind !== "desktop",
   };
 }

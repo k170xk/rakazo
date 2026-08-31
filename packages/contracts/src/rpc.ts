@@ -62,6 +62,7 @@ import {
   VoiceInfoSchema,
   VoiceStatusSchema,
   WorkspaceMemoryConfigSchema,
+  WorkspaceSchema,
 } from "./domain.js";
 import { ProductEventSchema } from "./events.js";
 import { Id, IsoDate } from "./ids.js";
@@ -134,9 +135,23 @@ export const appContract = {
           signupsEnabled: z.boolean().optional(),
           signupAllowlist: z.array(z.string()).optional(),
           computerHost: z.enum(["docker", "this-mac"]).nullable().optional(),
+          modelProvider: z.string().min(1).max(80).optional(),
+          modelId: z.string().min(1).max(200).optional(),
+          modelApiKey: z.string().min(8).max(4000).optional(),
+          clearModelCredential: z.boolean().optional(),
         }),
       )
       .output(DeploymentSettingsSchema),
+  },
+  workspaces: {
+    list: oc.output(z.array(WorkspaceSchema)),
+    create: oc
+      .input(z.object({ name: z.string().min(1).max(60) }))
+      .output(z.object({ workspace: WorkspaceSchema, me: MeSchema })),
+    update: oc
+      .input(z.object({ workspaceId: Id, name: z.string().min(1).max(60) }))
+      .output(WorkspaceSchema),
+    switch: oc.input(z.object({ workspaceId: Id })).output(MeSchema),
   },
   /**
    * Deployment-owner product updates. When the Compose updater sidecar is reachable, these proxy

@@ -19,6 +19,24 @@ describe("collaboration transcript markers", () => {
     expect(html).toContain("Research");
   });
 
+  it("renders the peer message body in the thread when given children", () => {
+    const html = renderToString(
+      <CollaborationMarker
+        ariaLabel="To Estimator QS"
+        color="#14B8A6"
+        identity="estimator"
+        label="To Estimator QS"
+        onClick={() => undefined}
+      >
+        Need the BoQ.
+      </CollaborationMarker>,
+    );
+
+    expect(html).toContain("data-testid=\"peer-message\"");
+    expect(html).toContain("To Estimator QS");
+    expect(html).toContain("Need the BoQ.");
+  });
+
   it("animates the active bot glyph from its run status", () => {
     const html = renderToString(
       <ActiveBotGlyph

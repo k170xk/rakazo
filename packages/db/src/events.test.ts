@@ -490,6 +490,116 @@ describe("answerRunInput", () => {
     });
   });
 
+  it("grants a screen handoff without overwriting the task prompt", async () => {
+    const fanout = new TestFanout();
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      message: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "message-1",
+          blocks: [
+            {
+              kind: "ask",
+              input: "screen_handoff",
+              text: "Writer needs the shared desktop. Another session is using it.",
+              status: "pending",
+              actions: [
+                { id: "allow", label: "Let this agent take over" },
+                { id: "deny", label: "Not now" },
+              ],
+            },
+          ],
+        }),
+        update: vi.fn().mockResolvedValue({ id: "message-1" }),
+      },
+      run: {
+        findFirst: vi.fn().mockResolvedValue({ botId: "bot-1" }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({ status: "queued" }),
+      },
+      task: { updateMany: vi.fn() },
+      thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
+      event: {
+        create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
+          ...event(data.seq),
+          type: data.type,
+        })),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+
+    await expect(
+      answerRunInput(
+        prisma,
+        {
+          workspaceId: "workspace-1",
+          threadId: "thread-1",
+          runId: "run-1",
+          messageId: "message-1",
+          answeredByUserId: "user-1",
+          answer: "allow",
+        },
+        fanout,
+      ),
+    ).resolves.toBe(true);
+
+    expect(tx.task.updateMany).not.toHaveBeenCalled();
+    expect(tx.message.update).toHaveBeenCalledWith({
+      where: { id: "message-1" },
+      data: {
+        blocks: [
+          expect.objectContaining({
+            input: "screen_handoff",
+            status: "answered",
+            answer: "allow",
+          }),
+        ],
+      },
+    });
+  });
+
+  it("rejects a screen handoff answer that is not allow or deny", async () => {
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      message: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "message-1",
+          blocks: [
+            {
+              kind: "ask",
+              input: "screen_handoff",
+              text: "Writer needs the shared desktop.",
+              status: "pending",
+              actions: [
+                { id: "allow", label: "Let this agent take over" },
+                { id: "deny", label: "Not now" },
+              ],
+            },
+          ],
+        }),
+      },
+      run: {
+        findFirst: vi.fn().mockResolvedValue({ botId: "bot-1", userId: "user-1" }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+
+    await expect(
+      answerRunInput(prisma, {
+        workspaceId: "workspace-1",
+        threadId: "thread-1",
+        runId: "run-1",
+        messageId: "message-1",
+        answeredByUserId: "user-1",
+        answer: "Paris",
+      }),
+    ).resolves.toBe(false);
+  });
+
   it("approves and upserts always-allow without overwriting the task prompt", async () => {
     const fanout = new TestFanout();
     const tx = {
@@ -892,10 +1002,14 @@ describe("sendUserMessage", () => {
         create: vi.fn().mockResolvedValue({ id: "message-1", seq: 4 }),
         update: vi.fn(),
       },
-      task: { create: vi.fn().mockResolvedValue({ id: "task-1" }) },
+      task: {
+        create: vi.fn().mockResolvedValue({ id: "task-1" }),
+        updateMany: vi.fn(),
+      },
       run: {
         create: vi.fn().mockResolvedValue({ id: "run-1" }),
         findUnique: vi.fn().mockResolvedValue({ status: "queued" }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
@@ -947,6 +1061,19 @@ describe("sendUserMessage", () => {
       }),
     );
     expect(publish).toHaveBeenCalledWith("thread:thread-1", JSON.stringify({ cursor: 8 }));
+    expect(tx.run.updateMany).toHaveBeenCalledWith({
+      where: {
+        botId: "bot-1",
+        status: "queued",
+        trigger: { in: ["user", "follow_up"] },
+        id: { not: "run-1" },
+      },
+      data: {
+        status: "cancelled",
+        completedAt: expect.any(Date),
+        error: "Superseded by a newer message",
+      },
+    });
   });
 
   it("skips run creation when the bot is already busy and onlyIfIdle is set", async () => {
@@ -965,6 +1092,7 @@ describe("sendUserMessage", () => {
       run: {
         findFirst: vi.fn().mockResolvedValue({ id: "run-0" }),
         create: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
       event: {
         create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({

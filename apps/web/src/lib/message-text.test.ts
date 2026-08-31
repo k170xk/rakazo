@@ -19,6 +19,22 @@ describe("copyableMessageText", () => {
     ).toBe("first\nworking\nquestion?");
   });
 
+  it("includes bot-to-bot messages with their direction", () => {
+    expect(
+      copyableMessageText(
+        message([
+          { kind: "bot_message_sent", toBotId: "b", toBotName: "Estimator QS", text: "Need pricing." },
+          {
+            kind: "bot_message_received",
+            fromBotId: "b",
+            fromBotName: "Estimator QS",
+            text: "Standing by.",
+          },
+        ]),
+      ),
+    ).toBe("To Estimator QS: Need pricing.\nFrom Estimator QS: Standing by.");
+  });
+
   it("includes phone channel messages with their iMessage attribution", () => {
     expect(
       copyableMessageText(

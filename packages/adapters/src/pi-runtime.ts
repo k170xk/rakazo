@@ -26,6 +26,7 @@ import {
   registerOpenAiCompatibleCatalog,
   registerOpenAiCompatibleRuntime,
 } from "./pi-openai-compatible-provider.js";
+import { formatRunSteering } from "./run-steering.js";
 import { textContentArg } from "./tool-text.js";
 
 const running = new Map<string, AbortController>();
@@ -233,6 +234,14 @@ export class PiAgentRuntime implements AgentRuntime {
         try {
           await agent.prompt(request.prompt, images?.length ? images : undefined);
           await agent.waitForIdle();
+          while (!host.pausePending && !signal.aborted) {
+            const extras = await request.pullSteering?.().catch(() => []);
+            const note = formatRunSteering(extras ?? []);
+            if (!note) break;
+            queue.push({ type: "progress", text: "Got your update" });
+            await agent.prompt(note);
+            await agent.waitForIdle();
+          }
         } finally {
           signal.removeEventListener("abort", onAbort);
         }
@@ -335,6 +344,24 @@ export function modelsForRequest(
     });
   }
   return catalogModels();
+}
+
+async function appendSteering<T extends { content: Array<{ type: string; text?: string }> }>(
+  host: ToolHost,
+  result: T,
+): Promise<T> {
+  const extras = await host.request.pullSteering?.().catch(() => []);
+  const note = formatRunSteering(extras ?? []);
+  if (!note) return result;
+  host.queue.push({ type: "progress", text: "Got your update" });
+  const existing = result.content
+    .map((part) => (part.type === "text" ? String(part.text ?? "") : ""))
+    .filter(Boolean)
+    .join("\n");
+  return {
+    ...result,
+    content: [{ type: "text" as const, text: existing ? `${existing}\n\n${note}` : note }],
+  };
 }
 
 function toAgentTools(toolDefs: readonly ConnectorTool[], host: ToolHost): AgentTool[] {
@@ -580,12 +607,12 @@ function toAgentTool(tool: ConnectorTool, host: ToolHost, exposedName: string): 
           : await host.request.executeTool(tool.name, args, executionId);
         if (isAgentToolExecutionResult(result)) {
           if (isToolPauseResult(result)) host.pausePending = true;
-          return result;
+          return appendSteering(host, result);
         }
-        return {
+        return appendSteering(host, {
           content: [{ type: "text", text: summarizeToolResult(result) }],
           details: result,
-        };
+        });
       }
       return {
         content: [{ type: "text", text: `${tool.name} is unavailable without an executor.` }],

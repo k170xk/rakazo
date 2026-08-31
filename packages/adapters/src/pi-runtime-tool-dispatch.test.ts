@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const fakeAgentState = vi.hoisted(() => ({
   mode: "dispatch" as "dispatch" | "empty" | "subagent-limit" | "parent-limit",
   abortCount: 0,
+  prompts: [] as unknown[],
   tools: [] as Array<{
     name: string;
     prepareArguments?: (args: unknown) => Record<string, unknown>;
@@ -31,8 +32,13 @@ vi.mock("@earendil-works/pi-agent-core", () => ({
       this.listeners.push(listener);
     }
 
-    async prompt() {
+    async prompt(text?: unknown) {
+      fakeAgentState.prompts.push(text);
       if (fakeAgentState.mode === "empty") {
+        return;
+      }
+      // Mid-turn steering calls prompt() again with the user's update.
+      if (typeof text === "string" && text.includes("Keep this desktop session")) {
         return;
       }
 
@@ -153,6 +159,7 @@ describe("Pi connector tool dispatch", () => {
   beforeEach(() => {
     fakeAgentState.mode = "dispatch";
     fakeAgentState.abortCount = 0;
+    fakeAgentState.prompts = [];
     fakeAgentState.tools = [];
     fakeAgentState.invoke = {
       name: "destination_write",
@@ -571,6 +578,46 @@ describe("Pi connector tool dispatch", () => {
         content: '{\n  "last_run": 1787648953\n}',
       },
       "call-1",
+    );
+  });
+
+  it("feeds a mid-turn user update into the same prompt without a new run", async () => {
+    let pulls = 0;
+    const pullSteering = vi.fn(async () => {
+      pulls += 1;
+      return pulls === 2 ? ["We do civil engineering."] : [];
+    });
+    const runtime = new PiAgentRuntime();
+    const events: unknown[] = [];
+
+    for await (const event of runtime.run(
+      {
+        botId: "b",
+        threadId: "t",
+        runId: "redirect",
+        prompt: "look on etenders",
+        instructions: "Use the destination tool.",
+        history: [],
+        tools: [destinationTool],
+        model: { provider: "test", id: "dispatch-test-model" },
+        executeTool: vi.fn(async () => ({ ok: true })),
+        pullSteering,
+      },
+      {
+        operationId: "redirect",
+        traceId: "redirect",
+        workspaceId: "w",
+        userId: "u",
+        signal: new AbortController().signal,
+      },
+    )) {
+      events.push(event);
+    }
+
+    expect(pullSteering).toHaveBeenCalled();
+    expect(events).toContainEqual({ type: "progress", text: "Got your update" });
+    expect(fakeAgentState.prompts[1]).toBe(
+      "The user sent an update. Keep this desktop session and follow it now:\nWe do civil engineering.",
     );
   });
 });

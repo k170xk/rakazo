@@ -4,6 +4,7 @@ import type { Pool, PrismaClient, ThreadEvents } from "@rakazo/db";
 import type { PoolClient } from "pg";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { scheduleComputerControlExpiry } from "./computer-control.js";
+import { failStalledRuns } from "./run-stall.js";
 
 const DEFAULT_INTERVAL_MS = 30_000;
 const DEFAULT_BATCH_SIZE = 100;
@@ -302,6 +303,7 @@ export function createJobReconciler(
           ? { at: lastControl.controlLeaseExpiresAt, id: lastControl.id }
           : undefined;
       if (!controlCursor) controlScanDeadline = undefined;
+      await failStalledRuns(deps.prisma, deps.events);
     })().finally(() => {
       reconciling = undefined;
     });

@@ -37,6 +37,12 @@ describe("scripted runtime", () => {
     expect(script?.some((t) => t.takeover)).toBe(true);
   });
 
+  it("resumes after a voluntary desktop release", () => {
+    const script = inferScript("keep working on the report", "takeover-released");
+    expect(script?.some((t) => t.assistant?.includes("released the desktop"))).toBe(true);
+    expect(script?.some((t) => t.takeover)).toBe(false);
+  });
+
   it("resumes after takeover without asking again", () => {
     const script = inferScript("install the cli and sign in", "takeover");
     expect(script?.some((t) => t.takeover)).toBe(false);

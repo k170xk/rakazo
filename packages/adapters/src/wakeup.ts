@@ -48,6 +48,7 @@ export class GraphileJobWorkerHost implements JobWorkerHost {
     private readonly connectionString: string,
     private readonly options: {
       concurrency?: number;
+      maxPoolSize?: number;
       pollInterval?: number;
       noHandleSignals?: boolean;
     } = {},
@@ -61,9 +62,11 @@ export class GraphileJobWorkerHost implements JobWorkerHost {
         async (payload: unknown) => dispatchBackgroundJob(handlers, name, payload),
       ]),
     );
+    const concurrency = this.options.concurrency ?? 4;
     this.runner = await run({
       connectionString: this.connectionString,
-      concurrency: this.options.concurrency ?? 4,
+      concurrency,
+      maxPoolSize: Math.max(this.options.maxPoolSize ?? 10, concurrency),
       pollInterval: this.options.pollInterval ?? 500,
       noHandleSignals: this.options.noHandleSignals,
       taskList,

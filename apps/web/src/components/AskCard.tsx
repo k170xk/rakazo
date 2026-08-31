@@ -2,7 +2,7 @@ import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo/chat-ui/web";
 import type { ThreadMessage } from "@rakazo/contracts";
-import { isApprovalAskBlock, isSecretAskBlock } from "@rakazo/core";
+import { isApprovalAskBlock, isScreenHandoffAskBlock, isSecretAskBlock } from "@rakazo/core";
 import { useState } from "react";
 
 export type AskBlock = Extract<ThreadMessage["blocks"][number], { kind: "ask" }>;
@@ -19,6 +19,16 @@ function formatAnsweredState(
   if (answer === "always") return t`Always allowed`;
   if (answer === "deny") return t`Denied`;
   return t`Answered: ${answer}`;
+}
+
+function actionButtonLabel(
+  id: string,
+  fallback: string,
+  screenHandoff: boolean,
+): string {
+  if (screenHandoff && id === "allow") return t`Let this agent take over`;
+  if (screenHandoff && id === "deny") return t`Not now`;
+  return approvalActionLabel(id, fallback);
 }
 
 function approvalActionLabel(id: string, fallback: string): string {
@@ -43,7 +53,9 @@ export function AskCard({
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const submitting = pendingAction !== null;
-  const approvalActions = isApprovalAskBlock(block) ? block.actions : undefined;
+  const screenHandoff = isScreenHandoffAskBlock(block);
+  const approvalActions =
+    isApprovalAskBlock(block) || screenHandoff ? block.actions : undefined;
   const secretInput = isSecretAskBlock(block);
 
   async function submitAnswer(value: string) {
@@ -62,21 +74,31 @@ export function AskCard({
   }
 
   return (
-    <div className="max-w-[74%] rounded-[20px] border border-[#242428] bg-[#141417] px-5 py-[17px]">
-      <div className="text-[15.5px] leading-[1.5] text-[#ECECEE]">
+    <div className="max-w-[74%] rounded-[20px] border border-[#e2e8f0] bg-[#ffffff] px-5 py-[17px]">
+      <div className="text-[15.5px] leading-[1.5] text-[#020817]">
         <ChatMarkdown>{block.text}</ChatMarkdown>
       </div>
       {block.detail ? (
-        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-[#0E0E10] px-3.5 py-3 font-mono text-[12.5px] leading-[1.7] text-[#85858A]">
+        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-[#F1F5F9] px-3.5 py-3 font-mono text-[12.5px] leading-[1.7] text-[#64748B]">
           {block.detail}
         </pre>
       ) : null}
       {block.status === "answered" ? (
-        <div className="mt-3.5 text-[13.5px] font-medium text-[#4ECB71]">
-          {formatAnsweredState(block.answer, Boolean(approvalActions), secretInput)}
+        <div
+          className={
+            screenHandoff && block.answer === "deny"
+              ? "mt-3.5 text-[13.5px] font-medium text-[#64748B]"
+              : "mt-3.5 text-[13.5px] font-medium text-[#4ECB71]"
+          }
+        >
+          {screenHandoff
+            ? block.answer === "allow"
+              ? t`This agent can take over`
+              : t`Kept the current session`
+            : formatAnsweredState(block.answer, Boolean(approvalActions), secretInput)}
         </div>
       ) : !canAnswer ? (
-        <div className="mt-3.5 text-[13.5px] font-medium text-[#85858A]">
+        <div className="mt-3.5 text-[13.5px] font-medium text-[#64748B]">
           <Trans>No longer active</Trans>
         </div>
       ) : approvalActions ? (
@@ -90,13 +112,13 @@ export function AskCard({
               className={
                 action.id === "allow"
                   ? "rounded-[11px] bg-[#F1F1EF] px-[17px] py-2 text-[14.5px] font-medium text-[#17171A] disabled:opacity-50"
-                  : "rounded-[11px] border border-[#26262A] px-[17px] py-2 text-[14.5px] text-[#C9C9CE] disabled:opacity-50"
+                  : "rounded-[11px] border border-[#E2E8F0] px-[17px] py-2 text-[14.5px] text-[#334155] disabled:opacity-50"
               }
             >
               {pendingAction === action.id ? (
                 <Trans>Sending…</Trans>
               ) : (
-                approvalActionLabel(action.id, action.label)
+                actionButtonLabel(action.id, action.label, screenHandoff)
               )}
             </button>
           ))}
@@ -116,7 +138,7 @@ export function AskCard({
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
             placeholder={t`Code`}
-            className="rounded-[11px] border border-[#303035] bg-[#0E0E10] px-3.5 py-2.5 text-[14.5px] text-[#ECECEE] outline-none focus:border-[#66666D]"
+            className="rounded-[11px] border border-[#cbd5e1] bg-[#F1F5F9] px-3.5 py-2.5 text-[14.5px] text-[#020817] outline-none focus:border-[#64748B]"
           />
           <button
             type="submit"
@@ -139,7 +161,7 @@ export function AskCard({
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
             placeholder={t`Type your answer`}
-            className="rounded-[11px] border border-[#303035] bg-[#0E0E10] px-3.5 py-2.5 text-[14.5px] text-[#ECECEE] outline-none focus:border-[#66666D]"
+            className="rounded-[11px] border border-[#cbd5e1] bg-[#F1F5F9] px-3.5 py-2.5 text-[14.5px] text-[#020817] outline-none focus:border-[#64748B]"
           />
           <div className="flex gap-2">
             <button
@@ -156,7 +178,7 @@ export function AskCard({
                 setAnswer("");
                 setEditing(false);
               }}
-              className="rounded-[11px] border border-[#26262A] px-[17px] py-2 text-[14.5px] text-[#C9C9CE] disabled:opacity-50"
+              className="rounded-[11px] border border-[#E2E8F0] px-[17px] py-2 text-[14.5px] text-[#334155] disabled:opacity-50"
             >
               <Trans>Cancel</Trans>
             </button>
@@ -176,7 +198,7 @@ export function AskCard({
             type="button"
             disabled={submitting}
             onClick={() => setEditing(true)}
-            className="rounded-[11px] border border-[#26262A] px-[17px] py-2 text-[14.5px] text-[#C9C9CE] disabled:opacity-50"
+            className="rounded-[11px] border border-[#E2E8F0] px-[17px] py-2 text-[14.5px] text-[#334155] disabled:opacity-50"
           >
             <Trans>Edit first</Trans>
           </button>

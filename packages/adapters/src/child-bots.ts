@@ -70,6 +70,7 @@ export async function spawnBot(
       instructions: (input.instructions ?? "").trim(),
       notifyOnFinish: true,
       parentBotId: input.spawnedBy.id,
+      computerMode: "dedicated",
       spawnKey: input.spawnKey,
       initialMessage: {
         role: "system",

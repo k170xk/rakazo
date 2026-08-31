@@ -10,7 +10,12 @@ import {
   clearActiveThreadRuns,
   computerPanelAutoBoot,
   computerPanelAutoUsesBoot,
+  computerPrimaryAction,
+  computerReleaseClosesViewer,
+  computerShowsReload,
   computerTakeoverBlocked,
+  ensureComputerStep,
+  pollComputerUntilSettled,
   isThreadSnapshotEvent,
   mergeThreadSnapshot,
   prependThreadMessagePage,
@@ -1294,13 +1299,61 @@ describe("computer event reduction", () => {
     expect(computerPanelAutoBoot("running", "https://screen.example")).toBe("wait");
     expect(computerPanelAutoBoot("running", null)).toBe("recover-screen");
     expect(computerPanelAutoBoot("booting")).toBe("wait");
-    expect(computerPanelAutoBoot("suspended")).toBe("wait");
+    expect(computerPanelAutoBoot("suspended")).toBe("boot");
   });
 
   it("maps recover-screen to computer.boot, not computer.recover", () => {
     expect(computerPanelAutoUsesBoot("recover-screen")).toBe(true);
     expect(computerPanelAutoUsesBoot("boot")).toBe(true);
     expect(computerPanelAutoUsesBoot("wait")).toBe(false);
+  });
+
+  it("picks one ensureComputer step from state and screen URL", () => {
+    expect(ensureComputerStep("suspended")).toBe("boot");
+    expect(ensureComputerStep("stopped")).toBe("boot");
+    expect(ensureComputerStep("error")).toBe("boot");
+    expect(ensureComputerStep("booting")).toBe("wait");
+    expect(ensureComputerStep("running", "https://screen.example")).toBe("ready");
+    expect(ensureComputerStep("running", null)).toBe("recover-screen");
+  });
+
+  it("polls a live boot until running", async () => {
+    const reads = ["booting", "booting", "running"] as const;
+    let index = 0;
+    const sleeps: number[] = [];
+    const result = await pollComputerUntilSettled(
+      async () => ({ state: reads[Math.min(index++, reads.length - 1)] }),
+      { sleep: async (ms) => void sleeps.push(ms) },
+    );
+    expect(result.state).toBe("running");
+    expect(sleeps).toEqual([500, 500]);
+  });
+
+  it("gives each computer state one primary action", () => {
+    expect(
+      computerPrimaryAction({ state: "suspended", hasControl: false, takeoverBlocked: false }),
+    ).toBe("wake");
+    expect(
+      computerPrimaryAction({ state: "booting", hasControl: false, takeoverBlocked: false }),
+    ).toBe("none");
+    expect(
+      computerPrimaryAction({ state: "running", hasControl: false, takeoverBlocked: false }),
+    ).toBe("take-control");
+    expect(
+      computerPrimaryAction({ state: "running", hasControl: true, takeoverBlocked: false }),
+    ).toBe("release");
+    expect(
+      computerPrimaryAction({ state: "running", hasControl: false, takeoverBlocked: true }),
+    ).toBe("none");
+    expect(computerShowsReload("running")).toBe(true);
+    expect(computerShowsReload("booting")).toBe(false);
+  });
+
+  it("closes the full-window viewer only after Skip or I'm done", () => {
+    expect(computerReleaseClosesViewer("done")).toBe(true);
+    expect(computerReleaseClosesViewer("skipped")).toBe(true);
+    expect(computerReleaseClosesViewer()).toBe(false);
+    expect(computerReleaseClosesViewer("released")).toBe(false);
   });
 });
 

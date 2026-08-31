@@ -7,10 +7,11 @@ import {
 import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import { expireComputerControl, hasActiveComputerControl } from "./computer-control.js";
-import { toComputerRef } from "./computer-lifecycle.js";
+import { hasLiveBootLease, toComputerRef } from "./computer-lifecycle.js";
 import { checkpointComputerWorkspace } from "./computer-workspace.js";
 
 export const DEFAULT_SANDBOX_IDLE_MS = 10 * 60 * 1000;
+export const VIEWER_TOUCH_MS = 90_000;
 
 export function sandboxIdleMs(): number {
   const raw = Number(process.env.SANDBOX_IDLE_MS ?? DEFAULT_SANDBOX_IDLE_MS);
@@ -42,6 +43,11 @@ export async function sleepComputerIfIdle(
 ): Promise<void> {
   let computer = await loadComputer(deps.prisma, computerId);
   if (!computer?.providerRef || computer.state !== "running") return;
+  if (hasLiveBootLease(computer)) return;
+  if (Date.now() - computer.updatedAt.getTime() < VIEWER_TOUCH_MS) {
+    scheduleComputerSleep(deps.jobs, computerId);
+    return;
+  }
 
   if (computer.controlBotId && computer.controlLeaseId && !hasActiveComputerControl(computer)) {
     await expireComputerControl(deps, computer.id, computer.controlLeaseId);
@@ -169,6 +175,7 @@ function loadComputer(prisma: PrismaClient, computerId: string) {
       controlLeaseId: true,
       controlLeaseExpiresAt: true,
       controlBotId: true,
+      bootLeaseExpiresAt: true,
       updatedAt: true,
     },
   });

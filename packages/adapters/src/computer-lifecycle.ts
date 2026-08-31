@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import type {
   AdapterContext,
@@ -19,8 +20,17 @@ import { isUnrecoverableSandboxError } from "./e2b-sandbox.js";
 import { resolveAgentHomePath } from "./home.js";
 
 const EXECUTION_LEASE_MS = 5 * 60_000;
+const BOOT_LEASE_MS = 30_000;
 const BOOT_WAIT_ATTEMPTS = 40;
+const BOOT_JOIN_WAIT_ATTEMPTS = 480;
 const BOOT_WAIT_MS = 250;
+
+export function hasLiveBootLease(
+  computer: { bootLeaseExpiresAt?: Date | null },
+  now = new Date(),
+) {
+  return Boolean(computer.bootLeaseExpiresAt && computer.bootLeaseExpiresAt.getTime() > now.getTime());
+}
 
 export class ComputerBusyError extends Error {
   constructor() {
@@ -30,6 +40,38 @@ export class ComputerBusyError extends Error {
 }
 
 export { toComputerRef } from "./computer-support.js";
+
+/** Flip abandoned mid-cycle rows after process death. Safe to run on API/worker start. */
+export async function reclaimAbandonedComputerTransitions(prisma: PrismaClient): Promise<void> {
+  const now = new Date();
+  const expired = {
+    OR: [{ bootLeaseExpiresAt: null }, { bootLeaseExpiresAt: { lte: now } }],
+  };
+  await prisma.computer.updateMany({
+    where: {
+      state: { in: ["booting", "suspending"] },
+      providerRef: { not: null },
+      ...expired,
+    },
+    data: {
+      state: "suspended",
+      bootLeaseId: null,
+      bootLeaseExpiresAt: null,
+    },
+  });
+  await prisma.computer.updateMany({
+    where: {
+      state: { in: ["booting", "suspending"] },
+      providerRef: null,
+      ...expired,
+    },
+    data: {
+      state: "error",
+      bootLeaseId: null,
+      bootLeaseExpiresAt: null,
+    },
+  });
+}
 
 export async function provisionComputer(
   deps: {
@@ -59,22 +101,53 @@ export async function provisionComputer(
     return reconnectComputer(deps, existing, homePath, context);
   }
   if (existing.state === "booting" || existing.state === "suspending") {
-    const ready = await waitForComputerReady(deps.prisma, computerId, context);
-    if (ready?.state === "running" && ready.providerRef) {
-      return reconnectComputer(deps, ready, homePath, context);
+    if (hasLiveBootLease(existing)) {
+      const ready = await waitForComputerReady(
+        deps.prisma,
+        computerId,
+        context,
+        BOOT_JOIN_WAIT_ATTEMPTS,
+      );
+      if (ready?.state === "running" && ready.providerRef) {
+        return reconnectComputer(deps, ready, homePath, context);
+      }
+      existing = await deps.prisma.computer.findUniqueOrThrow({ where: { id: computerId } });
+      if (hasLiveBootLease(existing)) throw new ComputerBusyError();
     }
-    existing = await deps.prisma.computer.findUniqueOrThrow({ where: { id: computerId } });
   }
 
+  const bootLeaseId = randomUUID();
+  const bootLeaseExpiresAt = new Date(Date.now() + BOOT_LEASE_MS);
   const claimed = await deps.prisma.computer.updateMany({
     where: {
       id: computerId,
-      state: { in: ["stopped", "suspended", "error"] },
       ...(context.botId ? { bots: { some: { id: context.botId, archivedAt: null } } } : {}),
+      OR: [
+        { state: { in: ["stopped", "suspended", "error"] } },
+        {
+          state: { in: ["booting", "suspending"] },
+          OR: [{ bootLeaseExpiresAt: null }, { bootLeaseExpiresAt: { lte: new Date() } }],
+        },
+      ],
     },
-    data: { state: "booting" },
+    data: { state: "booting", bootLeaseId, bootLeaseExpiresAt },
   });
-  if (claimed.count !== 1) throw new ComputerBusyError();
+  if (claimed.count !== 1) {
+    const current = await deps.prisma.computer.findUniqueOrThrow({ where: { id: computerId } });
+    if (current.state === "running" && current.providerRef) {
+      return reconnectComputer(deps, current, homePath, context);
+    }
+    throw new ComputerBusyError();
+  }
+  const heartbeat = setInterval(() => {
+    void deps.prisma.computer
+      .updateMany({
+        where: { id: computerId, bootLeaseId, state: "booting" },
+        data: { bootLeaseExpiresAt: new Date(Date.now() + BOOT_LEASE_MS) },
+      })
+      .catch(() => undefined);
+  }, 10_000);
+  heartbeat.unref?.();
   let provisioned: ComputerRef | undefined;
   try {
     const ref = await deps.sandbox.provision(
@@ -114,6 +187,8 @@ export async function provisionComputer(
         state: "running",
         providerRef: ref.providerRef,
         kind: ref.kind,
+        bootLeaseId: null,
+        bootLeaseExpiresAt: null,
         controlHolder: activeControl ? "user" : controlHolder,
         ...(!activeControl
           ? {
@@ -138,6 +213,8 @@ export async function provisionComputer(
         where: { id: computerId, state: "booting" },
         data: {
           state: "error",
+          bootLeaseId: null,
+          bootLeaseExpiresAt: null,
           ...(rollbackError && provisioned
             ? { providerRef: provisioned.providerRef, kind: provisioned.kind }
             : {}),
@@ -156,6 +233,8 @@ export async function provisionComputer(
       );
     }
     throw error;
+  } finally {
+    clearInterval(heartbeat);
   }
 }
 
@@ -198,8 +277,9 @@ async function waitForComputerReady(
   prisma: PrismaClient,
   computerId: string,
   context: AdapterContext,
+  attempts = BOOT_WAIT_ATTEMPTS,
 ) {
-  for (let attempt = 0; attempt < BOOT_WAIT_ATTEMPTS; attempt += 1) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     const current = await prisma.computer.findUniqueOrThrow({ where: { id: computerId } });
     if (current.state === "running" && current.providerRef) return current;
     if (current.state !== "booting" && current.state !== "suspending") return current;
@@ -218,15 +298,12 @@ async function rollbackProvisionedComputer(
   cause: unknown,
 ): Promise<unknown | undefined> {
   try {
+    if (!computer.fresh && cause instanceof ComputerBusyError) {
+      return undefined;
+    }
     await sandbox.releaseScreen?.(computer, context).catch(() => undefined);
     if (computer.fresh) {
       await sandbox.destroy(computer, context);
-    } else if (cause instanceof ComputerBusyError) {
-      try {
-        await sandbox.stop(computer, context);
-      } catch {
-        await sandbox.destroy(computer, context);
-      }
     } else {
       await sandbox.stop(computer, context);
     }
@@ -453,6 +530,7 @@ export async function replaceComputer(
 
   const previousState = existing.state;
   const now = new Date();
+  const bootLeaseId = randomUUID();
   const claimed = await deps.prisma.computer.updateMany({
     where: {
       id: computerId,
@@ -465,7 +543,11 @@ export async function replaceComputer(
         { controlLeaseExpiresAt: { lte: now } },
       ],
     },
-    data: { state: "suspending" },
+    data: {
+      state: "suspending",
+      bootLeaseId,
+      bootLeaseExpiresAt: new Date(Date.now() + BOOT_LEASE_MS),
+    },
   });
   if (claimed.count !== 1) throw new ComputerBusyError();
   const activeRun = await deps.prisma.run.findFirst({
@@ -478,7 +560,7 @@ export async function replaceComputer(
   if (activeRun) {
     await deps.prisma.computer.updateMany({
       where: { id: computerId, state: "suspending" },
-      data: { state: previousState },
+      data: { state: previousState, bootLeaseId: null, bootLeaseExpiresAt: null },
     });
     throw new ComputerBusyError();
   }
@@ -505,6 +587,8 @@ export async function replaceComputer(
       data: {
         state: "stopped",
         providerRef: null,
+        bootLeaseId: null,
+        bootLeaseExpiresAt: null,
         controlHolder: "none",
         controlLeaseId: null,
         controlLeaseExpiresAt: null,
@@ -517,7 +601,7 @@ export async function replaceComputer(
     await deps.prisma.computer
       .updateMany({
         where: { id: computerId },
-        data: { state: "error" },
+        data: { state: "error", bootLeaseId: null, bootLeaseExpiresAt: null },
       })
       .catch(() => undefined);
     throw error;

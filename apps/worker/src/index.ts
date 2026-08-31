@@ -12,6 +12,7 @@ import {
   createRunExecutor,
   createRunSandbox,
   createRunSecretWriter,
+  decryptDeploymentModelKey,
   EncryptedSecretStore,
   ExpoPushProvider,
   GraphileJobPublisher,
@@ -29,7 +30,8 @@ import {
   PipedreamConnector,
   PostgresRealtimeFanout,
   pipedreamConfigFromEnv,
-  resolveDeploymentModel,
+  reclaimAbandonedComputerTransitions,
+  resolveEffectiveDeploymentModel,
   resolveSandboxProvider,
   ScriptedAgentRuntime,
   SendBlueMessagingProvider,
@@ -44,6 +46,7 @@ async function main() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is required");
   const { prisma, pool } = createDb(databaseUrl);
+  await reclaimAbandonedComputerTransitions(prisma).catch(() => undefined);
   const realtime = new PostgresRealtimeFanout({
     connectionString: process.env.REALTIME_DATABASE_URL ?? databaseUrl,
     publisher: pool,
@@ -55,8 +58,14 @@ async function main() {
   const runtime =
     process.env.AGENT_RUNTIME === "scripted" ? new ScriptedAgentRuntime() : new PiAgentRuntime();
   const dataDir = process.env.DATA_DIR ?? "./data";
-  // Same resolver the API uses, so both processes agree on provider, model and key.
-  const { key: deploymentModelKey } = resolveDeploymentModel();
+  const settings = await prisma.deploymentSettings.findUnique({ where: { id: "default" } });
+  // Per-run decrypt still wins if the owner changes the key; this covers phone and
+  // compaction until the next restart.
+  const { key: deploymentModelKey } = resolveEffectiveDeploymentModel({
+    storedProvider: settings?.defaultModelProvider,
+    storedModel: settings?.defaultModelId,
+    storedKey: decryptDeploymentModelKey(secrets, settings?.deploymentModelCredentialCipher),
+  });
   const sandboxProvider = resolveSandboxProvider(process.env);
   const sandbox = createRunSandbox(sandboxProvider, {
     supervisorUrl: process.env.SANDBOX_SUPERVISOR_URL ?? "http://127.0.0.1:7091",
@@ -114,7 +123,9 @@ async function main() {
   const artifacts = new LocalArtifactStore(dataDir);
   const inMemoryJobs = process.env.WAKEUP_DRIVER === "memory" ? new InMemoryJobQueue() : undefined;
   const jobs: JobPublisher = inMemoryJobs ?? new GraphileJobPublisher(databaseUrl);
-  const jobHost: JobWorkerHost = inMemoryJobs ?? new GraphileJobWorkerHost(databaseUrl);
+  const concurrency = resolveWorkerConcurrency();
+  const jobHost: JobWorkerHost =
+    inMemoryJobs ?? new GraphileJobWorkerHost(databaseUrl, { concurrency });
   const executor = createRunExecutor({
     prisma,
     runtime,
@@ -175,7 +186,12 @@ async function main() {
   process.once("SIGTERM", () => void stop());
   process.once("SIGINT", () => void stop());
 
-  console.log("rakazo worker ready");
+  console.log(`rakazo worker ready (${concurrency} concurrent jobs)`);
+}
+
+function resolveWorkerConcurrency(): number {
+  const parsed = Number(process.env.WORKER_CONCURRENCY);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 4;
 }
 
 main().catch((error) => {

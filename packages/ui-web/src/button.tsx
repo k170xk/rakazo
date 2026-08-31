@@ -4,15 +4,15 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "./lib/utils.js";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[13px] text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-[#121215] text-[#FBFBF9] hover:bg-[#26262B]",
-        cream: "bg-[#F1F1EF] text-[#17171A] hover:opacity-90",
-        outline: "border border-[#26262A] text-[#ECECEE] hover:bg-[#1A1A1D]",
-        ghost: "text-[#C9C9CE] hover:bg-[#131315]",
-        pill: "rounded-full bg-[#1B1B1F] text-[#F2F2F3] hover:bg-[#26262B] hover:scale-[1.04]",
+        default: "bg-[#76BF43] text-white hover:bg-[#5ea334]",
+        cream: "bg-[#F1F5F9] text-[#020817] hover:bg-[#E2E8F0]",
+        outline: "border border-[#E2E8F0] text-[#020817] hover:bg-[#F1F5F9]",
+        ghost: "text-[#64748B] hover:bg-[#F1F5F9]",
+        pill: "rounded-full bg-[#F1F5F9] text-[#020817] hover:bg-[#E2E8F0] hover:scale-[1.04]",
       },
       size: {
         default: "h-10 px-4",

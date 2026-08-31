@@ -45,6 +45,7 @@ describe("queued run supersession", () => {
     expect(tx.run.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
+          status: "queued",
           trigger: "user",
           sourceMessage: { role: "user" },
         }),

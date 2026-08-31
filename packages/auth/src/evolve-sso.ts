@@ -1,6 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { bootstrapUserWorkspace, type PrismaClient } from "@rakazo/db";
-import { resolveSignupPolicy } from "./signup-policy.js";
 
 export const EVOLVE_SSO_AUD = "rakazo";
 export const EVOLVE_SSO_ISS = "evolve-computer";
@@ -163,12 +162,8 @@ export async function exchangeEvolveSso(input: {
   let user = await input.prisma.user.findUnique({ where: { email } });
   let created = false;
   if (!user) {
-    const policy = await resolveSignupPolicy(input.prisma, {
-      signupsEnabled: input.signupsEnabled,
-      signupAllowlist: input.signupAllowlist,
-    });
-    if (!policy.enabled) throw new EvolveSsoSignupsClosedError();
-
+    // Public email signup can be closed. A valid Evolve JWT is still allowed
+    // to provision the account — that is the intended way in.
     user = await input.prisma.user.create({
       data: {
         id: newId(),

@@ -61,10 +61,8 @@ describe("embeddableScreenUrl", () => {
 describe("computer copy", () => {
   it("matches the web pane while booting, asleep, or in control", () => {
     expect(previewPlaceholder("stopped", false, "Chief")).toBe("Computer is stopped");
-    expect(previewPlaceholder("suspended", false, "Chief")).toBe(
-      "Computer is asleep — take control to wake it",
-    );
-    expect(previewPlaceholder("running", true, "Chief")).toBe("Booting live desktop…");
+    expect(previewPlaceholder("suspended", false, "Chief")).toBe("Computer is asleep");
+    expect(previewPlaceholder("running", true, "Chief")).toBe("Waking desktop");
     expect(
       controlLabel(
         computer({
@@ -159,6 +157,8 @@ describe("mobile computer screen", () => {
     );
     expect(src).toContain("computer/boot");
     expect(src).toContain("computer/takeover");
+    expect(src).toContain("takeControl: false");
+    expect(src).toContain("async function takeComputerControl");
     expect(src).toContain("computer/release");
     expect(src).toContain("computer/heartbeat");
     expect(src).toContain("Take control");

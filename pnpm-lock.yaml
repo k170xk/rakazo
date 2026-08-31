@@ -225,6 +225,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@fontsource-variable/urbanist':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@lingui/core':
         specifier: 5.9.5
         version: 5.9.5(@lingui/babel-plugin-lingui-macro@5.9.5(typescript@5.9.3))
@@ -307,6 +310,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.12
         version: 4.3.3
+      terser:
+        specifier: ^5.50.0
+        version: 5.50.0
       typescript:
         specifier: ^5.9.2
         version: 5.9.3
@@ -2320,6 +2326,9 @@ packages:
 
   '@fontsource-variable/geist@5.3.0':
     resolution: {integrity: sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==}
+
+  '@fontsource-variable/urbanist@5.3.0':
+    resolution: {integrity: sha512-riHbcRgoOhEdCwVw3n3R1JLEwvRD1N9GlXtBcwl/UJ2KabfyDBuryE2Yq10308QJgbXw3F/IFF+VoMuuqwVfIA==}
 
   '@google/genai@1.52.0':
     resolution: {integrity: sha512-gwSvbpiN/17O9TbsqSsE/OzZcpv5Fo4RQjdngGgogtuB9RsyJ8ZHhX5KjHj1bp5N9snN2eK8LDGXSaWW2hof8Q==}
@@ -11539,6 +11548,8 @@ snapshots:
 
   '@fontsource-variable/geist@5.3.0': {}
 
+  '@fontsource-variable/urbanist@5.3.0': {}
+
   '@google/genai@1.52.0(@modelcontextprotocol/sdk@1.30.0(zod@4.4.3))':
     dependencies:
       google-auth-library: 10.9.1
@@ -13068,7 +13079,9 @@ snapshots:
       metro-runtime: 0.84.5
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
     optional: true
 
   '@react-native/metro-config@0.86.3(@babel/core@7.29.7)':

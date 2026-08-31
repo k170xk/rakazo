@@ -109,6 +109,13 @@ import {
   planLiveConnectionSync,
 } from "./composio-connector.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
+import { textFromUserBlocks } from "./run-steering.js";
+import {
+  DESKTOP_BUSY_TOO_LONG,
+  isComputerWaitAnnouncement,
+  shouldGiveUpComputerWait,
+  WAITING_FOR_SHARED_DESKTOP,
+} from "./run-stall.js";
 import {
   acquireComputerExecutionLease,
   ComputerBusyError,
@@ -119,7 +126,10 @@ import {
   renewComputerExecutionLease,
   screenLeaseIdForRun,
 } from "./computer-lifecycle.js";
-import { withComputerScreenAvailability } from "./computer-screens.js";
+import {
+  isComputerScreenUnavailableResult,
+  withComputerScreenAvailability,
+} from "./computer-screens.js";
 import {
   displayBotWorkspacePath,
   resolveBotWorkspaceCwd,
@@ -128,7 +138,7 @@ import {
 } from "./computer-support.js";
 import { observationToolResult, parseComputerActions } from "./computer-tools.js";
 import { checkpointAndRecordComputerWorkspace } from "./computer-workspace.js";
-import { resolveDeploymentModel } from "./deployment-model.js";
+import { decryptDeploymentModelKey, resolveEffectiveDeploymentModel } from "./deployment-model.js";
 import { handoffToGroupBot, loadGroupContext } from "./group-handoff.js";
 import {
   COMPACTION_BATCH_SIZE,
@@ -194,6 +204,7 @@ import {
   removeScratchpadItemFromTool,
   updateScratchpadItemFromTool,
 } from "./scratchpad-tools.js";
+import { buildScreenHandoffAskBlock } from "./screen-handoff.js";
 import { inferScript } from "./scripted-runtime.js";
 import type { EncryptedSecretStore } from "./secrets.js";
 import {
@@ -453,18 +464,18 @@ export function createRunExecutor(deps: ExecutorDeps) {
       // provider with a workspace or deployment secret from another provider.
       const useOverride = Boolean(hasOverride && overrideCredential);
       const credential = useOverride ? overrideCredential : defaultCredential;
-      const deployment = deps.deploymentModelKey ? resolveDeploymentModel() : null;
+      const deployment = effectiveDeploymentModel(deps, settings);
       const provider =
         (useOverride ? override!.modelProvider : null) ??
         credential?.provider ??
         settings?.defaultModelProvider ??
-        deployment?.provider ??
+        (deployment.key ? deployment.provider : null) ??
         "scripted";
       const id =
         (useOverride ? override!.modelId : null) ??
         credential?.defaultModel ??
         settings?.defaultModelId ??
-        deployment?.model ??
+        (deployment.key ? deployment.model : null) ??
         "scripted";
       // The key is resolved for the provider that won above, not before it is known.
       const resolved = await resolveModelKey(
@@ -473,6 +484,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
         scope.workspaceId,
         credential,
         provider,
+        undefined,
+        deployment,
       );
       return {
         provider,
@@ -604,12 +617,20 @@ export function createRunExecutor(deps: ExecutorDeps) {
       if (!run) return;
       if (isTerminal(run.status as RunStatus)) return;
       const resumeCheckpoint =
-        run.checkpoint === "takeover" || run.checkpoint === "takeover-skipped"
+        run.checkpoint === "takeover" ||
+        run.checkpoint === "takeover-skipped" ||
+        run.checkpoint === "takeover-released"
           ? run.checkpoint
           : null;
       const resumeFromTakeover = run.status === "waiting_takeover" || Boolean(resumeCheckpoint);
       const takeoverResume = resumeFromTakeover
-        ? takeoverResumeFromRelease(resumeCheckpoint === "takeover-skipped" ? "skipped" : "done")
+        ? takeoverResumeFromRelease(
+            resumeCheckpoint === "takeover-skipped"
+              ? "skipped"
+              : resumeCheckpoint === "takeover-released"
+                ? "released"
+                : "done",
+          )
         : null;
 
       const fence = nextFence(run.leaseFence);
@@ -656,7 +677,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
       });
       if (!leaseTarget.computerId) throw new Error("Bot has no computer");
       if (leaseTarget.computerSwitching) {
-        await requeueComputerRun(deps, runId, workerId, fence, resumeCheckpoint);
+        await waitForSharedDesktop(deps, runId, workerId, fence, resumeCheckpoint);
         return;
       }
       let computerLease: ComputerExecutionLease | null = null;
@@ -669,7 +690,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         });
       } catch (error) {
         if (!(error instanceof ComputerBusyError)) throw error;
-        await requeueComputerRun(deps, runId, workerId, fence, resumeCheckpoint);
+        await waitForSharedDesktop(deps, runId, workerId, fence, resumeCheckpoint);
         return;
       }
       const attempt = await deps.prisma.attempt
@@ -912,18 +933,18 @@ export function createRunExecutor(deps: ExecutorDeps) {
             }),
           );
         }
-        const runDeployment = deps.deploymentModelKey ? resolveDeploymentModel() : null;
+        const runDeployment = effectiveDeploymentModel(deps, settings);
         const runModelProvider =
           (useModelOverride ? bot.modelProvider : null) ??
           credential?.provider ??
           settings?.defaultModelProvider ??
-          runDeployment?.provider ??
+          (runDeployment.key ? runDeployment.provider : null) ??
           "scripted";
         const runModelId =
           (useModelOverride ? bot.modelId : null) ??
           credential?.defaultModel ??
           settings?.defaultModelId ??
-          runDeployment?.model ??
+          (runDeployment.key ? runDeployment.model : null) ??
           "scripted";
         const resolved = await resolveModelKey(
           deps,
@@ -932,6 +953,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           credential,
           runModelProvider,
           (values) => runSecrets.push(...values),
+          runDeployment,
         );
         runSecrets.push(...resolved.redact);
         await deps.prisma.run.updateMany({
@@ -1110,6 +1132,49 @@ export function createRunExecutor(deps: ExecutorDeps) {
           return secretPausedToolResult();
         };
 
+        const requestScreenHandoff = async () => {
+          if (!(await renewRunLease(deps, runId, workerId, fence))) {
+            return pauseForApproval();
+          }
+          await checkpointAndRecordComputerWorkspace(deps, storedComputer, computer, context);
+          const paused = await deps.events.pauseRunForInput({
+            workspaceId: run.workspaceId,
+            threadId: run.threadId,
+            botId: run.botId,
+            runId,
+            attemptId: attempt.id,
+            leaseOwner: workerId,
+            leaseFence: fence,
+            blocks: [buildScreenHandoffAskBlock(bot.name)],
+          });
+          if (!paused) {
+            throw new Error("Could not pause this run for the shared desktop; try sending again.");
+          }
+          await notifyRun(deps, run, {
+            kind: "help",
+            title: `${bot.name} needs the desktop`,
+            body: `${bot.name} needs the shared desktop. Another session is using it.`,
+            botId: bot.id,
+            threadId: thread.id,
+          });
+          return pauseForApproval();
+        };
+
+        const runDesktopTool = async (
+          work: () => Promise<unknown>,
+          finish?: (result: unknown) => Promise<unknown>,
+        ) => {
+          const result = await computerScreenToolResult(work, finish);
+          if (isComputerScreenUnavailableResult(result)) {
+            return requestScreenHandoff();
+          }
+          return result;
+        };
+
+        const pullSteeringSeen = new Set<string>(
+          run.sourceMessageId ? [run.sourceMessageId] : [],
+        );
+
         const applyTool = async (
           name: string,
           args: Record<string, unknown>,
@@ -1191,6 +1256,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
                 reviewCredential,
                 checker.provider,
                 (values) => runSecrets.push(...values),
+                runDeployment,
               );
               const judge = await runAutoReviewJudge({
                 runtime: deps.runtime,
@@ -1415,7 +1481,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             if (await getActiveTeachingSession(deps.prisma, run.workspaceId, run.botId)) {
               return { error: "Teaching is in progress. Stop teaching before using the computer." };
             }
-            return computerScreenToolResult(async () =>
+            return runDesktopTool(async () =>
               formatObservation(await deps.sandbox.observe(computer, context)),
             );
           }
@@ -1423,7 +1489,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
             if (await getActiveTeachingSession(deps.prisma, run.workspaceId, run.botId)) {
               return { error: "Teaching is in progress. Stop teaching before using the computer." };
             }
-            return computerScreenToolResult(async () => {
+            return runDesktopTool(async () => {
               const result = await deps.sandbox.act(
                 computer,
                 {
@@ -1658,7 +1724,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           }
           if (name === "open_path") {
             const requestedPath = String(args.path ?? "");
-            return computerScreenToolResult(async () => {
+            return runDesktopTool(async () => {
               const result = await deps.sandbox.act(
                 computer,
                 {
@@ -1682,7 +1748,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
           }
           if (name === "launch_app") {
             const application = String(args.application ?? "");
-            return computerScreenToolResult(async () => {
+            return runDesktopTool(async () => {
               const result = await deps.sandbox.act(
                 computer,
                 {
@@ -2474,6 +2540,27 @@ export function createRunExecutor(deps: ExecutorDeps) {
               allowSilentEmpty: allowSilentPeerMessage || phoneChannelRun,
               emptyResponseText,
               executeTool: scripted ? undefined : applyTool,
+              pullSteering: async () => {
+                const seen = pullSteeringSeen;
+                const rows = await deps.prisma.message.findMany({
+                  where: {
+                    threadId: thread.id,
+                    role: "user",
+                    id: { notIn: [...seen] },
+                    createdAt: { gte: run.createdAt },
+                  },
+                  orderBy: { seq: "asc" },
+                  take: 20,
+                  select: { id: true, blocks: true },
+                });
+                const texts: string[] = [];
+                for (const row of rows) {
+                  seen.add(row.id);
+                  const text = textFromUserBlocks(row.blocks);
+                  if (text) texts.push(text);
+                }
+                return texts;
+              },
             },
             context,
           )) {
@@ -2903,6 +2990,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
             },
           });
           if (computerBusy) {
+            if (shouldGiveUpComputerWait(fence)) {
+              await failDesktopWait(deps, runId);
+              return;
+            }
+            await announceComputerWait(deps, runId);
             await deps.jobs.enqueue({
               ...runContinueJob(runId),
               availableAt: new Date(Date.now() + computerRetryDelay(fence)),
@@ -2999,6 +3091,76 @@ async function renewRunLease(
 
 function computerRetryDelay(fence: number): number {
   return Math.min(10_000, 250 * 2 ** Math.min(Math.max(fence - 1, 0), 5));
+}
+
+export { WAITING_FOR_SHARED_DESKTOP };
+
+async function waitForSharedDesktop(
+  deps: ExecutorDeps,
+  runId: string,
+  workerId: string,
+  fence: number,
+  resumeCheckpoint: TakeoverResumeCheckpoint | null,
+): Promise<void> {
+  if (shouldGiveUpComputerWait(fence)) {
+    await failDesktopWait(deps, runId);
+    return;
+  }
+  await announceComputerWait(deps, runId);
+  await requeueComputerRun(deps, runId, workerId, fence, resumeCheckpoint);
+}
+
+async function failDesktopWait(deps: ExecutorDeps, runId: string): Promise<void> {
+  const run = await deps.prisma.run.findUnique({
+    where: { id: runId },
+    select: { workspaceId: true, threadId: true, botId: true },
+  });
+  const stopped = await deps.prisma.run.updateMany({
+    where: { id: runId, status: { in: ["running", "queued", "leased"] } },
+    data: {
+      status: "failed",
+      error: DESKTOP_BUSY_TOO_LONG,
+      completedAt: new Date(),
+      leaseOwner: null,
+      leaseExpiresAt: null,
+    },
+  });
+  if (stopped.count !== 1 || !run) return;
+  await deps.prisma.computerExecutionLease.deleteMany({ where: { runId } });
+  await deps.events
+    .append({
+      workspaceId: run.workspaceId,
+      threadId: run.threadId,
+      botId: run.botId,
+      type: "run.failed",
+      runId,
+      payload: { error: DESKTOP_BUSY_TOO_LONG },
+    })
+    .catch(() => undefined);
+}
+
+async function announceComputerWait(deps: ExecutorDeps, runId: string): Promise<void> {
+  const run = await deps.prisma.run.findUnique({
+    where: { id: runId },
+    select: { workspaceId: true, threadId: true, botId: true },
+  });
+  if (!run) return;
+  const previous = await deps.prisma.event.findFirst({
+    where: { runId, type: "thread.progress" },
+    orderBy: { createdAt: "desc" },
+    select: { payload: true },
+  });
+  if (isComputerWaitAnnouncement(previous?.payload)) return;
+  await deps.events
+    .append({
+      workspaceId: run.workspaceId,
+      threadId: run.threadId,
+      botId: run.botId,
+      type: "thread.progress",
+      runId,
+      payload: { text: WAITING_FOR_SHARED_DESKTOP },
+    })
+    .catch(() => undefined);
 }
 
 export function threadContextForRun<T>(
@@ -3216,14 +3378,36 @@ async function runSandboxCommand(
   return { stdout, stderr, code };
 }
 
+function effectiveDeploymentModel(
+  deps: ExecutorDeps,
+  settings?: {
+    defaultModelProvider?: string | null;
+    defaultModelId?: string | null;
+    deploymentModelCredentialCipher?: string | null;
+  } | null,
+) {
+  return resolveEffectiveDeploymentModel({
+    storedProvider: settings?.defaultModelProvider,
+    storedModel: settings?.defaultModelId,
+    storedKey: decryptDeploymentModelKey(
+      deps.secretStore,
+      settings?.deploymentModelCredentialCipher,
+    ),
+    envKey: deps.deploymentModelKey,
+  });
+}
+
 /**
  * The deployment key is a bearer credential for exactly one vendor, so it is handed out
  * only when the provider that won the resolution above is that vendor. A provider named
  * by deployment settings or a bot override gets no key rather than another vendor's.
  */
-function deploymentKeyFor(deps: ExecutorDeps, provider: string): string | undefined {
-  if (!deps.deploymentModelKey) return undefined;
-  return provider === resolveDeploymentModel().provider ? deps.deploymentModelKey : undefined;
+function deploymentKeyFor(
+  provider: string,
+  deployment: { provider: string; key?: string },
+): string | undefined {
+  if (!deployment.key) return undefined;
+  return provider === deployment.provider ? deployment.key : undefined;
 }
 
 async function resolveModelKey(
@@ -3233,6 +3417,7 @@ async function resolveModelKey(
   credential: { secretId: string; provider: string } | null,
   provider: string,
   registerSecrets?: (values: string[]) => void,
+  deployment = effectiveDeploymentModel(deps),
 ): Promise<{
   apiKey?: string;
   baseUrl?: string;
@@ -3243,7 +3428,7 @@ async function resolveModelKey(
   if (credential) {
     return withModelCredentialLock(credential.secretId, async () => {
       const row = await deps.prisma.secret.findUnique({ where: { id: credential.secretId } });
-      if (!row) return { apiKey: deploymentKeyFor(deps, provider), redact: [] };
+      if (!row) return { apiKey: deploymentKeyFor(provider, deployment), redact: [] };
       const plaintext = deps.secretStore.load(row.ciphertext, row.id);
       registerSecrets?.(secretValuesToRedact(parseModelSecret(plaintext)));
       const persist = async (next: string) => {
@@ -3306,7 +3491,7 @@ async function resolveModelKey(
       };
     });
   }
-  return { apiKey: deploymentKeyFor(deps, provider), redact: [] };
+  return { apiKey: deploymentKeyFor(provider, deployment), redact: [] };
 }
 
 async function withModelCredentialLock<T>(key: string, fn: () => Promise<T>): Promise<T> {

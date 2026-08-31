@@ -28,6 +28,8 @@ import {
   checkpointAndRecordComputerWorkspace,
   computerSupportsUpdate,
   createVoiceProvider,
+  DEPLOYMENT_MODEL_SECRET_ID,
+  decryptDeploymentModelKey,
   deletePushToken,
   deploymentAutoReviewDefault,
   destroyBot,
@@ -56,6 +58,7 @@ import {
   releaseComputerExecutionLease,
   replaceComputer,
   resolveBotWorkspacePath,
+  resolveEffectiveDeploymentModel,
   sanitizeComposioError,
   savePushToken,
   scheduleComputerControlExpiry,
@@ -85,6 +88,7 @@ import {
   expandSkillReferencesInPrompt,
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
+  isScreenHandoffAskBlock,
   nextCronDateAcrossStrict,
 } from "@rakazo/core";
 import {
@@ -92,6 +96,7 @@ import {
   createGroupRepos,
   createRepos,
   createThreadMessageInTransaction,
+  createUserWorkspace,
   findDefaultModelCredential,
   findDefaultVoiceCredential,
   findWorkspaceMemoryConfig,
@@ -109,7 +114,7 @@ import { createAgentSkillsService } from "./agent-skills.js";
 import { createOwnedArtifact, getOwnedArtifact, getWorkspaceArtifact } from "./artifacts.js";
 import {
   executionBlocksUserTakeover,
-  resolveBusyBotName,
+  resolveBusyBot,
   toComputerStatus,
 } from "./computer-status.js";
 import { buildMcpUpdateMaterial } from "./mcp-material.js";
@@ -214,6 +219,40 @@ function computerContext(actor: Actor, botId: string, operationId: string): Adap
     botId,
     signal: new AbortController().signal,
   };
+}
+
+async function grantScreenHandoff(
+  deps: { prisma: PrismaClient; sandbox: SandboxProvider },
+  actor: Actor,
+  runId: string,
+  messageId: string,
+) {
+  const message = await deps.prisma.message.findFirst({
+    where: { id: messageId, runId },
+    select: { blocks: true },
+  });
+  const blocks = Array.isArray(message?.blocks) ? message.blocks : [];
+  const allowed = blocks.some((block) => {
+    if (!block || typeof block !== "object") return false;
+    const ask = block as {
+      kind?: string;
+      input?: string;
+      answer?: string;
+      actions?: { id: string }[];
+    };
+    return isScreenHandoffAskBlock(ask) && ask.answer === "allow";
+  });
+  if (!allowed) return;
+  const run = await deps.prisma.run.findFirst({
+    where: { id: runId, workspaceId: actor.workspaceId },
+    select: { botId: true },
+  });
+  if (!run) return;
+  const bot = await createRepos(deps.prisma).getBot(actor, run.botId);
+  if (!bot.computer) return;
+  await deps.sandbox
+    .stealScreen?.(toComputerRef(bot.computer), computerContext(actor, bot.id, "screen.handoff"))
+    .catch((error) => console.error("screen handoff steal", error));
 }
 
 function mcpServerDto(
@@ -401,6 +440,25 @@ export function createRouter(deps: RouterDeps) {
               "This Mac mode is only available when SANDBOX_PROVIDER=docker on a personal local app.",
           });
         }
+        const modelCredential = input.clearModelCredential
+          ? { deploymentModelCredentialCipher: null }
+          : input.modelApiKey
+            ? {
+                deploymentModelCredentialCipher: (
+                  await deps.secrets.put(
+                    input.modelApiKey,
+                    {
+                      operationId: "deployment-model",
+                      traceId: "deployment-model",
+                      workspaceId: context.actor.workspaceId,
+                      userId: context.actor.userId,
+                      signal: context.signal ?? new AbortController().signal,
+                    },
+                    DEPLOYMENT_MODEL_SECRET_ID,
+                  )
+                ).ciphertext,
+              }
+            : {};
         await deps.prisma.deploymentSettings.upsert({
           where: { id: "default" },
           create: {
@@ -410,6 +468,9 @@ export function createRouter(deps: RouterDeps) {
             signupAllowlist: (input.signupAllowlist ?? []).join(","),
             signupPolicyInitialized: true,
             computerHost: input.computerHost ?? undefined,
+            defaultModelProvider: input.modelProvider,
+            defaultModelId: input.modelId,
+            ...modelCredential,
           },
           update: {
             ...(input.signupsEnabled === undefined ? {} : { signupsEnabled: input.signupsEnabled }),
@@ -418,9 +479,43 @@ export function createRouter(deps: RouterDeps) {
               ? {}
               : { signupPolicyInitialized: true }),
             ...(input.computerHost === undefined ? {} : { computerHost: input.computerHost }),
+            ...(input.modelProvider === undefined
+              ? {}
+              : { defaultModelProvider: input.modelProvider }),
+            ...(input.modelId === undefined ? {} : { defaultModelId: input.modelId }),
+            ...modelCredential,
           },
         });
         return deploymentDto(deps.prisma, deps.env.sandboxProvider);
+      }),
+    },
+    workspaces: {
+      list: authed.workspaces.list.handler(async ({ context }) =>
+        listWorkspacesDto(deps.prisma, context.actor.userId),
+      ),
+      create: authed.workspaces.create.handler(async ({ context, input }) => {
+        const name = input.name.trim();
+        if (!name) {
+          throw new ORPCError("BAD_REQUEST", { message: "Workspace name required" });
+        }
+        const created = await createUserWorkspace(deps.prisma, { id: context.actor.userId }, name);
+        await activateWorkspace(deps.prisma, context.actor.userId, created.workspaceId);
+        const me = await meDto(deps, { ...context.actor, workspaceId: created.workspaceId });
+        return { workspace: { id: created.workspaceId, name: created.name }, me };
+      }),
+      update: authed.workspaces.update.handler(async ({ context, input }) => {
+        await requireOwnedWorkspace(deps.prisma, context.actor.userId, input.workspaceId);
+        const updated = await deps.prisma.organization.update({
+          where: { id: input.workspaceId },
+          data: { name: input.name.trim() },
+          select: { id: true, name: true },
+        });
+        return updated;
+      }),
+      switch: authed.workspaces.switch.handler(async ({ context, input }) => {
+        await requireOwnedWorkspace(deps.prisma, context.actor.userId, input.workspaceId);
+        await activateWorkspace(deps.prisma, context.actor.userId, input.workspaceId);
+        return meDto(deps, { ...context.actor, workspaceId: input.workspaceId });
       }),
     },
     updater: {
@@ -1159,6 +1254,9 @@ export function createRouter(deps: RouterDeps) {
             message: "This prompt is no longer awaiting an answer",
           });
         }
+        if (input.answer === "allow") {
+          await grantScreenHandoff(deps, context.actor, input.runId, input.messageId);
+        }
         await deps.jobs.enqueue(runContinueJob(input.runId)).catch((error) => {
           // The answer and queued run are durable; the reconciler repairs a missed immediate wake.
           console.error("thread answer enqueue", error);
@@ -1198,7 +1296,7 @@ export function createRouter(deps: RouterDeps) {
           });
         } catch (error) {
           if (error instanceof ComputerBusyError) {
-            throw new ORPCError("CONFLICT", { message: "Computer is busy" });
+            return joinComputerBoot(deps, context.actor, input.botId);
           }
           throw error;
         }
@@ -1208,6 +1306,11 @@ export function createRouter(deps: RouterDeps) {
             screenLeaseId: screenLeaseIdForRun(lease, manualRunId),
           });
           scheduleComputerSleep(deps.jobs, bot.computer.id);
+        } catch (error) {
+          if (error instanceof ComputerBusyError) {
+            return joinComputerBoot(deps, context.actor, input.botId);
+          }
+          throw error;
         } finally {
           await releaseComputerExecutionLease(deps.prisma, lease);
         }
@@ -1636,7 +1739,7 @@ export function createRouter(deps: RouterDeps) {
             deps.env.screenProxySecret,
             deps.env.webOrigin,
             undefined,
-            { proxyExternal: bot.computer.kind === "box" },
+            { proxyExternal: bot.computer.kind === "box" || bot.computer.kind === "e2b" },
           ),
         };
       }),
@@ -3367,28 +3470,88 @@ async function loadAutoReviewSettings(deps: RouterDeps, actor: Actor) {
 }
 
 async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
-  const [user, cred, settings] = await Promise.all([
+  const [user, cred, settings, workspaces] = await Promise.all([
     deps.prisma.user.findUniqueOrThrow({ where: { id: actor.userId } }),
     findDefaultModelCredential(deps.prisma, actor),
     deps.prisma.deploymentSettings.findUnique({ where: { id: "default" } }),
+    listWorkspacesDto(deps.prisma, actor.userId),
   ]);
-  const hasDeployment = Boolean(
-    settings?.deploymentModelCredentialCipher || deps.env.deploymentModelKey,
+  const storedKey = decryptDeploymentModelKey(
+    deps.secrets,
+    settings?.deploymentModelCredentialCipher,
   );
+  const deployment = resolveEffectiveDeploymentModel({
+    storedProvider: settings?.defaultModelProvider,
+    storedModel: settings?.defaultModelId,
+    storedKey,
+    envKey: deps.env.deploymentModelKey,
+  });
+  const hasDeployment = Boolean(deployment.key);
+  const currentWorkspace = workspaces.find((workspace) => workspace.id === actor.workspaceId);
   return {
     userId: actor.userId,
     email: user.email,
     name: user.name,
     workspaceId: actor.workspaceId,
+    workspaceName: currentWorkspace?.name ?? "Workspace",
+    workspaces,
     isDeploymentOwner: actor.isDeploymentOwner,
     needsModel: !cred && !hasDeployment,
-    defaultProvider: cred?.provider ?? settings?.defaultModelProvider ?? deps.env.defaultProvider,
-    defaultModel: cred?.defaultModel ?? settings?.defaultModelId ?? deps.env.defaultModel,
+    defaultProvider: cred?.provider ?? deployment.provider,
+    defaultModel: cred?.defaultModel ?? deployment.model,
     computerHost: computerHostFor(settings?.computerHost, deps.env.sandboxProvider),
     canChooseHostComputer: actor.isDeploymentOwner && deps.env.sandboxProvider === "docker",
     sandboxProvider: deps.env.sandboxProvider,
     avatarStyle: user.avatarStyle === "organic" ? "organic" : "robot",
   };
+}
+
+async function listWorkspacesDto(prisma: PrismaClient, userId: string) {
+  const members = await prisma.member.findMany({
+    where: { userId },
+    include: { organization: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  return members.map((member) => ({
+    id: member.organization.id,
+    name: member.organization.name,
+  }));
+}
+
+async function requireOwnedWorkspace(prisma: PrismaClient, userId: string, workspaceId: string) {
+  const member = await prisma.member.findFirst({
+    where: { userId, organizationId: workspaceId },
+    select: { id: true },
+  });
+  if (!member) throw new ORPCError("NOT_FOUND");
+}
+
+async function activateWorkspace(prisma: PrismaClient, userId: string, workspaceId: string) {
+  await prisma.session.updateMany({
+    where: { userId },
+    data: { activeOrganizationId: workspaceId },
+  });
+}
+
+const COMPUTER_BOOT_JOIN_MS = 120_000;
+const COMPUTER_BOOT_POLL_MS = 250;
+
+async function joinComputerBoot(
+  deps: RouterDeps,
+  actor: Actor,
+  botId: string,
+): Promise<ComputerStatus> {
+  const deadline = Date.now() + COMPUTER_BOOT_JOIN_MS;
+  let status = await computerStatus(deps, actor, botId);
+  while (status.state === "booting" && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, COMPUTER_BOOT_POLL_MS));
+    status = await computerStatus(deps, actor, botId);
+  }
+  if (status.state === "running") {
+    const bot = await createRepos(deps.prisma).getBot(actor, botId);
+    if (bot.computer) scheduleComputerSleep(deps.jobs, bot.computer.id);
+  }
+  return status;
 }
 
 async function computerStatus(
@@ -3401,12 +3564,12 @@ async function computerStatus(
   if (await expireStaleComputerControl(deps, bot.computer)) {
     bot = await repos.getBot(actor, botId);
   }
-  const busyBotName = await resolveBusyBotName(deps.prisma, {
+  const busy = await resolveBusyBot(deps.prisma, {
     computerId: bot.computer?.id,
     botId,
     botName: bot.name,
   });
-  return toComputerStatus(botId, bot.computer, busyBotName);
+  return toComputerStatus(botId, bot.computer, busy?.name ?? null, busy?.botId ?? null);
 }
 
 async function runComputerReplace(

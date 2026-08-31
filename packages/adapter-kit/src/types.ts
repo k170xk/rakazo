@@ -338,6 +338,8 @@ export interface AgentRunRequest {
     executionId: string,
     route?: ConnectorRoute,
   ) => Promise<unknown>;
+  /** User messages that arrived while this turn is still running. */
+  pullSteering?: () => Promise<string[]>;
 }
 
 export interface ScriptedTurn {

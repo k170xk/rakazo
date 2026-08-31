@@ -1,12 +1,15 @@
+import { spawnSync } from "node:child_process";
+import { copyFileSync, readdirSync, unlinkSync } from "node:fs";
 import http from "node:http";
 import https from "node:https";
 import net from "node:net";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import tls from "node:tls";
 import { lingui } from "@lingui/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig, loadEnv, type PreviewServer, type ViteDevServer } from "vite";
+import { defineConfig, loadEnv, type Plugin, type PreviewServer, type ViteDevServer } from "vite";
 import { resolveScreenProxySecret } from "../../packages/core/src/secrets-guard.ts";
 import {
   resolveNovncTarget,
@@ -16,6 +19,27 @@ import {
 } from "./src/screen-proxy.js";
 
 const webPort = Number(process.env.WEB_PORT ?? 5173);
+
+function checkEmittedJsModules(): Plugin {
+  return {
+    name: "rakazo-check-js-modules",
+    apply: "build",
+    closeBundle() {
+      const assetsDir = path.resolve(import.meta.dirname, "dist/assets");
+      for (const file of readdirSync(assetsDir)) {
+        if (!file.endsWith(".js")) continue;
+        const tmp = path.join(tmpdir(), `rakazo-check-${file}.mjs`);
+        copyFileSync(path.join(assetsDir, file), tmp);
+        const checked = spawnSync(process.execPath, ["--check", tmp], { encoding: "utf8" });
+        unlinkSync(tmp);
+        if (checked.status === 0) continue;
+        throw new Error(
+          `${file} is not a valid ES module: ${checked.stderr.trim() || checked.stdout.trim()}`,
+        );
+      }
+    },
+  };
+}
 
 function attachNovncProxy(server: ViteDevServer | PreviewServer, secret: string) {
   server.middlewares.use((req, res, next) => {
@@ -117,7 +141,10 @@ function attachNovncProxy(server: ViteDevServer | PreviewServer, secret: string)
 export default defineConfig(({ mode }) => {
   const rootEnv = loadEnv(mode, path.resolve(import.meta.dirname, "../.."), "");
   const api = process.env.API_PROXY_TARGET ?? rootEnv.API_PROXY_TARGET ?? "http://127.0.0.1:3100";
-  const previewHost = process.env.RAKAZO_HOST ?? rootEnv.RAKAZO_HOST ?? "localhost";
+  const previewAllowedHosts = (process.env.RAKAZO_HOST ?? rootEnv.RAKAZO_HOST ?? "localhost")
+    .split(",")
+    .map((host) => host.trim())
+    .filter(Boolean);
   const screenProxySecret = () =>
     resolveScreenProxySecret({
       ...process.env,
@@ -155,7 +182,11 @@ export default defineConfig(({ mode }) => {
         configureServer: (server) => attachNovncProxy(server, screenProxySecret()),
         configurePreviewServer: (server) => attachNovncProxy(server, screenProxySecret()),
       },
+      checkEmittedJsModules(),
     ],
+    build: {
+      minify: "terser",
+    },
     server: {
       host: "127.0.0.1",
       port: webPort,
@@ -168,7 +199,7 @@ export default defineConfig(({ mode }) => {
     preview: {
       host: "0.0.0.0",
       port: Number(process.env.WEB_PORT ?? 5173),
-      allowedHosts: [previewHost],
+      allowedHosts: previewAllowedHosts,
       proxy: {
         "/api": { target: api, changeOrigin: true },
         "/rpc": { target: api, changeOrigin: true },

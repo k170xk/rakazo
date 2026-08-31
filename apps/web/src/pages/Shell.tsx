@@ -88,6 +88,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  type CSSProperties,
   type DragEvent,
   lazy,
   type MutableRefObject,
@@ -108,7 +109,12 @@ import {
   ActiveBotGlyph,
   CollaborationMarker,
 } from "../components/beautiful-ui/CollaborationMarker";
-import { BuiButton, BuiCard, SuccessPop } from "../components/beautiful-ui/primitives";
+import {
+  BuiButton,
+  BuiCard,
+  LoadingState,
+  SuccessPop,
+} from "../components/beautiful-ui/primitives";
 import { ComputerMaintenanceActions } from "../components/ComputerMaintenanceActions";
 import {
   ComputersUnavailableHint,
@@ -118,7 +124,16 @@ import { SkillDraftCard } from "../components/teach/SkillDraftCard";
 import { TeachCaptureOverlay } from "../components/teach/TeachCaptureOverlay";
 import { TeachComputerSection } from "../components/teach/TeachComputerSection";
 import { TeachRecordingChrome, TeachStopButton } from "../components/teach/TeachRecordingChrome";
+import { WorkspaceSwitcher } from "../components/WorkspaceSwitcher";
 import { readActivityMode, writeActivityMode } from "../lib/activity-mode";
+import {
+  clampSidePanelWidth,
+  DEFAULT_SIDE_PANEL_WIDTH,
+  readSidePanelWidth,
+  SIDE_PANEL_WIDTH_STEP,
+  sidePanelWidthFromClientX,
+  writeSidePanelWidth,
+} from "../lib/side-panel-width";
 import { type ArtifactTarget, decodeArtifactBase64 } from "../lib/artifact-open";
 import { authClient } from "../lib/auth";
 import { takeInitialBootstrap } from "../lib/bootstrap";
@@ -128,6 +143,20 @@ import {
   shouldNotifyBrowser,
 } from "../lib/browser-notifications";
 import { chartViewport } from "../lib/chart-viewport";
+import {
+  botHoldsDesktop,
+  computerModeKind,
+  desktopAccessNames,
+  isWorkingRunStatus,
+  rosterRunTone,
+} from "../lib/computer-mode";
+import {
+  desktopScreenSize,
+  embeddableScreenUrl,
+  pinnedScreenLayout,
+  sameComputerScreen,
+  usableScreenRect,
+} from "../lib/computer-screen";
 import { dictation } from "../lib/dictation";
 import { localTimezone } from "../lib/local-timezone";
 import { connectMcpOauth } from "../lib/mcp-connect";
@@ -140,9 +169,15 @@ import {
   clearActiveThreadRuns,
   computerPanelAutoBoot,
   computerPanelAutoUsesBoot,
+  computerPrimaryAction,
+  computerReleaseClosesViewer,
+  computerShowsReload,
   computerTakeoverBlocked,
+  computerWaking,
+  ensureComputerStep,
   isComputerStatusEvent,
   isThreadSnapshotEvent,
+  pollComputerUntilSettled,
   prependThreadMessagePage,
   reconcileRefreshedThread,
   reduceComputerStatus,
@@ -297,6 +332,10 @@ export function ShellPage() {
   const [attachmentNotice, setAttachmentNotice] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [panel, setPanel] = useState<Panel>(null);
+  const [sidePanelWidth, setSidePanelWidth] = useState(readSidePanelWidth);
+  const [resizingSidePanel, setResizingSidePanel] = useState(false);
+  const sidePanelWidthRef = useRef(sidePanelWidth);
+  sidePanelWidthRef.current = sidePanelWidth;
   const [peerMessagesOpen, setPeerMessagesOpen] = useState(false);
   const [peerMessagesFocusId, setPeerMessagesFocusId] = useState<string | null>(null);
   const [routines, setRoutines] = useState<Routine[]>([]);
@@ -407,7 +446,8 @@ export function ShellPage() {
   const [newSectionTarget, setNewSectionTarget] = useState<
     { kind: "bot"; chat: Bot } | { kind: "group"; chat: Group } | null
   >(null);
-  const [booting, setBooting] = useState(false);
+  const [desktopBusy, setDesktopBusy] = useState(false);
+  const [wakingStartedAt, setWakingStartedAt] = useState<number | undefined>();
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [initialBotsLoaded, setInitialBotsLoaded] = useState(false);
   const [bootstrapMe, setBootstrapMe] = useState<Me | null>();
@@ -419,7 +459,19 @@ export function ShellPage() {
   const [runningRoutine, setRunningRoutine] = useState(false);
   const [routineError, setRoutineError] = useState<string | null>(null);
   const [screenUrl, setScreenUrl] = useState<string | null>(null);
+  const screenUrlRef = useRef<string | null>(null);
+  screenUrlRef.current = screenUrl;
   const [computerOpen, setComputerOpen] = useState(false);
+  const previewScreenRef = useRef<HTMLDivElement | null>(null);
+  const overlayScreenRef = useRef<HTMLDivElement | null>(null);
+  const [screenFrame, setScreenFrame] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [desktopSize, setDesktopSize] = useState<{ width: number; height: number } | null>(null);
+  const [screenEpoch, setScreenEpoch] = useState(0);
   const [computerError, setComputerError] = useState<string | null>(null);
   useEffect(() => {
     if (!session.data?.user) return;
@@ -434,6 +486,44 @@ export function ShellPage() {
       cancelled = true;
     };
   }, [session.data?.user]);
+  useEffect(() => {
+    function onResize() {
+      setSidePanelWidth((width) => clampSidePanelWidth(width, window.innerWidth));
+    }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  useEffect(() => {
+    if (!resizingSidePanel) return;
+    const rtl = document.documentElement.dir === "rtl";
+    function onMove(event: PointerEvent) {
+      event.preventDefault();
+      setSidePanelWidth(
+        clampSidePanelWidth(
+          sidePanelWidthFromClientX(event.clientX, window.innerWidth, rtl),
+          window.innerWidth,
+        ),
+      );
+    }
+    function onUp() {
+      setResizingSidePanel(false);
+      writeSidePanelWidth(sidePanelWidthRef.current);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    const previousCursor = document.body.style.cursor;
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      document.body.style.cursor = previousCursor;
+      document.body.style.userSelect = previousUserSelect;
+    };
+  }, [resizingSidePanel]);
   const [usage, setUsage] = useState<{
     inputTokens: number;
     outputTokens: number;
@@ -485,6 +575,7 @@ export function ShellPage() {
   const activeGroupId = useRef<string | undefined>(groupId);
   activeGroupId.current = groupId;
   const screenRequest = useRef(0);
+  const screenInFlight = useRef<Promise<string | null> | null>(null);
   const contextBot =
     botMenu?.kind === "bot" ? bots.find((bot) => bot.id === botMenu.id) : undefined;
   const contextGroup =
@@ -740,7 +831,9 @@ export function ShellPage() {
     void Promise.all([
       rpc.routines.list({ botId: id }).catch(() => null),
       rpc.skills.list({ botId: id }).catch(() => null),
-      refreshComputerScreen(id).catch(() => null),
+      screenUrlRef.current || computerCacheRef.current.get(id)?.screenUrl
+        ? Promise.resolve(null)
+        : refreshComputerScreen(id).catch(() => null),
     ]).then(([routines, skills]) => {
       if (
         activeBotId.current !== id ||
@@ -761,20 +854,46 @@ export function ShellPage() {
     return snap;
   }
 
-  async function refreshComputerScreen(id: string) {
-    if (!computerVisible.current) return null;
+  async function refreshComputerScreen(id: string, force = false) {
+    if (!force && !computerVisible.current) return null;
+    if (screenInFlight.current) return screenInFlight.current;
     const request = ++screenRequest.current;
-    const screen = await rpc.computer.screenUrl({ botId: id }).catch(() => ({ url: null }));
-    if (
-      request !== screenRequest.current ||
-      activeBotId.current !== id ||
-      !computerVisible.current
-    ) {
-      return null;
-    }
-    setScreenUrl(screen.url);
-    cacheComputerFor(id, { screenUrl: screen.url });
-    return screen.url;
+    const pending = (async () => {
+      try {
+        const screen = await rpc.computer.screenUrl({ botId: id });
+        if (request !== screenRequest.current || activeBotId.current !== id) return null;
+        const url = embeddableScreenUrl(screen.url);
+        const current = screenUrlRef.current;
+        if (url && sameComputerScreen(current, url)) {
+          setComputerError(null);
+          return current;
+        }
+        setScreenUrl(url);
+        cacheComputerFor(id, { screenUrl: url });
+        if (url) setComputerError(null);
+        else if (force && !current) setComputerError(t`Desktop did not load`);
+        return url ?? current;
+      } catch (error) {
+        if (request !== screenRequest.current || activeBotId.current !== id) return null;
+        const current = screenUrlRef.current;
+        if (current) return current;
+        setScreenUrl(null);
+        cacheComputerFor(id, { screenUrl: null });
+        setComputerError(error instanceof Error ? error.message : t`Desktop did not load`);
+        return null;
+      } finally {
+        if (screenInFlight.current === pending) screenInFlight.current = null;
+      }
+    })();
+    screenInFlight.current = pending;
+    return pending;
+  }
+
+  async function reloadComputerScreen() {
+    if (!active) return;
+    computerVisible.current = true;
+    setScreenEpoch((value) => value + 1);
+    await refreshComputerScreen(active.id, true);
   }
 
   async function loadOlderMessages() {
@@ -1129,7 +1248,12 @@ export function ShellPage() {
             ) {
               // waiting_input: reconcile ask cards if a stale post-send refresh raced SSE.
               void refreshThread(active.id).catch(() => undefined);
-            } else if (isComputerStatusEvent(event)) {
+            } else if (
+              event.type === "computer.takeover.granted" ||
+              event.type === "computer.takeover.released"
+            ) {
+              void refreshComputerScreen(active.id, true).catch(() => undefined);
+            } else if (isComputerStatusEvent(event) && !screenUrlRef.current) {
               void refreshComputerScreen(active.id).catch(() => undefined);
             }
           }
@@ -1518,9 +1642,7 @@ export function ShellPage() {
       : null;
   const currentRuns = activeThreadRuns(activeSnapshot);
   const answerableAskMessageId = latestAnswerableAskMessageId(activeSnapshot);
-  const workingRuns = currentRuns.filter((run) =>
-    ["running", "queued", "leased"].includes(run.status),
-  );
+  const workingRuns = currentRuns.filter((run) => isWorkingRunStatus(run.status));
   const transcriptRunning = workingRuns.length > 0;
   const composerRunning = currentRuns.some((run) => isActive(run.status));
   const runError = threadRunError(activeSnapshot, dismissedRunErrorIds);
@@ -1541,7 +1663,7 @@ export function ShellPage() {
     const bot = resolveTranscriptBot(run.botId);
     return {
       botId: run.botId,
-      color: bot?.color ?? "#85858A",
+      color: bot?.color ?? "#64748B",
       name: bot?.name,
       status: run.status,
     };
@@ -2019,28 +2141,46 @@ export function ShellPage() {
     await refreshBots().catch(() => undefined);
   }
 
-  async function bootComputer({
-    takeControl,
-    overlay,
-    force = false,
-  }: {
-    takeControl: boolean;
-    overlay: boolean;
-    force?: boolean;
-  }) {
+  async function ensureComputer({ takeControl }: { takeControl: boolean }) {
     if (!active) return;
-    const needsBoot = force || computer?.state !== "running" || !screenUrl;
-    if (overlay && needsBoot) setBooting(true);
+    const botId = active.id;
+    setDesktopBusy(true);
     try {
-      if (needsBoot) await rpc.computer.boot({ botId: active.id });
-      if (takeControl) await rpc.computer.takeover({ botId: active.id });
-      await refreshThread(active.id);
-      setComputerError(null);
+      const snap = await refreshThread(botId).catch(() => null);
+      if (activeBotId.current !== botId) return;
+      let state = snap?.computer?.state ?? computerRef.current?.state;
+      let url = state === "running" ? await refreshComputerScreen(botId, true) : screenUrl;
+      if (activeBotId.current !== botId) return;
+      const step = ensureComputerStep(state, url);
+      if (step === "boot") {
+        await rpc.computer.boot({ botId });
+        const after = await refreshThread(botId).catch(() => null);
+        state = after?.computer?.state ?? state;
+      } else if (step === "wait") {
+        const settled = await pollComputerUntilSettled(() => rpc.computer.status({ botId }), {
+          isCancelled: () => activeBotId.current !== botId,
+        });
+        await refreshThread(botId).catch(() => undefined);
+        state = settled.state;
+      } else if (step === "recover-screen") {
+        url = await refreshComputerScreen(botId, true);
+      }
+      if (activeBotId.current !== botId) return;
+      const latest = computerRef.current;
+      const blocked = computerTakeoverBlocked(latest, snapshot?.run?.status);
+      if (takeControl && (state === "running" || latest?.state === "running") && !blocked) {
+        await rpc.computer.takeover({ botId });
+        await refreshThread(botId);
+        setScreenEpoch((value) => value + 1);
+        await refreshComputerScreen(botId, true);
+      } else if (state === "running" || latest?.state === "running") {
+        await refreshComputerScreen(botId, true);
+      }
     } catch (error) {
-      setComputerError(error instanceof Error ? error.message : t`Could not take control`);
+      setComputerError(error instanceof Error ? error.message : t`Could not wake the desktop`);
       throw error;
     } finally {
-      setBooting(false);
+      setDesktopBusy(false);
     }
   }
 
@@ -2058,21 +2198,21 @@ export function ShellPage() {
       const snap = await refreshThread(botId).catch(() => null);
       if (cancelled || activeBotId.current !== botId) return;
       const state = snap?.computer?.state;
-      const screen = state === "running" ? await refreshComputerScreen(botId) : null;
+      const screen = state === "running" ? await refreshComputerScreen(botId, true) : null;
       if (cancelled || activeBotId.current !== botId) return;
       const action = computerPanelAutoBoot(state, screen);
       if (action === "wait") {
         if (state === "running") autoBooted.current = botId;
+        if (state === "booting" && autoBooted.current !== botId) {
+          autoBooted.current = botId;
+          void ensureComputer({ takeControl: false }).catch(() => undefined);
+        }
         return;
       }
       if (action === "boot" && autoBooted.current === botId) return;
       autoBooted.current = botId;
       if (!computerPanelAutoUsesBoot(action)) return;
-      await bootComputer({
-        takeControl: false,
-        overlay: action === "boot",
-        force: true,
-      }).catch(() => undefined);
+      await ensureComputer({ takeControl: false }).catch(() => undefined);
     })();
     return () => {
       cancelled = true;
@@ -2082,11 +2222,24 @@ export function ShellPage() {
   useEffect(() => {
     setComputerOpen(false);
     setComputerError(null);
+    setScreenFrame(null);
   }, [active?.id]);
 
   useEffect(() => {
     if (!computer?.busyBotName) setComputerError(null);
   }, [computer?.busyBotName]);
+
+  useEffect(() => {
+    if (
+      desktopBusy ||
+      computerWaking(computer?.state) ||
+      (computer?.state === "running" && !screenUrl)
+    ) {
+      setWakingStartedAt((current) => current ?? Date.now());
+      return;
+    }
+    setWakingStartedAt(undefined);
+  }, [desktopBusy, computer?.state, screenUrl]);
 
   useEffect(() => {
     if (panel !== "routine") {
@@ -2126,6 +2279,21 @@ export function ShellPage() {
   }, [computerOpen]);
 
   useEffect(() => {
+    if (!computerOpen || !active) return;
+    const botId = active.id;
+    const reconnect = () => {
+      if (document.visibilityState !== "visible") return;
+      computerVisible.current = true;
+      setScreenEpoch((value) => value + 1);
+      void refreshComputerScreen(botId, true).catch(() => undefined);
+    };
+    document.addEventListener("visibilitychange", reconnect);
+    return () => {
+      document.removeEventListener("visibilitychange", reconnect);
+    };
+  }, [computerOpen, active?.id]);
+
+  useEffect(() => {
     if ((panel !== "computer" && !computerOpen) || !active || computer?.state !== "running") return;
     const ping = () => void rpc.computer.heartbeat({ botId: active.id }).catch(() => undefined);
     ping();
@@ -2135,17 +2303,27 @@ export function ShellPage() {
 
   async function openComputer() {
     if (!active) return;
-    const needsTakeover = !userHoldsComputerControl(computer, active.id);
-    const blocked = computerTakeoverBlocked(computer, snapshot?.run?.status);
+    computerVisible.current = true;
+    setComputerOpen(true);
+    // Watch-only: a live stream is already painted. Do not wake, refetch, or
+    // flash the desktop loader — that remounts noVNC and blacks the screen.
+    if (screenUrlRef.current) return;
     try {
-      await bootComputer({
-        takeControl: needsTakeover && !blocked,
-        overlay: (needsTakeover && !blocked) || computer?.state !== "running",
-        force: computer?.state !== "running",
-      });
-      setComputerOpen(true);
+      await ensureComputer({ takeControl: false });
     } catch {
-      // computerError already set in bootComputer
+      // computerError already set in ensureComputer / refreshComputerScreen
+    }
+  }
+
+  async function takeComputerControl() {
+    if (!active) return;
+    const blocked = computerTakeoverBlocked(computer, snapshot?.run?.status);
+    computerVisible.current = true;
+    setComputerOpen(true);
+    try {
+      await ensureComputer({ takeControl: !blocked });
+    } catch {
+      // computerError already set in ensureComputer / refreshComputerScreen
     }
   }
 
@@ -2161,7 +2339,7 @@ export function ShellPage() {
       });
     }
     await rpc.computer.release({ botId: active.id, reason });
-    setComputerOpen(false);
+    if (computerReleaseClosesViewer(reason)) setComputerOpen(false);
     setComputerError(null);
     await refreshThread(active.id);
   }
@@ -2176,8 +2354,82 @@ export function ShellPage() {
   }
 
   const embeddedScreenUrl = embeddableScreenUrl(screenUrl);
+  useLayoutEffect(() => {
+    const measureDesktop = () => {
+      const next = desktopScreenSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+      if (next) setDesktopSize(next);
+    };
+    measureDesktop();
+    window.addEventListener("resize", measureDesktop);
+    return () => window.removeEventListener("resize", measureDesktop);
+  }, []);
+  useLayoutEffect(() => {
+    const host = computerOpen ? overlayScreenRef.current : previewScreenRef.current;
+    if (!host) return;
+    const update = () => {
+      const box = host.getBoundingClientRect();
+      const next = usableScreenRect({
+        top: box.top,
+        left: box.left,
+        width: box.width,
+        height: box.height,
+      });
+      if (!next) return;
+      setScreenFrame(next);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(host);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [computerOpen, embeddedScreenUrl, active?.id, panel]);
+  const recoveringScreen =
+    (panel === "computer" || computerOpen) &&
+    computer?.state === "running" &&
+    !embeddedScreenUrl &&
+    computer?.kind !== "desktop";
   const hasControl = userHoldsComputerControl(computer, active?.id);
   const takeoverBlocked = computerTakeoverBlocked(computer, snapshot?.run?.status);
+  const liveScreen = Boolean(embeddedScreenUrl && computer?.kind !== "desktop");
+  const waking =
+    !liveScreen && (desktopBusy || computerWaking(computer?.state) || recoveringScreen);
+  const chromeState = waking ? "booting" : computer?.state;
+  const primaryAction = computerPrimaryAction({
+    state: chromeState,
+    hasControl,
+    takeoverBlocked,
+  });
+  const showReload = computerShowsReload(chromeState);
+
+  useEffect(() => {
+    if (!recoveringScreen || !active) return;
+    const botId = active.id;
+    computerVisible.current = true;
+    let cancelled = false;
+    const pull = () => {
+      if (cancelled || activeBotId.current !== botId) return;
+      void refreshComputerScreen(botId, true).catch(() => undefined);
+    };
+    pull();
+    const timer = window.setInterval(pull, 4_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [recoveringScreen, active?.id]);
+
+  const pinnedScreen = pinnedScreenLayout(desktopSize, screenFrame, computerOpen ? 25 : 45);
+  const showPinnedScreen = Boolean(
+    active && pinnedScreen && computer?.kind !== "desktop" && embeddedScreenUrl,
+  );
 
   const userName = session.data?.user.name ?? t`You`;
   const initials = userName
@@ -2191,7 +2443,7 @@ export function ShellPage() {
     <div
       data-testid="shell-root"
       data-ready={shellReady}
-      className="relative flex h-full min-w-0 overflow-hidden bg-[#050506] text-[#DFDFE2]"
+      className="relative flex h-full min-w-0 overflow-hidden bg-[#f8fafc] text-[#1E293B]"
     >
       {bootstrapMe !== undefined ? (
         <HostComputerPrompt initialMe={bootstrapMe ?? undefined} />
@@ -2205,7 +2457,7 @@ export function ShellPage() {
         />
       ) : null}
       <aside
-        className={`absolute inset-y-0 start-0 z-40 flex w-[calc(100%-48px)] max-w-[316px] shrink-0 flex-col border-e border-[#171719] bg-[#0B0B0C] transition-transform md:static md:z-auto md:w-[316px] md:translate-x-0 ${
+        className={`absolute inset-y-0 start-0 z-40 flex w-[calc(100%-48px)] max-w-[316px] shrink-0 flex-col border-e border-[#e2e8f0] bg-[#FFFFFF] transition-transform md:static md:z-auto md:w-[316px] md:translate-x-0 ${
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
         }`}
       >
@@ -2220,7 +2472,7 @@ export function ShellPage() {
               data-activity-mode={activityMode ? "on" : "off"}
               onClick={toggleActivityMode}
               className={`app-no-drag flex h-7 w-7 items-center justify-center rounded-full ${
-                activityMode ? "bg-[#4C8DFF] text-white" : "text-[#7A7A80] hover:text-[#C9C9CE]"
+                activityMode ? "bg-[#76BF43] text-white" : "text-[#64748B] hover:text-[#334155]"
               }`}
             >
               <Bell
@@ -2233,16 +2485,16 @@ export function ShellPage() {
             <button
               type="button"
               onClick={() => setCreateMenuOpen((open) => !open)}
-              className="app-no-drag text-[21px] text-[#7A7A80] hover:text-[#C9C9CE]"
+              className="app-no-drag text-[21px] text-[#64748B] hover:text-[#334155]"
               title={t`Create`}
             >
               +
             </button>
             {createMenuOpen ? (
-              <div className="app-no-drag absolute end-0 top-full z-20 mt-2 min-w-[160px] rounded-xl border border-[#26262A] bg-[#141416] py-1 shadow-lg">
+              <div className="app-no-drag absolute end-0 top-full z-20 mt-2 min-w-[160px] rounded-xl border border-[#E2E8F0] bg-[#ffffff] py-1 shadow-lg">
                 <button
                   type="button"
-                  className="block w-full px-3.5 py-2 text-start text-[14px] text-[#ECECEE] hover:bg-[#1A1A1D]"
+                  className="block w-full px-3.5 py-2 text-start text-[14px] text-[#020817] hover:bg-[#F1F5F9]"
                   onClick={() => {
                     setCreateMenuOpen(false);
                     setPanel("create");
@@ -2252,7 +2504,7 @@ export function ShellPage() {
                 </button>
                 <button
                   type="button"
-                  className="block w-full px-3.5 py-2 text-start text-[14px] text-[#ECECEE] hover:bg-[#1A1A1D]"
+                  className="block w-full px-3.5 py-2 text-start text-[14px] text-[#020817] hover:bg-[#F1F5F9]"
                   onClick={() => {
                     setCreateMenuOpen(false);
                     setPanel("create-group");
@@ -2264,7 +2516,15 @@ export function ShellPage() {
             ) : null}
           </div>
         </div>
-        <div className="mx-3.5 mb-3 flex items-center gap-2.5 rounded-xl border border-[#202023] bg-[#141416] px-3 py-2 text-[14px] text-[#6C6C70]">
+        {bootstrapMe && (bootstrapMe.workspaces?.length ?? 0) > 0 ? (
+          <WorkspaceSwitcher
+            me={bootstrapMe}
+            onSwitched={() => {
+              window.location.assign("/app");
+            }}
+          />
+        ) : null}
+        <div className="mx-3.5 mb-3 flex items-center gap-2.5 rounded-xl border border-[#e2e8f0] bg-[#ffffff] px-3 py-2 text-[14px] text-[#64748B]">
           <span>⌕</span>
           <input
             value={query}
@@ -2302,7 +2562,7 @@ export function ShellPage() {
                       <div className="pt-2">
                         <button
                           type="button"
-                          className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium text-[#6C6C70] hover:bg-[#1A1A1D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#8B5CF6]"
+                          className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium text-[#64748B] hover:bg-[#F1F5F9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#8B5CF6]"
                           onClick={() => toggleSidebarSection(group.key)}
                           aria-expanded={!collapsed}
                           aria-label={
@@ -2392,7 +2652,7 @@ export function ShellPage() {
                             background:
                               (item.kind === "bot" && !inGroup && active?.id === item.chat.id) ||
                               (item.kind === "group" && inGroup && activeGroup?.id === item.chat.id)
-                                ? "#161618"
+                                ? "#F1F5F9"
                                 : "transparent",
                           }}
                         >
@@ -2417,7 +2677,7 @@ export function ShellPage() {
                             <div className="flex items-baseline justify-between gap-2">
                               <span
                                 dir="auto"
-                                className={`truncate text-[15px] text-[#ECECEE] ${
+                                className={`truncate text-[15px] text-[#020817] ${
                                   item.chat.unread ? "font-semibold" : "font-medium"
                                 }`}
                               >
@@ -2428,9 +2688,16 @@ export function ShellPage() {
                                   </span>
                                 ) : null}
                               </span>
-                              <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] text-[#6C6C70]">
+                              <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] text-[#64748B]">
                                 {item.kind === "bot" && item.chat.status !== "idle"
-                                  ? item.chat.status
+                                  ? botHoldsDesktop({
+                                      botId: item.chat.id,
+                                      botName: item.chat.name,
+                                      busyBotId: computer?.busyBotId,
+                                      busyBotName: computer?.busyBotName,
+                                    })
+                                    ? "Using desktop"
+                                    : rosterStatusLabel(item.chat.status)
                                   : ""}
                                 {item.chat.unread ? (
                                   <span
@@ -2446,30 +2713,58 @@ export function ShellPage() {
                                   dir="auto"
                                   className={`mt-0.5 truncate text-[13.5px] ${
                                     item.chat.unread
-                                      ? "font-medium text-[#C9C9CE]"
-                                      : "text-[#85858A]"
+                                      ? "font-medium text-[#334155]"
+                                      : "text-[#64748B]"
                                   }`}
                                 >
                                   {item.chat.title}
                                 </div>
+                                <div
+                                  data-testid="roster-computer-mode"
+                                  className="truncate text-[12px] text-[#94A3B8]"
+                                >
+                                  {computerModeKind(item.chat.computerMode) === "own" ? (
+                                    <Trans>Own desktop</Trans>
+                                  ) : (
+                                    <Trans>Shared desktop</Trans>
+                                  )}
+                                </div>
                                 {item.chat.preview ? (
-                                  <div dir="auto" className="truncate text-[12.5px] text-[#6C6C70]">
+                                  <div dir="auto" className="truncate text-[12.5px] text-[#64748B]">
                                     {item.chat.preview}
                                   </div>
                                 ) : null}
                               </>
                             ) : (
-                              <div
-                                dir="auto"
-                                className={`mt-0.5 truncate text-[13.5px] ${
-                                  item.chat.unread ? "font-medium text-[#C9C9CE]" : "text-[#85858A]"
-                                }`}
-                              >
-                                {item.kind === "bot"
-                                  ? item.chat.preview
-                                  : item.chat.preview ||
-                                    item.chat.members.map((member) => member.name).join(", ")}
-                              </div>
+                              <>
+                                {item.kind === "bot" ? (
+                                  <div
+                                    data-testid="roster-computer-mode"
+                                    className="mt-0.5 truncate text-[12px] text-[#94A3B8]"
+                                  >
+                                    {computerModeKind(item.chat.computerMode) === "own" ? (
+                                      <Trans>Own desktop</Trans>
+                                    ) : (
+                                      <Trans>Shared desktop</Trans>
+                                    )}
+                                  </div>
+                                ) : null}
+                                <div
+                                  dir="auto"
+                                  className={`truncate text-[13.5px] ${
+                                    item.kind === "bot" ? "" : "mt-0.5 "
+                                  }${
+                                    item.chat.unread
+                                      ? "font-medium text-[#334155]"
+                                      : "text-[#64748B]"
+                                  }`}
+                                >
+                                  {item.kind === "bot"
+                                    ? item.chat.preview
+                                    : item.chat.preview ||
+                                      item.chat.members.map((member) => member.name).join(", ")}
+                                </div>
+                              </>
                             )}
                           </div>
                         </button>
@@ -2480,12 +2775,12 @@ export function ShellPage() {
             </>
           )}
           {archivedBots.length + archivedGroups.length > 0 && !showWorkspaceSearch ? (
-            <div className="mt-2 border-t border-[#202023] pt-2">
+            <div className="mt-2 border-t border-[#e2e8f0] pt-2">
               <button
                 type="button"
                 aria-expanded={archivedOpen}
                 onClick={() => setArchivedOpen((open) => !open)}
-                className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13.5px] text-[#85858A] hover:bg-[#131315]"
+                className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13.5px] text-[#64748B] hover:bg-[#f1f5f9]"
               >
                 <span>
                   <Trans>Archived</Trans>
@@ -2503,7 +2798,7 @@ export function ShellPage() {
                         status={bot.status}
                       />
                       <span
-                        className="min-w-0 flex-1 truncate text-[14px] text-[#A8A8AD]"
+                        className="min-w-0 flex-1 truncate text-[14px] text-[#94A3B8]"
                         dir="auto"
                       >
                         {bot.name}
@@ -2513,7 +2808,7 @@ export function ShellPage() {
                         onClick={() =>
                           void rpc.bots.restore({ botId: bot.id }).then(() => refreshBots(true))
                         }
-                        className="text-[12.5px] text-[#C9C9CE] hover:text-white"
+                        className="text-[12.5px] text-[#334155] hover:text-[#020817]"
                       >
                         <Trans>Restore</Trans>
                       </button>
@@ -2531,7 +2826,7 @@ export function ShellPage() {
                     <div key={group.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2">
                       <GroupAvatar members={group.members} size={28} />
                       <span
-                        className="min-w-0 flex-1 truncate text-[14px] text-[#A8A8AD]"
+                        className="min-w-0 flex-1 truncate text-[14px] text-[#94A3B8]"
                         dir="auto"
                       >
                         {group.name}
@@ -2543,7 +2838,7 @@ export function ShellPage() {
                             .restore({ groupId: group.id })
                             .then(() => refreshBots(true))
                         }
-                        className="text-[12.5px] text-[#C9C9CE] hover:text-white"
+                        className="text-[12.5px] text-[#334155] hover:text-[#020817]"
                       >
                         <Trans>Restore</Trans>
                       </button>
@@ -2565,18 +2860,18 @@ export function ShellPage() {
         <button
           type="button"
           onClick={() => setPluginsOpen(true)}
-          className="mx-3 mb-1 flex items-center gap-3 rounded-[11px] px-2.5 py-2 hover:bg-[#131315]"
+          className="mx-3 mb-1 flex items-center gap-3 rounded-[11px] px-2.5 py-2 hover:bg-[#f1f5f9]"
         >
-          <span className="grid h-[30px] w-[30px] place-items-center rounded-full bg-[#17171A] text-[#9A9AA0]">
+          <span className="grid h-[30px] w-[30px] place-items-center rounded-full bg-white text-[#94A3B8]">
             <Puzzle size={15} strokeWidth={1.7} />
           </span>
-          <span className="text-[14.5px] text-[#C9C9CE]">
+          <span className="text-[14.5px] text-[#334155]">
             <Trans>Integrations</Trans>
           </span>
         </button>
         <div className="relative">
           {menuOpen ? (
-            <div className="absolute bottom-14 inset-x-3 rounded-2xl border border-[#2A2A2F] bg-[#1A1A1D] p-2 shadow-[0_22px_50px_rgba(0,0,0,.55)]">
+            <div className="absolute bottom-14 inset-x-3 rounded-2xl border border-[#E2E8F0] bg-[#F1F5F9] p-2 shadow-[0_22px_50px_rgba(0,0,0,.55)]">
               <button
                 type="button"
                 aria-label={t`Settings`}
@@ -2585,10 +2880,10 @@ export function ShellPage() {
                   setAccountSettingsFocusUsage(false);
                   setAccountSettingsOpen(true);
                 }}
-                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#232327]"
+                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#e2e8f0]"
               >
-                <span className="text-[#9A9AA0]">⚙</span>
-                <span className="flex-1 text-start text-[14.5px] text-[#ECECEE]">
+                <span className="text-[#94A3B8]">⚙</span>
+                <span className="flex-1 text-start text-[14.5px] text-[#020817]">
                   <Trans>Settings</Trans>
                 </span>
               </button>
@@ -2598,10 +2893,10 @@ export function ShellPage() {
                   setMenuOpen(false);
                   setModelsOpen(true);
                 }}
-                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#232327]"
+                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#e2e8f0]"
               >
-                <Cpu size={16} strokeWidth={1.7} className="text-[#9A9AA0]" />
-                <span className="flex-1 text-start text-[14.5px] text-[#ECECEE]">
+                <Cpu size={16} strokeWidth={1.7} className="text-[#94A3B8]" />
+                <span className="flex-1 text-start text-[14.5px] text-[#020817]">
                   <Trans>Models</Trans>
                 </span>
               </button>
@@ -2611,10 +2906,10 @@ export function ShellPage() {
                   setMenuOpen(false);
                   setMemorySettingsOpen(true);
                 }}
-                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#232327]"
+                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#e2e8f0]"
               >
-                <span className="text-[#9A9AA0]">◇</span>
-                <span className="flex-1 text-start text-[14.5px] text-[#ECECEE]">
+                <span className="text-[#94A3B8]">◇</span>
+                <span className="flex-1 text-start text-[14.5px] text-[#020817]">
                   <Trans>Memory</Trans>
                 </span>
               </button>
@@ -2624,27 +2919,27 @@ export function ShellPage() {
                   setMenuOpen(false);
                   setVoiceOpen(true);
                 }}
-                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#232327]"
+                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#e2e8f0]"
               >
-                <Volume2 size={16} strokeWidth={1.7} className="text-[#9A9AA0]" />
-                <span className="flex-1 text-start text-[14.5px] text-[#ECECEE]">
+                <Volume2 size={16} strokeWidth={1.7} className="text-[#94A3B8]" />
+                <span className="flex-1 text-start text-[14.5px] text-[#020817]">
                   <Trans>Voice</Trans>
                 </span>
               </button>
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#232327]"
+                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#e2e8f0]"
                 onClick={async () => {
                   setUsage(await rpc.usage.summary());
                 }}
               >
-                <Gauge size={16} strokeWidth={1.7} className="text-[#9A9AA0]" />
-                <span className="flex-1 text-start text-[14.5px] text-[#ECECEE]">
+                <Gauge size={16} strokeWidth={1.7} className="text-[#94A3B8]" />
+                <span className="flex-1 text-start text-[14.5px] text-[#020817]">
                   <Trans>Usage</Trans>
                 </span>
               </button>
               {usage ? (
-                <p className="px-3 pb-2 text-[12.5px] text-[#85858A]">
+                <p className="px-3 pb-2 text-[12.5px] text-[#64748B]">
                   <Trans>
                     {usage.runs} runs · {usage.inputTokens + usage.outputTokens} tokens
                   </Trans>
@@ -2653,10 +2948,10 @@ export function ShellPage() {
               <button
                 type="button"
                 onClick={() => void authClient.signOut().then(() => navigate("/"))}
-                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#232327]"
+                className="flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 hover:bg-[#e2e8f0]"
               >
-                <LogOut size={16} strokeWidth={1.7} className="text-[#9A9AA0]" />
-                <span className="text-[14.5px] text-[#ECECEE]">
+                <LogOut size={16} strokeWidth={1.7} className="text-[#94A3B8]" />
+                <span className="text-[14.5px] text-[#020817]">
                   <Trans>Log out</Trans>
                 </span>
               </button>
@@ -2668,22 +2963,22 @@ export function ShellPage() {
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center gap-[11px] px-[18px] py-3.5"
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#232326] text-[12px] text-[#A8A8AD]">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#e2e8f0] text-[12px] text-[#94A3B8]">
               {initials}
             </span>
-            <span className="text-[14.5px] text-[#C9C9CE]">{userName}</span>
+            <span className="text-[14.5px] text-[#334155]">{userName}</span>
           </button>
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col bg-[#0D0D0E]">
-        <div className="app-drag flex items-center justify-between border-b border-[#141416] px-3 py-[17px] md:px-[22px]">
+      <main className="flex min-w-0 flex-1 flex-col bg-[#F8FAFC]">
+        <div className="app-drag flex items-center justify-between border-b border-[#E2E8F0] px-3 py-[17px] md:px-[22px]">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
               aria-label={t`Open navigation`}
               onClick={() => setMobileSidebarOpen(true)}
-              className="app-no-drag grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#A8A8AD] hover:bg-[#1B1B1E] md:hidden"
+              className="app-no-drag grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[#94A3B8] hover:bg-[#F1F5F9] md:hidden"
             >
               <Menu size={19} strokeWidth={1.7} />
             </button>
@@ -2707,7 +3002,7 @@ export function ShellPage() {
                 />
               ) : null}
               <span className="min-w-0">
-                <span className="block truncate text-[16px] font-medium text-[#ECECEE]" dir="auto">
+                <span className="block truncate text-[16px] font-medium text-[#020817]" dir="auto">
                   {inGroup
                     ? (activeGroup?.name ?? activeSnapshot?.groupName ?? t`Group`)
                     : (active?.name ?? t`Select a bot`)}
@@ -2728,10 +3023,10 @@ export function ShellPage() {
                   }
                   setCallOpen(true);
                 }}
-                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-[#1B1B1E]"
-                style={{ background: callOpen ? "#1B1B1E" : "transparent" }}
+                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-[#F1F5F9]"
+                style={{ background: callOpen ? "#F1F5F9" : "transparent" }}
               >
-                <Phone size={16} strokeWidth={1.6} className="text-[#A8A8AD]" />
+                <Phone size={16} strokeWidth={1.6} className="text-[#94A3B8]" />
               </button>
             ) : null}
             {!inGroup ? (
@@ -2746,10 +3041,10 @@ export function ShellPage() {
                     void refreshThread(active.id).catch(() => undefined);
                   }
                 }}
-                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-[#1B1B1E]"
-                style={{ background: panel ? "#1B1B1E" : "transparent" }}
+                className="app-no-drag grid h-[30px] w-[34px] place-items-center rounded-[9px] hover:bg-[#F1F5F9]"
+                style={{ background: panel ? "#F1F5F9" : "transparent" }}
               >
-                <Monitor size={18} strokeWidth={1.6} className="text-[#A8A8AD]" />
+                <Monitor size={18} strokeWidth={1.6} className="text-[#94A3B8]" />
               </button>
             ) : null}
           </div>
@@ -2764,6 +3059,7 @@ export function ShellPage() {
           answerableAskMessageId={answerableAskMessageId}
           running={transcriptRunning}
           workingBots={workingBots}
+          desktopOccupant={computer?.busyBotName ?? null}
           onLoadOlder={loadOlder}
           onOpenBot={openBot}
           onAnswer={answerMessage}
@@ -2842,23 +3138,70 @@ export function ShellPage() {
         />
       </main>
 
+      {panel && (active || activeGroup) ? (
+        <div className="relative z-30 hidden w-0 shrink-0 md:block">
+          <button
+            type="button"
+            data-testid="side-panel-resize"
+            aria-label={t`Resize panel`}
+            className="app-no-drag group/resize absolute inset-y-0 -start-2 w-4 cursor-col-resize touch-none"
+            onPointerDown={(event) => {
+              event.preventDefault();
+              setResizingSidePanel(true);
+            }}
+            onDoubleClick={() => {
+              setSidePanelWidth(DEFAULT_SIDE_PANEL_WIDTH);
+              writeSidePanelWidth(DEFAULT_SIDE_PANEL_WIDTH);
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+              event.preventDefault();
+              const rtl = document.documentElement.dir === "rtl";
+              const grow = rtl ? event.key === "ArrowRight" : event.key === "ArrowLeft";
+              const next = clampSidePanelWidth(
+                sidePanelWidth + (grow ? SIDE_PANEL_WIDTH_STEP : -SIDE_PANEL_WIDTH_STEP),
+                window.innerWidth,
+              );
+              setSidePanelWidth(next);
+              writeSidePanelWidth(next);
+            }}
+          >
+            <span
+              className={`pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 ${
+                resizingSidePanel
+                  ? "bg-[#76BF43]"
+                  : "bg-transparent group-hover/resize:bg-[#76BF43] group-focus-visible/resize:bg-[#76BF43]"
+              }`}
+            />
+          </button>
+        </div>
+      ) : null}
+
       <aside
         data-testid="side-panel"
         data-panel={panel ?? "closed"}
-        className={`absolute inset-y-0 end-0 z-20 flex min-h-0 shrink-0 flex-col overflow-hidden bg-[#0A0A0B] transition-[width] duration-150 ease-out md:relative ${
+        data-resizing={resizingSidePanel ? "true" : undefined}
+        className={`absolute inset-y-0 end-0 z-20 flex min-h-0 shrink-0 flex-col overflow-hidden bg-[#FFFFFF] md:relative ${
+          resizingSidePanel ? "" : "transition-[width] duration-150 ease-out"
+        } ${
           panel && (active || activeGroup)
-            ? "w-full max-w-[384px] border-s border-[#141416] md:w-[384px] md:max-w-none"
+            ? "w-full max-w-[384px] border-s border-[#E2E8F0] md:max-w-none md:w-[var(--rk-side-panel-width)]"
             : "pointer-events-none w-0"
         }`}
+        style={
+          {
+            "--rk-side-panel-width": `${sidePanelWidth}px`,
+          } as CSSProperties
+        }
       >
         {panel && (active || activeGroup) ? (
-          <div className="rk-scroll h-full w-full overflow-y-auto px-5 py-[17px] md:w-[384px]">
+          <div className="rk-scroll h-full w-full overflow-y-auto px-5 py-[17px]">
             {panel !== "routine" &&
             panel !== "create" &&
             panel !== "create-group" &&
             panel !== "group-settings" ? (
               <div className="mb-4 flex items-center justify-between">
-                <span className="text-[13.5px] text-[#85858A]">
+                <span className="text-[13.5px] text-[#64748B]">
                   {panel === "settings" ? (
                     <Trans>Settings</Trans>
                   ) : active ? (
@@ -2875,8 +3218,8 @@ export function ShellPage() {
                       onClick={() => setPanel(panel === "settings" ? "computer" : "settings")}
                       className={
                         panel === "settings"
-                          ? "text-[#ECECEE]"
-                          : "text-[#85858A] hover:text-[#ECECEE]"
+                          ? "text-[#020817]"
+                          : "text-[#64748B] hover:text-[#020817]"
                       }
                     >
                       <Settings size={16} strokeWidth={1.7} />
@@ -2890,35 +3233,30 @@ export function ShellPage() {
             ) : null}
             {panel === "computer" && active ? (
               <div>
-                <div className="relative aspect-[16/10] overflow-hidden rounded-[14px] bg-[#0E0E10]">
+                <div
+                  ref={previewScreenRef}
+                  className="relative aspect-[16/10] overflow-hidden rounded-[14px] bg-[#F1F5F9]"
+                >
                   {computerOpen ? (
-                    <div className="grid h-full place-items-center text-sm text-[#6C6C70]">
+                    <div className="grid h-full place-items-center text-sm text-[#64748B]">
                       <Trans>Open in full window</Trans>
                     </div>
                   ) : computer?.kind === "desktop" ? (
-                    <div className="grid h-full place-items-center px-6 text-center text-sm text-[#6C6C70]">
+                    <div className="grid h-full place-items-center px-6 text-center text-sm text-[#64748B]">
                       <Trans>
                         This bot runs on this computer, not a Linux desktop. Shell and files use
                         your home folder.
                       </Trans>
                     </div>
-                  ) : computer?.state === "running" && embeddedScreenUrl ? (
-                    <iframe
-                      title={t`Bot screen preview`}
-                      src={embeddedScreenUrl}
-                      sandbox={screenIframeSandbox(embeddedScreenUrl)}
-                      className="h-full w-full border-0 bg-black"
-                      allow="clipboard-read; clipboard-write"
-                      style={{ pointerEvents: "none" }}
-                    />
-                  ) : (
-                    <div className="grid h-full place-items-center px-6 text-center text-sm text-[#6C6C70]">
+                  ) : liveScreen ? null : (
+                    <div className="grid h-full place-items-center px-6 text-center text-sm text-[#64748B]">
                       {computersAreUnavailable(bootstrapMe?.sandboxProvider) ? (
                         <ComputersUnavailableHint />
+                      ) : waking || recoveringScreen ? (
+                        <LoadingState label={t`Waking desktop`} startedAt={wakingStartedAt} />
                       ) : (
                         computerPlaceholder(
                           computer?.state,
-                          booting,
                           computerLabel(computer?.mode, active.name),
                         )
                       )}
@@ -2929,41 +3267,49 @@ export function ShellPage() {
                     className="absolute inset-0 cursor-pointer"
                     aria-label={t`Open computer`}
                     onClick={() => void openComputer()}
+                    onDoubleClick={() => void takeComputerControl()}
                   />
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="min-w-0 text-[13.5px] text-[#85858A]">
-                    {hasControl
-                      ? t`You have control`
-                      : computerError
-                        ? computerError
-                        : computer?.busyBotName
-                          ? t`${computer.busyBotName} is using it`
-                          : computer?.state === "suspended"
-                            ? t`Asleep`
-                            : computerLabel(computer?.mode, active.name)}
-                  </span>
-                  {hasControl ? (
+                  <ComputerOccupancy
+                    mode={computer?.mode ?? active.computerMode}
+                    hasControl={hasControl}
+                    waking={waking || recoveringScreen}
+                    error={computerError}
+                    busyBotName={computer?.busyBotName ?? null}
+                    state={computer?.state}
+                    accessNames={desktopAccessNames(bots, active)}
+                  />
+                  {primaryAction === "release" ? (
                     <ComputerReleaseActions
                       takeoverRequested={computer?.takeoverRequested ?? false}
                       onRelease={releaseComputer}
                     />
+                  ) : primaryAction === "wake" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        void ensureComputer({ takeControl: false }).catch(() => undefined)
+                      }
+                    >
+                      <Trans>Wake</Trans>
+                    </Button>
                   ) : (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      disabled={takeoverBlocked}
+                      disabled={primaryAction !== "take-control"}
                       title={takeoverBlocked ? t`Stop the bot first` : undefined}
-                      onClick={() => void openComputer()}
+                      onClick={() => void takeComputerControl()}
                     >
                       <Trans>Take control</Trans>
                     </Button>
                   )}
                 </div>
-                {computer?.state === "error" ||
-                computer?.state === "stopped" ||
-                (computer?.state === "running" && !embeddedScreenUrl) ? (
+                {computer?.state === "error" || computer?.state === "stopped" ? (
                   <ComputerMaintenanceActions
                     botId={active.id}
                     computer={computer}
@@ -3008,7 +3354,7 @@ export function ShellPage() {
                     skills={activeTaughtSkills}
                     busy={teachBusy}
                     onRefresh={refreshActiveThread}
-                    onOpenComputer={openComputer}
+                    onOpenComputer={takeComputerControl}
                     onStopTeaching={stopTeaching}
                     onAddRoutine={(skill) => {
                       setRoutineDraft({
@@ -3526,18 +3872,9 @@ export function ShellPage() {
         ) : null}
       </Suspense>
 
-      {booting ? (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-[22px] bg-[rgba(4,4,5,.96)]">
-          <div className="text-[19px] font-medium text-[#F1F1F2]">
-            <Trans>Booting up {active?.name}’s computer</Trans>
-          </div>
-          <div className="h-[5px] w-[min(420px,70%)] overflow-hidden rounded-full bg-[#232327]">
-            <div className="h-full w-2/3 rounded-full bg-[#F1F1EF]" />
-          </div>
-        </div>
-      ) : computerOpen && active ? (
-        <div className="absolute inset-0 z-30 flex flex-col bg-[#050506]">
-          <div className="flex items-center justify-between gap-4 border-b border-[#171719] px-[18px] py-3.5">
+      {computerOpen && active ? (
+        <div className="pointer-events-none absolute inset-0 z-30 flex flex-col">
+          <div className="pointer-events-auto flex items-center justify-between gap-4 border-b border-[#e2e8f0] bg-[#f8fafc] px-[18px] py-3.5">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <BotAvatar
                 color={active.color}
@@ -3553,13 +3890,17 @@ export function ShellPage() {
                   variant="overlay"
                 />
               ) : (
-                <span className="truncate text-[15.5px] font-medium text-[#ECECEE]" dir="auto">
+                <span className="min-w-0 truncate text-[15.5px] font-medium text-[#020817]" dir="auto">
                   {computerLabel(computer?.mode, active.name)}
                 </span>
               )}
               {!recordingSkill && hasControl ? (
                 <span className="rounded-full bg-[rgba(48,162,75,.14)] px-[11px] py-1 text-[13px] text-[#4ECB71]">
                   <Trans>You have control</Trans>
+                </span>
+              ) : !recordingSkill && computer?.busyBotName ? (
+                <span className="truncate rounded-full bg-[#F1F5F9] px-[11px] py-1 text-[13px] text-[#64748B]">
+                  <Trans>{computer.busyBotName} is using it</Trans>
                 </span>
               ) : null}
             </div>
@@ -3578,28 +3919,45 @@ export function ShellPage() {
               ) : null}
               {recordingSkill ? (
                 <TeachStopButton busy={teachBusy} onStop={stopTeaching} />
-              ) : hasControl ? (
+              ) : primaryAction === "release" ? (
                 <ComputerReleaseActions
                   takeoverRequested={computer?.takeoverRequested ?? false}
                   onRelease={releaseComputer}
                 />
+              ) : primaryAction === "wake" ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void ensureComputer({ takeControl: false }).catch(() => undefined)}
+                >
+                  <Trans>Wake</Trans>
+                </Button>
               ) : (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={takeoverBlocked}
+                  disabled={primaryAction !== "take-control"}
                   title={takeoverBlocked ? t`Stop the bot first` : undefined}
-                  onClick={() =>
-                    void bootComputer({ takeControl: true, overlay: false }).catch(() => undefined)
-                  }
+                  onClick={() => void takeComputerControl()}
                 >
                   <Trans>Take control</Trans>
                 </Button>
               )}
+              {showReload ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void reloadComputerScreen()}
+                >
+                  <Trans>Reload</Trans>
+                </Button>
+              ) : null}
               <button
                 type="button"
-                className="text-[16px] text-[#85858A] hover:text-[#ECECEE]"
+                className="text-[16px] text-[#64748B] hover:text-[#020817]"
                 aria-label={t`Close computer`}
                 onClick={() => setComputerOpen(false)}
               >
@@ -3610,31 +3968,38 @@ export function ShellPage() {
           {sendError ? (
             <div
               role="alert"
-              className="border-b border-[#5A2A2A] bg-[#2A1717] px-[18px] py-2 text-[13px] text-[#F1A8A8]"
+              className="pointer-events-auto border-b border-[#5A2A2A] bg-[#2A1717] px-[18px] py-2 text-[13px] text-[#F1A8A8]"
             >
               {sendError}
             </div>
           ) : null}
-          <div className="relative min-h-0 flex-1 bg-[#0E0E10]">
+          <div
+            ref={overlayScreenRef}
+            className={`relative min-h-0 flex-1 ${liveScreen ? "" : "bg-[#F1F5F9]"} ${hasControl && !recordingSkill ? "pointer-events-none" : "pointer-events-auto"}`}
+          >
             {computer?.kind === "desktop" ? (
-              <div className="grid h-full place-items-center px-8 text-center text-sm text-[#6C6C70]">
+              <div className="grid h-full place-items-center px-8 text-center text-sm text-[#64748B]">
                 <Trans>
                   This bot runs on this computer. There is no separate Linux desktop. Ask it to use
                   the shell; working directories under your home folder are allowed.
                 </Trans>
               </div>
-            ) : computer?.state === "running" && embeddedScreenUrl ? (
+            ) : liveScreen ? (
               <>
-                <iframe
-                  title={t`Bot screen`}
-                  src={embeddedScreenUrl}
-                  sandbox={screenIframeSandbox(embeddedScreenUrl)}
-                  className="h-full w-full border-0 bg-black"
-                  allow="clipboard-read; clipboard-write; fullscreen"
-                  style={{
-                    pointerEvents: recordingSkill || !hasControl ? "none" : "auto",
-                  }}
-                />
+                {!recordingSkill && !hasControl ? (
+                  <button
+                    type="button"
+                    className="absolute inset-0 cursor-pointer"
+                    aria-label={t`Double-click to take control`}
+                    onDoubleClick={() => void takeComputerControl()}
+                  >
+                    <span className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+                      <span className="rounded-full bg-[rgba(2,8,23,.62)] px-3 py-1.5 text-[12.5px] text-[#F8FAFC]">
+                        <Trans>Watching — double-click to take control</Trans>
+                      </span>
+                    </span>
+                  </button>
+                ) : null}
                 {active ? (
                   <TeachCaptureOverlay
                     botId={active.id}
@@ -3646,13 +4011,64 @@ export function ShellPage() {
                 ) : null}
               </>
             ) : (
-              <div className="grid h-full place-items-center text-sm text-[#6C6C70]">
-                {computer?.state === "suspended"
-                  ? t`Computer is asleep`
-                  : computerLabel(computer?.mode, active.name)}
+              <div className="grid h-full place-items-center gap-3 px-8 text-center text-sm text-[#64748B]">
+                {waking || recoveringScreen ? (
+                  <LoadingState label={t`Waking desktop`} startedAt={wakingStartedAt} />
+                ) : computer?.state === "running" && !embeddedScreenUrl && !computerError ? (
+                  <SuccessPop label={t`Desktop ready`} />
+                ) : (
+                  <>
+                    <p>
+                      {computerError ||
+                        (computer?.state === "suspended"
+                          ? t`Computer is asleep`
+                          : computerPlaceholder(
+                              computer?.state,
+                              computerLabel(computer?.mode, active.name),
+                            ))}
+                    </p>
+                    {primaryAction === "wake" ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          void ensureComputer({ takeControl: false }).catch(() => undefined)
+                        }
+                      >
+                        {computer?.state === "error" ? <Trans>Retry</Trans> : <Trans>Wake</Trans>}
+                      </Button>
+                    ) : showReload ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void reloadComputerScreen()}
+                      >
+                        <Trans>Reload</Trans>
+                      </Button>
+                    ) : null}
+                  </>
+                )}
               </div>
             )}
           </div>
+        </div>
+      ) : null}
+      {showPinnedScreen && active && embeddedScreenUrl && pinnedScreen ? (
+        <div style={pinnedScreen.clip} className="pointer-events-none">
+          <iframe
+            key={`${active.id}:${screenEpoch}`}
+            title={t`Bot screen`}
+            src={embeddedScreenUrl}
+            sandbox={screenIframeSandbox(embeddedScreenUrl)}
+            className="border-0 bg-[#F1F5F9]"
+            allow="clipboard-read; clipboard-write; fullscreen"
+            style={{
+              ...pinnedScreen.iframe,
+              pointerEvents: recordingSkill || !hasControl || !computerOpen ? "none" : "auto",
+            }}
+          />
         </div>
       ) : null}
     </div>
@@ -3672,6 +4088,7 @@ const Transcript = memo(function Transcript({
   answerableAskMessageId,
   running,
   workingBots,
+  desktopOccupant,
   onLoadOlder,
   onOpenBot,
   onAnswer,
@@ -3695,6 +4112,7 @@ const Transcript = memo(function Transcript({
   answerableAskMessageId: string | null;
   running: boolean;
   workingBots: GroupAvatarMember[];
+  desktopOccupant: string | null;
   onLoadOlder: () => void | Promise<void>;
   onOpenBot: (botId: string) => void;
   onAnswer: (message: ThreadMessage, text: string) => Promise<void>;
@@ -3722,9 +4140,18 @@ const Transcript = memo(function Transcript({
     [messages],
   );
   const workingBotName = workingBots.length === 1 ? workingBots[0]?.name : undefined;
+  const workingStatus = workingBots.length === 1 ? workingBots[0]?.status : undefined;
   const workingLabel =
     workingBotName != null && workingBotName !== ""
-      ? t`${workingBotName} is working`
+      ? workingStatus === "waiting_input"
+        ? t`${workingBotName} needs a reply`
+        : workingStatus === "waiting_takeover"
+          ? t`${workingBotName} needs the desktop`
+          : workingStatus === "queued" || workingStatus === "leased"
+            ? desktopOccupant && desktopOccupant !== workingBotName
+              ? t`${workingBotName} is waiting for ${desktopOccupant}`
+              : t`${workingBotName} is starting`
+            : t`${workingBotName} is working`
       : t`Bots are working`;
   const snapToEnd = useCallback(() => {
     const element = scrollRef.current;
@@ -3838,7 +4265,7 @@ const Transcript = memo(function Transcript({
             type="button"
             disabled={loadingOlder}
             onClick={() => void loadOlder()}
-            className="self-center rounded-lg px-3 py-1.5 text-[13px] text-[#85858A] hover:bg-[#1A1A1D] hover:text-[#C9C9CE] disabled:opacity-50"
+            className="self-center rounded-lg px-3 py-1.5 text-[13px] text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#334155] disabled:opacity-50"
           >
             {loadingOlder ? t`Loading…` : t`Load earlier messages`}
           </button>
@@ -3891,7 +4318,7 @@ const Transcript = memo(function Transcript({
         aria-hidden={atEnd}
         tabIndex={atEnd ? -1 : 0}
         onClick={jumpToLatest}
-        className={`absolute bottom-4 left-1/2 z-20 grid h-9 w-9 -translate-x-1/2 place-items-center rounded-full border border-[#303034] bg-[#1A1A1D]/95 text-[#C9C9CE] shadow-[0_8px_24px_rgba(0,0,0,.45)] backdrop-blur transition-[opacity,transform,background-color] duration-200 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-[#242428] motion-reduce:transition-none ${
+        className={`absolute bottom-4 left-1/2 z-20 grid h-9 w-9 -translate-x-1/2 place-items-center rounded-full border border-[#cbd5e1] bg-[#F1F5F9]/95 text-[#334155] shadow-[0_8px_24px_rgba(0,0,0,.45)] backdrop-blur transition-[opacity,transform,background-color] duration-200 ease-[cubic-bezier(.22,1,.36,1)] hover:bg-[#e2e8f0] motion-reduce:transition-none ${
           atEnd ? "pointer-events-none translate-y-2 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
@@ -4157,7 +4584,7 @@ const Composer = memo(function Composer({
             aria-label={t`Dismiss error`}
             data-testid="composer-error-dismiss"
             onClick={onDismissError}
-            className="shrink-0 text-[#F1A8A8] hover:text-[#ECECEE]"
+            className="shrink-0 text-[#F1A8A8] hover:text-[#020817]"
           >
             <X size={13} strokeWidth={2} />
           </button>
@@ -4166,14 +4593,14 @@ const Composer = memo(function Composer({
       {replyTarget ? (
         <div
           data-testid="reply-chip"
-          className="mb-2 flex items-center gap-2 rounded-full border border-[#26262A] bg-[#17171A] px-3 py-1.5 text-[13px] text-[#C9C9CE]"
+          className="mb-2 flex items-center gap-2 rounded-full border border-[#E2E8F0] bg-white px-3 py-1.5 text-[13px] text-[#334155]"
         >
-          <span className="min-w-0 flex-1 truncate text-[#85858A]">{t`Replying to ${replyName}`}</span>
+          <span className="min-w-0 flex-1 truncate text-[#64748B]">{t`Replying to ${replyName}`}</span>
           <button
             type="button"
             aria-label={t`Cancel reply`}
             onClick={onClearReply}
-            className="shrink-0 text-[#85858A] hover:text-[#ECECEE]"
+            className="shrink-0 text-[#64748B] hover:text-[#020817]"
           >
             <X size={13} strokeWidth={2} />
           </button>
@@ -4189,7 +4616,7 @@ const Composer = memo(function Composer({
           {pendingAttachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="flex items-center gap-2 rounded-full border border-[#26262A] bg-[#17171A] px-3 py-1.5 text-[13px] text-[#C9C9CE]"
+              className="flex items-center gap-2 rounded-full border border-[#E2E8F0] bg-white px-3 py-1.5 text-[13px] text-[#334155]"
             >
               {attachment.previewUrl ? (
                 <img
@@ -4207,7 +4634,7 @@ const Composer = memo(function Composer({
                 type="button"
                 aria-label={t`Remove ${attachment.file.name}`}
                 onClick={() => onRemoveAttachment(attachment)}
-                className="text-[#85858A] hover:text-[#ECECEE]"
+                className="text-[#64748B] hover:text-[#020817]"
               >
                 <X size={13} strokeWidth={2} />
               </button>
@@ -4218,7 +4645,7 @@ const Composer = memo(function Composer({
       {mentionOptions.length ? (
         <div
           data-testid="mention-picker"
-          className="mb-2 overflow-hidden rounded-[14px] border border-[#26262A] bg-[#17171A]"
+          className="mb-2 overflow-hidden rounded-[14px] border border-[#E2E8F0] bg-white"
         >
           {mentionOptions.map((mention) => (
             <button
@@ -4226,15 +4653,15 @@ const Composer = memo(function Composer({
               type="button"
               aria-label={t`@${mention.name}`}
               onClick={() => insertMention(mention)}
-              className="flex w-full items-start gap-3 px-4 py-2.5 text-start hover:bg-[#1F1F22]"
+              className="flex w-full items-start gap-3 px-4 py-2.5 text-start hover:bg-[#F1F5F9]"
             >
               <MentionOptionIcon mention={mention} />
               <span className="min-w-0">
-                <span dir="auto" className="block text-[14px] text-[#ECECEE]">
+                <span dir="auto" className="block text-[14px] text-[#020817]">
                   @{mention.name}
                 </span>
                 {mention.subtitle ? (
-                  <span dir="auto" className="block truncate text-[12.5px] text-[#85858A]">
+                  <span dir="auto" className="block truncate text-[12.5px] text-[#64748B]">
                     {mention.subtitle}
                   </span>
                 ) : null}
@@ -4246,7 +4673,7 @@ const Composer = memo(function Composer({
       {showSlashPicker ? (
         <div
           data-testid="slash-picker"
-          className="mb-2 overflow-hidden rounded-[14px] border border-[#26262A] bg-[#17171A]"
+          className="mb-2 overflow-hidden rounded-[14px] border border-[#E2E8F0] bg-white"
         >
           {slashSkillOptions.map((skill) => (
             <button
@@ -4254,14 +4681,14 @@ const Composer = memo(function Composer({
               type="button"
               aria-label={t`Skill ${skill.name}`}
               onClick={() => insertSkill(skill)}
-              className="flex w-full items-start gap-3 px-4 py-2.5 text-start hover:bg-[#1F1F22]"
+              className="flex w-full items-start gap-3 px-4 py-2.5 text-start hover:bg-[#F1F5F9]"
             >
-              <Box size={16} strokeWidth={1.7} className="mt-0.5 shrink-0 text-[#9A9AA0]" />
+              <Box size={16} strokeWidth={1.7} className="mt-0.5 shrink-0 text-[#94A3B8]" />
               <span className="min-w-0">
-                <span dir="auto" className="block text-[14px] text-[#ECECEE]">
+                <span dir="auto" className="block text-[14px] text-[#020817]">
                   {skill.name}
                 </span>
-                <span dir="auto" className="block truncate text-[12.5px] text-[#85858A]">
+                <span dir="auto" className="block truncate text-[12.5px] text-[#64748B]">
                   {truncateSlashDescription(skill.description)}
                 </span>
               </span>
@@ -4275,10 +4702,10 @@ const Composer = memo(function Composer({
                 type="button"
                 aria-label={label}
                 onClick={() => runSlashAction(action.id)}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-start hover:bg-[#1F1F22]"
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-start hover:bg-[#F1F5F9]"
               >
-                <Settings size={16} strokeWidth={1.7} className="shrink-0 text-[#9A9AA0]" />
-                <span className="text-[14px] text-[#ECECEE]">{label}</span>
+                <Settings size={16} strokeWidth={1.7} className="shrink-0 text-[#94A3B8]" />
+                <span className="text-[14px] text-[#020817]">{label}</span>
               </button>
             );
           })}
@@ -4286,7 +4713,7 @@ const Composer = memo(function Composer({
       ) : null}
       <div
         data-testid="composer-bar"
-        className="flex items-center gap-3.5 rounded-full border border-[#202023] bg-[#131315] py-[9px] pe-2.5 ps-3"
+        className="flex items-center gap-3.5 rounded-full border border-[#e2e8f0] bg-[#f1f5f9] py-[9px] pe-2.5 ps-3"
       >
         <input
           ref={fileInputRef}
@@ -4301,7 +4728,7 @@ const Composer = memo(function Composer({
           aria-label={t`Attach file`}
           disabled={disabled}
           onClick={() => fileInputRef.current?.click()}
-          className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full border border-[#26262A] text-[#9A9AA0] disabled:opacity-40"
+          className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full border border-[#E2E8F0] text-[#94A3B8] disabled:opacity-40"
         >
           <Plus size={17} strokeWidth={1.8} />
         </button>
@@ -4324,7 +4751,7 @@ const Composer = memo(function Composer({
           className={`grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full border ${
             dictating
               ? "border-[#4ECB71] bg-[rgba(48,162,75,.16)] text-[#4ECB71]"
-              : "border-[#26262A] text-[#9A9AA0]"
+              : "border-[#E2E8F0] text-[#94A3B8]"
           }`}
           title={transcribe ? t`Hold to talk` : t`Hold to talk (on-device dictation)`}
         >
@@ -4334,9 +4761,9 @@ const Composer = memo(function Composer({
           {selectedSkill ? (
             <span
               data-testid="skill-chip"
-              className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#1C1C1F] px-2.5 py-1 text-[13px] text-[#ECECEE]"
+              className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[13px] text-[#020817]"
             >
-              <Box size={13} strokeWidth={1.7} className="shrink-0 text-[#B0B0B6]" />
+              <Box size={13} strokeWidth={1.7} className="shrink-0 text-[#94A3B8]" />
               <span dir="auto" className="truncate">
                 {selectedSkill.name}
               </span>
@@ -4344,7 +4771,7 @@ const Composer = memo(function Composer({
                 type="button"
                 aria-label={t`Remove skill ${selectedSkill.name}`}
                 onClick={() => setSelectedSkill(null)}
-                className="text-[#85858A] hover:text-[#ECECEE]"
+                className="text-[#64748B] hover:text-[#020817]"
               >
                 <X size={12} strokeWidth={2} />
               </button>
@@ -4355,7 +4782,7 @@ const Composer = memo(function Composer({
               key={mentionChipKey(mention)}
               data-testid="mention-chip"
               data-mention-kind={mention.kind}
-              className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#1C1C1F] px-2.5 py-1 text-[13px] text-[#ECECEE]"
+              className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[13px] text-[#020817]"
             >
               <MentionChipIcon mention={mention} />
               <span dir="auto" className="truncate">
@@ -4371,7 +4798,7 @@ const Composer = memo(function Composer({
                     ),
                   )
                 }
-                className="text-[#85858A] hover:text-[#ECECEE]"
+                className="text-[#64748B] hover:text-[#020817]"
               >
                 <X size={12} strokeWidth={2} />
               </button>
@@ -4409,7 +4836,7 @@ const Composer = memo(function Composer({
             autoComplete="off"
             dir="auto"
             rows={1}
-            className="max-h-32 min-h-[24px] min-w-[8rem] flex-1 resize-none overflow-y-auto bg-transparent py-0.5 text-[15.5px] leading-6 text-[#E9E9EA] outline-none disabled:opacity-40"
+            className="max-h-32 min-h-[24px] min-w-[8rem] flex-1 resize-none overflow-y-auto bg-transparent py-0.5 text-[15.5px] leading-6 text-[#020817] outline-none disabled:opacity-40"
           />
         </div>
         {running ? (
@@ -4417,7 +4844,7 @@ const Composer = memo(function Composer({
             type="button"
             aria-label={t`Stop`}
             onClick={() => void onStop()}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[#F1F1EF] text-[#17171A]"
+            className="grid h-9 w-9 place-items-center rounded-full bg-[#76BF43] text-white"
           >
             <Square size={12} strokeWidth={0} fill="currentColor" />
           </button>
@@ -4427,7 +4854,7 @@ const Composer = memo(function Composer({
             aria-label={t`Send`}
             disabled={sending || !canSend || disabled}
             onClick={send}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[#F1F1EF] text-[#17171A] disabled:opacity-50"
+            className="grid h-9 w-9 place-items-center rounded-full bg-[#76BF43] text-white disabled:opacity-50"
           >
             <ArrowUp size={18} strokeWidth={2} />
           </button>
@@ -4450,43 +4877,43 @@ function slashActionLabel(id: SlashActionId) {
 
 function MentionOptionIcon({ mention }: { mention: ComposerMention }) {
   if (mention.kind === "routine") {
-    return <Clock size={16} strokeWidth={1.7} className="mt-0.5 shrink-0 text-[#9A9AA0]" />;
+    return <Clock size={16} strokeWidth={1.7} className="mt-0.5 shrink-0 text-[#94A3B8]" />;
   }
   if (mention.kind === "connector") {
-    return <Puzzle size={16} strokeWidth={1.7} className="mt-0.5 shrink-0 text-[#9A9AA0]" />;
+    return <Puzzle size={16} strokeWidth={1.7} className="mt-0.5 shrink-0 text-[#94A3B8]" />;
   }
   if (mention.kind === "group") {
     return (
-      <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#2A2A2E] text-[9px] text-[#C9C9CE]">
+      <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#E2E8F0] text-[9px] text-[#334155]">
         G
       </span>
     );
   }
   if (mention.kind === "everyone") {
     return (
-      <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#2A2A2E] text-[9px] text-[#C9C9CE]">
+      <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#E2E8F0] text-[9px] text-[#334155]">
         @
       </span>
     );
   }
-  return <BotAvatar color={mention.color ?? "#85858A"} identity={mention.id} size={16} />;
+  return <BotAvatar color={mention.color ?? "#64748B"} identity={mention.id} size={16} />;
 }
 
 function MentionChipIcon({ mention }: { mention: ComposerMention }) {
   if (mention.kind === "routine") {
-    return <Clock size={13} strokeWidth={1.7} className="shrink-0 text-[#B0B0B6]" />;
+    return <Clock size={13} strokeWidth={1.7} className="shrink-0 text-[#94A3B8]" />;
   }
   if (mention.kind === "connector") {
-    return <Puzzle size={13} strokeWidth={1.7} className="shrink-0 text-[#B0B0B6]" />;
+    return <Puzzle size={13} strokeWidth={1.7} className="shrink-0 text-[#94A3B8]" />;
   }
   if (mention.kind === "group" || mention.kind === "everyone") {
     return (
-      <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#2A2A2E] text-[9px] text-[#C9C9CE]">
+      <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#E2E8F0] text-[9px] text-[#334155]">
         {mention.kind === "group" ? "G" : "@"}
       </span>
     );
   }
-  return <BotAvatar color={mention.color ?? "#85858A"} identity={mention.id} size={16} />;
+  return <BotAvatar color={mention.color ?? "#64748B"} identity={mention.id} size={16} />;
 }
 
 function previewMessageText(message: ThreadMessage): string {
@@ -4524,13 +4951,13 @@ function MessageHoverActions({
   return (
     <div
       data-testid="message-hover-actions"
-      className="pointer-events-none absolute end-0 top-0 z-10 flex items-center gap-0.5 rounded-full bg-[#1C1C1F] p-0.5 opacity-0 shadow-[0_1px_4px_rgba(0,0,0,0.45)] transition-opacity group-hover/message:pointer-events-auto group-hover/message:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100"
+      className="pointer-events-none absolute end-0 top-0 z-10 flex items-center gap-0.5 rounded-full bg-[#F1F5F9] p-0.5 opacity-0 shadow-[0_1px_4px_rgba(0,0,0,0.45)] transition-opacity group-hover/message:pointer-events-auto group-hover/message:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100"
     >
       <button
         type="button"
         aria-label={t`Reply`}
         onClick={() => onReply(message)}
-        className="grid h-7 w-7 place-items-center rounded-full text-[#C9C9CE] hover:bg-[#2A2A2F] hover:text-[#ECECEE]"
+        className="grid h-7 w-7 place-items-center rounded-full text-[#334155] hover:bg-[#E2E8F0] hover:text-[#020817]"
       >
         <Reply size={14} strokeWidth={1.8} />
       </button>
@@ -4538,7 +4965,7 @@ function MessageHoverActions({
         type="button"
         aria-label={t`Copy`}
         onClick={copyMessage}
-        className="grid h-7 w-7 place-items-center rounded-full text-[#C9C9CE] hover:bg-[#2A2A2F] hover:text-[#ECECEE]"
+        className="grid h-7 w-7 place-items-center rounded-full text-[#334155] hover:bg-[#E2E8F0] hover:text-[#020817]"
       >
         <Copy size={14} strokeWidth={1.8} />
       </button>
@@ -4623,9 +5050,15 @@ function ComputerReleaseActions({
           {pending ? <Trans>Working…</Trans> : <Trans>Release</Trans>}
         </Button>
       )}
-      {error ? <p className="max-w-[220px] text-right text-[12px] text-[#E65707]">{error}</p> : null}
+      {error ? (
+        <p className="max-w-[220px] text-right text-[12px] text-[#E65707]">{error}</p>
+      ) : null}
     </div>
   );
+}
+
+function isMessageBotLabel(value: string): boolean {
+  return /(?:^|\b)message[ _-]?bot(?:\b|$)/i.test(value);
 }
 
 function ToolSteps({
@@ -4635,9 +5068,13 @@ function ToolSteps({
   steps: Extract<ThreadMessage["blocks"][number], { kind: "steps" }>["steps"];
   currentIndex?: number;
 }) {
+  const visible = steps
+    .map((step, index) => ({ step, index }))
+    .filter(({ step }) => !isMessageBotLabel(step.label));
+  if (visible.length === 0) return null;
   return (
     <div className="space-y-1.5">
-      {steps.map((step, index) => {
+      {visible.map(({ step, index }) => {
         const isCurrent = index === currentIndex;
         return (
           <div key={index} className="flex items-center gap-2">
@@ -4652,7 +5089,7 @@ function ToolSteps({
             </span>
             <span
               className="truncate text-[14px]"
-              style={{ color: isCurrent ? "#DFDFE2" : "#85858A" }}
+              style={{ color: isCurrent ? "#1E293B" : "#64748B" }}
             >
               {step.label}
               {step.count > 1 ? ` ×${step.count}` : ""}
@@ -4715,7 +5152,7 @@ const MessageView = memo(function MessageView({
   const messageContext = (
     <>
       {speakerName ? (
-        <div className="mb-1 text-[12.5px] font-medium text-[#85858A]" dir="auto">
+        <div className="mb-1 text-[12.5px] font-medium text-[#64748B]" dir="auto">
           {speakerName}
         </div>
       ) : null}
@@ -4725,7 +5162,7 @@ const MessageView = memo(function MessageView({
           data-testid="reply-parent-preview"
           aria-label={t`Jump to replied message`}
           onClick={() => onJumpToMessage?.(parentJumpId)}
-          className="mb-2 block max-w-[74%] truncate rounded-[14px] border border-[#26262A] bg-[#131315] px-3 py-2 text-start text-[12.5px] text-[#85858A] hover:border-[#34343B] hover:text-[#C9C9CE]"
+          className="mb-2 block max-w-[74%] truncate rounded-[14px] border border-[#E2E8F0] bg-[#f1f5f9] px-3 py-2 text-start text-[12.5px] text-[#64748B] hover:border-[#CBD5E1] hover:text-[#334155]"
           dir="auto"
         >
           {replyPreview ? previewMessageText(replyPreview) : t`Earlier message`}
@@ -4739,7 +5176,7 @@ const MessageView = memo(function MessageView({
         {messageContext}
         <div className="flex justify-start">
           <div
-            className="max-w-[74%] space-y-2.5 rounded-[20px] bg-[#1A1A1D] px-[18px] py-3 text-[15.5px] leading-[1.5] text-[#DFDFE2]"
+            className="max-w-[74%] space-y-2.5 rounded-[20px] bg-[#F1F5F9] px-[18px] py-3 text-[15.5px] leading-[1.5] text-[#1E293B]"
             dir="auto"
           >
             {message.blocks.map((block, i) => {
@@ -4755,6 +5192,7 @@ const MessageView = memo(function MessageView({
                 );
               }
               if (block.kind === "text" || block.kind === "progress") {
+                if (block.kind === "progress" && isMessageBotLabel(block.text)) return null;
                 return (
                   <div key={i}>
                     <ChatMarkdown streaming={block.kind === "progress"}>{block.text}</ChatMarkdown>
@@ -4768,7 +5206,7 @@ const MessageView = memo(function MessageView({
                 type="button"
                 aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
                 onClick={onSpeak}
-                className="text-[12px] text-[#85858A] hover:text-[#ECECEE]"
+                className="text-[12px] text-[#64748B] hover:text-[#020817]"
               >
                 {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
               </button>
@@ -4788,7 +5226,7 @@ const MessageView = memo(function MessageView({
           return (
             <div
               key={i}
-              className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-[#85858A]"
+              className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-[#64748B]"
             >
               <span>
                 ↪ {to} ← {from}
@@ -4806,18 +5244,20 @@ const MessageView = memo(function MessageView({
             <CollaborationMarker
               key={i}
               ariaLabel={label}
-              color={peerBot(peerBotId)?.color ?? "#85858A"}
+              color={peerBot(peerBotId)?.color ?? "#64748B"}
               identity={peerBotId}
               label={label}
               onClick={() => onOpenPeerMessages(peerBotId)}
-            />
+            >
+              <ChatMarkdown>{block.text}</ChatMarkdown>
+            </CollaborationMarker>
           );
         }
         if (block.kind === "phone_channel_message") {
           return (
             <div
               key={i}
-              className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-[#85858A]"
+              className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-[#64748B]"
             >
               <span>
                 iMessage · {block.fromLabel}: {block.text}
@@ -4829,7 +5269,7 @@ const MessageView = memo(function MessageView({
           return (
             <div
               key={i}
-              className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-[#85858A]"
+              className="flex items-center justify-center gap-2 py-1 text-[13.5px] text-[#64748B]"
             >
               <span className="text-[#E65707]">◷</span>
               <span>{block.text}</span>
@@ -4837,10 +5277,11 @@ const MessageView = memo(function MessageView({
           );
         }
         if (block.kind === "progress") {
+          if (isMessageBotLabel(block.text)) return null;
           return (
             <div key={i} className="flex justify-start">
               <div
-                className="max-w-[74%] rounded-[20px] bg-[#1A1A1D] px-[18px] py-3 text-[15.5px] leading-[1.5] text-[#DFDFE2]"
+                className="max-w-[74%] rounded-[20px] bg-[#F1F5F9] px-[18px] py-3 text-[15.5px] leading-[1.5] text-[#1E293B]"
                 dir="auto"
               >
                 <ChatMarkdown streaming>{block.text}</ChatMarkdown>
@@ -4849,10 +5290,11 @@ const MessageView = memo(function MessageView({
           );
         }
         if (block.kind === "steps") {
+          if (block.steps.every((step) => isMessageBotLabel(step.label))) return null;
           return (
             <div key={i} className="flex justify-start">
               <div
-                className="max-w-[74%] space-y-1.5 rounded-[20px] bg-[#1A1A1D] px-[18px] py-3"
+                className="max-w-[74%] space-y-1.5 rounded-[20px] bg-[#F1F5F9] px-[18px] py-3"
                 dir="ltr"
               >
                 <ToolSteps
@@ -4869,10 +5311,10 @@ const MessageView = memo(function MessageView({
           return (
             <div
               key={i}
-              className="w-[min(420px,90%)] rounded-[18px] border border-[#232326] bg-[#17171A] px-[18px] py-4"
+              className="w-[min(420px,90%)] rounded-[18px] border border-[#e2e8f0] bg-white px-[18px] py-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[15px] font-medium text-[#ECECEE]" dir="auto">
+                <span className="text-[15px] font-medium text-[#020817]" dir="auto">
                   {block.name}
                 </span>
                 <span
@@ -4890,9 +5332,9 @@ const MessageView = memo(function MessageView({
                   {running ? <Trans>subagent</Trans> : block.status}
                 </span>
               </div>
-              <div className="mt-2 text-[13.5px] text-[#85858A]">{block.task}</div>
+              <div className="mt-2 text-[13.5px] text-[#64748B]">{block.task}</div>
               {block.progress || block.result ? (
-                <div className="mt-2.5 text-[14.5px] leading-[1.5] text-[#A8A8AD]">
+                <div className="mt-2.5 text-[14.5px] leading-[1.5] text-[#94A3B8]">
                   <ChatMarkdown streaming={running}>
                     {block.result || block.progress || ""}
                   </ChatMarkdown>
@@ -4909,10 +5351,10 @@ const MessageView = memo(function MessageView({
               type="button"
               disabled={removed}
               onClick={() => onOpenBot(block.botId)}
-              className="w-[min(340px,90%)] rounded-[18px] border border-[#232326] bg-[#17171A] px-[18px] py-4 text-start disabled:opacity-60"
+              className="w-[min(340px,90%)] rounded-[18px] border border-[#e2e8f0] bg-white px-[18px] py-4 text-start disabled:opacity-60"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[15px] font-medium text-[#ECECEE]" dir="auto">
+                <span className="text-[15px] font-medium text-[#020817]" dir="auto">
                   {block.name}
                 </span>
                 <span
@@ -4931,7 +5373,7 @@ const MessageView = memo(function MessageView({
                   )}
                 </span>
               </div>
-              <div className="mt-2 text-[14.5px] leading-[1.5] text-[#A8A8AD]" dir="auto">
+              <div className="mt-2 text-[14.5px] leading-[1.5] text-[#94A3B8]" dir="auto">
                 {removed
                   ? block.status === "archived"
                     ? t`Archived. Chat, memory, and files kept.`
@@ -5022,7 +5464,7 @@ const MessageView = memo(function MessageView({
           return (
             <div key={i} className="flex justify-start">
               <div
-                className="max-w-[74%] rounded-[20px] bg-[#1A1A1D] px-[18px] py-3 text-[15.5px] leading-[1.5] text-[#DFDFE2]"
+                className="max-w-[74%] rounded-[20px] bg-[#F1F5F9] px-[18px] py-3 text-[15.5px] leading-[1.5] text-[#1E293B]"
                 dir="auto"
               >
                 <ChatMarkdown>{block.text}</ChatMarkdown>
@@ -5031,7 +5473,7 @@ const MessageView = memo(function MessageView({
                     type="button"
                     aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
                     onClick={onSpeak}
-                    className="mt-2 text-[12px] text-[#85858A] hover:text-[#ECECEE]"
+                    className="mt-2 text-[12px] text-[#64748B] hover:text-[#020817]"
                   >
                     {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
                   </button>
@@ -5043,12 +5485,12 @@ const MessageView = memo(function MessageView({
         if (block.kind === "card") {
           return (
             <div key={i} className="flex justify-start">
-              <div className="flex flex-col gap-2 rounded-[20px] bg-[#1A1A1D] px-5 py-4">
+              <div className="flex flex-col gap-2 rounded-[20px] bg-[#F1F5F9] px-5 py-4">
                 {block.lines.map((line) => (
                   <div key={line.k} className="flex items-baseline gap-2.5 text-[15px]">
                     <span className="text-[#30A24B]">✓</span>
-                    <span className="font-semibold text-white">{line.k}</span>
-                    <span className="text-[#85858A]">→</span>
+                    <span className="font-semibold text-[#020817]">{line.k}</span>
+                    <span className="text-[#64748B]">→</span>
                     <span>{line.v}</span>
                   </div>
                 ))}
@@ -5077,17 +5519,17 @@ const MessageView = memo(function MessageView({
           return (
             <div
               key={i}
-              className="w-[340px] rounded-[18px] border border-[#232326] bg-[#17171A] px-[18px] py-4"
+              className="w-[340px] rounded-[18px] border border-[#e2e8f0] bg-white px-[18px] py-4"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[15px] font-medium text-[#ECECEE]">
+                <span className="text-[15px] font-medium text-[#020817]">
                   <Trans>Computer</Trans>
                 </span>
                 <span className="rounded-full bg-[rgba(48,162,75,.14)] px-[11px] py-1 text-[13px] text-[#4ECB71]">
                   {block.state}
                 </span>
               </div>
-              <div className="my-2.5 text-[14.5px] leading-[1.5] text-[#A8A8AD]">
+              <div className="my-2.5 text-[14.5px] leading-[1.5] text-[#94A3B8]">
                 <ChatMarkdown>{block.text}</ChatMarkdown>
               </div>
             </div>
@@ -5106,9 +5548,10 @@ function ComputerModePicker({
   value: ComputerMode;
   onChange: (value: ComputerMode) => void;
 }) {
+  const { t } = useLingui();
   return (
     <div className="mt-4">
-      <div className="text-[14px] text-[#85858A]">
+      <div className="text-[14px] text-[#64748B]">
         <Trans>Computer</Trans>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2">
@@ -5116,15 +5559,25 @@ function ComputerModePicker({
           <button
             key={mode}
             type="button"
+            aria-label={mode === "team" ? t`Shared` : t`Own`}
             aria-pressed={value === mode}
             onClick={() => onChange(mode)}
-            className={`rounded-[11px] border px-3.5 py-3 text-[14px] capitalize ${
+            className={`rounded-[11px] border px-3.5 py-3 text-left text-[14px] ${
               value === mode
-                ? "border-[#6C6C70] bg-[#1A1A1D] text-[#ECECEE]"
-                : "border-[#26262A] text-[#85858A]"
+                ? "border-[#64748B] bg-[#F1F5F9] text-[#020817]"
+                : "border-[#E2E8F0] text-[#64748B]"
             }`}
           >
-            {mode === "team" ? <Trans>Team</Trans> : <Trans>Private</Trans>}
+            <span className="block">
+              {mode === "team" ? <Trans>Shared</Trans> : <Trans>Own</Trans>}
+            </span>
+            <span className="mt-1 block text-[12px] text-[#64748B]">
+              {mode === "team" ? (
+                <Trans>One desktop for every Shared bot here</Trans>
+              ) : (
+                <Trans>This bot only</Trans>
+              )}
+            </span>
           </button>
         ))}
       </div>
@@ -5168,7 +5621,7 @@ function CreateBotForm({
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-[13.5px] text-[#85858A]">
+        <span className="text-[13.5px] text-[#64748B]">
           <Trans>New bot</Trans>
         </span>
         <button type="button" aria-label={t`Cancel new bot`} onClick={onCancel}>
@@ -5180,27 +5633,27 @@ function CreateBotForm({
           {error}
         </p>
       ) : null}
-      <label className="mt-6 block text-[14px] text-[#85858A]">
+      <label className="mt-6 block text-[14px] text-[#64748B]">
         <Trans>Name</Trans>
         <input
           value={name}
           maxLength={BOT_NAME_MAX_LENGTH}
           onChange={(e) => setName(e.target.value)}
           placeholder={t`Name this bot`}
-          className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+          className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
         />
       </label>
-      <label className="mt-4 block text-[14px] text-[#85858A]">
+      <label className="mt-4 block text-[14px] text-[#64748B]">
         <Trans>Title</Trans>
         <input
           value={title}
           maxLength={BOT_TITLE_MAX_LENGTH}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t`Describe what this bot does`}
-          className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+          className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
         />
       </label>
-      <label className="mt-4 block text-[14px] text-[#85858A]">
+      <label className="mt-4 block text-[14px] text-[#64748B]">
         <Trans>Description</Trans>
         <textarea
           value={description}
@@ -5208,7 +5661,7 @@ function CreateBotForm({
           onChange={(e) => setDescription(e.target.value)}
           placeholder={t`What this bot is for`}
           rows={4}
-          className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+          className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
         />
       </label>
       <ComputerModePicker value={computerMode} onChange={setComputerMode} />
@@ -5347,48 +5800,48 @@ function BotSettings({
       <div className="flex justify-center">
         <BotAvatar color={bot.color} identity={bot.id} size={64} status={bot.status} />
       </div>
-      <label className="mt-6 block text-[14px] text-[#85858A]">
+      <label className="mt-6 block text-[14px] text-[#64748B]">
         <Trans>Name</Trans>
         <input
           value={name}
           maxLength={BOT_NAME_MAX_LENGTH}
           onChange={(e) => setName(e.target.value)}
-          className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+          className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
         />
       </label>
-      <label className="mt-4 block text-[14px] text-[#85858A]">
+      <label className="mt-4 block text-[14px] text-[#64748B]">
         <Trans>Title</Trans>
         <input
           value={title}
           maxLength={BOT_TITLE_MAX_LENGTH}
           onChange={(e) => setTitle(e.target.value)}
-          className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+          className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
         />
       </label>
-      <label className="mt-4 block text-[14px] text-[#85858A]">
+      <label className="mt-4 block text-[14px] text-[#64748B]">
         <Trans>Description</Trans>
         <textarea
           value={description}
           maxLength={BOT_DESCRIPTION_MAX_LENGTH}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
-          className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+          className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
         />
       </label>
+      <ComputerModePicker value={computerMode} onChange={setComputerMode} />
       <details data-testid="bot-settings-advanced" className="group mt-5">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] text-[#85858A]">
-          <span className="text-[#85858A]">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] text-[#64748B]">
+          <span className="text-[#64748B]">
             <Trans>Advanced</Trans>
           </span>
           <span aria-hidden="true" className="transition-transform group-open:rotate-90">
             ›
           </span>
         </summary>
-        <ComputerModePicker value={computerMode} onChange={setComputerMode} />
         <Suspense fallback={null}>
           <ScratchpadSection botId={bot.id} />
         </Suspense>
-        <label className="mt-4 block text-[14px] text-[#85858A]">
+        <label className="mt-4 block text-[14px] text-[#64748B]">
           <Trans>Model</Trans>
           <select
             value={modelKey}
@@ -5396,7 +5849,7 @@ function BotSettings({
               setModelKey(event.target.value);
               setThinkingLevel("");
             }}
-            className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+            className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
           >
             <option value="">
               {t`Workspace default`}
@@ -5415,12 +5868,12 @@ function BotSettings({
           </select>
         </label>
         {thinkingOptions.length ? (
-          <label className="mt-4 block text-[14px] text-[#85858A]">
+          <label className="mt-4 block text-[14px] text-[#64748B]">
             <Trans>Thinking</Trans>
             <select
               value={thinkingLevel}
               onChange={(event) => setThinkingLevel(event.target.value)}
-              className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+              className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
             >
               <option value="">{t`Default (medium)`}</option>
               {thinkingOptions.map((level) => (
@@ -5432,7 +5885,7 @@ function BotSettings({
           </label>
         ) : null}
         {memoryProviderConfigured ? (
-          <div className="mt-4 text-[14px] text-[#85858A]">
+          <div className="mt-4 text-[14px] text-[#64748B]">
             <Trans>Memory scope</Trans>
             <div className="mt-2 flex gap-2">
               {(
@@ -5449,8 +5902,8 @@ function BotSettings({
                   onClick={() => setMemoryScope(option.value)}
                   className={`flex-1 rounded-[11px] border px-3 py-2 text-[13px] ${
                     memoryScope === option.value
-                      ? "border-[#4A4A50] bg-[#1A1A1D] text-[#ECECEE]"
-                      : "border-[#26262A] text-[#85858A]"
+                      ? "border-[#64748B] bg-[#F1F5F9] text-[#020817]"
+                      : "border-[#E2E8F0] text-[#64748B]"
                   }`}
                 >
                   {option.label}
@@ -5459,7 +5912,7 @@ function BotSettings({
             </div>
           </div>
         ) : null}
-        <label className="mt-5 flex cursor-pointer items-center gap-3 text-[14px] text-[#C9C9CE]">
+        <label className="mt-5 flex cursor-pointer items-center gap-3 text-[14px] text-[#334155]">
           <input
             type="checkbox"
             checked={autoSpeak}
@@ -5468,12 +5921,12 @@ function BotSettings({
           <Trans>Read replies aloud</Trans>
         </label>
         {voices.length ? (
-          <label className="mt-4 block text-[14px] text-[#85858A]">
+          <label className="mt-4 block text-[14px] text-[#64748B]">
             <Trans>Voice</Trans>
             <select
               value={voiceId}
               onChange={(event) => setVoiceId(event.target.value)}
-              className="mt-2 w-full rounded-[11px] border border-[#26262A] bg-transparent px-3.5 py-3 text-[#ECECEE]"
+              className="mt-2 w-full rounded-[11px] border border-[#E2E8F0] bg-transparent px-3.5 py-3 text-[#020817]"
             >
               <option value="">{t`Account default`}</option>
               {voices.map((voice) => (
@@ -5525,7 +5978,7 @@ function BotSettings({
         <button
           type="button"
           onClick={() => void onExport()}
-          className="text-[14px] text-[#85858A]"
+          className="text-[14px] text-[#64748B]"
         >
           <Trans>Export</Trans>
         </button>
@@ -5605,7 +6058,7 @@ function NewBotSectionDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-bot-section-title"
-        className="w-full max-w-[420px] rounded-[18px] border border-[#343438] bg-[#1A1A1D] p-5 shadow-[0_24px_70px_rgba(0,0,0,.65)]"
+        className="w-full max-w-[420px] rounded-[18px] border border-[#cbd5e1] bg-[#F1F5F9] p-5 shadow-[0_24px_70px_rgba(0,0,0,.65)]"
         onPointerDown={(event) => event.stopPropagation()}
         onSubmit={(event) => {
           event.preventDefault();
@@ -5619,19 +6072,19 @@ function NewBotSectionDialog({
           });
         }}
       >
-        <h2 id="new-bot-section-title" className="text-[17px] font-medium text-[#F1F1F2]">
+        <h2 id="new-bot-section-title" className="text-[17px] font-medium text-[#020817]">
           <Trans>New section</Trans>
         </h2>
-        <p className="mt-2 text-[14px] leading-6 text-[#9A9AA0]">
+        <p className="mt-2 text-[14px] leading-6 text-[#94A3B8]">
           <Trans>Create a section and move {bot.name} into it.</Trans>
         </p>
-        <label className="mt-4 block text-[13.5px] text-[#C9C9CE]">
+        <label className="mt-4 block text-[13.5px] text-[#334155]">
           <Trans>Name</Trans>
           <input
             maxLength={60}
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="mt-2 w-full rounded-[11px] border border-[#343438] bg-[#101012] px-3.5 py-2.5 text-[14.5px] text-[#ECECEE] outline-none focus:border-[#66666D]"
+            className="mt-2 w-full rounded-[11px] border border-[#cbd5e1] bg-[#ffffff] px-3.5 py-2.5 text-[14.5px] text-[#020817] outline-none focus:border-[#64748B]"
           />
         </label>
         {error ? <p className="mt-3 text-[13.5px] text-[#FF5364]">{error}</p> : null}
@@ -5640,7 +6093,7 @@ function NewBotSectionDialog({
             type="button"
             disabled={saving}
             onClick={onCancel}
-            className="rounded-[10px] px-3.5 py-2 text-[14px] text-[#C9C9CE] hover:bg-[#29292D] disabled:opacity-40"
+            className="rounded-[10px] px-3.5 py-2 text-[14px] text-[#334155] hover:bg-[#E2E8F0] disabled:opacity-40"
           >
             <Trans>Cancel</Trans>
           </button>
@@ -5691,15 +6144,15 @@ function ClearConversationDialog({
         aria-modal="true"
         aria-labelledby="clear-conversation-title"
         aria-describedby="clear-conversation-description"
-        className="w-full max-w-[420px] rounded-[18px] border border-[#343438] bg-[#1A1A1D] p-5 shadow-[0_24px_70px_rgba(0,0,0,.65)]"
+        className="w-full max-w-[420px] rounded-[18px] border border-[#cbd5e1] bg-[#F1F5F9] p-5 shadow-[0_24px_70px_rgba(0,0,0,.65)]"
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <h2 id="clear-conversation-title" className="text-[17px] font-medium text-[#F1F1F2]">
+        <h2 id="clear-conversation-title" className="text-[17px] font-medium text-[#020817]">
           <Trans>Clear {bot.name}’s conversation?</Trans>
         </h2>
         <p
           id="clear-conversation-description"
-          className="mt-2 text-[14px] leading-6 text-[#9A9AA0]"
+          className="mt-2 text-[14px] leading-6 text-[#94A3B8]"
         >
           <Trans>
             This permanently removes every message and stops current work. The chat remains
@@ -5712,7 +6165,7 @@ function ClearConversationDialog({
             type="button"
             disabled={clearing}
             onClick={onCancel}
-            className="rounded-[10px] px-3.5 py-2 text-[14px] text-[#C9C9CE] hover:bg-[#29292D] disabled:opacity-40"
+            className="rounded-[10px] px-3.5 py-2 text-[14px] text-[#334155] hover:bg-[#E2E8F0] disabled:opacity-40"
           >
             <Trans>Cancel</Trans>
           </button>
@@ -5772,23 +6225,23 @@ function DeleteBotDialog({
         aria-modal="true"
         aria-labelledby="delete-bot-title"
         aria-describedby="delete-bot-description"
-        className="w-full max-w-[420px] rounded-[18px] border border-[#343438] bg-[#1A1A1D] p-5 shadow-[0_24px_70px_rgba(0,0,0,.65)]"
+        className="w-full max-w-[420px] rounded-[18px] border border-[#cbd5e1] bg-[#F1F5F9] p-5 shadow-[0_24px_70px_rgba(0,0,0,.65)]"
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <h2 id="delete-bot-title" className="text-[17px] font-medium text-[#F1F1F2]">
+        <h2 id="delete-bot-title" className="text-[17px] font-medium text-[#020817]">
           <Trans>Delete {bot.name}?</Trans>
         </h2>
-        <p id="delete-bot-description" className="mt-2 text-[14px] leading-6 text-[#9A9AA0]">
+        <p id="delete-bot-description" className="mt-2 text-[14px] leading-6 text-[#94A3B8]">
           <Trans>
             Its conversation, files, and routines will be permanently deleted. Bots it created stay
             in your list.
           </Trans>
         </p>
         <fieldset className="mt-4 space-y-2">
-          <legend className="mb-2 text-[13.5px] text-[#C9C9CE]">
+          <legend className="mb-2 text-[13.5px] text-[#334155]">
             <Trans>What about its memories?</Trans>
           </legend>
-          <label className="flex cursor-pointer gap-3 rounded-[11px] border border-[#343438] p-3">
+          <label className="flex cursor-pointer gap-3 rounded-[11px] border border-[#cbd5e1] p-3">
             <input
               type="radio"
               name="delete-memory"
@@ -5796,15 +6249,15 @@ function DeleteBotDialog({
               onChange={() => setDeleteMemories(false)}
             />
             <span>
-              <span className="block text-[14px] text-[#ECECEE]">
+              <span className="block text-[14px] text-[#020817]">
                 <Trans>Keep memories</Trans>
               </span>
-              <span className="mt-0.5 block text-[12.5px] text-[#85858A]">
+              <span className="mt-0.5 block text-[12.5px] text-[#64748B]">
                 <Trans>Move them to your shared memory.</Trans>
               </span>
             </span>
           </label>
-          <label className="flex cursor-pointer gap-3 rounded-[11px] border border-[#343438] p-3">
+          <label className="flex cursor-pointer gap-3 rounded-[11px] border border-[#cbd5e1] p-3">
             <input
               type="radio"
               name="delete-memory"
@@ -5812,10 +6265,10 @@ function DeleteBotDialog({
               onChange={() => setDeleteMemories(true)}
             />
             <span>
-              <span className="block text-[14px] text-[#ECECEE]">
+              <span className="block text-[14px] text-[#020817]">
                 <Trans>Delete memories too</Trans>
               </span>
-              <span className="mt-0.5 block text-[12.5px] text-[#85858A]">
+              <span className="mt-0.5 block text-[12.5px] text-[#64748B]">
                 <Trans>This cannot be undone.</Trans>
               </span>
             </span>
@@ -5827,7 +6280,7 @@ function DeleteBotDialog({
             type="button"
             disabled={deleting}
             onClick={onCancel}
-            className="rounded-[10px] px-3.5 py-2 text-[14px] text-[#C9C9CE] hover:bg-[#29292D] disabled:opacity-40"
+            className="rounded-[10px] px-3.5 py-2 text-[14px] text-[#334155] hover:bg-[#E2E8F0] disabled:opacity-40"
           >
             <Trans>Cancel</Trans>
           </button>
@@ -5888,13 +6341,13 @@ function DeleteItemDialog({
         aria-modal="true"
         aria-labelledby="delete-item-title"
         aria-describedby="delete-item-description"
-        className="w-full max-w-[420px] rounded-[18px] border border-[#343438] bg-[#1A1A1D] p-5 shadow-[0_24px_70px_rgba(0,0,0,.65)]"
+        className="w-full max-w-[420px] rounded-[18px] border border-[#cbd5e1] bg-[#F1F5F9] p-5 shadow-[0_24px_70px_rgba(0,0,0,.65)]"
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <h2 id="delete-item-title" className="text-[17px] font-medium text-[#F1F1F2]">
+        <h2 id="delete-item-title" className="text-[17px] font-medium text-[#020817]">
           <Trans>Delete {item.name}?</Trans>
         </h2>
-        <p id="delete-item-description" className="mt-2 text-[14px] leading-6 text-[#9A9AA0]">
+        <p id="delete-item-description" className="mt-2 text-[14px] leading-6 text-[#94A3B8]">
           <Trans>This cannot be undone.</Trans>
         </p>
         {error ? <p className="mt-3 text-[13.5px] text-[#FF5364]">{error}</p> : null}
@@ -5903,7 +6356,7 @@ function DeleteItemDialog({
             type="button"
             disabled={deleting}
             onClick={onCancel}
-            className="rounded-[10px] px-3.5 py-2 text-[14px] text-[#C9C9CE] hover:bg-[#29292D] disabled:opacity-40"
+            className="rounded-[10px] px-3.5 py-2 text-[14px] text-[#334155] hover:bg-[#E2E8F0] disabled:opacity-40"
           >
             <Trans>Cancel</Trans>
           </button>
@@ -5934,47 +6387,95 @@ function DeleteItemDialog({
   );
 }
 
-function embeddableScreenUrl(url: string | null): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url, window.location.href);
-    const page = new URL(window.location.href);
-    const local = parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost";
-    const pagePort = page.port || (page.protocol === "https:" ? "443" : "80");
-    if (local && parsed.port && parsed.port !== pagePort) {
-      return null;
-    }
-    return parsed.toString();
-  } catch {
-    return url;
-  }
-}
-
 function screenIframeSandbox(url: string | null) {
   if (!url) return undefined;
   try {
     return new URL(url, window.location.href).pathname.startsWith("/novnc/")
-      ? "allow-scripts allow-pointer-lock"
+      ? "allow-scripts allow-same-origin allow-pointer-lock allow-forms"
       : undefined;
   } catch {
     return undefined;
   }
 }
 
-function computerPlaceholder(
-  state: ComputerStatus["state"] | undefined,
-  booting: boolean,
-  label: string,
-) {
-  if (state === "booting" || booting) return t`Booting live desktop…`;
+function computerPlaceholder(state: ComputerStatus["state"] | undefined, label: string) {
+  if (state === "booting") return t`Waking desktop`;
   if (state === "running") return label;
-  if (state === "suspended") return t`Computer is asleep. Take control to wake it.`;
+  if (state === "suspended") return t`Computer is asleep`;
   if (state === "error") return t`Computer failed to boot`;
   return t`Computer is stopped`;
 }
 
 function computerLabel(mode: ComputerStatus["mode"] | undefined, botName: string) {
-  return mode === "dedicated" ? t`${botName}’s computer` : t`Team Computer`;
+  return mode === "dedicated" ? t`${botName}’s desktop` : t`Shared desktop`;
+}
+
+function rosterStatusLabel(status: string): string {
+  switch (rosterRunTone(status)) {
+    case "queued":
+      return "Waiting";
+    case "starting":
+      return "Starting";
+    case "working":
+      return "Working";
+    case "needs_reply":
+      return "Needs a reply";
+    case "needs_desktop":
+      return "Needs the desktop";
+    default:
+      return "";
+  }
+}
+
+function ComputerOccupancy({
+  mode,
+  hasControl,
+  waking,
+  error,
+  busyBotName,
+  state,
+  accessNames,
+}: {
+  mode: ComputerStatus["mode"] | ComputerMode;
+  hasControl: boolean;
+  waking: boolean;
+  error: string | null;
+  busyBotName: string | null;
+  state: ComputerStatus["state"] | undefined;
+  accessNames: string[];
+}) {
+  const shared = computerModeKind(mode) === "shared";
+  const line = hasControl
+    ? t`You have control`
+    : waking
+      ? t`Waking desktop`
+      : error
+        ? error
+        : busyBotName
+          ? t`${busyBotName} is using it`
+          : state === "suspended"
+            ? t`Asleep`
+            : shared
+              ? t`Shared desktop`
+              : t`Own desktop`;
+  return (
+    <span className="min-w-0 text-[13.5px] text-[#64748B]">
+      <span className="block truncate">{line}</span>
+      {shared && accessNames.length > 0 ? (
+        <span className="mt-0.5 block truncate text-[12px] text-[#94A3B8]" data-testid="desktop-access">
+          {accessNames.length === 1 ? (
+            <Trans>Access: {accessNames[0]}</Trans>
+          ) : (
+            <Trans>Access: {accessNames.join(", ")}</Trans>
+          )}
+        </span>
+      ) : !shared ? (
+        <span className="mt-0.5 block truncate text-[12px] text-[#94A3B8]">
+          <Trans>This bot only</Trans>
+        </span>
+      ) : null}
+    </span>
+  );
 }
 
 function ChoiceCard({
@@ -6004,10 +6505,10 @@ function ChoiceCard({
 
   return (
     <div className="flex justify-start">
-      <div className="w-[min(420px,80%)] rounded-[20px] bg-[#1A1A1D] px-[18px] py-[14px]">
-        <div className="text-[15.5px] text-[#DFDFE2]">{block.question}</div>
+      <div className="w-[min(420px,80%)] rounded-[20px] bg-[#F1F5F9] px-[18px] py-[14px]">
+        <div className="text-[15.5px] text-[#1E293B]">{block.question}</div>
         {block.subtitle ? (
-          <div className="mt-0.5 text-[13px] text-[#85858A]">{block.subtitle}</div>
+          <div className="mt-0.5 text-[13px] text-[#64748B]">{block.subtitle}</div>
         ) : null}
         <div className="mt-3 space-y-1.5">
           {block.options
@@ -6018,17 +6519,17 @@ function ChoiceCard({
                 type="button"
                 disabled={Boolean(block.answerId) || pending}
                 onClick={() => void choose(option.id)}
-                className={`flex w-full items-center gap-3 rounded-[12px] border border-[#2A2A2F] px-3.5 py-3 text-start disabled:opacity-60 ${block.answerId ? "bg-[#1F1F23]" : "bg-[#161619] hover:bg-[#222226]"}`}
+                className={`flex w-full items-center gap-3 rounded-[12px] border border-[#E2E8F0] px-3.5 py-3 text-start disabled:opacity-60 ${block.answerId ? "bg-[#F1F5F9]" : "bg-white hover:bg-[#F1F5F9]"}`}
               >
-                <span className="grid h-[24px] w-[24px] place-items-center rounded-[7px] bg-[#232327] text-[12.5px] text-[#9A9AA0]">
+                <span className="grid h-[24px] w-[24px] place-items-center rounded-[7px] bg-[#e2e8f0] text-[12.5px] text-[#94A3B8]">
                   {option.letter}
                 </span>
                 <span
-                  className={`flex-1 text-[15px] ${block.answerId ? "text-[#85858A]" : "text-[#ECECEE]"}`}
+                  className={`flex-1 text-[15px] ${block.answerId ? "text-[#64748B]" : "text-[#020817]"}`}
                 >
                   {option.label}
                 </span>
-                {block.answerId === option.id ? <span className="text-[#B9B9C0]">✓</span> : null}
+                {block.answerId === option.id ? <span className="text-[#94A3B8]">✓</span> : null}
               </button>
             ))}
         </div>
@@ -6191,16 +6692,16 @@ function ChartCanvas({
       </div>
     );
   return (
-    <div className="text-[#C9C9CE]">
+    <div className="text-[#334155]">
       {meta.title ? (
-        <div className="mb-1 text-[14.5px] font-semibold text-[#ECECEE]">{meta.title}</div>
+        <div className="mb-1 text-[14.5px] font-semibold text-[#020817]">{meta.title}</div>
       ) : null}
       {meta.swatches.length > 0 ? (
         <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1">
           {meta.swatches.map((swatch) => (
             <span
               key={swatch.label}
-              className="flex items-center gap-1.5 text-[12px] text-[#A6A6AD]"
+              className="flex items-center gap-1.5 text-[12px] text-[#94A3B8]"
             >
               <span
                 className="h-[10px] w-[10px] rounded-[3px]"
@@ -6304,7 +6805,7 @@ function McpApprovalCard({
         </div>
       ) : null}
       {state === "dismissed" ? (
-        <p className="mt-2 text-[13px] text-[#85858A]">
+        <p className="mt-2 text-[13px] text-[#64748B]">
           <Trans>Dismissed — reconnect anytime from MCP settings.</Trans>
         </p>
       ) : null}
@@ -6344,12 +6845,12 @@ function ChartBlockView({
   const expandedViewport = chartViewport(viewport.width, viewport.height);
   return (
     <>
-      <div className="group relative max-w-[74%] rounded-[20px] bg-[#17171A] p-4">
+      <div className="group relative max-w-[74%] rounded-[20px] bg-white p-4">
         <ChartCanvas spec={spec} data={data} width={520} />
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="absolute end-3 top-3 rounded-lg border border-[#34343B] bg-[#1F1F22] px-2.5 py-1 text-[11px] text-[#B9B9C0] opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A6A6AD]"
+          className="absolute end-3 top-3 rounded-lg border border-[#CBD5E1] bg-[#F1F5F9] px-2.5 py-1 text-[11px] text-[#94A3B8] opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#94A3B8]"
         >
           <Trans>Expand</Trans>
         </button>
@@ -6367,14 +6868,14 @@ function ChartBlockView({
             if (event.key === "Escape") setExpanded(false);
           }}
         >
-          <div className="max-h-[92vh] w-[min(1320px,94vw)] overflow-auto rounded-[24px] border border-[#2A2A31] bg-[#141416] p-8 shadow-[0_40px_90px_rgba(0,0,0,.6)]">
+          <div className="max-h-[92vh] w-[min(1320px,94vw)] overflow-auto rounded-[24px] border border-[#E2E8F0] bg-[#ffffff] p-8 shadow-[0_40px_90px_rgba(0,0,0,.6)]">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-[13px] text-[#85858A]">{name}</span>
+              <span className="text-[13px] text-[#64748B]">{name}</span>
               <button
                 type="button"
                 aria-label={t`Close chart`}
                 onClick={() => setExpanded(false)}
-                className="text-lg text-[#85858A] hover:text-[#DFDFE2]"
+                className="text-lg text-[#64748B] hover:text-[#1E293B]"
               >
                 ✕
               </button>
@@ -6465,7 +6966,7 @@ function ArtifactImage({
           <img src={src} alt={name} className="max-h-48 w-full object-cover" />
         </button>
       ) : (
-        <div className="rounded-[20px] border border-[#26262A] bg-[#17171A] px-4 py-3 text-[14px] text-[#85858A]">
+        <div className="rounded-[20px] border border-[#E2E8F0] bg-white px-4 py-3 text-[14px] text-[#64748B]">
           {name}
         </div>
       )}

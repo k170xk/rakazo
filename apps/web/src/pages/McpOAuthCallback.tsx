@@ -44,9 +44,9 @@ export function McpOAuthCallbackPage() {
   }, [navigate, params, t]);
   const showReturn = Boolean(error) && window.name !== POPUP_NAME;
   return (
-    <div className="grid min-h-screen place-items-center bg-[#050506] p-6 text-center">
+    <div className="grid min-h-screen place-items-center bg-[#f8fafc] p-6 text-center">
       <div>
-        <div className="text-lg text-[#F1F1F2]">
+        <div className="text-lg text-[#020817]">
           {error ? (
             <Trans>OAuth connection failed</Trans>
           ) : done ? (
@@ -55,17 +55,17 @@ export function McpOAuthCallbackPage() {
             <Trans>Finishing MCP connection…</Trans>
           )}
         </div>
-        {error ? <p className="mt-2 max-w-md text-sm text-[#85858B]">{error}</p> : null}
+        {error ? <p className="mt-2 max-w-md text-sm text-[#64748B]">{error}</p> : null}
         {showReturn ? (
           <button
             type="button"
             onClick={() => navigate("/app")}
-            className="mt-5 rounded-xl bg-[#7785FF] px-4 py-2 text-sm font-semibold text-[#090A12]"
+            className="mt-5 rounded-xl bg-[#7785FF] px-4 py-2 text-sm font-semibold text-[#F8FAFC]"
           >
-            <Trans>Return to Rakazo</Trans>
+            <Trans>Return to Evolve Computer</Trans>
           </button>
         ) : (
-          <p className="mt-2 text-sm text-[#85858B]">
+          <p className="mt-2 text-sm text-[#64748B]">
             {error || done ? (
               <Trans>You can close this window.</Trans>
             ) : (

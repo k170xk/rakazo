@@ -196,8 +196,8 @@ test("an active Team bot must be stopped before user takeover", async ({ page },
 async function createBot(page: Page, name: string, mode: "team" | "dedicated") {
   await openNewBot(page);
   await expect(page.getByText("New bot", { exact: true })).toBeVisible();
-  const team = page.getByRole("button", { name: "Team", exact: true });
-  const privateComputer = page.getByRole("button", { name: "Private", exact: true });
+  const team = page.getByRole("button", { name: "Shared", exact: true });
+  const privateComputer = page.getByRole("button", { name: "Own", exact: true });
   await expect(team).toHaveAttribute("aria-pressed", "true");
   if (mode === "dedicated") await privateComputer.click();
   await expect(mode === "team" ? team : privateComputer).toHaveAttribute("aria-pressed", "true");
@@ -217,12 +217,8 @@ async function setComputerMode(
   await page.getByRole("button", { name: botName, exact: true }).last().click();
   const settings = page.getByTestId("bot-settings");
   await expect(settings.locator("label:has-text('Name') input")).toHaveValue(botName);
-  const advanced = settings.getByTestId("bot-settings-advanced");
-  await advanced.evaluate((element) => {
-    (element as HTMLDetailsElement).open = true;
-  });
   await settings
-    .getByRole("button", { name: mode === "team" ? "Team" : "Private", exact: true })
+    .getByRole("button", { name: mode === "team" ? "Shared" : "Own", exact: true })
     .click();
   await settings.getByRole("button", { name: "Save", exact: true }).click();
   await expect

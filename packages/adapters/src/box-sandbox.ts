@@ -468,6 +468,10 @@ export class BoxSandboxProvider implements SandboxProvider {
     this.screens.release(this.id(computer), context);
   }
 
+  async stealScreen(computer: ComputerRef, _context: AdapterContext): Promise<void> {
+    this.screens.steal(this.id(computer));
+  }
+
   async stop(computer: ComputerRef, context: AdapterContext): Promise<void> {
     const id = this.id(computer);
     try {

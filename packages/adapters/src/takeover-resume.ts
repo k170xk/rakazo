@@ -1,4 +1,4 @@
-export type TakeoverResumeCheckpoint = "takeover" | "takeover-skipped";
+export type TakeoverResumeCheckpoint = "takeover" | "takeover-skipped" | "takeover-released";
 
 export function takeoverResumeFromRelease(reason: unknown): {
   checkpoint: TakeoverResumeCheckpoint;
@@ -11,9 +11,16 @@ export function takeoverResumeFromRelease(reason: unknown): {
         "The user skipped the login. Continue without treating the login as complete. Do not request takeover again unless you still cannot proceed.",
     };
   }
+  if (reason === "done") {
+    return {
+      checkpoint: "takeover",
+      promptNote:
+        "The user finished the login. Continue from where you left off. Do not request takeover again.",
+    };
+  }
   return {
-    checkpoint: "takeover",
+    checkpoint: "takeover-released",
     promptNote:
-      "The user finished the login. Continue from where you left off. Do not request takeover again.",
+      "The user released the desktop. You have control again and can continue. Do not request takeover unless you still cannot proceed.",
   };
 }

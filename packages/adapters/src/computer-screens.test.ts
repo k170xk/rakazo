@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ComputerScreenUnavailableError,
   isComputerScreenUnavailable,
+  isComputerScreenUnavailableResult,
+  MULTI_SCREEN_UNAVAILABLE,
   SingleScreenClaimTracker,
   withComputerScreenAvailability,
 } from "./computer-screens.js";
@@ -56,6 +58,22 @@ describe("Team Computer parallel screens", () => {
     expect(
       new TextDecoder().decode(await fake.readFile(computer, "shared/note.txt", researcher)),
     ).toBe("office");
+  });
+
+  it("lets steal clear a claim so another bot can take the display", () => {
+    const claims = new SingleScreenClaimTracker();
+    claims.claim("computer-1", writer);
+    expect(() => claims.claim("computer-1", researcher)).toThrow(ComputerScreenUnavailableError);
+    claims.steal("computer-1");
+    expect(() => claims.claim("computer-1", researcher)).not.toThrow();
+  });
+
+  it("detects a desktop-tool error object that needs a handoff prompt", () => {
+    expect(isComputerScreenUnavailableResult({ error: MULTI_SCREEN_UNAVAILABLE })).toBe(true);
+    expect(
+      isComputerScreenUnavailableResult({ error: "This Team Computer cannot allocate another screen." }),
+    ).toBe(true);
+    expect(isComputerScreenUnavailableResult({ ok: true })).toBe(false);
   });
 
   it("releases a single-screen claim only for the owning bot", () => {
@@ -127,6 +145,16 @@ describe("Team Computer parallel screens", () => {
       ComputerScreenUnavailableError,
     );
     await emulator.releaseScreen(computer, writer);
+    await expect(emulator.observe(computer, researcher)).resolves.toMatchObject({
+      activeWindow: expect.anything(),
+    });
+  });
+
+  it("lets a second Team bot take the display after a user-approved steal", async () => {
+    const emulator = new ManagedSandboxEmulator();
+    const computer = await emulator.provision({ botId: "team-home", homePath: "/tmp" }, writer);
+    await emulator.observe(computer, writer);
+    await emulator.stealScreen(computer, researcher);
     await expect(emulator.observe(computer, researcher)).resolves.toMatchObject({
       activeWindow: expect.anything(),
     });

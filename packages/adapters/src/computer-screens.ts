@@ -37,6 +37,10 @@ export class SingleScreenClaimTracker {
     });
   }
 
+  steal(computerId: string): void {
+    this.owners.delete(computerId);
+  }
+
   release(computerId: string, context?: AdapterContext): void {
     if (!context) {
       this.owners.delete(computerId);
@@ -56,6 +60,17 @@ export function isComputerScreenUnavailable(error: unknown): error is Error {
   return (
     error instanceof ComputerScreenUnavailableError ||
     (error instanceof Error && /cannot allocate another screen/i.test(error.message))
+  );
+}
+
+export function isComputerScreenUnavailableResult(result: unknown): boolean {
+  if (!result || typeof result !== "object") return false;
+  const error = (result as { error?: unknown }).error;
+  return (
+    typeof error === "string" &&
+    (error === MULTI_SCREEN_UNAVAILABLE ||
+      /cannot allocate another screen/i.test(error) ||
+      /does not support multiple screens/i.test(error))
   );
 }
 

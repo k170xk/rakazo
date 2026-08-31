@@ -10,6 +10,7 @@ import {
 import {
   ACTIVE_RUN_STATUSES,
   isActive,
+  liveSendDisposition,
   projectMessages,
   resolveGroupTargetBotIds,
   runFailureError,
@@ -32,7 +33,7 @@ import {
   resolveGroupSendAttachments,
   resolveSendAttachments,
 } from "./artifacts.js";
-import { resolveBusyBotName, toComputerStatus } from "./computer-status.js";
+import { resolveBusyBot, toComputerStatus } from "./computer-status.js";
 import { withSerializableRetry } from "./serializable-retry.js";
 import { loadMessagePage } from "./thread-message-pages.js";
 
@@ -109,6 +110,22 @@ function sendRunClientNonce(
   return botId ? `send:${messageId}:${botId}` : `send:${messageId}`;
 }
 
+async function findLiveUserRun(
+  tx: Prisma.TransactionClient,
+  input: { threadId: string; botId: string },
+) {
+  return tx.run.findFirst({
+    where: {
+      threadId: input.threadId,
+      botId: input.botId,
+      status: { in: ["running", "leased", "waiting_input", "waiting_takeover"] },
+      trigger: { in: ["user", "follow_up"] },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, taskId: true, status: true },
+  });
+}
+
 async function enqueueRunsNeedingContinue(
   jobs: JobPublisher,
   runs: Array<{ id: string; status: string }>,
@@ -139,8 +156,19 @@ async function replayExistingSend(
 ) {
   if (!clientNonce) return null;
   const message = await findSendReceipt(deps.prisma, threadId, clientNonce);
-  if (!message || message.sourceRuns.length === 0) return null;
-  await enqueueRunsNeedingContinue(deps.jobs, message.sourceRuns);
+  if (!message) return null;
+  const runs =
+    message.sourceRuns.length > 0
+      ? message.sourceRuns
+      : message.runId
+        ? ((await deps.prisma.run.findUnique({
+            where: { id: message.runId },
+            select: { id: true, taskId: true, status: true },
+          })) ?? undefined)
+        : undefined;
+  const attached = runs && !Array.isArray(runs) ? [runs] : runs;
+  if (!attached || attached.length === 0) return null;
+  await enqueueRunsNeedingContinue(deps.jobs, attached);
   const latestEvent = await deps.prisma.event.findFirst({
     where: { threadId },
     orderBy: { seq: "desc" },
@@ -152,7 +180,7 @@ async function replayExistingSend(
       console.error("thread send realtime notification", error);
     });
   }
-  return sendResult(message, message.sourceRuns);
+  return sendResult(message, attached);
 }
 
 function sendResult(message: { seq: number }, runs: Array<{ id: string; taskId: string }>) {
@@ -279,8 +307,8 @@ export async function threadSnapshot(
   // otherwise advance the client cursor past thread.message.created while the
   // ask message page still omits it — leaving waiting_input with no AskCard.
   if (target.kind === "bot") {
-    const [busyBotName, core] = await Promise.all([
-      resolveBusyBotName(deps.prisma, {
+    const [busy, core] = await Promise.all([
+      resolveBusyBot(deps.prisma, {
         computerId: target.bot.computer?.id,
         botId: target.botId,
         botName: target.bot.name,
@@ -324,7 +352,12 @@ export async function threadSnapshot(
       messages: messagesWithLiveEvents(core.messagePage.messages, core.liveEvents),
       olderCursor: core.messagePage.olderCursor,
       run: core.run ? mapRun(core.run) : null,
-      computer: toComputerStatus(target.botId, target.bot.computer, busyBotName),
+      computer: toComputerStatus(
+        target.botId,
+        target.bot.computer,
+        busy?.name ?? null,
+        busy?.botId ?? null,
+      ),
     };
   }
 
@@ -514,6 +547,42 @@ export async function sendThreadMessage(
           replyToMessageId: input.replyToMessageId,
           clientNonce: input.clientNonce,
         });
+        const live = await findLiveUserRun(tx, { threadId: target.threadId, botId: target.botId });
+        const disposition = liveSendDisposition(live?.status);
+        if (live && disposition !== "new-run") {
+          await tx.message.update({ where: { id: message.id }, data: { runId: live.id } });
+          let status = live.status;
+          if (disposition === "resume") {
+            const resumed = await tx.run.updateMany({
+              where: { id: live.id, status: "waiting_input" },
+              data: { status: "queued", leaseOwner: null, leaseExpiresAt: null },
+            });
+            if (resumed.count === 1) status = "queued";
+          }
+          await cancelSupersededQueuedRuns(tx, {
+            threadId: target.threadId,
+            botIds: [target.botId],
+            keepRunIds: [live.id],
+          });
+          const event = await appendEventInTransaction(tx, {
+            workspaceId: actor.workspaceId,
+            threadId: target.threadId,
+            botId: target.botId,
+            type: "thread.message.created",
+            runId: live.id,
+            payload: {
+              messageId: message.id,
+              role: "user",
+              blocks,
+              replyToMessageId: input.replyToMessageId,
+            },
+          });
+          return {
+            message,
+            runs: [{ id: live.id, taskId: live.taskId, status }],
+            eventSeq: event.seq,
+          };
+        }
         const task = await tx.task.create({
           data: {
             workspaceId: actor.workspaceId,
@@ -589,6 +658,20 @@ export async function sendThreadMessage(
       });
       const runs: Array<{ id: string; taskId: string; botId: string; status: string }> = [];
       for (const botId of targetBotIds) {
+        const live = await findLiveUserRun(tx, { threadId: target.threadId, botId });
+        const disposition = liveSendDisposition(live?.status);
+        if (live && disposition !== "new-run") {
+          let status = live.status;
+          if (disposition === "resume") {
+            const resumed = await tx.run.updateMany({
+              where: { id: live.id, status: "waiting_input" },
+              data: { status: "queued", leaseOwner: null, leaseExpiresAt: null },
+            });
+            if (resumed.count === 1) status = "queued";
+          }
+          runs.push({ id: live.id, taskId: live.taskId, botId, status });
+          continue;
+        }
         const task = await tx.task.create({
           data: {
             workspaceId: actor.workspaceId,

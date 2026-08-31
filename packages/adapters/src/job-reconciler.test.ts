@@ -185,8 +185,11 @@ describe("createJobReconciler", () => {
     const runFindMany = vi
       .fn()
       .mockResolvedValueOnce(runs.slice(0, 2))
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce(runs.slice(2, 4))
-      .mockResolvedValueOnce(runs.slice(4));
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(runs.slice(4))
+      .mockResolvedValueOnce([]);
     const routineFindMany = vi
       .fn()
       .mockResolvedValueOnce(routines.slice(0, 2))
@@ -217,7 +220,7 @@ describe("createJobReconciler", () => {
       "run:run-5",
       "routine:routine-5",
     ]);
-    expect(runFindMany.mock.calls[1]?.[0]).toMatchObject({
+    expect(runFindMany.mock.calls[2]?.[0]).toMatchObject({
       orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
       where: {
         AND: [
@@ -285,7 +288,10 @@ describe("createJobReconciler", () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([terminalRun]);
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([terminalRun])
+      .mockResolvedValueOnce([]);
     const prisma = {
       run: { findMany: runFindMany, updateMany: vi.fn(async () => ({ count: 1 })) },
       routine: { findMany: vi.fn(async () => []) },

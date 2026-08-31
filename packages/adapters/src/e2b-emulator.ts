@@ -69,6 +69,11 @@ export class ManagedSandboxEmulator extends FakeSandboxProvider {
     await super.releaseScreen(computer, context);
   }
 
+  override async stealScreen(computer: ComputerRef, context: AdapterContext): Promise<void> {
+    this.screenClaims.steal(computer.providerRef || computer.id);
+    await super.stealScreen(computer, context);
+  }
+
   override async stop(computer: ComputerRef, context: AdapterContext): Promise<void> {
     this.screenClaims.release(computer.providerRef || computer.id);
     return super.stop(computer, context);

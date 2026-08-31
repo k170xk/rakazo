@@ -18,6 +18,36 @@ describe("screen proxy capability", () => {
     expect(result.searchParams.get("view_only")).toBe("true");
   });
 
+  it("signs loopback HTTPS streams the same way so the iframe is not given 127.0.0.1", () => {
+    const result = new URL(
+      addScreenProxyCapability(
+        "https://127.0.0.1:6080/vnc.html?view_only=true",
+        "secret",
+        "https://app.example",
+        100,
+      ),
+    );
+    expect(result.origin).toBe("https://app.example");
+    expect(result.pathname).toMatch(/^\/novnc\/[\w-]+\/6080\/view\/3600100\.[\w-]{43}\/vnc\.html$/);
+  });
+
+  it("proxies E2B desktops onto the app origin so the iframe is not cross-site", () => {
+    const result = new URL(
+      addScreenProxyCapability(
+        "https://6080-desktop.e2b.app/vnc.html?autoconnect=true&view_only=true",
+        "secret",
+        "https://app.example",
+        100,
+        { proxyExternal: true },
+      ),
+    );
+    expect(result.origin).toBe("https://app.example");
+    expect(result.pathname).toMatch(/^\/novnc\/remote\/view\/3600100\.[\w-]+\/vnc\.html$/);
+    expect(result.searchParams.get("autoconnect")).toBe("true");
+    expect(result.searchParams.get("view_only")).toBe("true");
+    expect(result.hostname).not.toContain("e2b.app");
+  });
+
   it("does not modify managed-provider URLs", () => {
     const url = "https://sandbox.example/embed.html?token=provider-token";
     expect(addScreenProxyCapability(url, "secret", "https://app.example", 100)).toBe(url);
@@ -35,6 +65,7 @@ describe("screen proxy capability", () => {
     );
     expect(result.origin).toBe("https://app.example");
     expect(result.pathname).toMatch(/^\/novnc\/remote\/view\/3600100\.[\w-]+\/vnc\.html$/);
+    expect(result.searchParams.get("view_only")).toBe("true");
     expect(result.toString()).not.toContain("provider-token");
   });
 });

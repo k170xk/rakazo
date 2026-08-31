@@ -54,6 +54,7 @@ import {
   parseExtraDisplayViewPassword,
   parseReleasedExtraDisplay,
   releaseExtraDisplayCommand,
+  resetScreenAssignmentsCommand,
   screenControlKey,
 } from "./extra-displays.js";
 
@@ -494,6 +495,25 @@ export class DaytonaSandboxProvider implements SandboxProvider {
     await Promise.all(previews.map((preview) => this.revokeScreenPreview(sandbox, preview)));
     if (index === 0) return;
     // Non-primary teardown runs inside the registry lock before the slot is reusable.
+  }
+
+  async stealScreen(computer: ComputerRef, _context: AdapterContext): Promise<void> {
+    const id = computer.providerRef || computer.id;
+    const sandbox = this.boxes.get(id) ?? (await this.box(computer).catch(() => undefined));
+    if (!sandbox) return;
+    await sandbox.process
+      .executeCommand(resetScreenAssignmentsCommand())
+      .catch(() => undefined);
+    const prefix = `${id}:`;
+    const previews = [];
+    for (const key of [...this.screenPreviews.keys()]) {
+      if (!key.startsWith(prefix)) continue;
+      const preview = this.screenPreviews.get(key);
+      this.screenPreviews.delete(key);
+      this.screenPreviewStarts.delete(key);
+      previews.push(preview);
+    }
+    await Promise.all(previews.map((preview) => this.revokeScreenPreview(sandbox, preview)));
   }
 
   async stop(computer: ComputerRef, _context: AdapterContext): Promise<void> {

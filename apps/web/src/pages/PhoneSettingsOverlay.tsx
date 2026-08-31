@@ -58,17 +58,17 @@ export function PhoneSettingsOverlay({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-labelledby="phone-settings-title"
         tabIndex={-1}
-        className="rk-scroll max-h-full w-[640px] max-w-full overflow-y-auto rounded-[26px] border border-[#232326] bg-[#141416] p-6 shadow-[0_40px_90px_rgba(0,0,0,.55)] sm:p-8"
+        className="rk-scroll max-h-full w-[640px] max-w-full overflow-y-auto rounded-[26px] border border-[#e2e8f0] bg-[#ffffff] p-6 shadow-[0_40px_90px_rgba(0,0,0,.55)] sm:p-8"
       >
         <div className="flex items-start justify-between gap-6">
-          <h2 id="phone-settings-title" className="text-2xl font-medium text-[#F1F1F2]">
+          <h2 id="phone-settings-title" className="text-2xl font-medium text-[#020817]">
             <Trans>Phone</Trans>
           </h2>
           <button
             type="button"
             aria-label={t`Close phone settings`}
             onClick={onClose}
-            className="text-[#85858A]"
+            className="text-[#64748B]"
           >
             ✕
           </button>
@@ -76,11 +76,11 @@ export function PhoneSettingsOverlay({ onClose }: { onClose: () => void }) {
 
         {error ? <p className="mt-4 text-[13px] text-[#E88B8B]">{error}</p> : null}
 
-        <section className="mt-8 rounded-[14px] border border-[#26262A] bg-[#101012] px-4 py-4">
-          <h3 className="text-[15px] font-medium text-[#ECECEE]">
+        <section className="mt-8 rounded-[14px] border border-[#E2E8F0] bg-[#ffffff] px-4 py-4">
+          <h3 className="text-[15px] font-medium text-[#020817]">
             <Trans>iMessage line</Trans>
           </h3>
-          <p className="mt-3 text-[14px] text-[#C9C9CE]">
+          <p className="mt-3 text-[14px] text-[#334155]">
             {status?.linked ? (
               <Trans>Linked as {status.phoneE164}</Trans>
             ) : (
@@ -91,12 +91,12 @@ export function PhoneSettingsOverlay({ onClose }: { onClose: () => void }) {
           </p>
         </section>
 
-        <section className="mt-5 rounded-[14px] border border-[#26262A] bg-[#101012] px-4 py-4">
-          <h3 className="text-[15px] font-medium text-[#ECECEE]">
+        <section className="mt-5 rounded-[14px] border border-[#E2E8F0] bg-[#ffffff] px-4 py-4">
+          <h3 className="text-[15px] font-medium text-[#020817]">
             <Trans>Channels</Trans>
           </h3>
           {channels.length === 0 ? (
-            <p className="mt-3 text-[13px] text-[#7A7A80]">
+            <p className="mt-3 text-[13px] text-[#64748B]">
               <Trans>No iMessage groups yet.</Trans>
             </p>
           ) : (
@@ -104,11 +104,11 @@ export function PhoneSettingsOverlay({ onClose }: { onClose: () => void }) {
               {channels.map((channel) => (
                 <li
                   key={channel.channelId}
-                  className="flex items-center justify-between gap-3 text-[14px] text-[#C9C9CE]"
+                  className="flex items-center justify-between gap-3 text-[14px] text-[#334155]"
                 >
                   <span>
                     {channel.name ?? t`Group`}{" "}
-                    <span className="text-[12px] text-[#7A7A80]">
+                    <span className="text-[12px] text-[#64748B]">
                       {channel.status} · {channel.memberCount}
                     </span>
                   </span>
@@ -158,12 +158,12 @@ export function PhoneSettingsOverlay({ onClose }: { onClose: () => void }) {
           )}
         </section>
 
-        <section className="mt-5 rounded-[14px] border border-[#26262A] bg-[#101012] px-4 py-4">
-          <h3 className="text-[15px] font-medium text-[#ECECEE]">
+        <section className="mt-5 rounded-[14px] border border-[#E2E8F0] bg-[#ffffff] px-4 py-4">
+          <h3 className="text-[15px] font-medium text-[#020817]">
             <Trans>Agent connections</Trans>
           </h3>
           {connections.length === 0 ? (
-            <p className="mt-3 text-[13px] text-[#7A7A80]">
+            <p className="mt-3 text-[13px] text-[#64748B]">
               <Trans>No agent connections yet.</Trans>
             </p>
           ) : (
@@ -171,13 +171,13 @@ export function PhoneSettingsOverlay({ onClose }: { onClose: () => void }) {
               {connections.map((connection) => (
                 <li
                   key={connection.id}
-                  className="flex items-center justify-between gap-3 text-[14px] text-[#C9C9CE]"
+                  className="flex items-center justify-between gap-3 text-[14px] text-[#334155]"
                 >
                   <span>
                     {connection.peerOwnerLabel}
                     {"'s "}
                     {connection.peerBotName}{" "}
-                    <span className="text-[12px] text-[#7A7A80]">{connection.status}</span>
+                    <span className="text-[12px] text-[#64748B]">{connection.status}</span>
                   </span>
                   <span className="flex gap-2">
                     {connection.status === "pending" && connection.incoming ? (

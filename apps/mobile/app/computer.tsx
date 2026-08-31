@@ -76,25 +76,18 @@ export default function Computer() {
     return () => clearInterval(timer);
   }, [botId]);
 
-  async function bootComputer({
-    takeControl,
-    overlay,
-    force = false,
-  }: {
-    takeControl: boolean;
-    overlay: boolean;
-    force?: boolean;
-  }) {
+  async function ensureComputer({ takeControl }: { takeControl: boolean }) {
     if (!botId) return;
-    const needsBoot = force || computer?.state !== "running" || !screenUrl;
-    if (overlay && needsBoot) setBooting(true);
+    const needsBoot = computer?.state !== "running";
+    const recoverScreen = computer?.state === "running" && !screenUrl;
+    if (needsBoot || recoverScreen) setBooting(true);
     try {
-      if (needsBoot) await rpc("computer/boot", { botId });
+      if (needsBoot || recoverScreen) await rpc("computer/boot", { botId });
       if (takeControl) await rpc("computer/takeover", { botId });
       await refresh({ screenAttempts: SCREEN_URL_OPEN_ATTEMPTS });
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not open computer");
+      setError(err instanceof Error ? err.message : "Could not wake the desktop");
       throw err;
     } finally {
       setBooting(false);
@@ -103,14 +96,10 @@ export default function Computer() {
 
   useEffect(() => {
     if (!ready || !botId) return;
-    if (computer?.state === "booting" || computer?.state === "suspended") return;
+    if (computer?.state === "booting") return;
     if (autoBooted.current === botId) return;
     autoBooted.current = botId;
-    void bootComputer({
-      takeControl: false,
-      overlay: computer?.state !== "running",
-      force: true,
-    }).catch(() => undefined);
+    void ensureComputer({ takeControl: false }).catch(() => undefined);
   }, [ready, botId, computer?.state]);
 
   useEffect(() => {
@@ -123,14 +112,20 @@ export default function Computer() {
 
   async function openComputer() {
     if (!botId) return;
-    const needsTakeover = !(computer?.controlHolder === "user" && computer.controlBotId === botId);
+    setComputerOpen(true);
     try {
-      await bootComputer({
-        takeControl: needsTakeover,
-        overlay: needsTakeover || computer?.state !== "running",
-        force: computer?.state !== "running",
-      });
-      setComputerOpen(true);
+      await ensureComputer({ takeControl: false });
+      setScreenError(null);
+    } catch {
+      // error already set
+    }
+  }
+
+  async function takeComputerControl() {
+    if (!botId) return;
+    setComputerOpen(true);
+    try {
+      await ensureComputer({ takeControl: true });
       setScreenError(null);
     } catch {
       // error already set
@@ -140,7 +135,7 @@ export default function Computer() {
   async function releaseComputer(reason?: ComputerReleaseReason) {
     if (!botId) return;
     await rpc("computer/release", { botId, reason }).catch(() => undefined);
-    setComputerOpen(false);
+    if (reason === "done" || reason === "skipped") setComputerOpen(false);
     await refresh().catch(() => undefined);
   }
 
@@ -220,14 +215,30 @@ export default function Computer() {
             takeoverRequested={computer?.takeoverRequested ?? false}
             onRelease={releaseComputer}
           />
-        ) : (
+        ) : computer?.state === "stopped" ||
+          computer?.state === "suspended" ||
+          computer?.state === "error" ? (
           <Pressable
-            onPress={() => void openComputer()}
+            onPress={() => void ensureComputer({ takeControl: false }).catch(() => undefined)}
             style={{
               backgroundColor: "#1A1A1D",
               paddingHorizontal: 14,
               paddingVertical: 10,
               borderRadius: 12,
+            }}
+          >
+            <Text style={{ color: "#ECECEE" }}>Wake</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => void takeComputerControl()}
+            disabled={booting}
+            style={{
+              backgroundColor: "#1A1A1D",
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              borderRadius: 12,
+              opacity: booting ? 0.5 : 1,
             }}
           >
             <Text style={{ color: "#ECECEE" }}>Take control</Text>
@@ -268,52 +279,12 @@ export default function Computer() {
       </View>
 
       <Modal
-        visible={booting || computerOpen}
+        visible={computerOpen}
         animationType="fade"
         presentationStyle="fullScreen"
-        onRequestClose={() => {
-          if (!booting) setComputerOpen(false);
-        }}
+        onRequestClose={() => setComputerOpen(false)}
       >
         <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          {booting ? (
-            <SafeAreaView
-              edges={["top", "left", "right"]}
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(4,4,5,0.96)",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 22,
-                padding: 24,
-              }}
-            >
-              <Text
-                style={{ color: "#F1F1F2", fontSize: 19, fontWeight: "500", textAlign: "center" }}
-              >
-                Booting {label}
-              </Text>
-              <View
-                style={{
-                  height: 5,
-                  width: "70%",
-                  maxWidth: 420,
-                  overflow: "hidden",
-                  borderRadius: 999,
-                  backgroundColor: "#232327",
-                }}
-              >
-                <View
-                  style={{
-                    height: "100%",
-                    width: "66%",
-                    borderRadius: 999,
-                    backgroundColor: "#F1F1EF",
-                  }}
-                />
-              </View>
-            </SafeAreaView>
-          ) : (
             <View style={{ flex: 1, backgroundColor: "#050506" }}>
               <SafeAreaView
                 edges={["top", "left", "right"]}
@@ -357,11 +328,7 @@ export default function Computer() {
                     />
                   ) : (
                     <Pressable
-                      onPress={() =>
-                        void bootComputer({ takeControl: true, overlay: false }).catch(
-                          () => undefined,
-                        )
-                      }
+                      onPress={() => void takeComputerControl()}
                       hitSlop={8}
                       style={{
                         borderWidth: 1,
@@ -407,15 +374,16 @@ export default function Computer() {
                     style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 16 }}
                   >
                     <Text style={{ color: "#6C6C70", textAlign: "center" }}>
-                      {computer?.state === "suspended"
-                        ? "Computer is asleep"
-                        : computerLabel(computer?.mode, name)}
+                      {booting || computer?.state === "booting"
+                        ? "Waking desktop"
+                        : computer?.state === "suspended"
+                          ? "Computer is asleep"
+                          : computerLabel(computer?.mode, name)}
                     </Text>
                   </View>
                 )}
               </View>
             </View>
-          )}
         </SafeAreaProvider>
       </Modal>
     </View>

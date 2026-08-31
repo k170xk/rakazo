@@ -13,6 +13,7 @@ import {
   type ComposerMention,
   isApprovalAskBlock,
   isRunTerminalEvent,
+  isScreenHandoffAskBlock,
   isSecretAskBlock,
   latestAnswerableAskMessageId,
   mentionChipKey,
@@ -1795,7 +1796,7 @@ const MessageBubble = memo(function MessageBubble({
   onPreviewMarkdown: (target: MarkdownArtifactPreviewTarget) => void;
   onSpeak?: (message: MobileMessage) => void;
 }) {
-  const [peerExpanded, setPeerExpanded] = useState(false);
+  const [peerExpanded, setPeerExpanded] = useState(true);
   const artifactTarget: MobileArtifactTarget = groupId ? { groupId } : { botId };
   const cardBotId = message.botId ?? botId;
   const appConnectBlocks = message.blocks.filter(
@@ -1804,7 +1805,7 @@ const MessageBubble = memo(function MessageBubble({
   );
   const ask = message.blocks.find(
     (block): block is Extract<MessageBlock, { kind: "ask" }> =>
-      block.kind === "ask" && !isApprovalAskBlock(block),
+      block.kind === "ask" && !isApprovalAskBlock(block) && !isScreenHandoffAskBlock(block),
   );
   if (ask) {
     return (
@@ -1975,7 +1976,9 @@ const MessageBubble = memo(function MessageBubble({
       </View>
     );
   }
-  const askBlock = message.blocks.find(isApprovalAskBlock);
+  const askBlock = message.blocks.find(
+    (block) => isApprovalAskBlock(block) || isScreenHandoffAskBlock(block),
+  );
   if (askBlock?.kind === "ask" && askBlock.actions?.length) {
     return (
       <View style={{ gap: 8, width: "100%" }}>
@@ -2017,7 +2020,11 @@ const MessageBubble = memo(function MessageBubble({
                 fontWeight: "600",
               }}
             >
-              {formatApprovalAnswer(askBlock.answer)}
+              {isScreenHandoffAskBlock(askBlock)
+                ? askBlock.answer === "allow"
+                  ? "This agent can take over"
+                  : "Kept the current session"
+                : formatApprovalAnswer(askBlock.answer)}
             </Text>
           ) : canAnswer && onAnswer ? (
             <AskActions

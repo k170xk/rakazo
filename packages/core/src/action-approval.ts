@@ -181,6 +181,19 @@ export function isSecretAskBlock(block: {
   return block.kind === "ask" && block.input === "secret" && !block.approvalEffectId;
 }
 
+export function isScreenHandoffAskBlock(block: {
+  kind: string;
+  input?: string;
+  approvalEffectId?: string;
+  actions?: Array<{ id: string }>;
+}): boolean {
+  if (block.kind !== "ask" || block.input !== "screen_handoff" || block.approvalEffectId) {
+    return false;
+  }
+  const actionIds = new Set((block.actions ?? []).map((action) => action.id));
+  return actionIds.has("allow") && actionIds.has("deny");
+}
+
 export function isApprovalAskBlock(block: {
   kind: string;
   approvalEffectId?: string;

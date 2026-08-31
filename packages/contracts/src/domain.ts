@@ -547,6 +547,7 @@ export const ComputerStatusSchema = z.object({
   screenHeight: z.number().int().positive(),
   homeRevision: z.string().nullable(),
   busyBotName: z.string().nullable(),
+  busyBotId: Id.nullable().optional(),
   updateAvailable: z.boolean(),
 });
 export type ComputerStatus = z.infer<typeof ComputerStatusSchema>;
@@ -771,6 +772,13 @@ export const DeploymentSettingsSchema = z.object({
   canChooseHostComputer: z.boolean(),
   sandboxProvider: z.string(),
 });
+export type DeploymentSettings = z.infer<typeof DeploymentSettingsSchema>;
+
+export const WorkspaceSchema = z.object({
+  id: Id,
+  name: z.string(),
+});
+export type Workspace = z.infer<typeof WorkspaceSchema>;
 
 export const ServerUpdateSourceSchema = z.object({
   repoUrl: z.string().max(400),
@@ -877,6 +885,8 @@ export const MeSchema = z.object({
   email: z.string().email(),
   name: z.string(),
   workspaceId: Id,
+  workspaceName: z.string().default("Workspace"),
+  workspaces: z.array(WorkspaceSchema).default([]),
   isDeploymentOwner: z.boolean(),
   needsModel: z.boolean(),
   defaultProvider: z.string().nullable(),

@@ -5,6 +5,7 @@ import {
   type BotSection,
   type MessageBlock,
 } from "@rakazo/contracts";
+import { preferredActiveRunStatus } from "@rakazo/core";
 import type { PrismaClient } from "./client.js";
 import { type ComputerMode, ensureComputerRecord, parseComputerMode } from "./computers.js";
 import { createThreadMessageInTransaction } from "./messages.js";
@@ -173,7 +174,7 @@ export function createRepos(prisma: PrismaClient) {
               status: { in: ["running", "queued", "leased", "waiting_input", "waiting_takeover"] },
             },
             orderBy: { createdAt: "desc" },
-            take: 1,
+            take: 8,
           },
           computer: { select: { scope: true } },
         },
@@ -185,7 +186,7 @@ export function createRepos(prisma: PrismaClient) {
           text?: string;
         }>;
         const preview = blocks.find((block) => block.text)?.text ?? "";
-        return mapBot(bot, preview, bot.runs[0]?.status ?? "idle");
+        return mapBot(bot, preview, preferredActiveRunStatus(bot.runs.map((run) => run.status)));
       });
     },
 

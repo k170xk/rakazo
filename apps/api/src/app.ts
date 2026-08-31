@@ -43,16 +43,13 @@ import {
   pipedreamConfigFromEnv,
   pushTokenPath,
   type RemoteConnectorDependencies,
+  reclaimAbandonedComputerTransitions,
   ScriptedAgentRuntime,
   SendBlueMessagingProvider,
   sendBlueConfigFromEnv,
   WorkspaceMemoryProviderResolver,
 } from "@rakazo/adapters";
-import {
-  blockedAuthPaths,
-  createAuth,
-  exchangeEvolveSso,
-} from "@rakazo/auth";
+import { blockedAuthPaths, createAuth, exchangeEvolveSso, resolveSignupPolicy } from "@rakazo/auth";
 import { signupPolicyFromEnv } from "@rakazo/core";
 import {
   createDb,
@@ -110,6 +107,7 @@ export async function createApp(
     : createDb(env.databaseUrl);
   const { prisma } = created;
   created.pool?.on("error", () => undefined);
+  await reclaimAbandonedComputerTransitions(prisma).catch(() => undefined);
   const realtime =
     realtimeOverride ??
     (created.pool
@@ -340,7 +338,11 @@ export async function createApp(
   app.use("/rpc/*", async (c, next) => {
     const session = await auth.api.getSession({ headers: sessionHeaders(c.req.raw) });
     const actor = session?.user
-      ? await requireMembership(prisma, session.user.id).catch(() => null)
+      ? await requireMembership(
+          prisma,
+          session.user.id,
+          session.session.activeOrganizationId,
+        ).catch(() => null)
       : null;
     const { matched, response } = await rpc.handle(c.req.raw, {
       prefix: "/rpc",
@@ -352,7 +354,9 @@ export async function createApp(
   mountVoiceHttpRoutes(app, { prisma, secrets }, async (c) => {
     const session = await auth.api.getSession({ headers: sessionHeaders(c.req.raw) });
     if (!session?.user) return null;
-    return requireMembership(prisma, session.user.id).catch(() => null);
+    return requireMembership(prisma, session.user.id, session.session.activeOrganizationId).catch(
+      () => null,
+    );
   });
   mountWebhookHttpRoutes(app, { prisma, secrets, events, jobs });
   // The phone webhook only exists when the messaging surface is enabled.
@@ -395,8 +399,12 @@ export async function createApp(
     });
   }
 
-  app.get("/health", (c) =>
-    c.json({
+  app.get("/health", async (c) => {
+    const signupPolicy = await resolveSignupPolicy(prisma, {
+      signupsEnabled: env.signupsEnabled,
+      signupAllowlist: env.signupAllowlist,
+    });
+    return c.json({
       ok: true,
       runtime: env.agentRuntime,
       sandbox: env.sandboxProvider,
@@ -406,8 +414,9 @@ export async function createApp(
       jobs: jobKind,
       realtime: realtime.describe().id,
       revision: env.gitSha ?? null,
-    }),
-  );
+      signupsEnabled: signupPolicy.enabled,
+    });
+  });
 
   return {
     app,
@@ -432,11 +441,7 @@ export async function createApp(
   };
 }
 
-async function handleEvolveSso(
-  c: Context,
-  env: AppEnv,
-  prisma: PrismaClient,
-): Promise<Response> {
+async function handleEvolveSso(c: Context, env: AppEnv, prisma: PrismaClient): Promise<Response> {
   if (!env.evolveSsoSecret) {
     return c.json({ error: "Not found" }, 404);
   }
@@ -459,7 +464,10 @@ async function handleEvolveSso(
       maxAge,
       ...(secure ? { prefix: "secure" as const } : {}),
     });
-    return c.redirect(session.created ? `${env.webOrigin}/onboarding` : `${env.webOrigin}/app`, 302);
+    return c.redirect(
+      session.created ? `${env.webOrigin}/onboarding` : `${env.webOrigin}/app`,
+      302,
+    );
   } catch {
     return c.redirect(`${env.webOrigin}/sign-in?error=evolve_sso`, 302);
   }

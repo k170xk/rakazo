@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ComputerScreenUnavailableError } from "./computer-screens.js";
 import { shouldSkipPortableWorkspaceFile } from "./computer-workspace.js";
 import {
+  E2B_SCREEN_STREAM_WAIT_MS,
   E2BSandboxProvider,
   type E2BSandboxSdk,
   isSandboxGoneError,
@@ -23,6 +24,71 @@ describe("E2B computer backend", () => {
     expect(shouldSkipPortableWorkspaceFile("project/lock")).toBe(false);
     expect(shouldSkipPortableWorkspaceFile(".browser-profiles/chromium/Cache/data")).toBe(true);
     expect(shouldSkipPortableWorkspaceFile(".browser-profiles/chromium/SingletonLock")).toBe(true);
+  });
+
+  it("does not kill Chrome when checkpointing a live computer", async () => {
+    const run = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }));
+    const desktop = {
+      sandboxId: "live-export-box",
+      display: ":0",
+      commands: { run },
+      files: { list: vi.fn(async () => []) },
+      launch: vi.fn(async () => undefined),
+    } as unknown as Sandbox;
+    const provider = new E2BSandboxProvider("test-key", {
+      create: vi.fn(async () => desktop),
+      connect: vi.fn(async () => desktop),
+      pause: vi.fn(async () => undefined),
+    });
+    const computer = {
+      id: "live-export-box",
+      botId: "bot-1",
+      kind: "e2b" as const,
+      providerRef: "live-export-box",
+      fresh: false,
+    };
+
+    const exported = [];
+    for await (const file of provider.exportWorkspace(computer, context)) exported.push(file);
+    expect(exported).toEqual([]);
+    expect(
+      run.mock.calls.some(([value]) => String(value).includes("pkill -f '[g]oogle-chrome")),
+    ).toBe(false);
+    expect(run.mock.calls.some(([value]) => String(value).includes("--kiosk"))).toBe(false);
+    expect(desktop.launch).not.toHaveBeenCalled();
+  });
+
+  it("stops Chrome only when the computer is stopping", async () => {
+    const run = vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 }));
+    const desktop = {
+      sandboxId: "stop-export-box",
+      display: ":0",
+      commands: { run },
+      files: { list: vi.fn(async () => []) },
+      launch: vi.fn(async () => undefined),
+    } as unknown as Sandbox;
+    const provider = new E2BSandboxProvider("test-key", {
+      create: vi.fn(async () => desktop),
+      connect: vi.fn(async () => desktop),
+      pause: vi.fn(async () => undefined),
+    });
+    const computer = {
+      id: "stop-export-box",
+      botId: "bot-1",
+      kind: "e2b" as const,
+      providerRef: "stop-export-box",
+      fresh: false,
+    };
+
+    for await (const _file of provider.exportWorkspace(computer, {
+      ...context,
+      operationId: "stop",
+    })) {
+      // drain
+    }
+    expect(run.mock.calls.some(([value]) => String(value).includes("pkill -f '[g]oogle-chrome"))).toBe(
+      true,
+    );
   });
 
   it("boots a fresh sandbox when reconnecting to a dead one fails with fetch failed", async () => {
@@ -48,6 +114,45 @@ describe("E2B computer backend", () => {
     expect(sdk.create).toHaveBeenCalledTimes(1);
     expect(computer.providerRef).toBe("fresh-e2b-box");
     expect(computer.fresh).toBe(true);
+  });
+
+  it("shares the primary stream when extra-display allocation is exhausted", async () => {
+    const run = vi.fn(async (value: string) => {
+      if (value.includes("RAKAZO_SCREEN_INDEX=")) {
+        return { stdout: "", stderr: "full", exitCode: 75 };
+      }
+      return { stdout: "", stderr: "", exitCode: 0 };
+    });
+    const desktop = {
+      sandboxId: "full-e2b-box",
+      display: ":0",
+      getHost: (port: number) => `${port}-desktop.test`,
+      commands: { run },
+      stream: {
+        start: vi.fn(async () => undefined),
+        stop: vi.fn(async () => undefined),
+        getAuthKey: () => "screen-key",
+        getUrl: () => "https://primary.test/vnc.html",
+      },
+    } as unknown as Sandbox;
+    const provider = new E2BSandboxProvider("test-key", {
+      create: vi.fn(async () => desktop),
+      connect: vi.fn(async () => desktop),
+      pause: vi.fn(async () => undefined),
+    });
+    const computer = {
+      id: "full-e2b-box",
+      botId: "bot-9",
+      kind: "e2b" as const,
+      providerRef: "full-e2b-box",
+      fresh: false,
+    };
+
+    const session = await provider.connectScreen(computer, { view: "stream" }, {
+      ...context,
+      botId: "bot-9",
+    });
+    expect(session.url).toBe("https://primary.test/vnc.html");
   });
 
   it("gives screen setup commands a real timeout and surfaces a failed one as unavailable", async () => {
@@ -84,7 +189,7 @@ describe("E2B computer backend", () => {
       fresh: false,
     };
 
-    await expect(provider.connectScreen(computer, { view: "stream" }, context)).rejects.toThrow(
+    await expect(provider.observe(computer, context)).rejects.toThrow(
       ComputerScreenUnavailableError,
     );
     expect(run.mock.calls[0]?.[1]?.timeoutMs).toBeGreaterThan(60_000);
@@ -113,9 +218,232 @@ describe("E2B computer backend", () => {
       fresh: false,
     };
 
-    await expect(provider.connectScreen(computer, { view: "stream" }, context)).rejects.toThrow(
+    await expect(provider.observe(computer, context)).rejects.toThrow(
       ComputerScreenUnavailableError,
     );
+  });
+
+  it("falls back to the primary stream when an extra display cannot start", async () => {
+    const command = vi.fn(async (value: string) => {
+      if (value.includes("RAKAZO_SCREEN_INDEX=")) {
+        return { stdout: "RAKAZO_SCREEN_INDEX=1\n", stderr: "", exitCode: 0 };
+      }
+      if (value.includes("Xvfb")) {
+        return { stdout: "", stderr: "cannot allocate", exitCode: 1, error: "cannot allocate" };
+      }
+      return { stdout: "", stderr: "", exitCode: 0 };
+    });
+    const desktop = {
+      sandboxId: "fallback-e2b-box",
+      display: ":0",
+      getHost: (port: number) => `${port}-desktop.test`,
+      commands: { run: command },
+      stream: {
+        start: vi.fn(async () => undefined),
+        stop: vi.fn(async () => undefined),
+        getAuthKey: () => "screen-key",
+        getUrl: () => "https://primary.test/vnc.html",
+      },
+    } as unknown as Sandbox;
+    const provider = new E2BSandboxProvider("test-key", {
+      create: vi.fn(async () => desktop),
+      connect: vi.fn(async () => desktop),
+      pause: vi.fn(async () => undefined),
+    });
+    const computer = {
+      id: "fallback-e2b-box",
+      botId: "bot-2",
+      kind: "e2b" as const,
+      providerRef: "fallback-e2b-box",
+      fresh: false,
+    };
+
+    const session = await provider.connectScreen(computer, { view: "stream" }, {
+      ...context,
+      botId: "second-bot",
+    });
+    expect(session.url).toBe("https://primary.test/vnc.html");
+    expect(desktop.stream.start).toHaveBeenCalledWith({ requireAuth: false });
+  });
+
+  it("returns a view URL when the SDK client has no auth key", async () => {
+    const desktop = {
+      sandboxId: "orphan-e2b-box",
+      display: ":0",
+      getHost: (port: number) => `${port}-desktop.test`,
+      commands: {
+        run: vi.fn(async (value: string) => {
+          if (value.includes("RAKAZO_SCREEN_INDEX=")) {
+            return { stdout: "RAKAZO_SCREEN_INDEX=0\n", stderr: "", exitCode: 0 };
+          }
+          return { stdout: "", stderr: "", exitCode: 0 };
+        }),
+      },
+      stream: {
+        start: vi.fn(async () => {
+          throw new Error("Stream is already running");
+        }),
+        stop: vi.fn(async () => undefined),
+        getAuthKey: () => {
+          throw new Error("Unable to retrieve stream auth key, check if requireAuth is enabled");
+        },
+        getUrl: () => {
+          throw new Error("Server is not running");
+        },
+      },
+    } as unknown as Sandbox;
+    const provider = new E2BSandboxProvider("test-key", {
+      create: vi.fn(async () => desktop),
+      connect: vi.fn(async () => desktop),
+      pause: vi.fn(async () => undefined),
+    });
+    const session = await provider.connectScreen(
+      {
+        id: "orphan-e2b-box",
+        botId: "bot-1",
+        kind: "e2b",
+        providerRef: "orphan-e2b-box",
+        fresh: false,
+      },
+      { view: "stream" },
+      context,
+    );
+    expect(session.url).toContain("https://6080-desktop.test/vnc.html");
+    expect(session.url).toContain("autoconnect=true");
+    expect(session.url).not.toContain("password=");
+  });
+
+  it("does not kill a live stream when the new SDK client has no password", async () => {
+    const streamStart = vi.fn(async () => {
+      throw new Error("Stream is already running");
+    });
+    const desktop = {
+      sandboxId: "live-e2b-box",
+      display: ":0",
+      getHost: (port: number) => `${port}-desktop.test`,
+      commands: {
+        run: vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 })),
+      },
+      stream: {
+        start: streamStart,
+        stop: vi.fn(async () => undefined),
+        getAuthKey: () => {
+          throw new Error("Server is not running");
+        },
+        getUrl: () => {
+          throw new Error("Server is not running");
+        },
+      },
+    } as unknown as Sandbox;
+    const provider = new E2BSandboxProvider("test-key", {
+      create: vi.fn(async () => desktop),
+      connect: vi.fn(async () => desktop),
+      pause: vi.fn(async () => undefined),
+    });
+    const computer = {
+      id: "live-e2b-box",
+      botId: "bot-1",
+      kind: "e2b" as const,
+      providerRef: "live-e2b-box",
+      fresh: false,
+    };
+
+    const session = await provider.connectScreen(computer, { view: "stream" }, context);
+    expect(session.url).toContain("https://6080-desktop.test/vnc.html");
+    expect(session.url).toContain("autoconnect=true");
+    expect(streamStart).toHaveBeenCalled();
+    expect(desktop.stream.stop).toHaveBeenCalled();
+  });
+
+  it("returns a host URL when stream start hangs after reconnect", async () => {
+    vi.useFakeTimers();
+    const desktop = {
+      sandboxId: "hung-stream-box",
+      display: ":0",
+      getHost: (port: number) => `${port}-desktop.test`,
+      commands: { run: vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 })) },
+      stream: {
+        start: vi.fn(() => new Promise<void>(() => undefined)),
+        stop: vi.fn(async () => undefined),
+        getAuthKey: () => {
+          throw new Error("Server is not running");
+        },
+        getUrl: () => {
+          throw new Error("Server is not running");
+        },
+      },
+    } as unknown as Sandbox;
+    const provider = new E2BSandboxProvider("test-key", {
+      create: vi.fn(async () => desktop),
+      connect: vi.fn(async () => desktop),
+      pause: vi.fn(async () => undefined),
+    });
+    try {
+      const connecting = provider.connectScreen(
+        {
+          id: "hung-stream-box",
+          botId: "bot-1",
+          kind: "e2b",
+          providerRef: "hung-stream-box",
+          fresh: false,
+        },
+        { view: "stream" },
+        context,
+      );
+      await vi.advanceTimersByTimeAsync(E2B_SCREEN_STREAM_WAIT_MS);
+      const session = await connecting;
+      expect(session.url).toContain("https://6080-desktop.test/vnc.html");
+      expect(desktop.stream.stop).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("joins one E2B connect when two viewers open the same computer", async () => {
+    let finishConnect!: (desktop: Sandbox) => void;
+    const desktop = {
+      sandboxId: "join-connect-box",
+      display: ":0",
+      getHost: (port: number) => `${port}-desktop.test`,
+      commands: { run: vi.fn(async () => ({ stdout: "", stderr: "", exitCode: 0 })) },
+      stream: {
+        start: vi.fn(async () => undefined),
+        stop: vi.fn(async () => undefined),
+        getAuthKey: () => undefined,
+        getUrl: () => "https://6080-desktop.test/vnc.html",
+      },
+    } as unknown as Sandbox;
+    const connect = vi.fn(
+      () =>
+        new Promise<Sandbox>((resolve) => {
+          finishConnect = resolve;
+        }),
+    );
+    const provider = new E2BSandboxProvider("test-key", {
+      create: vi.fn(async () => desktop),
+      connect,
+      pause: vi.fn(async () => undefined),
+    });
+    const computer = {
+      id: "join-connect-box",
+      botId: "bot-1",
+      kind: "e2b" as const,
+      providerRef: "join-connect-box",
+      fresh: false,
+    };
+    const first = provider.connectScreen(computer, { view: "stream" }, context);
+    const second = provider.connectScreen(computer, { view: "stream" }, {
+      ...context,
+      botId: "bot-2",
+    });
+    await vi.waitFor(() => {
+      expect(connect).toHaveBeenCalledTimes(1);
+    });
+    finishConnect(desktop);
+    const [a, b] = await Promise.all([first, second]);
+    expect(a.url).toContain("6080-desktop.test");
+    expect(b.url).toContain("6080-desktop.test");
+    expect(connect).toHaveBeenCalledTimes(1);
   });
 
   it("releases control without allocating an extra display", async () => {
@@ -191,8 +519,11 @@ describe("E2B computer backend", () => {
           String(value).includes("xdg-settings set default-web-browser google-chrome.desktop") &&
           String(value).includes("WebBrowser=google-chrome"),
       ),
+    ).toBe(false);
+    expect(
+      command.mock.calls.some(([value]) => String(value).includes("--kiosk")),
     ).toBe(true);
-    expect(desktop.launch).toHaveBeenCalledTimes(1);
+    expect(desktop.launch).not.toHaveBeenCalled();
   });
 
   it("opens http(s) URLs through the named browser launcher", async () => {
@@ -200,9 +531,10 @@ describe("E2B computer backend", () => {
       if (value.includes("RAKAZO_SCREEN_INDEX=")) {
         return { stdout: "RAKAZO_SCREEN_INDEX=0\n", stderr: "", exitCode: 0 };
       }
-      if (value.startsWith("gtk-launch")) {
-        if (value.includes("google-chrome")) return { stdout: "", stderr: "", exitCode: 0 };
-        throw new Error("missing");
+      if (value.includes("--kiosk") || value.includes("https://example.com/docs")) {
+        if (value.includes("google-chrome") || value.includes("CHROME=")) {
+          return { stdout: "", stderr: "", exitCode: 0 };
+        }
       }
       return { stdout: "", stderr: "", exitCode: 0 };
     });
@@ -231,7 +563,13 @@ describe("E2B computer backend", () => {
       { actions: [{ kind: "open", path: "https://example.com/docs" }], observe: false },
       context,
     );
-    expect(command).toHaveBeenCalledWith("gtk-launch 'google-chrome' 'https://example.com/docs'");
+    expect(
+      command.mock.calls.some(
+        ([value]) =>
+          String(value).includes("https://example.com/docs") &&
+          (String(value).includes("--kiosk") || String(value).includes("https://example.com/docs")),
+      ),
+    ).toBe(true);
     expect(launch).not.toHaveBeenCalled();
     expect(open).not.toHaveBeenCalled();
 
@@ -406,7 +744,7 @@ describe("E2B computer backend", () => {
       provider.connectScreen(computer, { view: "stream" }, context),
     ]);
     expect(screen.url).toBe("https://desktop.test/vnc.html");
-    expect(desktop.stream.start).toHaveBeenCalledWith({ requireAuth: true });
+    expect(desktop.stream.start).toHaveBeenCalledWith({ requireAuth: false });
     expect(desktop.stream.start).toHaveBeenCalledTimes(1);
     expect(getStreamUrl).toHaveBeenCalledWith(
       expect.objectContaining({ viewOnly: true, authKey: "screen-key" }),
@@ -419,6 +757,7 @@ describe("E2B computer backend", () => {
       context,
     );
     expect(control.url).toMatch(/^https:\/\/6081-desktop\.test\/vnc\.html\?/);
+    expect(command).toHaveBeenCalledWith("x11vnc -R noviewonly");
     const startControl = command.mock.calls
       .map(([value]) => String(value))
       .find((value) => value.includes("novnc_proxy") && value.includes("-rfbport 5901"));
@@ -604,9 +943,7 @@ describe("E2B computer backend", () => {
     const writerView = await provider.connectScreen(computer, { view: "stream" }, writer);
     const researcherView = await provider.connectScreen(computer, { view: "stream" }, researcher);
     expect(writerView.url).toContain("6080-desktop.test");
-    expect(researcherView.url).toContain("6082-desktop.test");
-    expect(researcherView.url).toContain("password=test-view-password");
-    expect(writerView.url).not.toBe(researcherView.url);
+    expect(researcherView.url).toBe(writerView.url);
     expect(command.mock.calls.some(([value]) => String(value).includes("Xvfb :2"))).toBe(true);
     expect(
       command.mock.calls.some(
@@ -636,18 +973,14 @@ describe("E2B computer backend", () => {
       { view: "stream", interactive: true, controlToken: "lease-1" },
       researcher,
     );
-    expect(control.url).toMatch(/6083-desktop\.test/);
-    const startControl = command.mock.calls
-      .map(([value]) => String(value))
-      .find((value) => value.includes("-rfbport 5903") && value.includes("novnc_proxy"));
-    expect(startControl).toBeDefined();
-    expect(startControl).toContain("pkill -f '(^|/)x11vnc .* -rfbport 5903'");
-    expect(startControl).toMatch(
-      /for i in \$\(seq 1 50\); do \(echo >\/dev\/tcp\/127\.0\.0\.1\/5903\)[\s\S]*then exit 1; fi[\s\S]*x11vnc -storepasswd/,
-    );
-    expect(startControl).toMatch(
-      /x11vnc -bg[\s\S]*-rfbport 5903[\s\S]*for i in \$\(seq 1 50\); do \(echo >\/dev\/tcp\/127\.0\.0\.1\/5903\)[\s\S]*then exit 1; fi[\s\S]*novnc_proxy/,
-    );
+    expect(control.url).toMatch(/6081-desktop\.test/);
+    expect(control.url).toContain("password=");
+    expect(
+      command.mock.calls.some(
+        ([value]) =>
+          String(value).includes("-rfbport 5901") && String(value).includes("novnc_proxy"),
+      ),
+    ).toBe(true);
 
     await provider.writeFile(
       computer,

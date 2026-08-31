@@ -43,12 +43,12 @@ export function HostComputerPrompt({ initialMe }: { initialMe?: Me }) {
   }
 
   return (
-    <div className="absolute inset-0 z-40 grid place-items-center bg-[#050506]/80 px-6">
-      <div className="w-[440px] rounded-[20px] border border-[#26262A] bg-[#121214] p-6">
-        <h2 className="text-[22px] font-medium text-[#F1F1F2]">
+    <div className="absolute inset-0 z-40 grid place-items-center bg-[#f8fafc]/80 px-6">
+      <div className="w-[440px] rounded-[20px] border border-[#E2E8F0] bg-[#ffffff] p-6">
+        <h2 className="text-[22px] font-medium text-[#020817]">
           <Trans>Where should bots run?</Trans>
         </h2>
-        <p className="mt-2 text-[14px] leading-relaxed text-[#85858A]">
+        <p className="mt-2 text-[14px] leading-relaxed text-[#64748B]">
           <Trans>Docker is the default: bots use a shared Team Computer.</Trans>
           {mac ? (
             <Trans>
@@ -78,12 +78,12 @@ export function HostComputerPrompt({ initialMe }: { initialMe?: Me }) {
             type="button"
             disabled={pending}
             onClick={() => void choose("this-mac")}
-            className="rounded-[11px] border border-[#26262A] px-5 py-2.5 text-[#ECECEE] disabled:opacity-40"
+            className="rounded-[11px] border border-[#E2E8F0] px-5 py-2.5 text-[#020817] disabled:opacity-40"
           >
             <Trans>Use {hostLabel}</Trans>
           </button>
         </div>
-        <p className="mt-3 text-[12px] leading-relaxed text-[#6C6C70]">
+        <p className="mt-3 text-[12px] leading-relaxed text-[#64748B]">
           {mac ? (
             <Trans>
               This Mac runs shell commands with your account, including files in your home folder.

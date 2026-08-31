@@ -1,7 +1,12 @@
 import type { AgentHomeStore, JobPublisher, SandboxProvider } from "@rakazo/adapter-kit";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_SANDBOX_IDLE_MS, sandboxIdleMs, sleepComputerIfIdle } from "./computer-idle.js";
+import {
+  DEFAULT_SANDBOX_IDLE_MS,
+  sandboxIdleMs,
+  sleepComputerIfIdle,
+  VIEWER_TOUCH_MS,
+} from "./computer-idle.js";
 import {
   e2bCreateOptions,
   isUnreachableTransportError,
@@ -82,6 +87,27 @@ describe("sandbox idle", () => {
     );
   });
 
+  it("does not suspend while a live boot lease is held", async () => {
+    const harness = idleHarness();
+    harness.computer.bootLeaseExpiresAt = new Date(Date.now() + 20_000);
+
+    await sleepComputerIfIdle(harness.deps, harness.computer.id);
+
+    expect(harness.home.commit).not.toHaveBeenCalled();
+    expect(harness.sandbox.stop).not.toHaveBeenCalled();
+    expect(harness.jobs.enqueue).not.toHaveBeenCalled();
+  });
+
+  it("does not suspend a computer the viewer touched recently", async () => {
+    const harness = idleHarness({ updatedAt: new Date(Date.now() - VIEWER_TOUCH_MS + 5_000) });
+
+    await sleepComputerIfIdle(harness.deps, harness.computer.id);
+
+    expect(harness.home.commit).not.toHaveBeenCalled();
+    expect(harness.sandbox.stop).not.toHaveBeenCalled();
+    expect(harness.jobs.enqueue).toHaveBeenCalledOnce();
+  });
+
   it("never stops the computer when checkpoint export fails", async () => {
     const harness = idleHarness({ exportError: new Error("checkpoint unavailable") });
     harness.prisma.run.findFirst.mockResolvedValueOnce(null);
@@ -120,30 +146,27 @@ describe("e2b create options", () => {
     await openDesktopBrowser({
       launch: async (application) => {
         launched.push(application);
-        if (application !== "firefox") throw new Error("missing");
       },
       open: async () => {
         throw new Error("should not fall back");
       },
     });
-    expect(launched).toEqual(["google-chrome", "firefox"]);
+    expect(launched).toEqual(["google-chrome"]);
   });
 
-  it("opens a URL through the named browser launcher", async () => {
+  it("opens a URL through Chrome and keeps it fullscreen", async () => {
     const launched: string[] = [];
     const commands = {
       run: async (cmd: string) => {
         launched.push(cmd);
-        if (cmd.includes("google-chrome")) throw new Error("missing");
-        if (cmd.includes("firefox")) return { exitCode: 0 };
-        throw new Error("missing");
+        return { exitCode: 0 };
       },
     };
     await openDesktopUrl(
       {
         commands,
         launch: async () => {
-          throw new Error("should use gtk-launch via commands");
+          throw new Error("should use Chrome via commands");
         },
         open: async () => {
           throw new Error("should not fall back");
@@ -151,14 +174,14 @@ describe("e2b create options", () => {
       },
       "https://example.com/page",
     );
-    expect(launched).toEqual([
-      "gtk-launch 'google-chrome' 'https://example.com/page'",
-      "gtk-launch 'firefox' 'https://example.com/page'",
-    ]);
+    expect(launched.some((cmd) => cmd.includes("google-chrome") && cmd.includes("example.com/page"))).toBe(
+      true,
+    );
+    expect(launched.some((cmd) => cmd.includes("--kiosk"))).toBe(true);
   });
 });
 
-function idleHarness(options: { exportError?: Error } = {}) {
+function idleHarness(options: { exportError?: Error; updatedAt?: Date } = {}) {
   const computer = {
     id: "computer-id",
     homeKey: "team-workspace",
@@ -172,7 +195,8 @@ function idleHarness(options: { exportError?: Error } = {}) {
     controlLeaseExpiresAt: null,
     controlBotId: null,
     executionBotId: null,
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    bootLeaseExpiresAt: null as Date | null,
+    updatedAt: options.updatedAt ?? new Date("2026-01-01T00:00:00.000Z"),
   };
   let checkpointedAt = computer.updatedAt;
   const prisma = {

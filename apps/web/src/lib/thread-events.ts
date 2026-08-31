@@ -450,7 +450,7 @@ export function computerPanelAutoBoot(
   state: ComputerStatus["state"] | undefined,
   screenUrl?: string | null,
 ): "boot" | "recover-screen" | "wait" {
-  if (state === "booting" || state === "suspended") return "wait";
+  if (state === "booting") return "wait";
   if (state === "running") return screenUrl ? "wait" : "recover-screen";
   return "boot";
 }
@@ -460,6 +460,77 @@ export function computerPanelAutoUsesBoot(
   action: ReturnType<typeof computerPanelAutoBoot>,
 ): boolean {
   return action === "boot" || action === "recover-screen";
+}
+
+export const COMPUTER_BOOT_JOIN_MS = 120_000;
+export const COMPUTER_BOOT_POLL_MS = 500;
+
+export type EnsureComputerStep = "boot" | "wait" | "recover-screen" | "ready";
+
+export function ensureComputerStep(
+  state: ComputerStatus["state"] | undefined,
+  screenUrl?: string | null,
+): EnsureComputerStep {
+  if (state === "running") return screenUrl ? "ready" : "recover-screen";
+  if (state === "booting") return "wait";
+  return "boot";
+}
+
+export function computerWaking(state: ComputerStatus["state"] | undefined): boolean {
+  return state === "booting";
+}
+
+export function computerNeedsWake(state: ComputerStatus["state"] | undefined): boolean {
+  return state === "stopped" || state === "suspended" || state === "error" || !state;
+}
+
+export type ComputerPrimaryAction = "wake" | "take-control" | "release" | "none";
+
+export function computerPrimaryAction(input: {
+  state?: ComputerStatus["state"];
+  hasControl: boolean;
+  takeoverBlocked: boolean;
+}): ComputerPrimaryAction {
+  if (computerWaking(input.state)) return "none";
+  if (computerNeedsWake(input.state)) return "wake";
+  if (input.state !== "running") return "none";
+  if (input.hasControl) return "release";
+  if (input.takeoverBlocked) return "none";
+  return "take-control";
+}
+
+export function computerShowsReload(state?: ComputerStatus["state"]): boolean {
+  return state === "running";
+}
+
+/** Skip / I'm done close the viewer. A voluntary Release leaves it open so the agent can resume on screen. */
+export function computerReleaseClosesViewer(reason?: string): boolean {
+  return reason === "done" || reason === "skipped";
+}
+
+export async function pollComputerUntilSettled<T extends { state: string }>(
+  read: () => Promise<T>,
+  options: {
+    timeoutMs?: number;
+    intervalMs?: number;
+    sleep?: (ms: number) => Promise<void>;
+    isCancelled?: () => boolean;
+  } = {},
+): Promise<T> {
+  const timeoutMs = options.timeoutMs ?? COMPUTER_BOOT_JOIN_MS;
+  const intervalMs = options.intervalMs ?? COMPUTER_BOOT_POLL_MS;
+  const sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+  const started = Date.now();
+  let latest = await read();
+  while (
+    (latest.state === "booting" || latest.state === "suspending") &&
+    Date.now() - started < timeoutMs
+  ) {
+    if (options.isCancelled?.()) return latest;
+    await sleep(intervalMs);
+    latest = await read();
+  }
+  return latest;
 }
 
 export function reduceComputerStatus(

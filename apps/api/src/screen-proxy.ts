@@ -23,9 +23,20 @@ export function addScreenProxyCapability(
       const policy = parsed.searchParams.get("view_only") === "false" ? "control" : "view";
       const token = sealScreenTarget(parsed.toString(), secret, policy, expiresAt);
       const origin = new URL(proxyOrigin).origin;
-      return `${origin}${SCREEN_PROXY_REMOTE_PREFIX}/${policy}/${expiresAt}.${token}${parsed.pathname || "/"}`;
+      const viewer = new URLSearchParams();
+      for (const key of ["autoconnect", "reconnect", "resize", "view_only", "path", "password"]) {
+        const value = parsed.searchParams.get(key);
+        if (value != null) viewer.set(key, value);
+      }
+      const search = viewer.size > 0 ? `?${viewer}` : "";
+      return `${origin}${SCREEN_PROXY_REMOTE_PREFIX}/${policy}/${expiresAt}.${token}${parsed.pathname || "/"}${search}`;
     }
-    if (parsed.protocol !== "http:" || !parsed.hostname || !parsed.port) return url;
+    const loopback =
+      parsed.hostname === "127.0.0.1" ||
+      parsed.hostname === "localhost" ||
+      parsed.hostname === "[::1]";
+    if (!parsed.hostname || !parsed.port) return url;
+    if (parsed.protocol !== "http:" && !(loopback && parsed.protocol === "https:")) return url;
     const expiresAt = now + SCREEN_PROXY_TTL_MS;
     const target = Buffer.from(parsed.hostname).toString("base64url");
     const policy = parsed.searchParams.get("view_only") === "false" ? "control" : "view";

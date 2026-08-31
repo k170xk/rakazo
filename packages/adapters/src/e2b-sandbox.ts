@@ -46,13 +46,25 @@ import {
   parseExtraDisplayObservation,
   parseExtraDisplayViewPassword,
   parseReleasedExtraDisplay,
-  primaryStreamCleanupCommand,
+  ensureGoogleChromeCommand,
+  lockDesktopBrowserCommand,
+  openDesktopUrlCommand,
+  primaryStreamResetCommand,
+  raiseDesktopBrowserCommand,
   releaseExtraDisplayCommand,
+  resetScreenAssignmentsCommand,
   screenControlKey,
 } from "./extra-displays.js";
 
 const E2B_WORKSPACE = "/home/user/rakazo-home";
 const E2B_BROWSER_PROFILES = `${E2B_WORKSPACE}/.browser-profiles`;
+/** Cap how long a viewer waits for E2B connect / stream.start. VNC is often already live. */
+export const E2B_SCREEN_CONNECT_WAIT_MS = 10_000;
+export const E2B_SCREEN_STREAM_WAIT_MS = 6_000;
+
+function isStreamAlreadyRunning(error: unknown): boolean {
+  return error instanceof Error && /already running/i.test(error.message);
+}
 
 export interface E2BSandboxSdk {
   create(options: ReturnType<typeof e2bCreateOptions>): Promise<Sandbox>;
@@ -135,7 +147,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-export const E2B_BROWSER_APPS = ["google-chrome", "firefox", "chromium"] as const;
+export const E2B_BROWSER_APPS = ["google-chrome"] as const;
 
 type E2BDesktopBrowser = {
   launch: (application: string, uri?: string) => Promise<void>;
@@ -143,44 +155,68 @@ type E2BDesktopBrowser = {
 };
 
 type E2BDesktopCommands = {
-  run: (cmd: string) => Promise<{ exitCode?: number }>;
+  run: (cmd: string, opts?: { timeoutMs?: number }) => Promise<{ exitCode?: number }>;
 };
 
-export async function openDesktopBrowser(desktop: E2BDesktopBrowser): Promise<void> {
-  for (const app of E2B_BROWSER_APPS) {
-    try {
-      await desktop.launch(app);
-      return;
-    } catch {
-      // try the next installed browser
-    }
-  }
-  await desktop.open("https://www.google.com").catch(() => undefined);
+export async function raiseDesktopBrowser(desktop: {
+  commands: E2BDesktopCommands;
+  display?: string;
+}): Promise<void> {
+  await desktop.commands
+    .run(raiseDesktopBrowserCommand(desktop.display ?? ":0"))
+    .catch(() => undefined);
 }
 
-/** Open an http(s) URL via a named browser — avoids the broken default-browser association. */
-export async function openDesktopUrl(
-  desktop: E2BDesktopBrowser & { commands: E2BDesktopCommands },
-  url: string,
+function isDesktopBrowserApp(application: string): boolean {
+  const name = application.trim().toLowerCase();
+  return (
+    name === "browser" ||
+    name === "google-chrome" ||
+    name === "google-chrome-stable" ||
+    name === "firefox" ||
+    name === "chromium" ||
+    name === "chromium-browser"
+  );
+}
+
+export async function openDesktopBrowser(
+  desktop: E2BDesktopBrowser & { commands?: E2BDesktopCommands; display?: string },
 ): Promise<void> {
-  for (const app of E2B_BROWSER_APPS) {
-    // Prefer a foreground gtk-launch so missing desktop entries / launch failures reject
-    // and we can try the next browser. desktop.launch backgrounds and always resolves.
-    const launched = await desktop.commands
-      .run(`gtk-launch ${shellQuote(app)} ${shellQuote(url)}`)
+  if (desktop.commands) {
+    const locked = await desktop.commands
+      .run(lockDesktopBrowserCommand(desktop.display ?? ":0"))
       .then(
         (result) => (result.exitCode ?? 0) === 0,
         () => false,
       );
-    if (launched) return;
+    if (locked) return;
   }
-  await desktop.open(url);
+  await desktop.launch("google-chrome").catch(() => undefined);
+  if (desktop.commands) await raiseDesktopBrowser(desktop);
+}
+
+/** Open an http(s) URL in Chrome and keep the window fullscreen. */
+export async function openDesktopUrl(
+  desktop: E2BDesktopBrowser & { commands: E2BDesktopCommands; display?: string },
+  url: string,
+): Promise<void> {
+  const opened = await desktop.commands
+    .run(openDesktopUrlCommand(url, desktop.display ?? ":0"))
+    .then(
+      (result) => (result.exitCode ?? 0) === 0,
+      () => false,
+    );
+  if (opened) return;
+  await desktop.open(url).catch(() => undefined);
+  await raiseDesktopBrowser(desktop);
 }
 
 export class E2BSandboxProvider implements SandboxProvider {
   private readonly boxes = new Map<string, Sandbox>();
+  private readonly connecting = new Map<string, Promise<Sandbox>>();
   private readonly lastTouchedAt = new Map<string, number>();
   private readonly streamReady = new Set<string>();
+  private readonly trimmedBrowser = new Set<string>();
   private readonly streamStarts = new Map<string, Promise<void>>();
   private readonly controlStreams = new Map<string, { password: string; controlToken: string }>();
 
@@ -207,40 +243,81 @@ export class E2BSandboxProvider implements SandboxProvider {
 
   private async box(computer: ComputerRef): Promise<Sandbox> {
     const id = computer.providerRef || computer.id;
+    const cached = await this.cachedBox(id);
+    if (cached) return cached;
+    const pending = this.connecting.get(id);
+    if (pending) return pending;
+    const connect = this.connectBox(id).finally(() => {
+      if (this.connecting.get(id) === connect) this.connecting.delete(id);
+    });
+    this.connecting.set(id, connect);
+    return connect;
+  }
+
+  private async cachedBox(id: string): Promise<Sandbox | null> {
     const existing = this.boxes.get(id);
-    if (existing) {
-      const lastTouched = this.lastTouchedAt.get(id) ?? 0;
-      if (Date.now() - lastTouched < 60_000) return existing;
-      // A cached handle to a sandbox E2B already killed keeps throwing on every call, and the
-      // process never reconnects. The keepalive is the cheapest place to notice and drop it.
-      const gone = await existing.setTimeout(sandboxIdleMs()).then(
-        () => false,
-        (error: unknown) => isSandboxGoneError(error),
-      );
-      if (!gone) {
-        this.lastTouchedAt.set(id, Date.now());
-        return existing;
-      }
-      this.forget(id);
+    if (!existing) return null;
+    const lastTouched = this.lastTouchedAt.get(id) ?? 0;
+    if (Date.now() - lastTouched < 60_000) return existing;
+    // A cached handle to a sandbox E2B already killed keeps throwing on every call, and the
+    // process never reconnects. The keepalive is the cheapest place to notice and drop it.
+    const gone = await existing.setTimeout(sandboxIdleMs()).then(
+      () => false,
+      (error: unknown) => isSandboxGoneError(error),
+    );
+    if (!gone) {
+      this.lastTouchedAt.set(id, Date.now());
+      return existing;
     }
+    this.forget(id);
+    return null;
+  }
+
+  private async connectBox(id: string): Promise<Sandbox> {
     const connected = await this.sdk.connect(id, {
       apiKey: this.apiKey,
       timeoutMs: sandboxIdleMs(),
     });
     this.boxes.set(connected.sandboxId, connected);
+    this.streamReady.delete(connected.sandboxId);
     this.lastTouchedAt.set(connected.sandboxId, Date.now());
     return connected;
   }
 
-  private async startStream(desktop: Sandbox) {
-    if (this.boxes.get(desktop.sandboxId) !== desktop) {
+  private async boxForScreen(computer: ComputerRef): Promise<Sandbox> {
+    try {
+      return await Promise.race([
+        this.box(computer),
+        delay(E2B_SCREEN_CONNECT_WAIT_MS).then(() => {
+          throw new Error("sandbox connect timed out");
+        }),
+      ]);
+    } catch (error) {
+      if (error instanceof Error && error.message === "sandbox connect timed out") {
+        throw new ComputerScreenUnavailableError("desktop did not connect");
+      }
+      throw error;
+    }
+  }
+
+  private async startStream(desktop: Sandbox, interactive = false) {
+    if (!this.boxes.has(desktop.sandboxId)) {
       throw new Error("screen stream stopped during computer teardown");
     }
-    if (this.streamReady.has(desktop.sandboxId)) return;
+    if (this.streamReady.has(desktop.sandboxId) && this.streamUrlReady(desktop)) {
+      await this.setPrimaryViewOnly(desktop, !interactive);
+      return;
+    }
     const pending = this.streamStarts.get(desktop.sandboxId);
-    if (pending) return pending;
+    if (pending) {
+      await pending;
+      if (this.boxes.has(desktop.sandboxId)) {
+        await this.setPrimaryViewOnly(desktop, !interactive);
+      }
+      return;
+    }
     let start!: Promise<void>;
-    start = this.initializeStream(desktop).finally(() => {
+    start = this.initializeStream(desktop, interactive).finally(() => {
       if (this.streamStarts.get(desktop.sandboxId) === start) {
         this.streamStarts.delete(desktop.sandboxId);
       }
@@ -249,21 +326,91 @@ export class E2BSandboxProvider implements SandboxProvider {
     return start;
   }
 
-  private async initializeStream(desktop: Sandbox) {
-    await desktop.commands.run(primaryStreamCleanupCommand()).catch(() => undefined);
-    await desktop.stream.start({ requireAuth: true });
+  private streamAuthKey(desktop: Sandbox): string | undefined {
     try {
-      await desktop.commands.run("x11vnc -R viewonly");
-    } catch (error) {
-      await desktop.stream.stop().catch(() => undefined);
-      throw error;
+      const key = desktop.stream.getAuthKey();
+      return typeof key === "string" && key.length > 0 ? key : undefined;
+    } catch {
+      return undefined;
     }
-    const current = this.boxes.get(desktop.sandboxId);
-    if (current !== desktop) {
-      if (!current) await desktop.stream.stop().catch(() => undefined);
+  }
+
+  private streamUrlReady(desktop: Sandbox): boolean {
+    try {
+      return Boolean(
+        typeof desktop.stream.getUrl === "function" &&
+          desktop.stream.getUrl({ autoConnect: true, viewOnly: true, resize: "scale" }),
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  private async claimPrimaryStream(desktop: Sandbox) {
+    try {
+      await desktop.stream.start({ requireAuth: false });
+      return;
+    } catch (error) {
+      if (!isStreamAlreadyRunning(error)) throw error;
+      if (this.streamUrlReady(desktop) || this.streamAuthKey(desktop)) return;
+    }
+    // The live stream still has a password from the process that started it.
+    // noVNC then sits on a black canvas. Restart with a hard cap so screenUrl
+    // can still return a host URL if E2B is slow.
+    await Promise.race([this.reclaimPrimaryStream(desktop), delay(E2B_SCREEN_STREAM_WAIT_MS)]);
+  }
+
+  private async reclaimPrimaryStream(desktop: Sandbox) {
+    await desktop.stream.stop().catch(() => undefined);
+    await desktop.commands
+      .run(primaryStreamResetCommand(), { timeoutMs: 4_000 })
+      .catch(() => undefined);
+    await delay(400);
+    try {
+      await desktop.stream.start({ requireAuth: false });
+    } catch (error) {
+      if (!isStreamAlreadyRunning(error)) throw error;
+    }
+  }
+
+  private async setPrimaryViewOnly(desktop: Sandbox, viewOnly: boolean) {
+    await desktop.commands
+      .run(viewOnly ? "x11vnc -R viewonly" : "x11vnc -R noviewonly")
+      .catch(() => undefined);
+  }
+
+  private async initializeStream(desktop: Sandbox, interactive = false) {
+    await this.claimPrimaryStream(desktop);
+    await this.setPrimaryViewOnly(desktop, !interactive);
+    if (!this.boxes.has(desktop.sandboxId)) {
+      await desktop.stream.stop().catch(() => undefined);
       throw new Error("screen stream stopped during computer teardown");
     }
     this.streamReady.add(desktop.sandboxId);
+  }
+
+  private primaryViewUrl(desktop: Sandbox): string {
+    const authKey = this.streamAuthKey(desktop);
+    try {
+      const url =
+        typeof desktop.stream.getUrl === "function"
+          ? desktop.stream.getUrl({
+              autoConnect: true,
+              viewOnly: true,
+              resize: "scale",
+              ...(authKey ? { authKey } : {}),
+            })
+          : null;
+      if (url) return url;
+    } catch {
+      // New SDK client after reconnect: this.url is null even though VNC is live.
+    }
+    const url = new URL(`https://${desktop.getHost(6080)}/vnc.html`);
+    url.searchParams.set("autoconnect", "true");
+    url.searchParams.set("resize", "scale");
+    url.searchParams.set("view_only", "true");
+    if (authKey) url.searchParams.set("password", authKey);
+    return url.toString();
   }
 
   async provision(
@@ -282,6 +429,7 @@ export class E2BSandboxProvider implements SandboxProvider {
           timeoutMs: sandboxIdleMs(),
         });
         this.boxes.set(desktop.sandboxId, desktop);
+        this.streamReady.delete(desktop.sandboxId);
         this.lastTouchedAt.set(desktop.sandboxId, Date.now());
         return {
           id: desktop.sandboxId,
@@ -313,9 +461,12 @@ export class E2BSandboxProvider implements SandboxProvider {
   async prepare(computer: ComputerRef, _context: AdapterContext): Promise<void> {
     const desktop = await this.box(computer);
     if (computer.fresh) await desktop.files.makeDir(E2B_WORKSPACE);
-    const profilesChanged = await configurePortableBrowserProfiles(desktop);
-    await configureDefaultWebBrowser(desktop);
-    if (!computer.fresh && profilesChanged) await openDesktopBrowser(desktop);
+    await configurePortableBrowserProfiles(desktop);
+    if (computer.fresh) {
+      await ensureGoogleChrome(desktop);
+      await configureDefaultWebBrowser(desktop);
+    }
+    await openDesktopBrowser(desktop);
   }
 
   async *execute(
@@ -354,13 +505,40 @@ export class E2BSandboxProvider implements SandboxProvider {
     request: ScreenRequest,
     context: AdapterContext,
   ): Promise<ScreenSession> {
-    const desktop = await this.box(computer);
-    const screenKey = screenSessionKey(context);
-    const layout = await this.resolveLayout(desktop, screenKey, context.screenLeaseId);
-    if (layout.isPrimary) {
-      await this.startStream(desktop);
-      if (request.interactive) {
-        if (!request.controlToken) throw new Error("interactive screen requires a control token");
+    const desktop = await this.boxForScreen(computer);
+    // E2B has one graphical display. Do not allocate extra Xvfb slots just to view —
+    // that fills the registry and 500s later bots. Everyone watches the real desktop.
+    return this.openPrimaryScreen(desktop, request, screenSessionKey(context));
+  }
+
+  private async readyPrimaryStream(desktop: Sandbox, interactive: boolean) {
+    try {
+      await Promise.race([
+        this.startStream(desktop, interactive),
+        delay(E2B_SCREEN_STREAM_WAIT_MS).then(() => {
+          throw new Error("screen stream timed out");
+        }),
+      ]);
+    } catch (error) {
+      if (error instanceof Error && error.message === "screen stream timed out") return;
+      throw error;
+    }
+  }
+
+  private async openPrimaryScreen(
+    desktop: Sandbox,
+    request: ScreenRequest,
+    screenKey: string,
+  ): Promise<ScreenSession> {
+    const layout = extraDisplayLayout(0, desktop.display ?? ":0");
+    await this.readyPrimaryStream(desktop, request.interactive);
+    if (!this.trimmedBrowser.has(desktop.sandboxId)) {
+      this.trimmedBrowser.add(desktop.sandboxId);
+      void openDesktopBrowser(desktop);
+    }
+    if (request.interactive) {
+      if (!request.controlToken) throw new Error("interactive screen requires a control token");
+      try {
         const password = await this.startControlStream(desktop, request.controlToken, screenKey);
         const url = new URL(`https://${desktop.getHost(layout.controlPort)}/vnc.html`);
         url.searchParams.set("autoconnect", "true");
@@ -371,31 +549,26 @@ export class E2BSandboxProvider implements SandboxProvider {
           mimeType: "text/html",
           close: async () => undefined,
         };
-      }
-      let authKey: string | undefined;
-      try {
-        authKey = desktop.stream.getAuthKey();
       } catch {
-        authKey = undefined;
+        // Control VNC is often wedged on this host. Still return the live view.
       }
-      const url =
-        typeof desktop.stream.getUrl === "function"
-          ? desktop.stream.getUrl({
-              autoConnect: true,
-              viewOnly: true,
-              resize: "scale",
-              ...(authKey ? { authKey } : {}),
-            })
-          : null;
-      return {
-        url,
-        mimeType: "text/html",
-        close: async () => {
-          await desktop.stream.stop().catch(() => undefined);
-          this.streamReady.delete(desktop.sandboxId);
-        },
-      };
     }
+    return {
+      url: this.primaryViewUrl(desktop),
+      mimeType: "text/html",
+      close: async () => {
+        this.streamReady.delete(desktop.sandboxId);
+      },
+    };
+  }
+
+  private async openExtraScreen(
+    desktop: Sandbox,
+    request: ScreenRequest,
+    screenKey: string,
+    layout: ReturnType<typeof extraDisplayLayout>,
+    context: AdapterContext,
+  ): Promise<ScreenSession> {
     const viewPassword = await this.ensureExtraDisplay(desktop, layout, context);
     if (request.interactive) {
       if (!request.controlToken) throw new Error("interactive screen requires a control token");
@@ -581,14 +754,11 @@ export class E2BSandboxProvider implements SandboxProvider {
     context: AdapterContext,
   ): AsyncIterable<PortableFile> {
     const desktop = await this.box(computer);
-    await stopDesktopBrowsers(desktop);
-    try {
-      yield* walkE2BWorkspace(desktop, "", context);
-    } finally {
-      if (context.operationId !== "stop" && context.operationId !== "computer.sleep") {
-        await openDesktopBrowser(desktop);
-      }
-    }
+    const quitting = context.operationId === "stop" || context.operationId === "computer.sleep";
+    // Live checkpoints used to pkill Chrome so profiles copied cleanly. That blanked
+    // the screen every time a bot replied. Skip locks/cache on export instead.
+    if (quitting) await stopDesktopBrowsers(desktop);
+    yield* walkE2BWorkspace(desktop, "", context);
   }
 
   async importWorkspace(
@@ -656,6 +826,17 @@ export class E2BSandboxProvider implements SandboxProvider {
     // Non-primary teardown runs inside the registry lock before the slot is reusable.
   }
 
+  async stealScreen(computer: ComputerRef, _context: AdapterContext): Promise<void> {
+    const id = computer.providerRef || computer.id;
+    const desktop = this.boxes.get(id) ?? (await this.box(computer).catch(() => undefined));
+    if (!desktop) return;
+    await desktop.commands.run(resetScreenAssignmentsCommand()).catch(() => undefined);
+    const prefix = `${id}:`;
+    for (const key of [...this.controlStreams.keys()]) {
+      if (key.startsWith(prefix)) this.controlStreams.delete(key);
+    }
+  }
+
   async stop(computer: ComputerRef, _context: AdapterContext): Promise<void> {
     const id = computer.providerRef || computer.id;
     const pending = this.streamStarts.get(id);
@@ -680,8 +861,10 @@ export class E2BSandboxProvider implements SandboxProvider {
 
   private forget(id: string): void {
     this.boxes.delete(id);
+    this.connecting.delete(id);
     this.lastTouchedAt.delete(id);
     this.streamReady.delete(id);
+    this.trimmedBrowser.delete(id);
     this.streamStarts.delete(id);
     for (const key of [...this.controlStreams.keys()]) {
       if (key.startsWith(`${id}:`)) this.controlStreams.delete(key);
@@ -911,12 +1094,18 @@ async function configureDefaultWebBrowser(desktop: Sandbox): Promise<void> {
   await desktop.commands
     .run(
       [
-        "command -v google-chrome >/dev/null 2>&1 || exit 0",
+        "command -v google-chrome-stable >/dev/null 2>&1 || command -v google-chrome >/dev/null 2>&1 || exit 0",
         'mkdir -p "$HOME/.config/xfce4"',
         "printf 'WebBrowser=google-chrome\\n' > \"$HOME/.config/xfce4/helpers.rc\"",
-        "xdg-settings set default-web-browser google-chrome.desktop",
+        "xdg-settings set default-web-browser google-chrome.desktop || xdg-settings set default-web-browser google-chrome-stable.desktop",
       ].join(" && "),
     )
+    .catch(() => undefined);
+}
+
+async function ensureGoogleChrome(desktop: Sandbox): Promise<void> {
+  await desktop.commands
+    .run(ensureGoogleChromeCommand(), { timeoutMs: 180_000 })
     .catch(() => undefined);
 }
 
@@ -962,6 +1151,14 @@ async function applyE2BAction(desktop: Sandbox, action: ComputerAction): Promise
       return;
     }
     await desktop.open(workspacePath(E2B_WORKSPACE, action.path));
+    return;
+  }
+  if (isDesktopBrowserApp(action.application)) {
+    if (action.uri && /^https?:\/\//i.test(action.uri)) {
+      await openDesktopUrl(desktop, action.uri);
+      return;
+    }
+    await openDesktopBrowser(desktop);
     return;
   }
   await desktop.launch(action.application, action.uri);

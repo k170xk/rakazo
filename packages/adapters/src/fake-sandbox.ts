@@ -237,6 +237,13 @@ export class FakeSandboxProvider implements SandboxProvider {
     box.screenLeases.delete(key);
   }
 
+  async stealScreen(computer: ComputerRef, _context: AdapterContext): Promise<void> {
+    const box = this.boxes.get(computer.id);
+    if (!box) return;
+    box.screens.clear();
+    box.screenLeases.clear();
+  }
+
   async stop(computer: ComputerRef, _context: AdapterContext): Promise<void> {
     const box = this.boxes.get(computer.id);
     if (box) box.running = false;

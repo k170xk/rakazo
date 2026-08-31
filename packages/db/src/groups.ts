@@ -5,7 +5,7 @@ import {
   type Group,
   type GroupMember,
 } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
+import { ACTIVE_RUN_STATUSES, preferredActiveRunStatus } from "@rakazo/core";
 import type { Prisma, PrismaClient } from "./client.js";
 import { IsolationError } from "./scope.js";
 
@@ -13,7 +13,7 @@ const activeRunStatuses = [...ACTIVE_RUN_STATUSES];
 const activeRunSelection = {
   where: { status: { in: activeRunStatuses } },
   orderBy: { createdAt: "desc" as const },
-  take: 1,
+  take: 8,
   select: { status: true },
 } as const;
 
@@ -71,7 +71,7 @@ function mapGroup(group: GroupRecord): Group {
       botId: member.bot.id,
       name: member.bot.name,
       color: member.bot.color,
-      status: member.bot.runs[0]?.status ?? "idle",
+      status: preferredActiveRunStatus(member.bot.runs.map((run) => run.status)),
     })),
     threadId: group.thread.id,
     preview,

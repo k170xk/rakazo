@@ -124,7 +124,7 @@ export function RoutineSchedules({
               type="button"
               aria-label={t`Remove this schedule`}
               onClick={() => onChange(value.filter((_, i) => i !== index))}
-              className="mt-3 shrink-0 text-[#85858A] hover:text-[#ECECEE]"
+              className="mt-3 shrink-0 text-[#64748B] hover:text-[#020817]"
             >
               <svg
                 width="15"
@@ -145,7 +145,7 @@ export function RoutineSchedules({
       <button
         type="button"
         onClick={() => onChange([...value, defaultCronPreset()])}
-        className="text-[13.5px] text-[#9A9AA0] hover:text-[#ECECEE]"
+        className="text-[13.5px] text-[#94A3B8] hover:text-[#020817]"
       >
         <Trans>+ Add another schedule</Trans>
       </button>
@@ -215,14 +215,14 @@ export function RoutineSchedule({
   );
 
   return (
-    <div className="mt-2 rounded-[13px] border border-[#26262A] p-3">
+    <div className="mt-2 rounded-[13px] border border-[#E2E8F0] p-3">
       <div className="flex items-center gap-2.5 px-0.5">
         <svg
           width="17"
           height="17"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#C9C9CE"
+          stroke="#334155"
           strokeWidth="1.6"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -232,10 +232,10 @@ export function RoutineSchedule({
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v5l3 2" />
         </svg>
-        <span className="text-[14.5px] text-[#ECECEE]">{lead}</span>
-        {detail ? <span className="flex-1 text-[14.5px] text-[#85858A]">{detail}</span> : null}
+        <span className="text-[14.5px] text-[#020817]">{lead}</span>
+        {detail ? <span className="flex-1 text-[14.5px] text-[#64748B]">{detail}</span> : null}
       </div>
-      <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-[11px] bg-[#16161A] px-2.5 py-2.5 text-[14px] text-[#7A7A80]">
+      <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-[11px] bg-[#FFFFFF] px-2.5 py-2.5 text-[14px] text-[#64748B]">
         <select
           className="rk-schedule-select"
           value={value.freq}
@@ -267,7 +267,7 @@ export function RoutineSchedule({
             placeholder="*/3 * * * *"
             aria-label={t`Cron expression`}
             onChange={(event) => patch({ cron: event.target.value })}
-            className="min-w-[120px] flex-1 rounded-lg border-0 bg-[#24242A] px-2.5 py-1.5 font-mono text-[13.5px] text-[#ECECEE] outline-none"
+            className="min-w-[120px] flex-1 rounded-lg border-0 bg-[#F1F5F9] px-2.5 py-1.5 font-mono text-[13.5px] text-[#020817] outline-none"
           />
         ) : null}
       </div>

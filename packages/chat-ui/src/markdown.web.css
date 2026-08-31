@@ -29,7 +29,7 @@
 .rk-chat-markdown h5,
 .rk-chat-markdown h6 {
   margin: 0.9em 0 0.35em;
-  color: #f3f3f4;
+  color: #020817;
   font-weight: 650;
   line-height: 1.25;
 }
@@ -80,16 +80,16 @@
 }
 
 .rk-chat-markdown a {
-  color: #86b7ff;
+  color: #76bf43;
   text-decoration: underline;
-  text-decoration-color: rgba(134, 183, 255, 0.55);
+  text-decoration-color: rgba(118, 191, 67, 0.55);
   text-underline-offset: 0.15em;
 }
 
 .rk-chat-markdown code {
-  border: 1px solid #34343a;
+  border: 1px solid #e2e8f0;
   border-radius: 0.35em;
-  background: #101012;
+  background: #f8fafc;
   padding: 0.08em 0.32em;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.88em;
@@ -100,9 +100,9 @@
 .rk-chat-markdown pre {
   max-width: 100%;
   overflow-x: auto;
-  border: 1px solid #2d2d32;
-  border-radius: 0.75em;
-  background: #0e0e10;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5em;
+  background: #f8fafc;
   padding: 0.8em 0.9em;
   direction: ltr;
   unicode-bidi: isolate;
@@ -134,10 +134,10 @@
   justify-content: center;
   width: 1.75em;
   height: 1.75em;
-  border: 1px solid #34343a;
+  border: 1px solid #e2e8f0;
   border-radius: 0.4em;
-  background: #17171a;
-  color: #b8b8bd;
+  background: #ffffff;
+  color: #64748b;
   opacity: 0;
   transition: opacity 0.12s;
   cursor: pointer;
@@ -149,14 +149,14 @@
 }
 
 .rk-chat-markdown-copy:hover {
-  background: #202024;
-  color: #f3f3f4;
+  background: #f1f5f9;
+  color: #020817;
 }
 
 .rk-chat-markdown blockquote {
-  border-left: 3px solid #55555c;
+  border-left: 3px solid #cbd5e1;
   padding-left: 0.85em;
-  color: #aaaab0;
+  color: #64748b;
 }
 
 .rk-chat-markdown table {
@@ -169,7 +169,7 @@
 
 .rk-chat-markdown th,
 .rk-chat-markdown td {
-  border: 1px solid #34343a;
+  border: 1px solid #e2e8f0;
   padding: 0.4em 0.6em;
   text-align: left;
   /* Not the container's `anywhere`: its break opportunities count toward
@@ -178,15 +178,15 @@
 }
 
 .rk-chat-markdown th {
-  background: #232327;
-  color: #f3f3f4;
+  background: #f1f5f9;
+  color: #020817;
   font-weight: 600;
 }
 
 .rk-chat-markdown hr {
   margin: 0.9em 0;
   border: 0;
-  border-top: 1px solid #34343a;
+  border-top: 1px solid #e2e8f0;
 }
 
 .rk-chat-markdown img {
@@ -199,7 +199,7 @@
 
 .rk-chat-markdown input[type="checkbox"] {
   margin-right: 0.4em;
-  accent-color: #6ea8fe;
+  accent-color: #76bf43;
 }
 
 .rk-chat-markdown-streaming {
@@ -214,7 +214,7 @@
   width: 0.16em;
   height: 1em;
   border-radius: 999px;
-  background: #85858a;
+  background: #76bf43;
   animation: rkMarkdownCursor 1s steps(2, jump-none) infinite;
 }
 

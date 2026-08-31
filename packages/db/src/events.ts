@@ -4,7 +4,7 @@ import {
   MessageBlock as MessageBlockSchema,
   type ProductEvent,
 } from "@rakazo/contracts";
-import { isApprovalAskBlock, isSecretAskBlock } from "@rakazo/core";
+import { isApprovalAskBlock, isScreenHandoffAskBlock, isSecretAskBlock } from "@rakazo/core";
 import type { Prisma, PrismaClient } from "./client.js";
 import {
   assertRunCanWriteHistory,
@@ -348,6 +348,21 @@ export async function sendUserMessage(
         if (input.linkMessageToRun) {
           await tx.message.update({ where: { id: message.id }, data: { runId: run.id } });
         }
+        if (run && (input.trigger === "user" || input.trigger === "follow_up")) {
+          await tx.run.updateMany({
+            where: {
+              botId: input.botId,
+              status: "queued",
+              trigger: { in: ["user", "follow_up"] },
+              id: { not: run.id },
+            },
+            data: {
+              status: "cancelled",
+              completedAt: new Date(),
+              error: "Superseded by a newer message",
+            },
+          });
+        }
       }
       const event = await appendEventInTransaction(tx, {
         workspaceId: input.workspaceId,
@@ -413,7 +428,11 @@ export async function answerRunInput(
     if (pendingAsk?.kind !== "ask") return null;
     const approvalAsk = isApprovalAskBlock(pendingAsk);
     const secretAsk = isSecretAskBlock(pendingAsk);
+    const screenHandoffAsk = isScreenHandoffAskBlock(pendingAsk);
     if (secretAsk && !runSecretWriter) return null;
+    if (screenHandoffAsk && !pendingAsk.actions?.some((action) => action.id === input.answer)) {
+      return null;
+    }
     let approvalEffect: { id: string; kind: string } | null = null;
     let approvalUserId: string | null = null;
 
@@ -489,6 +508,8 @@ export async function answerRunInput(
         },
         data: { status: "approved" },
       });
+    } else if (screenHandoffAsk) {
+      // Keep the original task. Allow/deny only decides whether this bot may take the display.
     } else {
       const task = await tx.task.updateMany({
         where: { runs: { some: { id: input.runId } } },
@@ -680,7 +701,9 @@ export async function finalizeComputerControlRelease(
             checkpoint:
               input.reason === "skipped" || input.reason === "expired"
                 ? "takeover-skipped"
-                : "takeover",
+                : input.reason === "done"
+                  ? "takeover"
+                  : "takeover-released",
           },
         })
       : { count: 0 };

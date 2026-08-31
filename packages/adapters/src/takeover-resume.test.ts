@@ -2,11 +2,18 @@ import { describe, expect, it } from "vitest";
 import { takeoverResumeFromRelease } from "./takeover-resume.js";
 
 describe("takeoverResumeFromRelease", () => {
-  it("tells the bot the login finished after I'm done or a plain release", () => {
-    for (const reason of ["done", "released", undefined]) {
+  it("tells the bot the login finished after I'm done", () => {
+    const resume = takeoverResumeFromRelease("done");
+    expect(resume.checkpoint).toBe("takeover");
+    expect(resume.promptNote).toMatch(/finished the login/i);
+  });
+
+  it("tells the bot it can take the desktop back after a voluntary release", () => {
+    for (const reason of ["released", undefined]) {
       const resume = takeoverResumeFromRelease(reason);
-      expect(resume.checkpoint).toBe("takeover");
-      expect(resume.promptNote).toMatch(/finished the login/i);
+      expect(resume.checkpoint).toBe("takeover-released");
+      expect(resume.promptNote).toMatch(/released the desktop/i);
+      expect(resume.promptNote).not.toMatch(/finished the login/i);
     }
   });
 

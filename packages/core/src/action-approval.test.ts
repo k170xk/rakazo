@@ -5,6 +5,7 @@ import {
   connectorKindFromToolName,
   connectorToolRequiresApproval,
   isApprovalAskBlock,
+  isScreenHandoffAskBlock,
   isSecretAskBlock,
   planActionGate,
   resolveActionApproval,
@@ -77,6 +78,29 @@ describe("isApprovalAskBlock", () => {
         kind: "ask",
         approvalEffectId: "effect-1",
         actions: [{ id: "deny", label: "No" }],
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("isScreenHandoffAskBlock", () => {
+  it("detects allow/deny cards for the shared desktop", () => {
+    expect(
+      isScreenHandoffAskBlock({
+        kind: "ask",
+        input: "screen_handoff",
+        actions: [
+          { id: "allow" },
+          { id: "deny" },
+        ],
+      }),
+    ).toBe(true);
+    expect(isScreenHandoffAskBlock({ kind: "ask", input: "screen_handoff" })).toBe(false);
+    expect(
+      isScreenHandoffAskBlock({
+        kind: "ask",
+        input: "secret",
+        actions: [{ id: "allow" }, { id: "deny" }],
       }),
     ).toBe(false);
   });

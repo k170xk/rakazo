@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bootstrapUserWorkspace } from "./bootstrap-user.js";
+import { bootstrapUserWorkspace, createUserWorkspace } from "./bootstrap-user.js";
 import type { PrismaClient } from "./client.js";
 
 function makePrisma(settings: { id: string; ownerUserId: string | null } | null) {
@@ -160,5 +160,26 @@ describe("bootstrapUserWorkspace concurrency", () => {
     );
 
     expect(result.workspaceId).toBe("org-winner");
+  });
+});
+
+describe("createUserWorkspace", () => {
+  it("creates an extra personal workspace with memory", async () => {
+    const prisma = makePrisma({ id: "default", ownerUserId: "user-1" });
+    const result = await createUserWorkspace(
+      prisma as unknown as PrismaClient,
+      { id: "user-1" },
+      "  OCSC  ",
+    );
+
+    expect(result.name).toBe("OCSC");
+    const orgData = prisma.organization.create.mock.calls[0]![0].data;
+    expect(orgData.name).toBe("OCSC");
+    expect(orgData.slug).toMatch(/^ws-user-1-/);
+    expect(result.workspaceId).toBe(orgData.id);
+    expect(prisma.member.create.mock.calls[0]![0].data.role).toBe("owner");
+    expect(prisma.memoryDocument.create.mock.calls[0]![0].data.workspaceId).toBe(
+      result.workspaceId,
+    );
   });
 });

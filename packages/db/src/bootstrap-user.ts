@@ -108,3 +108,42 @@ export async function bootstrapUserWorkspace(
     });
   return { workspaceId: orgId };
 }
+
+export async function createUserWorkspace(
+  prisma: PrismaClient,
+  user: { id: string },
+  name: string,
+): Promise<{ workspaceId: string; name: string }> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Workspace name required");
+  const orgId = newId();
+  const slug = `ws-${user.id.slice(0, 8)}-${newId().slice(0, 12)}`;
+  await prisma.organization.create({
+    data: { id: orgId, name: trimmed, slug, createdAt: new Date() },
+  });
+  await prisma.member.create({
+    data: {
+      id: newId(),
+      organizationId: orgId,
+      userId: user.id,
+      role: "owner",
+      createdAt: new Date(),
+    },
+  });
+  await prisma.memoryDocument.create({
+    data: {
+      workspaceId: orgId,
+      userId: user.id,
+      scope: "user",
+      path: "MEMORY.md",
+      content: "# User memory\n\nAccount-wide preferences live here.\n",
+    },
+  });
+  await prisma.notificationPreference.create({
+    data: {
+      workspaceId: orgId,
+      userId: user.id,
+    },
+  });
+  return { workspaceId: orgId, name: trimmed };
+}

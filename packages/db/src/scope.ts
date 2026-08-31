@@ -8,11 +8,20 @@ export class IsolationError extends Error {
   }
 }
 
-export async function requireMembership(prisma: PrismaClient, userId: string): Promise<Actor> {
-  const member = await prisma.member.findFirst({
+export async function requireMembership(
+  prisma: PrismaClient,
+  userId: string,
+  activeWorkspaceId?: string | null,
+): Promise<Actor> {
+  const members = await prisma.member.findMany({
     where: { userId },
     include: { user: true, organization: true },
+    orderBy: { createdAt: "asc" },
   });
+  const member =
+    (activeWorkspaceId
+      ? members.find((row) => row.organizationId === activeWorkspaceId)
+      : undefined) ?? members[0];
   if (!member) {
     throw new IsolationError("No personal workspace");
   }

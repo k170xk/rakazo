@@ -728,6 +728,8 @@ model Computer {
   executionBotId           String?
   executionLeaseExpiresAt  DateTime?
   executionFence           Int      @default(0)
+  bootLeaseId              String?
+  bootLeaseExpiresAt       DateTime?
   screenUrl                String?
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
@@ -735,6 +737,7 @@ model Computer {
   executionLeases          ComputerExecutionLease[]
 
   @@index([workspaceId, scope])
+  @@index([bootLeaseExpiresAt])
   @@map("computers")
 }
 

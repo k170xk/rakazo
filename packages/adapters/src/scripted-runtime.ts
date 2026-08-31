@@ -144,6 +144,14 @@ export function inferScript(
       },
     ];
   }
+  if (resumeFromCheckpoint === "takeover-released") {
+    return [
+      {
+        assistant: "the user released the desktop. continuing.",
+        complete: true,
+      },
+    ];
+  }
   if (
     lower.includes("ask me") ||
     lower.includes("which city") ||

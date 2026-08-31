@@ -120,6 +120,8 @@ export interface SandboxProvider {
   keepAlive?(computer: ComputerRef): Promise<void>;
   /** Drop a single-screen graphical claim for this bot so another Team bot can use the display. */
   releaseScreen?(computer: ComputerRef, context: AdapterContext): Promise<void>;
+  /** Force-clear every screen claim on this computer so this bot can take the shared display. */
+  stealScreen?(computer: ComputerRef, context: AdapterContext): Promise<void>;
   stop(computer: ComputerRef, context: AdapterContext): Promise<void>;
   destroy(computer: ComputerRef, context: AdapterContext): Promise<void>;
 }

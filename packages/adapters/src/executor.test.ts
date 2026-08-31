@@ -519,6 +519,40 @@ description: Prepare standup notes
     expect(model.apiKey).toBeUndefined();
   });
 
+  it("uses a stored deployment key when the owner set one", async () => {
+    const prisma = {
+      bot: { findFirst: vi.fn(async () => null) },
+      userModelCredential: { findFirst: vi.fn(async () => null) },
+      deploymentSettings: {
+        findUnique: vi.fn(async () => ({
+          defaultModelProvider: "openai",
+          defaultModelId: "gpt-4.1",
+          deploymentModelCredentialCipher: "cipher",
+        })),
+      },
+      secret: { findUnique: vi.fn(async () => null) },
+    } as unknown as PrismaClient;
+    const executor = createRunExecutor({
+      prisma,
+      secretStore: {
+        load: vi.fn((_ciphertext: string, recordId: string) => {
+          expect(recordId).toBe("deployment-model");
+          return "sk-stored-openai";
+        }),
+        put: vi.fn(),
+      },
+      deploymentModelKey: undefined,
+    } as unknown as Parameters<typeof createRunExecutor>[0]);
+
+    const model = await executor.resolveModel({ userId: "user-1", workspaceId: "ws-1" });
+
+    expect(model).toMatchObject({
+      provider: "openai",
+      id: "gpt-4.1",
+      apiKey: "sk-stored-openai",
+    });
+  });
+
   it("keeps per-bot thinking when using the workspace default model", async () => {
     const findFirst = vi.fn(async (args: { where: { provider?: string; isDefault?: boolean } }) => {
       if (args.where.isDefault) {
