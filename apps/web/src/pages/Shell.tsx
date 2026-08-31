@@ -178,6 +178,7 @@ import {
   ensureComputerStep,
   isComputerStatusEvent,
   isThreadSnapshotEvent,
+  liveTurnHoldsComposer,
   pollComputerUntilSettled,
   prependThreadMessagePage,
   reconcileRefreshedThread,
@@ -1645,7 +1646,7 @@ export function ShellPage() {
   const answerableAskMessageId = latestAnswerableAskMessageId(activeSnapshot);
   const workingRuns = currentRuns.filter((run) => isWorkingRunStatus(run.status));
   const transcriptRunning = workingRuns.length > 0;
-  const composerRunning = currentRuns.some((run) => isActive(run.status));
+  const composerRunning = liveTurnHoldsComposer(activeSnapshot);
   const runError = threadRunError(activeSnapshot, dismissedRunErrorIds);
   const transcriptArtifactTarget = useMemo<ArtifactTarget>(
     () => (inGroup ? { groupId: groupId ?? "" } : { botId: active?.id ?? "" }),

@@ -68,3 +68,17 @@ export function liveSendDisposition(status: string | undefined): LiveSendDisposi
   if (status === "waiting_input") return "resume";
   return "new-run";
 }
+
+/** After this much silence on a streamed reply, a follow-up is a new turn. */
+export const LIVE_TURN_IDLE_AFTER_MS = 8_000;
+
+export function lastEventMeansPendingWork(
+  last: { type: string; createdAt: Date } | null | undefined,
+  now = new Date(),
+): boolean {
+  if (!last) return true;
+  if (last.type === "agent.tool.called" || last.type === "thread.subagent") return true;
+  const age = now.getTime() - last.createdAt.getTime();
+  if (age < LIVE_TURN_IDLE_AFTER_MS) return true;
+  return false;
+}

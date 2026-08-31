@@ -10,6 +10,7 @@ import {
 import {
   ACTIVE_RUN_STATUSES,
   isActive,
+  lastEventMeansPendingWork,
   liveSendDisposition,
   projectMessages,
   resolveGroupTargetBotIds,
@@ -123,6 +124,99 @@ async function findLiveUserRun(
     },
     orderBy: { createdAt: "desc" },
     select: { id: true, taskId: true, status: true },
+  });
+}
+
+async function liveRunStillWorking(tx: Prisma.TransactionClient, runId: string) {
+  const last = await tx.event.findFirst({
+    where: { runId },
+    orderBy: { seq: "desc" },
+    select: { type: true, createdAt: true },
+  });
+  return lastEventMeansPendingWork(last);
+}
+
+function durableBlocksFromLiveProgress(
+  blocks: Array<{ kind: string; text?: string }>,
+): Array<{ kind: "text"; text: string }> {
+  return blocks.flatMap((block) => {
+    if ((block.kind === "text" || block.kind === "progress") && block.text?.trim()) {
+      return [{ kind: "text" as const, text: block.text }];
+    }
+    return [];
+  });
+}
+
+async function promoteLiveProgressToMessage(
+  tx: Prisma.TransactionClient,
+  input: { workspaceId: string; threadId: string; botId: string; runId: string },
+) {
+  const liveEvents = await tx.event.findMany({
+    where: {
+      threadId: input.threadId,
+      runId: input.runId,
+      type: { in: ["thread.progress", "thread.subagent", "agent.tool.called"] },
+    },
+    orderBy: { seq: "asc" },
+  });
+  const live = projectMessages(liveEvents).find((message) => message.id === `progress:${input.runId}`);
+  const blocks = durableBlocksFromLiveProgress(live?.blocks ?? []);
+  if (blocks.length > 0) {
+    const message = await createThreadMessageInTransaction(tx, {
+      threadId: input.threadId,
+      role: "bot",
+      blocks,
+      botId: input.botId,
+      runId: input.runId,
+    });
+    await appendEventInTransaction(tx, {
+      workspaceId: input.workspaceId,
+      threadId: input.threadId,
+      botId: input.botId,
+      type: "thread.message.created",
+      runId: input.runId,
+      payload: { messageId: message.id, role: "bot", blocks },
+    });
+  }
+  await tx.event.deleteMany({ where: { runId: input.runId, type: "thread.progress" } });
+}
+
+async function settleIdleUserRun(
+  tx: Prisma.TransactionClient,
+  input: { workspaceId: string; threadId: string; botId: string; runId: string; taskId: string },
+) {
+  await promoteLiveProgressToMessage(tx, input);
+  const now = new Date();
+  await tx.run.updateMany({
+    where: { id: input.runId, status: { in: [...ACTIVE_RUN_STATUSES] } },
+    data: {
+      status: "completed",
+      completedAt: now,
+      leaseOwner: null,
+      leaseExpiresAt: null,
+    },
+  });
+  await tx.task.updateMany({ where: { id: input.taskId }, data: { status: "completed" } });
+  await tx.attempt.updateMany({
+    where: { runId: input.runId, status: "running" },
+    data: { status: "completed", finishedAt: now },
+  });
+  await tx.computerExecutionLease.deleteMany({ where: { runId: input.runId } });
+  await tx.computer.updateMany({
+    where: { executionRunId: input.runId },
+    data: {
+      executionRunId: null,
+      executionBotId: null,
+      executionLeaseExpiresAt: null,
+    },
+  });
+  await appendEventInTransaction(tx, {
+    workspaceId: input.workspaceId,
+    threadId: input.threadId,
+    botId: input.botId,
+    type: "run.completed",
+    runId: input.runId,
+    payload: {},
   });
 }
 
@@ -547,8 +641,24 @@ export async function sendThreadMessage(
           replyToMessageId: input.replyToMessageId,
           clientNonce: input.clientNonce,
         });
-        const live = await findLiveUserRun(tx, { threadId: target.threadId, botId: target.botId });
-        const disposition = liveSendDisposition(live?.status);
+        let live = await findLiveUserRun(tx, { threadId: target.threadId, botId: target.botId });
+        let disposition = liveSendDisposition(live?.status);
+        if (
+          live &&
+          disposition === "redirect" &&
+          live.status === "running" &&
+          !(await liveRunStillWorking(tx, live.id))
+        ) {
+          await settleIdleUserRun(tx, {
+            workspaceId: actor.workspaceId,
+            threadId: target.threadId,
+            botId: target.botId,
+            runId: live.id,
+            taskId: live.taskId,
+          });
+          live = null;
+          disposition = "new-run";
+        }
         if (live && disposition !== "new-run") {
           await tx.message.update({ where: { id: message.id }, data: { runId: live.id } });
           let status = live.status;
@@ -658,8 +768,24 @@ export async function sendThreadMessage(
       });
       const runs: Array<{ id: string; taskId: string; botId: string; status: string }> = [];
       for (const botId of targetBotIds) {
-        const live = await findLiveUserRun(tx, { threadId: target.threadId, botId });
-        const disposition = liveSendDisposition(live?.status);
+        let live = await findLiveUserRun(tx, { threadId: target.threadId, botId });
+        let disposition = liveSendDisposition(live?.status);
+        if (
+          live &&
+          disposition === "redirect" &&
+          live.status === "running" &&
+          !(await liveRunStillWorking(tx, live.id))
+        ) {
+          await settleIdleUserRun(tx, {
+            workspaceId: actor.workspaceId,
+            threadId: target.threadId,
+            botId,
+            runId: live.id,
+            taskId: live.taskId,
+          });
+          live = null;
+          disposition = "new-run";
+        }
         if (live && disposition !== "new-run") {
           let status = live.status;
           if (disposition === "resume") {
@@ -744,15 +870,24 @@ export async function stopThreadRuns(
   actor: Actor,
   target: ThreadTarget,
 ) {
-  const runIds = (
-    await deps.prisma.run.findMany({
-      where: {
+  const active = await deps.prisma.run.findMany({
+    where: {
+      threadId: target.threadId,
+      status: { in: [...ACTIVE_RUN_STATUSES] },
+    },
+    select: { id: true, botId: true },
+  });
+  const runIds = active.map((run) => run.id);
+  await deps.prisma.$transaction(async (tx) => {
+    for (const run of active) {
+      await promoteLiveProgressToMessage(tx, {
+        workspaceId: actor.workspaceId,
         threadId: target.threadId,
-        status: { in: [...ACTIVE_RUN_STATUSES] },
-      },
-      select: { id: true },
-    })
-  ).map((run) => run.id);
+        botId: run.botId,
+        runId: run.id,
+      });
+    }
+  });
   await deps.prisma.run.updateMany({
     where: { id: { in: runIds } },
     data: { status: "cancelled", completedAt: new Date() },

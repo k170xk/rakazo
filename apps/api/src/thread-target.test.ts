@@ -549,7 +549,18 @@ describe("stopThreadRuns", () => {
         updateMany: vi.fn().mockResolvedValue({ count: 2 }),
       },
       computerExecutionLease: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
-      event: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      event: {
+        findMany: vi.fn().mockResolvedValue([]),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
+      $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
+        callback({
+          event: {
+            findMany: vi.fn().mockResolvedValue([]),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          },
+        }),
+      ),
     } as unknown as PrismaClient;
     const actor = {
       workspaceId: "workspace-1",

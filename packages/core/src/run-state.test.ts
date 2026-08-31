@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertTransition,
   canTransition,
+  lastEventMeansPendingWork,
   liveSendDisposition,
   preferredActiveRunStatus,
 } from "./run-state.js";
@@ -20,6 +21,29 @@ describe("run state machine", () => {
     expect(liveSendDisposition("waiting_input")).toBe("resume");
     expect(liveSendDisposition("queued")).toBe("new-run");
     expect(liveSendDisposition(undefined)).toBe("new-run");
+  });
+
+  it("treats a streamed reply that has gone quiet as finished work", () => {
+    const now = new Date("2026-08-31T20:00:10.000Z");
+    expect(
+      lastEventMeansPendingWork(
+        { type: "agent.tool.called", createdAt: new Date("2026-08-31T20:00:00.000Z") },
+        now,
+      ),
+    ).toBe(true);
+    expect(
+      lastEventMeansPendingWork(
+        { type: "thread.progress", createdAt: new Date("2026-08-31T20:00:09.000Z") },
+        now,
+      ),
+    ).toBe(true);
+    expect(
+      lastEventMeansPendingWork(
+        { type: "thread.progress", createdAt: new Date("2026-08-31T19:59:50.000Z") },
+        now,
+      ),
+    ).toBe(false);
+    expect(lastEventMeansPendingWork(null, now)).toBe(true);
   });
 
   it("prefers a live run over a newer queued one on the roster", () => {

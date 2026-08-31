@@ -17,6 +17,7 @@ import {
   ensureComputerStep,
   pollComputerUntilSettled,
   isThreadSnapshotEvent,
+  liveTurnHoldsComposer,
   appendOptimisticUserMessage,
   mergeThreadSnapshot,
   prependThreadMessagePage,
@@ -1141,6 +1142,24 @@ describe("thread event reduction", () => {
     const next = mergeThreadSnapshot(previous, recent);
 
     expect(next.messages.map((item) => item.id)).toEqual(["user-1", "progress:run-1"]);
+  });
+
+  it("hides Stop once the live bubble is a finished reply", () => {
+    const pending: ThreadSnapshot = {
+      ...snapshot([message("progress:run-1", [{ kind: "steps", steps: [{ label: "Shell", count: 1 }] }])]),
+      run: threadRun("run-1"),
+    };
+    const answered: ThreadSnapshot = {
+      ...snapshot([
+        message("progress:run-1", [
+          { kind: "steps", steps: [{ label: "Shell", count: 2 }] },
+          { kind: "progress", text: "Keith — here's where your team is at." },
+        ]),
+      ]),
+      run: threadRun("run-1"),
+    };
+    expect(liveTurnHoldsComposer(pending)).toBe(true);
+    expect(liveTurnHoldsComposer(answered)).toBe(false);
   });
 
   it("shows a user send immediately", () => {

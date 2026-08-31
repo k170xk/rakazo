@@ -86,6 +86,31 @@ export function activeThreadRuns(
   return snapshot?.activeRuns ?? (snapshot?.run ? [snapshot.run] : []);
 }
 
+/** True when the live bubble is still calling tools, not sitting on a finished reply. */
+export function liveProgressIsPending(
+  message: Pick<ThreadMessage, "id" | "blocks"> | undefined,
+): boolean {
+  if (!message?.id.startsWith("progress:")) return false;
+  const last = message.blocks.at(-1);
+  if (!last) return true;
+  if (last.kind === "steps") return true;
+  if (last.kind === "progress" && (last.pendingToolNames?.length ?? 0) > 0) return true;
+  return false;
+}
+
+/** Stop / Using-desktop chrome: hide it once the answer is already on screen. */
+export function liveTurnHoldsComposer(snapshot: ThreadSnapshot | null): boolean {
+  const runs = activeThreadRuns(snapshot);
+  return runs.some((run) => {
+    if (run.status === "queued" || run.status === "leased") return true;
+    if (run.status === "waiting_input" || run.status === "waiting_takeover") return true;
+    if (run.status !== "running") return false;
+    const live = snapshot?.messages.find((message) => message.id === `progress:${run.id}`);
+    if (!live) return true;
+    return liveProgressIsPending(live);
+  });
+}
+
 /** Reason the newest run stopped, until the reader dismisses that run's failure. */
 export function threadRunError(
   snapshot: ThreadSnapshot | null,
