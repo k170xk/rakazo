@@ -121,7 +121,73 @@ export function mergeThreadSnapshot(
   // A threads.get started before SSE caught up must not wipe newer live state
   // (e.g. ask cards applied after send's post-refresh request was already in flight).
   if (prev && prev.threadId === next.threadId && prev.cursor > next.cursor) return prev;
-  return mergeThreadHistory(prev, next, preserveLoadedHistory);
+  const merged = mergeThreadHistory(prev, next, preserveLoadedHistory);
+  if (!prev || prev.threadId !== merged.threadId) return merged;
+  return { ...merged, messages: keepLiveTranscript(prev.messages, merged) };
+}
+
+export function appendOptimisticUserMessage(
+  snapshot: ThreadSnapshot,
+  input: { id: string; text: string; botId?: string },
+): ThreadSnapshot {
+  const lastSeq = snapshot.messages.reduce(
+    (max, message) => (typeof message.seq === "number" ? Math.max(max, message.seq) : max),
+    snapshot.cursor,
+  );
+  return {
+    ...snapshot,
+    messages: upsertMessageById(snapshot.messages, {
+      id: input.id,
+      threadId: snapshot.threadId,
+      seq: lastSeq + 1,
+      role: "user",
+      blocks: [{ kind: "text", text: input.text }],
+      botId: input.botId,
+      runId: snapshot.run?.id ?? null,
+      createdAt: new Date().toISOString(),
+    }),
+  };
+}
+
+function messageText(message: ThreadMessage): string {
+  return message.blocks
+    .map((block) => (block.kind === "text" ? block.text : ""))
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Keep streaming bubbles and just-sent user lines that a refresh can omit. */
+function keepLiveTranscript(
+  previous: readonly ThreadMessage[],
+  next: ThreadSnapshot,
+): ThreadMessage[] {
+  const recentIds = new Set(next.messages.map((message) => message.id));
+  const recentUserTexts = new Set(
+    next.messages
+      .filter((message) => message.role === "user" && !message.id.startsWith("local:"))
+      .map(messageText),
+  );
+  const firstRecentSeq = next.messages.reduce<number | null>((first, message) => {
+    if (message.id.startsWith("progress:") || message.id.startsWith("subagent:")) return first;
+    if (typeof message.seq !== "number") return first;
+    return Math.min(first ?? message.seq, message.seq);
+  }, null);
+  const extras = previous.filter((message) => {
+    if (recentIds.has(message.id)) return false;
+    if (message.id.startsWith("local:")) return !recentUserTexts.has(messageText(message));
+    if (message.id.startsWith("progress:")) {
+      const runId = next.run?.id;
+      return Boolean(
+        runId &&
+          message.id === `progress:${runId}` &&
+          isActive(next.run!.status as RunStatus) &&
+          !next.messages.some((row) => row.id === message.id),
+      );
+    }
+    if (message.id.startsWith("subagent:")) return false;
+    return typeof message.seq === "number" && firstRecentSeq !== null && message.seq > firstRecentSeq;
+  });
+  return extras.length === 0 ? next.messages : [...next.messages, ...extras];
 }
 
 /**
@@ -407,9 +473,15 @@ export function reduceThreadSnapshot(
     const replacedSubagentIds = new Set(
       blocks.filter((block) => block.kind === "subagent").map((block) => block.agentId),
     );
-    const liveId = progressMessageId(event);
-    const { remaining } = takeLiveMessage(prev.messages, liveId);
-    const without = remaining.filter((message) => !replacedSubagent(message, replacedSubagentIds));
+    // A user follow-up shares the live runId. Do not tear down the streaming
+    // bubble — that is the bot still working, not a finished answer.
+    const remaining =
+      role === "bot" ? takeLiveMessage(prev.messages, progressMessageId(event)).remaining : prev.messages;
+    const without = remaining.filter(
+      (message) =>
+        !replacedSubagent(message, replacedSubagentIds) &&
+        !(message.id.startsWith("local:") && role === "user"),
+    );
     return { ...prev, cursor: event.seq, messages: upsertMessageById(without, next) };
   }
   return prev;

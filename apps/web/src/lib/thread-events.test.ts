@@ -17,6 +17,7 @@ import {
   ensureComputerStep,
   pollComputerUntilSettled,
   isThreadSnapshotEvent,
+  appendOptimisticUserMessage,
   mergeThreadSnapshot,
   prependThreadMessagePage,
   reconcileRefreshedThread,
@@ -1070,6 +1071,89 @@ describe("thread event reduction", () => {
       "subagent:research",
       "progress:run-active",
       "progress:run-concurrent",
+    ]);
+  });
+
+  it("keeps the live desktop bubble when a user follow-up lands on the same run", () => {
+    const initial = snapshot([
+      message("progress:run-1", [{ kind: "progress", text: "Searching eTenders…" }]),
+    ]);
+
+    const next = reduceThreadSnapshot(
+      initial,
+      event({
+        type: "thread.message.created",
+        seq: 8,
+        payload: {
+          messageId: "user-2",
+          role: "user",
+          blocks: [{ kind: "text", text: "We do civil engineering." }],
+        },
+      }),
+    );
+
+    expect(next?.messages.map((item) => item.id)).toEqual(["progress:run-1", "user-2"]);
+    expect(next?.messages[0]?.blocks[0]).toMatchObject({
+      kind: "progress",
+      text: "Searching eTenders…",
+    });
+  });
+
+  it("replaces a just-sent local user line once the server echo arrives", () => {
+    const initial = snapshot([
+      {
+        ...message("local:nonce-1", [{ kind: "text", text: "We do civil engineering." }]),
+        role: "user",
+      },
+    ]);
+
+    const next = reduceThreadSnapshot(
+      initial,
+      event({
+        type: "thread.message.created",
+        seq: 8,
+        payload: {
+          messageId: "user-2",
+          role: "user",
+          blocks: [{ kind: "text", text: "We do civil engineering." }],
+        },
+      }),
+    );
+
+    expect(next?.messages.map((item) => item.id)).toEqual(["user-2"]);
+  });
+
+  it("keeps a streaming reply when a refresh omits live progress", () => {
+    const previous: ThreadSnapshot = {
+      ...snapshot([
+        { ...message("user-1", [{ kind: "text", text: "look" }], 4), role: "user" },
+        message("progress:run-1", [{ kind: "progress", text: "Opening eTenders…" }], 7),
+      ]),
+      run: threadRun("run-1"),
+      cursor: 7,
+    };
+    const recent: ThreadSnapshot = {
+      ...snapshot([{ ...message("user-1", [{ kind: "text", text: "look" }], 4), role: "user" }]),
+      run: threadRun("run-1"),
+      cursor: 7,
+    };
+
+    const next = mergeThreadSnapshot(previous, recent);
+
+    expect(next.messages.map((item) => item.id)).toEqual(["user-1", "progress:run-1"]);
+  });
+
+  it("shows a user send immediately", () => {
+    const next = appendOptimisticUserMessage(snapshot([]), {
+      id: "local:nonce-1",
+      text: "try now",
+    });
+    expect(next.messages).toEqual([
+      expect.objectContaining({
+        id: "local:nonce-1",
+        role: "user",
+        blocks: [{ kind: "text", text: "try now" }],
+      }),
     ]);
   });
 

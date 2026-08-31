@@ -166,6 +166,7 @@ import { markAfterPaint, markOnce } from "../lib/performance";
 import { rpc } from "../lib/rpc";
 import {
   activeThreadRuns,
+  appendOptimisticUserMessage,
   clearActiveThreadRuns,
   computerPanelAutoBoot,
   computerPanelAutoUsesBoot,
@@ -1914,6 +1915,7 @@ export function ShellPage() {
         if (permissionRequest) void permissionRequest.then(flushPendingBrowserNotifications);
       }
       const trimmed = plan.trimmed;
+      const clientNonce = crypto.randomUUID();
       setSending(true);
       setSendError(null);
       try {
@@ -1960,6 +1962,18 @@ export function ShellPage() {
           );
           artifactIds.push(artifact.id);
         }
+        if (trimmed && !reroutedToGroup) {
+          updateSnapshot((prev) => {
+            if (!prev) return prev;
+            if (groupTarget && prev.groupId !== groupTarget) return prev;
+            if (botTarget && prev.botId !== botTarget) return prev;
+            return appendOptimisticUserMessage(prev, {
+              id: `local:${clientNonce}`,
+              text: trimmed,
+              botId: botTarget,
+            });
+          });
+        }
         if (groupTarget) {
           await rpc.threads.send({
             groupId: groupTarget,
@@ -1967,6 +1981,7 @@ export function ShellPage() {
             mentions: plan.mentionPayload.length ? plan.mentionPayload : undefined,
             artifactIds: artifactIds.length ? artifactIds : undefined,
             replyToMessageId: reroutedToGroup ? undefined : activeReplyTarget?.id,
+            clientNonce,
           });
         } else if (botTarget) {
           await rpc.threads.send({
@@ -1975,6 +1990,7 @@ export function ShellPage() {
             mentions: plan.mentionPayload.length ? plan.mentionPayload : undefined,
             artifactIds: artifactIds.length ? artifactIds : undefined,
             replyToMessageId: activeReplyTarget?.id,
+            clientNonce,
           });
         }
         setReplyTarget(null);
@@ -1993,6 +2009,14 @@ export function ShellPage() {
         if (groupTarget) await refreshGroupThreadRef.current(groupTarget);
         else if (botTarget) await refreshThreadRef.current(botTarget);
       } catch (error) {
+        updateSnapshot((prev) =>
+          prev
+            ? {
+                ...prev,
+                messages: prev.messages.filter((message) => message.id !== `local:${clientNonce}`),
+              }
+            : prev,
+        );
         if (reroutedToGroup && groupTarget) {
           setSendError(error instanceof Error ? error.message : t`Failed to send message`);
         } else if (groupTarget && activeGroupId.current === groupTarget) {
@@ -4844,21 +4868,20 @@ const Composer = memo(function Composer({
             type="button"
             aria-label={t`Stop`}
             onClick={() => void onStop()}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[#76BF43] text-white"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#cbd5e1] text-[#64748B]"
           >
             <Square size={12} strokeWidth={0} fill="currentColor" />
           </button>
-        ) : (
-          <button
-            type="button"
-            aria-label={t`Send`}
-            disabled={sending || !canSend || disabled}
-            onClick={send}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[#76BF43] text-white disabled:opacity-50"
-          >
-            <ArrowUp size={18} strokeWidth={2} />
-          </button>
-        )}
+        ) : null}
+        <button
+          type="button"
+          aria-label={t`Send`}
+          disabled={sending || !canSend || disabled}
+          onClick={send}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#76BF43] text-white disabled:opacity-50"
+        >
+          <ArrowUp size={18} strokeWidth={2} />
+        </button>
       </div>
     </fieldset>
   );
