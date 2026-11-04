@@ -9,7 +9,7 @@ const publishedSlugs = [
 
 describe("Rakazo skill", () => {
   it("links only to published docs pages", () => {
-    const skill = BUILTIN_AGENT_SKILLS.find((s) => s.name === "Rakazo")!;
+    const skill = BUILTIN_AGENT_SKILLS.find((s) => s.name === "OCSC Intelligence")!;
     const urls = [...skill.content.matchAll(/https?:\/\/\S+/g)].map((match) => match[0]);
     expect(urls).toEqual(RAKAZO_DOCS_URLS);
     for (const url of urls) {

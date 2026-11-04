@@ -17,9 +17,9 @@ export function webManifest() {
   }));
   return {
     id: "/",
-    name: "Rakazo",
-    short_name: "Rakazo",
-    description: "Your team of always-on agents.",
+    name: "OCSC Intelligence",
+    short_name: "OCSC Intelligence",
+    description: "OCSC Intelligence, the private assistant for OCSC staff.",
     start_url: "/",
     scope: "/",
     display: "standalone",
