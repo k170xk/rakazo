@@ -1107,6 +1107,17 @@ async function bundleFor(spec, config, onProgress) {
   return out;
 }
 
+/** Cores this process may use: a container's CPU quota when it has one, else the host's cores. */
+function cpuCount() {
+  try {
+    const [quota, period] = readFileSync("/sys/fs/cgroup/cpu.max", "utf8")
+      .trim()
+      .split(/\s+/);
+    if (quota !== "max") return Math.max(1, Math.floor(Number(quota) / Number(period)));
+  } catch {}
+  return cpus().length;
+}
+
 function prune() {
   if (!existsSync(WORK)) return;
   const bundles = readdirSync(WORK)
@@ -1573,7 +1584,7 @@ async function work(o) {
       colorSpace: "bt709",
       audioCodec: "aac",
       audioBitrate: "320k",
-      concurrency: Math.max(1, Math.min(4, Math.floor(cpus().length / 2))),
+      concurrency: Math.max(1, Math.min(4, Math.floor(cpuCount() / 2))),
       overwrite: true,
       logLevel: "error",
       onProgress: ({ progress, renderedFrames, encodedFrames }) =>
