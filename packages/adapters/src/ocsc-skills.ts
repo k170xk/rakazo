@@ -78,38 +78,44 @@ ${SCREEN_NOTE}`;
 
 const SLIDES_INSTRUCTIONS = `Use this whenever the person asks for slides, a deck, a presentation or a PowerPoint.
 
-MAKE THE SLIDES
-Call mcp__evolve__create_presentation_slides. Give every slide a specific title, subtitle and topic. It makes up to 10 slides per call; for a longer deck call it again for the next slides, keeping the order. Embed each returned image in your reply so the person sees the slides. Do not use it for an ordinary written answer.
-If an item comes back with "ok": false or no imageUrl, say which slide failed and call the tool again for just that slide, once.
+Work on your computer with write_file and shell, and always use the ocsc-pptx command. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package), because only ocsc-pptx keeps the OCSC branding. Always send the finished PowerPoint unless the person said they only want an outline.
 
-BUILD THE POWERPOINT
-When you have a computer, always turn the slides into a 16:9 PowerPoint and send it, unless the person said they only want the images. Use write_file and shell, and always use the ocsc-pptx command. Never build a .pptx another way.
-1. Write work/<short-name>-deck.json:
-{"title":"<Deck title>","slides":[
- {"image":"<imageUrl of slide 1, exactly as returned>","title":"<slide 1 title>","notes":"<two to four sentences of speaker notes>"},
- {"image":"<imageUrl of slide 2>","title":"<slide 2 title>","notes":"..."}]}
-Put the slides in the order they should be presented, and leave out any slide with no image.
-2. Run: ocsc-pptx new --spec work/<short-name>-deck.json --out outputs/<Descriptive-Name>.pptx
-Each image fills a 16:9 slide. An image of another shape (an infographic, a photo) is centred on a white slide without cropping, and "letterboxed" lists those slides. "image" can also be a PNG or JPEG in the workspace, such as work/<name>.png.
+WRITE THE DECK
+1. Plan the story first: a title slide, then one clear point per slide, usually 6 to 12 slides. Keep every slide short: a specific title, at most six bullets of one line each, and the detail in the speaker notes.
+2. Write work/<short-name>-deck.json:
+{"title":"<Deck title>","footer":"<optional footer, e.g. project name>","slides":[
+ {"layout":"title","kicker":"<optional small heading>","title":"<Deck title>","subtitle":"<client, project or date>","notes":"..."},
+ {"layout":"section","title":"<Part heading>","subtitle":"<optional>"},
+ {"layout":"bullets","title":"<Slide title>","subtitle":"<optional one-line lead>","bullets":["...","..."],"notes":"<two to four sentences of speaker notes>"},
+ {"layout":"columns","title":"<Slide title>","columns":[{"heading":"...","text":"...","bullets":["..."]},{"heading":"...","text":"..."}]},
+ {"layout":"stats","title":"<Slide title>","stats":[{"value":"£2.4m","label":"..."},{"value":"18 weeks","label":"..."}]},
+ {"layout":"quote","quote":"...","by":"<who said it>"}]}
+Layouts: title, section, bullets, columns (two to four), stats (two to four) and quote. ocsc-pptx draws each one as an OCSC-branded 16:9 slide.
+A slide can be a picture instead: {"image":"<https URL or workspace PNG/JPEG such as work/chart.png>","title":"...","notes":"..."}. Use this for a chart you made (for example with matplotlib, saved as PNG at 1920x1080) or a photo. An image that is not 16:9 is centred on a white slide, and "letterboxed" lists those slides.
+3. Run: ocsc-pptx new --spec work/<short-name>-deck.json --out outputs/<Descriptive-Name>.pptx
+
+PICTURE SLIDES FROM EVOLVE
+Only when mcp__evolve__create_presentation_slides is in your tools and the person wants designed picture slides: call it with a specific title, subtitle and topic for every slide (up to 10 per call, in order), then use each returned imageUrl exactly as the "image" of that slide. If an item comes back with "ok": false or no imageUrl, use a text layout for that slide instead.
 
 CHANGING THE DECK
-Run ocsc-pptx read --in outputs/<Name>.pptx to see its slides, titles and notes. To change a slide's look, make a new image for it first (mcp__evolve__create_presentation_slides with just that slide, or mcp__evolve__edit_image with its URL). Then write work/<short-name>-edits.json:
+Run ocsc-pptx read --in outputs/<Name>.pptx to see its slides, titles and notes. Then write work/<short-name>-edits.json:
 {"edits":[
- {"op":"replace","slide":3,"image":"<new image url>"},
- {"op":"insert","at":2,"image":"<url>","title":"...","notes":"..."},
+ {"op":"replace","slide":3,"layout":"bullets","title":"...","bullets":["..."],"notes":"..."},
+ {"op":"insert","at":2,"layout":"stats","title":"...","stats":[{"value":"...","label":"..."}]},
+ {"op":"replace","slide":4,"image":"work/chart.png"},
  {"op":"remove","slide":5},
  {"op":"move","from":4,"to":2},
  {"op":"notes","slide":1,"notes":"..."},
  {"op":"title","slide":1,"title":"..."}]}
-Slide numbers count from 1 and each edit sees the deck as the edits before it left it.
+A replace or insert takes the same slide fields as the deck, so you rewrite the whole slide. Slide numbers count from 1 and each edit sees the deck as the edits before it left it.
 Run: ocsc-pptx edit --in outputs/<Name>.pptx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.pptx
-Save each round as a new version (-v2, -v3) unless the person asks you to overwrite. List what changed using "summary". Only decks made by ocsc-pptx can be edited this way; for a PowerPoint the person uploaded, offer to rebuild it as new OCSC slides from its contents.
+Save each round as a new version (-v2, -v3) unless the person asks you to overwrite. List what changed using "summary". Only decks made by ocsc-pptx can be edited this way; for a PowerPoint the person uploaded, read its text and offer to rebuild it as a new OCSC deck.
 
 SENDING THE POWERPOINT
 ${SEND_NOTE} In a scheduled routine, do the same and also give the file's path.
 
 IF IT FAILS
-If the JSON says "ok": false, read the error, fix the spec, and run the command again. Stop after three attempts, tell the person what went wrong, and point them to the slide images above. Without a computer, send the slide images and say that a PowerPoint file needs a Bot with a computer.
+If the JSON says "ok": false, read the error, fix the spec, and run the command again. Stop after three attempts and tell the person what went wrong. Without a computer, give the slide outline in the chat and say that a PowerPoint file needs a Bot with a computer.
 
 ON THE SCREEN
 ${SCREEN_NOTE}
@@ -202,6 +208,7 @@ PICTURES AND FOOTAGE
 - OCSC projects first: mcp__evolve__search_project_datasheets finds real project photos. Use them for anything about OCSC's work.
 - Stock: mcp__evolve__search_stock_media with kind photo, video (Pexels footage) or illustration, and orientation landscape for 16:9 or portrait for vertical. Use footage as a "video" scene or a scene background {"type": "video", "videoUrl": ...} under text.
 - Use https URLs directly, or download with ocsc-video fetch --url <url> --out outputs/media/<name>.<ext> and use the workspace path. Every *Url, *Urls and src field takes either.
+- When those Evolve tools are not in your tools, use photos the person attached or gave as https links, and otherwise build the video from motion templates, text and charts with no photos. Say in one line that project photos need the Evolve connection or an attachment. Make the video on your own computer either way; never ask the person to open a desktop app or connect their computer for it.
 
 VOICE, MUSIC AND SOUND
 - Voiceover: write the script scene by scene, one or two short spoken sentences a scene. For each, call mcp__evolve__generate_voiceover {script, voice: Peter, Rory or Tim} and put the returned audioUrl in that scene's "voiceover": {"audioUrl", "script"}. A scene grows to fit its voice automatically; ocsc-video read shows the new timings.

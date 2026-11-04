@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /**
- * OCSC PowerPoint: turn slide images into a 16:9 PowerPoint deck on a Bot's computer.
+ * OCSC PowerPoint: build a 16:9 OCSC PowerPoint deck on a Bot's computer, from slides written
+ * as text (drawn by slides.mjs) or from slide images.
  *
  *   ocsc-pptx new  --spec deck.json --out outputs/Deck.pptx
  *   ocsc-pptx read --in outputs/Deck.pptx
  *   ocsc-pptx edit --in outputs/Deck.pptx --spec edits.json [--out outputs/Deck-v2.pptx]
  *
- * deck.json:  { "title": "...", "slides": [ { "image": "https://... or workspace path", "title": "...", "notes": "..." } ] }
+ * deck.json:  { "title": "...", "slides": [ { "layout": "bullets", "title": "...", "bullets": ["..."], "notes": "..." },
+ *               { "image": "https://... or workspace path", "title": "...", "notes": "..." } ] }
  * edits.json: { "edits": [ { "op": "replace", "slide": 2, "image": "..." }, { "op": "insert", "at": 3, "image": "..." },
  *               { "op": "remove", "slide": 4 }, { "op": "move", "from": 5, "to": 1 }, { "op": "notes", "slide": 1, "notes": "..." } ] }
  *
@@ -34,6 +36,7 @@ import {
 } from "node:path";
 import JSZip from "jszip";
 import PptxGenJS from "pptxgenjs";
+import { isTextSlide, renderSlides } from "./slides.mjs";
 
 const WORKSPACE =
   process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
@@ -194,6 +197,30 @@ function loadImage(source, label) {
     bytes = readFileSync(full);
   }
   return { bytes, ...imageInfo(bytes, label) };
+}
+
+/**
+ * Images for a set of slides: an "image" is loaded, and a slide written as text is drawn as
+ * an OCSC slide. `entries` is `[{ key, item, label }]`; the result maps each key to an image.
+ */
+async function slideImages(entries, meta) {
+  const images = new Map();
+  const text = [];
+  for (const { key, item, label } of entries) {
+    if (isTextSlide(item)) text.push({ index: key, slide: item, label });
+    else
+      images.set(
+        key,
+        loadImage(typeof item === "string" ? item : item?.image, label),
+      );
+  }
+  try {
+    for (const [key, bytes] of await renderSlides(text, meta))
+      images.set(key, { bytes, ...imageInfo(bytes, "Slide") });
+  } catch (error) {
+    throw new UsageError(error.message);
+  }
+  return images;
 }
 
 /** Centred and scaled to fit the slide without cropping. A 16:9 image fills it exactly. */
@@ -389,18 +416,21 @@ async function cmdNew(opts) {
   const spec = readSpec(opts.spec);
   const items = Array.isArray(spec?.slides) ? spec.slides : null;
   if (!items || items.length === 0)
-    throw new UsageError('The spec needs "slides": [{ "image": "..." }].');
+    throw new UsageError(
+      'The spec needs "slides": [{ "title": "...", "bullets": [...] }] or [{ "image": "..." }].',
+    );
   if (items.length > MAX_SLIDES)
     throw new UsageError(`A deck can hold at most ${MAX_SLIDES} slides.`);
   const out = outPath(opts.out);
-  const slides = items.map((item, index) => {
-    const source = typeof item === "string" ? item : item?.image;
-    return {
-      image: loadImage(source, `Slide ${index + 1}`),
-      title: typeof item === "object" ? item.title : "",
-      notes: typeof item === "object" ? item.notes : "",
-    };
-  });
+  const images = await slideImages(
+    items.map((item, index) => ({ key: index, item, label: `Slide ${index + 1}` })),
+    spec,
+  );
+  const slides = items.map((item, index) => ({
+    image: images.get(index),
+    title: typeof item === "object" ? item.title : "",
+    notes: typeof item === "object" ? item.notes : "",
+  }));
   const bytes = await writeDeck(slides, spec, out);
   return {
     ok: true,
@@ -459,6 +489,12 @@ async function cmdEdit(opts) {
     title,
     notes,
   }));
+  const fresh = await slideImages(
+    edits
+      .map((edit, index) => ({ key: index, item: edit, label: `Edit ${index + 1}` }))
+      .filter(({ item }) => item?.op === "replace" || item?.op === "insert"),
+    { title: spec.title || deck.title, footer: spec.footer },
+  );
   const summary = [];
   for (const [index, edit] of edits.entries()) {
     const label = `Edit ${index + 1}`;
@@ -466,11 +502,11 @@ async function cmdEdit(opts) {
       case "replace": {
         const at = position(edit.slide, slides.length, `${label} slide`);
         slides[at] = {
-          image: loadImage(edit.image, label),
+          image: fresh.get(index),
           title: edit.title ?? slides[at].title,
           notes: edit.notes ?? slides[at].notes,
         };
-        summary.push(`Replaced the image on slide ${at + 1}.`);
+        summary.push(`Replaced slide ${at + 1}.`);
         break;
       }
       case "insert": {
@@ -479,7 +515,7 @@ async function cmdEdit(opts) {
             ? slides.length
             : position(edit.at, slides.length, `${label} at`, true);
         slides.splice(at, 0, {
-          image: loadImage(edit.image, label),
+          image: fresh.get(index),
           title: edit.title ?? "",
           notes: edit.notes ?? "",
         });

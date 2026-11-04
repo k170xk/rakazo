@@ -20,4 +20,6 @@ if [ -z "${WORKSPACE_DIR:-}" ]; then
   esac
   export WORKSPACE_DIR
 fi
+# Headless Chromium never finishes starting with nss_wrapper preloaded, and these tools need no user lookup.
+unset LD_PRELOAD
 exec /usr/local/bin/node "$script" "$@"
