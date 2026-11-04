@@ -1,0 +1,5 @@
+**/node_modules
+ocsc/ocsc-video/build
+ocsc/ocsc-video/.work
+ocsc/ocsc-video/templates.json
+ocsc/ocsc-video/src/templates/index.ts

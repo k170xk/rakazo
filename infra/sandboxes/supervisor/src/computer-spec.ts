@@ -48,6 +48,9 @@ export const COMPUTER_IMAGE_CONTEXT_FILES = [
   "fluxbox.apps",
   "fluxbox.menu",
   "rakazo-local-bin.sh",
+  "ocsc/ocsc-word",
+  "ocsc/ocsc-video",
+  "ocsc/ocsc-tool",
 ] as const;
 
 /**

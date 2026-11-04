@@ -1,0 +1,13 @@
+{
+  "name": "ocsc-word",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "docx-preview": "0.4.1",
+    "exceljs": "4.4.0",
+    "jszip": "3.10.1",
+    "pdfjs-dist": "6.4.299",
+    "playwright-core": "1.62.1",
+    "pptxgenjs": "4.0.1"
+  }
+}

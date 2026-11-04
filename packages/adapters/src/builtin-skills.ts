@@ -1,4 +1,5 @@
 import { buildSkillMd } from "@rakazo/core";
+import { OCSC_SKILLS } from "./ocsc-skills.js";
 
 const RAKAZO_DOCS: ReadonlyArray<readonly [topics: string, url: string]> = [
   ["Getting started, first bot, what Rakazo does", "https://rakazo.com/docs.md"],
@@ -65,6 +66,7 @@ const SKILLS: Array<{ name: string; description: string; body: string }> = [
 
 ${RAKAZO_DOCS.map(([topics, url]) => `- ${topics}: ${url}`).join("\n")}`,
   },
+  ...OCSC_SKILLS,
 ];
 
 export const BUILTIN_AGENT_SKILLS: Array<{

@@ -1,0 +1,23 @@
+#!/bin/sh
+# Runs one OCSC document or video command, named by the ocsc-* link that invoked it.
+# Relative paths resolve from the calling bot's folder: the bot folder on a Team Computer,
+# the home folder on a Private Computer. attach_file resolves the same paths from there.
+set -eu
+tool="$(basename "$0")"
+case "$tool" in
+  ocsc-word|ocsc-pptx|ocsc-xlsx|ocsc-pdf|ocsc-show) script="/opt/ocsc-word/$tool.mjs" ;;
+  ocsc-video) script="/opt/ocsc-video/ocsc-video.mjs" ;;
+  *) echo "unknown OCSC command: $tool" >&2; exit 2 ;;
+esac
+if [ -z "${WORKSPACE_DIR:-}" ]; then
+  home="${HOME:-/home/rakazo}"
+  case "$PWD/" in
+    "$home"/bots/*/*)
+      rest="${PWD#"$home"/bots/}"
+      WORKSPACE_DIR="$home/bots/${rest%%/*}"
+      ;;
+    *) WORKSPACE_DIR="$home" ;;
+  esac
+  export WORKSPACE_DIR
+fi
+exec /usr/local/bin/node "$script" "$@"

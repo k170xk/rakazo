@@ -13,6 +13,19 @@ COPY xcapture.c .
 RUN cc -O3 -fPIC -shared -Wall -Wextra -Werror -o librakazo-xcapture.so xcapture.c \
     -lX11 -lXext -lXdamage -lXfixes -lXtst -lpng
 
+# OCSC documents and videos: the branded Word, Excel, PowerPoint, PDF and video commands from
+# OpenBot, with their packages, the prebuilt Remotion scene bundle and the Chrome Headless Shell
+# it renders with. Fetched here so a bot's command never depends on reaching a package registry.
+FROM node:24.18.1-bookworm-slim AS ocsc-builder
+COPY ocsc/ocsc-word /opt/ocsc-word
+RUN cd /opt/ocsc-word && npm ci --omit=dev --no-audit --no-fund
+COPY ocsc/ocsc-video /opt/ocsc-video
+RUN cd /opt/ocsc-video && npm ci --omit=dev --no-audit --no-fund \
+  && npm run build \
+  && node -e "import('@remotion/renderer').then((r) => r.ensureBrowser())" \
+  && mkdir -p .work node_modules/.cache \
+  && rm -rf /root/.npm /tmp/*
+
 FROM debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
 # Dev tools let bots clone repos and fetch artifacts; containers run uid 1000
 # with no privilege escalation, so nothing can be installed at runtime.
@@ -56,11 +69,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-utils \
     pandoc \
     python3-openpyxl \
+    python3-pandas \
+    python3-matplotlib \
   && rm -rf /var/lib/apt/lists/* \
   && pdftotext -v \
   && pdfinfo -v \
   && pandoc --version \
-  && python3 -c 'import openpyxl; print(openpyxl.__version__)' \
+  && python3 -c 'import openpyxl, pandas, matplotlib; print(openpyxl.__version__, pandas.__version__, matplotlib.__version__)' \
   && groupadd --gid 1000 rakazo \
   && useradd --uid 1000 --gid rakazo --create-home --shell /bin/bash rakazo \
   && mkdir -p /etc/rakazo/fluxbox /etc/chromium/policies/managed /etc/brave/policies/managed \
@@ -172,6 +187,29 @@ RUN ldconfig \
 # Agent-authored scripts often use the unversioned name. Keep it on the installed Python 3.
 RUN ln -s /usr/bin/python3 /usr/local/bin/python \
   && python -c 'import sys; assert sys.version_info.major == 3'
+# Node 24 and npm come first on PATH; Debian's Node 18 stays only for pandoc and noVNC.
+COPY --from=ocsc-builder /usr/local/bin/node /usr/local/bin/node
+COPY --from=ocsc-builder /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+COPY --from=ocsc-builder /opt/ocsc-word /opt/ocsc-word
+# Custom video scenes are bundled into .work and cached in node_modules/.cache at run time.
+COPY --from=ocsc-builder --chown=1000:1000 /opt/ocsc-video /opt/ocsc-video
+COPY --chmod=755 ocsc/ocsc-tool /usr/local/lib/rakazo/ocsc-tool
+RUN sed -i 's/\r$//' /usr/local/lib/rakazo/ocsc-tool \
+  && ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+  && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+  && for tool in word pptx xlsx pdf show video; do \
+       ln -s /usr/local/lib/rakazo/ocsc-tool "/usr/local/bin/ocsc-${tool}"; \
+     done \
+  && mkdir -p /usr/local/share/fonts/ocsc \
+  && cp /opt/ocsc-video/node_modules/@fontsource/inter/files/inter-latin-*-normal.woff2 \
+        /opt/ocsc-video/node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-*-normal.woff2 \
+        /opt/ocsc-video/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-*-normal.woff2 \
+        /usr/local/share/fonts/ocsc/ \
+  && (fc-cache -f /usr/local/share/fonts/ocsc || true) \
+  && node --version && npm --version
+ENV OCSC_PLAYWRIGHT_MODULE=/opt/ocsc-word/node_modules/playwright-core/index.mjs \
+    OCSC_CHROMIUM=/usr/bin/chromium \
+    OCSC_SCREEN_OPEN=/usr/local/bin/rakazo-browser
 EXPOSE 7070 6080 6081 6082 6083 6084 6085 6086 6087 6088 6089 6090 6091 6092 6093 6094 6095
 # Docker exec does not inherit PID 1's exports, so every process gets the same
 # identity lookup. Startup creates these private files for the effective UID/GID.
