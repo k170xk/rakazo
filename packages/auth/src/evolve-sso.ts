@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { emailAllowed } from "@rakazo/core";
 import { bootstrapUserSpace, type PrismaClient } from "@rakazo/db";
 import { resolveSignupPolicy } from "./signup-policy.js";
 
@@ -167,7 +168,8 @@ export async function exchangeEvolveSso(input: {
       signupsEnabled: input.signupsEnabled,
       signupAllowlist: input.signupAllowlist,
     });
-    if (!policy.enabled) throw new EvolveSsoSignupsClosedError();
+    // Evolve already checked this person. Public signup can stay closed; an allowlist still applies.
+    if (!emailAllowed(email, policy.allowlist)) throw new EvolveSsoSignupsClosedError();
 
     user = await input.prisma.user.create({
       data: {
