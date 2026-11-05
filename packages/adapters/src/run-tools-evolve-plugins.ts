@@ -2,6 +2,7 @@ import { runAsSystem } from "@rakazo/db";
 import { z } from "zod";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import {
+  callEvolveAssistants,
   callEvolvePlugins,
   EvolvePluginsError,
   fetchPluginBranch,
@@ -94,7 +95,30 @@ async function requireBuilder(ctx: RunContext, email: string) {
   }
 }
 
+const KnowledgeSearchSchema = z
+  .object({
+    query: z.string().trim().min(1).max(1000),
+    maxResults: z.number().int().min(1).max(20).optional(),
+  })
+  .strict();
+
 export const evolvePluginTools: ToolHandlers = {
+  async evolve_knowledge_search(ctx, call) {
+    const assistantId = ctx.bot.evolveAssistantId;
+    if (!assistantId)
+      return call.finish({ error: "This bot was not started from an Evolve assistant." });
+    const input = KnowledgeSearchSchema.safeParse(call.args);
+    if (!input.success) return call.finish({ error: issues(input.error) });
+    return withEvolve(ctx, call, (email) =>
+      callEvolveAssistants(
+        ctx.deps.evolvePlugins!,
+        email,
+        { action: "search", assistantId, ...input.data },
+        { signal: ctx.context.signal },
+      ),
+    );
+  },
+
   async evolve_plugin_status(ctx, call) {
     return withEvolve(ctx, call, async (email) => {
       const connection = ctx.deps.evolvePlugins!;

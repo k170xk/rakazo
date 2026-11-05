@@ -15,6 +15,7 @@ export interface EvolvePluginsConnection {
 }
 
 export const EVOLVE_PLUGINS_AUDIENCE = "evolve-plugins";
+export const EVOLVE_ASSISTANTS_AUDIENCE = "evolve-assistants";
 export const EVOLVE_PLUGINS_ISSUER = "ocsc-intelligence";
 const TOKEN_SECONDS = 120;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -61,11 +62,12 @@ export function signEvolvePluginsToken(
   secret: string,
   email: string,
   nowSeconds = Math.floor(Date.now() / 1000),
+  audience: string = EVOLVE_PLUGINS_AUDIENCE,
 ): string {
   const header = base64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const claims = base64Url(
     JSON.stringify({
-      aud: EVOLVE_PLUGINS_AUDIENCE,
+      aud: audience,
       iss: EVOLVE_PLUGINS_ISSUER,
       sub: email.trim().toLowerCase(),
       iat: nowSeconds,
@@ -90,16 +92,39 @@ function withTimeout(signal: AbortSignal | undefined) {
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
-export async function callEvolvePlugins<T = Record<string, unknown>>(
+export function callEvolvePlugins<T = Record<string, unknown>>(
   connection: EvolvePluginsConnection,
   email: string,
   body: Record<string, unknown>,
   options: { signal?: AbortSignal; fetch?: typeof fetch } = {},
 ): Promise<T> {
-  const response = await (options.fetch ?? fetch)(connection.url, {
+  return postEvolve<T>(connection.url, EVOLVE_PLUGINS_AUDIENCE, connection, email, body, options);
+}
+
+/** Evolve's chat assistants, through its evolve-assistants function beside plugin-builder. */
+export function callEvolveAssistants<T = Record<string, unknown>>(
+  connection: EvolvePluginsConnection,
+  email: string,
+  body: Record<string, unknown>,
+  options: { signal?: AbortSignal; fetch?: typeof fetch } = {},
+): Promise<T> {
+  const url = new URL("evolve-assistants", connection.url).toString();
+  return postEvolve<T>(url, EVOLVE_ASSISTANTS_AUDIENCE, connection, email, body, options);
+}
+
+async function postEvolve<T>(
+  url: string,
+  audience: string,
+  connection: EvolvePluginsConnection,
+  email: string,
+  body: Record<string, unknown>,
+  options: { signal?: AbortSignal; fetch?: typeof fetch },
+): Promise<T> {
+  const token = signEvolvePluginsToken(connection.secret, email, undefined, audience);
+  const response = await (options.fetch ?? fetch)(url, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${signEvolvePluginsToken(connection.secret, email)}`,
+      authorization: `Bearer ${token}`,
       "content-type": "application/json",
     },
     body: JSON.stringify(body),

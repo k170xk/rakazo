@@ -42,6 +42,7 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "list_secrets",
   "cloud_agent_status",
   "purchase_status",
+  "evolve_knowledge_search",
   "evolve_plugin_status",
   "evolve_plugin_scopes",
 ]);
@@ -116,6 +117,8 @@ export function selectBuiltinToolsForRun(options: {
   routinesEnabled?: boolean;
   /** Evolve is connected and the company turned Evolve plugins on. */
   evolvePluginsEnabled?: boolean;
+  /** Evolve is connected and this bot was started from an Evolve assistant. */
+  evolveKnowledgeEnabled?: boolean;
   /** Cursor agents are on and a plugins repository is set up, so their branches can be imported. */
   pluginBranchImportEnabled?: boolean;
 }) {
@@ -143,6 +146,7 @@ export function selectBuiltinToolsForRun(options: {
       (options.computersEnabled !== false || !COMPUTER_TOOL_NAMES.has(tool.name)) &&
       (options.connectedAppsEnabled !== false || tool.name !== "connect_app") &&
       (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
+      (tool.name !== "evolve_knowledge_search" || Boolean(options.evolveKnowledgeEnabled)) &&
       // Plugin tools act as the person in Evolve, so only their own direct turns get them.
       (!EVOLVE_PLUGIN_TOOL_NAMES.has(tool.name) ||
         (Boolean(options.evolvePluginsEnabled) &&

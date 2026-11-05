@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotAvatarSet } from "@rakazo/contracts";
+import type { BotAvatarSet, EvolveAssistant } from "@rakazo/contracts";
 import { BOT_NAME_MAX_LENGTH } from "@rakazo/contracts";
 import {
   newClientId,
@@ -9,6 +9,7 @@ import {
   organicAvatarSampleIdentity,
 } from "@rakazo/core";
 import {
+  Badge,
   BOT_AVATAR_COLORS,
   BotAvatar,
   Button,
@@ -20,7 +21,7 @@ import {
   Input,
   parseBotAvatar,
 } from "@rakazo/ui-web";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { errorText } from "../../lib/user-error";
 import { BotLookPicker } from "./avatar-studio-popover";
 
@@ -38,22 +39,51 @@ export interface CreateBotDialogInput {
   id?: string;
   /** The organic family the preview drew; omitted when a studio shape is picked. */
   avatarFamily?: number;
+  /** Start from this Evolve assistant's prompt and knowledge files. */
+  evolveAssistantId?: string;
 }
 
 /** Mounted only while open; the parent unmounts it from `onCancel` or after `onCreate`. */
 export function CreateBotDialog({
   avatarSet,
+  loadEvolveAssistants,
   onCancel,
   onCreate,
 }: {
   /** The account's set: the server gives it to the new bot, so the preview draws it too. */
   avatarSet: BotAvatarSet;
+  /** The person's Evolve chat assistants; an empty list hides the choice. */
+  loadEvolveAssistants?: () => Promise<EvolveAssistant[]>;
   onCancel: () => void;
   onCreate: (input: CreateBotDialogInput) => Promise<void>;
 }) {
   const { t } = useLingui();
   const nameRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState("");
+  const [assistants, setAssistants] = useState<EvolveAssistant[]>([]);
+  const [assistantId, setAssistantId] = useState<string | null>(null);
+  const loadRef = useRef(loadEvolveAssistants);
+  // Loads once per opening; the dialog is mounted only while open.
+  useEffect(() => {
+    if (!loadRef.current) return;
+    let live = true;
+    loadRef
+      .current()
+      .then((list) => {
+        if (live) setAssistants(list);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  function chooseAssistant(next: EvolveAssistant | null) {
+    const previous = assistants.find((item) => item.id === assistantId);
+    // Follow the pick while the name is empty or still the previous pick's name.
+    if (!name.trim() || name === previous?.name) setName(next?.name ?? "");
+    setAssistantId(next?.id ?? null);
+  }
   const [previewId] = useState(() => {
     let id: string;
     do {
@@ -80,6 +110,7 @@ export function CreateBotDialog({
         color: look.value,
         ...(avatarSet === "rakazo" ? { id: previewId } : {}),
         ...(organic ? { avatarFamily: organicAvatarFamily(look.identity) } : {}),
+        ...(assistantId ? { evolveAssistantId: assistantId } : {}),
       });
     } catch (err) {
       setError(errorText(err, t`Could not create bot`));
@@ -130,6 +161,53 @@ export function CreateBotDialog({
             onChange={(event) => setName(event.target.value)}
             className="text-center"
           />
+          {assistants.length > 0 ? (
+            <fieldset className="grid gap-1.5" data-testid="create-bot-evolve-assistants">
+              <legend className="mb-1.5 text-[13px] font-medium text-muted-foreground">
+                <Trans>Start from</Trans>
+              </legend>
+              {[null, ...assistants].map((assistant) => {
+                const selected = (assistant?.id ?? null) === assistantId;
+                return (
+                  <button
+                    key={assistant?.id ?? "blank"}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => chooseAssistant(assistant)}
+                    className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left ring-1 transition-colors ${
+                      selected ? "bg-accent ring-primary" : "ring-foreground/10 hover:bg-muted"
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">
+                        {assistant ? assistant.name : <Trans>A blank bot</Trans>}
+                      </span>
+                      <span className="block truncate text-[12px] text-muted-foreground">
+                        {assistant ? (
+                          assistant.description || <Trans>Evolve assistant</Trans>
+                        ) : (
+                          <Trans>Write its instructions yourself</Trans>
+                        )}
+                      </span>
+                    </span>
+                    {assistant?.knowledge ? (
+                      <Badge variant="secondary" className="shrink-0">
+                        <Trans>Knowledge files</Trans>
+                      </Badge>
+                    ) : null}
+                  </button>
+                );
+              })}
+              {assistantId ? (
+                <p className="text-[12px] text-muted-foreground">
+                  <Trans>
+                    The bot starts with this assistant's Evolve prompt and searches its knowledge
+                    files. You can edit its instructions later.
+                  </Trans>
+                </p>
+              ) : null}
+            </fieldset>
+          ) : null}
           {error ? (
             <p role="alert" data-testid="create-bot-error" className="text-[13px] text-destructive">
               {error}

@@ -539,6 +539,7 @@ export function createRepos(
         modelId?: string | null;
         thinkingLevel?: string | null;
         disabledBuiltinTools?: string[];
+        evolveAssistantId?: string | null;
         initialMessage?: {
           role: "user" | "bot" | "system";
           blocks: MessageBlock[];
@@ -638,6 +639,7 @@ export function createRepos(
               modelId,
               thinkingLevel,
               disabledBuiltinTools,
+              evolveAssistantId: input.evolveAssistantId ?? null,
             },
           });
           const thread = await tx.thread.create({

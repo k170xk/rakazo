@@ -15,6 +15,7 @@ import type {
   CodexLiveCatalog,
   ComposioProvider,
   ConnectorRegistry,
+  EvolvePluginsConnection,
   FaviconResolver,
   IntegrationProviderSettings,
   McpConnector,
@@ -66,6 +67,8 @@ export interface RouterDeps {
   notifications?: NotificationProvider;
   analytics?: ProductAnalytics;
   cloudAgent?: CloudAgentConnection | null;
+  /** Evolve's server-to-server link; absent hides Evolve assistants when creating a bot. */
+  evolvePlugins?: EvolvePluginsConnection | null;
   /** The deployment's wallet provider; absent hides purchases. */
   paymentWallet?: PaymentWalletProvider | null;
   prisma: PrismaClient;

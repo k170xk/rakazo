@@ -1792,6 +1792,30 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "evolve_knowledge_search",
+    description:
+      "Search the knowledge files of the Evolve assistant you were started from (its OpenAI vector store): OCSC guidance, standards, templates and past work it was given. Search before answering anything those files may cover, with a specific query, and name the files you used. Returns matching passages with their file names and scores.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          maxLength: 1000,
+          description: "What to look for, in plain words.",
+        },
+        maxResults: {
+          type: "integer",
+          minimum: 1,
+          maximum: 20,
+          description: "How many passages to return (default 8).",
+        },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+    readOnly: true,
+  },
+  {
     name: "evolve_plugin_status",
     description:
       "Whether the user may build Evolve plugins (the Plugin builder privilege in Evolve), and their plugins with each version's review status and the reviewers' notes. Call this before starting a plugin and when the user asks how a review is going.",

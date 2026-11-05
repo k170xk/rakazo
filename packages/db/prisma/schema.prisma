@@ -774,6 +774,8 @@ model Bot {
   crossSpaceCommunication Boolean @default(true)
   dailyCheckIns Boolean @default(true)
   fleetManagement        Boolean @default(true)
+  /// The Evolve chat assistant this bot was started from; its knowledge files answer evolve_knowledge_search.
+  evolveAssistantId String?
   routines          Routine[]
   scratchpadItems   ScratchpadItem[]
   taughtSkills      TaughtSkill[]

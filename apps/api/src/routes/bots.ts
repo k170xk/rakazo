@@ -9,6 +9,7 @@ import {
   forgetPageShareSecrets,
   hasActiveComputerControl,
   isSecretAlreadySaved,
+  listEvolveAssistants,
   listVaultItems,
   newVaultItemName,
   normalizeSecretDestination,
@@ -28,7 +29,12 @@ import type {
   SettingsScope,
   VaultPutInput,
 } from "@rakazo/contracts";
-import { BotSecretAuth, resolveBotAvatarSet } from "@rakazo/contracts";
+import {
+  BOT_DESCRIPTION_MAX_LENGTH,
+  BOT_INSTRUCTIONS_MAX_LENGTH,
+  BotSecretAuth,
+  resolveBotAvatarSet,
+} from "@rakazo/contracts";
 import { ACTIVE_RUN_STATUSES, displayName } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
@@ -250,6 +256,30 @@ export function botIntroPrompt(input: {
  * asks what the bot is for. The executor limits the "created" trigger to that question and the
  * bot's own profile, and answering resumes the run as the user's turn.
  */
+async function actorEmail(deps: RouterDeps, actor: Actor): Promise<string | null> {
+  const user = await deps.prisma.user.findUnique({
+    where: { id: actor.userId },
+    select: { email: true },
+  });
+  return user?.email ?? null;
+}
+
+/** The Evolve assistant a new bot starts from, checked against what this person may open. */
+async function evolveAssistantFor(deps: RouterDeps, actor: Actor, id: string) {
+  const email = await actorEmail(deps, actor);
+  if (!deps.evolvePlugins || !email) {
+    throw new ORPCError("BAD_REQUEST", { message: "Evolve is not linked to this server." });
+  }
+  const assistants = await listEvolveAssistants(deps.evolvePlugins, email).catch(() => {
+    throw new ORPCError("SERVICE_UNAVAILABLE", { message: "Evolve could not be reached." });
+  });
+  const assistant = assistants.find((item) => item.id === id);
+  if (!assistant) {
+    throw new ORPCError("FORBIDDEN", { message: "That Evolve assistant is not available to you." });
+  }
+  return assistant;
+}
+
 export async function enqueueBotIntroRun(deps: RouterDeps, actor: Actor, bot: Bot): Promise<void> {
   const threadId = bot.threadId;
   if (!threadId) return;
@@ -313,12 +343,34 @@ export function botsRoutes(ctx: RouterContext) {
         if (!found) throw new IsolationError();
         return found;
       }),
+      evolveAssistants: authed.bots.evolveAssistants.handler(async ({ context }) => {
+        const email = await actorEmail(deps, context.actor);
+        if (!deps.evolvePlugins || !email) return [];
+        try {
+          const assistants = await listEvolveAssistants(deps.evolvePlugins, email, {
+            signal: context.signal,
+          });
+          return assistants.map(({ instructions: _prompt, ...assistant }) => assistant);
+        } catch (error) {
+          // No Evolve profile, or Evolve unreachable: the dialog simply offers none.
+          getLogger().warn("evolve assistants list", { error: String(error) });
+          return [];
+        }
+      }),
       create: authed.bots.create.handler(async ({ context, input }) => {
         let bot: Bot;
         try {
           // Older apps always send Original, which would pin every new bot to it.
-          const { avatarSet: _ignored, ...request } = input;
-          bot = await repos.createBot(context.actor, request);
+          const { avatarSet: _ignored, evolveAssistantId, ...request } = input;
+          if (evolveAssistantId) {
+            const assistant = await evolveAssistantFor(deps, context.actor, evolveAssistantId);
+            request.instructions ||= assistant.instructions.slice(0, BOT_INSTRUCTIONS_MAX_LENGTH);
+            request.description ||= assistant.description.slice(0, BOT_DESCRIPTION_MAX_LENGTH);
+          }
+          bot = await repos.createBot(context.actor, {
+            ...request,
+            evolveAssistantId: evolveAssistantId ?? null,
+          });
         } catch (error) {
           throw mapSpaceLifecycleError(error);
         }

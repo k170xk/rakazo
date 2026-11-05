@@ -91,6 +91,7 @@ import {
   CreateScratchpadItemInput,
   DeploymentSettingsSchema,
   DirectoryPersonSchema,
+  EvolveAssistantSchema,
   ExportManifestSchema,
   ExternalConversationPolicySchema,
   GroupDetailSchema,
@@ -556,6 +557,8 @@ export const appContract = {
     listArchived: oc.output(z.array(BotSchema)),
     get: oc.input(botId).output(BotSchema),
     create: oc.input(CreateBotInput).output(BotSchema),
+    /** Evolve chat assistants this person may start a bot from; empty when Evolve is not linked. */
+    evolveAssistants: oc.output(z.array(EvolveAssistantSchema)),
     importPreview: oc.input(AgentImportPreviewInput).output(AgentImportPlanSchema),
     importCreate: oc.input(AgentImportCreateInput).output(BotSchema),
     importSetupState: oc.input(AgentImportSetupStateInput).output(AgentImportSetupStateSchema),

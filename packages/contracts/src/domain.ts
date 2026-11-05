@@ -472,8 +472,21 @@ export const CreateBotInput = z.object({
   computerMode: ComputerModeSchema.default("team"),
   /** Idempotency key within a space (unique with spaceId). */
   spawnKey: z.string().trim().min(1).max(120).optional(),
+  /** Start from this Evolve chat assistant: its prompt, and its knowledge files for searches. */
+  evolveAssistantId: z.string().uuid().optional(),
 });
 export type CreateBotInput = z.infer<typeof CreateBotInput>;
+
+/** An Evolve chat assistant the person may use, offered as a starting point for a new bot. */
+export const EvolveAssistantSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string(),
+  model: z.string().nullable(),
+  /** Has knowledge files (an OpenAI vector store) the bot can search. */
+  knowledge: z.boolean(),
+});
+export type EvolveAssistant = z.infer<typeof EvolveAssistantSchema>;
 
 export const UpdateBotInput = z
   .object({
