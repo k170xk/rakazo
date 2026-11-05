@@ -50,6 +50,20 @@ import { createTaughtSkillsService } from "../taught-skills.js";
 import { meDto } from "./shared.js";
 
 /**
+ * All a colleague may do in a Space they reach only through shared groups: read and write those
+ * group chats. Every other procedure refuses them.
+ */
+const GUEST_PROCEDURES: ReadonlySet<string> = new Set([
+  "threads.head",
+  "threads.get",
+  "threads.messages",
+  "threads.subscribe",
+  "threads.send",
+  "threads.markRead",
+  "artifacts.get",
+]);
+
+/**
  * Runs an authenticated procedure with row-level security scoped to the actor's
  * Space. A streamed result is read after the procedure returns, so each step of
  * its iterator re-enters the same scope.
@@ -360,9 +374,12 @@ export function createRouterContext(deps: RouterDeps) {
   const agentSkills = createAgentSkillsService(deps.prisma);
 
   const authed = os
-    .use(async ({ context, next }) => {
+    .use(async ({ context, next, path }) => {
       const actor = context.actor;
       if (!actor) throw new ORPCError("UNAUTHORIZED");
+      if (actor.guestGroupIds && !GUEST_PROCEDURES.has(path.join("."))) {
+        throw new ORPCError("FORBIDDEN");
+      }
       return asTenant(actor, () => next({ context: { ...context, actor } }));
     })
     .use(async ({ context, next, path }, input) => {
@@ -384,7 +401,7 @@ export function createRouterContext(deps: RouterDeps) {
     })
     .use(async ({ context, next }) => {
       const actor = context.actor;
-      if (!actor) throw new ORPCError("UNAUTHORIZED");
+      if (!actor || actor.guestGroupIds) throw new ORPCError("UNAUTHORIZED");
       return asTenant(actor, () => next({ context: { ...context, actor } }));
     });
   const ticketDeps = {

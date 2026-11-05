@@ -73,6 +73,9 @@ const AdminPluginsPage = lazyComponent(() =>
 const AdminAccessPage = lazyComponent(() =>
   import("./pages/AdminAccessPage").then((module) => module.AdminAccessPage),
 );
+const SharedChatsPage = lazyComponent(() =>
+  import("./pages/SharedChats").then((module) => module.SharedChatsPage),
+);
 const NavLinkPage = lazyComponent(() =>
   import("./pages/NavLinkPage").then((module) => module.NavLinkPage),
 );
@@ -285,6 +288,12 @@ function SessionApp() {
                 path="/admin/access"
                 element={
                   user ? <AdminAccessPage /> : <Navigate to="/sign-in?next=/admin/access" replace />
+                }
+              />
+              <Route
+                path="/shared/:spaceId?/:groupId?"
+                element={
+                  user ? <SharedChatsPage /> : <Navigate to="/sign-in?next=/shared" replace />
                 }
               />
               <Route

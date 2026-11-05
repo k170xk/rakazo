@@ -24,6 +24,7 @@ model AiDataConsent {
 model User {
   aiDataConsents AiDataConsent[]
   pages          Page[]
+  groupPeople    ChatGroupPerson[]
   id                          String                       @id
   name                        String
   email                       String
@@ -844,6 +845,8 @@ model ChatGroup {
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
   members    ChatGroupMember[]
+  people     ChatGroupPerson[]
+  invites    ChatGroupInvite[]
   thread     Thread?
   artifacts  Artifact[]
   pages      Page[]
@@ -851,6 +854,35 @@ model ChatGroup {
   @@index([spaceId, userId, archivedAt, pinned, updatedAt])
   @@index([sectionId])
   @@map("chat_groups")
+}
+
+/// A colleague the group's owner added. They read and write the group's chat, nothing else in the Space.
+model ChatGroupPerson {
+  id            String    @id @default(cuid())
+  groupId       String
+  group         ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addedByUserId String
+  createdAt     DateTime  @default(now())
+
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@map("chat_group_people")
+}
+
+/// A work email added before that colleague first signed in; claimed on their next sign-in.
+model ChatGroupInvite {
+  id              String    @id @default(cuid())
+  groupId         String
+  group           ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  email           String
+  invitedByUserId String
+  createdAt       DateTime  @default(now())
+
+  @@unique([groupId, email])
+  @@index([email])
+  @@map("chat_group_invites")
 }
 
 model ChatGroupMember {
@@ -907,6 +939,8 @@ model Message {
   role             String
   blocks           Json
   botId            String?
+  /// A colleague who wrote this in a shared group; NULL for the thread's owner.
+  authorUserId     String?
   replyToMessageId String?
   replyQuote       String?
   replyTo          Message?  @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)

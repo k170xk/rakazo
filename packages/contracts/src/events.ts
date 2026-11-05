@@ -464,6 +464,8 @@ export const ThreadMessageSchema = z.object({
   role: MessageRole,
   blocks: z.array(MessageBlock),
   botId: Id.optional(),
+  /** A colleague who wrote this in a shared group; unset for the owner. */
+  authorUserId: Id.optional(),
   replyToMessageId: Id.optional(),
   replyQuote: z.string().optional(),
   replyPreview: ReplyPreviewSchema.nullable().optional(),

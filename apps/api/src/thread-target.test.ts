@@ -1497,6 +1497,7 @@ function groupPrisma(findManyRuns: ReturnType<typeof groupRunFindMany>) {
   };
   return {
     $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    chatGroup: { findUnique: vi.fn().mockResolvedValue(null) },
   } as unknown as PrismaClient;
 }
 
@@ -4427,6 +4428,7 @@ describe("helper snapshot settlement", () => {
       };
       const prisma = {
         $transaction: vi.fn(async (work: (client: typeof tx) => unknown) => work(tx)),
+        chatGroup: { findUnique: vi.fn().mockResolvedValue(null) },
       } as unknown as PrismaClient;
       const result = await threadSnapshot({ prisma }, {
         kind,

@@ -403,7 +403,8 @@ export function createGroupRepos(prisma: PrismaClient) {
         where: {
           id: groupId,
           spaceId: actor.spaceId,
-          userId: actor.userId,
+          // A colleague added to this group reaches it in the owner's Space.
+          userId: actor.guestGroupIds?.includes(groupId) ? undefined : actor.userId,
           archivedAt: null,
         },
         include: groupTargetInclude,

@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { emailAllowed } from "@rakazo/core";
-import { bootstrapUserSpace, type PrismaClient } from "@rakazo/db";
+import type { PrismaClient } from "@rakazo/db";
+import { bootstrapUserSpace } from "@rakazo/db";
 import { resolveSignupPolicy } from "./signup-policy.js";
 
 export const EVOLVE_SSO_AUD = "rakazo";
@@ -121,7 +122,10 @@ export function verifyEvolveComputerSsoToken(
 
   if (typeof payload.email !== "string" || !payload.email.includes("@")) return null;
   if (typeof payload.jti !== "string" || !payload.jti) return null;
-  if (typeof payload.evolve_profile_id !== "number" || !Number.isFinite(payload.evolve_profile_id)) {
+  if (
+    typeof payload.evolve_profile_id !== "number" ||
+    !Number.isFinite(payload.evolve_profile_id)
+  ) {
     return null;
   }
   if (payload.aud !== EVOLVE_SSO_AUD || payload.iss !== EVOLVE_SSO_ISS) return null;
@@ -140,7 +144,7 @@ export async function exchangeEvolveSso(input: {
   token: string;
   signupsEnabled: string | undefined;
   signupAllowlist: string | undefined;
-}): Promise<{ token: string; expiresAt: Date; created: boolean }> {
+}): Promise<{ token: string; expiresAt: Date; created: boolean; email: string }> {
   const claims = verifyEvolveComputerSsoToken(input.secret, input.token);
   if (!claims) throw new EvolveSsoInvalidTokenError();
 
@@ -197,5 +201,5 @@ export async function exchangeEvolveSso(input: {
     },
   });
 
-  return { token: sessionToken, expiresAt, created };
+  return { token: sessionToken, expiresAt, created, email };
 }

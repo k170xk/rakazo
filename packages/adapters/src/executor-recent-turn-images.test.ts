@@ -184,6 +184,7 @@ async function runWithModel(
         return { count: 1 };
       }),
     },
+    chatGroupPerson: { count: vi.fn(async () => 0) },
     chatGroup: {
       findMany: vi.fn(async () => []),
       findUnique: vi.fn(async () => ({

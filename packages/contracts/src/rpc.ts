@@ -90,6 +90,7 @@ import {
   ExportManifestSchema,
   ExternalConversationPolicySchema,
   GroupDetailSchema,
+  GroupPeopleSchema,
   GroupSchema,
   IncomingBotCallSchema,
   IntegrationCatalogResultSchema,
@@ -131,6 +132,7 @@ import {
   ServerUpdateRequestSchema,
   ServerUpdateRunSchema,
   ServerUpdateStatusSchema,
+  SharedGroupSchema,
   SignupSurveySchema,
   SkillPlaybookSchema,
   SpaceAvailabilitySchema,
@@ -583,6 +585,20 @@ export const appContract = {
     archive: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
     restore: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
     remove: oc.input(groupId).output(z.object({ ok: z.literal(true) })),
+    people: oc.input(groupId).output(GroupPeopleSchema),
+    addPerson: oc
+      .input(groupId.safeExtend({ email: z.string().trim().toLowerCase().email().max(254) }))
+      .output(GroupPeopleSchema),
+    removePerson: oc
+      .input(
+        groupId.safeExtend({
+          userId: Id.optional(),
+          email: z.string().trim().toLowerCase().email().max(254).optional(),
+        }),
+      )
+      .output(GroupPeopleSchema),
+    /** Groups other people own that the signed-in user was added to, from any Space. */
+    shared: oc.output(z.array(SharedGroupSchema)),
   },
   botSections: {
     list: oc.output(z.array(BotSectionSchema)),

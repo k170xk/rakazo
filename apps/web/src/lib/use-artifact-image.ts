@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ArtifactTarget } from "./artifact-open";
-import { decodeArtifactBase64 } from "./artifact-open";
-import { rpc } from "./rpc";
+import { artifactClient, decodeArtifactBase64 } from "./artifact-open";
 
 type ImageDownload = {
   promise: Promise<string>;
@@ -31,8 +30,11 @@ function acquireDownload(target: ArtifactTarget, artifactId: string) {
       consumers: 0,
       objectUrl: null,
       settled: false,
-      promise: rpc.artifacts
-        .get({ ...target, artifactId })
+      promise: artifactClient(target)
+        .artifacts.get({
+          ...("botId" in target ? { botId: target.botId } : { groupId: target.groupId }),
+          artifactId,
+        })
         .then((artifact) => {
           const bytes = decodeArtifactBase64(artifact.contentBase64);
           entry.objectUrl = URL.createObjectURL(

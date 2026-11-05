@@ -64,6 +64,7 @@ async function teamChatRun(input: {
         return { count: 1 };
       }),
     },
+    chatGroupPerson: { count: vi.fn(async () => 0) },
     chatGroup: { findMany: vi.fn(async () => []) },
     bot: {
       findUniqueOrThrow: vi.fn(async () => ({

@@ -32,6 +32,7 @@ import { BotSecretAuth, resolveBotAvatarSet } from "@rakazo/contracts";
 import { ACTIVE_RUN_STATUSES, displayName } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
+  addGroupPerson,
   BotSectionNameConflictError,
   botProfileLabelsChanged,
   ComputerLimitError,
@@ -39,8 +40,11 @@ import {
   expireComputerExecutionLeases,
   InstructionConflictError,
   IsolationError,
+  listGroupPeople,
+  listSharedGroups,
   recordComputerRunEnd,
   recordSecurityEvent,
+  removeGroupPerson,
   restoreBotUnderComputerQuota,
   SpaceDeletionInProgressError,
   settingsTarget,
@@ -743,6 +747,18 @@ export function botsRoutes(ctx: RouterContext) {
         }
         return { ok: true as const };
       }),
+      people: authed.groups.people.handler(({ context, input }) =>
+        listGroupPeople(deps.prisma, context.actor, input.groupId),
+      ),
+      addPerson: authed.groups.addPerson.handler(({ context, input }) =>
+        addGroupPerson(deps.prisma, context.actor, input.groupId, input.email),
+      ),
+      removePerson: authed.groups.removePerson.handler(({ context, input }) =>
+        removeGroupPerson(deps.prisma, context.actor, input.groupId, input),
+      ),
+      shared: authed.groups.shared.handler(({ context }) =>
+        listSharedGroups(deps.prisma, { id: context.actor.userId, email: context.actor.email }),
+      ),
     },
     botSections: {
       list: authed.botSections.list.handler(async ({ context }) =>

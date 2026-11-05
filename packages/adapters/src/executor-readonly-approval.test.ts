@@ -444,6 +444,7 @@ function fixture({
       })),
     },
     taughtSkill: { findMany: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
+    chatGroupPerson: { count: vi.fn(async () => 0) },
     chatGroup: { findMany: vi.fn(async () => []) },
     botSection: { findMany: vi.fn(async () => []) },
     vaultCredential: { findMany: vi.fn(async () => []) },

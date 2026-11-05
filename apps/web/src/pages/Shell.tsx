@@ -625,6 +625,15 @@ function SpaceShell() {
     (botId: string | undefined) => memberName(transcriptMembers, botId),
     [transcriptMembers],
   );
+  const transcriptPeople = activeSnapshot?.people;
+  const resolveTranscriptAuthorName = useCallback(
+    (message: ThreadMessage) =>
+      message.authorUserId
+        ? (transcriptPeople?.find((person) => person.userId === message.authorUserId)?.name ??
+          t`A colleague`)
+        : undefined,
+    [transcriptPeople, t],
+  );
   const { composerMentionTargets, footerLogos, setFooterLogos } = useComposerMentions({
     rpc,
     queries,
@@ -1171,6 +1180,7 @@ function SpaceShell() {
               onJumpToMessage={jumpToReplyMessage}
               onOpenPeerMessages={openPeerMessages}
               memberName={resolveTranscriptMemberName}
+              authorName={resolveTranscriptAuthorName}
               peerBot={resolveTranscriptBot}
               onRefresh={refreshActiveThread}
               onBotChanged={refreshBots}

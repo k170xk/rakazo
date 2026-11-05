@@ -9,9 +9,10 @@ import {
   InputGroupInput,
   Sidebar,
 } from "@rakazo/ui-web";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, UsersRound } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { InviteDialog } from "../../components/InviteDialog";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
@@ -21,6 +22,7 @@ import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
 import { switchOrganization, useOrganizations } from "../../lib/organizations";
 import { useQueryUserId } from "../../lib/query";
 import type { Panel } from "../../lib/right-panel-state";
+import { rpc } from "../../lib/rpc";
 import { useSignOut } from "../../lib/sign-out";
 import { ActivityList } from "../ActivityList";
 import { SpaceSearchResults } from "../SpaceSearch";
@@ -357,6 +359,7 @@ function ShellSidebarFooter({
           ) : null}
         </div>
       ) : null}
+      {mini ? null : <SharedChatsLink />}
       <SidebarFooter
         mini={mini}
         logos={logos}
@@ -427,5 +430,35 @@ function ShellSidebarFooter({
         <InviteDialog referral={referral} open={inviteOpen} onOpenChange={setInviteOpen} />
       ) : null}
     </>
+  );
+}
+
+/** Shown once someone has added you to their group chat. */
+function SharedChatsLink() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    rpc.groups
+      .shared(undefined, { context: { spaceId: null } })
+      .then((shared) => {
+        if (!cancelled) setCount(shared.length);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  if (count === 0) return null;
+  return (
+    <Link
+      to="/shared"
+      className="mx-2.5 flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-foreground hover:bg-accent"
+    >
+      <UsersRound size={16} className="text-muted-foreground" aria-hidden="true" />
+      <span className="flex-1">
+        <Trans>Shared with you</Trans>
+      </span>
+      <span className="text-xs text-muted-foreground">{count}</span>
+    </Link>
   );
 }

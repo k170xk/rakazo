@@ -16,8 +16,10 @@ import {
   appendEventInTransaction,
   createExternalConversationRepos,
   createThreadMessageInTransaction,
+  groupOwner,
   IsolationError,
   lockOwnedGroup,
+  runAsTenant,
   touchGroupUpdatedAt,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -152,6 +154,33 @@ export function threadsRoutes(ctx: RouterContext) {
       throw error;
     });
   };
+  /**
+   * A colleague's message runs the group's bots for its owner, so the owner's models and billing
+   * apply; the run reads the author from the message and keeps the owner's private context out.
+   */
+  const sendAsGuest = async (guest: Actor, input: Parameters<typeof send>[1]) => {
+    if (!input.groupId || !guest.guestGroupIds?.includes(input.groupId)) {
+      throw new IsolationError();
+    }
+    if (input.artifactIds?.length) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Only the group's owner can attach files here.",
+      });
+    }
+    const owner = await groupOwner(deps.prisma, input.groupId);
+    const ownerActor: Actor = {
+      userId: owner.user.id,
+      spaceId: owner.spaceId,
+      email: owner.user.email,
+      isDeploymentOwner: false,
+    };
+    const mentions = input.mentions?.filter(
+      (mention) => typeof mention === "string" || mention.kind === "bot",
+    );
+    return runAsTenant(ownerActor, () =>
+      send(ownerActor, { ...input, mentions, authorUserId: guest.userId }),
+    );
+  };
   return {
     threads: {
       head: authed.threads.head.handler(async ({ context, input }) => {
@@ -237,7 +266,11 @@ export function threadsRoutes(ctx: RouterContext) {
           void follow.return(undefined).catch(() => {});
         }
       }),
-      send: authed.threads.send.handler(({ context, input }) => send(context.actor, input)),
+      send: authed.threads.send.handler(({ context, input }) =>
+        context.actor.guestGroupIds
+          ? sendAsGuest(context.actor, input)
+          : send(context.actor, input),
+      ),
       sendWithRoutines: authed.threads.sendWithRoutines.handler(async ({ context, input }) => {
         const { actor } = context;
         // The same checks as routines/testRun, all before anything is written.
@@ -673,6 +706,8 @@ export function threadsRoutes(ctx: RouterContext) {
       }),
       markRead: authed.threads.markRead.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        // Read state belongs to the owner; a colleague reading leaves it as it is.
+        if (context.actor.guestGroupIds) return { ok: true as const, unreadAfterSeq: null };
         const unreadAfterSeq = await markThreadRead(deps.prisma, context.actor, target);
         return { ok: true as const, unreadAfterSeq };
       }),

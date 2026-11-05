@@ -20,6 +20,7 @@ import { markOnce } from "../../lib/performance";
 import type { ChatTarget } from "../../lib/query";
 import { lastChatKey, queryClient, seedOnLeave, spaceSeedKey } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
+import { rpc as appRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
 import type { RosterDropTarget } from "./roster-drop";
 import { resolveRosterDrop } from "./roster-drop";
@@ -30,6 +31,14 @@ import type { ThreadState } from "./use-thread-state";
 type Navigation = ReturnType<typeof useShellNavigation>;
 
 /** The space's bots, groups, sections and spaces, refreshed while the shell is open. */
+
+/** Someone with no bots of their own starts in the chats colleagues shared, else in onboarding. */
+function openFirstRun(navigate: (to: string, options: { replace: boolean }) => void) {
+  appRpc.groups
+    .shared(undefined, { context: { spaceId: null } })
+    .then((shared) => navigate(shared.length ? "/shared" : "/onboarding", { replace: true }))
+    .catch(() => navigate("/onboarding", { replace: true }));
+}
 export function useSpaceRoster({
   rpc,
   seed,
@@ -124,7 +133,7 @@ export function useSpaceRoster({
           // Only the very first bot everywhere needs onboarding. An empty
           // current space with content elsewhere stays in the app so the
           // space can be switched to or deleted instead of trapping the user.
-          navigate("/onboarding", { replace: true });
+          openFirstRun(navigate);
           return;
         }
         const currentGroupId = routeGroupId.current;
@@ -405,7 +414,7 @@ export function useSpaceBootstrap({
           bootstrap.archivedGroups.length === 0 &&
           !bootstrap.spaces.some((space) => space.hasContent)
         ) {
-          navigate("/onboarding", { replace: true });
+          openFirstRun(navigate);
           return;
         }
         if (groupId) {

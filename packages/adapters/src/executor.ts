@@ -45,6 +45,7 @@ import {
   readRunTimingFields,
   recordUsage,
   settleReleasedTakeoverCards,
+  sharedGroupRunFromColleague,
   spaceHasModelAccess,
   teamChatRunFromOwner,
 } from "@rakazo/db";
@@ -257,6 +258,38 @@ async function verbatimMcpServersForRun(
   return { ids: servers.map((server) => server.id), slugs: servers.map((server) => server.slug) };
 }
 
+/** Owner-only reach a run in a group with colleagues gives up: accounts, money, devices, other bots. */
+const COLLEAGUE_BLOCKED_TOOLS: ReadonlySet<string> = new Set([
+  "connect_app",
+  "add_mcp_server",
+  "request_secret",
+  "generate_secret",
+  "list_secrets",
+  "secret_request",
+  "forget_secret",
+  "request_purchase",
+  "purchase_status",
+  "paid_request",
+  "user_computer_shell",
+  "user_computer_observe",
+  "user_computer_act",
+  "call_user",
+  "cloud_agent_launch",
+  "cloud_agent_status",
+  "cloud_agent_reply",
+  "cloud_agent_cancel",
+  "search_history",
+  "read_history",
+  "create_space",
+  "spawn_bot",
+  "update_bot",
+  "archive_bot",
+  "message_bot",
+  "connect_agent",
+  "respond_agent_connection",
+  "message_agent",
+  "update_preferences",
+]);
 export function createRunExecutor(executorDeps: ExecutorDeps) {
   const contextStrategy = executorDeps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY;
   const web = executorDeps.web ?? createWebProvider();
@@ -651,7 +684,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         // Team chat reaches people besides the owner, so their runs get a group channel's limits.
         const teamChatConversationId =
           run.trigger === "messaging" ? thread.externalConversationId : null;
+        const colleagueGroupRun = thread.groupId
+          ? await sharedGroupRunFromColleague(deps.prisma, {
+              groupId: thread.groupId,
+              sourceMessageId: run.sourceMessageId,
+            })
+          : false;
         const nonOwnerChatRun =
+          colleagueGroupRun ||
           messagingChannelRun ||
           (teamChatConversationId
             ? !(await teamChatRunFromOwner(deps.prisma, {
@@ -1297,7 +1337,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         // Calls carry no schema flag: the sending client encodes them in the clientNonce.
         const sourceClientNonce = sourceMessage?.clientNonce ?? null;
         // A follow-up can be queued by a bot (group handoffs); only the user's own counts.
-        const ownerStartedRun = isOwnerStartedRun(run.trigger, sourceMessage?.role === "user");
+        const ownerStartedRun =
+          !colleagueGroupRun && isOwnerStartedRun(run.trigger, sourceMessage?.role === "user");
         // A hang-up run has no source message: its own nonce carries the call it closes.
         const callEndRun = run.trigger === "call_end";
         const callClientNonceForRun = callEndRun ? run.clientNonce : sourceClientNonce;
@@ -1365,13 +1406,18 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             ? agentConnectionTools.filter((tool) => !disabledBuiltinTools.has(tool.name))
             : []),
         ];
-        const strategicBuiltins = filterStrategicInitiativeTools(builtins, {
-          trigger: run.trigger,
-          clientNonce: run.clientNonce,
-        });
-        const exposedConnectorTools = discovered.filter(
-          (tool) => !builtinAgentTools.some((builtin) => builtin.name === tool.name),
+        const strategicBuiltins = filterStrategicInitiativeTools(
+          colleagueGroupRun
+            ? builtins.filter((tool) => !COLLEAGUE_BLOCKED_TOOLS.has(tool.name))
+            : builtins,
+          { trigger: run.trigger, clientNonce: run.clientNonce },
         );
+        // A colleague's run never reaches the owner's connected apps.
+        const exposedConnectorTools = colleagueGroupRun
+          ? []
+          : discovered.filter(
+              (tool) => !builtinAgentTools.some((builtin) => builtin.name === tool.name),
+            );
         const strategicConnectorTools = filterStrategicInitiativeTools(exposedConnectorTools, {
           trigger: run.trigger,
           clientNonce: run.clientNonce,

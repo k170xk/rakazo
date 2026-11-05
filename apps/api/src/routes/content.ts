@@ -87,7 +87,11 @@ export function contentRoutes(ctx: RouterContext) {
           const group = await groupRepos.getGroupTarget(context.actor, input.groupId);
           const contextBotId = group.members[0]?.bot.id;
           if (!contextBotId) throw new IsolationError();
-          return getSpaceArtifact(deps, context.actor, {
+          // A colleague reads the group's files as its owner wrote them.
+          const reader = context.actor.guestGroupIds
+            ? { ...context.actor, userId: group.userId, guestGroupIds: undefined }
+            : context.actor;
+          return getSpaceArtifact(deps, reader, {
             artifactId: input.artifactId,
             groupId: input.groupId,
             contextBotId,

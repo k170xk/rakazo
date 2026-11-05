@@ -65,6 +65,7 @@ export const MessageView = memo(function MessageView({
   peerExchange,
   speakerName,
   memberName,
+  authorName,
   peerBot,
   replyParent,
   onJumpToMessage,
@@ -106,6 +107,8 @@ export const MessageView = memo(function MessageView({
   peerExchange?: PeerExchange;
   speakerName?: string;
   memberName?: (botId: string | undefined) => string | undefined;
+  /** The colleague who wrote this person's message, shown above it. */
+  authorName?: string;
   peerBot: (
     botId: string,
   ) => { name?: string; color: string; status?: string; avatarSet?: BotAvatarSet } | undefined;
@@ -184,6 +187,14 @@ export const MessageView = memo(function MessageView({
   );
   const messageContext = (
     <>
+      {authorName ? (
+        <div
+          className="mb-1 flex justify-end text-xs font-semibold text-muted-foreground"
+          dir="auto"
+        >
+          {authorName}
+        </div>
+      ) : null}
       {speakerName ? (
         <div
           className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold tracking-tight"

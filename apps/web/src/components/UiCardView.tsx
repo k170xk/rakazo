@@ -128,7 +128,7 @@ function CardFrame({
   children: ReactNode;
 }) {
   return (
-    <figure className="group/card w-full min-w-0 max-w-2xl overflow-hidden rounded-[20px] border border-border bg-card text-foreground dark:border-transparent">
+    <figure className="group/card w-[min(42rem,100%)] min-w-0 overflow-hidden rounded-[20px] border border-border bg-card text-foreground dark:border-transparent">
       <figcaption className="flex items-start justify-between gap-3 border-b border-border py-3 ps-5 pe-3">
         <div className="min-w-0 pt-0.5">
           <p className="truncate text-[14px] font-medium">{title}</p>

@@ -195,6 +195,34 @@ export const GroupMemberSchema = z.object({
 });
 export type GroupMember = z.infer<typeof GroupMemberSchema>;
 
+/** A person in a group chat: its owner, or a colleague the owner added by work email. */
+export const GroupPersonSchema = z.object({
+  userId: Id,
+  name: z.string(),
+  email: z.string(),
+  image: z.string().nullable(),
+  owner: z.boolean(),
+});
+export type GroupPerson = z.infer<typeof GroupPersonSchema>;
+
+export const GroupPeopleSchema = z.object({
+  people: z.array(GroupPersonSchema),
+  /** Work emails added before that colleague first signed in. */
+  invites: z.array(z.object({ email: z.string(), createdAt: z.string() })),
+});
+export type GroupPeople = z.infer<typeof GroupPeopleSchema>;
+
+/** A group someone else owns that the signed-in user was added to. */
+export const SharedGroupSchema = z.object({
+  id: Id,
+  spaceId: Id,
+  name: z.string(),
+  ownerName: z.string(),
+  members: z.array(GroupMemberSchema),
+  updatedAt: z.string(),
+});
+export type SharedGroup = z.infer<typeof SharedGroupSchema>;
+
 /** Selected-text excerpt carried by a reply; capped so a quote stays a quote. */
 export const REPLY_QUOTE_MAX_LENGTH = 2_000;
 
@@ -1416,6 +1444,8 @@ export const ThreadSnapshotSchema = z.object({
   groupId: Id.optional(),
   groupName: z.string().optional(),
   members: z.array(GroupMemberSchema).optional(),
+  /** Set when a group has colleagues besides its owner. */
+  people: z.array(GroupPersonSchema).optional(),
   run: RunSchema.nullable(),
   activeRuns: z.array(RunSchema).optional(),
   computer: ComputerStatusSchema.optional(),

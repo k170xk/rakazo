@@ -5,6 +5,7 @@ import { BotAvatar, Button, Checkbox, Input, SectionHeading } from "@rakazo/ui-w
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { GroupPeopleSection } from "../components/GroupPeople";
 import { errorText } from "../lib/user-error";
 import { DeleteItemDialog } from "./shell/dialogs";
 
@@ -351,6 +352,7 @@ export function GroupSettings({
       >
         {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}
       </Button>
+      <GroupPeopleSection groupId={group.id} spaceId={group.spaceId} />
       {pages ? (
         <section className="mt-6">
           <SectionHeading variant="label" className="mb-2">

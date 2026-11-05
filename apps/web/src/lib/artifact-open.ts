@@ -1,6 +1,16 @@
-import { rpc } from "./rpc";
+import { rpc, rpcForSpace } from "./rpc";
 
-export type ArtifactTarget = { botId: string } | { groupId: string };
+/** `spaceId` is set when the group lives in another person's Space that you were added to. */
+export type ArtifactTarget = { botId: string } | { groupId: string; spaceId?: string };
+
+/** The client that reads a target's artifacts, in the Space it belongs to. */
+export function artifactClient(target: ArtifactTarget) {
+  return "spaceId" in target && target.spaceId ? rpcForSpace(target.spaceId) : rpc;
+}
+
+function artifactInput(target: ArtifactTarget) {
+  return "botId" in target ? { botId: target.botId } : { groupId: target.groupId };
+}
 
 export function decodeArtifactBase64(contentBase64: string): Uint8Array {
   const binary = atob(contentBase64);
@@ -15,7 +25,10 @@ export async function fetchArtifactBytes(
   target: ArtifactTarget,
   artifactId: string,
 ): Promise<Uint8Array> {
-  const artifact = await rpc.artifacts.get({ ...target, artifactId });
+  const artifact = await artifactClient(target).artifacts.get({
+    ...artifactInput(target),
+    artifactId,
+  });
   return decodeArtifactBase64(artifact.contentBase64);
 }
 

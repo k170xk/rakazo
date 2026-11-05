@@ -125,6 +125,7 @@ import {
   createSecurityEventPruner,
   createThreadEvents,
   describeRowSecurity,
+  groupGuestActor,
   IsolationError,
   installAuditEventStore,
   installSecurityEventStore,
@@ -148,7 +149,8 @@ import {
 } from "@rakazo/logging";
 import { markExpectedFailure, requestLogging } from "@rakazo/logging/hono";
 import { MarkdownMemoryStore } from "@rakazo/memory";
-import { type Context, Hono } from "hono";
+import type { Context } from "hono";
+import { Hono } from "hono";
 import { setSignedCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { deleteAccountContent } from "./account-deletion.js";
@@ -971,18 +973,19 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     sandboxProvider: env.sandboxProvider,
     prisma,
   });
-  const requestSession = async (request: Request) => {
+  /** `allowGuest` lets a colleague reach another Space's groups they were added to (RPC only). */
+  const requestSession = async (request: Request, allowGuest = false) => {
     // The bearer plugin turns a signed `Authorization: Bearer` into the session cookie.
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) return null;
-    const actor = await actorFromMembership(
-      requireMembership(
-        prisma,
-        session.user.id,
-        request.headers.get("x-rakazo-space-id"),
-        session.session.id,
-      ),
-    );
+    const requestedSpaceId = request.headers.get("x-rakazo-space-id");
+    const actor =
+      (await actorFromMembership(
+        requireMembership(prisma, session.user.id, requestedSpaceId, session.session.id),
+      )) ??
+      (allowGuest && requestedSpaceId
+        ? await groupGuestActor(prisma, session.user, requestedSpaceId)
+        : null);
     return actor && { actor, sessionId: session.session.id };
   };
   const sessionActor = async (request: Request) => (await requestSession(request))?.actor ?? null;
@@ -1016,7 +1019,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   );
   const limitRpcBody = rpcBodyLimit(env.maxUploadSizeBytes);
   app.use("/rpc/*", async (c, next) => {
-    const session = await requestSession(c.req.raw);
+    const session = await requestSession(c.req.raw, true);
     const actor = session?.actor ?? null;
     const tooLarge = await limitRpcBody(c, actor !== null);
     if (tooLarge) return tooLarge;
@@ -1032,7 +1035,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         // Same user in the same space, so leaving the space also ends a stream.
         // A database failure rejects this check; only a missing membership is unauthorized.
         stillAuthorized: async () => {
-          const current = await sessionActor(c.req.raw);
+          const current = (await requestSession(c.req.raw, true))?.actor;
           return Boolean(
             actor && current?.userId === actor.userId && current.spaceId === actor.spaceId,
           );
@@ -1533,11 +1536,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   };
 }
 
-async function handleEvolveSso(
-  c: Context,
-  env: AppEnv,
-  prisma: PrismaClient,
-): Promise<Response> {
+async function handleEvolveSso(c: Context, env: AppEnv, prisma: PrismaClient): Promise<Response> {
   if (!env.evolveSsoSecret) {
     return c.json({ error: "Not found" }, 404);
   }
@@ -1560,7 +1559,14 @@ async function handleEvolveSso(
       maxAge,
       ...(secure ? { prefix: "secure" as const } : {}),
     });
-    return c.redirect(session.created ? `${env.webOrigin}/onboarding` : `${env.webOrigin}/app`, 302);
+    // A colleague added to someone's group lands in it instead of setting up bots of their own.
+    const invited =
+      session.created &&
+      (await runAsSystem("check a new user's group invites", () =>
+        prisma.chatGroupInvite.count({ where: { email: session.email } }),
+      )) > 0;
+    const next = invited ? "/shared" : session.created ? "/onboarding" : "/app";
+    return c.redirect(`${env.webOrigin}${next}`, 302);
   } catch {
     return c.redirect(`${env.webOrigin}/sign-in?error=evolve_sso`, 302);
   }

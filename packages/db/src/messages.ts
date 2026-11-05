@@ -7,13 +7,13 @@ import { withTransactionRetry } from "./transaction-retry.js";
  * `steeringMessages` is non-empty for a message still waiting for its own run, which the caller
  * leaves out of this run's history.
  */
-export function loadRunHistoryMessages(
+export async function loadRunHistoryMessages(
   prisma: PrismaClient,
   run: { id: string; threadId: string; botId: string },
   limit: number,
   channelId?: string,
 ) {
-  return prisma.message.findMany({
+  const rows = await prisma.message.findMany({
     where: {
       threadId: run.threadId,
       ...(channelId
@@ -43,8 +43,35 @@ export function loadRunHistoryMessages(
       replyQuote: true,
       replyTo: { select: { id: true, threadId: true, role: true, botId: true, blocks: true } },
       clientNonce: true,
+      authorUserId: true,
       steeringMessages: { where: { botId: run.botId, runId: null }, select: { id: true } },
     },
+  });
+  return labelColleagueMessages(prisma, rows);
+}
+
+/** A bot reading a shared group's history sees which lines a colleague wrote. */
+async function labelColleagueMessages<T extends { authorUserId: string | null; blocks: unknown }>(
+  prisma: PrismaClient,
+  rows: T[],
+): Promise<T[]> {
+  const authorIds = [
+    ...new Set(rows.flatMap((row) => (row.authorUserId ? [row.authorUserId] : []))),
+  ];
+  if (authorIds.length === 0) return rows;
+  const authors = new Map(
+    (
+      await prisma.user.findMany({
+        where: { id: { in: authorIds } },
+        select: { id: true, name: true, email: true },
+      })
+    ).map((user) => [user.id, `${user.name.trim() || user.email} <${user.email}>`]),
+  );
+  return rows.map((row) => {
+    if (!row.authorUserId || !Array.isArray(row.blocks)) return row;
+    const who = authors.get(row.authorUserId) ?? "a colleague";
+    const label: MessageBlock = { kind: "text", text: `[Written by ${who}, not your owner.]` };
+    return { ...row, blocks: [label, ...row.blocks] };
   });
 }
 
@@ -62,6 +89,8 @@ export interface CreateThreadMessageInput {
   role: "user" | "bot" | "system";
   blocks: MessageBlock[];
   botId?: string;
+  /** A colleague writing in a shared group; unset for the thread's owner. */
+  authorUserId?: string;
   replyToMessageId?: string;
   replyQuote?: string;
   runId?: string;
@@ -104,6 +133,7 @@ export async function createThreadMessageInTransaction(
       role: input.role,
       blocks: input.blocks as Prisma.InputJsonValue,
       botId: input.botId,
+      authorUserId: input.authorUserId,
       replyToMessageId: input.replyToMessageId,
       replyQuote: input.replyQuote,
       runId: input.runId,
