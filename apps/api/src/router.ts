@@ -143,6 +143,8 @@ export interface RouterDeps {
     desktopHostChoiceEnabled?: boolean;
     mcpStdioEnabled?: boolean;
     mcpStdioAllowedCommands?: string[];
+    evolveSsoSecret?: string;
+    evolveDirectoryUrl?: string;
   };
 }
 

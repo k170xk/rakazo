@@ -212,6 +212,19 @@ export const GroupPeopleSchema = z.object({
 });
 export type GroupPeople = z.infer<typeof GroupPeopleSchema>;
 
+/** An active Evolve profile offered in the group People picker. */
+export const DirectoryPersonSchema = z.object({
+  email: z.string(),
+  name: z.string(),
+  jobTitle: z.string().nullable(),
+  office: z.string().nullable(),
+  photo: z.string().nullable(),
+  /** Whether Evolve shows them the OCSC Intelligence menu item, without which they cannot join. */
+  canOpen: z.boolean(),
+  status: z.enum(["member", "invited"]).nullable(),
+});
+export type DirectoryPerson = z.infer<typeof DirectoryPersonSchema>;
+
 /** A group someone else owns that the signed-in user was added to. */
 export const SharedGroupSchema = z.object({
   id: Id,

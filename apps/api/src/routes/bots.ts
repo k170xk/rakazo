@@ -54,6 +54,7 @@ import type { AgentImportServices } from "../agent-import.js";
 import { agentImportSetupState, createImportedBot, previewAgentImport } from "../agent-import.js";
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
 import { changedBotSettings } from "../bot-setting-analytics.js";
+import { searchEvolveDirectory } from "../evolve-directory.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
 import type { RouterDeps } from "../router.js";
 import { loadMessagePage } from "../thread-message-pages.js";
@@ -755,6 +756,14 @@ export function botsRoutes(ctx: RouterContext) {
       ),
       removePerson: authed.groups.removePerson.handler(({ context, input }) =>
         removeGroupPerson(deps.prisma, context.actor, input.groupId, input),
+      ),
+      searchDirectory: authed.groups.searchDirectory.handler(async ({ context, input }) =>
+        searchEvolveDirectory({
+          secret: deps.env.evolveSsoSecret,
+          url: deps.env.evolveDirectoryUrl,
+          query: input.query,
+          people: await listGroupPeople(deps.prisma, context.actor, input.groupId),
+        }),
       ),
       shared: authed.groups.shared.handler(({ context }) =>
         listSharedGroups(deps.prisma, { id: context.actor.userId, email: context.actor.email }),

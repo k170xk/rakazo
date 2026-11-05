@@ -177,6 +177,8 @@ export interface AppEnv {
   crispWebsiteId?: string | null;
   /** Shared HMAC secret with Evolve `evolve-computer-sso-start`. Unset disables GET /api/auth/evolve. */
   evolveSsoSecret: string | undefined;
+  /** Evolve `evolve-computer-directory`, searched with a token signed by `evolveSsoSecret`. */
+  evolveDirectoryUrl?: string;
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
@@ -350,6 +352,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     browserMonitoring: browserMonitoringFromEnv(source),
     crispWebsiteId: parseCrispWebsiteId(source.CRISP_WEBSITE_ID),
     evolveSsoSecret: optional(source.EVOLVE_COMPUTER_SSO_SECRET),
+    evolveDirectoryUrl: optional(source.EVOLVE_DIRECTORY_URL),
   };
 }
 

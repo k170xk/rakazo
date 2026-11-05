@@ -87,6 +87,7 @@ import {
   CreateRoutineInput,
   CreateScratchpadItemInput,
   DeploymentSettingsSchema,
+  DirectoryPersonSchema,
   ExportManifestSchema,
   ExternalConversationPolicySchema,
   GroupDetailSchema,
@@ -597,6 +598,10 @@ export const appContract = {
         }),
       )
       .output(GroupPeopleSchema),
+    /** Active Evolve profiles to add; unavailable when this deployment is not linked to Evolve. */
+    searchDirectory: oc
+      .input(groupId.safeExtend({ query: z.string().trim().min(2).max(80) }))
+      .output(z.object({ available: z.boolean(), people: z.array(DirectoryPersonSchema) })),
     /** Groups other people own that the signed-in user was added to, from any Space. */
     shared: oc.output(z.array(SharedGroupSchema)),
   },
