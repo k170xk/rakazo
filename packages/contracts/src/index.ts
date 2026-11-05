@@ -42,6 +42,7 @@ export * from "./security-events.js";
 export * from "./server-headers.js";
 export * from "./settings-scope.js";
 export * from "./terminal.js";
+export * from "./ui-cards.js";
 export * from "./user-devices.js";
 export * from "./vault-items.js";
 export * from "./voice-errors.js";

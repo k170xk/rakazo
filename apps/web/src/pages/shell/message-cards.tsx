@@ -6,6 +6,7 @@ import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo
 import { Maximize2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BuiCard, SuccessPop } from "../../components/ai/primitives";
+import { ImageLightbox } from "../../components/ImageLightbox";
 import { OptionRow } from "../../components/OptionRow";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { chartViewport } from "../../lib/chart-viewport";
@@ -561,27 +562,7 @@ export function ArtifactImage({
           {name}
         </div>
       )}
-      {src ? (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent
-            showCloseButton={false}
-            className="w-auto max-w-none bg-transparent p-0 ring-0 sm:max-w-none"
-          >
-            <DialogTitle className="sr-only">{name}</DialogTitle>
-            <DialogClose
-              aria-label={t`Close image preview`}
-              render={<Button variant="ghost" size="icon-sm" className="absolute end-2 top-2" />}
-            >
-              <X />
-            </DialogClose>
-            <img
-              src={src}
-              alt={name}
-              className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
-            />
-          </DialogContent>
-        </Dialog>
-      ) : null}
+      <ImageLightbox image={open && src ? { src, name } : null} onClose={() => setOpen(false)} />
     </div>
   );
 }

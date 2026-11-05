@@ -21,6 +21,7 @@ import {
   TICKET_PRIORITIES,
   TICKET_STATUSES,
   TICKET_TITLE_MAX_LENGTH,
+  UI_CARD_TYPES,
 } from "@rakazo/contracts";
 import { z } from "zod";
 import { allowPrivateHttpSecretOrigins } from "./bot-secrets.js";
@@ -599,6 +600,33 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
       },
       required: ["question", "options"],
+    },
+  },
+  {
+    name: "show_card",
+    description:
+      "Show a card in the chat instead of a long list. type: record {title, subtitle?, status?, tone?, fields:[{label,value}]}; metrics {title, caption?, metrics:[{label,value,change?,tone?}] max 6}; checklist {title, caption?, items:[{text,done,note?}]}; notice {title, body, tone?, points?}; table {title, caption?, columns, rows: one string per column}; quote {quote, attribution, context?}. tone: neutral|positive|caution|negative. Does not end your turn; do not repeat the card in your reply.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        type: { type: "string", enum: [...UI_CARD_TYPES] },
+        title: { type: "string" },
+        subtitle: { type: "string" },
+        caption: { type: "string" },
+        status: { type: "string" },
+        tone: { type: "string" },
+        fields: { type: "array", items: { type: "object" } },
+        metrics: { type: "array", items: { type: "object" } },
+        items: { type: "array", items: { type: "object" } },
+        body: { type: "string" },
+        points: { type: "array", items: { type: "string" } },
+        columns: { type: "array", items: { type: "string" } },
+        rows: { type: "array", items: { type: "array", items: { type: "string" } } },
+        quote: { type: "string" },
+        attribution: { type: "string" },
+        context: { type: "string" },
+      },
+      required: ["type"],
     },
   },
   {

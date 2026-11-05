@@ -175,6 +175,8 @@ function replyBlockText(block: MessageBlock): string {
     case "mcp_approval":
     case "chart":
       return block.name;
+    case "ui_card":
+      return block.card.type === "quote" ? block.card.quote : block.card.title;
     case "import_setup":
       if (block.undone) return "";
       return block.items.map((item) => ("name" in item ? item.name : item.title)).join(", ");

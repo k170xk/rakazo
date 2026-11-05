@@ -26,6 +26,7 @@ import {
   ToolSteps,
 } from "../../components/ToolActivityDisclosure";
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
+import { UiCardView } from "../../components/UiCardView";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { messageProviderLabel } from "../../lib/messaging";
 import type { PageBlock } from "../../lib/page-cards";
@@ -471,6 +472,13 @@ export const MessageView = memo(function MessageView({
             return (
               <div key={i} className="flex justify-start">
                 <ChartBlockView name={block.name} spec={block.spec} data={block.data} />
+              </div>
+            );
+          }
+          if (block.kind === "ui_card") {
+            return (
+              <div key={i} className="flex justify-start">
+                <UiCardView card={block.card} />
               </div>
             );
           }

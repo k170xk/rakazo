@@ -287,6 +287,26 @@
   border-radius: 0.65em;
 }
 
+.rk-chat-markdown .rk-chat-markdown-image-preview {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.rk-chat-markdown .rk-chat-markdown-image-preview img {
+  max-height: 480px;
+  width: auto;
+}
+
+.rk-chat-markdown .rk-chat-markdown-image-preview:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 0.65em;
+}
+
 /* Shrinks to fit, but not below 80% of its drawn size: past that the card scrolls instead. */
 .rk-chat-markdown .rk-chat-markdown-diagram img {
   display: block;

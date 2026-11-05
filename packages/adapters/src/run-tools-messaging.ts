@@ -1,3 +1,4 @@
+import { UiCard } from "@rakazo/contracts";
 import { isBackgroundRunTrigger, redactSecrets } from "@rakazo/core";
 import {
   connectAgent,
@@ -109,6 +110,22 @@ export const messagingTools: ToolHandlers = {
         : { ok: true },
     );
   },
+  async show_card(ctx, call) {
+    const parsed = UiCard.safeParse(redactCardSecrets(call.args, ctx.secrets));
+    if (!parsed.success) {
+      return call.finish({
+        error: "The card could not be shown.",
+        issues: parsed.error.issues.slice(0, 5).map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+        hint: "Fill the fields for the chosen type, with one cell per column in each table row.",
+      });
+    }
+    await flushProgress(ctx);
+    await publishMessage(ctx.deps, ctx.run, "bot", [{ kind: "ui_card", card: parsed.data }]);
+    return call.finish({ ok: true, note: "The card is in the chat. Do not repeat its contents." });
+  },
   async message_bot(ctx, call) {
     const { deps, run, bot } = ctx;
     const { args, effectKey } = call;
@@ -191,3 +208,15 @@ export const messagingTools: ToolHandlers = {
     return call.finish(result);
   },
 };
+
+/** Strings in a card pass through the same secret redaction as written replies. */
+function redactCardSecrets(value: unknown, secrets: Parameters<typeof redactSecrets>[1]): unknown {
+  if (typeof value === "string") return redactSecrets(value, secrets);
+  if (Array.isArray(value)) return value.map((item) => redactCardSecrets(item, secrets));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, redactCardSecrets(item, secrets)]),
+    );
+  }
+  return value;
+}

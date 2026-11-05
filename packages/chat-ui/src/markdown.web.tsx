@@ -35,6 +35,7 @@ import { CheckIcon, CopyIcon, GlobeIcon, ImageIcon } from "./icons";
 import type { ChatMarkdownProps } from "./markdown";
 import {
   closeUnterminatedFence,
+  ImagePreviewContext,
   imageHostTrusted,
   inlineMarkdownImageSrc,
   isProseFence,
@@ -444,6 +445,32 @@ function RemoteImageButton({
   );
 }
 
+/** An image outside a link opens full screen when the app offers a viewer. */
+function PreviewableImage({
+  src,
+  alt,
+  insideLink,
+  children,
+}: {
+  src: string;
+  alt?: string;
+  insideLink: boolean;
+  children: ReactNode;
+}) {
+  const preview = useContext(ImagePreviewContext);
+  if (!preview || insideLink) return children;
+  return (
+    <button
+      type="button"
+      className="rk-chat-markdown-image-preview"
+      aria-label={alt ? `Open ${alt}` : "Open image"}
+      onClick={() => preview({ src, name: alt || "Image" })}
+    >
+      {children}
+    </button>
+  );
+}
+
 function MarkdownImage({ src = "", alt, title }: { src?: string; alt?: string; title?: string }) {
   const enclosingLink = useContext(InsideLinkContext);
   const loadsRemote = useRemoteImageSetting();
@@ -452,17 +479,23 @@ function MarkdownImage({ src = "", alt, title }: { src?: string; alt?: string; t
   const [, setRevision] = useState(0);
   const rejectedLink = enclosingLink === "rejected";
   if (inlineMarkdownImageSrc(src)) {
-    return <img src={src} alt={alt ?? ""} title={title} loading="lazy" />;
+    return (
+      <PreviewableImage src={src} alt={alt} insideLink={enclosingLink !== false}>
+        <img src={src} alt={alt ?? ""} title={title} loading="lazy" />
+      </PreviewableImage>
+    );
   }
   if (remote && remoteImageRenders(remote.href, loadsRemote(remote.href), rejectedLink)) {
     return (
-      <img
-        src={remote.href}
-        alt={alt ?? ""}
-        title={title}
-        loading="lazy"
-        referrerPolicy="no-referrer"
-      />
+      <PreviewableImage src={remote.href} alt={alt} insideLink={enclosingLink !== false}>
+        <img
+          src={remote.href}
+          alt={alt ?? ""}
+          title={title}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+      </PreviewableImage>
     );
   }
   if (!remote || enclosingLink !== false) return alt || remote?.host || src;
@@ -880,6 +913,7 @@ export const ChatMarkdown = memo(function ChatMarkdown({
 
 export type { ChatMarkdownProps, LinkFavicons } from "./markdown";
 export {
+  ImagePreviewContext,
   LinkFaviconsContext,
   RemoteImagesContext,
   TrustedImageHostsContext,

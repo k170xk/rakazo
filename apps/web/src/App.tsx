@@ -1,6 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { LinkFavicons } from "@rakazo/chat-ui/web";
 import {
+  ImagePreviewContext,
   LinkFaviconsContext,
   RemoteImagesContext,
   TrustedImageHostsContext,
@@ -19,6 +20,8 @@ import { Navigate, Outlet, Route, Routes, useLocation, useSearchParams } from "r
 import { LoadingState } from "./components/ai/primitives";
 import { CallLayout } from "./components/call/CallLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import type { LightboxImage } from "./components/ImageLightbox";
+import { ImageLightbox } from "./components/ImageLightbox";
 import { MarkdownLinkPrompt } from "./components/markdown-link-prompt";
 import { PageLoading } from "./components/PageLoading";
 import { SubscriptionGate } from "./components/SubscriptionGate";
@@ -95,22 +98,26 @@ export function App() {
     getRemoteImagesEnabled,
     () => false,
   );
+  const [lightbox, setLightbox] = useState<LightboxImage | null>(null);
   return (
-    <RemoteImagesContext.Provider value={loadRemoteImages}>
-      <TrustedImageHostsContext.Provider value={trustedImageHosts}>
-        <LinkFaviconsContext.Provider value={linkFavicons}>
-          <ErrorBoundary fallback={<AppFailed />}>
-            {window.location.pathname === SSO_CALLBACK_PATH ? (
-              <SsoCallbackPage />
-            ) : window.location.pathname === "/integrations/callback" ? (
-              <IntegrationCallbackPage />
-            ) : (
-              <SessionApp />
-            )}
-          </ErrorBoundary>
-        </LinkFaviconsContext.Provider>
-      </TrustedImageHostsContext.Provider>
-    </RemoteImagesContext.Provider>
+    <ImagePreviewContext.Provider value={setLightbox}>
+      <RemoteImagesContext.Provider value={loadRemoteImages}>
+        <TrustedImageHostsContext.Provider value={trustedImageHosts}>
+          <LinkFaviconsContext.Provider value={linkFavicons}>
+            <ErrorBoundary fallback={<AppFailed />}>
+              {window.location.pathname === SSO_CALLBACK_PATH ? (
+                <SsoCallbackPage />
+              ) : window.location.pathname === "/integrations/callback" ? (
+                <IntegrationCallbackPage />
+              ) : (
+                <SessionApp />
+              )}
+            </ErrorBoundary>
+          </LinkFaviconsContext.Provider>
+        </TrustedImageHostsContext.Provider>
+      </RemoteImagesContext.Provider>
+      {lightbox ? <ImageLightbox image={lightbox} onClose={() => setLightbox(null)} /> : null}
+    </ImagePreviewContext.Provider>
   );
 }
 

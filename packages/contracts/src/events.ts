@@ -4,6 +4,7 @@ import { botSecretDestinationSchema, LoginFieldLabels, OneTimeCodeTarget } from 
 import { Id, ThinkingLevelSchema } from "./ids.js";
 import { McpTransportSchema } from "./mcp.js";
 import { PAGE_TITLE_MAX_LENGTH } from "./pages.js";
+import { UiCard } from "./ui-cards.js";
 
 export const ProductEventType = z.enum([
   "thread.message.created",
@@ -278,6 +279,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     status: z.enum(["draft", "saved"]),
   }),
   ChartBlock,
+  /** A card the bot drew with show_card: a record, figures, checklist, notice, table or quote. */
+  z.object({ kind: z.literal("ui_card"), card: UiCard }),
   z.object({
     /** Approval card for an agent-created MCP server. The user completes the
         OAuth popup (or confirms no authorization is needed) in the UI. The

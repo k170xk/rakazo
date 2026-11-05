@@ -6,6 +6,7 @@ import {
   attachmentSizeLabel,
   isAllowedAttachmentMimeType,
   isAttachmentImageMimeType,
+  uiCardText,
 } from "@rakazo/contracts";
 
 export class AttachmentValidationError extends Error {
@@ -169,6 +170,7 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
     .map((block) => {
       if (block.kind === "text") return block.text;
       if (block.kind === "chart") return `[chart: ${block.name}]`;
+      if (block.kind === "ui_card") return `[${block.card.type} card: ${uiCardText(block.card)}]`;
       if (block.kind === "image") return `[image: ${block.name}]`;
       // The id lets a later turn, or another chat, update this page instead of making a new one.
       if (block.kind === "page") {

@@ -358,6 +358,11 @@ export const RemoteImagesContext = createContext(false);
  */
 export const TrustedImageHostsContext = createContext<readonly string[]>([]);
 
+/** Opens a chat image full screen. Apps that provide it make markdown images clickable. */
+export const ImagePreviewContext = createContext<
+  ((image: { src: string; name: string }) => void) | null
+>(null);
+
 export function imageHostTrusted(href: string, trustedHosts: readonly string[]): boolean {
   let host: string;
   try {

@@ -168,6 +168,7 @@ export function foldPeerReplies<T extends PresentableMessage>(
           block.kind === "file" ||
           block.kind === "image" ||
           block.kind === "chart" ||
+          block.kind === "ui_card" ||
           block.kind === "page",
       )
     )
