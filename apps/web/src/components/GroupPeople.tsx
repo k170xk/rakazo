@@ -331,7 +331,7 @@ function PeoplePicker({
           })}
           {options.length === 0 ? (
             <p className="px-2.5 py-3 text-sm text-muted-foreground">
-              {searching ? (
+              {searching || !result ? (
                 <Trans>Searching Evolve…</Trans>
               ) : result && !result.available ? (
                 <Trans>Evolve search is unavailable. Type a full work email instead.</Trans>
