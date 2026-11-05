@@ -43,6 +43,23 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
 /** Offered only to a user who connected a wallet. */
 const PURCHASE_TOOL_NAMES = new Set(["request_purchase", "purchase_status", "paid_request"]);
 
+/** Tools that work on the bot's own computer, offered only while the company allows computers. */
+export const COMPUTER_TOOL_NAMES: ReadonlySet<string> = new Set([
+  "computer_observe",
+  "computer_act",
+  "browser_navigate",
+  "browser_snapshot",
+  "browser_act",
+  "list_files",
+  "read_file",
+  "write_file",
+  "attach_file",
+  "shell",
+  "open_path",
+  "launch_app",
+  "request_takeover",
+]);
+
 export const BUILTIN_AGENT_TOOL_NAMES = new Set(builtinAgentTools.map((tool) => tool.name));
 
 const FLEET_TOOL_NAMES_SET: ReadonlySet<string> = new Set(FLEET_TOOL_NAMES);
@@ -86,6 +103,11 @@ export function selectBuiltinToolsForRun(options: {
   userComputer?: boolean;
   /** That desktop can look at and drive its apps. */
   userComputerScreen?: boolean;
+  /** Company-wide switches; each defaults to on. */
+  computersEnabled?: boolean;
+  connectedAppsEnabled?: boolean;
+  mcpServersEnabled?: boolean;
+  routinesEnabled?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
   const ownerStartedRun = isOwnerStartedRun(options.trigger, Boolean(options.followUpFromUser));
@@ -108,6 +130,11 @@ export function selectBuiltinToolsForRun(options: {
   ).filter(
     (tool) =>
       !disabled.has(tool.name) &&
+      (options.computersEnabled !== false || !COMPUTER_TOOL_NAMES.has(tool.name)) &&
+      (options.connectedAppsEnabled !== false || tool.name !== "connect_app") &&
+      (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
+      (options.routinesEnabled !== false ||
+        (!SCHEDULE_TOOL_NAMES.has(tool.name) && tool.name !== "create_child_routine")) &&
       (options.trigger !== "created" || CREATED_RUN_TOOL_NAMES.has(tool.name)) &&
       (!FLEET_TOOL_NAMES_SET.has(tool.name) ||
         (Boolean(options.fleetManagement) && ownerStartedRun)) &&

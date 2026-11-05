@@ -33,6 +33,7 @@ import {
   serverAvailability,
   serverSecretSpace,
 } from "../availability.js";
+import { requireCompanyFeature } from "../company-admin.js";
 import { searchIntegrationCatalog } from "../integration-catalog.js";
 import {
   queueMcpConnectedRun,
@@ -181,6 +182,7 @@ export function mcpRoutes(ctx: RouterContext) {
         }
       }),
       install: authed.capabilities.install.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "plugins");
         if (input.kind === "plugin") {
           return installPlugin(
             {
@@ -401,6 +403,7 @@ export function mcpRoutes(ctx: RouterContext) {
           );
         }),
         create: authed.mcp.servers.create.handler(async ({ context, input }) => {
+          await requireCompanyFeature(deps, context.actor, "mcpServers");
           const stored = await prepareMcpServer(context.actor, input);
           const row = await deps.prisma
             .$transaction((tx) =>
@@ -418,6 +421,7 @@ export function mcpRoutes(ctx: RouterContext) {
           return announceMcpServer(row, context.actor);
         }),
         update: authed.mcp.servers.update.handler(async ({ context, input }) => {
+          await requireCompanyFeature(deps, context.actor, "mcpServers");
           for (let attempt = 0; attempt < 5; attempt++) {
             const { existing, existingSecret } = await deps.prisma.$transaction(async (tx) => {
               const existing = await tx.mcpServer.findFirst({
@@ -611,6 +615,7 @@ export function mcpRoutes(ctx: RouterContext) {
           throw new ORPCError("CONFLICT", { message: "MCP credentials changed; retry" });
         }),
         test: authed.mcp.servers.test.handler(async ({ context, input }) => {
+          await requireCompanyFeature(deps, context.actor, "mcpServers");
           const scope = { id: input.id, ...availableInSpace(context.actor) };
           const server = await deps.prisma.mcpServer.findFirst({ where: scope });
           if (!server) throw new IsolationError();

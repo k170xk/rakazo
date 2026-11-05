@@ -864,7 +864,11 @@ function SpaceShell() {
     openSettings("space", spaceId);
   }
 
+  const companyFeatures = bootstrapMe?.features;
+  const appsOrPluginsOn =
+    companyFeatures?.connectedApps !== false || companyFeatures?.plugins !== false;
   const settingsNavItems = useSettingsNavItems({
+    models: companyFeatures?.memberModels !== false || bootstrapMe?.isAdmin === true,
     messaging: messagingSurfaceEnabled,
     wallet: Boolean(bootstrapMe?.paymentWalletProvider),
     computer: computersAreUnavailable(bootstrapMe?.sandboxProvider),
@@ -890,12 +894,16 @@ function SpaceShell() {
       icon: Lock,
       onSelect: () => dialogs.setNewSpaceOpen(true),
     },
-    {
-      id: "integrations",
-      label: t`Connect apps`,
-      icon: Plug,
-      onSelect: () => setOverlay({ kind: "integrations" }),
-    },
+    ...(appsOrPluginsOn
+      ? [
+          {
+            id: "integrations",
+            label: t`Connect apps`,
+            icon: Plug,
+            onSelect: () => setOverlay({ kind: "integrations" }),
+          },
+        ]
+      : []),
     {
       id: "keyboard-shortcuts",
       label: t`Keyboard shortcuts`,
@@ -1081,7 +1089,8 @@ function SpaceShell() {
         ticketBoardEnabled={Boolean(bootstrapMe?.ticketBoardEnabled)}
         navLinks={desktopBridge() ? [] : (bootstrapMe?.navLinks ?? [])}
         openSettings={openSettings}
-        openIntegrations={() => setOverlay({ kind: "integrations" })}
+        openIntegrations={appsOrPluginsOn ? () => setOverlay({ kind: "integrations" }) : undefined}
+        openAdmin={bootstrapMe?.isAdmin ? () => navigate("/admin") : undefined}
         openSkills={() => setOverlay({ kind: "skills" })}
         openSpaceChat={openSpaceChat}
       />
@@ -1390,6 +1399,7 @@ function SpaceShell() {
           setOverlay={setOverlay}
           activeBotId={activeBotId.current}
           stdioEnabled={bootstrapMe?.mcpStdioEnabled === true}
+          mcpEnabled={companyFeatures?.mcpServers !== false}
           onConnectedAppsChange={setFooterLogos}
         />
       </Suspense>

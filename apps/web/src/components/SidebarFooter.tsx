@@ -19,6 +19,7 @@ import {
   Plug,
   ScrollText,
   Settings,
+  ShieldCheck,
   Smartphone,
   SquareKanban,
   UserPlus,
@@ -38,7 +39,10 @@ type Props = {
   email?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onIntegrations: () => void;
+  /** Absent while the company has app connections and plugins turned off. */
+  onIntegrations?: () => void;
+  /** Deployment admins only. */
+  onAdmin?: () => void;
   onSkills: () => void;
   onBoard?: () => void;
   links?: NavLink[];
@@ -69,6 +73,7 @@ export function SidebarFooter({
   open,
   onOpenChange,
   onIntegrations,
+  onAdmin,
   onSkills,
   onBoard,
   links = [],
@@ -169,7 +174,7 @@ export function SidebarFooter({
                 <div className="my-1 border-t border-border" />
               </>
             ) : null}
-            {mini ? (
+            {mini && onIntegrations ? (
               <Button
                 variant="ghost"
                 className="h-9 w-full justify-start gap-2.5 font-normal"
@@ -188,6 +193,16 @@ export function SidebarFooter({
               <Settings className="text-muted-foreground" strokeWidth={1.75} />
               <Trans>Settings</Trans>
             </Button>
+            {onAdmin ? (
+              <Button
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2.5 font-normal"
+                onClick={onAdmin}
+              >
+                <ShieldCheck className="text-muted-foreground" strokeWidth={1.75} />
+                <Trans>Company admin</Trans>
+              </Button>
+            ) : null}
             <Button
               variant="ghost"
               className="h-9 w-full justify-start gap-2.5 font-normal"
@@ -274,7 +289,7 @@ export function SidebarFooter({
           </PopoverContent>
         ) : null}
       </Popover>
-      {!mini ? (
+      {!mini && onIntegrations ? (
         <Button
           variant="outline"
           ref={pillRef}

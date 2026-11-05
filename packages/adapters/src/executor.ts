@@ -66,6 +66,7 @@ import { createBrowserProvider } from "./browser-provider-factory.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
+import { companyFeatures, companyModel, liveDeploymentModelConfigured } from "./company-policy.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
 import { diskNoteInstruction, recordComputerDisk } from "./computer-disk.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
@@ -558,7 +559,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         clearInterval(heartbeat);
       };
 
-      const runSecrets = [...deps.secrets];
+      const companyKey = companyModel()?.key;
+      const runSecrets = companyKey ? [...deps.secrets, companyKey] : [...deps.secrets];
       let dispatchHandedOff = false;
       try {
         // Durable run ownership and its heartbeat now carry recovery. Model,
@@ -958,7 +960,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             }),
           );
         }
-        const runDeployment = deps.deploymentModelConfigured ? resolveDeploymentModel() : null;
+        const runDeployment = liveDeploymentModelConfigured(deps.deploymentModelConfigured)
+          ? resolveDeploymentModel()
+          : null;
         const runtimeFallback = runtimeFallbackModel(deps.runtime);
         const pinError =
           !pinnedComputerModels &&
@@ -1397,6 +1401,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             followUpFromUser: sourceMessage?.role === "user",
             userComputer: userComputer === "connected",
             userComputerScreen,
+            computersEnabled: companyFeatures().computers,
+            connectedAppsEnabled: companyFeatures().connectedApps,
+            mcpServersEnabled: companyFeatures().mcpServers,
+            routinesEnabled: companyFeatures().routines,
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
           ...(hasMessagingIdentity &&

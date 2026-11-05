@@ -16,6 +16,7 @@ import type {
 } from "@rakazo/adapter-kit";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
+import { companyFeatures } from "./company-policy.js";
 import { cancelComputerRunWork, probeBackgroundWork } from "./computer-idle.js";
 import {
   computerProviderDescriptor,
@@ -28,6 +29,12 @@ import { createSandboxProvider } from "./sandbox-factory.js";
 export const COMPUTER_PROVIDER_SECRET_KIND = "computer-provider";
 /** Record id binding the deployment's encrypted computer settings to its settings row. */
 export const DEPLOYMENT_COMPUTER_PROVIDER_RECORD = "deployment-computer-provider";
+export const COMPUTERS_OFF_MESSAGE = "Computers are turned off for your company.";
+
+/** Starting or working a computer waits on the company allowing computers; stopping never does. */
+function requireComputers(): void {
+  if (!companyFeatures().computers) throw new Error(COMPUTERS_OFF_MESSAGE);
+}
 /** Settings change rarely; other instances pick up a change within this window. */
 const SETTINGS_TTL_MS = 5_000;
 export interface StoredComputerSettings {
@@ -346,6 +353,7 @@ export class ConfiguredSandbox implements SandboxProvider {
     request: Parameters<SandboxProvider["provision"]>[0],
     context: AdapterContext,
   ): Promise<ComputerRef> {
+    requireComputers();
     const target = await this.target(request.botId);
     const kind = target.describe().id;
     // A reference from the other provider means nothing to this one.
@@ -390,6 +398,7 @@ export class ConfiguredSandbox implements SandboxProvider {
   }
 
   async prepare(computer: ComputerRef, context: AdapterContext) {
+    requireComputers();
     return (await this.route(computer)).prepare(computer, context);
   }
 
@@ -398,6 +407,7 @@ export class ConfiguredSandbox implements SandboxProvider {
     request: CommandRequest,
     context: AdapterContext,
   ): AsyncIterable<ProcessEvent> {
+    requireComputers();
     yield* (await this.route(computer)).execute(computer, request, context);
   }
 
@@ -418,10 +428,12 @@ export class ConfiguredSandbox implements SandboxProvider {
   }
 
   async connectScreen(computer: ComputerRef, request: ScreenRequest, context: AdapterContext) {
+    requireComputers();
     return (await this.route(computer)).connectScreen(computer, request, context);
   }
 
   async connectTerminal(computer: ComputerRef, request: TerminalRequest, context: AdapterContext) {
+    requireComputers();
     const provider = await this.route(computer);
     if (!provider.connectTerminal) throw new Error("terminal is unavailable on this computer");
     return provider.connectTerminal(computer, request, context);
@@ -447,14 +459,17 @@ export class ConfiguredSandbox implements SandboxProvider {
     lease: ControlLeaseRef,
     context: AdapterContext,
   ) {
+    requireComputers();
     return (await this.route(computer)).sendInput(computer, input, lease, context);
   }
 
   async observe(computer: ComputerRef, context: AdapterContext) {
+    requireComputers();
     return (await this.route(computer)).observe(computer, context);
   }
 
   async act(computer: ComputerRef, request: ComputerActionRequest, context: AdapterContext) {
+    requireComputers();
     return (await this.route(computer)).act(computer, request, context);
   }
 
@@ -472,6 +487,7 @@ export class ConfiguredSandbox implements SandboxProvider {
   }
 
   async writeFile(computer: ComputerRef, file: PortableFile, context: AdapterContext) {
+    requireComputers();
     return (await this.route(computer)).writeFile(computer, file, context);
   }
 
@@ -488,6 +504,7 @@ export class ConfiguredSandbox implements SandboxProvider {
     files: AsyncIterable<PortableFile>,
     context: AdapterContext,
   ) {
+    requireComputers();
     return (await this.route(computer)).importWorkspace(computer, files, context);
   }
 

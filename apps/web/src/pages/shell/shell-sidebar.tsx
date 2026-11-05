@@ -69,6 +69,7 @@ export function ShellSidebar({
   navLinks,
   openSettings,
   openIntegrations,
+  openAdmin,
   openSkills,
   openSpaceChat,
 }: {
@@ -97,7 +98,8 @@ export function ShellSidebar({
   ticketBoardEnabled: boolean;
   navLinks: NavLink[];
   openSettings: (section: SettingsSection) => void;
-  openIntegrations: () => void;
+  openIntegrations?: () => void;
+  openAdmin?: () => void;
   openSkills: () => void;
   openSpaceChat: (spaceId: string, path: string) => void;
 }) {
@@ -291,6 +293,7 @@ export function ShellSidebar({
           navigate={navigate}
           openSettings={openSettings}
           openIntegrations={openIntegrations}
+          openAdmin={openAdmin}
           openSkills={openSkills}
           openSpaceChat={openSpaceChat}
         />
@@ -309,6 +312,7 @@ function ShellSidebarFooter({
   navigate,
   openSettings,
   openIntegrations,
+  openAdmin,
   openSkills,
   openSpaceChat,
 }: {
@@ -320,7 +324,8 @@ function ShellSidebarFooter({
   closeMobileSidebar: () => void;
   navigate: (path: string) => void;
   openSettings: (section: SettingsSection) => void;
-  openIntegrations: () => void;
+  openIntegrations?: () => void;
+  openAdmin?: () => void;
   openSkills: () => void;
   openSpaceChat: (spaceId: string, path: string) => void;
 }) {
@@ -372,10 +377,23 @@ function ShellSidebarFooter({
           setMenuOpen(open);
           if (!open) setLogOutError(null);
         }}
-        onIntegrations={() => {
-          setMenuOpen(false);
-          openIntegrations();
-        }}
+        onIntegrations={
+          openIntegrations
+            ? () => {
+                setMenuOpen(false);
+                openIntegrations();
+              }
+            : undefined
+        }
+        onAdmin={
+          openAdmin
+            ? () => {
+                setMenuOpen(false);
+                closeMobileSidebar();
+                openAdmin();
+              }
+            : undefined
+        }
         onSkills={() => {
           setMenuOpen(false);
           openSkills();

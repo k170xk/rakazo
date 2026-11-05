@@ -553,6 +553,10 @@ model DeploymentSettings {
   computerProvider                String?
   /// That provider's encrypted connection settings, owned by the deployment rather than a user.
   computerProviderCipher          String?
+  /// Company-wide feature switches set by an admin; absent keys take their defaults.
+  companyFeatures                 Json     @default("{}")
+  /// When the company model (defaultModelProvider, defaultModelId and its key) last changed.
+  companyModelUpdatedAt           DateTime?
   createdAt                       DateTime @default(now())
   updatedAt                       DateTime @updatedAt
 

@@ -70,6 +70,9 @@ const BoardPage = lazyComponent(() => import("./pages/Board").then((module) => m
 const AdminPluginsPage = lazyComponent(() =>
   import("./pages/AdminPluginsPage").then((module) => module.AdminPluginsPage),
 );
+const AdminCompanyPage = lazyComponent(() =>
+  import("./pages/AdminCompanyPage").then((module) => module.AdminCompanyPage),
+);
 const AdminAccessPage = lazyComponent(() =>
   import("./pages/AdminAccessPage").then((module) => module.AdminAccessPage),
 );
@@ -133,6 +136,7 @@ function SessionApp() {
   // A connector sign-in started on another device lands here signed out; finish it after sign-in.
   const signInDestination =
     next === "/integrations/setup" ||
+    next === "/admin" ||
     next === "/admin/plugins" ||
     next === "/admin/access" ||
     next.startsWith(`${MCP_OAUTH_CALLBACK_PATH}?`) ||
@@ -272,6 +276,12 @@ function SessionApp() {
                   ) : (
                     <Navigate to="/sign-in?next=/integrations/setup" replace />
                   )
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  user ? <AdminCompanyPage /> : <Navigate to="/sign-in?next=/admin" replace />
                 }
               />
               <Route

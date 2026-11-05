@@ -15,6 +15,7 @@ import type {
 } from "@rakazo/adapter-kit";
 import { ConnectorAuthUnavailableError } from "@rakazo/adapter-kit";
 import { getLogger } from "@rakazo/logging";
+import { companyFeatures } from "./company-policy.js";
 import { COMPOSIO_MULTI_EXECUTE_TOOL, composioToolBatch } from "./composio-batch.js";
 import type { ToolkitDirectoryEntry } from "./composio-catalog-cache.js";
 import {
@@ -845,13 +846,29 @@ export class ConnectorRegistry implements ConnectorProvider {
     }
   }
 
+  /** Whether the company lets bots use this provider: apps, custom MCP servers, plugins. */
+  private allowed(id: string, provider: ConnectorProvider): boolean {
+    const features = companyFeatures();
+    if (id === "mcp") return features.mcpServers;
+    if (id === "installed") return features.plugins;
+    return isManagedConnectorProvider(provider) ? features.connectedApps : true;
+  }
+
+  private active(): [string, ConnectorProvider][] {
+    return [...this.providers].filter(([id, provider]) => this.allowed(id, provider));
+  }
+
   managedProviders(): ManagedConnectorProvider[] {
-    return [...this.providers.values()].filter(isManagedConnectorProvider);
+    return this.active()
+      .map(([, provider]) => provider)
+      .filter(isManagedConnectorProvider);
   }
 
   managed(id: string): ManagedConnectorProvider | undefined {
     const provider = this.providers.get(id);
-    return provider && isManagedConnectorProvider(provider) ? provider : undefined;
+    return provider && isManagedConnectorProvider(provider) && this.allowed(id, provider)
+      ? provider
+      : undefined;
   }
 
   /** Release run-scoped state of every provider that keeps it. */
@@ -872,7 +889,7 @@ export class ConnectorRegistry implements ConnectorProvider {
     const discovered: ConnectorTool[] = [];
     const used = new Set<string>();
     const providerTools = await Promise.all(
-      [...this.providers].map(async ([connectorId, provider]) => {
+      this.active().map(async ([connectorId, provider]) => {
         try {
           return [connectorId, await provider.discoverTools(context)] as const;
         } catch (error) {
@@ -910,6 +927,10 @@ export class ConnectorRegistry implements ConnectorProvider {
       yield { type: "error", message: `unknown connector ${connectorId}` };
       return;
     }
+    if (!this.allowed(connectorId, provider)) {
+      yield { type: "error", message: "Your company has turned this off." };
+      return;
+    }
     const connectionId = call.route?.connectionId ?? call.connectionId;
     if (
       connectionId &&
@@ -942,13 +963,14 @@ export class ConnectorRegistry implements ConnectorProvider {
   ): Promise<{ call: ConnectorCall; tool: ConnectorTool } | undefined> {
     const connectorId = call.route?.connectorId;
     if (!connectorId) {
-      for (const provider of this.providers.values()) {
+      for (const [, provider] of this.active()) {
         const resolved = await provider.resolveCall?.(call, context);
         if (resolved) return resolved;
       }
       return undefined;
     }
     const provider = this.providers.get(connectorId);
+    if (provider && !this.allowed(connectorId, provider)) return undefined;
     return provider?.resolveCall?.({ ...call, tool: call.route?.toolName ?? call.tool }, context);
   }
 }

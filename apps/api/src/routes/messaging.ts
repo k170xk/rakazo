@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import { messagingDeliverJob } from "@rakazo/adapter-kit";
+import { companyFeatures } from "@rakazo/adapters";
 import { displayName } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import {
@@ -9,6 +10,7 @@ import {
   runAsSystem,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
+import { requireCompanyFeature } from "../company-admin.js";
 import type { RouterContext } from "./context.js";
 import { isUniqueViolation } from "./shared.js";
 
@@ -27,6 +29,7 @@ export function messagingRoutes(ctx: RouterContext) {
           return { available: true, installations, personalLinkAvailable };
         }),
         start: authed.messaging.installations.start.handler(async ({ context, input }) => {
+          await requireCompanyFeature(deps, context.actor, "messaging");
           if (!deps.messagingInstallations) throw new ORPCError("BAD_REQUEST");
           return { url: await deps.messagingInstallations.start(context.actor, input.botId) };
         }),
@@ -53,7 +56,7 @@ export function messagingRoutes(ctx: RouterContext) {
           }),
         );
         return {
-          enabled: deps.messaging?.enabled ?? false,
+          enabled: (deps.messaging?.enabled ?? false) && companyFeatures().messaging,
           providers: deps.messaging?.providers ?? [],
           addresses: deps.messaging?.addresses ?? {},
           openSignup: deps.messaging?.openSignup ?? false,
@@ -64,6 +67,7 @@ export function messagingRoutes(ctx: RouterContext) {
       }),
       link: {
         start: authed.messaging.link.start.handler(async ({ context, input }) => {
+          await requireCompanyFeature(deps, context.actor, "messaging");
           // Any of the user's bots, so a workspace's DMs link from whichever space is open.
           const bot = await runAsSystem("find a bot to link a chat app", () =>
             deps.prisma.bot.findFirst({
@@ -104,6 +108,7 @@ export function messagingRoutes(ctx: RouterContext) {
       },
       identities: {
         setBot: authed.messaging.identities.setBot.handler(async ({ context, input }) => {
+          await requireCompanyFeature(deps, context.actor, "messaging");
           const identity = await acrossChatIdentities(() =>
             deps.prisma.messagingIdentity.findFirst({
               where: { id: input.identityId, userId: context.actor.userId },

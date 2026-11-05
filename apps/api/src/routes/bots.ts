@@ -54,6 +54,7 @@ import type { AgentImportServices } from "../agent-import.js";
 import { agentImportSetupState, createImportedBot, previewAgentImport } from "../agent-import.js";
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
 import { changedBotSettings } from "../bot-setting-analytics.js";
+import { requireCompanyFeature } from "../company-admin.js";
 import { searchEvolveDirectory } from "../evolve-directory.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
 import type { RouterDeps } from "../router.js";
@@ -390,6 +391,15 @@ export function botsRoutes(ctx: RouterContext) {
       }),
       update: authed.bots.update.handler(async ({ context, input }) => {
         const existing = await repos.getBot(context.actor, input.botId);
+        // Every save from the app resends the model; only a change to it needs model choice.
+        if (
+          (input.modelProvider !== undefined &&
+            (input.modelProvider ?? null) !== (existing.modelProvider ?? null)) ||
+          (input.modelId !== undefined && (input.modelId ?? null) !== (existing.modelId ?? null)) ||
+          (input.thinkingLevel !== undefined &&
+            (input.thinkingLevel ?? null) !== (existing.thinkingLevel ?? null))
+        )
+          await requireCompanyFeature(deps, context.actor, "memberModels");
         if (input.sectionId) {
           const section = await deps.prisma.botSection.findFirst({
             where: {

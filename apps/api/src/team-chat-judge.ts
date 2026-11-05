@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { AgentRunModel, AgentRuntime, SecretStore } from "@rakazo/adapter-kit";
 import {
+  companyModel,
   deploymentModelRole,
   formatCurrentTimeInstruction,
   hasHostedModelCredits,
   hostedModelCreditObserver,
+  liveDeploymentModelKey,
   parseModelSecret,
   resolveMemberMainModel,
   resolveModelAuth,
@@ -243,9 +245,14 @@ export class ModelTeamChatEngagementJudge implements TeamChatEngagementJudge {
           (await hasHostedModelCredits(this.deps.prisma, scope, member.provider))))
         ? member
         : null;
+    const company = companyModel();
+    const deploymentProvider = company?.provider ?? this.deps.deploymentProvider;
     const fallback = deploymentModelRole("main", {
       settings,
-      deployment: { provider: this.deps.deploymentProvider, model: this.deps.deploymentModel },
+      deployment: {
+        provider: deploymentProvider,
+        model: company?.model ?? this.deps.deploymentModel,
+      },
     }).primary;
     const credential = useOverride ? overrideCredential : (main?.credential ?? null);
     const provider = useOverride ? requestedProvider : (main ?? fallback)?.provider;
@@ -257,7 +264,9 @@ export class ModelTeamChatEngagementJudge implements TeamChatEngagementJudge {
       (await hasHostedModelCredits(this.deps.prisma, scope, provider));
     if (!credential || hosted) {
       const apiKey =
-        provider === this.deps.deploymentProvider ? this.deps.deploymentModelKey : undefined;
+        provider === deploymentProvider
+          ? liveDeploymentModelKey(this.deps.deploymentModelKey)
+          : undefined;
       const callObserver = settings?.modelCreditsEnabled
         ? await hostedModelCreditObserver(this.deps.prisma, scope)
         : undefined;

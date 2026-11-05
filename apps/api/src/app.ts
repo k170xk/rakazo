@@ -37,6 +37,7 @@ import {
   ChatSdkMessagingSurface,
   CodexCatalogCache,
   ComposioConnector,
+  companyModel,
   contentKeyProviderFromEnv,
   createAgentHomeStore,
   createApnsVoipProvider,
@@ -72,6 +73,7 @@ import {
   isComposioEnabled,
   isMessagingSurfaceEnabled,
   isPipedreamEnabled,
+  liveDeploymentModelConfigured,
   McpConnector,
   McpOAuthBroker,
   messagingPlatformsFromEnv,
@@ -101,6 +103,7 @@ import {
   userDeviceForwardSecret,
   userDeviceInternalAddress,
   verifyModelServesAgents,
+  watchCompanyPolicy,
   withSecretPersistence,
 } from "@rakazo/adapters";
 import {
@@ -337,6 +340,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   prisma = withSecretPersistence(prisma, secrets);
   installSecurityEventStore(prisma);
   installAuditEventStore(prisma);
+  // The admin's company model and feature switches; every process rereads them.
+  const stopCompanyPolicy = await watchCompanyPolicy(prisma, secrets);
   const unreadableMasterKeys = await verifyContentKeys(prisma);
   if (unreadableMasterKeys.length)
     logger.error("Stored space keys need master keys that are not configured", undefined, {
@@ -847,12 +852,21 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       maxUploadSizeBytes: env.maxUploadSizeBytes,
       maxAttachmentsPerMessage: env.maxAttachmentsPerMessage,
       agentRuntime: env.agentRuntime,
-      defaultProvider: env.defaultProvider,
-      defaultModel: env.defaultModel,
+      // A company model saved by an admin replaces the environment's while this process runs.
+      get defaultProvider() {
+        return companyModel()?.provider ?? env.defaultProvider;
+      },
+      get defaultModel() {
+        return companyModel()?.model ?? env.defaultModel;
+      },
       teamChatJudgeProvider: env.teamChatJudgeProvider,
       teamChatJudgeModel: env.teamChatJudgeModel,
-      deploymentModelConfigured: env.deploymentModelConfigured,
-      deploymentModelHostCredentials: env.deploymentModelHostCredentials,
+      get deploymentModelConfigured() {
+        return liveDeploymentModelConfigured(env.deploymentModelConfigured);
+      },
+      get deploymentModelHostCredentials() {
+        return !companyModel() && env.deploymentModelHostCredentials;
+      },
       webOrigin: env.webOrigin,
       privacyPolicyUrl: env.privacyPolicyUrl,
       screenProxySecret: env.screenProxySecret,
@@ -1490,6 +1504,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     backgroundFailures: inMemoryJobs ? () => inMemoryJobs.failureCounts() : undefined,
     handleUpgrade: userDeviceHub?.handleUpgrade,
     stop: async () => {
+      stopCompanyPolicy();
       // Handlers still running would otherwise query the pool after it ends.
       const requestsSettled = settleWithTimeout(inFlight.settled(), REQUEST_DRAIN_MS);
       // Abort in-flight continueRun boot waits before draining jobs so stop() cannot sit

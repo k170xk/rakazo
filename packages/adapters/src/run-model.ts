@@ -13,6 +13,7 @@ import {
 } from "@rakazo/contracts";
 import { MISSING_MODEL_RUN_ERROR } from "@rakazo/core";
 import { cloudflareProviderEnv } from "./cloudflare-ai-gateway.js";
+import { liveDeploymentModelConfigured, liveDeploymentModelKey } from "./company-policy.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { FleetPrepareDeps } from "./fleet-tools.js";
@@ -97,7 +98,9 @@ export async function fleetPrepareDeps(
           hostedProvider,
           defaults: {
             settings,
-            deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
+            deployment: liveDeploymentModelConfigured(deps.deploymentModelConfigured)
+              ? resolveDeploymentModel()
+              : null,
           },
         });
         return { provider: selected.provider ?? null, model: selected.id ?? null };
@@ -112,8 +115,9 @@ export async function fleetPrepareDeps(
  * by deployment settings or a bot override gets no key rather than another vendor's.
  */
 function deploymentKeyFor(deps: ExecutorDeps, provider: string): string | undefined {
-  if (!deps.deploymentModelKey) return undefined;
-  return provider === resolveDeploymentModel().provider ? deps.deploymentModelKey : undefined;
+  const key = liveDeploymentModelKey(deps.deploymentModelKey);
+  if (!key) return undefined;
+  return provider === resolveDeploymentModel().provider ? key : undefined;
 }
 
 /**
@@ -533,7 +537,9 @@ export async function resolveRunModel(
       : undefined,
     defaults: {
       settings,
-      deployment: deps.deploymentModelConfigured ? resolveDeploymentModel() : null,
+      deployment: liveDeploymentModelConfigured(deps.deploymentModelConfigured)
+        ? resolveDeploymentModel()
+        : null,
     },
   });
   const { credential, thinkingLevel } = selected;

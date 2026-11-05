@@ -5,6 +5,7 @@ import { blocksToAgentHistoryText, botMessageContext, escapePromptData } from "@
 import type { PrismaClient } from "@rakazo/db";
 import { recordUsage } from "@rakazo/db";
 import { getLogger, unwrapJobPayload } from "@rakazo/logging";
+import { liveDeploymentModelConfigured, liveDeploymentModelKey } from "./company-policy.js";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import { loadBotNames, UNKNOWN_BOT_SPEAKER, USER_SPEAKER } from "./history-speakers.js";
@@ -361,12 +362,12 @@ export async function compactHistory(deps: CompactHistoryDeps, threadId: string)
         spaceId: thread.spaceId,
         botId: thread.botId,
       })
-    : deps.deploymentModelConfigured
+    : liveDeploymentModelConfigured(deps.deploymentModelConfigured)
       ? {
           // Provider must come from the same resolver as the key, not a hardcoded one.
           provider: deploymentFallback.provider,
           id: deploymentFallback.model,
-          apiKey: deps.deploymentModelKey,
+          apiKey: liveDeploymentModelKey(deps.deploymentModelKey),
         }
       : await (async () => {
           const settings = await deps.prisma.deploymentSettings.findUnique({

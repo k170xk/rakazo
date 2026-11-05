@@ -80,6 +80,7 @@ import {
   shutdownPiTelemetry,
   UserDevices,
   userDeviceForwardSecret,
+  watchCompanyPolicy,
   withRunWorker,
   withSecretPersistence,
 } from "@rakazo/adapters";
@@ -138,6 +139,8 @@ async function main() {
   prisma = withSecretPersistence(prisma, secrets);
   installSecurityEventStore(prisma);
   installAuditEventStore(prisma);
+  // The admin's company model and feature switches, reread as the API saves them.
+  const stopCompanyPolicy = await watchCompanyPolicy(prisma, secrets);
   const unreadableMasterKeys = await verifyContentKeys(prisma);
   if (unreadableMasterKeys.length)
     logger.error("Stored space keys need master keys that are not configured", undefined, {
@@ -391,6 +394,7 @@ async function main() {
       stopping = true;
       shutdown.abort();
       stopStallWatch();
+      stopCompanyPolicy();
       try {
         await stopHealth?.();
         await reconciler.stop();

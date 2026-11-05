@@ -218,6 +218,10 @@ export function BotSettings({
   const credentials = credentialsQuery.data ?? NO_CREDENTIALS;
   const catalog = catalogQuery.data ?? NO_CATALOG;
   const me = meQuery.data ?? null;
+  // The company's admin may keep models, computers and routines to themselves or turn them off.
+  const modelChoiceAllowed = me?.features?.memberModels !== false || me?.isAdmin === true;
+  const computersOn = me?.features?.computers !== false;
+  const routinesOn = me?.features?.routines !== false;
   // A failed catalog load must not clear an existing thinkingLevel override on save.
   const modelMetaReady =
     credentialsQuery.data !== undefined &&
@@ -554,12 +558,16 @@ export function BotSettings({
       </div>
       <Tabs value={tab} onValueChange={(next) => onTabChange?.(next as BotPanelTab)}>
         <TabsList className="w-full">
-          <TabsTrigger value="computer">
-            <Trans>Computer</Trans>
-          </TabsTrigger>
-          <TabsTrigger value="routines">
-            <Trans>Routines</Trans>
-          </TabsTrigger>
+          {computersOn ? (
+            <TabsTrigger value="computer">
+              <Trans>Computer</Trans>
+            </TabsTrigger>
+          ) : null}
+          {routinesOn ? (
+            <TabsTrigger value="routines">
+              <Trans>Routines</Trans>
+            </TabsTrigger>
+          ) : null}
           <TabsTrigger value="pages">
             <Trans>Pages</Trans>
           </TabsTrigger>
@@ -614,92 +622,98 @@ export function BotSettings({
             </Suspense>
           </ErrorBoundary>
           <div className="space-y-6 pt-6">
-            <div ref={modelRef}>
-              <div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground pe-1">
-                <Trans>Model</Trans>
-                {onOpenConnections ? (
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label={t`Model connections`}
-                    onClick={onOpenConnections}
-                  >
-                    <Settings className="size-4" />
-                  </Button>
-                ) : null}
-              </div>
-              <div className="rounded-xl bg-muted/50 p-4 space-y-3">
-                <div className="flex min-h-11 items-center justify-between gap-3">
-                  <label htmlFor={`${ids}-model`} className="sr-only">
-                    <Trans>Model</Trans>
-                  </label>
-                  <div className="min-w-0 w-full [&>div]:mt-0 [&>button]:mt-0">
-                    <ChatModelPicker
-                      id={`${ids}-model`}
-                      choices={modelChoices}
-                      value={selectedModelKey}
-                      onChange={(key) => {
-                        setModelKey(key);
-                        setThinkingLevel("");
-                      }}
-                    />
-                  </div>
-                </div>
-                {thinkingOptions.length ? (
-                  <label
-                    htmlFor={`${ids}-thinking`}
-                    className="flex min-h-11 items-center justify-between gap-3 text-sm text-foreground"
-                  >
-                    <Trans>Thinking</Trans>
-                    <NativeSelect
-                      id={`${ids}-thinking`}
-                      className="max-w-2/3"
-                      value={thinkingLevel}
-                      onChange={(event) => setThinkingLevel(event.target.value)}
+            {modelChoiceAllowed ? (
+              <div ref={modelRef}>
+                <div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground pe-1">
+                  <Trans>Model</Trans>
+                  {onOpenConnections ? (
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={t`Model connections`}
+                      onClick={onOpenConnections}
                     >
-                      <NativeSelectOption value="">
-                        {t`Default (${thinkingLevelLabel(defaultThinkingLevel)})`}
-                      </NativeSelectOption>
-                      {thinkingOptions.map((level) => (
-                        <NativeSelectOption key={level} value={level}>
-                          {thinkingLevelLabel(level)}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                  </label>
-                ) : null}
-              </div>
-            </div>
-            <SettingsGroup label={t`Computer`} plain>
-              <ComputerModePicker value={computerMode} onChange={setComputerMode} />
-              {memoryProviderConfigured ? (
-                <div className="mt-4 text-sm text-foreground">
-                  <Trans>Memory scope</Trans>
-                  <div className="mt-2 flex gap-2">
-                    {(
-                      [
-                        { value: null, label: t`Inherit default` },
-                        { value: "isolated" as const, label: t`Isolated` },
-                        { value: "shared" as const, label: t`Shared` },
-                      ] satisfies Array<{ value: "isolated" | "shared" | null; label: string }>
-                    ).map((option) => (
-                      <Toggle
-                        key={option.label}
-                        variant="outline"
-                        size="sm"
-                        pressed={memoryScope === option.value}
-                        onPressedChange={(pressed) => {
-                          if (pressed) setMemoryScope(option.value);
-                        }}
-                        className="flex-1 aria-pressed:border-foreground/40 aria-pressed:text-foreground"
-                      >
-                        {option.label}
-                      </Toggle>
-                    ))}
-                  </div>
+                      <Settings className="size-4" />
+                    </Button>
+                  ) : null}
                 </div>
-              ) : null}
-            </SettingsGroup>
+                <div className="rounded-xl bg-muted/50 p-4 space-y-3">
+                  <div className="flex min-h-11 items-center justify-between gap-3">
+                    <label htmlFor={`${ids}-model`} className="sr-only">
+                      <Trans>Model</Trans>
+                    </label>
+                    <div className="min-w-0 w-full [&>div]:mt-0 [&>button]:mt-0">
+                      <ChatModelPicker
+                        id={`${ids}-model`}
+                        choices={modelChoices}
+                        value={selectedModelKey}
+                        onChange={(key) => {
+                          setModelKey(key);
+                          setThinkingLevel("");
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {thinkingOptions.length ? (
+                    <label
+                      htmlFor={`${ids}-thinking`}
+                      className="flex min-h-11 items-center justify-between gap-3 text-sm text-foreground"
+                    >
+                      <Trans>Thinking</Trans>
+                      <NativeSelect
+                        id={`${ids}-thinking`}
+                        className="max-w-2/3"
+                        value={thinkingLevel}
+                        onChange={(event) => setThinkingLevel(event.target.value)}
+                      >
+                        <NativeSelectOption value="">
+                          {t`Default (${thinkingLevelLabel(defaultThinkingLevel)})`}
+                        </NativeSelectOption>
+                        {thinkingOptions.map((level) => (
+                          <NativeSelectOption key={level} value={level}>
+                            {thinkingLevelLabel(level)}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                    </label>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+            {computersOn || memoryProviderConfigured ? (
+              <SettingsGroup label={computersOn ? t`Computer` : t`Memory`} plain>
+                {computersOn ? (
+                  <ComputerModePicker value={computerMode} onChange={setComputerMode} />
+                ) : null}
+                {memoryProviderConfigured ? (
+                  <div className="mt-4 text-sm text-foreground">
+                    <Trans>Memory scope</Trans>
+                    <div className="mt-2 flex gap-2">
+                      {(
+                        [
+                          { value: null, label: t`Inherit default` },
+                          { value: "isolated" as const, label: t`Isolated` },
+                          { value: "shared" as const, label: t`Shared` },
+                        ] satisfies Array<{ value: "isolated" | "shared" | null; label: string }>
+                      ).map((option) => (
+                        <Toggle
+                          key={option.label}
+                          variant="outline"
+                          size="sm"
+                          pressed={memoryScope === option.value}
+                          onPressedChange={(pressed) => {
+                            if (pressed) setMemoryScope(option.value);
+                          }}
+                          className="flex-1 aria-pressed:border-foreground/40 aria-pressed:text-foreground"
+                        >
+                          {option.label}
+                        </Toggle>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </SettingsGroup>
+            ) : null}
             <SettingsGroup label={t`Voice`}>
               <label
                 htmlFor={`${ids}-auto-speak`}

@@ -1966,7 +1966,80 @@ export const ServerUpdateRequestSchema = z.object({
 });
 export type ServerUpdateRequest = z.infer<typeof ServerUpdateRequestSchema>;
 
+/** Company-wide switches a deployment admin sets for every account. */
+export const CompanyFeaturesSchema = z.object({
+  /** Cloud computers: the bots' own machines and the Computer panel. */
+  computers: z.boolean(),
+  /** Managed app connections (Gmail, Slack, calendars and the rest). */
+  connectedApps: z.boolean(),
+  /** Custom MCP servers members add themselves. */
+  mcpServers: z.boolean(),
+  /** Installing plugins from the marketplace. */
+  plugins: z.boolean(),
+  /** Linking Slack, WhatsApp and other messaging apps to bots. */
+  messaging: z.boolean(),
+  /** Scheduled and watched routines. */
+  routines: z.boolean(),
+  /** Members connect their own model keys and choose models; off means only the company model runs. */
+  memberModels: z.boolean(),
+});
+export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
+export type CompanyFeatureId = keyof CompanyFeatures;
+
+export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
+  computers: true,
+  connectedApps: true,
+  mcpServers: true,
+  plugins: true,
+  messaging: true,
+  routines: true,
+  memberModels: true,
+};
+
+/** Stored switches over the defaults, so a switch added later starts at its default. */
+export function companyFeaturesFrom(stored: unknown): CompanyFeatures {
+  const parsed = CompanyFeaturesSchema.partial().safeParse(stored);
+  return { ...DEFAULT_COMPANY_FEATURES, ...(parsed.success ? parsed.data : {}) };
+}
+
+export const CompanyModelSchema = z.object({
+  provider: z.string(),
+  providerName: z.string().nullable(),
+  modelId: z.string(),
+  /** The key's last four characters, so an admin can tell which key is saved. */
+  keyHint: z.string().nullable(),
+  updatedAt: z.string().datetime(),
+});
+export type CompanyModel = z.infer<typeof CompanyModelSchema>;
+
+export const CompanyAdminStateSchema = z.object({
+  model: CompanyModelSchema.nullable(),
+  /** The model set in the server environment, used while no company model is saved. */
+  environmentModel: z.object({ provider: z.string(), modelId: z.string() }).nullable(),
+  features: CompanyFeaturesSchema,
+  /** The emails in RAKAZO_ADMIN_EMAILS. */
+  admins: z.array(z.string()),
+  staff: z.object({
+    accounts: z.number().int().nonnegative(),
+    /** Accounts holding their own model connections, which run instead while member models are on. */
+    withOwnModels: z.number().int().nonnegative(),
+  }),
+});
+export type CompanyAdminState = z.infer<typeof CompanyAdminStateSchema>;
+
+export const CompanyModelInputSchema = z.object({
+  provider: z.string().trim().min(1).max(80),
+  modelId: z.string().trim().min(1).max(200),
+  /** Omit to keep the saved key when only the model changes on the same provider. */
+  apiKey: z.string().trim().min(8).max(4000).optional(),
+});
+export type CompanyModelInput = z.infer<typeof CompanyModelInputSchema>;
+
 export const MeSchema = z.object({
+  /** Company-wide switches. Absent from older servers, which allow everything. */
+  features: CompanyFeaturesSchema.optional(),
+  /** Whether a company model runs for everyone who has none of their own. Absent from older servers. */
+  companyModelReady: z.boolean().optional(),
   maxUploadSizeBytes: z.number().int().positive().optional(),
   maxAttachmentsPerMessage: z.number().int().positive().optional(),
   ticketBoardEnabled: z.boolean(),

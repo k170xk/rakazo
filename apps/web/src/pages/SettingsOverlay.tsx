@@ -52,6 +52,8 @@ export function SettingsOverlay({
   onSandboxProviderChange,
   canConfigureComputers = false,
   messagingEnabled = false,
+  modelsAllowed = true,
+  computersAllowed = true,
   paymentWalletProvider = null,
   memoryConfig,
   onMemoryConfigChange,
@@ -83,6 +85,10 @@ export function SettingsOverlay({
   /** Admins choose where new computers run. */
   canConfigureComputers?: boolean;
   messagingEnabled?: boolean;
+  /** False while the company's admin chooses the models for everyone. */
+  modelsAllowed?: boolean;
+  /** False while the company has computers turned off. */
+  computersAllowed?: boolean;
   /** The wallet this deployment lets bots spend from; none hides Wallet. */
   paymentWalletProvider?: { id: string; name: string } | null;
   memoryConfig: SpaceMemoryConfig | null | undefined;
@@ -100,15 +106,17 @@ export function SettingsOverlay({
   const [keepComputerRecovery, setKeepComputerRecovery] = useState(false);
   const recoveryHoldTimer = useRef<number | undefined>(undefined);
   const showComputer =
-    canConfigureComputers ||
-    keepComputerRecovery ||
-    computersAreUnavailable(sandboxProvider) ||
-    canChooseOwnComputer(sandboxProvider);
+    computersAllowed &&
+    (canConfigureComputers ||
+      keepComputerRecovery ||
+      computersAreUnavailable(sandboxProvider) ||
+      canChooseOwnComputer(sandboxProvider));
   const showUpdates = Boolean(desktopBridge()?.update);
   // A section that isn't available yet (billing before its flag loads) shows General until it is.
   const section =
     (requestedSection === "computer" && !showComputer) ||
     (requestedSection === "billing" && !billingEnabled) ||
+    (requestedSection === "models" && !modelsAllowed) ||
     (requestedSection === "messaging" && !messagingEnabled) ||
     (requestedSection === "wallet" && !paymentWalletProvider) ||
     (requestedSection === "updates" && !showUpdates)
@@ -146,6 +154,7 @@ export function SettingsOverlay({
 
   const navItems = useSettingsNavItems({
     messaging: messagingEnabled,
+    models: modelsAllowed,
     wallet: Boolean(paymentWalletProvider),
     computer: showComputer,
     billing: billingEnabled,
@@ -425,7 +434,7 @@ export function SettingsOverlay({
                   ) : null}
                   {section === "billing" && billingEnabled ? <BillingSettingsPanel /> : null}
                   {section === "updates" && showUpdates ? <UpdatesSettingsPanel /> : null}
-                  {section === "models" ? (
+                  {section === "models" && modelsAllowed ? (
                     <ModelSettingsOverlay embedded scope="account" onClose={requestClose} />
                   ) : null}
                   {section === "memory" ? (

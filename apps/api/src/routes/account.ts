@@ -41,6 +41,12 @@ import { createAccessGrant, listAccessGrants, revokeAccessGrant } from "../acces
 import { requireAdmin } from "../admins.js";
 import { aiConsentStatus, allowAiConsent } from "../ai-consent.js";
 import type { BillingService } from "../billing.js";
+import {
+  clearCompanyModel,
+  companyAdminState,
+  setCompanyFeatures,
+  setCompanyModel,
+} from "../company-admin.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -141,6 +147,18 @@ export function accountRoutes(ctx: RouterContext) {
         await requireBilling(deps).claimReferral(context.actor, input.code);
         return { ok: true as const };
       }),
+    },
+    companyAdmin: {
+      get: authed.companyAdmin.get.handler(({ context }) => companyAdminState(deps, context.actor)),
+      setModel: authed.companyAdmin.setModel.handler(({ context, input }) =>
+        setCompanyModel(deps, context.actor, input),
+      ),
+      clearModel: authed.companyAdmin.clearModel.handler(({ context }) =>
+        clearCompanyModel(deps, context.actor),
+      ),
+      setFeatures: authed.companyAdmin.setFeatures.handler(({ context, input }) =>
+        setCompanyFeatures(deps, context.actor, input),
+      ),
     },
     accessGrants: {
       list: authed.accessGrants.list.handler(async ({ context }) => {

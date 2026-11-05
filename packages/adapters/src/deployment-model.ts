@@ -1,5 +1,6 @@
 import { getEnvApiKey } from "@earendil-works/pi-ai/compat";
 import type { ModelUsageLookup } from "@rakazo/adapter-kit";
+import { companyModel } from "./company-policy.js";
 import { OpenRouterUsageLookup } from "./openrouter-usage.js";
 import { LOCAL_PROVIDER_ID, localModelIds } from "./pi-local-provider-id.js";
 
@@ -32,8 +33,25 @@ export function hostCredentialSource(provider: string): string {
  * environment. Host credentials never become `key`.
  *
  * Vendor env names and model ids live here, in the adapter layer, not in core.
+ *
+ * A company model an admin saved in the app takes the place of all of this.
  */
 export function resolveDeploymentModel(env: NodeJS.ProcessEnv = process.env) {
+  const company = companyModel();
+  if (company) {
+    return {
+      provider: company.provider,
+      model: company.model,
+      key: company.key as string | undefined,
+      configured: true,
+      hostCredentials: false,
+    };
+  }
+  return resolveEnvironmentDeploymentModel(env);
+}
+
+/** The deployment model from the server environment alone, ignoring a company model. */
+export function resolveEnvironmentDeploymentModel(env: NodeJS.ProcessEnv = process.env) {
   const provider = env.PI_DEFAULT_PROVIDER?.trim() || "openrouter";
   // An unknown provider gets no key rather than another vendor's.
   const keys: Record<string, string | undefined> = {

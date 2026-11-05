@@ -9,6 +9,7 @@ import {
 } from "@rakazo/core";
 import { IsolationError, Prisma } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
+import { requireCompanyFeature } from "../company-admin.js";
 import { assertRoutineModel } from "../model-pins.js";
 import { listRoutineRuns } from "../routine-runs.js";
 import {
@@ -59,6 +60,7 @@ export function routinesRoutes(ctx: RouterContext) {
         return listRoutinesDto(deps, context.actor, input.botId);
       }),
       create: authed.routines.create.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "routines");
         assertRoutineSchedule(input);
         const bot = await repos.getBot(context.actor, input.botId);
         if (input.watch) {
@@ -83,6 +85,7 @@ export function routinesRoutes(ctx: RouterContext) {
         return mapRoutine(row);
       }),
       update: authed.routines.update.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "routines");
         // Archived bots keep their routines paused, so resolve an active parent before any write.
         const existing = await deps.prisma.routine.findFirst({
           where: {
@@ -322,6 +325,7 @@ export function routinesRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       testRun: authed.routines.testRun.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "routines");
         const target = await routineTestTarget(deps.prisma, repos, context.actor, input.routineId);
         const { threadId } = target;
         // The previous release stored the key without the user id; a retry still replays it.

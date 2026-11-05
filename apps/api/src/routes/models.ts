@@ -42,6 +42,7 @@ import {
   updateModelRole,
   writeModelRole,
 } from "@rakazo/db";
+import { requireCompanyFeature } from "../company-admin.js";
 import { mayUsePrivateEndpoint } from "../mcp-servers.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import {
@@ -161,6 +162,7 @@ export function modelsRoutes(ctx: RouterContext) {
         );
       }),
       setRole: authed.models.setRole.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         if (input.expectedUserId && input.expectedUserId !== context.actor.userId)
           throw new ORPCError("FORBIDDEN");
         const { role, primary, backups, scope } = input;
@@ -184,6 +186,7 @@ export function modelsRoutes(ctx: RouterContext) {
         ),
       ),
       setBackups: authed.models.setBackups.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         await validateRoleChoices(context.actor, "main", input);
         await updateModelRole(
           deps.prisma,
@@ -194,6 +197,7 @@ export function modelsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       connect: authed.models.connect.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         const record = await firstModelConnectAnalytics(deps, context.actor, "api_key");
         record(input.provider, { name: "model_connect_started" });
         try {
@@ -207,6 +211,7 @@ export function modelsRoutes(ctx: RouterContext) {
       }),
       probeOpenAiCompatible: authed.models.probeOpenAiCompatible.handler(
         async ({ context, input }) => {
+          await requireCompanyFeature(deps, context.actor, "memberModels");
           let apiKey = input.apiKey;
           let headers = input.headers;
           if (!apiKey?.trim() || headers === undefined) {
@@ -274,6 +279,7 @@ export function modelsRoutes(ctx: RouterContext) {
         },
       ),
       probeCatalog: authed.models.probeCatalog.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         try {
           const models = await probeCatalogProviderModels(
             { provider: input.provider, apiKey: input.apiKey },
@@ -288,6 +294,7 @@ export function modelsRoutes(ctx: RouterContext) {
         }
       }),
       beginOAuth: authed.models.beginOAuth.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         // An older app's sign-in renews the provider's newest connection, bound now so a
         // disconnect of that connection retires it and it never lands on another one.
         const target = await modelConnectionTarget(
@@ -318,6 +325,7 @@ export function modelsRoutes(ctx: RouterContext) {
           });
       }),
       submitOAuthCode: authed.models.submitOAuthCode.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         return deps.oauthLogins
           .submit(input.loginId, context.actor, input.code)
           .catch((error: unknown) => {
@@ -327,6 +335,7 @@ export function modelsRoutes(ctx: RouterContext) {
           });
       }),
       completeOAuth: authed.models.completeOAuth.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         const result = await deps.oauthLogins.complete(input.loginId, {
           userId: context.actor.userId,
           spaceId: context.actor.spaceId,
@@ -339,6 +348,7 @@ export function modelsRoutes(ctx: RouterContext) {
         return result.status === "connected" ? { status: "ready" as const } : result;
       }),
       finishOAuth: authed.models.finishOAuth.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         throwIfAborted(context.signal);
         let provider: string | undefined;
         const record = await firstModelConnectAnalytics(deps, context.actor, "oauth");
@@ -391,6 +401,7 @@ export function modelsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       setDefault: authed.models.setDefault.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         const modelId = usableModelId(input.modelId);
         if (!modelId) throw new ORPCError("BAD_REQUEST", { message: "Choose a model" });
         // An omitted level keeps the one this model already has in the main list: on the
@@ -573,6 +584,7 @@ export function modelsRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       rename: authed.models.rename.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "memberModels");
         const renamed = await deps.prisma.userModelCredential.updateMany({
           where: { id: input.credentialId, userId: context.actor.userId },
           data: { label: input.label },

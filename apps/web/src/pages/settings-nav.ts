@@ -25,6 +25,8 @@ export type SettingsNavItem = {
 
 /** The settings sections this deployment offers, in nav order; Space opens from its own menu. */
 export function useSettingsNavItems(available: {
+  /** False while the company's admin chooses the models. */
+  models?: boolean;
   messaging: boolean;
   wallet: boolean;
   computer: boolean;
@@ -35,7 +37,7 @@ export function useSettingsNavItems(available: {
   return [
     { id: "general", label: t`General`, icon: Settings },
     { id: "organization", label: t`Organization`, icon: Building2 },
-    { id: "models", label: t`Models`, icon: Cpu },
+    ...(available.models !== false ? [{ id: "models" as const, label: t`Models`, icon: Cpu }] : []),
     { id: "voice", label: t`Voice`, icon: Volume2 },
     { id: "confirmations", label: t`Approvals`, icon: ShieldCheck },
     { id: "vault", label: t`Vault`, icon: KeyRound },

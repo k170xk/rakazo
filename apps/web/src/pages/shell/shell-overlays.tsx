@@ -51,12 +51,15 @@ export function AppOverlays({
   setOverlay,
   activeBotId,
   stdioEnabled,
+  mcpEnabled = true,
   onConnectedAppsChange,
 }: {
   overlay: ShellOverlay;
   setOverlay: (next: ShellOverlay) => void;
   activeBotId: string | undefined;
   stdioEnabled: boolean;
+  /** False while the company has MCP servers turned off. */
+  mcpEnabled?: boolean;
   onConnectedAppsChange: (apps: ReturnType<typeof connectedAppMarks>) => void;
 }) {
   return (
@@ -66,11 +69,11 @@ export function AppOverlays({
           onConnectedAppsChange={onConnectedAppsChange}
           activeBotId={activeBotId}
           onClose={() => setOverlay(null)}
-          onOpenMcp={() => setOverlay({ kind: "mcp" })}
+          onOpenMcp={mcpEnabled ? () => setOverlay({ kind: "mcp" }) : undefined}
         />
       ) : null}
       {overlay?.kind === "skills" ? <SkillsDialog onClose={() => setOverlay(null)} /> : null}
-      {overlay?.kind === "mcp" ? (
+      {overlay?.kind === "mcp" && mcpEnabled ? (
         <McpServersOverlay
           editServerId={overlay.serverId}
           stdioEnabled={stdioEnabled}
@@ -163,6 +166,10 @@ export function SettingsOverlays({
             setBootstrapMe((prev) => (prev ? { ...prev, sandboxProvider } : prev))
           }
           messagingEnabled={messagingEnabled}
+          modelsAllowed={
+            bootstrapMe?.features?.memberModels !== false || bootstrapMe?.isAdmin === true
+          }
+          computersAllowed={bootstrapMe?.features?.computers !== false}
           paymentWalletProvider={bootstrapMe?.paymentWalletProvider ?? null}
           timezone={bootstrapMe?.timezone ?? null}
           onTimezoneChange={async (timezone) => {

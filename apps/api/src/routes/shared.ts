@@ -1,4 +1,6 @@
 import {
+  companyFeatures,
+  companyModel,
   deploymentModelRole,
   findConnectedModelCredential,
   hasHostedModelCredits,
@@ -43,8 +45,13 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     isAdmin(deps, actor.userId),
   ]);
   // Where the deployment runs computers once an admin's choice in Settings applies.
-  const sandboxProvider = effectiveSandboxProvider(setup.settings, deps.env.sandboxProvider);
+  // The app treats "none" as computers being unavailable, which is what the company switch means.
+  const sandboxProvider = companyFeatures().computers
+    ? effectiveSandboxProvider(setup.settings, deps.env.sandboxProvider)
+    : "none";
   return {
+    features: companyFeatures(),
+    companyModelReady: Boolean(companyModel()),
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
     phoneCallsEnabled: deps.env.phoneCallsEnabled === true,
     navLinks: deps.env.navLinks ?? [],

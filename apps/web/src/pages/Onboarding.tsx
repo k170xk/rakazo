@@ -40,7 +40,7 @@ import {
   SelectValue,
 } from "@rakazo/ui-web";
 import { Check, Copy } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AccountMenu } from "../components/AccountMenu";
 import { FoundModelPicker } from "../components/FoundModelPicker";
@@ -152,6 +152,8 @@ export function OnboardingPage() {
   const [surveyDone, setSurveyDone] = useState(false);
   const step = creatingBot ? "bot" : surveyDone ? "loading" : (linkedStep ?? "loading");
   const [billingEnabled, setBillingEnabled] = useState(false);
+  // True while staff wait for the company's admin to choose the model; null until me loads.
+  const [awaitingAdmin, setAwaitingAdmin] = useState<boolean | null>(null);
   // The step after the survey; null until me loads.
   const [afterSurvey, setAfterSurvey] = useState<"model" | "bot" | null>(null);
   const [catalog, setCatalog] = useState<ModelCatalogEntry[]>([]);
@@ -209,11 +211,18 @@ export function OnboardingPage() {
       .then(([me, models]) => {
         setBillingEnabled(me.billingEnabled);
         setCatalog(models);
+        const adminChoosesModel = me.needsModel && me.features?.memberModels === false;
+        if (adminChoosesModel && me.isAdmin) {
+          navigate("/admin", { replace: true });
+          return;
+        }
+        setAwaitingAdmin(adminChoosesModel);
         const next = me.needsModel ? "model" : "bot";
         setAfterSurvey(next);
         if (!linkedStep) goTo(me.needsSignupSurvey ? "survey" : next);
       })
       .catch(() => {
+        setAwaitingAdmin(false);
         setAfterSurvey("bot");
         if (!linkedStep) goTo("bot");
       });
@@ -221,6 +230,21 @@ export function OnboardingPage() {
       modelProbe.invalidate();
     };
   }, []);
+
+  const checkCompanyModel = useCallback(async () => {
+    try {
+      const me = await rpc.me();
+      if (!me.needsModel) goTo("bot");
+    } catch {
+      // The next check tries again.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (step !== "model" || !awaitingAdmin) return;
+    const timer = window.setInterval(() => void checkCompanyModel(), 15_000);
+    return () => window.clearInterval(timer);
+  }, [step, awaitingAdmin, checkCompanyModel]);
 
   useEffect(() => {
     if (!surveyDone || !afterSurvey) return;
@@ -557,14 +581,35 @@ export function OnboardingPage() {
   }, [step]);
 
   // Loading, and creating the first bot, both wait on one spinner until the chat opens.
-  if (step === "loading" || (step === "bot" && !error)) return <PageLoading />;
+  if (
+    step === "loading" ||
+    (step === "bot" && !error) ||
+    (step === "model" && awaitingAdmin === null)
+  )
+    return <PageLoading />;
 
   return (
     <div className="min-h-full bg-background px-6 py-12" data-rakazo-surface="onboarding">
       <AccountMenu signingOut={signingOut} onLogOut={() => void logOut()} />
       <div className="mx-auto w-full max-w-[560px]">
         {step === "survey" ? <SignupSurvey onDone={() => setSurveyDone(true)} /> : null}
-        {step === "model" ? (
+        {step === "model" && awaitingAdmin ? (
+          <div>
+            <h1 className="text-[32px] font-medium text-foreground">
+              <Trans>Almost ready</Trans>
+            </h1>
+            <p className="mt-4 text-base text-muted-foreground">
+              <Trans>
+                Your administrator is setting up OCSC Intelligence for the company. This page opens
+                your assistant as soon as it is ready.
+              </Trans>
+            </p>
+            <Button className="mt-8" onClick={() => void checkCompanyModel()}>
+              <Trans>Check again</Trans>
+            </Button>
+          </div>
+        ) : null}
+        {step === "model" && !awaitingAdmin ? (
           <div>
             <h1 className="text-[32px] font-medium text-foreground">
               <Trans>Connect a model</Trans>

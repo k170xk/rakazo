@@ -131,3 +131,56 @@ it("finds and searches a long custom endpoint list during onboarding", async () 
   expect(document.querySelector('[aria-label="Models from server"]')?.textContent).toBe("found-10");
   await act(async () => root.unmount());
 });
+
+it("tells staff their administrator is setting up the model instead of asking for a key", async () => {
+  const host = document.body.appendChild(document.createElement("div"));
+  const root = createRoot(host);
+  await act(async () =>
+    root.render(
+      <MemoryRouter initialEntries={["/onboarding"]}>
+        <Routes>
+          <Route path="/onboarding/:step?" element={<OnboardingPage />} />
+        </Routes>
+      </MemoryRouter>,
+    ),
+  );
+  await act(async () =>
+    account.load({
+      needsModel: true,
+      needsSignupSurvey: false,
+      billingEnabled: false,
+      isAdmin: false,
+      features: { memberModels: false },
+    }),
+  );
+  expect(host.querySelector("h1")?.textContent).toBe("Almost ready");
+  expect(host.querySelector('[aria-label="Provider"]')).toBeNull();
+  expect(host.querySelector('input[type="password"]')).toBeNull();
+  act(() => root.unmount());
+});
+
+it("sends the admin to the company admin page to choose the model", async () => {
+  const host = document.body.appendChild(document.createElement("div"));
+  const root = createRoot(host);
+  await act(async () =>
+    root.render(
+      <MemoryRouter initialEntries={["/onboarding"]}>
+        <Routes>
+          <Route path="/onboarding/:step?" element={<OnboardingPage />} />
+          <Route path="/admin" element={<p>company admin</p>} />
+        </Routes>
+      </MemoryRouter>,
+    ),
+  );
+  await act(async () =>
+    account.load({
+      needsModel: true,
+      needsSignupSurvey: false,
+      billingEnabled: false,
+      isAdmin: true,
+      features: { memberModels: false },
+    }),
+  );
+  expect(host.textContent).toBe("company admin");
+  act(() => root.unmount());
+});

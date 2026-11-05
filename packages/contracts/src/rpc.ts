@@ -73,6 +73,9 @@ import {
   CapabilityInstallSchema,
   ChatAlertSchema,
   CONNECTION_LABEL_MAX_LENGTH,
+  CompanyAdminStateSchema,
+  CompanyFeaturesSchema,
+  CompanyModelInputSchema,
   ComputerModeSchema,
   ComputerProviderSettingsSchema,
   ComputerProviderUpdateSchema,
@@ -351,6 +354,13 @@ export const appContract = {
     claimReferral: oc
       .input(z.object({ code: z.string().min(1).max(64) }))
       .output(z.object({ ok: z.literal(true) })),
+  },
+  /** Admins only: the model every account runs on and the company-wide feature switches. */
+  companyAdmin: {
+    get: oc.output(CompanyAdminStateSchema),
+    setModel: oc.input(CompanyModelInputSchema).output(CompanyAdminStateSchema),
+    clearModel: oc.output(CompanyAdminStateSchema),
+    setFeatures: oc.input(CompanyFeaturesSchema.partial()).output(CompanyAdminStateSchema),
   },
   /** Admins only, on deployments that sell model credits. */
   accessGrants: {
