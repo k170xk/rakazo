@@ -1,10 +1,11 @@
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 // Evolve runs a plugin as one script and one stylesheet with no network, so everything
 // (images, fonts, lazy code) is inlined into those two files. Change nothing here.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   base: "./",
   cacheDir: ".vite-cache",
   server: { host: "127.0.0.1", port: 5173, strictPort: false },

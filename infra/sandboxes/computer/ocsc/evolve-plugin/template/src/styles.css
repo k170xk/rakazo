@@ -1,68 +1,109 @@
-/* Evolve sets --evolve-primary, --evolve-text and the fonts from the Brand Hub; these are the fallbacks. */
+/*
+ * Evolve's design tokens. Inside Evolve the page sends its live values (and switches .dark
+ * on and off with Evolve's own dark mode), so these are the same values for npm run dev.
+ * Style with the Tailwind classes Evolve uses: bg-background, text-foreground, bg-card,
+ * text-muted-foreground, border-border, bg-primary, text-primary-foreground, rounded-md...
+ * Never hard-code colours. See GUIDELINES.md.
+ */
+@import "tailwindcss";
+@import "@fontsource-variable/urbanist/wght.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --evolve-primary: #77bf43;
-  --evolve-text: #1f2937;
-  --evolve-body-font: system-ui, sans-serif;
-  --evolve-heading-font: system-ui, sans-serif;
-  --evolve-muted: #6b7280;
-  --evolve-border: #e5e7eb;
-  color: var(--evolve-text);
-  font-family: var(--evolve-body-font);
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 95 49% 51%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 95 49% 51%;
+  --radius: 0.5rem;
 }
 
-body {
-  margin: 0;
-  background: #fff;
+.dark {
+  --background: 0 0% 8%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 102 48% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 30%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 43%;
+  --muted-foreground: 0 0% 80%;
+  --accent: 0 0% 30%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 30%;
+  --input: 0 0% 30%;
+  --ring: 102 48% 50%;
 }
 
-.page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 24px;
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --font-sans: "Urbanist Variable", Urbanist, system-ui, sans-serif;
 }
 
-h1,
-h2,
-h3 {
-  font-family: var(--evolve-heading-font);
-  margin: 0 0 8px;
-}
-
-.muted {
-  color: var(--evolve-muted);
-}
-
-.error {
-  color: #b91c1c;
-}
-
-.card {
-  border: 1px solid var(--evolve-border);
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 16px;
-}
-
-button {
-  background: var(--evolve-primary);
-  color: #fff;
-  border: 0;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font: inherit;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-input,
-select,
-textarea {
-  font: inherit;
-  border: 1px solid var(--evolve-border);
-  border-radius: 6px;
-  padding: 6px 10px;
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    margin: 0;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 600;
+  }
 }

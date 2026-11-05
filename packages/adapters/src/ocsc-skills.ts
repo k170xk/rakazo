@@ -250,14 +250,21 @@ BEFORE YOU START
 When evolve_plugin_status is missing from your tools, Evolve plugins are switched off for the company or for this chat; plugins are built in the person's own direct chat. Say that in one line and stop.
 1. evolve_plugin_status. If builder is false, tell the person to ask an Evolve admin for the Plugin builder privilege in Access Control and stop. It also lists their plugins, each version's status and the reviewers' notes; when the notes ask for changes, make exactly those changes.
 2. Build on a bot with its own computer. If this bot shares the team computer, offer to create one with spawn_bot (name "Plugin Builder", computer_mode "dedicated") and continue there. The computer holds no Evolve passwords or keys and sample data stands in for Evolve while you build.
-3. evolve_plugin_scopes lists what a plugin may read or change. Agree with the person which it needs; ask for the fewest, and read scopes over write scopes.
+3. evolve_plugin_scopes lists what a plugin may read or change. Agree with the person which it needs; ask for the fewest, and read scopes over write scopes. Project, CV and other Evolve data come as data.<source> scopes: Evolve admins choose each source's table, columns and whether people see all rows or only their own, and evolve_plugin_scopes lists the columns. A plugin can read only those columns, so design around them; when the person needs other data, tell them an Evolve admin can add it under Access Control → Plugins → Data access.
 
 BUILD
-1. ocsc-plugin new <slug> --name "<Name>"   makes plugins/<slug> from the template (React, TypeScript, Vite). The slug is lower-case words joined by hyphens.
-2. Edit plugins/<slug>/evolve-plugin.json: name, description, icon (a lucide icon name), version and scopes. Write the app in src/. Call Evolve only through the SDK in src/evolve.ts: await evolve.call("me.read") and so on; each call returns { ok, data } or { ok: false, error }, and a write can come back declined when the person says no at the Evolve prompt.
-3. Rules the sealed page enforces, so write for them from the start: no fetch, XMLHttpRequest, WebSocket or external links to load from; no localStorage or cookies (use the storage.personal scope to keep the person's settings); import images and fonts from src so the build inlines them; style with the theme CSS variables in src/styles.css so it follows the Evolve brand.
-4. ocsc-plugin dev plugins/<slug>   runs it with sample data and opens it on your screen; look with computer_observe. ocsc-plugin stop plugins/<slug> when done.
+1. ocsc-plugin new <slug> --name "<Name>"   makes plugins/<slug> from the template (React, TypeScript, Vite, Tailwind). The slug is lower-case words joined by hyphens.
+2. Edit plugins/<slug>/evolve-plugin.json: name, description, icon (a lucide icon name), version and scopes. Write the app in src/. Call Evolve only through the SDK in src/evolve.ts: await evolve.call("me.read") returns the data and throws an Error when Evolve refuses; a write throws "You declined this change." when the person says no at the Evolve prompt. Data sources take { search, filters, orderBy, ascending, limit, offset } and return { rows, columns, hasMore }: await evolve.call("data.projects", { search: "bridge", limit: 20 }). Put sample rows with the listed columns in src/mock-data.json under the scope name.
+3. Rules the sealed page enforces, so write for them from the start: no fetch, XMLHttpRequest, WebSocket or external links to load from; no localStorage or cookies (use the storage.personal scope to keep the person's settings); import images from src so the build inlines them.
+4. ocsc-plugin dev plugins/<slug>   runs it with sample data and opens it on your screen; look with computer_observe, in light mode and again with ?theme=dark on the address. ocsc-plugin stop plugins/<slug> when done.
 5. ocsc-plugin build plugins/<slug>   type-checks, bundles and runs the same checks Evolve runs. Fix every problem it lists.
+
+DESIGN
+Read plugins/<slug>/GUIDELINES.md before writing screens; the reviewers check it. In short, a plugin must look like part of Evolve:
+- Menu along the top only, with TopNav from src/ui. Evolve's own left menu is always beside the plugin, so never add a side menu or drawer. Evolve already shows the plugin's name above it.
+- Build from src/ui (AppShell, PageHeader, Card, Button, Input, Select, Badge, Table, EmptyState, Spinner) and lucide-react icons.
+- Type: Urbanist (bundled), page titles text-2xl font-bold, section titles text-lg font-semibold, card titles text-base, everything else text-sm, help text text-muted-foreground.
+- Colour: only Evolve's token classes (bg-background, text-foreground, bg-card, border, text-muted-foreground, bg-primary text-primary-foreground...). Never hard-code colours. Evolve switches the plugin between light and dark mode with its own setting, so token classes work in both; check both before sending.
 
 SEND
 - evolve_plugin_submit with path plugins/<slug> saves a draft version under the person's name and returns a preview link that only they and the reviewers can open. Raise version in evolve-plugin.json before each new submission.

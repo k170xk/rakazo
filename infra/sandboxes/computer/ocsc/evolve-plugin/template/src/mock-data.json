@@ -1,0 +1,44 @@
+{
+  "data.projects": [
+    {
+      "id": "p1",
+      "name": "Riverside Bridge Upgrade",
+      "job_number": "S101",
+      "client": "Sample County Council",
+      "project_summary": "Strengthening of a three-span bridge.",
+      "year_completed": 2024
+    },
+    {
+      "id": "p2",
+      "name": "Harbour Office Campus",
+      "job_number": "S102",
+      "client": "Example Developments",
+      "project_summary": "Structural and civil design for two office blocks.",
+      "year_completed": 2025
+    },
+    {
+      "id": "p3",
+      "name": "Greenway Phase 2",
+      "job_number": "S103",
+      "client": "Sample Transport Authority",
+      "project_summary": "8 km cycle and walking route.",
+      "year_completed": null
+    }
+  ],
+  "data.cv_skills": [
+    {
+      "id": "s1",
+      "skill": "Bridge design",
+      "category": "Structures",
+      "skill_level": "Advanced",
+      "is_software": false
+    },
+    {
+      "id": "s2",
+      "skill": "AutoCAD Civil 3D",
+      "category": "Software",
+      "skill_level": "Intermediate",
+      "is_software": true
+    }
+  ]
+}
