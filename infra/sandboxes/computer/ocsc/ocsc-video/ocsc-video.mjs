@@ -35,20 +35,11 @@ import {
   writeFileSync,
 } from "node:fs";
 import { cpus } from "node:os";
-import {
-  basename,
-  dirname,
-  extname,
-  isAbsolute,
-  join,
-  relative,
-  resolve,
-} from "node:path";
+import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const WORKSPACE =
-  process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
+const WORKSPACE = process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
 const STATE = join(WORKSPACE, ".openbot", "video");
 const JOBS = join(STATE, "jobs");
 const WORK = join(HERE, ".work");
@@ -113,14 +104,11 @@ function args(argv) {
 }
 
 function inWorkspace(p, label) {
-  if (typeof p !== "string" || !p.trim())
-    throw new UsageError(`${label} is required.`);
+  if (typeof p !== "string" || !p.trim()) throw new UsageError(`${label} is required.`);
   const full = isAbsolute(p) ? resolve(p) : resolve(WORKSPACE, p);
   const rel = relative(WORKSPACE, full);
   if (rel.startsWith("..") || isAbsolute(rel)) {
-    throw new UsageError(
-      `${label} must be inside the workspace (${WORKSPACE}).`,
-    );
+    throw new UsageError(`${label} must be inside the workspace (${WORKSPACE}).`);
   }
   return { full, rel: rel.split("\\").join("/") };
 }
@@ -193,8 +181,7 @@ const SCENES = {
   },
   timeline: {
     needs: ["items"],
-    fields:
-      "heading, items[{date,label,description}], orientation (horizontal|vertical)",
+    fields: "heading, items[{date,label,description}], orientation (horizontal|vertical)",
   },
   process_steps: {
     needs: ["steps"],
@@ -263,7 +250,8 @@ const EXPLAIN = {
     seconds: "4-6",
   },
   section_header: {
-    shows: "A large green section number, a heading and a subheading, with an optional photo beside them.",
+    shows:
+      "A large green section number, a heading and a subheading, with an optional photo beside them.",
     use_for: "Opening each part of a training video, walkthrough or report.",
     instead: "chapter-title for a lighter number-only break.",
     fits: "Heading up to 6 words; sectionNumber like 01.",
@@ -271,9 +259,11 @@ const EXPLAIN = {
     seconds: "4-5",
   },
   content: {
-    shows: "A title and bullet points that animate in, optionally beside one photo or a set of up to 4.",
+    shows:
+      "A title and bullet points that animate in, optionally beside one photo or a set of up to 4.",
     use_for: "The main teaching scene: explaining points, requirements, scope or findings.",
-    instead: "icon_list when each point has a title and description; process_steps when the points are in order.",
+    instead:
+      "icon_list when each point has a title and description; process_steps when the points are in order.",
     fits: "3-5 bullets of up to 10 words each.",
     media: "optional photo or photos",
     seconds: "6-10 (grows to fit the voice)",
@@ -281,7 +271,8 @@ const EXPLAIN = {
   fullscreen_text: {
     shows: "One large statement centred on the frame with a small line under it.",
     use_for: "A key message, a mission line, a question to the viewer or a pause between sections.",
-    instead: "text-highlight, slide-text or typewriter-subtitle for the same idea with more motion.",
+    instead:
+      "text-highlight, slide-text or typewriter-subtitle for the same idea with more motion.",
     fits: "Up to 12 words.",
     media: "none",
     seconds: "4-6",
@@ -295,7 +286,8 @@ const EXPLAIN = {
     seconds: "4-5",
   },
   stats: {
-    shows: "Two to six figures in cards, as a grid, a row, a column, one highlighted figure or progress bars.",
+    shows:
+      "Two to six figures in cards, as a grid, a row, a column, one highlighted figure or progress bars.",
     use_for: "Several key figures shown together: company facts, project KPIs, results.",
     instead: "big_number for one figure; progress-bars for percentages by stage.",
     fits: "2-6 stats with labels of up to 3 words.",
@@ -305,15 +297,18 @@ const EXPLAIN = {
   bar_chart: {
     shows: "A labelled chart: bar, column, line, area, donut, pie or radial, with values.",
     use_for: "Any comparison of figures: by sector, month, region or discipline.",
-    instead: "chart-animation, line-chart, area-chart, pie-chart or donut-chart for a chart that builds more dramatically.",
+    instead:
+      "chart-animation, line-chart, area-chart, pie-chart or donut-chart for a chart that builds more dramatically.",
     fits: "3-8 items with short labels.",
     media: "none",
     seconds: "6-8",
   },
   comparison: {
-    shows: "Two columns of points side by side with labels, coloured positive, negative or neutral.",
+    shows:
+      "Two columns of points side by side with labels, coloured positive, negative or neutral.",
     use_for: "Before and after, option A against option B, or problem against solution, in words.",
-    instead: "image-comparison-slider for two photos; comparison-chart for two numbers; card-flip for one line each.",
+    instead:
+      "image-comparison-slider for two photos; comparison-chart for two numbers; card-flip for one line each.",
     fits: "2-5 short points per side.",
     media: "none",
     seconds: "6-8",
@@ -359,9 +354,11 @@ const EXPLAIN = {
     seconds: "5-7",
   },
   image: {
-    shows: "One photo filling the frame edge to edge with a caption, optionally slowly zooming (kenBurns).",
+    shows:
+      "One photo filling the frame edge to edge with a caption, optionally slowly zooming (kenBurns).",
     use_for: "Showing a project, a site or a finished building.",
-    instead: "ken-burns, zoom-pulse or parallax-pan for richer camera motion; image-zoom-reveal for a hero reveal.",
+    instead:
+      "ken-burns, zoom-pulse or parallax-pan for richer camera motion; image-zoom-reveal for a hero reveal.",
     fits: "Caption up to 8 words.",
     media: "photo (required)",
     seconds: "4-6",
@@ -375,7 +372,8 @@ const EXPLAIN = {
     seconds: "5-8",
   },
   image_grid: {
-    shows: "A heading over 2-6 photos with captions, as a grid, a featured layout, masonry or a filmstrip.",
+    shows:
+      "A heading over 2-6 photos with captions, as a grid, a featured layout, masonry or a filmstrip.",
     use_for: "A portfolio of projects or a set of site photos.",
     instead: "gallery-grid, masonry-gallery or photo-stack for photos that animate in.",
     fits: "Up to 6 photos with captions of up to 3 words.",
@@ -432,7 +430,8 @@ const EXPLAIN = {
   },
   template: {
     shows: "One of the motion templates (ocsc-video templates lists them, with what each is for).",
-    use_for: "A moment that needs more motion than a built-in scene: a reveal, an animated chart, a cinematic photo move.",
+    use_for:
+      "A moment that needs more motion than a built-in scene: a reveal, an animated chart, a cinematic photo move.",
     instead: "A built-in scene when the point is teaching or reading.",
     fits: "See each template's props.",
     media: "see the template",
@@ -450,21 +449,26 @@ const EXPLAIN = {
 
 // Which scene to pick for a purpose: built-in scenes first, then templates with more motion.
 const CHOOSE = {
-  "open the video": "title, then optionally a logo template (logo-fade-reveal, logo-stroke-draw, logo-split-reveal, logo-bounce-drop) or cinematic-title-intro",
+  "open the video":
+    "title, then optionally a logo template (logo-fade-reveal, logo-stroke-draw, logo-split-reveal, logo-bounce-drop) or cinematic-title-intro",
   "start a section": "section_header, chapter-title",
   "explain points": "content, icon_list, animated-list",
   "a sequence or method": "process_steps, progress-steps, timeline (with dates)",
-  "one key message": "fullscreen_text, text-highlight, slide-text, typewriter-subtitle, title-split",
+  "one key message":
+    "fullscreen_text, text-highlight, slide-text, typewriter-subtitle, title-split",
   "one statistic": "big_number, stat-counter, circular-progress",
   "several figures": "stats, progress-bars",
   "a chart": "bar_chart, chart-animation, line-chart, area-chart, pie-chart, donut-chart",
-  "compare two things": "comparison (words), comparison-chart (two numbers), image-comparison-slider (two photos), split-screen (two photos with text), card-flip (one line each)",
-  "show one photo": "image, ken-burns, zoom-pulse, parallax-pan, image-zoom-reveal, spotlight-reveal, letterbox-reveal",
+  "compare two things":
+    "comparison (words), comparison-chart (two numbers), image-comparison-slider (two photos), split-screen (two photos with text), card-flip (one line each)",
+  "show one photo":
+    "image, ken-burns, zoom-pulse, parallax-pan, image-zoom-reveal, spotlight-reveal, letterbox-reveal",
   "show several photos": "image_grid, gallery-grid, masonry-gallery, image-carousel, photo-stack",
   "a person": "lower-third (over their photo), pull_quote, team_cards, polaroid-frame",
   "a quote": "quote, pull_quote, quote-card",
   "celebrate a milestone": "particle-explosion, popping-text, camera-shake",
-  "behind a heading": "bokeh-circles, geometric-patterns, grid-pulse, liquid-wave (water), matrix-rain (digital, BIM), starfield (vision), pixel-transition",
+  "behind a heading":
+    "bokeh-circles, geometric-patterns, grid-pulse, liquid-wave (water), matrix-rain (digital, BIM), starfield (vision), pixel-transition",
   "updates over footage": "notification-pop, typewriter-subtitle, subscribe-reminder (overlays)",
   "close the video": "closing (required last), end-card, credits-roll before it",
 };
@@ -482,8 +486,7 @@ const COMMON = {
 
 function loadSpec(o) {
   const spec = inWorkspace(o.spec, "--spec");
-  if (!existsSync(spec.full))
-    throw new UsageError(`${spec.rel} does not exist.`);
+  if (!existsSync(spec.full)) throw new UsageError(`${spec.rel} does not exist.`);
   let config;
   try {
     config = readJson(spec.full);
@@ -495,17 +498,14 @@ function loadSpec(o) {
 
 function validate(config, spec) {
   const problems = [];
-  if (!config || typeof config !== "object")
-    return ["The spec must be a JSON object."];
+  if (!config || typeof config !== "object") return ["The spec must be a JSON object."];
   const s = config.settings;
   if (!s || typeof s !== "object") problems.push("settings is required.");
   else {
     for (const key of ["width", "height"]) {
       const v = s[key];
       if (!Number.isInteger(v) || v < 320 || v > 3840 || v % 2)
-        problems.push(
-          `settings.${key} must be an even whole number from 320 to 3840.`,
-        );
+        problems.push(`settings.${key} must be an even whole number from 320 to 3840.`);
     }
     if (!Number.isInteger(s.fps) || s.fps < 12 || s.fps > 60)
       problems.push("settings.fps must be a whole number from 12 to 60.");
@@ -522,21 +522,12 @@ function validate(config, spec) {
       );
       return;
     }
-    if (
-      typeof scene.duration !== "number" ||
-      scene.duration < 0.5 ||
-      scene.duration > 120
-    )
+    if (typeof scene.duration !== "number" || scene.duration < 0.5 || scene.duration > 120)
       problems.push(`${at}.duration must be seconds from 0.5 to 120.`);
     else total += scene.duration;
     for (const field of kind.needs) {
       const v = scene[field];
-      if (
-        v === undefined ||
-        v === null ||
-        v === "" ||
-        (Array.isArray(v) && v.length === 0)
-      )
+      if (v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0))
         problems.push(`${at} (${scene.type}) needs ${field}.`);
     }
     if (scene.type === "template" && typeof scene.template === "string") {
@@ -570,23 +561,17 @@ function validate(config, spec) {
     if (scene.type === "custom" && typeof scene.file === "string") {
       try {
         const file = customFile(spec, scene.file);
-        if (!existsSync(file.full))
-          problems.push(`${at}.file ${file.rel} does not exist.`);
+        if (!existsSync(file.full)) problems.push(`${at}.file ${file.rel} does not exist.`);
         else if (!/export\s+default\b/.test(readFileSync(file.full, "utf8")))
-          problems.push(
-            `${at}.file ${file.rel} needs a default export (the scene component).`,
-          );
+          problems.push(`${at}.file ${file.rel} needs a default export (the scene component).`);
       } catch (error) {
         problems.push(`${at}.file: ${error.message}`);
       }
     }
   });
-  if (total > MAX_SECONDS)
-    problems.push(`The video is ${total}s; the most is ${MAX_SECONDS}s.`);
+  if (total > MAX_SECONDS) problems.push(`The video is ${total}s; the most is ${MAX_SECONDS}s.`);
   if (s?.transition !== undefined && !TRANSITIONS.includes(s.transition))
-    problems.push(
-      `settings.transition must be one of ${TRANSITIONS.join(", ")}.`,
-    );
+    problems.push(`settings.transition must be one of ${TRANSITIONS.join(", ")}.`);
   if (
     s?.transitionSeconds !== undefined &&
     !(s.transitionSeconds >= 0.1 && s.transitionSeconds <= 2)
@@ -599,19 +584,11 @@ function validate(config, spec) {
     if (music?.[key] !== undefined && !(music[key] <= 0 && music[key] >= -40))
       problems.push(`audio.music.${key} must be decibels from -40 to 0.`);
   config.scenes.forEach((scene, i) => {
-    if (
-      scene?.transition !== undefined &&
-      !TRANSITIONS.includes(scene.transition)
-    )
-      problems.push(
-        `scenes[${i}].transition must be one of ${TRANSITIONS.join(", ")}.`,
-      );
+    if (scene?.transition !== undefined && !TRANSITIONS.includes(scene.transition))
+      problems.push(`scenes[${i}].transition must be one of ${TRANSITIONS.join(", ")}.`);
     if (scene?.sfx !== undefined && !Array.isArray(scene.sfx))
       problems.push(`scenes[${i}].sfx must be a list of {src, at, volumeDb}.`);
-    for (const [j, effect] of (Array.isArray(scene?.sfx)
-      ? scene.sfx
-      : []
-    ).entries())
+    for (const [j, effect] of (Array.isArray(scene?.sfx) ? scene.sfx : []).entries())
       if (typeof effect?.src !== "string" || !effect.src)
         problems.push(`scenes[${i}].sfx[${j}] needs src.`);
   });
@@ -710,8 +687,7 @@ async function loudness(source, startAt = 0) {
       "/dev/null",
     ]);
     const lufs = Number(
-      JSON.parse(log.slice(log.lastIndexOf("{"), log.lastIndexOf("}") + 1))
-        .input_i,
+      JSON.parse(log.slice(log.lastIndexOf("{"), log.lastIndexOf("}") + 1)).input_i,
     );
     return Number.isFinite(lufs) && lufs > -60 ? lufs : null;
   } catch {
@@ -757,9 +733,7 @@ const isRemote = (v) => /^(https?:|data:)/i.test(v);
 async function mediaSeconds(src) {
   const { parseMedia } = await import("@remotion/media-parser");
   const local = !isRemote(src);
-  const reader = local
-    ? (await import("@remotion/media-parser/node")).nodeReader
-    : undefined;
+  const reader = local ? (await import("@remotion/media-parser/node")).nodeReader : undefined;
   const { durationInSeconds } = await parseMedia({
     src,
     fields: { durationInSeconds: true },
@@ -781,10 +755,7 @@ async function prepare(spec, config) {
   const local = (value, at) => {
     let file;
     try {
-      const fromSpec = inWorkspace(
-        isAbsolute(value) ? value : join(dirname(spec.rel), value),
-        at,
-      );
+      const fromSpec = inWorkspace(isAbsolute(value) ? value : join(dirname(spec.rel), value), at);
       file = existsSync(fromSpec.full) ? fromSpec : inWorkspace(value, at);
     } catch (error) {
       problems.push(`${at}: ${error.message}`);
@@ -842,10 +813,8 @@ async function prepare(spec, config) {
       }
       if (!seconds) return;
       voice.durationMs = Math.round(seconds * 1000);
-      const tail =
-        i === prepared.scenes.length - 1 ? LAST_VOICE_TAIL : VOICE_TAIL;
-      const needs =
-        Math.ceil(((voice.delay ?? VOICE_DELAY) + seconds + tail) * 10) / 10;
+      const tail = i === prepared.scenes.length - 1 ? LAST_VOICE_TAIL : VOICE_TAIL;
+      const needs = Math.ceil(((voice.delay ?? VOICE_DELAY) + seconds + tail) * 10) / 10;
       if (needs <= scene.duration) return;
       if (voice.autoFitDuration === false)
         warnings.push(
@@ -864,9 +833,7 @@ async function prepare(spec, config) {
   // Level every audio file to the same loudness, so a loudly mastered music track sits as far
   // under the voice as a quiet one.
   const sourceOf = (v) =>
-    typeof v === "string" && v.startsWith(TOKEN)
-      ? files.get(v.slice(TOKEN.length))?.full
-      : v;
+    typeof v === "string" && v.startsWith(TOKEN) ? files.get(v.slice(TOKEN.length))?.full : v;
   const levels = {};
   const jobs = [];
   const music = prepared.audio?.music;
@@ -898,8 +865,7 @@ async function prepare(spec, config) {
         );
   });
   await Promise.all(jobs);
-  if (levels.voice_lufs)
-    levels.voice_lufs = levels.voice_lufs.filter((v) => v !== undefined);
+  if (levels.voice_lufs) levels.voice_lufs = levels.voice_lufs.filter((v) => v !== undefined);
   const audio = {
     ...(Object.keys(levels).length
       ? { levelled_to: "voice and music -16 LUFS before volumeDb", ...levels }
@@ -925,9 +891,7 @@ async function serveMedia(prepared) {
     let start = 0;
     let end = size - 1;
     if (range) {
-      start = range[1]
-        ? Number(range[1])
-        : Math.max(0, size - Number(range[2]));
+      start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
       end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : end;
       if (start > end || start >= size) {
         res.writeHead(416, { "Content-Range": `bytes */${size}` }).end();
@@ -946,9 +910,7 @@ async function serveMedia(prepared) {
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const config = JSON.parse(
-    JSON.stringify(prepared.config).split(TOKEN).join(base),
-  );
+  const config = JSON.parse(JSON.stringify(prepared.config).split(TOKEN).join(base));
   return { config, close: () => server.close() };
 }
 
@@ -976,9 +938,7 @@ async function ffmpeg(argv) {
     });
     child.on("error", reject);
     child.on("close", (code) =>
-      code === 0
-        ? resolveRun(err)
-        : reject(new Error(`ffmpeg failed: ${err.slice(-800)}`)),
+      code === 0 ? resolveRun(err) : reject(new Error(`ffmpeg failed: ${err.slice(-800)}`)),
     );
   });
 }
@@ -1007,9 +967,7 @@ async function finish(tmp, out, audio) {
         "-y",
         "/dev/null",
       ]);
-      const m = JSON.parse(
-        log.slice(log.lastIndexOf("{"), log.lastIndexOf("}") + 1),
-      );
+      const m = JSON.parse(log.slice(log.lastIndexOf("{"), log.lastIndexOf("}") + 1));
       if (Number.isFinite(Number(m.input_i)) && Number(m.input_i) > -70)
         filter = `loudnorm=${target}:measured_I=${m.input_i}:measured_TP=${m.input_tp}:measured_LRA=${m.input_lra}:measured_thresh=${m.input_thresh}:offset=${m.target_offset}:linear=true,aresample=48000`;
     } catch {}
@@ -1035,13 +993,8 @@ async function finish(tmp, out, audio) {
 
 /** The Remotion bundle for this spec: the prebuilt one, or a private build with its custom scenes. */
 async function bundleFor(spec, config, onProgress) {
-  const custom = [
-    ...new Set(
-      config.scenes.filter((s) => s.type === "custom").map((s) => s.file),
-    ),
-  ];
-  if (custom.length === 0 && existsSync(join(PREBUILT, "index.html")))
-    return PREBUILT;
+  const custom = [...new Set(config.scenes.filter((s) => s.type === "custom").map((s) => s.file))];
+  if (custom.length === 0 && existsSync(join(PREBUILT, "index.html"))) return PREBUILT;
 
   const files = custom.map((file) => {
     const { full } = customFile(spec, file);
@@ -1060,10 +1013,7 @@ async function bundleFor(spec, config, onProgress) {
   cpSync(join(HERE, "src"), src, { recursive: true });
   mkdirSync(join(src, "custom", "user"), { recursive: true });
   const imports = files.map(({ file, source }, i) => {
-    writeFileSync(
-      join(src, "custom", "user", `scene${i}${extname(file)}`),
-      source,
-    );
+    writeFileSync(join(src, "custom", "user", `scene${i}${extname(file)}`), source);
     return { name: `Scene${i}`, from: `./user/scene${i}`, key: file };
   });
   writeFileSync(
@@ -1074,8 +1024,7 @@ async function bundleFor(spec, config, onProgress) {
         "\n",
       )}\n\nexport const customScenes: Record<string, ComponentType<Record<string, unknown>>> = {\n${imports
       .map(
-        (m) =>
-          `  ${JSON.stringify(m.key)}: ${m.name} as ComponentType<Record<string, unknown>>,`,
+        (m) => `  ${JSON.stringify(m.key)}: ${m.name} as ComponentType<Record<string, unknown>>,`,
       )
       .join("\n")}\n};\n`,
   );
@@ -1093,9 +1042,7 @@ async function bundleFor(spec, config, onProgress) {
     rmSync(out, { recursive: true, force: true });
     let message = String(error?.message || error);
     files.forEach(({ file }, i) => {
-      message = message
-        .split(join(src, "custom", "user", `scene${i}${extname(file)}`))
-        .join(file);
+      message = message.split(join(src, "custom", "user", `scene${i}${extname(file)}`)).join(file);
     });
     throw new UsageError(
       `A custom scene did not build: ${message.split("\n    at ")[0].slice(0, 2000)}`,
@@ -1110,9 +1057,7 @@ async function bundleFor(spec, config, onProgress) {
 /** Cores this process may use: a container's CPU quota when it has one, else the host's cores. */
 function cpuCount() {
   try {
-    const [quota, period] = readFileSync("/sys/fs/cgroup/cpu.max", "utf8")
-      .trim()
-      .split(/\s+/);
+    const [quota, period] = readFileSync("/sys/fs/cgroup/cpu.max", "utf8").trim().split(/\s+/);
     if (quota !== "max") return Math.max(1, Math.floor(Number(quota) / Number(period)));
   } catch {}
   return cpus().length;
@@ -1150,8 +1095,7 @@ function cmdScenes() {
     spec: {
       title: "optional",
       brandColor: "hex, default OCSC green #76bf43",
-      logoUrl:
-        "optional; the OCSC logo is used by default (logoOnDarkUrl for dark backgrounds)",
+      logoUrl: "optional; the OCSC logo is used by default (logoOnDarkUrl for dark backgrounds)",
       settings:
         "{width: 1920, height: 1080, fps: 30, show_skyline_footer: true, transition (how scenes enter, default fade), transitionSeconds (default 0.5)}",
       transitions: TRANSITION_NOTES,
@@ -1183,9 +1127,7 @@ function cmdTemplates(o) {
   const all = Object.values(catalogue());
   const pick = all
     .filter((m) => typeof o.category !== "string" || m.category === o.category)
-    .filter(
-      (m) => typeof o.kind !== "string" || (m.kind ?? "template") === o.kind,
-    );
+    .filter((m) => typeof o.kind !== "string" || (m.kind ?? "template") === o.kind);
   if (typeof o.name === "string") {
     const meta = catalogue()[o.name];
     if (!meta) throw new UsageError(`There is no template called ${o.name}.`);
@@ -1215,15 +1157,10 @@ function cmdTemplates(o) {
 function cmdNew(o) {
   const out = inWorkspace(o.out, "--out");
   if (!out.rel.endsWith(".video.json"))
-    throw new UsageError(
-      "--out must end in .video.json, e.g. outputs/Induction.video.json.",
-    );
+    throw new UsageError("--out must end in .video.json, e.g. outputs/Induction.video.json.");
   if (existsSync(out.full) && !o.force)
-    throw new UsageError(
-      `${out.rel} already exists. Edit it, or pass --force to start again.`,
-    );
-  const title =
-    typeof o.title === "string" ? o.title : basename(out.rel, ".video.json");
+    throw new UsageError(`${out.rel} already exists. Edit it, or pass --force to start again.`);
+  const title = typeof o.title === "string" ? o.title : basename(out.rel, ".video.json");
   const vertical = o.vertical === true;
   const config = {
     title,
@@ -1296,8 +1233,7 @@ async function forRender(o) {
   const { spec, config, problems } = loadSpec(o);
   if (problems.length) throw new UsageError(problems.join(" "));
   const prepared = await prepare(spec, config);
-  if (prepared.problems.length)
-    throw new UsageError(prepared.problems.join(" "));
+  if (prepared.problems.length) throw new UsageError(prepared.problems.join(" "));
   const served = await serveMedia(prepared);
   return { spec, prepared, ...served };
 }
@@ -1315,17 +1251,13 @@ async function still(o, spec, prepared, config) {
   const rows = timing(config);
   const n = o.scene === undefined ? 1 : Number(o.scene);
   const row = rows[n - 1];
-  if (!Number.isInteger(n) || !row)
-    throw new UsageError(`--scene must be 1 to ${rows.length}.`);
+  if (!Number.isInteger(n) || !row) throw new UsageError(`--scene must be 1 to ${rows.length}.`);
   const at =
     o.at === undefined
-      ? Math.round(Math.min(row.duration * 0.6, row.duration - 0.05) * 100) /
-        100
+      ? Math.round(Math.min(row.duration * 0.6, row.duration - 0.05) * 100) / 100
       : Number(o.at);
   if (!Number.isFinite(at) || at < 0 || at >= row.duration)
-    throw new UsageError(
-      `--at must be seconds within scene ${n} (0 to ${row.duration}).`,
-    );
+    throw new UsageError(`--at must be seconds within scene ${n} (0 to ${row.duration}).`);
   const out = inWorkspace(
     typeof o.out === "string"
       ? o.out
@@ -1341,10 +1273,7 @@ async function still(o, spec, prepared, config) {
     composition: comp,
     serveUrl,
     output: out.full,
-    frame: Math.min(
-      comp.durationInFrames - 1,
-      Math.round((row.start + at) * comp.fps),
-    ),
+    frame: Math.min(comp.durationInFrames - 1, Math.round((row.start + at) * comp.fps)),
     inputProps: { config },
     scale,
     imageFormat: "png",
@@ -1367,16 +1296,12 @@ async function cmdFetch(o) {
     throw new UsageError("--url must be an https link.");
   const out = inWorkspace(o.out, "--out");
   const ext = extname(out.full).toLowerCase();
-  if (!MIME[ext])
-    throw new UsageError(
-      `--out must end in one of ${Object.keys(MIME).join(", ")}.`,
-    );
+  if (!MIME[ext]) throw new UsageError(`--out must end in one of ${Object.keys(MIME).join(", ")}.`);
   const res = await fetch(o.url, {
     redirect: "follow",
     signal: AbortSignal.timeout(110_000),
   });
-  if (!res.ok || !res.body)
-    throw new UsageError(`The download failed: HTTP ${res.status}.`);
+  if (!res.ok || !res.body) throw new UsageError(`The download failed: HTTP ${res.status}.`);
   if (Number(res.headers.get("content-length")) > FETCH_MAX_BYTES)
     throw new UsageError("That file is over 400 MB.");
   const { Readable, Transform } = await import("node:stream");
@@ -1390,8 +1315,7 @@ async function cmdFetch(o) {
       new Transform({
         transform(chunk, _encoding, done) {
           bytes += chunk.length;
-          if (bytes > FETCH_MAX_BYTES)
-            done(new UsageError("That file is over 400 MB."));
+          if (bytes > FETCH_MAX_BYTES) done(new UsageError("That file is over 400 MB."));
           else done(null, chunk);
         },
       }),
@@ -1425,8 +1349,7 @@ function alive(pid) {
 }
 
 function jobFile(id) {
-  if (!/^[0-9a-f-]{36}$/.test(String(id)))
-    throw new UsageError("That is not a render job id.");
+  if (!/^[0-9a-f-]{36}$/.test(String(id))) throw new UsageError("That is not a render job id.");
   return join(JOBS, `${id}.json`);
 }
 
@@ -1435,27 +1358,19 @@ function findJob(id) {
   let file;
   if (id && id !== true) file = jobFile(id);
   else {
-    if (!existsSync(JOBS))
-      throw new UsageError("No video has been rendered on this computer yet.");
+    if (!existsSync(JOBS)) throw new UsageError("No video has been rendered on this computer yet.");
     const newest = readdirSync(JOBS)
       .filter((f) => f.endsWith(".json"))
       .map((f) => ({ f, t: statSync(join(JOBS, f)).mtimeMs }))
       .sort((a, b) => b.t - a.t)[0];
-    if (!newest)
-      throw new UsageError("No video has been rendered on this computer yet.");
+    if (!newest) throw new UsageError("No video has been rendered on this computer yet.");
     file = join(JOBS, newest.f);
   }
-  if (!existsSync(file))
-    throw new UsageError("There is no render job with that id.");
+  if (!existsSync(file)) throw new UsageError("There is no render job with that id.");
   const job = readJson(file);
-  if (
-    ["starting", "bundling", "rendering", "finishing"].includes(job.status) &&
-    !alive(job.pid)
-  ) {
+  if (["starting", "bundling", "rendering", "finishing"].includes(job.status) && !alive(job.pid)) {
     job.status = "failed";
-    job.error =
-      job.error ||
-      "The render stopped unexpectedly. Run ocsc-video render again.";
+    job.error = job.error || "The render stopped unexpectedly. Run ocsc-video render again.";
     writeJson(file, job);
   }
   return { file, job };
@@ -1467,12 +1382,7 @@ function running() {
     if (!f.endsWith(".json")) continue;
     try {
       const job = readJson(join(JOBS, f));
-      if (
-        ["starting", "bundling", "rendering", "finishing"].includes(
-          job.status,
-        ) &&
-        alive(job.pid)
-      )
+      if (["starting", "bundling", "rendering", "finishing"].includes(job.status) && alive(job.pid))
         return job;
     } catch {}
   }
@@ -1484,17 +1394,10 @@ function cmdRender(o) {
   if (!problems.length) problems.push(...endingProblems(config));
   if (problems.length) return { ok: false, spec: spec.rel, problems };
   const quality =
-    o.draft === true
-      ? "draft"
-      : typeof o.quality === "string"
-        ? o.quality
-        : "standard";
-  if (!QUALITY[quality])
-    throw new UsageError("--quality must be draft, standard or master.");
+    o.draft === true ? "draft" : typeof o.quality === "string" ? o.quality : "standard";
+  if (!QUALITY[quality]) throw new UsageError("--quality must be draft, standard or master.");
   if (quality === "master" && config.settings.width * 2 > 3840)
-    throw new UsageError(
-      "master doubles the size, so the spec must be 1920 wide or less.",
-    );
+    throw new UsageError("master doubles the size, so the spec must be 1920 wide or less.");
   const busy = running();
   if (busy)
     throw new UsageError(
@@ -1504,11 +1407,7 @@ function cmdRender(o) {
     typeof o.out === "string"
       ? o.out
       : spec.rel.replace(/\.video\.json$|\.json$/, "") +
-          (quality === "draft"
-            ? "-draft.mp4"
-            : quality === "master"
-              ? "-4k.mp4"
-              : ".mp4"),
+          (quality === "draft" ? "-draft.mp4" : quality === "master" ? "-4k.mp4" : ".mp4"),
     "--out",
   );
   if (extname(out.rel).toLowerCase() !== ".mp4")
@@ -1527,15 +1426,11 @@ function cmdRender(o) {
   };
   writeJson(file, job);
   mkdirSync(JOBS, { recursive: true });
-  const child = spawn(
-    process.execPath,
-    [fileURLToPath(import.meta.url), "_work", "--job", id],
-    {
-      detached: true,
-      stdio: "ignore",
-      env: process.env,
-    },
-  );
+  const child = spawn(process.execPath, [fileURLToPath(import.meta.url), "_work", "--job", id], {
+    detached: true,
+    stdio: "ignore",
+    env: process.env,
+  });
   child.unref();
   writeJson(file, { ...job, pid: child.pid });
   return {
@@ -1546,6 +1441,123 @@ function cmdRender(o) {
     seconds: job.seconds,
     next: `Run: ocsc-video wait --job ${id}`,
   };
+}
+
+/**
+ * A long video is rendered as short segments, each in a fresh browser and encoder, then joined:
+ * memory stays at one segment's worth however long the video is, and a crashed segment is
+ * rendered again instead of failing the whole video.
+ */
+const SEGMENT_SECONDS = 15;
+const SEGMENT_ATTEMPTS = 4;
+const MB = 1024 * 1024;
+
+/** x264's default lookahead and one thread per host core need more memory than the computer has. */
+function leanEncoder({ args }) {
+  if (!args.includes("libx264")) return args;
+  return [
+    ...args.slice(0, -1),
+    "-threads",
+    "2",
+    "-x264-params",
+    "rc-lookahead=10:sync-lookahead=0",
+    args[args.length - 1],
+  ];
+}
+
+async function withRetries(what, attemptOnce) {
+  let lastError;
+  for (let attempt = 1; attempt <= SEGMENT_ATTEMPTS; attempt += 1) {
+    try {
+      return await attemptOnce(attempt);
+    } catch (error) {
+      if (error instanceof UsageError) throw error;
+      lastError = error;
+      await new Promise((r) => setTimeout(r, 3000 * attempt));
+    }
+  }
+  throw new Error(
+    `Rendering ${what} failed ${SEGMENT_ATTEMPTS} times: ${String(lastError?.message || lastError).slice(0, 1500)}`,
+  );
+}
+
+async function renderInSegments({ comp, serveUrl, config, quality, tmp, hasAudio, update }) {
+  const { renderMedia } = await renderer();
+  const total = comp.durationInFrames;
+  const size = Math.max(1, Math.round(comp.fps * SEGMENT_SECONDS));
+  const dir = `${tmp}.segments`;
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  const common = {
+    composition: comp,
+    serveUrl,
+    inputProps: { config },
+    overwrite: true,
+    logLevel: "error",
+    offthreadVideoCacheSizeInBytes: 192 * MB,
+    offthreadVideoThreads: 1,
+    mediaCacheSizeInBytes: 192 * MB,
+  };
+  try {
+    const segments = [];
+    for (let start = 0; start < total; start += size) {
+      const end = Math.min(total, start + size) - 1;
+      const file = join(dir, `${String(segments.length).padStart(4, "0")}.mp4`);
+      await withRetries(`frames ${start}-${end}`, (attempt) =>
+        renderMedia({
+          ...common,
+          ...QUALITY[quality],
+          codec: "h264",
+          frameRange: [start, end],
+          muted: true,
+          outputLocation: file,
+          pixelFormat: "yuv420p",
+          colorSpace: "bt709",
+          concurrency: attempt === 1 ? Math.max(1, Math.min(2, Math.floor(cpuCount() / 2))) : 1,
+          ffmpegOverride: leanEncoder,
+          onProgress: ({ renderedFrames, encodedFrames }) =>
+            update({
+              progress: Math.min(
+                99,
+                Math.round(((start + encodedFrames) / total) * (hasAudio ? 95 : 100)),
+              ),
+              renderedFrames: start + renderedFrames,
+              encodedFrames: start + encodedFrames,
+            }),
+        }),
+      );
+      segments.push(file);
+    }
+    const list = join(dir, "segments.txt");
+    writeFileSync(list, segments.map((file) => `file '${file.replace(/'/g, "'\\''")}'`).join("\n"));
+    let soundtrack = null;
+    if (hasAudio) {
+      soundtrack = join(dir, "soundtrack.wav");
+      await withRetries("the soundtrack", () =>
+        renderMedia({ ...common, codec: "wav", outputLocation: soundtrack, concurrency: 1 }),
+      );
+    }
+    await ffmpeg([
+      "-loglevel",
+      "error",
+      "-f",
+      "concat",
+      "-safe",
+      "0",
+      "-i",
+      list,
+      ...(soundtrack ? ["-i", soundtrack] : []),
+      "-map",
+      "0:v:0",
+      ...(soundtrack ? ["-map", "1:a:0", "-c:a", "pcm_s16le"] : []),
+      "-c:v",
+      "copy",
+      "-y",
+      tmp,
+    ]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 async function work(o) {
@@ -1568,32 +1580,35 @@ async function work(o) {
     update({ seconds: totalSeconds(config) });
     const serveUrl = await bundleFor(spec, config);
     update({ status: "rendering" }, true);
-    const comp = await composition(serveUrl, config);
-    const { renderMedia } = await renderer();
+    const comp = await withRetries("the video's layout", () => composition(serveUrl, config));
     const out = inWorkspace(job.out, "--out");
     mkdirSync(dirname(out.full), { recursive: true });
-    const tmp = `${out.full}.part.mp4`;
-    await renderMedia({
-      composition: comp,
-      serveUrl,
-      codec: "h264",
-      outputLocation: tmp,
-      inputProps: { config },
-      ...QUALITY[job.quality ?? "standard"],
-      pixelFormat: "yuv420p",
-      colorSpace: "bt709",
-      audioCodec: "aac",
-      audioBitrate: "320k",
-      concurrency: Math.max(1, Math.min(4, Math.floor(cpuCount() / 2))),
-      overwrite: true,
-      logLevel: "error",
-      onProgress: ({ progress, renderedFrames, encodedFrames }) =>
-        update({
-          progress: Math.round(progress * 100),
-          renderedFrames,
-          encodedFrames,
-        }),
-    });
+    const tmp = `${out.full}.part.mkv`;
+    const segmented = (quality) =>
+      renderInSegments({
+        comp,
+        serveUrl,
+        config,
+        quality,
+        tmp,
+        hasAudio: Boolean(prepared.audio.music || prepared.audio.voices || prepared.audio.effects),
+        update,
+      });
+    const requested = job.quality ?? "standard";
+    try {
+      await segmented(requested);
+    } catch (error) {
+      if (requested === "draft") throw error;
+      // A finished video at half size beats no video; the note tells the Bot to say so.
+      update(
+        {
+          progress: 0,
+          note: `The ${requested} render kept failing (${String(error?.message || error).slice(0, 300)}), so this file is draft quality (half size). Tell the person, and offer to render ${requested} again later.`,
+        },
+        true,
+      );
+      await segmented("draft");
+    }
     update({ status: "finishing" }, true);
     await finish(tmp, out.full, prepared.audio);
     rmSync(tmp, { force: true });
@@ -1630,7 +1645,13 @@ function report(job) {
     progress: job.progress,
   };
   if (job.status === "done")
-    return { ok: true, ...base, bytes: job.bytes, ...downloadLink(job.out) };
+    return {
+      ok: true,
+      ...base,
+      bytes: job.bytes,
+      ...(job.note ? { note: job.note } : {}),
+      ...downloadLink(job.out),
+    };
   if (job.status === "failed" || job.status === "cancelled")
     return { ok: false, ...base, error: job.error };
   return {
@@ -1642,16 +1663,10 @@ function report(job) {
 }
 
 async function cmdWait(o) {
-  const seconds = Math.min(
-    MAX_WAIT_SECONDS,
-    Math.max(1, Number(o.seconds) || 100),
-  );
+  const seconds = Math.min(MAX_WAIT_SECONDS, Math.max(1, Number(o.seconds) || 100));
   const until = Date.now() + seconds * 1000;
   let { file, job } = findJob(o.job);
-  while (
-    !["done", "failed", "cancelled"].includes(job.status) &&
-    Date.now() < until
-  ) {
+  while (!["done", "failed", "cancelled"].includes(job.status) && Date.now() < until) {
     await new Promise((r) => setTimeout(r, 1000));
     ({ job } = findJob(job.id));
   }
