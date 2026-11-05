@@ -352,6 +352,22 @@ export function remoteMarkdownImage(url: string): { href: string; host: string }
 /** Whether remote markdown images load without a tap. Apps provide the reader's device setting. */
 export const RemoteImagesContext = createContext(false);
 
+/**
+ * Hosts whose images always load without a tap, such as the organisation's own file store. A
+ * host also covers its subdomains.
+ */
+export const TrustedImageHostsContext = createContext<readonly string[]>([]);
+
+export function imageHostTrusted(href: string, trustedHosts: readonly string[]): boolean {
+  let host: string;
+  try {
+    host = new URL(href).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return trustedHosts.some((trusted) => host === trusted || host.endsWith(`.${trusted}`));
+}
+
 // Images the reader chose to load stay loaded for the session, even after a bubble remounts.
 const loadedRemoteImages = new Set<string>();
 

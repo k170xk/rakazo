@@ -420,6 +420,13 @@ function SpaceShell() {
     } else return false;
     return true;
   }
+  function toggleComputerPanel() {
+    if (panel === "computer") setPanel(null);
+    else if (active) {
+      setPanel("computer");
+      void refreshThread(active.id).catch(() => undefined);
+    }
+  }
   const openSpaceChatRef = useRef<(spaceId: string, path: string) => void>(() => {});
   useSpaceBootstrap({
     rpc,
@@ -1111,8 +1118,10 @@ function SpaceShell() {
             voiceReady={Boolean(voiceStatus?.ready)}
             inCall={Boolean(active) && call?.botId === active?.id}
             panelOpen={chatPanelOpen}
+            computerPanelOpen={panel === "computer"}
             onOpenNavigation={() => setMobileSidebarOpen(true)}
             onTogglePanel={toggleChatPanel}
+            onToggleComputerPanel={toggleComputerPanel}
             onCall={(bot) => {
               if (call?.botId === bot.id) {
                 setCallMinimized(false);

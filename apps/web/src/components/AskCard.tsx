@@ -11,6 +11,7 @@ import {
 } from "@rakazo/core";
 import { Button, Input, Textarea } from "@rakazo/ui-web";
 import { Check } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import type { RpcClient } from "../lib/rpc";
 import { rpc as selectedSpaceRpc } from "../lib/rpc";
@@ -183,164 +184,202 @@ function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: A
   return (
     <BuiCard
       data-testid={block.instructionUpdate ? "instruction-approval-card" : undefined}
-      className="w-full min-w-0 max-w-xl px-5 py-4"
+      className="w-full min-w-0 max-w-xl overflow-hidden border border-border dark:border-transparent"
     >
-      <div className="text-[15.5px] leading-[1.5] text-foreground">
-        {block.instructionUpdate ? (
-          <Trans>Update instructions?</Trans>
-        ) : (
-          <ChatMarkdown>{block.text}</ChatMarkdown>
-        )}
-      </div>
-      {block.detail ? (
-        <pre
-          data-testid="ask-detail"
-          className={
-            block.detailFormat === "text"
-              ? "mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-[15.5px] leading-[1.5] text-foreground"
-              : "mt-2.5 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-background px-3 py-2 font-mono text-[13px] leading-[1.6] text-foreground"
-          }
-        >
-          {block.detail}
-        </pre>
-      ) : null}
-      {block.instructionUpdate && editing && canAnswer && !answered ? (
-        <form
-          className="mt-3 space-y-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submitAnswer(JSON.stringify({ instructions: answer }));
-          }}
-        >
-          <Textarea
-            aria-label={t`Instructions`}
-            maxLength={BOT_INSTRUCTIONS_MAX_LENGTH}
-            value={answer}
-            onChange={(event) => setAnswer(event.target.value)}
-          />
-          <Button type="submit" disabled={submitting}>
-            <Trans>Apply</Trans>
-          </Button>
-          <Button type="button" variant="outline" onClick={() => setEditing(false)}>
-            <Trans>Cancel</Trans>
-          </Button>
-        </form>
-      ) : optionQuestion ? (
-        // Options stay in place once answered: the chosen one is marked, the rest dim.
-        <div className="mt-2.5 space-y-0.5">
-          {askActions?.map((action, index) => (
-            <OptionRow
-              key={action.id}
-              letter={optionLetter(index)}
-              selected={chosenOption?.id === action.id}
-              disabled={answered || !canAnswer || submitting}
-              onClick={() => void submitAnswer(action.id)}
-            >
-              {pendingAction === action.id ? <Trans>Sending…</Trans> : action.label}
-            </OptionRow>
-          ))}
-        </div>
-      ) : typedAnswer ? (
-        <blockquote
-          data-testid="ask-answer"
-          className="mt-3 whitespace-pre-wrap break-words border-s-2 border-border ps-3 text-[15px] leading-[1.5] text-muted-foreground"
-        >
-          {typedAnswer}
-        </blockquote>
-      ) : answered ? (
-        <div className="mt-3.5 flex items-center gap-1.5 text-[13.5px] font-medium text-muted-foreground">
-          {displayedAnswer === "deny" ||
-          approvalActions?.find((action) => action.id === displayedAnswer)?.outcome ===
-            "cancelled" ? null : (
-            <Check aria-hidden className="size-4" />
+      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-2.5">
+        <span className="text-[13px] font-medium text-muted-foreground">
+          {block.instructionUpdate ? (
+            <Trans>Instructions</Trans>
+          ) : approvalActions || !askActions?.length ? (
+            <Trans>Needs your approval</Trans>
+          ) : (
+            <Trans>Question</Trans>
           )}
-          {block.instructionUpdate
-            ? displayedAnswer === "deny"
-              ? t`Dismissed`
-              : t`Allowed once`
-            : formatAnsweredState(
-                displayedAnswer,
-                Boolean(approvalActions),
-                approvalActions?.find((action) => action.id === displayedAnswer)?.outcome,
-                askActions,
-              )}
+        </span>
+        <StatusBadge tone={answered ? "positive" : canAnswer ? "caution" : "neutral"}>
+          {answered ? (
+            <Trans>Done</Trans>
+          ) : canAnswer ? (
+            <Trans>Waiting on you</Trans>
+          ) : (
+            <Trans>Closed</Trans>
+          )}
+        </StatusBadge>
+      </div>
+      <div className="px-5 py-4">
+        <div className="text-[15.5px] leading-[1.5] text-foreground">
+          {block.instructionUpdate ? (
+            <Trans>Update instructions?</Trans>
+          ) : (
+            <ChatMarkdown>{block.text}</ChatMarkdown>
+          )}
         </div>
-      ) : !canAnswer ? (
-        <div className="mt-3.5 text-[13.5px] font-medium text-muted-foreground">
-          <Trans>No longer active</Trans>
-        </div>
-      ) : displayActions?.length ? (
-        <div className="mt-3.5 flex flex-wrap gap-2">
-          {displayActions.map((action) => (
-            <Button
-              key={action.id}
-              variant={action.id === "allow" ? "default" : "outline"}
-              // Wraps long site names like the other cards' buttons.
-              className="h-auto min-h-8 min-w-0 whitespace-normal py-1 text-start"
-              disabled={submitting}
-              onClick={() =>
-                action.id === "edit" && block.instructionUpdate
-                  ? setEditing(true)
-                  : void submitAnswer(action.id)
-              }
-            >
-              {pendingAction === action.id ? (
-                <Trans>Sending…</Trans>
-              ) : action.id === "edit" ? (
-                action.label
-              ) : block.instructionUpdate ? (
-                action.id === "allow" ? (
-                  t`Apply`
-                ) : (
-                  t`Dismiss`
-                )
-              ) : (
-                approvalActionLabel(action.id, action.label, action.outcome, block.site)
-              )}
+        {block.detail ? (
+          <pre
+            data-testid="ask-detail"
+            className={
+              block.detailFormat === "text"
+                ? "mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-[15.5px] leading-[1.5] text-foreground"
+                : "mt-2.5 max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-background px-3 py-2 font-mono text-[13px] leading-[1.6] text-foreground"
+            }
+          >
+            {block.detail}
+          </pre>
+        ) : null}
+        {block.instructionUpdate && editing && canAnswer && !answered ? (
+          <form
+            className="mt-3 space-y-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitAnswer(JSON.stringify({ instructions: answer }));
+            }}
+          >
+            <Textarea
+              aria-label={t`Instructions`}
+              maxLength={BOT_INSTRUCTIONS_MAX_LENGTH}
+              value={answer}
+              onChange={(event) => setAnswer(event.target.value)}
+            />
+            <Button type="submit" disabled={submitting}>
+              <Trans>Apply</Trans>
             </Button>
-          ))}
-        </div>
-      ) : editing ? (
-        <form
-          className="mt-3.5 flex flex-col gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submitAnswer(answer);
-          }}
-        >
-          <Input
-            aria-label={t`Answer`}
-            value={answer}
-            onChange={(event) => setAnswer(event.target.value)}
-            placeholder={t`Type your answer`}
-          />
-          <div className="flex gap-2">
-            <Button type="submit" disabled={!answer.trim() || submitting}>
-              {submitting ? <Trans>Sending…</Trans> : <Trans>Send answer</Trans>}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={submitting}
-              onClick={() => {
-                setAnswer("");
-                setEditing(false);
-              }}
-            >
+            <Button type="button" variant="outline" onClick={() => setEditing(false)}>
               <Trans>Cancel</Trans>
             </Button>
+          </form>
+        ) : optionQuestion ? (
+          // Options stay in place once answered: the chosen one is marked, the rest dim.
+          <div className="mt-3.5 space-y-2">
+            {askActions?.map((action, index) => (
+              <OptionRow
+                key={action.id}
+                letter={optionLetter(index)}
+                selected={chosenOption?.id === action.id}
+                disabled={answered || !canAnswer || submitting}
+                onClick={() => void submitAnswer(action.id)}
+              >
+                {pendingAction === action.id ? <Trans>Sending…</Trans> : action.label}
+              </OptionRow>
+            ))}
           </div>
-        </form>
-      ) : (
-        <div className="mt-3.5 flex gap-2">
-          <Button disabled={submitting} onClick={() => void submitAnswer("approved")}>
-            {submitting ? <Trans>Sending…</Trans> : <Trans>Send it</Trans>}
-          </Button>
-          <Button variant="outline" disabled={submitting} onClick={() => setEditing(true)}>
-            <Trans>Edit first</Trans>
-          </Button>
-        </div>
-      )}
-      {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
+        ) : typedAnswer ? (
+          <blockquote
+            data-testid="ask-answer"
+            className="mt-3 whitespace-pre-wrap break-words border-s-2 border-border ps-3 text-[15px] leading-[1.5] text-muted-foreground"
+          >
+            {typedAnswer}
+          </blockquote>
+        ) : answered ? (
+          <div className="mt-3.5 flex items-center gap-1.5 text-[13.5px] font-medium text-muted-foreground">
+            {displayedAnswer === "deny" ||
+            approvalActions?.find((action) => action.id === displayedAnswer)?.outcome ===
+              "cancelled" ? null : (
+              <Check aria-hidden className="size-4" />
+            )}
+            {block.instructionUpdate
+              ? displayedAnswer === "deny"
+                ? t`Dismissed`
+                : t`Allowed once`
+              : formatAnsweredState(
+                  displayedAnswer,
+                  Boolean(approvalActions),
+                  approvalActions?.find((action) => action.id === displayedAnswer)?.outcome,
+                  askActions,
+                )}
+          </div>
+        ) : !canAnswer ? (
+          <div className="mt-3.5 text-[13.5px] font-medium text-muted-foreground">
+            <Trans>No longer active</Trans>
+          </div>
+        ) : displayActions?.length ? (
+          <div className="mt-3.5 flex flex-wrap gap-2">
+            {displayActions.map((action) => (
+              <Button
+                key={action.id}
+                variant={action.id === "allow" ? "default" : "outline"}
+                // Wraps long site names like the other cards' buttons.
+                className="h-auto min-h-8 min-w-0 whitespace-normal py-1 text-start"
+                disabled={submitting}
+                onClick={() =>
+                  action.id === "edit" && block.instructionUpdate
+                    ? setEditing(true)
+                    : void submitAnswer(action.id)
+                }
+              >
+                {pendingAction === action.id ? (
+                  <Trans>Sending…</Trans>
+                ) : action.id === "edit" ? (
+                  action.label
+                ) : block.instructionUpdate ? (
+                  action.id === "allow" ? (
+                    t`Apply`
+                  ) : (
+                    t`Dismiss`
+                  )
+                ) : (
+                  approvalActionLabel(action.id, action.label, action.outcome, block.site)
+                )}
+              </Button>
+            ))}
+          </div>
+        ) : editing ? (
+          <form
+            className="mt-3.5 flex flex-col gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitAnswer(answer);
+            }}
+          >
+            <Input
+              aria-label={t`Answer`}
+              value={answer}
+              onChange={(event) => setAnswer(event.target.value)}
+              placeholder={t`Type your answer`}
+            />
+            <div className="flex gap-2">
+              <Button type="submit" disabled={!answer.trim() || submitting}>
+                {submitting ? <Trans>Sending…</Trans> : <Trans>Send answer</Trans>}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={submitting}
+                onClick={() => {
+                  setAnswer("");
+                  setEditing(false);
+                }}
+              >
+                <Trans>Cancel</Trans>
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-3.5 flex gap-2">
+            <Button disabled={submitting} onClick={() => void submitAnswer("approved")}>
+              {submitting ? <Trans>Sending…</Trans> : <Trans>Send it</Trans>}
+            </Button>
+            <Button variant="outline" disabled={submitting} onClick={() => setEditing(true)}>
+              <Trans>Edit first</Trans>
+            </Button>
+          </div>
+        )}
+        {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
+      </div>
     </BuiCard>
+  );
+}
+
+const BADGE_TONES = {
+  neutral: "bg-foreground/5 text-muted-foreground",
+  positive: "bg-success/10 text-success",
+  caution: "bg-warning/15 text-warning",
+} as const;
+
+function StatusBadge({ tone, children }: { tone: keyof typeof BADGE_TONES; children: ReactNode }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[12px] font-medium ${BADGE_TONES[tone]}`}
+    >
+      {children}
+    </span>
   );
 }

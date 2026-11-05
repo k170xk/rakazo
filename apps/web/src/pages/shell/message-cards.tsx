@@ -3,7 +3,7 @@ import { useLinkPrompt } from "@rakazo/chat-ui/web";
 import type { MessageBlock } from "@rakazo/contracts";
 import { appConnectedInput, waitForConnection } from "@rakazo/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
-import { X } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { BuiCard, SuccessPop } from "../../components/ai/primitives";
 import { OptionRow } from "../../components/OptionRow";
@@ -543,13 +543,21 @@ export function ArtifactImage({
       {src ? (
         <button
           type="button"
+          aria-label={t`Enlarge ${name}`}
           onClick={() => setOpen(true)}
-          className="max-w-[240px] overflow-hidden rounded-[20px]"
+          className="group relative block max-w-[min(560px,100%)] overflow-hidden rounded-xl border border-border bg-muted"
         >
-          <img src={src} alt={name} className="max-h-48 w-full object-cover" />
+          <img
+            src={src}
+            alt={name}
+            className="block max-h-[420px] w-auto max-w-full object-contain"
+          />
+          <span className="pointer-events-none absolute end-2 bottom-2 grid size-8 place-items-center rounded-lg bg-background/90 text-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+            <Maximize2 aria-hidden className="size-4" />
+          </span>
         </button>
       ) : (
-        <div className="rounded-[20px] bg-muted px-4 py-3 text-[14px] text-muted-foreground">
+        <div className="grid h-48 w-[min(360px,80vw)] place-items-center rounded-xl border border-border bg-muted text-[13px] text-muted-foreground">
           {name}
         </div>
       )}

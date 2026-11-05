@@ -1,6 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { LinkFavicons } from "@rakazo/chat-ui/web";
-import { LinkFaviconsContext, RemoteImagesContext } from "@rakazo/chat-ui/web";
+import {
+  LinkFaviconsContext,
+  RemoteImagesContext,
+  TrustedImageHostsContext,
+} from "@rakazo/chat-ui/web";
 import { analyticsScreen } from "@rakazo/core";
 import { Button } from "@rakazo/ui-web";
 import {
@@ -82,6 +86,9 @@ const linkFavicons: LinkFavicons = {
   load: (origin) => rpc.links.favicon({ origin }),
 };
 
+// OCSC's own sites and the Evolve file store, where project photos and generated images live.
+const trustedImageHosts = ["ocsc.me", "ocsc.co.uk", "ocsc.ie", "axywhnegcerpjqjiuhhn.supabase.co"];
+
 export function App() {
   const loadRemoteImages = useSyncExternalStore(
     subscribeRemoteImages,
@@ -90,17 +97,19 @@ export function App() {
   );
   return (
     <RemoteImagesContext.Provider value={loadRemoteImages}>
-      <LinkFaviconsContext.Provider value={linkFavicons}>
-        <ErrorBoundary fallback={<AppFailed />}>
-          {window.location.pathname === SSO_CALLBACK_PATH ? (
-            <SsoCallbackPage />
-          ) : window.location.pathname === "/integrations/callback" ? (
-            <IntegrationCallbackPage />
-          ) : (
-            <SessionApp />
-          )}
-        </ErrorBoundary>
-      </LinkFaviconsContext.Provider>
+      <TrustedImageHostsContext.Provider value={trustedImageHosts}>
+        <LinkFaviconsContext.Provider value={linkFavicons}>
+          <ErrorBoundary fallback={<AppFailed />}>
+            {window.location.pathname === SSO_CALLBACK_PATH ? (
+              <SsoCallbackPage />
+            ) : window.location.pathname === "/integrations/callback" ? (
+              <IntegrationCallbackPage />
+            ) : (
+              <SessionApp />
+            )}
+          </ErrorBoundary>
+        </LinkFaviconsContext.Provider>
+      </TrustedImageHostsContext.Provider>
     </RemoteImagesContext.Provider>
   );
 }

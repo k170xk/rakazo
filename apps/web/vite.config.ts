@@ -486,7 +486,11 @@ export default defineConfig(({ command, mode }) => {
   // Set by the server built from this config; reusing one config object for two servers would
   // leave the last one's list.
   let proxyHosts: readonly string[] | true = [];
-  const proxy = apiProxy(api, () => proxyHosts);
+  const proxy = apiProxy(
+    api,
+    () => proxyHosts,
+    process.env.API_PROXY_ORIGIN ?? rootEnv.API_PROXY_ORIGIN,
+  );
   const screenProxySecret = () =>
     resolveScreenProxySecret({
       ...process.env,

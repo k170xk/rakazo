@@ -79,8 +79,10 @@ function renderHeader({ inGroup = false } = {}) {
         voiceReady={false}
         inCall={false}
         panelOpen={false}
+        computerPanelOpen={false}
         onOpenNavigation={() => undefined}
         onTogglePanel={() => undefined}
+        onToggleComputerPanel={() => undefined}
         onCall={() => undefined}
       />,
     ),
@@ -88,6 +90,32 @@ function renderHeader({ inGroup = false } = {}) {
 }
 
 const gift = () => container.querySelector<HTMLButtonElement>('[aria-label="Invite a friend"]');
+
+it("opens the computer panel from the header", () => {
+  const open = vi.fn();
+  billing.status = { referral: null };
+  act(() =>
+    root.render(
+      <ChatHeader
+        inGroup={false}
+        active={{ id: "bot-1", name: "Helper", color: BOT_COLORS[0] } as Bot}
+        activeGroup={undefined}
+        activeSnapshot={null}
+        phoneCallsEnabled={false}
+        voiceReady={false}
+        inCall={false}
+        panelOpen={false}
+        computerPanelOpen={false}
+        onOpenNavigation={() => undefined}
+        onTogglePanel={() => undefined}
+        onToggleComputerPanel={open}
+        onCall={() => undefined}
+      />,
+    ),
+  );
+  act(() => container.querySelector<HTMLButtonElement>('[aria-label="Computer"]')!.click());
+  expect(open).toHaveBeenCalledOnce();
+});
 
 it("shows no gift when the account cannot invite", () => {
   billing.status = { referral: null };

@@ -14,6 +14,7 @@ export const DEVICE_SOCKET = `^${USER_DEVICE_CONNECT_PATH}(?:\\?|$)`;
 export function apiProxy(
   target: string,
   allowedHosts: () => readonly string[] | true,
+  origin?: string,
 ): Record<string, ProxyOptions> {
   const options = (upgrades: boolean): ProxyOptions => ({
     target,
@@ -32,7 +33,17 @@ export function apiProxy(
     configure: (proxy) => {
       proxy.on("proxyReq", (proxyReq, req) => {
         proxyReq.setHeader("x-forwarded-for", appendForwardedFor(req));
+        // A dev server in front of a remote API: that API only trusts its own origin.
+        if (origin && proxyReq.getHeader("origin")) proxyReq.setHeader("origin", origin);
       });
+      if (origin) {
+        // Its redirects name its own site; keep them on this dev server.
+        proxy.on("proxyRes", (proxyRes) => {
+          const location = proxyRes.headers.location;
+          if (location?.startsWith(`${origin}/`))
+            proxyRes.headers.location = location.slice(origin.length);
+        });
+      }
       if (upgrades) {
         proxy.on("proxyReqWs", (proxyReq, req) => {
           proxyReq.setHeader("x-forwarded-for", appendForwardedFor(req));

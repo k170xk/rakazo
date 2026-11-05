@@ -216,7 +216,7 @@ it("translates every size unit and rolls up instead of 1,024.0 KB or 1,536.0 MB"
       </>,
     ),
   );
-  const sizes = [...container.querySelectorAll("button span:last-child")].map(
+  const sizes = [...container.querySelectorAll('[data-testid="artifact-file-size"]')].map(
     (el) => el.textContent,
   );
   expect(sizes).toEqual(["«512 B»", "«1 KB»", "«1 MB»", "«1.5 GB»", "«1.5 TB»"]);

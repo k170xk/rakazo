@@ -35,6 +35,7 @@ import { CheckIcon, CopyIcon, GlobeIcon, ImageIcon } from "./icons";
 import type { ChatMarkdownProps } from "./markdown";
 import {
   closeUnterminatedFence,
+  imageHostTrusted,
   inlineMarkdownImageSrc,
   isProseFence,
   LinkFaviconsPausedContext,
@@ -51,6 +52,7 @@ import {
   remoteImageRenders,
   remoteMarkdownImage,
   sanitizeMarkdownUrl,
+  TrustedImageHostsContext,
   useLinkFavicon,
 } from "./markdown";
 import { useMarkdownCopy } from "./markdown-copy";
@@ -407,6 +409,13 @@ function soleRemoteImage(node: MarkdownHast | undefined):
   };
 }
 
+/** Whether an image loads without a tap: the reader's setting, or a host the app trusts. */
+function useRemoteImageSetting(): (href: string) => boolean {
+  const loadRemote = useContext(RemoteImagesContext);
+  const trustedHosts = useContext(TrustedImageHostsContext);
+  return (href) => loadRemote || imageHostTrusted(href, trustedHosts);
+}
+
 function RemoteImageButton({
   image,
   alt,
@@ -437,7 +446,7 @@ function RemoteImageButton({
 
 function MarkdownImage({ src = "", alt, title }: { src?: string; alt?: string; title?: string }) {
   const enclosingLink = useContext(InsideLinkContext);
-  const loadRemote = useContext(RemoteImagesContext);
+  const loadsRemote = useRemoteImageSetting();
   const remote = remoteMarkdownImage(src);
   // Bumping this redraws after a tap. Whether the image shows is read from the current URL.
   const [, setRevision] = useState(0);
@@ -445,7 +454,7 @@ function MarkdownImage({ src = "", alt, title }: { src?: string; alt?: string; t
   if (inlineMarkdownImageSrc(src)) {
     return <img src={src} alt={alt ?? ""} title={title} loading="lazy" />;
   }
-  if (remote && remoteImageRenders(remote.href, loadRemote, rejectedLink)) {
+  if (remote && remoteImageRenders(remote.href, loadsRemote(remote.href), rejectedLink)) {
     return (
       <img
         src={remote.href}
@@ -478,9 +487,9 @@ function LinkedRemoteImage({
   alt?: string;
   title?: string;
 }) {
-  const loadRemote = useContext(RemoteImagesContext);
+  const loadsRemote = useRemoteImageSetting();
   const [, setRevision] = useState(0);
-  if (remoteImageRenders(image.href, loadRemote, false)) {
+  if (remoteImageRenders(image.href, loadsRemote(image.href), false)) {
     return (
       <ConfirmableAnchor href={href}>
         <img
@@ -567,7 +576,7 @@ function MarkdownAnchor({
   node,
   ...props
 }: React.ComponentPropsWithoutRef<"a"> & { node?: MarkdownHast }) {
-  const loadRemote = useContext(RemoteImagesContext);
+  const loadsRemote = useRemoteImageSetting();
   const { renderMention, onOpenPage: openPage } = useContext(InlineChipsContext);
   const href = typeof props.href === "string" ? props.href : "";
   const pageId = markdownPageId(href);
@@ -584,7 +593,7 @@ function MarkdownAnchor({
     return renderMention?.(mentionId, name) ?? <span>{props.children}</span>;
   }
   const image = href ? soleRemoteImage(node) : undefined;
-  if (image && !remoteImageRenders(image.href, loadRemote, false)) {
+  if (image && !remoteImageRenders(image.href, loadsRemote(image.href), false)) {
     return <LinkedRemoteImage href={href} image={image} alt={image.alt} title={image.title} />;
   }
   // urlTransform blanks unsafe URLs. Keep their text without a link that opens the app again.
@@ -873,6 +882,7 @@ export type { ChatMarkdownProps, LinkFavicons } from "./markdown";
 export {
   LinkFaviconsContext,
   RemoteImagesContext,
+  TrustedImageHostsContext,
   useLinkFavicon,
   withBlockMentions,
 } from "./markdown";

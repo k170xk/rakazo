@@ -1,8 +1,8 @@
-import { Button, cn } from "@rakazo/ui-web";
+import { cn } from "@rakazo/ui-web";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 
-/** A lettered answer row for question cards; it only fills on hover or once chosen. */
+/** A lettered answer row for question cards; the chosen one is tinted and the rest dim. */
 export function OptionRow({
   letter,
   selected,
@@ -17,25 +17,30 @@ export function OptionRow({
   children: ReactNode;
 }) {
   return (
-    <Button
-      variant="ghost"
+    <button
+      type="button"
       disabled={disabled}
       aria-pressed={selected || undefined}
       onClick={onClick}
       className={cn(
-        "-mx-2 h-auto w-[calc(100%+1rem)] min-w-0 justify-start gap-3 whitespace-normal px-2 py-2 text-start text-[15px] font-normal",
-        selected && "bg-accent disabled:opacity-100",
+        "flex w-full min-w-0 items-center gap-3 rounded-xl border px-3 py-2.5 text-start text-[15px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        selected
+          ? "border-success/40 bg-success/10"
+          : "border-border hover:bg-accent disabled:pointer-events-none disabled:opacity-50",
       )}
     >
       <span
         aria-hidden
-        className="grid size-7 shrink-0 place-items-center rounded-md border border-border bg-muted text-[13px] text-muted-foreground"
+        className={cn(
+          "grid size-7 shrink-0 place-items-center rounded-lg text-[13px] font-medium",
+          selected ? "bg-success text-background" : "bg-muted text-muted-foreground",
+        )}
       >
         {letter}
       </span>
       <span className="flex-1">{children}</span>
-      {selected ? <Check aria-hidden className="text-muted-foreground" /> : null}
-    </Button>
+      {selected ? <Check aria-hidden className="size-4 shrink-0 text-success" /> : null}
+    </button>
   );
 }
 

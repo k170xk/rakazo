@@ -3,11 +3,21 @@ import { t as translate } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo/chat-ui/web";
 import { artifactPreviewKind, isAttachmentAudioMimeType } from "@rakazo/contracts";
-import { fileSizeParts } from "@rakazo/core";
+import { artifactTypeLabel, attachmentExtensionForMimeType, fileSizeParts } from "@rakazo/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@rakazo/ui-web";
-import { Code2, Download, FileText, Play, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Code2,
+  Download,
+  FileArchive,
+  FileSpreadsheet,
+  FileText,
+  Play,
+  Presentation,
+  X,
+} from "lucide-react";
 import type { RefObject } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
 import { errorText } from "../lib/user-error";
@@ -67,74 +77,237 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
     );
   }
 
-  if (!previewable) {
+  if (artifactPreviewKind(props.mimeType) === "video") {
     return (
-      <div>
-        <button
-          type="button"
-          onClick={() => void startDownload()}
-          className="rounded-[20px] bg-card px-4 py-3 text-left text-[14px] text-foreground hover:bg-accent"
-        >
-          <div className="font-medium">{props.name}</div>
-          <div className="mt-1 flex gap-2 text-muted-foreground">
-            <span>{props.mimeType}</span>
-            <span>{formatSize(props.size)}</span>
-          </div>
-        </button>
+      <div className="w-[min(560px,100%)]">
+        <InlineVideo {...props} onDownload={startDownload} />
         {downloadError ? <DownloadError message={downloadError} /> : null}
       </div>
     );
   }
 
+  const type = fileType(props.name, props.mimeType);
+  const details = (
+    <>
+      <span
+        className={`grid size-10 shrink-0 place-items-center rounded-[10px] ${type.tile}`}
+        aria-hidden
+      >
+        <type.icon size={21} strokeWidth={1.8} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[14px] font-medium">{props.name}</span>
+        <span className="mt-0.5 flex gap-1.5 text-[13px] text-muted-foreground">
+          <span>{type.label}</span>
+          <span aria-hidden>·</span>
+          <span data-testid="artifact-file-size">{formatSize(props.size)}</span>
+        </span>
+      </span>
+    </>
+  );
+
   return (
     <>
       <div>
-        <BuiCard className="flex min-w-[280px] overflow-hidden text-left text-foreground">
-          <button
-            ref={previewButton}
-            type="button"
-            aria-label={t`Preview ${props.name}`}
-            onClick={() => setPreviewOpen(true)}
-            className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-accent"
-          >
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px] bg-muted text-foreground">
-              {props.mimeType === "text/html" ? (
-                <Code2 size={21} strokeWidth={1.8} />
-              ) : (
-                <FileText size={21} strokeWidth={1.8} />
-              )}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-[14px] font-medium">{props.name}</span>
-              <span className="mt-0.5 block text-[13px] text-muted-foreground">
-                {formatSize(props.size)}
-              </span>
-            </span>
-          </button>
-          <IconTooltip label={t`Download ${props.name}`}>
+        <BuiCard className="flex w-[min(420px,100%)] min-w-[280px] items-center gap-2 overflow-hidden border border-border py-2.5 ps-3 pe-2.5 text-left text-foreground dark:border-transparent">
+          {previewable ? (
             <button
+              ref={previewButton}
               type="button"
-              aria-label={t`Download ${props.name}`}
-              onClick={() => void startDownload()}
-              className="grid w-14 shrink-0 place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={t`Preview ${props.name}`}
+              onClick={() => setPreviewOpen(true)}
+              className="-my-1 -ms-1 flex min-w-0 flex-1 items-center gap-3 rounded-[14px] p-1 text-left hover:bg-accent"
             >
-              <Download size={19} strokeWidth={1.8} />
+              {details}
             </button>
-          </IconTooltip>
+          ) : (
+            <span className="flex min-w-0 flex-1 items-center gap-3">{details}</span>
+          )}
+          <DownloadPill name={props.name} onDownload={startDownload} />
         </BuiCard>
         {downloadError ? <DownloadError message={downloadError} /> : null}
       </div>
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent
-          showCloseButton={false}
-          initialFocus={closeButton}
-          finalFocus={previewButton}
-          className="flex h-[min(88vh,900px)] w-[min(960px,94vw)] flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
-        >
-          <FilePreview {...props} closeButtonRef={closeButton} />
-        </DialogContent>
-      </Dialog>
+      {previewable ? (
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent
+            showCloseButton={false}
+            initialFocus={closeButton}
+            finalFocus={previewButton}
+            className="flex h-[min(88vh,900px)] w-[min(960px,94vw)] flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
+          >
+            <FilePreview {...props} closeButtonRef={closeButton} />
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
+  );
+}
+
+function DownloadPill({ name, onDownload }: { name: string; onDownload: () => Promise<void> }) {
+  const { t } = useLingui();
+  return (
+    <button
+      type="button"
+      aria-label={t`Download ${name}`}
+      onClick={() => void onDownload()}
+      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-foreground px-2.5 text-[13px] font-medium text-background hover:bg-foreground/85"
+    >
+      <Download aria-hidden className="size-3.5" strokeWidth={2} />
+      {t`Download`}
+    </button>
+  );
+}
+
+const FILE_TYPES: Record<string, { icon: LucideIcon; label: () => string; tile: string }> = {
+  docx: {
+    icon: FileText,
+    label: () => translate`Word document`,
+    tile: "bg-link/10 text-link",
+  },
+  pptx: {
+    icon: Presentation,
+    label: () => translate`PowerPoint`,
+    tile: "bg-warning/15 text-warning",
+  },
+  xlsx: {
+    icon: FileSpreadsheet,
+    label: () => translate`Spreadsheet`,
+    tile: "bg-success/15 text-success",
+  },
+  pdf: {
+    icon: FileText,
+    label: () => translate`PDF`,
+    tile: "bg-destructive/10 text-destructive",
+  },
+  html: { icon: Code2, label: () => translate`Web page`, tile: "bg-muted text-foreground" },
+  zip: { icon: FileArchive, label: () => translate`ZIP archive`, tile: "bg-muted text-foreground" },
+};
+
+function fileType(name: string, mimeType: string) {
+  const extension =
+    attachmentExtensionForMimeType(mimeType).slice(1) ||
+    (name.includes(".") ? name.split(".").pop()!.toLowerCase() : "");
+  const key =
+    extension === "doc"
+      ? "docx"
+      : extension === "ppt"
+        ? "pptx"
+        : extension === "xls" || extension === "csv"
+          ? "xlsx"
+          : extension === "htm" || mimeType === "text/html"
+            ? "html"
+            : mimeType === "application/pdf"
+              ? "pdf"
+              : extension;
+  const known = FILE_TYPES[key];
+  if (known) return { icon: known.icon, label: known.label(), tile: known.tile };
+  return {
+    icon: FileText,
+    label: artifactTypeLabel(mimeType),
+    tile: "bg-muted text-foreground",
+  };
+}
+
+/** Small videos load as soon as they scroll into view; larger ones wait for Play. */
+const INLINE_VIDEO_AUTOLOAD_BYTES = 40 * 1024 * 1024;
+
+function InlineVideo({
+  target,
+  artifactId,
+  name,
+  size,
+  onDownload,
+}: ArtifactFileCardProps & { onDownload: () => Promise<void> }) {
+  const { t } = useLingui();
+  const container = useRef<HTMLDivElement>(null);
+  const [state, setState] = useState<
+    { status: "idle" | "loading" | "error" } | { status: "ready"; src: string }
+  >({ status: "idle" });
+  const started = useRef(false);
+  const src = state.status === "ready" ? state.src : undefined;
+  useEffect(() => () => (src ? URL.revokeObjectURL(src) : undefined), [src]);
+
+  const load = useCallback(async () => {
+    if (started.current) return;
+    started.current = true;
+    setState({ status: "loading" });
+    try {
+      const bytes = await fetchArtifactBytes(target, artifactId);
+      setState({
+        status: "ready",
+        src: URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "video/mp4" })),
+      });
+    } catch {
+      started.current = false;
+      setState({ status: "error" });
+    }
+  }, [target, artifactId]);
+
+  useEffect(() => {
+    if (size > INLINE_VIDEO_AUTOLOAD_BYTES) return;
+    const element = container.current;
+    if (!element || typeof IntersectionObserver === "undefined") {
+      void load();
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          void load();
+        }
+      },
+      { rootMargin: "320px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [load, size]);
+
+  return (
+    <div
+      ref={container}
+      className="overflow-hidden rounded-[20px] border border-border bg-card text-foreground dark:border-transparent"
+    >
+      <div className="relative aspect-video w-full bg-black">
+        {src ? (
+          // biome-ignore lint/a11y/useMediaCaption: A bot's rendered video carries no caption track.
+          <video
+            src={src}
+            controls
+            playsInline
+            preload="metadata"
+            aria-label={name}
+            className="absolute inset-0 h-full w-full object-contain"
+          />
+        ) : (
+          <button
+            type="button"
+            aria-label={t`Play ${name}`}
+            aria-busy={state.status === "loading"}
+            disabled={state.status === "loading"}
+            onClick={() => void load()}
+            className="absolute inset-0 grid place-items-center text-white"
+          >
+            {state.status === "loading" ? (
+              <Spinner aria-label={t`Loading video…`} />
+            ) : (
+              <span className="grid size-14 place-items-center rounded-full bg-white/15 backdrop-blur-sm transition-colors hover:bg-white/25">
+                <Play aria-hidden className="ms-0.5 size-6 fill-current" />
+              </span>
+            )}
+          </button>
+        )}
+      </div>
+      <div className="flex items-center gap-3 py-2.5 ps-4 pe-2.5">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14px] font-medium">{name}</span>
+          <span className="mt-0.5 block text-[13px] text-muted-foreground">
+            {state.status === "error" ? t`The video could not be loaded.` : formatSize(size)}
+          </span>
+        </span>
+        <DownloadPill name={name} onDownload={onDownload} />
+      </div>
+    </div>
   );
 }
 

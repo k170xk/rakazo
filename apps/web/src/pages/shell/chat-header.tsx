@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
 import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
-import { Gift, Menu, Phone } from "lucide-react";
+import { Gift, Menu, Monitor, Phone } from "lucide-react";
 import { useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
@@ -17,8 +17,10 @@ export function ChatHeader({
   voiceReady,
   inCall,
   panelOpen,
+  computerPanelOpen,
   onOpenNavigation,
   onTogglePanel,
+  onToggleComputerPanel,
   onCall,
 }: {
   inGroup: boolean;
@@ -30,8 +32,12 @@ export function ChatHeader({
   voiceReady: boolean;
   inCall: boolean;
   panelOpen: boolean;
+  /** True while the Computer tab of the side panel is showing. */
+  computerPanelOpen: boolean;
   onOpenNavigation: () => void;
   onTogglePanel: () => void;
+  /** Opens the Computer tab, or closes the side panel when that tab is already showing. */
+  onToggleComputerPanel: () => void;
   onCall: (bot: Bot) => void;
 }) {
   const { t } = useLingui();
@@ -77,6 +83,22 @@ export function ChatHeader({
         </span>
       </Button>
       <div className="flex items-center justify-self-end gap-2">
+        {!inGroup && active ? (
+          <IconTooltip label={t`Computer`}>
+            <Button
+              variant="floating"
+              size="icon-lg"
+              data-testid="computer-panel-trigger"
+              aria-label={t`Computer`}
+              aria-pressed={computerPanelOpen}
+              onClick={onToggleComputerPanel}
+              data-active={computerPanelOpen ? "" : undefined}
+              className="app-no-drag"
+            >
+              <Monitor strokeWidth={1.6} className="size-[17px]" />
+            </Button>
+          </IconTooltip>
+        ) : null}
         {phoneCallsEnabled && !inGroup && active ? (
           <IconTooltip label={inCall ? t`Open call` : t`Call`}>
             <Button
