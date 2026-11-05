@@ -302,7 +302,8 @@ export const OCSC_SKILLS: OcscSkill[] = [
   },
   {
     name: "evolve-plugin",
-    description: "Build an Evolve plugin (a staff mini-app) and send it for review",
+    description:
+      "Any app, tool, game or dashboard for Evolve or on Evolve project/CV data: an Evolve plugin",
     body: PLUGIN_INSTRUCTIONS,
   },
 ];

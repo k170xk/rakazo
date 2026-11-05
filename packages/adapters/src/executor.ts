@@ -194,6 +194,7 @@ import {
 } from "./run-routines.js";
 import {
   BUILTIN_AGENT_TOOL_NAMES,
+  evolvePluginsOffered,
   followUpsOffered,
   offeredFleetTools,
   selectBuiltinToolsForRun,
@@ -1919,6 +1920,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   : disabledBuiltinTools,
                 offeredFleetTools: offeredFleetTools(strategicBuiltins),
                 followUpsOffered: followUpsOffered(strategicBuiltins, ownerStartedRun),
+                evolvePluginsOffered: evolvePluginsOffered(strategicBuiltins),
                 userComputer,
               })
                 .filter((instruction): instruction is string => Boolean(instruction))

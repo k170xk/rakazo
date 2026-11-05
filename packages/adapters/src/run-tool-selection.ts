@@ -241,3 +241,8 @@ export function followUpsOffered(
     FOLLOW_UP_TOOL_NAMES.every((name) => tools.some((tool) => tool.name === name))
   );
 }
+
+/** Whether this run can build Evolve plugins (company switch on, owner's direct turn). */
+export function evolvePluginsOffered(tools: readonly { name: string }[]): boolean {
+  return tools.some((tool) => tool.name === "evolve_plugin_status");
+}

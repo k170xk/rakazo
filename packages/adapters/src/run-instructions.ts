@@ -342,6 +342,8 @@ export function userTurnInstructions(parts: {
   offeredFleetTools?: readonly string[];
   /** The run can set its own follow-ups (see followUpsOffered). */
   followUpsOffered?: boolean;
+  /** The run has the Evolve plugin tools (see evolvePluginsOffered). */
+  evolvePluginsOffered?: boolean;
   userComputer?: UserComputerState;
 }): (string | undefined)[] {
   return [
@@ -399,6 +401,9 @@ export function userTurnInstructions(parts: {
       "save_page",
       'For a dashboard, report, tracker or comparison, build a page with save_page (call it with {"help": true} first for the kit guide). To change a page, pass its pageId with edits or new source instead of making a new page. In your reply, mention the page by its title; never paste its source.',
     ),
+    parts.evolvePluginsOffered
+      ? "An app, tool, game or dashboard the person wants to use in Evolve, share with staff, or build on Evolve data (projects, CVs, people) is an Evolve plugin: read the evolve-plugin skill and build it with ocsc-plugin, which gives it Evolve's look, light and dark mode and admin-approved Evolve data. save_page is for a quick view inside this chat. When unsure which they want, ask."
+      : undefined,
     offeredBuiltinClause(
       parts.disabledBuiltinTools,
       "add_mcp_server",
