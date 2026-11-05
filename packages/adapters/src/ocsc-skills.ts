@@ -244,6 +244,29 @@ To play the finished video on your computer screen: ocsc-show <the .mp4 path>.
 STYLE
 UK and Irish English. File names like outputs/Working-at-Height.video.json, with no spaces. Short on-screen text: headings under 8 words, bullets under 12. The voice says more than the screen shows; never read the on-screen text out word for word.`;
 
+const PLUGIN_INSTRUCTIONS = `Evolve plugins are small apps staff build here and use inside Evolve once the plugin reviewers approve them. A plugin is a React page that runs sealed in Evolve: it has no network, cookies or storage of its own and reaches Evolve data only through evolve.call(scope), with only the scopes the reviewers grant.
+
+BEFORE YOU START
+When evolve_plugin_status is missing from your tools, Evolve plugins are switched off for the company or for this chat; plugins are built in the person's own direct chat. Say that in one line and stop.
+1. evolve_plugin_status. If builder is false, tell the person to ask an Evolve admin for the Plugin builder privilege in Access Control and stop. It also lists their plugins, each version's status and the reviewers' notes; when the notes ask for changes, make exactly those changes.
+2. Build on a bot with its own computer. If this bot shares the team computer, offer to create one with spawn_bot (name "Plugin Builder", computer_mode "dedicated") and continue there. The computer holds no Evolve passwords or keys and sample data stands in for Evolve while you build.
+3. evolve_plugin_scopes lists what a plugin may read or change. Agree with the person which it needs; ask for the fewest, and read scopes over write scopes.
+
+BUILD
+1. ocsc-plugin new <slug> --name "<Name>"   makes plugins/<slug> from the template (React, TypeScript, Vite). The slug is lower-case words joined by hyphens.
+2. Edit plugins/<slug>/evolve-plugin.json: name, description, icon (a lucide icon name), version and scopes. Write the app in src/. Call Evolve only through the SDK in src/evolve.ts: await evolve.call("me.read") and so on; each call returns { ok, data } or { ok: false, error }, and a write can come back declined when the person says no at the Evolve prompt.
+3. Rules the sealed page enforces, so write for them from the start: no fetch, XMLHttpRequest, WebSocket or external links to load from; no localStorage or cookies (use the storage.personal scope to keep the person's settings); import images and fonts from src so the build inlines them; style with the theme CSS variables in src/styles.css so it follows the Evolve brand.
+4. ocsc-plugin dev plugins/<slug>   runs it with sample data and opens it on your screen; look with computer_observe. ocsc-plugin stop plugins/<slug> when done.
+5. ocsc-plugin build plugins/<slug>   type-checks, bundles and runs the same checks Evolve runs. Fix every problem it lists.
+
+SEND
+- evolve_plugin_submit with path plugins/<slug> saves a draft version under the person's name and returns a preview link that only they and the reviewers can open. Raise version in evolve-plugin.json before each new submission.
+- When the person is happy, submit with submitForReview true and purpose: what it does, who it is for, and what it reads and changes. Reviewers choose which scopes to grant, can ask before each write, and publish it to the Staff Plugins menu.
+- Give the preview link and the My plugins link from the result. Reviews come back as Evolve notifications; evolve_plugin_status shows the decision and notes.
+
+CURSOR AGENTS
+When the person asks for a Cursor cloud agent to write the plugin, launch it on the company plugins repository with the slug as the folder and the template's layout and rules above in the prompt. When it finishes, evolve_plugin_import_branch {branch, folder} copies its work here; read the code, then build, try and submit it as above.`;
+
 export const OCSC_SKILLS: OcscSkill[] = [
   {
     name: "ocsc-word",
@@ -269,5 +292,10 @@ export const OCSC_SKILLS: OcscSkill[] = [
     name: "ocsc-video",
     description: "Any video, animation or social clip (.mp4): OCSC-branded, via ocsc-video",
     body: VIDEO_INSTRUCTIONS,
+  },
+  {
+    name: "evolve-plugin",
+    description: "Build an Evolve plugin (a staff mini-app) and send it for review",
+    body: PLUGIN_INSTRUCTIONS,
   },
 ];

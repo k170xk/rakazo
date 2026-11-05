@@ -1982,6 +1982,10 @@ export const CompanyFeaturesSchema = z.object({
   routines: z.boolean(),
   /** Members connect their own model keys and choose models; off means only the company model runs. */
   memberModels: z.boolean(),
+  /** Builder-approved staff build Evolve plugins with OCSC Intelligence and send them to Evolve. */
+  evolvePlugins: z.boolean(),
+  /** Cursor cloud agents for every space, on the company's Cursor key and monthly run cap. */
+  cursorAgents: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -1994,6 +1998,8 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   messaging: true,
   routines: true,
   memberModels: true,
+  evolvePlugins: false,
+  cursorAgents: false,
 };
 
 /** Stored switches over the defaults, so a switch added later starts at its default. */

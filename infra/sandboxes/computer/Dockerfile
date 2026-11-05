@@ -25,6 +25,9 @@ RUN cd /opt/ocsc-video && npm ci --omit=dev --no-audit --no-fund \
   && node -e "import('@remotion/renderer').then((r) => r.ensureBrowser())" \
   && mkdir -p .work node_modules/.cache \
   && rm -rf /root/.npm /tmp/*
+# Evolve staff plugins: the template, sample data and build tools, so a plugin builds offline.
+COPY ocsc/evolve-plugin /opt/evolve-plugin
+RUN cd /opt/evolve-plugin && npm ci --no-audit --no-fund && rm -rf /root/.npm /tmp/*
 
 FROM debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251
 # Dev tools let bots clone repos and fetch artifacts; containers run uid 1000
@@ -193,11 +196,12 @@ COPY --from=ocsc-builder /usr/local/lib/node_modules/npm /usr/local/lib/node_mod
 COPY --from=ocsc-builder /opt/ocsc-word /opt/ocsc-word
 # Custom video scenes are bundled into .work and cached in node_modules/.cache at run time.
 COPY --from=ocsc-builder --chown=1000:1000 /opt/ocsc-video /opt/ocsc-video
+COPY --from=ocsc-builder /opt/evolve-plugin /opt/evolve-plugin
 COPY --chmod=755 ocsc/ocsc-tool /usr/local/lib/rakazo/ocsc-tool
 RUN sed -i 's/\r$//' /usr/local/lib/rakazo/ocsc-tool \
   && ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
   && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
-  && for tool in word pptx xlsx pdf show video; do \
+  && for tool in word pptx xlsx pdf show video plugin; do \
        ln -s /usr/local/lib/rakazo/ocsc-tool "/usr/local/bin/ocsc-${tool}"; \
      done \
   && mkdir -p /usr/local/share/fonts/ocsc \

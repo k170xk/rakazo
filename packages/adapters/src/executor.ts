@@ -278,6 +278,10 @@ const COLLEAGUE_BLOCKED_TOOLS: ReadonlySet<string> = new Set([
   "cloud_agent_launch",
   "cloud_agent_status",
   "cloud_agent_reply",
+  "evolve_plugin_status",
+  "evolve_plugin_scopes",
+  "evolve_plugin_submit",
+  "evolve_plugin_import_branch",
   "cloud_agent_cancel",
   "search_history",
   "read_history",
@@ -1405,6 +1409,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             connectedAppsEnabled: companyFeatures().connectedApps,
             mcpServersEnabled: companyFeatures().mcpServers,
             routinesEnabled: companyFeatures().routines,
+            evolvePluginsEnabled: Boolean(deps.evolvePlugins) && companyFeatures().evolvePlugins,
+            pluginBranchImportEnabled:
+              Boolean(deps.evolvePlugins?.repo) &&
+              companyFeatures().cursorAgents &&
+              cloudAgentsEnabled(cloudAgent, run.spaceId),
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
           ...(hasMessagingIdentity &&

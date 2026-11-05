@@ -1,0 +1,68 @@
+/* Evolve sets --evolve-primary, --evolve-text and the fonts from the Brand Hub; these are the fallbacks. */
+:root {
+  --evolve-primary: #77bf43;
+  --evolve-text: #1f2937;
+  --evolve-body-font: system-ui, sans-serif;
+  --evolve-heading-font: system-ui, sans-serif;
+  --evolve-muted: #6b7280;
+  --evolve-border: #e5e7eb;
+  color: var(--evolve-text);
+  font-family: var(--evolve-body-font);
+}
+
+body {
+  margin: 0;
+  background: #fff;
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--evolve-heading-font);
+  margin: 0 0 8px;
+}
+
+.muted {
+  color: var(--evolve-muted);
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.card {
+  border: 1px solid var(--evolve-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+button {
+  background: var(--evolve-primary);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  border: 1px solid var(--evolve-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+}

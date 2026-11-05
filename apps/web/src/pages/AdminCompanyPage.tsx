@@ -340,6 +340,16 @@ function CompanyFeaturesSection({
       label: t`Routines`,
       description: t`Scheduled and recurring tasks.`,
     },
+    {
+      id: "evolvePlugins",
+      label: t`Evolve plugins`,
+      description: t`Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review.`,
+    },
+    {
+      id: "cursorAgents",
+      label: t`Cursor cloud agents`,
+      description: t`Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap.`,
+    },
   ];
 
   async function toggle(id: CompanyFeatureId, value: boolean) {

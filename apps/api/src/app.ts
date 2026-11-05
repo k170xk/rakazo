@@ -46,6 +46,7 @@ import {
   createBackgroundJobHandlers,
   createCloudAgentConnection,
   createConnectorStack,
+  createEvolvePluginsConnection,
   createIdleComputerSweeper,
   createJobReconciler,
   createMessagingContextLoader,
@@ -645,7 +646,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     CLOUD_AGENT_PROVIDER: env.cloudAgentProvider,
     CURSOR_API_KEY: env.cursorApiKey,
     CLOUD_AGENT_SPACE_ID: env.cloudAgentSpaceId,
+    CLOUD_AGENT_MONTHLY_LAUNCHES: process.env.CLOUD_AGENT_MONTHLY_LAUNCHES,
   });
+  const evolvePlugins = createEvolvePluginsConnection(process.env);
   const paymentWallet = await createPaymentWalletProvider({
     PAYMENT_WALLET_PROVIDER: env.paymentWalletProvider,
     PAYMENT_WALLET_CLIENT_ID: env.paymentWalletClientId,
@@ -701,6 +704,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     messaging: messaging ? createMessagingContextLoader(prisma) : undefined,
     web: createWebProvider(),
     cloudAgent,
+    evolvePlugins,
     userDevices: userDevicesOverride ?? userDevices,
     paymentWallet,
     shutdownSignal: shutdown.signal,

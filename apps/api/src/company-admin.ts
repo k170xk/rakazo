@@ -34,6 +34,8 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   messaging: "Messaging apps are turned off for your company.",
   routines: "Routines are turned off for your company.",
   memberModels: "Your administrator chooses the models for your company.",
+  evolvePlugins: "Building Evolve plugins is turned off for your company.",
+  cursorAgents: "Cursor cloud agents are turned off for your company.",
 };
 
 /** Fails a member's request for something the company turned off; admins keep model choice. */

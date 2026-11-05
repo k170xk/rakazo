@@ -8,6 +8,10 @@ import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
 import { selectMemoryTools } from "./memory-tools.js";
 import { filterImageReturningComputerTools } from "./model-vision.js";
+import {
+  EVOLVE_PLUGIN_COMPUTER_TOOLS,
+  EVOLVE_PLUGIN_TOOL_NAMES,
+} from "./run-tools-evolve-plugins.js";
 import { USER_COMPUTER_SCREEN_TOOLS } from "./run-tools-user-computer.js";
 import {
   filterBuiltinToolsForRun,
@@ -38,6 +42,8 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "list_secrets",
   "cloud_agent_status",
   "purchase_status",
+  "evolve_plugin_status",
+  "evolve_plugin_scopes",
 ]);
 
 /** Offered only to a user who connected a wallet. */
@@ -108,6 +114,10 @@ export function selectBuiltinToolsForRun(options: {
   connectedAppsEnabled?: boolean;
   mcpServersEnabled?: boolean;
   routinesEnabled?: boolean;
+  /** Evolve is connected and the company turned Evolve plugins on. */
+  evolvePluginsEnabled?: boolean;
+  /** Cursor agents are on and a plugins repository is set up, so their branches can be imported. */
+  pluginBranchImportEnabled?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
   const ownerStartedRun = isOwnerStartedRun(options.trigger, Boolean(options.followUpFromUser));
@@ -133,6 +143,14 @@ export function selectBuiltinToolsForRun(options: {
       (options.computersEnabled !== false || !COMPUTER_TOOL_NAMES.has(tool.name)) &&
       (options.connectedAppsEnabled !== false || tool.name !== "connect_app") &&
       (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
+      // Plugin tools act as the person in Evolve, so only their own direct turns get them.
+      (!EVOLVE_PLUGIN_TOOL_NAMES.has(tool.name) ||
+        (Boolean(options.evolvePluginsEnabled) &&
+          ownerStartedRun &&
+          !options.messagingChannelRun &&
+          (options.computersEnabled !== false || !EVOLVE_PLUGIN_COMPUTER_TOOLS.has(tool.name)) &&
+          (tool.name !== "evolve_plugin_import_branch" ||
+            Boolean(options.pluginBranchImportEnabled)))) &&
       (options.routinesEnabled !== false ||
         (!SCHEDULE_TOOL_NAMES.has(tool.name) && tool.name !== "create_child_routine")) &&
       (options.trigger !== "created" || CREATED_RUN_TOOL_NAMES.has(tool.name)) &&

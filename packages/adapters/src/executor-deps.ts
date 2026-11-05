@@ -18,6 +18,7 @@ import type {
 } from "@rakazo/adapter-kit";
 import type { PrismaClient, RunLease, ThreadEvents } from "@rakazo/db";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
+import type { EvolvePluginsConnection } from "./evolve-plugins.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
@@ -68,6 +69,8 @@ export interface ExecutorDeps {
   mcpAllowPrivateEndpoint?: boolean;
   /** Remote cloud coding agents. Null/omit means tools stay uninjected. */
   cloudAgent?: CloudAgentConnection | null;
+  /** Evolve staff plugins. Null/omit means the evolve_plugin_* tools stay uninjected. */
+  evolvePlugins?: EvolvePluginsConnection | null;
   /** The deployment's payment wallet. Null/omit means purchase tools stay uninjected. */
   paymentWallet?: PaymentWalletProvider | null;
   /** Optional Auto Review verifier. When omitted, the factory selects from env (llm | jev | scripted). */

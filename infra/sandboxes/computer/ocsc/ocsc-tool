@@ -7,6 +7,7 @@ tool="$(basename "$0")"
 case "$tool" in
   ocsc-word|ocsc-pptx|ocsc-xlsx|ocsc-pdf|ocsc-show) script="/opt/ocsc-word/$tool.mjs" ;;
   ocsc-video) script="/opt/ocsc-video/ocsc-video.mjs" ;;
+  ocsc-plugin) script="/opt/evolve-plugin/ocsc-plugin.mjs" ;;
   *) echo "unknown OCSC command: $tool" >&2; exit 2 ;;
 esac
 if [ -z "${WORKSPACE_DIR:-}" ]; then

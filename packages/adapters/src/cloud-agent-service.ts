@@ -37,6 +37,22 @@ export async function executeCloudAgentTool(
   let agent: CloudAgent;
   if (name === "cloud_agent_launch") {
     const request = cloudAgentLaunchSchema.parse(args);
+    if (connection.monthlyLaunchLimit) {
+      const now = new Date();
+      const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+      const launched = await deps.prisma.cloudAgent.count({
+        where: { providerKey: connection.key, createdAt: { gte: monthStart } },
+      });
+      const isRetry = await deps.prisma.cloudAgent.findUnique({
+        where: { operationKey: context.operationId },
+        select: { id: true },
+      });
+      if (!isRetry && launched >= connection.monthlyLaunchLimit) {
+        return {
+          error: `The company's ${connection.monthlyLaunchLimit} Cursor agent runs for this month are used up. An admin can raise CLOUD_AGENT_MONTHLY_LAUNCHES.`,
+        };
+      }
+    }
     const result = await deps.prisma.$transaction(async (tx) => {
       // Serialize with clearThread before creating either the intent or its card.
       await tx.thread.update({

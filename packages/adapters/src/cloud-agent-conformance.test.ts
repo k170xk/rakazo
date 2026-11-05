@@ -76,16 +76,20 @@ describe("cloud agent conformance over the Cursor wire emulator (offline)", () =
 });
 
 describe("cloud agent composition", () => {
-  it("fails closed without explicit credential and Space configuration", () => {
+  it("fails closed without an explicit credential, and without a Space until the company switch", () => {
     for (const source of [
       {},
       { CLOUD_AGENT_PROVIDER: "bogus" },
       { CLOUD_AGENT_PROVIDER: "cursor" },
-      { CLOUD_AGENT_PROVIDER: "cursor", CURSOR_API_KEY: "fake-key" },
     ]) {
       expect(resolveCloudAgentProvider(source)).toBe("none");
       expect(createCloudAgentConnection(source)).toBeNull();
     }
+    const unscoped = createCloudAgentConnection({
+      CLOUD_AGENT_PROVIDER: "cursor",
+      CURSOR_API_KEY: "fake-key",
+    })!;
+    expect(cloudAgentsEnabled(unscoped, "test-space")).toBe(false);
     const connection = createCloudAgentConnection({
       CLOUD_AGENT_PROVIDER: "cursor",
       CURSOR_API_KEY: "fake-key",

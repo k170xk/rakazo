@@ -1,0 +1,8 @@
+{
+  "slug": "__SLUG__",
+  "name": "__NAME__",
+  "description": "",
+  "version": "0.1.0",
+  "icon": "Puzzle",
+  "scopes": ["me.read"]
+}

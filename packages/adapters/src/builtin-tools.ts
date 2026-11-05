@@ -1791,6 +1791,64 @@ export const builtinAgentTools: ConnectorTool[] = [
       additionalProperties: false,
     },
   },
+  {
+    name: "evolve_plugin_status",
+    description:
+      "Whether the user may build Evolve plugins (the Plugin builder privilege in Evolve), and their plugins with each version's review status and the reviewers' notes. Call this before starting a plugin and when the user asks how a review is going.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    readOnly: true,
+  },
+  {
+    name: "evolve_plugin_scopes",
+    description:
+      "The Evolve data permissions (scopes) a plugin may ask for, with what each returns, whether it reads or writes, and its risk. Ask only for the scopes the plugin needs; reviewers grant each one separately.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    readOnly: true,
+  },
+  {
+    name: "evolve_plugin_submit",
+    description:
+      "Send a plugin built with ocsc-plugin build to Evolve as a new version, under the user's name. Returns the automatic check results and a preview link only the user and the reviewers can open. Raise version in evolve-plugin.json for every new submission. Set submitForReview only when the user asks to send it to the reviewers, with purpose saying what it does and who it is for.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The plugin folder, e.g. plugins/skills-helper." },
+        submitForReview: {
+          type: "boolean",
+          description:
+            "true sends it straight to the reviewers; omit to save it as a draft the user can preview.",
+        },
+        purpose: {
+          type: "string",
+          maxLength: 2000,
+          description:
+            "For the reviewers: what the plugin does, who it is for, and what it reads and changes.",
+        },
+      },
+      required: ["path"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "evolve_plugin_import_branch",
+    description:
+      "Copy a plugin a Cursor cloud agent wrote from its branch of the company plugins repository into plugins/<folder> on this computer, so it can be checked, tried with sample data, built and submitted like any other plugin.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        branch: {
+          type: "string",
+          description: "The agent's branch, e.g. cursor/skills-helper-keith.",
+        },
+        folder: {
+          type: "string",
+          description: "The plugin's folder in the repository, which is its slug.",
+        },
+      },
+      required: ["branch", "folder"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 /** Agent-connection tools, exposed only when the messaging surface is enabled. */

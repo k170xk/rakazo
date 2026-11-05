@@ -29,6 +29,7 @@ import {
   createCloudAgentConnection,
   createConnectorStack,
   createDeadJobPruner,
+  createEvolvePluginsConnection,
   createIdleComputerSweeper,
   createJobReconciler,
   createMessagingContextLoader,
@@ -263,6 +264,7 @@ async function main() {
   });
   // One provider instance so emulator launches and polls share the same Map.
   const cloudAgent = createCloudAgentConnection();
+  const evolvePlugins = createEvolvePluginsConnection();
   const paymentWallet = await createPaymentWalletProvider();
   // Shared with the reconciler so a stuck wait uses the same push path as a finish notice.
   const pushTokens = new PrismaPushTokenStore(prisma, resolveEncryptionKey(process.env));
@@ -300,6 +302,8 @@ async function main() {
       deploymentModelKey ?? "",
       process.env.COMPOSIO_API_KEY ?? "",
       process.env.CURSOR_API_KEY ?? "",
+      process.env.EVOLVE_PLUGINS_SECRET ?? "",
+      process.env.EVOLVE_PLUGINS_GITHUB_TOKEN ?? "",
       process.env.TYPESAFE_API_KEY ?? "",
     ].filter(Boolean),
     secretStore: secrets,
@@ -316,6 +320,7 @@ async function main() {
     messaging: messaging ? createMessagingContextLoader(prisma) : undefined,
     web: createWebProvider(),
     cloudAgent,
+    evolvePlugins,
     // Device sockets live in an API process; the worker forwards to whichever one holds it.
     userDevices:
       process.env.USER_DEVICES_ENABLED === "false"
