@@ -76,40 +76,59 @@ ${THEIR_FILES_NOTE} To change their Word file, run ocsc-word read --in <their fi
 ON THE SCREEN
 ${SCREEN_NOTE}`;
 
-const SLIDES_INSTRUCTIONS = `Use this whenever the person asks for slides, a deck, a presentation or a PowerPoint.
+const SLIDES_INSTRUCTIONS = `Use this whenever the person asks for slides, a deck, a presentation or a PowerPoint, or wants a PowerPoint changed.
 
-Work on your computer with write_file and shell, and always use the ocsc-pptx command. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package), because only ocsc-pptx keeps the OCSC branding. Always send the finished PowerPoint unless the person said they only want an outline.
+Work on your computer with write_file and shell, and always use the ocsc-pptx command. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline.
+
+THE OCSC TEMPLATE
+Every new deck is built on the OCSC company template, so it has the company fonts, colours, skyline footer, logo and page tab, and every heading, bullet, chart and table stays editable. Run ocsc-pptx layouts once to see each layout, what it holds (heading, subheading, body, pictures, points, icons) and its name. Pick the layout that fits each slide; use "template_layout" with an exact template name only when no short name fits.
+Company slides can be copied in whole with {"include":"about"}, "services", "company_structure", "organogram_civil_structural", "organogram_mechanical_electrical" or "organogram_environmental". Only include them when the deck is for a client, a bid or an introduction to OCSC, never by habit.
+For a plain deck without the template use "template":"none". When the person gives their own template, use "template":"<their file>.pptx" and pick from ocsc-pptx layouts --template <their file>.pptx.
+
+THE WOW FACTOR: AN INFOGRAPHIC ON EVERY CONTENT SLIDE
+When mcp__evolve__create_infographics is in your tools, give every content slide at least one GPT Image infographic, and two or three on a slide that carries several ideas. Call it once for the whole deck (up to 10 per call, in order) with a specific topic for each: what the diagram, flow, icons or chart should show, using the slide's real facts. Use each returned imageUrl as a picture on its slide: in a picture space ("image", "images") with "fit":"contain" so nothing is cut off, or as an "overlay". If an item fails, keep the slide without it.
+Use real pictures as well: mcp__evolve__search_project_datasheets for OCSC's own projects (covers, case studies, photos), and mcp__evolve__search_stock_media for stock photos, footage and illustrations. Prefer OCSC project photos for OCSC work. Never invent project facts.
+For a striking designed slide made entirely of a picture, mcp__evolve__create_presentation_slides draws whole OCSC slides; use it only when the person wants picture slides, because those slides cannot be edited.
 
 WRITE THE DECK
-1. Plan the story first: a title slide, then one clear point per slide, usually 6 to 12 slides. Keep every slide short: a specific title, at most six bullets of one line each, and the detail in the speaker notes.
+1. Plan the story: usually a cover, an agenda, then one clear point per slide, 6 to 14 slides, ending with thank_you. Keep slides short: a specific heading, a one-line subheading, at most six one-line bullets, and the detail in the speaker notes.
 2. Write work/<short-name>-deck.json:
-{"title":"<Deck title>","footer":"<optional footer, e.g. project name>","slides":[
- {"layout":"title","kicker":"<optional small heading>","title":"<Deck title>","subtitle":"<client, project or date>","notes":"..."},
- {"layout":"section","title":"<Part heading>","subtitle":"<optional>"},
- {"layout":"bullets","title":"<Slide title>","subtitle":"<optional one-line lead>","bullets":["...","..."],"notes":"<two to four sentences of speaker notes>"},
- {"layout":"columns","title":"<Slide title>","columns":[{"heading":"...","text":"...","bullets":["..."]},{"heading":"...","text":"..."}]},
- {"layout":"stats","title":"<Slide title>","stats":[{"value":"£2.4m","label":"..."},{"value":"18 weeks","label":"..."}]},
- {"layout":"quote","quote":"...","by":"<who said it>"}]}
-Layouts: title, section, bullets, columns (two to four), stats (two to four) and quote. ocsc-pptx draws each one as an OCSC-branded 16:9 slide.
-A slide can be a picture instead: {"image":"<https URL or workspace PNG/JPEG such as work/chart.png>","title":"...","notes":"..."}. Use this for a chart you made (for example with matplotlib, saved as PNG at 1920x1080) or a photo. An image that is not 16:9 is centred on a white slide, and "letterboxed" lists those slides.
+{"title":"<Deck title>","slides":[
+ {"layout":"cover","title":"<Deck title>","name":"<presenter>","date":"<Month Year>","notes":"..."},
+ {"layout":"agenda","items":[{"title":"<topic>","text":"<one line>"}]},
+ {"layout":"divider","title":"<PART>","subtitle":"<part name>"},
+ {"layout":"text_image","heading":"...","subheading":"...","bullets":["..."],"image":"<infographic imageUrl>","fit":"contain","notes":"..."},
+ {"layout":"text_2col","heading":"...","columns":[{"heading":"...","bullets":["..."]},{"heading":"...","text":"..."}]},
+ {"layout":"photos_3","heading":"...","subheading":"...","images":["<url>","<url>",{"image":"<url>","fit":"contain"}]},
+ {"layout":"infographic_4","heading":"...","points":[{"title":"...","text":"...","icon":"<url>"}],"centre":"<optional middle text>"},
+ {"layout":"photo","heading":"...","image":"<photo url>","overlay":[{"image":"<infographic url>","x":1300,"y":260,"w":520,"h":520,"fit":"contain"}]},
+ {"layout":"chart","heading":"...","chart":{"type":"column","categories":["..."],"series":[{"name":"...","values":[1,2]}],"show_values":true},"bullets":["<what it shows>"]},
+ {"layout":"table","heading":"...","header":["..."],"rows":[["..."]]},
+ {"layout":"thank_you"}]}
+The agenda holds up to four items. Bullets, text and cells may use **bold**. Pictures are https URLs or workspace PNG/JPEG paths. Overlay positions use a 1920x1080 grid. If a layout has fewer picture spaces than you give, the error says so: pick another layout or move extras to "overlay".
+Slides drawn natively on the template frame: stats ("stats":[{"value","label"}]), quote ("quote","by"), timeline ("steps":[{"label","title","text"}]), gallery, infographics, chart, table, motion and custom ("elements" of text, shape, image, chart, table and video placed on the 1920x1080 grid, like a video frame).
+Motion: for an animated slide, make a short scene with ocsc-video (see the video skill), render it to an mp4 and save a frame with ocsc-video still, then use {"layout":"motion","video":"<mp4>","poster":"<png>"}. A still from ocsc-video also makes a good picture for any slide.
 3. Run: ocsc-pptx new --spec work/<short-name>-deck.json --out outputs/<Descriptive-Name>.pptx
 
-PICTURE SLIDES FROM EVOLVE
-Only when mcp__evolve__create_presentation_slides is in your tools and the person wants designed picture slides: call it with a specific title, subtitle and topic for every slide (up to 10 per call, in order), then use each returned imageUrl exactly as the "image" of that slide. If an item comes back with "ok": false or no imageUrl, use a text layout for that slide instead.
+CHECK IT
+Run ocsc-pptx preview --in outputs/<Name>.pptx (add --slide N for one slide) and look at each PNG it lists: run ocsc-show <the PNG path> and then computer_observe. Fix overlaps, empty spaces, cut-off pictures and long text, then build it again.
 
-CHANGING THE DECK
-Run ocsc-pptx read --in outputs/<Name>.pptx to see its slides, titles and notes. Then write work/<short-name>-edits.json:
+CHANGING ANY POWERPOINT
+This works for decks you made and for PowerPoints the person uploaded. Run ocsc-pptx read --in <file>.pptx to see each slide's text boxes (with shape numbers), pictures and notes. Then write work/<short-name>-edits.json:
 {"edits":[
- {"op":"replace","slide":3,"layout":"bullets","title":"...","bullets":["..."],"notes":"..."},
- {"op":"insert","at":2,"layout":"stats","title":"...","stats":[{"value":"...","label":"..."}]},
- {"op":"replace","slide":4,"image":"work/chart.png"},
- {"op":"remove","slide":5},
- {"op":"move","from":4,"to":2},
+ {"op":"replace_text","find":"<exact words>","replace":"...","slide":3},
+ {"op":"set_text","slide":2,"shape":4,"bullets":["...","..."]},
+ {"op":"title","slide":1,"title":"..."},
  {"op":"notes","slide":1,"notes":"..."},
- {"op":"title","slide":1,"title":"..."}]}
-A replace or insert takes the same slide fields as the deck, so you rewrite the whole slide. Slide numbers count from 1 and each edit sees the deck as the edits before it left it.
-Run: ocsc-pptx edit --in outputs/<Name>.pptx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.pptx
-Save each round as a new version (-v2, -v3) unless the person asks you to overwrite. List what changed using "summary". Only decks made by ocsc-pptx can be edited this way; for a PowerPoint the person uploaded, read its text and offer to rebuild it as a new OCSC deck.
+ {"op":"replace_image","slide":5,"picture":1,"image":"<url or path>"},
+ {"op":"insert","at":4,"layout":"text_image","heading":"...","bullets":["..."],"image":"<url>","fit":"contain"},
+ {"op":"replace","slide":6,"layout":"chart","heading":"...","chart":{...}},
+ {"op":"duplicate","slide":3,"to":4},
+ {"op":"remove","slide":7},
+ {"op":"move","from":4,"to":2}]}
+Slide numbers count from 1 and each edit sees the deck as the edits before it left it. Prefer replace_text and set_text, which keep the person's own formatting; insert and replace take the same fields as a new slide and use the deck's own layouts when it has them.
+Run: ocsc-pptx edit --in <file>.pptx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.pptx
+Every changed slide gets a review comment saying what changed, so the person can check each one in PowerPoint; add --clean only if they ask for no comments. Save each round as a new version (-v2, -v3) unless they ask you to overwrite, and list the changes from "summary".
 
 SENDING THE POWERPOINT
 ${SEND_NOTE} In a scheduled routine, do the same and also give the file's path.
@@ -121,7 +140,7 @@ ON THE SCREEN
 ${SCREEN_NOTE}
 
 STYLE
-Use file names like outputs/HEL18-Design-Review.pptx, with no spaces or slashes in the name. Write titles and notes in UK and Irish English.`;
+Use file names like outputs/HEL18-Design-Review.pptx, with no spaces or slashes in the name. Write headings and notes in UK and Irish English.`;
 
 const EXCEL_INSTRUCTIONS = `Use this whenever the person wants a spreadsheet, workbook, cost plan, schedule, register, tracker or any .xlsx, or wants one changed.
 

@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 /**
- * OCSC PowerPoint: build a 16:9 OCSC PowerPoint deck on a Bot's computer, from slides written
- * as text (drawn by slides.mjs) or from slide images.
+ * OCSC PowerPoint: build, read, preview and edit 16:9 PowerPoint decks on a Bot's computer.
  *
- *   ocsc-pptx new  --spec deck.json --out outputs/Deck.pptx
- *   ocsc-pptx read --in outputs/Deck.pptx
- *   ocsc-pptx edit --in outputs/Deck.pptx --spec edits.json [--out outputs/Deck-v2.pptx]
+ *   ocsc-pptx new     --spec deck.json --out outputs/Deck.pptx
+ *   ocsc-pptx layouts [--template their-template.pptx]
+ *   ocsc-pptx read    --in outputs/Deck.pptx
+ *   ocsc-pptx preview --in outputs/Deck.pptx [--slide 3] [--out work/preview]
+ *   ocsc-pptx edit    --in Deck.pptx --spec edits.json --out outputs/Deck-v2.pptx [--clean]
  *
- * deck.json:  { "title": "...", "slides": [ { "layout": "bullets", "title": "...", "bullets": ["..."], "notes": "..." },
- *               { "image": "https://... or workspace path", "title": "...", "notes": "..." } ] }
- * edits.json: { "edits": [ { "op": "replace", "slide": 2, "image": "..." }, { "op": "insert", "at": 3, "image": "..." },
- *               { "op": "remove", "slide": 4 }, { "op": "move", "from": 5, "to": 1 }, { "op": "notes", "slide": 1, "notes": "..." } ] }
- *
- * Every command prints one JSON object. `new` and `edit` include `link`, a markdown link the Bot
- * pastes into its reply so the person gets a download card.
+ * `new` builds on the OCSC company template by default, filling its layouts' placeholders
+ * (pptx-template.mjs); slides it has no layout for, and every slide with "template": "none", are
+ * drawn as native, editable PowerPoint objects (pptx-native.mjs). `edit`
+ * changes any deck, including ones the person uploaded, and leaves a review comment on every
+ * slide it changed (pptx-package.mjs). Every command prints one JSON object.
  */
 import { execFileSync } from "node:child_process";
 import {
@@ -26,25 +25,22 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import {
-  basename,
-  dirname,
-  isAbsolute,
-  join,
-  relative,
-  resolve,
-} from "node:path";
-import JSZip from "jszip";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 import PptxGenJS from "pptxgenjs";
-import { isTextSlide, renderSlides } from "./slides.mjs";
+import { imageSources, isPictureSlide, SlideBuilder, videoSources } from "./pptx-native.mjs";
+import { applyEdits, readDeck } from "./pptx-package.mjs";
+import {
+  buildFromTemplate,
+  describeTemplate,
+  insertTemplateSlide,
+  OCSC_TEMPLATE,
+  templateImageSources,
+} from "./pptx-template.mjs";
 
-const WORKSPACE =
-  process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
-// PowerPoint's own widescreen size, 13.333 x 7.5 inches.
-const SLIDE_W = 13.333;
-const SLIDE_H = 7.5;
+const WORKSPACE = process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
 const MAX_SLIDES = 60;
 const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 150 * 1024 * 1024;
 
 class UsageError extends Error {}
 
@@ -67,14 +63,11 @@ function args(argv) {
 
 /** A path inside the workspace. Absolute paths and escapes are refused. */
 function inWorkspace(p, label) {
-  if (typeof p !== "string" || !p.trim())
-    throw new UsageError(`${label} is required.`);
+  if (typeof p !== "string" || !p.trim()) throw new UsageError(`${label} is required.`);
   const full = isAbsolute(p) ? resolve(p) : resolve(WORKSPACE, p);
   const rel = relative(WORKSPACE, full);
   if (rel.startsWith("..") || isAbsolute(rel)) {
-    throw new UsageError(
-      `${label} must be inside the workspace (${WORKSPACE}).`,
-    );
+    throw new UsageError(`${label} must be inside the workspace (${WORKSPACE}).`);
   }
   return { full, rel: rel.split("\\").join("/") };
 }
@@ -98,21 +91,22 @@ function downloadLink(rel) {
 
 function outPath(p) {
   const out = inWorkspace(p, "--out");
-  if (!/\.pptx$/i.test(out.full))
-    throw new UsageError("--out must end in .pptx.");
+  if (!/\.pptx$/i.test(out.full)) throw new UsageError("--out must end in .pptx.");
   return out;
 }
 
-// ---------- images ----------
+function deckPath(p) {
+  const deck = inWorkspace(p, "--in");
+  if (!existsSync(deck.full)) throw new UsageError(`${deck.rel} does not exist.`);
+  return deck;
+}
+
+// ---------- media ----------
 
 /** Width, height and type of a PNG or JPEG, read from its header. Anything else is refused. */
 function imageInfo(bytes, label) {
   if (bytes.length > 24 && bytes.readUInt32BE(0) === 0x89504e47) {
-    return {
-      type: "png",
-      width: bytes.readUInt32BE(16),
-      height: bytes.readUInt32BE(20),
-    };
+    return { type: "png", width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
   }
   if (bytes.length > 4 && bytes[0] === 0xff && bytes[1] === 0xd8) {
     let i = 2;
@@ -124,11 +118,7 @@ function imageInfo(bytes, label) {
       const marker = bytes[i + 1];
       const length = bytes.readUInt16BE(i + 2);
       // Start-of-frame markers carry the size; C4, C8 and CC are tables, not frames.
-      if (
-        marker >= 0xc0 &&
-        marker <= 0xcf &&
-        ![0xc4, 0xc8, 0xcc].includes(marker)
-      ) {
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
         return {
           type: "jpeg",
           height: bytes.readUInt16BE(i + 5),
@@ -139,275 +129,115 @@ function imageInfo(bytes, label) {
     }
   }
   throw new UsageError(
-    `${label} is not a PNG or JPEG image. Save it as PNG first.`,
+    `${label} is not a PNG or JPEG image. Save it as PNG first (for example: ocsc-video fetch, or convert it with python3 -c "from PIL import Image; Image.open('in.webp').save('out.png')").`,
   );
 }
 
-/** An image from an https URL or a workspace path, as bytes. */
+function download(url, label, maxBytes) {
+  const dir = mkdtempSync(join(tmpdir(), "ocsc-pptx-"));
+  const file = join(dir, "media");
+  try {
+    // curl rather than fetch: it honours the computer's egress proxy.
+    execFileSync(
+      "curl",
+      [
+        "-fsSL",
+        "--proto",
+        "=https",
+        "--max-time",
+        "120",
+        "--retry",
+        "2",
+        "--max-filesize",
+        String(maxBytes),
+        "-o",
+        file,
+        url,
+      ],
+      { stdio: ["ignore", "ignore", "pipe"] },
+    );
+    return readFileSync(file);
+  } catch (error) {
+    const reason = String(error?.stderr || error?.message || error)
+      .trim()
+      .split("\n")
+      .pop();
+    throw new UsageError(`${label}: could not download ${url} (${reason}).`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function localFile(value, label, maxBytes) {
+  const { full } = inWorkspace(value, label);
+  if (!existsSync(full)) throw new UsageError(`${label}: ${value} does not exist.`);
+  if (statSync(full).size > maxBytes)
+    throw new UsageError(`${label}: ${value} is larger than ${Math.round(maxBytes / 1048576)} MB.`);
+  return readFileSync(full);
+}
+
+/** An image from an https URL or a workspace path, as `{ bytes, type, width, height }`. */
 function loadImage(source, label) {
   if (typeof source !== "string" || !source.trim())
     throw new UsageError(`${label}: image is required.`);
   const value = source.trim();
-  let bytes;
-  if (/^https:\/\//i.test(value)) {
-    const dir = mkdtempSync(join(tmpdir(), "ocsc-pptx-"));
-    const file = join(dir, "image");
-    try {
-      // curl rather than fetch: it honours the computer's egress proxy.
-      execFileSync(
-        "curl",
-        [
-          "-fsSL",
-          "--proto",
-          "=https",
-          "--max-time",
-          "90",
-          "--retry",
-          "2",
-          "--max-filesize",
-          String(MAX_IMAGE_BYTES),
-          "-o",
-          file,
-          value,
-        ],
-        { stdio: ["ignore", "ignore", "pipe"] },
-      );
-      bytes = readFileSync(file);
-    } catch (error) {
-      const reason = String(error?.stderr || error?.message || error)
-        .trim()
-        .split("\n")
-        .pop();
-      throw new UsageError(
-        `${label}: could not download ${value} (${reason}).`,
-      );
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  } else if (/^[a-z]+:/i.test(value)) {
-    throw new UsageError(
-      `${label}: only https URLs or workspace paths are accepted.`,
-    );
-  } else {
-    const { full } = inWorkspace(value, `${label} image`);
-    if (!existsSync(full))
-      throw new UsageError(`${label}: ${value} does not exist.`);
-    if (statSync(full).size > MAX_IMAGE_BYTES)
-      throw new UsageError(`${label}: ${value} is larger than 25 MB.`);
-    bytes = readFileSync(full);
-  }
+  if (/^[a-z]+:/i.test(value) && !/^https:\/\//i.test(value))
+    throw new UsageError(`${label}: only https URLs or workspace paths are accepted.`);
+  const bytes = /^https:\/\//i.test(value)
+    ? download(value, label, MAX_IMAGE_BYTES)
+    : localFile(value, label, MAX_IMAGE_BYTES);
   return { bytes, ...imageInfo(bytes, label) };
 }
 
-/**
- * Images for a set of slides: an "image" is loaded, and a slide written as text is drawn as
- * an OCSC slide. `entries` is `[{ key, item, label }]`; the result maps each key to an image.
- */
-async function slideImages(entries, meta) {
+function loadVideo(source, label) {
+  const value = String(source ?? "").trim();
+  if (!/\.mp4$/i.test(value.split("?")[0]))
+    throw new UsageError(`${label}: a video must be an .mp4.`);
+  const bytes = /^https:\/\//i.test(value)
+    ? download(value, label, MAX_VIDEO_BYTES)
+    : localFile(value, label, MAX_VIDEO_BYTES);
+  return bytes;
+}
+
+/** Loads every picture and video the slides refer to, once each. */
+function loadMedia(items, labelOf) {
   const images = new Map();
-  const text = [];
-  for (const { key, item, label } of entries) {
-    if (isTextSlide(item)) text.push({ index: key, slide: item, label });
-    else
-      images.set(
-        key,
-        loadImage(typeof item === "string" ? item : item?.image, label),
-      );
+  const videos = new Map();
+  for (const [index, item] of items.entries()) {
+    const label = labelOf(index);
+    for (const { source, label: where } of [
+      ...imageSources(item, label),
+      ...templateImageSources(item, label),
+    ])
+      if (!images.has(source)) images.set(source, loadImage(source, where));
+    for (const { source, label: where } of videoSources(item, label))
+      if (!videos.has(source.trim())) videos.set(source.trim(), loadVideo(source, where));
   }
-  try {
-    for (const [key, bytes] of await renderSlides(text, meta))
-      images.set(key, { bytes, ...imageInfo(bytes, "Slide") });
-  } catch (error) {
-    throw new UsageError(error.message);
-  }
-  return images;
+  return { images, videos };
 }
 
-/** Centred and scaled to fit the slide without cropping. A 16:9 image fills it exactly. */
-function fit(width, height) {
-  const aspect = width / height;
-  if (aspect >= SLIDE_W / SLIDE_H) {
-    const h = SLIDE_W / aspect;
-    return { x: 0, y: (SLIDE_H - h) / 2, w: SLIDE_W, h };
-  }
-  const w = SLIDE_H * aspect;
-  return { x: (SLIDE_W - w) / 2, y: 0, w, h: SLIDE_H };
-}
-
-// ---------- writing ----------
-
-function cleanText(value, max) {
-  return typeof value === "string"
-    ? value
-        .replace(/\r\n?/g, "\n")
-        .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "")
-        .slice(0, max)
-    : "";
-}
-
-/** Writes slides of `{ image: {bytes,type,width,height}, title, notes }` as a 16:9 deck. */
-async function writeDeck(slides, meta, out) {
-  if (slides.length === 0)
-    throw new UsageError("A deck needs at least one slide.");
-  if (slides.length > MAX_SLIDES)
-    throw new UsageError(`A deck can hold at most ${MAX_SLIDES} slides.`);
+/** A PptxGenJS deck holding `items` as OCSC slides; returns the deck and which slides were letterboxed. */
+function buildDeck(items, meta, media, labelOf) {
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_WIDE";
   pptx.company = "OCSC";
-  pptx.author = cleanText(meta.author, 200) || "OCSC";
-  pptx.title = cleanText(meta.title, 200) || basename(out.rel, ".pptx");
-  for (const [index, slide] of slides.entries()) {
-    const page = pptx.addSlide();
-    page.background = {
-      color: /^[0-9a-f]{6}$/i.test(meta.background || "")
-        ? meta.background
-        : "FFFFFF",
-    };
-    const title = cleanText(slide.title, 300);
-    page.addImage({
-      data: `image/${slide.image.type};base64,${slide.image.bytes.toString("base64")}`,
-      ...fit(slide.image.width, slide.image.height),
-      altText: title || `Slide ${index + 1}`,
-    });
-    const notes = cleanText(slide.notes, 20000);
-    if (notes) page.addNotes(notes);
-  }
-  const buffer = await pptx.write({ outputType: "nodebuffer" });
-  mkdirSync(dirname(out.full), { recursive: true });
-  writeFileSync(out.full, buffer);
-  return buffer.length;
-}
-
-// ---------- reading ----------
-
-function attr(xml, name) {
-  const match = new RegExp(`\\b${name}="([^"]*)"`).exec(xml);
-  return match ? unesc(match[1]) : "";
-}
-
-function unesc(text) {
-  return text
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
-      String.fromCodePoint(Number.parseInt(hex, 16)),
-    )
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
-    .replace(/&amp;/g, "&");
-}
-
-function rels(xml) {
-  const out = new Map();
-  for (const match of xml.matchAll(/<Relationship\b[^>]*>/g)) {
-    out.set(attr(match[0], "Id"), {
-      target: attr(match[0], "Target"),
-      type: attr(match[0], "Type"),
-    });
-  }
-  return out;
-}
-
-function resolvePart(from, target) {
-  const parts = dirname(from).split("/");
-  for (const piece of target.split("/")) {
-    if (piece === "..") parts.pop();
-    else if (piece !== ".") parts.push(piece);
-  }
-  return parts.join("/");
-}
-
-function notesText(xml) {
-  const paragraphs = [];
-  for (const sp of xml.matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)) {
-    if (!/<p:ph\b[^>]*type="body"/.test(sp[0])) continue;
-    for (const para of sp[0].matchAll(/<a:p>[\s\S]*?<\/a:p>|<a:p\/>/g)) {
-      paragraphs.push(
-        [...para[0].matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)]
-          .map((t) => unesc(t[1]))
-          .join(""),
-      );
+  pptx.author = String(meta.author || "OCSC").slice(0, 200);
+  pptx.title = String(meta.title || "OCSC presentation").slice(0, 200);
+  pptx.theme = { headFontFace: "Arial", bodyFontFace: "Arial" };
+  const builder = new SlideBuilder(pptx, meta, media.images, media.videos);
+  const letterboxed = [];
+  for (const [index, item] of items.entries()) {
+    const label = labelOf(index);
+    try {
+      if (isPictureSlide(item)) {
+        if (builder.addPicture(item, label).letterboxed) letterboxed.push(index + 1);
+      } else if (item && typeof item === "object") builder.add(item, label);
+      else throw new Error(`${label} must be an object.`);
+    } catch (error) {
+      throw new UsageError(error.message);
     }
   }
-  return paragraphs.join("\n").replace(/\r\n?/g, "\n").trim();
-}
-
-/** The slides of a deck as `{ image, title, notes }`, in order. Only picture slides can be edited. */
-async function readDeck(path) {
-  const { full, rel } = inWorkspace(path, "--in");
-  if (!existsSync(full)) throw new UsageError(`${rel} does not exist.`);
-  let zip;
-  try {
-    zip = await JSZip.loadAsync(readFileSync(full));
-  } catch {
-    throw new UsageError(`${rel} is not a PowerPoint file.`);
-  }
-  const presentation = await zip.file("ppt/presentation.xml")?.async("string");
-  const presentationRels = await zip
-    .file("ppt/_rels/presentation.xml.rels")
-    ?.async("string");
-  if (!presentation || !presentationRels)
-    throw new UsageError(`${rel} is not a PowerPoint file.`);
-  const size = /<p:sldSz\b[^>]*>/.exec(presentation)?.[0] ?? "";
-  const cx = Number(attr(size, "cx"));
-  const cy = Number(attr(size, "cy"));
-  const map = rels(presentationRels);
-  const slides = [];
-  for (const id of presentation.matchAll(/<p:sldId\b[^>]*>/g)) {
-    const target = map.get(attr(id[0], "r:id"))?.target;
-    if (!target) continue;
-    const part = resolvePart("ppt/presentation.xml", target);
-    const xml = (await zip.file(part)?.async("string")) ?? "";
-    const slideRels = rels(
-      (await zip
-        .file(resolvePart(part, `_rels/${basename(part)}.rels`))
-        ?.async("string")) ?? "",
-    );
-    const pictures = [...xml.matchAll(/<p:pic>[\s\S]*?<\/p:pic>/g)];
-    const textShapes = [...xml.matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)].filter(
-      (sp) => /<a:t>/.test(sp[0]),
-    );
-    const editable = pictures.length === 1 && textShapes.length === 0;
-    let image = null;
-    let title = "";
-    if (pictures.length > 0) {
-      const pic = pictures[0][0];
-      title = attr(/<p:cNvPr\b[^>]*>/.exec(pic)?.[0] ?? "", "descr");
-      const embed = attr(/<a:blip\b[^>]*>/.exec(pic)?.[0] ?? "", "r:embed");
-      const media = slideRels.get(embed)?.target;
-      if (media) {
-        const bytes = await zip
-          .file(resolvePart(part, media))
-          ?.async("nodebuffer");
-        if (bytes) {
-          try {
-            image = {
-              bytes,
-              ...imageInfo(bytes, `Slide ${slides.length + 1}`),
-            };
-          } catch {
-            image = null;
-          }
-        }
-      }
-    }
-    let notes = "";
-    for (const relation of slideRels.values()) {
-      if (!relation.type.endsWith("/notesSlide")) continue;
-      notes = notesText(
-        (await zip.file(resolvePart(part, relation.target))?.async("string")) ??
-          "",
-      );
-    }
-    slides.push({ image, title, notes, editable: editable && image !== null });
-  }
-  return {
-    rel,
-    slides,
-    widescreen: cx > 0 && cy > 0 && Math.abs(cx / cy - 16 / 9) < 0.01,
-    size: { cx, cy },
-  };
+  return { pptx, letterboxed };
 }
 
 // ---------- commands ----------
@@ -417,166 +247,164 @@ async function cmdNew(opts) {
   const items = Array.isArray(spec?.slides) ? spec.slides : null;
   if (!items || items.length === 0)
     throw new UsageError(
-      'The spec needs "slides": [{ "title": "...", "bullets": [...] }] or [{ "image": "..." }].',
+      'The spec needs "slides": [{ "layout": "bullets", "title": "...", "bullets": [...] }, ...].',
     );
   if (items.length > MAX_SLIDES)
     throw new UsageError(`A deck can hold at most ${MAX_SLIDES} slides.`);
   const out = outPath(opts.out);
-  const images = await slideImages(
-    items.map((item, index) => ({ key: index, item, label: `Slide ${index + 1}` })),
-    spec,
-  );
-  const slides = items.map((item, index) => ({
-    image: images.get(index),
-    title: typeof item === "object" ? item.title : "",
-    notes: typeof item === "object" ? item.notes : "",
-  }));
-  const bytes = await writeDeck(slides, spec, out);
+  const labelOf = (i) => `Slide ${i + 1}`;
+  const media = loadMedia(items, labelOf);
+  const template = templateFile(spec.template);
+  let buffer;
+  let letterboxed = [];
+  if (template) {
+    try {
+      buffer = await buildFromTemplate(readFileSync(template.full), items, {
+        images: media.images,
+        labelOf,
+        meta: spec,
+        buildSlides: (list) =>
+          buildDeck(list, spec, media, (i) => list[i].__label ?? labelOf(i)).pptx.write({
+            outputType: "nodebuffer",
+          }),
+      });
+    } catch (error) {
+      throw error instanceof UsageError ? error : new UsageError(error.message);
+    }
+  } else {
+    const built = buildDeck(items, spec, media, labelOf);
+    letterboxed = built.letterboxed;
+    buffer = await built.pptx.write({ outputType: "nodebuffer" });
+  }
+  mkdirSync(dirname(out.full), { recursive: true });
+  writeFileSync(out.full, buffer);
   return {
     ok: true,
-    slides: slides.length,
+    slides: items.length,
     aspect: "16:9",
-    letterboxed: slides
-      .map((s, i) =>
-        Math.abs(s.image.width / s.image.height - 16 / 9) > 0.01 ? i + 1 : 0,
-      )
-      .filter(Boolean),
-    bytes,
+    editable: true,
+    template: template ? template.rel : "none",
+    letterboxed,
+    bytes: buffer.length,
     ...downloadLink(out.rel),
   };
 }
 
-async function cmdRead(opts) {
-  const deck = await readDeck(opts.in);
-  return {
-    ok: true,
-    path: deck.rel,
-    aspect: deck.widescreen ? "16:9" : "other",
-    slides: deck.slides.map((slide, index) => ({
-      slide: index + 1,
-      title: slide.title,
-      notes: slide.notes,
-      image: slide.image
-        ? `${slide.image.width}x${slide.image.height} ${slide.image.type}`
-        : null,
-      editable: slide.editable,
-    })),
-  };
+/** The template a spec asks for: the OCSC one by default, "none" for none, or a workspace .pptx. */
+function templateFile(value) {
+  if (value === "none" || value === false) return null;
+  if (value === undefined || value === null || value === "ocsc") {
+    if (!existsSync(OCSC_TEMPLATE)) {
+      if (value === "ocsc")
+        throw new UsageError("The OCSC company template is not on this computer.");
+      return null;
+    }
+    return { full: OCSC_TEMPLATE, rel: "ocsc" };
+  }
+  const file = inWorkspace(String(value), "template");
+  if (!/\.pptx$/i.test(file.full) || !existsSync(file.full))
+    throw new UsageError(`template: ${value} is not a .pptx in the workspace.`);
+  return file;
 }
 
-function position(value, count, label, allowEnd = false) {
-  const n = Number(value);
-  const max = allowEnd ? count + 1 : count;
-  if (!Number.isInteger(n) || n < 1 || n > max)
-    throw new UsageError(`${label} must be a slide number from 1 to ${max}.`);
-  return n - 1;
+async function cmdLayouts(opts) {
+  const template = templateFile(opts.template === undefined ? "ocsc" : opts.template);
+  if (!template) throw new UsageError("--template must be a .pptx in the workspace.");
+  try {
+    return {
+      ok: true,
+      template: template.rel,
+      ...(await describeTemplate(readFileSync(template.full))),
+    };
+  } catch (error) {
+    throw new UsageError(error.message);
+  }
+}
+
+async function cmdRead(opts) {
+  const deck = deckPath(opts.in);
+  try {
+    return { ok: true, path: deck.rel, ...(await readDeck(readFileSync(deck.full))) };
+  } catch (error) {
+    throw new UsageError(`${deck.rel}: ${error.message}`);
+  }
+}
+
+async function cmdPreview(opts) {
+  const deck = deckPath(opts.in);
+  const dir = inWorkspace(opts.out || `work/preview/${basename(deck.rel, ".pptx")}`, "--out");
+  const only = opts.slide === undefined ? null : Number(opts.slide);
+  const { renderDeckPngs } = await import("./pptx-render.mjs");
+  let pngs;
+  try {
+    pngs = await renderDeckPngs(readFileSync(deck.full), only);
+  } catch (error) {
+    throw new UsageError(error.message);
+  }
+  mkdirSync(dir.full, { recursive: true });
+  const files = [];
+  for (const [number, png] of pngs) {
+    const name = `slide-${String(number).padStart(2, "0")}.png`;
+    writeFileSync(join(dir.full, name), png);
+    files.push(`${dir.rel}/${name}`);
+  }
+  return { ok: true, path: deck.rel, previews: files };
 }
 
 async function cmdEdit(opts) {
-  const deck = await readDeck(opts.in);
-  const locked = deck.slides.findIndex((slide) => !slide.editable);
-  if (locked !== -1) {
-    throw new UsageError(
-      `Slide ${locked + 1} is not a single picture, so this deck was not made by ocsc-pptx and cannot be edited with it.`,
-    );
-  }
+  const deck = deckPath(opts.in);
   const spec = readSpec(opts.spec);
   const edits = Array.isArray(spec?.edits) ? spec.edits : null;
-  if (!edits || edits.length === 0)
-    throw new UsageError('The spec needs "edits": [...].');
-  const slides = deck.slides.map(({ image, title, notes }) => ({
-    image,
-    title,
-    notes,
-  }));
-  const fresh = await slideImages(
-    edits
-      .map((edit, index) => ({ key: index, item: edit, label: `Edit ${index + 1}` }))
-      .filter(({ item }) => item?.op === "replace" || item?.op === "insert"),
-    { title: spec.title || deck.title, footer: spec.footer },
-  );
-  const summary = [];
-  for (const [index, edit] of edits.entries()) {
-    const label = `Edit ${index + 1}`;
-    switch (edit?.op) {
-      case "replace": {
-        const at = position(edit.slide, slides.length, `${label} slide`);
-        slides[at] = {
-          image: fresh.get(index),
-          title: edit.title ?? slides[at].title,
-          notes: edit.notes ?? slides[at].notes,
-        };
-        summary.push(`Replaced slide ${at + 1}.`);
-        break;
-      }
-      case "insert": {
-        const at =
-          edit.at === undefined
-            ? slides.length
-            : position(edit.at, slides.length, `${label} at`, true);
-        slides.splice(at, 0, {
-          image: fresh.get(index),
-          title: edit.title ?? "",
-          notes: edit.notes ?? "",
-        });
-        summary.push(`Inserted a slide at position ${at + 1}.`);
-        break;
-      }
-      case "remove": {
-        const at = position(edit.slide, slides.length, `${label} slide`);
-        if (slides.length === 1)
-          throw new UsageError(
-            `${label}: a deck must keep at least one slide.`,
-          );
-        slides.splice(at, 1);
-        summary.push(`Removed slide ${at + 1}.`);
-        break;
-      }
-      case "move": {
-        const from = position(edit.from, slides.length, `${label} from`);
-        const to = position(edit.to, slides.length, `${label} to`);
-        const [moved] = slides.splice(from, 1);
-        slides.splice(to, 0, moved);
-        summary.push(`Moved slide ${from + 1} to position ${to + 1}.`);
-        break;
-      }
-      case "notes": {
-        const at = position(edit.slide, slides.length, `${label} slide`);
-        slides[at].notes = typeof edit.notes === "string" ? edit.notes : "";
-        summary.push(`Updated the speaker notes on slide ${at + 1}.`);
-        break;
-      }
-      case "title": {
-        const at = position(edit.slide, slides.length, `${label} slide`);
-        slides[at].title = typeof edit.title === "string" ? edit.title : "";
-        summary.push(`Renamed slide ${at + 1}.`);
-        break;
-      }
-      default:
-        throw new UsageError(
-          `${label}: op must be replace, insert, remove, move, notes or title.`,
-        );
-    }
-  }
+  if (!edits || edits.length === 0) throw new UsageError('The spec needs "edits": [...].');
   const out = outPath(opts.out || opts.in);
-  const bytes = await writeDeck(
-    slides,
-    { title: spec.title, background: spec.background },
-    out,
+  const labelOf = (i) => `Edit ${i + 1}`;
+  const slideEdits = edits.map((edit) =>
+    edit?.op === "insert" || edit?.op === "replace" ? edit : {},
   );
+  const media = loadMedia(slideEdits, labelOf);
+  const replacementImages = new Map();
+  for (const [i, edit] of edits.entries())
+    if (edit?.op === "replace_image")
+      replacementImages.set(i, loadImage(edit.image, `${labelOf(i)} image`));
+  let result;
+  try {
+    result = await applyEdits(readFileSync(deck.full), edits, {
+      clean: opts.clean === true,
+      meta: { title: spec.title, footer: spec.footer },
+      buildSlides: async (items) => {
+        const { pptx } = buildDeck(items, spec, media, (i) => items[i].__label);
+        return pptx.write({ outputType: "nodebuffer" });
+      },
+      replacementImages,
+      insertSlide: (target, item, at) =>
+        insertTemplateSlide(target, item, at, {
+          images: media.images,
+          buildSlides: (list) =>
+            buildDeck(list, spec, media, (i) => list[i].__label).pptx.write({
+              outputType: "nodebuffer",
+            }),
+        }),
+    });
+  } catch (error) {
+    throw new UsageError(error.message);
+  }
+  mkdirSync(dirname(out.full), { recursive: true });
+  writeFileSync(out.full, result.bytes);
   return {
     ok: true,
-    slides: slides.length,
-    aspect: "16:9",
-    summary,
-    bytes,
+    slides: result.slides,
+    summary: result.summary,
+    comments: result.comments,
+    bytes: result.bytes.length,
     ...downloadLink(out.rel),
   };
 }
 
 const USAGE = `ocsc-pptx new --spec deck.json --out outputs/Deck.pptx
+ocsc-pptx layouts [--template their-template.pptx]
 ocsc-pptx read --in outputs/Deck.pptx
-ocsc-pptx edit --in outputs/Deck.pptx --spec edits.json [--out outputs/Deck-v2.pptx]`;
+ocsc-pptx preview --in outputs/Deck.pptx [--slide 3] [--out work/preview]
+ocsc-pptx edit --in Deck.pptx --spec edits.json --out outputs/Deck-v2.pptx [--clean]`;
 
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
@@ -585,18 +413,18 @@ async function main() {
     let result;
     if (command === "new") result = await cmdNew(opts);
     else if (command === "read") result = await cmdRead(opts);
+    else if (command === "layouts") result = await cmdLayouts(opts);
+    else if (command === "preview") result = await cmdPreview(opts);
     else if (command === "edit") result = await cmdEdit(opts);
     else throw new UsageError(`Usage:\n${USAGE}`);
-    if (command !== "read" && result.ok && result.path) {
+    if ((command === "new" || command === "edit") && result.ok && result.path) {
       try {
         const { showOnScreen } = await import("./screen.mjs");
-        Object.assign(
-          result,
-          await showOnScreen(resolve(WORKSPACE, result.path), result.path),
-        );
+        Object.assign(result, await showOnScreen(resolve(WORKSPACE, result.path), result.path));
       } catch {}
     }
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    // Exit once printed: a preview's browser can linger after closing.
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`, () => process.exit(0));
   } catch (error) {
     process.stdout.write(
       `${JSON.stringify({ ok: false, error: error instanceof UsageError ? error.message : String(error?.stack || error) }, null, 2)}\n`,

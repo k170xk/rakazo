@@ -24,20 +24,11 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import {
-  basename,
-  dirname,
-  extname,
-  isAbsolute,
-  join,
-  relative,
-  resolve,
-} from "node:path";
+import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const WORKSPACE =
-  process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
+const WORKSPACE = process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
 const SCREEN_DIR = join(WORKSPACE, ".openbot", "screen");
 const MAX_INPUT_BYTES = 40 * 1024 * 1024;
 const MAX_SHEET_ROWS = 1000;
@@ -57,19 +48,6 @@ export function escapeHtml(text) {
     .replace(/'/g, "&#39;");
 }
 
-function unesc(text) {
-  return text
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
-      String.fromCodePoint(Number.parseInt(hex, 16)),
-    )
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
-    .replace(/&amp;/g, "&");
-}
-
 function lib(path) {
   return readFileSync(join(HERE, "node_modules", path));
 }
@@ -80,14 +58,11 @@ function libBase64(path) {
 }
 
 export function workspaceFile(p) {
-  if (typeof p !== "string" || !p.trim())
-    throw new ScreenError("A file path is required.");
+  if (typeof p !== "string" || !p.trim()) throw new ScreenError("A file path is required.");
   const full = isAbsolute(p) ? resolve(p) : resolve(WORKSPACE, p);
   const rel = relative(WORKSPACE, full);
   if (rel.startsWith("..") || isAbsolute(rel)) {
-    throw new ScreenError(
-      `The file must be inside the workspace (${WORKSPACE}).`,
-    );
+    throw new ScreenError(`The file must be inside the workspace (${WORKSPACE}).`);
   }
   if (!existsSync(full)) throw new ScreenError(`${rel} does not exist.`);
   const size = statSync(full).size;
@@ -303,9 +278,7 @@ function renderDocx(bytes, changes = true) {
     body: '<div id="ob-doc"></div>',
     script,
     ready: false,
-    note: changes
-      ? "Tracked changes show as green insertions and red deletions."
-      : "",
+    note: changes ? "Tracked changes show as green insertions and red deletions." : "",
   };
 }
 
@@ -354,17 +327,12 @@ export function cellText(cell) {
   if (typeof v === "object") {
     if ("formula" in v || "sharedFormula" in v) {
       const result = v.result;
-      if (result === undefined || result === null)
-        return `=${v.formula ?? v.sharedFormula}`;
-      if (typeof result === "object" && result?.error)
-        return String(result.error);
+      if (result === undefined || result === null) return `=${v.formula ?? v.sharedFormula}`;
+      if (typeof result === "object" && result?.error) return String(result.error);
       if (result instanceof Date) return result.toISOString().slice(0, 10);
-      return typeof result === "number"
-        ? formatNumber(result, cell.numFmt)
-        : String(result);
+      return typeof result === "number" ? formatNumber(result, cell.numFmt) : String(result);
     }
-    if (Array.isArray(v.richText))
-      return v.richText.map((r) => r.text).join("");
+    if (Array.isArray(v.richText)) return v.richText.map((r) => r.text).join("");
     if ("text" in v) return String(v.text);
     if ("error" in v) return String(v.error);
   }
@@ -372,9 +340,7 @@ export function cellText(cell) {
 }
 
 function argbCss(argb) {
-  return typeof argb === "string" && /^[0-9a-f]{8}$/i.test(argb)
-    ? `#${argb.slice(2)}`
-    : null;
+  return typeof argb === "string" && /^[0-9a-f]{8}$/i.test(argb) ? `#${argb.slice(2)}` : null;
 }
 
 async function renderXlsx(full) {
@@ -390,9 +356,7 @@ async function renderXlsx(full) {
     const head = ['<tr><th class="r"></th>'];
     for (let c = 1; c <= cols; c += 1) {
       const width = sheet.getColumn(c).width;
-      head.push(
-        `<th style="min-width:${Math.round((width || 9) * 7)}px">${columnName(c)}</th>`,
-      );
+      head.push(`<th style="min-width:${Math.round((width || 9) * 7)}px">${columnName(c)}</th>`);
     }
     head.push("</tr>");
     const body = [];
@@ -407,10 +371,7 @@ async function renderXlsx(full) {
         if (font.italic) style.push("font-style:italic");
         const color = argbCss(font.color?.argb);
         if (color) style.push(`color:${color}`);
-        const fill =
-          cell.fill?.type === "pattern"
-            ? argbCss(cell.fill.fgColor?.argb)
-            : null;
+        const fill = cell.fill?.type === "pattern" ? argbCss(cell.fill.fgColor?.argb) : null;
         if (fill) style.push(`background:${fill}`);
         const align = cell.alignment?.horizontal;
         if (align === "center" || align === "right" || align === "left")
@@ -429,8 +390,7 @@ async function renderXlsx(full) {
       `<section class="ob-sheet"><h2>${escapeHtml(sheet.name)}</h2><table class="ob-grid"><thead>${head.join("")}</thead><tbody>${body.join("")}</tbody></table></section>`,
     );
   }
-  if (parts.length === 0)
-    parts.push('<div class="ob-error">This workbook has no sheets.</div>');
+  if (parts.length === 0) parts.push('<div class="ob-error">This workbook has no sheets.</div>');
   return {
     body: parts.join(""),
     note: trimmed
@@ -474,10 +434,7 @@ function parseCsv(text) {
 
 function renderCsv(bytes, name) {
   const rows = parseCsv(bytes.toString("utf8"));
-  const cols = Math.min(
-    Math.max(0, ...rows.map((r) => r.length)),
-    MAX_SHEET_COLS,
-  );
+  const cols = Math.min(Math.max(0, ...rows.map((r) => r.length)), MAX_SHEET_COLS);
   const head = ['<tr><th class="r"></th>'];
   for (let c = 1; c <= cols; c += 1) head.push(`<th>${columnName(c)}</th>`);
   const body = rows.map(
@@ -495,31 +452,6 @@ function renderCsv(bytes, name) {
   };
 }
 
-function attr(xml, name) {
-  const match = new RegExp(`\\b${name}="([^"]*)"`).exec(xml);
-  return match ? unesc(match[1]) : "";
-}
-
-function rels(xml) {
-  const out = new Map();
-  for (const match of xml.matchAll(/<Relationship\b[^>]*>/g)) {
-    out.set(attr(match[0], "Id"), {
-      target: attr(match[0], "Target"),
-      type: attr(match[0], "Type"),
-    });
-  }
-  return out;
-}
-
-function resolvePart(from, target) {
-  const parts = dirname(from).split("/");
-  for (const piece of target.split("/")) {
-    if (piece === "..") parts.pop();
-    else if (piece !== ".") parts.push(piece);
-  }
-  return parts.join("/");
-}
-
 const IMAGE_TYPES = {
   png: "image/png",
   jpg: "image/jpeg",
@@ -530,60 +462,8 @@ const IMAGE_TYPES = {
 };
 
 async function renderPptx(bytes) {
-  const { default: JSZip } = await import("jszip");
-  const zip = await JSZip.loadAsync(bytes);
-  const presentation =
-    (await zip.file("ppt/presentation.xml")?.async("string")) ?? "";
-  const map = rels(
-    (await zip.file("ppt/_rels/presentation.xml.rels")?.async("string")) ?? "",
-  );
-  const slides = [];
-  let number = 0;
-  for (const id of presentation.matchAll(/<p:sldId\b[^>]*>/g)) {
-    const target = map.get(attr(id[0], "r:id"))?.target;
-    if (!target) continue;
-    number += 1;
-    const part = resolvePart("ppt/presentation.xml", target);
-    const xml = (await zip.file(part)?.async("string")) ?? "";
-    const slideRels = rels(
-      (await zip
-        .file(resolvePart(part, `_rels/${basename(part)}.rels`))
-        ?.async("string")) ?? "",
-    );
-    const images = [];
-    for (const blip of xml.matchAll(/<a:blip\b[^>]*r:embed="([^"]+)"/g)) {
-      const media = slideRels.get(blip[1])?.target;
-      if (!media) continue;
-      const path = resolvePart(part, media);
-      const type = IMAGE_TYPES[extname(path).slice(1).toLowerCase()];
-      const data = type ? await zip.file(path)?.async("base64") : null;
-      if (data) images.push(`data:${type};base64,${data}`);
-    }
-    const paragraphs = [];
-    for (const para of xml.matchAll(/<a:p>[\s\S]*?<\/a:p>/g)) {
-      const text = [...para[0].matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)]
-        .map((t) => unesc(t[1]))
-        .join("");
-      if (text.trim()) paragraphs.push(text);
-    }
-    if (images.length === 1 && paragraphs.length === 0) {
-      slides.push(
-        `<div class="ob-slide"><img class="full" alt="Slide ${number}" src="${images[0]}"><span class="num">${number}</span></div>`,
-      );
-    } else {
-      slides.push(
-        `<div class="ob-slide"><div class="text">${paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("")}<div class="thumbs">${images
-          .map((src) => `<img alt="" src="${src}">`)
-          .join("")}</div></div><span class="num">${number}</span></div>`,
-      );
-    }
-  }
-  return {
-    body:
-      slides.join("") ||
-      '<div class="ob-error">This presentation has no slides.</div>',
-    note: `${number} slide${number === 1 ? "" : "s"}, 16:9.`,
-  };
+  const { renderDeckHtml } = await import("./pptx-render.mjs");
+  return renderDeckHtml(bytes);
 }
 
 function renderPdf(bytes) {
@@ -623,8 +503,7 @@ function renderImage(bytes, name) {
 }
 
 function renderVideo(bytes, name) {
-  const type =
-    extname(name).toLowerCase() === ".webm" ? "video/webm" : "video/mp4";
+  const type = extname(name).toLowerCase() === ".webm" ? "video/webm" : "video/mp4";
   return {
     body: `<video class="ob-image" controls autoplay muted loop playsinline src="data:${type};base64,${bytes.toString("base64")}"></video>`,
   };
@@ -644,11 +523,7 @@ function renderHtml(bytes) {
 }
 
 /** One self-contained preview page for a workspace file. */
-export async function renderPreview(
-  full,
-  name = basename(full),
-  { changes = true } = {},
-) {
+export async function renderPreview(full, name = basename(full), { changes = true } = {}) {
   const kind = kindOf(name);
   if (!kind)
     throw new ScreenError(
@@ -689,11 +564,7 @@ function clean(keep) {
  * Ask the computer to show a file. `auto` is a document tool showing its own output: the computer
  * skips it when nobody is watching rather than starting a browser for it.
  */
-export async function requestShow(
-  full,
-  rel,
-  { auto = false, waitMs = 0 } = {},
-) {
+export async function requestShow(full, rel, { auto = false, waitMs = 0 } = {}) {
   // OCSC_SCREEN_OPEN names a browser that opens the preview itself, with no computer agent
   // watching request.json. Opening a tab after every save would bury the person's own tabs.
   const opener = process.env.OCSC_SCREEN_OPEN;
@@ -715,9 +586,7 @@ export async function requestShow(
   }
   let previous = null;
   try {
-    previous = JSON.parse(
-      readFileSync(join(SCREEN_DIR, "request.json"), "utf8"),
-    ).id;
+    previous = JSON.parse(readFileSync(join(SCREEN_DIR, "request.json"), "utf8")).id;
   } catch {}
   const request = {
     id,
@@ -728,10 +597,7 @@ export async function requestShow(
     at: Date.now(),
   };
   writeFileSync(join(SCREEN_DIR, "request.json.tmp"), JSON.stringify(request));
-  renameSync(
-    join(SCREEN_DIR, "request.json.tmp"),
-    join(SCREEN_DIR, "request.json"),
-  );
+  renameSync(join(SCREEN_DIR, "request.json.tmp"), join(SCREEN_DIR, "request.json"));
   clean([id, previous].filter(Boolean));
   if (!waitMs) return { requested: true, kind };
   const resultFile = join(SCREEN_DIR, `result-${id}.json`);
@@ -747,8 +613,7 @@ export async function requestShow(
   return {
     kind,
     shown: false,
-    reason:
-      "The computer did not answer in time. The preview may still appear.",
+    reason: "The computer did not answer in time. The preview may still appear.",
   };
 }
 
