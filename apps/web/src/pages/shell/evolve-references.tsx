@@ -7,7 +7,18 @@ import type {
 } from "@rakazo/contracts";
 import { hasEvolveReferences } from "@rakazo/contracts";
 import { newClientId } from "@rakazo/core";
-import { Button, Popover, PopoverContent, PopoverTrigger, toast } from "@rakazo/ui-web";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  toast,
+} from "@rakazo/ui-web";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@rakazo/ui-web/components/ui/tooltip";
 import { BookOpen } from "lucide-react";
 import type { ReactNode } from "react";
@@ -309,41 +320,174 @@ function FallbackImage({
   );
 }
 
-/** Evolve's "Added References:" list under a references message. */
+type OpenReference =
+  | { kind: "project"; item: ReferencesBlock["projects"][number] }
+  | { kind: "person"; item: ReferencesBlock["people"][number] }
+  | { kind: "exemplar"; item: ReferencesBlock["exemplars"][number] };
+
+function DetailRow({ label, value }: { label: string; value?: string | null }) {
+  if (!value?.trim()) return null;
+  return (
+    <div>
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <p className="whitespace-pre-wrap text-sm" dir="auto">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+/** Exactly what one reference sent to the AI: a project's datasheet details, a person's CV. */
+function ReferenceDetailDialog({
+  open,
+  onClose,
+}: {
+  open: OpenReference | null;
+  onClose: () => void;
+}) {
+  const { t } = useLingui();
+  const project = open?.kind === "project" ? open.item : null;
+  const person = open?.kind === "person" ? open.item : null;
+  const exemplar = open?.kind === "exemplar" ? open.item : null;
+  const cover = realImage(project?.image);
+  return (
+    <Dialog open={open !== null} onOpenChange={(next) => (next ? undefined : onClose())}>
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        {cover ? (
+          <FallbackImage src={cover} alt="" className="h-48 w-full shrink-0 object-cover" />
+        ) : null}
+        <DialogHeader className="shrink-0 px-6 pt-5 pb-3">
+          <div className="flex items-center gap-3">
+            {person?.photo ? (
+              <FallbackImage
+                src={person.photo}
+                alt=""
+                className="size-12 shrink-0 rounded-full object-cover"
+              />
+            ) : null}
+            <div className="min-w-0">
+              <DialogTitle className="truncate">
+                {project?.name ??
+                  person?.name ??
+                  (exemplar?.title || exemplar?.response_title || t`Exemplar response`)}
+              </DialogTitle>
+              <DialogDescription>
+                {project
+                  ? t`Project reference, as sent to the AI`
+                  : person
+                    ? t`Person reference, as sent to the AI`
+                    : t`Exemplar response, as sent to the AI`}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 pb-6">
+          {project ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <DetailRow label={t`Client`} value={project.client} />
+                <DetailRow label={t`Value`} value={project.value} />
+              </div>
+              <DetailRow label={t`Summary`} value={project.summary} />
+            </>
+          ) : null}
+          {person ? (
+            <>
+              {person.role ? (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                  <div className="text-xs font-medium text-muted-foreground">{t`Role on this work`}</div>
+                  <p className="text-sm font-medium" dir="auto">
+                    {person.role}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t`This role overrides any role or job title in their CV.`}
+                  </p>
+                </div>
+              ) : null}
+              {person.cv ? (
+                <div>
+                  <div className="mb-1 text-xs font-medium text-muted-foreground">{t`CV`}</div>
+                  <div
+                    className="whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-3 text-sm"
+                    dir="auto"
+                  >
+                    {person.cv.split("\n").map((line, index) =>
+                      /^[^\s-][^:]{0,60}:$/.test(line.trim()) ? (
+                        <div key={index} className="mt-3 font-semibold first:mt-0">
+                          {line.trim().slice(0, -1)}
+                        </div>
+                      ) : (
+                        <div key={index}>{line || "\u00a0"}</div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t`No CV was sent for this person: only their name and role.`}
+                </p>
+              )}
+            </>
+          ) : null}
+          {exemplar ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <DetailRow label={t`Category`} value={exemplar.category} />
+                <DetailRow label={t`Sector`} value={exemplar.sector} />
+              </div>
+              <DetailRow label={t`Response`} value={exemplar.response_text} />
+            </>
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Evolve's "Added References:" list under a references message; each opens what it sent. */
 export function EvolveReferencesChips({ block }: { block: ReferencesBlock }) {
   const { t } = useLingui();
-  const row = "flex items-center gap-2 rounded border p-2 text-xs";
+  const [open, setOpen] = useState<OpenReference | null>(null);
+  const row =
+    "flex w-full items-center gap-2 rounded border p-2 text-left text-xs transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   return (
     <div className="mt-3 space-y-2 border-t border-border pt-3" data-testid="evolve-references">
       <div className="text-xs font-medium opacity-80">{t`Added References:`}</div>
       <div className="space-y-1">
         {block.projects.map((project) => {
           const cover = realImage(project.image);
+          const show = () => setOpen({ kind: "project", item: project });
           return cover ? (
-            <div
+            <button
+              type="button"
               key={`project-${project.id}`}
-              className="overflow-hidden rounded border border-green-200 bg-green-50 text-xs dark:border-green-800 dark:bg-green-900/20"
+              onClick={show}
+              className="block w-full overflow-hidden rounded border border-green-200 bg-green-50 text-left text-xs transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-green-800 dark:bg-green-900/20"
             >
               <FallbackImage src={cover} alt={project.name} className="h-28 w-full object-cover" />
               <div className="flex items-center gap-2 p-2">
                 <span className="flex-1 truncate font-medium">{project.name}</span>
                 <span className="text-green-600 opacity-70 dark:text-green-400">{t`Project`}</span>
               </div>
-            </div>
+            </button>
           ) : (
-            <div
+            <button
+              type="button"
               key={`project-${project.id}`}
+              onClick={show}
               className={`${row} border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20`}
             >
               <div className="text-green-600 dark:text-green-400">📋</div>
               <span className="flex-1 truncate font-medium">{project.name}</span>
               <span className="text-green-600 opacity-70 dark:text-green-400">{t`Project`}</span>
-            </div>
+            </button>
           );
         })}
         {block.people.map((person) => (
-          <div
+          <button
+            type="button"
             key={`person-${person.id}`}
+            onClick={() => setOpen({ kind: "person", item: person })}
             className={`${row} border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20`}
           >
             {person.photo ? (
@@ -356,13 +500,20 @@ export function EvolveReferencesChips({ block }: { block: ReferencesBlock }) {
             ) : (
               <div className="text-blue-600 dark:text-blue-400">👤</div>
             )}
-            <span className="flex-1 truncate font-medium">{person.name}</span>
+            <span className="flex-1 truncate font-medium">
+              {person.name}
+              {person.role ? (
+                <span className="font-normal text-muted-foreground"> · {person.role}</span>
+              ) : null}
+            </span>
             <span className="text-blue-600 opacity-70 dark:text-blue-400">{t`Person`}</span>
-          </div>
+          </button>
         ))}
         {block.exemplars.map((ex) => (
-          <div
+          <button
+            type="button"
             key={`exemplar-${ex.id}`}
+            onClick={() => setOpen({ kind: "exemplar", item: ex })}
             className={`${row} border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-900/20`}
           >
             <div className="text-purple-600 dark:text-purple-400">📝</div>
@@ -370,9 +521,10 @@ export function EvolveReferencesChips({ block }: { block: ReferencesBlock }) {
               {ex.title || ex.response_title || t`Exemplar`}
             </span>
             <span className="text-purple-600 opacity-70 dark:text-purple-400">{t`Exemplar`}</span>
-          </div>
+          </button>
         ))}
       </div>
+      <ReferenceDetailDialog open={open} onClose={() => setOpen(null)} />
     </div>
   );
 }
