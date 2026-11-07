@@ -44,6 +44,7 @@ import { computerProviderRoutes } from "./routes/computer-provider.js";
 import { connectionsRoutes } from "./routes/connections.js";
 import { contentRoutes } from "./routes/content.js";
 import { createRouterContext } from "./routes/context.js";
+import { evolveHistoryRoutes } from "./routes/evolve-history.js";
 import { evolveReferencesRoutes } from "./routes/evolve-references.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { memoryRoutes } from "./routes/memory.js";
@@ -163,6 +164,7 @@ export function createRouter(deps: RouterDeps) {
     ...modelsRoutes(ctx),
     ...botsRoutes(ctx),
     ...evolveReferencesRoutes(ctx),
+    ...evolveHistoryRoutes(ctx),
     ...threadsRoutes(ctx),
     ...computerRoutes(ctx),
     ...computerProviderRoutes(ctx),

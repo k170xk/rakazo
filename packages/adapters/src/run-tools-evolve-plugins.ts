@@ -99,6 +99,7 @@ const KnowledgeSearchSchema = z
   .object({
     query: z.string().trim().min(1).max(1000),
     maxResults: z.number().int().min(1).max(20).optional(),
+    conversationId: z.string().uuid().optional(),
   })
   .strict();
 

@@ -162,6 +162,11 @@ import {
 } from "./domain.js";
 import { ComputerCommandSchema, ProductEventSchema } from "./events.js";
 import {
+  EvolveConversationMessagesSchema,
+  EvolveConversationPageSchema,
+  EvolveHistoryAssistantSchema,
+} from "./evolve-history.js";
+import {
   EvolvePersonOptionSchema,
   EvolveProjectPageSchema,
   EvolveReferenceExemplarSchema,
@@ -643,6 +648,30 @@ export const appContract = {
     people: oc.output(z.object({ people: z.array(EvolvePersonOptionSchema) })),
     exemplars: oc.output(z.object({ exemplars: z.array(EvolveReferenceExemplarSchema) })),
   },
+  /** The signed-in person's own Evolve chat history, read live from Evolve. */
+  evolveHistory: {
+    /** Assistants they have conversations with; unavailable when Evolve is not linked. */
+    assistants: oc.output(
+      z.object({ available: z.boolean(), assistants: z.array(EvolveHistoryAssistantSchema) }),
+    ),
+    conversations: oc
+      .input(
+        z.object({
+          assistantId: z.string().uuid().optional(),
+          search: z.string().trim().max(200).default(""),
+          page: z.number().int().min(0).max(10_000).default(0),
+        }),
+      )
+      .output(EvolveConversationPageSchema),
+    messages: oc
+      .input(
+        z.object({
+          conversationId: z.string().uuid(),
+          before: z.string().max(64).optional(),
+        }),
+      )
+      .output(EvolveConversationMessagesSchema),
+  },
   botSections: {
     list: oc.output(z.array(BotSectionSchema)),
     create: oc.input(threadTarget.safeExtend({ name: BotSectionName })).output(BotSectionSchema),
@@ -687,6 +716,15 @@ export const appContract = {
      * together, keyed by the nonce. A separate procedure, because an API without it must
      * reject the call rather than strip the routines and send only the text.
      */
+    /** Puts the person's own earlier Evolve conversation into a bot's chat to carry on from. */
+    continueEvolveConversation: oc
+      .input(
+        botId.safeExtend({
+          conversationId: z.string().uuid(),
+          clientNonce: z.string().min(1).max(200),
+        }),
+      )
+      .output(threadSendOutput),
     sendWithRoutines: oc
       .input(threadSendWithRoutinesInput)
       .output(z.object({ routineRunIds: z.array(Id), send: threadSendOutput.optional() })),

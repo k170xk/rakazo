@@ -9,6 +9,7 @@ import type {
 import {
   attachmentMaxBytes,
   attachmentMaxCount,
+  BOT_NAME_MAX_LENGTH,
   DEFAULT_NEW_BOT_AVATAR_SET,
 } from "@rakazo/contracts";
 import {
@@ -25,7 +26,7 @@ import {
 } from "@rakazo/core";
 import { fetchFresh, writeSaved } from "@rakazo/core/query";
 import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { Button } from "@rakazo/ui-web";
+import { BOT_AVATAR_COLORS, Button } from "@rakazo/ui-web";
 import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { Keyboard, Lock, Monitor, Moon, Plug, Plus, ScrollText, Sun, Users } from "lucide-react";
@@ -90,6 +91,7 @@ import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
 import { DrawingsButton, MAX_DRAWING_PAGES } from "./shell/drawings-dialog";
+import { EvolveHistoryAction } from "./shell/evolve-history";
 import { EvolveReferencesAction } from "./shell/evolve-references";
 import type { ImportSetupTarget } from "./shell/import-setup-card";
 import { KeyboardShortcutsDialog } from "./shell/keyboard-shortcuts-dialog";
@@ -1153,6 +1155,32 @@ function SpaceShell() {
               }
               callBot(bot);
             }}
+            historyAction={
+              active ? (
+                <EvolveHistoryAction
+                  key={active.id}
+                  rpc={rpc}
+                  bot={active}
+                  bots={bots}
+                  onContinued={async (botId) => {
+                    if (botId === active.id) await refreshThreadRef.current(botId);
+                    else navigate(`/app/${botId}`);
+                  }}
+                  onAddBot={async (assistant) => {
+                    const bot = await rpc.bots.create({
+                      name: assistant.name.slice(0, BOT_NAME_MAX_LENGTH),
+                      color:
+                        BOT_AVATAR_COLORS[Math.floor(Math.random() * BOT_AVATAR_COLORS.length)]!,
+                      evolveAssistantId: assistant.id,
+                      notifyOnFinish: true,
+                    });
+                    roster.addCreatedBot(bot);
+                    await refreshBots().catch(() => undefined);
+                    return bot;
+                  }}
+                />
+              ) : null
+            }
           />
           {!active && !activeGroup && initialBotsLoaded ? (
             <div className="grid flex-1 place-items-center">

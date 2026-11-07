@@ -4,6 +4,7 @@ import {
   ATTACHMENT_MAX_BYTES,
   ATTACHMENT_MAX_COUNT,
   attachmentSizeLabel,
+  evolveConversationPromptText,
   evolveReferencesPromptText,
   isAllowedAttachmentMimeType,
   isAttachmentImageMimeType,
@@ -174,6 +175,7 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
       if (block.kind === "ui_card") return `[${block.card.type} card: ${uiCardText(block.card)}]`;
       if (block.kind === "image") return `[image: ${block.name}]`;
       if (block.kind === "evolve_references") return evolveReferencesPromptText(block);
+      if (block.kind === "evolve_conversation") return evolveConversationPromptText(block);
       // The id lets a later turn, or another chat, update this page instead of making a new one.
       if (block.kind === "page") {
         return `[page: ${block.title} (pageId ${block.pageId}, version ${block.version})]`;

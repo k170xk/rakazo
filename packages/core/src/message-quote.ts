@@ -183,6 +183,8 @@ function replyBlockText(block: MessageBlock): string {
     case "image":
     case "file":
       return block.name || blocksToAgentHistoryText([block]);
+    case "evolve_conversation":
+      return block.title;
     case "evolve_references":
       return [
         ...block.projects.map((project) => project.name),

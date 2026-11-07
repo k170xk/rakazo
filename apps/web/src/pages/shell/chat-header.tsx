@@ -2,6 +2,7 @@ import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
 import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
 import { Gift, Menu, Monitor, Phone } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
@@ -22,6 +23,7 @@ export function ChatHeader({
   onTogglePanel,
   onToggleComputerPanel,
   onCall,
+  historyAction,
 }: {
   inGroup: boolean;
   active: Bot | undefined;
@@ -39,6 +41,8 @@ export function ChatHeader({
   /** Opens the Computer tab, or closes the side panel when that tab is already showing. */
   onToggleComputerPanel: () => void;
   onCall: (bot: Bot) => void;
+  /** Evolve's previous-conversations button, for bot chats. */
+  historyAction?: ReactNode;
 }) {
   const { t } = useLingui();
   const referral = useBilling().status?.referral;
@@ -83,6 +87,7 @@ export function ChatHeader({
         </span>
       </Button>
       <div className="flex items-center justify-self-end gap-2">
+        {!inGroup && active ? historyAction : null}
         {!inGroup && active ? (
           <IconTooltip label={t`Computer`}>
             <Button

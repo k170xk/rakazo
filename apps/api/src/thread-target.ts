@@ -4,6 +4,7 @@ import { runContinueJob } from "@rakazo/adapter-kit";
 import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@rakazo/adapters";
 import type {
   Actor,
+  EvolveConversationBlock,
   EvolveReferences,
   GroupMember,
   MessageBlock,
@@ -12,7 +13,9 @@ import type {
   ThreadSnapshot,
 } from "@rakazo/contracts";
 import {
+  EVOLVE_CONVERSATION_MESSAGE_TEXT,
   EVOLVE_REFERENCES_MESSAGE_TEXT,
+  evolveConversationPromptText,
   evolveReferencesPromptText,
   GROUP_MEMBER_MIN,
   hasEvolveReferences,
@@ -831,6 +834,8 @@ export async function sendThreadMessage(
     artifactIds?: string[];
     /** Evolve projects, people and exemplars: sent as Evolve sends them, on their own. */
     evolveReferences?: EvolveReferences;
+    /** Server-built only: the person's earlier Evolve conversation, continued in a bot's chat. */
+    evolveConversation?: EvolveConversationBlock;
     imageHandling?: "confirm" | "file";
     mentions?: MentionTargetInput[];
     replyToMessageId?: string;
@@ -850,7 +855,17 @@ export async function sendThreadMessage(
     ? rawInput.evolveReferences
     : undefined;
   if (references) assertEvolveReferencesSend(target, rawInput);
-  const input = references ? { ...rawInput, text: EVOLVE_REFERENCES_MESSAGE_TEXT } : rawInput;
+  const continued = references ? undefined : rawInput.evolveConversation;
+  if (continued && target.kind !== "bot") {
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Evolve conversations continue in a bot's chat.",
+    });
+  }
+  const input = references
+    ? { ...rawInput, text: EVOLVE_REFERENCES_MESSAGE_TEXT }
+    : continued
+      ? { ...rawInput, text: EVOLVE_CONVERSATION_MESSAGE_TEXT, artifactIds: [] }
+      : rawInput;
   const existing = await replayExistingSend(
     deps,
     target.threadId,
@@ -966,6 +981,7 @@ export async function sendThreadMessage(
           sendAttachmentBlocks(attachmentBlocks, artifacts, input.imageHandling),
         );
         if (references) blocks.push({ kind: "evolve_references", ...references });
+        if (continued) blocks.push({ kind: "evolve_conversation", ...continued });
         const message = await createThreadMessageInTransaction(tx, {
           threadId: target.threadId,
           role: "user",
@@ -1087,7 +1103,9 @@ export async function sendThreadMessage(
             userId: actor.userId,
             prompt: references
               ? evolveReferencesPromptText(references)
-              : buildSendPrompt(input.text, artifacts, connectorNames),
+              : continued
+                ? evolveConversationPromptText(continued)
+                : buildSendPrompt(input.text, artifacts, connectorNames),
             status: "queued",
           },
         });

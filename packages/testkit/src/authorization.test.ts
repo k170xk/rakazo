@@ -317,6 +317,17 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["evolveReferences/projects", {}],
       ["evolveReferences/people"],
       ["evolveReferences/exemplars"],
+      ["evolveHistory/assistants"],
+      ["evolveHistory/conversations", {}],
+      ["evolveHistory/messages", { conversationId: "35db4d59-e75a-4696-b1e1-357a746108a1" }],
+      [
+        "threads/continueEvolveConversation",
+        {
+          botId: "missing-bot",
+          conversationId: "35db4d59-e75a-4696-b1e1-357a746108a1",
+          clientNonce: "nope",
+        },
+      ],
       ["botSections/list"],
       ["botSections/create", { botId: "missing-bot", name: "Planning" }],
       ["botSections/update", { sectionId: "missing-section", name: "Planning" }],

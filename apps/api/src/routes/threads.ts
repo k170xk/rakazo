@@ -52,6 +52,7 @@ import {
 import { mapBotSecretInputError } from "./bots.js";
 import { releaseComputerControl } from "./computer.js";
 import type { RouterContext } from "./context.js";
+import { evolveConversationBlock } from "./evolve-history.js";
 import { withEvolvePeopleCvs } from "./evolve-references.js";
 import {
   botsRunOwnModels,
@@ -272,6 +273,31 @@ export function threadsRoutes(ctx: RouterContext) {
         context.actor.guestGroupIds
           ? sendAsGuest(context.actor, input)
           : send(context.actor, input),
+      ),
+      continueEvolveConversation: authed.threads.continueEvolveConversation.handler(
+        async ({ context, input }) => {
+          const bot = await deps.prisma.bot.findFirst({
+            where: {
+              id: input.botId,
+              spaceId: context.actor.spaceId,
+              userId: context.actor.userId,
+              archivedAt: null,
+            },
+            select: { evolveAssistantId: true },
+          });
+          if (!bot) throw new IsolationError();
+          const evolveConversation = await evolveConversationBlock(
+            deps,
+            context.actor,
+            input.conversationId,
+            Boolean(bot.evolveAssistantId),
+          );
+          return send(context.actor, {
+            botId: input.botId,
+            clientNonce: input.clientNonce,
+            evolveConversation,
+          });
+        },
       ),
       sendWithRoutines: authed.threads.sendWithRoutines.handler(async ({ context, input }) => {
         const { actor } = context;

@@ -1794,7 +1794,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "evolve_knowledge_search",
     description:
-      "Search the knowledge files of the Evolve assistant you were started from (its OpenAI vector store): OCSC guidance, standards, templates and past work it was given. Search before answering anything those files may cover, with a specific query, and name the files you used. Returns matching passages with their file names and scores.",
+      "Search the knowledge files of the Evolve assistant you were started from (its OpenAI vector store): OCSC guidance, standards, templates and past work it was given. Search before answering anything those files may cover, with a specific query, and name the files you used. Returns matching passages with their file names and scores. When this chat continues an earlier Evolve conversation, pass its conversationId to also search the files uploaded to that conversation and the user's own Evolve files; each result then says which it came from.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1808,6 +1808,12 @@ export const builtinAgentTools: ConnectorTool[] = [
           minimum: 1,
           maximum: 20,
           description: "How many passages to return (default 8).",
+        },
+        conversationId: {
+          type: "string",
+          format: "uuid",
+          description:
+            "The id of an earlier Evolve conversation continued in this chat, to search its files too.",
         },
       },
       required: ["query"],

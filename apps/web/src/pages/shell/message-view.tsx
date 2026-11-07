@@ -40,6 +40,7 @@ import {
 } from "../../lib/tool-activity-view";
 import { ReplyLine } from "./chat-context";
 import { FALLBACK_BOT_COLOR, previewMessageText } from "./chat-shared";
+import { EvolveConversationCard } from "./evolve-history";
 import { EvolveReferencesChips } from "./evolve-references";
 import type { ImportSetupTarget } from "./import-setup-card";
 import { ImportSetupCard } from "./import-setup-card";
@@ -525,6 +526,13 @@ export const MessageView = memo(function MessageView({
                   artifactId={block.artifactId}
                   name={block.name}
                 />
+              </div>
+            );
+          }
+          if (block.kind === "evolve_conversation") {
+            return (
+              <div key={i} className="flex justify-end">
+                <EvolveConversationCard block={block} />
               </div>
             );
           }
