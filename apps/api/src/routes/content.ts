@@ -18,6 +18,7 @@ import {
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
+import { measuredUsageTotals } from "../staff-spending.js";
 import { loadAllMessages } from "../thread-message-pages.js";
 import type { RouterContext } from "./context.js";
 
@@ -168,21 +169,7 @@ export function contentRoutes(ctx: RouterContext) {
         ]);
         const runs = new Set(runGroups.map((row) => row.parentRunId ?? row.runId).filter(Boolean))
           .size;
-        // A total that skips rows without a count would understate spend, so it reads as unknown.
-        const completeSums = (group: {
-          _sum: Record<keyof typeof sums, number | null>;
-          _count: Record<keyof typeof counts, number>;
-        }) => {
-          const complete = (field: keyof typeof sums) =>
-            group._count[field] === group._count._all ? (group._sum[field] ?? 0) : null;
-          return {
-            inputTokens: complete("inputTokens"),
-            outputTokens: complete("outputTokens"),
-            totalTokens: complete("totalTokens"),
-            costUsd: complete("costUsd"),
-            modelCalls: group._count._all,
-          };
-        };
+        const completeSums = measuredUsageTotals;
         return {
           ...completeSums(result),
           runs,

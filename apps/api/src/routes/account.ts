@@ -50,6 +50,7 @@ import {
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
+import { staffSpending } from "../staff-spending.js";
 import {
   disconnectVoiceCredential,
   listVoiceCatalog,
@@ -158,6 +159,9 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       setFeatures: authed.companyAdmin.setFeatures.handler(({ context, input }) =>
         setCompanyFeatures(deps, context.actor, input),
+      ),
+      spending: authed.companyAdmin.spending.handler(({ context, input }) =>
+        staffSpending(deps, context.actor.userId, input.period),
       ),
     },
     accessGrants: {

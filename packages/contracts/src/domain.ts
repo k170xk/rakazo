@@ -1319,21 +1319,60 @@ export const UsageRecordSchema = z.object({
   createdAt: z.string(),
 });
 
-/** Token and cost totals are null when any counted call lacks that figure. */
+/**
+ * Totals of the calls that reported each figure; null only when none did. `unmeasuredCalls`
+ * counts calls without a cost, such as one that failed before the provider replied.
+ */
 const UsageTotalsSchema = z.object({
   inputTokens: z.number().nullable(),
   outputTokens: z.number().nullable(),
   totalTokens: z.number().nullable().optional(),
   costUsd: z.number().nullable().optional(),
   modelCalls: z.number().optional(),
+  unmeasuredCalls: z.number().optional(),
 });
 export const UsageSummarySchema = UsageTotalsSchema.extend({
   runs: z.number(),
   models: z
-    .array(UsageTotalsSchema.required().extend({ provider: z.string(), model: z.string() }))
+    .array(
+      UsageTotalsSchema.required().extend({
+        unmeasuredCalls: z.number().optional(),
+        provider: z.string(),
+        model: z.string(),
+      }),
+    )
     .optional(),
 });
 export type UsageSummary = z.infer<typeof UsageSummarySchema>;
+
+export const STAFF_SPENDING_PERIODS = ["7d", "30d", "90d", "all"] as const;
+export type StaffSpendingPeriod = (typeof STAFF_SPENDING_PERIODS)[number];
+
+const StaffSpendingTotalsSchema = UsageTotalsSchema.required().extend({
+  totalTokens: z.number().nullable(),
+  costUsd: z.number().nullable(),
+});
+
+/** Company-wide model spending per person, for admins. */
+export const StaffSpendingSchema = z.object({
+  period: z.enum(STAFF_SPENDING_PERIODS),
+  /** Start of the period; null for all time. */
+  since: z.string().nullable(),
+  totals: StaffSpendingTotalsSchema.extend({ people: z.number() }),
+  people: z.array(
+    StaffSpendingTotalsSchema.extend({
+      userId: z.string(),
+      name: z.string(),
+      email: z.string(),
+      image: z.string().nullable(),
+      lastUsedAt: z.string(),
+      models: z.array(
+        StaffSpendingTotalsSchema.extend({ provider: z.string(), model: z.string() }),
+      ),
+    }),
+  ),
+});
+export type StaffSpending = z.infer<typeof StaffSpendingSchema>;
 
 export const COMPUTER_UPDATE_STAGES = [
   "preparing",

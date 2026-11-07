@@ -144,6 +144,8 @@ import {
   SpaceMemoryConfigSchema,
   SpaceNavigationSchema,
   SpaceSchema,
+  STAFF_SPENDING_PERIODS,
+  StaffSpendingSchema,
   TaughtSkillSchema,
   TeachRecordingEventSchema,
   ThreadMessagePageSchema,
@@ -377,6 +379,10 @@ export const appContract = {
     setModel: oc.input(CompanyModelInputSchema).output(CompanyAdminStateSchema),
     clearModel: oc.output(CompanyAdminStateSchema),
     setFeatures: oc.input(CompanyFeaturesSchema.partial()).output(CompanyAdminStateSchema),
+    /** Model spending per person across every space. */
+    spending: oc
+      .input(z.object({ period: z.enum(STAFF_SPENDING_PERIODS).default("30d") }))
+      .output(StaffSpendingSchema),
   },
   /** Admins only, on deployments that sell model credits. */
   accessGrants: {

@@ -1,4 +1,4 @@
-import { Trans, useLingui } from "@lingui/react/macro";
+import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import type { AccountSecurity, BotAvatarSet, UsageSummary } from "@rakazo/contracts";
 import {
   accountDisplay,
@@ -558,6 +558,15 @@ export function UsageSettingsPanel({
             </div>
           ))}
         </dl>
+      ) : null}
+      {usage?.unmeasuredCalls ? (
+        <p className="mt-3 text-[12.5px] text-muted-foreground">
+          <Plural
+            value={usage.unmeasuredCalls}
+            one="# call reported no cost, usually because it failed before the model replied. It is not included in the totals."
+            other="# calls reported no cost, usually because they failed before the model replied. They are not included in the totals."
+          />
+        </p>
       ) : null}
       {models.length > 0 ? (
         <div className="mt-4 rounded-xl border border-border px-2">
