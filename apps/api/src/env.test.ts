@@ -271,10 +271,27 @@ describe("loadEnv", () => {
 
   it("leaves Evolve Computer SSO unset unless a dedicated secret is provided", () => {
     expect(loadEnv(base).evolveSsoSecret).toBeUndefined();
+    expect(loadEnv(base).evolveSsoStartUrl).toBeUndefined();
+    const configured = loadEnv({
+      ...base,
+      EVOLVE_COMPUTER_SSO_SECRET: "  evolve-sso-secret-for-tests  ",
+    });
+    expect(configured.evolveSsoSecret).toBe("evolve-sso-secret-for-tests");
+    expect(configured.evolveSsoStartUrl).toBe("https://evolve.ocsc.me/evolve-computer-login");
     expect(
-      loadEnv({ ...base, EVOLVE_COMPUTER_SSO_SECRET: "  evolve-sso-secret-for-tests  " })
-        .evolveSsoSecret,
-    ).toBe("evolve-sso-secret-for-tests");
+      loadEnv({
+        ...base,
+        EVOLVE_COMPUTER_SSO_SECRET: "evolve-sso-secret-for-tests",
+        EVOLVE_SSO_START_URL: "https://evolve.example.test/evolve-computer-login/",
+      }).evolveSsoStartUrl,
+    ).toBe("https://evolve.example.test/evolve-computer-login");
+    expect(() =>
+      loadEnv({
+        ...base,
+        EVOLVE_COMPUTER_SSO_SECRET: "evolve-sso-secret-for-tests",
+        EVOLVE_SSO_START_URL: "evolve.example.test/login",
+      }),
+    ).toThrow(/EVOLVE_SSO_START_URL/);
   });
 
   it("exposes a deployed git revision when GIT_SHA is set", () => {

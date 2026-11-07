@@ -391,6 +391,11 @@ env.DATABASE_URL = database.url;
 env.DATABASE_MIGRATION_URL = database.migrationUrl;
 env.DATA_DIR = database.dataDir;
 
+// A checkout's .env turns on Evolve sign-in for this server. The shell can still override it.
+for (const name of ["NODE_ENV", "EVOLVE_COMPUTER_SSO_SECRET", "EVOLVE_SSO_START_URL", "EVOLVE_DIRECTORY_URL"]) {
+  if (!env[name] && setting(name)) env[name] = setting(name);
+}
+
 generateClientIfStale(env);
 // Checkouts starting together would otherwise grant the server-wide runtime role at the same
 // moment and fail. Advisory locks are per database, so every checkout locks the shared one.

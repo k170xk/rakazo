@@ -24,6 +24,13 @@ const fieldClass = "mt-2 h-12 rounded-xl px-4 text-base md:text-base";
 const CODE_LENGTH = 6;
 export const submitClass = "mt-3 h-12 w-full rounded-xl text-base";
 
+/** Evolve checks the person, then returns them to this checkout with a session. */
+function continueWithEvolve(startUrl: string) {
+  const start = new URL(startUrl);
+  start.searchParams.set("return", window.location.origin);
+  window.location.assign(start.href);
+}
+
 export function AuthPage({ mode }: { mode: AuthMode }) {
   const { t } = useLingui();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -250,6 +257,16 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
                 <Trans>Retry</Trans>
               </Button>
             </div>
+          ) : null}
+          {reset?.evolveSsoUrl && mode !== "forgot" && !codeStep ? (
+            <Button
+              type="button"
+              disabled={pending}
+              className={submitClass}
+              onClick={() => continueWithEvolve(reset.evolveSsoUrl!)}
+            >
+              <Trans>Continue with Evolve</Trans>
+            </Button>
           ) : null}
           {reset?.sso && !reset.passwordAuth && mode !== "forgot" ? (
             <Button

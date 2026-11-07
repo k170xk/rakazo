@@ -177,6 +177,8 @@ export interface AppEnv {
   crispWebsiteId?: string | null;
   /** Shared HMAC secret with Evolve `evolve-computer-sso-start`. Unset disables GET /api/auth/evolve. */
   evolveSsoSecret: string | undefined;
+  /** Evolve page that mints a sign-in token and returns the browser to this checkout. */
+  evolveSsoStartUrl?: string;
   /** Evolve `evolve-computer-directory`, searched with a token signed by `evolveSsoSecret`. */
   evolveDirectoryUrl?: string;
 }
@@ -352,6 +354,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     browserMonitoring: browserMonitoringFromEnv(source),
     crispWebsiteId: parseCrispWebsiteId(source.CRISP_WEBSITE_ID),
     evolveSsoSecret: optional(source.EVOLVE_COMPUTER_SSO_SECRET),
+    evolveSsoStartUrl: evolveSsoStartUrlFromEnv(source),
     evolveDirectoryUrl: optional(source.EVOLVE_DIRECTORY_URL),
   };
 }
@@ -361,6 +364,27 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
  * `${webOrigin}/path` cannot produce `https://host//path`; providers reject a
  * double-slash redirect URI as a mismatch against the one registered with them.
  */
+const DEFAULT_EVOLVE_SSO_START_URL = "https://evolve.ocsc.me/evolve-computer-login";
+
+/** Present only when Evolve SSO is configured, so the sign-in page can offer it. */
+function evolveSsoStartUrlFromEnv(source: NodeJS.ProcessEnv): string | undefined {
+  if (!optional(source.EVOLVE_COMPUTER_SSO_SECRET)) return undefined;
+  const value = optional(source.EVOLVE_SSO_START_URL) ?? DEFAULT_EVOLVE_SSO_START_URL;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("EVOLVE_SSO_START_URL must be an http(s) URL.");
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("EVOLVE_SSO_START_URL must be an http(s) URL.");
+  }
+  if (url.username || url.password) {
+    throw new Error("EVOLVE_SSO_START_URL must not include credentials.");
+  }
+  return url.href.replace(/\/+$/, "");
+}
+
 function resolveWebOrigin(value: string | undefined, fallback: string, name: string): string {
   const origin = (optional(value) ?? fallback).replace(/\/+$/, "");
   try {

@@ -19,6 +19,11 @@ export const authCapabilitiesSchema = z.object({
   nativePasskeys: z.object({ ios: z.boolean(), android: z.boolean() }).optional(),
   /** Crisp chat on the paywall; null or omitted when the deployment offers none. */
   crispWebsiteId: z.string().min(1).nullable().optional(),
+  /**
+   * Evolve sign-in page for this deployment. The client adds `return` with its own origin.
+   * Omitted by servers that have not configured the shared SSO secret.
+   */
+  evolveSsoUrl: z.string().url().nullable().optional(),
 });
 export type AuthCapabilities = z.infer<typeof authCapabilitiesSchema>;
 

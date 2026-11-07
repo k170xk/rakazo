@@ -928,6 +928,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       passkeyRpId: auth.passkeyRpId,
       nativePasskeys: nativePasskeys(env, auth.passkeyRpId),
       crispWebsiteId: billing ? (env.crispWebsiteId ?? null) : null,
+      evolveSsoUrl: env.evolveSsoStartUrl ?? null,
     } satisfies AuthCapabilities);
   });
   mountAppAssociation(app, env);
