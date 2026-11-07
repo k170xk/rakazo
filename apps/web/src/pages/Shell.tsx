@@ -92,7 +92,7 @@ import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
 import { DrawingsButton, MAX_DRAWING_PAGES } from "./shell/drawings-dialog";
-import { EvolveHistoryAction } from "./shell/evolve-history";
+import { EvolveArchive } from "./shell/evolve-history";
 import { EvolveReferencesAction } from "./shell/evolve-references";
 import type { ImportSetupTarget } from "./shell/import-setup-card";
 import { KeyboardShortcutsDialog } from "./shell/keyboard-shortcuts-dialog";
@@ -1091,15 +1091,43 @@ function SpaceShell() {
           />
         }
         archived={
-          <ArchivedChats
-            archivedBots={archivedBots}
-            archivedGroups={archivedGroups}
-            showSpaceSearch={search.showSpaceSearch}
-            rpc={rpc}
-            refreshBots={refreshBots}
-            setDeleteTarget={dialogs.setDeleteTarget}
-            setDeleteGroupTarget={dialogs.setDeleteGroupTarget}
-          />
+          <>
+            <EvolveArchive
+              rpc={rpc}
+              bots={bots}
+              activeBot={active}
+              hidden={search.showSpaceSearch}
+              onOpenBot={(botId) => {
+                setMobileSidebarOpen(false);
+                navigate(`/app/${botId}`);
+              }}
+              onContinued={async (botId) => {
+                setMobileSidebarOpen(false);
+                if (botId === active?.id) await refreshThreadRef.current(botId);
+                else navigate(`/app/${botId}`);
+              }}
+              onAddBot={async (assistant) => {
+                const bot = await rpc.bots.create({
+                  name: assistant.name.slice(0, BOT_NAME_MAX_LENGTH),
+                  color: BOT_AVATAR_COLORS[Math.floor(Math.random() * BOT_AVATAR_COLORS.length)]!,
+                  evolveAssistantId: assistant.id,
+                  notifyOnFinish: true,
+                });
+                roster.addCreatedBot(bot);
+                await refreshBots().catch(() => undefined);
+                return bot;
+              }}
+            />
+            <ArchivedChats
+              archivedBots={archivedBots}
+              archivedGroups={archivedGroups}
+              showSpaceSearch={search.showSpaceSearch}
+              rpc={rpc}
+              refreshBots={refreshBots}
+              setDeleteTarget={dialogs.setDeleteTarget}
+              setDeleteGroupTarget={dialogs.setDeleteGroupTarget}
+            />
+          </>
         }
         footerLogos={footerLogos}
         user={session.data?.user}
@@ -1164,32 +1192,6 @@ function SpaceShell() {
               }
               callBot(bot);
             }}
-            historyAction={
-              active ? (
-                <EvolveHistoryAction
-                  key={active.id}
-                  rpc={rpc}
-                  bot={active}
-                  bots={bots}
-                  onContinued={async (botId) => {
-                    if (botId === active.id) await refreshThreadRef.current(botId);
-                    else navigate(`/app/${botId}`);
-                  }}
-                  onAddBot={async (assistant) => {
-                    const bot = await rpc.bots.create({
-                      name: assistant.name.slice(0, BOT_NAME_MAX_LENGTH),
-                      color:
-                        BOT_AVATAR_COLORS[Math.floor(Math.random() * BOT_AVATAR_COLORS.length)]!,
-                      evolveAssistantId: assistant.id,
-                      notifyOnFinish: true,
-                    });
-                    roster.addCreatedBot(bot);
-                    await refreshBots().catch(() => undefined);
-                    return bot;
-                  }}
-                />
-              ) : null
-            }
           />
           {!active && !activeGroup && initialBotsLoaded ? (
             <div className="grid flex-1 place-items-center">

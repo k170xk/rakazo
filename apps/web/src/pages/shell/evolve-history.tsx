@@ -12,6 +12,9 @@ import type {
 import { newClientId } from "@rakazo/core";
 import {
   Button,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -20,9 +23,17 @@ import {
   Input,
   toast,
 } from "@rakazo/ui-web";
-import { FileText, History, Loader2, Search } from "lucide-react";
+import {
+  Archive,
+  Check,
+  ChevronDown,
+  FileText,
+  History,
+  Loader2,
+  MessagesSquare,
+  Search,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { IconTooltip } from "../../components/IconTooltip";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
 
@@ -129,32 +140,37 @@ function HistoryMessage({ message }: { message: EvolveHistoryMessage }) {
 }
 
 /**
- * Previous conversations from Evolve chat: the signed-in person's own history, read live from
- * Evolve. A conversation can be continued in a bot's chat, or its assistant added as a bot.
+ * The Evolve archive: the signed-in person's own Evolve chat history, read live from Evolve. A
+ * conversation can be continued in a bot's chat, reopened where it was continued, or its
+ * assistant added as a bot.
  */
 export function EvolveHistoryDialog({
   rpc,
-  bot,
+  activeBot,
   bots,
   assistants,
   open,
+  initialConversationId,
   onClose,
   onContinue,
   onAddBot,
+  onOpenBot,
 }: {
   rpc: SpaceRpc;
-  /** The chat the dialog was opened from. */
-  bot: Bot;
+  /** The chat showing behind the archive, offered as a place to continue. */
+  activeBot?: Bot;
   bots: readonly Bot[];
   assistants: EvolveHistoryAssistant[];
   open: boolean;
+  /** Opened straight onto this conversation. */
+  initialConversationId?: string;
   onClose: () => void;
   onContinue: (botId: string, conversationId: string) => Promise<void>;
   onAddBot: (assistant: EvolveHistoryAssistant, conversationId: string) => Promise<void>;
+  onOpenBot: (botId: string) => void;
 }) {
   const { t } = useLingui();
-  const ownAssistant = assistants.find((assistant) => assistant.botId === bot.id);
-  const [assistantId, setAssistantId] = useState<string>(ownAssistant?.id ?? ALL);
+  const [assistantId, setAssistantId] = useState<string>(ALL);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [list, setList] = useState<EvolveConversationSummary[]>([]);
@@ -210,6 +226,10 @@ export function EvolveHistoryDialog({
     setList([]);
     void loadList(0);
   }, [open, assistantId, search]);
+
+  useEffect(() => {
+    if (open && initialConversationId) void openConversation(initialConversationId);
+  }, [open, initialConversationId]);
 
   async function openConversation(id: string) {
     const request = ++detailRequest.current;
@@ -269,14 +289,24 @@ export function EvolveHistoryDialog({
   const assistantBot = conversationAssistant?.botId
     ? bots.find((item) => item.id === conversationAssistant.botId)
     : undefined;
+  const continuedIn = conversation
+    ? (list.find((item) => item.id === conversation.id)?.continuedIn ?? [])
+        .map((id) => bots.find((item) => item.id === id))
+        .filter((item): item is Bot => Boolean(item))
+    : [];
+  const openTarget = continuedIn[0];
+  const otherChat =
+    activeBot && activeBot.id !== openTarget?.id && activeBot.id !== assistantBot?.id
+      ? activeBot
+      : undefined;
 
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? undefined : onClose())}>
       <DialogContent className="flex h-[85vh] flex-col overflow-hidden sm:max-w-6xl">
         <DialogHeader>
-          <DialogTitle>{t`Previous conversations`}</DialogTitle>
+          <DialogTitle>{t`Your Evolve conversations`}</DialogTitle>
           <DialogDescription>
-            {t`Your chat history from Evolve. Open a conversation to read it, or continue it here.`}
+            {t`Everything you discussed with Evolve's chat assistants, read live from Evolve. Pick one up and it carries on in a chat here, files included.`}
           </DialogDescription>
         </DialogHeader>
         <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
@@ -312,8 +342,11 @@ export function EvolveHistoryDialog({
                   data-active={selectedId === item.id ? "" : undefined}
                   className="w-full rounded-lg px-3 py-2 text-start hover:bg-muted data-active:bg-muted"
                 >
-                  <span className="block truncate text-sm font-medium" dir="auto">
-                    {item.title}
+                  <span className="flex items-center gap-1.5">
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium" dir="auto">
+                      {item.title}
+                    </span>
+                    {item.continuedIn.length > 0 ? <ContinuedBadge /> : null}
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
                     {item.assistantName} · {shortDate(item.lastMessageAt)}
@@ -348,7 +381,7 @@ export function EvolveHistoryDialog({
             {conversation ? (
               <>
                 <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 basis-56">
                     <p className="truncate text-sm font-medium" dir="auto">
                       {conversation.title}
                     </p>
@@ -359,36 +392,47 @@ export function EvolveHistoryDialog({
                         : ""}
                     </p>
                   </div>
-                  {assistantBot && assistantBot.id !== bot.id ? (
+                  {otherChat ? (
                     <Button
                       size="sm"
                       variant="outline"
                       disabled={busy}
-                      onClick={() => void act(() => onContinue(assistantBot.id, conversation.id))}
+                      onClick={() => void act(() => onContinue(otherChat.id, conversation.id))}
                     >
-                      {t`Continue in ${assistantBot.name}`}
+                      {t`Continue in ${otherChat.name}`}
                     </Button>
                   ) : null}
-                  {!assistantBot && conversationAssistant?.available ? (
+                  {openTarget ? (
                     <Button
                       size="sm"
-                      variant="outline"
+                      onClick={() => {
+                        onOpenBot(openTarget.id);
+                        onClose();
+                      }}
+                    >
+                      {t`Open in ${openTarget.name}`}
+                    </Button>
+                  ) : assistantBot ? (
+                    <Button
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => void act(() => onContinue(assistantBot.id, conversation.id))}
+                    >
+                      {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+                      {t`Continue in ${assistantBot.name}`}
+                    </Button>
+                  ) : conversationAssistant?.available ? (
+                    <Button
+                      size="sm"
                       disabled={busy}
                       onClick={() =>
                         void act(() => onAddBot(conversationAssistant, conversation.id))
                       }
                     >
-                      {t`Add ${conversation.assistantName} as a bot`}
+                      {busy ? <Loader2 className="size-4 animate-spin" /> : null}
+                      {t`Continue as a new ${conversation.assistantName} chat`}
                     </Button>
                   ) : null}
-                  <Button
-                    size="sm"
-                    disabled={busy}
-                    onClick={() => void act(() => onContinue(bot.id, conversation.id))}
-                  >
-                    {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                    {t`Continue here`}
-                  </Button>
                 </div>
                 <div
                   ref={transcriptRef}
@@ -430,36 +474,75 @@ export function EvolveHistoryDialog({
   );
 }
 
-/** The header's history button; hidden unless Evolve is linked and the person has history. */
-export function EvolveHistoryAction({
+function ContinuedBadge() {
+  const { t } = useLingui();
+  return (
+    <span
+      title={t`Continued in a chat here`}
+      className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10.5px] font-medium text-primary"
+    >
+      <Check className="size-3" />
+      {t`Continued`}
+    </span>
+  );
+}
+
+const ARCHIVE_OPEN_KEY = "rakazo.sidebar.evolveArchive.open";
+const ARCHIVE_RECENT = 6;
+
+/**
+ * The sidebar's Evolve section: the person's latest Evolve conversations and how many they have
+ * carried over, opening the full archive. Hidden unless Evolve is linked and they have history.
+ */
+export function EvolveArchive({
   rpc,
-  bot,
   bots,
+  activeBot,
+  hidden,
+  onOpenBot,
   onContinued,
   onAddBot,
 }: {
   rpc: SpaceRpc;
-  bot: Bot;
   bots: readonly Bot[];
+  activeBot?: Bot;
+  hidden: boolean;
+  onOpenBot: (botId: string) => void;
   /** After a conversation is put into a bot's chat: show that chat. */
   onContinued: (botId: string) => Promise<void> | void;
   /** Creates a bot from an Evolve assistant and returns it. */
   onAddBot: (assistant: EvolveHistoryAssistant) => Promise<Bot>;
 }) {
   const { t } = useLingui();
-  const [assistants, setAssistants] = useState<EvolveHistoryAssistant[] | null>(null);
-  const [open, setOpen] = useState(false);
+  const [assistants, setAssistants] = useState<EvolveHistoryAssistant[]>([]);
+  const [continued, setContinued] = useState(0);
+  const [recent, setRecent] = useState<EvolveConversationSummary[]>([]);
+  const [reload, setReload] = useState(0);
+  const [expanded, setExpanded] = useState(() => localStorage.getItem(ARCHIVE_OPEN_KEY) !== "0");
+  const [dialog, setDialog] = useState<{ conversationId?: string } | null>(null);
+
   useEffect(() => {
     let live = true;
-    rpc.evolveHistory.assistants().then(
-      (result) => live && setAssistants(result.available ? result.assistants : []),
-      () => live && setAssistants([]),
-    );
+    void (async () => {
+      try {
+        const result = await rpc.evolveHistory.assistants();
+        if (!live || !result.available) return;
+        setAssistants(result.assistants);
+        setContinued(result.continued);
+        if (!result.assistants.some((assistant) => assistant.conversations > 0)) return;
+        const page = await rpc.evolveHistory.conversations({ search: "", page: 0 });
+        if (live) setRecent(page.conversations.slice(0, ARCHIVE_RECENT));
+      } catch {
+        // Evolve unreachable: the section stays hidden.
+      }
+    })();
     return () => {
       live = false;
     };
-  }, [rpc, bots.length]);
-  if (!assistants?.length) return null;
+  }, [rpc, bots.length, reload]);
+
+  const total = assistants.reduce((sum, assistant) => sum + assistant.conversations, 0);
+  if (total === 0 || recent.length === 0) return null;
 
   async function continueIn(botId: string, conversationId: string) {
     await rpc.threads.continueEvolveConversation({
@@ -467,36 +550,85 @@ export function EvolveHistoryAction({
       conversationId,
       clientNonce: newClientId(),
     });
+    setReload((value) => value + 1);
     await onContinued(botId);
-    toast.success(t`Conversation added to the chat.`);
+    toast.success(t`Conversation carried over from Evolve.`);
   }
 
   return (
     <>
-      <IconTooltip label={t`Previous conversations`}>
-        <Button
-          variant="floating"
-          size="icon-lg"
-          aria-label={t`Previous conversations`}
-          onClick={() => setOpen(true)}
-          className="app-no-drag"
-        >
-          <History strokeWidth={1.6} className="size-[17px]" />
-        </Button>
-      </IconTooltip>
-      {open ? (
+      <Collapsible
+        open={expanded}
+        onOpenChange={(next) => {
+          setExpanded(next);
+          localStorage.setItem(ARCHIVE_OPEN_KEY, next ? "1" : "0");
+        }}
+        className={hidden ? "hidden" : "mt-2 border-t border-border pt-2"}
+        data-testid="evolve-archive"
+      >
+        <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-[13.5px] text-muted-foreground hover:bg-sidebar-accent">
+          <Archive className="size-4 shrink-0" aria-hidden="true" />
+          <span className="flex-1 text-start">{t`From Evolve`}</span>
+          <span className="text-xs">
+            {continued > 0 ? t`${continued} of ${total} continued` : total}
+          </span>
+          <ChevronDown
+            className={`size-3.5 shrink-0 transition-transform ${expanded ? "" : "-rotate-90"}`}
+            aria-hidden="true"
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="flex flex-col gap-0.5">
+          {recent.map((item) => (
+            <button
+              type="button"
+              key={item.id}
+              onClick={() => setDialog({ conversationId: item.id })}
+              className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-1.5 text-start hover:bg-sidebar-accent"
+            >
+              <MessagesSquare
+                className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className="min-w-0 flex-1 truncate text-[13.5px] text-foreground/85"
+                    dir="auto"
+                  >
+                    {item.title}
+                  </span>
+                  {item.continuedIn.length > 0 ? <ContinuedBadge /> : null}
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {item.assistantName} · {shortDate(item.lastMessageAt)}
+                </span>
+              </span>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setDialog({})}
+            className="rounded-lg px-2.5 py-1.5 text-start text-[13px] text-primary hover:bg-sidebar-accent"
+          >
+            {t`See all ${total} Evolve conversations`}
+          </button>
+        </CollapsibleContent>
+      </Collapsible>
+      {dialog ? (
         <EvolveHistoryDialog
           rpc={rpc}
-          bot={bot}
+          activeBot={activeBot}
           bots={bots}
           assistants={assistants}
-          open={open}
-          onClose={() => setOpen(false)}
+          open
+          initialConversationId={dialog.conversationId}
+          onClose={() => setDialog(null)}
           onContinue={continueIn}
           onAddBot={async (assistant, conversationId) => {
             const created = await onAddBot(assistant);
             await continueIn(created.id, conversationId);
           }}
+          onOpenBot={onOpenBot}
         />
       ) : null}
     </>

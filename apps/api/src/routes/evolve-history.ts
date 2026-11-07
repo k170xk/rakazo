@@ -69,6 +69,46 @@ export async function evolveConversationBlock(
   };
 }
 
+/** Remembers that a conversation was continued in this bot's chat, so the archive can say so. */
+export async function recordEvolveContinuation(
+  deps: Deps,
+  actor: Actor,
+  conversationId: string,
+  botId: string,
+): Promise<void> {
+  await deps.prisma.evolveConversationLink.upsert({
+    where: {
+      userId_conversationId_botId: { userId: actor.userId, conversationId, botId },
+    },
+    create: { userId: actor.userId, spaceId: actor.spaceId, conversationId, botId },
+    update: {},
+  });
+}
+
+/** The person's live bots in this space each conversation was continued in, oldest first. */
+async function continuedBots(
+  deps: Deps,
+  actor: Actor,
+  conversationIds: string[],
+): Promise<Map<string, string[]>> {
+  const found = new Map<string, string[]>();
+  if (conversationIds.length === 0) return found;
+  const links = await deps.prisma.evolveConversationLink.findMany({
+    where: {
+      userId: actor.userId,
+      spaceId: actor.spaceId,
+      conversationId: { in: conversationIds },
+      bot: { archivedAt: null, userId: actor.userId, spaceId: actor.spaceId },
+    },
+    select: { conversationId: true, botId: true },
+    orderBy: { createdAt: "asc" },
+  });
+  for (const link of links) {
+    found.set(link.conversationId, [...(found.get(link.conversationId) ?? []), link.botId]);
+  }
+  return found;
+}
+
 /** Read-only Evolve chat history; each call is made as the signed-in person's Evolve profile. */
 export function evolveHistoryRoutes(ctx: RouterContext) {
   const { deps, authed } = ctx;
@@ -76,7 +116,7 @@ export function evolveHistoryRoutes(ctx: RouterContext) {
     evolveHistory: {
       assistants: authed.evolveHistory.assistants.handler(async ({ context }) => {
         const linked = await linkedEvolve(deps, context.actor);
-        if (!linked) return { available: false, assistants: [] };
+        if (!linked) return { available: false, assistants: [], continued: 0 };
         const assistants = await listEvolveHistoryAssistants(linked.connection, linked.email, {
           signal: context.signal,
         }).catch(unreachable);
@@ -96,8 +136,18 @@ export function evolveHistoryRoutes(ctx: RouterContext) {
             botFor.set(bot.evolveAssistantId, bot.id);
           }
         }
+        const continued = await deps.prisma.evolveConversationLink.findMany({
+          where: {
+            userId: context.actor.userId,
+            spaceId: context.actor.spaceId,
+            bot: { archivedAt: null },
+          },
+          distinct: ["conversationId"],
+          select: { conversationId: true },
+        });
         return {
           available: true,
+          continued: continued.length,
           assistants: assistants.map((assistant) => ({
             ...assistant,
             botId: botFor.get(assistant.id) ?? null,
@@ -106,9 +156,21 @@ export function evolveHistoryRoutes(ctx: RouterContext) {
       }),
       conversations: authed.evolveHistory.conversations.handler(async ({ context, input }) => {
         const { connection, email } = await requiredEvolve(deps, context.actor);
-        return listEvolveConversations(connection, email, input, {
+        const page = await listEvolveConversations(connection, email, input, {
           signal: context.signal,
         }).catch(unreachable);
+        const continuedIn = await continuedBots(
+          deps,
+          context.actor,
+          page.conversations.map((conversation) => conversation.id),
+        );
+        return {
+          ...page,
+          conversations: page.conversations.map((conversation) => ({
+            ...conversation,
+            continuedIn: continuedIn.get(conversation.id) ?? [],
+          })),
+        };
       }),
       messages: authed.evolveHistory.messages.handler(async ({ context, input }) => {
         const { connection, email } = await requiredEvolve(deps, context.actor);

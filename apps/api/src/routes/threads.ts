@@ -52,7 +52,7 @@ import {
 import { mapBotSecretInputError } from "./bots.js";
 import { releaseComputerControl } from "./computer.js";
 import type { RouterContext } from "./context.js";
-import { evolveConversationBlock } from "./evolve-history.js";
+import { evolveConversationBlock, recordEvolveContinuation } from "./evolve-history.js";
 import { withEvolvePeopleCvs } from "./evolve-references.js";
 import {
   botsRunOwnModels,
@@ -292,11 +292,20 @@ export function threadsRoutes(ctx: RouterContext) {
             input.conversationId,
             Boolean(bot.evolveAssistantId),
           );
-          return send(context.actor, {
+          const sent = await send(context.actor, {
             botId: input.botId,
             clientNonce: input.clientNonce,
             evolveConversation,
           });
+          await recordEvolveContinuation(
+            deps,
+            context.actor,
+            input.conversationId,
+            input.botId,
+          ).catch((error) =>
+            getLogger().warn("evolve continuation link", { error: String(error) }),
+          );
+          return sent;
         },
       ),
       sendWithRoutines: authed.threads.sendWithRoutines.handler(async ({ context, input }) => {

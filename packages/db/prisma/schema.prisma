@@ -776,6 +776,7 @@ model Bot {
   fleetManagement        Boolean @default(true)
   /// The Evolve chat assistant this bot was started from; its knowledge files answer evolve_knowledge_search.
   evolveAssistantId String?
+  evolveConversationLinks EvolveConversationLink[]
   routines          Routine[]
   scratchpadItems   ScratchpadItem[]
   taughtSkills      TaughtSkill[]
@@ -935,6 +936,22 @@ model Thread {
   @@index([spaceId])
   @@index([spaceId, userId])
   @@map("threads")
+}
+
+/// An earlier Evolve conversation its owner continued in one of their bots' chats.
+model EvolveConversationLink {
+  id             String   @id @default(cuid())
+  userId         String
+  spaceId        String
+  conversationId String
+  botId          String
+  bot            Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, conversationId, botId])
+  @@index([userId, spaceId])
+  @@index([botId])
+  @@map("evolve_conversation_links")
 }
 
 model Message {

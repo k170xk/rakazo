@@ -38,6 +38,8 @@ export const EvolveConversationSummarySchema = z.object({
   lastMessageAt: Timestamp,
   /** Files uploaded to the conversation. */
   files: z.number().int().nonnegative(),
+  /** The person's bots whose chats this conversation was continued in. */
+  continuedIn: z.array(z.string().min(1).max(64)).max(50).default([]),
 });
 export type EvolveConversationSummary = z.infer<typeof EvolveConversationSummarySchema>;
 

@@ -652,7 +652,12 @@ export const appContract = {
   evolveHistory: {
     /** Assistants they have conversations with; unavailable when Evolve is not linked. */
     assistants: oc.output(
-      z.object({ available: z.boolean(), assistants: z.array(EvolveHistoryAssistantSchema) }),
+      z.object({
+        available: z.boolean(),
+        assistants: z.array(EvolveHistoryAssistantSchema),
+        /** How many of their conversations they have continued in a chat here. */
+        continued: z.number().int().nonnegative().default(0),
+      }),
     ),
     conversations: oc
       .input(
