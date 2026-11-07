@@ -1380,7 +1380,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             userComputer = "connected";
             // The macOS and Windows desktops fetch a screen driver; Linux has none yet.
             userComputerScreen = device.platform === "darwin" || device.platform === "win32";
-          } else userComputer = "offline";
+          } else if (await deps.userDevices.pairedSince(userComputerOwnerId).catch(() => null)) {
+            // Only someone who has paired a desktop is told it is offline; for everyone
+            // else the line only invites the bot to ask for an app they never use.
+            userComputer = "offline";
+          }
         }
         const builtins = [
           ...selectBuiltinToolsForRun({
