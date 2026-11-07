@@ -10,6 +10,7 @@ import { newClientId } from "@rakazo/core";
 import { Button, Popover, PopoverContent, PopoverTrigger, toast } from "@rakazo/ui-web";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@rakazo/ui-web/components/ui/tooltip";
 import { BookOpen } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import type { createSpaceRpc } from "../../lib/rpc";
 import type { ReferencesLoaders } from "./references-dialog";
@@ -277,6 +278,37 @@ export function EvolveReferencesButton({
   );
 }
 
+/** Evolve sends a placeholder picture for projects without photos; that is no photo. */
+function realImage(url: string | undefined): string | undefined {
+  return url && !url.startsWith("https://placehold.co/") ? url : undefined;
+}
+
+/** An image that gives way to `fallback` (or nothing) when it fails to load. */
+function FallbackImage({
+  src,
+  alt,
+  className,
+  fallback = null,
+}: {
+  src: string;
+  alt: string;
+  className: string;
+  fallback?: ReactNode;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <>{fallback}</>;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={className}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 /** Evolve's "Added References:" list under a references message. */
 export function EvolveReferencesChips({ block }: { block: ReferencesBlock }) {
   const { t } = useLingui();
@@ -285,22 +317,45 @@ export function EvolveReferencesChips({ block }: { block: ReferencesBlock }) {
     <div className="mt-3 space-y-2 border-t border-border pt-3" data-testid="evolve-references">
       <div className="text-xs font-medium opacity-80">{t`Added References:`}</div>
       <div className="space-y-1">
-        {block.projects.map((project) => (
-          <div
-            key={`project-${project.id}`}
-            className={`${row} border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20`}
-          >
-            <div className="text-green-600 dark:text-green-400">📋</div>
-            <span className="flex-1 truncate font-medium">{project.name}</span>
-            <span className="text-green-600 opacity-70 dark:text-green-400">{t`Project`}</span>
-          </div>
-        ))}
+        {block.projects.map((project) => {
+          const cover = realImage(project.image);
+          return cover ? (
+            <div
+              key={`project-${project.id}`}
+              className="overflow-hidden rounded border border-green-200 bg-green-50 text-xs dark:border-green-800 dark:bg-green-900/20"
+            >
+              <FallbackImage src={cover} alt={project.name} className="h-28 w-full object-cover" />
+              <div className="flex items-center gap-2 p-2">
+                <span className="flex-1 truncate font-medium">{project.name}</span>
+                <span className="text-green-600 opacity-70 dark:text-green-400">{t`Project`}</span>
+              </div>
+            </div>
+          ) : (
+            <div
+              key={`project-${project.id}`}
+              className={`${row} border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20`}
+            >
+              <div className="text-green-600 dark:text-green-400">📋</div>
+              <span className="flex-1 truncate font-medium">{project.name}</span>
+              <span className="text-green-600 opacity-70 dark:text-green-400">{t`Project`}</span>
+            </div>
+          );
+        })}
         {block.people.map((person) => (
           <div
             key={`person-${person.id}`}
             className={`${row} border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20`}
           >
-            <div className="text-blue-600 dark:text-blue-400">👤</div>
+            {person.photo ? (
+              <FallbackImage
+                src={person.photo}
+                alt={person.name}
+                className="size-7 shrink-0 rounded-full object-cover"
+                fallback={<div className="text-blue-600 dark:text-blue-400">👤</div>}
+              />
+            ) : (
+              <div className="text-blue-600 dark:text-blue-400">👤</div>
+            )}
             <span className="flex-1 truncate font-medium">{person.name}</span>
             <span className="text-blue-600 opacity-70 dark:text-blue-400">{t`Person`}</span>
           </div>
