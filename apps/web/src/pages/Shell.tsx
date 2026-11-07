@@ -27,7 +27,7 @@ import {
 } from "@rakazo/core";
 import { fetchFresh, writeSaved } from "@rakazo/core/query";
 import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { BOT_AVATAR_COLORS, Button } from "@rakazo/ui-web";
+import { BOT_AVATAR_COLORS, Button, toast } from "@rakazo/ui-web";
 import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { Keyboard, Lock, Monitor, Moon, Plug, Plus, ScrollText, Sun, Users } from "lucide-react";
@@ -92,7 +92,7 @@ import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
 import { DrawingsButton, MAX_DRAWING_PAGES } from "./shell/drawings-dialog";
-import { EvolveArchive } from "./shell/evolve-history";
+import { EvolveArchive, EvolveConversationView } from "./shell/evolve-history";
 import { EvolveReferencesAction } from "./shell/evolve-references";
 import type { ImportSetupTarget } from "./shell/import-setup-card";
 import { KeyboardShortcutsDialog } from "./shell/keyboard-shortcuts-dialog";
@@ -330,6 +330,8 @@ function SpaceShell() {
   const dialogs = useShellDialogs();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
+  const evolveConversationId = searchParams.get("evolve");
+  const [evolveReload, setEvolveReload] = useState(0);
   const findInputRef = useRef<HTMLInputElement>(null);
   const chatColumnRef = useRef<HTMLDivElement>(null);
   // Matches belong to the chat they were found in.
@@ -1095,27 +1097,16 @@ function SpaceShell() {
             <EvolveArchive
               rpc={rpc}
               bots={bots}
-              activeBot={active}
               hidden={search.showSpaceSearch}
+              activeConversationId={evolveConversationId}
+              reloadKey={evolveReload}
+              onOpenConversation={(conversationId) => {
+                setMobileSidebarOpen(false);
+                navigate({ search: `?evolve=${encodeURIComponent(conversationId)}` });
+              }}
               onOpenBot={(botId) => {
                 setMobileSidebarOpen(false);
                 navigate(`/app/${botId}`);
-              }}
-              onContinued={async (botId) => {
-                setMobileSidebarOpen(false);
-                if (botId === active?.id) await refreshThreadRef.current(botId);
-                else navigate(`/app/${botId}`);
-              }}
-              onAddBot={async (assistant) => {
-                const bot = await rpc.bots.create({
-                  name: assistant.name.slice(0, BOT_NAME_MAX_LENGTH),
-                  color: BOT_AVATAR_COLORS[Math.floor(Math.random() * BOT_AVATAR_COLORS.length)]!,
-                  evolveAssistantId: assistant.id,
-                  notifyOnFinish: true,
-                });
-                roster.addCreatedBot(bot);
-                await refreshBots().catch(() => undefined);
-                return bot;
               }}
             />
             <ArchivedChats
@@ -1172,84 +1163,120 @@ function SpaceShell() {
               />
             </div>
           ) : null}
-          <ChatHeader
-            inGroup={inGroup}
-            active={active}
-            activeGroup={activeGroup}
-            activeSnapshot={activeSnapshot}
-            phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
-            voiceReady={Boolean(voiceStatus?.ready)}
-            inCall={Boolean(active) && call?.botId === active?.id}
-            panelOpen={chatPanelOpen}
-            computerPanelOpen={panel === "computer"}
-            onOpenNavigation={() => setMobileSidebarOpen(true)}
-            onTogglePanel={toggleChatPanel}
-            onToggleComputerPanel={toggleComputerPanel}
-            onCall={(bot) => {
-              if (call?.botId === bot.id) {
-                setCallMinimized(false);
-                return;
-              }
-              callBot(bot);
-            }}
-          />
-          {!active && !activeGroup && initialBotsLoaded ? (
-            <div className="grid flex-1 place-items-center">
-              <Button onClick={() => dialogs.setCreateBotOpen(true)}>
-                <Plus size={16} aria-hidden="true" />
-                <Trans>New bot</Trans>
-              </Button>
-            </div>
-          ) : (
-            <Transcript
-              key={activeSnapshot?.threadId}
-              scrollRef={thread.messageScroll}
-              scrollRequest={scrollRequest}
-              onScrollRequestHandled={clearScrollRequest}
-              followRequest={composer.sentCount}
-              artifactTarget={transcriptArtifactTarget}
-              markedUnreadMessageId={read.markedUnreadMessageId}
-              transcript={transcript}
-              showToolActivity={showToolActivity}
-              olderCursor={activeSnapshot?.olderCursor ?? null}
-              unreadAfterSeq={read.unreadAfterSeq}
-              loadingOlder={loadingOlder}
-              answerableAskIds={answerableAskIds}
-              dismissableAskIds={dismissableAskIds}
-              running={transcriptRunning}
-              workingBots={workingBots}
-              userBubble={userBubble}
-              onCallBack={
-                bootstrapMe?.phoneCallsEnabled && !inGroup && active
-                  ? () => callBot(active)
-                  : undefined
-              }
-              onLoadOlder={loadOlder}
-              onOpenBot={openBot}
-              onAnswer={composer.answerMessage}
-              onReply={replyToMessage}
-              onMarkUnread={markMessageUnread}
-              onQuote={quoteMessage}
-              onReact={composer.reactToMessage}
-              onJumpToMessage={jumpToReplyMessage}
-              onOpenPeerMessages={openPeerMessages}
-              memberName={resolveTranscriptMemberName}
-              authorName={resolveTranscriptAuthorName}
-              peerBot={resolveTranscriptBot}
-              me={transcriptMe}
-              onRefresh={refreshActiveThread}
-              onBotChanged={refreshBots}
-              onAddRoutine={addSkillRoutine}
-              voiceReady={Boolean(voiceStatus?.ready)}
-              speakingMessageId={speakingMessageId}
-              onSpeak={speakMessage}
-              onOpenComputer={computerControls.onOpenComputer}
-              onOpenImportSetup={openImportSetup}
+          {evolveConversationId ? (
+            <EvolveConversationView
+              key={evolveConversationId}
               rpc={rpc}
+              conversationId={evolveConversationId}
+              bots={bots}
+              activeBot={inGroup ? undefined : active}
+              onClose={() => navigate({ search: "" })}
+              onOpenNavigation={() => setMobileSidebarOpen(true)}
+              onOpenBot={(botId) => navigate(`/app/${botId}`)}
+              onContinue={async (botId, conversationId) => {
+                await rpc.threads.continueEvolveConversation({
+                  botId,
+                  conversationId,
+                  clientNonce: newClientId(),
+                });
+                setEvolveReload((value) => value + 1);
+                navigate(`/app/${botId}`);
+                if (botId === active?.id) await refreshThreadRef.current(botId);
+                toast.success(t`Conversation carried over from Evolve.`);
+              }}
+              onAddBot={async (assistant) => {
+                const bot = await rpc.bots.create({
+                  name: assistant.name.slice(0, BOT_NAME_MAX_LENGTH),
+                  color: BOT_AVATAR_COLORS[Math.floor(Math.random() * BOT_AVATAR_COLORS.length)]!,
+                  evolveAssistantId: assistant.id,
+                  notifyOnFinish: true,
+                });
+                roster.addCreatedBot(bot);
+                await refreshBots().catch(() => undefined);
+                return bot;
+              }}
             />
-          )}
+          ) : null}
+          <div className={evolveConversationId ? "hidden" : "contents"}>
+            <ChatHeader
+              inGroup={inGroup}
+              active={active}
+              activeGroup={activeGroup}
+              activeSnapshot={activeSnapshot}
+              phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
+              voiceReady={Boolean(voiceStatus?.ready)}
+              inCall={Boolean(active) && call?.botId === active?.id}
+              panelOpen={chatPanelOpen}
+              computerPanelOpen={panel === "computer"}
+              onOpenNavigation={() => setMobileSidebarOpen(true)}
+              onTogglePanel={toggleChatPanel}
+              onToggleComputerPanel={toggleComputerPanel}
+              onCall={(bot) => {
+                if (call?.botId === bot.id) {
+                  setCallMinimized(false);
+                  return;
+                }
+                callBot(bot);
+              }}
+            />
+            {!active && !activeGroup && initialBotsLoaded ? (
+              <div className="grid flex-1 place-items-center">
+                <Button onClick={() => dialogs.setCreateBotOpen(true)}>
+                  <Plus size={16} aria-hidden="true" />
+                  <Trans>New bot</Trans>
+                </Button>
+              </div>
+            ) : (
+              <Transcript
+                key={activeSnapshot?.threadId}
+                scrollRef={thread.messageScroll}
+                scrollRequest={scrollRequest}
+                onScrollRequestHandled={clearScrollRequest}
+                followRequest={composer.sentCount}
+                artifactTarget={transcriptArtifactTarget}
+                markedUnreadMessageId={read.markedUnreadMessageId}
+                transcript={transcript}
+                showToolActivity={showToolActivity}
+                olderCursor={activeSnapshot?.olderCursor ?? null}
+                unreadAfterSeq={read.unreadAfterSeq}
+                loadingOlder={loadingOlder}
+                answerableAskIds={answerableAskIds}
+                dismissableAskIds={dismissableAskIds}
+                running={transcriptRunning}
+                workingBots={workingBots}
+                userBubble={userBubble}
+                onCallBack={
+                  bootstrapMe?.phoneCallsEnabled && !inGroup && active
+                    ? () => callBot(active)
+                    : undefined
+                }
+                onLoadOlder={loadOlder}
+                onOpenBot={openBot}
+                onAnswer={composer.answerMessage}
+                onReply={replyToMessage}
+                onMarkUnread={markMessageUnread}
+                onQuote={quoteMessage}
+                onReact={composer.reactToMessage}
+                onJumpToMessage={jumpToReplyMessage}
+                onOpenPeerMessages={openPeerMessages}
+                memberName={resolveTranscriptMemberName}
+                authorName={resolveTranscriptAuthorName}
+                peerBot={resolveTranscriptBot}
+                me={transcriptMe}
+                onRefresh={refreshActiveThread}
+                onBotChanged={refreshBots}
+                onAddRoutine={addSkillRoutine}
+                voiceReady={Boolean(voiceStatus?.ready)}
+                speakingMessageId={speakingMessageId}
+                onSpeak={speakMessage}
+                onOpenComputer={computerControls.onOpenComputer}
+                onOpenImportSetup={openImportSetup}
+                rpc={rpc}
+              />
+            )}
+          </div>
         </div>
-        {active || activeGroup ? (
+        {(active || activeGroup) && !evolveConversationId ? (
           // Let messages continue behind the composer's rounded top corners.
           <div className="pointer-events-none relative z-30 -mt-7">
             {recordingSkill ? (

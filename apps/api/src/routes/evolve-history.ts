@@ -174,9 +174,17 @@ export function evolveHistoryRoutes(ctx: RouterContext) {
       }),
       messages: authed.evolveHistory.messages.handler(async ({ context, input }) => {
         const { connection, email } = await requiredEvolve(deps, context.actor);
-        return readEvolveConversation(connection, email, input, {
+        const result = await readEvolveConversation(connection, email, input, {
           signal: context.signal,
         }).catch(unreachable);
+        const continuedIn = await continuedBots(deps, context.actor, [result.conversation.id]);
+        return {
+          ...result,
+          conversation: {
+            ...result.conversation,
+            continuedIn: continuedIn.get(result.conversation.id) ?? [],
+          },
+        };
       }),
     },
   };
