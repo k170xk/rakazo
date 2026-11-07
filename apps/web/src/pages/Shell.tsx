@@ -13,6 +13,7 @@ import {
   DEFAULT_NEW_BOT_AVATAR_SET,
 } from "@rakazo/contracts";
 import {
+  accountDisplay,
   answerableAskMessageIds,
   channelMessageSender,
   chatUserBubbleColors,
@@ -633,6 +634,14 @@ function SpaceShell() {
     (botId: string | undefined) => memberName(transcriptMembers, botId),
     [transcriptMembers],
   );
+  const sessionUser = session.data?.user;
+  const transcriptMe = useMemo(
+    () =>
+      sessionUser
+        ? { name: accountDisplay(sessionUser, t`You`).label, image: sessionUser.image ?? null }
+        : undefined,
+    [sessionUser, t],
+  );
   const transcriptPeople = activeSnapshot?.people;
   const resolveTranscriptAuthorName = useCallback(
     (message: ThreadMessage) =>
@@ -1225,6 +1234,7 @@ function SpaceShell() {
               memberName={resolveTranscriptMemberName}
               authorName={resolveTranscriptAuthorName}
               peerBot={resolveTranscriptBot}
+              me={transcriptMe}
               onRefresh={refreshActiveThread}
               onBotChanged={refreshBots}
               onAddRoutine={addSkillRoutine}

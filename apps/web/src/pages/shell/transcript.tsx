@@ -21,7 +21,7 @@ import {
   voiceChatHoldsMessage,
 } from "@rakazo/core";
 import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { Button, cn, Spinner } from "@rakazo/ui-web";
+import { BotAvatar, Button, cn, Spinner } from "@rakazo/ui-web";
 import { ArrowDown } from "lucide-react";
 import type { CSSProperties, RefObject } from "react";
 import {
@@ -36,6 +36,7 @@ import {
 } from "react";
 import { ActiveBotGlyph } from "../../components/ai/CollaborationMarker";
 import { VoiceChatCard } from "../../components/call/VoiceChatCard";
+import { PersonAvatar } from "../../components/GroupPeople";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { projectPageCards } from "../../lib/page-cards";
 import { lastSelectedText, quoteDraftForSelection } from "../../lib/quote-selection";
@@ -44,6 +45,7 @@ import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
 import { TRANSCRIPT_CONTENT_PADDING } from "../../lib/transcript-layout";
 import { transcriptIsNearEnd, transcriptMovedDown } from "../../lib/transcript-scroll";
 import { TimeSeparator, UnreadDivider } from "./chat-context";
+import { FALLBACK_BOT_COLOR } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
 import { MessageView } from "./message-view";
 import { QuoteSelectionButton } from "./quote-selection-button";
@@ -53,6 +55,15 @@ export function bubbleFrameWidth(role: ThreadMessage["role"]) {
   return role === "user"
     ? "max-w-[min(84%,calc(100%_-_8rem),39rem)] [@media(hover:none)]:max-w-[min(84%,39rem)]"
     : "max-w-[min(88%,calc(100%_-_8rem),39rem)] [@media(hover:none)]:max-w-[min(88%,39rem)]";
+}
+
+const SIDE_AVATAR_SIZE = 28;
+
+function messageTime(createdAt: string, locale: string): string {
+  const date = new Date(createdAt);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
 }
 
 export const Transcript = memo(function Transcript({
@@ -85,6 +96,7 @@ export const Transcript = memo(function Transcript({
   memberName,
   authorName,
   peerBot,
+  me,
   onRefresh,
   onBotChanged,
   onAddRoutine,
@@ -137,6 +149,8 @@ export const Transcript = memo(function Transcript({
   peerBot: (
     botId: string,
   ) => { name?: string; color: string; status?: string; avatarSet?: BotAvatarSet } | undefined;
+  /** You, drawn beside your own messages. */
+  me?: { name: string; image: string | null };
   onRefresh: () => Promise<void>;
   onBotChanged: () => Promise<void>;
   onAddRoutine: (name: string, prompt: string) => void;
@@ -230,6 +244,21 @@ export const Transcript = memo(function Transcript({
     (message) => !exchanges.lineOf.has(message.id) || exchanges.lines.has(message.id),
   );
   const separatorIds = timeSeparatorIds(shownMessages);
+  // A run of messages from one sender shows its avatar once, beside the last of them.
+  const runEndIds = new Set(
+    shownMessages
+      .filter((message, index) => {
+        const next = shownMessages[index + 1];
+        return (
+          !next ||
+          next.role !== message.role ||
+          next.botId !== message.botId ||
+          next.authorUserId !== message.authorUserId ||
+          separatorIds.has(next.id)
+        );
+      })
+      .map((message) => message.id),
+  );
   const unreadDividerId = unreadDividerMessageId(shownMessages, unreadAfterSeq, olderCursor);
   const workingLabel = liveActivityLine(messages) ?? t`Working…`;
   const [quoteDraft, setQuoteDraft] = useState<{
@@ -544,6 +573,41 @@ export const Transcript = memo(function Transcript({
           if (!messageHasVisibleBlocks(message.blocks, showToolActivity)) return null;
           const peerReceipt = isPeerReceiptBlocks(message.blocks);
           const messageReactions = reactionView.reactions.get(message.id);
+          const speakerName =
+            peerReceipt || message.role !== "bot" ? undefined : memberName?.(message.botId);
+          const colleagueName = message.role === "user" ? authorName?.(message) : undefined;
+          const speaker = message.botId ? peerBot(message.botId) : undefined;
+          // Groups already name each speaker above their message.
+          const sideAvatar = peerReceipt
+            ? null
+            : message.role === "user"
+              ? !colleagueName && me
+                ? { kind: "me" as const }
+                : null
+              : !speakerName && message.botId
+                ? { kind: "bot" as const }
+                : null;
+          const avatarSlot = sideAvatar ? (
+            <div className="shrink-0 self-end" style={{ width: SIDE_AVATAR_SIZE }}>
+              {runEndIds.has(message.id) ? (
+                sideAvatar.kind === "me" && me ? (
+                  <PersonAvatar name={me.name} image={me.image} size={SIDE_AVATAR_SIZE} />
+                ) : (
+                  <BotAvatar
+                    color={speaker?.color ?? FALLBACK_BOT_COLOR}
+                    avatarSet={speaker?.avatarSet}
+                    status={speaker?.status}
+                    identity={message.botId}
+                    size={SIDE_AVATAR_SIZE}
+                  />
+                )
+              ) : null}
+            </div>
+          ) : null;
+          const time =
+            peerReceipt || message.id.includes(":")
+              ? ""
+              : messageTime(message.createdAt, i18n.locale || "en");
           return (
             <Fragment key={message.id}>
               {separatorIds.has(message.id) ? (
@@ -560,9 +624,10 @@ export const Transcript = memo(function Transcript({
                   className={
                     peerReceipt
                       ? undefined
-                      : `relative flex ${message.role === "user" ? "justify-end" : "justify-start"}`
+                      : `relative flex items-end gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`
                   }
                 >
+                  {message.role === "user" ? null : avatarSlot}
                   <div
                     data-testid={peerReceipt ? undefined : "message-bubble-frame"}
                     className={
@@ -588,15 +653,9 @@ export const Transcript = memo(function Transcript({
                       onOpenPeerMessages={onOpenPeerMessages}
                       peerExchange={exchanges.lines.get(message.id)}
                       onAnswer={onAnswer}
-                      speakerName={
-                        peerReceipt
-                          ? undefined
-                          : message.role === "bot"
-                            ? memberName?.(message.botId)
-                            : undefined
-                      }
+                      speakerName={speakerName}
                       memberName={memberName}
-                      authorName={message.role === "user" ? authorName?.(message) : undefined}
+                      authorName={colleagueName}
                       peerBot={peerBot}
                       replyParent={
                         message.replyToMessageId
@@ -619,6 +678,7 @@ export const Transcript = memo(function Transcript({
                       onReact={onReact}
                     />
                   </div>
+                  {message.role === "user" ? avatarSlot : null}
                 </div>
                 {!peerReceipt && messageReactions ? (
                   <div
@@ -637,6 +697,24 @@ export const Transcript = memo(function Transcript({
                         {count > 1 ? ` ${count}` : ""}
                       </span>
                     ))}
+                  </div>
+                ) : null}
+                {time ? (
+                  <div
+                    data-testid="message-time"
+                    className={cn(
+                      "mt-1 flex text-[11px] text-muted-foreground",
+                      message.role === "user" ? "justify-end" : "justify-start",
+                    )}
+                    style={
+                      sideAvatar
+                        ? message.role === "user"
+                          ? { paddingRight: SIDE_AVATAR_SIZE + 8 }
+                          : { paddingLeft: SIDE_AVATAR_SIZE + 8 }
+                        : undefined
+                    }
+                  >
+                    <time dateTime={message.createdAt}>{time}</time>
                   </div>
                 ) : null}
               </div>
