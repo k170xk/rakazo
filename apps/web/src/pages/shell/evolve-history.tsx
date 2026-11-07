@@ -85,7 +85,7 @@ function HistoryMessage({ message }: { message: EvolveHistoryMessage }) {
             <ChatMarkdown>{message.content}</ChatMarkdown>
           )
         ) : message.unsaved ? (
-          <p className="italic text-muted-foreground">{t`No reply was saved in Evolve.`}</p>
+          <p className="italic text-muted-foreground">{t`No reply was saved.`}</p>
         ) : null}
         {message.images.length > 0 ? (
           <div className="flex flex-wrap gap-2">
@@ -159,6 +159,8 @@ export function EvolveConversationView({
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Stays at the newest message while images load, until the person scrolls up.
+  const atBottom = useRef(true);
   const openedId = detail?.conversation.id;
 
   useEffect(() => {
@@ -174,7 +176,7 @@ export function EvolveConversationView({
         setDetail(messages);
         setAssistants(list.assistants);
       },
-      (failure) => live && setError(errorText(failure, t`Could not open that conversation.`)),
+      (failure) => live && setError(errorText(failure, t`Could not open that chat.`)),
     );
     return () => {
       live = false;
@@ -184,11 +186,13 @@ export function EvolveConversationView({
   // A conversation opens at its newest message, as a chat does.
   useEffect(() => {
     const element = scrollRef.current;
+    atBottom.current = true;
     if (openedId && element) element.scrollTop = element.scrollHeight;
   }, [openedId]);
 
   async function loadEarlier() {
     if (!detail?.before) return;
+    atBottom.current = false;
     const element = scrollRef.current;
     const fromBottom = element ? element.scrollHeight - element.scrollTop : 0;
     setLoadingOlder(true);
@@ -217,7 +221,7 @@ export function EvolveConversationView({
     try {
       await work();
     } catch (failure) {
-      toast.error(errorText(failure, t`Could not continue that conversation.`));
+      toast.error(errorText(failure, t`Could not continue that chat.`));
     } finally {
       setBusy(false);
     }
@@ -253,11 +257,11 @@ export function EvolveConversationView({
         <Archive className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium" dir="auto">
-            {conversation?.title ?? t`Evolve conversation`}
+            {conversation?.title ?? t`Archived chat`}
           </p>
           {conversation ? (
             <p className="truncate text-xs text-muted-foreground">
-              {t`From Evolve`} · {conversation.assistantName} ·{" "}
+              {t`Archived chat`} · {conversation.assistantName} ·{" "}
               {shortDate(conversation.lastMessageAt)}
               {conversation.files.length > 0 ? ` · ${filesLabel(conversation.files.length)}` : ""}
             </p>
@@ -267,7 +271,18 @@ export function EvolveConversationView({
           <X className="size-4" />
         </Button>
       </div>
-      <div ref={scrollRef} className="rk-scroll min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scrollRef}
+        className="rk-scroll min-h-0 flex-1 overflow-y-auto"
+        onScroll={(event) => {
+          const element = event.currentTarget;
+          atBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 40;
+        }}
+        onLoadCapture={() => {
+          const element = scrollRef.current;
+          if (element && atBottom.current) element.scrollTop = element.scrollHeight;
+        }}
+      >
         <div className="mx-auto w-full max-w-3xl space-y-3 px-4 py-6">
           {detail?.before ? (
             <div className="flex justify-center">
@@ -286,9 +301,7 @@ export function EvolveConversationView({
             <HistoryMessage key={message.id} message={message} />
           ))}
           {detail && detail.messages.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground">
-              {t`This conversation is empty.`}
-            </p>
+            <p className="text-center text-sm text-muted-foreground">{t`This chat is empty.`}</p>
           ) : null}
           {!detail && !error ? (
             <div className="flex justify-center py-10">
@@ -303,8 +316,8 @@ export function EvolveConversationView({
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-2.5 rounded-2xl border border-border bg-card px-4 py-3">
             <p className="min-w-0 flex-1 text-sm text-muted-foreground">
               {openTarget
-                ? t`You already carried this conversation over. Pick it up in its chat.`
-                : t`Read only, from Evolve. Continue it here to keep chatting; its files come with it.`}
+                ? t`You already continued this chat. Pick it up where you left off.`
+                : t`This chat is archived. Continue it to keep chatting; its files come with it.`}
             </p>
             <div className="flex shrink-0 flex-wrap justify-end gap-2">
               {otherChat ? (
@@ -434,7 +447,7 @@ export function EvolveArchive({
       setItems((current) => [...current, ...page.conversations]);
       setNextPage(page.nextPage);
     } catch (failure) {
-      toast.error(errorText(failure, t`Could not load your Evolve conversations.`));
+      toast.error(errorText(failure, t`Could not load your archived chats.`));
     } finally {
       setLoadingMore(false);
     }
@@ -455,7 +468,7 @@ export function EvolveArchive({
     >
       <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-[13.5px] text-muted-foreground hover:bg-sidebar-accent">
         <Archive className="size-4 shrink-0" aria-hidden="true" />
-        <span className="flex-1 text-start">{t`From Evolve`}</span>
+        <span className="flex-1 text-start">{t`Archived chats`}</span>
         <span className="text-xs">
           {continued > 0 ? t`${continued} of ${total} continued` : total}
         </span>

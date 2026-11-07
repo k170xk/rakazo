@@ -12,7 +12,7 @@ const Name = z.string().max(2_000);
 
 /** Characters of an old conversation carried into a bot's chat; the newest messages are kept. */
 export const EVOLVE_CONVERSATION_TRANSCRIPT_MAX_CHARS = 60_000;
-export const EVOLVE_CONVERSATION_MESSAGE_TEXT = "Continued an earlier Evolve conversation";
+export const EVOLVE_CONVERSATION_MESSAGE_TEXT = "Continued an archived chat";
 /** Characters kept from one message that added references (Evolve stores their full details). */
 export const EVOLVE_REFERENCE_CONTEXT_MAX_CHARS = 6_000;
 

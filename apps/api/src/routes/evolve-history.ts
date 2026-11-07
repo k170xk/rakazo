@@ -32,11 +32,11 @@ function unreachable(error: unknown): never {
   const status = (error as { status?: number } | null)?.status;
   if (status === 404) {
     throw new ORPCError("NOT_FOUND", {
-      message: "That conversation is not in your Evolve history.",
+      message: "That chat is not in your archive.",
     });
   }
   getLogger().warn("evolve history", { error: String(error) });
-  throw new ORPCError("SERVICE_UNAVAILABLE", { message: "Evolve could not be reached." });
+  throw new ORPCError("SERVICE_UNAVAILABLE", { message: "Your archived chats could not be reached. Try again shortly." });
 }
 
 /**

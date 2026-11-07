@@ -1182,7 +1182,7 @@ function SpaceShell() {
                 setEvolveReload((value) => value + 1);
                 navigate(`/app/${botId}`);
                 if (botId === active?.id) await refreshThreadRef.current(botId);
-                toast.success(t`Conversation carried over from Evolve.`);
+                toast.success(t`Archived chat continued.`);
               }}
               onAddBot={async (assistant) => {
                 const bot = await rpc.bots.create({
