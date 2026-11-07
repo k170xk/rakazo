@@ -7,6 +7,7 @@ import {
   CreateRoutineInput,
   canonicalPiProviderId,
   FLEET_WRITE_TOOL_NAMES,
+  GROUP_BOT_MIN,
   GROUP_MEMBER_MAX,
   GROUP_MEMBER_MIN,
   isAttachmentImageMimeType,
@@ -597,7 +598,7 @@ async function visibleGroups(prisma: PrismaClient, run: FleetRun): Promise<Fleet
       const members = group.members
         .filter((member) => member.bot.archivedAt === null)
         .map((member) => ({ id: member.botId, name: singleLine(member.bot.name) }));
-      if (members.length < GROUP_MEMBER_MIN) continue;
+      if (members.length < GROUP_BOT_MIN) continue;
       visible.push({
         id: group.id,
         name: singleLine(group.name),
@@ -673,9 +674,7 @@ export async function organizeBot(
     }
     const target = await resolveGroup(deps.prisma, run, args);
     if ("error" in target) return { error: target.error };
-    if (
-      target.members.filter((member) => member.bot.archivedAt === null).length < GROUP_MEMBER_MIN
-    ) {
+    if (target.members.filter((member) => member.bot.archivedAt === null).length < GROUP_BOT_MIN) {
       return { error: NOT_FOUND };
     }
     if (section) {

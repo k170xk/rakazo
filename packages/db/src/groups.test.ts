@@ -557,14 +557,14 @@ describe("listGroups archived", () => {
     const { findMany, repos: groupRepos } = repos([
       group("archived-with-archived-bots", true, [member("a", true), member("b", true)]),
       group("archived-with-active-bots", true, [member("h"), member("i")]),
-      group("left-with-one-bot", false, [member("c"), member("d", true)]),
+      group("left-without-active-bots", false, [member("c", true), member("d", true)]),
       group("still-openable", false, [member("e"), member("f"), member("g", true)]),
     ]);
     const listed = await groupRepos.listGroups(actor, { archived: true });
     expect(listed.map((item) => [item.id, item.archivedAt !== null])).toEqual([
       ["archived-with-archived-bots", true],
       ["archived-with-active-bots", true],
-      ["left-with-one-bot", false],
+      ["left-without-active-bots", false],
     ]);
     // Archived bots stay listed, so the group still names who is in it.
     expect(listed[0]!.members.map((item) => item.botId)).toEqual(["a", "b"]);
@@ -590,7 +590,7 @@ describe("listGroups archived", () => {
       group("one-bot", false, [member("c")]),
     ]);
     const listed = await groupRepos.listGroups(actor);
-    expect(listed.map((item) => item.id)).toEqual(["openable"]);
+    expect(listed.map((item) => item.id)).toEqual(["openable", "one-bot"]);
     expect(findMany.mock.calls[0]![0].where).toEqual({
       spaceId: "space-1",
       userId: "user-1",

@@ -1,6 +1,11 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { Bot, DirectoryPerson, Group } from "@rakazo/contracts";
-import { GROUP_MEMBER_MAX, GROUP_MEMBER_MIN, GROUP_NAME_MAX_LENGTH } from "@rakazo/contracts";
+import {
+  GROUP_BOT_MIN,
+  GROUP_MEMBER_MAX,
+  GROUP_MEMBER_MIN,
+  GROUP_NAME_MAX_LENGTH,
+} from "@rakazo/contracts";
 import { BotAvatar, Button, Checkbox, Input, SectionHeading } from "@rakazo/ui-web";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
@@ -10,12 +15,8 @@ import { GroupPeopleSection, PeoplePicker, PersonAvatar } from "../components/Gr
 import { errorText } from "../lib/user-error";
 import { DeleteItemDialog } from "./shell/dialogs";
 
-function validSelection(name: string, selected: readonly string[]) {
-  return (
-    Boolean(name.trim()) &&
-    selected.length >= GROUP_MEMBER_MIN &&
-    selected.length <= GROUP_MEMBER_MAX
-  );
+function validSelection(name: string, selected: readonly string[], minimum: number) {
+  return Boolean(name.trim()) && selected.length >= minimum && selected.length <= GROUP_MEMBER_MAX;
 }
 
 function sameMembers(left: readonly string[], right: readonly string[]) {
@@ -30,12 +31,14 @@ function MemberPicker({
   onChange,
   onOpenBot,
   initiallyExpanded = false,
+  hint,
 }: {
   bots: Bot[];
   selected: string[];
   onChange: (selected: string[]) => void;
   onOpenBot?: (botId: string) => void;
   initiallyExpanded?: boolean;
+  hint: ReactNode;
 }) {
   const { t } = useLingui();
   const listId = useId();
@@ -88,11 +91,7 @@ function MemberPicker({
             aria-label={t`Filter bots`}
             className="mt-2"
           />
-          <p className="mt-2 text-sm text-muted-foreground">
-            <Trans>
-              Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX}
-            </Trans>
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{hint}</p>
         </>
       ) : null}
       <div id={listId} className="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto">
@@ -165,9 +164,14 @@ export function CreateGroupForm({
   const [people, setPeople] = useState<ChosenPerson[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const canCreate = validSelection(
+    name,
+    selected,
+    people.length > 0 ? GROUP_BOT_MIN : GROUP_MEMBER_MIN,
+  );
 
   async function create() {
-    if (submitting || !validSelection(name, selected)) return;
+    if (submitting || !canCreate) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -221,6 +225,17 @@ export function CreateGroupForm({
         onChange={setSelected}
         onOpenBot={onOpenBot}
         initiallyExpanded
+        hint={
+          searchPeople ? (
+            <Trans>
+              Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below
+            </Trans>
+          ) : (
+            <Trans>
+              Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX}
+            </Trans>
+          )
+        }
       />
       {searchPeople ? (
         <section className="mt-5" aria-labelledby={`${peopleId}-heading`}>
@@ -292,7 +307,7 @@ export function CreateGroupForm({
       ) : null}
       <Button
         className="mt-5 w-full"
-        disabled={submitting || !validSelection(name, selected)}
+        disabled={submitting || !canCreate}
         onClick={() => void create()}
       >
         {submitting ? <Trans>Creating…</Trans> : <Trans>Create group</Trans>}
@@ -424,10 +439,20 @@ export function GroupSettings({
           className="mt-2"
         />
       </label>
-      <MemberPicker bots={bots} selected={selected} onChange={setSelected} onOpenBot={onOpenBot} />
+      <MemberPicker
+        bots={bots}
+        selected={selected}
+        onChange={setSelected}
+        onOpenBot={onOpenBot}
+        hint={
+          <Trans>
+            Pick {GROUP_BOT_MIN}–{GROUP_MEMBER_MAX}
+          </Trans>
+        }
+      />
       <Button
         className="mt-5 w-full"
-        disabled={saving || !validSelection(name, selected)}
+        disabled={saving || !validSelection(name, selected, GROUP_BOT_MIN)}
         onClick={() => void save()}
       >
         {saving ? <Trans>Saving…</Trans> : <Trans>Save</Trans>}

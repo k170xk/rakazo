@@ -17,7 +17,7 @@ import {
   EVOLVE_REFERENCES_MESSAGE_TEXT,
   evolveConversationPromptText,
   evolveReferencesPromptText,
-  GROUP_MEMBER_MIN,
+  GROUP_BOT_MIN,
   hasEvolveReferences,
   MessageBlock as MessageBlockSchema,
   resolveBotAvatarSet,
@@ -314,7 +314,7 @@ async function lockAndLoadGroupMembers(
       },
     },
   });
-  if (!group || group.members.length < GROUP_MEMBER_MIN) throw new IsolationError();
+  if (!group || group.members.length < GROUP_BOT_MIN) throw new IsolationError();
   return group.members.map((member) => ({
     botId: member.bot.id,
     name: member.bot.name,

@@ -1079,7 +1079,7 @@ describe("listFleet", () => {
     const hidden = Array.from({ length: 5 }, (_, index) => ({
       id: `hidden-${index}`,
       name: `Hidden ${index}`,
-      memberIds: ["bot-0", "bot-gone"],
+      memberIds: ["bot-gone"],
     }));
     const shown = Array.from({ length: 100 }, (_, index) => ({
       id: `group-${index}`,
@@ -1136,7 +1136,7 @@ describe("organizeBot refusals", () => {
         { id: "bot-active", name: "Active" },
         { id: "bot-gone", name: "Gone", archivedAt: new Date(0) },
       ],
-      groups: [{ id: "group-small", name: "Small", memberIds: ["bot-active", "bot-gone"] }],
+      groups: [{ id: "group-small", name: "Small", memberIds: ["bot-gone"] }],
     });
     expect(
       await organizeBot(writeDeps(prisma), run, { group_id: "group-small", section: "Research" }),

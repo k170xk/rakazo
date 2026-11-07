@@ -1,5 +1,5 @@
 import type { Actor, MessageBlock, SearchHit } from "@rakazo/contracts";
-import { GROUP_MEMBER_MIN } from "@rakazo/contracts";
+import { GROUP_BOT_MIN } from "@rakazo/contracts";
 import {
   displayName,
   escapeJsonSearchWildcards,
@@ -152,7 +152,7 @@ export async function querySpaceSearch(
           SELECT COUNT(*) FROM chat_group_members gm
           INNER JOIN bots gb ON gb.id = gm."botId"
           WHERE gm."groupId" = g.id AND gb."archivedAt" IS NULL
-        ) >= ${GROUP_MEMBER_MIN}
+        ) >= ${GROUP_BOT_MIN}
     `,
   );
   const openableGroupIds = openableGroups.map(({ id }) => id);

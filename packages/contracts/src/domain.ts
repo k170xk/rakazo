@@ -246,6 +246,9 @@ export function truncateReplyQuote(value: string): string {
   return last >= 0xd800 && last <= 0xdbff ? truncated.slice(0, -1) : truncated;
 }
 
+// A group may run on a single bot only when Evolve people are in it; bot-only
+// groups (and groups bots create themselves) still need GROUP_MEMBER_MIN.
+export const GROUP_BOT_MIN = 1;
 export const GROUP_MEMBER_MIN = 2;
 export const GROUP_MEMBER_MAX = 10;
 export const GROUP_NAME_MAX_LENGTH = 80;
@@ -275,7 +278,7 @@ export type Group = z.infer<typeof GroupSchema>;
 
 const GroupBotIds = z
   .array(Id)
-  .min(GROUP_MEMBER_MIN)
+  .min(GROUP_BOT_MIN)
   .max(GROUP_MEMBER_MAX)
   .refine((ids) => new Set(ids).size === ids.length, { error: "botIds must be distinct" });
 

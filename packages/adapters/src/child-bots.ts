@@ -12,7 +12,7 @@ import type { Actor, Bot, ComputerMode } from "@rakazo/contracts";
 import {
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_INSTRUCTIONS_MAX_LENGTH,
-  GROUP_MEMBER_MIN,
+  GROUP_BOT_MIN,
 } from "@rakazo/contracts";
 import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
 import type { Prisma, PrismaClient } from "@rakazo/db";
@@ -557,7 +557,7 @@ async function detachBotFromGroups(tx: Prisma.TransactionClient, botId: string) 
     const activeMembersAfterDeletion = group.members.filter(
       (member) => member.botId !== botId && member.bot.archivedAt === null,
     ).length;
-    if (activeMembersAfterDeletion < GROUP_MEMBER_MIN) {
+    if (activeMembersAfterDeletion < GROUP_BOT_MIN) {
       dissolvedGroupIds.push(group.id);
     }
   }

@@ -1,5 +1,5 @@
 import type { Actor } from "@rakazo/contracts";
-import { GROUP_MEMBER_MIN } from "@rakazo/contracts";
+import { GROUP_BOT_MIN } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { Prisma } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
@@ -164,7 +164,7 @@ it("resolves active group eligibility once for names, artifacts, and messages", 
   expect(eligibility.text).toContain('INNER JOIN bots gb ON gb.id = gm."botId"');
   expect(eligibility.text).toContain('gm."groupId" = g.id AND gb."archivedAt" IS NULL');
   expect(eligibility.text).toContain(") >= $3");
-  expect(eligibility.values).toEqual([actor.spaceId, actor.userId, GROUP_MEMBER_MIN]);
+  expect(eligibility.values).toEqual([actor.spaceId, actor.userId, GROUP_BOT_MIN]);
 
   expect(prisma.chatGroup.findMany.mock.calls[0]?.[0]).toMatchObject({
     where: { spaceId: actor.spaceId, userId: actor.userId, id: { in: ["group-test"] } },

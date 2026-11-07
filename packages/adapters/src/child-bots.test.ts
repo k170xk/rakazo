@@ -578,7 +578,7 @@ describe("destroyBot", () => {
     });
   });
 
-  it("dissolves groups with fewer than two active members after deleting the bot", async () => {
+  it("dissolves groups left without an active bot after deleting the bot", async () => {
     const deleteGroups = vi.fn().mockResolvedValue({ count: 1 });
     const deleteMemberships = vi.fn().mockResolvedValue({ count: 1 });
     const cancel = vi.fn().mockResolvedValue(undefined);
@@ -619,10 +619,7 @@ describe("destroyBot", () => {
             {
               id: "group-1",
               thread: { id: "thread-1" },
-              members: [
-                { botId: "bot-1", bot: { archivedAt: null } },
-                { botId: "bot-2", bot: { archivedAt: null } },
-              ],
+              members: [{ botId: "bot-1", bot: { archivedAt: null } }],
             },
             {
               id: "group-2",
@@ -639,7 +636,6 @@ describe("destroyBot", () => {
               members: [
                 { botId: "bot-1", bot: { archivedAt: null } },
                 { botId: "bot-2", bot: { archivedAt: new Date() } },
-                { botId: "bot-3", bot: { archivedAt: null } },
               ],
             },
           ]),

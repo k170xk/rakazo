@@ -1,4 +1,4 @@
-import { GROUP_MEMBER_MIN } from "@rakazo/contracts";
+import { GROUP_BOT_MIN } from "@rakazo/contracts";
 import type { PrismaClient } from "./client.js";
 import { runAsSystem } from "./row-security.js";
 
@@ -25,7 +25,7 @@ export function countUnreadInboxChats(
           OR EXISTS (SELECT 1 FROM chat_groups g WHERE g.id = t."groupId"
             AND g."spaceId" = t."spaceId" AND g."userId" = ${userId} AND g."archivedAt" IS NULL
             AND (SELECT count(*) FROM chat_group_members gm JOIN bots b ON b.id = gm."botId"
-              WHERE gm."groupId" = g.id AND b."archivedAt" IS NULL) >= ${GROUP_MEMBER_MIN})
+              WHERE gm."groupId" = g.id AND b."archivedAt" IS NULL) >= ${GROUP_BOT_MIN})
         )`;
     return result?.count ?? 0;
   });

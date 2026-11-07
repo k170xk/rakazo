@@ -1,5 +1,5 @@
 import type { Actor, Group, GroupMember, SpaceGroup } from "@rakazo/contracts";
-import { GROUP_MEMBER_MAX, GROUP_MEMBER_MIN, resolveBotAvatarSet } from "@rakazo/contracts";
+import { GROUP_BOT_MIN, GROUP_MEMBER_MAX, resolveBotAvatarSet } from "@rakazo/contracts";
 import { displayName } from "@rakazo/core";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
 import type { Prisma, PrismaClient } from "./client.js";
@@ -98,7 +98,7 @@ function mapSpaceGroup(group: SpaceGroupRecord): SpaceGroup {
 }
 
 function hasMinimumActiveMembers(members: readonly unknown[]) {
-  return members.length >= GROUP_MEMBER_MIN;
+  return members.length >= GROUP_BOT_MIN;
 }
 
 async function assertOwnedBots(
@@ -107,9 +107,9 @@ async function assertOwnedBots(
   botIds: string[],
 ): Promise<GroupMember[]> {
   const unique = [...new Set(botIds)];
-  if (unique.length < GROUP_MEMBER_MIN || unique.length > GROUP_MEMBER_MAX) {
+  if (unique.length < GROUP_BOT_MIN || unique.length > GROUP_MEMBER_MAX) {
     throw new IsolationError(
-      `Groups require ${GROUP_MEMBER_MIN} to ${GROUP_MEMBER_MAX} distinct bots`,
+      `Groups require ${GROUP_BOT_MIN} to ${GROUP_MEMBER_MAX} distinct bots`,
     );
   }
   const bots = await prisma.bot.findMany({
