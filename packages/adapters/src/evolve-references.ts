@@ -93,3 +93,30 @@ export async function readEvolveOwnProfile(
     })
     .parse(payload);
 }
+
+/** The longest a Render Studio edit may take; high quality can need two minutes. */
+const IMAGE_EDIT_TIMEOUT_MS = 170_000;
+/** Follows `markup` overlays precisely; gpt-image-2 has no markup input and its masks leave holes. */
+const IMAGE_EDIT_MODEL = "gpt-image-2.6-flare";
+
+/** Edits an image on Evolve's key; an optional transparent markup overlay outlines what changes. */
+export async function editEvolveImage(
+  connection: EvolvePluginsConnection,
+  email: string,
+  input: {
+    image: string;
+    markup: string | null;
+    prompt: string;
+    size: "1024x1024" | "1536x1024" | "1024x1536";
+    quality: "low" | "medium" | "high";
+  },
+  options: CallOptions = {},
+): Promise<string> {
+  const payload = await callEvolveAssistants(
+    connection,
+    email,
+    { action: "images.edit", model: IMAGE_EDIT_MODEL, ...input },
+    { ...options, timeoutMs: IMAGE_EDIT_TIMEOUT_MS },
+  );
+  return z.object({ image: z.string().startsWith("data:image/png;base64,") }).parse(payload).image;
+}

@@ -87,8 +87,8 @@ export class EvolvePluginsError extends Error {
   }
 }
 
-function withTimeout(signal: AbortSignal | undefined) {
-  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+function withTimeout(signal: AbortSignal | undefined, ms = REQUEST_TIMEOUT_MS) {
+  const timeout = AbortSignal.timeout(ms);
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
@@ -106,7 +106,7 @@ export function callEvolveAssistants<T = Record<string, unknown>>(
   connection: EvolvePluginsConnection,
   email: string,
   body: Record<string, unknown>,
-  options: { signal?: AbortSignal; fetch?: typeof fetch } = {},
+  options: { signal?: AbortSignal; fetch?: typeof fetch; timeoutMs?: number } = {},
 ): Promise<T> {
   const url = new URL("evolve-assistants", connection.url).toString();
   return postEvolve<T>(url, EVOLVE_ASSISTANTS_AUDIENCE, connection, email, body, options);
@@ -118,7 +118,7 @@ async function postEvolve<T>(
   connection: EvolvePluginsConnection,
   email: string,
   body: Record<string, unknown>,
-  options: { signal?: AbortSignal; fetch?: typeof fetch },
+  options: { signal?: AbortSignal; fetch?: typeof fetch; timeoutMs?: number },
 ): Promise<T> {
   const token = signEvolvePluginsToken(connection.secret, email, undefined, audience);
   const response = await (options.fetch ?? fetch)(url, {
@@ -128,7 +128,7 @@ async function postEvolve<T>(
       "content-type": "application/json",
     },
     body: JSON.stringify(body),
-    signal: withTimeout(options.signal),
+    signal: withTimeout(options.signal, options.timeoutMs),
   });
   const payload = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok) {

@@ -648,6 +648,32 @@ export const appContract = {
     people: oc.output(z.object({ people: z.array(EvolvePersonOptionSchema) })),
     exemplars: oc.output(z.object({ exemplars: z.array(EvolveReferenceExemplarSchema) })),
   },
+  /** Render Studio: granular gpt-image-2 edits run on Evolve, as in Evolve's chat. */
+  evolveImages: {
+    /** Whether this deployment is linked to Evolve, so images can be edited. */
+    available: oc.output(z.object({ available: z.boolean() })),
+    edit: oc
+      .input(
+        z.object({
+          /** The image to edit, as a base64 data URL. */
+          image: z
+            .string()
+            .max(14_000_000)
+            .regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/),
+          /** Same size as the image: a transparent overlay outlining the area to change. */
+          markup: z
+            .string()
+            .max(14_000_000)
+            .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/)
+            .nullable()
+            .default(null),
+          prompt: z.string().trim().min(1).max(4000),
+          size: z.enum(["1024x1024", "1536x1024", "1024x1536"]).default("1024x1024"),
+          quality: z.enum(["low", "medium", "high"]).default("medium"),
+        }),
+      )
+      .output(z.object({ image: z.string() })),
+  },
   /** The signed-in person's own Evolve chat history, read live from Evolve. */
   evolveHistory: {
     /** Assistants they have conversations with; unavailable when Evolve is not linked. */

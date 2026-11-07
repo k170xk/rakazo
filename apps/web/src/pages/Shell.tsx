@@ -46,6 +46,8 @@ import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { PageLoading } from "../components/PageLoading";
 import { PageViewHost } from "../components/pages/PageViewHost";
+import { registerRenderStudioHost } from "../components/render-studio/host";
+import { RenderStudioDialog } from "../components/render-studio/RenderStudioDialog";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { authClient } from "../lib/auth";
 import { peekBootstrapSeed } from "../lib/bootstrap";
@@ -330,6 +332,9 @@ function SpaceShell() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
   const [evolveReload, setEvolveReload] = useState(0);
+  const [renderStudioImage, setRenderStudioImage] = useState<{ src: string; name: string } | null>(
+    null,
+  );
   const findInputRef = useRef<HTMLInputElement>(null);
   const chatColumnRef = useRef<HTMLDivElement>(null);
   // Matches belong to the chat they were found in.
@@ -716,6 +721,21 @@ function SpaceShell() {
     refreshGroupThread: (id) => refreshGroupThreadRef.current(id),
   });
   const { computerBot, openComputer } = computerControls;
+  useEffect(() => {
+    let unregister: (() => void) | undefined;
+    let live = true;
+    rpc.evolveImages
+      .available()
+      .then(({ available }) => {
+        if (live && available)
+          unregister = registerRenderStudioHost({ open: setRenderStudioImage });
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+      unregister?.();
+    };
+  }, [rpc]);
   const composer = useComposerActions({
     rpc,
     pageSession: pages.session,
@@ -1489,6 +1509,17 @@ function SpaceShell() {
           peerBot={resolveTranscriptBot}
         />
       </Suspense>
+
+      <RenderStudioDialog
+        open={renderStudioImage !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenderStudioImage(null);
+        }}
+        sourceImageUrl={renderStudioImage?.src ?? null}
+        sourceName={renderStudioImage?.name}
+        render={async (request) => (await rpc.evolveImages.edit(request)).image}
+        onSaveToChat={active || inGroup ? (file) => composer.onAttachmentPick([file]) : undefined}
+      />
 
       <KeyboardShortcutsDialog
         open={shortcutsOpen}

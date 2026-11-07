@@ -1,9 +1,20 @@
 import { useLingui } from "@lingui/react/macro";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
-import { Check, Copy, Download, ExternalLink, Minus, Plus, ScanSearch, X } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  ExternalLink,
+  Minus,
+  Plus,
+  ScanSearch,
+  Wand2,
+  X,
+} from "lucide-react";
 import type { ReactNode, PointerEvent as ReactPointerEvent, WheelEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { IconTooltip } from "./IconTooltip";
+import { useRenderStudioHost } from "./render-studio/host";
 
 export type LightboxImage = { src: string; name: string; downloadName?: string };
 
@@ -27,14 +38,15 @@ export function ImageLightbox({
         showCloseButton={false}
         className="top-0 left-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none bg-black/95 p-0 text-white ring-0 sm:max-w-none"
       >
-        {image ? <Viewer key={image.src} image={image} /> : null}
+        {image ? <Viewer key={image.src} image={image} onClose={onClose} /> : null}
       </DialogContent>
     </Dialog>
   );
 }
 
-function Viewer({ image }: { image: LightboxImage }) {
+function Viewer({ image, onClose }: { image: LightboxImage; onClose: () => void }) {
   const { t } = useLingui();
+  const studio = useRenderStudioHost();
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [copied, setCopied] = useState<"image" | "link" | null>(null);
@@ -140,6 +152,19 @@ function Viewer({ image }: { image: LightboxImage }) {
           <ScanSearch />
         </ViewerButton>
         <span className="mx-1 h-5 w-px bg-white/15" aria-hidden />
+        {studio && !failed ? (
+          <button
+            type="button"
+            onClick={() => {
+              studio.open({ src: image.src, name: image.downloadName ?? image.name });
+              onClose();
+            }}
+            className="me-1 flex h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 text-[13px] font-medium text-white hover:bg-white/20 [&_svg]:size-4"
+          >
+            <Wand2 aria-hidden />
+            {t`Edit in Render Studio`}
+          </button>
+        ) : null}
         <ViewerButton
           label={
             copied === "image" ? t`Copied` : copied === "link" ? t`Link copied` : t`Copy image`

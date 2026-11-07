@@ -1,5 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import {
+  EvolvePluginsError,
+  editEvolveImage,
   listEvolveAssistants,
   listEvolvePeopleCvs,
   listEvolveReferenceExemplars,
@@ -122,6 +124,32 @@ export function evolveReferencesRoutes(ctx: RouterContext) {
           signal: context.signal,
         }).catch(unreachable);
         return { exemplars };
+      }),
+    },
+    evolveImages: {
+      available: authed.evolveImages.available.handler(async ({ context }) => ({
+        available: (await connectionFor(context.actor)) !== null,
+      })),
+      edit: authed.evolveImages.edit.handler(async ({ context, input }) => {
+        const { connection, email } = await required(context.actor);
+        try {
+          return {
+            image: await editEvolveImage(connection, email, input, { signal: context.signal }),
+          };
+        } catch (error) {
+          getLogger().warn("evolve image edit", { error: String(error) });
+          if (error instanceof EvolvePluginsError && error.status === 429) {
+            throw new ORPCError("TOO_MANY_REQUESTS", {
+              message: "The image service is busy. Wait a moment and render again.",
+            });
+          }
+          throw new ORPCError("SERVICE_UNAVAILABLE", {
+            message:
+              error instanceof EvolvePluginsError && error.status < 500
+                ? error.message
+                : "The render did not finish. Try again, or choose quality Low.",
+          });
+        }
       }),
     },
   };
