@@ -216,6 +216,138 @@ function loadMedia(items, labelOf) {
   return { images, videos };
 }
 
+// ---------- visuals ----------
+
+/** Where a slide's visual sits on the 1920x1080 grid: the whole content area, or beside its text. */
+const VISUAL_FULL = { x: 72, y: 168, w: 1776, h: 720 };
+const VISUAL_SIDE = { x: 800, y: 168, w: 1048, h: 720 };
+const TEXT_SIDE = { x: 72, y: 168, w: 680, h: 720 };
+
+const str = (value) =>
+  typeof value === "string" || typeof value === "number" ? String(value) : "";
+
+/** Whether a deck has the template's plain heading-only layout, which large visuals sit on. */
+async function hasPlainLayout(bytes) {
+  try {
+    return (await describeTemplate(bytes)).layouts.some((l) => l.layout === "plain");
+  } catch {
+    return false;
+  }
+}
+
+const hasText = (item) =>
+  ["bullets", "body", "text"].some((key) =>
+    Array.isArray(item[key]) ? item[key].length > 0 : Boolean(str(item[key])),
+  );
+
+/**
+ * Renders a slide's Remotion scene with ocsc-video, unbranded and shaped to the space it fills,
+ * and returns the PNG's workspace path.
+ */
+function renderVisual(visual, box, name, label, caption) {
+  const duration = Math.min(Math.max(Number(visual.duration) || 4, 1), 20);
+  const { at, ...rest } = visual;
+  const props = rest.props && typeof rest.props === "object" ? { ...rest.props } : {};
+  // A missing or empty title would show the template's sample title instead.
+  if ((rest.type ?? "template") === "template" && !str(props.title).trim() && caption)
+    props.title = caption;
+  const scene = { type: "template", ...rest, props, branded: false, duration };
+  // Scenes are laid out for a 1080-high frame; the width follows the space the visual fills.
+  const width = Math.round((1080 * box.w) / box.h / 2) * 2;
+  const spec = {
+    title: "Slide visual",
+    settings: { width, height: 1080, fps: 30, show_skyline_footer: false },
+    scenes: [scene, { type: "closing", heading: "End", duration: 4 }],
+  };
+  const dir = inWorkspace("work/visuals", "visuals folder");
+  mkdirSync(dir.full, { recursive: true });
+  const specRel = `${dir.rel}/${name}.video.json`;
+  const pngRel = `${dir.rel}/${name}.png`;
+  writeFileSync(join(dir.full, `${name}.video.json`), JSON.stringify(spec, null, 1));
+  let output = "";
+  try {
+    output = execFileSync(
+      "ocsc-video",
+      [
+        "still",
+        "--spec",
+        specRel,
+        "--scene",
+        "1",
+        "--at",
+        String(Number(at) || duration * 0.9),
+        "--out",
+        pngRel,
+      ],
+      { cwd: WORKSPACE, encoding: "utf8", timeout: 240000, stdio: ["ignore", "pipe", "pipe"] },
+    );
+  } catch (error) {
+    output = String(error?.stdout || "");
+    if (!output)
+      throw new UsageError(
+        `${label} visual: ocsc-video failed (${String(error?.message || error).split("\n")[0]}).`,
+      );
+  }
+  let result = null;
+  try {
+    result = JSON.parse(output);
+  } catch {}
+  if (!result?.ok)
+    throw new UsageError(
+      `${label} visual: ${result?.error ?? "ocsc-video could not render the scene"}. Check the template name and props with ocsc-video templates --name <template>.`,
+    );
+  return pngRel;
+}
+
+/**
+ * Turns each slide's "visual" (a picture, or a Remotion scene that is rendered here) into
+ * pictures on the slide. A slide whose layout is "visual", or that has no layout, shows the
+ * visual large under its heading, beside its text when it has any.
+ */
+function placeVisuals(items, { plain, name, labelOf }) {
+  return items.map((item, index) => {
+    if (!item || typeof item !== "object" || item.visual === undefined) return item;
+    const label = labelOf(index);
+    const { visual, ...rest } = item;
+    const layout = rest.layout ?? "visual";
+    const side = layout === "visual" && hasText(rest);
+    let source;
+    if (typeof visual === "string" && visual.trim()) source = visual.trim();
+    else if (visual && typeof visual === "object" && (visual.template || visual.type))
+      source = renderVisual(
+        visual,
+        side ? VISUAL_SIDE : VISUAL_FULL,
+        `${name}-slide-${index + 1}`,
+        label,
+        str(rest.subheading ?? rest.subtitle ?? rest.heading ?? rest.title),
+      );
+    else
+      throw new UsageError(
+        `${label}: "visual" must be a picture (an https URL or workspace PNG/JPEG) or a Remotion scene such as {"template": "progress-steps", "props": {...}}.`,
+      );
+    if (layout !== "visual") {
+      if (rest.image || rest.images)
+        throw new UsageError(
+          `${label}: give the picture as "visual" or "image", not both, or use "layout": "visual".`,
+        );
+      return { ...rest, image: source, fit: "contain" };
+    }
+    if (!plain)
+      return {
+        ...rest,
+        layout: "split",
+        image: source,
+        fit: "contain",
+        bullets: rest.bullets ?? [],
+      };
+    const overlay = [
+      ...(Array.isArray(rest.overlay) ? rest.overlay : []),
+      { image: source, ...(side ? VISUAL_SIDE : VISUAL_FULL), fit: "contain" },
+    ];
+    return { ...rest, layout: "plain", overlay, ...(side ? { __textBox: TEXT_SIDE } : {}) };
+  });
+}
+
 /** A PptxGenJS deck holding `items` as OCSC slides; returns the deck and which slides were letterboxed. */
 function buildDeck(items, meta, media, labelOf) {
   const pptx = new PptxGenJS();
@@ -244,17 +376,22 @@ function buildDeck(items, meta, media, labelOf) {
 
 async function cmdNew(opts) {
   const spec = readSpec(opts.spec);
-  const items = Array.isArray(spec?.slides) ? spec.slides : null;
-  if (!items || items.length === 0)
+  const specItems = Array.isArray(spec?.slides) ? spec.slides : null;
+  if (!specItems || specItems.length === 0)
     throw new UsageError(
       'The spec needs "slides": [{ "layout": "bullets", "title": "...", "bullets": [...] }, ...].',
     );
-  if (items.length > MAX_SLIDES)
+  if (specItems.length > MAX_SLIDES)
     throw new UsageError(`A deck can hold at most ${MAX_SLIDES} slides.`);
   const out = outPath(opts.out);
   const labelOf = (i) => `Slide ${i + 1}`;
-  const media = loadMedia(items, labelOf);
   const template = templateFile(spec.template);
+  const items = placeVisuals(specItems, {
+    plain: template ? await hasPlainLayout(readFileSync(template.full)) : false,
+    name: basename(out.rel, ".pptx"),
+    labelOf,
+  });
+  const media = loadMedia(items, labelOf);
   let buffer;
   let letterboxed = [];
   if (template) {
@@ -358,6 +495,15 @@ async function cmdEdit(opts) {
   if (!edits || edits.length === 0) throw new UsageError('The spec needs "edits": [...].');
   const out = outPath(opts.out || opts.in);
   const labelOf = (i) => `Edit ${i + 1}`;
+  const placed = placeVisuals(
+    edits.map((edit) => (edit?.op === "insert" || edit?.op === "replace" ? edit : null)),
+    {
+      plain: await hasPlainLayout(readFileSync(deck.full)),
+      name: basename(out.rel, ".pptx"),
+      labelOf,
+    },
+  );
+  for (const [i, edit] of placed.entries()) if (edit) edits[i] = edit;
   const slideEdits = edits.map((edit) =>
     edit?.op === "insert" || edit?.op === "replace" ? edit : {},
   );

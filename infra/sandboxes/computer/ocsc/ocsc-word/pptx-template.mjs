@@ -363,6 +363,18 @@ function srcRect(img, box, fit) {
   return `<a:srcRect t="${t}" b="${t}"/>`;
 }
 
+/** A box on the 1920x1080 grid, in slide units. */
+function gridBox(el, size) {
+  const sx = size.cx / 1920;
+  const sy = size.cy / 1080;
+  return {
+    x: Math.round((Number(el.x) || 0) * sx),
+    y: Math.round((Number(el.y) || 0) * sy),
+    w: Math.round((Number(el.w) || 600) * sx),
+    h: Math.round((Number(el.h) || 400) * sy),
+  };
+}
+
 class SlideWriter {
   constructor(deck, part) {
     this.deck = deck;
@@ -402,18 +414,23 @@ class SlideWriter {
 
   /** A picture anywhere on the slide, on the 1920x1080 grid. */
   freePicture(img, el, size) {
-    const sx = size.cx / 1920;
-    const sy = size.cy / 1080;
-    const box = {
-      x: Math.round((Number(el.x) || 0) * sx),
-      y: Math.round((Number(el.y) || 0) * sy),
-      w: Math.round((Number(el.w) || 600) * sx),
-      h: Math.round((Number(el.h) || 400) * sy),
-    };
+    const box = gridBox(el, size);
     const rid = this.media(img);
     const id = this.nextId();
     this.shapes.push(
       `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="Picture ${id}"${el.alt ? ` descr="${esc(str(el.alt, 300))}"` : ""}/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"/>${srcRect(img, box, el.fit === "cover" ? "cover" : "contain")}<a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${box.x}" y="${box.y}"/><a:ext cx="${box.w}" cy="${box.h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`,
+    );
+  }
+
+  /** A text box anywhere on the slide, on the 1920x1080 grid, in the template's body style. */
+  freeText(lines, el, size, { bullets = false } = {}) {
+    if (lines.length === 0) return;
+    const box = gridBox(el, size);
+    const id = this.nextId();
+    const level = (n, sz) =>
+      `<a:lvl${n}pPr><a:spcBef><a:spcPts val="1000"/></a:spcBef><a:defRPr sz="${sz}"><a:solidFill><a:srgbClr val="414042"/></a:solidFill><a:latin typeface="Arial"/><a:cs typeface="Arial"/></a:defRPr></a:lvl${n}pPr>`;
+    this.shapes.push(
+      `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="Text ${id}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="${box.x}" y="${box.y}"/><a:ext cx="${box.w}" cy="${box.h}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></p:spPr><p:txBody><a:bodyPr wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="ctr"><a:normAutofit/></a:bodyPr><a:lstStyle>${level(1, 1800)}${level(2, 1600)}${level(3, 1400)}</a:lstStyle>${paragraphs(lines, { bullets })}</p:txBody></p:sp>`,
     );
   }
 
@@ -484,6 +501,13 @@ async function layoutSlide(deck, layout, item, index, images, label) {
 
   const columns = Array.isArray(item.columns) ? item.columns : null;
   const bodies = columns ?? [item.bullets ?? item.body ?? item.text].filter((v) => v !== undefined);
+  if (item.__textBox) {
+    if (bodies[0] !== undefined)
+      w.freeText(linesOf(bodies[0]), item.__textBox, deck.slideSize(), {
+        bullets: Array.isArray(item.bullets),
+      });
+    bodies.length = 0;
+  }
   fits(bodies.length, roles.body.length, "text column");
   for (const [i, body] of bodies.entries()) {
     if (body && typeof body === "object" && !Array.isArray(body)) {

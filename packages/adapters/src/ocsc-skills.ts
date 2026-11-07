@@ -85,29 +85,30 @@ Every new deck is built on the OCSC company template, so it has the company font
 Company slides can be copied in whole with {"include":"about"}, "services", "company_structure", "organogram_civil_structural", "organogram_mechanical_electrical" or "organogram_environmental". Only include them when the deck is for a client, a bid or an introduction to OCSC, never by habit.
 For a plain deck without the template use "template":"none". When the person gives their own template, use "template":"<their file>.pptx" and pick from ocsc-pptx layouts --template <their file>.pptx.
 
-THE WOW FACTOR: AN INFOGRAPHIC ON EVERY CONTENT SLIDE
-When mcp__evolve__create_infographics is in your tools, give every content slide at least one GPT Image infographic, and two or three on a slide that carries several ideas. Call it once for the whole deck (up to 10 per call, in order) with a specific topic for each: what the diagram, flow, icons or chart should show, using the slide's real facts. Use each returned imageUrl as a picture on its slide: in a picture space ("image", "images") with "fit":"contain" so nothing is cut off, or as an "overlay". If an item fails, keep the slide without it.
-Use real pictures as well: mcp__evolve__search_project_datasheets for OCSC's own projects (covers, case studies, photos), and mcp__evolve__search_stock_media for stock photos, footage and illustrations. Prefer OCSC project photos for OCSC work. Never invent project facts.
+EVERY CONTENT SLIDE HAS A VISUAL
+Every slide between the agenda and thank_you carries a big "visual" that makes the point at a glance, like a frame of an OCSC video. A slide of bullets alone is never good enough, and keep the template's chevron layouts (infographic_1 to infographic_8) for when you have real icons or pictures for them. A visual is one of:
+- A GPT Image infographic, the most striking: call mcp__evolve__create_infographics once for the whole deck (up to 10 per call, in order) with a specific topic for each slide that describes the diagram, flow or icons using the slide's real facts, and set "visual" to its imageUrl. Use these for ideas, processes, systems and anything a diagram explains.
+- A Remotion scene from the OCSC video library, rendered by ocsc-pptx itself: "visual": {"template":"<name>","props":{...}}. Use these for numbers, charts, lists, steps and statements: chart-animation, comparison-chart, donut-chart, circular-progress, line-chart and area-chart for figures; animated-list for three to five short points; progress-steps for a short process (on a slide without bullets); text-highlight for a key message. ocsc-video templates lists them all and ocsc-video templates --name <name> gives each one's props and how much fits; fill every prop with the real content. A built-in scene works too: {"type":"<scene type>", ...its fields}.
+- A real photo, as the visual or in a photo layout: mcp__evolve__search_project_datasheets for OCSC's own projects (prefer these for OCSC work), mcp__evolve__search_stock_media for stock photos. Never invent project facts.
+Mix them across the deck so no two slides in a row look alike. When mcp__evolve__create_infographics is not in your tools, say once that GPT Image infographics need the Evolve connection and use Remotion scenes and photos for every visual instead.
+A slide with "visual" and no layout shows the visual large under its heading; give it "bullets" (at most four short ones) and the visual moves to the right with the text beside it. A visual on a picture layout such as text_image fills its picture space.
 For a striking designed slide made entirely of a picture, mcp__evolve__create_presentation_slides draws whole OCSC slides; use it only when the person wants picture slides, because those slides cannot be edited.
 
 WRITE THE DECK
-1. Plan the story: usually a cover, an agenda, then one clear point per slide, 6 to 14 slides, ending with thank_you. Keep slides short: a specific heading, a one-line subheading, at most six one-line bullets, and the detail in the speaker notes.
+1. Plan the story: usually a cover, an agenda, then one clear point per slide, 6 to 14 slides, ending with thank_you. Keep slides short: a specific heading, a one-line subheading, at most four one-line bullets, and the detail in the speaker notes.
 2. Write work/<short-name>-deck.json:
 {"title":"<Deck title>","slides":[
  {"layout":"cover","title":"<Deck title>","name":"<presenter>","date":"<Month Year>","notes":"..."},
  {"layout":"agenda","items":[{"title":"<topic>","text":"<one line>"}]},
+ {"heading":"...","subheading":"...","visual":"<infographic imageUrl>","notes":"..."},
+ {"heading":"...","subheading":"...","bullets":["...","..."],"visual":{"template":"comparison-chart","props":{"beforeValue":41,"afterValue":86,"beforeLabel":"Before","afterLabel":"After"}},"notes":"..."},
+ {"heading":"...","visual":{"template":"chart-animation","props":{"data":[{"label":"Jan","value":120},{"label":"Feb","value":80}]}}},
  {"layout":"divider","title":"<PART>","subtitle":"<part name>"},
- {"layout":"text_image","heading":"...","subheading":"...","bullets":["..."],"image":"<infographic imageUrl>","fit":"contain","notes":"..."},
- {"layout":"text_2col","heading":"...","columns":[{"heading":"...","bullets":["..."]},{"heading":"...","text":"..."}]},
- {"layout":"photos_3","heading":"...","subheading":"...","images":["<url>","<url>",{"image":"<url>","fit":"contain"}]},
- {"layout":"infographic_4","heading":"...","points":[{"title":"...","text":"...","icon":"<url>"}],"centre":"<optional middle text>"},
- {"layout":"photo","heading":"...","image":"<photo url>","overlay":[{"image":"<infographic url>","x":1300,"y":260,"w":520,"h":520,"fit":"contain"}]},
- {"layout":"chart","heading":"...","chart":{"type":"column","categories":["..."],"series":[{"name":"...","values":[1,2]}],"show_values":true},"bullets":["<what it shows>"]},
+ {"layout":"photos_3","heading":"...","subheading":"...","images":["<url>","<url>","<url>"]},
  {"layout":"table","heading":"...","header":["..."],"rows":[["..."]]},
  {"layout":"thank_you"}]}
-The agenda holds up to four items. Bullets, text and cells may use **bold**. Pictures are https URLs or workspace PNG/JPEG paths. Overlay positions use a 1920x1080 grid. If a layout has fewer picture spaces than you give, the error says so: pick another layout or move extras to "overlay".
-Slides drawn natively on the template frame: stats ("stats":[{"value","label"}]), quote ("quote","by"), timeline ("steps":[{"label","title","text"}]), gallery, infographics, chart, table, motion and custom ("elements" of text, shape, image, chart, table and video placed on the 1920x1080 grid, like a video frame).
-Motion: for an animated slide, make a short scene with ocsc-video (see the video skill), render it to an mp4 and save a frame with ocsc-video still, then use {"layout":"motion","video":"<mp4>","poster":"<png>"}. A still from ocsc-video also makes a good picture for any slide.
+The agenda holds up to four items. Bullets, text and cells may use **bold**. Pictures are https URLs or workspace PNG/JPEG paths. A scene's title defaults to the slide's subheading. Other layouts from ocsc-pptx layouts (text_2col, text_image, photo, photos_5 and more) and native ones (stats, quote, timeline, chart, table, custom with "elements" on a 1920x1080 grid) work too; "overlay":[{"image","x","y","w","h","fit"}] adds pictures anywhere on that grid.
+Motion: for an animated slide, render a short ocsc-video scene to an mp4, save a frame with ocsc-video still, then use {"layout":"motion","video":"<mp4>","poster":"<png>"}.
 3. Run: ocsc-pptx new --spec work/<short-name>-deck.json --out outputs/<Descriptive-Name>.pptx
 
 CHECK IT
