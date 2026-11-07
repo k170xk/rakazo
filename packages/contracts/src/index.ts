@@ -18,6 +18,7 @@ export * from "./connector-errors.js";
 export * from "./desktop.js";
 export * from "./domain.js";
 export * from "./events.js";
+export * from "./evolve-references.js";
 export * from "./history.js";
 export * from "./ids.js";
 export * from "./integration-settings.js";

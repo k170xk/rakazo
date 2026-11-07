@@ -256,7 +256,7 @@ export function botIntroPrompt(input: {
  * asks what the bot is for. The executor limits the "created" trigger to that question and the
  * bot's own profile, and answering resumes the run as the user's turn.
  */
-async function actorEmail(deps: RouterDeps, actor: Actor): Promise<string | null> {
+export async function actorEmail(deps: RouterDeps, actor: Actor): Promise<string | null> {
   const user = await deps.prisma.user.findUnique({
     where: { id: actor.userId },
     select: { email: true },

@@ -19,7 +19,7 @@ import {
 } from "@rakazo/core";
 import { Button } from "@rakazo/ui-web";
 import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react";
-import type { ClipboardEvent, ComponentProps, DragEvent, RefObject } from "react";
+import type { ClipboardEvent, ComponentProps, DragEvent, ReactNode, RefObject } from "react";
 import {
   memo,
   useEffect,
@@ -99,6 +99,7 @@ const ComposerBody = memo(function Composer({
   onSlashAction,
   draftKey,
   enterToSend,
+  extraActions,
   docked = false,
 }: {
   activeName?: string;
@@ -140,6 +141,8 @@ const ComposerBody = memo(function Composer({
   onSlashAction?: (action: SlashActionId) => void;
   draftKey: string;
   enterToSend: boolean;
+  /** Buttons before Send, such as Evolve References and PDF drawings. */
+  extraActions?: ReactNode;
   /** Floating over an open page instead of sitting under the chat. */
   docked?: boolean;
 }) {
@@ -969,6 +972,7 @@ const ComposerBody = memo(function Composer({
             expanded ? "row-start-2" : ""
           }`}
         >
+          {talk.recording?.locked ? null : extraActions}
           {talk.recording?.locked ? (
             <HoldToTalkControls talk={talk} />
           ) : running ? (

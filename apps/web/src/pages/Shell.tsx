@@ -6,7 +6,11 @@ import type {
   ThreadMessage,
   VoiceStatus,
 } from "@rakazo/contracts";
-import { DEFAULT_NEW_BOT_AVATAR_SET } from "@rakazo/contracts";
+import {
+  attachmentMaxBytes,
+  attachmentMaxCount,
+  DEFAULT_NEW_BOT_AVATAR_SET,
+} from "@rakazo/contracts";
 import {
   answerableAskMessageIds,
   channelMessageSender,
@@ -85,6 +89,8 @@ import { Composer } from "./shell/composer";
 import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
+import { DrawingsButton, MAX_DRAWING_PAGES } from "./shell/drawings-dialog";
+import { EvolveReferencesAction } from "./shell/evolve-references";
 import type { ImportSetupTarget } from "./shell/import-setup-card";
 import { KeyboardShortcutsDialog } from "./shell/keyboard-shortcuts-dialog";
 import { ShellDialogs, useShellDialogs } from "./shell/shell-dialogs";
@@ -1215,6 +1221,28 @@ function SpaceShell() {
               key={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
               draftKey={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
               enterToSend={enterToSend}
+              extraActions={
+                <>
+                  {!inGroup && active ? (
+                    <EvolveReferencesAction
+                      rpc={rpc}
+                      botId={active.id}
+                      messages={activeSnapshot?.messages ?? []}
+                      disabled={Boolean(recordingSkill) || sending}
+                      onSent={() => refreshThreadRef.current(active.id)}
+                    />
+                  ) : null}
+                  <DrawingsButton
+                    disabled={Boolean(recordingSkill)}
+                    maxPages={Math.min(
+                      MAX_DRAWING_PAGES,
+                      attachmentMaxCount(bootstrapMe) - composer.activePendingAttachments.length,
+                    )}
+                    maxBytes={attachmentMaxBytes(bootstrapMe)}
+                    onAddFiles={(files) => composer.onAttachmentPick(files)}
+                  />
+                </>
+              }
               activeName={inGroup ? (activeGroup?.name ?? activeSnapshot?.groupName) : active?.name}
               running={composerRunning}
               disabled={Boolean(recordingSkill)}

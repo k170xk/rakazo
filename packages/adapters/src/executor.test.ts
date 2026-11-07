@@ -1854,7 +1854,9 @@ describe("dockerComputerToolInstruction", () => {
 
   it("documents installed document text extractors", () => {
     const instruction = dockerComputerToolInstruction("docker");
-    expect(instruction).toContain("`pdftotext`, `pandoc`, and `openpyxl` are available");
+    expect(instruction).toContain(
+      "`pdftotext`, `pandoc`, `catdoc` (legacy Word `.doc`), and `openpyxl` are available",
+    );
     expect(instruction).toContain("PDFs, documents, and spreadsheets");
   });
   it("does not prescribe disabled browser or takeover tools for gh login", () => {

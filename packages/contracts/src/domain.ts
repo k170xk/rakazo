@@ -485,6 +485,9 @@ export const EvolveAssistantSchema = z.object({
   model: z.string().nullable(),
   /** Has knowledge files (an OpenAI vector store) the bot can search. */
   knowledge: z.boolean(),
+  /** The References dialog offers People / Responses for this assistant, as in Evolve. */
+  enablePeople: z.boolean().optional(),
+  enableResponses: z.boolean().optional(),
 });
 export type EvolveAssistant = z.infer<typeof EvolveAssistantSchema>;
 

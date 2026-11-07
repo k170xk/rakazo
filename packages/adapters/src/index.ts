@@ -79,6 +79,7 @@ export * from "./elevenlabs-voice.js";
 export * from "./email-emulator.js";
 export * from "./evolve-assistants.js";
 export * from "./evolve-plugins.js";
+export * from "./evolve-references.js";
 export * from "./executor.js";
 export * from "./expo-push.js";
 export * from "./fake-browser.js";

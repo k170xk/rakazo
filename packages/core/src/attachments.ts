@@ -4,6 +4,7 @@ import {
   ATTACHMENT_MAX_BYTES,
   ATTACHMENT_MAX_COUNT,
   attachmentSizeLabel,
+  evolveReferencesPromptText,
   isAllowedAttachmentMimeType,
   isAttachmentImageMimeType,
   uiCardText,
@@ -172,6 +173,7 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
       if (block.kind === "chart") return `[chart: ${block.name}]`;
       if (block.kind === "ui_card") return `[${block.card.type} card: ${uiCardText(block.card)}]`;
       if (block.kind === "image") return `[image: ${block.name}]`;
+      if (block.kind === "evolve_references") return evolveReferencesPromptText(block);
       // The id lets a later turn, or another chat, update this page instead of making a new one.
       if (block.kind === "page") {
         return `[page: ${block.title} (pageId ${block.pageId}, version ${block.version})]`;
@@ -227,6 +229,7 @@ const EXTENSION_MIME_TYPES: Record<string, AttachmentMimeType> = {
   ".csv": "text/csv",
   ".xls": "application/vnd.ms-excel",
   ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ".doc": "application/msword",
   ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   ".html": "text/html",
@@ -251,6 +254,7 @@ const MIME_TYPE_EXTENSIONS: Record<AttachmentMimeType, string> = {
   "text/csv": ".csv",
   "application/vnd.ms-excel": ".xls",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+  "application/msword": ".doc",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
   "text/html": ".html",

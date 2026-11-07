@@ -4,6 +4,7 @@ import { runContinueJob } from "@rakazo/adapter-kit";
 import { cancelComputerRunWork, screenLeaseIdForRun, toComputerRef } from "@rakazo/adapters";
 import type {
   Actor,
+  EvolveReferences,
   GroupMember,
   MessageBlock,
   MessageReaction,
@@ -11,7 +12,10 @@ import type {
   ThreadSnapshot,
 } from "@rakazo/contracts";
 import {
+  EVOLVE_REFERENCES_MESSAGE_TEXT,
+  evolveReferencesPromptText,
   GROUP_MEMBER_MIN,
+  hasEvolveReferences,
   MessageBlock as MessageBlockSchema,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
@@ -789,6 +793,27 @@ async function guestAuthoredPrompt(
   return `[Message from ${who}, a colleague your owner added to this group. They are not your owner.]\n\n${prompt}`;
 }
 
+/** Evolve adds references on their own, to one assistant, and needs every person's role. */
+function assertEvolveReferencesSend(
+  target: ThreadTarget,
+  input: { text?: string; artifactIds?: string[]; evolveReferences?: EvolveReferences },
+) {
+  if (target.kind !== "bot") {
+    throw new ORPCError("BAD_REQUEST", { message: "References can be added in a bot's chat." });
+  }
+  if (input.text?.trim() || input.artifactIds?.length) {
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Send references on their own, without text or attachments.",
+    });
+  }
+  const missing = (input.evolveReferences?.people ?? []).filter((person) => !person.role?.trim());
+  if (missing.length > 0) {
+    throw new ORPCError("BAD_REQUEST", {
+      message: `Please add roles for the following people before adding references: ${missing.map((person) => person.name).join(", ")}. Roles are required for proper AI context.`,
+    });
+  }
+}
+
 export async function sendThreadMessage(
   deps: {
     prisma: PrismaClient;
@@ -801,9 +826,11 @@ export async function sendThreadMessage(
   },
   actor: Actor,
   target: ThreadTarget,
-  input: {
+  rawInput: {
     text?: string;
     artifactIds?: string[];
+    /** Evolve projects, people and exemplars: sent as Evolve sends them, on their own. */
+    evolveReferences?: EvolveReferences;
     imageHandling?: "confirm" | "file";
     mentions?: MentionTargetInput[];
     replyToMessageId?: string;
@@ -819,6 +846,11 @@ export async function sendThreadMessage(
   /** Runs saved with the message, after the thread lock and before the message is routed. */
   startRoutines?: (tx: Prisma.TransactionClient) => Promise<Array<{ id: string; status: string }>>,
 ) {
+  const references = hasEvolveReferences(rawInput.evolveReferences)
+    ? rawInput.evolveReferences
+    : undefined;
+  if (references) assertEvolveReferencesSend(target, rawInput);
+  const input = references ? { ...rawInput, text: EVOLVE_REFERENCES_MESSAGE_TEXT } : rawInput;
   const existing = await replayExistingSend(
     deps,
     target.threadId,
@@ -929,10 +961,11 @@ export async function sendThreadMessage(
             imageAdmission: deps.imageAdmission,
           });
         }
-        const blocks = buildUserMessageBlocks(
+        const blocks: MessageBlock[] = buildUserMessageBlocks(
           input.text,
           sendAttachmentBlocks(attachmentBlocks, artifacts, input.imageHandling),
         );
+        if (references) blocks.push({ kind: "evolve_references", ...references });
         const message = await createThreadMessageInTransaction(tx, {
           threadId: target.threadId,
           role: "user",
@@ -1052,7 +1085,9 @@ export async function sendThreadMessage(
             botId: target.botId,
             threadId: target.threadId,
             userId: actor.userId,
-            prompt: buildSendPrompt(input.text, artifacts, connectorNames),
+            prompt: references
+              ? evolveReferencesPromptText(references)
+              : buildSendPrompt(input.text, artifacts, connectorNames),
             status: "queued",
           },
         });

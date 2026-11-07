@@ -14,6 +14,30 @@ import {
 } from "./attachments.js";
 
 describe("attachment helpers", () => {
+  it("keeps Evolve references in later turns with Evolve's own wording", () => {
+    expect(
+      blocksToAgentHistoryText([
+        { kind: "text", text: "Added references to conversation context" },
+        {
+          kind: "evolve_references",
+          projects: [],
+          people: [{ id: "1", name: "Aaron Kearney", role: "Engineer" }],
+          exemplars: [],
+        },
+      ]),
+    ).toBe(
+      "Added references to conversation context\n\n\nPlease use the following people as context for this conversation.\n\n• Aaron Kearney\n  - Role: Engineer",
+    );
+  });
+
+  it("accepts and preserves legacy Word .doc attachments", () => {
+    for (const reported of [undefined, "", "application/msword", "application/octet-stream"]) {
+      expect(inferAttachmentMimeType("brief.doc", reported)).toBe("application/msword");
+    }
+    expect(attachmentExtensionForMimeType("application/msword")).toBe(".doc");
+    expect(() => validateAttachmentMimeType("application/msword")).not.toThrow();
+  });
+
   it.each([
     ["xls", "application/vnd.ms-excel"],
     ["xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],

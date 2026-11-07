@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { AgentImportSetupItemSchema } from "./agent-import-setup.js";
 import { botSecretDestinationSchema, LoginFieldLabels, OneTimeCodeTarget } from "./bot-secrets.js";
+import { EvolveReferencesSchema } from "./evolve-references.js";
 import { Id, ThinkingLevelSchema } from "./ids.js";
 import { McpTransportSchema } from "./mcp.js";
 import { PAGE_TITLE_MAX_LENGTH } from "./pages.js";
@@ -314,6 +315,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     name: z.string(),
     size: z.number().int().nonnegative(),
   }),
+  /** Projects, people and exemplar responses added from the composer's References dialog. */
+  EvolveReferencesSchema.extend({ kind: z.literal("evolve_references") }),
   z.object({
     /** A page the bot saved. Title and version are as sent; read the page for its latest. */
     kind: z.literal("page"),

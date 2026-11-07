@@ -161,6 +161,14 @@ import {
   VoiceStatusSchema,
 } from "./domain.js";
 import { ComputerCommandSchema, ProductEventSchema } from "./events.js";
+import {
+  EvolvePersonOptionSchema,
+  EvolveProjectPageSchema,
+  EvolveReferenceExemplarSchema,
+  EvolveReferencesSchema,
+  EvolveReferenceTabsSchema,
+  hasEvolveReferences,
+} from "./evolve-references.js";
 import { Id, IsoDate, ThinkingLevelSchema } from "./ids.js";
 import {
   IntegrationProviderConfigSchema,
@@ -229,12 +237,14 @@ const threadSendFields = threadTarget.safeExtend({
   /** Sent from the open page: a reply to its card that quotes nothing. */
   fromPage: z.literal(true).optional(),
   clientNonce: z.string().min(1).max(200).optional(),
+  /** Evolve projects, people and exemplars to add as context, as Evolve chat's References do. */
+  evolveReferences: EvolveReferencesSchema.optional(),
 });
 
 const threadSendInput = threadSendFields.superRefine((input, ctx) => {
   const text = input.text?.trim() ?? "";
   const artifactIds = input.artifactIds ?? [];
-  if (!text && artifactIds.length === 0) {
+  if (!text && artifactIds.length === 0 && !hasEvolveReferences(input.evolveReferences)) {
     ctx.addIssue({
       code: "custom",
       message: "Provide text or at least one attachment",
@@ -617,6 +627,21 @@ export const appContract = {
       .output(z.object({ available: z.boolean(), people: z.array(DirectoryPersonSchema) })),
     /** Groups other people own that the signed-in user was added to, from any Space. */
     shared: oc.output(z.array(SharedGroupSchema)),
+  },
+  /** The composer's References dialog: Evolve's projects, people and exemplar responses. */
+  evolveReferences: {
+    /** Which tabs this bot offers; unavailable when this deployment is not linked to Evolve. */
+    tabs: oc.input(z.object({ botId: Id.optional() })).output(EvolveReferenceTabsSchema),
+    projects: oc
+      .input(
+        z.object({
+          search: z.string().trim().max(200).default(""),
+          page: z.number().int().min(0).max(10_000).default(0),
+        }),
+      )
+      .output(EvolveProjectPageSchema),
+    people: oc.output(z.object({ people: z.array(EvolvePersonOptionSchema) })),
+    exemplars: oc.output(z.object({ exemplars: z.array(EvolveReferenceExemplarSchema) })),
   },
   botSections: {
     list: oc.output(z.array(BotSectionSchema)),

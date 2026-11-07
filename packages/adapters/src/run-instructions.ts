@@ -131,7 +131,7 @@ export function dockerComputerToolInstruction(
   const act = builtinOffered(disabled, "browser_act");
   const takeover = builtinOffered(disabled, "request_takeover");
   const parts = [
-    "For Python CLI tools, use `uv tool install <package>`; it installs without sudo and keeps tools under this computer's persistent home. GitHub's `gh` CLI is installed. `pdftotext`, `pandoc`, and `openpyxl` are available to extract text from PDFs, documents, and spreadsheets.",
+    "For Python CLI tools, use `uv tool install <package>`; it installs without sudo and keeps tools under this computer's persistent home. GitHub's `gh` CLI is installed. `pdftotext`, `pandoc`, `catdoc` (legacy Word `.doc`), and `openpyxl` are available to extract text from PDFs, documents, and spreadsheets.",
   ];
   if (builtinOffered(disabled, "shell")) {
     parts.push(

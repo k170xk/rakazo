@@ -11,9 +11,17 @@ export function canPrepareImage(file: File): boolean {
   return mimeType === "image/jpeg" || mimeType === "image/png";
 }
 
+const fullResolution = new WeakSet<File>();
+
+/** Drawing pages keep every pixel; they were already sized to fit the upload limit. */
+export function keepFullResolution(file: File): File {
+  fullResolution.add(file);
+  return file;
+}
+
 /** Best effort: unsupported browsers and unreadable images retain the original upload. */
 export async function prepareImage(file: File): Promise<File> {
-  if (!canPrepareImage(file)) return file;
+  if (!canPrepareImage(file) || fullResolution.has(file)) return file;
   let image: ImageBitmap | undefined;
   try {
     image = await createImageBitmap(file);

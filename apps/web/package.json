@@ -23,6 +23,7 @@
     "@rakazo/chat-ui": "workspace:*",
     "@rakazo/contracts": "workspace:*",
     "@rakazo/core": "workspace:*",
+    "@rakazo/logging": "workspace:*",
     "@rakazo/ui-tokens": "workspace:*",
     "@rakazo/ui-web": "workspace:*",
     "@sentry/react": "11.10.0",
@@ -30,11 +31,11 @@
     "@tanstack/react-query": "5.105.3",
     "better-auth": "1.7.16",
     "lucide-react": "1.68.0",
+    "pdfjs-dist": "6.5.438",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-router-dom": "7.18.5",
-    "zod": "4.6.7",
-    "@rakazo/logging": "workspace:*"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@babel/core": "7.29.7",

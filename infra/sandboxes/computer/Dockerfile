@@ -71,6 +71,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xsel \
     poppler-utils \
     pandoc \
+    catdoc \
     python3-openpyxl \
     python3-pandas \
     python3-matplotlib \
@@ -78,6 +79,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && pdftotext -v \
   && pdfinfo -v \
   && pandoc --version \
+  && command -v catdoc \
   && python3 -c 'import openpyxl, pandas, matplotlib; print(openpyxl.__version__, pandas.__version__, matplotlib.__version__)' \
   && groupadd --gid 1000 rakazo \
   && useradd --uid 1000 --gid rakazo --create-home --shell /bin/bash rakazo \
