@@ -18,6 +18,7 @@ import {
 } from "@rakazo/contracts";
 import { isAdmin } from "../admins.js";
 import { effectiveSandboxProvider } from "../computer-provider-config.js";
+import { syncEvolvePhoto } from "../evolve-photo.js";
 import type { RouterDeps } from "../router.js";
 
 export { createAdapterContext as computerContext } from "@rakazo/adapter-kit";
@@ -35,6 +36,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
       select: {
         email: true,
         name: true,
+        image: true,
         timezone: true,
         locale: true,
         botAvatarSet: true,
@@ -44,6 +46,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     modelSetup(deps, actor),
     isAdmin(deps, actor.userId),
   ]);
+  void syncEvolvePhoto(deps, { id: actor.userId, email: user.email, image: user.image });
   // Where the deployment runs computers once an admin's choice in Settings applies.
   // The app treats "none" as computers being unavailable, which is what the company switch means.
   const sandboxProvider = companyFeatures().computers

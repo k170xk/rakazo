@@ -78,3 +78,18 @@ export async function listEvolvePeopleCvs(
   );
   return z.object({ cvs: z.array(EvolvePersonCvSchema) }).parse(payload).cvs;
 }
+
+/** The signed-in person's own Evolve name and CV photo (an https URL, or null). */
+export async function readEvolveOwnProfile(
+  connection: EvolvePluginsConnection,
+  email: string,
+  options: CallOptions = {},
+): Promise<{ name: string | null; photo: string | null }> {
+  const payload = await callEvolveAssistants(connection, email, { action: "profile.me" }, options);
+  return z
+    .object({
+      name: z.string().nullable().default(null),
+      photo: z.string().url().max(2_000).nullable().default(null),
+    })
+    .parse(payload);
+}
