@@ -265,7 +265,7 @@ export async function actorEmail(deps: RouterDeps, actor: Actor): Promise<string
 }
 
 /** The Evolve assistant a new bot starts from, checked against what this person may open. */
-async function evolveAssistantFor(deps: RouterDeps, actor: Actor, id: string) {
+export async function evolveAssistantFor(deps: RouterDeps, actor: Actor, id: string) {
   const email = await actorEmail(deps, actor);
   if (!deps.evolvePlugins || !email) {
     throw new ORPCError("BAD_REQUEST", { message: "Evolve is not linked to this server." });

@@ -100,6 +100,8 @@ export interface CreateThreadMessageInput {
   allowCancelledRun?: boolean;
   /** The executing attempt's lease; a superseded attempt cannot write. */
   lease?: RunLease;
+  /** When the message was written elsewhere, for history brought in from another app. */
+  createdAt?: Date;
 }
 
 export async function createThreadMessage(prisma: PrismaClient, input: CreateThreadMessageInput) {
@@ -138,6 +140,7 @@ export async function createThreadMessageInTransaction(
       replyQuote: input.replyQuote,
       runId: input.runId,
       clientNonce: input.clientNonce,
+      createdAt: input.createdAt,
     },
   });
 }

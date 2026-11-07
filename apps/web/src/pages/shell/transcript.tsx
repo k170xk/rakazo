@@ -61,9 +61,16 @@ const SIDE_AVATAR_SIZE = 28;
 
 function messageTime(createdAt: string, locale: string): string {
   const date = new Date(createdAt);
-  return Number.isNaN(date.getTime())
-    ? ""
-    : date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+  if (Number.isNaN(date.getTime())) return "";
+  const time = date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+  const now = new Date();
+  if (date.toDateString() === now.toDateString()) return time;
+  const day = date.toLocaleDateString(locale, {
+    day: "numeric",
+    month: "short",
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }),
+  });
+  return `${day}, ${time}`;
 }
 
 export const Transcript = memo(function Transcript({

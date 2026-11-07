@@ -676,6 +676,10 @@ export const appContract = {
         }),
       )
       .output(EvolveConversationMessagesSchema),
+    /** Opens an archived chat as a chat of its own, made on first open with its history. */
+    open: oc
+      .input(z.object({ conversationId: z.string().uuid() }))
+      .output(z.object({ botId: z.string().min(1).max(64), created: z.boolean() })),
   },
   botSections: {
     list: oc.output(z.array(BotSectionSchema)),

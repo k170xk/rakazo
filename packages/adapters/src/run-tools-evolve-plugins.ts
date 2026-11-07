@@ -110,11 +110,27 @@ export const evolvePluginTools: ToolHandlers = {
       return call.finish({ error: "This bot was not started from an Evolve assistant." });
     const input = KnowledgeSearchSchema.safeParse(call.args);
     if (!input.success) return call.finish({ error: issues(input.error) });
+    // A chat opened from an archived conversation searches that conversation's files by default.
+    const conversationId =
+      input.data.conversationId ??
+      (
+        await ctx.deps.prisma.evolveConversationLink.findFirst({
+          where: { botId: ctx.bot.id },
+          orderBy: { createdAt: "asc" },
+          select: { conversationId: true },
+        })
+      )?.conversationId;
     return withEvolve(ctx, call, (email) =>
       callEvolveAssistants(
         ctx.deps.evolvePlugins!,
         email,
-        { action: "search", assistantId, includePersonal: true, ...input.data },
+        {
+          action: "search",
+          assistantId,
+          includePersonal: true,
+          ...input.data,
+          ...(conversationId ? { conversationId } : {}),
+        },
         { signal: ctx.context.signal },
       ),
     );

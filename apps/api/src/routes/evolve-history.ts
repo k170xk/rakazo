@@ -5,10 +5,20 @@ import {
   readEvolveConversation,
   readWholeEvolveConversation,
 } from "@rakazo/adapters";
-import type { EvolveConversationBlock } from "@rakazo/contracts";
-import { evolveConversationTranscript } from "@rakazo/contracts";
+import type {
+  EvolveConversationBlock,
+  EvolveConversationMessages,
+  EvolveHistoryMessage,
+  MessageBlock,
+} from "@rakazo/contracts";
+import {
+  BOT_NAME_MAX_LENGTH,
+  EVOLVE_REFERENCE_CONTEXT_MAX_CHARS,
+  evolveConversationTranscript,
+} from "@rakazo/contracts";
+import { createThreadMessageInTransaction } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
-import { actorEmail } from "./bots.js";
+import { actorEmail, evolveAssistantFor } from "./bots.js";
 import type { RouterContext } from "./context.js";
 
 type Deps = Parameters<typeof actorEmail>[0];
@@ -36,7 +46,9 @@ function unreachable(error: unknown): never {
     });
   }
   getLogger().warn("evolve history", { error: String(error) });
-  throw new ORPCError("SERVICE_UNAVAILABLE", { message: "Your archived chats could not be reached. Try again shortly." });
+  throw new ORPCError("SERVICE_UNAVAILABLE", {
+    message: "Your archived chats could not be reached. Try again shortly.",
+  });
 }
 
 /**
@@ -109,11 +121,171 @@ async function continuedBots(
   return found;
 }
 
+/** One archived message as the blocks of a chat message; null when nothing was saved. */
+export function archivedMessageBlocks(message: EvolveHistoryMessage): MessageBlock[] | null {
+  let text = message.content.trim();
+  if (message.type === "references" && text.length > EVOLVE_REFERENCE_CONTEXT_MAX_CHARS) {
+    text = `${text.slice(0, EVOLVE_REFERENCE_CONTEXT_MAX_CHARS)}\n… (reference details trimmed)`;
+  }
+  const extras: string[] = [];
+  for (const url of message.images) extras.push(`![image](${url})`);
+  if (message.files.length > 0) {
+    extras.push(`Attached: ${message.files.map((file) => file.name).join(", ")}`);
+  }
+  const body = [text, ...extras].filter(Boolean).join("\n\n");
+  return body ? [{ kind: "text", text: body }] : null;
+}
+
+function shortDay(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? iso.slice(0, 10)
+    : date.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+}
+
+const GENERIC_TITLES = new Set(["", "new conversation", "new chat", "untitled"]);
+
+function archivedChatName(conversation: EvolveConversationMessages["conversation"]): string {
+  const title = conversation.title.trim();
+  const name = GENERIC_TITLES.has(title.toLowerCase())
+    ? `${conversation.assistantName} · ${shortDay(conversation.lastMessageAt)}`
+    : title;
+  return name.slice(0, BOT_NAME_MAX_LENGTH);
+}
+
+/**
+ * An archived chat as a chat of its own: a bot from the same assistant (its settings copied from
+ * the person's existing bot for that assistant, if any) whose thread holds the old messages at
+ * their original times. Opening it again returns the same chat.
+ */
+async function openArchivedChat(
+  ctx: RouterContext,
+  actor: Actor,
+  conversationId: string,
+): Promise<{ botId: string; created: boolean }> {
+  const { deps, repos } = ctx;
+  const linked = await deps.prisma.evolveConversationLink.findFirst({
+    where: {
+      userId: actor.userId,
+      spaceId: actor.spaceId,
+      conversationId,
+      bot: { archivedAt: null, userId: actor.userId, spaceId: actor.spaceId },
+    },
+    select: { botId: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (linked) return { botId: linked.botId, created: false };
+
+  const { connection, email } = await requiredEvolve(deps, actor);
+  const { conversation, messages } = await readWholeEvolveConversation(
+    connection,
+    email,
+    conversationId,
+  ).catch(unreachable);
+  const spawnKey = `evolve:${conversation.id}`;
+  const earlier = await deps.prisma.bot.findFirst({
+    where: { spaceId: actor.spaceId, userId: actor.userId, spawnKey },
+    select: { id: true, archivedAt: true },
+  });
+  if (earlier) {
+    if (earlier.archivedAt) {
+      await deps.prisma.bot.update({ where: { id: earlier.id }, data: { archivedAt: null } });
+    }
+    await recordEvolveContinuation(deps, actor, conversation.id, earlier.id);
+    return { botId: earlier.id, created: false };
+  }
+
+  const template = await deps.prisma.bot.findFirst({
+    where: {
+      spaceId: actor.spaceId,
+      userId: actor.userId,
+      archivedAt: null,
+      evolveAssistantId: conversation.assistantId,
+    },
+    orderBy: { createdAt: "asc" },
+    select: {
+      instructions: true,
+      description: true,
+      color: true,
+      modelProvider: true,
+      modelId: true,
+      thinkingLevel: true,
+      disabledBuiltinTools: true,
+    },
+  });
+  const assistant = template
+    ? null
+    : await evolveAssistantFor(deps, actor, conversation.assistantId).catch(() => null);
+  const keepsAssistant = Boolean(template || assistant);
+
+  const bot = await repos.createBot(actor, {
+    name: archivedChatName(conversation),
+    description: (template?.description ?? assistant?.description ?? "").slice(0, 500),
+    instructions: template?.instructions ?? assistant?.instructions ?? "",
+    notifyOnFinish: true,
+    color: template?.color,
+    modelProvider: template?.modelProvider ?? null,
+    modelId: template?.modelId ?? null,
+    thinkingLevel: template?.thinkingLevel ?? null,
+    disabledBuiltinTools: template?.disabledBuiltinTools,
+    evolveAssistantId: keepsAssistant ? conversation.assistantId : null,
+    spawnKey,
+    initialMessage: {
+      role: "system",
+      blocks: [
+        {
+          kind: "meta",
+          text: `Archived chat with ${conversation.assistantName}, started ${conversation.createdAt.slice(0, 10)}`,
+        },
+      ],
+    },
+    seed: async (tx, botId) => {
+      const thread = await tx.thread.findUniqueOrThrow({
+        where: { botId },
+        select: { id: true },
+      });
+      for (const message of messages) {
+        const blocks = archivedMessageBlocks(message);
+        if (!blocks) continue;
+        const createdAt = new Date(message.createdAt);
+        await createThreadMessageInTransaction(tx, {
+          threadId: thread.id,
+          role: message.role === "user" ? "user" : "bot",
+          botId: message.role === "user" ? undefined : botId,
+          blocks,
+          markUnread: false,
+          createdAt: Number.isNaN(createdAt.getTime()) ? undefined : createdAt,
+        });
+      }
+      const { nextMessageSeq } = await tx.thread.findUniqueOrThrow({
+        where: { id: thread.id },
+        select: { nextMessageSeq: true },
+      });
+      await tx.thread.update({
+        where: { id: thread.id },
+        data: { unread: false, lastReadSeq: nextMessageSeq - 1 },
+      });
+      await tx.evolveConversationLink.create({
+        data: {
+          userId: actor.userId,
+          spaceId: actor.spaceId,
+          conversationId: conversation.id,
+          botId,
+        },
+      });
+    },
+  });
+  return { botId: bot.id, created: true };
+}
+
 /** Read-only Evolve chat history; each call is made as the signed-in person's Evolve profile. */
 export function evolveHistoryRoutes(ctx: RouterContext) {
   const { deps, authed } = ctx;
   return {
     evolveHistory: {
+      open: authed.evolveHistory.open.handler(({ context, input }) =>
+        openArchivedChat(ctx, context.actor, input.conversationId),
+      ),
       assistants: authed.evolveHistory.assistants.handler(async ({ context }) => {
         const linked = await linkedEvolve(deps, context.actor);
         if (!linked) return { available: false, assistants: [], continued: 0 };
