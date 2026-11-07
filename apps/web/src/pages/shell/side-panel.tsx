@@ -6,7 +6,7 @@ import type {
   Group,
   ThreadSnapshot,
 } from "@rakazo/contracts";
-import { Button } from "@rakazo/ui-web";
+import { Button, toast } from "@rakazo/ui-web";
 import { X } from "lucide-react";
 import type { ComponentProps, Dispatch, ReactNode, SetStateAction } from "react";
 import { ComputerMaintenanceActions } from "../../components/ComputerMaintenanceActions";
@@ -89,13 +89,21 @@ export function ShellSidePanel({
       ? panel
       : null;
 
-  async function createGroup(input: { name: string; botIds: string[] }) {
-    const group = await rpc.groups.create(input);
+  async function createGroup(input: { name: string; botIds: string[]; emails: string[] }) {
+    const group = await rpc.groups.create({ name: input.name, botIds: input.botIds });
     setGroups((current) =>
       current.some((item) => item.id === group.id) ? current : [group, ...current],
     );
     navigate(`/app/g/${group.id}`);
     setPanel(null);
+    const missed: string[] = [];
+    for (const email of input.emails) {
+      await rpc.groups.addPerson({ groupId: group.id, email }).catch(() => missed.push(email));
+    }
+    if (missed.length) {
+      const list = missed.join(", ");
+      toast.error(t`The group was created, but these people could not be added: ${list}`);
+    }
     await refreshBots().catch(() => undefined);
   }
 
@@ -142,6 +150,7 @@ export function ShellSidePanel({
               bots={bots}
               onCancel={() => setPanel(null)}
               onCreate={(input) => createGroup(input)}
+              searchPeople={(query) => rpc.groups.searchDirectory({ query })}
               onOpenBot={(botId) => {
                 setPanel(null);
                 openBot(botId);

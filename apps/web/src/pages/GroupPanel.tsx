@@ -1,11 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, Group } from "@rakazo/contracts";
+import type { Bot, DirectoryPerson, Group } from "@rakazo/contracts";
 import { GROUP_MEMBER_MAX, GROUP_MEMBER_MIN, GROUP_NAME_MAX_LENGTH } from "@rakazo/contracts";
 import { BotAvatar, Button, Checkbox, Input, SectionHeading } from "@rakazo/ui-web";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { GroupPeopleSection } from "../components/GroupPeople";
+import type { DirectoryResult } from "../components/GroupPeople";
+import { GroupPeopleSection, PeoplePicker, PersonAvatar } from "../components/GroupPeople";
 import { errorText } from "../lib/user-error";
 import { DeleteItemDialog } from "./shell/dialogs";
 
@@ -140,21 +141,28 @@ function MemberPicker({
   );
 }
 
+type ChosenPerson = { email: string; name: string; photo: string | null; detail: string };
+
 export function CreateGroupForm({
   bots,
   onCancel,
   onCreate,
   onOpenBot,
+  searchPeople,
 }: {
   bots: Bot[];
   onCancel: () => void;
-  onCreate: (input: { name: string; botIds: string[] }) => Promise<void>;
+  onCreate: (input: { name: string; botIds: string[]; emails: string[] }) => Promise<void>;
   onOpenBot?: (botId: string) => void;
+  /** Evolve's directory; colleagues picked here are added once the group exists. */
+  searchPeople?: (query: string) => Promise<DirectoryResult>;
 }) {
   const { t } = useLingui();
   const nameId = useId();
+  const peopleId = useId();
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [people, setPeople] = useState<ChosenPerson[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -163,7 +171,11 @@ export function CreateGroupForm({
     setSubmitting(true);
     setError(null);
     try {
-      await onCreate({ name: name.trim(), botIds: selected });
+      await onCreate({
+        name: name.trim(),
+        botIds: selected,
+        emails: people.map((person) => person.email),
+      });
     } catch (cause) {
       setError(errorText(cause, t`Could not create group`));
     } finally {
@@ -210,6 +222,74 @@ export function CreateGroupForm({
         onOpenBot={onOpenBot}
         initiallyExpanded
       />
+      {searchPeople ? (
+        <section className="mt-5" aria-labelledby={`${peopleId}-heading`}>
+          <span id={`${peopleId}-heading`} className="text-sm text-muted-foreground">
+            <Trans>People ({people.length})</Trans>
+          </span>
+          <p className="mt-1 mb-2 text-xs text-muted-foreground">
+            <Trans>
+              Optional. Evolve colleagues chat with this group's bots, without your memory, notes,
+              saved logins or connected apps.
+            </Trans>
+          </p>
+          <PeoplePicker
+            inputId={peopleId}
+            busy={submitting}
+            search={async (query) => {
+              const found = await searchPeople(query);
+              const chosen = new Set(people.map((person) => person.email));
+              return {
+                ...found,
+                people: found.people.map((person: DirectoryPerson) =>
+                  chosen.has(person.email) ? { ...person, status: "member" as const } : person,
+                ),
+              };
+            }}
+            onPick={async (email, person) => {
+              if (people.some((chosen) => chosen.email === email)) return true;
+              setPeople((current) => [
+                ...current,
+                {
+                  email,
+                  name: person?.name ?? email,
+                  photo: person?.photo ?? null,
+                  detail: person
+                    ? [person.jobTitle, person.office].filter(Boolean).join(" · ") || email
+                    : t`Invited by email`,
+                },
+              ]);
+              return true;
+            }}
+          />
+          <ul className="mt-2 space-y-1">
+            {people.map((person) => (
+              <li key={person.email} className="flex items-center gap-3 rounded-xl px-2.5 py-2">
+                <PersonAvatar name={person.name} image={person.photo} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] text-foreground" dir="auto">
+                    {person.name}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {person.detail}
+                  </span>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t`Remove ${person.name}`}
+                  disabled={submitting}
+                  onClick={() =>
+                    setPeople((current) => current.filter((item) => item.email !== person.email))
+                  }
+                >
+                  <X size={16} />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <Button
         className="mt-5 w-full"
         disabled={submitting || !validSelection(name, selected)}

@@ -632,9 +632,12 @@ export const appContract = {
         }),
       )
       .output(GroupPeopleSchema),
-    /** Active Evolve profiles to add; unavailable when this deployment is not linked to Evolve. */
+    /**
+     * Active Evolve profiles to add; unavailable when this deployment is not linked to Evolve.
+     * Without a group (while creating one) nobody is marked as already added.
+     */
     searchDirectory: oc
-      .input(groupId.safeExtend({ query: z.string().trim().min(2).max(80) }))
+      .input(z.object({ groupId: Id.optional(), query: z.string().trim().min(2).max(80) }))
       .output(z.object({ available: z.boolean(), people: z.array(DirectoryPersonSchema) })),
     /** Groups other people own that the signed-in user was added to, from any Space. */
     shared: oc.output(z.array(SharedGroupSchema)),

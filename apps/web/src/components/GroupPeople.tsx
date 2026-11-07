@@ -148,10 +148,10 @@ export function GroupPeopleSection({ groupId, spaceId }: { groupId: string; spac
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SEARCH_DELAY_MS = 250;
 
-type DirectoryResult = { available: boolean; people: DirectoryPerson[] };
+export type DirectoryResult = { available: boolean; people: DirectoryPerson[] };
 
 /** Search-as-you-type over active Evolve profiles; a typed work email still works as a fallback. */
-function PeoplePicker({
+export function PeoplePicker({
   inputId,
   busy,
   search,
@@ -160,7 +160,7 @@ function PeoplePicker({
   inputId: string;
   busy: boolean;
   search: (query: string) => Promise<DirectoryResult>;
-  onPick: (email: string) => Promise<boolean>;
+  onPick: (email: string, person: DirectoryPerson | null) => Promise<boolean>;
 }) {
   const { t } = useLingui();
   const listId = useId();
@@ -209,7 +209,7 @@ function PeoplePicker({
 
   const pick = async (option: (typeof options)[number] | undefined) => {
     if (!option || !pickable(option) || busy) return;
-    if (await onPick(option.email)) {
+    if (await onPick(option.email, option.person)) {
       setQuery("");
       setResult(null);
       setOpen(false);

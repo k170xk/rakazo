@@ -825,7 +825,9 @@ export function botsRoutes(ctx: RouterContext) {
           secret: deps.env.evolveSsoSecret,
           url: deps.env.evolveDirectoryUrl,
           query: input.query,
-          people: await listGroupPeople(deps.prisma, context.actor, input.groupId),
+          people: input.groupId
+            ? await listGroupPeople(deps.prisma, context.actor, input.groupId)
+            : { people: [], invites: [] },
         }),
       ),
       shared: authed.groups.shared.handler(({ context }) =>
