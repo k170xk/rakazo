@@ -391,13 +391,17 @@ env.DATABASE_URL = database.url;
 env.DATABASE_MIGRATION_URL = database.migrationUrl;
 env.DATA_DIR = database.dataDir;
 
-// A checkout's .env turns on Evolve sign-in and names this server's admins. The shell can still
-// override it.
+// A checkout's .env connects this server to Evolve (sign-in, directory, assistants and plugins)
+// and names its admins. The shell can still override it.
 for (const name of [
   "NODE_ENV",
   "EVOLVE_COMPUTER_SSO_SECRET",
   "EVOLVE_SSO_START_URL",
   "EVOLVE_DIRECTORY_URL",
+  "EVOLVE_PLUGINS_URL",
+  "EVOLVE_PLUGINS_SECRET",
+  "EVOLVE_PLUGINS_REPO",
+  "EVOLVE_PLUGINS_GITHUB_TOKEN",
   "RAKAZO_ADMIN_EMAILS",
 ]) {
   if (!env[name] && setting(name)) env[name] = setting(name);
