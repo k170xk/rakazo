@@ -13,6 +13,8 @@ const Name = z.string().max(2_000);
 /** Characters of an old conversation carried into a bot's chat; the newest messages are kept. */
 export const EVOLVE_CONVERSATION_TRANSCRIPT_MAX_CHARS = 60_000;
 export const EVOLVE_CONVERSATION_MESSAGE_TEXT = "Continued an earlier Evolve conversation";
+/** Characters kept from one message that added references (Evolve stores their full details). */
+export const EVOLVE_REFERENCE_CONTEXT_MAX_CHARS = 6_000;
 
 export const EvolveHistoryAssistantSchema = z.object({
   id: EvolveId,
@@ -124,7 +126,10 @@ export function evolveHistoryMessageText(message: EvolveHistoryMessage): string 
   if (message.files.length)
     notes.push(`Attached files: ${message.files.map((f) => f.name).join("; ")}`);
   if (message.images.length) notes.push(`Images: ${message.images.join(" ")}`);
-  const body = message.content.trim() || (message.unsaved ? "(No reply was saved in Evolve.)" : "");
+  let body = message.content.trim() || (message.unsaved ? "(No reply was saved in Evolve.)" : "");
+  if (message.type === "references" && body.length > EVOLVE_REFERENCE_CONTEXT_MAX_CHARS) {
+    body = `${body.slice(0, EVOLVE_REFERENCE_CONTEXT_MAX_CHARS)}… (reference details trimmed)`;
+  }
   return [`${speaker}: ${body}`, ...notes.map((note) => `[${note}]`)].join("\n");
 }
 

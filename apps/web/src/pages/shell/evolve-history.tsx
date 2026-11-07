@@ -41,6 +41,26 @@ function filesLabel(count: number): string {
   return plural(count, { one: "# file", other: "# files" });
 }
 
+/** A message that only added references: its first line, with the stored details on request. */
+function ReferenceContext({ content }: { content: string }) {
+  const { t } = useLingui();
+  const [heading, ...rest] = content.trim().split("\n");
+  const details = rest.join("\n").trim();
+  return (
+    <div className="space-y-1">
+      <p dir="auto">{heading}</p>
+      {details ? (
+        <details>
+          <summary className="cursor-pointer text-xs opacity-80">{t`Show details`}</summary>
+          <p className="mt-1 max-h-64 overflow-y-auto whitespace-pre-wrap text-xs" dir="auto">
+            {details}
+          </p>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
 function HistoryMessage({ message }: { message: EvolveHistoryMessage }) {
   const { t } = useLingui();
   const mine = message.role === "user";
@@ -57,7 +77,9 @@ function HistoryMessage({ message }: { message: EvolveHistoryMessage }) {
           mine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
         }`}
       >
-        {message.content.trim() ? (
+        {message.type === "references" && message.content.trim() ? (
+          <ReferenceContext content={message.content} />
+        ) : message.content.trim() ? (
           mine ? (
             <p className="whitespace-pre-wrap" dir="auto">
               {message.content}

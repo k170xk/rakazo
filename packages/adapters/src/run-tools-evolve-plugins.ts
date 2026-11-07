@@ -114,7 +114,7 @@ export const evolvePluginTools: ToolHandlers = {
       callEvolveAssistants(
         ctx.deps.evolvePlugins!,
         email,
-        { action: "search", assistantId, ...input.data },
+        { action: "search", assistantId, includePersonal: true, ...input.data },
         { signal: ctx.context.signal },
       ),
     );

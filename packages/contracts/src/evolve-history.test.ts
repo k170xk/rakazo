@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MessageBlock } from "./events.js";
 import {
+  EVOLVE_REFERENCE_CONTEXT_MAX_CHARS,
   EvolveConversationMessagesSchema,
   evolveConversationPromptText,
   evolveConversationTranscript,
@@ -42,6 +43,23 @@ describe("evolveHistoryMessageText", () => {
   it("says when Evolve never saved a reply", () => {
     expect(evolveHistoryMessageText({ ...message("2", "assistant", ""), unsaved: true })).toBe(
       "Assistant: (No reply was saved in Evolve.)",
+    );
+  });
+
+  it("trims the stored details of a message that added references", () => {
+    const details = `Please use the following reference projects.\n${"x".repeat(EVOLVE_REFERENCE_CONTEXT_MAX_CHARS)}`;
+    const text = evolveHistoryMessageText({
+      ...message("3", "user", details),
+      type: "references",
+      references: { projects: [{ name: "Burton Street Sligo" }], people: [], exemplars: [] },
+    });
+    expect(text).toContain("User: Please use the following reference projects.");
+    expect(text).toContain(
+      "… (reference details trimmed)\n[Reference projects: Burton Street Sligo]",
+    );
+    expect(text.length).toBeLessThan(EVOLVE_REFERENCE_CONTEXT_MAX_CHARS + 120);
+    expect(evolveHistoryMessageText(message("4", "user", details))).toContain(
+      "x".repeat(EVOLVE_REFERENCE_CONTEXT_MAX_CHARS),
     );
   });
 });

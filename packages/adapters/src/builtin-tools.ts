@@ -1794,7 +1794,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "evolve_knowledge_search",
     description:
-      "Search the knowledge files of the Evolve assistant you were started from (its OpenAI vector store): OCSC guidance, standards, templates and past work it was given. Search before answering anything those files may cover, with a specific query, and name the files you used. Returns matching passages with their file names and scores. When this chat continues an earlier Evolve conversation, pass its conversationId to also search the files uploaded to that conversation and the user's own Evolve files; each result then says which it came from.",
+      "Search the knowledge files of the Evolve assistant you were started from (its OpenAI vector store): OCSC guidance, standards, templates and past work it was given, together with the user's own Evolve files. Search before answering anything those files may cover, with a specific query, and name the files you used. Returns matching passages with their file names, scores and source (assistant or personal). When this chat continues an earlier Evolve conversation, pass its conversationId to also search the files uploaded to that conversation (source conversation).",
     inputSchema: {
       type: "object",
       properties: {

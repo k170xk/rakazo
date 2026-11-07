@@ -412,6 +412,7 @@ export function botsRoutes(ctx: RouterContext) {
             modelId: source.modelId,
             thinkingLevel: source.thinkingLevel,
             disabledBuiltinTools: source.disabledBuiltinTools,
+            evolveAssistantId: source.evolveAssistantId ?? null,
           })
           .catch((error: unknown) => {
             throw mapSpaceLifecycleError(error);
