@@ -1,9 +1,11 @@
 import type {
+  EvolvePersonCv,
   EvolvePersonOption,
   EvolveProjectPage,
   EvolveReferenceExemplar,
 } from "@rakazo/contracts";
 import {
+  EvolvePersonCvSchema,
   EvolvePersonOptionSchema,
   EvolveProjectPageSchema,
   EvolveReferenceExemplarSchema,
@@ -58,4 +60,21 @@ export async function listEvolveReferenceExemplars(
     options,
   );
   return z.object({ exemplars: z.array(EvolveReferenceExemplarSchema) }).parse(payload).exemplars;
+}
+
+/** The CVs of the given Evolve profiles, as their CV pages hold them. */
+export async function listEvolvePeopleCvs(
+  connection: EvolvePluginsConnection,
+  email: string,
+  ids: string[],
+  options: CallOptions = {},
+): Promise<EvolvePersonCv[]> {
+  if (ids.length === 0) return [];
+  const payload = await callEvolveAssistants(
+    connection,
+    email,
+    { action: "references.cvs", ids },
+    options,
+  );
+  return z.object({ cvs: z.array(EvolvePersonCvSchema) }).parse(payload).cvs;
 }

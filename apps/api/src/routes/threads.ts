@@ -52,6 +52,7 @@ import {
 import { mapBotSecretInputError } from "./bots.js";
 import { releaseComputerControl } from "./computer.js";
 import type { RouterContext } from "./context.js";
+import { withEvolvePeopleCvs } from "./evolve-references.js";
 import {
   botsRunOwnModels,
   computerContext,
@@ -111,6 +112,7 @@ export function threadsRoutes(ctx: RouterContext) {
   ) => {
     const setup = await modelSetup(deps, actor);
     const target = await resolveThreadTarget(deps.prisma, actor, input);
+    const evolveReferences = await withEvolvePeopleCvs(deps, actor, input.evolveReferences);
     // A bot with its own runnable model needs no main model, and stopping work needs none.
     const replied =
       target.kind === "group" ? await replyParentBotId(deps.prisma, target, input) : undefined;
@@ -144,7 +146,7 @@ export function threadsRoutes(ctx: RouterContext) {
       },
       actor,
       target,
-      { ...input, noModel },
+      { ...input, evolveReferences, noModel },
       takeoverReleaser(deps, actor, target),
       startRoutines,
     ).catch((error: unknown) => {

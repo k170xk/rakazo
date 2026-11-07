@@ -1,15 +1,52 @@
 import { ORPCError } from "@orpc/server";
 import {
   listEvolveAssistants,
+  listEvolvePeopleCvs,
   listEvolveReferenceExemplars,
   listEvolveReferencePeople,
   listEvolveReferenceProjects,
 } from "@rakazo/adapters";
-import type { EvolveReferenceTabs } from "@rakazo/contracts";
+import type { EvolveReferences, EvolveReferenceTabs } from "@rakazo/contracts";
+import { evolvePersonCvText } from "@rakazo/contracts";
 import { IsolationError } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { actorEmail } from "./bots.js";
 import type { RouterContext } from "./context.js";
+
+/**
+ * Referenced people with their whole Evolve CV, read from Evolve as the sender. Any CV text the
+ * client sent is replaced, so the model only ever sees what Evolve holds.
+ */
+export async function withEvolvePeopleCvs(
+  deps: Parameters<typeof actorEmail>[0],
+  actor: Parameters<typeof actorEmail>[1],
+  references: EvolveReferences | undefined,
+): Promise<EvolveReferences | undefined> {
+  if (!references?.people.length) return references;
+  const people = references.people.map(({ cv: _cv, ...person }) => person);
+  const email = await actorEmail(deps, actor);
+  if (!deps.evolvePlugins || !email) {
+    throw new ORPCError("BAD_REQUEST", { message: "Evolve is not linked to this server." });
+  }
+  const cvs = await listEvolvePeopleCvs(
+    deps.evolvePlugins,
+    email,
+    people.map((person) => person.id),
+  ).catch((error: unknown) => {
+    getLogger().warn("evolve people cvs", { error: String(error) });
+    throw new ORPCError("SERVICE_UNAVAILABLE", {
+      message: "Could not load these people's CVs from Evolve. Try again.",
+    });
+  });
+  const cvById = new Map(cvs.map((cv) => [cv.id, evolvePersonCvText(cv)]));
+  return {
+    ...references,
+    people: people.map((person) => {
+      const cv = cvById.get(person.id);
+      return cv ? { ...person, cv } : person;
+    }),
+  };
+}
 
 const UNAVAILABLE: EvolveReferenceTabs = { available: false, people: false, exemplars: false };
 

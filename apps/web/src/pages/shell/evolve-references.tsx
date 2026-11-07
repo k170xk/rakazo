@@ -21,6 +21,14 @@ function uniqueById<T extends { id: string }>(items: T[]): T[] {
   return items.filter((item, index) => items.findIndex((other) => other.id === item.id) === index);
 }
 
+/** One entry per person, keeping the latest: a re-added person carries their new role. */
+function latestPeople(people: EvolveReferences["people"]): EvolveReferences["people"] {
+  return uniqueById([...people].reverse()).reverse();
+}
+
+const personKey = (person: EvolveReferences["people"][number]) =>
+  `${person.id}\u0000${person.role?.trim() ?? ""}`;
+
 /** Everything already added in this chat, as Evolve rebuilds it from earlier reference messages. */
 export function submittedEvolveReferences(messages: readonly ThreadMessage[]): EvolveReferences {
   const blocks = messages.flatMap((message) =>
@@ -28,24 +36,29 @@ export function submittedEvolveReferences(messages: readonly ThreadMessage[]): E
   );
   return {
     projects: uniqueById(blocks.flatMap((block) => block.projects)),
-    people: uniqueById(blocks.flatMap((block) => block.people)),
+    people: latestPeople(blocks.flatMap((block) => block.people)),
     exemplars: uniqueById(blocks.flatMap((block) => block.exemplars)),
   };
 }
 
-/** Only what has not been sent yet, as Evolve's submittedReferenceIds filter. */
+/**
+ * Only what has not been sent yet, as Evolve's submittedReferenceIds filter, except that a
+ * person whose role changed is sent again so the model gets the new role.
+ */
 export function unsentEvolveReferences(
   selection: EvolveReferences,
   submitted: EvolveReferences,
 ): EvolveReferences {
   const sent = new Set([
     ...submitted.projects.map((p) => p.id),
-    ...submitted.people.map((p) => p.id),
+    ...submitted.people.map(personKey),
     ...submitted.exemplars.map((e) => e.id),
   ]);
   return {
     projects: selection.projects.filter((p) => !sent.has(p.id)),
-    people: selection.people.filter((p) => !sent.has(p.id)),
+    people: selection.people
+      .filter((p) => !sent.has(personKey(p)))
+      .map(({ cv: _cv, ...person }) => person),
     exemplars: selection.exemplars.filter((e) => !sent.has(e.id)),
   };
 }
@@ -53,7 +66,7 @@ export function unsentEvolveReferences(
 function mergeReferences(a: EvolveReferences, b: EvolveReferences): EvolveReferences {
   return {
     projects: uniqueById([...a.projects, ...b.projects]),
-    people: uniqueById([...a.people, ...b.people]),
+    people: latestPeople([...a.people, ...b.people]),
     exemplars: uniqueById([...a.exemplars, ...b.exemplars]),
   };
 }

@@ -26,7 +26,7 @@ describe("attachment helpers", () => {
         },
       ]),
     ).toBe(
-      "Added references to conversation context\n\n\nPlease use the following people as context for this conversation.\n\n• Aaron Kearney\n  - Role: Engineer",
+      "Added references to conversation context\n\n\nPlease use the following people as context for this conversation.\n\n• Aaron Kearney\n  - Role: Engineer (the role this person will hold here; it overrides any role or job title in their CV)",
     );
   });
 
