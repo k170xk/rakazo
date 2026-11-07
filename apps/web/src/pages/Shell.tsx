@@ -15,7 +15,6 @@ import {
   accountDisplay,
   answerableAskMessageIds,
   channelMessageSender,
-  chatUserBubbleColors,
   dismissableAskMessageIds,
   foldPeerReplies,
   groupBotsForSidebar,
@@ -300,10 +299,6 @@ function SpaceShell() {
       navigate(`/app/${id}`);
     },
     [navigate, setMobileSidebarOpen],
-  );
-  const userBubble = useMemo(
-    () => (active ? chatUserBubbleColors(active.color, active.id) : undefined),
-    [active?.color, active?.id],
   );
   const activeGroup = groups.find((group) => group.id === groupId);
   const activeBotId = useRef<string | undefined>(inGroup ? undefined : active?.id);
@@ -1229,7 +1224,6 @@ function SpaceShell() {
               dismissableAskIds={dismissableAskIds}
               running={transcriptRunning}
               workingBots={workingBots}
-              userBubble={userBubble}
               onCallBack={
                 bootstrapMe?.phoneCallsEnabled && !inGroup && active
                   ? () => callBot(active)

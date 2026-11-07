@@ -8,6 +8,7 @@ import {
   darkTokens,
   lightTokens,
   normalizeAppearancePreference,
+  OCSC_GREEN,
   persistAppearancePreference,
   renderTokensCss,
   resolveAppearance,
@@ -268,7 +269,7 @@ describe.each([
 ] as const)("web %s palette contrast", (theme, palette: ColorTokens) => {
   // Opaque text on the surfaces it is drawn on. The web palette copies the target design
   // exactly, so in light mode success and warning text on cards and white on the red fill
-  // sit below 4.5:1 and are not listed.
+  // sit below 4.5:1 and are not listed. White on OCSC green is checked separately below.
   const pairs: [keyof ColorTokens, keyof ColorTokens][] = [
     ["foreground", "background"],
     ["foreground", "dialog"],
@@ -277,8 +278,6 @@ describe.each([
     ["foreground", "muted"],
     ["mutedForeground", "background"],
     ["mutedForeground", "card"],
-    ["chatUserForeground", "chatUser"],
-    ["primaryForeground", "primary"],
     ["sidebarForeground", "sidebar"],
     ["link", "background"],
     ["link", "card"],
@@ -297,5 +296,15 @@ describe.each([
 
   it.each(pairs)("%s on %s meets WCAG AA (4.5:1)", (text, surface) => {
     expect(contrastRatio(palette[text], palette[surface])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  // A brand decision: buttons and the person's own messages match OCSC Evolve, white on
+  // #76BF43 (about 2.3:1), rather than a deeper green that would reach 4.5:1.
+  it.each([
+    ["primaryForeground", "primary"],
+    ["chatUserForeground", "chatUser"],
+  ] as const)("%s on %s is white on OCSC green", (text, surface) => {
+    expect(palette[surface]).toBe(OCSC_GREEN);
+    expect(palette[text]).toBe("#FFFFFF");
   });
 });

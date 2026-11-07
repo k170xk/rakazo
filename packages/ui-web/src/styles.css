@@ -1,14 +1,16 @@
 @import "tw-animate-css";
 @import "./shadcn.css";
 @import "@rakazo/ui-tokens/css";
+@import "./fonts/urbanist/urbanist.css";
 
 @source "./**/*.{ts,tsx}";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Web type: the system font; chat messages read at 15/22, other UI at Tailwind sizes. Mobile sets its own type natively. */
+/* Web type: Urbanist, as in OCSC Evolve; chat messages read at 15/22, other UI at Tailwind sizes. Mobile sets its own type natively. */
 @theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans:
+    "Urbanist Variable", Urbanist, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
@@ -32,7 +34,7 @@
   --text-heading1--letter-spacing: -0.015em;
 }
 
-/* The system font reads light at 400 on macOS; regular text uses 420 there. Medium and semibold stay. */
+/* Text reads light at 400 on macOS; regular text uses 420 there. Medium and semibold stay. */
 :root[data-os="mac"] {
   --font-weight-normal: 420;
 }
