@@ -25,6 +25,15 @@ export const EvolveHistoryAssistantSchema = z.object({
   lastMessageAt: Timestamp.nullable(),
   /** The person's own bot started from this assistant, if they have one. */
   botId: z.string().min(1).max(64).nullable().default(null),
+  /** The assistant's bot avatar: its bot's look, or a fixed one, shared by its archived chats. */
+  look: z
+    .object({
+      color: z.string().min(1).max(64),
+      avatarSet: z.enum(["organic", "rakazo"]),
+      /** Draw with this identity so the organic body matches. */
+      identity: z.string().min(1).max(64),
+    })
+    .optional(),
 });
 export type EvolveHistoryAssistant = z.infer<typeof EvolveHistoryAssistantSchema>;
 

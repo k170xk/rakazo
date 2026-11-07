@@ -1,7 +1,18 @@
 import { plural } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
-import type { Bot, EvolveConversationSummary, MessageBlock } from "@rakazo/contracts";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger, toast } from "@rakazo/ui-web";
+import type {
+  Bot,
+  EvolveConversationSummary,
+  EvolveHistoryAssistant,
+  MessageBlock,
+} from "@rakazo/contracts";
+import {
+  BotAvatar,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  toast,
+} from "@rakazo/ui-web";
 import { Archive, Check, ChevronDown, History, Loader2, MessagesSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { createSpaceRpc } from "../../lib/rpc";
@@ -61,6 +72,7 @@ export function EvolveArchive({
   const [opening, setOpening] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [continued, setContinued] = useState(0);
+  const [looks, setLooks] = useState<Map<string, EvolveHistoryAssistant["look"]>>(new Map());
   const [items, setItems] = useState<EvolveConversationSummary[]>([]);
   const [nextPage, setNextPage] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -76,6 +88,7 @@ export function EvolveArchive({
         const count = result.assistants.reduce((sum, item) => sum + item.conversations, 0);
         setTotal(count);
         setContinued(result.continued);
+        setLooks(new Map(result.assistants.map((assistant) => [assistant.id, assistant.look])));
         if (count === 0) return;
         const page = await rpc.evolveHistory.conversations({ search: "", page: 0 });
         if (!live) return;
@@ -135,6 +148,9 @@ export function EvolveArchive({
           const chat = item.continuedIn
             .map((id) => bots.find((bot) => bot.id === id))
             .find((bot): bot is Bot => Boolean(bot));
+          const look = chat
+            ? { color: chat.color, avatarSet: chat.avatarSet, identity: chat.id }
+            : looks.get(item.assistantId);
           return (
             <button
               type="button"
@@ -151,10 +167,21 @@ export function EvolveArchive({
               className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-1.5 text-start hover:bg-sidebar-accent disabled:cursor-default"
             >
               {opening === item.id ? (
-                <Loader2
-                  className="mt-0.5 size-4 shrink-0 animate-spin text-muted-foreground"
-                  aria-hidden="true"
-                />
+                <span className="flex size-6 shrink-0 items-center justify-center">
+                  <Loader2
+                    className="size-4 animate-spin text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                </span>
+              ) : look ? (
+                <span className="shrink-0" aria-hidden="true">
+                  <BotAvatar
+                    avatarSet={look.avatarSet}
+                    color={look.color}
+                    identity={look.identity}
+                    size={24}
+                  />
+                </span>
               ) : (
                 <MessagesSquare
                   className="mt-0.5 size-4 shrink-0 text-muted-foreground"

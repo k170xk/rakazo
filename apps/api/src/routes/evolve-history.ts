@@ -16,6 +16,7 @@ import {
   EVOLVE_REFERENCE_CONTEXT_MAX_CHARS,
   evolveConversationTranscript,
 } from "@rakazo/contracts";
+import { BOT_AVATAR_COLORS, organicAvatarFamily, shippedHash } from "@rakazo/core";
 import { createThreadMessageInTransaction } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { actorEmail, evolveAssistantFor } from "./bots.js";
@@ -78,6 +79,29 @@ export async function evolveConversationBlock(
     searchable: conversation.searchable && botFromEvolve,
     omittedMessages,
     transcript,
+  };
+}
+
+/** Bots made by opening an archived chat; never an assistant's own bot. */
+const NOT_ARCHIVED_CHAT = {
+  OR: [{ spawnKey: null }, { NOT: { spawnKey: { startsWith: "evolve:" } } }],
+};
+
+type AssistantBot = { id: string; color: string; avatarSet: string | null };
+
+/** An assistant's look: its own bot's avatar, or a fixed colour and body chosen from its id. */
+export function assistantLook(assistantId: string, bot: AssistantBot | undefined) {
+  if (bot) {
+    return {
+      color: bot.color,
+      avatarSet: bot.avatarSet === "rakazo" ? ("rakazo" as const) : ("organic" as const),
+      identity: bot.id,
+    };
+  }
+  return {
+    color: BOT_AVATAR_COLORS[shippedHash(assistantId) % BOT_AVATAR_COLORS.length]!,
+    avatarSet: "organic" as const,
+    identity: assistantId,
   };
 }
 
@@ -201,9 +225,12 @@ async function openArchivedChat(
       userId: actor.userId,
       archivedAt: null,
       evolveAssistantId: conversation.assistantId,
+      ...NOT_ARCHIVED_CHAT,
     },
     orderBy: { createdAt: "asc" },
     select: {
+      id: true,
+      avatarSet: true,
       instructions: true,
       description: true,
       color: true,
@@ -217,13 +244,16 @@ async function openArchivedChat(
     ? null
     : await evolveAssistantFor(deps, actor, conversation.assistantId).catch(() => null);
   const keepsAssistant = Boolean(template || assistant);
+  const look = assistantLook(conversation.assistantId, template ?? undefined);
 
   const bot = await repos.createBot(actor, {
     name: archivedChatName(conversation),
     description: (template?.description ?? assistant?.description ?? "").slice(0, 500),
     instructions: template?.instructions ?? assistant?.instructions ?? "",
     notifyOnFinish: true,
-    color: template?.color,
+    color: look.color,
+    avatarSet: look.avatarSet,
+    avatarFamily: organicAvatarFamily(look.identity),
     modelProvider: template?.modelProvider ?? null,
     modelId: template?.modelId ?? null,
     thinkingLevel: template?.thinkingLevel ?? null,
@@ -298,14 +328,15 @@ export function evolveHistoryRoutes(ctx: RouterContext) {
             userId: context.actor.userId,
             archivedAt: null,
             evolveAssistantId: { in: assistants.map((assistant) => assistant.id) },
+            ...NOT_ARCHIVED_CHAT,
           },
-          select: { id: true, evolveAssistantId: true },
+          select: { id: true, evolveAssistantId: true, color: true, avatarSet: true },
           orderBy: { createdAt: "asc" },
         });
-        const botFor = new Map<string, string>();
+        const botFor = new Map<string, AssistantBot>();
         for (const bot of bots) {
           if (bot.evolveAssistantId && !botFor.has(bot.evolveAssistantId)) {
-            botFor.set(bot.evolveAssistantId, bot.id);
+            botFor.set(bot.evolveAssistantId, bot);
           }
         }
         const continued = await deps.prisma.evolveConversationLink.findMany({
@@ -322,7 +353,8 @@ export function evolveHistoryRoutes(ctx: RouterContext) {
           continued: continued.length,
           assistants: assistants.map((assistant) => ({
             ...assistant,
-            botId: botFor.get(assistant.id) ?? null,
+            botId: botFor.get(assistant.id)?.id ?? null,
+            look: assistantLook(assistant.id, botFor.get(assistant.id)),
           })),
         };
       }),

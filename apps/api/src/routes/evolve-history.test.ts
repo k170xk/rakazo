@@ -1,7 +1,7 @@
 import type { EvolveHistoryMessage } from "@rakazo/contracts";
 import { EVOLVE_REFERENCE_CONTEXT_MAX_CHARS } from "@rakazo/contracts";
 import { describe, expect, it } from "vitest";
-import { archivedMessageBlocks } from "./evolve-history.js";
+import { archivedMessageBlocks, assistantLook } from "./evolve-history.js";
 
 function message(overrides: Partial<EvolveHistoryMessage>): EvolveHistoryMessage {
   return {
@@ -52,5 +52,26 @@ describe("archivedMessageBlocks", () => {
     expect(text).toHaveLength(
       EVOLVE_REFERENCE_CONTEXT_MAX_CHARS + "\n… (reference details trimmed)".length,
     );
+  });
+});
+
+describe("assistantLook", () => {
+  const assistant = "5a3a70fb-af59-42f1-a974-a4d3227111d1";
+
+  it("uses the assistant's own bot avatar", () => {
+    expect(
+      assistantLook(assistant, { id: "bot1", color: "#FF781C::shape_4", avatarSet: "organic" }),
+    ).toEqual({
+      color: "#FF781C::shape_4",
+      avatarSet: "organic",
+      identity: "bot1",
+    });
+  });
+
+  it("gives an assistant without a bot the same look every time", () => {
+    const look = assistantLook(assistant, undefined);
+    expect(look).toEqual(assistantLook(assistant, undefined));
+    expect(look.identity).toBe(assistant);
+    expect(look.color).toMatch(/^#[0-9A-F]{6}$/i);
   });
 });
