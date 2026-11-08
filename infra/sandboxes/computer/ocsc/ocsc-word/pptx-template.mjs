@@ -833,10 +833,10 @@ const isAgenda = (s) => /agenda/i.test(s.layout);
 
 const STILL_LAYOUTS = new Set(["cover", "title", "thank_you"]);
 
-/** A slide's transition and builds; company slides keep their own design and only get the transition. */
+/** A slide's transition and builds; cover and closing slides only get the transition. */
 async function setMotion(deck, part, item, motion) {
   const chosen = motionOf(item, motion);
-  if (item.include || STILL_LAYOUTS.has(item.layout)) chosen.animate = false;
+  if (STILL_LAYOUTS.has(item.layout)) chosen.animate = false;
   deck.write(part, addMotion((await deck.text(part)) ?? "", chosen, deck.slideSize()));
 }
 

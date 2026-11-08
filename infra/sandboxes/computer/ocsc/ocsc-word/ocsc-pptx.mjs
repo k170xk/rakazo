@@ -27,6 +27,7 @@ import {
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 import PptxGenJS from "pptxgenjs";
+import { BUNDLED_IMAGES, placeCompany } from "./pptx-company.mjs";
 import {
   GREEN,
   INK,
@@ -189,6 +190,10 @@ function loadImage(source, label) {
   if (typeof source !== "string" || !source.trim())
     throw new UsageError(`${label}: image is required.`);
   const value = source.trim();
+  if (BUNDLED_IMAGES.has(value)) {
+    const bytes = readFileSync(value);
+    return { bytes, ...imageInfo(bytes, label) };
+  }
   if (/^[a-z]+:/i.test(value) && !/^https:\/\//i.test(value))
     throw new UsageError(`${label}: only https URLs or workspace paths are accepted.`);
   const bytes = /^https:\/\//i.test(value)
@@ -1288,8 +1293,9 @@ async function cmdNew(opts) {
   const out = outPath(opts.out);
   const labelOf = (i) => `Slide ${i + 1}`;
   const template = templateFile(spec.template);
-  const items = placeVisuals(placeClosing(specItems, labelOf), {
-    plain: template ? await hasPlainLayout(readFileSync(template.full)) : false,
+  const plain = template ? await hasPlainLayout(readFileSync(template.full)) : false;
+  const items = placeVisuals(placeCompany(placeClosing(specItems, labelOf), { plain }), {
+    plain,
     name: basename(out.rel, ".pptx"),
     labelOf,
   });
@@ -1397,16 +1403,16 @@ async function cmdEdit(opts) {
   if (!edits || edits.length === 0) throw new UsageError('The spec needs "edits": [...].');
   const out = outPath(opts.out || opts.in);
   const labelOf = (i) => `Edit ${i + 1}`;
+  const plain = await hasPlainLayout(readFileSync(deck.full));
   const placed = placeVisuals(
-    placeClosing(
-      edits.map((edit) => (edit?.op === "insert" || edit?.op === "replace" ? edit : null)),
-      labelOf,
+    placeCompany(
+      placeClosing(
+        edits.map((edit) => (edit?.op === "insert" || edit?.op === "replace" ? edit : null)),
+        labelOf,
+      ),
+      { plain },
     ),
-    {
-      plain: await hasPlainLayout(readFileSync(deck.full)),
-      name: basename(out.rel, ".pptx"),
-      labelOf,
-    },
+    { plain, name: basename(out.rel, ".pptx"), labelOf },
   );
   for (const [i, edit] of placed.entries()) if (edit) edits[i] = edit;
   const slideEdits = edits.map((edit) =>

@@ -117,7 +117,7 @@ ${SETUP_QUESTIONS_NOTE}
 
 THE OCSC TEMPLATE
 Every new deck is built on the OCSC company template, so it has the company fonts, colours, skyline footer, logo and page tab, and every heading, bullet, chart and table stays editable. Run ocsc-pptx layouts once to see each layout, what it holds (heading, subheading, body, pictures, points, icons) and its name. Pick the layout that fits each slide; use "template_layout" with an exact template name only when no short name fits.
-Company slides are copied in whole with {"include":"about"} and the other names above; add them only as the person chose.
+Company slides are added with {"include":"about"} and the other names above, nothing else on the item but "notes"; add them only as the person chose. About and services are drawn in the deck's own card style with the office map, the others are copied from the template, and all of them build in like the rest of the deck.
 MOTION: template decks come animated for presenting: a fade between slides and each slide's picture, cards and points building in on their own just after it appears, while the heading stays put. Leave it on. Use "transition" ("fade", "push", "wipe", "cover" or "none") on the deck or on one slide only when the person asks for a different one, and "animate":false (deck or slide) when they want slides without builds, such as for printing or a PDF handout.
 For a plain deck without the template use "template":"none". When the person gives their own template, use "template":"<their file>.pptx" and pick from ocsc-pptx layouts --template <their file>.pptx.
 
