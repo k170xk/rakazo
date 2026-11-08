@@ -4,14 +4,18 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  documentHomePath,
   expiredItems,
   isPinned,
   listStoredItems,
   openStoredFile,
   removeStoredItem,
+  runnerHomePath,
+  storedHomePaths,
   sweepConversationFolders,
   sweepHome,
 } from "./file-retention.js";
+import { LocalAgentHomeStore } from "./home.js";
 
 const DAY = 86_400_000;
 /** ctime cannot be set back, so "old" means a sweep run this far in the future. */
@@ -169,6 +173,21 @@ describe("sweeping a home", () => {
     expect(existsSync(path.join(conversations, "thread-1/notes.txt"))).toBe(true);
     expect(await readdir(path.join(conversations, "thread-2"))).toEqual(["kept.txt"]);
     expect(await readdir(path.join(home, "conversations"))).toEqual([]);
+  });
+});
+
+describe("where a person's bot files are kept", () => {
+  it("uses the home, or a document home apart from a computer that keeps its own", () => {
+    const store = new LocalAgentHomeStore(data);
+    const where = { home: store, dataDir: data, homeKey: "team-a" };
+    expect(runnerHomePath({ ...where, sharesHome: true })).toBe(home);
+    expect(storedHomePaths({ ...where, sharesHome: true })).toEqual([home]);
+    const documents = path.join(data, "tool-work/documents/team-a");
+    expect(documentHomePath(data, "team-a")).toBe(documents);
+    expect(runnerHomePath({ ...where, sharesHome: false })).toBe(documents);
+    expect(storedHomePaths({ ...where, sharesHome: false })).toEqual([documents, home]);
+    expect(runnerHomePath({ ...where, dataDir: undefined, sharesHome: false })).toBeNull();
+    expect(documentHomePath(data, "../team-a")).toBeNull();
   });
 });
 

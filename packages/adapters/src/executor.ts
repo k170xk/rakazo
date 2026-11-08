@@ -106,7 +106,7 @@ import { resolveDeploymentModel } from "./deployment-model.js";
 import { evolveAssistantAccessError } from "./evolve-assistants.js";
 import { evolvePersonContext } from "./evolve-person-context.js";
 import type { ExecutorDeps } from "./executor-deps.js";
-import { localHomePath } from "./file-retention.js";
+import { runnerHomePath } from "./file-retention.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { loadBotGroupDirectory, loadGroupContext } from "./group-handoff.js";
 import {
@@ -159,6 +159,7 @@ import { restoreTurnCheckpointEffects, settleRunningHelpers } from "./run-contex
 import { APPROVED_EFFECT_REPLAY_ORDER, buildApprovalContinuation } from "./run-effects.js";
 import {
   BOT_DIRECTORY_LIMIT,
+  DOCUMENTS_APART_INSTRUCTION,
   dockerComputerToolInstruction,
   limitedComputerInstruction,
   persistentComputerInstruction,
@@ -1299,17 +1300,23 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             },
           );
         };
-        // The OCSC document commands run on the tool runners, unless the owner's computer keeps
-        // its own copy of the home.
+        // A computer that keeps its own copy of the home would wipe what a runner wrote there,
+        // so its owner's documents and file tools use a document home apart from the computer.
         const runnerSharesHome = toolRunnersShareHome(
           ownerAccess,
           deps.sandbox.describe().capabilities.persistentHome !== false,
         );
+        const documentsApart = !runnerSharesHome && !runFolder;
         const runnerWorkspace =
-          deps.toolRunner && deps.dataDir && runnerSharesHome
+          deps.toolRunner && deps.dataDir
             ? toolRunnerWorkspace({
                 dataDir: deps.dataDir,
-                homePath: localHomePath(deps.home, storedComputer.homeKey, deps.dataDir),
+                homePath: runnerHomePath({
+                  home: deps.home,
+                  dataDir: deps.dataDir,
+                  homeKey: storedComputer.homeKey,
+                  sharesHome: runnerSharesHome,
+                }),
                 mode: computerMode,
                 botId: bot.id,
                 folder: runFolder,
@@ -1664,6 +1671,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                     ? `${baseComputerInstruction} ${dockerToolInstruction}`
                     : baseComputerInstruction,
                 diskNoteInstruction(storedComputer),
+                documentsApart && runToolRunner ? DOCUMENTS_APART_INSTRUCTION : undefined,
               ]
                 .filter(Boolean)
                 .join(" ");
@@ -1768,8 +1776,12 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             access: computerAccess,
             computerOff: personAccess === "none",
             folder: runFolder,
-            runner: computerAccess === "full" && !runFolder ? undefined : runToolRunner,
+            runner:
+              computerAccess === "full" && !runFolder && !documentsApart
+                ? undefined
+                : runToolRunner,
             documents: runToolRunner,
+            documentsApart: !runnerSharesHome,
           },
           tools: {
             offered: tools,

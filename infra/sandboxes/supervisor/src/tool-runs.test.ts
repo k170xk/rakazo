@@ -28,16 +28,25 @@ import {
 const valid = { mount: "tool-work/conversations/t1", program: "word", args: [], owner: "u1" };
 
 describe("tool run requests", () => {
-  it("accepts only a conversation folder or a whole home", () => {
+  it("accepts only a conversation folder, a document folder or a whole home", () => {
     expect(toolRunRequestSchema.safeParse(valid).success).toBe(true);
     expect(
       toolRunRequestSchema.safeParse({ ...valid, mount: "homes/team-a", cwd: "bots/b1" }).success,
+    ).toBe(true);
+    expect(
+      toolRunRequestSchema.safeParse({
+        ...valid,
+        mount: "tool-work/documents/team-a",
+        cwd: "bots/b1",
+      }).success,
     ).toBe(true);
     for (const mount of [
       "homes",
       "homes/..",
       "homes/team-a/bots",
       "tool-work",
+      "tool-work/documents",
+      "tool-work/documents/team-a/bots",
       "artifacts",
       "/data/homes/team-a",
       "tool-work/conversations/../../homes/team-a",

@@ -38,9 +38,12 @@ export interface ToolRunnerWorkspace {
   conversation?: string;
 }
 
+const HOME_KEY = /^[A-Za-z0-9_][A-Za-z0-9_.-]*$/;
+
 /**
  * A colleague's turn works in tool-work/conversations/<thread>, outside every home; a
- * Tools-only person's own turn works in their bot folder in their home.
+ * Tools-only person's own turn works in their bot folder in their home, or in its document
+ * home (`documentHomePath`) when their computer keeps its own copy.
  */
 export function toolRunnerWorkspace(input: {
   dataDir: string;
@@ -63,7 +66,8 @@ export function toolRunnerWorkspace(input: {
   }
   if (!input.homePath) return undefined;
   const mount = path.relative(dataDir, path.resolve(input.homePath)).split(path.sep).join("/");
-  if (!/^homes\/[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(mount)) return undefined;
+  const [, parent, key] = /^(homes|tool-work\/documents)\/([^/]+)$/.exec(mount) ?? [];
+  if (!parent || !key || !HOME_KEY.test(key)) return undefined;
   return {
     base: path.resolve(input.homePath),
     mount,

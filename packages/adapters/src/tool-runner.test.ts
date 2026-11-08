@@ -5,6 +5,7 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { documentHomePath } from "./file-retention.js";
 import {
   conversationFolderRefusal,
   ensureToolRunnerFolder,
@@ -65,6 +66,34 @@ describe("tool runner workspace", () => {
       cwd: "bots/b1",
       root: path.join(data, "homes/team-a"),
     });
+  });
+
+  it("gives the owner of a computer that keeps its own home a document home in tool-work", () => {
+    expect(documentHomePath(data, "team-a")).toBe(path.join(data, "tool-work/documents/team-a"));
+    expect(documentHomePath(data, "../homes")).toBeNull();
+    expect(
+      toolRunnerWorkspace({
+        dataDir: data,
+        homePath: documentHomePath(data, "team-a"),
+        mode: "team",
+        botId: "b1",
+        folder: undefined,
+      }),
+    ).toEqual({
+      base: path.join(data, "tool-work/documents/team-a"),
+      mount: "tool-work/documents/team-a",
+      cwd: "bots/b1",
+      root: path.join(data, "tool-work/documents/team-a"),
+    });
+    expect(
+      toolRunnerWorkspace({
+        dataDir: data,
+        homePath: path.join(data, "tool-work/conversations/t1"),
+        mode: "team",
+        botId: "b1",
+        folder: undefined,
+      }),
+    ).toBeUndefined();
   });
 
   it("makes the bot folder for someone whose computer never started", async () => {

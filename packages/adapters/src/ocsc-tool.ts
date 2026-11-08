@@ -167,6 +167,7 @@ export async function ocscBeforeRun(
       dataDir: ctx.deps.dataDir,
       userId: ctx.bot.userId,
       computer: ctx.computer.stored,
+      documentsApart: ctx.computer.documentsApart,
     });
     if (full) return { error: full };
   }

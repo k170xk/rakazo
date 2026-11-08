@@ -70,6 +70,10 @@ export function limitedComputerInstruction(
   return `This computer runs the OCSC document and video commands only: use the ocsc tool for Word, PowerPoint, Excel, PDF and video files, write_file for their spec files and attach_file to share the results. There is no shell, browser, screen or scheduled routine here, so never offer to browse, run other commands or set up routines; if a task needs them, say an administrator can give this person full computer access.${shared}`;
 }
 
+/** For a full computer whose documents and file tools use the runners' document home instead. */
+export const DOCUMENTS_APART_INSTRUCTION =
+  "Your files are kept apart from the computer. Chat uploads, the file tools (write_file, read_file, list_files), attach_file and the ocsc tool all use your document folder on the company document runners, which the computer cannot see. The shell, browser and apps run on the computer, whose files the file tools cannot reach. Make Word, PowerPoint, Excel, PDF and video files with the ocsc tool, never with commands on the computer.";
+
 export function persistentComputerInstruction(options: {
   heldForTakeover: boolean;
   graphicalToolsAllowed: boolean;

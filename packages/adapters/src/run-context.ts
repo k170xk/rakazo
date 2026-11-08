@@ -225,11 +225,14 @@ export interface RunComputerContext {
   folder: string | undefined;
   /**
    * Set when this run's file tools go to the tool runner folder instead of a computer:
-   * every colleague turn, and the own turns of people without full computer access.
+   * every colleague turn, the own turns of people without full computer access, and those whose
+   * documents are kept apart from the computer.
    */
   runner?: RunToolRunner;
   /** Where the OCSC document commands run for every run, full computer access included. */
   documents?: RunToolRunner;
+  /** The owner's documents live in a document home apart from a computer that keeps its own home. */
+  documentsApart?: boolean;
 }
 
 export interface RunToolRunner {

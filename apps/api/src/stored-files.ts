@@ -2,13 +2,16 @@ import { ORPCError } from "@orpc/server";
 import {
   botFolderInHome,
   companyTools,
+  computerAccessFor,
   listStoredItems,
-  localHomePath,
   openStoredFile,
   personStorageBytes,
   removeStoredItem,
+  runnerHomePath,
   storageLimitBytes,
   storedFileView,
+  storedHomePaths,
+  toolRunnersShareHome,
 } from "@rakazo/adapters";
 import type { StoredFilesState } from "@rakazo/contracts";
 import { runAsSystem } from "@rakazo/db";
@@ -21,14 +24,29 @@ interface OwnedBot {
   computer: { id: string; scope: string; homeKey: string; homeBytesAt: Date | null } | null;
 }
 
-type Deps = Pick<RouterDeps, "prisma" | "home" | "dataDir">;
+type Deps = Pick<RouterDeps, "prisma" | "home" | "dataDir" | "sandbox">;
 
-function located(deps: Deps, bot: OwnedBot) {
+/** The bot's files where its runs keep them: the home, or the document home kept apart from it. */
+async function located(deps: Deps, bot: OwnedBot) {
   const computer = bot.computer;
   if (!computer) return null;
-  const home = localHomePath(deps.home, computer.homeKey, deps.dataDir);
+  const where = {
+    home: deps.home,
+    dataDir: deps.dataDir,
+    homeKey: computer.homeKey,
+    sharesHome: toolRunnersShareHome(
+      await computerAccessFor(deps.prisma, bot.userId),
+      deps.sandbox.describe().capabilities.persistentHome !== false,
+    ),
+  };
+  const home = runnerHomePath(where);
   if (!home) return null;
-  return { computer, home, folder: botFolderInHome(computer.scope, bot.id) };
+  return {
+    computer,
+    home,
+    homes: storedHomePaths(where),
+    folder: botFolderInHome(computer.scope, bot.id),
+  };
 }
 
 export async function storedFilesState(
@@ -38,7 +56,7 @@ export async function storedFilesState(
 ): Promise<StoredFilesState> {
   const retentionDays = companyTools().fileRetentionDays;
   const limitBytes = await storageLimitBytes(deps.prisma, bot.userId);
-  const where = located(deps, bot);
+  const where = await located(deps, bot);
   if (!where) {
     return { available: false, files: [], usedBytes: 0, limitBytes, retentionDays };
   }
@@ -47,7 +65,7 @@ export async function storedFilesState(
     botPins(deps, bot.id),
     personStorageBytes(deps.prisma, bot.userId, {
       computerId: where.computer.id,
-      home: where.home,
+      homes: where.homes,
       measuredAt: remeasure ? null : where.computer.homeBytesAt,
     }),
   ]);
@@ -69,7 +87,7 @@ async function botPins(deps: Deps, botId: string) {
 
 /** Only items the Files tab lists can be pinned or deleted, so a typed path reaches nothing else. */
 async function listedItem(deps: Deps, bot: OwnedBot, itemPath: string) {
-  const where = located(deps, bot);
+  const where = await located(deps, bot);
   if (!where)
     throw new ORPCError("CONFLICT", { message: "This bot's files are not on this server." });
   const items = await listStoredItems(where.home, where.folder);

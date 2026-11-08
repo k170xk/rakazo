@@ -265,6 +265,37 @@ export function localHomePath(
   return resolveAgentHomePath(home, homeKey, dataDir);
 }
 
+/**
+ * The runners' copy of a home for someone whose computer keeps its own copy of it, laid out like
+ * the home and never mounted by a computer, so a computer saving its home cannot wipe documents.
+ */
+export function documentHomePath(dataDir: string, homeKey: string): string | null {
+  if (!/^[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(homeKey)) return null;
+  return path.join(path.resolve(dataDir), "tool-work", "documents", homeKey);
+}
+
+/**
+ * Where the runners, the Files tab, storage limits and cleanup find a person's bot files on this
+ * server: their home, or its document home when the runners must not share the home
+ * (`toolRunnersShareHome`).
+ */
+export function runnerHomePath(input: {
+  home: AgentHomeStore;
+  dataDir: string | undefined;
+  homeKey: string;
+  sharesHome: boolean;
+}): string | null {
+  if (input.sharesHome) return localHomePath(input.home, input.homeKey, input.dataDir);
+  return input.dataDir ? documentHomePath(input.dataDir, input.homeKey) : null;
+}
+
+/** Every folder on this server holding a person's bot files, which together count to their storage. */
+export function storedHomePaths(input: Parameters<typeof runnerHomePath>[0]): string[] {
+  const paths = [runnerHomePath(input)];
+  if (!input.sharesHome) paths.push(localHomePath(input.home, input.homeKey, input.dataDir));
+  return paths.filter((home): home is string => home !== null);
+}
+
 export interface HomeSweep {
   deletedItems: number;
   freedBytes: number;
@@ -433,26 +464,34 @@ export async function sweepComputerFiles(deps: {
   const total: HomeSweep = { deletedItems: 0, freedBytes: 0, homeBytes: 0 };
   for (const computer of computers) {
     const home = localHomePath(deps.home, computer.homeKey, deps.dataDir);
-    if (!home) continue;
-    const reachable = await pinnedDirectory(home, "");
-    if (!reachable) continue;
-    await reachable.close();
-    const pins = await pinsForBots(
-      deps.prisma,
-      computer.bots.map((bot) => bot.id),
-    );
-    const swept = await sweepHome({
-      home,
-      scope: computer.scope,
-      bots: pins,
-      retentionDays,
-      now,
-      conversationsTo,
-    });
-    total.deletedItems += swept.deletedItems;
-    total.freedBytes += swept.freedBytes;
-    total.homeBytes += swept.homeBytes;
-    await recordHomeBytes(deps.prisma, computer.id, swept.homeBytes, now);
+    const documents = deps.dataDir ? documentHomePath(deps.dataDir, computer.homeKey) : null;
+    let pins: Map<string, string[]> | undefined;
+    let homeBytes = 0;
+    let measured = false;
+    for (const folder of [home, documents]) {
+      if (!folder) continue;
+      const reachable = await pinnedDirectory(folder, "");
+      if (!reachable) continue;
+      await reachable.close();
+      pins ??= await pinsForBots(
+        deps.prisma,
+        computer.bots.map((bot) => bot.id),
+      );
+      const swept = await sweepHome({
+        home: folder,
+        scope: computer.scope,
+        bots: pins,
+        retentionDays,
+        now,
+        conversationsTo: folder === home ? conversationsTo : undefined,
+      });
+      total.deletedItems += swept.deletedItems;
+      total.freedBytes += swept.freedBytes;
+      total.homeBytes += swept.homeBytes;
+      homeBytes += swept.homeBytes;
+      measured = true;
+    }
+    if (measured) await recordHomeBytes(deps.prisma, computer.id, homeBytes, now);
   }
   if (conversationsTo && deps.dataDir) {
     const swept = await sweepConversationFolders({ dataDir: deps.dataDir, retentionDays, now });
@@ -491,11 +530,12 @@ export async function storageLimitBytes(prisma: PrismaClient, userId: string) {
 export async function personStorageBytes(
   prisma: PrismaClient,
   userId: string,
-  current?: { computerId: string; home: string; measuredAt: Date | null },
+  current?: { computerId: string; homes: readonly string[]; measuredAt: Date | null },
   now = Date.now(),
 ) {
   if (current && (!current.measuredAt || now - current.measuredAt.getTime() > MEASURE_FRESH_MS)) {
-    const bytes = (await measureTree(current.home)).size;
+    let bytes = 0;
+    for (const home of current.homes) bytes += (await measureTree(home)).size;
     await recordHomeBytes(prisma, current.computerId, bytes, now);
   }
   const rows = await runAsSystem("read computer home sizes", () =>
@@ -526,17 +566,23 @@ export async function storageRefusal(input: {
   dataDir: string | undefined;
   userId: string;
   computer: { id: string; homeKey: string; homeBytesAt: Date | null };
+  documentsApart?: boolean;
 }): Promise<string | null> {
   const disk = await serverDisk(input.dataDir);
   if (disk && disk.freeBytes < disk.totalBytes * MIN_FREE_DISK_SHARE) {
     return "The company server is nearly out of space, so new documents and videos are paused. Tell an admin.";
   }
-  const home = localHomePath(input.home, input.computer.homeKey, input.dataDir);
-  if (!home) return null;
+  const homes = storedHomePaths({
+    home: input.home,
+    dataDir: input.dataDir,
+    homeKey: input.computer.homeKey,
+    sharesHome: !input.documentsApart,
+  });
+  if (homes.length === 0) return null;
   const [used, limit] = await Promise.all([
     personStorageBytes(input.prisma, input.userId, {
       computerId: input.computer.id,
-      home,
+      homes,
       measuredAt: input.computer.homeBytesAt,
     }),
     storageLimitBytes(input.prisma, input.userId),

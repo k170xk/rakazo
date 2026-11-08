@@ -18,7 +18,9 @@ export const TOOL_RUN_LABEL = "rakazo.toolRun";
 export const TOOL_RUN_NETWORK_ID = "tool-runs";
 
 const SEGMENT = "[A-Za-z0-9_][A-Za-z0-9_.-]*";
-const MOUNT = new RegExp(`^(homes/${SEGMENT}|tool-work/conversations/${SEGMENT})$`);
+const MOUNT = new RegExp(
+  `^(homes/${SEGMENT}|tool-work/conversations/${SEGMENT}|tool-work/documents/${SEGMENT})$`,
+);
 const CWD = new RegExp(`^(bots/${SEGMENT})?$`);
 
 export const toolRunRequestSchema = z.object({
