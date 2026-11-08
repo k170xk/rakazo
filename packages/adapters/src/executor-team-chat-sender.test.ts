@@ -305,6 +305,16 @@ describe("team chat runs from the owner", () => {
     expect(result.toldNonOwner).toBe(false);
     for (const tool of ownerOnlyTools) expect(result.tools).toContain(tool);
   });
+
+  it("keeps the owner's own files and computer out of a chat other people can read", async () => {
+    const result = await teamChatRun({
+      senders: [{ senderId: "T1:U-OWNER" }],
+      ownerAddress: "T1:U-OWNER",
+    });
+    for (const tool of ["shell", "computer_act", "browser_navigate", "open_path", "copy_file"]) {
+      expect(result.tools).not.toContain(tool);
+    }
+  });
 });
 
 describe("private skills in shared-channel prompts", () => {

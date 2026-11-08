@@ -4,6 +4,7 @@ import { companyToolsWithDefaults, setCompanyPolicy } from "./company-policy.js"
 import {
   effectiveComputerAccess,
   runComputerAccess,
+  sharedConversationRun,
   toolRunnersShareHome,
 } from "./computer-access.js";
 import { conversationFolder, resolveRunFilePath } from "./computer-support.js";
@@ -15,6 +16,7 @@ import {
   videoQueuePlace,
   wordRebuildRefusal,
 } from "./ocsc-tool.js";
+import { limitedComputerInstruction } from "./run-instructions.js";
 import {
   COMPUTER_TOOL_NAMES,
   computerAccessRefusal,
@@ -55,6 +57,28 @@ describe("computer access levels", () => {
     expect(runComputerAccess("tools", true)).toBe("tools");
     expect(runComputerAccess("none", true)).toBe("none");
     expect(runComputerAccess("full", false)).toBe("full");
+  });
+
+  it("treats every chat other people can read as shared, the owner's own turns included", () => {
+    const run = (input: Partial<Parameters<typeof sharedConversationRun>[0]>) =>
+      sharedConversationRun({
+        colleagueTurn: false,
+        groupHasColleagues: false,
+        externalConversation: false,
+        ...input,
+      });
+    expect(run({})).toBe(false);
+    expect(run({ colleagueTurn: true })).toBe(true);
+    expect(run({ groupHasColleagues: true })).toBe(true);
+    expect(run({ externalConversation: true })).toBe(true);
+  });
+
+  it("tells the owner in a shared chat why their own files are not there", () => {
+    expect(limitedComputerInstruction("tools", "owner")).toContain(
+      "files from the owner's private chats are not here",
+    );
+    expect(limitedComputerInstruction("tools", "colleague")).toContain("someone else's bot");
+    expect(limitedComputerInstruction("tools", undefined)).not.toContain("shared");
   });
 
   it("keeps runners out of a home that the owner's computer keeps its own copy of", () => {

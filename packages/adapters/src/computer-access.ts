@@ -30,8 +30,22 @@ export async function computerAccessFor(
  * A colleague talking to someone else's bot works on the owner's computer, so their turn only
  * gets the OCSC commands and files, never the owner's shell, screen or browser sessions.
  */
-export function runComputerAccess(ownerAccess: ComputerAccess, colleagueTurn: boolean) {
-  return colleagueTurn && ownerAccess === "full" ? "tools" : ownerAccess;
+export function runComputerAccess(ownerAccess: ComputerAccess, sharedConversation: boolean) {
+  return sharedConversation && ownerAccess === "full" ? "tools" : ownerAccess;
+}
+
+/**
+ * Whether people besides the owner can read this conversation. Every turn there, the owner's
+ * included, works only in the conversation's own folder and without the owner's computer, so a
+ * file from the owner's private chats can never be shown to them.
+ */
+export function sharedConversationRun(input: {
+  colleagueTurn: boolean;
+  groupHasColleagues: boolean;
+  /** A team chat or messaging channel, where other people may read along. */
+  externalConversation: boolean;
+}) {
+  return input.colleagueTurn || input.groupHasColleagues || input.externalConversation;
 }
 
 /**

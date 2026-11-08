@@ -53,6 +53,11 @@ export async function groupGuestActor(
   };
 }
 
+/** Whether people besides the owner read this group. */
+export async function groupHasColleagues(prisma: PrismaClient, groupId: string) {
+  return (await prisma.chatGroupPerson.count({ where: { groupId } })) > 0;
+}
+
 /**
  * Whether a run in a group with colleagues serves anyone but its owner. Only a run woken directly
  * by the owner's own message keeps the owner's context; a colleague's message, a bot's handoff,
@@ -62,8 +67,7 @@ export async function sharedGroupRunFromColleague(
   prisma: PrismaClient,
   run: { groupId: string; sourceMessageId: string | null },
 ): Promise<boolean> {
-  const colleagues = await prisma.chatGroupPerson.count({ where: { groupId: run.groupId } });
-  if (colleagues === 0) return false;
+  if (!(await groupHasColleagues(prisma, run.groupId))) return false;
   const source = run.sourceMessageId
     ? await prisma.message.findUnique({
         where: { id: run.sourceMessageId },

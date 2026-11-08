@@ -55,15 +55,18 @@ function fileAndShellClause(disabled: ReadonlySet<string> | undefined): string |
 /** What a bot is told when its person has "Tools only" or no computer access. */
 export function limitedComputerInstruction(
   access: Exclude<ComputerAccess, "full">,
-  colleagueTurn: boolean,
+  sharedChat: "colleague" | "owner" | undefined,
   computerOff = false,
 ): string {
   if (access === "none") {
     return "There is no computer for this person's bots. Make documents, slides, images, charts and voiceovers with the company Evolve tools, and if a task needs a computer, say an administrator can give this person computer access.";
   }
-  const shared = colleagueTurn
-    ? " This is someone else's bot in a shared chat: you work in this conversation's own folder and cannot see the owner's files."
-    : "";
+  const shared =
+    sharedChat === "colleague"
+      ? " This is someone else's bot in a shared chat: you work in this conversation's own folder and cannot see the owner's files."
+      : sharedChat === "owner"
+        ? " Other people can read this chat, so you work in this conversation's own folder: files from the owner's private chats are not here and their computer is not used. If they need one of their own files here, ask them to upload it to this chat."
+        : "";
   if (computerOff) {
     return `This person has no computer, but the company document runners make OCSC files: use the ocsc tool for Word, PowerPoint, Excel, PDF and video files, write_file for their spec files and attach_file to share the results. A shell, a browser, a screen and scheduled routines are not available, so never offer them; if a task needs them, say an administrator can give this person computer access.${shared}`;
   }

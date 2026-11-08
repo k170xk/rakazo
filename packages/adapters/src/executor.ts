@@ -36,6 +36,7 @@ import type { ThreadEvents } from "@rakazo/db";
 import {
   availableInSpace,
   effectiveMemoryScope,
+  groupHasColleagues,
   isPartialReplyClientNonce,
   isTooManyDatabaseConnections,
   loadRunHistoryMessages,
@@ -74,7 +75,12 @@ import {
   liveDeploymentModelConfigured,
 } from "./company-policy.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
-import { computerAccessFor, runComputerAccess, toolRunnersShareHome } from "./computer-access.js";
+import {
+  computerAccessFor,
+  runComputerAccess,
+  sharedConversationRun,
+  toolRunnersShareHome,
+} from "./computer-access.js";
 import { diskNoteInstruction, recordComputerDisk } from "./computer-disk.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import type { ComputerExecutionLease } from "./computer-lifecycle.js";
@@ -731,8 +737,17 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               }))
             : false);
         const ownerAccess = await computerAccessFor(deps.prisma, bot.userId);
-        const personAccess = runComputerAccess(ownerAccess, nonOwnerChatRun);
-        const runFolder = nonOwnerChatRun ? conversationFolder(thread.id) : undefined;
+        const sharedConversation = sharedConversationRun({
+          colleagueTurn: nonOwnerChatRun,
+          groupHasColleagues: thread.groupId
+            ? await groupHasColleagues(deps.prisma, thread.groupId)
+            : false,
+          externalConversation: Boolean(
+            thread.externalConversationId || channelId || messagingChannelRun,
+          ),
+        });
+        const personAccess = runComputerAccess(ownerAccess, sharedConversation);
+        const runFolder = sharedConversation ? conversationFolder(thread.id) : undefined;
         const historySearchBeforeSeq =
           contextStrategy !== "current" && run.sourceMessageId
             ? (messages.find((message) => message.id === run.sourceMessageId)?.seq ??
@@ -1662,7 +1677,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           computerAccess !== "full"
             ? limitedComputerInstruction(
                 computerAccess,
-                Boolean(runFolder),
+                runFolder ? (nonOwnerChatRun ? "colleague" : "owner") : undefined,
                 personAccess === "none",
               )
             : [
