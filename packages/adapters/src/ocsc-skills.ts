@@ -271,7 +271,15 @@ ${THEIR_FILES_NOTE}
 
 1. OPEN: ocsc-pdf-studio open <file>.pdf --out outputs/<Name>-markup.pdf
    Saving writes to --out (by default outputs/<name>-markup.pdf) and never changes the original. To carry on with a file you marked up before, open that output file. If open says there are unsaved markups, save first; add --discard only when the person agrees to lose them.
-2. READ FIRST: ocsc-pdf-studio call stand (pages, current page, tool). ocsc-pdf-studio call get_page_text '{"page":1}' gives the page's text with positions, so you can place markups on the right words, rooms or details. ocsc-pdf-studio call list_annotations '{"page":1}' shows the markups already there. Before marking a page, show it whole: call go_to_page '{"page":2}', then call fit_page.
+2. INTERROGATE THE PDF FULLY before you judge or mark it. These are the app's own tools; read every page you are asked about:
+   - call stand: the pages, page size, current page and tool.
+   - call get_page_text '{"page":1}': every piece of text on the page with its position (title block, notes, labels, schedules), so you can place markups on the right words, rooms or details.
+   - call search_documents '{"query":"fire door","scope":"active"}': every place a word appears, with page and position.
+   - call capture_region '{"page":1,"x":1500,"y":1100,"width":600,"height":400,"dpi":200}': a picture of one area (or the whole page without x, y, width, height). Look at it to read what text cannot tell you: drawn details, symbols, hatching, scanned pages.
+   - call list_annotations '{"page":1}' and get_annotation '{"id":"<id>"}': the comments and markups already there, with their text.
+   - call hidden_information '{"action":"inspect","documentId":"<id>"}': metadata, hidden comments, layers, attachments and actions. open and status give the documentId; the inspection tools (hidden_information, print_preflight, review_ocr, locations) need it. Also bookmarks '{"action":"list"}', list_layers, titleblock, review_ocr '{"action":"list"}' for a scan.
+   A large answer is written to a file: the JSON then gives result_file and a preview. Search that file (grep, jq) or read it in parts; it holds the whole answer. A picture is saved as a .png path; look at it.
+   Before marking a page, show it whole: call go_to_page '{"page":2}', then call fit_page.
 3. MARK UP: ocsc-pdf-studio call create_annotation '{"type":"cloud","page":1,"props":{"x":900,"y":520,"width":420,"height":300,"strokeColor":"#E03131","lineWidth":3}}'
    Positions are PDF points from the top-left of the page at 100% zoom (an A1 sheet is about 2384 x 1684, A4 portrait 595 x 842; stand gives the page size).
    - cloud: around an issue. callout: a note with a leader line, props x, y, width, height, text, fontSize, and leaderStartX/Y (the point it marks) to leaderEndX/Y (the box). textbox: a plain note; for an approval write e.g. "CHECKED - OCSC 08/11/2026" in a green textbox (not a stamp, which does not save its picture). arrow and line: startX, startY, endX, endY. highlight or box: an area. comment: a sticky note at x, y.

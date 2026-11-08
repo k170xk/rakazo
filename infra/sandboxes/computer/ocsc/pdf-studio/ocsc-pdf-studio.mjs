@@ -39,6 +39,7 @@ const STATE_DIR = join(WORKSPACE, ".openbot", "pdf-studio");
 const SERVER_FILE = join(STATE_DIR, "server.json");
 const MAX_PDF_BYTES = 300 * 1024 * 1024;
 const OPEN_TIMEOUT_MS = 90_000;
+const MAX_PRINTED_CHARS = 20_000;
 
 class StudioError extends Error {}
 
@@ -341,6 +342,16 @@ async function run(frame, name, args = {}) {
   return result.value;
 }
 
+// The active document's id, which the inspection tools ask for; only page text reports it.
+async function documentId(frame) {
+  return frame
+    .evaluate(
+      async () =>
+        (await window.__OPDS_APP__.run("pdf_get_page_text", { page: 1 }))?.documentId ?? null,
+    )
+    .catch(() => null);
+}
+
 // Images inside a tool result go to files, so the answer stays small enough to read.
 function keepImages(value, label) {
   const walk = (v, key) => {
@@ -348,7 +359,7 @@ function keepImages(value, label) {
       const match = /^data:image\/(png|jpeg);base64,(.+)$/s.exec(v);
       const raw = match
         ? match[2]
-        : /^(png|image|base64|data)$/i.test(key || "") && v.length > 2000
+        : /^(png|image|data)$|base64$/i.test(key || "") && v.length > 2000
           ? v
           : null;
       if (!raw) return v;
@@ -434,6 +445,7 @@ async function cmdOpen(args) {
     ok: true,
     file: rel,
     saves_to: target,
+    documentId: await documentId(frame),
     state: stand,
     next: "ocsc-pdf-studio tools, then ocsc-pdf-studio call <tool> '<json>'",
   };
@@ -470,8 +482,20 @@ function parseArgs(text) {
 async function cmdCall(args) {
   const { frame } = await session();
   const name = toolName(args[0]);
-  const value = await run(frame, name, parseArgs(args[1]));
-  return { ok: true, tool: name, result: keepImages(value, name) };
+  const result = keepImages(await run(frame, name, parseArgs(args[1])), name);
+  const json = JSON.stringify(result, null, 2);
+  if (json.length <= MAX_PRINTED_CHARS) return { ok: true, tool: name, result };
+  mkdirSync(STATE_DIR, { recursive: true });
+  const file = join(STATE_DIR, `${name}-${Date.now()}.json`);
+  writeFileSync(file, json);
+  return {
+    ok: true,
+    tool: name,
+    result_file: relative(WORKSPACE, file).split(sep).join("/"),
+    chars: json.length,
+    note: "The whole answer is in result_file. Search it (grep, jq) or read it in parts.",
+    preview: json.slice(0, 1500),
+  };
 }
 
 async function cmdSave() {
@@ -501,7 +525,12 @@ async function cmdStatus() {
     file: window.evolvePdfHost.opened,
     saves: window.evolvePdfHost.saves,
   }));
-  return { ok: true, ...host, state: await run(frame, "stand") };
+  return {
+    ok: true,
+    ...host,
+    documentId: await documentId(frame),
+    state: await run(frame, "stand"),
+  };
 }
 
 async function cmdScreenshot(args) {
