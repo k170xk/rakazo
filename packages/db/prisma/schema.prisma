@@ -567,6 +567,11 @@ model DeploymentSettings {
   companyThinkingLevel            String?
   /// The admin whose voice connection every member without their own uses.
   companyVoiceUserId              String?
+  /// When scheduled file cleanup last finished, and what it removed.
+  fileCleanupLastRunAt            DateTime?
+  fileCleanupLastResult           Json?
+  /// An admin asked for a cleanup now; the worker runs it when this is newer than the last run.
+  fileCleanupRequestedAt          DateTime?
   createdAt                       DateTime  @default(now())
   updatedAt                       DateTime  @updatedAt
 

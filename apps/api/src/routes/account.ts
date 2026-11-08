@@ -48,6 +48,7 @@ import {
   listCompanyVault,
   putCompanyVaultItem,
   removeCompanyVault,
+  requestFileCleanup,
   setCompanyFeatures,
   setCompanyModel,
   setCompanyThinkingLevel,
@@ -198,6 +199,9 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       setStorageLimit: authed.companyAdmin.setStorageLimit.handler(({ context, input }) =>
         setStorageLimit(deps, context.actor, input),
+      ),
+      runFileCleanup: authed.companyAdmin.runFileCleanup.handler(({ context }) =>
+        requestFileCleanup(deps, context.actor),
       ),
       spending: authed.companyAdmin.spending.handler(({ context, input }) =>
         staffSpending(deps, context.actor.userId, input.period),

@@ -2116,6 +2116,17 @@ export const COMPUTER_ACCESS_LEVELS = ["full", "tools", "none"] as const;
 export const ComputerAccessSchema = z.enum(COMPUTER_ACCESS_LEVELS);
 export type ComputerAccess = z.infer<typeof ComputerAccessSchema>;
 
+export const FileCleanupScheduleSchema = z.enum(["daily", "weekly", "off"]);
+export type FileCleanupSchedule = z.infer<typeof FileCleanupScheduleSchema>;
+
+export const FileCleanupResultSchema = z.object({
+  deletedItems: z.number().int().nonnegative(),
+  freedBytes: z.number().nonnegative(),
+  /** Set when the run stopped early; what it removed before then still counts. */
+  error: z.string().nullable(),
+});
+export type FileCleanupResult = z.infer<typeof FileCleanupResultSchema>;
+
 /** Built-in skills and company tools an admin has switched off for every account; all others are on. */
 export const CompanyToolsSchema = z.object({
   disabledSkills: z.array(z.string().trim().min(1).max(80)).max(200),
@@ -2127,6 +2138,14 @@ export const CompanyToolsSchema = z.object({
   fileRetentionDays: z.number().int().min(1).max(3650),
   /** Each person's computer storage limit unless an admin set one for them. */
   defaultStorageLimitMb: z.number().int().min(100).max(10_000_000),
+  /** How often file cleanup runs; off pauses it, and nothing is deleted until it is on again. */
+  fileCleanupSchedule: FileCleanupScheduleSchema,
+  /** The hour, UK time, a scheduled cleanup starts. */
+  fileCleanupHour: z.number().int().min(0).max(23),
+  /** The day a weekly cleanup runs, 0 for Sunday. */
+  fileCleanupWeekday: z.number().int().min(0).max(6),
+  /** Files bots attached in chats are deleted this long after they were made; null keeps them. */
+  chatFileRetentionDays: z.number().int().min(1).max(3650).nullable(),
 });
 export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
 
@@ -2136,6 +2155,10 @@ export const DEFAULT_COMPANY_TOOLS: CompanyTools = {
   defaultComputerAccess: "tools",
   fileRetentionDays: 30,
   defaultStorageLimitMb: 5120,
+  fileCleanupSchedule: "daily",
+  fileCleanupHour: 2,
+  fileCleanupWeekday: 0,
+  chatFileRetentionDays: null,
 };
 
 export function companyToolsFrom(stored: unknown): CompanyTools {
@@ -2188,6 +2211,18 @@ export const CompanyComputersStateSchema = z.object({
   storage: z.object({
     fileRetentionDays: z.number().int(),
     defaultStorageLimitMb: z.number().int(),
+    chatFileRetentionDays: z.number().int().nullable(),
+    cleanup: z.object({
+      schedule: FileCleanupScheduleSchema,
+      hour: z.number().int(),
+      weekday: z.number().int(),
+      lastRunAt: z.string().datetime().nullable(),
+      lastResult: FileCleanupResultSchema.nullable(),
+      /** Null while paused. */
+      nextRunAt: z.string().datetime().nullable(),
+      /** An admin asked for a cleanup that has not finished yet. */
+      requested: z.boolean(),
+    }),
     /** The server disk holding every computer's files; null where it cannot be read. */
     disk: z.object({ usedBytes: z.number(), totalBytes: z.number() }).nullable(),
   }),

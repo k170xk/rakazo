@@ -405,6 +405,8 @@ export const appContract = {
         }),
       )
       .output(CompanyAdminStateSchema),
+    /** Asks the worker to run file cleanup now instead of waiting for the schedule. */
+    runFileCleanup: oc.output(CompanyAdminStateSchema),
     /** Shares the caller's own voice connection with everyone, or stops sharing it. */
     shareVoice: oc.input(z.object({ share: z.boolean() })).output(CompanyAdminStateSchema),
     /** Logins, API keys and command variables every member's assistants can use. */

@@ -38,7 +38,7 @@ describePostgres("cloud agent lifecycle and recovery (PostgreSQL + Cursor emulat
   });
   afterAll(async () => {
     if (!db) return;
-    await prisma.cloudAgent.deleteMany({ where: { userId: { in: users } } });
+    await asSystem(prisma).cloudAgent.deleteMany({ where: { userId: { in: users } } });
     await prisma.organization.deleteMany({ where: { id: { in: users } } });
     await prisma.user.deleteMany({ where: { id: { in: users } } });
     await db.prisma.$disconnect();
@@ -134,7 +134,7 @@ describePostgres("cloud agent lifecycle and recovery (PostgreSQL + Cursor emulat
       return result.id;
     };
     const state = (agentId: string) =>
-      prisma.cloudAgent.findUniqueOrThrow({ where: { id: agentId } });
+      asSystem(prisma).cloudAgent.findUniqueOrThrow({ where: { id: agentId } });
     const poll = (agentId: string) =>
       runAsSystem("cloud agent poll job", () => pollCloudAgent(deps, { agentId }));
     // Clearing a chat is an API request by its owner.
@@ -150,7 +150,7 @@ describePostgres("cloud agent lifecycle and recovery (PostgreSQL + Cursor emulat
     };
     // Age an ambiguous follow-up past the window in which a late acceptance could appear.
     const settle = (agentId: string) =>
-      prisma.cloudAgent.update({
+      asSystem(prisma).cloudAgent.update({
         where: { id: agentId },
         data: { followupDispatchedAt: new Date(Date.now() - 10 * 60_000) },
       });
@@ -193,7 +193,7 @@ describePostgres("cloud agent lifecycle and recovery (PostgreSQL + Cursor emulat
     const id = await h.launch();
     expect(h.wire.requests).toHaveLength(0);
     expect(await h.launch()).toBe(id);
-    expect(await prisma.cloudAgent.count({ where: { userId: h.id } })).toBe(1);
+    expect(await asSystem(prisma).cloudAgent.count({ where: { userId: h.id } })).toBe(1);
     await h.poll(id);
     await h.finish(id);
     expect(await h.state(id)).toMatchObject({
@@ -202,7 +202,7 @@ describePostgres("cloud agent lifecycle and recovery (PostgreSQL + Cursor emulat
       nextPollAt: null,
     });
     expect(await h.wakes()).toHaveLength(1);
-    await prisma.cloudAgent.update({ where: { id }, data: { nextPollAt: new Date() } });
+    await asSystem(prisma).cloudAgent.update({ where: { id }, data: { nextPollAt: new Date() } });
     await h.poll(id);
     expect(await h.wakes()).toHaveLength(1);
   });
@@ -270,14 +270,14 @@ describePostgres("cloud agent lifecycle and recovery (PostgreSQL + Cursor emulat
         ),
       ),
     ).rejects.toBeInstanceOf(RunHistoryWriteError);
-    expect(await prisma.cloudAgent.count({ where: { userId: h.id } })).toBe(0);
+    expect(await asSystem(prisma).cloudAgent.count({ where: { userId: h.id } })).toBe(0);
     expect(h.wire.requests).toHaveLength(0);
   });
 
   it("never dispatches a launch whose card transaction fails", async () => {
     const h = await setup();
     await expect(h.tool("launch", { prompt: "Task" }, { userId: "wrong-owner" })).rejects.toThrow();
-    expect(await prisma.cloudAgent.count({ where: { userId: h.id } })).toBe(0);
+    expect(await asSystem(prisma).cloudAgent.count({ where: { userId: h.id } })).toBe(0);
     expect(h.wire.requests).toHaveLength(0);
   });
 

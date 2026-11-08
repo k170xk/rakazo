@@ -1,6 +1,11 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { CompanyAdminState, ComputerAccess } from "@rakazo/contracts";
-import { Input, NativeSelect, NativeSelectOption, toast } from "@rakazo/ui-web";
+import type {
+  CompanyAdminState,
+  CompanyTools,
+  ComputerAccess,
+  FileCleanupSchedule,
+} from "@rakazo/contracts";
+import { Button, Input, NativeSelect, NativeSelectOption, toast } from "@rakazo/ui-web";
 import { useState } from "react";
 import { ComputerProviderSettings } from "../components/ComputerProviderSettings";
 import { rpc } from "../lib/rpc";
@@ -130,9 +135,9 @@ export function CompanyComputerAccessSection({
         <p className="text-sm text-muted-foreground">
           <Trans>
             Files bots make stay on each person's own computer and are never visible to anyone else.
-            Anything nobody changes for the period below is deleted automatically unless its owner
-            pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making
-            new documents and videos until they delete something.
+            Anything nobody changes for the period below is deleted at the next cleanup unless its
+            owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop
+            making new documents and videos until they delete something.
           </Trans>
         </p>
         <div className="flex flex-wrap items-center gap-3">
@@ -173,6 +178,51 @@ export function CompanyComputerAccessSection({
             }
           />
         </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <label htmlFor="chat-file-retention" className="flex-1 text-sm font-medium">
+            <Trans>Delete files bots attached in chats after</Trans>
+          </label>
+          <AccessSelect
+            id="chat-file-retention"
+            value={
+              storage.chatFileRetentionDays === null
+                ? "keep"
+                : String(storage.chatFileRetentionDays)
+            }
+            levels={{
+              keep: t`Never`,
+              ...(storage.chatFileRetentionDays === null
+                ? {}
+                : {
+                    [String(storage.chatFileRetentionDays)]:
+                      t`${storage.chatFileRetentionDays} days`,
+                  }),
+              ...retentions,
+            }}
+            disabled={busy !== null}
+            onChange={(days) =>
+              void run("chat-retention", () =>
+                rpc.companyAdmin.setTools({
+                  chatFileRetentionDays: days === "keep" ? null : Number(days),
+                }),
+              )
+            }
+          />
+        </div>
+        <p className="text-[13px] text-muted-foreground">
+          <Trans>
+            Counted from when the bot made the file. Files people upload themselves are never
+            deleted. The chat keeps the message and shows that the file was removed.
+          </Trans>
+        </p>
+        <CleanupSchedule
+          cleanup={storage.cleanup}
+          busy={busy}
+          onSchedule={(change) =>
+            void run("cleanup-schedule", () => rpc.companyAdmin.setTools(change))
+          }
+          onRunNow={() => void run("cleanup-now", () => rpc.companyAdmin.runFileCleanup())}
+        />
       </div>
 
       {people.length > 8 ? (
@@ -248,6 +298,136 @@ export function CompanyComputerAccessSection({
         })}
       </ul>
     </section>
+  );
+}
+
+type Cleanup = CompanyAdminState["computers"]["storage"]["cleanup"];
+
+function CleanupSchedule({
+  cleanup,
+  busy,
+  onSchedule,
+  onRunNow,
+}: {
+  cleanup: Cleanup;
+  busy: string | null;
+  onSchedule: (change: Partial<CompanyTools>) => void;
+  onRunNow: () => void;
+}) {
+  const { t, i18n } = useLingui();
+  const when = (iso: string) =>
+    new Intl.DateTimeFormat(i18n.locale, {
+      timeZone: "Europe/London",
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  const schedules: Record<FileCleanupSchedule, string> = {
+    daily: t`Every day`,
+    weekly: t`Every week`,
+    off: t`Paused`,
+  };
+  const hours = Object.fromEntries(
+    Array.from({ length: 24 }, (_, hour) => [String(hour), `${String(hour).padStart(2, "0")}:00`]),
+  ) as Record<string, string>;
+  const weekdays = Object.fromEntries(
+    Array.from({ length: 7 }, (_, day) => [
+      String(day),
+      new Intl.DateTimeFormat(i18n.locale, { weekday: "long", timeZone: "UTC" }).format(
+        new Date(Date.UTC(2026, 0, 4 + day)),
+      ),
+    ]),
+  ) as Record<string, string>;
+  const last = cleanup.lastResult;
+
+  return (
+    <div className="space-y-3 border-t border-border pt-3" data-testid="file-cleanup-schedule">
+      <div className="flex flex-wrap items-center gap-3">
+        <label htmlFor="cleanup-schedule" className="flex-1 text-sm font-medium">
+          <Trans>Run cleanup</Trans>
+        </label>
+        <AccessSelect
+          id="cleanup-schedule"
+          value={cleanup.schedule}
+          levels={schedules}
+          disabled={busy !== null}
+          onChange={(schedule) =>
+            onSchedule({ fileCleanupSchedule: schedule as FileCleanupSchedule })
+          }
+        />
+      </div>
+      {cleanup.schedule === "weekly" ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <label htmlFor="cleanup-weekday" className="flex-1 text-sm font-medium">
+            <Trans>On</Trans>
+          </label>
+          <AccessSelect
+            id="cleanup-weekday"
+            value={String(cleanup.weekday)}
+            levels={weekdays}
+            disabled={busy !== null}
+            onChange={(day) => onSchedule({ fileCleanupWeekday: Number(day) })}
+          />
+        </div>
+      ) : null}
+      {cleanup.schedule === "off" ? null : (
+        <div className="flex flex-wrap items-center gap-3">
+          <label htmlFor="cleanup-hour" className="flex-1 text-sm font-medium">
+            <Trans>At (UK time)</Trans>
+          </label>
+          <AccessSelect
+            id="cleanup-hour"
+            value={String(cleanup.hour)}
+            levels={hours}
+            disabled={busy !== null}
+            onChange={(hour) => onSchedule({ fileCleanupHour: Number(hour) })}
+          />
+        </div>
+      )}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 space-y-0.5 text-[13px] text-muted-foreground">
+          <p>
+            {cleanup.lastRunAt ? (
+              last ? (
+                <Trans>
+                  Last cleanup {when(cleanup.lastRunAt)}: {last.deletedItems} removed,{" "}
+                  {formatSize(last.freedBytes)} freed.
+                </Trans>
+              ) : (
+                <Trans>Cleanup started {when(cleanup.lastRunAt)}.</Trans>
+              )
+            ) : (
+              <Trans>No cleanup has run yet.</Trans>
+            )}
+          </p>
+          {last?.error ? (
+            <p className="text-destructive">
+              <Trans>It stopped early: {last.error}</Trans>
+            </p>
+          ) : null}
+          <p>
+            {cleanup.requested ? (
+              <Trans>Cleanup requested; it starts within a minute.</Trans>
+            ) : cleanup.nextRunAt ? (
+              <Trans>Next cleanup {when(cleanup.nextRunAt)}.</Trans>
+            ) : (
+              <Trans>Cleanup is paused, so nothing is deleted.</Trans>
+            )}
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={busy !== null || cleanup.requested}
+          onClick={onRunNow}
+        >
+          <Trans>Run cleanup now</Trans>
+        </Button>
+      </div>
+    </div>
   );
 }
 

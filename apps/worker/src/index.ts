@@ -15,9 +15,8 @@ import { createWorkerSecretStore } from "./secret-store.js";
 loadRootEnv();
 await unwrapEnvFromKeyManager();
 
-/** File cleanup waits for company settings to load after start, then repeats. */
-const FILE_SWEEP_FIRST_MS = 2 * 60_000;
-const FILE_SWEEP_EVERY_MS = 6 * 60 * 60_000;
+/** How often the worker checks whether a scheduled or requested file cleanup is owed. */
+const FILE_CLEANUP_CHECK_MS = 60_000;
 
 import {
   apnsVoipConfig,
@@ -80,11 +79,11 @@ import {
   resolveDeploymentModel,
   resolvePiSessionRoot,
   resolveSandboxProvider,
+  runDueFileCleanup,
   ScriptedAgentRuntime,
   SpaceMemoryProviderResolver,
   sandboxProviderOptionsFromEnv,
   shutdownPiTelemetry,
-  sweepComputerFiles,
   toolRunnerFromEnv,
   UserDevices,
   userDeviceForwardSecret,
@@ -252,13 +251,21 @@ async function main() {
   const memoryProviders = new SpaceMemoryProviderResolver(prisma, secrets);
   const home = createAgentHomeStore(dataDir, prisma);
   void home.removeStaleStaging().catch((error) => logger.error("home staging cleanup", error));
-  const sweepFiles = () =>
-    void sweepComputerFiles({ prisma, home, dataDir, toolRunners: Boolean(toolRunner) })
-      .then((swept) => logger.info("computer file cleanup", { ...swept }))
-      .catch((error) => logger.error("computer file cleanup", error));
-  setTimeout(sweepFiles, FILE_SWEEP_FIRST_MS).unref();
-  setInterval(sweepFiles, FILE_SWEEP_EVERY_MS).unref();
   const artifacts = createArtifactStore(dataDir, prisma);
+  let cleaning = false;
+  const cleanFiles = () => {
+    if (cleaning) return;
+    cleaning = true;
+    void runDueFileCleanup({ prisma, home, artifacts, dataDir, toolRunners: Boolean(toolRunner) })
+      .then((result) => {
+        if (result) logger.info("file cleanup", { ...result });
+      })
+      .catch((error) => logger.error("file cleanup", error))
+      .finally(() => {
+        cleaning = false;
+      });
+  };
+  setInterval(cleanFiles, FILE_CLEANUP_CHECK_MS).unref();
   const shutdown = new AbortController();
   const inMemoryJobs = process.env.WAKEUP_DRIVER === "memory" ? new InMemoryJobQueue() : undefined;
   const runs = new RunStarter(realtime, { signal: shutdown.signal });

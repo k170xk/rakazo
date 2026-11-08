@@ -20,7 +20,7 @@ import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
-import { errorText } from "../lib/user-error";
+import { errorCode, errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
 import { IconTooltip } from "./IconTooltip";
 import { PdfViewer } from "./PdfViewer";
@@ -59,8 +59,12 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
     setDownloadError(null);
     try {
       await downloadArtifact(props.target, props.artifactId, props.name, props.mimeType);
-    } catch {
-      setDownloadError(t`Could not download ${props.name}. Try again.`);
+    } catch (error) {
+      setDownloadError(
+        errorCode(error) === "NOT_FOUND"
+          ? t`${props.name} was removed by your company's file cleanup. Ask the bot to make it again.`
+          : t`Could not download ${props.name}. Try again.`,
+      );
     }
   }
 

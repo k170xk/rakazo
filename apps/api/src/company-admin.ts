@@ -8,6 +8,7 @@ import {
   effectiveComputerAccess,
   listCompanyVaultItems,
   listPiCatalog,
+  nextCleanupSlot,
   pageUrlOrigin,
   refreshCompanyPolicy,
   removeCompanyVaultItem,
@@ -37,6 +38,7 @@ import {
   ComputerAccessSchema,
   canonicalPiProviderId,
   companyFeaturesFrom,
+  FileCleanupResultSchema,
   ThinkingLevelSchema,
 } from "@rakazo/contracts";
 import type { Prisma } from "@rakazo/db";
@@ -100,6 +102,9 @@ function readSettings(deps: Pick<RouterDeps, "prisma">) {
         deploymentModelCredentialCipher: true,
         companyModelUpdatedAt: true,
         companyThinkingLevel: true,
+        fileCleanupLastRunAt: true,
+        fileCleanupLastResult: true,
+        fileCleanupRequestedAt: true,
         updatedAt: true,
       },
     }),
@@ -141,7 +146,7 @@ export async function companyAdminState(
       : null,
     features: companyFeaturesFrom(row?.companyFeatures),
     tools: toolsState(deps, companyToolsWithDefaults(row?.companyTools)),
-    computers: await computersState(deps, companyToolsWithDefaults(row?.companyTools)),
+    computers: await computersState(deps, companyToolsWithDefaults(row?.companyTools), row),
     admins: deps.env.adminEmails ?? [],
     voice: await voiceState(deps, actor),
     staff: { accounts, withOwnModels: owners.length },
@@ -151,6 +156,11 @@ export async function companyAdminState(
 async function computersState(
   deps: CompanyAdminDeps,
   policy: CompanyTools,
+  cleanup: {
+    fileCleanupLastRunAt: Date | null;
+    fileCleanupLastResult: unknown;
+    fileCleanupRequestedAt: Date | null;
+  } | null,
 ): Promise<CompanyComputersState> {
   const [people, runningComputers, load, homes, disk] = await Promise.all([
     runAsSystem("list computer access", () =>
@@ -199,6 +209,8 @@ async function computersState(
     storage: {
       fileRetentionDays: policy.fileRetentionDays,
       defaultStorageLimitMb: policy.defaultStorageLimitMb,
+      chatFileRetentionDays: policy.chatFileRetentionDays,
+      cleanup: cleanupState(policy, cleanup),
       disk: disk && { usedBytes: disk.usedBytes, totalBytes: disk.totalBytes },
     },
   };
@@ -223,6 +235,45 @@ export async function setStorageLimit(
     limitMb: input.limitMb,
     by: actor.userId,
   });
+  return companyAdminState(deps, actor);
+}
+
+function cleanupState(
+  policy: CompanyTools,
+  row: {
+    fileCleanupLastRunAt: Date | null;
+    fileCleanupLastResult: unknown;
+    fileCleanupRequestedAt: Date | null;
+  } | null,
+): CompanyComputersState["storage"]["cleanup"] {
+  const lastRunAt = row?.fileCleanupLastRunAt ?? null;
+  const requestedAt = row?.fileCleanupRequestedAt ?? null;
+  const next = nextCleanupSlot(policy, Date.now());
+  return {
+    schedule: policy.fileCleanupSchedule,
+    hour: policy.fileCleanupHour,
+    weekday: policy.fileCleanupWeekday,
+    lastRunAt: lastRunAt?.toISOString() ?? null,
+    lastResult: FileCleanupResultSchema.safeParse(row?.fileCleanupLastResult).data ?? null,
+    nextRunAt: next === null ? null : new Date(next).toISOString(),
+    requested: Boolean(requestedAt && (!lastRunAt || requestedAt > lastRunAt)),
+  };
+}
+
+/** Asks the worker to clean up now; it picks the request up within a minute. */
+export async function requestFileCleanup(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+): Promise<CompanyAdminState> {
+  await requireAdmin(deps, actor.userId);
+  await runAsSystem("request a file cleanup", () =>
+    deps.prisma.deploymentSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", fileCleanupRequestedAt: new Date() },
+      update: { fileCleanupRequestedAt: new Date() },
+    }),
+  );
+  getLogger().info("company_admin.file_cleanup_requested", { by: actor.userId });
   return companyAdminState(deps, actor);
 }
 
