@@ -2134,6 +2134,16 @@ export const FileCleanupResultSchema = z.object({
 export type FileCleanupResult = z.infer<typeof FileCleanupResultSchema>;
 
 /** Built-in skills and company tools an admin has switched off for every account; all others are on. */
+/** The model a bot started from an Evolve assistant runs on, instead of the company model. */
+export const CompanyAssistantModelSchema = z.object({
+  /** Applies only while the company model uses this provider, since it runs on the company key. */
+  provider: z.string().trim().min(1).max(80),
+  modelId: z.string().trim().min(1).max(200),
+  /** Null follows the company thinking level. */
+  thinkingLevel: ThinkingLevelSchema.nullable(),
+});
+export type CompanyAssistantModel = z.infer<typeof CompanyAssistantModelSchema>;
+
 export const CompanyToolsSchema = z.object({
   disabledSkills: z.array(z.string().trim().min(1).max(80)).max(200),
   /** Evolve tool names as Evolve lists them, e.g. "generate_voiceover". */
@@ -2152,6 +2162,8 @@ export const CompanyToolsSchema = z.object({
   fileCleanupWeekday: z.number().int().min(0).max(6),
   /** Files bots attached in chats are deleted this long after they were made; null keeps them. */
   chatFileRetentionDays: z.number().int().min(1).max(3650).nullable(),
+  /** Keyed by Evolve assistant id; assistants not listed run on the company model. */
+  assistantModels: z.record(z.string().uuid(), CompanyAssistantModelSchema).optional(),
 });
 export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
 
@@ -2165,6 +2177,7 @@ export const DEFAULT_COMPANY_TOOLS: CompanyTools = {
   fileCleanupHour: 2,
   fileCleanupWeekday: 0,
   chatFileRetentionDays: null,
+  assistantModels: {},
 };
 
 export function companyToolsFrom(stored: unknown): CompanyTools {
@@ -2276,6 +2289,8 @@ export const CompanyAdminStateSchema = z.object({
   model: CompanyModelSchema.nullable(),
   /** How hard every bot thinks while members cannot choose models; null is the model's default. */
   thinkingLevel: ThinkingLevelSchema.nullable(),
+  /** Models for bots started from an Evolve assistant, keyed by assistant id. */
+  assistantModels: z.record(z.string(), CompanyAssistantModelSchema),
   /** The model set in the server environment, used while no company model is saved. */
   environmentModel: z.object({ provider: z.string(), modelId: z.string() }).nullable(),
   features: CompanyFeaturesSchema,

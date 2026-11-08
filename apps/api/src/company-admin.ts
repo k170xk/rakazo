@@ -148,6 +148,7 @@ export async function companyAdminState(
         }
       : null,
     thinkingLevel: ThinkingLevelSchema.safeParse(row?.companyThinkingLevel).data ?? null,
+    assistantModels: companyToolsWithDefaults(row?.companyTools).assistantModels ?? {},
     environmentModel: environment.configured
       ? { provider: environment.provider, modelId: environment.model }
       : null,
@@ -513,6 +514,15 @@ export async function setCompanyTools(
   const tools = { ...companyToolsWithDefaults(row?.companyTools), ...input };
   tools.disabledSkills = [...new Set(tools.disabledSkills)];
   tools.disabledTools = [...new Set(tools.disabledTools)];
+  if (input.assistantModels) {
+    const catalog = listPiCatalog();
+    for (const chosen of Object.values(input.assistantModels)) {
+      if (
+        !catalog.some((entry) => entry.provider === chosen.provider && entry.id === chosen.modelId)
+      )
+        throw new ORPCError("BAD_REQUEST", { message: `Unknown model ${chosen.modelId}` });
+    }
+  }
   await runAsSystem("save the company tools", () =>
     deps.prisma.deploymentSettings.upsert({
       where: { id: "default" },

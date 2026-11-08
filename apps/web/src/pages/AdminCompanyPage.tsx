@@ -42,6 +42,7 @@ import { thinkingLevelLabel } from "../lib/model-catalog";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
+import { CompanyAssistantModelsSection } from "./AdminAssistantModels";
 import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
@@ -132,7 +133,12 @@ function CompanyAdminPanels() {
   function panel(data: CompanyAdminState) {
     switch (section) {
       case "models":
-        return <CompanyModelSection state={data} onSaved={saved} />;
+        return (
+          <div className="space-y-10">
+            <CompanyModelSection state={data} onSaved={saved} />
+            <CompanyAssistantModelsSection state={data} onSaved={saved} />
+          </div>
+        );
       case "features":
         return <CompanyFeaturesSection state={data} onSaved={saved} />;
       case "chat":

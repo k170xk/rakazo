@@ -67,6 +67,7 @@ import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import {
+  companyAssistantModel,
   companyFeatures,
   companyModel,
   companyThinkingLevel,
@@ -761,8 +762,23 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const companyChoosesModel = !companyFeatures().memberModels;
         // modelPinned distinguishes the captured choice from an attempt's recorded model.
         const modelPinned = run.modelPinned && !companyChoosesModel;
+        // A bot started from an Evolve assistant takes the model an admin chose for that
+        // assistant in place of the company model, still on the company key.
+        const assistantModel = companyAssistantModel(bot.evolveAssistantId);
+        const modelSettings =
+          assistantModel && settings
+            ? {
+                ...settings,
+                defaultModelProvider: assistantModel.provider,
+                defaultModelId: assistantModel.modelId,
+              }
+            : settings;
         const modelChoice = companyChoosesModel
-          ? { modelProvider: null, modelId: null, thinkingLevel: companyThinkingLevel() }
+          ? {
+              modelProvider: null,
+              modelId: null,
+              thinkingLevel: assistantModel?.thinkingLevel ?? companyThinkingLevel(),
+            }
           : runModelChoice(run, bot);
         const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
         const overrideCredential =
@@ -1024,7 +1040,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               hostedProvider: (await modelCreditBillingEnabled(deps))
                 ? resolveDeploymentModel().provider
                 : undefined,
-              defaults: { settings, deployment: runDeployment },
+              defaults: { settings: modelSettings, deployment: runDeployment },
             });
         const selectedProvider = selected.provider ?? runtimeFallback?.provider;
         const selectedModelId = selected.id ?? runtimeFallback?.id;

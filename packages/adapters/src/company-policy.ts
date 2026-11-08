@@ -1,5 +1,10 @@
 import type { SecretStore } from "@rakazo/adapter-kit";
-import type { CompanyFeatures, CompanyTools, ThinkingLevel } from "@rakazo/contracts";
+import type {
+  CompanyAssistantModel,
+  CompanyFeatures,
+  CompanyTools,
+  ThinkingLevel,
+} from "@rakazo/contracts";
 import {
   ComputerAccessSchema,
   companyFeaturesFrom,
@@ -65,6 +70,18 @@ export function companyModel(): LiveCompanyModel | null {
 /** How hard every bot thinks while members cannot choose models; null is the model's default. */
 export function companyThinkingLevel(): ThinkingLevel | null {
   return loadedThinkingLevel;
+}
+
+/**
+ * The model an admin chose for bots started from this Evolve assistant. It runs on the company
+ * key, so it is ignored while the company model is on another provider.
+ */
+export function companyAssistantModel(
+  assistantId: string | null | undefined,
+): CompanyAssistantModel | null {
+  if (!assistantId || !loadedModel) return null;
+  const chosen = companyTools().assistantModels?.[assistantId];
+  return chosen && chosen.provider === loadedModel.provider ? chosen : null;
 }
 
 /** Test seam: what a process would have read from deployment settings. */

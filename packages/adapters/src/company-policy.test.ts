@@ -1,8 +1,9 @@
-import { DEFAULT_COMPANY_FEATURES } from "@rakazo/contracts";
+import { DEFAULT_COMPANY_FEATURES, DEFAULT_COMPANY_TOOLS } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   COMPANY_MODEL_SECRET_RECORD,
+  companyAssistantModel,
   companyFeatures,
   companyModel,
   liveDeploymentModelConfigured,
@@ -20,7 +21,7 @@ function prismaWith(row: Record<string, unknown> | null) {
 }
 
 afterEach(() => {
-  setCompanyPolicy({ features: null, model: null });
+  setCompanyPolicy({ features: null, model: null, tools: null });
 });
 
 describe("company policy", () => {
@@ -116,5 +117,19 @@ describe("company switches in tool selection", () => {
     expect(off.has("add_mcp_server")).toBe(false);
     expect([...off].some((name) => name.startsWith("schedule_"))).toBe(false);
     expect(off.has("remember")).toBe(all.has("remember"));
+  });
+
+  it("runs an Evolve assistant's bots on its own model only on the company provider", () => {
+    const civil = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
+    const chosen = { provider: "openrouter", modelId: "openai/gpt-6", thinkingLevel: null };
+    setCompanyPolicy({
+      model: { provider: "openrouter", model: "openai/gpt-6-luna", key: "sk-company" },
+      tools: { ...DEFAULT_COMPANY_TOOLS, assistantModels: { [civil]: chosen } },
+    });
+    expect(companyAssistantModel(civil)).toEqual(chosen);
+    expect(companyAssistantModel(null)).toBeNull();
+    expect(companyAssistantModel("00000000-0000-4000-8000-000000000000")).toBeNull();
+    setCompanyPolicy({ model: { provider: "anthropic", model: "claude-sonnet-5", key: "sk-a" } });
+    expect(companyAssistantModel(civil)).toBeNull();
   });
 });
