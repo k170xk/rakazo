@@ -27,7 +27,15 @@ import {
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 import PptxGenJS from "pptxgenjs";
-import { imageSources, isPictureSlide, SlideBuilder, videoSources } from "./pptx-native.mjs";
+import {
+  GREEN,
+  INK,
+  imageSources,
+  isPictureSlide,
+  MUTED,
+  SlideBuilder,
+  videoSources,
+} from "./pptx-native.mjs";
 import { applyEdits, readDeck } from "./pptx-package.mjs";
 import {
   buildFromTemplate,
@@ -221,7 +229,6 @@ function loadMedia(items, labelOf) {
 /** Where a slide's visual sits on the 1920x1080 grid: the whole content area, or beside its text. */
 const VISUAL_FULL = { x: 72, y: 168, w: 1776, h: 720 };
 const VISUAL_SIDE = { x: 800, y: 168, w: 1048, h: 720 };
-const TEXT_SIDE = { x: 72, y: 168, w: 680, h: 720 };
 
 const str = (value) =>
   typeof value === "string" || typeof value === "number" ? String(value) : "";
@@ -299,24 +306,272 @@ function renderVisual(visual, box, name, label, caption) {
   return pngRel;
 }
 
+// ---------- visual slide styles ----------
+
+/** The content area under a template heading, on the 1920x1080 grid. */
+const AREA = { top: 184, bottom: 880, left: 72, right: 1848 };
+const AREA_H = AREA.bottom - AREA.top;
+const CARD_TINT = "F3F7F0";
+const RULE = "DDE3D8";
+/** How a visual slide is arranged; each keeps its words in editable text beside the picture. */
+const VISUAL_STYLES = ["side", "left", "panel", "cards", "steps", "stats", "statement", "full"];
+/** Styles for plain bullets, taken in turn so neighbouring slides differ. */
+const BULLET_STYLES = ["side", "left", "panel"];
+
+const plainText = (value) => str(value).replace(/\*\*/g, "").trim();
+
+function textLines(item) {
+  if (Array.isArray(item.bullets)) return item.bullets.map(plainText).filter(Boolean);
+  return plainText(item.body ?? item.text)
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+function pointsOf(item) {
+  const raw = Array.isArray(item.points) ? item.points : [];
+  return raw
+    .map((p) =>
+      typeof p === "string"
+        ? { title: plainText(p), text: "" }
+        : { title: plainText(p?.title), text: plainText(p?.text) },
+    )
+    .filter((p) => p.title || p.text);
+}
+
+function statsOf(item) {
+  return (Array.isArray(item.stats) ? item.stats : [])
+    .map((s) => ({ value: plainText(s?.value), label: plainText(s?.label) }))
+    .filter((s) => s.value);
+}
+
+/** The style a visual slide takes: the one asked for, else one that suits its content. */
+function visualStyle(item, previous) {
+  if (VISUAL_STYLES.includes(item.style)) return item.style;
+  if (statsOf(item).length) return "stats";
+  if (plainText(item.statement)) return "statement";
+  const points = pointsOf(item).length;
+  if (points) return points >= 4 && previous !== "steps" ? "steps" : "cards";
+  if (!hasText(item)) return "full";
+  return BULLET_STYLES[(BULLET_STYLES.indexOf(previous) + 1) % BULLET_STYLES.length];
+}
+
+/** Where the picture sits in each style; infographics are 3:2 and shown whole. */
+const PICTURE_BOX = {
+  side: { x: 800, y: AREA.top, w: 1048, h: AREA_H },
+  left: { x: AREA.left, y: AREA.top, w: 1044, h: AREA_H },
+  panel: { x: 780, y: AREA.top, w: 1068, h: AREA_H },
+  cards: { x: 856, y: AREA.top, w: 992, h: AREA_H },
+  steps: { x: AREA.left, y: 168, w: 1776, h: 452 },
+  stats: { x: AREA.left, y: AREA.top, w: 1044, h: AREA_H },
+  statement: { x: 900, y: AREA.top, w: 948, h: AREA_H },
+  full: { x: AREA.left, y: 168, w: 1776, h: 720 },
+};
+
+const textEl = (text, box, opts = {}) => ({ type: "text", text, ...box, ...opts });
+const bulletsEl = (lines, box, colour = INK) =>
+  textEl(lines.join("\n"), box, {
+    size: lines.length > 4 ? 20 : 22,
+    color: colour,
+    bullets: true,
+    valign: "middle",
+    line_height: 1.15,
+  });
+const numberEl = (n, x, y, d) => ({
+  type: "shape",
+  shape: "ellipse",
+  x,
+  y,
+  w: d,
+  h: d,
+  fill: GREEN,
+  text: String(n),
+  size: Math.round(d / 3),
+  bold: true,
+  color: "FFFFFF",
+});
+
+/** The native text and shapes of a styled visual slide, around its picture. */
+function styleElements(style, item, label) {
+  const lines = textLines(item);
+  const points = pointsOf(item);
+  const els = [];
+  const need = (ok, what) => {
+    if (!ok) throw new UsageError(`${label}: the "${style}" style needs ${what}.`);
+  };
+  switch (style) {
+    case "side":
+      if (lines.length)
+        els.push(bulletsEl(lines, { x: AREA.left, y: AREA.top, w: 680, h: AREA_H }));
+      break;
+    case "left":
+      if (lines.length) els.push(bulletsEl(lines, { x: 1172, y: AREA.top, w: 676, h: AREA_H }));
+      break;
+    case "panel":
+      els.push({
+        type: "shape",
+        shape: "rounded",
+        x: AREA.left,
+        y: AREA.top,
+        w: 660,
+        h: AREA_H,
+        fill: GREEN,
+        radius: 18,
+      });
+      if (lines.length)
+        els.push(bulletsEl(lines, { x: 124, y: AREA.top + 40, w: 556, h: AREA_H - 80 }, "FFFFFF"));
+      break;
+    case "cards": {
+      const cards = points.length ? points : lines.map((title) => ({ title, text: "" }));
+      need(cards.length >= 2 && cards.length <= 4, '"points" (2 to 4, each {"title","text"})');
+      const gap = 20;
+      const h = (AREA_H - gap * (cards.length - 1)) / cards.length;
+      for (const [i, c] of cards.entries()) {
+        const y = AREA.top + i * (h + gap);
+        els.push({
+          type: "shape",
+          shape: "rounded",
+          x: AREA.left,
+          y,
+          w: 744,
+          h,
+          fill: CARD_TINT,
+          radius: 14,
+        });
+        els.push(numberEl(i + 1, 100, y + (c.text ? 24 : (h - 60) / 2), 60));
+        if (c.text) {
+          els.push(
+            textEl(
+              c.title,
+              { x: 190, y: y + 22, w: 600, h: 44 },
+              { size: 22, bold: true, color: INK, valign: "middle" },
+            ),
+          );
+          els.push(
+            textEl(c.text, { x: 190, y: y + 70, w: 600, h: h - 86 }, { size: 16, color: MUTED }),
+          );
+        } else
+          els.push(
+            textEl(
+              c.title,
+              { x: 190, y, w: 600, h },
+              { size: 22, bold: true, color: INK, valign: "middle" },
+            ),
+          );
+      }
+      break;
+    }
+    case "steps": {
+      const steps = points.length ? points : lines.map((title) => ({ title, text: "" }));
+      need(steps.length >= 3 && steps.length <= 5, '"points" (3 to 5, each {"title","text"})');
+      const w = (AREA.right - AREA.left) / steps.length;
+      for (const [i, st] of steps.entries()) {
+        const x = AREA.left + i * w;
+        if (i < steps.length - 1)
+          els.push({
+            type: "shape",
+            shape: "rect",
+            x: x + 56,
+            y: 654,
+            w: w - 56,
+            h: 4,
+            fill: RULE,
+          });
+        els.push(numberEl(i + 1, x, 628, 56));
+        els.push(
+          textEl(st.title, { x, y: 700, w: w - 32, h: 40 }, { size: 20, bold: true, color: INK }),
+        );
+        if (st.text)
+          els.push(textEl(st.text, { x, y: 744, w: w - 32, h: 136 }, { size: 15, color: MUTED }));
+      }
+      break;
+    }
+    case "stats": {
+      const stats = statsOf(item);
+      need(stats.length >= 1 && stats.length <= 3, '"stats" (1 to 3, each {"value","label"})');
+      const h = AREA_H / stats.length;
+      for (const [i, st] of stats.entries()) {
+        const y = AREA.top + i * h;
+        if (i > 0) els.push({ type: "shape", shape: "rect", x: 1172, y, w: 676, h: 2, fill: RULE });
+        els.push(
+          textEl(
+            st.value,
+            { x: 1172, y: y + h / 2 - 92, w: 676, h: 104 },
+            { size: 66, bold: true, color: GREEN, valign: "bottom" },
+          ),
+        );
+        if (st.label)
+          els.push(
+            textEl(
+              st.label,
+              { x: 1172, y: y + h / 2 + 18, w: 676, h: 76 },
+              { size: 20, color: INK },
+            ),
+          );
+      }
+      break;
+    }
+    case "statement": {
+      const statement = plainText(item.statement) || lines[0];
+      need(Boolean(statement), '"statement" (one sentence)');
+      const support = plainText(item.statement) ? lines.join("\n") : lines.slice(1).join("\n");
+      // The grid is 2 units per point; bold Arial averages about 0.55em a character.
+      const width = 780;
+      const size = statement.length > 70 ? 30 : statement.length > 45 ? 34 : 40;
+      const perLine = Math.floor(width / (size * 2 * 0.55));
+      const statementH = Math.ceil(statement.length / perLine + 0.5) * size * 2 * 1.15;
+      const supportH = support ? Math.min(support.split("\n").length * 2 + 1, 6) * 20 * 2 * 1.2 : 0;
+      const total = 40 + statementH + (support ? 28 + supportH : 0);
+      let y = AREA.top + Math.max(0, (AREA_H - total) / 2);
+      els.push({ type: "shape", shape: "rect", x: AREA.left, y, w: 96, h: 8, fill: GREEN });
+      y += 40;
+      els.push(
+        textEl(
+          statement,
+          { x: AREA.left, y, w: width, h: statementH },
+          { size, bold: true, color: INK, line_height: 1.1 },
+        ),
+      );
+      y += statementH + 28;
+      if (support)
+        els.push(
+          textEl(
+            support,
+            { x: AREA.left, y, w: width, h: Math.min(supportH, AREA.bottom - y) },
+            { size: 20, color: MUTED },
+          ),
+        );
+      break;
+    }
+    case "full":
+      break;
+  }
+  return els;
+}
+
 /**
  * Turns each slide's "visual" (a picture, or a Remotion scene that is rendered here) into
- * pictures on the slide. A slide whose layout is "visual", or that has no layout, shows the
- * visual large under its heading, beside its text when it has any.
+ * pictures on the slide. On the company template a visual slide takes one of the styles above,
+ * built from native text and shapes; elsewhere it shows the visual beside its text.
  */
 function placeVisuals(items, { plain, name, labelOf }) {
+  let previous = null;
   return items.map((item, index) => {
     if (!item || typeof item !== "object" || item.visual === undefined) return item;
     const label = labelOf(index);
     const { visual, ...rest } = item;
     const layout = rest.layout ?? "visual";
+    const styled = layout === "visual" && plain;
+    const style = styled ? visualStyle(rest, previous) : null;
+    previous = style;
     const side = layout === "visual" && hasText(rest);
+    const box = style ? PICTURE_BOX[style] : side ? VISUAL_SIDE : VISUAL_FULL;
     let source;
     if (typeof visual === "string" && visual.trim()) source = visual.trim();
     else if (visual && typeof visual === "object" && (visual.template || visual.type))
       source = renderVisual(
         visual,
-        side ? VISUAL_SIDE : VISUAL_FULL,
+        box,
         `${name}-slide-${index + 1}`,
         label,
         str(rest.subheading ?? rest.subtitle ?? rest.heading ?? rest.title),
@@ -340,11 +595,17 @@ function placeVisuals(items, { plain, name, labelOf }) {
         fit: "contain",
         bullets: rest.bullets ?? [],
       };
-    const overlay = [
-      ...(Array.isArray(rest.overlay) ? rest.overlay : []),
-      { image: source, ...(side ? VISUAL_SIDE : VISUAL_FULL), fit: "contain" },
-    ];
-    return { ...rest, layout: "plain", overlay, ...(side ? { __textBox: TEXT_SIDE } : {}) };
+    const { bullets, body, text, points, stats, statement, overlay, ...frame } = rest;
+    return {
+      ...frame,
+      layout: "custom",
+      style: undefined,
+      elements: [
+        ...styleElements(style, rest, label),
+        { type: "image", image: source, ...box, fit: "contain" },
+        ...(Array.isArray(overlay) ? overlay.map((el) => ({ type: "image", ...el })) : []),
+      ],
+    };
   });
 }
 
