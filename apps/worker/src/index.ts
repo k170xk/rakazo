@@ -258,7 +258,10 @@ async function main() {
     cleaning = true;
     void runDueFileCleanup({ prisma, home, artifacts, dataDir, toolRunners: Boolean(toolRunner) })
       .then((result) => {
-        if (result) logger.info("file cleanup", { ...result });
+        if (!result) return;
+        const { error, ...counts } = result;
+        if (error) logger.warn("file cleanup", { ...counts, reason: error });
+        else logger.info("file cleanup", counts);
       })
       .catch((error) => logger.error("file cleanup", error))
       .finally(() => {
