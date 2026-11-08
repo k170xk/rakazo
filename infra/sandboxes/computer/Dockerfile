@@ -200,10 +200,13 @@ COPY --from=ocsc-builder /opt/ocsc-word /opt/ocsc-word
 COPY --from=ocsc-builder --chown=1000:1000 /opt/ocsc-video /opt/ocsc-video
 COPY --from=ocsc-builder /opt/evolve-plugin /opt/evolve-plugin
 COPY --chmod=755 ocsc/ocsc-tool /usr/local/lib/rakazo/ocsc-tool
+# Evolve PDF Studio: the OCSC build of Open PDF Studio for PDF markups, opened in the visible browser.
+# Its web bundle (ocsc/pdf-studio/app) comes from ocsc/pdf-studio/build-app.sh before the image build.
+COPY ocsc/pdf-studio /opt/pdf-studio
 RUN sed -i 's/\r$//' /usr/local/lib/rakazo/ocsc-tool \
   && ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
   && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
-  && for tool in word pptx xlsx pdf show video plugin; do \
+  && for tool in word pptx xlsx pdf show video plugin pdf-studio; do \
        ln -s /usr/local/lib/rakazo/ocsc-tool "/usr/local/bin/ocsc-${tool}"; \
      done \
   && mkdir -p /usr/local/share/fonts/ocsc \

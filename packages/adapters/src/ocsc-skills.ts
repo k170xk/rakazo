@@ -257,9 +257,33 @@ Never make a PDF another way (no LibreOffice, pandoc or wkhtmltopdf).
 READING A PDF
 ocsc-pdf read --in <name>.pdf returns the text of each page. A scanned drawing or photo has no text; say so rather than guessing its contents.
 
+To mark up, comment on, redline, audit, measure or take quantities off a PDF, use the skill /ocsc-pdf-markup instead.
+
 SENDING, FAILURES AND THE SCREEN
 ${SEND_NOTE} If the JSON says "ok": false, read the error and fix the input; stop after three attempts and say what went wrong.
 ${SCREEN_NOTE}`;
+
+const PDF_MARKUP_INSTRUCTIONS = `Use this whenever the person wants a PDF or drawing marked up, commented on, redlined, checked, audited or reviewed, wants measurements or quantities taken off it, or wants markups changed.
+
+You work in Evolve PDF Studio (OCSC's build of Open PDF Studio), open in your computer's browser so the person can watch every markup appear, and draw or fix markups themselves. Work on your computer with shell and the ocsc-pdf-studio command; every command prints JSON with "ok".
+
+${THEIR_FILES_NOTE}
+
+1. OPEN: ocsc-pdf-studio open <file>.pdf --out outputs/<Name>-markup.pdf
+   Saving writes to --out (by default outputs/<name>-markup.pdf) and never changes the original. To carry on with a file you marked up before, open that output file. If open says there are unsaved markups, save first; add --discard only when the person agrees to lose them.
+2. READ FIRST: ocsc-pdf-studio call stand (pages, current page, tool). ocsc-pdf-studio call get_page_text '{"page":1}' gives the page's text with positions, so you can place markups on the right words, rooms or details. ocsc-pdf-studio call list_annotations '{"page":1}' shows the markups already there. Before marking a page, show it whole: call go_to_page '{"page":2}', then call fit_page.
+3. MARK UP: ocsc-pdf-studio call create_annotation '{"type":"cloud","page":1,"props":{"x":900,"y":520,"width":420,"height":300,"strokeColor":"#E03131","lineWidth":3}}'
+   Positions are PDF points from the top-left of the page at 100% zoom (an A1 sheet is about 2384 x 1684, A4 portrait 595 x 842; stand gives the page size).
+   - cloud: around an issue. callout: a note with a leader line, props x, y, width, height, text, fontSize, and leaderStartX/Y (the point it marks) to leaderEndX/Y (the box). textbox: a plain note; for an approval write e.g. "CHECKED - OCSC 08/11/2026" in a green textbox (not a stamp, which does not save its picture). arrow and line: startX, startY, endX, endY. highlight or box: an area. comment: a sticky note at x, y.
+   - Colours: red #E03131 for an issue or non-compliance, orange #F08C00 for a query, green #2F9E44 for checked or approved.
+   - Put an audit on its own layer: call create_layer '{"name":"OCSC audit"}' once, then add "layer":"OCSC audit" to each create_annotation.
+   - Change or remove one: update_annotation '{"id":"<id>","props":{...}}', delete_annotation '{"id":"<id>"}', or undo.
+4. MEASURE: set_measure_scale for the drawing's scale, then measureDistance, measureArea or measurePerimeter annotations show their own values; get_takeoff and place_schedule total them.
+5. OTHER TOOLS: ocsc-pdf-studio tools lists all of them (pages, bookmarks, watermarks, title blocks, text replacement, layers, floor plans and more); ocsc-pdf-studio tools <name> shows a tool's arguments. Use the tools, not mouse clicks. For long arguments write a JSON file and pass @file.json.
+6. CHECK: ocsc-pdf-studio screenshot writes a PNG of the screen; look at it to check your markups sit where you meant.
+7. SAVE AND SEND: ocsc-pdf-studio save, then attach_file with the "saved" path. Then summarise the findings for the person: each issue with its page and what you marked. When they want a written audit report, write it with /ocsc-word.
+
+If a command says "ok": false, read the error and fix the input; stop after three attempts and say what went wrong.`;
 
 const VIDEO_INSTRUCTIONS = `Use this whenever the person wants a video, animation, motion graphics, explainer, toolbox talk video, social clip or an .mp4, or wants a video changed.
 
@@ -368,6 +392,11 @@ export const OCSC_SKILLS: OcscSkill[] = [
     name: "ocsc-pdf",
     description: "Any PDF to make or read: OCSC-branded, made with ocsc-pdf",
     body: PDF_INSTRUCTIONS,
+  },
+  {
+    name: "ocsc-pdf-markup",
+    description: "Mark up, audit, redline or measure a PDF or drawing: Evolve PDF Studio",
+    body: PDF_MARKUP_INSTRUCTIONS,
   },
   {
     name: "ocsc-video",

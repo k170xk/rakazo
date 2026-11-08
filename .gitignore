@@ -50,3 +50,6 @@ playwright-report-www
 # Downloaded embedded computer screen SDK files
 apps/web/public/computer-screen/*.js
 apps/web/public/computer-screen/sdk/
+
+# Evolve PDF Studio web bundle, built by build-app.sh
+infra/sandboxes/computer/ocsc/pdf-studio/app/

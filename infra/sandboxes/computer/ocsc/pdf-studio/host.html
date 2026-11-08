@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Evolve PDF Studio</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+  html, body { margin: 0; height: 100%; background: #141414; overflow: hidden; }
+  iframe { border: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<iframe id="app" title="Evolve PDF Studio" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+<script>
+// The host side of Open PDF Studio's workplace contract (js/core/host-brug.js in the app): the
+// app asks this page to open, save and list files, and this page reads and writes the bot's
+// workspace through the local server. The original PDF is never overwritten unless the bot
+// named it as the output.
+const TOKEN = "__TOKEN__";
+const params = new URLSearchParams(location.search);
+const source = params.get("file") || "";
+const output = params.get("out") || source;
+const frame = document.getElementById("app");
+
+const state = { saves: [], messages: [], opened: null, connected: false };
+window.evolvePdfHost = state;
+
+async function api(path, init = {}) {
+  const response = await fetch(path, { ...init, headers: { ...(init.headers || {}), "x-pdf-studio": TOKEN } });
+  if (!response.ok) {
+    let message = `${response.status}`;
+    try { message = (await response.json()).error || message; } catch {}
+    throw Object.assign(new Error(message), { code: response.status === 404 ? "niet_gevonden" : "fout" });
+  }
+  return response;
+}
+
+const fileUrl = (path) => `/api/file?path=${encodeURIComponent(path)}`;
+const baseName = (path) => path.split("/").pop();
+
+async function save(path, bytes, mode) {
+  const response = await api(`${fileUrl(path)}&mode=${mode}`, { method: "PUT", body: bytes });
+  const saved = await response.json();
+  state.saves.push({ ...saved, at: Date.now() });
+  return saved;
+}
+
+const handlers = {
+  hallo: async () => {
+    state.connected = true;
+    return { soorten: ["opslaan_als"] };
+  },
+  open: async ({ bestand }) => {
+    const bytes = await (await api(fileUrl(bestand))).arrayBuffer();
+    state.opened = bestand;
+    return { value: { bestand, naam: baseName(bestand), versie: null, alleen_lezen: false, bytes }, transfer: [bytes] };
+  },
+  opslaan: async ({ bestand, bytes }) => {
+    const target = bestand === source ? output : bestand;
+    const saved = await save(target, bytes, "overwrite");
+    const note = target === bestand ? null : `Saved to ${saved.path}; ${bestand} is unchanged.`;
+    return { bestand, naam: baseName(saved.path), versie: null, conflict: false, melding: note, vergrendeld: null };
+  },
+  opslaan_als: async ({ naam, map, bytes }) => {
+    const folder = map || output.split("/").slice(0, -1).join("/") || "outputs";
+    const saved = await save(`${folder}/${naam}`, bytes, "new");
+    return { bestand: saved.path, naam: baseName(saved.path), versie: null, hernoemd: baseName(saved.path) !== naam };
+  },
+  lijst: async ({ map }) => {
+    const folder = map || source.split("/").slice(0, -1).join("/");
+    return (await api(`/api/list?dir=${encodeURIComponent(folder)}`)).json();
+  },
+  versies: async () => [],
+  geopend: async () => true,
+  melding: async ({ tekst, toon }) => {
+    state.messages.push({ text: tekst, tone: toon, at: Date.now() });
+    return true;
+  },
+};
+
+window.addEventListener("message", async (event) => {
+  if (event.source !== frame.contentWindow || event.origin !== location.origin) return;
+  const data = event.data;
+  if (!data || data.werkplek !== 1 || typeof data.id !== "number" || typeof data.soort !== "string") return;
+  const reply = (fields, transfer) => frame.contentWindow.postMessage({ werkplek: 1, antwoord: data.id, ...fields }, location.origin, transfer || []);
+  const handler = handlers[data.soort];
+  if (!handler) return reply({ ok: false, fout: `Unknown request: ${data.soort}`, code: "onbekende_soort" });
+  try {
+    const result = await handler(data);
+    if (result && result.transfer) reply({ ok: true, waarde: result.value }, result.transfer);
+    else reply({ ok: true, waarde: result === undefined ? null : result });
+  } catch (error) {
+    reply({ ok: false, fout: String(error.message || error), code: error.code || "fout" });
+  }
+});
+
+const hash = new URLSearchParams({ ouder: location.origin, app: "pdf" });
+if (source) hash.set("bestand", source);
+frame.src = `/index.html#${hash}`;
+</script>
+</body>
+</html>
