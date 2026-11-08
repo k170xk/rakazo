@@ -1,0 +1,64 @@
+[
+  {
+    "office": "Dublin",
+    "aliases": ["Head Office", "Dublin Head Office", "Prussia Street"],
+    "label": "Head Office",
+    "lines": ["9 Prussia Street", "Dublin 7", "Ireland", "D07 KT57"],
+    "phone": "+353 (0)1 868 2000",
+    "email": "ocsc@ocsc.ie",
+    "web": "www.ocsc.ie"
+  },
+  {
+    "office": "Cork",
+    "label": "Cork Office",
+    "lines": [
+      "North Point House",
+      "North Point Business Park",
+      "New Mallow Road",
+      "Cork",
+      "T23 AT2P"
+    ],
+    "phone": "+353 21 235 5816",
+    "email": "cork@ocsc.ie",
+    "web": "www.ocsc.ie"
+  },
+  {
+    "office": "Galway",
+    "label": "Galway Office",
+    "lines": [
+      "2nd Floor, Technology House",
+      "Galway Technology Park",
+      "Parkmore",
+      "Galway",
+      "H91 TXK0"
+    ],
+    "phone": "+353 91 771 360",
+    "email": "galway@ocsc.ie",
+    "web": "www.ocsc.ie"
+  },
+  {
+    "office": "Belfast",
+    "aliases": ["Northern Ireland"],
+    "label": "Belfast Office",
+    "lines": ["113 The Mount", "Belfast", "Co. Antrim", "BT5 4ND", "Northern Ireland"],
+    "phone": "+44 28 9024 4444",
+    "email": "belfast@ocsc.co.uk",
+    "web": "www.ocsc.co.uk"
+  },
+  {
+    "office": "London",
+    "label": "London Office",
+    "lines": ["3 Sutton Lane", "London", "EC1M 5PU", "United Kingdom"],
+    "phone": "+44 20 7415 7120",
+    "email": "london@ocsc.co.uk",
+    "web": "www.ocsc.co.uk"
+  },
+  {
+    "office": "Birmingham",
+    "label": "Birmingham Office",
+    "lines": ["10 Brindley Place", "Birmingham", "B1 2JB", "United Kingdom"],
+    "phone": "+44 121 231 3061",
+    "email": "birmingham@ocsc.co.uk",
+    "web": "www.ocsc.co.uk"
+  }
+]

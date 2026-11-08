@@ -1,0 +1,30 @@
+{
+  "description": "The OCSC report, used for every Word document unless the person names another template: digital cover, Notice and Document Control, Table of Contents, numbered sections and the office's back cover.",
+  "office": "required",
+  "fields": {
+    "project_number": "OCSC job number, for example HEL18. On the cover, the document control table and the footers.",
+    "project_name": "Project name, on the cover and in the footers.",
+    "client_name": "The client the document is for, on the cover and in the Notice.",
+    "author": "Who wrote it, usually the person you are working for.",
+    "revision": "First revision code; P01 unless the person gives one (C01 once issued). Each edited version adds the next revision by itself.",
+    "document_title": "Comes from the spec's title.",
+    "date": "Issue date; today unless the person gives one.",
+    "status": "Status / suitability code, for example S2. Left blank when not given.",
+    "zone": "Zone / volume code. Left blank when not given.",
+    "level": "Level code. Left blank when not given.",
+    "role_type": "Role code. Left blank when not given.",
+    "number": "Document number. Left blank when not given.",
+    "checked_by": "Who checked it. Left blank when not given.",
+    "approved_by": "Who authorised it. Left blank when not given."
+  },
+  "defaults": {
+    "revision": "P01",
+    "status": "",
+    "zone": "",
+    "level": "",
+    "role_type": "",
+    "number": "",
+    "checked_by": "",
+    "approved_by": ""
+  }
+}

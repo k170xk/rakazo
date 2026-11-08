@@ -23,9 +23,16 @@ Work on your computer with write_file and the ocsc tool: every ocsc-word command
 
 TEMPLATES
 Run: ocsc-word templates
-The default is OCSCReportV1: a green OCSC banner holding the title and subtitle, and the city skyline in the footer. Use another template only when the person names it or the document type clearly matches one (each template is listed with its description and the {{fields}} it asks for).
+Every Word document uses the default, OCSCReport, unless the person names another template: the OCSC cover, Notice and Document Control (job details and revision history), Table of Contents, the green OCSC banner with the title and subtitle on every inside page, the city skyline footer with page numbers, and the back cover with the office's address. ocsc-word fills all of it from the spec, writes the Table of Contents from your headings and numbers the headings itself, so write headings without numbers ("Introduction", "Scope").
 A template can also be a Word file in the workspace: --template <their file>.docx. When the person sends a template to keep, copy it into templates/ (cp "<their file>.docx" templates/<Short-Name>.docx) so it is listed by name from then on.
-Templates may contain {{field}} placeholders, filled from "fields" in the spec ({"fields":{"client":"Dublin City Council","job_number":"HEL18"}}), and a {{content}} paragraph where the blocks go. If the output lists "unfilled" fields, ask the person for those values or fill them later with fill_fields. Never invent a value for a field.
+Templates may contain {{field}} placeholders, filled from "fields" in the spec, and a {{content}} paragraph where the blocks go. If the output lists "unfilled" fields, ask the person for those values or fill them later with fill_fields. Never invent a value for a field.
+
+DOCUMENT DETAILS
+Before a new document, gather these once, so the person never has to repeat them:
+- office: the OCSC office whose address goes on the back cover (Dublin, Cork, Galway, Belfast, London or Birmingham).
+- project_number, project_name and client_name: from the request, or look the project up with mcp__evolve__search_project_datasheets by its name or job number.
+- author: the person you are working for (evolve_my_profile gives their name and office).
+Take whatever the request, the conversation or Evolve already gives. Then ask for everything still missing in one ask_user question, with the office as options and their own office first; when nobody is there to answer, use their own office. The date (today), revision (P01), document title (the spec's title) and banner subtitle (job number and project name) fill themselves; give "revision", "status", "checked_by" or "approved_by" only when the person mentions them.
 
 BEFORE YOU START A NEW DOCUMENT
 For a report, proposal, method statement or other document of more than a page, ask so you can plan the pictures. ${SETUP_QUESTIONS_NOTE}
@@ -36,8 +43,8 @@ Letters and memos skip these questions and have no pictures unless the person as
 
 CREATE
 1. Write a spec with write_file to work/<short-name>.json:
-{"title":"Flood Risk Assessment","subtitle":"HEL 18 D&B, Dublin City Council","blocks":[
- {"type":"heading","level":1,"text":"1. Introduction"},
+{"title":"Flood Risk Assessment","office":"Dublin","fields":{"project_number":"HEL18","project_name":"HEL 18 Design and Build","client_name":"Dublin City Council","author":"<their name>"},"blocks":[
+ {"type":"heading","level":1,"text":"Introduction"},
  {"type":"paragraph","text":"Plain text. **bold** and *italic* are allowed."},
  {"type":"bullets","items":["Point",{"text":"Sub-point","level":1}]},
  {"type":"numbered","items":["Step one","Step two"]},
@@ -46,7 +53,7 @@ CREATE
  {"type":"image","path":"work/fig1.png","width_cm":15,"caption":"Figure 2: Site plan"},
  {"type":"pagebreak"}]}
 2. Run: ocsc-word new --spec work/<short-name>.json --out outputs/<Descriptive-Name>.docx
-Headings are level 1 to 3 and numbered in the text ("1. Introduction", "1.1 Scope"). The title and subtitle go in the banner, so do not repeat the title as a heading.
+Headings are level 1 to 3; in OCSCReport each level 1 heading starts a new page. The title goes on the cover, the banner and the footers, so do not repeat it as a heading. Add "subtitle" only to change the banner's second line. If ocsc-word answers that it needs the office, ask the person (see DOCUMENT DETAILS) and run it again.
 
 EDIT
 When the person asks for changes to a document you made or one they sent, always edit its latest version with ocsc-word edit. Never rebuild it with ocsc-word new unless they ask to start again: editing keeps their own changes, shows yours as tracked changes and leaves the earlier version in place. Do not ask the setup questions again; ask only what the new content needs (for example which projects, when they ask for project photos).
@@ -59,11 +66,13 @@ When the person asks for changes to a document you made or one they sent, always
  {"op":"replace_section","heading":"3. Conclusions","blocks":[...]},
  {"op":"delete_section","heading":"4. Appendix"},
  {"op":"append","blocks":[...]},
- {"op":"fill_fields","fields":{"client":"..."}},
+ {"op":"fill_fields","fields":{"client_name":"..."}},
+ {"op":"set_office","office":"Cork"},
  {"op":"set_title","text":"..."},
  {"op":"set_subtitle","text":"..."}]}
 3. Run: ocsc-word edit --in outputs/<Name>.docx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.docx
 Save each round of changes as a new version (-v2, -v3) so earlier versions stay available, unless the person asks you to overwrite.
+Each edited version is a new revision by itself: Document Control gets a row with the next code (P01, P02, ...) and today's date, and the cover, job row and footers follow, and the Table of Contents is rewritten. Do not ask about revisions. Only when the person says so, add "revision":"C01" beside "edits" for a specific code (for example when issuing), "author":"<name>" when someone else made this revision, or "revision":false for no new revision. A --clean edit while drafting adds no revision.
 Edit blocks are the same as a new document's, so an edit can add anything a new document has: new sections (a heading block plus its content, with add_to_section on the section before it or append at the end), infographic blocks (call evolve_infographics for just the new pictures), project photos, tables, lists, and {"type":"pagebreak"} to start a new page. To put an infographic beside existing words, replace_section with the section's words rewritten into an infographic block.
 
 SHOWING THE CHANGES

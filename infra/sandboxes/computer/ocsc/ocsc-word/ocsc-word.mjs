@@ -37,7 +37,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_DIR = process.env.OCSC_WORD_TEMPLATES || join(HERE, "templates");
 const WORKSPACE =
   process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
-const DEFAULT_TEMPLATE = "OCSCReportV1";
+const DEFAULT_TEMPLATE = "OCSCReport";
+/** Built-in templates that were replaced, so specs naming them still work. */
+const REPLACED_TEMPLATES = { ocscreportv1: DEFAULT_TEMPLATE };
 const BRAND_GREEN = "77C043";
 const HEADING_FONT = "Arial";
 const W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
@@ -205,7 +207,8 @@ function resolveTemplate(value) {
       path: path.rel,
     };
   }
-  const name = wanted.replace(TEMPLATE_EXT, "");
+  const asked = wanted.replace(TEMPLATE_EXT, "");
+  const name = REPLACED_TEMPLATES[asked.toLowerCase()] ?? asked;
   if (!/^[A-Za-z0-9 _-]+$/.test(name))
     throw new UsageError(
       "Template names are letters, digits, spaces, - and _.",
@@ -220,7 +223,48 @@ function resolveTemplate(value) {
   return hit;
 }
 
+/** OCSC's offices, for a back cover's address (templates/offices.json). */
+function offices() {
+  try {
+    const list = JSON.parse(
+      readFileSync(join(TEMPLATE_DIR, "offices.json"), "utf8"),
+    );
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function officeNames() {
+  return offices()
+    .map((o) => o.office)
+    .join(", ");
+}
+
+function resolveOffice(value) {
+  const want = norm(value)
+    .replace(/\b(ocsc|office)\b/g, "")
+    .trim();
+  const hit = offices().find((o) =>
+    [o.office, ...(o.aliases ?? [])].some((n) => norm(n) === want),
+  );
+  if (!hit)
+    throw new UsageError(
+      `Unknown office ${JSON.stringify(value)}. OCSC offices: ${officeNames()}.`,
+    );
+  return hit;
+}
+
+function today() {
+  return new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 const FIELD_RE = /\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g;
+const HEADING_NUMBER = /^\s*\d+(\.\d+)*\.?\s+/;
 
 /** The {{fields}} a template asks for, across its body, headers and footers. */
 async function templateFields(doc) {
@@ -326,6 +370,19 @@ class Doc {
     }
     if (add)
       this.styles = this.styles.replace("</w:styles>", `${add}</w:styles>`);
+  }
+
+  hasStyle(id) {
+    return Boolean(this.styles?.includes(`w:styleId="${id}"`));
+  }
+
+  /** The template numbers its headings itself, so typed numbers would show twice. */
+  numberedHeadings() {
+    const style =
+      /<w:style [^>]*w:styleId="Heading1"[^>]*>[\s\S]*?<\/w:style>/.exec(
+        this.styles ?? "",
+      )?.[0];
+    return Boolean(style?.includes("<w:numPr>"));
   }
 
   ensureNumbering() {
@@ -532,10 +589,16 @@ class Doc {
         switch (b?.type) {
           case "heading": {
             const level = Math.min(Math.max(Number(b.level) || 1, 1), 3);
-            return para(b.text, { style: `Heading${level}` });
+            const text = this.numberedHeadings()
+              ? String(b.text ?? "").replace(HEADING_NUMBER, "")
+              : b.text;
+            return para(text, { style: `Heading${level}` });
           }
           case "paragraph":
-            return para(b.text, { align: b.align });
+            return para(b.text, {
+              align: b.align,
+              style: this.hasStyle("Body") ? "Body" : undefined,
+            });
           case "bullets":
           case "numbered": {
             const num = this.listNum(
@@ -601,9 +664,26 @@ class Doc {
     return out;
   }
 
+  /** The section break closing the content before a back cover, or null when there is no back cover. */
+  contentEnd(els) {
+    const back = els.findIndex((e) =>
+      e.xml.includes('w:val="BackCoverAddress"'),
+    );
+    if (back < 0) return null;
+    return (
+      els
+        .slice(0, back)
+        .reverse()
+        .find((e) => e.tag === "p" && e.xml.includes("<w:sectPr")) ?? null
+    );
+  }
+
+  /** Adds body XML at the end of the content: before the back cover, or before the final section. */
   insertBeforeSectPr(xml) {
     const els = this.elements();
-    const sect = [...els].reverse().find((e) => e.tag === "sectPr");
+    const sect =
+      this.contentEnd(els) ??
+      [...els].reverse().find((e) => e.tag === "sectPr");
     const at = sect ? sect.from : this.xml.lastIndexOf("</w:body>");
     this.xml = this.xml.slice(0, at) + xml + this.xml.slice(at);
   }
@@ -611,12 +691,14 @@ class Doc {
   /** The heading element, and where its section ends. */
   section(heading) {
     const els = this.elements();
-    const want = norm(heading);
-    const idx = els.findIndex((e) => e.level && norm(e.text) === want);
+    const wants = [norm(heading), norm(heading).replace(HEADING_NUMBER, "")];
+    const idx = els.findIndex((e) => e.level && wants.includes(norm(e.text)));
     const loose =
       idx >= 0
         ? idx
-        : els.findIndex((e) => e.level && norm(e.text).includes(want));
+        : els.findIndex(
+            (e) => e.level && wants.some((w) => w && norm(e.text).includes(w)),
+          );
     if (loose < 0) {
       const found = els.filter((e) => e.level).map((e) => e.text);
       throw new UsageError(
@@ -624,9 +706,13 @@ class Doc {
       );
     }
     const h = els[loose];
+    const stop = this.contentEnd(els);
     const end = els
       .slice(loose + 1)
-      .find((e) => e.tag === "sectPr" || (e.level && e.level <= h.level));
+      .find(
+        (e) =>
+          e === stop || e.tag === "sectPr" || (e.level && e.level <= h.level),
+      );
     return {
       start: h.from,
       bodyStart: h.to,
@@ -724,6 +810,227 @@ class Doc {
     if (title) this.meta.title = title;
     if (subtitle) this.meta.subtitle = subtitle;
     return changed;
+  }
+
+  /** Writes an office's name, address, phone and contacts in the back cover; false when there is none. */
+  setOffice(office) {
+    const pPr = (p) => /<w:pPr>[\s\S]*?<\/w:pPr>/.exec(p ?? "")?.[0] ?? "";
+    const rPr = (p) =>
+      /<w:r(?:\s[^>]*)?>\s*(<w:rPr>[\s\S]*?<\/w:rPr>)/.exec(p ?? "")?.[1] ?? "";
+    const line = (from, text) =>
+      `<w:p>${pPr(from)}<w:r>${rPr(from)}<w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p>`;
+    let found = false;
+    // The text box is written twice, for Word and for older readers; both are rewritten.
+    this.xml = this.xml.replace(
+      /(<w:txbxContent\b[^>]*>)([\s\S]*?)(<\/w:txbxContent>)/g,
+      (box, open, inner, close) => {
+        if (!inner.includes('w:val="BackCoverAddress"')) return box;
+        found = true;
+        const paras = inner.match(PARA_RE) ?? [];
+        const styled = paras.filter((p) =>
+          p.includes('w:val="BackCoverAddress"'),
+        );
+        const plain = styled[1] ?? styled[0];
+        const contact =
+          paras.find(
+            (p) =>
+              !p.includes('w:val="BackCoverAddress"') && /\S/.test(textOf(p)),
+          ) ?? plain;
+        const contacts = [
+          office.email && `E: ${office.email}`,
+          office.web && `W: ${office.web}`,
+        ].filter(Boolean);
+        return (
+          open +
+          line(styled[0], office.label || `${office.office} Office`) +
+          [
+            ...(office.lines ?? []),
+            ...(office.phone ? [`T: ${office.phone}`] : []),
+          ]
+            .map((l) => line(plain, l))
+            .join("") +
+          (contacts.length ? line(contact, contacts.join(" | ")) : "") +
+          close
+        );
+      },
+    );
+    if (found) this.meta.office = office.office;
+    return found;
+  }
+
+  /**
+   * Adds a row to the Document Control table with the next revision (or `code`) and today's date,
+   * and puts the same revision and date in the job row, on the cover and in the footers.
+   */
+  async addRevision({ code, author } = {}) {
+    const els = this.elements();
+    const table = els.find(
+      (e) =>
+        e.tag === "tbl" &&
+        e.text.includes("Authorised") &&
+        e.text.includes("Issue Date"),
+    );
+    if (!table) return null;
+    const rows = childrenOf(table.xml, "tr");
+    const head = rows.findIndex((r) => textOf(r.xml).includes("Authorised"));
+    const last = rows[rows.length - 1];
+    if (head < 0 || head === rows.length - 1) return null;
+    const labels = childrenOf(rows[head].xml, "tc").map((c) =>
+      norm(textOf(c.xml)),
+    );
+    const cells = childrenOf(last.xml, "tc");
+    if (cells.length !== labels.length) return null;
+    const col = (label) => labels.findIndex((l) => l.startsWith(label));
+    const from = textOf(cells[0].xml).trim();
+    const to = code ? String(code).trim() : nextRevision(from);
+    if (!from || from.includes("{{") || !to || to === from) return null;
+    const oldDate = textOf(cells[col("issue")]?.xml ?? "").trim();
+    const date = today();
+    const values = new Map([
+      [0, to],
+      [col("issue"), date],
+      [col("checked"), ""],
+      [col("authorised"), ""],
+      ...(author ? [[col("author"), String(author)]] : []),
+    ]);
+    values.delete(-1);
+    const row =
+      last.xml.slice(0, cells[0].from) +
+      cells
+        .map((c, i) => (values.has(i) ? cellText(c.xml, values.get(i)) : c.xml))
+        .join("") +
+      last.xml.slice(cells[cells.length - 1].to);
+
+    // The job row under the vertical labels carries the current revision too.
+    const jobLabels = childrenOf(rows[0].xml, "tc").map((c) =>
+      norm(textOf(c.xml)),
+    );
+    const jobCells = rows[1] ? childrenOf(rows[1].xml, "tc") : [];
+    const revCol = jobLabels.indexOf("revision");
+    const jobRow =
+      head > 1 && revCol >= 0 && jobCells.length === jobLabels.length
+        ? rows[1].xml.slice(0, jobCells[0].from) +
+          jobCells
+            .map((c, i) => (i === revCol ? cellText(c.xml, to) : c.xml))
+            .join("") +
+          rows[1].xml.slice(jobCells[jobCells.length - 1].to)
+        : null;
+
+    const tableXml =
+      table.xml.slice(0, rows[0].from) +
+      rows.map((r, i) => (i === 1 && jobRow ? jobRow : r.xml)).join("") +
+      row +
+      table.xml.slice(last.to);
+    this.xml =
+      this.xml.slice(0, table.from) + tableXml + this.xml.slice(table.to);
+
+    // The cover's date, which comes before the table so its position is unchanged.
+    const cover = els.find(
+      (e) => e.tag === "tbl" && e.from < table.from && e.text.includes(oldDate),
+    );
+    if (cover && oldDate)
+      this.xml =
+        this.xml.slice(0, cover.from) +
+        swapText(cover.xml, [oldDate], date, () => {}) +
+        this.xml.slice(cover.to);
+    for (const [name, xml] of await this.headerFooterFiles()) {
+      if (!name.includes("footer")) continue;
+      let next = swapText(xml, [from], to, () => {});
+      if (oldDate) next = swapText(next, [oldDate], date, () => {});
+      this.zip.file(name, next);
+    }
+    return { from, to, date };
+  }
+
+  /** Writes a Table of Contents' entries from the headings; Word adds page numbers when it opens the file. */
+  async refreshToc() {
+    const instr = /<w:instrText[^>]*>\s*TOC\b([^<]*)<\/w:instrText>/.exec(
+      this.xml,
+    );
+    if (!instr) return false;
+    const range = /\\o\s+"(\d)-(\d)"/.exec(instr[1]);
+    const [lo, hi] = range ? [Number(range[1]), Number(range[2])] : [1, 3];
+    const before = this.xml.slice(0, instr.index);
+    const start = Math.max(
+      before.lastIndexOf("<w:p>"),
+      before.lastIndexOf("<w:p "),
+    );
+    if (start < 0) return false;
+    // The field runs from the TOC paragraph to the paragraph holding its end.
+    let depth = 0;
+    let at = start;
+    let firstPara = null;
+    let lastPara = null;
+    while (at < this.xml.length) {
+      const end = closeOf(this.xml, at, "p");
+      const p = this.xml.slice(at, end);
+      firstPara ??= p;
+      for (const m of p.matchAll(/w:fldCharType="(begin|end)"/g))
+        depth += m[1] === "begin" ? 1 : -1;
+      if (depth <= 0) {
+        lastPara = { p, end };
+        break;
+      }
+      const next = /<w:p[\s>]/.exec(this.xml.slice(end));
+      if (!next) return false;
+      at = end + next.index;
+    }
+    if (!lastPara) return false;
+    const begin = firstPara.lastIndexOf(
+      'w:fldCharType="begin"',
+      firstPara.search(/<w:instrText[^>]*>\s*TOC\b/),
+    );
+    const sep = firstPara.indexOf('w:fldCharType="separate"', begin);
+    if (begin < 0 || sep < 0) return false;
+    const runStart = Math.max(
+      firstPara.lastIndexOf("<w:r>", begin),
+      firstPara.lastIndexOf("<w:r ", begin),
+    );
+    const fieldStart = firstPara.slice(
+      runStart,
+      firstPara.indexOf("</w:r>", sep) + "</w:r>".length,
+    );
+
+    const numbered = this.numberedHeadings();
+    const counters = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const entries = [];
+    for (const e of this.elements()) {
+      if (!e.level || e.from < lastPara.end) continue;
+      const text = e.text.trim();
+      if (!text) continue;
+      counters[e.level - 1] += 1;
+      counters.fill(0, e.level);
+      if (e.level < lo || e.level > hi) continue;
+      const number = numbered ? counters.slice(0, e.level).join(".") : "";
+      entries.push({
+        style: `TOC${e.level}`,
+        runs:
+          (number ? `<w:r><w:t>${number}</w:t></w:r><w:r><w:tab/></w:r>` : "") +
+          `<w:r><w:t xml:space="preserve">${esc(text)}</w:t></w:r>`,
+      });
+    }
+    const para = (style, inner) =>
+      `<w:p><w:pPr><w:pStyle w:val="${style}"/></w:pPr>${inner}</w:p>`;
+    const [first, ...rest] = entries;
+    const xml =
+      para(first?.style ?? `TOC${lo}`, fieldStart + (first?.runs ?? "")) +
+      rest.map((e) => para(e.style, e.runs)).join("") +
+      `<w:p>${/<w:pPr>[\s\S]*?<\/w:pPr>/.exec(lastPara.p)?.[0] ?? ""}<w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>`;
+    this.xml = this.xml.slice(0, start) + xml + this.xml.slice(lastPara.end);
+
+    const settings = this.zip.file("word/settings.xml");
+    if (settings) {
+      const s = await settings.async("string");
+      if (!s.includes("<w:updateFields"))
+        this.zip.file(
+          "word/settings.xml",
+          s.replace(
+            /(<w:settings\b[^>]*>)/,
+            '$1<w:updateFields w:val="true"/>',
+          ),
+        );
+    }
+    return true;
   }
 
   async save(outFull) {
@@ -1139,6 +1446,51 @@ function rewriteParagraphText(p, text) {
   });
 }
 
+/** The top-level `tag` children inside one element's XML, with offsets into that XML. */
+function childrenOf(xml, tag) {
+  const out = [];
+  const re = new RegExp(`<w:${tag}(?=[\\s>/])`, "g");
+  let i = xml.indexOf(">") + 1;
+  for (;;) {
+    re.lastIndex = i;
+    const m = re.exec(xml);
+    if (!m) break;
+    const end = closeOf(xml, m.index, tag);
+    out.push({ from: m.index, to: end, xml: xml.slice(m.index, end) });
+    i = end;
+  }
+  return out;
+}
+
+/** A table cell holding just `text`, keeping the cell's and its first run's formatting. */
+function cellText(tc, text) {
+  const tcPr = /<w:tcPr>[\s\S]*?<\/w:tcPr>/.exec(tc)?.[0] ?? "";
+  const p = /<w:p[\s>][\s\S]*?<\/w:p>/.exec(tc)?.[0] ?? "";
+  const pPr = /<w:pPr>[\s\S]*?<\/w:pPr>/.exec(p)?.[0] ?? "";
+  const firstRun = /<w:r(?:\s[^>]*)?>([\s\S]*?)<\/w:r>/.exec(p)?.[1];
+  const rPr =
+    firstRun !== undefined
+      ? (/<w:rPr\/>|<w:rPr>[\s\S]*?<\/w:rPr>/.exec(firstRun)?.[0] ?? "")
+      : (/<w:rPr>[\s\S]*?<\/w:rPr>/.exec(pPr)?.[0] ?? "");
+  const run = text
+    ? `<w:r>${rPr}<w:t xml:space="preserve">${esc(text)}</w:t></w:r>`
+    : "";
+  return `<w:tc>${tcPr}<w:p>${pPr}${run}</w:p></w:tc>`;
+}
+
+/** P01 -> P02, C09 -> C10, A -> B; null when the code has no number or letter to step. */
+function nextRevision(code) {
+  const digits = /^(.*?)(\d+)$/.exec(code);
+  if (digits)
+    return (
+      digits[1] + String(Number(digits[2]) + 1).padStart(digits[2].length, "0")
+    );
+  const letter = /^(.*?)([A-Ya-y])$/.exec(code);
+  if (letter)
+    return letter[1] + String.fromCharCode(letter[2].charCodeAt(0) + 1);
+  return null;
+}
+
 function swapText(xml, finds, replacement, count) {
   let next = xml;
   for (const f of finds) {
@@ -1181,8 +1533,13 @@ async function cmdTemplates() {
   for (const t of templateFiles()) {
     const manifest = manifestFor(t.file);
     let fields = [];
+    let numbered = false;
+    let backCover = false;
     try {
-      fields = await templateFields(await Doc.open(readFileSync(t.file)));
+      const doc = await Doc.open(readFileSync(t.file));
+      fields = await templateFields(doc);
+      numbered = doc.numberedHeadings();
+      backCover = doc.xml.includes('w:val="BackCoverAddress"');
     } catch {
       // A template that will not open is still listed, so the person can be told it is broken.
     }
@@ -1196,12 +1553,17 @@ async function cmdTemplates() {
       ...(manifest.fields && typeof manifest.fields === "object"
         ? { field_notes: manifest.fields }
         : {}),
+      numbered_headings: numbered,
+      ...(backCover
+        ? { office: manifest.office === "required" ? "required" : "optional" }
+        : {}),
     });
   }
   return {
     ok: true,
     templates: listTemplates(),
     default: DEFAULT_TEMPLATE,
+    offices: offices().map((o) => o.office),
     details,
   };
 }
@@ -1219,21 +1581,44 @@ async function cmdNew(o) {
     );
 
   const doc = await Doc.open(readFileSync(template.file));
+  const officeName = spec.office ?? spec.fields?.office;
+  const backCover = doc.xml.includes('w:val="BackCoverAddress"');
+  if (!officeName && backCover && manifest.office === "required")
+    throw new UsageError(
+      `This template ends with an OCSC office's address on its back cover. Ask the person which office the document is from (${officeNames()}), then put it in the spec as "office".`,
+    );
+  const office = officeName && backCover ? resolveOffice(officeName) : null;
+  if (office) doc.setOffice(office);
   if (typeof manifest.title_placeholder === "string")
     doc.placeholders.title = manifest.title_placeholder;
   if (typeof manifest.subtitle_placeholder === "string")
     doc.placeholders.subtitle = manifest.subtitle_placeholder;
   doc.ensureStyles();
+  const fields = {
+    ...(manifest.defaults && typeof manifest.defaults === "object"
+      ? manifest.defaults
+      : {}),
+    date: today(),
+    ...(spec.title ? { document_title: spec.title } : {}),
+    ...(spec.fields && typeof spec.fields === "object" ? spec.fields : {}),
+  };
+  const known = (k) =>
+    typeof fields[k] === "string" && fields[k].trim() ? fields[k].trim() : "";
+  const subtitle =
+    spec.subtitle ||
+    [known("project_number"), known("project_name")]
+      .filter(Boolean)
+      .join(": ") ||
+    known("client_name") ||
+    "O’Connor Sutton Cronin & Associates";
   const headers = await doc.headerFiles();
-  await doc.setBanner(spec.title, spec.subtitle, headers);
+  await doc.setBanner(spec.title, subtitle, headers);
   for (const [n, x] of headers) doc.zip.file(n, x);
-
-  let filled = [];
-  if (spec.fields && typeof spec.fields === "object") {
-    const parts = await doc.headerFooterFiles();
-    filled = await doc.fillFields(spec.fields, parts);
-    for (const [n, x] of parts) doc.zip.file(n, x);
-  }
+  const parts = await doc.headerFooterFiles();
+  const filled = (await doc.fillFields(fields, parts)).filter(
+    (f) => spec.fields && Object.hasOwn(spec.fields, f),
+  );
+  for (const [n, x] of parts) doc.zip.file(n, x);
 
   const content = doc
     .elements()
@@ -1258,11 +1643,13 @@ async function cmdNew(o) {
     }
     doc.insertBeforeSectPr(blocks);
   }
+  await doc.refreshToc();
   await doc.save(out.full);
   const unfilled = (await templateFields(doc)).filter((f) => f !== "content");
   return {
     ok: true,
     template: template.name,
+    ...(office ? { office: office.office } : {}),
     ...(filled.length ? { filled } : {}),
     ...(unfilled.length
       ? {
@@ -1343,12 +1730,42 @@ async function cmdEdit(o) {
     switch (op?.op) {
       case "set_title":
       case "set_subtitle": {
-        const c = await doc.setBanner(
+        const before = (await doc.banner()).title;
+        let c = await doc.setBanner(
           op.op === "set_title" ? op.text : null,
           op.op === "set_subtitle" ? op.text : null,
           headers,
         );
+        // A report template shows the title on its cover and in its footers rather than a banner.
+        if (
+          op.op === "set_title" &&
+          op.text &&
+          before !== doc.placeholders.title
+        ) {
+          c += doc.replaceText(before, String(op.text), true, rev);
+          for (const [name, xml] of await doc.headerFooterFiles()) {
+            if (!name.includes("footer")) continue;
+            doc.zip.file(
+              name,
+              swapText(xml, [before], String(op.text), (k) => {
+                c += k;
+              }),
+            );
+          }
+        }
         report.push({ op: op.op, changed: c });
+        break;
+      }
+      case "set_office": {
+        if (!doc.setOffice(resolveOffice(op.office)))
+          throw new UsageError(
+            `Edit ${n}: this document has no OCSC back cover to put an office's address on.`,
+          );
+        report.push({
+          op: op.op,
+          office: doc.meta.office,
+          summary: `Back cover address set to the ${doc.meta.office} office`,
+        });
         break;
       }
       case "replace_text": {
@@ -1447,11 +1864,27 @@ async function cmdEdit(o) {
       }
       default:
         throw new UsageError(
-          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, replace_text, fill_fields, append, insert_after_heading, add_to_section, replace_section or delete_section.`,
+          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, fill_fields, append, insert_after_heading, add_to_section, replace_section or delete_section.`,
         );
     }
   }
   for (const [n, x] of headers) doc.zip.file(n, x);
+  // Each new version is a new revision, except while drafting (--clean) or when the spec says "revision": false.
+  const options = Array.isArray(spec) ? {} : spec;
+  const revision =
+    o.clean || options.revision === false
+      ? null
+      : await doc.addRevision({
+          code: typeof options.revision === "string" ? options.revision : null,
+          author: typeof options.author === "string" ? options.author : null,
+        });
+  if (revision)
+    report.push({
+      op: "revision",
+      ...revision,
+      summary: `Revision ${revision.from} → ${revision.to}, dated ${revision.date}, added to Document Control`,
+    });
+  await doc.refreshToc();
   await doc.save(out.full);
   return { ok: true, tracked: !!rev, edits: report, ...downloadLink(out.rel) };
 }
