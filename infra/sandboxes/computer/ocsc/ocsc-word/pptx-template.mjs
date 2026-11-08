@@ -8,6 +8,7 @@
  * plain content layout with its heading placeholders filled.
  */
 import { existsSync } from "node:fs";
+import { addMotion, motionOf } from "./pptx-motion.mjs";
 import {
   attr,
   CT,
@@ -581,10 +582,10 @@ function agendaLines(text, width, sizePt) {
   return lines;
 }
 
-function placeShape(sp, id, box) {
+function placeShape(sp, id, box, name) {
   return sp
     .replace(/(<p:cNvPr\b[^>]*?\bid=")\d+"/, `$1${id}"`)
-    .replace(/(<p:cNvPr\b[^>]*?\bname=")[^"]*"/, `$1Agenda ${id}"`)
+    .replace(/(<p:cNvPr\b[^>]*?\bname=")[^"]*"/, `$1${name} (${id})"`)
     .replace(
       /<a:off x="-?\d+" y="-?\d+"\s*\/>\s*<a:ext cx="\d+" cy="\d+"\s*\/>/,
       `<a:off x="${Math.round(box.x)}" y="${Math.round(box.y)}"/><a:ext cx="${Math.round(box.w)}" cy="${Math.round(box.h)}"/>`,
@@ -645,29 +646,45 @@ async function agendaSlide(deck, facts, item, index, label) {
   );
   const added = [];
   for (const [i, entry] of items.entries()) {
+    const row = `Agenda item ${i + 1}`;
     const column = Math.floor(i / rows);
-    const row = i % rows;
+    const rowIndex = i % rows;
     const x = left + column * columnWidth;
-    const y = top + row * pitch;
-    if (line && row < rows - 1 && i + 1 < items.length)
+    const y = top + rowIndex * pitch;
+    if (line && rowIndex < rows - 1 && i + 1 < items.length)
       added.push(
-        placeShape(line.sp, ++id, { x: x + oval.w / 2, y: y + oval.h, w: 0, h: pitch - oval.h }),
+        placeShape(
+          line.sp,
+          ++id,
+          { x: x + oval.w / 2, y: y + oval.h, w: 0, h: pitch - oval.h },
+          `Agenda line ${i + 1}`,
+        ),
       );
-    added.push(placeShape(ovals[0].sp, ++id, { ...oval, x, y }));
-    let numberSp = placeShape(number.sp, ++id, {
-      ...number.box,
-      x: x + (number.box.x - oval.x),
-      y: y + (number.box.y - oval.y),
-    });
+    added.push(placeShape(ovals[0].sp, ++id, { ...oval, x, y }, row));
+    let numberSp = placeShape(
+      number.sp,
+      ++id,
+      {
+        ...number.box,
+        x: x + (number.box.x - oval.x),
+        y: y + (number.box.y - oval.y),
+      },
+      row,
+    );
     numberSp = setShapeText(numberSp, id, [String(i + 1).padStart(2, "0")]).xml;
     added.push(numberSp);
     const topicY = y + (topic.box.y - oval.y);
-    let topicSp = placeShape(topic.sp, ++id, {
-      x: x + topicDx,
-      y: topicY,
-      w: textWidth,
-      h: topic.box.h,
-    });
+    let topicSp = placeShape(
+      topic.sp,
+      ++id,
+      {
+        x: x + topicDx,
+        y: topicY,
+        w: textWidth,
+        h: topic.box.h,
+      },
+      row,
+    );
     const size = columns > 1 ? 12 : 14;
     if (columns > 1) topicSp = topicSp.replace(/\bsz="1400"/g, 'sz="1200"');
     const title = str(entry.title, 120).toUpperCase();
@@ -675,12 +692,17 @@ async function agendaSlide(deck, facts, item, index, label) {
     const extraLines = agendaLines(title, textWidth, size) - 1;
     added.push(topicSp);
     if (sub && str(entry.text).trim()) {
-      let subSp = placeShape(sub.sp, ++id, {
-        x: x + topicDx,
-        y: topicY + AGENDA_SUB_DROP + (extraLines * 1.1 * size * EMU) / 72,
-        w: textWidth,
-        h: sub.box.h,
-      });
+      let subSp = placeShape(
+        sub.sp,
+        ++id,
+        {
+          x: x + topicDx,
+          y: topicY + AGENDA_SUB_DROP + (extraLines * 1.1 * size * EMU) / 72,
+          w: textWidth,
+          h: sub.box.h,
+        },
+        row,
+      );
       subSp = setShapeText(subSp, id, [str(entry.text, 200)]).xml;
       added.push(subSp);
     }
@@ -799,7 +821,17 @@ export async function describeTemplate(bytes) {
 }
 
 /** Adds one slide to a deck made from the template, using its layouts; null when it has no fitting layout. */
-export async function insertTemplateSlide(deck, item, index, { images, buildSlides }) {
+export async function insertTemplateSlide(deck, item, index, { images, buildSlides, motion }) {
+  const part = await placeTemplateSlide(deck, item, index, { images, buildSlides });
+  if (part)
+    deck.write(
+      part,
+      addMotion((await deck.text(part)) ?? "", motionOf(item, motion), deck.slideSize()),
+    );
+  return part;
+}
+
+async function placeTemplateSlide(deck, item, index, { images, buildSlides }) {
   const layouts = await layoutsOf(deck);
   const label = item.__label ?? "Slide";
   const layout = findLayout(layouts, item);
@@ -848,6 +880,7 @@ export async function buildFromTemplate(
       part = await insertTemplateSlide(deck, { ...item, __label: label }, at, {
         images,
         buildSlides,
+        motion: meta,
       });
       if (!part) {
         const known = [...Object.keys(TEMPLATE_LAYOUTS), "agenda", "closing", ...NATIVE].join(", ");

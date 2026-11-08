@@ -1429,6 +1429,7 @@ async function cmdEdit(opts) {
       insertSlide: (target, item, at) =>
         insertTemplateSlide(target, item, at, {
           images: media.images,
+          motion: spec,
           buildSlides: (list) =>
             buildDeck(list, spec, media, (i) => list[i].__label).pptx.write({
               outputType: "nodebuffer",
