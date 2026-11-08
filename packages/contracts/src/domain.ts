@@ -866,6 +866,21 @@ export type MemoryPromptBudget = z.infer<typeof MemoryPromptBudgetSchema>;
 export const MEMORY_INDEX_PATH = "MEMORY.md";
 /** What a bot may write to its memory. People can still write more by hand. */
 export const BOT_MEMORY_MAX_BYTES = 4 * 1024;
+/** A note a person adds by hand; bots read about 32 KB of memory in all, so one note cannot fill it. */
+export const MEMORY_NOTE_MAX_BYTES = 24 * 1024;
+/** Where notes a person adds by hand are kept, apart from what bots write. */
+export const MEMORY_NOTES_FOLDER = "My notes";
+/** The stored path for a note name, or null when nothing usable is left of it. */
+export function memoryNotePath(name: string): string | null {
+  const title = name
+    .replace(/[\\/]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\.(md|txt|docx?|pdf)$/i, "")
+    .slice(0, 80)
+    .replace(/^[\s.-]+|[\s.-]+$/g, "");
+  return title ? `${MEMORY_NOTES_FOLDER}/${title}.md` : null;
+}
 export function isDeletableMemoryDocument(path: string): boolean {
   return path !== MEMORY_INDEX_PATH;
 }

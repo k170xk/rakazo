@@ -1,12 +1,17 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ORPCError } from "@orpc/client";
 import type { AgentSkill, AgentSkillCatalogEntry, MemoryDocument } from "@rakazo/contracts";
-import { isDeletableMemoryDocument, isEmptyBotMemory } from "@rakazo/contracts";
+import {
+  isDeletableMemoryDocument,
+  isEmptyBotMemory,
+  MEMORY_NOTE_MAX_BYTES,
+  MEMORY_NOTES_FOLDER,
+} from "@rakazo/contracts";
 import { fetchFresh, writeSaved } from "@rakazo/core/query";
-import { Badge, Button, SectionHeading, Skeleton, Textarea } from "@rakazo/ui-web";
+import { Badge, Button, Input, SectionHeading, Skeleton, Textarea, toast } from "@rakazo/ui-web";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@rakazo/ui-web/components/ui/tooltip";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Plus } from "lucide-react";
+import { ChevronRight, Download, Plus, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   AvailabilityControl,
@@ -16,9 +21,11 @@ import {
 } from "../components/integrations/space-availability";
 import { SettingsSectionHeading } from "../components/SettingsSectionHeading";
 import { downloadArtifactBytes } from "../lib/artifact-open";
+import { MEMORY_IMPORT_ACCEPT, readMemoryFile } from "../lib/memory-import";
 import { isOcscTool } from "../lib/ocsc-tools";
 import { useSpaceQueries } from "../lib/query";
 import { useSpaceRpc } from "../lib/space-rpc";
+import { errorText } from "../lib/user-error";
 
 const NO_DOCS: MemoryDocument[] = [];
 const NO_SKILLS: AgentSkillCatalogEntry[] = [];
@@ -44,34 +51,289 @@ export function KnowledgeSection({ botId }: { botId: string }) {
   );
 }
 
-/** The space's shared memory documents, mounted in the Memory settings overlay. */
+type NoteIdea = { id: string; title: string; hint: string; template: string };
+
+function useNoteIdeas(): NoteIdea[] {
+  const { t } = useLingui();
+  return [
+    {
+      id: "writing-style",
+      title: t`Writing style`,
+      hint: t`Tone, spelling, sentence length, words to avoid`,
+      template: t`How I write:
+- Tone: friendly but professional
+- Spelling: British English (organise, colour)
+- Keep sentences short and use plain words
+- Avoid: jargon, exclamation marks, "I hope this email finds you well"
+`,
+    },
+    {
+      id: "about-me",
+      title: t`About me`,
+      hint: t`Your role, office, team and what you work on`,
+      template: t`About me:
+- Role:
+- Office and team:
+- What I mostly work on:
+- Qualifications or chartership:
+`,
+    },
+    {
+      id: "replies",
+      title: t`How I like answers`,
+      hint: t`Length, format, bullet points or prose`,
+      template: t`When you answer me:
+- Lead with the answer, then the detail
+- Use bullet points for lists of three or more
+- Keep it under 200 words unless I ask for more
+- Show sums step by step
+`,
+    },
+    {
+      id: "terms",
+      title: t`Words and terms`,
+      hint: t`Acronyms, product names and how to spell them`,
+      template: t`Terms I use:
+- OCSC: our company name, always in capitals
+- RIBA stages: write as "RIBA Stage 3", not "stage three"
+`,
+    },
+    {
+      id: "clients",
+      title: t`Clients and projects`,
+      hint: t`Who you work with and what matters to them`,
+      template: t`Current clients and projects:
+- Client:
+  - Project:
+  - What they care about:
+`,
+    },
+    {
+      id: "emails",
+      title: t`Emails and sign-off`,
+      hint: t`Greetings, sign-off and your signature`,
+      template: t`Emails:
+- Greeting: "Hi <first name>,"
+- Sign-off: "Kind regards,"
+- Signature:
+`,
+    },
+  ];
+}
+
+function noteBytes(text: string): number {
+  return new TextEncoder().encode(text).byteLength;
+}
+
+/** A person's own memory notes in this space, mounted in the Memory settings overlay. */
 export function SpaceMemorySection() {
+  const { t } = useLingui();
+  const rpc = useSpaceRpc();
+  const queries = useSpaceQueries();
+  const queryClient = useQueryClient();
+  const ideas = useNoteIdeas();
+  const listKey = queries.memory.list.queryOptions({ input: { scope: "user" } }).queryKey;
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [draft, setDraft] = useState<{ name: string; content: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const tooLong = draft ? noteBytes(draft.content) > MEMORY_NOTE_MAX_BYTES : false;
+
+  function startNote(name: string, content: string) {
+    setDraft({ name, content });
+    setError(null);
+  }
+
+  async function upload(file: File) {
+    setError(null);
+    setBusy(true);
+    try {
+      startNote(file.name.replace(/\.[^.]+$/, ""), await readMemoryFile(file));
+    } catch (err) {
+      const reason = (err as { reason?: string }).reason;
+      setError(
+        reason === "legacy-doc"
+          ? t`Older .doc files cannot be read. Open it in Word, choose Save As, and pick Word Document (.docx).`
+          : reason === "unsupported"
+            ? t`Upload a Word document (.docx), PDF, or text file (.txt or .md).`
+            : reason === "empty"
+              ? t`No text was found in that file. A scanned PDF has no text to read; paste the words in instead.`
+              : t`That file could not be read. Try saving it again, or paste its text in.`,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveNote() {
+    if (!draft || busy || tooLong) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await rpc.memory.create({ name: draft.name, content: draft.content });
+      await writeSaved(queryClient, listKey, (current) => [created, ...(current ?? [])]);
+      setDraft(null);
+      toast.success(t`Your bots will use this note from their next reply`);
+    } catch (err) {
+      setError(errorText(err, t`Could not save the note`));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section
-      className="rounded-xl border border-border px-4 py-4"
+      className="overflow-hidden rounded-xl border border-border"
       data-testid="space-memory-documents"
     >
-      <SettingsSectionHeading className="mb-0">
-        <Trans>Shared memory</Trans>
-      </SettingsSectionHeading>
-      <p className="mt-1 text-[13px] text-muted-foreground">
-        <Trans>Every bot in this space reads these notes and keeps them up to date.</Trans>
-      </p>
-      <div className="mt-3">
-        <MemoryDocumentList input={{ scope: "user" }} testId="space-memory-list" />
+      <img
+        src="/memory/banner.webp"
+        alt=""
+        className="block aspect-[3/1] w-full object-cover dark:opacity-90"
+      />
+      <div className="px-4 py-4">
+        <SettingsSectionHeading className="mb-0">
+          <Trans>My memory</Trans>
+        </SettingsSectionHeading>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          <Trans>
+            Teach your bots about you. Every bot you talk to in this space reads these notes before
+            it replies. Only you see them; each colleague has their own.
+          </Trans>
+        </p>
+
+        {draft ? (
+          <div className="mt-4 space-y-2" data-testid="memory-note-editor">
+            <Input
+              aria-label={t`Note name`}
+              placeholder={t`Note name, for example Writing style`}
+              value={draft.name}
+              disabled={busy}
+              maxLength={80}
+              onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+            />
+            <Textarea
+              aria-label={t`Note`}
+              placeholder={t`Type or paste here. Plain sentences or bullet points both work.`}
+              value={draft.content}
+              disabled={busy}
+              onChange={(event) => setDraft({ ...draft, content: event.target.value })}
+              rows={Math.min(18, Math.max(8, draft.content.split("\n").length + 1))}
+              className="w-full text-[13px] leading-relaxed"
+              dir="auto"
+            />
+            <p className={`text-[12px] ${tooLong ? "text-destructive" : "text-muted-foreground"}`}>
+              {tooLong
+                ? t`This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes.`
+                : t`${Math.ceil(noteBytes(draft.content) / 1024)} KB of ${MEMORY_NOTE_MAX_BYTES / 1024} KB. Short, specific notes work best.`}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                type="button"
+                disabled={busy || tooLong || !draft.name.trim() || !draft.content.trim()}
+                onClick={() => void saveNote()}
+              >
+                <Trans>Save note</Trans>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                type="button"
+                disabled={busy}
+                onClick={() => setDraft(null)}
+              >
+                <Trans>Cancel</Trans>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button size="sm" type="button" disabled={busy} onClick={() => startNote("", "")}>
+                <Plus className="size-4" />
+                <Trans>New note</Trans>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                disabled={busy}
+                onClick={() => fileInput.current?.click()}
+              >
+                <Upload className="size-4" />
+                <Trans>Upload a file</Trans>
+              </Button>
+              <input
+                ref={fileInput}
+                type="file"
+                hidden
+                accept={MEMORY_IMPORT_ACCEPT}
+                data-testid="memory-note-upload"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void upload(file);
+                }}
+              />
+            </div>
+            <p className="mt-2 text-[12px] text-muted-foreground">
+              <Trans>
+                Word (.docx), PDF and text files. The text is copied in for you to check.
+              </Trans>
+            </p>
+            <p className="mt-4 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+              <Trans>Ideas to start with</Trans>
+            </p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2" data-testid="memory-note-ideas">
+              {ideas.map((idea) => (
+                <button
+                  key={idea.id}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => startNote(idea.title, idea.template)}
+                  className="rounded-lg border border-border px-3 py-2 text-start transition-colors hover:border-primary/50 hover:bg-primary/5 disabled:opacity-50"
+                >
+                  <span className="block text-[13px] font-medium text-foreground">
+                    {idea.title}
+                  </span>
+                  <span className="block text-[12px] text-muted-foreground">{idea.hint}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {error ? <p className="mt-2 text-[13px] text-destructive">{error}</p> : null}
+
+        <p className="mt-5 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+          <Trans>Your notes</Trans>
+        </p>
+        <div className="mt-1">
+          <MemoryDocumentList input={{ scope: "user" }} testId="space-memory-list" groupArchived />
+        </div>
       </div>
     </section>
   );
 }
 
+function memoryLabel(path: string): string {
+  const prefix = `${MEMORY_NOTES_FOLDER}/`;
+  return path.startsWith(prefix) ? path.slice(prefix.length).replace(/\.md$/, "") : path;
+}
+
+const ARCHIVED_PREFIX = "Archived bots/";
+
 function MemoryDocumentList({
   input,
   testId,
   compact = false,
+  groupArchived = false,
 }: {
   input: { botId?: string; scope: "bot" | "user" };
   testId: string;
   compact?: boolean;
+  /** Folds memory kept from archived bots under one closed heading. */
+  groupArchived?: boolean;
 }) {
   const rpc = useSpaceRpc();
   const { t } = useLingui();
@@ -108,6 +370,11 @@ function MemoryDocumentList({
   const [actionError, setError] = useState<string | null>(null);
   const error = actionError ?? (listQuery.isError ? t`Could not load` : null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [archivedOpen, setArchivedOpen] = useState(false);
+  const archived = groupArchived ? docs.filter((doc) => doc.path.startsWith(ARCHIVED_PREFIX)) : [];
+  const current = groupArchived
+    ? docs.filter((doc) => !doc.path.startsWith(ARCHIVED_PREFIX))
+    : docs;
 
   async function setDocs(update: (current: MemoryDocument[]) => MemoryDocument[]) {
     await writeSaved(queryClient, list.queryKey, (current) => update(current ?? []));
@@ -197,6 +464,78 @@ function MemoryDocumentList({
     }
   }
 
+  function renderDoc(doc: MemoryDocument) {
+    return (
+      <div key={doc.id} className="border-b border-border last:border-0">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            type="button"
+            disabled={busy}
+            onClick={() => (openId === doc.id ? closeDoc() : openDoc(doc))}
+            className="-ms-2 h-auto min-w-0 flex-1 justify-start whitespace-normal px-2 py-2.5 text-start"
+          >
+            <span className="min-w-0 truncate text-[14px] font-normal text-foreground" dir="auto">
+              {memoryLabel(doc.path).replace(ARCHIVED_PREFIX, "")}
+            </span>
+          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={<Button variant="ghost" size="icon-sm" />}
+              aria-label={t`Download`}
+              disabled={busy}
+              onClick={() => downloadDocument(doc)}
+            >
+              <Download className="size-4" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <Trans>Download</Trans>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        {openId === doc.id ? (
+          <div className="pb-2">
+            <Textarea
+              aria-label={doc.path}
+              disabled={busy}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              rows={Math.min(16, Math.max(4, draft.split("\n").length + 1))}
+              className={fieldClass}
+              dir="auto"
+            />
+            <div className="mt-2 flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                disabled={busy || conflicted || draft === doc.content}
+                onClick={() => void save(doc)}
+              >
+                <Trans>Save</Trans>
+              </Button>
+              <Button variant="ghost" type="button" disabled={busy} onClick={closeDoc} size="sm">
+                <Trans>Cancel</Trans>
+              </Button>
+              {isDeletableMemoryDocument(doc.path) ? (
+                <Button
+                  variant="ghost"
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void remove(doc)}
+                  size="sm"
+                  className="ml-auto text-destructive"
+                >
+                  {confirmingDelete ? <Trans>Confirm delete</Trans> : <Trans>Delete</Trans>}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   if (compact && !memoryVisible && !error) return null;
   return (
     <section className={compact ? "mt-6" : undefined}>
@@ -223,86 +562,25 @@ function MemoryDocumentList({
             <Trans>Nothing remembered yet</Trans>
           </div>
         ) : null}
-        <div>
-          {(compact && !showAll ? docs.slice(0, 5) : docs).map((doc) => (
-            <div key={doc.id} className="border-b border-border last:border-0">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  type="button"
-                  disabled={busy}
-                  onClick={() => (openId === doc.id ? closeDoc() : openDoc(doc))}
-                  className="-ms-2 h-auto min-w-0 flex-1 justify-start whitespace-normal px-2 py-2.5 text-start"
-                >
-                  <span
-                    className="min-w-0 truncate text-[14px] font-normal text-foreground"
-                    dir="auto"
-                  >
-                    {doc.path}
-                  </span>
-                </Button>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={<Button variant="ghost" size="icon-sm" />}
-                    aria-label={t`Download`}
-                    disabled={busy}
-                    onClick={() => downloadDocument(doc)}
-                  >
-                    <Download className="size-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <Trans>Download</Trans>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              {openId === doc.id ? (
-                <div className="pb-2">
-                  <Textarea
-                    aria-label={doc.path}
-                    disabled={busy}
-                    value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
-                    rows={Math.min(16, Math.max(4, draft.split("\n").length + 1))}
-                    className={fieldClass}
-                    dir="auto"
-                  />
-                  <div className="mt-2 flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      type="button"
-                      disabled={busy || conflicted || draft === doc.content}
-                      onClick={() => void save(doc)}
-                    >
-                      <Trans>Save</Trans>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      disabled={busy}
-                      onClick={closeDoc}
-                      size="sm"
-                    >
-                      <Trans>Cancel</Trans>
-                    </Button>
-                    {isDeletableMemoryDocument(doc.path) ? (
-                      <Button
-                        variant="ghost"
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void remove(doc)}
-                        size="sm"
-                        className="ml-auto text-destructive"
-                      >
-                        {confirmingDelete ? <Trans>Confirm delete</Trans> : <Trans>Delete</Trans>}
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
+        <div>{(compact && !showAll ? current.slice(0, 5) : current).map(renderDoc)}</div>
+        {archived.length > 0 ? (
+          <div className="mt-2" data-testid="memory-archived-group">
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              className="-ms-2 text-muted-foreground"
+              aria-expanded={archivedOpen}
+              onClick={() => setArchivedOpen((open) => !open)}
+            >
+              <ChevronRight
+                className={`size-4 transition-transform ${archivedOpen ? "rotate-90" : ""}`}
+              />
+              {t`From archived bots (${archived.length})`}
+            </Button>
+            {archivedOpen ? <div className="ps-4">{archived.map(renderDoc)}</div> : null}
+          </div>
+        ) : null}
         {compact && docs.length > 5 && !showAll ? (
           <Button
             variant="ghost"

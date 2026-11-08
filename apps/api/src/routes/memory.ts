@@ -7,7 +7,11 @@ import {
   mapScratchpadItem,
   readAgentMemory,
 } from "@rakazo/adapters";
-import { isDeletableMemoryDocument } from "@rakazo/contracts";
+import {
+  isDeletableMemoryDocument,
+  MEMORY_NOTE_MAX_BYTES,
+  memoryNotePath,
+} from "@rakazo/contracts";
 import { findSpaceMemoryConfig, IsolationError } from "@rakazo/db";
 import {
   disconnectMemoryProvider,
@@ -52,6 +56,44 @@ export function memoryRoutes(ctx: RouterContext) {
           signal: context.signal ?? new AbortController().signal,
         });
         return buildAgentMemoryPrompt(documents).plan;
+      }),
+      create: authed.memory.create.handler(async ({ context, input }) => {
+        const path = memoryNotePath(input.name);
+        if (!path) throw new ORPCError("BAD_REQUEST", { message: "Give the note a name." });
+        if (new TextEncoder().encode(input.content).byteLength > MEMORY_NOTE_MAX_BYTES) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: `Notes can hold up to ${MEMORY_NOTE_MAX_BYTES / 1024} KB. Shorten it or split it into several notes.`,
+          });
+        }
+        const created = await deps.memory
+          .commit(
+            { scope: "user", path, content: input.content, expectedRevision: 0 },
+            {
+              operationId: "mem",
+              traceId: "mem",
+              spaceId: context.actor.spaceId,
+              userId: context.actor.userId,
+              signal: new AbortController().signal,
+            },
+          )
+          .catch((error: unknown) => {
+            if (error instanceof Error && error.message === MEMORY_REVISION_CONFLICT_ERROR) {
+              throw new ORPCError("CONFLICT", {
+                message:
+                  "You already have a note with this name. Open it to edit, or pick another name.",
+              });
+            }
+            throw error;
+          });
+        return {
+          id: created.id,
+          scope: "user" as const,
+          botId: null,
+          path: created.path,
+          content: created.content,
+          revision: created.revision,
+          updatedAt: new Date().toISOString(),
+        };
       }),
       update: authed.memory.update.handler(async ({ context, input }) => {
         const doc = await deps.prisma.memoryDocument.findFirst({

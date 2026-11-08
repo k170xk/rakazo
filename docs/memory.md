@@ -17,13 +17,20 @@ notes in `MEMORY.md`, merging or removing notes to make room. You can still add 
 To see what a bot remembers, click its name at the top of the chat and open **Memory**. Each note can
 be downloaded or deleted.
 
-## Shared memory
+## My memory
 
-Some things every bot should know, such as your name, your company, or how you like reports
-written. Those go in **Shared memory**: every bot in the [space](./spaces.md) reads these notes and
-keeps them up to date.
+Some things every bot should know, such as your role, your writing style, or how you like answers
+laid out. Those go in **My memory**: every bot you talk to in the [space](./spaces.md) reads these
+notes before it replies. They are yours alone; each colleague has their own.
 
-Find it in **Settings → Memory**.
+Find it in **Settings → Memory**. Choose **New note**, start from one of the ideas (writing style,
+about me, how I like answers, words and terms, clients and projects, emails and sign-off), or
+**Upload a file**. Word (.docx), PDF and text files are read in your browser and the text is put in
+a note for you to check before saving. Older Word .doc files need saving as .docx first, and scanned
+PDFs have no text to read.
+
+Each note holds up to 24 KB. Bots read about 32 KB of memory in all, newest first, so short and
+specific notes work best. Memory kept from bots you archived sits under **From archived bots**.
 
 ## Memory providers
 

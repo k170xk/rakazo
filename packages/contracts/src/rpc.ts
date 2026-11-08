@@ -992,6 +992,9 @@ export const appContract = {
       .input(z.object({ botId: Id.optional(), scope: z.enum(["bot", "user"]).optional() }))
       .output(z.array(MemoryDocumentSchema)),
     budget: oc.input(z.object({ botId: Id })).output(MemoryPromptBudgetSchema),
+    create: oc
+      .input(z.object({ name: z.string().min(1).max(200), content: z.string().min(1) }))
+      .output(MemoryDocumentSchema),
     update: oc
       .input(
         z.object({

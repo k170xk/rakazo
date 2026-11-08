@@ -196,6 +196,12 @@ msgstr "{0} 正在執行"
 msgid "{0} KB"
 msgstr "{0} KB"
 
+#. placeholder {0}: Math.ceil(noteBytes(draft.content) / 1024)
+#. placeholder {1}: MEMORY_NOTE_MAX_BYTES / 1024
+#: src/pages/KnowledgeSection.tsx
+msgid "{0} KB of {1} KB. Short, specific notes work best."
+msgstr ""
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} MB"
@@ -606,6 +612,19 @@ msgstr ""
 msgid "About {label}"
 msgstr "關於 {label}"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "About me"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "About me:\n"
+"- Role:\n"
+"- Office and team:\n"
+"- What I mostly work on:\n"
+"- Qualifications or chartership:\n"
+""
+msgstr ""
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Accepted: PDF. Select a file to preview and choose pages."
 msgstr ""
@@ -643,6 +662,10 @@ msgstr "帳號標籤"
 #: src/components/SidebarFooter.tsx
 msgid "Account menu for {name}"
 msgstr "{name} 的帳號選單"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Acronyms, product names and how to spell them"
+msgstr ""
 
 #. placeholder {0}: bot.name
 #. placeholder {0}: file.path
@@ -1916,6 +1939,10 @@ msgstr ""
 msgid "Client:"
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Clients and projects"
+msgstr ""
+
 #: src/components/ErrorBoundary.tsx
 #: src/components/ImageLightbox.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -2955,6 +2982,10 @@ msgstr ""
 msgid "Could not save the credential"
 msgstr "無法儲存憑證"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not save the note"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not save the thinking level"
 msgstr ""
@@ -3243,6 +3274,14 @@ msgstr "Cron 表示式"
 
 #: src/pages/AdminStaffSpending.tsx
 msgid "CSV"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Current clients and projects:\n"
+"- Client:\n"
+"  - Project:\n"
+"  - What they care about:\n"
+""
 msgstr ""
 
 #: src/components/AccountAccess.tsx
@@ -3763,6 +3802,18 @@ msgstr ""
 msgid "Email verification required"
 msgstr "需要驗證電子信箱"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Emails and sign-off"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Emails:\n"
+"- Greeting: \"Hi <first name>,\"\n"
+"- Sign-off: \"Kind regards,\"\n"
+"- Signature:\n"
+""
+msgstr ""
+
 #. placeholder {0}: humanizeTool(toolName)
 #: src/pages/shell/bot-panel.tsx
 msgid "Enable {0}"
@@ -3870,8 +3921,8 @@ msgid "Every assistant of every member has these. Switch one off to remove it fo
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Every bot in this space reads these notes and keeps them up to date."
-msgstr "此空間中的每個機器人都會讀取並更新這些筆記。"
+#~ msgid "Every bot in this space reads these notes and keeps them up to date."
+#~ msgstr "此空間中的每個機器人都會讀取並更新這些筆記。"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Every bot now thinks at this level"
@@ -4039,6 +4090,10 @@ msgstr "匯出資料"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Export this week's list from the CRM and drop it in the shared folder"
 msgstr "從 CRM 匯出本週名單並放到共享資料夾"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Export, import and delete accounts"
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -4233,6 +4288,11 @@ msgstr "從"
 msgid "From {0}"
 msgstr "自 {0} 起"
 
+#. placeholder {0}: archived.length
+#: src/pages/KnowledgeSection.tsx
+msgid "From archived bots ({0})"
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "From GitHub"
@@ -4356,6 +4416,10 @@ msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Granting…"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Greetings, sign-off and your signature"
 msgstr ""
 
 #: src/lib/identity-display.ts
@@ -4494,6 +4558,19 @@ msgstr "你是如何知道我們的？"
 msgid "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "How I like answers"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "How I write:\n"
+"- Tone: friendly but professional\n"
+"- Spelling: British English (organise, colour)\n"
+"- Keep sentences short and use plain words\n"
+"- Avoid: jargon, exclamation marks, \"I hope this email finds you well\"\n"
+""
+msgstr ""
+
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
 msgstr "頻率"
@@ -4516,6 +4593,10 @@ msgstr "我做完了"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Icon set"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Ideas to start with"
 msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -4830,6 +4911,10 @@ msgstr "退出"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Leave blank to keep the saved key"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Length, format, bullet points or prose"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -5441,6 +5526,10 @@ msgstr "已靜音"
 msgid "My computers"
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "My memory"
+msgstr ""
+
 #: src/pages/settings-nav.ts
 msgid "My vault"
 msgstr ""
@@ -5577,6 +5666,10 @@ msgstr ""
 #: src/pages/shell/chat-context.tsx
 msgid "New messages"
 msgstr "新訊息"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "New note"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "New open-work item"
@@ -5817,6 +5910,10 @@ msgstr ""
 msgid "No submissions"
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "No text was found in that file. A scanned PDF has no text to read; paste the words in instead."
+msgstr ""
+
 #: src/pages/Board.tsx
 msgid "No tickets yet"
 msgstr "尚無工作項目"
@@ -5891,6 +5988,18 @@ msgstr ""
 #: src/components/McpServerHealthLine.tsx
 msgid "Not working"
 msgstr "無法正常工作"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Note"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Note name"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Note name, for example Writing style"
+msgstr ""
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Note:"
@@ -6006,6 +6115,10 @@ msgstr ""
 
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Offline"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Older .doc files cannot be read. Open it in Word, choose Save As, and pick Word Document (.docx)."
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
@@ -6405,6 +6518,10 @@ msgstr ""
 #. placeholder {0}: people.length
 #: src/pages/GroupPanel.tsx
 msgid "People ({0})"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "People see a Data section in their settings to export or import their account, import agents from other apps and delete their account."
 msgstr ""
 
 #: src/pages/AdminStaffSpending.tsx
@@ -7321,6 +7438,10 @@ msgstr "儲存"
 msgid "Save for everyone"
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Save note"
+msgstr ""
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "儲存工作空間並安裝最新軟體。"
@@ -7702,8 +7823,8 @@ msgid "Shared"
 msgstr "共享"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Shared memory"
-msgstr "共用記憶"
+#~ msgid "Shared memory"
+#~ msgstr "共用記憶"
 
 #: src/pages/SharedPage.tsx
 msgid "Shared pages are only for people at your company."
@@ -8217,6 +8338,10 @@ msgstr ""
 msgid "Teach a task"
 msgstr "示範任務"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Teach your bots about you. Every bot you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "正在示範，傳送新訊息前請先停止示範。"
@@ -8239,6 +8364,13 @@ msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Template"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Terms I use:\n"
+"- OCSC: our company name, always in capitals\n"
+"- RIBA stages: write as \"RIBA Stage 3\", not \"stage three\"\n"
+""
 msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
@@ -8265,6 +8397,10 @@ msgstr ""
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Testing…"
 msgstr "正在測試…"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "That file could not be read. Try saving it again, or paste its text in."
+msgstr ""
 
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
@@ -8506,6 +8642,10 @@ msgstr "此模型的上下文視窗太小。請選擇其他模型。"
 msgid "This month"
 msgstr "本月"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes."
+msgstr ""
+
 #: src/lib/pages.ts
 msgid "This page couldn't be shown."
 msgstr "無法顯示此頁面。"
@@ -8628,6 +8768,10 @@ msgstr "顯示或隱藏側邊欄"
 #: src/pages/AdminStaffSpending.tsx
 msgid "Tokens"
 msgstr "Token"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Tone, spelling, sentence length, words to avoid"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Tool arguments (JSON)"
@@ -8767,6 +8911,10 @@ msgstr "輸入 {name} 以確認"
 msgid "Type a clear, specific instruction in the box below."
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Type or paste here. Plain sentences or bullet points both work."
+msgstr ""
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Type without recording"
 msgstr "輸入文字但不記錄內容"
@@ -8879,6 +9027,14 @@ msgstr "立即升級"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
 msgstr "上傳"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Upload a file"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Upload a Word document (.docx), PDF, or text file (.txt or .md)."
+msgstr ""
 
 #: src/pages/shell/composer.tsx
 msgid "Upload files, documents and images"
@@ -9228,6 +9384,15 @@ msgstr "何時執行"
 msgid "When to use"
 msgstr "何時使用"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "When you answer me:\n"
+"- Lead with the answer, then the detail\n"
+"- Use bullet points for lists of three or more\n"
+"- Keep it under 200 words unless I ask for more\n"
+"- Show sums step by step\n"
+""
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "Where should bots run?"
 msgstr "機器人應在哪裡執行？"
@@ -9235,6 +9400,10 @@ msgstr "機器人應在哪裡執行？"
 #: src/components/pages/SharePopover.tsx
 msgid "Who can open this page"
 msgstr "誰可以開啟此頁面"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Who you work with and what matters to them"
+msgstr ""
 
 #: src/lib/ticket-status.ts
 msgid "Won't do"
@@ -9244,8 +9413,16 @@ msgstr "不處理"
 msgid "Word"
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Word (.docx), PDF and text files. The text is copied in for you to check."
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Word document"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Words and terms"
 msgstr ""
 
 #: src/pages/shell/references-dialog.tsx
@@ -9293,6 +9470,10 @@ msgstr ""
 
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Write its instructions yourself"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Writing style"
 msgstr ""
 
 #: src/lib/billing.ts
@@ -9371,6 +9552,10 @@ msgstr ""
 msgid "Your Anthropic"
 msgstr "你的 Anthropic"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Your bots will use this note from their next reply"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Your card is charged {annualPrice} today, less the unused part of this month."
 msgstr "今天將從你的卡中扣款 {annualPrice}，並抵扣本月未使用的部分。"
@@ -9412,6 +9597,10 @@ msgstr "你的模型供應商"
 msgid "Your name"
 msgstr "你的名字"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Your notes"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Your OpenAI"
@@ -9445,6 +9634,10 @@ msgstr "試用結束後，你的方案將變為每年 {annualPrice}。"
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "試用結束後，你的方案將變為 {tierTargetLabel}。"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Your role, office, team and what you work on"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #~ msgid "Your skills"

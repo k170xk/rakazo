@@ -7,6 +7,7 @@ import { RPCHandler } from "@orpc/server/fetch";
 import type { ManagedConnectorProvider } from "@rakazo/adapter-kit";
 import {
   ConnectorAuthUnavailableError,
+  MEMORY_REVISION_CONFLICT_ERROR,
   routineWakeupJob,
   SecretStoreUnavailableError,
 } from "@rakazo/adapter-kit";
@@ -34,6 +35,7 @@ import {
   CONNECTOR_AUTH_UNAVAILABLE,
   DEFAULT_COMPANY_FEATURES,
   MCP_OAUTH_CLIENT_REQUIRED,
+  MEMORY_NOTE_MAX_BYTES,
   MODEL_KEY_FORMAT_ERROR,
   REPLY_QUOTE_MAX_LENGTH,
 } from "@rakazo/contracts";
@@ -9722,7 +9724,15 @@ describe("memory documents", () => {
     session: typeof actor | null = actor,
   ) {
     const memoryDocument = { findFirst: vi.fn(async () => doc) };
-    const memory = { remove: vi.fn(async () => ({ removed: true })) };
+    const memory = {
+      remove: vi.fn(async () => ({ removed: true })),
+      commit: vi.fn(async (request: { path: string; content: string }) => ({
+        id: "doc-new",
+        path: request.path,
+        content: request.content,
+        revision: 1,
+      })),
+    };
     const deps = {
       prisma: { memoryDocument },
       memory,
@@ -9731,6 +9741,43 @@ describe("memory documents", () => {
     const client = createRouterClient(createRouter(deps), { context: { actor: session } as never });
     return { client, memoryDocument, memory };
   }
+
+  it("adds a person's own note under My notes without replacing an existing one", async () => {
+    const { client, memory } = memoryClient(null);
+    await expect(
+      client.memory.create({ name: " Writing / style.docx ", content: "Plain English." }),
+    ).resolves.toMatchObject({
+      id: "doc-new",
+      scope: "user",
+      botId: null,
+      path: "My notes/Writing - style.md",
+    });
+    expect(memory.commit).toHaveBeenCalledWith(
+      {
+        scope: "user",
+        path: "My notes/Writing - style.md",
+        content: "Plain English.",
+        expectedRevision: 0,
+      },
+      expect.objectContaining({ spaceId: "space-1", userId: "user-1" }),
+    );
+
+    memory.commit.mockRejectedValueOnce(new Error(MEMORY_REVISION_CONFLICT_ERROR));
+    await expect(
+      client.memory.create({ name: "Writing style", content: "Again" }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it("refuses an unnamed or oversized note before saving", async () => {
+    const { client, memory } = memoryClient(null);
+    await expect(client.memory.create({ name: " / ", content: "x" })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+    await expect(
+      client.memory.create({ name: "Huge", content: "x".repeat(MEMORY_NOTE_MAX_BYTES + 1) }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(memory.commit).not.toHaveBeenCalled();
+  });
 
   it("deletes a memory document owned by the caller through the memory store", async () => {
     const { client, memoryDocument, memory } = memoryClient({
