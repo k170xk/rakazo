@@ -7,7 +7,6 @@ import {
   Gauge,
   KeyRound,
   MessageCircle,
-  Settings,
   ShieldCheck,
   Wallet,
 } from "lucide-react";
@@ -32,7 +31,6 @@ export function useSettingsNavItems(available: {
 }): SettingsNavItem[] {
   const { t } = useLingui();
   return [
-    { id: "general", label: t`General`, icon: Settings },
     { id: "organization", label: t`Work Space`, icon: Building2 },
     { id: "confirmations", label: t`Approvals`, icon: ShieldCheck },
     { id: "vault", label: t`My vault`, icon: KeyRound },

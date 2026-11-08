@@ -55,6 +55,7 @@ vi.mock("../lib/rpc", () => ({
   }),
 }));
 vi.mock("./BillingSettingsPanel", () => ({ BillingSettingsPanel: () => null }));
+vi.mock("./OrganizationSettingsPanel", () => ({ OrganizationSettingsPanel: () => null }));
 vi.mock("./PaymentWalletSettingsPanel", () => ({ PaymentWalletSettingsPanel: () => null }));
 vi.mock("./MemorySettingsOverlay", () => ({
   MemorySettingsOverlay: ({
@@ -155,7 +156,7 @@ function button(container: HTMLElement, label: string) {
   return match;
 }
 
-it("lists the spaces under General and opens the one picked", async () => {
+it("lists the spaces under Work Space and opens the one picked", async () => {
   const onOpenSpace = vi.fn();
   const { container, cleanup } = await render({ spaces, onOpenSpace });
   try {
@@ -164,7 +165,7 @@ it("lists the spaces under General and opens the one picked", async () => {
     expect(list?.textContent).toContain("Beta");
     await act(async () => button(container, "Manage Beta").click());
     expect(onOpenSpace).toHaveBeenCalledWith("space-b");
-    // Spaces live under General, not in the nav.
+    // Spaces live on the Work Space page, not in the nav.
     expect(container.querySelector('[data-testid="settings-nav-space"]')).toBeNull();
   } finally {
     await cleanup();
@@ -180,7 +181,7 @@ it("lists no spaces when there is only one", async () => {
   }
 });
 
-it("titles a space's page with its name and leads back to General", async () => {
+it("titles a space's page with its name and leads back to Work Space", async () => {
   const onDeleteSpace = vi.fn(async () => undefined);
   const onSectionChange = vi.fn();
   const { container, cleanup } = await render({
@@ -193,13 +194,15 @@ it("titles a space's page with its name and leads back to General", async () => 
   try {
     expect(container.querySelector("h2")?.textContent).toBe("Acme");
     expect(
-      container.querySelector('[data-testid="settings-nav-general"]')?.getAttribute("aria-current"),
+      container
+        .querySelector('[data-testid="settings-nav-organization"]')
+        ?.getAttribute("aria-current"),
     ).toBe("page");
     const panel = container.querySelector<HTMLButtonElement>('[data-testid="space-settings"]');
     await act(async () => panel?.click());
     expect(onDeleteSpace).toHaveBeenCalledWith("space-a");
     await act(async () => button(container, "Back").click());
-    expect(onSectionChange).toHaveBeenCalledWith("general");
+    expect(onSectionChange).toHaveBeenCalledWith("organization");
   } finally {
     await cleanup();
   }
@@ -226,7 +229,7 @@ it("opens a linked billing section once billing turns out to be on", async () =>
   const shown = () =>
     container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section");
   try {
-    expect(shown()).toBe("general");
+    expect(shown()).toBe("organization");
     await rerender({ section: "billing", billingEnabled: true });
     expect(shown()).toBe("billing");
   } finally {
@@ -243,7 +246,7 @@ it("edits the account's confirmations and personal vault, but not company settin
       await rerender({ ...props, section });
       expect(
         container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section"),
-      ).toBe("general");
+      ).toBe("organization");
       expect(container.querySelector(`[data-testid="settings-nav-${section}"]`)).toBeNull();
     }
     await rerender({ ...props, section: "vault" });
@@ -313,7 +316,7 @@ it("offers Wallet only when the deployment has a wallet provider", async () => {
     container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section");
   try {
     expect(container.querySelector('[data-testid="settings-nav-wallet"]')).toBeNull();
-    expect(shown()).toBe("general");
+    expect(shown()).toBe("organization");
     await rerender({ section: "wallet", paymentWalletProvider: { id: "link", name: "Link" } });
     expect(container.querySelector('[data-testid="settings-nav-wallet"]')).not.toBeNull();
     expect(shown()).toBe("wallet");

@@ -14,15 +14,28 @@ describe("readShellOverlay", () => {
     expect(read("?m=msg_1&routine=r_1")).toBeNull();
   });
 
-  it("opens a settings section, falling back to general for bare or unknown values", () => {
+  it("opens a settings section, falling back to Work Space for bare, general or unknown values", () => {
     expect(read("?settings=voice")).toEqual({ kind: "settings", section: "voice", spaceId: null });
     expect(read("?settings=space&space=sp_1")).toEqual({
       kind: "settings",
       section: "space",
       spaceId: "sp_1",
     });
-    expect(read("?settings")).toEqual({ kind: "settings", section: "general", spaceId: null });
-    expect(read("?settings=nope")).toEqual({ kind: "settings", section: "general", spaceId: null });
+    expect(read("?settings")).toEqual({
+      kind: "settings",
+      section: "organization",
+      spaceId: null,
+    });
+    expect(read("?settings=general")).toEqual({
+      kind: "settings",
+      section: "organization",
+      spaceId: null,
+    });
+    expect(read("?settings=nope")).toEqual({
+      kind: "settings",
+      section: "organization",
+      spaceId: null,
+    });
   });
 
   it("binds settings to a space only alongside settings", () => {

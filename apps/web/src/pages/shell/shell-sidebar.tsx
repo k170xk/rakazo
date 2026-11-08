@@ -456,7 +456,7 @@ function ShellSidebarFooter({
         }}
         onSettings={() => {
           setMenuOpen(false);
-          openSettings("general");
+          openSettings("organization");
         }}
         onInvite={
           referral

@@ -53,7 +53,7 @@ export function readShellOverlay(params: URLSearchParams): ShellOverlay {
   if (section !== null) {
     return {
       kind: "settings",
-      section: isSettingsSection(section) ? section : "general",
+      section: isSettingsSection(section) && section !== "general" ? section : "organization",
       spaceId: params.get("space") || null,
     };
   }

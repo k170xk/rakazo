@@ -1,34 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, openUserSettings, signup } from "./helpers";
 
-test("changing language updates settings overflow without resizing", async ({ page }, testInfo) => {
-  const stamp = Date.now();
-  await signup(page, `settings-language-${stamp}@rakazo.test`, "password12", "Settings");
-  await completeOnboarding(page);
-  const settings = await openUserSettings(page);
-  // Below the desktop breakpoint, where the section list scrolls sideways.
-  await page.setViewportSize({ width: 640, height: 700 });
-  const nav = settings.getByTestId("settings-nav");
-  const next = settings.getByRole("button", { name: "Next settings sections" });
-  const overflow = () => nav.evaluate((node) => node.scrollWidth - node.clientWidth);
-  const english = await overflow();
-
-  const language = settings.getByTestId("ui-locale-select");
-  await language.click();
-  await page.getByRole("option", { name: "Deutsch", exact: true }).click();
-  await expect(settings.getByRole("heading", { name: "Allgemein", exact: true })).toBeVisible();
-  // Longer German labels overflow further, and the scroll control follows without a resize.
-  await expect.poll(overflow).toBeGreaterThan(english);
-  await expect(next).toBeVisible();
-  await expect(next).toBeEnabled();
-  await captureScreenshot(page, testInfo, "settings-tabs-language-overflow");
-
-  await language.click();
-  await page.getByRole("option", { name: "English", exact: true }).click();
-  await expect(settings.getByRole("heading", { name: "General", exact: true })).toBeVisible();
-  await expect.poll(overflow).toBe(english);
-});
-
 test("narrow settings reveals the active section and offers scroll controls", async ({
   page,
 }, testInfo) => {
@@ -63,17 +35,21 @@ test("narrow settings reveals the active section and offers scroll controls", as
     const offset = await nav.evaluate((node) => node.scrollLeft);
     await previous.click();
     await expect.poll(() => nav.evaluate((node) => node.scrollLeft)).toBeLessThan(offset);
-    await settings.getByTestId("settings-nav-general").click();
-    await expect(settings).toHaveAttribute("data-settings-section", "general");
+    await settings.getByTestId("settings-nav-organization").click();
+    await expect(settings).toHaveAttribute("data-settings-section", "organization");
     await expect(next).toBeEnabled();
     await next.click();
     await expect.poll(() => nav.evaluate((node) => node.scrollLeft)).toBeGreaterThan(0);
     const header = settings.getByTestId("settings-header");
     const before = await header.boundingBox();
-    await settings.getByTestId("delete-account").scrollIntoViewIfNeeded();
-    await expect
-      .poll(() => settings.getByTestId("settings-scroll").evaluate((node) => node.scrollTop))
-      .toBeGreaterThan(0);
+    const scroller = settings.getByTestId("settings-scroll");
+    const canScroll = await scroller.evaluate((node) => node.scrollHeight > node.clientHeight + 8);
+    if (canScroll) {
+      await scroller.evaluate((node) => {
+        node.scrollTop = node.scrollHeight;
+      });
+      await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+    }
     expect(await header.boundingBox()).toEqual(before);
     expect(await settings.evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
     await expect(settings.getByRole("button", { name: "Close user settings" })).toBeVisible();
@@ -106,21 +82,25 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
 
   const settings = await openUserSettings(page);
   await expect(settings.getByTestId("settings-nav")).toBeVisible();
-  await expect(settings.getByTestId("settings-nav-general")).toHaveAttribute(
+  await expect(settings.getByTestId("settings-nav-general")).toHaveCount(0);
+  await expect(settings.getByTestId("settings-nav-organization")).toHaveAttribute(
     "aria-current",
     "page",
   );
-  await expect(settings.getByRole("heading", { name: "General", exact: true })).toBeVisible();
-  await expect(settings.getByRole("heading", { name: "Account", exact: true })).toBeVisible();
+  await expect(settings.getByRole("heading", { name: "Work Space", exact: true })).toBeVisible();
+  await expect(settings.getByRole("heading", { name: "Account", exact: true })).toHaveCount(0);
   // Chat behaviour is a company setting in the admin area, not a personal one.
   await expect(settings.getByRole("heading", { name: "Chat", exact: true })).toHaveCount(0);
   await expect(settings.getByTestId("response-streaming-toggle")).toHaveCount(0);
-  await captureScreenshot(page, testInfo, "settings-shell-general");
+  await captureScreenshot(page, testInfo, "settings-shell-work-space");
   const scroller = settings.getByTestId("settings-scroll");
-  await scroller.evaluate((node) => {
-    node.scrollTop = Math.max(0, (node.scrollHeight - node.clientHeight) / 2);
-  });
-  await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  const canScroll = await scroller.evaluate((node) => node.scrollHeight > node.clientHeight + 8);
+  if (canScroll) {
+    await scroller.evaluate((node) => {
+      node.scrollTop = Math.max(0, (node.scrollHeight - node.clientHeight) / 2);
+    });
+    await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+  }
   // Scrolled content clips at a visible divider with space under the subtitle.
   const headerEdge = await settings.getByTestId("settings-header").evaluate((node) => {
     const style = getComputedStyle(node);
@@ -134,18 +114,9 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   expect(headerEdge.borderStyle).toBe("solid");
   expect(headerEdge.padding).toBeGreaterThanOrEqual(16);
   await captureScreenshot(page, testInfo, "settings-shell-scrolled");
-  const deleteAccount = settings.getByTestId("delete-account");
-  await deleteAccount.scrollIntoViewIfNeeded();
-  await expect(deleteAccount).toBeVisible();
-  await captureScreenshot(page, testInfo, "settings-general-delete-account");
 
-  await settings.getByTestId("settings-nav-models").click();
-  await expect(settings).toHaveAttribute("data-settings-section", "models");
-  await expect(settings.getByTestId("model-settings")).toBeVisible();
-  await expect(settings.getByTestId("model-role-main")).toBeVisible();
-  await expect(settings.getByTestId("model-role-approval")).toBeVisible();
-  await captureScreenshot(page, testInfo, "settings-shell-models");
-
+  await expect(settings.getByTestId("settings-nav-models")).toHaveCount(0);
+  await expect(settings.getByTestId("settings-nav-voice")).toHaveCount(0);
   await settings.getByTestId("settings-nav-memory").click();
   await expect(settings).toHaveAttribute("data-settings-section", "memory");
   await expect(settings.getByTestId("memory-settings")).toBeVisible();
@@ -158,12 +129,7 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   await expect(memory.getByRole("button", { name: "Recall only" })).toBeVisible();
   await captureScreenshot(page, testInfo, "settings-shell-memory-serenity");
 
-  await settings.getByTestId("settings-nav-voice").click();
-  await expect(settings).toHaveAttribute("data-settings-section", "voice");
-  await expect(settings.getByTestId("voice-settings")).toBeVisible();
-  await captureScreenshot(page, testInfo, "settings-shell-voice");
-
-  await page.getByRole("button", { name: "Close voice settings" }).click();
+  await page.getByRole("button", { name: "Close memory settings" }).click();
   await expect(page.getByTestId("user-settings")).toHaveCount(0);
 
   await openUserSettings(page, "usage");

@@ -12,7 +12,7 @@ export function slashActionLabel(id: SlashActionId) {
     case "chat-settings":
       return t`Chat Settings`;
     case "settings-general":
-      return t`Settings: General`;
+      return t`Settings`;
     case "settings-usage":
       return t`Settings: Usage`;
   }

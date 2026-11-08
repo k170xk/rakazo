@@ -289,7 +289,10 @@ function SpaceShell() {
   // The app menu owns Cmd+, because macOS takes it before the page sees a keydown.
   const openSettingsRef = useRef(openSettings);
   openSettingsRef.current = openSettings;
-  useEffect(() => desktopBridge()?.settings?.onOpen(() => openSettingsRef.current("general")), []);
+  useEffect(
+    () => desktopBridge()?.settings?.onOpen(() => openSettingsRef.current("organization")),
+    [],
+  );
 
   const inGroup = Boolean(groupId);
   const chatPanelOpen = inGroup
@@ -898,7 +901,7 @@ function SpaceShell() {
     writeBotsSidebarCollapsed(userId, collapsed);
   }
 
-  function openSettings(section: SettingsSection = "general", spaceId: string | null = null) {
+  function openSettings(section: SettingsSection = "organization", spaceId: string | null = null) {
     if (isCompanySettingsSection(section)) {
       if (bootstrapMe?.isAdmin) navigate(`/admin#${section}`);
       else
@@ -1366,7 +1369,7 @@ function SpaceShell() {
                   return;
                 }
                 if (action === "settings-general") {
-                  openSettings("general");
+                  openSettings("organization");
                   return;
                 }
                 if (action === "settings-usage") {

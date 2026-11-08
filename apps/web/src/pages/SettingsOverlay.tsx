@@ -2,17 +2,13 @@ import { useLingui } from "@lingui/react/macro";
 import type { BotAvatarSet, SpaceMemoryConfig, UsageSummary } from "@rakazo/contracts";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
 import { PersonalVault } from "../components/PersonalVault";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { desktopBridge } from "../lib/desktop";
 import { SpaceRpcProvider } from "../lib/space-rpc";
-import {
-  GeneralSettingsPanels,
-  UpdatesSettingsPanel,
-  UsageSettingsPanel,
-} from "./AccountSettingsOverlay";
+import { UpdatesSettingsPanel, UsageSettingsPanel } from "./AccountSettingsOverlay";
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { MessagingSettingsPanel } from "./MessagingSettingsPanel";
@@ -30,20 +26,10 @@ export function SettingsOverlay({
   onOpenSpace,
   onRenameSpace,
   onDeleteSpace,
-  email,
-  name,
   usage,
   onUsageOpen,
   section: requestedSection,
   onSectionChange,
-  onNameSaved,
-  timezone,
-  onTimezoneChange,
-  botAvatarSet,
-  onBotAvatarSetChange,
-  onAccountImported,
-  onImportAgent,
-  accountDataEnabled = false,
   billingEnabled = false,
   messagingEnabled = false,
   paymentWalletProvider = null,
@@ -90,14 +76,15 @@ export function SettingsOverlay({
   const [memoryBusy, setMemoryBusy] = useState(false);
   const [voiceBusy, setVoiceBusy] = useState(false);
   const showUpdates = Boolean(desktopBridge()?.update);
-  // A section that isn't available yet (billing before its flag loads) shows General until it is.
+  // A section that isn't offered (including the removed General page) opens on Work Space.
   const section =
+    requestedSection === "general" ||
     isCompanySettingsSection(requestedSection) ||
     (requestedSection === "billing" && !billingEnabled) ||
     (requestedSection === "messaging" && !messagingEnabled) ||
     (requestedSection === "wallet" && !paymentWalletProvider) ||
     (requestedSection === "updates" && !showUpdates)
-      ? "general"
+      ? "organization"
       : requestedSection;
   const panelBusy = memoryBusy || voiceBusy;
   // Only a space's own page binds to it; every other section, memory included, acts on the
@@ -157,8 +144,7 @@ export function SettingsOverlay({
   const sectionTitle =
     section === "space"
       ? (space?.name ?? t`Space`)
-      : (navItems.find((item) => item.id === section)?.label ??
-        (section === "general" ? t`General` : t`Settings`));
+      : (navItems.find((item) => item.id === section)?.label ?? t`Settings`);
 
   const closeLabel = section === "memory" ? t`Close memory settings` : t`Close user settings`;
 
@@ -220,8 +206,8 @@ export function SettingsOverlay({
             >
               {navItems.map((item) => {
                 const Icon = item.icon;
-                // A space's page is reached from General, so General stays marked.
-                const active = item.id === (section === "space" ? "general" : section);
+                // A space's page is reached from Work Space, so that item stays marked.
+                const active = item.id === (section === "space" ? "organization" : section);
                 return (
                   <button
                     key={item.id}
@@ -267,7 +253,7 @@ export function SettingsOverlay({
                     className="-ms-2 shrink-0"
                     aria-label={t`Back`}
                     disabled={panelBusy}
-                    onClick={() => onSectionChange("general")}
+                    onClick={() => onSectionChange("organization")}
                   >
                     <ChevronLeft className="rtl:rotate-180" />
                   </Button>
@@ -303,20 +289,9 @@ export function SettingsOverlay({
                       : SETTINGS_CONTENT_WIDTH
                   }
                 >
-                  {section === "general" ? (
+                  {section === "organization" ? (
                     <div className="space-y-8">
-                      <GeneralSettingsPanels
-                        email={email}
-                        name={name}
-                        onNameSaved={onNameSaved}
-                        timezone={timezone}
-                        onTimezoneChange={onTimezoneChange}
-                        botAvatarSet={botAvatarSet}
-                        onBotAvatarSetChange={onBotAvatarSetChange}
-                        onAccountImported={onAccountImported}
-                        onImportAgent={onImportAgent}
-                        accountDataEnabled={accountDataEnabled}
-                      />
+                      <OrganizationSettingsPanel onBusyChange={setVoiceBusy} />
                       {/* One space is just the app, so there is nothing to tell apart or manage. */}
                       {spaces.length > 1 && onOpenSpace ? (
                         <SettingsGroup title={t`Spaces`} data-testid="settings-spaces">
@@ -350,9 +325,6 @@ export function SettingsOverlay({
                       onClose={requestClose}
                       onBusyChange={setVoiceBusy}
                     />
-                  ) : null}
-                  {section === "organization" ? (
-                    <OrganizationSettingsPanel onBusyChange={setVoiceBusy} />
                   ) : null}
                   {section === "confirmations" ? <ApprovalRulesSettings scope="account" /> : null}
                   {section === "vault" ? <PersonalVault /> : null}
