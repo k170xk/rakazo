@@ -503,7 +503,7 @@ export function DeleteItemDialog({
   onConfirm,
 }: {
   item: { name: string };
-  noun: "group" | "page" | "routine" | "section" | "space";
+  noun: "file" | "group" | "page" | "routine" | "section" | "space";
   title?: React.ReactNode;
   description?: React.ReactNode;
   onCancel: () => void;
@@ -545,7 +545,9 @@ export function DeleteItemDialog({
                           ? t`Could not delete section`
                           : noun === "page"
                             ? t`Could not delete page`
-                            : t`Could not delete routine`,
+                            : noun === "file"
+                              ? t`Could not delete file`
+                              : t`Could not delete routine`,
                   ),
                 );
                 setDeleting(false);

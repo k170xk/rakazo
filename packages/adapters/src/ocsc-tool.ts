@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
+import { storageRefusal } from "./file-retention.js";
 import type { RunContext } from "./run-context.js";
 
 /** The OCSC commands the ocsc tool runs; none of them needs a shell, the screen or the browser. */
@@ -16,6 +17,8 @@ const STALE_RUNNING_MS = 45 * 60_000;
 /** A queued render whose bot stopped asking gives up its place. */
 const STALE_QUEUED_MS = 5 * 60_000;
 const SLOT_LOCK = 7_342_119;
+/** Steps that only look at existing work, so they still run when storage is full. */
+const READ_ONLY_STEPS: ReadonlySet<string> = new Set(["status", "wait", "cancel", "read", "help"]);
 
 function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
@@ -157,6 +160,16 @@ export async function ocscBeforeRun(
   program: string,
   args: readonly string[],
 ): Promise<Record<string, unknown> | undefined> {
+  if (!READ_ONLY_STEPS.has(args[0] ?? "")) {
+    const full = await storageRefusal({
+      prisma: ctx.deps.prisma,
+      home: ctx.deps.home,
+      dataDir: ctx.deps.dataDir,
+      userId: ctx.bot.userId,
+      computer: ctx.computer.stored,
+    });
+    if (full) return { error: full };
+  }
   if (program !== "video") return undefined;
   if (ctx.computer.folder) {
     return {

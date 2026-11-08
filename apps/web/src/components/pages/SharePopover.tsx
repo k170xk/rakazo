@@ -84,8 +84,8 @@ export function SharePopover({
     },
     {
       value: "link",
-      title: t`Anyone with the link`,
-      detail: t`Can view without signing in`,
+      title: t`Anyone at the company with the link`,
+      detail: t`They sign in to view`,
       icon: <Globe className="size-4 text-foreground/70!" strokeWidth={1.5} />,
     },
   ];
@@ -93,7 +93,11 @@ export function SharePopover({
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger
         aria-label={
-          shared ? t`Share, anyone with the link can view` : compact ? t`Share` : undefined
+          shared
+            ? t`Share, anyone at the company with the link can view`
+            : compact
+              ? t`Share`
+              : undefined
         }
         data-shared={shared || undefined}
         className={

@@ -64,6 +64,12 @@ import {
   toComputerStatus,
 } from "../computer-status.js";
 import type { RouterDeps } from "../router.js";
+import {
+  deleteStoredFile,
+  downloadStoredFile,
+  pinStoredFile,
+  storedFilesState,
+} from "../stored-files.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, isRecordNotFound } from "./shared.js";
 
@@ -578,6 +584,29 @@ export function computerRoutes(ctx: RouterContext) {
           path: displayBotWorkspacePath(computerMode, bot.id, input.path, entry.path),
         }));
       }),
+      storedFiles: authed.computer.storedFiles.handler(async ({ context, input }) =>
+        storedFilesState(deps, await repos.getBot(context.actor, input.botId)),
+      ),
+      pinStoredFile: authed.computer.pinStoredFile.handler(async ({ context, input }) =>
+        pinStoredFile(
+          deps,
+          await repos.getBot(context.actor, input.botId),
+          input.path,
+          input.pinned,
+        ),
+      ),
+      deleteStoredFile: authed.computer.deleteStoredFile.handler(async ({ context, input }) =>
+        deleteStoredFile(deps, await repos.getBot(context.actor, input.botId), input.path),
+      ),
+      downloadStoredFile: authed.computer.downloadStoredFile.handler(async ({ context, input }) =>
+        downloadStoredFile(
+          deps,
+          await repos.getBot(context.actor, input.botId),
+          input.path,
+          attachmentMaxBytes(deps.env),
+          attachmentSizeLabel(attachmentMaxBytes(deps.env)),
+        ),
+      ),
       readFile: authed.computer.readFile.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
         if (!bot.computer) throw new IsolationError();

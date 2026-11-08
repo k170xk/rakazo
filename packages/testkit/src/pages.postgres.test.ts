@@ -419,10 +419,14 @@ describePages("pages", () => {
       });
     const read = (url: string) => {
       const token = new URL(url).pathname.slice(-43);
-      return app.request(`${SHARED_PAGE_PATH_PREFIX}${token}`);
+      return app.request(`${SHARED_PAGE_PATH_PREFIX}${token}`, { headers: { cookie } });
     };
     const firstLink = await share("link");
     expect(new URL(firstLink.shareUrl!).pathname).toMatch(/^\/p\/q3-plan-[\w-]{43}$/);
+    const signedOut = await app.request(
+      `${SHARED_PAGE_PATH_PREFIX}${new URL(firstLink.shareUrl!).pathname.slice(-43)}`,
+    );
+    expect(signedOut.status).toBe(401);
     const opened = await read(firstLink.shareUrl!);
     expect(opened.status).toBe(200);
     expect(opened.headers.get("cache-control")).toBe("no-store");
@@ -650,7 +654,9 @@ describePages("pages", () => {
     });
     await db().page.update({ where: { id: shared.pageId }, data: { groupId: group.id } });
     const read = (url: string) =>
-      app.request(`${SHARED_PAGE_PATH_PREFIX}${new URL(url).pathname.slice(-43)}`);
+      app.request(`${SHARED_PAGE_PATH_PREFIX}${new URL(url).pathname.slice(-43)}`, {
+        headers: { cookie },
+      });
     expect((await read(own.shareUrl)).status).toBe(200);
 
     await rpc(app, cookie, "bots/remove", { botId: bot.id, deleteMemories: true });
@@ -721,7 +727,8 @@ describePages("pages", () => {
       });
       return { token, pageId: created.id, secretId: secret.id };
     };
-    const read = (token: string) => app.request(`${SHARED_PAGE_PATH_PREFIX}${token}`);
+    const read = (token: string) =>
+      app.request(`${SHARED_PAGE_PATH_PREFIX}${token}`, { headers: { cookie: ownerCookie } });
     const leavers = await sharedBy(leaver.userId, "Leaver's page");
     const hosts = await sharedBy(host.userId, "Host's page");
     expect((await read(leavers.token)).status).toBe(200);
@@ -1048,6 +1055,7 @@ describePages("pages", () => {
   });
 
   it("answers every unusable token alike and throttles one address", async () => {
+    const cookie = await signup(app, `pages-tokens-${stamp}@rakazo.test`, "Token Prober");
     const answers = new Set<string>();
     for (const token of [
       "short",
@@ -1055,7 +1063,9 @@ describePages("pages", () => {
       `${"x".repeat(42)}!`,
       `${"x".repeat(35)}%2f..%2f`,
     ]) {
-      const response = await app.request(`${SHARED_PAGE_PATH_PREFIX}${token}`);
+      const response = await app.request(`${SHARED_PAGE_PATH_PREFIX}${token}`, {
+        headers: { cookie },
+      });
       answers.add(
         `${response.status} ${response.headers.get("cache-control")} ${await response.text()}`,
       );

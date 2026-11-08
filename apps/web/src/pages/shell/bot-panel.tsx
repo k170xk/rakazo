@@ -51,6 +51,7 @@ import { useSpaceQueries } from "../../lib/query";
 import { errorText } from "../../lib/user-error";
 import { AvatarStudioPopover } from "./avatar-studio-popover";
 import { ChatModelPicker } from "./chat-model-picker";
+import { FilesTab } from "./files-tab";
 
 const ScratchpadSection = lazyComponent(() =>
   import("../ScratchpadSection").then((module) => module.ScratchpadSection),
@@ -100,9 +101,9 @@ export function ComputerModePicker({
   );
 }
 
-export type BotPanelTab = "computer" | "routines" | "pages" | "settings";
+export type BotPanelTab = "computer" | "routines" | "pages" | "files" | "settings";
 
-/** A bot's profile above its Computer, Routines, Pages and Advanced tabs. */
+/** A bot's profile above its Computer, Routines, Pages, Files and Advanced tabs. */
 export function BotSettings({
   bot,
   tab = "settings",
@@ -223,6 +224,7 @@ export function BotSettings({
   const fullComputer = (me?.computerAccess ?? "full") === "full";
   const computersOn = me?.features?.computers !== false && fullComputer;
   const routinesOn = me?.features?.routines !== false && fullComputer;
+  const filesOn = me?.features?.computers !== false && me?.computerAccess !== "none";
   // A failed catalog load must not clear an existing thinkingLevel override on save.
   const modelMetaReady =
     credentialsQuery.data !== undefined &&
@@ -572,6 +574,11 @@ export function BotSettings({
           <TabsTrigger value="pages">
             <Trans>Pages</Trans>
           </TabsTrigger>
+          {filesOn ? (
+            <TabsTrigger value="files">
+              <Trans>Files</Trans>
+            </TabsTrigger>
+          ) : null}
           <TabsTrigger value="settings">
             <Trans>Advanced</Trans>
           </TabsTrigger>
@@ -584,6 +591,9 @@ export function BotSettings({
         </TabsContent>
         <TabsContent value="pages" className="pt-4">
           {tab === "pages" ? <PagesList botId={bot.id} /> : null}
+        </TabsContent>
+        <TabsContent value="files" className="pt-4">
+          {tab === "files" ? <FilesTab botId={bot.id} /> : null}
         </TabsContent>
         {/* Stays mounted so scratchpad and knowledge drafts survive a tab switch. */}
         <TabsContent value="settings" keepMounted data-testid="bot-settings-advanced">

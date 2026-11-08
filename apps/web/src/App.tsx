@@ -139,6 +139,7 @@ function SessionApp() {
     next === "/admin" ||
     next === "/admin/plugins" ||
     next === "/admin/access" ||
+    /^\/p\/[\w-]+$/.test(next) ||
     next.startsWith(`${MCP_OAUTH_CALLBACK_PATH}?`) ||
     next.startsWith(`${SLACK_INSTALL_CALLBACK_PATH}?`)
       ? next

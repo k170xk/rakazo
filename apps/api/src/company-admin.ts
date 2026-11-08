@@ -9,6 +9,7 @@ import {
   listPiCatalog,
   refreshCompanyPolicy,
   resolveEnvironmentDeploymentModel,
+  serverDisk,
   verifyCatalogProviderApiKey,
   videoRenderLoad,
   videoRenderSlots,
@@ -40,6 +41,7 @@ type CompanyAdminDeps = Pick<
   "prisma" | "secrets" | "modelConnectionFetch" | "evolveTools"
 > & {
   env: Pick<RouterDeps["env"], "adminEmails">;
+  dataDir?: string;
 };
 
 const FEATURE_OFF: Record<CompanyFeatureId, string> = {
@@ -127,18 +129,27 @@ async function computersState(
   deps: CompanyAdminDeps,
   policy: CompanyTools,
 ): Promise<CompanyComputersState> {
-  const [people, runningComputers, load] = await Promise.all([
+  const [people, runningComputers, load, homes, disk] = await Promise.all([
     runAsSystem("list computer access", () =>
       deps.prisma.user.findMany({
         orderBy: { name: "asc" },
-        select: { id: true, name: true, email: true, computerAccess: true },
+        select: { id: true, name: true, email: true, computerAccess: true, storageLimitMb: true },
       }),
     ),
     runAsSystem("count running computers", () =>
       deps.prisma.computer.count({ where: { state: "running" } }),
     ),
     videoRenderLoad(deps.prisma),
+    runAsSystem("read computer storage", () =>
+      deps.prisma.computer.groupBy({
+        by: ["userId"],
+        where: { homeBytes: { not: null } },
+        _sum: { homeBytes: true },
+      }),
+    ),
+    serverDisk(deps.dataDir),
   ]);
+  const used = new Map(homes.map((row) => [row.userId, Number(row._sum.homeBytes ?? 0n)]));
   const computersOn = companyFeatures().computers;
   return {
     defaultAccess: policy.defaultComputerAccess,
@@ -151,6 +162,9 @@ async function computersState(
         email: person.email,
         access: stored,
         effective: computersOn ? (stored ?? policy.defaultComputerAccess) : "none",
+        storageLimitMb: person.storageLimitMb,
+        effectiveStorageLimitMb: person.storageLimitMb ?? policy.defaultStorageLimitMb,
+        storageUsedBytes: used.get(person.id) ?? null,
       };
     }),
     capacity: {
@@ -159,7 +173,34 @@ async function computersState(
       videoRendering: load.rendering,
       videoQueued: load.queued,
     },
+    storage: {
+      fileRetentionDays: policy.fileRetentionDays,
+      defaultStorageLimitMb: policy.defaultStorageLimitMb,
+      disk: disk && { usedBytes: disk.usedBytes, totalBytes: disk.totalBytes },
+    },
   };
+}
+
+/** One person's storage limit; null returns them to the company default. */
+export async function setStorageLimit(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+  input: { userId: string; limitMb: number | null },
+): Promise<CompanyAdminState> {
+  await requireAdmin(deps, actor.userId);
+  const updated = await runAsSystem("save storage limit", () =>
+    deps.prisma.user.updateMany({
+      where: { id: input.userId },
+      data: { storageLimitMb: input.limitMb },
+    }),
+  );
+  if (!updated.count) throw new ORPCError("NOT_FOUND", { message: "No such person." });
+  getLogger().info("company_admin.storage_limit_saved", {
+    userId: input.userId,
+    limitMb: input.limitMb,
+    by: actor.userId,
+  });
+  return companyAdminState(deps, actor);
 }
 
 /** One person's level; null returns them to the company default. */

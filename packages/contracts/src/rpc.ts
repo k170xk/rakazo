@@ -148,6 +148,7 @@ import {
   SpaceSchema,
   STAFF_SPENDING_PERIODS,
   StaffSpendingSchema,
+  StoredFilesStateSchema,
   TaughtSkillSchema,
   TeachRecordingEventSchema,
   ThreadMessagePageSchema,
@@ -387,6 +388,15 @@ export const appContract = {
     /** One person's computer access; null returns them to the company default. */
     setComputerAccess: oc
       .input(z.object({ userId: z.string().min(1), access: ComputerAccessSchema.nullable() }))
+      .output(CompanyAdminStateSchema),
+    /** One person's computer storage limit; null returns them to the company default. */
+    setStorageLimit: oc
+      .input(
+        z.object({
+          userId: z.string().min(1),
+          limitMb: z.number().int().min(100).max(10_000_000).nullable(),
+        }),
+      )
       .output(CompanyAdminStateSchema),
     /** Model spending per person across every space. */
     spending: oc
@@ -942,6 +952,17 @@ export const appContract = {
         }),
       )
       .output(z.object({ ok: z.literal(true) })),
+    /** The bot's Files tab: what it made, when cleanup deletes each item, and storage used. */
+    storedFiles: oc.input(botId).output(StoredFilesStateSchema),
+    pinStoredFile: oc
+      .input(z.object({ botId: Id, path: z.string().min(1).max(1024), pinned: z.boolean() }))
+      .output(StoredFilesStateSchema),
+    deleteStoredFile: oc
+      .input(z.object({ botId: Id, path: z.string().min(1).max(1024) }))
+      .output(StoredFilesStateSchema),
+    downloadStoredFile: oc
+      .input(z.object({ botId: Id, path: z.string().min(1).max(1024) }))
+      .output(z.object({ path: z.string(), contentBase64: z.string() })),
     terminalUrl: oc.input(botId).output(z.object({ url: z.string().nullable() })),
     commands: oc
       .input(botId)

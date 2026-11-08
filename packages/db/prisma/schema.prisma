@@ -45,6 +45,8 @@ model User {
   billingTrialUsedAt          DateTime?
   /// "full", "tools" or "none" as an admin set it; null follows the company default.
   computerAccess              String?
+  /// Computer storage limit an admin set for this person; null follows the company default.
+  storageLimitMb              Int?
   sessions                    Session[]
   accounts                    Account[]
   passkeys                    Passkey[]
@@ -978,6 +980,20 @@ model HeavyToolJob {
   @@map("heavy_tool_jobs")
 }
 
+/// An item in a bot's folder its owner pinned, so file cleanup never deletes it.
+model KeptFile {
+  id        String   @id @default(cuid())
+  botId     String
+  userId    String
+  /// Relative to the bot's folder, e.g. "outputs/Induction.mp4".
+  path      String
+  createdAt DateTime @default(now())
+
+  @@unique([botId, path])
+  @@index([userId])
+  @@map("kept_files")
+}
+
 model Message {
   id               String    @id @default(cuid())
   threadId         String
@@ -1565,6 +1581,9 @@ model Computer {
   diskFreeBytes           BigInt?
   /// How full the disk was when the user hid its warning; the warning returns once it is fuller.
   diskDismissedPercent    Int?
+  /// Size of everything in this computer's home when file cleanup last measured it.
+  homeBytes               BigInt?
+  homeBytesAt             DateTime?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   bots                    Bot[]

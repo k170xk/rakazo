@@ -1,0 +1,448 @@
+import { randomUUID } from "node:crypto";
+import { constants } from "node:fs";
+import { lstat, mkdir, open, readdir, realpath, rename, rm, statfs } from "node:fs/promises";
+import path from "node:path";
+import type { AgentHomeStore } from "@rakazo/adapter-kit";
+import type { StoredFile } from "@rakazo/contracts";
+import type { PrismaClient } from "@rakazo/db";
+import { runAsSystem } from "@rakazo/db";
+import { companyTools } from "./company-policy.js";
+import { teamBotWorkspaceDirectory } from "./computer-support.js";
+import { fileHandlePath } from "./file-handle-path.js";
+import { isContained, resolveAgentHomePath } from "./home.js";
+
+/** Folders whose children are listed and cleaned one by one instead of as a single item. */
+export const OUTPUT_FOLDERS: readonly string[] = ["outputs", "work"];
+const CONVERSATIONS = "conversations";
+const DAY_MS = 86_400_000;
+const MAX_ITEMS = 2000;
+/** A measured size counts as current this long before an OCSC command measures again. */
+const MEASURE_FRESH_MS = 10 * 60_000;
+/** Below this share of free disk, nobody's bot starts new OCSC work. */
+const MIN_FREE_DISK_SHARE = 0.05;
+
+export interface StoredItem {
+  path: string;
+  kind: "file" | "dir";
+  size: number;
+  files: number;
+  modifiedMs: number;
+}
+
+interface Tree {
+  size: number;
+  files: number;
+  newestMs: number;
+}
+
+/** Size and newest change of a tree, never following links, which may point anywhere on the host. */
+export async function measureTree(full: string): Promise<Tree> {
+  const info = await lstat(full).catch(() => null);
+  if (!info) return { size: 0, files: 0, newestMs: 0 };
+  if (!info.isDirectory()) {
+    return { size: info.isFile() ? info.size : 0, files: 1, newestMs: changedMs(info) };
+  }
+  const tree: Tree = { size: 0, files: 0, newestMs: changedMs(info) };
+  const pending = [full];
+  while (pending.length > 0) {
+    const dir = pending.pop()!;
+    const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      const child = path.join(dir, entry.name);
+      const stat = await lstat(child).catch(() => null);
+      if (!stat) continue;
+      tree.newestMs = Math.max(tree.newestMs, changedMs(stat));
+      if (stat.isDirectory()) pending.push(child);
+      else {
+        tree.files += 1;
+        if (stat.isFile()) tree.size += stat.size;
+      }
+    }
+  }
+  return tree;
+}
+
+/** ctime too, since unzip and copies can set an old mtime on a file made just now. */
+function changedMs(info: { mtimeMs: number; ctimeMs: number }) {
+  return Math.max(info.mtimeMs, info.ctimeMs);
+}
+
+/**
+ * Opens `relative` under `root` one real directory at a time, refusing links, and keeps it open.
+ * On Linux `path` goes through the open handle, so a folder later swapped for a link (the home's
+ * owner controls everything in it) cannot redirect what is read or moved to another home.
+ */
+export async function pinnedDirectory(root: string, relative: string) {
+  const handles: Awaited<ReturnType<typeof open>>[] = [];
+  const close = async () => {
+    await Promise.all(handles.map((handle) => handle.close().catch(() => undefined)));
+  };
+  const flags = constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW;
+  try {
+    const realRoot = await realpath(root);
+    let current = await open(root, flags);
+    handles.push(current);
+    for (const segment of relative.split("/").filter((part) => part && part !== ".")) {
+      if (segment === "..") throw new Error("Path leaves the home");
+      current = await open(path.join(await handlePath(current.fd), segment), flags);
+      handles.push(current);
+    }
+    if (!isContained(realRoot, await fileHandlePath(current.fd)))
+      throw new Error("Path leaves the home");
+    return { path: await handlePath(current.fd), close };
+  } catch {
+    await close();
+    return null;
+  }
+}
+
+async function handlePath(fd: number) {
+  return process.platform === "linux" ? `/proc/self/fd/${fd}` : fileHandlePath(fd);
+}
+
+async function withPinned<T>(root: string, relative: string, use: (dir: string) => Promise<T>) {
+  const pinned = await pinnedDirectory(root, relative);
+  if (!pinned) return null;
+  try {
+    return await use(pinned.path);
+  } finally {
+    await pinned.close();
+  }
+}
+
+/** Server-only folder beside the homes, which no computer mounts, for items on their way out. */
+function trashFolder(home: string) {
+  return path.resolve(home, "..", "..", "file-trash");
+}
+
+/**
+ * Moves one entry out of the home in a single rename, then deletes it where its former owner can
+ * no longer reach it. A link is moved as a link and never followed.
+ */
+async function removeEntry(home: string, parent: string, name: string) {
+  const trash = trashFolder(home);
+  await mkdir(trash, { recursive: true, mode: 0o700 });
+  const moved = path.join(trash, randomUUID());
+  const done = await withPinned(home, parent, async (dir) => {
+    await rename(path.join(dir, name), moved);
+    return true;
+  });
+  if (!done) throw new Error("That is not an item in this bot's folder.");
+  await rm(moved, { recursive: true, force: true });
+}
+
+const visible = (name: string) => !name.startsWith(".");
+
+/**
+ * What a bot made, as the Files tab shows it and cleanup deletes it: each top-level file or
+ * folder in its folder, except `outputs` and `work`, whose children count separately. Hidden
+ * entries are settings, never listed or deleted.
+ */
+export async function listStoredItems(home: string, botFolder: string): Promise<StoredItem[]> {
+  const items = await withPinned(home, botFolder, async (root) => {
+    const found: StoredItem[] = [];
+    const add = async (dir: string, name: string, relative: string) => {
+      const full = path.join(dir, name);
+      const info = await lstat(full).catch(() => null);
+      if (!info) return;
+      const tree = await measureTree(full);
+      found.push({
+        path: relative,
+        kind: info.isDirectory() ? "dir" : "file",
+        size: tree.size,
+        files: tree.files,
+        modifiedMs: tree.newestMs,
+      });
+    };
+    for (const entry of await readdir(root, { withFileTypes: true }).catch(() => [])) {
+      if (!visible(entry.name) || found.length >= MAX_ITEMS) continue;
+      if (entry.isDirectory() && OUTPUT_FOLDERS.includes(entry.name)) {
+        await withPinned(root, entry.name, async (inner) => {
+          for (const child of await readdir(inner, { withFileTypes: true }).catch(() => [])) {
+            if (visible(child.name) && found.length < MAX_ITEMS) {
+              await add(inner, child.name, `${entry.name}/${child.name}`);
+            }
+          }
+        });
+      } else {
+        await add(root, entry.name, entry.name);
+      }
+    }
+    return found;
+  });
+  return (items ?? []).sort((a, b) => b.modifiedMs - a.modifiedMs);
+}
+
+/** A pin keeps the item it names, the item holding it, and every item inside it. */
+export function isPinned(itemPath: string, pins: readonly string[]) {
+  return pins.some(
+    (pin) => pin === itemPath || pin.startsWith(`${itemPath}/`) || itemPath.startsWith(`${pin}/`),
+  );
+}
+
+export function expiredItems(
+  items: readonly StoredItem[],
+  pins: readonly string[],
+  retentionDays: number,
+  now: number,
+) {
+  const cutoff = now - retentionDays * DAY_MS;
+  return items.filter((item) => item.modifiedMs < cutoff && !isPinned(item.path, pins));
+}
+
+/** Deletes one listed item; anything not exactly a listed item, or reached through a link, is refused. */
+export async function removeStoredItem(home: string, botFolder: string, itemPath: string) {
+  const segments = itemPath.split("/");
+  const shapeOk =
+    segments.every(
+      (segment) => segment !== "" && segment !== "." && segment !== ".." && visible(segment),
+    ) &&
+    (segments.length === 1 || (segments.length === 2 && OUTPUT_FOLDERS.includes(segments[0]!)));
+  if (!shapeOk) throw new Error("That is not an item in this bot's folder.");
+  await removeEntry(
+    home,
+    path.posix.join(botFolder, ...segments.slice(0, -1)),
+    segments[segments.length - 1]!,
+  );
+}
+
+/** Opens one listed file for reading through its pinned folder, refusing a link. */
+export async function openStoredFile(home: string, botFolder: string, itemPath: string) {
+  const segments = itemPath.split("/");
+  const pinned = await pinnedDirectory(home, path.posix.join(botFolder, ...segments.slice(0, -1)));
+  if (!pinned) throw new Error("That is not an item in this bot's folder.");
+  try {
+    return await open(
+      path.join(pinned.path, segments[segments.length - 1]!),
+      constants.O_RDONLY | constants.O_NOFOLLOW,
+    );
+  } finally {
+    await pinned.close();
+  }
+}
+
+export function storedFileView(
+  item: StoredItem,
+  pins: readonly string[],
+  retentionDays: number,
+): StoredFile {
+  const pinned = isPinned(item.path, pins);
+  return {
+    path: item.path,
+    kind: item.kind,
+    size: item.size,
+    files: item.files,
+    modifiedAt: new Date(item.modifiedMs).toISOString(),
+    pinned,
+    deletesAt: pinned ? null : new Date(item.modifiedMs + retentionDays * DAY_MS).toISOString(),
+  };
+}
+
+/** Where a bot's own files sit inside its computer's home. */
+export function botFolderInHome(scope: string, botId: string) {
+  return scope === "team" ? teamBotWorkspaceDirectory(botId) : "";
+}
+
+/**
+ * Homes are swept straight on this server's disk only while they live here; homes kept in object
+ * storage are copies that a later save would overwrite.
+ */
+export function localHomePath(
+  home: AgentHomeStore,
+  homeKey: string,
+  dataDir: string | undefined,
+): string | null {
+  if (home.describe().id !== "local-fs") return null;
+  return resolveAgentHomePath(home, homeKey, dataDir);
+}
+
+export interface HomeSweep {
+  deletedItems: number;
+  freedBytes: number;
+  homeBytes: number;
+}
+
+/**
+ * Deletes every unpinned item older than the retention in each bot folder, and colleague
+ * conversation folders nobody touched for as long, then measures the whole home.
+ */
+export async function sweepHome(input: {
+  home: string;
+  scope: string;
+  /** The bots whose folders are in this home, each with its pins. */
+  bots: ReadonlyMap<string, readonly string[]>;
+  retentionDays: number;
+  now: number;
+}): Promise<HomeSweep> {
+  const result: HomeSweep = { deletedItems: 0, freedBytes: 0, homeBytes: 0 };
+  const folders: [string, readonly string[]][] =
+    input.scope === "team"
+      ? await teamBotFolders(input.home, input.bots)
+      : [...input.bots.values()].slice(0, 1).map((pins) => ["", pins]);
+  for (const [folder, pins] of folders) {
+    const items = await listStoredItems(input.home, folder);
+    for (const item of expiredItems(items, pins, input.retentionDays, input.now)) {
+      await removeStoredItem(input.home, folder, item.path);
+      result.deletedItems += 1;
+      result.freedBytes += item.size;
+    }
+  }
+  const cutoff = input.now - input.retentionDays * DAY_MS;
+  const stale =
+    (await withPinned(input.home, CONVERSATIONS, async (root) => {
+      const found: { name: string; size: number }[] = [];
+      for (const entry of await readdir(root, { withFileTypes: true }).catch(() => [])) {
+        if (!entry.isDirectory()) continue;
+        const tree = await measureTree(path.join(root, entry.name));
+        if (tree.newestMs < cutoff) found.push({ name: entry.name, size: tree.size });
+      }
+      return found;
+    })) ?? [];
+  for (const folder of stale) {
+    await removeEntry(input.home, CONVERSATIONS, folder.name);
+    result.deletedItems += 1;
+    result.freedBytes += folder.size;
+  }
+  result.homeBytes = (await measureTree(input.home)).size;
+  return result;
+}
+
+/** Every folder under `bots/`, including those of bots deleted since, which have no pins. */
+async function teamBotFolders(home: string, bots: ReadonlyMap<string, readonly string[]>) {
+  const entries =
+    (await withPinned(home, "bots", (dir) =>
+      readdir(dir, { withFileTypes: true }).catch(() => []),
+    )) ?? [];
+  return entries
+    .filter((entry) => entry.isDirectory() && visible(entry.name))
+    .map((entry): [string, readonly string[]] => [
+      teamBotWorkspaceDirectory(entry.name),
+      bots.get(entry.name) ?? [],
+    ]);
+}
+
+export async function pinsForBots(prisma: PrismaClient, botIds: readonly string[]) {
+  const rows = await runAsSystem("read pinned files", () =>
+    prisma.keptFile.findMany({ where: { botId: { in: [...botIds] } } }),
+  );
+  const pins = new Map<string, string[]>(botIds.map((id) => [id, []]));
+  for (const row of rows) pins.get(row.botId)?.push(row.path);
+  return pins;
+}
+
+/** Runs cleanup over every computer whose home is on this server's disk. */
+export async function sweepComputerFiles(deps: {
+  prisma: PrismaClient;
+  home: AgentHomeStore;
+  dataDir: string | undefined;
+  now?: number;
+}) {
+  const now = deps.now ?? Date.now();
+  const retentionDays = companyTools().fileRetentionDays;
+  const computers = await runAsSystem("list computers for file cleanup", () =>
+    deps.prisma.computer.findMany({
+      select: { id: true, scope: true, homeKey: true, bots: { select: { id: true } } },
+    }),
+  );
+  const total: HomeSweep = { deletedItems: 0, freedBytes: 0, homeBytes: 0 };
+  for (const computer of computers) {
+    const home = localHomePath(deps.home, computer.homeKey, deps.dataDir);
+    if (!home) continue;
+    const reachable = await pinnedDirectory(home, "");
+    if (!reachable) continue;
+    await reachable.close();
+    const pins = await pinsForBots(
+      deps.prisma,
+      computer.bots.map((bot) => bot.id),
+    );
+    const swept = await sweepHome({ home, scope: computer.scope, bots: pins, retentionDays, now });
+    total.deletedItems += swept.deletedItems;
+    total.freedBytes += swept.freedBytes;
+    total.homeBytes += swept.homeBytes;
+    await recordHomeBytes(deps.prisma, computer.id, swept.homeBytes, now);
+  }
+  return total;
+}
+
+async function recordHomeBytes(
+  prisma: PrismaClient,
+  computerId: string,
+  bytes: number,
+  now: number,
+) {
+  await runAsSystem("record computer home size", () =>
+    prisma.computer.updateMany({
+      where: { id: computerId },
+      data: { homeBytes: BigInt(bytes), homeBytesAt: new Date(now) },
+    }),
+  );
+}
+
+export async function storageLimitBytes(prisma: PrismaClient, userId: string) {
+  const user = await runAsSystem("read storage limit", () =>
+    prisma.user.findUnique({ where: { id: userId }, select: { storageLimitMb: true } }),
+  );
+  const mb = user?.storageLimitMb ?? companyTools().defaultStorageLimitMb;
+  return mb * 1024 * 1024;
+}
+
+/**
+ * Everything one person keeps across their computers, measuring `current` again when its last
+ * measurement is stale. Other computers count at their last measured size.
+ */
+export async function personStorageBytes(
+  prisma: PrismaClient,
+  userId: string,
+  current?: { computerId: string; home: string; measuredAt: Date | null },
+  now = Date.now(),
+) {
+  if (current && (!current.measuredAt || now - current.measuredAt.getTime() > MEASURE_FRESH_MS)) {
+    const bytes = (await measureTree(current.home)).size;
+    await recordHomeBytes(prisma, current.computerId, bytes, now);
+  }
+  const rows = await runAsSystem("read computer home sizes", () =>
+    prisma.computer.findMany({ where: { userId }, select: { homeBytes: true } }),
+  );
+  return rows.reduce((sum, row) => sum + Number(row.homeBytes ?? 0n), 0);
+}
+
+/** The disk holding every computer's files, or null where it cannot be read. */
+export async function serverDisk(dataDir: string | undefined) {
+  const info = await statfs(dataDir ?? "./data").catch(() => null);
+  if (!info) return null;
+  const totalBytes = info.blocks * info.bsize;
+  const freeBytes = info.bavail * info.bsize;
+  return { usedBytes: totalBytes - freeBytes, totalBytes, freeBytes };
+}
+
+export function formatBytes(bytes: number) {
+  if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+  if (bytes >= 1024 ** 2) return `${Math.round(bytes / 1024 ** 2)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/** Why new OCSC work cannot start for lack of space, or null when there is room. */
+export async function storageRefusal(input: {
+  prisma: PrismaClient;
+  home: AgentHomeStore;
+  dataDir: string | undefined;
+  userId: string;
+  computer: { id: string; homeKey: string; homeBytesAt: Date | null };
+}): Promise<string | null> {
+  const disk = await serverDisk(input.dataDir);
+  if (disk && disk.freeBytes < disk.totalBytes * MIN_FREE_DISK_SHARE) {
+    return "The company server is nearly out of space, so new documents and videos are paused. Tell an admin.";
+  }
+  const home = localHomePath(input.home, input.computer.homeKey, input.dataDir);
+  if (!home) return null;
+  const [used, limit] = await Promise.all([
+    personStorageBytes(input.prisma, input.userId, {
+      computerId: input.computer.id,
+      home,
+      measuredAt: input.computer.homeBytesAt,
+    }),
+    storageLimitBytes(input.prisma, input.userId),
+  ]);
+  if (used < limit) return null;
+  return `Your computer storage is full (${formatBytes(used)} of ${formatBytes(limit)}). Ask the person to delete or unpin old files in this bot's Files tab, or ask an admin for a higher limit.`;
+}

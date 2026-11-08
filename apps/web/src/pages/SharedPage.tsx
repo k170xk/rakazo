@@ -8,17 +8,21 @@ import { useParams } from "react-router-dom";
 import { PublicPageShell } from "../components/pages/PublicPageShell";
 import { usePageDocument } from "../lib/pages";
 
-async function readSharedPage(token: string): Promise<SharedPage | null> {
+/** Shared pages open only for people signed in to this company. */
+type SharedPageRead = SharedPage | null | "sign-in";
+
+async function readSharedPage(token: string): Promise<SharedPageRead> {
   const response = await fetch(`${SHARED_PAGE_PATH_PREFIX}${token}`, {
-    credentials: "omit",
+    credentials: "same-origin",
     referrerPolicy: "no-referrer",
   });
+  if (response.status === 401) return "sign-in";
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Shared page returned ${response.status}`);
   return (await response.json()) as SharedPage;
 }
 
-/** A page someone shared by link, for anyone holding it, signed in or not. */
+/** A page someone shared by link, for anyone in the company holding it. */
 export function SharedPagePage() {
   return (
     <>
@@ -38,12 +42,35 @@ function SharedPageBody() {
     enabled: token !== null,
     retry: false,
   });
-  const viewer = usePageDocument(shared.data?.code);
-  const title = shared.data?.title;
+  const page = shared.data === "sign-in" ? undefined : shared.data;
+  const viewer = usePageDocument(page?.code);
+  const title = page?.title;
   useEffect(() => {
     if (title) document.title = title;
   }, [title]);
 
+  if (shared.data === "sign-in") {
+    const next = encodeURIComponent(`/p/${slugToken}`);
+    return (
+      <main className="grid min-h-dvh place-items-center bg-background px-6 text-center">
+        <div className="flex max-w-[360px] flex-col items-center gap-3">
+          <img src="/favicon-32x32.png" alt="" className="size-8 rounded-full" />
+          <h1 className="text-[18px] leading-6 font-medium text-foreground">
+            <Trans>Sign in to view this page</Trans>
+          </h1>
+          <p className="text-[14px] leading-5 text-muted-foreground">
+            <Trans>Shared pages are only for people at your company.</Trans>
+          </p>
+          <a
+            href={`/sign-in?next=${next}`}
+            className={`${buttonVariants({ variant: "outline", size: "sm" })} mt-1`}
+          >
+            <Trans>Sign in</Trans>
+          </a>
+        </div>
+      </main>
+    );
+  }
   if (token === null || shared.data === null) {
     return (
       <main className="grid min-h-dvh place-items-center bg-background px-6 text-center">
@@ -63,7 +90,7 @@ function SharedPageBody() {
     );
   }
   // Busy or unreachable is not gone; a failed refresh keeps the page being read.
-  const failed = shared.isError && !shared.data;
+  const failed = shared.isError && !page;
   if (failed || viewer.failed) {
     return (
       <div className="grid min-h-dvh place-items-center bg-background px-6 text-center text-[15px] text-muted-foreground">
@@ -85,12 +112,12 @@ function SharedPageBody() {
       </div>
     );
   }
-  if (!shared.data) {
+  if (!page) {
     return (
       <div className="grid min-h-dvh place-items-center bg-background text-muted-foreground">
         <Spinner />
       </div>
     );
   }
-  return <PublicPageShell title={shared.data.title} document={viewer.document} />;
+  return <PublicPageShell title={page.title} document={viewer.document} />;
 }

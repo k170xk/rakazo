@@ -2085,6 +2085,10 @@ export const CompanyToolsSchema = z.object({
   disabledTools: z.array(z.string().trim().min(1).max(120)).max(500),
   /** The computer access of everyone without a level of their own. */
   defaultComputerAccess: ComputerAccessSchema,
+  /** Files on a computer untouched this long are deleted unless pinned in the bot's Files tab. */
+  fileRetentionDays: z.number().int().min(1).max(3650),
+  /** Each person's computer storage limit unless an admin set one for them. */
+  defaultStorageLimitMb: z.number().int().min(100).max(10_000_000),
 });
 export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
 
@@ -2092,6 +2096,8 @@ export const DEFAULT_COMPANY_TOOLS: CompanyTools = {
   disabledSkills: [],
   disabledTools: [],
   defaultComputerAccess: "tools",
+  fileRetentionDays: 30,
+  defaultStorageLimitMb: 5120,
 };
 
 export function companyToolsFrom(stored: unknown): CompanyTools {
@@ -2124,6 +2130,11 @@ export const CompanyComputerPersonSchema = z.object({
   /** Null follows the company default. */
   access: ComputerAccessSchema.nullable(),
   effective: ComputerAccessSchema,
+  /** Null follows the company default limit. */
+  storageLimitMb: z.number().int().nullable(),
+  effectiveStorageLimitMb: z.number().int(),
+  /** Last measured size of everything on their computers; null before the first measurement. */
+  storageUsedBytes: z.number().nonnegative().nullable(),
 });
 
 /** Who may use a computer, and how busy the shared computer capacity is. */
@@ -2136,8 +2147,41 @@ export const CompanyComputersStateSchema = z.object({
     videoRendering: z.number().int().nonnegative(),
     videoQueued: z.number().int().nonnegative(),
   }),
+  storage: z.object({
+    fileRetentionDays: z.number().int(),
+    defaultStorageLimitMb: z.number().int(),
+    /** The server disk holding every computer's files; null where it cannot be read. */
+    disk: z.object({ usedBytes: z.number(), totalBytes: z.number() }).nullable(),
+  }),
 });
 export type CompanyComputersState = z.infer<typeof CompanyComputersStateSchema>;
+
+/**
+ * One item in a bot's Files tab: a file or folder at the top of the bot's folder, or inside
+ * `outputs` or `work`. Cleanup deletes whole items, so a project folder never loses half its files.
+ */
+export const StoredFileSchema = z.object({
+  path: z.string(),
+  kind: z.enum(["file", "dir"]),
+  size: z.number().nonnegative(),
+  files: z.number().int().nonnegative(),
+  /** Newest change anywhere inside. */
+  modifiedAt: z.string().datetime(),
+  pinned: z.boolean(),
+  /** When cleanup deletes it; null while pinned. */
+  deletesAt: z.string().datetime().nullable(),
+});
+export type StoredFile = z.infer<typeof StoredFileSchema>;
+
+export const StoredFilesStateSchema = z.object({
+  /** False where this server cannot read the bot's folder directly. */
+  available: z.boolean(),
+  files: z.array(StoredFileSchema),
+  usedBytes: z.number().nonnegative(),
+  limitBytes: z.number().nonnegative(),
+  retentionDays: z.number().int(),
+});
+export type StoredFilesState = z.infer<typeof StoredFilesStateSchema>;
 
 export const CompanyModelSchema = z.object({
   provider: z.string(),

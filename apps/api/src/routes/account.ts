@@ -49,6 +49,7 @@ import {
   setCompanyModel,
   setCompanyTools,
   setComputerAccess,
+  setStorageLimit,
 } from "../company-admin.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
@@ -171,6 +172,9 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       setComputerAccess: authed.companyAdmin.setComputerAccess.handler(({ context, input }) =>
         setComputerAccess(deps, context.actor, input),
+      ),
+      setStorageLimit: authed.companyAdmin.setStorageLimit.handler(({ context, input }) =>
+        setStorageLimit(deps, context.actor, input),
       ),
       spending: authed.companyAdmin.spending.handler(({ context, input }) =>
         staffSpending(deps, context.actor.userId, input.period),
