@@ -62,10 +62,10 @@ export function limitedComputerInstruction(
     return "There is no computer for this person's bots. Make documents, slides, images, charts and voiceovers with the company Evolve tools, and if a task needs a computer, say an administrator can give this person computer access.";
   }
   const shared = colleagueTurn
-    ? " This is someone else's bot in a shared chat: you work in this conversation's own folder and cannot see the owner's files, and videos are made by each person's own bots."
+    ? " This is someone else's bot in a shared chat: you work in this conversation's own folder and cannot see the owner's files."
     : "";
   if (computerOff) {
-    return `This person has no computer, but the company document runners make OCSC files: use the ocsc tool for Word, PowerPoint, Excel and PDF files, write_file for their spec files and attach_file to share the results. Videos, a shell, a browser, a screen and scheduled routines are not available, so never offer them; if a task needs them, say an administrator can give this person computer access.${shared}`;
+    return `This person has no computer, but the company document runners make OCSC files: use the ocsc tool for Word, PowerPoint, Excel, PDF and video files, write_file for their spec files and attach_file to share the results. A shell, a browser, a screen and scheduled routines are not available, so never offer them; if a task needs them, say an administrator can give this person computer access.${shared}`;
   }
   return `This computer runs the OCSC document and video commands only: use the ocsc tool for Word, PowerPoint, Excel, PDF and video files, write_file for their spec files and attach_file to share the results. There is no shell, browser, screen or scheduled routine here, so never offer to browse, run other commands or set up routines; if a task needs them, say an administrator can give this person full computer access.${shared}`;
 }

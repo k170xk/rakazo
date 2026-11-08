@@ -127,6 +127,7 @@ import {
   toolRunLocalMount,
   toolRunRequestSchema,
   toolRunSlots,
+  toolRunVideoSlots,
   writeToolCacheFile,
 } from "./tool-runs.js";
 
@@ -563,6 +564,7 @@ app.post("/computers/:id/exec", async (c) => {
 });
 
 const toolRunSlotsShared = new FairSlots(toolRunSlots());
+const toolRunVideoSlotsShared = new FairSlots(toolRunVideoSlots());
 const TOOL_RUN_OUTPUT_MAX_BYTES = 4 * 1024 * 1024;
 // Runs this process started are the only ones it waits on, so any found before the first are leftovers.
 let toolRunLeftoversCleared: Promise<void> | undefined;
@@ -605,7 +607,9 @@ const toolCacheSweep = setInterval(
 );
 toolCacheSweep.unref();
 
-app.get("/tool-runs/status", (c) => c.json(toolRunSlotsShared.stats()));
+app.get("/tool-runs/status", (c) =>
+  c.json({ ...toolRunSlotsShared.stats(), video: toolRunVideoSlotsShared.stats() }),
+);
 
 app.post("/tool-runs/files/list", async (c) => {
   const parsed = toolRunFileListSchema.safeParse(await c.req.json().catch(() => null));
@@ -689,7 +693,7 @@ app.post("/tool-runs/run", async (c) => {
       let closed = false;
       let sentBytes = 0;
       const send = (event: {
-        type: "stdout" | "stderr" | "exit" | "queued";
+        type: "stdout" | "stderr" | "exit" | "queued" | "ping";
         data?: string;
         code?: number;
         ahead?: number;
@@ -705,7 +709,10 @@ app.post("/tool-runs/run", async (c) => {
           closed = true;
         }
       };
+      // Fetch clients drop a response silent for five minutes, and a video prints only at the end.
+      const ping = setInterval(() => send({ type: "ping" }), 30_000);
       let release: (() => void) | undefined;
+      let releaseVideo: (() => void) | undefined;
       let container: Docker.Container | undefined;
       try {
         toolRunLeftoversCleared ??= clearToolRunLeftovers().catch(() => undefined);
@@ -726,6 +733,11 @@ app.post("/tool-runs/run", async (c) => {
           await ensureBotNetwork(
             TOOL_RUN_NETWORK_ID,
             computerNetworkOwnerFor(dataDir, runtimeInfo),
+          );
+        }
+        if (request.program === "video") {
+          releaseVideo = await toolRunVideoSlotsShared.acquire(request.owner, abort, (ahead) =>
+            send({ type: "queued", ahead }),
           );
         }
         release = await toolRunSlotsShared.acquire(request.owner, abort, (ahead) =>
@@ -784,7 +796,9 @@ app.post("/tool-runs/run", async (c) => {
         send({ type: "exit", code: 1 });
       } finally {
         await container?.remove({ force: true }).catch(() => undefined);
+        clearInterval(ping);
         release?.();
+        releaseVideo?.();
         closed = true;
         try {
           controller.close();

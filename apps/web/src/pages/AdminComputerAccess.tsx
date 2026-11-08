@@ -70,10 +70,10 @@ export function CompanyComputerAccessSection({
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           <Trans>
-            Word, PowerPoint, Excel and PDF documents always run on the company document runners,
-            for everyone. Tools only adds videos, with no shell, browser, screen or routines. Full:
-            everything, including browsing and routines. No computer: documents and Evolve tools
-            only. Every person's files stay their own.
+            Word, PowerPoint, Excel, PDF and video files always run on the company tool runners, for
+            everyone. Full adds the person's own computer for browsing, a shell and routines. Tools
+            only and No computer: documents, videos and Evolve tools. Every person's files stay
+            their own.
           </Trans>
         </p>
       </div>
@@ -81,7 +81,8 @@ export function CompanyComputerAccessSection({
       {computersOn ? null : (
         <p className="text-sm text-muted-foreground">
           <Trans>
-            Computers are switched off above, so nobody has one. Documents still work for everyone.
+            Computers are switched off above, so nobody has one. Documents and videos still work for
+            everyone.
           </Trans>
         </p>
       )}

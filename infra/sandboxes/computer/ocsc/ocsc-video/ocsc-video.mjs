@@ -34,7 +34,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { cpus } from "node:os";
+import { cpus, hostname } from "node:os";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -47,6 +47,14 @@ const PREBUILT = join(HERE, "build");
 const COMPOSITION = "OcscVideo";
 const MAX_SECONDS = 600;
 const MAX_WAIT_SECONDS = 110;
+/**
+ * A tool runner keeps only the command's own process, so the render finishes inside the render
+ * command and its read-only engine folder gets no build cache.
+ */
+const INLINE = process.env.OCSC_VIDEO_INLINE === "1";
+/** A render in another runner rewrites its job this often; one silent for longer has died. */
+const BEAT_MS = 20_000;
+const STALE_MS = 120_000;
 const KEEP_BUNDLES = 4;
 const FETCH_MAX_BYTES = 400 * 1024 * 1024;
 const TRANSITIONS = [
@@ -1035,7 +1043,7 @@ async function bundleFor(spec, config, onProgress) {
       entryPoint: join(src, "index.ts"),
       outDir: out,
       rootDir: HERE,
-      enableCaching: true,
+      enableCaching: !INLINE,
       onProgress: (p) => onProgress?.(p),
     });
   } catch (error) {
@@ -1348,6 +1356,13 @@ function alive(pid) {
   }
 }
 
+/** Process ids mean nothing across runners, so a render from another one is judged by its beat. */
+function jobAlive(job) {
+  if (job.host && job.host !== hostname())
+    return Date.now() - Date.parse(job.beat ?? job.startedAt) < STALE_MS;
+  return alive(job.pid);
+}
+
 function jobFile(id) {
   if (!/^[0-9a-f-]{36}$/.test(String(id))) throw new UsageError("That is not a render job id.");
   return join(JOBS, `${id}.json`);
@@ -1368,7 +1383,7 @@ function findJob(id) {
   }
   if (!existsSync(file)) throw new UsageError("There is no render job with that id.");
   const job = readJson(file);
-  if (["starting", "bundling", "rendering", "finishing"].includes(job.status) && !alive(job.pid)) {
+  if (["starting", "bundling", "rendering", "finishing"].includes(job.status) && !jobAlive(job)) {
     job.status = "failed";
     job.error = job.error || "The render stopped unexpectedly. Run ocsc-video render again.";
     writeJson(file, job);
@@ -1382,14 +1397,14 @@ function running() {
     if (!f.endsWith(".json")) continue;
     try {
       const job = readJson(join(JOBS, f));
-      if (["starting", "bundling", "rendering", "finishing"].includes(job.status) && alive(job.pid))
+      if (["starting", "bundling", "rendering", "finishing"].includes(job.status) && jobAlive(job))
         return job;
     } catch {}
   }
   return null;
 }
 
-function cmdRender(o) {
+async function cmdRender(o) {
   const { spec, config, problems } = loadSpec(o);
   if (!problems.length) problems.push(...endingProblems(config));
   if (problems.length) return { ok: false, spec: spec.rel, problems };
@@ -1424,6 +1439,11 @@ function cmdRender(o) {
     progress: 0,
     startedAt: new Date().toISOString(),
   };
+  if (INLINE) {
+    writeJson(file, { ...job, pid: process.pid, host: hostname() });
+    await work({ job: id });
+    return cmdWait({ job: id, seconds: 1 });
+  }
   writeJson(file, job);
   mkdirSync(JOBS, { recursive: true });
   const child = spawn(process.execPath, [fileURLToPath(import.meta.url), "_work", "--job", id], {
@@ -1572,8 +1592,11 @@ async function work(o) {
     writeJson(file, job);
   };
   let close = () => undefined;
+  const beat = INLINE
+    ? setInterval(() => update({ beat: new Date().toISOString() }, true), BEAT_MS)
+    : undefined;
   try {
-    update({ status: "bundling", pid: process.pid }, true);
+    update({ status: "bundling", pid: process.pid, beat: new Date().toISOString() }, true);
     const ready = await forRender({ spec: job.spec });
     const { spec, prepared, config } = ready;
     close = ready.close;
@@ -1632,6 +1655,7 @@ async function work(o) {
     );
     process.exitCode = 1;
   } finally {
+    clearInterval(beat);
     close();
   }
 }
@@ -1724,7 +1748,7 @@ async function main() {
     else if (command === "read") result = await cmdRead(o);
     else if (command === "fetch") result = await cmdFetch(o);
     else if (command === "still") result = await cmdStill(o);
-    else if (command === "render") result = cmdRender(o);
+    else if (command === "render") result = await cmdRender(o);
     else if (command === "wait") result = await cmdWait(o);
     else if (command === "cancel") result = cmdCancel(o);
     else throw new UsageError(`Usage:\n${USAGE}`);

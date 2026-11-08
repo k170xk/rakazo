@@ -11,7 +11,13 @@ import { normalizeWorkspacePath, teamBotWorkspaceDirectory } from "./computer-su
 import { measureTree, pinnedDirectory } from "./file-retention.js";
 
 /** OCSC programs that finish in one command and need no screen, so a tool runner can run them. */
-export const RUNNER_PROGRAMS: ReadonlySet<string> = new Set(["word", "pptx", "xlsx", "pdf"]);
+export const RUNNER_PROGRAMS: ReadonlySet<string> = new Set([
+  "word",
+  "pptx",
+  "xlsx",
+  "pdf",
+  "video",
+]);
 /** Server folder beside the homes holding colleague conversation folders; no computer mounts it. */
 export const TOOL_WORK = "tool-work";
 /** A colleague conversation folder stops taking new work past this size. */
@@ -64,6 +70,11 @@ export function toolRunnerWorkspace(input: {
     root: path.resolve(input.homePath),
     cwd: input.mode === "team" ? teamBotWorkspaceDirectory(input.botId) : "",
   };
+}
+
+/** A person who never had a computer has no home yet; the runner only mounts folders that exist. */
+export async function ensureToolRunnerFolder(workspace: ToolRunnerWorkspace) {
+  await mkdir(path.join(workspace.root, workspace.cwd), { recursive: true, mode: 0o755 });
 }
 
 /** Stands in for a computer where the file helpers ask for one; the folder files ignore it. */

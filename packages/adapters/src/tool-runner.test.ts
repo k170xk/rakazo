@@ -7,6 +7,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   conversationFolderRefusal,
+  ensureToolRunnerFolder,
   folderFiles,
   listFolderFiles,
   TOOL_RUNNER_COMPUTER,
@@ -64,6 +65,19 @@ describe("tool runner workspace", () => {
       cwd: "bots/b1",
       root: path.join(data, "homes/team-a"),
     });
+  });
+
+  it("makes the bot folder for someone whose computer never started", async () => {
+    const workspace = toolRunnerWorkspace({
+      dataDir: data,
+      homePath: path.join(data, "homes/team-new"),
+      mode: "team",
+      botId: "b1",
+      folder: undefined,
+    })!;
+    await ensureToolRunnerFolder(workspace);
+    expect((await stat(path.join(data, "homes/team-new/bots/b1"))).isDirectory()).toBe(true);
+    await ensureToolRunnerFolder(workspace);
   });
 
   it("has none for a home kept elsewhere", () => {

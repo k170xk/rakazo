@@ -45,7 +45,8 @@ describe("tool run requests", () => {
       expect(toolRunRequestSchema.safeParse({ ...valid, mount }).success, mount).toBe(false);
     }
     expect(toolRunRequestSchema.safeParse({ ...valid, cwd: "../x" }).success).toBe(false);
-    expect(toolRunRequestSchema.safeParse({ ...valid, program: "video" }).success).toBe(false);
+    expect(toolRunRequestSchema.safeParse({ ...valid, program: "video" }).success).toBe(true);
+    expect(toolRunRequestSchema.safeParse({ ...valid, program: "show" }).success).toBe(false);
   });
 });
 
@@ -213,5 +214,21 @@ describe("tool run container", () => {
     expect(options.WorkingDir).toBe("/work/bots/b1");
     expect(options.Entrypoint).toEqual(["/usr/local/bin/ocsc-word"]);
     expect(options.Env).toContain("WORKSPACE_DIR=/work/bots/b1");
+    expect(options.HostConfig.Tmpfs).not.toHaveProperty("/opt/ocsc-video/.work");
+  });
+
+  it("gives a video more memory and a writable engine scratch folder", () => {
+    const options = toolRunContainerOptions({
+      name: "rakazo-tool-run-v",
+      image: "rakazo/computer:local",
+      user: "1000:1000",
+      request: toolRunRequestSchema.parse({ ...valid, program: "video", args: ["render"] }),
+      storage: { homePath: "/srv/data/homes/team-a" },
+    });
+    expect(options.Entrypoint).toEqual(["/usr/local/bin/ocsc-video"]);
+    expect(options.HostConfig.Memory).toBe(6 * 1024 ** 3);
+    expect(options.HostConfig.ReadonlyRootfs).toBe(true);
+    expect(options.HostConfig.Tmpfs).toHaveProperty("/opt/ocsc-video/.work");
+    expect(options.Env).toContain("OCSC_VIDEO_INLINE=1");
   });
 });

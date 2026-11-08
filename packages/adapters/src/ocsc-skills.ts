@@ -341,8 +341,8 @@ For anything the built-in scenes and templates cannot show (kinetic type, animat
 
 CHECK, RENDER, SEND
 - ocsc-video still --spec outputs/<Name>.video.json --scene <n> [--at <seconds>] renders one full-size frame as a PNG. To look at it yourself, run ocsc-show <the PNG path> with shell and then computer_observe (skip this when you have no screen). Check every custom scene and every scene with a photo before the full render.
-- ocsc-video render --spec outputs/<Name>.video.json starts the render in the background and prints a job. It renders at full 1080p quality; --quality draft is a quick half-size timing check, and --quality master makes a 4K copy when the person asks for one.
-- ocsc-video wait --job <job> waits up to 100 seconds and reports progress. Run it again until "status" is "done".
+- ocsc-video render --spec outputs/<Name>.video.json renders at full 1080p quality; --quality draft is a quick half-size timing check, and --quality master makes a 4K copy when the person asks for one. On the tool runners it returns only when the video is finished, with "status" "done"; elsewhere it starts in the background and prints a job.
+- ocsc-video wait --job <job> waits up to 100 seconds and reports progress. Run it again until "status" is "done"; it is not needed when render already said "done".
 - When the job is done, send the .mp4 at its printed "path" with attach_file. Give the length, the scene list and the voice in a few lines.
 - To change a video, edit the spec (and custom .tsx files), keep everything else, and render again under the same file names, then attach_file again with the same name. Change only what the person asked for: a new voice line means a new generate_voiceover for that scene only.
 If the JSON says "ok": false, read the error (a custom scene build error names the line), fix it and run again; stop after three attempts and say what went wrong.

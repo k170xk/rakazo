@@ -74,14 +74,15 @@ describe("ocsc on a tool runner", () => {
     expect(h.computerGet).not.toHaveBeenCalled();
   });
 
-  it("refuses video in a shared chat instead of using the owner's computer", async () => {
+  it("renders a shared chat's video on a runner instead of the owner's computer", async () => {
     const h = harness({ folder: "conversations/t1", runner: true });
-    const result = (await computerTools.ocsc!(
+    await computerTools.ocsc!(
       h.ctx,
-      h.call({ program: "video", args: ["render"] }) as never,
-    )) as { error?: string };
-    expect(result.error).toMatch(/not available in a shared chat/);
-    expect(h.run).not.toHaveBeenCalled();
+      h.call({ program: "video", args: ["render", "--spec", "outputs/a.video.json"] }) as never,
+    );
+    expect(h.run).toHaveBeenCalledWith(
+      expect.objectContaining({ program: "video", timeoutMs: 45 * 60_000 }),
+    );
     expect(h.computerGet).not.toHaveBeenCalled();
   });
 
@@ -95,8 +96,18 @@ describe("ocsc on a tool runner", () => {
     expect(h.computerGet).not.toHaveBeenCalled();
   });
 
-  it("refuses video without starting a computer when the person has none", async () => {
+  it("renders video on a runner when the person has no computer", async () => {
     const h = harness({ runner: true, documents: true, computerOff: true });
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "video", args: ["render", "--spec", "outputs/a.video.json"] }) as never,
+    );
+    expect(h.run).toHaveBeenCalledWith(expect.objectContaining({ program: "video" }));
+    expect(h.computerGet).not.toHaveBeenCalled();
+  });
+
+  it("refuses without starting a computer when the person has none and no runner is set up", async () => {
+    const h = harness({ computerOff: true });
     const result = (await computerTools.ocsc!(
       h.ctx,
       h.call({ program: "video", args: ["render"] }) as never,

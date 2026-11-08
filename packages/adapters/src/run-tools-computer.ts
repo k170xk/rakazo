@@ -288,6 +288,9 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
  * Runs one OCSC document command on a tool runner, which sees only this run's folder,
  * showing it in Activity like a command on the computer.
  */
+/** A runner renders the whole video inside the one command, up to ten minutes of footage. */
+const VIDEO_RUN_TIMEOUT_MS = 45 * 60_000;
+
 async function runOcscOnRunner(
   ctx: RunContext,
   call: ToolCall,
@@ -320,7 +323,7 @@ async function runOcscOnRunner(
       program,
       args,
       owner: ctx.run.userId,
-      timeoutMs: sandboxCommandTimeoutMs(),
+      timeoutMs: program === "video" ? VIDEO_RUN_TIMEOUT_MS : sandboxCommandTimeoutMs(),
       signal: ctx.context.signal,
       onQueued: (ahead) =>
         void publish(
@@ -571,7 +574,7 @@ export const computerTools: ToolHandlers = {
     }
     if (ctx.computer.computerOff) {
       return call.finish({
-        error: `ocsc ${program} needs a computer, and this person has none. Word, PowerPoint, Excel and PDF documents still work; an administrator can give computer access for videos.`,
+        error: `ocsc ${program} needs a computer, and this person has none. Word, PowerPoint, Excel, PDF and video files still work; an administrator can give computer access for the rest.`,
       });
     }
     if (ctx.computer.folder) {

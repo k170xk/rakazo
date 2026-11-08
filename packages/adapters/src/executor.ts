@@ -249,7 +249,12 @@ import {
 import { loadAgentTicketContext } from "./ticket-context.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
 import { toolResultFingerprint } from "./tool-loop.js";
-import { folderFiles, TOOL_RUNNER_COMPUTER, toolRunnerWorkspace } from "./tool-runner.js";
+import {
+  ensureToolRunnerFolder,
+  folderFiles,
+  TOOL_RUNNER_COMPUTER,
+  toolRunnerWorkspace,
+} from "./tool-runner.js";
 import { restoreTurnCheckpoint } from "./turn-checkpoint.js";
 import { createWebProvider } from "./web-provider-factory.js";
 
@@ -1291,6 +1296,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               copying = copying
                 .catch(() => undefined)
                 .then(async () => {
+                  await ensureToolRunnerFolder(runnerWorkspace);
                   if (!artifacts) return;
                   const fileDeps = { ...deps, artifacts, sandbox: files };
                   if (!recentCopied) {

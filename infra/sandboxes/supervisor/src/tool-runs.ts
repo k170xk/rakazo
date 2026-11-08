@@ -12,7 +12,7 @@ import { parseMemoryBytes, parseNanoCpus, parsePidsLimit } from "./computer-spec
  * nothing else. Colleague conversations and Tools-only people work here, so their files never
  * sit where somebody's own computer, and so their shell, could reach them.
  */
-export const TOOL_RUN_PROGRAMS = ["word", "pptx", "xlsx", "pdf"] as const;
+export const TOOL_RUN_PROGRAMS = ["word", "pptx", "xlsx", "pdf", "video"] as const;
 export const TOOL_RUN_LABEL = "rakazo.toolRun";
 /** Network id shared by every tool run, kept apart from each person's computer network. */
 export const TOOL_RUN_NETWORK_ID = "tool-runs";
@@ -71,26 +71,32 @@ function envOrDefault(name: string, fallback: string) {
   return raw === undefined || raw.trim() === "" ? fallback : raw;
 }
 
-export function toolRunSlots() {
-  const value = Number(envOrDefault("RAKAZO_TOOL_RUNNER_SLOTS", "2"));
+function positiveInteger(name: string, fallback: string) {
+  const value = Number(envOrDefault(name, fallback));
   if (!Number.isSafeInteger(value) || value < 1) {
-    throw new Error("RAKAZO_TOOL_RUNNER_SLOTS must be a positive integer");
+    throw new Error(`${name} must be a positive integer`);
   }
   return value;
 }
 
-export function toolRunLimits() {
-  const memory = parseMemoryBytes(
-    "RAKAZO_TOOL_RUNNER_MEMORY",
-    envOrDefault("RAKAZO_TOOL_RUNNER_MEMORY", "4g"),
-  );
+export function toolRunSlots() {
+  return positiveInteger("RAKAZO_TOOL_RUNNER_SLOTS", "2");
+}
+
+/** Videos hold a browser and an encoder for minutes, so fewer of them run at once. */
+export function toolRunVideoSlots() {
+  return positiveInteger("RAKAZO_TOOL_RUNNER_VIDEO_SLOTS", "2");
+}
+
+export function toolRunLimits(program: ToolRunRequest["program"] = "word") {
+  const video = program === "video";
+  const memoryName = video ? "RAKAZO_TOOL_RUNNER_VIDEO_MEMORY" : "RAKAZO_TOOL_RUNNER_MEMORY";
+  const cpusName = video ? "RAKAZO_TOOL_RUNNER_VIDEO_CPUS" : "RAKAZO_TOOL_RUNNER_CPUS";
+  const memory = parseMemoryBytes(memoryName, envOrDefault(memoryName, video ? "6g" : "4g"));
   return {
     Memory: memory,
     MemorySwap: memory,
-    NanoCpus: parseNanoCpus(
-      "RAKAZO_TOOL_RUNNER_CPUS",
-      envOrDefault("RAKAZO_TOOL_RUNNER_CPUS", "2"),
-    ),
+    NanoCpus: parseNanoCpus(cpusName, envOrDefault(cpusName, "2")),
     PidsLimit: parsePidsLimit(
       "RAKAZO_TOOL_RUNNER_PIDS_LIMIT",
       envOrDefault("RAKAZO_TOOL_RUNNER_PIDS_LIMIT", "512"),
@@ -431,6 +437,7 @@ export function toolRunContainerOptions(input: ToolRunContainerInput) {
       "LD_PRELOAD=",
       "LANG=C.UTF-8",
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "OCSC_VIDEO_INLINE=1",
     ],
     WorkingDir: workDir,
     Labels: { [TOOL_RUN_LABEL]: "true" },
@@ -452,11 +459,20 @@ export function toolRunContainerOptions(input: ToolRunContainerInput) {
           }
         : { Binds: [`${input.storage.homePath}:/work`] }),
       ReadonlyRootfs: true,
-      Tmpfs: { "/tmp": "rw,nosuid,nodev,size=2g,mode=1777" },
+      Tmpfs: {
+        "/tmp": "rw,nosuid,nodev,size=2g,mode=1777",
+        // Custom video scenes are bundled beside the engine, which is otherwise read-only.
+        ...(input.request.program === "video"
+          ? {
+              "/opt/ocsc-video/.work": "rw,nosuid,nodev,size=1g,mode=1777",
+              "/opt/ocsc-video/node_modules/.cache": "rw,nosuid,nodev,size=512m,mode=1777",
+            }
+          : {}),
+      },
       ShmSize: 512 * 1024 * 1024,
       CapDrop: ["ALL"],
       SecurityOpt: ["no-new-privileges:true"],
-      ...toolRunLimits(),
+      ...toolRunLimits(input.request.program),
       NetworkMode: input.networkMode ?? "bridge",
       ...(input.dns ? { Dns: input.dns } : {}),
       AutoRemove: false,

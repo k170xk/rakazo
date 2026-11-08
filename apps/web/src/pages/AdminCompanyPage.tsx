@@ -382,7 +382,7 @@ function CompanyFeaturesSection({
     {
       id: "computers",
       label: t`Computers`,
-      description: t`Each assistant's cloud computer, browser, routines and videos. Word, PowerPoint, Excel and PDF documents keep working when off: they run on the company document runners.`,
+      description: t`Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners.`,
     },
     {
       id: "staffIntegrations",
