@@ -14,21 +14,31 @@ const group = (id: string, sectionId: string | null, memberIds: string[]) => ({
 });
 
 describe("resolveRosterDrop", () => {
-  it("reorders when the bot is dropped on a sibling in the same section", () => {
+  it("reorders when a pinned bot is dropped on a pinned sibling", () => {
+    expect(
+      resolveRosterDrop({
+        dragged: bot("a", null, true),
+        target: { kind: "bot", chat: bot("b", null, true) },
+        sameList: true,
+      }),
+    ).toEqual({ action: "reorder", targetBotId: "b" });
+  });
+
+  it("leaves unpinned siblings in newest-message order", () => {
     expect(
       resolveRosterDrop({
         dragged: bot("a", "s1"),
         target: { kind: "bot", chat: bot("b", "s1") },
         sameList: true,
       }),
-    ).toEqual({ action: "reorder", targetBotId: "b" });
+    ).toBeNull();
   });
 
-  it("refuses a reorder across tree levels inside one section", () => {
+  it("refuses a reorder across tree levels", () => {
     expect(
       resolveRosterDrop({
-        dragged: bot("a", "s1"),
-        target: { kind: "bot", chat: bot("b", "s1") },
+        dragged: bot("a", null, true),
+        target: { kind: "bot", chat: bot("b", null, true) },
         sameList: false,
       }),
     ).toBeNull();

@@ -6,7 +6,17 @@ type SidebarChat = {
   preview?: string | null;
   pinned: boolean;
   sectionId: string | null;
+  updatedAt?: string | null;
 };
+
+/** Pinned chats keep the order people arranged; the rest follow their newest message. */
+function byRecentActivity<T extends { pinned: boolean; chat: SidebarChat }>(items: T[]): T[] {
+  const pinned = items.filter((item) => item.pinned);
+  const recent = items
+    .filter((item) => !item.pinned)
+    .sort((a, b) => (b.chat.updatedAt ?? "").localeCompare(a.chat.updatedAt ?? ""));
+  return [...pinned, ...recent];
+}
 
 type SidebarSpace<TBot extends SidebarChat, TGroup extends SidebarChat> = {
   id: string;
@@ -52,15 +62,17 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
       `${group.name} ${group.preview ?? ""}`.toLowerCase().includes(needle),
     );
     const grouped = groupBotsForSidebar(
-      [
-        ...visibleBots.map((chat) => ({ kind: "bot" as const, chat })),
-        ...visibleGroups.map((chat) => ({ kind: "group" as const, chat })),
-      ].map((item) => ({
-        ...item,
-        id: item.chat.id,
-        pinned: item.chat.pinned,
-        sectionId: item.chat.sectionId,
-      })),
+      byRecentActivity(
+        [
+          ...visibleBots.map((chat) => ({ kind: "bot" as const, chat })),
+          ...visibleGroups.map((chat) => ({ kind: "group" as const, chat })),
+        ].map((item) => ({
+          ...item,
+          id: item.chat.id,
+          pinned: item.chat.pinned,
+          sectionId: item.chat.sectionId,
+        })),
+      ),
       space.botSections,
       { labels },
     );

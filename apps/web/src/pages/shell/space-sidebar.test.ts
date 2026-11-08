@@ -78,6 +78,30 @@ describe("sidebarGroupsForSpaces", () => {
     ]);
   });
 
+  it("lists unpinned bots and groups by newest message, pinned chats in their saved order", () => {
+    const at = (id: string, name: string, updatedAt: string, pinned = false) => ({
+      ...chat(id, name),
+      pinned,
+      updatedAt,
+    });
+    const input = {
+      ...space("space-1", "Personal"),
+      bots: [
+        at("old", "Old", "2026-11-08T10:00:00.000Z"),
+        at("pin-b", "Pinned B", "2026-11-01T00:00:00.000Z", true),
+        at("new", "New", "2026-11-08T18:00:00.000Z"),
+        at("pin-a", "Pinned A", "2026-11-08T19:00:00.000Z", true),
+      ],
+      groups: [at("team", "Team", "2026-11-08T12:00:00.000Z")],
+    };
+    expect(
+      sidebarGroupsForSpaces([input], "").map((group) => group.bots.map((item) => item.id)),
+    ).toEqual([
+      ["pin-b", "pin-a"],
+      ["new", "team", "old"],
+    ]);
+  });
+
   it("names the only space on the header that holds its menu", () => {
     const [group] = sidebarGroupsForSpaces([space("space-1", "Personal", { canRename: true })], "");
 
