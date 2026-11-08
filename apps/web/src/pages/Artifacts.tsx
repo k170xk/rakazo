@@ -131,11 +131,11 @@ export function ArtifactsPage() {
   const nextCursor = listing.data?.pages.at(-1)?.nextCursor ?? null;
   const loadingMore = listing.isFetchingNextPage;
   const loadError =
-    listing.error && !listing.data ? errorText(listing.error, t`Could not load artifacts.`) : null;
+    listing.error && !listing.data ? errorText(listing.error, t`Could not load files.`) : null;
   // A failed refresh over the cached list is still said; a failed next page keeps Load more.
   const refreshError =
     listing.data && listing.isRefetchError
-      ? errorText(listing.error, t`Could not load artifacts.`)
+      ? errorText(listing.error, t`Could not load files.`)
       : null;
 
   function loadMore() {
@@ -205,7 +205,7 @@ export function ArtifactsPage() {
       if (artifactId === pendingDelete.id) navigate("/app/artifacts");
       setPendingDelete(null);
     } catch (error) {
-      setDeleteError(errorText(error, t`Could not delete this artifact.`));
+      setDeleteError(errorText(error, t`Could not delete this file.`));
     } finally {
       setDeleteBusy(false);
     }
@@ -227,7 +227,7 @@ export function ArtifactsPage() {
               <Trans>Bots</Trans>
             </Link>
             <h1 className="text-heading2 font-semibold">
-              <Trans>Artifacts</Trans>
+              <Trans>Files</Trans>
             </h1>
           </div>
           <div className="app-no-drag flex shrink-0 items-center gap-2">
@@ -285,7 +285,7 @@ export function ArtifactsPage() {
                 type="search"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={t`Search artifacts…`}
+                placeholder={t`Search files…`}
                 className="w-full rounded-lg border border-border bg-background py-1.5 ps-8 pe-3 text-[13px] outline-none focus:border-ring"
               />
             </div>
@@ -371,7 +371,7 @@ export function ArtifactsPage() {
               <AlertDialogDescription>
                 {pendingDelete.versionCount > 1 ? (
                   <Trans>
-                    This deletes all {pendingDelete.versionCount} versions of this artifact. This
+                    This deletes all {pendingDelete.versionCount} versions of this file. This
                     can't be undone.
                   </Trans>
                 ) : (
@@ -496,7 +496,7 @@ function EmptyArtifacts({
   if (!nextCursor) {
     return (
       <div className={className}>
-        <Trans>No artifacts found.</Trans>
+        <Trans>No files found.</Trans>
       </div>
     );
   }
@@ -507,7 +507,7 @@ function EmptyArtifacts({
           {loadingMore ? (
             <Spinner aria-label={t`Loading…`} />
           ) : (
-            <Trans>No matching artifacts on this page.</Trans>
+            <Trans>No matching files on this page.</Trans>
           )}
         </span>
         <LoadMoreButton loading={loadingMore} onClick={onLoadMore} />
@@ -839,7 +839,7 @@ function PreviewPane({
       : artifactQuery.error
         ? {
             status: "error",
-            message: errorText(artifactQuery.error, t`Could not load this artifact.`),
+            message: errorText(artifactQuery.error, t`Could not load this file.`),
           }
         : { status: "loading" };
 

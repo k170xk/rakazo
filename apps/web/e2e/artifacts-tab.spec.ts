@@ -16,7 +16,7 @@ test("opens Artifacts from the account menu and lists created files", async ({
   expect((await sidebar.boundingBox())?.x).toBe(0);
   await expect(sidebar.getByRole("button", { name: "Connect apps" })).toBeVisible();
   await page.getByTestId("user-menu-trigger").click();
-  const artifactsItem = page.getByRole("button", { name: "Artifacts", exact: true });
+  const artifactsItem = page.getByRole("button", { name: "Files", exact: true });
   const settingsItem = page.getByRole("button", { name: "Settings", exact: true });
   await expect(artifactsItem).toBeVisible();
   await expect(settingsItem).toBeVisible();
@@ -27,13 +27,13 @@ test("opens Artifacts from the account menu and lists created files", async ({
 
   await artifactsItem.click();
   await expect(page).toHaveURL(/\/app\/artifacts$/);
-  await expect(page.getByRole("heading", { name: "Artifacts", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Files", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Filters" })).toBeVisible();
-  await expect(page.getByText("No artifacts found.")).toBeVisible();
+  await expect(page.getByText("No files found.")).toBeVisible();
   await captureScreenshot(page, testInfo, "artifacts-empty");
 
   await page.setViewportSize({ width: 360, height: 700 });
-  const narrowHeading = page.getByRole("heading", { name: "Artifacts", exact: true });
+  const narrowHeading = page.getByRole("heading", { name: "Files", exact: true });
   const narrowCardView = page.getByRole("button", { name: "Card view" });
   await expect(narrowHeading).toBeVisible();
   await expect(narrowCardView).toBeVisible();
@@ -53,7 +53,7 @@ test("opens Artifacts from the account menu and lists created files", async ({
     contentBase64: Buffer.from("# Artifacts tab").toString("base64"),
   });
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Artifacts", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Files", exact: true })).toBeVisible();
   await expect(page.getByText("notes/artifacts-tab.md")).toBeVisible();
   await captureScreenshot(page, testInfo, "artifacts-list");
 
@@ -71,7 +71,7 @@ test("opens Artifacts from the account menu and lists created files", async ({
   await page.getByRole("button", { name: "Open navigation" }).click();
   const mobileSidebar = page.getByTestId("bots-sidebar");
   await mobileSidebar.getByTestId("user-menu-trigger").click();
-  const mobileArtifacts = page.getByRole("button", { name: "Artifacts", exact: true });
+  const mobileArtifacts = page.getByRole("button", { name: "Files", exact: true });
   await expect(mobileArtifacts).toBeVisible();
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "account-menu-artifacts-mobile");

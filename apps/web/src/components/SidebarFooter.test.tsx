@@ -142,7 +142,7 @@ it("opens integrations and keeps the existing account actions and links", async 
   expect([...menu.querySelectorAll("button, a")].map((row) => row.textContent)).toEqual([
     "Settings",
     "Tools and skills",
-    "Artifacts",
+    "Files",
     "Board",
     "Log out",
   ]);
