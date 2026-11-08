@@ -2052,6 +2052,14 @@ export const CompanyFeaturesSchema = z.object({
   staffIntegrations: z.boolean(),
   /** Speaking replies, dictation and calls for everyone, on the company voice connection. */
   voice: z.boolean(),
+  /** Enter sends a message on computers; phones and tablets always add a new line. */
+  sendWithEnter: z.boolean(),
+  /** Replies appear as they are written instead of all at once. */
+  streamReplies: z.boolean(),
+  /** Chats show a card for each tool a bot runs. */
+  toolActivity: z.boolean(),
+  /** Images from the web load in chats without a tap. */
+  webImages: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -2069,6 +2077,10 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   evolveTools: true,
   staffIntegrations: false,
   voice: true,
+  sendWithEnter: true,
+  streamReplies: false,
+  toolActivity: false,
+  webImages: false,
 };
 
 /** Stored switches over the defaults, so a switch added later starts at its default. */

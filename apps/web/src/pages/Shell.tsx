@@ -57,6 +57,7 @@ import {
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
+import { applyCompanyChatSettings } from "../lib/company-chat-settings";
 import {
   getComposerEnterToSend,
   subscribeComposerEnterToSend,
@@ -248,6 +249,10 @@ function SpaceShell() {
         ? null
         : undefined;
   const call = useCallSession();
+  const companyChat = bootstrapMe?.features;
+  useEffect(() => {
+    applyCompanyChatSettings(companyChat);
+  }, [companyChat]);
   /** Calls a bot, or opens voice settings first when no voice is connected. */
   const callBot = (bot: Bot) => {
     if (!bootstrapMe?.phoneCallsEnabled) return;

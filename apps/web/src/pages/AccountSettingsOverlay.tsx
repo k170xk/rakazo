@@ -11,11 +11,9 @@ import {
   Field,
   FieldLabel,
   Input,
-  Label,
   NativeSelect,
   NativeSelectOption,
   OptionSelect,
-  Switch,
   ToggleGroup,
   ToggleGroupItem,
 } from "@rakazo/ui-web";
@@ -49,26 +47,9 @@ import {
   setBotsSidebarDensity,
   subscribeBotsSidebarDensity,
 } from "../lib/bots-sidebar-density-pref";
-import {
-  getComposerEnterToSend,
-  setComposerEnterToSend,
-  subscribeComposerEnterToSend,
-} from "../lib/composer-enter-to-send-pref";
 import { getActiveUiLocale, setUiLocale } from "../lib/i18n";
 import { localTimezone, sameTimeZone, timezoneOptions } from "../lib/local-timezone";
 import { usePasskeysSupported } from "../lib/passkeys";
-import {
-  getRemoteImagesPreference,
-  setRemoteImagesPreference,
-} from "../lib/remote-images-preference";
-import {
-  getResponseStreamingPreference,
-  setResponseStreamingPreference,
-} from "../lib/response-streaming";
-import {
-  getToolActivityPreference,
-  setToolActivityPreference,
-} from "../lib/tool-activity-preference";
 import type { AppearancePreference } from "../lib/ui-appearance";
 import { getUiAppearancePreference, setUiAppearance } from "../lib/ui-appearance";
 import type { UiLocale } from "../lib/ui-locale";
@@ -154,24 +135,6 @@ export function GeneralSettingsPanels({
   const sidebarDensityLabelId = useId();
   const botStyleLabelId = useId();
   const [botStyleError, setBotStyleError] = useState<string | null>(null);
-  const [streamReplies, setStreamReplies] = useState(
-    () => getResponseStreamingPreference() === "on",
-  );
-  const streamRepliesId = useId();
-  const [showToolActivity, setShowToolActivity] = useState(
-    () => getToolActivityPreference() === "on",
-  );
-  const showToolActivityId = useId();
-  const enterToSend = useSyncExternalStore(
-    subscribeComposerEnterToSend,
-    getComposerEnterToSend,
-    () => false,
-  );
-  const enterToSendId = useId();
-  const [loadRemoteImages, setLoadRemoteImages] = useState(
-    () => getRemoteImagesPreference() === "on",
-  );
-  const loadRemoteImagesId = useId();
   const timezoneId = useId();
   const showPassword = Boolean(
     accountSecurity?.hasPassword && accountSecurity.passwordChangeEnabled !== false,
@@ -431,78 +394,6 @@ export function GeneralSettingsPanels({
             </SettingsRow>
           </div>
         ) : null}
-      </SettingsGroup>
-
-      <SettingsGroup title={<Trans>Chat</Trans>}>
-        <SettingsRow
-          label={
-            <Label htmlFor={enterToSendId} className="text-[14px] font-normal text-foreground">
-              <Trans>Send with Enter</Trans>
-            </Label>
-          }
-          control={
-            <Switch
-              id={enterToSendId}
-              data-testid="composer-enter-to-send-toggle"
-              checked={enterToSend}
-              onCheckedChange={(checked) => setComposerEnterToSend(checked)}
-            />
-          }
-        />
-        <SettingsRow
-          label={
-            <Label htmlFor={streamRepliesId} className="text-[14px] font-normal text-foreground">
-              <Trans>Stream replies</Trans>
-            </Label>
-          }
-          control={
-            <Switch
-              id={streamRepliesId}
-              data-testid="response-streaming-toggle"
-              checked={streamReplies}
-              onCheckedChange={(checked) => {
-                setStreamReplies(checked);
-                setResponseStreamingPreference(checked ? "on" : "off");
-              }}
-            />
-          }
-        />
-        <SettingsRow
-          label={
-            <Label htmlFor={showToolActivityId} className="text-[14px] font-normal text-foreground">
-              <Trans>Show tool activity</Trans>
-            </Label>
-          }
-          control={
-            <Switch
-              id={showToolActivityId}
-              data-testid="tool-activity-toggle"
-              checked={showToolActivity}
-              onCheckedChange={(checked) => {
-                setShowToolActivity(checked);
-                setToolActivityPreference(checked ? "on" : "off");
-              }}
-            />
-          }
-        />
-        <SettingsRow
-          label={
-            <Label htmlFor={loadRemoteImagesId} className="text-[14px] font-normal text-foreground">
-              <Trans>Load web images automatically</Trans>
-            </Label>
-          }
-          control={
-            <Switch
-              id={loadRemoteImagesId}
-              data-testid="remote-images-toggle"
-              checked={loadRemoteImages}
-              onCheckedChange={(checked) => {
-                setLoadRemoteImages(checked);
-                setRemoteImagesPreference(checked ? "on" : "off");
-              }}
-            />
-          }
-        />
       </SettingsGroup>
 
       <TrustedLinkSitesSettings />

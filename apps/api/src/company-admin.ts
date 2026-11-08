@@ -65,6 +65,10 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   evolveTools: "Evolve's tools are turned off for your company.",
   staffIntegrations: "Connecting apps and plugins is coming soon.",
   voice: "Voice is turned off for your company.",
+  sendWithEnter: "Your administrator sets how Enter works in chats.",
+  streamReplies: "Your administrator sets whether replies stream.",
+  toolActivity: "Your administrator sets whether tool activity shows.",
+  webImages: "Your administrator sets whether web images load automatically.",
 };
 
 /** Switches that only limit members; admins keep these so they can configure and test. */

@@ -100,6 +100,7 @@ function CompanyAdminPanels() {
     <>
       <CompanyModelSection state={state.data} onSaved={saved} />
       <CompanyFeaturesSection state={state.data} onSaved={saved} />
+      <CompanyChatSection state={state.data} onSaved={saved} />
       <CompanyToolsSection state={state.data} onSaved={saved} />
       <CompanyVoiceSection state={state.data} onSaved={saved} />
       <CompanyVaultSection />
@@ -320,8 +321,7 @@ function CompanyFeaturesSection({
   onSaved: (next: CompanyAdminState) => Promise<void>;
 }) {
   const { t } = useLingui();
-  const [busy, setBusy] = useState<CompanyFeatureId | null>(null);
-  const rows: Array<{ id: CompanyFeatureId; label: string; description: string }> = [
+  const rows: CompanySwitchRow[] = [
     {
       id: "memberModels",
       label: t`Members choose models`,
@@ -374,6 +374,70 @@ function CompanyFeaturesSection({
     },
   ];
 
+  return (
+    <Section
+      title={t`Features`}
+      description={t`These apply to everyone in the company and take effect within a few seconds.`}
+    >
+      <CompanySwitchList rows={rows} state={state} onSaved={onSaved} />
+    </Section>
+  );
+}
+
+function CompanyChatSection({
+  state,
+  onSaved,
+}: {
+  state: CompanyAdminState;
+  onSaved: (next: CompanyAdminState) => Promise<void>;
+}) {
+  const { t } = useLingui();
+  const rows: CompanySwitchRow[] = [
+    {
+      id: "sendWithEnter",
+      label: t`Send with Enter`,
+      description: t`Enter sends a message on computers. On phones and tablets Enter always adds a new line.`,
+    },
+    {
+      id: "streamReplies",
+      label: t`Stream replies`,
+      description: t`Replies appear as they are written instead of all at once.`,
+    },
+    {
+      id: "toolActivity",
+      label: t`Show tool activity`,
+      description: t`Chats show a card for each tool a bot runs.`,
+    },
+    {
+      id: "webImages",
+      label: t`Load web images automatically`,
+      description: t`Images from websites show in chats without a tap.`,
+    },
+  ];
+  return (
+    <Section
+      title={t`Chat`}
+      description={t`How chats behave for everyone in the company. People cannot change these.`}
+    >
+      <CompanySwitchList rows={rows} state={state} onSaved={onSaved} />
+    </Section>
+  );
+}
+
+type CompanySwitchRow = { id: CompanyFeatureId; label: string; description: string };
+
+function CompanySwitchList({
+  rows,
+  state,
+  onSaved,
+}: {
+  rows: CompanySwitchRow[];
+  state: CompanyAdminState;
+  onSaved: (next: CompanyAdminState) => Promise<void>;
+}) {
+  const { t } = useLingui();
+  const [busy, setBusy] = useState<CompanyFeatureId | null>(null);
+
   async function toggle(id: CompanyFeatureId, value: boolean) {
     setBusy(id);
     try {
@@ -387,27 +451,22 @@ function CompanyFeaturesSection({
   }
 
   return (
-    <Section
-      title={t`Features`}
-      description={t`These apply to everyone in the company and take effect within a few seconds.`}
-    >
-      <ul className="divide-y divide-border rounded-xl border border-border">
-        {rows.map((row) => (
-          <li key={row.id} className="flex items-center gap-4 px-4 py-3">
-            <label htmlFor={`company-feature-${row.id}`} className="min-w-0 flex-1 cursor-pointer">
-              <span className="block text-sm font-medium">{row.label}</span>
-              <span className="block text-[13px] text-muted-foreground">{row.description}</span>
-            </label>
-            <Switch
-              id={`company-feature-${row.id}`}
-              checked={state.features[row.id]}
-              disabled={busy !== null}
-              onCheckedChange={(checked) => void toggle(row.id, checked)}
-            />
-          </li>
-        ))}
-      </ul>
-    </Section>
+    <ul className="divide-y divide-border rounded-xl border border-border">
+      {rows.map((row) => (
+        <li key={row.id} className="flex items-center gap-4 px-4 py-3">
+          <label htmlFor={`company-feature-${row.id}`} className="min-w-0 flex-1 cursor-pointer">
+            <span className="block text-sm font-medium">{row.label}</span>
+            <span className="block text-[13px] text-muted-foreground">{row.description}</span>
+          </label>
+          <Switch
+            id={`company-feature-${row.id}`}
+            checked={state.features[row.id]}
+            disabled={busy !== null}
+            onCheckedChange={(checked) => void toggle(row.id, checked)}
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 
