@@ -1,4 +1,4 @@
-import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
+import { ATTACHMENT_MAX_BYTES, attachmentSizeLabel } from "@rakazo/contracts";
 import { inferAttachmentMimeType, isBackgroundRunTrigger } from "@rakazo/core";
 import { resolveRunFilePath } from "./computer-support.js";
 import { desktopGuardApplies, desktopProtectionGuardMessage } from "./desktop-command-guard.js";
@@ -187,14 +187,17 @@ export const fileTools: ToolHandlers = {
     };
     if (!deps.artifacts) return failAttach("artifact storage unavailable");
     const storedPath = runFilePath(ctx, filePath);
+    const maxBytes = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
     let bytes: Uint8Array;
     try {
       const { files, computer } = runFiles(ctx, call);
-      bytes = await files.readFile(await computer(), storedPath, context, {
-        maxBytes: deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES,
-      });
-    } catch {
-      return failAttach("file not found or unreadable");
+      bytes = await files.readFile(await computer(), storedPath, context, { maxBytes });
+    } catch (error) {
+      return failAttach(
+        error instanceof Error && /exceeds \d+ bytes/.test(error.message)
+          ? `file is larger than the ${attachmentSizeLabel(maxBytes)} attachment limit; make a smaller copy (for example fewer or compressed images, or a PDF) and attach that`
+          : "file not found",
+      );
     }
     const mimeType = inferAttachmentMimeType(filePath);
     if (!mimeType) return failAttach("unsupported attachment type");

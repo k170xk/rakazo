@@ -109,4 +109,22 @@ describe("file tools on a tool runner", () => {
     expect(h.prepare).toHaveBeenCalled();
     expect(h.computerGet).not.toHaveBeenCalled();
   });
+
+  it("tells the model an attachment is too large instead of unreadable", async () => {
+    const h = harness({ runner: true });
+    Object.assign((h.ctx as { deps: object }).deps, { artifacts: {} });
+    h.files.readFile.mockRejectedValueOnce(new Error("file exceeds 10485760 bytes"));
+    const tooLarge = (await fileTools.attach_file!(
+      h.ctx,
+      h.call({ path: "outputs/deck.pptx" }, "attach_file") as never,
+    )) as { error?: string };
+    expect(tooLarge.error).toMatch(/larger than the 10 MiB attachment limit/);
+    h.files.readFile.mockRejectedValueOnce(new Error("file not found"));
+    const missing = (await fileTools.attach_file!(
+      h.ctx,
+      h.call({ path: "outputs/missing.pptx" }, "attach_file") as never,
+    )) as { error?: string };
+    expect(missing.error).toBe("file not found");
+    expect(h.computerGet).not.toHaveBeenCalled();
+  });
 });
