@@ -108,6 +108,15 @@ import {
   withKeyedLock,
   workspaceTarget,
 } from "./supervisor-logic.js";
+import {
+  FairSlots,
+  prepareToolRunMount,
+  TOOL_RUN_LABEL,
+  TOOL_RUN_NETWORK_ID,
+  toolRunContainerOptions,
+  toolRunRequestSchema,
+  toolRunSlots,
+} from "./tool-runs.js";
 
 loadRootEnv();
 
@@ -217,6 +226,13 @@ app.use("/computers/*", async (c, next) => {
 });
 app.use("/computers", limitSupervisorRequestBody);
 app.use("/computers/*", limitSupervisorRequestBody);
+app.use("/tool-runs/*", async (c, next) => {
+  if (!hasValidBearerToken(c.req.header("authorization"), supervisorToken)) {
+    return c.json({ error: "unauthorized" }, 401);
+  }
+  await next();
+});
+app.use("/tool-runs/*", limitSupervisorRequestBody);
 
 app.post("/computers", async (c) => {
   const body = z
@@ -514,6 +530,158 @@ app.post("/computers/:id/exec", async (c) => {
         send({ type: "stderr", data: message });
         send({ type: "exit", code: 1 });
       } finally {
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          // The client already went away.
+        }
+      }
+    },
+  });
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "cache-control": "no-cache, no-transform",
+      "x-accel-buffering": "no",
+    },
+  });
+});
+
+const toolRunSlotsShared = new FairSlots(toolRunSlots());
+const TOOL_RUN_OUTPUT_MAX_BYTES = 4 * 1024 * 1024;
+// Runs this process started are the only ones it waits on, so any found before the first are leftovers.
+let toolRunLeftoversCleared: Promise<void> | undefined;
+
+async function clearToolRunLeftovers() {
+  const listed = await docker.listContainers({
+    all: true,
+    filters: { label: [`${TOOL_RUN_LABEL}=true`] },
+  });
+  await Promise.all(
+    listed.map((item) =>
+      docker
+        .getContainer(item.Id)
+        .remove({ force: true })
+        .catch(() => undefined),
+    ),
+  );
+}
+
+app.get("/tool-runs/status", (c) => c.json(toolRunSlotsShared.stats()));
+
+app.post("/tool-runs/run", async (c) => {
+  const parsed = toolRunRequestSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalid tool run" }, 400);
+  const request = parsed.data;
+  const timeoutMs = boundedSandboxCommandTimeoutMs(request.timeoutMs);
+  const abort = c.req.raw.signal;
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      let closed = false;
+      let sentBytes = 0;
+      const send = (event: {
+        type: "stdout" | "stderr" | "exit" | "queued";
+        data?: string;
+        code?: number;
+        ahead?: number;
+      }) => {
+        if (closed) return;
+        if (event.data) {
+          if (sentBytes >= TOOL_RUN_OUTPUT_MAX_BYTES) return;
+          sentBytes += event.data.length;
+        }
+        try {
+          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        } catch {
+          closed = true;
+        }
+      };
+      let release: (() => void) | undefined;
+      let container: Docker.Container | undefined;
+      try {
+        toolRunLeftoversCleared ??= clearToolRunLeftovers().catch(() => undefined);
+        await toolRunLeftoversCleared;
+        await ensureComputerImage();
+        await ensureRestrictedEgressEnforced();
+        const runtimeInfo = await inspectSupervisorContainer();
+        const hostUid = process.getuid?.();
+        const hostGid = process.getgid?.();
+        const user = runtimeInfo ? COMPUTER_USER : hostComputerUser(hostUid, hostGid);
+        const [uid, gid] = user.split(":").map(Number) as [number, number];
+        const servicePath = await prepareToolRunMount(
+          dataDir,
+          request.mount,
+          hostUid === 0 ? { uid, gid } : undefined,
+        );
+        const storage = computerHomeStorage(servicePath, dataDir, runtimeInfo);
+        if (storage.homeVolume) assertVolumeSubpathSupport((await docker.version()).ApiVersion);
+        const networkMode = computerNetworkName(TOOL_RUN_NETWORK_ID, runtimeInfo);
+        if (networkMode === computerNetworkNameFor(TOOL_RUN_NETWORK_ID)) {
+          await ensureBotNetwork(
+            TOOL_RUN_NETWORK_ID,
+            computerNetworkOwnerFor(dataDir, runtimeInfo),
+          );
+        }
+        release = await toolRunSlotsShared.acquire(request.owner, abort, (ahead) =>
+          send({ type: "queued", ahead }),
+        );
+        container = await docker.createContainer(
+          toolRunContainerOptions({
+            name: `rakazo-tool-run-${randomUUID().slice(0, 12)}`,
+            image: COMPUTER_IMAGE,
+            user,
+            request,
+            storage,
+            networkMode,
+            dns: computerDns,
+          }),
+        );
+        const demuxer = createDockerStreamDemuxer();
+        const output = (await container.attach({
+          stream: true,
+          stdout: true,
+          stderr: true,
+        })) as NodeJS.ReadableStream;
+        const drained = new Promise<void>((resolve) => {
+          output.on("data", (chunk: Buffer) => {
+            for (const event of demuxer.push(chunk)) send({ type: event.stream, data: event.data });
+          });
+          output.on("end", resolve);
+          output.on("close", resolve);
+          output.on("error", () => resolve());
+        });
+        await container.start();
+        const running = container;
+        let timedOut = false;
+        const stop = () => void running.kill().catch(() => undefined);
+        const timer = setTimeout(() => {
+          timedOut = true;
+          stop();
+        }, timeoutMs);
+        abort.addEventListener("abort", stop, { once: true });
+        let code: number;
+        try {
+          const waited = (await running.wait()) as { StatusCode?: number };
+          code = waited.StatusCode ?? 1;
+        } finally {
+          clearTimeout(timer);
+          abort.removeEventListener("abort", stop);
+        }
+        await Promise.race([drained, new Promise((resolve) => setTimeout(resolve, 2000))]);
+        for (const event of demuxer.finish()) send({ type: event.stream, data: event.data });
+        if (timedOut) send({ type: "stderr", data: `command timed out after ${timeoutMs} ms\n` });
+        send({ type: "exit", code: timedOut ? 124 : code });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!abort.aborted) getLogger().warn("tool run failed", { error: message });
+        send({ type: "stderr", data: `${message}\n` });
+        send({ type: "exit", code: 1 });
+      } finally {
+        await container?.remove({ force: true }).catch(() => undefined);
+        release?.();
         closed = true;
         try {
           controller.close();

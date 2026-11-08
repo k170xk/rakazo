@@ -1,4 +1,4 @@
-import type { AdapterContext, ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
+import type { AdapterContext, ComputerRef } from "@rakazo/adapter-kit";
 import type { ComputerMode } from "@rakazo/contracts";
 import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
 import { redactSecrets } from "@rakazo/core";
@@ -17,6 +17,7 @@ import {
 } from "./plot-tool.js";
 import { publishMessage } from "./run-messages.js";
 import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
+import type { WorkspaceFiles } from "./tool-runner.js";
 /** The bot workspace a run reaches on its computer. */
 export type RunWorkspace = {
   botId: string;
@@ -24,6 +25,8 @@ export type RunWorkspace = {
   /** A colleague's turn: every path stays in this conversation folder. */
   folder?: string;
   computer: () => Promise<ComputerRef>;
+  /** The computer's files, or the tool runner folder's on a run that has one. */
+  files: WorkspaceFiles;
   markDirty: () => void;
   context: AdapterContext;
   runSecrets: string[];
@@ -49,7 +52,7 @@ function displayRunFilePath(workspace: RunWorkspace, requestedPath: string, stor
 }
 
 export async function listFilesFromTool(
-  sandbox: SandboxProvider,
+  sandbox: WorkspaceFiles,
   workspace: RunWorkspace,
   args: Record<string, unknown>,
 ) {
@@ -71,7 +74,7 @@ export async function listFilesFromTool(
 }
 
 export async function readFileFromTool(
-  sandbox: SandboxProvider,
+  sandbox: WorkspaceFiles,
   workspace: RunWorkspace,
   args: Record<string, unknown>,
 ) {
@@ -147,7 +150,7 @@ export async function renderPlotFromTool(
     const dataPath =
       typeof args.data_path === "string" && args.data_path ? args.data_path : undefined;
     if (!rows && dataPath) {
-      const bytes = await deps.sandbox.readFile(
+      const bytes = await workspace.files.readFile(
         await computer(),
         resolveRunFilePath(runFileWorkspace(workspace), dataPath),
         context,
@@ -164,7 +167,7 @@ export async function renderPlotFromTool(
     const outPath =
       typeof args.path === "string" && args.path ? args.path : `charts/plot-${Date.now()}.png`;
     workspace.markDirty();
-    await deps.sandbox.writeFile(
+    await workspace.files.writeFile(
       await computer(),
       {
         path: resolveRunFilePath(runFileWorkspace(workspace), outPath),

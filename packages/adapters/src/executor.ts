@@ -98,6 +98,7 @@ import {
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { localHomePath } from "./file-retention.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { loadBotGroupDirectory, loadGroupContext } from "./group-handoff.js";
 import {
@@ -144,6 +145,7 @@ import type {
   RunLeaseState,
   RunningHelper,
   RunState,
+  RunToolRunner,
 } from "./run-context.js";
 import { restoreTurnCheckpointEffects, settleRunningHelpers } from "./run-context.js";
 import { APPROVED_EFFECT_REPLAY_ORDER, buildApprovalContinuation } from "./run-effects.js";
@@ -241,6 +243,7 @@ import {
 import { loadAgentTicketContext } from "./ticket-context.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
 import { toolResultFingerprint } from "./tool-loop.js";
+import { folderFiles, TOOL_RUNNER_COMPUTER, toolRunnerWorkspace } from "./tool-runner.js";
 import { restoreTurnCheckpoint } from "./turn-checkpoint.js";
 import { createWebProvider } from "./web-provider-factory.js";
 
@@ -1247,6 +1250,55 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             },
           );
         };
+        const runnerWorkspace =
+          deps.toolRunner && deps.dataDir && (runFolder || computerAccess === "tools")
+            ? toolRunnerWorkspace({
+                dataDir: deps.dataDir,
+                homePath: localHomePath(deps.home, storedComputer.homeKey, deps.dataDir),
+                mode: computerMode,
+                botId: bot.id,
+                folder: runFolder,
+              })
+            : undefined;
+        let runToolRunner: RunToolRunner | undefined;
+        if (runnerWorkspace) {
+          const files = folderFiles(runnerWorkspace.base);
+          const copied = new WeakSet<MessageBlock[]>();
+          let recentCopied = false;
+          let copying = Promise.resolve();
+          const runnerComputer = async () => TOOL_RUNNER_COMPUTER;
+          runToolRunner = {
+            workspace: runnerWorkspace,
+            files,
+            // Turn attachments go into the folder the first time a tool needs it, like a computer's first use.
+            prepare: () => {
+              copying = copying
+                .catch(() => undefined)
+                .then(async () => {
+                  if (!artifacts) return;
+                  const fileDeps = { ...deps, artifacts, sandbox: files };
+                  if (!recentCopied) {
+                    recentCopied = true;
+                    await materializeRecentThreadFiles(fileDeps, history, historyMessages, {
+                      ...recentFilesInput,
+                      computer: runnerComputer,
+                    });
+                  }
+                  for (const blocks of pendingTurnFiles) {
+                    if (copied.has(blocks)) continue;
+                    await materializeCurrentTurnFiles(fileDeps, blocks, {
+                      context,
+                      computer: runnerComputer,
+                      computerMode,
+                      folder: runFolder,
+                    });
+                    copied.add(blocks);
+                  }
+                });
+              return copying;
+            },
+          };
+        }
         let currentTurnFiles: Awaited<ReturnType<typeof listCurrentTurnFiles>> = [];
         let recentThreadFiles: Awaited<ReturnType<typeof listRecentThreadFiles>> = [];
         try {
@@ -1651,6 +1703,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             heldForTakeover,
             access: computerAccess,
             folder: runFolder,
+            runner: runToolRunner,
           },
           tools: {
             offered: tools,

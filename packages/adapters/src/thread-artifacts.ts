@@ -174,7 +174,7 @@ export async function materializeCurrentTurnFiles(
     prisma: PrismaClient;
     artifacts: ArtifactStore;
     maxUploadSizeBytes?: number;
-    sandbox: SandboxProvider;
+    sandbox: Pick<SandboxProvider, "readFile" | "writeFile">;
   },
   blocks: MessageBlock[] | undefined,
   input: {

@@ -9,6 +9,7 @@ import {
   listStoredItems,
   openStoredFile,
   removeStoredItem,
+  sweepConversationFolders,
   sweepHome,
 } from "./file-retention.js";
 
@@ -150,5 +151,39 @@ describe("sweeping a home", () => {
     });
     expect(swept.deletedItems).toBe(0);
     expect(swept.homeBytes).toBeGreaterThan(0);
+  });
+
+  it("moves colleague conversations out of the home when tool runners hold them", async () => {
+    const conversations = path.join(data, "tool-work/conversations");
+    await put(path.join(conversations, "thread-2/kept.txt"));
+    await put(path.join(home, "conversations/thread-2/stale-copy.txt"));
+    await sweepHome({
+      home,
+      scope: "team",
+      bots: new Map([["b1", []]]),
+      retentionDays: 30,
+      now: Date.now(),
+      conversationsTo: conversations,
+    });
+    expect(existsSync(path.join(home, "conversations/thread-1"))).toBe(false);
+    expect(existsSync(path.join(conversations, "thread-1/notes.txt"))).toBe(true);
+    expect(await readdir(path.join(conversations, "thread-2"))).toEqual(["kept.txt"]);
+    expect(await readdir(path.join(home, "conversations"))).toEqual([]);
+  });
+});
+
+describe("sweeping tool runner conversation folders", () => {
+  it("deletes folders idle past the retention and keeps recent ones", async () => {
+    await put(path.join(data, "tool-work/conversations/old/deck.pptx"), "12345");
+    const old = await sweepConversationFolders({ dataDir: data, retentionDays: 30, now: LATER });
+    expect(old).toEqual({ deletedItems: 1, freedBytes: 5 });
+    expect(existsSync(path.join(data, "tool-work/conversations/old"))).toBe(false);
+    await put(path.join(data, "tool-work/conversations/new/deck.pptx"));
+    const recent = await sweepConversationFolders({
+      dataDir: data,
+      retentionDays: 30,
+      now: Date.now(),
+    });
+    expect(recent.deletedItems).toBe(0);
   });
 });

@@ -9,6 +9,7 @@ import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { recordComputerAction } from "./run-tools-computer.js";
 import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
+import { TOOL_RUNNER_COMPUTER } from "./tool-runner.js";
 import { textContentArg } from "./tool-text.js";
 import type { RunWorkspace } from "./workspace-file-tools.js";
 import { listFilesFromTool, readFileFromTool, renderPlotFromTool } from "./workspace-file-tools.js";
@@ -18,10 +19,31 @@ function runWorkspace(ctx: RunContext, call: ToolCall): RunWorkspace {
     botId: ctx.bot.id,
     computerMode: ctx.computer.mode,
     folder: ctx.computer.folder,
-    computer: () => ctx.computer.get("tool", call.name),
+    ...runFiles(ctx, call),
     markDirty: () => ctx.computer.checkpoint.markDirty(),
     context: ctx.context,
     runSecrets: ctx.secrets,
+  };
+}
+
+/**
+ * Where this run's file tools reach: the tool runner folder when the run has one, which never
+ * starts a computer, otherwise the bot's computer.
+ */
+function runFiles(ctx: RunContext, call: ToolCall) {
+  const { runner } = ctx.computer;
+  if (runner) {
+    return {
+      files: runner.files,
+      computer: async () => {
+        await runner.prepare();
+        return TOOL_RUNNER_COMPUTER;
+      },
+    };
+  }
+  return {
+    files: ctx.deps.sandbox,
+    computer: () => ctx.computer.get("tool", call.name),
   };
 }
 
@@ -110,20 +132,18 @@ async function generateMedia(ctx: RunContext, call: ToolCall) {
 /** Workspace files, attachments, plots and generated media. */
 export const fileTools: ToolHandlers = {
   async list_files(ctx, call) {
-    const { deps } = ctx;
     const { args } = call;
     const workspace = runWorkspace(ctx, call);
-    return listFilesFromTool(deps.sandbox, workspace, args);
+    return listFilesFromTool(workspace.files, workspace, args);
   },
   async read_file(ctx, call) {
-    const { deps } = ctx;
     const { args } = call;
     const workspace = runWorkspace(ctx, call);
-    return readFileFromTool(deps.sandbox, workspace, args);
+    return readFileFromTool(workspace.files, workspace, args);
   },
   async write_file(ctx, call) {
-    const { deps, context } = ctx;
-    const { name, args } = call;
+    const { context } = ctx;
+    const { args } = call;
     const filePath = String(args.path ?? "notes/result.txt");
     if (desktopGuardApplies(ctx.computer)) {
       const activateRefusal = protectedActivateScriptWriteRefusal(filePath);
@@ -134,8 +154,9 @@ export const fileTools: ToolHandlers = {
     const content = new TextEncoder().encode(textContentArg(args.content, ""));
     ctx.computer.checkpoint.markDirty();
     try {
-      await deps.sandbox.writeFile(
-        await ctx.computer.get("tool", name),
+      const { files, computer } = runFiles(ctx, call);
+      await files.writeFile(
+        await computer(),
         { path: runFilePath(ctx, filePath), content },
         context,
       );
@@ -158,7 +179,7 @@ export const fileTools: ToolHandlers = {
   },
   async attach_file(ctx, call) {
     const { deps, run, bot, thread, context } = ctx;
-    const { name, args, executionId } = call;
+    const { args, executionId } = call;
     const filePath = String(args.path ?? "");
     const failAttach = async (error: string) => {
       await recordComputerAction(ctx, call, "attach_file", filePath, { error });
@@ -168,14 +189,10 @@ export const fileTools: ToolHandlers = {
     const storedPath = runFilePath(ctx, filePath);
     let bytes: Uint8Array;
     try {
-      bytes = await deps.sandbox.readFile(
-        await ctx.computer.get("tool", name),
-        storedPath,
-        context,
-        {
-          maxBytes: deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES,
-        },
-      );
+      const { files, computer } = runFiles(ctx, call);
+      bytes = await files.readFile(await computer(), storedPath, context, {
+        maxBytes: deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES,
+      });
     } catch {
       return failAttach("file not found or unreadable");
     }

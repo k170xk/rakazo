@@ -156,7 +156,7 @@ export function parseNanoCpus(name: string, raw: string): number {
   return nanoCpus;
 }
 
-function parsePidsLimit(name: string, raw: string): number {
+export function parsePidsLimit(name: string, raw: string): number {
   if (isUnlimited(raw)) return 0;
   const value = Number(raw.trim());
   if (!Number.isSafeInteger(value) || value <= 0) {

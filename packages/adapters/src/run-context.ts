@@ -41,6 +41,7 @@ import { secretPausedToolResult } from "./run-secret.js";
 import type { createRunTrustLoaders } from "./run-trust.js";
 import type { inferScript } from "./scripted-runtime.js";
 import type { LoopGuardStreak } from "./tool-loop.js";
+import type { ToolRunnerWorkspace, WorkspaceFiles } from "./tool-runner.js";
 import { restoreTurnCheckpoint, unresolvedTurnCheckpointCalls } from "./turn-checkpoint.js";
 
 export type RunningHelper = Omit<Extract<MessageBlock, { kind: "subagent" }>, "kind">;
@@ -220,6 +221,18 @@ export interface RunComputerContext {
   access: ComputerAccess;
   /** Set on a colleague's turn: its files and OCSC commands stay in this folder, away from the owner's. */
   folder: string | undefined;
+  /**
+   * Set when this run's files and document commands go to the tool runners instead of a
+   * computer: every colleague turn, and Tools-only people's own turns.
+   */
+  runner?: RunToolRunner;
+}
+
+export interface RunToolRunner {
+  workspace: ToolRunnerWorkspace;
+  files: WorkspaceFiles;
+  /** Copies the turn's attachments into the folder; call before a tool reads it. */
+  prepare: () => Promise<void>;
 }
 
 export interface RunSource {

@@ -45,7 +45,7 @@ import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import { OCSC_PROGRAMS, ocscAfterRun, ocscBeforeRun, ocscCommand } from "./ocsc-tool.js";
 import { purchaseApprovalOf } from "./purchase-gate.js";
 import { resolvePurchaseCardFill, resolvePurchasePayTokenFill } from "./purchase-service.js";
-import type { RunContext } from "./run-context.js";
+import type { RunContext, RunToolRunner } from "./run-context.js";
 import { addRunSecrets } from "./run-context.js";
 import { builtinOffered } from "./run-instructions.js";
 import { computerScreenToolResult } from "./run-lifecycle.js";
@@ -57,6 +57,8 @@ import {
 } from "./shell-command-stream.js";
 import { DESKTOP_HELD_FOR_TAKEOVER_MESSAGE } from "./takeover-resume.js";
 import { getActiveTeachingSession } from "./teaching-session.js";
+import type { ToolRunnerClient } from "./tool-runner.js";
+import { conversationFolderRefusal, RUNNER_PROGRAMS } from "./tool-runner.js";
 import { vaultCardUseOf } from "./vault-card-use.js";
 
 function appendComputerCommand(ctx: RunContext, payload: ComputerCommand) {
@@ -283,6 +285,67 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
 }
 
 /**
+ * Runs one OCSC document command on a tool runner, which sees only this run's folder,
+ * showing it in Activity like a command on the computer.
+ */
+async function runOcscOnRunner(
+  ctx: RunContext,
+  call: ToolCall,
+  runner: RunToolRunner,
+  client: ToolRunnerClient,
+  program: string,
+  args: readonly string[],
+) {
+  const refusal = await conversationFolderRefusal(runner.workspace);
+  if (refusal) return call.finish({ error: refusal });
+  await runner.prepare();
+  const commandEvent = {
+    executionId: call.executionId,
+    kind: "shell" as const,
+    command: redactSecrets(ocscCommand(program, args), ctx.secrets),
+    cwd: ".",
+  };
+  const publish = (output: string, status: "running" | "done", exitCode: number | null) =>
+    appendComputerCommand(ctx, {
+      ...commandEvent,
+      status,
+      exitCode,
+      output: output.slice(-COMPUTER_COMMAND_OUTPUT_MAX_CHARS),
+    });
+  await publish("", "running", null);
+  let lastPublishedAt = 0;
+  try {
+    const result = await client.run({
+      workspace: runner.workspace,
+      program,
+      args,
+      owner: ctx.run.userId,
+      timeoutMs: sandboxCommandTimeoutMs(),
+      signal: ctx.context.signal,
+      onQueued: (ahead) =>
+        void publish(
+          `Waiting for a document runner (${ahead} ${ahead === 1 ? "command" : "commands"} ahead)…\n`,
+          "running",
+          null,
+        ),
+      onOutput: (snapshot) => {
+        if (Date.now() - lastPublishedAt < 400) return;
+        lastPublishedAt = Date.now();
+        const safe = redactShellStreams(snapshot, ctx.secrets, { withholdPartial: true });
+        void publish(`${safe.stdout}${safe.stderr}`, "running", null);
+      },
+    });
+    const safe = redactShellStreams(result, ctx.secrets, { withholdPartial: false });
+    await publish(`${safe.stdout}${safe.stderr}`, "done", result.code);
+    return call.finish({ stdout: safe.stdout, stderr: safe.stderr, code: result.code });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "the document runner failed";
+    await publish(message, "done", 1);
+    return call.finish({ error: redactSecrets(message, ctx.secrets) });
+  }
+}
+
+/**
  * Runs one command on the bot's computer, streaming its output to Activity and handing
  * still-running work to the runtime. Without bot secrets the command gets none of them.
  */
@@ -499,6 +562,17 @@ export const computerTools: ToolHandlers = {
     const args = Array.isArray(call.args.args) ? call.args.args.map(String) : [];
     if (!OCSC_PROGRAMS.has(program)) {
       return call.finish({ error: `program must be one of ${[...OCSC_PROGRAMS].join(", ")}.` });
+    }
+    const { runner } = ctx.computer;
+    if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {
+      const held = await ocscBeforeRun(ctx, program, args);
+      if (held) return call.finish(held);
+      return runOcscOnRunner(ctx, call, runner, ctx.deps.toolRunner, program, args);
+    }
+    if (ctx.computer.folder) {
+      return call.finish({
+        error: `ocsc ${program} needs the bot owner's own computer, so it is not available in a shared chat. Word, PowerPoint, Excel and PDF documents still work here.`,
+      });
     }
     const held = await ocscBeforeRun(ctx, program, args);
     if (held) return call.finish(held);

@@ -85,6 +85,7 @@ import {
   sandboxProviderOptionsFromEnv,
   shutdownPiTelemetry,
   sweepComputerFiles,
+  toolRunnerFromEnv,
   UserDevices,
   userDeviceForwardSecret,
   watchCompanyPolicy,
@@ -177,6 +178,10 @@ async function main() {
     prisma,
     secrets,
   });
+  const toolRunner = toolRunnerFromEnv(process.env, sandboxProvider, {
+    url: process.env.SANDBOX_SUPERVISOR_URL ?? "http://127.0.0.1:7091",
+    token: sandboxProvider === "docker" ? resolveSupervisorToken(process.env) : undefined,
+  });
   const allowPrivateEndpoint = process.env.MCP_ALLOW_PRIVATE_ENDPOINT === "true";
   const mcpOAuth = new McpOAuthBroker(prisma, secrets, {}, allowPrivateEndpoint);
   const mcpStdio = {
@@ -248,7 +253,7 @@ async function main() {
   const home = createAgentHomeStore(dataDir, prisma);
   void home.removeStaleStaging().catch((error) => logger.error("home staging cleanup", error));
   const sweepFiles = () =>
-    void sweepComputerFiles({ prisma, home, dataDir })
+    void sweepComputerFiles({ prisma, home, dataDir, toolRunners: Boolean(toolRunner) })
       .then((swept) => logger.info("computer file cleanup", { ...swept }))
       .catch((error) => logger.error("computer file cleanup", error));
   setTimeout(sweepFiles, FILE_SWEEP_FIRST_MS).unref();
@@ -326,6 +331,7 @@ async function main() {
     deploymentModelKey,
     deploymentModelConfigured,
     dataDir,
+    toolRunner,
     notifications,
     jobs,
     events,

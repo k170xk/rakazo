@@ -72,7 +72,11 @@ function changedMs(info: { mtimeMs: number; ctimeMs: number }) {
  * On Linux `path` goes through the open handle, so a folder later swapped for a link (the home's
  * owner controls everything in it) cannot redirect what is read or moved to another home.
  */
-export async function pinnedDirectory(root: string, relative: string) {
+export async function pinnedDirectory(
+  root: string,
+  relative: string,
+  options: { create?: boolean } = {},
+) {
   const handles: Awaited<ReturnType<typeof open>>[] = [];
   const close = async () => {
     await Promise.all(handles.map((handle) => handle.close().catch(() => undefined)));
@@ -84,7 +88,13 @@ export async function pinnedDirectory(root: string, relative: string) {
     handles.push(current);
     for (const segment of relative.split("/").filter((part) => part && part !== ".")) {
       if (segment === "..") throw new Error("Path leaves the home");
-      current = await open(path.join(await handlePath(current.fd), segment), flags);
+      const next = path.join(await handlePath(current.fd), segment);
+      if (options.create) {
+        await mkdir(next).catch((error: NodeJS.ErrnoException) => {
+          if (error.code !== "EEXIST") throw error;
+        });
+      }
+      current = await open(next, flags);
       handles.push(current);
     }
     if (!isContained(realRoot, await fileHandlePath(current.fd)))
@@ -119,8 +129,7 @@ function trashFolder(home: string) {
  * Moves one entry out of the home in a single rename, then deletes it where its former owner can
  * no longer reach it. A link is moved as a link and never followed.
  */
-async function removeEntry(home: string, parent: string, name: string) {
-  const trash = trashFolder(home);
+async function removeEntry(home: string, parent: string, name: string, trash = trashFolder(home)) {
   await mkdir(trash, { recursive: true, mode: 0o700 });
   const moved = path.join(trash, randomUUID());
   const done = await withPinned(home, parent, async (dir) => {
@@ -273,6 +282,11 @@ export async function sweepHome(input: {
   bots: ReadonlyMap<string, readonly string[]>;
   retentionDays: number;
   now: number;
+  /**
+   * With tool runners on, colleague conversations live here instead; any still in the home
+   * move out, so the home's owner can no longer reach them from their computer.
+   */
+  conversationsTo?: string;
 }): Promise<HomeSweep> {
   const result: HomeSweep = { deletedItems: 0, freedBytes: 0, homeBytes: 0 };
   const folders: [string, readonly string[]][] =
@@ -288,6 +302,7 @@ export async function sweepHome(input: {
     }
   }
   const cutoff = input.now - input.retentionDays * DAY_MS;
+  if (input.conversationsTo) await moveConversationsOut(input.home, input.conversationsTo);
   const stale =
     (await withPinned(input.home, CONVERSATIONS, async (root) => {
       const found: { name: string; size: number }[] = [];
@@ -304,6 +319,57 @@ export async function sweepHome(input: {
     result.freedBytes += folder.size;
   }
   result.homeBytes = (await measureTree(input.home)).size;
+  return result;
+}
+
+/** Moves each conversation folder in a home to `destination`, keeping one already there. */
+async function moveConversationsOut(home: string, destination: string) {
+  await mkdir(destination, { recursive: true, mode: 0o750 });
+  const names =
+    (await withPinned(home, CONVERSATIONS, async (root) =>
+      (
+        await readdir(root, { withFileTypes: true }).catch(() => [])
+      )
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name),
+    )) ?? [];
+  for (const name of names) {
+    const target = path.join(destination, name);
+    if (await lstat(target).catch(() => null)) {
+      await removeEntry(home, CONVERSATIONS, name);
+      continue;
+    }
+    await withPinned(home, CONVERSATIONS, (root) =>
+      rename(path.join(root, name), target).catch(() => undefined),
+    );
+  }
+}
+
+/** Deletes colleague conversation folders in the tool runners' folder nobody touched for the retention. */
+export async function sweepConversationFolders(input: {
+  dataDir: string;
+  retentionDays: number;
+  now: number;
+}) {
+  const root = path.resolve(input.dataDir);
+  const relative = "tool-work/conversations";
+  const cutoff = input.now - input.retentionDays * DAY_MS;
+  const result = { deletedItems: 0, freedBytes: 0 };
+  const stale =
+    (await withPinned(root, relative, async (dir) => {
+      const found: { name: string; size: number }[] = [];
+      for (const entry of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
+        if (!entry.isDirectory()) continue;
+        const tree = await measureTree(path.join(dir, entry.name));
+        if (tree.newestMs < cutoff) found.push({ name: entry.name, size: tree.size });
+      }
+      return found;
+    })) ?? [];
+  for (const folder of stale) {
+    await removeEntry(root, relative, folder.name, path.join(root, "file-trash"));
+    result.deletedItems += 1;
+    result.freedBytes += folder.size;
+  }
   return result;
 }
 
@@ -335,10 +401,16 @@ export async function sweepComputerFiles(deps: {
   prisma: PrismaClient;
   home: AgentHomeStore;
   dataDir: string | undefined;
+  /** Tool runners are on: colleague conversations belong in tool-work, not in homes. */
+  toolRunners?: boolean;
   now?: number;
 }) {
   const now = deps.now ?? Date.now();
   const retentionDays = companyTools().fileRetentionDays;
+  const conversationsTo =
+    deps.toolRunners && deps.dataDir
+      ? path.resolve(deps.dataDir, "tool-work", CONVERSATIONS)
+      : undefined;
   const computers = await runAsSystem("list computers for file cleanup", () =>
     deps.prisma.computer.findMany({
       select: { id: true, scope: true, homeKey: true, bots: { select: { id: true } } },
@@ -355,11 +427,23 @@ export async function sweepComputerFiles(deps: {
       deps.prisma,
       computer.bots.map((bot) => bot.id),
     );
-    const swept = await sweepHome({ home, scope: computer.scope, bots: pins, retentionDays, now });
+    const swept = await sweepHome({
+      home,
+      scope: computer.scope,
+      bots: pins,
+      retentionDays,
+      now,
+      conversationsTo,
+    });
     total.deletedItems += swept.deletedItems;
     total.freedBytes += swept.freedBytes;
     total.homeBytes += swept.homeBytes;
     await recordHomeBytes(deps.prisma, computer.id, swept.homeBytes, now);
+  }
+  if (conversationsTo && deps.dataDir) {
+    const swept = await sweepConversationFolders({ dataDir: deps.dataDir, retentionDays, now });
+    total.deletedItems += swept.deletedItems;
+    total.freedBytes += swept.freedBytes;
   }
   return total;
 }
