@@ -83,20 +83,35 @@ export function ComputerModePicker({
   onChange: (value: ComputerMode) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {BOT_COMPUTER_MODES.map((mode) => (
-        <Toggle
-          key={mode}
-          variant="outline"
-          pressed={value === mode}
-          onPressedChange={(pressed) => {
-            if (pressed) onChange(mode);
-          }}
-          className="capitalize aria-pressed:border-foreground/40 aria-pressed:text-foreground"
-        >
-          {mode === "team" ? <Trans>Team</Trans> : <Trans>Private</Trans>}
-        </Toggle>
-      ))}
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        {BOT_COMPUTER_MODES.map((mode) => (
+          <Toggle
+            key={mode}
+            variant="outline"
+            pressed={value === mode}
+            onPressedChange={(pressed) => {
+              if (pressed) onChange(mode);
+            }}
+            className="aria-pressed:border-foreground/40 aria-pressed:text-foreground"
+          >
+            {mode === "team" ? <Trans>Shared with my bots</Trans> : <Trans>This bot only</Trans>}
+          </Toggle>
+        ))}
+      </div>
+      <p className="text-[13px] text-muted-foreground" data-testid="computer-mode-hint">
+        {value === "team" ? (
+          <Trans>
+            All your bots work on one computer. Each has its own folder there, they can see each
+            other's folders and swap files through a shared folder. Colleagues' bots never use it.
+          </Trans>
+        ) : (
+          <Trans>
+            This bot gets a computer of its own. Your other bots can't see or change its files, apps
+            or browser.
+          </Trans>
+        )}
+      </p>
     </div>
   );
 }

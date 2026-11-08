@@ -963,6 +963,10 @@ msgstr "所有狀態"
 msgid "All time"
 msgstr "不限時間"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "允許"
@@ -6542,8 +6546,8 @@ msgid "Priority"
 msgstr "優先順序"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Private"
-msgstr "私人"
+#~ msgid "Private"
+#~ msgstr "私人"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Private spaces keep a team's chats and files separate"
@@ -7653,6 +7657,10 @@ msgstr "共用記憶"
 msgid "Shared pages are only for people at your company."
 msgstr ""
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Shared with my bots"
+msgstr ""
+
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Shared with you"
@@ -8162,8 +8170,8 @@ msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "正在示範，傳送新訊息前請先停止示範。"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Team"
-msgstr "團隊"
+#~ msgid "Team"
+#~ msgstr "團隊"
 
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
@@ -8344,12 +8352,20 @@ msgstr "無法讀取此備份。"
 msgid "This bot"
 msgstr "此機器人"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
+msgstr ""
+
 #: src/pages/shell/files-tab.tsx
 msgid "This bot has no files on a computer yet."
 msgstr ""
 
 #: src/pages/shell/files-tab.tsx
 msgid "This bot hasn't made any files yet."
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "This bot only"
 msgstr ""
 
 #: src/pages/shell/computer-view.tsx

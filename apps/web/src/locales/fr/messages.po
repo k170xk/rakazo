@@ -962,6 +962,10 @@ msgstr ""
 msgid "All time"
 msgstr "Toute la période"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "Autoriser"
@@ -6541,8 +6545,8 @@ msgid "Priority"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Private"
-msgstr "Privé"
+#~ msgid "Private"
+#~ msgstr "Privé"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Private spaces keep a team's chats and files separate"
@@ -7652,6 +7656,10 @@ msgstr "Mémoire partagée"
 msgid "Shared pages are only for people at your company."
 msgstr ""
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Shared with my bots"
+msgstr ""
+
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Shared with you"
@@ -8161,8 +8169,8 @@ msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Enseignement en cours. Arrêtez l'enseignement avant d'envoyer un nouveau message."
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Team"
-msgstr "Équipe"
+#~ msgid "Team"
+#~ msgstr "Équipe"
 
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
@@ -8343,12 +8351,20 @@ msgstr "Impossible de lire cette sauvegarde."
 msgid "This bot"
 msgstr "Ce bot"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
+msgstr ""
+
 #: src/pages/shell/files-tab.tsx
 msgid "This bot has no files on a computer yet."
 msgstr ""
 
 #: src/pages/shell/files-tab.tsx
 msgid "This bot hasn't made any files yet."
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "This bot only"
 msgstr ""
 
 #: src/pages/shell/computer-view.tsx

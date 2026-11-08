@@ -102,7 +102,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await expect(studio.getByRole("button", { name: "Color #FFAF38" })).toHaveClass(/ring-2/);
   await studio.getByRole("button", { name: "Done", exact: true }).click();
   const modelSelect = settings.getByRole("combobox", { name: "Model", exact: true });
-  const teamComputer = settings.getByRole("button", { name: "Team" });
+  const teamComputer = settings.getByRole("button", { name: "Shared with my bots" });
   const openWork = settings.getByTestId("bot-scratchpad");
   const notificationsHeading = settings.getByRole("heading", {
     name: "Notifications",

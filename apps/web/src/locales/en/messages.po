@@ -962,6 +962,10 @@ msgstr "All statuses"
 msgid "All time"
 msgstr "All time"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
+msgstr "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "Allow"
@@ -6541,8 +6545,8 @@ msgid "Priority"
 msgstr "Priority"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Private"
-msgstr "Private"
+#~ msgid "Private"
+#~ msgstr "Private"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Private spaces keep a team's chats and files separate"
@@ -7652,6 +7656,10 @@ msgstr "Shared memory"
 msgid "Shared pages are only for people at your company."
 msgstr "Shared pages are only for people at your company."
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Shared with my bots"
+msgstr "Shared with my bots"
+
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Shared with you"
@@ -8161,8 +8169,8 @@ msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Teaching in progress. Stop teaching before sending a new message."
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Team"
-msgstr "Team"
+#~ msgid "Team"
+#~ msgstr "Team"
 
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
@@ -8343,6 +8351,10 @@ msgstr "This backup could not be read."
 msgid "This bot"
 msgstr "This bot"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
+msgstr "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
+
 #: src/pages/shell/files-tab.tsx
 msgid "This bot has no files on a computer yet."
 msgstr "This bot has no files on a computer yet."
@@ -8350,6 +8362,10 @@ msgstr "This bot has no files on a computer yet."
 #: src/pages/shell/files-tab.tsx
 msgid "This bot hasn't made any files yet."
 msgstr "This bot hasn't made any files yet."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "This bot only"
+msgstr "This bot only"
 
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
