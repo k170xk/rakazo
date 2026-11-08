@@ -67,6 +67,7 @@ export const COMPUTER_TOOL_NAMES: ReadonlySet<string> = new Set([
   "read_file",
   "write_file",
   "attach_file",
+  "copy_file",
   "shell",
   "ocsc",
   "open_path",
@@ -158,6 +159,8 @@ export function selectBuiltinToolsForRun(options: {
   computersEnabled?: boolean;
   /** What the bot owner may do on their computer; defaults to everything. */
   computerAccess?: ComputerAccess;
+  /** The person's documents are kept apart from their computer, so copy_file can move files between them. */
+  documentsApart?: boolean;
   connectedAppsEnabled?: boolean;
   mcpServersEnabled?: boolean;
   routinesEnabled?: boolean;
@@ -194,6 +197,7 @@ export function selectBuiltinToolsForRun(options: {
     (tool) =>
       !disabled.has(tool.name) &&
       computerToolAllowed(tool.name, computerAccess) &&
+      (tool.name !== "copy_file" || Boolean(options.documentsApart)) &&
       (options.connectedAppsEnabled !== false || tool.name !== "connect_app") &&
       (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
       (tool.name !== "evolve_knowledge_search" || Boolean(options.evolveKnowledgeEnabled)) &&

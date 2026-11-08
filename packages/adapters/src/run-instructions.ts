@@ -72,7 +72,7 @@ export function limitedComputerInstruction(
 
 /** For a full computer whose documents and file tools use the runners' document home instead. */
 export const DOCUMENTS_APART_INSTRUCTION =
-  "Your files are kept apart from the computer. Chat uploads, the file tools (write_file, read_file, list_files), attach_file and the ocsc tool all use your document folder on the company document runners, which the computer cannot see. The shell, browser and apps run on the computer, whose files the file tools cannot reach. Make Word, PowerPoint, Excel, PDF and video files with the ocsc tool, never with commands on the computer.";
+  "Your files are kept apart from the computer. Chat uploads, the file tools (write_file, read_file, list_files), attach_file and the ocsc tool all use your document folder on the company document runners, which the computer cannot see. The shell, browser and apps run on the computer, whose files the file tools cannot reach. Make Word, PowerPoint, Excel, PDF and video files with the ocsc tool, never with commands on the computer. When a script, download or app on the computer needs a document file, or makes one the person should get, move it with copy_file.";
 
 export function persistentComputerInstruction(options: {
   heldForTakeover: boolean;

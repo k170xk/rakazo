@@ -458,6 +458,21 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "copy_file",
+    description:
+      'Copy one file between the computer and the document folder, which are kept apart. from "computer" copies a file the shell, browser or an app made on the computer (a download, a script\'s output) into the document folder, where attach_file, the file tools and the ocsc tool can use it. from "documents" copies a chat upload or a made document onto the computer for a script or app. to defaults to the same path. An existing file is never replaced unless overwrite is true; prefer a new name.',
+    inputSchema: {
+      type: "object",
+      properties: {
+        from: { type: "string", enum: ["computer", "documents"] },
+        path: { type: "string" },
+        to: { type: "string" },
+        overwrite: { type: "boolean" },
+      },
+      required: ["from", "path"],
+    },
+  },
+  {
     name: "shell",
     description:
       "Run a command inside this bot's computer. cwd defaults to the bot's folder on a Team Computer and the workspace root on a Private Computer. Output can arrive while the command is still running; tell the user any one-time code or sign-in URL in that output. A command is stopped after a few minutes, so on Linux or macOS start longer work, such as a coding agent CLI, as its own statement `nohup <command> < /dev/null > <log> 2>&1 &`, never after `&&`, and read the log to follow it.",

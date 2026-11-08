@@ -196,6 +196,8 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   if (toolName === "write_file") return `Writing ${detail(record.path)}`;
   if (toolName === "list_files") return `Listing ${detail(record.path ?? ".")}`;
   if (toolName === "attach_file") return `Attaching ${detail(record.path)}`;
+  if (toolName === "copy_file")
+    return `Copying ${detail(record.path)} ${record.from === "documents" ? "to the computer" : "from the computer"}`;
   if (toolName === "open_path") return `Opening ${detail(record.path)}`;
   if (toolName === "render_plot") return "Rendering a chart";
   if (toolName === "show_card") return "Drawing a card";

@@ -1546,6 +1546,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             // The document runners keep the file tools and ocsc when company computers are off.
             computersEnabled: companyFeatures().computers || computerAccess !== "none",
             computerAccess,
+            documentsApart: documentsApart && Boolean(runToolRunner),
             connectedAppsEnabled: companyFeatures().connectedApps,
             mcpServersEnabled: companyFeatures().mcpServers,
             routinesEnabled: companyFeatures().routines && computerAccess === "full",

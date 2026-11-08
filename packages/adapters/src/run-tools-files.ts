@@ -9,6 +9,7 @@ import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { recordComputerAction } from "./run-tools-computer.js";
 import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
+import type { WorkspaceFiles } from "./tool-runner.js";
 import { TOOL_RUNNER_COMPUTER } from "./tool-runner.js";
 import { textContentArg } from "./tool-text.js";
 import type { RunWorkspace } from "./workspace-file-tools.js";
@@ -45,6 +46,38 @@ function runFiles(ctx: RunContext, call: ToolCall) {
     files: ctx.deps.sandbox,
     computer: () => ctx.computer.get("tool", call.name),
   };
+}
+
+/** Both sides of a person whose documents are kept apart from their computer. */
+function copySides(ctx: RunContext, call: ToolCall) {
+  const { documents } = ctx.computer;
+  if (!documents || !ctx.computer.documentsApart || ctx.computer.access !== "full")
+    return undefined;
+  return {
+    computer: {
+      files: ctx.deps.sandbox as WorkspaceFiles,
+      ref: () => ctx.computer.get("tool", call.name),
+    },
+    documents: {
+      files: documents.files,
+      ref: async () => {
+        await documents.prepare();
+        return TOOL_RUNNER_COMPUTER;
+      },
+    },
+  };
+}
+
+async function fileExists(
+  files: WorkspaceFiles,
+  ref: Parameters<WorkspaceFiles["listFiles"]>[0],
+  stored: string,
+  context: RunContext["context"],
+): Promise<boolean> {
+  const segments = stored.split("/").filter(Boolean);
+  const name = segments.pop();
+  const entries = await files.listFiles(ref, segments.join("/"), context).catch(() => []);
+  return entries.some((entry) => entry.path.split("/").filter(Boolean).at(-1) === name);
 }
 
 function runFilePath(ctx: RunContext, filePath: string): string {
@@ -168,6 +201,67 @@ export const fileTools: ToolHandlers = {
     }
     await recordComputerAction(ctx, call, "write_file", filePath, { bytes: content.byteLength });
     return call.finish({ ok: true, path: filePath });
+  },
+  async copy_file(ctx, call) {
+    const { deps, context } = ctx;
+    const { args } = call;
+    const sides = copySides(ctx, call);
+    if (!sides) {
+      return call.finish({
+        error: "The computer and the document folder are the same here; use the path directly.",
+      });
+    }
+    const from =
+      args.from === "documents" ? "documents" : args.from === "computer" ? "computer" : "";
+    const filePath = String(args.path ?? "").trim();
+    const toPath = typeof args.to === "string" && args.to.trim() ? args.to.trim() : filePath;
+    if (!from || !filePath) {
+      return call.finish({ error: 'Give from ("computer" or "documents") and the file path.' });
+    }
+    const source = sides[from];
+    const target = sides[from === "computer" ? "documents" : "computer"];
+    if (from === "documents" && desktopGuardApplies(ctx.computer)) {
+      const activateRefusal = protectedActivateScriptWriteRefusal(toPath);
+      if (activateRefusal) {
+        return call.finish({ error: desktopProtectionGuardMessage(activateRefusal) });
+      }
+    }
+    const storedFrom = runFilePath(ctx, filePath);
+    const storedTo = runFilePath(ctx, toPath);
+    const maxBytes = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
+    let content: Uint8Array;
+    try {
+      content = await source.files.readFile(await source.ref(), storedFrom, context, { maxBytes });
+    } catch (error) {
+      return call.finish({
+        error:
+          error instanceof Error && /exceeds \d+ bytes/.test(error.message)
+            ? `The file is larger than ${attachmentSizeLabel(maxBytes)}.`
+            : `${filePath} was not found on the ${from === "computer" ? "computer" : "document folder"}.`,
+      });
+    }
+    const targetRef = await target.ref();
+    if (args.overwrite !== true && (await fileExists(target.files, targetRef, storedTo, context))) {
+      return call.finish({
+        error: `${toPath} already exists there. Copy it under a new name with to, or pass overwrite only if the person asked to replace that file.`,
+      });
+    }
+    if (from === "documents") ctx.computer.checkpoint.markDirty();
+    try {
+      await target.files.writeFile(targetRef, { path: storedTo, content }, context);
+    } catch (error) {
+      await recordComputerAction(ctx, call, "write_file", toPath, {
+        error: error instanceof Error ? error.message : "could not copy file",
+      });
+      throw error;
+    }
+    await recordComputerAction(ctx, call, "write_file", toPath, { bytes: content.byteLength });
+    return call.finish({
+      ok: true,
+      copied: from === "computer" ? "computer → documents" : "documents → computer",
+      path: toPath,
+      bytes: content.byteLength,
+    });
   },
   generate_image: generateMedia,
   generate_video: generateMedia,
