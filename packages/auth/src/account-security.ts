@@ -21,6 +21,7 @@ export function accountSecurity(
   ssoName?: string,
   ssoIssuer?: string,
   passwordChangeEnabled = true,
+  accountDeletionAllowed: () => boolean = () => true,
 ): BetterAuthPlugin {
   return {
     id: "account-security",
@@ -63,6 +64,12 @@ export function accountSecurity(
         { method: "POST", use: [sessionMiddleware] },
         async (ctx) => {
           const user = ctx.context.session.user;
+          if (!accountDeletionAllowed()) {
+            throw new APIError("FORBIDDEN", {
+              message: "Deleting accounts is turned off for your company.",
+              code: "ACCOUNT_DELETION_DISABLED",
+            });
+          }
           if (
             !email ||
             (await ctx.context.internalAdapter.findCredentialAccount(user.id))?.password
@@ -92,6 +99,12 @@ export function accountSecurity(
             // Deletion codes are submitted through the CSRF-protected POST endpoint.
             // Never delete an account through a navigable GET callback.
             if (ctx.path === "/delete-user/callback") throw new APIError("FORBIDDEN");
+            if (!accountDeletionAllowed()) {
+              throw new APIError("FORBIDDEN", {
+                message: "Deleting accounts is turned off for your company.",
+                code: "ACCOUNT_DELETION_DISABLED",
+              });
+            }
             const session = await sessionForAuthHook(ctx);
             if (!session) throw new APIError("UNAUTHORIZED");
             const credential = await ctx.context.internalAdapter.findCredentialAccount(

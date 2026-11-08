@@ -380,10 +380,12 @@ export function botsRoutes(ctx: RouterContext) {
         });
         return bot;
       }),
-      importPreview: authed.bots.importPreview.handler(async ({ context, input }) =>
-        previewAgentImport(agentImportServices as AgentImportServices, context.actor, input),
-      ),
+      importPreview: authed.bots.importPreview.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "accountData");
+        return previewAgentImport(agentImportServices as AgentImportServices, context.actor, input);
+      }),
       importCreate: authed.bots.importCreate.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "accountData");
         let bot: Bot;
         try {
           bot = await createImportedBot(agentImportServices, context.actor, input, context.signal);

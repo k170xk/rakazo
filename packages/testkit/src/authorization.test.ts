@@ -21,6 +21,7 @@ import {
   setSpaceSettingOverride,
 } from "@rakazo/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { enableCompanyFeatures } from "./company-features.js";
 import type { BotIntroHarness } from "./discard-bot-intro.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
 import { sessionCookieHeader } from "./index.js";
@@ -71,6 +72,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
     });
     pushTokens = new PrismaPushTokenStore(handles.prisma, encryptionKey);
     app = handles.app;
+    await enableCompanyFeatures(handles.prisma, { accountData: true });
     db = asSystem(handles.prisma);
     botIntroHarness = handles;
   });

@@ -37,6 +37,7 @@ import {
   ChatSdkMessagingSurface,
   CodexCatalogCache,
   ComposioConnector,
+  companyFeatures,
   companyModel,
   contentKeyProviderFromEnv,
   createAgentHomeStore,
@@ -601,6 +602,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         : undefined,
     extraOrigins: MOBILE_AUTH_ORIGINS,
     androidAppCertFingerprints: env.passkeyAndroidCertFingerprints,
+    accountDeletionAllowed: () => companyFeatures().accountData,
     beforeDeleteUser: async (userId) => {
       // First, so a provider failure aborts deletion before anything is destroyed.
       await billing?.cancelForDeletedUser(userId);

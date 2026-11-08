@@ -3,12 +3,13 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { JobPublisher, SandboxProvider } from "@rakazo/adapter-kit";
-import { LocalAgentHomeStore } from "@rakazo/adapters";
+import { LocalAgentHomeStore, setCompanyPolicy } from "@rakazo/adapters";
 import type { AccountExportRecord, Actor } from "@rakazo/contracts";
 import {
   AccountExportManifestSchema,
   AccountExportRecordSchema,
   accountExportPaths,
+  DEFAULT_COMPANY_FEATURES,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import {
@@ -45,6 +46,7 @@ describePostgres("account export (PostgreSQL)", () => {
 
   beforeAll(() =>
     runAsSystem("test fixture", async () => {
+      setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, accountData: true } });
       // The derived key keeps rows from other suites sharing this database readable.
       const keyProvider = new LocalKeyProvider([
         { id: "export-test", key: randomBytes(32) },
@@ -255,6 +257,7 @@ describePostgres("account export (PostgreSQL)", () => {
   );
 
   afterAll(async () => {
+    setCompanyPolicy({ features: null });
     if (!db) return;
     await runAsSystem("test fixture", async () => {
       await prisma.organization.deleteMany({

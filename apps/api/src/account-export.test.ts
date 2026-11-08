@@ -1,15 +1,17 @@
+import { setCompanyPolicy } from "@rakazo/adapters";
 import type { AccountExportRecord } from "@rakazo/contracts";
 import {
   ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES,
   AccountExportManifestSchema,
   AccountExportRecordSchema,
   accountExportPaths,
+  DEFAULT_COMPANY_FEATURES,
 } from "@rakazo/contracts";
 import type { AccountExportSource } from "@rakazo/db";
 import { currentDbContext } from "@rakazo/db";
 import { Unzip, UnzipInflate } from "fflate";
 import { Hono } from "hono";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AccountExportStores } from "./account-export.js";
 import { accountArchiveFiles, mountAccountExportRoute, zipStream } from "./account-export.js";
 
@@ -260,7 +262,23 @@ describe("account export archive", () => {
 });
 
 describe("GET /api/account/export", () => {
+  afterEach(() => setCompanyPolicy({ features: null }));
+
+  it("refuses every download while the company has account data turned off", async () => {
+    const app = new Hono();
+    const consumeAccountExportToken = vi.fn(async () => "user-1");
+    mountAccountExportRoute(app, {
+      ...stores(),
+      prisma: {} as never,
+      auth: { consumeAccountExportToken },
+    });
+    const response = await app.request("/api/account/export?token=fresh");
+    expect(response.status).toBe(403);
+    expect(consumeAccountExportToken).not.toHaveBeenCalled();
+  });
+
   it("refuses a token that does not name a user", async () => {
+    setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, accountData: true } });
     const app = new Hono();
     const consumeAccountExportToken = vi.fn(async () => null);
     mountAccountExportRoute(app, {

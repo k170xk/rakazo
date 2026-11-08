@@ -15,6 +15,7 @@ import {
   listArtifactVersions,
   listSpaceArtifacts,
 } from "../artifacts.js";
+import { requireCompanyFeature } from "../company-admin.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
 import { listSpaceRuns } from "../runs.js";
 import { querySpaceSearch } from "../search.js";
@@ -241,6 +242,7 @@ export function contentRoutes(ctx: RouterContext) {
         };
       }),
       accountToken: authed.export.accountToken.handler(async ({ context }) => {
+        await requireCompanyFeature(deps, context.actor, "accountData");
         await requireIdentityConfirmation(deps.auth, context);
         return { token: await deps.auth.issueAccountExportToken(context.actor.userId) };
       }),

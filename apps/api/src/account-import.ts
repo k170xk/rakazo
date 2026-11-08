@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
 import type { AdapterContext } from "@rakazo/adapter-kit";
-import { normalizeWorkspacePath, resolveBotWorkspacePath } from "@rakazo/adapters";
+import { companyFeatures, normalizeWorkspacePath, resolveBotWorkspacePath } from "@rakazo/adapters";
 import type {
   AccountExportManifest,
   AccountExportRecord,
@@ -1089,6 +1089,10 @@ export function mountAccountImportRoute(
     if (!actor) {
       cancelBody(request.body);
       return c.json({ error: "Unauthorized" }, 401);
+    }
+    if (!companyFeatures().accountData) {
+      cancelBody(request.body);
+      return c.json({ error: "Importing accounts is turned off for your company." }, 403);
     }
     // A non-simple content type keeps cross-site form posts from reaching the importer.
     const contentType = request.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();

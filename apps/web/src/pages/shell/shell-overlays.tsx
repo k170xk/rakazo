@@ -192,6 +192,7 @@ export function SettingsOverlays({
             // refresh only waits for the roster's next poll.
             void refreshSpaces().catch(() => undefined);
           }}
+          accountDataEnabled={bootstrapMe?.features?.accountData === true}
           onAccountImported={refreshSpaces}
           onImportAgent={() => {
             setOverlay(null);

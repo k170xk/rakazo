@@ -9,6 +9,7 @@ import { SHARED_PAGE_PATH_PREFIX } from "@rakazo/contracts";
 import { deletePageShareSecrets } from "@rakazo/db";
 import { pageViewerCode } from "@rakazo/page-kit/compile";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { enableCompanyFeatures } from "./company-features.js";
 import type { BotIntroHarness } from "./discard-bot-intro.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
 import { sessionCookieHeader } from "./index.js";
@@ -42,6 +43,7 @@ describePages("pages", () => {
       agentRuntime: "scripted",
     });
     app = handles.app;
+    await enableCompanyFeatures(handles.prisma, { accountData: true });
     stop = handles.stop;
     jobs = handles.jobs;
     harness = handles;

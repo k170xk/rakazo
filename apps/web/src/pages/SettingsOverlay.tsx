@@ -43,6 +43,7 @@ export function SettingsOverlay({
   onBotAvatarSetChange,
   onAccountImported,
   onImportAgent,
+  accountDataEnabled = false,
   billingEnabled = false,
   messagingEnabled = false,
   paymentWalletProvider = null,
@@ -70,6 +71,8 @@ export function SettingsOverlay({
   onBotAvatarSetChange?: (set: BotAvatarSet) => Promise<void>;
   onAccountImported?: () => Promise<void>;
   onImportAgent?: () => void;
+  /** The company lets people export, import and delete their account. */
+  accountDataEnabled?: boolean;
   billingEnabled?: boolean;
   messagingEnabled?: boolean;
   /** The wallet this deployment lets bots spend from; none hides Wallet. */
@@ -312,6 +315,7 @@ export function SettingsOverlay({
                         onBotAvatarSetChange={onBotAvatarSetChange}
                         onAccountImported={onAccountImported}
                         onImportAgent={onImportAgent}
+                        accountDataEnabled={accountDataEnabled}
                       />
                       {/* One space is just the app, so there is nothing to tell apart or manage. */}
                       {spaces.length > 1 && onOpenSpace ? (

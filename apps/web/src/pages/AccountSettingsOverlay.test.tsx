@@ -77,22 +77,22 @@ vi.mock("@rakazo/ui-web", async (importOriginal) => ({
 const accountPolicy = vi.hoisted(() => ({
   passwordChangeEnabled: undefined as boolean | undefined,
 }));
+const accountSecurity = (): AccountSecurity => ({
+  hasPassword: true,
+  passwordChangeEnabled: accountPolicy.passwordChangeEnabled,
+  freshOidcAuth: false,
+  ssoLinked: false,
+  emailDeletion: false,
+  sso: null,
+});
 vi.mock("../components/AccountAccess", () => ({
   AccountAccess: ({ onSecurity }: { onSecurity: (value: AccountSecurity) => void }) => {
-    useEffect(
-      () =>
-        onSecurity({
-          hasPassword: true,
-          passwordChangeEnabled: accountPolicy.passwordChangeEnabled,
-          freshOidcAuth: false,
-          ssoLinked: false,
-          emailDeletion: false,
-          sso: null,
-        }),
-      [onSecurity],
-    );
-    return null;
+    useEffect(() => onSecurity(accountSecurity()), [onSecurity]);
+    return <p>Delete account</p>;
   },
+}));
+vi.mock("../lib/account-security", () => ({
+  fetchAccountSecurity: () => Promise.resolve(accountSecurity()),
 }));
 
 vi.mock("../components/AccountDataSettings", () => ({ AccountDataSettings: () => null }));
@@ -122,6 +122,26 @@ import { GeneralSettingsPanels, UsageSettingsPanel } from "./AccountSettingsOver
 afterEach(() => {
   localStorage.clear();
 });
+
+it.each([false, true])(
+  "shows the Data section only when the company allows it (%s)",
+  async (enabled) => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    try {
+      await act(async () =>
+        root.render(<GeneralSettingsPanels name="Test" accountDataEnabled={enabled} />),
+      );
+      expect(Boolean(container.querySelector('[data-testid="account-data"]'))).toBe(enabled);
+      expect(container.textContent?.includes("Delete account")).toBe(enabled);
+      expect(container.textContent?.includes("Change password")).toBe(true);
+    } finally {
+      await act(async () => root.unmount());
+      vi.unstubAllGlobals();
+    }
+  },
+);
 
 it.each([undefined, true, false])("respects the password-change policy (%s)", async (enabled) => {
   accountPolicy.passwordChangeEnabled = enabled;

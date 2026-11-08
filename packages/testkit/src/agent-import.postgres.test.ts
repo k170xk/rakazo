@@ -9,6 +9,7 @@ import { createDb } from "@rakazo/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 // The app's own logger module (the API resolves `@rakazo/logging` to this file).
 import { createLogger, createTestSink, installLogger } from "../../logging/src/index.js";
+import { enableCompanyFeatures } from "./company-features.js";
 import { sessionCookieHeader } from "./index.js";
 import { asSystem } from "./system-db.js";
 
@@ -134,6 +135,7 @@ describeIntegration("agent import", () => {
       },
     });
     app = handles.app;
+    await enableCompanyFeatures(handles.prisma, { accountData: true });
     db = asSystem(handles.prisma);
     stop = handles.stop;
   });

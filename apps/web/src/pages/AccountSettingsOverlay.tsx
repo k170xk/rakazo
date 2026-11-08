@@ -26,7 +26,7 @@ import {
   TableRow,
 } from "@rakazo/ui-web/components/ui/table";
 import type { RefObject } from "react";
-import { useId, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { AccountAccess, LinkSsoRow } from "../components/AccountAccess";
 import { AccountDataSettings } from "../components/AccountDataSettings";
 import { SuccessPop } from "../components/ai/primitives";
@@ -40,6 +40,7 @@ import { DesktopUpdateSection } from "../components/DesktopUpdates";
 import { PasskeySettings } from "../components/PasskeySettings";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { TrustedLinkSitesSettings } from "../components/TrustedLinkSitesSettings";
+import { fetchAccountSecurity } from "../lib/account-security";
 import { authClient } from "../lib/auth";
 import type { BotsSidebarDensity } from "../lib/bots-sidebar-density-pref";
 import {
@@ -68,6 +69,8 @@ export type SettingsGeneralProps = {
   onBotAvatarSetChange?: (set: BotAvatarSet) => Promise<void>;
   onAccountImported?: () => Promise<void>;
   onImportAgent?: () => void;
+  /** The company lets people export, import and delete their account. */
+  accountDataEnabled?: boolean;
 };
 
 export function GeneralSettingsPanels({
@@ -80,6 +83,7 @@ export function GeneralSettingsPanels({
   onBotAvatarSetChange,
   onAccountImported,
   onImportAgent,
+  accountDataEnabled = false,
 }: SettingsGeneralProps) {
   const { t } = useLingui();
   const account = accountDisplay({ name, email }, t`You`);
@@ -140,6 +144,19 @@ export function GeneralSettingsPanels({
     accountSecurity?.hasPassword && accountSecurity.passwordChangeEnabled !== false,
   );
   const passkeysSupported = usePasskeysSupported();
+  // The Data section's delete form loads this when it shows; without it, load it here.
+  useEffect(() => {
+    if (accountDataEnabled) return;
+    let active = true;
+    void fetchAccountSecurity()
+      .then((value) => {
+        if (active) setAccountSecurity(value);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [accountDataEnabled]);
   const canLinkSso = Boolean(accountSecurity?.sso && !accountSecurity.ssoLinked);
   const [timezonePending, setTimezonePending] = useState(false);
   const [timezoneError, setTimezoneError] = useState<string | null>(null);
@@ -407,10 +424,12 @@ export function GeneralSettingsPanels({
         </SettingsGroup>
       ) : null}
 
-      <SettingsGroup title={<Trans>Data</Trans>} data-testid="account-data">
-        <AccountDataSettings onImported={onAccountImported} onImportAgent={onImportAgent} />
-        <AccountAccess onSecurity={setAccountSecurity} />
-      </SettingsGroup>
+      {accountDataEnabled ? (
+        <SettingsGroup title={<Trans>Data</Trans>} data-testid="account-data">
+          <AccountDataSettings onImported={onAccountImported} onImportAgent={onImportAgent} />
+          <AccountAccess onSecurity={setAccountSecurity} />
+        </SettingsGroup>
+      ) : null}
     </div>
   );
 }

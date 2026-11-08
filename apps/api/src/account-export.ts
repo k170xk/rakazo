@@ -1,5 +1,5 @@
 import type { AdapterContext, AgentHomeStore, ArtifactStore } from "@rakazo/adapter-kit";
-import { resolveBotWorkspacePath } from "@rakazo/adapters";
+import { companyFeatures, resolveBotWorkspacePath } from "@rakazo/adapters";
 import type { Auth } from "@rakazo/auth";
 import type {
   AccountExportExecutables,
@@ -213,6 +213,11 @@ export function mountAccountExportRoute(
   },
 ): void {
   app.get("/api/account/export", async (c) => {
+    if (!companyFeatures().accountData) {
+      return c.text("Exporting accounts is turned off for your company.", 403, {
+        "cache-control": "no-store",
+      });
+    }
     const userId = await deps.auth.consumeAccountExportToken(c.req.query("token") ?? "");
     if (!userId) return c.text("Export link expired", 410, { "cache-control": "no-store" });
     const now = new Date();

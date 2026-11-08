@@ -26,6 +26,7 @@ import {
   runAsSystem,
 } from "@rakazo/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { enableCompanyFeatures } from "./company-features.js";
 import type { BotIntroHarness } from "./discard-bot-intro.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
 import { sessionCookieHeader } from "./index.js";
@@ -138,6 +139,7 @@ describeJourneys("required product journeys", () => {
       connectors: [connector],
     });
     app = handles.app;
+    await enableCompanyFeatures(handles.prisma, { accountData: true });
     stop = handles.stop;
     prisma = asSystem(handles.prisma);
     appPrisma = handles.prisma;

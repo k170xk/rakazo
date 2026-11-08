@@ -96,6 +96,8 @@ export interface AuthEnv {
   logger?: BetterAuthOptions["logger"];
   onEmailError?: (error: unknown) => void;
   beforeDeleteUser?: (userId: string) => Promise<void>;
+  /** Whether people may delete their own account right now; unset always allows it. */
+  accountDeletionAllowed?: () => boolean;
   /** Runs when a session row is deleted. Delivery also drops a token whose session is missing or expired. */
   afterDeleteSession?: (session: AuthSession) => Promise<void>;
   /** Runs when a password change replaces the caller's own session instead of ending it. */
@@ -377,6 +379,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
         env.oidc?.name,
         env.oidc?.issuer,
         env.passwordAuth !== false,
+        env.accountDeletionAllowed,
       ),
       identityConfirmation(env.email, emailLocaleOf),
       ...(discovery ? [discovery.plugin] : []),
