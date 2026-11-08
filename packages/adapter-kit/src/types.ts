@@ -109,10 +109,13 @@ export interface ComputerRef {
   started?: boolean;
 }
 
+/** Team Computer folders whose children belong to one bot, browser profile or conversation. */
+export type WorkspaceFolderParent = ".browser-profiles" | "bots" | "conversations";
+
 export type WorkspaceDirectoryRequest =
   | { action: "ensure"; paths: string[] }
   | { action: "list" }
-  | { action: "remove"; parent: ".browser-profiles" | "bots"; names: string[] };
+  | { action: "remove"; parent: WorkspaceFolderParent; names: string[] };
 
 export interface CommandRequest {
   argv: string[];

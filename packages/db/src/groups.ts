@@ -669,8 +669,33 @@ export function createGroupRepos(prisma: PrismaClient) {
         );
         const { targets } = await snapshotRunTeardownTargets(tx, runIds);
         const pageShareSecrets = await deletePageShareSecrets(tx, { groupId });
+        // Each member bot worked in conversations/<threadId> on its owner's Team Computer.
+        const owners = group.thread
+          ? [
+              ...new Set(
+                (
+                  await tx.chatGroupMember.findMany({
+                    where: { groupId },
+                    select: { bot: { select: { userId: true } } },
+                  })
+                ).map((member) => member.bot.userId),
+              ),
+            ]
+          : [];
+        if (group.thread && owners.length) {
+          await tx.conversationDeletion.createMany({
+            data: owners.map((userId) => ({
+              spaceId: actor.spaceId,
+              userId,
+              threadId: group.thread!.id,
+            })),
+            skipDuplicates: true,
+          });
+        }
         await tx.chatGroup.delete({ where: { id: groupId } });
         return {
+          threadId: group.thread?.id ?? null,
+          conversationFolderOwners: owners,
           contextBotId,
           artifactStorageKeys: group.artifacts.map((artifact) => artifact.storageKey),
           cancelledRunIds: runIds,

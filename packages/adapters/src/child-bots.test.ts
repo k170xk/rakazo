@@ -308,6 +308,10 @@ describe("destroyBot", () => {
         computer: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
         $executeRaw: vi.fn().mockResolvedValue(0),
         botDeletion: { create: vi.fn().mockResolvedValue({}) },
+        thread: { findUnique: vi.fn().mockResolvedValue(null) },
+        conversationDeletion: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        keptFile: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        heavyToolJob: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
         bot: { delete: vi.fn().mockResolvedValue({}) },
       });
       order.push("commit");
@@ -374,6 +378,10 @@ describe("destroyBot", () => {
         computer: { updateMany: releaseComputers },
         $executeRaw: executeRaw,
         botDeletion: { create: createDeletion },
+        thread: { findUnique: vi.fn().mockResolvedValue(null) },
+        conversationDeletion: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        keptFile: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        heavyToolJob: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
         bot: { delete: deleteBot },
       }),
     );
@@ -465,6 +473,10 @@ describe("destroyBot", () => {
           deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
         botDeletion: { create: createDeletion },
+        thread: { findUnique: vi.fn().mockResolvedValue(null) },
+        conversationDeletion: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        keptFile: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        heavyToolJob: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
         bot: { delete: deleteBot },
       }),
     );
@@ -528,6 +540,10 @@ describe("destroyBot", () => {
         computer: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
         $executeRaw: vi.fn().mockResolvedValue(1),
         botDeletion: { create: vi.fn().mockResolvedValue({}) },
+        thread: { findUnique: vi.fn().mockResolvedValue(null) },
+        conversationDeletion: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        keptFile: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        heavyToolJob: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
         bot: { delete: vi.fn().mockResolvedValue({}) },
       }),
     );
@@ -664,6 +680,10 @@ describe("destroyBot", () => {
         computer: { updateMany: clearExecution },
         $executeRaw: vi.fn(),
         botDeletion: { create: vi.fn() },
+        thread: { findUnique: vi.fn().mockResolvedValue(null) },
+        conversationDeletion: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        keptFile: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        heavyToolJob: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
         bot: { delete: vi.fn() },
       }),
     );
@@ -1430,6 +1450,69 @@ describe("destroyBot", () => {
         "keep",
       );
       await expect(readFile(path.join(teamHome, "shared/plan.txt"), "utf8")).resolves.toBe("keep");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("removes the deleted chat's conversation folder and pinned files with the bot's folder", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-conversation-delete-"));
+    try {
+      const home = new LocalAgentHomeStore(root);
+      const teamHome = home.pathFor("team-workspace-1");
+      await seedFile(teamHome, "bots/bot-1/outputs/pinned.mp4", "gone");
+      await seedFile(teamHome, "conversations/thread-1/report.pdf", "gone");
+      await seedFile(teamHome, "conversations/thread-2/notes.txt", "keep");
+      const dataDir = path.join(root, "data");
+      await seedFile(dataDir, "tool-work/conversations/thread-1/draft.docx", "gone");
+      await seedFile(dataDir, "tool-work/conversations/thread-2/draft.docx", "keep");
+      const team = {
+        id: "team-computer",
+        homeKey: "team-workspace-1",
+        kind: "e2b",
+        providerRef: null,
+        scope: "team",
+        state: "stopped",
+      };
+      const conversationDeletion = { createMany: vi.fn().mockResolvedValue({ count: 1 }) };
+      const keptFile = { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) };
+
+      await destroyBot(
+        {
+          prisma: deletionPrisma(team, { threadId: "thread-1", conversationDeletion, keptFile }),
+          sandbox: {} as SandboxProvider,
+          home,
+          jobs: { cancel: vi.fn() } as unknown as JobPublisher,
+          dataDir,
+        },
+        {
+          id: "bot-1",
+          spaceId: "workspace-1",
+          userId: "user-1",
+          name: "Researcher",
+          archivedAt: null,
+          computerId: team.id,
+        },
+        context,
+        { deleteMemories: true },
+      );
+
+      expect(conversationDeletion.createMany).toHaveBeenCalledWith({
+        data: [{ spaceId: "workspace-1", userId: "user-1", threadId: "thread-1" }],
+        skipDuplicates: true,
+      });
+      expect(keptFile.deleteMany).toHaveBeenCalledWith({ where: { botId: "bot-1" } });
+      await expect(access(path.join(teamHome, "bots", "bot-1"))).rejects.toThrow();
+      await expect(access(path.join(teamHome, "conversations", "thread-1"))).rejects.toThrow();
+      await expect(
+        readFile(path.join(teamHome, "conversations/thread-2/notes.txt"), "utf8"),
+      ).resolves.toBe("keep");
+      await expect(
+        access(path.join(dataDir, "tool-work/conversations/thread-1")),
+      ).rejects.toThrow();
+      await expect(
+        readFile(path.join(dataDir, "tool-work/conversations/thread-2/draft.docx"), "utf8"),
+      ).resolves.toBe("keep");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -2437,7 +2520,14 @@ function runInWorkspace(cwd: string, argv: readonly string[]) {
   }
 }
 
-function deletionPrisma(team: { id: string }) {
+function deletionPrisma(
+  team: { id: string },
+  chat: {
+    threadId?: string;
+    conversationDeletion?: { createMany: ReturnType<typeof vi.fn> };
+    keptFile?: { deleteMany: ReturnType<typeof vi.fn> };
+  } = {},
+) {
   const transaction = vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
     callback({
       $queryRaw: vi.fn().mockResolvedValue([{ id: "bot-1" }]),
@@ -2460,6 +2550,14 @@ function deletionPrisma(team: { id: string }) {
       computerExecutionLease: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       computer: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
       botDeletion: { create: vi.fn().mockResolvedValue({}) },
+      thread: {
+        findUnique: vi.fn().mockResolvedValue(chat.threadId ? { id: chat.threadId } : null),
+      },
+      conversationDeletion: chat.conversationDeletion ?? {
+        createMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
+      keptFile: chat.keptFile ?? { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      heavyToolJob: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       bot: { delete: vi.fn().mockResolvedValue({}) },
     }),
   );

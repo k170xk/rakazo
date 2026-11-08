@@ -16,6 +16,7 @@ import {
   normalizeSecretDestination,
   pageUrlOrigin,
   relabelVaultItem,
+  removeConversationFolders,
   revealBotSecret,
   SPACE_VAULT_NOT_IN_USE,
   stopCancelledGroupRuns,
@@ -811,6 +812,19 @@ export function botsRoutes(ctx: RouterContext) {
               getLogger().error("group artifact cleanup", result.reason);
           }
           await forgetPageShareSecrets(deps.secrets, removed.pageShareSecrets);
+          if (removed.threadId) {
+            await removeConversationFolders(
+              deps,
+              context.actor.spaceId,
+              removed.conversationFolderOwners,
+              removed.threadId,
+              computerContext(
+                context.actor,
+                removed.contextBotId,
+                `group-remove-folders:${input.groupId}`,
+              ),
+            ).catch((error) => getLogger().error("group conversation folder cleanup", error));
+          }
         }
         return { ok: true as const };
       }),

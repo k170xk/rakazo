@@ -24,7 +24,7 @@ const directories = z.discriminatedUnion("action", [
   z.object({ action: z.literal("list") }),
   z.object({
     action: z.literal("remove"),
-    parent: z.enum(["bots", ".browser-profiles"]),
+    parent: z.enum(["bots", ".browser-profiles", "conversations"]),
     names: z.array(z.string().max(256)).max(256),
   }),
 ]);

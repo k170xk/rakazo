@@ -6,6 +6,7 @@ import type {
   JobPublisher,
   SandboxProvider,
   SecretStore,
+  WorkspaceFolderParent,
 } from "@rakazo/adapter-kit";
 import { routineJobKey, runContinueJob, runJobKey } from "@rakazo/adapter-kit";
 import type { Actor, Bot, ComputerMode } from "@rakazo/contracts";
@@ -38,6 +39,7 @@ import {
   teamBrowserProfileName,
   withCleanupDeadline,
 } from "./computer-workspace.js";
+import { removeConversationToolWork } from "./file-retention.js";
 import { removeAgentHome, removeAgentHomeFolders } from "./home.js";
 import { forgetPageShareSecrets } from "./page-share-secrets.js";
 import { removePiBotSessions } from "./pi-session.js";
@@ -478,6 +480,20 @@ export async function destroyBot(
           memoriesPreserved: !deleteMemories,
         },
       });
+      // Colleagues' turns in this chat worked in conversations/<threadId> on the owner's computer.
+      const thread = await tx.thread.findUnique({
+        where: { botId: bot.id },
+        select: { id: true },
+      });
+      if (thread) {
+        await tx.conversationDeletion.createMany({
+          data: [{ spaceId: bot.spaceId, userId: bot.userId, threadId: thread.id }],
+          skipDuplicates: true,
+        });
+      }
+      // Pins only protect files from scheduled cleanup; deleting the chat removes them too.
+      await tx.keptFile.deleteMany({ where: { botId: bot.id } });
+      await tx.heavyToolJob.deleteMany({ where: { botId: bot.id } });
       await tx.bot.delete({ where: { id: bot.id } });
       if (webhookSecretId) {
         await tx.secret.deleteMany({
@@ -486,6 +502,7 @@ export async function destroyBot(
       }
       if (dedicated) await tx.computer.delete({ where: { id: dedicated.id } });
       return {
+        threadId: thread?.id ?? null,
         artifactKeys: [
           ...botArtifacts.map((artifact) => artifact.storageKey),
           ...groupCleanup.artifactKeys,
@@ -524,9 +541,14 @@ export async function destroyBot(
     await removeAgentHome(deps.home, dedicated.homeKey, deps.dataDir).catch(() => undefined);
   }
   await removeTeamBrowserProfile(deps, bot.id, sharedComputer, context);
-  await removeTeamBotWorkspace(deps, bot, context).catch((error) => {
+  await removeTeamBotWorkspace(deps, bot, deletion.threadId, context).catch((error) => {
     getLogger().error("team bot folder cleanup", error);
   });
+  if (deps.dataDir && deletion.threadId) {
+    await removeConversationToolWork(deps.dataDir, deletion.threadId).catch((error) => {
+      getLogger().error("conversation tool folder cleanup", error);
+    });
+  }
   const artifactStore = deps.artifacts;
   if (artifactStore) {
     await removeStoredArtifacts(artifactStore, deletion.artifactKeys, context);
@@ -802,6 +824,7 @@ async function removeProfileOnceClosed(
 async function removeTeamBotWorkspace(
   deps: BotLifecycleDeps,
   bot: LifecycleBot,
+  threadId: string | null,
   context: AdapterContext,
 ) {
   if (!isTeamBotFolderName(bot.id)) return;
@@ -818,7 +841,20 @@ async function removeTeamBotWorkspace(
     deps.prisma.computer.findUnique({ where: { homeKey: legacyTeamHomeKey(bot.spaceId) } }),
   ]);
   const profile = teamBrowserProfileName(bot.id);
-  if (own) await removeBotFolders(deps, bot.id, own, [["bots", bot.id]], context);
+  if (own) {
+    await removeBotFolders(
+      deps,
+      bot.id,
+      own,
+      [
+        ["bots", bot.id],
+        ...(threadId && isTeamBotFolderName(threadId)
+          ? [["conversations", threadId] as const]
+          : []),
+      ],
+      context,
+    );
+  }
   if (legacy && legacy.id !== own?.id && legacy.scope === "team") {
     await removeBotFolders(
       deps,
@@ -859,11 +895,44 @@ export async function removeDeletedBotsFromLegacyTeamHome(
     );
 }
 
+/**
+ * Remove a deleted group chat's conversations/<threadId> folder from the Team Computer of each
+ * person whose bot was in it, where that can be done now. conversation_deletions keeps the rest
+ * for each computer's next boot.
+ */
+export async function removeConversationFolders(
+  deps: Pick<BotLifecycleDeps, "prisma" | "sandbox" | "home" | "dataDir">,
+  spaceId: string,
+  userIds: readonly string[],
+  threadId: string,
+  context: AdapterContext,
+) {
+  if (!isTeamBotFolderName(threadId)) return;
+  if (deps.dataDir) {
+    await removeConversationToolWork(deps.dataDir, threadId).catch((error) => {
+      getLogger().error("conversation tool folder cleanup", error);
+    });
+  }
+  for (const userId of new Set(userIds)) {
+    const computer = await deps.prisma.computer.findUnique({
+      where: { scopeKey: computerScopeKey({ mode: "team", spaceId, userId }) },
+    });
+    if (!computer) continue;
+    await removeBotFolders(
+      deps,
+      context.botId ?? threadId,
+      computer,
+      [["conversations", threadId]],
+      context,
+    );
+  }
+}
+
 async function removeBotFolders(
-  deps: BotLifecycleDeps,
+  deps: Pick<BotLifecycleDeps, "sandbox" | "home" | "dataDir">,
   botId: string,
   computer: { homeKey: string; kind: string; providerRef: string | null; state: string },
-  folders: ReadonlyArray<readonly [".browser-profiles" | "bots", string]>,
+  folders: ReadonlyArray<readonly [WorkspaceFolderParent, string]>,
   context: AdapterContext,
 ) {
   // Remote providers keep a stored copy that only the server writes, and replacement computers

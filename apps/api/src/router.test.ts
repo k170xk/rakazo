@@ -9119,6 +9119,16 @@ describe("groups.remove", () => {
       },
       attempt: { updateMany: vi.fn() },
       task: { updateMany: vi.fn() },
+      chatGroupMember: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue([
+            { bot: { userId: "user-1" } },
+            { bot: { userId: "user-2" } },
+            { bot: { userId: "user-1" } },
+          ]),
+      },
+      conversationDeletion: { createMany: vi.fn(async () => ({ count: 2 })) },
       // No page in the group had a link, so there are no tokens to delete.
       page: { updateMany: vi.fn(async () => ({ count: 0 })) },
       secret: { findMany: vi.fn(async () => []), deleteMany: vi.fn() },
@@ -9152,7 +9162,7 @@ describe("groups.remove", () => {
     const prisma = {
       $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
       computerExecutionLease: { updateMany: leaseUpdate },
-      computer: { updateMany: vi.fn() },
+      computer: { updateMany: vi.fn(), findUnique: vi.fn(async () => null) },
     } as unknown as PrismaClient;
     const releaseScreen = vi.fn(async () => {
       calls.push("release screen");
@@ -9202,6 +9212,15 @@ describe("groups.remove", () => {
         cancelRunWork: true,
       }),
     );
+    // Every member bot worked in the chat's conversation folder on its owner's computer.
+    expect(tx.conversationDeletion.createMany).toHaveBeenCalledWith({
+      data: [
+        { spaceId: "workspace-1", userId: "user-1", threadId: "thread-1" },
+        { spaceId: "workspace-1", userId: "user-2", threadId: "thread-1" },
+      ],
+      skipDuplicates: true,
+    });
+    expect(prisma.computer.findUnique).toHaveBeenCalledTimes(2);
     expect(leaseUpdate).toHaveBeenCalledWith({
       where: { runId: { in: ["run-1"] } },
       data: { expiresAt: new Date(0) },
@@ -9236,6 +9255,8 @@ describe("groups.remove", () => {
       },
       attempt: { updateMany: vi.fn() },
       task: { updateMany: vi.fn() },
+      chatGroupMember: { findMany: vi.fn(async () => [{ bot: { userId: "user-1" } }]) },
+      conversationDeletion: { createMany: vi.fn(async () => ({ count: 1 })) },
       page: { updateMany: vi.fn(async () => ({ count: 1 })) },
       secret: {
         findMany: vi.fn(async () => [{ id: "secret-1", ciphertext: "vault-ref-1" }]),
@@ -9250,7 +9271,7 @@ describe("groups.remove", () => {
       computerExecutionLease: {
         updateMany: vi.fn().mockRejectedValue(new Error("database unavailable")),
       },
-      computer: { updateMany: vi.fn() },
+      computer: { updateMany: vi.fn(), findUnique: vi.fn(async () => null) },
     } as unknown as PrismaClient;
     const removeArtifact = vi.fn(async () => undefined);
     const deleteSecret = vi.fn(async () => undefined);

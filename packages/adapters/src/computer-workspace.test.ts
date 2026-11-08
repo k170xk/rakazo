@@ -555,6 +555,63 @@ describe("Team bot folder cleanup", () => {
     );
   });
 
+  it("removes the owner's deleted chats' conversation folders, pinned files included, when a Team Computer wakes", async () => {
+    const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-conversation-"));
+    roots.push(workspace);
+    await seedFile(workspace, "conversations/thread-gone/outputs/pinned.mp4", "gone");
+    await seedFile(workspace, "conversations/thread-live/notes.txt", "keep");
+    const conversationFindMany = vi.fn().mockResolvedValue([
+      { id: "deletion-1", threadId: "thread-gone" },
+      { id: "deletion-2", threadId: "thread-already-removed" },
+    ]);
+    const deleteMany = vi.fn().mockResolvedValue({ count: 1 });
+    const prisma = {
+      botDeletion: { findMany: vi.fn().mockResolvedValue([]) },
+      conversationDeletion: { findMany: conversationFindMany, deleteMany },
+    } as unknown as PrismaClient;
+
+    await removeDeletedBotWorkspaces(
+      { prisma, sandbox: localWorkspaceSandbox(workspace) },
+      computer,
+      "workspace",
+      context,
+      undefined,
+      "owner-1",
+    );
+
+    expect(conversationFindMany).toHaveBeenCalledWith({
+      where: { spaceId: "workspace", userId: "owner-1" },
+      select: { id: true, threadId: true },
+    });
+    await expect(access(path.join(workspace, "conversations", "thread-gone"))).rejects.toThrow();
+    await expect(
+      readFile(path.join(workspace, "conversations/thread-live/notes.txt"), "utf8"),
+    ).resolves.toBe("keep");
+    expect(deleteMany).toHaveBeenCalledWith({ where: { id: { in: ["deletion-2"] } } });
+  });
+
+  it("leaves the owner's deleted chats' conversation folders out of a checkpoint", async () => {
+    const prisma = {
+      botDeletion: { findMany: async () => [] },
+      computer: { findUnique: vi.fn().mockResolvedValue({ userId: "owner-1" }) },
+      conversationDeletion: {
+        findMany: vi.fn().mockResolvedValue([{ threadId: "thread-gone" }]),
+      },
+    };
+
+    await expect(
+      deletedTeamBotFolders(prisma as never, {
+        id: "computer-1",
+        scope: "team",
+        spaceId: "workspace",
+      }),
+    ).resolves.toEqual(new Set(["conversations/thread-gone"]));
+    expect(prisma.conversationDeletion.findMany).toHaveBeenCalledWith({
+      where: { spaceId: "workspace", userId: "owner-1" },
+      select: { threadId: true },
+    });
+  });
+
   it("unlinks a deleted bot's symlink that the provider's file listing does not show", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-link-"));
     roots.push(workspace);

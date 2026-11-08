@@ -505,10 +505,11 @@ export class WuyingSandboxProvider implements SandboxProvider {
       }
       return [];
     }
-    const parents = request.action === "list" ? ["bots", ".browser-profiles"] : [request.parent];
+    const parents =
+      request.action === "list" ? ["bots", ".browser-profiles", "conversations"] : [request.parent];
     const entries: string[] = [];
     for (const parent of parents) {
-      if (parent !== "bots" && parent !== ".browser-profiles")
+      if (parent !== "bots" && parent !== ".browser-profiles" && parent !== "conversations")
         throw new Error("Path escapes the computer workspace");
       const directory = await this.target(computer, parent, context.signal);
       if (!(await this.exists(directory, context.signal))) continue;
@@ -517,7 +518,8 @@ export class WuyingSandboxProvider implements SandboxProvider {
           entries.push(`${parent}/${entry.name}`);
         continue;
       }
-      const pattern = parent === "bots" ? /^[A-Za-z0-9_-]+$/ : /^chromium-bot-[0-9a-f]{32}$/;
+      const pattern =
+        parent === ".browser-profiles" ? /^chromium-bot-[0-9a-f]{32}$/ : /^[A-Za-z0-9_-]+$/;
       if (request.names.some((name) => !pattern.test(name)))
         throw new Error("Path escapes the computer workspace");
       for (const name of request.names) {

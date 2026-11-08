@@ -436,6 +436,7 @@ model Space {
   bots                        Bot[]
   botSections                 BotSection[]
   botDeletions                BotDeletion[]
+  conversationDeletions       ConversationDeletion[]
   threads                     Thread[]
   events                      Event[]
   tasks                       Task[]
@@ -852,6 +853,22 @@ model BotDeletion {
 
   @@index([spaceId, deletedAt])
   @@map("bot_deletions")
+}
+
+/// A deleted chat's conversations/<threadId> folder still on a person's Team Computer, removed
+/// at once when it can be and otherwise when that computer next boots.
+model ConversationDeletion {
+  id        String   @id @default(cuid())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  /// Whose Team Computer holds the folder.
+  userId    String
+  threadId  String
+  deletedAt DateTime @default(now())
+
+  @@unique([userId, threadId])
+  @@index([spaceId, userId])
+  @@map("conversation_deletions")
 }
 
 model ChatGroup {

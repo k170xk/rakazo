@@ -216,12 +216,14 @@ export class DesktopSandboxProvider implements SandboxProvider {
       return [];
     }
     const entries: string[] = [];
-    const parents = request.action === "list" ? ["bots", ".browser-profiles"] : [request.parent];
+    const parents =
+      request.action === "list" ? ["bots", ".browser-profiles", "conversations"] : [request.parent];
     let refused = false;
     for (const parent of parents) {
-      if (parent !== "bots" && parent !== ".browser-profiles")
+      if (parent !== "bots" && parent !== ".browser-profiles" && parent !== "conversations")
         throw new Error("Path escapes the computer workspace");
-      const pattern = parent === "bots" ? /^[A-Za-z0-9_-]+$/ : /^chromium-bot-[0-9a-f]{32}$/;
+      const pattern =
+        parent === ".browser-profiles" ? /^chromium-bot-[0-9a-f]{32}$/ : /^[A-Za-z0-9_-]+$/;
       const names =
         request.action === "remove"
           ? request.names.filter((name) => {

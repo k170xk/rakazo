@@ -10,6 +10,7 @@ import type {
   StreamedPortableFile,
   WorkspaceDirectoryRequest,
   WorkspaceExportLimits,
+  WorkspaceFolderParent,
 } from "@rakazo/adapter-kit";
 import { WorkspaceTooLargeError } from "@rakazo/adapter-kit";
 import type { ComputerMode } from "@rakazo/contracts";
@@ -100,7 +101,7 @@ const REMOVE_CONTAINED_DIRECTORIES = [
   "shift",
   'case "$parent" in',
   "  .browser-profiles) pattern='^chromium-bot-[0-9a-f]{32}$' ;;",
-  "  bots) pattern='^[A-Za-z0-9_-]+$' ;;",
+  "  bots|conversations) pattern='^[A-Za-z0-9_-]+$' ;;",
   '  *) echo "folder escapes the team home" >&2; exit 1 ;;',
   "esac",
   'if [ -L "$parent" ]; then echo "folder escapes the team home" >&2; exit 1; fi',
@@ -135,7 +136,7 @@ const REMOVE_CONTAINED_DIRECTORIES = [
 export async function removeComputerWorkspaceDirectories(
   sandbox: SandboxProvider,
   computer: ComputerRef,
-  parent: ".browser-profiles" | "bots",
+  parent: WorkspaceFolderParent,
   names: readonly string[],
   context: AdapterContext,
 ): Promise<void> {
@@ -178,9 +179,11 @@ export async function removeDeletedBotWorkspaces(
   spaceId: string,
   context: AdapterContext,
   budgetMs = DELETED_BOT_FOLDER_BUDGET_MS,
+  /** The computer's owner, whose deleted chats' conversation folders are removed too. */
+  ownerId?: string,
 ): Promise<void> {
   await withCleanupDeadline(context, budgetMs, (cleanupContext) =>
-    removeDeletedBotFolders(deps, computer, spaceId, cleanupContext),
+    removeDeletedBotFolders(deps, computer, spaceId, cleanupContext, ownerId),
   );
 }
 
@@ -222,15 +225,21 @@ async function removeDeletedBotFolders(
   computer: ComputerRef,
   spaceId: string,
   context: AdapterContext,
+  ownerId?: string,
 ) {
   // Work follows what is still on the computer, not the space's whole deletion history, so
   // every boot makes progress on the leftovers.
   const present = new Set(await listTeamBotEntries(deps.sandbox, computer, context));
   if (!present.size) return;
-  const deleted = await deps.prisma.botDeletion.findMany({
-    where: { spaceId },
-    select: { id: true },
-  });
+  const [deleted, deletedConversations] = await Promise.all([
+    deps.prisma.botDeletion.findMany({ where: { spaceId }, select: { id: true } }),
+    ownerId
+      ? deps.prisma.conversationDeletion.findMany({
+          where: { spaceId, userId: ownerId },
+          select: { id: true, threadId: true },
+        })
+      : [],
+  ]);
   const folders: string[] = [];
   const profiles: string[] = [];
   for (const { id } of deleted) {
@@ -239,9 +248,23 @@ async function removeDeletedBotFolders(
     const profile = teamBrowserProfileName(id);
     if (profile && present.has(`.browser-profiles/${profile}`)) profiles.push(profile);
   }
+  const conversations = deletedConversations
+    .filter(({ threadId }) => isTeamBotFolderName(threadId))
+    .filter(({ threadId }) => present.has(`conversations/${threadId}`))
+    .map(({ threadId }) => threadId);
+  // Records whose folder is already gone have nothing left to remove.
+  const finished = deletedConversations
+    .filter(({ threadId }) => !present.has(`conversations/${threadId}`))
+    .map(({ id }) => id);
+  if (finished.length) {
+    await deps.prisma.conversationDeletion
+      .deleteMany({ where: { id: { in: finished } } })
+      .catch((error) => getLogger().error("conversation folder records cleanup", error));
+  }
   for (const [parent, names] of [
     ["bots", folders],
     [".browser-profiles", profiles],
+    ["conversations", conversations],
   ] as const) {
     for (let start = 0; start < names.length; start += DELETED_BOT_FOLDER_BATCH) {
       if (context.signal.aborted) return;
@@ -260,7 +283,7 @@ async function removeDeletedBotFolders(
 
 // A shell glob also lists the symlinks some provider file listings leave out.
 const LIST_TEAM_BOT_ENTRIES = [
-  "for dir in bots .browser-profiles; do",
+  "for dir in bots .browser-profiles conversations; do",
   '  if [ ! -d "$dir" ] || [ -L "$dir" ]; then continue; fi',
   '  for entry in "$dir"/*; do',
   '    if [ -e "$entry" ] || [ -L "$entry" ]; then printf \'%s\\n\' "$entry"; fi',
@@ -292,12 +315,14 @@ async function listTeamBotEntries(
 }
 
 /**
- * Folders of the space's deleted bots, as `bots/<id>` and `.browser-profiles/<name>`. A Team
- * Computer that has not removed them yet must not save them back into its stored home.
+ * Folders of the space's deleted bots, as `bots/<id>` and `.browser-profiles/<name>`, and of the
+ * owner's deleted chats, as `conversations/<threadId>`. A Team Computer that has not removed them
+ * yet must not save them back into its stored home.
  */
 export async function deletedTeamBotFolders(
-  prisma: Pick<PrismaClient, "botDeletion">,
-  computer: { scope: string; spaceId: string },
+  prisma: Pick<PrismaClient, "botDeletion"> &
+    Partial<Pick<PrismaClient, "computer" | "conversationDeletion">>,
+  computer: { id?: string; scope: string; spaceId: string },
 ): Promise<Set<string> | undefined> {
   if (computer.scope !== "team") return undefined;
   const deleted = await prisma.botDeletion.findMany({
@@ -310,6 +335,20 @@ export async function deletedTeamBotFolders(
     const profile = teamBrowserProfileName(id);
     if (profile) folders.add(`.browser-profiles/${profile}`);
   }
+  if (computer.id && prisma.computer && prisma.conversationDeletion) {
+    const owner = await prisma.computer.findUnique({
+      where: { id: computer.id },
+      select: { userId: true },
+    });
+    const conversations = owner
+      ? await prisma.conversationDeletion.findMany({
+          where: { spaceId: computer.spaceId, userId: owner.userId },
+          select: { threadId: true },
+        })
+      : [];
+    for (const { threadId } of conversations)
+      if (isTeamBotFolderName(threadId)) folders.add(`conversations/${threadId}`);
+  }
   return folders;
 }
 
@@ -321,7 +360,8 @@ export async function checkpointComputerWorkspace(
   context: AdapterContext,
   /** The computer saved; its deleted bots' folders are read after the export, just before saving. */
   record?: {
-    prisma: Pick<PrismaClient, "botDeletion" | "computer">;
+    prisma: Pick<PrismaClient, "botDeletion" | "computer"> &
+      Partial<Pick<PrismaClient, "conversationDeletion">>;
     computer: { id: string; scope: string; spaceId: string };
     /** Called once the export has finished, just before the files are stored. */
     onExported?: () => void;

@@ -373,6 +373,20 @@ export async function sweepConversationFolders(input: {
   return result;
 }
 
+/** Deletes a deleted chat's colleague conversation folder from the tool runners' folder. */
+export async function removeConversationToolWork(dataDir: string, threadId: string) {
+  if (!/^[A-Za-z0-9_-]+$/.test(threadId)) return;
+  const root = path.resolve(dataDir);
+  const relative = `tool-work/${CONVERSATIONS}`;
+  const present = await withPinned(root, relative, (dir) =>
+    lstat(path.join(dir, threadId)).then(
+      () => true,
+      () => false,
+    ),
+  );
+  if (present) await removeEntry(root, relative, threadId, path.join(root, "file-trash"));
+}
+
 /** Every folder under `bots/`, including those of bots deleted since, which have no pins. */
 async function teamBotFolders(home: string, bots: ReadonlyMap<string, readonly string[]>) {
   const entries =
