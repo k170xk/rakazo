@@ -1505,6 +1505,7 @@ function SpaceShell() {
           stdioEnabled={bootstrapMe?.mcpStdioEnabled === true}
           mcpEnabled={companyFeatures?.mcpServers !== false && !integrationsComingSoon}
           integrationsComingSoon={integrationsComingSoon}
+          canAddCustom={bootstrapMe?.isAdmin === true}
           tourAvailability={tourAvailability}
           onConnectedAppsChange={setFooterLogos}
         />

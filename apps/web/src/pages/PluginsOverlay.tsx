@@ -7,11 +7,7 @@ import type {
   IntegrationCatalogSurface,
   PluginMarketplaceEntry,
 } from "@rakazo/contracts";
-import {
-  CONNECTION_LABEL_MAX_LENGTH,
-  PluginPreviewSchema,
-  SUBMIT_PLUGIN_URL,
-} from "@rakazo/contracts";
+import { CONNECTION_LABEL_MAX_LENGTH, PluginPreviewSchema } from "@rakazo/contracts";
 import type { PluginCategory } from "@rakazo/core";
 import {
   buildFeaturedConnectorTiles,
@@ -55,7 +51,7 @@ import {
   Spinner,
 } from "@rakazo/ui-web";
 import { queryOptions, skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, ChevronDown, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IntegrationSetup } from "../components/integrations/IntegrationSetup";
@@ -135,11 +131,14 @@ export function PluginsOverlay({
   onClose,
   onOpenMcp,
   activeBotId,
+  canAddCustom = false,
 }: {
   onConnectedAppsChange?: (apps: ReturnType<typeof connectedAppMarks>) => void;
   onClose: () => void;
   onOpenMcp?: () => void;
   activeBotId?: string;
+  /** Custom sources (GitHub, MCP, OpenAPI and the rest). Admins only. */
+  canAddCustom?: boolean;
 }) {
   const { t } = useLingui();
   const [query, setQuery] = useState("");
@@ -1541,7 +1540,7 @@ export function PluginsOverlay({
                 <ChevronRight />
               </Button>
             ) : null}
-            {browsing || view === "manage" ? renderAddMenu() : null}
+            {canAddCustom && (browsing || view === "manage") ? renderAddMenu() : null}
             <DialogClose
               render={<Button variant="ghost" size="icon-sm" aria-label={t`Close integrations`} />}
             >
@@ -1807,19 +1806,6 @@ export function PluginsOverlay({
                   ) : null}
                 </>
               )}
-              {catalogLoaded && !category ? (
-                <div className="mt-10 flex justify-center">
-                  <a
-                    href={SUBMIT_PLUGIN_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"
-                  >
-                    <Trans>Submit a plugin</Trans>
-                    <ArrowUpRight size={14} />
-                  </a>
-                </div>
-              ) : null}
             </>
           )}
         </div>

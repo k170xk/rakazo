@@ -58,6 +58,7 @@ export function AppOverlays({
   stdioEnabled,
   mcpEnabled = true,
   integrationsComingSoon = false,
+  canAddCustom = false,
   tourAvailability,
   onConnectedAppsChange,
 }: {
@@ -69,6 +70,8 @@ export function AppOverlays({
   mcpEnabled?: boolean;
   /** A member while the company keeps integrations to admins. */
   integrationsComingSoon?: boolean;
+  /** The Add custom menu: GitHub, MCP and other sources. Admins only. */
+  canAddCustom?: boolean;
   tourAvailability: TourAvailability;
   onConnectedAppsChange: (apps: ReturnType<typeof connectedAppMarks>) => void;
 }) {
@@ -85,6 +88,7 @@ export function AppOverlays({
           activeBotId={activeBotId}
           onClose={() => setOverlay(null)}
           onOpenMcp={mcpEnabled ? () => setOverlay({ kind: "mcp" }) : undefined}
+          canAddCustom={canAddCustom}
         />
       ) : null}
       {overlay?.kind === "skills" ? <SkillsDialog onClose={() => setOverlay(null)} /> : null}
