@@ -8,6 +8,7 @@
  * plain content layout with its heading placeholders filled.
  */
 import { existsSync, readFileSync } from "node:fs";
+import { DRAWN_COMPANY_SLIDES } from "./pptx-company.mjs";
 import { addMotion, motionOf } from "./pptx-motion.mjs";
 import {
   attr,
@@ -813,9 +814,14 @@ export async function describeTemplate(bytes) {
       template_layout: l.name,
       holds: slotsOf(analyseLayout(l.xml)),
     })),
-    company_slides: Object.entries(COMPANY_SLIDES)
-      .filter(([, c]) => facts.some(c.match))
-      .map(([key, c]) => ({ include: key, about: c.label })),
+    company_slides: [
+      ...Object.entries(COMPANY_SLIDES)
+        .filter(([, c]) => facts.some(c.match))
+        .map(([key, c]) => ({ include: key, about: c.label })),
+      ...(layouts.some((l) => norm(l.name) === norm(TEMPLATE_LAYOUTS.plain))
+        ? DRAWN_COMPANY_SLIDES
+        : []),
+    ],
     agenda: facts.some((s) => /agenda/i.test(s.layout)),
   };
 }

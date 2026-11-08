@@ -10,8 +10,18 @@ import { GREEN, INK, MUTED } from "./pptx-native.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 export const OFFICES_MAP = join(HERE, "templates", "ocsc-offices-map.png");
+
+const DISCIPLINES = [
+  { key: "civil", title: "Civil", text: "Roads, drainage and utilities" },
+  { key: "structural", title: "Structural", text: "Frames, foundations and bridges" },
+  { key: "mechanical", title: "Mechanical", text: "Heating, ventilation and plumbing" },
+  { key: "electrical", title: "Electrical", text: "Power, lighting and controls" },
+  { key: "environmental", title: "Environmental", text: "Ecology and the environment" },
+  { key: "sustainability", title: "Sustainability", text: "Energy, carbon and certification" },
+].map((d) => ({ ...d, icon: join(HERE, "templates", "icons", `${d.key}.png`) }));
+
 /** Pictures shipped with the tool that a slide may use besides workspace files and https URLs. */
-export const BUNDLED_IMAGES = new Set([OFFICES_MAP]);
+export const BUNDLED_IMAGES = new Set([OFFICES_MAP, ...DISCIPLINES.map((d) => d.icon)]);
 
 const CARD_TINT = "F3F7F0";
 const AREA = { top: 184, bottom: 880, left: 72, right: 1848 };
@@ -210,7 +220,120 @@ function servicesElements() {
   ];
 }
 
+/**
+ * OCSC at the hub of a ring of six discipline cards. Each card straddles the ring's edge so it
+ * builds in on its own after the ring and hub, instead of arriving with them.
+ */
+function disciplinesElements() {
+  const cx = 960;
+  const cy = (AREA.top + AREA.bottom) / 2;
+  const rx = 620;
+  const ry = 245;
+  const hub = 260;
+  const cardW = 300;
+  const cardH = 240;
+  const els = [
+    {
+      type: "shape",
+      shape: "ellipse",
+      x: cx - rx,
+      y: cy - ry,
+      w: rx * 2,
+      h: ry * 2,
+      fill: "FFFFFF",
+      transparency: 100,
+      line: "DDE3D8",
+      line_width: 2,
+    },
+    {
+      type: "shape",
+      shape: "ellipse",
+      x: cx - hub / 2,
+      y: cy - hub / 2,
+      w: hub,
+      h: hub,
+      fill: GREEN,
+    },
+    {
+      type: "text",
+      text: "OCSC",
+      x: cx - hub / 2,
+      y: cy - 76,
+      w: hub,
+      h: 80,
+      size: 36,
+      bold: true,
+      color: "FFFFFF",
+      align: "center",
+      valign: "middle",
+    },
+    {
+      type: "text",
+      text: "Multidisciplinary consulting engineering",
+      x: cx - hub / 2 + 30,
+      y: cy + 8,
+      w: hub - 60,
+      h: 64,
+      size: 12,
+      color: "FFFFFF",
+      align: "center",
+    },
+  ];
+  // Clockwise from the top left, in screen degrees (y grows downwards).
+  const angles = [240, 300, 0, 60, 120, 180];
+  for (const [i, d] of DISCIPLINES.entries()) {
+    const a = (angles[i] * Math.PI) / 180;
+    const x = cx + rx * Math.cos(a) - cardW / 2;
+    const y = cy + ry * Math.sin(a) - cardH / 2;
+    els.push(card(x, y, cardW, cardH, 18));
+    els.push({
+      type: "image",
+      image: d.icon,
+      x: x + cardW / 2 - 64,
+      y: y + 12,
+      w: 128,
+      h: 128,
+      fit: "contain",
+    });
+    els.push({
+      type: "text",
+      text: d.title,
+      x,
+      y: y + 146,
+      w: cardW,
+      h: 36,
+      size: 18,
+      bold: true,
+      color: INK,
+      align: "center",
+      valign: "middle",
+    });
+    els.push({
+      type: "text",
+      text: d.text,
+      x: x + 20,
+      y: y + 184,
+      w: cardW - 40,
+      h: 44,
+      size: 12,
+      color: MUTED,
+      align: "center",
+    });
+  }
+  return els;
+}
+
+/** Company slides drawn here rather than kept in the template, for the template's slide list. */
+export const DRAWN_COMPANY_SLIDES = [
+  { include: "disciplines", about: "Infographic of OCSC's engineering disciplines" },
+];
+
 const NATIVE_COMPANY = {
+  disciplines: () => ({
+    heading: "Multidisciplinary Engineering",
+    subheading: "Six disciplines working as one OCSC team",
+    elements: disciplinesElements(),
+  }),
   about: () => ({
     heading: "About OCSC",
     subheading: "O'Connor Sutton Cronin: multidisciplinary consulting engineers for over 35 years",
