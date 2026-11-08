@@ -210,6 +210,7 @@ describe("tool run container", () => {
       CapDrop: ["ALL"],
       SecurityOpt: ["no-new-privileges:true"],
       NanoCpus: 2e9,
+      CpuShares: 512,
     });
     expect(options.WorkingDir).toBe("/work/bots/b1");
     expect(options.Entrypoint).toEqual(["/usr/local/bin/ocsc-word"]);

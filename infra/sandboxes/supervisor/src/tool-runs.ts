@@ -97,6 +97,9 @@ export function toolRunLimits(program: ToolRunRequest["program"] = "word") {
     Memory: memory,
     MemorySwap: memory,
     NanoCpus: parseNanoCpus(cpusName, envOrDefault(cpusName, "2")),
+    // Half the default weight: when the CPUs are busy, the app and its database answer first and a
+    // burst of documents takes a little longer instead.
+    CpuShares: 512,
     PidsLimit: parsePidsLimit(
       "RAKAZO_TOOL_RUNNER_PIDS_LIMIT",
       envOrDefault("RAKAZO_TOOL_RUNNER_PIDS_LIMIT", "512"),
