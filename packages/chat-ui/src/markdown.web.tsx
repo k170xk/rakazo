@@ -13,10 +13,14 @@ import {
 } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import remarkParse from "remark-parse";
+import type { PluggableList } from "unified";
 import { unified } from "unified";
 import type { HastNode } from "./table-utils";
+import "katex/dist/katex.min.css";
 import "./markdown.web.css";
 import "./markdown-table.css";
 import { droppedTableHtmlText } from "@rakazo/contracts";
@@ -59,6 +63,7 @@ import {
 import { useMarkdownCopy } from "./markdown-copy";
 import { useMarkdownLinkCopy, useMarkdownLinkTrust } from "./markdown-link-prompt";
 import { MarkdownTable, MarkdownTableSourceContext } from "./markdown-table";
+import { normalizeMathDelimiters } from "./math";
 import { isMermaidFence, mermaidSvgImage } from "./mermaid";
 import { useMermaidSvg } from "./mermaid.web";
 import { PAGE_ICON } from "./page-icon";
@@ -786,8 +791,13 @@ export function LinkifiedText({
   );
 }
 
-const remarkPlugins = [remarkGfm];
-const rehypePlugins = [preserveSkippedTableText];
+// Single dollars are rewritten to $$ only where they read as maths, so prices stay text.
+const remarkPlugins: PluggableList = [remarkGfm, [remarkMath, { singleDollarTextMath: false }]];
+// KaTeX's default trust setting keeps \href, \url and \includegraphics from making links or loads.
+const rehypePlugins: PluggableList = [
+  preserveSkippedTableText,
+  [rehypeKatex, { throwOnError: false, strict: "ignore" }],
+];
 
 // MarkdownImage decides what an image source may do, so it receives the source as written.
 function urlTransform(url: string, key: string) {
@@ -824,7 +834,10 @@ const MarkdownBlock = memo(function MarkdownBlock({
 type SourceBlock = { start: number; source: string };
 type SplitSource = { text: string; blocks: SourceBlock[] };
 
-const blockParser = unified().use(remarkParse).use(remarkGfm);
+const blockParser = unified()
+  .use(remarkParse)
+  .use(remarkGfm)
+  .use(remarkMath, { singleDollarTextMath: false });
 // Link and footnote definitions apply to the whole document, so such text is never split.
 const definition = /\]:/;
 
@@ -872,11 +885,12 @@ export const ChatMarkdown = memo(function ChatMarkdown({
   const [split, setSplit] = useState(streaming);
   if (streaming && !split) setSplit(true);
   const previousSplit = useRef<SplitSource | undefined>(undefined);
+  const source = useMemo(() => normalizeMathDelimiters(children), [children]);
   const blocks = useMemo(() => {
     if (!split) return undefined;
-    previousSplit.current = splitSource(children, previousSplit.current);
+    previousSplit.current = splitSource(source, previousSplit.current);
     return previousSplit.current.blocks;
-  }, [children, split]);
+  }, [source, split]);
 
   const inlineChips = useMemo(() => ({ renderMention, onOpenPage }), [renderMention, onOpenPage]);
   return (
@@ -899,7 +913,7 @@ export const ChatMarkdown = memo(function ChatMarkdown({
                   </Fragment>
                 ))
               ) : (
-                <MarkdownBlock source={children} streaming={streaming} />
+                <MarkdownBlock source={source} streaming={streaming} />
               )}
             </PlainTextOnFailure>
           </LinkFaviconsPausedContext.Provider>

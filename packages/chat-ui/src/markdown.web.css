@@ -449,3 +449,15 @@ a.rk-chat-link:hover .rk-chat-link-label {
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+/* Wide equations scroll sideways instead of widening the message. */
+.rk-chat-markdown .katex-display {
+  margin: 0.75em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25em 0;
+}
+
+.rk-chat-markdown .katex {
+  font-size: 1.1em;
+}
