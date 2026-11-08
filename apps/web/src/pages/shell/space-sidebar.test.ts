@@ -100,6 +100,18 @@ describe("sidebarGroupsForSpaces", () => {
       ["pin-b", "pin-a"],
       ["new", "team", "old"],
     ]);
+    const ids = (sort: "name" | "manual") =>
+      sidebarGroupsForSpaces([input], "", undefined, sort).map((group) =>
+        group.bots.map((item) => item.id),
+      );
+    expect(ids("name")).toEqual([
+      ["pin-b", "pin-a"],
+      ["new", "old", "team"],
+    ]);
+    expect(ids("manual")).toEqual([
+      ["pin-b", "pin-a"],
+      ["old", "new", "team"],
+    ]);
   });
 
   it("names the only space on the header that holds its menu", () => {

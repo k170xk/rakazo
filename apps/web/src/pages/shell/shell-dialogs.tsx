@@ -4,10 +4,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@rakazo/ui-web";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { Settings, Trash2 } from "lucide-react";
+import { ArrowDownUp, Settings, Trash2 } from "lucide-react";
 import type { ComponentProps, RefObject } from "react";
 import { useCallback, useDeferredValue, useEffect, useRef, useState } from "react";
 import { PAGE_PARAM } from "../../lib/pages";
@@ -15,6 +21,8 @@ import { useSpaceQueries } from "../../lib/query";
 import type { Panel } from "../../lib/right-panel-state";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { selectSpace } from "../../lib/rpc";
+import type { SidebarSort } from "../../lib/sidebar-sort";
+import { setSidebarSort, useSidebarSort } from "../../lib/sidebar-sort";
 import type { CommandPaletteAction } from "./command-palette";
 import { CommandPalette } from "./command-palette";
 import type { CreateBotDialogInput } from "./create-bot-dialog";
@@ -155,6 +163,7 @@ export function ShellDialogs({
     commandPaletteOpen,
     setCommandPaletteOpen,
   } = dialogs;
+  const sidebarSort = useSidebarSort();
   const spaceMenuTarget = spaceMenu
     ? (spaces.find((space) => space.id === spaceMenu.id) ?? null)
     : null;
@@ -193,6 +202,26 @@ export function ShellDialogs({
             sideOffset={0}
             className="w-[220px]"
           >
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <ArrowDownUp />
+                {t`Sort chats`}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-[200px]">
+                <DropdownMenuRadioGroup
+                  value={sidebarSort}
+                  onValueChange={(value) => {
+                    setSidebarSort(value as SidebarSort);
+                    setSpaceMenu(null);
+                  }}
+                >
+                  <DropdownMenuRadioItem value="recent">{t`Recent activity`}</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="name">{t`Name (A to Z)`}</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="manual">{t`Manual (drag to order)`}</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSeparator />
             {spaceMenuTarget ? (
               <DropdownMenuItem
                 onClick={() => {

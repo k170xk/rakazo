@@ -1,4 +1,5 @@
 import { groupBotsForSidebar } from "@rakazo/core";
+import type { SidebarSort } from "../../lib/sidebar-sort";
 
 type SidebarChat = {
   id: string;
@@ -9,13 +10,20 @@ type SidebarChat = {
   updatedAt?: string | null;
 };
 
-/** Pinned chats keep the order people arranged; the rest follow their newest message. */
-function byRecentActivity<T extends { pinned: boolean; chat: SidebarChat }>(items: T[]): T[] {
+/** Pinned chats keep the order people arranged; the rest follow the chosen sort. */
+function sortChats<T extends { pinned: boolean; chat: SidebarChat }>(
+  items: T[],
+  sort: SidebarSort,
+): T[] {
+  if (sort === "manual") return items;
   const pinned = items.filter((item) => item.pinned);
-  const recent = items
-    .filter((item) => !item.pinned)
-    .sort((a, b) => (b.chat.updatedAt ?? "").localeCompare(a.chat.updatedAt ?? ""));
-  return [...pinned, ...recent];
+  const rest = items.filter((item) => !item.pinned);
+  rest.sort(
+    sort === "name"
+      ? (a, b) => a.chat.name.localeCompare(b.chat.name, undefined, { sensitivity: "base" })
+      : (a, b) => (b.chat.updatedAt ?? "").localeCompare(a.chat.updatedAt ?? ""),
+  );
+  return [...pinned, ...rest];
 }
 
 type SidebarSpace<TBot extends SidebarChat, TGroup extends SidebarChat> = {
@@ -51,6 +59,7 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
   spaces: readonly SidebarSpace<TBot, TGroup>[],
   query: string,
   labels?: { pinned: string; unassigned: string },
+  sort: SidebarSort = "recent",
 ) {
   const needle = query.toLowerCase();
   const showSpaceNames = spaces.length > 1;
@@ -62,7 +71,7 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
       `${group.name} ${group.preview ?? ""}`.toLowerCase().includes(needle),
     );
     const grouped = groupBotsForSidebar(
-      byRecentActivity(
+      sortChats(
         [
           ...visibleBots.map((chat) => ({ kind: "bot" as const, chat })),
           ...visibleGroups.map((chat) => ({ kind: "group" as const, chat })),
@@ -72,6 +81,7 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
           pinned: item.chat.pinned,
           sectionId: item.chat.sectionId,
         })),
+        sort,
       ),
       space.botSections,
       { labels },

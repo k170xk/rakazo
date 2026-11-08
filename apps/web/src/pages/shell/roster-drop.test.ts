@@ -34,6 +34,17 @@ describe("resolveRosterDrop", () => {
     ).toBeNull();
   });
 
+  it("reorders unpinned siblings in manual order", () => {
+    expect(
+      resolveRosterDrop({
+        dragged: bot("a", "s1"),
+        target: { kind: "bot", chat: bot("b", "s1") },
+        sameList: true,
+        manualOrder: true,
+      }),
+    ).toEqual({ action: "reorder", targetBotId: "b" });
+  });
+
   it("refuses a reorder across tree levels", () => {
     expect(
       resolveRosterDrop({

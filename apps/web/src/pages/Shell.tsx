@@ -56,6 +56,7 @@ import {
   subscribeBotsSidebarDensity,
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
+import { useSidebarSort } from "../lib/sidebar-sort";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
 import { applyCompanyChatSettings } from "../lib/company-chat-settings";
 import {
@@ -577,13 +578,16 @@ function SpaceShell() {
           : [],
     [bootstrapMe, botSections, bots, groups, spaces],
   );
+  const sidebarSort = useSidebarSort(userId);
   const sidebarGroups = useMemo(
     () =>
-      sidebarGroupsForSpaces(sidebarSpaces, miniSidebar ? "" : search.query, {
-        pinned: t`Pinned`,
-        unassigned: t`Unassigned`,
-      }),
-    [sidebarSpaces, search.query, miniSidebar, t],
+      sidebarGroupsForSpaces(
+        sidebarSpaces,
+        miniSidebar ? "" : search.query,
+        { pinned: t`Pinned`, unassigned: t`Unassigned` },
+        sidebarSort,
+      ),
+    [sidebarSpaces, search.query, miniSidebar, t, sidebarSort],
   );
   // The Dock badge ignores the roster search box: a filter must not hide unread chats.
   const unreadChatCount = useMemo(

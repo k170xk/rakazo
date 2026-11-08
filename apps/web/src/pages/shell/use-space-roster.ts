@@ -21,6 +21,7 @@ import type { ChatTarget } from "../../lib/query";
 import { lastChatKey, queryClient, seedOnLeave, spaceSeedKey } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { rpc as appRpc } from "../../lib/rpc";
+import { useSidebarSort } from "../../lib/sidebar-sort";
 import { errorText } from "../../lib/user-error";
 import type { RosterDropTarget } from "./roster-drop";
 import { resolveRosterDrop } from "./roster-drop";
@@ -488,10 +489,11 @@ export function useRosterDrop({
   const [rosterDropKey, setRosterDropKey] = useState<string | null>(null);
   // Drags only act on bots of the active space; other spaces are read-only here.
   const draggedBot = draggedBotId ? bots.find((bot) => bot.id === draggedBotId) : undefined;
+  const manualOrder = useSidebarSort() === "manual";
   const rosterDropAction = useCallback(
     (target: RosterDropTarget, sameList: boolean) =>
-      draggedBot ? resolveRosterDrop({ dragged: draggedBot, target, sameList }) : null,
-    [draggedBot],
+      draggedBot ? resolveRosterDrop({ dragged: draggedBot, target, sameList, manualOrder }) : null,
+    [draggedBot, manualOrder],
   );
   const applyRosterDrop = useCallback(
     (target: RosterDropTarget, sameList: boolean, groupBotIds: string[]) => {
