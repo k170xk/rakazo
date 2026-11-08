@@ -9,10 +9,11 @@ import {
   InputGroupInput,
   Sidebar,
 } from "@rakazo/ui-web";
-import { Search, SlidersHorizontal, UsersRound } from "lucide-react";
+import { Search, SlidersHorizontal, Sparkles, UsersRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
@@ -71,6 +72,7 @@ export function ShellSidebar({
   openIntegrations,
   openAdmin,
   openSkills,
+  openTour,
   openSpaceChat,
 }: {
   isMobile: boolean;
@@ -101,6 +103,7 @@ export function ShellSidebar({
   openIntegrations?: () => void;
   openAdmin?: () => void;
   openSkills: () => void;
+  openTour: () => void;
   openSpaceChat: (spaceId: string, path: string) => void;
 }) {
   const { t } = useLingui();
@@ -282,6 +285,39 @@ export function ShellSidebar({
         </div>
         <div className={mini ? "hidden" : "contents"}>
           <PasskeyOffer />
+        </div>
+        <div className={mini ? "flex justify-center px-1 pt-2" : "px-2.5 pt-3"}>
+          {mini ? (
+            <IconTooltip label={t`Get to know OCSC Intelligence`}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t`Get to know OCSC Intelligence`}
+                data-testid="open-ocsc-tour"
+                onClick={() => {
+                  setMobileOpen(false);
+                  openTour();
+                }}
+              >
+                <Sparkles className="text-primary" />
+              </Button>
+            </IconTooltip>
+          ) : (
+            <Button
+              variant="outline"
+              data-testid="open-ocsc-tour"
+              className="h-9 w-full justify-start gap-2.5 border-primary/40 bg-primary/10 font-normal hover:bg-primary/15 dark:hover:bg-primary/15"
+              onClick={() => {
+                setMobileOpen(false);
+                openTour();
+              }}
+            >
+              <Sparkles className="text-primary" />
+              <span className="min-w-0 truncate">
+                <Trans>Get to know OCSC Intelligence</Trans>
+              </span>
+            </Button>
+          )}
         </div>
         <ShellSidebarFooter
           mini={mini}

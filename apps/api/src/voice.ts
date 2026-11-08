@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
 import { VoiceAccountError } from "@rakazo/adapter-kit";
 import {
+  companyFeatures,
   createVoiceProvider,
   isFishSpeechModelId,
   isVoiceProviderId,
@@ -33,6 +34,7 @@ import {
   lockSpaceSettings,
   newestVoiceCredentialOrder,
   Prisma,
+  runAsSystem,
   runAsSystemInTransaction,
   runAsTenant,
   saveVoicePreference,
@@ -220,19 +222,59 @@ export async function loadDefaultVoiceCredential(
   return loadVoiceCredential(deps, actor, undefined, scope);
 }
 
+/** The admin whose voice connection everyone without their own uses; null when none is shared. */
+export async function companyVoiceOwner(deps: Pick<VoiceDeps, "prisma">) {
+  const row = await runAsSystem("read the company voice", () =>
+    deps.prisma.deploymentSettings.findUnique({
+      where: { id: "default" },
+      select: { companyVoiceUserId: true },
+    }),
+  );
+  return row?.companyVoiceUserId ?? null;
+}
+
+/**
+ * The voice connection that applies: none while the company has voice off, else the person's
+ * own, else the one an admin shares with the company. Read as the system only for the shared one.
+ */
+export async function effectiveVoiceCredential(
+  deps: Pick<VoiceDeps, "prisma">,
+  actor: Pick<Actor, "userId" | "spaceId">,
+  provider?: string,
+  scope?: SettingsScope,
+) {
+  if (!companyFeatures().voice) return null;
+  const own = provider
+    ? await findVoiceCredential(deps.prisma, actor, provider, scope)
+    : await findDefaultVoiceCredential(deps.prisma, actor, scope);
+  if (own) return { cred: own, ownerId: actor.userId };
+  const owner = await companyVoiceOwner(deps);
+  if (!owner || owner === actor.userId) return null;
+  const shared = { userId: owner, spaceId: actor.spaceId };
+  const cred = await runAsSystem("read the company voice connection", () =>
+    provider
+      ? findVoiceCredential(deps.prisma, shared, provider, "account")
+      : findDefaultVoiceCredential(deps.prisma, shared, "account"),
+  );
+  return cred ? { cred, ownerId: owner } : null;
+}
+
 export async function loadVoiceCredential(
   deps: VoiceDeps,
   actor: Pick<Actor, "userId" | "spaceId">,
   provider?: string,
   scope?: SettingsScope,
 ) {
-  const cred = provider
-    ? await findVoiceCredential(deps.prisma, actor, provider, scope)
-    : await findDefaultVoiceCredential(deps.prisma, actor, scope);
-  if (!cred) return null;
-  const secret = await deps.prisma.secret.findFirst({
-    where: { id: cred.secretId, userId: actor.userId, spaceId: null },
-  });
+  const found = await effectiveVoiceCredential(deps, actor, provider, scope);
+  if (!found) return null;
+  const { cred, ownerId } = found;
+  const where = { id: cred.secretId, userId: ownerId, spaceId: null };
+  const secret =
+    ownerId === actor.userId
+      ? await deps.prisma.secret.findFirst({ where })
+      : await runAsSystem("read the company voice key", () =>
+          deps.prisma.secret.findFirst({ where }),
+        );
   if (!secret) return null;
   return { cred, apiKey: await deps.secrets.load(secret.ciphertext, secret.id) };
 }

@@ -56,3 +56,24 @@ it("keeps history behind its label action and restores with the current baseline
     vi.unstubAllGlobals();
   }
 });
+
+it("shows nothing for an OCSC company assistant", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () =>
+      root.render(
+        <InstructionSettings
+          bot={{ id: "company", instructions: "", companyAssistant: true } as Bot}
+        />,
+      ),
+    );
+    expect(host.innerHTML).toBe("");
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+    vi.unstubAllGlobals();
+  }
+});

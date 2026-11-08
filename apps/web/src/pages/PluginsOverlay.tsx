@@ -1511,7 +1511,7 @@ export function PluginsOverlay({
       >
         <DialogHeader className="flex-row items-start justify-between px-8 pt-7">
           <DialogTitle className="text-heading2 text-foreground">
-            <Trans>Integrations</Trans>
+            <Trans>OCSC Intelligence integrations</Trans>
           </DialogTitle>
           <div className="flex items-center gap-2">
             {browsing && connectedCount > 0 ? (

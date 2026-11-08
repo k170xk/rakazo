@@ -25,7 +25,7 @@ import {
 } from "@rakazo/core";
 import { fetchFresh, writeSaved } from "@rakazo/core/query";
 import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { Button } from "@rakazo/ui-web";
+import { Button, toast } from "@rakazo/ui-web";
 import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { Keyboard, Lock, Monitor, Moon, Plug, Plus, ScrollText, Sun, Users } from "lucide-react";
@@ -124,6 +124,7 @@ import { useOpenSpaceChat } from "./shell/use-space-switch";
 import { useThreadState } from "./shell/use-thread-state";
 import { useThreadSync } from "./shell/use-thread-sync";
 import type { SettingsSection } from "./shell-overlay";
+import { isCompanySettingsSection } from "./shell-overlay";
 
 const NO_AGENT_SKILLS: AgentSkillCatalogEntry[] = [];
 const NO_PROVIDERS: string[] = [];
@@ -842,8 +843,7 @@ function SpaceShell() {
   const openImportSetup = useCallback(
     (target: ImportSetupTarget) => {
       importSetupOpen.current = true;
-      if (target.kind === "models")
-        setOverlayRef.current({ kind: "settings", section: "models", spaceId: null });
+      if (target.kind === "models") openSettingsRef.current("models");
       else if (target.kind === "mcp")
         setOverlayRef.current({ kind: "mcp", serverId: target.serverId });
       else {
@@ -894,6 +894,18 @@ function SpaceShell() {
   }
 
   function openSettings(section: SettingsSection = "general", spaceId: string | null = null) {
+    if (isCompanySettingsSection(section)) {
+      if (bootstrapMe?.isAdmin) navigate(`/admin#${section}`);
+      else
+        toast(
+          section === "voice"
+            ? t`Your administrator sets up voice for the company.`
+            : section === "models"
+              ? t`Your administrator chooses the models for the company.`
+              : t`Your administrator sets up computers for the company.`,
+        );
+      return;
+    }
     setOverlay({ kind: "settings", section, spaceId });
   }
 
@@ -906,11 +918,17 @@ function SpaceShell() {
   const companyFeatures = bootstrapMe?.features;
   const appsOrPluginsOn =
     companyFeatures?.connectedApps !== false || companyFeatures?.plugins !== false;
+  const integrationsComingSoon =
+    companyFeatures?.staffIntegrations === false && bootstrapMe?.isAdmin !== true;
+  const tourAvailability = {
+    connectorsSoon: integrationsComingSoon,
+    routinesSoon:
+      companyFeatures?.routines === false ||
+      (bootstrapMe?.computerAccess !== undefined && bootstrapMe.computerAccess !== "full"),
+  };
   const settingsNavItems = useSettingsNavItems({
-    models: companyFeatures?.memberModels !== false || bootstrapMe?.isAdmin === true,
     messaging: messagingSurfaceEnabled,
     wallet: Boolean(bootstrapMe?.paymentWalletProvider),
-    computer: computersAreUnavailable(bootstrapMe?.sandboxProvider),
     billing: bootstrapMe?.billingEnabled === true,
     updates: Boolean(desktopBridge()?.update),
   });
@@ -1150,6 +1168,7 @@ function SpaceShell() {
         openIntegrations={appsOrPluginsOn ? () => setOverlay({ kind: "integrations" }) : undefined}
         openAdmin={bootstrapMe?.isAdmin ? () => navigate("/admin") : undefined}
         openSkills={() => setOverlay({ kind: "skills" })}
+        openTour={() => setOverlay({ kind: "tour" })}
         openSpaceChat={openSpaceChat}
       />
 
@@ -1479,7 +1498,9 @@ function SpaceShell() {
           setOverlay={setOverlay}
           activeBotId={activeBotId.current}
           stdioEnabled={bootstrapMe?.mcpStdioEnabled === true}
-          mcpEnabled={companyFeatures?.mcpServers !== false}
+          mcpEnabled={companyFeatures?.mcpServers !== false && !integrationsComingSoon}
+          integrationsComingSoon={integrationsComingSoon}
+          tourAvailability={tourAvailability}
           onConnectedAppsChange={setFooterLogos}
         />
       </Suspense>

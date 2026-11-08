@@ -141,11 +141,9 @@ it("opens integrations and keeps the existing account actions and links", async 
   const menu = document.querySelector('[data-slot="popover-content"]')!;
   expect([...menu.querySelectorAll("button, a")].map((row) => row.textContent)).toEqual([
     "Settings",
-    "Skills",
+    "Tools and skills",
     "Artifacts",
     "Board",
-    "Get the mobile app",
-    "Docs",
     "Log out",
   ]);
   expect(host.querySelector('[data-testid="user-menu-trigger"]')?.getAttribute("aria-label")).toBe(
@@ -159,13 +157,12 @@ it("omits Board when unavailable", async () => {
   );
 });
 
-it("offers Google Play on Android", async () => {
-  vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Android");
+it("links to neither the mobile app nor the docs", async () => {
   await render();
-  const mobile = [...document.querySelectorAll("a")].find(
-    (link) => link.textContent === "Get the mobile app",
-  )!;
-  expect(mobile.href).toBe("https://play.google.com/store/apps/details?id=com.rakazo.app");
+  const menu = document.querySelector('[data-slot="popover-content"]')!;
+  expect(menu.textContent).not.toContain("Get the mobile app");
+  expect(menu.textContent).not.toContain("Docs");
+  expect(menu.querySelector("a")).toBeNull();
 });
 
 it("falls back when app artwork fails and accepts replacement artwork", async () => {

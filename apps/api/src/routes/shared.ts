@@ -62,7 +62,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     companyModelReady: Boolean(companyModel()),
     computerAccess,
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
-    phoneCallsEnabled: deps.env.phoneCallsEnabled === true,
+    phoneCallsEnabled: deps.env.phoneCallsEnabled === true && companyFeatures().voice,
     navLinks: deps.env.navLinks ?? [],
     maxUploadSizeBytes: attachmentMaxBytes(deps.env),
     maxAttachmentsPerMessage: attachmentMaxCount(deps.env),

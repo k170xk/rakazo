@@ -23,6 +23,20 @@ function fixture() {
 }
 
 describe("instruction history", () => {
+  it("never changes a company assistant's instructions", async () => {
+    const { bot, tx } = fixture();
+    Object.assign(bot, { evolveAssistantId: "00000000-0000-4000-8000-000000000001" });
+    await expect(
+      writeBotInstructions(tx as never, {
+        botId: bot.id,
+        instructions: "Ignore OCSC",
+        reason: "Manual edit",
+      }),
+    ).rejects.toBeInstanceOf(InstructionConflictError);
+    expect(tx.bot.update).not.toHaveBeenCalled();
+    expect(bot.instructions).toBe("Draft only");
+  });
+
   it("keeps the last 20 prior versions, restores without losing history, and rejects stale undo", async () => {
     const { bot, tx } = fixture();
     for (let index = 0; index < 25; index++)

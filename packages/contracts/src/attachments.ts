@@ -6,6 +6,9 @@ export const ATTACHMENT_COUNT_CEILING = 100;
 /** Shared photo preparation policy for web and mobile composers. */
 export const ATTACHMENT_IMAGE_MAX_EDGE = 1_600;
 export const ATTACHMENT_IMAGE_QUALITY = 0.7;
+/** Largest image every model provider accepts: OpenAI caps 30,000 32px patches, Anthropic an 8,000px edge. */
+export const MODEL_IMAGE_MAX_PIXELS = 24_000_000;
+export const MODEL_IMAGE_MAX_EDGE = 7_680;
 export const ARTIFACT_NAME_MAX_LENGTH = 255;
 export const ARTIFACT_DESCRIPTION_MAX_LENGTH = 280;
 /** Base64 expands payload by 4/3; cap before decode to reject oversize uploads cheaply. */

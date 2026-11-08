@@ -1,10 +1,11 @@
 import { Agent } from "@earendil-works/pi-agent-core";
-import { PRODUCT_NAME } from "@rakazo/core";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
+import { PRODUCT_NAME } from "@rakazo/core";
 import { isTerminatingReplyResult, terminatingReplyText } from "./approval-effect.js";
 import { withAutomatedLabels } from "./automated-messages.js";
 import { DELEGATION_TOOL_NAMES } from "./builtin-tools.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
+import { fitContextImages } from "./model-image-fit.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import { COMPUTER_MODE_TOOLS } from "./pi-runtime-computer-mode.js";
 import {
@@ -250,10 +251,10 @@ export async function executeSubagent(
       );
     },
     sessionId: conversationSessionId(host.request.threadId, host.request.botId, agentId),
-    streamFn: (_m, ctx, options) =>
+    streamFn: async (_m, ctx, options) =>
       fallbackAwareModelStream(
         retryState,
-        ctx,
+        await fitContextImages(ctx),
         withAutomatedLabels({ ...options, fetch: host.modelFetch ?? options?.fetch }),
       ),
     getApiKey: async () =>

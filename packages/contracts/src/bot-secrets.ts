@@ -754,6 +754,28 @@ export const VaultPutInput = settingsScopeInput.extend({
 });
 export type VaultPutInput = z.infer<typeof VaultPutInput>;
 
+/** A company vault item: like a personal one, but never a card or contact, which belong to a person. */
+export const CompanyVaultPutInput = VaultPutInput.omit({ scope: true }).superRefine(
+  (input, context) => {
+    if (input.destination.auth.type === "card" || input.destination.auth.type === "contact")
+      context.addIssue({
+        code: "custom",
+        path: ["destination", "auth"],
+        message: "Cards and contacts belong in a person's own vault.",
+      });
+  },
+);
+export type CompanyVaultPutInput = z.infer<typeof CompanyVaultPutInput>;
+
+/** What members see of a company vault item. */
+export const CompanyVaultItemSchema = z.object({
+  title: z.string(),
+  origin: z.string(),
+  type: z.string(),
+  note: z.string(),
+});
+export type CompanyVaultItem = z.infer<typeof CompanyVaultItemSchema>;
+
 export const VaultRevealInput = settingsScopeInput.extend({ name: StoredBotSecretName });
 
 /**

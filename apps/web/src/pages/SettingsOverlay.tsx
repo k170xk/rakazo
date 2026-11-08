@@ -4,14 +4,11 @@ import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
-import { computersAreUnavailable } from "../components/ComputersUnavailableHint";
+import { PersonalVault } from "../components/PersonalVault";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
-import { VaultSettings } from "../components/VaultSettings";
-import { canChooseOwnComputer } from "../lib/computer-sandbox";
 import { desktopBridge } from "../lib/desktop";
 import { SpaceRpcProvider } from "../lib/space-rpc";
 import {
-  ComputerSettingsPanel,
   GeneralSettingsPanels,
   UpdatesSettingsPanel,
   UsageSettingsPanel,
@@ -19,14 +16,13 @@ import {
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { MessagingSettingsPanel } from "./MessagingSettingsPanel";
-import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
 import { OrganizationSettingsPanel } from "./OrganizationSettingsPanel";
 import { PaymentWalletSettingsPanel } from "./PaymentWalletSettingsPanel";
 import { SpaceSettingsPanel } from "./SpaceSettingsPanel";
 import { useSettingsNavItems } from "./settings-nav";
 import type { SettingsSpace } from "./shell/dialogs";
 import type { SettingsSection } from "./shell-overlay";
-import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
+import { isCompanySettingsSection } from "./shell-overlay";
 
 export function SettingsOverlay({
   space,
@@ -48,12 +44,7 @@ export function SettingsOverlay({
   onAccountImported,
   onImportAgent,
   billingEnabled = false,
-  sandboxProvider,
-  onSandboxProviderChange,
-  canConfigureComputers = false,
   messagingEnabled = false,
-  modelsAllowed = true,
-  computersAllowed = true,
   paymentWalletProvider = null,
   memoryConfig,
   onMemoryConfigChange,
@@ -80,15 +71,7 @@ export function SettingsOverlay({
   onAccountImported?: () => Promise<void>;
   onImportAgent?: () => void;
   billingEnabled?: boolean;
-  sandboxProvider?: string | null;
-  onSandboxProviderChange?: (sandboxProvider: string) => void;
-  /** Admins choose where new computers run. */
-  canConfigureComputers?: boolean;
   messagingEnabled?: boolean;
-  /** False while the company's admin chooses the models for everyone. */
-  modelsAllowed?: boolean;
-  /** False while the company has computers turned off. */
-  computersAllowed?: boolean;
   /** The wallet this deployment lets bots spend from; none hides Wallet. */
   paymentWalletProvider?: { id: string; name: string } | null;
   memoryConfig: SpaceMemoryConfig | null | undefined;
@@ -103,20 +86,11 @@ export function SettingsOverlay({
   const usageRef = useRef<HTMLDivElement>(null);
   const [memoryBusy, setMemoryBusy] = useState(false);
   const [voiceBusy, setVoiceBusy] = useState(false);
-  const [keepComputerRecovery, setKeepComputerRecovery] = useState(false);
-  const recoveryHoldTimer = useRef<number | undefined>(undefined);
-  const showComputer =
-    computersAllowed &&
-    (canConfigureComputers ||
-      keepComputerRecovery ||
-      computersAreUnavailable(sandboxProvider) ||
-      canChooseOwnComputer(sandboxProvider));
   const showUpdates = Boolean(desktopBridge()?.update);
   // A section that isn't available yet (billing before its flag loads) shows General until it is.
   const section =
-    (requestedSection === "computer" && !showComputer) ||
+    isCompanySettingsSection(requestedSection) ||
     (requestedSection === "billing" && !billingEnabled) ||
-    (requestedSection === "models" && !modelsAllowed) ||
     (requestedSection === "messaging" && !messagingEnabled) ||
     (requestedSection === "wallet" && !paymentWalletProvider) ||
     (requestedSection === "updates" && !showUpdates)
@@ -126,25 +100,6 @@ export function SettingsOverlay({
   // Only a space's own page binds to it; every other section, memory included, acts on the
   // space the app is showing.
   const spaceId = section === "space" ? (space?.id ?? null) : null;
-  const releaseComputerRecovery = useCallback(() => {
-    window.clearTimeout(recoveryHoldTimer.current);
-    recoveryHoldTimer.current = undefined;
-    setKeepComputerRecovery(false);
-  }, []);
-  const holdComputerRecovery = useCallback(() => {
-    setKeepComputerRecovery(true);
-    window.clearTimeout(recoveryHoldTimer.current);
-    recoveryHoldTimer.current = window.setTimeout(() => {
-      recoveryHoldTimer.current = undefined;
-      setKeepComputerRecovery(false);
-    }, 4000);
-  }, []);
-
-  useEffect(() => {
-    if (section !== "computer") releaseComputerRecovery();
-  }, [section, releaseComputerRecovery]);
-  useEffect(() => () => window.clearTimeout(recoveryHoldTimer.current), []);
-
   useEffect(() => {
     if (section === "usage") {
       onUsageOpen();
@@ -154,9 +109,7 @@ export function SettingsOverlay({
 
   const navItems = useSettingsNavItems({
     messaging: messagingEnabled,
-    models: modelsAllowed,
     wallet: Boolean(paymentWalletProvider),
-    computer: showComputer,
     billing: billingEnabled,
     updates: showUpdates,
   });
@@ -189,15 +142,7 @@ export function SettingsOverlay({
       nav.removeEventListener("scroll", measure);
       observer?.disconnect();
     };
-  }, [
-    section,
-    showComputer,
-    billingEnabled,
-    messagingEnabled,
-    paymentWalletProvider,
-    showUpdates,
-    i18n.locale,
-  ]);
+  }, [section, billingEnabled, messagingEnabled, paymentWalletProvider, showUpdates, i18n.locale]);
 
   function scrollSections(direction: number) {
     const nav = navRef.current;
@@ -212,14 +157,7 @@ export function SettingsOverlay({
       : (navItems.find((item) => item.id === section)?.label ??
         (section === "general" ? t`General` : t`Settings`));
 
-  const closeLabel =
-    section === "models"
-      ? t`Close model settings`
-      : section === "memory"
-        ? t`Close memory settings`
-        : section === "voice"
-          ? t`Close voice settings`
-          : t`Close user settings`;
+  const closeLabel = section === "memory" ? t`Close memory settings` : t`Close user settings`;
 
   async function refreshVoiceStatus() {
     await onVoiceStatusMaybeChanged?.();
@@ -413,7 +351,7 @@ export function SettingsOverlay({
                     <OrganizationSettingsPanel onBusyChange={setVoiceBusy} />
                   ) : null}
                   {section === "confirmations" ? <ApprovalRulesSettings scope="account" /> : null}
-                  {section === "vault" ? <VaultSettings scope="account" /> : null}
+                  {section === "vault" ? <PersonalVault /> : null}
                   {section === "messaging" && messagingEnabled ? <MessagingSettingsPanel /> : null}
                   {section === "wallet" && paymentWalletProvider ? (
                     <PaymentWalletSettingsPanel provider={paymentWalletProvider} />
@@ -421,22 +359,8 @@ export function SettingsOverlay({
                   {section === "usage" ? (
                     <UsageSettingsPanel usage={usage} panelRef={usageRef} />
                   ) : null}
-                  {section === "computer" && showComputer ? (
-                    <ComputerSettingsPanel
-                      sandboxProvider={sandboxProvider}
-                      onSandboxProviderChange={(next) => {
-                        onSandboxProviderChange?.(next);
-                        holdComputerRecovery();
-                      }}
-                      onRecoveryDismissed={releaseComputerRecovery}
-                      canConfigureComputers={canConfigureComputers}
-                    />
-                  ) : null}
                   {section === "billing" && billingEnabled ? <BillingSettingsPanel /> : null}
                   {section === "updates" && showUpdates ? <UpdatesSettingsPanel /> : null}
-                  {section === "models" && modelsAllowed ? (
-                    <ModelSettingsOverlay embedded scope="account" onClose={requestClose} />
-                  ) : null}
                   {section === "memory" ? (
                     <MemorySettingsOverlay
                       embedded
@@ -444,14 +368,6 @@ export function SettingsOverlay({
                       config={memoryConfig}
                       onConfigChange={onMemoryConfigChange}
                       onBusyChange={setMemoryBusy}
-                    />
-                  ) : null}
-                  {section === "voice" ? (
-                    <VoiceSettingsOverlay
-                      embedded
-                      scope="account"
-                      onClose={requestClose}
-                      onBusyChange={setVoiceBusy}
                     />
                   ) : null}
                 </div>

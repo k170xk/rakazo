@@ -6,16 +6,21 @@ import {
   companyModel,
   companyToolsWithDefaults,
   effectiveComputerAccess,
+  listCompanyVaultItems,
   listPiCatalog,
+  pageUrlOrigin,
   refreshCompanyPolicy,
+  removeCompanyVaultItem,
   resolveEnvironmentDeploymentModel,
   serverDisk,
+  storeCompanyVaultItem,
   verifyCatalogProviderApiKey,
   videoRenderLoad,
   videoRenderSlots,
 } from "@rakazo/adapters";
 import type {
   Actor,
+  BotSecretMetadata,
   CompanyAdminState,
   CompanyComputersState,
   CompanyFeatureId,
@@ -23,18 +28,21 @@ import type {
   CompanyModelInput,
   CompanyTools,
   CompanyToolsState,
+  CompanyVaultPutInput,
   ComputerAccess,
 } from "@rakazo/contracts";
 import {
+  BotSecretAuth,
   ComputerAccessSchema,
   canonicalPiProviderId,
   companyFeaturesFrom,
 } from "@rakazo/contracts";
 import type { Prisma } from "@rakazo/db";
-import { runAsSystem } from "@rakazo/db";
+import { findDefaultVoiceCredential, runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { isAdmin, requireAdmin } from "./admins.js";
 import type { RouterDeps } from "./router.js";
+import { companyVoiceOwner } from "./voice.js";
 
 type CompanyAdminDeps = Pick<
   RouterDeps,
@@ -55,16 +63,21 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   evolvePlugins: "Building Evolve plugins is turned off for your company.",
   cursorAgents: "Cursor cloud agents are turned off for your company.",
   evolveTools: "Evolve's tools are turned off for your company.",
+  staffIntegrations: "Connecting apps and plugins is coming soon.",
+  voice: "Voice is turned off for your company.",
 };
 
-/** Fails a member's request for something the company turned off; admins keep model choice. */
+/** Switches that only limit members; admins keep these so they can configure and test. */
+const ADMIN_EXEMPT: ReadonlySet<CompanyFeatureId> = new Set(["memberModels", "staffIntegrations"]);
+
+/** Fails a member's request for something the company turned off; admins keep model choice and integrations. */
 export async function requireCompanyFeature(
   deps: Pick<RouterDeps, "prisma"> & { env: Pick<RouterDeps["env"], "adminEmails"> },
   actor: Pick<Actor, "userId">,
   feature: CompanyFeatureId,
 ): Promise<void> {
   if (companyFeatures()[feature]) return;
-  if (feature === "memberModels" && (await isAdmin(deps, actor.userId))) return;
+  if (ADMIN_EXEMPT.has(feature) && (await isAdmin(deps, actor.userId))) return;
   throw new ORPCError("FORBIDDEN", { message: FEATURE_OFF[feature] });
 }
 
@@ -121,6 +134,7 @@ export async function companyAdminState(
     tools: toolsState(deps, companyToolsWithDefaults(row?.companyTools)),
     computers: await computersState(deps, companyToolsWithDefaults(row?.companyTools)),
     admins: deps.env.adminEmails ?? [],
+    voice: await voiceState(deps, actor),
     staff: { accounts, withOwnModels: owners.length },
   };
 }
@@ -432,4 +446,114 @@ export async function checkCompanyTools(
   await requireAdmin(deps, actor.userId);
   await deps.evolveTools?.refresh();
   return companyAdminState(deps, actor);
+}
+
+async function voiceState(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+): Promise<CompanyAdminState["voice"]> {
+  const owner = await companyVoiceOwner(deps);
+  if (!owner) return { sharedBy: null, provider: null };
+  const [user, cred] = await runAsSystem("read the company voice", () =>
+    Promise.all([
+      deps.prisma.user.findUnique({ where: { id: owner }, select: { name: true, email: true } }),
+      findDefaultVoiceCredential(deps.prisma, { userId: owner, spaceId: actor.spaceId }, "account"),
+    ]),
+  );
+  return {
+    sharedBy: { userId: owner, name: user?.name || user?.email || "" },
+    provider: cred?.provider ?? null,
+  };
+}
+
+/** Shares the admin's own voice connection with everyone who has none, or stops sharing it. */
+export async function shareCompanyVoice(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+  input: { share: boolean },
+): Promise<CompanyAdminState> {
+  await requireAdmin(deps, actor.userId);
+  if (input.share) {
+    const own = await findDefaultVoiceCredential(deps.prisma, actor, "account");
+    if (!own)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Connect a voice provider and pick a voice first.",
+      });
+  } else if ((await companyVoiceOwner(deps)) === null) {
+    return companyAdminState(deps, actor);
+  }
+  const companyVoiceUserId = input.share ? actor.userId : null;
+  await runAsSystem("save the company voice", () =>
+    deps.prisma.deploymentSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", companyVoiceUserId },
+      update: { companyVoiceUserId },
+    }),
+  );
+  getLogger().info("company_admin.voice_shared", { share: input.share, by: actor.userId });
+  return companyAdminState(deps, actor);
+}
+
+function companyVaultDto(
+  row: Awaited<ReturnType<typeof listCompanyVaultItems>>[number],
+): BotSecretMetadata {
+  const auth = BotSecretAuth.safeParse(row.auth);
+  return {
+    name: row.name,
+    origin: row.origin,
+    auth: auth.success ? auth.data : null,
+    title: row.title,
+    note: row.note,
+    ...(row.preview ? { preview: row.preview } : {}),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+export async function listCompanyVault(deps: CompanyAdminDeps, actor: Actor) {
+  await requireAdmin(deps, actor.userId);
+  return (await listCompanyVaultItems(deps.prisma, deps.secrets)).map(companyVaultDto);
+}
+
+export async function putCompanyVaultItem(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+  input: CompanyVaultPutInput,
+): Promise<BotSecretMetadata> {
+  await requireAdmin(deps, actor.userId);
+  // A pasted page URL is saved under its site, as in a person's own vault.
+  const site = pageUrlOrigin(input.destination.origin, { allowUserinfo: false, maxLength: 2048 });
+  let name: string;
+  try {
+    name = await storeCompanyVaultItem({
+      prisma: deps.prisma,
+      secretStore: deps.secrets,
+      adminUserId: actor.userId,
+      spaceId: actor.spaceId,
+      destination: { ...input.destination, ...(site ? { origin: site } : {}) },
+      plaintext: input.value,
+      title: input.title,
+      note: input.note,
+    });
+  } catch (error) {
+    // These messages describe the destination, never the value.
+    throw new ORPCError("BAD_REQUEST", {
+      message: error instanceof Error ? error.message : "The item was not saved.",
+    });
+  }
+  getLogger().info("company_admin.vault_saved", { name, by: actor.userId });
+  const [row] = await listCompanyVaultItems(deps.prisma, deps.secrets, name);
+  if (!row) throw new ORPCError("CONFLICT", { message: "The item was not saved." });
+  return companyVaultDto(row);
+}
+
+export async function removeCompanyVault(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+  name: string,
+): Promise<{ ok: true }> {
+  await requireAdmin(deps, actor.userId);
+  await removeCompanyVaultItem(deps.prisma, deps.secrets, name);
+  getLogger().info("company_admin.vault_removed", { name, by: actor.userId });
+  return { ok: true };
 }

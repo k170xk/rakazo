@@ -11,6 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { RefObject } from "react";
 import { useCallback } from "react";
 import { lazyOverlay } from "../../components/ErrorBoundary";
+import { IntegrationsComingSoon } from "../../components/integrations/integrations-coming-soon";
+import type { TourAvailability } from "../../components/tour/ocsc-tour";
 import type { connectedAppMarks } from "../../lib/connected-apps";
 import type { SpaceQueries } from "../../lib/query";
 import { queryClient } from "../../lib/query";
@@ -29,6 +31,9 @@ const PluginsOverlay = lazyOverlay(() =>
 );
 const SkillsDialog = lazyOverlay(() =>
   import("../../components/integrations/skills-dialog").then((module) => module.SkillsDialog),
+);
+const OcscTourDialog = lazyOverlay(() =>
+  import("../../components/tour/ocsc-tour").then((module) => module.OcscTourDialog),
 );
 const McpServersOverlay = lazyOverlay(() =>
   import("../McpServersOverlay").then((module) => module.McpServersOverlay),
@@ -52,6 +57,8 @@ export function AppOverlays({
   activeBotId,
   stdioEnabled,
   mcpEnabled = true,
+  integrationsComingSoon = false,
+  tourAvailability,
   onConnectedAppsChange,
 }: {
   overlay: ShellOverlay;
@@ -60,11 +67,19 @@ export function AppOverlays({
   stdioEnabled: boolean;
   /** False while the company has MCP servers turned off. */
   mcpEnabled?: boolean;
+  /** A member while the company keeps integrations to admins. */
+  integrationsComingSoon?: boolean;
+  tourAvailability: TourAvailability;
   onConnectedAppsChange: (apps: ReturnType<typeof connectedAppMarks>) => void;
 }) {
   return (
     <>
-      {overlay?.kind === "integrations" ? (
+      {overlay?.kind === "tour" ? (
+        <OcscTourDialog availability={tourAvailability} onClose={() => setOverlay(null)} />
+      ) : null}
+      {overlay?.kind === "integrations" && integrationsComingSoon ? (
+        <IntegrationsComingSoon onClose={() => setOverlay(null)} />
+      ) : overlay?.kind === "integrations" ? (
         <PluginsOverlay
           onConnectedAppsChange={onConnectedAppsChange}
           activeBotId={activeBotId}
@@ -160,19 +175,7 @@ export function SettingsOverlays({
           section={overlay.section}
           onSectionChange={(section) => setOverlay({ ...overlay, section })}
           billingEnabled={bootstrapMe?.billingEnabled === true}
-          sandboxProvider={bootstrapMe?.sandboxProvider}
-          canConfigureComputers={bootstrapMe?.isAdmin === true}
-          onSandboxProviderChange={(sandboxProvider) =>
-            setBootstrapMe((prev) => (prev ? { ...prev, sandboxProvider } : prev))
-          }
           messagingEnabled={messagingEnabled}
-          modelsAllowed={
-            bootstrapMe?.features?.memberModels !== false || bootstrapMe?.isAdmin === true
-          }
-          computersAllowed={
-            bootstrapMe?.features?.computers !== false &&
-            (bootstrapMe?.computerAccess ?? "full") === "full"
-          }
           paymentWalletProvider={bootstrapMe?.paymentWalletProvider ?? null}
           timezone={bootstrapMe?.timezone ?? null}
           onTimezoneChange={async (timezone) => {

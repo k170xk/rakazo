@@ -23,8 +23,8 @@ import {
   MISSING_TOOL_FINAL_RESPONSE_ERROR,
   MODEL_IMAGE_INPUT_ERROR,
   MODEL_OUTPUT_CUT_ERROR,
-  PRODUCT_NAME,
   modelFallbackFailure,
+  PRODUCT_NAME,
 } from "@rakazo/core";
 import { getLogger } from "@rakazo/logging";
 import {
@@ -35,6 +35,7 @@ import {
 import { automated, withAutomatedLabels } from "./automated-messages.js";
 import { withCloudflareAuth } from "./cloudflare-ai-gateway.js";
 import { neutralizeSpeakerLabels } from "./history-speakers.js";
+import { fitContextImages } from "./model-image-fit.js";
 import { estimatePiImageTokens } from "./pi-image-context.js";
 import {
   COMPUTER_MODE_TOOLS,
@@ -591,10 +592,10 @@ export class PiAgentRuntime implements AgentRuntime {
         agent = new Agent({
           sessionId: conversationSessionId(request.threadId, request.botId),
           steeringMode: "all",
-          streamFn: (_m, ctx, options) =>
+          streamFn: async (_m, ctx, options) =>
             fallbackAwareModelStream(
               fallbackState,
-              ctx,
+              await fitContextImages(ctx),
               withAutomatedLabels({ ...options, fetch: this.modelFetch ?? options?.fetch }),
             ),
           getApiKey:

@@ -543,6 +543,7 @@ describe("tickRoutineWatch on a computer", () => {
         ...(options?.vault
           ? {
               vaultCredential: options.vault.prisma.vaultCredential,
+              companyVaultCredential: options.vault.prisma.companyVaultCredential,
               spaceSettingOverride: options.vault.prisma.spaceSettingOverride,
             }
           : {}),

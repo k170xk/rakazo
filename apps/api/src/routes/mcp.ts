@@ -183,6 +183,7 @@ export function mcpRoutes(ctx: RouterContext) {
       }),
       install: authed.capabilities.install.handler(async ({ context, input }) => {
         await requireCompanyFeature(deps, context.actor, "plugins");
+        await requireCompanyFeature(deps, context.actor, "staffIntegrations");
         if (input.kind === "plugin") {
           return installPlugin(
             {
@@ -404,6 +405,7 @@ export function mcpRoutes(ctx: RouterContext) {
         }),
         create: authed.mcp.servers.create.handler(async ({ context, input }) => {
           await requireCompanyFeature(deps, context.actor, "mcpServers");
+          await requireCompanyFeature(deps, context.actor, "staffIntegrations");
           const stored = await prepareMcpServer(context.actor, input);
           const row = await deps.prisma
             .$transaction((tx) =>
@@ -422,6 +424,7 @@ export function mcpRoutes(ctx: RouterContext) {
         }),
         update: authed.mcp.servers.update.handler(async ({ context, input }) => {
           await requireCompanyFeature(deps, context.actor, "mcpServers");
+          await requireCompanyFeature(deps, context.actor, "staffIntegrations");
           for (let attempt = 0; attempt < 5; attempt++) {
             const { existing, existingSecret } = await deps.prisma.$transaction(async (tx) => {
               const existing = await tx.mcpServer.findFirst({
@@ -616,6 +619,7 @@ export function mcpRoutes(ctx: RouterContext) {
         }),
         test: authed.mcp.servers.test.handler(async ({ context, input }) => {
           await requireCompanyFeature(deps, context.actor, "mcpServers");
+          await requireCompanyFeature(deps, context.actor, "staffIntegrations");
           const scope = { id: input.id, ...availableInSpace(context.actor) };
           const server = await deps.prisma.mcpServer.findFirst({ where: scope });
           if (!server) throw new IsolationError();

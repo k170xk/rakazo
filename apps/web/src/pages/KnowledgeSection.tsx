@@ -16,6 +16,7 @@ import {
 } from "../components/integrations/space-availability";
 import { SettingsSectionHeading } from "../components/SettingsSectionHeading";
 import { downloadArtifactBytes } from "../lib/artifact-open";
+import { isOcscTool } from "../lib/ocsc-tools";
 import { useSpaceQueries } from "../lib/query";
 import { useSpaceRpc } from "../lib/space-rpc";
 
@@ -337,7 +338,7 @@ description: What this skill does and when the agent should use it.
 Steps the agent should follow.
 `;
 
-/** Your own skills in this space, plus the built-in ones; plugin skills are listed by plugin. */
+/** Your own skills in this space, plus the built-in ones; OCSC Tools and plugin skills are listed apart. */
 export function AgentSkills() {
   const rpc = useSpaceRpc();
   const { t } = useLingui();
@@ -346,7 +347,9 @@ export function AgentSkills() {
   // The same list the composer offers as skill mentions, so a change here shows there at once.
   const list = queries.agentSkills.list.queryOptions();
   const listQuery = useQuery({ ...list, refetchOnMount: "always" });
-  const skills = (listQuery.data ?? NO_SKILLS).filter((skill) => skill.source !== "plugin");
+  const skills = (listQuery.data ?? NO_SKILLS).filter(
+    (skill) => skill.source !== "plugin" && !(skill.source === "builtin" && isOcscTool(skill.name)),
+  );
   const loading = listQuery.isPending;
   const [open, setOpen] = useState<AgentSkill | null>(null);
   const [creating, setCreating] = useState(false);

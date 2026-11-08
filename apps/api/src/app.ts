@@ -1600,7 +1600,7 @@ async function handleEvolveSso(c: Context, env: AppEnv, prisma: PrismaClient): P
       (await runAsSystem("check a new user's group invites", () =>
         prisma.chatGroupInvite.count({ where: { email: session.email } }),
       )) > 0;
-    const next = invited ? "/shared" : session.created ? "/onboarding" : "/app";
+    const next = invited ? "/onboarding?after=shared" : session.created ? "/onboarding" : "/app";
     return c.redirect(`${env.webOrigin}${next}`, 302);
   } catch {
     return c.redirect(`${env.webOrigin}/sign-in?error=evolve_sso`, 302);

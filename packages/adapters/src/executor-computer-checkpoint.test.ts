@@ -307,6 +307,7 @@ function fixture(runId = "run-1") {
     taughtSkill: { findMany: vi.fn(async () => []), findFirst: vi.fn(async () => null) },
     secret: { findMany: vi.fn(async () => []) },
     vaultCredential: { findMany: vi.fn(async () => []) },
+    companyVaultCredential: { findMany: vi.fn(async () => []) },
     agentSkill: { findMany: vi.fn(async () => []) },
     scratchpadItem: { findMany: vi.fn(async () => []) },
     spaceSettingOverride: { findUnique: async () => null },

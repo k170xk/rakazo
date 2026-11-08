@@ -261,13 +261,11 @@ it("shows the profile and the Advanced tab's controls", async () => {
     "Ada",
   );
   expect(container.querySelector('input[aria-label="Name"]')).toBeNull();
-  expect([...container.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent)).toEqual([
-    "Computer",
-    "Routines",
-    "Pages",
-    "Files",
-    "Advanced",
-  ]);
+  expect(
+    [...container.querySelectorAll('[role="tab"]')].map(
+      (tab) => tab.textContent || tab.getAttribute("aria-label"),
+    ),
+  ).toEqual(["Computer", "Routines", "Pages", "Files", "Settings"]);
   expect(
     [...container.querySelectorAll("button")].some((button) => button.textContent === "Save"),
   ).toBe(false);

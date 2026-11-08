@@ -131,6 +131,7 @@ async function teamChatRun(input: {
     },
     secret: { findMany: vi.fn(async () => []) },
     vaultCredential: { findMany: vi.fn(async () => []) },
+    companyVaultCredential: { findMany: vi.fn(async () => []) },
     agentSkill: {
       findMany: vi.fn(async () => [
         {

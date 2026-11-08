@@ -32,6 +32,7 @@ import {
 import type { Actor, Bot, ProductEvent } from "@rakazo/contracts";
 import {
   CONNECTOR_AUTH_UNAVAILABLE,
+  DEFAULT_COMPANY_FEATURES,
   MCP_OAUTH_CLIENT_REQUIRED,
   MODEL_KEY_FORMAT_ERROR,
   REPLY_QUOTE_MAX_LENGTH,
@@ -44,7 +45,7 @@ import {
   runProviderTransaction,
 } from "@rakazo/db";
 import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mainRole, withModelRoles } from "../../../packages/adapters/src/testing/model-roles.js";
 import type { RouterDeps } from "./router.js";
 import {
@@ -55,6 +56,16 @@ import {
   SESSION_RECHECK_MS,
 } from "./router.js";
 import { providerScopeKey } from "./routes/connections.js";
+
+// These suites act as ordinary members, who reach integrations only once the company opens them to staff.
+beforeEach(() => {
+  adapters.setCompanyPolicy({
+    features: { ...DEFAULT_COMPANY_FEATURES, staffIntegrations: true },
+  });
+});
+afterEach(() => {
+  adapters.setCompanyPolicy({ features: null });
+});
 
 const withRoleDeps = (deps: RouterDeps) => {
   withModelRoles(deps.prisma);

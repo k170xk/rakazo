@@ -201,7 +201,7 @@ export function createRouterContext(deps: RouterDeps) {
               auth.secretIdByModel[entry.provider]?.[entry.id] ||
               auth.secretIdByProvider[entry.provider]
                 ? entry.billing
-                : "Uses Rakazo credits",
+                : "Uses OCSC Intelligence credits",
           }
         : entry,
     );

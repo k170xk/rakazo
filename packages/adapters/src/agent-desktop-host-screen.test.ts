@@ -98,7 +98,7 @@ describe("agent-desktop host screen", () => {
       'No open app is named exactly "note". Open apps with similar names: notepad, notes-sync.',
     );
     await expect(screen.observe(scope, "rakazo")).rejects.toThrow(
-      "Rakazo can't use its own window.",
+      "OCSC Intelligence can't use its own window.",
     );
     expect(calls.filter(([name]) => name === "launch")).toEqual([
       ["launch", "--", "Photoshop"],

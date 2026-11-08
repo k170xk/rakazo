@@ -18,7 +18,7 @@ import {
   updateComposerMentionBindings,
 } from "@rakazo/core";
 import { Button } from "@rakazo/ui-web";
-import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react";
+import { ArrowUp, Box, Paperclip, Settings, Square, X } from "lucide-react";
 import type { ClipboardEvent, ComponentProps, DragEvent, ReactNode, RefObject } from "react";
 import {
   memo,
@@ -811,13 +811,14 @@ const ComposerBody = memo(function Composer({
           variant="ghost"
           size="icon"
           aria-label={t`Attach file`}
+          title={t`Upload files, documents and images`}
           disabled={disabled}
           onClick={() => fileInputRef.current?.click()}
           className={`col-start-1 size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground ${
             expanded ? "row-start-2" : ""
           }`}
         >
-          <Plus size={16} strokeWidth={2} />
+          <Paperclip size={16} strokeWidth={2} />
         </Button>
         <div
           ref={composerFieldRef}

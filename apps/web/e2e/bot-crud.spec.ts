@@ -64,7 +64,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   expect(new URL(page.url()).pathname).toBe(deletedBotPath);
   await captureScreenshot(page, testInfo, "27-created-bot");
 
-  await openBotPanelTab(page, "Advanced");
+  await openBotPanelTab(page, "Settings");
   await expect(page.getByRole("button", { name: "Edit name", exact: true })).toBeVisible();
   async function editName(value: string) {
     await page.getByRole("button", { name: "Edit name", exact: true }).click();
@@ -89,7 +89,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await expect(page.getByPlaceholder("Message Researcher")).toBeVisible();
 
   await page.getByRole("button", { name: "Close panel" }).click();
-  await openBotPanelTab(page, "Advanced");
+  await openBotPanelTab(page, "Settings");
   await expect(page.getByRole("button", { name: "Edit name", exact: true })).toHaveText(
     "Researcher",
   );
@@ -112,7 +112,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await expect(notificationsHeading).toHaveCount(0);
   await expect(modelSelect).toHaveCount(0);
   await expect(settings.getByRole("button", { name: "Export", exact: true })).toHaveCount(0);
-  await openBotPanelTab(page, "Advanced");
+  await openBotPanelTab(page, "Settings");
   await expect(notificationsHeading).toBeVisible();
   await expect(
     settings.getByRole("switch", { name: "When it finishes or needs input", exact: true }),
@@ -134,7 +134,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
     title: "First fixture task",
   });
   await page.getByRole("button", { name: "Close panel" }).click();
-  await openBotPanelTab(page, "Advanced");
+  await openBotPanelTab(page, "Settings");
   await expect(openWork.getByText("First fixture task", { exact: true })).toBeVisible();
   await openWork.getByRole("button", { name: "Add open work" }).click();
   await openWork.getByRole("textbox", { name: "New open-work item" }).fill("Second fixture task");
@@ -175,7 +175,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await captureScreenshot(page, testInfo, "27b-computer-panel");
 
   await editName("Atlas");
-  await openBotPanelTab(page, "Advanced");
+  await openBotPanelTab(page, "Settings");
   await descriptionInput.fill("Builds durable, source-backed research briefs.");
   await descriptionInput.blur();
   await expect(botList.getByRole("button", { name: /^Atlas/ })).toBeVisible();
@@ -185,7 +185,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await page.reload();
   await expect(botList.getByRole("button", { name: /^Atlas/ })).toBeVisible();
   await expect(page.getByPlaceholder("Message Atlas")).toBeVisible();
-  await openBotPanelTab(page, "Advanced");
+  await openBotPanelTab(page, "Settings");
   await expect(page.getByRole("button", { name: "Edit name", exact: true })).toHaveText("Atlas");
   await expect(descriptionInput).toHaveValue("Builds durable, source-backed research briefs.");
   await captureScreenshot(page, testInfo, "29-reloaded-bot-profile");

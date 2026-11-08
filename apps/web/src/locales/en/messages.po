@@ -13,14 +13,53 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
+msgstr " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr " (unread)"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"Build me a fee tracker for my projects with a chart of invoiced against remaining fees, then get it ready to share with the Civil team.\""
+msgstr "\"Build me a fee tracker for my projects with a chart of invoiced against remaining fees, then get it ready to share with the Civil team.\""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"Every Monday at 8am, summarise open ACC issues and send me the list\""
+msgstr "\"Every Monday at 8am, summarise open ACC issues and send me the list\""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"List this week's open RFIs on the Riverside job in ACC and draft our responses in an OCSC Word document.\" Or: \"Compare the Forma massing options and summarise the area and daylight results in a deck.\""
+msgstr "\"List this week's open RFIs on the Riverside job in ACC and draft our responses in an OCSC Word document.\" Or: \"Compare the Forma massing options and summarise the area and daylight results in a deck.\""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"On the last Friday of the month, update the bid tracker and flag anything overdue\""
+msgstr "\"On the last Friday of the month, update the bid tracker and flag anything overdue\""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"Turn these site visit notes into an OCSC report with two infographics.\" Then: \"Make section 3 shorter and add the Riverside project.\""
+msgstr "\"Turn these site visit notes into an OCSC report with two infographics.\" Then: \"Make section 3 shorter and add the Riverside project.\""
+
+#. placeholder {0}: state.staff.accounts
+#: src/pages/AdminCompanyPage.tsx
+msgid "{0, plural, one {# account} other {# accounts}}"
+msgstr "{0, plural, one {# account} other {# accounts}}"
 
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
 msgstr "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
+
+#. placeholder {0}: data.totals.unmeasuredCalls
+#: src/pages/AdminStaffSpending.tsx
+msgid "{0, plural, one {# call reported no cost, usually because it failed before the model replied, and is left out of the totals.} other {# calls reported no cost, usually because they failed before the model replied, and are left out of the totals.}}"
+msgstr "{0, plural, one {# call reported no cost, usually because it failed before the model replied, and is left out of the totals.} other {# calls reported no cost, usually because they failed before the model replied, and are left out of the totals.}}"
+
+#. placeholder {0}: usage.unmeasuredCalls
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0, plural, one {# call reported no cost, usually because it failed before the model replied. It is not included in the totals.} other {# calls reported no cost, usually because they failed before the model replied. They are not included in the totals.}}"
+msgstr "{0, plural, one {# call reported no cost, usually because it failed before the model replied. It is not included in the totals.} other {# calls reported no cost, usually because they failed before the model replied. They are not included in the totals.}}"
 
 #. placeholder {0}: servers.length
 #: src/pages/PluginsOverlay.tsx
@@ -42,6 +81,11 @@ msgstr "{0, plural, one {# free month earned} other {# free months earned}}"
 msgid "{0, plural, one {# free month} other {# free months}}"
 msgstr "{0, plural, one {# free month} other {# free months}}"
 
+#. placeholder {0}: block.messageCount
+#: src/pages/shell/evolve-history.tsx
+msgid "{0, plural, one {# message} other {# messages}}"
+msgstr "{0, plural, one {# message} other {# messages}}"
+
 #. placeholder {0}: skills.length - shownSkills.length
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{0, plural, one {# more} other {# more}}"
@@ -58,10 +102,25 @@ msgstr "{0, plural, one {# skill} other {# skills}}"
 msgid "{0, plural, one {# space} other {# spaces}}"
 msgstr "{0, plural, one {# space} other {# spaces}}"
 
+#. placeholder {0}: state.staff.withOwnModels
+#: src/pages/AdminCompanyPage.tsx
+msgid "{0, plural, one {# still has their own model connection} other {# still have their own model connections}}"
+msgstr "{0, plural, one {# still has their own model connection} other {# still have their own model connections}}"
+
 #. placeholder {0}: server.health.toolCount
 #: src/pages/McpServersOverlay.tsx
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, one {# tool} other {# tools}}"
+
+#. placeholder {0}: data.retentionDays
+#: src/pages/shell/files-tab.tsx
+msgid "{0, plural, one {Files nobody changes for # day are deleted automatically. Pin anything you want to keep.} other {Files nobody changes for # days are deleted automatically. Pin anything you want to keep.}}"
+msgstr "{0, plural, one {Files nobody changes for # day are deleted automatically. Pin anything you want to keep.} other {Files nobody changes for # days are deleted automatically. Pin anything you want to keep.}}"
+
+#. placeholder {0}: shapes.length
+#: src/components/render-studio/StageCanvas.tsx
+msgid "{0, plural, one {Mask active · # region · Render will target selection} other {Mask active · # regions · Render will target selection}}"
+msgstr "{0, plural, one {Mask active · # region · Render will target selection} other {Mask active · # regions · Render will target selection}}"
 
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
@@ -101,6 +160,11 @@ msgstr "{0} {unitLabel}"
 msgid "{0} connection"
 msgstr "{0} connection"
 
+#. placeholder {0}: storage.fileRetentionDays
+#: src/pages/AdminComputerAccess.tsx
+msgid "{0} days"
+msgstr "{0} days"
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} GB"
@@ -136,10 +200,21 @@ msgstr "{0} KB"
 msgid "{0} MB"
 msgstr "{0} MB"
 
+#. placeholder {0}: formatSize(person.storageUsedBytes)
+#. placeholder {1}: limitLabel(person.effectiveStorageLimitMb)
+#: src/pages/AdminComputerAccess.tsx
+msgid "{0} of {1} used"
+msgstr "{0} of {1} used"
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
 msgstr "{0} rollup hours"
+
+#. placeholder {0}: sharedBy.name
+#: src/pages/AdminCompanyVoice.tsx
+msgid "{0} shares their voice connection, but it has been removed. Connect one again below."
+msgstr "{0} shares their voice connection, but it has been removed. Connect one again below."
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
@@ -166,6 +241,14 @@ msgstr "{commandVariable} is reserved and cannot be used as a command variable. 
 msgid "{connectedCount, plural, one {# connected} other {# connected}}"
 msgstr "{connectedCount, plural, one {# connected} other {# connected}}"
 
+#: src/pages/shell/evolve-history.tsx
+msgid "{continued} of {total} opened"
+msgstr "{continued} of {total} opened"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "{count, plural, one {# file} other {# files}}"
+msgstr "{count, plural, one {# file} other {# files}}"
+
 #: src/pages/shell/message-view.tsx
 msgid "{count, plural, one {# message with {peer}} other {# messages with {peer}}}"
 msgstr "{count, plural, one {# message with {peer}} other {# messages with {peer}}}"
@@ -190,9 +273,17 @@ msgstr "{count} weeks"
 msgid "{count} years"
 msgstr "{count} years"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "{days} days"
+msgstr "{days} days"
+
 #: src/lib/relative-time.ts
 msgid "{days}d ago"
 msgstr "{days}d ago"
+
+#: src/pages/shell/files-tab.tsx
+msgid "{daysLeft, plural, =0 {Deleted today} one {Deleted in # day} other {Deleted in # days}}"
+msgstr "{daysLeft, plural, =0 {Deleted today} one {Deleted in # day} other {Deleted in # days}}"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -201,6 +292,10 @@ msgstr "{from}–{to} of {total} rows"
 #: src/lib/cron.ts
 msgid "{fromName} to {toName}"
 msgstr "{fromName} to {toName}"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "{gb} GB"
+msgstr "{gb} GB"
 
 #: src/components/markdown-copy.tsx
 msgid "{header}, column {index}"
@@ -225,6 +320,14 @@ msgstr "{label}, empty"
 #: src/lib/relative-time.ts
 msgid "{minutes}m ago"
 msgstr "{minutes}m ago"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "{MODEL_LABEL} edits only inside your mask and saves a new version."
+msgstr "{MODEL_LABEL} edits only inside your mask and saves a new version."
+
+#: src/pages/shell/references-dialog.tsx
+msgid "{modeNoun} selected"
+msgstr "{modeNoun} selected"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
@@ -364,6 +467,10 @@ msgstr "{remaining} left"
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# seat} other {# seats}}"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "{selectedCount} / {maxPages} pages selected"
+msgstr "{selectedCount} / {maxPages} pages selected"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
@@ -409,6 +516,10 @@ msgstr "{toolCount, plural, one {# tool} other {# tools}}"
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 
+#: src/pages/SharedChats.tsx
+msgid "{working} is working…"
+msgstr "{working} is working…"
+
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
 msgid "@{0}"
@@ -418,17 +529,63 @@ msgstr "@{0}"
 msgid "/ month"
 msgstr "/ month"
 
+#. placeholder {0}: ex.tags.length - 3
+#: src/pages/shell/references-dialog.tsx
+msgid "+{0} more"
+msgstr "+{0} more"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "⚠️ Approaching context limit - {remaining}% remaining"
+msgstr "⚠️ Approaching context limit - {remaining}% remaining"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "⚠️ Near context limit - consider removing some references"
+msgstr "⚠️ Near context limit - consider removing some references"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "✅ Good context usage - {remaining}% remaining"
+msgstr "✅ Good context usage - {remaining}% remaining"
+
 #: src/components/integrations/space-availability.tsx
 msgid "1 space"
 msgstr "1 space"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A bid writer drafts the response as an OCSC Word document"
+msgstr "A bid writer drafts the response as an OCSC Word document"
 
 #: src/pages/shell/message-cards.tsx
 msgid "A bit of everything"
 msgstr "A bit of everything"
 
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "A blank bot"
+msgstr "A blank bot"
+
+#: src/pages/SharedChats.tsx
+#: src/pages/Shell.tsx
+msgid "A colleague"
+msgstr "A colleague"
+
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
 msgstr "A command's output"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A connector links an agent to a system you already use, so it can read and act on your data with your permission. Think Outlook, Teams, SharePoint and the construction platforms we work in."
+msgstr "A connector links an agent to a system you already use, so it can read and act on your data with your permission. Think Outlook, Teams, SharePoint and the construction platforms we work in."
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A research agent finds the right OCSC project references"
+msgstr "A research agent finds the right OCSC project references"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A reviewer checks it against the brief and sends it back to you"
+msgstr "A reviewer checks it against the brief and sends it back to you"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A routine is a task an agent carries out on a schedule or when something changes, then delivers the result to you."
+msgstr "A routine is a task an agent carries out on a schedule or when something changes, then delivers the result to you."
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
@@ -447,6 +604,10 @@ msgstr "About {kb} KB of memory no longer reaches the bot."
 #: src/components/InfoTooltip.tsx
 msgid "About {label}"
 msgstr "About {label}"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Accepted: PDF. Select a file to preview and choose pages."
+msgstr "Accepted: PDF. Select a file to preview and choose pages."
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Access key ID"
@@ -483,11 +644,12 @@ msgid "Account menu for {name}"
 msgstr "Account menu for {name}"
 
 #. placeholder {0}: bot.name
+#. placeholder {0}: file.path
 #. placeholder {0}: group.spaceName
-#. placeholder {0}: page.title
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/shell/files-tab.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Actions for {0}"
 msgstr "Actions for {0}"
@@ -496,6 +658,7 @@ msgstr "Actions for {0}"
 msgid "Actions for space"
 msgstr "Actions for space"
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Active"
@@ -504,6 +667,10 @@ msgstr "Active"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"
 msgstr "Activity"
+
+#: src/components/ImageLightbox.tsx
+msgid "Actual size"
+msgstr "Actual size"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/SecretAskCard.tsx
@@ -575,6 +742,14 @@ msgstr "Add credits"
 msgid "Add custom"
 msgstr "Add custom"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Add drawings"
+msgstr "Add drawings"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Add Evolve References (Projects & More)"
+msgstr "Add Evolve References (Projects & More)"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Add fallback"
 msgstr "Add fallback"
@@ -604,9 +779,25 @@ msgstr "Add open work"
 msgid "Add passkey"
 msgstr "Add passkey"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Add PDF drawings"
+msgstr "Add PDF drawings"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Add PDF drawings as images"
+msgstr "Add PDF drawings as images"
+
 #: src/pages/model-settings/providers-section.tsx
 msgid "Add provider"
 msgstr "Add provider"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Add References"
+msgstr "Add References"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Add References as AI Context"
+msgstr "Add References as AI Context"
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Add rule"
@@ -624,6 +815,10 @@ msgstr "Add server URL"
 msgid "Add skills"
 msgstr "Add skills"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Add to chat"
+msgstr "Add to chat"
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "Add to routine"
@@ -636,10 +831,24 @@ msgstr "Add trigger"
 msgid "Add workspace"
 msgstr "Add workspace"
 
+#: src/components/GroupPeople.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Added"
 msgstr "Added"
+
+#. placeholder {0}: person.role
+#: src/pages/shell/evolve-references.tsx
+msgid "Added as Role: {0}"
+msgstr "Added as Role: {0}"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Added References:"
+msgstr "Added References:"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Adding a line above a total grows the total to include it"
+msgstr "Adding a line above a total grows the total to include it"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -656,13 +865,20 @@ msgstr "Address"
 msgid "Address line 2"
 msgstr "Address line 2"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Adds infographics, tables, figures and real OCSC project photos"
+msgstr "Adds infographics, tables, figures and real OCSC project photos"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Admins come from the server's RAKAZO_ADMIN_EMAILS setting."
+msgstr "Admins come from the server's RAKAZO_ADMIN_EMAILS setting."
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Advanced"
 msgstr "Advanced"
 
@@ -670,9 +886,53 @@ msgstr "Advanced"
 msgid "Advanced..."
 msgstr "Advanced..."
 
+#: src/components/render-studio/CompareSlider.tsx
+msgid "After"
+msgstr "After"
+
+#: src/components/render-studio/CompareSlider.tsx
+msgid "AFTER"
+msgstr "AFTER"
+
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
 msgstr "Agent from another app"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Agents"
+#~ msgstr "Agents"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents can look back through earlier chats when you refer to them"
+msgstr "Agents can look back through earlier chats when you refer to them"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents can message one another and pass tasks along, so each one does what it's best at."
+msgstr "Agents can message one another and pass tasks along, so each one does what it's best at."
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents hand work to each other"
+msgstr "Agents hand work to each other"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents keep working while you get on with something else"
+msgstr "Agents keep working while you get on with something else"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents remember what matters across chats: your preferences, your projects and the decisions you've made. They also know who you are from your Evolve CV, so their work fits your role from the very first message."
+msgstr "Agents remember what matters across chats: your preferences, your projects and the decisions you've made. They also know who you are from your Evolve CV, so their work fits your role from the very first message."
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents that work like teammates"
+msgstr "Agents that work like teammates"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Agents working together"
+#~ msgstr "Agents working together"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "AI teammates, each with a job"
+msgstr "AI teammates, each with a job"
 
 #: src/components/VaultSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -697,6 +957,7 @@ msgstr "All spaces"
 msgid "All statuses"
 msgstr "All statuses"
 
+#: src/pages/AdminStaffSpending.tsx
 #: src/pages/Artifacts.tsx
 msgid "All time"
 msgstr "All time"
@@ -713,13 +974,13 @@ msgstr "Allow cross-space bot communication"
 msgid "Allow in this space"
 msgstr "Allow in this space"
 
+#: src/lib/dictation.ts
+msgid "Allow OCSC Intelligence to use Speech Recognition and the microphone in System Settings."
+msgstr "Allow OCSC Intelligence to use Speech Recognition and the microphone in System Settings."
+
 #: src/components/AskCard.tsx
 msgid "Allow once"
 msgstr "Allow once"
-
-#: src/lib/dictation.ts
-msgid "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
-msgstr "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -732,6 +993,10 @@ msgstr "Allowed in this space"
 #: src/components/AskCard.tsx
 msgid "Allowed once"
 msgstr "Allowed once"
+
+#: src/pages/Onboarding.tsx
+msgid "Almost ready"
+msgstr "Almost ready"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Already connected"
@@ -761,13 +1026,17 @@ msgstr "Always allowed"
 msgid "Always open {site}"
 msgstr "Always open {site}"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "An agent is an AI teammate with its own name, job and instructions. Talk to it like a colleague: give it a task, attach files, and it plans the work, does it and tells you when it's finished."
+msgstr "An agent is an AI teammate with its own name, job and instructions. Talk to it like a colleague: give it a task, attach files, and it plans the work, does it and tells you when it's finished."
+
 #: src/lib/model-connection-preflight.ts
 msgid "An API key is stored for this provider, not a subscription sign-in."
 msgstr "An API key is stored for this provider, not a subscription sign-in."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "An existing Honcho peer to read from. Rakazo never writes to it."
-msgstr "An existing Honcho peer to read from. Rakazo never writes to it."
+msgid "An existing Honcho peer to read from. OCSC Intelligence never writes to it."
+msgstr "An existing Honcho peer to read from. OCSC Intelligence never writes to it."
 
 #: src/lib/agent-import-errors.ts
 msgid "An imported API key could not be checked. Try again."
@@ -780,6 +1049,10 @@ msgstr "An imported API key could not be used. Untick it and try again."
 #: src/pages/RoutineEditor.tsx
 msgid "An integration tool"
 msgstr "An integration tool"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Animated charts, statements and transitions; widescreen or vertical"
+msgstr "Animated charts, statements and transitions; widescreen or vertical"
 
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
@@ -819,13 +1092,14 @@ msgid "Any model, with your own key"
 msgstr "Any model, with your own key"
 
 #: src/components/pages/SharePopover.tsx
-msgid "Anyone with the link"
-msgstr "Anyone with the link"
+msgid "Anyone at the company with the link"
+msgstr "Anyone at the company with the link"
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/kinds.tsx
 #: src/lib/localized-provider-hint.ts
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/model-settings/compatible-key-field.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -897,6 +1171,10 @@ msgstr "Approve this server to let your agent use its tools."
 msgid "Approved"
 msgstr "Approved"
 
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Approved plugin builders send them to Evolve for review before colleagues use them"
+#~ msgstr "Approved plugin builders send them to Evolve for review before colleagues use them"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr "Approving…"
@@ -905,6 +1183,14 @@ msgstr "Approving…"
 #: src/pages/PluginsOverlay.tsx
 msgid "Apps"
 msgstr "Apps"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Apps and plugins for staff"
+msgstr "Apps and plugins for staff"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Apps, Connectors and Routines that extend what agents can do"
+msgstr "Apps, Connectors and Routines that extend what agents can do"
 
 #: src/pages/BotContextMenu.tsx
 msgid "Archive"
@@ -915,8 +1201,12 @@ msgid "archived"
 msgstr "archived"
 
 #: src/pages/shell/archived-chats.tsx
-msgid "Archived"
-msgstr "Archived"
+msgid "Archived bots"
+msgstr "Archived bots"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Archived chats"
+msgstr "Archived chats"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Arguments"
@@ -931,9 +1221,29 @@ msgstr "Artifacts"
 msgid "Ask"
 msgstr "Ask"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Ask \"What do you remember about me?\" at any time"
+msgstr "Ask \"What do you remember about me?\" at any time"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Ask an agent for a dashboard, tracker, calculator or comparison and it builds a live page right in the chat. Ask for changes and it updates the same page."
+#~ msgstr "Ask an agent for a dashboard, tracker, calculator or comparison and it builds a live page right in the chat. Ask for changes and it updates the same page."
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Ask for any OCSC deliverable in plain English"
+msgstr "Ask for any OCSC deliverable in plain English"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Ask it anything, or for any OCSC deliverable"
+msgstr "Ask it anything, or for any OCSC deliverable"
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
 msgstr "Asleep"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
+msgstr "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -952,6 +1262,10 @@ msgstr "Attach file"
 #: src/pages/shell/chat-shared.ts
 msgid "Attachment"
 msgstr "Attachment"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Audit this GA drawing against the brief and mark up anything missing"
+msgstr "Audit this GA drawing against the brief and mark up anything missing"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Authentication"
@@ -1016,8 +1330,10 @@ msgstr "Avatar Studio"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/tour/ocsc-tour.tsx
 #: src/components/vault/VaultPageHeader.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminPluginsPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
@@ -1026,6 +1342,7 @@ msgstr "Avatar Studio"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/SettingsOverlay.tsx
+#: src/pages/SharedChats.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Back"
 msgstr "Back"
@@ -1041,6 +1358,10 @@ msgstr "Back to chat"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "Back to sign in"
+
+#: src/pages/SharedChats.tsx
+msgid "Back to your chats"
+msgstr "Back to your chats"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1060,6 +1381,18 @@ msgstr "Basic auth ({username})"
 #: src/pages/PluginsOverlay.tsx
 msgid "Bearer token"
 msgstr "Bearer token"
+
+#: src/components/render-studio/CompareSlider.tsx
+msgid "Before"
+msgstr "Before"
+
+#: src/components/render-studio/CompareSlider.tsx
+msgid "BEFORE"
+msgstr "BEFORE"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Bigger ideas become Evolve plugins, with Evolve's look and approved data"
+#~ msgstr "Bigger ideas become Evolve plugins, with Evolve's look and approved data"
 
 #: src/pages/settings-nav.ts
 msgid "Billing"
@@ -1147,6 +1480,11 @@ msgstr "Bots"
 msgid "Bots and browser automation"
 msgstr "Bots and browser automation"
 
+#. placeholder {0}: group.ownerName
+#: src/pages/SharedChats.tsx
+msgid "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
+msgstr "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
+
 #: src/pages/Paywall.tsx
 msgid "Bots with their own computer and browser"
 msgstr "Bots with their own computer and browser"
@@ -1154,6 +1492,22 @@ msgstr "Bots with their own computer and browser"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
 msgstr "Brain label"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Branded deliverables, done properly"
+msgstr "Branded deliverables, done properly"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Branded PDFs, plus markups, redlines and measurements on drawings in Evolve PDF Studio."
+msgstr "Branded PDFs, plus markups, redlines and measurements on drawings in Evolve PDF Studio."
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Branded videos, explainers and social clips."
+msgstr "Branded videos, explainers and social clips."
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Branded Word reports, letters, memos and specifications."
+msgstr "Branded Word reports, letters, memos and specifications."
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Browse"
@@ -1163,10 +1517,46 @@ msgstr "Browse"
 msgid "Browse MCP servers"
 msgstr "Browse MCP servers"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Brush"
+msgstr "Brush"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Brush radius: {brushRadius}px"
+msgstr "Brush radius: {brushRadius}px"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Build me a fee tracker dashboard for my projects"
+msgstr "Build me a fee tracker dashboard for my projects"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Build your own apps, and share them"
+msgstr "Build your own apps, and share them"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Build your own tools in a chat"
+#~ msgstr "Build your own tools in a chat"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Builds a deck from a brief, with the company fonts, colours, logo and footer"
+msgstr "Builds a deck from a brief, with the company fonts, colours, logo and footer"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Builds OCSC-styled workbooks with real formulas, totals and number formats"
+msgstr "Builds OCSC-styled workbooks with real formulas, totals and number formats"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
+msgstr "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
 msgstr "Built-in"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Built-in skills"
+msgstr "Built-in skills"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -1190,12 +1580,17 @@ msgid "Calling…"
 msgstr "Calling…"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminStaffSpending.tsx
 msgid "Calls"
 msgstr "Calls"
 
-#: src/components/pages/SharePopover.tsx
-msgid "Can view without signing in"
-msgstr "Can view without signing in"
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Can add OCSC's company introduction and real project photos"
+msgstr "Can add OCSC's company introduction and real project photos"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Can show tracked changes marked up in the PDF when you want them"
+msgstr "Can show tracked changes marked up in the PDF when you want them"
 
 #: src/App.tsx
 msgid "Can't reach the server."
@@ -1212,6 +1607,7 @@ msgstr "Can't read images"
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -1227,6 +1623,7 @@ msgstr "Can't read images"
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/drawings-dialog.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -1242,6 +1639,15 @@ msgstr "Cancel new group"
 #: src/pages/shell/chat-context.tsx
 msgid "Cancel reply"
 msgstr "Cancel reply"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Cancel the in-progress shape and deactivate the tool (Esc)"
+msgstr "Cancel the in-progress shape and deactivate the tool (Esc)"
+
+#. placeholder {0}: invite.email
+#: src/components/GroupPeople.tsx
+msgid "Cancel the invite for {0}"
+msgstr "Cancel the invite for {0}"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Canceled"
@@ -1272,6 +1678,10 @@ msgstr "Card view"
 msgid "Cards"
 msgstr "Cards"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "Category"
+msgstr "Category"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "Change {name}"
@@ -1279,6 +1689,14 @@ msgstr "Change {name}"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {title}"
 msgstr "Change {title}"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Change an agent's job, instructions or model whenever you like"
+msgstr "Change an agent's job, instructions or model whenever you like"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Change any scene and render again"
+msgstr "Change any scene and render again"
 
 #: src/pages/shell/composer-error.tsx
 msgid "Change model"
@@ -1291,6 +1709,10 @@ msgstr "Change password"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
 msgstr "Changing…"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "characters"
+msgstr "characters"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Chart failed to render: {error}"
@@ -1326,6 +1748,7 @@ msgstr "Chats"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/pages/HostComputerPrompt.tsx
+#: src/pages/Onboarding.tsx
 msgid "Check again"
 msgstr "Check again"
 
@@ -1345,6 +1768,10 @@ msgstr "Check for updates"
 #: src/pages/shell/use-routine-editor.ts
 msgid "Check in."
 msgstr "Check in."
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Check now"
+msgstr "Check now"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
@@ -1377,6 +1804,7 @@ msgstr "Checking connection…"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/HostComputerPrompt.tsx
 msgid "Checking…"
 msgstr "Checking…"
@@ -1413,8 +1841,12 @@ msgstr "Choose folder"
 
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
-msgid "Choose how to use Rakazo"
-msgstr "Choose how to use Rakazo"
+msgid "Choose how to use OCSC Intelligence"
+msgstr "Choose how to use OCSC Intelligence"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Choose projects, people, or responses to provide context for your AI conversation."
+msgstr "Choose projects, people, or responses to provide context for your AI conversation."
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
@@ -1447,11 +1879,37 @@ msgstr "Clear conversation"
 msgid "Clear filter {label}"
 msgstr "Clear filter {label}"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Clear mask"
+msgstr "Clear mask"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Clear Search"
+msgstr "Clear Search"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "Clearing…"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "Click \"Add References\" to select projects"
+msgstr "Click \"Add References\" to select projects"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Click \"Select PDF\" to choose a document"
+msgstr "Click \"Select PDF\" to choose a document"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Client"
+msgstr "Client"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Client:"
+msgstr "Client:"
+
 #: src/components/ErrorBoundary.tsx
+#: src/components/ImageLightbox.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -1471,10 +1929,7 @@ msgstr "Close chart"
 msgid "Close computer"
 msgstr "Close computer"
 
-#: src/pages/shell/message-cards.tsx
-msgid "Close image preview"
-msgstr "Close image preview"
-
+#: src/components/integrations/integrations-coming-soon.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Close integrations"
 msgstr "Close integrations"
@@ -1489,7 +1944,6 @@ msgid "Close memory settings"
 msgstr "Close memory settings"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Close model settings"
 msgstr "Close model settings"
 
@@ -1518,18 +1972,29 @@ msgstr "Close skills"
 msgid "Close table"
 msgstr "Close table"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Close tour"
+msgstr "Close tour"
+
 #: src/pages/SettingsOverlay.tsx
 msgid "Close user settings"
 msgstr "Close user settings"
 
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Close voice settings"
 msgstr "Close voice settings"
 
+#: src/components/AskCard.tsx
+msgid "Closed"
+msgstr "Closed"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Cloud"
 msgstr "Cloud"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Clouds, callouts, arrows and notes placed exactly where the issue is"
+msgstr "Clouds, callouts, arrows and notes placed exactly where the issue is"
 
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/SecretAskCard.tsx
@@ -1546,6 +2011,14 @@ msgstr "Code"
 msgid "Collapse {0}"
 msgstr "Collapse {0}"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Colleagues and agents, together"
+msgstr "Colleagues and agents, together"
+
+#: src/components/GroupPeople.tsx
+msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
+msgstr "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "Color"
@@ -1558,9 +2031,18 @@ msgstr "Color {color}"
 msgid "column {index}"
 msgstr "column {index}"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Come back to this tour any time from the sidebar"
+msgstr "Come back to this tour any time from the sidebar"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Comfortable"
 msgstr "Comfortable"
+
+#: src/components/integrations/integrations-coming-soon.tsx
+#: src/components/tour/ocsc-tour.tsx
+msgid "Coming soon"
+msgstr "Coming soon"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1588,19 +2070,65 @@ msgstr "Communication"
 msgid "Compact"
 msgstr "Compact"
 
+#: src/components/SidebarFooter.tsx
+#: src/pages/AdminCompanyPage.tsx
+msgid "Company admin"
+msgstr "Company admin"
+
+#. placeholder {0}: levels[defaultAccess]
+#: src/pages/AdminComputerAccess.tsx
+msgid "Company default ({0})"
+msgstr "Company default ({0})"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Company model"
+msgstr "Company model"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Company plugins"
+msgstr "Company plugins"
+
+#: src/pages/AdminCompanyTools.tsx
+#~ msgid "Company tools"
+#~ msgstr "Company tools"
+
+#: src/components/VaultSettings.tsx
+msgid "Company values stay hidden once saved. Edit the item to replace its value."
+msgstr "Company values stay hidden once saved. Edit the item to replace its value."
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Company vault"
+msgstr "Company vault"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Compare"
+msgstr "Compare"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Compares two versions, or gives you a clean copy with every change accepted"
+msgstr "Compares two versions, or gives you a clean copy with every change accepted"
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Complete"
 msgstr "Complete"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Complete Required Roles First"
+msgstr "Complete Required Roles First"
 
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "Completed"
 
-#: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/chat-header.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "Computer"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computer access"
+msgstr "Computer access"
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -1634,6 +2162,7 @@ msgstr "Computer-use model"
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Computers"
 msgstr "Computers"
 
@@ -1644,6 +2173,14 @@ msgstr "Computers are available. Reload or open a bot to continue."
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, novita, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, novita, daytona, or boat with its API key. Recreate the stack after changing .env."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computers are switched off above, so nobody has one."
+msgstr "Computers are switched off above, so nobody has one."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computers running"
+msgstr "Computers running"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
@@ -1733,12 +2270,13 @@ msgstr "Connect this model's provider first."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "Connect your own API key in Models or choose Rakazo credits in Billing."
+msgid "Connect your own API key in Models or choose OCSC Intelligence credits in Billing."
+msgstr "Connect your own API key in Models or choose OCSC Intelligence credits in Billing."
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/AdminCompanyTools.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1751,6 +2289,14 @@ msgstr "Connected"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connected {0}."
 msgstr "Connected {0}."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Connected apps"
+msgstr "Connected apps"
+
+#: src/components/integrations/integrations-coming-soon.tsx
+msgid "Connecting apps such as Outlook, Teams and Stripe, and adding plugins, is being tested and will be available to everyone soon."
+msgstr "Connecting apps such as Outlook, Teams and Stripe, and adding plugins, is being tested and will be available to everyone soon."
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -1779,6 +2325,10 @@ msgstr "Connection to {0} is still pending. You can close this and check again."
 msgid "Connector"
 msgstr "Connector"
 
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Connectors"
+#~ msgstr "Connectors"
+
 #: src/components/vault/kinds.tsx
 msgid "Contact"
 msgstr "Contact"
@@ -1796,6 +2346,10 @@ msgstr "Contains code to run"
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
 msgstr "Context limit"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Context Window Usage"
+msgstr "Context Window Usage"
 
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/integrations/IntegrationSetup.tsx
@@ -1822,15 +2376,21 @@ msgstr "Continue to checkout"
 msgid "Continue with {0}"
 msgstr "Continue with {0}"
 
+#: src/pages/Auth.tsx
+msgid "Continue with Evolve"
+msgstr "Continue with Evolve"
+
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
 msgstr "Conversations"
 
 #: src/components/ComputersUnavailableHint.tsx
+#: src/components/ImageLightbox.tsx
 #: src/components/InviteDialog.tsx
 #: src/components/markdown-copy.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/components/UiCardView.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -1838,6 +2398,7 @@ msgstr "Conversations"
 msgid "Copied"
 msgstr "Copied"
 
+#: src/components/UiCardView.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -1857,6 +2418,10 @@ msgstr "Copy code"
 msgid "Copy diagram source"
 msgstr "Copy diagram source"
 
+#: src/components/ImageLightbox.tsx
+msgid "Copy image"
+msgstr "Copy image"
+
 #: src/components/InviteDialog.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
@@ -1872,8 +2437,13 @@ msgid "Copy rows"
 msgstr "Copy rows"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminStaffSpending.tsx
 msgid "Cost"
 msgstr "Cost"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Cost plans, trackers and schedules, styled for OCSC and ready to share."
+msgstr "Cost plans, trackers and schedules, styled for OCSC and ready to share."
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Could not add"
@@ -1887,6 +2457,10 @@ msgstr "Could not add MCP server"
 msgid "Could not add skills"
 msgstr "Could not add skills"
 
+#: src/components/GroupPeople.tsx
+msgid "Could not add that person"
+msgstr "Could not add that person"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not approve plugin"
 msgstr "Could not approve plugin"
@@ -1898,6 +2472,10 @@ msgstr "Could not approve this server"
 #: src/pages/shell/message-cards.tsx
 msgid "Could not authorize this app"
 msgstr "Could not authorize this app"
+
+#: src/components/GroupPeople.tsx
+msgid "Could not cancel that invite"
+msgstr "Could not cancel that invite"
 
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Could not change"
@@ -2002,6 +2580,10 @@ msgid "Could not delete bot"
 msgstr "Could not delete bot"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Could not delete file"
+msgstr "Could not delete file"
+
+#: src/pages/shell/dialogs.tsx
 msgid "Could not delete group"
 msgstr "Could not delete group"
 
@@ -2065,6 +2647,10 @@ msgstr "Could not download {0}. Try again."
 #: src/components/ArtifactFileCard.tsx
 msgid "Could not download {name}. Try again."
 msgstr "Could not download {name}. Try again."
+
+#: src/pages/shell/files-tab.tsx
+msgid "Could not download the file"
+msgstr "Could not download the file"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not enable tools"
@@ -2130,6 +2716,10 @@ msgstr "Could not load MCP servers"
 msgid "Could not load model settings"
 msgstr "Could not load model settings"
 
+#: src/components/GroupPeople.tsx
+msgid "Could not load people"
+msgstr "Could not load people"
+
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
 msgstr "Could not load run history"
@@ -2156,9 +2746,21 @@ msgstr "Could not load this chat."
 msgid "Could not load this file."
 msgstr "Could not load this file."
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Could not load this image into Render Studio."
+msgstr "Could not load this image into Render Studio."
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not load voice settings"
 msgstr "Could not load voice settings"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Could not load your archived chats."
+msgstr "Could not load your archived chats."
+
+#: src/pages/SharedChats.tsx
+msgid "Could not load your shared chats"
+msgstr "Could not load your shared chats"
 
 #: src/lib/sign-out.ts
 msgid "Could not log out. Try again."
@@ -2171,6 +2773,10 @@ msgstr "Could not log out. Try again."
 msgid "Could not open billing"
 msgstr "Could not open billing"
 
+#: src/pages/shell/evolve-history.tsx
+msgid "Could not open that chat."
+msgstr "Could not open that chat."
+
 #: src/components/pages/PagesList.tsx
 msgid "Could not pin this page. Try again."
 msgstr "Could not pin this page. Try again."
@@ -2182,6 +2788,10 @@ msgstr "Could not play a test clip"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not preview plugin"
 msgstr "Could not preview plugin"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not reach Evolve"
+msgstr "Could not reach Evolve"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Could not reach the model server."
@@ -2227,6 +2837,14 @@ msgstr "Could not remove rule"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not remove skills"
 msgstr "Could not remove skills"
+
+#: src/components/GroupPeople.tsx
+msgid "Could not remove that person"
+msgstr "Could not remove that person"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Could not remove the company model"
+msgstr "Could not remove the company model"
 
 #: src/components/VaultSettings.tsx
 msgid "Could not remove the credential"
@@ -2320,6 +2938,10 @@ msgstr "Could not save that speech model"
 msgid "Could not save that voice"
 msgstr "Could not save that voice"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Could not save the company model"
+msgstr "Could not save the company model"
+
 #: src/components/VaultSettings.tsx
 msgid "Could not save the credential"
 msgstr "Could not save the credential"
@@ -2340,6 +2962,10 @@ msgstr "Could not send reset email"
 #: src/lib/call-session.ts
 msgid "Could not send that"
 msgstr "Could not send that"
+
+#: src/pages/SharedChats.tsx
+msgid "Could not send that message"
+msgstr "Could not send that message"
 
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
@@ -2398,6 +3024,10 @@ msgstr "Could not update bot access"
 msgid "Could not update computer"
 msgstr "Could not update computer"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Could not update computer access"
+msgstr "Could not update computer access"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not update name"
 msgstr "Could not update name"
@@ -2406,9 +3036,30 @@ msgstr "Could not update name"
 msgid "Could not update reaction"
 msgstr "Could not update reaction"
 
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not update the company setting"
+msgstr "Could not update the company setting"
+
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not update the default memory scope"
 msgstr "Could not update the default memory scope"
+
+#: src/pages/shell/files-tab.tsx
+msgid "Could not update the file"
+msgstr "Could not update the file"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not update the skill"
+msgstr "Could not update the skill"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not update the tool"
+msgstr "Could not update the tool"
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Could not update voice"
+msgstr "Could not update voice"
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
@@ -2417,6 +3068,10 @@ msgstr "Could not verify computer setup ({failureMessage}). Fix the connection, 
 #: src/components/pages/SharePopover.tsx
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "Couldn't copy. Select the link and copy it."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Couldn't load company settings"
+msgstr "Couldn't load company settings"
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Couldn't load grants"
@@ -2430,9 +3085,17 @@ msgstr "Couldn't load messaging settings"
 msgid "Couldn't load pages."
 msgstr "Couldn't load pages."
 
+#: src/pages/AdminStaffSpending.tsx
+msgid "Couldn't load staff spending"
+msgstr "Couldn't load staff spending"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Couldn't load submissions"
 msgstr "Couldn't load submissions"
+
+#: src/pages/shell/files-tab.tsx
+msgid "Couldn't load this bot's files."
+msgstr "Couldn't load this bot's files."
 
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
@@ -2480,9 +3143,21 @@ msgstr "Create a section and move {0} into it."
 msgid "Create account"
 msgstr "Create account"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Create as many as you need: a bid writer, a drainage checker, a reviewer"
+msgstr "Create as many as you need: a bid writer, a drainage checker, a reviewer"
+
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
 msgstr "Create group"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Create more agents later from the + button"
+msgstr "Create more agents later from the + button"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Create my first chat"
+msgstr "Create my first chat"
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -2499,12 +3174,16 @@ msgid "Create space"
 msgstr "Create space"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Create your Rakazo"
+msgid "Create your OCSC Intelligence account"
+msgstr "Create your OCSC Intelligence account"
 
 #: src/components/AskCard.tsx
 msgid "Created"
 msgstr "Created"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Creates a finished OCSC document from a short brief, on the company template"
+msgstr "Creates a finished OCSC document from a short brief, on the company template"
 
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2544,10 +3223,18 @@ msgstr "Cron"
 msgid "Cron expression"
 msgstr "Cron expression"
 
+#: src/pages/AdminStaffSpending.tsx
+msgid "CSV"
+msgstr "CSV"
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
 msgstr "Current password"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Cursor cloud agents"
+msgstr "Cursor cloud agents"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
@@ -2568,6 +3255,10 @@ msgstr "Customize {label}"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "Customize bot avatar"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "CV"
+msgstr "CV"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Daily check-ins on unfinished work"
@@ -2627,6 +3318,11 @@ msgstr "Default from OpenClaw"
 msgid "Default scope"
 msgstr "Default scope"
 
+#. placeholder {0}: limitLabel(storage.defaultStorageLimitMb)
+#: src/pages/AdminComputerAccess.tsx
+msgid "Default storage ({0})"
+msgstr "Default storage ({0})"
+
 #: src/components/AccountAccess.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
@@ -2638,6 +3334,7 @@ msgstr "Default scope"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/files-tab.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "Delete"
@@ -2696,6 +3393,10 @@ msgstr "Delete space"
 msgid "Delete this Space's credentials?"
 msgstr "Delete this Space's credentials?"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Delete unpinned files after"
+msgstr "Delete unpinned files after"
+
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
 msgstr "deleted"
@@ -2724,10 +3425,30 @@ msgstr "Deny"
 msgid "Deployment default ({0})"
 msgstr "Deployment default ({0})"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Describe a dashboard or tool and the agent builds it as an Evolve plugin"
+msgstr "Describe a dashboard or tool and the agent builds it as an Evolve plugin"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Describe the change"
+msgstr "Describe the change"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Describe the change — e.g. remove the car in the foreground, change the wall colour to sage green, add soft afternoon light"
+msgstr "Describe the change — e.g. remove the car in the foreground, change the wall colour to sage green, add soft afternoon light"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Describe the edit you want"
+msgstr "Describe the edit you want"
+
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Description"
 msgstr "Description"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Deselect All"
+msgstr "Deselect All"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Design"
@@ -2853,10 +3574,6 @@ msgstr "Docker is configured but computers are not responding. Confirm the sandb
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
 msgstr "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
 
-#: src/components/SidebarFooter.tsx
-msgid "Docs"
-msgstr "Docs"
-
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "Document changed. Reopen to edit the latest version."
@@ -2866,7 +3583,10 @@ msgid "Don’t have an account?"
 msgstr "Don’t have an account?"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/AskCard.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/ToolActivityDisclosure.tsx
+#: src/components/tour/ocsc-tour.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -2879,27 +3599,30 @@ msgstr "Done"
 msgid "Downgrade at renewal"
 msgstr "Downgrade at renewal"
 
+#: src/components/ArtifactFileCard.tsx
+#: src/components/ImageLightbox.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/shell/files-tab.tsx
 msgid "Download"
 msgstr "Download"
-
-#. placeholder {0}: props.name
-#: src/components/ArtifactFileCard.tsx
-msgid "Download {0}"
-msgstr "Download {0}"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Download {name}"
 msgstr "Download {name}"
 
 #: src/components/markdown-copy.tsx
+#: src/components/UiCardView.tsx
 msgid "Download CSV"
 msgstr "Download CSV"
 
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Download PDF"
 msgstr "Download PDF"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Download PNG"
+msgstr "Download PNG"
 
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
@@ -2917,20 +3640,41 @@ msgstr "Drag, drop, or paste an image"
 msgid "Duplicate"
 msgstr "Duplicate"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills."
+msgstr "Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills."
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Each name can be used once."
 msgstr "Each name can be used once."
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
+msgstr "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
+
 #: src/components/AskCard.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersOverlay.tsx
 msgid "Edit"
 msgstr "Edit"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Edit any slide later; each changed slide gets a review comment saying what changed"
+msgstr "Edit any slide later; each changed slide gets a review comment saying what changed"
+
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "Edit first"
+
+#: src/components/ImageLightbox.tsx
+msgid "Edit in Render Studio"
+msgstr "Edit in Render Studio"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Edit it as many times as you like: ask for changes in plain words"
+msgstr "Edit it as many times as you like: ask for changes in plain words"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
@@ -2939,6 +3683,44 @@ msgstr "Edit name"
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "Edit Profile"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Edit References"
+msgstr "Edit References"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "EDITING"
+msgstr "EDITING"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Editing ORIGINAL"
+msgstr "Editing ORIGINAL"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Editing original → first render will be v1"
+msgstr "Editing original → first render will be v1"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Editing RENDER"
+msgstr "Editing RENDER"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "EDITING THIS · NEXT → v{nextVersion}"
+msgstr "EDITING THIS · NEXT → v{nextVersion}"
+
+#. placeholder {0}: activeRender.version
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "EDITING v{0} · NEXT → v{nextVersion}"
+msgstr "EDITING v{0} · NEXT → v{nextVersion}"
+
+#. placeholder {0}: activeRender.version
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Editing v{0} → next will be v{nextVersion}"
+msgstr "Editing v{0} → next will be v{nextVersion}"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Edits Word files you send it, keeping your original untouched"
+msgstr "Edits Word files you send it, keeping your original untouched"
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -2973,8 +3755,12 @@ msgid "Ends {day}"
 msgstr "Ends {day}"
 
 #: src/components/GitHubStarPrompt.tsx
-msgid "Enjoying Rakazo?"
-msgstr "Enjoying Rakazo?"
+msgid "Enjoying OCSC Intelligence?"
+msgstr "Enjoying OCSC Intelligence?"
+
+#: src/pages/shell/message-cards.tsx
+msgid "Enlarge {name}"
+msgstr "Enlarge {name}"
 
 #: src/lib/user-error.ts
 msgid "Enter a password"
@@ -3003,6 +3789,10 @@ msgstr "Enter a whole number from 1 to 1000 for the image limit."
 msgid "Enter an API key before testing."
 msgstr "Enter an API key before testing."
 
+#: src/pages/shell/references-dialog.tsx
+msgid "Enter role..."
+msgstr "Enter role..."
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
 msgstr "Environment ID"
@@ -3019,6 +3809,11 @@ msgstr "Environment variables: {names}"
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Error"
 msgstr "Error"
+
+#. placeholder {0}: projectsState.error
+#: src/pages/shell/references-dialog.tsx
+msgid "Error fetching projects: {0}"
+msgstr "Error fetching projects: {0}"
 
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
@@ -3044,6 +3839,10 @@ msgstr "every {intervalAmountSelect} {intervalUnitSelect}"
 msgid "Every {n} hours at :{minute}"
 msgstr "Every {n} hours at :{minute}"
 
+#: src/pages/AdminCompanyTools.tsx
+msgid "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
+msgstr "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Every bot in this space reads these notes and keeps them up to date."
 msgstr "Every bot in this space reads these notes and keeps them up to date."
@@ -3053,6 +3852,10 @@ msgstr "Every bot in this space reads these notes and keeps them up to date."
 #: src/pages/RoutineSchedule.tsx
 msgid "Every day"
 msgstr "Every day"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Every edit is a Word tracked change by \"OCSC Bot\", so you accept or reject each one"
+msgstr "Every edit is a Word tracked change by \"OCSC Bot\", so you accept or reject each one"
 
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
@@ -3064,6 +3867,10 @@ msgstr "Every hour"
 #: src/lib/cron.ts
 msgid "Every hour at :{0}"
 msgstr "Every hour at :{0}"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Every member's assistant runs on this model and key. Members are never asked to connect one."
+msgstr "Every member's assistant runs on this model and key. Members are never asked to connect one."
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Every message"
@@ -3078,14 +3885,84 @@ msgstr "Every Monday"
 msgid "Every month"
 msgstr "Every month"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Every plugin is reviewed before it reaches colleagues, so shared apps stay safe"
+msgstr "Every plugin is reviewed before it reaches colleagues, so shared apps stay safe"
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
 msgstr "Every week"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Everyone now uses this model"
+msgstr "Everyone now uses this model"
+
+#. placeholder {0}: sharedBy.name
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Everyone uses {0}'s {provider} connection."
+msgstr "Everyone uses {0}'s {provider} connection."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Everyone without their own level"
+msgstr "Everyone without their own level"
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Evolve assistant"
+msgstr "Evolve assistant"
+
+#: src/components/GroupPeople.tsx
+msgid "Evolve people"
+msgstr "Evolve people"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Evolve plugins"
+msgstr "Evolve plugins"
+
+#: src/components/GroupPeople.tsx
+msgid "Evolve search is unavailable. Type a full work email instead."
+msgstr "Evolve search is unavailable. Type a full work email instead."
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Evolve tools"
+msgstr "Evolve tools"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Evolve tools for everyone"
+msgstr "Evolve tools for everyone"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Example"
+msgstr "Example"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Example: Autodesk Construction Cloud and Forma"
+msgstr "Example: Autodesk Construction Cloud and Forma"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Excel"
+msgstr "Excel"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Executor token"
 msgstr "Executor token"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Exemplar"
+msgstr "Exemplar"
+
+#: src/pages/shell/evolve-references.tsx
+#: src/pages/shell/references-dialog.tsx
+msgid "Exemplar response"
+msgstr "Exemplar response"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Exemplar response, as sent to the AI"
+msgstr "Exemplar response, as sent to the AI"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "exemplar responses"
+msgstr "exemplar responses"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Expand"
@@ -3153,6 +4030,18 @@ msgstr "failed"
 msgid "Failed"
 msgstr "Failed"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Failed to add drawings"
+msgstr "Failed to add drawings"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Failed to add references. Please try again."
+msgstr "Failed to add references. Please try again."
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Failed to preview PDF"
+msgstr "Failed to preview PDF"
+
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
 msgstr "Failed to send message"
@@ -3170,6 +4059,10 @@ msgstr "Failed."
 msgid "Failure handling"
 msgstr "Failure handling"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Features"
+msgstr "Features"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Fields that mark a change"
 msgstr "Fields that mark a change"
@@ -3182,6 +4075,14 @@ msgstr "Fields to compare, e.g. id, modifiedTime (optional)"
 #: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "File"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Files"
+msgstr "Files"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted automatically unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted automatically unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
 
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
@@ -3212,6 +4113,10 @@ msgstr "Finance"
 msgid "Find a page"
 msgstr "Find a page"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Find a person"
+msgstr "Find a person"
+
 #: src/pages/shell/chat-find-bar.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Find in chat"
@@ -3226,6 +4131,10 @@ msgstr "Find models"
 #: src/pages/Onboarding.tsx
 msgid "Finding…"
 msgstr "Finding…"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Finish drawing — locks the current mask and deactivates the tool"
+msgstr "Finish drawing — locks the current mask and deactivates the tool"
 
 #: src/pages/shell/import-setup-card.tsx
 msgid "Finish setting up"
@@ -3247,6 +4156,11 @@ msgstr "Finished."
 #: src/pages/McpOAuthCallback.tsx
 msgid "Finishing MCP connection…"
 msgstr "Finishing MCP connection…"
+
+#: src/components/ImageLightbox.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Fit to screen"
+msgstr "Fit to screen"
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Focus message"
@@ -3290,6 +4204,18 @@ msgstr "From {0}"
 msgid "From GitHub"
 msgstr "From GitHub"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "from original"
+msgstr "from original"
+
+#: src/components/PersonalVault.tsx
+msgid "From the company vault"
+msgstr "From the company vault"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Full computer"
+msgstr "Full computer"
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Full name"
@@ -3317,9 +4243,46 @@ msgstr "Gateway URL"
 msgid "General"
 msgstr "General"
 
-#: src/components/SidebarFooter.tsx
-msgid "Get the mobile app"
-msgstr "Get the mobile app"
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know agent teamwork"
+msgstr "Get to know agent teamwork"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know agents"
+msgstr "Get to know agents"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know and understand connectors"
+msgstr "Get to know and understand connectors"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know groups"
+msgstr "Get to know groups"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know memory"
+msgstr "Get to know memory"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know OCSC Apps"
+msgstr "Get to know OCSC Apps"
+
+#: src/components/tour/ocsc-tour.tsx
+#: src/pages/shell/shell-sidebar.tsx
+msgid "Get to know OCSC Intelligence"
+msgstr "Get to know OCSC Intelligence"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know OCSC Tools"
+msgstr "Get to know OCSC Tools"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know routines"
+msgstr "Get to know routines"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Gets to know you over time"
+msgstr "Gets to know you over time"
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Getting ready"
@@ -3333,6 +4296,14 @@ msgstr "Git event"
 msgid "Give a friend {weeks} weeks free"
 msgstr "Give a friend {weeks} weeks free"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Give each agent a clear job and it will get better at it"
+msgstr "Give each agent a clear job and it will get better at it"
+
+#: src/components/GroupPeople.tsx
+msgid "Give them OCSC Intelligence in Evolve's menu access so they can open the chat"
+msgstr "Give them OCSC Intelligence in Evolve's menu access so they can open the chat"
+
 #: src/pages/NotFound.tsx
 msgid "Go home"
 msgstr "Go home"
@@ -3340,6 +4311,10 @@ msgstr "Go home"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Go to bot"
 msgstr "Go to bot"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "GPT Image infographics and pictures, drawing on Evolve's project datasheets and people profiles."
+#~ msgstr "GPT Image infographics and pictures, drawing on Evolve's project datasheets and people profiles."
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Grant"
@@ -3364,6 +4339,14 @@ msgstr "Group settings"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Group updates"
 msgstr "Group updates"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Groups"
+#~ msgstr "Groups"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Grow it into an Evolve plugin with OCSC branding and approved company data"
+msgstr "Grow it into an Evolve plugin with OCSC branding and approved company data"
 
 #: src/components/call/CallCard.tsx
 msgid "Hang up"
@@ -3436,6 +4419,10 @@ msgstr "High"
 msgid "High"
 msgstr "High"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "High (slow)"
+msgstr "High (slow)"
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Hold to talk"
 msgstr "Hold to talk"
@@ -3478,8 +4465,8 @@ msgid "How to check"
 msgstr "How to check"
 
 #: src/components/SignupSurvey.tsx
-msgid "How will you use Rakazo?"
-msgstr "How will you use Rakazo?"
+msgid "How will you use OCSC Intelligence?"
+msgstr "How will you use OCSC Intelligence?"
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
@@ -3509,6 +4496,10 @@ msgstr "Image input is not configured for this model."
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "Image upload area"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Images and Evolve data"
+msgstr "Images and Evolve data"
 
 #: src/components/AccountDataSettings.tsx
 msgid "Import"
@@ -3550,6 +4541,10 @@ msgstr "Include API keys"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "Incoming call"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Infographics on most slides, plus editable charts, tables and timelines"
+msgstr "Infographics on most slides, plus editable charts, tables and timelines"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
@@ -3610,9 +4605,9 @@ msgstr "Instructions updated"
 msgid "Integration domain"
 msgstr "Integration domain"
 
-#: src/pages/PluginsOverlay.tsx
-msgid "Integrations"
-msgstr "Integrations"
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Intended use is to add no more than {MAX_DRAWING_PAGES} drawing pages at a time. Please select only the most relevant pages."
+msgstr "Intended use is to add no more than {MAX_DRAWING_PAGES} drawing pages at a time. Please select only the most relevant pages."
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -3631,9 +4626,18 @@ msgstr "Interval unit"
 msgid "Invalid code"
 msgstr "Invalid code"
 
+#. placeholder {0}: option.email
+#: src/components/GroupPeople.tsx
+msgid "Invite {0}"
+msgstr "Invite {0}"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Invite a friend"
 msgstr "Invite a friend"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Invite colleagues straight from the Evolve directory"
+msgstr "Invite colleagues straight from the Evolve directory"
 
 #: src/components/SidebarFooter.tsx
 msgid "Invite friends"
@@ -3642,6 +4646,14 @@ msgstr "Invite friends"
 #: src/components/InviteDialog.tsx
 msgid "Invite link"
 msgstr "Invite link"
+
+#: src/components/GroupPeople.tsx
+msgid "Invited"
+msgstr "Invited"
+
+#: src/pages/GroupPanel.tsx
+msgid "Invited by email"
+msgstr "Invited by email"
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -3668,6 +4680,10 @@ msgstr "Its conversation, files, and routines will be permanently deleted. Bots 
 msgid "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
 msgstr "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
 
+#: src/components/GroupPeople.tsx
+msgid "Joins when they open OCSC Intelligence from Evolve"
+msgstr "Joins when they open OCSC Intelligence from Evolve"
+
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
 msgstr "Jump to latest"
@@ -3692,6 +4708,11 @@ msgstr "Keep tool results whole"
 msgid "key"
 msgstr "key"
 
+#. placeholder {0}: current.keyHint
+#: src/pages/AdminCompanyPage.tsx
+msgid "Key ending {0}"
+msgstr "Key ending {0}"
+
 #: src/pages/Shell.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Keyboard shortcuts"
@@ -3701,6 +4722,10 @@ msgstr "Keyboard shortcuts"
 msgid "Keys"
 msgstr "Keys"
 
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Knowledge files"
+msgstr "Knowledge files"
+
 #: src/components/vault/LoginFieldsInput.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Label"
@@ -3709,6 +4734,22 @@ msgstr "Label"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Language"
 msgstr "Language"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Lasso"
+msgstr "Lasso"
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Last 30 days"
+msgstr "Last 30 days"
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Last 7 days"
+msgstr "Last 7 days"
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Last 90 days"
+msgstr "Last 90 days"
 
 #. placeholder {0}: new Date(state.checkedAt).toLocaleString()
 #: src/pages/RoutineEditor.tsx
@@ -3720,6 +4761,19 @@ msgstr "Last check {0}: changed"
 msgid "Last check {0}: no changes"
 msgstr "Last check {0}: no changes"
 
+#. placeholder {0}: evolve.error
+#: src/pages/AdminCompanyTools.tsx
+msgid "Last check failed: {0}. Assistants keep the last tool list that worked."
+msgstr "Last check failed: {0}. Assistants keep the last tool list that worked."
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Last checked {checked}."
+msgstr "Last checked {checked}."
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Last used"
+msgstr "Last used"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
 msgstr "Later"
@@ -3728,9 +4782,21 @@ msgstr "Later"
 msgid "Leave"
 msgstr "Leave"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Leave blank to keep the saved key"
+msgstr "Leave blank to keep the saved key"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Less"
+msgstr "Less"
+
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Let bots use this computer"
 msgstr "Let bots use this computer"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Let's begin"
+msgstr "Let's begin"
 
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Lets bots save and recall facts by meaning, alongside MEMORY.md."
@@ -3745,6 +4811,7 @@ msgstr "Light"
 msgid "Link"
 msgstr "Link"
 
+#: src/components/ImageLightbox.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
 msgid "Link copied"
@@ -3775,6 +4842,7 @@ msgid "Load earlier messages"
 msgstr "Load earlier messages"
 
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/evolve-history.tsx
 msgid "Load more"
 msgstr "Load more"
 
@@ -3786,9 +4854,23 @@ msgstr "Load older runs"
 msgid "Load web images automatically"
 msgstr "Load web images automatically"
 
+#. placeholder {0}: files.length
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Loaded {pageCount} page from {0} PDF(s)"
+msgstr "Loaded {pageCount} page from {0} PDF(s)"
+
+#. placeholder {0}: files.length
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Loaded {pageCount} pages from {0} PDF(s)"
+msgstr "Loaded {pageCount} pages from {0} PDF(s)"
+
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
 msgstr "Loading activity…"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Loading exemplar responses..."
+msgstr "Loading exemplar responses..."
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
@@ -3803,6 +4885,10 @@ msgstr "Loading memory settings…"
 msgid "Loading model catalog…"
 msgstr "Loading model catalog…"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "Loading people..."
+msgstr "Loading people..."
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading plugins…"
 msgstr "Loading plugins…"
@@ -3810,6 +4896,14 @@ msgstr "Loading plugins…"
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading preview…"
 msgstr "Loading preview…"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Loading projects..."
+msgstr "Loading projects..."
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Loading video…"
+msgstr "Loading video…"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
@@ -3819,11 +4913,14 @@ msgstr "Loading voice providers…"
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PageLoading.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminStaffSpending.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/shell/drawings-dialog.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Loading…"
 msgstr "Loading…"
@@ -3849,9 +4946,17 @@ msgstr "Login"
 msgid "Logins"
 msgstr "Logins"
 
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Logins, API keys and variables every member's assistants can use, for shared company accounts. Members see each item's name, never its value; one of their own with the same name is used instead. Anyone with a full computer can run commands with these variables, so add only what you would trust them with. Cards and contacts stay in each person's own vault."
+msgstr "Logins, API keys and variables every member's assistants can use, for shared company accounts. Members see each item's name, never its value; one of their own with the same name is used instead. Anyone with a full computer can run commands with these variables, so add only what you would trust them with. Cards and contacts stay in each person's own vault."
+
 #: src/pages/shell/agent-import.tsx
 msgid "Looks like it contains a key"
 msgstr "Looks like it contains a key"
+
+#: src/pages/SharedChats.tsx
+msgid "Lost the connection. Reconnecting…"
+msgstr "Lost the connection. Reconnecting…"
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -3864,9 +4969,25 @@ msgstr "Low"
 msgid "Low"
 msgstr "Low"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Low (fastest)"
+msgstr "Low (fastest)"
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Main model"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Make a 10-slide bid presentation for a school extension"
+msgstr "Make a 10-slide bid presentation for a school extension"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Make a 30-second LinkedIn clip about our latest bridge project"
+msgstr "Make a 30-second LinkedIn clip about our latest bridge project"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Makes and reads PDFs."
+msgstr "Makes and reads PDFs."
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -3913,6 +5034,10 @@ msgstr "Mark as unread"
 msgid "Mark as Unread"
 msgstr "Mark as Unread"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Mark the area"
+msgstr "Mark the area"
+
 #: src/components/markdown-copy.tsx
 msgid "Markdown table"
 msgstr "Markdown table"
@@ -3920,6 +5045,22 @@ msgstr "Markdown table"
 #: src/pages/PluginsOverlay.tsx
 msgid "Marketing"
 msgstr "Marketing"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Marks up, audits and measures PDFs and drawings in Evolve PDF Studio."
+msgstr "Marks up, audits and measures PDFs and drawings in Evolve PDF Studio."
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "MASK"
+msgstr "MASK"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Mask active — only the marked area will change"
+msgstr "Mask active — only the marked area will change"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "masked"
+msgstr "masked"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -3954,11 +5095,13 @@ msgstr "MCP endpoint"
 msgid "MCP server"
 msgstr "MCP server"
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "MCP servers"
 msgstr "MCP servers"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Medium"
@@ -3969,6 +5112,10 @@ msgstr "Medium"
 msgid "Medium"
 msgstr "Medium"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Meet OCSC General Intelligence"
+msgstr "Meet OCSC General Intelligence"
+
 #: src/lib/identity-display.ts
 msgid "Member"
 msgstr "Member"
@@ -3978,10 +5125,35 @@ msgstr "Member"
 msgid "Members ({0})"
 msgstr "Members ({0})"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members add their own MCP servers."
+msgstr "Members add their own MCP servers."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members choose models"
+msgstr "Members choose models"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members connect apps such as Gmail, Slack or Notion to their assistants."
+msgstr "Members connect apps such as Gmail, Slack or Notion to their assistants."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members install plugins from the catalog."
+msgstr "Members install plugins from the catalog."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members link Slack, Telegram and other chat apps to their assistants."
+msgstr "Members link Slack, Telegram and other chat apps to their assistants."
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Members use it with the voice you picked, and their use is billed to this connection's account."
+msgstr "Members use it with the voice you picked, and their use is billed to this connection's account."
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Memory"
 msgstr "Memory"
 
@@ -4013,6 +5185,7 @@ msgstr "Mentions OpenClaw features"
 msgid "Mentions: {mentions}"
 msgstr "Mentions: {mentions}"
 
+#: src/pages/SharedChats.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
 #: src/pages/SpaceSearch.tsx
@@ -4023,6 +5196,11 @@ msgstr "Message"
 #: src/lib/browser-notifications.ts
 msgid "Message"
 msgstr "Message"
+
+#. placeholder {0}: group.name
+#: src/pages/SharedChats.tsx
+msgid "Message {0}. Use @Name to ask one bot."
+msgstr "Message {0}. Use @Name to ask one bot."
 
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
@@ -4052,6 +5230,7 @@ msgstr "Message…"
 msgid "Messaged {peer}"
 msgstr "Messaged {peer}"
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/settings-nav.ts
 msgid "Messaging"
 msgstr "Messaging"
@@ -4101,6 +5280,7 @@ msgid "Mode"
 msgstr "Mode"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
@@ -4112,6 +5292,10 @@ msgstr "Model"
 #: src/lib/model-connection-preflight.ts
 msgid "Model \"{modelId}\" was not listed."
 msgstr "Model \"{modelId}\" was not listed."
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Model calls"
+msgstr "Model calls"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Model connections"
@@ -4128,7 +5312,6 @@ msgid "Model options"
 msgstr "Model options"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/settings-nav.ts
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Models"
 msgstr "Models"
@@ -4208,6 +5391,10 @@ msgstr "Muted"
 msgid "My computers"
 msgstr "My computers"
 
+#: src/pages/settings-nav.ts
+msgid "My vault"
+msgstr "My vault"
+
 #: src/components/CreateOrganizationDialog.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -4248,6 +5435,10 @@ msgstr "Name this routine"
 msgid "Name your Bot"
 msgstr "Name your Bot"
 
+#: src/pages/shell/files-tab.tsx
+msgid "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
+msgstr "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
+
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
 msgstr "Needs an answer"
@@ -4275,6 +5466,10 @@ msgstr "Needs takeover"
 msgid "Needs you"
 msgstr "Needs you"
 
+#: src/components/AskCard.tsx
+msgid "Needs your approval"
+msgstr "Needs your approval"
+
 #: src/pages/shell/import-status.ts
 msgid "Needs: {names}"
 msgstr "Needs: {names}"
@@ -4288,6 +5483,10 @@ msgstr "Never ask"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "New"
 msgstr "New"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "New · Granular Editing — follow the 3 steps below"
+msgstr "New · Granular Editing — follow the 3 steps below"
 
 #: src/components/VaultSettings.tsx
 msgid "New API key"
@@ -4343,6 +5542,10 @@ msgstr "New password"
 msgid "New private space"
 msgstr "New private space"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "New reports and letters in OCSC style. Ask for changes as often as you like: each edit comes back as tracked changes you can accept or reject, and earlier versions are kept."
+msgstr "New reports and letters in OCSC style. Ask for changes as often as you like: each edit comes back as tracked changes you can accept or reject, and earlier versions are kept."
+
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "New section"
@@ -4364,6 +5567,11 @@ msgstr "New ticket"
 msgid "New variable"
 msgstr "New variable"
 
+#: src/components/tour/ocsc-tour.tsx
+#: src/pages/shell/references-dialog.tsx
+msgid "Next"
+msgstr "Next"
+
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Next match"
 msgstr "Next match"
@@ -4379,6 +5587,14 @@ msgstr "Next page"
 #: src/pages/SettingsOverlay.tsx
 msgid "Next settings sections"
 msgstr "Next settings sections"
+
+#: src/components/GroupPeople.tsx
+msgid "No access yet"
+msgstr "No access yet"
+
+#: src/components/GroupPeople.tsx
+msgid "No active Evolve profile matches."
+msgstr "No active Evolve profile matches."
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
@@ -4405,6 +5621,34 @@ msgstr "No bots"
 msgid "No bots match"
 msgstr "No bots match"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "No computer"
+msgstr "No computer"
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "No connection is shared yet, so staff have no voice."
+msgstr "No connection is shared yet, so staff have no voice."
+
+#: src/pages/shell/evolve-references.tsx
+msgid "No CV was sent for this person: only their name and role."
+msgstr "No CV was sent for this person: only their name and role."
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "No drawings selected"
+msgstr "No drawings selected"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "No exemplar responses match your search."
+msgstr "No exemplar responses match your search."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "No files yet"
+msgstr "No files yet"
+
+#: src/components/render-studio/StageCanvas.tsx
+msgid "No image"
+msgstr "No image"
+
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "No longer active"
@@ -4413,6 +5657,10 @@ msgstr "No longer active"
 #: src/pages/PluginsOverlay.tsx
 msgid "No managed app catalog is configured on this deployment."
 msgstr "No managed app catalog is configured on this deployment."
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "No mask — the whole image will be edited. Tip: draw a mask above for granular edits."
+msgstr "No mask — the whole image will be edited. Tip: draw a mask above for granular edits."
 
 #: src/components/VaultSettings.tsx
 msgid "No matches"
@@ -4436,9 +5684,21 @@ msgstr "No members yet"
 msgid "No messages with {peerBotName} yet."
 msgstr "No messages with {peerBotName} yet."
 
+#: src/pages/SharedChats.tsx
+msgid "No messages yet. Say hello to the team."
+msgstr "No messages yet. Say hello to the team."
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "No model catalog is available."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "No model is set up yet. Members see a waiting screen until you save one."
+msgstr "No model is set up yet. Members see a waiting screen until you save one."
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "No model usage in this period."
+msgstr "No model usage in this period."
 
 #: src/lib/model-connection-preflight.ts
 msgid "No models listed."
@@ -4452,9 +5712,25 @@ msgstr "No OpenClaw, Hermes or agent document found."
 msgid "No pages match “{query}”."
 msgstr "No pages match “{query}”."
 
+#: src/pages/shell/references-dialog.tsx
+msgid "No people match your search."
+msgstr "No people match your search."
+
+#: src/pages/shell/references-dialog.tsx
+msgid "No projects match your filters. Try adjusting your criteria."
+msgstr "No projects match your filters. Try adjusting your criteria."
+
+#: src/pages/shell/evolve-references.tsx
+msgid "No references selected"
+msgstr "No references selected"
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "No remote MCP servers found"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "NO RENDERS YET"
+msgstr "NO RENDERS YET"
 
 #: src/pages/RoutineRunHistory.tsx
 msgid "No reply"
@@ -4483,6 +5759,10 @@ msgstr "No runs yet"
 msgid "No skills yet"
 msgstr "No skills yet"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "No source image"
+msgstr "No source image"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "No submissions"
 msgstr "No submissions"
@@ -4494,6 +5774,10 @@ msgstr "No tickets yet"
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
 msgstr "No trigger"
+
+#: src/pages/SharedChats.tsx
+msgid "Nobody has added you to a group chat yet."
+msgstr "Nobody has added you to a group chat yet."
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "None"
@@ -4516,13 +5800,21 @@ msgstr "Not added: {0}"
 msgid "Not checked yet"
 msgstr "Not checked yet"
 
+#: src/pages/AdminCompanyTools.tsx
+msgid "Not checked yet."
+msgstr "Not checked yet."
+
+#: src/components/GroupPeople.tsx
+msgid "Not found in Evolve; joins if they sign in with this email"
+msgstr "Not found in Evolve; joins if they sign in with this email"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "Not imported"
 
 #: src/pages/shell/import-status.ts
-msgid "Not in Rakazo's catalog"
-msgstr "Not in Rakazo's catalog"
+msgid "Not in OCSC Intelligence's catalog"
+msgstr "Not in OCSC Intelligence's catalog"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
@@ -4533,18 +5825,26 @@ msgstr "Not in the plugin catalog"
 msgid "Not now"
 msgstr "Not now"
 
-#: src/pages/shell/agent-import.tsx
-#: src/pages/shell/import-status.ts
-msgid "Not supported in Rakazo"
-msgstr "Not supported in Rakazo"
+#: src/pages/AdminCompanyTools.tsx
+msgid "Not set up"
+msgstr "Not set up"
 
 #: src/pages/shell/agent-import.tsx
-msgid "Not used by Rakazo"
-msgstr "Not used by Rakazo"
+#: src/pages/shell/import-status.ts
+msgid "Not supported in OCSC Intelligence"
+msgstr "Not supported in OCSC Intelligence"
+
+#: src/pages/shell/agent-import.tsx
+msgid "Not used by OCSC Intelligence"
+msgstr "Not used by OCSC Intelligence"
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not working"
 msgstr "Not working"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Note:"
+msgstr "Note:"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
@@ -4581,6 +5881,78 @@ msgstr "OAuth connection failed"
 #: src/pages/PluginsOverlay.tsx
 msgid "OAuth expired"
 msgstr "OAuth expired"
+
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "OCSC"
+msgstr "OCSC"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "OCSC Apps"
+#~ msgstr "OCSC Apps"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC Apps put coding in every member of staff's hands. Describe the dashboard, tracker, calculator or plugin you need and an agent writes and runs the code for you inside the secure OCSC sandbox, away from live systems."
+msgstr "OCSC Apps put coding in every member of staff's hands. Describe the dashboard, tracker, calculator or plugin you need and an agent writes and runs the code for you inside the secure OCSC sandbox, away from live systems."
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC decks with an infographic on most slides, real project photos and a closing slide from your Evolve CV. Changes arrive as a new version with review comments."
+msgstr "OCSC decks with an infographic on most slides, real project photos and a closing slide from your Evolve CV. Changes arrive as a new version with review comments."
+
+#: src/components/ModelCredits.tsx
+#: src/pages/Onboarding.tsx
+msgid "OCSC Intelligence credits"
+msgstr "OCSC Intelligence credits"
+
+#: src/components/integrations/integrations-coming-soon.tsx
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC Intelligence integrations"
+msgstr "OCSC Intelligence integrations"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC Intelligence is our own AI workspace. Its agents know OCSC, use our branded tools and work alongside you on real project work. It runs on OCSC's own platform, so your chats, agents and files stay private to you unless you share them."
+msgstr "OCSC Intelligence is our own AI workspace. Its agents know OCSC, use our branded tools and work alongside you on real project work. It runs on OCSC's own platform, so your chats, agents and files stay private to you unless you share them."
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "OCSC Intelligence V3"
+#~ msgstr "OCSC Intelligence V3"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+#: src/pages/AdminCompanyTools.tsx
+msgid "OCSC Tools"
+msgstr "OCSC Tools"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "OCSC Tools and skills"
+msgstr "OCSC Tools and skills"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC Tools that produce branded deliverables"
+msgstr "OCSC Tools that produce branded deliverables"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC Vision Intelligence creates infographics and pictures, drawing on Evolve's project datasheets and people profiles."
+msgstr "OCSC Vision Intelligence creates infographics and pictures, drawing on Evolve's project datasheets and people profiles."
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC-branded animations and social clips, with voiceover and stock footage."
+msgstr "OCSC-branded animations and social clips, with voiceover and stock footage."
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Off"
+msgstr "Off"
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Off hides voice, dictation and calls for every member, admins included."
+msgstr "Off hides voice, dictation and calls for every member, admins included."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Off: only admins connect models or change a bot's model; everyone runs on the company model."
+msgstr "Off: only admins connect models or change a bot's model; everyone runs on the company model."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test."
+msgstr "Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test."
 
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Offline"
@@ -4653,6 +6025,10 @@ msgstr "Open {title}"
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "Open <0>{0}</0> and enter this code:"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Open any agent and ask for what you need, or create a new agent from the + button for a job you do often."
+msgstr "Open any agent and ask for what you need, or create a new agent from the + button for a job you do often."
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr "Open call"
@@ -4674,6 +6050,10 @@ msgstr "Open external link?"
 msgid "Open in full window"
 msgstr "Open in full window"
 
+#: src/components/ImageLightbox.tsx
+msgid "Open in new tab"
+msgstr "Open in new tab"
+
 #: src/components/pages/SharePopover.tsx
 msgid "Open link"
 msgstr "Open link"
@@ -4684,8 +6064,8 @@ msgstr "Open navigation"
 
 #: src/components/pages/PublicPageShell.tsx
 #: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "Open Rakazo"
+msgid "Open OCSC Intelligence"
+msgstr "Open OCSC Intelligence"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -4704,6 +6084,19 @@ msgstr "OpenAI-compatible server URL"
 msgid "OpenClaw or Hermes"
 msgstr "OpenClaw or Hermes"
 
+#: src/pages/shell/evolve-history.tsx
+msgid "Opened"
+msgstr "Opened"
+
+#. placeholder {0}: chat.name
+#: src/pages/shell/evolve-history.tsx
+msgid "Opened as {0}"
+msgstr "Opened as {0}"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Opened as a chat"
+msgstr "Opened as a chat"
+
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Opens your browser's print dialog. Choose Save as PDF as the destination."
 msgstr "Opens your browser's print dialog. Choose Save as PDF as the destination."
@@ -4719,6 +6112,10 @@ msgstr "Optional"
 msgid "Optional header value"
 msgstr "Optional header value"
 
+#: src/pages/GroupPanel.tsx
+msgid "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connected apps."
+msgstr "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connected apps."
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Or paste an API key"
@@ -4733,24 +6130,54 @@ msgstr "Organization"
 msgid "Organization API key"
 msgstr "Organization API key"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Original"
 msgstr "Original"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "ORIGINAL"
+msgstr "ORIGINAL"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "ORIGINAL (v0)"
+msgstr "ORIGINAL (v0)"
+
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
 msgstr "Original message unavailable"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Original source image"
+msgstr "Original source image"
 
 #: src/components/FoundModelPicker.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "Other model…"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
 msgstr "Output"
 
+#. placeholder {0}: captureSize.w
+#. placeholder {1}: captureSize.h
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Output size is locked to the original image ({0} × {1}px). Every render inherits this size — no resizing, no cropping."
+msgstr "Output size is locked to the original image ({0} × {1}px). Every render inherits this size — no resizing, no cropping."
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Output size is locked to the original image. Every render inherits this size — no resizing, no cropping."
+msgstr "Output size is locked to the original image. Every render inherits this size — no resizing, no cropping."
+
+#. placeholder {0}: group.ownerName
+#: src/pages/SharedChats.tsx
+msgid "Owned by {0}"
+msgstr "Owned by {0}"
+
+#: src/components/GroupPeople.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
@@ -4778,6 +6205,21 @@ msgstr "Page · Shared · {when}"
 msgid "Page · Updated below"
 msgstr "Page · Updated below"
 
+#. placeholder {0}: p.pageNumber
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Page {0}"
+msgstr "Page {0}"
+
+#. placeholder {0}: page.pageNumber
+#. placeholder {1}: source.name
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Page {0} of {1} is too large to attach"
+msgstr "Page {0} of {1} is too large to attach"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Page {curPage}"
+msgstr "Page {curPage}"
+
 #: src/components/markdown-copy.tsx
 msgid "Page {page} of {count}"
 msgstr "Page {page} of {count}"
@@ -4804,6 +6246,10 @@ msgstr "Page title"
 #: src/pages/shell/command-palette.tsx
 msgid "Pages"
 msgstr "Pages"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Pages are perfect for quick views of your project data"
+#~ msgstr "Pages are perfect for quick views of your project data"
 
 #: src/components/pages/PagesList.tsx
 msgid "Pages this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
@@ -4862,8 +6308,8 @@ msgid "Paste a replacement key"
 msgstr "Paste a replacement key"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
+msgid "Paste the OpenAI-compatible address from your server. OCSC Intelligence adds /v1 if needed."
+msgstr "Paste the OpenAI-compatible address from your server. OCSC Intelligence adds /v1 if needed."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -4882,15 +6328,56 @@ msgstr "Paste your API key, then test again."
 msgid "Paused"
 msgstr "Paused"
 
+#: src/components/ArtifactFileCard.tsx
+msgid "PDF"
+msgstr "PDF"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "PDF and PDF Studio"
+msgstr "PDF and PDF Studio"
+
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Pending"
 msgstr "Pending"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "people"
+msgstr "people"
+
+#: src/components/GroupPeople.tsx
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminStaffSpending.tsx
+#: src/pages/shell/references-dialog.tsx
+msgid "People"
+msgstr "People"
+
+#. placeholder {0}: people.length
+#: src/pages/GroupPanel.tsx
+msgid "People ({0})"
+msgstr "People ({0})"
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Period"
+msgstr "Period"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Permissions"
 msgstr "Permissions"
+
+#: src/pages/AdminStaffSpending.tsx
+#: src/pages/shell/evolve-references.tsx
+msgid "Person"
+msgstr "Person"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Person reference"
+msgstr "Person reference"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Person reference, as sent to the AI"
+msgstr "Person reference, as sent to the AI"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Persona"
@@ -4915,8 +6402,16 @@ msgid "Photo"
 msgstr "Photo"
 
 #: src/pages/GroupPanel.tsx
+msgid "Pick {GROUP_BOT_MIN}–{GROUP_MEMBER_MAX}"
+msgstr "Pick {GROUP_BOT_MIN}–{GROUP_MEMBER_MAX}"
+
+#: src/pages/GroupPanel.tsx
 msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX}"
 msgstr "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX}"
+
+#: src/pages/GroupPanel.tsx
+msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below"
+msgstr "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Pick a model from the catalog."
@@ -4935,14 +6430,26 @@ msgstr "Pick a tool to check"
 msgid "Pin"
 msgstr "Pin"
 
+#: src/pages/shell/files-tab.tsx
+msgid "Pin, keep it"
+msgstr "Pin, keep it"
+
 #: src/components/pages/PagesList.tsx
 #: src/pages/Shell.tsx
 msgid "Pinned"
 msgstr "Pinned"
 
+#: src/pages/shell/files-tab.tsx
+msgid "Pinned, kept"
+msgstr "Pinned, kept"
+
 #: src/components/ModelCredits.tsx
 msgid "Plan"
 msgstr "Plan"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Plans the story scene by scene, then renders an .mp4"
+msgstr "Plans the story scene by scene, then renders an .mp4"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Play {name}"
@@ -4951,6 +6458,14 @@ msgstr "Play {name}"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Playing…"
 msgstr "Playing…"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Please add roles for the following people before adding references: {names}. Roles are required for proper AI context."
+msgstr "Please add roles for the following people before adding references: {names}. Roles are required for proper AI context."
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Please select PDF files only"
+msgstr "Please select PDF files only"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Plugin"
@@ -4966,6 +6481,7 @@ msgid "Plugin submissions"
 msgstr "Plugin submissions"
 
 #: src/components/integrations/skills-dialog.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Plugins"
 msgstr "Plugins"
 
@@ -4976,6 +6492,15 @@ msgstr "Post \"No changes\" in chat"
 #: src/pages/RoutineEditor.tsx
 msgid "POST to"
 msgstr "POST to"
+
+#: src/components/ArtifactFileCard.tsx
+#: src/components/tour/ocsc-tour.tsx
+msgid "PowerPoint"
+msgstr "PowerPoint"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "PowerPoint decks on the OCSC template, ready to present."
+msgstr "PowerPoint decks on the OCSC template, ready to present."
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
@@ -4994,6 +6519,10 @@ msgstr "Preview {0}"
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr "Preview isn't available for this file type — download it to view it."
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Previous"
+msgstr "Previous"
 
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Previous match"
@@ -5015,9 +6544,21 @@ msgstr "Priority"
 msgid "Private"
 msgstr "Private"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Private spaces keep a team's chats and files separate"
+msgstr "Private spaces keep a team's chats and files separate"
+
 #: src/pages/shell/bot-picker.tsx
 msgid "Private workspace with its own bots and groups."
 msgstr "Private workspace with its own bots and groups."
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Processing references and sending to AI..."
+msgstr "Processing references and sending to AI..."
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Processing References..."
+msgstr "Processing References..."
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
@@ -5027,6 +6568,22 @@ msgstr "Productivity"
 msgid "Program: {name}"
 msgstr "Program: {name}"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "Project"
+msgstr "Project"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Project reference, as sent to the AI"
+msgstr "Project reference, as sent to the AI"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "projects"
+msgstr "projects"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Projects"
+msgstr "Projects"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "Protected input"
@@ -5035,6 +6592,7 @@ msgstr "Protected input"
 msgid "Protocol"
 msgstr "Protocol"
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -5049,23 +6607,29 @@ msgstr "Providers"
 msgid "Pull request"
 msgstr "Pull request"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Put OCSC Intelligence to work"
+msgstr "Put OCSC Intelligence to work"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Quality"
+msgstr "Quality"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Quality:"
+msgstr "Quality:"
+
+#: src/components/AskCard.tsx
+msgid "Question"
+msgstr "Question"
+
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "Queued"
 
-#: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Rakazo"
-msgstr "Rakazo"
-
-#: src/components/ModelCredits.tsx
-#: src/pages/Onboarding.tsx
-msgid "Rakazo credits"
-msgstr "Rakazo credits"
-
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
-msgstr "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
+msgid "rakazo-shared and IDs starting with bot- are reserved for OCSC Intelligence."
+msgstr "rakazo-shared and IDs starting with bot- are reserved for OCSC Intelligence."
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5079,9 +6643,25 @@ msgstr "Reactions"
 msgid "Read replies aloud"
 msgstr "Read replies aloud"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Reads a workbook first, then edits cells, rows and sheets without breaking formulas"
+msgstr "Reads a workbook first, then edits cells, rows and sheets without breaking formulas"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Reads every page, existing comments and hidden information before judging"
+msgstr "Reads every page, existing comments and hidden information before judging"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Reads PDFs you send it, so you can ask questions about them"
+msgstr "Reads PDFs you send it, so you can ask questions about them"
+
 #: src/pages/shell/import-status.ts
 msgid "Ready"
 msgstr "Ready"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Ready-made ways of working that come with OCSC Intelligence. Staff can also write their own skills under Tools and skills."
+msgstr "Ready-made ways of working that come with OCSC Intelligence. Staff can also write their own skills under Tools and skills."
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Reason"
@@ -5186,9 +6766,21 @@ msgstr "Recreating the computer"
 msgid "Recruiting & HR"
 msgstr "Recruiting & HR"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Rect"
+msgstr "Rect"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Redirect URI"
 msgstr "Redirect URI"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "References"
+msgstr "References"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "References successfully added as AI context!"
+msgstr "References successfully added as AI context!"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
@@ -5247,6 +6839,7 @@ msgstr "Reload"
 #: src/components/TrustedLinkSitesSettings.tsx
 #: src/components/vault/LoginFieldsInput.tsx
 #: src/components/vault/VaultItemDetail.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5256,8 +6849,12 @@ msgstr "Remove"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
+#. placeholder {0}: p.name
 #: src/components/ComputerDeviceSettings.tsx
+#: src/components/GroupPeople.tsx
+#: src/pages/GroupPanel.tsx
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/references-dialog.tsx
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
@@ -5277,6 +6874,10 @@ msgstr "Remove {site}"
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
 msgstr "Remove change trigger"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Remove exemplar"
+msgstr "Remove exemplar"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -5319,6 +6920,7 @@ msgid "Removed, but list refresh failed"
 msgstr "Removed, but list refresh failed"
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Removing…"
 msgstr "Removing…"
@@ -5334,6 +6936,36 @@ msgstr "Rename"
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Rename section"
 msgstr "Rename section"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render"
+msgstr "Render"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render Studio"
+msgstr "Render Studio"
+
+#. placeholder {0}: activeRender.version
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render v{0} added to your message"
+msgstr "Render v{0} added to your message"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render v{nextVersion}"
+msgstr "Render v{nextVersion}"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render v{version} ready"
+msgstr "Render v{version} ready"
+
+#: src/components/render-studio/RenderLoader.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Rendering…"
+msgstr "Rendering…"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Renders waiting"
+msgstr "Renders waiting"
 
 #: src/lib/billing.ts
 msgid "Renews {day}"
@@ -5427,7 +7059,12 @@ msgstr "Resize bots sidebar"
 msgid "Resize panel"
 msgstr "Resize panel"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "Response"
+msgstr "Response"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/shell/references-dialog.tsx
 msgid "Responses"
 msgstr "Responses"
 
@@ -5461,6 +7098,8 @@ msgstr "Restoring your workspace"
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminStaffSpending.tsx
 #: src/pages/Auth.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5485,8 +7124,8 @@ msgstr "Return to call with {0}"
 
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Return to Rakazo"
+msgid "Return to OCSC Intelligence"
+msgstr "Return to OCSC Intelligence"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -5500,6 +7139,18 @@ msgstr "Revoke"
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
 msgstr "Revoked"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Role is required for this person reference"
+msgstr "Role is required for this person reference"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Role on this work"
+msgstr "Role on this work"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Role required"
+msgstr "Role required"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Root filesystem"
@@ -5516,6 +7167,7 @@ msgstr "Rotate key"
 msgid "Routine"
 msgstr "Routine"
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
@@ -5563,6 +7215,10 @@ msgstr "Running…"
 msgid "Runs"
 msgstr "Runs"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Runs in a locked-down sandbox and is reviewed before it is published"
+msgstr "Runs in a locked-down sandbox and is reviewed before it is published"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "Runs when this bot receives a verified message from this provider."
@@ -5604,6 +7260,10 @@ msgstr "Saturday"
 msgid "Save"
 msgstr "Save"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Save for everyone"
+msgstr "Save for everyone"
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "Save the workspace and install current software."
@@ -5630,6 +7290,14 @@ msgstr "Saved."
 #: src/pages/RoutineEditor.tsx
 msgid "Saved. Rotate to reveal."
 msgstr "Saved. Rotate to reveal."
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Saves each round as a new version and says what changed"
+msgstr "Saves each round as a new version and says what changed"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Saves each round as a new version and works on decks you send it"
+msgstr "Saves each round as a new version and works on decks you send it"
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Saving your workspace"
@@ -5660,6 +7328,10 @@ msgstr "Say yes or no, or answer in a sentence."
 msgid "Schedule delayed"
 msgstr "Schedule delayed"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Scheduled and recurring tasks."
+msgstr "Scheduled and recurring tasks."
+
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
 msgstr "Scheduled routines"
@@ -5686,6 +7358,10 @@ msgstr "Screen not connected"
 msgid "Search"
 msgstr "Search"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "Search & Filter"
+msgstr "Search & Filter"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Search apps"
@@ -5706,6 +7382,14 @@ msgstr "Search bots, actions, and settings"
 #: src/pages/PluginsOverlay.tsx
 msgid "Search by domain"
 msgstr "Search by domain"
+
+#: src/components/GroupPeople.tsx
+msgid "Search Evolve people"
+msgstr "Search Evolve people"
+
+#: src/components/GroupPeople.tsx
+msgid "Search Evolve people to add"
+msgstr "Search Evolve people to add"
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
@@ -5735,10 +7419,22 @@ msgstr "Search Vault"
 msgid "Search: {0}"
 msgstr "Search: {0}"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "Search..."
+msgstr "Search..."
+
+#: src/components/GroupPeople.tsx
+msgid "Searching Evolve…"
+msgstr "Searching Evolve…"
+
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Searching…"
 msgstr "Searching…"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Sector"
+msgstr "Sector"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Security"
@@ -5757,10 +7453,31 @@ msgstr "Security code"
 msgid "Select a bot"
 msgstr "Select a bot"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Select at least one page"
+msgstr "Select at least one page"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Select Drawing(s)"
+msgstr "Select Drawing(s)"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Select References"
+msgstr "Select References"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Selected pages will be converted to images and added to your message."
+msgstr "Selected pages will be converted to images and added to your message."
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Selected References"
+msgstr "Selected References"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"
 msgstr "Self-hosted"
 
+#: src/pages/SharedChats.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
 msgstr "Send"
@@ -5789,6 +7506,10 @@ msgstr "Send deletion code"
 msgid "Send it"
 msgstr "Send it"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Send me that report as a PDF with the changes marked up"
+msgstr "Send me that report as a PDF with the changes marked up"
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Send recording"
 msgstr "Send recording"
@@ -5807,6 +7528,10 @@ msgstr "Send with Enter"
 msgid "Sending…"
 msgstr "Sending…"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Sends back the marked-up PDF with a list of findings by page"
+msgstr "Sends back the marked-up PDF with a list of findings by page"
+
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
@@ -5815,6 +7540,10 @@ msgstr "Sent"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Serenity endpoint is required."
 msgstr "Serenity endpoint is required."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Server disk"
+msgstr "Server disk"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Server name"
@@ -5828,10 +7557,23 @@ msgstr "Server name"
 msgid "Server URL"
 msgstr "Server URL"
 
+#: src/pages/AdminCompanyTools.tsx
+msgid "Set EVOLVE_PLUGINS_URL and EVOLVE_PLUGINS_SECRET on the server to connect."
+msgstr "Set EVOLVE_PLUGINS_URL and EVOLVE_PLUGINS_SECRET on the server to connect."
+
+#: src/components/PersonalVault.tsx
+msgid "Set up by your administrator for everyone. Your assistants can use these, but nobody sees the values. One of yours with the same name is used instead."
+msgstr "Set up by your administrator for everyone. Your assistants can use these, but nobody sees the values. One of yours with the same name is used instead."
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Sets the drawing scale, then measures lengths, areas and perimeters"
+msgstr "Sets the drawing scale, then measures lengths, areas and perimeters"
+
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
@@ -5880,9 +7622,21 @@ msgstr "Share"
 msgid "Share “{title}”"
 msgstr "Share “{title}”"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Share it with colleagues so everyone can use what you built"
+msgstr "Share it with colleagues so everyone can use what you built"
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Share my connection with everyone"
+msgstr "Share my connection with everyone"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Share your dashboards, tools and functions so colleagues can use them too"
+msgstr "Share your dashboards, tools and functions so colleagues can use them too"
+
 #: src/components/pages/SharePopover.tsx
-msgid "Share, anyone with the link can view"
-msgstr "Share, anyone with the link can view"
+msgid "Share, anyone at the company with the link can view"
+msgstr "Share, anyone at the company with the link can view"
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -5894,6 +7648,15 @@ msgstr "Shared"
 msgid "Shared memory"
 msgstr "Shared memory"
 
+#: src/pages/SharedPage.tsx
+msgid "Shared pages are only for people at your company."
+msgstr "Shared pages are only for people at your company."
+
+#: src/pages/SharedChats.tsx
+#: src/pages/shell/shell-sidebar.tsx
+msgid "Shared with you"
+msgstr "Shared with you"
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -5903,9 +7666,17 @@ msgstr "Show"
 msgid "Show all"
 msgstr "Show all"
 
+#: src/pages/shell/evolve-history.tsx
+msgid "Show all {total}"
+msgstr "Show all {total}"
+
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "Show bots"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Show fewer"
+msgstr "Show fewer"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -5944,6 +7715,7 @@ msgstr "Sidebar density"
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/SharedPage.tsx
 msgid "Sign in"
 msgstr "Sign in"
 
@@ -5963,8 +7735,12 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "Sign in at <0>{0}</0>, then paste the code here."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Sign in to Rakazo"
+msgid "Sign in to OCSC Intelligence"
+msgstr "Sign in to OCSC Intelligence"
+
+#: src/pages/SharedPage.tsx
+msgid "Sign in to view this page"
+msgstr "Sign in to view this page"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -6002,7 +7778,6 @@ msgstr "Skill {position}"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Skills"
@@ -6019,6 +7794,10 @@ msgstr "Skip"
 #: src/lib/localized-provider-hint.ts
 msgid "Skip or deploy key"
 msgstr "Skip or deploy key"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Skip to the end"
+msgstr "Skip to the end"
 
 #: src/pages/shell/message-view.tsx
 msgid "Skipped"
@@ -6040,6 +7819,10 @@ msgstr "Slack not enabled"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Slide up to lock"
 msgstr "Slide up to lock"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Slides come animated for presenting"
+msgstr "Slides come animated for presenting"
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6064,6 +7847,7 @@ msgid "Something you chose cannot work here. Untick it and try again."
 msgstr "Something you chose cannot work here. Untick it and try again."
 
 #: src/components/markdown-copy.tsx
+#: src/components/UiCardView.tsx
 msgid "Sort by {column}"
 msgstr "Sort by {column}"
 
@@ -6108,6 +7892,22 @@ msgstr "Speaking"
 msgid "Speech model"
 msgstr "Speech model"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Split"
+msgstr "Split"
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Spoken replies, dictation and calls. Staff never set voice up themselves: everyone uses the connection shared here."
+msgstr "Spoken replies, dictation and calls. Staff never set voice up themselves: everyone uses the connection shared here."
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Spreadsheet"
+msgstr "Spreadsheet"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Spreadsheets, cost plans, registers and trackers."
+msgstr "Spreadsheets, cost plans, registers and trackers."
+
 #: src/components/AccountAccess.tsx
 msgid "SSO"
 msgstr "SSO"
@@ -6115,6 +7915,14 @@ msgstr "SSO"
 #: src/lib/user-error.ts
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO is temporarily unavailable. Try again."
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Staff spending"
+msgstr "Staff spending"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review."
+msgstr "Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review."
 
 #: src/components/GitHubStarPrompt.tsx
 msgid "Star on GitHub"
@@ -6128,6 +7936,18 @@ msgstr "Start"
 #: src/pages/Paywall.tsx
 msgid "Start {trialDays}-day free trial"
 msgstr "Start {trialDays}-day free trial"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
+msgstr "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Start from"
+msgstr "Start from"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Start in the chat: a live app appears and changes each time you ask"
+msgstr "Start in the chat: a live app appears and changes each time you ask"
 
 #: src/components/ModelCredits.tsx
 msgid "Start plan"
@@ -6177,6 +7997,14 @@ msgstr "State or region"
 msgid "Status"
 msgstr "Status"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Step 2 — Describe the edit"
+msgstr "Step 2 — Describe the edit"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Step 3"
+msgstr "Step 3"
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Steps"
 msgstr "Steps"
@@ -6208,6 +8036,19 @@ msgstr "Stopped."
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stopping…"
 msgstr "Stopping…"
+
+#. placeholder {0}: person.name
+#: src/pages/AdminComputerAccess.tsx
+msgid "Storage limit for {0}"
+msgstr "Storage limit for {0}"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Storage per person"
+msgstr "Storage per person"
+
+#: src/pages/shell/files-tab.tsx
+msgid "Storage used"
+msgstr "Storage used"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Stored encrypted"
@@ -6244,8 +8085,8 @@ msgid "Subscribe for {price} / month"
 msgstr "Subscribe for {price} / month"
 
 #: src/components/ModelCredits.tsx
-msgid "Subscribe to Rakazo credits"
-msgstr "Subscribe to Rakazo credits"
+msgid "Subscribe to OCSC Intelligence credits"
+msgstr "Subscribe to OCSC Intelligence credits"
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
@@ -6254,6 +8095,10 @@ msgstr "Subscribe with your own AI"
 #: src/pages/Paywall.tsx
 msgid "Subscription required"
 msgstr "Subscription required"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Summary"
+msgstr "Summary"
 
 #: src/lib/cron.ts
 msgid "Sunday"
@@ -6327,6 +8172,10 @@ msgstr "Team Computer"
 msgid "Teams message"
 msgstr "Teams message"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Tell an agent to forget something and it will"
+msgstr "Tell an agent to forget something and it will"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Template"
 msgstr "Template"
@@ -6360,6 +8209,10 @@ msgstr "Testing…"
 msgid "The bot can use the file but won't see the picture."
 msgstr "The bot can use the file but won't see the picture."
 
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "The bot starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
+msgstr "The bot starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
+
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."
 msgstr "The browser keeps dropping the microphone. Start dictation again to retry."
@@ -6367,6 +8220,14 @@ msgstr "The browser keeps dropping the microphone. Start dictation again to retr
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "The connection timed out."
+
+#: src/pages/shell/side-panel.tsx
+msgid "The group was created, but these people could not be added: {list}"
+msgstr "The group was created, but these people could not be added: {list}"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "The key is checked with the provider, then stored encrypted on the server."
+msgstr "The key is checked with the provider, then stored encrypted on the server."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6407,17 +8268,35 @@ msgstr "The screen link expired."
 msgid "The selected memory provider is not available in this build."
 msgstr "The selected memory provider is not available in this build."
 
+#. placeholder {0}: state.environmentModel.provider
+#. placeholder {1}: state.environmentModel.modelId
+#: src/pages/AdminCompanyPage.tsx
+msgid "The server's own model is in use: {0} · {1}. Saving a company model here replaces it."
+msgstr "The server's own model is in use: {0} · {1}. Saving a company model here replaces it."
+
 #: src/components/pages/SharePopover.tsx
 msgid "The shared link stops working"
 msgstr "The shared link stops working"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
+msgstr "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
 
 #: src/components/ModelCredits.tsx
 msgid "The unused difference is credited to your next invoice."
 msgstr "The unused difference is credited to your next invoice."
 
+#: src/components/ArtifactFileCard.tsx
+msgid "The video could not be loaded."
+msgstr "The video could not be loaded."
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "Their own model is cleared. You can pick one again in each bot."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "These apply to everyone in the company and take effect within a few seconds."
+msgstr "These apply to everyone in the company and take effect within a few seconds."
 
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
@@ -6435,6 +8314,10 @@ msgstr "These saved settings can't be read. Remove it and add it again."
 #: src/components/InviteDialog.tsx
 msgid "They get {weeks} weeks free."
 msgstr "They get {weeks} weeks free."
+
+#: src/components/pages/SharePopover.tsx
+msgid "They sign in to view"
+msgstr "They sign in to view"
 
 #: src/components/call/CallCard.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -6459,6 +8342,14 @@ msgstr "This backup could not be read."
 #: src/pages/shell/agent-import.tsx
 msgid "This bot"
 msgstr "This bot"
+
+#: src/pages/shell/files-tab.tsx
+msgid "This bot has no files on a computer yet."
+msgstr "This bot has no files on a computer yet."
+
+#: src/pages/shell/files-tab.tsx
+msgid "This bot hasn't made any files yet."
+msgstr "This bot hasn't made any files yet."
 
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
@@ -6488,6 +8379,10 @@ msgstr "This can't be undone."
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
+#: src/pages/SharedChats.tsx
+msgid "This chat is no longer shared with you."
+msgstr "This chat is no longer shared with you."
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "this computer"
@@ -6510,6 +8405,10 @@ msgstr "This deletes all {0} versions of this artifact. This can't be undone."
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "This file is not valid UTF-8 text."
+
+#: src/components/ImageLightbox.tsx
+msgid "This image could not be shown."
+msgstr "This image could not be shown."
 
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
@@ -6576,6 +8475,10 @@ msgstr "This removes the connection from every space."
 msgid "This reset link is invalid or expired"
 msgstr "This reset link is invalid or expired"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "This role overrides any role or job title in their CV."
+msgstr "This role overrides any role or job title in their CV."
+
 #: src/pages/shell/message-cards.tsx
 msgid "This server cannot be assigned without a bot."
 msgstr "This server cannot be assigned without a bot."
@@ -6594,8 +8497,8 @@ msgid "This server's tool result does not fit the model. Turn off Keep tool resu
 msgstr "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 
 #: src/pages/model-settings/connection-controls.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
+msgid "This subscription sign-in is not available in OCSC Intelligence yet. Use a deployment credential or choose another provider."
+msgstr "This subscription sign-in is not available in OCSC Intelligence yet. Use a deployment credential or choose another provider."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -6616,6 +8519,10 @@ msgstr "Timezone"
 #: src/pages/shell/agent-import.tsx
 msgid "Timing may differ"
 msgstr "Timing may differ"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Tip:"
+msgstr "Tip:"
 
 #: src/pages/Board.tsx
 msgid "Title"
@@ -6648,6 +8555,7 @@ msgid "Toggle sidebar"
 msgstr "Toggle sidebar"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminStaffSpending.tsx
 msgid "Tokens"
 msgstr "Tokens"
 
@@ -6672,6 +8580,31 @@ msgstr "Tool name"
 #: src/pages/shell/bot-panel.tsx
 msgid "Tools"
 msgstr "Tools"
+
+#: src/components/integrations/skills-dialog.tsx
+#: src/components/SidebarFooter.tsx
+msgid "Tools and skills"
+msgstr "Tools and skills"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Tools are OCSC's own functions. Agents use them to turn your words, your files and Evolve data into real deliverables in our brand. Just ask in plain English."
+msgstr "Tools are OCSC's own functions. Agents use them to turn your words, your files and Evolve data into real deliverables in our brand. Just ask in plain English."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Tools only"
+msgstr "Tools only"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's own private computer, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: chat and Evolve tools only. Every person's computer and files stay their own."
+msgstr "Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's own private computer, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: chat and Evolve tools only. Every person's computer and files stay their own."
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Total cost"
+msgstr "Total cost"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Totals quantities into a take-off schedule"
+msgstr "Totals quantities into a take-off schedule"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
@@ -6717,14 +8650,23 @@ msgstr "Trials get fewer hours to prevent abuse."
 msgid "Trusted sites"
 msgstr "Trusted sites"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Try"
+msgstr "Try"
+
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/SharedPage.tsx
+#: src/pages/shell/files-tab.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Try again"
 msgstr "Try again"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Try asking"
+msgstr "Try asking"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Try the test again."
@@ -6734,6 +8676,14 @@ msgstr "Try the test again."
 msgid "Tuesday"
 msgstr "Tuesday"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Turn these quantities into a cost plan with a total per trade"
+msgstr "Turn these quantities into a cost plan with a total per trade"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Turns any OCSC Word report, deck or workbook into a clean PDF"
+msgstr "Turns any OCSC Word report, deck or workbook into a clean PDF"
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Type"
@@ -6742,6 +8692,10 @@ msgstr "Type"
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "Type {name} to confirm"
 msgstr "Type {name} to confirm"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Type a clear, specific instruction in the box below."
+msgstr "Type a clear, specific instruction in the box below."
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Type without recording"
@@ -6774,8 +8728,13 @@ msgstr "Unmute"
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx
+#: src/pages/shell/files-tab.tsx
 msgid "Unpin"
 msgstr "Unpin"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Unreachable"
+msgstr "Unreachable"
 
 #: src/pages/ActivityList.tsx
 msgid "Unread"
@@ -6851,6 +8810,14 @@ msgstr "Upgrade now"
 msgid "Upload"
 msgstr "Upload"
 
+#: src/pages/shell/composer.tsx
+msgid "Upload files, documents and images"
+msgstr "Upload files, documents and images"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Uploading drawings here turns pages into images the AI can visually inspect. The regular file upload is for text extraction only and does not provide visual understanding of drawings."
+msgstr "Uploading drawings here turns pages into images the AI can visually inspect. The regular file upload is for text extraction only and does not provide visual understanding of drawings."
+
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "Urgent"
@@ -6894,17 +8861,21 @@ msgstr "Use defaults for {label}"
 msgid "Use in this bot"
 msgstr "Use in this bot"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Use Lasso, Rect or Brush to outline what should change. Optional — skip to edit the whole image."
+msgstr "Use Lasso, Rect or Brush to outline what should change. Optional — skip to edit the whole image."
+
 #: src/components/ModelCredits.tsx
 msgid "Use my subscription or API key"
 msgstr "Use my subscription or API key"
 
+#: src/components/ModelCredits.tsx
+msgid "Use OCSC Intelligence credits"
+msgstr "Use OCSC Intelligence credits"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
 msgstr "Use Protected input for passwords."
-
-#: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "Use Rakazo credits"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
@@ -6924,6 +8895,10 @@ msgstr "User peer"
 msgid "Username"
 msgstr "Username"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Uses Evolve data you are allowed to see, nothing more"
+msgstr "Uses Evolve data you are allowed to see, nothing more"
+
 #: src/pages/shell/import-status.ts
 msgid "Uses files that are not imported"
 msgstr "Uses files that are not imported"
@@ -6931,6 +8906,10 @@ msgstr "Uses files that are not imported"
 #: src/pages/shell/import-status.ts
 msgid "Uses paths on your computer"
 msgstr "Uses paths on your computer"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Uses real OCSC project photos and stock footage"
+msgstr "Uses real OCSC project photos and stock footage"
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
@@ -6948,8 +8927,13 @@ msgstr "Using your API key. Free plan ends {freeUntil}."
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/shell/evolve-references.tsx
 msgid "Value"
 msgstr "Value"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Value:"
+msgstr "Value:"
 
 #: src/components/vault/kinds.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -6964,7 +8948,6 @@ msgstr "Variable name"
 msgid "Variables"
 msgstr "Variables"
 
-#: src/pages/settings-nav.ts
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Vault"
 msgstr "Vault"
@@ -6981,6 +8964,29 @@ msgstr "Verifying…"
 msgid "Version"
 msgstr "Version"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Version history"
+msgstr "Version history"
+
+#. placeholder {0}: activeRender.version
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "VERSION v{0} (from original)"
+msgstr "VERSION v{0} (from original)"
+
+#. placeholder {0}: activeRender.version
+#. placeholder {1}: versionOf(activeRender.parentRenderId) ?? 0
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "VERSION v{0} (from v{1})"
+msgstr "VERSION v{0} (from v{1})"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Video"
+msgstr "Video"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Video renders"
+msgstr "Video renders"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
 msgstr "View all"
@@ -6989,16 +8995,24 @@ msgstr "View all"
 msgid "View source"
 msgstr "View source"
 
-#: src/pages/settings-nav.ts
+#: src/pages/AdminCompanyVoice.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "Voice"
 
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Voice for everyone"
+msgstr "Voice for everyone"
+
 #: src/lib/tts.ts
 msgid "Voice request timed out."
 msgstr "Voice request timed out."
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Voiceover in OCSC Peter, Rory or Tim's voice"
+msgstr "Voiceover in OCSC Peter, Rory or Tim's voice"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Wait a moment and test again."
@@ -7007,6 +9021,10 @@ msgstr "Wait a moment and test again."
 #: src/lib/roster-status.ts
 msgid "Waiting in line…"
 msgstr "Waiting in line…"
+
+#: src/components/AskCard.tsx
+msgid "Waiting on you"
+msgstr "Waiting on you"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
@@ -7019,6 +9037,14 @@ msgstr "Wake"
 #: src/pages/settings-nav.ts
 msgid "Wallet"
 msgstr "Wallet"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Warning:"
+msgstr "Warning:"
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Web page"
+msgstr "Web page"
 
 #: src/components/ModelCredits.tsx
 msgid "Web, desktop and mobile"
@@ -7050,25 +9076,45 @@ msgstr "Weekdays"
 msgid "Weekends"
 msgstr "Weekends"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Welcome to a new era of AI at OCSC"
+msgstr "Welcome to a new era of AI at OCSC"
+
 #: src/components/SignupSurvey.tsx
-msgid "Welcome to Rakazo"
-msgstr "Welcome to Rakazo"
+msgid "Welcome to OCSC Intelligence"
+msgstr "Welcome to OCSC Intelligence"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Welcome to OCSC Intelligence V3"
+msgstr "Welcome to OCSC Intelligence V3"
 
 #: src/pages/shell/dialogs.tsx
 msgid "What about its memories?"
 msgstr "What about its memories?"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "What assistants can look up and do in Evolve on the person's behalf, such as project datasheets, stock media and voiceovers. Each person only reaches what Evolve lets them see."
+msgstr "What assistants can look up and do in Evolve on the person's behalf, such as project datasheets, stock media and voiceovers. Each person only reaches what Evolve lets them see."
 
 #: src/pages/shell/dialogs.tsx
 msgid "What can this space use?"
 msgstr "What can this space use?"
 
 #: src/components/SignupSurvey.tsx
-msgid "What do you most want Rakazo to help with?"
-msgstr "What do you most want Rakazo to help with?"
+msgid "What do you most want OCSC Intelligence to help with?"
+msgstr "What do you most want OCSC Intelligence to help with?"
 
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"
 msgstr "What do you want me on first?"
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "What each person's chats, bots and routines have cost in model usage. Updates every minute."
+msgstr "What each person's chats, bots and routines have cost in model usage. Updates every minute."
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "What it can do"
+msgstr "What it can do"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "What result will you demonstrate?"
@@ -7124,9 +9170,25 @@ msgstr "Who can open this page"
 msgid "Won't do"
 msgstr "Won't do"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Word"
+msgstr "Word"
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Word document"
+msgstr "Word document"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Words:"
+msgstr "Words:"
+
 #: src/components/SignupSurvey.tsx
 msgid "Work"
 msgstr "Work"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Work that runs itself"
+msgstr "Work that runs itself"
 
 #: src/pages/ActivityList.tsx
 msgid "Working"
@@ -7151,6 +9213,14 @@ msgstr "Works with your ChatGPT or Claude plan."
 msgid "Workspace"
 msgstr "Workspace"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Write a flood risk assessment for HEL18, then tighten the conclusions"
+msgstr "Write a flood risk assessment for HEL18, then tighten the conclusions"
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Write its instructions yourself"
+msgstr "Write its instructions yourself"
+
 #: src/lib/billing.ts
 msgid "year"
 msgstr "year"
@@ -7166,6 +9236,7 @@ msgstr "Yesterday"
 
 #: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/SharedChats.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
@@ -7181,6 +9252,10 @@ msgstr "You can close this tab if it does not redirect automatically."
 msgid "You can close this window."
 msgstr "You can close this window."
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "You can select up to {maxPages} pages at a time"
+msgstr "You can select up to {maxPages} pages at a time"
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "You declined"
 msgstr "You declined"
@@ -7192,6 +9267,26 @@ msgstr "You get a free month when they start their trial with a new card."
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"
 msgstr "You have control"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "You're all set"
+msgstr "You're all set"
+
+#: src/pages/Shell.tsx
+msgid "Your administrator chooses the models for the company."
+msgstr "Your administrator chooses the models for the company."
+
+#: src/pages/Onboarding.tsx
+msgid "Your administrator is setting up OCSC Intelligence for the company. This page opens your assistant as soon as it is ready."
+msgstr "Your administrator is setting up OCSC Intelligence for the company. This page opens your assistant as soon as it is ready."
+
+#: src/pages/Shell.tsx
+msgid "Your administrator sets up computers for the company."
+msgstr "Your administrator sets up computers for the company."
+
+#: src/pages/Shell.tsx
+msgid "Your administrator sets up voice for the company."
+msgstr "Your administrator sets up voice for the company."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -7205,6 +9300,10 @@ msgstr "Your card is charged {annualPrice} today, less the unused part of this m
 #: src/components/ModelCredits.tsx
 msgid "Your card is charged the prorated difference today."
 msgstr "Your card is charged the prorated difference today."
+
+#: src/pages/shell/files-tab.tsx
+msgid "Your computer storage"
+msgstr "Your computer storage"
 
 #: src/pages/Shell.tsx
 msgid "Your computer's disk is nearly full. Free up space by removing build output and caches you no longer need."
@@ -7221,6 +9320,10 @@ msgstr "Your defaults"
 #: src/pages/Auth.tsx
 msgid "Your email address"
 msgstr "Your email address"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Your first agent is ready. It already knows who you are from your Evolve CV, has every OCSC Tool, and will ask a couple of quick questions to get you started."
+msgstr "Your first agent is ready. It already knows who you are from your Evolve CV, has every OCSC Tool, and will ask a couple of quick questions to get you started."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -7241,6 +9344,22 @@ msgstr "Your OpenAI"
 msgid "Your OpenRouter"
 msgstr "Your OpenRouter"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Your other systems, inside the chat"
+msgstr "Your other systems, inside the chat"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Your own dashboards, calculators and apps, built in the OCSC sandbox."
+msgstr "Your own dashboards, calculators and apps, built in the OCSC sandbox."
+
+#: src/components/PersonalVault.tsx
+msgid "Your own logins, cards, API keys and contacts. Only your assistants use them, and only you can see them here."
+msgstr "Your own logins, cards, API keys and contacts. Only your assistants use them, and only you can see them here."
+
+#: src/components/integrations/skills-dialog.tsx
+msgid "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below; the built-in ones come with OCSC Intelligence."
+msgstr "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below; the built-in ones come with OCSC Intelligence."
+
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {annualPrice} / year when your trial ends."
 msgstr "Your plan becomes {annualPrice} / year when your trial ends."
@@ -7250,8 +9369,8 @@ msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "Your plan becomes {tierTargetLabel} when your trial ends."
 
 #: src/components/integrations/skills-dialog.tsx
-msgid "Your skills"
-msgstr "Your skills"
+#~ msgid "Your skills"
+#~ msgstr "Your skills"
 
 #: src/components/ModelCredits.tsx
 msgid "Your subscription or API key"
@@ -7265,6 +9384,10 @@ msgstr "Your trial ends and your card is charged {price} today."
 msgid "Your trial ends and your card is charged today."
 msgstr "Your trial ends and your card is charged today."
 
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Your voice connection"
+msgstr "Your voice connection"
+
 #: src/lib/user-error.ts
 msgid "Your voice provider is out of credit."
 msgstr "Your voice provider is out of credit."
@@ -7273,6 +9396,20 @@ msgstr "Your voice provider is out of credit."
 msgid "Your voice provider key was rejected."
 msgstr "Your voice provider key was rejected."
 
+#: src/components/ArtifactFileCard.tsx
+msgid "ZIP archive"
+msgstr "ZIP archive"
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "ZIP or postal code"
+
+#: src/components/ImageLightbox.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Zoom in"
+msgstr "Zoom in"
+
+#: src/components/ImageLightbox.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Zoom out"
+msgstr "Zoom out"

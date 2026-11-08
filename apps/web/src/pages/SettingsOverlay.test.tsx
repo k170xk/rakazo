@@ -94,12 +94,12 @@ const { scopes, recordScope } = vi.hoisted(() => {
       },
   };
 });
-vi.mock("./ModelSettingsOverlay", () => ({ ModelSettingsOverlay: recordScope("models") }));
-vi.mock("./VoiceSettingsOverlay", () => ({ VoiceSettingsOverlay: recordScope("voice") }));
 vi.mock("../components/ApprovalRulesSettings", () => ({
   ApprovalRulesSettings: recordScope("confirmations"),
 }));
-vi.mock("../components/VaultSettings", () => ({ VaultSettings: recordScope("vault") }));
+vi.mock("../components/PersonalVault", () => ({
+  PersonalVault: () => recordScope("vault")({ scope: "account" }),
+}));
 vi.mock("../components/ComputersUnavailableHint", () => ({
   computersAreUnavailable: () => false,
 }));
@@ -234,21 +234,24 @@ it("opens a linked billing section once billing turns out to be on", async () =>
   }
 });
 
-it("edits the account's models, voice, confirmations, and vault", async () => {
+it("edits the account's confirmations and personal vault, but not company settings", async () => {
   scopes.length = 0;
   const props = { space: acme, spaces };
-  const { container, rerender, cleanup } = await render({ ...props, section: "models" });
+  const { container, rerender, cleanup } = await render({ ...props, section: "confirmations" });
   try {
-    for (const section of ["models", "voice", "confirmations", "vault"] as const) {
+    for (const section of ["models", "voice", "computer"] as const) {
       await rerender({ ...props, section });
+      expect(
+        container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section"),
+      ).toBe("general");
+      expect(container.querySelector(`[data-testid="settings-nav-${section}"]`)).toBeNull();
     }
+    await rerender({ ...props, section: "vault" });
     const vaultNav = container.querySelector('[data-testid="settings-nav-vault"]');
-    expect(vaultNav?.textContent).toBe("Vault");
+    expect(vaultNav?.textContent).toBe("My vault");
     expect(vaultNav?.getAttribute("aria-current")).toBe("page");
-    expect(container.querySelector("h2")?.textContent).toBe("Vault");
-    expect(new Set(scopes)).toEqual(
-      new Set(["models:account", "voice:account", "confirmations:account", "vault:account"]),
-    );
+    expect(container.querySelector("h2")?.textContent).toBe("My vault");
+    expect(new Set(scopes)).toEqual(new Set(["confirmations:account", "vault:account"]));
   } finally {
     await cleanup();
   }

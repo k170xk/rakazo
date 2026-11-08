@@ -41,7 +41,7 @@ import {
 } from "@rakazo/ui-web";
 import { Check, Copy } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AccountMenu } from "../components/AccountMenu";
 import { FoundModelPicker } from "../components/FoundModelPicker";
 import {
@@ -51,6 +51,8 @@ import {
 import { ModelHeadersEditor } from "../components/ModelHeadersEditor";
 import { PageLoading } from "../components/PageLoading";
 import { SignupSurvey } from "../components/SignupSurvey";
+import type { TourAvailability } from "../components/tour/ocsc-tour";
+import { hasSeenTour, markTourSeen, OcscTour } from "../components/tour/ocsc-tour";
 import { useCopyText } from "../lib/copy-text";
 import { providerDisplayName } from "../lib/localized-provider-hint";
 import type { ModelCatalogEntry } from "../lib/model-auth";
@@ -85,7 +87,9 @@ const MAIN_PROVIDER_OPTIONS: ReadonlyArray<{ provider: string; auth?: ProviderAu
 function providerOptionValue(provider: string, auth?: ProviderAuth): string {
   return auth ? `${provider}:${auth}` : provider;
 }
-const FIRST_BOT_NAME = "Chief";
+const FIRST_BOT_NAME = "OCSC General Intelligence";
+/** First bots created before the OCSC name, and before spawnKey was set. */
+const LEGACY_FIRST_BOT_NAMES = new Set([FIRST_BOT_NAME, "Chief"]);
 const FIRST_BOT_SPAWN_KEY = "onboarding:first";
 const FIRST_BOT_LOCK = "rakazo:onboarding-first-bot";
 
@@ -98,7 +102,7 @@ function findFirstBot(
   const bySpawnKey = bots.find((bot) => bot.spawnKey === FIRST_BOT_SPAWN_KEY);
   if (bySpawnKey) return { id: bySpawnKey.id };
   // Legacy first-run Chief created before spawnKey was set.
-  const byName = bots.find((bot) => bot.name === FIRST_BOT_NAME);
+  const byName = bots.find((bot) => LEGACY_FIRST_BOT_NAMES.has(bot.name));
   return byName ? { id: byName.id } : undefined;
 }
 
@@ -106,6 +110,10 @@ async function createOrReuseFirstBot(): Promise<{ id: string }> {
   const existing = await rpc.bots.list();
   const reuse = findFirstBot(existing);
   if (reuse) return reuse;
+  // Starts from the company's General Intelligence assistant in Evolve when this person has it.
+  const template = (await rpc.bots.evolveAssistants().catch(() => [])).find(
+    (assistant) => assistant.name.trim() === FIRST_BOT_NAME,
+  );
   try {
     const created = await rpc.bots.create({
       name: FIRST_BOT_NAME,
@@ -113,6 +121,7 @@ async function createOrReuseFirstBot(): Promise<{ id: string }> {
       instructions: "",
       notifyOnFinish: true,
       spawnKey: FIRST_BOT_SPAWN_KEY,
+      ...(template ? { evolveAssistantId: template.id } : {}),
     });
     return { id: created.id };
   } catch (error) {
@@ -148,6 +157,14 @@ export function OnboardingPage() {
   // The URL holds the survey and model steps, so /onboarding/survey and /onboarding/model open directly.
   const { step: routeStep } = useParams();
   const linkedStep = routeStep === "survey" || routeStep === "model" ? routeStep : undefined;
+  // A colleague invited to a group sees the tour, then goes to the group instead of making a bot.
+  const [searchParams] = useSearchParams();
+  const afterTour = searchParams.get("after") === "shared" ? "shared" : null;
+  const [tour, setTour] = useState<{
+    userId: string;
+    availability: TourAvailability;
+    resume: "survey" | "model" | "bot";
+  } | null>(null);
   const [creatingBot, setCreatingBot] = useState(false);
   const [surveyDone, setSurveyDone] = useState(false);
   const step = creatingBot ? "bot" : surveyDone ? "loading" : (linkedStep ?? "loading");
@@ -208,7 +225,7 @@ export function OnboardingPage() {
 
   useEffect(() => {
     void Promise.all([rpc.me(), rpc.models.list().catch(() => [])])
-      .then(([me, models]) => {
+      .then(async ([me, models]) => {
         setBillingEnabled(me.billingEnabled);
         setCatalog(models);
         const adminChoosesModel = me.needsModel && me.features?.memberModels === false;
@@ -219,7 +236,27 @@ export function OnboardingPage() {
         setAwaitingAdmin(adminChoosesModel);
         const next = me.needsModel ? "model" : "bot";
         setAfterSurvey(next);
-        if (!linkedStep) goTo(me.needsSignupSurvey ? "survey" : next);
+        if (linkedStep) return;
+        const first = me.needsSignupSurvey ? "survey" : next;
+        if (!hasSeenTour(me.userId)) {
+          // An empty new space opens onboarding too; only a person's first run gets the tour.
+          const bots = await rpc.bots.list().catch(() => []);
+          if (afterTour || !findFirstBot(bots)) {
+            setTour({
+              userId: me.userId,
+              availability: {
+                connectorsSoon: me.features?.staffIntegrations === false && !me.isAdmin,
+                routinesSoon:
+                  me.features?.routines === false ||
+                  (me.computerAccess !== undefined && me.computerAccess !== "full"),
+              },
+              resume: first,
+            });
+            return;
+          }
+        }
+        if (afterTour) navigate("/shared", { replace: true });
+        else goTo(first);
       })
       .catch(() => {
         setAwaitingAdmin(false);
@@ -579,6 +616,25 @@ export function OnboardingPage() {
     if (step !== "bot") return;
     void createFirstBot();
   }, [step]);
+
+  if (tour) {
+    return (
+      <div className="h-full bg-background p-3 md:p-8" data-rakazo-surface="onboarding">
+        <div className="mx-auto flex h-full max-h-[780px] w-full max-w-[1100px] flex-col overflow-hidden rounded-2xl border border-border shadow-sm">
+          <OcscTour
+            mode={afterTour ? "revisit" : "first-run"}
+            availability={tour.availability}
+            onFinish={() => {
+              markTourSeen(tour.userId);
+              setTour(null);
+              if (afterTour) navigate("/shared", { replace: true });
+              else goTo(tour.resume);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   // Loading, and creating the first bot, both wait on one spinner until the chat opens.
   if (

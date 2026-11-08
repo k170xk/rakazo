@@ -23,6 +23,11 @@ export async function writeBotInstructions(
 ) {
   await tx.$queryRaw`SELECT id FROM bots WHERE id = ${input.botId} FOR UPDATE`;
   const bot = await tx.bot.findUniqueOrThrow({ where: { id: input.botId } });
+  if (bot.evolveAssistantId) {
+    throw new InstructionConflictError(
+      "This OCSC company assistant's instructions are managed by OCSC and cannot be changed.",
+    );
+  }
   if (input.versionId && input.expectedInstructions === undefined) {
     throw new InstructionConflictError("Review the current instructions before restoring.");
   }

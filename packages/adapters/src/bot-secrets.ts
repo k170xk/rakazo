@@ -40,6 +40,7 @@ import {
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import {
   lockSpaceSettings,
+  runAsSystem,
   runCodeKind,
   runCodeSpentKind,
   runLoginKind,
@@ -206,11 +207,14 @@ export async function loadBotCommandEnvironment(
   scope: BotSecretScope,
   unsetVariables?: Set<string>,
 ): Promise<Record<string, string>> {
-  const rows = await prisma.vaultCredential.findMany({
+  const own = await prisma.vaultCredential.findMany({
     where: await vaultFields(prisma, scope),
     select: { id: true, name: true, auth: true, ciphertext: true },
     orderBy: { name: "asc" },
   });
+  const company = await companyVaultRows(prisma, { auth: { path: ["type"], equals: "command" } });
+  // The person's own variables come last, so one of theirs replaces the company's.
+  const rows = [...unshadowed(company, own), ...own];
   const environment: Record<string, string> = {};
   for (const row of rows) {
     if (!isCommandCredential(row.auth)) continue;
@@ -520,10 +524,12 @@ export async function findBotSecret(prisma: PrismaClient, scope: BotSecretScope,
  */
 export async function findSiteLogin(prisma: PrismaClient, scope: BotSecretScope, origin: string) {
   if (!origin.startsWith("https://")) return null;
-  const rows = await prisma.vaultCredential.findMany({
+  const own = await prisma.vaultCredential.findMany({
     where: { ...(await vaultFields(prisma, scope)), origin },
     select: metadata,
   });
+  // The company's login for the site counts only when the person saved none of their own.
+  const rows = own.length > 0 ? own : await companyVaultRows(prisma, { origin });
   // A row saved before today's name or site rules can't be filled, so it doesn't count.
   const logins = rows.flatMap((row) => {
     try {
@@ -553,6 +559,26 @@ export function canonicalSecretValue(destination: BotSecretDestination, plaintex
   return plaintext;
 }
 
+/** The value as it is saved for its destination; throws when it can't be used there. */
+function checkedSecretValue(destination: BotSecretDestination, plaintext: string): string {
+  if (!plaintext || plaintext.length > 16_384) throw new Error("Invalid credential length");
+  if (
+    destination.auth.type === "login" ||
+    destination.auth.type === "card" ||
+    destination.auth.type === "contact"
+  ) {
+    return canonicalSecretValue(destination, plaintext);
+  }
+  if (destination.auth.type === "command") {
+    // NUL cannot be an environment value. An unpaired surrogate cannot be percent-encoded
+    // later, and that throw would abort every subsequent shell command for this bot.
+    if (plaintext.includes("\0") || percentEncoded(plaintext) === undefined) {
+      throw new Error(UNUSABLE_CREDENTIAL);
+    }
+  } else credentialHeader(destination, plaintext);
+  return plaintext;
+}
+
 export async function prepareBotSecret(input: {
   prisma: PrismaClient;
   secretStore: SecretStore;
@@ -571,22 +597,8 @@ export async function prepareBotSecret(input: {
   note?: string;
 }) {
   const { prisma, secretStore, scope } = input;
-  let { plaintext } = input;
-  if (!plaintext || plaintext.length > 16_384) throw new Error("Invalid credential length");
   const destination = normalizeSecretDestination(input.destination);
-  if (
-    destination.auth.type === "login" ||
-    destination.auth.type === "card" ||
-    destination.auth.type === "contact"
-  ) {
-    plaintext = canonicalSecretValue(destination, plaintext);
-  } else if (destination.auth.type === "command") {
-    // NUL cannot be an environment value. An unpaired surrogate cannot be percent-encoded
-    // later, and that throw would abort every subsequent shell command for this bot.
-    if (plaintext.includes("\0") || percentEncoded(plaintext) === undefined) {
-      throw new Error(UNUSABLE_CREDENTIAL);
-    }
-  } else credentialHeader(destination, plaintext);
+  const plaintext = checkedSecretValue(destination, input.plaintext);
   await assertVaultInUse(prisma, scope);
   const vault = await vaultFields(prisma, scope);
   const existing = await prisma.vaultCredential.findFirst({
@@ -782,19 +794,25 @@ export async function listBotSecrets(
   secretStore: Pick<SecretStore, "load">,
   scope: BotSecretScope,
 ) {
-  const rows = await prisma.vaultCredential.findMany({
+  const own = await prisma.vaultCredential.findMany({
     where: await vaultFields(prisma, scope),
     select: { ...metadata, ...labels, id: true, ciphertext: true },
     orderBy: { name: "asc" },
   });
+  const company = unshadowed(await companyVaultRows(prisma), own).map((row) => ({
+    ...row,
+    company: true,
+  }));
+  const rows: Array<(typeof own)[number] & { company?: boolean }> = [...own, ...company];
   return Promise.all(
-    rows.map(async ({ id, ciphertext, title, note, ...row }) => {
+    rows.map(async ({ id, ciphertext, title, note, company: fromCompany, ...row }) => {
       const preview = await itemPreview(secretStore, { id, ciphertext, auth: row.auth });
       const view = botSecretToolView({ name: row.name, origin: row.origin, auth: row.auth });
       return {
         ...view,
         ...(title ? { title } : {}),
         ...(note ? { note } : {}),
+        ...(fromCompany ? { company: true } : {}),
         ...(preview?.card
           ? { card: { ...preview.card, expiry: cardExpiry(preview.card) } }
           : preview?.contact
@@ -993,9 +1011,10 @@ export async function requestWithBotSecret(input: {
   registerRedactions?: (values: string[]) => void;
 }): Promise<unknown> {
   const request = SecretHttpRequest.parse(input.request);
-  const row = await input.prisma.vaultCredential.findFirst({
-    where: { ...(await vaultFields(input.prisma, input.scope)), name: request.name },
-  });
+  const row =
+    (await input.prisma.vaultCredential.findFirst({
+      where: { ...(await vaultFields(input.prisma, input.scope)), name: request.name },
+    })) ?? (await findCompanyVaultItem(input.prisma, request.name));
   if (!row) return { error: "Credential is unavailable. Use request_secret to save it first." };
   const destination = normalizeSecretDestination(row);
   if (destination.auth.type === "login") {
@@ -1111,7 +1130,7 @@ export async function loadLoginPasswordRedactions(
   scope: BotSecretScope,
 ): Promise<string[]> {
   // Every saved login and card, however many other credentials the bot has; only they are read.
-  const rows = await prisma.vaultCredential.findMany({
+  const own = await prisma.vaultCredential.findMany({
     where: {
       ...(await vaultFields(prisma, scope)),
       OR: [
@@ -1121,6 +1140,8 @@ export async function loadLoginPasswordRedactions(
     },
     select: { id: true, auth: true, ciphertext: true },
   });
+  const company = await companyVaultRows(prisma, { auth: { path: ["type"], equals: "login" } });
+  const rows = [...own, ...company];
   const forms = new Set<string>();
   for (const row of rows) {
     const type = BotSecretAuth.safeParse(row.auth).data?.type;
@@ -1303,9 +1324,9 @@ export async function resolveLoginFill(input: {
   );
   const row = runLogin
     ? undefined
-    : await input.prisma.vaultCredential.findFirst({
+    : ((await input.prisma.vaultCredential.findFirst({
         where: { ...(await vaultFields(input.prisma, input.scope)), name: input.name },
-      });
+      })) ?? (await findCompanyVaultItem(input.prisma, input.name)));
   const stored = runLogin
     ? { name: input.name, origin: runLogin.origin, auth: { type: "login" } }
     : row;
@@ -1489,4 +1510,172 @@ export async function resolveVaultCardFill(input: {
         error:
           "This card has no billing postal code saved. Type the postal code of the user's billing address yourself.",
       };
+}
+
+type CompanyVaultClient = Pick<PrismaClient, "companyVaultCredential">;
+const companyColumns = {
+  id: true,
+  name: true,
+  title: true,
+  note: true,
+  origin: true,
+  auth: true,
+  ciphertext: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+/**
+ * The company vault: items an admin saved for every member's assistants. Read as the system, since
+ * no member owns them, and only on the paths that use a value without showing it.
+ */
+export function companyVaultRows(
+  prisma: CompanyVaultClient,
+  where: Prisma.CompanyVaultCredentialWhereInput = {},
+) {
+  return runAsSystem("read the company vault", () =>
+    prisma.companyVaultCredential.findMany({
+      where,
+      select: companyColumns,
+      orderBy: { name: "asc" },
+    }),
+  );
+}
+
+export async function findCompanyVaultItem(prisma: CompanyVaultClient, name: string) {
+  const [row] = await companyVaultRows(prisma, { name });
+  return row ?? null;
+}
+
+/** Company items a person's own item of the same name doesn't replace. */
+function unshadowed<T extends { name: string }>(company: T[], own: readonly { name: string }[]) {
+  const names = new Set(own.map((row) => row.name));
+  return company.filter((row) => !names.has(row.name));
+}
+
+/** The company vault as its admins see it: labels and previews, never a value. */
+export async function listCompanyVaultItems(
+  prisma: CompanyVaultClient,
+  secretStore: Pick<SecretStore, "load">,
+  name?: string,
+) {
+  const rows = await companyVaultRows(prisma, name !== undefined ? { name } : {});
+  return Promise.all(
+    rows.map(async ({ id, ciphertext, ...row }) => {
+      const preview = await itemPreview(secretStore, { id, ciphertext, auth: row.auth });
+      return { ...row, title: vaultItemTitle(row, preview), preview };
+    }),
+  );
+}
+
+/**
+ * Saves a company item, or relabels it when no value is given. Never a card or contact: those
+ * belong to a person. A new item is named from its title.
+ */
+export async function storeCompanyVaultItem(input: {
+  prisma: CompanyVaultClient;
+  secretStore: SecretStore;
+  adminUserId: string;
+  spaceId: string;
+  destination: { name?: string; origin: string; auth: unknown };
+  plaintext?: string;
+  title?: string;
+  note?: string;
+}): Promise<string> {
+  const { prisma } = input;
+  const labels = {
+    ...(input.title !== undefined ? { title: input.title } : {}),
+    ...(input.note !== undefined ? { note: input.note } : {}),
+  };
+  if (input.plaintext === undefined) {
+    if (!input.destination.name) throw new Error("A new item needs its value");
+    const name = input.destination.name;
+    const updated = await runAsSystem("relabel a company vault item", () =>
+      prisma.companyVaultCredential.updateMany({
+        where: { name },
+        data: { ...labels, updatedBy: input.adminUserId },
+      }),
+    );
+    if (updated.count === 0) throw new Error("Credential not found");
+    return name;
+  }
+  const name =
+    input.destination.name ??
+    (await freeCompanyItemName(
+      prisma,
+      input.title ||
+        defaultVaultItemTitle(input.destination as BotSecretDestination, input.plaintext),
+    ));
+  const destination = normalizeSecretDestination({ ...input.destination, name });
+  if (destination.auth.type === "card" || destination.auth.type === "contact") {
+    throw new Error("Cards and contacts belong in a person's own vault");
+  }
+  const plaintext = checkedSecretValue(destination, input.plaintext);
+  const existing = await findCompanyVaultItem(prisma, name);
+  if (existing && !sameSecretDestination(normalizeSecretDestination(existing), destination)) {
+    throw new Error("Remove the existing credential before changing its destination");
+  }
+  const id = existing?.id ?? randomBytes(12).toString("hex");
+  const stored = await input.secretStore.put(
+    plaintext,
+    {
+      operationId: id,
+      traceId: id,
+      userId: input.adminUserId,
+      spaceId: input.spaceId,
+      signal: AbortSignal.timeout(20_000),
+    },
+    { recordId: id },
+  );
+  await runAsSystem("save a company vault item", () =>
+    existing
+      ? prisma.companyVaultCredential.update({
+          where: { id },
+          data: { ciphertext: stored.ciphertext, ...labels, updatedBy: input.adminUserId },
+        })
+      : prisma.companyVaultCredential.create({
+          data: {
+            id,
+            name,
+            origin: destination.origin,
+            auth: destination.auth as Prisma.InputJsonObject,
+            ciphertext: stored.ciphertext,
+            ...labels,
+            updatedBy: input.adminUserId,
+          },
+        }),
+  );
+  if (existing && existing.ciphertext !== stored.ciphertext) {
+    await input.secretStore.delete(existing.ciphertext, existing.id).catch(() => undefined);
+  }
+  return name;
+}
+
+async function freeCompanyItemName(prisma: CompanyVaultClient, title: string) {
+  const base =
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "item";
+  const taken = new Set(
+    (await companyVaultRows(prisma, { name: { startsWith: base } })).map((row) => row.name),
+  );
+  for (let n = 1; ; n++) {
+    const candidate = n === 1 ? base : `${base}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
+export async function removeCompanyVaultItem(
+  prisma: CompanyVaultClient,
+  secretStore: Pick<SecretStore, "delete">,
+  name: string,
+) {
+  const row = await findCompanyVaultItem(prisma, name);
+  if (!row) return;
+  await runAsSystem("remove a company vault item", () =>
+    prisma.companyVaultCredential.deleteMany({ where: { id: row.id } }),
+  );
+  await secretStore.delete(row.ciphertext, row.id).catch(() => undefined);
 }

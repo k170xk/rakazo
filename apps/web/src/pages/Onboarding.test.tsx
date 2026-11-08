@@ -11,6 +11,7 @@ const account = vi.hoisted(() => ({ load: (_me: unknown) => {} }));
 vi.mock("../lib/rpc", () => ({
   selectedSpaceId: () => null,
   rpc: {
+    bots: { list: vi.fn(async () => []) },
     me: vi.fn(
       () =>
         new Promise((resolve) => {
@@ -43,6 +44,7 @@ vi.mock("@lingui/react/macro", () => {
   };
 });
 
+import { hasSeenTour, markTourSeen } from "../components/tour/ocsc-tour";
 import { OnboardingPage } from "./Onboarding";
 
 beforeEach(() => {
@@ -56,9 +58,11 @@ beforeEach(() => {
     },
   );
   Element.prototype.scrollIntoView = () => {};
+  markTourSeen("u1");
 });
 afterEach(() => {
   document.body.innerHTML = "";
+  localStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -79,7 +83,12 @@ it("marks onboarding as usable for the desktop only once a step shows", async ()
   expect(marked()).toBeNull();
 
   await act(async () =>
-    account.load({ needsModel: true, needsSignupSurvey: false, billingEnabled: false }),
+    account.load({
+      needsModel: true,
+      userId: "u1",
+      needsSignupSurvey: false,
+      billingEnabled: false,
+    }),
   );
   expect(host.querySelector("h1")?.textContent).toBe("Connect a model");
   expect(marked()).not.toBeNull();
@@ -98,7 +107,12 @@ it("finds and searches a long custom endpoint list during onboarding", async () 
     ),
   );
   await act(async () =>
-    account.load({ needsModel: true, needsSignupSurvey: false, billingEnabled: false }),
+    account.load({
+      needsModel: true,
+      userId: "u1",
+      needsSignupSurvey: false,
+      billingEnabled: false,
+    }),
   );
   await act(async () => document.querySelector<HTMLElement>('[aria-label="Provider"]')!.click());
   await act(async () =>
@@ -147,6 +161,7 @@ it("tells staff their administrator is setting up the model instead of asking fo
   await act(async () =>
     account.load({
       needsModel: true,
+      userId: "u1",
       needsSignupSurvey: false,
       billingEnabled: false,
       isAdmin: false,
@@ -175,6 +190,7 @@ it("sends the admin to the company admin page to choose the model", async () => 
   await act(async () =>
     account.load({
       needsModel: true,
+      userId: "u1",
       needsSignupSurvey: false,
       billingEnabled: false,
       isAdmin: true,
@@ -182,5 +198,38 @@ it("sends the admin to the company admin page to choose the model", async () => 
     }),
   );
   expect(host.textContent).toBe("company admin");
+  act(() => root.unmount());
+});
+
+it("shows the OCSC Intelligence tour before a new person's first step", async () => {
+  const host = document.body.appendChild(document.createElement("div"));
+  const root = createRoot(host);
+  await act(async () =>
+    root.render(
+      <MemoryRouter initialEntries={["/onboarding"]}>
+        <Routes>
+          <Route path="/onboarding/:step?" element={<OnboardingPage />} />
+        </Routes>
+      </MemoryRouter>,
+    ),
+  );
+  await act(async () =>
+    account.load({
+      userId: "new",
+      needsModel: true,
+      needsSignupSurvey: false,
+      billingEnabled: false,
+    }),
+  );
+  expect(host.querySelector('[data-testid="ocsc-tour"]')).not.toBeNull();
+  await act(async () =>
+    [...host.querySelectorAll("button")]
+      .find((button) => button.textContent === "Skip to the end")!
+      .click(),
+  );
+  await act(async () => host.querySelector<HTMLElement>('[data-testid="ocsc-tour-next"]')!.click());
+  expect(host.querySelector('[data-testid="ocsc-tour"]')).toBeNull();
+  expect(host.querySelector("h1")?.textContent).toBe("Connect a model");
+  expect(hasSeenTour("new")).toBe(true);
   act(() => root.unmount());
 });

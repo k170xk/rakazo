@@ -321,7 +321,7 @@ test("connects, lists, and uses an OpenAI-compatible endpoint", async ({ page },
       .click();
     await expect(saved).toBeHidden();
     await page.getByRole("button", { name: "Close model settings" }).click();
-    await openBotPanelTab(page, "Advanced");
+    await openBotPanelTab(page, "Settings");
     const settings = page.getByTestId("bot-settings");
     // The Model select sits inside its wrapping <label>, so the label text includes
     // option copy and getByLabel(..., { exact: true }) misses it. Use the role name.

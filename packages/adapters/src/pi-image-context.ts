@@ -213,6 +213,15 @@ function animatedWebpFrameTokens(bytes: Buffer): number | undefined {
   return offset === bytes.length && animationControl && tokens > 0 ? tokens : undefined;
 }
 
+/** Width and height from a base64 PNG, JPEG or still WebP header; undefined otherwise. */
+export function piImageDimensions(data: string, mimeType: string): [number, number] | undefined {
+  const header = Buffer.from(data.slice(0, MAX_IMAGE_HEADER_BASE64), "base64");
+  const dimensions = imageDimensions(header, mimeType);
+  if (dimensions?.[2] !== 1) return;
+  const [width, height] = dimensions;
+  return width >= 1 && height >= 1 ? [width, height] : undefined;
+}
+
 /** Bounded-resolution context planning estimate, independent of provider billing. */
 export function estimatePiImageTokens(image: object): number | undefined {
   if (!("data" in image) || typeof image.data !== "string") return;

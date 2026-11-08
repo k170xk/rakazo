@@ -448,6 +448,7 @@ function fixture({
     chatGroup: { findMany: vi.fn(async () => []) },
     botSection: { findMany: vi.fn(async () => []) },
     vaultCredential: { findMany: vi.fn(async () => []) },
+    companyVaultCredential: { findMany: vi.fn(async () => []) },
     agentSkill: { findMany: vi.fn(async () => []) },
     scratchpadItem: { findMany: vi.fn(async () => []) },
     spaceSettingOverride: {
@@ -3424,7 +3425,10 @@ describe("user_computer_shell", () => {
     f.setCalls([call("ls")]);
     await f.run();
     expect(f.results).toEqual([
-      { error: "The user's computer is not connected. Ask them to open the Rakazo desktop app." },
+      {
+        error:
+          "The user's computer is not connected. Ask them to open the OCSC Intelligence desktop app.",
+      },
     ]);
     expect(requests).toEqual([]);
   });

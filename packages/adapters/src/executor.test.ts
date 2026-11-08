@@ -1305,6 +1305,7 @@ function pinnedRoutineRunPrisma(modelId: string) {
     taughtSkill: { findMany: vi.fn(async () => []) },
     secret: { findMany: vi.fn(async () => []) },
     vaultCredential: { findMany: vi.fn(async () => []) },
+    companyVaultCredential: { findMany: vi.fn(async () => []) },
     agentSkill: { findMany: vi.fn(async () => []) },
     scratchpadItem: { findMany: vi.fn(async () => []) },
   };
@@ -3105,6 +3106,7 @@ description: Prepare standup notes
         },
         taughtSkill: { findMany: vi.fn(async () => []) },
         vaultCredential: { findMany: vi.fn(async () => []) },
+        companyVaultCredential: { findMany: vi.fn(async () => []) },
         agentSkill: { findMany: vi.fn(async () => []) },
         scratchpadItem: { findMany: vi.fn(async () => []) },
       } as unknown as PrismaClient;
@@ -3219,6 +3221,7 @@ description: Prepare standup notes
       taughtSkill: { findMany: vi.fn(async () => []) },
       secret: { findMany: vi.fn(async () => []) },
       vaultCredential: { findMany: vi.fn(async () => []) },
+      companyVaultCredential: { findMany: vi.fn(async () => []) },
       agentSkill: { findMany: vi.fn(async () => []) },
       scratchpadItem: { findMany: vi.fn(async () => []) },
     } as unknown as PrismaClient;
@@ -3338,6 +3341,7 @@ description: Prepare standup notes
       taughtSkill: { findMany: vi.fn(async () => []) },
       secret: { findMany: vi.fn(async () => []) },
       vaultCredential: { findMany: vi.fn(async () => []) },
+      companyVaultCredential: { findMany: vi.fn(async () => []) },
       agentSkill: { findMany: vi.fn(async () => []) },
       scratchpadItem: { findMany: vi.fn(async () => []) },
     } as unknown as PrismaClient;

@@ -37,6 +37,8 @@ import { BotAvatarSetSchema } from "./bot-avatar.js";
 import {
   BotSecretMetadata,
   BotSecretPutInput,
+  CompanyVaultItemSchema,
+  CompanyVaultPutInput,
   LOGIN_FIELD_LIMIT,
   LoginFieldInput,
   StoredBotSecretName,
@@ -398,6 +400,16 @@ export const appContract = {
         }),
       )
       .output(CompanyAdminStateSchema),
+    /** Shares the caller's own voice connection with everyone, or stops sharing it. */
+    shareVoice: oc.input(z.object({ share: z.boolean() })).output(CompanyAdminStateSchema),
+    /** Logins, API keys and command variables every member's assistants can use. */
+    vault: {
+      list: oc.output(z.array(BotSecretMetadata)),
+      put: oc.input(CompanyVaultPutInput).output(BotSecretMetadata),
+      remove: oc
+        .input(z.object({ name: StoredBotSecretName }))
+        .output(z.object({ ok: z.literal(true) })),
+    },
     /** Model spending per person across every space. */
     spending: oc
       .input(z.object({ period: z.enum(STAFF_SPENDING_PERIODS).default("30d") }))
@@ -1692,6 +1704,8 @@ export const appContract = {
     remove: oc
       .input(settingsScopeInput.extend({ name: StoredBotSecretName }))
       .output(z.object({ ok: z.literal(true) })),
+    /** What the company vault holds, without values, so people know what their assistants can use. */
+    company: oc.output(z.array(CompanyVaultItemSchema)),
   },
   /** The vault this Space uses, for apps that predate it. The bot only checks access. */
   botSecrets: {

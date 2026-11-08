@@ -579,8 +579,13 @@ export function BotSettings({
               <Trans>Files</Trans>
             </TabsTrigger>
           ) : null}
-          <TabsTrigger value="settings">
-            <Trans>Advanced</Trans>
+          <TabsTrigger
+            value="settings"
+            aria-label={t`Settings`}
+            title={t`Settings`}
+            className="flex-none px-2"
+          >
+            <Settings className="size-4" strokeWidth={1.75} />
           </TabsTrigger>
         </TabsList>
         <TabsContent value="computer" className="pt-4">

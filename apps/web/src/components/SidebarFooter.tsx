@@ -1,16 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { NavLink } from "@rakazo/contracts";
-import { ANDROID_APP_STORE_URL, IOS_APP_STORE_URL } from "@rakazo/contracts";
+import { AppMarkStack, Button, Popover, PopoverContent, PopoverTrigger } from "@rakazo/ui-web";
 import {
-  AppMarkStack,
-  Button,
-  buttonVariants,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@rakazo/ui-web";
-import {
-  BookOpen,
   Check,
   Download,
   FolderOpen,
@@ -20,7 +11,6 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
-  Smartphone,
   SquareKanban,
   UserPlus,
   UserRound,
@@ -209,7 +199,7 @@ export function SidebarFooter({
               onClick={onSkills}
             >
               <ScrollText className="text-muted-foreground" strokeWidth={1.75} />
-              <Trans>Skills</Trans>
+              <Trans>Tools and skills</Trans>
             </Button>
             <Button
               variant="ghost"
@@ -240,18 +230,6 @@ export function SidebarFooter({
                 {link.label}
               </Button>
             ))}
-            <div className="my-1 border-t border-border" />
-            <a
-              className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
-              href={
-                /Android/i.test(navigator.userAgent) ? ANDROID_APP_STORE_URL : IOS_APP_STORE_URL
-              }
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Smartphone className="text-muted-foreground" strokeWidth={1.75} />
-              <Trans>Get the mobile app</Trans>
-            </a>
             {onInvite ? (
               <Button
                 variant="ghost"
@@ -262,15 +240,6 @@ export function SidebarFooter({
                 <Trans>Invite friends</Trans>
               </Button>
             ) : null}
-            <a
-              className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
-              href="https://github.com/elie222/rakazo/blob/main/docs/self-host.md"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <BookOpen className="text-muted-foreground" strokeWidth={1.75} />
-              <Trans>Docs</Trans>
-            </a>
             <div className="my-1 border-t border-border" />
             <Button
               variant="ghost"

@@ -10,6 +10,10 @@ import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
 export function InstructionSettings({ bot }: { bot: Bot }) {
+  return bot.companyAssistant ? null : <EditableInstructions bot={bot} />;
+}
+
+function EditableInstructions({ bot }: { bot: Bot }) {
   const { t } = useLingui();
   const id = useId();
   const [previousBot, setPreviousBot] = useState(bot);

@@ -1,8 +1,9 @@
 import { createRouterClient } from "@orpc/server";
 import type { SecretStore } from "@rakazo/adapter-kit";
-import { BUILTIN_AGENT_SKILLS, previewPluginInstall } from "@rakazo/adapters";
+import { BUILTIN_AGENT_SKILLS, previewPluginInstall, setCompanyPolicy } from "@rakazo/adapters";
 import type { Actor } from "@rakazo/contracts";
-import { describe, expect, it, vi } from "vitest";
+import { DEFAULT_COMPANY_FEATURES } from "@rakazo/contracts";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 import { installPlugin, setPluginParts } from "./plugin-installs.js";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";
@@ -276,6 +277,8 @@ describe("plugin RPC boundary", () => {
     });
   });
   it("returns summaries without sensitive material and requires digest at install", async () => {
+    setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, staffIntegrations: true } });
+    onTestFinished(() => setCompanyPolicy({ features: DEFAULT_COMPANY_FEATURES }));
     const { rpc, prisma } = client();
     const result = await rpc.capabilities.pluginPreview({ source });
     expect(result.resolvedSha).toBe(sha);

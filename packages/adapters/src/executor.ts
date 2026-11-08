@@ -97,6 +97,7 @@ import {
 } from "./connection-context.js";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
+import { evolvePersonContext } from "./evolve-person-context.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { localHomePath } from "./file-retention.js";
 import type { FleetRun } from "./fleet-tools.js";
@@ -1785,16 +1786,21 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             );
         const replyContext = await loadReplyContext(deps.prisma, thread.id, run.sourceMessageId);
         let userTimeZone: string | null | undefined;
+        let ownerEmail: string | undefined;
         try {
-          userTimeZone = (
-            await deps.prisma.user.findUnique({
-              where: { id: run.userId },
-              select: { timezone: true },
-            })
-          )?.timezone;
+          const owner = await deps.prisma.user.findUnique({
+            where: { id: run.userId },
+            select: { timezone: true, email: true },
+          });
+          userTimeZone = owner?.timezone;
+          ownerEmail = owner?.email;
         } catch {
           // Timezone is optional context; a lookup failure must not prevent a run.
         }
+        // The owner's Evolve CV; a colleague's or outside chat's turn must not see it.
+        const personContext = nonOwnerChatRun
+          ? undefined
+          : await evolvePersonContext(deps.evolvePlugins, ownerEmail);
         let lateRoutineNote: string | undefined;
         const lateSince = current.lateSince ?? firstLateSince;
         if (lateSince && run.routineId) {
@@ -1976,6 +1982,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               contextStrategy: deps.contextStrategy,
               instructions: userTurnInstructions({
                 botInstructions: runIdentityInstruction(bot, run.trigger),
+                personContext,
                 groupContext: groupReplyOptional
                   ? [groupContext, GROUP_UNADDRESSED_REPLY_GUIDANCE].filter(Boolean).join("\n")
                   : groupContext,

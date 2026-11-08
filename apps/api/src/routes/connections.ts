@@ -16,6 +16,7 @@ import {
   runProviderTransaction,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
+import { requireCompanyFeature } from "../company-admin.js";
 import { connectionCreatedEvent } from "../security-audit.js";
 import type { RouterContext } from "./context.js";
 
@@ -276,6 +277,7 @@ export function connectionsRoutes(ctx: RouterContext) {
         }));
       }),
       begin: authed.connections.begin.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "staffIntegrations");
         const connector =
           deps.integrationSettings &&
           (input.connectorId === "composio" || input.connectorId === "pipedream")
@@ -480,6 +482,7 @@ export function connectionsRoutes(ctx: RouterContext) {
         }
       }),
       complete: authed.connections.complete.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "staffIntegrations");
         const existing = await deps.prisma.connection.findFirst({
           where: {
             id: input.connectionId,

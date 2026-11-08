@@ -1069,6 +1069,7 @@ describe("transcribeInboundVoice", () => {
           ),
         },
         secret: { findFirst: vi.fn().mockResolvedValue({ id: "secret-1", ciphertext: "c" }) },
+        deploymentSettings: { findUnique: vi.fn().mockResolvedValue(null) },
       },
       secrets: {
         load: vi.fn().mockImplementation(async () => overrides.load?.() ?? "key"),

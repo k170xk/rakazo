@@ -17,7 +17,6 @@ import type {
 } from "@rakazo/contracts";
 import { AI_DISCLOSURE_VERSION, AI_PRIVACY_URL } from "@rakazo/contracts";
 import {
-  findDefaultVoiceCredential,
   findModelCredential,
   findModelCredentialById,
   listModelRoleChoices,
@@ -27,7 +26,7 @@ import {
 } from "@rakazo/db";
 import type { RouterDeps } from "./router.js";
 import { resolveThreadTarget } from "./thread-target.js";
-import { voiceCredentialServer } from "./voice.js";
+import { effectiveVoiceCredential, voiceCredentialServer } from "./voice.js";
 
 export async function aiConsentStatus(
   deps: RouterDeps,
@@ -91,8 +90,8 @@ export async function aiConsentStatus(
         : [],
       uses.includes("voice")
         ? query.uses
-          ? findDefaultVoiceCredential(deps.prisma, actor, query.settingsScope).then(
-              (credential) => (credential ? [{ credential }] : []),
+          ? effectiveVoiceCredential(deps, actor, undefined, query.settingsScope).then((found) =>
+              found ? [{ credential: found.cred }] : [],
             )
           : voicePreferenceTarget(deps.prisma, actor, query.settingsScope).then((target) =>
               listVoicePreferences(deps.prisma, target),

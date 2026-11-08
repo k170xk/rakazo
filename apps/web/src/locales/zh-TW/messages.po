@@ -14,14 +14,53 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: @lingui/cli\n"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
+msgstr ""
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr "（未讀）"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"Build me a fee tracker for my projects with a chart of invoiced against remaining fees, then get it ready to share with the Civil team.\""
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"Every Monday at 8am, summarise open ACC issues and send me the list\""
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"List this week's open RFIs on the Riverside job in ACC and draft our responses in an OCSC Word document.\" Or: \"Compare the Forma massing options and summarise the area and daylight results in a deck.\""
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"On the last Friday of the month, update the bid tracker and flag anything overdue\""
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "\"Turn these site visit notes into an OCSC report with two infographics.\" Then: \"Make section 3 shorter and add the Riverside project.\""
+msgstr ""
+
+#. placeholder {0}: state.staff.accounts
+#: src/pages/AdminCompanyPage.tsx
+msgid "{0, plural, one {# account} other {# accounts}}"
+msgstr ""
 
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
 msgstr "{0, plural, one {# 個機器人使用自己的模型：} other {# 個機器人使用自己的模型：}}"
+
+#. placeholder {0}: data.totals.unmeasuredCalls
+#: src/pages/AdminStaffSpending.tsx
+msgid "{0, plural, one {# call reported no cost, usually because it failed before the model replied, and is left out of the totals.} other {# calls reported no cost, usually because they failed before the model replied, and are left out of the totals.}}"
+msgstr ""
+
+#. placeholder {0}: usage.unmeasuredCalls
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0, plural, one {# call reported no cost, usually because it failed before the model replied. It is not included in the totals.} other {# calls reported no cost, usually because they failed before the model replied. They are not included in the totals.}}"
+msgstr ""
 
 #. placeholder {0}: servers.length
 #: src/pages/PluginsOverlay.tsx
@@ -43,6 +82,11 @@ msgstr "{0, plural, one {已獲得 # 個月免費} other {已獲得 # 個月免�
 msgid "{0, plural, one {# free month} other {# free months}}"
 msgstr ""
 
+#. placeholder {0}: block.messageCount
+#: src/pages/shell/evolve-history.tsx
+msgid "{0, plural, one {# message} other {# messages}}"
+msgstr ""
+
 #. placeholder {0}: skills.length - shownSkills.length
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{0, plural, one {# more} other {# more}}"
@@ -59,9 +103,24 @@ msgstr ""
 msgid "{0, plural, one {# space} other {# spaces}}"
 msgstr ""
 
+#. placeholder {0}: state.staff.withOwnModels
+#: src/pages/AdminCompanyPage.tsx
+msgid "{0, plural, one {# still has their own model connection} other {# still have their own model connections}}"
+msgstr ""
+
 #. placeholder {0}: server.health.toolCount
 #: src/pages/McpServersOverlay.tsx
 msgid "{0, plural, one {# tool} other {# tools}}"
+msgstr ""
+
+#. placeholder {0}: data.retentionDays
+#: src/pages/shell/files-tab.tsx
+msgid "{0, plural, one {Files nobody changes for # day are deleted automatically. Pin anything you want to keep.} other {Files nobody changes for # days are deleted automatically. Pin anything you want to keep.}}"
+msgstr ""
+
+#. placeholder {0}: shapes.length
+#: src/components/render-studio/StageCanvas.tsx
+msgid "{0, plural, one {Mask active · # region · Render will target selection} other {Mask active · # regions · Render will target selection}}"
 msgstr ""
 
 #. placeholder {0}: pinned.length
@@ -102,6 +161,11 @@ msgstr "{0} {unitLabel}"
 msgid "{0} connection"
 msgstr "{0} 連線"
 
+#. placeholder {0}: storage.fileRetentionDays
+#: src/pages/AdminComputerAccess.tsx
+msgid "{0} days"
+msgstr ""
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} GB"
@@ -137,10 +201,21 @@ msgstr "{0} KB"
 msgid "{0} MB"
 msgstr "{0} MB"
 
+#. placeholder {0}: formatSize(person.storageUsedBytes)
+#. placeholder {1}: limitLabel(person.effectiveStorageLimitMb)
+#: src/pages/AdminComputerAccess.tsx
+msgid "{0} of {1} used"
+msgstr ""
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
 msgstr "{0} 彙整時數"
+
+#. placeholder {0}: sharedBy.name
+#: src/pages/AdminCompanyVoice.tsx
+msgid "{0} shares their voice connection, but it has been removed. Connect one again below."
+msgstr ""
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
@@ -167,6 +242,14 @@ msgstr "{commandVariable} 是保留名稱，不能用作命令變數。請選擇
 msgid "{connectedCount, plural, one {# connected} other {# connected}}"
 msgstr ""
 
+#: src/pages/shell/evolve-history.tsx
+msgid "{continued} of {total} opened"
+msgstr ""
+
+#: src/pages/shell/evolve-history.tsx
+msgid "{count, plural, one {# file} other {# files}}"
+msgstr ""
+
 #: src/pages/shell/message-view.tsx
 msgid "{count, plural, one {# message with {peer}} other {# messages with {peer}}}"
 msgstr "{count, plural, other {與{peer}的 # 則訊息}}"
@@ -191,9 +274,17 @@ msgstr "{count} 週"
 msgid "{count} years"
 msgstr "{count} 年"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "{days} days"
+msgstr ""
+
 #: src/lib/relative-time.ts
 msgid "{days}d ago"
 msgstr "{days} 天前"
+
+#: src/pages/shell/files-tab.tsx
+msgid "{daysLeft, plural, =0 {Deleted today} one {Deleted in # day} other {Deleted in # days}}"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -202,6 +293,10 @@ msgstr "第 {from}–{to} 列，共 {total} 列"
 #: src/lib/cron.ts
 msgid "{fromName} to {toName}"
 msgstr "{fromName}至{toName}"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "{gb} GB"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 msgid "{header}, column {index}"
@@ -226,6 +321,14 @@ msgstr "{label}，空白"
 #: src/lib/relative-time.ts
 msgid "{minutes}m ago"
 msgstr "{minutes} 分鐘前"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "{MODEL_LABEL} edits only inside your mask and saves a new version."
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "{modeNoun} selected"
+msgstr ""
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
@@ -365,6 +468,10 @@ msgstr "剩餘 {remaining}"
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# 個席位} other {# 個席位}}"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "{selectedCount} / {maxPages} pages selected"
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
@@ -410,6 +517,10 @@ msgstr "{toolCount, plural, one {# 個工具} other {# 個工具}}"
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU、{memoryGb} GB、每月 {hours} 小時電腦時數"
 
+#: src/pages/SharedChats.tsx
+msgid "{working} is working…"
+msgstr ""
+
 #. placeholder {0}: mention.name
 #: src/pages/shell/composer.tsx
 msgid "@{0}"
@@ -419,17 +530,63 @@ msgstr "@{0}"
 msgid "/ month"
 msgstr "/ 月"
 
+#. placeholder {0}: ex.tags.length - 3
+#: src/pages/shell/references-dialog.tsx
+msgid "+{0} more"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "⚠️ Approaching context limit - {remaining}% remaining"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "⚠️ Near context limit - consider removing some references"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "✅ Good context usage - {remaining}% remaining"
+msgstr ""
+
 #: src/components/integrations/space-availability.tsx
 msgid "1 space"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A bid writer drafts the response as an OCSC Word document"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "A bit of everything"
 msgstr "什麼都做一點"
 
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "A blank bot"
+msgstr ""
+
+#: src/pages/SharedChats.tsx
+#: src/pages/Shell.tsx
+msgid "A colleague"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "A command's output"
 msgstr "命令的輸出"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A connector links an agent to a system you already use, so it can read and act on your data with your permission. Think Outlook, Teams, SharePoint and the construction platforms we work in."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A research agent finds the right OCSC project references"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A reviewer checks it against the brief and sends it back to you"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A routine is a task an agent carries out on a schedule or when something changes, then delivers the result to you."
+msgstr ""
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
@@ -448,6 +605,10 @@ msgstr ""
 #: src/components/InfoTooltip.tsx
 msgid "About {label}"
 msgstr "關於 {label}"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Accepted: PDF. Select a file to preview and choose pages."
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Access key ID"
@@ -484,11 +645,12 @@ msgid "Account menu for {name}"
 msgstr "{name} 的帳號選單"
 
 #. placeholder {0}: bot.name
+#. placeholder {0}: file.path
 #. placeholder {0}: group.spaceName
-#. placeholder {0}: page.title
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/shell/files-tab.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Actions for {0}"
 msgstr "{0} 的操作"
@@ -497,6 +659,7 @@ msgstr "{0} 的操作"
 msgid "Actions for space"
 msgstr "空間操作"
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Active"
@@ -505,6 +668,10 @@ msgstr "啟用"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"
 msgstr "動態"
+
+#: src/components/ImageLightbox.tsx
+msgid "Actual size"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/SecretAskCard.tsx
@@ -576,6 +743,14 @@ msgstr "加值"
 msgid "Add custom"
 msgstr ""
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Add drawings"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Add Evolve References (Projects & More)"
+msgstr ""
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Add fallback"
 msgstr "新增備援模型"
@@ -605,9 +780,25 @@ msgstr "新增待辦事項"
 msgid "Add passkey"
 msgstr "新增通行金鑰"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Add PDF drawings"
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Add PDF drawings as images"
+msgstr ""
+
 #: src/pages/model-settings/providers-section.tsx
 msgid "Add provider"
 msgstr "新增供應商"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Add References"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Add References as AI Context"
+msgstr ""
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Add rule"
@@ -625,6 +816,10 @@ msgstr "新增伺服器網址"
 msgid "Add skills"
 msgstr ""
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Add to chat"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "加入例行任務"
@@ -637,10 +832,24 @@ msgstr "新增觸發器"
 msgid "Add workspace"
 msgstr "新增工作區"
 
+#: src/components/GroupPeople.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Added"
 msgstr "已新增"
+
+#. placeholder {0}: person.role
+#: src/pages/shell/evolve-references.tsx
+msgid "Added as Role: {0}"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Added References:"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Adding a line above a total grows the total to include it"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -657,13 +866,20 @@ msgstr ""
 msgid "Address line 2"
 msgstr ""
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Adds infographics, tables, figures and real OCSC project photos"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Admins come from the server's RAKAZO_ADMIN_EMAILS setting."
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
-#: src/pages/shell/bot-panel.tsx
 msgid "Advanced"
 msgstr "進階"
 
@@ -671,8 +887,52 @@ msgstr "進階"
 msgid "Advanced..."
 msgstr "進階..."
 
+#: src/components/render-studio/CompareSlider.tsx
+msgid "After"
+msgstr ""
+
+#: src/components/render-studio/CompareSlider.tsx
+msgid "AFTER"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Agents"
+#~ msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents can look back through earlier chats when you refer to them"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents can message one another and pass tasks along, so each one does what it's best at."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents hand work to each other"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents keep working while you get on with something else"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents remember what matters across chats: your preferences, your projects and the decisions you've made. They also know who you are from your Evolve CV, so their work fits your role from the very first message."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Agents that work like teammates"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Agents working together"
+#~ msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "AI teammates, each with a job"
 msgstr ""
 
 #: src/components/VaultSettings.tsx
@@ -698,6 +958,7 @@ msgstr ""
 msgid "All statuses"
 msgstr "所有狀態"
 
+#: src/pages/AdminStaffSpending.tsx
 #: src/pages/Artifacts.tsx
 msgid "All time"
 msgstr "不限時間"
@@ -714,13 +975,13 @@ msgstr "允許跨空間機器人通訊"
 msgid "Allow in this space"
 msgstr ""
 
+#: src/lib/dictation.ts
+msgid "Allow OCSC Intelligence to use Speech Recognition and the microphone in System Settings."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Allow once"
 msgstr "允許一次"
-
-#: src/lib/dictation.ts
-msgid "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
-msgstr ""
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -733,6 +994,10 @@ msgstr ""
 #: src/components/AskCard.tsx
 msgid "Allowed once"
 msgstr "已允許一次"
+
+#: src/pages/Onboarding.tsx
+msgid "Almost ready"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Already connected"
@@ -762,13 +1027,17 @@ msgstr "一律允許"
 msgid "Always open {site}"
 msgstr "一律開啟 {site}"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "An agent is an AI teammate with its own name, job and instructions. Talk to it like a colleague: give it a task, attach files, and it plans the work, does it and tells you when it's finished."
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "An API key is stored for this provider, not a subscription sign-in."
 msgstr "此供應商儲存的是 API 金鑰，不是訂閱登入。"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "An existing Honcho peer to read from. Rakazo never writes to it."
-msgstr "用於讀取資料的現有 Honcho peer。Rakazo 絕不會向其寫入資料。"
+msgid "An existing Honcho peer to read from. OCSC Intelligence never writes to it."
+msgstr ""
 
 #: src/lib/agent-import-errors.ts
 msgid "An imported API key could not be checked. Try again."
@@ -781,6 +1050,10 @@ msgstr "無法使用匯入的 API 金鑰。請取消勾選後再試一次。"
 #: src/pages/RoutineEditor.tsx
 msgid "An integration tool"
 msgstr "整合工具"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Animated charts, statements and transitions; widescreen or vertical"
+msgstr ""
 
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
@@ -820,13 +1093,14 @@ msgid "Any model, with your own key"
 msgstr "使用自己的金鑰連接任何模型"
 
 #: src/components/pages/SharePopover.tsx
-msgid "Anyone with the link"
-msgstr "任何擁有連結的人"
+msgid "Anyone at the company with the link"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/kinds.tsx
 #: src/lib/localized-provider-hint.ts
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 #: src/pages/model-settings/compatible-key-field.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -898,6 +1172,10 @@ msgstr "核准此伺服器，讓代理程式使用它的工具。"
 msgid "Approved"
 msgstr ""
 
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Approved plugin builders send them to Evolve for review before colleagues use them"
+#~ msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
 msgstr ""
@@ -905,6 +1183,14 @@ msgstr ""
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Apps"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Apps and plugins for staff"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Apps, Connectors and Routines that extend what agents can do"
 msgstr ""
 
 #: src/pages/BotContextMenu.tsx
@@ -916,8 +1202,12 @@ msgid "archived"
 msgstr "已封存"
 
 #: src/pages/shell/archived-chats.tsx
-msgid "Archived"
-msgstr "已封存"
+msgid "Archived bots"
+msgstr ""
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Archived chats"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Arguments"
@@ -932,9 +1222,29 @@ msgstr "成品"
 msgid "Ask"
 msgstr "詢問"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Ask \"What do you remember about me?\" at any time"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Ask an agent for a dashboard, tracker, calculator or comparison and it builds a live page right in the chat. Ask for changes and it updates the same page."
+#~ msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Ask for any OCSC deliverable in plain English"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Ask it anything, or for any OCSC deliverable"
+msgstr ""
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
 msgstr "休眠中"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
+msgstr ""
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -953,6 +1263,10 @@ msgstr "附加檔案"
 #: src/pages/shell/chat-shared.ts
 msgid "Attachment"
 msgstr "附件"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Audit this GA drawing against the brief and mark up anything missing"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Authentication"
@@ -1017,8 +1331,10 @@ msgstr "頭像工作室"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/tour/ocsc-tour.tsx
 #: src/components/vault/VaultPageHeader.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminPluginsPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
@@ -1027,6 +1343,7 @@ msgstr "頭像工作室"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/SettingsOverlay.tsx
+#: src/pages/SharedChats.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Back"
 msgstr "返回"
@@ -1042,6 +1359,10 @@ msgstr "返回聊天"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "返回登入"
+
+#: src/pages/SharedChats.tsx
+msgid "Back to your chats"
+msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1061,6 +1382,18 @@ msgstr "基本驗證（{username}）"
 #: src/pages/PluginsOverlay.tsx
 msgid "Bearer token"
 msgstr "Bearer 權杖"
+
+#: src/components/render-studio/CompareSlider.tsx
+msgid "Before"
+msgstr ""
+
+#: src/components/render-studio/CompareSlider.tsx
+msgid "BEFORE"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Bigger ideas become Evolve plugins, with Evolve's look and approved data"
+#~ msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Billing"
@@ -1148,6 +1481,11 @@ msgstr "機器人"
 msgid "Bots and browser automation"
 msgstr "機器人與瀏覽器自動化"
 
+#. placeholder {0}: group.ownerName
+#: src/pages/SharedChats.tsx
+msgid "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
+msgstr ""
+
 #: src/pages/Paywall.tsx
 msgid "Bots with their own computer and browser"
 msgstr "擁有專屬電腦與瀏覽器的機器人"
@@ -1155,6 +1493,22 @@ msgstr "擁有專屬電腦與瀏覽器的機器人"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
 msgstr "大腦標籤"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Branded deliverables, done properly"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Branded PDFs, plus markups, redlines and measurements on drawings in Evolve PDF Studio."
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Branded videos, explainers and social clips."
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Branded Word reports, letters, memos and specifications."
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Browse"
@@ -1164,10 +1518,46 @@ msgstr ""
 msgid "Browse MCP servers"
 msgstr "瀏覽 MCP 伺服器"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Brush"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Brush radius: {brushRadius}px"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Build me a fee tracker dashboard for my projects"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Build your own apps, and share them"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Build your own tools in a chat"
+#~ msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Builds a deck from a brief, with the company fonts, colours, logo and footer"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Builds OCSC-styled workbooks with real formulas, totals and number formats"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
 msgstr "內建"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Built-in skills"
+msgstr ""
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -1191,12 +1581,17 @@ msgid "Calling…"
 msgstr "撥號中…"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminStaffSpending.tsx
 msgid "Calls"
 msgstr "通話"
 
-#: src/components/pages/SharePopover.tsx
-msgid "Can view without signing in"
-msgstr "無需登入即可檢視"
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Can add OCSC's company introduction and real project photos"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Can show tracked changes marked up in the PDF when you want them"
+msgstr ""
 
 #: src/App.tsx
 msgid "Can't reach the server."
@@ -1213,6 +1608,7 @@ msgstr "無法讀取影像"
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -1228,6 +1624,7 @@ msgstr "無法讀取影像"
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/drawings-dialog.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Cancel"
 msgstr "取消"
@@ -1243,6 +1640,15 @@ msgstr "取消新增群組"
 #: src/pages/shell/chat-context.tsx
 msgid "Cancel reply"
 msgstr "取消回覆"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Cancel the in-progress shape and deactivate the tool (Esc)"
+msgstr ""
+
+#. placeholder {0}: invite.email
+#: src/components/GroupPeople.tsx
+msgid "Cancel the invite for {0}"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Canceled"
@@ -1273,6 +1679,10 @@ msgstr "卡片檢視"
 msgid "Cards"
 msgstr ""
 
+#: src/pages/shell/evolve-references.tsx
+msgid "Category"
+msgstr ""
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "更改 {name}"
@@ -1280,6 +1690,14 @@ msgstr "更改 {name}"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {title}"
 msgstr "更改 {title}"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Change an agent's job, instructions or model whenever you like"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Change any scene and render again"
+msgstr ""
 
 #: src/pages/shell/composer-error.tsx
 msgid "Change model"
@@ -1292,6 +1710,10 @@ msgstr "修改密碼"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
 msgstr "正在修改…"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "characters"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Chart failed to render: {error}"
@@ -1327,6 +1749,7 @@ msgstr "聊天"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/pages/HostComputerPrompt.tsx
+#: src/pages/Onboarding.tsx
 msgid "Check again"
 msgstr "再次檢查"
 
@@ -1346,6 +1769,10 @@ msgstr "檢查更新"
 #: src/pages/shell/use-routine-editor.ts
 msgid "Check in."
 msgstr "報到。"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Check now"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
@@ -1378,6 +1805,7 @@ msgstr "正在檢查連線…"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/HostComputerPrompt.tsx
 msgid "Checking…"
 msgstr "正在檢查…"
@@ -1414,8 +1842,12 @@ msgstr "選擇資料夾"
 
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
-msgid "Choose how to use Rakazo"
-msgstr "選擇 Rakazo 的使用方式"
+msgid "Choose how to use OCSC Intelligence"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Choose projects, people, or responses to provide context for your AI conversation."
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
@@ -1448,11 +1880,37 @@ msgstr "清空對話"
 msgid "Clear filter {label}"
 msgstr "清除篩選條件 {label}"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Clear mask"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Clear Search"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "正在清空…"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "Click \"Add References\" to select projects"
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Click \"Select PDF\" to choose a document"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Client"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Client:"
+msgstr ""
+
 #: src/components/ErrorBoundary.tsx
+#: src/components/ImageLightbox.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -1472,10 +1930,7 @@ msgstr "關閉圖表"
 msgid "Close computer"
 msgstr "關閉電腦"
 
-#: src/pages/shell/message-cards.tsx
-msgid "Close image preview"
-msgstr "關閉圖片預覽"
-
+#: src/components/integrations/integrations-coming-soon.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Close integrations"
 msgstr "關閉整合"
@@ -1490,7 +1945,6 @@ msgid "Close memory settings"
 msgstr "關閉記憶設定"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/SettingsOverlay.tsx
 msgid "Close model settings"
 msgstr "關閉模型設定"
 
@@ -1519,18 +1973,29 @@ msgstr ""
 msgid "Close table"
 msgstr "關閉表格"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Close tour"
+msgstr ""
+
 #: src/pages/SettingsOverlay.tsx
 msgid "Close user settings"
 msgstr "關閉使用者設定"
 
-#: src/pages/SettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Close voice settings"
 msgstr "關閉語音設定"
 
+#: src/components/AskCard.tsx
+msgid "Closed"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Cloud"
 msgstr "雲端"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Clouds, callouts, arrows and notes placed exactly where the issue is"
+msgstr ""
 
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/SecretAskCard.tsx
@@ -1547,6 +2012,14 @@ msgstr "驗證碼"
 msgid "Collapse {0}"
 msgstr "摺疊 {0}"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Colleagues and agents, together"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
+msgstr ""
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "顏色"
@@ -1559,9 +2032,18 @@ msgstr "顏色 {color}"
 msgid "column {index}"
 msgstr "第 {index} 欄"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Come back to this tour any time from the sidebar"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Comfortable"
 msgstr "寬鬆"
+
+#: src/components/integrations/integrations-coming-soon.tsx
+#: src/components/tour/ocsc-tour.tsx
+msgid "Coming soon"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1589,19 +2071,65 @@ msgstr ""
 msgid "Compact"
 msgstr "緊湊"
 
+#: src/components/SidebarFooter.tsx
+#: src/pages/AdminCompanyPage.tsx
+msgid "Company admin"
+msgstr ""
+
+#. placeholder {0}: levels[defaultAccess]
+#: src/pages/AdminComputerAccess.tsx
+msgid "Company default ({0})"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Company model"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Company plugins"
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+#~ msgid "Company tools"
+#~ msgstr ""
+
+#: src/components/VaultSettings.tsx
+msgid "Company values stay hidden once saved. Edit the item to replace its value."
+msgstr ""
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Company vault"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Compare"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Compares two versions, or gives you a clean copy with every change accepted"
+msgstr ""
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Complete"
 msgstr "完成"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Complete Required Roles First"
+msgstr ""
 
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "已完成"
 
-#: src/pages/settings-nav.ts
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/chat-header.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "電腦"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computer access"
+msgstr ""
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -1635,6 +2163,7 @@ msgstr "電腦操作模型"
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Computers"
 msgstr "電腦"
 
@@ -1645,6 +2174,14 @@ msgstr "電腦已可使用。請重新載入或開啟機器人以繼續。"
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, novita, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "電腦未開啟。請設定 SANDBOX_PROVIDER=docker 並提供 SANDBOX_SUPERVISOR_TOKEN，或將 SANDBOX_PROVIDER 設為 e2b、novita、daytona 或 boat 並提供對應 API 金鑰。更改 .env 後請重建環境。"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computers are switched off above, so nobody has one."
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computers running"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
@@ -1734,12 +2271,13 @@ msgstr "請先連結此模型的供應商。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
+msgid "Connect your own API key in Models or choose OCSC Intelligence credits in Billing."
 msgstr "請在「模型」中連接你自己的 API 金鑰，或在「帳務」中選擇 Rakazo 點數。"
 
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/AdminCompanyTools.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1752,6 +2290,14 @@ msgstr "已連線"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connected {0}."
 msgstr "已連線 {0}。"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Connected apps"
+msgstr ""
+
+#: src/components/integrations/integrations-coming-soon.tsx
+msgid "Connecting apps such as Outlook, Teams and Stripe, and adding plugins, is being tested and will be available to everyone soon."
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -1780,6 +2326,10 @@ msgstr "與 {0} 的連線仍在等待。可以關閉此視窗稍後再看。"
 msgid "Connector"
 msgstr ""
 
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Connectors"
+#~ msgstr ""
+
 #: src/components/vault/kinds.tsx
 msgid "Contact"
 msgstr ""
@@ -1797,6 +2347,10 @@ msgstr "包含可執行的程式碼"
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
 msgstr "上下文長度限制"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Context Window Usage"
+msgstr ""
 
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/integrations/IntegrationSetup.tsx
@@ -1823,15 +2377,21 @@ msgstr "繼續結帳"
 msgid "Continue with {0}"
 msgstr "透過 {0} 繼續"
 
+#: src/pages/Auth.tsx
+msgid "Continue with Evolve"
+msgstr ""
+
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
 msgstr "對話"
 
 #: src/components/ComputersUnavailableHint.tsx
+#: src/components/ImageLightbox.tsx
 #: src/components/InviteDialog.tsx
 #: src/components/markdown-copy.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/components/UiCardView.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -1839,6 +2399,7 @@ msgstr "對話"
 msgid "Copied"
 msgstr "已複製"
 
+#: src/components/UiCardView.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -1858,6 +2419,10 @@ msgstr "複製程式碼"
 msgid "Copy diagram source"
 msgstr "複製圖表原始碼"
 
+#: src/components/ImageLightbox.tsx
+msgid "Copy image"
+msgstr ""
+
 #: src/components/InviteDialog.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
@@ -1873,8 +2438,13 @@ msgid "Copy rows"
 msgstr "複製列"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminStaffSpending.tsx
 msgid "Cost"
 msgstr "費用"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Cost plans, trackers and schedules, styled for OCSC and ready to share."
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Could not add"
@@ -1888,6 +2458,10 @@ msgstr "無法新增 MCP 伺服器"
 msgid "Could not add skills"
 msgstr ""
 
+#: src/components/GroupPeople.tsx
+msgid "Could not add that person"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not approve plugin"
 msgstr ""
@@ -1899,6 +2473,10 @@ msgstr "無法核准此伺服器"
 #: src/pages/shell/message-cards.tsx
 msgid "Could not authorize this app"
 msgstr "無法授權此應用程式"
+
+#: src/components/GroupPeople.tsx
+msgid "Could not cancel that invite"
+msgstr ""
 
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Could not change"
@@ -2003,6 +2581,10 @@ msgid "Could not delete bot"
 msgstr "無法刪除機器人"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Could not delete file"
+msgstr ""
+
+#: src/pages/shell/dialogs.tsx
 msgid "Could not delete group"
 msgstr "無法刪除群組"
 
@@ -2066,6 +2648,10 @@ msgstr "無法下載 {0}。請重試。"
 #: src/components/ArtifactFileCard.tsx
 msgid "Could not download {name}. Try again."
 msgstr "無法下載 {name}。請重試。"
+
+#: src/pages/shell/files-tab.tsx
+msgid "Could not download the file"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not enable tools"
@@ -2131,6 +2717,10 @@ msgstr "無法載入 MCP 伺服器"
 msgid "Could not load model settings"
 msgstr "無法載入模型設定"
 
+#: src/components/GroupPeople.tsx
+msgid "Could not load people"
+msgstr ""
+
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
 msgstr "無法載入執行歷史紀錄"
@@ -2157,9 +2747,21 @@ msgstr "無法載入此對話。"
 msgid "Could not load this file."
 msgstr "無法載入此檔案。"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Could not load this image into Render Studio."
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not load voice settings"
 msgstr "無法載入語音設定"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Could not load your archived chats."
+msgstr ""
+
+#: src/pages/SharedChats.tsx
+msgid "Could not load your shared chats"
+msgstr ""
 
 #: src/lib/sign-out.ts
 msgid "Could not log out. Try again."
@@ -2172,6 +2774,10 @@ msgstr "無法登出，請再試一次。"
 msgid "Could not open billing"
 msgstr "無法開啟帳務頁面"
 
+#: src/pages/shell/evolve-history.tsx
+msgid "Could not open that chat."
+msgstr ""
+
 #: src/components/pages/PagesList.tsx
 msgid "Could not pin this page. Try again."
 msgstr "無法置頂此頁面。請再試一次。"
@@ -2182,6 +2788,10 @@ msgstr "無法播放測試片段"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not preview plugin"
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not reach Evolve"
 msgstr ""
 
 #: src/lib/model-connection-preflight.ts
@@ -2227,6 +2837,14 @@ msgstr "無法移除規則"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not remove skills"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "Could not remove that person"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Could not remove the company model"
 msgstr ""
 
 #: src/components/VaultSettings.tsx
@@ -2321,6 +2939,10 @@ msgstr "無法儲存該語音模型"
 msgid "Could not save that voice"
 msgstr "無法儲存該語音"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Could not save the company model"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Could not save the credential"
 msgstr "無法儲存憑證"
@@ -2341,6 +2963,10 @@ msgstr "無法傳送重設郵件"
 #: src/lib/call-session.ts
 msgid "Could not send that"
 msgstr "無法傳送"
+
+#: src/pages/SharedChats.tsx
+msgid "Could not send that message"
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
@@ -2399,6 +3025,10 @@ msgstr ""
 msgid "Could not update computer"
 msgstr "無法更新電腦"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Could not update computer access"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not update name"
 msgstr "無法更新姓名"
@@ -2407,9 +3037,30 @@ msgstr "無法更新姓名"
 msgid "Could not update reaction"
 msgstr "無法更新反應"
 
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not update the company setting"
+msgstr ""
+
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not update the default memory scope"
 msgstr "無法更新預設記憶範圍"
+
+#: src/pages/shell/files-tab.tsx
+msgid "Could not update the file"
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not update the skill"
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not update the tool"
+msgstr ""
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Could not update voice"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
@@ -2418,6 +3069,10 @@ msgstr "無法驗證電腦設定（{failureMessage}）。請修復連線後再�
 #: src/components/pages/SharePopover.tsx
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "無法複製。請選取連結後複製。"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Couldn't load company settings"
+msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Couldn't load grants"
@@ -2431,8 +3086,16 @@ msgstr "無法載入訊息設定"
 msgid "Couldn't load pages."
 msgstr "無法載入頁面。"
 
+#: src/pages/AdminStaffSpending.tsx
+msgid "Couldn't load staff spending"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Couldn't load submissions"
+msgstr ""
+
+#: src/pages/shell/files-tab.tsx
+msgid "Couldn't load this bot's files."
 msgstr ""
 
 #: src/pages/SharedPage.tsx
@@ -2481,9 +3144,21 @@ msgstr "建立分組並把 {0} 移入。"
 msgid "Create account"
 msgstr "建立帳號"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Create as many as you need: a bid writer, a drainage checker, a reviewer"
+msgstr ""
+
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
 msgstr "建立群組"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Create more agents later from the + button"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Create my first chat"
+msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -2500,12 +3175,16 @@ msgid "Create space"
 msgstr "建立空間"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "建立你的 Rakazo"
+msgid "Create your OCSC Intelligence account"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Created"
 msgstr "已建立"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Creates a finished OCSC document from a short brief, on the company template"
+msgstr ""
 
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2545,10 +3224,18 @@ msgstr "Cron"
 msgid "Cron expression"
 msgstr "Cron 表示式"
 
+#: src/pages/AdminStaffSpending.tsx
+msgid "CSV"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
 msgstr "目前密碼"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Cursor cloud agents"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
@@ -2569,6 +3256,10 @@ msgstr "自訂{label}"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Customize bot avatar"
 msgstr "自訂機器人頭像"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "CV"
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Daily check-ins on unfinished work"
@@ -2628,6 +3319,11 @@ msgstr "OpenClaw 預設內容"
 msgid "Default scope"
 msgstr "預設範圍"
 
+#. placeholder {0}: limitLabel(storage.defaultStorageLimitMb)
+#: src/pages/AdminComputerAccess.tsx
+msgid "Default storage ({0})"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
@@ -2639,6 +3335,7 @@ msgstr "預設範圍"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/files-tab.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "刪除"
@@ -2697,6 +3394,10 @@ msgstr "刪除空間"
 msgid "Delete this Space's credentials?"
 msgstr "要刪除此空間的憑證嗎？"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Delete unpinned files after"
+msgstr ""
+
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
 msgstr "已刪除"
@@ -2725,10 +3426,30 @@ msgstr "拒絕"
 msgid "Deployment default ({0})"
 msgstr ""
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Describe a dashboard or tool and the agent builds it as an Evolve plugin"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Describe the change"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Describe the change — e.g. remove the car in the foreground, change the wall colour to sage green, add soft afternoon light"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Describe the edit you want"
+msgstr ""
+
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Description"
 msgstr "描述"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Deselect All"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Design"
@@ -2854,10 +3575,6 @@ msgstr "Docker 已設定，但電腦沒有回應。請確認沙箱管理服務�
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
 msgstr "Docker 限制對你電腦的存取，以提高安全性。使用 {hostLabel} 時，機器人可以處理你的本機檔案並使用本機工具。"
 
-#: src/components/SidebarFooter.tsx
-msgid "Docs"
-msgstr "說明文件"
-
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "文件已變更，請重新開啟以編輯最新版本。"
@@ -2867,7 +3584,10 @@ msgid "Don’t have an account?"
 msgstr "還沒有帳號？"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/AskCard.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/ToolActivityDisclosure.tsx
+#: src/components/tour/ocsc-tour.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -2880,27 +3600,30 @@ msgstr "完成"
 msgid "Downgrade at renewal"
 msgstr "下次續訂時降級"
 
+#: src/components/ArtifactFileCard.tsx
+#: src/components/ImageLightbox.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/shell/files-tab.tsx
 msgid "Download"
 msgstr "下載"
-
-#. placeholder {0}: props.name
-#: src/components/ArtifactFileCard.tsx
-msgid "Download {0}"
-msgstr "下載 {0}"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Download {name}"
 msgstr "下載 {name}"
 
 #: src/components/markdown-copy.tsx
+#: src/components/UiCardView.tsx
 msgid "Download CSV"
 msgstr "下載 CSV"
 
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Download PDF"
 msgstr "下載 PDF"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Download PNG"
+msgstr ""
 
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
@@ -2918,20 +3641,41 @@ msgstr "拖放或貼上圖片"
 msgid "Duplicate"
 msgstr "複製"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills."
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Each name can be used once."
 msgstr "每個名稱只能使用一次。"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
+msgstr ""
+
 #: src/components/AskCard.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/McpServersOverlay.tsx
 msgid "Edit"
 msgstr "編輯"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Edit any slide later; each changed slide gets a review comment saying what changed"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "先編輯"
+
+#: src/components/ImageLightbox.tsx
+msgid "Edit in Render Studio"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Edit it as many times as you like: ask for changes in plain words"
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
@@ -2940,6 +3684,44 @@ msgstr "編輯名稱"
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "編輯資料"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Edit References"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "EDITING"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Editing ORIGINAL"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Editing original → first render will be v1"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Editing RENDER"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "EDITING THIS · NEXT → v{nextVersion}"
+msgstr ""
+
+#. placeholder {0}: activeRender.version
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "EDITING v{0} · NEXT → v{nextVersion}"
+msgstr ""
+
+#. placeholder {0}: activeRender.version
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Editing v{0} → next will be v{nextVersion}"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Edits Word files you send it, keeping your original untouched"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -2974,7 +3756,11 @@ msgid "Ends {day}"
 msgstr "於 {day} 結束"
 
 #: src/components/GitHubStarPrompt.tsx
-msgid "Enjoying Rakazo?"
+msgid "Enjoying OCSC Intelligence?"
+msgstr ""
+
+#: src/pages/shell/message-cards.tsx
+msgid "Enlarge {name}"
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -3004,6 +3790,10 @@ msgstr "請輸入 1 到 1000 之間的整數作為影像限制。"
 msgid "Enter an API key before testing."
 msgstr "測試前請輸入 API 金鑰。"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "Enter role..."
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
 msgstr ""
@@ -3020,6 +3810,11 @@ msgstr "環境變數：{names}"
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Error"
 msgstr "錯誤"
+
+#. placeholder {0}: projectsState.error
+#: src/pages/shell/references-dialog.tsx
+msgid "Error fetching projects: {0}"
+msgstr ""
 
 #: src/lib/cron.ts
 #: src/pages/ExternalConversationSettings.tsx
@@ -3045,6 +3840,10 @@ msgstr "每 {intervalAmountSelect} {intervalUnitSelect}"
 msgid "Every {n} hours at :{minute}"
 msgstr "每 {n} 小時 {minute} 分"
 
+#: src/pages/AdminCompanyTools.tsx
+msgid "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Every bot in this space reads these notes and keeps them up to date."
 msgstr "此空間中的每個機器人都會讀取並更新這些筆記。"
@@ -3054,6 +3853,10 @@ msgstr "此空間中的每個機器人都會讀取並更新這些筆記。"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every day"
 msgstr "每天"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Every edit is a Word tracked change by \"OCSC Bot\", so you accept or reject each one"
+msgstr ""
 
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
@@ -3065,6 +3868,10 @@ msgstr "每小時"
 #: src/lib/cron.ts
 msgid "Every hour at :{0}"
 msgstr "每小時 {0} 分"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Every member's assistant runs on this model and key. Members are never asked to connect one."
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Every message"
@@ -3079,14 +3886,84 @@ msgstr "每週一"
 msgid "Every month"
 msgstr "每月"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Every plugin is reviewed before it reaches colleagues, so shared apps stay safe"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
 msgstr "每週"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Everyone now uses this model"
+msgstr ""
+
+#. placeholder {0}: sharedBy.name
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Everyone uses {0}'s {provider} connection."
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Everyone without their own level"
+msgstr ""
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Evolve assistant"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "Evolve people"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Evolve plugins"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "Evolve search is unavailable. Type a full work email instead."
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Evolve tools"
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Evolve tools for everyone"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Example"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Example: Autodesk Construction Cloud and Forma"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Excel"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Executor token"
 msgstr "Executor 權杖"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Exemplar"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+#: src/pages/shell/references-dialog.tsx
+msgid "Exemplar response"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Exemplar response, as sent to the AI"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "exemplar responses"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Expand"
@@ -3154,6 +4031,18 @@ msgstr "失敗"
 msgid "Failed"
 msgstr "失敗"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Failed to add drawings"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Failed to add references. Please try again."
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Failed to preview PDF"
+msgstr ""
+
 #: src/pages/shell/use-composer-actions.ts
 msgid "Failed to send message"
 msgstr "傳送訊息失敗"
@@ -3171,6 +4060,10 @@ msgstr "失敗。"
 msgid "Failure handling"
 msgstr "失敗處理"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Features"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Fields that mark a change"
 msgstr "標記變化的欄位"
@@ -3183,6 +4076,14 @@ msgstr "要比較的欄位，例如 id, modifiedTime（選填）"
 #: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "檔案"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Files"
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted automatically unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
@@ -3213,6 +4114,10 @@ msgstr ""
 msgid "Find a page"
 msgstr "尋找頁面"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Find a person"
+msgstr ""
+
 #: src/pages/shell/chat-find-bar.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Find in chat"
@@ -3227,6 +4132,10 @@ msgstr "查詢模型"
 #: src/pages/Onboarding.tsx
 msgid "Finding…"
 msgstr "正在查詢…"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Finish drawing — locks the current mask and deactivates the tool"
+msgstr ""
 
 #: src/pages/shell/import-setup-card.tsx
 msgid "Finish setting up"
@@ -3248,6 +4157,11 @@ msgstr "已完成。"
 #: src/pages/McpOAuthCallback.tsx
 msgid "Finishing MCP connection…"
 msgstr "正在完成 MCP 連線…"
+
+#: src/components/ImageLightbox.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Fit to screen"
+msgstr ""
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Focus message"
@@ -3291,6 +4205,18 @@ msgstr "自 {0} 起"
 msgid "From GitHub"
 msgstr ""
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "from original"
+msgstr ""
+
+#: src/components/PersonalVault.tsx
+msgid "From the company vault"
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Full computer"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Full name"
@@ -3318,9 +4244,46 @@ msgstr ""
 msgid "General"
 msgstr "一般"
 
-#: src/components/SidebarFooter.tsx
-msgid "Get the mobile app"
-msgstr "下載手機應用程式"
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know agent teamwork"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know agents"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know and understand connectors"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know groups"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know memory"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know OCSC Apps"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+#: src/pages/shell/shell-sidebar.tsx
+msgid "Get to know OCSC Intelligence"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know OCSC Tools"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know routines"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Gets to know you over time"
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Getting ready"
@@ -3334,6 +4297,14 @@ msgstr "Git 事件"
 msgid "Give a friend {weeks} weeks free"
 msgstr "送朋友 {weeks} 週免費"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Give each agent a clear job and it will get better at it"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "Give them OCSC Intelligence in Evolve's menu access so they can open the chat"
+msgstr ""
+
 #: src/pages/NotFound.tsx
 msgid "Go home"
 msgstr "返回首頁"
@@ -3341,6 +4312,10 @@ msgstr "返回首頁"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Go to bot"
 msgstr "前往機器人"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "GPT Image infographics and pictures, drawing on Evolve's project datasheets and people profiles."
+#~ msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Grant"
@@ -3365,6 +4340,14 @@ msgstr "群組設定"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Group updates"
 msgstr "群組更新"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Groups"
+#~ msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Grow it into an Evolve plugin with OCSC branding and approved company data"
+msgstr ""
 
 #: src/components/call/CallCard.tsx
 msgid "Hang up"
@@ -3437,6 +4420,10 @@ msgstr "高"
 msgid "High"
 msgstr "高"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "High (slow)"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Hold to talk"
 msgstr "按住說話"
@@ -3479,8 +4466,8 @@ msgid "How to check"
 msgstr "如何檢查"
 
 #: src/components/SignupSurvey.tsx
-msgid "How will you use Rakazo?"
-msgstr "你會如何使用 Rakazo？"
+msgid "How will you use OCSC Intelligence?"
+msgstr ""
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
@@ -3510,6 +4497,10 @@ msgstr "此模型尚未設定圖片輸入。"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "圖片上傳區域"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Images and Evolve data"
+msgstr ""
 
 #: src/components/AccountDataSettings.tsx
 msgid "Import"
@@ -3551,6 +4542,10 @@ msgstr "包含 API 金鑰"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "來電"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Infographics on most slides, plus editable charts, tables and timelines"
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Inherit default"
@@ -3611,9 +4606,9 @@ msgstr "指令已更新"
 msgid "Integration domain"
 msgstr "整合服務網域"
 
-#: src/pages/PluginsOverlay.tsx
-msgid "Integrations"
-msgstr "整合"
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Intended use is to add no more than {MAX_DRAWING_PAGES} drawing pages at a time. Please select only the most relevant pages."
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -3632,9 +4627,18 @@ msgstr "間隔單位"
 msgid "Invalid code"
 msgstr "驗證碼無效"
 
+#. placeholder {0}: option.email
+#: src/components/GroupPeople.tsx
+msgid "Invite {0}"
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Invite a friend"
 msgstr "邀請朋友"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Invite colleagues straight from the Evolve directory"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 msgid "Invite friends"
@@ -3643,6 +4647,14 @@ msgstr "邀請朋友"
 #: src/components/InviteDialog.tsx
 msgid "Invite link"
 msgstr "邀請連結"
+
+#: src/components/GroupPeople.tsx
+msgid "Invited"
+msgstr ""
+
+#: src/pages/GroupPanel.tsx
+msgid "Invited by email"
+msgstr ""
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -3669,6 +4681,10 @@ msgstr "它的對話、檔案和例行任務將被永久刪除。它建立的機
 msgid "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
 msgstr "其共用連結將失效，聊天中的卡片會顯示為已刪除。此操作無法復原。"
 
+#: src/components/GroupPeople.tsx
+msgid "Joins when they open OCSC Intelligence from Evolve"
+msgstr ""
+
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
 msgstr "跳到最新"
@@ -3693,6 +4709,11 @@ msgstr ""
 msgid "key"
 msgstr "金鑰"
 
+#. placeholder {0}: current.keyHint
+#: src/pages/AdminCompanyPage.tsx
+msgid "Key ending {0}"
+msgstr ""
+
 #: src/pages/Shell.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Keyboard shortcuts"
@@ -3700,6 +4721,10 @@ msgstr "鍵盤快速鍵"
 
 #: src/components/vault/kinds.tsx
 msgid "Keys"
+msgstr ""
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Knowledge files"
 msgstr ""
 
 #: src/components/vault/LoginFieldsInput.tsx
@@ -3711,6 +4736,22 @@ msgstr "標籤"
 msgid "Language"
 msgstr "語言"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Lasso"
+msgstr ""
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Last 30 days"
+msgstr ""
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Last 7 days"
+msgstr ""
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Last 90 days"
+msgstr ""
+
 #. placeholder {0}: new Date(state.checkedAt).toLocaleString()
 #: src/pages/RoutineEditor.tsx
 msgid "Last check {0}: changed"
@@ -3721,6 +4762,19 @@ msgstr "上次檢查 {0}：有變化"
 msgid "Last check {0}: no changes"
 msgstr "上次檢查 {0}：無變化"
 
+#. placeholder {0}: evolve.error
+#: src/pages/AdminCompanyTools.tsx
+msgid "Last check failed: {0}. Assistants keep the last tool list that worked."
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Last checked {checked}."
+msgstr ""
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Last used"
+msgstr ""
+
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
 msgstr "稍後"
@@ -3729,8 +4783,20 @@ msgstr "稍後"
 msgid "Leave"
 msgstr "退出"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Leave blank to keep the saved key"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Less"
+msgstr ""
+
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Let bots use this computer"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Let's begin"
 msgstr ""
 
 #: src/pages/MemorySettingsOverlay.tsx
@@ -3746,6 +4812,7 @@ msgstr "淺色"
 msgid "Link"
 msgstr ""
 
+#: src/components/ImageLightbox.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
 msgid "Link copied"
@@ -3776,6 +4843,7 @@ msgid "Load earlier messages"
 msgstr "載入更早的訊息"
 
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/evolve-history.tsx
 msgid "Load more"
 msgstr "載入更多"
 
@@ -3787,9 +4855,23 @@ msgstr "載入更早的執行紀錄"
 msgid "Load web images automatically"
 msgstr "自動載入網路圖片"
 
+#. placeholder {0}: files.length
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Loaded {pageCount} page from {0} PDF(s)"
+msgstr ""
+
+#. placeholder {0}: files.length
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Loaded {pageCount} pages from {0} PDF(s)"
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
 msgstr "正在載入動態…"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Loading exemplar responses..."
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
@@ -3804,6 +4886,10 @@ msgstr "正在載入記憶設定…"
 msgid "Loading model catalog…"
 msgstr "正在載入模型目錄…"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "Loading people..."
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading plugins…"
 msgstr ""
@@ -3811,6 +4897,14 @@ msgstr ""
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading preview…"
 msgstr "正在載入預覽…"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Loading projects..."
+msgstr ""
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Loading video…"
+msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Loading voice providers…"
@@ -3820,11 +4914,14 @@ msgstr "正在載入語音供應商…"
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PageLoading.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminStaffSpending.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/shell/drawings-dialog.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Loading…"
 msgstr "載入中…"
@@ -3850,9 +4947,17 @@ msgstr ""
 msgid "Logins"
 msgstr ""
 
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Logins, API keys and variables every member's assistants can use, for shared company accounts. Members see each item's name, never its value; one of their own with the same name is used instead. Anyone with a full computer can run commands with these variables, so add only what you would trust them with. Cards and contacts stay in each person's own vault."
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Looks like it contains a key"
 msgstr "似乎包含金鑰"
+
+#: src/pages/SharedChats.tsx
+msgid "Lost the connection. Reconnecting…"
+msgstr ""
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -3865,9 +4970,25 @@ msgstr "低"
 msgid "Low"
 msgstr "低"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Low (fastest)"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "主模型"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Make a 10-slide bid presentation for a school extension"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Make a 30-second LinkedIn clip about our latest bridge project"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Makes and reads PDFs."
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -3914,12 +5035,32 @@ msgstr "標為未讀"
 msgid "Mark as Unread"
 msgstr "標為未讀"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Mark the area"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "Markdown table"
 msgstr "Markdown 表格"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Marketing"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Marks up, audits and measures PDFs and drawings in Evolve PDF Studio."
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "MASK"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Mask active — only the marked area will change"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "masked"
 msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -3955,11 +5096,13 @@ msgstr "MCP 端點"
 msgid "MCP server"
 msgstr ""
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "MCP servers"
 msgstr "MCP 伺服器"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Medium"
@@ -3970,6 +5113,10 @@ msgstr "中"
 msgid "Medium"
 msgstr "中"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Meet OCSC General Intelligence"
+msgstr ""
+
 #: src/lib/identity-display.ts
 msgid "Member"
 msgstr "成員"
@@ -3979,10 +5126,35 @@ msgstr "成員"
 msgid "Members ({0})"
 msgstr "成員（{0}）"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members add their own MCP servers."
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members choose models"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members connect apps such as Gmail, Slack or Notion to their assistants."
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members install plugins from the catalog."
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Members link Slack, Telegram and other chat apps to their assistants."
+msgstr ""
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Members use it with the voice you picked, and their use is billed to this connection's account."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
 #: src/pages/shell/agent-import.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Memory"
 msgstr "記憶"
 
@@ -4014,6 +5186,7 @@ msgstr "提及 OpenClaw 功能"
 msgid "Mentions: {mentions}"
 msgstr "提及：{mentions}"
 
+#: src/pages/SharedChats.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
 #: src/pages/SpaceSearch.tsx
@@ -4024,6 +5197,11 @@ msgstr "訊息"
 #: src/lib/browser-notifications.ts
 msgid "Message"
 msgstr "訊息"
+
+#. placeholder {0}: group.name
+#: src/pages/SharedChats.tsx
+msgid "Message {0}. Use @Name to ask one bot."
+msgstr ""
 
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
@@ -4053,6 +5231,7 @@ msgstr "訊息…"
 msgid "Messaged {peer}"
 msgstr "已發給 {peer}"
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/settings-nav.ts
 msgid "Messaging"
 msgstr "訊息"
@@ -4102,6 +5281,7 @@ msgid "Mode"
 msgstr "模式"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
@@ -4113,6 +5293,10 @@ msgstr "模型"
 #: src/lib/model-connection-preflight.ts
 msgid "Model \"{modelId}\" was not listed."
 msgstr "模型「{modelId}」未列出。"
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Model calls"
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Model connections"
@@ -4129,7 +5313,6 @@ msgid "Model options"
 msgstr "模型選項"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/settings-nav.ts
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Models"
 msgstr "模型"
@@ -4209,6 +5392,10 @@ msgstr "已靜音"
 msgid "My computers"
 msgstr ""
 
+#: src/pages/settings-nav.ts
+msgid "My vault"
+msgstr ""
+
 #: src/components/CreateOrganizationDialog.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -4249,6 +5436,10 @@ msgstr "給這個例行任務命名"
 msgid "Name your Bot"
 msgstr "為你的機器人命名"
 
+#: src/pages/shell/files-tab.tsx
+msgid "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
+msgstr ""
+
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
 msgstr "需要回覆"
@@ -4276,6 +5467,10 @@ msgstr "需要接管"
 msgid "Needs you"
 msgstr "需要你處理"
 
+#: src/components/AskCard.tsx
+msgid "Needs your approval"
+msgstr ""
+
 #: src/pages/shell/import-status.ts
 msgid "Needs: {names}"
 msgstr "需要：{names}"
@@ -4289,6 +5484,10 @@ msgstr "永不詢問"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "New"
 msgstr "新增"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "New · Granular Editing — follow the 3 steps below"
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "New API key"
@@ -4344,6 +5543,10 @@ msgstr "新密碼"
 msgid "New private space"
 msgstr "新增私人空間"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "New reports and letters in OCSC style. Ask for changes as often as you like: each edit comes back as tracked changes you can accept or reject, and earlier versions are kept."
+msgstr ""
+
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "New section"
@@ -4365,6 +5568,11 @@ msgstr "新增工作項目"
 msgid "New variable"
 msgstr ""
 
+#: src/components/tour/ocsc-tour.tsx
+#: src/pages/shell/references-dialog.tsx
+msgid "Next"
+msgstr ""
+
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Next match"
 msgstr "下一個相符項目"
@@ -4380,6 +5588,14 @@ msgstr "下一頁"
 #: src/pages/SettingsOverlay.tsx
 msgid "Next settings sections"
 msgstr "下一組設定區段"
+
+#: src/components/GroupPeople.tsx
+msgid "No access yet"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "No active Evolve profile matches."
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
@@ -4406,6 +5622,34 @@ msgstr ""
 msgid "No bots match"
 msgstr "沒有符合的機器人"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "No computer"
+msgstr ""
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "No connection is shared yet, so staff have no voice."
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "No CV was sent for this person: only their name and role."
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "No drawings selected"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "No exemplar responses match your search."
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "No files yet"
+msgstr ""
+
+#: src/components/render-studio/StageCanvas.tsx
+msgid "No image"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "No longer active"
@@ -4414,6 +5658,10 @@ msgstr "已停用"
 #: src/pages/PluginsOverlay.tsx
 msgid "No managed app catalog is configured on this deployment."
 msgstr "此部署尚未設定受管理的應用程式目錄。"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "No mask — the whole image will be edited. Tip: draw a mask above for granular edits."
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "No matches"
@@ -4437,9 +5685,21 @@ msgstr "尚無成員"
 msgid "No messages with {peerBotName} yet."
 msgstr "還沒有與 {peerBotName} 的訊息。"
 
+#: src/pages/SharedChats.tsx
+msgid "No messages yet. Say hello to the team."
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No model catalog is available."
 msgstr "沒有可用的模型目錄。"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "No model is set up yet. Members see a waiting screen until you save one."
+msgstr ""
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "No model usage in this period."
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "No models listed."
@@ -4453,9 +5713,25 @@ msgstr "找不到 OpenClaw、Hermes 或代理程式文件。"
 msgid "No pages match “{query}”."
 msgstr "沒有符合「{query}」的頁面。"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "No people match your search."
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "No projects match your filters. Try adjusting your criteria."
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "No references selected"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
 msgstr "找不到遠端 MCP 伺服器"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "NO RENDERS YET"
+msgstr ""
 
 #: src/pages/RoutineRunHistory.tsx
 msgid "No reply"
@@ -4484,6 +5760,10 @@ msgstr "還沒有執行紀錄"
 msgid "No skills yet"
 msgstr "尚無技能"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "No source image"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "No submissions"
 msgstr ""
@@ -4495,6 +5775,10 @@ msgstr "尚無工作項目"
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
 msgstr "無觸發器"
+
+#: src/pages/SharedChats.tsx
+msgid "Nobody has added you to a group chat yet."
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "None"
@@ -4517,13 +5801,21 @@ msgstr ""
 msgid "Not checked yet"
 msgstr "尚未檢查"
 
+#: src/pages/AdminCompanyTools.tsx
+msgid "Not checked yet."
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "Not found in Evolve; joins if they sign in with this email"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
 msgstr "未匯入"
 
 #: src/pages/shell/import-status.ts
-msgid "Not in Rakazo's catalog"
-msgstr "不在 Rakazo 目錄中"
+msgid "Not in OCSC Intelligence's catalog"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
@@ -4534,18 +5826,26 @@ msgstr "不在外掛程式目錄中"
 msgid "Not now"
 msgstr "暫不"
 
-#: src/pages/shell/agent-import.tsx
-#: src/pages/shell/import-status.ts
-msgid "Not supported in Rakazo"
-msgstr "Rakazo 不支援"
+#: src/pages/AdminCompanyTools.tsx
+msgid "Not set up"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
-msgid "Not used by Rakazo"
-msgstr "Rakazo 不使用"
+#: src/pages/shell/import-status.ts
+msgid "Not supported in OCSC Intelligence"
+msgstr ""
+
+#: src/pages/shell/agent-import.tsx
+msgid "Not used by OCSC Intelligence"
+msgstr ""
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not working"
 msgstr "無法正常工作"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Note:"
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
@@ -4582,6 +5882,78 @@ msgstr "OAuth 連線失敗"
 #: src/pages/PluginsOverlay.tsx
 msgid "OAuth expired"
 msgstr "OAuth 已過期"
+
+#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "OCSC"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "OCSC Apps"
+#~ msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC Apps put coding in every member of staff's hands. Describe the dashboard, tracker, calculator or plugin you need and an agent writes and runs the code for you inside the secure OCSC sandbox, away from live systems."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC decks with an infographic on most slides, real project photos and a closing slide from your Evolve CV. Changes arrive as a new version with review comments."
+msgstr ""
+
+#: src/components/ModelCredits.tsx
+#: src/pages/Onboarding.tsx
+msgid "OCSC Intelligence credits"
+msgstr ""
+
+#: src/components/integrations/integrations-coming-soon.tsx
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC Intelligence integrations"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC Intelligence is our own AI workspace. Its agents know OCSC, use our branded tools and work alongside you on real project work. It runs on OCSC's own platform, so your chats, agents and files stay private to you unless you share them."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "OCSC Intelligence V3"
+#~ msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+#: src/pages/AdminCompanyTools.tsx
+msgid "OCSC Tools"
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "OCSC Tools and skills"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC Tools that produce branded deliverables"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC Vision Intelligence creates infographics and pictures, drawing on Evolve's project datasheets and people profiles."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "OCSC-branded animations and social clips, with voiceover and stock footage."
+msgstr ""
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Off"
+msgstr ""
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Off hides voice, dictation and calls for every member, admins included."
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Off: only admins connect models or change a bot's model; everyone runs on the company model."
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test."
+msgstr ""
 
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Offline"
@@ -4654,6 +6026,10 @@ msgstr "開啟 {title}"
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "開啟 <0>{0}</0> 並輸入以下代碼："
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Open any agent and ask for what you need, or create a new agent from the + button for a job you do often."
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr "開啟通話"
@@ -4675,6 +6051,10 @@ msgstr "開啟外部連結？"
 msgid "Open in full window"
 msgstr "在完整視窗中開啟"
 
+#: src/components/ImageLightbox.tsx
+msgid "Open in new tab"
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Open link"
 msgstr "開啟連結"
@@ -4685,8 +6065,8 @@ msgstr "開啟導覽"
 
 #: src/components/pages/PublicPageShell.tsx
 #: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "開啟 Rakazo"
+msgid "Open OCSC Intelligence"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -4705,6 +6085,19 @@ msgstr "OpenAI 相容伺服器 URL"
 msgid "OpenClaw or Hermes"
 msgstr "OpenClaw 或 Hermes"
 
+#: src/pages/shell/evolve-history.tsx
+msgid "Opened"
+msgstr ""
+
+#. placeholder {0}: chat.name
+#: src/pages/shell/evolve-history.tsx
+msgid "Opened as {0}"
+msgstr ""
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Opened as a chat"
+msgstr ""
+
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Opens your browser's print dialog. Choose Save as PDF as the destination."
 msgstr "開啟瀏覽器的列印對話框。目的地請選擇「另存為 PDF」。"
@@ -4720,6 +6113,10 @@ msgstr "選填"
 msgid "Optional header value"
 msgstr "選填標頭值"
 
+#: src/pages/GroupPanel.tsx
+msgid "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connected apps."
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Or paste an API key"
@@ -4734,24 +6131,54 @@ msgstr "組織"
 msgid "Organization API key"
 msgstr "組織 API 金鑰"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Original"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "ORIGINAL"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "ORIGINAL (v0)"
 msgstr ""
 
 #: src/pages/shell/chat-context.tsx
 msgid "Original message unavailable"
 msgstr "原訊息不可用"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Original source image"
+msgstr ""
+
 #: src/components/FoundModelPicker.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "其他模型…"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Output"
 msgstr "輸出"
 
+#. placeholder {0}: captureSize.w
+#. placeholder {1}: captureSize.h
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Output size is locked to the original image ({0} × {1}px). Every render inherits this size — no resizing, no cropping."
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Output size is locked to the original image. Every render inherits this size — no resizing, no cropping."
+msgstr ""
+
+#. placeholder {0}: group.ownerName
+#: src/pages/SharedChats.tsx
+msgid "Owned by {0}"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
@@ -4779,6 +6206,21 @@ msgstr "頁面 · 已共用 · {when}"
 msgid "Page · Updated below"
 msgstr "頁面 · 已在下方更新"
 
+#. placeholder {0}: p.pageNumber
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Page {0}"
+msgstr ""
+
+#. placeholder {0}: page.pageNumber
+#. placeholder {1}: source.name
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Page {0} of {1} is too large to attach"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Page {curPage}"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "Page {page} of {count}"
 msgstr "第 {page} 頁，共 {count} 頁"
@@ -4805,6 +6247,10 @@ msgstr "頁面標題"
 #: src/pages/shell/command-palette.tsx
 msgid "Pages"
 msgstr "頁面"
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Pages are perfect for quick views of your project data"
+#~ msgstr ""
 
 #: src/components/pages/PagesList.tsx
 msgid "Pages this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
@@ -4863,8 +6309,8 @@ msgid "Paste a replacement key"
 msgstr "貼上替換金鑰"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "貼上伺服器的 OpenAI 相容地址。需要時 Rakazo 會補上 /v1。"
+msgid "Paste the OpenAI-compatible address from your server. OCSC Intelligence adds /v1 if needed."
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -4883,15 +6329,56 @@ msgstr "請貼上你的 API 金鑰，然後重新測試。"
 msgid "Paused"
 msgstr "已暫停"
 
+#: src/components/ArtifactFileCard.tsx
+msgid "PDF"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "PDF and PDF Studio"
+msgstr ""
+
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Pending"
 msgstr "待處理"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "people"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminStaffSpending.tsx
+#: src/pages/shell/references-dialog.tsx
+msgid "People"
+msgstr ""
+
+#. placeholder {0}: people.length
+#: src/pages/GroupPanel.tsx
+msgid "People ({0})"
+msgstr ""
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Period"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Permissions"
 msgstr "權限"
+
+#: src/pages/AdminStaffSpending.tsx
+#: src/pages/shell/evolve-references.tsx
+msgid "Person"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Person reference"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Person reference, as sent to the AI"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Persona"
@@ -4916,8 +6403,16 @@ msgid "Photo"
 msgstr "照片"
 
 #: src/pages/GroupPanel.tsx
+msgid "Pick {GROUP_BOT_MIN}–{GROUP_MEMBER_MAX}"
+msgstr ""
+
+#: src/pages/GroupPanel.tsx
 msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX}"
 msgstr "選擇 {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} 個"
+
+#: src/pages/GroupPanel.tsx
+msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Pick a model from the catalog."
@@ -4936,14 +6431,26 @@ msgstr "選擇要檢查的工具"
 msgid "Pin"
 msgstr "置頂"
 
+#: src/pages/shell/files-tab.tsx
+msgid "Pin, keep it"
+msgstr ""
+
 #: src/components/pages/PagesList.tsx
 #: src/pages/Shell.tsx
 msgid "Pinned"
 msgstr "置頂"
 
+#: src/pages/shell/files-tab.tsx
+msgid "Pinned, kept"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Plan"
 msgstr "方案"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Plans the story scene by scene, then renders an .mp4"
+msgstr ""
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Play {name}"
@@ -4952,6 +6459,14 @@ msgstr "播放 {name}"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Playing…"
 msgstr "播放中…"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Please add roles for the following people before adding references: {names}. Roles are required for proper AI context."
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Please select PDF files only"
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Plugin"
@@ -4967,6 +6482,7 @@ msgid "Plugin submissions"
 msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Plugins"
 msgstr ""
 
@@ -4977,6 +6493,15 @@ msgstr "在聊天室中傳送「沒有變更」"
 #: src/pages/RoutineEditor.tsx
 msgid "POST to"
 msgstr "POST 到"
+
+#: src/components/ArtifactFileCard.tsx
+#: src/components/tour/ocsc-tour.tsx
+msgid "PowerPoint"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "PowerPoint decks on the OCSC template, ready to present."
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
@@ -4995,6 +6520,10 @@ msgstr "預覽 {0}"
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr "此檔案類型無法預覽，請下載後檢視。"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Previous"
+msgstr ""
 
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Previous match"
@@ -5016,9 +6545,21 @@ msgstr "優先順序"
 msgid "Private"
 msgstr "私人"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Private spaces keep a team's chats and files separate"
+msgstr ""
+
 #: src/pages/shell/bot-picker.tsx
 msgid "Private workspace with its own bots and groups."
 msgstr "擁有專屬機器人與群組的私人工作空間。"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Processing references and sending to AI..."
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Processing References..."
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Productivity"
@@ -5028,6 +6569,22 @@ msgstr ""
 msgid "Program: {name}"
 msgstr "程式：{name}"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "Project"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Project reference, as sent to the AI"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "projects"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Projects"
+msgstr ""
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "受保護的輸入"
@@ -5036,6 +6593,7 @@ msgstr "受保護的輸入"
 msgid "Protocol"
 msgstr ""
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -5050,23 +6608,29 @@ msgstr "供應商"
 msgid "Pull request"
 msgstr "Pull request"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Put OCSC Intelligence to work"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Quality"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Quality:"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Question"
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "排隊中"
 
-#: src/pages/AccountSettingsOverlay.tsx
-#: src/pages/shell/avatar-studio-popover.tsx
-msgid "Rakazo"
-msgstr "Rakazo"
-
-#: src/components/ModelCredits.tsx
-#: src/pages/Onboarding.tsx
-msgid "Rakazo credits"
-msgstr "Rakazo 額度"
-
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
-msgstr "rakazo-shared 與以 bot- 開頭的 ID 保留給 Rakazo 使用。"
+msgid "rakazo-shared and IDs starting with bot- are reserved for OCSC Intelligence."
+msgstr ""
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5080,9 +6644,25 @@ msgstr "表情回應"
 msgid "Read replies aloud"
 msgstr "朗讀回覆"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Reads a workbook first, then edits cells, rows and sheets without breaking formulas"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Reads every page, existing comments and hidden information before judging"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Reads PDFs you send it, so you can ask questions about them"
+msgstr ""
+
 #: src/pages/shell/import-status.ts
 msgid "Ready"
 msgstr "就緒"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Ready-made ways of working that come with OCSC Intelligence. Staff can also write their own skills under Tools and skills."
+msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Reason"
@@ -5187,9 +6767,21 @@ msgstr "正在重建電腦"
 msgid "Recruiting & HR"
 msgstr ""
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Rect"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Redirect URI"
 msgstr "重新導向 URI"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "References"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "References successfully added as AI context!"
+msgstr ""
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
@@ -5248,6 +6840,7 @@ msgstr "重新載入"
 #: src/components/TrustedLinkSitesSettings.tsx
 #: src/components/vault/LoginFieldsInput.tsx
 #: src/components/vault/VaultItemDetail.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5257,8 +6850,12 @@ msgstr "移除"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
+#. placeholder {0}: p.name
 #: src/components/ComputerDeviceSettings.tsx
+#: src/components/GroupPeople.tsx
+#: src/pages/GroupPanel.tsx
 #: src/pages/shell/composer.tsx
+#: src/pages/shell/references-dialog.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
 
@@ -5278,6 +6875,10 @@ msgstr "移除 {site}"
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
 msgstr "移除變化觸發器"
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Remove exemplar"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -5320,6 +6921,7 @@ msgid "Removed, but list refresh failed"
 msgstr "已移除，但清單重新整理失敗"
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Removing…"
 msgstr "正在移除…"
@@ -5335,6 +6937,36 @@ msgstr "重新命名"
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Rename section"
 msgstr "重新命名分組"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render Studio"
+msgstr ""
+
+#. placeholder {0}: activeRender.version
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render v{0} added to your message"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render v{nextVersion}"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Render v{version} ready"
+msgstr ""
+
+#: src/components/render-studio/RenderLoader.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Rendering…"
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Renders waiting"
+msgstr ""
 
 #: src/lib/billing.ts
 msgid "Renews {day}"
@@ -5428,7 +7060,12 @@ msgstr "調整機器人側邊欄大小"
 msgid "Resize panel"
 msgstr "調整面板大小"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "Response"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/shell/references-dialog.tsx
 msgid "Responses"
 msgstr ""
 
@@ -5462,6 +7099,8 @@ msgstr "正在還原工作空間"
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminStaffSpending.tsx
 #: src/pages/Auth.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5486,8 +7125,8 @@ msgstr "返回與 {0} 的通話"
 
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
-msgid "Return to Rakazo"
-msgstr "返回 Rakazo"
+msgid "Return to OCSC Intelligence"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -5500,6 +7139,18 @@ msgstr "撤銷授權"
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Role is required for this person reference"
+msgstr ""
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Role on this work"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Role required"
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -5517,6 +7168,7 @@ msgstr "輪換金鑰"
 msgid "Routine"
 msgstr "例行任務"
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
@@ -5564,6 +7216,10 @@ msgstr "正在執行…"
 msgid "Runs"
 msgstr "執行"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Runs in a locked-down sandbox and is reviewed before it is published"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "當此機器人收到來自這個供應商且通過驗證的訊息時執行。"
@@ -5605,6 +7261,10 @@ msgstr "週六"
 msgid "Save"
 msgstr "儲存"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Save for everyone"
+msgstr ""
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "儲存工作空間並安裝最新軟體。"
@@ -5631,6 +7291,14 @@ msgstr "已儲存。"
 #: src/pages/RoutineEditor.tsx
 msgid "Saved. Rotate to reveal."
 msgstr "已儲存。輪換後可檢視。"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Saves each round as a new version and says what changed"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Saves each round as a new version and works on decks you send it"
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Saving your workspace"
@@ -5661,6 +7329,10 @@ msgstr "回答是或否，或一句話說明。"
 msgid "Schedule delayed"
 msgstr "排程執行延遲"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Scheduled and recurring tasks."
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Scheduled routines"
 msgstr "排程例行任務"
@@ -5687,6 +7359,10 @@ msgstr "螢幕未連線"
 msgid "Search"
 msgstr "搜尋"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "Search & Filter"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Search apps"
@@ -5707,6 +7383,14 @@ msgstr ""
 #: src/pages/PluginsOverlay.tsx
 msgid "Search by domain"
 msgstr "依網域搜尋"
+
+#: src/components/GroupPeople.tsx
+msgid "Search Evolve people"
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "Search Evolve people to add"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
@@ -5736,10 +7420,22 @@ msgstr ""
 msgid "Search: {0}"
 msgstr "搜尋：{0}"
 
+#: src/pages/shell/references-dialog.tsx
+msgid "Search..."
+msgstr ""
+
+#: src/components/GroupPeople.tsx
+msgid "Searching Evolve…"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Searching…"
 msgstr "正在搜尋…"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Sector"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Security"
@@ -5758,10 +7454,31 @@ msgstr ""
 msgid "Select a bot"
 msgstr "選擇機器人"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Select at least one page"
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Select Drawing(s)"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Select References"
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Selected pages will be converted to images and added to your message."
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Selected References"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"
 msgstr "自行託管"
 
+#: src/pages/SharedChats.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
 msgstr "傳送"
@@ -5790,6 +7507,10 @@ msgstr "傳送刪除驗證碼"
 msgid "Send it"
 msgstr "傳送"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Send me that report as a PDF with the changes marked up"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Send recording"
 msgstr "傳送錄製內容"
@@ -5808,6 +7529,10 @@ msgstr "按 Enter 傳送"
 msgid "Sending…"
 msgstr "正在傳送…"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Sends back the marked-up PDF with a list of findings by page"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
@@ -5816,6 +7541,10 @@ msgstr ""
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Serenity endpoint is required."
 msgstr "請填寫 Serenity 端點。"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Server disk"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Server name"
@@ -5829,10 +7558,23 @@ msgstr "伺服器名稱"
 msgid "Server URL"
 msgstr "伺服器 URL"
 
+#: src/pages/AdminCompanyTools.tsx
+msgid "Set EVOLVE_PLUGINS_URL and EVOLVE_PLUGINS_SECRET on the server to connect."
+msgstr ""
+
+#: src/components/PersonalVault.tsx
+msgid "Set up by your administrator for everyone. Your assistants can use these, but nobody sees the values. One of yours with the same name is used instead."
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Sets the drawing scale, then measures lengths, areas and perimeters"
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
@@ -5881,9 +7623,21 @@ msgstr "分享"
 msgid "Share “{title}”"
 msgstr "分享「{title}」"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Share it with colleagues so everyone can use what you built"
+msgstr ""
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Share my connection with everyone"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Share your dashboards, tools and functions so colleagues can use them too"
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
-msgid "Share, anyone with the link can view"
-msgstr "共用，任何擁有連結的人都能檢視"
+msgid "Share, anyone at the company with the link can view"
+msgstr ""
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -5895,6 +7649,15 @@ msgstr "共享"
 msgid "Shared memory"
 msgstr "共用記憶"
 
+#: src/pages/SharedPage.tsx
+msgid "Shared pages are only for people at your company."
+msgstr ""
+
+#: src/pages/SharedChats.tsx
+#: src/pages/shell/shell-sidebar.tsx
+msgid "Shared with you"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -5904,9 +7667,17 @@ msgstr "顯示"
 msgid "Show all"
 msgstr "顯示全部"
 
+#: src/pages/shell/evolve-history.tsx
+msgid "Show all {total}"
+msgstr ""
+
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "顯示機器人"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Show fewer"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -5945,6 +7716,7 @@ msgstr "側邊欄密度"
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/SharedPage.tsx
 msgid "Sign in"
 msgstr "登入"
 
@@ -5964,8 +7736,12 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "在 <0>{0}</0> 登入，然後將代碼貼到這裡。"
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "登入 Rakazo"
+msgid "Sign in to OCSC Intelligence"
+msgstr ""
+
+#: src/pages/SharedPage.tsx
+msgid "Sign in to view this page"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -6003,7 +7779,6 @@ msgstr "技能 {position}"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
-#: src/components/SidebarFooter.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Skills"
@@ -6020,6 +7795,10 @@ msgstr "跳過"
 #: src/lib/localized-provider-hint.ts
 msgid "Skip or deploy key"
 msgstr "跳過或使用部署金鑰"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Skip to the end"
+msgstr ""
 
 #: src/pages/shell/message-view.tsx
 msgid "Skipped"
@@ -6041,6 +7820,10 @@ msgstr "未啟用 Slack"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Slide up to lock"
 msgstr "向上滑動以鎖定"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Slides come animated for presenting"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6065,6 +7848,7 @@ msgid "Something you chose cannot work here. Untick it and try again."
 msgstr "你選擇的某個項目無法在此使用。請取消勾選後再試一次。"
 
 #: src/components/markdown-copy.tsx
+#: src/components/UiCardView.tsx
 msgid "Sort by {column}"
 msgstr "依 {column} 排序"
 
@@ -6109,6 +7893,22 @@ msgstr "說話中"
 msgid "Speech model"
 msgstr "語音模型"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Split"
+msgstr ""
+
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Spoken replies, dictation and calls. Staff never set voice up themselves: everyone uses the connection shared here."
+msgstr ""
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Spreadsheet"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Spreadsheets, cost plans, registers and trackers."
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 msgid "SSO"
 msgstr ""
@@ -6116,6 +7916,14 @@ msgstr ""
 #: src/lib/user-error.ts
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO 暫時不可用，請重試。"
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Staff spending"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review."
+msgstr ""
 
 #: src/components/GitHubStarPrompt.tsx
 msgid "Star on GitHub"
@@ -6129,6 +7937,18 @@ msgstr "啟動"
 #: src/pages/Paywall.tsx
 msgid "Start {trialDays}-day free trial"
 msgstr "開始 {trialDays} 天免費試用"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
+msgstr ""
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Start from"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Start in the chat: a live app appears and changes each time you ask"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Start plan"
@@ -6178,6 +7998,14 @@ msgstr ""
 msgid "Status"
 msgstr "狀態"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Step 2 — Describe the edit"
+msgstr ""
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Step 3"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Steps"
 msgstr "步驟"
@@ -6209,6 +8037,19 @@ msgstr "已停止。"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stopping…"
 msgstr "正在停止…"
+
+#. placeholder {0}: person.name
+#: src/pages/AdminComputerAccess.tsx
+msgid "Storage limit for {0}"
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Storage per person"
+msgstr ""
+
+#: src/pages/shell/files-tab.tsx
+msgid "Storage used"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Stored encrypted"
@@ -6245,8 +8086,8 @@ msgid "Subscribe for {price} / month"
 msgstr "以每月 {price} 訂閱"
 
 #: src/components/ModelCredits.tsx
-msgid "Subscribe to Rakazo credits"
-msgstr "訂閱 Rakazo 額度"
+msgid "Subscribe to OCSC Intelligence credits"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Subscribe with your own AI"
@@ -6255,6 +8096,10 @@ msgstr "使用自己的 AI 訂閱"
 #: src/pages/Paywall.tsx
 msgid "Subscription required"
 msgstr "需要訂閱"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Summary"
+msgstr ""
 
 #: src/lib/cron.ts
 msgid "Sunday"
@@ -6328,6 +8173,10 @@ msgstr "團隊電腦"
 msgid "Teams message"
 msgstr "Teams 訊息"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Tell an agent to forget something and it will"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Template"
 msgstr ""
@@ -6361,6 +8210,10 @@ msgstr "正在測試…"
 msgid "The bot can use the file but won't see the picture."
 msgstr "機器人可以使用這個檔案，但看不到圖片內容。"
 
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "The bot starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
+msgstr ""
+
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."
 msgstr ""
@@ -6368,6 +8221,14 @@ msgstr ""
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "連線超時。"
+
+#: src/pages/shell/side-panel.tsx
+msgid "The group was created, but these people could not be added: {list}"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "The key is checked with the provider, then stored encrypted on the server."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6408,17 +8269,35 @@ msgstr "螢幕連結已過期。"
 msgid "The selected memory provider is not available in this build."
 msgstr "所選記憶供應商在此版本中不可用。"
 
+#. placeholder {0}: state.environmentModel.provider
+#. placeholder {1}: state.environmentModel.modelId
+#: src/pages/AdminCompanyPage.tsx
+msgid "The server's own model is in use: {0} · {1}. Saving a company model here replaces it."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "The shared link stops working"
 msgstr "共用連結將失效"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "The unused difference is credited to your next invoice."
 msgstr "未使用的差額將抵扣到你的下一張帳單。"
 
+#: src/components/ArtifactFileCard.tsx
+msgid "The video could not be loaded."
+msgstr ""
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "已清除機器人的個別模型設定。你可以隨時為各機器人重新選擇模型。"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "These apply to everyone in the company and take effect within a few seconds."
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "These files are too large to import."
@@ -6436,6 +8315,10 @@ msgstr "無法讀取已儲存的設定，請移除後重新新增。"
 #: src/components/InviteDialog.tsx
 msgid "They get {weeks} weeks free."
 msgstr "對方可免費使用 {weeks} 週。"
+
+#: src/components/pages/SharePopover.tsx
+msgid "They sign in to view"
+msgstr ""
 
 #: src/components/call/CallCard.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -6460,6 +8343,14 @@ msgstr "無法讀取此備份。"
 #: src/pages/shell/agent-import.tsx
 msgid "This bot"
 msgstr "此機器人"
+
+#: src/pages/shell/files-tab.tsx
+msgid "This bot has no files on a computer yet."
+msgstr ""
+
+#: src/pages/shell/files-tab.tsx
+msgid "This bot hasn't made any files yet."
+msgstr ""
 
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
@@ -6489,6 +8380,10 @@ msgstr "此操作無法復原。"
 msgid "This cannot be undone."
 msgstr "此操作無法復原。"
 
+#: src/pages/SharedChats.tsx
+msgid "This chat is no longer shared with you."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "這臺電腦"
@@ -6511,6 +8406,10 @@ msgstr "這將刪除此成品的全部 {0} 個版本，且無法復原。"
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "此檔案不是有效的 UTF-8 文字。"
+
+#: src/components/ImageLightbox.tsx
+msgid "This image could not be shown."
+msgstr ""
 
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
@@ -6577,6 +8476,10 @@ msgstr "這將從每個空間移除該連線。"
 msgid "This reset link is invalid or expired"
 msgstr "此重設連結無效或已過期"
 
+#: src/pages/shell/evolve-references.tsx
+msgid "This role overrides any role or job title in their CV."
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "This server cannot be assigned without a bot."
 msgstr "沒有機器人就無法分配此伺服器。"
@@ -6595,8 +8498,8 @@ msgid "This server's tool result does not fit the model. Turn off Keep tool resu
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "此訂閱登入在 Rakazo 中尚不可用。請使用部署憑證或選擇其他供應商。"
+msgid "This subscription sign-in is not available in OCSC Intelligence yet. Use a deployment credential or choose another provider."
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -6617,6 +8520,10 @@ msgstr "時區"
 #: src/pages/shell/agent-import.tsx
 msgid "Timing may differ"
 msgstr "執行時間可能不同"
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Tip:"
+msgstr ""
 
 #: src/pages/Board.tsx
 msgid "Title"
@@ -6649,6 +8556,7 @@ msgid "Toggle sidebar"
 msgstr "顯示或隱藏側邊欄"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminStaffSpending.tsx
 msgid "Tokens"
 msgstr "Token"
 
@@ -6673,6 +8581,31 @@ msgstr "工具名稱"
 #: src/pages/shell/bot-panel.tsx
 msgid "Tools"
 msgstr "工具"
+
+#: src/components/integrations/skills-dialog.tsx
+#: src/components/SidebarFooter.tsx
+msgid "Tools and skills"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Tools are OCSC's own functions. Agents use them to turn your words, your files and Evolve data into real deliverables in our brand. Just ask in plain English."
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Tools only"
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's own private computer, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: chat and Evolve tools only. Every person's computer and files stay their own."
+msgstr ""
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "Total cost"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Totals quantities into a take-off schedule"
+msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
@@ -6718,14 +8651,23 @@ msgstr "為防止濫用，試用期的時數較少。"
 msgid "Trusted sites"
 msgstr "受信任的網站"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Try"
+msgstr ""
+
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/SharedPage.tsx
+#: src/pages/shell/files-tab.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Try again"
 msgstr "重試"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Try asking"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Try the test again."
@@ -6735,6 +8677,14 @@ msgstr "請重試測試。"
 msgid "Tuesday"
 msgstr "週二"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Turn these quantities into a cost plan with a total per trade"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Turns any OCSC Word report, deck or workbook into a clean PDF"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Type"
@@ -6743,6 +8693,10 @@ msgstr "類型"
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "Type {name} to confirm"
 msgstr "輸入 {name} 以確認"
+
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Type a clear, specific instruction in the box below."
+msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Type without recording"
@@ -6775,8 +8729,13 @@ msgstr "取消靜音"
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx
+#: src/pages/shell/files-tab.tsx
 msgid "Unpin"
 msgstr "取消置頂"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Unreachable"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Unread"
@@ -6852,6 +8811,14 @@ msgstr "立即升級"
 msgid "Upload"
 msgstr "上傳"
 
+#: src/pages/shell/composer.tsx
+msgid "Upload files, documents and images"
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Uploading drawings here turns pages into images the AI can visually inspect. The regular file upload is for text extraction only and does not provide visual understanding of drawings."
+msgstr ""
+
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "緊急"
@@ -6895,17 +8862,21 @@ msgstr "{label}使用預設值"
 msgid "Use in this bot"
 msgstr ""
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Use Lasso, Rect or Brush to outline what should change. Optional — skip to edit the whole image."
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Use my subscription or API key"
 msgstr "使用我的訂閱或 API 金鑰"
 
+#: src/components/ModelCredits.tsx
+msgid "Use OCSC Intelligence credits"
+msgstr ""
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
 msgstr "輸入密碼時，請使用受保護的輸入。"
-
-#: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "使用 Rakazo 額度"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
@@ -6925,6 +8896,10 @@ msgstr "使用者對端"
 msgid "Username"
 msgstr "使用者名稱"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Uses Evolve data you are allowed to see, nothing more"
+msgstr ""
+
 #: src/pages/shell/import-status.ts
 msgid "Uses files that are not imported"
 msgstr "使用未匯入的檔案"
@@ -6932,6 +8907,10 @@ msgstr "使用未匯入的檔案"
 #: src/pages/shell/import-status.ts
 msgid "Uses paths on your computer"
 msgstr "使用你電腦上的路徑"
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Uses real OCSC project photos and stock footage"
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
@@ -6949,8 +8928,13 @@ msgstr "正在使用你的 API 金鑰。免費方案將於 {freeUntil} 結束。
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/shell/evolve-references.tsx
 msgid "Value"
 msgstr "值"
+
+#: src/pages/shell/evolve-references.tsx
+msgid "Value:"
+msgstr ""
 
 #: src/components/vault/kinds.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -6965,7 +8949,6 @@ msgstr ""
 msgid "Variables"
 msgstr ""
 
-#: src/pages/settings-nav.ts
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Vault"
 msgstr "保管庫"
@@ -6982,6 +8965,29 @@ msgstr "正在驗證…"
 msgid "Version"
 msgstr "版本"
 
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Version history"
+msgstr ""
+
+#. placeholder {0}: activeRender.version
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "VERSION v{0} (from original)"
+msgstr ""
+
+#. placeholder {0}: activeRender.version
+#. placeholder {1}: versionOf(activeRender.parentRenderId) ?? 0
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "VERSION v{0} (from v{1})"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Video"
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Video renders"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
 msgstr ""
@@ -6990,15 +8996,23 @@ msgstr ""
 msgid "View source"
 msgstr ""
 
-#: src/pages/settings-nav.ts
+#: src/pages/AdminCompanyVoice.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Voice"
 msgstr "語音"
 
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Voice for everyone"
+msgstr ""
+
 #: src/lib/tts.ts
 msgid "Voice request timed out."
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Voiceover in OCSC Peter, Rory or Tim's voice"
 msgstr ""
 
 #: src/lib/model-connection-preflight.ts
@@ -7008,6 +9022,10 @@ msgstr "請稍候並重新測試。"
 #: src/lib/roster-status.ts
 msgid "Waiting in line…"
 msgstr "排隊等候…"
+
+#: src/components/AskCard.tsx
+msgid "Waiting on you"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
@@ -7019,6 +9037,14 @@ msgstr "喚醒"
 
 #: src/pages/settings-nav.ts
 msgid "Wallet"
+msgstr ""
+
+#: src/pages/shell/drawings-dialog.tsx
+msgid "Warning:"
+msgstr ""
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Web page"
 msgstr ""
 
 #: src/components/ModelCredits.tsx
@@ -7051,25 +9077,45 @@ msgstr "工作日"
 msgid "Weekends"
 msgstr "週末"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Welcome to a new era of AI at OCSC"
+msgstr ""
+
 #: src/components/SignupSurvey.tsx
-msgid "Welcome to Rakazo"
-msgstr "歡迎使用 Rakazo"
+msgid "Welcome to OCSC Intelligence"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Welcome to OCSC Intelligence V3"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "What about its memories?"
 msgstr "它的記憶怎麼處理？"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "What assistants can look up and do in Evolve on the person's behalf, such as project datasheets, stock media and voiceovers. Each person only reaches what Evolve lets them see."
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "What can this space use?"
 msgstr ""
 
 #: src/components/SignupSurvey.tsx
-msgid "What do you most want Rakazo to help with?"
-msgstr "你最希望 Rakazo 幫你做什麼？"
+msgid "What do you most want OCSC Intelligence to help with?"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"
 msgstr "你想讓我先做什麼？"
+
+#: src/pages/AdminStaffSpending.tsx
+msgid "What each person's chats, bots and routines have cost in model usage. Updates every minute."
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "What it can do"
+msgstr ""
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "What result will you demonstrate?"
@@ -7125,9 +9171,25 @@ msgstr "誰可以開啟此頁面"
 msgid "Won't do"
 msgstr "不處理"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Word"
+msgstr ""
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Word document"
+msgstr ""
+
+#: src/pages/shell/references-dialog.tsx
+msgid "Words:"
+msgstr ""
+
 #: src/components/SignupSurvey.tsx
 msgid "Work"
 msgstr "工作"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Work that runs itself"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Working"
@@ -7152,6 +9214,14 @@ msgstr "可使用你的 ChatGPT 或 Claude 方案。"
 msgid "Workspace"
 msgstr "工作空間"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Write a flood risk assessment for HEL18, then tighten the conclusions"
+msgstr ""
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Write its instructions yourself"
+msgstr ""
+
 #: src/lib/billing.ts
 msgid "year"
 msgstr "年"
@@ -7167,6 +9237,7 @@ msgstr "昨天"
 
 #: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/SharedChats.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/message-view.tsx
 #: src/pages/shell/shell-sidebar.tsx
@@ -7182,6 +9253,10 @@ msgstr "如果沒有自動重新導向，可以關閉此分頁。"
 msgid "You can close this window."
 msgstr "可以關閉此視窗。"
 
+#: src/pages/shell/drawings-dialog.tsx
+msgid "You can select up to {maxPages} pages at a time"
+msgstr ""
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "You declined"
 msgstr "你已拒絕"
@@ -7193,6 +9268,26 @@ msgstr "對方用新卡開始試用後，你將獲得一個月免費。"
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"
 msgstr "你已接管"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "You're all set"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Your administrator chooses the models for the company."
+msgstr ""
+
+#: src/pages/Onboarding.tsx
+msgid "Your administrator is setting up OCSC Intelligence for the company. This page opens your assistant as soon as it is ready."
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Your administrator sets up computers for the company."
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Your administrator sets up voice for the company."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -7206,6 +9301,10 @@ msgstr "今天將從你的卡中扣款 {annualPrice}，並抵扣本月未使用�
 #: src/components/ModelCredits.tsx
 msgid "Your card is charged the prorated difference today."
 msgstr "今天將從你的卡片扣除按比例計算的差額。"
+
+#: src/pages/shell/files-tab.tsx
+msgid "Your computer storage"
+msgstr ""
 
 #: src/pages/Shell.tsx
 msgid "Your computer's disk is nearly full. Free up space by removing build output and caches you no longer need."
@@ -7222,6 +9321,10 @@ msgstr "你的預設值"
 #: src/pages/Auth.tsx
 msgid "Your email address"
 msgstr "你的電子信箱"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Your first agent is ready. It already knows who you are from your Evolve CV, has every OCSC Tool, and will ask a couple of quick questions to get you started."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -7242,6 +9345,22 @@ msgstr "你的 OpenAI"
 msgid "Your OpenRouter"
 msgstr "你的 OpenRouter"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Your other systems, inside the chat"
+msgstr ""
+
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Your own dashboards, calculators and apps, built in the OCSC sandbox."
+msgstr ""
+
+#: src/components/PersonalVault.tsx
+msgid "Your own logins, cards, API keys and contacts. Only your assistants use them, and only you can see them here."
+msgstr ""
+
+#: src/components/integrations/skills-dialog.tsx
+msgid "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below; the built-in ones come with OCSC Intelligence."
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {annualPrice} / year when your trial ends."
 msgstr "試用結束後，你的方案將變為每年 {annualPrice}。"
@@ -7251,8 +9370,8 @@ msgid "Your plan becomes {tierTargetLabel} when your trial ends."
 msgstr "試用結束後，你的方案將變為 {tierTargetLabel}。"
 
 #: src/components/integrations/skills-dialog.tsx
-msgid "Your skills"
-msgstr ""
+#~ msgid "Your skills"
+#~ msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Your subscription or API key"
@@ -7266,6 +9385,10 @@ msgstr "試用將結束，今天將從你的卡片扣款 {price}。"
 msgid "Your trial ends and your card is charged today."
 msgstr "試用將結束，今天將從你的卡片扣款。"
 
+#: src/pages/AdminCompanyVoice.tsx
+msgid "Your voice connection"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Your voice provider is out of credit."
 msgstr "你的語音供應商額度已用完。"
@@ -7274,6 +9397,20 @@ msgstr "你的語音供應商額度已用完。"
 msgid "Your voice provider key was rejected."
 msgstr "你的語音供應商拒絕了該金鑰。"
 
+#: src/components/ArtifactFileCard.tsx
+msgid "ZIP archive"
+msgstr ""
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
+msgstr ""
+
+#: src/components/ImageLightbox.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Zoom in"
+msgstr ""
+
+#: src/components/ImageLightbox.tsx
+#: src/components/render-studio/RenderStudioDialog.tsx
+msgid "Zoom out"
 msgstr ""

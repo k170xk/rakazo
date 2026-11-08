@@ -1,4 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
+import { MODEL_IMAGE_MAX_EDGE, MODEL_IMAGE_MAX_PIXELS } from "@rakazo/contracts";
 import {
   Button,
   Dialog,
@@ -38,7 +39,14 @@ async function loadPdfjs() {
 
 async function renderPage(pdf: PDFDocumentProxy, pageNumber: number, scale: number) {
   const page = await pdf.getPage(pageNumber);
-  const viewport = page.getViewport({ scale });
+  // Large sheets (A1, A0) at screen density exceed what the models accept.
+  const unit = page.getViewport({ scale: 1 });
+  const fit = Math.min(
+    scale,
+    MODEL_IMAGE_MAX_EDGE / Math.max(unit.width, unit.height),
+    Math.sqrt(MODEL_IMAGE_MAX_PIXELS / (unit.width * unit.height)),
+  );
+  const viewport = page.getViewport({ scale: fit });
   const canvas = document.createElement("canvas");
   canvas.width = Math.floor(viewport.width);
   canvas.height = Math.floor(viewport.height);

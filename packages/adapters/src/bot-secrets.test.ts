@@ -64,6 +64,7 @@ async function fixture(auth = destination.auth) {
     spaceSettingOverride: ownVault,
     vaultCredential: { findFirst },
     secret: { findFirst: vi.fn(async () => null) },
+    companyVaultCredential: { findMany: vi.fn(async () => []) },
   } as unknown as PrismaClient;
   const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({ ok: true }));
   const registerRedactions = vi.fn();
@@ -243,6 +244,7 @@ describe("authenticated secret requests", () => {
       prisma: {
         spaceSettingOverride: ownVault,
         vaultCredential: { findFirst },
+        companyVaultCredential: { findMany: vi.fn(async () => []) },
       } as unknown as PrismaClient,
       secretStore,
       scope,
@@ -286,6 +288,7 @@ describe("authenticated secret requests", () => {
       prisma: {
         spaceSettingOverride: ownVault,
         vaultCredential: { findFirst },
+        companyVaultCredential: { findMany: vi.fn(async () => []) },
       } as unknown as PrismaClient,
       secretStore,
       scope,
@@ -856,6 +859,7 @@ describe("saved website logins", () => {
         spaceSettingOverride: ownVault,
         vaultCredential: { findFirst, findMany },
         secret: { findFirst: vi.fn(async () => null) },
+        companyVaultCredential: { findMany: vi.fn(async () => []) },
       } as unknown as PrismaClient,
     };
   }
@@ -876,6 +880,7 @@ describe("saved website logins", () => {
     const prisma = {
       spaceSettingOverride: ownVault,
       vaultCredential: { findMany: vi.fn(async (query) => matchingRows(rows, query)) },
+      companyVaultCredential: { findMany: vi.fn(async () => []) },
     } as unknown as PrismaClient;
     expect(await loadLoginPasswordRedactions(prisma, secretStore, scope)).toContain(password);
   });
@@ -925,6 +930,7 @@ describe("saved website logins", () => {
     const prisma = {
       spaceSettingOverride: ownVault,
       vaultCredential: { findMany: vi.fn(async () => [row]) },
+      companyVaultCredential: { findMany: vi.fn(async () => []) },
     } as unknown as PrismaClient;
     const warn = vi.fn();
     const logger = vi.spyOn(Logging, "getLogger").mockReturnValue({ warn } as never);
@@ -1151,6 +1157,7 @@ describe("logins kept for one run", () => {
           ...saved,
         })),
       },
+      companyVaultCredential: { findMany: vi.fn(async () => []) },
     } as unknown as PrismaClient;
   }
 
@@ -1323,6 +1330,7 @@ describe("resolveCodeFill", () => {
           return { count: found.length };
         }),
       },
+      companyVaultCredential: { findMany: vi.fn(async () => []) },
     } as unknown as PrismaClient;
     return { prisma, rows };
   }

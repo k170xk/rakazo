@@ -4,6 +4,7 @@ import { runContinueJob } from "@rakazo/adapter-kit";
 import {
   archiveBot,
   checkpointAndStopComputer,
+  companyVaultRows,
   defaultVaultItemTitle,
   forgetBotSecret,
   forgetPageShareSecrets,
@@ -906,6 +907,14 @@ export function botsRoutes(ctx: RouterContext) {
         await forgetBotSecret(deps.prisma, vaultScope(context.actor, input.scope), input.name);
         return { ok: true as const };
       }),
+      company: authed.vault.company.handler(async () =>
+        (await companyVaultRows(deps.prisma)).map((row) => ({
+          title: row.title || (URL.canParse(row.origin) ? new URL(row.origin).host : row.name),
+          origin: row.origin,
+          type: BotSecretAuth.safeParse(row.auth).data?.type ?? "",
+          note: row.note,
+        })),
+      ),
     },
     botSecrets: {
       list: authed.botSecrets.list.handler(async ({ context, input }) => {

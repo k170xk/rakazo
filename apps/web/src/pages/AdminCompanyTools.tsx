@@ -3,12 +3,13 @@ import type { CompanyAdminState, CompanyTools } from "@rakazo/contracts";
 import { Badge, Button, Switch, toast } from "@rakazo/ui-web";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
+import { isOcscTool, ocscToolTitle } from "../lib/ocsc-tools";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
 type Entry = CompanyAdminState["tools"]["skills"][number];
 
-/** The skills and Evolve tools every assistant has, each switchable off for the whole company. */
+/** The OCSC Tools, Evolve tools and built-in skills every assistant has, each switchable off for the whole company. */
 export function CompanyToolsSection({
   state,
   onSaved,
@@ -20,6 +21,8 @@ export function CompanyToolsSection({
   const [busy, setBusy] = useState<string | null>(null);
   const { skills, evolve } = state.tools;
   const evolveOn = state.features.evolveTools;
+  const ocscTools = skills.filter((entry) => isOcscTool(entry.name));
+  const builtinSkills = skills.filter((entry) => !isOcscTool(entry.name));
 
   async function run(key: string, action: () => Promise<CompanyAdminState>, failure: string) {
     setBusy(key);
@@ -67,7 +70,7 @@ export function CompanyToolsSection({
     <section className="space-y-4" data-testid="company-tools">
       <div>
         <h2 className="text-base font-medium">
-          <Trans>Company tools</Trans>
+          <Trans>OCSC Tools and skills</Trans>
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           <Trans>
@@ -75,6 +78,24 @@ export function CompanyToolsSection({
             takes effect within a few seconds.
           </Trans>
         </p>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium">
+          <Trans>OCSC Tools</Trans>
+        </h3>
+        <p className="text-[13px] text-muted-foreground">
+          <Trans>
+            The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video
+            and apps. Staff see them under OCSC Tools, with what each can do.
+          </Trans>
+        </p>
+        <ToggleList
+          entries={ocscTools}
+          idPrefix="company-skill"
+          disabled={busy !== null}
+          onChange={(name, on) => void setSkill(name, on)}
+        />
       </div>
 
       <div className="space-y-2">
@@ -108,6 +129,13 @@ export function CompanyToolsSection({
           />
         </div>
         <p className="text-[13px] text-muted-foreground">
+          <Trans>
+            What assistants can look up and do in Evolve on the person's behalf, such as project
+            datasheets, stock media and voiceovers. Each person only reaches what Evolve lets them
+            see.
+          </Trans>
+        </p>
+        <p className="text-[13px] text-muted-foreground">
           {evolve.status === "not-configured" ? (
             <Trans>
               Set EVOLVE_PLUGINS_URL and EVOLVE_PLUGINS_SECRET on the server to connect.
@@ -134,10 +162,16 @@ export function CompanyToolsSection({
 
       <div className="space-y-2">
         <h3 className="text-sm font-medium">
-          <Trans>Skills</Trans>
+          <Trans>Built-in skills</Trans>
         </h3>
+        <p className="text-[13px] text-muted-foreground">
+          <Trans>
+            Ready-made ways of working that come with OCSC Intelligence. Staff can also write their
+            own skills under Tools and skills.
+          </Trans>
+        </p>
         <ToggleList
-          entries={skills}
+          entries={builtinSkills}
           idPrefix="company-skill"
           disabled={busy !== null}
           onChange={(name, on) => void setSkill(name, on)}
@@ -165,7 +199,14 @@ function ToggleList({
         return (
           <li key={entry.name} className="flex items-center gap-4 px-4 py-3">
             <label htmlFor={id} className="min-w-0 flex-1 cursor-pointer">
-              <span className="block text-sm font-medium">{entry.name}</span>
+              <span className="block text-sm font-medium">
+                {ocscToolTitle(entry.name) ?? entry.name}
+                {ocscToolTitle(entry.name) ? (
+                  <span className="ms-2 font-mono text-[12px] font-normal text-muted-foreground">
+                    {entry.name}
+                  </span>
+                ) : null}
+              </span>
               <span className="line-clamp-2 block text-[13px] text-muted-foreground">
                 {entry.description}
               </span>

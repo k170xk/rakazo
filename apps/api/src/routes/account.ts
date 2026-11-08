@@ -38,18 +38,22 @@ import {
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { createAccessGrant, listAccessGrants, revokeAccessGrant } from "../access-grants.js";
-import { requireAdmin } from "../admins.js";
+import { isAdmin, requireAdmin } from "../admins.js";
 import { aiConsentStatus, allowAiConsent } from "../ai-consent.js";
 import type { BillingService } from "../billing.js";
 import {
   checkCompanyTools,
   clearCompanyModel,
   companyAdminState,
+  listCompanyVault,
+  putCompanyVaultItem,
+  removeCompanyVault,
   setCompanyFeatures,
   setCompanyModel,
   setCompanyTools,
   setComputerAccess,
   setStorageLimit,
+  shareCompanyVoice,
 } from "../company-admin.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
@@ -57,6 +61,7 @@ import { withSerializableRetry } from "../serializable-retry.js";
 import { staffSpending } from "../staff-spending.js";
 import {
   disconnectVoiceCredential,
+  effectiveVoiceCredential,
   listVoiceCatalog,
   loadDefaultVoiceCredential,
   loadVoiceCredential,
@@ -170,6 +175,20 @@ export function accountRoutes(ctx: RouterContext) {
       checkTools: authed.companyAdmin.checkTools.handler(({ context }) =>
         checkCompanyTools(deps, context.actor),
       ),
+      shareVoice: authed.companyAdmin.shareVoice.handler(({ context, input }) =>
+        shareCompanyVoice(deps, context.actor, input),
+      ),
+      vault: {
+        list: authed.companyAdmin.vault.list.handler(({ context }) =>
+          listCompanyVault(deps, context.actor),
+        ),
+        put: authed.companyAdmin.vault.put.handler(({ context, input }) =>
+          putCompanyVaultItem(deps, context.actor, input),
+        ),
+        remove: authed.companyAdmin.vault.remove.handler(({ context, input }) =>
+          removeCompanyVault(deps, context.actor, input.name),
+        ),
+      },
       setComputerAccess: authed.companyAdmin.setComputerAccess.handler(({ context, input }) =>
         setComputerAccess(deps, context.actor, input),
       ),
@@ -517,8 +536,8 @@ export function accountRoutes(ctx: RouterContext) {
         listVoiceCatalog({ allowPrivateEndpoint: deps.env?.mcpAllowPrivateEndpoint }),
       ),
       status: authed.voice.status.handler(async ({ context, input }) => {
-        const cred = await findDefaultVoiceCredential(deps.prisma, context.actor, input?.scope);
-        return toVoiceStatus(cred);
+        const found = await effectiveVoiceCredential(deps, context.actor, undefined, input?.scope);
+        return toVoiceStatus(found?.cred ?? null);
       }),
       credentials: authed.voice.credentials.handler(async ({ context, input }) => {
         const target = await voicePreferenceTarget(deps.prisma, context.actor, input?.scope);
@@ -542,8 +561,9 @@ export function accountRoutes(ctx: RouterContext) {
           }),
         );
       }),
-      connect: authed.voice.connect.handler(async ({ context, input }) =>
-        persistVoiceCredential(deps, context.actor, {
+      connect: authed.voice.connect.handler(async ({ context, input }) => {
+        await requireVoiceAdmin(deps, context.actor);
+        return persistVoiceCredential(deps, context.actor, {
           provider: input.provider,
           plaintext: input.apiKey,
           voiceId: input.voiceId,
@@ -553,11 +573,12 @@ export function accountRoutes(ctx: RouterContext) {
           sttModel: input.sttModel,
           scope: input.scope,
           signal: context.signal,
-        }),
-      ),
-      disconnect: authed.voice.disconnect.handler(async ({ context, input }) =>
-        disconnectVoiceCredential(deps, context.actor, { provider: input.provider }),
-      ),
+        });
+      }),
+      disconnect: authed.voice.disconnect.handler(async ({ context, input }) => {
+        await requireVoiceAdmin(deps, context.actor);
+        return disconnectVoiceCredential(deps, context.actor, { provider: input.provider });
+      }),
       setVoice: authed.voice.setVoice.handler(async ({ context, input }) => {
         const cred = await withSerializableRetry(() =>
           deps.prisma.$transaction(
@@ -582,9 +603,10 @@ export function accountRoutes(ctx: RouterContext) {
         );
         return toVoiceStatus(cred);
       }),
-      setSpeechModel: authed.voice.setSpeechModel.handler(async ({ context, input }) =>
-        updateVoiceSpeechModel(deps, context.actor, input),
-      ),
+      setSpeechModel: authed.voice.setSpeechModel.handler(async ({ context, input }) => {
+        await requireVoiceAdmin(deps, context.actor);
+        return updateVoiceSpeechModel(deps, context.actor, input);
+      }),
       voices: authed.voice.voices.handler(async ({ context, input }) => {
         // A named provider lists its voices even before the copy has a default voice.
         const row = input.provider
@@ -685,4 +707,12 @@ async function requireGrantAdmin(deps: RouterDeps, actor: Actor) {
   await requireAdmin(deps, actor.userId);
   if (!deps.billing?.modelCreditsEnabled)
     throw new ORPCError("NOT_FOUND", { message: "Model credits are not enabled" });
+}
+
+/** Voice is set up once for the company, by an admin. */
+async function requireVoiceAdmin(deps: RouterDeps, actor: { userId: string }) {
+  if (await isAdmin(deps, actor.userId)) return;
+  throw new ORPCError("FORBIDDEN", {
+    message: "Your administrator sets up voice for the company.",
+  });
 }

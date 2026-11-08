@@ -31,19 +31,27 @@ const REVEAL_CANCELLED = new Error("Reveal cancelled");
 
 type Editing = { kind: VaultKind; mode: "new" | "edit"; initial?: VaultEditorInitial };
 
-/** The items in the account's vault, or in the bound Space's own once it customizes them. */
+/**
+ * The items in the account's vault, or in the bound Space's own once it customizes them. With
+ * company, the company vault an admin keeps for everyone: its values are never shown again, and it
+ * holds no cards or contacts, which belong to a person.
+ */
 export function VaultSettings({
-  scope,
+  scope = "account",
+  company = false,
   onBusyChange,
 }: {
-  scope: SettingsScope;
+  scope?: SettingsScope;
+  company?: boolean;
   onBusyChange?: (busy: boolean) => void;
 }) {
   const { t } = useLingui();
   const rpc = useSpaceRpc();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
-  const list = queries.vault.list.queryOptions({ input: { scope } });
+  const list = company
+    ? queries.companyAdmin.vault.list.queryOptions()
+    : queries.vault.list.queryOptions({ input: { scope } });
   const listQuery = useQuery({ ...list, refetchOnMount: "always" });
   const items = listQuery.data;
   const { one, many } = useVaultKindLabels();
@@ -75,13 +83,14 @@ export function VaultSettings({
   async function save(result: VaultEditorResult) {
     setBusy(true);
     try {
-      await rpc.vault.put({
-        scope,
+      const item = {
         destination: result.destination,
         ...(result.value !== undefined ? { value: result.value } : {}),
         ...(result.title !== undefined ? { title: result.title } : {}),
         ...(result.note !== undefined ? { note: result.note } : {}),
-      });
+      };
+      if (company) await rpc.companyAdmin.vault.put(item);
+      else await rpc.vault.put({ scope, ...item });
     } finally {
       setBusy(false);
     }
@@ -90,6 +99,10 @@ export function VaultSettings({
 
   async function reveal(name: string): Promise<VaultRevealed | null> {
     setDetailError(null);
+    if (company) {
+      setDetailError(t`Company values stay hidden once saved. Edit the item to replace its value.`);
+      return null;
+    }
     const attempt = revealAttempt.current;
     const current = () => revealAttempt.current === attempt;
     try {
@@ -121,7 +134,8 @@ export function VaultSettings({
     setDetailError(null);
     setBusy(true);
     try {
-      await rpc.vault.remove({ scope, name });
+      if (company) await rpc.companyAdmin.vault.remove({ name });
+      else await rpc.vault.remove({ scope, name });
     } catch (err) {
       setDetailError(errorText(err, t`Could not remove the credential`));
       return false;
@@ -270,18 +284,24 @@ export function VaultSettings({
             <ChevronDown />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-44">
-            {VAULT_KINDS.map((kind) => (
-              <Fragment key={kind}>
-                {kind === "api_key" ? <DropdownMenuSeparator /> : null}
-                <DropdownMenuItem
-                  data-testid={`vault-new-${kind}`}
-                  onClick={() => setEditing({ kind, mode: "new" })}
-                >
-                  <VaultTile kind={kind} title="" className="size-5 rounded-none bg-transparent" />
-                  {one[kind]}
-                </DropdownMenuItem>
-              </Fragment>
-            ))}
+            {VAULT_KINDS.filter((kind) => !company || (kind !== "card" && kind !== "contact")).map(
+              (kind) => (
+                <Fragment key={kind}>
+                  {kind === "api_key" ? <DropdownMenuSeparator /> : null}
+                  <DropdownMenuItem
+                    data-testid={`vault-new-${kind}`}
+                    onClick={() => setEditing({ kind, mode: "new" })}
+                  >
+                    <VaultTile
+                      kind={kind}
+                      title=""
+                      className="size-5 rounded-none bg-transparent"
+                    />
+                    {one[kind]}
+                  </DropdownMenuItem>
+                </Fragment>
+              ),
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

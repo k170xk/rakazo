@@ -335,6 +335,8 @@ function toolUsageLine(parts: {
 // Ordering matters: stable blocks first, volatile ones last, so the prefix stays cacheable.
 export function userTurnInstructions(parts: {
   botInstructions: string;
+  /** Who the owner is, from their Evolve CV (see evolvePersonContext). */
+  personContext?: string;
   groupContext: string | undefined;
   messagingContext: string | undefined;
   redactedMemoryContext: string | undefined;
@@ -364,6 +366,7 @@ export function userTurnInstructions(parts: {
   return [
     PRODUCT_IDENTITY,
     parts.botInstructions,
+    parts.personContext,
     parts.historyRetrievalEnabled &&
     builtinOffered(parts.disabledBuiltinTools, "search_history") &&
     builtinOffered(parts.disabledBuiltinTools, "read_history")

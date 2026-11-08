@@ -19,6 +19,7 @@ import { ChevronLeft, X } from "lucide-react";
 import { useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
 import { AgentSkills } from "../../pages/KnowledgeSection";
+import { OcscToolsSection } from "./ocsc-tools-section";
 import type { PluginSelection } from "./plugin-marketplace";
 import {
   PluginDetail,
@@ -37,7 +38,7 @@ function skillCount(install: CapabilityInstall) {
   return parsed.success ? parsed.data.skills.length : 0;
 }
 
-/** Your skills in this space, the skills plugins added, and skill packs to browse. */
+/** OCSC Tools, your skills in this space, the skills plugins added, and skill packs to browse. */
 export function SkillsDialog({ onClose }: { onClose: () => void }) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
@@ -50,6 +51,10 @@ export function SkillsDialog({ onClose }: { onClose: () => void }) {
     queries.marketplace.catalog.queryOptions({ input: { query: "" }, staleTime: 60_000 }),
   );
   const installs = useQuery(queries.capabilities.list.queryOptions());
+  const agentSkills = useQuery(queries.agentSkills.list.queryOptions());
+  const skillNames = agentSkills.data
+    ? new Set(agentSkills.data.map((skill) => skill.name))
+    : undefined;
   const packs = (catalog.data?.entries ?? NO_ENTRIES).filter(
     (entry) => !entry.hasConnector && matchesPluginQuery(entry, query),
   );
@@ -144,10 +149,20 @@ export function SkillsDialog({ onClose }: { onClose: () => void }) {
       );
     return (
       <div className="space-y-8">
+        <OcscToolsSection available={skillNames} />
         <section data-testid="your-skills">
-          <h3 className="mb-2 px-2.5 text-[14px] font-medium text-muted-foreground">
-            <Trans>Your skills</Trans>
-          </h3>
+          <div className="mb-2 px-2.5">
+            <h3 className="text-[14px] font-medium text-muted-foreground">
+              <Trans>Skills</Trans>
+            </h3>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              <Trans>
+                Your own ways of working, written down so your agents follow them every time: a
+                checklist, a house style, how you like a report laid out. Create one with New skill
+                below; the built-in ones come with OCSC Intelligence.
+              </Trans>
+            </p>
+          </div>
           <div className="px-2.5">
             <AgentSkills />
           </div>
@@ -243,7 +258,7 @@ export function SkillsDialog({ onClose }: { onClose: () => void }) {
       >
         <DialogHeader className="flex-row items-start justify-between px-8 pt-7">
           <DialogTitle className="text-heading2 text-foreground">
-            <Trans>Skills</Trans>
+            <Trans>Tools and skills</Trans>
           </DialogTitle>
           <div className="flex items-center gap-2">
             {!selection && !importing ? (

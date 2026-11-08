@@ -146,7 +146,7 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
     documentId: seededDocs[0].id,
     content: "# Chief\n\nA remembered preference.\n",
   });
-  await openBotPanelTab(page, "Advanced");
+  await openBotPanelTab(page, "Settings");
   const settings = page.getByTestId("bot-settings");
   await expect(settings.getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
   const botMemory = settings.getByTestId("bot-knowledge-memory");
@@ -178,9 +178,9 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   await expect(settings.getByTestId("bot-knowledge-skills")).toHaveCount(0);
   const openSkills = async () => {
     await page.getByTestId("user-menu-trigger").click();
-    await page.getByRole("button", { name: "Skills", exact: true }).click();
+    await page.getByRole("button", { name: "Tools and skills", exact: true }).click();
   };
-  const skillsDialog = page.getByRole("dialog", { name: "Skills", exact: true });
+  const skillsDialog = page.getByRole("dialog", { name: "Tools and skills", exact: true });
   const closeSkills = () =>
     skillsDialog.getByRole("button", { name: "Close skills", exact: true }).click();
   await openSkills();
@@ -298,7 +298,7 @@ test("a new bot hides its untouched memory index", async ({ page }, testInfo) =>
   const memoryLoaded = page.waitForResponse(
     (response) => response.url().includes("/rpc/memory/list") && response.ok(),
   );
-  await openBotPanelTab(page, "Advanced");
+  await openBotPanelTab(page, "Settings");
   await memoryLoaded;
   await page.evaluate(
     () =>

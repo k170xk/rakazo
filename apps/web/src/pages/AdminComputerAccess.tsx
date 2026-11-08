@@ -2,6 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type { CompanyAdminState, ComputerAccess } from "@rakazo/contracts";
 import { Input, NativeSelect, NativeSelectOption, toast } from "@rakazo/ui-web";
 import { useState } from "react";
+import { ComputerProviderSettings } from "../components/ComputerProviderSettings";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
@@ -62,7 +63,7 @@ export function CompanyComputerAccessSection({
     : people;
 
   return (
-    <section className="space-y-4" data-testid="company-computer-access">
+    <section id="computer" className="scroll-mt-6 space-y-4" data-testid="company-computer-access">
       <div>
         <h2 className="text-base font-medium">
           <Trans>Computer access</Trans>
@@ -82,6 +83,10 @@ export function CompanyComputerAccessSection({
           <Trans>Computers are switched off above, so nobody has one.</Trans>
         </p>
       )}
+
+      <div className="rounded-xl border border-border px-4 py-4">
+        <ComputerProviderSettings scope="deployment" />
+      </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="computer-access-default" className="flex-1 text-sm font-medium">

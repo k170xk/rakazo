@@ -141,6 +141,8 @@ export const BotSchema = z.object({
   webhookConfigured: z.boolean(),
   /** Present when created with an idempotency key (e.g. onboarding:first). */
   spawnKey: z.string().nullable(),
+  /** Started from an OCSC company assistant: its instructions are company-owned, never sent. */
+  companyAssistant: z.boolean().optional(),
   /** The bot is ringing the user right now. */
   incomingCall: z
     .object({
@@ -2046,6 +2048,10 @@ export const CompanyFeaturesSchema = z.object({
   cursorAgents: z.boolean(),
   /** Evolve's tools (voiceover, stock media, project datasheets, people, images, infographics) for every bot. */
   evolveTools: z.boolean(),
+  /** Staff may open Connect apps, install plugins and add MCP servers; off shows them Coming soon. Admins always can. */
+  staffIntegrations: z.boolean(),
+  /** Speaking replies, dictation and calls for everyone, on the company voice connection. */
+  voice: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -2061,6 +2067,8 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   evolvePlugins: false,
   cursorAgents: false,
   evolveTools: true,
+  staffIntegrations: false,
+  voice: true,
 };
 
 /** Stored switches over the defaults, so a switch added later starts at its default. */
@@ -2202,6 +2210,13 @@ export const CompanyAdminStateSchema = z.object({
   computers: CompanyComputersStateSchema,
   /** The emails in RAKAZO_ADMIN_EMAILS. */
   admins: z.array(z.string()),
+  /** The voice connection everyone without their own uses. */
+  voice: z.object({
+    /** Who shares it; null while nobody does. */
+    sharedBy: z.object({ userId: z.string(), name: z.string() }).nullable(),
+    /** Its provider; null while the sharing admin has no connection. */
+    provider: z.string().nullable(),
+  }),
   staff: z.object({
     accounts: z.number().int().nonnegative(),
     /** Accounts holding their own model connections, which run instead while member models are on. */

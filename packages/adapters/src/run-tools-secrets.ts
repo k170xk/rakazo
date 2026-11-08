@@ -16,6 +16,7 @@ import {
   canReplaceLoginSite,
   findBotSecret,
   findCommandVariableConflict,
+  findCompanyVaultItem,
   findRunLogin,
   findSiteLogin,
   forgetBotSecret,
@@ -164,6 +165,13 @@ export const secretTools: ToolHandlers = {
         return call.finish(known ?? { error: "The saved credential is no longer available." });
       }
       if (known && args.replace !== true) return call.finish(known);
+      // An item the company saved under this name is used as it is, never replaced from here.
+      if (!known && !existing && args.replace !== true) {
+        const row = await findCompanyVaultItem(deps.prisma, destination.name);
+        const company = row ? normalizeSecretDestination(row) : undefined;
+        if (company && sameSecretDestination(company, destination))
+          return call.finish({ saved: true, company: true, ...botSecretToolView(company) });
+      }
       // A login saved for this exact site under another name is the one to fill.
       const siteLogin =
         !known && destination.auth.type === "login" && args.replace !== true

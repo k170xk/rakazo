@@ -17,15 +17,32 @@ const SETTINGS_SECTIONS = [
 
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
 
+/** Set once for the whole company in the admin panel, so they are not in anyone's Settings. */
+const COMPANY_SETTINGS_SECTIONS = ["models", "voice", "computer"] as const;
+export type CompanySettingsSection = (typeof COMPANY_SETTINGS_SECTIONS)[number];
+
+export function isCompanySettingsSection(section: string): section is CompanySettingsSection {
+  return (COMPANY_SETTINGS_SECTIONS as readonly string[]).includes(section);
+}
+
 /** The shell overlay a URL opens; the URL is its only source of truth so links and reloads keep it. */
 export type ShellOverlay =
   | { kind: "settings"; section: SettingsSection; spaceId: string | null }
   | { kind: "integrations" }
   | { kind: "skills" }
   | { kind: "mcp"; serverId?: string }
+  | { kind: "tour" }
   | null;
 
-const OVERLAY_KEYS = ["settings", "space", "integrations", "skills", "mcp", "messaging"] as const;
+const OVERLAY_KEYS = [
+  "settings",
+  "space",
+  "integrations",
+  "skills",
+  "mcp",
+  "messaging",
+  "tour",
+] as const;
 
 function isSettingsSection(value: string): value is SettingsSection {
   return (SETTINGS_SECTIONS as readonly string[]).includes(value);
@@ -42,6 +59,7 @@ export function readShellOverlay(params: URLSearchParams): ShellOverlay {
   }
   if (params.has("integrations")) return { kind: "integrations" };
   if (params.has("skills")) return { kind: "skills" };
+  if (params.has("tour")) return { kind: "tour" };
   if (params.has("mcp")) {
     const serverId = params.get("mcp");
     return serverId ? { kind: "mcp", serverId } : { kind: "mcp" };

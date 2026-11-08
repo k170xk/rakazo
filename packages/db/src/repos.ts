@@ -111,6 +111,7 @@ function mapBot(
     disabledBuiltinTools?: string[];
     webhookSecretId?: string | null;
     spawnKey?: string | null;
+    evolveAssistantId?: string | null;
   },
   preview = "",
   status = "idle",
@@ -121,14 +122,18 @@ function mapBot(
   if (!bot.thread) {
     throw new IsolationError("Bot is missing its thread");
   }
+  const companyAssistant = Boolean(bot.evolveAssistantId);
   return {
     id: bot.id,
     spaceId: bot.spaceId,
     name: bot.name,
     title: "",
     description: bot.description,
-    instructions: bot.instructions,
-    instructionHistory: InstructionVersionSchema.array().parse(bot.instructionHistory ?? []),
+    instructions: companyAssistant ? "" : bot.instructions,
+    instructionHistory: companyAssistant
+      ? []
+      : InstructionVersionSchema.array().parse(bot.instructionHistory ?? []),
+    companyAssistant,
     color: bot.color,
     avatarSet: resolveBotAvatarSet(bot.avatarSet),
     notifyOnFinish: bot.notifyOnFinish,

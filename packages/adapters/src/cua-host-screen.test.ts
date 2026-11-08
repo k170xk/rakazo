@@ -93,7 +93,7 @@ describe("Cua host screen", () => {
     );
     await expect(screen.observe(scope, "T")).rejects.toThrow("TextEdit, Terminal");
     await expect(screen.observe(scope, "Rakazo")).rejects.toThrow(
-      "Rakazo can't use its own window.",
+      "OCSC Intelligence can't use its own window.",
     );
     await expect(screen.observe(scope, "com.apple.textedit")).resolves.toMatchObject({
       app: "TextEdit",

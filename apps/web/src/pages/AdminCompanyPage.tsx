@@ -23,12 +23,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { PageLoading } from "../components/PageLoading";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { CompanyToolsSection } from "./AdminCompanyTools";
+import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection } from "./AdminComputerAccess";
 import { StaffSpendingSection } from "./AdminStaffSpending";
 import { WindowChrome } from "./WindowChrome";
@@ -68,6 +69,11 @@ function CompanyAdminPanels() {
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
   const state = useQuery(queries.companyAdmin.get.queryOptions());
+  const { hash } = useLocation();
+  const loaded = state.isSuccess;
+  useEffect(() => {
+    if (loaded && hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: "start" });
+  }, [loaded, hash]);
 
   async function saved(next: CompanyAdminState) {
     queryClient.setQueryData(queries.companyAdmin.get.queryKey(), next);
@@ -95,6 +101,8 @@ function CompanyAdminPanels() {
       <CompanyModelSection state={state.data} onSaved={saved} />
       <CompanyFeaturesSection state={state.data} onSaved={saved} />
       <CompanyToolsSection state={state.data} onSaved={saved} />
+      <CompanyVoiceSection state={state.data} onSaved={saved} />
+      <CompanyVaultSection />
       <CompanyComputerAccessSection state={state.data} onSaved={saved} />
       <CompanyPeopleSection state={state.data} />
       <StaffSpendingSection />
@@ -103,16 +111,18 @@ function CompanyAdminPanels() {
 }
 
 function Section({
+  id,
   title,
   description,
   children,
 }: {
+  id?: string;
   title: string;
   description: string;
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-4">
+    <section id={id} className="scroll-mt-6 space-y-4">
       <div>
         <h2 className="text-base font-medium">{title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
@@ -196,6 +206,7 @@ function CompanyModelSection({
 
   return (
     <Section
+      id="models"
       title={t`Company model`}
       description={t`Every member's assistant runs on this model and key. Members are never asked to connect one.`}
     >
@@ -320,6 +331,11 @@ function CompanyFeaturesSection({
       id: "computers",
       label: t`Computers`,
       description: t`Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills.`,
+    },
+    {
+      id: "staffIntegrations",
+      label: t`Apps and plugins for staff`,
+      description: t`Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test.`,
     },
     {
       id: "connectedApps",

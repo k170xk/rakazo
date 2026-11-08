@@ -16,19 +16,23 @@ export * from "./boat-sandbox.js";
 export * from "./bot-avatar.js";
 export * from "./bot-messages.js";
 export {
+  companyVaultRows,
   defaultVaultItemTitle,
   forgetBotSecret,
   getBotSecretMetadata,
   isSecretAlreadySaved,
   listBotSecretMetadata,
+  listCompanyVaultItems,
   listVaultItems,
   newVaultItemName,
   normalizeSecretDestination,
   pageUrlOrigin,
   relabelVaultItem,
+  removeCompanyVaultItem,
   revealBotSecret,
   SPACE_VAULT_NOT_IN_USE,
   storeBotSecret,
+  storeCompanyVaultItem,
 } from "./bot-secrets.js";
 export * from "./boxd-sandbox.js";
 export * from "./browser-emulator.js";
@@ -81,6 +85,7 @@ export * from "./email-emulator.js";
 export * from "./evolve-assistants.js";
 export * from "./evolve-company-tools.js";
 export * from "./evolve-history.js";
+export * from "./evolve-person-context.js";
 export * from "./evolve-plugins.js";
 export * from "./evolve-references.js";
 export * from "./executor.js";
