@@ -18,7 +18,6 @@ const KNOWN_EVOLVE_TOOLS = [
   "search_people_profiles",
   "generate_image",
   "edit_image",
-  "create_presentation_slides",
   "create_infographics",
   "search_stock_media",
   "generate_voiceover",
@@ -79,6 +78,28 @@ describe("Evolve company tools", () => {
     const [url, init] = fetch.mock.calls[0]!;
     expect(String(url)).toBe("https://evolve.test/functions/v1/evolve-computer-mcp");
     expect(claimsOf(init).aud).toBe("evolve-computer-mcp");
+  });
+
+  it("never offers Evolve's picture slides, so decks are made with ocsc-pptx", async () => {
+    const slides = { name: "create_presentation_slides", description: "Slides" };
+    const fetch = evolve(() => reply({ tools: [...listed.tools, slides] }));
+    const tools = new EvolveCompanyTools(prisma, connection, { fetch });
+    const names = (await tools.discoverTools(context)).map((tool) => tool.name);
+    expect(names).not.toContain("mcp__evolve__create_presentation_slides");
+    expect(tools.health().tools.map((tool) => tool.name)).not.toContain(slides.name);
+    const call = await collect(
+      tools.execute(
+        {
+          tool: "mcp__evolve__create_presentation_slides",
+          args: {},
+          executionId: "x",
+          route: { connectorId: EVOLVE_COMPANY_CONNECTOR_ID, toolName: slides.name },
+        },
+        context,
+      ),
+    );
+    expect(JSON.stringify(call)).toMatch(/off|unavailable|not/i);
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the last good list when Evolve stops answering", async () => {

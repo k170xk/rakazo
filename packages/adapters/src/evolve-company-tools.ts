@@ -42,12 +42,20 @@ export interface EvolveCompanyToolsOptions {
   now?: () => number;
 }
 
+/** Evolve tools never offered here: whole-slide pictures cannot be edited, and decks are made with ocsc-pptx. */
+const NOT_OFFERED: ReadonlySet<string> = new Set(["create_presentation_slides"]);
+
 function readTools(result: unknown): EvolveTool[] {
   const tools = (result as { tools?: unknown } | undefined)?.tools;
   if (!Array.isArray(tools)) throw new Error("Evolve sent no tool list");
   return tools.flatMap((tool) => {
     const entry = tool as Partial<EvolveTool> | null;
-    if (!entry || typeof entry.name !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(entry.name))
+    if (
+      !entry ||
+      typeof entry.name !== "string" ||
+      !/^[A-Za-z0-9_-]{1,64}$/.test(entry.name) ||
+      NOT_OFFERED.has(entry.name)
+    )
       return [];
     return [
       {
@@ -204,7 +212,7 @@ export class EvolveCompanyTools implements ConnectorProvider {
   }
 
   private enabled(name: string): boolean {
-    return !companyTools().disabledTools.includes(name);
+    return !NOT_OFFERED.has(name) && !companyTools().disabledTools.includes(name);
   }
 
   /** What the admin page shows: every tool Evolve lists, switched on or off, and the last check. */

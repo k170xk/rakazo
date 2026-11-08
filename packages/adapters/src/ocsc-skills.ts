@@ -142,7 +142,7 @@ SLIDE STYLES: every slide between the agenda and the closing slide is an infogra
 - "panel": "bullets" (2 to 4) in white on a green panel; "side" and "left": "bullets" beside the picture. Use these least.
 - "full": the picture alone, wide, for an overview.
 Without "style" the content decides (compare, milestones, bars, quote, number, stats, statement, points), and plain bullets rotate through side, panel, checklist, left and banner. A visual on a picture layout such as text_image fills its picture space.
-For a striking designed slide made entirely of a picture, mcp__evolve__create_presentation_slides draws whole OCSC slides; use it only when the person wants picture slides, because those slides cannot be edited.
+Never make a slide that is one whole picture: every heading, bullet and figure stays editable text on the template.
 
 WRITE THE DECK
 1. Plan the story: usually a cover, an agenda, then one clear point per slide, 6 to 14 slides, ending with the closing slide. Keep slides short: a specific heading, a one-line subheading, at most four one-line bullets, and the detail in the speaker notes.
