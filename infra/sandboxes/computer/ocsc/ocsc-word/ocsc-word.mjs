@@ -10,17 +10,20 @@
  * Every command prints one JSON object. `new` and `edit` include `link`, a markdown link the Bot
  * pastes into its reply so the person gets a download card.
  */
+import { execFileSync } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
+import { tmpdir } from "node:os";
 import {
   basename,
   dirname,
-  extname,
   isAbsolute,
   join,
   relative,
@@ -28,6 +31,7 @@ import {
 } from "node:path";
 import { fileURLToPath } from "node:url";
 import JSZip from "jszip";
+import { infographicXml, wordStyle } from "./docx-infographic.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_DIR = process.env.OCSC_WORD_TEMPLATES || join(HERE, "templates");
@@ -39,6 +43,43 @@ const HEADING_FONT = "Arial";
 const W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
 class UsageError extends Error {}
+
+const MAX_IMAGE_BYTES = 25 * 1048576;
+
+/** An https image, fetched with curl so the computer's egress proxy applies. */
+function download(url, label) {
+  const dir = mkdtempSync(join(tmpdir(), "ocsc-word-"));
+  const file = join(dir, "image");
+  try {
+    execFileSync(
+      "curl",
+      [
+        "-fsSL",
+        "--proto",
+        "=https",
+        "--max-time",
+        "120",
+        "--retry",
+        "2",
+        "--max-filesize",
+        String(MAX_IMAGE_BYTES),
+        "-o",
+        file,
+        url,
+      ],
+      { stdio: ["ignore", "ignore", "pipe"] },
+    );
+    return readFileSync(file);
+  } catch (error) {
+    const reason = String(error?.stderr || error?.message || error)
+      .trim()
+      .split("\n")
+      .pop();
+    throw new UsageError(`${label}: could not download ${url} (${reason}).`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 // ---------- small helpers ----------
 
@@ -360,12 +401,22 @@ class Doc {
   }
 
   addImage(path) {
-    const { full } = inWorkspace(path, "image path");
-    if (!existsSync(full)) throw new UsageError(`Image not found: ${path}`);
-    const bytes = readFileSync(full);
-    const ext = extname(full).toLowerCase().replace(".jpeg", ".jpg");
+    if (typeof path !== "string" || !path.trim())
+      throw new UsageError("An image path or https URL is required.");
+    this.images ??= new Map();
+    if (this.images.has(path)) return this.images.get(path);
+    let bytes;
+    if (/^https:\/\//i.test(path)) bytes = download(path, "image");
+    else if (/^[a-z]+:/i.test(path))
+      throw new UsageError(`Images are workspace paths or https URLs: ${path}`);
+    else {
+      const { full } = inWorkspace(path, "image path");
+      if (!existsSync(full)) throw new UsageError(`Image not found: ${path}`);
+      bytes = readFileSync(full);
+    }
     const size = imageSize(bytes);
-    if (!size || ![".png", ".jpg"].includes(ext))
+    const ext = bytes.readUInt32BE(0) === 0x89504e47 ? ".png" : ".jpg";
+    if (!size)
       throw new UsageError(`Only PNG and JPEG images are supported: ${path}`);
     const existing = Object.keys(this.zip.files).filter((f) =>
       f.startsWith("word/media/"),
@@ -385,24 +436,61 @@ class Doc {
         `<Default Extension="${extKey}" ContentType="${mime}"/><Override`,
       );
     }
-    return { rid, ...size };
+    const image = { rid, ...size };
+    this.images.set(path, image);
+    return image;
+  }
+
+  /** A run holding a picture `cx` EMU wide, with an id no other drawing in the document uses. */
+  pictureRun(img, cx, name) {
+    this.drawingId ??= Math.max(
+      1000,
+      ...[...this.xml.matchAll(/<wp:docPr\b[^>]*?\bid="(\d+)"/g)].map((m) =>
+        Number(m[1]),
+      ),
+    );
+    this.drawingId += 1;
+    const id = this.drawingId;
+    const cy = Math.round((cx * img.h) / img.w);
+    return (
+      `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">` +
+      `<wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="Picture ${id}"/>` +
+      `<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">` +
+      `<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${esc(name)}"/><pic:cNvPicPr/></pic:nvPicPr>` +
+      `<pic:blipFill><a:blip r:embed="${img.rid}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>` +
+      `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>` +
+      `</a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`
+    );
+  }
+
+  infographicBlock(block, n) {
+    const source = block.image ?? block.visual;
+    const label = `Block ${n} (infographic)`;
+    if (typeof source !== "string" || !source.trim())
+      throw new UsageError(
+        `${label} needs "image": the infographic's https URL or a workspace PNG/JPEG.`,
+      );
+    try {
+      const style = wordStyle(block, this.lastInfographic);
+      this.lastInfographic = style;
+      const img = this.addImage(source.trim());
+      return infographicXml(block, style, {
+        runs,
+        label,
+        picture: (cx) =>
+          this.pictureRun(img, cx, block.caption || "Infographic"),
+      });
+    } catch (error) {
+      throw error instanceof UsageError ? error : new UsageError(error.message);
+    }
   }
 
   imageBlock(block, n) {
-    const img = this.addImage(block.path);
+    const source = block.path ?? block.image;
+    const img = this.addImage(source);
     const widthCm = Math.min(Number(block.width_cm) || 15, 16);
-    const cx = Math.round(widthCm * 360000);
-    const cy = Math.round((cx * img.h) / img.w);
-    const id = 1000 + n;
-    const drawing =
-      `<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">` +
-      `<wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="Picture ${id}"/>` +
-      `<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">` +
-      `<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${esc(basename(block.path))}"/><pic:cNvPicPr/></pic:nvPicPr>` +
-      `<pic:blipFill><a:blip r:embed="${img.rid}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>` +
-      `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>` +
-      `</a:graphicData></a:graphic></wp:inline></w:drawing>`;
-    let out = `<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r>${drawing}</w:r></w:p>`;
+    const name = basename(String(source).split("?")[0]) || `Picture ${n}`;
+    let out = `<w:p><w:pPr><w:jc w:val="center"/></w:pPr>${this.pictureRun(img, Math.round(widthCm * 360000), name)}</w:p>`;
     if (block.caption)
       out += para(block.caption, { style: "Caption", align: "center" });
     return out;
@@ -469,11 +557,13 @@ class Doc {
             return this.tableBlock(b);
           case "image":
             return this.imageBlock(b, n);
+          case "infographic":
+            return this.infographicBlock(b, n);
           case "pagebreak":
             return `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`;
           default:
             throw new UsageError(
-              `Block ${n} has unknown type ${JSON.stringify(b?.type)}. Use heading, paragraph, bullets, numbered, table, image or pagebreak.`,
+              `Block ${n} has unknown type ${JSON.stringify(b?.type)}. Use heading, paragraph, bullets, numbered, table, image, infographic or pagebreak.`,
             );
         }
       })

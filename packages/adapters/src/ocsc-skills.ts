@@ -30,7 +30,8 @@ CREATE
  {"type":"bullets","items":["Point",{"text":"Sub-point","level":1}]},
  {"type":"numbered","items":["Step one","Step two"]},
  {"type":"table","header":["Item","Owner"],"rows":[["Survey","Civil"]],"caption":"Table 1: Programme"},
- {"type":"image","path":"work/fig1.png","width_cm":15,"caption":"Figure 1: Site plan"},
+ {"type":"infographic","image":"<infographic imageUrl>","style":"steps","points":[{"title":"Desk study","text":"..."},{"title":"Survey","text":"..."},{"title":"Modelling","text":"..."}],"caption":"Figure 1: How we assess flood risk"},
+ {"type":"image","path":"work/fig1.png","width_cm":15,"caption":"Figure 2: Site plan"},
  {"type":"pagebreak"}]}
 2. Run: ocsc-word new --spec work/<short-name>.json --out outputs/<Descriptive-Name>.docx
 Headings are level 1 to 3 and numbered in the text ("1. Introduction", "1.1 Scope"). The title and subtitle go in the banner, so do not repeat the title as a heading.
@@ -57,8 +58,22 @@ Add --clean to the edit only when the person asks for no tracked changes, or whi
 For a clean copy with every change accepted: ocsc-word accept --in outputs/<Name>-v2.docx --out outputs/<Name>-v2-clean.docx
 To say what differs between two versions: ocsc-word compare --old outputs/<Name>.docx --new outputs/<Name>-v2.docx
 
+INFOGRAPHICS
+Every new report, proposal, method statement or other document of more than a page carries GPT Image infographics, like the OCSC slides: usually one for each main section, 2 to 6 in all (none in a short letter or memo unless the person asks). Once the outline is settled, call evolve_infographics once with all of them (up to 12, in order; about a minute), each with a "title" and a "topic" that describes the picture: the diagram, flow, stages, scenes and icons that show that section's point. They come back without text, so the words stay editable in Word. Put each one in an infographic block, {"type":"infographic","image":"<imageUrl>","style":"...", ...its words, "caption":"Figure N: ..."}, straight after the paragraph it illustrates, and write the words each style needs:
+- "cards": "points":[{"title","text"}] (2 to 4) as numbered cards under the picture.
+- "checklist": "points" or "bullets" (2 to 6) as tinted rows with green ticks beside the picture.
+- "steps": "points" (3 to 5) as a numbered sequence under the picture.
+- "timeline": "milestones":[{"date","label","text"}] (3 to 6) under the picture.
+- "stats": "stats":[{"value","label"}] (1 to 3) as big green figures beside the picture; "kpis": 2 to 5 stats as cards under it. Real figures only.
+- "progress": "bars":[{"label","value"}] (2 to 6, value 0 to 100).
+- "compare": "compare":{"left":{"label","points":[]},"right":{"label","points":[]}} with the picture between.
+- "statement", "highlight" or "banner": "statement":"<one sentence>" with optional "bullets".
+- "quote": "quote" and "attribution", real ones only. "side": "bullets" beside the picture ("picture":"right" to swap). "full": the picture alone.
+Never use the same style twice in a row; without "style" the content decides. The picture's words also belong in the text, so the document still reads fully without it. Only when the person asks for infographics with writing in them, add "withText": true to evolve_infographics. If evolve_infographics is not in your tools, use mcp__evolve__create_infographics (ending each topic with "No text, labels or numbers in the image."); if neither is, leave infographics out and say once that they need the Evolve connection.
+Infographic blocks also work in edits (add_to_section, insert_after_heading, replace_section, append), so you can add them to an existing document.
+
 PICTURES AND CHARTS
-To put a chart or generated image in a document, first save it into the workspace, for example: curl -fsSL -o work/fig1.png "<image url>". Then use it as an image block. Only PNG and JPEG work.
+Image blocks take an https URL or a workspace PNG/JPEG ("path"). Only PNG and JPEG work.
 
 SENDING THE DOCUMENT
 ${SEND_NOTE} Then summarise what is in the document in two to four short bullets.
