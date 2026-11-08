@@ -20,10 +20,23 @@ import {
   toast,
 } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  Cpu,
+  HardDrive,
+  KeyRound,
+  MessageSquare,
+  Mic,
+  Monitor,
+  Receipt,
+  ToggleRight,
+  Users,
+  Wrench,
+} from "lucide-react";
 import type { FormEvent, ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { PageLoading } from "../components/PageLoading";
 import { thinkingLevelLabel } from "../lib/model-catalog";
 import { useSpaceQueries } from "../lib/query";
@@ -31,9 +44,28 @@ import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
-import { CompanyComputerAccessSection } from "./AdminComputerAccess";
+import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
 import { StaffSpendingSection } from "./AdminStaffSpending";
 import { WindowChrome } from "./WindowChrome";
+
+const ADMIN_SECTIONS = [
+  "models",
+  "features",
+  "chat",
+  "tools",
+  "voice",
+  "vault",
+  "computer",
+  "storage",
+  "people",
+  "spending",
+] as const;
+type AdminSection = (typeof ADMIN_SECTIONS)[number];
+
+function adminSectionFrom(hash: string): AdminSection {
+  const id = hash.replace(/^#/, "");
+  return (ADMIN_SECTIONS as readonly string[]).includes(id) ? (id as AdminSection) : "models";
+}
 
 export function AdminCompanyPage() {
   const { t } = useLingui();
@@ -56,11 +88,7 @@ export function AdminCompanyPage() {
           <Trans>Company admin</Trans>
         </h1>
       </header>
-      <main className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl space-y-10 px-4 py-6">
-          <CompanyAdminPanels />
-        </div>
-      </main>
+      <CompanyAdminPanels />
     </div>
   );
 }
@@ -71,10 +99,29 @@ function CompanyAdminPanels() {
   const queryClient = useQueryClient();
   const state = useQuery(queries.companyAdmin.get.queryOptions());
   const { hash } = useLocation();
-  const loaded = state.isSuccess;
+  const navigate = useNavigate();
+  const section = adminSectionFrom(hash);
+  const mainRef = useRef<HTMLElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (loaded && hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: "start" });
-  }, [loaded, hash]);
+    mainRef.current?.scrollTo({ top: 0 });
+    navRef.current
+      ?.querySelector<HTMLElement>('[aria-current="page"]')
+      ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [section]);
+
+  const nav: { id: AdminSection; label: string; icon: LucideIcon }[] = [
+    { id: "models", label: t`Model`, icon: Cpu },
+    { id: "features", label: t`Features`, icon: ToggleRight },
+    { id: "chat", label: t`Chat`, icon: MessageSquare },
+    { id: "tools", label: t`Tools and skills`, icon: Wrench },
+    { id: "voice", label: t`Voice`, icon: Mic },
+    { id: "vault", label: t`Company vault`, icon: KeyRound },
+    { id: "computer", label: t`Computers`, icon: Monitor },
+    { id: "storage", label: t`Storage and cleanup`, icon: HardDrive },
+    { id: "people", label: t`People`, icon: Users },
+    { id: "spending", label: t`Spending`, icon: Receipt },
+  ];
 
   async function saved(next: CompanyAdminState) {
     queryClient.setQueryData(queries.companyAdmin.get.queryKey(), next);
@@ -82,33 +129,80 @@ function CompanyAdminPanels() {
     await queryClient.invalidateQueries({ queryKey: queries.me.key() });
   }
 
-  if (state.isPending)
-    return (
-      <div className="grid place-items-center py-10">
-        <Spinner className="size-5 text-muted-foreground" aria-label={t`Loading…`} />
-      </div>
-    );
-  if (state.isError)
-    return (
-      <div role="alert" className="flex items-center gap-3 text-sm text-destructive">
-        {errorText(state.error, t`Couldn't load company settings`)}
-        <Button variant="outline" size="sm" onClick={() => void state.refetch()}>
-          <Trans>Retry</Trans>
-        </Button>
-      </div>
-    );
+  function panel(data: CompanyAdminState) {
+    switch (section) {
+      case "models":
+        return <CompanyModelSection state={data} onSaved={saved} />;
+      case "features":
+        return <CompanyFeaturesSection state={data} onSaved={saved} />;
+      case "chat":
+        return <CompanyChatSection state={data} onSaved={saved} />;
+      case "tools":
+        return <CompanyToolsSection state={data} onSaved={saved} />;
+      case "voice":
+        return <CompanyVoiceSection state={data} onSaved={saved} />;
+      case "vault":
+        return <CompanyVaultSection />;
+      case "computer":
+        return <CompanyComputerAccessSection state={data} onSaved={saved} />;
+      case "storage":
+        return <CompanyStorageSection state={data} onSaved={saved} />;
+      case "people":
+        return <CompanyPeopleSection state={data} />;
+      case "spending":
+        return <StaffSpendingSection />;
+    }
+  }
+
   return (
-    <>
-      <CompanyModelSection state={state.data} onSaved={saved} />
-      <CompanyFeaturesSection state={state.data} onSaved={saved} />
-      <CompanyChatSection state={state.data} onSaved={saved} />
-      <CompanyToolsSection state={state.data} onSaved={saved} />
-      <CompanyVoiceSection state={state.data} onSaved={saved} />
-      <CompanyVaultSection />
-      <CompanyComputerAccessSection state={state.data} onSaved={saved} />
-      <CompanyPeopleSection state={state.data} />
-      <StaffSpendingSection />
-    </>
+    <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <nav
+        ref={navRef}
+        data-testid="admin-nav"
+        aria-label={t`Company admin sections`}
+        className="flex shrink-0 flex-row gap-1 overflow-x-auto border-b border-border px-3 py-2 md:w-[220px] md:flex-col md:overflow-y-auto md:border-e md:border-b-0 md:bg-sidebar md:py-4"
+      >
+        {nav.map((item) => {
+          const Icon = item.icon;
+          const active = item.id === section;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              data-testid={`admin-nav-${item.id}`}
+              aria-current={active ? "page" : undefined}
+              onClick={() => navigate({ hash: item.id }, { replace: true })}
+              className={`flex shrink-0 items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-[13.5px] transition-colors ${
+                active
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              <Icon className="size-4 shrink-0" strokeWidth={1.75} />
+              <span className="whitespace-nowrap">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+      <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-8">
+          {state.isPending ? (
+            <div className="grid place-items-center py-10">
+              <Spinner className="size-5 text-muted-foreground" aria-label={t`Loading…`} />
+            </div>
+          ) : state.isError ? (
+            <div role="alert" className="flex items-center gap-3 text-sm text-destructive">
+              {errorText(state.error, t`Couldn't load company settings`)}
+              <Button variant="outline" size="sm" onClick={() => void state.refetch()}>
+                <Trans>Retry</Trans>
+              </Button>
+            </div>
+          ) : (
+            panel(state.data)
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
 
@@ -365,6 +459,8 @@ function CompanyModelSection({
   );
 }
 
+type FeatureGroup = "models" | "computers" | "apps" | "people";
+
 function CompanyFeaturesSection({
   state,
   onSaved,
@@ -373,62 +469,80 @@ function CompanyFeaturesSection({
   onSaved: (next: CompanyAdminState) => Promise<void>;
 }) {
   const { t } = useLingui();
-  const rows: CompanySwitchRow[] = [
+  const rows: (CompanySwitchRow & { group: FeatureGroup })[] = [
     {
       id: "memberModels",
+      group: "models",
       label: t`Members choose models`,
       description: t`Off: only admins connect models or change a bot's model; everyone runs on the company model.`,
     },
     {
       id: "computers",
+      group: "computers",
       label: t`Computers`,
       description: t`Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners.`,
     },
     {
       id: "staffIntegrations",
+      group: "apps",
       label: t`Apps and plugins for staff`,
       description: t`Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test.`,
     },
     {
       id: "connectedApps",
+      group: "apps",
       label: t`Connected apps`,
       description: t`Members connect apps such as Gmail, Slack or Notion to their assistants.`,
     },
     {
       id: "plugins",
+      group: "apps",
       label: t`Plugins`,
       description: t`Members install plugins from the catalog.`,
     },
     {
       id: "mcpServers",
+      group: "apps",
       label: t`MCP servers`,
       description: t`Members add their own MCP servers.`,
     },
     {
       id: "messaging",
+      group: "apps",
       label: t`Messaging`,
       description: t`Members link Slack, Telegram and other chat apps to their assistants.`,
     },
     {
       id: "routines",
+      group: "computers",
       label: t`Routines`,
       description: t`Scheduled and recurring tasks.`,
     },
     {
       id: "evolvePlugins",
+      group: "apps",
       label: t`Evolve plugins`,
       description: t`Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review.`,
     },
     {
       id: "accountData",
+      group: "people",
       label: t`Export, import and delete accounts`,
       description: t`People see a Data section in their settings to export or import their account, import agents from other apps and delete their account.`,
     },
     {
       id: "cursorAgents",
+      group: "models",
       label: t`Cursor cloud agents`,
       description: t`Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap.`,
     },
+  ];
+
+  const groups: { id: FeatureGroup; title: string }[] = [
+    { id: "models", title: t`Models and agents` },
+    { id: "computers", title: t`Computers and routines` },
+    { id: "apps", title: t`Apps, plugins and messaging` },
+    { id: "people", title: t`What people manage themselves` },
   ];
 
   return (
@@ -436,7 +550,16 @@ function CompanyFeaturesSection({
       title={t`Features`}
       description={t`These apply to everyone in the company and take effect within a few seconds.`}
     >
-      <CompanySwitchList rows={rows} state={state} onSaved={onSaved} />
+      {groups.map((group) => (
+        <div key={group.id} className="space-y-2">
+          <h3 className="px-1 text-sm font-medium">{group.title}</h3>
+          <CompanySwitchList
+            rows={rows.filter((row) => row.group === group.id)}
+            state={state}
+            onSaved={onSaved}
+          />
+        </div>
+      ))}
     </Section>
   );
 }
