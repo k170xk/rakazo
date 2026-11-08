@@ -107,7 +107,7 @@ WRITE THE DECK
  {"layout":"photos_3","heading":"...","subheading":"...","images":["<url>","<url>","<url>"]},
  {"layout":"table","heading":"...","header":["..."],"rows":[["..."]]},
  {"layout":"thank_you"}]}
-The agenda holds up to four items. Bullets, text and cells may use **bold**. Pictures are https URLs or workspace PNG/JPEG paths. A scene's title defaults to the slide's subheading. Other layouts from ocsc-pptx layouts (text_2col, text_image, photo, photos_5 and more) and native ones (stats, quote, timeline, chart, table, custom with "elements" on a 1920x1080 grid) work too; "overlay":[{"image","x","y","w","h","fit"}] adds pictures anywhere on that grid.
+The agenda lists every section of the deck, up to 14 items (more than eight go into two columns, so keep those titles to a few words); each item's "text" is one short line. Bullets, text and cells may use **bold**. Pictures are https URLs or workspace PNG/JPEG paths. A scene's title defaults to the slide's subheading. Other layouts from ocsc-pptx layouts (text_2col, text_image, photo, photos_5 and more) and native ones (stats, quote, timeline, chart, table, custom with "elements" on a 1920x1080 grid) work too; "overlay":[{"image","x","y","w","h","fit"}] adds pictures anywhere on that grid.
 Motion: for an animated slide, render a short ocsc-video scene to an mp4, save a frame with ocsc-video still, then use {"layout":"motion","video":"<mp4>","poster":"<png>"}.
 3. Run: ocsc-pptx new --spec work/<short-name>-deck.json --out outputs/<Descriptive-Name>.pptx
 

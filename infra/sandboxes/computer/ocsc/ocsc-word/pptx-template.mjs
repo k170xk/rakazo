@@ -557,48 +557,136 @@ async function layoutSlide(deck, layout, item, index, images, label) {
   return part;
 }
 
-/** The agenda: a copy of the template's agenda slide with its topics rewritten. */
+/** Agenda rows: one column up to this many, then two columns. */
+const AGENDA_COLUMN_ROWS = 8;
+const AGENDA_MAX_ITEMS = 14;
+const AGENDA_SPACE = { top: 0.85 * EMU, bottom: 6.65 * EMU, right: 0.6 * EMU };
+/** Space between a topic's top and its sub-header, a little more than the template's own. */
+const AGENDA_SUB_DROP = 0.31 * EMU;
+/** Two columns start left of the template's single column, clear of the "Presentation agenda" title. */
+const AGENDA_TWO_COLUMN_X = 5.2 * EMU;
+
+/** Lines an upper-case bold Arial topic wraps to in `width` EMU (a cautious estimate). */
+function agendaLines(text, width, sizePt) {
+  const perLine = Math.max(1, Math.floor(width / ((0.65 * sizePt * EMU) / 72)));
+  let lines = 1;
+  let used = 0;
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const need = used === 0 ? word.length : used + 1 + word.length;
+    if (need <= perLine) used = need;
+    else {
+      lines += 1;
+      used = word.length;
+    }
+  }
+  return lines;
+}
+
+function placeShape(sp, id, box) {
+  return sp
+    .replace(/(<p:cNvPr\b[^>]*?\bid=")\d+"/, `$1${id}"`)
+    .replace(/(<p:cNvPr\b[^>]*?\bname=")[^"]*"/, `$1Agenda ${id}"`)
+    .replace(
+      /<a:off x="-?\d+" y="-?\d+"\s*\/>\s*<a:ext cx="\d+" cy="\d+"\s*\/>/,
+      `<a:off x="${Math.round(box.x)}" y="${Math.round(box.y)}"/><a:ext cx="${Math.round(box.w)}" cy="${Math.round(box.h)}"/>`,
+    );
+}
+
+/**
+ * The agenda: the template's agenda slide with its rows rebuilt from the template's own circle,
+ * number, topic, sub-header and connector, so any number of items keeps the template's look.
+ */
 async function agendaSlide(deck, facts, item, index, label) {
   const source = facts.find((s) => /agenda/i.test(s.layout));
   if (!source) throw new Error(`${label}: this template has no agenda slide.`);
   const items = (Array.isArray(item.items) ? item.items : []).map((e) =>
     typeof e === "string" ? { title: e } : (e ?? {}),
   );
+  if (items.length === 0 || items.length > AGENDA_MAX_ITEMS)
+    throw new Error(
+      `${label}: an agenda takes 1 to ${AGENDA_MAX_ITEMS} items; split a longer one over two agenda slides.`,
+    );
   const at = deck.slides().findIndex((s) => s.part === source.part);
   const part = await duplicateSlide(deck, at, index);
   let xml = (await deck.text(part)) ?? "";
-  const shapes = [...xml.matchAll(SHAPE)].map((m) => ({
-    sp: m[0],
-    info: shapeInfo(m[0]),
-    box: boxOf(m[0]),
-    text: [...m[0].matchAll(/<a:t>([^<]*)<\/a:t>/g)].map((t) => t[1]).join(""),
-  }));
-  const topics = shapes.filter((s) => /^TOPIC /.test(s.text)).sort((a, b) => a.box.y - b.box.y);
-  if (topics.length === 0)
+  const right = [...xml.matchAll(/<p:(sp|cxnSp)\b[^>]*>[\s\S]*?<\/p:\1>/g)]
+    .map((m) => ({
+      sp: m[0],
+      box: boxOf(m[0]),
+      text: [...m[0].matchAll(/<a:t>([^<]*)<\/a:t>/g)].map((t) => t[1]).join(""),
+    }))
+    .filter((s) => s.box && s.box.x >= 5.5 * EMU);
+  const byY = (a, b) => a.box.y - b.box.y;
+  const ovals = right.filter((s) => /prst="ellipse"/.test(s.sp)).sort(byY);
+  const number = right.filter((s) => /^\d+$/.test(s.text.trim())).sort(byY)[0];
+  const topic = right.filter((s) => /^TOPIC /.test(s.text)).sort(byY)[0];
+  const sub = right.filter((s) => /Insert Sub Header/i.test(s.text)).sort(byY)[0];
+  const line = right.find((s) => s.sp.startsWith("<p:cxnSp"));
+  if (!ovals.length || !number || !topic)
     throw new Error(`${label}: the agenda slide's topics could not be found.`);
-  if (items.length === 0 || items.length > topics.length)
-    throw new Error(`${label}: an agenda takes 1 to ${topics.length} items.`);
-  const rowOf = (s) => {
-    let row = 0;
-    for (const [i, t] of topics.entries())
-      if (s.box && s.box.y + s.box.h / 2 >= t.box.y - 0.15 * EMU) row = i;
-    return row;
-  };
-  for (const s of shapes) {
-    if (!s.box || s.box.x < 5.5 * EMU) continue;
-    const row = rowOf(s);
-    if (row >= items.length) {
-      xml = xml.replace(s.sp, "");
-      continue;
-    }
-    if (/^TOPIC /.test(s.text))
-      xml = setShapeText(xml, s.info.shape, [str(items[row].title, 120).toUpperCase()]).xml;
-    else if (/Insert Sub Header/i.test(s.text)) {
-      xml = items[row].text
-        ? setShapeText(xml, s.info.shape, [str(items[row].text, 200)]).xml
-        : xml.replace(s.sp, "");
+  for (const s of right) xml = xml.replace(s.sp, "");
+
+  const oval = ovals[0].box;
+  const last = ovals[ovals.length - 1].box;
+  const templatePitch = ovals.length > 1 ? (last.y - oval.y) / (ovals.length - 1) : 0.955 * EMU;
+  const centre = (oval.y + last.y + last.h) / 2;
+  const columns = items.length > AGENDA_COLUMN_ROWS ? 2 : 1;
+  const rows = Math.ceil(items.length / columns);
+  const room = AGENDA_SPACE.bottom - AGENDA_SPACE.top - oval.h;
+  const pitch = rows > 1 ? Math.min(templatePitch, room / (rows - 1)) : templatePitch;
+  const top = Math.max(AGENDA_SPACE.top, centre - ((rows - 1) * pitch + oval.h) / 2);
+  const left = columns > 1 ? Math.min(oval.x, AGENDA_TWO_COLUMN_X) : oval.x;
+  const columnWidth = (deck.slideSize().cx - AGENDA_SPACE.right - left) / columns;
+  const topicDx = topic.box.x - oval.x;
+  const textWidth = columnWidth - topicDx - (columns > 1 ? 0.15 * EMU : 0);
+
+  let id = Math.max(
+    0,
+    ...[...xml.matchAll(/<p:cNvPr\b[^>]*?\bid="(\d+)"/g)].map((m) => Number(m[1])),
+  );
+  const added = [];
+  for (const [i, entry] of items.entries()) {
+    const column = Math.floor(i / rows);
+    const row = i % rows;
+    const x = left + column * columnWidth;
+    const y = top + row * pitch;
+    if (line && row < rows - 1 && i + 1 < items.length)
+      added.push(
+        placeShape(line.sp, ++id, { x: x + oval.w / 2, y: y + oval.h, w: 0, h: pitch - oval.h }),
+      );
+    added.push(placeShape(ovals[0].sp, ++id, { ...oval, x, y }));
+    let numberSp = placeShape(number.sp, ++id, {
+      ...number.box,
+      x: x + (number.box.x - oval.x),
+      y: y + (number.box.y - oval.y),
+    });
+    numberSp = setShapeText(numberSp, id, [String(i + 1).padStart(2, "0")]).xml;
+    added.push(numberSp);
+    const topicY = y + (topic.box.y - oval.y);
+    let topicSp = placeShape(topic.sp, ++id, {
+      x: x + topicDx,
+      y: topicY,
+      w: textWidth,
+      h: topic.box.h,
+    });
+    const size = columns > 1 ? 12 : 14;
+    if (columns > 1) topicSp = topicSp.replace(/\bsz="1400"/g, 'sz="1200"');
+    const title = str(entry.title, 120).toUpperCase();
+    topicSp = setShapeText(topicSp, id, [title]).xml;
+    const extraLines = agendaLines(title, textWidth, size) - 1;
+    added.push(topicSp);
+    if (sub && str(entry.text).trim()) {
+      let subSp = placeShape(sub.sp, ++id, {
+        x: x + topicDx,
+        y: topicY + AGENDA_SUB_DROP + (extraLines * 1.1 * size * EMU) / 72,
+        w: textWidth,
+        h: sub.box.h,
+      });
+      subSp = setShapeText(subSp, id, [str(entry.text, 200)]).xml;
+      added.push(subSp);
     }
   }
+  xml = xml.replace("</p:spTree>", `${added.join("")}</p:spTree>`);
   deck.write(part, xml);
   return part;
 }
