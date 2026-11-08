@@ -149,7 +149,11 @@ export function motionOf(item, deck = {}) {
 }
 
 /** A slide's XML with its transition and entrance builds replaced by the given ones. */
-export function addMotion(xml, { transition = "fade", animate = true } = {}, size = null) {
+export function addMotion(
+  xml,
+  { transition = "fade", animate = true, together = false } = {},
+  size = null,
+) {
   const out = xml
     .replace(
       /<mc:AlternateContent\b(?:(?!<\/mc:AlternateContent>)[\s\S])*?<p:transition\b[\s\S]*?<\/mc:AlternateContent>/g,
@@ -157,7 +161,8 @@ export function addMotion(xml, { transition = "fade", animate = true } = {}, siz
     )
     .replace(/<p:transition\b[^>]*\/>|<p:transition\b[\s\S]*?<\/p:transition>/g, "")
     .replace(/<p:timing>[\s\S]*?<\/p:timing>/g, "");
-  const groups = animate ? buildGroups(out, size) : [];
+  const found = animate ? buildGroups(out, size) : [];
+  const groups = together && found.length ? [found.flat()] : found;
   const added =
     (TRANSITION_XML[transition]
       ? `<p:transition spd="med">${TRANSITION_XML[transition]}</p:transition>`
