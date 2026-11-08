@@ -259,6 +259,38 @@ allowed by Incus before any ACL rule. The IP filtering options stop
 a computer from spoofing addresses or sending router advertisements to the host. Set
 `INCUS_SANDBOX_PROJECT=rakazo` and the certificate and key from `rakazo.crt` and `rakazo.key`.
 
+### Computers on Incus, document runners on the Compose server
+
+A Compose stack can keep its supervisor for the tool runners (Word, PowerPoint, Excel, PDF and
+video) while computers run on a separate Incus server. In the stack's `.env`:
+
+```bash
+SANDBOX_PROVIDER=incus
+RAKAZO_TOOL_RUNNER_URL=http://supervisor:7091
+RAKAZO_TOOL_RUNNER_TOKEN=<the SANDBOX_SUPERVISOR_TOKEN value>
+```
+
+The stack's own supervisor shares the data volume, so its runners work in homes on that disk.
+An Incus computer replaces its saved home when it stops, which would wipe a runner's output, so
+people with full computer access run the document commands on their computer instead; everyone
+else keeps using the runners. Join the two servers with a private link such as WireGuard, and
+point `INCUS_SANDBOX_URL` and the screen ACL rule at its addresses.
+
+A private image registry on the Incus server avoids pulling the computer image over the internet:
+allow it with `restricted.images.servers`, push the image there and set
+`INCUS_SANDBOX_COMPUTER_IMAGE` to its tag. Push a new tag whenever the computer image changes.
+
+### More than one Incus server
+
+Join each new server to the first as an Incus cluster member over the private link (`incus
+cluster add` on the first, `incus admin init` with the join token on the new one). Incus places
+new computers across members, and the client certificate and project apply to all of them. A
+bridge network such as `rakazo0` uses the same address range on every member, so the Compose
+server could not tell their computers apart; replace it with an OVN network before the second
+member takes computers; instances are ephemeral, so only the default
+profile's `eth0` changes. Give the Compose server a route to the new member's computers and add
+it to the screen ACL rule.
+
 ## `wuying`
 
 Bot computers run on one existing Wuying (无影) cloud computer. An admin can also set this up in
