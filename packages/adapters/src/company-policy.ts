@@ -1,10 +1,11 @@
 import type { SecretStore } from "@rakazo/adapter-kit";
-import type { CompanyFeatures, CompanyTools } from "@rakazo/contracts";
+import type { CompanyFeatures, CompanyTools, ThinkingLevel } from "@rakazo/contracts";
 import {
   ComputerAccessSchema,
   companyFeaturesFrom,
   companyToolsFrom,
   DEFAULT_COMPANY_FEATURES,
+  ThinkingLevelSchema,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
@@ -21,6 +22,7 @@ export type LiveCompanyModel = { provider: string; model: string; key: string };
 let loadedFeatures: CompanyFeatures | null = null;
 let loadedModel: LiveCompanyModel | null = null;
 let loadedTools: CompanyTools | null = null;
+let loadedThinkingLevel: ThinkingLevel | null = null;
 
 export function companyFeatures(): CompanyFeatures {
   return loadedFeatures ?? DEFAULT_COMPANY_FEATURES;
@@ -53,12 +55,19 @@ export function companyModel(): LiveCompanyModel | null {
   return loadedModel;
 }
 
+/** How hard every bot thinks while members cannot choose models; null is the model's default. */
+export function companyThinkingLevel(): ThinkingLevel | null {
+  return loadedThinkingLevel;
+}
+
 /** Test seam: what a process would have read from deployment settings. */
 export function setCompanyPolicy(policy: {
   features?: CompanyFeatures | null;
   model?: LiveCompanyModel | null;
   tools?: CompanyTools | null;
+  thinkingLevel?: ThinkingLevel | null;
 }): void {
+  if (policy.thinkingLevel !== undefined) loadedThinkingLevel = policy.thinkingLevel;
   if (policy.tools !== undefined) loadedTools = policy.tools;
   if (policy.features !== undefined) loadedFeatures = policy.features;
   if (policy.model !== undefined) loadedModel = policy.model;
@@ -77,10 +86,12 @@ export async function refreshCompanyPolicy(
         defaultModelProvider: true,
         defaultModelId: true,
         deploymentModelCredentialCipher: true,
+        companyThinkingLevel: true,
       },
     }),
   );
   loadedFeatures = companyFeaturesFrom(row?.companyFeatures);
+  loadedThinkingLevel = ThinkingLevelSchema.safeParse(row?.companyThinkingLevel).data ?? null;
   loadedTools = companyToolsWithDefaults(row?.companyTools);
   if (!row?.defaultModelProvider || !row.defaultModelId || !row.deploymentModelCredentialCipher) {
     loadedModel = null;

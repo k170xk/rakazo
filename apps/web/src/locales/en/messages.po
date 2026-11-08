@@ -1722,7 +1722,7 @@ msgstr "characters"
 msgid "Chart failed to render: {error}"
 msgstr "Chart failed to render: {error}"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Chat"
 msgstr "Chat"
 
@@ -1749,6 +1749,10 @@ msgstr "ChatGPT subscription"
 #: src/lib/identity-display.ts
 msgid "Chats"
 msgstr "Chats"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Chats show a card for each tool a bot runs."
+msgstr "Chats show a card for each tool a bot runs."
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/pages/HostComputerPrompt.tsx
@@ -2950,6 +2954,10 @@ msgstr "Could not save the company model"
 msgid "Could not save the credential"
 msgstr "Could not save the credential"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Could not save the thinking level"
+msgstr "Could not save the thinking level"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not save this choice"
 msgstr "Could not save this choice"
@@ -3165,8 +3173,8 @@ msgstr "Create my first chat"
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
-msgid "Create organization"
-msgstr "Create organization"
+#~ msgid "Create organization"
+#~ msgstr "Create organization"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Create Routine"
@@ -3176,6 +3184,11 @@ msgstr "Create Routine"
 #: src/pages/shell/dialogs.tsx
 msgid "Create space"
 msgstr "Create space"
+
+#: src/components/CreateOrganizationDialog.tsx
+#: src/pages/OrganizationSettingsPanel.tsx
+msgid "Create work space"
+msgstr "Create work space"
 
 #: src/pages/Auth.tsx
 msgid "Create your OCSC Intelligence account"
@@ -3381,8 +3394,8 @@ msgid "Delete memories too"
 msgstr "Delete memories too"
 
 #: src/pages/OrganizationSettingsPanel.tsx
-msgid "Delete organization"
-msgstr "Delete organization"
+#~ msgid "Delete organization"
+#~ msgstr "Delete organization"
 
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
@@ -3400,6 +3413,10 @@ msgstr "Delete this Space's credentials?"
 #: src/pages/AdminComputerAccess.tsx
 msgid "Delete unpinned files after"
 msgstr "Delete unpinned files after"
+
+#: src/pages/OrganizationSettingsPanel.tsx
+msgid "Delete work space"
+msgstr "Delete work space"
 
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
@@ -3797,6 +3814,10 @@ msgstr "Enter an API key before testing."
 msgid "Enter role..."
 msgstr "Enter role..."
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Enter sends a message on computers. On phones and tablets Enter always adds a new line."
+msgstr "Enter sends a message on computers. On phones and tablets Enter always adds a new line."
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
 msgstr "Environment ID"
@@ -3850,6 +3871,14 @@ msgstr "Every assistant of every member has these. Switch one off to remove it f
 #: src/pages/KnowledgeSection.tsx
 msgid "Every bot in this space reads these notes and keeps them up to date."
 msgstr "Every bot in this space reads these notes and keeps them up to date."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Every bot now thinks at this level"
+msgstr "Every bot now thinks at this level"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
+msgstr "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
 
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
@@ -4452,9 +4481,17 @@ msgstr "hours"
 msgid "How big is your team?"
 msgstr "How big is your team?"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "How chats behave for everyone in the company. People cannot change these."
+msgstr "How chats behave for everyone in the company. People cannot change these."
+
 #: src/components/SignupSurvey.tsx
 msgid "How did you hear about us?"
 msgstr "How did you hear about us?"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
+msgstr "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
 
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
@@ -4504,6 +4541,10 @@ msgstr "Image upload area"
 #: src/components/tour/ocsc-tour.tsx
 msgid "Images and Evolve data"
 msgstr "Images and Evolve data"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Images from websites show in chats without a tap."
+msgstr "Images from websites show in chats without a tap."
 
 #: src/components/AccountDataSettings.tsx
 msgid "Import"
@@ -4854,7 +4895,7 @@ msgstr "Load more"
 msgid "Load older runs"
 msgstr "Load older runs"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Load web images automatically"
 msgstr "Load web images automatically"
 
@@ -5304,6 +5345,10 @@ msgstr "Model calls"
 #: src/pages/shell/bot-panel.tsx
 msgid "Model connections"
 msgstr "Model connections"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Model default"
+msgstr "Model default"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -6126,7 +6171,6 @@ msgid "Or paste an API key"
 msgstr "Or paste an API key"
 
 #: src/components/ComputerProviderSettings.tsx
-#: src/pages/settings-nav.ts
 msgid "Organization"
 msgstr "Organization"
 
@@ -6548,13 +6592,17 @@ msgstr "Priority"
 #~ msgid "Private"
 #~ msgstr "Private"
 
+#: src/pages/shell/bot-picker.tsx
+msgid "Private space with its own bots and groups."
+msgstr "Private space with its own bots and groups."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Private spaces keep a team's chats and files separate"
 msgstr "Private spaces keep a team's chats and files separate"
 
 #: src/pages/shell/bot-picker.tsx
-msgid "Private workspace with its own bots and groups."
-msgstr "Private workspace with its own bots and groups."
+#~ msgid "Private workspace with its own bots and groups."
+#~ msgstr "Private workspace with its own bots and groups."
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -6994,6 +7042,10 @@ msgstr "Replace key"
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Replaces the login saved for {0}"
 msgstr "Replaces the login saved for {0}"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Replies appear as they are written instead of all at once."
+msgstr "Replies appear as they are written instead of all at once."
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Replies to"
@@ -7522,7 +7574,7 @@ msgstr "Send recording"
 msgid "Send reset link"
 msgstr "Send reset link"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Send with Enter"
 msgstr "Send with Enter"
 
@@ -7705,7 +7757,7 @@ msgstr "Show password"
 msgid "Show selected"
 msgstr "Show selected"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Show tool activity"
 msgstr "Show tool activity"
 
@@ -8062,7 +8114,7 @@ msgstr "Storage used"
 msgid "Stored encrypted"
 msgstr "Stored encrypted"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Stream replies"
 msgstr "Stream replies"
 
@@ -8328,6 +8380,7 @@ msgid "They sign in to view"
 msgstr "They sign in to view"
 
 #: src/components/call/CallCard.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -9202,6 +9255,10 @@ msgstr "Words:"
 msgid "Work"
 msgstr "Work"
 
+#: src/pages/settings-nav.ts
+msgid "Work Space"
+msgstr "Work Space"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Work that runs itself"
 msgstr "Work that runs itself"
@@ -9295,6 +9352,10 @@ msgstr "Your administrator chooses the models for the company."
 #: src/pages/Onboarding.tsx
 msgid "Your administrator is setting up OCSC Intelligence for the company. This page opens your assistant as soon as it is ready."
 msgstr "Your administrator is setting up OCSC Intelligence for the company. This page opens your assistant as soon as it is ready."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Your administrator sets the model and thinking level for every bot."
+msgstr "Your administrator sets the model and thinking level for every bot."
 
 #: src/pages/Shell.tsx
 msgid "Your administrator sets up computers for the company."

@@ -1723,7 +1723,7 @@ msgstr ""
 msgid "Chart failed to render: {error}"
 msgstr "圖表渲染失敗：{error}"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Chat"
 msgstr ""
 
@@ -1750,6 +1750,10 @@ msgstr "ChatGPT 訂閱"
 #: src/lib/identity-display.ts
 msgid "Chats"
 msgstr "聊天"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Chats show a card for each tool a bot runs."
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/pages/HostComputerPrompt.tsx
@@ -2951,6 +2955,10 @@ msgstr ""
 msgid "Could not save the credential"
 msgstr "無法儲存憑證"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Could not save the thinking level"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not save this choice"
 msgstr "無法儲存此選擇"
@@ -3166,8 +3174,8 @@ msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
-msgid "Create organization"
-msgstr "建立組織"
+#~ msgid "Create organization"
+#~ msgstr "建立組織"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Create Routine"
@@ -3177,6 +3185,11 @@ msgstr "建立例行任務"
 #: src/pages/shell/dialogs.tsx
 msgid "Create space"
 msgstr "建立空間"
+
+#: src/components/CreateOrganizationDialog.tsx
+#: src/pages/OrganizationSettingsPanel.tsx
+msgid "Create work space"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Create your OCSC Intelligence account"
@@ -3382,8 +3395,8 @@ msgid "Delete memories too"
 msgstr "同時刪除記憶"
 
 #: src/pages/OrganizationSettingsPanel.tsx
-msgid "Delete organization"
-msgstr "刪除組織"
+#~ msgid "Delete organization"
+#~ msgstr "刪除組織"
 
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
@@ -3400,6 +3413,10 @@ msgstr "要刪除此空間的憑證嗎？"
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Delete unpinned files after"
+msgstr ""
+
+#: src/pages/OrganizationSettingsPanel.tsx
+msgid "Delete work space"
 msgstr ""
 
 #: src/pages/shell/message-view.tsx
@@ -3798,6 +3815,10 @@ msgstr "測試前請輸入 API 金鑰。"
 msgid "Enter role..."
 msgstr ""
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Enter sends a message on computers. On phones and tablets Enter always adds a new line."
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
 msgstr ""
@@ -3851,6 +3872,14 @@ msgstr ""
 #: src/pages/KnowledgeSection.tsx
 msgid "Every bot in this space reads these notes and keeps them up to date."
 msgstr "此空間中的每個機器人都會讀取並更新這些筆記。"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Every bot now thinks at this level"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
+msgstr ""
 
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
@@ -4453,9 +4482,17 @@ msgstr "小時"
 msgid "How big is your team?"
 msgstr "你的團隊有多大？"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "How chats behave for everyone in the company. People cannot change these."
+msgstr ""
+
 #: src/components/SignupSurvey.tsx
 msgid "How did you hear about us?"
 msgstr "你是如何知道我們的？"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
+msgstr ""
 
 #: src/pages/RoutineSchedule.tsx
 msgid "How often"
@@ -4504,6 +4541,10 @@ msgstr "圖片上傳區域"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Images and Evolve data"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Images from websites show in chats without a tap."
 msgstr ""
 
 #: src/components/AccountDataSettings.tsx
@@ -4855,7 +4896,7 @@ msgstr "載入更多"
 msgid "Load older runs"
 msgstr "載入更早的執行紀錄"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Load web images automatically"
 msgstr "自動載入網路圖片"
 
@@ -5305,6 +5346,10 @@ msgstr ""
 #: src/pages/shell/bot-panel.tsx
 msgid "Model connections"
 msgstr "模型連線"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Model default"
+msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -6127,7 +6172,6 @@ msgid "Or paste an API key"
 msgstr "或貼上 API 金鑰"
 
 #: src/components/ComputerProviderSettings.tsx
-#: src/pages/settings-nav.ts
 msgid "Organization"
 msgstr "組織"
 
@@ -6549,13 +6593,17 @@ msgstr "優先順序"
 #~ msgid "Private"
 #~ msgstr "私人"
 
+#: src/pages/shell/bot-picker.tsx
+msgid "Private space with its own bots and groups."
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Private spaces keep a team's chats and files separate"
 msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
-msgid "Private workspace with its own bots and groups."
-msgstr "擁有專屬機器人與群組的私人工作空間。"
+#~ msgid "Private workspace with its own bots and groups."
+#~ msgstr "擁有專屬機器人與群組的私人工作空間。"
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -6994,6 +7042,10 @@ msgstr "替換金鑰"
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Replaces the login saved for {0}"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Replies appear as they are written instead of all at once."
 msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
@@ -7523,7 +7575,7 @@ msgstr "傳送錄製內容"
 msgid "Send reset link"
 msgstr "傳送重設連結"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Send with Enter"
 msgstr "按 Enter 傳送"
 
@@ -7706,7 +7758,7 @@ msgstr "顯示密碼"
 msgid "Show selected"
 msgstr "顯示已選取項目"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Show tool activity"
 msgstr "顯示工具活動"
 
@@ -8063,7 +8115,7 @@ msgstr ""
 msgid "Stored encrypted"
 msgstr "已加密儲存"
 
-#: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Stream replies"
 msgstr "串流回覆"
 
@@ -8329,6 +8381,7 @@ msgid "They sign in to view"
 msgstr ""
 
 #: src/components/call/CallCard.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -9203,6 +9256,10 @@ msgstr ""
 msgid "Work"
 msgstr "工作"
 
+#: src/pages/settings-nav.ts
+msgid "Work Space"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Work that runs itself"
 msgstr ""
@@ -9295,6 +9352,10 @@ msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Your administrator is setting up OCSC Intelligence for the company. This page opens your assistant as soon as it is ready."
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Your administrator sets the model and thinking level for every bot."
 msgstr ""
 
 #: src/pages/Shell.tsx

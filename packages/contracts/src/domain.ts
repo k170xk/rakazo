@@ -2060,6 +2060,8 @@ export const CompanyFeaturesSchema = z.object({
   toolActivity: z.boolean(),
   /** Images from the web load in chats without a tap. */
   webImages: z.boolean(),
+  /** People export, import and delete their own account and import agents from other apps. */
+  accountData: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -2081,6 +2083,7 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   streamReplies: false,
   toolActivity: false,
   webImages: false,
+  accountData: false,
 };
 
 /** Stored switches over the defaults, so a switch added later starts at its default. */
@@ -2215,6 +2218,8 @@ export type CompanyModel = z.infer<typeof CompanyModelSchema>;
 
 export const CompanyAdminStateSchema = z.object({
   model: CompanyModelSchema.nullable(),
+  /** How hard every bot thinks while members cannot choose models; null is the model's default. */
+  thinkingLevel: ThinkingLevelSchema.nullable(),
   /** The model set in the server environment, used while no company model is saved. */
   environmentModel: z.object({ provider: z.string(), modelId: z.string() }).nullable(),
   features: CompanyFeaturesSchema,

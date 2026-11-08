@@ -30,12 +30,14 @@ import type {
   CompanyToolsState,
   CompanyVaultPutInput,
   ComputerAccess,
+  ThinkingLevel,
 } from "@rakazo/contracts";
 import {
   BotSecretAuth,
   ComputerAccessSchema,
   canonicalPiProviderId,
   companyFeaturesFrom,
+  ThinkingLevelSchema,
 } from "@rakazo/contracts";
 import type { Prisma } from "@rakazo/db";
 import { findDefaultVoiceCredential, runAsSystem } from "@rakazo/db";
@@ -69,6 +71,7 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   streamReplies: "Your administrator sets whether replies stream.",
   toolActivity: "Your administrator sets whether tool activity shows.",
   webImages: "Your administrator sets whether web images load automatically.",
+  accountData: "Exporting, importing and deleting accounts is turned off for your company.",
 };
 
 /** Switches that only limit members; admins keep these so they can configure and test. */
@@ -96,6 +99,7 @@ function readSettings(deps: Pick<RouterDeps, "prisma">) {
         defaultModelId: true,
         deploymentModelCredentialCipher: true,
         companyModelUpdatedAt: true,
+        companyThinkingLevel: true,
         updatedAt: true,
       },
     }),
@@ -131,6 +135,7 @@ export async function companyAdminState(
           updatedAt: (row?.companyModelUpdatedAt ?? row?.updatedAt ?? new Date()).toISOString(),
         }
       : null,
+    thinkingLevel: ThinkingLevelSchema.safeParse(row?.companyThinkingLevel).data ?? null,
     environmentModel: environment.configured
       ? { provider: environment.provider, modelId: environment.model }
       : null,
@@ -397,6 +402,25 @@ export async function clearCompanyModel(
       .catch(() => undefined);
   }
   getLogger().info("company_admin.model_cleared", { by: actor.userId });
+  await refreshCompanyPolicy(deps.prisma, deps.secrets);
+  return companyAdminState(deps, actor);
+}
+
+/** How hard every bot thinks on the company model; null leaves it to the model. */
+export async function setCompanyThinkingLevel(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+  thinkingLevel: ThinkingLevel | null,
+): Promise<CompanyAdminState> {
+  await requireAdmin(deps, actor.userId);
+  await runAsSystem("save the company thinking level", () =>
+    deps.prisma.deploymentSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", companyThinkingLevel: thinkingLevel },
+      update: { companyThinkingLevel: thinkingLevel },
+    }),
+  );
+  getLogger().info("company_admin.thinking_level_saved", { thinkingLevel, by: actor.userId });
   await refreshCompanyPolicy(deps.prisma, deps.secrets);
   return companyAdminState(deps, actor);
 }

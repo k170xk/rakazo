@@ -66,7 +66,12 @@ import { createBrowserProvider } from "./browser-provider-factory.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
-import { companyFeatures, companyModel, liveDeploymentModelConfigured } from "./company-policy.js";
+import {
+  companyFeatures,
+  companyModel,
+  companyThinkingLevel,
+  liveDeploymentModelConfigured,
+} from "./company-policy.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
 import { computerAccessFor, runComputerAccess } from "./computer-access.js";
 import { diskNoteInstruction, recordComputerDisk } from "./computer-disk.js";
@@ -745,8 +750,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const agentEnvironmentInstruction = formatAgentEnvironmentInstruction(
           initialBotCommandEnvironment,
         );
+        // While members cannot choose models, every run uses the company model and thinking level,
+        // whatever its bot, routine or owner's own connections say.
+        const companyChoosesModel = !companyFeatures().memberModels;
         // modelPinned distinguishes the captured choice from an attempt's recorded model.
-        const modelChoice = runModelChoice(run, bot);
+        const modelPinned = run.modelPinned && !companyChoosesModel;
+        const modelChoice = companyChoosesModel
+          ? { modelProvider: null, modelId: null, thinkingLevel: companyThinkingLevel() }
+          : runModelChoice(run, bot);
         const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
         const overrideCredential =
           !pinnedComputerModels && hasModelOverride && modelChoice.modelProvider
@@ -986,7 +997,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const runtimeFallback = runtimeFallbackModel(deps.runtime);
         const pinError =
           !pinnedComputerModels &&
-          run.modelPinned &&
+          modelPinned &&
           !(
             (await modelCreditBillingEnabled(deps)) &&
             modelChoice.modelProvider === runDeployment?.provider
@@ -1003,7 +1014,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           : selectConfiguredModel({
               override: modelChoice,
               overrideCredential,
-              main,
+              main: companyChoosesModel ? null : main,
               hostedProvider: (await modelCreditBillingEnabled(deps))
                 ? resolveDeploymentModel().provider
                 : undefined,
@@ -1034,7 +1045,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         }
         if (
           !pinnedComputerModels &&
-          run.modelPinned &&
+          modelPinned &&
           (selected.provider !== modelChoice.modelProvider || selected.id !== modelChoice.modelId)
         ) {
           await failRunBeforeModel(PINNED_PROVIDER_NOT_CONNECTED, true);
@@ -1063,7 +1074,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         // A main model with no connection, or whose provider refused its sign-in, runs on the
         // first backup that starts. A pinned run asked for its model and keeps it.
         const startOnBackup = async () => {
-          if (run.modelPinned) return undefined;
+          if (modelPinned || companyChoosesModel) return undefined;
           for (const choice of await loadBackups()) {
             try {
               const backup = await resolveConnectedModelKey(

@@ -25,6 +25,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { PageLoading } from "../components/PageLoading";
+import { thinkingLevelLabel } from "../lib/model-catalog";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
@@ -194,6 +195,31 @@ function CompanyModelSection({
     }
   }
 
+  const active = current
+    ? { provider: current.provider, modelId: current.modelId }
+    : state.environmentModel;
+  const thinkingLevels = (
+    (catalog.data ?? []).find(
+      (entry: ModelCatalogEntry) =>
+        entry.provider === active?.provider && entry.id === active?.modelId,
+    )?.thinkingLevels ?? []
+  ).filter((level) => level !== "off");
+  const [savingThinking, setSavingThinking] = useState(false);
+
+  async function saveThinking(value: string) {
+    setSavingThinking(true);
+    try {
+      const thinkingLevel = (thinkingLevels.find((level) => level === value) ??
+        null) as CompanyAdminState["thinkingLevel"];
+      await onSaved(await rpc.companyAdmin.setThinkingLevel({ thinkingLevel }));
+      toast.success(t`Every bot now thinks at this level`);
+    } catch (err) {
+      toast.error(errorText(err, t`Could not save the thinking level`));
+    } finally {
+      setSavingThinking(false);
+    }
+  }
+
   async function clear() {
     setBusy("clear");
     try {
@@ -309,6 +335,32 @@ function CompanyModelSection({
           </Button>
         </div>
       </form>
+      {thinkingLevels.length ? (
+        <Field className="max-w-sm">
+          <FieldLabel htmlFor="company-thinking">
+            <Trans>Thinking</Trans>
+          </FieldLabel>
+          <NativeSelect
+            id="company-thinking"
+            value={state.thinkingLevel ?? ""}
+            disabled={savingThinking}
+            onChange={(event) => void saveThinking(event.target.value)}
+          >
+            <NativeSelectOption value="">{t`Model default`}</NativeSelectOption>
+            {thinkingLevels.map((level) => (
+              <NativeSelectOption key={level} value={level}>
+                {thinkingLevelLabel(level)}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+          <FieldDescription>
+            <Trans>
+              How hard every bot thinks before answering. Higher is better for hard problems but
+              slower and costs more.
+            </Trans>
+          </FieldDescription>
+        </Field>
+      ) : null}
     </Section>
   );
 }
@@ -366,6 +418,11 @@ function CompanyFeaturesSection({
       id: "evolvePlugins",
       label: t`Evolve plugins`,
       description: t`Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review.`,
+    },
+    {
+      id: "accountData",
+      label: t`Export, import and delete accounts`,
+      description: t`People see a Data section in their settings to export or import their account, import agents from other apps and delete their account.`,
     },
     {
       id: "cursorAgents",

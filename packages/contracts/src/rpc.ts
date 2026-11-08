@@ -385,6 +385,9 @@ export const appContract = {
     get: oc.output(CompanyAdminStateSchema),
     setModel: oc.input(CompanyModelInputSchema).output(CompanyAdminStateSchema),
     clearModel: oc.output(CompanyAdminStateSchema),
+    setThinkingLevel: oc
+      .input(z.object({ thinkingLevel: ThinkingLevelSchema.nullable() }))
+      .output(CompanyAdminStateSchema),
     setFeatures: oc.input(CompanyFeaturesSchema.partial()).output(CompanyAdminStateSchema),
     setTools: oc.input(CompanyToolsSchema.partial()).output(CompanyAdminStateSchema),
     /** Asks Evolve for its tool list now instead of waiting for the next check. */

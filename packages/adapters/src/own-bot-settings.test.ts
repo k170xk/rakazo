@@ -1,6 +1,8 @@
 import { VoiceAccountError } from "@rakazo/adapter-kit";
+import { DEFAULT_COMPANY_FEATURES } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { setCompanyPolicy } from "./company-policy.js";
 import type { FleetPrepareDeps } from "./fleet-tools.js";
 import { updateOwnBotFromTool } from "./fleet-tools.js";
 import type * as ModelSelection from "./model-selection.js";
@@ -221,6 +223,23 @@ describe("prepareOwnBotSettings", () => {
       error: "Thinking level must be one of: low, medium, high",
     });
     expect(validate).toHaveBeenCalledOnce();
+  });
+
+  it("leaves the model and thinking level to the company while members cannot choose", async () => {
+    setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, memberModels: false } });
+    try {
+      for (const args of [{ model: "gemini" }, { thinkingLevel: "high" }]) {
+        expect(await prepareOwnBotSettings(deps(), scope, bot, args)).toEqual({
+          error: expect.stringContaining("Your administrator chooses the model"),
+        });
+      }
+      expect(await prepareOwnBotSettings(deps(), scope, bot, { readAloud: true })).toEqual({
+        data: { autoSpeak: true },
+      });
+      expect(validate).not.toHaveBeenCalled();
+    } finally {
+      setCompanyPolicy({ features: null });
+    }
   });
 
   it("refuses values outside the allowed ones before any check", async () => {

@@ -50,6 +50,7 @@ import {
   removeCompanyVault,
   setCompanyFeatures,
   setCompanyModel,
+  setCompanyThinkingLevel,
   setCompanyTools,
   setComputerAccess,
   setStorageLimit,
@@ -165,6 +166,9 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       clearModel: authed.companyAdmin.clearModel.handler(({ context }) =>
         clearCompanyModel(deps, context.actor),
+      ),
+      setThinkingLevel: authed.companyAdmin.setThinkingLevel.handler(({ context, input }) =>
+        setCompanyThinkingLevel(deps, context.actor, input.thinkingLevel),
       ),
       setFeatures: authed.companyAdmin.setFeatures.handler(({ context, input }) =>
         setCompanyFeatures(deps, context.actor, input),

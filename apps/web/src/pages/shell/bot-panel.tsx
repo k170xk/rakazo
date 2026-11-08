@@ -41,6 +41,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Download, Settings, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { InstructionSettings } from "../../components/InstructionSettings";
 import { PagesList } from "../../components/pages/PagesList";
@@ -235,7 +236,8 @@ export function BotSettings({
   const catalog = catalogQuery.data ?? NO_CATALOG;
   const me = meQuery.data ?? null;
   // The company's admin may keep models, computers and routines to themselves or turn them off.
-  const modelChoiceAllowed = me?.features?.memberModels !== false || me?.isAdmin === true;
+  // The company model and thinking level run every bot while members cannot choose models.
+  const modelChoiceAllowed = me?.features?.memberModels !== false;
   const fullComputer = (me?.computerAccess ?? "full") === "full";
   const computersOn = me?.features?.computers !== false && fullComputer;
   const routinesOn = me?.features?.routines !== false && fullComputer;
@@ -410,16 +412,20 @@ export function BotSettings({
         memoryScope,
         autoSpeak,
         voiceId: voiceId || null,
-        modelProvider: selected?.provider ?? null,
-        modelId: selected?.modelId ?? null,
-        ...(modelMetaReady &&
-        (thinkingOptions.length > 0 ||
-          (selected?.provider ?? null) !== bot.modelProvider ||
-          (selected?.modelId ?? null) !== bot.modelId)
+        ...(modelChoiceAllowed
           ? {
-              thinkingLevel: thinkingOptions.length
-                ? ((thinkingLevel || null) as ThinkingLevel | null)
-                : null,
+              modelProvider: selected?.provider ?? null,
+              modelId: selected?.modelId ?? null,
+              ...(modelMetaReady &&
+              (thinkingOptions.length > 0 ||
+                (selected?.provider ?? null) !== bot.modelProvider ||
+                (selected?.modelId ?? null) !== bot.modelId)
+                ? {
+                    thinkingLevel: thinkingOptions.length
+                      ? ((thinkingLevel || null) as ThinkingLevel | null)
+                      : null,
+                  }
+                : {}),
             }
           : {}),
       };
@@ -710,7 +716,21 @@ export function BotSettings({
                   ) : null}
                 </div>
               </div>
-            ) : null}
+            ) : (
+              <p className="text-[13px] text-muted-foreground" data-testid="company-model-note">
+                {me?.isAdmin ? (
+                  <Trans>
+                    Every bot uses the company model and thinking level. Change them in the{" "}
+                    <Link to="/admin#models" className="underline underline-offset-2">
+                      admin panel
+                    </Link>
+                    .
+                  </Trans>
+                ) : (
+                  <Trans>Your administrator sets the model and thinking level for every bot.</Trans>
+                )}
+              </p>
+            )}
             {computersOn || memoryProviderConfigured ? (
               <SettingsGroup label={computersOn ? t`Computer` : t`Memory`} plain>
                 {computersOn ? (

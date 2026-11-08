@@ -563,6 +563,8 @@ model DeploymentSettings {
   companyTools                    Json      @default("{}")
   /// When the company model (defaultModelProvider, defaultModelId and its key) last changed.
   companyModelUpdatedAt           DateTime?
+  /// How hard every bot thinks on the company model while members cannot choose models.
+  companyThinkingLevel            String?
   /// The admin whose voice connection every member without their own uses.
   companyVoiceUserId              String?
   createdAt                       DateTime  @default(now())
