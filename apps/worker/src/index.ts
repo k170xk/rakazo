@@ -47,6 +47,7 @@ import {
   createWebProvider,
   databaseCapacityBackoffMs,
   deploymentModelUsageLookup,
+  EvolveCompanyTools,
   ExpoPushProvider,
   GraphileJobPublisher,
   homeStorageSweeper,
@@ -229,7 +230,10 @@ async function main() {
     {},
     allowPrivateEndpoint,
   );
+  const evolveTools = new EvolveCompanyTools(prisma, createEvolvePluginsConnection());
+  const stopEvolveTools = evolveTools.start();
   const stack = createConnectorStack(undefined, [
+    evolveTools,
     installedConnectors,
     ...integrationSettings.providers(),
     mcp,
@@ -400,6 +404,7 @@ async function main() {
       shutdown.abort();
       stopStallWatch();
       stopCompanyPolicy();
+      stopEvolveTools();
       try {
         await stopHealth?.();
         await reconciler.stop();

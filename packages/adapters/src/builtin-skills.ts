@@ -1,4 +1,5 @@
 import { buildSkillMd, PRODUCT_NAME } from "@rakazo/core";
+import { companyTools } from "./company-policy.js";
 import { OCSC_SKILLS } from "./ocsc-skills.js";
 
 const RAKAZO_DOCS: ReadonlyArray<readonly [topics: string, url: string]> = [
@@ -78,3 +79,9 @@ export const BUILTIN_AGENT_SKILLS: Array<{
   description,
   content: buildSkillMd({ name, description, body }),
 }));
+
+/** The built-in skills an admin has left on for every account. */
+export function enabledBuiltinAgentSkills(): typeof BUILTIN_AGENT_SKILLS {
+  const off = new Set(companyTools().disabledSkills.map((name) => name.toLowerCase()));
+  return BUILTIN_AGENT_SKILLS.filter((skill) => !off.has(skill.name.toLowerCase()));
+}

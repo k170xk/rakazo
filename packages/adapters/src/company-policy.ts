@@ -1,6 +1,11 @@
 import type { SecretStore } from "@rakazo/adapter-kit";
-import type { CompanyFeatures } from "@rakazo/contracts";
-import { companyFeaturesFrom, DEFAULT_COMPANY_FEATURES } from "@rakazo/contracts";
+import type { CompanyFeatures, CompanyTools } from "@rakazo/contracts";
+import {
+  companyFeaturesFrom,
+  companyToolsFrom,
+  DEFAULT_COMPANY_FEATURES,
+  DEFAULT_COMPANY_TOOLS,
+} from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -15,9 +20,15 @@ export type LiveCompanyModel = { provider: string; model: string; key: string };
 
 let loadedFeatures: CompanyFeatures | null = null;
 let loadedModel: LiveCompanyModel | null = null;
+let loadedTools: CompanyTools | null = null;
 
 export function companyFeatures(): CompanyFeatures {
   return loadedFeatures ?? DEFAULT_COMPANY_FEATURES;
+}
+
+/** Built-in skills and company tools switched off for every account. */
+export function companyTools(): CompanyTools {
+  return loadedTools ?? DEFAULT_COMPANY_TOOLS;
 }
 
 /** The admin-set model every account runs on when it has none of its own, with its key. */
@@ -29,7 +40,9 @@ export function companyModel(): LiveCompanyModel | null {
 export function setCompanyPolicy(policy: {
   features?: CompanyFeatures | null;
   model?: LiveCompanyModel | null;
+  tools?: CompanyTools | null;
 }): void {
+  if (policy.tools !== undefined) loadedTools = policy.tools;
   if (policy.features !== undefined) loadedFeatures = policy.features;
   if (policy.model !== undefined) loadedModel = policy.model;
 }
@@ -43,6 +56,7 @@ export async function refreshCompanyPolicy(
       where: { id: "default" },
       select: {
         companyFeatures: true,
+        companyTools: true,
         defaultModelProvider: true,
         defaultModelId: true,
         deploymentModelCredentialCipher: true,
@@ -50,6 +64,7 @@ export async function refreshCompanyPolicy(
     }),
   );
   loadedFeatures = companyFeaturesFrom(row?.companyFeatures);
+  loadedTools = companyToolsFrom(row?.companyTools);
   if (!row?.defaultModelProvider || !row.defaultModelId || !row.deploymentModelCredentialCipher) {
     loadedModel = null;
     return;

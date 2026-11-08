@@ -8,7 +8,8 @@ import {
 } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { availableInSpace } from "@rakazo/db";
-import { BUILTIN_AGENT_SKILLS } from "./builtin-skills.js";
+import { enabledBuiltinAgentSkills } from "./builtin-skills.js";
+import { evolveToolsNote } from "./evolve-company-tools.js";
 
 export const SKILL_TOOL_NAMES = new Set([
   "skill_read",
@@ -53,7 +54,7 @@ function toRecord(row: AgentSkillRow): SkillRecord & { id: string } {
 }
 
 export function builtinAgentSkillRecords(): Array<SkillRecord & { id: string }> {
-  return BUILTIN_AGENT_SKILLS.map((skill) => ({
+  return enabledBuiltinAgentSkills().map((skill) => ({
     id: `builtin:${skill.name}`,
     name: skill.name,
     description: skill.description,
@@ -156,6 +157,7 @@ export async function skillReadFromTool(
     if (text === undefined) return { error: `No file "${wanted}" in this skill.`, files: paths };
     return { name: skill.name, file: wanted, content: text };
   }
+  const unavailable = evolveToolsNote(skill.content);
   return {
     name: skill.name,
     description: skill.description,
@@ -163,6 +165,7 @@ export async function skillReadFromTool(
     readOnly: skill.readOnly,
     content: skill.content,
     ...(paths.length ? { files: paths } : {}),
+    ...(unavailable ? { unavailable } : {}),
   };
 }
 

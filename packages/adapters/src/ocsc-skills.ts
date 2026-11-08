@@ -1,7 +1,8 @@
 /**
  * OCSC document and video skills, carried over from OpenBot's ocsc-setup instructions. They drive
- * the ocsc-* commands in the computer image (infra/sandboxes/computer/ocsc) and the Evolve MCP
- * server's tools, which bots see as mcp__evolve__<tool> when the server is named "Evolve".
+ * the ocsc-* commands in the computer image (infra/sandboxes/computer/ocsc) and Evolve's tools,
+ * which every bot has as mcp__evolve__<tool> through EvolveCompanyTools. A tool named here must
+ * be in KNOWN_EVOLVE_TOOLS in evolve-company-tools.test.ts and in Evolve's evolve-computer-mcp.
  */
 
 export type OcscSkill = { name: string; description: string; body: string };
@@ -413,8 +414,7 @@ export const OCSC_SKILLS: OcscSkill[] = [
   },
   {
     name: "evolve-plugin",
-    description:
-      "Any app, tool, game or dashboard for Evolve or on Evolve project/CV data: an Evolve plugin",
+    description: "Any app, tool, game or dashboard on Evolve or its data: an Evolve plugin",
     body: PLUGIN_INSTRUCTIONS,
   },
 ];

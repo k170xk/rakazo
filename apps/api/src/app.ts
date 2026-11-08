@@ -64,6 +64,7 @@ import {
   createWebProvider,
   deploymentModelUsageLookup,
   EmailEmulator,
+  EvolveCompanyTools,
   ExpoPushProvider,
   GraphileJobPublisher,
   InMemoryJobQueue,
@@ -435,6 +436,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   void home.removeStaleStaging().catch((error) => getLogger().error("home staging cleanup", error));
   const artifacts = createArtifactStore(env.dataDir, prisma);
   const memory = new MarkdownMemoryStore(prisma);
+  const evolvePlugins = createEvolvePluginsConnection(process.env);
+  const evolveTools = new EvolveCompanyTools(prisma, evolvePlugins);
+  const stopEvolveTools = evolveTools.start();
   const mcp = new McpConnector(
     prisma,
     secrets,
@@ -519,6 +523,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     pipedream,
   });
   const stack = createConnectorStack(composioOverride, [
+    evolveTools,
     installed,
     ...integrationSettings
       .providers()
@@ -648,7 +653,6 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     CLOUD_AGENT_SPACE_ID: env.cloudAgentSpaceId,
     CLOUD_AGENT_MONTHLY_LAUNCHES: process.env.CLOUD_AGENT_MONTHLY_LAUNCHES,
   });
-  const evolvePlugins = createEvolvePluginsConnection(process.env);
   const paymentWallet = await createPaymentWalletProvider({
     PAYMENT_WALLET_PROVIDER: env.paymentWalletProvider,
     PAYMENT_WALLET_CLIENT_ID: env.paymentWalletClientId,
@@ -807,6 +811,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     pluginMarketplaceRead,
     cloudAgent,
     evolvePlugins,
+    evolveTools,
     paymentWallet,
     codexCatalog,
     prisma,
@@ -1511,6 +1516,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     handleUpgrade: userDeviceHub?.handleUpgrade,
     stop: async () => {
       stopCompanyPolicy();
+      stopEvolveTools();
       // Handlers still running would otherwise query the pool after it ends.
       const requestsSettled = settleWithTimeout(inFlight.settled(), REQUEST_DRAIN_MS);
       // Abort in-flight continueRun boot waits before draining jobs so stop() cannot sit

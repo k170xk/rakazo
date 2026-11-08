@@ -1,5 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import {
+  BUILTIN_AGENT_SKILLS,
   COMPANY_MODEL_SECRET_RECORD,
   companyFeatures,
   companyModel,
@@ -14,15 +15,20 @@ import type {
   CompanyFeatureId,
   CompanyFeatures,
   CompanyModelInput,
+  CompanyTools,
+  CompanyToolsState,
 } from "@rakazo/contracts";
-import { canonicalPiProviderId, companyFeaturesFrom } from "@rakazo/contracts";
+import { canonicalPiProviderId, companyFeaturesFrom, companyToolsFrom } from "@rakazo/contracts";
 import type { Prisma } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { isAdmin, requireAdmin } from "./admins.js";
 import type { RouterDeps } from "./router.js";
 
-type CompanyAdminDeps = Pick<RouterDeps, "prisma" | "secrets" | "modelConnectionFetch"> & {
+type CompanyAdminDeps = Pick<
+  RouterDeps,
+  "prisma" | "secrets" | "modelConnectionFetch" | "evolveTools"
+> & {
   env: Pick<RouterDeps["env"], "adminEmails">;
 };
 
@@ -36,6 +42,7 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   memberModels: "Your administrator chooses the models for your company.",
   evolvePlugins: "Building Evolve plugins is turned off for your company.",
   cursorAgents: "Cursor cloud agents are turned off for your company.",
+  evolveTools: "Evolve's tools are turned off for your company.",
 };
 
 /** Fails a member's request for something the company turned off; admins keep model choice. */
@@ -55,6 +62,7 @@ function readSettings(deps: Pick<RouterDeps, "prisma">) {
       where: { id: "default" },
       select: {
         companyFeatures: true,
+        companyTools: true,
         defaultModelProvider: true,
         defaultModelId: true,
         deploymentModelCredentialCipher: true,
@@ -98,8 +106,33 @@ export async function companyAdminState(
       ? { provider: environment.provider, modelId: environment.model }
       : null,
     features: companyFeaturesFrom(row?.companyFeatures),
+    tools: toolsState(deps, companyToolsFrom(row?.companyTools)),
     admins: deps.env.adminEmails ?? [],
     staff: { accounts, withOwnModels: owners.length },
+  };
+}
+
+function toolsState(deps: CompanyAdminDeps, policy: CompanyTools): CompanyToolsState {
+  const offSkills = new Set(policy.disabledSkills.map((name) => name.toLowerCase()));
+  const evolve = deps.evolveTools?.health() ?? {
+    status: "not-configured" as const,
+    tools: [],
+    checkedAt: null,
+    error: null,
+  };
+  return {
+    skills: BUILTIN_AGENT_SKILLS.map((skill) => ({
+      name: skill.name,
+      description: skill.description,
+      enabled: !offSkills.has(skill.name.toLowerCase()),
+    })),
+    evolve: {
+      ...evolve,
+      tools: evolve.tools.map((tool) => ({
+        ...tool,
+        enabled: !policy.disabledTools.includes(tool.name),
+      })),
+    },
   };
 }
 
@@ -219,5 +252,36 @@ export async function setCompanyFeatures(
   );
   getLogger().info("company_admin.features_saved", { ...features, by: actor.userId });
   await refreshCompanyPolicy(deps.prisma, deps.secrets);
+  return companyAdminState(deps, actor);
+}
+
+export async function setCompanyTools(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+  input: Partial<CompanyTools>,
+): Promise<CompanyAdminState> {
+  await requireAdmin(deps, actor.userId);
+  const row = await readSettings(deps);
+  const tools = { ...companyToolsFrom(row?.companyTools), ...input };
+  tools.disabledSkills = [...new Set(tools.disabledSkills)];
+  tools.disabledTools = [...new Set(tools.disabledTools)];
+  await runAsSystem("save the company tools", () =>
+    deps.prisma.deploymentSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", companyTools: tools as Prisma.InputJsonObject },
+      update: { companyTools: tools as Prisma.InputJsonObject },
+    }),
+  );
+  getLogger().info("company_admin.tools_saved", { ...tools, by: actor.userId });
+  await refreshCompanyPolicy(deps.prisma, deps.secrets);
+  return companyAdminState(deps, actor);
+}
+
+export async function checkCompanyTools(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+): Promise<CompanyAdminState> {
+  await requireAdmin(deps, actor.userId);
+  await deps.evolveTools?.refresh();
   return companyAdminState(deps, actor);
 }

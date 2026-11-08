@@ -18,6 +18,7 @@ export const EVOLVE_PLUGINS_AUDIENCE = "evolve-plugins";
 export const EVOLVE_ASSISTANTS_AUDIENCE = "evolve-assistants";
 export const EVOLVE_INFOGRAPHICS_AUDIENCE = "evolve-infographics";
 export const EVOLVE_MY_PROFILE_AUDIENCE = "evolve-my-profile";
+export const EVOLVE_COMPUTER_MCP_AUDIENCE = "evolve-computer-mcp";
 export const EVOLVE_PLUGINS_ISSUER = "ocsc-intelligence";
 const TOKEN_SECONDS = 120;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -133,6 +134,17 @@ export function callEvolveMyProfile<T = Record<string, unknown>>(
 ): Promise<T> {
   const url = new URL("evolve-my-profile", connection.url).toString();
   return postEvolve<T>(url, EVOLVE_MY_PROFILE_AUDIENCE, connection, email, {}, options);
+}
+
+/** One JSON-RPC message to Evolve's MCP server for the company tools every bot has. */
+export function callEvolveComputerMcp<T = Record<string, unknown>>(
+  connection: EvolvePluginsConnection,
+  email: string,
+  body: Record<string, unknown>,
+  options: { signal?: AbortSignal; fetch?: typeof fetch; timeoutMs?: number } = {},
+): Promise<T> {
+  const url = new URL("evolve-computer-mcp", connection.url).toString();
+  return postEvolve<T>(url, EVOLVE_COMPUTER_MCP_AUDIENCE, connection, email, body, options);
 }
 
 async function postEvolve<T>(

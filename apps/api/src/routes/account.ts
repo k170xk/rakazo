@@ -42,10 +42,12 @@ import { requireAdmin } from "../admins.js";
 import { aiConsentStatus, allowAiConsent } from "../ai-consent.js";
 import type { BillingService } from "../billing.js";
 import {
+  checkCompanyTools,
   clearCompanyModel,
   companyAdminState,
   setCompanyFeatures,
   setCompanyModel,
+  setCompanyTools,
 } from "../company-admin.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
@@ -159,6 +161,12 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       setFeatures: authed.companyAdmin.setFeatures.handler(({ context, input }) =>
         setCompanyFeatures(deps, context.actor, input),
+      ),
+      setTools: authed.companyAdmin.setTools.handler(({ context, input }) =>
+        setCompanyTools(deps, context.actor, input),
+      ),
+      checkTools: authed.companyAdmin.checkTools.handler(({ context }) =>
+        checkCompanyTools(deps, context.actor),
       ),
       spending: authed.companyAdmin.spending.handler(({ context, input }) =>
         staffSpending(deps, context.actor.userId, input.period),

@@ -2044,6 +2044,8 @@ export const CompanyFeaturesSchema = z.object({
   evolvePlugins: z.boolean(),
   /** Cursor cloud agents for every space, on the company's Cursor key and monthly run cap. */
   cursorAgents: z.boolean(),
+  /** Evolve's tools (voiceover, stock media, project datasheets, people, images, infographics) for every bot. */
+  evolveTools: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -2058,6 +2060,7 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   memberModels: true,
   evolvePlugins: false,
   cursorAgents: false,
+  evolveTools: true,
 };
 
 /** Stored switches over the defaults, so a switch added later starts at its default. */
@@ -2065,6 +2068,39 @@ export function companyFeaturesFrom(stored: unknown): CompanyFeatures {
   const parsed = CompanyFeaturesSchema.partial().safeParse(stored);
   return { ...DEFAULT_COMPANY_FEATURES, ...(parsed.success ? parsed.data : {}) };
 }
+
+/** Built-in skills and company tools an admin has switched off for every account; all others are on. */
+export const CompanyToolsSchema = z.object({
+  disabledSkills: z.array(z.string().trim().min(1).max(80)).max(200),
+  /** Evolve tool names as Evolve lists them, e.g. "generate_voiceover". */
+  disabledTools: z.array(z.string().trim().min(1).max(120)).max(500),
+});
+export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
+
+export const DEFAULT_COMPANY_TOOLS: CompanyTools = { disabledSkills: [], disabledTools: [] };
+
+export function companyToolsFrom(stored: unknown): CompanyTools {
+  const parsed = CompanyToolsSchema.partial().safeParse(stored);
+  return { ...DEFAULT_COMPANY_TOOLS, ...(parsed.success ? parsed.data : {}) };
+}
+
+export const CompanyToolEntrySchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  enabled: z.boolean(),
+});
+
+/** What every bot is offered from the company: built-in skills and the Evolve tool set, with its health. */
+export const CompanyToolsStateSchema = z.object({
+  skills: z.array(CompanyToolEntrySchema),
+  evolve: z.object({
+    status: z.enum(["ready", "unavailable", "not-configured", "off"]),
+    tools: z.array(CompanyToolEntrySchema),
+    checkedAt: z.string().datetime().nullable(),
+    error: z.string().nullable(),
+  }),
+});
+export type CompanyToolsState = z.infer<typeof CompanyToolsStateSchema>;
 
 export const CompanyModelSchema = z.object({
   provider: z.string(),
@@ -2081,6 +2117,7 @@ export const CompanyAdminStateSchema = z.object({
   /** The model set in the server environment, used while no company model is saved. */
   environmentModel: z.object({ provider: z.string(), modelId: z.string() }).nullable(),
   features: CompanyFeaturesSchema,
+  tools: CompanyToolsStateSchema,
   /** The emails in RAKAZO_ADMIN_EMAILS. */
   admins: z.array(z.string()),
   staff: z.object({

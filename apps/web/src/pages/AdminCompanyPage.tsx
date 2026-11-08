@@ -28,6 +28,7 @@ import { PageLoading } from "../components/PageLoading";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
+import { CompanyToolsSection } from "./AdminCompanyTools";
 import { StaffSpendingSection } from "./AdminStaffSpending";
 import { WindowChrome } from "./WindowChrome";
 
@@ -92,6 +93,7 @@ function CompanyAdminPanels() {
     <>
       <CompanyModelSection state={state.data} onSaved={saved} />
       <CompanyFeaturesSection state={state.data} onSaved={saved} />
+      <CompanyToolsSection state={state.data} onSaved={saved} />
       <CompanyPeopleSection state={state.data} />
       <StaffSpendingSection />
     </>

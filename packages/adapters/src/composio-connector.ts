@@ -23,6 +23,7 @@ import {
   createToolkitDirectoryCache,
   mergeCatalogWithConnected,
 } from "./composio-catalog-cache.js";
+import { EVOLVE_COMPANY_CONNECTOR_ID } from "./evolve-company-tools.js";
 import { isVitestRuntime } from "./test-runtime.js";
 
 type SdkSession = Awaited<ReturnType<Composio["create"]>>;
@@ -851,6 +852,7 @@ export class ConnectorRegistry implements ConnectorProvider {
     const features = companyFeatures();
     if (id === "mcp") return features.mcpServers;
     if (id === "installed") return features.plugins;
+    if (id === EVOLVE_COMPANY_CONNECTOR_ID) return features.evolveTools;
     return isManagedConnectorProvider(provider) ? features.connectedApps : true;
   }
 

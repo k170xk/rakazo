@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import { BUILTIN_AGENT_SKILLS } from "@rakazo/adapters";
+import { enabledBuiltinAgentSkills } from "@rakazo/adapters";
 import type { Actor, AgentSkill, AgentSkillSource } from "@rakazo/contracts";
 import type { SkillSource } from "@rakazo/core";
 import {
@@ -52,7 +52,7 @@ export function mapAgentSkill(row: AgentSkillRow): AgentSkill {
 }
 
 function builtinCatalog(): AgentSkill[] {
-  return BUILTIN_AGENT_SKILLS.map((skill) => ({
+  return enabledBuiltinAgentSkills().map((skill) => ({
     id: `builtin:${skill.name}`,
     name: skill.name,
     description: skill.description,

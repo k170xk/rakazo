@@ -76,6 +76,7 @@ import {
   CompanyAdminStateSchema,
   CompanyFeaturesSchema,
   CompanyModelInputSchema,
+  CompanyToolsSchema,
   ComputerModeSchema,
   ComputerProviderSettingsSchema,
   ComputerProviderUpdateSchema,
@@ -379,6 +380,9 @@ export const appContract = {
     setModel: oc.input(CompanyModelInputSchema).output(CompanyAdminStateSchema),
     clearModel: oc.output(CompanyAdminStateSchema),
     setFeatures: oc.input(CompanyFeaturesSchema.partial()).output(CompanyAdminStateSchema),
+    setTools: oc.input(CompanyToolsSchema.partial()).output(CompanyAdminStateSchema),
+    /** Asks Evolve for its tool list now instead of waiting for the next check. */
+    checkTools: oc.output(CompanyAdminStateSchema),
     /** Model spending per person across every space. */
     spending: oc
       .input(z.object({ period: z.enum(STAFF_SPENDING_PERIODS).default("30d") }))

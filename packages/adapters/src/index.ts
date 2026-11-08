@@ -78,6 +78,7 @@ export * from "./e2b-sandbox.js";
 export * from "./elevenlabs-voice.js";
 export * from "./email-emulator.js";
 export * from "./evolve-assistants.js";
+export * from "./evolve-company-tools.js";
 export * from "./evolve-history.js";
 export * from "./evolve-plugins.js";
 export * from "./evolve-references.js";
