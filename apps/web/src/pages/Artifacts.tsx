@@ -371,8 +371,8 @@ export function ArtifactsPage() {
               <AlertDialogDescription>
                 {pendingDelete.versionCount > 1 ? (
                   <Trans>
-                    This deletes all {pendingDelete.versionCount} versions of this file. This
-                    can't be undone.
+                    This deletes all {pendingDelete.versionCount} versions of this file. This can't
+                    be undone.
                   </Trans>
                 ) : (
                   <Trans>This can't be undone.</Trans>
@@ -427,16 +427,20 @@ function BrowsingPane({
   }
   if (items.length === 0) {
     return (
-      <EmptyArtifacts
-        className="grid flex-1 place-items-center text-sm text-muted-foreground/80"
-        nextCursor={nextCursor}
-        loadingMore={loadingMore}
-        onLoadMore={onLoadMore}
-      />
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <FilesIntro />
+        <EmptyArtifacts
+          className="grid min-h-64 place-items-center text-sm text-muted-foreground/80"
+          nextCursor={nextCursor}
+          loadingMore={loadingMore}
+          onLoadMore={onLoadMore}
+        />
+      </div>
     );
   }
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+      <FilesIntro />
       {viewMode === "grid" ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
           {items.map((item) => (
@@ -462,6 +466,19 @@ function BrowsingPane({
       )}
       {nextCursor ? <LoadMoreButton loading={loadingMore} onClick={onLoadMore} /> : null}
     </div>
+  );
+}
+
+/** What the list is, shown above the cards and the empty state. */
+function FilesIntro() {
+  return (
+    <p className="mb-5 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
+      <Trans>
+        Files from your chats in this work space. They appear here when a bot sends you a document,
+        slide, spreadsheet or other file, and when you attach a file to a message. Each card is the
+        latest copy; open it to preview or download.
+      </Trans>
+    </p>
   );
 }
 
