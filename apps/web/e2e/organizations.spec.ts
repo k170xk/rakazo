@@ -56,11 +56,11 @@ test("create, switch, rename and delete an organization", async ({ page }, testI
   await expect(
     settings
       .getByTestId("organization-settings")
-      .getByRole("button", { name: "Delete organization" }),
+      .getByRole("button", { name: "Delete work space" }),
   ).toHaveCount(0);
   await captureScreenshot(page, testInfo, "org-settings-single");
-  await settings.getByRole("button", { name: "Create organization" }).click();
-  const create = page.getByRole("dialog", { name: "Create organization" });
+  await settings.getByRole("button", { name: "Create work space" }).click();
+  const create = page.getByRole("dialog", { name: "Create work space" });
   await create.getByLabel("Name").fill("Work");
   await captureScreenshot(page, testInfo, "org-create-dialog");
 
@@ -138,7 +138,7 @@ test("create, switch, rename and delete an organization", async ({ page }, testI
     )
     .toEqual(["Personal", "Acme"]);
 
-  await organization.getByRole("button", { name: "Delete organization" }).click();
+  await organization.getByRole("button", { name: "Delete work space" }).click();
   const confirm = page.getByRole("alertdialog", { name: "Delete Acme?" });
   const remove = confirm.getByRole("button", { name: "Delete", exact: true });
   await expect(remove).toBeDisabled();

@@ -128,6 +128,7 @@ export interface RouterDeps {
   speechSummary?: VoiceDeps["speechSummary"];
   env: {
     ticketBoardEnabled?: boolean;
+    companyWorkspace?: string | null;
     navLinks?: NavLink[];
     adminEmails?: string[];
     phoneCallsEnabled?: boolean;

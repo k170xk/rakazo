@@ -66,6 +66,8 @@ export interface AppEnv {
   /** Opt-in Pi JSONL session recording under DATA_DIR/pi-sessions. Default off. */
   piSessionRecording: boolean;
   ticketBoardEnabled: boolean;
+  /** Each person's own company work space beside Personal, by name. RAKAZO_COMPANY_WORKSPACE=off turns it off. */
+  companyWorkspace: string | null;
   /** USER_DEVICES_ENABLED=false stops users connecting their own computers. Default on. */
   userDevicesEnabled: boolean;
   /** Operator menu links that frame a same-origin page (RAKAZO_NAV_LINKS). */
@@ -261,6 +263,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     dataDir: source.DATA_DIR ?? "./data",
     piSessionRecording: source.PI_SESSION_RECORDING === "true",
     ticketBoardEnabled: source.TICKET_BOARD_ENABLED === "true",
+    companyWorkspace: companyWorkspaceName(source.RAKAZO_COMPANY_WORKSPACE),
     userDevicesEnabled: source.USER_DEVICES_ENABLED !== "false",
     navLinks: parseNavLinks(source.RAKAZO_NAV_LINKS),
     adminEmails: list(source.RAKAZO_ADMIN_EMAILS).map((email) => email.toLowerCase()),
@@ -430,6 +433,13 @@ function optional(value: string | undefined): string | undefined {
 
 function list(value: string | undefined): string[] {
   return (value ?? "").split(/[\s,]+/).filter(Boolean);
+}
+
+function companyWorkspaceName(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (trimmed === undefined) return "OCSC";
+  if (!trimmed || trimmed.toLowerCase() === "off") return null;
+  return trimmed.slice(0, 60);
 }
 
 /** SHA-256 signing certificate fingerprints, normalized to the `AA:BB:…` form Digital Asset Links uses. */

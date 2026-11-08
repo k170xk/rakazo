@@ -1,7 +1,9 @@
 import { ORPCError } from "@orpc/server";
 import {
+  CannotDeleteCompanyWorkspaceError,
   CannotDeleteLastOrganizationError,
   createOrganizationForUser,
+  ensureCompanyWorkspace,
   firstOrganizationSpace,
   InvalidSpaceNameError,
   listMemberOrganizations,
@@ -20,9 +22,13 @@ export function organizationsRoutes(ctx: RouterContext) {
   return {
     organizations: {
       list: authed.organizations.list.handler(({ context }) =>
-        runAsSystem("list the organizations a user belongs to", () =>
-          listMemberOrganizations(deps.prisma, context.actor),
-        ),
+        runAsSystem("list the organizations a user belongs to", async () => {
+          const companyWorkspace = deps.env.companyWorkspace;
+          if (companyWorkspace) {
+            await ensureCompanyWorkspace(deps.prisma, context.actor.userId, companyWorkspace);
+          }
+          return listMemberOrganizations(deps.prisma, context.actor);
+        }),
       ),
       create: authed.organizations.create.handler(({ context, input }) =>
         runAsSystem("create an organization for its owner", async () => {
@@ -82,6 +88,7 @@ export function organizationsRoutes(ctx: RouterContext) {
           } catch (error) {
             if (
               error instanceof CannotDeleteLastOrganizationError ||
+              error instanceof CannotDeleteCompanyWorkspaceError ||
               error instanceof SharedOrganizationError
             )
               throw new ORPCError("BAD_REQUEST", { message: error.message });
@@ -111,6 +118,6 @@ export function organizationsRoutes(ctx: RouterContext) {
 
 function invalidOrganizationName() {
   return new ORPCError("BAD_REQUEST", {
-    message: "Organization name must be readable and between 1 and 60 characters",
+    message: "Work space name must be readable and between 1 and 60 characters",
   });
 }

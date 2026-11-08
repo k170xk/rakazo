@@ -298,6 +298,8 @@ export const OrganizationListSchema = z.object({
       spaceIds: z.array(Id),
       /** Whether the user owns it, so can rename or delete it. */
       canManage: z.boolean(),
+      /** The company work space every person has; it can be renamed but not deleted. */
+      permanent: z.boolean().optional(),
     }),
   ),
 });

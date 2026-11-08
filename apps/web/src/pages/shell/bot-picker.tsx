@@ -99,7 +99,7 @@ export function BotCreatePicker({
               </span>
               <PickerInfo
                 testId="picker-info-space"
-                label={t`Private workspace with its own bots and groups.`}
+                label={t`Private space with its own bots and groups.`}
               />
             </CommandItem>
           </CommandGroup>

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Actor, OrganizationList } from "@rakazo/contracts";
-import { createOrganizationWithDefaultSpace } from "./bootstrap-user.js";
+import { createOrganizationWithDefaultSpace, isCompanyWorkspaceSlug } from "./bootstrap-user.js";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { IsolationError } from "./scope.js";
@@ -16,21 +16,28 @@ export const MAX_ORGANIZATIONS_PER_USER = 10;
 
 export class OrganizationLimitError extends Error {
   constructor() {
-    super(`You can have up to ${MAX_ORGANIZATIONS_PER_USER} organizations.`);
+    super(`You can have up to ${MAX_ORGANIZATIONS_PER_USER} work spaces.`);
     this.name = "OrganizationLimitError";
   }
 }
 
 export class CannotDeleteLastOrganizationError extends Error {
   constructor() {
-    super("Your only organization cannot be deleted");
+    super("Your only work space cannot be deleted");
     this.name = "CannotDeleteLastOrganizationError";
+  }
+}
+
+export class CannotDeleteCompanyWorkspaceError extends Error {
+  constructor() {
+    super("The company work space cannot be deleted");
+    this.name = "CannotDeleteCompanyWorkspaceError";
   }
 }
 
 export class SharedOrganizationError extends Error {
   constructor() {
-    super("An organization with other members cannot be deleted");
+    super("A work space with other members cannot be deleted");
     this.name = "SharedOrganizationError";
   }
 }
@@ -86,6 +93,7 @@ export async function listMemberOrganizations(
       select: {
         id: true,
         name: true,
+        slug: true,
         spaces: { where: { isDefault: true }, select: { id: true }, take: 1 },
         members: { where: { userId: actor.userId }, select: { role: true }, take: 1 },
         _count: { select: { members: true } },
@@ -108,6 +116,7 @@ export async function listMemberOrganizations(
       canManage:
         organization._count.members === 1 &&
         organization.members.some((member) => member.role.includes("owner")),
+      permanent: isCompanyWorkspaceSlug(organization.slug),
       spaceIds: memberships
         .filter((membership) => membership.organizationId === organization.id)
         .map((membership) => membership.spaceId),
@@ -148,7 +157,7 @@ export async function claimOrganizationForDeletion(
         const [owner, otherMembers, otherOwned] = await Promise.all([
           tx.member.findFirst({
             where: { organizationId: input.organizationId, userId: input.userId, role: OWNER },
-            select: { id: true },
+            select: { id: true, organization: { select: { slug: true } } },
           }),
           tx.member.count({
             where: { organizationId: input.organizationId, userId: { not: input.userId } },
@@ -163,6 +172,9 @@ export async function claimOrganizationForDeletion(
           }),
         ]);
         if (!owner) throw new IsolationError();
+        if (isCompanyWorkspaceSlug(owner.organization.slug)) {
+          throw new CannotDeleteCompanyWorkspaceError();
+        }
         if (otherMembers > 0) throw new SharedOrganizationError();
         if (otherOwned === 0) throw new CannotDeleteLastOrganizationError();
         await lockOrganizationSpaces(tx, input.organizationId);

@@ -23,7 +23,7 @@ import { queryClient, useQueryUserId } from "../lib/query";
 import { clearSpaceSelection, rpc, selectSpace } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
-/** The organization the app is showing: its name, and, for its owner, renaming and deletion. */
+/** The work space (organization) the app is showing: its name, and, for its owner, renaming and deletion. */
 export function OrganizationSettingsPanel({
   onBusyChange,
 }: {
@@ -37,7 +37,9 @@ export function OrganizationSettingsPanel({
       key={organization.id}
       organization={organization}
       canDelete={
-        organization.canManage && organizations.filter((each) => each.canManage).length > 1
+        organization.canManage &&
+        !organization.permanent &&
+        organizations.filter((each) => each.canManage).length > 1
       }
       onBusyChange={onBusyChange}
     />
@@ -136,7 +138,7 @@ function OrganizationSettings({
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" className="rounded-full" onClick={() => setCreating(true)}>
           <Plus aria-hidden="true" />
-          <Trans>Create organization</Trans>
+          <Trans>Create work space</Trans>
         </Button>
         {canDelete ? (
           <Button
@@ -144,7 +146,7 @@ function OrganizationSettings({
             className="rounded-full"
             onClick={() => setConfirmingDelete(true)}
           >
-            <Trans>Delete organization</Trans>
+            <Trans>Delete work space</Trans>
           </Button>
         ) : null}
       </div>

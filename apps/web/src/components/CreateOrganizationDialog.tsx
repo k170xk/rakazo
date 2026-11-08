@@ -69,7 +69,7 @@ export function CreateOrganizationDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <Trans>Create organization</Trans>
+            <Trans>Create work space</Trans>
           </DialogTitle>
         </DialogHeader>
         <form

@@ -33,7 +33,7 @@ export function useSettingsNavItems(available: {
   const { t } = useLingui();
   return [
     { id: "general", label: t`General`, icon: Settings },
-    { id: "organization", label: t`Organization`, icon: Building2 },
+    { id: "organization", label: t`Work Space`, icon: Building2 },
     { id: "confirmations", label: t`Approvals`, icon: ShieldCheck },
     { id: "vault", label: t`My vault`, icon: KeyRound },
     ...(available.messaging

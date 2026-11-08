@@ -102,6 +102,34 @@ export async function createOrganizationWithDefaultSpace(
   return orgId;
 }
 
+const COMPANY_WORKSPACE_SLUG_PREFIX = "company-";
+
+/** The company work space every person gets beside Personal; it comes back if missing, so it cannot be deleted. */
+export function isCompanyWorkspaceSlug(slug: string): boolean {
+  return slug.startsWith(COMPANY_WORKSPACE_SLUG_PREFIX);
+}
+
+/** Adds the person's own company work space, named `name`, when they have none yet. */
+export async function ensureCompanyWorkspace(
+  prisma: PrismaClient,
+  userId: string,
+  name: string,
+): Promise<void> {
+  const slug = `${COMPANY_WORKSPACE_SLUG_PREFIX}${userId}`;
+  const ready = await prisma.organization.findFirst({
+    where: { slug, members: { some: { userId } }, spaces: { some: { isDefault: true } } },
+    select: { id: true },
+  });
+  if (ready) return;
+  // Each step joins what a concurrent or interrupted call already made, so this finishes it.
+  await createOrganizationWithDefaultSpace(prisma, {
+    userId,
+    orgId: newId(),
+    name,
+    slug,
+  });
+}
+
 /** Provision a personal workspace. Signup never grants deployment administration. */
 export async function bootstrapUserSpace(
   prisma: PrismaClient,

@@ -171,6 +171,7 @@ describePostgres("organizations (PostgreSQL)", () => {
           defaultSpaceId: ada.spaceId,
           spaceIds: [ada.spaceId],
           canManage: true,
+          permanent: false,
         },
         {
           id: work.id,
@@ -178,6 +179,7 @@ describePostgres("organizations (PostgreSQL)", () => {
           defaultSpaceId: work.id,
           spaceIds: [work.id],
           canManage: true,
+          permanent: false,
         },
       ],
     });
@@ -206,6 +208,50 @@ describePostgres("organizations (PostgreSQL)", () => {
     ]);
   });
 
+  it("gives each person their own company work space, which can be renamed but not deleted", async () => {
+    const ada = await signup();
+    const grace = await signup();
+    const company = (actor: Actor) =>
+      createRouterClient(
+        createRouter({ ...deps(), env: { companyWorkspace: "OCSC" } } as unknown as RouterDeps),
+        { context: { actor } },
+      );
+
+    const [first, second] = await Promise.all([
+      company(ada).organizations.list(),
+      company(ada).organizations.list(),
+    ]);
+    expect(second.organizations).toEqual(first.organizations);
+    expect(
+      first.organizations.map(({ name, canManage, permanent }) => ({ name, canManage, permanent })),
+    ).toEqual([
+      { name: "Personal", canManage: true, permanent: false },
+      { name: "OCSC", canManage: true, permanent: true },
+    ]);
+    const ocsc = first.organizations[1]!;
+    expect(ocsc.spaceIds).toEqual([ocsc.defaultSpaceId]);
+
+    const graces = await company(grace).organizations.list();
+    expect(graces.organizations.map((org) => org.name)).toEqual(["Personal", "OCSC"]);
+    expect(graces.organizations[1]!.id).not.toBe(ocsc.id);
+
+    await expect(
+      company(ada).organizations.remove({ organizationId: ocsc.id }),
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "The company work space cannot be deleted",
+    });
+    await company(ada).organizations.rename({ organizationId: ocsc.id, name: "OCSC Projects" });
+    expect((await company(ada).organizations.list()).organizations.map((org) => org.name)).toEqual([
+      "Personal",
+      "OCSC Projects",
+    ]);
+
+    // A deployment without a company work space adds nothing.
+    const carol = await signup();
+    expect((await client(carol).organizations.list()).organizations).toHaveLength(1);
+  });
+
   it("caps organizations at ten per person, even when two creates race", async () => {
     const ada = await signup();
     for (let index = 2; index <= 9; index += 1)
@@ -218,7 +264,7 @@ describePostgres("organizations (PostgreSQL)", () => {
 
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
     expect(results.find((result) => result.status === "rejected")).toMatchObject({
-      reason: { code: "BAD_REQUEST", message: "You can have up to 10 organizations." },
+      reason: { code: "BAD_REQUEST", message: "You can have up to 10 work spaces." },
     });
     await expect(system.member.count({ where: { userId: ada.userId } })).resolves.toBe(10);
 
@@ -284,7 +330,7 @@ describePostgres("organizations (PostgreSQL)", () => {
     });
     const nameError = {
       code: "BAD_REQUEST",
-      message: "Organization name must be readable and between 1 and 60 characters",
+      message: "Work space name must be readable and between 1 and 60 characters",
     };
     await expect(client(ada).organizations.create({ name: "!!!" })).rejects.toMatchObject(
       nameError,
