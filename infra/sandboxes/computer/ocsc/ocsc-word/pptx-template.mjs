@@ -25,7 +25,6 @@ import {
   SHAPE,
   setNotes,
   setShapeText,
-  shapeInfo,
   transplant,
 } from "./pptx-package.mjs";
 
