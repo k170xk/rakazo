@@ -233,6 +233,8 @@ export interface RunComputerContext {
   documents?: RunToolRunner;
   /** The owner's documents live in a document home apart from a computer that keeps its own home. */
   documentsApart?: boolean;
+  /** Word documents attached to this turn or earlier in the conversation, which edits must change. */
+  wordDocuments?: readonly { name: string; path: string }[];
 }
 
 export interface RunToolRunner {

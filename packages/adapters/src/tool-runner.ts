@@ -379,6 +379,8 @@ export class ToolRunnerClient {
     program: string;
     args: readonly string[];
     owner: string;
+    /** Written as the author of tracked changes and review comments. */
+    author?: string;
     timeoutMs: number;
     signal: AbortSignal;
     onQueued?: (ahead: number) => void;
@@ -395,6 +397,7 @@ export class ToolRunnerClient {
         program: input.program,
         args: input.args,
         owner: input.owner,
+        ...(input.author ? { author: input.author } : {}),
         timeoutMs: input.timeoutMs,
         ...(synced ? { synced: true } : {}),
       }),

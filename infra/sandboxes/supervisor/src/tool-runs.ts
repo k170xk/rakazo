@@ -32,6 +32,12 @@ export const toolRunRequestSchema = z.object({
   args: z.array(z.string().max(200_000)).max(200),
   /** Whose turn waits in line, so one person's burst cannot hold every runner. */
   owner: z.string().min(1).max(200),
+  /** The person's name, written as the author of tracked changes and review comments. */
+  author: z
+    .string()
+    .max(200)
+    .transform((name) => name.replace(/\p{Cc}/gu, " ").trim())
+    .optional(),
   timeoutMs: z.number().int().positive().optional(),
   /** Run on this server's copy in tool-cache, which the caller keeps in step from its own disk. */
   synced: z.boolean().optional(),
@@ -443,6 +449,7 @@ export function toolRunContainerOptions(input: ToolRunContainerInput) {
       "LANG=C.UTF-8",
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
       "OCSC_VIDEO_INLINE=1",
+      ...(input.request.author ? [`OCSC_AUTHOR=${input.request.author}`] : []),
     ],
     WorkingDir: workDir,
     Labels: { [TOOL_RUN_LABEL]: "true" },

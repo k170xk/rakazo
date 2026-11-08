@@ -14,7 +14,7 @@ function useToolStories(): Record<OcscToolSkill, ToolStory> {
       abilities: [
         t`Creates a finished OCSC document from a short brief, on the company template`,
         t`Edit it as many times as you like: ask for changes in plain words`,
-        t`Every edit is a Word tracked change by "OCSC Bot", so you accept or reject each one`,
+        t`Every edit is a Word tracked change in your name, so you accept or reject each one`,
         t`Each round is saved as a new version (-v2, -v3), so earlier versions are never lost`,
         t`Compares two versions, or gives you a clean copy with every change accepted`,
         t`Adds infographics, tables, figures and real OCSC project photos`,

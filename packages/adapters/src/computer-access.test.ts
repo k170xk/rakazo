@@ -7,7 +7,14 @@ import {
   toolRunnersShareHome,
 } from "./computer-access.js";
 import { conversationFolder, resolveRunFilePath } from "./computer-support.js";
-import { ocscCommand, videoQueuePlace } from "./ocsc-tool.js";
+import {
+  isWordDocument,
+  NEW_DOCUMENT_FLAG,
+  ocscCommand,
+  ocscProgramArgs,
+  videoQueuePlace,
+  wordRebuildRefusal,
+} from "./ocsc-tool.js";
 import {
   COMPUTER_TOOL_NAMES,
   computerAccessRefusal,
@@ -146,6 +153,68 @@ describe("ocsc command line", () => {
     expect(ocscCommand("pptx", ["create"], "conversations/t1")).toBe(
       `mkdir -p 'conversations/t1' && cd 'conversations/t1' && WORKSPACE_DIR="$PWD" ocsc-pptx 'create'`,
     );
+  });
+
+  it("names the person as the author, quoted so a name cannot run a command", () => {
+    expect(ocscCommand("word", ["edit"], undefined, "Keith O'Neill; rm -rf ~")).toBe(
+      `OCSC_AUTHOR='Keith O'\\''Neill; rm -rf ~' ocsc-word 'edit'`,
+    );
+    expect(ocscCommand("word", ["edit"], "conversations/t1", "Ann")).toBe(
+      `mkdir -p 'conversations/t1' && cd 'conversations/t1' && WORKSPACE_DIR="$PWD" OCSC_AUTHOR='Ann' ocsc-word 'edit'`,
+    );
+  });
+});
+
+describe("editing rather than rebuilding Word documents", () => {
+  const report = [{ name: "Report.docx", path: "attachments/a1.docx" }];
+
+  it("refuses a new document in a conversation that already has one", () => {
+    const refusal = wordRebuildRefusal(
+      "word",
+      ["new", "--spec", "s.json", "--out", "x.docx"],
+      report,
+    );
+    expect(refusal).toContain('"Report.docx" (attachments/a1.docx)');
+    expect(refusal).toContain("ocsc word edit --in");
+    expect(refusal).toContain(NEW_DOCUMENT_FLAG);
+  });
+
+  it("refuses to overwrite an existing document even in a new conversation", () => {
+    expect(
+      wordRebuildRefusal("word", ["new", "--spec", "s.json", "--out", "x.docx", "--overwrite"], []),
+    ).toContain("replace an existing Word document");
+  });
+
+  it("allows a first document, a brand-new one asked for, and every edit", () => {
+    expect(wordRebuildRefusal("word", ["new", "--spec", "s.json", "--out", "x.docx"], [])).toBe(
+      undefined,
+    );
+    expect(
+      wordRebuildRefusal("word", ["new", "--spec", "s.json", NEW_DOCUMENT_FLAG], report),
+    ).toBeUndefined();
+    expect(wordRebuildRefusal("word", ["edit", "--in", "attachments/a1.docx"], report)).toBe(
+      undefined,
+    );
+    expect(wordRebuildRefusal("pptx", ["new", "--spec", "s.json"], report)).toBeUndefined();
+  });
+
+  it("never passes the flag to the program", () => {
+    expect(ocscProgramArgs(["new", NEW_DOCUMENT_FLAG, "--spec", "s.json"])).toEqual([
+      "new",
+      "--spec",
+      "s.json",
+    ]);
+  });
+
+  it("recognises Word documents by type or name", () => {
+    expect(
+      isWordDocument(
+        "upload",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ),
+    ).toBe(true);
+    expect(isWordDocument("Spec.DOCX", "application/octet-stream")).toBe(true);
+    expect(isWordDocument("deck.pptx", null)).toBe(false);
   });
 });
 

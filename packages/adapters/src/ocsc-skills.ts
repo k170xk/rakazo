@@ -56,7 +56,7 @@ CREATE
 Headings are level 1 to 3; in OCSCReport each level 1 heading starts a new page. The title goes on the cover, the banner and the footers, so do not repeat it as a heading. Add "subtitle" only to change the banner's second line. If ocsc-word answers that it needs the office, ask the person (see DOCUMENT DETAILS) and run it again.
 
 EDIT
-When the person asks for changes to a document you made or one they sent, always edit its latest version with ocsc-word edit. Never rebuild it with ocsc-word new unless they ask to start again: editing keeps their own changes, shows yours as tracked changes and leaves the earlier version in place. Do not ask the setup questions again; ask only what the new content needs (for example which projects, when they ask for project photos).
+When the person asks for changes to a document you made or one they sent, always edit its latest version with ocsc-word edit. Never rebuild it with ocsc-word new unless they ask to start again: editing keeps their own changes, shows yours as tracked changes and leaves the earlier version in place. In a conversation that already has a Word document, ocsc-word new is refused; add --new-document to it only when the person asked for a brand-new, separate document, never to get around the refusal when they asked for changes. Do not ask the setup questions again; ask only what the new content needs (for example which projects, when they ask for project photos).
 1. Always read the document first: ocsc-word read --in outputs/<Name>.docx. It returns the title, subtitle and every heading and paragraph with its exact wording.
 2. Write the edits to work/<short-name>-edits.json:
 {"edits":[
@@ -76,7 +76,7 @@ A new document starts at revision P01, and edits keep that revision; the Table o
 Edit blocks are the same as a new document's, so an edit can add anything a new document has: new sections (a heading block plus its content, with add_to_section on the section before it or append at the end), infographic blocks (call evolve_infographics for just the new pictures), project photos, tables, lists, and {"type":"pagebreak"} to start a new page. To put an infographic beside existing words, replace_section with the section's words rewritten into an infographic block.
 
 SHOWING THE CHANGES
-Edits are saved as Word tracked changes by "OCSC Bot", so the person sees every insertion and deletion when they open the file and can accept or reject each one. In your reply, list what changed using the "summary" of each edit. ocsc-word read lists a document's tracked changes as "tracked_changes"; use it when the person asks what was changed.
+Edits are saved as Word tracked changes under the name of the person you are working for, so the person sees every insertion and deletion when they open the file and can accept or reject each one. In your reply, list what changed using the "summary" of each edit. ocsc-word read lists a document's tracked changes as "tracked_changes"; use it when the person asks what was changed.
 Add --clean to the edit only when the person asks for no tracked changes, or while you are still drafting a document they have not seen yet.
 For a clean copy with every change accepted: ocsc-word accept --in outputs/<Name>-v2.docx --out outputs/<Name>-v2-clean.docx
 To say what differs between two versions: ocsc-word compare --old outputs/<Name>.docx --new outputs/<Name>-v2.docx

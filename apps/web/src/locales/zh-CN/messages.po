@@ -3954,7 +3954,7 @@ msgid "Every day"
 msgstr "每天"
 
 #: src/components/integrations/ocsc-tools-section.tsx
-msgid "Every edit is a Word tracked change by \"OCSC Bot\", so you accept or reject each one"
+msgid "Every edit is a Word tracked change in your name, so you accept or reject each one"
 msgstr ""
 
 #: src/lib/cron.ts

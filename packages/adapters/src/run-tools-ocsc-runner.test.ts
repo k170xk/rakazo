@@ -17,6 +17,7 @@ function harness(options: {
   runner?: boolean;
   documents?: boolean;
   computerOff?: boolean;
+  wordDocuments?: { name: string; path: string }[];
 }) {
   const run = vi.fn(async () => ({ stdout: '{"ok":true}', stderr: "", code: 0 }));
   const prepare = vi.fn(async () => {});
@@ -33,6 +34,11 @@ function harness(options: {
       toolRunner: { run },
       sandbox: files,
       events: { append: async () => undefined },
+      prisma: {
+        user: {
+          findUnique: vi.fn(async () => ({ name: "Keith Knox", email: "keith@ocsc.ie" })),
+        },
+      },
     },
     run: { spaceId: "space", userId: "owner" },
     runId: "r1",
@@ -48,6 +54,7 @@ function harness(options: {
       runner: options.runner ? { workspace, files, prepare } : undefined,
       documents: options.documents ? { workspace, files, prepare } : undefined,
       computerOff: options.computerOff,
+      wordDocuments: options.wordDocuments,
     },
   };
   const call = (args: Record<string, unknown>, name = "ocsc") => ({
@@ -58,6 +65,61 @@ function harness(options: {
   });
   return { ctx: ctx as never, call, run, prepare, computerGet, files };
 }
+
+describe("Word documents on a tool runner", () => {
+  it("writes the person's name as the author of tracked changes", async () => {
+    const h = harness({ documents: true });
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({
+        program: "word",
+        args: ["edit", "--in", "outputs/a.docx", "--spec", "e.json"],
+      }) as never,
+    );
+    expect(h.run).toHaveBeenCalledWith(
+      expect.objectContaining({ program: "word", author: "Keith Knox" }),
+    );
+  });
+
+  it("edits a document already in the conversation instead of making it again", async () => {
+    const h = harness({
+      documents: true,
+      wordDocuments: [{ name: "Report.docx", path: "attachments/a1.docx" }],
+    });
+    const refused = await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "word", args: ["new", "--spec", "s.json", "--out", "x.docx"] }) as never,
+    );
+    expect(refused).toEqual({ error: expect.stringContaining("ocsc word edit --in") });
+    expect(h.run).not.toHaveBeenCalled();
+
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({
+        program: "word",
+        args: ["edit", "--in", "attachments/a1.docx", "--spec", "e.json"],
+      }) as never,
+    );
+    expect(h.run).toHaveBeenCalledTimes(1);
+  });
+
+  it("makes a brand-new document when the person asked for one, without passing the flag on", async () => {
+    const h = harness({
+      documents: true,
+      wordDocuments: [{ name: "Report.docx", path: "attachments/a1.docx" }],
+    });
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({
+        program: "word",
+        args: ["new", "--spec", "s.json", "--out", "y.docx", "--new-document"],
+      }) as never,
+    );
+    expect(h.run).toHaveBeenCalledWith(
+      expect.objectContaining({ args: ["new", "--spec", "s.json", "--out", "y.docx"] }),
+    );
+  });
+});
 
 describe("ocsc on a tool runner", () => {
   it("runs a colleague's document command on a runner in the conversation folder", async () => {

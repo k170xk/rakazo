@@ -42,7 +42,15 @@ import {
   protectedComputerLifecycleRefusal,
 } from "./desktop-command-guard.js";
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
-import { OCSC_PROGRAMS, ocscAfterRun, ocscBeforeRun, ocscCommand } from "./ocsc-tool.js";
+import {
+  documentAuthor,
+  OCSC_PROGRAMS,
+  ocscAfterRun,
+  ocscBeforeRun,
+  ocscCommand,
+  ocscProgramArgs,
+  wordRebuildRefusal,
+} from "./ocsc-tool.js";
 import { purchaseApprovalOf } from "./purchase-gate.js";
 import { resolvePurchaseCardFill, resolvePurchasePayTokenFill } from "./purchase-service.js";
 import type { RunContext, RunToolRunner } from "./run-context.js";
@@ -298,6 +306,7 @@ async function runOcscOnRunner(
   client: ToolRunnerClient,
   program: string,
   args: readonly string[],
+  author: string | undefined,
 ) {
   const refusal = await conversationFolderRefusal(runner.workspace);
   if (refusal) return call.finish({ error: refusal });
@@ -323,6 +332,7 @@ async function runOcscOnRunner(
       program,
       args,
       owner: ctx.run.userId,
+      author,
       timeoutMs: program === "video" ? VIDEO_RUN_TIMEOUT_MS : sandboxCommandTimeoutMs(),
       signal: ctx.context.signal,
       onQueued: (ahead) =>
@@ -370,6 +380,8 @@ async function runComputerCommand(
         registerRedactions: (values) => addRunSecrets(ctx, values),
       })
     : { env: {}, unsetEnv: undefined };
+  const author = input.botSecrets ? await documentAuthor(ctx) : undefined;
+  if (author) commandEnvironment.env = { ...commandEnvironment.env, OCSC_AUTHOR: author };
   ctx.computer.checkpoint.markDirty();
   const commandEvent = {
     executionId,
@@ -562,15 +574,19 @@ export const computerTools: ToolHandlers = {
   },
   async ocsc(ctx, call) {
     const program = String(call.args.program ?? "");
-    const args = Array.isArray(call.args.args) ? call.args.args.map(String) : [];
+    const given = Array.isArray(call.args.args) ? call.args.args.map(String) : [];
     if (!OCSC_PROGRAMS.has(program)) {
       return call.finish({ error: `program must be one of ${[...OCSC_PROGRAMS].join(", ")}.` });
     }
+    const rebuild = wordRebuildRefusal(program, given, ctx.computer.wordDocuments ?? []);
+    if (rebuild) return call.finish({ error: rebuild });
+    const args = ocscProgramArgs(given);
+    const author = await documentAuthor(ctx);
     const runner = ctx.computer.documents ?? ctx.computer.runner;
     if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {
       const held = await ocscBeforeRun(ctx, program, args);
       if (held) return call.finish(held);
-      return runOcscOnRunner(ctx, call, runner, ctx.deps.toolRunner, program, args);
+      return runOcscOnRunner(ctx, call, runner, ctx.deps.toolRunner, program, args, author);
     }
     if (ctx.computer.computerOff) {
       return call.finish({
@@ -585,7 +601,7 @@ export const computerTools: ToolHandlers = {
     const held = await ocscBeforeRun(ctx, program, args);
     if (held) return call.finish(held);
     const result = await runComputerCommand(ctx, call, {
-      command: ocscCommand(program, args, ctx.computer.folder),
+      command: ocscCommand(program, args, ctx.computer.folder, author),
       cwd: ctx.computer.folder
         ? undefined
         : resolveBotWorkspaceCwd(ctx.computer.mode, ctx.bot.id, undefined),

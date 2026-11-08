@@ -3,7 +3,7 @@
  * well as OCSC decks: text is changed in place keeping its formatting, slides are added (drawn by
  * pptx-native.mjs in a scratch deck and moved across with their pictures, charts and notes),
  * replaced, removed, moved and duplicated, and every slide that changed gets a review comment
- * from "OCSC Bot". PowerPoint has no tracked changes, so the comments are how a person reviews
+ * from the person who asked (OCSC_AUTHOR). PowerPoint has no tracked changes, so the comments are how a person reviews
  * what changed.
  */
 import { basename, dirname, posix } from "node:path";
@@ -38,8 +38,19 @@ const MEDIA_TYPES = {
   emf: "image/x-emf",
   wmf: "image/x-wmf",
 };
-const AUTHOR = "OCSC Bot";
+// Rakazo sets OCSC_AUTHOR to the name of the person whose request this is.
+const AUTHOR = process.env.OCSC_AUTHOR?.trim() || "OCSC Bot";
 const SLIDE_LIMIT = 60;
+
+function initialsOf(name) {
+  const letters = name
+    .split(/\s+/)
+    .map((word) => [...word][0] ?? "")
+    .filter(Boolean);
+  return (letters.length > 1 ? letters[0] + letters[letters.length - 1] : letters[0] ?? "")
+    .toUpperCase()
+    .slice(0, 4);
+}
 
 // ---------- xml helpers ----------
 
@@ -661,7 +672,7 @@ async function addComment(deck, part, text, when) {
   if (!author) {
     const ids = [...authors.matchAll(/<p:cmAuthor\b[^>]*\bid="(\d+)"/g)].map((m) => Number(m[1]));
     const id = Math.max(-1, ...ids) + 1;
-    author = `<p:cmAuthor id="${id}" name="${AUTHOR}" initials="OB" lastIdx="0" clrIdx="${id % 8}"/>`;
+    author = `<p:cmAuthor id="${id}" name="${esc(AUTHOR)}" initials="${esc(initialsOf(AUTHOR))}" lastIdx="0" clrIdx="${id % 8}"/>`;
     authors = authors.replace("</p:cmAuthorLst>", `${author}</p:cmAuthorLst>`);
   }
   const authorId = attr(author, "id");

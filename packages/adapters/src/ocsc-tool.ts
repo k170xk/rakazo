@@ -24,12 +24,85 @@ function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
-/** The command line for one OCSC command; in a conversation folder its files stay in that folder. */
-export function ocscCommand(program: string, args: readonly string[], folder?: string): string {
-  const run = [`ocsc-${program}`, ...args.map(shellQuote)].join(" ");
+/**
+ * The command line for one OCSC command; in a conversation folder its files stay in that folder.
+ * `author` names the person on tracked changes and review comments.
+ */
+export function ocscCommand(
+  program: string,
+  args: readonly string[],
+  folder?: string,
+  author?: string,
+): string {
+  const env = author ? `OCSC_AUTHOR=${shellQuote(author)} ` : "";
+  const run = `${env}${[`ocsc-${program}`, ...args.map(shellQuote)].join(" ")}`;
   if (!folder) return run;
   const dir = shellQuote(folder);
   return `mkdir -p ${dir} && cd ${dir} && WORKSPACE_DIR="$PWD" ${run}`;
+}
+
+/** One line, so it is safe in an environment variable and readable in Word's review pane. */
+function authorName(value: string | null | undefined): string {
+  return (value ?? "")
+    .replace(/\p{Cc}/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 200);
+}
+
+/**
+ * Whose name OCSC documents record as the author of tracked changes and review comments: the
+ * person whose request this run is, never the bot.
+ */
+export async function documentAuthor(ctx: RunContext): Promise<string | undefined> {
+  try {
+    const user = await runAsSystem("read document author", () =>
+      ctx.deps.prisma.user.findUnique({
+        where: { id: ctx.run.userId },
+        select: { name: true, email: true },
+      }),
+    );
+    return authorName(user?.name) || authorName(user?.email?.split("@")[0]) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+export function isWordDocument(name: string, mimeType: string | null | undefined): boolean {
+  return mimeType === DOCX_MIME || name.toLowerCase().endsWith(".docx");
+}
+
+/** Passed to `ocsc word new` when the person asked for a brand-new document; removed before running. */
+export const NEW_DOCUMENT_FLAG = "--new-document";
+
+/** The arguments the OCSC program receives. */
+export function ocscProgramArgs(args: readonly string[]): string[] {
+  return args.filter((arg) => arg !== NEW_DOCUMENT_FLAG);
+}
+
+/**
+ * Why `ocsc word new` must not run: in a conversation that already has a Word document, or over
+ * an existing file, making a new one would rebuild the person's document instead of editing it.
+ * The bot passes NEW_DOCUMENT_FLAG only when the person asked for a brand-new document.
+ */
+export function wordRebuildRefusal(
+  program: string,
+  args: readonly string[],
+  wordDocuments: readonly { name: string; path: string }[],
+): string | undefined {
+  if (program !== "word" || args[0] !== "new" || args.includes(NEW_DOCUMENT_FLAG)) return undefined;
+  const overwriting = args.includes("--overwrite");
+  if (!overwriting && wordDocuments.length === 0) return undefined;
+  const listed = wordDocuments
+    .slice(0, 5)
+    .map((doc) => `"${doc.name}" (${doc.path})`)
+    .join(", ");
+  const existing = overwriting
+    ? "This would replace an existing Word document."
+    : `This conversation already has a Word document: ${listed}.`;
+  return `${existing} To change a document, never make it again: run ocsc word read --in <its path>, then ocsc word edit --in <its path> --spec <edits>.json --out <new version>.docx, so the changes show as tracked changes. Only when the person explicitly asked for a brand-new, separate document (not changes to an existing one), run the same new command again with ${NEW_DOCUMENT_FLAG}.`;
 }
 
 type SlotRow = { key: string; userId: string; state: string };

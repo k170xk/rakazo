@@ -1409,7 +1409,11 @@ function fitBanner(xml, title, subtitle) {
       close,
   );
 }
-const AUTHOR = process.env.OCSC_WORD_AUTHOR || "OCSC Bot";
+// Rakazo sets OCSC_AUTHOR to the name of the person whose request this is.
+const AUTHOR =
+  process.env.OCSC_AUTHOR?.trim() ||
+  process.env.OCSC_WORD_AUTHOR?.trim() ||
+  "OCSC Bot";
 
 /** Applies fn to each run, skipping the inside of any `skip` element (for example runs already deleted). */
 function mapRuns(xml, fn, skip = []) {

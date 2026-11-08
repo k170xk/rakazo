@@ -224,7 +224,19 @@ describe("tool run container", () => {
     expect(options.WorkingDir).toBe("/work/bots/b1");
     expect(options.Entrypoint).toEqual(["/usr/local/bin/ocsc-word"]);
     expect(options.Env).toContain("WORKSPACE_DIR=/work/bots/b1");
+    expect(options.Env.some((entry) => entry.startsWith("OCSC_AUTHOR="))).toBe(false);
     expect(options.HostConfig.Tmpfs).not.toHaveProperty("/opt/ocsc-video/.work");
+  });
+
+  it("names the person as the author of tracked changes, on one line", () => {
+    const options = toolRunContainerOptions({
+      name: "rakazo-tool-run-a",
+      image: "rakazo/computer:local",
+      user: "1000:1000",
+      request: toolRunRequestSchema.parse({ ...valid, author: " Keith\nKnox " }),
+      storage: { homePath: "/srv/data/tool-work/conversations/t1" },
+    });
+    expect(options.Env).toContain("OCSC_AUTHOR=Keith Knox");
   });
 
   it("gives a video more memory and a writable engine scratch folder", () => {
