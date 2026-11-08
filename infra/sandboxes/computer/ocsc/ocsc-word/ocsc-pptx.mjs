@@ -313,10 +313,30 @@ const AREA = { top: 184, bottom: 880, left: 72, right: 1848 };
 const AREA_H = AREA.bottom - AREA.top;
 const CARD_TINT = "F3F7F0";
 const RULE = "DDE3D8";
+const CARD_GREY = "F2F4F1";
 /** How a visual slide is arranged; each keeps its words in editable text beside the picture. */
-const VISUAL_STYLES = ["side", "left", "panel", "cards", "steps", "stats", "statement", "full"];
-/** Styles for plain bullets, taken in turn so neighbouring slides differ. */
-const BULLET_STYLES = ["side", "left", "panel"];
+const VISUAL_STYLES = [
+  "side",
+  "left",
+  "panel",
+  "checklist",
+  "banner",
+  "cards",
+  "steps",
+  "timeline",
+  "stats",
+  "kpis",
+  "progress",
+  "compare",
+  "statement",
+  "highlight",
+  "section",
+  "quote",
+  "full",
+];
+/** Styles for plain bullets, and for a statement, taken in turn so neighbouring slides differ. */
+const BULLET_STYLES = ["side", "panel", "checklist", "left", "banner"];
+const STATEMENT_STYLES = ["statement", "highlight", "banner"];
 
 const plainText = (value) => str(value).replace(/\*\*/g, "").trim();
 
@@ -339,6 +359,50 @@ function pointsOf(item) {
     .filter((p) => p.title || p.text);
 }
 
+function listOf(value, map) {
+  return (Array.isArray(value) ? value : []).map(map).filter(Boolean);
+}
+
+const milestonesOf = (item) =>
+  listOf(item.milestones, (m) =>
+    plainText(m?.label)
+      ? { date: plainText(m?.date), label: plainText(m?.label), text: plainText(m?.text) }
+      : null,
+  );
+const barsOf = (item) =>
+  listOf(item.bars, (b) =>
+    plainText(b?.label) && Number.isFinite(Number(b?.value))
+      ? { label: plainText(b.label), value: Math.min(Math.max(Number(b.value), 0), 100) }
+      : null,
+  );
+const compareOf = (item) => {
+  const side = (s) => ({
+    label: plainText(s?.label),
+    points: listOf(s?.points, (x) => plainText(x) || null),
+  });
+  const c = item.compare;
+  return c && typeof c === "object" ? { left: side(c.left), right: side(c.right) } : null;
+};
+
+/** Lines `text` wraps to in `width` grid units at `size` points (the grid is 2 units a point). */
+function wrapLines(text, width, size, em = 0.55) {
+  const perLine = Math.max(1, Math.floor(width / (size * 2 * em)));
+  let lines = 0;
+  for (const para of String(text).split("\n")) {
+    let used = 0;
+    lines += 1;
+    for (const word of para.split(/\s+/).filter(Boolean)) {
+      const need = used ? used + 1 + word.length : word.length;
+      if (need <= perLine) used = need;
+      else {
+        lines += 1;
+        used = word.length;
+      }
+    }
+  }
+  return lines;
+}
+
 function statsOf(item) {
   return (Array.isArray(item.stats) ? item.stats : [])
     .map((s) => ({ value: plainText(s?.value), label: plainText(s?.label) }))
@@ -348,12 +412,19 @@ function statsOf(item) {
 /** The style a visual slide takes: the one asked for, else one that suits its content. */
 function visualStyle(item, previous) {
   if (VISUAL_STYLES.includes(item.style)) return item.style;
-  if (statsOf(item).length) return "stats";
-  if (plainText(item.statement)) return "statement";
+  const next = (styles) => styles[(styles.indexOf(previous) + 1) % styles.length];
+  if (compareOf(item)) return "compare";
+  if (milestonesOf(item).length) return "timeline";
+  if (barsOf(item).length) return "progress";
+  if (plainText(item.quote)) return "quote";
+  if (plainText(item.number)) return "section";
+  const stats = statsOf(item).length;
+  if (stats) return stats >= 4 ? "kpis" : "stats";
+  if (plainText(item.statement)) return next(STATEMENT_STYLES);
   const points = pointsOf(item).length;
   if (points) return points >= 4 && previous !== "steps" ? "steps" : "cards";
   if (!hasText(item)) return "full";
-  return BULLET_STYLES[(BULLET_STYLES.indexOf(previous) + 1) % BULLET_STYLES.length];
+  return next(BULLET_STYLES);
 }
 
 /** Where the picture sits in each style; infographics are 3:2 and shown whole. */
@@ -366,6 +437,15 @@ const PICTURE_BOX = {
   stats: { x: AREA.left, y: AREA.top, w: 1044, h: AREA_H },
   statement: { x: 900, y: AREA.top, w: 948, h: AREA_H },
   full: { x: AREA.left, y: 168, w: 1776, h: 720 },
+  checklist: { x: AREA.left, y: AREA.top, w: 1000, h: AREA_H },
+  banner: { x: 560, y: 168, w: 1288, h: 712 },
+  timeline: { x: AREA.left, y: 168, w: 1776, h: 410 },
+  kpis: { x: AREA.left, y: 168, w: 1776, h: 440 },
+  progress: { x: AREA.left, y: AREA.top, w: 1000, h: AREA_H },
+  compare: { x: 652, y: AREA.top, w: 616, h: AREA_H },
+  highlight: { x: 1000, y: AREA.top, w: 848, h: AREA_H },
+  section: { x: 900, y: AREA.top, w: 948, h: AREA_H },
+  quote: { x: 1000, y: AREA.top, w: 848, h: AREA_H },
 };
 
 const textEl = (text, box, opts = {}) => ({ type: "text", text, ...box, ...opts });
@@ -543,6 +623,382 @@ function styleElements(style, item, label) {
         );
       break;
     }
+    case "checklist": {
+      const rows = points.length ? points : lines.map((title) => ({ title, text: "" }));
+      need(rows.length >= 2 && rows.length <= 5, '"bullets" or "points" (2 to 5)');
+      const gap = 16;
+      const h = Math.min(150, (AREA_H - gap * (rows.length - 1)) / rows.length);
+      let y = AREA.top + (AREA_H - (h * rows.length + gap * (rows.length - 1))) / 2;
+      for (const row of rows) {
+        els.push({
+          type: "shape",
+          shape: "rounded",
+          x: 1120,
+          y,
+          w: 728,
+          h,
+          fill: CARD_TINT,
+          radius: 14,
+        });
+        els.push({
+          type: "shape",
+          shape: "rounded",
+          x: 1144,
+          y: y + (h - 52) / 2,
+          w: 52,
+          h: 52,
+          fill: GREEN,
+          radius: 10,
+          text: "\u2713",
+          size: 22,
+          bold: true,
+          color: "FFFFFF",
+        });
+        if (row.text) {
+          els.push(
+            textEl(
+              row.title,
+              { x: 1220, y: y + 16, w: 604, h: 40 },
+              { size: 20, bold: true, color: INK, valign: "middle" },
+            ),
+          );
+          els.push(
+            textEl(row.text, { x: 1220, y: y + 58, w: 604, h: h - 70 }, { size: 15, color: MUTED }),
+          );
+        } else
+          els.push(
+            textEl(
+              row.title,
+              { x: 1220, y, w: 604, h },
+              { size: 20, bold: true, color: INK, valign: "middle" },
+            ),
+          );
+        y += h + gap;
+      }
+      break;
+    }
+    case "banner": {
+      const headline = plainText(item.statement);
+      need(headline || lines.length, '"statement" or "bullets"');
+      const body = lines;
+      const size = headline.length > 60 ? 26 : 30;
+      const headH = headline ? wrapLines(headline, 600, size) * size * 2 * 1.15 : 0;
+      const bodyH = body.length ? wrapLines(body.join("\n"), 580, 18) * 18 * 2 * 1.3 : 0;
+      const h = Math.min(AREA_H - 40, 100 + headH + (headline && body.length ? 24 : 0) + bodyH);
+      const y = AREA.bottom - h - 20;
+      els.push({
+        type: "shape",
+        shape: "rounded",
+        x: AREA.left,
+        y,
+        w: 680,
+        h,
+        fill: GREEN,
+        radius: 18,
+        shadow: true,
+      });
+      let ty = y + 50;
+      if (headline) {
+        els.push(
+          textEl(
+            headline,
+            { x: 112, y: ty, w: 600, h: headH },
+            { size, bold: true, color: "FFFFFF", line_height: 1.1 },
+          ),
+        );
+        ty += headH + 24;
+      }
+      if (body.length)
+        els.push(
+          textEl(
+            body.join("\n"),
+            { x: 112, y: ty, w: 600, h: bodyH },
+            { size: 18, color: "FFFFFF", bullets: true, line_height: 1.2 },
+          ),
+        );
+      break;
+    }
+    case "timeline": {
+      const ms = milestonesOf(item);
+      need(ms.length >= 3 && ms.length <= 6, '"milestones" (3 to 6, each {"date","label","text"})');
+      const w = (AREA.right - AREA.left) / ms.length;
+      els.push({
+        type: "shape",
+        shape: "rect",
+        x: AREA.left + w / 2,
+        y: 650,
+        w: w * (ms.length - 1),
+        h: 4,
+        fill: RULE,
+      });
+      for (const [i, m] of ms.entries()) {
+        const x = AREA.left + i * w;
+        if (m.date)
+          els.push(
+            textEl(
+              m.date,
+              { x, y: 596, w, h: 36 },
+              { size: 18, bold: true, color: GREEN, align: "center" },
+            ),
+          );
+        els.push({
+          type: "shape",
+          shape: "ellipse",
+          x: x + w / 2 - 16,
+          y: 636,
+          w: 32,
+          h: 32,
+          fill: GREEN,
+          line: "FFFFFF",
+          line_width: 3,
+        });
+        els.push(
+          textEl(
+            m.label,
+            { x: x + 12, y: 684, w: w - 24, h: 40 },
+            { size: 19, bold: true, color: INK, align: "center" },
+          ),
+        );
+        if (m.text)
+          els.push(
+            textEl(
+              m.text,
+              { x: x + 12, y: 728, w: w - 24, h: 140 },
+              { size: 15, color: MUTED, align: "center" },
+            ),
+          );
+      }
+      break;
+    }
+    case "kpis": {
+      const stats = statsOf(item);
+      need(stats.length >= 2 && stats.length <= 5, '"stats" (2 to 5, each {"value","label"})');
+      const gap = 24;
+      const w = (AREA.right - AREA.left - gap * (stats.length - 1)) / stats.length;
+      for (const [i, st] of stats.entries()) {
+        const x = AREA.left + i * (w + gap);
+        els.push({
+          type: "shape",
+          shape: "rounded",
+          x,
+          y: 640,
+          w,
+          h: 230,
+          fill: CARD_TINT,
+          radius: 16,
+        });
+        els.push(
+          textEl(
+            st.value,
+            { x, y: 664, w, h: 110 },
+            { size: 56, bold: true, color: GREEN, align: "center", valign: "middle" },
+          ),
+        );
+        if (st.label)
+          els.push(
+            textEl(
+              st.label.toUpperCase(),
+              { x: x + 16, y: 786, w: w - 32, h: 64 },
+              { size: 15, color: MUTED, align: "center", letter_spacing: 1 },
+            ),
+          );
+      }
+      break;
+    }
+    case "progress": {
+      const bars = barsOf(item);
+      need(
+        bars.length >= 2 && bars.length <= 6,
+        '"bars" (2 to 6, each {"label","value"} with value 0 to 100)',
+      );
+      els.push({
+        type: "shape",
+        shape: "rounded",
+        x: 1120,
+        y: AREA.top,
+        w: 728,
+        h: AREA_H,
+        fill: "FFFFFF",
+        line: RULE,
+        line_width: 1,
+        radius: 18,
+        shadow: true,
+      });
+      const rowH = Math.min(110, (AREA_H - 100) / bars.length);
+      let y = AREA.top + (AREA_H - rowH * bars.length) / 2;
+      for (const b of bars) {
+        els.push(
+          textEl(
+            b.label,
+            { x: 1168, y, w: 520, h: 40 },
+            { size: 18, bold: true, color: INK, valign: "middle" },
+          ),
+        );
+        els.push(
+          textEl(
+            `${Math.round(b.value)}%`,
+            { x: 1690, y, w: 110, h: 40 },
+            { size: 16, color: MUTED, align: "right", valign: "middle" },
+          ),
+        );
+        els.push({
+          type: "shape",
+          shape: "rounded",
+          x: 1168,
+          y: y + 50,
+          w: 632,
+          h: 14,
+          fill: "EEF1EC",
+          radius: 7,
+        });
+        if (b.value > 0)
+          els.push({
+            type: "shape",
+            shape: "rounded",
+            x: 1168,
+            y: y + 50,
+            w: Math.max(14, (632 * b.value) / 100),
+            h: 14,
+            fill: GREEN,
+            radius: 7,
+          });
+        y += rowH;
+      }
+      break;
+    }
+    case "compare": {
+      const c = compareOf(item);
+      need(
+        c?.left.points.length && c.right.points.length,
+        '"compare":{"left":{"label","points":[]},"right":{"label","points":[]}}',
+      );
+      for (const [side, x, fill, colour] of [
+        [c.left, AREA.left, CARD_GREY, MUTED],
+        [c.right, 1288, CARD_TINT, GREEN],
+      ]) {
+        els.push({
+          type: "shape",
+          shape: "rounded",
+          x,
+          y: AREA.top,
+          w: 560,
+          h: AREA_H,
+          fill,
+          radius: 18,
+        });
+        els.push({
+          type: "shape",
+          shape: "rect",
+          x: x + 40,
+          y: AREA.top + 52,
+          w: 64,
+          h: 6,
+          fill: colour,
+        });
+        els.push(
+          textEl(
+            side.label.toUpperCase(),
+            { x: x + 40, y: AREA.top + 76, w: 480, h: 48 },
+            { size: 22, bold: true, color: colour, letter_spacing: 1 },
+          ),
+        );
+        els.push(
+          textEl(
+            side.points.join("\n"),
+            { x: x + 40, y: AREA.top + 150, w: 480, h: AREA_H - 190 },
+            { size: 20, color: INK, bullets: true, line_height: 1.3 },
+          ),
+        );
+      }
+      break;
+    }
+    case "highlight": {
+      const message = plainText(item.statement) || lines[0];
+      need(Boolean(message), '"statement" (one short sentence)');
+      const support = plainText(item.statement) ? lines.join("\n") : lines.slice(1).join("\n");
+      const size = message.length > 60 ? 34 : 42;
+      const h = wrapLines(message, 860, size, 0.6) * size * 2 * 1.5;
+      const total = h + (support ? 70 + 150 : 0);
+      let y = AREA.top + Math.max(0, (AREA_H - total) / 2);
+      els.push({
+        type: "text",
+        x: AREA.left,
+        y,
+        w: 860,
+        h,
+        size,
+        bold: true,
+        line_height: 1.45,
+        runs: [{ text: ` ${message} `, color: "FFFFFF", highlight: GREEN }],
+      });
+      y += h + 70;
+      if (support)
+        els.push(textEl(support, { x: AREA.left, y, w: 860, h: 150 }, { size: 20, color: MUTED }));
+      break;
+    }
+    case "section": {
+      const number = plainText(item.number) || "01";
+      const message = plainText(item.statement) || lines[0];
+      need(Boolean(message), '"number" and "statement"');
+      const support = plainText(item.statement) ? lines.join("\n") : lines.slice(1).join("\n");
+      const size = message.length > 50 ? 32 : 38;
+      const h = wrapLines(message, 760, size) * size * 2 * 1.15;
+      let y = AREA.top + Math.max(0, (AREA_H - (200 + 30 + h + (support ? 170 : 0))) / 2);
+      els.push(
+        textEl(
+          number,
+          { x: AREA.left, y, w: 600, h: 190 },
+          { size: 120, bold: true, color: GREEN, valign: "bottom" },
+        ),
+      );
+      y += 200;
+      els.push({ type: "shape", shape: "rect", x: AREA.left + 6, y, w: 140, h: 8, fill: GREEN });
+      y += 30;
+      els.push(
+        textEl(
+          message,
+          { x: AREA.left, y, w: 760, h },
+          { size, bold: true, color: INK, line_height: 1.1 },
+        ),
+      );
+      y += h + 24;
+      if (support)
+        els.push(textEl(support, { x: AREA.left, y, w: 760, h: 146 }, { size: 20, color: MUTED }));
+      break;
+    }
+    case "quote": {
+      const quote = plainText(item.quote);
+      need(Boolean(quote), '"quote" and "attribution"');
+      const size = quote.length > 120 ? 24 : quote.length > 70 ? 28 : 32;
+      const h = wrapLines(quote, 820, size, 0.58) * size * 2 * 1.35;
+      let y = AREA.top + Math.max(0, (AREA_H - (150 + h + 90)) / 2);
+      els.push(
+        textEl(
+          "\u201C",
+          { x: AREA.left, y, w: 200, h: 150 },
+          { size: 150, bold: true, color: GREEN, valign: "top" },
+        ),
+      );
+      y += 150;
+      els.push(
+        textEl(
+          quote,
+          { x: AREA.left, y, w: 820, h },
+          { size, italic: true, color: INK, line_height: 1.3 },
+        ),
+      );
+      y += h + 50;
+      els.push({ type: "shape", shape: "rect", x: AREA.left, y, w: 60, h: 4, fill: GREEN });
+      if (plainText(item.attribution))
+        els.push(
+          textEl(
+            plainText(item.attribution).toUpperCase(),
+            { x: AREA.left + 80, y: y - 18, w: 740, h: 40 },
+            { size: 15, bold: true, color: GREEN, letter_spacing: 2, valign: "middle" },
+          ),
+        );
+      break;
+    }
     case "full":
       break;
   }
@@ -595,7 +1051,22 @@ function placeVisuals(items, { plain, name, labelOf }) {
         fit: "contain",
         bullets: rest.bullets ?? [],
       };
-    const { bullets, body, text, points, stats, statement, overlay, ...frame } = rest;
+    const {
+      bullets,
+      body,
+      text,
+      points,
+      stats,
+      statement,
+      milestones,
+      bars,
+      compare,
+      quote,
+      attribution,
+      number,
+      overlay,
+      ...frame
+    } = rest;
     return {
       ...frame,
       layout: "custom",

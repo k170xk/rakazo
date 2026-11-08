@@ -86,20 +86,25 @@ Company slides can be copied in whole with {"include":"about"}, "services", "com
 For a plain deck without the template use "template":"none". When the person gives their own template, use "template":"<their file>.pptx" and pick from ocsc-pptx layouts --template <their file>.pptx.
 
 EVERY CONTENT SLIDE HAS A VISUAL
-Every slide between the agenda and thank_you carries a big "visual" that makes the point at a glance, like a frame of an OCSC video. A slide of bullets alone is never good enough, and keep the template's chevron layouts (infographic_1 to infographic_8) for when you have real icons or pictures for them. A visual is one of:
+Every slide between the agenda and thank_you carries a big "visual" that makes the point at a glance, like a frame of an OCSC video, laid out in one of the slide styles below. A slide of bullets alone is never good enough. A visual is one of:
 - A GPT Image infographic, the most striking and the one to use on most slides: as soon as the outline is settled, call evolve_infographics once with every slide's infographic (up to 12, in order; Evolve draws them all at the same time, about a minute), each with a "title" and a "topic" that describes the picture: the diagram, flow, stages, scenes and icons that show the slide's point. The pictures come back without any text, so every word stays editable on the slide, written in one of the slide styles below. Then set each slide's "visual" to its imageUrl. Only when the person asks for full infographics with the writing in them, add "withText": true. If evolve_infographics is not in your tools, mcp__evolve__create_infographics does the same (up to 10 per call); end each of its topics with "No text, labels or numbers in the image." Use these for ideas, processes, systems and anything a diagram explains.
 - A Remotion scene from the OCSC video library, rendered by ocsc-pptx itself: "visual": {"template":"<name>","props":{...}}. Use these for numbers, charts, lists, steps and statements: chart-animation, comparison-chart, donut-chart, circular-progress, line-chart and area-chart for figures; animated-list for three to five short points; progress-steps for a short process (on a slide without bullets); text-highlight for a key message. ocsc-video templates lists them all and ocsc-video templates --name <name> gives each one's props and how much fits; fill every prop with the real content. A built-in scene works too: {"type":"<scene type>", ...its fields}.
 - A real photo, as the visual or in a photo layout: mcp__evolve__search_project_datasheets for OCSC's own projects (prefer these for OCSC work), mcp__evolve__search_stock_media for stock photos. Never invent project facts.
 Give at least two of every three content slides a GPT Image infographic, and use Remotion scenes and photos where figures or real projects tell it better. An item that comes back ok false gets a Remotion scene instead. When neither infographic tool is in your tools, say once that GPT Image infographics need the Evolve connection and use Remotion scenes and photos for every visual instead.
-SLIDE STYLES: a slide with "visual" and no layout is built from native text and shapes around its picture in a "style". Vary them: never two slides in a row the same, and no more than two bullet slides in the deck. Write the content each style needs:
-- "cards": "points":[{"title","text"}] (2 to 4) as numbered cards on the left, picture right. Good for reasons, services, benefits.
-- "steps": "points" (3 to 5) as a numbered timeline under a wide picture. Good for a process or programme.
-- "stats": "stats":[{"value":"40%","label":"less peak run-off"}] (1 to 3) as big green figures beside the picture. Use real figures only.
-- "statement": "statement":"<one bold sentence>" plus an optional one-line "bullets", for a key message or the view OCSC takes.
-- "panel": "bullets" (2 to 4) in white on a green panel, picture right. Good for why it matters, risks, the brief.
-- "side" and "left": "bullets" (2 to 4) beside the picture, on the left or the right.
-- "full": the picture alone, wide under the heading, for a whole system or overview.
-Set "style" to choose one; without it the content decides (stats, statement, points) and plain bullets take side, left and panel in turn. A visual on a picture layout such as text_image fills its picture space.
+SLIDE STYLES: every slide between the agenda and thank_you is an infographic slide: a "visual" (normally its GPT Image infographic), no layout, and a "style" that lays its words out natively around the picture. Use other layouts (photos, table, chart, the template's own pages) only when the person asks for them or the content truly needs one. Never put the same style on two slides in a row, and use at least five different styles in a deck of eight or more. Write the content each style needs:
+- "cards": "points":[{"title","text"}] (2 to 4) as numbered cards, picture right. Reasons, services, benefits.
+- "checklist": "points" or "bullets" (2 to 5) as tinted rows with green ticks, picture left. Requirements, what we check, scope.
+- "steps": "points" (3 to 5) as a numbered sequence under a wide picture. A process.
+- "timeline": "milestones":[{"date","label","text"}] (3 to 6) on a dotted line under a wide picture. A programme with dates.
+- "stats": "stats":[{"value","label"}] (1 to 3) as big green figures beside the picture; "kpis": 4 or 5 stats as cards under a wide picture. Real figures only.
+- "progress": "bars":[{"label","value"}] (2 to 6, value 0 to 100) on a white card. Stage progress, completion, scores.
+- "compare": "compare":{"left":{"label","points":[]},"right":{"label","points":[]}} with the picture between. Before and after, options, traditional against OCSC's way.
+- "statement": "statement":"<one bold sentence>"; "highlight": the same on a green highlighter; "banner": the statement and "bullets" on a green card over the picture. Key messages and OCSC's view.
+- "section": "number":"02" with a "statement", opening a part of the deck.
+- "quote": "quote" and "attribution". A client or team quote, only real ones.
+- "panel": "bullets" (2 to 4) in white on a green panel; "side" and "left": "bullets" beside the picture. Use these least.
+- "full": the picture alone, wide, for an overview.
+Without "style" the content decides (compare, milestones, bars, quote, number, stats, statement, points), and plain bullets rotate through side, panel, checklist, left and banner. A visual on a picture layout such as text_image fills its picture space.
 For a striking designed slide made entirely of a picture, mcp__evolve__create_presentation_slides draws whole OCSC slides; use it only when the person wants picture slides, because those slides cannot be edited.
 
 WRITE THE DECK
@@ -110,12 +115,11 @@ WRITE THE DECK
  {"layout":"agenda","items":[{"title":"<topic>","text":"<one line>"}]},
  {"heading":"...","subheading":"...","style":"cards","points":[{"title":"...","text":"..."},{"title":"...","text":"..."},{"title":"...","text":"..."}],"visual":"<infographic imageUrl>","notes":"..."},
  {"heading":"...","subheading":"...","style":"steps","points":[{"title":"...","text":"..."}],"visual":"<infographic imageUrl>"},
- {"heading":"...","subheading":"...","style":"statement","statement":"...","visual":"<infographic imageUrl>"},
- {"heading":"...","subheading":"...","bullets":["...","..."],"visual":{"template":"comparison-chart","props":{"beforeValue":41,"afterValue":86,"beforeLabel":"Before","afterLabel":"After"}},"notes":"..."},
- {"heading":"...","visual":{"template":"chart-animation","props":{"data":[{"label":"Jan","value":120},{"label":"Feb","value":80}]}}},
- {"layout":"divider","title":"<PART>","subtitle":"<part name>"},
- {"layout":"photos_3","heading":"...","subheading":"...","images":["<url>","<url>","<url>"]},
- {"layout":"table","heading":"...","header":["..."],"rows":[["..."]]},
+ {"heading":"...","subheading":"...","style":"highlight","statement":"...","bullets":["<one supporting line>"],"visual":"<infographic imageUrl>"},
+ {"heading":"...","subheading":"...","style":"compare","compare":{"left":{"label":"...","points":["..."]},"right":{"label":"...","points":["..."]}},"visual":"<infographic imageUrl>"},
+ {"heading":"...","subheading":"...","style":"timeline","milestones":[{"date":"...","label":"...","text":"..."}],"visual":"<infographic imageUrl>"},
+ {"heading":"...","subheading":"...","style":"kpis","stats":[{"value":"...","label":"..."}],"visual":"<infographic imageUrl>"},
+ {"heading":"...","subheading":"...","style":"banner","statement":"...","bullets":["...","..."],"visual":"<infographic imageUrl>"},
  {"layout":"thank_you"}]}
 The agenda lists every section of the deck, up to 14 items (more than eight go into two columns, so keep those titles to a few words); each item's "text" is one short line. Bullets, text and cells may use **bold**. Pictures are https URLs or workspace PNG/JPEG paths. A scene's title defaults to the slide's subheading. Other layouts from ocsc-pptx layouts (text_2col, text_image, photo, photos_5 and more) and native ones (stats, quote, timeline, chart, table, custom with "elements" on a 1920x1080 grid) work too; "overlay":[{"image","x","y","w","h","fit"}] adds pictures anywhere on that grid.
 Motion: for an animated slide, render a short ocsc-video scene to an mp4, save a frame with ocsc-video still, then use {"layout":"motion","video":"<mp4>","poster":"<png>"}.
