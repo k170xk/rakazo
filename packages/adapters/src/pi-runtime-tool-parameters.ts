@@ -94,7 +94,7 @@ function builtinParameters(tool: ConnectorTool) {
   }
   if (tool.name === "spawn_bot") {
     return Type.Object({
-      name: Type.String(),
+      name: Type.Optional(Type.String()),
       description: Type.Optional(Type.String()),
       instructions: Type.Optional(Type.String()),
       prompt: Type.Optional(Type.String()),

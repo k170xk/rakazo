@@ -367,6 +367,7 @@ export function ShellDialogs({
       {createBotOpen ? (
         <CreateBotDialog
           avatarSet={botAvatarSet}
+          takenNames={bots.map((bot) => bot.name)}
           loadEvolveAssistants={() => rpc.bots.evolveAssistants()}
           onCancel={() => setCreateBotOpen(false)}
           onCreate={createBot}

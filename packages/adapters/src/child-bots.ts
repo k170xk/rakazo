@@ -15,7 +15,7 @@ import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   GROUP_BOT_MIN,
 } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
+import { ACTIVE_RUN_STATUSES, suggestBotName } from "@rakazo/core";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import {
   cancelRunsInTransaction,
@@ -76,8 +76,19 @@ export async function spawnBot(
     computerMode?: ComputerMode;
   },
 ) {
-  const name = input.name.trim();
-  if (!name) return { error: "Bot name is required." };
+  const name =
+    input.name.trim() ||
+    suggestBotName(
+      (
+        await deps.prisma.bot.findMany({
+          where: managedBotsWhere({
+            userId: input.spawnedBy.userId,
+            spaceId: input.spawnedBy.spaceId,
+          }),
+          select: { name: true },
+        })
+      ).map((bot) => bot.name),
+    );
 
   const actor: Actor = {
     userId: input.spawnedBy.userId,

@@ -7,6 +7,7 @@ import {
   ORGANIC_AVATAR_LOOKS,
   organicAvatarFamily,
   organicAvatarSampleIdentity,
+  suggestBotName,
 } from "@rakazo/core";
 import {
   Badge,
@@ -21,6 +22,7 @@ import {
   Input,
   parseBotAvatar,
 } from "@rakazo/ui-web";
+import { Shuffle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { errorText } from "../../lib/user-error";
 import { BotLookPicker } from "./avatar-studio-popover";
@@ -46,12 +48,15 @@ export interface CreateBotDialogInput {
 /** Mounted only while open; the parent unmounts it from `onCancel` or after `onCreate`. */
 export function CreateBotDialog({
   avatarSet,
+  takenNames = [],
   loadEvolveAssistants,
   onCancel,
   onCreate,
 }: {
   /** The account's set: the server gives it to the new bot, so the preview draws it too. */
   avatarSet: BotAvatarSet;
+  /** Names the person's bots already use, so the suggested name is not a repeat. */
+  takenNames?: readonly string[];
   /** The person's Evolve chat assistants; an empty list hides the choice. */
   loadEvolveAssistants?: () => Promise<EvolveAssistant[]>;
   onCancel: () => void;
@@ -59,7 +64,8 @@ export function CreateBotDialog({
 }) {
   const { t } = useLingui();
   const nameRef = useRef<HTMLInputElement>(null);
-  const [name, setName] = useState("");
+  const [suggested, setSuggested] = useState(() => suggestBotName(takenNames));
+  const [name, setName] = useState(suggested);
   const [assistants, setAssistants] = useState<EvolveAssistant[]>([]);
   const [assistantId, setAssistantId] = useState<string | null>(null);
   const loadRef = useRef(loadEvolveAssistants);
@@ -80,9 +86,18 @@ export function CreateBotDialog({
 
   function chooseAssistant(next: EvolveAssistant | null) {
     const previous = assistants.find((item) => item.id === assistantId);
-    // Follow the pick while the name is empty or still the previous pick's name.
-    if (!name.trim() || name === previous?.name) setName(next?.name ?? "");
+    // Follow the pick while the name is empty, suggested, or still the previous pick's name.
+    if (!name.trim() || name === suggested || name === previous?.name) {
+      setName(next?.name ?? suggested);
+    }
     setAssistantId(next?.id ?? null);
+  }
+
+  function suggestAnother() {
+    const next = suggestBotName([...takenNames, suggested, name]);
+    setSuggested(next);
+    setName(next);
+    nameRef.current?.focus();
   }
   const [previewId] = useState(() => {
     let id: string;
@@ -152,15 +167,29 @@ export function CreateBotDialog({
               avatarSet={avatarSet}
             />
           </div>
-          <Input
-            ref={nameRef}
-            aria-label={t`Name`}
-            placeholder={t`Name your Bot`}
-            value={name}
-            maxLength={BOT_NAME_MAX_LENGTH}
-            onChange={(event) => setName(event.target.value)}
-            className="text-center"
-          />
+          <div className="relative">
+            <Input
+              ref={nameRef}
+              aria-label={t`Name`}
+              placeholder={t`Name your Bot`}
+              value={name}
+              maxLength={BOT_NAME_MAX_LENGTH}
+              onChange={(event) => setName(event.target.value)}
+              onFocus={(event) => event.currentTarget.select()}
+              className="px-9 text-center"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t`Suggest a name`}
+              title={t`Suggest a name`}
+              onClick={suggestAnother}
+              className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground"
+            >
+              <Shuffle />
+            </Button>
+          </div>
           {assistants.length > 0 ? (
             <fieldset className="grid gap-1.5" data-testid="create-bot-evolve-assistants">
               <legend className="mb-1.5 text-[13px] font-medium text-muted-foreground">

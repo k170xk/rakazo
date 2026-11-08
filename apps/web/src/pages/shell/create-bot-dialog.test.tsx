@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import type { BotAvatarSet } from "@rakazo/contracts";
-import { ORGANIC_AVATAR_LOOKS } from "@rakazo/core";
+import { BOT_NAME_IDEAS, ORGANIC_AVATAR_LOOKS } from "@rakazo/core";
 import type { ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -72,9 +72,25 @@ async function click(element: HTMLElement) {
 }
 
 describe("CreateBotDialog", () => {
+  it("starts with a short suggested name and offers another", async () => {
+    const onCreate = vi.fn(async (_input: CreateBotDialogInput) => undefined);
+    await render(onCreate);
+    const input = document.querySelector<HTMLInputElement>('input[placeholder="Name your Bot"]')!;
+    const first = input.value;
+    expect(BOT_NAME_IDEAS).toContain(first);
+    expect(button("Create").disabled).toBe(false);
+    await click(button("Suggest a name"));
+    expect(BOT_NAME_IDEAS).toContain(input.value);
+    expect(input.value).not.toBe(first);
+    const second = input.value;
+    await click(button("Create"));
+    expect(onCreate.mock.lastCall?.[0]).toMatchObject({ name: second });
+  });
+
   it("creates only once the name is not blank", async () => {
     const onCreate = vi.fn(async () => undefined);
     await render(onCreate);
+    await typeName("");
     expect(button("Create").disabled).toBe(true);
     await typeName("   ");
     expect(button("Create").disabled).toBe(true);

@@ -22,6 +22,7 @@ import type {
   SandboxProvider,
 } from "@rakazo/adapter-kit";
 import { SandboxDamagedError } from "@rakazo/adapter-kit";
+import { BOT_NAME_IDEAS } from "@rakazo/core";
 import { browserProfilePathForScreen } from "@rakazo/core/node/desktop-runtime";
 import type { createRepos, PrismaClient } from "@rakazo/db";
 import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
@@ -179,6 +180,38 @@ describe("spawned bot creation", () => {
       name: "Painter",
       threadId: "thread-2",
     });
+    createReposSpy.mockRestore();
+  });
+
+  it("picks a short name none of the person's bots uses when none is given", async () => {
+    const createBot = vi.fn(async (_actor: unknown, input: { name: string }) => ({
+      id: "child-3",
+      name: input.name,
+      threadId: "thread-3",
+    }));
+    const createReposSpy = vi.spyOn(await import("@rakazo/db"), "createRepos").mockReturnValue({
+      createBot,
+    } as unknown as ReturnType<typeof createRepos>);
+    const taken = BOT_NAME_IDEAS.filter((name) => name !== "Juno");
+    const findMany = vi.fn().mockResolvedValue(taken.map((name) => ({ name })));
+
+    const result = await spawnBot(
+      {
+        prisma: { bot: { findMany } } as unknown as PrismaClient,
+        jobs: { enqueue: vi.fn() } as unknown as JobPublisher,
+      },
+      {
+        spawnedBy: { id: "parent-1", name: "Chief", spaceId: "workspace-1", userId: "user-1" },
+        runId: "run-1",
+        spawnKey: "tool-call-3",
+        name: "  ",
+      },
+    );
+
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: "user-1", spaceId: "workspace-1" } }),
+    );
+    expect(result).toMatchObject({ ok: true, name: "Juno" });
     createReposSpy.mockRestore();
   });
 });

@@ -1502,7 +1502,11 @@ export const builtinAgentTools: ConnectorTool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        name: { type: "string" },
+        name: {
+          type: "string",
+          description:
+            "Use the name the user gave. Otherwise give it a short, friendly robot-style name of 3 or 4 letters, such as Rex, Nova, Bolt, Dex or Juno, that none of the user's bots already has; put its job in description, not the name. Leave empty to have one picked.",
+        },
         description: {
           type: "string",
           maxLength: BOT_DESCRIPTION_MAX_LENGTH,
@@ -1526,7 +1530,6 @@ export const builtinAgentTools: ConnectorTool[] = [
             "Optional. team shares one screen with other Team bots; dedicated (Private) gets its own. Defaults to team.",
         },
       },
-      required: ["name"],
     },
   },
   {

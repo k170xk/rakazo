@@ -5589,6 +5589,10 @@ msgstr "ルーティンに名前を付ける"
 msgid "Name your Bot"
 msgstr "ボットに名前を付ける"
 
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Suggest a name"
+msgstr ""
+
 #: src/pages/shell/files-tab.tsx
 msgid "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
 msgstr ""
