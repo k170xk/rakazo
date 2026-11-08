@@ -942,7 +942,110 @@ class Doc {
     return { from, to, date };
   }
 
-  /** Writes a Table of Contents' entries from the headings; Word adds page numbers when it opens the file. */
+  /**
+   * The page each heading after `fromOffset` lands on, counting the content's pages from 1. An
+   * estimate from line lengths, picture and table sizes; updating the table in Word makes it exact.
+   */
+  headingPages(fromOffset) {
+    const els = this.elements();
+    const stop = this.contentEnd(els);
+    const sect =
+      /<w:sectPr\b[\s\S]*?<\/w:sectPr>/.exec(
+        stop?.xml ?? this.xml.slice(this.xml.lastIndexOf("<w:sectPr")),
+      )?.[0] ?? "";
+    const num = (re, fallback) => Number(re.exec(sect)?.[1] ?? fallback);
+    const avail =
+      num(/<w:pgSz [^>]*w:h="(\d+)"/, 16838) -
+      num(/<w:pgMar [^>]*w:top="(\d+)"/, 1440) -
+      num(/<w:pgMar [^>]*w:bottom="(\d+)"/, 1440);
+    const width =
+      num(/<w:pgSz [^>]*w:w="(\d+)"/, 11906) -
+      num(/<w:pgMar [^>]*w:left="(\d+)"/, 1440) -
+      num(/<w:pgMar [^>]*w:right="(\d+)"/, 1440);
+    const styles = this.styles ?? "";
+    const styleXml = (id) =>
+      new RegExp(
+        `<w:style [^>]*w:styleId="${id}"[^>]*>[\\s\\S]*?</w:style>`,
+      ).exec(styles)?.[0] ?? "";
+    // Sizes in twips: half-points x 10. Word's own default is 10 pt.
+    const defaults =
+      /<w:rPrDefault>[\s\S]*?<\/w:rPrDefault>/.exec(styles)?.[0] ?? "";
+    const size =
+      Number(
+        /<w:sz w:val="(\d+)"/.exec(styleXml("Normal"))?.[1] ??
+          /<w:sz w:val="(\d+)"/.exec(defaults)?.[1] ??
+          20,
+      ) * 10;
+    const spacing =
+      Number(
+        /w:line="(\d+)" w:lineRule="auto"/.exec(styleXml("Normal"))?.[1] ?? 240,
+      ) / 240;
+    const line = size * 1.15 * spacing;
+    const lines = (text, w) =>
+      Math.max(1, Math.ceil((text.length * size * 0.45) / Math.max(w, 1)));
+    const pictures = (xml) =>
+      [...xml.matchAll(/<wp:extent cx="\d+" cy="(\d+)"/g)].reduce(
+        (sum, m) => sum + Number(m[1]) / 635,
+        0,
+      );
+    const breaksBefore = (level) =>
+      /<w:pageBreakBefore\/>/.test(styleXml(`Heading${level}`));
+    const height = (e) => {
+      if (e.tag === "tbl") {
+        return childrenOf(e.xml, "tr").reduce((sum, row) => {
+          const cells = childrenOf(row.xml, "tc");
+          const cellW = width / Math.max(cells.length, 1);
+          return (
+            sum +
+            Math.max(
+              line,
+              ...cells.map(
+                (c) =>
+                  pictures(c.xml) +
+                  (textOf(c.xml).trim()
+                    ? lines(textOf(c.xml), cellW) * line
+                    : 0),
+              ),
+            ) +
+            160
+          );
+        }, 200);
+      }
+      if (e.level) return line * 2.5;
+      const text = textOf(e.xml).trim();
+      return (
+        pictures(e.xml) +
+        (text || !pictures(e.xml) ? lines(text, width) * line : 0) +
+        200
+      );
+    };
+    const pages = new Map();
+    let page = 1;
+    let used = 0;
+    for (const e of els) {
+      if (e.from < fromOffset || e.tag === "sdt") continue;
+      if (e === stop || e.tag === "sectPr") break;
+      if (e.xml.includes("<w:sectPr")) continue;
+      if (/<w:br w:type="page"\/>/.test(e.xml) && !textOf(e.xml).trim()) {
+        page += 1;
+        used = 0;
+        continue;
+      }
+      if (e.level && used > 0 && breaksBefore(e.level)) {
+        page += 1;
+        used = 0;
+      }
+      if (e.level) pages.set(e.from, page);
+      used += height(e);
+      while (used > avail) {
+        page += 1;
+        used -= avail;
+      }
+    }
+    return pages;
+  }
+
+  /** Writes a Table of Contents' entries and their page numbers from the headings. */
   async refreshToc() {
     const instr = /<w:instrText[^>]*>\s*TOC\b([^<]*)<\/w:instrText>/.exec(
       this.xml,
@@ -992,6 +1095,7 @@ class Doc {
     );
 
     const numbered = this.numberedHeadings();
+    const pages = this.headingPages(lastPara.end);
     const counters = [0, 0, 0, 0, 0, 0, 0, 0, 0];
     const entries = [];
     for (const e of this.elements()) {
@@ -1006,7 +1110,10 @@ class Doc {
         style: `TOC${e.level}`,
         runs:
           (number ? `<w:r><w:t>${number}</w:t></w:r><w:r><w:tab/></w:r>` : "") +
-          `<w:r><w:t xml:space="preserve">${esc(text)}</w:t></w:r>`,
+          `<w:r><w:t xml:space="preserve">${esc(text)}</w:t></w:r>` +
+          (pages.has(e.from)
+            ? `<w:r><w:tab/></w:r><w:r><w:t>${pages.get(e.from)}</w:t></w:r>`
+            : ""),
       });
     }
     const para = (style, inner) =>
@@ -1020,14 +1127,12 @@ class Doc {
 
     const settings = this.zip.file("word/settings.xml");
     if (settings) {
+      // Asking Word to update fields on opening makes it warn about "fields that may refer to other files".
       const s = await settings.async("string");
-      if (!s.includes("<w:updateFields"))
+      if (s.includes("<w:updateFields"))
         this.zip.file(
           "word/settings.xml",
-          s.replace(
-            /(<w:settings\b[^>]*>)/,
-            '$1<w:updateFields w:val="true"/>',
-          ),
+          s.replace(/<w:updateFields\b[^>]*\/>/g, ""),
         );
     }
     return true;

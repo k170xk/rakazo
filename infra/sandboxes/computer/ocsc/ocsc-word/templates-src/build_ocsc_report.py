@@ -232,9 +232,8 @@ def fill_footer(xml):
 
 
 def settings(xml):
-    xml = re.sub(r"<w:attachedTemplate [^>]*/>", "", xml)
-    if "<w:updateFields" not in xml:
-        xml = re.sub(r"(<w:settings\b[^>]*>)", r'\1<w:updateFields w:val="true"/>', xml, count=1)
+    # No updateFields: Word would warn about "fields that may refer to other files" on every opening.
+    xml = re.sub(r"<w:attachedTemplate [^>]*/>|<w:updateFields [^>]*/>", "", xml)
     return xml
 
 
