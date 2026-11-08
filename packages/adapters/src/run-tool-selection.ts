@@ -120,6 +120,7 @@ export function selectBuiltinToolsForRun(options: {
   /** Evolve is connected and this bot was started from an Evolve assistant. */
   evolveKnowledgeEnabled?: boolean;
   evolveInfographicsEnabled?: boolean;
+  evolveProfileEnabled?: boolean;
   /** Cursor agents are on and a plugins repository is set up, so their branches can be imported. */
   pluginBranchImportEnabled?: boolean;
 }) {
@@ -149,6 +150,7 @@ export function selectBuiltinToolsForRun(options: {
       (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
       (tool.name !== "evolve_knowledge_search" || Boolean(options.evolveKnowledgeEnabled)) &&
       (tool.name !== "evolve_infographics" || Boolean(options.evolveInfographicsEnabled)) &&
+      (tool.name !== "evolve_my_profile" || Boolean(options.evolveProfileEnabled)) &&
       // Plugin tools act as the person in Evolve, so only their own direct turns get them.
       (!EVOLVE_PLUGIN_TOOL_NAMES.has(tool.name) ||
         (Boolean(options.evolvePluginsEnabled) &&

@@ -4,6 +4,7 @@ import { resolveBotWorkspacePath } from "./computer-support.js";
 import {
   callEvolveAssistants,
   callEvolveInfographics,
+  callEvolveMyProfile,
   callEvolvePlugins,
   EvolvePluginsError,
   fetchPluginBranch,
@@ -126,6 +127,11 @@ const InfographicsSchema = z
 const INFOGRAPHICS_TIMEOUT_MS = 200_000;
 
 export const evolvePluginTools: ToolHandlers = {
+  async evolve_my_profile(ctx, call) {
+    return withEvolve(ctx, call, (email) =>
+      callEvolveMyProfile(ctx.deps.evolvePlugins!, email, { signal: ctx.context.signal }),
+    );
+  },
   async evolve_infographics(ctx, call) {
     const input = InfographicsSchema.safeParse(call.args);
     if (!input.success) return call.finish({ error: issues(input.error) });

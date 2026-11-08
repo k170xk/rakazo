@@ -1865,6 +1865,12 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "evolve_my_profile",
+    description:
+      "The person you are working for, from their Evolve CV profile: name, role, CV photo (an https URL, or null), CV phone (or null) and work email. Use it to sign off documents and presentations as them, such as the presenter card on a deck's closing slide.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
     name: "evolve_plugin_status",
     description:
       "Whether the user may build Evolve plugins (the Plugin builder privilege in Evolve), and their plugins with each version's review status and the reviewers' notes. Call this before starting a plugin and when the user asks how a review is going.",

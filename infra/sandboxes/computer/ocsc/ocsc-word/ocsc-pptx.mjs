@@ -1005,6 +1005,175 @@ function styleElements(style, item, label) {
   return els;
 }
 
+// ---------- closing slide ----------
+
+const initialsOf = (name) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+/**
+ * The closing slide: a thank-you with up to three takeaways, signed off on a card with the
+ * presenter's photo, name, role and contact details, all native and editable.
+ */
+function closingSlide(item, label) {
+  const p = item.presenter && typeof item.presenter === "object" ? item.presenter : {};
+  const name = plainText(p.name);
+  if (!name)
+    throw new UsageError(`${label}: a closing slide needs "presenter" with at least a "name".`);
+  const title = plainText(item.title) || "Thank you";
+  const subtitle = plainText(item.subtitle);
+  const takeaways = listOf(item.takeaways, (t) => plainText(t) || null).slice(0, 3);
+  const els = [];
+
+  const titleH = 130;
+  const total =
+    8 + 30 + titleH + (subtitle ? 90 : 0) + (takeaways.length ? 30 + takeaways.length * 70 : 0);
+  let y = AREA.top + Math.max(0, (AREA_H - total) / 2);
+  els.push({ type: "shape", shape: "rect", x: 120, y, w: 120, h: 8, fill: GREEN });
+  y += 38;
+  els.push(
+    textEl(
+      title,
+      { x: 120, y, w: 900, h: titleH },
+      { size: 66, bold: true, color: INK, valign: "middle" },
+    ),
+  );
+  y += titleH;
+  if (subtitle) {
+    els.push(textEl(subtitle, { x: 120, y, w: 900, h: 80 }, { size: 24, color: MUTED }));
+    y += 90;
+  }
+  if (takeaways.length) y += 30;
+  for (const t of takeaways) {
+    els.push({
+      type: "shape",
+      shape: "rounded",
+      x: 120,
+      y: y + 6,
+      w: 40,
+      h: 40,
+      fill: GREEN,
+      radius: 8,
+      text: "\u2713",
+      size: 16,
+      bold: true,
+      color: "FFFFFF",
+    });
+    els.push(textEl(t, { x: 184, y, w: 836, h: 52 }, { size: 20, color: INK, valign: "middle" }));
+    y += 70;
+  }
+
+  const card = { x: 1180, y: AREA.top, w: 600, h: AREA_H - 20 };
+  const cx = card.x + card.w / 2;
+  els.push({
+    type: "shape",
+    shape: "rounded",
+    ...card,
+    fill: "FFFFFF",
+    line: RULE,
+    line_width: 1,
+    radius: 24,
+    shadow: true,
+  });
+  els.push(
+    textEl(
+      "PRESENTED BY",
+      { x: card.x, y: card.y + 40, w: card.w, h: 30 },
+      { size: 14, bold: true, color: GREEN, align: "center", letter_spacing: 3 },
+    ),
+  );
+  const ring = 236;
+  els.push({
+    type: "shape",
+    shape: "ellipse",
+    x: cx - ring / 2,
+    y: card.y + 90,
+    w: ring,
+    h: ring,
+    fill: GREEN,
+  });
+  const photo = plainText(p.photo);
+  if (photo)
+    els.push({
+      type: "image",
+      image: photo,
+      x: cx - 110,
+      y: card.y + 98,
+      w: 220,
+      h: 220,
+      circle: true,
+      alt: name,
+    });
+  else
+    els.push({
+      type: "shape",
+      shape: "ellipse",
+      x: cx - 110,
+      y: card.y + 98,
+      w: 220,
+      h: 220,
+      fill: "5A9433",
+      text: initialsOf(name),
+      size: 60,
+      bold: true,
+      color: "FFFFFF",
+    });
+  let cy = card.y + 90 + ring + 34;
+  els.push(
+    textEl(
+      name,
+      { x: card.x + 30, y: cy, w: card.w - 60, h: 54 },
+      { size: 30, bold: true, color: INK, align: "center", valign: "middle" },
+    ),
+  );
+  cy += 58;
+  const role = plainText(p.role);
+  if (role) {
+    els.push(
+      textEl(
+        role,
+        { x: card.x + 30, y: cy, w: card.w - 60, h: 64 },
+        { size: 19, color: GREEN, align: "center" },
+      ),
+    );
+    cy += 70;
+  }
+  els.push({ type: "shape", shape: "rect", x: cx - 80, y: cy, w: 160, h: 3, fill: RULE });
+  cy += 24;
+  for (const line of [plainText(p.email), plainText(p.phone)].filter(Boolean)) {
+    els.push(
+      textEl(
+        line,
+        { x: card.x + 30, y: cy, w: card.w - 60, h: 34 },
+        { size: 17, color: MUTED, align: "center" },
+      ),
+    );
+    cy += 38;
+  }
+  els.push(
+    textEl(
+      plainText(p.website) || "www.ocsc.ie",
+      { x: card.x, y: card.y + card.h - 64, w: card.w, h: 34 },
+      { size: 16, bold: true, color: INK, align: "center" },
+    ),
+  );
+
+  const { presenter, takeaways: _t, subtitle: _s, title: _ti, ...rest } = item;
+  return { ...rest, layout: "custom", elements: els };
+}
+
+const placeClosing = (items, labelOf) =>
+  items.map((item, index) =>
+    item && typeof item === "object" && item.layout === "closing"
+      ? closingSlide(item, labelOf(index))
+      : item,
+  );
+
 /**
  * Turns each slide's "visual" (a picture, or a Remotion scene that is rendered here) into
  * pictures on the slide. On the company template a visual slide takes one of the styles above,
@@ -1118,7 +1287,7 @@ async function cmdNew(opts) {
   const out = outPath(opts.out);
   const labelOf = (i) => `Slide ${i + 1}`;
   const template = templateFile(spec.template);
-  const items = placeVisuals(specItems, {
+  const items = placeVisuals(placeClosing(specItems, labelOf), {
     plain: template ? await hasPlainLayout(readFileSync(template.full)) : false,
     name: basename(out.rel, ".pptx"),
     labelOf,
@@ -1228,7 +1397,10 @@ async function cmdEdit(opts) {
   const out = outPath(opts.out || opts.in);
   const labelOf = (i) => `Edit ${i + 1}`;
   const placed = placeVisuals(
-    edits.map((edit) => (edit?.op === "insert" || edit?.op === "replace" ? edit : null)),
+    placeClosing(
+      edits.map((edit) => (edit?.op === "insert" || edit?.op === "replace" ? edit : null)),
+      labelOf,
+    ),
     {
       plain: await hasPlainLayout(readFileSync(deck.full)),
       name: basename(out.rel, ".pptx"),

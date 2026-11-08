@@ -156,7 +156,12 @@ export class SlideBuilder {
   }
 
   /** Places a picture in a box, cropped to fill it ("cover") or fitted inside it ("contain"). */
-  picture(page, source, box, { fit = "cover", alt = "", rounded = false, transparency } = {}) {
+  picture(
+    page,
+    source,
+    box,
+    { fit = "cover", alt = "", rounded = false, circle = false, transparency } = {},
+  ) {
     const img = this.image(source);
     if (!img) return false;
     page.addImage({
@@ -168,6 +173,7 @@ export class SlideBuilder {
       sizing: { type: fit === "contain" ? "contain" : "cover", w: box.w, h: box.h },
       altText: alt,
       ...(rounded ? { rounding: false } : {}),
+      ...(circle ? { rounding: true } : {}),
       ...(transparency ? { transparency } : {}),
     });
     return true;
@@ -1145,6 +1151,7 @@ export class SlideBuilder {
             !this.picture(page, el.image ?? el.src, box, {
               fit: el.fit === "contain" ? "contain" : "cover",
               alt: str(el.alt, 300),
+              circle: el.circle === true,
               transparency: Number(el.transparency) || 0,
             })
           )

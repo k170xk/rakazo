@@ -850,7 +850,7 @@ export async function buildFromTemplate(
         buildSlides,
       });
       if (!part) {
-        const known = [...Object.keys(TEMPLATE_LAYOUTS), "agenda", ...NATIVE].join(", ");
+        const known = [...Object.keys(TEMPLATE_LAYOUTS), "agenda", "closing", ...NATIVE].join(", ");
         throw new Error(
           `${label}: layout must be one of ${known}, or give "template_layout" with a layout name from ocsc-pptx layouts.`,
         );

@@ -61,6 +61,7 @@ export const BUILTIN_TOOL_NAMES = [
   "cloud_agent_cancel",
   "evolve_knowledge_search",
   "evolve_infographics",
+  "evolve_my_profile",
   "evolve_plugin_status",
   "evolve_plugin_scopes",
   "evolve_plugin_submit",

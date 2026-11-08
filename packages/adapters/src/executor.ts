@@ -281,6 +281,7 @@ const COLLEAGUE_BLOCKED_TOOLS: ReadonlySet<string> = new Set([
   "cloud_agent_reply",
   "evolve_knowledge_search",
   "evolve_infographics",
+  "evolve_my_profile",
   "evolve_plugin_status",
   "evolve_plugin_scopes",
   "evolve_plugin_submit",
@@ -1419,6 +1420,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             evolvePluginsEnabled: Boolean(deps.evolvePlugins) && companyFeatures().evolvePlugins,
             evolveKnowledgeEnabled: Boolean(deps.evolvePlugins && bot.evolveAssistantId),
             evolveInfographicsEnabled: Boolean(deps.evolvePlugins),
+            evolveProfileEnabled: Boolean(deps.evolvePlugins),
             pluginBranchImportEnabled:
               Boolean(deps.evolvePlugins?.repo) &&
               companyFeatures().cursorAgents &&
