@@ -102,6 +102,7 @@ import {
 } from "./connection-context.js";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
+import { evolveAssistantAccessError } from "./evolve-assistants.js";
 import { evolvePersonContext } from "./evolve-person-context.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { localHomePath } from "./file-retention.js";
@@ -1043,6 +1044,23 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         if (pinnedComputerFailure) {
           await failRunBeforeModel(pinnedComputerFailure, true);
           return;
+        }
+        if (bot.evolveAssistantId) {
+          const people = await deps.prisma.user.findMany({
+            where: { id: { in: [...new Set([bot.userId, run.userId])] } },
+            select: { email: true },
+          });
+          for (const person of people) {
+            const denied = await evolveAssistantAccessError(
+              deps.evolvePlugins,
+              person.email,
+              bot.evolveAssistantId,
+            );
+            if (denied) {
+              await failRunBeforeModel(denied, true);
+              return;
+            }
+          }
         }
         if (pinError) {
           await failRunBeforeModel(pinError, pinError === PINNED_PROVIDER_NOT_CONNECTED);
