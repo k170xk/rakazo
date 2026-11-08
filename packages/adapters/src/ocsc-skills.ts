@@ -30,7 +30,7 @@ Templates may contain {{field}} placeholders, filled from "fields" in the spec, 
 DOCUMENT DETAILS
 Before a new document, gather these once, so the person never has to repeat them:
 - office: the OCSC office whose address goes on the back cover (Dublin, Cork, Galway, Belfast, London or Birmingham).
-- project_number, project_name and client_name: from the request, or look the project up with mcp__evolve__search_project_datasheets by its name or job number.
+- project_number, project_name and client_name: from the request, or look the project up with mcp__evolve__search_project_datasheets by its name or job number. When the document is not for a project (general guidance, internal notes), leave these out rather than writing "N/A".
 - author: the person you are working for (evolve_my_profile gives their name and office).
 Take whatever the request, the conversation or Evolve already gives. Then ask for everything still missing in one ask_user question, with the office as options and their own office first; when nobody is there to answer, use their own office. The date (today), revision (P01), document title (the spec's title) and banner subtitle (job number and project name) fill themselves; give "revision", "status", "checked_by" or "approved_by" only when the person mentions them.
 
@@ -72,7 +72,7 @@ When the person asks for changes to a document you made or one they sent, always
  {"op":"set_subtitle","text":"..."}]}
 3. Run: ocsc-word edit --in outputs/<Name>.docx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.docx
 Save each round of changes as a new version (-v2, -v3) so earlier versions stay available, unless the person asks you to overwrite.
-Each edited version is a new revision by itself: Document Control gets a row with the next code (P01, P02, ...) and today's date, and the cover, job row and footers follow, and the Table of Contents is rewritten. Do not ask about revisions. Only when the person says so, add "revision":"C01" beside "edits" for a specific code (for example when issuing), "author":"<name>" when someone else made this revision, or "revision":false for no new revision. A --clean edit while drafting adds no revision.
+A new document starts at revision P01, and edits keep that revision; the Table of Contents is rewritten after every edit. Do not ask about revisions. Only when the person asks for a new revision (for example "issue it as P02", "new revision", "rev it up"), add "revision":true beside "edits" for the next code, or "revision":"C01" for a specific one, and "author":"<name>" when someone else made it: Document Control gets a row with the code and today's date, and the cover, job row and footers follow.
 Edit blocks are the same as a new document's, so an edit can add anything a new document has: new sections (a heading block plus its content, with add_to_section on the section before it or append at the end), infographic blocks (call evolve_infographics for just the new pictures), project photos, tables, lists, and {"type":"pagebreak"} to start a new page. To put an infographic beside existing words, replace_section with the section's words rewritten into an infographic block.
 
 SHOWING THE CHANGES

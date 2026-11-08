@@ -805,7 +805,10 @@ class Doc {
           subtitle,
           (n) => (changed += n),
         );
-      headerFiles.set(name, next);
+      headerFiles.set(
+        name,
+        fitBanner(next, title || current.title, subtitle || current.subtitle),
+      );
     }
     if (title) this.meta.title = title;
     if (subtitle) this.meta.subtitle = subtitle;
@@ -943,6 +946,75 @@ class Doc {
   }
 
   /**
+   * Keeps headings and table text left-aligned when body text is justified, and keeps an introduction written
+   * before the first chapter on that chapter's page rather than alone on a page of its own.
+   */
+  tidyLayout() {
+    if (this.styles)
+      this.styles = this.styles.replace(
+        /<w:style [^>]*w:styleId="(?:Heading[1-9]|TOCHeading)"[^>]*>[\s\S]*?<\/w:style>/g,
+        (s) =>
+          s.includes("<w:pPr>")
+            ? s.replace(
+                /<w:pPr>([\s\S]*?)<\/w:pPr>/,
+                (_, inner) => `<w:pPr>${withJc(inner)}</w:pPr>`,
+              )
+            : s.replace(
+                /(<w:rPr>|<\/w:style>)/,
+                '<w:pPr><w:jc w:val="left"/></w:pPr>$1',
+              ),
+      );
+    const toc = /<w:instrText[^>]*>\s*TOC\b/.exec(this.xml);
+    if (!toc) return;
+    const els = this.elements();
+    const stop = this.contentEnd(els);
+    const brk = els.findIndex(
+      (e) => e.from > toc.index && e.tag === "p" && e.xml.includes("<w:sectPr"),
+    );
+    if (brk < 0) return;
+    let lead = false;
+    for (const e of els.slice(brk + 1)) {
+      if (e === stop || e.tag === "sectPr" || e.xml.includes("<w:sectPr"))
+        break;
+      if (e.level === 1) {
+        if (lead && !e.xml.includes("<w:pageBreakBefore")) {
+          const p = e.xml.replace(
+            /(<w:pStyle [^>]*\/>(?:<w:keepNext[^>]*\/>)?(?:<w:keepLines[^>]*\/>)?)/,
+            '$1<w:pageBreakBefore w:val="0"/>',
+          );
+          this.xml = this.xml.slice(0, e.from) + p + this.xml.slice(e.to);
+        }
+        break;
+      }
+      if (e.tag === "tbl" || e.text.trim() || /<w:drawing|<w:pict/.test(e.xml))
+        lead = true;
+    }
+    // Table text without an alignment of its own inherits the body's justification.
+    const all = this.elements();
+    const end = this.contentEnd(all);
+    const tables = all.filter(
+      (e) =>
+        e.tag === "tbl" && e.from > toc.index && (!end || e.from < end.from),
+    );
+    for (const t of tables.reverse()) {
+      const xml = t.xml.replace(PARA_RE, (p) => {
+        if (p.includes("<w:jc ")) return p;
+        const q = p.replace("<w:pPr/>", "<w:pPr></w:pPr>");
+        return q.includes("<w:pPr>")
+          ? q.replace(
+              /<w:pPr>([\s\S]*?)<\/w:pPr>/,
+              (_, pPr) => `<w:pPr>${withJc(pPr)}</w:pPr>`,
+            )
+          : q.replace(
+              /(<w:p(?=[\s>])[^>]*>)/,
+              '$1<w:pPr><w:jc w:val="left"/></w:pPr>',
+            );
+      });
+      this.xml = this.xml.slice(0, t.from) + xml + this.xml.slice(t.to);
+    }
+  }
+
+  /**
    * The page each heading after `fromOffset` lands on, counting the content's pages from 1. An
    * estimate from line lengths, picture and table sizes; updating the table in Word makes it exact.
    */
@@ -981,8 +1053,8 @@ class Doc {
         /w:line="(\d+)" w:lineRule="auto"/.exec(styleXml("Normal"))?.[1] ?? 240,
       ) / 240;
     const line = size * 1.15 * spacing;
-    const lines = (text, w) =>
-      Math.max(1, Math.ceil((text.length * size * 0.45) / Math.max(w, 1)));
+    const lines = (text, w, sz = size) =>
+      Math.max(1, Math.ceil((text.length * sz * 0.45) / Math.max(w, 1)));
     const pictures = (xml) =>
       [...xml.matchAll(/<wp:extent cx="\d+" cy="(\d+)"/g)].reduce(
         (sum, m) => sum + Number(m[1]) / 635,
@@ -990,34 +1062,117 @@ class Doc {
       );
     const breaksBefore = (level) =>
       /<w:pageBreakBefore\/>/.test(styleXml(`Heading${level}`));
+    const pPrDefault =
+      /<w:pPrDefault>[\s\S]*?<\/w:pPrDefault>/.exec(styles)?.[0] ?? "";
+    // The paragraph's own properties, then its style and the styles it is based on, then the defaults.
+    const chain = (pPr, id) => {
+      const out = [pPr];
+      for (let s = id, n = 0; s && n < 6; n += 1) {
+        const x = styleXml(s);
+        if (!x) break;
+        out.push(x);
+        s = /<w:basedOn w:val="([^"]+)"/.exec(x)?.[1];
+      }
+      if (!out.includes(styleXml("Normal"))) out.push(styleXml("Normal"));
+      return [...out, pPrDefault];
+    };
+    const first = (re, xmls) => {
+      for (const x of xmls) {
+        const m = re.exec(x);
+        if (m) return Number(m[1]);
+      }
+      return null;
+    };
+    let trailing = 0;
+    const paragraph = (xml, w) => {
+      const pPr = /<w:pPr>[\s\S]*?<\/w:pPr>/.exec(xml)?.[0] ?? "";
+      const props = chain(
+        pPr,
+        /<w:pStyle w:val="([^"]+)"/.exec(pPr)?.[1] ?? "Normal",
+      );
+      // The size of the run holding most of the text.
+      const main = childrenOf(xml, "r").reduce(
+        (best, r) =>
+          textOf(r.xml).length > textOf(best).length ? r.xml : best,
+        "",
+      );
+      const sz =
+        (first(/<w:sz w:val="(\d+)"/, [main]) ??
+          first(/<w:sz w:val="(\d+)"/, props.slice(1)) ??
+          size / 10) * 10;
+      const ls = first(
+        /<w:spacing [^>]*w:line="(\d+)" w:lineRule="auto"/,
+        props,
+      );
+      const contextual = props.some((x) =>
+        x.includes("<w:contextualSpacing/>"),
+      );
+      const text = textOf(xml).trim();
+      trailing = contextual
+        ? 0
+        : (first(/<w:spacing [^>]*w:after="(\d+)"/, props) ?? 0);
+      return (
+        pictures(xml) +
+        (text || !pictures(xml)
+          ? lines(text, w, sz) * sz * 1.15 * ((ls ?? 240) / 240)
+          : 0) +
+        (contextual
+          ? 0
+          : (first(/<w:spacing [^>]*w:before="(\d+)"/, props) ?? 0)) +
+        trailing
+      );
+    };
     const height = (e) => {
       if (e.tag === "tbl") {
-        return childrenOf(e.xml, "tr").reduce((sum, row) => {
+        const tblMar =
+          /<w:tblCellMar>[\s\S]*?<\/w:tblCellMar>/.exec(e.xml)?.[0] ?? "";
+        const grid = [...e.xml.matchAll(/<w:gridCol w:w="(\d+)"/g)].map((m) =>
+          Number(m[1]),
+        );
+        // A cell merged down over several rows counts once, against the rows it spans.
+        let merged = 0;
+        let spanned = 0;
+        const rows = childrenOf(e.xml, "tr").reduce((sum, row) => {
           const cells = childrenOf(row.xml, "tc");
-          const cellW = width / Math.max(cells.length, 1);
-          return (
-            sum +
-            Math.max(
-              line,
-              ...cells.map(
-                (c) =>
-                  pictures(c.xml) +
-                  (textOf(c.xml).trim()
-                    ? lines(textOf(c.xml), cellW) * line
-                    : 0),
-              ),
-            ) +
-            160
-          );
+          const heights = cells.map((c, i) => {
+            const cellW =
+              Number(/<w:tcW w:w="(\d+)" w:type="dxa"/.exec(c.xml)?.[1] ?? 0) ||
+              grid[i] ||
+              width / Math.max(cells.length, 1);
+            const mar =
+              /<w:tcMar>[\s\S]*?<\/w:tcMar>/.exec(c.xml)?.[0] ?? tblMar;
+            const edge = (side) =>
+              Number(new RegExp(`<w:${side} w:w="(\\d+)"`).exec(mar)?.[1] ?? 0);
+            const h =
+              edge("top") +
+              edge("bottom") +
+              childrenOf(c.xml, "p").reduce(
+                (t, p) =>
+                  t +
+                  paragraph(
+                    p.xml,
+                    cellW - (edge("left") || 100) - (edge("right") || 100),
+                  ),
+                0,
+              );
+            if (/<w:vMerge w:val="restart"\/>/.test(c.xml)) {
+              merged = Math.max(merged, h);
+              return 0;
+            }
+            return /<w:vMerge\/>|<w:vMerge w:val="continue"\/>/.test(c.xml)
+              ? 0
+              : h;
+          });
+          const h = Math.max(line, ...heights) + 80;
+          spanned += h;
+          return sum + h;
         }, 200);
+        trailing = 0;
+        return rows + Math.max(0, merged - spanned);
       }
+      trailing = 0;
       if (e.level) return line * 2.5;
-      const text = textOf(e.xml).trim();
-      return (
-        pictures(e.xml) +
-        (text || !pictures(e.xml) ? lines(text, width) * line : 0) +
-        200
-      );
+      return paragraph(e.xml, width);
     };
     const pages = new Map();
     let page = 1;
@@ -1031,13 +1186,19 @@ class Doc {
         used = 0;
         continue;
       }
-      if (e.level && used > 0 && breaksBefore(e.level)) {
+      if (
+        e.level &&
+        used > 0 &&
+        breaksBefore(e.level) &&
+        !/<w:pageBreakBefore w:val="(?:0|false)"\/>/.test(e.xml)
+      ) {
         page += 1;
         used = 0;
       }
       if (e.level) pages.set(e.from, page);
       used += height(e);
-      while (used > avail) {
+      // Word drops the space after the last paragraph on a page.
+      while (used - trailing > avail) {
         page += 1;
         used -= avail;
       }
@@ -1200,6 +1361,54 @@ class Doc {
 
 /** A paragraph that is not self-closing, through its close. */
 const PARA_RE = /<w:p(?=[\s>])[^>]*(?<!\/)>[\s\S]*?<\/w:p>/g;
+
+/** Paragraph properties made left-aligned, with the alignment where Word's element order needs it. */
+function withJc(pPr) {
+  const rest = pPr.replace(/<w:jc [^>]*\/>/g, "");
+  const at = rest.search(
+    /<w:(?:textDirection|textAlignment|textboxTightWrap|outlineLvl|divId|cnfStyle|rPr|sectPr|pPrChange)\b/,
+  );
+  const i = at < 0 ? rest.length : at;
+  return `${rest.slice(0, i)}<w:jc w:val="left"/>${rest.slice(i)}`;
+}
+
+/**
+ * Left-aligns the banner's title and subtitle and sizes the title to fit the banner on one line.
+ * The banner fits about 39 characters at its full 20 pt.
+ */
+function fitBanner(xml, title, subtitle) {
+  return xml.replace(
+    /(<w:txbxContent\b[^>]*>)([\s\S]*?)(<\/w:txbxContent>)/g,
+    (box, open, inner, close) =>
+      open +
+      inner.replace(PARA_RE, (p) => {
+        const text = textOf(p).trim();
+        if (!text || (text !== title && text !== subtitle)) return p;
+        let out = /<w:pPr>/.test(p)
+          ? p.replace(
+              /<w:pPr>([\s\S]*?)<\/w:pPr>/,
+              (_, pPr) => `<w:pPr>${withJc(pPr)}</w:pPr>`,
+            )
+          : p.replace(
+              /(<w:p(?=[\s>])[^>]*>)/,
+              '$1<w:pPr><w:jc w:val="left"/></w:pPr>',
+            );
+        if (text === title) {
+          const fit = Math.max(
+            24,
+            Math.min(40, Math.floor((40 * 39) / text.length)),
+          );
+          out = out.replace(/<w:(sz|szCs) w:val="(\d+)"\/>/g, (m, tag, v) =>
+            Number(v) >= 24 && Number(v) <= 40
+              ? `<w:${tag} w:val="${fit}"/>`
+              : m,
+          );
+        }
+        return out;
+      }) +
+      close,
+  );
+}
 const AUTHOR = process.env.OCSC_WORD_AUTHOR || "OCSC Bot";
 
 /** Applies fn to each run, skipping the inside of any `skip` element (for example runs already deleted). */
@@ -1748,6 +1957,7 @@ async function cmdNew(o) {
     }
     doc.insertBeforeSectPr(blocks);
   }
+  doc.tidyLayout();
   await doc.refreshToc();
   await doc.save(out.full);
   const unfilled = (await templateFields(doc)).filter((f) => f !== "content");
@@ -1973,11 +2183,13 @@ async function cmdEdit(o) {
         );
     }
   }
-  for (const [n, x] of headers) doc.zip.file(n, x);
-  // Each new version is a new revision, except while drafting (--clean) or when the spec says "revision": false.
+  const banner = await doc.banner();
+  for (const [n, x] of headers)
+    doc.zip.file(n, fitBanner(x, banner.title, banner.subtitle));
+  // P01 is written when the document is made; later revisions only when the spec asks for one.
   const options = Array.isArray(spec) ? {} : spec;
   const revision =
-    o.clean || options.revision === false
+    o.clean || !options.revision
       ? null
       : await doc.addRevision({
           code: typeof options.revision === "string" ? options.revision : null,
@@ -1989,6 +2201,7 @@ async function cmdEdit(o) {
       ...revision,
       summary: `Revision ${revision.from} → ${revision.to}, dated ${revision.date}, added to Document Control`,
     });
+  doc.tidyLayout();
   await doc.refreshToc();
   await doc.save(out.full);
   return { ok: true, tracked: !!rev, edits: report, ...downloadLink(out.rel) };
