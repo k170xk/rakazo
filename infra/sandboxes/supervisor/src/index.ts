@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, realpathSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
+import { mkdir, utimes } from "node:fs/promises";
 import http from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import {
@@ -109,13 +110,24 @@ import {
   workspaceTarget,
 } from "./supervisor-logic.js";
 import {
+  deleteToolCacheFiles,
   FairSlots,
+  listToolCacheFiles,
+  openToolCacheFile,
   prepareToolRunMount,
+  sweepToolCache,
+  TOOL_CACHE,
   TOOL_RUN_LABEL,
   TOOL_RUN_NETWORK_ID,
+  toolCacheDays,
   toolRunContainerOptions,
+  toolRunFileDeleteSchema,
+  toolRunFileListSchema,
+  toolRunFileSchema,
+  toolRunLocalMount,
   toolRunRequestSchema,
   toolRunSlots,
+  writeToolCacheFile,
 } from "./tool-runs.js";
 
 loadRootEnv();
@@ -171,6 +183,7 @@ export function supervisorRequestBodyLimit(
   pathname: string,
   maxBytes = maxUploadSizeBytes,
 ): number {
+  if (method === "PUT" && pathname === "/tool-runs/files") return maxBytes;
   return method === "POST" && /^\/computers\/[^/]+\/files\/?$/.test(pathname)
     ? supervisorFileContentLimit(maxBytes) + 64 * 1024
     : MAX_SUPERVISOR_REQUEST_BYTES;
@@ -569,7 +582,100 @@ async function clearToolRunLeftovers() {
   );
 }
 
+/** Runs use the computer user; folders the supervisor makes as root are handed to that user. */
+function toolRunUser(runtimeInfo: Awaited<ReturnType<typeof inspectSupervisorContainer>>) {
+  const hostUid = process.getuid?.();
+  const user = runtimeInfo ? COMPUTER_USER : hostComputerUser(hostUid, process.getgid?.());
+  const [uid, gid] = user.split(":").map(Number) as [number, number];
+  return { user, owner: hostUid === 0 ? { uid, gid } : undefined };
+}
+
+async function toolCacheRoot(mount: string) {
+  const { owner } = toolRunUser(await inspectSupervisorContainer());
+  return { root: await prepareToolRunMount(dataDir, `${TOOL_CACHE}/${mount}`, owner), owner };
+}
+
+const toolCacheSweep = setInterval(
+  () => {
+    sweepToolCache(dataDir, toolCacheDays() * 24 * 60 * 60 * 1000).catch((error) =>
+      getLogger().warn("tool cache sweep failed", { error: String(error) }),
+    );
+  },
+  60 * 60 * 1000,
+);
+toolCacheSweep.unref();
+
 app.get("/tool-runs/status", (c) => c.json(toolRunSlotsShared.stats()));
+
+app.post("/tool-runs/files/list", async (c) => {
+  const parsed = toolRunFileListSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalid folder" }, 400);
+  try {
+    const { root } = await toolCacheRoot(parsed.data.mount);
+    return c.json({ files: await listToolCacheFiles(root, parsed.data.under) });
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : String(error) }, 400);
+  }
+});
+
+app.put("/tool-runs/files", async (c) => {
+  const parsed = toolRunFileSchema.safeParse({
+    mount: c.req.query("mount"),
+    path: c.req.query("path"),
+  });
+  const mtimeMs = Number(c.req.query("mtimeMs"));
+  if (!parsed.success || !Number.isFinite(mtimeMs) || !c.req.raw.body) {
+    return c.json({ error: "invalid file" }, 400);
+  }
+  try {
+    const { root, owner } = await toolCacheRoot(parsed.data.mount);
+    const size = await writeToolCacheFile({
+      root,
+      relative: parsed.data.path,
+      body: c.req.raw.body as unknown as AsyncIterable<Uint8Array>,
+      mtimeMs,
+      owner,
+      maxBytes: maxUploadSizeBytes,
+    });
+    return c.json({ size });
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : String(error) }, 400);
+  }
+});
+
+app.get("/tool-runs/files", async (c) => {
+  const parsed = toolRunFileSchema.safeParse({
+    mount: c.req.query("mount"),
+    path: c.req.query("path"),
+  });
+  if (!parsed.success) return c.json({ error: "invalid file" }, 400);
+  try {
+    const { root } = await toolCacheRoot(parsed.data.mount);
+    const file = await openToolCacheFile(root, parsed.data.path);
+    if (!file) return c.json({ error: "file not found" }, 404);
+    const stream = file.handle.createReadStream({ autoClose: true });
+    return new Response(Readable.toWeb(stream) as ReadableStream, {
+      headers: {
+        "content-type": "application/octet-stream",
+        "content-length": String(file.size),
+        "x-rakazo-mtime-ms": String(file.mtimeMs),
+      },
+    });
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : String(error) }, 400);
+  }
+});
+
+app.post("/tool-runs/files/delete", async (c) => {
+  const parsed = toolRunFileDeleteSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return c.json({ error: "invalid files" }, 400);
+  try {
+    const { root } = await toolCacheRoot(parsed.data.mount);
+    return c.json({ removed: await deleteToolCacheFiles(root, parsed.data.paths) });
+  } catch (error) {
+    return c.json({ error: error instanceof Error ? error.message : String(error) }, 400);
+  }
+});
 
 app.post("/tool-runs/run", async (c) => {
   const parsed = toolRunRequestSchema.safeParse(await c.req.json().catch(() => null));
@@ -607,15 +713,12 @@ app.post("/tool-runs/run", async (c) => {
         await ensureComputerImage();
         await ensureRestrictedEgressEnforced();
         const runtimeInfo = await inspectSupervisorContainer();
-        const hostUid = process.getuid?.();
-        const hostGid = process.getgid?.();
-        const user = runtimeInfo ? COMPUTER_USER : hostComputerUser(hostUid, hostGid);
-        const [uid, gid] = user.split(":").map(Number) as [number, number];
-        const servicePath = await prepareToolRunMount(
-          dataDir,
-          request.mount,
-          hostUid === 0 ? { uid, gid } : undefined,
-        );
+        const { user, owner } = toolRunUser(runtimeInfo);
+        const servicePath = await prepareToolRunMount(dataDir, toolRunLocalMount(request), owner);
+        if (request.synced) {
+          const now = new Date();
+          await utimes(servicePath, now, now);
+        }
         const storage = computerHomeStorage(servicePath, dataDir, runtimeInfo);
         if (storage.homeVolume) assertVolumeSubpathSupport((await docker.version()).ApiVersion);
         const networkMode = computerNetworkName(TOOL_RUN_NETWORK_ID, runtimeInfo);

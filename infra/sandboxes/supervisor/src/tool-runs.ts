@@ -1,5 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-import { chown, mkdir, open } from "node:fs/promises";
+import type { FileHandle } from "node:fs/promises";
+import { chown, lstat, mkdir, open, readdir, rename, rm, unlink } from "node:fs/promises";
 import path from "node:path";
 import type Docker from "dockerode";
 import { z } from "zod";
@@ -29,8 +31,40 @@ export const toolRunRequestSchema = z.object({
   /** Whose turn waits in line, so one person's burst cannot hold every runner. */
   owner: z.string().min(1).max(200),
   timeoutMs: z.number().int().positive().optional(),
+  /** Run on this server's copy in tool-cache, which the caller keeps in step from its own disk. */
+  synced: z.boolean().optional(),
 });
 export type ToolRunRequest = z.infer<typeof toolRunRequestSchema>;
+
+/** Copies of folders from the server that holds them, when the runners live on another server. */
+export const TOOL_CACHE = "tool-cache";
+
+const filePath = z
+  .string()
+  .min(1)
+  .max(1024)
+  .refine(
+    (value) =>
+      !value.includes("\0") &&
+      value
+        .split("/")
+        .every((part) => part !== "" && part !== "." && part !== ".." && part.length <= 255),
+  );
+
+export const toolRunFileSchema = z.object({ mount: z.string().regex(MOUNT), path: filePath });
+export const toolRunFileListSchema = z.object({
+  mount: z.string().regex(MOUNT),
+  under: z.string().regex(CWD).default(""),
+});
+export const toolRunFileDeleteSchema = z.object({
+  mount: z.string().regex(MOUNT),
+  paths: z.array(filePath).max(20_000),
+});
+
+/** The folder a run mounts, relative to the data directory. */
+export function toolRunLocalMount(request: { mount: string; synced?: boolean }) {
+  return request.synced ? `${TOOL_CACHE}/${request.mount}` : request.mount;
+}
 
 function envOrDefault(name: string, fallback: string) {
   const raw = process.env[name];
@@ -141,7 +175,7 @@ export async function prepareToolRunMount(
   mount: string,
   owner: { uid: number; gid: number } | undefined,
 ) {
-  const create = mount.startsWith("tool-work/");
+  const create = mount.startsWith("tool-work/") || mount.startsWith(`${TOOL_CACHE}/`);
   const flags = constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW;
   let current = path.resolve(dataDir);
   for (const segment of mount.split("/")) {
@@ -162,6 +196,209 @@ export async function prepareToolRunMount(
     await handle.close();
   }
   return current;
+}
+
+type FolderOwner = { uid: number; gid: number } | undefined;
+const DIRECTORY_FLAGS = constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW;
+
+/**
+ * Opens `relative` under a cache root one real folder at a time and keeps each open. On Linux
+ * later steps go through the open handle, so a run that swaps a folder for a link cannot send
+ * the supervisor's reads or writes anywhere else.
+ */
+async function pinnedCacheFolder(
+  root: string,
+  relative: string,
+  create: { owner: FolderOwner } | undefined,
+) {
+  const handles: FileHandle[] = [];
+  const close = () => Promise.all(handles.map((handle) => handle.close().catch(() => undefined)));
+  const through = (handle: FileHandle, fallback: string) =>
+    process.platform === "linux" ? `/proc/self/fd/${handle.fd}` : fallback;
+  try {
+    let plain = root;
+    let current = await open(root, DIRECTORY_FLAGS);
+    handles.push(current);
+    for (const segment of relative.split("/").filter(Boolean)) {
+      const next = path.join(through(current, plain), segment);
+      if (create) {
+        const made = await mkdir(next, { mode: 0o750 }).then(
+          () => true,
+          (error: NodeJS.ErrnoException) => {
+            if (error.code === "EEXIST") return false;
+            throw error;
+          },
+        );
+        if (made && create.owner) await chown(next, create.owner.uid, create.owner.gid);
+      }
+      current = await open(next, DIRECTORY_FLAGS);
+      handles.push(current);
+      plain = path.join(plain, segment);
+    }
+    return { path: through(current, plain), close };
+  } catch (error) {
+    await close();
+    if ((error as NodeJS.ErrnoException).code === "ENOENT" && !create) return undefined;
+    throw new Error("tool run folder is not a plain folder");
+  }
+}
+
+function splitFilePath(relative: string) {
+  const parts = relative.split("/");
+  return { dir: parts.slice(0, -1).join("/"), name: parts.at(-1)! };
+}
+
+export interface ToolCacheEntry {
+  path: string;
+  size: number;
+  mtimeMs: number;
+}
+
+/** Every plain file under `under`, skipping links, with what the caller compares to its copy. */
+export async function listToolCacheFiles(root: string, under: string, maxEntries = 20_000) {
+  const top = await pinnedCacheFolder(root, under, undefined);
+  if (!top) return [];
+  const files: ToolCacheEntry[] = [];
+  const walk = async (dir: string, relative: string) => {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      if (files.length >= maxEntries) throw new Error("too many files to copy");
+      const child = path.join(dir, entry.name);
+      const info = await lstat(child).catch(() => undefined);
+      const childRelative = relative ? `${relative}/${entry.name}` : entry.name;
+      if (!info || info.isSymbolicLink()) continue;
+      if (info.isFile()) {
+        files.push({ path: childRelative, size: info.size, mtimeMs: Math.round(info.mtimeMs) });
+      } else if (info.isDirectory()) {
+        const handle = await open(child, DIRECTORY_FLAGS).catch(() => undefined);
+        if (!handle) continue;
+        try {
+          await walk(
+            process.platform === "linux" ? `/proc/self/fd/${handle.fd}` : child,
+            childRelative,
+          );
+        } finally {
+          await handle.close();
+        }
+      }
+    }
+  };
+  try {
+    await walk(top.path, under);
+  } finally {
+    await top.close();
+  }
+  return files;
+}
+
+/** Writes one copied file through a temporary name, then gives it the sender's change time. */
+export async function writeToolCacheFile(input: {
+  root: string;
+  relative: string;
+  body: AsyncIterable<Uint8Array>;
+  mtimeMs: number;
+  owner: FolderOwner;
+  maxBytes: number;
+}) {
+  const { dir, name } = splitFilePath(input.relative);
+  const folder = await pinnedCacheFolder(input.root, dir, { owner: input.owner });
+  if (!folder) throw new Error("tool run folder is not a plain folder");
+  const temporary = path.join(folder.path, `.${name}.${randomUUID().slice(0, 8)}.upload`);
+  try {
+    const handle = await open(
+      temporary,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
+      0o644,
+    );
+    let written = 0;
+    try {
+      for await (const chunk of input.body) {
+        written += chunk.byteLength;
+        if (written > input.maxBytes) throw new Error(`file exceeds ${input.maxBytes} bytes`);
+        await handle.write(chunk);
+      }
+      if (input.owner) await handle.chown(input.owner.uid, input.owner.gid);
+      const when = new Date(input.mtimeMs);
+      await handle.utimes(when, when);
+    } finally {
+      await handle.close();
+    }
+    await rename(temporary, path.join(folder.path, name));
+    return written;
+  } catch (error) {
+    await rm(temporary, { force: true }).catch(() => undefined);
+    throw error;
+  } finally {
+    await folder.close();
+  }
+}
+
+/** An open copied file to stream back, or undefined when there is no such plain file. */
+export async function openToolCacheFile(root: string, relative: string) {
+  const { dir, name } = splitFilePath(relative);
+  const folder = await pinnedCacheFolder(root, dir, undefined);
+  if (!folder) return undefined;
+  try {
+    const handle = await open(
+      path.join(folder.path, name),
+      constants.O_RDONLY | constants.O_NOFOLLOW,
+    ).catch(() => undefined);
+    if (!handle) return undefined;
+    const info = await handle.stat();
+    if (!info.isFile()) {
+      await handle.close();
+      return undefined;
+    }
+    return { handle, size: info.size, mtimeMs: Math.round(info.mtimeMs) };
+  } finally {
+    await folder.close();
+  }
+}
+
+/** Removes copied files the caller no longer has; folders and links are left alone. */
+export async function deleteToolCacheFiles(root: string, relatives: readonly string[]) {
+  let removed = 0;
+  for (const relative of relatives) {
+    const { dir, name } = splitFilePath(relative);
+    const folder = await pinnedCacheFolder(root, dir, undefined).catch(() => undefined);
+    if (!folder) continue;
+    try {
+      const target = path.join(folder.path, name);
+      const info = await lstat(target).catch(() => undefined);
+      if (info?.isFile()) {
+        await unlink(target);
+        removed += 1;
+      }
+    } finally {
+      await folder.close();
+    }
+  }
+  return removed;
+}
+
+/** Days a copied folder stays after its last use; the server that sent it keeps the original. */
+export function toolCacheDays() {
+  const value = Number(envOrDefault("RAKAZO_TOOL_CACHE_DAYS", "7"));
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error("RAKAZO_TOOL_CACHE_DAYS must be a positive number");
+  }
+  return value;
+}
+
+/** Deletes copied folders not used within `maxIdleMs`. */
+export async function sweepToolCache(dataDir: string, maxIdleMs: number, now = Date.now()) {
+  let removed = 0;
+  for (const parent of [`${TOOL_CACHE}/homes`, `${TOOL_CACHE}/tool-work/conversations`]) {
+    const folder = path.join(dataDir, parent);
+    const entries = await readdir(folder, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      const target = path.join(folder, entry.name);
+      const info = await lstat(target).catch(() => undefined);
+      if (!info || now - info.mtimeMs <= maxIdleMs) continue;
+      await rm(target, { recursive: true, force: true });
+      removed += 1;
+    }
+  }
+  return removed;
 }
 
 export interface ToolRunContainerInput {

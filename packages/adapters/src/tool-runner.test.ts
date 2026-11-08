@@ -1,10 +1,14 @@
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
+import type { Server } from "node:http";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   conversationFolderRefusal,
   folderFiles,
+  listFolderFiles,
   TOOL_RUNNER_COMPUTER,
   toolRunnerFromEnv,
   toolRunnerWorkspace,
@@ -40,6 +44,7 @@ describe("tool runner workspace", () => {
       base: path.join(data, "tool-work"),
       mount: "tool-work/conversations/t1",
       cwd: "",
+      root: path.join(data, "tool-work/conversations/t1"),
       conversation: path.join(data, "tool-work/conversations/t1"),
     });
   });
@@ -53,7 +58,12 @@ describe("tool runner workspace", () => {
         botId: "b1",
         folder: undefined,
       }),
-    ).toEqual({ base: path.join(data, "homes/team-a"), mount: "homes/team-a", cwd: "bots/b1" });
+    ).toEqual({
+      base: path.join(data, "homes/team-a"),
+      mount: "homes/team-a",
+      cwd: "bots/b1",
+      root: path.join(data, "homes/team-a"),
+    });
   });
 
   it("has none for a home kept elsewhere", () => {
@@ -122,6 +132,102 @@ describe("files in a runner folder", () => {
       folder: "conversations/t1",
     })!;
     expect(await conversationFolderRefusal(workspace)).toBeUndefined();
+  });
+});
+
+describe("runners on another server", () => {
+  let server: Server;
+  let url: string;
+  const remote = new Map<string, { content: Buffer; mtimeMs: number }>();
+  const calls: string[] = [];
+
+  beforeEach(async () => {
+    remote.clear();
+    calls.length = 0;
+    server = createServer(async (req, res) => {
+      const target = new URL(req.url ?? "", "http://runner");
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) chunks.push(chunk as Buffer);
+      const body = Buffer.concat(chunks);
+      const json = (value: unknown) => res.end(JSON.stringify(value));
+      calls.push(
+        `${req.method} ${target.pathname} ${target.searchParams.get("path") ?? ""}`.trim(),
+      );
+      if (target.pathname === "/tool-runs/files/list") {
+        json({
+          files: [...remote].map(([name, file]) => ({
+            path: name,
+            size: file.content.length,
+            mtimeMs: file.mtimeMs,
+          })),
+        });
+      } else if (target.pathname === "/tool-runs/files" && req.method === "PUT") {
+        remote.set(target.searchParams.get("path")!, {
+          content: body,
+          mtimeMs: Number(target.searchParams.get("mtimeMs")),
+        });
+        json({ size: body.length });
+      } else if (target.pathname === "/tool-runs/files") {
+        const file = remote.get(target.searchParams.get("path")!);
+        if (!file) return void res.writeHead(404).end();
+        res.writeHead(200, { "x-rakazo-mtime-ms": String(file.mtimeMs) }).end(file.content);
+      } else if (target.pathname === "/tool-runs/files/delete") {
+        for (const name of JSON.parse(body.toString()).paths) remote.delete(name);
+        json({});
+      } else if (target.pathname === "/tool-runs/run") {
+        expect(JSON.parse(body.toString()).synced).toBe(true);
+        remote.set("out/report.docx", { content: Buffer.from("made"), mtimeMs: 1_700_000_000_000 });
+        res.end(`${JSON.stringify({ type: "exit", code: 0 })}\n`);
+      }
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  });
+
+  afterEach(() => new Promise<void>((resolve) => server.close(() => resolve())));
+
+  it("sends changed files, drops removed ones, and brings back what the run made", async () => {
+    const workspace = toolRunnerWorkspace({
+      dataDir: data,
+      homePath: null,
+      mode: "team",
+      botId: "b1",
+      folder: "conversations/t1",
+    })!;
+    await mkdir(path.join(workspace.root, "in"), { recursive: true });
+    await writeFile(path.join(workspace.root, "in/brief.txt"), "brief");
+    await symlink("/etc/passwd", path.join(workspace.root, "in/link"));
+    const unchanged = (await listFolderFiles(workspace.root, ""))[0]!;
+    remote.set("in/brief.txt", { content: Buffer.from("brief"), mtimeMs: unchanged.mtimeMs });
+    remote.set("old.txt", { content: Buffer.from("gone"), mtimeMs: 1 });
+    await writeFile(path.join(workspace.root, "in/new.txt"), "new");
+
+    const client = toolRunnerFromEnv(
+      { RAKAZO_TOOL_RUNNER_URL: url, RAKAZO_TOOL_RUNNER_TOKEN: "t" },
+      "docker",
+      { url: "", token: undefined },
+    )!;
+    const result = await client.run({
+      workspace,
+      program: "word",
+      args: [],
+      owner: "u1",
+      timeoutMs: 1000,
+      signal: new AbortController().signal,
+    });
+
+    expect(result.code).toBe(0);
+    expect(calls.filter((call) => call.startsWith("PUT"))).toEqual([
+      "PUT /tool-runs/files in/new.txt",
+    ]);
+    expect(remote.has("old.txt")).toBe(false);
+    expect(remote.has("in/link")).toBe(false);
+    expect(calls.filter((call) => call.startsWith("GET"))).toEqual([
+      "GET /tool-runs/files out/report.docx",
+    ]);
+    const copied = path.join(workspace.root, "out/report.docx");
+    expect(await readFile(copied, "utf8")).toBe("made");
+    expect(Math.round((await stat(copied)).mtimeMs)).toBe(1_700_000_000_000);
   });
 });
 
