@@ -1,7 +1,11 @@
 import { DEFAULT_COMPANY_FEATURES, DEFAULT_COMPANY_TOOLS } from "@rakazo/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { companyToolsWithDefaults, setCompanyPolicy } from "./company-policy.js";
-import { effectiveComputerAccess, runComputerAccess } from "./computer-access.js";
+import {
+  effectiveComputerAccess,
+  runComputerAccess,
+  toolRunnersShareHome,
+} from "./computer-access.js";
 import { conversationFolder, resolveRunFilePath } from "./computer-support.js";
 import { ocscCommand, videoQueuePlace } from "./ocsc-tool.js";
 import {
@@ -44,6 +48,13 @@ describe("computer access levels", () => {
     expect(runComputerAccess("tools", true)).toBe("tools");
     expect(runComputerAccess("none", true)).toBe("none");
     expect(runComputerAccess("full", false)).toBe("full");
+  });
+
+  it("keeps runners out of a home that the owner's computer keeps its own copy of", () => {
+    expect(toolRunnersShareHome("full", true)).toBe(true);
+    expect(toolRunnersShareHome("full", false)).toBe(false);
+    expect(toolRunnersShareHome("tools", false)).toBe(true);
+    expect(toolRunnersShareHome("none", false)).toBe(true);
   });
 });
 

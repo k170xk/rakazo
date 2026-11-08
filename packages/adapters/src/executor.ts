@@ -74,7 +74,7 @@ import {
   liveDeploymentModelConfigured,
 } from "./company-policy.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
-import { computerAccessFor, runComputerAccess } from "./computer-access.js";
+import { computerAccessFor, runComputerAccess, toolRunnersShareHome } from "./computer-access.js";
 import { diskNoteInstruction, recordComputerDisk } from "./computer-disk.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import type { ComputerExecutionLease } from "./computer-lifecycle.js";
@@ -728,10 +728,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 sourceClientNonce: messagingSource?.clientNonce,
               }))
             : false);
-        const personAccess = runComputerAccess(
-          await computerAccessFor(deps.prisma, bot.userId),
-          nonOwnerChatRun,
-        );
+        const ownerAccess = await computerAccessFor(deps.prisma, bot.userId);
+        const personAccess = runComputerAccess(ownerAccess, nonOwnerChatRun);
         const runFolder = nonOwnerChatRun ? conversationFolder(thread.id) : undefined;
         const historySearchBeforeSeq =
           contextStrategy !== "current" && run.sourceMessageId
@@ -1301,9 +1299,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             },
           );
         };
-        // The OCSC document commands run on the tool runners for everyone, whatever their computer.
+        // The OCSC document commands run on the tool runners, unless the owner's computer keeps
+        // its own copy of the home.
+        const runnerSharesHome = toolRunnersShareHome(
+          ownerAccess,
+          deps.sandbox.describe().capabilities.persistentHome !== false,
+        );
         const runnerWorkspace =
-          deps.toolRunner && deps.dataDir
+          deps.toolRunner && deps.dataDir && runnerSharesHome
             ? toolRunnerWorkspace({
                 dataDir: deps.dataDir,
                 homePath: localHomePath(deps.home, storedComputer.homeKey, deps.dataDir),

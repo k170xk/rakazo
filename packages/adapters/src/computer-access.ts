@@ -33,3 +33,12 @@ export async function computerAccessFor(
 export function runComputerAccess(ownerAccess: ComputerAccess, colleagueTurn: boolean) {
   return colleagueTurn && ownerAccess === "full" ? "tools" : ownerAccess;
 }
+
+/**
+ * Whether the tool runners may work in the owner's home on this server's disk. A computer that
+ * keeps its own copy of the home (Incus, Kubernetes) replaces that home whenever it saves, which
+ * would wipe what a runner wrote, so its owner's runs do their documents on the computer.
+ */
+export function toolRunnersShareHome(ownerAccess: ComputerAccess, computerHomeOnDisk: boolean) {
+  return ownerAccess !== "full" || computerHomeOnDisk;
+}

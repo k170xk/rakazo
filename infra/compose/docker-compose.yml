@@ -173,7 +173,8 @@ x-app-environment: &app-environment
   GCLOUD_PROJECT:
   GOOGLE_CLOUD_LOCATION:
   # Computers and cloud agents
-  SANDBOX_PROVIDER: docker
+  # incus puts computers on a separate Incus server while the supervisor keeps the tool runners.
+  SANDBOX_PROVIDER: ${SANDBOX_PROVIDER:-docker}
   SANDBOX_SUPERVISOR_URL: http://supervisor:7091
   SANDBOX_SUPERVISOR_TOKEN:
   RAKAZO_TOOL_RUNNER:

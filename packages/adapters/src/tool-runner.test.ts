@@ -263,4 +263,19 @@ describe("tool runner configuration", () => {
       ),
     ).toBeDefined();
   });
+
+  it("shares the folder with the stack's own supervisor when computers run elsewhere", () => {
+    const synced = (env: NodeJS.ProcessEnv) =>
+      (
+        toolRunnerFromEnv(env, "incus", { url: supervisor.url, token: undefined }) as unknown as {
+          options: { synced?: boolean };
+        }
+      ).options.synced;
+    expect(synced({ RAKAZO_TOOL_RUNNER_URL: supervisor.url, RAKAZO_TOOL_RUNNER_TOKEN: "t" })).toBe(
+      false,
+    );
+    expect(
+      synced({ RAKAZO_TOOL_RUNNER_URL: "https://runners.example", RAKAZO_TOOL_RUNNER_TOKEN: "t" }),
+    ).toBe(true);
+  });
 });

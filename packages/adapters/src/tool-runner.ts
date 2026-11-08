@@ -444,5 +444,6 @@ export function toolRunnerFromEnv(
   const url = remote || (sandboxProvider === "docker" ? supervisor.url : "");
   const token = env.RAKAZO_TOOL_RUNNER_TOKEN || supervisor.token;
   if (!url || !token) return undefined;
-  return new ToolRunnerClient(url, token, { synced: Boolean(remote) });
+  // The stack's own supervisor shares DATA_DIR, so only a runner elsewhere is sent the folder.
+  return new ToolRunnerClient(url, token, { synced: Boolean(remote) && remote !== supervisor.url });
 }
