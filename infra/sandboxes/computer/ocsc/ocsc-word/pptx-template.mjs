@@ -7,7 +7,7 @@
  * (charts, tables, timelines, freeform designs) are drawn natively and placed on the template's
  * plain content layout with its heading placeholders filled.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { addMotion, motionOf } from "./pptx-motion.mjs";
 import {
   attr,
@@ -597,7 +597,7 @@ function placeShape(sp, id, box, name) {
  * number, topic, sub-header and connector, so any number of items keeps the template's look.
  */
 async function agendaSlide(deck, facts, item, index, label) {
-  const source = facts.find((s) => /agenda/i.test(s.layout));
+  const source = facts.find(isAgenda);
   if (!source) throw new Error(`${label}: this template has no agenda slide.`);
   const items = (Array.isArray(item.items) ? item.items : []).map((e) =>
     typeof e === "string" ? { title: e } : (e ?? {}),
@@ -822,12 +822,57 @@ export async function describeTemplate(bytes) {
 
 /** Adds one slide to a deck made from the template, using its layouts; null when it has no fitting layout. */
 export async function insertTemplateSlide(deck, item, index, { images, buildSlides, motion }) {
-  const part = await placeTemplateSlide(deck, item, index, { images, buildSlides });
-  if (part)
-    deck.write(
-      part,
-      addMotion((await deck.text(part)) ?? "", motionOf(item, motion), deck.slideSize()),
+  const part = item.include
+    ? await companySlide(deck, item, index, buildSlides)
+    : await placeTemplateSlide(deck, item, index, { images, buildSlides });
+  if (part) await setMotion(deck, part, item, motion);
+  return part;
+}
+
+const isAgenda = (s) => /agenda/i.test(s.layout);
+
+const STILL_LAYOUTS = new Set(["cover", "title", "thank_you"]);
+
+/** A slide's transition and builds; company slides keep their own design and only get the transition. */
+async function setMotion(deck, part, item, motion) {
+  const chosen = motionOf(item, motion);
+  if (item.include || STILL_LAYOUTS.has(item.layout)) chosen.animate = false;
+  deck.write(part, addMotion((await deck.text(part)) ?? "", chosen, deck.slideSize()));
+}
+
+function unknownCompanySlide(label, available) {
+  return new Error(`${label}: include must be one of ${available.join(", ")}.`);
+}
+
+/** A company slide copied from the OCSC template into a deck being edited. */
+async function companySlide(deck, item, index, buildSlides) {
+  const label = item.__label ?? "Slide";
+  const company = COMPANY_SLIDES[item.include];
+  if (!company) throw unknownCompanySlide(label, Object.keys(COMPANY_SLIDES));
+  return fromTemplate(deck, { include: item.include }, index, buildSlides, label, company);
+}
+
+/**
+ * A slide built on the OCSC template and copied into `deck` on its layout of the same name, for
+ * slides that copy one of the template's own (company slides, and the agenda once a deck has none).
+ */
+async function fromTemplate(deck, item, index, buildSlides, label, { match, label: what }) {
+  if (!existsSync(OCSC_TEMPLATE))
+    throw new Error(`${label}: the OCSC company template is not on this computer.`);
+  const templateBytes = readFileSync(OCSC_TEMPLATE);
+  const source = (await slideFacts(await Deck.load(templateBytes))).find(match);
+  if (!source) throw new Error(`${label}: the OCSC template has no ${what} slide.`);
+  const layout = (await layoutsOf(deck)).find((l) => norm(l.name) === norm(source.layout));
+  if (!layout)
+    throw new Error(
+      `${label}: this slide can only be added to a deck built on the OCSC template, which has the "${source.layout}" layout.`,
     );
+  const scratch = await buildFromTemplate(templateBytes, [item], {
+    images: new Map(),
+    buildSlides,
+    labelOf: () => label,
+  });
+  const [part] = await transplant(deck, scratch, index, { layout: layout.part, keepMaster: true });
   return part;
 }
 
@@ -836,8 +881,16 @@ async function placeTemplateSlide(deck, item, index, { images, buildSlides }) {
   const label = item.__label ?? "Slide";
   const layout = findLayout(layouts, item);
   if (layout) return layoutSlide(deck, layout, item, index, images, label);
-  if (item.layout === "agenda")
-    return agendaSlide(deck, await slideFacts(deck), item, index, label);
+  if (item.layout === "agenda") {
+    const facts = await slideFacts(deck);
+    if (facts.some((f) => isAgenda(f) && /TOPIC /.test(f.text)))
+      return agendaSlide(deck, facts, item, index, label);
+    const { __label, ...agenda } = item;
+    return fromTemplate(deck, agenda, index, buildSlides, label, {
+      match: isAgenda,
+      label: "agenda",
+    });
+  }
   if (layouts.some((l) => norm(l.name) === norm(TEMPLATE_LAYOUTS.plain)) && NATIVE.has(item.layout))
     return nativeSlide(deck, layouts, item, index, buildSlides);
   return null;
@@ -866,16 +919,16 @@ export async function buildFromTemplate(
       const company = COMPANY_SLIDES[item.include];
       const source = company ? facts.find(company.match) : null;
       if (!source)
-        throw new Error(
-          `${label}: include must be one of ${Object.keys(COMPANY_SLIDES)
-            .filter((k) => facts.some(COMPANY_SLIDES[k].match))
-            .join(", ")}.`,
+        throw unknownCompanySlide(
+          label,
+          Object.keys(COMPANY_SLIDES).filter((k) => facts.some(COMPANY_SLIDES[k].match)),
         );
       part = await duplicateSlide(
         deck,
         deck.slides().findIndex((s) => s.part === source.part),
         at,
       );
+      await setMotion(deck, part, item, meta);
     } else {
       part = await insertTemplateSlide(deck, { ...item, __label: label }, at, {
         images,

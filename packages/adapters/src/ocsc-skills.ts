@@ -12,6 +12,10 @@ const SEND_NOTE = `Every successful command prints JSON with "ok": true and the 
 
 const THEIR_FILES_NOTE = `When the person attaches a file, check whether it is on your computer (list_files, or the path the message gives) and work on it there. Keep their original: always save your changes under a new name.`;
 
+const PROJECT_PHOTOS_NOTE = `PROJECT PHOTOS: for each project, call mcp__evolve__search_project_datasheets with its name, job number or client (or, when the person wants you to choose, the topic, sector or client of the document, then pick the two to four closest matches). A result's "images" lists its photos, the cover first. Use only https URLs ending in .jpg, .jpeg or .png and skip the others. Every fact you write about a project (client, sector, value, dates, scope, summary) comes from its datasheet; never invent or embellish one. If a project is not found or has no photos, say so and carry on with an infographic.`;
+
+const SETUP_QUESTIONS_NOTE = `Ask with ask_user, one question at a time, waiting for each answer. Skip any question the person has already answered in their request, and ask none in a scheduled routine or when nobody is there to answer (use the defaults given). Never ask more than three.`;
+
 const WORD_INSTRUCTIONS = `Use this whenever the person wants a Word document, report, letter, memo, method statement, specification or any .docx, or wants one changed.
 
 Work on your computer with write_file and shell. Always use the ocsc-word command. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding.
@@ -21,6 +25,13 @@ Run: ocsc-word templates
 The default is OCSCReportV1: a green OCSC banner holding the title and subtitle, and the city skyline in the footer. Use another template only when the person names it or the document type clearly matches one (each template is listed with its description and the {{fields}} it asks for).
 A template can also be a Word file in the workspace: --template <their file>.docx. When the person sends a template to keep, copy it into templates/ (cp "<their file>.docx" templates/<Short-Name>.docx) so it is listed by name from then on.
 Templates may contain {{field}} placeholders, filled from "fields" in the spec ({"fields":{"client":"Dublin City Council","job_number":"HEL18"}}), and a {{content}} paragraph where the blocks go. If the output lists "unfilled" fields, ask the person for those values or fill them later with fill_fields. Never invent a value for a field.
+
+BEFORE YOU START A NEW DOCUMENT
+For a report, proposal, method statement or other document of more than a page, ask so you can plan the pictures. ${SETUP_QUESTIONS_NOTE}
+1. "Would you like infographics in the document?" with options "Yes, one per main section", "Just a few (2 or 3)", "Only one", "No infographics". Default: one per main section.
+2. "Would you like real OCSC project photos?" with options "No, infographics only", "Project photos as well", "Project photos instead of infographics". Default: infographics only.
+3. Only when they want photos: "Which projects should I use?" with options "I'll name them", "Find relevant ones for me". If they will name them, wait for their message.
+Letters and memos skip these questions and have no pictures unless the person asks.
 
 CREATE
 1. Write a spec with write_file to work/<short-name>.json:
@@ -37,6 +48,7 @@ CREATE
 Headings are level 1 to 3 and numbered in the text ("1. Introduction", "1.1 Scope"). The title and subtitle go in the banner, so do not repeat the title as a heading.
 
 EDIT
+When the person asks for changes to a document you made or one they sent, always edit its latest version with ocsc-word edit. Never rebuild it with ocsc-word new unless they ask to start again: editing keeps their own changes, shows yours as tracked changes and leaves the earlier version in place. Do not ask the setup questions again; ask only what the new content needs (for example which projects, when they ask for project photos).
 1. Always read the document first: ocsc-word read --in outputs/<Name>.docx. It returns the title, subtitle and every heading and paragraph with its exact wording.
 2. Write the edits to work/<short-name>-edits.json:
 {"edits":[
@@ -51,6 +63,7 @@ EDIT
  {"op":"set_subtitle","text":"..."}]}
 3. Run: ocsc-word edit --in outputs/<Name>.docx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.docx
 Save each round of changes as a new version (-v2, -v3) so earlier versions stay available, unless the person asks you to overwrite.
+Edit blocks are the same as a new document's, so an edit can add anything a new document has: new sections (a heading block plus its content, with add_to_section on the section before it or append at the end), infographic blocks (call evolve_infographics for just the new pictures), project photos, tables, lists, and {"type":"pagebreak"} to start a new page. To put an infographic beside existing words, replace_section with the section's words rewritten into an infographic block.
 
 SHOWING THE CHANGES
 Edits are saved as Word tracked changes by "OCSC Bot", so the person sees every insertion and deletion when they open the file and can accept or reject each one. In your reply, list what changed using the "summary" of each edit. ocsc-word read lists a document's tracked changes as "tracked_changes"; use it when the person asks what was changed.
@@ -59,7 +72,7 @@ For a clean copy with every change accepted: ocsc-word accept --in outputs/<Name
 To say what differs between two versions: ocsc-word compare --old outputs/<Name>.docx --new outputs/<Name>-v2.docx
 
 INFOGRAPHICS
-Every new report, proposal, method statement or other document of more than a page carries GPT Image infographics, like the OCSC slides: usually one for each main section, 2 to 6 in all (none in a short letter or memo unless the person asks). Once the outline is settled, call evolve_infographics once with all of them (up to 12, in order; about a minute), each with a "title" and a "topic" that describes the picture: the diagram, flow, stages, scenes and icons that show that section's point. They come back without text, so the words stay editable in Word. Put each one in an infographic block, {"type":"infographic","image":"<imageUrl>","style":"...", ...its words, "caption":"Figure N: ..."}, straight after the paragraph it illustrates, and write the words each style needs:
+Documents carry as many GPT Image infographics as the person chose (one per main section by default, none in a letter or memo unless asked), like the OCSC slides. Once the outline is settled, call evolve_infographics once with all of them (up to 12, in order; about a minute), each with a "title" and a "topic" that describes the picture: the diagram, flow, stages, scenes and icons that show that section's point. They come back without text, so the words stay editable in Word. Put each one in an infographic block, {"type":"infographic","image":"<imageUrl>","style":"...", ...its words, "caption":"Figure N: ..."}, straight after the paragraph it illustrates, and write the words each style needs:
 - "cards": "points":[{"title","text"}] (2 to 4) as numbered cards under the picture.
 - "checklist": "points" or "bullets" (2 to 6) as tinted rows with green ticks beside the picture.
 - "steps": "points" (3 to 5) as a numbered sequence under the picture.
@@ -74,6 +87,7 @@ Infographic blocks also work in edits (add_to_section, insert_after_heading, rep
 
 PICTURES AND CHARTS
 Image blocks take an https URL or a workspace PNG/JPEG ("path"). Only PNG and JPEG work.
+${PROJECT_PHOTOS_NOTE} Show a project as an infographic block with its cover photo as "image" (the "side", "stats" or "cards" style with the project's facts, or "full" for the photo alone) and a caption "Figure N: <Project name>, <Client>", or as an image block for a second photo.
 
 SENDING THE DOCUMENT
 ${SEND_NOTE} Then summarise what is in the document in two to four short bullets.
@@ -95,9 +109,15 @@ const SLIDES_INSTRUCTIONS = `Use this whenever the person asks for slides, a dec
 
 Work on your computer with write_file and shell, and always use the ocsc-pptx command. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline.
 
+BEFORE YOU START A NEW DECK
+${SETUP_QUESTIONS_NOTE}
+1. "Should the deck include OCSC's company introduction?" with options "Yes: about OCSC and our sectors", "Yes, plus company structure", "No, just the topic". These are pages kept in the template, added with "include": "about" is About OCSC, the practice's history and a map of our offices (Dublin, London, Belfast, Birmingham, Cork, Galway); "services" lists OCSC's services and sectors; "company_structure" is the company structure chart; "organogram_civil_structural", "organogram_mechanical_electrical" and "organogram_environmental" are the board and directors of each division. For the first answer include about and services; for the second add company_structure and the organogram of the division the deck is about. Put them straight after the agenda. Default: no, unless the deck is for a client, a bid or an introduction to OCSC.
+2. "Would you like real OCSC project photos?" with options "No, infographics only", "Project photos as well", "Project photos instead of infographics". Default: infographics only.
+3. Only when they want photos: "Which projects should I use?" with options "I'll name them", "Find relevant ones for me". If they will name them, wait for their message.
+
 THE OCSC TEMPLATE
 Every new deck is built on the OCSC company template, so it has the company fonts, colours, skyline footer, logo and page tab, and every heading, bullet, chart and table stays editable. Run ocsc-pptx layouts once to see each layout, what it holds (heading, subheading, body, pictures, points, icons) and its name. Pick the layout that fits each slide; use "template_layout" with an exact template name only when no short name fits.
-Company slides can be copied in whole with {"include":"about"}, "services", "company_structure", "organogram_civil_structural", "organogram_mechanical_electrical" or "organogram_environmental". Only include them when the deck is for a client, a bid or an introduction to OCSC, never by habit.
+Company slides are copied in whole with {"include":"about"} and the other names above; add them only as the person chose.
 MOTION: template decks come animated for presenting: a fade between slides and each slide's picture, cards and points building in on their own just after it appears, while the heading stays put. Leave it on. Use "transition" ("fade", "push", "wipe", "cover" or "none") on the deck or on one slide only when the person asks for a different one, and "animate":false (deck or slide) when they want slides without builds, such as for printing or a PDF handout.
 For a plain deck without the template use "template":"none". When the person gives their own template, use "template":"<their file>.pptx" and pick from ocsc-pptx layouts --template <their file>.pptx.
 
@@ -105,7 +125,7 @@ EVERY CONTENT SLIDE HAS A VISUAL
 Every slide between the agenda and the closing slide carries a big "visual" that makes the point at a glance, like a frame of an OCSC video, laid out in one of the slide styles below. A slide of bullets alone is never good enough. A visual is one of:
 - A GPT Image infographic, the most striking and the one to use on most slides: as soon as the outline is settled, call evolve_infographics once with every slide's infographic (up to 12, in order; Evolve draws them all at the same time, about a minute), each with a "title" and a "topic" that describes the picture: the diagram, flow, stages, scenes and icons that show the slide's point. The pictures come back without any text, so every word stays editable on the slide, written in one of the slide styles below. Then set each slide's "visual" to its imageUrl. Only when the person asks for full infographics with the writing in them, add "withText": true. If evolve_infographics is not in your tools, mcp__evolve__create_infographics does the same (up to 10 per call); end each of its topics with "No text, labels or numbers in the image." Use these for ideas, processes, systems and anything a diagram explains.
 - A Remotion scene from the OCSC video library, rendered by ocsc-pptx itself: "visual": {"template":"<name>","props":{...}}. Use these for numbers, charts, lists, steps and statements: chart-animation, comparison-chart, donut-chart, circular-progress, line-chart and area-chart for figures; animated-list for three to five short points; progress-steps for a short process (on a slide without bullets); text-highlight for a key message. ocsc-video templates lists them all and ocsc-video templates --name <name> gives each one's props and how much fits; fill every prop with the real content. A built-in scene works too: {"type":"<scene type>", ...its fields}.
-- A real photo, as the visual or in a photo layout: mcp__evolve__search_project_datasheets for OCSC's own projects (prefer these for OCSC work), mcp__evolve__search_stock_media for stock photos. Never invent project facts.
+- A real OCSC project photo, when the person wants them. ${PROJECT_PHOTOS_NOTE} Give each project its own slide: its cover as the "visual" of a styled slide ("cards" or "stats" with the project's facts, heading the project name, subheading the client), or {"layout":"text_photo","heading","subheading","bullets","image"}; and for several photos a gallery, {"layout":"photos_3","heading","images":[three photos]} (photos_5 and photos_8_circles take more). With "Project photos instead of infographics", every content slide that is about a project uses its photo and the rest still use infographics. mcp__evolve__search_stock_media finds stock photos when the person asks for them.
 Give at least two of every three content slides a GPT Image infographic, and use Remotion scenes and photos where figures or real projects tell it better. An item that comes back ok false gets a Remotion scene instead. When neither infographic tool is in your tools, say once that GPT Image infographics need the Evolve connection and use Remotion scenes and photos for every visual instead.
 SLIDE STYLES: every slide between the agenda and the closing slide is an infographic slide: a "visual" (normally its GPT Image infographic), no layout, and a "style" that lays its words out natively around the picture. Use other layouts (photos, table, chart, the template's own pages) only when the person asks for them or the content truly needs one. Never put the same style on two slides in a row, and use at least five different styles in a deck of eight or more. Write the content each style needs:
 - "cards": "points":[{"title","text"}] (2 to 4) as numbered cards, picture right. Reasons, services, benefits.
@@ -146,6 +166,7 @@ CHECK IT
 Run ocsc-pptx preview --in outputs/<Name>.pptx (add --slide N for one slide) and look at each PNG it lists: run ocsc-show <the PNG path> and then computer_observe. Fix overlaps, empty spaces, cut-off pictures and long text, then build it again.
 
 CHANGING ANY POWERPOINT
+When the person asks for changes to a deck you made or one they sent, always edit its latest version with ocsc-pptx edit. Never rebuild it with ocsc-pptx new unless they ask to start again: editing keeps every slide you did not touch exactly as it was, including their own changes, and leaves the earlier version in place. Do not ask the setup questions again; ask only what the new content needs (for example which projects, when they ask for project photos).
 This works for decks you made and for PowerPoints the person uploaded. Run ocsc-pptx read --in <file>.pptx to see each slide's text boxes (with shape numbers), pictures and notes. Then write work/<short-name>-edits.json:
 {"edits":[
  {"op":"replace_text","find":"<exact words>","replace":"...","slide":3},
@@ -153,14 +174,16 @@ This works for decks you made and for PowerPoints the person uploaded. Run ocsc-
  {"op":"title","slide":1,"title":"..."},
  {"op":"notes","slide":1,"notes":"..."},
  {"op":"replace_image","slide":5,"picture":1,"image":"<url or path>"},
- {"op":"insert","at":4,"layout":"text_image","heading":"...","bullets":["..."],"image":"<url>","fit":"contain"},
+ {"op":"insert","at":4,"heading":"...","subheading":"...","style":"steps","points":[...],"visual":"<new infographic imageUrl>"},
+ {"op":"insert","at":5,"layout":"text_photo","heading":"<project>","subheading":"<client>","bullets":["..."],"image":"<project cover photo>"},
+ {"op":"insert","at":3,"include":"about"},
  {"op":"replace","slide":6,"layout":"chart","heading":"...","chart":{...}},
  {"op":"duplicate","slide":3,"to":4},
  {"op":"remove","slide":7},
  {"op":"move","from":4,"to":2}]}
-Slide numbers count from 1 and each edit sees the deck as the edits before it left it. Prefer replace_text and set_text, which keep the person's own formatting; insert and replace take the same fields as a new slide and use the deck's own layouts when it has them.
+Slide numbers count from 1 and each edit sees the deck as the edits before it left it. Prefer replace_text and set_text, which keep the person's own formatting; insert and replace take the same fields as a new slide (styles, infographics, project photos, company slides, the agenda and closing layouts), use the deck's own layouts when it has them, and get the deck's slide transition and builds like the rest (add "transition" or "animate":false to the edit to change that). For new infographics call evolve_infographics for just those slides. To give an existing slide an infographic or another style, replace it with its words in the new style and a visual. Whenever slides are added, removed or moved, also replace the agenda slide ({"op":"replace","slide":<its number>,"layout":"agenda","items":[...]}) so it matches the deck; to change the closing slide, replace it with a new "layout":"closing" slide rather than editing its text.
 Run: ocsc-pptx edit --in <file>.pptx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.pptx
-Every changed slide gets a review comment saying what changed, so the person can check each one in PowerPoint; add --clean only if they ask for no comments. Save each round as a new version (-v2, -v3) unless they ask you to overwrite, and list the changes from "summary".
+PowerPoint has no tracked changes, so every changed slide gets a review comment saying what changed instead, for the person to check in PowerPoint; add --clean only if they ask for no comments. Save each round as a new version (-v2, -v3) unless they ask you to overwrite, and list the changes from "summary".
 
 SENDING THE POWERPOINT
 ${SEND_NOTE} In a scheduled routine, do the same and also give the file's path.

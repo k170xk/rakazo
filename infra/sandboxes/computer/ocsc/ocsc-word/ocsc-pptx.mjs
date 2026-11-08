@@ -1030,7 +1030,8 @@ function closingSlide(item, label) {
   const takeaways = listOf(item.takeaways, (t) => plainText(t) || null).slice(0, 3);
   const els = [];
 
-  const titleH = 130;
+  const titleSize = [66, 54, 44].find((size) => wrapLines(title, 900, size, 0.6) === 1) ?? 44;
+  const titleH = Math.max(130, wrapLines(title, 900, titleSize, 0.6) * titleSize * 2 * 1.15);
   const total =
     8 + 30 + titleH + (subtitle ? 90 : 0) + (takeaways.length ? 30 + takeaways.length * 70 : 0);
   let y = AREA.top + Math.max(0, (AREA_H - total) / 2);
@@ -1040,7 +1041,7 @@ function closingSlide(item, label) {
     textEl(
       title,
       { x: 120, y, w: 900, h: titleH },
-      { size: 66, bold: true, color: INK, valign: "middle" },
+      { size: titleSize, bold: true, color: INK, valign: "middle" },
     ),
   );
   y += titleH;

@@ -1,8 +1,9 @@
 /**
  * Slide transitions and entrance builds. Builds start on their own after the transition (no
- * clicks): placeholders such as the heading are there from the start, and the slide's own shapes
- * float in one group after another, the main picture first and a shape lying inside another (a
- * card's words) arriving with it. Pictures fade, thin rules and connectors wipe in from the left.
+ * clicks): text placeholders such as the heading are there from the start, and the slide's own
+ * shapes and photos float in one group after another, the main picture first and a shape lying
+ * inside another (a card's words) arriving with it. Pictures fade, thin rules and connectors wipe
+ * in from the left.
  */
 
 export const TRANSITIONS = ["fade", "push", "wipe", "cover", "none"];
@@ -69,9 +70,10 @@ function buildGroups(xml, size) {
   const groups = [];
   const named = new Map();
   for (const shape of topLevelShapes(xml)) {
-    if (/<p:ph\b/.test(shape.xml)) continue;
+    if (shape.kind !== "pic" && /<p:ph\b/.test(shape.xml)) continue;
     const id = /<p:cNvPr\b[^>]*?\bid="(\d+)"/.exec(shape.xml)?.[1];
-    const box = boxOf(shape.xml);
+    const placeholder = /<p:ph\b/.test(shape.xml);
+    const box = boxOf(shape.xml) ?? (placeholder ? { x: 0, y: 0, w: 0, h: 0 } : null);
     if (!id || !box) continue;
     if (size && box.w * box.h > BACKGROUND_SHARE * size.cx * size.cy) continue;
     const entry = {
@@ -79,7 +81,7 @@ function buildGroups(xml, size) {
       box,
       kind: shape.kind,
       hasText: /<a:t>/.test(shape.xml),
-      line: shape.kind === "cxnSp" || box.h < 0.02 * (size?.cy ?? 6858000),
+      line: shape.kind === "cxnSp" || (box.w > 0 && box.h < 0.02 * (size?.cy ?? 6858000)),
     };
     const name = /<p:cNvPr\b[^>]*?\bname="(Agenda item \d+)/.exec(shape.xml)?.[1];
     if (name) {
