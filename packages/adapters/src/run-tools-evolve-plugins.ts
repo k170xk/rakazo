@@ -113,6 +113,7 @@ const InfographicsSchema = z
             title: z.string().trim().max(200).optional(),
             subtitle: z.string().trim().max(300).optional(),
             topic: z.string().trim().min(1).max(2000),
+            withText: z.boolean().optional(),
           })
           .strict(),
       )

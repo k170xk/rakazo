@@ -1824,7 +1824,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "evolve_infographics",
     description:
-      "Create OCSC infographics with GPT Image on Evolve: clean diagrams, flows, icons and explainer graphics in the OCSC palette on a white canvas. Every item renders at the same time, so ask for all of a deck's infographics in one call; it takes one to three minutes. Returns each item's imageUrl (https) in order, or ok false for one that failed. Use them as slide visuals in ocsc-pptx, or in documents.",
+      "Create OCSC infographics with GPT Image on Evolve: clean diagrams, flows, icons and explainer graphics in the OCSC palette on a white canvas. They contain no text unless withText is true, so the words stay editable on the slide or page. Every item renders at the same time, so ask for all of a deck's infographics in one call; it takes one to three minutes. Returns each item's imageUrl (https) in order, or ok false for one that failed. Use them as slide visuals in ocsc-pptx, or in documents.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1838,7 +1838,8 @@ export const builtinAgentTools: ConnectorTool[] = [
               title: {
                 type: "string",
                 maxLength: 200,
-                description: "The headline on the graphic.",
+                description:
+                  "Which slide or section it is for; drawn as a headline only with withText.",
               },
               subtitle: { type: "string", maxLength: 300 },
               topic: {
@@ -1846,7 +1847,12 @@ export const builtinAgentTools: ConnectorTool[] = [
                 minLength: 1,
                 maxLength: 2000,
                 description:
-                  "What the graphic shows, specifically: the diagram, flow, stages, icons or figures, using the real facts.",
+                  "What the picture shows: the diagram, flow, stages, scenes and icons, described visually (for example four connected circles: a desk study at a monitor, a surveyor with a tripod, a river model on a laptop, a planted flood wall).",
+              },
+              withText: {
+                type: "boolean",
+                description:
+                  "Draw the title, labels and figures into the picture. Only when the person asks for a full infographic, because that text cannot be edited.",
               },
             },
             required: ["topic"],
