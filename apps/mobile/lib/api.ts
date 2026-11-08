@@ -1208,6 +1208,8 @@ export type MobileMe = Pick<
   | "paymentWalletProvider"
   | "ticketBoardEnabled"
   | "botAvatarSet"
+  | "features"
+  | "isAdmin"
 >;
 
 export type MobileModel = ModelCatalogEntry;

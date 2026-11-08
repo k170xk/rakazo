@@ -74,10 +74,17 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   toolActivity: "Your administrator sets whether tool activity shows.",
   webImages: "Your administrator sets whether web images load automatically.",
   accountData: "Exporting, importing and deleting accounts is turned off for your company.",
+  personalVault: "Personal vaults are turned off for your company.",
+  staffSkills:
+    "Writing skills, browsing skill packs and adding them from GitHub is turned off for your company.",
 };
 
 /** Switches that only limit members; admins keep these so they can configure and test. */
-const ADMIN_EXEMPT: ReadonlySet<CompanyFeatureId> = new Set(["memberModels", "staffIntegrations"]);
+const ADMIN_EXEMPT: ReadonlySet<CompanyFeatureId> = new Set([
+  "memberModels",
+  "staffIntegrations",
+  "staffSkills",
+]);
 
 /** Fails a member's request for something the company turned off; admins keep model choice and integrations. */
 export async function requireCompanyFeature(

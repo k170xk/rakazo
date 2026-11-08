@@ -32,6 +32,7 @@ export function SettingsOverlay({
   onSectionChange,
   billingEnabled = false,
   messagingEnabled = false,
+  personalVaultEnabled = false,
   paymentWalletProvider = null,
   memoryConfig,
   onMemoryConfigChange,
@@ -61,6 +62,8 @@ export function SettingsOverlay({
   accountDataEnabled?: boolean;
   billingEnabled?: boolean;
   messagingEnabled?: boolean;
+  /** The company lets people keep their own vault. Off hides My vault for everyone. */
+  personalVaultEnabled?: boolean;
   /** The wallet this deployment lets bots spend from; none hides Wallet. */
   paymentWalletProvider?: { id: string; name: string } | null;
   memoryConfig: SpaceMemoryConfig | null | undefined;
@@ -82,6 +85,7 @@ export function SettingsOverlay({
     isCompanySettingsSection(requestedSection) ||
     (requestedSection === "billing" && !billingEnabled) ||
     (requestedSection === "messaging" && !messagingEnabled) ||
+    (requestedSection === "vault" && !personalVaultEnabled) ||
     (requestedSection === "wallet" && !paymentWalletProvider) ||
     (requestedSection === "updates" && !showUpdates)
       ? "organization"
@@ -102,6 +106,7 @@ export function SettingsOverlay({
     wallet: Boolean(paymentWalletProvider),
     billing: billingEnabled,
     updates: showUpdates,
+    vault: personalVaultEnabled,
   });
 
   useEffect(() => {
@@ -132,7 +137,15 @@ export function SettingsOverlay({
       nav.removeEventListener("scroll", measure);
       observer?.disconnect();
     };
-  }, [section, billingEnabled, messagingEnabled, paymentWalletProvider, showUpdates, i18n.locale]);
+  }, [
+    section,
+    billingEnabled,
+    messagingEnabled,
+    paymentWalletProvider,
+    personalVaultEnabled,
+    showUpdates,
+    i18n.locale,
+  ]);
 
   function scrollSections(direction: number) {
     const nav = navRef.current;
@@ -320,6 +333,7 @@ export function SettingsOverlay({
                     <SpaceSettingsPanel
                       key={space.id}
                       space={space}
+                      personalVaultEnabled={personalVaultEnabled}
                       onRename={(name) => onRenameSpace?.(space.id, name) ?? Promise.resolve()}
                       onDelete={() => onDeleteSpace?.(space.id) ?? Promise.resolve()}
                       onClose={requestClose}
@@ -327,7 +341,7 @@ export function SettingsOverlay({
                     />
                   ) : null}
                   {section === "confirmations" ? <ApprovalRulesSettings scope="account" /> : null}
-                  {section === "vault" ? <PersonalVault /> : null}
+                  {section === "vault" && personalVaultEnabled ? <PersonalVault /> : null}
                   {section === "messaging" && messagingEnabled ? <MessagingSettingsPanel /> : null}
                   {section === "wallet" && paymentWalletProvider ? (
                     <PaymentWalletSettingsPanel provider={paymentWalletProvider} />

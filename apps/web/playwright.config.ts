@@ -95,5 +95,10 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      ...process.env,
+      RAKAZO_E2E_PERSONAL_VAULT: "1",
+      RAKAZO_E2E_STAFF_SKILLS: "1",
+    },
   },
 });

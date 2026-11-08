@@ -46,6 +46,26 @@ describe("staff integrations switch", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("lets admins add skills while staff cannot", async () => {
+    expect(DEFAULT_COMPANY_FEATURES.staffSkills).toBe(false);
+    await expect(requireCompanyFeature(deps, { userId: "member" }, "staffSkills")).rejects.toThrow(
+      "Writing skills",
+    );
+    await expect(
+      requireCompanyFeature(deps, { userId: "admin" }, "staffSkills"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("keeps personal vaults off for everyone until an admin turns them on", async () => {
+    expect(DEFAULT_COMPANY_FEATURES.personalVault).toBe(false);
+    await expect(
+      requireCompanyFeature(deps, { userId: "member" }, "personalVault"),
+    ).rejects.toThrow("Personal vaults are turned off");
+    await expect(requireCompanyFeature(deps, { userId: "admin" }, "personalVault")).rejects.toThrow(
+      "Personal vaults are turned off",
+    );
+  });
+
   it("still blocks admins from a switch that applies to everyone", async () => {
     setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, plugins: false } });
     await expect(requireCompanyFeature(deps, { userId: "admin" }, "plugins")).rejects.toThrow(

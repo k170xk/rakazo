@@ -29,7 +29,7 @@ export function ArchivedChats({
   setDeleteGroupTarget: (group: Group) => void;
 }) {
   const { t } = useLingui();
-  const [archivedOpen, setArchivedOpen] = useState(false);
+  const [archivedOpen, setArchivedOpen] = useState(true);
   return archivedBots.length + archivedGroups.length > 0 && !showSpaceSearch ? (
     <Collapsible
       open={archivedOpen}

@@ -1,6 +1,7 @@
 import { RPCHandler } from "@orpc/server/fetch";
+import { setCompanyPolicy } from "@rakazo/adapters";
 import type { Actor } from "@rakazo/contracts";
-import { encodeLoginSecret } from "@rakazo/contracts";
+import { DEFAULT_COMPANY_FEATURES, encodeLoginSecret } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
@@ -138,6 +139,7 @@ function botSecretDeps(seed: Row[] = []) {
     },
     dataDir: "/tmp/rakazo-router-test",
   } as unknown as RouterDeps;
+  setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, personalVault: true } });
   const handler = new RPCHandler(createRouter(deps));
   async function call(path: string, input: unknown) {
     const { response } = await handler.handle(
@@ -165,6 +167,7 @@ function putInput(origin: string, botId = "bot-1") {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  setCompanyPolicy({ features: null });
 });
 
 describe("botSecrets router", () => {
@@ -507,6 +510,14 @@ describe("botSecrets router", () => {
 });
 
 describe("vault router", () => {
+  it("refuses the personal vault while the company has it off", async () => {
+    const { call } = botSecretDeps();
+    setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, personalVault: false } });
+    const listed = await call("vault/list", {});
+    expect(listed.status).toBe(403);
+    expect(listed.text).toContain("Personal vaults are turned off");
+  });
+
   const destination = {
     name: "portal",
     origin: "https://portal.example.test",

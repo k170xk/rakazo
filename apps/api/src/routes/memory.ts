@@ -13,6 +13,7 @@ import {
   memoryNotePath,
 } from "@rakazo/contracts";
 import { findSpaceMemoryConfig, IsolationError } from "@rakazo/db";
+import { requireCompanyFeature } from "../company-admin.js";
 import {
   disconnectMemoryProvider,
   persistMemoryProviderConfig,
@@ -296,15 +297,18 @@ export function memoryRoutes(ctx: RouterContext) {
       get: authed.agentSkills.get.handler(async ({ context, input }) =>
         agentSkills.get(context.actor, input),
       ),
-      create: authed.agentSkills.create.handler(async ({ context, input }) =>
-        agentSkills.create(context.actor, input),
-      ),
-      update: authed.agentSkills.update.handler(async ({ context, input }) =>
-        agentSkills.update(context.actor, input),
-      ),
-      remove: authed.agentSkills.remove.handler(async ({ context, input }) =>
-        agentSkills.remove(context.actor, input.skillId),
-      ),
+      create: authed.agentSkills.create.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "staffSkills");
+        return agentSkills.create(context.actor, input);
+      }),
+      update: authed.agentSkills.update.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "staffSkills");
+        return agentSkills.update(context.actor, input);
+      }),
+      remove: authed.agentSkills.remove.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "staffSkills");
+        return agentSkills.remove(context.actor, input.skillId);
+      }),
     },
   };
 }

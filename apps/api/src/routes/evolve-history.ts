@@ -1,9 +1,11 @@
 import { ORPCError } from "@orpc/server";
 import {
+  deleteEvolveConversation,
   listEvolveConversations,
   listEvolveHistoryAssistants,
   readEvolveConversation,
   readWholeEvolveConversation,
+  restoreEvolveConversation,
 } from "@rakazo/adapters";
 import type {
   EvolveConversationBlock,
@@ -308,7 +310,7 @@ async function openArchivedChat(
   return { botId: bot.id, created: true };
 }
 
-/** Read-only Evolve chat history; each call is made as the signed-in person's Evolve profile. */
+/** The signed-in person's Evolve chats. The sidebar lists archived ones and can restore or delete them. */
 export function evolveHistoryRoutes(ctx: RouterContext) {
   const { deps, authed } = ctx;
   return {
@@ -375,6 +377,23 @@ export function evolveHistoryRoutes(ctx: RouterContext) {
             continuedIn: continuedIn.get(conversation.id) ?? [],
           })),
         };
+      }),
+      restore: authed.evolveHistory.restore.handler(async ({ context, input }) => {
+        const { connection, email } = await requiredEvolve(deps, context.actor);
+        await restoreEvolveConversation(connection, email, input.conversationId, {
+          signal: context.signal,
+        }).catch(unreachable);
+        return { ok: true as const };
+      }),
+      remove: authed.evolveHistory.remove.handler(async ({ context, input }) => {
+        const { connection, email } = await requiredEvolve(deps, context.actor);
+        await deleteEvolveConversation(connection, email, input.conversationId, {
+          signal: context.signal,
+        }).catch(unreachable);
+        await deps.prisma.evolveConversationLink.deleteMany({
+          where: { userId: context.actor.userId, conversationId: input.conversationId },
+        });
+        return { ok: true as const };
       }),
       messages: authed.evolveHistory.messages.handler(async ({ context, input }) => {
         const { connection, email } = await requiredEvolve(deps, context.actor);

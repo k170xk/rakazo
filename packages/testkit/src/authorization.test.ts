@@ -72,7 +72,7 @@ describeWithDatabase("API authorization and resource isolation", () => {
     });
     pushTokens = new PrismaPushTokenStore(handles.prisma, encryptionKey);
     app = handles.app;
-    await enableCompanyFeatures(handles.prisma, { accountData: true });
+    await enableCompanyFeatures(handles.prisma, { accountData: true, staffSkills: true });
     db = asSystem(handles.prisma);
     botIntroHarness = handles;
   });
@@ -334,6 +334,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["evolveReferences/exemplars"],
       ["evolveHistory/assistants"],
       ["evolveHistory/conversations", {}],
+      ["evolveHistory/restore", { conversationId: "35db4d59-e75a-4696-b1e1-357a746108a1" }],
+      ["evolveHistory/remove", { conversationId: "35db4d59-e75a-4696-b1e1-357a746108a1" }],
       ["evolveHistory/messages", { conversationId: "35db4d59-e75a-4696-b1e1-357a746108a1" }],
       [
         "threads/continueEvolveConversation",

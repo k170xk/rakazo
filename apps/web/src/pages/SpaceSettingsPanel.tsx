@@ -13,12 +13,15 @@ export function SpaceSettingsPanel({
   onDelete,
   onClose,
   onBusyChange,
+  personalVaultEnabled = false,
 }: {
   space: SettingsSpace;
   onRename: (name: string) => Promise<void>;
   onDelete: () => Promise<void>;
   onClose: () => void;
   onBusyChange?: (busy: boolean) => void;
+  /** The company lets this space keep its own vault. */
+  personalVaultEnabled?: boolean;
 }) {
   const { t } = useLingui();
   const nameId = useId();
@@ -101,7 +104,11 @@ export function SpaceSettingsPanel({
           </SettingsRow>
         </SettingsGroup>
       ) : null}
-      <SpaceSettingOverrides onClose={onClose} onBusyChange={setOverridesBusy} />
+      <SpaceSettingOverrides
+        onClose={onClose}
+        onBusyChange={setOverridesBusy}
+        personalVaultEnabled={personalVaultEnabled}
+      />
       {space.canDelete ? (
         <Button
           variant="destructive"

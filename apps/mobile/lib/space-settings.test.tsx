@@ -146,6 +146,7 @@ beforeEach(async () => {
   state.rpc
     .mockReset()
     .mockImplementation(async (proc: string, input?: Record<string, unknown>) => {
+      if (proc === "me") return { features: { personalVault: true } };
       if (proc === "spaceSettings/overrides") return state.overrides;
       if (proc === "spaceSettings/setOverride") {
         const setting = input!.setting as string;

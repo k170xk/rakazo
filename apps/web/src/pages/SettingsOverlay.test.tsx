@@ -250,6 +250,11 @@ it("edits the account's confirmations and personal vault, but not company settin
       expect(container.querySelector(`[data-testid="settings-nav-${section}"]`)).toBeNull();
     }
     await rerender({ ...props, section: "vault" });
+    expect(
+      container.querySelector("[data-settings-section]")?.getAttribute("data-settings-section"),
+    ).toBe("organization");
+    expect(container.querySelector('[data-testid="settings-nav-vault"]')).toBeNull();
+    await rerender({ ...props, section: "vault", personalVaultEnabled: true });
     const vaultNav = container.querySelector('[data-testid="settings-nav-vault"]');
     expect(vaultNav?.textContent).toBe("My vault");
     expect(vaultNav?.getAttribute("aria-current")).toBe("page");

@@ -28,12 +28,14 @@ export function useSettingsNavItems(available: {
   wallet: boolean;
   billing: boolean;
   updates: boolean;
+  /** The company has turned on each person's own vault. */
+  vault: boolean;
 }): SettingsNavItem[] {
   const { t } = useLingui();
   return [
     { id: "organization", label: t`Work Space`, icon: Building2 },
     { id: "confirmations", label: t`Approvals`, icon: ShieldCheck },
-    { id: "vault", label: t`My vault`, icon: KeyRound },
+    ...(available.vault ? [{ id: "vault" as const, label: t`My vault`, icon: KeyRound }] : []),
     ...(available.messaging
       ? [{ id: "messaging" as const, label: t`Messaging`, icon: MessageCircle }]
       : []),

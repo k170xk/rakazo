@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { ORPCError } from "@orpc/server";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import {
+  companyFeatures,
   createPluginMarketplace,
   isTransientFetchError,
   McpOAuthClientRequiredError,
@@ -183,7 +184,10 @@ export function mcpRoutes(ctx: RouterContext) {
       }),
       install: authed.capabilities.install.handler(async ({ context, input }) => {
         await requireCompanyFeature(deps, context.actor, "plugins");
-        await requireCompanyFeature(deps, context.actor, "staffIntegrations");
+        // Staff skills covers skill packs and GitHub. Connecting other apps stays on its own switch.
+        if (!companyFeatures().staffSkills) {
+          await requireCompanyFeature(deps, context.actor, "staffIntegrations");
+        }
         if (input.kind === "plugin") {
           return installPlugin(
             {

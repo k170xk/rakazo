@@ -59,6 +59,7 @@ export function AppOverlays({
   mcpEnabled = true,
   integrationsComingSoon = false,
   canAddCustom = false,
+  canManageSkills = false,
   tourAvailability,
   onConnectedAppsChange,
 }: {
@@ -72,6 +73,8 @@ export function AppOverlays({
   integrationsComingSoon?: boolean;
   /** The Add custom menu: GitHub, MCP and other sources. Admins only. */
   canAddCustom?: boolean;
+  /** Own skills, skill packs and From GitHub. Admins, or staff once the company allows it. */
+  canManageSkills?: boolean;
   tourAvailability: TourAvailability;
   onConnectedAppsChange: (apps: ReturnType<typeof connectedAppMarks>) => void;
 }) {
@@ -91,7 +94,9 @@ export function AppOverlays({
           canAddCustom={canAddCustom}
         />
       ) : null}
-      {overlay?.kind === "skills" ? <SkillsDialog onClose={() => setOverlay(null)} /> : null}
+      {overlay?.kind === "skills" ? (
+        <SkillsDialog canManageSkills={canManageSkills} onClose={() => setOverlay(null)} />
+      ) : null}
       {overlay?.kind === "mcp" && mcpEnabled ? (
         <McpServersOverlay
           editServerId={overlay.serverId}
@@ -180,6 +185,7 @@ export function SettingsOverlays({
           onSectionChange={(section) => setOverlay({ ...overlay, section })}
           billingEnabled={bootstrapMe?.billingEnabled === true}
           messagingEnabled={messagingEnabled}
+          personalVaultEnabled={bootstrapMe?.features?.personalVault === true}
           paymentWalletProvider={bootstrapMe?.paymentWalletProvider ?? null}
           timezone={bootstrapMe?.timezone ?? null}
           onTimezoneChange={async (timezone) => {

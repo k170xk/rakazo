@@ -32,9 +32,12 @@ import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
 export function SpaceSettingOverrides({
   onClose,
   onBusyChange,
+  personalVaultEnabled = false,
 }: {
   onClose: () => void;
   onBusyChange?: (busy: boolean) => void;
+  /** The company lets people keep a vault. Off hides a Space's own vault. */
+  personalVaultEnabled?: boolean;
 }) {
   const { t } = useLingui();
   const rpc = useSpaceRpc();
@@ -76,14 +79,18 @@ export function SpaceSettingOverrides({
       label: t`Approvals`,
       panel: () => <ApprovalRulesSettings scope="space" />,
     },
-    {
-      id: "credentials",
-      label: t`Vault`,
-      panel: () => <VaultSettings scope="space" onBusyChange={setVaultBusy} />,
-      busy: vaultBusy,
-      // Going back to the defaults deletes the Space's own credentials.
-      resetConfirmation: t`Delete this Space's credentials?`,
-    },
+    ...(personalVaultEnabled
+      ? [
+          {
+            id: "credentials" as const,
+            label: t`Vault`,
+            panel: () => <VaultSettings scope="space" onBusyChange={setVaultBusy} />,
+            busy: vaultBusy,
+            // Going back to the defaults deletes the Space's own credentials.
+            resetConfirmation: t`Delete this Space's credentials?`,
+          },
+        ]
+      : []),
   ];
 
   async function setOverride(setting: SpaceSetting, enabled: boolean) {

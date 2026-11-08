@@ -29,10 +29,12 @@ const { element, account } = vi.hoisted(() => ({
         children,
       ),
   account: {
-    me: { userId: "user-1", name: "Tester", email: "tester@example.test" } as Record<
-      string,
-      unknown
-    >,
+    me: {
+      userId: "user-1",
+      name: "Tester",
+      email: "tester@example.test",
+      features: { personalVault: true },
+    } as Record<string, unknown>,
     push: vi.fn(),
     approvals: { mode: "ask", enabled: false, skipApprovals: false, checkerAvailable: true },
     rules: [] as { id: string }[],
@@ -278,7 +280,12 @@ let container: HTMLDivElement | undefined;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  account.me = { userId: "user-1", name: "Tester", email: "tester@example.test" };
+  account.me = {
+    userId: "user-1",
+    name: "Tester",
+    email: "tester@example.test",
+    features: { personalVault: true },
+  };
   account.rules = [];
   account.messaging = { enabled: true };
   vi.mocked(fetchAccountSecurity).mockResolvedValue(security());

@@ -38,8 +38,17 @@ function skillCount(install: CapabilityInstall) {
   return parsed.success ? parsed.data.skills.length : 0;
 }
 
-/** OCSC Tools, your skills in this space, the skills plugins added, and skill packs to browse. */
-export function SkillsDialog({ onClose }: { onClose: () => void }) {
+/**
+ * OCSC Tools, and, when the company allows it, your skills, the skills plugins added, and skill
+ * packs to browse. Admins always see the extra sections so they can add the company's skills.
+ */
+export function SkillsDialog({
+  onClose,
+  canManageSkills = false,
+}: {
+  onClose: () => void;
+  canManageSkills?: boolean;
+}) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -47,9 +56,10 @@ export function SkillsDialog({ onClose }: { onClose: () => void }) {
   const [selection, setSelection] = useState<PluginSelection | null>(null);
   const [importing, setImporting] = useState(false);
   const [gitSource, setGitSource] = useState("");
-  const catalog = useQuery(
-    queries.marketplace.catalog.queryOptions({ input: { query: "" }, staleTime: 60_000 }),
-  );
+  const catalog = useQuery({
+    ...queries.marketplace.catalog.queryOptions({ input: { query: "" }, staleTime: 60_000 }),
+    enabled: canManageSkills,
+  });
   const installs = useQuery(queries.capabilities.list.queryOptions());
   const agentSkills = useQuery(queries.agentSkills.list.queryOptions());
   const skillNames = agentSkills.data
@@ -150,23 +160,25 @@ export function SkillsDialog({ onClose }: { onClose: () => void }) {
     return (
       <div className="space-y-8">
         <OcscToolsSection available={skillNames} />
-        <section data-testid="your-skills">
-          <div className="mb-2 px-2.5">
-            <h3 className="text-[14px] font-medium text-muted-foreground">
-              <Trans>Skills</Trans>
-            </h3>
-            <p className="mt-1 text-[13px] text-muted-foreground">
-              <Trans>
-                Your own ways of working, written down so your agents follow them every time: a
-                checklist, a house style, how you like a report laid out. Create one with New skill
-                below; the built-in ones come with OCSC Intelligence.
-              </Trans>
-            </p>
-          </div>
-          <div className="px-2.5">
-            <AgentSkills />
-          </div>
-        </section>
+        {canManageSkills ? (
+          <section data-testid="your-skills">
+            <div className="mb-2 px-2.5">
+              <h3 className="text-[14px] font-medium text-muted-foreground">
+                <Trans>Skills</Trans>
+              </h3>
+              <p className="mt-1 text-[13px] text-muted-foreground">
+                <Trans>
+                  Your own ways of working, written down so your agents follow them every time: a
+                  checklist, a house style, how you like a report laid out. Create one with New
+                  skill below; the built-in ones come with OCSC Intelligence.
+                </Trans>
+              </p>
+            </div>
+            <div className="px-2.5">
+              <AgentSkills />
+            </div>
+          </section>
+        ) : null}
         {skillSets.length ? (
           <section data-testid="plugin-skill-sets">
             <h3 className="mb-2 px-2.5 text-[14px] font-medium text-muted-foreground">
@@ -196,51 +208,53 @@ export function SkillsDialog({ onClose }: { onClose: () => void }) {
             </div>
           </section>
         ) : null}
-        <section data-testid="skill-packs-section">
-          <h3 className="mb-2 px-2.5 text-[14px] font-medium text-muted-foreground">
-            <Trans>Browse</Trans>
-          </h3>
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            aria-label={t`Search skills`}
-            placeholder={t`Search skills`}
-            maxLength={200}
-            className="mb-5 h-11 rounded-xl"
-          />
-          {catalog.isPending ? (
-            <div className="grid place-items-center py-10">
-              <Spinner className="size-5 text-muted-foreground" aria-label={t`Loading…`} />
+        {canManageSkills ? (
+          <section data-testid="skill-packs-section">
+            <h3 className="mb-2 px-2.5 text-[14px] font-medium text-muted-foreground">
+              <Trans>Browse</Trans>
+            </h3>
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              aria-label={t`Search skills`}
+              placeholder={t`Search skills`}
+              maxLength={200}
+              className="mb-5 h-11 rounded-xl"
+            />
+            {catalog.isPending ? (
+              <div className="grid place-items-center py-10">
+                <Spinner className="size-5 text-muted-foreground" aria-label={t`Loading…`} />
+              </div>
+            ) : null}
+            {catalog.error || catalog.data?.unavailableRegistries.length ? (
+              <div
+                role="alert"
+                className="mb-4 flex items-center gap-3 text-sm text-muted-foreground"
+              >
+                <Trans>Some plugins could not be loaded.</Trans>
+                <Button variant="outline" size="sm" onClick={() => void catalog.refetch()}>
+                  <Trans>Retry</Trans>
+                </Button>
+              </div>
+            ) : null}
+            <div data-testid="skill-packs" className="grid grid-cols-2 gap-2">
+              {packs.map((entry) => {
+                const pack = pluginSelection(entry);
+                return (
+                  <PluginRow
+                    key={entry.id}
+                    name={entry.displayName}
+                    description={entry.description}
+                    logo={entry.logo}
+                    site={pack.site}
+                    installed={pluginInstalls.some((row) => row.source === entry.installedSource)}
+                    onOpen={() => setSelection(pack)}
+                  />
+                );
+              })}
             </div>
-          ) : null}
-          {catalog.error || catalog.data?.unavailableRegistries.length ? (
-            <div
-              role="alert"
-              className="mb-4 flex items-center gap-3 text-sm text-muted-foreground"
-            >
-              <Trans>Some plugins could not be loaded.</Trans>
-              <Button variant="outline" size="sm" onClick={() => void catalog.refetch()}>
-                <Trans>Retry</Trans>
-              </Button>
-            </div>
-          ) : null}
-          <div data-testid="skill-packs" className="grid grid-cols-2 gap-2">
-            {packs.map((entry) => {
-              const pack = pluginSelection(entry);
-              return (
-                <PluginRow
-                  key={entry.id}
-                  name={entry.displayName}
-                  description={entry.description}
-                  logo={entry.logo}
-                  site={pack.site}
-                  installed={pluginInstalls.some((row) => row.source === entry.installedSource)}
-                  onOpen={() => setSelection(pack)}
-                />
-              );
-            })}
-          </div>
-        </section>
+          </section>
+        ) : null}
       </div>
     );
   }
@@ -261,7 +275,7 @@ export function SkillsDialog({ onClose }: { onClose: () => void }) {
             <Trans>Tools and skills</Trans>
           </DialogTitle>
           <div className="flex items-center gap-2">
-            {!selection && !importing ? (
+            {canManageSkills && !selection && !importing ? (
               <Button variant="ghost" size="sm" onClick={() => setImporting(true)}>
                 <Trans>From GitHub</Trans>
               </Button>

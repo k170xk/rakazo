@@ -2077,6 +2077,10 @@ export const CompanyFeaturesSchema = z.object({
   webImages: z.boolean(),
   /** People export, import and delete their own account and import agents from other apps. */
   accountData: z.boolean(),
+  /** Each person's own logins, cards, API keys and contacts, used by their assistants. */
+  personalVault: z.boolean(),
+  /** Staff write their own skills, browse skill packs and add them from GitHub. Admins always can. */
+  staffSkills: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -2099,6 +2103,8 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   toolActivity: false,
   webImages: false,
   accountData: false,
+  personalVault: false,
+  staffSkills: false,
 };
 
 /** Stored switches over the defaults, so a switch added later starts at its default. */

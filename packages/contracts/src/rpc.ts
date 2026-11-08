@@ -721,7 +721,7 @@ export const appContract = {
       )
       .output(z.object({ image: z.string() })),
   },
-  /** The signed-in person's own Evolve chat history, read live from Evolve. */
+  /** The signed-in person's own Evolve chats. Archived ones can be restored or deleted. */
   evolveHistory: {
     /** Assistants they have conversations with; unavailable when Evolve is not linked. */
     assistants: oc.output(
@@ -738,9 +738,19 @@ export const appContract = {
           assistantId: z.string().uuid().optional(),
           search: z.string().trim().max(200).default(""),
           page: z.number().int().min(0).max(10_000).default(0),
+          /** Archived Evolve chats. The sidebar lists these, with restore and delete. */
+          archived: z.boolean().default(true),
         }),
       )
       .output(EvolveConversationPageSchema),
+    /** Puts an archived Evolve chat back in Evolve. */
+    restore: oc
+      .input(z.object({ conversationId: z.string().uuid() }))
+      .output(z.object({ ok: z.literal(true) })),
+    /** Removes one of the person's Evolve chats, and its messages, from Evolve. */
+    remove: oc
+      .input(z.object({ conversationId: z.string().uuid() }))
+      .output(z.object({ ok: z.literal(true) })),
     messages: oc
       .input(
         z.object({

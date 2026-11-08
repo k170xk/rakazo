@@ -56,14 +56,12 @@ import {
   subscribeBotsSidebarDensity,
 } from "../lib/bots-sidebar-density-pref";
 import { readBotsSidebarCollapsed, writeBotsSidebarCollapsed } from "../lib/bots-sidebar-pref";
-import { useSidebarSort } from "../lib/sidebar-sort";
 import { setCallMinimized, startCall, useCallSession } from "../lib/call-session";
 import { applyCompanyChatSettings } from "../lib/company-chat-settings";
 import {
   getComposerEnterToSend,
   subscribeComposerEnterToSend,
 } from "../lib/composer-enter-to-send-pref";
-import { computersAreUnavailable } from "../lib/computer-sandbox";
 import { desktopBridge } from "../lib/desktop";
 import { hasOpenDialog } from "../lib/has-open-dialog";
 import { PagesProvider, usePagesForChat } from "../lib/pages";
@@ -73,6 +71,7 @@ import { lastChatKey, lastChatOf, queryClient, spaceQueries, spaceSeedKey } from
 import type { Panel } from "../lib/right-panel-state";
 import { rightPanelStorageKey } from "../lib/right-panel-state";
 import { createSpaceRpc, selectedSpaceId, selectSpace } from "../lib/rpc";
+import { useSidebarSort } from "../lib/sidebar-sort";
 import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
 import { activeThreadRuns } from "../lib/thread-events";
 import { getToolActivityEnabled, subscribeToolActivity } from "../lib/tool-activity-preference";
@@ -83,7 +82,6 @@ import { errorText } from "../lib/user-error";
 import { HostComputerPrompt } from "./HostComputerPrompt";
 import { RoutineList } from "./RoutineEditor";
 import { useSettingsNavItems } from "./settings-nav";
-import { ArchivedChats } from "./shell/archived-chats";
 import { ChatContextMenu } from "./shell/chat-context-menu";
 import { ChatFindBar } from "./shell/chat-find-bar";
 import { ChatHeader } from "./shell/chat-header";
@@ -343,7 +341,6 @@ function SpaceShell() {
   const dialogs = useShellDialogs();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
-  const [evolveReload, setEvolveReload] = useState(0);
   const [renderStudioImage, setRenderStudioImage] = useState<{ src: string; name: string } | null>(
     null,
   );
@@ -943,6 +940,7 @@ function SpaceShell() {
     wallet: Boolean(bootstrapMe?.paymentWalletProvider),
     billing: bootstrapMe?.billingEnabled === true,
     updates: Boolean(desktopBridge()?.update),
+    vault: bootstrapMe?.features?.personalVault === true,
   });
   const paletteActions: CommandPaletteAction[] = [
     {
@@ -1143,34 +1141,21 @@ function SpaceShell() {
           />
         }
         archived={
-          <>
-            <EvolveArchive
-              rpc={rpc}
-              bots={bots}
-              hidden={search.showSpaceSearch}
-              reloadKey={evolveReload}
-              onOpenConversation={async (conversationId) => {
-                const opened = await rpc.evolveHistory.open({ conversationId });
-                if (opened.created) await refreshBots().catch(() => undefined);
-                setEvolveReload((value) => value + 1);
-                setMobileSidebarOpen(false);
-                navigate(`/app/${opened.botId}`);
-              }}
-              onOpenBot={(botId) => {
-                setMobileSidebarOpen(false);
-                navigate(`/app/${botId}`);
-              }}
-            />
-            <ArchivedChats
-              archivedBots={archivedBots}
-              archivedGroups={archivedGroups}
-              showSpaceSearch={search.showSpaceSearch}
-              rpc={rpc}
-              refreshBots={refreshBots}
-              setDeleteTarget={dialogs.setDeleteTarget}
-              setDeleteGroupTarget={dialogs.setDeleteGroupTarget}
-            />
-          </>
+          <EvolveArchive
+            rpc={rpc}
+            hidden={search.showSpaceSearch}
+            archivedBots={archivedBots}
+            archivedGroups={archivedGroups}
+            refreshBots={refreshBots}
+            setDeleteTarget={dialogs.setDeleteTarget}
+            setDeleteGroupTarget={dialogs.setDeleteGroupTarget}
+            onRestore={async (conversationId) => {
+              const opened = await rpc.evolveHistory.open({ conversationId });
+              await refreshBots(true).catch(() => undefined);
+              setMobileSidebarOpen(false);
+              navigate(`/app/${opened.botId}`);
+            }}
+          />
         }
         footerLogos={footerLogos}
         user={session.data?.user}
@@ -1513,6 +1498,9 @@ function SpaceShell() {
           mcpEnabled={companyFeatures?.mcpServers !== false && !integrationsComingSoon}
           integrationsComingSoon={integrationsComingSoon}
           canAddCustom={bootstrapMe?.isAdmin === true}
+          canManageSkills={
+            bootstrapMe?.isAdmin === true || bootstrapMe?.features?.staffSkills === true
+          }
           tourAvailability={tourAvailability}
           onConnectedAppsChange={setFooterLogos}
         />

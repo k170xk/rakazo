@@ -25,7 +25,14 @@ let loadedTools: CompanyTools | null = null;
 let loadedThinkingLevel: ThinkingLevel | null = null;
 
 export function companyFeatures(): CompanyFeatures {
-  return loadedFeatures ?? DEFAULT_COMPANY_FEATURES;
+  let features = loadedFeatures ?? DEFAULT_COMPANY_FEATURES;
+  // The browser suite sets this so its vault specs can open the page. A deployment
+  // leaves it unset; the admin switch is what turns personal vaults on.
+  if (process.env.RAKAZO_E2E_PERSONAL_VAULT === "1")
+    features = { ...features, personalVault: true };
+  // The browser suite sets this so its skill specs can open the staff sections.
+  if (process.env.RAKAZO_E2E_STAFF_SKILLS === "1") features = { ...features, staffSkills: true };
+  return features;
 }
 
 /** Built-in skills and company tools switched off for every account. */

@@ -19,6 +19,7 @@ import { NativeActionButton } from "../../components/native-action-button";
 import { PluginIcon } from "../../components/plugin-icon";
 import { Chevron } from "../../components/row-accessories";
 import { SkillSymbol } from "../../components/skill-symbol";
+import type { MobileMe } from "../../lib/api";
 import { rpc } from "../../lib/api";
 import { useI18n } from "../../lib/i18n";
 import { native, useThemedStyles } from "../../lib/native";
@@ -48,11 +49,20 @@ export default function SkillsScreen() {
   const [state, setState] = useState<"loading" | "ready" | "partial">("loading");
   const [query, setQuery] = useState("");
   const [importing, setImporting] = useState(false);
+  const [canManageSkills, setCanManageSkills] = useState(false);
   const [gitUrl, setGitUrl] = useState("");
   const live = useRef(true);
 
   const load = useCallback(() => {
     // Plugin skills are listed by their plugin, not one by one.
+    void rpc("me")
+      .then((me: MobileMe) => {
+        if (live.current)
+          setCanManageSkills(me.isAdmin === true || me.features?.staffSkills === true);
+      })
+      .catch(() => {
+        if (live.current) setCanManageSkills(false);
+      });
     void rpc("agentSkills/list")
       .then((skills) => {
         if (live.current) setOwnSkills(skills.filter((skill) => skill.source !== "plugin"));
@@ -82,6 +92,13 @@ export default function SkillsScreen() {
 
   useLayoutEffect(() => {
     const toggle = () => setImporting((open) => !open);
+    if (!canManageSkills) {
+      navigation.setOptions({
+        headerRight: () => null,
+        unstable_headerRightItems: () => [],
+      });
+      return;
+    }
     navigation.setOptions(
       iosAtLeast(26)
         ? {
@@ -100,7 +117,7 @@ export default function SkillsScreen() {
             ),
           },
     );
-  }, [navigation, t]);
+  }, [canManageSkills, navigation, t]);
 
   const installed = new Set(installs.map((row) => row.source));
   const packs = skillPacks(entries, query);
@@ -122,7 +139,7 @@ export default function SkillsScreen() {
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
-        {importing ? (
+        {canManageSkills && importing ? (
           <View testID="plugin-git-import" style={styles.card}>
             <TextInput
               value={gitUrl}
@@ -145,42 +162,44 @@ export default function SkillsScreen() {
             />
           </View>
         ) : null}
-        <View testID="your-skills" style={styles.list}>
-          <Text style={styles.section}>{t("Your skills")}</Text>
-          {ownSkills.map((skill) => (
+        {canManageSkills ? (
+          <View testID="your-skills" style={styles.list}>
+            <Text style={styles.section}>{t("Your skills")}</Text>
+            {ownSkills.map((skill) => (
+              <Pressable
+                key={skill.id}
+                testID="own-skill"
+                accessibilityRole="button"
+                accessibilityLabel={skill.name}
+                onPress={() => router.push({ pathname: "/skill", params: { id: skill.id } })}
+                style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+              >
+                <View style={styles.skillMark}>
+                  <SkillSymbol size={17} />
+                </View>
+                <View style={styles.grow}>
+                  <Text numberOfLines={1} style={styles.title}>
+                    {skill.name}
+                  </Text>
+                  {skill.description ? (
+                    <Text numberOfLines={1} style={styles.secondary}>
+                      {skill.description}
+                    </Text>
+                  ) : null}
+                </View>
+                <Chevron />
+              </Pressable>
+            ))}
             <Pressable
-              key={skill.id}
-              testID="own-skill"
               accessibilityRole="button"
-              accessibilityLabel={skill.name}
-              onPress={() => router.push({ pathname: "/skill", params: { id: skill.id } })}
+              onPress={() => router.push("/skill")}
               style={({ pressed }) => [styles.row, pressed && styles.pressed]}
             >
-              <View style={styles.skillMark}>
-                <SkillSymbol size={17} />
-              </View>
-              <View style={styles.grow}>
-                <Text numberOfLines={1} style={styles.title}>
-                  {skill.name}
-                </Text>
-                {skill.description ? (
-                  <Text numberOfLines={1} style={styles.secondary}>
-                    {skill.description}
-                  </Text>
-                ) : null}
-              </View>
+              <Text style={[styles.title, styles.grow]}>{t("New skill")}</Text>
               <Chevron />
             </Pressable>
-          ))}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push("/skill")}
-            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-          >
-            <Text style={[styles.title, styles.grow]}>{t("New skill")}</Text>
-            <Chevron />
-          </Pressable>
-        </View>
+          </View>
+        ) : null}
         {skillSets.length ? (
           <View testID="plugin-skill-sets" style={styles.list}>
             <Text style={styles.section}>{t("Plugins")}</Text>
@@ -216,70 +235,74 @@ export default function SkillsScreen() {
             })}
           </View>
         ) : null}
-        <Text style={styles.section}>{t("Browse")}</Text>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          accessibilityLabel={t("Search skills")}
-          placeholder={t("Search skills")}
-          placeholderTextColor={native.tertiaryLabel}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="search"
-          style={styles.input}
-        />
-        {state === "partial" ? (
-          <View style={styles.row}>
-            <Text style={[styles.secondary, styles.grow]}>
-              {t("Some plugins could not be loaded.")}
-            </Text>
-            <NativeActionButton
-              fill={false}
-              label={t("Retry")}
-              onPress={() => {
-                setState("loading");
-                load();
-              }}
-              prominence="secondary"
+        {canManageSkills ? (
+          <>
+            <Text style={styles.section}>{t("Browse")}</Text>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              accessibilityLabel={t("Search skills")}
+              placeholder={t("Search skills")}
+              placeholderTextColor={native.tertiaryLabel}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              style={styles.input}
             />
-          </View>
-        ) : null}
-        {state === "loading" ? (
-          <ActivityIndicator color={native.secondaryLabel} accessibilityLabel={t("Loading…")} />
-        ) : null}
-        <View testID="skill-packs" style={styles.list}>
-          {packs.map((entry) => (
-            <Pressable
-              key={entry.id}
-              accessibilityRole="button"
-              accessibilityLabel={entry.displayName}
-              onPress={() => openSkills(pluginParams(entry))}
-              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-            >
-              <PluginIcon
-                logo={entry.logo}
-                name={entry.displayName}
-                site={pluginSite(entry)}
-                size={LOGO_SIZE}
-              />
-              <View style={styles.grow}>
-                <Text numberOfLines={1} style={styles.title}>
-                  {entry.displayName}
+            {state === "partial" ? (
+              <View style={styles.row}>
+                <Text style={[styles.secondary, styles.grow]}>
+                  {t("Some plugins could not be loaded.")}
                 </Text>
-                {entry.description ? (
-                  <Text numberOfLines={1} style={styles.secondary}>
-                    {entry.description}
-                  </Text>
-                ) : null}
+                <NativeActionButton
+                  fill={false}
+                  label={t("Retry")}
+                  onPress={() => {
+                    setState("loading");
+                    load();
+                  }}
+                  prominence="secondary"
+                />
               </View>
-              {installed.has(entry.installedSource) ? (
-                <Text style={styles.secondary}>{t("Added")}</Text>
-              ) : (
-                <Chevron />
-              )}
-            </Pressable>
-          ))}
-        </View>
+            ) : null}
+            {state === "loading" ? (
+              <ActivityIndicator color={native.secondaryLabel} accessibilityLabel={t("Loading…")} />
+            ) : null}
+            <View testID="skill-packs" style={styles.list}>
+              {packs.map((entry) => (
+                <Pressable
+                  key={entry.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={entry.displayName}
+                  onPress={() => openSkills(pluginParams(entry))}
+                  style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+                >
+                  <PluginIcon
+                    logo={entry.logo}
+                    name={entry.displayName}
+                    site={pluginSite(entry)}
+                    size={LOGO_SIZE}
+                  />
+                  <View style={styles.grow}>
+                    <Text numberOfLines={1} style={styles.title}>
+                      {entry.displayName}
+                    </Text>
+                    {entry.description ? (
+                      <Text numberOfLines={1} style={styles.secondary}>
+                        {entry.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {installed.has(entry.installedSource) ? (
+                    <Text style={styles.secondary}>{t("Added")}</Text>
+                  ) : (
+                    <Chevron />
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

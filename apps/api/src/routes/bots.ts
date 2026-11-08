@@ -871,6 +871,7 @@ export function botsRoutes(ctx: RouterContext) {
     },
     vault: {
       list: authed.vault.list.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "personalVault");
         const rows = await listVaultItems(
           deps.prisma,
           deps.secrets,
@@ -878,10 +879,12 @@ export function botsRoutes(ctx: RouterContext) {
         );
         return rows.map(botSecretMetadataDto);
       }),
-      put: authed.vault.put.handler(({ context, input }) =>
-        saveVaultCredential(deps, vaultScope(context.actor, input.scope), input),
-      ),
+      put: authed.vault.put.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "personalVault");
+        return saveVaultCredential(deps, vaultScope(context.actor, input.scope), input);
+      }),
       reveal: authed.vault.reveal.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "personalVault");
         await requireIdentityConfirmation(deps.auth, context);
         // Resolved here, so the event names the vault that was read even when scope is omitted.
         const scope = await settingsTarget(deps.prisma, context.actor, "credentials", input.scope);
@@ -906,6 +909,7 @@ export function botsRoutes(ctx: RouterContext) {
         return revealed;
       }),
       remove: authed.vault.remove.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "personalVault");
         await forgetBotSecret(deps.prisma, vaultScope(context.actor, input.scope), input.name);
         return { ok: true as const };
       }),
@@ -920,15 +924,18 @@ export function botsRoutes(ctx: RouterContext) {
     },
     botSecrets: {
       list: authed.botSecrets.list.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "personalVault");
         await repos.getBot(context.actor, input.botId);
         const rows = await listVaultItems(deps.prisma, deps.secrets, vaultScope(context.actor));
         return rows.map(botSecretMetadataDto);
       }),
       put: authed.botSecrets.put.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "personalVault");
         await repos.getBot(context.actor, input.botId);
         return saveVaultCredential(deps, vaultScope(context.actor), input);
       }),
       remove: authed.botSecrets.remove.handler(async ({ context, input }) => {
+        await requireCompanyFeature(deps, context.actor, "personalVault");
         await repos.getBot(context.actor, input.botId);
         await forgetBotSecret(deps.prisma, vaultScope(context.actor), input.name);
         return { ok: true as const };

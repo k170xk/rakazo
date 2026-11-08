@@ -531,6 +531,18 @@ function CompanyFeaturesSection({
       description: t`People see a Data section in their settings to export or import their account, import agents from other apps and delete their account.`,
     },
     {
+      id: "staffSkills",
+      group: "people",
+      label: t`Staff skills`,
+      description: t`Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch.`,
+    },
+    {
+      id: "personalVault",
+      group: "people",
+      label: t`My vault`,
+      description: t`People keep their own logins, cards, API keys and contacts, and their assistants can use them. Off for everyone until you turn this on. The company vault on this page is separate and stays available.`,
+    },
+    {
       id: "cursorAgents",
       group: "models",
       label: t`Cursor cloud agents`,

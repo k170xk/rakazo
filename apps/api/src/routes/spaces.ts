@@ -22,6 +22,7 @@ import {
   spaceSettingOverrides,
 } from "@rakazo/db";
 import { otherSpaceOfBot } from "../bot-space.js";
+import { requireCompanyFeature } from "../company-admin.js";
 import type { RouterDeps } from "../router.js";
 import { listRoutinesDto } from "../routines.js";
 import { deleteSpaceWithContent } from "../space-deletion.js";
@@ -54,9 +55,12 @@ export function spacesRoutes(ctx: RouterContext) {
       overrides: authed.spaceSettings.overrides.handler(({ context }) =>
         spaceSettingOverrides(deps.prisma, context.actor),
       ),
-      setOverride: authed.spaceSettings.setOverride.handler(({ context, input }) =>
-        setSpaceSettingOverride(deps.prisma, context.actor, input.setting, input.enabled),
-      ),
+      setOverride: authed.spaceSettings.setOverride.handler(async ({ context, input }) => {
+        if (input.setting === "credentials") {
+          await requireCompanyFeature(deps, context.actor, "personalVault");
+        }
+        return setSpaceSettingOverride(deps.prisma, context.actor, input.setting, input.enabled);
+      }),
     },
     spaces: {
       list: authed.spaces.list.handler(async ({ context }) =>

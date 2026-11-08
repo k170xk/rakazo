@@ -166,8 +166,8 @@ export function CompanyToolsSection({
         </h3>
         <p className="text-[13px] text-muted-foreground">
           <Trans>
-            Ready-made ways of working that come with OCSC Intelligence. Staff can also write their
-            own skills under Tools and skills.
+            Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no
+            longer see it. Their own skills, skill packs and GitHub are a separate switch.
           </Trans>
         </p>
         <ToggleList

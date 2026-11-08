@@ -135,7 +135,7 @@ describeIntegration("agent import", () => {
       },
     });
     app = handles.app;
-    await enableCompanyFeatures(handles.prisma, { accountData: true });
+    await enableCompanyFeatures(handles.prisma, { accountData: true, staffSkills: true });
     db = asSystem(handles.prisma);
     stop = handles.stop;
   });

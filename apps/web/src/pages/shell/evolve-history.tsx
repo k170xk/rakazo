@@ -4,16 +4,19 @@ import type {
   Bot,
   EvolveConversationSummary,
   EvolveHistoryAssistant,
+  Group,
   MessageBlock,
 } from "@rakazo/contracts";
 import {
   BotAvatar,
+  Button,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
+  GroupAvatar,
   toast,
 } from "@rakazo/ui-web";
-import { Archive, Check, ChevronDown, History, Loader2, MessagesSquare } from "lucide-react";
+import { Archive, ChevronDown, History, Loader2, MessagesSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
@@ -31,52 +34,39 @@ function filesLabel(count: number): string {
   return plural(count, { one: "# file", other: "# files" });
 }
 
-function ContinuedBadge() {
-  const { t } = useLingui();
-  return (
-    <span
-      title={t`Opened as a chat`}
-      className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10.5px] font-medium text-primary"
-    >
-      <Check className="size-3" />
-      {t`Opened`}
-    </span>
-  );
-}
-
-const ARCHIVE_OPEN_KEY = "rakazo.sidebar.evolveArchive.open";
-const ARCHIVE_RECENT = 6;
+const ARCHIVE_OPEN_KEY = "rakazo.sidebar.evolveArchive.list";
 
 /**
- * The sidebar's Evolve section: the person's Evolve conversations and how many they have carried
- * over. Hidden unless Evolve is linked and they have history.
+ * One archive list: archived bots and groups, and archived Evolve chats.
+ * Restore on an Evolve chat makes it a chatbot in the list above, the same as opening it used to.
  */
 export function EvolveArchive({
   rpc,
-  bots,
   hidden,
-  reloadKey,
-  onOpenConversation,
-  onOpenBot,
+  archivedBots,
+  archivedGroups,
+  refreshBots,
+  setDeleteTarget,
+  setDeleteGroupTarget,
+  onRestore,
 }: {
   rpc: SpaceRpc;
-  bots: readonly Bot[];
   hidden: boolean;
-  /** Changes after a conversation is continued, to refresh what was carried over. */
-  reloadKey: number;
-  /** Opens the archived chat as a chat of its own, making it on first open. */
-  onOpenConversation: (conversationId: string) => Promise<void>;
-  onOpenBot: (botId: string) => void;
+  archivedBots: Bot[];
+  archivedGroups: Group[];
+  refreshBots: (includeArchived?: boolean) => Promise<void>;
+  setDeleteTarget: (bot: Bot) => void;
+  setDeleteGroupTarget: (group: Group) => void;
+  /** Moves the Evolve chat into the chatbot list above. */
+  onRestore: (conversationId: string) => Promise<void>;
 }) {
   const { t } = useLingui();
-  const [opening, setOpening] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
-  const [continued, setContinued] = useState(0);
   const [looks, setLooks] = useState<Map<string, EvolveHistoryAssistant["look"]>>(new Map());
   const [items, setItems] = useState<EvolveConversationSummary[]>([]);
   const [nextPage, setNextPage] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(() => localStorage.getItem(ARCHIVE_OPEN_KEY) !== "0");
 
   useEffect(() => {
@@ -85,12 +75,12 @@ export function EvolveArchive({
       try {
         const result = await rpc.evolveHistory.assistants();
         if (!live || !result.available) return;
-        const count = result.assistants.reduce((sum, item) => sum + item.conversations, 0);
-        setTotal(count);
-        setContinued(result.continued);
         setLooks(new Map(result.assistants.map((assistant) => [assistant.id, assistant.look])));
-        if (count === 0) return;
-        const page = await rpc.evolveHistory.conversations({ search: "", page: 0 });
+        const page = await rpc.evolveHistory.conversations({
+          search: "",
+          page: 0,
+          archived: false,
+        });
         if (!live) return;
         setItems(page.conversations);
         setNextPage(page.nextPage);
@@ -101,15 +91,51 @@ export function EvolveArchive({
     return () => {
       live = false;
     };
-  }, [rpc, bots.length, reloadKey]);
+  }, [rpc]);
 
-  if (total === 0 || items.length === 0) return null;
+  const chats = items.filter((item) => item.continuedIn.length === 0);
+  if (hidden || chats.length + archivedBots.length + archivedGroups.length === 0) {
+    return null;
+  }
+
+  function drop(id: string) {
+    setItems((current) => current.filter((item) => item.id !== id));
+    setConfirming(null);
+  }
+
+  async function restore(id: string) {
+    setBusy(id);
+    try {
+      await onRestore(id);
+      drop(id);
+    } catch (failure) {
+      toast.error(errorText(failure, t`Could not restore that chat.`));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function remove(id: string) {
+    setBusy(id);
+    try {
+      await rpc.evolveHistory.remove({ conversationId: id });
+      drop(id);
+    } catch (failure) {
+      toast.error(errorText(failure, t`Could not delete that chat.`));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function loadMore() {
     if (nextPage === null) return;
     setLoadingMore(true);
     try {
-      const page = await rpc.evolveHistory.conversations({ search: "", page: nextPage });
+      const page = await rpc.evolveHistory.conversations({
+        search: "",
+        page: nextPage,
+        archived: false,
+      });
       setItems((current) => [...current, ...page.conversations]);
       setNextPage(page.nextPage);
     } catch (failure) {
@@ -118,9 +144,6 @@ export function EvolveArchive({
       setLoadingMore(false);
     }
   }
-
-  const shown = showAll ? items : items.slice(0, ARCHIVE_RECENT);
-  const more = showAll ? nextPage !== null : items.length > ARCHIVE_RECENT || nextPage !== null;
 
   return (
     <Collapsible
@@ -134,9 +157,9 @@ export function EvolveArchive({
     >
       <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-[13.5px] text-muted-foreground hover:bg-sidebar-accent">
         <Archive className="size-4 shrink-0" aria-hidden="true" />
-        <span className="flex-1 text-start">{t`Archived chats`}</span>
+        <span className="flex-1 text-start">{t`Archived`}</span>
         <span className="text-xs">
-          {continued > 0 ? t`${continued} of ${total} opened` : total}
+          {archivedBots.length + archivedGroups.length + chats.length}
         </span>
         <ChevronDown
           className={`size-3.5 shrink-0 transition-transform ${expanded ? "" : "-rotate-90"}`}
@@ -144,36 +167,68 @@ export function EvolveArchive({
         />
       </CollapsibleTrigger>
       <CollapsibleContent className="flex flex-col gap-0.5">
-        {shown.map((item) => {
-          const chat = item.continuedIn
-            .map((id) => bots.find((bot) => bot.id === id))
-            .find((bot): bot is Bot => Boolean(bot));
-          const look = chat
-            ? { color: chat.color, avatarSet: chat.avatarSet, identity: chat.id }
-            : looks.get(item.assistantId);
-          return (
-            <button
-              type="button"
-              key={item.id}
-              disabled={opening !== null}
-              onClick={() => {
-                if (chat) return onOpenBot(chat.id);
-                setOpening(item.id);
-                onOpenConversation(item.id)
-                  .catch((failure) => toast.error(errorText(failure, t`Could not open that chat.`)))
-                  .finally(() => setOpening(null));
-              }}
-              title={chat ? t`Opened as ${chat.name}` : undefined}
-              className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-1.5 text-start hover:bg-sidebar-accent disabled:cursor-default"
+        {archivedBots.map((bot) => (
+          <div key={bot.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2">
+            <BotAvatar
+              avatarSet={bot.avatarSet}
+              color={bot.color}
+              identity={bot.id}
+              size={28}
+              status={bot.status}
+            />
+            <span className="min-w-0 flex-1 truncate text-[14px] text-foreground/75" dir="auto">
+              {bot.name}
+            </span>
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() => void rpc.bots.restore({ botId: bot.id }).then(() => refreshBots(true))}
             >
-              {opening === item.id ? (
-                <span className="flex size-6 shrink-0 items-center justify-center">
-                  <Loader2
-                    className="size-4 animate-spin text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                </span>
-              ) : look ? (
+              {t`Restore`}
+            </Button>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="text-destructive hover:text-destructive"
+              aria-label={t`Delete ${bot.name}`}
+              onClick={() => setDeleteTarget(bot)}
+            >
+              {t`Delete`}
+            </Button>
+          </div>
+        ))}
+        {archivedGroups.map((group) => (
+          <div key={group.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2">
+            <GroupAvatar members={group.members} size={28} />
+            <span className="min-w-0 flex-1 truncate text-[14px] text-foreground/75" dir="auto">
+              {group.name}
+            </span>
+            <Button
+              variant="ghost"
+              size="xs"
+              onClick={() =>
+                void rpc.groups.restore({ groupId: group.id }).then(() => refreshBots(true))
+              }
+            >
+              {t`Restore`}
+            </Button>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="text-destructive hover:text-destructive"
+              aria-label={t`Delete ${group.name}`}
+              onClick={() => setDeleteGroupTarget(group)}
+            >
+              {t`Delete`}
+            </Button>
+          </div>
+        ))}
+        {chats.map((item) => {
+          const look = looks.get(item.assistantId);
+          const working = busy === item.id;
+          return (
+            <div key={item.id} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5">
+              {look ? (
                 <span className="shrink-0" aria-hidden="true">
                   <BotAvatar
                     avatarSet={look.avatarSet}
@@ -184,44 +239,57 @@ export function EvolveArchive({
                 </span>
               ) : (
                 <MessagesSquare
-                  className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                  className="size-4 shrink-0 text-muted-foreground"
                   aria-hidden="true"
                 />
               )}
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className="min-w-0 flex-1 truncate text-[13.5px] text-foreground/85"
-                    dir="auto"
-                  >
-                    {item.title}
-                  </span>
-                  {chat ? <ContinuedBadge /> : null}
+                <span className="block truncate text-[13.5px] text-foreground/85" dir="auto">
+                  {item.title}
                 </span>
                 <span className="block truncate text-xs text-muted-foreground">
                   {item.assistantName} · {shortDate(item.lastMessageAt)}
                 </span>
               </span>
-            </button>
+              <Button
+                variant="ghost"
+                size="xs"
+                disabled={working}
+                onClick={() => void restore(item.id)}
+              >
+                {t`Restore`}
+              </Button>
+              <Button
+                variant="ghost"
+                size="xs"
+                className="text-destructive hover:text-destructive"
+                disabled={working}
+                aria-label={t`Delete ${item.title}`}
+                onClick={() => {
+                  if (confirming === item.id) void remove(item.id);
+                  else setConfirming(item.id);
+                }}
+              >
+                {working ? (
+                  <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                ) : confirming === item.id ? (
+                  t`Confirm`
+                ) : (
+                  t`Delete`
+                )}
+              </Button>
+            </div>
           );
         })}
-        {more ? (
+        {nextPage !== null ? (
           <button
             type="button"
             disabled={loadingMore}
-            onClick={() => (showAll ? void loadMore() : setShowAll(true))}
+            onClick={() => void loadMore()}
             className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
           >
             {loadingMore ? <Loader2 className="size-3.5 animate-spin" /> : null}
-            {showAll ? t`Load more` : t`Show all ${total}`}
-          </button>
-        ) : showAll && items.length > ARCHIVE_RECENT ? (
-          <button
-            type="button"
-            onClick={() => setShowAll(false)}
-            className="rounded-lg px-2.5 py-1.5 text-start text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-          >
-            {t`Show fewer`}
+            {t`Load more`}
           </button>
         ) : null}
       </CollapsibleContent>

@@ -29,6 +29,7 @@ export default function SpaceSettings() {
   const sideInsets = useSideInsets();
   const styles = useThemedStyles(createStyles);
   const [overrides, setOverrides] = useState<SpaceSetting[] | null>(null);
+  const [vaultOn, setVaultOn] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -49,6 +50,13 @@ export default function SpaceSettings() {
         })
         .catch((err: unknown) => {
           if (current) setLoadError(errorText(err, t("Something went wrong. Try again.")));
+        });
+      void rpc("me")
+        .then((me) => {
+          if (current) setVaultOn(me.features?.personalVault === true);
+        })
+        .catch(() => {
+          if (current) setVaultOn(false);
         });
       return () => {
         current = false;
@@ -143,7 +151,7 @@ export default function SpaceSettings() {
           {row("models", t("Models"))}
           {row("voice", t("Voice"))}
           {row("confirmations", t("Approvals"))}
-          {row("credentials", t("Vault"))}
+          {vaultOn ? row("credentials", t("Vault")) : null}
         </SettingsGroup>
         {overrides?.includes("confirmations") ? (
           <SettingsGroup>

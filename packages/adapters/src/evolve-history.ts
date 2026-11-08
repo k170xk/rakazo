@@ -22,12 +22,12 @@ const MAX_CONTINUE_PAGES = 50;
 export async function listEvolveHistoryAssistants(
   connection: EvolvePluginsConnection,
   email: string,
-  options: CallOptions = {},
+  options: CallOptions & { archived?: boolean } = {},
 ): Promise<EvolveHistoryAssistant[]> {
   const payload = await callEvolveAssistants(
     connection,
     email,
-    { action: "conversations.assistants" },
+    { action: "conversations.assistants", archived: options.archived === true },
     options,
   );
   return z.object({ assistants: z.array(EvolveHistoryAssistantSchema) }).parse(payload).assistants;
@@ -37,7 +37,7 @@ export async function listEvolveHistoryAssistants(
 export async function listEvolveConversations(
   connection: EvolvePluginsConnection,
   email: string,
-  input: { assistantId?: string; search: string; page: number },
+  input: { assistantId?: string; search: string; page: number; archived?: boolean },
   options: CallOptions = {},
 ): Promise<EvolveConversationPage> {
   const payload = await callEvolveAssistants(
@@ -63,6 +63,36 @@ export async function readEvolveConversation(
     options,
   );
   return EvolveConversationMessagesSchema.parse(payload);
+}
+
+/** Puts one of the person's archived Evolve chats back into Evolve. */
+export async function restoreEvolveConversation(
+  connection: EvolvePluginsConnection,
+  email: string,
+  conversationId: string,
+  options: CallOptions = {},
+): Promise<void> {
+  await callEvolveAssistants(
+    connection,
+    email,
+    { action: "conversations.restore", conversationId },
+    options,
+  );
+}
+
+/** Deletes one of the person's Evolve chats and its messages. */
+export async function deleteEvolveConversation(
+  connection: EvolvePluginsConnection,
+  email: string,
+  conversationId: string,
+  options: CallOptions = {},
+): Promise<void> {
+  await callEvolveAssistants(
+    connection,
+    email,
+    { action: "conversations.delete", conversationId },
+    options,
+  );
 }
 
 /** The whole conversation, oldest message first, for carrying it into a bot's chat. */

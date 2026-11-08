@@ -7,6 +7,7 @@ import type { createApp } from "@rakazo/api/app";
 import { resolveEncryptionKey } from "@rakazo/core";
 import { answerRunInput, runAsSystem, runAsTenant } from "@rakazo/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { enableCompanyFeatures } from "./company-features.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
 import { asSystem } from "./system-db.js";
 
@@ -48,6 +49,7 @@ describeIntegration("reusable credential lifecycle", () => {
       },
     });
     db = asSystem(handles.prisma);
+    await enableCompanyFeatures(handles.prisma, { personalVault: true });
   });
   afterAll(async () => {
     await handles?.stop();
