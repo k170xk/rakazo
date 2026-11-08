@@ -1822,6 +1822,43 @@ export const builtinAgentTools: ConnectorTool[] = [
     readOnly: true,
   },
   {
+    name: "evolve_infographics",
+    description:
+      "Create OCSC infographics with GPT Image on Evolve: clean diagrams, flows, icons and explainer graphics in the OCSC palette on a white canvas. Every item renders at the same time, so ask for all of a deck's infographics in one call; it takes one to three minutes. Returns each item's imageUrl (https) in order, or ok false for one that failed. Use them as slide visuals in ocsc-pptx, or in documents.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        infographics: {
+          type: "array",
+          minItems: 1,
+          maxItems: 12,
+          items: {
+            type: "object",
+            properties: {
+              title: {
+                type: "string",
+                maxLength: 200,
+                description: "The headline on the graphic.",
+              },
+              subtitle: { type: "string", maxLength: 300 },
+              topic: {
+                type: "string",
+                minLength: 1,
+                maxLength: 2000,
+                description:
+                  "What the graphic shows, specifically: the diagram, flow, stages, icons or figures, using the real facts.",
+              },
+            },
+            required: ["topic"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["infographics"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "evolve_plugin_status",
     description:
       "Whether the user may build Evolve plugins (the Plugin builder privilege in Evolve), and their plugins with each version's review status and the reviewers' notes. Call this before starting a plugin and when the user asks how a review is going.",

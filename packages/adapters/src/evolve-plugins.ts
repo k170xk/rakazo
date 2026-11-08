@@ -16,6 +16,7 @@ export interface EvolvePluginsConnection {
 
 export const EVOLVE_PLUGINS_AUDIENCE = "evolve-plugins";
 export const EVOLVE_ASSISTANTS_AUDIENCE = "evolve-assistants";
+export const EVOLVE_INFOGRAPHICS_AUDIENCE = "evolve-infographics";
 export const EVOLVE_PLUGINS_ISSUER = "ocsc-intelligence";
 const TOKEN_SECONDS = 120;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -110,6 +111,17 @@ export function callEvolveAssistants<T = Record<string, unknown>>(
 ): Promise<T> {
   const url = new URL("evolve-assistants", connection.url).toString();
   return postEvolve<T>(url, EVOLVE_ASSISTANTS_AUDIENCE, connection, email, body, options);
+}
+
+/** GPT Image infographics rendered on Evolve, every item at once. */
+export function callEvolveInfographics<T = Record<string, unknown>>(
+  connection: EvolvePluginsConnection,
+  email: string,
+  body: Record<string, unknown>,
+  options: { signal?: AbortSignal; fetch?: typeof fetch; timeoutMs?: number } = {},
+): Promise<T> {
+  const url = new URL("evolve-infographics", connection.url).toString();
+  return postEvolve<T>(url, EVOLVE_INFOGRAPHICS_AUDIENCE, connection, email, body, options);
 }
 
 async function postEvolve<T>(

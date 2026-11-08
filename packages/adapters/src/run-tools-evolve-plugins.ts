@@ -3,6 +3,7 @@ import { z } from "zod";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import {
   callEvolveAssistants,
+  callEvolveInfographics,
   callEvolvePlugins,
   EvolvePluginsError,
   fetchPluginBranch,
@@ -103,7 +104,40 @@ const KnowledgeSearchSchema = z
   })
   .strict();
 
+const InfographicsSchema = z
+  .object({
+    infographics: z
+      .array(
+        z
+          .object({
+            title: z.string().trim().max(200).optional(),
+            subtitle: z.string().trim().max(300).optional(),
+            topic: z.string().trim().min(1).max(2000),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(12),
+  })
+  .strict();
+
+/** GPT Image renders in parallel on Evolve; the slowest of a batch can take about three minutes. */
+const INFOGRAPHICS_TIMEOUT_MS = 200_000;
+
 export const evolvePluginTools: ToolHandlers = {
+  async evolve_infographics(ctx, call) {
+    const input = InfographicsSchema.safeParse(call.args);
+    if (!input.success) return call.finish({ error: issues(input.error) });
+    return withEvolve(ctx, call, (email) =>
+      callEvolveInfographics(
+        ctx.deps.evolvePlugins!,
+        email,
+        { infographics: input.data.infographics },
+        { signal: ctx.context.signal, timeoutMs: INFOGRAPHICS_TIMEOUT_MS },
+      ),
+    );
+  },
+
   async evolve_knowledge_search(ctx, call) {
     const assistantId = ctx.bot.evolveAssistantId;
     if (!assistantId)
