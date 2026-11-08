@@ -215,8 +215,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
       throw new Error(`${key} must be true or false`);
   }
   const passwordAuth = source.AUTH_PASSWORD_ENABLED !== "false";
-  if (!passwordAuth && !issuer)
-    throw new Error("AUTH_PASSWORD_ENABLED=false requires OIDC configuration");
+  if (!passwordAuth && !issuer && !optional(source.EVOLVE_COMPUTER_SSO_SECRET))
+    throw new Error("AUTH_PASSWORD_ENABLED=false requires OIDC or Evolve sign-in configuration");
   const oidc =
     issuer && clientId && clientSecret
       ? {

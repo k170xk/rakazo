@@ -390,6 +390,13 @@ describe("OIDC environment", () => {
   it("guards password-only lockout without contacting discovery", () => {
     expect(() => loadEnv({ ...base, AUTH_PASSWORD_ENABLED: "false" })).toThrow(/requires OIDC/);
     expect(loadEnv({ ...base, ...oidc, AUTH_PASSWORD_ENABLED: "false" }).passwordAuth).toBe(false);
+    const evolveOnly = loadEnv({
+      ...base,
+      AUTH_PASSWORD_ENABLED: "false",
+      EVOLVE_COMPUTER_SSO_SECRET: "evolve-secret",
+    });
+    expect(evolveOnly.passwordAuth).toBe(false);
+    expect(evolveOnly.evolveSsoStartUrl).toBe("https://evolve.ocsc.me/evolve-computer-login");
   });
   it("leaves the breached password check off unless explicitly enabled", () => {
     expect(loadEnv(base).breachedPasswordCheck).toBe(false);

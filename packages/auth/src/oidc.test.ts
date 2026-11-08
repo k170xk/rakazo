@@ -814,6 +814,7 @@ describe("OIDC callbacks", () => {
   });
   it("refuses password-off without an alternative", () => {
     expect(() => setup({ passwordAuth: false, oidc: undefined })).toThrow(/requires OIDC/);
+    expect(() => setup({ passwordAuth: false, oidc: undefined, evolveSso: true })).not.toThrow();
   });
 });
 

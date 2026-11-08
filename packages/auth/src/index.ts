@@ -79,6 +79,8 @@ export { resolveSignupPolicy } from "./signup-policy.js";
 export interface AuthEnv {
   analytics?: ProductAnalytics;
   passwordAuth?: boolean;
+  /** Evolve sign-in is configured, so password sign-in may be turned off without OIDC. */
+  evolveSso?: boolean;
   /** Opt-in: rejects new passwords found in Have I Been Pwned. Calls an outside service. */
   breachedPasswordCheck?: boolean;
   oidc?: OidcConfig;
@@ -169,8 +171,8 @@ export function authRateLimitOptions(nodeEnv = process.env.NODE_ENV) {
 }
 
 export function createAuth(prisma: PrismaClient, env: AuthEnv) {
-  if (env.passwordAuth === false && !env.oidc)
-    throw new Error("Password auth requires OIDC when disabled");
+  if (env.passwordAuth === false && !env.oidc && !env.evolveSso)
+    throw new Error("Password auth requires OIDC or Evolve sign-in when disabled");
   // A failed lookup still sends the email, in the asking browser's language.
   const emailLocaleOf: EmailLocaleOf = async (account, headers) => {
     try {
