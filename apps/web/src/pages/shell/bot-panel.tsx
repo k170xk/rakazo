@@ -25,6 +25,7 @@ import {
 } from "@rakazo/core";
 import {
   Button,
+  buttonVariants,
   Input,
   NativeSelect,
   NativeSelectOption,
@@ -38,7 +39,7 @@ import {
   Toggle,
 } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Settings, X } from "lucide-react";
+import { Download, MonitorOff, Settings, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Suspense, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -610,7 +611,14 @@ export function BotSettings({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="computer" className="pt-4">
-          {computer}
+          {me && !computersOn ? (
+            <NoComputerNotice
+              companyOff={me.features?.computers === false}
+              isAdmin={me.isAdmin === true}
+            />
+          ) : (
+            computer
+          )}
         </TabsContent>
         <TabsContent value="routines" className="pt-4">
           {routines}
@@ -1052,4 +1060,45 @@ function SettingsGroup({
 function humanizeTool(name: string) {
   const words = name.replaceAll("_", " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** Shown instead of a screen that would only be refused: the company or this person has no desktop. */
+function NoComputerNotice({ companyOff, isAdmin }: { companyOff: boolean; isAdmin: boolean }) {
+  return (
+    <div
+      data-testid="no-computer-notice"
+      className="grid aspect-[16/10] place-items-center rounded-[14px] bg-muted/40 px-6 text-center"
+    >
+      <div className="flex max-w-xs flex-col items-center gap-3">
+        <span className="grid size-10 place-items-center rounded-full bg-background text-muted-foreground">
+          <MonitorOff className="size-5" strokeWidth={1.75} aria-hidden />
+        </span>
+        <p className="text-sm font-medium">
+          {companyOff ? (
+            <Trans>Computers are off for the company</Trans>
+          ) : (
+            <Trans>No desktop on your account</Trans>
+          )}
+        </p>
+        <p className="text-[13px] text-muted-foreground">
+          <Trans>
+            Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve
+            tools. A desktop adds browsing, a shell and routines.
+          </Trans>
+        </p>
+        {isAdmin ? (
+          <Link
+            to={companyOff ? "/admin#features" : "/admin#computer"}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            <Trans>Change in Company admin</Trans>
+          </Link>
+        ) : (
+          <p className="text-[13px] text-muted-foreground">
+            <Trans>Ask your administrator if you need one.</Trans>
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
