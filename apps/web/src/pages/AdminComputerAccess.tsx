@@ -70,17 +70,19 @@ export function CompanyComputerAccessSection({
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           <Trans>
-            Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's
-            own private computer, with no shell, browser, screen or routines. Full: everything,
-            including browsing and routines. No computer: chat and Evolve tools only. Every person's
-            computer and files stay their own.
+            Word, PowerPoint, Excel and PDF documents always run on the company document runners,
+            for everyone. Tools only adds videos, with no shell, browser, screen or routines. Full:
+            everything, including browsing and routines. No computer: documents and Evolve tools
+            only. Every person's files stay their own.
           </Trans>
         </p>
       </div>
 
       {computersOn ? null : (
         <p className="text-sm text-muted-foreground">
-          <Trans>Computers are switched off above, so nobody has one.</Trans>
+          <Trans>
+            Computers are switched off above, so nobody has one. Documents still work for everyone.
+          </Trans>
         </p>
       )}
 

@@ -563,11 +563,16 @@ export const computerTools: ToolHandlers = {
     if (!OCSC_PROGRAMS.has(program)) {
       return call.finish({ error: `program must be one of ${[...OCSC_PROGRAMS].join(", ")}.` });
     }
-    const { runner } = ctx.computer;
+    const runner = ctx.computer.documents ?? ctx.computer.runner;
     if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {
       const held = await ocscBeforeRun(ctx, program, args);
       if (held) return call.finish(held);
       return runOcscOnRunner(ctx, call, runner, ctx.deps.toolRunner, program, args);
+    }
+    if (ctx.computer.computerOff) {
+      return call.finish({
+        error: `ocsc ${program} needs a computer, and this person has none. Word, PowerPoint, Excel and PDF documents still work; an administrator can give computer access for videos.`,
+      });
     }
     if (ctx.computer.folder) {
       return call.finish({

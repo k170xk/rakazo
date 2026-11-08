@@ -2215,8 +2215,12 @@ msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TO
 msgstr "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, novita, daytona, or boat with its API key. Recreate the stack after changing .env."
 
 #: src/pages/AdminComputerAccess.tsx
-msgid "Computers are switched off above, so nobody has one."
-msgstr "Computers are switched off above, so nobody has one."
+#~ msgid "Computers are switched off above, so nobody has one."
+#~ msgstr "Computers are switched off above, so nobody has one."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computers are switched off above, so nobody has one. Documents still work for everyone."
+msgstr "Computers are switched off above, so nobody has one. Documents still work for everyone."
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Computers running"
@@ -3710,8 +3714,12 @@ msgid "Duplicate"
 msgstr "Duplicate"
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills."
-msgstr "Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills."
+#~ msgid "Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills."
+#~ msgstr "Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Each assistant's cloud computer, browser, routines and videos. Word, PowerPoint, Excel and PDF documents keep working when off: they run on the company document runners."
+msgstr "Each assistant's cloud computer, browser, routines and videos. Word, PowerPoint, Excel and PDF documents keep working when off: they run on the company document runners."
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Each name can be used once."
@@ -8829,8 +8837,8 @@ msgid "Tools only"
 msgstr "Tools only"
 
 #: src/pages/AdminComputerAccess.tsx
-msgid "Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's own private computer, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: chat and Evolve tools only. Every person's computer and files stay their own."
-msgstr "Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's own private computer, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: chat and Evolve tools only. Every person's computer and files stay their own."
+#~ msgid "Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's own private computer, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: chat and Evolve tools only. Every person's computer and files stay their own."
+#~ msgstr "Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's own private computer, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: chat and Evolve tools only. Every person's computer and files stay their own."
 
 #: src/pages/AdminStaffSpending.tsx
 msgid "Total cost"
@@ -9445,6 +9453,10 @@ msgstr "Word (.docx), PDF and text files. The text is copied in for you to check
 #: src/components/ArtifactFileCard.tsx
 msgid "Word document"
 msgstr "Word document"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Word, PowerPoint, Excel and PDF documents always run on the company document runners, for everyone. Tools only adds videos, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: documents and Evolve tools only. Every person's files stay their own."
+msgstr "Word, PowerPoint, Excel and PDF documents always run on the company document runners, for everyone. Tools only adds videos, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: documents and Evolve tools only. Every person's files stay their own."
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Words and terms"

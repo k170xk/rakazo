@@ -6,7 +6,7 @@ import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
 } from "@rakazo/adapter-kit";
-import type { MessageBlock, ModelRoleChoice, RunStatus } from "@rakazo/contracts";
+import type { ComputerAccess, MessageBlock, ModelRoleChoice, RunStatus } from "@rakazo/contracts";
 import { disabledBuiltinToolSet } from "@rakazo/contracts";
 import {
   assertTransition,
@@ -721,7 +721,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 sourceClientNonce: messagingSource?.clientNonce,
               }))
             : false);
-        const computerAccess = runComputerAccess(
+        const personAccess = runComputerAccess(
           await computerAccessFor(deps.prisma, bot.userId),
           nonOwnerChatRun,
         );
@@ -1262,8 +1262,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             },
           );
         };
+        // The OCSC document commands run on the tool runners for everyone, whatever their computer.
         const runnerWorkspace =
-          deps.toolRunner && deps.dataDir && (runFolder || computerAccess === "tools")
+          deps.toolRunner && deps.dataDir
             ? toolRunnerWorkspace({
                 dataDir: deps.dataDir,
                 homePath: localHomePath(deps.home, storedComputer.homeKey, deps.dataDir),
@@ -1272,6 +1273,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 folder: runFolder,
               })
             : undefined;
+        // With computers off, the runners still give people the document commands and their files.
+        const computerAccess: ComputerAccess =
+          personAccess === "none" && runnerWorkspace ? "tools" : personAccess;
         let runToolRunner: RunToolRunner | undefined;
         if (runnerWorkspace) {
           const files = folderFiles(runnerWorkspace.base);
@@ -1488,7 +1492,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             followUpFromUser: sourceMessage?.role === "user",
             userComputer: userComputer === "connected",
             userComputerScreen,
-            computersEnabled: companyFeatures().computers,
+            // The document runners keep the file tools and ocsc when company computers are off.
+            computersEnabled: companyFeatures().computers || computerAccess !== "none",
             computerAccess,
             connectedAppsEnabled: companyFeatures().connectedApps,
             mcpServersEnabled: companyFeatures().mcpServers,
@@ -1603,7 +1608,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             : `Commands run on the user's ${hostEnvironment.platform} computer with their account permissions. ${hostShell} Local files outside the bot workspace can be accessed through commands. App launching is available through OS commands; graphical screen control is unavailable.`;
         const computerInstruction =
           computerAccess !== "full"
-            ? limitedComputerInstruction(computerAccess, Boolean(runFolder))
+            ? limitedComputerInstruction(
+                computerAccess,
+                Boolean(runFolder),
+                personAccess === "none",
+              )
             : [
                 "Use the computer only when the task needs files, commands, a browser, or an installed application. Answer directly from the conversation when sufficient; use connected tools for app data. A website with no connected app is still yours to use in the computer's browser, now and in scheduled routines, so a missing connection alone is never a reason to decline. Do not inspect the computer just to prepare for an unrelated task. If what you are about to buy, send or submit differs from what the user confirmed, such as a changed item or total, show the difference and confirm again first.",
                 hostInstruction
@@ -1714,8 +1723,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             acceptsImages,
             heldForTakeover,
             access: computerAccess,
+            computerOff: personAccess === "none",
             folder: runFolder,
-            runner: runToolRunner,
+            runner: computerAccess === "full" && !runFolder ? undefined : runToolRunner,
+            documents: runToolRunner,
           },
           tools: {
             offered: tools,

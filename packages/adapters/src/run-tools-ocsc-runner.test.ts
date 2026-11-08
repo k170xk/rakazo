@@ -12,7 +12,12 @@ vi.mock("./ocsc-tool.js", async (importOriginal) => ({
 
 const workspace = { base: "/data/tool-work", mount: "tool-work/conversations/t1", cwd: "" };
 
-function harness(options: { folder?: string; runner?: boolean }) {
+function harness(options: {
+  folder?: string;
+  runner?: boolean;
+  documents?: boolean;
+  computerOff?: boolean;
+}) {
   const run = vi.fn(async () => ({ stdout: '{"ok":true}', stderr: "", code: 0 }));
   const prepare = vi.fn(async () => {});
   const computerGet = vi.fn(async () => {
@@ -41,6 +46,8 @@ function harness(options: { folder?: string; runner?: boolean }) {
       get: computerGet,
       checkpoint: { markDirty: () => {} },
       runner: options.runner ? { workspace, files, prepare } : undefined,
+      documents: options.documents ? { workspace, files, prepare } : undefined,
+      computerOff: options.computerOff,
     },
   };
   const call = (args: Record<string, unknown>, name = "ocsc") => ({
@@ -74,6 +81,27 @@ describe("ocsc on a tool runner", () => {
       h.call({ program: "video", args: ["render"] }) as never,
     )) as { error?: string };
     expect(result.error).toMatch(/not available in a shared chat/);
+    expect(h.run).not.toHaveBeenCalled();
+    expect(h.computerGet).not.toHaveBeenCalled();
+  });
+
+  it("runs a full-computer person's documents on a runner, not their computer", async () => {
+    const h = harness({ documents: true });
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "pptx", args: ["new", "--spec", "work/deck.json"] }) as never,
+    );
+    expect(h.run).toHaveBeenCalledWith(expect.objectContaining({ program: "pptx" }));
+    expect(h.computerGet).not.toHaveBeenCalled();
+  });
+
+  it("refuses video without starting a computer when the person has none", async () => {
+    const h = harness({ runner: true, documents: true, computerOff: true });
+    const result = (await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "video", args: ["render"] }) as never,
+    )) as { error?: string };
+    expect(result.error).toMatch(/needs a computer/);
     expect(h.run).not.toHaveBeenCalled();
     expect(h.computerGet).not.toHaveBeenCalled();
   });

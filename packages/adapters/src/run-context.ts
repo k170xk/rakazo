@@ -219,13 +219,17 @@ export interface RunComputerContext {
   heldForTakeover: boolean;
   /** What this run may do on the computer; a colleague's turn never gets more than "tools". */
   access: ComputerAccess;
+  /** The person has no computer: only the tool runners' document commands and files work. */
+  computerOff?: boolean;
   /** Set on a colleague's turn: its files and OCSC commands stay in this folder, away from the owner's. */
   folder: string | undefined;
   /**
-   * Set when this run's files and document commands go to the tool runners instead of a
-   * computer: every colleague turn, and Tools-only people's own turns.
+   * Set when this run's file tools go to the tool runner folder instead of a computer:
+   * every colleague turn, and the own turns of people without full computer access.
    */
   runner?: RunToolRunner;
+  /** Where the OCSC document commands run for every run, full computer access included. */
+  documents?: RunToolRunner;
 }
 
 export interface RunToolRunner {
