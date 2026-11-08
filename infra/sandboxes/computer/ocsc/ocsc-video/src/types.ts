@@ -165,13 +165,39 @@ export interface ImageSceneConfig {
   kenBurns?: boolean;
 }
 
+export type InfographicStyle =
+  | "full"
+  | "side"
+  | "cards"
+  | "steps"
+  | "checklist"
+  | "stats"
+  | "statement";
+
+export interface InfographicPoint {
+  title?: string;
+  text?: string;
+}
+
+export interface InfographicStat {
+  value: string;
+  label?: string;
+}
+
 /**
- * Full-bleed single-image scene for AI-generated infographics (Gemini outputs).
- * Identical layout to the image showcase but with NO Ken Burns zoom and NO caption/badge.
+ * An OCSC Vision Intelligence infographic (drawn without text) with the scene's words laid out
+ * around it in a slide style; "full" shows the picture alone, edge to edge.
  */
 export interface InfographicSceneConfig {
   type: "infographic";
   imageUrl: string;
+  style?: InfographicStyle;
+  heading?: string;
+  subheading?: string;
+  bullets?: string[];
+  points?: InfographicPoint[];
+  stats?: InfographicStat[];
+  statement?: string;
   duration: number;
   transition?: TransitionType;
   voiceover?: VoiceoverConfig;

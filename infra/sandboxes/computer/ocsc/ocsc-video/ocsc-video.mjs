@@ -208,7 +208,11 @@ const SCENES = {
     needs: ["imageUrl"],
     fields: "imageUrl, caption, kenBurns (full bleed)",
   },
-  infographic: { needs: ["imageUrl"], fields: "imageUrl (full bleed)" },
+  infographic: {
+    needs: ["imageUrl"],
+    fields:
+      "imageUrl, style (side|cards|steps|checklist|stats|statement|full), heading, subheading, bullets[], points[{title,text}], stats[{value,label}], statement",
+  },
   image_grid: {
     needs: ["images"],
     fields:
@@ -372,12 +376,15 @@ const EXPLAIN = {
     seconds: "4-6",
   },
   infographic: {
-    shows: "One graphic filling the frame: an infographic, a drawing, a plan or a chart image.",
-    use_for: "Showing a ready-made graphic or drawing in full.",
-    instead: "image for a photo.",
-    fits: "A landscape image; no text is added.",
-    media: "image (required)",
-    seconds: "5-8",
+    shows:
+      "An OCSC Vision Intelligence infographic (from evolve_infographics, drawn without text) with the scene's heading and words laid out around it and building in, like the OCSC slides. Styles: side (bullets beside the picture), cards (2-4 numbered points), steps (3-5 points in a row under a wide picture), checklist (2-5 ticked rows), stats (1-3 big figures beside it, or 4-5 in a row under it), statement (one bold sentence, highlighted, with up to 2 short lines), full (the picture alone, edge to edge). Without style the content decides.",
+    use_for:
+      "The video's key ideas, processes, systems and explanations: the main visual of most content scenes.",
+    instead:
+      "image for a photo; process_steps or progress-steps when there is no infographic; stats or a chart template for figures without a picture.",
+    fits: "Heading under 8 words; points' text up to 10 words; bullets under 12 words.",
+    media: "infographic image (required): an imageUrl from evolve_infographics",
+    seconds: "6-9",
   },
   image_grid: {
     shows:
@@ -504,6 +511,31 @@ function loadSpec(o) {
   return { spec, config, problems: validate(config, spec) };
 }
 
+const INFOGRAPHIC_STYLES = ["full", "side", "cards", "steps", "checklist", "stats", "statement"];
+
+/** What an infographic scene's style needs, as the slides check it. */
+function infographicProblems(scene, at) {
+  const problems = [];
+  const count = (list) => (Array.isArray(list) ? list.length : 0);
+  const items = count(scene.points) || count(scene.bullets);
+  const range = (n, lo, hi, what) => {
+    if (n < lo || n > hi) problems.push(`${at} (infographic, ${scene.style}) needs ${what}.`);
+  };
+  if (scene.style === undefined) return problems;
+  if (!INFOGRAPHIC_STYLES.includes(scene.style)) {
+    problems.push(`${at}.style must be one of ${INFOGRAPHIC_STYLES.join(", ")}.`);
+    return problems;
+  }
+  if (scene.style === "cards") range(items, 2, 4, '2 to 4 "points" ({"title","text"})');
+  if (scene.style === "steps") range(items, 3, 5, '3 to 5 "points" ({"title","text"})');
+  if (scene.style === "checklist") range(items, 2, 5, '2 to 5 "points" or "bullets"');
+  if (scene.style === "side") range(items, 1, 4, '1 to 4 "bullets"');
+  if (scene.style === "stats") range(count(scene.stats), 1, 5, '1 to 5 "stats" ({"value","label"})');
+  if (scene.style === "statement" && !scene.statement)
+    problems.push(`${at} (infographic, statement) needs "statement": one bold sentence.`);
+  return problems;
+}
+
 function validate(config, spec) {
   const problems = [];
   if (!config || typeof config !== "object") return ["The spec must be a JSON object."];
@@ -538,6 +570,7 @@ function validate(config, spec) {
       if (v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0))
         problems.push(`${at} (${scene.type}) needs ${field}.`);
     }
+    if (scene.type === "infographic") problems.push(...infographicProblems(scene, at));
     if (scene.type === "template" && typeof scene.template === "string") {
       if (!catalogue()[scene.template])
         problems.push(

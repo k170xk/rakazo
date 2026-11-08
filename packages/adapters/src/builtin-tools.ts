@@ -1837,7 +1837,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "evolve_infographics",
     description:
-      "Create OCSC infographics with OCSC Vision Intelligence on Evolve (call it that when you mention it to the person; never name the model behind it): clean diagrams, flows, icons and explainer graphics in the OCSC palette on a white canvas. They contain no text unless withText is true, so the words stay editable on the slide or page. Every item renders at the same time, so ask for all of a deck's infographics in one call; it takes one to three minutes. Returns each item's imageUrl (https) in order, or ok false for one that failed. Use them as slide visuals in ocsc-pptx, or in documents.",
+      "Create OCSC infographics with OCSC Vision Intelligence on Evolve (call it that when you mention it to the person; never name the model behind it): clean diagrams, flows, icons and explainer graphics in the OCSC palette on a white canvas. They contain no text unless withText is true, so the words stay editable on the slide or page. Every item renders at the same time, so ask for all of a deck's infographics in one call; it takes one to three minutes. Returns each item's imageUrl (https) in order, or ok false for one that failed. Use them as slide visuals in ocsc-pptx, as infographic scenes in ocsc-video, or in documents.",
     inputSchema: {
       type: "object",
       properties: {

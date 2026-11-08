@@ -16,7 +16,7 @@ import { FullscreenTextScene } from "./FullscreenTextScene";
 import { IconListScene } from "./IconListScene";
 import { ImageGridScene } from "./ImageGridScene";
 import { ImageScene } from "./ImageScene";
-import { InfographicScene } from "./InfographicScene";
+import { InfographicScene, infographicStyle } from "./InfographicScene";
 import { LogoWallScene } from "./LogoWallScene";
 import { MapCalloutScene } from "./MapCalloutScene";
 import { Picture } from "./Picture";
@@ -70,7 +70,7 @@ export const TrainingVideo: React.FC<TrainingVideoProps> = ({
         const isFullBleed =
           scene.type === "image" ||
           scene.type === "video" ||
-          scene.type === "infographic" ||
+          (scene.type === "infographic" && infographicStyle(scene) === "full") ||
           (scene.type === "custom" && !scene.branded) ||
           (scene.type === "template" &&
             !(scene.branded ?? !(meta?.fullBleed || meta?.kind === "shot")));
@@ -141,6 +141,13 @@ export const TrainingVideo: React.FC<TrainingVideoProps> = ({
                   imageUrl={scene.imageUrl}
                   brandColor={brandColor}
                   background={scene.background}
+                  style={scene.style}
+                  heading={scene.heading}
+                  subheading={scene.subheading}
+                  bullets={scene.bullets}
+                  points={scene.points}
+                  stats={scene.stats}
+                  statement={scene.statement}
                 />
               )}
               {scene.type === "closing" && (
