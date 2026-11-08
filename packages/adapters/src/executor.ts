@@ -68,6 +68,7 @@ import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import { companyFeatures, companyModel, liveDeploymentModelConfigured } from "./company-policy.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
+import { computerAccessFor, runComputerAccess } from "./computer-access.js";
 import { diskNoteInstruction, recordComputerDisk } from "./computer-disk.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import type { ComputerExecutionLease } from "./computer-lifecycle.js";
@@ -86,7 +87,7 @@ import {
   PINNED_COMPUTER_MODEL_LOST_RUN_ERROR,
   resolveComputerRunModel,
 } from "./computer-model-settings.js";
-import { teamBotWorkspaceDirectory } from "./computer-support.js";
+import { conversationFolder, teamBotWorkspaceDirectory } from "./computer-support.js";
 import { checkpointRunComputerWorkspace } from "./computer-workspace.js";
 import {
   connectedContext,
@@ -149,6 +150,7 @@ import { APPROVED_EFFECT_REPLAY_ORDER, buildApprovalContinuation } from "./run-e
 import {
   BOT_DIRECTORY_LIMIT,
   dockerComputerToolInstruction,
+  limitedComputerInstruction,
   persistentComputerInstruction,
   runIdentityInstruction,
   threadContextForRun,
@@ -194,6 +196,7 @@ import {
 } from "./run-routines.js";
 import {
   BUILTIN_AGENT_TOOL_NAMES,
+  computerAccessRefusal,
   evolvePluginsOffered,
   followUpsOffered,
   offeredFleetTools,
@@ -709,6 +712,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 sourceClientNonce: messagingSource?.clientNonce,
               }))
             : false);
+        const computerAccess = runComputerAccess(
+          await computerAccessFor(deps.prisma, bot.userId),
+          nonOwnerChatRun,
+        );
+        const runFolder = nonOwnerChatRun ? conversationFolder(thread.id) : undefined;
         const historySearchBeforeSeq =
           contextStrategy !== "current" && run.sourceMessageId
             ? (messages.find((message) => message.id === run.sourceMessageId)?.seq ??
@@ -1164,6 +1172,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const recentFilesInput = {
           context,
           computerMode,
+          folder: runFolder,
           skipMessageId: currentTurnMessage?.id,
           maxTurns: RECENT_TURN_IMAGE_TURNS,
         };
@@ -1225,6 +1234,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                         context,
                         computer: async () => computer,
                         computerMode,
+                        folder: runFolder,
                         markWorkspaceDirty: workspaceCheckpoint.markDirty,
                       },
                     );
@@ -1374,6 +1384,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         let userComputerScreen = false;
         if (
           userComputerOwnerId &&
+          computerAccess === "full" &&
           deps.userDevices &&
           !disabledBuiltinTools.has(USER_COMPUTER_SHELL_TOOL)
         ) {
@@ -1414,9 +1425,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             userComputer: userComputer === "connected",
             userComputerScreen,
             computersEnabled: companyFeatures().computers,
+            computerAccess,
             connectedAppsEnabled: companyFeatures().connectedApps,
             mcpServersEnabled: companyFeatures().mcpServers,
-            routinesEnabled: companyFeatures().routines,
+            routinesEnabled: companyFeatures().routines && computerAccess === "full",
             evolvePluginsEnabled: Boolean(deps.evolvePlugins) && companyFeatures().evolvePlugins,
             evolveKnowledgeEnabled: Boolean(deps.evolvePlugins && bot.evolveAssistantId),
             evolveInfographicsEnabled: Boolean(deps.evolvePlugins),
@@ -1483,15 +1495,22 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           select: { kind: true, request: true, idempotencyKey: true },
         });
         const approvedEffectReplays = createApprovedEffectReplayQueue(approvedEffects);
+        // Instructions name only the tools this person's computer access allows.
+        const instructionDisabledTools = new Set([
+          ...disabledBuiltinTools,
+          ...[...BUILTIN_AGENT_TOOL_NAMES].filter((name) =>
+            computerAccessRefusal(name, computerAccess),
+          ),
+        ]);
         const baseComputerInstruction = persistentComputerInstruction({
           heldForTakeover,
           graphicalToolsAllowed,
           graphical,
-          disabled: disabledBuiltinTools,
+          disabled: instructionDisabledTools,
         });
         const dockerToolInstruction = dockerComputerToolInstruction(
           computerKind,
-          disabledBuiltinTools,
+          instructionDisabledTools,
         );
         const hostEnvironment =
           computerKind && usesNativeShell(computerKind)
@@ -1518,21 +1537,27 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           : computerKind === "wuying"
             ? `Commands run on a Windows cloud computer. ${hostShell} Files outside the bot workspace can be accessed through commands. The screen shows the Windows desktop; use the graphical tools for apps without a command line.`
             : `Commands run on the user's ${hostEnvironment.platform} computer with their account permissions. ${hostShell} Local files outside the bot workspace can be accessed through commands. App launching is available through OS commands; graphical screen control is unavailable.`;
-        const computerInstruction = [
-          "Use the computer only when the task needs files, commands, a browser, or an installed application. Answer directly from the conversation when sufficient; use connected tools for app data. A website with no connected app is still yours to use in the computer's browser, now and in scheduled routines, so a missing connection alone is never a reason to decline. Do not inspect the computer just to prepare for an unrelated task. If what you are about to buy, send or submit differs from what the user confirmed, such as a changed item or total, show the difference and confirm again first.",
-          hostInstruction
-            ? `${baseComputerInstruction} ${hostInstruction}`
-            : dockerToolInstruction
-              ? `${baseComputerInstruction} ${dockerToolInstruction}`
-              : baseComputerInstruction,
-          diskNoteInstruction(storedComputer),
-        ]
-          .filter(Boolean)
-          .join(" ");
-        const workspaceInstruction =
-          computerMode === "team"
-            ? `Your Team Computer home is ${teamBotWorkspaceDirectory(bot.id)}. Relative file paths and shell working directories start there. Put intentionally shared work under shared/. Other bots' folders are visible under bots/; treat them as their working areas.`
-            : "This entire computer workspace is your private home. Relative file paths and shell working directories start at its root.";
+        const computerInstruction =
+          computerAccess !== "full"
+            ? limitedComputerInstruction(computerAccess, Boolean(runFolder))
+            : [
+                "Use the computer only when the task needs files, commands, a browser, or an installed application. Answer directly from the conversation when sufficient; use connected tools for app data. A website with no connected app is still yours to use in the computer's browser, now and in scheduled routines, so a missing connection alone is never a reason to decline. Do not inspect the computer just to prepare for an unrelated task. If what you are about to buy, send or submit differs from what the user confirmed, such as a changed item or total, show the difference and confirm again first.",
+                hostInstruction
+                  ? `${baseComputerInstruction} ${hostInstruction}`
+                  : dockerToolInstruction
+                    ? `${baseComputerInstruction} ${dockerToolInstruction}`
+                    : baseComputerInstruction,
+                diskNoteInstruction(storedComputer),
+              ]
+                .filter(Boolean)
+                .join(" ");
+        const workspaceInstruction = runFolder
+          ? "Relative file paths start in this conversation's own folder."
+          : computerAccess === "none"
+            ? ""
+            : computerMode === "team"
+              ? `Your Team Computer home is ${teamBotWorkspaceDirectory(bot.id)}. Relative file paths and shell working directories start there. Put intentionally shared work under shared/. Other bots' folders are visible under bots/; treat them as their working areas.`
+              : "This entire computer workspace is your private home. Relative file paths and shell working directories start at its root.";
 
         const reply = await createReplyState(deps, run, runSecrets);
         const script = scripted ? inferScript(task.prompt, takeoverResume?.checkpoint) : undefined;
@@ -1624,6 +1649,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             pageBrowserAllowed,
             acceptsImages,
             heldForTakeover,
+            access: computerAccess,
+            folder: runFolder,
           },
           tools: {
             offered: tools,
@@ -1927,7 +1954,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                         .map((tool) => tool.name)
                         .filter((name) => !strategicBuiltins.some((tool) => tool.name === name)),
                     )
-                  : disabledBuiltinTools,
+                  : instructionDisabledTools,
                 offeredFleetTools: offeredFleetTools(strategicBuiltins),
                 followUpsOffered: followUpsOffered(strategicBuiltins, ownerStartedRun),
                 evolvePluginsOffered: evolvePluginsOffered(strategicBuiltins),

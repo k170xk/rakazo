@@ -169,7 +169,10 @@ export function SettingsOverlays({
           modelsAllowed={
             bootstrapMe?.features?.memberModels !== false || bootstrapMe?.isAdmin === true
           }
-          computersAllowed={bootstrapMe?.features?.computers !== false}
+          computersAllowed={
+            bootstrapMe?.features?.computers !== false &&
+            (bootstrapMe?.computerAccess ?? "full") === "full"
+          }
           paymentWalletProvider={bootstrapMe?.paymentWalletProvider ?? null}
           timezone={bootstrapMe?.timezone ?? null}
           onTimezoneChange={async (timezone) => {

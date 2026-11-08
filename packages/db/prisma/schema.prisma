@@ -43,6 +43,8 @@ model User {
   marketingEmailOptOutAt      DateTime?
   /// When an organization this person owns first subscribed or was given free own-key days.
   billingTrialUsedAt          DateTime?
+  /// "full", "tools" or "none" as an admin set it; null follows the company default.
+  computerAccess              String?
   sessions                    Session[]
   accounts                    Account[]
   passkeys                    Passkey[]
@@ -954,6 +956,26 @@ model EvolveConversationLink {
   @@index([userId, spaceId])
   @@index([botId])
   @@map("evolve_conversation_links")
+}
+
+/// One video render holding or waiting for a shared render slot, one row per bot's computer
+/// folder. Slots are handed out oldest first so no one person's renders crowd others out.
+model HeavyToolJob {
+  /// "<userId>:<botId>": the folder a render runs in, which runs one render at a time.
+  key       String   @id
+  userId    String
+  botId     String
+  /// "queued" or "running".
+  state     String
+  /// The render's own job id once it started.
+  jobRef    String?
+  createdAt DateTime @default(now())
+  /// When the bot last asked about the job; stale rows give their place up.
+  touchedAt DateTime @default(now())
+  startedAt DateTime?
+
+  @@index([state, createdAt])
+  @@map("heavy_tool_jobs")
 }
 
 model Message {

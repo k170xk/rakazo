@@ -9,7 +9,7 @@ import {
 } from "@rakazo/core";
 import { IsolationError, Prisma } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
-import { requireCompanyFeature } from "../company-admin.js";
+import { requireCompanyFeature, requireFullComputer } from "../company-admin.js";
 import { assertRoutineModel } from "../model-pins.js";
 import { listRoutineRuns } from "../routine-runs.js";
 import {
@@ -61,6 +61,7 @@ export function routinesRoutes(ctx: RouterContext) {
       }),
       create: authed.routines.create.handler(async ({ context, input }) => {
         await requireCompanyFeature(deps, context.actor, "routines");
+        await requireFullComputer(deps, context.actor);
         assertRoutineSchedule(input);
         const bot = await repos.getBot(context.actor, input.botId);
         if (input.watch) {
@@ -326,6 +327,7 @@ export function routinesRoutes(ctx: RouterContext) {
       }),
       testRun: authed.routines.testRun.handler(async ({ context, input }) => {
         await requireCompanyFeature(deps, context.actor, "routines");
+        await requireFullComputer(deps, context.actor);
         const target = await routineTestTarget(deps.prisma, repos, context.actor, input.routineId);
         const { threadId } = target;
         // The previous release stored the key without the user id; a retry still replays it.

@@ -29,6 +29,8 @@ if (!process.env.VERIFY_PROVIDERS) {
   process.env.RAKAZO_LIVE_MODEL_CATALOG = "off";
   process.env.AGENT_RUNTIME = "scripted";
   process.env.SANDBOX_PROVIDER = "fake";
+  // Tests drive the whole computer unless they set a narrower level themselves.
+  process.env.RAKAZO_COMPUTER_ACCESS_DEFAULT = "full";
   process.env.CLOUD_AGENT_PROVIDER = "emulator";
   process.env.MEDIA_GENERATION_PROVIDER = "disabled";
   delete process.env.MEDIA_GENERATION_API_KEY;

@@ -7,7 +7,11 @@ import { noteComputerTaskStep } from "./run-progress.js";
 import type { ToolHandler } from "./run-tool-gate.js";
 import { auditToolCall, gateToolCall } from "./run-tool-gate.js";
 import { prepareToolRequest, resolveToolRequest } from "./run-tool-request.js";
-import { PAGE_BROWSER_TOOL_NAMES } from "./run-tool-selection.js";
+import {
+  computerAccessRefusal,
+  drivesComputer,
+  PAGE_BROWSER_TOOL_NAMES,
+} from "./run-tool-selection.js";
 import { computerTools, pageBrowserTool } from "./run-tools-computer.js";
 import { evolvePluginTools } from "./run-tools-evolve-plugins.js";
 import { feedbackTools } from "./run-tools-feedback.js";
@@ -103,6 +107,10 @@ async function dispatchTool(
   }
   const request = await resolveToolRequest(ctx, name, args, executionId);
   if ("error" in request) return request;
+  if (drivesComputer(request.name)) {
+    const accessRefusal = computerAccessRefusal(request.name, ctx.computer.access);
+    if (accessRefusal) return { error: accessRefusal };
+  }
   const refused = await prepareToolRequest(ctx, request);
   if (refused) return refused;
   noteComputerTaskStep(ctx.state.reply, request.name);

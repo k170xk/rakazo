@@ -156,6 +156,7 @@ describe("Parallel through the ordinary bot caller", () => {
       },
     } as unknown as AgentRuntime;
     const fixture = executorFixture(runtime);
+    fixture.prisma.user.findUnique.mockResolvedValueOnce(null);
     if (state === "failure") {
       fixture.prisma.user.findUnique.mockRejectedValueOnce(new Error("lookup unavailable"));
     } else if (state === "saved") {

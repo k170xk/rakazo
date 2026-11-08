@@ -4,7 +4,7 @@ import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
 import { redactSecrets } from "@rakazo/core";
 import { getLogger } from "@rakazo/logging";
 import { JSDOM } from "jsdom";
-import { displayBotWorkspacePath, resolveBotWorkspacePath } from "./computer-support.js";
+import { displayBotWorkspacePath, resolveRunFilePath } from "./computer-support.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { PlotSpec } from "./plot-tool.js";
 import {
@@ -21,6 +21,8 @@ import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
 export type RunWorkspace = {
   botId: string;
   computerMode: ComputerMode;
+  /** A colleague's turn: every path stays in this conversation folder. */
+  folder?: string;
   computer: () => Promise<ComputerRef>;
   markDirty: () => void;
   context: AdapterContext;
@@ -29,16 +31,33 @@ export type RunWorkspace = {
 
 const MAX_MODEL_FILE_BYTES = 250_000;
 
+function runFileWorkspace(workspace: RunWorkspace) {
+  return { mode: workspace.computerMode, botId: workspace.botId, folder: workspace.folder };
+}
+
+function displayRunFilePath(workspace: RunWorkspace, requestedPath: string, storedPath: string) {
+  const { folder } = workspace;
+  if (!folder) {
+    return displayBotWorkspacePath(
+      workspace.computerMode,
+      workspace.botId,
+      requestedPath,
+      storedPath,
+    );
+  }
+  return storedPath.startsWith(`${folder}/`) ? storedPath.slice(folder.length + 1) : storedPath;
+}
+
 export async function listFilesFromTool(
   sandbox: SandboxProvider,
   workspace: RunWorkspace,
   args: Record<string, unknown>,
 ) {
-  const { botId, computerMode, computer, context, runSecrets } = workspace;
+  const { computer, context, runSecrets } = workspace;
   const requestedPath = String(args.path ?? "");
   const entries = await sandbox.listFiles(
     await computer(),
-    resolveBotWorkspacePath(computerMode, botId, requestedPath),
+    resolveRunFilePath(runFileWorkspace(workspace), requestedPath),
     context,
   );
   return {
@@ -46,10 +65,7 @@ export async function listFilesFromTool(
     entries: entries.map((entry) => ({
       ...entry,
       // A file name can carry a value an earlier command or page wrote.
-      path: redactSecrets(
-        displayBotWorkspacePath(computerMode, botId, requestedPath, entry.path),
-        runSecrets,
-      ),
+      path: redactSecrets(displayRunFilePath(workspace, requestedPath, entry.path), runSecrets),
     })),
   };
 }
@@ -59,9 +75,9 @@ export async function readFileFromTool(
   workspace: RunWorkspace,
   args: Record<string, unknown>,
 ) {
-  const { botId, computerMode, computer, context, runSecrets } = workspace;
+  const { computer, context, runSecrets } = workspace;
   const filePath = String(args.path ?? "");
-  const storedPath = resolveBotWorkspacePath(computerMode, botId, filePath);
+  const storedPath = resolveRunFilePath(runFileWorkspace(workspace), filePath);
   let bytes: Uint8Array;
   try {
     bytes = await sandbox.readFile(await computer(), storedPath, context, {
@@ -112,7 +128,7 @@ export async function renderPlotFromTool(
   workspace: RunWorkspace,
   finish: (result: unknown) => Promise<unknown>,
 ) {
-  const { botId, computerMode, computer, context, runSecrets } = workspace;
+  const { computer, context, runSecrets } = workspace;
   if (args.charts !== undefined) {
     const query = typeof args.charts === "string" ? args.charts : undefined;
     return {
@@ -133,7 +149,7 @@ export async function renderPlotFromTool(
     if (!rows && dataPath) {
       const bytes = await deps.sandbox.readFile(
         await computer(),
-        resolveBotWorkspacePath(computerMode, botId, dataPath),
+        resolveRunFilePath(runFileWorkspace(workspace), dataPath),
         context,
         { maxBytes: deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES },
       );
@@ -151,7 +167,7 @@ export async function renderPlotFromTool(
     await deps.sandbox.writeFile(
       await computer(),
       {
-        path: resolveBotWorkspacePath(computerMode, botId, outPath),
+        path: resolveRunFilePath(runFileWorkspace(workspace), outPath),
         content: png,
       },
       context,
@@ -186,7 +202,7 @@ export async function renderPlotFromTool(
         {
           spaceId: run.spaceId,
           userId: run.userId,
-          botId,
+          botId: workspace.botId,
           runId: run.id,
           filePath: outPath,
           bytes: png,
@@ -202,7 +218,8 @@ export async function renderPlotFromTool(
       error instanceof Error ? error.message : String(error),
       runSecrets,
     );
-    if (!checkingSpec) getLogger().error(`render_plot failed for bot ${botId}: ${message}`);
+    if (!checkingSpec)
+      getLogger().error(`render_plot failed for bot ${workspace.botId}: ${message}`);
     return finish({
       error: message,
       hint: 'Call render_plot with {"charts": true} for runnable example specs, or {"help": true} for the full guide.',

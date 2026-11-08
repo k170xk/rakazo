@@ -56,6 +56,7 @@ import {
   recordComputerRunEnd,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
+import { requireFullComputer } from "../company-admin.js";
 import { scrollPoint } from "../computer-input.js";
 import {
   executionBlocksUserTakeover,
@@ -334,6 +335,7 @@ export function computerRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       takeover: authed.computer.takeover.handler(async ({ context, input }) => {
+        await requireFullComputer(deps, context.actor);
         let bot = await repos.getBot(context.actor, input.botId);
         if (!bot.computer?.providerRef || bot.computer.state !== "running") {
           throw new ORPCError("BAD_REQUEST", { message: "computer must be running" });
@@ -492,6 +494,7 @@ export function computerRoutes(ctx: RouterContext) {
         return { ok: true as const };
       }),
       input: authed.computer.input.handler(async ({ context, input }) => {
+        await requireFullComputer(deps, context.actor);
         const bot = await repos.getBot(context.actor, input.botId);
         const computer = bot.computer;
         if (!computer || !hasActiveComputerControl(computer) || computer.controlBotId !== bot.id) {
@@ -708,6 +711,7 @@ export function computerRoutes(ctx: RouterContext) {
         );
       }),
       terminalUrl: authed.computer.terminalUrl.handler(async ({ context, input }) => {
+        await requireFullComputer(deps, context.actor);
         let bot = await repos.getBot(context.actor, input.botId);
         if (await expireStaleComputerControl(deps, bot.computer)) {
           bot = await repos.getBot(context.actor, input.botId);
@@ -765,6 +769,7 @@ export function computerRoutes(ctx: RouterContext) {
         };
       }),
       screenUrl: authed.computer.screenUrl.handler(async ({ context, input }) => {
+        await requireFullComputer(deps, context.actor);
         let bot = await repos.getBot(context.actor, input.botId);
         if (await expireStaleComputerControl(deps, bot.computer)) {
           bot = await repos.getBot(context.actor, input.botId);

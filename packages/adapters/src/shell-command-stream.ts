@@ -80,7 +80,9 @@ function turnReturnedRunningShell(turn: {
 }): boolean {
   return turn.toolResults.some(
     (result) =>
-      (result.toolName === "shell" || result.toolName === "user_computer_shell") &&
+      (result.toolName === "shell" ||
+        result.toolName === "ocsc" ||
+        result.toolName === "user_computer_shell") &&
       isRunningShellCommand(result.details),
   );
 }

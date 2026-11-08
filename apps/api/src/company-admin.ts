@@ -4,21 +4,31 @@ import {
   COMPANY_MODEL_SECRET_RECORD,
   companyFeatures,
   companyModel,
+  companyToolsWithDefaults,
+  effectiveComputerAccess,
   listPiCatalog,
   refreshCompanyPolicy,
   resolveEnvironmentDeploymentModel,
   verifyCatalogProviderApiKey,
+  videoRenderLoad,
+  videoRenderSlots,
 } from "@rakazo/adapters";
 import type {
   Actor,
   CompanyAdminState,
+  CompanyComputersState,
   CompanyFeatureId,
   CompanyFeatures,
   CompanyModelInput,
   CompanyTools,
   CompanyToolsState,
+  ComputerAccess,
 } from "@rakazo/contracts";
-import { canonicalPiProviderId, companyFeaturesFrom, companyToolsFrom } from "@rakazo/contracts";
+import {
+  ComputerAccessSchema,
+  canonicalPiProviderId,
+  companyFeaturesFrom,
+} from "@rakazo/contracts";
 import type { Prisma } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -106,10 +116,107 @@ export async function companyAdminState(
       ? { provider: environment.provider, modelId: environment.model }
       : null,
     features: companyFeaturesFrom(row?.companyFeatures),
-    tools: toolsState(deps, companyToolsFrom(row?.companyTools)),
+    tools: toolsState(deps, companyToolsWithDefaults(row?.companyTools)),
+    computers: await computersState(deps, companyToolsWithDefaults(row?.companyTools)),
     admins: deps.env.adminEmails ?? [],
     staff: { accounts, withOwnModels: owners.length },
   };
+}
+
+async function computersState(
+  deps: CompanyAdminDeps,
+  policy: CompanyTools,
+): Promise<CompanyComputersState> {
+  const [people, runningComputers, load] = await Promise.all([
+    runAsSystem("list computer access", () =>
+      deps.prisma.user.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, email: true, computerAccess: true },
+      }),
+    ),
+    runAsSystem("count running computers", () =>
+      deps.prisma.computer.count({ where: { state: "running" } }),
+    ),
+    videoRenderLoad(deps.prisma),
+  ]);
+  const computersOn = companyFeatures().computers;
+  return {
+    defaultAccess: policy.defaultComputerAccess,
+    people: people.map((person) => {
+      const access = ComputerAccessSchema.safeParse(person.computerAccess);
+      const stored = access.success ? access.data : null;
+      return {
+        userId: person.id,
+        name: person.name,
+        email: person.email,
+        access: stored,
+        effective: computersOn ? (stored ?? policy.defaultComputerAccess) : "none",
+      };
+    }),
+    capacity: {
+      runningComputers,
+      videoSlots: videoRenderSlots(),
+      videoRendering: load.rendering,
+      videoQueued: load.queued,
+    },
+  };
+}
+
+/** One person's level; null returns them to the company default. */
+export async function setComputerAccess(
+  deps: CompanyAdminDeps,
+  actor: Actor,
+  input: { userId: string; access: ComputerAccess | null },
+): Promise<CompanyAdminState> {
+  await requireAdmin(deps, actor.userId);
+  const updated = await runAsSystem("save computer access", () =>
+    deps.prisma.user.updateMany({
+      where: { id: input.userId },
+      data: { computerAccess: input.access },
+    }),
+  );
+  if (!updated.count) throw new ORPCError("NOT_FOUND", { message: "No such person." });
+  getLogger().info("company_admin.computer_access_saved", {
+    userId: input.userId,
+    access: input.access,
+    by: actor.userId,
+  });
+  return companyAdminState(deps, actor);
+}
+
+/** Fails a request that drives a computer directly, such as its screen or terminal, without Full access. */
+export async function requireFullComputer(
+  deps: Pick<RouterDeps, "prisma">,
+  actor: Pick<Actor, "userId">,
+): Promise<void> {
+  const user = await runAsSystem("read computer access", () =>
+    deps.prisma.user.findUnique({ where: { id: actor.userId }, select: { computerAccess: true } }),
+  );
+  if (effectiveComputerAccess(user?.computerAccess) === "full") return;
+  throw new ORPCError("FORBIDDEN", {
+    message: "Your administrator has not given you full computer access.",
+  });
+}
+
+/**
+ * Admins keep full computer access when levels arrive, so a new company default never locks
+ * them out of their own computers; they can change their own level afterwards.
+ */
+export async function keepAdminsOnFullComputers(
+  deps: Pick<RouterDeps, "prisma"> & { env: Pick<RouterDeps["env"], "adminEmails"> },
+): Promise<void> {
+  const admins = deps.env.adminEmails ?? [];
+  if (!admins.length) return;
+  await runAsSystem("keep admins on full computers", () =>
+    deps.prisma.user.updateMany({
+      where: {
+        email: { in: admins, mode: "insensitive" },
+        emailVerified: true,
+        computerAccess: null,
+      },
+      data: { computerAccess: "full" },
+    }),
+  );
 }
 
 function toolsState(deps: CompanyAdminDeps, policy: CompanyTools): CompanyToolsState {
@@ -262,7 +369,7 @@ export async function setCompanyTools(
 ): Promise<CompanyAdminState> {
   await requireAdmin(deps, actor.userId);
   const row = await readSettings(deps);
-  const tools = { ...companyToolsFrom(row?.companyTools), ...input };
+  const tools = { ...companyToolsWithDefaults(row?.companyTools), ...input };
   tools.disabledSkills = [...new Set(tools.disabledSkills)];
   tools.disabledTools = [...new Set(tools.disabledTools)];
   await runAsSystem("save the company tools", () =>

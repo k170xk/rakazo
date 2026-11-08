@@ -2069,15 +2069,30 @@ export function companyFeaturesFrom(stored: unknown): CompanyFeatures {
   return { ...DEFAULT_COMPANY_FEATURES, ...(parsed.success ? parsed.data : {}) };
 }
 
+/**
+ * What a person's bots may do on their computer. "full": everything. "tools": only the OCSC
+ * document and video commands and files in the bot's own folder, with no shell, browser, screen
+ * or routines. "none": no computer; company tools that run elsewhere still work.
+ */
+export const COMPUTER_ACCESS_LEVELS = ["full", "tools", "none"] as const;
+export const ComputerAccessSchema = z.enum(COMPUTER_ACCESS_LEVELS);
+export type ComputerAccess = z.infer<typeof ComputerAccessSchema>;
+
 /** Built-in skills and company tools an admin has switched off for every account; all others are on. */
 export const CompanyToolsSchema = z.object({
   disabledSkills: z.array(z.string().trim().min(1).max(80)).max(200),
   /** Evolve tool names as Evolve lists them, e.g. "generate_voiceover". */
   disabledTools: z.array(z.string().trim().min(1).max(120)).max(500),
+  /** The computer access of everyone without a level of their own. */
+  defaultComputerAccess: ComputerAccessSchema,
 });
 export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
 
-export const DEFAULT_COMPANY_TOOLS: CompanyTools = { disabledSkills: [], disabledTools: [] };
+export const DEFAULT_COMPANY_TOOLS: CompanyTools = {
+  disabledSkills: [],
+  disabledTools: [],
+  defaultComputerAccess: "tools",
+};
 
 export function companyToolsFrom(stored: unknown): CompanyTools {
   const parsed = CompanyToolsSchema.partial().safeParse(stored);
@@ -2102,6 +2117,28 @@ export const CompanyToolsStateSchema = z.object({
 });
 export type CompanyToolsState = z.infer<typeof CompanyToolsStateSchema>;
 
+export const CompanyComputerPersonSchema = z.object({
+  userId: z.string(),
+  name: z.string(),
+  email: z.string(),
+  /** Null follows the company default. */
+  access: ComputerAccessSchema.nullable(),
+  effective: ComputerAccessSchema,
+});
+
+/** Who may use a computer, and how busy the shared computer capacity is. */
+export const CompanyComputersStateSchema = z.object({
+  defaultAccess: ComputerAccessSchema,
+  people: z.array(CompanyComputerPersonSchema),
+  capacity: z.object({
+    runningComputers: z.number().int().nonnegative(),
+    videoSlots: z.number().int().positive(),
+    videoRendering: z.number().int().nonnegative(),
+    videoQueued: z.number().int().nonnegative(),
+  }),
+});
+export type CompanyComputersState = z.infer<typeof CompanyComputersStateSchema>;
+
 export const CompanyModelSchema = z.object({
   provider: z.string(),
   providerName: z.string().nullable(),
@@ -2118,6 +2155,7 @@ export const CompanyAdminStateSchema = z.object({
   environmentModel: z.object({ provider: z.string(), modelId: z.string() }).nullable(),
   features: CompanyFeaturesSchema,
   tools: CompanyToolsStateSchema,
+  computers: CompanyComputersStateSchema,
   /** The emails in RAKAZO_ADMIN_EMAILS. */
   admins: z.array(z.string()),
   staff: z.object({
@@ -2141,6 +2179,8 @@ export const MeSchema = z.object({
   features: CompanyFeaturesSchema.optional(),
   /** Whether a company model runs for everyone who has none of their own. Absent from older servers. */
   companyModelReady: z.boolean().optional(),
+  /** What this person's bots may do on their computer. Absent from older servers, which allow everything. */
+  computerAccess: ComputerAccessSchema.optional(),
   maxUploadSizeBytes: z.number().int().positive().optional(),
   maxAttachmentsPerMessage: z.number().int().positive().optional(),
   ticketBoardEnabled: z.boolean(),

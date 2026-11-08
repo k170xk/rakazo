@@ -7,7 +7,7 @@
 
 export type OcscSkill = { name: string; description: string; body: string };
 
-const SCREEN_NOTE = `To show a workspace file on your computer screen, for example so the person can watch a document you made: ocsc-show <path>. It opens a branded preview in the computer's browser (Word tracked changes in colour). The screen is for the person: check the content yourself with the read command, not by looking at the screen.`;
+const SCREEN_NOTE = `When you have a shell and a screen, you can show a workspace file on your computer screen, for example so the person can watch a document you made: run ocsc-show <path> with shell. It opens a branded preview in the computer's browser (Word tracked changes in colour). The screen is for the person: check the content yourself with the read command, not by looking at the screen.`;
 
 const SEND_NOTE = `Every successful command prints JSON with "ok": true and the file's "path". Send the file with attach_file, using that exact path and a short name and description (for example name "HEL18 Flood Risk Assessment"), so the person can open or download it from the chat and the Artifacts tab. For a new version of a file you already sent, call attach_file again with the same name. Never send a file you have not just made or edited, and never write a download link yourself.`;
 
@@ -19,7 +19,7 @@ const SETUP_QUESTIONS_NOTE = `Ask with ask_user, one question at a time, waiting
 
 const WORD_INSTRUCTIONS = `Use this whenever the person wants a Word document, report, letter, memo, method statement, specification or any .docx, or wants one changed.
 
-Work on your computer with write_file and shell. Always use the ocsc-word command. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding.
+Work on your computer with write_file and the ocsc tool: every ocsc-word command below runs as the ocsc tool with program word and the rest of the command as args, one item per word. Always use ocsc-word. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding.
 
 TEMPLATES
 Run: ocsc-word templates
@@ -108,7 +108,7 @@ ${SCREEN_NOTE}`;
 
 const SLIDES_INSTRUCTIONS = `Use this whenever the person asks for slides, a deck, a presentation or a PowerPoint, or wants a PowerPoint changed.
 
-Work on your computer with write_file and shell, and always use the ocsc-pptx command. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline.
+Work on your computer with write_file and the ocsc tool: every ocsc-pptx command below runs as the ocsc tool with program pptx and the rest of the command as args, one item per word. Always use ocsc-pptx. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline.
 
 BEFORE YOU START A NEW DECK
 ${SETUP_QUESTIONS_NOTE}
@@ -164,7 +164,7 @@ Motion: for an animated slide, render a short ocsc-video scene to an mp4, save a
 3. Run: ocsc-pptx new --spec work/<short-name>-deck.json --out outputs/<Descriptive-Name>.pptx
 
 CHECK IT
-Run ocsc-pptx preview --in outputs/<Name>.pptx (add --slide N for one slide) and look at each PNG it lists: run ocsc-show <the PNG path> and then computer_observe. Fix overlaps, empty spaces, cut-off pictures and long text, then build it again.
+Run ocsc-pptx preview --in outputs/<Name>.pptx (add --slide N for one slide) and look at each PNG it lists: run ocsc-show <the PNG path> with shell and then computer_observe (skip looking when you have no screen). Fix overlaps, empty spaces, cut-off pictures and long text, then build it again.
 
 CHANGING ANY POWERPOINT
 When the person asks for changes to a deck you made or one they sent, always edit its latest version with ocsc-pptx edit. Never rebuild it with ocsc-pptx new unless they ask to start again: editing keeps every slide you did not touch exactly as it was, including their own changes, and leaves the earlier version in place. Do not ask the setup questions again; ask only what the new content needs (for example which projects, when they ask for project photos).
@@ -200,7 +200,7 @@ Use file names like outputs/HEL18-Design-Review.pptx, with no spaces or slashes 
 
 const EXCEL_INSTRUCTIONS = `Use this whenever the person wants a spreadsheet, workbook, cost plan, schedule, register, tracker or any .xlsx, or wants one changed.
 
-Work on your computer with write_file and shell. Always use the ocsc-xlsx command. Never build a workbook another way (no openpyxl, pandas or LibreOffice), because only ocsc-xlsx keeps the OCSC styling and works out the formulas.
+Work on your computer with write_file and the ocsc tool: every ocsc-xlsx command below runs as the ocsc tool with program xlsx and the rest of the command as args, one item per word. Always use ocsc-xlsx. Never build a workbook another way (no openpyxl, pandas or LibreOffice), because only ocsc-xlsx keeps the OCSC styling and works out the formulas.
 
 CREATE
 1. Write a spec with write_file to work/<short-name>.json:
@@ -244,7 +244,7 @@ Sheet names under 31 characters. File names like outputs/HEL18-Cost-Plan.xlsx, w
 
 const PDF_INSTRUCTIONS = `Use this whenever the person wants a PDF, or wants to read a PDF on your computer.
 
-Work on your computer with shell, and always use the ocsc-pdf command.
+Work on your computer with write_file and the ocsc tool: every ocsc-pdf command below runs as the ocsc tool with program pdf and the rest of the command as args, one item per word. Always use ocsc-pdf.
 
 MAKING A PDF
 Build the document first with the right tool, then convert it, so the PDF carries the OCSC branding:
@@ -296,7 +296,7 @@ If a command says "ok": false, read the error and fix the input; stop after thre
 
 const VIDEO_INSTRUCTIONS = `Use this whenever the person wants a video, animation, motion graphics, explainer, toolbox talk video, social clip or an .mp4, or wants a video changed.
 
-Work on your computer with write_file and shell, and always use the ocsc-video command. It renders with Remotion and the same branded scene library as Evolve's video creator, then mixes the voiceover and any music file in the workspace and masters the loudness. Never make a video another way (no ffmpeg slideshows, moviepy or screen recording).
+Work on your computer with write_file and the ocsc tool: every ocsc-video command below runs as the ocsc tool with program video and the rest of the command as args, one item per word. Always use ocsc-video. It renders with Remotion and the same branded scene library as Evolve's video creator, then mixes the voiceover and any music file in the workspace and masters the loudness. Never make a video another way (no ffmpeg slideshows, moviepy or screen recording).
 
 Make it a polished production: a clear story, real OCSC project photos and good stock footage, and the voice the person chooses.
 
@@ -340,7 +340,7 @@ For anything the built-in scenes and templates cannot show (kinetic type, animat
 - Set backgroundColor on the outer AbsoluteFill from frame 0. Inline styles only; fontFamily Inter. Size things from useVideoConfig().width so vertical clips work. Keep to OCSC green #77bf43, dark #102a0a, white and one accent.
 
 CHECK, RENDER, SEND
-- ocsc-video still --spec outputs/<Name>.video.json --scene <n> [--at <seconds>] renders one full-size frame as a PNG. To look at it yourself, run ocsc-show <the PNG path> and then computer_observe. Check every custom scene and every scene with a photo before the full render.
+- ocsc-video still --spec outputs/<Name>.video.json --scene <n> [--at <seconds>] renders one full-size frame as a PNG. To look at it yourself, run ocsc-show <the PNG path> with shell and then computer_observe (skip this when you have no screen). Check every custom scene and every scene with a photo before the full render.
 - ocsc-video render --spec outputs/<Name>.video.json starts the render in the background and prints a job. It renders at full 1080p quality; --quality draft is a quick half-size timing check, and --quality master makes a 4K copy when the person asks for one.
 - ocsc-video wait --job <job> waits up to 100 seconds and reports progress. Run it again until "status" is "done".
 - When the job is done, send the .mp4 at its printed "path" with attach_file. Give the length, the scene list and the voice in a few lines.

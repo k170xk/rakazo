@@ -77,6 +77,7 @@ import {
   CompanyFeaturesSchema,
   CompanyModelInputSchema,
   CompanyToolsSchema,
+  ComputerAccessSchema,
   ComputerModeSchema,
   ComputerProviderSettingsSchema,
   ComputerProviderUpdateSchema,
@@ -383,6 +384,10 @@ export const appContract = {
     setTools: oc.input(CompanyToolsSchema.partial()).output(CompanyAdminStateSchema),
     /** Asks Evolve for its tool list now instead of waiting for the next check. */
     checkTools: oc.output(CompanyAdminStateSchema),
+    /** One person's computer access; null returns them to the company default. */
+    setComputerAccess: oc
+      .input(z.object({ userId: z.string().min(1), access: ComputerAccessSchema.nullable() }))
+      .output(CompanyAdminStateSchema),
     /** Model spending per person across every space. */
     spending: oc
       .input(z.object({ period: z.enum(STAFF_SPENDING_PERIODS).default("30d") }))

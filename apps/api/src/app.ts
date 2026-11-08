@@ -174,6 +174,7 @@ import {
   requestClientIp,
   withClientIp,
 } from "./client-ip.js";
+import { keepAdminsOnFullComputers } from "./company-admin.js";
 import { cspReportRoutes } from "./csp-report.js";
 import { configuredEmailProvider } from "./email.js";
 import type { AppEnv } from "./env.js";
@@ -344,6 +345,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   installAuditEventStore(prisma);
   // The admin's company model and feature switches; every process rereads them.
   const stopCompanyPolicy = await watchCompanyPolicy(prisma, secrets);
+  await keepAdminsOnFullComputers({ prisma, env }).catch((error: unknown) =>
+    logger.error("admin computer access could not be kept", error),
+  );
   const unreadableMasterKeys = await verifyContentKeys(prisma);
   if (unreadableMasterKeys.length)
     logger.error("Stored space keys need master keys that are not configured", undefined, {

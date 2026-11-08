@@ -220,8 +220,9 @@ export function BotSettings({
   const me = meQuery.data ?? null;
   // The company's admin may keep models, computers and routines to themselves or turn them off.
   const modelChoiceAllowed = me?.features?.memberModels !== false || me?.isAdmin === true;
-  const computersOn = me?.features?.computers !== false;
-  const routinesOn = me?.features?.routines !== false;
+  const fullComputer = (me?.computerAccess ?? "full") === "full";
+  const computersOn = me?.features?.computers !== false && fullComputer;
+  const routinesOn = me?.features?.routines !== false && fullComputer;
   // A failed catalog load must not clear an existing thinkingLevel override on save.
   const modelMetaReady =
     credentialsQuery.data !== undefined &&

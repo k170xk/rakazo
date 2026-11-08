@@ -1,5 +1,5 @@
 import type { AdapterContext, ConnectorEvent } from "@rakazo/adapter-kit";
-import { DEFAULT_COMPANY_FEATURES } from "@rakazo/contracts";
+import { DEFAULT_COMPANY_FEATURES, DEFAULT_COMPANY_TOOLS } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BUILTIN_AGENT_SKILLS, enabledBuiltinAgentSkills } from "./builtin-skills.js";
@@ -133,7 +133,11 @@ describe("Evolve company tools", () => {
     const fetch = evolve(() => reply(listed));
     const tools = new EvolveCompanyTools(prisma, connection, { fetch });
     setCompanyPolicy({
-      tools: { disabledTools: ["generate_voiceover"], disabledSkills: ["OCSC-Video"] },
+      tools: {
+        ...DEFAULT_COMPANY_TOOLS,
+        disabledTools: ["generate_voiceover"],
+        disabledSkills: ["OCSC-Video"],
+      },
     });
     expect((await tools.discoverTools(context)).map((tool) => tool.name)).toEqual([
       "mcp__evolve__search_stock_media",
@@ -182,7 +186,9 @@ describe("Evolve company tools", () => {
 
   it("notes a skill's tools that are switched off", () => {
     expect(evolveToolsNote("no tools here")).toBeNull();
-    setCompanyPolicy({ tools: { disabledTools: ["generate_voiceover"], disabledSkills: [] } });
+    setCompanyPolicy({
+      tools: { ...DEFAULT_COMPANY_TOOLS, disabledTools: ["generate_voiceover"] },
+    });
     expect(evolveToolsNote("use mcp__evolve__generate_voiceover")).toContain(
       "turned off by your company: generate_voiceover",
     );

@@ -23,7 +23,7 @@ import {
 import type { Artifact, Prisma, PrismaClient } from "@rakazo/db";
 import { withResolvedArtifactVersion } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
-import { resolveBotWorkspacePath } from "./computer-support.js";
+import { resolveRunFilePath } from "./computer-support.js";
 
 export type MaterializedThreadFile = {
   name: string;
@@ -182,6 +182,8 @@ export async function materializeCurrentTurnFiles(
     /** Starts the computer; called only when there is a file to copy onto it. */
     computer: () => Promise<ComputerRef>;
     computerMode: ComputerMode;
+    /** A colleague's turn: files land in this conversation folder instead of the bot's own. */
+    folder?: string;
     markWorkspaceDirty?: () => void;
   },
 ): Promise<MaterializedThreadFile[]> {
@@ -205,9 +207,8 @@ async function materializeThreadFiles(
     const row = byId.get(block.artifactId);
     if (!row) throw new Error(`Attached file is unavailable: ${block.name}`);
     const metadata = threadFileMetadata(row);
-    const workspacePath = resolveBotWorkspacePath(
-      input.computerMode,
-      input.context.botId,
+    const workspacePath = resolveRunFilePath(
+      { mode: input.computerMode, botId: input.context.botId, folder: input.folder },
       metadata.path,
     );
     const exists = preserveExisting

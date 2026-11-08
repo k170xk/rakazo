@@ -1,6 +1,6 @@
 import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
 import { inferAttachmentMimeType, isBackgroundRunTrigger } from "@rakazo/core";
-import { resolveBotWorkspacePath } from "./computer-support.js";
+import { resolveRunFilePath } from "./computer-support.js";
 import { desktopGuardApplies, desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";
@@ -17,11 +17,19 @@ function runWorkspace(ctx: RunContext, call: ToolCall): RunWorkspace {
   return {
     botId: ctx.bot.id,
     computerMode: ctx.computer.mode,
+    folder: ctx.computer.folder,
     computer: () => ctx.computer.get("tool", call.name),
     markDirty: () => ctx.computer.checkpoint.markDirty(),
     context: ctx.context,
     runSecrets: ctx.secrets,
   };
+}
+
+function runFilePath(ctx: RunContext, filePath: string): string {
+  return resolveRunFilePath(
+    { mode: ctx.computer.mode, botId: ctx.bot.id, folder: ctx.computer.folder },
+    filePath,
+  );
 }
 
 /** Generate an image or video, or with recoverOnly, only resume a job an earlier attempt started. */
@@ -114,7 +122,7 @@ export const fileTools: ToolHandlers = {
     return readFileFromTool(deps.sandbox, workspace, args);
   },
   async write_file(ctx, call) {
-    const { deps, bot, context } = ctx;
+    const { deps, context } = ctx;
     const { name, args } = call;
     const filePath = String(args.path ?? "notes/result.txt");
     if (desktopGuardApplies(ctx.computer)) {
@@ -128,7 +136,7 @@ export const fileTools: ToolHandlers = {
     try {
       await deps.sandbox.writeFile(
         await ctx.computer.get("tool", name),
-        { path: resolveBotWorkspacePath(ctx.computer.mode, bot.id, filePath), content },
+        { path: runFilePath(ctx, filePath), content },
         context,
       );
     } catch (error) {
@@ -157,7 +165,7 @@ export const fileTools: ToolHandlers = {
       return call.finish({ error, path: filePath });
     };
     if (!deps.artifacts) return failAttach("artifact storage unavailable");
-    const storedPath = resolveBotWorkspacePath(ctx.computer.mode, bot.id, filePath);
+    const storedPath = runFilePath(ctx, filePath);
     let bytes: Uint8Array;
     try {
       bytes = await deps.sandbox.readFile(

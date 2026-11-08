@@ -48,6 +48,7 @@ import {
   setCompanyFeatures,
   setCompanyModel,
   setCompanyTools,
+  setComputerAccess,
 } from "../company-admin.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
@@ -167,6 +168,9 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       checkTools: authed.companyAdmin.checkTools.handler(({ context }) =>
         checkCompanyTools(deps, context.actor),
+      ),
+      setComputerAccess: authed.companyAdmin.setComputerAccess.handler(({ context, input }) =>
+        setComputerAccess(deps, context.actor, input),
       ),
       spending: authed.companyAdmin.spending.handler(({ context, input }) =>
         staffSpending(deps, context.actor.userId, input.period),

@@ -93,6 +93,27 @@ export function resolveBotWorkspacePath(
   return path.posix.join(teamBotWorkspaceDirectory(botId), normalized);
 }
 
+/** The folder a colleague's turns in one conversation work in, outside every bot's own folder. */
+export function conversationFolder(threadId: string): string {
+  return path.posix.join("conversations", normalizeWorkspacePath(threadId));
+}
+
+/**
+ * Where a file tool reads or writes. With a conversation folder every path stays inside it,
+ * including absolute paths and ones a command printed from inside it.
+ */
+export function resolveRunFilePath(
+  workspace: { mode: ComputerMode; botId: string; folder: string | undefined },
+  rawPath: string,
+): string {
+  const { mode, botId, folder } = workspace;
+  if (!folder) return resolveBotWorkspacePath(mode, botId, rawPath);
+  const marker = `${folder}/`;
+  const at = rawPath.replace(/\\/g, "/").indexOf(marker);
+  const inside = at >= 0 ? rawPath.replace(/\\/g, "/").slice(at + marker.length) : rawPath;
+  return workspacePath(folder, inside.replace(/^~\/?/, ""));
+}
+
 export function resolveBotWorkspaceCwd(
   scope: ComputerMode,
   botId: string,

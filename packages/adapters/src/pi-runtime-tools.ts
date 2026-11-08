@@ -184,6 +184,10 @@ export function describeToolActivity(toolName: string, args: unknown): string {
     return text.length > ACTIVITY_DETAIL_LIMIT ? `${text.slice(0, ACTIVITY_DETAIL_LIMIT)}…` : text;
   };
   if (toolName === "shell") return `Running: ${detail(record.command)}`;
+  if (toolName === "ocsc") {
+    const args = Array.isArray(record.args) ? record.args.join(" ") : "";
+    return `Running: ${detail(`ocsc-${String(record.program ?? "")} ${args}`)}`;
+  }
   if (toolName === "user_computer_shell")
     return `Running on your computer: ${detail(record.command)}`;
   if (toolName === "user_computer_observe") return `Looking at ${detail(record.app)}`;

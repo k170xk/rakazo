@@ -1274,6 +1274,7 @@ function pinnedRoutineRunPrisma(modelId: string) {
     computer: { id: "computer-1", scope: "private" },
   };
   return {
+    user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
     run: {
       findUnique: vi.fn(async () => run),
       findUniqueOrThrow: vi.fn(async () => ({ status: "leased", startedAt: null })),
@@ -3043,6 +3044,7 @@ description: Prepare standup notes
             },
       );
       const prisma = {
+        user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
         run: {
           findUnique: vi.fn(async () => run),
           findUniqueOrThrow: vi.fn(async () => ({ status: "leased", startedAt: null })),
@@ -3161,6 +3163,7 @@ description: Prepare standup notes
       leaseFence: 0,
     };
     const prisma = {
+      user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
       run: {
         findUnique: vi.fn(async () => run),
         findUniqueOrThrow: vi.fn(async () => ({ status: "leased", startedAt: null })),
@@ -3266,6 +3269,7 @@ description: Prepare standup notes
       leaseFence: 0,
     };
     const prisma = {
+      user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
       run: {
         findUnique: vi.fn(async () => run),
         findUniqueOrThrow: vi.fn(async () => ({ status: "leased", startedAt: null })),
@@ -3382,6 +3386,7 @@ description: Prepare standup notes
       return null;
     });
     const prisma = {
+      user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
       bot: {
         findFirst: vi.fn(async () => ({
           modelProvider: "xai",

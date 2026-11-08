@@ -1,3 +1,4 @@
+import type { ComputerAccess } from "@rakazo/contracts";
 import { FLEET_WRITE_TOOL_NAMES } from "@rakazo/contracts";
 import {
   PRODUCT_IDENTITY,
@@ -49,6 +50,20 @@ function fileAndShellClause(disabled: ReadonlySet<string> | undefined): string |
   if (files) return "Use the file tools for precise filesystem work.";
   if (shell) return "Use shell for precise terminal work.";
   return undefined;
+}
+
+/** What a bot is told when its person has "Tools only" or no computer access. */
+export function limitedComputerInstruction(
+  access: Exclude<ComputerAccess, "full">,
+  colleagueTurn: boolean,
+): string {
+  if (access === "none") {
+    return "There is no computer for this person's bots. Make documents, slides, images, charts and voiceovers with the company Evolve tools, and if a task needs a computer, say an administrator can give this person computer access.";
+  }
+  const shared = colleagueTurn
+    ? " This is someone else's bot in a shared chat: you work in this conversation's own folder and cannot see the owner's files, and videos are made by each person's own bots."
+    : "";
+  return `This computer runs the OCSC document and video commands only: use the ocsc tool for Word, PowerPoint, Excel, PDF and video files, write_file for their spec files and attach_file to share the results. There is no shell, browser, screen or scheduled routine here, so never offer to browse, run other commands or set up routines; if a task needs them, say an administrator can give this person full computer access.${shared}`;
 }
 
 export function persistentComputerInstruction(options: {

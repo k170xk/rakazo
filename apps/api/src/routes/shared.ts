@@ -2,6 +2,7 @@ import {
   companyFeatures,
   companyModel,
   deploymentModelRole,
+  effectiveComputerAccess,
   findConnectedModelCredential,
   hasHostedModelCredits,
   hostCredentialSource,
@@ -40,6 +41,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
         timezone: true,
         locale: true,
         botAvatarSet: true,
+        computerAccess: true,
         signupSurvey: { select: { userId: true } },
       },
     }),
@@ -48,13 +50,17 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
   ]);
   void syncEvolvePhoto(deps, { id: actor.userId, email: user.email, image: user.image });
   // Where the deployment runs computers once an admin's choice in Settings applies.
-  // The app treats "none" as computers being unavailable, which is what the company switch means.
-  const sandboxProvider = companyFeatures().computers
-    ? effectiveSandboxProvider(setup.settings, deps.env.sandboxProvider)
-    : "none";
+  // The app treats "none" as computers being unavailable, which is what the company switch
+  // means, and so is a person without full access: their bots' computers only run OCSC tools.
+  const computerAccess = effectiveComputerAccess(user.computerAccess);
+  const sandboxProvider =
+    computerAccess === "full"
+      ? effectiveSandboxProvider(setup.settings, deps.env.sandboxProvider)
+      : "none";
   return {
     features: companyFeatures(),
     companyModelReady: Boolean(companyModel()),
+    computerAccess,
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
     phoneCallsEnabled: deps.env.phoneCallsEnabled === true,
     navLinks: deps.env.navLinks ?? [],

@@ -1,10 +1,10 @@
 import type { SecretStore } from "@rakazo/adapter-kit";
 import type { CompanyFeatures, CompanyTools } from "@rakazo/contracts";
 import {
+  ComputerAccessSchema,
   companyFeaturesFrom,
   companyToolsFrom,
   DEFAULT_COMPANY_FEATURES,
-  DEFAULT_COMPANY_TOOLS,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
@@ -28,7 +28,24 @@ export function companyFeatures(): CompanyFeatures {
 
 /** Built-in skills and company tools switched off for every account. */
 export function companyTools(): CompanyTools {
-  return loadedTools ?? DEFAULT_COMPANY_TOOLS;
+  return loadedTools ?? companyToolsWithDefaults(undefined);
+}
+
+/**
+ * The stored company tools; until an admin picks a default computer access level,
+ * RAKAZO_COMPUTER_ACCESS_DEFAULT sets it, else everyone gets "tools".
+ */
+export function companyToolsWithDefaults(
+  stored: unknown,
+  env: NodeJS.ProcessEnv = process.env,
+): CompanyTools {
+  const tools = companyToolsFrom(stored);
+  const chosen = ComputerAccessSchema.safeParse(
+    (stored as { defaultComputerAccess?: unknown } | null | undefined)?.defaultComputerAccess,
+  );
+  if (chosen.success) return tools;
+  const deployment = ComputerAccessSchema.safeParse(env.RAKAZO_COMPUTER_ACCESS_DEFAULT);
+  return deployment.success ? { ...tools, defaultComputerAccess: deployment.data } : tools;
 }
 
 /** The admin-set model every account runs on when it has none of its own, with its key. */
@@ -64,7 +81,7 @@ export async function refreshCompanyPolicy(
     }),
   );
   loadedFeatures = companyFeaturesFrom(row?.companyFeatures);
-  loadedTools = companyToolsFrom(row?.companyTools);
+  loadedTools = companyToolsWithDefaults(row?.companyTools);
   if (!row?.defaultModelProvider || !row.defaultModelId || !row.deploymentModelCredentialCipher) {
     loadedModel = null;
     return;

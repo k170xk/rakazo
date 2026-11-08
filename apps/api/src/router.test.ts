@@ -4015,6 +4015,7 @@ describe("computer screen url", () => {
   ) => {
     const endRun = vi.fn().mockResolvedValue(1);
     const prisma = {
+      user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -4155,6 +4156,7 @@ describe("computer terminal and file transfer", () => {
       writeFile: vi.fn().mockResolvedValue(undefined),
     };
     const prisma = {
+      user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
       bot: {
         findFirst: vi.fn().mockResolvedValue({
           id: "bot-1",
@@ -7318,6 +7320,7 @@ describe("routine live Codex model validation", () => {
       const client = createRouterClient(
         createRouter({
           prisma: {
+            user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
             bot: { findFirst: vi.fn(async () => ({ id: "bot-1", computer: null })) },
             routine: { findFirst: vi.fn(async () => row), create: save, update: save },
             userModelPreference: { findMany: vi.fn(async () => []) },
@@ -9791,6 +9794,7 @@ describe("routine watch creation boundaries", () => {
     const client = createRouterClient(
       createRouter({
         prisma: {
+          user: { findUnique: vi.fn(async () => ({ computerAccess: null })) },
           bot: { findFirst: findBot },
           routine: { findFirst: findRoutine, create, update },
         },

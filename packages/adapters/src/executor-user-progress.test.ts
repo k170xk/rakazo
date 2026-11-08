@@ -827,7 +827,9 @@ describe("notes that can't be posted as messages", () => {
     };
     const headsUp = ["This will take a few minutes."];
     expect(await sent("user", "computer_observe")).toEqual(headsUp);
-    expect(await sent("messaging", "browser_snapshot")).toEqual(headsUp);
+    expect(await sent("user", "browser_snapshot")).toEqual(headsUp);
+    // Anyone in a channel can send these, so they never reach the owner's browser.
+    expect(await sent("messaging", "browser_snapshot")).toEqual([]);
     // Other steps, tools this computer lacks, and runs nobody is waiting on keep the
     // fresh-turn rule.
     expect(await sent("user", "shell")).toEqual([]);

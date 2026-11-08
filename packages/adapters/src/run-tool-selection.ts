@@ -1,3 +1,4 @@
+import type { ComputerAccess } from "@rakazo/contracts";
 import {
   disabledBuiltinToolSet,
   FLEET_TOOL_NAMES,
@@ -19,6 +20,11 @@ import {
   SCHEDULE_TOOL_NAMES,
 } from "./schedule-tools.js";
 import { SKILL_TOOL_NAMES } from "./skill-tools.js";
+import {
+  USER_COMPUTER_ACT_TOOL,
+  USER_COMPUTER_OBSERVE_TOOL,
+  USER_COMPUTER_SHELL_TOOL,
+} from "./user-computer-tools.js";
 
 export const READ_ONLY_AGENT_TOOLS = new Set([
   "computer_observe",
@@ -62,10 +68,48 @@ export const COMPUTER_TOOL_NAMES: ReadonlySet<string> = new Set([
   "write_file",
   "attach_file",
   "shell",
+  "ocsc",
   "open_path",
   "launch_app",
   "request_takeover",
 ]);
+
+/** A "Tools only" computer: the OCSC commands and the bot's own files, nothing that drives the machine. */
+export const TOOLS_ONLY_COMPUTER_TOOLS: ReadonlySet<string> = new Set([
+  "list_files",
+  "read_file",
+  "write_file",
+  "attach_file",
+  "ocsc",
+]);
+
+const USER_COMPUTER_TOOL_NAMES: ReadonlySet<string> = new Set([
+  USER_COMPUTER_SHELL_TOOL,
+  USER_COMPUTER_OBSERVE_TOOL,
+  USER_COMPUTER_ACT_TOOL,
+]);
+
+function computerToolAllowed(name: string, access: ComputerAccess): boolean {
+  if (!COMPUTER_TOOL_NAMES.has(name) || access === "full") return true;
+  return access === "tools" && TOOLS_ONLY_COMPUTER_TOOLS.has(name);
+}
+
+export function drivesComputer(name: string): boolean {
+  return (
+    COMPUTER_TOOL_NAMES.has(name) ||
+    EVOLVE_PLUGIN_COMPUTER_TOOLS.has(name) ||
+    USER_COMPUTER_TOOL_NAMES.has(name)
+  );
+}
+
+/** Why this run may not call a tool that drives the computer, or undefined when it may. */
+export function computerAccessRefusal(name: string, access: ComputerAccess): string | undefined {
+  if (!drivesComputer(name) || access === "full") return undefined;
+  if (access === "tools" && TOOLS_ONLY_COMPUTER_TOOLS.has(name)) return undefined;
+  return access === "none"
+    ? "This person has no computer access. Company tools (Evolve) still work."
+    : "This computer only runs the OCSC tools (the ocsc tool) and files in the bot's folder.";
+}
 
 export const BUILTIN_AGENT_TOOL_NAMES = new Set(builtinAgentTools.map((tool) => tool.name));
 
@@ -112,6 +156,8 @@ export function selectBuiltinToolsForRun(options: {
   userComputerScreen?: boolean;
   /** Company-wide switches; each defaults to on. */
   computersEnabled?: boolean;
+  /** What the bot owner may do on their computer; defaults to everything. */
+  computerAccess?: ComputerAccess;
   connectedAppsEnabled?: boolean;
   mcpServersEnabled?: boolean;
   routinesEnabled?: boolean;
@@ -125,6 +171,8 @@ export function selectBuiltinToolsForRun(options: {
   pluginBranchImportEnabled?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
+  const computerAccess: ComputerAccess =
+    options.computersEnabled === false ? "none" : (options.computerAccess ?? "full");
   const ownerStartedRun = isOwnerStartedRun(options.trigger, Boolean(options.followUpFromUser));
   return selectCloudAgentTools(
     selectMemoryTools(
@@ -145,7 +193,7 @@ export function selectBuiltinToolsForRun(options: {
   ).filter(
     (tool) =>
       !disabled.has(tool.name) &&
-      (options.computersEnabled !== false || !COMPUTER_TOOL_NAMES.has(tool.name)) &&
+      computerToolAllowed(tool.name, computerAccess) &&
       (options.connectedAppsEnabled !== false || tool.name !== "connect_app") &&
       (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
       (tool.name !== "evolve_knowledge_search" || Boolean(options.evolveKnowledgeEnabled)) &&
@@ -156,7 +204,7 @@ export function selectBuiltinToolsForRun(options: {
         (Boolean(options.evolvePluginsEnabled) &&
           ownerStartedRun &&
           !options.messagingChannelRun &&
-          (options.computersEnabled !== false || !EVOLVE_PLUGIN_COMPUTER_TOOLS.has(tool.name)) &&
+          (computerAccess === "full" || !EVOLVE_PLUGIN_COMPUTER_TOOLS.has(tool.name)) &&
           (tool.name !== "evolve_plugin_import_branch" ||
             Boolean(options.pluginBranchImportEnabled)))) &&
       (options.routinesEnabled !== false ||

@@ -471,6 +471,19 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "ocsc",
+    description:
+      'Run one OCSC command, ocsc-<program>, on this bot\'s computer. args are its command-line words, one per item, e.g. program pptx, args ["create", "--spec", "deck.json"]. Paths are relative to the bot\'s folder. Use this, not shell, for OCSC commands.',
+    inputSchema: {
+      type: "object",
+      properties: {
+        program: { type: "string", enum: ["word", "pptx", "xlsx", "pdf", "video"] },
+        args: { type: "array", items: { type: "string" }, maxItems: 64 },
+      },
+      required: ["program", "args"],
+    },
+  },
+  {
     name: "user_computer_shell",
     description:
       "Run a command on the user's own computer. Use only when the task needs their local files, credentials, or network. cwd defaults to their home folder and must stay inside it.",

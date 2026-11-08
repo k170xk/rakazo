@@ -8,7 +8,7 @@ import type {
   SemanticMemoryProvider,
   WebProvider,
 } from "@rakazo/adapter-kit";
-import type { ComputerMode, MessageBlock } from "@rakazo/contracts";
+import type { ComputerAccess, ComputerMode, MessageBlock } from "@rakazo/contracts";
 import { createStreamingRedactor } from "@rakazo/core";
 import { toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
 import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@rakazo/db";
@@ -216,6 +216,10 @@ export interface RunComputerContext {
   pageBrowserAllowed: boolean;
   acceptsImages: boolean;
   heldForTakeover: boolean;
+  /** What this run may do on the computer; a colleague's turn never gets more than "tools". */
+  access: ComputerAccess;
+  /** Set on a colleague's turn: its files and OCSC commands stay in this folder, away from the owner's. */
+  folder: string | undefined;
 }
 
 export interface RunSource {
