@@ -9978,3 +9978,11 @@ msgstr ""
 #: src/pages/shell/bot-panel.tsx
 msgid "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
 msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Search chat files"
+msgstr "חיפוש בקובצי הצ׳אט"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes."
+msgstr "קובצי Word,‏ PDF,‏ PowerPoint וטקסט שצורפו לצ׳אט עוברים אינדוקס עם OpenAI ברקע, כך שהעוזרים מוצאים במהירות את הקטעים הנכונים במקום לקרוא כל קובץ מחדש. פועל כל עוד מודל החברה רץ על OpenAI. כיבוי מפסיק את האינדוקס ומוחק את האינדקסים."
