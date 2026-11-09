@@ -27,6 +27,26 @@ Every Word document uses the default, OCSCReport, unless the person names anothe
 A template can also be a Word file in the workspace: --template <their file>.docx. When the person sends a template to keep, copy it into templates/ (cp "<their file>.docx" templates/<Short-Name>.docx) so it is listed by name from then on.
 Templates may contain {{field}} placeholders, filled from "fields" in the spec, and a {{content}} paragraph where the blocks go. If the output lists "unfilled" fields, ask the person for those values or fill them later with fill_fields. Never invent a value for a field.
 
+WHICH DOCUMENT THEY MEAN
+"An OCSC Word document", "the OCSC Word doc" or "an OCSC template" means a document on an OCSC template. When the conversation has no Word document of theirs and they attached none, make a new one; never ask them to upload a document or template. Only ask when they clearly mean a particular file they have (for example "the report I sent yesterday") that is not in the conversation.
+
+OCSC TEMPLATES IN THE DOCUMENT LIBRARY
+OCSC's official Word templates live in the Evolve Document Library, by code. Use the one that fits the document; anything else (reports, method statements, technical notes, specifications without a template) uses OCSCReport.
+- Tender submissions, quality submissions, award criteria answers ("Criterion A"), expressions of interest: QF18 (Tender A4).
+- Letters: QF24 headed paper for the author's office: 1-page letter QF24-01 Dublin, QF24-05 Cork, QF24-07 Galway, QF24-09 London, QF24-11 Belfast, QF24-15 Birmingham, QF24-17 Environmental; MEP letters QF24-03 Dublin, QF24-13 London. The 2-page versions are the next code up (QF24-02, -06, -08, -10, -12, -16, -18, -04, -14).
+- Fee proposals: QF54-01 Dublin, -02 Galway, -03 Cork, -04 London, -05 Belfast, -06 Birmingham, -07 London MEP, -08 Environmental Dublin, -09 Dublin MEP.
+- Minutes QF51, agenda QF52, memo QF81, peer review report QF33, work instruction QF02, non-disclosure agreement QF80, design information QF35, testing document QF64.
+- Design risk assessments: SF01 (Ireland), SF02 (UK), SF02-1 (Northern Ireland).
+- BIM: EIR BIMQT15, pre-appointment BEP BIMQT1, federation strategy BIMQT17.
+- MEP documents: design note BQD10, briefing note BQD11, memorandum BQD12, tender report BQD16, stage report BQD18, site inspection report BQD21, meeting agenda BQD27, meeting minutes BQD28.
+- An A3 landscape report, or a report the person asks to be on the office's QF26 template: QF26-01 Dublin A3, QF26-02 Belfast A4, QF26-03 Belfast A3, QF26-04 Cork A4, QF26-05 Cork A3, QF26-06 Galway A4, QF26-07 Galway A3, QF26-08 London A4, QF26-09 London A3, QF26-10 Birmingham A4, QF26-11 Birmingham A3; otherwise OCSCReport, which is the Dublin A4 report.
+To use one:
+1. Call mcp__evolve__search_document_library with the code (for example "QF18") and take the matching result's "link".
+2. Run: ocsc-word fetch-template --url <link> --name <code> (for example --name QF24-05). It saves templates/<code>.docx (or .dotx) and replaces an older copy, so the Library's current version is always used. An old .doc file cannot be a template: say so and use OCSCReport.
+3. If the template is a blank page with OCSC branding (QF18), write the spec as usual and run ocsc-word new --template <code>.
+4. If the template already has wording, instructions or a form to complete (letters, fee proposals, minutes, agendas, memos, risk assessments, BIM and MEP templates, QF26), fill it in rather than adding to its end: ocsc-word read --in templates/<file>, then ocsc-word edit --in templates/<file> --spec <edits>.json --out outputs/<Name>.docx --clean. Fill its blanks and placeholders with replace_text (for example "Dear XXX", "[Insert Client Name]"), put the content in place of placeholder text and remove the template's instructions for use with replace_paragraphs (from the first paragraph to replace through the last, giving the new blocks; no blocks removes them), and use replace_section or delete_section for headed sections. The template's own fonts are kept.
+If mcp__evolve__search_document_library is not in your tools, use OCSCReport and say once that the Library templates need the Evolve connection.
+
 DOCUMENT DETAILS
 Before a new document, gather these once, so the person never has to repeat them:
 - office: the OCSC office whose address goes on the back cover (Dublin, Cork, Galway, Belfast, London or Birmingham).
@@ -65,6 +85,7 @@ When the person asks for changes to a document you made or one they sent, always
  {"op":"insert_after_heading","heading":"2. Programme","blocks":[...]},
  {"op":"replace_section","heading":"3. Conclusions","blocks":[...]},
  {"op":"delete_section","heading":"4. Appendix"},
+ {"op":"replace_paragraphs","from":"first words to replace","to":"words in the last paragraph to replace","blocks":[...]},
  {"op":"append","blocks":[...]},
  {"op":"fill_fields","fields":{"client_name":"..."}},
  {"op":"set_office","office":"Cork"},

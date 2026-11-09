@@ -3,6 +3,7 @@
  * OCSC Word: build and edit branded Word documents on a Bot's computer.
  *
  *   ocsc-word templates
+ *   ocsc-word fetch-template --url https://…/QF18.docx --name QF18
  *   ocsc-word new  --spec spec.json --out outputs/Report.docx [--template OCSCReportV1]
  *   ocsc-word read --in outputs/Report.docx
  *   ocsc-word edit --in outputs/Report.docx --spec edits.json [--out outputs/Report-v2.docx]
@@ -686,6 +687,31 @@ class Doc {
       [...els].reverse().find((e) => e.tag === "sectPr");
     const at = sect ? sect.from : this.xml.lastIndexOf("</w:body>");
     this.xml = this.xml.slice(0, at) + xml + this.xml.slice(at);
+  }
+
+  /** From the paragraph or table containing `from` through the one containing `to`, for template text that has no heading. */
+  paragraphRange(from, to) {
+    const els = this.elements();
+    const has = (e, s) => norm(e.text).includes(norm(s));
+    const a = els.findIndex((e) => e.tag !== "sectPr" && has(e, from));
+    if (a < 0)
+      throw new UsageError(
+        `Text not found: ${JSON.stringify(from)}. Run "ocsc-word read" to see the exact wording.`,
+      );
+    const b = to ? els.findIndex((e, i) => i >= a && has(e, to)) : a;
+    if (b < 0)
+      throw new UsageError(
+        `Text not found after ${JSON.stringify(from)}: ${JSON.stringify(to)}.`,
+      );
+    if (
+      els
+        .slice(a, b + 1)
+        .some((e) => e.tag === "sectPr" || e.xml.includes("<w:sectPr"))
+    )
+      throw new UsageError(
+        "That range crosses a section break (a new page layout). Replace the text on each side of it separately.",
+      );
+    return { start: els[a].from, end: els[b].to, count: b - a + 1 };
   }
 
   /** The heading element, and where its section ends. */
@@ -1746,6 +1772,32 @@ function textOf(xml) {
     .join("");
 }
 
+/** Gives runs without a font of their own the font and size of the first run in `sample`, for templates formatted run by run. */
+function withRunFont(xml, sample) {
+  const rPr =
+    /<w:r\b[^>]*>\s*<w:rPr>([\s\S]*?)<\/w:rPr>/.exec(sample)?.[1] ?? "";
+  const face = /<w:rFonts\b[^>]*\/>/.exec(rPr)?.[0] ?? "";
+  const size = [/<w:sz\b[^>]*\/>/, /<w:szCs\b[^>]*\/>/]
+    .map((re) => re.exec(rPr)?.[0] ?? "")
+    .join("");
+  if (!face && !size) return xml;
+  // Schema order: rStyle, rFonts, … b, i, … color, …, sz, szCs, highlight, u, … vertAlign, …, lang.
+  const AFTER_SIZE =
+    /<w:(?:highlight|u|effect|bdr|shd|fitText|vertAlign|rtl|cs|em|lang|eastAsianLayout|specVanish|oMath)\b/;
+  return xml.replace(
+    /<w:r>(<w:rPr>([\s\S]*?)<\/w:rPr>)?/g,
+    (all, has, inner) => {
+      if (!has) return `<w:r><w:rPr>${face}${size}</w:rPr>`;
+      if (/<w:rFonts\b|<w:sz\b/.test(inner)) return all;
+      const style = /^<w:rStyle\b[^>]*\/>/.exec(inner)?.[0] ?? "";
+      let rest = inner.slice(style.length);
+      const at = rest.search(AFTER_SIZE);
+      rest = at < 0 ? rest + size : rest.slice(0, at) + size + rest.slice(at);
+      return `<w:r><w:rPr>${style}${face}${rest}</w:rPr>`;
+    },
+  );
+}
+
 function norm(s) {
   return String(s ?? "")
     .replace(/\s+/g, " ")
@@ -1959,6 +2011,24 @@ async function cmdNew(o) {
     ) {
       doc.xml = doc.xml.slice(0, first.from) + doc.xml.slice(first.to);
     }
+    // Blank lines at the end of a letterhead template would push the content onto a later page.
+    const els = doc.elements();
+    const end = doc.contentEnd(els) ?? els.find((e) => e.tag === "sectPr");
+    const last = end ? els.indexOf(end) : els.length;
+    let cut = last;
+    while (
+      template.source !== "built-in" &&
+      cut > 0 &&
+      els[cut - 1].tag === "p" &&
+      !els[cut - 1].text.trim() &&
+      !/<w:sectPr|<w:drawing|<w:pict|<w:object|<w:br w:type="page"|<w:fldChar|<w:instrText/.test(
+        els[cut - 1].xml,
+      )
+    )
+      cut -= 1;
+    if (cut < last)
+      doc.xml =
+        doc.xml.slice(0, els[cut].from) + doc.xml.slice(els[last - 1].to);
     doc.insertBeforeSectPr(blocks);
   }
   doc.tidyLayout();
@@ -2181,9 +2251,34 @@ async function cmdEdit(o) {
         });
         break;
       }
+      case "replace_paragraphs": {
+        if (!op.from)
+          throw new UsageError(
+            `Edit ${n}: replace_paragraphs needs "from" (and optionally "to").`,
+          );
+        const r = doc.paragraphRange(
+          String(op.from),
+          op.to ? String(op.to) : null,
+        );
+        const old = doc.xml.slice(r.start, r.end);
+        const next = withRunFont(
+          doc.blocks(Array.isArray(op.blocks) ? op.blocks : []),
+          old,
+        );
+        doc.xml =
+          doc.xml.slice(0, r.start) +
+          (rev ? rev.deleted(old) + (next ? rev.inserted(next) : "") : next) +
+          doc.xml.slice(r.end);
+        report.push({
+          op: op.op,
+          removed: r.count,
+          summary: `${next ? "Replaced" : "Removed"} ${r.count} paragraph(s) from "${clip(op.from)}"`,
+        });
+        break;
+      }
       default:
         throw new UsageError(
-          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, fill_fields, append, insert_after_heading, add_to_section, replace_section or delete_section.`,
+          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, fill_fields, append, insert_after_heading, add_to_section, replace_section, delete_section or replace_paragraphs.`,
         );
     }
   }
@@ -2297,12 +2392,63 @@ async function cmdCompare(o) {
   };
 }
 
+/** Saves a Word template from a link (the Document Library's) into templates/, replacing an older copy. */
+async function cmdFetchTemplate(o) {
+  const url = typeof o.url === "string" ? o.url.trim() : "";
+  if (!/^https:\/\//i.test(url))
+    throw new UsageError("--url must be the template's https link.");
+  const file = decodeURIComponent(
+    new URL(url).pathname.split("/").pop() ?? "",
+  );
+  const ext = /\.(docx|dotx|doc|dot)$/i.exec(file)?.[1]?.toLowerCase();
+  if (ext === "doc" || ext === "dot")
+    throw new UsageError(
+      `${file} is an old-format Word file (.${ext}), which cannot be used as a template. Use the OCSC report instead, or ask for a .docx version of it to be added to the Document Library.`,
+    );
+  if (!ext) throw new UsageError("The link must be to a .docx or .dotx file.");
+  const name = String(o.name ?? file.replace(TEMPLATE_EXT, ""))
+    .trim()
+    .replace(/[^A-Za-z0-9 _-]+/g, "-");
+  if (!name) throw new UsageError("--name must have letters or digits.");
+  const builtIn = templateFiles().find(
+    (t) =>
+      t.source === "built-in" && t.name.toLowerCase() === name.toLowerCase(),
+  );
+  if (builtIn)
+    throw new UsageError(
+      `${builtIn.name} is a built-in template name. Choose another --name.`,
+    );
+  const bytes = download(url, "--url");
+  try {
+    const zip = await JSZip.loadAsync(bytes);
+    if (!zip.file("word/document.xml")) throw new Error("no document");
+  } catch {
+    throw new UsageError(`${file} is not a Word document.`);
+  }
+  mkdirSync(WORKSPACE_TEMPLATE_DIR, { recursive: true });
+  for (const f of readdirSync(WORKSPACE_TEMPLATE_DIR)) {
+    if (f.replace(TEMPLATE_EXT, "").toLowerCase() === name.toLowerCase())
+      rmSync(join(WORKSPACE_TEMPLATE_DIR, f), { force: true });
+  }
+  const full = join(WORKSPACE_TEMPLATE_DIR, `${name}.${ext}`);
+  writeFileSync(full, bytes);
+  const path = relative(WORKSPACE, full);
+  return {
+    ok: true,
+    template: name,
+    path,
+    note: `Use it with --template ${name}, or fill it in with: edit --in ${path} --spec <edits>.json --out outputs/<Name>.docx --clean`,
+  };
+}
+
 async function main() {
   const o = args(process.argv.slice(2));
   const cmd = o._[0];
   switch (cmd) {
     case "templates":
       return cmdTemplates();
+    case "fetch-template":
+      return cmdFetchTemplate(o);
     case "new":
       return cmdNew(o);
     case "read":
@@ -2315,7 +2461,7 @@ async function main() {
       return cmdCompare(o);
     default:
       throw new UsageError(
-        "Usage: ocsc-word templates | new --spec s.json --out outputs/X.docx [--template NAME|uploads/T.docx] | read --in X.docx | edit --in X.docx --spec e.json [--out Y.docx] [--clean] | accept --in X.docx [--out Y.docx] | compare --old A.docx --new B.docx",
+        "Usage: ocsc-word templates | fetch-template --url <link> [--name CODE] | new --spec s.json --out outputs/X.docx [--template NAME|uploads/T.docx] | read --in X.docx | edit --in X.docx --spec e.json [--out Y.docx] [--clean] | accept --in X.docx [--out Y.docx] | compare --old A.docx --new B.docx",
       );
   }
 }

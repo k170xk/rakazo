@@ -23,6 +23,7 @@ const KNOWN_EVOLVE_TOOLS = [
   "generate_voiceover",
   "create_chart",
   "web_search",
+  "search_document_library",
 ];
 
 const SECRET = "s".repeat(40);
