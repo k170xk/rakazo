@@ -392,7 +392,8 @@ env.DATABASE_MIGRATION_URL = database.migrationUrl;
 env.DATA_DIR = database.dataDir;
 
 // A checkout's .env connects this server to Evolve (sign-in, directory, assistants and plugins),
-// names its admins and sets the attachment count. The shell can still override it.
+// names its admins and sets the attachment count and context strategy. The shell can still
+// override it.
 for (const name of [
   "NODE_ENV",
   "EVOLVE_COMPUTER_SSO_SECRET",
@@ -404,6 +405,7 @@ for (const name of [
   "EVOLVE_PLUGINS_GITHUB_TOKEN",
   "RAKAZO_ADMIN_EMAILS",
   "MAX_ATTACHMENTS_PER_MESSAGE",
+  "AGENT_CONTEXT_STRATEGY",
 ]) {
   if (!env[name] && setting(name)) env[name] = setting(name);
 }
