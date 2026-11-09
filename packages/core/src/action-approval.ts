@@ -14,6 +14,7 @@ const APPROVAL_EXEMPT_TOOLS = new Set([
   "copy_file",
   "fetch_file",
   "note_file",
+  "list_conversation_files",
   "shell",
   "open_path",
   "launch_app",

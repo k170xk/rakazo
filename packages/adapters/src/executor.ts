@@ -253,13 +253,15 @@ import {
   artifactIdFromAttachmentPath,
   currentTurnFilesInstruction,
   earlierThreadFilesInstruction,
+  FILE_HELPERS_INSTRUCTION,
   FILE_NOTES_INSTRUCTION,
+  listConversationFiles,
   listCurrentTurnFiles,
-  listEarlierThreadFiles,
   listRecentThreadFiles,
   materializeCurrentTurnFiles,
   materializeRecentThreadFiles,
   recentThreadFilesInstruction,
+  selectEarlierThreadFiles,
   threadFileNotes,
   withFileNotes,
 } from "./thread-artifacts.js";
@@ -1405,14 +1407,22 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           throw error;
         }
         // Earlier files and notes only add to what the run is told; a failure leaves them out.
+        let allConversationFiles: EarlierThreadFile[] = [];
         let earlierThreadFiles: EarlierThreadFile[] = [];
+        let earlierThreadFileCount = 0;
         if (artifacts) {
           try {
-            earlierThreadFiles = await listEarlierThreadFiles(deps, history, historyMessages, {
+            allConversationFiles = await listConversationFiles(deps, {
+              threadId: thread.id,
+              channelId,
               context,
-              skipMessageId: currentTurnMessage?.id,
-              listed: new Set([...currentTurnFiles, ...recentThreadFiles].map((file) => file.path)),
             });
+            const earlier = selectEarlierThreadFiles(
+              allConversationFiles,
+              new Set([...currentTurnFiles, ...recentThreadFiles].map((file) => file.path)),
+            );
+            earlierThreadFiles = earlier.shown;
+            earlierThreadFileCount = earlier.total;
             const notes = await threadFileNotes(
               deps.prisma,
               thread.id,
@@ -1430,12 +1440,13 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             });
           }
         }
-        const conversationFiles = new Map(
-          [...currentTurnFiles, ...recentThreadFiles, ...earlierThreadFiles].flatMap((file) => {
-            const artifactId = artifactIdFromAttachmentPath(file.path);
-            return artifactId ? [[file.path, artifactId] as const] : [];
-          }),
-        );
+        const conversationFiles = new Map<string, EarlierThreadFile>();
+        for (const file of [...currentTurnFiles, ...recentThreadFiles, ...allConversationFiles]) {
+          const artifactId = artifactIdFromAttachmentPath(file.path);
+          if (artifactId && !conversationFiles.has(file.path)) {
+            conversationFiles.set(file.path, { ...file, artifactId });
+          }
+        }
         const attachedFilesPrompt = [
           currentTurnFilesInstruction(currentTurnFiles),
           recentThreadFilesInstruction(recentThreadFiles),
@@ -1631,8 +1642,15 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const offersBuiltin = (name: string) =>
           strategicBuiltins.some((tool) => tool.name === name) && !disabledBuiltinTools.has(name);
         const conversationFilesPrompt = [
-          offersBuiltin("fetch_file") ? earlierThreadFilesInstruction(earlierThreadFiles) : "",
+          offersBuiltin("fetch_file")
+            ? earlierThreadFilesInstruction(earlierThreadFiles, earlierThreadFileCount, {
+                canList: offersBuiltin("list_conversation_files"),
+              })
+            : "",
           offersBuiltin("note_file") && conversationFiles.size ? FILE_NOTES_INSTRUCTION : "",
+          offersBuiltin("note_file") && offersBuiltin("run_subagent") && conversationFiles.size > 1
+            ? FILE_HELPERS_INSTRUCTION
+            : "",
         ]
           .filter(Boolean)
           .join("\n\n");

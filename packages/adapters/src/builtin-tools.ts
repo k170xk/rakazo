@@ -493,6 +493,18 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "list_conversation_files",
+    description:
+      "List every file the person attached in this conversation, newest first, 20 a page, with paths and your notes. Use it to find a file not shown in your instructions, or to go through all of them page by page. query keeps files whose name or note contains every word.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Words to find in file names or notes." },
+        page: { type: "integer", minimum: 1 },
+      },
+    },
+  },
+  {
     name: "shell",
     description:
       "Run a command inside this bot's computer. cwd defaults to the bot's folder on a Team Computer and the workspace root on a Private Computer. Output can arrive while the command is still running; tell the user any one-time code or sign-in URL in that output. A command is stopped after a few minutes, so on Linux or macOS start longer work, such as a coding agent CLI, as its own statement `nohup <command> < /dev/null > <log> 2>&1 &`, never after `&&`, and read the log to follow it.",

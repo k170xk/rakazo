@@ -11,7 +11,10 @@ import { recordComputerAction } from "./run-tools-computer.js";
 import {
   attachWorkspaceFileToThread,
   cleanFileNote,
+  conversationFilesPage,
   saveThreadFileNote,
+  threadFileNotes,
+  withFileNotes,
 } from "./thread-artifacts.js";
 import type { WorkspaceFiles } from "./tool-runner.js";
 import { TOOL_RUNNER_COMPUTER } from "./tool-runner.js";
@@ -270,10 +273,11 @@ export const fileTools: ToolHandlers = {
   async fetch_file(ctx, call) {
     const { deps, context } = ctx;
     const filePath = String(call.args.path ?? "").trim();
-    const artifactId = ctx.computer.conversationFiles?.get(filePath);
+    const artifactId = ctx.computer.conversationFiles?.get(filePath)?.artifactId;
     if (!artifactId) {
       return call.finish({
-        error: "Use the exact attachments/ path of a file listed for this conversation.",
+        error:
+          "Use the exact attachments/ path of a file in this conversation (see list_conversation_files).",
       });
     }
     if (!deps.artifacts) return call.finish({ error: "File storage is unavailable." });
@@ -308,10 +312,11 @@ export const fileTools: ToolHandlers = {
   async note_file(ctx, call) {
     const { deps, thread } = ctx;
     const filePath = String(call.args.path ?? "").trim();
-    const artifactId = ctx.computer.conversationFiles?.get(filePath);
+    const artifactId = ctx.computer.conversationFiles?.get(filePath)?.artifactId;
     if (!artifactId) {
       return call.finish({
-        error: "Use the exact attachments/ path of a file listed for this conversation.",
+        error:
+          "Use the exact attachments/ path of a file in this conversation (see list_conversation_files).",
       });
     }
     const note = cleanFileNote(call.args.note);
@@ -323,6 +328,20 @@ export const fileTools: ToolHandlers = {
       note,
     });
     return call.finish({ ok: true, path: filePath, note });
+  },
+  async list_conversation_files(ctx, call) {
+    const files = [...(ctx.computer.conversationFiles?.values() ?? [])];
+    const notes = await threadFileNotes(
+      ctx.deps.prisma,
+      ctx.thread.id,
+      files.map((file) => file.artifactId),
+    );
+    return call.finish(
+      conversationFilesPage(withFileNotes(files, notes), {
+        query: typeof call.args.query === "string" ? call.args.query : undefined,
+        page: Number(call.args.page) || 1,
+      }),
+    );
   },
   generate_image: generateMedia,
   generate_video: generateMedia,

@@ -86,6 +86,13 @@ export const TOOLS_ONLY_COMPUTER_TOOLS: ReadonlySet<string> = new Set([
   "ocsc",
 ]);
 
+/** Offered only when the run has conversation files to work on. */
+const CONVERSATION_FILE_TOOLS: ReadonlySet<string> = new Set([
+  "fetch_file",
+  "note_file",
+  "list_conversation_files",
+]);
+
 const USER_COMPUTER_TOOL_NAMES: ReadonlySet<string> = new Set([
   USER_COMPUTER_SHELL_TOOL,
   USER_COMPUTER_OBSERVE_TOOL,
@@ -202,8 +209,7 @@ export function selectBuiltinToolsForRun(options: {
       !disabled.has(tool.name) &&
       computerToolAllowed(tool.name, computerAccess) &&
       (tool.name !== "copy_file" || Boolean(options.documentsApart)) &&
-      ((tool.name !== "fetch_file" && tool.name !== "note_file") ||
-        Boolean(options.conversationFiles)) &&
+      (!CONVERSATION_FILE_TOOLS.has(tool.name) || Boolean(options.conversationFiles)) &&
       (options.connectedAppsEnabled !== false || tool.name !== "connect_app") &&
       (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
       (tool.name !== "evolve_knowledge_search" || Boolean(options.evolveKnowledgeEnabled)) &&

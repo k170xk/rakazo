@@ -33,6 +33,7 @@ export const BUILTIN_TOOL_NAMES = [
   "copy_file",
   "fetch_file",
   "note_file",
+  "list_conversation_files",
   "shell",
   "ocsc",
   "user_computer_shell",

@@ -40,6 +40,7 @@ import { subagentMarksUnread } from "./run-notifications.js";
 import { secretPausedToolResult } from "./run-secret.js";
 import type { createRunTrustLoaders } from "./run-trust.js";
 import type { inferScript } from "./scripted-runtime.js";
+import type { EarlierThreadFile } from "./thread-artifacts.js";
 import type { LoopGuardStreak } from "./tool-loop.js";
 import type { ToolRunnerWorkspace, WorkspaceFiles } from "./tool-runner.js";
 import { restoreTurnCheckpoint, unresolvedTurnCheckpointCalls } from "./turn-checkpoint.js";
@@ -235,8 +236,8 @@ export interface RunComputerContext {
   documentsApart?: boolean;
   /** Word documents attached to this turn or earlier in the conversation, which edits must change. */
   wordDocuments?: readonly { name: string; path: string }[];
-  /** The person's files listed to this run, by attachment path to artifact id; fetch_file and note_file accept only these. */
-  conversationFiles?: ReadonlyMap<string, string>;
+  /** The person's files in this conversation, newest first, by attachment path; fetch_file, note_file and list_conversation_files accept only these. */
+  conversationFiles?: ReadonlyMap<string, EarlierThreadFile>;
 }
 
 export interface RunToolRunner {

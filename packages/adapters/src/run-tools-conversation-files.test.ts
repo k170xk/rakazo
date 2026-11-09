@@ -1,4 +1,3 @@
-import type { MessageBlock } from "@rakazo/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { selectBuiltinToolsForRun } from "./run-tool-selection.js";
 import { fileTools } from "./run-tools-files.js";
@@ -7,9 +6,10 @@ import {
   cleanFileNote,
   earlierThreadFilesInstruction,
   FILE_NOTE_MAX_LENGTH,
-  listEarlierThreadFiles,
+  listConversationFiles,
   recentThreadFilesInstruction,
   saveThreadFileNote,
+  selectEarlierThreadFiles,
   withFileNotes,
 } from "./thread-artifacts.js";
 import { TOOL_RUNNER_COMPUTER } from "./tool-runner.js";
@@ -74,6 +74,10 @@ function notesTable() {
   };
 }
 
+function conversationFile(artifactId: string, name: string, path: string) {
+  return { artifactId, name, path, mimeType: "application/pdf", size: 10 };
+}
+
 function harness() {
   const runner = folder();
   const prepare = vi.fn(async () => {});
@@ -109,8 +113,8 @@ function harness() {
       checkpoint: { markDirty: () => {} },
       runner: { workspace: {}, files: runner, prepare },
       conversationFiles: new Map([
-        [SPEC, "spec1"],
-        [OTHER, "other9"],
+        [SPEC, conversationFile("spec1", "Spec.docx", SPEC)],
+        [OTHER, conversationFile("other9", "Other.pdf", OTHER)],
       ]),
     },
   };
@@ -158,7 +162,7 @@ describe("fetch_file", () => {
     const h = harness();
     for (const path of ["attachments/someone-else.docx", "../spec1.docx", "outputs/Report.docx"]) {
       const result = await fileTools.fetch_file!(h.ctx, h.call("fetch_file", { path }) as never);
-      expect(result).toEqual({ error: expect.stringContaining("listed for this conversation") });
+      expect(result).toEqual({ error: expect.stringContaining("in this conversation") });
     }
     expect(h.findFirst).not.toHaveBeenCalled();
     expect(h.runner.writeFile).not.toHaveBeenCalled();
@@ -232,58 +236,77 @@ describe("note_file", () => {
 });
 
 describe("conversation file listing", () => {
-  const block = (artifactId: string, name: string): MessageBlock =>
-    ({ kind: "file", artifactId, name, mimeType: "application/pdf", size: 1 }) as MessageBlock;
-
-  function listing(count: number) {
-    const history = Array.from({ length: count }, (_, index) => ({
-      id: `m${index}`,
-      role: "user",
-    }));
-    const messages = history.map((entry, index) => ({
-      id: entry.id,
-      blocks: [block(`a${index}`, `File ${index}.pdf`)],
-    }));
+  function database(found: string[]) {
     const prisma = {
+      $queryRaw: vi.fn(async () => found.map((artifactId) => ({ artifactId }))),
       artifact: {
-        findMany: vi.fn(async ({ where }: { where: { id: { in: string[] }; userId: string } }) =>
+        findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
           where.id.in
-            .filter((id) => id !== "a3")
+            .filter((id) => id !== "theirs")
             .map((id) => ({
               id,
-              name: `File ${id.slice(1)}.pdf`,
+              name: `${id}.pdf`,
               mimeType: "application/pdf",
-              size: 1,
-              userId: where.userId,
+              size: id === "huge" ? 10_000 : 1,
             })),
         ),
       },
     };
-    return { history, messages, prisma };
+    return prisma;
   }
+  const context = { spaceId: "space", userId: "owner" } as never;
 
-  it("lists earlier files newest first, skipping the listed, the current turn and others' files", async () => {
-    const { history, messages, prisma } = listing(6);
-    const files = await listEarlierThreadFiles({ prisma } as never, history, messages, {
-      context: { spaceId: "space", userId: "owner" } as never,
-      skipMessageId: "m5",
-      listed: new Set(["attachments/a4.pdf"]),
+  it("finds the person's files across the whole conversation, newest first", async () => {
+    const prisma = database(["a9", "theirs", "a5", "huge", "a1"]);
+    const files = await listConversationFiles({ prisma, maxUploadSizeBytes: 100 } as never, {
+      threadId: "t1",
+      context,
     });
-    expect(files.map((file) => file.artifactId)).toEqual(["a2", "a1", "a0"]);
-    expect(files[0]).toMatchObject({ path: "attachments/a2.pdf", name: "File 2.pdf" });
-    expect(prisma.artifact.findMany).toHaveBeenCalledWith({
-      where: expect.objectContaining({ spaceId: "space", userId: "owner" }),
-    });
+    expect(files.map((file) => file.artifactId)).toEqual(["a9", "a5", "a1"]);
+    expect(files[0]).toMatchObject({ path: "attachments/a9.pdf", name: "a9.pdf" });
+    expect(prisma.artifact.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ spaceId: "space", userId: "owner" }),
+      }),
+    );
+    const query = (prisma.$queryRaw.mock.calls[0] as unknown[]).slice(1);
+    expect(query).toContain("t1");
+    expect(JSON.stringify(query)).not.toContain("channel_message");
   });
 
-  it("caps how many earlier files are listed", async () => {
-    const { history, messages, prisma } = listing(60);
-    const files = await listEarlierThreadFiles({ prisma } as never, history, messages, {
-      context: { spaceId: "space", userId: "owner" } as never,
-      listed: new Set(),
-    });
-    expect(files).toHaveLength(15);
-    expect(files[0]?.artifactId).toBe("a59");
+  it("keeps a channel run to its channel's messages", async () => {
+    const prisma = database(["a1"]);
+    await listConversationFiles({ prisma } as never, { threadId: "t1", channelId: "c7", context });
+    expect(JSON.stringify(prisma.$queryRaw.mock.calls[0])).toContain(
+      JSON.stringify(JSON.stringify([{ kind: "channel_message", channelId: "c7" }])).slice(1, -1),
+    );
+  });
+
+  it("lists nothing and skips the artifact lookup when no files were attached", async () => {
+    const prisma = database([]);
+    expect(await listConversationFiles({ prisma } as never, { threadId: "t1", context })).toEqual(
+      [],
+    );
+    expect(prisma.artifact.findMany).not.toHaveBeenCalled();
+  });
+
+  it("shows the newest earlier files and counts the rest", () => {
+    const files = Array.from({ length: 40 }, (_, index) => ({
+      ...conversationFile(`a${index}`, `File ${index}.pdf`, `attachments/a${index}.pdf`),
+    }));
+    const earlier = selectEarlierThreadFiles(files, new Set(["attachments/a0.pdf"]));
+    expect(earlier.shown).toHaveLength(15);
+    expect(earlier.shown[0]?.artifactId).toBe("a1");
+    expect(earlier.total).toBe(39);
+    const text = earlierThreadFilesInstruction(earlier.shown, earlier.total, { canList: true });
+    expect(text).toContain("24 older files are not shown");
+    expect(text).toContain("list_conversation_files");
+    expect(earlierThreadFilesInstruction(earlier.shown, earlier.total)).not.toContain(
+      "list_conversation_files",
+    );
+    expect(
+      earlierThreadFilesInstruction(earlier.shown.slice(0, 3), 3, { canList: true }),
+    ).not.toContain("not shown");
   });
 
   it("keeps the earlier-files instruction small however long the notes are", () => {
@@ -317,6 +340,80 @@ describe("conversation file listing", () => {
   });
 });
 
+describe("list_conversation_files", () => {
+  function many(count: number) {
+    const h = harness();
+    const files = new Map(
+      Array.from({ length: count }, (_, index) => {
+        const path = `attachments/f${index}.pdf`;
+        return [path, conversationFile(`f${index}`, `Report ${index}.pdf`, path)] as const;
+      }),
+    );
+    (h.ctx as { computer: { conversationFiles: unknown } }).computer.conversationFiles = files;
+    h.threadFileNote.rows.push({
+      id: "n1",
+      spaceId: "space",
+      threadId: "t1",
+      artifactId: "f42",
+      note: "Drainage budget for HEL18",
+    });
+    const findMany = vi.fn(async ({ where }: { where: { artifactId: { in: string[] } } }) =>
+      h.threadFileNote.rows.filter((row) => where.artifactId.in.includes(row.artifactId)),
+    );
+    Object.assign(h.threadFileNote, { findMany });
+    return h;
+  }
+  const list = (h: ReturnType<typeof many>, args: Record<string, unknown>) =>
+    fileTools.list_conversation_files!(
+      h.ctx,
+      h.call("list_conversation_files", args) as never,
+    ) as Promise<{
+      page: number;
+      pages: number;
+      matching: number;
+      total: number;
+      withoutNote: number;
+      files: Array<{ name: string; path: string; note?: string }>;
+    }>;
+
+  it("pages through every file in the conversation, newest first", async () => {
+    const h = many(45);
+    const first = await list(h, {});
+    expect(first).toMatchObject({ page: 1, pages: 3, matching: 45, total: 45, withoutNote: 44 });
+    expect(first.files).toHaveLength(20);
+    expect(first.files[0]?.path).toBe("attachments/f0.pdf");
+    const last = await list(h, { page: 9 });
+    expect(last.page).toBe(3);
+    expect(last.files.map((file) => file.path)).toEqual([
+      "attachments/f40.pdf",
+      "attachments/f41.pdf",
+      "attachments/f42.pdf",
+      "attachments/f43.pdf",
+      "attachments/f44.pdf",
+    ]);
+    expect(last.files[2]?.note).toBe("Drainage budget for HEL18");
+  });
+
+  it("finds files by every word of the query in their name or note", async () => {
+    const h = many(45);
+    const byNote = await list(h, { query: "hel18 DRAINAGE" });
+    expect(byNote.files.map((file) => file.path)).toEqual(["attachments/f42.pdf"]);
+    const byName = await list(h, { query: "report 7" });
+    expect(byName.files.map((file) => file.name)).toEqual([
+      "Report 7.pdf",
+      "Report 17.pdf",
+      "Report 27.pdf",
+      "Report 37.pdf",
+    ]);
+    expect((await list(h, { query: "nothing like this" })).files).toEqual([]);
+  });
+
+  it("returns an empty page when the conversation has no files", async () => {
+    const h = many(0);
+    expect(await list(h, {})).toMatchObject({ page: 1, pages: 1, total: 0, files: [] });
+  });
+});
+
 describe("offering fetch_file and note_file", () => {
   const base = {
     graphicalToolsAllowed: true,
@@ -330,8 +427,9 @@ describe("offering fetch_file and note_file", () => {
 
   it("offers them only when the run lists conversation files", () => {
     expect(names({ conversationFiles: true })).toEqual(
-      expect.arrayContaining(["fetch_file", "note_file"]),
+      expect.arrayContaining(["fetch_file", "note_file", "list_conversation_files"]),
     );
+    expect(names({ conversationFiles: false })).not.toContain("list_conversation_files");
     expect(names({ conversationFiles: false })).not.toContain("fetch_file");
     expect(names({ conversationFiles: false })).not.toContain("note_file");
     expect(names({ conversationFiles: true, computerAccess: "tools" })).toContain("fetch_file");
