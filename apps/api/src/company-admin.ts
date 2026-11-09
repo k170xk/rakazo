@@ -77,6 +77,7 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   personalVault: "Personal vaults are turned off for your company.",
   staffSkills:
     "Writing skills, browsing skill packs and adding them from GitHub is turned off for your company.",
+  chatFileSearch: "Searching chat files is turned off for your company.",
 };
 
 /** Switches that only limit members; admins keep these so they can configure and test. */

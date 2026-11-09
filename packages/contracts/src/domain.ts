@@ -339,7 +339,7 @@ export const SpaceBotSchema = BotSchema.pick({
   threadStatus: true,
   runErrorId: true,
   updatedAt: true,
-});
+}).extend({ modelId: BotSchema.shape.modelId.optional() });
 export type SpaceBot = z.infer<typeof SpaceBotSchema>;
 
 export const SpaceGroupSchema = GroupSchema.pick({
@@ -2081,6 +2081,8 @@ export const CompanyFeaturesSchema = z.object({
   personalVault: z.boolean(),
   /** Staff write their own skills, browse skill packs and add them from GitHub. Admins always can. */
   staffSkills: z.boolean(),
+  /** Files attached to a chat are indexed with OpenAI so assistants search them by passage. */
+  chatFileSearch: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -2105,6 +2107,7 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   accountData: false,
   personalVault: false,
   staffSkills: false,
+  chatFileSearch: true,
 };
 
 /** Stored switches over the defaults, so a switch added later starts at its default. */

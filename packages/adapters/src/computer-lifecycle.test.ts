@@ -2455,6 +2455,8 @@ describe("computer execution leases", () => {
         updateMany: vi.fn(),
       },
       message: { deleteMany: vi.fn(), findMany: vi.fn(async () => []) },
+      chatFileIndex: { updateMany: vi.fn() },
+      chatFileIndexEntry: { updateMany: vi.fn() },
       event: {
         deleteMany: vi.fn(),
         create: vi.fn().mockResolvedValue({

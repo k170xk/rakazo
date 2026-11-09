@@ -505,6 +505,22 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "search_conversation_files",
+    description:
+      "Search the text of the files attached in this conversation and get the most relevant passages, each with its file's attachments/ path. Fast: use it first for a question about what the files say. notSearchable lists files still being indexed or that cannot be searched (such as spreadsheets and images); read those directly.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "What to look for, as a question or the key words.",
+        },
+        max_results: { type: "integer", minimum: 1, maximum: 8 },
+      },
+      required: ["query"],
+    },
+  },
+  {
     name: "shell",
     description:
       "Run a command inside this bot's computer. cwd defaults to the bot's folder on a Team Computer and the workspace root on a Private Computer. Output can arrive while the command is still running; tell the user any one-time code or sign-in URL in that output. A command is stopped after a few minutes, so on Linux or macOS start longer work, such as a coding agent CLI, as its own statement `nohup <command> < /dev/null > <log> 2>&1 &`, never after `&&`, and read the log to follow it.",

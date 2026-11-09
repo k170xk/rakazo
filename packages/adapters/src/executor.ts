@@ -66,6 +66,15 @@ import {
 import { createBrowserProvider } from "./browser-provider-factory.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
+import {
+  CHAT_FILE_SEARCH_INSTRUCTION,
+  chatFileSearchKey,
+  FIRST_TURN_INDEX_WAIT_MIN_FILES,
+  searchableChatFileCount,
+  startChatFileIndexing,
+  unsearchableReason,
+  waitForChatFileIndex,
+} from "./chat-file-search.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import {
   companyAssistantModel,
@@ -253,7 +262,6 @@ import {
   artifactIdFromAttachmentPath,
   currentTurnFilesInstruction,
   earlierThreadFilesInstruction,
-  FILE_HELPERS_INSTRUCTION,
   FILE_NOTES_INSTRUCTION,
   listConversationFiles,
   listCurrentTurnFiles,
@@ -1447,6 +1455,39 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             conversationFiles.set(file.path, { ...file, artifactId });
           }
         }
+        let conversationFileSearch = false;
+        if (conversationFiles.size && deps.artifacts && chatFileSearchKey()) {
+          const artifactIds = [...conversationFiles.values()].map((file) => file.artifactId);
+          // Usually already running since upload; this picks up anything not yet indexed.
+          startChatFileIndexing(
+            { prisma: deps.prisma, artifacts: deps.artifacts },
+            {
+              spaceId: run.spaceId,
+              userId: context.userId,
+              threadId: thread.id,
+              files: conversationFiles.values(),
+              context,
+            },
+          );
+          const sentNow = currentTurnFiles.flatMap((file) => {
+            const indexed = conversationFiles.get(file.path);
+            return indexed && !unsearchableReason(indexed) ? [indexed.artifactId] : [];
+          });
+          // A batch of new documents is quicker to search than to read one by one, so the
+          // turn waits briefly for them; one or two files are read directly without waiting.
+          if (sentNow.length >= FIRST_TURN_INDEX_WAIT_MIN_FILES) {
+            await waitForChatFileIndex(deps.prisma, thread.id, sentNow, {
+              signal: context.signal,
+            }).catch(() => undefined);
+          }
+          conversationFileSearch = await searchableChatFileCount(
+            deps.prisma,
+            thread.id,
+            artifactIds,
+          )
+            .then((count) => count > 0)
+            .catch(() => false);
+        }
         const attachedFilesPrompt = [
           currentTurnFilesInstruction(currentTurnFiles),
           recentThreadFilesInstruction(recentThreadFiles),
@@ -1613,6 +1654,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             computerAccess,
             documentsApart: documentsApart && Boolean(runToolRunner),
             conversationFiles: conversationFiles.size > 0,
+            conversationFileSearch,
             connectedAppsEnabled: companyFeatures().connectedApps,
             mcpServersEnabled: companyFeatures().mcpServers,
             routinesEnabled: companyFeatures().routines && computerAccess === "full",
@@ -1648,9 +1690,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               })
             : "",
           offersBuiltin("note_file") && conversationFiles.size ? FILE_NOTES_INSTRUCTION : "",
-          offersBuiltin("note_file") && offersBuiltin("run_subagent") && conversationFiles.size > 1
-            ? FILE_HELPERS_INSTRUCTION
-            : "",
+          offersBuiltin("search_conversation_files") ? CHAT_FILE_SEARCH_INSTRUCTION : "",
         ]
           .filter(Boolean)
           .join("\n\n");

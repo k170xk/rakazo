@@ -201,6 +201,7 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   if (toolName === "fetch_file") return `Fetching ${detail(record.path)}`;
   if (toolName === "note_file") return `Noting what ${detail(record.path)} contains`;
   if (toolName === "list_conversation_files") return "Looking through the conversation's files";
+  if (toolName === "search_conversation_files") return "Searching the conversation's files";
   if (toolName === "open_path") return `Opening ${detail(record.path)}`;
   if (toolName === "render_plot") return "Rendering a chart";
   if (toolName === "show_card") return "Drawing a card";

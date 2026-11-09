@@ -1091,6 +1091,41 @@ model ThreadFileNote {
   @@map("thread_file_notes")
 }
 
+/// A conversation's OpenAI vector store. No foreign keys: the sweeper still needs the
+/// OpenAI ids after the thread, its files or the space are deleted.
+model ChatFileIndex {
+  id            String   @id @default(cuid())
+  spaceId       String
+  threadId      String   @unique
+  vectorStoreId String
+  createdAt     DateTime @default(now())
+  /// Last indexed or searched; idle stores are removed.
+  usedAt        DateTime @default(now())
+
+  @@index([spaceId])
+  @@index([usedAt])
+  @@map("chat_file_indexes")
+}
+
+/// One conversation file in its thread's vector store.
+model ChatFileIndexEntry {
+  id           String   @id @default(cuid())
+  spaceId      String
+  threadId     String
+  artifactId   String
+  openaiFileId String?
+  /// indexing | ready | failed | skipped
+  status       String
+  error        String?
+  claimedAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([threadId, artifactId])
+  @@index([artifactId])
+  @@index([status, claimedAt])
+  @@map("chat_file_index_entries")
+}
+
 model Task {
   id        String   @id @default(cuid())
   spaceId   String

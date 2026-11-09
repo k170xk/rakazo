@@ -419,6 +419,17 @@ export async function clearThread(
     await expireComputerExecutionLeases(tx, { runId: { in: runIds } });
     await tx.message.deleteMany({ where: { threadId: input.threadId } });
     await tx.event.deleteMany({ where: { threadId: input.threadId } });
+    // The cleared files leave the conversation's search index: renamed off the thread, the
+    // index matches no thread, so the chat file sweeper deletes it at OpenAI.
+    const retiredIndex = `${input.threadId}:cleared:${now.getTime()}`;
+    await tx.chatFileIndex.updateMany({
+      where: { threadId: input.threadId },
+      data: { threadId: retiredIndex },
+    });
+    await tx.chatFileIndexEntry.updateMany({
+      where: { threadId: input.threadId },
+      data: { threadId: retiredIndex },
+    });
     if (thread.nextMessageSeq > 0) {
       // nextMessageSeq is not reset, so mark every deleted message as already compacted.
       // Leaving the cursor behind would let compaction re-summarize deleted history (or, reset

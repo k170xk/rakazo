@@ -554,6 +554,12 @@ function CompanyFeaturesSection({
       label: t`Cursor cloud agents`,
       description: t`Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap.`,
     },
+    {
+      id: "chatFileSearch",
+      group: "models",
+      label: t`Search chat files`,
+      description: t`Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes.`,
+    },
   ];
 
   const groups: { id: FeatureGroup; title: string }[] = [

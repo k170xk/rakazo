@@ -24,6 +24,7 @@ import {
   auditLogConfig,
   ChatSdkMessagingSurface,
   CodexCatalogCache,
+  chatFileSearchSweeper,
   contentKeyProviderFromEnv,
   createAgentHomeStore,
   createApnsVoipProvider,
@@ -422,6 +423,7 @@ async function main() {
     reconcileHomeStorage: homeStorageSweeper(home),
     reconcileIdleComputers: createIdleComputerSweeper({ prisma, jobs }),
     reconcileDeadJobs: inMemoryJobs ? undefined : createDeadJobPruner(pool),
+    reconcileChatFileSearch: chatFileSearchSweeper(prisma),
   });
   let stopHealth: (() => Promise<void>) | undefined;
   let stopping = false;

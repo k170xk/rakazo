@@ -4796,6 +4796,8 @@ describe("clearThread", () => {
       computerExecutionLease: { updateMany: vi.fn() },
       computer: { updateMany: vi.fn() },
       message: { deleteMany: vi.fn(), findMany: vi.fn(async () => []) },
+      chatFileIndex: { updateMany: vi.fn() },
+      chatFileIndexEntry: { updateMany: vi.fn() },
       event: {
         deleteMany: vi.fn(),
         create: vi.fn().mockResolvedValue({ ...event(0), type: "thread.cleared" }),
@@ -4844,6 +4846,8 @@ describe("clearThread", () => {
       computerExecutionLease: { updateMany: vi.fn() },
       computer: { updateMany: vi.fn() },
       message: { deleteMany: vi.fn(), findMany: vi.fn(async () => []) },
+      chatFileIndex: { updateMany: vi.fn() },
+      chatFileIndexEntry: { updateMany: vi.fn() },
       event: {
         deleteMany: vi.fn(),
         create: vi.fn().mockResolvedValue({
@@ -4867,6 +4871,16 @@ describe("clearThread", () => {
     expect(tx.computerExecutionLease.updateMany).toHaveBeenCalledWith({
       where: { runId: { in: ["run-1"] } },
       data: { expiresAt: new Date(0) },
+    });
+    // The cleared files' search index is moved off the thread for the sweeper to delete.
+    const retired = { threadId: expect.stringMatching(/^thread-1:cleared:\d+$/) };
+    expect(tx.chatFileIndex.updateMany).toHaveBeenCalledWith({
+      where: { threadId: "thread-1" },
+      data: retired,
+    });
+    expect(tx.chatFileIndexEntry.updateMany).toHaveBeenCalledWith({
+      where: { threadId: "thread-1" },
+      data: retired,
     });
     // The legacy execution binding is cleared after the transaction commits, so the
     // transaction never reaches for the computer row under the thread-row lock.
@@ -4933,6 +4947,8 @@ describe("clearThread", () => {
       computerExecutionLease: { updateMany: vi.fn() },
       computer: { updateMany: vi.fn() },
       message: { deleteMany: vi.fn(), findMany: vi.fn(async () => []) },
+      chatFileIndex: { updateMany: vi.fn() },
+      chatFileIndexEntry: { updateMany: vi.fn() },
       event: {
         deleteMany: vi.fn(),
         create: vi.fn().mockResolvedValue({

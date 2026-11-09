@@ -172,6 +172,8 @@ export function selectBuiltinToolsForRun(options: {
   documentsApart?: boolean;
   /** The run lists the person's conversation files, which fetch_file and note_file work on. */
   conversationFiles?: boolean;
+  /** At least one of those files is indexed, so search_conversation_files can find passages. */
+  conversationFileSearch?: boolean;
   connectedAppsEnabled?: boolean;
   mcpServersEnabled?: boolean;
   routinesEnabled?: boolean;
@@ -210,6 +212,8 @@ export function selectBuiltinToolsForRun(options: {
       computerToolAllowed(tool.name, computerAccess) &&
       (tool.name !== "copy_file" || Boolean(options.documentsApart)) &&
       (!CONVERSATION_FILE_TOOLS.has(tool.name) || Boolean(options.conversationFiles)) &&
+      (tool.name !== "search_conversation_files" ||
+        (Boolean(options.conversationFiles) && Boolean(options.conversationFileSearch))) &&
       (options.connectedAppsEnabled !== false || tool.name !== "connect_app") &&
       (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
       (tool.name !== "evolve_knowledge_search" || Boolean(options.evolveKnowledgeEnabled)) &&

@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
 import type { UsageOperationKind } from "@rakazo/adapter-kit";
-import { resolveBotWorkspacePath } from "@rakazo/adapters";
+import { indexUploadedChatFile, resolveBotWorkspacePath } from "@rakazo/adapters";
 import type { ExportManifest } from "@rakazo/contracts";
 import { attachmentMaxBytes, resolveBotAvatarSet } from "@rakazo/contracts";
 import { AttachmentValidationError } from "@rakazo/core";
@@ -72,11 +72,18 @@ export function contentRoutes(ctx: RouterContext) {
           : (await groupRepos.getGroupTarget(context.actor, input.groupId!)).members[0]?.bot.id;
         if (!botId) throw new IsolationError();
         try {
-          return await createOwnedArtifact(
+          const artifact = await createOwnedArtifact(
             { ...deps, maxUploadSizeBytes: attachmentMaxBytes(deps.env) },
             context.actor,
             { ...input, botId },
           );
+          indexUploadedChatFile(deps, {
+            spaceId: context.actor.spaceId,
+            userId: context.actor.userId,
+            target: { botId, groupId: input.groupId },
+            file: { artifactId: artifact.id, name: artifact.name, size: artifact.size },
+          });
+          return artifact;
         } catch (error) {
           if (error instanceof AttachmentValidationError) {
             throw new ORPCError("BAD_REQUEST", { message: error.message });

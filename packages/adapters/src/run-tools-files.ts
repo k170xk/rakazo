@@ -1,5 +1,7 @@
 import { ATTACHMENT_MAX_BYTES, attachmentSizeLabel } from "@rakazo/contracts";
 import { inferAttachmentMimeType, isBackgroundRunTrigger } from "@rakazo/core";
+import { getLogger } from "@rakazo/logging";
+import { searchChatFiles } from "./chat-file-search.js";
 import { resolveRunFilePath } from "./computer-support.js";
 import { desktopGuardApplies, desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
@@ -342,6 +344,30 @@ export const fileTools: ToolHandlers = {
         page: Number(call.args.page) || 1,
       }),
     );
+  },
+  async search_conversation_files(ctx, call) {
+    const files = ctx.computer.conversationFiles;
+    if (!files?.size) return call.finish({ error: "This conversation has no files to search." });
+    try {
+      const found = await searchChatFiles(
+        { prisma: ctx.deps.prisma },
+        {
+          threadId: ctx.thread.id,
+          query: typeof call.args.query === "string" ? call.args.query : "",
+          maxResults: Number(call.args.max_results) || undefined,
+          files,
+        },
+      );
+      return call.finish(found);
+    } catch (error) {
+      getLogger().warn("chat file search failed", {
+        threadId: ctx.thread.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return call.finish({
+        error: "File search is unavailable right now. Read the files directly instead.",
+      });
+    }
   },
   generate_image: generateMedia,
   generate_video: generateMedia,
