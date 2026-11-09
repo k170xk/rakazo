@@ -210,6 +210,7 @@ export function createRepos(
         sectionId: true,
         updatedAt: true,
         parentBotId: true,
+        modelId: true,
         thread: {
           select: {
             id: true,
@@ -236,6 +237,7 @@ export function createRepos(
         sectionId: bot.sectionId,
         unread: bot.thread.unread,
         parentBotId: bot.parentBotId,
+        modelId: bot.modelId,
         preview: previewFromBlocks(bot.thread.messages[0]?.blocks),
         status: activeRun?.status ?? "idle",
         threadStatus: threadRunStatus(bot.runs, bot.thread.id),

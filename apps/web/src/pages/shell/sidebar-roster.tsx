@@ -24,6 +24,7 @@ import {
   rosterHasUndismissedRunError,
   rosterWorkStatusLabel,
 } from "../../lib/roster-status";
+import { shortModelName } from "../../lib/short-model-name";
 import type { RosterDropAction, RosterDropTarget } from "./roster-drop";
 import type { sidebarGroupsForSpaces } from "./space-sidebar";
 import { useRedrawAtMidnight } from "./use-redraw-at-midnight";
@@ -63,7 +64,7 @@ export function SidebarRoster({
     typeof sidebarGroupsForSpaces<Space["bots"][number], Space["groups"][number]>
   >;
   collapsedSidebarSections: ReadonlySet<string>;
-  bootstrapMe: Pick<Me, "spaceId"> | null | undefined;
+  bootstrapMe: Pick<Me, "spaceId" | "defaultModel"> | null | undefined;
   botSections: BotSection[];
   spaces: Space[];
   rosterDropKey: string | null;
@@ -284,6 +285,10 @@ export function SidebarRoster({
                       ? item.chat.preview || (item.chat.status !== "idle" ? item.chat.status : "")
                       : item.chat.preview ||
                         item.chat.members.map((member) => member.name).join(", ")));
+                const modelName =
+                  item.kind === "bot"
+                    ? shortModelName(item.chat.modelId ?? bootstrapMe?.defaultModel)
+                    : "";
                 const rowDropTarget: RosterDropTarget | null =
                   item.chat.spaceId !== bootstrapMe?.spaceId
                     ? null
@@ -393,8 +398,10 @@ export function SidebarRoster({
                       mini
                         ? "mx-auto size-12 justify-center rounded-xl"
                         : compact
-                          ? "w-full min-h-11 gap-2 rounded-xl px-2.5 py-1.5"
-                          : "w-full gap-3 rounded-xl px-2.5 py-[10px]"
+                          ? `w-full min-h-11 gap-2 rounded-xl px-2.5 ${modelName ? "py-1" : "py-1.5"}`
+                          : modelName
+                            ? "w-full gap-3 rounded-xl px-2.5 py-1.5"
+                            : "w-full gap-3 rounded-xl px-2.5 py-[10px]"
                     } text-start ${
                       item.kind === "bot" ? "cursor-grab active:cursor-grabbing" : ""
                     } ${
@@ -435,6 +442,16 @@ export function SidebarRoster({
                             </span>
                           </>
                         ) : null}
+                      </span>
+                    ) : modelName ? (
+                      <span className="flex w-12 shrink-0 flex-col items-center">
+                        {avatar}
+                        <span
+                          data-roster-model
+                          className="-mt-px w-full truncate text-center text-[9px] font-medium leading-none tracking-tight text-muted-foreground"
+                        >
+                          {modelName}
+                        </span>
                       </span>
                     ) : (
                       avatar
@@ -543,11 +560,9 @@ export function SidebarRoster({
                       {mini ? (
                         <IconTooltip
                           side="inline-end"
-                          label={
-                            compactStatusLabel
-                              ? `${item.chat.name}: ${compactStatusLabel}`
-                              : item.chat.name
-                          }
+                          label={[item.chat.name, modelName, compactStatusLabel]
+                            .filter(Boolean)
+                            .join(" · ")}
                         >
                           {chatTrigger}
                         </IconTooltip>
