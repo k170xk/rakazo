@@ -9737,3 +9737,270 @@ msgstr "Zoom in"
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
 msgstr "Zoom out"
+
+#. placeholder {0}: props.name
+#: src/components/ArtifactFileCard.tsx
+msgid "{0} was removed by your company's file cleanup. Ask the bot to make it again."
+msgstr "{0} was removed by your company's file cleanup. Ask the bot to make it again."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Apps, plugins and messaging"
+msgstr "Apps, plugins and messaging"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Archived"
+msgstr "Archived"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Ask your administrator if you need one."
+msgstr "Ask your administrator if you need one."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "At (UK time)"
+msgstr "At (UK time)"
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
+msgstr "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Change in Company admin"
+msgstr "Change in Company admin"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Cleanup is paused, so nothing is deleted."
+msgstr "Cleanup is paused, so nothing is deleted."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Cleanup requested; it starts within a minute."
+msgstr "Cleanup requested; it starts within a minute."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Cleanup schedule"
+msgstr "Cleanup schedule"
+
+#. placeholder {0}: when(cleanup.lastRunAt)
+#: src/pages/AdminComputerAccess.tsx
+msgid "Cleanup started {0}."
+msgstr "Cleanup started {0}."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Company admin sections"
+msgstr "Company admin sections"
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Company model ({companyLabel})"
+msgstr "Company model ({companyLabel})"
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Company thinking"
+msgstr "Company thinking"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computer provider"
+msgstr "Computer provider"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Computers and routines"
+msgstr "Computers and routines"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Computers are off for the company"
+msgstr "Computers are off for the company"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computers are switched off in Features, so nobody has one. Documents and videos still work for everyone."
+msgstr "Computers are switched off in Features, so nobody has one. Documents and videos still work for everyone."
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Confirm"
+msgstr "Confirm"
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Could not delete that chat."
+msgstr "Could not delete that chat."
+
+#: src/pages/Artifacts.tsx
+msgid "Could not delete this file."
+msgstr "Could not delete this file."
+
+#: src/pages/Artifacts.tsx
+msgid "Could not load files."
+msgstr "Could not load files."
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Could not restore that chat."
+msgstr "Could not restore that chat."
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Could not save the assistant model"
+msgstr "Could not save the assistant model"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Could not update storage"
+msgstr "Could not update storage"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
+msgstr "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Delete files bots attached in chats after"
+msgstr "Delete files bots attached in chats after"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Everyone without their own limit"
+msgstr "Everyone without their own limit"
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Evolve assistant models"
+msgstr "Evolve assistant models"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+
+#: src/pages/Artifacts.tsx
+msgid "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
+msgstr "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
+
+#. placeholder {0}: last.error
+#: src/pages/AdminComputerAccess.tsx
+msgid "It stopped early: {0}"
+msgstr "It stopped early: {0}"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Keeping files"
+msgstr "Keeping files"
+
+#. placeholder {0}: when(cleanup.lastRunAt)
+#. placeholder {1}: last.deletedItems
+#. placeholder {2}: formatSize(last.freedBytes)
+#: src/pages/AdminComputerAccess.tsx
+msgid "Last cleanup {0}: {1} removed, {2} freed."
+msgstr "Last cleanup {0}: {1} removed, {2} freed."
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Loading assistants…"
+msgstr "Loading assistants…"
+
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Manual (drag to order)"
+msgstr "Manual (drag to order)"
+
+#. placeholder {0}: assistant.name
+#: src/pages/AdminAssistantModels.tsx
+msgid "Model for {0}"
+msgstr "Model for {0}"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Models and agents"
+msgstr "Models and agents"
+
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Name (A to Z)"
+msgstr "Name (A to Z)"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Never"
+msgstr "Never"
+
+#. placeholder {0}: when(cleanup.nextRunAt)
+#: src/pages/AdminComputerAccess.tsx
+msgid "Next cleanup {0}."
+msgstr "Next cleanup {0}."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "No cleanup has run yet."
+msgstr "No cleanup has run yet."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "No desktop on your account"
+msgstr "No desktop on your account"
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "No Evolve assistants are available. Check that Evolve is linked."
+msgstr "No Evolve assistants are available. Check that Evolve is linked."
+
+#: src/pages/Artifacts.tsx
+msgid "No files found."
+msgstr "No files found."
+
+#: src/pages/Artifacts.tsx
+msgid "No matching files on this page."
+msgstr "No matching files on this page."
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "On"
+msgstr "On"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "People keep their own logins, cards, API keys and contacts, and their assistants can use them. Off for everyone until you turn this on. The company vault on this page is separate and stays available."
+msgstr "People keep their own logins, cards, API keys and contacts, and their assistants can use them. Off for everyone until you turn this on. The company vault on this page is separate and stays available."
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
+msgstr "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
+
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Recent activity"
+msgstr "Recent activity"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Run cleanup"
+msgstr "Run cleanup"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Run cleanup now"
+msgstr "Run cleanup now"
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Save a company model first; assistant models run on its key."
+msgstr "Save a company model first; assistant models run on its key."
+
+#: src/pages/Artifacts.tsx
+msgid "Search files…"
+msgstr "Search files…"
+
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Sort chats"
+msgstr "Sort chats"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Spending"
+msgstr "Spending"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
+msgstr "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Staff skills"
+msgstr "Staff skills"
+
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminComputerAccess.tsx
+msgid "Storage and cleanup"
+msgstr "Storage and cleanup"
+
+#. placeholder {0}: assistant.name
+#: src/pages/AdminAssistantModels.tsx
+msgid "Thinking for {0}"
+msgstr "Thinking for {0}"
+
+#. placeholder {0}: pendingDelete.versionCount
+#: src/pages/Artifacts.tsx
+msgid "This deletes all {0} versions of this file. This can't be undone."
+msgstr "This deletes all {0} versions of this file. This can't be undone."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "What people manage themselves"
+msgstr "What people manage themselves"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Who gets a computer"
+msgstr "Who gets a computer"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
+msgstr "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
