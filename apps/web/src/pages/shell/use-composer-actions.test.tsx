@@ -26,7 +26,7 @@ vi.mock("../../lib/prepare-image", () => ({
 
 type Rpc = {
   routines: { testRun: ReturnType<typeof vi.fn> };
-  artifacts: { create: ReturnType<typeof vi.fn> };
+  artifacts: { create: ReturnType<typeof vi.fn>; remove: ReturnType<typeof vi.fn> };
   threads: { send: ReturnType<typeof vi.fn>; sendWithRoutines: ReturnType<typeof vi.fn> };
 };
 
@@ -88,7 +88,7 @@ beforeEach(() => {
   pageSession = createPageSession();
   rpc = {
     routines: { testRun: vi.fn() },
-    artifacts: { create: vi.fn() },
+    artifacts: { create: vi.fn(), remove: vi.fn() },
     threads: { send: vi.fn(), sendWithRoutines: vi.fn() },
   };
   root = createRoot(document.createElement("div"));
@@ -229,12 +229,65 @@ it("does not send another chat's attachments from the open chat", async () => {
   await act(async () => {
     await latest.sendMessage("hello", [], "nonce-2");
   });
-  expect(rpc.artifacts.create).not.toHaveBeenCalled();
+  expect(rpc.artifacts.create).not.toHaveBeenCalledWith(
+    expect.objectContaining({ botId: "bot-2" }),
+  );
   expect(rpc.threads.send).toHaveBeenCalledWith(
     expect.objectContaining({ text: "hello", artifactIds: undefined }),
   );
   switchChat("bot-1");
   expect(latest.activePendingAttachments.map((pending) => pending.file)).toEqual([file]);
+});
+
+it("uploads a file when it is attached and sends that upload", async () => {
+  const file = new File(["a"], "a.txt", { type: "text/plain" });
+  rpc.artifacts.create.mockResolvedValue({ id: "artifact-a" });
+  rpc.threads.send.mockResolvedValue({ runId: "run-1", taskId: "task-1" });
+  act(() => void latest.onAttachmentPick([file]));
+  await flush();
+  expect(rpc.artifacts.create).toHaveBeenCalledWith(
+    expect.objectContaining({ botId: "bot-1", name: "a.txt" }),
+  );
+  expect(rpc.threads.send).not.toHaveBeenCalled();
+  await act(async () => void (await latest.sendMessage("", [], "nonce-1")));
+  expect(rpc.artifacts.create).toHaveBeenCalledTimes(1);
+  expect(rpc.threads.send).toHaveBeenCalledWith(
+    expect.objectContaining({ artifactIds: ["artifact-a"] }),
+  );
+  expect(rpc.artifacts.remove).not.toHaveBeenCalled();
+});
+
+it("deletes the early upload of a removed attachment", async () => {
+  const file = new File(["a"], "a.txt", { type: "text/plain" });
+  rpc.artifacts.create.mockResolvedValue({ id: "artifact-a" });
+  act(() => void latest.onAttachmentPick([file]));
+  act(() => latest.removeAttachment(latest.activePendingAttachments[0]!));
+  await flush();
+  expect(rpc.artifacts.remove).toHaveBeenCalledWith({ artifactId: "artifact-a" });
+});
+
+it("uploads again on Send when the early upload failed", async () => {
+  const file = new File(["a"], "a.txt", { type: "text/plain" });
+  rpc.artifacts.create
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValueOnce({ id: "artifact-a" });
+  rpc.threads.send.mockResolvedValue({ runId: "run-1", taskId: "task-1" });
+  act(() => void latest.onAttachmentPick([file]));
+  await flush();
+  await act(async () => void (await latest.sendMessage("", [], "nonce-1")));
+  expect(rpc.artifacts.create).toHaveBeenCalledTimes(2);
+  expect(rpc.threads.send).toHaveBeenCalledWith(
+    expect.objectContaining({ artifactIds: ["artifact-a"] }),
+  );
+});
+
+it("deletes early uploads when their chat is discarded", async () => {
+  const file = new File(["a"], "a.txt", { type: "text/plain" });
+  rpc.artifacts.create.mockResolvedValue({ id: "artifact-a" });
+  act(() => void latest.onAttachmentPick([file]));
+  act(() => latest.discardThreadAttachments("bot-1"));
+  await flush();
+  expect(rpc.artifacts.remove).toHaveBeenCalledWith({ artifactId: "artifact-a" });
 });
 
 const digest = { kind: "routine" as const, id: "routine-1", name: "digest" };

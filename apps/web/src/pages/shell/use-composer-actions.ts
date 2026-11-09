@@ -42,6 +42,15 @@ import type { useShellNavigation } from "./use-shell-navigation";
 
 type ThreadRefresh = RefObject<(id: string) => Promise<ThreadSnapshot>>;
 
+type UploadTarget = { botId: string; groupId?: undefined } | { groupId: string; botId?: undefined };
+
+/** A file uploaded when it was attached, so the server can start indexing before Send. */
+type EarlyUpload = { target: string; artifactId: Promise<string | null> };
+
+function uploadTargetKey(target: UploadTarget): string {
+  return target.groupId ? `group:${target.groupId}` : `bot:${target.botId}`;
+}
+
 /**
  * What the composer sends and the chat actions beside it: attachments, replies, send, stop,
  * answers, reactions, and the errors they leave.
@@ -93,6 +102,8 @@ export function useComposerActions({
   const { t } = useLingui();
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
   usePendingAttachmentPreviewCleanup(pendingAttachments);
+  const pendingAttachmentsRef = useRef(pendingAttachments);
+  pendingAttachmentsRef.current = pendingAttachments;
   const [replyTarget, setReplyTarget] = useState<ThreadMessage | null>(null);
   const [replyQuote, setReplyQuote] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -118,6 +129,9 @@ export function useComposerActions({
     setSendFailure(message === null ? null : { message, imageConfirmation: false });
   }, []);
   const uploadedSendArtifacts = useRef(new Map<string, WeakMap<File, string>>());
+  const earlyUploads = useRef(new Map<string, EarlyUpload>());
+  // One upload at a time, in the order the files were attached.
+  const earlyUploadQueue = useRef<Promise<unknown>>(Promise.resolve());
   const [attachmentNotice, setAttachmentNotice] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dismissedRunErrorIds, setDismissedRunErrorIds] =
@@ -266,10 +280,59 @@ export function useComposerActions({
     },
     [t],
   );
+  const uploadAttachment = useCallback(
+    async (original: File, target: UploadTarget) => {
+      const mimeType = inferAttachmentMimeType(original.name, original.type);
+      if (!mimeType) {
+        throw new Error(t`Unsupported file type: ${original.name}`);
+      }
+      const file = await prepareImage(original);
+      const contentBase64 = await readFileAsBase64(file);
+      const artifact = await rpc.artifacts.create({
+        ...target,
+        name: original.name,
+        mimeType,
+        contentBase64,
+      });
+      return artifact.id;
+    },
+    [t],
+  );
+  const startEarlyUpload = useCallback(
+    (pending: PendingAttachment, target: UploadTarget) => {
+      // A failed early upload is retried on Send, where its error can be shown.
+      const artifactId = earlyUploadQueue.current
+        .then(() => uploadAttachment(pending.file, target))
+        .catch(() => null);
+      earlyUploadQueue.current = artifactId;
+      earlyUploads.current.set(pending.id, { target: uploadTargetKey(target), artifactId });
+    },
+    [uploadAttachment],
+  );
+  /** Deletes the copy of an attachment that will not be sent with it. */
+  const discardEarlyUpload = useCallback((early: EarlyUpload) => {
+    void early.artifactId
+      .then((artifactId) => (artifactId ? rpc.artifacts.remove({ artifactId }) : undefined))
+      .catch(() => undefined);
+  }, []);
+  const forgetEarlyUploads = useCallback(
+    (attachments: readonly PendingAttachment[], keepFor?: string) => {
+      for (const attachment of attachments) {
+        const early = earlyUploads.current.get(attachment.id);
+        if (!early) continue;
+        earlyUploads.current.delete(attachment.id);
+        if (early.target !== keepFor) discardEarlyUpload(early);
+      }
+    },
+    [discardEarlyUpload],
+  );
   const onAttachmentPick = useCallback(
     (files: FileList | readonly File[] | null) => {
-      const threadKey = activeGroupId.current ?? activeBotId.current;
+      const groupKey = activeGroupId.current;
+      const botKey = activeBotId.current;
+      const threadKey = groupKey ?? botKey;
       if (!threadKey || !files?.length) return false;
+      const target: UploadTarget = groupKey ? { groupId: groupKey } : { botId: botKey! };
       const ATTACHMENT_MAX_COUNT = attachmentMaxCount(bootstrapMe);
       const existing = attachmentsForThread(pendingAttachments, threadKey);
       const next: PendingAttachment[] = [];
@@ -300,28 +363,37 @@ export function useComposerActions({
         });
       }
       if (next.length) setPendingAttachments((current) => [...current, ...next]);
+      for (const pending of next) startEarlyUpload(pending, target);
       setAttachmentNotice(skipped.length ? t`Skipped ${skipped.join(", ")}` : null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return next.length > 0;
     },
-    [pendingAttachments, bootstrapMe, t],
+    [pendingAttachments, bootstrapMe, startEarlyUpload, t],
   );
   useEffect(() => {
     if (!pendingAttachments.length) uploadedSendArtifacts.current.clear();
   }, [pendingAttachments]);
-  const removeAttachment = useCallback((attachment: PendingAttachment) => {
-    revokePendingAttachmentPreviews([attachment]);
-    setPendingAttachments((current) => current.filter((item) => item.id !== attachment.id));
-  }, []);
+  const removeAttachment = useCallback(
+    (attachment: PendingAttachment) => {
+      revokePendingAttachmentPreviews([attachment]);
+      forgetEarlyUploads([attachment]);
+      setPendingAttachments((current) => current.filter((item) => item.id !== attachment.id));
+    },
+    [forgetEarlyUploads],
+  );
   /** A deleted chat's files can never be sent: drop them and release their previews. */
-  const discardThreadAttachments = useCallback((threadKey: string) => {
-    setPendingAttachments((current) => {
-      const discarded = attachmentsForThread(current, threadKey);
-      if (!discarded.length) return current;
-      revokePendingAttachmentPreviews(discarded);
-      return current.filter((attachment) => !discarded.includes(attachment));
-    });
-  }, []);
+  const discardThreadAttachments = useCallback(
+    (threadKey: string) => {
+      forgetEarlyUploads(attachmentsForThread(pendingAttachmentsRef.current, threadKey));
+      setPendingAttachments((current) => {
+        const discarded = attachmentsForThread(current, threadKey);
+        if (!discarded.length) return current;
+        revokePendingAttachmentPreviews(discarded);
+        return current.filter((attachment) => !discarded.includes(attachment));
+      });
+    },
+    [forgetEarlyUploads],
+  );
   const sendMessage = useCallback(
     async (
       draft: string,
@@ -386,6 +458,7 @@ export function useComposerActions({
           dropDelayedSetup();
           clearReply();
           revokePendingAttachmentPreviews(attachments);
+          forgetEarlyUploads(attachments);
           setPendingAttachments((current) =>
             current.filter((attachment) => !attachments.includes(attachment)),
           );
@@ -405,25 +478,21 @@ export function useComposerActions({
         const uploaded =
           uploadedSendArtifacts.current.get(clientNonce) ?? new WeakMap<File, string>();
         uploadedSendArtifacts.current.set(clientNonce, uploaded);
+        const sendTarget: UploadTarget = groupTarget
+          ? { groupId: groupTarget }
+          : { botId: botTarget! };
+        const sendTargetKey = uploadTargetKey(sendTarget);
         for (const pending of attachments) {
           const existing = uploaded.get(pending.file);
           if (existing) {
             artifactIds.push(existing);
             continue;
           }
-          const mimeType = inferAttachmentMimeType(pending.file.name, pending.file.type);
-          if (!mimeType) {
-            throw new Error(t`Unsupported file type: ${pending.file.name}`);
-          }
-          const file = await prepareImage(pending.file);
-          const contentBase64 = await readFileAsBase64(file);
-          const artifact = await rpc.artifacts.create(
-            groupTarget
-              ? { groupId: groupTarget, name: pending.file.name, mimeType, contentBase64 }
-              : { botId: botTarget!, name: pending.file.name, mimeType, contentBase64 },
-          );
-          uploaded.set(pending.file, artifact.id);
-          artifactIds.push(artifact.id);
+          const early = earlyUploads.current.get(pending.id);
+          const earlyId = early?.target === sendTargetKey ? await early.artifactId : null;
+          const artifactId = earlyId ?? (await uploadAttachment(pending.file, sendTarget));
+          uploaded.set(pending.file, artifactId);
+          artifactIds.push(artifactId);
         }
         const payload = {
           ...(groupTarget ? { groupId: groupTarget } : { botId: botTarget! }),
@@ -458,6 +527,8 @@ export function useComposerActions({
           );
         }
         uploadedSendArtifacts.current.delete(clientNonce);
+        // Copies made for another chat (a send rerouted to a group) are not needed.
+        forgetEarlyUploads(attachments, sendTargetKey);
         dropDelayedSetup();
         clearReply();
         revokePendingAttachmentPreviews(attachments);
@@ -513,6 +584,8 @@ export function useComposerActions({
       pendingAttachments,
       sending,
       t,
+      forgetEarlyUploads,
+      uploadAttachment,
     ],
   );
   const stopRun = useCallback(async () => {
