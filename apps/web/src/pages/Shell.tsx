@@ -388,6 +388,7 @@ function SpaceShell() {
           setPanel("create-group");
           return true;
         case "integrations":
+          if (!appsOrPluginsOn) return false;
           setOverlay({ kind: "integrations" });
           return true;
         case "chat-panel":
@@ -925,8 +926,11 @@ function SpaceShell() {
   }
 
   const companyFeatures = bootstrapMe?.features;
+  // Both catalog switches off hides the button from staff. A platform admin still opens it to test.
   const appsOrPluginsOn =
-    companyFeatures?.connectedApps !== false || companyFeatures?.plugins !== false;
+    bootstrapMe?.isAdmin === true ||
+    companyFeatures?.connectedApps !== false ||
+    companyFeatures?.plugins !== false;
   const integrationsComingSoon =
     companyFeatures?.staffIntegrations === false && bootstrapMe?.isAdmin !== true;
   const tourAvailability = {
