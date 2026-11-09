@@ -1,6 +1,7 @@
 import { hostname } from "node:os";
 import { setTimeout as sleep } from "node:timers/promises";
 import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
+import { contextStrategyFromEnv } from "@rakazo/adapter-kit";
 import {
   ComposioConnector,
   IntegrationProviderSettings,
@@ -306,6 +307,7 @@ async function main() {
   });
   const executor = createRunExecutor({
     maxUploadSizeBytes: uploadSizeFromEnv(process.env),
+    contextStrategy: contextStrategyFromEnv(process.env),
     prisma,
     runtime,
     // Live per-account Codex catalog; never refreshes or writes credentials.

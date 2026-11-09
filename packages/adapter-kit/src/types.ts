@@ -520,6 +520,20 @@ export interface AgentRunModel {
 
 export type AgentContextStrategy = "current" | "retrieval" | "snapshots" | "cache-aware";
 export const DEFAULT_CONTEXT_STRATEGY: AgentContextStrategy = "retrieval";
+const CONTEXT_STRATEGIES: readonly AgentContextStrategy[] = [
+  "current",
+  "retrieval",
+  "snapshots",
+  "cache-aware",
+];
+
+/** AGENT_CONTEXT_STRATEGY, or undefined (the runtime's own choice) when unset or unknown. */
+export function contextStrategyFromEnv(
+  env: Record<string, string | undefined>,
+): AgentContextStrategy | undefined {
+  const value = env.AGENT_CONTEXT_STRATEGY?.trim().toLowerCase();
+  return CONTEXT_STRATEGIES.find((strategy) => strategy === value);
+}
 
 export interface AgentRunRequest {
   /** Awaited producer-side accounting, independent of event-consumer cancellation. */

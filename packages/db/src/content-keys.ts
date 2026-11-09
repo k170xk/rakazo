@@ -157,6 +157,7 @@ export type SpaceSource =
   | "threads"
   | "messages"
   | "events"
+  | "thread_file_notes"
   | "memory_documents"
   | "memory_revisions";
 
@@ -185,6 +186,7 @@ export const ROW_OWNER: Record<SpaceSource, string> = {
   threads: "userId",
   messages: "threadId",
   events: "threadId",
+  thread_file_notes: "threadId",
   memory_documents: "userId",
   memory_revisions: "documentId",
 };
@@ -197,6 +199,7 @@ const COLUMNS = `id, "spaceId", version, "masterKeyId", "wrappedKey"`;
 const ROW_CONTEXT: Record<SpaceSource, string> = {
   threads: `SELECT "spaceId", "userId" AS owner FROM threads WHERE id = $1`,
   events: `SELECT "spaceId", "threadId" AS owner FROM events WHERE id = $1`,
+  thread_file_notes: `SELECT "spaceId", "threadId" AS owner FROM thread_file_notes WHERE id = $1`,
   memory_documents: `SELECT "spaceId", "userId" AS owner FROM memory_documents WHERE id = $1`,
   messages: `SELECT t."spaceId", m."threadId" AS owner FROM messages m JOIN threads t ON t.id = m."threadId" WHERE m.id = $1`,
   memory_revisions: `SELECT d."spaceId", r."documentId" AS owner FROM memory_revisions r JOIN memory_documents d ON d.id = r."documentId" WHERE r.id = $1`,

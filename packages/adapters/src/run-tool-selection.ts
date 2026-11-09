@@ -68,6 +68,7 @@ export const COMPUTER_TOOL_NAMES: ReadonlySet<string> = new Set([
   "write_file",
   "attach_file",
   "copy_file",
+  "fetch_file",
   "shell",
   "ocsc",
   "open_path",
@@ -81,6 +82,7 @@ export const TOOLS_ONLY_COMPUTER_TOOLS: ReadonlySet<string> = new Set([
   "read_file",
   "write_file",
   "attach_file",
+  "fetch_file",
   "ocsc",
 ]);
 
@@ -161,6 +163,8 @@ export function selectBuiltinToolsForRun(options: {
   computerAccess?: ComputerAccess;
   /** The person's documents are kept apart from their computer, so copy_file can move files between them. */
   documentsApart?: boolean;
+  /** The run lists the person's conversation files, which fetch_file and note_file work on. */
+  conversationFiles?: boolean;
   connectedAppsEnabled?: boolean;
   mcpServersEnabled?: boolean;
   routinesEnabled?: boolean;
@@ -198,6 +202,8 @@ export function selectBuiltinToolsForRun(options: {
       !disabled.has(tool.name) &&
       computerToolAllowed(tool.name, computerAccess) &&
       (tool.name !== "copy_file" || Boolean(options.documentsApart)) &&
+      ((tool.name !== "fetch_file" && tool.name !== "note_file") ||
+        Boolean(options.conversationFiles)) &&
       (options.connectedAppsEnabled !== false || tool.name !== "connect_app") &&
       (options.mcpServersEnabled !== false || tool.name !== "add_mcp_server") &&
       (tool.name !== "evolve_knowledge_search" || Boolean(options.evolveKnowledgeEnabled)) &&

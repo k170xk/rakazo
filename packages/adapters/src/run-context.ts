@@ -235,6 +235,8 @@ export interface RunComputerContext {
   documentsApart?: boolean;
   /** Word documents attached to this turn or earlier in the conversation, which edits must change. */
   wordDocuments?: readonly { name: string; path: string }[];
+  /** The person's files listed to this run, by attachment path to artifact id; fetch_file and note_file accept only these. */
+  conversationFiles?: ReadonlyMap<string, string>;
 }
 
 export interface RunToolRunner {

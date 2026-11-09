@@ -8,7 +8,11 @@ import type { RunContext } from "./run-context.js";
 import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { recordComputerAction } from "./run-tools-computer.js";
-import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
+import {
+  attachWorkspaceFileToThread,
+  cleanFileNote,
+  saveThreadFileNote,
+} from "./thread-artifacts.js";
 import type { WorkspaceFiles } from "./tool-runner.js";
 import { TOOL_RUNNER_COMPUTER } from "./tool-runner.js";
 import { textContentArg } from "./tool-text.js";
@@ -262,6 +266,63 @@ export const fileTools: ToolHandlers = {
       path: toPath,
       bytes: content.byteLength,
     });
+  },
+  async fetch_file(ctx, call) {
+    const { deps, context } = ctx;
+    const filePath = String(call.args.path ?? "").trim();
+    const artifactId = ctx.computer.conversationFiles?.get(filePath);
+    if (!artifactId) {
+      return call.finish({
+        error: "Use the exact attachments/ path of a file listed for this conversation.",
+      });
+    }
+    if (!deps.artifacts) return call.finish({ error: "File storage is unavailable." });
+    const { files, computer } = runFiles(ctx, call);
+    const ref = await computer();
+    const stored = runFilePath(ctx, filePath);
+    if (await fileExists(files, ref, stored, context)) {
+      return call.finish({ ok: true, path: filePath, alreadyThere: true });
+    }
+    const row = await deps.prisma.artifact.findFirst({
+      where: { id: artifactId, spaceId: context.spaceId, userId: context.userId },
+      select: { storageKey: true, size: true },
+    });
+    if (!row) return call.finish({ error: "That file is no longer available." });
+    const maxBytes = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
+    if (row.size > maxBytes) {
+      return call.finish({ error: `The file is larger than ${attachmentSizeLabel(maxBytes)}.` });
+    }
+    const content = await deps.artifacts.get(row.storageKey, context);
+    ctx.computer.checkpoint.markDirty();
+    try {
+      await files.writeFile(ref, { path: stored, content }, context);
+    } catch (error) {
+      await recordComputerAction(ctx, call, "write_file", filePath, {
+        error: error instanceof Error ? error.message : "could not fetch file",
+      });
+      throw error;
+    }
+    await recordComputerAction(ctx, call, "write_file", filePath, { bytes: content.byteLength });
+    return call.finish({ ok: true, path: filePath, bytes: content.byteLength });
+  },
+  async note_file(ctx, call) {
+    const { deps, thread } = ctx;
+    const filePath = String(call.args.path ?? "").trim();
+    const artifactId = ctx.computer.conversationFiles?.get(filePath);
+    if (!artifactId) {
+      return call.finish({
+        error: "Use the exact attachments/ path of a file listed for this conversation.",
+      });
+    }
+    const note = cleanFileNote(call.args.note);
+    if (!note) return call.finish({ error: "Give a short note on what the file contains." });
+    await saveThreadFileNote(deps.prisma, {
+      spaceId: thread.spaceId,
+      threadId: thread.id,
+      artifactId,
+      note,
+    });
+    return call.finish({ ok: true, path: filePath, note });
   },
   generate_image: generateMedia,
   generate_video: generateMedia,

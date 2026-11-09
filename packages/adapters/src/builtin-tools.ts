@@ -473,6 +473,26 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "fetch_file",
+    description:
+      "Put a file the person attached earlier in this conversation back at its listed attachments/ path, so read_file, the ocsc tool or a script can open it. Use the exact path from the conversation's file list; a file already there is left as it is.",
+    inputSchema: {
+      type: "object",
+      properties: { path: { type: "string" } },
+      required: ["path"],
+    },
+  },
+  {
+    name: "note_file",
+    description:
+      "Save one short line on what a listed conversation file contains (its subject and key facts), shown beside the file in later turns so you know it without reading it again. Replaces your earlier note on that file.",
+    inputSchema: {
+      type: "object",
+      properties: { path: { type: "string" }, note: { type: "string" } },
+      required: ["path", "note"],
+    },
+  },
+  {
     name: "shell",
     description:
       "Run a command inside this bot's computer. cwd defaults to the bot's folder on a Team Computer and the workspace root on a Private Computer. Output can arrive while the command is still running; tell the user any one-time code or sign-in URL in that output. A command is stopped after a few minutes, so on Linux or macOS start longer work, such as a coding agent CLI, as its own statement `nohup <command> < /dev/null > <log> 2>&1 &`, never after `&&`, and read the log to follow it.",

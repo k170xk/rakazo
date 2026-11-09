@@ -13,7 +13,7 @@ export type ContentMigrationMode = "encrypt" | "reencrypt" | "decrypt";
 
 interface TableSpec {
   model: keyof typeof ENCRYPTED_MODELS;
-  delegate: "message" | "event" | "memoryDocument" | "memoryRevision" | "thread";
+  delegate: "message" | "event" | "threadFileNote" | "memoryDocument" | "memoryRevision" | "thread";
   column: string;
   json: boolean;
   /** Preserve @updatedAt so a migration does not reorder recently edited documents. */
@@ -54,6 +54,18 @@ const TABLES: TableSpec[] = [
       WHERE id > ${cursor} ORDER BY id LIMIT ${limit}`,
     writePlaintext: (id, value) =>
       Prisma.sql`UPDATE events SET payload = ${JSON.stringify(value)}::jsonb WHERE id = ${id}`,
+  },
+  {
+    model: "ThreadFileNote",
+    delegate: "threadFileNote",
+    column: "note",
+    json: false,
+    updatedAt: true,
+    scan: (cursor, limit) => Prisma.sql`
+      SELECT id, note AS value, "spaceId", "threadId" AS owner FROM thread_file_notes
+      WHERE id > ${cursor} ORDER BY id LIMIT ${limit}`,
+    writePlaintext: (id, value) =>
+      Prisma.sql`UPDATE thread_file_notes SET note = ${value as string} WHERE id = ${id}`,
   },
   {
     model: "MemoryDocument",
@@ -301,6 +313,8 @@ export async function contentEncryptionStatus(
       WHEN 'object' THEN jsonb_exists(payload, '$sealed')
       WHEN 'array' THEN jsonb_array_length(payload) = 0 OR jsonb_exists(payload->0, '$sealed')
       ELSE false END) FROM events
+    UNION ALL
+    SELECT 'thread_file_notes', count(*), count(*) FILTER (WHERE note NOT LIKE 'rkz1:%') FROM thread_file_notes
     UNION ALL
     SELECT 'memory_documents', count(*), count(*) FILTER (WHERE content NOT LIKE 'rkz1:%') FROM memory_documents
     UNION ALL

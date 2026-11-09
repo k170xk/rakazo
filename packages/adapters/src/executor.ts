@@ -248,13 +248,20 @@ import {
 } from "./takeover-resume.js";
 import { TASK_CATALOG_GUIDANCE } from "./task-catalog.js";
 import { parsePlaybook } from "./teaching-session.js";
+import type { EarlierThreadFile } from "./thread-artifacts.js";
 import {
+  artifactIdFromAttachmentPath,
   currentTurnFilesInstruction,
+  earlierThreadFilesInstruction,
+  FILE_NOTES_INSTRUCTION,
   listCurrentTurnFiles,
+  listEarlierThreadFiles,
   listRecentThreadFiles,
   materializeCurrentTurnFiles,
   materializeRecentThreadFiles,
   recentThreadFilesInstruction,
+  threadFileNotes,
+  withFileNotes,
 } from "./thread-artifacts.js";
 import { loadAgentTicketContext } from "./ticket-context.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
@@ -1397,6 +1404,38 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           await workspaceCheckpoint.flush().catch(() => undefined);
           throw error;
         }
+        // Earlier files and notes only add to what the run is told; a failure leaves them out.
+        let earlierThreadFiles: EarlierThreadFile[] = [];
+        if (artifacts) {
+          try {
+            earlierThreadFiles = await listEarlierThreadFiles(deps, history, historyMessages, {
+              context,
+              skipMessageId: currentTurnMessage?.id,
+              listed: new Set([...currentTurnFiles, ...recentThreadFiles].map((file) => file.path)),
+            });
+            const notes = await threadFileNotes(
+              deps.prisma,
+              thread.id,
+              [...currentTurnFiles, ...recentThreadFiles, ...earlierThreadFiles].flatMap(
+                (file) => artifactIdFromAttachmentPath(file.path) ?? [],
+              ),
+            );
+            currentTurnFiles = withFileNotes(currentTurnFiles, notes);
+            recentThreadFiles = withFileNotes(recentThreadFiles, notes);
+            earlierThreadFiles = withFileNotes(earlierThreadFiles, notes);
+          } catch (error) {
+            if (context.signal.aborted) throw error;
+            getLogger().warn("earlier conversation files were not listed", {
+              reason: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
+        const conversationFiles = new Map(
+          [...currentTurnFiles, ...recentThreadFiles, ...earlierThreadFiles].flatMap((file) => {
+            const artifactId = artifactIdFromAttachmentPath(file.path);
+            return artifactId ? [[file.path, artifactId] as const] : [];
+          }),
+        );
         const attachedFilesPrompt = [
           currentTurnFilesInstruction(currentTurnFiles),
           recentThreadFilesInstruction(recentThreadFiles),
@@ -1562,6 +1601,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             computersEnabled: companyFeatures().computers || computerAccess !== "none",
             computerAccess,
             documentsApart: documentsApart && Boolean(runToolRunner),
+            conversationFiles: conversationFiles.size > 0,
             connectedAppsEnabled: companyFeatures().connectedApps,
             mcpServersEnabled: companyFeatures().mcpServers,
             routinesEnabled: companyFeatures().routines && computerAccess === "full",
@@ -1588,6 +1628,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             : builtins,
           { trigger: run.trigger, clientNonce: run.clientNonce },
         );
+        const offersBuiltin = (name: string) =>
+          strategicBuiltins.some((tool) => tool.name === name) && !disabledBuiltinTools.has(name);
+        const conversationFilesPrompt = [
+          offersBuiltin("fetch_file") ? earlierThreadFilesInstruction(earlierThreadFiles) : "",
+          offersBuiltin("note_file") && conversationFiles.size ? FILE_NOTES_INSTRUCTION : "",
+        ]
+          .filter(Boolean)
+          .join("\n\n");
         // A colleague's run never reaches the owner's connected apps.
         const exposedConnectorTools = colleagueGroupRun
           ? []
@@ -1802,6 +1850,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             wordDocuments: [...currentTurnFiles, ...recentThreadFiles]
               .filter((file) => isWordDocument(file.name, file.mimeType))
               .map(({ name, path }) => ({ name, path })),
+            conversationFiles,
           },
           tools: {
             offered: tools,
@@ -1847,7 +1896,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           currentTurnImages,
         );
         const taskPrompt = expandSkillReferencesInPrompt(
-          [task.prompt, attachedFilesPrompt, missingImagesInstruction].filter(Boolean).join("\n\n"),
+          [task.prompt, attachedFilesPrompt, conversationFilesPrompt, missingImagesInstruction]
+            .filter(Boolean)
+            .join("\n\n"),
           runAgentSkills,
         );
         const invokedSkill = runSavedSkills.find((skill) =>

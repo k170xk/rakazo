@@ -16,6 +16,7 @@ import type {
   TransactionalEmailProvider,
 } from "@rakazo/adapter-kit";
 import {
+  contextStrategyFromEnv,
   SandboxAllowanceUsedError,
   SandboxDamagedError,
   SandboxRateLimitError,
@@ -670,7 +671,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const executor = createRunExecutor({
     billingEnabled: modelCreditsEnabled,
     maxUploadSizeBytes: env.maxUploadSizeBytes,
-    contextStrategy,
+    contextStrategy: contextStrategy ?? contextStrategyFromEnv(process.env),
     prisma,
     runtime,
     codexCatalog,

@@ -439,6 +439,7 @@ model Space {
   conversationDeletions       ConversationDeletion[]
   threads                     Thread[]
   events                      Event[]
+  threadFileNotes             ThreadFileNote[]
   tasks                       Task[]
   runs                        Run[]
   routines                    Routine[]
@@ -961,6 +962,7 @@ model Thread {
   lastReadSeq                    Int                   @default(-1)
   messages                       Message[]
   events                         Event[]
+  fileNotes                      ThreadFileNote[]
   tasks                          Task[]
   runs                           Run[]
   routines                       Routine[]
@@ -1068,6 +1070,25 @@ model Event {
   @@index([spaceId, createdAt])
   @@index([runId, type, seq])
   @@map("events")
+}
+
+/// The bot's own one-line note on what a file attached to a conversation contains, so later
+/// turns know it without reading the file again. Encrypted like messages.
+model ThreadFileNote {
+  id         String   @id @default(cuid())
+  spaceId    String
+  space      Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  threadId   String
+  thread     Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  artifactId String
+  artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  note       String
+  updatedAt  DateTime @updatedAt
+
+  @@unique([threadId, artifactId])
+  @@index([artifactId])
+  @@index([spaceId])
+  @@map("thread_file_notes")
 }
 
 model Task {
@@ -1710,6 +1731,7 @@ model Artifact {
   version        Int        @default(1)
   // Client-chosen per upload so a retried upload that already landed returns this row.
   clientNonce    String?
+  threadNotes    ThreadFileNote[]
 
   @@unique([spaceId, userId, clientNonce])
   @@index([spaceId, botId])

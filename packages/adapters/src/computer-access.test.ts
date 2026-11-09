@@ -97,6 +97,7 @@ describe("tools for each level", () => {
     trigger: "user",
     semanticMemoryEnabled: false,
     messagingChannelRun: false,
+    conversationFiles: true,
   };
   const names = (computerAccess: "full" | "tools" | "none") =>
     new Set(

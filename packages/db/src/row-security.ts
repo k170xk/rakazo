@@ -107,6 +107,7 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "Thread",
   "Message",
   "Event",
+  "ThreadFileNote",
   "MemoryDocument",
   "MemoryRevision",
   "Artifact",

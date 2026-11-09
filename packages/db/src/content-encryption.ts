@@ -62,6 +62,13 @@ export const ENCRYPTED_MODELS: Record<string, ModelSpec> = {
     space: { column: "spaceId" },
     ownerRelation: "thread",
   },
+  /** A bot's note on what an attached file contains is derived file content. */
+  ThreadFileNote: {
+    table: "thread_file_notes",
+    fields: { note: {} },
+    space: { column: "spaceId" },
+    ownerRelation: "thread",
+  },
   MemoryDocument: {
     table: "memory_documents",
     fields: { content: {} },
