@@ -8940,6 +8940,14 @@ msgid "Type without recording"
 msgstr "輸入文字但不記錄內容"
 
 #: src/components/AskCard.tsx
+msgid "Type my own answer"
+msgstr "輸入我自己的回答"
+
+#: src/components/AskCard.tsx
+msgid "Your answer"
+msgstr "你的回答"
+
+#: src/components/AskCard.tsx
 msgid "Type your answer"
 msgstr "輸入你的回答"
 

@@ -8939,6 +8939,14 @@ msgid "Type without recording"
 msgstr ""
 
 #: src/components/AskCard.tsx
+msgid "Type my own answer"
+msgstr "Eigene Antwort eingeben"
+
+#: src/components/AskCard.tsx
+msgid "Your answer"
+msgstr "Deine Antwort"
+
+#: src/components/AskCard.tsx
 msgid "Type your answer"
 msgstr "Gib deine Antwort ein"
 

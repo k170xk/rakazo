@@ -8939,6 +8939,14 @@ msgid "Type without recording"
 msgstr "הקלדה בלי הקלטה"
 
 #: src/components/AskCard.tsx
+msgid "Type my own answer"
+msgstr "להקליד תשובה משלי"
+
+#: src/components/AskCard.tsx
+msgid "Your answer"
+msgstr "התשובה שלך"
+
+#: src/components/AskCard.tsx
 msgid "Type your answer"
 msgstr "יש להקליד תשובה"
 

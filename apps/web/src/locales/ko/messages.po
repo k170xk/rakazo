@@ -8939,6 +8939,14 @@ msgid "Type without recording"
 msgstr ""
 
 #: src/components/AskCard.tsx
+msgid "Type my own answer"
+msgstr "직접 답변 입력"
+
+#: src/components/AskCard.tsx
+msgid "Your answer"
+msgstr "내 답변"
+
+#: src/components/AskCard.tsx
 msgid "Type your answer"
 msgstr "답변을 입력하세요"
 
