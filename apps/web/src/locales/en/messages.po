@@ -10024,3 +10024,7 @@ msgstr "or sign in with email"
 #: src/pages/Auth.tsx
 msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
 msgstr "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
+
+#: src/pages/Auth.tsx
+msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
+msgstr "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."

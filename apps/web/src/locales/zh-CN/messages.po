@@ -9998,3 +9998,7 @@ msgstr "或使用邮箱登录"
 #: src/pages/Auth.tsx
 msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
 msgstr "面向工程的 AI 工作空间：投标、报告、方案与项目知识，尽在一处。"
+
+#: src/pages/Auth.tsx
+msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
+msgstr "通过 Evolve 使用您的 OCSC Microsoft 账户。首次登录会自动创建您的账户。"

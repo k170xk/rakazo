@@ -271,6 +271,14 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
               </Trans>
             </Button>
           ) : null}
+          {reset?.evolveSsoUrl && !reset.passwordAuth && mode !== "forgot" ? (
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              <Trans>
+                Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your
+                account.
+              </Trans>
+            </p>
+          ) : null}
           {reset?.evolveSsoUrl && reset.passwordAuth && mode !== "forgot" && !codeStep ? (
             <div className="my-6 flex w-full items-center gap-3 text-sm text-muted-foreground">
               <span className="h-px flex-1 bg-border" />

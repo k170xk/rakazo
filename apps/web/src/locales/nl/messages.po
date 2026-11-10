@@ -9998,3 +9998,7 @@ msgstr "of log in met e-mail"
 #: src/pages/Auth.tsx
 msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
 msgstr "Je AI-werkruimte voor engineering: aanbestedingen, rapporten, voorstellen en projectkennis op één plek."
+
+#: src/pages/Auth.tsx
+msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
+msgstr "Gebruik je OCSC-Microsoft-account via Evolve. Bij je eerste aanmelding wordt je account aangemaakt."

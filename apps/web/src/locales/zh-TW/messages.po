@@ -9999,3 +9999,7 @@ msgstr "或使用電子郵件登入"
 #: src/pages/Auth.tsx
 msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
 msgstr "專為工程打造的 AI 工作空間：投標、報告、提案與專案知識，集中一處。"
+
+#: src/pages/Auth.tsx
+msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
+msgstr "透過 Evolve 使用您的 OCSC Microsoft 帳戶。首次登入會自動建立您的帳戶。"
