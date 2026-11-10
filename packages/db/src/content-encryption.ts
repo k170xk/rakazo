@@ -84,7 +84,7 @@ export const ENCRYPTED_MODELS: Record<string, ModelSpec> = {
   /** A person's to-do text, often taken from their email. */
   TodoItem: {
     table: "todo_items",
-    fields: { content: {} },
+    fields: { content: { plainKeys: new Set() } },
     space: { column: "spaceId" },
     ownerRelation: "user",
   },

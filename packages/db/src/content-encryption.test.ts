@@ -133,3 +133,48 @@ describe("withContentEncryption with encryption off", () => {
     ).rejects.toThrow(/nested write/);
   });
 });
+
+describe("withContentEncryption on a to-do item", () => {
+  const keys: import("./content-keys.js").SpaceKeyRecord[] = [];
+  const memory: SpaceKeyStore = {
+    forSpace: async (spaceId) => keys.filter((key) => key.spaceId === spaceId),
+    byId: async (id) => keys.find((key) => key.id === id),
+    insert: async (record) => {
+      keys.push(record);
+      return record;
+    },
+    rowContext: unreachable,
+    sampleByMasterKey: async () => keys,
+  };
+  const sealing = new ContentKeyRing(
+    new LocalKeyProvider([{ id: "a", key: randomBytes(32) }]),
+    memory,
+  );
+  const rows: Record<string, unknown>[] = [];
+  const sealed = withContentEncryption(
+    new PrismaClient({ adapter: new PrismaPg(pool) }),
+    sealing,
+  ).$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ operation, args }) {
+          if (operation === "create") {
+            rows.push(structuredClone((args as { data: Record<string, unknown> }).data));
+            return structuredClone(rows.at(-1));
+          }
+          return structuredClone(rows);
+        },
+      },
+    },
+  }) as unknown as PrismaClient;
+
+  it("seals the whole title, notes and source, and opens them again", async () => {
+    const content = { title: "Call insurance", notes: "Policy renewal", source: null };
+    await sealed.todoItem.create({
+      data: { spaceId: "s", userId: "u", content, position: 0, status: "todo" },
+    });
+    expect(JSON.stringify(rows[0]!.content)).not.toContain("Call insurance");
+    const [opened] = await sealed.todoItem.findMany({ where: { userId: "u" } });
+    expect(opened!.content).toEqual(content);
+  });
+});
