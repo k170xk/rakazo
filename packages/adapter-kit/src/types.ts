@@ -617,6 +617,12 @@ export interface AgentRunRequest {
   onToolCompleted?: (completion: AgentToolCompletion) => Promise<void> | void;
   /** Atomically claim durable user steering at the runtime's next safe turn boundary. */
   claimSteering?: (seenIds: string[]) => Promise<AgentSteeringMessage[]>;
+  /**
+   * Documents this run made or changed while it has sent nothing with attach_file. A final
+   * reply with any outstanding gets one reminder to send them, since a file the person cannot
+   * open from the chat is lost to them.
+   */
+  unsentDocuments?: () => readonly string[];
 }
 
 export interface ScriptedTurn {

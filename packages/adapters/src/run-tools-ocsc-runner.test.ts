@@ -1,13 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
 import type * as OcscToolModule from "./ocsc-tool.js";
+import type * as RunMessagesModule from "./run-messages.js";
 import { computerTools } from "./run-tools-computer.js";
 import { fileTools } from "./run-tools-files.js";
+import type * as ThreadArtifactsModule from "./thread-artifacts.js";
 import { TOOL_RUNNER_COMPUTER } from "./tool-runner.js";
 
 vi.mock("./ocsc-tool.js", async (importOriginal) => ({
   ...(await importOriginal<typeof OcscToolModule>()),
   ocscBeforeRun: async () => undefined,
   ocscAfterRun: async () => undefined,
+}));
+vi.mock("./thread-artifacts.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof ThreadArtifactsModule>()),
+  attachWorkspaceFileToThread: async () => ({ artifactId: "a1", block: { kind: "file" } }),
+}));
+vi.mock("./run-messages.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof RunMessagesModule>()),
+  publishMessage: async () => undefined,
 }));
 
 const workspace = { base: "/data/tool-work", mount: "tool-work/conversations/t1", cwd: "" };
@@ -56,6 +66,7 @@ function harness(options: {
       computerOff: options.computerOff,
       wordDocuments: options.wordDocuments,
     },
+    state: { documents: { made: [] as string[], attached: false } },
   };
   const call = (args: Record<string, unknown>, name = "ocsc") => ({
     name,
@@ -63,8 +74,56 @@ function harness(options: {
     executionId: "e1",
     finish: async (result: unknown) => result,
   });
-  return { ctx: ctx as never, call, run, prepare, computerGet, files };
+  return { ctx: ctx as never, call, run, prepare, computerGet, files, state: ctx.state };
 }
+
+describe("documents a run has not sent yet", () => {
+  const printed = (json: Record<string, unknown>) => ({
+    stdout: JSON.stringify(json),
+    stderr: "",
+    code: 0,
+  });
+
+  it("records each document a command writes, latest last, until one is attached", async () => {
+    const h = harness({ runner: true });
+    const ocsc = (args: string[], json: Record<string, unknown>) => {
+      h.run.mockResolvedValueOnce(printed(json));
+      return computerTools.ocsc!(h.ctx, h.call({ program: "word", args }) as never);
+    };
+    await ocsc(["edit", "--in", "outputs/a.docx"], { ok: true, path: "outputs/a.docx" });
+    await ocsc(["new", "--out", "outputs/b.docx"], { ok: true, path: "outputs/b.docx" });
+    await ocsc(["edit", "--in", "outputs/a.docx"], { ok: true, path: "outputs/a.docx" });
+    expect(h.state.documents.made).toEqual(["outputs/b.docx", "outputs/a.docx"]);
+
+    Object.assign((h.ctx as { deps: object }).deps, { artifacts: {} });
+    h.files.readFile.mockRejectedValueOnce(new Error("file not found"));
+    await fileTools.attach_file!(h.ctx, h.call({ path: "outputs/c.docx" }, "attach_file") as never);
+    expect(h.state.documents.attached).toBe(false);
+
+    const sent = await fileTools.attach_file!(
+      h.ctx,
+      h.call({ path: "outputs/a.docx" }, "attach_file") as never,
+    );
+    expect(sent).toMatchObject({ ok: true });
+    expect(h.state.documents.attached).toBe(true);
+  });
+
+  it("ignores commands that only read a document, and failed ones", async () => {
+    const h = harness({ documents: true });
+    h.run
+      .mockResolvedValueOnce(printed({ ok: true, path: "attachments/a1.docx" }))
+      .mockResolvedValueOnce(printed({ ok: false, path: "outputs/x.docx", error: "bad spec" }));
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "word", args: ["read", "attachments/a1.docx"] }) as never,
+    );
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "word", args: ["edit", "--in", "outputs/x.docx"] }) as never,
+    );
+    expect(h.state.documents.made).toEqual([]);
+  });
+});
 
 describe("Word documents on a tool runner", () => {
   it("writes the person's name as the author of tracked changes", async () => {

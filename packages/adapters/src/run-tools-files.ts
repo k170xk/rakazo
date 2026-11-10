@@ -422,6 +422,7 @@ export const fileTools: ToolHandlers = {
         },
       );
       await publishMessage(deps, run, "bot", [attached.block]);
+      ctx.state.documents.attached = true;
       await recordComputerAction(ctx, call, "attach_file", filePath);
       return call.finish({ ok: true, artifactId: attached.artifactId, path: filePath });
     } catch (error) {

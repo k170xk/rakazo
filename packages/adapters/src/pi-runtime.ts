@@ -126,6 +126,16 @@ export function cutReplyAtLimitPrompt(cut: string): string {
     `Your previous reply hit the output limit. It ended with: "${quoted}" Continue it: start by repeating those last words exactly, then carry on without repeating anything else.`,
   );
 }
+/** Sent once when a reply ends while the documents this run made are still only on disk. */
+export function unsentDocumentsPrompt(paths: readonly string[]): string {
+  const listed = paths
+    .slice(-5)
+    .map((path) => `"${path}"`)
+    .join(", ");
+  return automated(
+    `You made or changed ${listed} but sent nothing with attach_file, so the person cannot open or download it. Attach the finished document now with attach_file (that exact path and a short name; skip drafts and working copies), then end with one short line saying it is attached, without repeating your reply.`,
+  );
+}
 export const SILENT_ALLOWED_TOOL_CONTINUATION_PROMPT = automated(
   "Your last turn ended right after a tool result, without a reply. Continue the original task from the latest tool result. If you need information or a decision from the user, ask them instead of guessing, even if you were told to stay silent. Otherwise, if you were instructed to stay silent when there is nothing to report, follow that instruction for the entire final assistant reply; if not, use any remaining tools needed, then give the user the final answer.",
 );
@@ -773,6 +783,7 @@ export class PiAgentRuntime implements AgentRuntime {
           queue.push({ type: "text", text });
         };
         let toolWorkPendingFinal = false;
+        let unsentDocumentsReminded = false;
         // Text streamed before this point is tool-turn narration. Only text after
         // it counts as the final reply, including when the completed message omits it.
         let streamedBeforePendingFinal = 0;
@@ -866,6 +877,20 @@ export class PiAgentRuntime implements AgentRuntime {
                 if (messageText.trim() && !streamedFinal) {
                   streamed += messageText;
                   queue.push({ type: "text", text: messageText });
+                }
+                const unsent =
+                  unsentDocumentsReminded ||
+                  host.pausePending ||
+                  !toolDefs.some((tool) => tool.name === "attach_file")
+                    ? []
+                    : (request.unsentDocuments?.() ?? []);
+                if (unsent.length > 0) {
+                  unsentDocumentsReminded = true;
+                  agent.followUp({
+                    role: "user",
+                    content: unsentDocumentsPrompt(unsent),
+                    timestamp: Date.now(),
+                  });
                 }
               } else if (
                 // A provider failure is not an empty success. Do not schedule

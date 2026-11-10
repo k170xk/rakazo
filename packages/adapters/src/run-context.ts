@@ -200,6 +200,8 @@ export interface RunState {
   walletHosts: Set<string>;
   handedOff: boolean;
   terminalCheckpointComplete: boolean;
+  /** Paths this attempt's ocsc commands made or changed, and whether it attached any file. */
+  documents: { made: string[]; attached: boolean };
 }
 
 export interface RunComputerContext {

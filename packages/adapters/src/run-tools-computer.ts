@@ -46,6 +46,7 @@ import {
   documentAuthor,
   OCSC_PROGRAMS,
   ocscAfterRun,
+  noteDocumentWrite,
   ocscBeforeRun,
   ocscCommand,
   ocscProgramArgs,
@@ -586,7 +587,17 @@ export const computerTools: ToolHandlers = {
     if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {
       const held = await ocscBeforeRun(ctx, program, args);
       if (held) return call.finish(held);
-      return runOcscOnRunner(ctx, call, runner, ctx.deps.toolRunner, program, args, author);
+      const result = await runOcscOnRunner(
+        ctx,
+        call,
+        runner,
+        ctx.deps.toolRunner,
+        program,
+        args,
+        author,
+      );
+      noteDocumentWrite(ctx, program, args, result);
+      return result;
     }
     if (ctx.computer.computerOff) {
       return call.finish({
@@ -608,6 +619,7 @@ export const computerTools: ToolHandlers = {
       botSecrets: false,
     });
     await ocscAfterRun(ctx, program, args, result);
+    noteDocumentWrite(ctx, program, args, result);
     return result;
   },
   async open_path(ctx, call) {

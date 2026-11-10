@@ -1852,6 +1852,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           walletHosts: new Set(),
           handedOff: false,
           terminalCheckpointComplete: false,
+          documents: { made: [], attached: false },
         };
         const { effects } = state;
         /** Fleet tools take every scope from the run, never from arguments. */
@@ -2377,6 +2378,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                     hasImages: Boolean(currentTurnImages?.length),
                   },
                 ),
+              unsentDocuments: () => (state.documents.attached ? [] : state.documents.made),
             },
             context,
           );

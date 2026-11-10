@@ -224,6 +224,30 @@ function printedJson(result: unknown): Record<string, unknown> | undefined {
   }
 }
 
+/** The ocsc commands that write the document named in their output; the rest only look at one. */
+const DOCUMENT_WRITES: Readonly<Record<string, readonly string[]>> = {
+  word: ["new", "edit", "accept"],
+  pptx: ["new", "edit"],
+  xlsx: ["new", "edit"],
+  pdf: ["convert"],
+};
+
+/** Records the document a successful ocsc command made or changed, for the unsent-file reminder. */
+export function noteDocumentWrite(
+  ctx: RunContext,
+  program: string,
+  args: readonly string[],
+  result: unknown,
+): void {
+  if (!DOCUMENT_WRITES[program]?.includes(args[0] ?? "")) return;
+  const printed = printedJson(result);
+  if (printed?.ok !== true || typeof printed.path !== "string" || !printed.path) return;
+  const { made } = ctx.state.documents;
+  const at = made.indexOf(printed.path);
+  if (at >= 0) made.splice(at, 1);
+  made.push(printed.path);
+}
+
 /**
  * Before a command runs: a reason it may not run here, or a place in the render line.
  * Undefined lets it run.
