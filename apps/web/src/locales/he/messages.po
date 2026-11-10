@@ -10178,3 +10178,27 @@ msgstr "The chosen document is no longer a template, so new Word documents use t
 
 msgid "Word files"
 msgstr "Word files"
+
+msgid "Get its own icon and window, and open it straight from your desktop."
+msgstr "Get its own icon and window, and open it straight from your desktop."
+
+msgid "In Safari's File menu, choose Add to Dock."
+msgstr "In Safari's File menu, choose Add to Dock."
+
+msgid "Install"
+msgstr "Install"
+
+msgid "Install OCSC Intelligence"
+msgstr "Install OCSC Intelligence"
+
+msgid "Open in its own window"
+msgstr "Open in its own window"
+
+msgid "Open it in its own window, then install it to get its own icon and window."
+msgstr "Open it in its own window, then install it to get its own icon and window."
+
+msgid "Tap Share, then Add to Home Screen."
+msgstr "Tap Share, then Add to Home Screen."
+
+msgid "Use OCSC Intelligence as an app"
+msgstr "Use OCSC Intelligence as an app"
