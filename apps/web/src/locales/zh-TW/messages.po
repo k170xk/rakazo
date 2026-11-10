@@ -10122,3 +10122,60 @@ msgstr "Stop sharing {0}"
 
 msgid "The connection did not finish. Close this window and try again."
 msgstr "The connection did not finish. Close this window and try again."
+
+msgid "{0} is now {1}"
+msgstr "{0} is now {1}"
+
+msgid "All documents"
+msgstr "All documents"
+
+msgid "Built-in OCSC report"
+msgstr "Built-in OCSC report"
+
+msgid "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
+msgstr "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
+
+msgid "Could not change AI access"
+msgstr "Could not change AI access"
+
+msgid "Could not change the default Word template"
+msgstr "Could not change the default Word template"
+
+msgid "Couldn't load the Document Library"
+msgstr "Couldn't load the Document Library"
+
+msgid "Default Word template"
+msgstr "Default Word template"
+
+msgid "Default Word template saved"
+msgstr "Default Word template saved"
+
+msgid "Document library"
+msgstr "Document library"
+
+msgid "Find a document"
+msgstr "Find a document"
+
+msgid "Has AI instructions"
+msgstr "Has AI instructions"
+
+msgid "Hidden from AI"
+msgstr "Hidden from AI"
+
+msgid "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
+msgstr "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
+
+msgid "No documents match."
+msgstr "No documents match."
+
+msgid "Read only"
+msgstr "Read only"
+
+msgid "Templates"
+msgstr "Templates"
+
+msgid "The chosen document is no longer a template, so new Word documents use the built-in OCSC report until you choose another."
+msgstr "The chosen document is no longer a template, so new Word documents use the built-in OCSC report until you choose another."
+
+msgid "Word files"
+msgstr "Word files"
