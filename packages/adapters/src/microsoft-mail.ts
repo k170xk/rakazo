@@ -1,8 +1,20 @@
 import type { ConnectorEvent, ConnectorTool } from "@rakazo/adapter-kit";
 
 export const OUTLOOK_PROVIDER = "outlook";
-/** Read-only by design: Mail.Read cannot send, move, delete or flag anything. */
-export const OUTLOOK_SCOPES = "openid profile offline_access User.Read Mail.Read";
+/**
+ * Mail.ReadWrite because that is the permission OCSC's Entra app has consent for. It never
+ * includes Mail.Send, and every request is held to reading by OUTLOOK_TOOL_NAMES,
+ * readOnlyMail and the connector's GET-only mail client.
+ */
+export const OUTLOOK_SCOPES = "openid profile offline_access User.Read Mail.ReadWrite";
+/** The only Outlook tools that exist; any other name is refused before a token is fetched. */
+export const OUTLOOK_TOOL_NAMES: readonly string[] = [
+  "outlook_list_folders",
+  "outlook_list_messages",
+  "outlook_search",
+  "outlook_read_message",
+  "outlook_read_attachment",
+];
 /** Where a read attachment lands on the assistant's computer. */
 export const OUTLOOK_COMPUTER_FOLDER = "outlook";
 export const OUTLOOK_MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
@@ -77,6 +89,75 @@ export interface MailGraph {
   json<T>(path: string, headers?: Record<string, string>): Promise<T>;
   bytes(path: string, maxBytes: number): Promise<Uint8Array>;
   fileName(name: string): string;
+}
+
+const SEGMENT = "[^/?#]+";
+const READ_ROUTES = [
+  `/me/mailFolders`,
+  `/me/mailFolders/${SEGMENT}/childFolders`,
+  `/me/mailFolders/${SEGMENT}/messages`,
+  `/me/messages`,
+  `/me/messages/${SEGMENT}`,
+  `/me/messages/${SEGMENT}/attachments`,
+  `/me/messages/${SEGMENT}/attachments/${SEGMENT}`,
+  `/me/messages/${SEGMENT}/attachments/${SEGMENT}/\\$value`,
+].map((route) => new RegExp(`^${route}$`));
+/** Graph's mail action names, refused even where an id could sit. */
+const ACTION_SEGMENTS = new Set([
+  "send",
+  "sendmail",
+  "move",
+  "copy",
+  "reply",
+  "replyall",
+  "forward",
+  "createreply",
+  "createreplyall",
+  "createforward",
+  "permanentdelete",
+  "createuploadsession",
+  "delta",
+  "messagerules",
+]);
+
+/**
+ * Throws unless the path is one of the mailbox listings or reads above. Graph actions such as
+ * send, move, copy or reply are extra path segments, so none of them can match.
+ */
+export function assertMailRead(path: string): void {
+  const route = path.split("?")[0] ?? "";
+  const unsafe = route.split("/").some((segment) => {
+    const name = decodeSegment(segment).toLowerCase();
+    return (
+      name === "." || name === ".." || ACTION_SEGMENTS.has(name.replace(/^microsoft\.graph\./, ""))
+    );
+  });
+  if (unsafe || !READ_ROUTES.some((pattern) => pattern.test(route))) {
+    throw new Error("Outlook is read-only here: that request was refused.");
+  }
+}
+
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+/** The same client, refusing anything that is not a mailbox read before it is sent. */
+export function readOnlyMail(graph: MailGraph): MailGraph {
+  return {
+    json: (path, headers) => {
+      assertMailRead(path);
+      return graph.json(path, headers);
+    },
+    bytes: (path, maxBytes) => {
+      assertMailRead(path);
+      return graph.bytes(path, maxBytes);
+    },
+    fileName: graph.fileName,
+  };
 }
 
 function address(recipient: Recipient | undefined): string | undefined {
@@ -302,10 +383,15 @@ const TEXT_BODY = { prefer: 'outlook.body-content-type="text"' };
 
 /** Run one Outlook tool as the signed-in person. */
 export async function* runMailTool(
-  graph: MailGraph,
+  client: MailGraph,
   tool: string,
   args: Record<string, unknown>,
 ): AsyncIterable<ConnectorEvent> {
+  if (!OUTLOOK_TOOL_NAMES.includes(tool)) {
+    yield { type: "error", message: `unknown tool ${tool}` };
+    return;
+  }
+  const graph = readOnlyMail(client);
   if (tool === "outlook_list_folders") {
     const parent = mailId(args.parent_folder_id, "parent_folder_id");
     const listed = await graph.json<{ value?: MailFolder[] }>(

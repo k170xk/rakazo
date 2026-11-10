@@ -286,12 +286,19 @@ describe("MicrosoftConnector", () => {
     const secrets = {
       load: vi.fn(async () => JSON.stringify({ refreshToken: "fake-refresh" })),
     } as unknown as SecretStore;
-    const requests: Array<{ url: URL; body?: string }> = [];
+    const requests: Array<{
+      url: URL;
+      method?: string;
+      body?: string;
+      headers: Record<string, string>;
+    }> = [];
     const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
       const url = new URL(String(input instanceof Request ? input.url : input));
       requests.push({
         url,
+        method: init?.method,
         body: typeof init?.body === "string" ? init.body : init?.body?.toString(),
+        headers: Object.fromEntries(new Headers(init?.headers).entries()),
       });
       if (url.hostname === "login.microsoftonline.com") {
         return Response.json({ access_token: "fake-mail-access", expires_in: 3_600 });
@@ -325,12 +332,13 @@ describe("MicrosoftConnector", () => {
     tool: string,
     on: AdapterContext,
     connectionId = "conn-mail",
+    args: Record<string, unknown> = {},
   ) {
     const events: ConnectorEvent[] = [];
     for await (const event of connector.execute(
       {
         tool,
-        args: {},
+        args,
         executionId: "e-mail",
         route: { connectorId: "microsoft", toolName: tool, connectionId },
       },
@@ -355,7 +363,7 @@ describe("MicrosoftConnector", () => {
     ]);
     const started = await connector.begin({ provider: "outlook", redirectUrl: "ignored" }, context);
     expect(new URL(started.authorizationUrl!).searchParams.get("scope")).toBe(
-      "openid profile offline_access User.Read Mail.Read",
+      "openid profile offline_access User.Read Mail.ReadWrite",
     );
   });
 
@@ -377,7 +385,7 @@ describe("MicrosoftConnector", () => {
     ]);
     const token = requests.find((request) => request.url.hostname === "login.microsoftonline.com");
     expect(new URLSearchParams(token!.body).get("scope")).toBe(
-      "openid profile offline_access User.Read Mail.Read",
+      "openid profile offline_access User.Read Mail.ReadWrite",
     );
     expect(requests.at(-1)!.url.pathname).toBe("/v1.0/me/mailFolders");
   });
@@ -397,6 +405,47 @@ describe("MicrosoftConnector", () => {
     expect((await runMail(connector, "sharepoint_list_folders", mailContext))[0]?.type).toBe(
       "error",
     );
+    expect(requests).toEqual([]);
+  });
+
+  it("reads mail only with bodiless GETs to mailbox read paths, though the token can write", async () => {
+    const { connector, requests } = outlookConnector();
+    const calls: Array<[string, Record<string, unknown>]> = [
+      ["outlook_list_folders", { parent_folder_id: "inbox" }],
+      ["outlook_list_messages", { unread_only: true, from: "anne@example.com" }],
+      ["outlook_list_messages", { conversation_id: "conv-1" }],
+      ["outlook_search", { query: "budget", folder_id: "inbox" }],
+      ["outlook_read_message", { message_id: "AAMk" }],
+      ["outlook_read_attachment", { message_id: "AAMk", attachment_id: "att-1" }],
+    ];
+    for (const [tool, args] of calls) {
+      const events = await runMail(connector, tool, mailContext, "conn-mail", args);
+      expect(
+        events.some((event) => event.type === "error"),
+        tool,
+      ).toBe(false);
+    }
+    const graph = requests.filter((request) => request.url.hostname === "graph.microsoft.com");
+    expect(graph.length).toBeGreaterThanOrEqual(calls.length);
+    for (const request of graph) {
+      expect(request.method).toBe("GET");
+      expect(request.body).toBeUndefined();
+      expect(request.url.pathname).toMatch(/^\/v1\.0\/me\/(mailFolders|messages)(\/|$)/);
+      for (const header of Object.keys(request.headers)) {
+        expect(["authorization", "accept", "prefer"]).toContain(header);
+      }
+    }
+  });
+
+  it("refuses any Outlook tool that is not one of its reads, before signing in", async () => {
+    const { connector, requests } = outlookConnector();
+    for (const tool of ["outlook_send_message", "outlook_delete_message", "outlook_move"]) {
+      expect(
+        await runMail(connector, tool, mailContext, "conn-mail", { message_id: "AAMk" }),
+      ).toEqual([
+        { type: "error", message: "Outlook is read-only here: that request was refused." },
+      ]);
+    }
     expect(requests).toEqual([]);
   });
 

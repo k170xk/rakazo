@@ -1,14 +1,19 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { ConnectorEvent } from "@rakazo/adapter-kit";
 import { connectorToolRequiresApproval } from "@rakazo/core";
 import { describe, expect, it } from "vitest";
 import { computerFileName } from "./microsoft-connector.js";
 import type { MailGraph } from "./microsoft-mail.js";
 import {
+  assertMailRead,
   bodyText,
   MAIL_BODY_CHARS,
   messageFilter,
   OUTLOOK_SCOPES,
+  OUTLOOK_TOOL_NAMES,
   outlookTools,
+  readOnlyMail,
   runMailTool,
   searchPhrase,
 } from "./microsoft-mail.js";
@@ -38,15 +43,89 @@ async function run(graph: MailGraph, tool: string, args: Record<string, unknown>
 }
 
 describe("Outlook permissions and tools", () => {
-  it("asks only to read mail", () => {
+  it("asks for the consented mail permission and never for sending or other mailboxes", () => {
     expect(OUTLOOK_SCOPES.split(" ")).toEqual([
       "openid",
       "profile",
       "offline_access",
       "User.Read",
-      "Mail.Read",
+      "Mail.ReadWrite",
     ]);
-    expect(OUTLOOK_SCOPES).not.toMatch(/Send|ReadWrite|Files|Sites|Shared/i);
+    expect(OUTLOOK_SCOPES).not.toMatch(/Send|Files|Sites|Shared|MailboxSettings|\.All/i);
+  });
+
+  it("allows only mailbox listings and reads", () => {
+    for (const path of [
+      "/me/mailFolders?$top=100",
+      "/me/mailFolders/inbox/childFolders",
+      "/me/mailFolders/inbox/messages?$top=20",
+      "/me/messages?$search=%22budget%22",
+      "/me/messages/AAMk%3D",
+      "/me/messages/AAMk/attachments?$top=50",
+      "/me/messages/AAMk/attachments/att-1",
+      "/me/messages/AAMk/attachments/att-1/$value",
+    ]) {
+      expect(() => assertMailRead(path), path).not.toThrow();
+    }
+    for (const path of [
+      "/me/sendMail",
+      "/me/messages/AAMk/send",
+      "/me/messages/AAMk/move",
+      "/me/messages/AAMk/copy",
+      "/me/messages/AAMk/reply",
+      "/me/messages/AAMk/replyAll",
+      "/me/messages/AAMk/forward",
+      "/me/messages/AAMk/createReply",
+      "/me/messages/AAMk/createForward",
+      "/me/messages/AAMk/permanentDelete",
+      "/me/mailFolders/inbox/messages/delta",
+      "/me/mailFolders/inbox/move",
+      "/me/mailFolders/inbox/messageRules",
+      "/me/messages/AAMk/attachments/createUploadSession",
+      "/me/messages/AAMk/attachments/microsoft.graph.createUploadSession",
+      "/me/messages/delta",
+      "/me/messages/AAMk/attachments/%2E%2E",
+      "/me/messages/../sendMail",
+      "/me/messages/./x/send",
+      "/me/mailboxSettings",
+      "/me/drive/root",
+      "/users/someone@ocsc.ie/messages",
+      "",
+    ]) {
+      expect(() => assertMailRead(path), path).toThrow(/read-only/);
+    }
+  });
+
+  it("refuses any request a tool would make outside the read paths, and unknown tools", async () => {
+    const calls: string[] = [];
+    const graph: MailGraph = {
+      async json<T>(path: string) {
+        calls.push(path);
+        return {} as T;
+      },
+      async bytes(path: string) {
+        calls.push(path);
+        return new Uint8Array();
+      },
+      fileName: computerFileName,
+    };
+    expect(() => readOnlyMail(graph).json("/me/messages/AAMk/send")).toThrow(/read-only/);
+    expect(() => readOnlyMail(graph).bytes("/me/sendMail", 10)).toThrow(/read-only/);
+    expect(await run(graph, "outlook_send_message", { message_id: "AAMk" })).toEqual([
+      { type: "error", message: "unknown tool outlook_send_message" },
+    ]);
+    expect(calls).toEqual([]);
+  });
+
+  it("has no code that writes to a mailbox", () => {
+    const source = readFileSync(
+      fileURLToPath(new URL("./microsoft-mail.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(source).not.toMatch(/\b(POST|PATCH|PUT|DELETE)\b|method\s*:/);
+    expect(source).not.toMatch(
+      /sendMail|createReply|createForward|permanentDelete|\/move\b|\/copy\b/,
+    );
   });
 
   it("offers only tools the approval rules see as reads", () => {
@@ -58,6 +137,7 @@ describe("Outlook permissions and tools", () => {
       "outlook_read_message",
       "outlook_read_attachment",
     ]);
+    expect(tools.map((tool) => tool.name)).toEqual(OUTLOOK_TOOL_NAMES);
     for (const tool of tools) {
       expect(tool.readOnly).toBe(true);
       expect(connectorToolRequiresApproval(tool.name, tool.readOnly)).toBe(false);

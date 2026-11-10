@@ -15,7 +15,14 @@ import { runAsSystem, runAsTenant } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { combineSignals, sanitizeConnectorError } from "./connector-safety.js";
 import type { MailGraph } from "./microsoft-mail.js";
-import { OUTLOOK_PROVIDER, OUTLOOK_SCOPES, outlookTools, runMailTool } from "./microsoft-mail.js";
+import {
+  assertMailRead,
+  OUTLOOK_PROVIDER,
+  OUTLOOK_SCOPES,
+  OUTLOOK_TOOL_NAMES,
+  outlookTools,
+  runMailTool,
+} from "./microsoft-mail.js";
 import { isVitestRuntime } from "./test-runtime.js";
 import { readBodyCapped } from "./web-ssrf.js";
 
@@ -534,6 +541,10 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       };
       return;
     }
+    if (wanted === OUTLOOK_PROVIDER && !OUTLOOK_TOOL_NAMES.includes(tool)) {
+      yield { type: "error", message: "Outlook is read-only here: that request was refused." };
+      return;
+    }
     let token: string | undefined;
     try {
       const [row] = await this.rows(context, { id: connectionId, status: "connected" }, wanted);
@@ -972,6 +983,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     const app = options.app ?? "SharePoint";
     const abort = combineSignals(signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS));
     const response = await this.fetch()(`${GRAPH}${path}`, {
+      method: "GET",
       headers: {
         ...options.headers,
         authorization: `Bearer ${token}`,
@@ -984,13 +996,25 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     return (text ? JSON.parse(text) : {}) as T;
   }
 
-  /** Outlook as the signed-in person, through their own token only. */
+  /**
+   * Outlook as the signed-in person, through their own token only. The token can write, so
+   * this client only ever sends a GET without a body, and only to a mailbox read path.
+   */
   private mailGraph(token: string, signal: AbortSignal | undefined): MailGraph {
     return {
-      json: (path, headers) => this.graphJson(token, path, signal, { app: "Outlook", headers }),
+      json: (path, headers) => {
+        assertMailRead(path);
+        const prefer = headers?.prefer;
+        return this.graphJson(token, path, signal, {
+          app: "Outlook",
+          headers: prefer ? { prefer } : undefined,
+        });
+      },
       bytes: async (path, maxBytes) => {
+        assertMailRead(path);
         const abort = combineSignals(signal, AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS));
         const response = await this.fetch()(`${GRAPH}${path}`, {
+          method: "GET",
           headers: { authorization: `Bearer ${token}` },
           signal: abort,
           redirect: "follow",
