@@ -14,6 +14,13 @@ describe("Team Computer bot folders", () => {
       "bots/bot-1/notes/result.txt",
     );
     expect(resolveBotWorkspacePath("team", "bot-1", "")).toBe("bots/bot-1");
+    expect(resolveBotWorkspacePath("team", "bot-1", ".")).toBe("bots/bot-1");
+    expect(resolveBotWorkspacePath("team", "bot-1", "./attachments/x.docx")).toBe(
+      "bots/bot-1/attachments/x.docx",
+    );
+    expect(() => resolveBotWorkspacePath("team", "bot-1", "./../x")).toThrow(
+      "Path escapes the computer workspace",
+    );
     expect(resolveBotWorkspaceCwd("team", "bot-1", undefined)).toBe("bots/bot-1");
     expect(resolveBotWorkspaceCwd("team", "bot-1", "projects/site")).toBe(
       "bots/bot-1/projects/site",

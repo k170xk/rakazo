@@ -377,6 +377,14 @@ class Doc {
     return Boolean(this.styles?.includes(`w:styleId="${id}"`));
   }
 
+  /** A named table style used in `xml` (by default the whole body), other than OCSC's own; null if none. */
+  tableStyleIn(xml = this.xml) {
+    for (const [, id] of xml.matchAll(/<w:tblStyle w:val="([^"]+)"/g)) {
+      if (!/^OCSC|^TableNormal$/i.test(id) && this.hasStyle(id)) return id;
+    }
+    return null;
+  }
+
   /** The template numbers its headings itself, so typed numbers would show twice. */
   numberedHeadings() {
     const style =
@@ -564,15 +572,20 @@ class Doc {
     );
     const width = 9026;
     const colW = Math.floor(width / cols);
+    // In someone else's document a new table takes that document's table style instead of OCSC's look.
+    const own = this.tableStyle;
     const cell = (text, head) =>
-      `<w:tc><w:tcPr><w:tcW w:w="${colW}" w:type="dxa"/>${head ? `<w:shd w:val="clear" w:color="auto" w:fill="${BRAND_GREEN}"/>` : ""}</w:tcPr>` +
-      `<w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr>${runs(text, head ? '<w:b/><w:color w:val="FFFFFF"/>' : "")}</w:p></w:tc>`;
+      `<w:tc><w:tcPr><w:tcW w:w="${colW}" w:type="dxa"/>${head && !own ? `<w:shd w:val="clear" w:color="auto" w:fill="${BRAND_GREEN}"/>` : ""}</w:tcPr>` +
+      `<w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr>${runs(text, head && !own ? '<w:b/><w:color w:val="FFFFFF"/>' : "")}</w:p></w:tc>`;
     const row = (cells, head) =>
       `<w:tr>${head ? "<w:trPr><w:tblHeader/></w:trPr>" : ""}${Array.from({ length: cols }, (_, i) => cell(cells[i] ?? "", head)).join("")}</w:tr>`;
     const border = `w:val="single" w:sz="4" w:space="0" w:color="BFBFBF"`;
     let out =
-      `<w:tbl><w:tblPr><w:tblW w:w="${width}" w:type="dxa"/><w:tblBorders><w:top ${border}/><w:left ${border}/><w:bottom ${border}/><w:right ${border}/><w:insideH ${border}/><w:insideV ${border}/></w:tblBorders>` +
-      `<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="100" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar></w:tblPr>` +
+      (own
+        ? `<w:tbl><w:tblPr><w:tblStyle w:val="${own}"/><w:tblW w:w="${width}" w:type="dxa"/><w:tblLayout w:type="fixed"/>` +
+          `<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr>`
+        : `<w:tbl><w:tblPr><w:tblW w:w="${width}" w:type="dxa"/><w:tblBorders><w:top ${border}/><w:left ${border}/><w:bottom ${border}/><w:right ${border}/><w:insideH ${border}/><w:insideV ${border}/></w:tblBorders>` +
+          `<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="100" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar></w:tblPr>`) +
       `<w:tblGrid>${Array.from({ length: cols }, () => `<w:gridCol w:w="${colW}"/>`).join("")}</w:tblGrid>` +
       (header.length ? row(header, true) : "") +
       rows.map((r) => row(Array.isArray(r) ? r : [r], false)).join("") +
@@ -769,8 +782,41 @@ class Doc {
     const filled = new Set();
     const known = (k) =>
       Object.hasOwn(fields, k) && fields[k] !== null && fields[k] !== undefined;
+    // A blank field would leave its punctuation behind: "{{project_number}}: {{project_name}}"
+    // reads ": Name" or a lone ":", "for its client, {{client_name}}." reads "client, ." and
+    // the cover reads "For" with no one after it.
+    const blank = (k) => known(k) && !String(fields[k]).trim();
+    const pair =
+      /^\s*\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}\s*[:\-–|]\s*\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}\s*$/;
+    const fillBlanks = (xml) =>
+      xml.replace(PARA_RE, (p) => {
+        const text = textOf(p);
+        // The cover's "For" sits on its own line above {{client_name}}.
+        if (blank("client_name") && text.trim() === "For")
+          return rewriteParagraphText(p, "");
+        if (![...text.matchAll(FIELD_RE)].some((m) => blank(m[1]))) return p;
+        const m = pair.exec(text);
+        const both = m && known(m[1]) && known(m[2]);
+        if (both) filled.add(m[1]).add(m[2]);
+        const tidied = both
+          ? [m[1], m[2]]
+              .map((k) => String(fields[k]).trim())
+              .filter(Boolean)
+              .join("")
+          : text.replace(
+              /,\s*\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}(?=\s*[.;:)])/g,
+              (s, k) => (blank(k) ? "" : s),
+            );
+        if (tidied === text) return p;
+        return rewriteParagraphText(
+          p,
+          tidied.replace(FIELD_RE, (ph, k) =>
+            known(k) ? (filled.add(k), String(fields[k])) : ph,
+          ),
+        );
+      });
     const fill = (xml) =>
-      xml
+      fillBlanks(xml)
         .replace(
           /(<w:t(?:\s[^>]*)?>)([^<]*)(<\/w:t>)/g,
           (m, open, t, close) => {
@@ -1652,15 +1698,18 @@ function unwrap(xml, tag) {
     .replace(new RegExp(`</w:${tag}>`, "g"), "");
 }
 
+const rowDeleted = (row) =>
+  /^<w:tr[^>]*><w:trPr>(?:(?!<\/w:trPr>)[\s\S])*<w:del(?=[\s/])/.test(row);
+
 /** Accepts every tracked change: deletions go, insertions stay, and the markers are removed. */
 function acceptAll(xml) {
   const deletedMark =
     /<w:pPr>(?:(?!<\/w:pPr>)[\s\S])*?<w:rPr>(?:(?!<\/w:rPr>)[\s\S])*?<w:del(?=[\s/])/;
   let out = xml.replace(/<w:tr(?=[\s>])[^>]*>[\s\S]*?<\/w:tr>/g, (row) =>
-    /^<w:tr[^>]*><w:trPr>(?:(?!<\/w:trPr>)[\s\S])*<w:del(?=[\s/])/.test(row)
-      ? ""
-      : row,
+    rowDeleted(row) ? "" : row,
   );
+  // Word reports a table without rows as a damaged file.
+  out = out.replace(/<w:tbl>(?:(?!<w:tr[\s>]|<w:tbl>)[\s\S])*?<\/w:tbl>/g, "");
   out = mapBlocks(out, (el, tag) => {
     if (tag !== "p" || !deletedMark.test(el)) return el;
     const left = removeElements(removeElements(el, "del"), "moveFrom");
@@ -2055,12 +2104,14 @@ function outlineOf(doc) {
   for (const e of doc.elements()) {
     if (e.tag === "sectPr") continue;
     if (e.tag === "tbl") {
-      const rows = [...e.xml.matchAll(/<w:tr\b[\s\S]*?<\/w:tr>/g)].map((r) =>
-        [...r[0].matchAll(/<w:tc\b[\s\S]*?<\/w:tc>/g)].map((c) =>
-          textOf(c[0]).trim(),
-        ),
-      );
-      outline.push({ table: rows });
+      const rows = [...e.xml.matchAll(/<w:tr\b[\s\S]*?<\/w:tr>/g)]
+        .filter((r) => !rowDeleted(r[0]))
+        .map((r) =>
+          [...r[0].matchAll(/<w:tc\b[\s\S]*?<\/w:tc>/g)].map((c) =>
+            textOf(c[0]).trim(),
+          ),
+        );
+      if (rows.length) outline.push({ table: rows });
     } else if (e.level && e.text.trim())
       outline.push({ heading: e.text.trim(), level: e.level });
     else if (e.text.trim()) outline.push({ text: e.text.trim() });
@@ -2109,6 +2160,8 @@ async function cmdEdit(o) {
 
   const doc = await Doc.open(readFileSync(src.full));
   doc.ensureStyles();
+  const tableStyle = doc.tableStyleIn();
+  doc.tableStyle = tableStyle;
   const headers = await doc.headerFiles();
   // Tracked by default, so the person sees every change in Word; --clean edits silently.
   const rev = o.clean ? null : new Revisions(doc.xml);
@@ -2226,7 +2279,9 @@ async function cmdEdit(o) {
       case "replace_section": {
         const s = doc.section(op.heading);
         const old = doc.xml.slice(s.bodyStart, s.end);
+        doc.tableStyle = doc.tableStyleIn(old) ?? tableStyle;
         const next = doc.blocks(op.blocks);
+        doc.tableStyle = tableStyle;
         doc.xml =
           doc.xml.slice(0, s.bodyStart) +
           (rev ? rev.deleted(old) + rev.inserted(next) : next) +
@@ -2261,10 +2316,12 @@ async function cmdEdit(o) {
           op.to ? String(op.to) : null,
         );
         const old = doc.xml.slice(r.start, r.end);
+        doc.tableStyle = doc.tableStyleIn(old) ?? tableStyle;
         const next = withRunFont(
           doc.blocks(Array.isArray(op.blocks) ? op.blocks : []),
           old,
         );
+        doc.tableStyle = tableStyle;
         doc.xml =
           doc.xml.slice(0, r.start) +
           (rev ? rev.deleted(old) + (next ? rev.inserted(next) : "") : next) +

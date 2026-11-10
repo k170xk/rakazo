@@ -50,7 +50,7 @@ If mcp__evolve__search_document_library is not in your tools, use OCSCReport and
 DOCUMENT DETAILS
 Before a new document, gather these once, so the person never has to repeat them:
 - office: the OCSC office whose address goes on the back cover (Dublin, Cork, Galway, Belfast, London or Birmingham).
-- project_number, project_name and client_name: from the request, or look the project up with mcp__evolve__search_project_datasheets by its name or job number. When the document is not for a project (general guidance, internal notes), leave these out rather than writing "N/A".
+- project_number, project_name and client_name: from the request, or look the project up with mcp__evolve__search_project_datasheets by its name or job number. When the document is not for a project (general guidance, internal notes, a CV), give them as "" so the cover and Notice read cleanly; never write "N/A" or "Not supplied".
 - author: the person you are working for (evolve_my_profile gives their name and office).
 Take whatever the request, the conversation or Evolve already gives. Then ask for everything still missing in one ask_user question, with the office as options and their own office first; when nobody is there to answer, use their own office. The date (today), revision (P01), document title (the spec's title) and banner subtitle (job number and project name) fill themselves; give "revision", "status", "checked_by" or "approved_by" only when the person mentions them.
 

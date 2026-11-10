@@ -264,8 +264,9 @@ function renderVisual(visual, box, name, label, caption) {
   if ((rest.type ?? "template") === "template" && !str(props.title).trim() && caption)
     props.title = caption;
   const scene = { type: "template", ...rest, props, branded: false, duration };
-  // Scenes are laid out for a 1080-high frame; the width follows the space the visual fills.
-  const width = Math.round((1080 * box.w) / box.h / 2) * 2;
+  // Scenes are laid out for a 1080-high frame; the width follows the space the visual fills,
+  // up to ocsc-video's 3840 limit (wide timeline and figure boxes then show it centred).
+  const width = Math.min(Math.round((1080 * box.w) / box.h / 2) * 2, 3840);
   const spec = {
     title: "Slide visual",
     settings: { width, height: 1080, fps: 30, show_skyline_footer: false },
@@ -454,6 +455,14 @@ const PICTURE_BOX = {
 };
 
 const textEl = (text, box, opts = {}) => ({ type: "text", text, ...box, ...opts });
+/**
+ * A font size that keeps the longest of `values` on one line `width` grid units wide (2 units
+ * a point, about 0.6em a bold character), so a long figure such as "Jul–Aug 2027" does not wrap.
+ */
+const oneLineSize = (values, width, max) => {
+  const longest = Math.max(...values.map((v) => String(v ?? "").length), 1);
+  return Math.max(Math.min(max, Math.floor((width - 30) / (2 * 0.6 * longest))), 24);
+};
 const bulletsEl = (lines, box, colour = INK) =>
   textEl(lines.join("\n"), box, {
     size: lines.length > 4 ? 20 : 22,
@@ -575,6 +584,11 @@ function styleElements(style, item, label) {
       const stats = statsOf(item);
       need(stats.length >= 1 && stats.length <= 3, '"stats" (1 to 3, each {"value","label"})');
       const h = AREA_H / stats.length;
+      const size = oneLineSize(
+        stats.map((st) => st.value),
+        676,
+        66,
+      );
       for (const [i, st] of stats.entries()) {
         const y = AREA.top + i * h;
         if (i > 0) els.push({ type: "shape", shape: "rect", x: 1172, y, w: 676, h: 2, fill: RULE });
@@ -582,7 +596,7 @@ function styleElements(style, item, label) {
           textEl(
             st.value,
             { x: 1172, y: y + h / 2 - 92, w: 676, h: 104 },
-            { size: 66, bold: true, color: GREEN, valign: "bottom" },
+            { size, bold: true, color: GREEN, valign: "bottom" },
           ),
         );
         if (st.label)
@@ -780,6 +794,11 @@ function styleElements(style, item, label) {
       need(stats.length >= 2 && stats.length <= 5, '"stats" (2 to 5, each {"value","label"})');
       const gap = 24;
       const w = (AREA.right - AREA.left - gap * (stats.length - 1)) / stats.length;
+      const size = oneLineSize(
+        stats.map((st) => st.value),
+        w,
+        56,
+      );
       for (const [i, st] of stats.entries()) {
         const x = AREA.left + i * (w + gap);
         els.push({
@@ -796,7 +815,7 @@ function styleElements(style, item, label) {
           textEl(
             st.value,
             { x, y: 664, w, h: 110 },
-            { size: 56, bold: true, color: GREEN, align: "center", valign: "middle" },
+            { size, bold: true, color: GREEN, align: "center", valign: "middle" },
           ),
         );
         if (st.label)

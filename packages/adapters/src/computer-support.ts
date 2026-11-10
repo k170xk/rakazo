@@ -64,8 +64,8 @@ export function clampRounded(value: number, min: number, max: number): number {
 
 export function normalizeWorkspacePath(value: string): string {
   const normalized = value.replace(/\\/g, "/").replace(/^\/+/, "");
-  const segments = normalized.split("/").filter(Boolean);
-  if (segments.some((segment) => segment === "." || segment === "..")) {
+  const segments = normalized.split("/").filter((segment) => segment && segment !== ".");
+  if (segments.includes("..")) {
     throw new Error("Path escapes the computer workspace");
   }
   return segments.join("/");
