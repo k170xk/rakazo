@@ -265,7 +265,7 @@ it("shows the profile and the Advanced tab's controls", async () => {
     [...container.querySelectorAll('[role="tab"]')].map(
       (tab) => tab.textContent || tab.getAttribute("aria-label"),
     ),
-  ).toEqual(["Computer", "Routines", "Pages", "Files", "Settings"]);
+  ).toEqual(["Computer", "Routines", "Pages", "Artifacts", "Settings"]);
   expect(
     [...container.querySelectorAll("button")].some((button) => button.textContent === "Save"),
   ).toBe(false);

@@ -119,7 +119,7 @@ it("opens the Artifacts screen and lists what listSpace returns", async () => {
   });
   const page = await renderArtifacts();
   try {
-    expect(page.container.textContent).toContain("Files");
+    expect(page.container.textContent).toContain("Artifacts");
     expect(page.container.textContent).toContain("when a bot sends you a document");
     expect(page.container.textContent).toContain("Q3 Content Calendar");
     expect(page.container.querySelector("a[href='/app']")?.textContent).toContain("Bots");

@@ -207,7 +207,7 @@ export function SidebarFooter({
               onClick={onArtifacts}
             >
               <FolderOpen className="text-muted-foreground" strokeWidth={1.75} />
-              <Trans>Files</Trans>
+              <Trans>Artifacts</Trans>
             </Button>
             {onBoard ? (
               <Button

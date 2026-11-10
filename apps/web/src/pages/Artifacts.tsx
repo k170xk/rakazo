@@ -227,7 +227,7 @@ export function ArtifactsPage() {
               <Trans>Bots</Trans>
             </Link>
             <h1 className="text-heading2 font-semibold">
-              <Trans>Files</Trans>
+              <Trans>Artifacts</Trans>
             </h1>
           </div>
           <div className="app-no-drag flex shrink-0 items-center gap-2">
