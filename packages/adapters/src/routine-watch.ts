@@ -32,7 +32,12 @@ import { companyTools, isDeploymentAdmin } from "./company-policy.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";
 import { resolveBotWorkspaceCwd, teamBotWorkspaceDirectory } from "./computer-support.js";
-import { connectedContext, selectRunConnections } from "./connection-context.js";
+import {
+  connectedContext,
+  routineIsPrivate,
+  selectRunConnections,
+  withoutPrivateApps,
+} from "./connection-context.js";
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import { loadPurchaseRedactions } from "./purchase-service.js";
 
@@ -363,11 +368,13 @@ async function toolContext(
     },
   });
   const staffApps = companyTools().staffApps;
-  const usable =
+  const allowed =
     rows.every((row) => staffMayUseConnection(staffApps, row)) ||
     (await isDeploymentAdmin(prisma, routine.userId))
       ? rows
       : rows.filter((row) => staffMayUseConnection(staffApps, row));
+  // What a check finds goes into the routine's chat, so private apps need a private chat.
+  const usable = withoutPrivateApps(allowed, await routineIsPrivate(prisma, routine));
   return { ...context(routine), ...connectedContext(selectRunConnections(usable, [])) };
 }
 

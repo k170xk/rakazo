@@ -3,10 +3,14 @@ import type { PrismaClient } from "@rakazo/db";
 import type { PluginConnectionRow } from "./composio-connector.js";
 import { planLiveConnectionSync } from "./composio-connector.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { SHAREPOINT_PROVIDER } from "./microsoft-connector.js";
 import { OUTLOOK_PROVIDER } from "./microsoft-mail.js";
 
-/** Apps holding a person's private correspondence, reachable only from their private chat. */
-const PRIVATE_APPS = [{ connectorId: "microsoft", provider: OUTLOOK_PROVIDER }];
+/** Apps holding a person's own mail and files, reachable only from their private chat. */
+const PRIVATE_APPS = [
+  { connectorId: "microsoft", provider: OUTLOOK_PROVIDER },
+  { connectorId: "microsoft", provider: SHAREPOINT_PROVIDER },
+];
 
 /** Runs the person started or scheduled themselves, never ones another person or bot set off. */
 const OWNER_TRIGGERS = new Set([
@@ -107,6 +111,41 @@ export function connectedContext(
       .filter((row) => row.connectorId === "composio")
       .map((row) => row.provider),
   };
+}
+
+const PRIVACY_THREAD_FIELDS = {
+  userId: true,
+  botId: true,
+  groupId: true,
+  externalConversationId: true,
+} as const;
+
+/**
+ * Whether a routine's checks may use private apps: its chat must be the owner's private chat
+ * with the routine's own bot. Anything that cannot be confirmed counts as shared.
+ */
+export async function routineIsPrivate(
+  prisma: PrismaClient,
+  routine: { id: string; userId: string },
+): Promise<boolean> {
+  try {
+    const found = await prisma.routine.findUnique({
+      where: { id: routine.id },
+      select: {
+        bot: { select: { id: true, userId: true, thread: { select: PRIVACY_THREAD_FIELDS } } },
+        thread: { select: PRIVACY_THREAD_FIELDS },
+      },
+    });
+    const thread = found?.thread ?? found?.bot.thread;
+    if (!found || !thread) return false;
+    return isOwnersPrivateChat({
+      run: { userId: routine.userId, trigger: "routine" },
+      bot: found.bot,
+      thread,
+    });
+  } catch {
+    return false;
+  }
 }
 
 export async function loadLivePluginSlugs(

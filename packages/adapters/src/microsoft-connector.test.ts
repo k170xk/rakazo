@@ -384,7 +384,7 @@ describe("MicrosoftConnector", () => {
 
   it("refuses mail when this run was not given the Outlook connection", async () => {
     const { connector, requests } = outlookConnector();
-    // A run outside the person's private chat has no Outlook connection, only SharePoint.
+    // A run without the Outlook connection, here one given only SharePoint.
     const events = await runMail(connector, "outlook_list_folders", context);
     expect(events).toEqual([
       {

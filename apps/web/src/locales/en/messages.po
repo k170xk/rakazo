@@ -10231,3 +10231,6 @@ msgstr "Use OCSC Intelligence as an app"
 
 msgid "Read-only: assistants can list folders, search, read emails and open attachments, but never send, move or delete mail. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
 msgstr "Read-only: assistants can list folders, search, read emails and open attachments, but never send, move or delete mail. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
+
+msgid "Read-only, and only the folders you choose. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
+msgstr "Read-only, and only the folders you choose. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."

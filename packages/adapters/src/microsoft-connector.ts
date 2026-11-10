@@ -530,10 +530,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     if (!connectionId || !allowed) {
       yield {
         type: "error",
-        message:
-          wanted === OUTLOOK_PROVIDER
-            ? "Outlook is only available in the person's own chat with their own assistant."
-            : "SharePoint is not connected for this conversation.",
+        message: `${MICROSOFT_APPS[wanted].name} is only available in the person's own chat with their own assistant.`,
       };
       return;
     }

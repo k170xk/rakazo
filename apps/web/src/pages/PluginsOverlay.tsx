@@ -940,6 +940,16 @@ export function PluginsOverlay({
           )}
         </section>
 
+        {sharePoint ? (
+          <p data-testid="sharepoint-privacy" className="text-[13px] text-muted-foreground">
+            <Trans>
+              Read-only, and only the folders you choose. Only your own one-to-one chats with your
+              own assistants can use it, never group chats, Slack or Teams conversations or messages
+              from other assistants.
+            </Trans>
+          </p>
+        ) : null}
+
         {sharePoint
           ? accounts
               .filter((row) => row.status === "connected")

@@ -4,6 +4,7 @@ import { mergeConnectedPlugins } from "./composio-connector.js";
 import {
   isOwnersPrivateChat,
   persistLivePluginConnections,
+  routineIsPrivate,
   selectRunConnections,
   withoutPrivateApps,
 } from "./connection-context.js";
@@ -32,14 +33,47 @@ describe("private mail stays in the owner's own chat", () => {
     }
   });
 
-  it("drops only Outlook outside the private chat", () => {
+  it("drops Outlook and SharePoint outside the private chat", () => {
     const rows = [
       { connectorId: "microsoft", provider: "outlook" },
-      { connectorId: "microsoft", provider: "sharepoint" },
+      { connectorId: "microsoft", provider: "SharePoint" },
       { connectorId: "composio", provider: "outlook" },
     ];
     expect(withoutPrivateApps(rows, true)).toEqual(rows);
-    expect(withoutPrivateApps(rows, false)).toEqual(rows.slice(1));
+    expect(withoutPrivateApps(rows, false)).toEqual(rows.slice(2));
+  });
+
+  function routinePrisma(found: unknown) {
+    return {
+      routine: { findUnique: vi.fn(async () => found) },
+    } as unknown as PrismaClient;
+  }
+  const ownThread = {
+    userId: "keith",
+    botId: "bot-1",
+    groupId: null,
+    externalConversationId: null,
+  };
+
+  it("lets a routine's checks use them only when its chat is the owner's private chat", async () => {
+    const routine = { id: "r1", userId: "keith" };
+    const bot = { id: "bot-1", userId: "keith", thread: ownThread };
+    expect(await routineIsPrivate(routinePrisma({ bot, thread: null }), routine)).toBe(true);
+    expect(
+      await routineIsPrivate(
+        routinePrisma({ bot, thread: { ...ownThread, botId: null, groupId: "g" } }),
+        routine,
+      ),
+    ).toBe(false);
+    expect(await routineIsPrivate(routinePrisma(null), routine)).toBe(false);
+    const broken = {
+      routine: {
+        findUnique: vi.fn(async () => {
+          throw new Error("down");
+        }),
+      },
+    } as unknown as PrismaClient;
+    expect(await routineIsPrivate(broken, routine)).toBe(false);
   });
 });
 
