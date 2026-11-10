@@ -46,7 +46,29 @@ export function SidebarHeader({
     <div
       className={`app-drag flex items-center ${mini ? `flex-col gap-2 px-0 pb-2 ${hasWindowChrome ? "pt-4" : "pt-2"}` : "justify-between px-[18px] pb-3 pt-4"}`}
     >
-      {!mini || hasWindowChrome ? <WindowChrome /> : null}
+      {mini ? (
+        <>
+          {hasWindowChrome ? <WindowChrome /> : null}
+          <img
+            src="/brand/evolve-e.png"
+            alt="Evolve"
+            data-testid="sidebar-logo-mini"
+            className="h-6 w-auto select-none"
+            draggable={false}
+          />
+        </>
+      ) : (
+        <div className="flex min-w-0 items-center gap-3">
+          {hasWindowChrome ? <WindowChrome /> : null}
+          <img
+            src="/brand/evolve-wordmark.png"
+            alt="Evolve"
+            data-testid="sidebar-logo"
+            className="h-5 w-auto select-none"
+            draggable={false}
+          />
+        </div>
+      )}
       <div className={`relative flex items-center ${mini ? "flex-col gap-0.5" : "gap-1"}`}>
         {onSearch ? (
           <IconTooltip label={t`Search`}>
