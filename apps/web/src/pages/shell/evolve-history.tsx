@@ -34,8 +34,6 @@ function filesLabel(count: number): string {
   return plural(count, { one: "# file", other: "# files" });
 }
 
-const ARCHIVE_OPEN_KEY = "rakazo.sidebar.evolveArchive.list";
-
 /**
  * One archive list: archived bots and groups, and archived Evolve chats.
  * Restore on an Evolve chat makes it a chatbot in the list above, the same as opening it used to.
@@ -67,7 +65,7 @@ export function EvolveArchive({
   const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(() => localStorage.getItem(ARCHIVE_OPEN_KEY) !== "0");
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -148,10 +146,7 @@ export function EvolveArchive({
   return (
     <Collapsible
       open={expanded}
-      onOpenChange={(next) => {
-        setExpanded(next);
-        localStorage.setItem(ARCHIVE_OPEN_KEY, next ? "1" : "0");
-      }}
+      onOpenChange={setExpanded}
       className={hidden ? "hidden" : "mt-2 border-t border-border pt-2"}
       data-testid="evolve-archive"
     >
