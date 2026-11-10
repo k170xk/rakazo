@@ -22,6 +22,7 @@ import type { EvolvePluginsConnection } from "./evolve-plugins.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
+import type { RunPool } from "./run-pool.js";
 import type { TicketChangeNotifier } from "./ticket-changes.js";
 import type { ToolRunnerClient } from "./tool-runner.js";
 import type { UserDeviceGateway } from "./user-device-protocol.js";
@@ -51,6 +52,8 @@ export interface ExecutorDeps {
   dataDir?: string;
   /** Runs OCSC document commands for colleague turns and Tools-only people; see tool-runner.ts. */
   toolRunner?: ToolRunnerClient;
+  /** Which runs this process takes; see run-pool.ts. Defaults to all. */
+  runPool?: RunPool;
   notifications?: NotificationProvider;
   jobs: JobPublisher;
   /** Publishes board-change signals and wakes ticket owners; absent disables both. */

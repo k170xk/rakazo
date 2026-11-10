@@ -100,6 +100,7 @@ import {
   reconcilePurchases,
   removePiUserSessions,
   resolveDeploymentModel,
+  runPoolFromEnv,
   ScriptedAgentRuntime,
   SpaceMemoryProviderResolver,
   StripeBillingProvider,
@@ -396,7 +397,10 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const jobPool = created.pool ?? ownedJobPool;
   const shutdown = new AbortController();
   // Chat starts in the process that receives it; the worker only takes what this one can't.
-  const runs = inMemoryJobs ? undefined : new RunStarter(realtime, { signal: shutdown.signal });
+  const runPool = runPoolFromEnv(process.env);
+  const runs = inMemoryJobs
+    ? undefined
+    : new RunStarter(realtime, { signal: shutdown.signal, pool: { pool: runPool, prisma } });
   const jobs =
     inMemoryJobs ??
     new RunJobPublisher(
@@ -717,6 +721,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     deploymentModelKey: env.deploymentModelKey,
     deploymentModelConfigured: env.deploymentModelConfigured,
     dataDir: env.dataDir,
+    runPool,
     notifications,
     jobs,
     events,

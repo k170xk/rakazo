@@ -20,6 +20,7 @@ import {
   tickRoutineWatch,
   toolResultText,
   validateRoutineWatch,
+  watchComputerRefusal,
   watchFolder,
 } from "./routine-watch.js";
 
@@ -144,6 +145,7 @@ describe("tickRoutineWatch", () => {
     const deps = {
       prisma: {
         routine: { updateMany },
+        user: { findUnique: vi.fn(async () => ({ computerAccess: "full" })) },
         connection: { findMany: vi.fn(async () => []) },
         spaceSettingOverride: { findUnique: vi.fn(async () => null) },
         actionApprovalRule: { findMany: vi.fn(async () => []) },
@@ -418,6 +420,33 @@ describe("tickRoutineWatch", () => {
     expect(messages[0]).toMatchObject({ role: "bot" });
     expect(JSON.stringify(messages[0]?.blocks)).toContain("401 unauthorized");
   });
+
+  it("pauses a file watch for someone without full computer access, without starting a computer", async () => {
+    const { deps, routine, updateMany, messages } = setup({});
+    routine.watch = { kind: "files", paths: ["inbox"] } as unknown as typeof routine.watch;
+    vi.mocked(deps.prisma.user.findUnique).mockResolvedValue({
+      computerAccess: "tools",
+    } as never);
+    vi.mocked(provisionComputer).mockClear();
+    const tick = await tickRoutineWatch(deps, routine, target, scheduledAt);
+    expect(tick).toEqual({ run: false });
+    expect(provisionComputer).not.toHaveBeenCalled();
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ active: false }) }),
+    );
+    expect(JSON.stringify(messages[0]?.blocks)).toContain("needs full computer access");
+  });
+});
+
+describe("watchComputerRefusal", () => {
+  it("refuses computer watches below full access and allows app watches", () => {
+    const files = { kind: "files", paths: ["inbox"] } as never;
+    const tool = { kind: "tool" } as never;
+    expect(watchComputerRefusal(files, "tools")).toContain("full computer access");
+    expect(watchComputerRefusal(files, "none")).toContain("full computer access");
+    expect(watchComputerRefusal(files, "full")).toBeUndefined();
+    expect(watchComputerRefusal(tool, "none")).toBeUndefined();
+  });
 });
 
 describe("tool results", () => {
@@ -533,6 +562,7 @@ describe("tickRoutineWatch on a computer", () => {
     const deps = {
       prisma: {
         routine: { updateMany },
+        user: { findUnique: vi.fn(async () => ({ computerAccess: "full" })) },
         bot: {
           findUnique: vi.fn(async () => ({
             id: "bot-1",

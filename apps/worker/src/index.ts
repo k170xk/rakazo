@@ -85,6 +85,7 @@ import {
   resolvePiSessionRoot,
   resolveSandboxProvider,
   runDueFileCleanup,
+  runPoolFromEnv,
   ScriptedAgentRuntime,
   SpaceMemoryProviderResolver,
   sandboxProviderOptionsFromEnv,
@@ -166,6 +167,10 @@ async function main() {
   const ticketBoardEnabled = process.env.TICKET_BOARD_ENABLED === "true";
   const boardEvents = createBoardEvents(realtime);
   const dataDir = process.env.DATA_DIR ?? "./data";
+  // A routines worker runs routine work only: the chat processes keep background jobs,
+  // reconcilers and file cleanup, so this one can live on its own server.
+  const runPool = runPoolFromEnv(process.env);
+  const routinesOnly = runPool === "routines";
   const runtime =
     process.env.AGENT_RUNTIME === "scripted"
       ? new ScriptedAgentRuntime()
@@ -262,7 +267,9 @@ async function main() {
   integrationSettings.warmDirectories();
   const memoryProviders = new SpaceMemoryProviderResolver(prisma, secrets);
   const home = createAgentHomeStore(dataDir, prisma);
-  void home.removeStaleStaging().catch((error) => logger.error("home staging cleanup", error));
+  if (!routinesOnly) {
+    void home.removeStaleStaging().catch((error) => logger.error("home staging cleanup", error));
+  }
   const artifacts = createArtifactStore(dataDir, prisma);
   let cleaning = false;
   const cleanFiles = () => {
@@ -280,10 +287,13 @@ async function main() {
         cleaning = false;
       });
   };
-  setInterval(cleanFiles, FILE_CLEANUP_CHECK_MS).unref();
+  if (!routinesOnly) setInterval(cleanFiles, FILE_CLEANUP_CHECK_MS).unref();
   const shutdown = new AbortController();
   const inMemoryJobs = process.env.WAKEUP_DRIVER === "memory" ? new InMemoryJobQueue() : undefined;
-  const runs = new RunStarter(realtime, { signal: shutdown.signal });
+  const runs = new RunStarter(realtime, {
+    signal: shutdown.signal,
+    pool: { pool: runPool, prisma },
+  });
   const jobs: JobPublisher =
     inMemoryJobs ?? new RunJobPublisher(prisma, new GraphileJobPublisher(pool, prisma), runs);
   const { messaging } = installedMessaging(
@@ -355,6 +365,7 @@ async function main() {
     deploymentModelConfigured,
     dataDir,
     toolRunner,
+    runPool,
     notifications,
     jobs,
     events,
@@ -377,14 +388,17 @@ async function main() {
     shutdownSignal: shutdown.signal,
   });
 
+  const runWorker = new RunWorkerHost(prisma, realtime, runs, { pool });
   const jobHost: JobWorkerHost =
     inMemoryJobs ??
-    withRunWorker(
-      new RunWorkerHost(prisma, realtime, runs, { pool }),
-      createReservedGraphileJobWorkerHost(pool, {
-        concurrency: parsePositiveInteger(process.env.GRAPHILE_WORKER_CONCURRENCY, 4),
-      }),
-    );
+    (routinesOnly
+      ? runWorker
+      : withRunWorker(
+          runWorker,
+          createReservedGraphileJobWorkerHost(pool, {
+            concurrency: parsePositiveInteger(process.env.GRAPHILE_WORKER_CONCURRENCY, 4),
+          }),
+        ));
 
   const jobHandlers = createBackgroundJobHandlers({
     executor,
@@ -513,10 +527,13 @@ async function main() {
     }
   }
   if (stopping) return;
-  reconciler.start();
-  stopHealth = startWorkerHealth(reconciler.lastCompletedAt);
+  if (!routinesOnly) reconciler.start();
+  stopHealth = startWorkerHealth(routinesOnly ? () => Date.now() : reconciler.lastCompletedAt);
 
-  logger.info("worker ready", { degraded: secrets.describe().capabilities.degraded ?? false });
+  logger.info("worker ready", {
+    degraded: secrets.describe().capabilities.degraded ?? false,
+    runPool,
+  });
 }
 
 // The worker only does cross-tenant work: job dispatch, reconcilers, leadership and

@@ -935,9 +935,7 @@ function SpaceShell() {
     companyFeatures?.staffIntegrations === false && bootstrapMe?.isAdmin !== true;
   const tourAvailability = {
     connectorsSoon: integrationsComingSoon,
-    routinesSoon:
-      companyFeatures?.routines === false ||
-      (bootstrapMe?.computerAccess !== undefined && bootstrapMe.computerAccess !== "full"),
+    routinesSoon: companyFeatures?.routines === false,
   };
   const settingsNavItems = useSettingsNavItems({
     messaging: messagingSurfaceEnabled,

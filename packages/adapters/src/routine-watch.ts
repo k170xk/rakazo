@@ -11,7 +11,7 @@ import type {
   SecretStore,
 } from "@rakazo/adapter-kit";
 import { routineJobKey, routineWakeupJob } from "@rakazo/adapter-kit";
-import type { RoutineWatch, RoutineWatchState } from "@rakazo/contracts";
+import type { ComputerAccess, RoutineWatch, RoutineWatchState } from "@rakazo/contracts";
 import {
   RoutineWatchSchema,
   RoutineWatchStateSchema,
@@ -25,10 +25,12 @@ import {
   createThreadMessageInTransaction,
   listApprovalRules,
   parseComputerMode,
+  runAsSystem,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { loadLoginPasswordRedactions, shellCommandEnvironment } from "./bot-secrets.js";
 import { companyTools, isDeploymentAdmin } from "./company-policy.js";
+import { effectiveComputerAccess } from "./computer-access.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";
 import { resolveBotWorkspaceCwd, teamBotWorkspaceDirectory } from "./computer-support.js";
@@ -743,6 +745,18 @@ export async function tickRoutineWatch(
   let outcome: RoutineWatchOutcome;
   try {
     if (!watch) throw new RoutineWatchError("The change trigger's settings are not valid.");
+    if (watch.kind === "files" || watch.kind === "command") {
+      const user = await runAsSystem("read computer access", () =>
+        deps.prisma.user.findUnique({
+          where: { id: routine.userId },
+          select: { computerAccess: true },
+        }),
+      ).catch(() => {
+        throw new RoutineWatchRetry();
+      });
+      const refusal = watchComputerRefusal(watch, effectiveComputerAccess(user?.computerAccess));
+      if (refusal) throw new RoutineWatchError(refusal);
+    }
     outcome = await checkRoutineWatch(deps, routine, now);
   } catch (error) {
     if (error instanceof RoutineWatchRetry) {
@@ -856,12 +870,21 @@ export function assertWatchToolReadOnly(tool: string, readOnly: boolean | undefi
 }
 
 /** Validate without executing a tool or provisioning a computer. */
+/** Files and commands are checked on the bot's computer, which only Full access reaches. */
+export function watchComputerRefusal(watch: RoutineWatch, access: ComputerAccess) {
+  if ((watch.kind !== "files" && watch.kind !== "command") || access === "full") return undefined;
+  return "Watching computer files or commands needs full computer access. Watch a connected app instead, or run on a schedule.";
+}
+
 export async function validateRoutineWatch(
   deps: { connector?: ConnectorProvider; prisma?: PrismaClient },
   watch: RoutineWatch,
   target: { spaceId: string; userId: string; botId: string },
   computer?: { scope: string } | null,
+  access?: ComputerAccess,
 ): Promise<void> {
+  const refusal = access ? watchComputerRefusal(watch, access) : undefined;
+  if (refusal) throw new RoutineWatchError(refusal);
   if (watch.kind === "files" && computer) {
     for (const path of watch.paths ?? [])
       resolveWatchPath(parseComputerMode(computer.scope), target.botId, path);

@@ -38,6 +38,8 @@ x-app-environment: &app-environment
   OBJECT_STORAGE_PREFIX:
   OBJECT_STORAGE_PATH_STYLE:
   WAKEUP_DRIVER: graphile
+  # all, chat or routines: which runs this process takes (docs/self-host-routine-runner.md).
+  RAKAZO_RUN_POOL:
   AGENT_RUNTIME: pi
   AGENT_CONTEXT_STRATEGY: ${AGENT_CONTEXT_STRATEGY:-snapshots}
   API_URL: ${API_URL:-http://127.0.0.1:5173}

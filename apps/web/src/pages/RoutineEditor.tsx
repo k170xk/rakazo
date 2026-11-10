@@ -119,9 +119,9 @@ export type RoutineWatchDraft = {
   loud: boolean;
 };
 
-export function emptyWatchDraft(): RoutineWatchDraft {
+export function emptyWatchDraft(kind: RoutineWatchDraft["kind"] = "files"): RoutineWatchDraft {
   return {
-    kind: "files",
+    kind,
     paths: "",
     command: "",
     tool: "",
@@ -370,6 +370,9 @@ export function RoutineEditor({
   const { t } = useLingui();
   const fieldId = useId();
   const queries = useSpaceQueries();
+  // Files and commands are checked on the computer, which only Full access reaches.
+  const computerWatches =
+    (useQuery(queries.me.queryOptions()).data?.computerAccess ?? "full") === "full";
   const scheduleStatus = useQuery({
     ...queries.routines.list.queryOptions({ input: { botId: editing?.botId ?? "" } }),
     enabled: editing !== null && draft.active,
@@ -657,6 +660,7 @@ export function RoutineEditor({
             <WatchTriggerCard
               watch={draft.watch}
               state={editing?.watch ? editing.watchState : null}
+              computerWatches={computerWatches}
               onChange={(watch) => onChange({ ...draft, watch })}
               onRemove={() => onChange({ ...draft, watch: null })}
             />
@@ -724,7 +728,9 @@ export function RoutineEditor({
 
             <DropdownMenuItem
               disabled={Boolean(draft.watch) || draft.schedules.length > 0}
-              onClick={() => onChange({ ...draft, watch: emptyWatchDraft() })}
+              onClick={() =>
+                onChange({ ...draft, watch: emptyWatchDraft(computerWatches ? "files" : "tool") })
+              }
             >
               <Eye />
               <Trans>When something changes</Trans>
@@ -768,11 +774,13 @@ export function RoutineEditor({
 function WatchTriggerCard({
   watch,
   state,
+  computerWatches,
   onChange,
   onRemove,
 }: {
   watch: RoutineWatchDraft;
   state: Routine["watchState"];
+  computerWatches: boolean;
   onChange: (watch: RoutineWatchDraft) => void;
   onRemove: () => void;
 }) {
@@ -811,8 +819,12 @@ function WatchTriggerCard({
             onChange({ ...watch, kind: event.target.value as RoutineWatchDraft["kind"] })
           }
         >
-          <NativeSelectOption value="files">{t`Files or folders on the computer`}</NativeSelectOption>
-          <NativeSelectOption value="command">{t`A command's output`}</NativeSelectOption>
+          {computerWatches || watch.kind === "files" ? (
+            <NativeSelectOption value="files">{t`Files or folders on the computer`}</NativeSelectOption>
+          ) : null}
+          {computerWatches || watch.kind === "command" ? (
+            <NativeSelectOption value="command">{t`A command's output`}</NativeSelectOption>
+          ) : null}
           <NativeSelectOption value="tool">{t`An integration tool`}</NativeSelectOption>
         </NativeSelect>
         {watch.kind === "files" ? (

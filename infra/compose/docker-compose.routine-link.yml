@@ -1,0 +1,15 @@
+# Overlay for a Compose stack whose routines run on another server (docs/self-host-routine-runner.md).
+# Publishes the database and the document runners on the stack's private address only, through a
+# TCP relay, so neither service has to be recreated. Limit who may connect with a firewall too.
+services:
+  routine-link:
+    image: ${HAPROXY_IMAGE:-haproxy:3.2-alpine}
+    restart: unless-stopped
+    volumes:
+      - ./routine-link.haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "${RAKAZO_ROUTINE_LINK_BIND:?Set RAKAZO_ROUTINE_LINK_BIND to the stack's private address}:5432:5432"
+      - "${RAKAZO_ROUTINE_LINK_BIND}:7091:7091"
+    depends_on:
+      - postgres
+      - supervisor

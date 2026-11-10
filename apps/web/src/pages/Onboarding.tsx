@@ -246,9 +246,7 @@ export function OnboardingPage() {
               userId: me.userId,
               availability: {
                 connectorsSoon: me.features?.staffIntegrations === false && !me.isAdmin,
-                routinesSoon:
-                  me.features?.routines === false ||
-                  (me.computerAccess !== undefined && me.computerAccess !== "full"),
+                routinesSoon: me.features?.routines === false,
               },
               resume: first,
             });

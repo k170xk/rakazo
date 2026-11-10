@@ -1,0 +1,25 @@
+# A worker that runs only routines, on a server of its own beside a Compose stack
+# (docs/self-host-routine-runner.md). It takes the stack worker's settings and reaches the stack's
+# database, document runners and data directory over a private network. Start it with the
+# stack's .env plus the three RAKAZO_STACK_* values below, next to a copy of docker-compose.yml.
+name: rakazo-routines
+
+services:
+  worker:
+    extends:
+      file: docker-compose.yml
+      service: worker
+    image: ${RAKAZO_ROUTINE_RUNNER_IMAGE:-rakazo-worker:latest}
+    build: !reset null
+    depends_on: !reset {}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://rakazo_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@${RAKAZO_STACK_HOST:?Set RAKAZO_STACK_HOST to the stack's private address}:${RAKAZO_STACK_DB_PORT:-5432}/${POSTGRES_DB:-rakazo}
+      RAKAZO_RUN_POOL: routines
+      # Routines never reach a computer; documents go to the stack's tool runners.
+      SANDBOX_PROVIDER: none
+      SANDBOX_SUPERVISOR_URL: http://${RAKAZO_STACK_HOST}:${RAKAZO_STACK_RUNNER_PORT:-7091}
+      RAKAZO_TOOL_RUNNER_URL: http://${RAKAZO_STACK_HOST}:${RAKAZO_STACK_RUNNER_PORT:-7091}
+    volumes:
+      # The stack's DATA_DIR, mounted on this server (for example over NFS on the private network).
+      - ${RAKAZO_STACK_DATA_DIR:?Set RAKAZO_STACK_DATA_DIR to the stack's data directory mount}:/data

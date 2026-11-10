@@ -18,6 +18,7 @@ import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
 import { runAsSystemInTransaction } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 
+import { computerAccessFor } from "./computer-access.js";
 import { localDateTime } from "./current-time.js";
 import { validateRoutineWatch } from "./routine-watch.js";
 
@@ -590,7 +591,13 @@ async function createWatchFromTool(
       include: { computer: true },
     });
     if (!bot) return { error: "Bot not found." };
-    await validateRoutineWatch(deps, parsed.data, input, bot.computer);
+    await validateRoutineWatch(
+      deps,
+      parsed.data,
+      input,
+      bot.computer,
+      await computerAccessFor(deps.prisma, input.userId),
+    );
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Invalid change trigger." };
   }

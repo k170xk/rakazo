@@ -309,15 +309,22 @@ export async function setComputerAccess(
   return companyAdminState(deps, actor);
 }
 
+export async function computerAccessOf(
+  deps: Pick<RouterDeps, "prisma">,
+  actor: Pick<Actor, "userId">,
+) {
+  const user = await runAsSystem("read computer access", () =>
+    deps.prisma.user.findUnique({ where: { id: actor.userId }, select: { computerAccess: true } }),
+  );
+  return effectiveComputerAccess(user?.computerAccess);
+}
+
 /** Fails a request that drives a computer directly, such as its screen or terminal, without Full access. */
 export async function requireFullComputer(
   deps: Pick<RouterDeps, "prisma">,
   actor: Pick<Actor, "userId">,
 ): Promise<void> {
-  const user = await runAsSystem("read computer access", () =>
-    deps.prisma.user.findUnique({ where: { id: actor.userId }, select: { computerAccess: true } }),
-  );
-  if (effectiveComputerAccess(user?.computerAccess) === "full") return;
+  if ((await computerAccessOf(deps, actor)) === "full") return;
   throw new ORPCError("FORBIDDEN", {
     message: "Your administrator has not given you full computer access.",
   });

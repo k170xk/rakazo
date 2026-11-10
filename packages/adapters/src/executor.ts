@@ -217,6 +217,7 @@ import {
   resolveRunModel,
   runtimeFallbackModel,
 } from "./run-model.js";
+import { poolComputerAccess, runInPool } from "./run-pool.js";
 import { createReplyState } from "./run-progress.js";
 import {
   DELEGATED_EMPTY_NOTICE,
@@ -399,6 +400,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
       if (deps.shutdownSignal?.aborted) return;
       const run = await deps.prisma.run.findUnique({ where: { id: runId } });
       if (!run) return;
+      // Another pool's process runs it; its own recovery and handoffs find the row.
+      if (!runInPool(run.trigger, deps.runPool ?? "all")) return;
       // Logs and security events raised by this run's tools name its account and space.
       enrichLogContext({
         "run.id": runId,
@@ -771,7 +774,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             thread.externalConversationId || channelId || messagingChannelRun,
           ),
         });
-        const personAccess = runComputerAccess(ownerAccess, sharedConversation);
+        const personAccess = poolComputerAccess(
+          runComputerAccess(ownerAccess, sharedConversation),
+          deps.runPool ?? "all",
+        );
         const runFolder = sharedConversation ? conversationFolder(thread.id) : undefined;
         const historySearchBeforeSeq =
           contextStrategy !== "current" && run.sourceMessageId
@@ -1680,7 +1686,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             conversationFileSearch,
             connectedAppsEnabled: companyFeatures().connectedApps,
             mcpServersEnabled: companyFeatures().mcpServers,
-            routinesEnabled: companyFeatures().routines && computerAccess === "full",
+            routinesEnabled: companyFeatures().routines,
             evolvePluginsEnabled: Boolean(deps.evolvePlugins) && companyFeatures().evolvePlugins,
             evolveKnowledgeEnabled: Boolean(deps.evolvePlugins && bot.evolveAssistantId),
             evolveInfographicsEnabled: Boolean(deps.evolvePlugins),

@@ -118,6 +118,7 @@ Compose bot homes mount only their own subdirectory of the application volume us
   limits.
 - [Production deployment](./self-host-production.md): a public single-VM install with automatic
   HTTPS.
+- [Routine runner](./self-host-routine-runner.md): routine runs on a server of their own.
 - [Backup and restore](./self-host-backups.md) and [upgrading](./self-host-upgrading.md).
 - [Logs and monitoring](./self-host-observability.md): logs, error reports, traces, security events
   and alerts.

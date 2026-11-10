@@ -837,7 +837,7 @@ describe("schedule tool persistence", () => {
 });
 
 describe("schedule_create with a watch", () => {
-  function deps() {
+  function deps(computerAccess = "full") {
     const create = vi.fn(async (args: { data: Record<string, unknown> }) => ({
       id: "routine-w",
       ...args.data,
@@ -852,6 +852,7 @@ describe("schedule_create with a watch", () => {
             connection: { findMany: vi.fn(async () => []) },
             bot: { findFirst: vi.fn(async () => ({ computer: null })) },
             routine: { create, findMany: noRoutines },
+            user: { findUnique: vi.fn(async () => ({ computerAccess })) },
           },
           null,
         ),
@@ -936,6 +937,21 @@ describe("schedule_create with a watch", () => {
     });
     expect(result).toMatchObject({ ok: true });
     expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses a computer watch without full computer access, but not an app watch", async () => {
+    const { deps: d, create } = deps("tools");
+    const files = await createScheduleFromTool(d, {
+      ...base,
+      schedule: { watch: { kind: "files", paths: ["inbox"] } },
+    });
+    expect(files).toMatchObject({ error: expect.stringContaining("full computer access") });
+    expect(create).not.toHaveBeenCalled();
+    const app = await createScheduleFromTool(d, {
+      ...base,
+      schedule: { watch: { kind: "tool", tool: "brain_changed" } },
+    });
+    expect(app).toMatchObject({ ok: true });
   });
 
   it("refuses a watch combined with a schedule, or an invalid watch", async () => {

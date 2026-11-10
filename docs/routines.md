@@ -36,8 +36,13 @@ accepts a cron expression. Times use your timezone, set in **Settings → Genera
 
 The bot checks something at a set interval (**Check every**, from 5 minutes to a day) and runs only
 when it changed. **What to watch** can be files or folders on the computer, a command's output, or a
-tool from a connected app. Turn on **Post "No changes" in chat** if you want a note every time. A
-watch can't be combined with a schedule.
+tool from a connected app. Watching files or a command needs full computer access; anyone can watch
+a connected app. Turn on **Post "No changes" in chat** if you want a note every time. A watch can't
+be combined with a schedule.
+
+Routines don't need a computer. When the deployment has a
+[routine runner](./self-host-routine-runner.md), routine runs use only the bot's apps, files and
+document commands, never a shell, screen or browser.
 
 ### Webhook
 

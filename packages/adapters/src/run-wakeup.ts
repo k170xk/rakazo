@@ -12,9 +12,10 @@ import { endTakeoverWaits, isTooManyDatabaseConnections, runAsSystem } from "@ra
 import { getLogger, runCorrelatedJob } from "@rakazo/logging";
 import type { Pool } from "pg";
 import { RunExecutionHost } from "./run-execution.js";
+import type { RunPool } from "./run-pool.js";
+import { runPoolOf, runPoolWhere, runReadyTopic, runReadyTopics } from "./run-pool.js";
 import { findRunRecoveryBlockers } from "./run-recovery.js";
 
-const RUN_READY_TOPIC = "runs:ready";
 const INTERACTIVE_QUEUE_WARNING_MS = 30_000;
 const RESUMABLE = ["queued", "waiting_input", "waiting_takeover"];
 
@@ -33,8 +34,16 @@ export class RunStarter {
 
   constructor(
     private readonly realtime: RealtimeFanout,
-    private readonly options: { signal?: AbortSignal } = {},
+    private readonly options: {
+      signal?: AbortSignal;
+      /** A process limited to one pool passes every other run to the processes that take it. */
+      pool?: { pool: RunPool; prisma: PrismaClient };
+    } = {},
   ) {}
+
+  get pool(): RunPool {
+    return this.options.pool?.pool ?? "all";
+  }
 
   attach(handlers: BackgroundJobHandlers): void {
     this.handlers = handlers;
@@ -81,11 +90,23 @@ export class RunStarter {
     return Boolean(this.handlers) && !this.stopping && !this.options.signal?.aborted;
   }
 
-  private handOff(runId: string): void {
+  private handOff(runId: string, pool: RunPool = this.pool): void {
     // Without a listening process the durable row waits for recovery.
-    void this.realtime.publish(RUN_READY_TOPIC, runId).catch((error) => {
+    void this.realtime.publish(runReadyTopic(pool), runId).catch((error) => {
       getLogger().error("run handoff notification", error);
     });
+  }
+
+  /** The pool that must run this, when it is not this process's; undefined to run it here. */
+  private async otherPool(runId: string): Promise<RunPool | undefined> {
+    const limited = this.options.pool;
+    if (!limited || limited.pool === "all") return undefined;
+    const run = await runAsSystem("run pool check", () =>
+      limited.prisma.run.findUnique({ where: { id: runId }, select: { trigger: true } }),
+    );
+    if (!run) return undefined;
+    const pool = runPoolOf(run.trigger);
+    return pool === limited.pool ? undefined : pool;
   }
 
   private async begin(runId: string, local: boolean): Promise<void> {
@@ -96,6 +117,22 @@ export class RunStarter {
     const handlers = this.handlers;
     if (!handlers || !this.accepting) {
       if (local) this.handOff(runId);
+      return;
+    }
+    let other: RunPool | undefined;
+    try {
+      other = await this.otherPool(runId);
+    } catch (error) {
+      // The row stays durable; recovery in the right pool finds it.
+      getLogger().error("run pool check", error);
+      return;
+    }
+    if (other) {
+      this.handOff(runId, other);
+      return;
+    }
+    if (this.inFlight.has(runId)) {
+      if (local) this.dueAgain.add(runId);
       return;
     }
     this.inFlight.add(runId);
@@ -205,14 +242,23 @@ export class RunWorkerHost implements JobWorkerHost {
     this.wakeRequested = false;
     this.starter.attach(handlers);
     this.eventLoopDelay.enable();
+    const unsubscribes: (() => Promise<void>)[] = [];
+    this.unsubscribe = async () => {
+      await Promise.all(unsubscribes.map((unsubscribe) => unsubscribe()));
+    };
     try {
-      // A release before handoffs carried a run id notifies with an empty payload.
-      this.unsubscribe = await this.realtime.subscribe(RUN_READY_TOPIC, (runId) =>
-        runId ? this.starter.take(runId) : this.wake(),
-      );
+      for (const topic of runReadyTopics(this.starter.pool)) {
+        // A release before handoffs carried a run id notifies with an empty payload.
+        unsubscribes.push(
+          await this.realtime.subscribe(topic, (runId) =>
+            runId ? this.starter.take(runId) : this.wake(),
+          ),
+        );
+      }
     } catch (error) {
       this.stopping = true;
       this.eventLoopDelay.disable();
+      await this.unsubscribe().catch(() => undefined);
       throw error;
     }
     this.timer = setInterval(() => this.wake(), this.options.intervalMs ?? 5_000);
@@ -260,6 +306,8 @@ export class RunWorkerHost implements JobWorkerHost {
    */
   private checkQueueAge(): void {
     const now = Date.now();
+    // Chat processes report chat waits; a routines process never takes them.
+    if (this.starter.pool === "routines") return;
     if (this.queueCheck || now < this.nextQueueCheckAt) return;
     this.nextQueueCheckAt = now + INTERACTIVE_QUEUE_WARNING_MS;
     this.queueCheck = runAsSystem("interactive queue health", async () => {
@@ -355,18 +403,19 @@ export class RunWorkerHost implements JobWorkerHost {
           lane === "background"
             ? { in: ["routine", "reaction"] }
             : { notIn: ["routine", "reaction"] },
-        ...(cursor
-          ? {
-              AND: [
+        AND: [
+          ...(this.starter.pool === "all" ? [] : [runPoolWhere(this.starter.pool)]),
+          ...(cursor
+            ? [
                 {
                   OR: [
                     { createdAt: { gt: cursor.createdAt } },
                     { createdAt: cursor.createdAt, id: { gt: cursor.id } },
                   ],
                 },
-              ],
-            }
-          : {}),
+              ]
+            : []),
+        ],
         OR: [
           { status: "queued", AND: [due] },
           { status: { in: ["leased", "running"] }, leaseExpiresAt: { lte: now } },

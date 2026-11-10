@@ -241,7 +241,7 @@ export function BotSettings({
   const modelChoiceAllowed = me?.features?.memberModels !== false;
   const fullComputer = (me?.computerAccess ?? "full") === "full";
   const computersOn = me?.features?.computers !== false && fullComputer;
-  const routinesOn = me?.features?.routines !== false && fullComputer;
+  const routinesOn = me?.features?.routines !== false;
   const filesOn = me?.features?.computers !== false && me?.computerAccess !== "none";
   // A failed catalog load must not clear an existing thinkingLevel override on save.
   const modelMetaReady =
