@@ -40,7 +40,7 @@ function runWorkspace(ctx: RunContext, call: ToolCall): RunWorkspace {
  * Where this run's file tools reach: the tool runner folder when the run has one, which never
  * starts a computer, otherwise the bot's computer.
  */
-function runFiles(ctx: RunContext, call: ToolCall) {
+export function runFiles(ctx: RunContext, call: ToolCall) {
   const { runner } = ctx.computer;
   if (runner) {
     return {
@@ -89,7 +89,7 @@ async function fileExists(
   return entries.some((entry) => entry.path.split("/").filter(Boolean).at(-1) === name);
 }
 
-function runFilePath(ctx: RunContext, filePath: string): string {
+export function runFilePath(ctx: RunContext, filePath: string): string {
   return resolveRunFilePath(
     { mode: ctx.computer.mode, botId: ctx.bot.id, folder: ctx.computer.folder },
     filePath,

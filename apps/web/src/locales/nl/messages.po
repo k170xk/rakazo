@@ -10082,3 +10082,42 @@ msgstr "Je ziet wat medewerkers zien."
 #: src/pages/AdminStaffApps.tsx
 msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
 msgstr "Medewerkers zien elke plugin totdat je op deze pagina een keuze opslaat. Daarna zien ze alleen de hier ingeschakelde."
+
+msgid "Choose folders"
+msgstr "Choose folders"
+
+msgid "Could not load SharePoint folders."
+msgstr "Could not load SharePoint folders."
+
+msgid "Could not open this in SharePoint."
+msgstr "Could not open this in SharePoint."
+
+msgid "Could not save SharePoint folders."
+msgstr "Could not save SharePoint folders."
+
+msgid "Folders assistants can read"
+msgstr "Folders assistants can read"
+
+msgid "Loading folders…"
+msgstr "Loading folders…"
+
+msgid "No folders here."
+msgstr "No folders here."
+
+msgid "No sites found."
+msgstr "No sites found."
+
+msgid "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
+msgstr "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
+
+msgid "Search SharePoint sites"
+msgstr "Search SharePoint sites"
+
+msgid "Sites"
+msgstr "Sites"
+
+msgid "Stop sharing {0}"
+msgstr "Stop sharing {0}"
+
+msgid "The connection did not finish. Close this window and try again."
+msgstr "The connection did not finish. Close this window and try again."

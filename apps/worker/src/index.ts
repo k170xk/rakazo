@@ -61,12 +61,15 @@ import {
   installedMessaging,
   isComposioEnabled,
   isMessagingSurfaceEnabled,
+  isMicrosoftEnabled,
   isPipedreamEnabled,
   McpConnector,
   McpOAuthBroker,
+  MicrosoftConnector,
   mcpStdioOptionsFromEnv,
   messagingEnvFromProcess,
   messagingPlatformsFromEnv,
+  microsoftConfigFromEnv,
   PiAgentRuntime,
   PipedreamConnector,
   PostgresRealtimeFanout,
@@ -213,6 +216,10 @@ async function main() {
   const pipedream = isPipedreamEnabled(pipedreamConfig)
     ? new PipedreamConnector(pipedreamConfig)
     : undefined;
+  const microsoftConfig = microsoftConfigFromEnv(process.env, {
+    webOrigin: process.env.WEB_ORIGIN ?? "",
+    encryptionKey: resolveEncryptionKey(process.env),
+  });
   // Never poll inbound here: Telegram allows a single getUpdates consumer,
   // and that is the API process, which owns the inbound sink.
   const messagingPlatforms = messagingPlatformsFromEnv(messagingEnvFromProcess(process.env)).filter(
@@ -247,6 +254,9 @@ async function main() {
     evolveTools,
     installedConnectors,
     ...integrationSettings.providers(),
+    ...(isMicrosoftEnabled(microsoftConfig)
+      ? [new MicrosoftConnector(microsoftConfig, prisma, secrets)]
+      : []),
     mcp,
   ]);
   integrationSettings.warmDirectories();

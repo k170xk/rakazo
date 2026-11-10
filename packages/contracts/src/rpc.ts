@@ -144,7 +144,11 @@ import {
   ServerUpdateRequestSchema,
   ServerUpdateRunSchema,
   ServerUpdateStatusSchema,
+  SHAREPOINT_FOLDER_LIMIT,
   SharedGroupSchema,
+  SharePointBrowseEntrySchema,
+  SharePointFolderSchema,
+  SharePointLocationSchema,
   SignupSurveySchema,
   SkillPlaybookSchema,
   SpaceAvailabilitySchema,
@@ -1425,6 +1429,28 @@ export const appContract = {
         }),
       ),
     ),
+    /** The SharePoint folders a person lets assistants read, browsed as that person. */
+    sharePoint: {
+      folders: oc.input(z.object({ connectionId: Id })).output(z.array(SharePointFolderSchema)),
+      browse: oc
+        .input(z.object({ connectionId: Id, location: SharePointLocationSchema }))
+        .output(z.array(SharePointBrowseEntrySchema)),
+      setFolders: oc
+        .input(
+          z.object({
+            connectionId: Id,
+            folders: z
+              .array(
+                z.object({
+                  driveId: z.string().trim().min(1).max(512),
+                  itemId: z.string().trim().min(1).max(512),
+                }),
+              )
+              .max(SHAREPOINT_FOLDER_LIMIT),
+          }),
+        )
+        .output(z.array(SharePointFolderSchema)),
+    },
   },
   /** External messaging surface: link state, group channels, agent connections. */
   messaging: {

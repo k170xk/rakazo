@@ -68,6 +68,7 @@ import {
   pluginSelection,
   ROW_HOVER,
 } from "../components/integrations/plugin-marketplace";
+import { SharePointFolders } from "../components/integrations/SharePointFolders";
 import {
   AvailabilityControl,
   AvailabilityLabel,
@@ -830,6 +831,8 @@ export function PluginsOverlay({
     const connecting = pending === key;
     const uninstalling = pending === `uninstall:${key}`;
     const toolCount = tools.length;
+    // One Microsoft account per person; its folders decide what assistants may read.
+    const sharePoint = item.connectorId === "microsoft" && item.slug === "sharepoint";
 
     return (
       <div data-testid="connection-detail" className="space-y-5">
@@ -908,18 +911,26 @@ export function PluginsOverlay({
               </Button>
             </div>
           ))}
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-9 px-2 text-[14px] text-muted-foreground"
-            size="sm"
-            disabled={connecting || uninstalling}
-            onClick={() => void connect(item)}
-          >
-            <Plus />
-            {connecting ? <Trans>Adding…</Trans> : <Trans>Add another</Trans>}
-          </Button>
+          {sharePoint && accounts.length > 0 ? null : (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-9 px-2 text-[14px] text-muted-foreground"
+              size="sm"
+              disabled={connecting || uninstalling}
+              onClick={() => void connect(item)}
+            >
+              <Plus />
+              {connecting ? <Trans>Adding…</Trans> : <Trans>Add another</Trans>}
+            </Button>
+          )}
         </section>
+
+        {sharePoint
+          ? accounts
+              .filter((row) => row.status === "connected")
+              .map((row) => <SharePointFolders key={row.id} connectionId={row.id} />)
+          : null}
 
         {toolsLoading || tools.length > 0 ? (
           <Disclosure

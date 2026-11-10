@@ -76,11 +76,15 @@ import {
   installedMessaging,
   isComposioEnabled,
   isMessagingSurfaceEnabled,
+  isMicrosoftEnabled,
   isPipedreamEnabled,
   liveDeploymentModelConfigured,
   McpConnector,
   McpOAuthBroker,
+  MICROSOFT_CALLBACK_PATH,
+  MicrosoftConnector,
   messagingPlatformsFromEnv,
+  microsoftConfigFromEnv,
   ObjectAgentHomeStore,
   PiAgentRuntime,
   PiOAuthLogins,
@@ -462,6 +466,13 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const pipedream =
     pipedreamOverride ??
     (isPipedreamEnabled(pipedreamConfig) ? new PipedreamConnector(pipedreamConfig) : undefined);
+  const microsoftConfig = microsoftConfigFromEnv(process.env, {
+    webOrigin: env.webOrigin,
+    encryptionKey: env.encryptionKey,
+  });
+  const microsoft = isMicrosoftEnabled(microsoftConfig)
+    ? new MicrosoftConnector(microsoftConfig, prisma, secrets)
+    : undefined;
   // This process registers the inbound sink, so it must hold Telegram's getUpdates connection.
   const messagingPlatforms = messagingPlatformsFromEnv(env, { pollInboundMessages: true }).filter(
     (platform) => platform.provider !== "slack" || !env.slackClientId,
@@ -534,6 +545,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     ...integrationSettings
       .providers()
       .filter((provider) => !composioOverride || provider.describe().id !== "composio"),
+    ...(microsoft ? [microsoft] : []),
     mcp,
     ...connectorOverrides,
   ]);
@@ -837,6 +849,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     secrets,
     oauthLogins,
     integrationSettings,
+    microsoft,
     mcpOAuth,
     mcp,
     composio: stack.composio,
@@ -1038,6 +1051,30 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         return found ? { userId: found.user.id, sessionId: found.session.id } : null;
       },
       trustedOrigin: (origin) => isTrustedOrigin(origin, env),
+    });
+  }
+  if (microsoft) {
+    // Entra's registered redirect. Only the signed-in person who started a sign-in can finish it.
+    app.get(MICROSOFT_CALLBACK_PATH, async (c) => {
+      const query = new URL(c.req.url).searchParams;
+      const target = new URL("/integrations/callback", env.webOrigin);
+      const session = await auth.api.getSession({ headers: c.req.raw.headers }).catch(() => null);
+      if (!session?.user) {
+        target.searchParams.set("error", "signed_out");
+        return c.redirect(target.toString());
+      }
+      try {
+        const finished = await microsoft.finishSignIn(session.user.id, {
+          state: query.get("state") ?? "",
+          code: query.get("code") ?? undefined,
+          error: query.get("error") ?? undefined,
+        });
+        if (!finished) target.searchParams.set("error", "not_finished");
+      } catch (error) {
+        getLogger().error("microsoft sign-in failed", error);
+        target.searchParams.set("error", "failed");
+      }
+      return c.redirect(target.toString());
     });
   }
   if (messagingInstallations) {

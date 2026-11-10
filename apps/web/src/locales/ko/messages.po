@@ -10082,3 +10082,42 @@ msgstr "직원 화면을 표시하고 있습니다."
 #: src/pages/AdminStaffApps.tsx
 msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
 msgstr "이 페이지에서 선택을 저장하기 전까지 직원은 모든 플러그인을 봅니다. 저장한 후에는 여기에서 사용으로 설정한 플러그인만 봅니다."
+
+msgid "Choose folders"
+msgstr "Choose folders"
+
+msgid "Could not load SharePoint folders."
+msgstr "Could not load SharePoint folders."
+
+msgid "Could not open this in SharePoint."
+msgstr "Could not open this in SharePoint."
+
+msgid "Could not save SharePoint folders."
+msgstr "Could not save SharePoint folders."
+
+msgid "Folders assistants can read"
+msgstr "Folders assistants can read"
+
+msgid "Loading folders…"
+msgstr "Loading folders…"
+
+msgid "No folders here."
+msgstr "No folders here."
+
+msgid "No sites found."
+msgstr "No sites found."
+
+msgid "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
+msgstr "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
+
+msgid "Search SharePoint sites"
+msgstr "Search SharePoint sites"
+
+msgid "Sites"
+msgstr "Sites"
+
+msgid "Stop sharing {0}"
+msgstr "Stop sharing {0}"
+
+msgid "The connection did not finish. Close this window and try again."
+msgstr "The connection did not finish. Close this window and try again."

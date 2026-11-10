@@ -309,6 +309,8 @@ export interface ConnectorCall {
 export type ConnectorEvent =
   | { type: "log"; message: string }
   | { type: "result"; data: unknown }
+  /** A file for the assistant's computer, at a relative path the tool runner checks. */
+  | { type: "file"; path: string; content: Uint8Array }
   | { type: "error"; message: string; logIds?: string[] };
 
 export interface ConnectorCapabilities {

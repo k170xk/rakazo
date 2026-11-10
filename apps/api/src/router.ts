@@ -23,6 +23,7 @@ import type {
   McpOAuthBroker,
   MemoryProviderResolver,
   MessagingInstallations,
+  MicrosoftConnector,
   PiOAuthLogins,
   PluginRepoFetcher,
   PluginTextReader,
@@ -104,6 +105,8 @@ export interface RouterDeps {
     provider: string,
   ) => void;
   integrationSettings?: IntegrationProviderSettings;
+  /** Read-only SharePoint through the company's Entra app, when it is configured. */
+  microsoft?: MicrosoftConnector;
   composio?: ComposioProvider;
   mcpOAuth?: McpOAuthBroker;
   /** Probes MCP server health; without it servers are never probed from here. */

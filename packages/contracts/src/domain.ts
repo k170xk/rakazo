@@ -2236,6 +2236,35 @@ export const CompanyAppSchema = z.object({
 });
 export type CompanyApp = z.infer<typeof CompanyAppSchema>;
 
+/** A SharePoint folder a person lets their assistants read, with everything inside it. */
+export const SharePointFolderSchema = z.object({
+  driveId: z.string(),
+  itemId: z.string(),
+  name: z.string(),
+  location: z.string(),
+  webUrl: z.string().nullable(),
+});
+export type SharePointFolder = z.infer<typeof SharePointFolderSchema>;
+
+const SharePointRef = z.string().trim().min(1).max(512);
+export const SharePointLocationSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("sites"), query: z.string().max(200).optional() }),
+  z.object({ kind: z.literal("libraries"), siteId: SharePointRef }),
+  z.object({ kind: z.literal("folder"), driveId: SharePointRef, itemId: SharePointRef }),
+]);
+export type SharePointLocation = z.infer<typeof SharePointLocationSchema>;
+
+/** One row of the folder picker: a site, a document library or a folder. */
+export const SharePointBrowseEntrySchema = z.object({
+  kind: z.enum(["site", "library", "folder"]),
+  id: z.string(),
+  driveId: z.string().optional(),
+  name: z.string(),
+  detail: z.string().optional(),
+});
+export type SharePointBrowseEntry = z.infer<typeof SharePointBrowseEntrySchema>;
+export const SHAREPOINT_FOLDER_LIMIT = 25;
+
 /** Built-in skills and company tools an admin has switched off for every account; all others are on. */
 /** The model a bot started from an Evolve assistant runs on, instead of the company model. */
 export const CompanyAssistantModelSchema = z.object({

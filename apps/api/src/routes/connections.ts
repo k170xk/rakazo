@@ -14,6 +14,7 @@ import {
   COMPANY_APPS,
   staffAppKey,
   staffAppState,
+  staffMayUseConnection,
 } from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import {
@@ -227,6 +228,32 @@ function connectionContext(
 
 export function connectionsRoutes(ctx: RouterContext) {
   const { deps, authed } = ctx;
+  /** SharePoint for a person allowed to use it; admins may try it before staff see it. */
+  const sharePointFor = async (actor: Actor) => {
+    await requireCompanyFeature(deps, actor, "staffIntegrations");
+    const microsoft = deps.connectors.managed("microsoft") ? deps.microsoft : undefined;
+    if (!microsoft) {
+      throw new ORPCError("BAD_REQUEST", { message: "SharePoint is not set up on this server." });
+    }
+    if (
+      !staffMayUseConnection(companyTools().staffApps, {
+        connectorId: "microsoft",
+        provider: "sharepoint",
+      }) &&
+      !(await isAdmin(deps, actor.userId))
+    ) {
+      throw new ORPCError("FORBIDDEN", { message: "This app is not available yet." });
+    }
+    return microsoft;
+  };
+  const sharePointCall = async <T>(run: () => Promise<T>): Promise<T> => {
+    try {
+      return await run();
+    } catch (error) {
+      if (error instanceof ORPCError) throw error;
+      throw new ORPCError("BAD_REQUEST", { message: sanitizeComposioError(error) });
+    }
+  };
   return {
     connections: {
       catalog: authed.connections.catalog.handler(async ({ context, input }) => {
@@ -1075,6 +1102,29 @@ export function connectionsRoutes(ctx: RouterContext) {
         }
         return { ok: true as const };
       }),
+      sharePoint: {
+        folders: authed.connections.sharePoint.folders.handler(async ({ context, input }) => {
+          const microsoft = await sharePointFor(context.actor);
+          return sharePointCall(() => microsoft.chosenFolders(context.actor, input.connectionId));
+        }),
+        browse: authed.connections.sharePoint.browse.handler(async ({ context, input }) => {
+          const microsoft = await sharePointFor(context.actor);
+          return sharePointCall(() =>
+            microsoft.browse(context.actor, input.connectionId, input.location, context.signal),
+          );
+        }),
+        setFolders: authed.connections.sharePoint.setFolders.handler(async ({ context, input }) => {
+          const microsoft = await sharePointFor(context.actor);
+          return sharePointCall(() =>
+            microsoft.chooseFolders(
+              context.actor,
+              input.connectionId,
+              input.folders,
+              context.signal,
+            ),
+          );
+        }),
+      },
       tools: authed.connections.tools.handler(async ({ context, input }) => {
         const connector = deps.connectors.managed(input.connectorId);
         if (!connector) return [];
