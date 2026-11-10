@@ -449,6 +449,134 @@ describe("MicrosoftConnector", () => {
     expect(requests).toEqual([]);
   });
 
+  it("finishes a sign-in even when earlier attempts were abandoned, closing them", async () => {
+    type Row = {
+      id: string;
+      spaceId: string;
+      userId: string;
+      connectorId: string;
+      provider: string;
+      status: string;
+      secretId: string | null;
+      providerRef: string;
+      metadata: Record<string, unknown>;
+    };
+    const base = { spaceId: "space-1", userId: "user-1", connectorId: "microsoft", metadata: {} };
+    const rows: Row[] = [
+      {
+        ...base,
+        id: "old-1",
+        provider: "outlook",
+        status: "pending",
+        secretId: null,
+        providerRef: "s-old-1",
+      },
+      {
+        ...base,
+        id: "old-2",
+        provider: "outlook",
+        status: "pending",
+        secretId: "sec-old",
+        providerRef: "s-old-2",
+      },
+      {
+        ...base,
+        id: "new",
+        provider: "outlook",
+        status: "pending",
+        secretId: null,
+        providerRef: "s-new",
+      },
+      {
+        ...base,
+        id: "sp",
+        provider: "sharepoint",
+        status: "pending",
+        secretId: null,
+        providerRef: "s-sp",
+      },
+      {
+        ...base,
+        id: "other",
+        userId: "user-2",
+        provider: "outlook",
+        status: "pending",
+        secretId: null,
+        providerRef: "s-other",
+      },
+    ];
+    const deletedSecrets: unknown[] = [];
+    const matches = (row: Row, where: Record<string, unknown>) =>
+      Object.entries(where).every(([key, wanted]) => {
+        const value = row[key as keyof Row];
+        if (wanted && typeof wanted === "object") {
+          const condition = wanted as { in?: unknown[]; not?: unknown };
+          if (condition.in) return condition.in.includes(value);
+          if ("not" in condition) return value !== condition.not;
+        }
+        return value === wanted;
+      });
+    const connection = {
+      findFirst: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
+        structuredClone(rows.find((row) => matches(row, where)) ?? null),
+      ),
+      findMany: vi.fn(async ({ where }: { where: Record<string, unknown> }) =>
+        structuredClone(rows.filter((row) => matches(row, where))),
+      ),
+      updateMany: vi.fn(
+        async ({ where, data }: { where: Record<string, unknown>; data: Partial<Row> }) => {
+          const hit = rows.filter((row) => matches(row, where));
+          for (const row of hit) Object.assign(row, data);
+          return { count: hit.length };
+        },
+      ),
+    };
+    const secret = {
+      create: vi.fn(async () => ({})),
+      deleteMany: vi.fn(async ({ where }: { where: unknown }) => {
+        deletedSecrets.push(where);
+        return { count: 1 };
+      }),
+    };
+    const prisma = {
+      connection,
+      secret,
+      $transaction: async (run: (tx: unknown) => Promise<unknown>) => run({ connection, secret }),
+    } as unknown as PrismaClient;
+    const secrets = {
+      put: vi.fn(async () => ({ id: "sec-new", ciphertext: "cipher" })),
+    } as unknown as SecretStore;
+    const fetch = vi.fn(async (input: string | URL | Request) => {
+      const url = new URL(String(input instanceof Request ? input.url : input));
+      if (url.hostname === "login.microsoftonline.com") {
+        return Response.json({ access_token: "a", refresh_token: "r", expires_in: 3_600 });
+      }
+      return Response.json({ displayName: "Anne", mail: "anne@example.com" });
+    }) as unknown as typeof globalThis.fetch;
+    const connector = new MicrosoftConnector(CONFIG, prisma, secrets, { fetch });
+
+    expect(await connector.connectionReady(context, "outlook")).toBe(false);
+    expect(await connector.finishSignIn("user-1", { state: "s-new", code: "code" })).toBe(true);
+
+    expect(rows.find((row) => row.id === "new")).toMatchObject({
+      status: "pending",
+      secretId: "sec-new",
+    });
+    expect(rows.find((row) => row.id === "old-1")).toMatchObject({
+      status: "revoked",
+      secretId: null,
+    });
+    expect(rows.find((row) => row.id === "old-2")).toMatchObject({
+      status: "revoked",
+      secretId: null,
+    });
+    expect(deletedSecrets).toContainEqual({ id: { in: ["sec-old"] }, userId: "user-1" });
+    // Another app's attempt and another person's are left alone.
+    expect(rows.find((row) => row.id === "sp")?.status).toBe("pending");
+    expect(rows.find((row) => row.id === "other")?.status).toBe("pending");
+    expect(await connector.connectionReady(context, "outlook")).toBe(true);
+  });
+
   it("refuses a connection this run was not given", async () => {
     const { connector } = connectorWithSharePoint({});
     const events: ConnectorEvent[] = [];

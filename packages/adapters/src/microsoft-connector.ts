@@ -407,6 +407,29 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
         });
         if (updated.count === 0) throw new Error("This sign-in was replaced by a newer one.");
         if (row.secretId) await tx.secret.deleteMany({ where: { id: row.secretId } });
+        // connectionReady waits for every pending attempt, so abandoned ones would hold this
+        // finished sign-in at pending for good; they are closed and their tokens deleted.
+        const abandoned = await tx.connection.findMany({
+          where: {
+            spaceId: owner.spaceId,
+            userId: owner.userId,
+            connectorId: MICROSOFT_CONNECTOR_ID,
+            provider: row.provider,
+            status: "pending",
+            id: { not: row.id },
+          },
+          select: { id: true, secretId: true },
+        });
+        if (abandoned.length > 0) {
+          await tx.connection.updateMany({
+            where: { id: { in: abandoned.map((entry) => entry.id) }, status: "pending" },
+            data: { status: "revoked", secretId: null },
+          });
+          const secretIds = abandoned.flatMap((entry) => entry.secretId ?? []);
+          if (secretIds.length > 0) {
+            await tx.secret.deleteMany({ where: { id: { in: secretIds }, userId: owner.userId } });
+          }
+        }
       });
       this.accessTokens.set(row.id, {
         value: tokens.access_token,
