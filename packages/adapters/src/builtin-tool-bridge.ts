@@ -66,7 +66,7 @@ const AREAS: Array<[area: string, matches: (name: string) => boolean]> = [
   [
     "tasks",
     (name) =>
-      /^(scratchpad_|ticket_)/.test(name) || ["board_tickets", "task_catalog"].includes(name),
+      /^(scratchpad_|ticket_|todo_)/.test(name) || ["board_tickets", "task_catalog"].includes(name),
   ],
   ["skills", (name) => name.startsWith("skill_")],
   ["schedules", (name) => name.startsWith("schedule_")],

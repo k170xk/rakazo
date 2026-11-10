@@ -81,6 +81,13 @@ export const ENCRYPTED_MODELS: Record<string, ModelSpec> = {
     space: { parent: "memory_documents" },
     ownerRelation: "document",
   },
+  /** A person's to-do text, often taken from their email. */
+  TodoItem: {
+    table: "todo_items",
+    fields: { content: {} },
+    space: { column: "spaceId" },
+    ownerRelation: "user",
+  },
   /** The compacted summary of older history is derived message content. */
   Thread: {
     table: "threads",

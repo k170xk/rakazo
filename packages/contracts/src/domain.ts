@@ -687,6 +687,66 @@ export const CreateScratchpadItemInput = z.object({
   notes: z.string().max(4_000).default(""),
 });
 
+export const TODO_STATUSES = ["todo", "in_progress", "waiting", "done"] as const;
+export const TodoStatusSchema = z.enum(TODO_STATUSES);
+export type TodoStatus = z.infer<typeof TodoStatusSchema>;
+export const TODO_PRIORITIES = ["low", "normal", "high"] as const;
+export const TodoPrioritySchema = z.enum(TODO_PRIORITIES);
+export type TodoPriority = z.infer<typeof TodoPrioritySchema>;
+export const TODO_TITLE_MAX = 300;
+export const TODO_NOTES_MAX = 8_000;
+
+export const TodoSourceSchema = z.object({
+  kind: z.enum(["email", "chat", "other"]),
+  /** Such as "Email from Anne Byrne: Drawings for Block B". */
+  label: z.string().max(300),
+  /** An https link back to it, such as the email in Outlook on the web. */
+  link: z.string().max(2_000).nullable(),
+});
+export type TodoSource = z.infer<typeof TodoSourceSchema>;
+
+export const TodoItemSchema = z.object({
+  id: Id,
+  title: z.string(),
+  notes: z.string(),
+  status: TodoStatusSchema,
+  priority: TodoPrioritySchema,
+  position: z.number(),
+  dueAt: z.string().nullable(),
+  origin: z.enum(["user", "ai"]),
+  source: TodoSourceSchema.nullable(),
+  botId: z.string().nullable(),
+  completedAt: z.string().nullable(),
+  archivedAt: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type TodoItem = z.infer<typeof TodoItemSchema>;
+
+export const CreateTodoItemInput = z.object({
+  title: z.string().trim().min(1).max(TODO_TITLE_MAX),
+  notes: z.string().max(TODO_NOTES_MAX).default(""),
+  status: TodoStatusSchema.default("todo"),
+  priority: TodoPrioritySchema.default("normal"),
+  dueAt: z.string().datetime({ offset: true }).nullable().default(null),
+});
+
+export const UpdateTodoItemInput = z.object({
+  itemId: Id,
+  title: z.string().trim().min(1).max(TODO_TITLE_MAX).optional(),
+  notes: z.string().max(TODO_NOTES_MAX).optional(),
+  status: TodoStatusSchema.optional(),
+  priority: TodoPrioritySchema.optional(),
+  dueAt: z.string().datetime({ offset: true }).nullable().optional(),
+});
+
+export const MoveTodoItemInput = z.object({
+  itemId: Id,
+  status: TodoStatusSchema,
+  /** The item it now sits above; null puts it at the bottom of the column. */
+  beforeId: Id.nullable(),
+});
+
 export const TaughtSkillStatusSchema = z.enum(["recording", "drafting", "draft", "saved"]);
 export type TaughtSkillStatus = z.infer<typeof TaughtSkillStatusSchema>;
 

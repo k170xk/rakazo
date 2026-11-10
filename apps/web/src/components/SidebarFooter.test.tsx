@@ -139,13 +139,29 @@ it("opens integrations and keeps the existing account actions and links", async 
   await act(async () => connect.click());
   expect(onIntegrations).toHaveBeenCalledOnce();
   const menu = document.querySelector('[data-slot="popover-content"]')!;
-  expect([...menu.querySelectorAll("button, a")].map((row) => row.textContent)).toEqual([
+  const rows = menu.querySelectorAll('button:not([data-testid^="menu-appearance-"]), a');
+  expect([...rows].map((row) => row.textContent)).toEqual([
     "Settings",
     "Tools and skills",
     "Artifacts",
     "Board",
     "Log out",
   ]);
+  const appearance = [...menu.querySelectorAll('[data-testid^="menu-appearance-"]')];
+  expect(appearance.map((button) => button.getAttribute("aria-label"))).toEqual([
+    "Light",
+    "Dark",
+    "System",
+  ]);
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn(() => ({ matches: true })),
+  );
+  await act(async () => (appearance[1] as HTMLButtonElement).click());
+  expect(document.documentElement.dataset.theme).toBe("dark");
+  await act(async () => (appearance[0] as HTMLButtonElement).click());
+  expect(document.documentElement.dataset.theme).toBe("light");
+  vi.unstubAllGlobals();
   expect(host.querySelector('[data-testid="user-menu-trigger"]')?.getAttribute("aria-label")).toBe(
     "Account menu for Demo User",
   );

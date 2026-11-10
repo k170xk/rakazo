@@ -9,7 +9,7 @@ import {
   InputGroupInput,
   Sidebar,
 } from "@rakazo/ui-web";
-import { Search, SlidersHorizontal, Sparkles, UsersRound } from "lucide-react";
+import { ListTodo, Search, SlidersHorizontal, Sparkles, UsersRound } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -18,6 +18,7 @@ import { InviteDialog } from "../../components/InviteDialog";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
 import { useBilling } from "../../components/SubscriptionGate";
+import { useOpenTodoCount } from "../../components/todos/todo-count";
 import { formatBillingDate } from "../../lib/billing";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
 import { switchOrganization, useOrganizations } from "../../lib/organizations";
@@ -73,6 +74,7 @@ export function ShellSidebar({
   openAdmin,
   openSkills,
   openTour,
+  openTodos,
   openSpaceChat,
 }: {
   isMobile: boolean;
@@ -104,6 +106,7 @@ export function ShellSidebar({
   openAdmin?: () => void;
   openSkills: () => void;
   openTour: () => void;
+  openTodos: () => void;
   openSpaceChat: (spaceId: string, path: string) => void;
 }) {
   const { t } = useLingui();
@@ -286,7 +289,16 @@ export function ShellSidebar({
         <div className={mini ? "hidden" : "contents"}>
           <PasskeyOffer />
         </div>
-        <div className={mini ? "flex justify-center px-1 pt-2" : "px-2.5 pt-3"}>
+        <div className={mini ? "pt-2" : "pt-3"}>
+          <TodoListButton
+            mini={mini}
+            onOpen={() => {
+              setMobileOpen(false);
+              openTodos();
+            }}
+          />
+        </div>
+        <div className={mini ? "flex justify-center px-1 pt-1" : "px-2.5 pt-1"}>
           {mini ? (
             <IconTooltip label={t`Get to know OCSC Intelligence`}>
               <Button
@@ -484,6 +496,51 @@ function ShellSidebarFooter({
         <InviteDialog referral={referral} open={inviteOpen} onOpenChange={setInviteOpen} />
       ) : null}
     </>
+  );
+}
+
+/** Opens the person's own to-do board; the badge counts what is still open. */
+function TodoListButton({ mini, onOpen }: { mini: boolean; onOpen: () => void }) {
+  const { t } = useLingui();
+  const open = useOpenTodoCount();
+  if (mini) {
+    return (
+      <div className="flex justify-center px-1">
+        <IconTooltip label={t`To do list`}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t`To do list`}
+            data-testid="open-todo-list"
+            className="relative"
+            onClick={onOpen}
+          >
+            <ListTodo />
+            {open > 0 ? (
+              <span className="absolute top-1 right-1 size-2 rounded-full bg-primary" />
+            ) : null}
+          </Button>
+        </IconTooltip>
+      </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      data-testid="open-todo-list"
+      onClick={onOpen}
+      className="mx-2.5 flex w-[calc(100%-1.25rem)] items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm text-foreground hover:bg-accent"
+    >
+      <ListTodo size={16} className="text-muted-foreground" aria-hidden="true" />
+      <span className="flex-1">
+        <Trans>To do list</Trans>
+      </span>
+      {open > 0 ? (
+        <span className="rounded-full bg-primary/15 px-1.5 text-xs font-medium text-primary">
+          {open}
+        </span>
+      ) : null}
+    </button>
   );
 }
 

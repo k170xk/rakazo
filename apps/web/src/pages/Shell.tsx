@@ -1170,6 +1170,7 @@ function SpaceShell() {
         openAdmin={bootstrapMe?.isAdmin ? () => navigate("/admin") : undefined}
         openSkills={() => setOverlay({ kind: "skills" })}
         openTour={() => setOverlay({ kind: "tour" })}
+        openTodos={() => setOverlay({ kind: "todos" })}
         openSpaceChat={openSpaceChat}
       />
 

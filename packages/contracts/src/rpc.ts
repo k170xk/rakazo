@@ -94,6 +94,7 @@ import {
   CreateGroupInput,
   CreateRoutineInput,
   CreateScratchpadItemInput,
+  CreateTodoItemInput,
   DeploymentSettingsSchema,
   DirectoryPersonSchema,
   EvolveAssistantSchema,
@@ -127,6 +128,7 @@ import {
   ModelCredentialSchema,
   ModelCreditAmountSchema,
   ModelOAuthBeginSchema,
+  MoveTodoItemInput,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   PluginMarketplaceCatalogSchema,
   PluginPartSchema,
@@ -163,10 +165,12 @@ import {
   ThreadMessagePageSchema,
   ThreadSnapshotSchema,
   TimeZoneSchema,
+  TodoItemSchema,
   UpdateAgentSkillInput,
   UpdateBotInput,
   UpdateExternalConversationPolicyInput,
   UpdateGroupInput,
+  UpdateTodoItemInput,
   UsageRecordSchema,
   UsageSummarySchema,
   VoiceCatalogEntrySchema,
@@ -1154,6 +1158,17 @@ export const appContract = {
         }),
       )
       .output(ScratchpadItemSchema),
+    remove: oc.input(z.object({ itemId: Id })).output(z.object({ ok: z.literal(true) })),
+  },
+  todos: {
+    list: oc
+      .input(z.object({ includeArchived: z.boolean().optional() }))
+      .output(z.array(TodoItemSchema)),
+    create: oc.input(CreateTodoItemInput).output(TodoItemSchema),
+    update: oc.input(UpdateTodoItemInput).output(TodoItemSchema),
+    move: oc.input(MoveTodoItemInput).output(TodoItemSchema),
+    archive: oc.input(z.object({ itemId: Id })).output(TodoItemSchema),
+    restore: oc.input(z.object({ itemId: Id })).output(TodoItemSchema),
     remove: oc.input(z.object({ itemId: Id })).output(z.object({ ok: z.literal(true) })),
   },
   boards: {

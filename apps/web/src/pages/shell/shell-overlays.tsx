@@ -35,6 +35,9 @@ const SkillsDialog = lazyOverlay(() =>
 const OcscTourDialog = lazyOverlay(() =>
   import("../../components/tour/ocsc-tour").then((module) => module.OcscTourDialog),
 );
+const TodoBoardDialog = lazyOverlay(() =>
+  import("../../components/todos/todo-board").then((module) => module.TodoBoardDialog),
+);
 const McpServersOverlay = lazyOverlay(() =>
   import("../McpServersOverlay").then((module) => module.McpServersOverlay),
 );
@@ -94,6 +97,7 @@ export function AppOverlays({
           canAddCustom={canAddCustom}
         />
       ) : null}
+      {overlay?.kind === "todos" ? <TodoBoardDialog onClose={() => setOverlay(null)} /> : null}
       {overlay?.kind === "skills" ? (
         <SkillsDialog canManageSkills={canManageSkills} onClose={() => setOverlay(null)} />
       ) : null}

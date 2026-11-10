@@ -1650,6 +1650,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const builtins = [
           ...selectBuiltinToolsForRun({
             ticketBoardEnabled: deps.ticketBoardEnabled,
+            personalTodos: isOwnersPrivateChat({ run, bot, thread }),
             phoneCallsEnabled: deps.phoneCallsEnabled,
             historyRetrievalEnabled: contextStrategy !== "current",
             graphicalToolsAllowed,

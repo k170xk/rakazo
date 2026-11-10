@@ -10208,3 +10208,103 @@ msgstr "Read-only: assistants can list folders, search, read emails and open att
 
 msgid "Read-only, and only the folders you choose. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
 msgstr "Read-only, and only the folders you choose. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
+
+#: src/components/todos/todo-board.tsx
+msgid "Added by your assistant"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "AI"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Back to board"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Close to do list"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not add that item."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not delete it."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not load your to do list."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not move that item."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not restore it."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not save your changes."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Due"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Edit item"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "From:"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "New item"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Notes"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Nothing archived."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Nothing here"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Only you can see this list. Your assistants can add to it from your emails and chats when you ask them, including in routines."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "To do list"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Waiting on others"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "What needs doing?"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Your assistant added this item."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Confirm hard delete"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not hard delete it."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Hard delete"
+msgstr ""

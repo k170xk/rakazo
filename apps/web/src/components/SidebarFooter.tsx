@@ -1,22 +1,35 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { NavLink } from "@rakazo/contracts";
-import { AppMarkStack, Button, Popover, PopoverContent, PopoverTrigger } from "@rakazo/ui-web";
+import {
+  AppMarkStack,
+  Button,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@rakazo/ui-web";
 import {
   Check,
   Download,
   FolderOpen,
   Link2,
   LogOut,
+  Monitor,
+  Moon,
   Plug,
   ScrollText,
   Settings,
   ShieldCheck,
   SquareKanban,
+  Sun,
   UserPlus,
   UserRound,
 } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { Organization } from "../lib/organizations";
+import type { AppearancePreference } from "../lib/ui-appearance";
+import { getUiAppearancePreference, setUiAppearance } from "../lib/ui-appearance";
 import { useSidebarUpdate } from "./DesktopUpdates";
 import { IconTooltip } from "./IconTooltip";
 
@@ -241,6 +254,8 @@ export function SidebarFooter({
               </Button>
             ) : null}
             <div className="my-1 border-t border-border" />
+            <AppearanceToggle />
+            <div className="my-1 border-t border-border" />
             <Button
               variant="ghost"
               className="h-9 w-full justify-start gap-2.5 font-normal"
@@ -284,6 +299,49 @@ export function SidebarFooter({
           </Button>
         </IconTooltip>
       ) : null}
+    </div>
+  );
+}
+
+/** Light, dark or follow the system; the same preference as Settings → Appearance. */
+function AppearanceToggle() {
+  const { t } = useLingui();
+  const [value, setValue] = useState<AppearancePreference>(() => getUiAppearancePreference());
+  const options = [
+    { value: "light", label: t`Light`, icon: Sun },
+    { value: "dark", label: t`Dark`, icon: Moon },
+    { value: "system", label: t`System`, icon: Monitor },
+  ] satisfies { value: AppearancePreference; label: string; icon: typeof Sun }[];
+  return (
+    <div className="flex items-center justify-between gap-2 px-2.5 py-1.5">
+      <span className="text-sm">
+        <Trans>Appearance</Trans>
+      </span>
+      <ToggleGroup
+        aria-label={t`Appearance`}
+        data-testid="menu-appearance"
+        value={[value]}
+        onValueChange={([next]) => {
+          if (!next) return;
+          setValue(next as AppearancePreference);
+          setUiAppearance(next as AppearancePreference);
+        }}
+        spacing={1}
+        className="rounded-lg bg-muted p-0.5"
+      >
+        {options.map((option) => (
+          <ToggleGroupItem
+            key={option.value}
+            value={option.value}
+            aria-label={option.label}
+            title={option.label}
+            data-testid={`menu-appearance-${option.value}`}
+            className="size-7 min-w-0 p-0 aria-pressed:bg-background aria-pressed:shadow-sm"
+          >
+            <option.icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
     </div>
   );
 }

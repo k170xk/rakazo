@@ -261,6 +261,9 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "search_history",
   "skill_read",
   "task_catalog",
+  "todo_add",
+  "todo_archive",
+  "todo_update",
   "update_preferences",
   "write_file",
 ]);

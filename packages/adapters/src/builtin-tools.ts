@@ -1209,7 +1209,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "scratchpad_add",
     description:
-      "Add an open-work item to this bot's scratchpad. Use for todos or parked work that should outlive this turn. Not a reminder or schedule.",
+      "Add an open-work item to this bot's scratchpad. Use for the assistant's own todos or parked work that should outlive this turn. Not a reminder or schedule. The person's own tasks and actions go on their to-do list with todo_add when it is offered.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1258,6 +1258,74 @@ export const builtinAgentTools: ConnectorTool[] = [
         itemId: { type: "string" },
       },
       required: ["itemId"],
+    },
+  },
+  {
+    name: "todo_list",
+    description:
+      "List the person's own to-do list (shared by all their assistants and shown to them as a board with To do, In progress, Waiting on others and Done). Open items by default. Check it before adding so nothing is added twice.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["todo", "in_progress", "waiting", "done"] },
+        include_done: { type: "boolean", description: "Include done items." },
+      },
+    },
+  },
+  {
+    name: "todo_add",
+    description:
+      "Add an item to the person's to-do list, such as an action found in their email or one they mention. Keep the title short and actionable; put context in notes; for an email give source_kind email, a source_label like 'Email from Anne Byrne: Drawings' and its web_link as source_link.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short, actionable title." },
+        notes: { type: "string" },
+        status: {
+          type: "string",
+          enum: ["todo", "in_progress", "waiting", "done"],
+          description: "todo by default; waiting when it is with someone else.",
+        },
+        priority: { type: "string", enum: ["low", "normal", "high"] },
+        due: { type: "string", description: "Due date (ISO 8601), when one is known." },
+        source_kind: { type: "string", enum: ["email", "chat", "other"] },
+        source_label: { type: "string", description: "Where it came from, in a few words." },
+        source_link: {
+          type: "string",
+          description: "https link back to it, such as an email's web_link.",
+        },
+      },
+      required: ["title"],
+    },
+  },
+  {
+    name: "todo_update",
+    description:
+      "Change a to-do item: its title, notes, status (todo, in_progress, waiting, done), priority, due date or source. Mark it done when the work is finished, for example when Sent Items shows the reply went out.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        item_id: { type: "string" },
+        title: { type: "string" },
+        notes: { type: "string" },
+        status: { type: "string", enum: ["todo", "in_progress", "waiting", "done"] },
+        priority: { type: "string", enum: ["low", "normal", "high"] },
+        due: { type: "string", description: "Due date (ISO 8601); empty to clear." },
+        source_kind: { type: "string", enum: ["email", "chat", "other"] },
+        source_label: { type: "string" },
+        source_link: { type: "string" },
+      },
+      required: ["item_id"],
+    },
+  },
+  {
+    name: "todo_archive",
+    description:
+      "Remove a to-do item from the board when it is no longer needed. It is archived, so the person can restore it.",
+    inputSchema: {
+      type: "object",
+      properties: { item_id: { type: "string" } },
+      required: ["item_id"],
     },
   },
   {

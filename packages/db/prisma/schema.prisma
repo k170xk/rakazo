@@ -23,6 +23,7 @@ model AiDataConsent {
 
 model User {
   aiDataConsents              AiDataConsent[]
+  todoItems                   TodoItem[]
   pages                       Page[]
   groupPeople                 ChatGroupPerson[]
   id                          String                          @id
@@ -444,6 +445,7 @@ model Space {
   runs                        Run[]
   routines                    Routine[]
   scratchpadItems             ScratchpadItem[]
+  todoItems                   TodoItem[]
   taughtSkills                TaughtSkill[]
   agentSkills                 AgentSkill[]
   agentImports                AgentImport[]
@@ -796,6 +798,7 @@ model Bot {
   evolveConversationLinks EvolveConversationLink[]
   routines                Routine[]
   scratchpadItems         ScratchpadItem[]
+  todoItems               TodoItem[]
   taughtSkills            TaughtSkill[]
   memoryDocuments         MemoryDocument[]
   agentHome               AgentHome?
@@ -1423,6 +1426,40 @@ model ScratchpadItem {
   @@index([spaceId, botId, updatedAt])
   @@index([botId, status, updatedAt, id])
   @@map("scratchpad_items")
+}
+
+/// A person's own to-do list, shared by all of their assistants and private to them. The
+/// title, notes and source (such as the email it came from) are encrypted in `content`.
+model TodoItem {
+  id          String    @id @default(cuid())
+  spaceId     String
+  space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// The assistant that added it, when one did.
+  botId       String?
+  bot         Bot?      @relation(fields: [botId], references: [id], onDelete: SetNull)
+  content     Json
+  /// todo, in_progress, waiting or done.
+  status      String    @default("todo")
+  /// Order within its column, smallest first.
+  position    Float     @default(0)
+  /// low, normal or high.
+  priority    String    @default("normal")
+  dueAt       DateTime?
+  /// "user" or "ai": who created it.
+  origin      String    @default("user")
+  /// email, chat or other.
+  sourceKind  String?
+  completedAt DateTime?
+  /// Archived items are hidden but can be restored; an assistant's delete archives.
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([spaceId, userId, archivedAt, status, position])
+  @@index([botId])
+  @@map("todo_items")
 }
 
 model TaughtSkill {

@@ -118,10 +118,9 @@ describe("Outlook permissions and tools", () => {
   });
 
   it("has no code that writes to a mailbox", () => {
-    const source = readFileSync(
-      fileURLToPath(new URL("./microsoft-mail.ts", import.meta.url)),
-      "utf8",
-    );
+    const source = ["./microsoft-mail.ts", "./microsoft-mail-triage.ts"]
+      .map((file) => readFileSync(fileURLToPath(new URL(file, import.meta.url)), "utf8"))
+      .join("\n");
     expect(source).not.toMatch(/\b(POST|PATCH|PUT|DELETE)\b|method\s*:/);
     expect(source).not.toMatch(
       /sendMail|createReply|createForward|permanentDelete|\/move\b|\/copy\b/,
@@ -136,6 +135,8 @@ describe("Outlook permissions and tools", () => {
       "outlook_search",
       "outlook_read_message",
       "outlook_read_attachment",
+      "outlook_find_followups",
+      "outlook_read_messages",
     ]);
     expect(tools.map((tool) => tool.name)).toEqual(OUTLOOK_TOOL_NAMES);
     for (const tool of tools) {
@@ -210,6 +211,24 @@ describe("Outlook tools", () => {
         ],
       },
     });
+  });
+
+  it("returns up to 100 at once with shorter previews, and says where older mail starts", async () => {
+    const long = { ...message, bodyPreview: "x".repeat(255) };
+    const page = Array.from({ length: 100 }, (_, index) => ({ ...long, id: `msg-${index}` }));
+    const { graph, calls } = fakeGraph({ "/me/mailFolders/inbox/messages": { value: page } });
+    const [event] = await run(graph, "outlook_list_messages", { limit: 500 });
+    expect(calls[0]!.path).toContain("$top=100");
+    const data = (event as { data: { messages: Array<{ preview: string }> } }).data;
+    expect(data).toMatchObject({ more: true, next_skip: 100 });
+    expect(data.messages[0]!.preview).toHaveLength(141);
+
+    const { graph: small, calls: smallCalls } = fakeGraph({
+      "/me/mailFolders/inbox/messages": { value: [long] },
+    });
+    const [few] = await run(small, "outlook_list_messages", {});
+    expect(smallCalls[0]!.path).toContain("$top=25");
+    expect(few).toMatchObject({ data: { more: false, messages: [{ preview: long.bodyPreview }] } });
   });
 
   it("lists a whole thread in order without asking Outlook to sort it", async () => {

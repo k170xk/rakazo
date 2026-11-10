@@ -581,7 +581,12 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       if (wanted === OUTLOOK_PROVIDER) {
         const mailToken = await this.accessToken(row, context);
         token = mailToken;
-        yield* runMailTool(this.mailGraph(mailToken, context.signal), tool, call.args);
+        const account = metadataRecord(row.metadata).account as StoredTokens["account"];
+        yield* runMailTool(
+          this.mailGraph(mailToken, context.signal, account?.email),
+          tool,
+          call.args,
+        );
         return;
       }
       const folders = savedFolders(row.metadata);
@@ -1023,8 +1028,9 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
    * Outlook as the signed-in person, through their own token only. The token can write, so
    * this client only ever sends a GET without a body, and only to a mailbox read path.
    */
-  private mailGraph(token: string, signal: AbortSignal | undefined): MailGraph {
+  private mailGraph(token: string, signal: AbortSignal | undefined, mailbox?: string): MailGraph {
     return {
+      mailbox,
       json: (path, headers) => {
         assertMailRead(path);
         const prefer = headers?.prefer;

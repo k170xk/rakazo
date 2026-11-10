@@ -138,6 +138,8 @@ const CREATED_RUN_TOOL_NAMES = new Set(["ask_user", "update_bot"]);
 
 export function selectBuiltinToolsForRun(options: {
   ticketBoardEnabled?: boolean;
+  /** The person's own private chat or routine, where their to-do list may be used. */
+  personalTodos?: boolean;
   phoneCallsEnabled?: boolean;
   historyRetrievalEnabled?: boolean;
   graphicalToolsAllowed: boolean;
@@ -237,6 +239,7 @@ export function selectBuiltinToolsForRun(options: {
       (options.mediaImagesEnabled || tool.name !== "generate_image") &&
       (options.ticketBoardEnabled ||
         (tool.name !== "board_tickets" && !tool.name.startsWith("ticket_"))) &&
+      (Boolean(options.personalTodos) || !tool.name.startsWith("todo_")) &&
       (!isBackgroundRunTrigger(options.trigger) ||
         ![
           "message_user",

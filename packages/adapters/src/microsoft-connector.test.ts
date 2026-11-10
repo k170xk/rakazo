@@ -375,6 +375,8 @@ describe("MicrosoftConnector", () => {
       "outlook_search",
       "outlook_read_message",
       "outlook_read_attachment",
+      "outlook_find_followups",
+      "outlook_read_messages",
     ]);
     const events = await runMail(connector, "outlook_list_folders", mailContext);
     expect(events).toEqual([
