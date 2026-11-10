@@ -8,7 +8,7 @@ import type {
   IntegrationCatalogSurface,
   PluginMarketplaceEntry,
 } from "@rakazo/contracts";
-import { CONNECTION_LABEL_MAX_LENGTH, PluginPreviewSchema } from "@rakazo/contracts";
+import { CONNECTION_LABEL_MAX_LENGTH, PluginPreviewSchema, staffAppKey } from "@rakazo/contracts";
 import type { PluginCategory } from "@rakazo/core";
 import {
   buildFeaturedConnectorTiles,
@@ -303,8 +303,20 @@ export function PluginsOverlay({
     );
   }, [catalog, detailKey]);
 
-  const featuredTiles = useMemo(() => buildFeaturedConnectorTiles(catalog), [catalog]);
   const showFeatured = !query.trim();
+  // Apps in the OCSC apps section are not listed again below it.
+  const inCompanySection = useMemo(() => {
+    const slugs = new Set(companyApps.map((app) => app.slug));
+    return (item: ConnectionCatalogItem) => slugs.has(staffAppKey(item.slug));
+  }, [companyApps]);
+  // Suggested apps the catalog lacks are only an admin hint, never part of the staff view.
+  const featuredTiles = useMemo(
+    () =>
+      buildFeaturedConnectorTiles(catalog).filter((tile) =>
+        tile.item && !tile.missing ? !inCompanySection(tile.item) : isAdmin && showEverything,
+      ),
+    [catalog, inCompanySection, isAdmin, showEverything],
+  );
 
   const visible = useMemo(() => filterConnectionCatalogItems(catalog, query), [catalog, query]);
   // Apps whose name starts with the query come before plugins; mid-word matches trail them.
@@ -312,7 +324,7 @@ export function PluginsOverlay({
     ? []
     : visible.filter((item) => matchesWordPrefixes(item.name, query));
   const weakMatches = showFeatured
-    ? visible
+    ? visible.filter((item) => !inCompanySection(item))
     : visible.filter((item) => !matchesWordPrefixes(item.name, query));
   const rendered = weakMatches.slice(0, visibleCount);
 
@@ -1766,7 +1778,7 @@ export function PluginsOverlay({
                         <Trans>Configure a plugin catalog on the server to connect apps.</Trans>
                       </p>
                     )
-                  ) : (
+                  ) : featuredTiles.length === 0 ? null : (
                     <div className="grid grid-cols-2 gap-2">
                       {featuredTiles.map((tile) => {
                         const item = tile.item;
@@ -1829,12 +1841,12 @@ export function PluginsOverlay({
               {showFeatured ? (
                 <>
                   {renderPluginSections()}
-                  {catalogLoaded && catalog.length > 0 && !category ? (
+                  {catalogLoaded && rendered.length > 0 && !category ? (
                     <SectionHeading as="h2" className="mt-8 mb-2 px-2.5">
                       <Trans>More apps</Trans>
                     </SectionHeading>
                   ) : null}
-                  {visible.length > 0 && !category ? (
+                  {rendered.length > 0 && !category ? (
                     <div className="grid grid-cols-2 gap-2">
                       {rendered.map((item) =>
                         renderCatalogTile(item, item.name, item.logo, {
@@ -1844,7 +1856,7 @@ export function PluginsOverlay({
                       )}
                     </div>
                   ) : null}
-                  {rendered.length < visible.length && !category ? (
+                  {rendered.length < weakMatches.length && !category ? (
                     <div className="mt-4 flex justify-center">
                       <Button
                         type="button"
