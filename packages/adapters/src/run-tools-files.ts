@@ -96,13 +96,13 @@ export function runFilePath(ctx: RunContext, filePath: string): string {
   );
 }
 
-/** Generate an image or video, or with recoverOnly, only resume a job an earlier attempt started. */
+/** Generate an image, or with recoverOnly, only resume a job an earlier attempt started. */
 export async function callMediaTool(ctx: RunContext, call: ToolCall, recoverOnly = false) {
   const { deps, run, bot, thread, context } = ctx;
   const { name, args, executionId, applied } = call;
   const mediaGeneration = ctx.providers.mediaGeneration;
   if (
-    (name !== "generate_image" && name !== "generate_video") ||
+    name !== "generate_image" ||
     isBackgroundRunTrigger(run.trigger) ||
     !mediaGeneration ||
     !deps.artifacts
@@ -370,7 +370,6 @@ export const fileTools: ToolHandlers = {
     }
   },
   generate_image: generateMedia,
-  generate_video: generateMedia,
   async render_plot(ctx, call) {
     const { deps, run } = ctx;
     const { args, executionId } = call;

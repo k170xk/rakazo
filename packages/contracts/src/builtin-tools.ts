@@ -55,7 +55,6 @@ export const BUILTIN_TOOL_NAMES = [
   "show_card",
   "save_page",
   "generate_image",
-  "generate_video",
   "add_mcp_server",
   "remember",
   "save_shared_memory",

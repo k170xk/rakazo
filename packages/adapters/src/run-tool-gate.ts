@@ -679,7 +679,7 @@ async function settleToolUncertainty(
   effectId: string,
   toolName: string,
 ) {
-  if (call.name === "generate_image" || call.name === "generate_video") {
+  if (call.name === "generate_image") {
     const recovered = await callMediaTool(ctx, call, true);
     if (
       recovered !== undefined &&

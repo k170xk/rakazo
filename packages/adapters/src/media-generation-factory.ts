@@ -13,13 +13,11 @@ export function createMediaGenerationProvider(
   if (kind !== "fal") throw new Error("Unknown media generation provider");
   const apiKey = env.MEDIA_GENERATION_API_KEY?.trim();
   const imageModel = env.MEDIA_GENERATION_IMAGE_MODEL?.trim();
-  const videoModel = env.MEDIA_GENERATION_VIDEO_MODEL?.trim();
-  if (!apiKey || (!imageModel && !videoModel))
-    throw new Error("Media generation requires credentials and at least one model");
+  if (!apiKey || !imageModel)
+    throw new Error("Media generation requires credentials and an image model");
   return new FalMediaGenerationProvider({
     apiKey,
     imageModel,
-    videoModel,
     baseUrl: env.MEDIA_GENERATION_BASE_URL,
   });
 }

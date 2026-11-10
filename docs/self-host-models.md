@@ -165,24 +165,20 @@ MEDIA_GENERATION_PROVIDER=fal
 MEDIA_GENERATION_BASE_URL=https://queue.fal.run
 MEDIA_GENERATION_API_KEY=replace-with-media-api-key
 MEDIA_GENERATION_IMAGE_MODEL=fal-ai/flux/schnell
-MEDIA_GENERATION_VIDEO_MODEL=fal-ai/wan/v2.2-a14b/text-to-video
 ```
 
 `MEDIA_GENERATION_PROVIDER` accepts `disabled` (the default), `fal`, or `fake`
 (for offline testing only). The base URL is optional and defaults to the URL above.
-Only set the image/video model fields for capabilities you want enabled. Compatible
-servers can use the same connection fields; models must support the corresponding
-fal queue API and Flux/Wan input and output shapes. Credentials stay on the server. Set these in
+Compatible servers can use the same connection fields; the model must support the
+fal queue API and Flux input and output shapes. Credentials stay on the server. Set these in
 your deployment secret configuration; never commit actual credentials.
 
-Bots use `generate_image` to attach one PNG or `generate_video` to submit a
-four-second MP4. The video tool returns a job ID and queued/running status; call it
-again with `jobId` to check progress and attach the completed video. Saved jobs
-can be polled after worker restarts by the same owner/bot/thread. The first version
-requires polling through the bot; it does not automatically deliver jobs in the
-background. Use the existing per-bot tool switches and action approval rules to
-control access. Both tools require approval by default. Ticket board runs keep
-these chat-only media tools unavailable so ticket work stays on the board.
+Bots use `generate_image` to attach one PNG. There is no prompt-to-video tool:
+videos are made only with OCSC Video (the `ocsc` tool's `video` program), which
+admins switch on and off with the OCSC Video skill in Company tools. Use the
+existing per-bot tool switches and action approval rules to control access. The
+image tool requires approval by default. Ticket board runs keep this chat-only
+media tool unavailable so ticket work stays on the board.
 
 Each run allows at most two submissions (including failures). Submissions are
 never retried automatically: a lost response can mean the provider accepted and

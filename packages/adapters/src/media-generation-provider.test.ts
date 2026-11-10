@@ -17,12 +17,10 @@ const context: AdapterContext = {
 const json = (value: unknown) => new Response(JSON.stringify(value));
 const job = {
   request_id: "job",
-  status_url: "https://queue.fal.run/fal-ai/wan/requests/job/status",
-  response_url: "https://queue.fal.run/fal-ai/wan/requests/job",
+  status_url: "https://queue.fal.run/fal-ai/flux/requests/job/status",
+  response_url: "https://queue.fal.run/fal-ai/flux/requests/job",
 };
-const jobId = JSON.stringify({ status: job.status_url, response: job.response_url });
 const imageResult = { images: [{ url: "https://cdn.example.test/image.png" }] };
-const videoResult = { video: { url: "https://cdn.example.test/video.mp4" } };
 function setup(...responses: Response[]) {
   const fetch = vi.fn<typeof globalThis.fetch>();
   for (const response of responses) fetch.mockResolvedValueOnce(response);
@@ -31,7 +29,6 @@ function setup(...responses: Response[]) {
     provider: new FalMediaGenerationProvider({
       apiKey: "fake-key",
       imageModel: "fal-ai/flux/schnell",
-      videoModel: "fal-ai/wan/v2.2-a14b/text-to-video",
       fetch,
       resolveHostname: async () => [{ address: "93.184.216.34", family: 4 }],
     }),
@@ -56,14 +53,20 @@ describe("media generation connection", () => {
         MEDIA_GENERATION_IMAGE_MODEL: "fal-ai/flux/schnell",
         MEDIA_GENERATION_BASE_URL: "https://media.example.test",
       })?.capabilities,
-    ).toEqual({ images: true, video: false, offline: false });
+    ).toEqual({ images: true, offline: false });
+    expect(() =>
+      createMediaGenerationProvider({
+        MEDIA_GENERATION_PROVIDER: "fal",
+        MEDIA_GENERATION_API_KEY: "fake-key",
+        MEDIA_GENERATION_VIDEO_MODEL: "fal-ai/wan/v2.2-a14b/text-to-video",
+      }),
+    ).toThrow();
   });
-  it("has an offline image and async video implementation", async () => {
+  it("has an offline image implementation and no video", async () => {
     const provider = new FakeMediaGenerationProvider();
     expect((await provider.generateImage({ prompt: "draw" }, context)).mimeType).toBe("image/png");
-    const job = await provider.generateVideo({ prompt: "move" }, context);
-    expect(job.status).toBe("queued");
-    expect((await provider.pollVideo(job.id, context)).status).toBe("completed");
+    expect(provider.capabilities).toEqual({ images: true, offline: true });
+    expect("generateVideo" in provider).toBe(false);
   });
   it("translates one image generation and downloads without forwarding credentials", async () => {
     const { fetch, provider } = setup(
@@ -84,26 +87,15 @@ describe("media generation connection", () => {
     });
     expect(new Headers(fetch.mock.calls[3]![1]?.headers).has("authorization")).toBe(false);
   });
-  it("translates async submission, queue status, completion and failure", async () => {
-    const { provider, fetch } = setup(
+  it("waits through the queue and reports a failed job", async () => {
+    const { provider } = setup(
       json(job),
-      json({ status: "IN_PROGRESS" }),
-      json({ status: "COMPLETED" }),
-      json(videoResult),
-      new Response("video", { headers: { "content-type": "video/mp4" } }),
+      json({ status: "IN_QUEUE" }),
       json({ status: "COMPLETED", error: "private provider failure" }),
     );
-    expect(await provider.generateVideo({ prompt: "move" }, context)).toEqual({
-      id: jobId,
-      status: "queued",
+    await expect(provider.generateImage({ prompt: "draw" }, context)).rejects.toMatchObject({
+      code: "provider_failure",
     });
-    expect(await provider.pollVideo(jobId, context)).toMatchObject({ status: "running" });
-    expect(await provider.pollVideo(jobId, context)).toMatchObject({
-      status: "completed",
-      output: { mimeType: "video/mp4" },
-    });
-    expect(fetch.mock.calls[3]![0]).toBe(job.response_url);
-    expect(await provider.pollVideo(jobId, context)).toEqual({ id: jobId, status: "failed" });
   });
   it.each([
     [429, "rate_limit"],
@@ -135,27 +127,28 @@ describe("media generation connection", () => {
       code: "invalid_input",
     });
     await expect(
-      provider.generateVideo({ prompt: "x".repeat(4001) }, context),
+      provider.generateImage({ prompt: "x".repeat(4001) }, context),
     ).rejects.toMatchObject({ code: "invalid_input" });
     expect(fetch).not.toHaveBeenCalled();
     await expect(
-      new FalMediaGenerationProvider({ apiKey: "fake" }).generateVideo({ prompt: "move" }, context),
+      new FalMediaGenerationProvider({ apiKey: "fake" }).generateImage({ prompt: "draw" }, context),
     ).rejects.toMatchObject({ code: "unsupported" });
   });
   it("rejects oversized output with and without Content-Length", async () => {
     for (const headers of [
       new Headers({
         "content-length": String(ATTACHMENT_MAX_BYTES + 1),
-        "content-type": "video/mp4",
+        "content-type": "image/png",
       }),
-      new Headers({ "content-type": "video/mp4" }),
+      new Headers({ "content-type": "image/png" }),
     ]) {
       const { provider } = setup(
+        json(job),
         json({ status: "COMPLETED" }),
-        json(videoResult),
+        json(imageResult),
         new Response(new Uint8Array(ATTACHMENT_MAX_BYTES + 1), { headers }),
       );
-      await expect(provider.pollVideo(jobId, context)).rejects.toMatchObject({
+      await expect(provider.generateImage({ prompt: "draw" }, context)).rejects.toMatchObject({
         code: "output_limit",
       });
     }
@@ -163,20 +156,24 @@ describe("media generation connection", () => {
   it("rejects wrong output MIME and invalid statuses", async () => {
     await expect(
       setup(
+        json(job),
         json({ status: "COMPLETED" }),
-        json(videoResult),
+        json(imageResult),
         new Response("html", { headers: { "content-type": "text/html" } }),
-      ).provider.pollVideo(jobId, context),
+      ).provider.generateImage({ prompt: "draw" }, context),
     ).rejects.toMatchObject({ code: "provider_failure" });
     await expect(
-      setup(json({ status: "unknown" })).provider.pollVideo(jobId, context),
+      setup(json(job), json({ status: "unknown" })).provider.generateImage(
+        { prompt: "draw" },
+        context,
+      ),
     ).rejects.toMatchObject({ code: "provider_failure" });
   });
   it("rejects cross-origin queue URLs before forwarding credentials", async () => {
     const { provider, fetch } = setup(
       json({ ...job, status_url: "https://attacker.example.test/status" }),
     );
-    await expect(provider.generateVideo({ prompt: "move" }, context)).rejects.toMatchObject({
+    await expect(provider.generateImage({ prompt: "draw" }, context)).rejects.toMatchObject({
       code: "provider_failure",
     });
     expect(fetch).toHaveBeenCalledTimes(1);
@@ -186,19 +183,24 @@ describe("media generation connection", () => {
     "http://169.254.169.254/latest/meta-data",
     "file:///etc/passwd",
   ])("rejects unsafe output URL %s", async (url) => {
-    const { provider, fetch } = setup(json({ status: "COMPLETED" }), json({ video: { url } }));
-    await expect(provider.pollVideo(jobId, context)).rejects.toMatchObject({
+    const { provider, fetch } = setup(
+      json(job),
+      json({ status: "COMPLETED" }),
+      json({ images: [{ url }] }),
+    );
+    await expect(provider.generateImage({ prompt: "draw" }, context)).rejects.toMatchObject({
       code: "provider_failure",
     });
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
   it("rejects redirects from output downloads", async () => {
     const { provider } = setup(
+      json(job),
       json({ status: "COMPLETED" }),
-      json(videoResult),
+      json(imageResult),
       new Response(null, { status: 302, headers: { location: "http://127.0.0.1/private" } }),
     );
-    await expect(provider.pollVideo(jobId, context)).rejects.toMatchObject({
+    await expect(provider.generateImage({ prompt: "draw" }, context)).rejects.toMatchObject({
       code: "provider_failure",
     });
   });

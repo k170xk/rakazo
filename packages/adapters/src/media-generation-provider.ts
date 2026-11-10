@@ -4,12 +4,10 @@ import type {
   GeneratedMedia,
   MediaGenerationInput,
   MediaGenerationProvider,
-  MediaVideoJob,
 } from "@rakazo/adapter-kit";
 import { MediaGenerationError } from "@rakazo/adapter-kit";
 import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
 import { z } from "zod";
-import { FAKE_VIDEO_BASE64 } from "./fake-media-assets.js";
 import type { ResolveHostname } from "./web-ssrf.js";
 import { fetchSafeWebBytes } from "./web-ssrf.js";
 
@@ -72,7 +70,6 @@ export class FalMediaGenerationProvider implements MediaGenerationProvider {
       apiKey: string;
       baseUrl?: string;
       imageModel?: string;
-      videoModel?: string;
       fetch?: typeof fetch;
       resolveHostname?: ResolveHostname;
     },
@@ -87,13 +84,11 @@ export class FalMediaGenerationProvider implements MediaGenerationProvider {
     )
       throw new Error("Invalid media generation base URL");
     this.baseUrl = url.href.replace(/\/$/, "");
-    for (const model of [options.imageModel, options.videoModel]) {
-      if (model && !/^[a-zA-Z0-9_-][a-zA-Z0-9_.-]*(?:\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*)+$/.test(model))
-        throw new Error("Invalid media model endpoint");
-    }
+    const model = options.imageModel;
+    if (model && !/^[a-zA-Z0-9_-][a-zA-Z0-9_.-]*(?:\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*)+$/.test(model))
+      throw new Error("Invalid media model endpoint");
     this.capabilities = {
       images: Boolean(options.imageModel),
-      video: Boolean(options.videoModel),
       offline: false,
     };
   }
@@ -139,17 +134,17 @@ export class FalMediaGenerationProvider implements MediaGenerationProvider {
       throw new MediaGenerationError("provider_failure");
     }
   }
-  private async submit(input: MediaGenerationInput, video: boolean, context: AdapterContext) {
-    const model = video ? this.options.videoModel : this.options.imageModel;
+  private async submit(input: MediaGenerationInput, context: AdapterContext) {
+    const model = this.options.imageModel;
     if (!model) throw new MediaGenerationError("unsupported");
     const parsed = mediaPromptSchema.safeParse(input);
     if (!parsed.success) throw new MediaGenerationError("invalid_input");
     const job = queueJob.safeParse(
       await this.request(`${this.baseUrl}/${model}`, context, {
         prompt: parsed.data.prompt,
-        ...(video
-          ? { num_frames: 65, frames_per_second: 16, resolution: "480p" }
-          : { num_images: 1, image_size: "square", output_format: "png" }),
+        num_images: 1,
+        image_size: "square",
+        output_format: "png",
       }),
     );
     if (!job.success) throw new MediaGenerationError("provider_failure");
@@ -174,16 +169,11 @@ export class FalMediaGenerationProvider implements MediaGenerationProvider {
       };
     return { status: "completed" as const, value: await this.request(job.response, context) };
   }
-  private async download(
-    value: unknown,
-    video: boolean,
-    context: AdapterContext,
-  ): Promise<GeneratedMedia> {
-    const parsed = (
-      video
-        ? z.object({ video: fileResult }).transform((v) => v.video)
-        : z.object({ images: z.array(fileResult).length(1) }).transform((v) => v.images[0]!)
-    ).safeParse(value);
+  private async download(value: unknown, context: AdapterContext): Promise<GeneratedMedia> {
+    const parsed = z
+      .object({ images: z.array(fileResult).length(1) })
+      .transform((v) => v.images[0]!)
+      .safeParse(value);
     if (!parsed.success) throw new MediaGenerationError("provider_failure");
     try {
       // Output URLs are untrusted. Pin public DNS, reject private addresses and redirects;
@@ -196,7 +186,7 @@ export class FalMediaGenerationProvider implements MediaGenerationProvider {
         maxRedirects: 0,
         timeoutMs: 60_000,
       });
-      const mimeType = video ? "video/mp4" : "image/png";
+      const mimeType = "image/png";
       if (result.contentType?.split(";")[0] !== mimeType)
         throw new MediaGenerationError("provider_failure");
       const output = { bytes: result.body, mimeType } as GeneratedMedia;
@@ -220,33 +210,21 @@ export class FalMediaGenerationProvider implements MediaGenerationProvider {
       ...context,
       signal: AbortSignal.any([context.signal, AbortSignal.timeout(180_000)]),
     };
-    const id = await this.submit(input, false, context);
+    const id = await this.submit(input, context);
     for (let attempt = 0; attempt < 120; attempt++) {
       const job = await this.poll(id, context);
-      if (job.status === "completed") return this.download(job.value, false, context);
+      if (job.status === "completed") return this.download(job.value, context);
       if (job.status === "failed") throw new MediaGenerationError("provider_failure");
       await delay(1000, undefined, { signal: context.signal });
     }
     throw new MediaGenerationError("provider_failure");
-  }
-  async generateVideo(
-    input: MediaGenerationInput,
-    context: AdapterContext,
-  ): Promise<MediaVideoJob> {
-    return { id: await this.submit(input, true, context), status: "queued" };
-  }
-  async pollVideo(id: string, context: AdapterContext): Promise<MediaVideoJob> {
-    const job = await this.poll(id, context);
-    return job.status === "completed"
-      ? { id, status: "completed", output: await this.download(job.value, true, context) }
-      : { id, status: job.status };
   }
 }
 
 /** Deterministic provider; no network or billing. */
 export class FakeMediaGenerationProvider implements MediaGenerationProvider {
   readonly id = "fake";
-  readonly capabilities = { images: true, video: true, offline: true };
+  readonly capabilities = { images: true, offline: true };
   async generateImage(
     _input: MediaGenerationInput,
     context: AdapterContext,
@@ -258,24 +236,6 @@ export class FakeMediaGenerationProvider implements MediaGenerationProvider {
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0u8AAAAASUVORK5CYII=",
         "base64",
       ),
-    };
-  }
-  async generateVideo(
-    _input: MediaGenerationInput,
-    context: AdapterContext,
-  ): Promise<MediaVideoJob> {
-    context.signal.throwIfAborted();
-    return { id: "fake-video", status: "queued", progress: 0 };
-  }
-  async pollVideo(id: string, context: AdapterContext): Promise<MediaVideoJob> {
-    context.signal.throwIfAborted();
-    return {
-      id,
-      status: "completed",
-      output: {
-        mimeType: "video/mp4",
-        bytes: Buffer.from(FAKE_VIDEO_BASE64, "base64"),
-      },
     };
   }
 }

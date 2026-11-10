@@ -3,18 +3,13 @@ import type { AdapterContext } from "./types.js";
 export type MediaGenerationInput = { prompt: string };
 export type GeneratedMedia = {
   bytes: Uint8Array;
-  mimeType: "image/png" | "video/mp4";
+  mimeType: "image/png";
 };
-export type MediaVideoJob =
-  | { id: string; status: "queued" | "running"; progress?: number }
-  | { id: string; status: "completed"; output: GeneratedMedia }
-  | { id: string; status: "failed" };
+/** Images only: OCSC Video (the ocsc tool) is the one way assistants make videos. */
 export interface MediaGenerationProvider {
   readonly id: string;
-  readonly capabilities: { images: boolean; video: boolean; offline: boolean };
+  readonly capabilities: { images: boolean; offline: boolean };
   generateImage(input: MediaGenerationInput, context: AdapterContext): Promise<GeneratedMedia>;
-  generateVideo(input: MediaGenerationInput, context: AdapterContext): Promise<MediaVideoJob>;
-  pollVideo(id: string, context: AdapterContext): Promise<MediaVideoJob>;
 }
 export type MediaGenerationErrorCode =
   | "invalid_input"
