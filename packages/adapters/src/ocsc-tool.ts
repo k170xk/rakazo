@@ -10,6 +10,93 @@ import type { RunContext } from "./run-context.js";
 /** The OCSC commands the ocsc tool runs; none of them needs a shell, the screen or the browser. */
 export const OCSC_PROGRAMS: ReadonlySet<string> = new Set(["word", "pptx", "xlsx", "pdf", "video"]);
 
+/** The built-in skill for each program; an admin switching the skill off switches the program off. */
+const PROGRAM_SKILLS: Readonly<Record<string, string>> = {
+  word: "ocsc-word",
+  pptx: "ocsc-slides",
+  xlsx: "ocsc-excel",
+  pdf: "ocsc-pdf",
+  video: "ocsc-video",
+};
+
+/** The OCSC programs an admin has switched off for every account. */
+export function switchedOffOcscPrograms(
+  disabledSkills: readonly string[] = companyTools().disabledSkills,
+): Set<string> {
+  const off = new Set(disabledSkills.map((name) => name.toLowerCase()));
+  return new Set([...OCSC_PROGRAMS].filter((program) => off.has(PROGRAM_SKILLS[program] ?? "")));
+}
+
+const PROGRAM_FILES: Readonly<Record<string, string>> = {
+  word: "Word",
+  pptx: "PowerPoint",
+  xlsx: "Excel",
+  pdf: "PDF",
+  video: "video",
+};
+
+/** The kinds of file the ocsc tool may make, for instructions: "Word, PowerPoint and PDF files". */
+export function ocscFileKinds(off: ReadonlySet<string> = switchedOffOcscPrograms()): string {
+  const kinds = [...OCSC_PROGRAMS]
+    .filter((program) => !off.has(program))
+    .map((program) => PROGRAM_FILES[program]);
+  if (kinds.length <= 1) return `${kinds[0] ?? "no"} files`;
+  return `${kinds.slice(0, -1).join(", ")} and ${kinds.at(-1)} files`;
+}
+
+function switchedOffMessage(program: string): string {
+  return `ocsc-${program} is switched off for this company by an administrator. Tell the person it is not available; do not make it another way.`;
+}
+
+/** Why the ocsc tool may not run this program, or undefined when it may. */
+export function ocscProgramRefusal(
+  program: string,
+  off: ReadonlySet<string> = switchedOffOcscPrograms(),
+): string | undefined {
+  return off.has(program) ? switchedOffMessage(program) : undefined;
+}
+
+/** Why a shell command may not run: it calls a switched-off OCSC program directly. */
+export function ocscShellRefusal(
+  command: string,
+  off: ReadonlySet<string> = switchedOffOcscPrograms(),
+): string | undefined {
+  for (const program of off) {
+    if (new RegExp(`(^|[^\\w-])ocsc-${program}(?![\\w-])`).test(command))
+      return switchedOffMessage(program);
+  }
+  return undefined;
+}
+
+/**
+ * The ocsc tool as offered to a run: switched-off programs leave its program list, and the
+ * tool goes when none is left.
+ */
+export function withOcscProgramsOffered<T extends { name: string; inputSchema?: unknown }>(
+  tools: readonly T[],
+  off: ReadonlySet<string> = switchedOffOcscPrograms(),
+): T[] {
+  if (off.size === 0) return [...tools];
+  const on = [...OCSC_PROGRAMS].filter((program) => !off.has(program));
+  return tools.flatMap((tool) => {
+    if (tool.name !== "ocsc") return [tool];
+    if (on.length === 0) return [];
+    const schema = tool.inputSchema as
+      | { properties?: Record<string, Record<string, unknown>> }
+      | undefined;
+    if (!schema?.properties?.program) return [tool];
+    return [
+      {
+        ...tool,
+        inputSchema: {
+          ...schema,
+          properties: { ...schema.properties, program: { ...schema.properties.program, enum: on } },
+        },
+      },
+    ];
+  });
+}
+
 /** Video renders across the whole company at once; each one takes a computer's CPUs for minutes. */
 export function videoRenderSlots(env: NodeJS.ProcessEnv = process.env): number {
   const parsed = Number.parseInt(env.RAKAZO_VIDEO_RENDER_SLOTS ?? "", 10);

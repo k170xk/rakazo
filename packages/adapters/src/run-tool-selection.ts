@@ -9,6 +9,7 @@ import { builtinAgentTools } from "./builtin-tools.js";
 import { selectCloudAgentTools } from "./cloud-agent-tools-select.js";
 import { selectMemoryTools } from "./memory-tools.js";
 import { filterImageReturningComputerTools } from "./model-vision.js";
+import { withOcscProgramsOffered } from "./ocsc-tool.js";
 import {
   EVOLVE_PLUGIN_COMPUTER_TOOLS,
   EVOLVE_PLUGIN_TOOL_NAMES,
@@ -190,7 +191,7 @@ export function selectBuiltinToolsForRun(options: {
   const computerAccess: ComputerAccess =
     options.computersEnabled === false ? "none" : (options.computerAccess ?? "full");
   const ownerStartedRun = isOwnerStartedRun(options.trigger, Boolean(options.followUpFromUser));
-  return selectCloudAgentTools(
+  const selected = selectCloudAgentTools(
     selectMemoryTools(
       filterBuiltinToolsForRun(
         filterBuiltinToolsForThread(
@@ -275,6 +276,7 @@ export function selectBuiltinToolsForRun(options: {
           !tool.name.startsWith("scratchpad_") &&
           !tool.name.startsWith("ticket_"))),
   );
+  return withOcscProgramsOffered(selected);
 }
 
 export const PAGE_BROWSER_TOOL_NAMES = new Set([

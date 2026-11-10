@@ -50,6 +50,8 @@ import {
   ocscBeforeRun,
   ocscCommand,
   ocscProgramArgs,
+  ocscProgramRefusal,
+  ocscShellRefusal,
   withDefaultWordTemplate,
   wordRebuildRefusal,
 } from "./ocsc-tool.js";
@@ -567,6 +569,8 @@ export const computerTools: ToolHandlers = {
     if (desktopGuardApplies(ctx.computer) && refusal) {
       return call.finish({ error: desktopProtectionGuardMessage(refusal) });
     }
+    const switchedOff = ocscShellRefusal(command);
+    if (switchedOff) return call.finish({ error: switchedOff });
     const cwd = resolveBotWorkspaceCwd(
       ctx.computer.mode,
       ctx.bot.id,
@@ -580,6 +584,8 @@ export const computerTools: ToolHandlers = {
     if (!OCSC_PROGRAMS.has(program)) {
       return call.finish({ error: `program must be one of ${[...OCSC_PROGRAMS].join(", ")}.` });
     }
+    const switchedOff = ocscProgramRefusal(program);
+    if (switchedOff) return call.finish({ error: switchedOff });
     const rebuild = wordRebuildRefusal(program, given, ctx.computer.wordDocuments ?? []);
     if (rebuild) return call.finish({ error: rebuild });
     const args = await withDefaultWordTemplate(ctx, program, ocscProgramArgs(given));

@@ -8,6 +8,7 @@ import {
   toolRequiresExplicitApproval,
 } from "@rakazo/core";
 import { MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
+import { ocscFileKinds } from "./ocsc-tool.js";
 import { replyGuidanceForOfferedTools } from "./run-replies.js";
 import type { UserComputerState } from "./run-tools-user-computer.js";
 import { SCHEDULE_TOOL_NAMES } from "./schedule-tools.js";
@@ -69,9 +70,9 @@ export function limitedComputerInstruction(
         ? " Other people can read this chat, so you work in this conversation's own folder: files from the owner's private chats are not here and their computer is not used. If they need one of their own files here, ask them to upload it to this chat."
         : "";
   if (computerOff) {
-    return `This person has no computer, but the company document runners make OCSC files: use the ocsc tool for Word, PowerPoint, Excel, PDF and video files, write_file for their spec files and attach_file to share the results. A shell, a browser, a screen and scheduled routines are not available, so never offer them; if a task needs them, say an administrator can give this person computer access.${shared}`;
+    return `This person has no computer, but the company document runners make OCSC files: use the ocsc tool for ${ocscFileKinds()}, write_file for their spec files and attach_file to share the results. A shell, a browser, a screen and scheduled routines are not available, so never offer them; if a task needs them, say an administrator can give this person computer access.${shared}`;
   }
-  return `This computer runs the OCSC document and video commands only: use the ocsc tool for Word, PowerPoint, Excel, PDF and video files, write_file for their spec files and attach_file to share the results. There is no shell, browser, screen or scheduled routine here, so never offer to browse, run other commands or set up routines; if a task needs them, say an administrator can give this person full computer access.${shared}`;
+  return `This computer runs the OCSC commands only: use the ocsc tool for ${ocscFileKinds()}, write_file for their spec files and attach_file to share the results. There is no shell, browser, screen or scheduled routine here, so never offer to browse, run other commands or set up routines; if a task needs them, say an administrator can give this person full computer access.${shared}`;
 }
 
 /** For a full computer whose documents and file tools use the runners' document home instead. */
