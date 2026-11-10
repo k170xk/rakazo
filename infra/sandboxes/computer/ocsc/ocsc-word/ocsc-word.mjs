@@ -1394,6 +1394,13 @@ class Doc {
       };
       put("dc:title", this.meta.title);
       put("dc:subject", this.meta.subtitle);
+      if (PERSON) {
+        c = c.replace(
+          /<cp:lastModifiedBy\s*\/>|<cp:lastModifiedBy>[\s\S]*?<\/cp:lastModifiedBy>/,
+          "",
+        );
+        put("cp:lastModifiedBy", PERSON);
+      }
       c = c.replace(
         /<dcterms:modified([^>]*)>[^<]*<\/dcterms:modified>/,
         `<dcterms:modified$1>${new Date().toISOString().replace(/\.\d+Z$/, "Z")}</dcterms:modified>`,
@@ -1482,10 +1489,9 @@ function fitBanner(xml, title, subtitle) {
   );
 }
 // Rakazo sets OCSC_AUTHOR to the name of the person whose request this is.
-const AUTHOR =
-  process.env.OCSC_AUTHOR?.trim() ||
-  process.env.OCSC_WORD_AUTHOR?.trim() ||
-  "OCSC Bot";
+const PERSON =
+  process.env.OCSC_AUTHOR?.trim() || process.env.OCSC_WORD_AUTHOR?.trim() || "";
+const AUTHOR = PERSON || "OCSC Bot";
 
 /** Applies fn to each run, skipping the inside of any `skip` element (for example runs already deleted). */
 function mapRuns(xml, fn, skip = []) {
