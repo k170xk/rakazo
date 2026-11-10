@@ -46,6 +46,7 @@ import { CompanyAssistantModelsSection } from "./AdminAssistantModels";
 import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
+import { StaffAppsSection } from "./AdminStaffApps";
 import { StaffSpendingSection } from "./AdminStaffSpending";
 import { WindowChrome } from "./WindowChrome";
 
@@ -582,6 +583,11 @@ function CompanyFeaturesSection({
             state={state}
             onSaved={onSaved}
           />
+          {group.id === "apps" ? (
+            <div className="pt-4">
+              <StaffAppsSection onSaved={onSaved} />
+            </div>
+          ) : null}
         </div>
       ))}
     </Section>

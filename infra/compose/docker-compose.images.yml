@@ -528,6 +528,8 @@ services:
     environment:
       <<: *app-environment
       GRAPHILE_WORKER_CONCURRENCY:
+      # Lets admins keep apps that are hidden from staff, to test them.
+      RAKAZO_ADMIN_EMAILS:
     volumes:
       - appdata:/data
     networks:

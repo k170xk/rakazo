@@ -1,0 +1,53 @@
+import { describe, expect, it } from "vitest";
+import {
+  CompanyToolsSchema,
+  companyToolsFrom,
+  staffAppKey,
+  staffAppState,
+  staffMayUseConnection,
+} from "./domain.js";
+
+describe("staff apps", () => {
+  it("hides apps an admin has not listed once the list is saved", () => {
+    expect(staffAppState({}, "sharepoint")).toBe("hidden");
+    expect(staffAppState({ outlook: "soon" }, "gmail")).toBe("hidden");
+  });
+
+  it("keeps catalog apps open and company apps hidden before the list is saved", () => {
+    expect(staffAppState(undefined, "gmail")).toBe("enabled");
+    expect(staffAppState(undefined, "share_point")).toBe("hidden");
+  });
+
+  it("reads catalog slugs through the company app aliases", () => {
+    expect(staffAppKey("share_point")).toBe("sharepoint");
+    expect(staffAppKey("MICROSOFT_TEAMS")).toBe("microsoft-teams");
+    expect(staffAppKey("gmail")).toBe("gmail");
+    expect(staffAppState({ sharepoint: "enabled" }, "share_point")).toBe("enabled");
+  });
+
+  it("lets staff use only enabled app connections", () => {
+    const staffApps = { sharepoint: "enabled", outlook: "soon" } as const;
+    expect(
+      staffMayUseConnection(staffApps, { connectorId: "composio", provider: "share_point" }),
+    ).toBe(true);
+    expect(staffMayUseConnection(staffApps, { connectorId: "composio", provider: "outlook" })).toBe(
+      false,
+    );
+    expect(staffMayUseConnection(staffApps, { connectorId: "pipedream", provider: "slack" })).toBe(
+      false,
+    );
+    expect(staffMayUseConnection(staffApps, { connectorId: "mcp", provider: "anything" })).toBe(
+      true,
+    );
+  });
+
+  it("keeps stored company tools when the app setting is missing or invalid", () => {
+    expect(companyToolsFrom({ fileRetentionDays: 10 }).staffApps).toBeUndefined();
+    expect(
+      CompanyToolsSchema.partial().safeParse({ staffApps: { sharepoint: "on" } }).success,
+    ).toBe(false);
+    expect(companyToolsFrom({ staffApps: { sharepoint: "soon" } }).staffApps).toEqual({
+      sharepoint: "soon",
+    });
+  });
+});

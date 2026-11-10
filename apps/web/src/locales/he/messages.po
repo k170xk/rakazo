@@ -10002,3 +10002,47 @@ msgstr "סביבת העבודה שלך מבוססת AI להנדסה: מכרזי�
 #: src/pages/Auth.tsx
 msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
 msgstr "השתמשו בחשבון Microsoft של OCSC דרך Evolve. הכניסה הראשונה יוצרת את החשבון שלכם."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Apps for staff"
+msgstr "אפליקציות לצוות"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Being set up"
+msgstr "בהגדרה"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Could not update the app"
+msgstr "לא ניתן לעדכן את האפליקציה"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled"
+msgstr "מופעלת"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
+msgstr "ניתן לחבר אפליקציות מופעלות. אפליקציות שיגיעו בקרוב מוצגות לצוות עם תג. אפליקציות מוסתרות אינן מוצגות, והכלים שלהן אינם מוצעים לעוזרים של הצוות. מנהלים תמיד רואים כל אפליקציה, כדי לבדוק אותה."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Hidden from staff"
+msgstr "מוסתרת מהצוות"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Not set up yet. Staff see it as being set up until it is."
+msgstr "עדיין לא הוגדרה. עד אז הצוות רואה אותה כבהגדרה."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC apps"
+msgstr "אפליקציות OCSC"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Ready to connect."
+msgstr "מוכנה לחיבור."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff access to {0}"
+msgstr "גישת הצוות אל {0}"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Waiting for setup"
+msgstr "ממתינה להגדרה"

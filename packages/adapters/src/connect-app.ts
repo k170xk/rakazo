@@ -1,8 +1,10 @@
 import type { AdapterContext, ManagedConnectorProvider } from "@rakazo/adapter-kit";
 import type { MessageBlock } from "@rakazo/contracts";
+import { staffAppState } from "@rakazo/contracts";
 import { appConnectCard, matchAppCatalog, matchesAppConnection } from "@rakazo/core";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import { appendEventInTransaction, createThreadMessageInTransaction } from "@rakazo/db";
+import { companyTools, isDeploymentAdmin } from "./company-policy.js";
 
 const RECENT_MESSAGES = 50;
 
@@ -18,7 +20,7 @@ export async function connectApp(
   if (typeof app !== "string" || !app.trim() || app.length > 100) {
     return { error: "Provide an app name or slug of at most 100 characters." };
   }
-  const catalog = (
+  const allCatalog = (
     await Promise.all(
       providers.map(async (provider) => {
         try {
@@ -32,6 +34,12 @@ export async function connectApp(
       }),
     )
   ).flat();
+  const staffApps = companyTools().staffApps;
+  const catalog =
+    allCatalog.every((item) => staffAppState(staffApps, item.slug) === "enabled") ||
+    (await isDeploymentAdmin(deps.prisma, context.userId))
+      ? allCatalog
+      : allCatalog.filter((item) => staffAppState(staffApps, item.slug) === "enabled");
   // An app connected through any provider counts, even if another provider lists it first.
   const entry =
     matchAppCatalog(

@@ -2,12 +2,19 @@ import { ORPCError } from "@orpc/server";
 import type { AdapterContext, ConnectorCatalogItem } from "@rakazo/adapter-kit";
 import { ConnectorAuthUnavailableError } from "@rakazo/adapter-kit";
 import {
+  companyTools,
   pickReusableConnection,
   planLiveConnectionSync,
   prepareManagedConnectorForTransaction,
   sanitizeComposioError,
 } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
+import type { Actor, CompanyApp } from "@rakazo/contracts";
+import {
+  COMPANY_APP_CONNECTORS,
+  COMPANY_APPS,
+  staffAppKey,
+  staffAppState,
+} from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import {
   IsolationError,
@@ -16,6 +23,7 @@ import {
   runProviderTransaction,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
+import { isAdmin } from "../admins.js";
 import { requireCompanyFeature } from "../company-admin.js";
 import { connectionCreatedEvent } from "../security-audit.js";
 import type { RouterContext } from "./context.js";
@@ -260,7 +268,60 @@ export function connectionsRoutes(ctx: RouterContext) {
             }
           }),
         );
-        return catalogs.flat();
+        const items = catalogs.flat();
+        if (await isAdmin(deps, context.actor.userId)) return items;
+        const staffApps = companyTools().staffApps;
+        return items.filter((item) => staffAppState(staffApps, item.slug) === "enabled");
+      }),
+      companyApps: authed.connections.companyApps.handler(async ({ context }) => {
+        const admin = await isAdmin(deps, context.actor.userId);
+        const staffApps = companyTools().staffApps;
+        const adapterContext = connectionContext(
+          context.actor,
+          "connections.companyApps",
+          context.signal,
+        );
+        const catalog = (
+          await Promise.all(
+            deps.connectors
+              .managedProviders()
+              .map((provider) => provider.catalog(adapterContext).catch(() => [])),
+          )
+        ).flat();
+        const listed = new Set<string>();
+        const apps: CompanyApp[] = COMPANY_APPS.map((app) => {
+          const item = catalog.find((entry) => staffAppKey(entry.slug) === app.slug);
+          listed.add(app.slug);
+          return {
+            slug: app.slug,
+            name: app.name,
+            logo: app.logo,
+            state: staffApps?.[app.slug] ?? "hidden",
+            ready: Boolean(item),
+            connectorId: item?.connectorId ?? null,
+            provider: item?.slug ?? null,
+            connected: item?.connected ?? false,
+          };
+        });
+        // Admins see every catalog app, so saving the list never hides one they did not see;
+        // staff see only the catalog apps an admin listed here.
+        for (const item of catalog) {
+          const key = staffAppKey(item.slug);
+          const state = staffAppState(staffApps, item.slug);
+          if (listed.has(key) || (!admin && (!staffApps?.[key] || state === "hidden"))) continue;
+          listed.add(key);
+          apps.push({
+            slug: key,
+            name: item.name,
+            logo: item.logo,
+            state,
+            ready: true,
+            connectorId: item.connectorId,
+            provider: item.slug,
+            connected: item.connected,
+          });
+        }
+        return admin ? apps : apps.filter((app) => app.state !== "hidden");
       }),
       list: authed.connections.list.handler(async ({ context }) => {
         const rows = await deps.prisma.connection.findMany({
@@ -278,6 +339,13 @@ export function connectionsRoutes(ctx: RouterContext) {
       }),
       begin: authed.connections.begin.handler(async ({ context, input }) => {
         await requireCompanyFeature(deps, context.actor, "staffIntegrations");
+        if (
+          COMPANY_APP_CONNECTORS.includes(input.connectorId) &&
+          staffAppState(companyTools().staffApps, input.provider) !== "enabled" &&
+          !(await isAdmin(deps, context.actor.userId))
+        ) {
+          throw new ORPCError("FORBIDDEN", { message: "This app is not available yet." });
+        }
         const connector =
           deps.integrationSettings &&
           (input.connectorId === "composio" || input.connectorId === "pipedream")

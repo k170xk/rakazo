@@ -12,7 +12,11 @@ import type {
 } from "@rakazo/adapter-kit";
 import { routineJobKey, routineWakeupJob } from "@rakazo/adapter-kit";
 import type { RoutineWatch, RoutineWatchState } from "@rakazo/contracts";
-import { RoutineWatchSchema, RoutineWatchStateSchema } from "@rakazo/contracts";
+import {
+  RoutineWatchSchema,
+  RoutineWatchStateSchema,
+  staffMayUseConnection,
+} from "@rakazo/contracts";
 import type { ActionApprovalRule } from "@rakazo/core";
 import { connectorKindFromToolName, redactSecrets, watchToolRefusal } from "@rakazo/core";
 import type { ComputerMode, PrismaClient, ThreadEvents } from "@rakazo/db";
@@ -24,6 +28,7 @@ import {
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { loadLoginPasswordRedactions, shellCommandEnvironment } from "./bot-secrets.js";
+import { companyTools, isDeploymentAdmin } from "./company-policy.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";
 import { resolveBotWorkspaceCwd, teamBotWorkspaceDirectory } from "./computer-support.js";
@@ -357,7 +362,13 @@ async function toolContext(
       status: true,
     },
   });
-  return { ...context(routine), ...connectedContext(selectRunConnections(rows, [])) };
+  const staffApps = companyTools().staffApps;
+  const usable =
+    rows.every((row) => staffMayUseConnection(staffApps, row)) ||
+    (await isDeploymentAdmin(prisma, routine.userId))
+      ? rows
+      : rows.filter((row) => staffMayUseConnection(staffApps, row));
+  return { ...context(routine), ...connectedContext(selectRunConnections(usable, [])) };
 }
 
 // Lists every file under each path as "path<TAB>size<TAB>mtime". A path that

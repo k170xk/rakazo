@@ -10002,3 +10002,47 @@ msgstr "Ihr KI-Arbeitsbereich für das Ingenieurwesen: Ausschreibungen, Berichte
 #: src/pages/Auth.tsx
 msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
 msgstr "Melden Sie sich über Evolve mit Ihrem OCSC-Microsoft-Konto an. Bei der ersten Anmeldung wird Ihr Konto eingerichtet."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Apps for staff"
+msgstr "Apps für Mitarbeitende"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Being set up"
+msgstr "Wird eingerichtet"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Could not update the app"
+msgstr "Die App konnte nicht aktualisiert werden"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled"
+msgstr "Aktiviert"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
+msgstr "Aktivierte Apps können verbunden werden. Bald verfügbare Apps werden Mitarbeitenden mit einem Hinweis angezeigt. Ausgeblendete Apps werden nicht angezeigt, und ihre Tools werden den Assistenten der Mitarbeitenden nicht angeboten. Admins sehen immer jede App, um sie zu testen."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Hidden from staff"
+msgstr "Für Mitarbeitende ausgeblendet"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Not set up yet. Staff see it as being set up until it is."
+msgstr "Noch nicht eingerichtet. Bis dahin sehen Mitarbeitende sie als „Wird eingerichtet“."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC apps"
+msgstr "OCSC-Apps"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Ready to connect."
+msgstr "Bereit zum Verbinden."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff access to {0}"
+msgstr "Zugriff der Mitarbeitenden auf {0}"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Waiting for setup"
+msgstr "Wartet auf Einrichtung"

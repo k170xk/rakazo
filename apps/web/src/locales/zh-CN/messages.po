@@ -10002,3 +10002,47 @@ msgstr "面向工程的 AI 工作空间：投标、报告、方案与项目知�
 #: src/pages/Auth.tsx
 msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
 msgstr "通过 Evolve 使用您的 OCSC Microsoft 账户。首次登录会自动创建您的账户。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Apps for staff"
+msgstr "员工应用"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Being set up"
+msgstr "正在设置"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Could not update the app"
+msgstr "无法更新该应用"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled"
+msgstr "已启用"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
+msgstr "已启用的应用可以连接。即将推出的应用会带标记显示给员工。隐藏的应用不会显示，其工具也不会提供给员工的助手。管理员始终可以看到所有应用，以便测试。"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Hidden from staff"
+msgstr "对员工隐藏"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Not set up yet. Staff see it as being set up until it is."
+msgstr "尚未设置。在设置完成前，员工会看到它正在设置。"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC apps"
+msgstr "OCSC 应用"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Ready to connect."
+msgstr "可以连接。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff access to {0}"
+msgstr "员工对 {0} 的访问权限"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Waiting for setup"
+msgstr "等待设置"

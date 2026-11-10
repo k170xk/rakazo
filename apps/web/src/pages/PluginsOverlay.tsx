@@ -1,6 +1,7 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import type {
   CapabilityInstall,
+  CompanyApp,
   Connection,
   ConnectionCatalogItem,
   IntegrationCatalogResult,
@@ -99,6 +100,7 @@ type SourceKind = "treg" | "executor" | "mcp" | "api" | "graphql";
 type OverlayView = "browse" | "manage" | "github" | "source" | "browseMcp" | "domain";
 
 const NO_CATALOG: ConnectionCatalogItem[] = [];
+const NO_APPS: CompanyApp[] = [];
 const NO_CONNECTIONS: Connection[] = [];
 const NO_SOURCES: CapabilityInstall[] = [];
 const NO_PLUGINS: PluginMarketplaceEntry[] = [];
@@ -207,6 +209,8 @@ export function PluginsOverlay({
   const catalogLoaded = integrations.data !== undefined;
   const loading = !catalogLoaded && integrations.isFetching;
   const catalog = integrations.data?.catalog ?? NO_CATALOG;
+  const companyApps = useQuery(queries.connections.companyApps.queryOptions()).data ?? NO_APPS;
+  const isAdmin = useQuery(queries.me.queryOptions()).data?.isAdmin === true;
   const connections = integrations.data?.connections ?? NO_CONNECTIONS;
   const sources = integrations.data?.sources ?? NO_SOURCES;
   const pluginInstalls = integrations.data?.plugins ?? NO_SOURCES;
@@ -708,6 +712,64 @@ export function PluginsOverlay({
       >
         {connecting ? <Trans>Adding…</Trans> : <Trans>Add</Trans>}
       </Button>
+    );
+  }
+
+  function renderCompanyApps() {
+    return (
+      <div className="mb-6" data-testid="company-apps">
+        <SectionHeading as="h2" className="mb-2 px-2.5">
+          <Trans>OCSC apps</Trans>
+        </SectionHeading>
+        <div className="grid grid-cols-2 gap-2">
+          {companyApps.map((app) => {
+            const item =
+              app.ready && app.state === "enabled"
+                ? catalog.find(
+                    (entry) => entry.connectorId === app.connectorId && entry.slug === app.provider,
+                  )
+                : undefined;
+            if (item) return renderCatalogTile(item, app.name, app.logo);
+            const status =
+              app.state === "soon" ? (
+                <Trans>Coming soon</Trans>
+              ) : app.state === "hidden" ? (
+                <Trans>Hidden from staff</Trans>
+              ) : app.ready ? null : isAdmin ? (
+                <Trans>Waiting for setup</Trans>
+              ) : (
+                <Trans>Being set up</Trans>
+              );
+            return (
+              <div
+                key={app.slug}
+                data-testid={`company-app-${app.slug}`}
+                className="flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2"
+              >
+                {app.logo ? (
+                  <img
+                    src={app.logo}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="h-9 w-9 shrink-0 rounded-xl bg-white object-contain p-1.5"
+                  />
+                ) : (
+                  <ConnectorIcon name={app.name} />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[15px] font-medium text-foreground">{app.name}</div>
+                </div>
+                {status ? (
+                  <Badge variant={app.state === "enabled" ? "outline" : "secondary"}>
+                    {status}
+                  </Badge>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     );
   }
 
@@ -1674,10 +1736,11 @@ export function PluginsOverlay({
             renderBrowseMcp()
           ) : (
             <>
+              {showFeatured && !category && companyApps.length > 0 ? renderCompanyApps() : null}
               {catalogLoaded && showFeatured && !category ? (
                 <div className="mb-6" data-testid="featured-connectors">
                   {catalog.length === 0 ? (
-                    plugins.length ? null : (
+                    plugins.length || companyApps.length ? null : (
                       <p className="text-[13.5px] leading-6 text-muted-foreground/80">
                         <Trans>Configure a plugin catalog on the server to connect apps.</Trans>
                       </p>
@@ -1724,6 +1787,7 @@ export function PluginsOverlay({
 
               {catalogLoaded &&
               catalog.length === 0 &&
+              companyApps.length === 0 &&
               !showFeatured &&
               !pluginMatches.length &&
               !brandMatches.length ? (

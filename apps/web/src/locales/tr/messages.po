@@ -10002,3 +10002,47 @@ msgstr "Mühendislik için yapay zekâ çalışma alanınız: ihaleler, raporlar
 #: src/pages/Auth.tsx
 msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
 msgstr "Evolve üzerinden OCSC Microsoft hesabınızı kullanın. İlk girişinizde hesabınız oluşturulur."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Apps for staff"
+msgstr "Çalışanlar için uygulamalar"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Being set up"
+msgstr "Kuruluyor"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Could not update the app"
+msgstr "Uygulama güncellenemedi"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled"
+msgstr "Etkin"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
+msgstr "Etkin uygulamalar bağlanabilir. Yakında gelecek uygulamalar çalışanlara bir rozetle gösterilir. Gizli uygulamalar gösterilmez ve araçları çalışanların asistanlarına sunulmaz. Yöneticiler test etmek için her uygulamayı her zaman görür."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Hidden from staff"
+msgstr "Çalışanlardan gizli"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Not set up yet. Staff see it as being set up until it is."
+msgstr "Henüz kurulmadı. O zamana kadar çalışanlar onu kuruluyor olarak görür."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC apps"
+msgstr "OCSC uygulamaları"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Ready to connect."
+msgstr "Bağlanmaya hazır."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff access to {0}"
+msgstr "Çalışanların {0} erişimi"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Waiting for setup"
+msgstr "Kurulum bekleniyor"

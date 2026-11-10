@@ -7,7 +7,11 @@ import {
   SandboxUnresponsiveError,
 } from "@rakazo/adapter-kit";
 import type { ComputerAccess, MessageBlock, ModelRoleChoice, RunStatus } from "@rakazo/contracts";
-import { disabledBuiltinToolSet } from "@rakazo/contracts";
+import {
+  COMPANY_APP_CONNECTORS,
+  disabledBuiltinToolSet,
+  staffMayUseConnection,
+} from "@rakazo/contracts";
 import {
   assertTransition,
   botMessageAllowsSilence,
@@ -81,6 +85,8 @@ import {
   companyFeatures,
   companyModel,
   companyThinkingLevel,
+  companyTools,
+  isDeploymentAdmin,
   liveDeploymentModelConfigured,
 } from "./company-policy.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
@@ -829,7 +835,17 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const onShutdown = () => runAbortController?.abort(deps.shutdownSignal?.reason);
         deps.shutdownSignal?.addEventListener("abort", onShutdown);
         detachShutdown = () => deps.shutdownSignal?.removeEventListener("abort", onShutdown);
-        const composioRows = storedConnections.filter(
+        // Admins keep every app so they can try one before staff see it.
+        const staffApps = companyTools().staffApps;
+        const ownerMayUse =
+          !storedConnections.some((connection) =>
+            COMPANY_APP_CONNECTORS.includes(connection.connectorId),
+          ) || (await isDeploymentAdmin(deps.prisma, run.userId))
+            ? () => true
+            : (connection: { connectorId: string; provider: string }) =>
+                staffMayUseConnection(staffApps, connection);
+        const usableConnections = storedConnections.filter(ownerMayUse);
+        const composioRows = usableConnections.filter(
           (connection) => connection.connectorId === "composio",
         );
         let liveSlugs: string[] = [];
@@ -842,9 +858,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             );
           }
         }
-        const connectedComposio = mergeConnectedPlugins(composioRows, liveSlugs);
+        const connectedComposio = mergeConnectedPlugins(composioRows, liveSlugs).filter(
+          (connection) => ownerMayUse({ connectorId: "composio", provider: connection.provider }),
+        );
         const connectedPlugins = selectRunConnections(
-          storedConnections,
+          usableConnections,
           connectedComposio.map((connection) => connection.provider),
         );
         const context = {

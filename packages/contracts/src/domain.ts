@@ -2136,6 +2136,93 @@ export const FileCleanupResultSchema = z.object({
 });
 export type FileCleanupResult = z.infer<typeof FileCleanupResultSchema>;
 
+/** Whether staff can connect an app, only see it as coming soon, or not see it at all. */
+export const STAFF_APP_STATES = ["enabled", "soon", "hidden"] as const;
+export const StaffAppStateSchema = z.enum(STAFF_APP_STATES);
+export type StaffAppState = z.infer<typeof StaffAppStateSchema>;
+
+/** Apps the company offers staff whether or not a managed app catalog is configured. */
+export const COMPANY_APPS = [
+  {
+    slug: "sharepoint",
+    name: "SharePoint",
+    logo: "/apps/sharepoint.svg",
+    aliases: ["share_point", "sharepoint"],
+  },
+  { slug: "outlook", name: "Outlook", logo: "/apps/outlook.svg", aliases: ["outlook"] },
+  {
+    slug: "microsoft-teams",
+    name: "Microsoft Teams",
+    logo: "/apps/teams.svg",
+    aliases: ["microsoft_teams", "microsoftteams"],
+  },
+  {
+    slug: "autodesk-forma",
+    name: "Autodesk Forma",
+    logo: "/apps/autodesk.svg",
+    aliases: ["autodesk_forma"],
+  },
+  {
+    slug: "autodesk-acc",
+    name: "Autodesk Construction Cloud",
+    logo: "/apps/autodesk.svg",
+    aliases: ["autodesk_acc", "autodesk_construction_cloud"],
+  },
+] as const satisfies ReadonlyArray<{
+  slug: string;
+  name: string;
+  logo: string;
+  aliases: readonly string[];
+}>;
+
+/** Connectors whose connections are apps governed by the staff app settings. */
+export const COMPANY_APP_CONNECTORS: readonly string[] = ["composio", "pipedream", "microsoft"];
+
+/** The settings key for a catalog provider slug: its company app when one lists it as an alias. */
+export function staffAppKey(provider: string): string {
+  const slug = provider.trim().toLowerCase();
+  return (
+    COMPANY_APPS.find((app) => app.slug === slug || app.aliases.some((a) => a === slug))?.slug ??
+    slug
+  );
+}
+
+/**
+ * Once an admin saves the app list, apps not on it are hidden. Before that, catalog apps stay
+ * open as they always were and only the company apps wait to be switched on.
+ */
+export function staffAppState(
+  staffApps: Record<string, StaffAppState> | undefined,
+  provider: string,
+): StaffAppState {
+  const key = staffAppKey(provider);
+  if (staffApps) return staffApps[key] ?? "hidden";
+  return COMPANY_APPS.some((app) => app.slug === key) ? "hidden" : "enabled";
+}
+
+/** Whether a non-admin may use this connection; non-app connectors are not governed here. */
+export function staffMayUseConnection(
+  staffApps: Record<string, StaffAppState> | undefined,
+  connection: { connectorId: string; provider: string },
+): boolean {
+  if (!COMPANY_APP_CONNECTORS.includes(connection.connectorId)) return true;
+  return staffAppState(staffApps, connection.provider) === "enabled";
+}
+
+/** A company app as staff and admins see it; ready means it can be connected now. */
+export const CompanyAppSchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+  logo: z.string().nullable(),
+  state: StaffAppStateSchema,
+  ready: z.boolean(),
+  /** The connector and provider slug to begin a connection with, when ready. */
+  connectorId: z.string().nullable(),
+  provider: z.string().nullable(),
+  connected: z.boolean(),
+});
+export type CompanyApp = z.infer<typeof CompanyAppSchema>;
+
 /** Built-in skills and company tools an admin has switched off for every account; all others are on. */
 /** The model a bot started from an Evolve assistant runs on, instead of the company model. */
 export const CompanyAssistantModelSchema = z.object({
@@ -2167,6 +2254,8 @@ export const CompanyToolsSchema = z.object({
   chatFileRetentionDays: z.number().int().min(1).max(3650).nullable(),
   /** Keyed by Evolve assistant id; assistants not listed run on the company model. */
   assistantModels: z.record(z.string().uuid(), CompanyAssistantModelSchema).optional(),
+  /** Keyed by app slug; once saved, apps not listed are hidden from staff. */
+  staffApps: z.record(z.string().trim().min(1).max(120), StaffAppStateSchema).optional(),
 });
 export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
 

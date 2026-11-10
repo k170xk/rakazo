@@ -76,6 +76,7 @@ import {
   ChatAlertSchema,
   CONNECTION_LABEL_MAX_LENGTH,
   CompanyAdminStateSchema,
+  CompanyAppSchema,
   CompanyFeaturesSchema,
   CompanyModelInputSchema,
   CompanyToolsSchema,
@@ -1363,6 +1364,8 @@ export const appContract = {
     catalog: oc
       .input(z.object({ query: z.string().optional(), connectorId: z.string().optional() }))
       .output(z.array(ConnectionCatalogItemSchema)),
+    /** Staff get enabled and coming-soon apps; admins get every app with its state. */
+    companyApps: oc.output(z.array(CompanyAppSchema)),
     list: oc.output(z.array(ConnectionSchema)),
     begin: oc
       .input(

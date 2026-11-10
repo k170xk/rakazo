@@ -10002,3 +10002,47 @@ msgstr "Ваше AI-пространство для инженерной раб�
 #: src/pages/Auth.tsx
 msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
 msgstr "Используйте учётную запись Microsoft OCSC через Evolve. При первом входе ваша учётная запись будет создана."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Apps for staff"
+msgstr "Приложения для сотрудников"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Being set up"
+msgstr "Настраивается"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Could not update the app"
+msgstr "Не удалось обновить приложение"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled"
+msgstr "Включено"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
+msgstr "Включённые приложения можно подключить. Скоро доступные приложения показываются сотрудникам с пометкой. Скрытые приложения не показываются, и их инструменты не предлагаются ассистентам сотрудников. Администраторы всегда видят все приложения, чтобы их проверить."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Hidden from staff"
+msgstr "Скрыто от сотрудников"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Not set up yet. Staff see it as being set up until it is."
+msgstr "Ещё не настроено. До тех пор сотрудники видят его как настраиваемое."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC apps"
+msgstr "Приложения OCSC"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Ready to connect."
+msgstr "Готово к подключению."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff access to {0}"
+msgstr "Доступ сотрудников к {0}"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Waiting for setup"
+msgstr "Ожидает настройки"

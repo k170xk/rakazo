@@ -46,6 +46,26 @@ export function companyTools(): CompanyTools {
 }
 
 /**
+ * Whether the account is listed in RAKAZO_ADMIN_EMAILS with a verified email, as the API
+ * decides admins, for processes such as the worker that have no admin list of their own.
+ */
+export async function isDeploymentAdmin(
+  prisma: Pick<PrismaClient, "user">,
+  userId: string,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<boolean> {
+  const admins = (env.RAKAZO_ADMIN_EMAILS ?? "")
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map((email) => email.toLowerCase());
+  if (admins.length === 0) return false;
+  const user = await runAsSystem("check whether a run owner is an admin", () =>
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true, emailVerified: true } }),
+  );
+  return Boolean(user?.emailVerified && admins.includes(user.email.toLowerCase()));
+}
+
+/**
  * The stored company tools; until an admin picks a default computer access level,
  * RAKAZO_COMPUTER_ACCESS_DEFAULT sets it, else everyone gets "tools".
  */
