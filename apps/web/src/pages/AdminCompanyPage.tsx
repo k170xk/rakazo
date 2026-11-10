@@ -24,6 +24,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ChevronLeft,
   Cpu,
+  FileText,
   HardDrive,
   KeyRound,
   MessageSquare,
@@ -46,6 +47,7 @@ import { CompanyAssistantModelsSection } from "./AdminAssistantModels";
 import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
+import { DocumentLibrarySection } from "./AdminDocumentLibrary";
 import { StaffAppsSection } from "./AdminStaffApps";
 import { StaffSpendingSection } from "./AdminStaffSpending";
 import { WindowChrome } from "./WindowChrome";
@@ -57,6 +59,7 @@ const ADMIN_SECTIONS = [
   "tools",
   "voice",
   "vault",
+  "library",
   "computer",
   "storage",
   "people",
@@ -119,6 +122,7 @@ function CompanyAdminPanels() {
     { id: "tools", label: t`Tools and skills`, icon: Wrench },
     { id: "voice", label: t`Voice`, icon: Mic },
     { id: "vault", label: t`Company vault`, icon: KeyRound },
+    { id: "library", label: t`Document library`, icon: FileText },
     { id: "computer", label: t`Computers`, icon: Monitor },
     { id: "storage", label: t`Storage and cleanup`, icon: HardDrive },
     { id: "people", label: t`People`, icon: Users },
@@ -150,6 +154,8 @@ function CompanyAdminPanels() {
         return <CompanyVoiceSection state={data} onSaved={saved} />;
       case "vault":
         return <CompanyVaultSection />;
+      case "library":
+        return <DocumentLibrarySection />;
       case "computer":
         return <CompanyComputerAccessSection state={data} onSaved={saved} />;
       case "storage":

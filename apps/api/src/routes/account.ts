@@ -57,6 +57,11 @@ import {
   setStorageLimit,
   shareCompanyVoice,
 } from "../company-admin.js";
+import {
+  listLibraryDocuments,
+  setDefaultLibraryTemplate,
+  setLibraryDocumentAccess,
+} from "../company-document-library.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -206,6 +211,17 @@ export function accountRoutes(ctx: RouterContext) {
       spending: authed.companyAdmin.spending.handler(({ context, input }) =>
         staffSpending(deps, context.actor.userId, input.period),
       ),
+      documentLibrary: {
+        list: authed.companyAdmin.documentLibrary.list.handler(({ context }) =>
+          listLibraryDocuments(deps, context.actor),
+        ),
+        setAccess: authed.companyAdmin.documentLibrary.setAccess.handler(({ context, input }) =>
+          setLibraryDocumentAccess(deps, context.actor, input),
+        ),
+        setDefaultTemplate: authed.companyAdmin.documentLibrary.setDefaultTemplate.handler(
+          ({ context, input }) => setDefaultLibraryTemplate(deps, context.actor, input),
+        ),
+      },
     },
     accessGrants: {
       list: authed.accessGrants.list.handler(async ({ context }) => {

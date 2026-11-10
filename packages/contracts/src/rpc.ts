@@ -104,6 +104,8 @@ import {
   GroupSchema,
   IncomingBotCallSchema,
   IntegrationCatalogResultSchema,
+  LibraryAiAccessSchema,
+  LibraryDocumentSchema,
   McpServerConfigInput,
   McpServerSchema,
   MemoryDocumentSchema,
@@ -422,6 +424,26 @@ export const appContract = {
     spending: oc
       .input(z.object({ period: z.enum(STAFF_SPENDING_PERIODS).default("30d") }))
       .output(StaffSpendingSchema),
+    /**
+     * What AI may do with each Evolve Document Library item, read and changed in Evolve as the
+     * admin, who must also be an Evolve admin or Document Library manager.
+     */
+    documentLibrary: {
+      list: oc.output(
+        z.object({
+          documents: z.array(LibraryDocumentSchema),
+          /** The template new Word documents start from; null is the built-in OCSC report. */
+          defaultTemplateId: z.string().nullable(),
+        }),
+      ),
+      /** Makes a Library template the company's default Word template, or null for the built-in one. */
+      setDefaultTemplate: oc
+        .input(z.object({ id: z.string().uuid().nullable() }))
+        .output(z.object({ defaultTemplateId: z.string().nullable() })),
+      setAccess: oc
+        .input(z.object({ id: z.string().uuid(), aiAccess: LibraryAiAccessSchema }))
+        .output(z.object({ id: z.string(), aiAccess: LibraryAiAccessSchema })),
+    },
   },
   /** Admins only, on deployments that sell model credits. */
   accessGrants: {

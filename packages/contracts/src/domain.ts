@@ -2269,6 +2269,11 @@ export const CompanyToolsSchema = z.object({
   assistantModels: z.record(z.string().uuid(), CompanyAssistantModelSchema).optional(),
   /** Keyed by app slug or pluginStaffKey; once saved, apps not listed are hidden from staff. */
   staffApps: z.record(z.string().trim().min(1).max(2100), StaffAppStateSchema).optional(),
+  /**
+   * The Document Library template `ocsc word new` uses when nobody names one; null or absent
+   * keeps the built-in OCSC report.
+   */
+  defaultWordTemplateId: z.string().uuid().nullable().optional(),
 });
 export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
 
@@ -2419,6 +2424,24 @@ export const CompanyAdminStateSchema = z.object({
   }),
 });
 export type CompanyAdminState = z.infer<typeof CompanyAdminStateSchema>;
+
+/** What AI assistants may do with an Evolve Document Library item. */
+export const LibraryAiAccessSchema = z.enum(["read_only", "template", "hidden"]);
+export type LibraryAiAccess = z.infer<typeof LibraryAiAccessSchema>;
+
+export const LibraryDocumentSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  folder: z.string().nullable(),
+  fileName: z.string().nullable(),
+  type: z.string(),
+  aiAccess: LibraryAiAccessSchema,
+  /** Whether the document has instructions for the AI, which are edited in Evolve. */
+  hasInstructions: z.boolean(),
+  /** Only Word files can be templates. */
+  canBeTemplate: z.boolean(),
+});
+export type LibraryDocument = z.infer<typeof LibraryDocumentSchema>;
 
 export const CompanyModelInputSchema = z.object({
   provider: z.string().trim().min(1).max(80),

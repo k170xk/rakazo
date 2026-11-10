@@ -12,12 +12,14 @@
  * pastes into its reply so the person gets a download card.
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -174,6 +176,35 @@ function templateFiles() {
 
 function listTemplates() {
   return templateFiles().map((t) => t.name);
+}
+
+/**
+ * The company's default Word template from the Document Library, which the server passes as
+ * --default-template-url when the person named no template. It is filled in with the OCSC
+ * report's manifest; null falls back to the built-in copy when it cannot be fetched or opened.
+ */
+async function libraryDefaultTemplate(url, name) {
+  if (typeof url !== "string" || !/^https:\/\//i.test(url)) return null;
+  const dir = join(tmpdir(), "ocsc-word-default-template");
+  const key = createHash("sha256").update(url).digest("hex").slice(0, 32);
+  const file = join(dir, `${key}.docx`);
+  try {
+    if (!existsSync(file)) {
+      const bytes = download(url, "--default-template-url");
+      const zip = await JSZip.loadAsync(bytes);
+      if (!zip.file("word/document.xml")) return null;
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(`${file}.part`, bytes);
+      renameSync(`${file}.part`, file);
+    }
+  } catch {
+    return null;
+  }
+  const label =
+    typeof name === "string"
+      ? name.trim().replace(/[^A-Za-z0-9 _-]+/g, "-")
+      : "";
+  return { name: label || DEFAULT_TEMPLATE, source: "library", file };
 }
 
 /** The optional `<template>.json` beside a template: description, fields, banner wording. */
@@ -1994,8 +2025,17 @@ async function cmdTemplates() {
 }
 
 async function cmdNew(o) {
-  const template = resolveTemplate(o.template);
-  const manifest = manifestFor(template.file);
+  const asked = typeof o.template === "string" && o.template.trim();
+  const library = asked
+    ? null
+    : await libraryDefaultTemplate(
+        o["default-template-url"],
+        o["default-template-name"],
+      );
+  const template = library ?? resolveTemplate(o.template);
+  const manifest = manifestFor(
+    library ? resolveTemplate(DEFAULT_TEMPLATE).file : template.file,
+  );
   const spec = readSpec(o.spec);
   const out = inWorkspace(o.out, "--out");
   if (!out.full.toLowerCase().endsWith(".docx"))
@@ -2093,6 +2133,7 @@ async function cmdNew(o) {
   return {
     ok: true,
     template: template.name,
+    ...(library ? { templateSource: "Document Library" } : {}),
     ...(office ? { office: office.office } : {}),
     ...(filled.length ? { filled } : {}),
     ...(unfilled.length

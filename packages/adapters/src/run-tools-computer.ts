@@ -44,12 +44,13 @@ import {
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import {
   documentAuthor,
+  noteDocumentWrite,
   OCSC_PROGRAMS,
   ocscAfterRun,
-  noteDocumentWrite,
   ocscBeforeRun,
   ocscCommand,
   ocscProgramArgs,
+  withDefaultWordTemplate,
   wordRebuildRefusal,
 } from "./ocsc-tool.js";
 import { purchaseApprovalOf } from "./purchase-gate.js";
@@ -581,7 +582,7 @@ export const computerTools: ToolHandlers = {
     }
     const rebuild = wordRebuildRefusal(program, given, ctx.computer.wordDocuments ?? []);
     if (rebuild) return call.finish({ error: rebuild });
-    const args = ocscProgramArgs(given);
+    const args = await withDefaultWordTemplate(ctx, program, ocscProgramArgs(given));
     const author = await documentAuthor(ctx);
     const runner = ctx.computer.documents ?? ctx.computer.runner;
     if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {

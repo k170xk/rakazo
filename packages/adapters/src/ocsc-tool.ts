@@ -1,5 +1,9 @@
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
+import { getLogger } from "@rakazo/logging";
+import { companyTools } from "./company-policy.js";
+import type { EvolvePluginsConnection } from "./evolve-plugins.js";
+import { callEvolveDocumentLibrary } from "./evolve-plugins.js";
 import { storageRefusal } from "./file-retention.js";
 import type { RunContext } from "./run-context.js";
 
@@ -76,6 +80,74 @@ export function isWordDocument(name: string, mimeType: string | null | undefined
 
 /** Passed to `ocsc word new` when the person asked for a brand-new document; removed before running. */
 export const NEW_DOCUMENT_FLAG = "--new-document";
+
+type LibraryTemplate = { title: string; fileUrl: string };
+
+/** Kept briefly so each new document does not ask Evolve again; a miss is retried sooner. */
+const libraryTemplates = new Map<string, { at: number; template: LibraryTemplate | null }>();
+const LIBRARY_TEMPLATE_TTL_MS = 5 * 60_000;
+const LIBRARY_TEMPLATE_MISS_TTL_MS = 60_000;
+
+export function resetLibraryTemplateCache(): void {
+  libraryTemplates.clear();
+}
+
+async function libraryTemplate(
+  ctx: RunContext,
+  connection: EvolvePluginsConnection,
+  id: string,
+): Promise<LibraryTemplate | null> {
+  const cached = libraryTemplates.get(id);
+  const age = cached ? Date.now() - cached.at : Number.POSITIVE_INFINITY;
+  if (cached && age < (cached.template ? LIBRARY_TEMPLATE_TTL_MS : LIBRARY_TEMPLATE_MISS_TTL_MS))
+    return cached.template;
+  let template: LibraryTemplate | null = null;
+  try {
+    const user = await runAsSystem("read the run owner's email", () =>
+      ctx.deps.prisma.user.findUnique({ where: { id: ctx.run.userId }, select: { email: true } }),
+    );
+    if (user?.email) {
+      const found = await callEvolveDocumentLibrary<{ title?: unknown; fileUrl?: unknown }>(
+        connection,
+        user.email,
+        { action: "template", id },
+      );
+      if (typeof found.fileUrl === "string" && found.fileUrl.startsWith("https://")) {
+        template = {
+          fileUrl: found.fileUrl,
+          title: typeof found.title === "string" ? found.title : "",
+        };
+      }
+    }
+  } catch (error) {
+    getLogger().warn("default word template unavailable", { id, error: String(error) });
+  }
+  libraryTemplates.set(id, { at: Date.now(), template });
+  return template;
+}
+
+/**
+ * `ocsc word new` without --template gets the Document Library template an admin made the
+ * company default; ocsc-word uses its built-in OCSC report when it has none or cannot fetch it.
+ */
+export async function withDefaultWordTemplate(
+  ctx: RunContext,
+  program: string,
+  args: readonly string[],
+): Promise<string[]> {
+  if (program !== "word" || args[0] !== "new" || args.includes("--template")) return [...args];
+  const id = companyTools().defaultWordTemplateId;
+  const connection = ctx.deps.evolvePlugins;
+  if (!id || !connection) return [...args];
+  const template = await libraryTemplate(ctx, connection, id);
+  if (!template) return [...args];
+  return [
+    ...args,
+    "--default-template-url",
+    template.fileUrl,
+    ...(template.title ? ["--default-template-name", template.title] : []),
+  ];
+}
 
 /** The arguments the OCSC program receives. */
 export function ocscProgramArgs(args: readonly string[]): string[] {
