@@ -14,6 +14,8 @@ import type { Prisma, PrismaClient } from "@rakazo/db";
 import { runAsSystem, runAsTenant } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { combineSignals, sanitizeConnectorError } from "./connector-safety.js";
+import type { MailGraph } from "./microsoft-mail.js";
+import { OUTLOOK_PROVIDER, OUTLOOK_SCOPES, outlookTools, runMailTool } from "./microsoft-mail.js";
 import { isVitestRuntime } from "./test-runtime.js";
 import { readBodyCapped } from "./web-ssrf.js";
 
@@ -23,6 +25,36 @@ export const MICROSOFT_CALLBACK_PATH = "/api/v1/connections/microsoft/callback";
 /** Read-only by design: nothing here lets the app change or delete a file. */
 export const MICROSOFT_SCOPES =
   "openid profile offline_access User.Read Files.Read.All Sites.Read.All";
+
+/**
+ * The Microsoft apps on the company's Entra app. Each is its own connection with its own
+ * sign-in, so connecting SharePoint never grants mail and connecting Outlook never grants files.
+ */
+const MICROSOFT_APPS = {
+  [SHAREPOINT_PROVIDER]: {
+    name: "SharePoint",
+    logo: "/apps/sharepoint.svg",
+    scopes: MICROSOFT_SCOPES,
+    keywords: "sharepoint microsoft files documents",
+  },
+  [OUTLOOK_PROVIDER]: {
+    name: "Outlook",
+    logo: "/apps/outlook.svg",
+    scopes: OUTLOOK_SCOPES,
+    keywords: "outlook microsoft email mail inbox",
+  },
+} as const;
+type MicrosoftApp = keyof typeof MICROSOFT_APPS;
+const MICROSOFT_APP_SLUGS = Object.keys(MICROSOFT_APPS) as MicrosoftApp[];
+
+function isMicrosoftApp(provider: string | null | undefined): provider is MicrosoftApp {
+  return MICROSOFT_APP_SLUGS.includes(provider as MicrosoftApp);
+}
+
+/** SharePoint was the only Microsoft app before Outlook, so a row without a known one is it. */
+function appOf(row: { provider?: string | null }): MicrosoftApp {
+  return isMicrosoftApp(row.provider) ? row.provider : SHAREPOINT_PROVIDER;
+}
 export const SHAREPOINT_MAX_FILE_BYTES = 50 * 1024 * 1024;
 /** Where a read file lands on the assistant's computer. */
 export const SHAREPOINT_COMPUTER_FOLDER = "sharepoint";
@@ -95,6 +127,7 @@ type ConnectionRow = {
   id: string;
   spaceId: string;
   userId: string;
+  provider?: string;
   status: string;
   secretId: string | null;
   providerRef: string | null;
@@ -102,8 +135,8 @@ type ConnectionRow = {
 };
 
 export class MicrosoftReconnectError extends Error {
-  constructor() {
-    super("SharePoint needs signing in again. Reconnect it in Plugins.");
+  constructor(app = "SharePoint") {
+    super(`${app} needs signing in again. Reconnect it in Plugins.`);
   }
 }
 
@@ -188,14 +221,19 @@ function describeItem(item: DriveItem) {
   };
 }
 
+function routeFor(connectionId: string) {
+  return (toolName: string) => ({ connectorId: MICROSOFT_CONNECTOR_ID, toolName, connectionId });
+}
+
 const ID_ARGS = {
   drive_id: { type: "string", description: "drive_id from a SharePoint listing or search" },
   item_id: { type: "string", description: "item_id from a SharePoint listing or search" },
 };
 
 /**
- * Read-only SharePoint for one person, through their own Microsoft sign-in. Assistants only
- * reach the folders that person chose, and every listing, search and read checks it again.
+ * Read-only SharePoint and Outlook for one person, through their own Microsoft sign-in.
+ * SharePoint assistants only reach the folders that person chose, and every listing, search
+ * and read checks it again; Outlook reads only the signed-in person's own mailbox.
  */
 export class MicrosoftConnector implements ManagedConnectorProvider {
   private readonly accessTokens = new Map<string, { value: string; expiresAt: number }>();
@@ -222,30 +260,31 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
 
   async catalog(context: AdapterContext, query?: string): Promise<ConnectorCatalogItem[]> {
     const words = (query ?? "").trim().toLowerCase();
-    if (words && !"sharepoint microsoft".includes(words)) return [];
+    const apps = MICROSOFT_APP_SLUGS.filter(
+      (slug) => !words || MICROSOFT_APPS[slug].keywords.includes(words),
+    );
+    if (apps.length === 0) return [];
     const connected = await this.listConnectedExternalIds(context);
-    return [
-      {
-        connectorId: MICROSOFT_CONNECTOR_ID,
-        slug: SHAREPOINT_PROVIDER,
-        name: "SharePoint",
-        logo: "/apps/sharepoint.svg",
-        connected: connected.includes(SHAREPOINT_PROVIDER),
-        noAuth: false,
-      },
-    ];
+    return apps.map((slug) => ({
+      connectorId: MICROSOFT_CONNECTOR_ID,
+      slug,
+      name: MICROSOFT_APPS[slug].name,
+      logo: MICROSOFT_APPS[slug].logo,
+      connected: connected.includes(slug),
+      noAuth: false,
+    }));
   }
 
   async listConnectedExternalIds(context: AdapterContext): Promise<string[]> {
     const rows = await this.rows(context, { status: "connected", secretId: { not: null } });
-    return rows.length > 0 ? [SHAREPOINT_PROVIDER] : [];
+    return [...new Set(rows.map(appOf))];
   }
 
   async begin(
     request: { provider: string; redirectUrl: string },
     _context: AdapterContext,
   ): Promise<{ authorizationUrl: string | null; state: string }> {
-    if (request.provider !== SHAREPOINT_PROVIDER) throw new Error("Unknown Microsoft app");
+    if (!isMicrosoftApp(request.provider)) throw new Error("Unknown Microsoft app");
     const state = randomBytes(32).toString("base64url");
     const url = new URL(
       `https://login.microsoftonline.com/${encodeURIComponent(this.config.tenantId)}/oauth2/v2.0/authorize`,
@@ -255,7 +294,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       response_type: "code",
       redirect_uri: this.redirectUrl,
       response_mode: "query",
-      scope: MICROSOFT_SCOPES,
+      scope: MICROSOFT_APPS[request.provider].scopes,
       state,
       code_challenge: createHash("sha256").update(this.verifier(state)).digest("base64url"),
       code_challenge_method: "S256",
@@ -284,7 +323,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
         where: {
           userId,
           connectorId: MICROSOFT_CONNECTOR_ID,
-          provider: SHAREPOINT_PROVIDER,
+          provider: { in: MICROSOFT_APP_SLUGS },
           providerRef: request.state,
           status: "pending",
         },
@@ -299,12 +338,13 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
           spaceId: owner.spaceId,
           userId: owner.userId,
           connectorId: MICROSOFT_CONNECTOR_ID,
-          provider: SHAREPOINT_PROVIDER,
+          provider: { in: MICROSOFT_APP_SLUGS },
           providerRef: request.state,
           status: "pending",
         },
       });
       if (!row) return false;
+      const app = appOf(row);
       if (request.error || !request.code) {
         await this.prisma.connection.updateMany({
           where: { id: row.id, status: "pending" },
@@ -312,7 +352,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
         });
         return false;
       }
-      const tokens = await this.tokenRequest({
+      const tokens = await this.tokenRequest(app, {
         grant_type: "authorization_code",
         code: request.code,
         redirect_uri: this.redirectUrl,
@@ -352,7 +392,9 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
           where: { id: row.id, status: "pending", providerRef: request.state },
           data: {
             secretId: stored.id,
-            ...(account.email ? { displayName: `SharePoint (${account.email})` } : {}),
+            ...(account.email
+              ? { displayName: `${MICROSOFT_APPS[app].name} (${account.email})` }
+              : {}),
             metadata: { ...metadataRecord(row.metadata), signedIn: request.state, account },
           },
         });
@@ -368,8 +410,8 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
   }
 
   async connectionReady(context: AdapterContext, externalId: string): Promise<boolean> {
-    if (externalId !== SHAREPOINT_PROVIDER) return false;
-    const rows = await this.rows(context, { status: { in: ["pending", "connected"] } });
+    if (!isMicrosoftApp(externalId)) return false;
+    const rows = await this.rows(context, { status: { in: ["pending", "connected"] } }, externalId);
     const pending = rows.filter((row) => row.status === "pending");
     if (pending.length > 0) {
       return pending.every(
@@ -386,8 +428,8 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
           spaceId: context.spaceId,
           userId: context.userId,
           connectorId: MICROSOFT_CONNECTOR_ID,
-          ...(connectionRef === SHAREPOINT_PROVIDER
-            ? { status: "revoked" }
+          ...(isMicrosoftApp(connectionRef)
+            ? { provider: connectionRef, status: "revoked" }
             : { providerRef: connectionRef }),
         },
         select: { id: true, secretId: true },
@@ -412,22 +454,22 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       context.connectedConnections?.filter(
         (connection) =>
           connection.connectorId === MICROSOFT_CONNECTOR_ID &&
-          connection.externalId === SHAREPOINT_PROVIDER,
+          isMicrosoftApp(connection.externalId),
       ) ?? [];
     if (connections.length === 0) return [];
     const rows = await this.rows(context, {
       id: { in: connections.map((connection) => connection.id) },
       status: "connected",
     });
-    return rows.flatMap((row) => this.toolsFor(row.id, savedFolders(row.metadata)));
+    return rows.flatMap((row) =>
+      appOf(row) === OUTLOOK_PROVIDER
+        ? outlookTools(routeFor(row.id))
+        : this.toolsFor(row.id, savedFolders(row.metadata)),
+    );
   }
 
   private toolsFor(connectionId: string, folders: SharePointFolder[]): ConnectorTool[] {
-    const route = (toolName: string) => ({
-      connectorId: MICROSOFT_CONNECTOR_ID,
-      toolName,
-      connectionId,
-    });
+    const route = routeFor(connectionId);
     const shared =
       folders.length === 0
         ? "The person has not chosen any SharePoint folders yet; ask them to choose some in Plugins → SharePoint → Choose folders."
@@ -475,19 +517,40 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
 
   async *execute(call: ConnectorCall, context: AdapterContext): AsyncIterable<ConnectorEvent> {
     const connectionId = call.route?.connectionId ?? call.connectionId;
+    const tool = call.route?.toolName ?? call.tool;
+    const wanted: MicrosoftApp = tool.startsWith("outlook_")
+      ? OUTLOOK_PROVIDER
+      : SHAREPOINT_PROVIDER;
     const allowed = context.connectedConnections?.some(
       (connection) =>
-        connection.id === connectionId && connection.connectorId === MICROSOFT_CONNECTOR_ID,
+        connection.id === connectionId &&
+        connection.connectorId === MICROSOFT_CONNECTOR_ID &&
+        appOf({ provider: connection.externalId }) === wanted,
     );
     if (!connectionId || !allowed) {
-      yield { type: "error", message: "SharePoint is not connected for this conversation." };
+      yield {
+        type: "error",
+        message:
+          wanted === OUTLOOK_PROVIDER
+            ? "Outlook is only available in the person's own chat with their own assistant."
+            : "SharePoint is not connected for this conversation.",
+      };
       return;
     }
     let token: string | undefined;
     try {
-      const [row] = await this.rows(context, { id: connectionId, status: "connected" });
+      const [row] = await this.rows(context, { id: connectionId, status: "connected" }, wanted);
       if (!row) {
-        yield { type: "error", message: "SharePoint is not connected. Reconnect it in Plugins." };
+        yield {
+          type: "error",
+          message: `${MICROSOFT_APPS[wanted].name} is not connected. Reconnect it in Plugins.`,
+        };
+        return;
+      }
+      if (wanted === OUTLOOK_PROVIDER) {
+        const mailToken = await this.accessToken(row, context);
+        token = mailToken;
+        yield* runMailTool(this.mailGraph(mailToken, context.signal), tool, call.args);
         return;
       }
       const folders = savedFolders(row.metadata);
@@ -500,7 +563,6 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
         return;
       }
       token = await this.accessToken(row, context);
-      const tool = call.route?.toolName ?? call.tool;
       const scope = await this.resolveFolders(token, folders, context.signal);
       if (tool === "sharepoint_list_folders") {
         yield {
@@ -728,9 +790,11 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       .digest("base64url");
   }
 
+  /** The person's own Microsoft connections, for one app or all of them. */
   private rows(
     context: Pick<AdapterContext, "spaceId" | "userId">,
     where: Prisma.ConnectionWhereInput,
+    app?: MicrosoftApp,
   ): Promise<ConnectionRow[]> {
     return runAsTenant(context, () =>
       this.prisma.connection.findMany({
@@ -739,12 +803,13 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
           spaceId: context.spaceId,
           userId: context.userId,
           connectorId: MICROSOFT_CONNECTOR_ID,
-          provider: SHAREPOINT_PROVIDER,
+          provider: app ?? { in: MICROSOFT_APP_SLUGS },
         },
         select: {
           id: true,
           spaceId: true,
           userId: true,
+          provider: true,
           status: true,
           secretId: true,
           providerRef: true,
@@ -759,7 +824,11 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     owner: { spaceId: string; userId: string },
     connectionId: string,
   ): Promise<ConnectionRow> {
-    const [row] = await this.rows(owner, { id: connectionId, status: "connected" });
+    const [row] = await this.rows(
+      owner,
+      { id: connectionId, status: "connected" },
+      SHAREPOINT_PROVIDER,
+    );
     if (!row) throw new Error("SharePoint is not connected.");
     return row;
   }
@@ -770,13 +839,15 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
   ): Promise<string> {
     const cached = this.accessTokens.get(row.id);
     if (cached && cached.expiresAt > Date.now() + 60_000) return cached.value;
-    if (!row.secretId) throw new MicrosoftReconnectError();
+    const app = appOf(row);
+    const name = MICROSOFT_APPS[app].name;
+    if (!row.secretId) throw new MicrosoftReconnectError(name);
     const material = await runAsTenant(owner, async () => {
       const secret = await this.prisma.secret.findFirst({
         where: { id: row.secretId!, userId: owner.userId },
         select: { id: true, ciphertext: true },
       });
-      if (!secret) throw new MicrosoftReconnectError();
+      if (!secret) throw new MicrosoftReconnectError(name);
       return {
         id: secret.id,
         tokens: JSON.parse(await this.secrets.load(secret.ciphertext, secret.id)) as StoredTokens,
@@ -784,7 +855,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     });
     let tokens: Awaited<ReturnType<MicrosoftConnector["tokenRequest"]>>;
     try {
-      tokens = await this.tokenRequest({
+      tokens = await this.tokenRequest(app, {
         grant_type: "refresh_token",
         refresh_token: material.tokens.refreshToken,
       });
@@ -796,7 +867,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
             data: { status: "error" },
           }),
         );
-        throw new MicrosoftReconnectError();
+        throw new MicrosoftReconnectError(name);
       }
       throw error;
     }
@@ -853,7 +924,10 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     );
   }
 
-  private async tokenRequest(fields: Record<string, string>): Promise<{
+  private async tokenRequest(
+    app: MicrosoftApp,
+    fields: Record<string, string>,
+  ): Promise<{
     access_token: string;
     refresh_token?: string;
     expires_in?: number;
@@ -866,7 +940,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
         body: new URLSearchParams({
           client_id: this.config.clientId,
           client_secret: this.config.clientSecret,
-          scope: MICROSOFT_SCOPES,
+          scope: MICROSOFT_APPS[app].scopes,
           ...fields,
         }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -892,26 +966,53 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     return body as { access_token: string; refresh_token?: string; expires_in?: number };
   }
 
-  private async graphJson<T>(token: string, path: string, signal?: AbortSignal): Promise<T> {
+  private async graphJson<T>(
+    token: string,
+    path: string,
+    signal?: AbortSignal,
+    options: { app?: string; headers?: Record<string, string> } = {},
+  ): Promise<T> {
+    const app = options.app ?? "SharePoint";
     const abort = combineSignals(signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS));
     const response = await this.fetch()(`${GRAPH}${path}`, {
-      headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+      headers: {
+        ...options.headers,
+        authorization: `Bearer ${token}`,
+        accept: "application/json",
+      },
       signal: abort,
     });
     const text = new TextDecoder().decode(await readBodyCapped(response, MAX_JSON_BYTES, abort));
-    if (!response.ok) {
-      let message = `HTTP ${response.status}`;
-      try {
-        const parsed = JSON.parse(text) as { error?: { message?: string } };
-        if (parsed.error?.message) message = parsed.error.message;
-      } catch {}
-      if (response.status === 404) throw new Error("SharePoint could not find that item.");
-      if (response.status === 403) {
-        throw new Error("SharePoint refused access to that item for this person.");
-      }
-      throw new Error(`SharePoint returned ${message}`);
-    }
+    if (!response.ok) throw graphError(app, response.status, text);
     return (text ? JSON.parse(text) : {}) as T;
+  }
+
+  /** Outlook as the signed-in person, through their own token only. */
+  private mailGraph(token: string, signal: AbortSignal | undefined): MailGraph {
+    return {
+      json: (path, headers) => this.graphJson(token, path, signal, { app: "Outlook", headers }),
+      bytes: async (path, maxBytes) => {
+        const abort = combineSignals(signal, AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS));
+        const response = await this.fetch()(`${GRAPH}${path}`, {
+          headers: { authorization: `Bearer ${token}` },
+          signal: abort,
+          redirect: "follow",
+        });
+        if (!response.ok) {
+          const text = await response.text().catch(() => "");
+          throw graphError("Outlook", response.status, text);
+        }
+        try {
+          return await readBodyCapped(response, maxBytes, abort);
+        } catch (error) {
+          if (error instanceof Error && error.message === "Response is too large") {
+            throw new Error("That attachment is larger than 50 MB.");
+          }
+          throw error;
+        }
+      },
+      fileName: computerFileName,
+    };
   }
 
   /** The chosen folders as they are now, so a moved or renamed folder keeps its contents. */
@@ -1045,6 +1146,18 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
 }
 
 class MicrosoftGrantError extends Error {}
+
+function graphError(app: string, status: number, text: string): Error {
+  let message = `HTTP ${status}`;
+  try {
+    const parsed = JSON.parse(text) as { error?: { message?: string } };
+    if (parsed.error?.message) message = parsed.error.message;
+  } catch {}
+  const thing = app === "Outlook" ? "that email, folder or attachment" : "that item";
+  if (status === 404) return new Error(`${app} could not find ${thing}.`);
+  if (status === 403) return new Error(`${app} refused access to ${thing} for this person.`);
+  return new Error(`${app} returned ${message}`);
+}
 
 function decodeSafely(value: string): string {
   try {

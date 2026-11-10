@@ -265,6 +265,141 @@ describe("MicrosoftConnector", () => {
     expect(requests.some((path) => path.endsWith("/content"))).toBe(false);
   });
 
+  function outlookConnector() {
+    const row = {
+      id: "conn-mail",
+      spaceId: "space-1",
+      userId: "user-1",
+      provider: "outlook",
+      status: "connected",
+      secretId: "secret-mail",
+      providerRef: "state-mail",
+      metadata: {},
+    };
+    const findMany = vi.fn(async (query: { where: { provider: unknown } }) =>
+      query.where.provider === "sharepoint" ? [] : [row],
+    );
+    const prisma = {
+      connection: { findMany, updateMany: vi.fn() },
+      secret: { findFirst: vi.fn(async () => ({ id: "secret-mail", ciphertext: "cipher" })) },
+    } as unknown as PrismaClient;
+    const secrets = {
+      load: vi.fn(async () => JSON.stringify({ refreshToken: "fake-refresh" })),
+    } as unknown as SecretStore;
+    const requests: Array<{ url: URL; body?: string }> = [];
+    const fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(String(input instanceof Request ? input.url : input));
+      requests.push({
+        url,
+        body: typeof init?.body === "string" ? init.body : init?.body?.toString(),
+      });
+      if (url.hostname === "login.microsoftonline.com") {
+        return Response.json({ access_token: "fake-mail-access", expires_in: 3_600 });
+      }
+      return Response.json({
+        value: [{ id: "inbox-id", displayName: "Inbox", unreadItemCount: 2 }],
+      });
+    }) as unknown as typeof globalThis.fetch;
+    return {
+      connector: new MicrosoftConnector(CONFIG, prisma, secrets, { fetch }),
+      requests,
+      findMany,
+    };
+  }
+
+  const mailContext: AdapterContext = {
+    ...context,
+    connectedConnections: [
+      {
+        id: "conn-mail",
+        connectorId: "microsoft",
+        externalId: "outlook",
+        displayName: "Outlook",
+        providerRef: "state-mail",
+      },
+    ],
+  };
+
+  async function runMail(
+    connector: MicrosoftConnector,
+    tool: string,
+    on: AdapterContext,
+    connectionId = "conn-mail",
+  ) {
+    const events: ConnectorEvent[] = [];
+    for await (const event of connector.execute(
+      {
+        tool,
+        args: {},
+        executionId: "e-mail",
+        route: { connectorId: "microsoft", toolName: tool, connectionId },
+      },
+      on,
+    ))
+      events.push(event);
+    return events;
+  }
+
+  it("lists both Microsoft apps, each with its own sign-in", async () => {
+    const connector = new MicrosoftConnector(
+      CONFIG,
+      { connection: { findMany: vi.fn(async () => []) } } as unknown as PrismaClient,
+      {} as SecretStore,
+    );
+    expect((await connector.catalog(context)).map((item) => item.slug)).toEqual([
+      "sharepoint",
+      "outlook",
+    ]);
+    expect((await connector.catalog(context, "email")).map((item) => item.slug)).toEqual([
+      "outlook",
+    ]);
+    const started = await connector.begin({ provider: "outlook", redirectUrl: "ignored" }, context);
+    expect(new URL(started.authorizationUrl!).searchParams.get("scope")).toBe(
+      "openid profile offline_access User.Read Mail.Read",
+    );
+  });
+
+  it("offers mail tools for an Outlook connection and reads with its own token and scope", async () => {
+    const { connector, requests } = outlookConnector();
+    expect((await connector.discoverTools(mailContext)).map((tool) => tool.name)).toEqual([
+      "outlook_list_folders",
+      "outlook_list_messages",
+      "outlook_search",
+      "outlook_read_message",
+      "outlook_read_attachment",
+    ]);
+    const events = await runMail(connector, "outlook_list_folders", mailContext);
+    expect(events).toEqual([
+      {
+        type: "result",
+        data: { folders: [{ folder_id: "inbox-id", name: "Inbox", unread: 2, total: undefined }] },
+      },
+    ]);
+    const token = requests.find((request) => request.url.hostname === "login.microsoftonline.com");
+    expect(new URLSearchParams(token!.body).get("scope")).toBe(
+      "openid profile offline_access User.Read Mail.Read",
+    );
+    expect(requests.at(-1)!.url.pathname).toBe("/v1.0/me/mailFolders");
+  });
+
+  it("refuses mail when this run was not given the Outlook connection", async () => {
+    const { connector, requests } = outlookConnector();
+    // A run outside the person's private chat has no Outlook connection, only SharePoint.
+    const events = await runMail(connector, "outlook_list_folders", context);
+    expect(events).toEqual([
+      {
+        type: "error",
+        message: "Outlook is only available in the person's own chat with their own assistant.",
+      },
+    ]);
+    // A SharePoint connection cannot be used to reach mail, nor Outlook for files.
+    expect((await runMail(connector, "outlook_search", context, "conn-1"))[0]?.type).toBe("error");
+    expect((await runMail(connector, "sharepoint_list_folders", mailContext))[0]?.type).toBe(
+      "error",
+    );
+    expect(requests).toEqual([]);
+  });
+
   it("refuses a connection this run was not given", async () => {
     const { connector } = connectorWithSharePoint({});
     const events: ConnectorEvent[] = [];

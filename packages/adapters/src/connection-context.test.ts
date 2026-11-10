@@ -1,7 +1,47 @@
 import type { PrismaClient } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
 import { mergeConnectedPlugins } from "./composio-connector.js";
-import { persistLivePluginConnections, selectRunConnections } from "./connection-context.js";
+import {
+  isOwnersPrivateChat,
+  persistLivePluginConnections,
+  selectRunConnections,
+  withoutPrivateApps,
+} from "./connection-context.js";
+
+describe("private mail stays in the owner's own chat", () => {
+  const own = {
+    run: { userId: "keith", trigger: "user" },
+    bot: { id: "bot-1", userId: "keith" },
+    thread: { userId: "keith", botId: "bot-1", groupId: null, externalConversationId: null },
+  };
+
+  it("is private only in the person's one-to-one chat with their own bot", () => {
+    expect(isOwnersPrivateChat(own)).toBe(true);
+    expect(isOwnersPrivateChat({ ...own, run: { ...own.run, trigger: "routine" } })).toBe(true);
+    expect(isOwnersPrivateChat({ ...own, thread: { ...own.thread, groupId: "g" } })).toBe(false);
+    expect(
+      isOwnersPrivateChat({ ...own, thread: { ...own.thread, externalConversationId: "slack" } }),
+    ).toBe(false);
+    expect(isOwnersPrivateChat({ ...own, thread: { ...own.thread, botId: "other-bot" } })).toBe(
+      false,
+    );
+    // A colleague talking to Keith's bot, or Keith's bot answering another bot.
+    expect(isOwnersPrivateChat({ ...own, run: { userId: "anne", trigger: "user" } })).toBe(false);
+    for (const trigger of ["bot_message", "messaging", "webhook", "spawn", "tickets"]) {
+      expect(isOwnersPrivateChat({ ...own, run: { ...own.run, trigger } })).toBe(false);
+    }
+  });
+
+  it("drops only Outlook outside the private chat", () => {
+    const rows = [
+      { connectorId: "microsoft", provider: "outlook" },
+      { connectorId: "microsoft", provider: "sharepoint" },
+      { connectorId: "composio", provider: "outlook" },
+    ];
+    expect(withoutPrivateApps(rows, true)).toEqual(rows);
+    expect(withoutPrivateApps(rows, false)).toEqual(rows.slice(1));
+  });
+});
 
 describe("run connection selection", () => {
   it("uses synchronized account statuses in the current run", async () => {

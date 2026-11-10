@@ -118,9 +118,11 @@ import { conversationFolder, teamBotWorkspaceDirectory } from "./computer-suppor
 import { checkpointRunComputerWorkspace } from "./computer-workspace.js";
 import {
   connectedContext,
+  isOwnersPrivateChat,
   loadLivePluginSlugs,
   persistLivePluginConnections,
   selectRunConnections,
+  withoutPrivateApps,
 } from "./connection-context.js";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
@@ -844,7 +846,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             ? () => true
             : (connection: { connectorId: string; provider: string }) =>
                 staffMayUseConnection(staffApps, connection);
-        const usableConnections = storedConnections.filter(ownerMayUse);
+        const usableConnections = withoutPrivateApps(
+          storedConnections.filter(ownerMayUse),
+          isOwnersPrivateChat({ run, bot, thread }),
+        );
         const composioRows = usableConnections.filter(
           (connection) => connection.connectorId === "composio",
         );

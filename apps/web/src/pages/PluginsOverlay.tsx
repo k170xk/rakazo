@@ -843,8 +843,10 @@ export function PluginsOverlay({
     const connecting = pending === key;
     const uninstalling = pending === `uninstall:${key}`;
     const toolCount = tools.length;
-    // One Microsoft account per person; its folders decide what assistants may read.
-    const sharePoint = item.connectorId === "microsoft" && item.slug === "sharepoint";
+    // One Microsoft account per person and app; SharePoint's folders decide what assistants may read.
+    const microsoft = item.connectorId === "microsoft";
+    const sharePoint = microsoft && item.slug === "sharepoint";
+    const outlook = microsoft && item.slug === "outlook";
 
     return (
       <div data-testid="connection-detail" className="space-y-5">
@@ -923,7 +925,7 @@ export function PluginsOverlay({
               </Button>
             </div>
           ))}
-          {sharePoint && accounts.length > 0 ? null : (
+          {microsoft && accounts.length > 0 ? null : (
             <Button
               type="button"
               variant="ghost"
@@ -943,6 +945,17 @@ export function PluginsOverlay({
               .filter((row) => row.status === "connected")
               .map((row) => <SharePointFolders key={row.id} connectionId={row.id} />)
           : null}
+
+        {outlook ? (
+          <p data-testid="outlook-privacy" className="text-[13px] text-muted-foreground">
+            <Trans>
+              Read-only: assistants can list folders, search, read emails and open attachments, but
+              never send, move or delete mail. Only your own one-to-one chats with your own
+              assistants can use it, never group chats, Slack or Teams conversations or messages
+              from other assistants.
+            </Trans>
+          </p>
+        ) : null}
 
         {toolsLoading || tools.length > 0 ? (
           <Disclosure

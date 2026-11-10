@@ -317,7 +317,9 @@ export function connectionsRoutes(ctx: RouterContext) {
         ).flat();
         const listed = new Set<string>();
         const apps: CompanyApp[] = COMPANY_APPS.map((app) => {
-          const item = catalog.find((entry) => staffAppKey(entry.slug) === app.slug);
+          // The company's own Microsoft sign-in comes before any catalog app of the same name.
+          const matching = catalog.filter((entry) => staffAppKey(entry.slug) === app.slug);
+          const item = matching.find((entry) => entry.connectorId === "microsoft") ?? matching[0];
           listed.add(app.slug);
           return {
             slug: app.slug,

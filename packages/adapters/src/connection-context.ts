@@ -3,6 +3,62 @@ import type { PrismaClient } from "@rakazo/db";
 import type { PluginConnectionRow } from "./composio-connector.js";
 import { planLiveConnectionSync } from "./composio-connector.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import { OUTLOOK_PROVIDER } from "./microsoft-mail.js";
+
+/** Apps holding a person's private correspondence, reachable only from their private chat. */
+const PRIVATE_APPS = [{ connectorId: "microsoft", provider: OUTLOOK_PROVIDER }];
+
+/** Runs the person started or scheduled themselves, never ones another person or bot set off. */
+const OWNER_TRIGGERS = new Set([
+  "user",
+  "routine",
+  "resume",
+  "follow_up",
+  "reaction",
+  "call_end",
+  "skill",
+]);
+
+/**
+ * True only for the person's own one-to-one chat with their own bot, on a turn they set off:
+ * group chats, Slack or Teams conversations and messages from other bots all fall outside it,
+ * so nobody else can read the replies.
+ */
+export function isOwnersPrivateChat(input: {
+  run: { userId: string; trigger: string };
+  bot: { id: string; userId: string };
+  thread: {
+    userId: string;
+    botId: string | null;
+    groupId: string | null;
+    externalConversationId: string | null;
+  };
+}): boolean {
+  const { run, bot, thread } = input;
+  return (
+    OWNER_TRIGGERS.has(run.trigger) &&
+    bot.userId === run.userId &&
+    thread.userId === run.userId &&
+    thread.botId === bot.id &&
+    !thread.groupId &&
+    !thread.externalConversationId
+  );
+}
+
+/** Drops private apps from a run that is not the owner's private chat. */
+export function withoutPrivateApps<T extends { connectorId: string; provider: string }>(
+  rows: T[],
+  privateChat: boolean,
+): T[] {
+  if (privateChat) return rows;
+  return rows.filter(
+    (row) =>
+      !PRIVATE_APPS.some(
+        (app) =>
+          app.connectorId === row.connectorId && app.provider === row.provider.trim().toLowerCase(),
+      ),
+  );
+}
 
 export function selectRunConnections<
   T extends { connectorId: string; provider: string; status: string },
