@@ -48,6 +48,22 @@ it("shows nothing when every tool is switched off", async () => {
   expect(host.querySelector('[data-testid="ocsc-tools"]')).toBeNull();
 });
 
+it("shows no tools until the account's skill list has loaded", async () => {
+  await act(async () => root.render(<OcscToolsSection available={undefined} />));
+  expect(host.querySelector('[data-testid="ocsc-tools"]')).toBeNull();
+});
+
+it("leaves out a tool an admin switched off", async () => {
+  const on = new Set(["ocsc-word", "ocsc-slides", "ocsc-excel", "ocsc-pdf", "ocsc-pdf-markup"]);
+  await act(async () => root.render(<OcscToolsSection available={on} />));
+  const titles = [...host.querySelectorAll('[data-testid="ocsc-tool"]')].map(
+    (card) => card.querySelector("button span span")?.textContent,
+  );
+  expect(titles).not.toContain("OCSC Video");
+  expect(titles).not.toContain("OCSC Apps");
+  expect(titles).toHaveLength(on.size);
+});
+
 it("tells OCSC Tools apart from skills", () => {
   expect(isOcscTool("ocsc-pdf-markup")).toBe(true);
   expect(isOcscTool("evolve-plugin")).toBe(true);

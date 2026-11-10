@@ -131,8 +131,12 @@ function CompanyAdminPanels() {
 
   async function saved(next: CompanyAdminState) {
     queryClient.setQueryData(queries.companyAdmin.get.queryKey(), next);
-    // Me carries the switches and model readiness the rest of the app reads.
-    await queryClient.invalidateQueries({ queryKey: queries.me.key() });
+    // Me carries the switches and model readiness the rest of the app reads, and the skill list
+    // drops built-in skills and OCSC Tools that are switched off.
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queries.me.key() }),
+      queryClient.invalidateQueries({ queryKey: queries.agentSkills.list.queryKey() }),
+    ]);
   }
 
   function panel(data: CompanyAdminState) {

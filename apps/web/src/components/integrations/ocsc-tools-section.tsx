@@ -88,11 +88,15 @@ function useToolStories(): Record<OcscToolSkill, ToolStory> {
   };
 }
 
-/** The tools OCSC built for everyone, each with a picture and what it can do. */
-export function OcscToolsSection({ available }: { available?: ReadonlySet<string> }) {
+/**
+ * The tools OCSC built for everyone, each with a picture and what it can do. Only the tools in
+ * `available` (this account's skills, without those an admin switched off) are shown, and none
+ * until that list has loaded.
+ */
+export function OcscToolsSection({ available }: { available: ReadonlySet<string> | undefined }) {
   const stories = useToolStories();
   const [openTool, setOpenTool] = useState<OcscToolSkill | null>(null);
-  const tools = available ? OCSC_TOOLS.filter((tool) => available.has(tool.skill)) : OCSC_TOOLS;
+  const tools = available ? OCSC_TOOLS.filter((tool) => available.has(tool.skill)) : [];
   if (tools.length === 0) return null;
   return (
     <section data-testid="ocsc-tools">
