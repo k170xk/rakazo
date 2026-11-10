@@ -10046,3 +10046,39 @@ msgstr "Çalışanların {0} erişimi"
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "Kurulum bekleniyor"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "Katalogda eklenti yok."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "Çalışanlar için eklentiler"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "Stripe, Figma veya Cal.com gibi bir uygulamayı bağlayan katalog eklentileri. Çalışanlar yalnızca burada etkinleştirilenleri görür ve Eklentiler açıkken ekler. Yalnızca beceri içeren paketler Çalışan becerileri ayarına bağlıdır."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "Eklenti ara"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "Her şeyi göster (yöneticiler)"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "Çalışanların gördüğünü göster"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "Çalışanlardan gizlenenler dahil tüm uygulamalar ve eklentiler gösteriliyor."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "Çalışanların gördüğü gösteriliyor."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "Bu sayfada bir seçim kaydedene kadar çalışanlar her eklentiyi görür. Ondan sonra yalnızca burada etkinleştirilenleri görür."

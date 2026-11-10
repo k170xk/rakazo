@@ -2200,6 +2200,19 @@ export function staffAppState(
   return COMPANY_APPS.some((app) => app.slug === key) ? "hidden" : "enabled";
 }
 
+/** The settings key for a marketplace plugin, from its installed source. */
+export function pluginStaffKey(installedSource: string): string {
+  return `plugin:${installedSource}`;
+}
+
+/** Whether staff see a plugin that adds an app; open until an admin saves the list. */
+export function staffPluginEnabled(
+  staffApps: Record<string, StaffAppState> | undefined | null,
+  installedSource: string,
+): boolean {
+  return !staffApps || staffApps[pluginStaffKey(installedSource)] === "enabled";
+}
+
 /** Whether a non-admin may use this connection; non-app connectors are not governed here. */
 export function staffMayUseConnection(
   staffApps: Record<string, StaffAppState> | undefined,
@@ -2254,8 +2267,8 @@ export const CompanyToolsSchema = z.object({
   chatFileRetentionDays: z.number().int().min(1).max(3650).nullable(),
   /** Keyed by Evolve assistant id; assistants not listed run on the company model. */
   assistantModels: z.record(z.string().uuid(), CompanyAssistantModelSchema).optional(),
-  /** Keyed by app slug; once saved, apps not listed are hidden from staff. */
-  staffApps: z.record(z.string().trim().min(1).max(120), StaffAppStateSchema).optional(),
+  /** Keyed by app slug or pluginStaffKey; once saved, apps not listed are hidden from staff. */
+  staffApps: z.record(z.string().trim().min(1).max(2100), StaffAppStateSchema).optional(),
 });
 export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
 
@@ -2383,6 +2396,8 @@ export const CompanyAdminStateSchema = z.object({
   thinkingLevel: ThinkingLevelSchema.nullable(),
   /** Models for bots started from an Evolve assistant, keyed by assistant id. */
   assistantModels: z.record(z.string(), CompanyAssistantModelSchema),
+  /** Null until an admin first saves which apps and plugins staff see. */
+  staffApps: z.record(z.string(), StaffAppStateSchema).nullable(),
   /** The model set in the server environment, used while no company model is saved. */
   environmentModel: z.object({ provider: z.string(), modelId: z.string() }).nullable(),
   features: CompanyFeaturesSchema,

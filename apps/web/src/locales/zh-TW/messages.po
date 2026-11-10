@@ -10047,3 +10047,39 @@ msgstr "員工對 {0} 的存取權"
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "等待設定"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "目錄中沒有外掛程式。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "員工外掛程式"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "目錄中用於連線應用程式的外掛程式，例如 Stripe、Figma 或 Cal.com。員工只會看到此處啟用的外掛程式，並可在外掛程式功能開啟時新增。僅含技能的套件依循員工技能設定。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "搜尋外掛程式"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "顯示全部（管理員）"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "顯示員工看到的內容"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "正在顯示所有應用程式和外掛程式，包括對員工隱藏的。"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "正在顯示員工看到的內容。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "在此頁面儲存選擇之前，員工可以看到所有外掛程式。之後只會看到此處啟用的外掛程式。"

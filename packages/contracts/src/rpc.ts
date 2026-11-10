@@ -1213,7 +1213,13 @@ export const appContract = {
   },
   marketplace: {
     catalog: oc
-      .input(z.object({ query: z.string().trim().max(200).default("") }))
+      .input(
+        z.object({
+          query: z.string().trim().max(200).default(""),
+          /** Admins see the list as staff do; staff always get it filtered. */
+          staffView: z.boolean().default(false),
+        }),
+      )
       .output(PluginMarketplaceCatalogSchema),
     /** Admins only. */
     submissions: oc

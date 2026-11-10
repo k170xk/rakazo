@@ -585,7 +585,7 @@ function CompanyFeaturesSection({
           />
           {group.id === "apps" ? (
             <div className="pt-4">
-              <StaffAppsSection onSaved={onSaved} />
+              <StaffAppsSection state={state} onSaved={onSaved} />
             </div>
           ) : null}
         </div>

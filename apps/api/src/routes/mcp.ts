@@ -3,6 +3,7 @@ import { ORPCError } from "@orpc/server";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import {
   companyFeatures,
+  companyTools,
   createPluginMarketplace,
   isTransientFetchError,
   McpOAuthClientRequiredError,
@@ -16,7 +17,7 @@ import {
   verifyMcpInstall,
 } from "@rakazo/adapters";
 import type { Actor } from "@rakazo/contracts";
-import { signupSurveyAsksTeamSize } from "@rakazo/contracts";
+import { signupSurveyAsksTeamSize, staffPluginEnabled } from "@rakazo/contracts";
 import { comparePlugins, containsSecret, matchesPluginQuery } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
@@ -27,7 +28,7 @@ import {
   spaceAvailability,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
-import { requireAdmin } from "../admins.js";
+import { isAdmin, requireAdmin } from "../admins.js";
 import {
   assertNameFreeWhereAvailable,
   lockOwner,
@@ -120,19 +121,26 @@ export function mcpRoutes(ctx: RouterContext) {
   };
   return {
     marketplace: {
-      catalog: authed.marketplace.catalog.handler(async ({ input }) => {
-        const [catalog, approved] = await Promise.all([
+      catalog: authed.marketplace.catalog.handler(async ({ context, input }) => {
+        const [catalog, approved, admin] = await Promise.all([
           pluginMarketplace.catalog(input.query),
           approvedPluginEntries(deps.prisma),
+          isAdmin(deps, context.actor.userId),
         ]);
         // A plugin also listed by another registry shows once, as the version we reviewed.
         const reviewed = new Set(approved.map((entry) => entry.installedSource));
+        const entries = [
+          ...approved.filter((entry) => matchesPluginQuery(entry, input.query)),
+          ...catalog.entries.filter((entry) => !reviewed.has(entry.installedSource)),
+        ].sort(comparePlugins);
+        if (admin && !input.staffView) return { ...catalog, entries };
+        // Skill packs stay under the staff skills switch; plugins that add an app need a grant.
+        const staffApps = companyTools().staffApps;
         return {
           ...catalog,
-          entries: [
-            ...approved.filter((entry) => matchesPluginQuery(entry, input.query)),
-            ...catalog.entries.filter((entry) => !reviewed.has(entry.installedSource)),
-          ].sort(comparePlugins),
+          entries: entries.filter(
+            (entry) => !entry.hasConnector || staffPluginEnabled(staffApps, entry.installedSource),
+          ),
         };
       }),
       submissions: authed.marketplace.submissions.handler(async ({ context, input }) => {
@@ -189,12 +197,18 @@ export function mcpRoutes(ctx: RouterContext) {
           await requireCompanyFeature(deps, context.actor, "staffIntegrations");
         }
         if (input.kind === "plugin") {
+          const staffApps = companyTools().staffApps;
+          const connectorAllowed =
+            !staffApps || (await isAdmin(deps, context.actor.userId))
+              ? undefined
+              : (source: string) => staffPluginEnabled(staffApps, source);
           return installPlugin(
             {
               prisma: deps.prisma,
               secrets: deps.secrets,
               fetcher: deps.pluginRepoFetcher,
               assertEndpoint: (endpoint) => assertMcpRemoteEndpoint(endpoint, deps),
+              connectorAllowed,
             },
             context.actor,
             input,
@@ -358,12 +372,17 @@ export function mcpRoutes(ctx: RouterContext) {
       }),
       pluginParts: authed.capabilities.pluginParts.handler(async ({ context, input }) => {
         const notify: Array<{ threadId: string; seq: number }> = [];
+        const staffApps = companyTools().staffApps;
         const install = await setPluginParts(
           {
             prisma: deps.prisma,
             secrets: deps.secrets,
             fetcher: deps.pluginRepoFetcher,
             assertEndpoint: (endpoint) => assertMcpRemoteEndpoint(endpoint, deps),
+            connectorAllowed:
+              !staffApps || (await isAdmin(deps, context.actor.userId))
+                ? undefined
+                : (source: string) => staffPluginEnabled(staffApps, source),
             removeServer: async (tx, server) =>
               notify.push(...(await removeMcpServerInTransaction(tx, context.actor, server))),
           },

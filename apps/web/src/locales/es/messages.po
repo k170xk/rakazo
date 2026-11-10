@@ -10046,3 +10046,39 @@ msgstr "Acceso del personal a {0}"
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "Esperando la configuración"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "No hay plugins en el catálogo."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "Plugins para el personal"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "Plugins del catálogo que conectan una app, como Stripe, Figma o Cal.com. El personal solo ve los activados aquí y los añade mientras Plugins esté activado. Los paquetes solo de habilidades siguen a Habilidades del personal."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "Buscar plugins"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "Mostrar todo (administradores)"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "Mostrar lo que ve el personal"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "Se muestran todas las apps y plugins, incluidos los ocultos para el personal."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "Se muestra lo que ve el personal."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "El personal ve todos los plugins hasta que guardes una elección en esta página. Después solo verá los activados aquí."

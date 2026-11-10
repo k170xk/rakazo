@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   CompanyToolsSchema,
   companyToolsFrom,
+  pluginStaffKey,
   staffAppKey,
   staffAppState,
   staffMayUseConnection,
+  staffPluginEnabled,
 } from "./domain.js";
 
 describe("staff apps", () => {
@@ -39,6 +41,18 @@ describe("staff apps", () => {
     expect(staffMayUseConnection(staffApps, { connectorId: "mcp", provider: "anything" })).toBe(
       true,
     );
+  });
+
+  it("shows staff every plugin until the list is saved, then only enabled ones", () => {
+    const source = "https://github.com/example/plugins#figma";
+    expect(staffPluginEnabled(undefined, source)).toBe(true);
+    expect(staffPluginEnabled(null, source)).toBe(true);
+    expect(staffPluginEnabled({ sharepoint: "enabled" }, source)).toBe(false);
+    expect(staffPluginEnabled({ [pluginStaffKey(source)]: "enabled" }, source)).toBe(true);
+    expect(
+      CompanyToolsSchema.partial().safeParse({ staffApps: { [pluginStaffKey(source)]: "enabled" } })
+        .success,
+    ).toBe(true);
   });
 
   it("keeps stored company tools when the app setting is missing or invalid", () => {

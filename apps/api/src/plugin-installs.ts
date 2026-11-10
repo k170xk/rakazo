@@ -24,7 +24,11 @@ export type PluginInstallDeps = {
   secrets: SecretStore;
   fetcher?: PluginRepoFetcher;
   assertEndpoint: (endpoint: string) => Promise<void>;
+  /** Unset lets every plugin add its app; staff get the admin's per-plugin choice. */
+  connectorAllowed?: (installedSource: string) => boolean;
 };
+
+const CONNECTOR_NOT_ALLOWED = "This app is not available yet.";
 
 type LoadedPlugin = Awaited<ReturnType<typeof previewPluginInstall>>;
 type PreparedServer = {
@@ -290,8 +294,10 @@ export async function installPlugin(
     });
   }
   const servers = parts.includes("connector") ? plugin.mcpServers : [];
+  const source = plugin.source.gitUrl + (plugin.source.subdir ? `#${plugin.source.subdir}` : "");
+  if (servers.length && deps.connectorAllowed && !deps.connectorAllowed(source))
+    throw new ORPCError("FORBIDDEN", { message: CONNECTOR_NOT_ALLOWED });
   return withPreparedServers(deps, actor, servers, signal, async (prepared) => {
-    const source = plugin.source.gitUrl + (plugin.source.subdir ? `#${plugin.source.subdir}` : "");
     const scope = { spaceId: actor.spaceId, userId: actor.userId };
     try {
       const row = await deps.prisma.$transaction(async (tx) => {
@@ -380,6 +386,8 @@ export async function setPluginParts(
   const parts = [...current.filter((part) => !removing.includes(part)), ...added];
   if (!parts.length) return null;
   const servers = plugin && added.includes("connector") ? plugin.mcpServers : [];
+  if (servers.length && deps.connectorAllowed && !deps.connectorAllowed(existing.source))
+    throw new ORPCError("FORBIDDEN", { message: CONNECTOR_NOT_ALLOWED });
   return withPreparedServers(deps, actor, servers, signal, async (prepared) => {
     try {
       const row = await deps.prisma.$transaction(async (tx) => {

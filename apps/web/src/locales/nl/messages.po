@@ -10046,3 +10046,39 @@ msgstr "Toegang van medewerkers tot {0}"
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "Wacht op instelling"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "Er staan geen plugins in de catalogus."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "Plugins voor medewerkers"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "Plugins uit de catalogus die een app koppelen, zoals Stripe, Figma of Cal.com. Medewerkers zien alleen de hier ingeschakelde en voegen ze toe zolang Plugins aan staat. Pakketten met alleen vaardigheden volgen Vaardigheden voor medewerkers."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "Plugins zoeken"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "Alles tonen (beheerders)"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "Tonen wat medewerkers zien"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "Alle apps en plugins worden getoond, ook die verborgen zijn voor medewerkers."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "Je ziet wat medewerkers zien."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "Medewerkers zien elke plugin totdat je op deze pagina een keuze opslaat. Daarna zien ze alleen de hier ingeschakelde."

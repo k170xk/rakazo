@@ -10046,3 +10046,39 @@ msgstr "גישת הצוות אל {0}"
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "ממתינה להגדרה"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "אין תוספים בקטלוג."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "תוספים לצוות"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "תוספים מהקטלוג שמחברים אפליקציה, כמו Stripe, ‏Figma או Cal.com. הצוות רואה רק את אלה שהופעלו כאן ומוסיף אותם כל עוד תוספים מופעלים. חבילות של מיומנויות בלבד כפופות למיומנויות צוות."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "חיפוש תוספים"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "הצגת הכול (מנהלים)"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "הצגת מה שהצוות רואה"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "מוצגים כל האפליקציות והתוספים, כולל אלה המוסתרים מהצוות."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "מוצג מה שהצוות רואה."
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "הצוות רואה כל תוסף עד שתשמרו בחירה בדף זה. לאחר מכן הוא יראה רק את אלה שהופעלו כאן."

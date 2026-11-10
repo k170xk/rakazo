@@ -150,6 +150,7 @@ export async function companyAdminState(
       : null,
     thinkingLevel: ThinkingLevelSchema.safeParse(row?.companyThinkingLevel).data ?? null,
     assistantModels: companyToolsWithDefaults(row?.companyTools).assistantModels ?? {},
+    staffApps: companyToolsWithDefaults(row?.companyTools).staffApps ?? null,
     environmentModel: environment.configured
       ? { provider: environment.provider, modelId: environment.model }
       : null,

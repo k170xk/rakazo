@@ -209,13 +209,23 @@ export function PluginsOverlay({
   const catalogLoaded = integrations.data !== undefined;
   const loading = !catalogLoaded && integrations.isFetching;
   const catalog = integrations.data?.catalog ?? NO_CATALOG;
-  const companyApps = useQuery(queries.connections.companyApps.queryOptions()).data ?? NO_APPS;
   const isAdmin = useQuery(queries.me.queryOptions()).data?.isAdmin === true;
+  // Admins see the window as staff do unless they ask for everything, to test.
+  const [showEverything, setShowEverything] = useState(false);
+  const allCompanyApps = useQuery(queries.connections.companyApps.queryOptions()).data ?? NO_APPS;
+  const companyApps = useMemo(
+    () =>
+      showEverything ? allCompanyApps : allCompanyApps.filter((app) => app.state !== "hidden"),
+    [allCompanyApps, showEverything],
+  );
   const connections = integrations.data?.connections ?? NO_CONNECTIONS;
   const sources = integrations.data?.sources ?? NO_SOURCES;
   const pluginInstalls = integrations.data?.plugins ?? NO_SOURCES;
   const pluginCatalog = useQuery(
-    queries.marketplace.catalog.queryOptions({ input: { query: "" }, staleTime: 60_000 }),
+    queries.marketplace.catalog.queryOptions({
+      input: { query: "", staffView: !showEverything },
+      staleTime: 60_000,
+    }),
   );
   const assignmentsQuery = useQuery(
     queries.mcp.assignments.list.queryOptions({
@@ -1740,7 +1750,7 @@ export function PluginsOverlay({
               {catalogLoaded && showFeatured && !category ? (
                 <div className="mb-6" data-testid="featured-connectors">
                   {catalog.length === 0 ? (
-                    plugins.length || companyApps.length ? null : (
+                    plugins.length || companyApps.length || !isAdmin ? null : (
                       <p className="text-[13.5px] leading-6 text-muted-foreground/80">
                         <Trans>Configure a plugin catalog on the server to connect apps.</Trans>
                       </p>
@@ -1788,6 +1798,7 @@ export function PluginsOverlay({
               {catalogLoaded &&
               catalog.length === 0 &&
               companyApps.length === 0 &&
+              isAdmin &&
               !showFeatured &&
               !pluginMatches.length &&
               !brandMatches.length ? (
@@ -1870,6 +1881,28 @@ export function PluginsOverlay({
                   ) : null}
                 </>
               )}
+              {isAdmin ? (
+                <div className="mt-8 flex items-center justify-center gap-2 text-[13px] text-muted-foreground">
+                  {showEverything ? (
+                    <Trans>Showing every app and plugin, including ones hidden from staff.</Trans>
+                  ) : (
+                    <Trans>Showing what staff see.</Trans>
+                  )}
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-auto px-0 text-[13px]"
+                    onClick={() => setShowEverything((value) => !value)}
+                  >
+                    {showEverything ? (
+                      <Trans>Show what staff see</Trans>
+                    ) : (
+                      <Trans>Show everything (admins)</Trans>
+                    )}
+                  </Button>
+                </div>
+              ) : null}
             </>
           )}
         </div>

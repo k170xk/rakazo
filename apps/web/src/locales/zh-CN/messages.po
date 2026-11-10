@@ -10046,3 +10046,39 @@ msgstr "员工对 {0} 的访问权限"
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "等待设置"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "目录中没有插件。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "员工插件"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "目录中用于连接应用的插件，例如 Stripe、Figma 或 Cal.com。员工只能看到此处启用的插件，并可在插件功能开启时添加。仅含技能的包遵循员工技能设置。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "搜索插件"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "显示全部（管理员）"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "显示员工看到的内容"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "正在显示所有应用和插件，包括对员工隐藏的。"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "正在显示员工看到的内容。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "在此页面保存选择之前，员工可以看到所有插件。之后只能看到此处启用的插件。"

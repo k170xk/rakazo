@@ -10046,3 +10046,39 @@ msgstr "{0} へのスタッフのアクセス"
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "設定待ち"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "カタログにプラグインはありません。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "スタッフ向けプラグイン"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "Stripe、Figma、Cal.com などのアプリを接続するカタログのプラグインです。スタッフにはここで有効にしたものだけが表示され、プラグインがオンの間に追加できます。スキルのみのパックはスタッフのスキルの設定に従います。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "プラグインを検索"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "すべて表示（管理者）"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "スタッフの表示を見る"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "スタッフに非表示のものを含め、すべてのアプリとプラグインを表示しています。"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "スタッフの表示を表示しています。"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "このページで選択を保存するまで、スタッフにはすべてのプラグインが表示されます。保存後は、ここで有効にしたものだけが表示されます。"

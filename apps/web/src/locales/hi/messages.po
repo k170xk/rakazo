@@ -10046,3 +10046,39 @@ msgstr "{0} तक स्टाफ़ की पहुँच"
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "सेटअप की प्रतीक्षा है"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "कैटलॉग में कोई प्लगइन नहीं है।"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "स्टाफ़ के लिए प्लगइन"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "कैटलॉग के वे प्लगइन जो कोई ऐप जोड़ते हैं, जैसे Stripe, Figma या Cal.com। स्टाफ़ केवल यहाँ चालू किए गए प्लगइन देखता है और प्लगइन चालू रहने तक उन्हें जोड़ सकता है। केवल स्किल वाले पैक स्टाफ़ स्किल का पालन करते हैं।"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "प्लगइन खोजें"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "सब दिखाएँ (एडमिन)"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "स्टाफ़ जो देखता है वह दिखाएँ"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "सभी ऐप और प्लगइन दिखाए जा रहे हैं, स्टाफ़ से छिपे हुए भी।"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "स्टाफ़ जो देखता है वह दिखाया जा रहा है।"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "जब तक आप इस पेज पर कोई विकल्प सेव नहीं करते, स्टाफ़ हर प्लगइन देखता है। उसके बाद वह केवल यहाँ चालू किए गए प्लगइन देखता है।"
