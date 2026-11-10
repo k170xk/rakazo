@@ -1,6 +1,7 @@
 import type { ComputerAccess } from "@rakazo/contracts";
 import { FLEET_WRITE_TOOL_NAMES } from "@rakazo/contracts";
 import {
+  OCSC_HOUSE_STYLE,
   PRODUCT_IDENTITY,
   PRODUCT_NAME,
   runReadsThreadHistory,
@@ -377,6 +378,7 @@ export function userTurnInstructions(parts: {
   return [
     PRODUCT_IDENTITY,
     parts.botInstructions,
+    OCSC_HOUSE_STYLE,
     parts.personContext,
     parts.historyRetrievalEnabled &&
     builtinOffered(parts.disabledBuiltinTools, "search_history") &&

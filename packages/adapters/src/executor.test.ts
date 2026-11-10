@@ -7,7 +7,12 @@ import {
   cloudflareModelConfigMessage,
   FLEET_TOOL_NAMES,
 } from "@rakazo/contracts";
-import { isOwnerStartedRun, ONCE_ROUTINE_CRON } from "@rakazo/core";
+import {
+  isOwnerStartedRun,
+  OCSC_HOUSE_STYLE,
+  ONCE_ROUTINE_CRON,
+  PRODUCT_IDENTITY,
+} from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { RunHistoryWriteError } from "@rakazo/db";
 import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
@@ -1485,7 +1490,9 @@ describe("userTurnInstructions", () => {
     }).filter(Boolean);
 
     expect(instructions).toEqual([
+      PRODUCT_IDENTITY,
       "Bot instructions",
+      OCSC_HOUSE_STYLE,
       computerLine,
       "This entire computer workspace is your private home.",
       "Agent environment",
@@ -1521,7 +1528,9 @@ describe("userTurnInstructions", () => {
     }).filter(Boolean);
 
     expect(instructions).toEqual([
+      PRODUCT_IDENTITY,
       "Bot instructions",
+      OCSC_HOUSE_STYLE,
       computerLine,
       "This entire computer workspace is your private home.",
       ...stableMiddle,
@@ -1549,7 +1558,9 @@ describe("userTurnInstructions", () => {
     }).filter(Boolean);
 
     expect(instructions).toEqual([
+      PRODUCT_IDENTITY,
       "Bot instructions",
+      OCSC_HOUSE_STYLE,
       computerLine,
       "Catalog guidance",
       "This entire computer workspace is your private home.",
@@ -1596,7 +1607,7 @@ describe("userTurnInstructions", () => {
         agentSkillsLine: undefined,
         taughtSkillsLine: undefined,
         followUpsOffered,
-      }).filter(Boolean)[1];
+      }).filter(Boolean)[3];
     const offered = toolLine(true);
     expect(offered).toContain(
       "(not reminders — those are schedule_*). Do not wait to be asked about open loops.",
