@@ -714,6 +714,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   Send: "发送",
   "Send reset link": "发送重置链接",
   "Send answer": "发送回答",
+  "Type my own answer": "输入我自己的回答",
+  "Your answer": "你的回答",
   "Sending…": "正在发送…",
   Server: "服务器",
   "Server URL": "服务器地址",

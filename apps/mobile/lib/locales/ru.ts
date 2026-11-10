@@ -738,6 +738,8 @@ export const RU_MESSAGES: Record<string, string> = {
   Send: "Отправить",
   "Send reset link": "Отправить ссылку для сброса",
   "Send answer": "Отправить ответ",
+  "Type my own answer": "Ввести свой ответ",
+  "Your answer": "Ваш ответ",
   "Sending…": "Отправка…",
   Server: "Сервер",
   "Server URL": "URL-адрес сервера",

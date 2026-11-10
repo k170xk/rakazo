@@ -399,6 +399,8 @@ export const ES_MESSAGES: Record<string, string> = {
   Sent: "Enviado",
   Send: "Enviar",
   "Send answer": "Enviar respuesta",
+  "Type my own answer": "Escribir mi propia respuesta",
+  "Your answer": "Tu respuesta",
   "Sending…": "Enviando…",
   "Show {label}": "Mostrar {label}",
   "Skill {name}": "Habilidad {name}",

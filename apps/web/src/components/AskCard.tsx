@@ -105,6 +105,11 @@ function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: A
     !approvalActions && !block.instructionUpdate && Boolean(askActions?.length);
   const chosenOption =
     answered && displayedAnswer ? resolveAskChoice(displayedAnswer, askActions) : undefined;
+  const [writingOwn, setWritingOwn] = useState(false);
+  const [ownAnswer, setOwnAnswer] = useState("");
+  /** An answer in the person's own words rather than one of the options. */
+  const ownChoice =
+    optionQuestion && answered && displayedAnswer && !chosenOption ? displayedAnswer : undefined;
   // An edited draft is shown in the user's words, so the card reads as answered. A typed reply to
   // options already shows as the user's message, so it only dims them.
   const typedAnswer =
@@ -261,6 +266,57 @@ function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: A
                 {pendingAction === action.id ? <Trans>Sending…</Trans> : action.label}
               </OptionRow>
             ))}
+            {writingOwn && canAnswer && !answered ? (
+              <form
+                className="flex flex-col gap-2 rounded-xl border border-border px-3 py-2.5"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void submitAnswer(ownAnswer);
+                }}
+              >
+                <Textarea
+                  aria-label={t`Your answer`}
+                  autoFocus
+                  rows={2}
+                  value={ownAnswer}
+                  onChange={(event) => setOwnAnswer(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "Enter" &&
+                      !event.shiftKey &&
+                      !event.nativeEvent.isComposing
+                    ) {
+                      event.preventDefault();
+                      void submitAnswer(ownAnswer);
+                    }
+                  }}
+                  placeholder={t`Type your answer`}
+                />
+                <div className="flex gap-2">
+                  <Button type="submit" size="sm" disabled={!ownAnswer.trim() || submitting}>
+                    {submitting ? <Trans>Sending…</Trans> : <Trans>Send answer</Trans>}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={submitting}
+                    onClick={() => setWritingOwn(false)}
+                  >
+                    <Trans>Cancel</Trans>
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <OptionRow
+                letter={optionLetter(askActions?.length ?? 0)}
+                selected={Boolean(ownChoice)}
+                disabled={answered || !canAnswer || submitting}
+                onClick={() => setWritingOwn(true)}
+              >
+                {ownChoice ?? <Trans>Type my own answer</Trans>}
+              </OptionRow>
+            )}
           </div>
         ) : typedAnswer ? (
           <blockquote

@@ -34,6 +34,8 @@ export function AskActions({
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(instructions ?? "");
+  const [writingOwn, setWritingOwn] = useState(false);
+  const [ownAnswer, setOwnAnswer] = useState("");
   const submitting = pendingAction !== null;
   const displayActions =
     instructions !== undefined
@@ -111,6 +113,55 @@ export function AskActions({
             />
           );
         })}
+        {!approval && instructions === undefined ? (
+          writingOwn ? (
+            <View style={{ gap: 6 }}>
+              <TextInput
+                accessibilityLabel={t("Your answer")}
+                autoFocus
+                multiline
+                placeholder={t("Type your answer")}
+                placeholderTextColor={tokens.mutedForeground}
+                value={ownAnswer}
+                onChangeText={setOwnAnswer}
+                style={{
+                  color: tokens.foreground,
+                  backgroundColor: native.fill,
+                  borderRadius: 12,
+                  padding: 12,
+                  minHeight: 44,
+                }}
+              />
+              <View style={{ flexDirection: "row", gap: 6 }}>
+                <NativeActionButton
+                  label={t("Send answer")}
+                  prominence="primary"
+                  fill={false}
+                  disabled={disabled || submitting || !ownAnswer.trim()}
+                  busy={submitting}
+                  onPress={() => void submit(ownAnswer.trim())}
+                />
+                <NativeActionButton
+                  label={t("Cancel")}
+                  prominence="secondary"
+                  fill={false}
+                  disabled={submitting}
+                  onPress={() => setWritingOwn(false)}
+                />
+              </View>
+            </View>
+          ) : (
+            <NativeActionButton
+              accessibilityActions={accessibilityActions}
+              onAccessibilityAction={onAccessibilityAction}
+              label={t("Type my own answer")}
+              prominence="secondary"
+              fill
+              disabled={disabled || submitting}
+              onPress={() => setWritingOwn(true)}
+            />
+          )
+        ) : null}
       </View>
     </View>
   );

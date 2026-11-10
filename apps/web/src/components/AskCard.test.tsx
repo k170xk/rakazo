@@ -374,6 +374,58 @@ it("letters question options and fills them only on hover", async () => {
   expect(option.querySelector("[aria-hidden]")?.textContent).toBe("B");
 });
 
+it("offers typing an own answer as the last option and sends it", async () => {
+  const onAnswer = vi.fn(async () => undefined);
+  await render(
+    {
+      kind: "ask",
+      text: "How long should the video be?",
+      status: "pending",
+      actions: [
+        { id: "choice-1", label: "About 1 minute" },
+        { id: "choice-2", label: "About 2 minutes" },
+      ],
+    },
+    undefined,
+    onAnswer,
+  );
+  await act(async () => button("CType my own answer")!.click());
+  const field = container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Your answer"]')!;
+  expect(button("Send answer")!.disabled).toBe(true);
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(
+      field,
+      "90 seconds",
+    );
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () => button("Send answer")!.click());
+  expect(onAnswer).toHaveBeenCalledWith("90 seconds");
+  expect(button("C90 seconds")!.getAttribute("aria-pressed")).toBe("true");
+});
+
+it("closes the own-answer box on cancel without sending", async () => {
+  const onAnswer = vi.fn(async () => undefined);
+  await render(
+    {
+      kind: "ask",
+      text: "Which format?",
+      status: "pending",
+      actions: [
+        { id: "choice-1", label: "Landscape" },
+        { id: "choice-2", label: "Vertical" },
+      ],
+    },
+    undefined,
+    onAnswer,
+  );
+  await act(async () => button("CType my own answer")!.click());
+  await act(async () => button("Cancel")!.click());
+  expect(container.querySelector("textarea")).toBeNull();
+  expect(button("CType my own answer")!.disabled).toBe(false);
+  expect(onAnswer).not.toHaveBeenCalled();
+});
+
 it("sizes approval buttons like the other card buttons", async () => {
   await render({
     kind: "ask",
@@ -650,7 +702,7 @@ it("quotes an edited reply and marks a sent draft", async () => {
   expect(container.textContent).toContain("Sent");
 });
 
-it("dims the options a typed answer did not match", async () => {
+it("marks a typed answer on the last row and dims the options it did not match", async () => {
   await render({
     kind: "ask",
     text: "Which city?",
@@ -662,8 +714,9 @@ it("dims the options a typed answer did not match", async () => {
     ],
   });
   expect(container.querySelector('[data-testid="ask-answer"]')).toBeNull();
-  expect(container.textContent).not.toContain("Paris");
-  expect(container.querySelector("[aria-pressed]")).toBeNull();
+  expect(button("ABerlin")!.getAttribute("aria-pressed")).toBeNull();
+  expect(button("CParis")!.getAttribute("aria-pressed")).toBe("true");
+  expect(button("CParis")!.disabled).toBe(true);
 
   await render({
     kind: "ask",

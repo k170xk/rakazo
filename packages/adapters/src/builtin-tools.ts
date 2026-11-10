@@ -649,7 +649,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "ask_user",
     description:
-      "Ask the user one short multiple-choice question with tappable options, then wait for their selection. Use this instead of asking them to type when two to four concise choices are enough.",
+      "Ask the user one short question with two to four tappable options, then wait for their answer. The card also lets them type their own answer, so never add an 'Other' option.",
     inputSchema: {
       type: "object",
       properties: {

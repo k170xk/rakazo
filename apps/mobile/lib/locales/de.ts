@@ -416,6 +416,8 @@ export const DE_MESSAGES: Record<string, string> = {
   Sent: "Gesendet",
   Send: "Senden",
   "Send answer": "Antwort senden",
+  "Type my own answer": "Eigene Antwort eingeben",
+  "Your answer": "Deine Antwort",
   "Sending…": "Wird gesendet…",
   "Show {label}": "{label} anzeigen",
   "Skill {name}": "Skill {name}",

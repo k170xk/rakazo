@@ -407,6 +407,8 @@ export const PL_MESSAGES: Record<string, string> = {
   Sent: "Wysłano",
   Send: "Wyślij",
   "Send answer": "Wyślij odpowiedź",
+  "Type my own answer": "Wpisz własną odpowiedź",
+  "Your answer": "Twoja odpowiedź",
   "Sending…": "Wysyłanie…",
   "Show {label}": "Pokaż {label}",
   "Skill {name}": "Umiejętność {name}",

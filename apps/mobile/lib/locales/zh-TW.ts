@@ -688,6 +688,8 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   Send: "傳送",
   "Send reset link": "傳送重設連結",
   "Send answer": "傳送回答",
+  "Type my own answer": "輸入我自己的回答",
+  "Your answer": "你的回答",
   "Sending…": "正在傳送…",
   Server: "伺服器",
   "Server URL": "伺服器網址",

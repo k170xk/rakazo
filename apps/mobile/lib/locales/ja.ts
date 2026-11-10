@@ -397,6 +397,8 @@ export const JA_MESSAGES: Record<string, string> = {
   Sent: "送信しました",
   Send: "送信",
   "Send answer": "回答を送信",
+  "Type my own answer": "自分で回答を入力",
+  "Your answer": "あなたの回答",
   "Sending…": "送信中…",
   "Show {label}": "{label}を表示",
   "Skill {name}": "スキル{name}",

@@ -411,6 +411,8 @@ export const NL_MESSAGES: Record<string, string> = {
   Sent: "Verzonden",
   Send: "Verzenden",
   "Send answer": "Antwoord verzenden",
+  "Type my own answer": "Zelf een antwoord typen",
+  "Your answer": "Jouw antwoord",
   "Sending…": "Bezig met verzenden…",
   "Show {label}": "{label} tonen",
   "Skill {name}": "Skill {name}",
