@@ -9986,3 +9986,15 @@ msgstr "채팅 파일 검색"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes."
 msgstr "채팅에 첨부된 Word, PDF, PowerPoint, 텍스트 파일은 백그라운드에서 OpenAI로 색인되어, 어시스턴트가 모든 파일을 다시 읽지 않고도 필요한 부분을 빠르게 찾습니다. 회사 모델이 OpenAI에서 실행되는 동안 작동합니다. 끄면 색인이 중지되고 색인이 삭제됩니다."
+
+#: src/pages/Auth.tsx
+msgid "Continue with <0/>"
+msgstr "<0/>(으)로 계속"
+
+#: src/pages/Auth.tsx
+msgid "or sign in with email"
+msgstr "또는 이메일로 로그인"
+
+#: src/pages/Auth.tsx
+msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
+msgstr "엔지니어링을 위한 AI 작업 공간: 입찰, 보고서, 제안서, 프로젝트 지식을 한곳에서."

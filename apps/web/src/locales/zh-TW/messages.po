@@ -9987,3 +9987,15 @@ msgstr "搜尋聊天檔案"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes."
 msgstr "附加到聊天中的 Word、PDF、PowerPoint 和文字檔案會在背景由 OpenAI 建立索引，助理無需重讀每個檔案即可快速找到相關段落。僅在公司模型使用 OpenAI 時有效。關閉後將停止索引並刪除索引。"
+
+#: src/pages/Auth.tsx
+msgid "Continue with <0/>"
+msgstr "使用 <0/> 繼續"
+
+#: src/pages/Auth.tsx
+msgid "or sign in with email"
+msgstr "或使用電子郵件登入"
+
+#: src/pages/Auth.tsx
+msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
+msgstr "專為工程打造的 AI 工作空間：投標、報告、提案與專案知識，集中一處。"

@@ -265,8 +265,18 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
               className={submitClass}
               onClick={() => continueWithEvolve(reset.evolveSsoUrl!)}
             >
-              <Trans>Continue with Evolve</Trans>
+              <Trans>
+                Continue with{" "}
+                <img src="/auth/evolve-logo-white.png" alt="Evolve" className="h-3.5 w-auto" />
+              </Trans>
             </Button>
+          ) : null}
+          {reset?.evolveSsoUrl && reset.passwordAuth && mode !== "forgot" && !codeStep ? (
+            <div className="my-6 flex w-full items-center gap-3 text-sm text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              <Trans>or sign in with email</Trans>
+              <span className="h-px flex-1 bg-border" />
+            </div>
           ) : null}
           {reset?.sso && !reset.passwordAuth && mode !== "forgot" ? (
             <Button
@@ -568,24 +578,55 @@ export function AuthFrame({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="flex min-h-full flex-col bg-background text-foreground"
-      data-rakazo-surface="auth"
-    >
-      <div className="app-drag flex gap-2 px-5 py-[18px]">
-        <WindowChrome />
-      </div>
-      <div className="flex flex-1 items-center justify-center px-6 pb-16">
-        <form onSubmit={onSubmit} className="flex w-full max-w-[460px] flex-col items-center">
-          <div className="flex h-[74px] w-[74px] items-center justify-center gap-[11px] rounded-full bg-muted">
-            <span className="h-5 w-[9px] rounded-full bg-primary" />
-            <span className="h-5 w-[9px] rounded-full bg-primary" />
-          </div>
-          <h1 aria-live="polite" className="mb-9 mt-7 text-4xl font-medium tracking-tight">
-            {title}
-          </h1>
-          {children}
-        </form>
+    <div className="flex min-h-full bg-background text-foreground" data-rakazo-surface="auth">
+      <aside className="relative hidden w-[44%] max-w-[640px] shrink-0 overflow-hidden bg-black lg:block">
+        <img
+          src="/auth/signin-hero.webp"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-bottom"
+        />
+        <div className="absolute inset-x-0 top-0 h-2/3 bg-gradient-to-b from-black/60 via-black/30 to-transparent" />
+        <div className="relative flex h-full flex-col px-12 pb-12 pt-20 xl:px-16">
+          <img src="/auth/ocsc-logo-on-dark.png" alt="OCSC" className="w-48 xl:w-56" />
+          <p className="mt-14 max-w-sm text-3xl font-medium leading-tight tracking-tight text-white xl:text-4xl">
+            OCSC Intelligence
+          </p>
+          <p className="mt-4 max-w-sm text-base leading-relaxed text-white/70">
+            <Trans>
+              Your AI workspace for engineering: tenders, reports, proposals and project knowledge
+              in one place.
+            </Trans>
+          </p>
+        </div>
+      </aside>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="app-drag flex gap-2 px-5 py-[18px]">
+          <WindowChrome />
+        </div>
+        <div className="flex flex-1 items-center justify-center px-6 pb-16">
+          <form onSubmit={onSubmit} className="flex w-full max-w-[420px] flex-col items-center">
+            <img
+              src="/auth/ocsc-logo-on-light.png"
+              alt="OCSC"
+              className="w-40 dark:hidden lg:hidden"
+            />
+            <img
+              src="/auth/ocsc-logo-on-dark.png"
+              alt="OCSC"
+              className="hidden w-40 dark:block dark:lg:hidden"
+            />
+            <h1
+              aria-live="polite"
+              className="mb-9 mt-8 text-center text-3xl font-medium tracking-tight lg:mt-0"
+            >
+              {title}
+            </h1>
+            {children}
+          </form>
+        </div>
+        <p className="pb-6 text-center text-xs text-muted-foreground">
+          O’Connor Sutton Cronin · Multidisciplinary Consulting Engineers
+        </p>
       </div>
     </div>
   );

@@ -9986,3 +9986,15 @@ msgstr "Sohbet dosyalarında ara"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes."
 msgstr "Sohbete eklenen Word, PDF, PowerPoint ve metin dosyaları arka planda OpenAI ile dizinlenir; böylece asistanlar her dosyayı yeniden okumak yerine doğru bölümleri hızla bulur. Şirket modeli OpenAI üzerinde çalıştığı sürece çalışır. Kapalı olduğunda dizinleme durur ve dizinler kaldırılır."
+
+#: src/pages/Auth.tsx
+msgid "Continue with <0/>"
+msgstr "<0/> ile devam et"
+
+#: src/pages/Auth.tsx
+msgid "or sign in with email"
+msgstr "veya e-posta ile giriş yapın"
+
+#: src/pages/Auth.tsx
+msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
+msgstr "Mühendislik için yapay zekâ çalışma alanınız: ihaleler, raporlar, teklifler ve proje bilgisi tek bir yerde."

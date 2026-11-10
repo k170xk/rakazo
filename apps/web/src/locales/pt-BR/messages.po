@@ -9986,3 +9986,15 @@ msgstr "Pesquisar arquivos do chat"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes."
 msgstr "Arquivos Word, PDF, PowerPoint e de texto anexados a um chat são indexados com a OpenAI em segundo plano, para que os assistentes encontrem rapidamente os trechos certos em vez de reler cada arquivo. Funciona enquanto o modelo da empresa usa a OpenAI. Desligado interrompe a indexação e remove os índices."
+
+#: src/pages/Auth.tsx
+msgid "Continue with <0/>"
+msgstr "Continuar com <0/>"
+
+#: src/pages/Auth.tsx
+msgid "or sign in with email"
+msgstr "ou entre com e-mail"
+
+#: src/pages/Auth.tsx
+msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
+msgstr "Seu espaço de trabalho com IA para engenharia: licitações, relatórios, propostas e conhecimento de projetos em um só lugar."
