@@ -8,6 +8,7 @@ import { BrowserRouter, useLocation } from "react-router-dom";
 import { App } from "./App";
 import { DesktopUpdatesProvider } from "./components/DesktopUpdates";
 import { I18nBootstrap } from "./components/I18nBootstrap";
+import { InstallAppBanner } from "./components/InstallAppBanner";
 import { applyUiDirection } from "./lib/apply-ui-direction";
 import { clientUpdates } from "./lib/client-update";
 import { webLogoAvatarActivity } from "./lib/logo-avatar-activity";
@@ -18,6 +19,7 @@ import { queryClient } from "./lib/query";
 import { captureReferral } from "./lib/referral";
 import { applyUiAppearance, watchSystemAppearance } from "./lib/ui-appearance";
 import { resolveUiLocale } from "./lib/ui-locale";
+import { captureInstallPrompt } from "./pwa/install";
 import { registerServiceWorker } from "./pwa/register";
 import { lockStandaloneZoom } from "./pwa/standalone";
 import "./styles.css";
@@ -26,6 +28,7 @@ markOnce("rk:renderer:module-evaluated");
 installPreloadRecovery();
 clientUpdates().install();
 registerServiceWorker();
+captureInstallPrompt();
 lockStandaloneZoom();
 applyUiDirection(resolveUiLocale());
 applyUiAppearance();
@@ -76,6 +79,7 @@ createRoot(document.getElementById("root")!, { onCaughtError: reportCaughtReactE
               </BotAvatarActivityProvider>
             </TooltipProvider>
             <Toaster />
+            <InstallAppBanner />
           </DesktopUpdatesProvider>
         </QueryClientProvider>
       </BrowserRouter>
