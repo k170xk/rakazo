@@ -20,7 +20,7 @@ import {
 import { listVaultItems } from "./bot-secrets.js";
 import { validCloudAgentArgs } from "./cloud-agent-tools.js";
 import { sanitizeConnectorError } from "./connector-safety.js";
-import { isEvolveDeadlineTool, previewDeadlineChange } from "./evolve-deadline-card.js";
+import { isEvolveChangeTool, previewEvolveChange } from "./evolve-change-card.js";
 import { isFleetApprovalTool, prepareFleetRequest } from "./fleet-tools.js";
 import { assertConnectorToolArgs, CATALOG_EXECUTE } from "./lazy-tool-catalog.js";
 import { paidRequestEffect, restorePaidRequest } from "./paid-request.js";
@@ -366,11 +366,11 @@ export async function prepareToolRequest(
     args = prepared.canonical;
     request.fleetSummary = prepared.summary;
   }
-  if (isEvolveDeadlineTool(name) && nextApprovedTool !== name) {
-    // The card shows the project and deadline Evolve resolved, never what the model typed; an
+  if (isEvolveChangeTool(name) && nextApprovedTool !== name) {
+    // The card shows the project and record Evolve resolved, never what the model typed; an
     // approved replay runs the stored request and is not previewed again.
     if (!deps.connector) return { error: "Evolve's tools are not available in this run." };
-    const preview = await previewDeadlineChange(
+    const preview = await previewEvolveChange(
       deps.connector,
       { ...request.connectorCall, args },
       ctx.context,

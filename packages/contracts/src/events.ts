@@ -131,6 +131,41 @@ export const ProjectDeadlineChangeSchema = z.object({
 });
 export type ProjectDeadlineChange = z.infer<typeof ProjectDeadlineChangeSchema>;
 
+const WorkPackageValues = z.object({
+  title: z.string(),
+  category: z.string().nullable(),
+  status: z.string(),
+  priority: z.string(),
+  assignee: z.string().nullable(),
+  durationDays: z.number(),
+  canStart: z.string().nullable(),
+  mustStart: z.string().nullable(),
+  due: z.string().nullable(),
+  percentComplete: z.number(),
+  notes: z.string().nullable(),
+  links: z.array(z.object({ title: z.string(), url: z.string() })),
+});
+
+/** A work package added to, changed on or deleted from an Evolve project, as its approval card previews it. */
+export const WorkPackageChangeSchema = z.object({
+  action: z.enum(["add", "update", "delete"]),
+  project: z.object({
+    jobNumber: z.string().nullable(),
+    name: z.string().nullable(),
+    client: z.string().nullable(),
+  }),
+  /** The work package as it is now; an update and a delete have one. */
+  before: WorkPackageValues.optional(),
+  /** The work package once saved; a delete has none. */
+  after: WorkPackageValues.optional(),
+  requester: z.string().nullable().optional(),
+  /** Who Evolve's work package email goes to once it is saved. */
+  emails: z.array(z.string()).optional(),
+  statusComment: z.string().optional(),
+  warnings: z.array(z.string()).optional(),
+});
+export type WorkPackageChange = z.infer<typeof WorkPackageChangeSchema>;
+
 export const MessageBlock = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("text"), text: z.string() }),
   z.object({
@@ -155,6 +190,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
       .object({ botId: Id, before: BotSettingsValuesSchema, after: BotSettingsValuesSchema })
       .optional(),
     deadlineChange: ProjectDeadlineChangeSchema.optional(),
+    workPackageChange: WorkPackageChangeSchema.optional(),
     detail: z.string().optional(),
     detailFormat: z.enum(["text", "code"]).optional(),
     input: z.enum(["text", "secret"]).optional(),

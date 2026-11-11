@@ -461,11 +461,44 @@ Every add and change shows the person a card with the project and the deadline (
 - If they cancel, say nothing was changed and ask what they would like instead. If the reply says the deadline changed since the card was shown, read it again and propose the change again.
 - In a routine the card waits in its chat until the person answers. If the reply says this run cannot ask, list the deadlines you would add or change and ask the person to make the change from a chat.`;
 
+const WORK_PACKAGE_INSTRUCTIONS = `Use this whenever the person wants a work package (a task) added to an OCSC project, or an existing one changed (title, category, assignee, dates, duration, status, priority, progress, notes or links) or deleted.
+
+FIND THE PROJECT AND THE WORK PACKAGE
+1. Use the project_id you already have, or call mcp__evolve__search_project_datasheets with the job number, name or client and pick the matching result. When several could fit, ask which with ask_user, listing job number, name and client.
+2. To change or delete one, find its work_package_id with mcp__evolve__find_work_packages (project, assignee, category or search text) or mcp__evolve__get_project_details. If more than one could be the one they mean, ask which, listing title, assignee and due date.
+
+FILL IT IN LIKE THE WORK PACKAGES PAGE
+- title: short and specific, such as "Update GA drawings to architect's markup". Keep detail for notes.
+- category: the team it goes to, named as on the page (CAD (S), CAD (C), REVIT (S), REVIT (M&E D), ENG (C), SITE3D (C), RC (C/S), GRAPHICS, MARKETING, P.REVIEW and so on). The category decides which team's notification group is emailed, so choose it from what the person said; when the team is unclear, ask rather than guess. A wrong name comes back with the list to choose from.
+- assignee: a name, an email or "me"; leave it out to leave it unassigned for the category team to pick up.
+- duration_days: whole working days (default 1). can_start_date defaults to today; due_date is when it must be done. Evolve works out the latest start from the due date and duration, as the page does.
+- priority low, medium (default), high or urgent; notes for instructions; links for drawings, markups or folders as { title, url }, where url can be a web address or a file path such as H:\\C-Jobs\\C1078\\1.0 WIP\\...
+- Dates are written YYYY-MM-DD. Work out "next Friday" or "end of the month" from today's date; when a date is unclear, ask.
+- The person asking is recorded as the requester.
+
+PROPOSE THE CHANGE
+- Adding: mcp__evolve__add_work_package with project_id (or the exact job_number), title and the fields they gave.
+- Changing: mcp__evolve__update_work_package with work_package_id and only the fields that change. status is pending, in_progress, on_hold, completed or cancelled; pass status_comment when they gave a reason, since it goes in the status email. links replaces the whole list, so include the links to keep.
+- Deleting: mcp__evolve__delete_work_package with work_package_id, only when they clearly asked to delete it. To stop work but keep the record, set status cancelled instead.
+
+APPROVAL
+Every add, change and delete shows the person a card with the project, the work package (before and after for a change) and who will be emailed. Nothing is saved until they approve it on that card, and the card cannot be skipped or approved for later changes. So call the tool as soon as you know what to propose, without asking them to confirm in chat first. One card per work package; for several, make one call each.
+- If the reply lists projects or people to choose from (needs_choice), ask which and call again.
+- After approval the reply says saved true: tell them in one line, with the project, title, assignee and due date. Evolve sends its usual work package emails (the category team, assignee and requester for a new one; the requester for a status change) and updates the resource planner.
+- If they cancel, say nothing was changed and ask what they would like instead. If the reply says the work package changed since the card was shown, read it again and propose the change again.
+- In a routine the card waits in its chat until the person answers. If the reply says this run cannot ask, list the work packages you would add, change or delete and ask the person to make the change from a chat.`;
+
 export const OCSC_SKILLS: OcscSkill[] = [
   {
     name: "ocsc-project-deadlines",
     description: "Add or change deadlines on an OCSC project, approved on a card first",
     body: DEADLINE_INSTRUCTIONS,
+  },
+  {
+    name: "ocsc-work-packages",
+    description:
+      "Add, change or delete work packages (tasks) on an OCSC project, approved on a card",
+    body: WORK_PACKAGE_INSTRUCTIONS,
   },
   {
     name: "ocsc-word",

@@ -291,6 +291,7 @@ msgstr "{count} 周"
 msgid "{count} years"
 msgstr "{count} 年"
 
+#: src/components/AskCard.tsx
 #: src/pages/AdminComputerAccess.tsx
 msgid "{days} days"
 msgstr ""
@@ -562,6 +563,10 @@ msgstr ""
 
 #: src/pages/shell/references-dialog.tsx
 msgid "✅ Good context usage - {remaining}% remaining"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "1 day"
 msgstr ""
 
 #: src/components/integrations/space-availability.tsx
@@ -868,6 +873,10 @@ msgstr "加入例行任务"
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
 msgstr "添加触发器"
+
+#: src/components/AskCard.tsx
+msgid "Add work package"
+msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Add workspace"
@@ -1228,6 +1237,10 @@ msgid "Approved: adding it to Evolve"
 msgstr ""
 
 #: src/components/AskCard.tsx
+msgid "Approved: deleting it from Evolve"
+msgstr ""
+
+#: src/components/AskCard.tsx
 msgid "Approved: saving it in Evolve"
 msgstr ""
 
@@ -1306,6 +1319,10 @@ msgstr ""
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
 msgstr "休眠中"
+
+#: src/components/AskCard.tsx
+msgid "Assigned to"
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
@@ -1670,6 +1687,10 @@ msgstr ""
 msgid "Can show tracked changes marked up in the PDF when you want them"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Can start"
+msgstr ""
+
 #: src/App.tsx
 msgid "Can't reach the server."
 msgstr "无法连接服务器。"
@@ -1757,6 +1778,7 @@ msgstr "卡片视图"
 msgid "Cards"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
 msgstr ""
@@ -2245,6 +2267,7 @@ msgstr ""
 msgid "Compares two versions, or gives you a clean copy with every change accepted"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Complete"
 msgstr "完成"
@@ -3651,6 +3674,10 @@ msgstr "要删除此工作区的凭据吗？"
 msgid "Delete unpinned files after"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Delete work package"
+msgstr ""
+
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "Delete work space"
 msgstr ""
@@ -3911,6 +3938,10 @@ msgstr ""
 msgid "Duplicate"
 msgstr "复制"
 
+#: src/components/AskCard.tsx
+msgid "Duration"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
 msgstr ""
@@ -4015,6 +4046,10 @@ msgstr "把验证码发到我的邮箱"
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "需要验证邮箱"
+
+#: src/components/AskCard.tsx
+msgid "Emails"
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Emails and sign-off"
@@ -4576,6 +4611,10 @@ msgstr ""
 msgid "Get its own icon and window, and open it straight from your desktop."
 msgstr "Get its own icon and window, and open it straight from your desktop."
 
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Get notified when your work finishes, an agent needs your input, or a routine completes — even when you are in another tab."
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Get to know agent teamwork"
 msgstr ""
@@ -4758,6 +4797,7 @@ msgstr "隐藏密码"
 msgid "Hide transcript"
 msgstr "隐藏文字记录"
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4894,6 +4934,7 @@ msgstr "导入 Agent"
 msgid "Import data"
 msgstr "导入数据"
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-status.ts
 msgid "In progress"
@@ -5244,6 +5285,10 @@ msgstr "关联私信"
 msgid "Link SSO"
 msgstr "关联 SSO"
 
+#: src/components/AskCard.tsx
+msgid "Links"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "List view"
 msgstr "列表视图"
@@ -5387,6 +5432,7 @@ msgstr "似乎包含密钥"
 msgid "Lost the connection. Reconnecting…"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5540,6 +5586,7 @@ msgstr "MCP 服务器"
 msgid "MCP servers"
 msgstr "MCP 服务器"
 
+#: src/components/AskCard.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -5831,6 +5878,10 @@ msgstr "移动到"
 msgid "Move up"
 msgstr "上移"
 
+#: src/components/AskCard.tsx
+msgid "Must start"
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "静音"
@@ -6048,6 +6099,10 @@ msgstr ""
 msgid "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
 msgstr "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
 
+#: src/components/AskCard.tsx
+msgid "New work package"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/shell/references-dialog.tsx
 msgid "Next"
@@ -6102,6 +6157,10 @@ msgstr ""
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "没有匹配的 Bot"
+
+#: src/components/AskCard.tsx
+msgid "No category"
+msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "No cleanup has run yet."
@@ -6347,6 +6406,7 @@ msgstr ""
 msgid "Not in the plugin catalog"
 msgstr "不在插件目录中"
 
+#: src/components/EnableNotificationsDialog.tsx
 #: src/components/GitHubStarPrompt.tsx
 #: src/components/InstallAppBanner.tsx
 #: src/pages/shell/message-cards.tsx
@@ -6390,6 +6450,7 @@ msgstr ""
 msgid "Note:"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
 msgstr ""
@@ -6535,6 +6596,10 @@ msgstr "按计划"
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
 msgstr "{day}日 {time}"
+
+#: src/components/AskCard.tsx
+msgid "On hold"
+msgstr ""
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -6897,6 +6962,7 @@ msgstr ""
 msgid "PDF and PDF Studio"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -7113,6 +7179,7 @@ msgstr "上一页"
 msgid "Previous settings sections"
 msgstr "上一组设置项"
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Priority"
@@ -7611,6 +7678,10 @@ msgstr "正在回复 {0}"
 #: src/lib/user-error.ts
 msgid "Request a new code"
 msgstr "请重新获取验证码"
+
+#: src/components/AskCard.tsx
+msgid "Requested by"
+msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Requests"
@@ -8675,6 +8746,14 @@ msgstr ""
 msgid "Status"
 msgstr "状态"
 
+#: src/components/AskCard.tsx
+msgid "Status comment"
+msgstr ""
+
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Stay up to date"
+msgstr ""
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Step 2 — Describe the edit"
 msgstr ""
@@ -9419,8 +9498,16 @@ msgstr "请重试测试。"
 msgid "Tuesday"
 msgstr "周二"
 
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Turn on notifications"
+msgstr ""
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Turn these quantities into a cost plan with a total per trade"
+msgstr ""
+
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Turning on…"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -9457,6 +9544,7 @@ msgstr "直接输入，不录制"
 msgid "Type your answer"
 msgstr "输入你的回答"
 
+#: src/components/AskCard.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/Shell.tsx
 msgid "Unassigned"
@@ -9582,6 +9670,7 @@ msgstr ""
 msgid "Uploading drawings here turns pages into images the AI can visually inspect. The regular file upload is for text extraction only and does not provide visual understanding of drawings."
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "紧急"
@@ -10011,6 +10100,14 @@ msgstr ""
 #: src/components/SignupSurvey.tsx
 msgid "Work"
 msgstr "工作"
+
+#: src/components/AskCard.tsx
+msgid "Work package"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Work package change"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Work Space"

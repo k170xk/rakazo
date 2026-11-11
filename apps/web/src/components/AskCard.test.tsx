@@ -937,3 +937,79 @@ it("previews a deadline change with its project and approves it once", async () 
   expect(onAnswer).toHaveBeenCalledWith("allow");
   expect(card.textContent).toContain("Approved: saving it in Evolve");
 });
+
+const stage2Package = {
+  title: "Stage 2 drawings",
+  category: "Structures",
+  status: "pending",
+  priority: "medium",
+  assignee: "Aoife Byrne",
+  durationDays: 3,
+  canStart: "2026-11-16",
+  mustStart: "2026-11-18",
+  due: "2026-11-20",
+  percentComplete: 0,
+  notes: null,
+  links: [],
+};
+
+const workPackageCard = (change: NonNullable<AskBlock["workPackageChange"]>): AskBlock => ({
+  kind: "ask",
+  approvalEffectId: "effect-1",
+  text: "Change this work package on C1078?",
+  detail: "Project: C1078 · Cork Library",
+  detailFormat: "text",
+  workPackageChange: change,
+  status: "pending",
+  actions: [
+    {
+      id: "allow",
+      label: change.action === "delete" ? "Delete work package" : "Save changes",
+    },
+    { id: "deny", label: "Cancel" },
+  ],
+});
+
+it("previews a work package change with who is emailed and approves it once", async () => {
+  const onAnswer = vi.fn(async () => undefined);
+  await render(
+    workPackageCard({
+      action: "update",
+      project: { jobNumber: "C1078", name: "Cork Library", client: "Cork County Council" },
+      before: stage2Package,
+      after: { ...stage2Package, status: "completed", percentComplete: 100 },
+      requester: "Keith Murphy",
+      statusComment: "Issued to client",
+      emails: ["Keith Murphy"],
+    }),
+    undefined,
+    onAnswer,
+  );
+  const card = container.querySelector('[data-testid="work-package-approval-card"]')!;
+  expect(card.textContent).toContain("C1078 · Cork Library");
+  expect(card.textContent).toContain("Structures");
+  expect(card.querySelector(".line-through")?.textContent).toBe("Pending");
+  expect(card.textContent).toContain("Issued to client");
+  expect(card.textContent).toContain("Keith Murphy");
+  const buttons = [...card.querySelectorAll("button")].map((button) => button.textContent);
+  expect(buttons).toEqual(["Save changes", "Cancel"]);
+  await act(async () => (card.querySelector("button") as HTMLButtonElement).click());
+  expect(onAnswer).toHaveBeenCalledWith("allow");
+  expect(card.textContent).toContain("Approved: saving it in Evolve");
+});
+
+it("shows a work package being deleted without striking anything through", async () => {
+  await render(
+    workPackageCard({
+      action: "delete",
+      project: { jobNumber: "C1078", name: "Cork Library", client: null },
+      before: stage2Package,
+      warnings: ["Its planned hours are removed from the resource planner."],
+    }),
+  );
+  const card = container.querySelector('[data-testid="work-package-approval-card"]')!;
+  expect(card.textContent).toContain("Delete work package");
+  expect(card.textContent).toContain("Stage 2 drawings");
+  expect(card.querySelector(".line-through")).toBeNull();
+  expect(card.textContent).toContain("resource planner");
+});

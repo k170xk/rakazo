@@ -502,10 +502,17 @@ describe("planActionGate", () => {
     }
   });
 
-  it("treats Evolve deadline changes as every-time approvals", () => {
-    expect(toolNeedsApprovalEveryTime("mcp__evolve__add_project_deadline")).toBe(true);
-    expect(toolNeedsApprovalEveryTime("mcp__evolve__update_project_deadline")).toBe(true);
-    expect(toolRequiresExplicitApproval("mcp__evolve__update_project_deadline")).toBe(true);
+  it("treats Evolve deadline and work package changes as every-time approvals", () => {
+    for (const tool of [
+      "add_project_deadline",
+      "update_project_deadline",
+      "add_work_package",
+      "update_work_package",
+      "delete_work_package",
+    ]) {
+      expect(toolNeedsApprovalEveryTime(`mcp__evolve__${tool}`)).toBe(true);
+      expect(toolRequiresExplicitApproval(`mcp__evolve__${tool}`)).toBe(true);
+    }
     expect(toolNeedsApprovalEveryTime("mcp__evolve__get_project_details")).toBe(false);
   });
 

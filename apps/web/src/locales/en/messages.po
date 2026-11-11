@@ -291,6 +291,7 @@ msgstr "{count} weeks"
 msgid "{count} years"
 msgstr "{count} years"
 
+#: src/components/AskCard.tsx
 #: src/pages/AdminComputerAccess.tsx
 msgid "{days} days"
 msgstr "{days} days"
@@ -563,6 +564,10 @@ msgstr "⚠️ Near context limit - consider removing some references"
 #: src/pages/shell/references-dialog.tsx
 msgid "✅ Good context usage - {remaining}% remaining"
 msgstr "✅ Good context usage - {remaining}% remaining"
+
+#: src/components/AskCard.tsx
+msgid "1 day"
+msgstr "1 day"
 
 #: src/components/integrations/space-availability.tsx
 msgid "1 space"
@@ -873,6 +878,10 @@ msgstr "Add to routine"
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
 msgstr "Add trigger"
+
+#: src/components/AskCard.tsx
+msgid "Add work package"
+msgstr "Add work package"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Add workspace"
@@ -1233,6 +1242,10 @@ msgid "Approved: adding it to Evolve"
 msgstr "Approved: adding it to Evolve"
 
 #: src/components/AskCard.tsx
+msgid "Approved: deleting it from Evolve"
+msgstr "Approved: deleting it from Evolve"
+
+#: src/components/AskCard.tsx
 msgid "Approved: saving it in Evolve"
 msgstr "Approved: saving it in Evolve"
 
@@ -1311,6 +1324,10 @@ msgstr "Ask your administrator if you need one."
 #: src/pages/shell/computer-panel.tsx
 msgid "Asleep"
 msgstr "Asleep"
+
+#: src/components/AskCard.tsx
+msgid "Assigned to"
+msgstr "Assigned to"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
@@ -1675,6 +1692,10 @@ msgstr "Can add OCSC's company introduction and real project photos"
 msgid "Can show tracked changes marked up in the PDF when you want them"
 msgstr "Can show tracked changes marked up in the PDF when you want them"
 
+#: src/components/AskCard.tsx
+msgid "Can start"
+msgstr "Can start"
+
 #: src/App.tsx
 msgid "Can't reach the server."
 msgstr "Can't reach the server."
@@ -1762,6 +1783,7 @@ msgstr "Card view"
 msgid "Cards"
 msgstr "Cards"
 
+#: src/components/AskCard.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
 msgstr "Category"
@@ -2250,6 +2272,7 @@ msgstr "Compare"
 msgid "Compares two versions, or gives you a clean copy with every change accepted"
 msgstr "Compares two versions, or gives you a clean copy with every change accepted"
 
+#: src/components/AskCard.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Complete"
 msgstr "Complete"
@@ -3660,6 +3683,10 @@ msgstr "Delete this Space's credentials?"
 msgid "Delete unpinned files after"
 msgstr "Delete unpinned files after"
 
+#: src/components/AskCard.tsx
+msgid "Delete work package"
+msgstr "Delete work package"
+
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "Delete work space"
 msgstr "Delete work space"
@@ -3920,6 +3947,10 @@ msgstr "Due"
 msgid "Duplicate"
 msgstr "Duplicate"
 
+#: src/components/AskCard.tsx
+msgid "Duration"
+msgstr "Duration"
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
 msgstr "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
@@ -4024,6 +4055,10 @@ msgstr "Email me a code"
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "Email verification required"
+
+#: src/components/AskCard.tsx
+msgid "Emails"
+msgstr "Emails"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Emails and sign-off"
@@ -4589,6 +4624,10 @@ msgstr "Gateway URL"
 msgid "Get its own icon and window, and open it straight from your desktop."
 msgstr "Get its own icon and window, and open it straight from your desktop."
 
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Get notified when your work finishes, an agent needs your input, or a routine completes — even when you are in another tab."
+msgstr "Get notified when your work finishes, an agent needs your input, or a routine completes — even when you are in another tab."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Get to know agent teamwork"
 msgstr "Get to know agent teamwork"
@@ -4771,6 +4810,7 @@ msgstr "Hide password"
 msgid "Hide transcript"
 msgstr "Hide transcript"
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4912,6 +4952,7 @@ msgstr "Import an agent"
 msgid "Import data"
 msgstr "Import data"
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-status.ts
 msgid "In progress"
@@ -5262,6 +5303,10 @@ msgstr "Link DMs"
 msgid "Link SSO"
 msgstr "Link SSO"
 
+#: src/components/AskCard.tsx
+msgid "Links"
+msgstr "Links"
+
 #: src/pages/Artifacts.tsx
 msgid "List view"
 msgstr "List view"
@@ -5405,6 +5450,7 @@ msgstr "Looks like it contains a key"
 msgid "Lost the connection. Reconnecting…"
 msgstr "Lost the connection. Reconnecting…"
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5558,6 +5604,7 @@ msgstr "MCP server"
 msgid "MCP servers"
 msgstr "MCP servers"
 
+#: src/components/AskCard.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -5849,6 +5896,10 @@ msgstr "Move to"
 msgid "Move up"
 msgstr "Move up"
 
+#: src/components/AskCard.tsx
+msgid "Must start"
+msgstr "Must start"
+
 #: src/components/call/CallCard.tsx
 msgid "Mute"
 msgstr "Mute"
@@ -6066,6 +6117,10 @@ msgstr "New variable"
 msgid "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
 msgstr "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
 
+#: src/components/AskCard.tsx
+msgid "New work package"
+msgstr "New work package"
+
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/shell/references-dialog.tsx
 msgid "Next"
@@ -6120,6 +6175,10 @@ msgstr "No bots"
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "No bots match"
+
+#: src/components/AskCard.tsx
+msgid "No category"
+msgstr "No category"
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "No cleanup has run yet."
@@ -6365,6 +6424,7 @@ msgstr "Not in OCSC Intelligence's catalog"
 msgid "Not in the plugin catalog"
 msgstr "Not in the plugin catalog"
 
+#: src/components/EnableNotificationsDialog.tsx
 #: src/components/GitHubStarPrompt.tsx
 #: src/components/InstallAppBanner.tsx
 #: src/pages/shell/message-cards.tsx
@@ -6408,6 +6468,7 @@ msgstr "Note name, for example Writing style"
 msgid "Note:"
 msgstr "Note:"
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
 msgstr "Notes"
@@ -6553,6 +6614,10 @@ msgstr "On a schedule"
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
 msgstr "on day {day} at {time}"
+
+#: src/components/AskCard.tsx
+msgid "On hold"
+msgstr "On hold"
 
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
@@ -6915,6 +6980,7 @@ msgstr "PDF"
 msgid "PDF and PDF Studio"
 msgstr "PDF and PDF Studio"
 
+#: src/components/AskCard.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -7131,6 +7197,7 @@ msgstr "Previous page"
 msgid "Previous settings sections"
 msgstr "Previous settings sections"
 
+#: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Priority"
@@ -7629,6 +7696,10 @@ msgstr "Replying to {0}"
 #: src/lib/user-error.ts
 msgid "Request a new code"
 msgstr "Request a new code"
+
+#: src/components/AskCard.tsx
+msgid "Requested by"
+msgstr "Requested by"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Requests"
@@ -8693,6 +8764,14 @@ msgstr "State or region"
 msgid "Status"
 msgstr "Status"
 
+#: src/components/AskCard.tsx
+msgid "Status comment"
+msgstr "Status comment"
+
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Stay up to date"
+msgstr "Stay up to date"
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Step 2 — Describe the edit"
 msgstr "Step 2 — Describe the edit"
@@ -9440,9 +9519,17 @@ msgstr "Try the test again."
 msgid "Tuesday"
 msgstr "Tuesday"
 
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Turn on notifications"
+msgstr "Turn on notifications"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Turn these quantities into a cost plan with a total per trade"
 msgstr "Turn these quantities into a cost plan with a total per trade"
+
+#: src/components/EnableNotificationsDialog.tsx
+msgid "Turning on…"
+msgstr "Turning on…"
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Turns any OCSC Word report, deck or workbook into a clean PDF"
@@ -9478,6 +9565,7 @@ msgstr "Type without recording"
 msgid "Type your answer"
 msgstr "Type your answer"
 
+#: src/components/AskCard.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/Shell.tsx
 msgid "Unassigned"
@@ -9603,6 +9691,7 @@ msgstr "Upload files, documents and images"
 msgid "Uploading drawings here turns pages into images the AI can visually inspect. The regular file upload is for text extraction only and does not provide visual understanding of drawings."
 msgstr "Uploading drawings here turns pages into images the AI can visually inspect. The regular file upload is for text extraction only and does not provide visual understanding of drawings."
 
+#: src/components/AskCard.tsx
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "Urgent"
@@ -10037,6 +10126,14 @@ msgstr "Words:"
 #: src/components/SignupSurvey.tsx
 msgid "Work"
 msgstr "Work"
+
+#: src/components/AskCard.tsx
+msgid "Work package"
+msgstr "Work package"
+
+#: src/components/AskCard.tsx
+msgid "Work package change"
+msgstr "Work package change"
 
 #: src/pages/settings-nav.ts
 msgid "Work Space"

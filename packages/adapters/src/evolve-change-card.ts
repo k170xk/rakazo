@@ -2,8 +2,10 @@ import type { AdapterContext, ConnectorCall, ConnectorProvider } from "@rakazo/a
 import type { ProjectDeadlineChange } from "@rakazo/contracts";
 import { toolNeedsApprovalEveryTime } from "@rakazo/core";
 import type { FleetCardSummary } from "./approval-ask.js";
+import type { WorkPackagePreview } from "./evolve-work-package-card.js";
+import { workPackageCardSummary } from "./evolve-work-package-card.js";
 
-/** Keys only Rakazo sets on a deadline call; whatever the model sends under them is dropped. */
+/** Keys only Rakazo sets on an Evolve change; whatever the model sends under them is dropped. */
 const CARRIED_KEYS = ["_preview", "_expected", "_caller_email"] as const;
 
 type DeadlineValues = {
@@ -23,7 +25,8 @@ type DeadlinePreview = {
   warnings?: string[];
 };
 
-export function isEvolveDeadlineTool(name: string): boolean {
+/** A deadline or work package change, previewed on a card and approved every time. */
+export function isEvolveChangeTool(name: string): boolean {
   return toolNeedsApprovalEveryTime(name);
 }
 
@@ -111,10 +114,10 @@ export function deadlineCardSummary(preview: DeadlinePreview): FleetCardSummary 
 }
 
 /**
- * Ask Evolve what a deadline call would do without saving it. Returns the card and the arguments
- * the approval covers, or the reply to hand straight back (an error, or projects to choose from).
+ * Ask Evolve what a deadline or work package call would do without saving it. Returns the card and
+ * the arguments the approval covers, or the reply to hand straight back (an error, or choices).
  */
-export async function previewDeadlineChange(
+export async function previewEvolveChange(
   connector: ConnectorProvider,
   call: ConnectorCall,
   context: AdapterContext,
@@ -131,8 +134,12 @@ export async function previewDeadlineChange(
   }
   if (failure) return { error: failure };
   const reply = evolveReply(data);
-  const preview = reply?.preview as DeadlinePreview | undefined;
-  if (!reply || reply.ok === false || !preview?.deadline) {
+  const preview = reply?.preview as (DeadlinePreview | WorkPackagePreview) | undefined;
+  const workPackage =
+    preview && "work_package" in preview
+      ? true
+      : preview?.action === "delete" && Boolean(preview.before);
+  if (!reply || reply.ok === false || !preview || (!workPackage && !("deadline" in preview))) {
     return {
       error: reply
         ? `Nothing was saved. ${JSON.stringify(reply)}`
@@ -140,9 +147,11 @@ export async function previewDeadlineChange(
     };
   }
   return {
-    summary: deadlineCardSummary(preview),
-    // The change is saved only while the deadline still reads as the card showed it.
+    summary: workPackage
+      ? workPackageCardSummary(preview as WorkPackagePreview)
+      : deadlineCardSummary(preview as DeadlinePreview),
+    // The change is saved only while the record still reads as the card showed it.
     args:
-      preview.action === "update" && preview.before ? { ...args, _expected: preview.before } : args,
+      preview.action !== "add" && preview.before ? { ...args, _expected: preview.before } : args,
   };
 }

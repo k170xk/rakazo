@@ -68,6 +68,9 @@ const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
 const EVERY_TIME_APPROVAL_TOOLS = new Set([
   "mcp__evolve__add_project_deadline",
   "mcp__evolve__update_project_deadline",
+  "mcp__evolve__add_work_package",
+  "mcp__evolve__update_work_package",
+  "mcp__evolve__delete_work_package",
 ]);
 
 export function toolNeedsApprovalEveryTime(toolName: string): boolean {

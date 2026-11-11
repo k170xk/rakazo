@@ -79,11 +79,16 @@ export function AskCard(props: AskCardProps) {
   if (isSecretAskBlock(props.block)) return <SecretAskCard {...props} />;
   if (props.block.deadlineChange && isApprovalAskBlock(props.block))
     return <DeadlineAskCard {...props} change={props.block.deadlineChange} />;
+  if (props.block.workPackageChange && isApprovalAskBlock(props.block))
+    return <WorkPackageAskCard {...props} change={props.block.workPackageChange} />;
   return <PromptAskCard {...props} />;
 }
 
 type DeadlineChange = NonNullable<AskBlock["deadlineChange"]>;
 type DeadlineValues = DeadlineChange["after"];
+type WorkPackageChange = NonNullable<AskBlock["workPackageChange"]>;
+type WorkPackageValues = NonNullable<WorkPackageChange["after"]>;
+type ChangeRow = { key: string; label: string; value: string };
 
 function dueDay(value: string | null): string {
   if (!value) return t`No date`;
@@ -96,7 +101,7 @@ function dueDay(value: string | null): string {
   });
 }
 
-function deadlineRows(values: DeadlineValues) {
+function deadlineRows(values: DeadlineValues): ChangeRow[] {
   return [
     { key: "name", label: t`Deadline`, value: values.name },
     { key: "date", label: t`Due`, value: dueDay(values.date) },
@@ -110,24 +115,131 @@ function deadlineRows(values: DeadlineValues) {
   ];
 }
 
-/** A project deadline to add or change, previewed from Evolve; it is saved only when approved. */
-function DeadlineAskCard({
+function workPackageStatus(status: string): string {
+  switch (status) {
+    case "pending":
+      return t`Pending`;
+    case "in_progress":
+      return t`In progress`;
+    case "on_hold":
+      return t`On hold`;
+    case "completed":
+      return t`Completed`;
+    case "cancelled":
+      return t`Cancelled`;
+    default:
+      return status;
+  }
+}
+
+function workPackagePriority(priority: string): string {
+  switch (priority) {
+    case "low":
+      return t`Low`;
+    case "medium":
+      return t`Medium`;
+    case "high":
+      return t`High`;
+    case "urgent":
+      return t`Urgent`;
+    default:
+      return priority;
+  }
+}
+
+function workPackageRows(values: WorkPackageValues): ChangeRow[] {
+  const days = values.durationDays;
+  return [
+    { key: "title", label: t`Work package`, value: values.title },
+    { key: "category", label: t`Category`, value: values.category ?? t`No category` },
+    { key: "assignee", label: t`Assigned to`, value: values.assignee ?? t`Unassigned` },
+    { key: "status", label: t`Status`, value: workPackageStatus(values.status) },
+    { key: "priority", label: t`Priority`, value: workPackagePriority(values.priority) },
+    { key: "duration", label: t`Duration`, value: days === 1 ? t`1 day` : t`${days} days` },
+    { key: "canStart", label: t`Can start`, value: values.canStart ? dueDay(values.canStart) : "" },
+    {
+      key: "mustStart",
+      label: t`Must start`,
+      value: values.mustStart ? dueDay(values.mustStart) : "",
+    },
+    { key: "due", label: t`Due`, value: values.due ? dueDay(values.due) : "" },
+    {
+      key: "complete",
+      label: t`Complete`,
+      value: values.percentComplete ? `${values.percentComplete}%` : "",
+    },
+    { key: "notes", label: t`Notes`, value: values.notes ?? "" },
+    {
+      key: "links",
+      label: t`Links`,
+      value: values.links
+        .map((link) => (link.title ? `${link.title}: ${link.url}` : link.url))
+        .join("\n"),
+    },
+  ];
+}
+
+/** The deadline's or work package's fields, with each changed value struck through beside its new one. */
+function ChangeRows({ rows, before }: { rows: ChangeRow[]; before?: ChangeRow[] }) {
+  const { t } = useLingui();
+  const shown = rows.filter(
+    (row) => row.value || before?.find((item) => item.key === row.key)?.value,
+  );
+  return (
+    <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[14.5px] leading-[1.45]">
+      {shown.map((row) => {
+        const previous = before?.find((item) => item.key === row.key)?.value;
+        const changed = before !== undefined && previous !== row.value;
+        return (
+          <div key={row.key} className="contents">
+            <dt className="text-muted-foreground">{row.label}</dt>
+            <dd className="min-w-0 whitespace-pre-wrap break-words text-foreground">
+              {changed && previous ? (
+                <span className="me-1.5 text-muted-foreground line-through">{previous}</span>
+              ) : null}
+              <span className={changed ? "font-medium" : undefined}>
+                {row.value || (changed ? t`(cleared)` : "")}
+              </span>
+            </dd>
+          </div>
+        );
+      })}
+    </dl>
+  );
+}
+
+/**
+ * The frame every Evolve change card shares: the project, what changes, warnings, and the once-only
+ * buttons. The change is saved only when it is approved here.
+ */
+function EvolveChangeCard({
   block,
   canAnswer,
   onAnswer,
-  change,
-}: AskCardProps & { change: DeadlineChange }) {
+  testId,
+  heading,
+  project,
+  children,
+  warnings,
+  allowLabel,
+  approvedText,
+  destructive,
+}: Pick<AskCardProps, "block" | "canAnswer" | "onAnswer"> & {
+  testId: string;
+  heading: ReactNode;
+  project: DeadlineChange["project"];
+  children: ReactNode;
+  warnings?: string[];
+  allowLabel: string;
+  approvedText: string;
+  destructive?: boolean;
+}) {
   const { t } = useLingui();
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [acceptedAnswer, setAcceptedAnswer] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const answer = block.status === "answered" ? block.answer : acceptedAnswer;
   const answered = answer !== undefined;
-  const adding = change.action === "add";
-  const before = change.before ? deadlineRows(change.before) : undefined;
-  const rows = deadlineRows(change.after).filter(
-    (row, index) => row.value || before?.[index]?.value,
-  );
 
   async function answerWith(id: string) {
     if (pendingAction) return;
@@ -145,13 +257,11 @@ function DeadlineAskCard({
 
   return (
     <BuiCard
-      data-testid="deadline-approval-card"
+      data-testid={testId}
       className="w-full min-w-0 max-w-xl overflow-hidden border border-border dark:border-transparent"
     >
       <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-2.5">
-        <span className="text-[13px] font-medium text-muted-foreground">
-          {adding ? <Trans>New project deadline</Trans> : <Trans>Deadline change</Trans>}
-        </span>
+        <span className="text-[13px] font-medium text-muted-foreground">{heading}</span>
         <StatusBadge tone={answered ? "positive" : canAnswer ? "caution" : "neutral"}>
           {answered ? (
             <Trans>Done</Trans>
@@ -168,35 +278,16 @@ function DeadlineAskCard({
             <Trans>Project</Trans>
           </div>
           <div className="mt-0.5 text-[15px] font-medium text-foreground">
-            {[change.project.jobNumber, change.project.name].filter(Boolean).join(" · ") ||
-              t`Unnamed project`}
+            {[project.jobNumber, project.name].filter(Boolean).join(" · ") || t`Unnamed project`}
           </div>
-          {change.project.client ? (
-            <div className="text-[13.5px] text-muted-foreground">{change.project.client}</div>
+          {project.client ? (
+            <div className="text-[13.5px] text-muted-foreground">{project.client}</div>
           ) : null}
         </div>
-        <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[14.5px] leading-[1.45]">
-          {rows.map((row) => {
-            const previous = before?.find((item) => item.key === row.key)?.value;
-            const changed = before !== undefined && previous !== row.value;
-            return (
-              <div key={row.key} className="contents">
-                <dt className="text-muted-foreground">{row.label}</dt>
-                <dd className="min-w-0 whitespace-pre-wrap break-words text-foreground">
-                  {changed && previous ? (
-                    <span className="me-1.5 text-muted-foreground line-through">{previous}</span>
-                  ) : null}
-                  <span className={changed ? "font-medium" : undefined}>
-                    {row.value || (changed ? t`(cleared)` : "")}
-                  </span>
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
-        {change.warnings?.length ? (
+        {children}
+        {warnings?.length ? (
           <ul className="mt-3 space-y-1 rounded-lg bg-warning/10 px-3 py-2 text-[13.5px] text-warning">
-            {change.warnings.map((warning) => (
+            {warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>
@@ -204,11 +295,7 @@ function DeadlineAskCard({
         {answered ? (
           <div className="mt-3.5 flex items-center gap-1.5 text-[13.5px] font-medium text-muted-foreground">
             {answer === "deny" ? null : <Check aria-hidden className="size-4" />}
-            {answer === "deny"
-              ? t`Cancelled`
-              : adding
-                ? t`Approved: adding it to Evolve`
-                : t`Approved: saving it in Evolve`}
+            {answer === "deny" ? t`Cancelled` : approvedText}
           </div>
         ) : !canAnswer ? (
           <div className="mt-3.5 text-[13.5px] font-medium text-muted-foreground">
@@ -219,18 +306,16 @@ function DeadlineAskCard({
             {block.actions?.map((action) => (
               <Button
                 key={action.id}
-                variant={action.id === "allow" ? "default" : "outline"}
+                variant={
+                  action.id !== "allow" ? "outline" : destructive ? "destructive" : "default"
+                }
                 disabled={pendingAction !== null}
                 onClick={() => void answerWith(action.id)}
               >
                 {pendingAction === action.id ? (
                   <Trans>Sending…</Trans>
                 ) : action.id === "allow" ? (
-                  adding ? (
-                    t`Add deadline`
-                  ) : (
-                    t`Save changes`
-                  )
+                  allowLabel
                 ) : (
                   t`Cancel`
                 )}
@@ -241,6 +326,108 @@ function DeadlineAskCard({
         {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
       </div>
     </BuiCard>
+  );
+}
+
+/** A project deadline to add or change, previewed from Evolve; it is saved only when approved. */
+function DeadlineAskCard({ change, ...props }: AskCardProps & { change: DeadlineChange }) {
+  const { t } = useLingui();
+  const adding = change.action === "add";
+  return (
+    <EvolveChangeCard
+      {...props}
+      testId="deadline-approval-card"
+      heading={adding ? <Trans>New project deadline</Trans> : <Trans>Deadline change</Trans>}
+      project={change.project}
+      warnings={change.warnings}
+      allowLabel={adding ? t`Add deadline` : t`Save changes`}
+      approvedText={adding ? t`Approved: adding it to Evolve` : t`Approved: saving it in Evolve`}
+    >
+      <ChangeRows
+        rows={deadlineRows(change.after)}
+        before={change.before ? deadlineRows(change.before) : undefined}
+      />
+    </EvolveChangeCard>
+  );
+}
+
+/**
+ * A work package to add, change or delete, previewed from Evolve with who its email reaches; it is
+ * saved only when approved.
+ */
+function WorkPackageAskCard({ change, ...props }: AskCardProps & { change: WorkPackageChange }) {
+  const { t } = useLingui();
+  const shown = change.after ?? change.before;
+  return (
+    <EvolveChangeCard
+      {...props}
+      testId="work-package-approval-card"
+      heading={
+        change.action === "add" ? (
+          <Trans>New work package</Trans>
+        ) : change.action === "update" ? (
+          <Trans>Work package change</Trans>
+        ) : (
+          <Trans>Delete work package</Trans>
+        )
+      }
+      project={change.project}
+      warnings={change.warnings}
+      destructive={change.action === "delete"}
+      allowLabel={
+        change.action === "add"
+          ? t`Add work package`
+          : change.action === "update"
+            ? t`Save changes`
+            : t`Delete work package`
+      }
+      approvedText={
+        change.action === "add"
+          ? t`Approved: adding it to Evolve`
+          : change.action === "update"
+            ? t`Approved: saving it in Evolve`
+            : t`Approved: deleting it from Evolve`
+      }
+    >
+      {shown ? (
+        <ChangeRows
+          rows={workPackageRows(shown)}
+          before={
+            change.action === "update" && change.before ? workPackageRows(change.before) : undefined
+          }
+        />
+      ) : null}
+      {change.requester || change.statusComment || change.emails?.length ? (
+        <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-border pt-3 text-[13.5px] leading-[1.45]">
+          {change.requester ? (
+            <div className="contents">
+              <dt className="text-muted-foreground">
+                <Trans>Requested by</Trans>
+              </dt>
+              <dd className="min-w-0 text-foreground">{change.requester}</dd>
+            </div>
+          ) : null}
+          {change.statusComment ? (
+            <div className="contents">
+              <dt className="text-muted-foreground">
+                <Trans>Status comment</Trans>
+              </dt>
+              <dd className="min-w-0 whitespace-pre-wrap break-words text-foreground">
+                {change.statusComment}
+              </dd>
+            </div>
+          ) : null}
+          {change.emails?.length ? (
+            <div className="contents">
+              <dt className="text-muted-foreground">
+                <Trans>Emails</Trans>
+              </dt>
+              <dd className="min-w-0 break-words text-foreground">{change.emails.join(", ")}</dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : null}
+    </EvolveChangeCard>
   );
 }
 
