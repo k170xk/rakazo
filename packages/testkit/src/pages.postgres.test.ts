@@ -439,6 +439,9 @@ describePages("pages", () => {
       code: expect.stringMatching(/React\.createElement\(Page, \{ title: "Middle"/),
       version: 1,
       updatedAt: expect.any(String),
+      kind: "page",
+      canEditData: false,
+      canSaveState: true,
     });
     // A card's read leaves the secret store alone; only the share popover asks for the link.
     const { shareSecretId } = await db().page.findUniqueOrThrow({ where: { id: middle } });

@@ -7,6 +7,7 @@ import { spaceQueries } from "./query";
 const detail = (id: string, title: string): PageDetail => ({
   id,
   title,
+  kind: "page",
   botId: "b1",
   groupId: null,
   visibility: "private",

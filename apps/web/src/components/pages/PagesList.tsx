@@ -13,13 +13,14 @@ import {
   Spinner,
 } from "@rakazo/ui-web";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Globe, MoreHorizontal, Search } from "lucide-react";
+import { AppWindow, Globe, MoreHorizontal, Search } from "lucide-react";
 import { useDeferredValue, useState } from "react";
 import { pageMutationOptions } from "../../lib/page-actions";
 import { useOpenPage } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import { formatRelativeTime } from "../../lib/relative-time";
 import { DeleteItemDialog } from "../../pages/shell/dialogs";
+import { ImportWorkbookButton } from "../apps/ImportWorkbookButton";
 
 /** Enough to fill the panel; Show more brings the next batch. */
 const PAGE_SIZE = 20;
@@ -85,19 +86,22 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
   const searchable = query !== "" || items.length >= SEARCH_FROM || pages.hasNextPage;
   if (items.length === 0 && !searchable) {
     return (
-      <p className="px-1 py-2 text-[13px] text-muted-foreground">
-        {groupId ? (
-          <Trans>
-            Pages this group builds for you appear here. Ask for a dashboard, tracker or plan to
-            make one.
-          </Trans>
-        ) : (
-          <Trans>
-            Pages this bot builds for you appear here. Ask for a dashboard, tracker or plan to make
-            one.
-          </Trans>
-        )}
-      </p>
+      <div className="flex flex-col gap-2 px-1 py-2">
+        <p className="text-[13px] text-muted-foreground">
+          {groupId ? (
+            <Trans>
+              Pages this group builds for you appear here. Ask for a dashboard, tracker or plan to
+              make one.
+            </Trans>
+          ) : (
+            <Trans>
+              Pages this bot builds for you appear here. Ask for a dashboard, tracker or plan to
+              make one.
+            </Trans>
+          )}
+        </p>
+        <ImportWorkbookButton botId={botId} groupId={groupId} />
+      </div>
     );
   }
   const commitRename = () => {
@@ -145,7 +149,15 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
           className="flex min-w-0 flex-1 items-center gap-3 rounded-[10px] px-2 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <span className="grid size-8 shrink-0 place-items-center rounded-[8px] bg-muted text-foreground">
-            <PageIcon className="h-5 w-4" />
+            {page.kind === "app" ? (
+              <AppWindow
+                aria-hidden="true"
+                className="size-[18px] text-primary"
+                strokeWidth={1.7}
+              />
+            ) : (
+              <PageIcon className="h-5 w-4" />
+            )}
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-[14px] leading-5 text-foreground" dir="auto">
@@ -156,6 +168,12 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
                 <>
                   <Globe aria-hidden="true" className="size-3" strokeWidth={1.8} />
                   <Trans>Shared</Trans>
+                  <span aria-hidden="true">·</span>
+                </>
+              ) : null}
+              {page.kind === "app" ? (
+                <>
+                  <Trans>App</Trans>
                   <span aria-hidden="true">·</span>
                 </>
               ) : null}
@@ -199,6 +217,7 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
   );
   return (
     <div data-testid="bot-pages" className="flex flex-col gap-3">
+      <ImportWorkbookButton botId={botId} groupId={groupId} />
       {searchable ? (
         <label className="flex h-9 items-center gap-2 rounded-[10px] bg-muted px-2.5 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
           <Search aria-hidden="true" className="size-4 shrink-0" />

@@ -188,6 +188,7 @@ import { cspReportRoutes } from "./csp-report.js";
 import { configuredEmailProvider } from "./email.js";
 import type { AppEnv } from "./env.js";
 import { loadEnv } from "./env.js";
+import { mountEvolveAppData } from "./evolve-app-data.js";
 import { healthRoutes } from "./health.js";
 import { homeRetentionSweep } from "./home-retention.js";
 import { startHourlySweep } from "./hourly-sweep.js";
@@ -1014,6 +1015,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     requestClientIp,
     async (request) => (await auth.api.getSession({ headers: request.headers }))?.user?.id ?? null,
   );
+  mountEvolveAppData(app, prisma, evolvePlugins);
   const auditAuthResponse = createAuthResponseAudit();
   // Account and session tables, signup bootstrap and account deletion span tenants;
   // webhooks authenticate a bot or provider, then resolve the tenant from it.

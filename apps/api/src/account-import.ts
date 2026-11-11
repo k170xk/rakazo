@@ -7,6 +7,8 @@ import path from "node:path";
 import { createInterface } from "node:readline";
 import type { AdapterContext } from "@rakazo/adapter-kit";
 import { companyFeatures, normalizeWorkspacePath, resolveBotWorkspacePath } from "@rakazo/adapters";
+import { buildApp } from "@rakazo/app-kit/build";
+import { checkSchema, MAX_ROW_BYTES, MAX_ROWS_PER_TABLE, MAX_TABLES } from "@rakazo/app-kit/schema";
 import type {
   AccountExportManifest,
   AccountExportRecord,
@@ -26,6 +28,9 @@ import {
 } from "@rakazo/contracts";
 import { organicAvatarFamily } from "@rakazo/core";
 import {
+  AppDataError,
+  addAppAsset,
+  appFilesFrom,
   createRepos,
   createSpaceForMember,
   InvalidSpaceNameError,
@@ -265,6 +270,11 @@ class SpaceImport {
   /** Each page's newest version so far, which it opens on; 0 until one arrives. */
   readonly pageVersions = new Map<string, number>();
   readonly seenPageVersions = new Set<string>();
+  /** Apps by source id, with their tables' and rows' counts, so limits hold as on save. */
+  readonly apps = new Map<string, { tables: number }>();
+  readonly appTables = new Map<string, { pageId: string; rows: number }>();
+  /** Source asset id to new, for the app files that name their pictures. */
+  readonly appAssets = new Map<string, string>();
   readonly artifacts = new Map<string, PendingArtifact>();
   readonly parentLinks: Array<{ botId: string; parentBotId: string }> = [];
   readonly homes = new Map<string, string>();
@@ -510,6 +520,8 @@ class AccountImporter implements ArchiveSink {
           where: { id: space.mapped(sourceId) },
           data: { currentVersion },
         });
+      for (const sourceId of space.apps.keys())
+        await this.rebuildApp(space, space.mapped(sourceId), space.pageVersions.get(sourceId)!);
       for (const link of space.parentLinks) {
         const parentBotId = space.ids.get(link.parentBotId);
         if (parentBotId)
@@ -522,6 +534,26 @@ class AccountImporter implements ArchiveSink {
         });
     });
     space.recordsDone = true;
+  }
+
+  /** Points an imported app's files at its pictures' new ids, and builds the version it opens on. */
+  private async rebuildApp(space: SpaceImport, pageId: string, currentVersion: number) {
+    const { prisma } = this.deps;
+    const versions = await prisma.pageVersion.findMany({
+      where: { pageId },
+      select: { id: true, version: true, title: true, source: true },
+    });
+    for (const version of versions) {
+      let source = version.source;
+      for (const [from, to] of space.appAssets) source = source.split(from).join(to);
+      let code = "";
+      if (version.version === currentVersion) {
+        const built = await buildApp(appFilesFrom(source), { title: version.title });
+        if (built.ok) code = built.html;
+      }
+      if (source !== version.source || code)
+        await prisma.pageVersion.update({ where: { id: version.id }, data: { source, code } });
+    }
   }
 
   private async importRecord(record: AccountExportRecord) {
@@ -612,14 +644,98 @@ class AccountImporter implements ArchiveSink {
             title: record.title,
             pinnedAt: date(record.pinnedAt),
             currentVersion: record.currentVersion,
+            kind: record.kind ?? "page",
+            dataAccess: record.dataAccess ?? "owner",
+            createdAt: new Date(record.createdAt),
+            updatedAt: new Date(record.updatedAt),
+          },
+        });
+        if (record.kind === "app") space.apps.set(record.id, { tables: 0 });
+        return;
+      case "app_version": {
+        const newest = space.pageVersions.get(record.pageId);
+        if (newest === undefined || !space.apps.has(record.pageId)) throw missingRecord();
+        const key = `${record.pageId}:${record.version}`;
+        if (space.seenPageVersions.has(key)) throw unreadable();
+        space.seenPageVersions.add(key);
+        space.pageVersions.set(record.pageId, Math.max(newest, record.version));
+        // Built once the app's pictures are in; an older version rebuilds if it is restored.
+        await prisma.pageVersion.create({
+          data: {
+            id: newId(),
+            pageId: space.mapped(record.pageId),
+            version: record.version,
+            title: record.title,
+            source: JSON.stringify(appFilesFrom(record.source)),
+            code: "",
+            createdAt: new Date(record.createdAt),
+          },
+        });
+        return;
+      }
+      case "app_table": {
+        const app = space.apps.get(record.pageId);
+        if (!app) throw missingRecord();
+        const schema = checkSchema(record.schema);
+        if (!schema.ok || schema.schema.name !== record.name || ++app.tables > MAX_TABLES)
+          throw unreadable();
+        const pageId = space.mapped(record.pageId);
+        await prisma.appTable.create({
+          data: {
+            id: newId(),
+            pageId,
+            name: record.name,
+            label: record.label,
+            schema: schema.schema as unknown as Prisma.InputJsonValue,
+            position: record.position,
+          },
+        });
+        space.appTables.set(record.id, { pageId, rows: 0 });
+        return;
+      }
+      case "app_row": {
+        const table = space.appTables.get(record.tableId);
+        if (!table) throw missingRecord();
+        if (
+          !record.data ||
+          typeof record.data !== "object" ||
+          Array.isArray(record.data) ||
+          JSON.stringify(record.data).length > MAX_ROW_BYTES ||
+          ++table.rows > MAX_ROWS_PER_TABLE
+        )
+          throw unreadable();
+        await prisma.appRow.create({
+          data: {
+            id: newId(),
+            pageId: table.pageId,
+            tableId: space.mapped(record.tableId),
+            data: record.data as Prisma.InputJsonValue,
+            position: record.position,
             createdAt: new Date(record.createdAt),
             updatedAt: new Date(record.updatedAt),
           },
         });
         return;
+      }
+      case "app_asset": {
+        if (!space.apps.has(record.pageId) || space.appAssets.has(record.id)) throw unreadable();
+        try {
+          const asset = await addAppAsset(prisma, space.mapped(record.pageId), {
+            name: record.name,
+            mime: record.mime,
+            bytes: Buffer.from(record.base64, "base64"),
+            source: record.source,
+          });
+          space.appAssets.set(record.id, asset.id);
+        } catch (error) {
+          if (error instanceof AppDataError) throw new AccountImportError(error.message);
+          throw error;
+        }
+        return;
+      }
       case "page_version": {
         const newest = space.pageVersions.get(record.pageId);
-        if (newest === undefined) throw missingRecord();
+        if (newest === undefined || space.apps.has(record.pageId)) throw missingRecord();
         const pageId = space.mapped(record.pageId);
         const key = `${record.pageId}:${record.version}`;
         if (space.seenPageVersions.has(key)) throw unreadable();

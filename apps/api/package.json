@@ -25,6 +25,7 @@
     "@orpc/server": "1.16.1",
     "@rakazo/adapter-kit": "workspace:*",
     "@rakazo/adapters": "workspace:*",
+    "@rakazo/app-kit": "workspace:*",
     "@rakazo/auth": "workspace:*",
     "@rakazo/contracts": "workspace:*",
     "@rakazo/core": "workspace:*",

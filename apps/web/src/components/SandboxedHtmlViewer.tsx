@@ -19,6 +19,9 @@ document.addEventListener("submit", (event) => event.preventDefault(), true);
 function previewDocument(html: string): string {
   const meta = `<meta http-equiv="Content-Security-Policy" content="${PREVIEW_CSP}">`;
   const referrer = `<meta name="referrer" content="no-referrer">`;
+  const doctype = /^<!doctype html>/i.exec(html);
+  if (doctype)
+    return `${doctype[0]}${meta}${referrer}${PREVIEW_GUARD}${html.slice(doctype[0].length)}`;
   return `${meta}${referrer}${PREVIEW_GUARD}${html}`;
 }
 

@@ -7,10 +7,11 @@ import { setCompanyPolicy } from "./company-policy.js";
 import {
   callEvolveTranscribe,
   createEvolvePluginsConnection,
-  EvolvePluginsError,
   EVOLVE_TRANSCRIBE_AUDIENCE,
+  EvolvePluginsError,
   fetchPluginBranch,
   signEvolvePluginsToken,
+  verifyAppDataToken,
 } from "./evolve-plugins.js";
 import { selectBuiltinToolsForRun } from "./run-tool-selection.js";
 
@@ -203,5 +204,49 @@ describe("Cursor agents company switch", () => {
   it("leaves the offline emulator available everywhere", () => {
     const emulator = { provider: new EmulatorCloudAgentProvider(), key: "emulator" };
     expect(cloudAgentsEnabled(emulator, "any")).toBe(true);
+  });
+});
+
+describe("Evolve app-data tokens", () => {
+  const now = 1_800_000_000;
+  const sign = (claims: Record<string, unknown>, secret = SECRET, alg = "HS256") => {
+    const head = Buffer.from(JSON.stringify({ alg, typ: "JWT" })).toString("base64url");
+    const body = Buffer.from(JSON.stringify(claims)).toString("base64url");
+    const signature = createHmac("sha256", secret).update(`${head}.${body}`).digest("base64url");
+    return `${head}.${body}.${signature}`;
+  };
+  const good = {
+    iss: "evolve",
+    aud: "ocsc-intelligence-app-data",
+    sub: " Keith@OCSC.ie ",
+    slug: "job-tracker",
+    iat: now,
+    exp: now + 60,
+  };
+
+  it("names the person and plugin of a token Evolve signed", () => {
+    expect(verifyAppDataToken(SECRET, sign(good), now)).toEqual({
+      email: "keith@ocsc.ie",
+      slug: "job-tracker",
+    });
+  });
+
+  it("refuses tokens this server signs, other secrets, and stale or long-lived tokens", () => {
+    expect(
+      verifyAppDataToken(SECRET, signEvolvePluginsToken(SECRET, "keith@ocsc.ie", now), now),
+    ).toBeNull();
+    for (const token of [
+      sign(good, "x".repeat(40)),
+      sign(good, SECRET, "none"),
+      sign({ ...good, iss: "ocsc-intelligence" }),
+      sign({ ...good, aud: "evolve-plugins" }),
+      sign({ ...good, exp: now }),
+      sign({ ...good, exp: now + 600 }),
+      sign({ ...good, slug: "../other" }),
+      sign({ ...good, sub: "nobody" }),
+      `${sign(good).slice(0, -2)}xx`,
+      "not-a-token",
+    ])
+      expect(verifyAppDataToken(SECRET, token, now)).toBeNull();
   });
 });

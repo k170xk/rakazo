@@ -787,6 +787,7 @@ msgstr "Activity"
 msgid "Actual size"
 msgstr "Actual size"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/SecretAskCard.tsx
@@ -883,6 +884,10 @@ msgstr "Add fallback"
 msgid "Add field"
 msgstr "Add field"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Add from Excel"
+msgstr "Add from Excel"
+
 #: src/components/ModelHeadersEditor.tsx
 msgid "Add header"
 msgstr "Add header"
@@ -912,6 +917,10 @@ msgstr "Add PDF drawings"
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Add PDF drawings as images"
 msgstr "Add PDF drawings as images"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Add picture"
+msgstr "Add picture"
 
 #: src/pages/model-settings/providers-section.tsx
 msgid "Add provider"
@@ -1248,6 +1257,10 @@ msgstr "Any active staff member"
 msgid "Any model, with your own key"
 msgstr "Any model, with your own key"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Anyone at OCSC with the link"
+msgstr "Anyone at OCSC with the link"
+
 #: src/components/pages/SharePopover.tsx
 msgid "Anyone at the company with the link"
 msgstr "Anyone at the company with the link"
@@ -1255,6 +1268,10 @@ msgstr "Anyone at the company with the link"
 #: src/components/pages/SharePopover.tsx
 msgid "Anyone with the link and password"
 msgstr "Anyone with the link and password"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Anyone you share the app with can always see it. Visitors using the password only read."
+msgstr "Anyone you share the app with can always see it. Visitors using the password only read."
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
@@ -1288,6 +1305,15 @@ msgstr "API token"
 #: src/components/ComputerProviderSettings.tsx
 msgid "API URL"
 msgstr "API URL"
+
+#: src/components/apps/AppStudio.tsx
+#: src/components/pages/PagesList.tsx
+msgid "App"
+msgstr "App"
+
+#: src/components/apps/AppStudio.tsx
+msgid "App Studio"
+msgstr "App Studio"
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -1412,6 +1438,10 @@ msgstr "Ask for any OCSC deliverable in plain English"
 #: src/components/tour/ocsc-tour.tsx
 msgid "Ask it anything, or for any OCSC deliverable"
 msgstr "Ask it anything, or for any OCSC deliverable"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Ask the bot to fix it"
+msgstr "Ask the bot to fix it"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Ask your administrator if you need one."
@@ -1666,10 +1696,6 @@ msgstr "Bot screen preview"
 msgid "Bot style"
 msgstr "Bot style"
 
-#: src/pages/RoutineEditor.tsx
-#~ msgid "Bot's model"
-#~ msgstr "Bot's model"
-
 #: src/components/SignupSurvey.tsx
 msgid "Both"
 msgstr "Both"
@@ -1742,6 +1768,10 @@ msgstr "Build me a fee tracker dashboard for my projects"
 #: src/components/tour/ocsc-tour.tsx
 msgid "Build your own apps, and share them"
 msgstr "Build your own apps, and share them"
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "Building your app…"
+msgstr "Building your app…"
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Builds a deck from a brief, with the company fonts, colours, logo and footer"
@@ -1816,6 +1846,7 @@ msgstr "Can't reach the server."
 msgid "Can't read images"
 msgstr "Can't read images"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/integrations/CompanyMcpApp.tsx
@@ -2185,6 +2216,10 @@ msgstr "Click \"Add References\" to select projects"
 msgid "Click \"Select PDF\" to choose a document"
 msgstr "Click \"Select PDF\" to choose a document"
 
+#: src/components/apps/AppStudio.tsx
+msgid "Click something in the app to tell the bot what to change"
+msgstr "Click something in the app to tell the bot what to change"
+
 #: src/pages/shell/evolve-references.tsx
 msgid "Client"
 msgstr "Client"
@@ -2211,6 +2246,10 @@ msgstr "Clients and projects"
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "Close"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Close app"
+msgstr "Close app"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Close chart"
@@ -2246,6 +2285,7 @@ msgstr "Close navigation"
 msgid "Close page"
 msgstr "Close page"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/side-panel.tsx
 msgid "Close panel"
@@ -2291,6 +2331,7 @@ msgstr "Cloud"
 msgid "Clouds, callouts, arrows and notes placed exactly where the issue is"
 msgstr "Clouds, callouts, arrows and notes placed exactly where the issue is"
 
+#: src/components/apps/AppStudio.tsx
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Code"
@@ -2300,6 +2341,10 @@ msgstr "Code"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "Code"
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Code changes are versioned. Data is not: restoring a version keeps today's rows."
+msgstr "Code changes are versioned. Data is not: restoring a version keeps today's rows."
 
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
@@ -2322,9 +2367,21 @@ msgstr "Color"
 msgid "Color {color}"
 msgstr "Color {color}"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column"
+msgstr "Column"
+
 #: src/components/markdown-copy.tsx
 msgid "column {index}"
 msgstr "column {index}"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column name"
+msgstr "Column name"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column type"
+msgstr "Column type"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Come back to this tour any time from the sidebar"
@@ -2925,10 +2982,6 @@ msgstr "Could not create group"
 #: src/pages/shell/dialogs.tsx
 msgid "Could not create section"
 msgstr "Could not create section"
-
-#: src/pages/shell/dialogs.tsx
-#~ msgid "Could not create space"
-#~ msgstr "Could not create space"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not create team"
@@ -3554,6 +3607,10 @@ msgstr "Couldn't load your files."
 msgid "Couldn't load your wallet"
 msgstr "Couldn't load your wallet"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Couldn't save."
+msgstr "Couldn't save."
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update bot style"
 msgstr "Couldn't update bot style"
@@ -3686,6 +3743,10 @@ msgstr "Cron expression"
 msgid "CSV"
 msgstr "CSV"
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Current"
+msgstr "Current"
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Current clients and projects:\n"
 "- Client:\n"
@@ -3745,6 +3806,7 @@ msgstr "Daily check-ins on unfinished work"
 msgid "Dark"
 msgstr "Dark"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
@@ -3885,6 +3947,10 @@ msgstr "Delete group"
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"
 msgstr "Delete memories too"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Delete row"
+msgstr "Delete row"
 
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
@@ -4033,6 +4099,10 @@ msgstr "Disable a tool"
 msgid "Disabled"
 msgstr "Disabled"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Discard"
+msgstr "Discard"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Discard changes"
 msgstr "Discard changes"
@@ -4072,6 +4142,7 @@ msgstr "Disconnected {disconnectName}."
 msgid "Disconnecting…"
 msgstr "Disconnecting…"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/PasskeyOffer.tsx
@@ -4155,6 +4226,10 @@ msgstr "Download (.zip)"
 #: src/components/ArtifactFileCard.tsx
 msgid "Download {name}"
 msgstr "Download {name}"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Download as Excel"
+msgstr "Download as Excel"
 
 #: src/components/markdown-copy.tsx
 #: src/components/UiCardView.tsx
@@ -4455,6 +4530,10 @@ msgstr "Every bot now thinks at this level"
 msgid "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
 msgstr "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Every check passed."
+msgstr "Every check passed."
+
 #: src/lib/cron.ts
 #: src/pages/AdminComputerAccess.tsx
 #: src/pages/RoutineEditor.tsx
@@ -4544,6 +4623,10 @@ msgstr "Evolve checks the change again; nothing is saved until you approve the c
 #: src/components/EvolveChangeEditor.tsx
 msgid "Evolve did not accept that change"
 msgstr "Evolve did not accept that change"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Evolve didn't accept it."
+msgstr "Evolve didn't accept it."
 
 #: src/components/GroupPeople.tsx
 msgid "Evolve people"
@@ -4713,6 +4796,10 @@ msgstr "Fields to compare, e.g. id, modifiedTime (optional)"
 #: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "File"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "File name, like Chart.tsx"
+msgstr "File name, like Chart.tsx"
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
@@ -5105,6 +5192,10 @@ msgstr "High"
 msgid "High (slow)"
 msgstr "High (slow)"
 
+#: src/components/apps/AppStudio.tsx
+msgid "History"
+msgstr "History"
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Hold to talk"
 msgstr "Hold to talk"
@@ -5397,6 +5488,10 @@ msgstr "Isolated"
 #: src/pages/Artifacts.tsx
 msgid "Isolated preview — no access to your account"
 msgstr "Isolated preview — no access to your account"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "It didn't build, so nothing was saved."
+msgstr "It didn't build, so nothing was saved."
 
 #: src/components/pages/PageViewHost.tsx
 msgid "It may have been deleted, or it belongs to someone else."
@@ -6257,6 +6352,10 @@ msgstr "My computers"
 msgid "My memory"
 msgstr "My memory"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "My plugins"
+msgstr "My plugins"
+
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/settings-nav.ts
 msgid "My vault"
@@ -6372,6 +6471,10 @@ msgstr "New · Granular Editing — follow the 3 steps below"
 msgid "New API key"
 msgstr "New API key"
 
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "New app from Excel"
+msgstr "New app from Excel"
+
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/create-bot-dialog.tsx
@@ -6389,6 +6492,10 @@ msgstr "New computers run on"
 #: src/components/VaultSettings.tsx
 msgid "New contact"
 msgstr "New contact"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "New file"
+msgstr "New file"
 
 #: src/pages/GroupPanel.tsx
 msgid "New group"
@@ -6426,11 +6533,6 @@ msgstr "New open-work item"
 msgid "New password"
 msgstr "New password"
 
-#: src/pages/Shell.tsx
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "New private space"
-#~ msgstr "New private space"
-
 #: src/components/AskCard.tsx
 msgid "New project deadline"
 msgstr "New project deadline"
@@ -6447,10 +6549,6 @@ msgstr "New section"
 #: src/pages/KnowledgeSection.tsx
 msgid "New skill"
 msgstr "New skill"
-
-#: src/pages/shell/dialogs.tsx
-#~ msgid "New space"
-#~ msgstr "New space"
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
@@ -6661,6 +6759,10 @@ msgstr "No pages match “{query}”."
 msgid "No people match your search."
 msgstr "No people match your search."
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "No pictures yet."
+msgstr "No pictures yet."
+
 #: src/pages/AdminStaffApps.tsx
 msgid "No plugins are in the catalog."
 msgstr "No plugins are in the catalog."
@@ -6695,6 +6797,10 @@ msgstr "No results"
 #: src/components/markdown-copy.tsx
 msgid "No rows"
 msgstr "No rows"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "No rows match."
+msgstr "No rows match."
 
 #: src/pages/ActivityList.tsx
 msgid "No runs match these filters."
@@ -7007,6 +7113,10 @@ msgstr "One-time purchase. Credits do not expire."
 msgid "Only enter a code {codeHost} sent you."
 msgstr "Only enter a code {codeHost} sent you."
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Only me"
+msgstr "Only me"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Only people on the project's Design Team, and Evolve admins, can add or change its deadlines."
 msgstr "Only people on the project's Design Team, and Evolve admins, can add or change its deadlines."
@@ -7186,6 +7296,10 @@ msgstr "Original source image"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "Other model…"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Others see the data but can't change it."
+msgstr "Others see the data but can't change it."
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -7479,6 +7593,10 @@ msgstr "Pick a model from the list or enter a model id served by this endpoint."
 msgid "Pick a tool to check"
 msgstr "Pick a tool to check"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Pictures"
+msgstr "Pictures"
+
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
 #: src/pages/BotContextMenu.tsx
@@ -7532,6 +7650,10 @@ msgstr "Plugin"
 msgid "Plugin GitHub URL"
 msgstr "Plugin GitHub URL"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Plugin name in Evolve"
+msgstr "Plugin name in Evolve"
+
 #: src/pages/AdminPluginsPage.tsx
 msgid "Plugin submissions"
 msgstr "Plugin submissions"
@@ -7548,6 +7670,10 @@ msgstr "Plugins for staff"
 #: src/pages/AdminStaffApps.tsx
 msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
 msgstr "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+
+#: src/components/apps/AppStudio.tsx
+msgid "Point at something in the app to change it"
+msgstr "Point at something in the app to change it"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -7588,6 +7714,10 @@ msgstr "Preview"
 msgid "Preview {0}"
 msgstr "Preview {0}"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Preview in Evolve"
+msgstr "Preview in Evolve"
+
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr "Preview isn't available for this file type — download it to view it."
@@ -7614,14 +7744,6 @@ msgstr "Previous settings sections"
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr "Priority"
-
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "Private space with its own bots and groups."
-#~ msgstr "Private space with its own bots and groups."
-
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Private spaces keep a team's chats and files separate"
-#~ msgstr "Private spaces keep a team's chats and files separate"
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -7684,6 +7806,16 @@ msgstr "Provider"
 #: src/pages/model-settings/providers-section.tsx
 msgid "Providers"
 msgstr "Providers"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Publish to Evolve"
+msgstr "Publish to Evolve"
+
+#. placeholder {0}: publication.data.slug
+#. placeholder {1}: publication.data.release
+#: src/components/apps/AppPublishSection.tsx
+msgid "Published as {0}, release {1}. Publishing again sends the current version."
+msgstr "Published as {0}, release {1}. Publishing again sends the current version."
 
 #: src/components/CloudAgentCard.tsx
 msgid "Pull request"
@@ -7958,9 +8090,10 @@ msgstr "Reload"
 msgid "Remove"
 msgstr "Remove"
 
+#. placeholder {0}: asset.name
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
-#. placeholder {0}: p.name
+#: src/components/apps/AppSettingsPanel.tsx
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/GroupPeople.tsx
 #: src/pages/GroupPanel.tsx
@@ -8200,6 +8333,7 @@ msgstr "Responses"
 msgid "Restart to update"
 msgstr "Restart to update"
 
+#: src/components/apps/AppHistoryPanel.tsx
 #: src/components/InstructionSettings.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/shell/archived-chats.tsx
@@ -8308,6 +8442,7 @@ msgstr "Routines"
 msgid "Routines that run while you're away"
 msgstr "Routines that run while you're away"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/markdown-copy.tsx
 msgid "Row"
 msgstr "Row"
@@ -8404,9 +8539,17 @@ msgstr "Saturday"
 msgid "Save"
 msgstr "Save"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Save & build"
+msgstr "Save & build"
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "Save a company model first; assistant models run on its key."
 msgstr "Save a company model first; assistant models run on its key."
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Save as draft"
+msgstr "Save as draft"
 
 #: src/components/AskCard.tsx
 msgid "Save changes"
@@ -8439,6 +8582,11 @@ msgstr "Save to Vault"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Saved"
 msgstr "Saved"
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppCodePanel.tsx
+msgid "Saved as version {0}."
+msgstr "Saved as version {0}."
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
@@ -8576,6 +8724,10 @@ msgstr "Search models"
 msgid "Search plugins"
 msgstr "Search plugins"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Search rows"
+msgstr "Search rows"
+
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Search runs"
 msgstr "Search runs"
@@ -8640,6 +8792,10 @@ msgstr "Select a bot"
 msgid "Select all"
 msgstr "Select all"
 
+#: src/components/apps/AppStudio.tsx
+msgid "Select an element"
+msgstr "Select an element"
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Select at least one page"
 msgstr "Select at least one page"
@@ -8688,6 +8844,10 @@ msgstr "Send as file"
 #: src/components/AccountAccess.tsx
 msgid "Send deletion code"
 msgstr "Send deletion code"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Send for review"
+msgstr "Send for review"
 
 #: src/components/AskCard.tsx
 msgid "Send it"
@@ -8760,6 +8920,7 @@ msgstr "Set up by your administrator for everyone. Your assistants can use these
 msgid "Sets the drawing scale, then measures lengths, areas and perimeters"
 msgstr "Sets the drawing scale, then measures lengths, areas and perimeters"
 
+#: src/components/apps/AppStudio.tsx
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -8879,6 +9040,11 @@ msgstr "Show list"
 msgid "Show more"
 msgstr "Show more"
 
+#. placeholder {0}: rows.length - shown
+#: src/components/apps/AppDataPanel.tsx
+msgid "Show more ({0} left)"
+msgstr "Show more ({0} left)"
+
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "Show password"
@@ -8964,6 +9130,10 @@ msgstr "Sign up"
 msgid "Sign-in cancelled. Try again."
 msgstr "Sign-in cancelled. Try again."
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Signed-in colleagues can add, edit and remove rows."
+msgstr "Signed-in colleagues can add, edit and remove rows."
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Site"
@@ -9048,6 +9218,10 @@ msgstr "Some plugins could not be loaded."
 msgid "Some settings are not imported"
 msgstr "Some settings are not imported"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Someone saved a newer version. Reload the code to see it."
+msgstr "Someone saved a newer version. Reload the code to see it."
+
 #: src/App.tsx
 #: src/lib/user-error.ts
 msgid "Something went wrong. Try again."
@@ -9090,10 +9264,6 @@ msgstr "Space"
 #: src/pages/shell/bot-panel.tsx
 msgid "Space default"
 msgstr "Space default"
-
-#: src/pages/SettingsOverlay.tsx
-#~ msgid "Spaces"
-#~ msgstr "Spaces"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -9497,6 +9667,10 @@ msgstr "Testing"
 msgid "Testing…"
 msgstr "Testing…"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "That change wasn't saved."
+msgstr "That change wasn't saved."
+
 #: src/pages/KnowledgeSection.tsx
 msgid "That file could not be read. Try saving it again, or paste its text in."
 msgstr "That file could not be read. Try saving it again, or paste its text in."
@@ -9504,6 +9678,34 @@ msgstr "That file could not be read. Try saving it again, or paste its text in."
 #: src/pages/SharedPage.tsx
 msgid "That password is not right. Check it and try again."
 msgstr "That password is not right. Check it and try again."
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "That picture wasn't added."
+msgstr "That picture wasn't added."
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "That version couldn't be restored."
+msgstr "That version couldn't be restored."
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "That workbook couldn't be read."
+msgstr "That workbook couldn't be read."
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "That workbook is over 10 MB."
+msgstr "That workbook is over 10 MB."
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "The app becomes an Evolve staff plugin. Once Evolve's reviewers publish it, it opens from Evolve's menu with this data, and changes follow the setting above."
+msgstr "The app becomes an Evolve staff plugin. Once Evolve's reviewers publish it, it opens from Evolve's menu with this data, and changes follow the setting above."
+
+#: src/components/apps/AppStudio.tsx
+msgid "The app hit an error."
+msgstr "The app hit an error."
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "The app shows these by id, and the bot can add infographics and generated images here."
+msgstr "The app shows these by id, and the bot can add infographics and generated images here."
 
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
@@ -9648,6 +9850,10 @@ msgstr "Thinking for {0}"
 #: src/pages/ModelRoleSettings.tsx
 msgid "Thinking: {0}"
 msgstr "Thinking: {0}"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
+msgstr "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
 
 #: src/lib/user-error.ts
 msgid "This app needs its own sign-in setup to connect."
@@ -10123,6 +10329,10 @@ msgstr "Unreachable"
 msgid "Unread"
 msgstr "Unread"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Unsaved changes"
+msgstr "Unsaved changes"
+
 #. placeholder {0}: original.name
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
@@ -10156,6 +10366,10 @@ msgstr "Update from {name}"
 msgid "Update from {name}: {text}"
 msgstr "Update from {name}: {text}"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Update from Excel"
+msgstr "Update from Excel"
+
 #: src/components/AskCard.tsx
 msgid "Update instructions?"
 msgstr "Update instructions?"
@@ -10167,6 +10381,10 @@ msgstr "Update progress"
 #: src/lib/client-update.ts
 msgid "Update required"
 msgstr "Update required"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Updated from Excel"
+msgstr "Updated from Excel"
 
 #: src/pages/settings-nav.ts
 msgid "Updates"
@@ -10236,10 +10454,18 @@ msgstr "Use {hostLabel}"
 msgid "Use {oauthEnvReference} for the access token."
 msgstr "Use {oauthEnvReference} for the access token."
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Use 3 to 40 lowercase letters, numbers or dashes."
+msgstr "Use 3 to 40 lowercase letters, numbers or dashes."
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Use a found model"
 msgstr "Use a found model"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "Use a new name like Chart.tsx or theme.css."
+msgstr "Use a new name like Chart.tsx or theme.css."
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -10379,6 +10605,21 @@ msgstr "Verifying…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#. placeholder {0}: files.data?.version ?? version
+#: src/components/apps/AppCodePanel.tsx
+msgid "Version {0}"
+msgstr "Version {0}"
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppPublishSection.tsx
+msgid "Version {0} is saved as a draft in Evolve."
+msgstr "Version {0} is saved as a draft in Evolve."
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppPublishSection.tsx
+msgid "Version {0} is waiting for Evolve's reviewers."
+msgstr "Version {0} is waiting for Evolve's reviewers."
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Version history"
@@ -10526,10 +10767,6 @@ msgid "What assistants can look up and do in Evolve on the person's behalf, such
 msgstr "What assistants can look up and do in Evolve on the person's behalf, such as project datasheets, stock media and voiceovers. Each person only reaches what Evolve lets them see."
 
 #: src/pages/shell/dialogs.tsx
-#~ msgid "What can this space use?"
-#~ msgstr "What can this space use?"
-
-#: src/pages/shell/dialogs.tsx
 msgid "What can this team use?"
 msgstr "What can this team use?"
 
@@ -10548,6 +10785,10 @@ msgstr "What each person's chats, bots and routines have cost in model usage. Up
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "What it can do"
 msgstr "What it can do"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "What it's for and who uses it"
+msgstr "What it's for and who uses it"
 
 #: src/components/todos/todo-board.tsx
 msgid "What needs doing?"
@@ -10624,6 +10865,10 @@ msgstr "Who can add, change and delete Evolve deadlines and work packages throug
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Who can change projects"
 msgstr "Who can change projects"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Who can change the data"
+msgstr "Who can change the data"
 
 #: src/components/pages/SharePopover.tsx
 msgid "Who can open this page"

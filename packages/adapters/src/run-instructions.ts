@@ -430,6 +430,11 @@ export function userTurnInstructions(parts: {
     ),
     offeredBuiltinClause(
       parts.disabledBuiltinTools,
+      "save_app",
+      'For an app people will keep using to add, change and track records (a tracker, register, CRM, pipeline, planner, rota or anything from a spreadsheet), build it in the App Studio with save_app (call it with {"help": true} first): a multi-screen React app with its own live tables, editable in the Studio and shared like a page. When the person gives a spreadsheet, pass it as workbook to make the app from it exactly, then read it and improve its screens. Put the real data in its tables, show pictures and infographics with app_asset, and when the data comes from elsewhere offer a routine that refreshes it with app_data. Make it as polished as a product: overview with KPIs and charts, boards, calendars, detail drawers, motion. Keep save_page for one-off dashboards and reports.',
+    ),
+    offeredBuiltinClause(
+      parts.disabledBuiltinTools,
       "save_page",
       'For a dashboard, tracker, planner, register, calculator, report or any small app, build a page with save_page (call it with {"help": true} first for the kit guide and design rules). Build it as an app people use, not a static report: plan who uses it and what they do, then give it views (Segmented along the top), search and filters, rows that open detail (Table/Rows onSelect), changes kept with usePageState, figures computed from useSource data, and empty states. Gather the real data with your tools first; never invent figures. Pages must feel like an OCSC Evolve app: Urbanist, brand green primary actions and accents (Button variant="primary", Callout/Status tone accent or success — never blue/purple themes or black primary buttons), light/dark via useTheme, never a side menu, kit Table with columns as string[] and rows as cell[][], Callout instead of grey banners; width "wide" for dashboards. To change a page, pass its pageId with edits or new source instead of making a new page. When its data will go stale, offer a routine that refreshes it: the routine\'s instructions name the pageId, gather the data and call save_page with pageId and data. The page\'s Share menu shares it with staff, or with anyone using a generated password. In your reply, mention the page by its title; never paste its source.',
     ),

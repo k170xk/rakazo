@@ -114,6 +114,66 @@ const json = (value: Prisma.JsonValue) => value as Json;
 const iso = (date: Date) => date.toISOString();
 const isoOrNull = (date: Date | null) => date?.toISOString() ?? null;
 
+/** An app's tables, rows and pictures, after its versions. */
+async function* exportAppData(
+  prisma: PrismaClient,
+  pageId: string,
+): AsyncGenerator<AccountExportRecord> {
+  const tables = await prisma.appTable.findMany({
+    where: { pageId },
+    orderBy: [{ position: "asc" }, { id: "asc" }],
+    select: { id: true, name: true, label: true, schema: true, position: true },
+  });
+  for (const table of tables) {
+    yield {
+      type: "app_table",
+      ...table,
+      pageId,
+      schema: table.schema as Prisma.JsonValue as never,
+    };
+    for (let cursor = ""; ; ) {
+      const rows = await prisma.appRow.findMany({
+        where: { tableId: table.id, id: { gt: cursor } },
+        orderBy: { id: "asc" },
+        take: PAGE,
+        select: { id: true, data: true, position: true, createdAt: true, updatedAt: true },
+      });
+      for (const row of rows)
+        yield {
+          type: "app_row",
+          id: row.id,
+          tableId: table.id,
+          data: row.data as never,
+          position: row.position,
+          createdAt: iso(row.createdAt),
+          updatedAt: iso(row.updatedAt),
+        };
+      if (rows.length < PAGE) break;
+      cursor = rows.at(-1)!.id;
+    }
+  }
+  // Pictures are up to 6 MB each, so they are read one at a time.
+  for (let cursor = ""; ; ) {
+    const asset = await prisma.appAsset.findFirst({
+      where: { pageId, id: { gt: cursor } },
+      orderBy: { id: "asc" },
+      select: { id: true, name: true, mime: true, source: true, bytes: true, createdAt: true },
+    });
+    if (!asset) break;
+    yield {
+      type: "app_asset",
+      id: asset.id,
+      pageId,
+      name: asset.name,
+      mime: asset.mime,
+      source: asset.source,
+      base64: Buffer.from(asset.bytes).toString("base64"),
+      createdAt: iso(asset.createdAt),
+    };
+    cursor = asset.id;
+  }
+}
+
 async function* spaceRecords(
   prisma: PrismaClient,
   tenant: Tenant,
@@ -204,9 +264,12 @@ async function* spaceRecords(
         title: page.title,
         pinnedAt: isoOrNull(page.pinnedAt),
         currentVersion: page.currentVersion,
+        kind: page.kind === "app" ? "app" : "page",
+        dataAccess: page.dataAccess === "company" ? "company" : "owner",
         createdAt: iso(page.createdAt),
         updatedAt: iso(page.updatedAt),
       };
+      const versionType = page.kind === "app" ? "app_version" : "page_version";
       // A save landing after the page row was read stays out, so the archive matches its header.
       for (let version = 0; ; ) {
         const versions = await prisma.pageVersion.findMany({
@@ -216,10 +279,11 @@ async function* spaceRecords(
           select: { id: true, version: true, title: true, source: true, createdAt: true },
         });
         for (const row of versions)
-          yield { type: "page_version", ...row, pageId: page.id, createdAt: iso(row.createdAt) };
+          yield { type: versionType, ...row, pageId: page.id, createdAt: iso(row.createdAt) };
         if (versions.length < PAGE) break;
         version = versions.at(-1)!.version;
       }
+      if (page.kind === "app") yield* exportAppData(prisma, page.id);
     }
     if (pages.length < PAGE) break;
     cursor = pages.at(-1)!.id;

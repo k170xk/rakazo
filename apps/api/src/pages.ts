@@ -29,6 +29,7 @@ type PageDeps = { prisma: PrismaClient; secrets: SecretStore; webOrigin: string 
 const summarySelect = {
   id: true,
   title: true,
+  kind: true,
   botId: true,
   groupId: true,
   visibility: true,
@@ -44,6 +45,7 @@ function pageSummary(row: SummaryRow): PageSummary {
   return {
     id: row.id,
     title: row.title,
+    kind: row.kind === "app" ? "app" : "page",
     botId: row.botId,
     groupId: row.groupId,
     visibility: shownVisibility(row.visibility),
@@ -566,10 +568,11 @@ export async function readSharedPage(
   prisma: PrismaClient,
   token: string,
 ): Promise<{
-  page: Omit<SharedPage, "canSaveState">;
+  page: Omit<SharedPage, "canSaveState" | "canEditData">;
   pageId: string;
   visibility: "link" | "public";
   passwordHash: string | null;
+  dataAccess: string;
 } | null> {
   if (pageShareTokenFromSlug(token) !== token) return null;
   const page = await runAsSystem("page share link", () =>
@@ -578,6 +581,8 @@ export async function readSharedPage(
       select: {
         visibility: true,
         title: true,
+        kind: true,
+        dataAccess: true,
         currentVersion: true,
         updatedAt: true,
         id: true,
@@ -599,6 +604,7 @@ export async function readSharedPage(
   return {
     page: {
       title: page.title,
+      kind: page.kind === "app" ? "app" : "page",
       code: version.code,
       version: page.currentVersion,
       updatedAt: page.updatedAt.toISOString(),
@@ -606,13 +612,17 @@ export async function readSharedPage(
     pageId: page.id,
     visibility,
     passwordHash: visibility === "public" ? page.sharePasswordHash : null,
+    dataAccess: page.dataAccess,
   };
 }
 
 /** A page's saved value was too large, or the page already keeps as many keys as it may. */
 export class PageStateRefusedError extends Error {}
 
-async function readStateRows(prisma: PrismaClient, pageId: string): Promise<PageStateValues> {
+export async function readStateRows(
+  prisma: PrismaClient,
+  pageId: string,
+): Promise<PageStateValues> {
   const rows = await prisma.pageState.findMany({
     where: { pageId },
     select: { key: true, value: true },
@@ -621,7 +631,7 @@ async function readStateRows(prisma: PrismaClient, pageId: string): Promise<Page
   return Object.fromEntries(rows.map((row) => [row.key, row.value]));
 }
 
-async function writeStateRow(
+export async function writeStateRow(
   prisma: PrismaClient,
   pageId: string,
   key: string,

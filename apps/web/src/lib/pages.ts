@@ -17,7 +17,7 @@ import { errorCode } from "./user-error";
 /** The search parameter naming the page open full screen over a chat. */
 export const PAGE_PARAM = "page";
 
-function readTheme(): "light" | "dark" {
+export function readTheme(): "light" | "dark" {
   return document.documentElement.dataset.theme === "light" ? "light" : "dark";
 }
 
@@ -41,7 +41,7 @@ export function useMedia(query: string) {
   );
 }
 
-function subscribeTheme(onChange: () => void) {
+export function subscribeTheme(onChange: () => void) {
   const observer = new MutationObserver(onChange);
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   return () => observer.disconnect();

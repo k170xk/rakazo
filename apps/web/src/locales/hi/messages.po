@@ -782,6 +782,7 @@ msgstr "गतिविधि"
 msgid "Actual size"
 msgstr ""
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/SecretAskCard.tsx
@@ -878,6 +879,10 @@ msgstr "फ़ॉलबैक जोड़ें"
 msgid "Add field"
 msgstr "फ़ील्ड जोड़ें"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Add from Excel"
+msgstr ""
+
 #: src/components/ModelHeadersEditor.tsx
 msgid "Add header"
 msgstr "हेडर जोड़ें"
@@ -906,6 +911,10 @@ msgstr ""
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Add PDF drawings as images"
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Add picture"
 msgstr ""
 
 #: src/pages/model-settings/providers-section.tsx
@@ -1243,12 +1252,20 @@ msgstr ""
 msgid "Any model, with your own key"
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Anyone at OCSC with the link"
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Anyone at the company with the link"
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 msgid "Anyone with the link and password"
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Anyone you share the app with can always see it. Visitors using the password only read."
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -1282,6 +1299,15 @@ msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "API URL"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+#: src/components/pages/PagesList.tsx
+msgid "App"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "App Studio"
 msgstr ""
 
 #: src/components/SidebarFooter.tsx
@@ -1406,6 +1432,10 @@ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Ask it anything, or for any OCSC deliverable"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "Ask the bot to fix it"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -1661,10 +1691,6 @@ msgstr "बॉट स्क्रीन प्रीव्यू"
 msgid "Bot style"
 msgstr ""
 
-#: src/pages/RoutineEditor.tsx
-#~ msgid "Bot's model"
-#~ msgstr "बॉट का मॉडल"
-
 #: src/components/SignupSurvey.tsx
 msgid "Both"
 msgstr ""
@@ -1736,6 +1762,10 @@ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Build your own apps, and share them"
+msgstr ""
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "Building your app…"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -1811,6 +1841,7 @@ msgstr "सर्वर तक नहीं पहुंचा जा सका�
 msgid "Can't read images"
 msgstr "तस्वीरें नहीं पढ़ सकता"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/integrations/CompanyMcpApp.tsx
@@ -2180,6 +2211,10 @@ msgstr ""
 msgid "Click \"Select PDF\" to choose a document"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Click something in the app to tell the bot what to change"
+msgstr ""
+
 #: src/pages/shell/evolve-references.tsx
 msgid "Client"
 msgstr ""
@@ -2206,6 +2241,10 @@ msgstr ""
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "बंद करें"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Close app"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Close chart"
@@ -2241,6 +2280,7 @@ msgstr "नेविगेशन बंद करें"
 msgid "Close page"
 msgstr "पेज बंद करें"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/side-panel.tsx
 msgid "Close panel"
@@ -2286,6 +2326,7 @@ msgstr "क्लाउड"
 msgid "Clouds, callouts, arrows and notes placed exactly where the issue is"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Code"
@@ -2295,6 +2336,10 @@ msgstr "कोड"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "कोड"
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Code changes are versioned. Data is not: restoring a version keeps today's rows."
+msgstr ""
 
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
@@ -2317,9 +2362,21 @@ msgstr "रंग"
 msgid "Color {color}"
 msgstr "रंग {color}"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "column {index}"
 msgstr "स्तंभ {index}"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column name"
+msgstr ""
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column type"
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Come back to this tour any time from the sidebar"
@@ -2920,10 +2977,6 @@ msgstr "समूह नहीं बनाया जा सका"
 #: src/pages/shell/dialogs.tsx
 msgid "Could not create section"
 msgstr "सेक्शन नहीं बनाया जा सका"
-
-#: src/pages/shell/dialogs.tsx
-#~ msgid "Could not create space"
-#~ msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not create team"
@@ -3549,6 +3602,10 @@ msgstr ""
 msgid "Couldn't load your wallet"
 msgstr ""
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Couldn't save."
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update bot style"
 msgstr ""
@@ -3681,6 +3738,10 @@ msgstr "Cron एक्सप्रेशन"
 msgid "CSV"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Current"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Current clients and projects:\n"
 "- Client:\n"
@@ -3736,6 +3797,7 @@ msgstr "अधूरे काम पर रोज़ पूछें"
 msgid "Dark"
 msgstr "डार्क"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
@@ -3876,6 +3938,10 @@ msgstr "समूह डिलीट करें"
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"
 msgstr "मेमोरी भी डिलीट करें"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Delete row"
+msgstr ""
 
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
@@ -4024,6 +4090,10 @@ msgstr "टूल अक्षम करें"
 msgid "Disabled"
 msgstr "अक्षम"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Discard"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Discard changes"
 msgstr ""
@@ -4063,6 +4133,7 @@ msgstr "{disconnectName} डिस्कनेक्ट किया गया�
 msgid "Disconnecting…"
 msgstr "डिस्कनेक्ट हो रहा है…"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/PasskeyOffer.tsx
@@ -4146,6 +4217,10 @@ msgstr ""
 #: src/components/ArtifactFileCard.tsx
 msgid "Download {name}"
 msgstr "{name} डाउनलोड करें"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Download as Excel"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 #: src/components/UiCardView.tsx
@@ -4442,6 +4517,10 @@ msgstr ""
 msgid "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Every check passed."
+msgstr ""
+
 #: src/lib/cron.ts
 #: src/pages/AdminComputerAccess.tsx
 #: src/pages/RoutineEditor.tsx
@@ -4530,6 +4609,10 @@ msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Evolve did not accept that change"
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Evolve didn't accept it."
 msgstr ""
 
 #: src/components/GroupPeople.tsx
@@ -4700,6 +4783,10 @@ msgstr "तुलना के लिए फ़ील्ड, जैसे id, mo
 #: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "फ़ाइल"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "File name, like Chart.tsx"
+msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
@@ -5092,6 +5179,10 @@ msgstr "उच्च"
 msgid "High (slow)"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "History"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Hold to talk"
 msgstr "बोलने के लिए दबाए रखें"
@@ -5378,6 +5469,10 @@ msgstr "पृथक"
 
 #: src/pages/Artifacts.tsx
 msgid "Isolated preview — no access to your account"
+msgstr ""
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "It didn't build, so nothing was saved."
 msgstr ""
 
 #: src/components/pages/PageViewHost.tsx
@@ -6239,6 +6334,10 @@ msgstr ""
 msgid "My memory"
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "My plugins"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/settings-nav.ts
 msgid "My vault"
@@ -6354,6 +6453,10 @@ msgstr ""
 msgid "New API key"
 msgstr ""
 
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "New app from Excel"
+msgstr ""
+
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/create-bot-dialog.tsx
@@ -6370,6 +6473,10 @@ msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "New contact"
+msgstr ""
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "New file"
 msgstr ""
 
 #: src/pages/GroupPanel.tsx
@@ -6408,11 +6515,6 @@ msgstr "नया खुला-कार्य आइटम"
 msgid "New password"
 msgstr "नया पासवर्ड"
 
-#: src/pages/Shell.tsx
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "New private space"
-#~ msgstr "नया निजी स्पेस"
-
 #: src/components/AskCard.tsx
 msgid "New project deadline"
 msgstr ""
@@ -6429,10 +6531,6 @@ msgstr "नया अनुभाग"
 #: src/pages/KnowledgeSection.tsx
 msgid "New skill"
 msgstr "नई स्किल"
-
-#: src/pages/shell/dialogs.tsx
-#~ msgid "New space"
-#~ msgstr ""
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
@@ -6643,6 +6741,10 @@ msgstr "“{query}” से कोई पेज मेल नहीं खा�
 msgid "No people match your search."
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "No pictures yet."
+msgstr ""
+
 #: src/pages/AdminStaffApps.tsx
 msgid "No plugins are in the catalog."
 msgstr "कैटलॉग में कोई प्लगइन नहीं है।"
@@ -6677,6 +6779,10 @@ msgstr "कोई परिणाम नहीं"
 #: src/components/markdown-copy.tsx
 msgid "No rows"
 msgstr "कोई पंक्ति नहीं"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "No rows match."
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "No runs match these filters."
@@ -6989,6 +7095,10 @@ msgstr ""
 msgid "Only enter a code {codeHost} sent you."
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Only me"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Only people on the project's Design Team, and Evolve admins, can add or change its deadlines."
 msgstr ""
@@ -7168,6 +7278,10 @@ msgstr ""
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "अन्य मॉडल…"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Others see the data but can't change it."
+msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -7461,6 +7575,10 @@ msgstr "सूची से एक मॉडल चुनें या इस �
 msgid "Pick a tool to check"
 msgstr "जाँचने के लिए टूल चुनें"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Pictures"
+msgstr ""
+
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
 #: src/pages/BotContextMenu.tsx
@@ -7514,6 +7632,10 @@ msgstr "प्लगइन"
 msgid "Plugin GitHub URL"
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Plugin name in Evolve"
+msgstr ""
+
 #: src/pages/AdminPluginsPage.tsx
 msgid "Plugin submissions"
 msgstr ""
@@ -7530,6 +7652,10 @@ msgstr "स्टाफ़ के लिए प्लगइन"
 #: src/pages/AdminStaffApps.tsx
 msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
 msgstr "कैटलॉग के वे प्लगइन जो कोई ऐप जोड़ते हैं, जैसे Stripe, Figma या Cal.com। स्टाफ़ केवल यहाँ चालू किए गए प्लगइन देखता है और प्लगइन चालू रहने तक उन्हें जोड़ सकता है। केवल स्किल वाले पैक स्टाफ़ स्किल का पालन करते हैं।"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Point at something in the app to change it"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -7570,6 +7696,10 @@ msgstr ""
 msgid "Preview {0}"
 msgstr "{0} का प्रीव्यू"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Preview in Evolve"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr ""
@@ -7596,14 +7726,6 @@ msgstr ""
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr ""
-
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "Private space with its own bots and groups."
-#~ msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Private spaces keep a team's chats and files separate"
-#~ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -7666,6 +7788,16 @@ msgstr "प्रोवाइडर"
 #: src/pages/model-settings/providers-section.tsx
 msgid "Providers"
 msgstr "प्रोवाइडर"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Publish to Evolve"
+msgstr ""
+
+#. placeholder {0}: publication.data.slug
+#. placeholder {1}: publication.data.release
+#: src/components/apps/AppPublishSection.tsx
+msgid "Published as {0}, release {1}. Publishing again sends the current version."
+msgstr ""
 
 #: src/components/CloudAgentCard.tsx
 msgid "Pull request"
@@ -7940,9 +8072,10 @@ msgstr "फिर से लोड करें"
 msgid "Remove"
 msgstr "हटाएं"
 
+#. placeholder {0}: asset.name
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
-#. placeholder {0}: p.name
+#: src/components/apps/AppSettingsPanel.tsx
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/GroupPeople.tsx
 #: src/pages/GroupPanel.tsx
@@ -8182,6 +8315,7 @@ msgstr ""
 msgid "Restart to update"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
 #: src/components/InstructionSettings.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/shell/archived-chats.tsx
@@ -8290,6 +8424,7 @@ msgstr "रूटीन्स"
 msgid "Routines that run while you're away"
 msgstr ""
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/markdown-copy.tsx
 msgid "Row"
 msgstr "पंक्ति"
@@ -8386,8 +8521,16 @@ msgstr "शनिवार"
 msgid "Save"
 msgstr "सहेजें"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Save & build"
+msgstr ""
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "Save a company model first; assistant models run on its key."
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Save as draft"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -8421,6 +8564,11 @@ msgstr "वॉल्ट में सहेजें"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Saved"
 msgstr "सहेजा गया"
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppCodePanel.tsx
+msgid "Saved as version {0}."
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
@@ -8558,6 +8706,10 @@ msgstr ""
 msgid "Search plugins"
 msgstr "प्लगइन खोजें"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Search rows"
+msgstr ""
+
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Search runs"
 msgstr "रन खोजें"
@@ -8622,6 +8774,10 @@ msgstr "एक बॉट चुनें"
 msgid "Select all"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Select an element"
+msgstr ""
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Select at least one page"
 msgstr ""
@@ -8670,6 +8826,10 @@ msgstr "फ़ाइल के रूप में भेजें"
 #: src/components/AccountAccess.tsx
 msgid "Send deletion code"
 msgstr "हटाने का कोड भेजें"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Send for review"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Send it"
@@ -8742,6 +8902,7 @@ msgstr ""
 msgid "Sets the drawing scale, then measures lengths, areas and perimeters"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -8861,6 +9022,11 @@ msgstr ""
 msgid "Show more"
 msgstr "और दिखाएँ"
 
+#. placeholder {0}: rows.length - shown
+#: src/components/apps/AppDataPanel.tsx
+msgid "Show more ({0} left)"
+msgstr ""
+
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr ""
@@ -8944,6 +9110,10 @@ msgstr "साइन अप करें"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Sign-in cancelled. Try again."
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Signed-in colleagues can add, edit and remove rows."
 msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
@@ -9030,6 +9200,10 @@ msgstr ""
 msgid "Some settings are not imported"
 msgstr "कुछ सेटिंग्स इंपोर्ट नहीं होतीं"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Someone saved a newer version. Reload the code to see it."
+msgstr ""
+
 #: src/App.tsx
 #: src/lib/user-error.ts
 msgid "Something went wrong. Try again."
@@ -9072,10 +9246,6 @@ msgstr "कार्यस्थान"
 #: src/pages/shell/bot-panel.tsx
 msgid "Space default"
 msgstr "स्पेस डिफ़ॉल्ट"
-
-#: src/pages/SettingsOverlay.tsx
-#~ msgid "Spaces"
-#~ msgstr "कार्यस्थान"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -9476,12 +9646,44 @@ msgstr ""
 msgid "Testing…"
 msgstr "परीक्षण हो रहा है…"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "That change wasn't saved."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "That file could not be read. Try saving it again, or paste its text in."
 msgstr ""
 
 #: src/pages/SharedPage.tsx
 msgid "That password is not right. Check it and try again."
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "That picture wasn't added."
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "That version couldn't be restored."
+msgstr ""
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "That workbook couldn't be read."
+msgstr ""
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "That workbook is over 10 MB."
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "The app becomes an Evolve staff plugin. Once Evolve's reviewers publish it, it opens from Evolve's menu with this data, and changes follow the setting above."
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "The app hit an error."
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "The app shows these by id, and the bot can add infographics and generated images here."
 msgstr ""
 
 #: src/pages/shell/composer-error.tsx
@@ -9627,6 +9829,10 @@ msgstr ""
 #: src/pages/ModelRoleSettings.tsx
 msgid "Thinking: {0}"
 msgstr "सोच: {0}"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "This app needs its own sign-in setup to connect."
@@ -10102,6 +10308,10 @@ msgstr ""
 msgid "Unread"
 msgstr "अपठित"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Unsaved changes"
+msgstr ""
+
 #. placeholder {0}: original.name
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
@@ -10135,6 +10345,10 @@ msgstr "{name} से अपडेट"
 msgid "Update from {name}: {text}"
 msgstr "{name} से अपडेट: {text}"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Update from Excel"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Update instructions?"
 msgstr "निर्देश अपडेट करें?"
@@ -10146,6 +10360,10 @@ msgstr ""
 #: src/lib/client-update.ts
 msgid "Update required"
 msgstr "अपडेट आवश्यक है"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Updated from Excel"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Updates"
@@ -10215,10 +10433,18 @@ msgstr "{hostLabel} का उपयोग करें"
 msgid "Use {oauthEnvReference} for the access token."
 msgstr "एक्सेस टोकन के लिए {oauthEnvReference} का उपयोग करें।"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Use 3 to 40 lowercase letters, numbers or dashes."
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Use a found model"
 msgstr "मिला हुआ मॉडल उपयोग करें"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "Use a new name like Chart.tsx or theme.css."
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -10357,6 +10583,21 @@ msgstr "पुष्टि की जा रही है…"
 
 #: src/pages/Artifacts.tsx
 msgid "Version"
+msgstr ""
+
+#. placeholder {0}: files.data?.version ?? version
+#: src/components/apps/AppCodePanel.tsx
+msgid "Version {0}"
+msgstr ""
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppPublishSection.tsx
+msgid "Version {0} is saved as a draft in Evolve."
+msgstr ""
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppPublishSection.tsx
+msgid "Version {0} is waiting for Evolve's reviewers."
 msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -10505,10 +10746,6 @@ msgid "What assistants can look up and do in Evolve on the person's behalf, such
 msgstr ""
 
 #: src/pages/shell/dialogs.tsx
-#~ msgid "What can this space use?"
-#~ msgstr ""
-
-#: src/pages/shell/dialogs.tsx
 msgid "What can this team use?"
 msgstr ""
 
@@ -10526,6 +10763,10 @@ msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "What it can do"
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "What it's for and who uses it"
 msgstr ""
 
 #: src/components/todos/todo-board.tsx
@@ -10597,6 +10838,10 @@ msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Who can change projects"
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Who can change the data"
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx

@@ -30,6 +30,7 @@ it("bounds the titles pages send out by the cap a saved title has", () => {
     PageSummarySchema.safeParse({
       id: "page-1",
       title,
+      kind: "page",
       botId: null,
       groupId: null,
       visibility: "private",
@@ -39,7 +40,15 @@ it("bounds the titles pages send out by the cap a saved title has", () => {
       updatedAt: at,
     }).success;
   const shared = (title: string) =>
-    SharedPageSchema.safeParse({ title, code: "", version: 1, updatedAt: at, canSaveState: false }).success;
+    SharedPageSchema.safeParse({
+      title,
+      kind: "page",
+      code: "",
+      version: 1,
+      updatedAt: at,
+      canSaveState: false,
+      canEditData: false,
+    }).success;
   const longest = "x".repeat(PAGE_TITLE_MAX_LENGTH);
   expect([summary(longest), shared(longest)]).toEqual([true, true]);
   expect([summary(`${longest}x`), shared(`${longest}x`)]).toEqual([false, false]);

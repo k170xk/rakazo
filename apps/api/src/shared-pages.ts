@@ -4,7 +4,17 @@ import {
   SHARED_PAGE_PATH_PREFIX,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
+import { isAppDataError } from "@rakazo/db";
 import type { Context, Hono } from "hono";
+import { AppAskError, askForApp } from "./app-ask.js";
+import type { SharedRowWrite } from "./apps.js";
+import {
+  exportSharedAppTable,
+  readSharedAppAsset,
+  readSharedAppData,
+  readSharedAppRevision,
+  writeSharedAppRow,
+} from "./apps.js";
 import {
   PageStateRefusedError,
   readSharedPage,
@@ -18,6 +28,8 @@ const MINUTE_MS = 60_000;
 const READS_PER_IP_PER_MINUTE = 120;
 /** Password tries per address and link in 15 minutes, right or wrong. */
 const PASSWORD_TRIES = 20;
+/** Row writes per address and app a minute, so a script on an open link cannot flood a table. */
+const WRITES_PER_MINUTE = 120;
 
 /**
  * Anyone signed in to this company with a page's link reads its current version here. A page
@@ -33,6 +45,7 @@ export function mountSharedPages(
   signedInUser: (request: Request) => Promise<string | null>,
 ) {
   const reads = windowCounter(MINUTE_MS);
+  const writes = windowCounter(MINUTE_MS);
   const tries = windowCounter(15 * MINUTE_MS);
   const headers = {
     "cache-control": "no-store",
@@ -75,7 +88,134 @@ export function mountSharedPages(
   app.get(`${SHARED_PAGE_PATH_PREFIX}:token`, async (c) => {
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
-    return c.json({ ...admitted.found.page, canSaveState: admitted.userId !== null }, 200, headers);
+    return c.json(
+      {
+        ...admitted.found.page,
+        canSaveState: admitted.userId !== null,
+        canEditData: admitted.userId !== null && admitted.found.dataAccess === "company",
+      },
+      200,
+      headers,
+    );
+  });
+  /** An app's tables for a reader the link admitted; canEdit says whether they may change rows. */
+  app.get(`${SHARED_PAGE_PATH_PREFIX}:token/app/data`, async (c) => {
+    const admitted = await admit(c);
+    if (admitted instanceof Response) return admitted;
+    if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+    const data = await readSharedAppData(prisma, admitted.found.pageId);
+    const canEdit = admitted.userId !== null && admitted.found.dataAccess === "company";
+    return c.json({ ...data, canEdit, canSaveState: admitted.userId !== null }, 200, headers);
+  });
+  app.get(`${SHARED_PAGE_PATH_PREFIX}:token/app/revision`, async (c) => {
+    const admitted = await admit(c);
+    if (admitted instanceof Response) return admitted;
+    if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+    return c.json(
+      { revision: await readSharedAppRevision(prisma, admitted.found.pageId) },
+      200,
+      headers,
+    );
+  });
+  app.post(`${SHARED_PAGE_PATH_PREFIX}:token/app/rows`, async (c) => {
+    const admitted = await admit(c);
+    if (admitted instanceof Response) return admitted;
+    if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+    if (!admitted.userId || admitted.found.dataAccess !== "company") {
+      return c.json({ error: "Only the owner can change this app's data" }, 403, headers);
+    }
+    if (writes(`${throttleKey(clientIp(c))}:${admitted.found.pageId}`) > WRITES_PER_MINUTE) {
+      return c.json({ error: "Too many changes" }, 429, { ...headers, "retry-after": "60" });
+    }
+    const body = (await c.req.json().catch(() => null)) as Partial<SharedRowWrite> | null;
+    const table =
+      typeof body?.table === "string" && /^[a-z][a-z0-9_]{0,39}$/.test(body.table)
+        ? body.table
+        : null;
+    const values = (value: unknown) =>
+      value && typeof value === "object" && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : null;
+    let write: SharedRowWrite | null = null;
+    if (table && body?.op === "insert" && values(body.row))
+      write = { op: "insert", table, row: values(body.row)! };
+    else if (table && body?.op === "update" && typeof body.id === "string" && values(body.patch)) {
+      write = { op: "update", table, id: body.id.slice(0, 64), patch: values(body.patch)! };
+    } else if (table && body?.op === "remove" && typeof body.id === "string")
+      write = { op: "remove", table, id: body.id.slice(0, 64) };
+    if (!write) return c.json({ error: "Invalid change" }, 400, headers);
+    if (JSON.stringify(write).length > 64_000)
+      return c.json({ error: "That change is too large" }, 413, headers);
+    try {
+      return c.json(
+        await writeSharedAppRow(prisma, admitted.found.pageId, write, admitted.userId),
+        200,
+        headers,
+      );
+    } catch (error) {
+      if (isAppDataError(error))
+        return c.json({ error: error instanceof Error ? error.message : "Refused" }, 400, headers);
+      throw error;
+    }
+  });
+  app.get(`${SHARED_PAGE_PATH_PREFIX}:token/app/assets/:assetId`, async (c) => {
+    const admitted = await admit(c);
+    if (admitted instanceof Response) return admitted;
+    if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+    const asset = await readSharedAppAsset(
+      prisma,
+      admitted.found.pageId,
+      (c.req.param("assetId") ?? "").slice(0, 64),
+    );
+    if (!asset) return c.json({ error: "Not found" }, 404, headers);
+    return c.body(new Uint8Array(asset.bytes), 200, {
+      ...headers,
+      "content-type": asset.mime,
+      "x-content-type-options": "nosniff",
+      "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+    });
+  });
+  /** An app's AI answer, for colleagues signed in to the company; visitors with the password get none. */
+  app.post(`${SHARED_PAGE_PATH_PREFIX}:token/app/ask`, async (c) => {
+    const admitted = await admit(c);
+    if (admitted instanceof Response) return admitted;
+    if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+    if (!admitted.userId) return c.json({ error: "Sign in to use AI in this app" }, 403, headers);
+    const body = (await c.req.json().catch(() => null)) as {
+      prompt?: unknown;
+      json?: unknown;
+    } | null;
+    if (typeof body?.prompt !== "string" || !body.prompt.trim() || body.prompt.length > 8000)
+      return c.json({ error: "Invalid question" }, 400, headers);
+    try {
+      const answer = await askForApp({
+        userId: admitted.userId,
+        prompt: body.prompt,
+        json: body.json === true,
+      });
+      return c.json({ answer }, 200, headers);
+    } catch (error) {
+      if (error instanceof AppAskError) return c.json({ error: error.message }, 400, headers);
+      throw error;
+    }
+  });
+  app.get(`${SHARED_PAGE_PATH_PREFIX}:token/app/export`, async (c) => {
+    const admitted = await admit(c);
+    if (admitted instanceof Response) return admitted;
+    if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+    const table = c.req.query("table") ?? "";
+    const format = c.req.query("format") === "csv" ? "csv" : "xlsx";
+    if (!/^[a-z][a-z0-9_]{0,39}$/.test(table))
+      return c.json({ error: "Invalid table" }, 400, headers);
+    try {
+      return c.json(
+        await exportSharedAppTable(prisma, admitted.found.pageId, table, format),
+        200,
+        headers,
+      );
+    } catch {
+      return c.json({ error: "Not found" }, 404, headers);
+    }
   });
   app.get(`${SHARED_PAGE_PATH_PREFIX}:token/state`, async (c) => {
     const admitted = await admit(c);

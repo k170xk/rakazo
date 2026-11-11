@@ -1838,11 +1838,25 @@ model Page {
   sharePasswordSecret   Secret?       @relation("PageSharePassword", fields: [sharePasswordSecretId], references: [id], onDelete: SetNull)
   pinnedAt              DateTime?
   currentVersion        Int           @default(1)
+  /// "page" is one JSX file on the page kit; "app" is a set of files built with the app kit,
+  /// whose version source holds the files as JSON and whose code is the built document.
+  kind                  String        @default("page")
+  /// Goes up whenever an app's rows change, so open copies know to fetch them again.
+  dataRevision          Int           @default(0)
+  /// Who besides the owner may change an app's rows: "owner" or "company" (signed-in colleagues).
+  dataAccess            String        @default("owner")
+  /// The Evolve plugin this app was last published as; Evolve's calls for that plugin read it.
+  evolvePluginSlug      String?       @unique
+  /// How many times it was published, which numbers the plugin's versions.
+  evolvePluginRelease   Int           @default(0)
   createdAt             DateTime      @default(now())
   /// Set when the page's content or title changes; pinning or sharing it is not an update.
   updatedAt             DateTime      @default(now())
   versions              PageVersion[]
   state                 PageState[]
+  appTables             AppTable[]
+  appRows               AppRow[]
+  appAssets             AppAsset[]
 
   @@index([spaceId, userId, updatedAt])
   @@index([botId])
@@ -1877,6 +1891,57 @@ model PageState {
 
   @@unique([pageId, key])
   @@map("page_state")
+}
+
+/// One table of an app's data; its schema says each column's type, label and options.
+model AppTable {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  name      String
+  label     String
+  schema    Json
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  rows      AppRow[]
+
+  @@unique([pageId, name])
+  @@map("app_tables")
+}
+
+model AppRow {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  tableId   String
+  table     AppTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  data      Json
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  /// Who last changed it: a user id, or null for the agent and imports.
+  updatedBy String?
+
+  @@index([tableId, position])
+  @@index([pageId])
+  @@map("app_rows")
+}
+
+/// A picture an app shows (an infographic, generated image or upload), served to its frame as bytes.
+model AppAsset {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  name      String
+  mime      String
+  size      Int
+  bytes     Bytes
+  source    String
+  createdAt DateTime @default(now())
+
+  @@index([pageId])
+  @@map("app_assets")
 }
 
 model UsageRecord {

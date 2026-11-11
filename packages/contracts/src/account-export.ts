@@ -19,6 +19,10 @@ import { PageSourceSchema, PageTitleSchema } from "./pages.js";
  */
 /** A page version number, within the database's 32-bit column. */
 const PageVersionNumber = z.number().int().positive().max(2_147_483_647);
+/** An app's files together (the builder allows 1.5 MB of source) with their JSON escaping. */
+const APP_SOURCE_MAX_BYTES = 4_000_000;
+/** A 6 MB picture as base64. */
+const APP_ASSET_MAX_BASE64 = 8_400_000;
 
 export const ACCOUNT_EXPORT_FORMAT = "rakazo-account-export";
 export const ACCOUNT_EXPORT_VERSION = 1;
@@ -125,8 +129,49 @@ export const AccountExportRecordSchema = z.discriminatedUnion("type", [
     title: PageTitleSchema,
     pinnedAt: IsoDate.nullable(),
     currentVersion: PageVersionNumber,
+    /** Archives from before apps hold only pages. */
+    kind: z.enum(["page", "app"]).optional(),
+    dataAccess: z.enum(["owner", "company"]).optional(),
     createdAt: IsoDate,
     updatedAt: IsoDate,
+  }),
+  /** An app's files, as the JSON its versions store; apps rebuild on import. */
+  z.object({
+    type: z.literal("app_version"),
+    id: Id,
+    pageId: Id,
+    version: PageVersionNumber,
+    title: PageTitleSchema,
+    source: z.string().min(2).max(APP_SOURCE_MAX_BYTES),
+    createdAt: IsoDate,
+  }),
+  z.object({
+    type: z.literal("app_table"),
+    id: Id,
+    pageId: Id,
+    name: z.string().min(1).max(60),
+    label: z.string().max(200),
+    schema: json,
+    position: z.number().int(),
+  }),
+  z.object({
+    type: z.literal("app_row"),
+    id: Id,
+    tableId: Id,
+    data: json,
+    position: z.number().int(),
+    createdAt: IsoDate,
+    updatedAt: IsoDate,
+  }),
+  z.object({
+    type: z.literal("app_asset"),
+    id: Id,
+    pageId: Id,
+    name: z.string().max(200),
+    mime: z.string().max(100),
+    source: z.string().max(40),
+    base64: z.string().max(APP_ASSET_MAX_BASE64),
+    createdAt: IsoDate,
   }),
   z.object({
     type: z.literal("page_version"),

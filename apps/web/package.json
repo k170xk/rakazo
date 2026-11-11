@@ -21,6 +21,7 @@
     "@orpc/client": "1.16.1",
     "@orpc/contract": "1.16.1",
     "@orpc/tanstack-query": "1.16.1",
+    "@rakazo/app-kit": "workspace:*",
     "@rakazo/chat-ui": "workspace:*",
     "@rakazo/contracts": "workspace:*",
     "@rakazo/core": "workspace:*",

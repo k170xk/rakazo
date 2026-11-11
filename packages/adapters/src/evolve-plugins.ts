@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { getLogger } from "@rakazo/logging";
 
 /**
@@ -83,6 +83,46 @@ export function signEvolvePluginsToken(
   );
   const signature = createHmac("sha256", secret).update(`${header}.${claims}`).digest("base64url");
   return `${header}.${claims}.${signature}`;
+}
+
+/** Evolve's plugin-api calling back for an app published as a plugin: the reverse direction. */
+export const APP_DATA_ISSUER = "evolve";
+export const APP_DATA_AUDIENCE = "ocsc-intelligence-app-data";
+
+/**
+ * The person and plugin an Evolve app-data token names, or null. It shares the plugins secret, so
+ * it is told apart from tokens this server signs by its issuer and audience.
+ */
+export function verifyAppDataToken(
+  secret: string,
+  token: string,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): { email: string; slug: string } | null {
+  const [header, claims, signature] = token.split(".");
+  if (!header || !claims || !signature) return null;
+  const expected = createHmac("sha256", secret).update(`${header}.${claims}`).digest();
+  const given = Buffer.from(signature, "base64url");
+  if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
+  try {
+    const head = JSON.parse(Buffer.from(header, "base64url").toString("utf8"));
+    const body = JSON.parse(Buffer.from(claims, "base64url").toString("utf8"));
+    const email = typeof body.sub === "string" ? body.sub.trim().toLowerCase() : "";
+    const slug = typeof body.slug === "string" ? body.slug : "";
+    if (
+      head.alg !== "HS256" ||
+      body.iss !== APP_DATA_ISSUER ||
+      body.aud !== APP_DATA_AUDIENCE ||
+      typeof body.exp !== "number" ||
+      body.exp <= nowSeconds ||
+      body.exp - nowSeconds > TOKEN_SECONDS ||
+      !email.includes("@") ||
+      !PLUGIN_SLUG.test(slug)
+    )
+      return null;
+    return { email, slug };
+  } catch {
+    return null;
+  }
 }
 
 export class EvolvePluginsError extends Error {

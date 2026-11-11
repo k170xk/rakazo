@@ -38,9 +38,14 @@ export const PageTitleSchema = z
   .transform((title) => title.replace(/[\p{Cc}\u2028\u2029\s]+/gu, " ").trim())
   .pipe(z.string().min(1).max(PAGE_TITLE_MAX_LENGTH));
 
+/** A page is one JSX file; an app is a set of files with its own tables of data. */
+export const PageKindSchema = z.enum(["page", "app"]);
+export type PageKind = z.infer<typeof PageKindSchema>;
+
 export const PageSummarySchema = z.strictObject({
   id: Id,
   title: z.string().max(PAGE_TITLE_MAX_LENGTH),
+  kind: PageKindSchema,
   botId: Id.nullable(),
   groupId: Id.nullable(),
   visibility: PageVisibilitySchema,
@@ -68,12 +73,15 @@ export type PageDetail = z.infer<typeof PageDetailSchema>;
 /** What anyone with a page's link reads; no owner, bot or ids. */
 export const SharedPageSchema = z.strictObject({
   title: z.string().max(PAGE_TITLE_MAX_LENGTH),
+  kind: PageKindSchema,
   /** Compiled for the viewer, as in PageDetail. */
   code: z.string(),
   version: z.number().int().positive(),
   updatedAt: IsoDate,
   /** Whether this reader may save the page's own data; a password reader only reads it. */
   canSaveState: z.boolean(),
+  /** For an app: whether this reader may add, change and remove its rows. */
+  canEditData: z.boolean(),
 });
 export type SharedPage = z.infer<typeof SharedPageSchema>;
 

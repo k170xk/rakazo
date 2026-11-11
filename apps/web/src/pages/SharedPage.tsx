@@ -10,7 +10,9 @@ import { useQuery } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { AppFrame } from "../components/apps/AppFrame";
 import { PublicPageShell } from "../components/pages/PublicPageShell";
+import { sharedAppSource } from "../lib/app-host";
 import { sharedPageState } from "../lib/page-state";
 import { usePageDocument } from "../lib/pages";
 
@@ -79,7 +81,12 @@ function SharedPageBody() {
     () => (token ? sharedPageState(token, password) : undefined),
     [token, password],
   );
-  const viewer = usePageDocument(page?.code);
+  const isApp = page?.kind === "app";
+  const viewer = usePageDocument(isApp ? undefined : page?.code);
+  const appSource = useMemo(
+    () => (token && isApp ? sharedAppSource(token, password, page?.canSaveState === true) : null),
+    [token, password, isApp, page?.canSaveState],
+  );
   const title = page?.title;
   useEffect(() => {
     if (title) document.title = title;
@@ -151,7 +158,7 @@ function SharedPageBody() {
   }
   // Busy or unreachable is not gone; a failed refresh keeps the page being read.
   const failed = shared.isError && !page;
-  if (failed || viewer.failed) {
+  if (failed || (!isApp && viewer.failed)) {
     return (
       <div className="grid min-h-dvh place-items-center bg-background px-6 text-center text-[15px] text-muted-foreground">
         <div className="flex flex-col items-center gap-3">
@@ -177,6 +184,18 @@ function SharedPageBody() {
       <div className="grid min-h-dvh place-items-center bg-background text-muted-foreground">
         <Spinner />
       </div>
+    );
+  }
+  if (isApp && appSource) {
+    return (
+      <PublicPageShell title={page.title} document={null} fill>
+        <AppFrame
+          document={page.code}
+          title={page.title}
+          app={{ id: token ?? "", version: page.version }}
+          source={appSource}
+        />
+      </PublicPageShell>
     );
   }
   return <PublicPageShell title={page.title} document={viewer.document} state={pageState} />;

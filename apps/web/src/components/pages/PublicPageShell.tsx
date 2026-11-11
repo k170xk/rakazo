@@ -1,6 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Button } from "@rakazo/ui-web";
 import { Check, Link } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { useCopyText } from "../../lib/copy-text";
 import type { PageStateStore } from "../../lib/page-state";
@@ -16,10 +17,15 @@ export function PublicPageShell({
   title,
   document,
   state,
+  fill = false,
+  children,
 }: {
   title: string;
   document: string | null;
   state?: PageStateStore;
+  /** An app: it fills the screen below the header and scrolls inside itself, so no PDF. */
+  fill?: boolean;
+  children?: ReactNode;
 }) {
   const { t } = useLingui();
   const [copied, copy, copyFailed] = useCopyText();
@@ -55,7 +61,9 @@ export function PublicPageShell({
               {copied ? <Trans>Copied</Trans> : <Trans>Copy link</Trans>}
             </span>
           </Button>
-          <DownloadPdfButton className={ACTION} labelClassName="max-[560px]:sr-only" />
+          {fill ? null : (
+            <DownloadPdfButton className={ACTION} labelClassName="max-[560px]:sr-only" />
+          )}
           <span role="status" className="sr-only">
             {copied ? t`Link copied` : ""}
           </span>
@@ -68,12 +76,14 @@ export function PublicPageShell({
           </div>
         </div>
       ) : null}
+      {fill ? <div className="h-[calc(100dvh-48px)]">{children}</div> : null}
       {/* The frame grows to the page, so the page scrolls with this document and prints whole. */}
       <div
+        hidden={fill}
         className="min-h-[calc(100dvh-48px)] print:min-h-0"
         style={{ height: height || undefined }}
       >
-        {document !== null ? (
+        {document !== null && !fill ? (
           <PageFrame
             document={document}
             title={title}

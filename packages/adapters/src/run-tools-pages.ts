@@ -92,6 +92,7 @@ async function savePage(ctx: RunContext, call: ToolCall) {
         where: { id: pageId, spaceId: run.spaceId, userId: run.userId, OR: reachable },
         select: {
           id: true,
+          kind: true,
           title: true,
           currentVersion: true,
           versions: { orderBy: { version: "desc" }, take: 1, select: { source: true } },
@@ -100,6 +101,9 @@ async function savePage(ctx: RunContext, call: ToolCall) {
       })
     : null;
   if (pageId && !page) return { error: "No page with that pageId belongs to this bot or chat." };
+  if (page?.kind === "app") {
+    return { error: "That id is an app, not a page; change it with save_app." };
+  }
   const current = page?.versions[0]?.source ?? "";
 
   if (page && !hasSource && !hasEdits && !hasData && !title) {

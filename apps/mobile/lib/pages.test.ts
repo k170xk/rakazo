@@ -20,6 +20,7 @@ const {
 const detail = (overrides: Partial<PageDetail> = {}): PageDetail => ({
   id: "page-1",
   title: "Duplex voice build",
+  kind: "page",
   botId: "bot-1",
   groupId: null,
   visibility: "private",

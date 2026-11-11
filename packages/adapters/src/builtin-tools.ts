@@ -818,6 +818,91 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "save_app",
+    description:
+      'Build or change an OCSC app in the App Studio: a real multi-screen React app with its own live tables that people use, edit and share (Lovable-quality, inside OCSC). Prefer it over save_page when people will add, change or track records, or when the person gives a spreadsheet. Call with {"help": true} first for the guide. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save. To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures.',
+    inputSchema: {
+      type: "object",
+      properties: {
+        help: { type: "boolean", description: "Return the App Studio guide instead of saving." },
+        appId: { type: "string", description: "The app to read or change." },
+        title: { type: "string", description: "App title; required for a new app." },
+        files: {
+          type: "object",
+          description:
+            'File name to TypeScript/TSX source, e.g. {"App.tsx": "..."}; App.tsx default-exports the app. Files you leave out stay.',
+        },
+        edits: {
+          type: "array",
+          description: "Changes to the current files; each find occurs exactly once in its file.",
+          items: {
+            type: "object",
+            properties: {
+              file: { type: "string", description: "Default App.tsx." },
+              find: { type: "string" },
+              replace: { type: "string" },
+            },
+            required: ["find", "replace"],
+          },
+        },
+        deleteFiles: { type: "array", items: { type: "string" } },
+        workbook: {
+          type: "object",
+          description:
+            "A spreadsheet ({artifactId} of a chat attachment, or {path} in the workspace) made into a new app deterministically: a table per sheet, typed columns, overview, table screens, board and calendar. With appId it updates that app's rows by key instead.",
+          properties: { artifactId: { type: "string" }, path: { type: "string" } },
+        },
+        tables: {
+          type: "array",
+          description:
+            "Tables to define or change: [{schema: {name, label, key?, title?, columns: [{key, label, type, options?, currency?, relation?, formula?}]}, rows?: [...], mode?: replace|append|upsert}]. A schema without rows keeps the rows.",
+          items: { type: "object" },
+        },
+      },
+    },
+  },
+  {
+    name: "app_data",
+    description:
+      "Read or change an app's rows without touching its code: query (where, search, limit, offset), insert (row), update (id, patch), remove (id), replace/append/upsert (rows; upsert matches the table's key) or drop a table. Open copies of the app update within seconds, so a routine can keep an app live by gathering data and calling this.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        appId: { type: "string" },
+        table: { type: "string", description: "Omit with query to list every table." },
+        action: {
+          type: "string",
+          enum: ["query", "insert", "update", "remove", "replace", "append", "upsert", "drop"],
+        },
+        where: { type: "object", description: "query: column values that must match exactly." },
+        search: { type: "string", description: "query: words that must all appear in the row." },
+        limit: { type: "number" },
+        offset: { type: "number" },
+        row: { type: "object" },
+        rows: { type: "array", items: { type: "object" } },
+        id: { type: "string", description: "The row's _id." },
+        patch: { type: "object" },
+      },
+      required: ["appId"],
+    },
+  },
+  {
+    name: "app_asset",
+    description:
+      "Add a picture to an app so it can show it with <AssetImage asset={id}/>: a workspace image file (path), an image attached in this chat such as one from generate_image (artifactId), or an infographic url returned by evolve_infographics. PNG, JPEG, WebP, GIF or SVG up to 6 MB.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        appId: { type: "string" },
+        path: { type: "string" },
+        artifactId: { type: "string" },
+        url: { type: "string" },
+        name: { type: "string" },
+      },
+      required: ["appId"],
+    },
+  },
+  {
     name: "add_mcp_server",
     description:
       "Connect a remote MCP tool server to this Space when the user asks you to add one and provides the details (URL, optional token/headers). The server is created immediately and an approval card appears in the chat; its tools reach you once the user approves it there. Do not invent endpoints; only use details the user provided. Local (stdio) servers can only be added by an admin in Settings.",

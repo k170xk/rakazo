@@ -783,6 +783,7 @@ msgstr "動態"
 msgid "Actual size"
 msgstr ""
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/SecretAskCard.tsx
@@ -879,6 +880,10 @@ msgstr "新增備援模型"
 msgid "Add field"
 msgstr "新增欄位"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Add from Excel"
+msgstr ""
+
 #: src/components/ModelHeadersEditor.tsx
 msgid "Add header"
 msgstr "新增標頭"
@@ -907,6 +912,10 @@ msgstr ""
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Add PDF drawings as images"
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Add picture"
 msgstr ""
 
 #: src/pages/model-settings/providers-section.tsx
@@ -1244,12 +1253,20 @@ msgstr ""
 msgid "Any model, with your own key"
 msgstr "使用自己的金鑰連接任何模型"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Anyone at OCSC with the link"
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Anyone at the company with the link"
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 msgid "Anyone with the link and password"
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Anyone you share the app with can always see it. Visitors using the password only read."
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -1283,6 +1300,15 @@ msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "API URL"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+#: src/components/pages/PagesList.tsx
+msgid "App"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "App Studio"
 msgstr ""
 
 #: src/components/SidebarFooter.tsx
@@ -1407,6 +1433,10 @@ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Ask it anything, or for any OCSC deliverable"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "Ask the bot to fix it"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -1662,10 +1692,6 @@ msgstr "機器人螢幕預覽"
 msgid "Bot style"
 msgstr ""
 
-#: src/pages/RoutineEditor.tsx
-#~ msgid "Bot's model"
-#~ msgstr "機器人的模型"
-
 #: src/components/SignupSurvey.tsx
 msgid "Both"
 msgstr "兩者都有"
@@ -1737,6 +1763,10 @@ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Build your own apps, and share them"
+msgstr ""
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "Building your app…"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -1812,6 +1842,7 @@ msgstr "無法連線伺服器。"
 msgid "Can't read images"
 msgstr "無法讀取影像"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/integrations/CompanyMcpApp.tsx
@@ -2181,6 +2212,10 @@ msgstr ""
 msgid "Click \"Select PDF\" to choose a document"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Click something in the app to tell the bot what to change"
+msgstr ""
+
 #: src/pages/shell/evolve-references.tsx
 msgid "Client"
 msgstr ""
@@ -2207,6 +2242,10 @@ msgstr ""
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "關閉"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Close app"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Close chart"
@@ -2242,6 +2281,7 @@ msgstr "關閉導覽"
 msgid "Close page"
 msgstr "關閉頁面"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/side-panel.tsx
 msgid "Close panel"
@@ -2287,6 +2327,7 @@ msgstr "雲端"
 msgid "Clouds, callouts, arrows and notes placed exactly where the issue is"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Code"
@@ -2296,6 +2337,10 @@ msgstr "程式碼"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "驗證碼"
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Code changes are versioned. Data is not: restoring a version keeps today's rows."
+msgstr ""
 
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
@@ -2318,9 +2363,21 @@ msgstr "顏色"
 msgid "Color {color}"
 msgstr "顏色 {color}"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "column {index}"
 msgstr "第 {index} 欄"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column name"
+msgstr ""
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Column type"
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Come back to this tour any time from the sidebar"
@@ -2921,10 +2978,6 @@ msgstr "無法建立群組"
 #: src/pages/shell/dialogs.tsx
 msgid "Could not create section"
 msgstr "無法建立分組"
-
-#: src/pages/shell/dialogs.tsx
-#~ msgid "Could not create space"
-#~ msgstr "無法建立空間"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not create team"
@@ -3550,6 +3603,10 @@ msgstr ""
 msgid "Couldn't load your wallet"
 msgstr ""
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Couldn't save."
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update bot style"
 msgstr ""
@@ -3682,6 +3739,10 @@ msgstr "Cron 表示式"
 msgid "CSV"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Current"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Current clients and projects:\n"
 "- Client:\n"
@@ -3737,6 +3798,7 @@ msgstr "每天追蹤未完成的工作"
 msgid "Dark"
 msgstr "深色"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
@@ -3877,6 +3939,10 @@ msgstr "刪除群組"
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"
 msgstr "同時刪除記憶"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Delete row"
+msgstr ""
 
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
@@ -4025,6 +4091,10 @@ msgstr "停用工具"
 msgid "Disabled"
 msgstr "已停用"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Discard"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Discard changes"
 msgstr ""
@@ -4064,6 +4134,7 @@ msgstr "已中斷連結 {disconnectName}。"
 msgid "Disconnecting…"
 msgstr "正在中斷…"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/PasskeyOffer.tsx
@@ -4147,6 +4218,10 @@ msgstr ""
 #: src/components/ArtifactFileCard.tsx
 msgid "Download {name}"
 msgstr "下載 {name}"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Download as Excel"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 #: src/components/UiCardView.tsx
@@ -4443,6 +4518,10 @@ msgstr ""
 msgid "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Every check passed."
+msgstr ""
+
 #: src/lib/cron.ts
 #: src/pages/AdminComputerAccess.tsx
 #: src/pages/RoutineEditor.tsx
@@ -4531,6 +4610,10 @@ msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Evolve did not accept that change"
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Evolve didn't accept it."
 msgstr ""
 
 #: src/components/GroupPeople.tsx
@@ -4701,6 +4784,10 @@ msgstr "要比較的欄位，例如 id, modifiedTime（選填）"
 #: src/pages/SpaceSearch.tsx
 msgid "File"
 msgstr "檔案"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "File name, like Chart.tsx"
+msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
@@ -5093,6 +5180,10 @@ msgstr "高"
 msgid "High (slow)"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "History"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Hold to talk"
 msgstr "按住說話"
@@ -5380,6 +5471,10 @@ msgstr "隔離"
 #: src/pages/Artifacts.tsx
 msgid "Isolated preview — no access to your account"
 msgstr "隔離預覽 — 無法存取你的帳號"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "It didn't build, so nothing was saved."
+msgstr ""
 
 #: src/components/pages/PageViewHost.tsx
 msgid "It may have been deleted, or it belongs to someone else."
@@ -6240,6 +6335,10 @@ msgstr ""
 msgid "My memory"
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "My plugins"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/settings-nav.ts
 msgid "My vault"
@@ -6355,6 +6454,10 @@ msgstr ""
 msgid "New API key"
 msgstr ""
 
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "New app from Excel"
+msgstr ""
+
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/create-bot-dialog.tsx
@@ -6371,6 +6474,10 @@ msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "New contact"
+msgstr ""
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "New file"
 msgstr ""
 
 #: src/pages/GroupPanel.tsx
@@ -6409,11 +6516,6 @@ msgstr "新的待辦"
 msgid "New password"
 msgstr "新密碼"
 
-#: src/pages/Shell.tsx
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "New private space"
-#~ msgstr "新增私人空間"
-
 #: src/components/AskCard.tsx
 msgid "New project deadline"
 msgstr ""
@@ -6430,10 +6532,6 @@ msgstr "新增分組"
 #: src/pages/KnowledgeSection.tsx
 msgid "New skill"
 msgstr "新增技能"
-
-#: src/pages/shell/dialogs.tsx
-#~ msgid "New space"
-#~ msgstr "新增空間"
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
@@ -6644,6 +6742,10 @@ msgstr "沒有符合「{query}」的頁面。"
 msgid "No people match your search."
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "No pictures yet."
+msgstr ""
+
 #: src/pages/AdminStaffApps.tsx
 msgid "No plugins are in the catalog."
 msgstr "目錄中沒有外掛程式。"
@@ -6678,6 +6780,10 @@ msgstr "無結果"
 #: src/components/markdown-copy.tsx
 msgid "No rows"
 msgstr "沒有資料列"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "No rows match."
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "No runs match these filters."
@@ -6990,6 +7096,10 @@ msgstr "單次購買，額度不會到期。"
 msgid "Only enter a code {codeHost} sent you."
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Only me"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Only people on the project's Design Team, and Evolve admins, can add or change its deadlines."
 msgstr ""
@@ -7169,6 +7279,10 @@ msgstr ""
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "其他模型…"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Others see the data but can't change it."
+msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -7462,6 +7576,10 @@ msgstr "請從清單中選擇模型，或輸入此端點提供的模型 ID。"
 msgid "Pick a tool to check"
 msgstr "選擇要檢查的工具"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Pictures"
+msgstr ""
+
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
 #: src/pages/BotContextMenu.tsx
@@ -7515,6 +7633,10 @@ msgstr "外掛程式"
 msgid "Plugin GitHub URL"
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Plugin name in Evolve"
+msgstr ""
+
 #: src/pages/AdminPluginsPage.tsx
 msgid "Plugin submissions"
 msgstr ""
@@ -7531,6 +7653,10 @@ msgstr "員工外掛程式"
 #: src/pages/AdminStaffApps.tsx
 msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
 msgstr "目錄中用於連線應用程式的外掛程式，例如 Stripe、Figma 或 Cal.com。員工只會看到此處啟用的外掛程式，並可在外掛程式功能開啟時新增。僅含技能的套件依循員工技能設定。"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Point at something in the app to change it"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
@@ -7571,6 +7697,10 @@ msgstr ""
 msgid "Preview {0}"
 msgstr "預覽 {0}"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Preview in Evolve"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr "此檔案類型無法預覽，請下載後檢視。"
@@ -7597,14 +7727,6 @@ msgstr "上一組設定區段"
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr "優先順序"
-
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "Private space with its own bots and groups."
-#~ msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Private spaces keep a team's chats and files separate"
-#~ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -7667,6 +7789,16 @@ msgstr "供應商"
 #: src/pages/model-settings/providers-section.tsx
 msgid "Providers"
 msgstr "供應商"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Publish to Evolve"
+msgstr ""
+
+#. placeholder {0}: publication.data.slug
+#. placeholder {1}: publication.data.release
+#: src/components/apps/AppPublishSection.tsx
+msgid "Published as {0}, release {1}. Publishing again sends the current version."
+msgstr ""
 
 #: src/components/CloudAgentCard.tsx
 msgid "Pull request"
@@ -7941,9 +8073,10 @@ msgstr "重新載入"
 msgid "Remove"
 msgstr "移除"
 
+#. placeholder {0}: asset.name
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
-#. placeholder {0}: p.name
+#: src/components/apps/AppSettingsPanel.tsx
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/GroupPeople.tsx
 #: src/pages/GroupPanel.tsx
@@ -8183,6 +8316,7 @@ msgstr ""
 msgid "Restart to update"
 msgstr "重新啟動以更新"
 
+#: src/components/apps/AppHistoryPanel.tsx
 #: src/components/InstructionSettings.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/shell/archived-chats.tsx
@@ -8291,6 +8425,7 @@ msgstr "例行任務"
 msgid "Routines that run while you're away"
 msgstr "在你離線時執行的例行任務"
 
+#: src/components/apps/AppDataPanel.tsx
 #: src/components/markdown-copy.tsx
 msgid "Row"
 msgstr "列"
@@ -8387,8 +8522,16 @@ msgstr "週六"
 msgid "Save"
 msgstr "儲存"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Save & build"
+msgstr ""
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "Save a company model first; assistant models run on its key."
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Save as draft"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -8422,6 +8565,11 @@ msgstr "儲存到保管庫"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Saved"
 msgstr "已儲存"
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppCodePanel.tsx
+msgid "Saved as version {0}."
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
@@ -8559,6 +8707,10 @@ msgstr "搜尋模型"
 msgid "Search plugins"
 msgstr "搜尋外掛程式"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Search rows"
+msgstr ""
+
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Search runs"
 msgstr "搜尋執行紀錄"
@@ -8623,6 +8775,10 @@ msgstr "選擇機器人"
 msgid "Select all"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Select an element"
+msgstr ""
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Select at least one page"
 msgstr ""
@@ -8671,6 +8827,10 @@ msgstr "以檔案傳送"
 #: src/components/AccountAccess.tsx
 msgid "Send deletion code"
 msgstr "傳送刪除驗證碼"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Send for review"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Send it"
@@ -8743,6 +8903,7 @@ msgstr ""
 msgid "Sets the drawing scale, then measures lengths, areas and perimeters"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -8862,6 +9023,11 @@ msgstr "顯示清單"
 msgid "Show more"
 msgstr "顯示更多"
 
+#. placeholder {0}: rows.length - shown
+#: src/components/apps/AppDataPanel.tsx
+msgid "Show more ({0} left)"
+msgstr ""
+
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "顯示密碼"
@@ -8945,6 +9111,10 @@ msgstr "註冊"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Sign-in cancelled. Try again."
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Signed-in colleagues can add, edit and remove rows."
 msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
@@ -9031,6 +9201,10 @@ msgstr ""
 msgid "Some settings are not imported"
 msgstr "部分設定不會匯入"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Someone saved a newer version. Reload the code to see it."
+msgstr ""
+
 #: src/App.tsx
 #: src/lib/user-error.ts
 msgid "Something went wrong. Try again."
@@ -9073,10 +9247,6 @@ msgstr "空間"
 #: src/pages/shell/bot-panel.tsx
 msgid "Space default"
 msgstr "空間預設"
-
-#: src/pages/SettingsOverlay.tsx
-#~ msgid "Spaces"
-#~ msgstr "空間"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -9477,12 +9647,44 @@ msgstr ""
 msgid "Testing…"
 msgstr "正在測試…"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "That change wasn't saved."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "That file could not be read. Try saving it again, or paste its text in."
 msgstr ""
 
 #: src/pages/SharedPage.tsx
 msgid "That password is not right. Check it and try again."
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "That picture wasn't added."
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "That version couldn't be restored."
+msgstr ""
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "That workbook couldn't be read."
+msgstr ""
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "That workbook is over 10 MB."
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "The app becomes an Evolve staff plugin. Once Evolve's reviewers publish it, it opens from Evolve's menu with this data, and changes follow the setting above."
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "The app hit an error."
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "The app shows these by id, and the bot can add infographics and generated images here."
 msgstr ""
 
 #: src/pages/shell/composer-error.tsx
@@ -9628,6 +9830,10 @@ msgstr ""
 #: src/pages/ModelRoleSettings.tsx
 msgid "Thinking: {0}"
 msgstr "思考：{0}"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "This app needs its own sign-in setup to connect."
@@ -10103,6 +10309,10 @@ msgstr ""
 msgid "Unread"
 msgstr "未讀"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Unsaved changes"
+msgstr ""
+
 #. placeholder {0}: original.name
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
@@ -10136,6 +10346,10 @@ msgstr "來自 {name} 的更新"
 msgid "Update from {name}: {text}"
 msgstr "來自 {name} 的更新：{text}"
 
+#: src/components/apps/AppDataPanel.tsx
+msgid "Update from Excel"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Update instructions?"
 msgstr "更新指令？"
@@ -10147,6 +10361,10 @@ msgstr "更新進度"
 #: src/lib/client-update.ts
 msgid "Update required"
 msgstr "需要更新"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Updated from Excel"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Updates"
@@ -10216,10 +10434,18 @@ msgstr "使用 {hostLabel}"
 msgid "Use {oauthEnvReference} for the access token."
 msgstr "存取權杖請使用 {oauthEnvReference}。"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Use 3 to 40 lowercase letters, numbers or dashes."
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Use a found model"
 msgstr "使用找到的模型"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "Use a new name like Chart.tsx or theme.css."
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -10359,6 +10585,21 @@ msgstr "正在驗證…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "版本"
+
+#. placeholder {0}: files.data?.version ?? version
+#: src/components/apps/AppCodePanel.tsx
+msgid "Version {0}"
+msgstr ""
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppPublishSection.tsx
+msgid "Version {0} is saved as a draft in Evolve."
+msgstr ""
+
+#. placeholder {0}: result.version
+#: src/components/apps/AppPublishSection.tsx
+msgid "Version {0} is waiting for Evolve's reviewers."
+msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Version history"
@@ -10506,10 +10747,6 @@ msgid "What assistants can look up and do in Evolve on the person's behalf, such
 msgstr ""
 
 #: src/pages/shell/dialogs.tsx
-#~ msgid "What can this space use?"
-#~ msgstr ""
-
-#: src/pages/shell/dialogs.tsx
 msgid "What can this team use?"
 msgstr ""
 
@@ -10527,6 +10764,10 @@ msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "What it can do"
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "What it's for and who uses it"
 msgstr ""
 
 #: src/components/todos/todo-board.tsx
@@ -10598,6 +10839,10 @@ msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Who can change projects"
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Who can change the data"
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx

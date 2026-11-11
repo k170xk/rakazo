@@ -26,6 +26,7 @@ COPY --chmod=755 packages/db/package.json packages/db/
 COPY --chmod=755 packages/logging/package.json packages/logging/
 COPY --chmod=755 packages/memory/package.json packages/memory/
 COPY --chmod=755 packages/page-kit/package.json packages/page-kit/
+COPY --chmod=755 packages/app-kit/package.json packages/app-kit/
 COPY --chmod=755 packages/testkit/package.json packages/testkit/
 COPY --chmod=755 packages/ui-tokens/package.json packages/ui-tokens/
 COPY --chmod=755 packages/ui-web/package.json packages/ui-web/

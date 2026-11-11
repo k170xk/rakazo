@@ -14,6 +14,19 @@ import { AgentImportSetupStateInput, AgentImportSetupStateSchema } from "./agent
 import { AiConsentQuerySchema, AiConsentStatusSchema } from "./ai-consent.js";
 import { AnalyticsScreenInput } from "./analytics.js";
 import {
+  AppAssetSchema,
+  AppBuildProblemSchema,
+  AppDataAccessSchema,
+  AppDataSchema,
+  AppFilesSchema,
+  AppRowIdSchema,
+  AppRowSchema,
+  AppRowValuesSchema,
+  AppTableNameSchema,
+  AppTableSchemaSchema,
+  AppVersionSchema,
+} from "./apps.js";
+import {
   ARTIFACT_DESCRIPTION_MAX_LENGTH,
   ARTIFACT_NAME_MAX_LENGTH,
   ATTACHMENT_COUNT_CEILING,
@@ -1725,6 +1738,168 @@ export const appContract = {
     saveState: oc
       .input(z.strictObject({ pageId: Id, key: PageStateKeySchema, value: z.unknown() }))
       .output(z.object({ ok: z.literal(true) })),
+  },
+  /** Apps: pages built from several files with their own tables of data. Owner only. */
+  apps: {
+    /** Every table with its rows, what the app saved for itself and the data revision. */
+    data: oc.input(z.strictObject({ pageId: Id })).output(AppDataSchema),
+    /** Polled by open copies: fetch data again when it moves. */
+    revision: oc
+      .input(z.strictObject({ pageId: Id }))
+      .output(z.object({ revision: z.number().int(), version: z.number().int() })),
+    insertRow: oc
+      .input(z.strictObject({ pageId: Id, table: AppTableNameSchema, row: AppRowValuesSchema }))
+      .output(z.object({ row: AppRowSchema, revision: z.number().int() })),
+    updateRow: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          table: AppTableNameSchema,
+          id: AppRowIdSchema,
+          patch: AppRowValuesSchema,
+        }),
+      )
+      .output(z.object({ row: AppRowSchema, revision: z.number().int() })),
+    removeRow: oc
+      .input(z.strictObject({ pageId: Id, table: AppTableNameSchema, id: AppRowIdSchema }))
+      .output(z.object({ revision: z.number().int() })),
+    /** Defines or changes a table (from the Studio's data grid), optionally replacing its rows. */
+    defineTable: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          schema: AppTableSchemaSchema,
+          rows: z.array(AppRowValuesSchema).max(20_000).optional(),
+        }),
+      )
+      .output(z.object({ table: z.string(), rows: z.number().int(), revision: z.number().int() })),
+    dropTable: oc
+      .input(z.strictObject({ pageId: Id, table: AppTableNameSchema }))
+      .output(z.object({ revision: z.number().int() })),
+    files: oc
+      .input(z.strictObject({ pageId: Id, version: z.number().int().positive().optional() }))
+      .output(z.object({ files: AppFilesSchema, version: z.number().int() })),
+    /** Builds the files and saves them as a new version when they build; problems otherwise. */
+    saveFiles: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          files: AppFilesSchema,
+          baseVersion: z.number().int().positive(),
+        }),
+      )
+      .output(
+        z.object({
+          version: z.number().int().nullable(),
+          problems: z.array(AppBuildProblemSchema),
+        }),
+      ),
+    /** The current files (or the given ones) built for the Studio, with elements tagged by source line. */
+    preview: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          files: AppFilesSchema.optional(),
+          version: z.number().int().positive().optional(),
+        }),
+      )
+      .output(z.object({ html: z.string().nullable(), problems: z.array(AppBuildProblemSchema) })),
+    versions: oc.input(z.strictObject({ pageId: Id })).output(z.array(AppVersionSchema)),
+    /** Makes an earlier version current again, as a new version. */
+    restore: oc
+      .input(z.strictObject({ pageId: Id, version: z.number().int().positive() }))
+      .output(z.object({ version: z.number().int() })),
+    setDataAccess: oc
+      .input(z.strictObject({ pageId: Id, access: AppDataAccessSchema }))
+      .output(z.object({ access: AppDataAccessSchema })),
+    assets: oc.input(z.strictObject({ pageId: Id })).output(z.array(AppAssetSchema)),
+    asset: oc
+      .input(z.strictObject({ pageId: Id, assetId: Id }))
+      .output(z.object({ mime: z.string(), base64: z.string() })),
+    addAsset: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          name: z.string().min(1).max(200),
+          mime: z.string().max(60),
+          base64: z.string().max(9_000_000),
+        }),
+      )
+      .output(AppAssetSchema),
+    removeAsset: oc
+      .input(z.strictObject({ pageId: Id, assetId: Id }))
+      .output(z.object({ ok: z.literal(true) })),
+    /** A table as a spreadsheet file. */
+    export: oc
+      .input(
+        z.strictObject({ pageId: Id, table: AppTableNameSchema, format: z.enum(["xlsx", "csv"]) }),
+      )
+      .output(z.object({ filename: z.string(), mime: z.string(), base64: z.string() })),
+    /** A newer copy of the workbook read into this app, matching rows by each table's key. */
+    reimportWorkbook: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          fileName: z.string().min(1).max(200),
+          base64: z.string().max(14_000_000),
+        }),
+      )
+      .output(z.object({ report: z.array(z.string()), revision: z.number().int() })),
+    /** Whether this app can go to Evolve, and the plugin it was last published as. */
+    evolvePublication: oc.input(z.strictObject({ pageId: Id })).output(
+      z.object({
+        available: z.boolean(),
+        slug: z.string().nullable(),
+        release: z.number().int(),
+      }),
+    ),
+    /**
+     * Sends the app to Evolve as a staff plugin, a draft or for review; once Evolve publishes it,
+     * it opens from Evolve's menu with this app's data.
+     */
+    publishToEvolve: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          slug: z.string().regex(/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/),
+          submitForReview: z.boolean(),
+          purpose: z.string().trim().max(2000).optional(),
+        }),
+      )
+      .output(
+        z.object({
+          slug: z.string(),
+          version: z.string(),
+          status: z.string(),
+          checks: z
+            .array(z.object({ label: z.string(), ok: z.boolean(), detail: z.string().optional() }))
+            .optional(),
+          previewUrl: z.string().optional(),
+          myPluginsUrl: z.string().optional(),
+        }),
+      ),
+    /** An app's `ai.ask`, answered on the company model for the signed-in owner. */
+    ask: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          prompt: z.string().min(1).max(8000),
+          json: z.boolean().optional(),
+        }),
+      )
+      .output(z.object({ answer: z.unknown() })),
+    /** A new app made from a workbook: a table per sheet and screens built from them. */
+    importWorkbook: oc
+      .input(
+        z.strictObject({
+          title: z.string().trim().min(1).max(200).optional(),
+          fileName: z.string().min(1).max(200),
+          base64: z.string().max(14_000_000),
+          botId: Id.optional(),
+          groupId: Id.optional(),
+        }),
+      )
+      .output(z.object({ pageId: Id, report: z.array(z.string()) })),
   },
   usage: {
     list: oc.output(z.array(UsageRecordSchema)),

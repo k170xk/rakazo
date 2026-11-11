@@ -660,6 +660,107 @@ describePostgres("account import (PostgreSQL)", () => {
     });
   });
 
+  it("imports an app with its data and pictures, built and pointing at the pictures' new ids", async () => {
+    const appSource = (asset: string) =>
+      JSON.stringify({
+        "App.tsx": `import { AssetImage, Card } from "@ocsc/ui";\nexport default () => <Card><AssetImage asset="${asset}" /></Card>;\n`,
+      });
+    const records: AccountExportRecord[] = [
+      ...sourceRecords(),
+      {
+        type: "page",
+        id: "src-app",
+        botId: null,
+        groupId: null,
+        title: "Jobs",
+        pinnedAt: null,
+        currentVersion: 2,
+        kind: "app",
+        dataAccess: "company",
+        createdAt: at,
+        updatedAt: at,
+      },
+      ...[1, 2].map((version) => ({
+        type: "app_version" as const,
+        id: `src-app-v${version}`,
+        pageId: "src-app",
+        version,
+        title: "Jobs",
+        source: appSource("src-asset"),
+        createdAt: at,
+      })),
+      {
+        type: "app_table",
+        id: "src-table",
+        pageId: "src-app",
+        name: "jobs",
+        label: "Jobs",
+        schema: {
+          name: "jobs",
+          label: "Jobs",
+          columns: [{ key: "name", label: "Name", type: "text" }],
+        },
+        position: 0,
+      },
+      {
+        type: "app_row",
+        id: "src-row",
+        tableId: "src-table",
+        data: { name: "Quay bridge" },
+        position: 1,
+        createdAt: at,
+        updatedAt: at,
+      },
+      {
+        type: "app_asset",
+        id: "src-asset",
+        pageId: "src-app",
+        name: "logo.png",
+        mime: "image/png",
+        source: "upload",
+        base64: Buffer.from([137, 80, 78, 71]).toString("base64"),
+        createdAt: at,
+      },
+    ];
+    const result = await runImport(archive(records));
+    const app = await system.page.findFirstOrThrow({
+      where: { spaceId: result.spaces[0]!.id },
+      select: {
+        kind: true,
+        dataAccess: true,
+        currentVersion: true,
+        versions: { orderBy: { version: "asc" }, select: { source: true, code: true } },
+        appRows: { select: { data: true } },
+        appAssets: { select: { id: true } },
+      },
+    });
+    expect(app).toMatchObject({ kind: "app", dataAccess: "company", currentVersion: 2 });
+    expect(app.appRows).toEqual([{ data: { name: "Quay bridge" } }]);
+    const assetId = app.appAssets[0]!.id;
+    expect(app.versions.map((version) => version.source)).toEqual([
+      appSource(assetId),
+      appSource(assetId),
+    ]);
+    expect(app.versions[0]!.code).toBe("");
+    expect(app.versions[1]!.code).toMatch(/^<!doctype html>/i);
+
+    // An app's version cannot arrive as a page's, nor a page's as an app's.
+    const before = await ownedSpaceIds();
+    for (const broken of [
+      records.map((record) =>
+        record.type === "app_version" ? { ...record, type: "page_version" as const } : record,
+      ),
+      pageRecords([1]).map((record) =>
+        record.type === "page_version" ? { ...record, type: "app_version" as const } : record,
+      ),
+    ]) {
+      await expect(runImport(archive(broken as AccountExportRecord[]))).rejects.toBeInstanceOf(
+        AccountImportError,
+      );
+      expect(await ownedSpaceIds()).toEqual(before);
+    }
+  });
+
   it("imports a version today's check refuses, so it opens on its own error", async () => {
     const result = await runImport(
       archive(

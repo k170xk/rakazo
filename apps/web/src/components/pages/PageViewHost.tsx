@@ -8,6 +8,7 @@ import type { PageSession } from "../../lib/pages";
 import { PAGE_PARAM, useMedia, usePageDocument, usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import { errorCode } from "../../lib/user-error";
+import { AppStudio } from "../apps/AppStudio";
 import { PageNotice } from "./PageNotice";
 import { PageView } from "./PageView";
 import { SharePopover } from "./SharePopover";
@@ -54,7 +55,14 @@ function OpenPage({
     enabled: pageId !== null,
   });
   // Always the Evolve canvas (background), never the slate card chrome — pages looked grey.
-  const viewer = usePageDocument(page.data?.code, "background", true, DOCK_CLEARANCE);
+  const isApp = page.data?.kind === "app";
+  // An app is a whole document of its own; only pages are wrapped in the page runtime.
+  const viewer = usePageDocument(
+    isApp ? undefined : page.data?.code,
+    "background",
+    true,
+    DOCK_CLEARANCE,
+  );
   const pageState = useMemo(
     () => (shownId ? ownerPageState(queries, shownId) : undefined),
     [queries, shownId],
@@ -106,6 +114,65 @@ function OpenPage({
     session.dock.set({ page: dockPage });
     return () => session.dock.set({ page: null });
   }, [session, dockPage?.id, dockPage?.title]);
+  const notice = gone ? (
+    <PageNotice
+      title={t`This page isn't available`}
+      detail={t`It may have been deleted, or it belongs to someone else.`}
+      onClose={close}
+    />
+  ) : failed || (!isApp && viewer.failed) ? (
+    <PageNotice
+      title={t`This page couldn't load`}
+      detail={t`Check your connection and try again.`}
+      onRetry={() => {
+        if (failed) void page.refetch();
+        if (viewer.failed) viewer.retry();
+      }}
+      onClose={close}
+    />
+  ) : null;
+  const share = data ? (
+    <SharePopover
+      compact={compact}
+      title={data.title}
+      owner={data.owner}
+      visibility={shownVisibility}
+      shareUrl={link.data?.shareUrl ?? null}
+      sharePassword={link.data?.sharePassword ?? null}
+      onRenewPassword={() => {
+        if (pageId && !visibility.isPending) {
+          visibility.mutate({ pageId, visibility: "public", renewPassword: true });
+        }
+      }}
+      open={shareOpen}
+      onOpenChange={setShareOpen}
+      pending={visibility.isPending}
+      error={visibility.isError ? t`Could not change who can view this page. Try again.` : null}
+      onVisibilityChange={(next) => {
+        if (pageId && next !== shownVisibility && !visibility.isPending) {
+          visibility.mutate({ pageId, visibility: next });
+        }
+      }}
+    />
+  ) : null;
+  if (isApp) {
+    return (
+      <AppStudio
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) close();
+        }}
+        page={data}
+        ownerName={data?.owner.name ?? null}
+        share={share}
+        composer={<div ref={setDockNode} />}
+        onReply={session.offerReply}
+        returnFocus={session.restoreFocus}
+        compact={compact}
+        notice={notice}
+      />
+    );
+  }
   return (
     <PageView
       open={open}
@@ -117,25 +184,7 @@ function OpenPage({
       state={pageState}
       returnFocus={session.restoreFocus}
       compact={compact}
-      notice={
-        gone ? (
-          <PageNotice
-            title={t`This page isn't available`}
-            detail={t`It may have been deleted, or it belongs to someone else.`}
-            onClose={close}
-          />
-        ) : failed || viewer.failed ? (
-          <PageNotice
-            title={t`This page couldn't load`}
-            detail={t`Check your connection and try again.`}
-            onRetry={() => {
-              if (failed) void page.refetch();
-              if (viewer.failed) viewer.retry();
-            }}
-            onClose={close}
-          />
-        ) : null
-      }
+      notice={notice}
       renameError={rename.isError ? t`Could not rename this page. Try again.` : null}
       onRename={
         rename.isPending || !data
@@ -146,34 +195,7 @@ function OpenPage({
       }
       composer={<div ref={setDockNode} />}
       onReply={session.offerReply}
-      share={
-        data ? (
-          <SharePopover
-            compact={compact}
-            title={data.title}
-            owner={data.owner}
-            visibility={shownVisibility}
-            shareUrl={link.data?.shareUrl ?? null}
-            sharePassword={link.data?.sharePassword ?? null}
-            onRenewPassword={() => {
-              if (pageId && !visibility.isPending) {
-                visibility.mutate({ pageId, visibility: "public", renewPassword: true });
-              }
-            }}
-            open={shareOpen}
-            onOpenChange={setShareOpen}
-            pending={visibility.isPending}
-            error={
-              visibility.isError ? t`Could not change who can view this page. Try again.` : null
-            }
-            onVisibilityChange={(next) => {
-              if (pageId && next !== shownVisibility && !visibility.isPending) {
-                visibility.mutate({ pageId, visibility: next });
-              }
-            }}
-          />
-        ) : null
-      }
+      share={share}
     />
   );
 }
