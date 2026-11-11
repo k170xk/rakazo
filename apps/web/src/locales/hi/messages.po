@@ -3203,7 +3203,7 @@ msgid "Create group"
 msgstr "समूह बनाएं"
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Create more agents later from the + button"
+msgid "Let it suggest specialists, then create more from the + button"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -5259,7 +5259,12 @@ msgid "Medium"
 msgstr "मध्यम"
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Meet OCSC General Intelligence"
+msgid "Meet your Main PA"
+msgstr ""
+
+#: src/pages/shell/chat-header.tsx
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Main PA"
 msgstr ""
 
 #: src/lib/identity-display.ts
@@ -9620,7 +9625,7 @@ msgid "Your email address"
 msgstr "आपका ईमेल पता"
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Your first agent is ready. It already knows who you are from your Evolve CV, has every OCSC Tool, and will ask a couple of quick questions to get you started."
+msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot."
 msgstr ""
 
 #. js-lingui-explicit-id
