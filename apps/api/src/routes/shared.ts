@@ -59,7 +59,10 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
       : "none";
   const voiceOn = companyFeatures().voice;
   const phoneCallsEnabled = deps.env.phoneCallsEnabled === true && voiceOn;
-  const dictationEnabled = voiceOn && (phoneCallsEnabled || Boolean(deps.evolvePlugins));
+  // Composer mic: company voice (calls/STT) OR Evolve Whisper via plugins. Do not require
+  // companyFeatures.voice for the Evolve path — that switch is the company voice connection,
+  // and OCSC keeps it off while still wanting dictation through Evolve's OpenAI key.
+  const dictationEnabled = phoneCallsEnabled || Boolean(deps.evolvePlugins);
   return {
     features: companyFeatures(),
     companyModelReady: Boolean(companyModel()),
