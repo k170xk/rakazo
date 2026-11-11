@@ -149,15 +149,22 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
 
 function DownloadPill({ name, onDownload }: { name: string; onDownload: () => Promise<void> }) {
   const { t } = useLingui();
+  const [busy, setBusy] = useState(false);
   return (
     <button
       type="button"
       aria-label={t`Download ${name}`}
-      onClick={() => void onDownload()}
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-foreground px-2.5 text-[13px] font-medium text-background hover:bg-foreground/85"
+      aria-busy={busy}
+      disabled={busy}
+      onClick={() => {
+        if (busy) return;
+        setBusy(true);
+        void onDownload().finally(() => setBusy(false));
+      }}
+      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-foreground px-2.5 text-[13px] font-medium text-background hover:bg-foreground/85 disabled:opacity-60"
     >
       <Download aria-hidden className="size-3.5" strokeWidth={2} />
-      {t`Download`}
+      {busy ? t`Downloading…` : t`Download`}
     </button>
   );
 }

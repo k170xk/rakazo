@@ -5,10 +5,12 @@ import type { ExportManifest } from "@rakazo/contracts";
 import { attachmentMaxBytes, resolveBotAvatarSet } from "@rakazo/contracts";
 import { AttachmentValidationError } from "@rakazo/core";
 import { IsolationError, parseComputerMode } from "@rakazo/db";
+import { ARTIFACT_DOWNLOAD_PATH } from "../artifact-download.js";
 import {
   ArtifactListCursorError,
   createOwnedArtifact,
   deleteArtifactFamily,
+  findReadableArtifact,
   getOwnedArtifact,
   getSpaceArtifact,
   getSpaceArtifactById,
@@ -119,6 +121,43 @@ export function contentRoutes(ctx: RouterContext) {
       }),
       getById: authed.artifacts.getById.handler(async ({ context, input }) => {
         return getSpaceArtifactById(deps, context.actor, input);
+      }),
+      meta: authed.artifacts.meta.handler(async ({ context, input }) => {
+        const row = await findReadableArtifact(deps.prisma, context.actor, input);
+        return {
+          id: row.id,
+          botId: row.botId,
+          groupId: row.groupId,
+          runId: row.runId,
+          name: row.name,
+          description: row.description,
+          mimeType: row.mimeType,
+          size: row.size,
+          version: row.version,
+          createdAt: row.createdAt.toISOString(),
+        };
+      }),
+      downloadToken: authed.artifacts.downloadToken.handler(async ({ context, input }) => {
+        let grantActor = context.actor;
+        if (input.groupId) {
+          const group = await groupRepos.getGroupTarget(context.actor, input.groupId);
+          // A colleague downloads the group's files as its owner wrote them.
+          if (context.actor.guestGroupIds) {
+            grantActor = { ...context.actor, userId: group.userId, guestGroupIds: undefined };
+          }
+        } else if (input.botId) {
+          await repos.getBot(context.actor, input.botId);
+        }
+        const row = await findReadableArtifact(deps.prisma, grantActor, input);
+        const token = await deps.auth.issueArtifactDownloadToken({
+          spaceId: row.spaceId,
+          userId: row.userId,
+          artifactId: row.id,
+        });
+        return {
+          token,
+          url: `${ARTIFACT_DOWNLOAD_PATH}?token=${encodeURIComponent(token)}`,
+        };
       }),
       remove: authed.artifacts.remove.handler(async ({ context, input }) => {
         return deleteArtifactFamily(deps, context.actor, { familyId: input.artifactId });

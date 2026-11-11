@@ -61,6 +61,7 @@ const GUEST_PROCEDURES: ReadonlySet<string> = new Set([
   "threads.send",
   "threads.markRead",
   "artifacts.get",
+  "artifacts.downloadToken",
 ]);
 
 /**

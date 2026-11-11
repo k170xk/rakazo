@@ -42,12 +42,31 @@ export function downloadArtifactBytes(name: string, mimeType: string, bytes: Uin
   window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+/**
+ * Ask the server for a one-time download link, then let the browser save the file natively.
+ * Large PowerPoints and videos never pass through base64 on the UI thread.
+ */
 export async function downloadArtifact(
   target: ArtifactTarget,
   artifactId: string,
-  name: string,
-  mimeType: string,
+  _name?: string,
+  _mimeType?: string,
 ): Promise<void> {
-  const bytes = await fetchArtifactBytes(target, artifactId);
-  downloadArtifactBytes(name, mimeType, bytes);
+  const { url } = await artifactClient(target).artifacts.downloadToken({
+    ...artifactInput(target),
+    artifactId,
+  });
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.rel = "noopener";
+  anchor.click();
+}
+
+/** Same native download when the page only has an artifact id (Artifacts library). */
+export async function downloadArtifactById(artifactId: string): Promise<void> {
+  const { url } = await rpc.artifacts.downloadToken({ artifactId });
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.rel = "noopener";
+  anchor.click();
 }

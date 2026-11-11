@@ -1118,6 +1118,32 @@ describe("account export tokens", () => {
   });
 });
 
+describe("artifact download tokens", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("returns the grant once, and stores only a hash", async () => {
+    const f = fixture({ delivery: false });
+    const grant = { spaceId: "space-1", userId: "user-a", artifactId: "art-1" };
+    const token = await f.auth.issueArtifactDownloadToken(grant);
+    expect(JSON.stringify(f.data.verification)).not.toContain(token);
+    expect(await f.auth.consumeArtifactDownloadToken(token)).toEqual(grant);
+    expect(await f.auth.consumeArtifactDownloadToken(token)).toBeNull();
+    expect(await f.auth.consumeArtifactDownloadToken("")).toBeNull();
+  });
+
+  it("expires after a minute", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const f = fixture({ delivery: false });
+    const token = await f.auth.issueArtifactDownloadToken({
+      spaceId: "space-1",
+      userId: "user-a",
+      artifactId: "art-1",
+    });
+    vi.setSystemTime(Date.now() + 60_000);
+    expect(await f.auth.consumeArtifactDownloadToken(token)).toBeNull();
+  });
+});
+
 function challengeCookie(response: Response): string {
   const cookie = response.headers.get("set-cookie") ?? "";
   const match = cookie.match(/(?:__Secure-)?better-auth\.better-auth-passkey=[^;]+/);

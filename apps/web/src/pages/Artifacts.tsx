@@ -43,7 +43,11 @@ import { VideoPreview } from "../components/ArtifactFileCard";
 import { IconTooltip } from "../components/IconTooltip";
 import { PdfViewer } from "../components/PdfViewer";
 import { SandboxedHtmlViewer } from "../components/SandboxedHtmlViewer";
-import { decodeArtifactBase64, downloadArtifactBytes } from "../lib/artifact-open";
+import {
+  decodeArtifactBase64,
+  downloadArtifactById,
+  downloadArtifactBytes,
+} from "../lib/artifact-open";
 import { takeInitialBootstrap } from "../lib/bootstrap";
 import { desktopBridge } from "../lib/desktop";
 import { useSpaceQueries } from "../lib/query";
@@ -838,9 +842,16 @@ function PreviewPane({
   const selectedVersionId =
     pickedVersionId ??
     (versions ? (versions[0]?.id ?? artifactId) : versionsQuery.isError ? artifactId : null);
+  const metaQuery = useQuery(
+    queries.artifacts.meta.queryOptions({
+      input: selectedVersionId ? { artifactId: selectedVersionId } : skipToken,
+    }),
+  );
+  const needsBytes =
+    metaQuery.data !== undefined && artifactPreviewKind(metaQuery.data.mimeType) !== "none";
   const artifactQuery = useQuery(
     queries.artifacts.getById.queryOptions({
-      input: selectedVersionId ? { artifactId: selectedVersionId } : skipToken,
+      input: needsBytes && selectedVersionId ? { artifactId: selectedVersionId } : skipToken,
     }),
   );
   const bytes = useMemo(
@@ -849,14 +860,21 @@ function PreviewPane({
   );
   const state:
     | { status: "loading" }
-    | { status: "ready"; artifact: Artifact; bytes: Uint8Array }
+    | { status: "ready"; artifact: Artifact; bytes: Uint8Array | null }
     | { status: "error"; message: string } =
-    artifactQuery.data && bytes
-      ? { status: "ready", artifact: artifactQuery.data, bytes }
-      : artifactQuery.error
+    metaQuery.data && (!needsBytes || bytes)
+      ? {
+          status: "ready",
+          artifact: needsBytes && artifactQuery.data ? artifactQuery.data : metaQuery.data,
+          bytes,
+        }
+      : metaQuery.error || artifactQuery.error
         ? {
             status: "error",
-            message: errorText(artifactQuery.error, t`Could not load this file.`),
+            message: errorText(
+              metaQuery.error ?? artifactQuery.error,
+              t`Could not load this file.`,
+            ),
           }
         : { status: "loading" };
 
@@ -893,7 +911,9 @@ function PreviewPane({
               variant="outline"
               size="sm"
               onClick={() =>
-                downloadArtifactBytes(state.artifact.name, state.artifact.mimeType, state.bytes)
+                void (state.bytes
+                  ? downloadArtifactBytes(state.artifact.name, state.artifact.mimeType, state.bytes)
+                  : downloadArtifactById(state.artifact.id))
               }
             >
               <Download className="me-1.5" size={15} strokeWidth={1.9} />
@@ -929,7 +949,7 @@ function PreviewPane({
           </div>
         ) : (
           <div className="relative h-full overflow-hidden rounded-2xl border border-border">
-            <ArtifactPreview artifact={state.artifact} bytes={state.bytes} />
+            <ArtifactPreview artifact={state.artifact} bytes={state.bytes ?? new Uint8Array()} />
             {state.artifact.mimeType === "text/html" ? (
               <div className="absolute bottom-3 end-3 flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1.5 text-[11px] text-white">
                 <Lock size={12} strokeWidth={2} />

@@ -1589,6 +1589,31 @@ export const appContract = {
       .output(ArtifactSchema),
     get: oc.input(threadTarget.and(z.object({ artifactId: Id }))).output(ArtifactWithContentSchema),
     getById: oc.input(z.object({ artifactId: Id })).output(ArtifactWithContentSchema),
+    /** Name, type and size only — for deciding whether a preview needs the file bytes. */
+    meta: oc.input(z.object({ artifactId: Id })).output(ArtifactSchema),
+    /**
+     * A one-time token for `GET /api/artifacts/download?token=`, which streams the file as a
+     * normal download. Keeps large files (PowerPoint, video) off the chat UI thread.
+     */
+    downloadToken: oc
+      .input(
+        z
+          .object({
+            artifactId: Id,
+            botId: Id.optional(),
+            groupId: Id.optional(),
+          })
+          .superRefine((input, ctx) => {
+            if (input.botId && input.groupId) {
+              ctx.addIssue({
+                code: "custom",
+                message: "Provide at most one of botId or groupId",
+                path: ["botId"],
+              });
+            }
+          }),
+      )
+      .output(z.object({ token: z.string(), url: z.string() })),
     remove: oc.input(z.object({ artifactId: Id })).output(z.object({ ok: z.literal(true) })),
   },
   /** Pages bots built for the caller in this Space. */

@@ -34,6 +34,12 @@ import {
   sessionForAuthHook,
   signedBearer,
 } from "./account-security.js";
+import type { ArtifactDownloadGrant } from "./artifact-download-token.js";
+import {
+  ARTIFACT_DOWNLOAD_TOKEN_PREFIX,
+  consumeArtifactDownloadToken,
+  issueArtifactDownloadToken,
+} from "./artifact-download-token.js";
 import { breachedPasswordCheck } from "./breached-password.js";
 import type { EmailLocaleOf } from "./email.js";
 import { emailLocale, passwordResetEmail, signInCodeEmail, verificationEmail } from "./email.js";
@@ -50,18 +56,7 @@ export {
   signInCodeEmail,
   verificationEmail,
 } from "./email.js";
-export type { HomeDeletionReason } from "./home-deletion-email.js";
-export { homeDeletionEmail } from "./home-deletion-email.js";
-export type { OidcConfig } from "./oidc.js";
-export { passkeyRelyingParty } from "./passkey.js";
-export {
-  integrationClaimConfirmEmail,
-  pluginSubmissionAdminEmail,
-  pluginSubmissionReceivedEmail,
-  pluginSubmissionReviewedEmail,
-} from "./plugin-submission-email.js";
-export { referralEmail } from "./referral-email.js";
-export { welcomeEmail } from "./welcome-email.js";
+export type { EvolveComputerSsoClaims, SignEvolveComputerSsoInput } from "./evolve-sso.js";
 export {
   EVOLVE_SSO_AUD,
   EVOLVE_SSO_ISS,
@@ -73,8 +68,19 @@ export {
   signEvolveComputerSsoToken,
   verifyEvolveComputerSsoToken,
 } from "./evolve-sso.js";
-export type { EvolveComputerSsoClaims, SignEvolveComputerSsoInput } from "./evolve-sso.js";
+export type { HomeDeletionReason } from "./home-deletion-email.js";
+export { homeDeletionEmail } from "./home-deletion-email.js";
+export type { OidcConfig } from "./oidc.js";
+export { passkeyRelyingParty } from "./passkey.js";
+export {
+  integrationClaimConfirmEmail,
+  pluginSubmissionAdminEmail,
+  pluginSubmissionReceivedEmail,
+  pluginSubmissionReviewedEmail,
+} from "./plugin-submission-email.js";
+export { referralEmail } from "./referral-email.js";
 export { resolveSignupPolicy } from "./signup-policy.js";
+export { welcomeEmail } from "./welcome-email.js";
 
 export interface AuthEnv {
   analytics?: ProductAnalytics;
@@ -249,6 +255,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
           "reset-password:": "hashed",
           "delete-account-": "hashed",
           [ACCOUNT_EXPORT_TOKEN_PREFIX]: "hashed",
+          [ARTIFACT_DOWNLOAD_TOKEN_PREFIX]: "hashed",
         },
       },
     },
@@ -770,6 +777,10 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
       issueAccountExportToken((await auth.$context).internalAdapter, userId),
     consumeAccountExportToken: async (token: string) =>
       consumeAccountExportToken((await auth.$context).internalAdapter, token),
+    issueArtifactDownloadToken: async (grant: ArtifactDownloadGrant) =>
+      issueArtifactDownloadToken((await auth.$context).internalAdapter, grant),
+    consumeArtifactDownloadToken: async (token: string) =>
+      consumeArtifactDownloadToken((await auth.$context).internalAdapter, token),
     disposeOidcDiscovery: () => discovery?.dispose(),
   });
 }

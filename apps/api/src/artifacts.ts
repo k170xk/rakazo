@@ -248,15 +248,30 @@ export async function getSpaceArtifactById(
   actor: Actor,
   input: { artifactId: string },
 ) {
-  const row = await deps.prisma.artifact.findFirst({
+  const row = await findReadableArtifact(deps.prisma, actor, input);
+  return readArtifact(deps.artifacts, actor, row, row.botId ?? row.groupId ?? row.id);
+}
+
+/**
+ * Authorize a download without reading the bytes. The returned row's space and user are the
+ * grant stored in a one-time download token.
+ */
+export async function findReadableArtifact(
+  prisma: PrismaClient,
+  actor: Actor,
+  input: { artifactId: string; botId?: string; groupId?: string },
+) {
+  const row = await prisma.artifact.findFirst({
     where: {
       id: input.artifactId,
       spaceId: actor.spaceId,
       userId: actor.userId,
+      ...(input.botId ? { botId: input.botId, groupId: null } : {}),
+      ...(input.groupId ? { groupId: input.groupId } : {}),
     },
   });
   if (!row) throw new IsolationError();
-  return readArtifact(deps.artifacts, actor, row, row.botId ?? row.groupId ?? row.id);
+  return row;
 }
 
 async function readArtifact(
