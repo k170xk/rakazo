@@ -110,7 +110,7 @@ Documents carry as many OCSC Vision Intelligence infographics as the person chos
 - "timeline": "milestones":[{"date","label","text"}] (3 to 6) under the picture.
 - "stats": "stats":[{"value","label"}] (1 to 3) as big green figures beside the picture; "kpis": 2 to 5 stats as cards under it. Real figures only.
 - "progress": "bars":[{"label","value"}] (2 to 6, value 0 to 100).
-- "compare": "compare":{"left":{"label","points":[]},"right":{"label","points":[]}} with the picture between.
+- "compare": "compare":{"left":{"label","points":[]},"right":{"label","points":[]}} with the picture between. Each label 2 to 4 words; 3 to 5 points a side, each under 10 words.
 - "statement", "highlight" or "banner": "statement":"<one sentence>" with optional "bullets".
 - "quote": "quote" and "attribution", real ones only. "side": "bullets" beside the picture ("picture":"right" to swap). "full": the picture alone.
 Never use the same style twice in a row; without "style" the content decides. The picture's words also belong in the text, so the document still reads fully without it. Only when the person asks for infographics with writing in them, add "withText": true to evolve_infographics. If evolve_infographics is not in your tools, use mcp__evolve__create_infographics (ending each topic with "No text, labels or numbers in the image."); if neither is, leave infographics out and say once that they need the Evolve connection.
@@ -165,7 +165,7 @@ SLIDE STYLES: every slide between the agenda and the closing slide is an infogra
 - "timeline": "milestones":[{"date","label","text"}] (3 to 6) on a dotted line under a wide picture. A programme with dates.
 - "stats": "stats":[{"value","label"}] (1 to 3) as big green figures beside the picture; "kpis": 4 or 5 stats as cards under a wide picture. Real figures only.
 - "progress": "bars":[{"label","value"}] (2 to 6, value 0 to 100) on a white card. Stage progress, completion, scores.
-- "compare": "compare":{"left":{"label","points":[]},"right":{"label","points":[]}} with the picture between. Before and after, options, traditional against OCSC's way.
+- "compare": "compare":{"left":{"label","points":[]},"right":{"label","points":[]}} with the picture between. Each label 2 to 4 words; 3 to 5 points a side, each under 10 words. Before and after, options, traditional against OCSC's way.
 - "statement": "statement":"<one bold sentence>"; "highlight": the same on a green highlighter; "banner": the statement and "bullets" on a green card over the picture. Key messages and OCSC's view.
 - "section": "number":"02" with a "statement", opening a part of the deck.
 - "quote": "quote" and "attribution". A client or team quote, only real ones.

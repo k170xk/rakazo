@@ -896,6 +896,31 @@ function styleElements(style, item, label) {
         c?.left.points.length && c.right.points.length,
         '"compare":{"left":{"label","points":[]},"right":{"label","points":[]}}',
       );
+      // PowerPoint only shrinks overflowing text once someone edits it, so every size here is
+      // measured: the label wraps to two lines (three at most) and the points start below it.
+      const inner = 480;
+      const bulletIndent = 44;
+      const labels = [c.left.label, c.right.label].map((l) => l.toUpperCase());
+      const labelLines = (size) =>
+        Math.max(...labels.map((l) => wrapLines(l, inner, size, 0.72 + 1 / size)));
+      const labelSize =
+        [22, 20, 18, 16].find((s) => labelLines(s) <= 2) ??
+        [16, 15, 14].find((s) => labelLines(s) <= 3);
+      need(labelSize, "a short label for each side, a few words");
+      const labelH = labelLines(labelSize) * labelSize * 2 * 1.2;
+      const pointsTop = AREA.top + 76 + labelH + 28;
+      const room = AREA.bottom - 36 - pointsTop;
+      const pointsH = (size) =>
+        Math.max(
+          ...[c.left, c.right].map(
+            (s) => wrapLines(s.points.join("\n"), inner - bulletIndent, size) * size * 2 * 1.3,
+          ),
+        );
+      const pointSize = [20, 19, 18, 17, 16, 15, 14, 13].find((s) => pointsH(s) <= room);
+      need(
+        pointSize,
+        "points that fit each panel: at most 5 short points a side, about 10 words each, and a label of a few words",
+      );
       for (const [side, x, fill, colour] of [
         [c.left, AREA.left, CARD_GREY, MUTED],
         [c.right, 1288, CARD_TINT, GREEN],
@@ -922,15 +947,15 @@ function styleElements(style, item, label) {
         els.push(
           textEl(
             side.label.toUpperCase(),
-            { x: x + 40, y: AREA.top + 76, w: 480, h: 48 },
-            { size: 22, bold: true, color: colour, letter_spacing: 1 },
+            { x: x + 40, y: AREA.top + 76, w: inner, h: labelH },
+            { size: labelSize, bold: true, color: colour, letter_spacing: 1, line_height: 1.1 },
           ),
         );
         els.push(
           textEl(
             side.points.join("\n"),
-            { x: x + 40, y: AREA.top + 150, w: 480, h: AREA_H - 190 },
-            { size: 20, color: INK, bullets: true, line_height: 1.3 },
+            { x: x + 40, y: pointsTop, w: inner, h: room },
+            { size: pointSize, color: INK, bullets: true, line_height: 1.3 },
           ),
         );
       }
