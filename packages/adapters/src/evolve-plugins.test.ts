@@ -5,8 +5,10 @@ import { EmulatorCloudAgentProvider } from "./cloud-agent-emulator.js";
 import { cloudAgentsEnabled, createCloudAgentConnection } from "./cloud-agent-factory.js";
 import { setCompanyPolicy } from "./company-policy.js";
 import {
+  callEvolveTranscribe,
   createEvolvePluginsConnection,
   EvolvePluginsError,
+  EVOLVE_TRANSCRIBE_AUDIENCE,
   fetchPluginBranch,
   signEvolvePluginsToken,
 } from "./evolve-plugins.js";
@@ -64,6 +66,32 @@ describe("Evolve plugins connection", () => {
       iat: 1_000,
       exp: 1_120,
     });
+  });
+
+  it("posts audio to Evolve Whisper as the staff member", async () => {
+    const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(String(url)).toBe("https://evolve.test/functions/v1/transcribe-audio");
+      expect(init?.method).toBe("POST");
+      const headers = new Headers(init?.headers);
+      const auth = headers.get("authorization") ?? "";
+      const token = auth.replace(/^Bearer\s+/i, "");
+      const claims = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString());
+      expect(claims.aud).toBe(EVOLVE_TRANSCRIBE_AUDIENCE);
+      expect(claims.sub).toBe("keith@ocsc.co.uk");
+      expect(JSON.parse(String(init?.body))).toEqual({
+        audioBase64: "YQ==",
+        mimeType: "audio/webm",
+      });
+      return new Response(JSON.stringify({ text: "hello world" }), { status: 200 });
+    });
+    const text = await callEvolveTranscribe(
+      { url: "https://evolve.test/functions/v1/plugin-builder", secret: SECRET },
+      "Keith@OCSC.co.uk",
+      { audioBase64: "YQ==", mimeType: "audio/webm" },
+      { fetch: fetchImpl as typeof fetch },
+    );
+    expect(text).toEqual({ text: "hello world" });
+    expect(fetchImpl).toHaveBeenCalledOnce();
   });
 });
 

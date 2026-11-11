@@ -37,6 +37,7 @@ import {
   computersAreUnavailable,
 } from "../components/ComputersUnavailableHint";
 import { DesktopUpdateSection } from "../components/DesktopUpdates";
+import { DictationShortcutSettings } from "../components/DictationShortcutSettings";
 import { PasskeySettings } from "../components/PasskeySettings";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { TrustedLinkSitesSettings } from "../components/TrustedLinkSitesSettings";
@@ -362,6 +363,7 @@ export function GeneralSettingsPanels({
           label={<Trans>Language</Trans>}
           control={<UiLocalePicker value={locale} onChange={chooseLocale} />}
         />
+        <DictationShortcutSettings />
         {onTimezoneChange ? (
           <div data-testid="timezone-settings">
             <SettingsRow

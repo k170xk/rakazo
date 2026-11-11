@@ -57,12 +57,16 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     computerAccess === "full"
       ? effectiveSandboxProvider(setup.settings, deps.env.sandboxProvider)
       : "none";
+  const voiceOn = companyFeatures().voice;
+  const phoneCallsEnabled = deps.env.phoneCallsEnabled === true && voiceOn;
+  const dictationEnabled = voiceOn && (phoneCallsEnabled || Boolean(deps.evolvePlugins));
   return {
     features: companyFeatures(),
     companyModelReady: Boolean(companyModel()),
     computerAccess,
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
-    phoneCallsEnabled: deps.env.phoneCallsEnabled === true && companyFeatures().voice,
+    phoneCallsEnabled,
+    dictationEnabled,
     navLinks: deps.env.navLinks ?? [],
     maxUploadSizeBytes: attachmentMaxBytes(deps.env),
     maxAttachmentsPerMessage: attachmentMaxCount(deps.env),

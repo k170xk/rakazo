@@ -20,9 +20,11 @@ export const EVOLVE_INFOGRAPHICS_AUDIENCE = "evolve-infographics";
 export const EVOLVE_MY_PROFILE_AUDIENCE = "evolve-my-profile";
 export const EVOLVE_COMPUTER_MCP_AUDIENCE = "evolve-computer-mcp";
 export const EVOLVE_DOCUMENT_LIBRARY_AUDIENCE = "evolve-document-library";
+export const EVOLVE_TRANSCRIBE_AUDIENCE = "evolve-transcribe";
 export const EVOLVE_PLUGINS_ISSUER = "ocsc-intelligence";
 const TOKEN_SECONDS = 120;
 const REQUEST_TIMEOUT_MS = 30_000;
+const TRANSCRIBE_TIMEOUT_MS = 70_000;
 
 export const PLUGIN_SLUG = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 const BRANCH = /^(?!.*\.\.)[A-Za-z0-9._/-]{1,200}$/;
@@ -160,6 +162,20 @@ export function callEvolveComputerMcp<T = Record<string, unknown>>(
 ): Promise<T> {
   const url = new URL("evolve-computer-mcp", connection.url).toString();
   return postEvolve<T>(url, EVOLVE_COMPUTER_MCP_AUDIENCE, connection, email, body, options);
+}
+
+/** Whisper transcription through Evolve's OpenAI key (composer dictation). */
+export function callEvolveTranscribe(
+  connection: EvolvePluginsConnection,
+  email: string,
+  body: { audioBase64: string; mimeType?: string; language?: string },
+  options: { signal?: AbortSignal; fetch?: typeof fetch; timeoutMs?: number } = {},
+): Promise<{ text: string }> {
+  const url = new URL("transcribe-audio", connection.url).toString();
+  return postEvolve<{ text: string }>(url, EVOLVE_TRANSCRIBE_AUDIENCE, connection, email, body, {
+    ...options,
+    timeoutMs: options.timeoutMs ?? TRANSCRIBE_TIMEOUT_MS,
+  });
 }
 
 async function postEvolve<T>(

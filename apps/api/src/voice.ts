@@ -2,8 +2,10 @@ import { ORPCError } from "@orpc/server";
 import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
 import { VoiceAccountError } from "@rakazo/adapter-kit";
 import {
+  callEvolveTranscribe,
   companyFeatures,
   createVoiceProvider,
+  type EvolvePluginsConnection,
   isFishSpeechModelId,
   isVoiceProviderId,
   listVoiceCatalog,
@@ -55,6 +57,8 @@ export interface VoiceDeps {
   env?: { mcpAllowPrivateEndpoint?: boolean };
   /** Set only when `VOICE_SUMMARY_MIN_CHARS` turns spoken summaries on. */
   speechSummary?: { summarize: SpeechSummarizer; minChars: number };
+  /** When set, composer dictation can use Evolve's Whisper without a company voice key. */
+  evolvePlugins?: EvolvePluginsConnection | null;
 }
 
 /** A self-hosted speech server on a private address is limited like model endpoints. */
@@ -94,15 +98,23 @@ export function catalogEntry(provider: string) {
   return voiceCatalogEntry(provider);
 }
 
-export function toVoiceStatus(cred: { provider: string; voiceId: string } | null): VoiceStatus {
+export function toVoiceStatus(
+  cred: { provider: string; voiceId: string } | null,
+  options: { evolveTranscribe?: boolean } = {},
+): VoiceStatus {
   const entry = cred ? catalogEntry(cred.provider) : undefined;
   return {
     configured: Boolean(cred),
     ready: Boolean(cred?.voiceId),
-    transcribe: Boolean(entry?.transcribe && cred),
+    transcribe: Boolean((entry?.transcribe && cred) || options.evolveTranscribe),
     provider: cred?.provider ?? null,
     voiceId: cred?.voiceId ?? "",
   };
+}
+
+/** True when OCSC Intelligence can ask Evolve to Whisper-transcribe for this deployment. */
+export function evolveTranscribeAvailable(deps: Pick<VoiceDeps, "evolvePlugins">): boolean {
+  return Boolean(deps.evolvePlugins);
 }
 
 export function toVoiceCredential(row: {
@@ -590,27 +602,55 @@ export async function transcribeVoice(
   actor: Actor,
   input: { audio: Uint8Array; mimeType: string; language?: string; signal?: AbortSignal },
 ) {
+  if (input.audio.byteLength === 0 || input.audio.byteLength > MAX_TRANSCRIBE_BYTES) {
+    throw new ORPCError("BAD_REQUEST", { message: "That recording is empty or too large." });
+  }
   const loaded = await loadDefaultVoiceCredential(deps, actor);
-  if (!loaded) throw new NoVoiceConfigured("key");
-  const provider = await voiceProviderFor(deps, loaded.cred.provider);
-  if (!provider.transcribe) {
+  if (loaded) {
+    const provider = await voiceProviderFor(deps, loaded.cred.provider);
+    if (provider.transcribe) {
+      return provider.transcribe(
+        {
+          audio: input.audio,
+          mimeType: input.mimeType || "audio/webm",
+          language: input.language,
+          apiKey: loaded.apiKey,
+          signal: input.signal,
+        },
+        voiceContext(actor, input.signal),
+      );
+    }
+  }
+  const evolve = await transcribeViaEvolve(deps, actor, input);
+  if (evolve) return evolve;
+  if (loaded) {
     throw new ORPCError("BAD_REQUEST", {
       message: "This voice provider does not transcribe audio. Use on-device dictation instead.",
     });
   }
-  if (input.audio.byteLength === 0 || input.audio.byteLength > MAX_TRANSCRIBE_BYTES) {
-    throw new ORPCError("BAD_REQUEST", { message: "That recording is empty or too large." });
-  }
-  return provider.transcribe(
+  throw new NoVoiceConfigured("key");
+}
+
+async function transcribeViaEvolve(
+  deps: VoiceDeps,
+  actor: Pick<Actor, "email">,
+  input: { audio: Uint8Array; mimeType: string; language?: string; signal?: AbortSignal },
+): Promise<{ text: string } | null> {
+  if (!deps.evolvePlugins) return null;
+  const email = actor.email?.trim().toLowerCase();
+  if (!email) return null;
+  const result = await callEvolveTranscribe(
+    deps.evolvePlugins,
+    email,
     {
-      audio: input.audio,
+      audioBase64: Buffer.from(input.audio).toString("base64"),
       mimeType: input.mimeType || "audio/webm",
       language: input.language,
-      apiKey: loaded.apiKey,
-      signal: input.signal,
     },
-    voiceContext(actor, input.signal),
+    { signal: input.signal },
   );
+  const text = typeof result.text === "string" ? result.text.trim() : "";
+  return { text };
 }
 
 /**
@@ -621,19 +661,23 @@ export async function transcribeVoice(
  */
 export async function transcribeInboundVoice(
   deps: VoiceDeps,
-  owner: Pick<Actor, "userId" | "spaceId">,
+  owner: Pick<Actor, "userId" | "spaceId"> & { email?: string },
   input: { audio: Uint8Array; mimeType: string; signal?: AbortSignal },
 ): Promise<string | null> {
   if (input.audio.byteLength > MAX_TRANSCRIBE_BYTES) return null;
   const loaded = await loadDefaultVoiceCredential(deps, owner);
-  if (!loaded) return null;
-  const provider = await voiceProviderFor(deps, loaded.cred.provider);
-  if (!provider.transcribe) return null;
-  const { text } = await provider.transcribe(
-    { audio: input.audio, mimeType: input.mimeType, apiKey: loaded.apiKey },
-    voiceContext(owner, input.signal),
-  );
-  return text;
+  if (loaded) {
+    const provider = await voiceProviderFor(deps, loaded.cred.provider);
+    if (provider.transcribe) {
+      const { text } = await provider.transcribe(
+        { audio: input.audio, mimeType: input.mimeType, apiKey: loaded.apiKey },
+        voiceContext(owner, input.signal),
+      );
+      return text;
+    }
+  }
+  const evolve = await transcribeViaEvolve(deps, owner, input).catch(() => null);
+  return evolve?.text ?? null;
 }
 
 export function mountVoiceHttpRoutes(

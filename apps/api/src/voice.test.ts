@@ -51,6 +51,16 @@ describe("toVoiceStatus", () => {
       voiceId: "",
     });
   });
+
+  it("offers transcription through Evolve when no voice credential is connected", () => {
+    expect(toVoiceStatus(null, { evolveTranscribe: true })).toEqual({
+      configured: false,
+      ready: false,
+      transcribe: true,
+      provider: null,
+      voiceId: "",
+    });
+  });
 });
 
 describe("voice HTTP routes", () => {

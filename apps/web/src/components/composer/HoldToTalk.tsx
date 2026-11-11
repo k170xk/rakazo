@@ -23,10 +23,13 @@ export function useHoldToTalk({
   transcribe,
   disabled,
   onText,
+  /** When this changes (e.g. switching chats), drop in-flight dictation. */
+  sessionKey,
 }: {
   transcribe?: boolean;
   disabled?: boolean;
   onText: (text: string) => void;
+  sessionKey?: string;
 }) {
   const { t } = useLingui();
   const [recording, setRecording] = useState<Recording>(null);
@@ -36,6 +39,10 @@ export function useHoldToTalk({
   const [notice, setNotice] = useState<string | null>(null);
   const recordingRef = useRef(recording);
   const onTextRef = useRef(onText);
+  const sessionKeyRef = useRef(sessionKey);
+  sessionKeyRef.current = sessionKey;
+  /** Draft/session that owned the current listen call. */
+  const listenSessionKeyRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     onTextRef.current = onText;
   }, [onText]);
@@ -76,6 +83,23 @@ export function useHoldToTalk({
     [],
   );
 
+  const cancel = useCallback(() => {
+    gesture.current = null;
+    started.current = false;
+    listenSessionKeyRef.current = undefined;
+    recordingRef.current = null;
+    setRecording(null);
+    setTranscribing(false);
+    setLift(0);
+    dictation.stop("cancel");
+  }, []);
+
+  useEffect(() => {
+    if (!recordingRef.current) return;
+    if (listenSessionKeyRef.current === sessionKey) return;
+    cancel();
+  }, [sessionKey, cancel]);
+
   const start = useCallback(
     (locked: boolean) => {
       started.current = false;
@@ -83,11 +107,15 @@ export function useHoldToTalk({
       setTranscript("");
       const next = { locked, startedAt: Date.now() };
       recordingRef.current = next;
+      listenSessionKeyRef.current = sessionKeyRef.current;
       setRecording(next);
       void dictation.listen({
         mode: "hold",
         transcribe,
-        onFinal: (text) => onTextRef.current(text),
+        onFinal: (text) => {
+          if (listenSessionKeyRef.current !== sessionKeyRef.current) return;
+          onTextRef.current(text);
+        },
       });
     },
     [transcribe],
@@ -96,16 +124,6 @@ export function useHoldToTalk({
   const submit = useCallback(() => {
     if (!recordingRef.current) return;
     dictation.submitHold();
-  }, []);
-
-  const cancel = useCallback(() => {
-    gesture.current = null;
-    started.current = false;
-    recordingRef.current = null;
-    setRecording(null);
-    setTranscribing(false);
-    setLift(0);
-    dictation.stop("cancel");
   }, []);
 
   const lock = useCallback(() => {

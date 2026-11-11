@@ -43,6 +43,7 @@ import { useParams } from "react-router-dom";
 import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
+import { EnableNotificationsDialog } from "../components/EnableNotificationsDialog";
 import { PageLoading } from "../components/PageLoading";
 import { PageViewHost } from "../components/pages/PageViewHost";
 import { registerRenderStudioHost } from "../components/render-studio/host";
@@ -1362,6 +1363,9 @@ function SpaceShell() {
               onSend={composer.sendMessage}
               onStop={stopRun}
               phoneCallsEnabled={bootstrapMe?.phoneCallsEnabled === true}
+              dictationEnabled={
+                bootstrapMe?.dictationEnabled ?? bootstrapMe?.phoneCallsEnabled === true
+              }
               dictationTranscribe={voiceStatus ? Boolean(voiceStatus.transcribe) : undefined}
               artifactTarget={transcriptArtifactTarget}
               replyTarget={composer.replyTarget}
@@ -1567,7 +1571,16 @@ function SpaceShell() {
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}
         host={{ desktop: Boolean(desktopBridge()), apple: isApplePlatform() }}
-        dictation={Boolean(bootstrapMe?.phoneCallsEnabled)}
+        dictation={Boolean(
+          bootstrapMe?.dictationEnabled ?? bootstrapMe?.phoneCallsEnabled,
+        )}
+      />
+
+      <EnableNotificationsDialog
+        userId={userId}
+        ready={initialBotsLoaded}
+        blockedByOverlay={overlay !== null || shortcutsOpen || computerOpen}
+        onEnabled={flushPendingBrowserNotifications}
       />
 
       {computerOpen && computerBot ? (

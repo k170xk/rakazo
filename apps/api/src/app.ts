@@ -1138,7 +1138,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   mountAccountExportRoute(app, { prisma, auth, artifacts, home });
   mountArtifactDownloadRoute(app, { prisma, auth, artifacts });
   mountAuditExportRoute(app, { prisma, sessionActor });
-  mountVoiceHttpRoutes(app, { prisma, secrets, env }, async (c) => {
+  mountVoiceHttpRoutes(app, { prisma, secrets, env, evolvePlugins }, async (c) => {
     const actor = await sessionActor(c.req.raw);
     if (actor) enrichLogContext({ "user.id": actor.userId, "space.id": actor.spaceId });
     return actor;
@@ -1203,6 +1203,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
             prisma,
             secrets,
             env: { mcpAllowPrivateEndpoint: env.mcpAllowPrivateEndpoint },
+            evolvePlugins,
           },
           { spaceId, userId },
           { audio, mimeType, signal },

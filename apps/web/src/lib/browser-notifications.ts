@@ -36,6 +36,44 @@ export function requestBrowserNotificationPermission(
   return permissionRequest;
 }
 
+/** Bump when the prompt's copy or timing should show again for everyone. */
+const NOTIFICATIONS_PROMPT_VERSION = "v1";
+
+const notificationsPromptKey = (userId: string) =>
+  `rakazo:notifications-prompt:${NOTIFICATIONS_PROMPT_VERSION}:${userId}`;
+
+export function hasSeenBrowserNotificationsPrompt(userId: string): boolean {
+  try {
+    return globalThis.localStorage?.getItem(notificationsPromptKey(userId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markBrowserNotificationsPromptSeen(userId: string): void {
+  try {
+    globalThis.localStorage?.setItem(notificationsPromptKey(userId), "1");
+  } catch {
+    // Storage blocked: the prompt may show again next visit, which is harmless.
+  }
+}
+
+/** Whether the shell should open the first-run browser-notifications dialogue. */
+export function shouldOfferBrowserNotificationsPrompt(options: {
+  userId: string | undefined;
+  /** `undefined` when the browser has no Notification API. */
+  permission: BrowserNotificationPermission | undefined;
+  blockedByOverlay?: boolean;
+}): boolean {
+  const { userId, permission, blockedByOverlay = false } = options;
+  return Boolean(
+    userId &&
+      permission === "default" &&
+      !blockedByOverlay &&
+      !hasSeenBrowserNotificationsPrompt(userId),
+  );
+}
+
 export type BrowserNotificationContext = {
   subscribedThreadId: string;
   initialCursor: number;

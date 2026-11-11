@@ -250,13 +250,10 @@ export class Dictation {
     this.mode = opts.mode;
     this.set({ status: "listening", transcript: "" });
     const transcribe = Boolean(opts.transcribe);
-    // Desktop system speech is a fallback for an unconfigured transcription provider.
-    // An unknown capability is not a refusal: a device whose browser cannot hold the
-    // microphone open goes to the server even before the voice status has loaded.
-    if (
-      (prefersServerDictation() && opts.transcribe !== false) ||
-      (desktopBridge()?.speech && transcribe)
-    ) {
+    // Prefer server Whisper (Evolve / company voice) whenever transcription is available so
+    // staff get the same OpenAI path. Phones also prefer the recorder because Web Speech
+    // cannot hold a session open. Desktop OS speech and Web Speech are fallbacks otherwise.
+    if (transcribe || (prefersServerDictation() && opts.transcribe !== false)) {
       await this.listenRecorder(mine, opts.mode, opts.endpointMs ?? ENDPOINT_SILENCE_MS, spaceId);
       return;
     }
@@ -268,10 +265,6 @@ export class Dictation {
         transcribe,
         spaceId,
       );
-      return;
-    }
-    if (transcribe) {
-      await this.listenRecorder(mine, opts.mode, opts.endpointMs ?? ENDPOINT_SILENCE_MS, spaceId);
       return;
     }
     this.set({

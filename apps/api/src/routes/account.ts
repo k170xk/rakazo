@@ -561,7 +561,9 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       status: authed.voice.status.handler(async ({ context, input }) => {
         const found = await effectiveVoiceCredential(deps, context.actor, undefined, input?.scope);
-        return toVoiceStatus(found?.cred ?? null);
+        return toVoiceStatus(found?.cred ?? null, {
+          evolveTranscribe: Boolean(deps.evolvePlugins),
+        });
       }),
       credentials: authed.voice.credentials.handler(async ({ context, input }) => {
         const target = await voicePreferenceTarget(deps.prisma, context.actor, input?.scope);

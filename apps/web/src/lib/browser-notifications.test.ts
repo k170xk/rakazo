@@ -6,8 +6,11 @@ import type {
 import {
   browserNotificationMessage,
   deliverBrowserNotification,
+  hasSeenBrowserNotificationsPrompt,
+  markBrowserNotificationsPromptSeen,
   requestBrowserNotificationPermission,
   shouldNotifyBrowser,
+  shouldOfferBrowserNotificationsPrompt,
 } from "./browser-notifications.js";
 import { i18n } from "./i18n.js";
 
@@ -165,4 +168,73 @@ describe("browser notifications", () => {
 
 it("uses a readable fallback for opaque notification names", () => {
   expect(browserNotificationMessage(event(), "__TestTok1__").title).toBe("Bot");
+});
+
+describe("browser notifications prompt", () => {
+  const memory = new Map<string, string>();
+  beforeEach(() => {
+    memory.clear();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => memory.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        memory.set(key, value);
+      },
+      removeItem: (key: string) => {
+        memory.delete(key);
+      },
+      clear: () => memory.clear(),
+    });
+  });
+
+  it("offers only when permission is still undecided and the person has not answered", () => {
+    expect(
+      shouldOfferBrowserNotificationsPrompt({
+        userId: "user-1",
+        permission: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldOfferBrowserNotificationsPrompt({
+        userId: "user-1",
+        permission: "granted",
+      }),
+    ).toBe(false);
+    expect(
+      shouldOfferBrowserNotificationsPrompt({
+        userId: "user-1",
+        permission: "denied",
+      }),
+    ).toBe(false);
+    expect(
+      shouldOfferBrowserNotificationsPrompt({
+        userId: undefined,
+        permission: "default",
+      }),
+    ).toBe(false);
+    expect(
+      shouldOfferBrowserNotificationsPrompt({
+        userId: "user-1",
+        permission: undefined,
+      }),
+    ).toBe(false);
+    expect(
+      shouldOfferBrowserNotificationsPrompt({
+        userId: "user-1",
+        permission: "default",
+        blockedByOverlay: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("remembers when the prompt was answered", () => {
+    expect(hasSeenBrowserNotificationsPrompt("user-1")).toBe(false);
+    markBrowserNotificationsPromptSeen("user-1");
+    expect(hasSeenBrowserNotificationsPrompt("user-1")).toBe(true);
+    expect(
+      shouldOfferBrowserNotificationsPrompt({
+        userId: "user-1",
+        permission: "default",
+      }),
+    ).toBe(false);
+  });
 });

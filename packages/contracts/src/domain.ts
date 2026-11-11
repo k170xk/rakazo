@@ -2553,6 +2553,12 @@ export const MeSchema = z.object({
   maxAttachmentsPerMessage: z.number().int().positive().optional(),
   ticketBoardEnabled: z.boolean(),
   phoneCallsEnabled: z.boolean().default(false),
+  /**
+   * Composer microphone dictation. True when phone calls are on, or when Evolve can
+   * transcribe through the plugins connection without a company voice credential.
+   * Absent from older servers (treat as phoneCallsEnabled).
+   */
+  dictationEnabled: z.boolean().optional(),
   /** Operator-configured menu links. Absent from older servers. */
   navLinks: z.array(NavLinkSchema).default([]),
   userId: Id,

@@ -47,6 +47,11 @@ import {
   subscribeComposerDraftAccepted,
   writeComposerDraft,
 } from "../../lib/composer-draft";
+import {
+  getDictationShortcut,
+  matchesDictationShortcut,
+  subscribeDictationShortcut,
+} from "../../lib/dictation-shortcut-pref";
 import { hasOpenDialog } from "../../lib/has-open-dialog";
 import { usePageSession } from "../../lib/pages";
 import { isFileDrag, isFilePaste } from "../../lib/pending-attachments";
@@ -60,7 +65,7 @@ import {
   MentionOptionIcon,
   slashActionLabel,
 } from "./composer-mentions";
-import { isApplePlatform, isEditableTarget, primaryModifier } from "./shell-shortcuts";
+import { isApplePlatform, isEditableTarget } from "./shell-shortcuts";
 import { useComposerLayout } from "./use-composer-layout";
 
 const ATTACHMENT_ACCEPT = attachmentPickerAccept(navigator.userAgent);
@@ -88,6 +93,7 @@ const ComposerBody = memo(function Composer({
   onSend,
   onStop,
   phoneCallsEnabled,
+  dictationEnabled,
   dictationTranscribe,
   replyTarget,
   replyQuote,
@@ -128,6 +134,10 @@ const ComposerBody = memo(function Composer({
   ) => Promise<boolean>;
   onStop: () => Promise<void>;
   phoneCallsEnabled?: boolean;
+  /**
+   * Composer microphone. Falls back to phoneCallsEnabled on older servers that omit it.
+   */
+  dictationEnabled?: boolean;
   /** Hold-to-talk falls back to the voice provider's transcription; undefined while unknown. */
   dictationTranscribe?: boolean;
   artifactTarget: ArtifactTarget;
@@ -189,18 +199,21 @@ const ComposerBody = memo(function Composer({
     return slashMatch ? (slashMatch[1] ?? "") : null;
   });
   const onCall = useCallSession() !== null;
+  const canDictate = dictationEnabled ?? phoneCallsEnabled;
   const talk = useHoldToTalk({
     transcribe: dictationTranscribe,
-    disabled: disabled || onCall || !phoneCallsEnabled,
+    disabled: disabled || onCall || !canDictate,
+    sessionKey: draftKey,
     onText: (text) => {
-      // A refused send keeps the words: they land in the field to edit or retry.
-      void onSend(text, [], newClientId())
-        .then((accepted) => {
-          if (accepted === false) appendDictation(text);
-        })
-        .catch(() => appendDictation(text));
+      // Insert into the draft so the person can edit before sending.
+      appendDictation(text);
     },
   });
+  const dictateShortcut = useSyncExternalStore(
+    subscribeDictationShortcut,
+    getDictationShortcut,
+    () => getDictationShortcut(null),
+  );
   const [selectedSkill, setSelectedSkill] = useState<AgentSkillCatalogEntry | null>(null);
   const editRevision = useRef(0);
   useEffect(
@@ -234,20 +247,20 @@ const ComposerBody = memo(function Composer({
     composerFieldRef,
     expanded,
   } = useComposerLayout(draft, selectedSkill !== null);
-  // Cmd/Ctrl+D in the message field dictates hands-free, like a keyboard press on the mic button,
-  // and sends once pressed again. The field hides while recording, so the key is heard window-wide.
-  const dictateKey = useRef({ talk, available: false });
+  // The configured shortcut starts hands-free dictation in the message field, and finishes it
+  // when pressed again. The field hides while recording, so the key is heard window-wide.
+  const dictateKey = useRef({ talk, available: false, shortcut: dictateShortcut });
   dictateKey.current = {
     talk,
-    available: Boolean(phoneCallsEnabled) && !disabled && !onCall && draft.trim().length === 0,
+    available: Boolean(canDictate) && !disabled && !onCall,
+    shortcut: dictateShortcut,
   };
   useEffect(() => {
     const apple = isApplePlatform();
     function onKey(event: KeyboardEvent) {
-      if (event.repeat || event.altKey || event.shiftKey || event.key?.toLowerCase() !== "d")
-        return;
-      if (!primaryModifier(event, apple)) return;
-      const { talk, available } = dictateKey.current;
+      if (event.repeat) return;
+      const { talk, available, shortcut } = dictateKey.current;
+      if (!matchesDictationShortcut(event, shortcut, apple)) return;
       if (talk.recording) {
         // Pressed while typing elsewhere, it belongs to that field rather than this recording.
         if (!talk.recording.locked || talk.transcribing) return;
@@ -978,7 +991,7 @@ const ComposerBody = memo(function Composer({
             <HoldToTalkControls talk={talk} />
           ) : running ? (
             <>
-              {phoneCallsEnabled && draft.trim().length === 0 ? (
+              {canDictate ? (
                 <HoldToTalkControls talk={talk} disabled={disabled || onCall} />
               ) : null}
               <Button
@@ -1003,7 +1016,7 @@ const ComposerBody = memo(function Composer({
             </>
           ) : (
             <>
-              {phoneCallsEnabled && draft.trim().length === 0 ? (
+              {canDictate ? (
                 <HoldToTalkControls talk={talk} disabled={disabled || onCall} />
               ) : null}
               <Button

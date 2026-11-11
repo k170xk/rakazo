@@ -1,5 +1,11 @@
 import { useLingui } from "@lingui/react/macro";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Kbd, KbdGroup } from "@rakazo/ui-web";
+import { useSyncExternalStore } from "react";
+import {
+  formatDictationShortcut,
+  getDictationShortcut,
+  subscribeDictationShortcut,
+} from "../../lib/dictation-shortcut-pref";
 import type { ShortcutHost } from "./shell-shortcuts";
 
 type Row = { label: string; keys: string[][] };
@@ -13,13 +19,18 @@ export function KeyboardShortcutsDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   host: ShortcutHost;
-  /** Whether the composer offers the microphone, which Cmd/Ctrl+D starts. */
+  /** Whether the composer offers the microphone. */
   dictation: boolean;
 }) {
   const { t } = useLingui();
   const mod = host.apple ? "⌘" : "Ctrl";
   const shift = host.apple ? "⇧" : "Shift";
   const ctrl = host.apple ? "⌃" : "Ctrl";
+  const dictateShortcut = useSyncExternalStore(
+    subscribeDictationShortcut,
+    getDictationShortcut,
+    () => getDictationShortcut(null),
+  );
   // Browsers keep some chords for themselves, so those rows show only in the desktop app.
   const rows: (Row | false)[] = [
     { label: t`Command menu`, keys: [[mod, "K"]] },
@@ -29,7 +40,10 @@ export function KeyboardShortcutsDialog({
     host.desktop && { label: t`Search bots`, keys: [[mod, shift, "F"]] },
     { label: t`Toggle sidebar`, keys: [[mod, "B"]] },
     { label: t`Focus message`, keys: [[mod, "I"]] },
-    dictation && { label: t`Dictate`, keys: [[mod, "D"]] },
+    dictation && {
+      label: t`Dictate`,
+      keys: [formatDictationShortcut(dictateShortcut, host.apple)],
+    },
     { label: t`Chat details`, keys: [[mod, shift, ","]] },
     { label: t`Connect apps`, keys: [[mod, shift, "M"]] },
     host.desktop && { label: t`Go to bot`, keys: [[mod, "1–9"]] },
