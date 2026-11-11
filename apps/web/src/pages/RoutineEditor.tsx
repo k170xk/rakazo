@@ -370,9 +370,11 @@ export function RoutineEditor({
   const { t } = useLingui();
   const fieldId = useId();
   const queries = useSpaceQueries();
+  const me = useQuery(queries.me.queryOptions()).data;
   // Files and commands are checked on the computer, which only Full access reaches.
-  const computerWatches =
-    (useQuery(queries.me.queryOptions()).data?.computerAccess ?? "full") === "full";
+  const computerWatches = (me?.computerAccess ?? "full") === "full";
+  // Staff keep the assistant's model. An admin can pin another from Advanced.
+  const canChooseModel = me?.isAdmin === true;
   const scheduleStatus = useQuery({
     ...queries.routines.list.queryOptions({ input: { botId: editing?.botId ?? "" } }),
     enabled: editing !== null && draft.active,
@@ -530,77 +532,86 @@ export function RoutineEditor({
         <div className="flex items-baseline gap-2">
           <Trans>When to run</Trans>
           <span className="text-xs text-muted-foreground/70">{timezone}</span>
-          <Popover>
-            <PopoverTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="relative ml-auto text-muted-foreground"
-                  aria-label={t`Advanced`}
-                  title={t`Advanced`}
-                />
-              }
-            >
-              <SlidersHorizontal />
-              {draft.modelKey ? (
-                <span
-                  aria-hidden
-                  className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-muted-foreground"
-                />
-              ) : null}
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-96 max-w-[calc(100vw-2rem)] p-4">
-              <label htmlFor={`${fieldId}-model`} className="block text-sm text-muted-foreground">
-                <Trans>Model</Trans>
-                <NativeSelect
-                  id={`${fieldId}-model`}
-                  className="mt-2 w-full"
-                  value={draft.modelKey}
-                  onChange={(event) =>
-                    onChange({ ...draft, modelKey: event.target.value, thinkingLevel: "" })
-                  }
-                >
-                  <NativeSelectOption value="">{t`Bot's model`}</NativeSelectOption>
-                  {draft.modelKey &&
-                  !modelOptions.some((option) => option.key === draft.modelKey) ? (
-                    <NativeSelectOption value={draft.modelKey}>
-                      {selectedModel?.modelId ?? draft.modelKey}
-                    </NativeSelectOption>
-                  ) : null}
-                  {modelOptions.map((option) => (
-                    <NativeSelectOption key={option.key} value={option.key}>
-                      {option.label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </label>
-
-              {thinkingOptions.length ? (
-                <label
-                  htmlFor={`${fieldId}-thinking`}
-                  className="mt-5 block text-sm text-muted-foreground"
-                >
-                  <Trans>Thinking</Trans>
+          {me && !canChooseModel ? (
+            <span className="ml-auto text-xs" data-testid="routine-model-locked">
+              <Trans>Uses the assistant's model.</Trans>
+            </span>
+          ) : null}
+          {canChooseModel ? (
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="relative ml-auto text-muted-foreground"
+                    aria-label={t`Advanced`}
+                    title={t`Advanced`}
+                  />
+                }
+              >
+                <SlidersHorizontal />
+                {draft.modelKey ? (
+                  <span
+                    aria-hidden
+                    className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-muted-foreground"
+                  />
+                ) : null}
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-96 max-w-[calc(100vw-2rem)] p-4">
+                <label htmlFor={`${fieldId}-model`} className="block text-sm text-muted-foreground">
+                  <Trans>Model</Trans>
                   <NativeSelect
-                    id={`${fieldId}-thinking`}
+                    id={`${fieldId}-model`}
                     className="mt-2 w-full"
-                    value={draft.thinkingLevel}
-                    onChange={(event) => onChange({ ...draft, thinkingLevel: event.target.value })}
+                    value={draft.modelKey}
+                    onChange={(event) =>
+                      onChange({ ...draft, modelKey: event.target.value, thinkingLevel: "" })
+                    }
                   >
-                    <NativeSelectOption value="">
-                      {t`Default (${thinkingLevelLabel(defaultThinkingLevel)})`}
-                    </NativeSelectOption>
-                    {thinkingOptions.map((level) => (
-                      <NativeSelectOption key={level} value={level}>
-                        {thinkingLevelLabel(level)}
+                    <NativeSelectOption value="">{t`Assistant's model`}</NativeSelectOption>
+                    {draft.modelKey &&
+                    !modelOptions.some((option) => option.key === draft.modelKey) ? (
+                      <NativeSelectOption value={draft.modelKey}>
+                        {selectedModel?.modelId ?? draft.modelKey}
+                      </NativeSelectOption>
+                    ) : null}
+                    {modelOptions.map((option) => (
+                      <NativeSelectOption key={option.key} value={option.key}>
+                        {option.label}
                       </NativeSelectOption>
                     ))}
                   </NativeSelect>
                 </label>
-              ) : null}
-            </PopoverContent>
-          </Popover>
+
+                {thinkingOptions.length ? (
+                  <label
+                    htmlFor={`${fieldId}-thinking`}
+                    className="mt-5 block text-sm text-muted-foreground"
+                  >
+                    <Trans>Thinking</Trans>
+                    <NativeSelect
+                      id={`${fieldId}-thinking`}
+                      className="mt-2 w-full"
+                      value={draft.thinkingLevel}
+                      onChange={(event) =>
+                        onChange({ ...draft, thinkingLevel: event.target.value })
+                      }
+                    >
+                      <NativeSelectOption value="">
+                        {t`Default (${thinkingLevelLabel(defaultThinkingLevel)})`}
+                      </NativeSelectOption>
+                      {thinkingOptions.map((level) => (
+                        <NativeSelectOption key={level} value={level}>
+                          {thinkingLevelLabel(level)}
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
+                  </label>
+                ) : null}
+              </PopoverContent>
+            </Popover>
+          ) : null}
         </div>
 
         <div className="mt-2 space-y-2">

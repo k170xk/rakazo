@@ -11,8 +11,45 @@ import {
 } from "@rakazo/core";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import { IsolationError } from "@rakazo/db";
+import { isAdmin } from "./admins.js";
 import type { RouterDeps } from "./router.js";
 import type { RouterContext } from "./routes/context.js";
+
+type RoutineModelChoice = {
+  modelProvider: string | null;
+  thinkingLevel: string | null;
+  modelId: string | null;
+};
+
+function sameRoutineModel(left: RoutineModelChoice, right: RoutineModelChoice): boolean {
+  return (
+    canonicalPiProviderId(left.modelProvider ?? "") ===
+      canonicalPiProviderId(right.modelProvider ?? "") &&
+    (left.modelId ?? null) === (right.modelId ?? null) &&
+    (left.thinkingLevel ?? null) === (right.thinkingLevel ?? null)
+  );
+}
+
+/**
+ * A routine follows its assistant's model until an admin pins another.
+ * With no admin list, a self-hosted account keeps the choice.
+ */
+export async function assertMemberMaySetRoutineModel(
+  deps: Pick<RouterDeps, "prisma"> & { env: Pick<RouterDeps["env"], "adminEmails"> },
+  actor: Pick<Actor, "userId">,
+  next: RoutineModelChoice,
+  previous?: RoutineModelChoice,
+): Promise<void> {
+  if (previous && sameRoutineModel(next, previous)) return;
+  const pinning = Boolean(next.modelProvider || next.modelId || next.thinkingLevel);
+  if (!pinning && !previous?.modelProvider && !previous?.modelId && !previous?.thinkingLevel)
+    return;
+  const admins = deps.env.adminEmails ?? [];
+  if (admins.length === 0 || (await isAdmin(deps, actor.userId))) return;
+  throw new ORPCError("FORBIDDEN", {
+    message: "Your administrator chooses the model for routines.",
+  });
+}
 
 export function assertRoutineSchedule(input: CreateRoutineInput): void {
   if (hasMixedOneShotSchedule(input.crons)) {

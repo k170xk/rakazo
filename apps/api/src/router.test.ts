@@ -7433,6 +7433,126 @@ describe("routine live Codex model validation", () => {
   );
 });
 
+describe("routine model choice", () => {
+  const actor = { userId: "user-1", spaceId: "space-1", email: "user@rakazo.test" };
+  const stamp = new Date("2026-01-01T00:00:00Z");
+  const row = {
+    id: "routine-1",
+    botId: "bot-1",
+    name: "Check",
+    prompt: "Check changes",
+    crons: ["0 9 * * *"],
+    timezone: "UTC",
+    active: false,
+    notify: false,
+    webhookEnabled: false,
+    githubEnabled: false,
+    messageProvider: null,
+    modelProvider: null,
+    modelId: null,
+    thinkingLevel: null,
+    lastRunAt: null,
+    nextRunAt: null,
+    createdAt: stamp,
+  };
+
+  function clientFor(admin: boolean) {
+    const save = vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+      ...row,
+      ...Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
+    }));
+    const client = createRouterClient(
+      createRouter({
+        prisma: {
+          user: {
+            findUnique: vi.fn(async () =>
+              admin
+                ? { email: "admin@ocsc.co.uk", emailVerified: true }
+                : { email: "user@rakazo.test", emailVerified: true },
+            ),
+          },
+          secret: { findFirst: vi.fn(async () => null) },
+          userModelPreference: {
+            findMany: vi.fn(async () => []),
+            findFirst: vi.fn(async () => ({ id: "preference-1" })),
+          },
+          userModelCredential: {
+            findMany: vi.fn(async () => [
+              {
+                id: "credential-1",
+                provider: "openai-compatible",
+                apiKey: "fake-key",
+                userId: actor.userId,
+              },
+            ]),
+          },
+          bot: { findFirst: vi.fn(async () => ({ id: "bot-1", computer: null, thread: null })) },
+          routine: { findFirst: vi.fn(async () => row), create: save, update: save },
+        },
+        jobs: { cancel: vi.fn(async () => undefined), enqueue: vi.fn(async () => undefined) },
+        events: { append: vi.fn(async () => undefined) },
+        env: { sandboxProvider: "fake", adminEmails: ["admin@ocsc.co.uk"] },
+      } as unknown as RouterDeps),
+      { context: { actor } as never },
+    );
+    return { client, save };
+  }
+
+  it("lets staff create a routine on the assistant's model and refuses a different one", async () => {
+    const { client, save } = clientFor(false);
+    await expect(
+      client.routines.create({
+        botId: "bot-1",
+        name: "Check",
+        prompt: "Check changes",
+        crons: ["0 9 * * *"],
+        active: false,
+      }),
+    ).resolves.toMatchObject({ modelProvider: null, modelId: null });
+    await expect(
+      client.routines.create({
+        botId: "bot-1",
+        name: "Check",
+        prompt: "Check changes",
+        crons: ["0 9 * * *"],
+        active: false,
+        modelProvider: "openai",
+        modelId: "gpt-5.5",
+      }),
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "Your administrator chooses the model for routines.",
+    });
+    expect(save).toHaveBeenCalledOnce();
+  });
+
+  it("lets an admin pin a routine model", async () => {
+    const { client } = clientFor(true);
+    await expect(
+      client.routines.update({
+        routineId: "routine-1",
+        modelProvider: "openai-compatible",
+        modelId: "llama-3.3-70b",
+      }),
+    ).resolves.toMatchObject({
+      modelProvider: "openai-compatible",
+      modelId: "llama-3.3-70b",
+    });
+  });
+
+  it("refuses a staff change to a routine model", async () => {
+    const { client, save } = clientFor(false);
+    await expect(
+      client.routines.update({
+        routineId: "routine-1",
+        modelProvider: "openai-compatible",
+        modelId: "llama-3.3-70b",
+      }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(save).not.toHaveBeenCalled();
+  });
+});
+
 describe("routines.list", () => {
   it("marks routines another Space member created as not editable", async () => {
     const actor = { userId: "user-1", spaceId: "space-1" };

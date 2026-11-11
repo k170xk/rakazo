@@ -13,6 +13,7 @@ import { computerAccessOf, requireCompanyFeature } from "../company-admin.js";
 import { assertRoutineModel } from "../model-pins.js";
 import { listRoutineRuns } from "../routine-runs.js";
 import {
+  assertMemberMaySetRoutineModel,
   assertRoutineSchedule,
   createRoutineTestRun,
   firstWatchCheck,
@@ -78,6 +79,11 @@ export function routinesRoutes(ctx: RouterContext) {
             });
           }
         }
+        await assertMemberMaySetRoutineModel(deps, context.actor, {
+          modelProvider: input.modelProvider ?? null,
+          modelId: input.modelId ?? null,
+          thinkingLevel: input.thinkingLevel ?? null,
+        });
         await assertRoutineModel(deps, context.actor, input, codexCatalog);
         const row = await deps.prisma.routine.create({
           data: routineRowData(context.actor, input, routineNextRunAt(input)),
@@ -132,6 +138,18 @@ export function routinesRoutes(ctx: RouterContext) {
               ? null
               : existing.thinkingLevel
             : input.thinkingLevel;
+        if (touchesModel) {
+          await assertMemberMaySetRoutineModel(
+            deps,
+            context.actor,
+            { modelProvider, modelId, thinkingLevel },
+            {
+              modelProvider: existing.modelProvider,
+              modelId: existing.modelId,
+              thinkingLevel: existing.thinkingLevel,
+            },
+          );
+        }
         if (modelChanged) {
           await assertRoutineModel(deps, context.actor, { modelProvider, modelId }, codexCatalog);
         }

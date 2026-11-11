@@ -1426,6 +1426,10 @@ msgstr "Assigned to"
 msgid "assignee"
 msgstr "assignee"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Assistant's model"
+msgstr "Assistant's model"
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
 msgstr "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
@@ -1659,8 +1663,8 @@ msgid "Bot style"
 msgstr "Bot style"
 
 #: src/pages/RoutineEditor.tsx
-msgid "Bot's model"
-msgstr "Bot's model"
+#~ msgid "Bot's model"
+#~ msgstr "Bot's model"
 
 #: src/components/SignupSurvey.tsx
 msgid "Both"
@@ -10271,6 +10275,10 @@ msgstr "Uses paths on your computer"
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Uses real OCSC project photos and stock footage"
 msgstr "Uses real OCSC project photos and stock footage"
+
+#: src/pages/RoutineEditor.tsx
+msgid "Uses the assistant's model."
+msgstr "Uses the assistant's model."
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."

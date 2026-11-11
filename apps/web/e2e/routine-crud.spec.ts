@@ -68,7 +68,7 @@ async function saveAndReturn(page: Page, procedure: "routines/create" | "routine
   return response.request().postDataJSON().json;
 }
 
-test("routine editing updates in place, preserves timezone, deletion persists, and model choice saves", async ({
+test("routine editing updates in place, preserves timezone, deletion persists, and staff keep the assistant model", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
@@ -133,20 +133,16 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
   await expect(updatedButton).toHaveCount(0);
   expect(await rpc<Routine[]>(page, "routines/list", { botId })).toEqual([]);
 
-  // A routine runs on the bot's model until another is picked.
+  // Staff cannot pick a model. A new routine follows the assistant.
   await page.getByRole("button", { name: "Create Routine" }).click();
   await page.locator("label:has-text('Name') input").fill("Model check");
   await page.locator("label:has-text('Instruction') textarea").fill("Check the inbox");
   await addScheduleTrigger(page, "Every day");
 
-  await expect(page.getByRole("combobox", { name: "Model", exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Advanced", exact: true }).click();
-  const modelSelect = page.getByRole("combobox", { name: "Model", exact: true });
-  await expect(modelSelect).toHaveValue("");
-  await expect(modelSelect).toContainText("Bot's model");
-  await captureScreenshot(page, testInfo, "routine-model-picker");
+  await expect(page.getByRole("button", { name: "Advanced", exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("routine-model-locked")).toHaveText("Uses the assistant's model.");
+  await captureScreenshot(page, testInfo, "routine-model-locked");
 
-  await page.keyboard.press("Escape");
   expect(await saveAndReturn(page, "routines/create")).toMatchObject({
     modelProvider: null,
     modelId: null,
@@ -158,24 +154,6 @@ test("routine editing updates in place, preserves timezone, deletion persists, a
     modelId: null,
     thinkingLevel: null,
   });
-  await rpc(page, "models/connect", {
-    provider: "openai-compatible",
-    apiKey: "fake-routine-model-key",
-    modelId: "llama-3.3-70b",
-    baseUrl: "http://127.0.0.1:8090/v1",
-    thinkingLevel: "low",
-    reasoning: true,
-  });
-  await page.getByRole("button", { name: /Model check/ }).click();
-  await page.getByRole("button", { name: "Advanced", exact: true }).click();
-  await modelSelect.selectOption("openai-compatible::llama-3.3-70b");
-  await page.keyboard.press("Escape");
-  expect(await saveAndReturn(page, "routines/update")).toMatchObject({
-    modelProvider: "openai-compatible",
-    modelId: "llama-3.3-70b",
-    thinkingLevel: null,
-  });
-  await expect(page.getByRole("button", { name: /Model check/ })).toContainText("llama-3.3-70b");
 
   await page.getByRole("button", { name: /Model check/ }).click();
   await page.locator("label:has-text('Name') input").fill("Renamed model check");
