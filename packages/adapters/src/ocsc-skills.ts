@@ -442,7 +442,31 @@ SEND
 CURSOR AGENTS
 When the person asks for a Cursor cloud agent to write the plugin, launch it on the company plugins repository with the slug as the folder and the template's layout and rules above in the prompt. When it finishes, evolve_plugin_import_branch {branch, folder} copies its work here; read the code, then build, try and submit it as above.`;
 
+const DEADLINE_INSTRUCTIONS = `Use this whenever the person wants a deadline added to an OCSC project, or a project deadline moved, renamed, switched between hard and soft, commented on, marked completed or reopened.
+
+FIND THE PROJECT
+1. Use the project_id you already have, or call mcp__evolve__search_project_datasheets with the job number, name or client and pick the matching result. When several could fit, ask which with ask_user, listing job number, name and client.
+2. To change an existing deadline, call mcp__evolve__get_project_details for that project and take the deadline's deadline_id. If more than one deadline could be the one they mean, ask which.
+
+PROPOSE THE CHANGE
+- Adding: mcp__evolve__add_project_deadline with project_id (or the exact job_number), name, date and, when they said so, hard_deadline false for a soft deadline and comments. Deadlines are hard unless the person says soft.
+- Changing: mcp__evolve__update_project_deadline with deadline_id and only the fields that change. completed true marks it done; false reopens it.
+- Dates are written YYYY-MM-DD. Work out "next Friday" or "end of the month" from today's date; when a date is unclear, ask rather than guess.
+- Name deadlines the way the tracker does: short and specific, such as "Stage 2 report issue" or "Planning submission". Keep any detail for comments.
+
+APPROVAL
+Every add and change shows the person a card with the project and the deadline (before and after for a change). Nothing is saved until they approve it on that card, and the card cannot be skipped or approved for later changes. So call the tool as soon as you know what to propose, without asking them to confirm in chat first. One card per deadline; for several deadlines make one call each.
+- If the reply lists projects to choose from (needs_choice), ask which one and call again with its project_id.
+- After approval the reply says saved true: tell them in one line, with the project and date. The project team gets the tracker's usual email.
+- If they cancel, say nothing was changed and ask what they would like instead. If the reply says the deadline changed since the card was shown, read it again and propose the change again.
+- In a routine the card waits in its chat until the person answers. If the reply says this run cannot ask, list the deadlines you would add or change and ask the person to make the change from a chat.`;
+
 export const OCSC_SKILLS: OcscSkill[] = [
+  {
+    name: "ocsc-project-deadlines",
+    description: "Add or change deadlines on an OCSC project, approved on a card first",
+    body: DEADLINE_INSTRUCTIONS,
+  },
   {
     name: "ocsc-word",
     description: "Any Word document or report (.docx): OCSC-branded, made with ocsc-word",

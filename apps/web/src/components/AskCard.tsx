@@ -76,10 +76,171 @@ export type AskCardProps = {
 
 /** A question, approval or protected-input request from the bot. */
 export function AskCard(props: AskCardProps) {
-  return isSecretAskBlock(props.block) ? (
-    <SecretAskCard {...props} />
-  ) : (
-    <PromptAskCard {...props} />
+  if (isSecretAskBlock(props.block)) return <SecretAskCard {...props} />;
+  if (props.block.deadlineChange && isApprovalAskBlock(props.block))
+    return <DeadlineAskCard {...props} change={props.block.deadlineChange} />;
+  return <PromptAskCard {...props} />;
+}
+
+type DeadlineChange = NonNullable<AskBlock["deadlineChange"]>;
+type DeadlineValues = DeadlineChange["after"];
+
+function dueDay(value: string | null): string {
+  if (!value) return t`No date`;
+  return new Date(`${value}T00:00:00Z`).toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+function deadlineRows(values: DeadlineValues) {
+  return [
+    { key: "name", label: t`Deadline`, value: values.name },
+    { key: "date", label: t`Due`, value: dueDay(values.date) },
+    {
+      key: "type",
+      label: t`Type`,
+      value: values.hardDeadline ? t`Hard deadline` : t`Soft deadline`,
+    },
+    { key: "status", label: t`Status`, value: values.completed ? t`Completed` : t`Open` },
+    { key: "comments", label: t`Comments`, value: values.comments ?? "" },
+  ];
+}
+
+/** A project deadline to add or change, previewed from Evolve; it is saved only when approved. */
+function DeadlineAskCard({
+  block,
+  canAnswer,
+  onAnswer,
+  change,
+}: AskCardProps & { change: DeadlineChange }) {
+  const { t } = useLingui();
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [acceptedAnswer, setAcceptedAnswer] = useState<string>();
+  const [error, setError] = useState<string | null>(null);
+  const answer = block.status === "answered" ? block.answer : acceptedAnswer;
+  const answered = answer !== undefined;
+  const adding = change.action === "add";
+  const before = change.before ? deadlineRows(change.before) : undefined;
+  const rows = deadlineRows(change.after).filter(
+    (row, index) => row.value || before?.[index]?.value,
+  );
+
+  async function answerWith(id: string) {
+    if (pendingAction) return;
+    setPendingAction(id);
+    setError(null);
+    try {
+      await onAnswer(id);
+      setAcceptedAnswer(id);
+    } catch (err) {
+      setError(errorText(err, t`Could not submit this answer`));
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  return (
+    <BuiCard
+      data-testid="deadline-approval-card"
+      className="w-full min-w-0 max-w-xl overflow-hidden border border-border dark:border-transparent"
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-2.5">
+        <span className="text-[13px] font-medium text-muted-foreground">
+          {adding ? <Trans>New project deadline</Trans> : <Trans>Deadline change</Trans>}
+        </span>
+        <StatusBadge tone={answered ? "positive" : canAnswer ? "caution" : "neutral"}>
+          {answered ? (
+            <Trans>Done</Trans>
+          ) : canAnswer ? (
+            <Trans>Needs your approval</Trans>
+          ) : (
+            <Trans>Closed</Trans>
+          )}
+        </StatusBadge>
+      </div>
+      <div className="px-5 py-4">
+        <div className="rounded-lg bg-background px-3 py-2.5">
+          <div className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+            <Trans>Project</Trans>
+          </div>
+          <div className="mt-0.5 text-[15px] font-medium text-foreground">
+            {[change.project.jobNumber, change.project.name].filter(Boolean).join(" · ") ||
+              t`Unnamed project`}
+          </div>
+          {change.project.client ? (
+            <div className="text-[13.5px] text-muted-foreground">{change.project.client}</div>
+          ) : null}
+        </div>
+        <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[14.5px] leading-[1.45]">
+          {rows.map((row) => {
+            const previous = before?.find((item) => item.key === row.key)?.value;
+            const changed = before !== undefined && previous !== row.value;
+            return (
+              <div key={row.key} className="contents">
+                <dt className="text-muted-foreground">{row.label}</dt>
+                <dd className="min-w-0 whitespace-pre-wrap break-words text-foreground">
+                  {changed && previous ? (
+                    <span className="me-1.5 text-muted-foreground line-through">{previous}</span>
+                  ) : null}
+                  <span className={changed ? "font-medium" : undefined}>
+                    {row.value || (changed ? t`(cleared)` : "")}
+                  </span>
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+        {change.warnings?.length ? (
+          <ul className="mt-3 space-y-1 rounded-lg bg-warning/10 px-3 py-2 text-[13.5px] text-warning">
+            {change.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        ) : null}
+        {answered ? (
+          <div className="mt-3.5 flex items-center gap-1.5 text-[13.5px] font-medium text-muted-foreground">
+            {answer === "deny" ? null : <Check aria-hidden className="size-4" />}
+            {answer === "deny"
+              ? t`Cancelled`
+              : adding
+                ? t`Approved: adding it to Evolve`
+                : t`Approved: saving it in Evolve`}
+          </div>
+        ) : !canAnswer ? (
+          <div className="mt-3.5 text-[13.5px] font-medium text-muted-foreground">
+            <Trans>No longer active</Trans>
+          </div>
+        ) : (
+          <div className="mt-3.5 flex flex-wrap gap-2">
+            {block.actions?.map((action) => (
+              <Button
+                key={action.id}
+                variant={action.id === "allow" ? "default" : "outline"}
+                disabled={pendingAction !== null}
+                onClick={() => void answerWith(action.id)}
+              >
+                {pendingAction === action.id ? (
+                  <Trans>Sending…</Trans>
+                ) : action.id === "allow" ? (
+                  adding ? (
+                    t`Add deadline`
+                  ) : (
+                    t`Save changes`
+                  )
+                ) : (
+                  t`Cancel`
+                )}
+              </Button>
+            ))}
+          </div>
+        )}
+        {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
+      </div>
+    </BuiCard>
   );
 }
 

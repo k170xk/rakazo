@@ -108,6 +108,29 @@ export const BotSettingsValuesSchema = z.object({
 });
 export type BotSettingsValues = z.infer<typeof BotSettingsValuesSchema>;
 
+const ProjectDeadlineValues = z.object({
+  name: z.string(),
+  date: z.string().nullable(),
+  hardDeadline: z.boolean(),
+  completed: z.boolean(),
+  comments: z.string().nullable(),
+});
+
+/** A deadline added to or changed on an Evolve project, as its approval card previews it. */
+export const ProjectDeadlineChangeSchema = z.object({
+  action: z.enum(["add", "update"]),
+  project: z.object({
+    jobNumber: z.string().nullable(),
+    name: z.string().nullable(),
+    client: z.string().nullable(),
+  }),
+  /** The deadline as it is now; only an update has one. */
+  before: ProjectDeadlineValues.optional(),
+  after: ProjectDeadlineValues,
+  warnings: z.array(z.string()).optional(),
+});
+export type ProjectDeadlineChange = z.infer<typeof ProjectDeadlineChangeSchema>;
+
 export const MessageBlock = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("text"), text: z.string() }),
   z.object({
@@ -131,6 +154,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     settingsUpdate: z
       .object({ botId: Id, before: BotSettingsValuesSchema, after: BotSettingsValuesSchema })
       .optional(),
+    deadlineChange: ProjectDeadlineChangeSchema.optional(),
     detail: z.string().optional(),
     detailFormat: z.enum(["text", "code"]).optional(),
     input: z.enum(["text", "secret"]).optional(),

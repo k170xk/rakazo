@@ -41,6 +41,10 @@ msgstr ""
 msgid "\"Turn these site visit notes into an OCSC report with two infographics.\" Then: \"Make section 3 shorter and add the Riverside project.\""
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "(cleared)"
+msgstr ""
+
 #. placeholder {0}: state.staff.accounts
 #: src/pages/AdminCompanyPage.tsx
 msgid "{0, plural, one {# account} other {# accounts}}"
@@ -160,6 +164,7 @@ msgstr "{0} {unitLabel}"
 msgid "{0} connection"
 msgstr "{0} verbinding"
 
+#. placeholder {0}: storage.chatFileRetentionDays
 #. placeholder {0}: storage.fileRetentionDays
 #: src/pages/AdminComputerAccess.tsx
 msgid "{0} days"
@@ -184,6 +189,12 @@ msgstr "{0} belt je"
 #: src/pages/McpServersOverlay.tsx
 msgid "{0} is not working"
 msgstr "{0} werkt niet"
+
+#. placeholder {0}: document.title
+#. placeholder {1}: levels[aiAccess].toLowerCase()
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "{0} is now {1}"
+msgstr "{0} is now {1}"
 
 #. placeholder {0}: updated.name
 #: src/pages/McpServersOverlay.tsx
@@ -227,6 +238,11 @@ msgstr ""
 msgid "{0} TB"
 msgstr "{0} TB"
 
+#. placeholder {0}: props.name
+#: src/components/ArtifactFileCard.tsx
+msgid "{0} was removed by your company's file cleanup. Ask the bot to make it again."
+msgstr ""
+
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
@@ -245,10 +261,6 @@ msgstr "{commandVariable} is gereserveerd en kan niet als commandovariabele word
 
 #: src/pages/PluginsOverlay.tsx
 msgid "{connectedCount, plural, one {# connected} other {# connected}}"
-msgstr ""
-
-#: src/pages/shell/evolve-history.tsx
-msgid "{continued} of {total} opened"
 msgstr ""
 
 #: src/pages/shell/evolve-history.tsx
@@ -696,7 +708,9 @@ msgid "Actual size"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/components/integrations/SharePointFolders.tsx
 #: src/components/SecretAskCard.tsx
+#: src/components/todos/todo-board.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -765,6 +779,10 @@ msgstr ""
 msgid "Add custom"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Add deadline"
+msgstr ""
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Add drawings"
 msgstr ""
@@ -785,6 +803,7 @@ msgstr "Veld toevoegen"
 msgid "Add header"
 msgstr "Header toevoegen"
 
+#: src/components/todos/todo-board.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Add item"
 msgstr "Item toevoegen"
@@ -856,6 +875,7 @@ msgstr "Werkruimte toevoegen"
 
 #: src/components/GroupPeople.tsx
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/components/integrations/SharePointFolders.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Added"
 msgstr "Toegevoegd"
@@ -863,6 +883,10 @@ msgstr "Toegevoegd"
 #. placeholder {0}: person.role
 #: src/pages/shell/evolve-references.tsx
 msgid "Added as Role: {0}"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Added by your assistant"
 msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
@@ -922,10 +946,6 @@ msgid "Agent from another app"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
-#~ msgid "Agents"
-#~ msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
 msgid "Agents can look back through earlier chats when you refer to them"
 msgstr ""
 
@@ -949,9 +969,9 @@ msgstr ""
 msgid "Agents that work like teammates"
 msgstr ""
 
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Agents working together"
-#~ msgstr ""
+#: src/components/todos/todo-board.tsx
+msgid "AI"
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "AI teammates, each with a job"
@@ -971,6 +991,10 @@ msgstr "De volledige {credit} gaat naar modelgebruik."
 #: src/pages/shell/agent-import.tsx
 msgid "All bots"
 msgstr "Alle bots"
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "All documents"
+msgstr "All documents"
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1155,6 +1179,7 @@ msgstr ""
 msgid "API URL"
 msgstr ""
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
 msgstr "Weergave"
@@ -1198,9 +1223,13 @@ msgstr "Keur deze server goed zodat je agent zijn tools kan gebruiken."
 msgid "Approved"
 msgstr ""
 
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Approved plugin builders send them to Evolve for review before colleagues use them"
-#~ msgstr ""
+#: src/components/AskCard.tsx
+msgid "Approved: adding it to Evolve"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Approved: saving it in Evolve"
+msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
@@ -1215,8 +1244,16 @@ msgstr ""
 msgid "Apps and plugins for staff"
 msgstr ""
 
+#: src/pages/AdminStaffApps.tsx
+msgid "Apps for staff"
+msgstr "Apps voor medewerkers"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Apps, Connectors and Routines that extend what agents can do"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Apps, plugins and messaging"
 msgstr ""
 
 #: src/pages/BotContextMenu.tsx
@@ -1227,12 +1264,13 @@ msgstr "Archiveren"
 msgid "archived"
 msgstr "gearchiveerd"
 
-#: src/pages/shell/archived-chats.tsx
-msgid "Archived bots"
+#: src/components/todos/todo-board.tsx
+#: src/pages/shell/evolve-history.tsx
+msgid "Archived"
 msgstr ""
 
-#: src/pages/shell/evolve-history.tsx
-msgid "Archived chats"
+#: src/pages/shell/archived-chats.tsx
+msgid "Archived bots"
 msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
@@ -1241,6 +1279,7 @@ msgstr "Argumenten"
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Artifacts"
 msgstr "Artefacten"
 
@@ -1253,15 +1292,15 @@ msgid "Ask \"What do you remember about me?\" at any time"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
-#~ msgid "Ask an agent for a dashboard, tracker, calculator or comparison and it builds a live page right in the chat. Ask for changes and it updates the same page."
-#~ msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
 msgid "Ask for any OCSC deliverable in plain English"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Ask it anything, or for any OCSC deliverable"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Ask your administrator if you need one."
 msgstr ""
 
 #: src/pages/shell/computer-panel.tsx
@@ -1270,6 +1309,10 @@ msgstr "Slaapt"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "At (UK time)"
 msgstr ""
 
 #. placeholder {0}: preset.time
@@ -1378,6 +1421,10 @@ msgstr "Terug"
 msgid "Back or forward"
 msgstr "Terug of vooruit"
 
+#: src/components/todos/todo-board.tsx
+msgid "Back to board"
+msgstr ""
+
 #: src/components/pages/PageNotice.tsx
 msgid "Back to chat"
 msgstr "Terug naar chat"
@@ -1417,9 +1464,9 @@ msgstr ""
 msgid "BEFORE"
 msgstr ""
 
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Bigger ideas become Evolve plugins, with Evolve's look and approved data"
-#~ msgstr ""
+#: src/pages/PluginsOverlay.tsx
+msgid "Being set up"
+msgstr "Wordt ingesteld"
 
 #: src/pages/settings-nav.ts
 msgid "Billing"
@@ -1512,6 +1559,10 @@ msgstr ""
 msgid "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
 msgstr ""
 
+#: src/pages/AdminAssistantModels.tsx
+msgid "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
+msgstr ""
+
 #: src/pages/Paywall.tsx
 msgid "Bots with their own computer and browser"
 msgstr "Bots met een eigen computer en browser"
@@ -1560,10 +1611,6 @@ msgstr ""
 msgid "Build your own apps, and share them"
 msgstr ""
 
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Build your own tools in a chat"
-#~ msgstr ""
-
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Builds a deck from a brief, with the company fonts, colours, logo and footer"
 msgstr ""
@@ -1580,6 +1627,10 @@ msgstr ""
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
 msgstr "Ingebouwd"
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Built-in OCSC report"
+msgstr "Built-in OCSC report"
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Built-in skills"
@@ -1636,6 +1687,7 @@ msgstr "Kan afbeeldingen niet lezen"
 #: src/components/PasskeySettings.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
+#: src/components/todos/todo-board.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
@@ -1723,6 +1775,10 @@ msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Change any scene and render again"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Change in Company admin"
 msgstr ""
 
 #: src/pages/shell/composer-error.tsx
@@ -1870,6 +1926,11 @@ msgstr "Bestand kiezen"
 msgid "Choose folder"
 msgstr "Map kiezen"
 
+#: src/components/integrations/SharePointFolders.tsx
+#: src/pages/PluginsOverlay.tsx
+msgid "Choose folders"
+msgstr "Choose folders"
+
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use OCSC Intelligence"
@@ -1878,6 +1939,10 @@ msgstr ""
 #: src/pages/shell/references-dialog.tsx
 msgid "Choose projects, people, or responses to provide context for your AI conversation."
 msgstr ""
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
+msgstr "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
@@ -1890,6 +1955,23 @@ msgstr ""
 #: src/pages/shell/computer-panel.tsx
 msgid "Clean up"
 msgstr "Opruimen"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Cleanup is paused, so nothing is deleted."
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Cleanup requested; it starts within a minute."
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Cleanup schedule"
+msgstr ""
+
+#. placeholder {0}: when(cleanup.lastRunAt)
+#: src/pages/AdminComputerAccess.tsx
+msgid "Cleanup started {0}."
+msgstr ""
 
 #: src/components/SecretAskCard.tsx
 #: src/pages/shell/dialogs.tsx
@@ -1944,6 +2026,7 @@ msgstr ""
 
 #: src/components/ErrorBoundary.tsx
 #: src/components/ImageLightbox.tsx
+#: src/components/InstallAppBanner.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -2006,6 +2089,10 @@ msgstr ""
 #: src/components/markdown-copy.tsx
 msgid "Close table"
 msgstr "Tabel sluiten"
+
+#: src/components/todos/todo-board.tsx
+msgid "Close to do list"
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Close tour"
@@ -2076,6 +2163,8 @@ msgstr "Comfortabel"
 
 #: src/components/integrations/integrations-coming-soon.tsx
 #: src/components/tour/ocsc-tour.tsx
+#: src/pages/AdminStaffApps.tsx
+#: src/pages/PluginsOverlay.tsx
 msgid "Coming soon"
 msgstr ""
 
@@ -2097,6 +2186,10 @@ msgstr "Commandovariabele"
 msgid "Comment"
 msgstr "Opmerking"
 
+#: src/components/AskCard.tsx
+msgid "Comments"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Communication"
 msgstr ""
@@ -2110,6 +2203,10 @@ msgstr "Compact"
 msgid "Company admin"
 msgstr ""
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Company admin sections"
+msgstr ""
+
 #. placeholder {0}: levels[defaultAccess]
 #: src/pages/AdminComputerAccess.tsx
 msgid "Company default ({0})"
@@ -2119,18 +2216,23 @@ msgstr ""
 msgid "Company model"
 msgstr ""
 
+#: src/pages/AdminAssistantModels.tsx
+msgid "Company model ({companyLabel})"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Company plugins"
 msgstr ""
 
-#: src/pages/AdminCompanyTools.tsx
-#~ msgid "Company tools"
-#~ msgstr ""
+#: src/pages/AdminAssistantModels.tsx
+msgid "Company thinking"
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "Company values stay hidden once saved. Edit the item to replace its value."
 msgstr ""
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminCompanyVoice.tsx
 msgid "Company vault"
 msgstr ""
@@ -2151,6 +2253,7 @@ msgstr "Voltooid"
 msgid "Complete Required Roles First"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "Voltooid"
@@ -2160,10 +2263,6 @@ msgstr "Voltooid"
 #: src/pages/shell/message-view.tsx
 msgid "Computer"
 msgstr "Computer"
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Computer access"
-msgstr ""
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -2191,6 +2290,10 @@ msgstr "De computer is in slaapstand. Open hem om hem te laten ontwaken."
 msgid "Computer is stopped"
 msgstr "De computer is gestopt"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Computer provider"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Computer-use model"
 msgstr "Model voor computergebruik"
@@ -2198,28 +2301,29 @@ msgstr "Model voor computergebruik"
 #: src/components/ComputerDeviceSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminComputerAccess.tsx
 msgid "Computers"
 msgstr "Computers"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Computers and routines"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Computers are available. Reload or open a bot to continue."
 msgstr "Computers zijn beschikbaar. Herlaad of open een bot om verder te gaan."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Computers are off for the company"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Computers are off. Set SANDBOX_PROVIDER=docker with SANDBOX_SUPERVISOR_TOKEN, or set SANDBOX_PROVIDER to e2b, novita, daytona, or boat with its API key. Recreate the stack after changing .env."
 msgstr "Computers staan uit. Stel SANDBOX_PROVIDER=docker in met SANDBOX_SUPERVISOR_TOKEN, of stel SANDBOX_PROVIDER in op e2b, novita, daytona of boat met de bijbehorende API-sleutel. Bouw de stack opnieuw op nadat je .env hebt gewijzigd."
 
 #: src/pages/AdminComputerAccess.tsx
-#~ msgid "Computers are switched off above, so nobody has one."
-#~ msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Computers are switched off above, so nobody has one. Documents and videos still work for everyone."
+msgid "Computers are switched off in Features, so nobody has one. Documents and videos still work for everyone."
 msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-#~ msgid "Computers are switched off above, so nobody has one. Documents still work for everyone."
-#~ msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Computers running"
@@ -2229,9 +2333,17 @@ msgstr ""
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "Configureer een plugincatalogus op de server om apps te koppelen."
 
+#: src/pages/shell/evolve-history.tsx
+msgid "Confirm"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
 msgstr "Verwijderen bevestigen"
+
+#: src/components/todos/todo-board.tsx
+msgid "Confirm hard delete"
+msgstr ""
 
 #: src/components/ConfirmIdentityDialog.tsx
 msgid "Confirm it's you"
@@ -2320,6 +2432,7 @@ msgstr "Verbind je eigen API-sleutel bij Modellen of kies Rakazo-tegoed bij Fact
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/AdminCompanyTools.tsx
+#: src/pages/AdminStaffApps.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -2367,10 +2480,6 @@ msgstr "De verbinding met {0} is nog in afwachting. Je kunt dit venster sluiten 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Connector"
 msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Connectors"
-#~ msgstr ""
 
 #: src/components/vault/kinds.tsx
 msgid "Contact"
@@ -2420,8 +2529,8 @@ msgid "Continue with {0}"
 msgstr "Doorgaan met {0}"
 
 #: src/pages/Auth.tsx
-msgid "Continue with Evolve"
-msgstr ""
+msgid "Continue with <0/>"
+msgstr "Doorgaan met <0/>"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
@@ -2500,6 +2609,10 @@ msgstr "MCP-server toevoegen mislukt"
 msgid "Could not add skills"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
+msgid "Could not add that item."
+msgstr ""
+
 #: src/components/GroupPeople.tsx
 msgid "Could not add that person"
 msgstr ""
@@ -2524,9 +2637,17 @@ msgstr ""
 msgid "Could not change"
 msgstr ""
 
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Could not change AI access"
+msgstr "Could not change AI access"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not change password"
 msgstr "Wachtwoord wijzigen mislukt"
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Could not change the default Word template"
+msgstr "Could not change the default Word template"
 
 #: src/components/integrations/space-availability.tsx
 msgid "Could not change where this is available"
@@ -2630,6 +2751,10 @@ msgstr ""
 msgid "Could not delete group"
 msgstr "Groep verwijderen mislukt"
 
+#: src/components/todos/todo-board.tsx
+msgid "Could not delete it."
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not delete MCP server"
 msgstr "MCP-server verwijderen mislukt"
@@ -2654,9 +2779,13 @@ msgstr "Skill verwijderen mislukt"
 msgid "Could not delete space"
 msgstr "Space verwijderen mislukt"
 
+#: src/pages/shell/evolve-history.tsx
+msgid "Could not delete that chat."
+msgstr ""
+
 #: src/pages/Artifacts.tsx
-msgid "Could not delete this artifact."
-msgstr "Dit artefact verwijderen mislukt."
+msgid "Could not delete this file."
+msgstr ""
 
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not disconnect memory provider"
@@ -2703,6 +2832,10 @@ msgstr ""
 msgid "Could not grant access"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
+msgid "Could not hard delete it."
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not install connector"
 msgstr "Connector installeren mislukt"
@@ -2726,10 +2859,6 @@ msgstr "Activiteit laden mislukt"
 msgid "Could not load approval rules"
 msgstr "Goedkeuringsregels laden mislukt"
 
-#: src/pages/Artifacts.tsx
-msgid "Could not load artifacts."
-msgstr "Artefacten laden mislukt."
-
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Could not load billing"
 msgstr "Facturatie laden mislukt"
@@ -2745,6 +2874,10 @@ msgstr ""
 #: src/components/VaultSettings.tsx
 msgid "Could not load credentials."
 msgstr "Gegevens laden mislukt."
+
+#: src/pages/Artifacts.tsx
+msgid "Could not load files."
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not load integrations"
@@ -2767,6 +2900,10 @@ msgstr ""
 msgid "Could not load run history"
 msgstr "Rungeschiedenis laden mislukt"
 
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Could not load SharePoint folders."
+msgstr "Could not load SharePoint folders."
+
 #: src/lib/account-security.ts
 #: src/pages/Auth.tsx
 msgid "Could not load sign-in options"
@@ -2777,15 +2914,12 @@ msgstr "Aanmeldopties laden mislukt"
 msgid "Could not load skill"
 msgstr "Skill laden mislukt"
 
-#: src/pages/Artifacts.tsx
-msgid "Could not load this artifact."
-msgstr "Dit artefact laden mislukt."
-
 #: src/pages/PeerMessagesOverlay.tsx
 msgid "Could not load this chat."
 msgstr "Deze chat laden mislukt."
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Artifacts.tsx
 msgid "Could not load this file."
 msgstr "Dit bestand laden mislukt."
 
@@ -2805,9 +2939,17 @@ msgstr ""
 msgid "Could not load your shared chats"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
+msgid "Could not load your to do list."
+msgstr ""
+
 #: src/lib/sign-out.ts
 msgid "Could not log out. Try again."
 msgstr "Uitloggen mislukt. Probeer het opnieuw."
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not move that item."
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 #: src/pages/BillingSettingsPanel.tsx
@@ -2816,9 +2958,9 @@ msgstr "Uitloggen mislukt. Probeer het opnieuw."
 msgid "Could not open billing"
 msgstr "Facturatie openen mislukt"
 
-#: src/pages/shell/evolve-history.tsx
-msgid "Could not open that chat."
-msgstr ""
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Could not open this in SharePoint."
+msgstr "Could not open this in SharePoint."
 
 #: src/components/pages/PagesList.tsx
 msgid "Could not pin this page. Try again."
@@ -2919,6 +3061,14 @@ msgstr "Grafiek weergeven mislukt"
 msgid "Could not reset password"
 msgstr "Wachtwoord opnieuw instellen mislukt"
 
+#: src/components/todos/todo-board.tsx
+msgid "Could not restore it."
+msgstr ""
+
+#: src/pages/shell/evolve-history.tsx
+msgid "Could not restore that chat."
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not revoke connection"
 msgstr "Verbinding intrekken mislukt"
@@ -2964,6 +3114,10 @@ msgstr "Routine opslaan mislukt"
 msgid "Could not save rule"
 msgstr "Regel opslaan mislukt"
 
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Could not save SharePoint folders."
+msgstr "Could not save SharePoint folders."
+
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not save skill"
@@ -2980,6 +3134,10 @@ msgstr "Dat spraakmodel opslaan mislukt"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not save that voice"
 msgstr "Die stem opslaan mislukt"
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Could not save the assistant model"
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not save the company model"
@@ -3000,6 +3158,10 @@ msgstr ""
 #: src/pages/shell/message-cards.tsx
 msgid "Could not save this choice"
 msgstr "Deze keuze opslaan mislukt"
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not save your changes."
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not search catalog"
@@ -3087,6 +3249,14 @@ msgstr "Naam kon niet worden bijgewerkt"
 msgid "Could not update reaction"
 msgstr "Reactie bijwerken mislukt"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Could not update storage"
+msgstr ""
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Could not update the app"
+msgstr "Kan de app niet bijwerken"
+
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminCompanyTools.tsx
 msgid "Could not update the company setting"
@@ -3144,6 +3314,10 @@ msgstr ""
 msgid "Couldn't load submissions"
 msgstr ""
 
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Couldn't load the Document Library"
+msgstr "Couldn't load the Document Library"
+
 #: src/pages/shell/files-tab.tsx
 msgid "Couldn't load this bot's files."
 msgstr ""
@@ -3170,6 +3344,10 @@ msgstr "Je tijdzone bijwerken mislukt"
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't update your wallet"
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
 msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
@@ -3203,17 +3381,8 @@ msgid "Create group"
 msgstr "Groep aanmaken"
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Let it suggest specialists, then create more from the + button"
-msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
 msgid "Create my first chat"
 msgstr ""
-
-#: src/components/CreateOrganizationDialog.tsx
-#: src/pages/OrganizationSettingsPanel.tsx
-#~ msgid "Create organization"
-#~ msgstr "Organisatie maken"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Create Routine"
@@ -3328,6 +3497,7 @@ msgstr ""
 msgid "Daily check-ins on unfinished work"
 msgstr "Dagelijks navragen over onafgemaakt werk"
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
 msgid "Dark"
@@ -3351,11 +3521,20 @@ msgstr "Dagelijkse taken"
 msgid "days"
 msgstr "dagen"
 
+#: src/components/AskCard.tsx
+msgid "Deadline"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Deadline change"
+msgstr ""
+
 #: src/components/call/IncomingCall.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Decline"
 msgstr "Weigeren"
 
+#: src/pages/AdminDocumentLibrary.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -3387,9 +3566,18 @@ msgstr "Standaardbereik"
 msgid "Default storage ({0})"
 msgstr ""
 
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Default Word template"
+msgstr "Default Word template"
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Default Word template saved"
+msgstr "Default Word template saved"
+
 #: src/components/AccountAccess.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/todos/todo-board.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -3398,6 +3586,7 @@ msgstr ""
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/evolve-history.tsx
 #: src/pages/shell/files-tab.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
@@ -3415,6 +3604,7 @@ msgstr "\"{0}\" verwijderen?"
 #. placeholder {0}: group.name
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/archived-chats.tsx
+#: src/pages/shell/evolve-history.tsx
 msgid "Delete {0}"
 msgstr "{0} verwijderen"
 
@@ -3432,6 +3622,10 @@ msgstr "{0} verwijderen?"
 msgid "Delete account"
 msgstr "Account verwijderen"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Delete files bots attached in chats after"
+msgstr ""
+
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "Groep verwijderen"
@@ -3439,10 +3633,6 @@ msgstr "Groep verwijderen"
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"
 msgstr "Herinneringen ook verwijderen"
-
-#: src/pages/OrganizationSettingsPanel.tsx
-#~ msgid "Delete organization"
-#~ msgstr "Organisatie verwijderen"
 
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
@@ -3646,13 +3836,20 @@ msgstr "Docker beperkt de toegang tot je computer voor extra veiligheid. Met {ho
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "Het document is gewijzigd. Open het opnieuw om de nieuwste versie te bewerken."
 
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Document library"
+msgstr "Document library"
+
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
 msgstr "Heb je geen account?"
 
 #: src/components/AccountDataSettings.tsx
 #: src/components/AskCard.tsx
+#: src/components/integrations/SharePointFolders.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
+#: src/components/todos/todo-board.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/components/tour/ocsc-tour.tsx
 #: src/lib/ticket-status.ts
@@ -3692,6 +3889,7 @@ msgstr "PDF downloaden"
 msgid "Download PNG"
 msgstr ""
 
+#: src/components/ArtifactFileCard.tsx
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "Bezig met downloaden…"
@@ -3704,21 +3902,18 @@ msgstr "Concept-skill"
 msgid "Drag, drop, or paste an image"
 msgstr "Sleep, laat los of plak een afbeelding"
 
+#: src/components/AskCard.tsx
+#: src/components/todos/todo-board.tsx
+msgid "Due"
+msgstr ""
+
 #: src/pages/BotContextMenu.tsx
 msgid "Duplicate"
 msgstr "Dupliceren"
 
 #: src/pages/AdminCompanyPage.tsx
-#~ msgid "Each assistant's cloud computer, browser and files. Off also stops the OCSC PDF, Word and video skills."
-#~ msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
 msgid "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
 msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-#~ msgid "Each assistant's cloud computer, browser, routines and videos. Word, PowerPoint, Excel and PDF documents keep working when off: they run on the company document runners."
-#~ msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Each name can be used once."
@@ -3750,6 +3945,10 @@ msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Edit it as many times as you like: ask for changes in plain words"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Edit item"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -3833,6 +4032,14 @@ msgstr ""
 #: src/pages/shell/bot-panel.tsx
 msgid "Enable {0}"
 msgstr "{0} inschakelen"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled"
+msgstr "Ingeschakeld"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
+msgstr "Ingeschakelde apps kunnen worden gekoppeld. Binnenkort beschikbare apps worden met een label aan medewerkers getoond. Verborgen apps worden niet getoond en hun tools worden niet aangeboden aan de assistenten van medewerkers. Beheerders zien altijd elke app, om te testen."
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
@@ -3935,10 +4142,6 @@ msgstr "Elke {n} uur om :{minute}"
 msgid "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
 msgstr ""
 
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "Every bot in this space reads these notes and keeps them up to date."
-#~ msgstr "Alle bots in deze space lezen deze notities en houden ze bij."
-
 #: src/pages/AdminCompanyPage.tsx
 msgid "Every bot now thinks at this level"
 msgstr ""
@@ -3948,6 +4151,7 @@ msgid "Every bot uses the company model and thinking level. Change them in the <
 msgstr ""
 
 #: src/lib/cron.ts
+#: src/pages/AdminComputerAccess.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
 msgid "Every day"
@@ -3989,6 +4193,7 @@ msgstr "Elke maand"
 msgid "Every plugin is reviewed before it reaches colleagues, so shared apps stay safe"
 msgstr ""
 
+#: src/pages/AdminComputerAccess.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
 msgid "Every week"
@@ -4007,8 +4212,16 @@ msgstr ""
 msgid "Everyone without their own level"
 msgstr ""
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Everyone without their own limit"
+msgstr ""
+
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Evolve assistant"
+msgstr ""
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Evolve assistant models"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
@@ -4180,12 +4393,12 @@ msgstr "Te vergelijken velden, bijv. id, modifiedTime (optioneel)"
 msgid "File"
 msgstr "Bestand"
 
-#: src/pages/shell/bot-panel.tsx
-msgid "Files"
+#: src/pages/AdminComputerAccess.tsx
+msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
 msgstr ""
 
-#: src/pages/AdminComputerAccess.tsx
-msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted automatically unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+#: src/pages/Artifacts.tsx
+msgid "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -4212,6 +4425,10 @@ msgstr "Filters"
 #: src/pages/PluginsOverlay.tsx
 msgid "Finance"
 msgstr ""
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Find a document"
+msgstr "Find a document"
 
 #: src/components/pages/PagesList.tsx
 msgid "Find a page"
@@ -4270,6 +4487,10 @@ msgstr ""
 msgid "Focus message"
 msgstr "Naar bericht"
 
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Folders assistants can read"
+msgstr "Folders assistants can read"
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "Wachtwoord vergeten?"
@@ -4321,6 +4542,10 @@ msgstr ""
 msgid "From the company vault"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
+msgid "From:"
+msgstr ""
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "Full computer"
 msgstr ""
@@ -4347,10 +4572,9 @@ msgstr ""
 msgid "Gateway URL"
 msgstr ""
 
-#: src/pages/settings-nav.ts
-#: src/pages/SettingsOverlay.tsx
-msgid "General"
-msgstr "Algemeen"
+#: src/components/InstallAppBanner.tsx
+msgid "Get its own icon and window, and open it straight from your desktop."
+msgstr "Get its own icon and window, and open it straight from your desktop."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Get to know agent teamwork"
@@ -4421,10 +4645,6 @@ msgstr "Naar home"
 msgid "Go to bot"
 msgstr "Naar bot"
 
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "GPT Image infographics and pictures, drawing on Evolve's project datasheets and people profiles."
-#~ msgstr ""
-
 #: src/pages/AdminAccessPage.tsx
 msgid "Grant"
 msgstr ""
@@ -4454,10 +4674,6 @@ msgid "Group updates"
 msgstr "Groepsupdates"
 
 #: src/components/tour/ocsc-tour.tsx
-#~ msgid "Groups"
-#~ msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
 msgid "Grow it into an Evolve plugin with OCSC branding and approved company data"
 msgstr ""
 
@@ -4472,6 +4688,18 @@ msgstr "Hang eerst op en voer daarna de code op het scherm in."
 #: src/lib/call-session.ts
 msgid "Hang up, then enter the code on screen."
 msgstr "Hang op en voer daarna de code op het scherm in."
+
+#: src/components/AskCard.tsx
+msgid "Hard deadline"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Hard delete"
+msgstr ""
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Has AI instructions"
+msgstr "Has AI instructions"
 
 #: src/pages/RoutineEditor.tsx
 msgid "header"
@@ -4506,8 +4734,17 @@ msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "Hoi, zo klink ik als ik antwoorden hardop voorlees."
 
 #: src/components/vault/LoginFieldsInput.tsx
+#: src/pages/AdminStaffApps.tsx
 msgid "Hidden"
 msgstr "Verborgen"
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Hidden from AI"
+msgstr "Hidden from AI"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Hidden from staff"
+msgstr "Verborgen voor medewerkers"
 
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Hide"
@@ -4521,6 +4758,7 @@ msgstr "Wachtwoord verbergen"
 msgid "Hide transcript"
 msgstr "Transcript verbergen"
 
+#: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -4656,6 +4894,7 @@ msgstr "Een agent importeren"
 msgid "Import data"
 msgstr "Gegevens importeren"
 
+#: src/components/todos/todo-board.tsx
 #: src/lib/ticket-status.ts
 msgid "In progress"
 msgstr "Bezig"
@@ -4663,6 +4902,10 @@ msgstr "Bezig"
 #: src/lib/ticket-status.ts
 msgid "In review"
 msgstr "In beoordeling"
+
+#: src/components/InstallAppBanner.tsx
+msgid "In Safari's File menu, choose Add to Dock."
+msgstr "In Safari's File menu, choose Add to Dock."
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "In this bot"
@@ -4699,6 +4942,14 @@ msgstr "Invoer"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "Invoer"
+
+#: src/components/InstallAppBanner.tsx
+msgid "Install"
+msgstr "Install"
+
+#: src/components/InstallAppBanner.tsx
+msgid "Install OCSC Intelligence"
+msgstr "Install OCSC Intelligence"
 
 #: src/components/SidebarFooter.tsx
 msgid "Install update"
@@ -4810,6 +5061,11 @@ msgstr "Geïsoleerd voorbeeld — geen toegang tot je account"
 msgid "It may have been deleted, or it belongs to someone else."
 msgstr "Misschien is hij verwijderd, of is hij van iemand anders."
 
+#. placeholder {0}: last.error
+#: src/pages/AdminComputerAccess.tsx
+msgid "It stopped early: {0}"
+msgstr ""
+
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
 msgstr "De bots en groepen blijven behouden en verlaten de sectie."
@@ -4846,6 +5102,10 @@ msgstr "Herinneringen bewaren"
 msgid "Keep tool results whole"
 msgstr ""
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Keeping files"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "key"
 msgstr "sleutel"
@@ -4864,6 +5124,7 @@ msgstr "Sneltoetsen"
 msgid "Keys"
 msgstr ""
 
+#: src/pages/AdminAssistantModels.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Knowledge files"
 msgstr ""
@@ -4912,6 +5173,13 @@ msgstr ""
 msgid "Last checked {checked}."
 msgstr ""
 
+#. placeholder {0}: when(cleanup.lastRunAt)
+#. placeholder {1}: last.deletedItems
+#. placeholder {2}: formatSize(last.freedBytes)
+#: src/pages/AdminComputerAccess.tsx
+msgid "Last cleanup {0}: {1} removed, {2} freed."
+msgstr ""
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last used"
 msgstr ""
@@ -4941,6 +5209,10 @@ msgid "Let bots use this computer"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
+msgid "Let it suggest specialists, then create more from the + button"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
 msgid "Let's begin"
 msgstr ""
 
@@ -4948,6 +5220,7 @@ msgstr ""
 msgid "Lets bots save and recall facts by meaning, alongside MEMORY.md."
 msgstr "Laat bots feiten op betekenis opslaan en terugvinden, naast MEMORY.md."
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
 msgid "Light"
@@ -5014,9 +5287,17 @@ msgstr ""
 msgid "Loading activity…"
 msgstr "Activiteit laden…"
 
+#: src/pages/AdminAssistantModels.tsx
+msgid "Loading assistants…"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Loading exemplar responses..."
 msgstr ""
+
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Loading folders…"
+msgstr "Loading folders…"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
@@ -5056,10 +5337,12 @@ msgid "Loading voice providers…"
 msgstr "Spraakanbieders laden…"
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/components/integrations/SharePointFolders.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PageLoading.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDocumentLibrary.tsx
 #: src/pages/AdminStaffSpending.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
@@ -5104,6 +5387,7 @@ msgstr "Lijkt een sleutel te bevatten"
 msgid "Lost the connection. Reconnecting…"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -5122,6 +5406,11 @@ msgstr ""
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Hoofdmodel"
+
+#: src/pages/shell/chat-header.tsx
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Main PA"
+msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Make a 10-slide bid presentation for a school extension"
@@ -5163,6 +5452,10 @@ msgstr "Andere bots beheren"
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "Handmatig"
+
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Manual (drag to order)"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual setup required"
@@ -5260,11 +5553,6 @@ msgstr "Gemiddeld"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Meet your Main PA"
-msgstr ""
-
-#: src/pages/shell/chat-header.tsx
-#: src/pages/shell/sidebar-roster.tsx
-msgid "Main PA"
 msgstr ""
 
 #: src/lib/identity-display.ts
@@ -5456,6 +5744,11 @@ msgstr "Modelverbindingen"
 msgid "Model default"
 msgstr ""
 
+#. placeholder {0}: assistant.name
+#: src/pages/AdminAssistantModels.tsx
+msgid "Model for {0}"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Model id"
@@ -5470,6 +5763,10 @@ msgstr "Modelopties"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Models"
 msgstr "Modellen"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Models and agents"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Models at provider cost"
@@ -5550,6 +5847,7 @@ msgstr ""
 msgid "My memory"
 msgstr ""
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/settings-nav.ts
 msgid "My vault"
 msgstr ""
@@ -5573,6 +5871,10 @@ msgstr ""
 msgid "Name"
 msgstr "Naam"
 
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Name (A to Z)"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Name on card"
@@ -5592,10 +5894,6 @@ msgstr "Geef deze routine een naam"
 
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Name your Bot"
-msgstr ""
-
-#: src/pages/shell/create-bot-dialog.tsx
-msgid "Suggest a name"
 msgstr ""
 
 #: src/pages/shell/files-tab.tsx
@@ -5636,6 +5934,10 @@ msgstr ""
 #: src/pages/shell/import-status.ts
 msgid "Needs: {names}"
 msgstr "Vereist: {names}"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Never"
+msgstr ""
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Never ask"
@@ -5683,6 +5985,10 @@ msgstr "Nieuwe groep"
 msgid "New group chat"
 msgstr "Nieuwe groepschat"
 
+#: src/components/todos/todo-board.tsx
+msgid "New item"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "New login"
 msgstr ""
@@ -5709,6 +6015,10 @@ msgstr "Nieuw wachtwoord"
 msgid "New private space"
 msgstr "Nieuwe privéruimte"
 
+#: src/components/AskCard.tsx
+msgid "New project deadline"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "New reports and letters in OCSC style. Ask for changes as often as you like: each edit comes back as tracked changes you can accept or reject, and earlier versions are kept."
 msgstr ""
@@ -5734,9 +6044,18 @@ msgstr "Nieuw ticket"
 msgid "New variable"
 msgstr ""
 
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
+msgstr "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
+
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/shell/references-dialog.tsx
 msgid "Next"
+msgstr ""
+
+#. placeholder {0}: when(cleanup.nextRunAt)
+#: src/pages/AdminComputerAccess.tsx
+msgid "Next cleanup {0}."
 msgstr ""
 
 #: src/pages/shell/chat-find-bar.tsx
@@ -5767,10 +6086,6 @@ msgstr ""
 msgid "No apps match your search."
 msgstr "Geen apps komen overeen met je zoekopdracht."
 
-#: src/pages/Artifacts.tsx
-msgid "No artifacts found."
-msgstr "Geen artefacten gevonden."
-
 #: src/pages/PluginsOverlay.tsx
 msgid "No auth"
 msgstr "Geen auth"
@@ -5789,6 +6104,10 @@ msgid "No bots match"
 msgstr "Geen bots gevonden"
 
 #: src/pages/AdminComputerAccess.tsx
+msgid "No cleanup has run yet."
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
 msgid "No computer"
 msgstr ""
 
@@ -5800,17 +6119,41 @@ msgstr ""
 msgid "No CV was sent for this person: only their name and role."
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "No date"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "No desktop on your account"
+msgstr ""
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "No documents match."
+msgstr "No documents match."
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "No drawings selected"
+msgstr ""
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "No Evolve assistants are available. Check that Evolve is linked."
 msgstr ""
 
 #: src/pages/shell/references-dialog.tsx
 msgid "No exemplar responses match your search."
 msgstr ""
 
+#: src/pages/Artifacts.tsx
+msgid "No files found."
+msgstr ""
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "No files yet"
 msgstr ""
+
+#: src/components/integrations/SharePointFolders.tsx
+msgid "No folders here."
+msgstr "No folders here."
 
 #: src/components/render-studio/StageCanvas.tsx
 msgid "No image"
@@ -5834,8 +6177,8 @@ msgid "No matches"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
-msgid "No matching artifacts on this page."
-msgstr "Geen overeenkomende artefacten op deze pagina."
+msgid "No matching files on this page."
+msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -5883,6 +6226,10 @@ msgstr "Geen pagina's komen overeen met ‘{query}’."
 msgid "No people match your search."
 msgstr ""
 
+#: src/pages/AdminStaffApps.tsx
+msgid "No plugins are in the catalog."
+msgstr "Er staan geen plugins in de catalogus."
+
 #: src/pages/shell/references-dialog.tsx
 msgid "No projects match your filters. Try adjusting your criteria."
 msgstr ""
@@ -5922,6 +6269,10 @@ msgstr "Geen runs komen overeen met deze filters."
 msgid "No runs yet"
 msgstr "Nog geen runs"
 
+#: src/components/integrations/SharePointFolders.tsx
+msgid "No sites or OneDrive found."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "No skills yet"
 msgstr "Nog geen skills"
@@ -5954,6 +6305,11 @@ msgstr ""
 msgid "None"
 msgstr ""
 
+#: src/components/integrations/SharePointFolders.tsx
+msgid "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
+msgstr "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
+
+#: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 msgid "Normal"
 msgstr "Normaal"
@@ -5992,6 +6348,7 @@ msgid "Not in the plugin catalog"
 msgstr "Niet in de plugincatalogus"
 
 #: src/components/GitHubStarPrompt.tsx
+#: src/components/InstallAppBanner.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "Niet nu"
@@ -5999,6 +6356,10 @@ msgstr "Niet nu"
 #: src/pages/AdminCompanyTools.tsx
 msgid "Not set up"
 msgstr ""
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Not set up yet. Staff see it as being set up until it is."
+msgstr "Nog niet ingesteld. Tot die tijd zien medewerkers hem als wordt ingesteld."
 
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/import-status.ts
@@ -6027,6 +6388,18 @@ msgstr ""
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Note:"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Notes"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Nothing archived."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Nothing here"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -6070,9 +6443,9 @@ msgstr "OAuth verlopen"
 msgid "OCSC"
 msgstr ""
 
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "OCSC Apps"
-#~ msgstr ""
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC apps"
+msgstr "OCSC-apps"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "OCSC Apps put coding in every member of staff's hands. Describe the dashboard, tracker, calculator or plugin you need and an agent writes and runs the code for you inside the secure OCSC sandbox, away from live systems."
@@ -6095,10 +6468,6 @@ msgstr ""
 #: src/components/tour/ocsc-tour.tsx
 msgid "OCSC Intelligence is our own AI workspace. Its agents know OCSC, use our branded tools and work alongside you on real project work. It runs on OCSC's own platform, so your chats, agents and files stay private to you unless you share them."
 msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "OCSC Intelligence V3"
-#~ msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
@@ -6155,6 +6524,10 @@ msgstr ""
 msgid "Ollama Cloud"
 msgstr ""
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "On"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "On a schedule"
 msgstr "Op een schema"
@@ -6184,6 +6557,11 @@ msgstr ""
 msgid "Only you"
 msgstr "Alleen jij"
 
+#: src/components/todos/todo-board.tsx
+msgid "Only you can see this list. Your assistants can add to it from your emails and chats when you ask them, including in routines."
+msgstr ""
+
+#: src/components/AskCard.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
@@ -6237,11 +6615,20 @@ msgstr "Externe link openen?"
 msgid "Open in full window"
 msgstr "In volledig venster openen"
 
+#: src/components/InstallAppBanner.tsx
+msgid "Open in its own window"
+msgstr "Open in its own window"
+
 #: src/components/ImageLightbox.tsx
 msgid "Open in new tab"
 msgstr ""
 
+#: src/components/InstallAppBanner.tsx
+msgid "Open it in its own window, then install it to get its own icon and window."
+msgstr "Open it in its own window, then install it to get its own icon and window."
+
 #: src/components/pages/SharePopover.tsx
+#: src/components/todos/todo-board.tsx
 msgid "Open link"
 msgstr "Link openen"
 
@@ -6271,19 +6658,6 @@ msgstr "OpenAI-compatibele server-URL"
 msgid "OpenClaw or Hermes"
 msgstr "OpenClaw of Hermes"
 
-#: src/pages/shell/evolve-history.tsx
-msgid "Opened"
-msgstr ""
-
-#. placeholder {0}: chat.name
-#: src/pages/shell/evolve-history.tsx
-msgid "Opened as {0}"
-msgstr ""
-
-#: src/pages/shell/evolve-history.tsx
-msgid "Opened as a chat"
-msgstr ""
-
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Opens your browser's print dialog. Choose Save as PDF as the destination."
 msgstr "Opent het afdrukvenster van je browser. Kies Opslaan als PDF als bestemming."
@@ -6307,6 +6681,10 @@ msgstr ""
 #: src/pages/Onboarding.tsx
 msgid "Or paste an API key"
 msgstr "Of plak een API-sleutel"
+
+#: src/pages/Auth.tsx
+msgid "or sign in with email"
+msgstr "of log in met e-mail"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Organization"
@@ -6433,10 +6811,6 @@ msgstr "Paginatitel"
 msgid "Pages"
 msgstr "Pagina's"
 
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Pages are perfect for quick views of your project data"
-#~ msgstr ""
-
 #: src/components/pages/PagesList.tsx
 msgid "Pages this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
 msgstr "Pagina's die deze bot voor je maakt, verschijnen hier. Vraag om een dashboard, tracker of plan om er een te maken."
@@ -6509,6 +6883,7 @@ msgstr "Plak je API-sleutel"
 msgid "Paste your API key, then test again."
 msgstr "Plak je API-sleutel en test daarna opnieuw."
 
+#: src/pages/AdminComputerAccess.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/import-status.ts
 msgid "Paused"
@@ -6542,6 +6917,10 @@ msgstr ""
 #. placeholder {0}: people.length
 #: src/pages/GroupPanel.tsx
 msgid "People ({0})"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "People keep their own logins, cards, API keys and contacts, and their assistants can use them. Off for everyone until you turn this on. The company vault on this page is separate and stays available."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -6675,6 +7054,14 @@ msgstr ""
 msgid "Plugins"
 msgstr ""
 
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins for staff"
+msgstr "Plugins voor medewerkers"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
+msgstr "Plugins uit de catalogus die een app koppelen, zoals Stripe, Figma of Cal.com. Medewerkers zien alleen de hier ingeschakelde en voegen ze toe zolang Plugins aan staat. Pakketten met alleen vaardigheden volgen Vaardigheden voor medewerkers."
+
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "Plaats \"No changes\" in de chat"
@@ -6726,13 +7113,10 @@ msgstr "Vorige pagina"
 msgid "Previous settings sections"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Priority"
 msgstr "Prioriteit"
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Private"
-#~ msgstr "Privé"
 
 #: src/pages/shell/bot-picker.tsx
 msgid "Private space with its own bots and groups."
@@ -6741,10 +7125,6 @@ msgstr ""
 #: src/components/tour/ocsc-tour.tsx
 msgid "Private spaces keep a team's chats and files separate"
 msgstr ""
-
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "Private workspace with its own bots and groups."
-#~ msgstr "Privéwerkruimte met eigen bots en groepen."
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -6762,6 +7142,7 @@ msgstr ""
 msgid "Program: {name}"
 msgstr "Programma: {name}"
 
+#: src/components/AskCard.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Project"
 msgstr ""
@@ -6833,9 +7214,21 @@ msgstr "Reageren"
 msgid "Reactions"
 msgstr "Reacties"
 
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Read only"
+msgstr "Read only"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
 msgstr "Antwoorden hardop voorlezen"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Read-only, and only the folders you choose. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
+msgstr "Read-only, and only the folders you choose. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Read-only: assistants can list folders, search, read emails and open attachments, but never send, move or delete mail. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
+msgstr "Read-only: assistants can list folders, search, read emails and open attachments, but never send, move or delete mail. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Reads a workbook first, then edits cells, rows and sheets without breaking formulas"
@@ -6853,8 +7246,12 @@ msgstr ""
 msgid "Ready"
 msgstr "Klaar"
 
+#: src/pages/AdminStaffApps.tsx
+msgid "Ready to connect."
+msgstr "Klaar om te koppelen."
+
 #: src/pages/AdminCompanyTools.tsx
-msgid "Ready-made ways of working that come with OCSC Intelligence. Staff can also write their own skills under Tools and skills."
+msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
 msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -6881,6 +7278,10 @@ msgstr ""
 #: src/pages/ActivityList.tsx
 msgid "Recent"
 msgstr "Recent"
+
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Recent activity"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"
@@ -7271,7 +7672,9 @@ msgid "Restart to update"
 msgstr "Herstarten om bij te werken"
 
 #: src/components/InstructionSettings.tsx
+#: src/components/todos/todo-board.tsx
 #: src/pages/shell/archived-chats.tsx
+#: src/pages/shell/evolve-history.tsx
 msgid "Restore"
 msgstr "Herstellen"
 
@@ -7297,6 +7700,7 @@ msgstr "Je werkruimte herstellen"
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDocumentLibrary.tsx
 #: src/pages/AdminStaffSpending.tsx
 #: src/pages/Auth.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -7387,6 +7791,14 @@ msgstr ""
 msgid "Run at"
 msgstr "Uitvoeren om"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Run cleanup"
+msgstr ""
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Run cleanup now"
+msgstr ""
+
 #: src/pages/RoutineRunHistory.tsx
 msgid "Run history"
 msgstr "Rungeschiedenis"
@@ -7442,6 +7854,7 @@ msgstr "zaterdag"
 #: src/components/PasskeySettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
+#: src/components/todos/todo-board.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Board.tsx
@@ -7457,6 +7870,14 @@ msgstr "zaterdag"
 #: src/pages/shell/dialogs.tsx
 msgid "Save"
 msgstr "Opslaan"
+
+#: src/pages/AdminAssistantModels.tsx
+msgid "Save a company model first; assistant models run on its key."
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Save changes"
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Save for everyone"
@@ -7477,6 +7898,7 @@ msgstr "Opslaan in kluis"
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/AdminAssistantModels.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Saved"
 msgstr "Opgeslagen"
@@ -7569,10 +7991,6 @@ msgstr ""
 msgid "Search apps"
 msgstr "Apps zoeken"
 
-#: src/pages/Artifacts.tsx
-msgid "Search artifacts…"
-msgstr "Artefacten zoeken…"
-
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Search bots"
 msgstr "Bots zoeken"
@@ -7585,12 +8003,20 @@ msgstr ""
 msgid "Search by domain"
 msgstr "Zoeken op domein"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Search chat files"
+msgstr "Chatbestanden doorzoeken"
+
 #: src/components/GroupPeople.tsx
 msgid "Search Evolve people"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
 msgid "Search Evolve people to add"
+msgstr ""
+
+#: src/pages/Artifacts.tsx
+msgid "Search files…"
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
@@ -7604,9 +8030,17 @@ msgstr "integrations.sh doorzoeken"
 msgid "Search models"
 msgstr "Modellen zoeken"
 
+#: src/pages/AdminStaffApps.tsx
+msgid "Search plugins"
+msgstr "Plugins zoeken"
+
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Search runs"
 msgstr "Runs zoeken"
+
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Search sites"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
@@ -7776,6 +8210,7 @@ msgstr ""
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/composer-mentions.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Settings"
@@ -7788,10 +8223,6 @@ msgstr "Instellingen bijgewerkt"
 #: src/pages/Shell.tsx
 msgid "Settings: {label}"
 msgstr ""
-
-#: src/pages/shell/composer-mentions.tsx
-msgid "Settings: General"
-msgstr "Instellingen: algemeen"
 
 #: src/pages/shell/composer-mentions.tsx
 msgid "Settings: Usage"
@@ -7846,10 +8277,6 @@ msgstr ""
 msgid "Shared"
 msgstr "Gedeeld"
 
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "Shared memory"
-#~ msgstr "Gedeeld geheugen"
-
 #: src/pages/SharedPage.tsx
 msgid "Shared pages are only for people at your company."
 msgstr ""
@@ -7865,6 +8292,7 @@ msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/AdminDocumentLibrary.tsx
 msgid "Show"
 msgstr "Tonen"
 
@@ -7872,17 +8300,13 @@ msgstr "Tonen"
 msgid "Show all"
 msgstr "Alles tonen"
 
-#: src/pages/shell/evolve-history.tsx
-msgid "Show all {total}"
-msgstr ""
-
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "Bots tonen"
 
-#: src/pages/shell/evolve-history.tsx
-msgid "Show fewer"
-msgstr ""
+#: src/pages/PluginsOverlay.tsx
+msgid "Show everything (admins)"
+msgstr "Alles tonen (beheerders)"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -7910,6 +8334,18 @@ msgstr "Toolactiviteit tonen"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Show transcript"
 msgstr "Transcript tonen"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Show what staff see"
+msgstr "Tonen wat medewerkers zien"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing every app and plugin, including ones hidden from staff."
+msgstr "Alle apps en plugins worden getoond, ook die verborgen zijn voor medewerkers."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Showing what staff see."
+msgstr "Je ziet wat medewerkers zien."
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Sidebar density"
@@ -7973,6 +8409,10 @@ msgstr ""
 msgid "Site"
 msgstr "Site"
 
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Sites & OneDrive"
+msgstr ""
+
 #. placeholder {0}: skill.name
 #: src/pages/shell/composer.tsx
 msgid "Skill {0}"
@@ -8030,6 +8470,10 @@ msgstr "Schuif omhoog om te vergrendelen"
 msgid "Slides come animated for presenting"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Soft deadline"
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Some plugins could not be loaded."
@@ -8056,6 +8500,10 @@ msgstr "Iets wat je koos werkt hier niet. Vink het uit en probeer het opnieuw."
 #: src/components/UiCardView.tsx
 msgid "Sort by {column}"
 msgstr "Sorteren op {column}"
+
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Sort chats"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 msgid "Sort cleared"
@@ -8098,6 +8546,10 @@ msgstr "Spreekt"
 msgid "Speech model"
 msgstr "Spraakmodel"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Spending"
+msgstr ""
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Split"
 msgstr ""
@@ -8121,6 +8573,24 @@ msgstr ""
 #: src/lib/user-error.ts
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO is tijdelijk niet beschikbaar. Probeer het opnieuw."
+
+#. placeholder {0}: app.name
+#. placeholder {0}: entry.displayName
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff access to {0}"
+msgstr "Toegang van medewerkers tot {0}"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
+msgstr ""
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+msgstr "Medewerkers zien elke plugin totdat je op deze pagina een keuze opslaat. Daarna zien ze alleen de hier ingeschakelde."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Staff skills"
+msgstr ""
 
 #: src/pages/AdminStaffSpending.tsx
 msgid "Staff spending"
@@ -8198,6 +8668,8 @@ msgstr "Bezig met starten…"
 msgid "State or region"
 msgstr ""
 
+#: src/components/AskCard.tsx
+#: src/components/todos/todo-board.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
 msgid "Status"
@@ -8226,6 +8698,11 @@ msgstr "Stoppen"
 msgid "Stop computer"
 msgstr ""
 
+#. placeholder {0}: folder.name
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Stop sharing {0}"
+msgstr "Stop sharing {0}"
+
 #: src/pages/shell/message-view.tsx
 msgid "Stop speaking"
 msgstr "Stoppen met spreken"
@@ -8241,6 +8718,11 @@ msgstr "Gestopt."
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Stopping…"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminComputerAccess.tsx
+msgid "Storage and cleanup"
 msgstr ""
 
 #. placeholder {0}: person.name
@@ -8273,10 +8755,6 @@ msgstr "subagent"
 msgid "Submit"
 msgstr "Versturen"
 
-#: src/pages/PluginsOverlay.tsx
-msgid "Submit a plugin"
-msgstr ""
-
 #: src/components/ModelCredits.tsx
 #: src/pages/Paywall.tsx
 msgid "Subscribe"
@@ -8301,6 +8779,10 @@ msgstr "Abonneren met je eigen AI"
 #: src/pages/Paywall.tsx
 msgid "Subscription required"
 msgstr "Abonnement vereist"
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "Suggest a name"
+msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Summary"
@@ -8341,6 +8823,7 @@ msgstr "Overstappen op jaarlijks?"
 msgid "Switching…"
 msgstr "Bezig met wisselen…"
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
 msgid "System"
@@ -8353,6 +8836,10 @@ msgstr "Tabel"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "Controle overnemen"
+
+#: src/components/InstallAppBanner.tsx
+msgid "Tap Share, then Add to Home Screen."
+msgstr "Tap Share, then Add to Home Screen."
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Target"
@@ -8370,10 +8857,6 @@ msgstr ""
 msgid "Teaching in progress. Stop teaching before sending a new message."
 msgstr "Er wordt lesgegeven. Stop het onderwijs voordat je een nieuw bericht stuurt."
 
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Team"
-#~ msgstr "Team"
-
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "Teamcomputer"
@@ -8387,8 +8870,13 @@ msgid "Tell an agent to forget something and it will"
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
+#: src/pages/AdminDocumentLibrary.tsx
 msgid "Template"
 msgstr ""
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Templates"
+msgstr "Templates"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Terms I use:\n"
@@ -8437,6 +8925,14 @@ msgstr ""
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."
 msgstr ""
+
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "The chosen document is no longer a template, so new Word documents use the built-in OCSC report until you choose another."
+msgstr "The chosen document is no longer a template, so new Word documents use the built-in OCSC report until you choose another."
+
+#: src/pages/IntegrationCallback.tsx
+msgid "The connection did not finish. Close this window and try again."
+msgstr "The connection did not finish. Close this window and try again."
 
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
@@ -8548,6 +9044,11 @@ msgstr ""
 msgid "Thinking"
 msgstr "Denkt"
 
+#. placeholder {0}: assistant.name
+#: src/pages/AdminAssistantModels.tsx
+msgid "Thinking for {0}"
+msgstr ""
+
 #. placeholder {0}: thinkingLevelLabel(choice.thinkingLevel)
 #: src/pages/ModelRoleSettings.tsx
 msgid "Thinking: {0}"
@@ -8629,8 +9130,8 @@ msgstr "Dit gesprek is te lang voor het model. Opnieuw proberen helpt niet. Begi
 
 #. placeholder {0}: pendingDelete.versionCount
 #: src/pages/Artifacts.tsx
-msgid "This deletes all {0} versions of this artifact. This can't be undone."
-msgstr "Hiermee worden alle {0} versies van dit artefact verwijderd. Dit kan niet ongedaan worden gemaakt."
+msgid "This deletes all {0} versions of this file. This can't be undone."
+msgstr ""
 
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
@@ -8758,6 +9259,7 @@ msgstr "Het tijdstip kan afwijken"
 msgid "Tip:"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Title"
 msgstr "Titel"
@@ -8771,9 +9273,15 @@ msgstr "Aan"
 msgid "To {0}"
 msgstr "Tot {0}"
 
+#: src/components/todos/todo-board.tsx
 #: src/lib/ticket-status.ts
 msgid "To do"
 msgstr "Te doen"
+
+#: src/components/todos/todo-board.tsx
+#: src/pages/shell/shell-sidebar.tsx
+msgid "To do list"
+msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
 msgid "To:"
@@ -8821,6 +9329,7 @@ msgstr "Tools"
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/SidebarFooter.tsx
+#: src/pages/AdminCompanyPage.tsx
 msgid "Tools and skills"
 msgstr ""
 
@@ -8831,10 +9340,6 @@ msgstr ""
 #: src/pages/AdminComputerAccess.tsx
 msgid "Tools only"
 msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-#~ msgid "Tools only: assistants make Word, PowerPoint, Excel, PDF and video files on the person's own private computer, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: chat and Evolve tools only. Every person's computer and files stay their own."
-#~ msgstr ""
 
 #: src/pages/AdminStaffSpending.tsx
 msgid "Total cost"
@@ -8922,6 +9427,7 @@ msgstr ""
 msgid "Turns any OCSC Word report, deck or workbook into a clean PDF"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Type"
@@ -8935,6 +9441,10 @@ msgstr "Typ {name} om te bevestigen"
 msgid "Type a clear, specific instruction in the box below."
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Type my own answer"
+msgstr "Zelf een antwoord typen"
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Type or paste here. Plain sentences or bullet points both work."
 msgstr ""
@@ -8942,14 +9452,6 @@ msgstr ""
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Type without recording"
 msgstr "Typen zonder opname"
-
-#: src/components/AskCard.tsx
-msgid "Type my own answer"
-msgstr "Zelf een antwoord typen"
-
-#: src/components/AskCard.tsx
-msgid "Your answer"
-msgstr "Jouw antwoord"
 
 #: src/components/AskCard.tsx
 msgid "Type your answer"
@@ -8976,6 +9478,10 @@ msgstr "Koppeling verbreken"
 msgid "Unmute"
 msgstr "Dempen opheffen"
 
+#: src/components/AskCard.tsx
+msgid "Unnamed project"
+msgstr ""
+
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/files-tab.tsx
@@ -8990,7 +9496,7 @@ msgstr ""
 msgid "Unread"
 msgstr "Ongelezen"
 
-#. placeholder {0}: pending.file.name
+#. placeholder {0}: original.name
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Niet-ondersteund bestandstype: {0}"
@@ -9127,6 +9633,10 @@ msgstr ""
 msgid "Use my subscription or API key"
 msgstr ""
 
+#: src/components/InstallAppBanner.tsx
+msgid "Use OCSC Intelligence as an app"
+msgstr "Use OCSC Intelligence as an app"
+
 #: src/components/ModelCredits.tsx
 msgid "Use OCSC Intelligence credits"
 msgstr ""
@@ -9142,6 +9652,10 @@ msgstr ""
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Gebruik maximaal 512 letters, cijfers, _ of -."
+
+#: src/pages/Auth.tsx
+msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
+msgstr "Gebruik je OCSC-Microsoft-account via Evolve. Bij je eerste aanmelding wordt je account aangemaakt."
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
@@ -9253,6 +9767,7 @@ msgstr ""
 msgid "View source"
 msgstr ""
 
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminCompanyVoice.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/SpaceSettingOverrides.tsx
@@ -9276,9 +9791,17 @@ msgstr ""
 msgid "Wait a moment and test again."
 msgstr "Wacht even en test daarna opnieuw."
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Waiting for setup"
+msgstr "Wacht op instelling"
+
 #: src/lib/roster-status.ts
 msgid "Waiting in line…"
 msgstr "In de wachtrij…"
+
+#: src/components/todos/todo-board.tsx
+msgid "Waiting on others"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Waiting on you"
@@ -9374,6 +9897,14 @@ msgstr ""
 msgid "What it can do"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
+msgid "What needs doing?"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "What people manage themselves"
+msgstr ""
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "What result will you demonstrate?"
 msgstr "Welk resultaat ga je aantonen?"
@@ -9433,6 +9964,10 @@ msgstr "Waar moeten bots draaien?"
 msgid "Who can open this page"
 msgstr "Wie deze pagina kan openen"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Who gets a computer"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Who you work with and what matters to them"
 msgstr ""
@@ -9453,9 +9988,13 @@ msgstr ""
 msgid "Word document"
 msgstr ""
 
-#: src/pages/AdminComputerAccess.tsx
-#~ msgid "Word, PowerPoint, Excel and PDF documents always run on the company document runners, for everyone. Tools only adds videos, with no shell, browser, screen or routines. Full: everything, including browsing and routines. No computer: documents and Evolve tools only. Every person's files stay their own."
-#~ msgstr ""
+#: src/pages/AdminDocumentLibrary.tsx
+msgid "Word files"
+msgstr "Word files"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes."
+msgstr "Word-, PDF-, PowerPoint- en tekstbestanden die aan een chat zijn toegevoegd, worden op de achtergrond met OpenAI geïndexeerd, zodat assistenten snel de juiste passages vinden in plaats van elk bestand opnieuw te lezen. Werkt zolang het bedrijfsmodel op OpenAI draait. Uit stopt het indexeren en verwijdert de indexen."
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Word, PowerPoint, Excel, PDF and video files always run on the company tool runners, for everyone. Full adds the person's own computer for browsing, a shell and routines. Tools only and No computer: documents, videos and Evolve tools. Every person's files stay their own."
@@ -9587,10 +10126,26 @@ msgstr ""
 msgid "Your administrator sets up voice for the company."
 msgstr ""
 
+#: src/pages/Auth.tsx
+msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
+msgstr "Je AI-werkruimte voor engineering: aanbestedingen, rapporten, voorstellen en projectkennis op één plek."
+
+#: src/components/AskCard.tsx
+msgid "Your answer"
+msgstr "Jouw antwoord"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Your Anthropic"
 msgstr "Jouw Anthropic"
+
+#: src/components/todos/todo-board.tsx
+msgid "Your assistant added this item."
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Your bots will use this note from their next reply"
@@ -9623,10 +10178,6 @@ msgstr "Jouw standaardinstellingen"
 #: src/pages/Auth.tsx
 msgid "Your email address"
 msgstr "Jouw e-mailadres"
-
-#: src/components/tour/ocsc-tour.tsx
-msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot."
-msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -9667,6 +10218,10 @@ msgstr ""
 msgid "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below; the built-in ones come with OCSC Intelligence."
 msgstr ""
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot."
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {annualPrice} / year when your trial ends."
 msgstr "Na je proefperiode kost je plan {annualPrice} per jaar."
@@ -9678,10 +10233,6 @@ msgstr "Je abonnement wordt {tierTargetLabel} wanneer je proefperiode eindigt."
 #: src/pages/KnowledgeSection.tsx
 msgid "Your role, office, team and what you work on"
 msgstr ""
-
-#: src/components/integrations/skills-dialog.tsx
-#~ msgid "Your skills"
-#~ msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Your subscription or API key"
@@ -9723,613 +10274,4 @@ msgstr ""
 #: src/components/ImageLightbox.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
-msgstr ""
-
-#. placeholder {0}: props.name
-#: src/components/ArtifactFileCard.tsx
-msgid "{0} was removed by your company's file cleanup. Ask the bot to make it again."
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Apps, plugins and messaging"
-msgstr ""
-
-#: src/pages/shell/evolve-history.tsx
-msgid "Archived"
-msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Ask your administrator if you need one."
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "At (UK time)"
-msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-msgid "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
-msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Change in Company admin"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Cleanup is paused, so nothing is deleted."
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Cleanup requested; it starts within a minute."
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Cleanup schedule"
-msgstr ""
-
-#. placeholder {0}: when(cleanup.lastRunAt)
-#: src/pages/AdminComputerAccess.tsx
-msgid "Cleanup started {0}."
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Company admin sections"
-msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-msgid "Company model ({companyLabel})"
-msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-msgid "Company thinking"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Computer provider"
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Computers and routines"
-msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Computers are off for the company"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Computers are switched off in Features, so nobody has one. Documents and videos still work for everyone."
-msgstr ""
-
-#: src/pages/shell/evolve-history.tsx
-msgid "Confirm"
-msgstr ""
-
-#: src/pages/shell/evolve-history.tsx
-msgid "Could not delete that chat."
-msgstr ""
-
-#: src/pages/Artifacts.tsx
-msgid "Could not delete this file."
-msgstr ""
-
-#: src/pages/Artifacts.tsx
-msgid "Could not load files."
-msgstr ""
-
-#: src/pages/shell/evolve-history.tsx
-msgid "Could not restore that chat."
-msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-msgid "Could not save the assistant model"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Could not update storage"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Delete files bots attached in chats after"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Everyone without their own limit"
-msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-msgid "Evolve assistant models"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
-msgstr ""
-
-#: src/pages/Artifacts.tsx
-msgid "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
-msgstr ""
-
-#. placeholder {0}: last.error
-#: src/pages/AdminComputerAccess.tsx
-msgid "It stopped early: {0}"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Keeping files"
-msgstr ""
-
-#. placeholder {0}: when(cleanup.lastRunAt)
-#. placeholder {1}: last.deletedItems
-#. placeholder {2}: formatSize(last.freedBytes)
-#: src/pages/AdminComputerAccess.tsx
-msgid "Last cleanup {0}: {1} removed, {2} freed."
-msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-msgid "Loading assistants…"
-msgstr ""
-
-#: src/pages/shell/shell-dialogs.tsx
-msgid "Manual (drag to order)"
-msgstr ""
-
-#. placeholder {0}: assistant.name
-#: src/pages/AdminAssistantModels.tsx
-msgid "Model for {0}"
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Models and agents"
-msgstr ""
-
-#: src/pages/shell/shell-dialogs.tsx
-msgid "Name (A to Z)"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Never"
-msgstr ""
-
-#. placeholder {0}: when(cleanup.nextRunAt)
-#: src/pages/AdminComputerAccess.tsx
-msgid "Next cleanup {0}."
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "No cleanup has run yet."
-msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-msgid "No desktop on your account"
-msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-msgid "No Evolve assistants are available. Check that Evolve is linked."
-msgstr ""
-
-#: src/pages/Artifacts.tsx
-msgid "No files found."
-msgstr ""
-
-#: src/pages/Artifacts.tsx
-msgid "No matching files on this page."
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "On"
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "People keep their own logins, cards, API keys and contacts, and their assistants can use them. Off for everyone until you turn this on. The company vault on this page is separate and stays available."
-msgstr ""
-
-#: src/pages/AdminCompanyTools.tsx
-msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
-msgstr ""
-
-#: src/pages/shell/shell-dialogs.tsx
-msgid "Recent activity"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Run cleanup"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Run cleanup now"
-msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-msgid "Save a company model first; assistant models run on its key."
-msgstr ""
-
-#: src/pages/Artifacts.tsx
-msgid "Search files…"
-msgstr ""
-
-#: src/pages/shell/shell-dialogs.tsx
-msgid "Sort chats"
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Spending"
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Staff skills"
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-#: src/pages/AdminComputerAccess.tsx
-msgid "Storage and cleanup"
-msgstr ""
-
-#. placeholder {0}: assistant.name
-#: src/pages/AdminAssistantModels.tsx
-msgid "Thinking for {0}"
-msgstr ""
-
-#. placeholder {0}: pendingDelete.versionCount
-#: src/pages/Artifacts.tsx
-msgid "This deletes all {0} versions of this file. This can't be undone."
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "What people manage themselves"
-msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-msgid "Who gets a computer"
-msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Search chat files"
-msgstr "Chatbestanden doorzoeken"
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes."
-msgstr "Word-, PDF-, PowerPoint- en tekstbestanden die aan een chat zijn toegevoegd, worden op de achtergrond met OpenAI geïndexeerd, zodat assistenten snel de juiste passages vinden in plaats van elk bestand opnieuw te lezen. Werkt zolang het bedrijfsmodel op OpenAI draait. Uit stopt het indexeren en verwijdert de indexen."
-
-#: src/pages/Auth.tsx
-msgid "Continue with <0/>"
-msgstr "Doorgaan met <0/>"
-
-#: src/pages/Auth.tsx
-msgid "or sign in with email"
-msgstr "of log in met e-mail"
-
-#: src/pages/Auth.tsx
-msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
-msgstr "Je AI-werkruimte voor engineering: aanbestedingen, rapporten, voorstellen en projectkennis op één plek."
-
-#: src/pages/Auth.tsx
-msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
-msgstr "Gebruik je OCSC-Microsoft-account via Evolve. Bij je eerste aanmelding wordt je account aangemaakt."
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Apps for staff"
-msgstr "Apps voor medewerkers"
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Being set up"
-msgstr "Wordt ingesteld"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Could not update the app"
-msgstr "Kan de app niet bijwerken"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Enabled"
-msgstr "Ingeschakeld"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
-msgstr "Ingeschakelde apps kunnen worden gekoppeld. Binnenkort beschikbare apps worden met een label aan medewerkers getoond. Verborgen apps worden niet getoond en hun tools worden niet aangeboden aan de assistenten van medewerkers. Beheerders zien altijd elke app, om te testen."
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Hidden from staff"
-msgstr "Verborgen voor medewerkers"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Not set up yet. Staff see it as being set up until it is."
-msgstr "Nog niet ingesteld. Tot die tijd zien medewerkers hem als wordt ingesteld."
-
-#: src/pages/PluginsOverlay.tsx
-msgid "OCSC apps"
-msgstr "OCSC-apps"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Ready to connect."
-msgstr "Klaar om te koppelen."
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Staff access to {0}"
-msgstr "Toegang van medewerkers tot {0}"
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Waiting for setup"
-msgstr "Wacht op instelling"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "No plugins are in the catalog."
-msgstr "Er staan geen plugins in de catalogus."
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Plugins for staff"
-msgstr "Plugins voor medewerkers"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
-msgstr "Plugins uit de catalogus die een app koppelen, zoals Stripe, Figma of Cal.com. Medewerkers zien alleen de hier ingeschakelde en voegen ze toe zolang Plugins aan staat. Pakketten met alleen vaardigheden volgen Vaardigheden voor medewerkers."
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Search plugins"
-msgstr "Plugins zoeken"
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Show everything (admins)"
-msgstr "Alles tonen (beheerders)"
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Show what staff see"
-msgstr "Tonen wat medewerkers zien"
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Showing every app and plugin, including ones hidden from staff."
-msgstr "Alle apps en plugins worden getoond, ook die verborgen zijn voor medewerkers."
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Showing what staff see."
-msgstr "Je ziet wat medewerkers zien."
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
-msgstr "Medewerkers zien elke plugin totdat je op deze pagina een keuze opslaat. Daarna zien ze alleen de hier ingeschakelde."
-
-msgid "Choose folders"
-msgstr "Choose folders"
-
-msgid "Could not load SharePoint folders."
-msgstr "Could not load SharePoint folders."
-
-msgid "Could not open this in SharePoint."
-msgstr "Could not open this in SharePoint."
-
-msgid "Could not save SharePoint folders."
-msgstr "Could not save SharePoint folders."
-
-msgid "Folders assistants can read"
-msgstr "Folders assistants can read"
-
-msgid "Loading folders…"
-msgstr "Loading folders…"
-
-msgid "No folders here."
-msgstr "No folders here."
-
-msgid "No sites found."
-msgstr "No sites found."
-
-msgid "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
-msgstr "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
-
-msgid "Search SharePoint sites"
-msgstr "Search SharePoint sites"
-
-#: src/components/integrations/SharePointFolders.tsx
-msgid "Sites & OneDrive"
-msgstr ""
-
-#: src/components/integrations/SharePointFolders.tsx
-msgid "Search sites"
-msgstr ""
-
-#: src/components/integrations/SharePointFolders.tsx
-msgid "No sites or OneDrive found."
-msgstr ""
-
-msgid "Sites"
-msgstr "Sites"
-
-msgid "Stop sharing {0}"
-msgstr "Stop sharing {0}"
-
-msgid "The connection did not finish. Close this window and try again."
-msgstr "The connection did not finish. Close this window and try again."
-
-msgid "{0} is now {1}"
-msgstr "{0} is now {1}"
-
-msgid "All documents"
-msgstr "All documents"
-
-msgid "Built-in OCSC report"
-msgstr "Built-in OCSC report"
-
-msgid "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
-msgstr "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
-
-msgid "Could not change AI access"
-msgstr "Could not change AI access"
-
-msgid "Could not change the default Word template"
-msgstr "Could not change the default Word template"
-
-msgid "Couldn't load the Document Library"
-msgstr "Couldn't load the Document Library"
-
-msgid "Default Word template"
-msgstr "Default Word template"
-
-msgid "Default Word template saved"
-msgstr "Default Word template saved"
-
-msgid "Document library"
-msgstr "Document library"
-
-msgid "Find a document"
-msgstr "Find a document"
-
-msgid "Has AI instructions"
-msgstr "Has AI instructions"
-
-msgid "Hidden from AI"
-msgstr "Hidden from AI"
-
-msgid "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
-msgstr "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
-
-msgid "No documents match."
-msgstr "No documents match."
-
-msgid "Read only"
-msgstr "Read only"
-
-msgid "Templates"
-msgstr "Templates"
-
-msgid "The chosen document is no longer a template, so new Word documents use the built-in OCSC report until you choose another."
-msgstr "The chosen document is no longer a template, so new Word documents use the built-in OCSC report until you choose another."
-
-msgid "Word files"
-msgstr "Word files"
-
-msgid "Get its own icon and window, and open it straight from your desktop."
-msgstr "Get its own icon and window, and open it straight from your desktop."
-
-msgid "In Safari's File menu, choose Add to Dock."
-msgstr "In Safari's File menu, choose Add to Dock."
-
-msgid "Install"
-msgstr "Install"
-
-msgid "Install OCSC Intelligence"
-msgstr "Install OCSC Intelligence"
-
-msgid "Open in its own window"
-msgstr "Open in its own window"
-
-msgid "Open it in its own window, then install it to get its own icon and window."
-msgstr "Open it in its own window, then install it to get its own icon and window."
-
-msgid "Tap Share, then Add to Home Screen."
-msgstr "Tap Share, then Add to Home Screen."
-
-msgid "Use OCSC Intelligence as an app"
-msgstr "Use OCSC Intelligence as an app"
-
-msgid "Read-only: assistants can list folders, search, read emails and open attachments, but never send, move or delete mail. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
-msgstr "Read-only: assistants can list folders, search, read emails and open attachments, but never send, move or delete mail. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
-
-msgid "Read-only, and only the folders you choose. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
-msgstr "Read-only, and only the folders you choose. Only your own one-to-one chats with your own assistants can use it, never group chats, Slack or Teams conversations or messages from other assistants."
-
-#: src/components/todos/todo-board.tsx
-msgid "Added by your assistant"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "AI"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Back to board"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Close to do list"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Could not add that item."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Could not delete it."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Could not load your to do list."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Could not move that item."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Could not restore it."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Could not save your changes."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Due"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Edit item"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "From:"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "New item"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Notes"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Nothing archived."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Nothing here"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Only you can see this list. Your assistants can add to it from your emails and chats when you ask them, including in routines."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "To do list"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Waiting on others"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "What needs doing?"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Your assistant added this item."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Confirm hard delete"
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Could not hard delete it."
-msgstr ""
-
-#: src/components/todos/todo-board.tsx
-msgid "Hard delete"
 msgstr ""

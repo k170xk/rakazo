@@ -61,6 +61,19 @@ const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
   "set_child_bot_model",
 ]);
 
+/**
+ * Changes a person approves on a card each time, in every approval mode: no rule, reviewer or
+ * "never ask" setting lets one through, as for a purchase.
+ */
+const EVERY_TIME_APPROVAL_TOOLS = new Set([
+  "mcp__evolve__add_project_deadline",
+  "mcp__evolve__update_project_deadline",
+]);
+
+export function toolNeedsApprovalEveryTime(toolName: string): boolean {
+  return EVERY_TIME_APPROVAL_TOOLS.has(toolName);
+}
+
 const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "browser_snapshot",
   "cloud_agent_status",
@@ -195,7 +208,7 @@ function innerToolSlugs(args: unknown): string[] {
 
 /** Security-boundary changes cannot be auto-reviewed or permanently allowed. */
 export function toolRequiresExplicitApproval(toolName: string): boolean {
-  return EXPLICIT_APPROVAL_BUILTIN_TOOLS.has(toolName);
+  return EXPLICIT_APPROVAL_BUILTIN_TOOLS.has(toolName) || toolNeedsApprovalEveryTime(toolName);
 }
 
 /**
@@ -594,9 +607,11 @@ export function planActionGate(input: {
   newDestination?: boolean;
   /** A click that completes a purchase: a person approves it each time, in every mode. */
   purchase?: boolean;
+  /** Approved on a card each time in every mode, like a purchase (see toolNeedsApprovalEveryTime). */
+  everyTime?: boolean;
 }): "ask" | "allow" | "judge" | "deny" {
   if (input.resolved.decision === "deny") return "deny";
-  if (input.purchase) return "ask";
+  if (input.purchase || input.everyTime) return "ask";
   if (input.mandatory) {
     if (input.mode !== "never") return "ask";
     return input.steerable ? "deny" : "allow";

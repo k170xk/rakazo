@@ -23,6 +23,7 @@ import {
   repeatsDeniedAction,
   resolveActionApprovalForTools,
   SITE_SENDING_TOOLS,
+  toolNeedsApprovalEveryTime,
   toolRequiresApproval,
   toolRequiresExplicitApproval,
   unattendedTriggerToolRequiresApproval,
@@ -254,6 +255,7 @@ export async function gateToolCall(
   const { purchase, cardUse } = request;
   // Typing a saved card is approved like a purchase: every time, by a person.
   const paying = Boolean(purchase) || Boolean(cardUse);
+  const everyTime = toolNeedsApprovalEveryTime(name);
   const requiresApprovalByDefault =
     request.heldForApproval ||
     paying ||
@@ -341,6 +343,7 @@ export async function gateToolCall(
         checkerConfigured,
         newDestination: siteGate === "new",
         purchase: paying,
+        everyTime,
       });
   // Nobody is there to approve a purchase a webhook run reaches.
   if (paying && run.trigger === "webhook" && plan !== "deny") {
@@ -349,6 +352,15 @@ export async function gateToolCall(
       result: {
         error:
           "This would complete a purchase, which needs the user's approval, and a webhook run cannot ask. Don't retry; tell the user.",
+      },
+    };
+  }
+  if (everyTime && run.trigger === "webhook" && plan !== "deny") {
+    await auditToolCall(ctx, name, "denied", { reason: "approval_unattended" });
+    return {
+      result: {
+        error:
+          "This change needs the user's approval on a card, and a webhook run cannot ask. Don't retry; tell the user.",
       },
     };
   }

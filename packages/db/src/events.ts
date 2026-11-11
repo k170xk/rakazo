@@ -979,6 +979,8 @@ async function commitAnswerRunInput(
       )
         return null;
     }
+    // The change is made in Evolve as the person the run belongs to, so only they approve it.
+    if (pendingAsk.deadlineChange && run.userId !== input.answeredByUserId) return null;
     if (input.answer === "always") {
       if (run.userId !== input.answeredByUserId) return null;
       approvalUserId = input.answeredByUserId;

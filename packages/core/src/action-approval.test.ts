@@ -19,6 +19,7 @@ import {
   resolveActionApproval,
   resolveActionApprovalDetail,
   resolveActionApprovalForTools,
+  toolNeedsApprovalEveryTime,
   toolRequiresApproval,
   toolRequiresExplicitApproval,
   toolResultTaintsRun,
@@ -492,6 +493,20 @@ describe("planActionGate", () => {
 
   it("asks in Auto when no approval model is set up", () => {
     expect(gate("auto", { checkerConfigured: false })).toBe("ask");
+  });
+
+  it("asks for an every-time change in every mode, despite an always-allow rule", () => {
+    for (const mode of ["never", "auto", "ask"] as const) {
+      expect(gate(mode, { everyTime: true, mandatory: true, resolved: allowed })).toBe("ask");
+      expect(gate(mode, { everyTime: true, mandatory: true, resolved: blocked })).toBe("deny");
+    }
+  });
+
+  it("treats Evolve deadline changes as every-time approvals", () => {
+    expect(toolNeedsApprovalEveryTime("mcp__evolve__add_project_deadline")).toBe(true);
+    expect(toolNeedsApprovalEveryTime("mcp__evolve__update_project_deadline")).toBe(true);
+    expect(toolRequiresExplicitApproval("mcp__evolve__update_project_deadline")).toBe(true);
+    expect(toolNeedsApprovalEveryTime("mcp__evolve__get_project_details")).toBe(false);
   });
 
   it("runs an allowlisted change in every mode without judging", () => {

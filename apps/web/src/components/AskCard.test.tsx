@@ -890,3 +890,50 @@ it("sends Undo to the chat's space, not the one selected in another tab", async 
   expect(rpc.bots.restoreInstructions).not.toHaveBeenCalled();
   expect(rpc.bots.update).not.toHaveBeenCalled();
 });
+
+const deadlineCard: AskBlock = {
+  kind: "ask",
+  approvalEffectId: "effect-1",
+  text: "Change this deadline on C1078?",
+  detail: "Project: C1078 · Cork Library",
+  detailFormat: "text",
+  deadlineChange: {
+    action: "update",
+    project: { jobNumber: "C1078", name: "Cork Library", client: "Cork County Council" },
+    before: {
+      name: "Stage 2 issue",
+      date: "2026-11-20",
+      hardDeadline: true,
+      completed: false,
+      comments: null,
+    },
+    after: {
+      name: "Stage 2 issue",
+      date: "2026-11-27",
+      hardDeadline: true,
+      completed: false,
+      comments: null,
+    },
+    warnings: ['The project already has a deadline called "Stage 2 issue" on that day.'],
+  },
+  status: "pending",
+  actions: [
+    { id: "allow", label: "Save changes" },
+    { id: "deny", label: "Cancel" },
+  ],
+};
+
+it("previews a deadline change with its project and approves it once", async () => {
+  const onAnswer = vi.fn(async () => undefined);
+  await render(deadlineCard, undefined, onAnswer);
+  const card = container.querySelector('[data-testid="deadline-approval-card"]')!;
+  expect(card.textContent).toContain("C1078 · Cork Library");
+  expect(card.textContent).toContain("Cork County Council");
+  expect(card.querySelector(".line-through")?.textContent).toContain("20");
+  expect(card.textContent).toContain("already has a deadline");
+  const buttons = [...card.querySelectorAll("button")].map((button) => button.textContent);
+  expect(buttons).toEqual(["Save changes", "Cancel"]);
+  await act(async () => (card.querySelector("button") as HTMLButtonElement).click());
+  expect(onAnswer).toHaveBeenCalledWith("allow");
+  expect(card.textContent).toContain("Approved: saving it in Evolve");
+});

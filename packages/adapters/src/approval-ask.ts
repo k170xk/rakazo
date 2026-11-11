@@ -1,5 +1,5 @@
 import type { ToolBatch } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock, ProjectDeadlineChange } from "@rakazo/contracts";
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
 import {
   batchActions,
@@ -21,7 +21,13 @@ export const MAX_FETCH_URL_LENGTH = 2_048;
 
 /** A fleet card built from the resolved request: a title and the lines under it. */
 /** `onceOnly`: the card never offers Always allow, as for a purchase. */
-export type FleetCardSummary = { title: string; lines: string[]; onceOnly?: boolean };
+/** `deadline`: the project deadline the card previews, drawn as its own card. */
+export type FleetCardSummary = {
+  title: string;
+  lines: string[];
+  onceOnly?: boolean;
+  deadline?: ProjectDeadlineChange;
+};
 
 /**
  * The child instruction card shows the whole new text, so its detail holds the longest
@@ -40,6 +46,25 @@ export function buildApprovalAskBlock(
   secrets: string[],
   options?: { reviewReason?: string; summary?: FleetCardSummary; batch?: ToolBatch },
 ): MessageBlock {
+  if (options?.summary?.deadline) {
+    const { deadline } = options.summary;
+    return {
+      kind: "ask",
+      approvalEffectId: effectId,
+      text: truncate(redactSecrets(options.summary.title, secrets), MAX_APPROVAL_SUMMARY_LENGTH),
+      detail: truncate(
+        redactSecrets(options.summary.lines.join("\n"), secrets),
+        MAX_APPROVAL_DETAIL_LENGTH,
+      ),
+      detailFormat: "text",
+      deadlineChange: redactLeaves(deadline, secrets) as ProjectDeadlineChange,
+      status: "pending",
+      actions: [
+        { id: "allow", label: deadline.action === "add" ? "Add deadline" : "Save changes" },
+        { id: "deny", label: "Cancel" },
+      ],
+    };
+  }
   if (options?.summary) {
     // Built from what was resolved before the effect was recorded, not from what the model typed.
     return {

@@ -15,6 +15,9 @@ import { OCSC_SKILLS } from "./ocsc-skills.js";
 /** Evolve's evolve-computer-mcp tools; a skill naming any other would send bots looking for it. */
 const KNOWN_EVOLVE_TOOLS = [
   "search_project_datasheets",
+  "get_project_details",
+  "add_project_deadline",
+  "update_project_deadline",
   "search_people_profiles",
   "generate_image",
   "edit_image",
