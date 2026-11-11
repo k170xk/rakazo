@@ -7,6 +7,7 @@ function makePrisma(settings: { id: string; ownerUserId: string | null } | null)
   const prisma = {
     organization: {
       create: create(),
+      findFirst: vi.fn(async () => null),
       findUniqueOrThrow: vi.fn(async () => {
         throw new Error("not found");
       }),
@@ -111,6 +112,23 @@ describe("bootstrapUserSpace", () => {
     expect(prefData.spaceId).toBe(spaceId);
     expect(prefData.userId).toBe("user-1");
   });
+
+  it("creates OCSC beside Personal and opens on OCSC when company workspace is set", async () => {
+    const prisma = makePrisma({ id: "default", ownerUserId: "user-1" });
+    const result = await bootstrapUserSpace(prisma as unknown as PrismaClient, { id: "user-1" }, {
+      ...env,
+      companyWorkspace: "OCSC",
+    });
+
+    expect(prisma.organization.create).toHaveBeenCalledTimes(2);
+    const personal = prisma.organization.create.mock.calls[0]![0].data;
+    const company = prisma.organization.create.mock.calls[1]![0].data;
+    expect(personal.name).toBe("Personal");
+    expect(company.name).toBe("OCSC");
+    expect(company.slug).toBe("company-user-1");
+    expect(result.spaceId).toBe(company.id);
+    expect(result.spaceId).not.toBe(personal.id);
+  });
 });
 
 describe("bootstrapUserSpace concurrency", () => {
@@ -121,6 +139,7 @@ describe("bootstrapUserSpace concurrency", () => {
     const prisma = {
       organization: {
         create: vi.fn(uniqueViolation),
+        findFirst: vi.fn(async () => null),
         findUniqueOrThrow: vi.fn(async () => ({ id: "org-winner" })),
       },
       member: { create: vi.fn(uniqueViolation) },

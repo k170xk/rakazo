@@ -1,5 +1,9 @@
 import type { OrganizationList } from "@rakazo/contracts";
-import { organizationLandingSpaceId, organizationOfSpace } from "@rakazo/core";
+import {
+  organizationLandingSpaceId,
+  organizationOfSpace,
+  preferredOrganization,
+} from "@rakazo/core";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { queryClient, spaceQueries, useQueryUserId } from "./query";
 import { ORGANIZATION_SPACES_STORAGE_KEY, rpc, selectedSpaceId, selectSpace } from "./rpc";
@@ -114,4 +118,19 @@ export function switchOrganization(
     openSpaceChat ? "/app" : "/",
     openSpaceChat,
   );
+}
+
+/**
+ * When this device has no saved Space, open the permanent company work space (OCSC).
+ * Leaves an explicit `rakazo:space-id` alone. Returns true when a Space was newly selected.
+ */
+export async function ensureDefaultCompanySpace(userId: string | null): Promise<boolean> {
+  if (selectedSpaceId()) return false;
+  const listed = await queryClient
+    .ensureQueryData(organizationsQuery(userId))
+    .catch(() => undefined);
+  if (!listed || selectedSpaceId()) return false;
+  const company = preferredOrganization(listed.organizations);
+  if (!company) return false;
+  return selectSpace(landingSpaceId(company));
 }

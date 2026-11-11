@@ -1,8 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { landingSpaceId, leaveOrganization, organizationsQuery } from "./organizations";
+import {
+  ensureDefaultCompanySpace,
+  landingSpaceId,
+  leaveOrganization,
+  organizationsQuery,
+} from "./organizations";
 import { queryClient, spaceQueries } from "./query";
 import type * as RpcModule from "./rpc";
-import { clearSpaceSelection, rpc, selectSpace } from "./rpc";
+import { clearSpaceSelection, rpc, selectedSpaceId, selectSpace } from "./rpc";
 
 vi.mock("./auth", () => ({ authClient: { $store: { notify: vi.fn() } } }));
 vi.mock("./rpc", async (importOriginal) => ({
@@ -16,6 +21,14 @@ const personal = {
   defaultSpaceId: "home",
   spaceIds: ["home", "side"],
   canManage: true,
+};
+const ocsc = {
+  id: "org-ocsc",
+  name: "OCSC",
+  defaultSpaceId: "ocsc-home",
+  spaceIds: ["ocsc-home"],
+  canManage: true,
+  permanent: true,
 };
 const work = {
   id: "org-work",
@@ -45,6 +58,28 @@ beforeEach(() => {
 afterEach(() => {
   queryClient.clear();
   vi.unstubAllGlobals();
+});
+
+describe("ensureDefaultCompanySpace", () => {
+  it("selects the permanent company work space when none is saved", async () => {
+    queryClient.setQueryData(organizationsQuery("user-1").queryKey, {
+      activeOrganizationId: personal.id,
+      organizations: [ocsc, personal, work],
+    });
+    clearSpaceSelection();
+    await expect(ensureDefaultCompanySpace("user-1")).resolves.toBe(true);
+    expect(selectedSpaceId()).toBe("ocsc-home");
+  });
+
+  it("leaves an explicit Space selection alone", async () => {
+    expect(selectSpace("home")).toBe(true);
+    queryClient.setQueryData(organizationsQuery("user-1").queryKey, {
+      activeOrganizationId: personal.id,
+      organizations: [ocsc, personal],
+    });
+    await expect(ensureDefaultCompanySpace("user-1")).resolves.toBe(false);
+    expect(selectedSpaceId()).toBe("home");
+  });
 });
 
 describe("landing Space", () => {

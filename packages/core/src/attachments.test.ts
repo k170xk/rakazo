@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   AttachmentValidationError,
+  artifactDownloadFileName,
   artifactTypeLabel,
   attachmentExtensionForMimeType,
   attachmentsForBot,
@@ -36,6 +37,22 @@ describe("attachment helpers", () => {
     }
     expect(attachmentExtensionForMimeType("application/msword")).toBe(".doc");
     expect(() => validateAttachmentMimeType("application/msword")).not.toThrow();
+  });
+
+  it("adds the mime extension when a download name omits it", () => {
+    const pptx = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    const docx = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const xlsx = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    expect(artifactDownloadFileName("OCSC BIM & Underground Services", pptx)).toBe(
+      "OCSC BIM & Underground Services.pptx",
+    );
+    expect(artifactDownloadFileName("deck.PPTX", pptx)).toBe("deck.PPTX");
+    expect(artifactDownloadFileName("brief.docx", docx)).toBe("brief.docx");
+    expect(artifactDownloadFileName("Costs", xlsx)).toBe("Costs.xlsx");
+    expect(artifactDownloadFileName("notes", "text/plain")).toBe("notes.txt");
+    expect(artifactDownloadFileName("photo", "image/png")).toBe("photo.png");
+    expect(artifactDownloadFileName("odd", "application/x-unknown")).toBe("odd");
+    expect(artifactDownloadFileName("  ", pptx)).toBe("download.pptx");
   });
 
   it.each([

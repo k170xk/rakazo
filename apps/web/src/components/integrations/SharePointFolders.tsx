@@ -117,9 +117,13 @@ export function SharePointFolders({ connectionId }: { connectionId: string }) {
       ) : (
         <Button
           type="button"
-          variant="ghost"
+          variant={chosen.length === 0 ? "default" : "ghost"}
           size="sm"
-          className="h-9 px-2 text-[14px] text-muted-foreground"
+          className={
+            chosen.length === 0
+              ? "h-9 px-3 text-[14px]"
+              : "h-9 px-2 text-[14px] text-muted-foreground"
+          }
           disabled={folders === null}
           onClick={() => setBrowsing(true)}
         >

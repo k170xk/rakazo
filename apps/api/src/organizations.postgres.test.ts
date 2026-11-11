@@ -225,15 +225,15 @@ describePostgres("organizations (PostgreSQL)", () => {
     expect(
       first.organizations.map(({ name, canManage, permanent }) => ({ name, canManage, permanent })),
     ).toEqual([
-      { name: "Personal", canManage: true, permanent: false },
       { name: "OCSC", canManage: true, permanent: true },
+      { name: "Personal", canManage: true, permanent: false },
     ]);
-    const ocsc = first.organizations[1]!;
+    const ocsc = first.organizations[0]!;
     expect(ocsc.spaceIds).toEqual([ocsc.defaultSpaceId]);
 
     const graces = await company(grace).organizations.list();
-    expect(graces.organizations.map((org) => org.name)).toEqual(["Personal", "OCSC"]);
-    expect(graces.organizations[1]!.id).not.toBe(ocsc.id);
+    expect(graces.organizations.map((org) => org.name)).toEqual(["OCSC", "Personal"]);
+    expect(graces.organizations[0]!.id).not.toBe(ocsc.id);
 
     await expect(
       company(ada).organizations.remove({ organizationId: ocsc.id }),
@@ -243,8 +243,8 @@ describePostgres("organizations (PostgreSQL)", () => {
     });
     await company(ada).organizations.rename({ organizationId: ocsc.id, name: "OCSC Projects" });
     expect((await company(ada).organizations.list()).organizations.map((org) => org.name)).toEqual([
-      "Personal",
       "OCSC Projects",
+      "Personal",
     ]);
 
     // A deployment without a company work space adds nothing.

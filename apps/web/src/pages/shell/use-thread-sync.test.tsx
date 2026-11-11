@@ -50,6 +50,7 @@ function syncInput({
       threads: { get: { queryKey: vi.fn(() => ["thread"]) } },
       routines: { list: { queryOptions: vi.fn() }, history: { key: vi.fn(() => ["history"]) } },
       skills: { list: { queryOptions: vi.fn() } },
+      todos: { key: vi.fn(() => ["todos"]) },
     },
     thread: {
       snapshot: null,

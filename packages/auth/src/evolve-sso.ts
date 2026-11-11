@@ -144,6 +144,7 @@ export async function exchangeEvolveSso(input: {
   token: string;
   signupsEnabled: string | undefined;
   signupAllowlist: string | undefined;
+  companyWorkspace?: string | null;
 }): Promise<{ token: string; expiresAt: Date; created: boolean; email: string }> {
   const claims = verifyEvolveComputerSsoToken(input.secret, input.token);
   if (!claims) throw new EvolveSsoInvalidTokenError();
@@ -186,6 +187,7 @@ export async function exchangeEvolveSso(input: {
     await bootstrapUserSpace(input.prisma, user, {
       signupsEnabled: input.signupsEnabled,
       signupAllowlist: input.signupAllowlist,
+      companyWorkspace: input.companyWorkspace,
     });
     created = true;
   }

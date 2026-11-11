@@ -24,6 +24,20 @@ describe("artifactContentDisposition", () => {
     expect(artifactContentDisposition("Présentation.pptx")).toContain(
       "filename*=UTF-8''Pr%C3%A9sentation.pptx",
     );
+    expect(artifactContentDisposition("Présentation.pptx")).toContain('filename="Pr_sentation.pptx"');
+  });
+
+  it("keeps em dashes out of the ASCII filename= header", () => {
+    const header = artifactContentDisposition("Cherry Orchard — Criterion A Working Draft.docx");
+    expect(header).toContain('filename="Cherry Orchard _ Criterion A Working Draft.docx"');
+    expect(header).toContain("filename*=UTF-8''Cherry%20Orchard%20%E2%80%94%20Criterion%20A%20Working%20Draft.docx");
+    expect([...header].every((ch) => ch.codePointAt(0)! < 128 || header.includes("UTF-8''"))).toBe(
+      true,
+    );
+    // The quoted filename= value itself must be Latin-1-safe for undici Headers.
+    const asciiPart = header.match(/filename="([^"]*)"/)?.[1] ?? "";
+    expect([...asciiPart].every((ch) => (ch.codePointAt(0) ?? 0) <= 0xff)).toBe(true);
+    expect(asciiPart).not.toContain("—");
   });
 });
 
@@ -77,6 +91,27 @@ describe("GET /api/artifacts/download", () => {
     expect(response.headers.get("content-length")).toBe("4");
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes);
     expect(get).toHaveBeenCalledOnce();
+  });
+
+  it("adds .pptx when the stored title has no extension", async () => {
+    const { app } = mount({
+      grant: { spaceId: "space-1", userId: "user-1", artifactId: "art-1" },
+      row: {
+        id: "art-1",
+        spaceId: "space-1",
+        userId: "user-1",
+        botId: "bot-1",
+        groupId: null,
+        storageKey: "key-1",
+        name: "OCSC BIM & Underground Services",
+        mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      },
+    });
+    const response = await app.request(`${ARTIFACT_DOWNLOAD_PATH}?token=fresh`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-disposition")).toContain(
+      "OCSC%20BIM%20%26%20Underground%20Services.pptx",
+    );
   });
 
   it("refuses a spent or missing token without reading storage", async () => {

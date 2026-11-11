@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { organizationLandingSpaceId, organizationOfSpace } from "./organizations.js";
+import {
+  organizationLandingSpaceId,
+  organizationOfSpace,
+  preferredOrganization,
+} from "./organizations.js";
 
 const work = {
   id: "org-work",
@@ -15,6 +19,14 @@ const home = {
   spaceIds: ["b1", "b2"],
   canManage: true,
 };
+const ocsc = {
+  id: "org-ocsc",
+  name: "OCSC",
+  defaultSpaceId: "c1",
+  spaceIds: ["c1"],
+  canManage: true,
+  permanent: true,
+};
 
 describe("organizationLandingSpaceId", () => {
   it("opens the Space last used there, else the default", () => {
@@ -29,5 +41,16 @@ describe("organizationOfSpace", () => {
     expect(organizationOfSpace([work, home], "b2")).toBe(home);
     expect(organizationOfSpace([work, home], "elsewhere")).toBeUndefined();
     expect(organizationOfSpace([work, home], null)).toBeUndefined();
+  });
+});
+
+describe("preferredOrganization", () => {
+  it("prefers the permanent company work space", () => {
+    expect(preferredOrganization([home, ocsc, work])).toBe(ocsc);
+  });
+
+  it("falls back to the first organization when none is permanent", () => {
+    expect(preferredOrganization([home, work])).toBe(home);
+    expect(preferredOrganization([])).toBeUndefined();
   });
 });

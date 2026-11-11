@@ -5,6 +5,8 @@ import type { PrismaClient } from "./client.js";
 export interface SignupPolicyEnv {
   signupsEnabled: string | undefined;
   signupAllowlist: string | undefined;
+  /** When set, signup also creates this permanent company work space and opens there. */
+  companyWorkspace?: string | null;
 }
 
 type OrganizationClient = Pick<
@@ -109,20 +111,23 @@ export function isCompanyWorkspaceSlug(slug: string): boolean {
   return slug.startsWith(COMPANY_WORKSPACE_SLUG_PREFIX);
 }
 
-/** Adds the person's own company work space, named `name`, when they have none yet. */
+/**
+ * Adds the person's own company work space, named `name`, when they have none yet.
+ * Returns its default Space id (same as the organization id).
+ */
 export async function ensureCompanyWorkspace(
   prisma: PrismaClient,
   userId: string,
   name: string,
-): Promise<void> {
+): Promise<string> {
   const slug = `${COMPANY_WORKSPACE_SLUG_PREFIX}${userId}`;
   const ready = await prisma.organization.findFirst({
     where: { slug, members: { some: { userId } }, spaces: { some: { isDefault: true } } },
     select: { id: true },
   });
-  if (ready) return;
+  if (ready) return ready.id;
   // Each step joins what a concurrent or interrupted call already made, so this finishes it.
-  await createOrganizationWithDefaultSpace(prisma, {
+  return createOrganizationWithDefaultSpace(prisma, {
     userId,
     orgId: newId(),
     name,
@@ -130,14 +135,14 @@ export async function ensureCompanyWorkspace(
   });
 }
 
-/** Provision a personal workspace. Signup never grants deployment administration. */
+/** Provision Personal (and OCSC when configured). Signup never grants deployment administration. */
 export async function bootstrapUserSpace(
   prisma: PrismaClient,
   user: { id: string },
   env: SignupPolicyEnv,
 ): Promise<{ spaceId: string }> {
   // Concurrent bootstraps for the same user (e.g. overlapping first phone inbounds) share the slug.
-  const spaceId = await createOrganizationWithDefaultSpace(prisma, {
+  const personalSpaceId = await createOrganizationWithDefaultSpace(prisma, {
     userId: user.id,
     orgId: newId(),
     name: "Personal",
@@ -155,5 +160,10 @@ export async function bootstrapUserSpace(
     },
     update: {},
   });
-  return { spaceId };
+  const companyName = env.companyWorkspace?.trim();
+  if (companyName) {
+    const companySpaceId = await ensureCompanyWorkspace(prisma, user.id, companyName);
+    return { spaceId: companySpaceId };
+  }
+  return { spaceId: personalSpaceId };
 }

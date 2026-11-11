@@ -36,7 +36,8 @@ import { lazyComponent } from "./lib/preload-recovery";
 import { QueryUserProvider, setQueryUser } from "./lib/query";
 import { getRemoteImagesEnabled, subscribeRemoteImages } from "./lib/remote-images-preference";
 import { hasSignedInBefore, rememberSignedIn } from "./lib/returning-user";
-import { rpc } from "./lib/rpc";
+import { ensureDefaultCompanySpace } from "./lib/organizations";
+import { rpc, selectedSpaceId } from "./lib/rpc";
 import {
   holdAnonymousGate,
   holdUnreachableGate,
@@ -130,6 +131,30 @@ export function App() {
 const MCP_OAUTH_CALLBACK_PATH = "/mcp/oauth/callback";
 const SLACK_INSTALL_CALLBACK_PATH = "/messaging/slack/callback";
 
+/** When this device has no saved Space, wait until OCSC (or the fallback org) is selected. */
+function useDefaultCompanySpaceReady(userId: string | null, authenticated: boolean): boolean {
+  const [ready, setReady] = useState(() => !authenticated || Boolean(selectedSpaceId()));
+  useLayoutEffect(() => {
+    if (!authenticated) {
+      setReady(true);
+      return;
+    }
+    if (selectedSpaceId()) {
+      setReady(true);
+      return;
+    }
+    let cancelled = false;
+    setReady(false);
+    void ensureDefaultCompanySpace(userId).finally(() => {
+      if (!cancelled) setReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, userId]);
+  return ready;
+}
+
 function SessionApp() {
   const [searchParams] = useSearchParams();
   const next = searchParams.get("next") ?? "";
@@ -173,6 +198,10 @@ function SessionApp() {
       .catch(() => undefined);
   }, [analyticsUserId, screen]);
   const gate = sessionGate(session);
+  const spaceReady = useDefaultCompanySpaceReady(
+    analyticsUserId ?? null,
+    gate === "authenticated",
+  );
   useLayoutEffect(() => {
     if (gate !== "authenticated" && gate !== "anonymous") return;
     syncWebLogoAvatarIdentity(analyticsUserId ?? null);
@@ -201,6 +230,9 @@ function SessionApp() {
   }
   if (gate === "loading" && !nextHoldingAnonymous) {
     return <PageLoading data-rakazo-app-state="session-pending" />;
+  }
+  if (gate === "authenticated" && !spaceReady) {
+    return <PageLoading data-rakazo-app-state="space-pending" />;
   }
 
   const user = session.data?.user;

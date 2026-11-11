@@ -383,6 +383,14 @@ export function useThreadSync({
         ) {
           void sidebarRefresh.invalidate().catch(() => undefined);
         }
+        if (
+          isRunTerminalEvent(event) ||
+          (event.type === "agent.tool.completed" &&
+            typeof event.payload.name === "string" &&
+            /^(todo_(add|update|archive)|use_tool)$/.test(event.payload.name))
+        ) {
+          void queryClient.invalidateQueries({ queryKey: queries.todos.key() });
+        }
         if (event.type === "thread.message.created") {
           const blocks = (event.payload.blocks as Array<{ kind?: string }>) ?? [];
           relistPagesForBlocks(queries, queryClient, blocks);

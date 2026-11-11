@@ -1,3 +1,4 @@
+import { artifactDownloadFileName } from "@rakazo/core";
 import { rpc, rpcForSpace } from "./rpc";
 
 /** `spaceId` is set when the group lives in another person's Space that you were added to. */
@@ -37,7 +38,7 @@ export function downloadArtifactBytes(name: string, mimeType: string, bytes: Uin
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = name;
+  anchor.download = artifactDownloadFileName(name, mimeType);
   anchor.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
@@ -49,8 +50,8 @@ export function downloadArtifactBytes(name: string, mimeType: string, bytes: Uin
 export async function downloadArtifact(
   target: ArtifactTarget,
   artifactId: string,
-  _name?: string,
-  _mimeType?: string,
+  name?: string,
+  mimeType?: string,
 ): Promise<void> {
   const { url } = await artifactClient(target).artifacts.downloadToken({
     ...artifactInput(target),
@@ -59,6 +60,8 @@ export async function downloadArtifact(
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.rel = "noopener";
+  // Same-origin downloads honour this; Content-Disposition on the GET is the source of truth.
+  if (name && mimeType) anchor.download = artifactDownloadFileName(name, mimeType);
   anchor.click();
 }
 

@@ -311,6 +311,19 @@ export function attachmentExtensionForMimeType(mimeType: string): string {
   return isAllowedAttachmentMimeType(mimeType) ? MIME_TYPE_EXTENSIONS[mimeType] : "";
 }
 
+/**
+ * Filename for a browser/OS download. Artifact display names often omit the extension
+ * (e.g. a PowerPoint titled "OCSC BIM"), so append the mime type's extension when missing.
+ */
+export function artifactDownloadFileName(name: string, mimeType: string): string {
+  const trimmed = name.replace(/[\r\n]/g, " ").trim() || "download";
+  const extension = attachmentExtensionForMimeType(mimeType);
+  if (!extension) return trimmed;
+  return trimmed.toLowerCase().endsWith(extension.toLowerCase())
+    ? trimmed
+    : `${trimmed}${extension}`;
+}
+
 export function attachmentsForThread<T extends { threadKey: string }>(
   attachments: readonly T[],
   threadKey: string | undefined,

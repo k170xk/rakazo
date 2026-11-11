@@ -9,8 +9,8 @@ import {
   InputGroupInput,
   Sidebar,
 } from "@rakazo/ui-web";
-import { ListTodo, Search, SlidersHorizontal, Sparkles, UsersRound } from "lucide-react";
-import type { ReactNode } from "react";
+import { ListTodo, Search, SlidersHorizontal, Sparkles, Star, UsersRound } from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { IconTooltip } from "../../components/IconTooltip";
@@ -18,7 +18,7 @@ import { InviteDialog } from "../../components/InviteDialog";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
 import { useBilling } from "../../components/SubscriptionGate";
-import { useOpenTodoCount } from "../../components/todos/todo-count";
+import { useTodoBadge } from "../../components/todos/todo-count";
 import { formatBillingDate } from "../../lib/billing";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
 import { switchOrganization, useOrganizations } from "../../lib/organizations";
@@ -502,7 +502,8 @@ function ShellSidebarFooter({
 /** Opens the person's own to-do board; the badge counts what is still open. */
 function TodoListButton({ mini, onOpen }: { mini: boolean; onOpen: () => void }) {
   const { t } = useLingui();
-  const open = useOpenTodoCount();
+  const { open, arrivals } = useTodoBadge();
+  const celebrating = useCelebration(arrivals);
   if (mini) {
     return (
       <div className="flex justify-center px-1">
@@ -517,8 +518,14 @@ function TodoListButton({ mini, onOpen }: { mini: boolean; onOpen: () => void })
           >
             <ListTodo />
             {open > 0 ? (
-              <span className="absolute top-1 right-1 size-2 rounded-full bg-primary" />
+              <span
+                key={arrivals}
+                className={`absolute top-1 right-1 size-2 rounded-full bg-primary ${
+                  celebrating ? "rk-todo-pop" : ""
+                }`}
+              />
             ) : null}
+            {celebrating ? <TodoStars key={arrivals} className="top-1.5 right-1.5" /> : null}
           </Button>
         </IconTooltip>
       </div>
@@ -535,12 +542,65 @@ function TodoListButton({ mini, onOpen }: { mini: boolean; onOpen: () => void })
       <span className="flex-1">
         <Trans>To do list</Trans>
       </span>
-      {open > 0 ? (
-        <span className="rounded-full bg-primary/15 px-1.5 text-xs font-medium text-primary">
-          {open}
-        </span>
-      ) : null}
+      <span className="relative">
+        {open > 0 ? (
+          <span
+            key={arrivals}
+            className={`inline-block rounded-full bg-primary/15 px-1.5 text-xs font-medium text-primary ${
+              celebrating ? "rk-todo-pop bg-primary text-primary-foreground" : ""
+            }`}
+          >
+            {open}
+          </span>
+        ) : null}
+        {celebrating ? (
+          <>
+            <TodoStars key={arrivals} className="top-1/2 left-1/2" />
+            <span
+              aria-hidden="true"
+              className="rk-todo-plus pointer-events-none absolute -top-3 right-0 text-xs font-semibold text-primary"
+            >
+              +1
+            </span>
+          </>
+        ) : null}
+      </span>
     </button>
+  );
+}
+
+/** True for a moment after `arrivals` goes up. */
+function useCelebration(arrivals: number): boolean {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    if (arrivals === 0) return;
+    setActive(true);
+    const timer = setTimeout(() => setActive(false), 1_200);
+    return () => clearTimeout(timer);
+  }, [arrivals]);
+  return active;
+}
+
+const STARS = [
+  { tx: "-22px", ty: "-20px", color: "text-amber-400", size: "size-3" },
+  { tx: "20px", ty: "-24px", color: "text-primary", size: "size-2.5" },
+  { tx: "26px", ty: "4px", color: "text-sky-400", size: "size-3" },
+  { tx: "-26px", ty: "6px", color: "text-fuchsia-400", size: "size-2.5" },
+  { tx: "-6px", ty: "-30px", color: "text-amber-300", size: "size-2" },
+  { tx: "10px", ty: "22px", color: "text-primary", size: "size-2" },
+];
+
+function TodoStars({ className }: { className: string }) {
+  return (
+    <span aria-hidden="true" className={`pointer-events-none absolute ${className}`}>
+      {STARS.map((star) => (
+        <Star
+          key={`${star.tx}${star.ty}`}
+          className={`rk-todo-star absolute top-0 left-0 fill-current ${star.color} ${star.size}`}
+          style={{ "--tx": star.tx, "--ty": star.ty } as CSSProperties}
+        />
+      ))}
+    </span>
   );
 }
 

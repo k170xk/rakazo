@@ -104,6 +104,16 @@ async function recentOrganizationId(prisma: PrismaClient, userId: string): Promi
     });
     if (space) return space.organizationId;
   }
+  // Prefer the permanent company work space (OCSC) over Personal when nothing else pins the session.
+  const company = await prisma.organization.findFirst({
+    where: {
+      slug: `company-${userId}`,
+      members: { some: { userId } },
+      spaces: { some: { isDefault: true, deletingAt: null } },
+    },
+    select: { id: true },
+  });
+  if (company) return company.id;
   const first = await prisma.spaceMember.findFirst({
     where: { userId, space: { deletingAt: null } },
     orderBy: [{ space: { isDefault: "desc" } }, { createdAt: "asc" }, { id: "asc" }],

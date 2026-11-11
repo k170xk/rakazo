@@ -121,3 +121,74 @@ body,
   background-color: var(--primary);
   color: var(--primary-foreground);
 }
+
+/* A to-do item just arrived: stars burst from the sidebar count, which pops. */
+@keyframes rk-todo-star {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1) rotate(160deg);
+  }
+}
+@keyframes rk-todo-pop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.45);
+  }
+  60% {
+    transform: scale(0.92);
+  }
+}
+@keyframes rk-todo-plus {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+}
+@keyframes rk-todo-new {
+  0%,
+  60% {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.rk-todo-star {
+  animation: rk-todo-star 900ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.rk-todo-pop {
+  animation: rk-todo-pop 600ms ease-out;
+}
+.rk-todo-plus {
+  animation: rk-todo-plus 1100ms ease-out both;
+}
+.rk-todo-new {
+  animation: rk-todo-new 2400ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rk-todo-star,
+  .rk-todo-plus {
+    display: none;
+  }
+  .rk-todo-pop,
+  .rk-todo-new {
+    animation: none;
+  }
+}

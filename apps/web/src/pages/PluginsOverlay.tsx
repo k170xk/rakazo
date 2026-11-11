@@ -497,6 +497,10 @@ export function PluginsOverlay({
         void notifyAppConnected(item);
         await refresh().catch(() => undefined);
         refreshTools();
+        // SharePoint still needs folder picks before assistants can read anything.
+        if (item.connectorId === "microsoft" && item.slug === "sharepoint") {
+          openDetail(item);
+        }
         return;
       }
       setCatalogError(
@@ -706,6 +710,7 @@ export function PluginsOverlay({
     const key = catalogItemKey(item);
     const connected = itemConnected(item);
     const connecting = pending === key;
+    const sharePoint = item.connectorId === "microsoft" && item.slug === "sharepoint";
     if (connected) {
       return (
         <Button
@@ -718,7 +723,13 @@ export function PluginsOverlay({
             openDetail(item);
           }}
         >
-          {connecting ? <Trans>Adding…</Trans> : <Trans>Added</Trans>}
+          {connecting ? (
+            <Trans>Adding…</Trans>
+          ) : sharePoint ? (
+            <Trans>Choose folders</Trans>
+          ) : (
+            <Trans>Added</Trans>
+          )}
         </Button>
       );
     }

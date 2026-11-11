@@ -95,6 +95,8 @@ export interface AuthEnv {
   webOrigin: string;
   signupsEnabled: string | undefined;
   signupAllowlist: string | undefined;
+  /** Permanent company work space name (e.g. OCSC); null/omit skips creating it at signup. */
+  companyWorkspace?: string | null;
   /** Admits a new account only while there is none, for a deployment that serves one person. */
   singleAccount?: boolean;
   extraOrigins?: string[];

@@ -106,21 +106,27 @@ export async function listMemberOrganizations(
     }),
   ]);
   if (!current) throw new IsolationError();
+  const listed = organizations.map((organization) => ({
+    id: organization.id,
+    name: organization.name,
+    defaultSpaceId: organization.spaces[0]!.id,
+    // Phase one manages only organizations their owner has to themselves.
+    canManage:
+      organization._count.members === 1 &&
+      organization.members.some((member) => member.role.includes("owner")),
+    permanent: isCompanyWorkspaceSlug(organization.slug),
+    spaceIds: memberships
+      .filter((membership) => membership.organizationId === organization.id)
+      .map((membership) => membership.spaceId),
+  }));
+  // Company work space first so the default landing and sidebar show OCSC above Personal.
+  listed.sort((left, right) => {
+    if (left.permanent !== right.permanent) return left.permanent ? -1 : 1;
+    return 0;
+  });
   return {
     activeOrganizationId: current.organizationId,
-    organizations: organizations.map((organization) => ({
-      id: organization.id,
-      name: organization.name,
-      defaultSpaceId: organization.spaces[0]!.id,
-      // Phase one manages only organizations their owner has to themselves.
-      canManage:
-        organization._count.members === 1 &&
-        organization.members.some((member) => member.role.includes("owner")),
-      permanent: isCompanyWorkspaceSlug(organization.slug),
-      spaceIds: memberships
-        .filter((membership) => membership.organizationId === organization.id)
-        .map((membership) => membership.spaceId),
-    })),
+    organizations: listed,
   };
 }
 

@@ -1,6 +1,7 @@
 import type { ArtifactStore } from "@rakazo/adapter-kit";
 import { createAdapterContext } from "@rakazo/adapter-kit";
 import type { Auth } from "@rakazo/auth";
+import { artifactDownloadFileName } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsTenant } from "@rakazo/db";
 import type { Hono } from "hono";
@@ -8,10 +9,14 @@ import type { Hono } from "hono";
 /** Path the browser opens after `artifacts.downloadToken`; the token is the only credential. */
 export const ARTIFACT_DOWNLOAD_PATH = "/api/artifacts/download";
 
-/** RFC 5987 disposition so names with spaces and non-ASCII stay intact. */
+/**
+ * RFC 5987 disposition so names with spaces and non-ASCII stay intact.
+ * `filename=` must be ASCII (HTTP header ByteString); `filename*` carries the real UTF-8 name.
+ */
 export function artifactContentDisposition(name: string): string {
-  const fallback = name.replace(/[\r\n"]/g, "_") || "download";
-  const encoded = encodeURIComponent(name).replace(/['()]/g, escape).replace(/\*/g, "%2A");
+  const cleaned = name.replace(/[\r\n"]/g, "_").trim() || "download";
+  const fallback = cleaned.replace(/[^\x20-\x7E]/g, "_") || "download";
+  const encoded = encodeURIComponent(cleaned).replace(/['()]/g, escape).replace(/\*/g, "%2A");
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }
 
@@ -53,11 +58,15 @@ export function mountArtifactDownloadRoute(
     if (!payload) {
       return c.text("File not found", 404, { "cache-control": "no-store" });
     }
+    const fileName = artifactDownloadFileName(
+      payload.row.name,
+      payload.row.mimeType || "application/octet-stream",
+    );
     return new Response(Uint8Array.from(payload.bytes), {
       headers: {
         "content-type": payload.row.mimeType || "application/octet-stream",
         "content-length": String(payload.bytes.byteLength),
-        "content-disposition": artifactContentDisposition(payload.row.name),
+        "content-disposition": artifactContentDisposition(fileName),
         "cache-control": "no-store",
       },
     });

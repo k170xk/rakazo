@@ -33,7 +33,7 @@ import {
 import type { DragEvent, FormEvent } from "react";
 import { useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
-import { TODO_REFRESH_MS as REFRESH_MS } from "./todo-count";
+import { TODO_REFRESH_MS as REFRESH_MS, TODO_NEW_MS } from "./todo-count";
 
 const DRAG_TYPE = "application/x-rakazo-todo";
 
@@ -453,8 +453,8 @@ function TodoCard({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={`cursor-grab rounded-lg border border-l-4 bg-card p-2.5 shadow-sm transition hover:-translate-y-px hover:shadow-md active:cursor-grabbing ${PRIORITY_STRIPE[item.priority]} ${
-        dragging ? "opacity-40" : ""
-      }`}
+        Date.now() - new Date(item.createdAt).getTime() < TODO_NEW_MS ? "rk-todo-new" : ""
+      } ${dragging ? "opacity-40" : ""}`}
     >
       <button
         type="button"

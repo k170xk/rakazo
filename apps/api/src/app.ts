@@ -593,6 +593,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     webOrigin: env.webOrigin,
     signupsEnabled: env.signupsEnabled,
     signupAllowlist: env.signupAllowlist,
+    companyWorkspace: env.companyWorkspace,
     singleAccount: Boolean(env.desktopStackToken),
     email,
     logger: {
@@ -1632,6 +1633,7 @@ async function handleEvolveSso(c: Context, env: AppEnv, prisma: PrismaClient): P
       token,
       signupsEnabled: env.signupsEnabled,
       signupAllowlist: env.signupAllowlist,
+      companyWorkspace: env.companyWorkspace,
     });
     const secure = env.webOrigin.startsWith("https:") || env.authUrl.startsWith("https:");
     const maxAge = Math.max(0, Math.floor((session.expiresAt.getTime() - Date.now()) / 1000));

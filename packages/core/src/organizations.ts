@@ -19,3 +19,10 @@ export function organizationOfSpace(
     ? organizations.find((organization) => organization.spaceIds.includes(spaceId))
     : undefined;
 }
+
+/** Permanent company work space (OCSC) when present; otherwise the first listed organization. */
+export function preferredOrganization(
+  organizations: readonly Organization[],
+): Organization | undefined {
+  return organizations.find((organization) => organization.permanent) ?? organizations[0];
+}

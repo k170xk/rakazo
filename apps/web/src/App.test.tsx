@@ -50,7 +50,13 @@ vi.mock("./lib/remote-images-preference", () => ({
   subscribeRemoteImages: () => () => {},
 }));
 vi.mock("./lib/performance", () => ({ markOnce: () => {}, markAfterPaint: () => {} }));
-vi.mock("./lib/rpc", () => ({ rpc: { analytics: { screen: capability.screen } } }));
+vi.mock("./lib/rpc", () => ({
+  rpc: { analytics: { screen: capability.screen } },
+  selectedSpaceId: () => "space-1",
+}));
+vi.mock("./lib/organizations", () => ({
+  ensureDefaultCompanySpace: vi.fn(async () => false),
+}));
 vi.mock("./components/SubscriptionGate", () => ({
   SubscriptionGate: ({ children }: { children: ReactNode }) => children,
 }));
