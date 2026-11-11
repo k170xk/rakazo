@@ -178,7 +178,13 @@ import {
   VoiceInfoSchema,
   VoiceStatusSchema,
 } from "./domain.js";
-import { ComputerCommandSchema, ProductEventSchema } from "./events.js";
+import {
+  ComputerCommandSchema,
+  EvolveChangeEditsSchema,
+  EvolveChangeOptionKindSchema,
+  EvolveChangeOptionsSchema,
+  ProductEventSchema,
+} from "./events.js";
 import {
   EvolveConversationMessagesSchema,
   EvolveConversationPageSchema,
@@ -952,6 +958,23 @@ export const appContract = {
           ),
       )
       .output(z.object({ ok: z.literal(true) })),
+    /**
+     * The run owner's edits to a pending deadline or work package card. Evolve previews the edited
+     * change and the card is replaced with it; nothing is saved until the card is approved.
+     */
+    reviseEvolveChange: oc
+      .input(threadTarget.safeExtend({ runId: Id, messageId: Id, edits: EvolveChangeEditsSchema }))
+      .output(z.object({ ok: z.literal(true) })),
+    /** Live Evolve projects, people or categories for a pending card's pickers. */
+    evolveChangeOptions: oc
+      .input(
+        threadTarget.safeExtend({
+          runId: Id,
+          kind: EvolveChangeOptionKindSchema,
+          query: z.string().trim().max(100).default(""),
+        }),
+      )
+      .output(EvolveChangeOptionsSchema),
     /** `unreadAfterSeq`: the seq read up to before this call, null when nothing was unread. */
     markRead: oc
       .input(threadTarget)

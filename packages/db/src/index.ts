@@ -24,6 +24,7 @@ export * from "./cross-space-communication.js";
 export * from "./database-access.js";
 export * from "./deferred-migrations.js";
 export * from "./events.js";
+export * from "./evolve-change-ask.js";
 export * from "./expire-stuck-run.js";
 export * from "./external-conversations.js";
 export * from "./group-people.js";

@@ -1326,8 +1326,13 @@ msgid "Asleep"
 msgstr "Asleep"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Assigned to"
 msgstr "Assigned to"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "assignee"
+msgstr "assignee"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
@@ -1420,6 +1425,7 @@ msgstr "Available to shell commands as {commandVariable}"
 msgid "Avatar Studio"
 msgstr "Avatar Studio"
 
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/tour/ocsc-tour.tsx
@@ -1693,6 +1699,7 @@ msgid "Can show tracked changes marked up in the PDF when you want them"
 msgstr "Can show tracked changes marked up in the PDF when you want them"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Can start"
 msgstr "Can start"
 
@@ -1783,7 +1790,12 @@ msgstr "Card view"
 msgid "Cards"
 msgstr "Cards"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "category"
+msgstr "category"
+
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
 msgstr "Category"
@@ -1791,6 +1803,10 @@ msgstr "Category"
 #: src/components/DictationShortcutSettings.tsx
 msgid "Change"
 msgstr "Change"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Change {label}"
+msgstr "Change {label}"
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
@@ -1920,6 +1936,10 @@ msgstr "Checking computer setup…"
 msgid "Checking connection…"
 msgstr "Checking connection…"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Checking with Evolve…"
+msgstr "Checking with Evolve…"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
 #: src/pages/AdminCompanyPage.tsx
@@ -1939,6 +1959,10 @@ msgstr "Choose a model"
 #: src/pages/Auth.tsx
 msgid "Choose a new password"
 msgstr "Choose a new password"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Choose a project"
+msgstr "Choose a project"
 
 #: src/pages/Onboarding.tsx
 msgid "Choose a provider"
@@ -2218,6 +2242,7 @@ msgid "Comment"
 msgstr "Comment"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Comments"
 msgstr "Comments"
 
@@ -2281,11 +2306,16 @@ msgstr "Compares two versions, or gives you a clean copy with every change accep
 msgid "Complete"
 msgstr "Complete"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Complete (%)"
+msgstr "Complete (%)"
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Complete Required Roles First"
 msgstr "Complete Required Roles First"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "Completed"
@@ -2946,6 +2976,10 @@ msgstr "Could not load sign-in options"
 msgid "Could not load skill"
 msgstr "Could not load skill"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Could not load the choices from Evolve"
+msgstr "Could not load the choices from Evolve"
+
 #: src/pages/PeerMessagesOverlay.tsx
 msgid "Could not load this chat."
 msgstr "Could not load this chat."
@@ -3566,6 +3600,7 @@ msgid "days"
 msgstr "days"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Deadline"
 msgstr "Deadline"
 
@@ -3959,6 +3994,7 @@ msgid "Drag, drop, or paste an image"
 msgstr "Drag, drop, or paste an image"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Due"
 msgstr "Due"
@@ -3970,6 +4006,10 @@ msgstr "Duplicate"
 #: src/components/AskCard.tsx
 msgid "Duration"
 msgstr "Duration"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Duration (days)"
+msgstr "Duration (days)"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
@@ -4291,6 +4331,14 @@ msgstr "Evolve assistant"
 #: src/pages/AdminAssistantModels.tsx
 msgid "Evolve assistant models"
 msgstr "Evolve assistant models"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Evolve checks the change again; nothing is saved until you approve the card."
+msgstr "Evolve checks the change again; nothing is saved until you approve the card."
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Evolve did not accept that change"
+msgstr "Evolve did not accept that change"
 
 #: src/components/GroupPeople.tsx
 msgid "Evolve people"
@@ -4762,6 +4810,7 @@ msgid "Hang up, then enter the code on screen."
 msgstr "Hang up, then enter the code on screen."
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Hard deadline"
 msgstr "Hard deadline"
 
@@ -5157,6 +5206,10 @@ msgstr "Its conversation, files, and routines will be permanently deleted. Bots 
 msgid "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
 msgstr "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Job number, project or client"
+msgstr "Job number, project or client"
+
 #: src/components/GroupPeople.tsx
 msgid "Joins when they open OCSC Intelligence from Evolve"
 msgstr "Joins when they open OCSC Intelligence from Evolve"
@@ -5381,6 +5434,10 @@ msgstr "Loading exemplar responses..."
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Loading folders…"
 msgstr "Loading folders…"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Loading from Evolve…"
+msgstr "Loading from Evolve…"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
@@ -5916,6 +5973,11 @@ msgstr "Move to"
 msgid "Move up"
 msgstr "Move up"
 
+#. placeholder {0}: [movedFrom.jobNumber, movedFrom.name].filter(Boolean).join(" · ") || t`Unnamed project`
+#: src/components/AskCard.tsx
+msgid "Moved from <0>{0}</0>"
+msgstr "Moved from <0>{0}</0>"
+
 #: src/components/AskCard.tsx
 msgid "Must start"
 msgstr "Must start"
@@ -5942,6 +6004,7 @@ msgid "My vault"
 msgstr "My vault"
 
 #: src/components/CreateOrganizationDialog.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -6197,6 +6260,7 @@ msgid "No bots match"
 msgstr "No bots match"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "No category"
 msgstr "No category"
 
@@ -6489,6 +6553,7 @@ msgid "Note:"
 msgstr "Note:"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
 msgstr "Notes"
@@ -6500,6 +6565,10 @@ msgstr "Nothing archived."
 #: src/components/todos/todo-board.tsx
 msgid "Nothing here"
 msgstr "Nothing here"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Nothing in Evolve matches."
+msgstr "Nothing in Evolve matches."
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
@@ -7226,6 +7295,7 @@ msgid "Previous settings sections"
 msgstr "Previous settings sections"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Priority"
@@ -7255,7 +7325,12 @@ msgstr "Productivity"
 msgid "Program: {name}"
 msgstr "Program: {name}"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "project"
+msgstr "project"
+
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Project"
 msgstr "Project"
@@ -8104,6 +8179,10 @@ msgstr "Screen not connected"
 msgid "Search"
 msgstr "Search"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Search {label}"
+msgstr "Search {label}"
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Search & Filter"
 msgstr "Search & Filter"
@@ -8593,6 +8672,7 @@ msgid "Slides come animated for presenting"
 msgstr "Slides come animated for presenting"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Soft deadline"
 msgstr "Soft deadline"
 
@@ -8795,6 +8875,7 @@ msgid "State or region"
 msgstr "State or region"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
@@ -8802,6 +8883,7 @@ msgid "Status"
 msgstr "Status"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Status comment"
 msgstr "Status comment"
 
@@ -9576,6 +9658,7 @@ msgid "Turns any OCSC Word report, deck or workbook into a clean PDF"
 msgstr "Turns any OCSC Word report, deck or workbook into a clean PDF"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Type"
@@ -9606,6 +9689,7 @@ msgid "Type your answer"
 msgstr "Type your answer"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/Shell.tsx
 msgid "Unassigned"
@@ -9657,6 +9741,10 @@ msgstr "Up to date"
 #: src/components/ModelCredits.tsx
 msgid "Update"
 msgstr "Update"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Update card"
+msgstr "Update card"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Update computer"
@@ -10168,6 +10256,7 @@ msgid "Work"
 msgstr "Work"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Work package"
 msgstr "Work package"
 

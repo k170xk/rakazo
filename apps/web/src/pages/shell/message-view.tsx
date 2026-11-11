@@ -3,6 +3,8 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown, LinkifiedText, withBlockMentions } from "@rakazo/chat-ui/web";
 import type {
   BotAvatarSet,
+  EvolveChangeEdits,
+  EvolveChangeOptionKind,
   LoginFieldInput,
   MessageReaction,
   ThreadMessage,
@@ -52,6 +54,11 @@ import {
   McpApprovalCard,
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
+
+/** The chat a card belongs to, as the thread routes name it. */
+function chatTarget(target: ArtifactTarget): { botId: string } | { groupId: string } {
+  return "botId" in target ? { botId: target.botId } : { groupId: target.groupId };
+}
 
 export const MessageView = memo(function MessageView({
   artifactTarget,
@@ -642,6 +649,26 @@ export const MessageView = memo(function MessageView({
                   }
                   onDismiss={() => onAnswer(message, "", undefined, true)}
                   rpc={rpc}
+                  {...(message.runId && (block.deadlineChange || block.workPackageChange)
+                    ? {
+                        onReviseChange: async (edits: EvolveChangeEdits) => {
+                          await rpc.threads.reviseEvolveChange({
+                            ...chatTarget(artifactTarget),
+                            runId: message.runId!,
+                            messageId: message.id,
+                            edits,
+                          });
+                          await onRefresh().catch(() => undefined);
+                        },
+                        loadChangeOptions: (kind: EvolveChangeOptionKind, query: string) =>
+                          rpc.threads.evolveChangeOptions({
+                            ...chatTarget(artifactTarget),
+                            runId: message.runId!,
+                            kind,
+                            query,
+                          }),
+                      }
+                    : {})}
                 />
                 {i === hoverAnchorIndex ? hoverActions : null}
               </div>

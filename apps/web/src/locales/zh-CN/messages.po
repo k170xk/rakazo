@@ -1321,7 +1321,12 @@ msgid "Asleep"
 msgstr "休眠中"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Assigned to"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "assignee"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -1415,6 +1420,7 @@ msgstr "Shell 命令可通过 {commandVariable} 使用"
 msgid "Avatar Studio"
 msgstr "头像工作室"
 
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/tour/ocsc-tour.tsx
@@ -1688,6 +1694,7 @@ msgid "Can show tracked changes marked up in the PDF when you want them"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Can start"
 msgstr ""
 
@@ -1778,13 +1785,22 @@ msgstr "卡片视图"
 msgid "Cards"
 msgstr ""
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "category"
+msgstr ""
+
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
 msgstr ""
 
 #: src/components/DictationShortcutSettings.tsx
 msgid "Change"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Change {label}"
 msgstr ""
 
 #: src/pages/ModelRoleSettings.tsx
@@ -1915,6 +1931,10 @@ msgstr "正在检查电脑设置…"
 msgid "Checking connection…"
 msgstr "正在检查连接…"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Checking with Evolve…"
+msgstr ""
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
 #: src/pages/AdminCompanyPage.tsx
@@ -1934,6 +1954,10 @@ msgstr "选择模型"
 #: src/pages/Auth.tsx
 msgid "Choose a new password"
 msgstr "设置新密码"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Choose a project"
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Choose a provider"
@@ -2213,6 +2237,7 @@ msgid "Comment"
 msgstr "评论"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Comments"
 msgstr ""
 
@@ -2276,11 +2301,16 @@ msgstr ""
 msgid "Complete"
 msgstr "完成"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Complete (%)"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Complete Required Roles First"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "已完成"
@@ -2941,6 +2971,10 @@ msgstr "无法加载登录选项"
 msgid "Could not load skill"
 msgstr "无法加载技能"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Could not load the choices from Evolve"
+msgstr ""
+
 #: src/pages/PeerMessagesOverlay.tsx
 msgid "Could not load this chat."
 msgstr "无法加载此对话。"
@@ -3557,6 +3591,7 @@ msgid "days"
 msgstr "天"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Deadline"
 msgstr ""
 
@@ -3950,6 +3985,7 @@ msgid "Drag, drop, or paste an image"
 msgstr "拖放或粘贴图片"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Due"
 msgstr ""
@@ -3960,6 +3996,10 @@ msgstr "复制"
 
 #: src/components/AskCard.tsx
 msgid "Duration"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Duration (days)"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -4277,6 +4317,14 @@ msgstr ""
 
 #: src/pages/AdminAssistantModels.tsx
 msgid "Evolve assistant models"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Evolve checks the change again; nothing is saved until you approve the card."
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Evolve did not accept that change"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
@@ -4749,6 +4797,7 @@ msgid "Hang up, then enter the code on screen."
 msgstr "请挂断，然后输入屏幕上的代码。"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Hard deadline"
 msgstr ""
 
@@ -5139,6 +5188,10 @@ msgstr "它的对话、文件和例行任务将被永久删除。它创建的 Bo
 msgid "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
 msgstr "其共享链接将失效，聊天中的卡片会显示为已删除。此操作无法撤销。"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Job number, project or client"
+msgstr ""
+
 #: src/components/GroupPeople.tsx
 msgid "Joins when they open OCSC Intelligence from Evolve"
 msgstr ""
@@ -5363,6 +5416,10 @@ msgstr ""
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Loading folders…"
 msgstr "Loading folders…"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Loading from Evolve…"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading integrations…"
@@ -5898,6 +5955,11 @@ msgstr "移动到"
 msgid "Move up"
 msgstr "上移"
 
+#. placeholder {0}: [movedFrom.jobNumber, movedFrom.name].filter(Boolean).join(" · ") || t`Unnamed project`
+#: src/components/AskCard.tsx
+msgid "Moved from <0>{0}</0>"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Must start"
 msgstr ""
@@ -5924,6 +5986,7 @@ msgid "My vault"
 msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -6179,6 +6242,7 @@ msgid "No bots match"
 msgstr "没有匹配的 Bot"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "No category"
 msgstr ""
 
@@ -6471,6 +6535,7 @@ msgid "Note:"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
 msgstr ""
@@ -6481,6 +6546,10 @@ msgstr ""
 
 #: src/components/todos/todo-board.tsx
 msgid "Nothing here"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Nothing in Evolve matches."
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -7208,6 +7277,7 @@ msgid "Previous settings sections"
 msgstr "上一组设置项"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Priority"
@@ -7237,7 +7307,12 @@ msgstr "效率"
 msgid "Program: {name}"
 msgstr "程序：{name}"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "project"
+msgstr ""
+
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Project"
 msgstr ""
@@ -8086,6 +8161,10 @@ msgstr "屏幕未连接"
 msgid "Search"
 msgstr "搜索"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Search {label}"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Search & Filter"
 msgstr ""
@@ -8575,6 +8654,7 @@ msgid "Slides come animated for presenting"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Soft deadline"
 msgstr ""
 
@@ -8777,6 +8857,7 @@ msgid "State or region"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
@@ -8784,6 +8865,7 @@ msgid "Status"
 msgstr "状态"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Status comment"
 msgstr ""
 
@@ -9555,6 +9637,7 @@ msgid "Turns any OCSC Word report, deck or workbook into a clean PDF"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Type"
@@ -9585,6 +9668,7 @@ msgid "Type your answer"
 msgstr "输入你的回答"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/Shell.tsx
 msgid "Unassigned"
@@ -9636,6 +9720,10 @@ msgstr "已是最新"
 #: src/components/ModelCredits.tsx
 msgid "Update"
 msgstr "更新"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Update card"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Update computer"
@@ -10142,6 +10230,7 @@ msgid "Work"
 msgstr "工作"
 
 #: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 msgid "Work package"
 msgstr ""
 

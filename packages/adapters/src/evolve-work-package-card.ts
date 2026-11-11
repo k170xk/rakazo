@@ -16,9 +16,12 @@ type WorkPackageValues = {
   links: { title: string; url: string }[];
 };
 
+type PreviewProject = { job_number: string | null; name: string | null; client: string | null };
+
 export type WorkPackagePreview = {
   action: "add" | "update" | "delete";
-  project: { job_number: string | null; name: string | null; client: string | null };
+  project: PreviewProject;
+  moved_from?: PreviewProject;
   before?: WorkPackageValues;
   work_package?: WorkPackageValues;
   requester?: string | null;
@@ -87,6 +90,15 @@ export function workPackageCardSummary(preview: WorkPackagePreview): FleetCardSu
     },
     ...(action !== "add" && preview.before ? { before: values(preview.before) } : {}),
     ...(action !== "delete" && preview.work_package ? { after: values(preview.work_package) } : {}),
+    ...(action === "update" && preview.moved_from
+      ? {
+          movedFrom: {
+            jobNumber: preview.moved_from.job_number ?? null,
+            name: preview.moved_from.name ?? null,
+            client: preview.moved_from.client ?? null,
+          },
+        }
+      : {}),
     ...(preview.requester ? { requester: preview.requester } : {}),
     ...(preview.emails?.length ? { emails: preview.emails.map(String) } : {}),
     ...(preview.status_comment ? { statusComment: preview.status_comment } : {}),
@@ -96,6 +108,11 @@ export function workPackageCardSummary(preview: WorkPackagePreview): FleetCardSu
   const lines = [
     `Project: ${project || "No project"}`,
     ...(change.project.client ? [`Client: ${change.project.client}`] : []),
+    ...(change.movedFrom
+      ? [
+          `Moved from: ${[change.movedFrom.jobNumber, change.movedFrom.name].filter(Boolean).join(" · ") || "No project"}`,
+        ]
+      : []),
     ...(action === "update" && change.before ? ["Now:", ...describe(change.before), "After:"] : []),
     ...(action === "delete" && change.before ? describe(change.before) : []),
     ...(change.after ? describe(change.after) : []),

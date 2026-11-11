@@ -1,7 +1,14 @@
 import type { AdapterContext, ConnectorCall, ConnectorProvider } from "@rakazo/adapter-kit";
-import type { ProjectDeadlineChange } from "@rakazo/contracts";
+import type {
+  EvolveChangeEdits,
+  EvolveChangeOptionKind,
+  EvolveChangeOptions,
+  ProjectDeadlineChange,
+} from "@rakazo/contracts";
 import { toolNeedsApprovalEveryTime } from "@rakazo/core";
 import type { FleetCardSummary } from "./approval-ask.js";
+import type { EvolvePluginsConnection } from "./evolve-plugins.js";
+import { callEvolveComputerMcp } from "./evolve-plugins.js";
 import type { WorkPackagePreview } from "./evolve-work-package-card.js";
 import { workPackageCardSummary } from "./evolve-work-package-card.js";
 
@@ -28,6 +35,140 @@ type DeadlinePreview = {
 /** A deadline or work package change, previewed on a card and approved every time. */
 export function isEvolveChangeTool(name: string): boolean {
   return toolNeedsApprovalEveryTime(name);
+}
+
+/** What each card lets its owner change; the fields its Evolve tool takes, links aside. */
+const EDITABLE: Record<string, readonly (keyof EvolveChangeEdits)[]> = {
+  add_project_deadline: ["project_id", "name", "date", "hard_deadline", "comments"],
+  update_project_deadline: ["name", "date", "hard_deadline", "completed", "comments"],
+  add_work_package: [
+    "project_id",
+    "title",
+    "category",
+    "assignee",
+    "duration_days",
+    "can_start_date",
+    "due_date",
+    "priority",
+    "notes",
+  ],
+  update_work_package: [
+    "project_id",
+    "title",
+    "category",
+    "assignee",
+    "duration_days",
+    "can_start_date",
+    "due_date",
+    "status",
+    "status_comment",
+    "priority",
+    "completion_percentage",
+    "notes",
+  ],
+};
+
+/** The Evolve tool an approval effect calls, such as add_work_package. */
+export function evolveChangeToolName(kind: string): string | null {
+  if (!isEvolveChangeTool(kind)) return null;
+  return kind.slice(kind.lastIndexOf("__") + 2) || null;
+}
+
+/** The stored call with the owner's edits applied, or why those edits do not fit this card. */
+export function editedEvolveChangeArgs(
+  kind: string,
+  args: Record<string, unknown>,
+  edits: EvolveChangeEdits,
+): { args: Record<string, unknown> } | { error: string } {
+  const tool = evolveChangeToolName(kind);
+  const editable = tool ? EDITABLE[tool] : undefined;
+  if (!editable) return { error: "This card cannot be edited." };
+  const refused = Object.keys(edits).find(
+    (key) => !editable.includes(key as keyof EvolveChangeEdits),
+  );
+  if (refused) return { error: `This card cannot change ${refused.replace(/_/g, " ")}.` };
+  const next: Record<string, unknown> = { ...withoutCarriedKeys(args), ...edits };
+  // A chosen project replaces however the model named it.
+  if (edits.project_id !== undefined) {
+    delete next.job_number;
+    delete next.project_name;
+  }
+  return { args: next };
+}
+
+/** Previews an edited change as the run's owner, the way the run's own call is previewed. */
+export async function previewEvolveChangeAs(
+  connection: EvolvePluginsConnection,
+  email: string,
+  kind: string,
+  args: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<{ summary: FleetCardSummary; args: Record<string, unknown> } | { error: string }> {
+  const tool = evolveChangeToolName(kind);
+  if (!tool) return { error: "This card cannot be edited." };
+  const reply = await callEvolveComputerMcp<{ result?: unknown; error?: { message?: string } }>(
+    connection,
+    email,
+    {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name: tool, arguments: { ...args, _preview: true } },
+    },
+    { signal },
+  );
+  if (reply.error) return { error: reply.error.message ?? "Evolve refused the change." };
+  return evolveChangePreview(reply.result, args);
+}
+
+/** Live projects, people or categories for a card's pickers, chosen as Evolve's tools resolve them. */
+export async function listEvolveChangeOptions(
+  connection: EvolvePluginsConnection,
+  email: string,
+  kind: EvolveChangeOptionKind,
+  query: string,
+  signal?: AbortSignal,
+): Promise<EvolveChangeOptions> {
+  const reply = await callEvolveComputerMcp<{ result?: unknown; error?: { message?: string } }>(
+    connection,
+    email,
+    {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name: "evolve_change_options", arguments: { kind, query } },
+    },
+    { signal },
+  );
+  const data = evolveReply(reply.result);
+  if (reply.error || !data || data.ok === false) {
+    throw new Error(String(data?.error ?? reply.error?.message ?? "Evolve did not list choices."));
+  }
+  const text = (value: unknown) => (typeof value === "string" && value ? value : null);
+  if (kind === "categories") {
+    return {
+      categories: (Array.isArray(data.categories) ? data.categories : []).map(String).slice(0, 200),
+    };
+  }
+  if (kind === "people") {
+    return {
+      people: (Array.isArray(data.people) ? data.people : [])
+        .map((row) => ({ name: String(row?.name ?? ""), email: String(row?.email ?? "") }))
+        .filter((row) => row.name && row.email)
+        .slice(0, 50),
+    };
+  }
+  return {
+    projects: (Array.isArray(data.projects) ? data.projects : [])
+      .map((row) => ({
+        projectId: Number(row?.project_id),
+        jobNumber: text(row?.job_number),
+        name: text(row?.name),
+        client: text(row?.client),
+      }))
+      .filter((row) => Number.isInteger(row.projectId) && row.projectId > 0)
+      .slice(0, 50),
+  };
 }
 
 export function withoutCarriedKeys(args: Record<string, unknown>): Record<string, unknown> {
@@ -133,6 +274,14 @@ export async function previewEvolveChange(
     else if (event.type === "error") failure = event.message;
   }
   if (failure) return { error: failure };
+  return evolveChangePreview(data, args);
+}
+
+/** The card and approved arguments for Evolve's answer to a `_preview` call made with `args`. */
+export function evolveChangePreview(
+  data: unknown,
+  args: Record<string, unknown>,
+): { summary: FleetCardSummary; args: Record<string, unknown> } | { error: string } {
   const reply = evolveReply(data);
   const preview = reply?.preview as (DeadlinePreview | WorkPackagePreview) | undefined;
   const workPackage =

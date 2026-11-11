@@ -1,7 +1,13 @@
 import type { AdapterContext, ConnectorCall, ConnectorProvider } from "@rakazo/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { buildApprovalAskBlock } from "./approval-ask.js";
-import { deadlineCardSummary, evolveReply, previewEvolveChange } from "./evolve-change-card.js";
+import {
+  deadlineCardSummary,
+  editedEvolveChangeArgs,
+  evolveChangeToolName,
+  evolveReply,
+  previewEvolveChange,
+} from "./evolve-change-card.js";
 
 const context = { userId: "user", signal: new AbortController().signal } as AdapterContext;
 const project = {
@@ -198,6 +204,69 @@ describe("work package approval card", () => {
         ],
       });
     }
+  });
+});
+
+describe("editing a pending card", () => {
+  it("applies the owner's edits and lets a chosen project replace the model's", () => {
+    expect(
+      editedEvolveChangeArgs(
+        "mcp__evolve__add_work_package",
+        { job_number: "C1078", project_name: "Cork", title: "GA", _preview: true, _expected: {} },
+        { project_id: 9, assignee: "unassigned", category: "none" },
+      ),
+    ).toEqual({ args: { title: "GA", project_id: 9, assignee: "unassigned", category: "none" } });
+  });
+
+  it("refuses fields a card cannot change, and delete cards entirely", () => {
+    expect(
+      editedEvolveChangeArgs(
+        "mcp__evolve__update_project_deadline",
+        { deadline_id: "d" },
+        {
+          project_id: 9,
+        },
+      ),
+    ).toEqual({ error: "This card cannot change project id." });
+    expect(
+      editedEvolveChangeArgs(
+        "mcp__evolve__delete_work_package",
+        { work_package_id: "w" },
+        {
+          title: "x",
+        },
+      ),
+    ).toEqual({ error: "This card cannot be edited." });
+    expect(evolveChangeToolName("mcp__evolve__search_projects")).toBeNull();
+  });
+
+  it("shows the project a work package moves out of", async () => {
+    const { connector } = evolveAnswering({
+      ok: true,
+      preview: {
+        action: "update",
+        project,
+        moved_from: { job_number: "C1001", name: "Old job", client: null },
+        before: workPackage,
+        work_package: workPackage,
+        changed: ["project"],
+      },
+    });
+    const result = await previewEvolveChange(
+      connector,
+      {
+        ...call({ work_package_id: "wp-1", project_id: 7 }),
+        tool: "mcp__evolve__update_work_package",
+      },
+      context,
+    );
+    if (!("summary" in result)) throw new Error(result.error);
+    expect(result.summary.workPackage?.movedFrom).toEqual({
+      jobNumber: "C1001",
+      name: "Old job",
+      client: null,
+    });
+    expect(result.summary.lines).toContain("Moved from: C1001 · Old job");
   });
 });
 

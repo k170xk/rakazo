@@ -1,6 +1,12 @@
 import { ORPCError } from "@orpc/server";
 import { runContinueJob, runJobKey } from "@rakazo/adapter-kit";
-import { settleCallRequest } from "@rakazo/adapters";
+import {
+  buildApprovalAskBlock,
+  editedEvolveChangeArgs,
+  listEvolveChangeOptions,
+  previewEvolveChangeAs,
+  settleCallRequest,
+} from "@rakazo/adapters";
 import type { Actor, ProductEvent } from "@rakazo/contracts";
 import {
   AttachmentValidationError,
@@ -14,11 +20,13 @@ import type { Prisma } from "@rakazo/db";
 import {
   AnswerTooLongError,
   appendEventInTransaction,
+  commitEvolveChangeRevision,
   createExternalConversationRepos,
   createThreadMessageInTransaction,
   groupOwner,
   IsolationError,
   lockOwnedGroup,
+  readPendingEvolveChange,
   runAsTenant,
   touchGroupUpdatedAt,
 } from "@rakazo/db";
@@ -49,7 +57,7 @@ import {
   threadHead,
   threadSnapshot,
 } from "../thread-target.js";
-import { mapBotSecretInputError } from "./bots.js";
+import { actorEmail, mapBotSecretInputError } from "./bots.js";
 import { releaseComputerControl } from "./computer.js";
 import type { RouterContext } from "./context.js";
 import { evolveConversationBlock, recordEvolveContinuation } from "./evolve-history.js";
@@ -741,6 +749,87 @@ export function threadsRoutes(ctx: RouterContext) {
         });
         return { ok: true as const };
       }),
+      reviseEvolveChange: authed.threads.reviseEvolveChange.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const card = {
+          spaceId: context.actor.spaceId,
+          threadId: target.threadId,
+          runId: input.runId,
+          messageId: input.messageId,
+          userId: context.actor.userId,
+        };
+        const stale = () =>
+          new ORPCError("CONFLICT", { message: "This card is no longer waiting for you." });
+        const pending = await readPendingEvolveChange(deps.prisma, card);
+        if (!pending) throw stale();
+        const email = await actorEmail(deps, context.actor);
+        if (!deps.evolvePlugins || !email) {
+          throw new ORPCError("BAD_REQUEST", { message: "Evolve is not linked to this server." });
+        }
+        const edited = editedEvolveChangeArgs(pending.kind, pending.args, input.edits);
+        if ("error" in edited) throw new ORPCError("BAD_REQUEST", { message: edited.error });
+        const preview = await previewEvolveChangeAs(
+          deps.evolvePlugins,
+          email,
+          pending.kind,
+          edited.args,
+          context.signal,
+        ).catch((error: unknown) => {
+          getLogger().warn("evolve change revise", { error: String(error) });
+          throw new ORPCError("SERVICE_UNAVAILABLE", { message: "Evolve could not be reached." });
+        });
+        // Evolve's own refusal (no such category, several people match) is the person's to fix.
+        if ("error" in preview) throw new ORPCError("BAD_REQUEST", { message: preview.error });
+        const ask = buildApprovalAskBlock(pending.effectId, pending.kind, preview.args, [], {
+          summary: preview.summary,
+        });
+        if (ask.kind !== "ask") throw stale();
+        const committed = await commitEvolveChangeRevision(deps.prisma, card, {
+          pending,
+          args: preview.args,
+          ask,
+        });
+        if (!committed) throw stale();
+        await deps.events.notify(committed.threadId, committed.seq).catch((error) => {
+          getLogger().error("evolve change revise notification", error);
+        });
+        return { ok: true as const };
+      }),
+      evolveChangeOptions: authed.threads.evolveChangeOptions.handler(
+        async ({ context, input }) => {
+          const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+          // Choices are offered only while the person's own Evolve card is waiting.
+          const run = await deps.prisma.run.findFirst({
+            where: {
+              id: input.runId,
+              spaceId: context.actor.spaceId,
+              threadId: target.threadId,
+              status: "waiting_input",
+              userId: context.actor.userId,
+            },
+            select: { id: true },
+          });
+          if (!run) {
+            throw new ORPCError("CONFLICT", { message: "This card is no longer waiting for you." });
+          }
+          const email = await actorEmail(deps, context.actor);
+          if (!deps.evolvePlugins || !email) {
+            throw new ORPCError("BAD_REQUEST", { message: "Evolve is not linked to this server." });
+          }
+          return listEvolveChangeOptions(
+            deps.evolvePlugins,
+            email,
+            input.kind,
+            input.query,
+            context.signal,
+          ).catch((error: unknown) => {
+            getLogger().warn("evolve change options", { error: String(error) });
+            throw new ORPCError("SERVICE_UNAVAILABLE", {
+              message: "Could not load the choices from Evolve. Try again.",
+            });
+          });
+        },
+      ),
       markRead: authed.threads.markRead.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         // Read state belongs to the owner; a colleague reading leaves it as it is.

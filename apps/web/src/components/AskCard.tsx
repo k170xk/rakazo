@@ -1,7 +1,7 @@
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { LoginFieldInput, ThreadMessage } from "@rakazo/contracts";
+import type { EvolveChangeEdits, LoginFieldInput, ThreadMessage } from "@rakazo/contracts";
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
 import {
   isApprovalAskBlock,
@@ -17,6 +17,8 @@ import type { RpcClient } from "../lib/rpc";
 import { rpc as selectedSpaceRpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
+import type { LoadChangeOptions } from "./EvolveChangeEditor";
+import { DeadlineEditor, WorkPackageEditor } from "./EvolveChangeEditor";
 import { OptionRow, optionLetter } from "./OptionRow";
 import { SecretAskCard } from "./SecretAskCard";
 
@@ -72,6 +74,10 @@ export type AskCardProps = {
   onDismiss: () => Promise<void>;
   /** The chat's space; Undo goes there even if another tab selects a different space. */
   rpc?: RpcClient;
+  /** Edits a pending deadline or work package card; Evolve previews the edit, which replaces it. */
+  onReviseChange?: (edits: EvolveChangeEdits) => Promise<void>;
+  /** The live Evolve choices that card's pickers offer. */
+  loadChangeOptions?: LoadChangeOptions;
 };
 
 /** A question, approval or protected-input request from the bot. */
@@ -224,6 +230,8 @@ function EvolveChangeCard({
   allowLabel,
   approvedText,
   destructive,
+  movedFrom,
+  editor,
 }: Pick<AskCardProps, "block" | "canAnswer" | "onAnswer"> & {
   testId: string;
   heading: ReactNode;
@@ -233,13 +241,19 @@ function EvolveChangeCard({
   allowLabel: string;
   approvedText: string;
   destructive?: boolean;
+  /** The project a work package change moves it out of. */
+  movedFrom?: DeadlineChange["project"];
+  /** The card's fields to edit before approving; closing returns to the preview. */
+  editor?: (close: () => void) => ReactNode;
 }) {
   const { t } = useLingui();
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [acceptedAnswer, setAcceptedAnswer] = useState<string>();
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const answer = block.status === "answered" ? block.answer : acceptedAnswer;
   const answered = answer !== undefined;
+  const editable = Boolean(editor) && canAnswer && !answered;
 
   async function answerWith(id: string) {
     if (pendingAction) return;
@@ -283,8 +297,19 @@ function EvolveChangeCard({
           {project.client ? (
             <div className="text-[13.5px] text-muted-foreground">{project.client}</div>
           ) : null}
+          {movedFrom ? (
+            <div className="mt-1 text-[13px] text-muted-foreground">
+              <Trans>
+                Moved from{" "}
+                <span className="line-through">
+                  {[movedFrom.jobNumber, movedFrom.name].filter(Boolean).join(" · ") ||
+                    t`Unnamed project`}
+                </span>
+              </Trans>
+            </div>
+          ) : null}
         </div>
-        {children}
+        {editing && editable && editor ? editor(() => setEditing(false)) : children}
         {warnings?.length ? (
           <ul className="mt-3 space-y-1 rounded-lg bg-warning/10 px-3 py-2 text-[13.5px] text-warning">
             {warnings.map((warning) => (
@@ -301,7 +326,7 @@ function EvolveChangeCard({
           <div className="mt-3.5 text-[13.5px] font-medium text-muted-foreground">
             <Trans>No longer active</Trans>
           </div>
-        ) : (
+        ) : editing && editable ? null : (
           <div className="mt-3.5 flex flex-wrap gap-2">
             {block.actions?.map((action) => (
               <Button
@@ -321,6 +346,18 @@ function EvolveChangeCard({
                 )}
               </Button>
             ))}
+            {editable ? (
+              <Button
+                variant="outline"
+                disabled={pendingAction !== null}
+                onClick={() => {
+                  setError(null);
+                  setEditing(true);
+                }}
+              >
+                <Trans>Edit</Trans>
+              </Button>
+            ) : null}
           </div>
         )}
         {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
@@ -342,6 +379,18 @@ function DeadlineAskCard({ change, ...props }: AskCardProps & { change: Deadline
       warnings={change.warnings}
       allowLabel={adding ? t`Add deadline` : t`Save changes`}
       approvedText={adding ? t`Approved: adding it to Evolve` : t`Approved: saving it in Evolve`}
+      editor={
+        props.onReviseChange && props.loadChangeOptions
+          ? (close) => (
+              <DeadlineEditor
+                change={change}
+                loadOptions={props.loadChangeOptions!}
+                onRevise={props.onReviseChange!}
+                onClose={close}
+              />
+            )
+          : undefined
+      }
     >
       <ChangeRows
         rows={deadlineRows(change.after)}
@@ -387,6 +436,24 @@ function WorkPackageAskCard({ change, ...props }: AskCardProps & { change: WorkP
           : change.action === "update"
             ? t`Approved: saving it in Evolve`
             : t`Approved: deleting it from Evolve`
+      }
+      movedFrom={change.movedFrom}
+      editor={
+        change.action !== "delete" &&
+        change.after &&
+        props.onReviseChange &&
+        props.loadChangeOptions
+          ? (close) => (
+              <WorkPackageEditor
+                change={change}
+                loadOptions={props.loadChangeOptions!}
+                onRevise={props.onReviseChange!}
+                onClose={close}
+                statusLabel={workPackageStatus}
+                priorityLabel={workPackagePriority}
+              />
+            )
+          : undefined
       }
     >
       {shown ? (

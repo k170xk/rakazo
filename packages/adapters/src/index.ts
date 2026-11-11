@@ -4,6 +4,7 @@ export * from "./agent-import-settings.js";
 export * from "./ai-consent.js";
 export type { ApnsVoipConfig } from "./apns-voip.js";
 export { apnsVoipConfig, createApnsVoipProvider } from "./apns-voip-config.js";
+export { buildApprovalAskBlock } from "./approval-ask.js";
 export * from "./artifact-store-factory.js";
 export * from "./artifacts.js";
 export * from "./audit-forwarding.js";
@@ -84,6 +85,12 @@ export * from "./e2b-sandbox.js";
 export * from "./elevenlabs-voice.js";
 export * from "./email-emulator.js";
 export * from "./evolve-assistants.js";
+export {
+  editedEvolveChangeArgs,
+  evolveChangeToolName,
+  listEvolveChangeOptions,
+  previewEvolveChangeAs,
+} from "./evolve-change-card.js";
 export * from "./evolve-company-tools.js";
 export * from "./evolve-history.js";
 export * from "./evolve-person-context.js";

@@ -158,6 +158,14 @@ export const WorkPackageChangeSchema = z.object({
   before: WorkPackageValues.optional(),
   /** The work package once saved; a delete has none. */
   after: WorkPackageValues.optional(),
+  /** The project an update moves it out of; `project` is then where it goes. */
+  movedFrom: z
+    .object({
+      jobNumber: z.string().nullable(),
+      name: z.string().nullable(),
+      client: z.string().nullable(),
+    })
+    .optional(),
   requester: z.string().nullable().optional(),
   /** Who Evolve's work package email goes to once it is saved. */
   emails: z.array(z.string()).optional(),
@@ -165,6 +173,58 @@ export const WorkPackageChangeSchema = z.object({
   warnings: z.array(z.string()).optional(),
 });
 export type WorkPackageChange = z.infer<typeof WorkPackageChangeSchema>;
+
+const EditDay = z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]);
+const EditText = (max: number) => z.string().max(max);
+
+/**
+ * What the run owner changed on a deadline or work package card before approving it. Evolve
+ * previews the edited change again, so names, people and categories resolve as the tools resolve
+ * them; an empty day or "unassigned"/"none" clears that field.
+ */
+export const EvolveChangeEditsSchema = z
+  .object({
+    project_id: z.number().int().positive(),
+    name: EditText(200).min(1),
+    date: EditDay,
+    hard_deadline: z.boolean(),
+    completed: z.boolean(),
+    comments: EditText(2000),
+    title: EditText(300).min(1),
+    category: EditText(120).min(1),
+    assignee: EditText(254).min(1),
+    duration_days: z.number().int().min(1).max(365),
+    can_start_date: EditDay,
+    due_date: EditDay,
+    status: z.enum(["pending", "in_progress", "on_hold", "completed", "cancelled"]),
+    status_comment: EditText(2000),
+    priority: z.enum(["low", "medium", "high", "urgent"]),
+    completion_percentage: z.number().int().min(0).max(100),
+    notes: EditText(5000),
+  })
+  .partial()
+  .refine((edits) => Object.keys(edits).length > 0, "Change at least one field");
+export type EvolveChangeEdits = z.infer<typeof EvolveChangeEditsSchema>;
+
+export const EvolveChangeOptionKindSchema = z.enum(["projects", "people", "categories"]);
+export type EvolveChangeOptionKind = z.infer<typeof EvolveChangeOptionKindSchema>;
+
+/** The live Evolve choices a card's project, assignee and category pickers offer. */
+export const EvolveChangeOptionsSchema = z.object({
+  projects: z
+    .array(
+      z.object({
+        projectId: z.number().int(),
+        jobNumber: z.string().nullable(),
+        name: z.string().nullable(),
+        client: z.string().nullable(),
+      }),
+    )
+    .optional(),
+  people: z.array(z.object({ name: z.string(), email: z.string() })).optional(),
+  categories: z.array(z.string()).optional(),
+});
+export type EvolveChangeOptions = z.infer<typeof EvolveChangeOptionsSchema>;
 
 export const MessageBlock = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("text"), text: z.string() }),

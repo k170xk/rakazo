@@ -1013,3 +1013,106 @@ it("shows a work package being deleted without striking anything through", async
   expect(card.querySelector(".line-through")).toBeNull();
   expect(card.textContent).toContain("resource planner");
 });
+
+async function renderEditable(
+  block: AskBlock,
+  onReviseChange: (edits: Record<string, unknown>) => Promise<void>,
+  loadChangeOptions = vi.fn(async (kind: string) =>
+    kind === "people"
+      ? { people: [{ name: "Sam Ryan", email: "sam@ocsc.ie" }] }
+      : kind === "categories"
+        ? { categories: ["CAD (S)", "Structures"] }
+        : {
+            projects: [{ projectId: 9, jobNumber: "C1100", name: "Galway Bridge", client: "TII" }],
+          },
+  ),
+) {
+  await act(async () =>
+    root.render(
+      <AskCard
+        block={block}
+        canAnswer
+        canDismiss
+        onAnswer={async () => undefined}
+        onDismiss={async () => undefined}
+        onReviseChange={onReviseChange}
+        loadChangeOptions={loadChangeOptions}
+      />,
+    ),
+  );
+  return loadChangeOptions;
+}
+
+async function click(target: Element | undefined | null) {
+  await act(async () => (target as HTMLElement).click());
+}
+
+async function pick(label: string, choice: string) {
+  await click(container.querySelector(`[aria-label="Change ${label}"]`));
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+  await click(
+    button(choice) ??
+      [...container.querySelectorAll("button")].find((item) =>
+        item.textContent?.startsWith(choice),
+      ),
+  );
+}
+
+it("edits a work package card with live Evolve choices and sends only what changed", async () => {
+  const onReviseChange = vi.fn(async () => undefined);
+  const load = await renderEditable(
+    workPackageCard({
+      action: "add",
+      project: { jobNumber: "C1078", name: "Cork Library", client: null },
+      after: stage2Package,
+    }),
+    onReviseChange,
+  );
+  await click(button("Edit"));
+  expect(button("Add work package")).toBeUndefined();
+  await pick("project", "C1100 · Galway Bridge");
+  await pick("assignee", "Sam Ryan");
+  await pick("category", "No category");
+  expect(load).toHaveBeenCalledWith("projects", "");
+  expect(load).toHaveBeenCalledWith("people", "");
+  await click(button("Update card"));
+  expect(onReviseChange).toHaveBeenCalledWith({
+    project_id: 9,
+    assignee: "sam@ocsc.ie",
+    category: "none",
+  });
+  expect(container.querySelector('[data-testid="evolve-change-editor"]')).toBeNull();
+});
+
+it("keeps the editor open with Evolve's reason when an edit is refused", async () => {
+  const onReviseChange = vi.fn(async () => {
+    throw new Error("No active person matches that name.");
+  });
+  await renderEditable(deadlineCard, onReviseChange);
+  await click(button("Edit"));
+  expect(container.querySelector('[aria-label="Change project"]')).toBeNull();
+  const date = container.querySelector<HTMLInputElement>('input[type="date"]')!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(
+      date,
+      "2026-12-04",
+    );
+    date.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await click(button("Update card"));
+  expect(onReviseChange).toHaveBeenCalledWith({ date: "2026-12-04" });
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain("No active person");
+  expect(container.querySelector('[data-testid="evolve-change-editor"]')).not.toBeNull();
+});
+
+it("offers no edit on a work package delete", async () => {
+  await renderEditable(
+    workPackageCard({
+      action: "delete",
+      project: { jobNumber: "C1078", name: "Cork Library", client: null },
+      before: stage2Package,
+    }),
+    vi.fn(async () => undefined),
+  );
+  expect(button("Edit")).toBeUndefined();
+});
