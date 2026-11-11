@@ -15,7 +15,7 @@ import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   GROUP_BOT_MIN,
 } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, suggestBotName } from "@rakazo/core";
+import { ACTIVE_RUN_STATUSES, botWelcomePrompt, displayName, suggestBotName } from "@rakazo/core";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import {
   cancelRunsInTransaction,
@@ -74,6 +74,8 @@ export async function spawnBot(
     instructions?: string;
     prompt?: string;
     computerMode?: ComputerMode;
+    /** Without a prompt, the new bot's first turn welcomes the person and asks how to start. */
+    welcome?: boolean;
   },
 ) {
   const name =
@@ -148,6 +150,23 @@ export async function spawnBot(
     await deps.jobs
       .enqueue(runContinueJob(run.id))
       .catch((error) => getLogger().error("spawned bot enqueue", error));
+  } else if (input.welcome) {
+    const run = await ensureWelcomeRun(deps.prisma, {
+      spaceId: input.spawnedBy.spaceId,
+      userId: input.spawnedBy.userId,
+      botId: created.id,
+      threadId: created.threadId,
+      spawnKey: input.spawnKey,
+      createdBy: input.spawnedBy.name,
+    }).catch((error) => {
+      getLogger().error("spawned bot welcome", error);
+      return null;
+    });
+    if (run) {
+      await deps.jobs
+        .enqueue(runContinueJob(run.id))
+        .catch((error) => getLogger().error("spawned bot welcome enqueue", error));
+    }
   }
 
   return {
@@ -215,6 +234,62 @@ async function ensureSpawnRun(
   } catch (error) {
     const winner = await prisma.run.findUnique({ where });
     if (winner) return winner;
+    throw error;
+  }
+}
+
+/** One hidden welcome turn per spawned bot, run under the same limits as a created bot's intro. */
+async function ensureWelcomeRun(
+  prisma: PrismaClient,
+  input: {
+    spaceId: string;
+    userId: string;
+    botId: string;
+    threadId: string;
+    spawnKey: string;
+    createdBy: string;
+  },
+) {
+  const clientNonce = `welcome:${input.spawnKey}`;
+  const where = { spaceId_clientNonce: { spaceId: input.spaceId, clientNonce } } as const;
+  if (await prisma.run.findUnique({ where })) return null;
+  const [user, bot] = await Promise.all([
+    prisma.user.findUnique({ where: { id: input.userId }, select: { name: true } }),
+    prisma.bot.findUnique({ where: { id: input.botId }, select: { disabledBuiltinTools: true } }),
+  ]);
+  const prompt = botWelcomePrompt({
+    userName: displayName(user?.name, ""),
+    spaceName: null,
+    disabledBuiltinTools: bot?.disabledBuiltinTools ?? [],
+    createdBy: input.createdBy,
+  });
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const task = await tx.task.create({
+        data: {
+          spaceId: input.spaceId,
+          botId: input.botId,
+          threadId: input.threadId,
+          userId: input.userId,
+          prompt,
+          status: "queued",
+        },
+      });
+      return tx.run.create({
+        data: {
+          spaceId: input.spaceId,
+          botId: input.botId,
+          threadId: input.threadId,
+          taskId: task.id,
+          userId: input.userId,
+          status: "queued",
+          trigger: "created",
+          clientNonce,
+        },
+      });
+    });
+  } catch (error) {
+    if (await prisma.run.findUnique({ where })) return null;
     throw error;
   }
 }

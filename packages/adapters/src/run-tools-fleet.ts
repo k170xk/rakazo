@@ -189,6 +189,7 @@ export const fleetTools: ToolHandlers = {
       instructions: args.instructions ? String(args.instructions) : undefined,
       prompt: args.prompt ? String(args.prompt) : undefined,
       computerMode,
+      welcome: !ctx.scripted,
     });
     if ("error" in spawned) return call.finish(spawned);
     if (!(await call.persistEffectResult(spawned))) return uncertainEffectResult(name);
@@ -215,7 +216,7 @@ export const fleetTools: ToolHandlers = {
     if (runsPaAgentSetup(bot)) {
       return {
         ...spawned,
-        next: `If an OCSC agent offer from your setup is still to come, do not end your turn: write one line naming ${spawned.name} and what it does, then call ask_user with the next offer. If every offer has been made, send the closing summary.`,
+        next: `If an OCSC agent offer from your setup is still to come, do not end your turn: write one line naming ${spawned.name}, what it does, and that it is saying hello in its own chat with a few questions to get started, then call ask_user with the next offer. If every offer has been made, send the closing summary.`,
       };
     }
     return spawned;

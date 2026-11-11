@@ -214,6 +214,75 @@ describe("spawned bot creation", () => {
     expect(result).toMatchObject({ ok: true, name: "Juno" });
     createReposSpy.mockRestore();
   });
+
+  it("queues one hidden welcome turn when the new bot has no first task", async () => {
+    const createBot = vi.fn().mockResolvedValue({ id: "child-4", name: "Pip", threadId: "t-4" });
+    const createReposSpy = vi.spyOn(await import("@rakazo/db"), "createRepos").mockReturnValue({
+      createBot,
+    } as unknown as ReturnType<typeof createRepos>);
+    const taskCreate = vi.fn().mockResolvedValue({ id: "task-4" });
+    const runCreate = vi.fn().mockResolvedValue({ id: "run-4" });
+    const enqueue = vi.fn().mockResolvedValue(undefined);
+    const prisma = {
+      run: { findUnique: vi.fn().mockResolvedValue(null) },
+      user: { findUnique: vi.fn().mockResolvedValue({ name: "Keith Knox" }) },
+      bot: { findUnique: vi.fn().mockResolvedValue({ disabledBuiltinTools: [] }) },
+      $transaction: vi.fn(async (fn: (tx: unknown) => unknown) =>
+        fn({ task: { create: taskCreate }, run: { create: runCreate } }),
+      ),
+    } as unknown as PrismaClient;
+
+    await spawnBot(
+      { prisma, jobs: { enqueue } as unknown as JobPublisher },
+      {
+        spawnedBy: { id: "parent-1", name: "Max", spaceId: "workspace-1", userId: "user-1" },
+        runId: "run-1",
+        spawnKey: "tool-call-4",
+        name: "Pip",
+        welcome: true,
+      },
+    );
+
+    const prompt = taskCreate.mock.calls[0]?.[0].data.prompt as string;
+    expect(prompt).toContain("Max set you up for Keith");
+    expect(prompt).toContain("which inbox, how often to check and what to look out for");
+    expect(prompt).toContain("ask_user");
+    expect(runCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ trigger: "created", clientNonce: "welcome:tool-call-4" }),
+      }),
+    );
+    expect(enqueue).toHaveBeenCalledOnce();
+    createReposSpy.mockRestore();
+  });
+
+  it("does not welcome twice when the spawn is retried", async () => {
+    const createBot = vi.fn().mockResolvedValue({ id: "child-5", name: "Pip", threadId: "t-5" });
+    const createReposSpy = vi.spyOn(await import("@rakazo/db"), "createRepos").mockReturnValue({
+      createBot,
+    } as unknown as ReturnType<typeof createRepos>);
+    const enqueue = vi.fn();
+    const $transaction = vi.fn();
+    const prisma = {
+      run: { findUnique: vi.fn().mockResolvedValue({ id: "earlier-welcome" }) },
+      $transaction,
+    } as unknown as PrismaClient;
+
+    await spawnBot(
+      { prisma, jobs: { enqueue } as unknown as JobPublisher },
+      {
+        spawnedBy: { id: "parent-1", name: "Max", spaceId: "workspace-1", userId: "user-1" },
+        runId: "run-1",
+        spawnKey: "tool-call-5",
+        name: "Pip",
+        welcome: true,
+      },
+    );
+
+    expect($transaction).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+    createReposSpy.mockRestore();
+  });
 });
 describe("spawned bot archival", () => {
   it("scopes management by account and space without requiring a creator", () => {
