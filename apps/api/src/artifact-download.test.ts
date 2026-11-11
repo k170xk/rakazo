@@ -1,5 +1,14 @@
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@rakazo/db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@rakazo/db")>();
+  return {
+    ...actual,
+    runAsTenant: async <T>(_tenant: unknown, fn: () => T | PromiseLike<T>) => fn(),
+  };
+});
+
 import {
   ARTIFACT_DOWNLOAD_PATH,
   artifactContentDisposition,

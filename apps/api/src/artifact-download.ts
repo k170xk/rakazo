@@ -2,6 +2,7 @@ import type { ArtifactStore } from "@rakazo/adapter-kit";
 import { createAdapterContext } from "@rakazo/adapter-kit";
 import type { Auth } from "@rakazo/auth";
 import type { PrismaClient } from "@rakazo/db";
+import { runAsTenant } from "@rakazo/db";
 import type { Hono } from "hono";
 
 /** Path the browser opens after `artifacts.downloadToken`; the token is the only credential. */
@@ -31,27 +32,32 @@ export function mountArtifactDownloadRoute(
     if (!grant) {
       return c.text("Download link expired", 410, { "cache-control": "no-store" });
     }
-    const row = await deps.prisma.artifact.findFirst({
-      where: {
-        id: grant.artifactId,
-        spaceId: grant.spaceId,
-        userId: grant.userId,
-      },
+    const tenant = { spaceId: grant.spaceId, userId: grant.userId };
+    // The token is the credential; read as that person so row-level security allows the file.
+    const payload = await runAsTenant(tenant, async () => {
+      const row = await deps.prisma.artifact.findFirst({
+        where: {
+          id: grant.artifactId,
+          spaceId: grant.spaceId,
+          userId: grant.userId,
+        },
+      });
+      if (!row) return null;
+      const contextBotId = row.botId ?? row.groupId ?? row.id;
+      const bytes = await deps.artifacts.get(
+        row.storageKey,
+        createAdapterContext(tenant, contextBotId, `artifact-download:${row.id}`),
+      );
+      return { row, bytes };
     });
-    if (!row) {
+    if (!payload) {
       return c.text("File not found", 404, { "cache-control": "no-store" });
     }
-    const actor = { spaceId: grant.spaceId, userId: grant.userId };
-    const contextBotId = row.botId ?? row.groupId ?? row.id;
-    const bytes = await deps.artifacts.get(
-      row.storageKey,
-      createAdapterContext(actor, contextBotId, `artifact-download:${row.id}`),
-    );
-    return new Response(Uint8Array.from(bytes), {
+    return new Response(Uint8Array.from(payload.bytes), {
       headers: {
-        "content-type": row.mimeType || "application/octet-stream",
-        "content-length": String(bytes.byteLength),
-        "content-disposition": artifactContentDisposition(row.name),
+        "content-type": payload.row.mimeType || "application/octet-stream",
+        "content-length": String(payload.bytes.byteLength),
+        "content-disposition": artifactContentDisposition(payload.row.name),
         "cache-control": "no-store",
       },
     });
