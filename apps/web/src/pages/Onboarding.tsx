@@ -63,6 +63,12 @@ import {
   runModelConnectionPreflight,
   unavailableSelectedModel,
 } from "../lib/model-connection-preflight";
+import {
+  EVOLVE_GENERAL_INTELLIGENCE_NAME,
+  findFirstBot,
+  firstPaBotCreateInput,
+  ONBOARDING_FIRST_BOT_SPAWN_KEY,
+} from "../lib/onboarding-first-bot";
 import { rpc } from "../lib/rpc";
 import { useSignOut } from "../lib/sign-out";
 import { useModelOAuthSignIn } from "../lib/use-model-oauth-signin";
@@ -87,48 +93,46 @@ const MAIN_PROVIDER_OPTIONS: ReadonlyArray<{ provider: string; auth?: ProviderAu
 function providerOptionValue(provider: string, auth?: ProviderAuth): string {
   return auth ? `${provider}:${auth}` : provider;
 }
-const FIRST_BOT_NAME = "OCSC General Intelligence";
-/** First bots created before the OCSC name, and before spawnKey was set. */
-const LEGACY_FIRST_BOT_NAMES = new Set([FIRST_BOT_NAME, "Chief"]);
-const FIRST_BOT_SPAWN_KEY = "onboarding:first";
 const FIRST_BOT_LOCK = "rakazo:onboarding-first-bot";
 
 /** Survives StrictMode remounts; concurrent first-bot creates share one in-flight attempt. */
 let firstBotEnsure: Promise<{ id: string }> | null = null;
 
-function findFirstBot(
-  bots: Array<{ id: string; name: string; spawnKey: string | null }>,
-): { id: string } | undefined {
-  const bySpawnKey = bots.find((bot) => bot.spawnKey === FIRST_BOT_SPAWN_KEY);
-  if (bySpawnKey) return { id: bySpawnKey.id };
-  // Legacy first-run Chief created before spawnKey was set.
-  const byName = bots.find((bot) => LEGACY_FIRST_BOT_NAMES.has(bot.name));
-  return byName ? { id: byName.id } : undefined;
+/** Pins the Main PA at the top of the sidebar; safe to call when already pinned. */
+async function pinMainPa(botId: string): Promise<void> {
+  await rpc.bots.update({ botId, pinned: true }).catch(() => undefined);
 }
 
 async function createOrReuseFirstBot(): Promise<{ id: string }> {
   const existing = await rpc.bots.list();
   const reuse = findFirstBot(existing);
-  if (reuse) return reuse;
-  // Starts from the company's General Intelligence assistant in Evolve when this person has it.
+  if (reuse) {
+    if (!reuse.pinned) await pinMainPa(reuse.id);
+    return { id: reuse.id };
+  }
+  const me = await rpc.me().catch(() => null);
+  // Knowledge only: Evolve's General Intelligence assistant when this person has it.
   const template = (await rpc.bots.evolveAssistants().catch(() => [])).find(
-    (assistant) => assistant.name.trim() === FIRST_BOT_NAME,
+    (assistant) => assistant.name.trim() === EVOLVE_GENERAL_INTELLIGENCE_NAME,
   );
   try {
-    const created = await rpc.bots.create({
-      name: FIRST_BOT_NAME,
-      description: "",
-      instructions: "",
-      notifyOnFinish: true,
-      spawnKey: FIRST_BOT_SPAWN_KEY,
-      ...(template ? { evolveAssistantId: template.id } : {}),
-    });
+    const created = await rpc.bots.create(
+      firstPaBotCreateInput({
+        existingNames: existing.map((bot) => bot.name),
+        userDisplayName: me?.name ?? "",
+        evolveAssistantId: template?.id,
+      }),
+    );
+    await pinMainPa(created.id);
     return { id: created.id };
   } catch (error) {
     // Another tab won the unique (spaceId, spawnKey) race; reuse that bot only.
     const afterConflict = await rpc.bots.list();
-    const winner = afterConflict.find((bot) => bot.spawnKey === FIRST_BOT_SPAWN_KEY);
-    if (winner) return { id: winner.id };
+    const winner = afterConflict.find((bot) => bot.spawnKey === ONBOARDING_FIRST_BOT_SPAWN_KEY);
+    if (winner) {
+      if (!winner.pinned) await pinMainPa(winner.id);
+      return { id: winner.id };
+    }
     throw error;
   }
 }

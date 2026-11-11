@@ -327,6 +327,7 @@ export const SpaceBotSchema = BotSchema.pick({
   spaceId: true,
   name: true,
   title: true,
+  description: true,
   color: true,
   avatarSet: true,
   notifyOnFinish: true,
@@ -338,6 +339,7 @@ export const SpaceBotSchema = BotSchema.pick({
   status: true,
   threadStatus: true,
   runErrorId: true,
+  spawnKey: true,
   updatedAt: true,
 }).extend({ modelId: BotSchema.shape.modelId.optional() });
 export type SpaceBot = z.infer<typeof SpaceBotSchema>;

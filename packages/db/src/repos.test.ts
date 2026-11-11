@@ -441,11 +441,13 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
         id: "bot-2",
         spaceId: "ws-2",
         name: "Support",
+        description: "Keith's PA",
         color: "#123456",
         avatarSet: "organic",
         notifyOnFinish: false,
         pinned: true,
         sectionId: null,
+        spawnKey: "onboarding:first",
         updatedAt: new Date("2026-08-20T00:00:00.000Z"),
         parentBotId: null,
         thread: {
@@ -484,6 +486,7 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
         spaceId: "ws-2",
         name: "Support",
         title: "",
+        description: "Keith's PA",
         color: "#123456",
         avatarSet: "organic",
         notifyOnFinish: false,
@@ -495,6 +498,7 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
         status: "running",
         threadStatus: "idle",
         runErrorId: "run-failed",
+        spawnKey: "onboarding:first",
         updatedAt: "2026-08-19T12:00:00.000Z",
       },
     ]);
@@ -509,7 +513,8 @@ describe("createRepos.listSpaceBotsForSpaces", () => {
     expect(query.where).toEqual(
       expect.objectContaining({ spaceId: { in: ["ws-2"] }, userId: actor.userId }),
     );
-    expect(query.select).not.toHaveProperty("description");
+    expect(query.select).toHaveProperty("description");
+    expect(query.select).toHaveProperty("spawnKey");
     expect(query.select).not.toHaveProperty("instructions");
     expect(query.select).not.toHaveProperty("computer");
   });

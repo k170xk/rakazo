@@ -1,7 +1,8 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
+import { isMainPaBot } from "@rakazo/core";
 import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
-import { Gift, Menu, Monitor, Phone } from "lucide-react";
+import { Gift, Menu, Monitor, Phone, Star } from "lucide-react";
 import { useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
@@ -75,11 +76,32 @@ export function ChatHeader({
           />
         ) : null}
         <span className="min-w-0">
-          <span className="block truncate text-[15px] font-medium text-foreground" dir="auto">
-            {inGroup
-              ? (activeGroup?.name ?? activeSnapshot?.groupName ?? t`Group`)
-              : (active?.name ?? t`Select a bot`)}
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="block truncate text-[15px] font-medium text-foreground" dir="auto">
+              {inGroup
+                ? (activeGroup?.name ?? activeSnapshot?.groupName ?? t`Group`)
+                : (active?.name ?? t`Select a bot`)}
+            </span>
+            {!inGroup && active && isMainPaBot(active) ? (
+              <span
+                data-testid="main-pa-badge"
+                title={t`Main PA`}
+                className="inline-flex shrink-0 items-center gap-0.5 rounded-md bg-muted px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                <Star size={10} aria-hidden="true" className="fill-current text-foreground/70" />
+                <span>PA</span>
+              </span>
+            ) : null}
           </span>
+          {!inGroup && active?.description?.trim() ? (
+            <span
+              className="block truncate text-[11px] font-normal text-muted-foreground"
+              dir="auto"
+              data-testid="bot-header-description"
+            >
+              {active.description.trim()}
+            </span>
+          ) : null}
         </span>
       </Button>
       <div className="flex items-center justify-self-end gap-2">

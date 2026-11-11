@@ -17,7 +17,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 
 /** Bump when the tour's content changes enough that everyone should see it again on first run. */
-const TOUR_VERSION = "v3";
+const TOUR_VERSION = "v4";
 
 const seenKey = (userId: string) => `ocsc-tour:${TOUR_VERSION}:${userId}`;
 
@@ -210,11 +210,11 @@ function useSteps(mode: "first-run" | "revisit", availability: TourAvailability)
           id: "start",
           image: "/tour/start.webp",
           eyebrow: t`Let's begin`,
-          title: t`Meet OCSC General Intelligence`,
-          body: t`Your first agent is ready. It already knows who you are from your Evolve CV, has every OCSC Tool, and will ask a couple of quick questions to get you started.`,
+          title: t`Meet your Main PA`,
+          body: t`Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot.`,
           points: [
             t`Ask it anything, or for any OCSC deliverable`,
-            t`Create more agents later from the + button`,
+            t`Let it suggest specialists, then create more from the + button`,
             t`Come back to this tour any time from the sidebar`,
           ],
         }

@@ -338,6 +338,7 @@ async function memberSpaceNavigation(
           spaceId: bot.spaceId,
           name: bot.name,
           title: "",
+          description: bot.description,
           color: bot.color,
           avatarSet: bot.avatarSet,
           notifyOnFinish: bot.notifyOnFinish,
@@ -348,6 +349,7 @@ async function memberSpaceNavigation(
           status: bot.status,
           threadStatus: bot.threadStatus,
           runErrorId: bot.runErrorId,
+          spawnKey: bot.spawnKey,
           updatedAt: bot.updatedAt,
         })),
         groups: spaceGroups.map((group) => ({

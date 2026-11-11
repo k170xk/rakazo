@@ -37,7 +37,7 @@ import {
   BotSecretAuth,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, displayName } from "@rakazo/core";
+import { ACTIVE_RUN_STATUSES, displayName, isMainPaBot, paBotIntroPrompt } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
   addGroupPerson,
@@ -226,7 +226,13 @@ export function botIntroPrompt(input: {
   userName: string;
   spaceName: string | null;
   disabledBuiltinTools: readonly string[];
+  /** When onboarding:first, uses the Main PA interview instead of the generic intro. */
+  spawnKey?: string | null;
+  botName?: string;
 }): string {
+  if (isMainPaBot({ spawnKey: input.spawnKey })) {
+    return paBotIntroPrompt(input);
+  }
   const canAsk = !input.disabledBuiltinTools.includes("ask_user");
   const canUpdate = !input.disabledBuiltinTools.includes("update_bot");
   const options =
@@ -300,6 +306,8 @@ export async function enqueueBotIntroRun(deps: RouterDeps, actor: Actor, bot: Bo
     userName: displayName(user?.name, ""),
     spaceName: space && !space.isDefault ? space.name.trim() || null : null,
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
+    spawnKey: bot.spawnKey,
+    botName: bot.name,
   });
   const run = await deps.prisma.$transaction(async (tx) => {
     // An idempotent create (spawnKey) returns the bot it already made; it gets one intro.

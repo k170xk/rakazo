@@ -2,6 +2,7 @@ import { i18n } from "@lingui/core";
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { Bot, BotSection, Group, Me, Space, ThreadSnapshot } from "@rakazo/contracts";
+import { isMainPaBot } from "@rakazo/core";
 import {
   BotAvatar,
   Button,
@@ -14,7 +15,7 @@ import {
   ContextMenuTrigger,
   GroupAvatar,
 } from "@rakazo/ui-web";
-import { ChevronDown, CircleAlert, Lock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, CircleAlert, Lock, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 import { Suspense } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
@@ -469,6 +470,20 @@ export function SidebarRoster({
                             >
                               {item.chat.name}
                             </span>
+                            {item.kind === "bot" && isMainPaBot(item.chat) ? (
+                              <span
+                                data-roster-main-pa=""
+                                title={t`Main PA`}
+                                className="inline-flex shrink-0 items-center gap-0.5 rounded-md bg-sidebar-accent px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                              >
+                                <Star
+                                  size={10}
+                                  aria-hidden="true"
+                                  className="fill-current text-foreground/70"
+                                />
+                                <span>PA</span>
+                              </span>
+                            ) : null}
                             {item.chat.unread ? (
                               <span className="sr-only">
                                 <Trans> (unread)</Trans>
@@ -493,6 +508,18 @@ export function SidebarRoster({
                             ) : null}
                           </div>
                         </div>
+                        {!compact &&
+                        item.kind === "bot" &&
+                        "description" in item.chat &&
+                        item.chat.description?.trim() ? (
+                          <div
+                            dir="auto"
+                            data-roster-bot-description=""
+                            className="mt-0.5 truncate text-[11px] text-muted-foreground"
+                          >
+                            {item.chat.description.trim()}
+                          </div>
+                        ) : null}
                         {compact ? (
                           compactStatusLabel ? (
                             <div

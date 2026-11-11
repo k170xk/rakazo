@@ -91,6 +91,41 @@ function renderHeader({ inGroup = false } = {}) {
 
 const gift = () => container.querySelector<HTMLButtonElement>('[aria-label="Invite a friend"]');
 
+it("shows the Main PA badge and description for the onboarding first bot", () => {
+  billing.status = { referral: null };
+  act(() =>
+    root.render(
+      <ChatHeader
+        inGroup={false}
+        active={
+          {
+            id: "bot-1",
+            name: "Rex",
+            description: "Keith's PA",
+            color: BOT_COLORS[0],
+            spawnKey: "onboarding:first",
+          } as Bot
+        }
+        activeGroup={undefined}
+        activeSnapshot={null}
+        phoneCallsEnabled={false}
+        voiceReady={false}
+        inCall={false}
+        panelOpen={false}
+        computerPanelOpen={false}
+        onOpenNavigation={() => undefined}
+        onTogglePanel={() => undefined}
+        onToggleComputerPanel={() => undefined}
+        onCall={() => undefined}
+      />,
+    ),
+  );
+  expect(container.querySelector('[data-testid="main-pa-badge"]')?.textContent).toContain("PA");
+  expect(container.querySelector('[data-testid="bot-header-description"]')?.textContent).toBe(
+    "Keith's PA",
+  );
+});
+
 it("opens the computer panel from the header", () => {
   const open = vi.fn();
   billing.status = { referral: null };

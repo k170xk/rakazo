@@ -5874,6 +5874,34 @@ describe("bot intro run", () => {
     expect(prompt(["ask_user", "update_bot"])).not.toContain("ask_user");
     expect(prompt(["ask_user", "update_bot"])).not.toContain("update_bot");
   });
+
+  it("uses the Main PA interview for the onboarding first bot", async () => {
+    const { create, deps } = introDeps();
+    await enqueueBotIntroRun(deps, actor, {
+      ...bot,
+      name: "Rex",
+      spawnKey: "onboarding:first",
+      disabledBuiltinTools: [],
+    } as Bot);
+    const [taskCall] = create.mock.calls as Array<[{ data: { prompt?: string } }]>;
+    const prompt = taskCall?.[0].data.prompt ?? "";
+    expect(prompt).toContain("personal assistant");
+    expect(prompt).toContain("Email specialist");
+    expect(prompt).toContain("Rex");
+    expect(prompt).not.toContain("what they want you for");
+  });
+
+  it("keeps the generic intro for ordinary bots", () => {
+    const prompt = botIntroPrompt({
+      userName: "Ada",
+      spaceName: null,
+      disabledBuiltinTools: [],
+      spawnKey: null,
+      botName: "Nova",
+    });
+    expect(prompt).toContain("what they want you for");
+    expect(prompt).not.toContain("personal assistant and chief of staff");
+  });
 });
 
 describe("codex catalog auth", () => {
