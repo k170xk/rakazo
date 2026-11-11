@@ -1,7 +1,7 @@
 import { isMainPaBot, paBotInstructions } from "@rakazo/core";
 import { rpc } from "./rpc";
 
-const MARKER = "three OCSC agents";
+const MARKER = "Leave the spawn name empty";
 
 /** Refresh standing instructions for an early Main PA that still has the short first version. */
 export async function refreshMainPaInstructions(bot: {
