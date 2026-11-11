@@ -56,7 +56,7 @@ describe("firstPaBotCreateInput", () => {
       team: true,
       random: () => 0,
     });
-    expect(created.instructions).toContain("Do not run the three-agent setup");
+    expect(created.instructions).toContain("Do not run the organisation agent setup");
     expect(created.instructions).not.toContain("Set them up");
   });
 

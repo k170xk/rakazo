@@ -19,7 +19,7 @@ describe("refreshMainPaInstructions", () => {
     ).resolves.toBe(true);
     expect(update).toHaveBeenCalledWith({
       botId: "bot-1",
-      instructions: expect.stringContaining("Creating an agent never ends the setup"),
+      instructions: expect.stringContaining("OCSC QA agent"),
     });
   });
 
@@ -29,7 +29,7 @@ describe("refreshMainPaInstructions", () => {
         id: "bot-1",
         name: "Rok",
         spawnKey: "onboarding:first",
-        instructions: "… Creating an agent never ends the setup …",
+        instructions: "… OCSC QA agent …",
       }),
     ).resolves.toBe(false);
     await expect(
@@ -57,7 +57,7 @@ describe("refreshMainPaInstructions", () => {
     ).resolves.toBe(true);
     expect(update).toHaveBeenCalledWith({
       botId: "bot-1",
-      instructions: expect.stringContaining("Do not run the three-agent setup"),
+      instructions: expect.stringContaining("Do not run the organisation agent setup"),
     });
   });
 
@@ -68,7 +68,7 @@ describe("refreshMainPaInstructions", () => {
           id: "bot-1",
           name: "Rok",
           spawnKey: "onboarding:first",
-          instructions: "Do not run the three-agent setup",
+          instructions: "Do not run the organisation agent setup",
         },
         { team: true },
       ),

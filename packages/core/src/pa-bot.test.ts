@@ -10,6 +10,7 @@ import {
   paBotInstructions,
   paBotIntroPrompt,
   paBotTeamInstructions,
+  qaSpecialistInstructions,
   researchSpecialistInstructions,
   runsPaAgentSetup,
 } from "./pa-bot.js";
@@ -33,7 +34,7 @@ describe("pa-bot", () => {
     expect(LEGACY_FIRST_BOT_NAMES.has("Chief")).toBe(true);
   });
 
-  it("writes standing PA instructions that offer three OCSC agents from the CV", () => {
+  it("writes standing PA instructions that offer four OCSC agents from the CV", () => {
     const text = paBotInstructions("Rex");
     expect(text).toContain("You are Rex");
     expect(text).toContain("chief of staff");
@@ -43,7 +44,7 @@ describe("pa-bot", () => {
     expect(text).toContain("OCSC Marketing agent");
     expect(text).toContain("OCSC Research agent");
     expect(text).toContain("spawn_bot");
-    expect(text).toContain("three OCSC agents");
+    expect(text).toContain("four OCSC agents");
     expect(text).toContain("Leave the spawn name empty");
     expect(text).toContain("Creating an agent never ends the setup");
     expect(text).toContain("Weekday mornings at 8:30");
@@ -67,6 +68,21 @@ describe("pa-bot", () => {
     expect(text).toContain("source_kind email");
     expect(text).toContain("schedule_create");
     expect(text).toContain("Never send");
+  });
+
+  it("writes a read-only QA agent that digests the person's tracker projects", () => {
+    const qa = qaSpecialistInstructions("Keith");
+    expect(qa).toContain("Keith's OCSC QA agent");
+    expect(qa).toContain('find_tracker_projects returns with person "me"');
+    expect(qa).toContain("get_project_details");
+    expect(qa).toContain("peer review");
+    expect(qa).toContain("design risk assessment");
+    expect(qa).toContain("PSDP");
+    expect(qa).toContain("Never add, change or delete");
+    expect(paBotInstructions("Max")).toContain("Set up an OCSC QA agent?");
+    expect(
+      paBotIntroPrompt({ userName: "Keith", spaceName: null, disabledBuiltinTools: [] }),
+    ).toContain("How often should it send the QA digest?");
   });
 
   it("writes Marketing and Research agent instructions", () => {
@@ -102,7 +118,7 @@ describe("pa-bot", () => {
   it("asks what a new team is for and skips the agent setup", () => {
     const text = paBotTeamInstructions("Nova");
     expect(text).toContain("You are Nova");
-    expect(text).toContain("Do not run the three-agent setup");
+    expect(text).toContain("Do not run the organisation agent setup");
     expect(text).not.toContain("Set them up");
     const prompt = paBotIntroPrompt({
       userName: "Keith",
@@ -113,7 +129,7 @@ describe("pa-bot", () => {
     });
     expect(prompt).toContain("what they want this team for");
     expect(prompt).toContain("Bridges");
-    expect(prompt).toContain("Do not run the three-agent setup");
+    expect(prompt).toContain("Do not run the organisation agent setup");
     expect(prompt).not.toContain("OCSC Email agent");
   });
 });
