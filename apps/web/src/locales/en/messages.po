@@ -660,6 +660,10 @@ msgstr "A reviewer checks it against the brief and sends it back to you"
 msgid "A routine is a task an agent carries out on a schedule or when something changes, then delivers the result to you."
 msgstr "A routine is a task an agent carries out on a schedule or when something changes, then delivers the result to you."
 
+#: src/pages/shell/bot-picker.tsx
+msgid "A separate work space. It opens straight away, with its own bots and apps."
+msgstr "A separate work space. It opens straight away, with its own bots and apps."
+
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -3597,7 +3601,10 @@ msgid "Create space"
 msgstr "Create space"
 
 #: src/components/CreateOrganizationDialog.tsx
+#: src/components/SidebarFooter.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
+#: src/pages/Shell.tsx
+#: src/pages/shell/bot-picker.tsx
 msgid "Create work space"
 msgstr "Create work space"
 

@@ -9,7 +9,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@rakazo/ui-web";
-import { Info, Lock, Plus, Users } from "lucide-react";
+import { Building2, Info, Lock, Plus, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 
@@ -19,12 +19,14 @@ export function BotCreatePicker({
   onOpenBot,
   onCreateGroup,
   onCreateSpace,
+  onCreateWorkSpace,
 }: {
   bots: Bot[];
   onCreateBot: () => void;
   onOpenBot: (botId: string) => void;
   onCreateGroup: () => void;
   onCreateSpace: () => void;
+  onCreateWorkSpace: () => void;
 }) {
   const { t } = useLingui();
   const [query, setQuery] = useState("");
@@ -100,6 +102,23 @@ export function BotCreatePicker({
               <PickerInfo
                 testId="picker-info-space"
                 label={t`Private space with its own bots and groups.`}
+              />
+            </CommandItem>
+            <CommandItem
+              value="create-work-space"
+              data-testid="create-new-work-space"
+              onSelect={() => onCreateWorkSpace()}
+              className="gap-2"
+            >
+              <span className="flex size-[22px] shrink-0 items-center justify-center">
+                <Building2 size={16} strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1 truncate">
+                <Trans>Create work space</Trans>
+              </span>
+              <PickerInfo
+                testId="picker-info-work-space"
+                label={t`A separate work space. It opens straight away, with its own bots and apps.`}
               />
             </CommandItem>
           </CommandGroup>

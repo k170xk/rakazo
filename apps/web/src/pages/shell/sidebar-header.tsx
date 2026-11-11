@@ -23,6 +23,7 @@ export function SidebarHeader({
   navigate,
   setNewSpaceOpen,
   setCreateBotOpen,
+  setCreateWorkSpaceOpen,
 }: {
   mini?: boolean;
   createMenuOpen: boolean;
@@ -38,6 +39,7 @@ export function SidebarHeader({
   navigate: (path: string) => void;
   setNewSpaceOpen: (open: boolean) => void;
   setCreateBotOpen: (open: boolean) => void;
+  setCreateWorkSpaceOpen: (open: boolean) => void;
 }) {
   const { t } = useLingui();
   const hasWindowChrome = Boolean(desktopBridge());
@@ -163,6 +165,11 @@ export function SidebarHeader({
                   setCreateMenuOpen(false);
                   setMobileSidebarOpen(false);
                   setNewSpaceOpen(true);
+                }}
+                onCreateWorkSpace={() => {
+                  setCreateMenuOpen(false);
+                  setMobileSidebarOpen(false);
+                  setCreateWorkSpaceOpen(true);
                 }}
               />
             </PopoverContent>

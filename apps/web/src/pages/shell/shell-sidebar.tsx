@@ -71,6 +71,7 @@ export function ShellSidebar({
   navigate,
   setNewSpaceOpen,
   setCreateBotOpen,
+  setCreateWorkSpaceOpen,
   roster,
   archived,
   footerLogos,
@@ -103,6 +104,7 @@ export function ShellSidebar({
   navigate: (path: string) => void;
   setNewSpaceOpen: (open: boolean) => void;
   setCreateBotOpen: (open: boolean) => void;
+  setCreateWorkSpaceOpen: (open: boolean) => void;
   roster: ReactNode;
   archived: ReactNode;
   footerLogos: Array<{ name: string; logo?: string | null }>;
@@ -194,6 +196,7 @@ export function ShellSidebar({
           navigate={navigate}
           setNewSpaceOpen={setNewSpaceOpen}
           setCreateBotOpen={setCreateBotOpen}
+          setCreateWorkSpaceOpen={setCreateWorkSpaceOpen}
         />
         {mini ||
         !(
@@ -352,6 +355,7 @@ export function ShellSidebar({
           openAdmin={openAdmin}
           openSkills={openSkills}
           openSpaceChat={openSpaceChat}
+          setCreateWorkSpaceOpen={setCreateWorkSpaceOpen}
         />
       </Sidebar>
     </>
@@ -371,6 +375,7 @@ function ShellSidebarFooter({
   openAdmin,
   openSkills,
   openSpaceChat,
+  setCreateWorkSpaceOpen,
 }: {
   mini: boolean;
   logos: Array<{ name: string; logo?: string | null }>;
@@ -384,6 +389,7 @@ function ShellSidebarFooter({
   openAdmin?: () => void;
   openSkills: () => void;
   openSpaceChat: (spaceId: string, path: string) => void;
+  setCreateWorkSpaceOpen: (open: boolean) => void;
 }) {
   const { t, i18n } = useLingui();
   const userId = useQueryUserId();
@@ -483,6 +489,11 @@ function ShellSidebarFooter({
         onSettings={() => {
           setMenuOpen(false);
           openSettings("organization");
+        }}
+        onCreateWorkSpace={() => {
+          setMenuOpen(false);
+          closeMobileSidebar();
+          setCreateWorkSpaceOpen(true);
         }}
         onInvite={
           referral

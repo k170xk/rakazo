@@ -166,6 +166,35 @@ it("opens integrations and keeps the existing account actions and links", async 
     "Account menu for Demo User",
   );
 });
+it("offers a new work space from the account menu and opens the create dialog", async () => {
+  const onCreateWorkSpace = vi.fn();
+  await act(async () =>
+    root.render(
+      <DesktopUpdatesProvider>
+        <SidebarFooter
+          name="Demo User"
+          initials="DU"
+          email="account@rakazo.test"
+          open
+          onOpenChange={() => {}}
+          onSkills={() => {}}
+          onArtifacts={() => {}}
+          onSettings={() => {}}
+          onCreateWorkSpace={onCreateWorkSpace}
+          onLogOut={() => {}}
+          signingOut={false}
+          logOutError={null}
+        />
+      </DesktopUpdatesProvider>,
+    ),
+  );
+  const create = document.querySelector<HTMLButtonElement>(
+    '[data-testid="account-new-work-space"]',
+  )!;
+  expect(create.textContent).toContain("Create work space");
+  await act(async () => create.click());
+  expect(onCreateWorkSpace).toHaveBeenCalledOnce();
+});
 it("omits Board when unavailable", async () => {
   await render();
   expect(document.querySelector('[data-slot="popover-content"]')?.textContent).not.toContain(

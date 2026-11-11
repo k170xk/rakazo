@@ -11,6 +11,7 @@ import {
   ToggleGroupItem,
 } from "@rakazo/ui-web";
 import {
+  Building2,
   Check,
   Download,
   FolderOpen,
@@ -60,6 +61,8 @@ type Props = {
   /** Everything counting against the person's storage limit, with download and delete. */
   onStorage?: () => void;
   onSettings: () => void;
+  /** Creates a work space and opens it. */
+  onCreateWorkSpace?: () => void;
   onInvite?: () => void;
   onLogOut: () => void;
   signingOut: boolean;
@@ -96,6 +99,7 @@ export function SidebarFooter({
   onArtifacts,
   onStorage,
   onSettings,
+  onCreateWorkSpace,
   onInvite,
   onLogOut,
   signingOut,
@@ -194,6 +198,17 @@ export function SidebarFooter({
                 ))}
                 <div className="my-1 border-t border-border" />
               </>
+            ) : null}
+            {onCreateWorkSpace ? (
+              <Button
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2.5 font-normal"
+                data-testid="account-new-work-space"
+                onClick={onCreateWorkSpace}
+              >
+                <Building2 className="text-muted-foreground" strokeWidth={1.75} />
+                <Trans>Create work space</Trans>
+              </Button>
             ) : null}
             {mini && onIntegrations ? (
               <Button

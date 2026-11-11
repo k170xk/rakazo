@@ -61,6 +61,7 @@ export function useShellDialogs() {
   const [renameSectionTarget, setRenameSectionTarget] = useState<SectionTarget | null>(null);
   const [deleteSectionTarget, setDeleteSectionTarget] = useState<SectionTarget | null>(null);
   const [newSpaceOpen, setNewSpaceOpen] = useState(false);
+  const [createWorkSpaceOpen, setCreateWorkSpaceOpen] = useState(false);
   const [createBotOpen, setCreateBotOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   return {
@@ -84,6 +85,8 @@ export function useShellDialogs() {
     setDeleteSectionTarget,
     newSpaceOpen,
     setNewSpaceOpen,
+    createWorkSpaceOpen,
+    setCreateWorkSpaceOpen,
     createBotOpen,
     setCreateBotOpen,
     commandPaletteOpen,

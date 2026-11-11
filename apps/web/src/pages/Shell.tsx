@@ -28,7 +28,18 @@ import type { GroupAvatarMember } from "@rakazo/ui-web";
 import { Button, toast } from "@rakazo/ui-web";
 import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
-import { Keyboard, Lock, Monitor, Moon, Plug, Plus, ScrollText, Sun, Users } from "lucide-react";
+import {
+  Building2,
+  Keyboard,
+  Lock,
+  Monitor,
+  Moon,
+  Plug,
+  Plus,
+  ScrollText,
+  Sun,
+  Users,
+} from "lucide-react";
 import {
   Suspense,
   useCallback,
@@ -41,6 +52,7 @@ import {
 } from "react";
 import { useParams } from "react-router-dom";
 import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
+import { CreateOrganizationDialog } from "../components/CreateOrganizationDialog";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { EnableNotificationsDialog } from "../components/EnableNotificationsDialog";
@@ -981,6 +993,12 @@ function SpaceShell() {
       icon: Lock,
       onSelect: () => dialogs.setNewSpaceOpen(true),
     },
+    {
+      id: "new-work-space",
+      label: t`Create work space`,
+      icon: Building2,
+      onSelect: () => dialogs.setCreateWorkSpaceOpen(true),
+    },
     ...(appsOrPluginsOn
       ? [
           {
@@ -1127,6 +1145,7 @@ function SpaceShell() {
         navigate={navigate}
         setNewSpaceOpen={dialogs.setNewSpaceOpen}
         setCreateBotOpen={dialogs.setCreateBotOpen}
+        setCreateWorkSpaceOpen={dialogs.setCreateWorkSpaceOpen}
         roster={
           <SidebarRoster
             mini={miniSidebar}
@@ -1487,6 +1506,11 @@ function SpaceShell() {
         onClearBot={(bot) => dialogs.setClearTarget({ kind: "bot", chat: bot })}
       />
 
+      <CreateOrganizationDialog
+        open={dialogs.createWorkSpaceOpen}
+        onOpenChange={dialogs.setCreateWorkSpaceOpen}
+        openSpaceChat={openSpaceChat}
+      />
       <Suspense fallback={null}>
         <ShellDialogs
           dialogs={dialogs}

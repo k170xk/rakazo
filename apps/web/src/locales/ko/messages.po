@@ -660,6 +660,10 @@ msgstr ""
 msgid "A routine is a task an agent carries out on a schedule or when something changes, then delivers the result to you."
 msgstr ""
 
+#: src/pages/shell/bot-picker.tsx
+msgid "A separate work space. It opens straight away, with its own bots and apps."
+msgstr ""
+
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -3592,7 +3596,10 @@ msgid "Create space"
 msgstr "스페이스 만들기"
 
 #: src/components/CreateOrganizationDialog.tsx
+#: src/components/SidebarFooter.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
+#: src/pages/Shell.tsx
+#: src/pages/shell/bot-picker.tsx
 msgid "Create work space"
 msgstr ""
 
