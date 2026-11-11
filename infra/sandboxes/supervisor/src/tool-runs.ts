@@ -104,7 +104,8 @@ export function toolRunLimits(program: ToolRunRequest["program"] = "word") {
   return {
     Memory: memory,
     MemorySwap: memory,
-    NanoCpus: parseNanoCpus(cpusName, envOrDefault(cpusName, "2")),
+    // A video draws one Chrome frame per core, so it gets twice the cores of a document.
+    NanoCpus: parseNanoCpus(cpusName, envOrDefault(cpusName, video ? "4" : "2")),
     // Half the default weight: when the CPUs are busy, the app and its database answer first and a
     // burst of documents takes a little longer instead.
     CpuShares: 512,

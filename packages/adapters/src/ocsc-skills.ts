@@ -349,6 +349,14 @@ When you plan the story, give every content scene (each scene between the title 
 - The person can also name a visual for a scene ("put an infographic on the safety steps", "use drone footage for the intro"); do exactly that. To change a scene's visual later, replace that scene only: a new infographic means one evolve_infographics item for it.
 Infographics are left out only when the person says no infographics; then use motion templates for the ideas instead.
 
+WORK IN PARALLEL
+A video is several separate jobs. Run them at the same time, never one after another:
+1. Once the answers are in, plan the whole story: every scene, its visual and its voice line.
+2. Make every voice line in one mcp__evolve__generate_voiceover call (VOICE, MUSIC AND SOUND), alone in its turn: the person approves it once, and its approval card would stop anything else started in the same turn.
+3. Then start everything else in one turn, as calls made together: evolve_infographics with every infographic (more than 12 means further calls in that same turn); a run_subagent helper named "media" for the photo and footage scenes, given each scene's number, subject and the orientation, told to find one https photo or clip per scene (OCSC projects with mcp__evolve__search_project_datasheets, stock with mcp__evolve__search_stock_media) and to reply with a list of scene number, URL and, for a project, its name, client and facts from the datasheet; when the video has custom scenes, a run_subagent helper named "motion" for each one or two .tsx files, given the scene's purpose, props, file path and the MOTION GRAPHICS rules, told to write the files with write_file and check them with ocsc-video still; and ocsc-video new. At most four helpers run at once.
+4. When they all come back, write the whole spec once with every URL, then ocsc-video read, the stills and the render.
+Skip a helper whose job the video does not need.
+
 THE SPEC
 A video is a JSON spec of timed scenes played in order: outputs/<Name>.video.json. Media goes in outputs/media/.
 1. ocsc-video new --out outputs/<Name>.video.json --title "<title>"   (add --vertical for a 1080x1920 social clip)
@@ -365,13 +373,13 @@ PICTURES AND FOOTAGE
 
 INFOGRAPHICS
 Infographic scenes are OCSC Vision Intelligence pictures, like the OCSC slides, on the scenes SCENE VISUALS gives them.
-- As soon as the story is planned, call evolve_infographics with every infographic the video needs, in scene order; Evolve draws them all at the same time (one to three minutes). One call takes up to 12, so for more, make the further calls straight away rather than waiting for the first. Give each a "title" and a "topic" that describes the picture: the diagram, flow, stages, scenes and icons that show the scene's point. Generate the voiceovers and fetch the photos and footage while you wait. The pictures come back without text; never set "withText" unless the person asks for infographics with the writing drawn in.
+- Call evolve_infographics with every infographic the video needs, in scene order, together with the helpers (WORK IN PARALLEL); Evolve draws them all at the same time (one to three minutes). One call takes up to 12, so for more, make the further calls in the same turn. Give each a "title" and a "topic" that describes the picture: the diagram, flow, stages, scenes and icons that show the scene's point. The pictures come back without text; never set "withText" unless the person asks for infographics with the writing drawn in.
 - Put each one in an infographic scene with its words laid out around it, which build in on their own: {"type": "infographic", "imageUrl": "<imageUrl>", "style": "cards", "heading": "...", "subheading": "...", "points": [{"title": "...", "text": "..."}], "duration": 7}. Styles: "side" (1-4 "bullets" beside the picture), "cards" (2-4 numbered "points"), "steps" (3-5 "points" in a row under a wide picture, for a process), "checklist" (2-5 ticked "points" or "bullets"), "stats" (1-5 real "stats" [{"value","label"}]), "statement" (one bold "statement", with up to 2 short "bullets"), and "full" (the picture alone, edge to edge, for an overview). Never use the same style twice in a row, give each infographic scene 6 to 9 seconds, and let the voice explain the picture rather than read the words.
 - If evolve_infographics is not in your tools, mcp__evolve__create_infographics does the same (up to 10 per call); end each of its topics with "No text, labels or numbers in the image." An item that comes back ok false gets a motion template or built-in scene instead. When neither tool is in your tools, say once that OCSC Vision Intelligence infographics need the Evolve connection and use motion templates instead.
 - Vertical videos use the same scenes; the words go under the picture by themselves.
 
 VOICE, MUSIC AND SOUND
-- Voiceover: write the script scene by scene, one or two short spoken sentences a scene. For each, call mcp__evolve__generate_voiceover {script, voice: Peter, Rory or Tim} and put the returned audioUrl in that scene's "voiceover": {"audioUrl", "script"}. A scene grows to fit its voice automatically; ocsc-video read shows the new timings.
+- Voiceover: write the script scene by scene, one or two short spoken sentences a scene. Call mcp__evolve__generate_voiceover once with every line: {"lines": [{"script": "..."}, ...] in scene order, "voice": the chosen OCSC voice}. Its "voiceovers" come back in the same order; put each audioUrl in its scene's "voiceover": {"audioUrl", "script"}, and send any line that came back ok false again on its own. A scene grows to fit its voice automatically; ocsc-video read shows the new timings.
 - Music: there is no music search here. Add music only when the person gives you a track (a file on your computer or an https link): fetch it into outputs/media/ and set "audio": {"music": {"src": "media/<name>.mp3"}}. The engine levels it under the voice and fades it in and out by itself; leave volumeDb and duckDb at their defaults. If the person finds the music too loud, lower volumeDb by 4 dB (-12); too quiet, raise it (-5).
 - Sound effects work the same way from a file they give you: "sfx": [{"src": "media/whoosh.mp3", "at": 0}]. Use a few, on transitions and reveals, never on every scene.
 - Transitions: settings.transition sets how every scene enters; a scene's own "transition" overrides it (see MOTION TEMPLATES AND FLAIR for the list).
@@ -397,7 +405,7 @@ CHECK, RENDER, SEND
 - ocsc-video render --spec outputs/<Name>.video.json renders at full 1080p quality; --quality draft is a quick half-size timing check, and --quality master makes a 4K copy when the person asks for one. On the tool runners it returns only when the video is finished, with "status" "done"; elsewhere it starts in the background and prints a job.
 - ocsc-video wait --job <job> waits up to 100 seconds and reports progress. Run it again until "status" is "done"; it is not needed when render already said "done".
 - When the job is done, send the .mp4 at its printed "path" with attach_file. Give the length, the scene list and the voice in a few lines.
-- To change a video, edit the spec (and custom .tsx files), keep everything else, and render again under the same file names, then attach_file again with the same name. Change only what the person asked for: a new voice line means a new generate_voiceover for that scene only.
+- To change a video, edit the spec (and custom .tsx files), keep everything else, and render again under the same file names, then attach_file again with the same name. Change only what the person asked for: a new voice line means a new generate_voiceover for that scene only, with "script".
 If the JSON says "ok": false, read the error (a custom scene build error names the line), fix it and run again; stop after three attempts and say what went wrong.
 To play the finished video on your computer screen: ocsc-show <the .mp4 path>.
 

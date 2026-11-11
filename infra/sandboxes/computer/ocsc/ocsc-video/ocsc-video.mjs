@@ -1566,7 +1566,8 @@ async function renderInSegments({ comp, serveUrl, config, quality, tmp, hasAudio
           outputLocation: file,
           pixelFormat: "yuv420p",
           colorSpace: "bt709",
-          concurrency: attempt === 1 ? Math.max(1, Math.min(2, Math.floor(cpuCount() / 2))) : 1,
+          // Drawing frames, not encoding, is the slow part: one Chrome tab per core, up to four.
+          concurrency: attempt === 1 ? Math.max(1, Math.min(4, cpuCount())) : 1,
           ffmpegOverride: leanEncoder,
           onProgress: ({ renderedFrames, encodedFrames }) =>
             update({

@@ -228,6 +228,17 @@ describe("tool run container", () => {
     expect(options.HostConfig.Tmpfs).not.toHaveProperty("/opt/ocsc-video/.work");
   });
 
+  it("gives a video twice a document's cores", () => {
+    const options = toolRunContainerOptions({
+      name: "rakazo-tool-run-v",
+      image: "rakazo/computer:local",
+      user: "1000:1000",
+      request: toolRunRequestSchema.parse({ ...valid, program: "video", args: ["render"] }),
+      storage: { homePath: "/srv/data/homes/team-a" },
+    });
+    expect(options.HostConfig).toMatchObject({ NanoCpus: 4e9, CpuShares: 512 });
+  });
+
   it("names the person as the author of tracked changes, on one line", () => {
     const options = toolRunContainerOptions({
       name: "rakazo-tool-run-a",
