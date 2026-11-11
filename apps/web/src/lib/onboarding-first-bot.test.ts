@@ -43,7 +43,9 @@ describe("firstPaBotCreateInput", () => {
     expect(created.description).toBe("Keith's PA");
     expect(created.spawnKey).toBe(ONBOARDING_FIRST_BOT_SPAWN_KEY);
     expect(created.instructions).toContain(`You are ${created.name}`);
-    expect(created.instructions).toContain("Email specialist");
+    expect(created.instructions).toContain("OCSC Email agent");
+    expect(created.instructions).toContain("OCSC Marketing agent");
+    expect(created.instructions).toContain("OCSC Research agent");
     expect(created.notifyOnFinish).toBe(true);
   });
 

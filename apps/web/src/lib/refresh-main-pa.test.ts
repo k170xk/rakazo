@@ -19,7 +19,7 @@ describe("refreshMainPaInstructions", () => {
     ).resolves.toBe(true);
     expect(update).toHaveBeenCalledWith({
       botId: "bot-1",
-      instructions: expect.stringContaining("do not stop after the first answer"),
+      instructions: expect.stringContaining("three OCSC agents"),
     });
   });
 
@@ -29,7 +29,7 @@ describe("refreshMainPaInstructions", () => {
         id: "bot-1",
         name: "Rok",
         spawnKey: "onboarding:first",
-        instructions: "… do not stop after the first answer …",
+        instructions: "… three OCSC agents …",
       }),
     ).resolves.toBe(false);
     await expect(

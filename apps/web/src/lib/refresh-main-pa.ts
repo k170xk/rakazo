@@ -1,7 +1,7 @@
 import { isMainPaBot, paBotInstructions } from "@rakazo/core";
 import { rpc } from "./rpc";
 
-const MARKER = "do not stop after the first answer";
+const MARKER = "three OCSC agents";
 
 /** Refresh standing instructions for an early Main PA that still has the short first version. */
 export async function refreshMainPaInstructions(bot: {
