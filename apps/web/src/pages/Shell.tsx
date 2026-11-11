@@ -68,6 +68,7 @@ import { PagesProvider, usePagesForChat } from "../lib/pages";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
 import { lastChatKey, lastChatOf, queryClient, spaceQueries, spaceSeedKey } from "../lib/query";
+import { refreshMainPaInstructions } from "../lib/refresh-main-pa";
 import type { Panel } from "../lib/right-panel-state";
 import { rightPanelStorageKey } from "../lib/right-panel-state";
 import { createSpaceRpc, selectedSpaceId, selectSpace } from "../lib/rpc";
@@ -189,6 +190,21 @@ function SpaceShell() {
   useEffect(() => {
     setBotsSidebarCollapsed(readBotsSidebarCollapsed(userId));
   }, [userId]);
+  // Early Main PAs keep the short first instructions; refresh once so onboarding keeps going.
+  useEffect(() => {
+    if (!initialBotsLoaded) return;
+    let cancelled = false;
+    void (async () => {
+      for (const bot of botsRef.current) {
+        if (cancelled) return;
+        const updated = await refreshMainPaInstructions(bot).catch(() => false);
+        if (updated && !cancelled) await refreshBots().catch(() => undefined);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialBotsLoaded, botsRef, refreshBots]);
   const search = useSidebarSearch({ rpc, navigate });
   const thread = useThreadState();
   const { snapshot } = thread;

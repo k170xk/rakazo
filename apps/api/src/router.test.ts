@@ -5886,7 +5886,7 @@ describe("bot intro run", () => {
     const [taskCall] = create.mock.calls as Array<[{ data: { prompt?: string } }]>;
     const prompt = taskCall?.[0].data.prompt ?? "";
     expect(prompt).toContain("personal assistant");
-    expect(prompt).toContain("Email specialist");
+    expect(prompt).toContain("Email helper");
     expect(prompt).toContain("Rex");
     expect(prompt).not.toContain("what they want you for");
   });

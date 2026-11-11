@@ -1114,8 +1114,12 @@ async function commitAnswerRunInput(
     const task = await tx.task.updateMany({
       where: { runs: { some: { id: input.runId } } },
       data: {
+        // Creation intros and daily check-ins never post their coaching into the thread, and
+        // answering a choice card clears the turn checkpoint. Keep the opener's task prompt
+        // (pass the pre-flip trigger into resumePrompt) so the resumed "user" turn still knows
+        // what to do next — otherwise only the choice label remains and the bot stalls.
         prompt: resumePrompt(
-          { ...run, trigger: resumedTrigger },
+          answersOpener ? run : { ...run, trigger: resumedTrigger },
           pendingAsk.text,
           selectedChoice ? `Selected choice ${selectedChoice.id}: ${resumeLabel}` : input.answer,
         ),

@@ -1718,8 +1718,9 @@ describe("answerRunInput", () => {
       return tx;
     };
 
-    // The executor gives a "user" run the thread and every tool; the answer is its prompt,
-    // which the restored ask_user call receives as its result.
+    // Flips to a "user" run (thread + every tool) but keeps the opener's coaching in the
+    // task prompt — creation intros never post that text into the thread, and choice answers
+    // clear the turn checkpoint.
     const chosen = await answerIntro("choice-2");
     expect(chosen.run.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1728,7 +1729,10 @@ describe("answerRunInput", () => {
     );
     expect(chosen.task.updateMany).toHaveBeenCalledWith({
       where: { runs: { some: { id: "run-1" } } },
-      data: { prompt: "Selected choice choice-2: Research and one-off tasks" },
+      data: {
+        prompt:
+          "You were just created.\n\nWhat do you want me for?\nAnswer: Selected choice choice-2: Research and one-off tasks",
+      },
     });
 
     const checkIn = await answerIntro("choice-1", {
@@ -1738,6 +1742,13 @@ describe("answerRunInput", () => {
     expect(checkIn.run.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ trigger: "user" }) }),
     );
+    expect(checkIn.task.updateMany).toHaveBeenCalledWith({
+      where: { runs: { some: { id: "run-1" } } },
+      data: {
+        prompt:
+          "You were just created.\n\nWhat do you want me for?\nAnswer: Selected choice choice-1: Just testing things out",
+      },
+    });
 
     const typed = await answerIntro("Track our competitors' launches");
     expect(typed.run.updateMany).toHaveBeenCalledWith(
@@ -1745,7 +1756,10 @@ describe("answerRunInput", () => {
     );
     expect(typed.task.updateMany).toHaveBeenCalledWith({
       where: { runs: { some: { id: "run-1" } } },
-      data: { prompt: "Track our competitors' launches" },
+      data: {
+        prompt:
+          "You were just created.\n\nWhat do you want me for?\nAnswer: Track our competitors' launches",
+      },
     });
   });
 
