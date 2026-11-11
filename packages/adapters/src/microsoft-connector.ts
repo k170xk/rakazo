@@ -701,12 +701,44 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       const found = await this.graphJson<{
         value?: Array<{ id: string; displayName?: string; name?: string; webUrl?: string }>;
       }>(token, `/sites?search=${encodeURIComponent(query)}&$top=50`, signal);
-      return (found.value ?? []).map((site) => ({
+      const sites = (found.value ?? []).map((site) => ({
         kind: "site" as const,
         id: site.id,
         name: site.displayName || site.name || "Site",
         detail: site.webUrl,
       }));
+      // Personal OneDrive is not a SharePoint site search hit; offer it at the root when
+      // browsing (or when the search could mean OneDrive). Scopes already include Files.Read.All.
+      const needle = query === "*" ? "" : query.toLowerCase();
+      const wantOneDrive =
+        !needle ||
+        (needle.length >= 3 &&
+          ["onedrive", "one drive", "my files", "myfiles", "personal"].some(
+            (label) => label.includes(needle) || needle.includes(label),
+          ));
+      if (!wantOneDrive) return sites;
+      const oneDrive = await this.graphJson<{
+        id?: string;
+        name?: string;
+        webUrl?: string;
+      }>(token, `/me/drive?$select=id,name,webUrl`, signal).catch(() => null);
+      if (!oneDrive?.id) return sites;
+      const root = await this.graphJson<{ id?: string }>(
+        token,
+        `/me/drive/root?$select=id`,
+        signal,
+      ).catch(() => ({ id: undefined }));
+      if (!root.id) return sites;
+      return [
+        {
+          kind: "library" as const,
+          id: root.id,
+          driveId: oneDrive.id,
+          name: "My files",
+          detail: oneDrive.webUrl || oneDrive.name || "OneDrive",
+        },
+        ...sites,
+      ];
     }
     if (location.kind === "libraries") {
       const found = await this.graphJson<{
@@ -792,11 +824,13 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       const relative = item.root
         ? ""
         : (item.parentReference?.path?.split("root:")[1] ?? "").replace(/^\/+/, "");
+      const place =
+        site.displayName || (item.parentReference?.siteId ? undefined : drive.name || "OneDrive");
       folders.push({
         driveId,
         itemId: item.id,
-        name: item.root ? drive.name || "Documents" : item.name,
-        location: [site.displayName, drive.name, relative && decodeSafely(relative)]
+        name: item.root ? drive.name || "My files" : item.name,
+        location: [place, drive.name, relative && decodeSafely(relative)]
           .filter(Boolean)
           .join(" › "),
         webUrl: item.webUrl ?? drive.webUrl ?? null,

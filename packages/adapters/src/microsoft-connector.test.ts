@@ -265,6 +265,75 @@ describe("MicrosoftConnector", () => {
     expect(requests.some((path) => path.endsWith("/content"))).toBe(false);
   });
 
+  it("lists My files (OneDrive) ahead of SharePoint sites in the folder picker", async () => {
+    const row = {
+      id: "conn-1",
+      spaceId: "space-1",
+      userId: "user-1",
+      status: "connected",
+      secretId: "secret-1",
+      providerRef: "state-1",
+      metadata: { folders: [] },
+    };
+    const prisma = {
+      connection: { findMany: vi.fn(async () => [row]), updateMany: vi.fn() },
+      secret: { findFirst: vi.fn(async () => ({ id: "secret-1", ciphertext: "cipher" })) },
+    } as unknown as PrismaClient;
+    const secrets = {
+      load: vi.fn(async () => JSON.stringify({ refreshToken: "fake-refresh" })),
+    } as unknown as SecretStore;
+    const paths: string[] = [];
+    const fetch = vi.fn(async (input: string | URL | Request) => {
+      const url = new URL(String(input instanceof Request ? input.url : input));
+      paths.push(`${url.pathname}${url.search}`);
+      if (url.hostname === "login.microsoftonline.com") {
+        return Response.json({ access_token: "fake-access", expires_in: 3_600 });
+      }
+      if (url.pathname === "/v1.0/me/drive") {
+        return Response.json({
+          id: "drive-me",
+          name: "OneDrive",
+          webUrl: "https://contoso-my.sharepoint.com/personal/keith",
+        });
+      }
+      if (url.pathname === "/v1.0/me/drive/root") {
+        return Response.json({ id: "root-me" });
+      }
+      if (url.pathname === "/v1.0/sites") {
+        return Response.json({
+          value: [
+            {
+              id: "site-1",
+              displayName: "Projects",
+              webUrl: "https://contoso.sharepoint.com/sites/Projects",
+            },
+          ],
+        });
+      }
+      return Response.json({ error: { message: "nope" } }, { status: 404 });
+    }) as unknown as typeof globalThis.fetch;
+    const connector = new MicrosoftConnector(CONFIG, prisma, secrets, { fetch });
+    const entries = await connector.browse({ spaceId: "space-1", userId: "user-1" }, "conn-1", {
+      kind: "sites",
+    });
+    expect(entries[0]).toEqual({
+      kind: "library",
+      id: "root-me",
+      driveId: "drive-me",
+      name: "My files",
+      detail: "https://contoso-my.sharepoint.com/personal/keith",
+    });
+    expect(entries[1]).toMatchObject({ kind: "site", id: "site-1", name: "Projects" });
+    expect(paths.some((path) => path.startsWith("/v1.0/me/drive"))).toBe(true);
+    expect(paths.some((path) => path.startsWith("/v1.0/sites?"))).toBe(true);
+
+    const filtered = await connector.browse({ spaceId: "space-1", userId: "user-1" }, "conn-1", {
+      kind: "sites",
+      query: "hr",
+    });
+    expect(filtered.every((entry) => entry.kind === "site")).toBe(true);
+  });
+
   function outlookConnector() {
     const row = {
       id: "conn-mail",

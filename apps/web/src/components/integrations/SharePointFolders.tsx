@@ -147,7 +147,9 @@ function SharePointBrowser({
   onClose: () => void;
 }) {
   const { t } = useLingui();
-  const [steps, setSteps] = useState<Step[]>([{ label: t`Sites`, location: { kind: "sites" } }]);
+  const [steps, setSteps] = useState<Step[]>([
+    { label: t`Sites & OneDrive`, location: { kind: "sites" } },
+  ]);
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<SharePointBrowseEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -206,14 +208,16 @@ function SharePointBrowser({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            setSteps([{ label: t`Sites`, location: { kind: "sites", query: query.trim() } }]);
+            setSteps([
+              { label: t`Sites & OneDrive`, location: { kind: "sites", query: query.trim() } },
+            ]);
           }}
         >
           <Input
             value={query}
             maxLength={200}
-            placeholder={t`Search SharePoint sites`}
-            aria-label={t`Search SharePoint sites`}
+            placeholder={t`Search sites`}
+            aria-label={t`Search sites`}
             onChange={(event) => setQuery(event.target.value)}
           />
         </form>
@@ -229,7 +233,7 @@ function SharePointBrowser({
       ) : entries.length === 0 ? (
         <p className="px-1 py-2 text-[13px] text-muted-foreground">
           {step.location.kind === "sites" ? (
-            <Trans>No sites found.</Trans>
+            <Trans>No sites or OneDrive found.</Trans>
           ) : (
             <Trans>No folders here.</Trans>
           )}

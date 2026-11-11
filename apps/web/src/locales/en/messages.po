@@ -10152,6 +10152,18 @@ msgstr "None yet. Assistants cannot read SharePoint until you choose folders. Th
 msgid "Search SharePoint sites"
 msgstr "Search SharePoint sites"
 
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Sites & OneDrive"
+msgstr "Sites & OneDrive"
+
+#: src/components/integrations/SharePointFolders.tsx
+msgid "Search sites"
+msgstr "Search sites"
+
+#: src/components/integrations/SharePointFolders.tsx
+msgid "No sites or OneDrive found."
+msgstr "No sites or OneDrive found."
+
 msgid "Sites"
 msgstr "Sites"
 
