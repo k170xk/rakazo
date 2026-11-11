@@ -19,7 +19,7 @@ describe("refreshMainPaInstructions", () => {
     ).resolves.toBe(true);
     expect(update).toHaveBeenCalledWith({
       botId: "bot-1",
-      instructions: expect.stringContaining("Leave the spawn name empty"),
+      instructions: expect.stringContaining("Creating an agent never ends the setup"),
     });
   });
 
@@ -29,7 +29,7 @@ describe("refreshMainPaInstructions", () => {
         id: "bot-1",
         name: "Rok",
         spawnKey: "onboarding:first",
-        instructions: "… Leave the spawn name empty …",
+        instructions: "… Creating an agent never ends the setup …",
       }),
     ).resolves.toBe(false);
     await expect(

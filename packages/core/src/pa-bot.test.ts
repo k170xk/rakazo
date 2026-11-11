@@ -11,6 +11,7 @@ import {
   paBotIntroPrompt,
   paBotTeamInstructions,
   researchSpecialistInstructions,
+  runsPaAgentSetup,
 } from "./pa-bot.js";
 
 describe("pa-bot", () => {
@@ -44,10 +45,20 @@ describe("pa-bot", () => {
     expect(text).toContain("spawn_bot");
     expect(text).toContain("three OCSC agents");
     expect(text).toContain("Leave the spawn name empty");
+    expect(text).toContain("Creating an agent never ends the setup");
     expect(text).toContain("Weekday mornings at 8:30");
     expect(text).toContain("What should it make most often?");
     expect(text).toContain("Never offer a generic construction roundup");
     expect(text).toContain("Do not rename yourself");
+  });
+
+  it("knows which Main PA is still running the organisation agent setup", () => {
+    const spawnKey = "onboarding:first";
+    expect(runsPaAgentSetup({ spawnKey, instructions: paBotInstructions("Max") })).toBe(true);
+    expect(runsPaAgentSetup({ spawnKey, instructions: paBotTeamInstructions("Max") })).toBe(false);
+    expect(runsPaAgentSetup({ spawnKey: null, instructions: paBotInstructions("Max") })).toBe(
+      false,
+    );
   });
 
   it("writes Email specialist instructions for mail, todos and routines", () => {
@@ -81,6 +92,7 @@ describe("pa-bot", () => {
     expect(prompt).toContain("Discipline");
     expect(prompt).toContain("Do not stop after the first card");
     expect(prompt).toContain("Leave the spawn name empty");
+    expect(prompt).toContain("Creating an agent never ends the setup");
     expect(prompt).toContain("Weekday mornings at 8:30");
     expect(prompt).toContain("Never offer a generic construction roundup");
     expect(prompt).toContain("Milo");

@@ -1,7 +1,7 @@
 import { isMainPaBot, paBotInstructions, paBotTeamInstructions } from "@rakazo/core";
 import { rpc } from "./rpc";
 
-const MARKER = "Leave the spawn name empty";
+const MARKER = "Creating an agent never ends the setup";
 const TEAM_MARKER = "Do not run the three-agent setup";
 
 /** Refresh standing instructions for an early Main PA that still has the short first version. */

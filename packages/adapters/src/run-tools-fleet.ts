@@ -1,4 +1,5 @@
 import { BotSettingsValuesSchema } from "@rakazo/contracts";
+import { runsPaAgentSetup } from "@rakazo/core";
 import {
   appendEventInTransaction,
   commitBotUpdate,
@@ -210,6 +211,12 @@ export const fleetTools: ToolHandlers = {
       });
     } catch (error) {
       getLogger().error("spawned bot notification", error);
+    }
+    if (runsPaAgentSetup(bot)) {
+      return {
+        ...spawned,
+        next: `If an OCSC agent offer from your setup is still to come, do not end your turn: write one line naming ${spawned.name} and what it does, then call ask_user with the next offer. If all three have been offered, send the closing summary.`,
+      };
     }
     return spawned;
   },
