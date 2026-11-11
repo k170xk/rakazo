@@ -58,8 +58,8 @@ describe("built-in tool bridge", () => {
       "write_file",
     ]);
     // request_secret carries the card and contact kinds; update_bot carries instructions paging;
-    // ocsc runs the OCSC document and video commands on computers without a shell.
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(33_646);
+    // ocsc runs Word/PowerPoint/Excel/PDF/video on the document runners without a full computer.
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(33_804);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining(["render_plot", "create_space", "generate_secret", "scratchpad_add"]),
     );

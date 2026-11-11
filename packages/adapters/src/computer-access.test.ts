@@ -17,6 +17,7 @@ import {
   wordRebuildRefusal,
 } from "./ocsc-tool.js";
 import { limitedComputerInstruction } from "./run-instructions.js";
+import { builtinAgentTools } from "./builtin-tools.js";
 import {
   COMPUTER_TOOL_NAMES,
   computerAccessRefusal,
@@ -81,6 +82,13 @@ describe("computer access levels", () => {
     expect(limitedComputerInstruction("tools", undefined)).not.toContain("shared");
   });
 
+  it("tells Tools-only / computers-off runs to use the ocsc tool on the document runners", () => {
+    expect(limitedComputerInstruction("tools", undefined, true)).toContain("document runners");
+    expect(limitedComputerInstruction("tools", undefined, true)).toContain("ocsc tool");
+    expect(limitedComputerInstruction("none", undefined)).not.toMatch(/enable computer access so/i);
+    expect(limitedComputerInstruction("none", undefined)).toContain("document runners");
+  });
+
   it("keeps runners out of a home that the owner's computer keeps its own copy of", () => {
     expect(toolRunnersShareHome("full", true)).toBe(true);
     expect(toolRunnersShareHome("full", false)).toBe(false);
@@ -112,6 +120,13 @@ describe("tools for each level", () => {
     for (const name of ["shell", "computer_act", "browser_navigate", "request_takeover"])
       expect(tools.has(name)).toBe(false);
     expect(tools.has("evolve_plugin_submit")).toBe(false);
+  });
+
+  it("describes the ocsc tool as document runners, not a full computer", () => {
+    const ocsc = builtinAgentTools.find((tool) => tool.name === "ocsc");
+    expect(ocsc?.description).toMatch(/document runners/i);
+    expect(ocsc?.description).toMatch(/Does not need a full computer/i);
+    expect(ocsc?.description).not.toMatch(/on this bot's computer/i);
   });
 
   it("offers no computer tools without access, and everything with Full", () => {

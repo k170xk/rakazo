@@ -285,7 +285,15 @@ export function runnerHomePath(input: {
   homeKey: string;
   sharesHome: boolean;
 }): string | null {
-  if (input.sharesHome) return localHomePath(input.home, input.homeKey, input.dataDir);
+  // Tools-only / computers-off still need a folder the runners can mount. Prefer the on-disk
+  // home when it is shared; fall back to the document home so Word/PowerPoint keep working when
+  // the home lives elsewhere (object storage) or the computer keeps its own copy.
+  if (input.sharesHome) {
+    return (
+      localHomePath(input.home, input.homeKey, input.dataDir) ??
+      (input.dataDir ? documentHomePath(input.dataDir, input.homeKey) : null)
+    );
+  }
   return input.dataDir ? documentHomePath(input.dataDir, input.homeKey) : null;
 }
 

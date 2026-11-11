@@ -11,7 +11,7 @@ const SCREEN_NOTE = `When you have a shell and a screen, you can show a workspac
 
 const SEND_NOTE = `Every successful command prints JSON with "ok": true and the file's "path". Send the file with attach_file, using that exact path and a short name and description (for example name "HEL18 Flood Risk Assessment"), so the person can open or download it from the chat and the Artifacts tab. For a new version of a file you already sent, call attach_file again with the same name. Never send a file you have not just made or edited, and never write a download link yourself.`;
 
-const THEIR_FILES_NOTE = `When the person attaches a file, check whether it is on your computer (list_files, or the path the message gives) and work on it there. Keep their original: always save your changes under a new name.`;
+const THEIR_FILES_NOTE = `When the person attaches a file, check whether it is in the bot's folder (list_files, or the path the message gives) and work on it there. Keep their original: always save your changes under a new name.`;
 
 const PROJECT_PHOTOS_NOTE = `PROJECT PHOTOS: for each project, call mcp__evolve__search_project_datasheets with its name, job number or client (or, when the person wants you to choose, the topic, sector or client of the document, then pick the two to four closest matches). A result's "images" lists its photos, the cover first. Use only https URLs ending in .jpg, .jpeg or .png and skip the others. Every fact you write about a project (client, sector, value, dates, scope, summary) comes from its datasheet; never invent or embellish one. If a project is not found or has no photos, say so and carry on with an infographic.`;
 
@@ -19,7 +19,7 @@ const SETUP_QUESTIONS_NOTE = `Ask with ask_user, one question at a time, waiting
 
 const WORD_INSTRUCTIONS = `Use this whenever the person wants a Word document, report, letter, memo, method statement, specification or any .docx, or wants one changed.
 
-Work on your computer with write_file and the ocsc tool: every ocsc-word command below runs as the ocsc tool with program word and the rest of the command as args, one item per word. Always use ocsc-word. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding.
+Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-word command below runs as the ocsc tool with program word and the rest of the command as args, one item per word. Always use ocsc-word. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding.
 
 TEMPLATES
 Run: ocsc-word templates
@@ -138,7 +138,7 @@ ${SCREEN_NOTE}`;
 
 const SLIDES_INSTRUCTIONS = `Use this whenever the person asks for slides, a deck, a presentation or a PowerPoint, or wants a PowerPoint changed.
 
-Work on your computer with write_file and the ocsc tool: every ocsc-pptx command below runs as the ocsc tool with program pptx and the rest of the command as args, one item per word. Always use ocsc-pptx. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline.
+Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-pptx command below runs as the ocsc tool with program pptx and the rest of the command as args, one item per word. Always use ocsc-pptx. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline.
 
 BEFORE YOU START A NEW DECK
 ${SETUP_QUESTIONS_NOTE}
@@ -230,7 +230,7 @@ Use file names like outputs/HEL18-Design-Review.pptx, with no spaces or slashes 
 
 const EXCEL_INSTRUCTIONS = `Use this whenever the person wants a spreadsheet, workbook, cost plan, schedule, register, tracker or any .xlsx, or wants one changed.
 
-Work on your computer with write_file and the ocsc tool: every ocsc-xlsx command below runs as the ocsc tool with program xlsx and the rest of the command as args, one item per word. Always use ocsc-xlsx. Never build a workbook another way (no openpyxl, pandas or LibreOffice), because only ocsc-xlsx keeps the OCSC styling and works out the formulas.
+Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-xlsx command below runs as the ocsc tool with program xlsx and the rest of the command as args, one item per word. Always use ocsc-xlsx. Never build a workbook another way (no openpyxl, pandas or LibreOffice), because only ocsc-xlsx keeps the OCSC styling and works out the formulas.
 
 CREATE
 1. Write a spec with write_file to work/<short-name>.json:
@@ -274,7 +274,7 @@ Sheet names under 31 characters. File names like outputs/HEL18-Cost-Plan.xlsx, w
 
 const PDF_INSTRUCTIONS = `Use this whenever the person wants a PDF, or wants to read a PDF on your computer.
 
-Work on your computer with write_file and the ocsc tool: every ocsc-pdf command below runs as the ocsc tool with program pdf and the rest of the command as args, one item per word. Always use ocsc-pdf.
+Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-pdf command below runs as the ocsc tool with program pdf and the rest of the command as args, one item per word. Always use ocsc-pdf.
 
 MAKING A PDF
 Build the document first with the right tool, then convert it, so the PDF carries the OCSC branding:
@@ -326,7 +326,7 @@ If a command says "ok": false, read the error and fix the input; stop after thre
 
 const VIDEO_INSTRUCTIONS = `Use this whenever the person wants a video, animation, motion graphics, explainer, toolbox talk video, social clip or an .mp4, or wants a video changed.
 
-Work on your computer with write_file and the ocsc tool: every ocsc-video command below runs as the ocsc tool with program video and the rest of the command as args, one item per word. Always use ocsc-video. It renders with Remotion and the same branded scene library as Evolve's video creator, then mixes the voiceover and any music file in the workspace and masters the loudness. Never make a video another way (no ffmpeg slideshows, moviepy or screen recording).
+Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-video command below runs as the ocsc tool with program video and the rest of the command as args, one item per word. Always use ocsc-video. It renders with Remotion and the same branded scene library as Evolve's video creator, then mixes the voiceover and any music file in the workspace and masters the loudness. Never make a video another way (no ffmpeg slideshows, moviepy or screen recording).
 
 Make it a polished production: a clear story, OCSC Vision Intelligence infographics, real OCSC project photos and good stock footage, and the voice the person chooses.
 

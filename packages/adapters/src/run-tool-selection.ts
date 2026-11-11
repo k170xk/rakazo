@@ -118,7 +118,7 @@ export function computerAccessRefusal(name: string, access: ComputerAccess): str
   if (!drivesComputer(name) || access === "full") return undefined;
   if (access === "tools" && TOOLS_ONLY_COMPUTER_TOOLS.has(name)) return undefined;
   return access === "none"
-    ? "This person has no computer access. Company tools (Evolve) still work."
+    ? "This person has no computer access. Document files still use the ocsc tool and file tools when the company document runners are available; shell, screen and browser do not."
     : "This computer only runs the OCSC tools (the ocsc tool) and files in the bot's folder.";
 }
 

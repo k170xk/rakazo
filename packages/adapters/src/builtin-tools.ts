@@ -523,7 +523,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "ocsc",
     description:
-      'Run one OCSC command, ocsc-<program>, on this bot\'s computer. args are its command-line words, one per item, e.g. program pptx, args ["create", "--spec", "deck.json"]. Paths are relative to the bot\'s folder. Use this, not shell, for OCSC commands.',
+      'Run one OCSC document command (Word, PowerPoint, Excel, PDF or video) in this bot\'s document folder via the company document runners. Does not need a full computer (no shell, screen or browser). args are its command-line words, one per item, e.g. program word, args ["new", "--spec", "work/spec.json", "--out", "outputs/Report.docx"]. Paths are relative to the bot\'s folder. Use this, not shell, for OCSC commands.',
     inputSchema: {
       type: "object",
       properties: {

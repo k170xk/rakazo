@@ -61,7 +61,7 @@ export function limitedComputerInstruction(
   computerOff = false,
 ): string {
   if (access === "none") {
-    return "There is no computer for this person's bots. Make documents, slides, images, charts and voiceovers with the company Evolve tools, and if a task needs a computer, say an administrator can give this person computer access.";
+    return "There is no computer for this person's bots, and the document runners are not available on this turn, so Word, PowerPoint, Excel, PDF and video files cannot be made here. Do not say that computer access is required for those files in general — they normally run on the company document runners without a computer. If a task needs a shell, browser or screen, say an administrator can give this person computer access.";
   }
   const shared =
     sharedChat === "colleague"
