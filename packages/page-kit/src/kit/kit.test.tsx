@@ -28,6 +28,7 @@ describe("page kit", () => {
       </Page>,
     );
     expect(markup).toContain('<p class="rk-summary">Updated <strong>Monday</strong></p>');
+    expect(markup).toContain('<p class="rk-brand">OCSC</p>');
     expect(markup).toContain('data-width="wide"');
     // Wide pages card top-level headed sections (Evolve borders); Segmented is the top menu.
     expect(markup).toMatch(
@@ -274,6 +275,25 @@ describe("page kit", () => {
       />,
     );
     expect(phrases).toContain('<th scope="col">Rebate</th>');
+  });
+
+  it("accepts {key,label} columns and object rows the way models often write them", () => {
+    const markup = html(
+      <Table
+        columns={[
+          { key: "c0", label: "Project" },
+          { key: "c1", label: "Stage" },
+        ]}
+        rows={[
+          { id: "0", c0: "W407", c1: "Stage 5" },
+          { id: "1", c0: "I277", c1: "Stage 4" },
+        ]}
+      />,
+    );
+    expect(markup).toContain("<th scope=\"col\">Project</th>");
+    expect(markup).toContain("<th scope=\"col\">Stage</th>");
+    expect(markup).toContain(">W407</td>");
+    expect(markup).toContain(">I277</td>");
   });
 
   it("marks a line chart's floor, middle and ceiling and thins x labels to fit", () => {

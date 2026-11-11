@@ -688,7 +688,7 @@ a.rk-linkcard:focus-visible{outline:2px solid var(--ring);outline-offset:-2px;bo
 .rk-legend-name{color:var(--rk-secondary)}
 .rk-legend-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
 .rk-hero{display:flex;flex-direction:column;gap:.5rem;margin:0 0 .5rem}
-.rk-hero-caption{display:flex;align-items:center;gap:.4rem;font-size:.8125rem;line-height:1.125rem;color:var(--rk-secondary)}
+.rk-hero-caption{display:flex;align-items:center;gap:.4rem;font-size:.8125rem;line-height:1.125rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--primary)}
 .rk-meta{margin:0;font-size:.875rem;line-height:1.25rem;color:var(--rk-secondary)}
 .rk-header>.rk-meta{margin-top:-.5rem}
 .rk-footnote{margin:.5rem 0 0;font-size:.8125rem;line-height:1.125rem;color:var(--rk-secondary)}

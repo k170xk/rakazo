@@ -38,6 +38,8 @@ body{font-size:1rem}
 .rk-page[data-width="wide"]{max-width:calc(1280px + 6rem)}
 .rk-page[data-width="full"]{max-width:none}
 .rk-header{display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.75rem}
+.rk-brand{display:inline-flex;align-items:center;gap:.5rem;margin:0;font-size:.75rem;line-height:1rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--primary)}
+.rk-brand::before{content:"";display:block;width:1.25rem;height:.25rem;border-radius:999px;background:var(--primary)}
 .rk-title{margin:0;font-size:1.875rem;line-height:1.2;font-weight:600;letter-spacing:-0.012em;overflow-wrap:anywhere}
 .rk-summary{margin:0;font-size:1rem;line-height:1.5}
 .rk-section{min-width:0;display:flex;flex-direction:column;gap:0.9rem}
@@ -145,7 +147,7 @@ body{font-size:1rem}
 .rk-segment{display:inline-block}
 .rk-segment-count{margin-left:5px;font-size:12px;line-height:16px;letter-spacing:.12px;color:var(--rk-secondary);font-variant-numeric:tabular-nums}
 .rk-segmented button:hover{color:var(--foreground)}
-.rk-segmented button[aria-pressed="true"]{color:var(--foreground);background:var(--background);box-shadow:0 1px 2px color-mix(in srgb,var(--foreground) 12%,transparent)}
+.rk-segmented button[aria-pressed="true"]{color:var(--foreground);background:color-mix(in srgb,var(--primary) 16%,var(--background));box-shadow:0 0 0 1px color-mix(in srgb,var(--primary) 35%,transparent)}
 .rk-segmented button:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
 .rk-chart{display:flex;flex-direction:column;gap:.75rem;min-width:0}
 .rk-chart svg{display:block;width:100%;overflow:visible}

@@ -371,9 +371,10 @@ export function Checkbox({ label, value }: { label?: string; value?: boolean }) 
 }
 
 // Control sizes are in px: they stay the same size on every screen.
+// Primary actions follow Evolve's --primary (OCSC green), not a black/white kit default.
 export const CONTROLS_CSS = `
-:root{--rk-control:${pageKitPalette.dark.controlFill};--rk-control-hover:${pageKitPalette.dark.controlHoverFill};--rk-primary:${pageKitPalette.dark.buttonFill};--rk-primary-hover:${pageKitPalette.dark.buttonHoverFill};--rk-primary-ink:${pageKitPalette.dark.buttonInk};--rk-option:${pageKitPalette.dark.optionFill};--rk-checked:${pageKitPalette.dark.checkedFill}}
-[data-theme="light"]{--rk-control:${pageKitPalette.light.controlFill};--rk-control-hover:${pageKitPalette.light.controlHoverFill};--rk-primary:${pageKitPalette.light.buttonFill};--rk-primary-hover:${pageKitPalette.light.buttonHoverFill};--rk-primary-ink:${pageKitPalette.light.buttonInk};--rk-option:${pageKitPalette.light.optionFill};--rk-checked:${pageKitPalette.light.checkedFill}}
+:root{--rk-control:${pageKitPalette.dark.controlFill};--rk-control-hover:${pageKitPalette.dark.controlHoverFill};--rk-primary:var(--primary);--rk-primary-hover:var(--primary-hover);--rk-primary-ink:var(--primary-foreground);--rk-option:${pageKitPalette.dark.optionFill};--rk-checked:var(--primary)}
+[data-theme="light"]{--rk-control:${pageKitPalette.light.controlFill};--rk-control-hover:${pageKitPalette.light.controlHoverFill};--rk-primary:var(--primary);--rk-primary-hover:var(--primary-hover);--rk-primary-ink:var(--primary-foreground);--rk-option:${pageKitPalette.light.optionFill};--rk-checked:var(--primary)}
 .rk-button{appearance:none;transform-origin:center;display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;justify-self:start;flex:none;max-width:100%;height:28px;margin:0;padding:4px 12px;border:0;border-radius:9999px;background:var(--rk-control);color:var(--foreground);font:inherit;font-size:14px;line-height:20px;font-weight:500;letter-spacing:.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:background-color .14s,color .14s,transform .1s}
 .rk-button:hover:not(:disabled){background:var(--rk-control-hover)}
 .rk-button[data-variant="primary"]{background:var(--rk-primary);color:var(--rk-primary-ink)}
@@ -420,5 +421,5 @@ a.rk-link-text:hover,.rk-text-link:hover{text-decoration:underline;text-underlin
 .rk-link-button:active,.rk-segmented button:active{opacity:.75}
 @media (pointer:coarse){.rk-button,:is(.rk-section,.rk-grid,.rk-page)>.rk-button,.rk-select select,.rk-input,.rk-link-button{height:44px;min-height:44px}.rk-button,:is(.rk-section,.rk-grid,.rk-page)>.rk-button{padding:10px 16px;font-size:15px;line-height:20px}.rk-select select,.rk-input{font-size:16px}.rk-toggle,.rk-checkbox{min-height:44px}.rk-segmented button{min-height:44px}}
 @media (prefers-reduced-motion:reduce){.rk-button,.rk-link-button,.rk-select select,.rk-toggle-track,.rk-toggle-thumb{transition:none}}
-@media print{:root,[data-theme]{--rk-control:${pageKitPalette.light.controlFill};--rk-primary:${pageKitPalette.light.buttonFill};--rk-primary-ink:${pageKitPalette.light.buttonInk};--rk-checked:${pageKitPalette.light.checkedFill}}.rk-button{display:none}}
+@media print{:root,[data-theme]{--rk-control:${pageKitPalette.light.controlFill};--rk-primary:var(--primary);--rk-primary-ink:var(--primary-foreground);--rk-checked:var(--primary)}.rk-button{display:none}}
 `;

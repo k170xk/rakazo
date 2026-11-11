@@ -97,6 +97,7 @@ export function Page({
             style={colors as CSSProperties}
           >
             <header className="rk-header">
+              <p className="rk-brand">OCSC</p>
               {hero}
               <h1 className="rk-title">{title}</h1>
               {summary ? (

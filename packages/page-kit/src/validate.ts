@@ -192,9 +192,22 @@ export function checkPageSource(source: string): PageSourceCheck {
       "Use the kit Table component instead of a hand-rolled HTML table so the page gets Evolve borders and spacing.",
     );
   }
+  if (
+    /columns\s*=\s*\{[^}]*\{[^}]*key\s*:/i.test(source) ||
+    /columns=\{[^}]*\.map\([^)]*=>\s*\(\s*\{\s*key\s*:/i.test(source)
+  ) {
+    warnings.push(
+      'Kit Table columns must be string[] (e.g. ["Project","Stage"]), not {key,label} objects — object columns hide the headers.',
+    );
+  }
   if (/background\s*:\s*t\.bg\.subtle|background:\s*[^;]*muted/i.test(source)) {
     warnings.push(
       "Avoid full-bleed grey banners (bg.subtle / muted). Use Callout with a tone for priority notes.",
+    );
+  }
+  if (/#(1084fe|0a58ab|4f46e5|6366f7|7c3aed|8b5cf6)\b/i.test(source)) {
+    warnings.push(
+      "Avoid blue/purple hex themes; use kit components and useTheme() so brand green stays the accent.",
     );
   }
   // The list goes back to the model, so a file with the same mistake on every line stays cheap.

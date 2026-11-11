@@ -350,6 +350,42 @@ function useScrollEdges() {
   return { ref, edges };
 }
 
+/** Models sometimes pass {key,label} columns and row objects; normalise to string heads + cell arrays. */
+function tableColumns(columns: unknown): { heads: ReactNode[]; keys: string[] } {
+  if (!Array.isArray(columns)) return { heads: [], keys: [] };
+  const heads: ReactNode[] = [];
+  const keys: string[] = [];
+  for (const [index, column] of columns.entries()) {
+    if (
+      column &&
+      typeof column === "object" &&
+      !isValidElement(column) &&
+      ("label" in column || "key" in column || "header" in column)
+    ) {
+      const record = column as { label?: unknown; header?: unknown; key?: unknown; id?: unknown };
+      const label = record.label ?? record.header ?? record.key ?? `c${index}`;
+      heads.push(label as ReactNode);
+      keys.push(String(record.key ?? record.id ?? `c${index}`));
+      continue;
+    }
+    heads.push(column as ReactNode);
+    keys.push(`c${index}`);
+  }
+  return { heads, keys };
+}
+
+function tableRows(rows: unknown, keys: string[]): TableCell[][] {
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row) => {
+    if (Array.isArray(row)) return [row as TableCell[]];
+    if (row && typeof row === "object" && !isValidElement(row)) {
+      const record = row as Record<string, TableCell>;
+      return [keys.map((key) => record[key])];
+    }
+    return [];
+  });
+}
+
 export function Table({
   columns = [],
   rows = [],
@@ -358,16 +394,14 @@ export function Table({
   sortable = false,
 }: {
   columns?: ReactNode[];
-  rows?: TableCell[][];
+  rows?: TableCell[][] | Record<string, TableCell>[];
   align?: Align[];
   emphasis?: number;
   sortable?: boolean;
 }) {
   const words = useWords();
-  const heads = Array.isArray(columns) ? columns : [];
-  const body = (Array.isArray(rows) ? rows : []).filter((row): row is TableCell[] =>
-    Array.isArray(row),
-  );
+  const { heads, keys } = tableColumns(columns);
+  const body = tableRows(rows, keys);
   const [sort, setSort] = useState<{ column: number; descending: boolean } | null>(null);
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(PAGE_ROWS);
