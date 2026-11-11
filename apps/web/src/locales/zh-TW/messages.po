@@ -1784,6 +1784,10 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Change"
+msgstr ""
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "更改 {name}"
@@ -3077,6 +3081,10 @@ msgstr "無法重新命名空間"
 msgid "Could not rename this page. Try again."
 msgstr "無法重新命名此頁面。請再試一次。"
 
+#: src/components/SidebarFooter.tsx
+msgid "Could not rename work space"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not render chart"
 msgstr "無法渲染圖表"
@@ -3484,6 +3492,10 @@ msgid "Current clients and projects:\n"
 ""
 msgstr ""
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Current dictate shortcut"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
@@ -3641,6 +3653,10 @@ msgstr "刪除 {0}"
 msgid "Delete {0}?"
 msgstr "刪除 {0}？"
 
+#: src/components/SidebarFooter.tsx
+msgid "Delete {name}"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/components/AccountMenu.tsx
 msgid "Delete account"
@@ -3764,6 +3780,10 @@ msgstr ""
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Dictate"
 msgstr "聽寫"
+
+#: src/components/DictationShortcutSettings.tsx
+msgid "Dictate shortcut"
+msgstr ""
 
 #: src/lib/dictation.ts
 msgid "Dictation ended unexpectedly."
@@ -7150,6 +7170,14 @@ msgstr ""
 msgid "Preferences"
 msgstr "偏好設定"
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Press a shortcut with ⌘ or Ctrl. Escape cancels."
+msgstr ""
+
+#: src/components/DictationShortcutSettings.tsx
+msgid "Press keys…"
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Preview"
@@ -7594,6 +7622,10 @@ msgstr "正在移除…"
 msgid "Rename"
 msgstr "重新命名"
 
+#: src/components/SidebarFooter.tsx
+msgid "Rename {name}"
+msgstr ""
+
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-roster.tsx
@@ -7693,6 +7725,7 @@ msgid "Research & writing"
 msgstr "調研和寫作"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/DictationShortcutSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -8736,6 +8769,10 @@ msgstr "正在開始"
 msgid "Starting…"
 msgstr "正在開始…"
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Starts and stops voice typing in the message field."
+msgstr ""
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "State or region"
 msgstr ""
@@ -9185,7 +9222,6 @@ msgstr "此通話已不在響鈴中。"
 msgid "This can't be undone."
 msgstr "此操作無法復原。"
 
-#: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "此操作無法復原。"
@@ -9265,6 +9301,10 @@ msgstr "無法載入此頁面"
 #: src/pages/SharedPage.tsx
 msgid "This page isn't available"
 msgstr "此頁面無法使用"
+
+#: src/pages/OrganizationSettingsPanel.tsx
+msgid "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
+msgstr ""
 
 #: src/components/AccountAccess.tsx
 msgid "This permanently deletes your account and data."

@@ -74,6 +74,7 @@ it("enables Delete only once the organization's exact name is typed", async () =
       />,
     ),
   );
+  expect(container.textContent).toContain("every agent, chat, message and file");
   const label = container.querySelector("label")!;
   expect(label.textContent).toBe("Type Work to confirm");
   const input = container.querySelector<HTMLInputElement>(`#${CSS.escape(label.htmlFor)}`)!;

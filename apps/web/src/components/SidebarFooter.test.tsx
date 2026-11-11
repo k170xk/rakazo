@@ -273,8 +273,12 @@ const work = {
 };
 
 async function renderOrganizations(
-  organizations: (typeof personal)[],
+  organizations: Array<typeof personal & { permanent?: boolean }>,
   onSwitchOrganization = vi.fn(),
+  manage: {
+    onRenameOrganization?: (organization: typeof personal, name: string) => Promise<void>;
+    onDeleteOrganization?: (organization: typeof personal) => void;
+  } = {},
 ) {
   await act(async () =>
     root.render(
@@ -295,6 +299,7 @@ async function renderOrganizations(
           organizations={organizations}
           activeOrganizationId="org-personal"
           onSwitchOrganization={onSwitchOrganization}
+          {...manage}
         />
       </DesktopUpdatesProvider>,
     ),
@@ -317,4 +322,86 @@ it("lists two organizations with the active one checked", async () => {
   expect(rows[1]!.querySelector("svg")).toBeNull();
   await act(async () => rows[1]!.click());
   expect(onSwitch).toHaveBeenCalledWith(work);
+});
+
+const menuButton = (label: string) =>
+  document.querySelector<HTMLButtonElement>(
+    `[data-slot="popover-content"] button[aria-label="${label}"]`,
+  );
+
+async function typeInto(input: HTMLInputElement, value: string) {
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+}
+
+it("renames a work space in place from its pen", async () => {
+  const onRename = vi.fn(async () => undefined);
+  await renderOrganizations([personal, work], vi.fn(), { onRenameOrganization: onRename });
+  await act(async () => menuButton("Rename Work")!.click());
+  const input = document.querySelector<HTMLInputElement>(
+    '[data-testid="organization-rename-input"]',
+  )!;
+  expect(input.value).toBe("Work");
+  await typeInto(input, "  Client work ");
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+  expect(onRename).toHaveBeenCalledWith(work, "Client work");
+  expect(document.querySelector('[data-testid="organization-rename-input"]')).toBeNull();
+});
+
+it("keeps the name when a rename is cancelled with Escape", async () => {
+  const onRename = vi.fn(async () => undefined);
+  await renderOrganizations([personal, work], vi.fn(), { onRenameOrganization: onRename });
+  await act(async () => menuButton("Rename Work")!.click());
+  const input = document.querySelector<HTMLInputElement>(
+    '[data-testid="organization-rename-input"]',
+  )!;
+  await typeInto(input, "Other");
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  });
+  expect(onRename).not.toHaveBeenCalled();
+  expect(document.querySelector('[data-testid="organization-rename-input"]')).toBeNull();
+});
+
+it("shows the rename error and keeps the field open", async () => {
+  const onRename = vi.fn(async () => {
+    throw new Error("Work space name must be readable");
+  });
+  await renderOrganizations([personal, work], vi.fn(), { onRenameOrganization: onRename });
+  await act(async () => menuButton("Rename Work")!.click());
+  const input = document.querySelector<HTMLInputElement>(
+    '[data-testid="organization-rename-input"]',
+  )!;
+  await typeInto(input, "!!!");
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+  expect(document.querySelector('[role="alert"]')?.textContent).toContain("readable");
+  expect(document.querySelector('[data-testid="organization-rename-input"]')).not.toBeNull();
+});
+
+it("offers delete only where it is allowed and hands the choice to the caller", async () => {
+  const onDelete = vi.fn();
+  const company = { ...personal, id: "org-ocsc", name: "OCSC", permanent: true };
+  const viewer = { ...work, id: "org-viewer", name: "Shared", canManage: false };
+  await renderOrganizations([company, work, viewer], vi.fn(), {
+    onRenameOrganization: vi.fn(async () => undefined),
+    onDeleteOrganization: onDelete,
+  });
+  expect(menuButton("Delete OCSC")).toBeNull();
+  expect(menuButton("Delete Shared")).toBeNull();
+  expect(menuButton("Rename Shared")).toBeNull();
+  expect(menuButton("Rename OCSC")).not.toBeNull();
+  await act(async () => menuButton("Delete Work")!.click());
+  expect(onDelete).toHaveBeenCalledWith(work);
+});
+
+it("never offers to delete the last work space someone manages", async () => {
+  const viewer = { ...work, canManage: false };
+  await renderOrganizations([personal, viewer], vi.fn(), { onDeleteOrganization: vi.fn() });
+  expect(menuButton("Delete Personal")).toBeNull();
 });

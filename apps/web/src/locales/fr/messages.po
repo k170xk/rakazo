@@ -1783,6 +1783,10 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Change"
+msgstr ""
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "Changer {name}"
@@ -3076,6 +3080,10 @@ msgstr "Impossible de renommer l'espace"
 msgid "Could not rename this page. Try again."
 msgstr "Impossible de renommer cette page. Réessayez."
 
+#: src/components/SidebarFooter.tsx
+msgid "Could not rename work space"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not render chart"
 msgstr "Impossible d'afficher le graphique"
@@ -3483,6 +3491,10 @@ msgid "Current clients and projects:\n"
 ""
 msgstr ""
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Current dictate shortcut"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
@@ -3640,6 +3652,10 @@ msgstr "Supprimer {0}"
 msgid "Delete {0}?"
 msgstr "Supprimer {0} ?"
 
+#: src/components/SidebarFooter.tsx
+msgid "Delete {name}"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/components/AccountMenu.tsx
 msgid "Delete account"
@@ -3763,6 +3779,10 @@ msgstr ""
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Dictate"
 msgstr "Dicter"
+
+#: src/components/DictationShortcutSettings.tsx
+msgid "Dictate shortcut"
+msgstr ""
 
 #: src/lib/dictation.ts
 msgid "Dictation ended unexpectedly."
@@ -7149,6 +7169,14 @@ msgstr ""
 msgid "Preferences"
 msgstr "Préférences"
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Press a shortcut with ⌘ or Ctrl. Escape cancels."
+msgstr ""
+
+#: src/components/DictationShortcutSettings.tsx
+msgid "Press keys…"
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Preview"
@@ -7593,6 +7621,10 @@ msgstr "Retrait en cours…"
 msgid "Rename"
 msgstr "Renommer"
 
+#: src/components/SidebarFooter.tsx
+msgid "Rename {name}"
+msgstr ""
+
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-roster.tsx
@@ -7692,6 +7724,7 @@ msgid "Research & writing"
 msgstr "Recherche et rédaction"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/DictationShortcutSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -8735,6 +8768,10 @@ msgstr "Démarrage"
 msgid "Starting…"
 msgstr "Démarrage en cours…"
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Starts and stops voice typing in the message field."
+msgstr ""
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "State or region"
 msgstr ""
@@ -9184,7 +9221,6 @@ msgstr "Cet appel ne sonne plus."
 msgid "This can't be undone."
 msgstr "Cette action est irréversible."
 
-#: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "Cette action est irréversible."
@@ -9264,6 +9300,10 @@ msgstr "Impossible de charger cette page"
 #: src/pages/SharedPage.tsx
 msgid "This page isn't available"
 msgstr "Cette page n'est pas disponible"
+
+#: src/pages/OrganizationSettingsPanel.tsx
+msgid "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
+msgstr ""
 
 #: src/components/AccountAccess.tsx
 msgid "This permanently deletes your account and data."

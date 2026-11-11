@@ -6,7 +6,13 @@ import {
 } from "@rakazo/core";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { queryClient, spaceQueries, useQueryUserId } from "./query";
-import { ORGANIZATION_SPACES_STORAGE_KEY, rpc, selectedSpaceId, selectSpace } from "./rpc";
+import {
+  clearSpaceSelection,
+  ORGANIZATION_SPACES_STORAGE_KEY,
+  rpc,
+  selectedSpaceId,
+  selectSpace,
+} from "./rpc";
 
 export type Organization = OrganizationList["organizations"][number];
 
@@ -118,6 +124,33 @@ export function switchOrganization(
     openSpaceChat ? "/app" : "/",
     openSpaceChat,
   );
+}
+
+export async function renameOrganization(
+  userId: string | null,
+  organization: Organization,
+  name: string,
+): Promise<void> {
+  await rpc.organizations.rename({ organizationId: organization.id, name });
+  await queryClient.invalidateQueries({ queryKey: organizationsQuery(userId).queryKey });
+}
+
+/**
+ * Deletes the work space with every agent, chat, message and file in it. Leaving the one being
+ * shown reloads into the Space the server picks; deleting another only refreshes the list.
+ */
+export async function deleteOrganization(
+  userId: string | null,
+  organization: Organization,
+): Promise<void> {
+  const shown = organization.spaceIds.includes(selectedSpaceId() ?? "");
+  const { activeSpaceId } = await rpc.organizations.remove({ organizationId: organization.id });
+  if (!shown) {
+    await queryClient.invalidateQueries({ queryKey: organizationsQuery(userId).queryKey });
+    return;
+  }
+  if (!selectSpace(activeSpaceId)) clearSpaceSelection();
+  window.location.assign("/");
 }
 
 /**

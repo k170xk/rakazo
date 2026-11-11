@@ -17,10 +17,10 @@ import { Plus } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { CreateOrganizationDialog } from "../components/CreateOrganizationDialog";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
+import { canDeleteOrganization } from "../lib/organization-access";
 import type { Organization } from "../lib/organizations";
-import { organizationsQuery, useOrganizations } from "../lib/organizations";
-import { queryClient, useQueryUserId } from "../lib/query";
-import { clearSpaceSelection, rpc, selectSpace } from "../lib/rpc";
+import { deleteOrganization, renameOrganization, useOrganizations } from "../lib/organizations";
+import { useQueryUserId } from "../lib/query";
 import { errorText } from "../lib/user-error";
 
 /** The work space (organization) the app is showing: its name, and, for its owner, renaming and deletion. */
@@ -36,11 +36,7 @@ export function OrganizationSettingsPanel({
     <OrganizationSettings
       key={organization.id}
       organization={organization}
-      canDelete={
-        organization.canManage &&
-        !organization.permanent &&
-        organizations.filter((each) => each.canManage).length > 1
-      }
+      canDelete={canDeleteOrganization(organization, organizations)}
       onBusyChange={onBusyChange}
     />
   );
@@ -77,9 +73,8 @@ function OrganizationSettings({
     setPending(true);
     setError(null);
     try {
-      await rpc.organizations.rename({ organizationId: organization.id, name: trimmed });
+      await renameOrganization(userId, organization, trimmed);
       setDraft(trimmed);
-      await queryClient.invalidateQueries({ queryKey: organizationsQuery(userId).queryKey });
     } catch (reason) {
       setError(errorText(reason));
     } finally {
@@ -155,13 +150,7 @@ function OrganizationSettings({
         <DeleteOrganizationDialog
           organization={organization}
           onCancel={() => setConfirmingDelete(false)}
-          onConfirm={async () => {
-            const { activeSpaceId } = await rpc.organizations.remove({
-              organizationId: organization.id,
-            });
-            if (!selectSpace(activeSpaceId)) clearSpaceSelection();
-            window.location.assign("/");
-          }}
+          onConfirm={() => deleteOrganization(userId, organization)}
         />
       ) : null}
     </div>
@@ -196,7 +185,10 @@ export function DeleteOrganizationDialog({
             <Trans>Delete {organization.name}?</Trans>
           </AlertDialogTitle>
           <AlertDialogDescription>
-            <Trans>This cannot be undone.</Trans>
+            <Trans>
+              This permanently deletes every agent, chat, message and file in it, cancels its plan
+              and removes everyone else's access. This cannot be undone.
+            </Trans>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Field>

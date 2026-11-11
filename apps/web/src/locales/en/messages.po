@@ -1788,6 +1788,10 @@ msgstr "Cards"
 msgid "Category"
 msgstr "Category"
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Change"
+msgstr "Change"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Change {name}"
 msgstr "Change {name}"
@@ -3081,6 +3085,10 @@ msgstr "Could not rename space"
 msgid "Could not rename this page. Try again."
 msgstr "Could not rename this page. Try again."
 
+#: src/components/SidebarFooter.tsx
+msgid "Could not rename work space"
+msgstr "Could not rename work space"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Could not render chart"
 msgstr "Could not render chart"
@@ -3492,6 +3500,10 @@ msgstr "Current clients and projects:\n"
 "  - What they care about:\n"
 ""
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Current dictate shortcut"
+msgstr "Current dictate shortcut"
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
@@ -3649,6 +3661,10 @@ msgstr "Delete {0}"
 msgid "Delete {0}?"
 msgstr "Delete {0}?"
 
+#: src/components/SidebarFooter.tsx
+msgid "Delete {name}"
+msgstr "Delete {name}"
+
 #: src/components/AccountAccess.tsx
 #: src/components/AccountMenu.tsx
 msgid "Delete account"
@@ -3772,6 +3788,10 @@ msgstr "Developer"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Dictate"
 msgstr "Dictate"
+
+#: src/components/DictationShortcutSettings.tsx
+msgid "Dictate shortcut"
+msgstr "Dictate shortcut"
 
 #: src/lib/dictation.ts
 msgid "Dictation ended unexpectedly."
@@ -7167,6 +7187,14 @@ msgstr "PowerPoint decks on the OCSC template, ready to present."
 msgid "Preferences"
 msgstr "Preferences"
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Press a shortcut with ⌘ or Ctrl. Escape cancels."
+msgstr "Press a shortcut with ⌘ or Ctrl. Escape cancels."
+
+#: src/components/DictationShortcutSettings.tsx
+msgid "Press keys…"
+msgstr "Press keys…"
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Preview"
@@ -7611,6 +7639,10 @@ msgstr "Removing…"
 msgid "Rename"
 msgstr "Rename"
 
+#: src/components/SidebarFooter.tsx
+msgid "Rename {name}"
+msgstr "Rename {name}"
+
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/sidebar-roster.tsx
@@ -7710,6 +7742,7 @@ msgid "Research & writing"
 msgstr "Research & writing"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/DictationShortcutSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -8753,6 +8786,10 @@ msgstr "Starting"
 msgid "Starting…"
 msgstr "Starting…"
 
+#: src/components/DictationShortcutSettings.tsx
+msgid "Starts and stops voice typing in the message field."
+msgstr "Starts and stops voice typing in the message field."
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "State or region"
 msgstr "State or region"
@@ -9205,7 +9242,6 @@ msgstr "This call is no longer ringing."
 msgid "This can't be undone."
 msgstr "This can't be undone."
 
-#: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
@@ -9285,6 +9321,10 @@ msgstr "This page couldn't load"
 #: src/pages/SharedPage.tsx
 msgid "This page isn't available"
 msgstr "This page isn't available"
+
+#: src/pages/OrganizationSettingsPanel.tsx
+msgid "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
+msgstr "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
 
 #: src/components/AccountAccess.tsx
 msgid "This permanently deletes your account and data."

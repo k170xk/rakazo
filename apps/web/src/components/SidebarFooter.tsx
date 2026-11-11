@@ -3,6 +3,7 @@ import type { NavLink } from "@rakazo/contracts";
 import {
   AppMarkStack,
   Button,
+  Input,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -17,19 +18,23 @@ import {
   LogOut,
   Monitor,
   Moon,
+  Pencil,
   Plug,
   ScrollText,
   Settings,
   ShieldCheck,
   SquareKanban,
   Sun,
+  Trash2,
   UserPlus,
   UserRound,
 } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { canDeleteOrganization } from "../lib/organization-access";
 import type { Organization } from "../lib/organizations";
 import type { AppearancePreference } from "../lib/ui-appearance";
 import { getUiAppearancePreference, setUiAppearance } from "../lib/ui-appearance";
+import { errorText } from "../lib/user-error";
 import { useSidebarUpdate } from "./DesktopUpdates";
 import { IconTooltip } from "./IconTooltip";
 
@@ -59,6 +64,10 @@ type Props = {
   organizations?: Organization[];
   activeOrganizationId?: string | null;
   onSwitchOrganization?: (organization: Organization) => void;
+  /** Offered on the work spaces the person manages. */
+  onRenameOrganization?: (organization: Organization, name: string) => Promise<void>;
+  /** Offered on the work spaces they may delete; the caller confirms before deleting. */
+  onDeleteOrganization?: (organization: Organization) => void;
 };
 
 // Marks are 24px wide, overlap by 2px, and need 2px for the outer ring.
@@ -90,6 +99,8 @@ export function SidebarFooter({
   organizations = [],
   activeOrganizationId,
   onSwitchOrganization,
+  onRenameOrganization,
+  onDeleteOrganization,
 }: Props) {
   const { t } = useLingui();
   const update = useSidebarUpdate();
@@ -159,21 +170,24 @@ export function SidebarFooter({
             </div>
             {organizations.length > 1 ? (
               <>
-                {organizations.map((organization) => {
-                  const active = organization.id === activeOrganizationId;
-                  return (
-                    <Button
-                      key={organization.id}
-                      variant="ghost"
-                      aria-current={active ? "true" : undefined}
-                      className="h-9 w-full justify-between gap-2.5 font-normal"
-                      onClick={() => onSwitchOrganization?.(organization)}
-                    >
-                      <span className="min-w-0 truncate">{organization.name}</span>
-                      {active ? <Check aria-hidden="true" strokeWidth={1.75} /> : null}
-                    </Button>
-                  );
-                })}
+                {organizations.map((organization) => (
+                  <OrganizationRow
+                    key={organization.id}
+                    organization={organization}
+                    active={organization.id === activeOrganizationId}
+                    onSwitch={() => onSwitchOrganization?.(organization)}
+                    onRename={
+                      organization.canManage && onRenameOrganization
+                        ? (name) => onRenameOrganization(organization, name)
+                        : undefined
+                    }
+                    onDelete={
+                      onDeleteOrganization && canDeleteOrganization(organization, organizations)
+                        ? () => onDeleteOrganization(organization)
+                        : undefined
+                    }
+                  />
+                ))}
                 <div className="my-1 border-t border-border" />
               </>
             ) : null}
@@ -298,6 +312,129 @@ export function SidebarFooter({
             <Download aria-hidden="true" />
           </Button>
         </IconTooltip>
+      ) : null}
+    </div>
+  );
+}
+
+const ROW_ACTION =
+  "size-7 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100";
+
+/** One work space in the account menu: switch to it, rename it in place, or ask to delete it. */
+function OrganizationRow({
+  organization,
+  active,
+  onSwitch,
+  onRename,
+  onDelete,
+}: {
+  organization: Organization;
+  active: boolean;
+  onSwitch: () => void;
+  onRename?: (name: string) => Promise<void>;
+  onDelete?: () => void;
+}) {
+  const { t } = useLingui();
+  const [draft, setDraft] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Removing the field on Escape can still blur it; that blur must not save what was cancelled.
+  const cancelled = useRef(false);
+  const name = organization.name;
+
+  async function save() {
+    if (draft === null || saving || cancelled.current) return;
+    const trimmed = draft.trim();
+    // An empty or unchanged name keeps the current one without a request.
+    if (!trimmed || trimmed === name || !onRename) {
+      setDraft(null);
+      setError(null);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await onRename(trimmed);
+      setDraft(null);
+    } catch (reason) {
+      setError(errorText(reason, t`Could not rename work space`));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (draft !== null) {
+    return (
+      <div className="px-1 py-0.5">
+        <Input
+          autoFocus
+          aria-label={t`Rename ${name}`}
+          data-testid="organization-rename-input"
+          className="h-8"
+          maxLength={60}
+          value={draft}
+          disabled={saving}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            setError(null);
+          }}
+          onBlur={() => void save()}
+          onKeyDown={(event) => {
+            // Escape cancels the rename instead of closing the menu.
+            if (event.key === "Escape") event.stopPropagation();
+            if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+            if (event.key === "Enter") event.currentTarget.blur();
+            if (event.key === "Escape") {
+              cancelled.current = true;
+              setDraft(null);
+              setError(null);
+            }
+          }}
+        />
+        {error ? (
+          <p role="alert" className="px-1.5 pt-1 text-[12.5px] text-destructive">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="group flex items-center gap-0.5">
+      <Button
+        variant="ghost"
+        aria-current={active ? "true" : undefined}
+        className="h-9 min-w-0 flex-1 justify-between gap-2.5 font-normal"
+        onClick={onSwitch}
+      >
+        <span className="min-w-0 truncate">{name}</span>
+        {active ? <Check aria-hidden="true" strokeWidth={1.75} /> : null}
+      </Button>
+      {onRename ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t`Rename ${name}`}
+          className={ROW_ACTION}
+          onClick={() => {
+            cancelled.current = false;
+            setDraft(name);
+          }}
+        >
+          <Pencil aria-hidden="true" strokeWidth={1.75} />
+        </Button>
+      ) : null}
+      {onDelete ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t`Delete ${name}`}
+          className={`${ROW_ACTION} hover:text-destructive`}
+          onClick={onDelete}
+        >
+          <Trash2 aria-hidden="true" strokeWidth={1.75} />
+        </Button>
       ) : null}
     </div>
   );

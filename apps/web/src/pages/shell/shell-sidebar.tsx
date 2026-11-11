@@ -21,12 +21,19 @@ import { useBilling } from "../../components/SubscriptionGate";
 import { useTodoBadge } from "../../components/todos/todo-count";
 import { formatBillingDate } from "../../lib/billing";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
-import { switchOrganization, useOrganizations } from "../../lib/organizations";
+import type { Organization } from "../../lib/organizations";
+import {
+  deleteOrganization,
+  renameOrganization,
+  switchOrganization,
+  useOrganizations,
+} from "../../lib/organizations";
 import { useQueryUserId } from "../../lib/query";
 import type { Panel } from "../../lib/right-panel-state";
 import { rpc } from "../../lib/rpc";
 import { useSignOut } from "../../lib/sign-out";
 import { ActivityList } from "../ActivityList";
+import { DeleteOrganizationDialog } from "../OrganizationSettingsPanel";
 import { SpaceSearchResults } from "../SpaceSearch";
 import type { SettingsSection } from "../shell-overlay";
 import { SidebarHeader } from "./sidebar-header";
@@ -389,6 +396,7 @@ function ShellSidebarFooter({
       : null;
   const [menuOpen, setMenuOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [deletingOrganization, setDeletingOrganization] = useState<Organization | null>(null);
   const referral = billing?.referral;
   const [logOutError, setLogOutError] = useState<string | null>(null);
   const { signingOut, logOut } = useSignOut("/sign-in", (message) => {
@@ -491,7 +499,24 @@ function ShellSidebarFooter({
           if (organization.id !== activeOrganizationId)
             void switchOrganization(userId, organization, openSpaceChat);
         }}
+        onRenameOrganization={(organization, name) =>
+          renameOrganization(userId, organization, name)
+        }
+        onDeleteOrganization={(organization) => {
+          setMenuOpen(false);
+          setDeletingOrganization(organization);
+        }}
       />
+      {deletingOrganization ? (
+        <DeleteOrganizationDialog
+          organization={deletingOrganization}
+          onCancel={() => setDeletingOrganization(null)}
+          onConfirm={async () => {
+            await deleteOrganization(userId, deletingOrganization);
+            setDeletingOrganization(null);
+          }}
+        />
+      ) : null}
       {referral ? (
         <InviteDialog referral={referral} open={inviteOpen} onOpenChange={setInviteOpen} />
       ) : null}
