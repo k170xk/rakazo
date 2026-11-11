@@ -5,6 +5,7 @@ __pycache__/
 .turbo
 dist
 build
+!packages/app-kit/src/build
 coverage
 .playwright-report
 .playwright-cli
