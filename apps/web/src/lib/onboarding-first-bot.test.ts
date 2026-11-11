@@ -49,6 +49,17 @@ describe("firstPaBotCreateInput", () => {
     expect(created.notifyOnFinish).toBe(true);
   });
 
+  it("skips the agent setup for a team inside the organisation", () => {
+    const created = firstPaBotCreateInput({
+      existingNames: [],
+      userDisplayName: "Keith Cronin",
+      team: true,
+      random: () => 0,
+    });
+    expect(created.instructions).toContain("Do not run the three-agent setup");
+    expect(created.instructions).not.toContain("Set them up");
+  });
+
   it("attaches an Evolve assistant id only for knowledge", () => {
     expect(
       firstPaBotCreateInput({

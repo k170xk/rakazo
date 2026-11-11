@@ -111,6 +111,9 @@ async function createOrReuseFirstBot(): Promise<{ id: string }> {
     return { id: reuse.id };
   }
   const me = await rpc.me().catch(() => null);
+  const navigation = await rpc.spaces.list().catch(() => null);
+  const team =
+    navigation?.spaces.find((space) => space.id === navigation.current.id)?.isDefault === false;
   // Knowledge only: Evolve's General Intelligence assistant when this person has it.
   const template = (await rpc.bots.evolveAssistants().catch(() => [])).find(
     (assistant) => assistant.name.trim() === EVOLVE_GENERAL_INTELLIGENCE_NAME,
@@ -121,6 +124,7 @@ async function createOrReuseFirstBot(): Promise<{ id: string }> {
         existingNames: existing.map((bot) => bot.name),
         userDisplayName: me?.name ?? "",
         evolveAssistantId: template?.id,
+        team,
       }),
     );
     await pinMainPa(created.id);

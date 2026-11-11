@@ -5891,6 +5891,22 @@ describe("bot intro run", () => {
     expect(prompt).not.toContain("what they want you for");
   });
 
+  it("asks what a new team is for instead of setting up agents", async () => {
+    const { create, deps } = introDeps();
+    deps.prisma.space.findUnique = vi.fn().mockResolvedValue({ name: "Bridges", isDefault: false });
+    await enqueueBotIntroRun(deps, actor, {
+      ...bot,
+      name: "Nova",
+      spawnKey: "onboarding:first",
+      disabledBuiltinTools: [],
+    } as Bot);
+    const [taskCall] = create.mock.calls as Array<[{ data: { prompt?: string } }]>;
+    const prompt = taskCall?.[0].data.prompt ?? "";
+    expect(prompt).toContain("what they want this team for");
+    expect(prompt).toContain("Bridges");
+    expect(prompt).not.toContain("OCSC Email agent");
+  });
+
   it("keeps the generic intro for ordinary bots", () => {
     const prompt = botIntroPrompt({
       userName: "Ada",

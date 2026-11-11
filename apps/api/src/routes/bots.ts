@@ -37,7 +37,13 @@ import {
   BotSecretAuth,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, displayName, isMainPaBot, paBotIntroPrompt } from "@rakazo/core";
+import {
+  ACTIVE_RUN_STATUSES,
+  displayName,
+  isMainPaBot,
+  paBotIntroPrompt,
+  paBotTeamInstructions,
+} from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
   addGroupPerson,
@@ -229,6 +235,8 @@ export function botIntroPrompt(input: {
   /** When onboarding:first, uses the Main PA interview instead of the generic intro. */
   spawnKey?: string | null;
   botName?: string;
+  /** False for a new team inside an organisation that already has an assistant. */
+  setupAgents?: boolean;
 }): string {
   if (isMainPaBot({ spawnKey: input.spawnKey })) {
     return paBotIntroPrompt(input);
@@ -308,6 +316,7 @@ export async function enqueueBotIntroRun(deps: RouterDeps, actor: Actor, bot: Bo
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
     spawnKey: bot.spawnKey,
     botName: bot.name,
+    setupAgents: space?.isDefault !== false,
   });
   const run = await deps.prisma.$transaction(async (tx) => {
     // An idempotent create (spawnKey) returns the bot it already made; it gets one intro.
@@ -372,6 +381,16 @@ export function botsRoutes(ctx: RouterContext) {
         try {
           // Older apps always send Original, which would pin every new bot to it.
           const { avatarSet: _ignored, evolveAssistantId, ...request } = input;
+          if (isMainPaBot({ spawnKey: request.spawnKey }) && request.name) {
+            const space = await deps.prisma.space.findUnique({
+              where: { id: context.actor.spaceId },
+              select: { isDefault: true },
+            });
+            // A new team skips the organisation's agent interview.
+            if (space?.isDefault === false) {
+              request.instructions = paBotTeamInstructions(request.name);
+            }
+          }
           if (evolveAssistantId) {
             const assistant = await evolveAssistantFor(deps, context.actor, evolveAssistantId);
             request.instructions ||= assistant.instructions.slice(0, BOT_INSTRUCTIONS_MAX_LENGTH);

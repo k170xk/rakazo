@@ -4,6 +4,7 @@ import {
   ONBOARDING_FIRST_BOT_SPAWN_KEY,
   paBotDescription,
   paBotInstructions,
+  paBotTeamInstructions,
   suggestBotName,
 } from "@rakazo/core";
 
@@ -24,12 +25,14 @@ export function firstPaBotCreateInput(input: {
   userDisplayName: string;
   evolveAssistantId?: string;
   random?: () => number;
+  /** A team inside an organisation skips the agent-setup interview. */
+  team?: boolean;
 }) {
   const name = suggestBotName(input.existingNames, input.random);
   return {
     name,
     description: paBotDescription(input.userDisplayName),
-    instructions: paBotInstructions(name),
+    instructions: input.team ? paBotTeamInstructions(name) : paBotInstructions(name),
     notifyOnFinish: true as const,
     spawnKey: ONBOARDING_FIRST_BOT_SPAWN_KEY,
     ...(input.evolveAssistantId ? { evolveAssistantId: input.evolveAssistantId } : {}),

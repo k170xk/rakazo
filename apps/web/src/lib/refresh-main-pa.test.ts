@@ -42,4 +42,37 @@ describe("refreshMainPaInstructions", () => {
     ).resolves.toBe(false);
     expect(update).not.toHaveBeenCalled();
   });
+
+  it("replaces the organisation interview on a team assistant", async () => {
+    await expect(
+      refreshMainPaInstructions(
+        {
+          id: "bot-1",
+          name: "Rok",
+          spawnKey: "onboarding:first",
+          instructions: "Leave the spawn name empty and offer three OCSC agents",
+        },
+        { team: true },
+      ),
+    ).resolves.toBe(true);
+    expect(update).toHaveBeenCalledWith({
+      botId: "bot-1",
+      instructions: expect.stringContaining("Do not run the three-agent setup"),
+    });
+  });
+
+  it("leaves a team assistant that already skips the setup", async () => {
+    await expect(
+      refreshMainPaInstructions(
+        {
+          id: "bot-1",
+          name: "Rok",
+          spawnKey: "onboarding:first",
+          instructions: "Do not run the three-agent setup",
+        },
+        { team: true },
+      ),
+    ).resolves.toBe(false);
+    expect(update).not.toHaveBeenCalled();
+  });
 });

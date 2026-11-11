@@ -3,13 +3,14 @@ import {
   EVOLVE_GENERAL_INTELLIGENCE_NAME,
   emailSpecialistInstructions,
   isMainPaBot,
-  marketingSpecialistInstructions,
-  researchSpecialistInstructions,
   LEGACY_FIRST_BOT_NAMES,
+  marketingSpecialistInstructions,
   ONBOARDING_FIRST_BOT_SPAWN_KEY,
   paBotDescription,
   paBotInstructions,
   paBotIntroPrompt,
+  paBotTeamInstructions,
+  researchSpecialistInstructions,
 } from "./pa-bot.js";
 
 describe("pa-bot", () => {
@@ -84,5 +85,23 @@ describe("pa-bot", () => {
     expect(prompt).toContain("Never offer a generic construction roundup");
     expect(prompt).toContain("Milo");
     expect(prompt).not.toContain("what they want you for");
+  });
+
+  it("asks what a new team is for and skips the agent setup", () => {
+    const text = paBotTeamInstructions("Nova");
+    expect(text).toContain("You are Nova");
+    expect(text).toContain("Do not run the three-agent setup");
+    expect(text).not.toContain("Set them up");
+    const prompt = paBotIntroPrompt({
+      userName: "Keith",
+      spaceName: "Bridges",
+      disabledBuiltinTools: [],
+      botName: "Nova",
+      setupAgents: false,
+    });
+    expect(prompt).toContain("what they want this team for");
+    expect(prompt).toContain("Bridges");
+    expect(prompt).toContain("Do not run the three-agent setup");
+    expect(prompt).not.toContain("OCSC Email agent");
   });
 });

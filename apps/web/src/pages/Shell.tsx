@@ -211,14 +211,15 @@ function SpaceShell() {
     void (async () => {
       for (const bot of botsRef.current) {
         if (cancelled) return;
-        const updated = await refreshMainPaInstructions(bot).catch(() => false);
+        const team = spaces.find((space) => space.id === bootstrapMe?.spaceId)?.isDefault === false;
+        const updated = await refreshMainPaInstructions(bot, { team }).catch(() => false);
         if (updated && !cancelled) await refreshBots().catch(() => undefined);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [initialBotsLoaded, botsRef, refreshBots]);
+  }, [bootstrapMe?.spaceId, initialBotsLoaded, botsRef, refreshBots, spaces]);
   const search = useSidebarSearch({ rpc, navigate });
   const thread = useThreadState();
   const { snapshot } = thread;
