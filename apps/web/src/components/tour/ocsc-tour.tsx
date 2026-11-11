@@ -202,7 +202,7 @@ function useSteps(mode: "first-run" | "revisit", availability: TourAvailability)
       body: t`Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed.`,
       points: [
         t`Invite colleagues straight from the Evolve directory`,
-        t`Private spaces keep a team's chats and files separate`,
+        t`A team keeps its chats and files separate from the rest of the work space`,
       ],
     },
     mode === "first-run"

@@ -989,7 +989,7 @@ function SpaceShell() {
     },
     {
       id: "new-space",
-      label: t`New private space`,
+      label: t`New team`,
       icon: Lock,
       onSelect: () => dialogs.setNewSpaceOpen(true),
     },

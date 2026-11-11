@@ -18,12 +18,12 @@ test("a new space chooses what it can use, and a skill can be limited to some sp
   });
 
   await openNewSpace(page);
-  const create = page.getByRole("dialog", { name: "New space" });
+  const create = page.getByRole("dialog", { name: "New team" });
   await create.getByLabel("Name").fill("Clients");
-  await create.getByRole("button", { name: "Create space", exact: true }).click();
+  await create.getByRole("button", { name: "Create team", exact: true }).click();
 
   // What the user added reaches every space, so it starts ticked and can be left out here.
-  const chooser = page.getByRole("dialog", { name: "What can this space use?" });
+  const chooser = page.getByRole("dialog", { name: "What can this team use?" });
   const item = chooser.getByRole("checkbox", { name: "weekly-review", exact: true });
   await expect(item).toBeChecked();
   await captureScreenshot(page, testInfo, "new-space-items");

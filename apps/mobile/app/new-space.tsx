@@ -36,7 +36,7 @@ export default function NewSpace() {
       router.dismissAll();
       router.replace("/");
     } catch (reason) {
-      setError(errorText(reason, t("Could not create space")));
+      setError(errorText(reason, t("Could not create team")));
       setPending(false);
     }
   }
@@ -72,7 +72,7 @@ export default function NewSpace() {
         {error ? <Text style={{ color: tokens.destructive, marginTop: 14 }}>{error}</Text> : null}
         <NativeActionButton
           disabled={!name.trim() || pending}
-          label={pending ? t("Creating…") : t("Create space")}
+          label={pending ? t("Creating…") : t("Create team")}
           onPress={() => void create()}
           style={{ marginTop: 20 }}
         />

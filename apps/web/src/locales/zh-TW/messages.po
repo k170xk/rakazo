@@ -675,6 +675,14 @@ msgstr "已開啟 <0>{0}</0> 的登入分頁。請在該分頁輸入以下代碼
 msgid "A subscription credential is stored securely."
 msgstr "訂閱憑證已安全儲存。"
 
+#: src/pages/shell/bot-picker.tsx
+msgid "A team inside this work space, with its own bots, chats and files."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A team keeps its chats and files separate from the rest of the work space"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
 msgstr ""
@@ -2906,8 +2914,12 @@ msgid "Could not create section"
 msgstr "無法建立分組"
 
 #: src/pages/shell/dialogs.tsx
-msgid "Could not create space"
-msgstr "無法建立空間"
+#~ msgid "Could not create space"
+#~ msgstr "無法建立空間"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Could not create team"
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Could not create your bot"
@@ -3592,9 +3604,12 @@ msgid "Create Routine"
 msgstr "建立例行任務"
 
 #: src/components/AskCard.tsx
-#: src/pages/shell/dialogs.tsx
 msgid "Create space"
 msgstr "建立空間"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Create team"
+msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/components/SidebarFooter.tsx
@@ -6378,8 +6393,8 @@ msgstr "新密碼"
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
-msgid "New private space"
-msgstr "新增私人空間"
+#~ msgid "New private space"
+#~ msgstr "新增私人空間"
 
 #: src/components/AskCard.tsx
 msgid "New project deadline"
@@ -6399,8 +6414,14 @@ msgid "New skill"
 msgstr "新增技能"
 
 #: src/pages/shell/dialogs.tsx
-msgid "New space"
-msgstr "新增空間"
+#~ msgid "New space"
+#~ msgstr "新增空間"
+
+#: src/pages/Shell.tsx
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "New team"
+msgstr ""
 
 #: src/pages/Board.tsx
 msgid "New ticket"
@@ -7551,12 +7572,12 @@ msgid "Priority"
 msgstr "優先順序"
 
 #: src/pages/shell/bot-picker.tsx
-msgid "Private space with its own bots and groups."
-msgstr ""
+#~ msgid "Private space with its own bots and groups."
+#~ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Private spaces keep a team's chats and files separate"
-msgstr ""
+#~ msgid "Private spaces keep a team's chats and files separate"
+#~ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -9019,8 +9040,8 @@ msgid "Space default"
 msgstr "空間預設"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Spaces"
-msgstr "空間"
+#~ msgid "Spaces"
+#~ msgstr "空間"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -9367,6 +9388,10 @@ msgstr "正在示範，傳送新訊息前請先停止示範。"
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "團隊電腦"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Teams"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Teams message"
@@ -10430,7 +10455,11 @@ msgid "What assistants can look up and do in Evolve on the person's behalf, such
 msgstr ""
 
 #: src/pages/shell/dialogs.tsx
-msgid "What can this space use?"
+#~ msgid "What can this space use?"
+#~ msgstr ""
+
+#: src/pages/shell/dialogs.tsx
+msgid "What can this team use?"
 msgstr ""
 
 #: src/components/SignupSurvey.tsx

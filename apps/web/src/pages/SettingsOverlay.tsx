@@ -307,7 +307,7 @@ export function SettingsOverlay({
                       <OrganizationSettingsPanel onBusyChange={setVoiceBusy} />
                       {/* One space is just the app, so there is nothing to tell apart or manage. */}
                       {spaces.length > 1 && onOpenSpace ? (
-                        <SettingsGroup title={t`Spaces`} data-testid="settings-spaces">
+                        <SettingsGroup title={t`Teams`} data-testid="settings-spaces">
                           {spaces.map((option) => (
                             <SettingsRow
                               key={option.id}

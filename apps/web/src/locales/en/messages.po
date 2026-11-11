@@ -674,6 +674,14 @@ msgstr "A sign-in tab opened at <0>{0}</0>. Enter this code there — this windo
 msgid "A subscription credential is stored securely."
 msgstr "A subscription credential is stored securely."
 
+#: src/pages/shell/bot-picker.tsx
+msgid "A team inside this work space, with its own bots, chats and files."
+msgstr "A team inside this work space, with its own bots, chats and files."
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A team keeps its chats and files separate from the rest of the work space"
+msgstr "A team keeps its chats and files separate from the rest of the work space"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
 msgstr "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
@@ -2910,8 +2918,12 @@ msgid "Could not create section"
 msgstr "Could not create section"
 
 #: src/pages/shell/dialogs.tsx
-msgid "Could not create space"
-msgstr "Could not create space"
+#~ msgid "Could not create space"
+#~ msgstr "Could not create space"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Could not create team"
+msgstr "Could not create team"
 
 #: src/pages/Onboarding.tsx
 msgid "Could not create your bot"
@@ -3596,9 +3608,12 @@ msgid "Create Routine"
 msgstr "Create Routine"
 
 #: src/components/AskCard.tsx
-#: src/pages/shell/dialogs.tsx
 msgid "Create space"
 msgstr "Create space"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Create team"
+msgstr "Create team"
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/components/SidebarFooter.tsx
@@ -6395,8 +6410,8 @@ msgstr "New password"
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
-msgid "New private space"
-msgstr "New private space"
+#~ msgid "New private space"
+#~ msgstr "New private space"
 
 #: src/components/AskCard.tsx
 msgid "New project deadline"
@@ -6416,8 +6431,14 @@ msgid "New skill"
 msgstr "New skill"
 
 #: src/pages/shell/dialogs.tsx
-msgid "New space"
-msgstr "New space"
+#~ msgid "New space"
+#~ msgstr "New space"
+
+#: src/pages/Shell.tsx
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "New team"
+msgstr "New team"
 
 #: src/pages/Board.tsx
 msgid "New ticket"
@@ -7568,12 +7589,12 @@ msgid "Priority"
 msgstr "Priority"
 
 #: src/pages/shell/bot-picker.tsx
-msgid "Private space with its own bots and groups."
-msgstr "Private space with its own bots and groups."
+#~ msgid "Private space with its own bots and groups."
+#~ msgstr "Private space with its own bots and groups."
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Private spaces keep a team's chats and files separate"
-msgstr "Private spaces keep a team's chats and files separate"
+#~ msgid "Private spaces keep a team's chats and files separate"
+#~ msgstr "Private spaces keep a team's chats and files separate"
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -9036,8 +9057,8 @@ msgid "Space default"
 msgstr "Space default"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Spaces"
-msgstr "Spaces"
+#~ msgid "Spaces"
+#~ msgstr "Spaces"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -9384,6 +9405,10 @@ msgstr "Teaching in progress. Stop teaching before sending a new message."
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "Team Computer"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Teams"
+msgstr "Teams"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Teams message"
@@ -10450,8 +10475,12 @@ msgid "What assistants can look up and do in Evolve on the person's behalf, such
 msgstr "What assistants can look up and do in Evolve on the person's behalf, such as project datasheets, stock media and voiceovers. Each person only reaches what Evolve lets them see."
 
 #: src/pages/shell/dialogs.tsx
-msgid "What can this space use?"
-msgstr "What can this space use?"
+#~ msgid "What can this space use?"
+#~ msgstr "What can this space use?"
+
+#: src/pages/shell/dialogs.tsx
+msgid "What can this team use?"
+msgstr "What can this team use?"
 
 #: src/components/SignupSurvey.tsx
 msgid "What do you most want OCSC Intelligence to help with?"

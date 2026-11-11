@@ -463,7 +463,7 @@ function LayoutContent() {
                     <Stack.Screen
                       name="new-space"
                       options={{
-                        title: t("New private space"),
+                        title: t("New team"),
                         presentation: "modal",
                         gestureEnabled: true,
                         headerBackVisible: false,

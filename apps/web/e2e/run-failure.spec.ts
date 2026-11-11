@@ -123,7 +123,7 @@ test("a covered run error is not remembered until it is presented", async ({ pag
   const modalSendButton = await page.getByRole("button", { name: "Send" }).elementHandle();
   if (!modalSendButton) throw new Error("Send button not found");
   await openNewSpace(page);
-  const newSpaceDialog = page.getByRole("dialog", { name: "New space" });
+  const newSpaceDialog = page.getByRole("dialog", { name: "New team" });
   await expect(newSpaceDialog).toBeVisible();
   await modalSendButton.evaluate((button) => (button as HTMLButtonElement).click());
   await expect(error).toContainText("The model provider returned an error.", { timeout: 30_000 });

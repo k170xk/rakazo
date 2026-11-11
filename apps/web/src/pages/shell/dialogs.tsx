@@ -67,7 +67,7 @@ export function NewSpaceDialog({
       try {
         spaceId = await onCreate(trimmed);
       } catch (reason) {
-        setError(errorText(reason, t`Could not create space`));
+        setError(errorText(reason, t`Could not create team`));
         setSaving(false);
         return;
       }
@@ -101,7 +101,7 @@ export function NewSpaceDialog({
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>
-              <Trans>What can this space use?</Trans>
+              <Trans>What can this team use?</Trans>
             </DialogTitle>
           </DialogHeader>
           <div data-testid="new-space-items" className="max-h-80 space-y-1 overflow-y-auto">
@@ -149,7 +149,7 @@ export function NewSpaceDialog({
               className="text-muted-foreground"
               aria-hidden="true"
             />
-            <Trans>New space</Trans>
+            <Trans>New team</Trans>
           </DialogTitle>
         </DialogHeader>
         <label htmlFor={nameId} className="block text-[13.5px] text-foreground/75">
@@ -176,7 +176,7 @@ export function NewSpaceDialog({
             <Trans>Cancel</Trans>
           </Button>
           <Button disabled={saving || !name.trim()} onClick={create}>
-            {saving ? <Trans>Creating…</Trans> : <Trans>Create space</Trans>}
+            {saving ? <Trans>Creating…</Trans> : <Trans>Create team</Trans>}
           </Button>
         </DialogFooter>
       </DialogContent>

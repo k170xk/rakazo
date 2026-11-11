@@ -674,6 +674,14 @@ msgstr ""
 msgid "A subscription credential is stored securely."
 msgstr "구독 인증 정보가 안전하게 저장되어 있습니다."
 
+#: src/pages/shell/bot-picker.tsx
+msgid "A team inside this work space, with its own bots, chats and files."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A team keeps its chats and files separate from the rest of the work space"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
 msgstr ""
@@ -2905,8 +2913,12 @@ msgid "Could not create section"
 msgstr "섹션을 만들지 못했습니다."
 
 #: src/pages/shell/dialogs.tsx
-msgid "Could not create space"
-msgstr "스페이스를 만들 수 없습니다"
+#~ msgid "Could not create space"
+#~ msgstr "스페이스를 만들 수 없습니다"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Could not create team"
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Could not create your bot"
@@ -3591,9 +3603,12 @@ msgid "Create Routine"
 msgstr "자동 실행 만들기"
 
 #: src/components/AskCard.tsx
-#: src/pages/shell/dialogs.tsx
 msgid "Create space"
 msgstr "스페이스 만들기"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Create team"
+msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/components/SidebarFooter.tsx
@@ -6377,8 +6392,8 @@ msgstr "새 비밀번호"
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
-msgid "New private space"
-msgstr "새 비공개 스페이스"
+#~ msgid "New private space"
+#~ msgstr "새 비공개 스페이스"
 
 #: src/components/AskCard.tsx
 msgid "New project deadline"
@@ -6398,8 +6413,14 @@ msgid "New skill"
 msgstr "새 스킬"
 
 #: src/pages/shell/dialogs.tsx
-msgid "New space"
-msgstr "새 스페이스"
+#~ msgid "New space"
+#~ msgstr "새 스페이스"
+
+#: src/pages/Shell.tsx
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "New team"
+msgstr ""
 
 #: src/pages/Board.tsx
 msgid "New ticket"
@@ -7550,12 +7571,12 @@ msgid "Priority"
 msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
-msgid "Private space with its own bots and groups."
-msgstr ""
+#~ msgid "Private space with its own bots and groups."
+#~ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Private spaces keep a team's chats and files separate"
-msgstr ""
+#~ msgid "Private spaces keep a team's chats and files separate"
+#~ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -9018,8 +9039,8 @@ msgid "Space default"
 msgstr "스페이스 기본값"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Spaces"
-msgstr "스페이스"
+#~ msgid "Spaces"
+#~ msgstr "스페이스"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -9366,6 +9387,10 @@ msgstr "작업을 가르치는 중입니다. 새 메시지를 보내려면 먼�
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "팀 컴퓨터"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Teams"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Teams message"
@@ -10429,7 +10454,11 @@ msgid "What assistants can look up and do in Evolve on the person's behalf, such
 msgstr ""
 
 #: src/pages/shell/dialogs.tsx
-msgid "What can this space use?"
+#~ msgid "What can this space use?"
+#~ msgstr ""
+
+#: src/pages/shell/dialogs.tsx
+msgid "What can this team use?"
 msgstr ""
 
 #: src/components/SignupSurvey.tsx

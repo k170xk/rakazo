@@ -674,6 +674,14 @@ msgstr ""
 msgid "A subscription credential is stored securely."
 msgstr "Uma credencial de assinatura está armazenada com segurança."
 
+#: src/pages/shell/bot-picker.tsx
+msgid "A team inside this work space, with its own bots, chats and files."
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A team keeps its chats and files separate from the rest of the work space"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
 msgstr ""
@@ -2905,7 +2913,11 @@ msgid "Could not create section"
 msgstr "Não foi possível criar a seção"
 
 #: src/pages/shell/dialogs.tsx
-msgid "Could not create space"
+#~ msgid "Could not create space"
+#~ msgstr ""
+
+#: src/pages/shell/dialogs.tsx
+msgid "Could not create team"
 msgstr ""
 
 #: src/pages/Onboarding.tsx
@@ -3591,8 +3603,11 @@ msgid "Create Routine"
 msgstr ""
 
 #: src/components/AskCard.tsx
-#: src/pages/shell/dialogs.tsx
 msgid "Create space"
+msgstr ""
+
+#: src/pages/shell/dialogs.tsx
+msgid "Create team"
 msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
@@ -6377,8 +6392,8 @@ msgstr "Nova senha"
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
-msgid "New private space"
-msgstr "Novo espaço privado"
+#~ msgid "New private space"
+#~ msgstr "Novo espaço privado"
 
 #: src/components/AskCard.tsx
 msgid "New project deadline"
@@ -6398,7 +6413,13 @@ msgid "New skill"
 msgstr "Nova habilidade"
 
 #: src/pages/shell/dialogs.tsx
-msgid "New space"
+#~ msgid "New space"
+#~ msgstr ""
+
+#: src/pages/Shell.tsx
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/dialogs.tsx
+msgid "New team"
 msgstr ""
 
 #: src/pages/Board.tsx
@@ -7550,12 +7571,12 @@ msgid "Priority"
 msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
-msgid "Private space with its own bots and groups."
-msgstr ""
+#~ msgid "Private space with its own bots and groups."
+#~ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Private spaces keep a team's chats and files separate"
-msgstr ""
+#~ msgid "Private spaces keep a team's chats and files separate"
+#~ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -9018,8 +9039,8 @@ msgid "Space default"
 msgstr "Padrão do espaço"
 
 #: src/pages/SettingsOverlay.tsx
-msgid "Spaces"
-msgstr "Espaços"
+#~ msgid "Spaces"
+#~ msgstr "Espaços"
 
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
@@ -9366,6 +9387,10 @@ msgstr "Ensino em andamento. Pare de ensinar antes de enviar uma nova mensagem."
 #: src/pages/shell/computer-view.tsx
 msgid "Team Computer"
 msgstr "Computador da equipe"
+
+#: src/pages/SettingsOverlay.tsx
+msgid "Teams"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Teams message"
@@ -10429,7 +10454,11 @@ msgid "What assistants can look up and do in Evolve on the person's behalf, such
 msgstr ""
 
 #: src/pages/shell/dialogs.tsx
-msgid "What can this space use?"
+#~ msgid "What can this space use?"
+#~ msgstr ""
+
+#: src/pages/shell/dialogs.tsx
+msgid "What can this team use?"
 msgstr ""
 
 #: src/components/SignupSurvey.tsx
