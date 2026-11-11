@@ -8,6 +8,7 @@ import {
 import { CALENDAR_CSS } from "./calendar.js";
 import { CONTROLS_CSS } from "./controls.js";
 import { DATAVIZ_CSS } from "./dataviz-styles.js";
+import { URBANIST_FACE } from "./fonts/urbanist-face.js";
 import { MEDIA_CSS } from "./media.js";
 import { TEXT_KIT_CSS } from "./text.js";
 
@@ -25,8 +26,9 @@ const LIGHT_PALETTE = palette(pageKitPalette.light);
 
 // Sizes are in rem so the whole page steps up together on wide screens.
 const KIT_CSS = `
+${URBANIST_FACE}
 *,*::before,*::after{box-sizing:border-box}
-:root{--rk-font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",sans-serif;--rk-secondary:color-mix(in srgb,var(--foreground) 60%,transparent);--rk-tertiary:color-mix(in srgb,var(--foreground) 40%,transparent);--rk-line:color-mix(in srgb,var(--foreground) 15%,transparent);--rk-hairline:color-mix(in srgb,var(--foreground) 9%,transparent);--rk-track:color-mix(in srgb,var(--foreground) 8%,transparent);--rk-fill:color-mix(in srgb,var(--foreground) 7%,transparent);${DARK_PALETTE}}
+:root{--rk-font:"Urbanist Variable",Urbanist,system-ui,sans-serif;--rk-secondary:color-mix(in srgb,var(--foreground) 60%,transparent);--rk-tertiary:color-mix(in srgb,var(--foreground) 40%,transparent);--rk-line:color-mix(in srgb,var(--foreground) 15%,transparent);--rk-hairline:color-mix(in srgb,var(--foreground) 9%,transparent);--rk-track:color-mix(in srgb,var(--foreground) 8%,transparent);--rk-fill:color-mix(in srgb,var(--foreground) 7%,transparent);${DARK_PALETTE}}
 [data-theme="light"]{${LIGHT_PALETTE}--rk-secondary:color-mix(in srgb,var(--foreground) 64%,transparent);--rk-on-c5:${pageKitPalette.shared.onDeepTone}}
 :root{--rk-on-c1:${pageKitPalette.shared.onTone};--rk-on-c2:${pageKitPalette.shared.onTone};--rk-on-c3:${pageKitPalette.shared.onTone};--rk-on-c4:${pageKitPalette.shared.onTone};--rk-on-c5:${pageKitPalette.shared.onTone}}
 html{font-size:16px}

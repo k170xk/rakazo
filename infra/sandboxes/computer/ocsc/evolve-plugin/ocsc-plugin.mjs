@@ -94,6 +94,74 @@ function calledScopes(files) {
   return [...found].sort();
 }
 
+/**
+ * Evolve branding: plugins sit beside Evolve's left drawer, so no second side menu;
+ * Urbanist + token colours only. Matches GUIDELINES.md / the evolve-plugin skill.
+ */
+function designProblems(source) {
+  const problems = [];
+  const code = Object.entries(source)
+    .filter(([file]) => /\.(tsx?|jsx?|css)$/i.test(file) && !file.startsWith("GUIDELINES"))
+    .map(([, text]) => text)
+    .join("\n");
+  if (
+    /\b(SideNav|Sidebar|SideBar|DrawerNav|NavDrawer|LeftNav|left-nav)\b/.test(code) ||
+    /<(Sidebar|SideNav|Drawer)\b/.test(code) ||
+    /function\s+(Sidebar|SideNav|Drawer)\b/.test(code) ||
+    /(?:fixed|sticky)\s+[^"'`\n]{0,40}\bleft-0\b[^"'`\n]{0,80}\b(?:w-(?:48|52|56|60|64|72|80)|inset-y-0)\b/.test(
+      code,
+    )
+  ) {
+    problems.push(
+      "Do not add a side menu or drawer: Evolve's left menu is already beside the plugin. Put sections in TopNav along the top.",
+    );
+  }
+  if (/fonts\.googleapis\.com|fonts\.gstatic\.com|@import\s+url\(/i.test(code)) {
+    problems.push("Do not load fonts from the web; Urbanist is already bundled in styles.css.");
+  }
+  if (
+    /font-family\s*:\s*[^;]*(Inter|Roboto|Arial|Helvetica Neue)/i.test(code) ||
+    /fontFamily\s*:\s*['"`][^'"`]*(Inter|Roboto|Arial)/i.test(code) ||
+    /font-(?:sans|family)-?(?:inter|roboto)\b/i.test(code)
+  ) {
+    problems.push("Use Urbanist (the bundled face), not Inter, Roboto or Arial.");
+  }
+  if (
+    /(?:from|via|to)-(?:purple|violet|indigo)-|#(?:7[cC]3[aA][eE][dD]|[68][bB]5[cC][fF]6|4[fF]46[eE]5)\b/.test(
+      code,
+    )
+  ) {
+    problems.push(
+      "Do not use purple/indigo marketing themes; use Evolve token classes (bg-primary is OCSC green).",
+    );
+  }
+  if (
+    /#[0-9a-fA-F]{3,8}\b/.test(code) &&
+    !/styles\.css/.test(Object.keys(source).join(" ")) &&
+    Object.entries(source).some(
+      ([file, text]) =>
+        /\.(tsx?|jsx?)$/i.test(file) &&
+        /#[0-9a-fA-F]{3,8}\b/.test(text) &&
+        !/mock-data|GUIDELINES/.test(file),
+    )
+  ) {
+    // Soft: only flag obvious hard-coded greys/whites in TSX, not every # in comments.
+    const hexHits = Object.entries(source).flatMap(([file, text]) =>
+      /\.(tsx?|jsx?)$/i.test(file) && !/mock-data/.test(file)
+        ? [...text.matchAll(/\b(?:bg|text|border|fill|stroke|color)\s*[:=][^;\n]*#(?:fff|ffffff|000|000000|111|222|333|f5f5f5|e5e5e5)\b/gi)].map(
+            (m) => `${file}: ${m[0].slice(0, 40)}`,
+          )
+        : [],
+    );
+    if (hexHits.length) {
+      problems.push(
+        `Use token classes (bg-background, text-foreground...), not hard-coded greys: ${hexHits[0]}`,
+      );
+    }
+  }
+  return problems;
+}
+
 function newPlugin(args) {
   const slug = args[0];
   if (!slug || !SLUG.test(slug))
@@ -221,6 +289,9 @@ function build(args) {
     fail(
       `The code calls ${undeclared.join(", ")}; add ${undeclared.length > 1 ? "them" : "it"} to "scopes" in evolve-plugin.json.`,
     );
+
+  const branding = designProblems(source);
+  if (branding.length) fail(branding[0], { design: branding });
 
   const enginePath = path.join(dir, ".evolve", "engine");
   const engine =

@@ -428,11 +428,11 @@ BUILD
 5. ocsc-plugin build plugins/<slug>   type-checks, bundles and runs the same checks Evolve runs. Fix every problem it lists.
 
 DESIGN
-Read plugins/<slug>/GUIDELINES.md before writing screens; the reviewers check it. In short, a plugin must look like part of Evolve:
-- Menu along the top only, with TopNav from src/ui. Evolve's own left menu is always beside the plugin, so never add a side menu or drawer. Evolve already shows the plugin's name above it.
-- Build from src/ui (AppShell, PageHeader, Card, Button, Input, Select, Badge, Table, EmptyState, Spinner) and lucide-react icons.
-- Type: Urbanist (bundled), page titles text-2xl font-bold, section titles text-lg font-semibold, card titles text-base, everything else text-sm, help text text-muted-foreground.
-- Colour: only Evolve's token classes (bg-background, text-foreground, bg-card, border, text-muted-foreground, bg-primary text-primary-foreground...). Never hard-code colours. Evolve switches the plugin between light and dark mode with its own setting, so token classes work in both; check both before sending.
+Read plugins/<slug>/GUIDELINES.md before writing screens; reviewers and ocsc-plugin build enforce it. Match Evolve (OCSC CV Generator): Urbanist, brand green primary (#76BF43), semantic light/dark tokens, top section tabs — never a second left menu.
+- Menu along the top only, with TopNav from src/ui (muted pill tabs like Project Health / LMS Admin). Evolve's left drawer is always beside the plugin iframe, so never add a Sidebar, Drawer, SideNav, fixed left rail, or second logo header. Evolve already shows the plugin's name above it. Keep about six top items; finer filters stay horizontal.
+- Wrap screens in AppShell and start each with PageHeader. Build from src/ui (Card, Button, Input, Select, Badge, Table, EmptyState, Spinner) and lucide-react icons before inventing new chrome.
+- Type: Urbanist only (already bundled via @fontsource-variable/urbanist). Never load Google Fonts or set Inter/Roboto/Arial. Page titles text-2xl font-bold, section titles text-lg font-semibold, card titles text-base, body text-sm, help text-muted-foreground.
+- Colour: only Evolve token classes (bg-background, text-foreground, bg-card, border, text-muted-foreground, bg-primary text-primary-foreground, bg-muted...). Never hard-code hex/rgb or purple-indigo themes. Primary is OCSC green. Evolve toggles .dark with its own Light/Dark control — token classes cover both; verify with ocsc-plugin dev and again with ?theme=dark before sending.
 
 SEND
 - evolve_plugin_submit with path plugins/<slug> saves a draft version under the person's name and returns a preview link that only they and the reviewers can open. Raise version in evolve-plugin.json before each new submission.

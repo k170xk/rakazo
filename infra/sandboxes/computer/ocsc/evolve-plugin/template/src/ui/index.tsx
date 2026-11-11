@@ -202,8 +202,9 @@ export const Spinner = ({ className }: { className?: string }) => (
 export type NavItem = { id: string; label: string; icon?: LucideIcon };
 
 /**
- * The plugin's menu. Evolve's left menu is always beside the plugin, so plugins navigate with
- * this bar along the top only: never a side menu. It scrolls sideways on narrow screens.
+ * The plugin's section menu — Evolve already has the left drawer, so plugins navigate with
+ * this top bar only (same muted pill tabs as Project Health / LMS Admin in Evolve). Never a
+ * side menu. Scrolls sideways on narrow screens.
  */
 export function TopNav({
   items,
@@ -218,9 +219,9 @@ export function TopNav({
 }) {
   return (
     <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-12 max-w-6xl items-center gap-4 px-6">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-6">
         <nav
-          className="-mb-px flex h-full flex-1 items-stretch gap-1 overflow-x-auto"
+          className="inline-flex h-10 max-w-full flex-1 items-center gap-1 overflow-x-auto rounded-md bg-muted p-1 text-muted-foreground"
           aria-label="Plugin"
         >
           {items.map(({ id, label, icon: Icon }) => (
@@ -230,11 +231,11 @@ export function TopNav({
               aria-current={id === active ? "page" : undefined}
               onClick={() => onSelect(id)}
               className={cn(
-                "inline-flex cursor-pointer items-center gap-2 whitespace-nowrap border-b-2 px-3 text-sm font-medium transition-colors",
+                "inline-flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all",
                 focusRing,
                 id === active
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
+                  ? "bg-background text-foreground shadow-sm"
+                  : "hover:text-foreground",
               )}
             >
               {Icon && <Icon className="h-4 w-4" />}

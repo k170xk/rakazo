@@ -5,8 +5,8 @@ import { layoutDiagram } from "./diagram.js";
 
 type Kind = "light" | "dark";
 
-const FONT =
-  '-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",sans-serif';
+/** OCSC Evolve brand face (Urbanist Variable is inlined in PAGE_STYLES for sandboxed pages). */
+const FONT = '"Urbanist Variable",Urbanist,system-ui,sans-serif';
 const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
 const type = (fontSize: number, lineHeight: number, letterSpacing: string) => ({
   fontSize: `${fontSize}px`,

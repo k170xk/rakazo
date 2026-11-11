@@ -11,12 +11,16 @@ A page is JSX source whose default export is a React component. It renders in an
 - Plain HTML and SVG elements (div, span, svg, path, rect, circle, text, linearGradient, animate...) with style={{...}} are allowed for custom visuals; take colours from useTheme() so they match both themes. script, style, iframe, object, embed and foreignObject are not allowed, and handlers are functions, never strings. Images are data: URIs only.
 - Save with save_page {title, source}. To change it later, pass the pageId you got back with edits [{find, replace}] (all apply or none do) or the whole new source; pass only pageId to read the current source.
 
-## Design rules
+## Design rules (OCSC / Evolve branding)
+Pages must look like Evolve (the OCSC CV Generator app), not a generic AI dashboard.
+- Type: Urbanist is already the kit font. Do not set fontFamily to Inter, Roboto, Arial or a system stack, and do not load fonts from the web.
+- Colour: use kit components and useTheme() only. Brand green is primary (fill.primary / the kit's accent). No hex colours, no purple/indigo marketing themes, no gradients or glows, no emoji as icons or bullets. Tones (success, warning, danger, info) are for meaning, not decoration.
+- Light and dark: the viewer follows the reader's theme. Always take colours from useTheme() for custom SVG/HTML so both modes work; never hard-code white/black backgrounds.
+- Layout: section menus and view switches go along the top with Segmented (Evolve already has a left drawer outside the page). Do not invent a side navigation rail inside the page.
 - Show, don't narrate: pick the richest component that fits the data. Numbers become Metrics, trends a LineChart, comparisons Bars, shares a Pie, flows a Diagram, sequences Steps, options ProsCons, statuses toned Status pills. A paragraph is for the one thing a visual cannot say.
 - Lead with the answer: a Callout (lead + tone) or Metrics first, evidence below. The reader should get the point in two seconds.
 - Long pages (five or more sections) start with a TableOfContents whose ids match the Section ids. Number sections in reading order when the order matters.
 - Avoid walls of text and walls of identical cards: mix open sections, a Grid of two or three cells and one or two tables. Break prose into BulletList / NumberedList items.
-- Colour comes from the kit and useTheme: no hex colours, no gradients or glows, no emoji as icons or bullets. Tones (success, warning, danger, info) are for meaning, not decoration.
 - Every chart sits in a Section with a heading and, when useful, a caption naming the unit, the period and the source. Omit a section rather than show empty data or placeholder text.
 - A LineChart axis starts at 0 unless floor is set: for a narrow range (3.05% to 3.41%) set floor and ceiling just around the data. Chart series take palette colours in order, never tones; to make a part mean "failed", put that colour first with Page palette (from useTheme).
 - Custom SVG with text gets a fixed width and height plus style={{maxWidth: "100%"}}; a small viewBox at width "100%" scales its text with the page.

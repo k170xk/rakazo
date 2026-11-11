@@ -168,6 +168,25 @@ export function checkPageSource(source: string): PageSourceCheck {
   if (defaults !== 1) {
     errors.push("The page needs exactly one `export default` of its top component.");
   }
+  // OCSC / Evolve branding: the kit already ships Urbanist + light/dark tokens.
+  if (/fonts\.googleapis\.com|fonts\.gstatic\.com/i.test(source)) {
+    errors.push(
+      "Do not load fonts from the web; pages already use Urbanist (OCSC Evolve's typeface).",
+    );
+  }
+  if (/fontFamily\s*:\s*['"`][^'"`]*(Inter|Roboto|Arial)\b/i.test(source)) {
+    errors.push(
+      "Do not set Inter, Roboto or Arial; Urbanist is already the page font. Prefer kit components and useTheme().",
+    );
+  }
+  if (
+    /\b(Sidebar|SideNav|LeftNav)\b/.test(source) ||
+    /fixed[^"'`\n]{0,40}left-0[^"'`\n]{0,60}w-(?:48|56|64|72)/.test(source)
+  ) {
+    errors.push(
+      "Do not add a side navigation rail; Evolve already has a left drawer. Use Segmented along the top for view switches.",
+    );
+  }
   // The list goes back to the model, so a file with the same mistake on every line stays cheap.
   if (errors.length > MAX_REPORTED_ERRORS) {
     const more = errors.length - MAX_REPORTED_ERRORS;
