@@ -21,6 +21,7 @@ export const EVOLVE_MY_PROFILE_AUDIENCE = "evolve-my-profile";
 export const EVOLVE_COMPUTER_MCP_AUDIENCE = "evolve-computer-mcp";
 export const EVOLVE_DOCUMENT_LIBRARY_AUDIENCE = "evolve-document-library";
 export const EVOLVE_TRANSCRIBE_AUDIENCE = "evolve-transcribe";
+export const EVOLVE_SAFEGUARDS_AUDIENCE = "evolve-ai-safeguards";
 export const EVOLVE_PLUGINS_ISSUER = "ocsc-intelligence";
 const TOKEN_SECONDS = 120;
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -151,6 +152,17 @@ export function callEvolveDocumentLibrary<T = Record<string, unknown>>(
 ): Promise<T> {
   const url = new URL("evolve-document-library", connection.url).toString();
   return postEvolve<T>(url, EVOLVE_DOCUMENT_LIBRARY_AUDIENCE, connection, email, body, options);
+}
+
+/** Reads or sets who may change deadlines and work packages through the AI; Evolve admins only. */
+export function callEvolveSafeguards<T = Record<string, unknown>>(
+  connection: EvolvePluginsConnection,
+  email: string,
+  body: Record<string, unknown>,
+  options: { signal?: AbortSignal; fetch?: typeof fetch; timeoutMs?: number } = {},
+): Promise<T> {
+  const url = new URL("evolve-ai-safeguards", connection.url).toString();
+  return postEvolve<T>(url, EVOLVE_SAFEGUARDS_AUDIENCE, connection, email, body, options);
 }
 
 /** One JSON-RPC message to Evolve's MCP server for the company tools every bot has. */

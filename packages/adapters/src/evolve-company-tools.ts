@@ -5,7 +5,8 @@ import type {
   ConnectorProvider,
   ConnectorTool,
 } from "@rakazo/adapter-kit";
-import type { CompanyToolsState } from "@rakazo/contracts";
+import type { CompanyToolsState, EvolveToolAccess } from "@rakazo/contracts";
+import { EvolveToolAccessSchema } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -34,7 +35,13 @@ const FIRST_LIST_WAIT_MS = 8_000;
 /** Signs background reads of the tool list, which belong to no one; calls carry the person. */
 const LIST_SUBJECT = "tools@ocsc-intelligence.invalid";
 
-type EvolveTool = { name: string; description: string; inputSchema: Record<string, unknown> };
+type EvolveTool = {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+  access?: EvolveToolAccess;
+  changes?: string;
+};
 type RpcReply = { result?: unknown; error?: { message?: unknown } };
 
 export interface EvolveCompanyToolsOptions {
@@ -49,7 +56,7 @@ function readTools(result: unknown): EvolveTool[] {
   const tools = (result as { tools?: unknown } | undefined)?.tools;
   if (!Array.isArray(tools)) throw new Error("Evolve sent no tool list");
   return tools.flatMap((tool) => {
-    const entry = tool as Partial<EvolveTool> | null;
+    const entry = tool as (Partial<EvolveTool> & { _meta?: Record<string, unknown> }) | null;
     if (
       !entry ||
       typeof entry.name !== "string" ||
@@ -65,9 +72,22 @@ function readTools(result: unknown): EvolveTool[] {
           entry.inputSchema && typeof entry.inputSchema === "object"
             ? entry.inputSchema
             : { type: "object" },
+        ...toolAccess(entry._meta),
       },
     ];
   });
+}
+
+/** What Evolve says the tool does to its records, for the admin page; never sent to the model. */
+function toolAccess(
+  meta: Record<string, unknown> | undefined,
+): Pick<EvolveTool, "access" | "changes"> {
+  const access = EvolveToolAccessSchema.safeParse(meta?.["ocsc/access"]);
+  const changes = meta?.["ocsc/changes"];
+  return {
+    ...(access.success ? { access: access.data } : {}),
+    ...(typeof changes === "string" && changes ? { changes: changes.slice(0, 300) } : {}),
+  };
 }
 
 class EvolveRpcError extends Error {}
@@ -221,6 +241,8 @@ export class EvolveCompanyTools implements ConnectorProvider {
       name: tool.name,
       description: tool.description,
       enabled: this.enabled(tool.name),
+      ...(tool.access ? { access: tool.access } : {}),
+      ...(tool.changes ? { changes: tool.changes } : {}),
     }));
     const checkedAt = this.checkedAt === null ? null : new Date(this.checkedAt).toISOString();
     if (!this.connection) return { status: "not-configured", tools, checkedAt, error: null };

@@ -2386,11 +2386,78 @@ export function companyToolsFrom(stored: unknown): CompanyTools {
   return { ...DEFAULT_COMPANY_TOOLS, ...(parsed.success ? parsed.data : {}) };
 }
 
+/**
+ * What an Evolve tool does to Evolve, as Evolve reports it: read changes nothing, files only makes
+ * new media files, and add/edit/delete change Evolve records after the person approves a card.
+ */
+export const EvolveToolAccessSchema = z.enum(["read", "files", "add", "edit", "delete"]);
+export type EvolveToolAccess = z.infer<typeof EvolveToolAccessSchema>;
+
 export const CompanyToolEntrySchema = z.object({
   name: z.string(),
   description: z.string(),
   enabled: z.boolean(),
+  /** Evolve tools only; absent for skills. */
+  access: EvolveToolAccessSchema.optional(),
+  /** What it changes in Evolve, for tools that change anything. */
+  changes: z.string().optional(),
 });
+
+export const EVOLVE_CHANGE_TOOLS = [
+  "add_project_deadline",
+  "update_project_deadline",
+  "add_work_package",
+  "update_work_package",
+  "delete_work_package",
+] as const;
+export type EvolveChangeTool = (typeof EVOLVE_CHANGE_TOOLS)[number];
+
+export const EvolveChangeLimitSchema = z.object({
+  /** 0 pauses the tool for everyone. */
+  hour: z.number().int().min(0).max(1000),
+  day: z.number().int().min(0).max(5000),
+  /** Deletes count projects over a day, everything else over an hour. */
+  projects: z.number().int().min(1).max(500),
+});
+
+/** Who may change deadlines and work packages through OCSC Intelligence, set in Evolve by its admins. */
+export const EvolveSafeguardsSchema = z.object({
+  deadlinesTeamOnly: z.boolean(),
+  workPackagesTeamOnly: z.boolean(),
+  involvedMayChange: z.boolean(),
+  noTeamProjects: z.enum(["open", "admins"]),
+  limitsApplyToAdmins: z.boolean(),
+  refuseDuplicateDeadlines: z.boolean(),
+  maxDeadlinesPerProject: z.number().int().min(10).max(5000),
+  limits: z.object({
+    add_project_deadline: EvolveChangeLimitSchema,
+    update_project_deadline: EvolveChangeLimitSchema,
+    add_work_package: EvolveChangeLimitSchema,
+    update_work_package: EvolveChangeLimitSchema,
+    delete_work_package: EvolveChangeLimitSchema,
+  }),
+});
+export type EvolveSafeguards = z.infer<typeof EvolveSafeguardsSchema>;
+
+export const EvolveSafeguardsStateSchema = z.object({
+  settings: EvolveSafeguardsSchema,
+  defaults: EvolveSafeguardsSchema,
+  updatedAt: z.string().nullable(),
+  updatedBy: z.string().nullable(),
+  /** The latest changes the AI saved in Evolve, newest first. */
+  recent: z.array(
+    z.object({
+      id: z.string(),
+      person: z.string().nullable(),
+      tool: z.string(),
+      action: z.enum(["add", "update", "delete"]),
+      project: z.string().nullable(),
+      label: z.string().nullable(),
+      at: z.string(),
+    }),
+  ),
+});
+export type EvolveSafeguardsState = z.infer<typeof EvolveSafeguardsStateSchema>;
 
 /** What every bot is offered from the company: built-in skills and the Evolve tool set, with its health. */
 export const CompanyToolsStateSchema = z.object({
@@ -2475,6 +2542,42 @@ export const StoredFilesStateSchema = z.object({
   retentionDays: z.number().int(),
 });
 export type StoredFilesState = z.infer<typeof StoredFilesStateSchema>;
+
+/** One item in Manage storage: a bot's computer file or folder, or a file a bot attached in a chat. */
+export const StorageItemRefSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("computer"), botId: z.string().min(1), path: z.string().min(1).max(1024) }),
+  z.object({ kind: z.literal("chat"), artifactId: z.string().min(1) }),
+]);
+export type StorageItemRef = z.infer<typeof StorageItemRefSchema>;
+
+export const MAX_STORAGE_SELECTION = 200;
+
+export const MyStorageItemSchema = z.object({
+  ref: StorageItemRefSchema,
+  name: z.string(),
+  botName: z.string().nullable(),
+  kind: z.enum(["file", "dir"]),
+  size: z.number().nonnegative(),
+  modifiedAt: z.string().datetime(),
+  /** Chat files cannot be pinned; they are kept by downloading them. */
+  pinnable: z.boolean(),
+  pinned: z.boolean(),
+  /** When cleanup deletes it; null while pinned or while chat files are kept. */
+  deletesAt: z.string().datetime().nullable(),
+});
+export type MyStorageItem = z.infer<typeof MyStorageItemSchema>;
+
+export const MyStorageStateSchema = z.object({
+  usedBytes: z.number().nonnegative(),
+  limitBytes: z.number().nonnegative(),
+  computerBytes: z.number().nonnegative(),
+  chatBytes: z.number().nonnegative(),
+  computerRetentionDays: z.number().int(),
+  chatRetentionDays: z.number().int().nullable(),
+  /** Largest first. */
+  items: z.array(MyStorageItemSchema),
+});
+export type MyStorageState = z.infer<typeof MyStorageStateSchema>;
 
 export const CompanyModelSchema = z.object({
   provider: z.string(),

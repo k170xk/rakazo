@@ -478,6 +478,10 @@ msgstr "{provider} rejected the API key. Check your connection settings."
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider} took too long to respond. Try again."
 
+#: src/pages/AdminCompanyTools.tsx
+msgid "{reads} only read Evolve, {files} only make new files, and {changes} add, edit or delete Evolve records. Those always show the person an approval card first and follow the AI safeguards."
+msgstr "{reads} only read Evolve, {files} only make new files, and {changes} add, edit or delete Evolve records. Those always show the person an approval card first and follow the AI safeguards."
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "{remaining} left"
@@ -598,6 +602,10 @@ msgstr "A command's output"
 msgid "A connector links an agent to a system you already use, so it can read and act on your data with your permission. Think Outlook, Teams, SharePoint and the construction platforms we work in."
 msgstr "A connector links an agent to a system you already use, so it can read and act on your data with your permission. Think Outlook, Teams, SharePoint and the construction platforms we work in."
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "A deadline with the same name and date as one already on the project is not added again."
+msgstr "A deadline with the same name and date as one already on the project is not added again."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "A research agent finds the right OCSC project references"
 msgstr "A research agent finds the right OCSC project references"
@@ -619,6 +627,10 @@ msgstr "A sign-in tab opened at <0>{0}</0>. Enter this code there — this windo
 #: src/pages/model-settings/use-model-settings.ts
 msgid "A subscription credential is stored securely."
 msgstr "A subscription credential is stored securely."
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
+msgstr "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
 
 #: src/pages/KnowledgeSection.tsx
 msgid "About {kb} KB of memory no longer reaches the bot."
@@ -645,6 +657,10 @@ msgstr "About me:\n"
 "- What I mostly work on:\n"
 "- Qualifications or chartership:\n"
 ""
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "About one in ten projects has no Design Team set in Evolve."
+msgstr "About one in ten projects has no Design Team set in Evolve."
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Accepted: PDF. Select a file to preview and choose pages."
@@ -793,6 +809,10 @@ msgstr "Add custom"
 msgid "Add deadline"
 msgstr "Add deadline"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Add deadlines"
+msgstr "Add deadlines"
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Add drawings"
 msgstr "Add drawings"
@@ -883,6 +903,10 @@ msgstr "Add trigger"
 msgid "Add work package"
 msgstr "Add work package"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Add work packages"
+msgstr "Add work packages"
+
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Add workspace"
 msgstr "Add workspace"
@@ -929,6 +953,10 @@ msgstr "Address line 2"
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Adds infographics, tables, figures and real OCSC project photos"
 msgstr "Adds infographics, tables, figures and real OCSC project photos"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Adds records"
+msgstr "Adds records"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Admins come from the server's RAKAZO_ADMIN_EMAILS setting."
@@ -986,6 +1014,11 @@ msgstr "Agents that work like teammates"
 #: src/components/todos/todo-board.tsx
 msgid "AI"
 msgstr "AI"
+
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "AI safeguards"
+msgstr "AI safeguards"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "AI teammates, each with a job"
@@ -1151,6 +1184,10 @@ msgstr "Anthropic API"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Anthropic Messages"
 msgstr "Anthropic Messages"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Any active staff member"
+msgstr "Any active staff member"
 
 #: src/pages/Paywall.tsx
 msgid "Any model, with your own key"
@@ -1801,6 +1838,7 @@ msgid "Category"
 msgstr "Category"
 
 #: src/components/DictationShortcutSettings.tsx
+#: src/pages/AdminEvolveSafeguards.tsx
 msgid "Change"
 msgstr "Change"
 
@@ -1824,6 +1862,10 @@ msgstr "Change an agent's job, instructions or model whenever you like"
 msgid "Change any scene and render again"
 msgstr "Change any scene and render again"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Change deadlines"
+msgstr "Change deadlines"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Change in Company admin"
 msgstr "Change in Company admin"
@@ -1835,6 +1877,10 @@ msgstr "Change model"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "Change password"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Change work packages"
+msgstr "Change work packages"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -3058,6 +3104,10 @@ msgstr "Could not reach the model server."
 msgid "Could not reach the server"
 msgstr "Could not reach the server"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Could not read the safeguards from Evolve"
+msgstr "Could not read the safeguards from Evolve"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Could not read these files"
 msgstr "Could not read these files"
@@ -3220,6 +3270,10 @@ msgstr "Could not save the credential"
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not save the note"
 msgstr "Could not save the note"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Could not save the safeguards"
+msgstr "Could not save the safeguards"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not save the thinking level"
@@ -3416,6 +3470,10 @@ msgstr "Couldn't update your timezone"
 msgid "Couldn't update your wallet"
 msgstr "Couldn't update your wallet"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Counted from the changes each person has saved through the AI. Set a tool's hourly limit to 0 to pause it for everyone. Deletes count projects over 24 hours, everything else over an hour."
+msgstr "Counted from the changes each person has saved through the AI. Set a tool's hourly limit to 0 to pause it for everyone. Deletes count projects over 24 hours, everything else over an hour."
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
 msgstr "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
@@ -3608,6 +3666,10 @@ msgstr "Deadline"
 msgid "Deadline change"
 msgstr "Deadline change"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Deadlines: Design Team only"
+msgstr "Deadlines: Design Team only"
+
 #: src/components/call/IncomingCall.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Decline"
@@ -3738,6 +3800,10 @@ msgstr "Delete unpinned files after"
 msgid "Delete work package"
 msgstr "Delete work package"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Delete work packages"
+msgstr "Delete work packages"
+
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "Delete work space"
 msgstr "Delete work space"
@@ -3745,6 +3811,10 @@ msgstr "Delete work space"
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
 msgstr "deleted"
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Deletes records"
+msgstr "Deletes records"
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
@@ -3851,6 +3921,10 @@ msgstr "Disable a tool"
 #: src/pages/PluginsOverlay.tsx
 msgid "Disabled"
 msgstr "Disabled"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Discard changes"
+msgstr "Discard changes"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
@@ -4093,6 +4167,10 @@ msgstr "EDITING v{0} · NEXT → v{nextVersion}"
 msgid "Editing v{0} → next will be v{nextVersion}"
 msgstr "Editing v{0} → next will be v{nextVersion}"
 
+#: src/pages/AdminCompanyTools.tsx
+msgid "Edits records"
+msgstr "Edits records"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Edits Word files you send it, keeping your original untouched"
 msgstr "Edits Word files you send it, keeping your original untouched"
@@ -4323,6 +4401,10 @@ msgstr "Everyone without their own level"
 #: src/pages/AdminComputerAccess.tsx
 msgid "Everyone without their own limit"
 msgstr "Everyone without their own limit"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Evolve admins only"
+msgstr "Evolve admins only"
 
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Evolve assistant"
@@ -5238,6 +5320,10 @@ msgstr "Keep tool results whole"
 msgid "Keeping files"
 msgstr "Keeping files"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Keeps the limits on everyone, so one admin account cannot change Evolve in bulk either."
+msgstr "Keeps the limits on everyone, so one admin account cannot change Evolve in bulk either."
+
 #: src/pages/RoutineEditor.tsx
 msgid "key"
 msgstr "key"
@@ -5285,6 +5371,15 @@ msgstr "Last 7 days"
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last 90 days"
 msgstr "Last 90 days"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Last changed {updated}. Earlier versions are kept in Evolve."
+msgstr "Last changed {updated}. Earlier versions are kept in Evolve."
+
+#. placeholder {0}: data.updatedBy
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Last changed by {0}, {updated}. Earlier versions are kept in Evolve."
+msgstr "Last changed by {0}, {updated}. Earlier versions are kept in Evolve."
 
 #. placeholder {0}: new Date(state.checkedAt).toLocaleString()
 #: src/pages/RoutineEditor.tsx
@@ -5357,6 +5452,14 @@ msgstr "Lets bots save and recall facts by meaning, alongside MEMORY.md."
 #: src/pages/Shell.tsx
 msgid "Light"
 msgstr "Light"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Limits apply to admins too"
+msgstr "Limits apply to admins too"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Limits per person"
+msgstr "Limits per person"
 
 #: src/pages/SpaceSearch.tsx
 msgid "Link"
@@ -5564,6 +5667,10 @@ msgstr "Make a 30-second LinkedIn clip about our latest bridge project"
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Makes and reads PDFs."
 msgstr "Makes and reads PDFs."
+
+#: src/pages/AdminCompanyTools.tsx
+msgid "Makes files"
+msgstr "Makes files"
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -5957,6 +6064,10 @@ msgstr "More apps"
 msgid "More computer actions"
 msgstr "More computer actions"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Most deadlines a project may hold"
+msgstr "Most deadlines a project may hold"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "Move down"
@@ -6283,6 +6394,10 @@ msgstr "No CV was sent for this person: only their name and role."
 #: src/components/AskCard.tsx
 msgid "No date"
 msgstr "No date"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "No deadline or work package has been changed through the AI yet."
+msgstr "No deadline or work package has been changed through the AI yet."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "No desktop on your account"
@@ -6725,6 +6840,14 @@ msgstr "One-time purchase. Credits do not expire."
 msgid "Only enter a code {codeHost} sent you."
 msgstr "Only enter a code {codeHost} sent you."
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Only people on the project's Design Team, and Evolve admins, can add or change its deadlines."
+msgstr "Only people on the project's Design Team, and Evolve admins, can add or change its deadlines."
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Only people on the project's Design Team, and Evolve admins, can add, change or delete its work packages."
+msgstr "Only people on the project's Design Team, and Evolve admins, can add, change or delete its work packages."
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "Only you"
@@ -7100,6 +7223,14 @@ msgstr "People keep their own logins, cards, API keys and contacts, and their as
 msgid "People see a Data section in their settings to export or import their account, import agents from other apps and delete their account."
 msgstr "People see a Data section in their settings to export or import their account, import agents from other apps and delete their account."
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Per day"
+msgstr "Per day"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Per hour"
+msgstr "Per hour"
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "Period"
 msgstr "Period"
@@ -7343,9 +7474,14 @@ msgstr "Project reference, as sent to the AI"
 msgid "projects"
 msgstr "projects"
 
+#: src/pages/AdminEvolveSafeguards.tsx
 #: src/pages/shell/references-dialog.tsx
 msgid "Projects"
 msgstr "Projects"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Projects with no Design Team"
+msgstr "Projects with no Design Team"
 
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
@@ -7402,6 +7538,7 @@ msgstr "React"
 msgid "Reactions"
 msgstr "Reactions"
 
+#: src/pages/AdminCompanyTools.tsx
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Read only"
 msgstr "Read only"
@@ -7470,6 +7607,10 @@ msgstr "Recent"
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Recent activity"
 msgstr "Recent activity"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Recent AI changes in Evolve"
+msgstr "Recent AI changes in Evolve"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"
@@ -7582,6 +7723,10 @@ msgstr "Refresh view"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr "Refreshing…"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Refuse duplicate deadlines"
+msgstr "Refuse duplicate deadlines"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Region"
@@ -7808,6 +7953,10 @@ msgstr "Request a new code"
 msgid "Requested by"
 msgstr "Requested by"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Requester and assignee can change their own"
+msgstr "Requester and assignee can change their own"
+
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Requests"
 msgstr "Requests"
@@ -8030,6 +8179,10 @@ msgstr "Runs in a locked-down sandbox and is reviewed before it is published"
 msgid "Runs when this bot receives a verified message from this provider."
 msgstr "Runs when this bot receives a verified message from this provider."
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Safeguards saved in Evolve"
+msgstr "Safeguards saved in Evolve"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Sales & CRM"
 msgstr "Sales & CRM"
@@ -8084,6 +8237,10 @@ msgstr "Save for everyone"
 msgid "Save note"
 msgstr "Save note"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Save safeguards"
+msgstr "Save safeguards"
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "Save the workspace and install current software."
@@ -8131,6 +8288,7 @@ msgstr "Saving..."
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/pages/AdminEvolveSafeguards.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -9703,6 +9861,10 @@ msgstr "Undo"
 msgid "Uninstall"
 msgstr "Uninstall"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Unknown person"
+msgstr "Unknown person"
+
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Unlink"
 msgstr "Unlink"
@@ -9883,6 +10045,10 @@ msgstr "Use OCSC Intelligence credits"
 msgid "Use Protected input for passwords."
 msgstr "Use Protected input for passwords."
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Use recommended settings"
+msgstr "Use recommended settings"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Use space default"
 msgstr "Use space default"
@@ -9924,6 +10090,10 @@ msgstr "Uses real OCSC project photos and stock footage"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
 msgstr "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Using the recommended settings."
+msgstr "Using the recommended settings."
 
 #: src/components/ModelCredits.tsx
 msgid "Using your API key"
@@ -10203,6 +10373,14 @@ msgstr "When you answer me:\n"
 msgid "Where should bots run?"
 msgstr "Where should bots run?"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Who can add, change and delete Evolve deadlines and work packages through the AI, and how much one person can change. Every change also needs the person's approval on a card. Evolve enforces these, and only Evolve admins can change them."
+msgstr "Who can add, change and delete Evolve deadlines and work packages through the AI, and how much one person can change. Every change also needs the person's approval on a card. Evolve enforces these, and only Evolve admins can change them."
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Who can change projects"
+msgstr "Who can change projects"
+
 #: src/components/pages/SharePopover.tsx
 msgid "Who can open this page"
 msgstr "Who can open this page"
@@ -10263,6 +10441,10 @@ msgstr "Work package"
 #: src/components/AskCard.tsx
 msgid "Work package change"
 msgstr "Work package change"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Work packages: Design Team only"
+msgstr "Work packages: Design Team only"
 
 #: src/pages/settings-nav.ts
 msgid "Work Space"

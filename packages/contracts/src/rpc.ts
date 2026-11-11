@@ -98,6 +98,8 @@ import {
   DeploymentSettingsSchema,
   DirectoryPersonSchema,
   EvolveAssistantSchema,
+  EvolveSafeguardsSchema,
+  EvolveSafeguardsStateSchema,
   ExportManifestSchema,
   ExternalConversationPolicySchema,
   GroupDetailSchema,
@@ -107,6 +109,7 @@ import {
   IntegrationCatalogResultSchema,
   LibraryAiAccessSchema,
   LibraryDocumentSchema,
+  MAX_STORAGE_SELECTION,
   McpServerConfigInput,
   McpServerSchema,
   MemoryDocumentSchema,
@@ -129,6 +132,7 @@ import {
   ModelCreditAmountSchema,
   ModelOAuthBeginSchema,
   MoveTodoItemInput,
+  MyStorageStateSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   PluginMarketplaceCatalogSchema,
   PluginPartSchema,
@@ -159,6 +163,7 @@ import {
   SpaceSchema,
   STAFF_SPENDING_PERIODS,
   StaffSpendingSchema,
+  StorageItemRefSchema,
   StoredFilesStateSchema,
   TaughtSkillSchema,
   TeachRecordingEventSchema,
@@ -457,6 +462,14 @@ export const appContract = {
       setAccess: oc
         .input(z.object({ id: z.string().uuid(), aiAccess: LibraryAiAccessSchema }))
         .output(z.object({ id: z.string(), aiAccess: LibraryAiAccessSchema })),
+    },
+    /**
+     * Who may change Evolve deadlines and work packages through the AI and how many changes a
+     * person may make, read and set in Evolve as the admin, who must also be an Evolve admin.
+     */
+    evolveSafeguards: {
+      get: oc.output(EvolveSafeguardsStateSchema),
+      set: oc.input(EvolveSafeguardsSchema).output(EvolveSafeguardsStateSchema),
     },
   },
   /** Admins only, on deployments that sell model credits. */
@@ -1046,6 +1059,15 @@ export const appContract = {
     downloadStoredFile: oc
       .input(z.object({ botId: Id, path: z.string().min(1).max(1024) }))
       .output(z.object({ path: z.string(), contentBase64: z.string() })),
+    /** Manage storage: everything counting against the caller's limit, across all their bots. */
+    myStorage: oc.output(MyStorageStateSchema),
+    deleteMyStorage: oc
+      .input(z.object({ items: z.array(StorageItemRefSchema).min(1).max(MAX_STORAGE_SELECTION) }))
+      .output(MyStorageStateSchema),
+    /** A one-time link to a zip of the chosen items, opened as a plain download. */
+    myStorageDownload: oc
+      .input(z.object({ items: z.array(StorageItemRefSchema).min(1).max(MAX_STORAGE_SELECTION) }))
+      .output(z.object({ url: z.string() })),
     terminalUrl: oc.input(botId).output(z.object({ url: z.string().nullable() })),
     commands: oc
       .input(botId)

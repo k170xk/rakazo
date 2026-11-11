@@ -62,6 +62,7 @@ import {
   setDefaultLibraryTemplate,
   setLibraryDocumentAccess,
 } from "../company-document-library.js";
+import { getEvolveSafeguards, setEvolveSafeguards } from "../company-evolve-safeguards.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -220,6 +221,14 @@ export function accountRoutes(ctx: RouterContext) {
         ),
         setDefaultTemplate: authed.companyAdmin.documentLibrary.setDefaultTemplate.handler(
           ({ context, input }) => setDefaultLibraryTemplate(deps, context.actor, input),
+        ),
+      },
+      evolveSafeguards: {
+        get: authed.companyAdmin.evolveSafeguards.get.handler(({ context }) =>
+          getEvolveSafeguards(deps, context.actor),
+        ),
+        set: authed.companyAdmin.evolveSafeguards.set.handler(({ context, input }) =>
+          setEvolveSafeguards(deps, context.actor, input),
         ),
       },
     },

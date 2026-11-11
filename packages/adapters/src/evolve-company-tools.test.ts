@@ -88,6 +88,40 @@ describe("Evolve company tools", () => {
     expect(claimsOf(init).aud).toBe("evolve-computer-mcp");
   });
 
+  it("shows the admin what each tool does to Evolve without telling the model", async () => {
+    const fetch = evolve(() =>
+      reply({
+        tools: [
+          { ...listed.tools[0], _meta: { "ocsc/access": "files" } },
+          {
+            name: "delete_work_package",
+            description: "Delete",
+            _meta: { "ocsc/access": "delete", "ocsc/changes": "Deletes one work package." },
+          },
+          {
+            name: "search_project_datasheets",
+            description: "Projects",
+            _meta: { "ocsc/access": "sudo" },
+          },
+        ],
+      }),
+    );
+    const tools = new EvolveCompanyTools(prisma, connection, { fetch });
+    const offered = await tools.discoverTools(context);
+    expect(JSON.stringify(offered)).not.toMatch(/access|Deletes one/);
+    expect(tools.health().tools).toEqual([
+      { name: "generate_voiceover", description: "Voice", enabled: true, access: "files" },
+      {
+        name: "delete_work_package",
+        description: "Delete",
+        enabled: true,
+        access: "delete",
+        changes: "Deletes one work package.",
+      },
+      { name: "search_project_datasheets", description: "Projects", enabled: true },
+    ]);
+  });
+
   it("never offers Evolve's picture slides, so decks are made with ocsc-pptx", async () => {
     const slides = { name: "create_presentation_slides", description: "Slides" };
     const fetch = evolve(() => reply({ tools: [...listed.tools, slides] }));

@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { CompanyAdminState, CompanyTools } from "@rakazo/contracts";
+import type { CompanyAdminState, CompanyTools, EvolveToolAccess } from "@rakazo/contracts";
 import { Badge, Button, Switch, toast } from "@rakazo/ui-web";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
@@ -150,6 +150,7 @@ export function CompanyToolsSection({
             <Trans>Not checked yet.</Trans>
           )}
         </p>
+        {evolve.tools.length > 0 ? <AccessSummary entries={evolve.tools} /> : null}
         {evolve.tools.length > 0 ? (
           <ToggleList
             entries={evolve.tools}
@@ -210,6 +211,12 @@ function ToggleList({
               <span className="line-clamp-2 block text-[13px] text-muted-foreground">
                 {entry.description}
               </span>
+              {entry.access ? (
+                <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[12.5px] text-muted-foreground">
+                  <AccessBadge access={entry.access} />
+                  {entry.changes ? <span>{entry.changes}</span> : null}
+                </span>
+              ) : null}
             </label>
             <Switch
               id={id}
@@ -221,5 +228,44 @@ function ToggleList({
         );
       })}
     </ul>
+  );
+}
+
+const CHANGES_EVOLVE: ReadonlySet<EvolveToolAccess> = new Set(["add", "edit", "delete"]);
+
+/** What an Evolve tool does to Evolve: reads, makes new files, or adds, edits or deletes records. */
+export function AccessBadge({ access }: { access: EvolveToolAccess }) {
+  const { t } = useLingui();
+  const shown: Record<
+    EvolveToolAccess,
+    { label: string; variant: "secondary" | "outline" | "destructive" }
+  > = {
+    read: { label: t`Read only`, variant: "secondary" },
+    files: { label: t`Makes files`, variant: "outline" },
+    add: { label: t`Adds records`, variant: "outline" },
+    edit: { label: t`Edits records`, variant: "outline" },
+    delete: { label: t`Deletes records`, variant: "destructive" },
+  };
+  return (
+    <Badge variant={shown[access].variant} data-testid={`tool-access-${access}`}>
+      {shown[access].label}
+    </Badge>
+  );
+}
+
+function AccessSummary({ entries }: { entries: Entry[] }) {
+  const reads = entries.filter((entry) => entry.access === "read").length;
+  const files = entries.filter((entry) => entry.access === "files").length;
+  const changes = entries.filter(
+    (entry) => entry.access && CHANGES_EVOLVE.has(entry.access),
+  ).length;
+  return (
+    <p className="text-[13px] text-muted-foreground" data-testid="tool-access-summary">
+      <Trans>
+        {reads} only read Evolve, {files} only make new files, and {changes} add, edit or delete
+        Evolve records. Those always show the person an approval card first and follow the AI
+        safeguards.
+      </Trans>
+    </p>
   );
 }
