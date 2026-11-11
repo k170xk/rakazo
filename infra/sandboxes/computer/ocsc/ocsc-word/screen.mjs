@@ -33,6 +33,8 @@ const SCREEN_DIR = join(WORKSPACE, ".openbot", "screen");
 const MAX_INPUT_BYTES = 40 * 1024 * 1024;
 const MAX_SHEET_ROWS = 1000;
 const MAX_SHEET_COLS = 40;
+const MAX_PRINT_ROWS = 5000;
+const MAX_PRINT_COLS = 150;
 const MAX_PDF_PAGES = 60;
 
 export class ScreenError extends Error {}
@@ -318,10 +320,14 @@ function formatNumber(value, numFmt) {
   return String(Math.round(value * 1e10) / 1e10);
 }
 
+function dateText(d) {
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+}
+
 export function cellText(cell) {
   const v = cell.value;
   if (v === null || v === undefined) return "";
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (v instanceof Date) return dateText(v);
   if (typeof v === "number") return formatNumber(v, cell.numFmt);
   if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
   if (typeof v === "object") {
@@ -329,7 +335,7 @@ export function cellText(cell) {
       const result = v.result;
       if (result === undefined || result === null) return `=${v.formula ?? v.sharedFormula}`;
       if (typeof result === "object" && result?.error) return String(result.error);
-      if (result instanceof Date) return result.toISOString().slice(0, 10);
+      if (result instanceof Date) return dateText(result);
       return typeof result === "number" ? formatNumber(result, cell.numFmt) : String(result);
     }
     if (Array.isArray(v.richText)) return v.richText.map((r) => r.text).join("");
@@ -343,27 +349,246 @@ function argbCss(argb) {
   return typeof argb === "string" && /^[0-9a-f]{8}$/i.test(argb) ? `#${argb.slice(2)}` : null;
 }
 
-async function renderXlsx(full) {
+function letterIndex(letters) {
+  return letters.split("").reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
+}
+
+/**
+ * Fills in the result of each formula it can work out (arithmetic, SUM, AVERAGE, MIN, MAX, COUNT,
+ * ROUND, ABS), so a saved or printed workbook shows numbers before Excel recalculates it. With
+ * shared, formulas that reuse another cell's formula are worked out too, for display only.
+ */
+export function evaluateFormulas(book, { shared = false } = {}) {
+  let computed = 0;
+  let left = 0;
+  for (const sheet of book.worksheets) {
+    const memo = new Map();
+    const valueAt = (col, row, stack) => {
+      const key = `${col}:${row}`;
+      if (memo.has(key)) return memo.get(key);
+      if (stack.has(key)) throw new Error("circular");
+      const cell = sheet.getRow(row).getCell(col);
+      const v = cell.value;
+      let out;
+      const formula =
+        v && typeof v === "object"
+          ? "formula" in v && !v.sharedFormula
+            ? v.formula
+            : shared && v.sharedFormula
+              ? cell.formula
+              : null
+          : null;
+      if (formula) {
+        stack.add(key);
+        out = evaluate(formula, stack);
+        stack.delete(key);
+      } else if (v && typeof v === "object" && "result" in v) out = v.result;
+      else out = v;
+      memo.set(key, out);
+      return out;
+    };
+    const evaluate = (formula, stack) => {
+      const tokens =
+        String(formula).match(
+          /\$?[A-Za-z]{1,3}\$?\d+(?::\$?[A-Za-z]{1,3}\$?\d+)?|[A-Za-z]+(?=\()|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?|[-+*/^(),%]|\S/g,
+        ) || [];
+      let i = 0;
+      const peek = () => tokens[i];
+      const take = () => tokens[i++];
+      const cellRef = (t) => {
+        const m = /^\$?([A-Za-z]{1,3})\$?(\d+)$/.exec(t);
+        return {
+          col: letterIndex(m[1].toUpperCase()),
+          row: Number(m[2]),
+        };
+      };
+      const rangeValues = (t) => {
+        const [a, b] = t.split(":").map(cellRef);
+        const out = [];
+        for (
+          let r = Math.min(a.row, b.row);
+          r <= Math.max(a.row, b.row);
+          r += 1
+        ) {
+          for (
+            let c = Math.min(a.col, b.col);
+            c <= Math.max(a.col, b.col);
+            c += 1
+          )
+            out.push(valueAt(c, r, stack));
+        }
+        if (out.length > 200000) throw new Error("range too large");
+        return out;
+      };
+      const num = (v) => {
+        if (typeof v === "number") return v;
+        if (v === null || v === undefined || v === "") return 0;
+        if (typeof v === "boolean") return v ? 1 : 0;
+        throw new Error("not a number");
+      };
+      const FUNCS = {
+        SUM: (xs) =>
+          xs.filter((x) => typeof x === "number").reduce((a, b) => a + b, 0),
+        AVERAGE: (xs) => {
+          const n = xs.filter((x) => typeof x === "number");
+          if (!n.length) throw new Error("no values");
+          return n.reduce((a, b) => a + b, 0) / n.length;
+        },
+        MIN: (xs) => Math.min(...xs.filter((x) => typeof x === "number")),
+        MAX: (xs) => Math.max(...xs.filter((x) => typeof x === "number")),
+        COUNT: (xs) => xs.filter((x) => typeof x === "number").length,
+        ROUND: (xs) => {
+          const f = 10 ** num(xs[1] ?? 0);
+          return Math.round(num(xs[0]) * f) / f;
+        },
+        ABS: (xs) => Math.abs(num(xs[0])),
+      };
+      const primary = () => {
+        const t = take();
+        if (t === undefined) throw new Error("end");
+        if (t === "(") {
+          const v = expr();
+          if (take() !== ")") throw new Error("paren");
+          return v;
+        }
+        if (t === "-") return -num(primary());
+        if (t === "+") return num(primary());
+        if (/^\d/.test(t)) return Number(t);
+        if (/^[A-Za-z]+$/.test(t) && peek() === "(") {
+          const fn = FUNCS[t.toUpperCase()];
+          if (!fn) throw new Error("function");
+          take();
+          const xs = [];
+          if (peek() !== ")") {
+            for (;;) {
+              if (/:/.test(peek() ?? "")) xs.push(...rangeValues(take()));
+              else xs.push(expr());
+              if (peek() === ",") take();
+              else break;
+            }
+          }
+          if (take() !== ")") throw new Error("paren");
+          return fn(xs);
+        }
+        if (/^\$?[A-Za-z]{1,3}\$?\d+$/.test(t)) {
+          const { col, row } = cellRef(t);
+          return num(valueAt(col, row, stack));
+        }
+        throw new Error("token");
+      };
+      const postfix = () => {
+        let v = primary();
+        while (peek() === "%") {
+          take();
+          v = num(v) / 100;
+        }
+        return v;
+      };
+      const power = () => {
+        let v = postfix();
+        while (peek() === "^") {
+          take();
+          v = num(v) ** num(postfix());
+        }
+        return v;
+      };
+      const term = () => {
+        let v = power();
+        while (peek() === "*" || peek() === "/") {
+          const op = take();
+          const r = num(power());
+          if (op === "/" && r === 0) throw new Error("div0");
+          v = op === "*" ? num(v) * r : num(v) / r;
+        }
+        return v;
+      };
+      const expr = () => {
+        let v = term();
+        while (peek() === "+" || peek() === "-") {
+          const op = take();
+          const r = num(term());
+          v = op === "+" ? num(v) + r : num(v) - r;
+        }
+        return v;
+      };
+      const v = expr();
+      if (i !== tokens.length) throw new Error("trailing");
+      return v;
+    };
+    sheet.eachRow({ includeEmpty: false }, (row) => {
+      row.eachCell({ includeEmpty: false }, (cell) => {
+        const v = cell.value;
+        if (!v || typeof v !== "object") return;
+        const formula =
+          "formula" in v && !v.sharedFormula
+            ? v.formula
+            : shared && v.sharedFormula
+              ? cell.formula
+              : null;
+        if (!formula) return;
+        try {
+          const result = evaluate(formula, new Set());
+          if (typeof result === "number" && Number.isFinite(result)) {
+            cell.value = { formula, result };
+            computed += 1;
+            return;
+          }
+        } catch {}
+        left += 1;
+      });
+    });
+  }
+  return { computed, left };
+}
+/** Merged ranges as table spans over the rows and columns shown; covered cells are left out. */
+function mergeSpans(sheet, shownRows, shownCols) {
+  const spans = new Map();
+  const covered = new Set();
+  for (const range of Object.values(sheet._merges ?? {})) {
+    const m = range?.model ?? range;
+    if (!m || !Number.isInteger(m.top) || !Number.isInteger(m.left)) continue;
+    const inRows = shownRows.filter((r) => r >= m.top && r <= m.bottom);
+    const inCols = shownCols.filter((c) => c >= m.left && c <= m.right);
+    if (!inRows.length || !inCols.length) continue;
+    const first = `${inRows[0]}:${inCols[0]}`;
+    for (const r of inRows) for (const c of inCols) if (`${r}:${c}` !== first) covered.add(`${r}:${c}`);
+    spans.set(first, { rows: inRows.length, cols: inCols.length });
+  }
+  return { spans, covered };
+}
+
+async function renderXlsx(full, print = false) {
   const { default: ExcelJS } = await import("exceljs");
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(full);
+  evaluateFormulas(workbook, { shared: true });
   const parts = [];
   let trimmed = false;
   for (const sheet of workbook.worksheets.slice(0, 12)) {
-    const rows = Math.min(sheet.rowCount, MAX_SHEET_ROWS);
-    const cols = Math.min(Math.max(sheet.columnCount, 1), MAX_SHEET_COLS);
+    const rows = Math.min(sheet.rowCount, print ? MAX_PRINT_ROWS : MAX_SHEET_ROWS);
+    const cols = Math.min(Math.max(sheet.columnCount, 1), print ? MAX_PRINT_COLS : MAX_SHEET_COLS);
     if (sheet.rowCount > rows || sheet.columnCount > cols) trimmed = true;
-    const head = ['<tr><th class="r"></th>'];
-    for (let c = 1; c <= cols; c += 1) {
-      const width = sheet.getColumn(c).width;
-      head.push(`<th style="min-width:${Math.round((width || 9) * 7)}px">${columnName(c)}</th>`);
+    const shownCols = [];
+    for (let c = 1; c <= cols; c += 1) if (!(print && sheet.getColumn(c).hidden)) shownCols.push(c);
+    const shownRows = [];
+    for (let r = 1; r <= rows; r += 1) if (!(print && sheet.getRow(r).hidden)) shownRows.push(r);
+    const blank = (r) => shownCols.every((c) => cellText(sheet.getRow(r).getCell(c)) === "");
+    if (print) while (shownRows.length > 1 && blank(shownRows[shownRows.length - 1])) shownRows.pop();
+    const { spans, covered } = mergeSpans(sheet, shownRows, shownCols);
+    const widths = shownCols.map((c) => Math.round((sheet.getColumn(c).width || 9) * 7));
+    const head = print
+      ? [`<colgroup>${widths.map((w) => `<col style="width:${w}px">`).join("")}</colgroup>`]
+      : ['<thead><tr><th class="r"></th>'];
+    if (!print) {
+      shownCols.forEach((c, i) => head.push(`<th style="min-width:${widths[i]}px">${columnName(c)}</th>`));
+      head.push("</tr></thead>");
     }
-    head.push("</tr>");
     const body = [];
-    for (let r = 1; r <= rows; r += 1) {
+    for (const r of shownRows) {
       const row = sheet.getRow(r);
-      const cells = [`<th class="r">${r}</th>`];
-      for (let c = 1; c <= cols; c += 1) {
+      const cells = print ? [] : [`<th class="r">${r}</th>`];
+      for (const c of shownCols) {
+        if (covered.has(`${r}:${c}`)) continue;
         const cell = row.getCell(c);
         const style = [];
         const font = cell.font || {};
@@ -380,21 +605,28 @@ async function renderXlsx(full) {
         const numeric =
           typeof raw === "number" ||
           (raw && typeof raw === "object" && typeof raw.result === "number");
+        const shown = cellText(cell);
+        const uncalculated =
+          raw && typeof raw === "object" && ("formula" in raw || "sharedFormula" in raw) && shown.startsWith("=");
+        const span = spans.get(`${r}:${c}`);
+        const spanAttrs = span
+          ? `${span.cols > 1 ? ` colspan="${span.cols}"` : ""}${span.rows > 1 ? ` rowspan="${span.rows}"` : ""}`
+          : "";
         cells.push(
-          `<td${numeric ? ' class="n"' : ""}${style.length ? ` style="${style.join(";")}"` : ""}>${escapeHtml(cellText(cell))}</td>`,
+          `<td${numeric ? ' class="n"' : ""}${spanAttrs}${style.length ? ` style="${style.join(";")}"` : ""}>${print && uncalculated ? "" : escapeHtml(shown)}</td>`,
         );
       }
       body.push(`<tr>${cells.join("")}</tr>`);
     }
     parts.push(
-      `<section class="ob-sheet"><h2>${escapeHtml(sheet.name)}</h2><table class="ob-grid"><thead>${head.join("")}</thead><tbody>${body.join("")}</tbody></table></section>`,
+      `<section class="ob-sheet"><h2>${escapeHtml(sheet.name)}</h2><table class="ob-grid"${print ? ` style="width:${widths.reduce((a, b) => a + b, 0)}px;table-layout:fixed"` : ""}>${head.join("")}<tbody>${body.join("")}</tbody></table></section>`,
     );
   }
   if (parts.length === 0) parts.push('<div class="ob-error">This workbook has no sheets.</div>');
   return {
     body: parts.join(""),
     note: trimmed
-      ? `Showing up to ${MAX_SHEET_ROWS} rows and ${MAX_SHEET_COLS} columns per sheet. Formulas show their last calculated value, or the formula until Excel calculates it.`
+      ? `Showing up to ${print ? MAX_PRINT_ROWS : MAX_SHEET_ROWS} rows and ${print ? MAX_PRINT_COLS : MAX_SHEET_COLS} columns per sheet. Formulas show their last calculated value, or the formula until Excel calculates it.`
       : "Formulas show their last calculated value, or the formula until Excel calculates it.",
   };
 }
@@ -523,7 +755,7 @@ function renderHtml(bytes) {
 }
 
 /** One self-contained preview page for a workspace file. */
-export async function renderPreview(full, name = basename(full), { changes = true } = {}) {
+export async function renderPreview(full, name = basename(full), { changes = true, print = false } = {}) {
   const kind = kindOf(name);
   if (!kind)
     throw new ScreenError(
@@ -534,7 +766,7 @@ export async function renderPreview(full, name = basename(full), { changes = tru
   let part;
   try {
     if (kind === "Word") part = renderDocx(bytes, changes);
-    else if (kind === "Excel") part = await renderXlsx(full);
+    else if (kind === "Excel") part = await renderXlsx(full, print);
     else if (kind === "CSV") part = renderCsv(bytes, name);
     else if (kind === "PowerPoint") part = await renderPptx(bytes);
     else if (kind === "PDF") part = renderPdf(bytes);

@@ -3,7 +3,7 @@
  * OCSC Excel: build, read and edit Excel workbooks on a Bot's computer.
  *
  *   ocsc-xlsx new  --spec book.json --out outputs/Costs.xlsx
- *   ocsc-xlsx read --in outputs/Costs.xlsx [--sheet Summary] [--rows 200]
+ *   ocsc-xlsx read --in outputs/Costs.xlsx [--sheet Summary] [--range A1:K40 | --from 41]
  *   ocsc-xlsx edit --in outputs/Costs.xlsx --spec edits.json [--out outputs/Costs-v2.xlsx]
  *
  * book.json:
@@ -23,7 +23,8 @@
 import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import ExcelJS from "exceljs";
-import { cellText, showOnScreen } from "./screen.mjs";
+import JSZip from "jszip";
+import { cellText, evaluateFormulas, showOnScreen } from "./screen.mjs";
 
 const WORKSPACE =
   process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
@@ -81,19 +82,44 @@ function readSpec(p) {
 async function openBook(p) {
   const src = inWorkspace(p, "--in");
   if (!existsSync(src.full)) throw new UsageError(`${src.rel} does not exist.`);
-  if (!/\.xlsx$/i.test(src.full))
+  if (/\.xls$/i.test(src.full))
+    throw new UsageError(
+      `${src.rel} is an old Excel 97-2003 file. Ask the person to save it as .xlsx (File > Save As) and upload that.`,
+    );
+  if (!/\.xls[xm]$/i.test(src.full))
     throw new UsageError("--in must be an .xlsx file.");
   if (statSync(src.full).size > MAX_INPUT_BYTES)
     throw new UsageError(`${src.rel} is larger than 40 MB.`);
   const book = new ExcelJS.Workbook();
+  let lost = [];
   try {
-    await book.xlsx.readFile(src.full);
+    const bytes = readFileSync(src.full);
+    await book.xlsx.load(bytes);
+    lost = await unkeptParts(bytes);
   } catch (error) {
     throw new UsageError(
       `${src.rel} could not be opened as an Excel workbook: ${error.message}`,
     );
   }
-  return { src, book };
+  return { src, book, lost };
+}
+
+/** Parts of a workbook that ExcelJS drops when it saves an edited copy. */
+async function unkeptParts(bytes) {
+  const names = Object.keys((await JSZip.loadAsync(bytes)).files);
+  const count = (re) => names.filter((n) => re.test(n)).length;
+  return [
+    [count(/^xl\/charts\/chart\d*\.xml$/i), "chart"],
+    [count(/^xl\/pivotTables\/[^/]+\.xml$/i), "pivot table"],
+    [count(/^xl\/slicers\/[^/]+\.xml$/i), "slicer"],
+    [count(/^xl\/vbaProject\.bin$/i), "macro project"],
+  ]
+    .filter(([n]) => n > 0)
+    .map(([n, what]) => `${n} ${what}${n === 1 ? "" : "s"}`);
+}
+
+function lostWarning(lost) {
+  return `This workbook has ${lost.join(", ")}, which an edited copy will not keep. Tell the person before sending an edited copy.`;
 }
 
 function outFile(p) {
@@ -170,10 +196,12 @@ function address(ref, where) {
 function sheetOf(book, name, where) {
   if (name === undefined && book.worksheets.length === 1)
     return book.worksheets[0];
+  const wanted = String(name ?? "").trim().toLowerCase();
   const sheet =
     typeof name === "number"
       ? book.worksheets[name - 1]
-      : book.getWorksheet(String(name ?? ""));
+      : (book.getWorksheet(String(name ?? "")) ??
+        book.worksheets.find((s) => s.name.trim().toLowerCase() === wanted));
   if (!sheet) {
     throw new UsageError(
       `${where}: there is no sheet ${JSON.stringify(name)}. Sheets: ${book.worksheets.map((s) => s.name).join(", ")}.`,
@@ -311,175 +339,6 @@ function shiftRows(sheet, { at, inserted = 0, removed = 0 }) {
  * ranges on the same sheet) so the file opens with values and the preview shows numbers. Anything else
  * is left for Excel, which recalculates every formula when the file opens.
  */
-function evaluateFormulas(book) {
-  let computed = 0;
-  let left = 0;
-  for (const sheet of book.worksheets) {
-    const memo = new Map();
-    const valueAt = (col, row, stack) => {
-      const key = `${col}:${row}`;
-      if (memo.has(key)) return memo.get(key);
-      if (stack.has(key)) throw new Error("circular");
-      const cell = sheet.getRow(row).getCell(col);
-      const v = cell.value;
-      let out;
-      if (v && typeof v === "object" && "formula" in v) {
-        stack.add(key);
-        out = evaluate(v.formula, stack);
-        stack.delete(key);
-      } else if (v && typeof v === "object" && "result" in v) out = v.result;
-      else out = v;
-      memo.set(key, out);
-      return out;
-    };
-    const evaluate = (formula, stack) => {
-      const tokens =
-        String(formula).match(
-          /\$?[A-Za-z]{1,3}\$?\d+(?::\$?[A-Za-z]{1,3}\$?\d+)?|[A-Za-z]+(?=\()|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?|[-+*/^(),%]|\S/g,
-        ) || [];
-      let i = 0;
-      const peek = () => tokens[i];
-      const take = () => tokens[i++];
-      const cellRef = (t) => {
-        const m = /^\$?([A-Za-z]{1,3})\$?(\d+)$/.exec(t);
-        return {
-          col: columnIndex(m[1].toUpperCase(), "formula"),
-          row: Number(m[2]),
-        };
-      };
-      const rangeValues = (t) => {
-        const [a, b] = t.split(":").map(cellRef);
-        const out = [];
-        for (
-          let r = Math.min(a.row, b.row);
-          r <= Math.max(a.row, b.row);
-          r += 1
-        ) {
-          for (
-            let c = Math.min(a.col, b.col);
-            c <= Math.max(a.col, b.col);
-            c += 1
-          )
-            out.push(valueAt(c, r, stack));
-        }
-        if (out.length > 200000) throw new Error("range too large");
-        return out;
-      };
-      const num = (v) => {
-        if (typeof v === "number") return v;
-        if (v === null || v === undefined || v === "") return 0;
-        if (typeof v === "boolean") return v ? 1 : 0;
-        throw new Error("not a number");
-      };
-      const FUNCS = {
-        SUM: (xs) =>
-          xs.filter((x) => typeof x === "number").reduce((a, b) => a + b, 0),
-        AVERAGE: (xs) => {
-          const n = xs.filter((x) => typeof x === "number");
-          if (!n.length) throw new Error("no values");
-          return n.reduce((a, b) => a + b, 0) / n.length;
-        },
-        MIN: (xs) => Math.min(...xs.filter((x) => typeof x === "number")),
-        MAX: (xs) => Math.max(...xs.filter((x) => typeof x === "number")),
-        COUNT: (xs) => xs.filter((x) => typeof x === "number").length,
-        ROUND: (xs) => {
-          const f = 10 ** num(xs[1] ?? 0);
-          return Math.round(num(xs[0]) * f) / f;
-        },
-        ABS: (xs) => Math.abs(num(xs[0])),
-      };
-      const primary = () => {
-        const t = take();
-        if (t === undefined) throw new Error("end");
-        if (t === "(") {
-          const v = expr();
-          if (take() !== ")") throw new Error("paren");
-          return v;
-        }
-        if (t === "-") return -num(primary());
-        if (t === "+") return num(primary());
-        if (/^\d/.test(t)) return Number(t);
-        if (/^[A-Za-z]+$/.test(t) && peek() === "(") {
-          const fn = FUNCS[t.toUpperCase()];
-          if (!fn) throw new Error("function");
-          take();
-          const xs = [];
-          if (peek() !== ")") {
-            for (;;) {
-              if (/:/.test(peek() ?? "")) xs.push(...rangeValues(take()));
-              else xs.push(expr());
-              if (peek() === ",") take();
-              else break;
-            }
-          }
-          if (take() !== ")") throw new Error("paren");
-          return fn(xs);
-        }
-        if (/^\$?[A-Za-z]{1,3}\$?\d+$/.test(t)) {
-          const { col, row } = cellRef(t);
-          return num(valueAt(col, row, stack));
-        }
-        throw new Error("token");
-      };
-      const postfix = () => {
-        let v = primary();
-        while (peek() === "%") {
-          take();
-          v = num(v) / 100;
-        }
-        return v;
-      };
-      const power = () => {
-        let v = postfix();
-        while (peek() === "^") {
-          take();
-          v = num(v) ** num(postfix());
-        }
-        return v;
-      };
-      const term = () => {
-        let v = power();
-        while (peek() === "*" || peek() === "/") {
-          const op = take();
-          const r = num(power());
-          if (op === "/" && r === 0) throw new Error("div0");
-          v = op === "*" ? num(v) * r : num(v) / r;
-        }
-        return v;
-      };
-      const expr = () => {
-        let v = term();
-        while (peek() === "+" || peek() === "-") {
-          const op = take();
-          const r = num(term());
-          v = op === "+" ? num(v) + r : num(v) - r;
-        }
-        return v;
-      };
-      const v = expr();
-      if (i !== tokens.length) throw new Error("trailing");
-      return v;
-    };
-    sheet.eachRow({ includeEmpty: false }, (row) => {
-      row.eachCell({ includeEmpty: false }, (cell) => {
-        const v = cell.value;
-        if (!v || typeof v !== "object" || !("formula" in v) || v.sharedFormula)
-          return;
-        try {
-          const result = evaluate(v.formula, new Set());
-          if (typeof result === "number" && Number.isFinite(result)) {
-            cell.value = { formula: v.formula, result };
-            computed += 1;
-            return;
-          }
-        } catch {}
-        left += 1;
-      });
-    });
-  }
-  return { computed, left };
-}
-
 async function save(book, out) {
   const formulas = evaluateFormulas(book);
   book.calcProperties = {
@@ -533,53 +392,131 @@ async function cmdNew(o) {
   };
 }
 
+/** Tool results reach the assistant cut at 12,000 characters, so a read stays under that. */
+const READ_BUDGET = 10_000;
+const READ_MAX_COLUMNS = 200;
+
+function formulaOf(cell) {
+  const v = cell.value;
+  if (!v || typeof v !== "object" || !("formula" in v || "sharedFormula" in v))
+    return null;
+  return cell.formula || v.formula || null;
+}
+
+function columnName(n) {
+  let s = "";
+  for (let x = n; x > 0; x = Math.floor((x - 1) / 26))
+    s = String.fromCharCode(65 + ((x - 1) % 26)) + s;
+  return s;
+}
+
+/** The rows and columns one read covers: --range, or --from and --rows, else the whole sheet. */
+function readArea(o, sheet) {
+  const lastCol = Math.min(Math.max(sheet.columnCount, 1), READ_MAX_COLUMNS);
+  if (typeof o.range === "string") {
+    const [a, b = a] = o.range.split(":");
+    const start = address(a, "--range");
+    const end = address(b, "--range");
+    return {
+      r1: Math.min(start.row, end.row),
+      r2: Math.max(start.row, end.row),
+      c1: Math.min(start.col, end.col),
+      c2: Math.min(Math.max(start.col, end.col), start.col + READ_MAX_COLUMNS - 1),
+    };
+  }
+  const r1 = Math.max(Number(o.from) || 1, 1);
+  const rows = Math.min(Math.max(Number(o.rows) || 2000, 1), 2000);
+  return { r1, r2: Math.min(sheet.rowCount, r1 + rows - 1), c1: 1, c2: lastCol };
+}
+
+/**
+ * Non-empty cells by row and column letter, so edits can name cells directly. A merged range
+ * shows once, at its top-left cell; a formula shows as "=FORMULA" or "=FORMULA → value".
+ */
+function readCells(sheet, area, budget) {
+  const rows = {};
+  let used = 0;
+  for (let r = area.r1; r <= area.r2; r += 1) {
+    const row = sheet.getRow(r);
+    const cells = {};
+    for (let c = area.c1; c <= area.c2; c += 1) {
+      const cell = row.getCell(c);
+      if (cell.isMerged && cell.master !== cell) continue;
+      const shown = cellText(cell);
+      const formula = formulaOf(cell);
+      const text = formula
+        ? shown && !shown.startsWith("=")
+          ? `=${formula} → ${shown}`
+          : `=${formula}`
+        : shown;
+      if (text !== "") cells[columnName(c)] = text;
+    }
+    if (!Object.keys(cells).length) continue;
+    const size = JSON.stringify({ [r]: cells }).length;
+    if (used + size > budget && used > 0) return { rows, used, next: r };
+    rows[r] = cells;
+    used += size;
+  }
+  return { rows, used, next: null };
+}
+
+function mergedRanges(sheet, fromRow, toRow) {
+  return Object.values(sheet._merges ?? {})
+    .filter((m) => m?.range && m.top <= toRow && m.bottom >= fromRow)
+    .sort((a, b) => a.top - b.top || a.left - b.left)
+    .map((m) => m.range);
+}
+
 async function cmdRead(o) {
-  const { src, book } = await openBook(o.in);
-  const limit = Math.min(Math.max(Number(o.rows) || 200, 1), 2000);
-  const wanted =
-    o.sheet === undefined || o.sheet === true
-      ? book.worksheets
-      : [sheetOf(book, o.sheet, "--sheet")];
+  const { src, book, lost } = await openBook(o.in);
+  evaluateFormulas(book, { shared: true });
+  const named = o.sheet !== undefined && o.sheet !== true;
+  const wanted = named ? [sheetOf(book, o.sheet, "--sheet")] : book.worksheets;
+  let budget = READ_BUDGET;
+  const sheets = [];
+  const unread = [];
+  for (const sheet of wanted) {
+    if (budget < 500) {
+      unread.push(sheet.name);
+      continue;
+    }
+    const area = readArea(o, sheet);
+    const { rows, used, next } = readCells(sheet, area, budget);
+    budget -= used;
+    const merged = mergedRanges(sheet, area.r1, next ? next - 1 : area.r2);
+    const sheetOption = `--sheet ${JSON.stringify(sheet.name)}`;
+    sheets.push({
+      name: sheet.name,
+      size: `${sheet.rowCount} rows x ${sheet.columnCount} columns`,
+      ...(merged.length ? { merged: merged.slice(0, 60) } : {}),
+      rows,
+      ...(next
+        ? {
+            more: `Rows ${next} to ${area.r2} were not shown. Read them with: ocsc-xlsx read --in ${src.rel} ${sheetOption} --from ${next}`,
+          }
+        : {}),
+    });
+    if (next) {
+      for (const rest of wanted.slice(wanted.indexOf(sheet) + 1)) unread.push(rest.name);
+      break;
+    }
+  }
   return {
     ok: true,
     file: src.rel,
-    sheets: wanted.map((sheet) => {
-      const rows = [];
-      const formulas = {};
-      for (let r = 1; r <= Math.min(sheet.rowCount, limit); r += 1) {
-        const row = sheet.getRow(r);
-        const values = [];
-        for (let c = 1; c <= Math.min(sheet.columnCount, 60); c += 1) {
-          const cell = row.getCell(c);
-          values.push(cellText(cell));
-          if (
-            cell.value &&
-            typeof cell.value === "object" &&
-            "formula" in cell.value
-          ) {
-            formulas[cell.address] = `=${cell.value.formula}`;
-          }
-        }
-        while (values.length && values[values.length - 1] === "") values.pop();
-        rows.push(values);
-      }
-      return {
-        name: sheet.name,
-        size: `${sheet.rowCount} rows x ${sheet.columnCount} columns`,
-        rows,
-        ...(Object.keys(formulas).length ? { formulas } : {}),
-        ...(sheet.rowCount > limit
-          ? { more_rows: sheet.rowCount - limit }
-          : {}),
-      };
-    }),
+    workbook: book.worksheets.map((s) => `${s.name} (${s.rowCount} rows x ${s.columnCount} columns)`),
+    sheets,
+    ...(unread.length
+      ? { unread: `Not read yet: ${unread.join(", ")}. Read one with --sheet "<name>".` }
+      : {}),
+    ...(lost.length ? { warning: lostWarning(lost) } : {}),
   };
 }
 
 async function cmdEdit(o) {
-  const { src, book } = await openBook(o.in);
+  const { src, book, lost } = await openBook(o.in);
   const spec = readSpec(o.spec);
-  const edits = Array.isArray(spec.edits) ? spec.edits : null;
+  const edits = Array.isArray(spec) ? spec : Array.isArray(spec.edits) ? spec.edits : null;
   if (!edits?.length)
     throw new UsageError(
       'The spec needs "edits": [ { "op": "set", "sheet": "...", "cell": "B4", "value": 1 } ].',
@@ -664,6 +601,7 @@ async function cmdEdit(o) {
       }
       case "delete_rows": {
         const sheet = sheetOf(book, e.sheet, where);
+        e.from ??= e.row ?? e.at;
         if (!Number.isInteger(e.from) || e.from < 1)
           throw new UsageError(`${where}: from must be a row number.`);
         const count = Number.isInteger(e.count) && e.count > 0 ? e.count : 1;
@@ -732,17 +670,28 @@ async function cmdEdit(o) {
     ok: true,
     edits: report,
     ...describe(formulas),
+    ...(lost.length ? { warning: lostWarning(lost) } : {}),
     ...downloadLink(out.rel),
   };
 }
 
 const USAGE = `ocsc-xlsx new --spec book.json --out outputs/X.xlsx
-ocsc-xlsx read --in outputs/X.xlsx [--sheet NAME] [--rows 200]
-ocsc-xlsx edit --in outputs/X.xlsx --spec edits.json [--out outputs/Y.xlsx]`;
+ocsc-xlsx read --in X.xlsx [--sheet NAME] [--range A1:K40 | --from ROW [--rows N]]
+ocsc-xlsx edit --in X.xlsx --spec edits.json [--out outputs/Y.xlsx]
+read lists non-empty cells by row and column letter; a long sheet is read in parts, each ending with the command for the next part.
+edits.json: {"edits":[{"op":"set","sheet":"Summary","cell":"B3","value":950}]}
+ops: set {sheet,cell,value,format?}, set_range {sheet,start,values:[[...]]}, append_rows {sheet,rows:[[...]]},
+insert_rows {sheet,at,rows:[[...]]}, delete_rows {sheet,from,count?}, add_sheet {name,columns?,rows?},
+delete_sheet {sheet}, rename_sheet {sheet,name}, set_column {sheet,column,width?,format?}
+A value is text, a number, true/false, null, {"formula":"SUM(B2:B9)"} or {"date":"2026-10-22"}.`;
 
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
   const o = args(rest);
+  if (!command || command === "help" || command === "--help" || o.help) {
+    process.stdout.write(`${JSON.stringify({ ok: true, usage: USAGE }, null, 2)}\n`);
+    return;
+  }
   try {
     let result;
     if (command === "new") result = await cmdNew(o);
@@ -754,7 +703,11 @@ async function main() {
         result,
         await showOnScreen(resolve(WORKSPACE, result.path), result.path),
       );
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    process.stdout.write(
+      command === "read"
+        ? `${JSON.stringify(result).replace(/,"(\d+)":\{/g, ',\n"$1":{')}\n`
+        : `${JSON.stringify(result, null, 2)}\n`,
+    );
   } catch (error) {
     process.stdout.write(
       `${JSON.stringify({ ok: false, error: error instanceof UsageError ? error.message : String(error?.stack || error) }, null, 2)}\n`,

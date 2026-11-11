@@ -17,6 +17,9 @@ const PROJECT_PHOTOS_NOTE = `PROJECT PHOTOS: for each project, call mcp__evolve_
 
 const SETUP_QUESTIONS_NOTE = `Ask with ask_user, one question at a time, waiting for each answer. Skip any question the person has already answered in their request, and ask none in a scheduled routine or when nobody is there to answer (use the defaults given). Never ask more than three.`;
 
+const PDF_EXPORT_NOTE = (file: string) =>
+  `When the person wants a PDF of a ${file} (one you made or theirs), convert it with the ocsc tool, program pdf, args: convert --in <the ${file} path> --out outputs/<Name>.pdf, then send the PDF with attach_file. Never make the PDF another way.`;
+
 const WORD_INSTRUCTIONS = `Use this whenever the person wants a Word document, report, letter, memo, method statement, specification or any .docx, or wants one changed.
 
 Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-word command below runs as the ocsc tool with program word and the rest of the command as args, one item per word. Always use ocsc-word. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding.
@@ -127,6 +130,9 @@ In a scheduled routine, do the same, and also give the file's path (for example 
 IF IT FAILS
 If the JSON says "ok": false, read the error, fix the spec, and run the command again. Stop after three attempts and tell the person what went wrong.
 
+PDF
+${PDF_EXPORT_NOTE("Word document")}
+
 STYLE
 Write in UK and Irish English, in a professional engineering consultancy voice. Use tables for anything with rows and columns. Keep paragraphs short. Use file names like outputs/HEL18-Flood-Risk-Assessment.docx, with no spaces or slashes in the name.
 
@@ -225,6 +231,9 @@ If the JSON says "ok": false, read the error, fix the spec, and run the command 
 ON THE SCREEN
 ${SCREEN_NOTE}
 
+PDF
+${PDF_EXPORT_NOTE("PowerPoint")} Each slide becomes one page.
+
 STYLE
 Use file names like outputs/HEL18-Design-Review.pptx, with no spaces or slashes in the name. Write headings and notes in UK and Irish English.`;
 
@@ -243,7 +252,8 @@ A cell is text, a number, true/false, null, {"formula":"SUM(D2:D9)"} (no leading
 2. Run: ocsc-xlsx new --spec work/<short-name>.json --out outputs/<Descriptive-Name>.xlsx
 
 EDIT
-1. Always read it first: ocsc-xlsx read --in outputs/<Name>.xlsx [--sheet Costs]. It returns every row as shown, and the formulas by cell.
+1. Always read it first: ocsc-xlsx read --in <path>.xlsx. It lists the sheets, then each non-empty cell by row number and column letter, for example "23":{"B":"Stage iii","D":"10","F":"=D23*E23 → €950.00"}: a formula shows as =FORMULA → its value, and a merged range (in "merged") shows once, at its top-left cell. Use those addresses in your edits.
+A long sheet is read in parts: when the result has "more", run the command it gives (--from <row>) until you have what you need. Read one sheet with --sheet "<name>", or one block with --range A20:L40. Never parse the .xlsx yourself (no Python, unzip or XML).
 2. Write work/<short-name>-edits.json:
 {"edits":[
  {"op":"set","sheet":"Costs","cell":"C2","value":475},
@@ -263,7 +273,11 @@ FORMULAS
 Arithmetic, SUM, AVERAGE, MIN, MAX, COUNT, ROUND and ABS on the same sheet are worked out when the file is saved, so read and the preview show the numbers. Other formulas work in Excel, which recalculates everything when the file opens; until then read shows the formula itself.
 
 THEIR OWN FILES
-${THEIR_FILES_NOTE} Read their spreadsheet with ocsc-xlsx read and save your edit to outputs/. Only .xlsx works; ask for an .xlsx copy of an .xls or .csv file, or build a new workbook from its contents.
+${THEIR_FILES_NOTE} When the person asks you to fill in, update or change their spreadsheet (a pricing schedule, register, tender return), edit THEIR workbook: ocsc-xlsx read it, then ocsc-xlsx edit --in <their file>.xlsx --out outputs/<their name>-v2.xlsx. Never rebuild it as a new workbook with ocsc-xlsx new, which loses their layout, formatting and formulas. Their formulas stay and recalculate, so fill in the input cells (hours, rates, quantities) and leave the formula cells alone.
+If read or edit gives a "warning" (charts, pivot tables or macros an edited copy cannot keep), tell the person before you send the edited copy. Only .xlsx and .xlsm work; ask for an .xlsx copy of an .xls file, or build a new workbook from a .csv.
+
+PDF
+${PDF_EXPORT_NOTE("workbook")} Each sheet prints landscape, scaled to fit the page width.
 
 SENDING, FAILURES AND THE SCREEN
 ${SEND_NOTE} Also give the path. If the JSON says "ok": false, read the error, fix the spec and run it again; stop after three attempts and say what went wrong.
@@ -279,9 +293,9 @@ Use write_file and the ocsc tool (document runners; no full computer needed): ev
 MAKING A PDF
 Build the document first with the right tool, then convert it, so the PDF carries the OCSC branding:
 - a report, letter or memo: ocsc-word (skill /ocsc-word), then: ocsc-pdf convert --in outputs/<Name>.docx --out outputs/<Name>.pdf
-- a table or cost plan: ocsc-xlsx (skill /ocsc-excel), then convert the .xlsx (each sheet prints landscape)
+- a table or cost plan: ocsc-xlsx (skill /ocsc-excel), then convert the .xlsx (each sheet prints landscape, scaled to fit the page width)
 - a deck: ocsc-pptx, then convert the .pptx (one slide per page)
-Images (PNG, JPEG), CSV, text and HTML files in the workspace convert the same way.
+Images (PNG, JPEG), CSV, text and HTML files in the workspace convert the same way, and so do the person's own .docx, .xlsx and .pptx files. Convert one file per command and wait for it before the next. An old .doc, .xls or .ppt cannot be converted: ask the person to save it as .docx, .xlsx or .pptx and upload that.
 A Word file prints as its final text with tracked changes applied. Add --show-changes only when the person wants the changes marked up in the PDF.
 Never make a PDF another way (no LibreOffice, pandoc or wkhtmltopdf).
 

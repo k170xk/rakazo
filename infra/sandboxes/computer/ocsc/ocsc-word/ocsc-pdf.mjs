@@ -16,6 +16,7 @@
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   statSync,
   writeFileSync,
@@ -76,16 +77,15 @@ function downloadLink(rel) {
   return { name, path: rel, url, link: `[${name}](${url})` };
 }
 
+const SHEET_CSS =
+  "@page{size:A4 landscape;margin:10mm}.ob-sheet{overflow:visible;max-width:none;margin:0 0 6mm;break-after:page}.ob-sheet:last-child{break-after:auto}.ob-sheet h2{position:static}.ob-grid th{position:static}.ob-grid td{white-space:pre-wrap;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;max-width:none}.ob-grid tr{break-inside:avoid}";
+/** A4 landscape less 10 mm margins, in CSS pixels. */
+const SHEET_PRINT_WIDTH = Math.floor((277 / 25.4) * 96);
+
 const PRINT = {
   Word: { css: "@page{size:A4;margin:0}", format: "A4" },
-  Excel: {
-    css: "@page{size:A4 landscape;margin:12mm}.ob-sheet{overflow:visible}.ob-grid th{position:static}",
-    landscape: true,
-  },
-  CSV: {
-    css: "@page{size:A4 landscape;margin:12mm}.ob-sheet{overflow:visible}.ob-grid th{position:static}",
-    landscape: true,
-  },
+  Excel: { css: SHEET_CSS, landscape: true, fit: true },
+  CSV: { css: SHEET_CSS, landscape: true, fit: true },
   PowerPoint: {
     css: "@page{size:13.333in 7.5in;margin:0}.ob-slide{width:13.333in!important;height:7.5in!important;aspect-ratio:auto;margin:0!important}.ob-slide .num{display:none}",
   },
@@ -116,7 +116,7 @@ async function browser() {
 
 async function printHtml(
   html,
-  { css = "", landscape = false, scripts = true, ready = true },
+  { css = "", landscape = false, scripts = true, ready = true, fit = false },
   outFull,
 ) {
   const b = await browser();
@@ -143,10 +143,18 @@ async function printHtml(
       );
     }
     await page.emulateMedia({ media: "print" });
+    let scale = 1;
+    if (fit) {
+      const widest = await page.evaluate(() =>
+        Math.max(0, ...[...document.querySelectorAll("table.ob-grid")].map((t) => t.scrollWidth)),
+      );
+      if (widest > SHEET_PRINT_WIDTH) scale = Math.max(0.3, SHEET_PRINT_WIDTH / widest);
+    }
     const pdf = await page.pdf({
       printBackground: true,
       preferCSSPageSize: true,
       landscape,
+      scale,
     });
     mkdirSync(dirname(outFull), { recursive: true });
     writeFileSync(outFull, pdf);
@@ -156,20 +164,47 @@ async function printHtml(
   }
 }
 
+const LEGACY = {
+  doc: ["Word", ".docx"],
+  xls: ["Excel", ".xlsx"],
+  ppt: ["PowerPoint", ".pptx"],
+};
+
+/** Report.pdf, or Report-xlsx.pdf when another Report.* beside it could print to the same name. */
+function defaultOut(src) {
+  const stem = src.rel.replace(/\.[^./]+$/, "");
+  const ext = extname(src.rel).slice(1).toLowerCase();
+  const dir = dirname(src.full);
+  const base = basename(stem);
+  const siblings = existsSync(dir)
+    ? readdirSync(dir).filter(
+        (n) =>
+          n.slice(0, n.length - extname(n).length) === base &&
+          extname(n).toLowerCase() !== `.${ext}` &&
+          kindOf(n) &&
+          kindOf(n) !== "PDF",
+      )
+    : [];
+  return siblings.length ? `${stem}-${ext}.pdf` : `${stem}.pdf`;
+}
+
 async function cmdConvert(o) {
   const src = inWorkspace(o.in, "--in");
   if (!existsSync(src.full)) throw new UsageError(`${src.rel} does not exist.`);
   if (statSync(src.full).size > 40 * 1024 * 1024)
     throw new UsageError(`${src.rel} is larger than 40 MB.`);
-  const out = inWorkspace(
-    o.out || `${src.rel.replace(/\.[^./]+$/, "")}.pdf`,
-    "--out",
-  );
+  const out = inWorkspace(o.out || defaultOut(src), "--out");
   if (!/\.pdf$/i.test(out.full)) throw new UsageError("--out must end in .pdf");
   const kind = kindOf(src.rel);
+  const legacy = LEGACY[extname(src.rel).slice(1).toLowerCase()];
+  if (legacy) {
+    throw new UsageError(
+      `${src.rel} is an old ${legacy[0]} 97-2003 file, which cannot be converted here. Ask the person to open it and save it as ${legacy[1]} (File > Save As), then upload that and convert it.`,
+    );
+  }
   if (!kind || kind === "PDF") {
     throw new UsageError(
-      `${src.rel} cannot be converted. Word, Excel, CSV, PowerPoint, images, text and HTML can.`,
+      `${src.rel} cannot be converted. Word (.docx), Excel (.xlsx), CSV, PowerPoint (.pptx), images, text and HTML can.`,
     );
   }
   let bytes;
@@ -186,6 +221,7 @@ async function cmdConvert(o) {
   } else {
     const { html } = await renderPreview(src.full, basename(src.rel), {
       changes: o["show-changes"] === true,
+      print: true,
     });
     bytes = await printHtml(html, PRINT[kind] || {}, out.full);
   }
