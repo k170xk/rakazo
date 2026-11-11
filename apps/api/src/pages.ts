@@ -1,13 +1,27 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type { SecretStore } from "@rakazo/adapter-kit";
 import { forgetPageShareSecrets } from "@rakazo/adapters";
-import type { Actor, PageDetail, PageSummary, PageVisibility, SharedPage } from "@rakazo/contracts";
-import { pageShareTokenFromSlug, pageShareUrl } from "@rakazo/contracts";
+import type {
+  Actor,
+  PageDetail,
+  PageStateValues,
+  PageSummary,
+  PageVisibility,
+  SharedPage,
+} from "@rakazo/contracts";
+import {
+  PAGE_STATE_KEY,
+  PAGE_STATE_MAX_BYTES,
+  PAGE_STATE_MAX_KEYS,
+  pageShareTokenFromSlug,
+  pageShareUrl,
+} from "@rakazo/contracts";
 import type { PageShareSecret, PrismaClient } from "@rakazo/db";
 import { IsolationError, Prisma, runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 
 const PAGE_SHARE_SECRET_KIND = "page_share";
+const PAGE_SHARE_PASSWORD_SECRET_KIND = "page_share_password";
 const DEFAULT_LIST_LIMIT = 30;
 
 type PageDeps = { prisma: PrismaClient; secrets: SecretStore; webOrigin: string };
@@ -32,12 +46,49 @@ function pageSummary(row: SummaryRow): PageSummary {
     title: row.title,
     botId: row.botId,
     groupId: row.groupId,
-    visibility: row.visibility === "link" ? "link" : "private",
+    visibility: shownVisibility(row.visibility),
     currentVersion: row.currentVersion,
     pinned: row.pinnedAt !== null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+function shownVisibility(stored: string): PageVisibility {
+  return stored === "link" || stored === "public" ? stored : "private";
+}
+
+// No 0/O or 1/I/L, so a password read aloud or from a screen is typed right first time.
+const PASSWORD_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+/** Twelve characters in three groups, such as K7M4-9QXT-2HPW: about 59 bits. */
+function newSharePassword(): string {
+  const bytes = randomBytes(12);
+  const chars = [...bytes].map((byte) => PASSWORD_ALPHABET[byte % PASSWORD_ALPHABET.length]);
+  return [chars.slice(0, 4), chars.slice(4, 8), chars.slice(8)].map((g) => g.join("")).join("-");
+}
+
+/** Case, spaces and dashes do not count, so "k7m4 9qxt 2hpw" opens the page too. */
+function normalSharePassword(password: string): string {
+  return password.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function hashSharePassword(password: string): string {
+  const salt = randomBytes(16);
+  const hash = scryptSync(normalSharePassword(password), salt, 32);
+  return `scrypt:${salt.toString("base64url")}:${hash.toString("base64url")}`;
+}
+
+export function sharePasswordMatches(stored: string, given: string): boolean {
+  const [scheme, salt, hash] = stored.split(":");
+  if (scheme !== "scrypt" || !salt || !hash) return false;
+  const expected = Buffer.from(hash, "base64url");
+  const actual = scryptSync(
+    normalSharePassword(given.slice(0, 200)),
+    Buffer.from(salt, "base64url"),
+    32,
+  );
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
 
 function hashPageShareToken(token: string): string {
@@ -59,7 +110,7 @@ async function stillThere<T>(write: Promise<T>): Promise<T> {
 async function requirePage(prisma: PrismaClient, actor: Actor, pageId: string) {
   const row = await prisma.page.findFirst({
     where: { id: pageId, spaceId: actor.spaceId, userId: actor.userId },
-    select: { ...summarySelect, shareSecretId: true },
+    select: { ...summarySelect, shareSecretId: true, sharePasswordSecretId: true },
   });
   if (!row) throw new IsolationError();
   return row;
@@ -139,7 +190,16 @@ async function shareUrlFor(
   deps: PageDeps,
   row: { title: string; visibility: string; shareSecretId: string | null },
 ): Promise<string | null> {
-  if (row.visibility !== "link" || !row.shareSecretId) return null;
+  if (shownVisibility(row.visibility) === "private") return null;
+  return linkUrlFor(deps, row);
+}
+
+/** The link the page's sealed token makes, whatever its visibility is set to just now. */
+async function linkUrlFor(
+  deps: PageDeps,
+  row: { title: string; shareSecretId: string | null },
+): Promise<string | null> {
+  if (!row.shareSecretId) return null;
   const secret = await deps.prisma.secret.findUnique({
     where: { id: row.shareSecretId },
     select: { id: true, ciphertext: true },
@@ -147,6 +207,117 @@ async function shareUrlFor(
   if (!secret) return null;
   const token = await deps.secrets.load(secret.ciphertext, { recordId: secret.id });
   return pageShareUrl(deps.webOrigin, row.title, token);
+}
+
+async function sharePasswordFor(
+  deps: PageDeps,
+  row: { visibility: string; sharePasswordSecretId: string | null },
+): Promise<string | null> {
+  if (row.visibility !== "public" || !row.sharePasswordSecretId) return null;
+  const secret = await deps.prisma.secret.findUnique({
+    where: { id: row.sharePasswordSecretId },
+    select: { id: true, ciphertext: true },
+  });
+  if (!secret) return null;
+  return deps.secrets.load(secret.ciphertext, { recordId: secret.id });
+}
+
+/** Removes the page's password, so the link opens for signed-in people only (or not at all). */
+async function clearSharePassword(deps: PageDeps, pageId: string) {
+  const removed = await deps.prisma.$transaction(async (tx) => {
+    const current = await tx.page.findUnique({
+      where: { id: pageId },
+      select: { sharePasswordSecretId: true },
+    });
+    if (!current?.sharePasswordSecretId) return null;
+    await tx.page.update({
+      where: { id: pageId },
+      data: { sharePasswordHash: null, sharePasswordSecretId: null },
+    });
+    const secret = await tx.secret.findUnique({
+      where: { id: current.sharePasswordSecretId },
+      select: { id: true, ciphertext: true },
+    });
+    await tx.secret.deleteMany({ where: { id: current.sharePasswordSecretId } });
+    return secret;
+  });
+  if (removed) await forgetPageShareSecrets(deps.secrets, [removed]);
+}
+
+/** The page's password, made now when it has none it can read or when asked for a new one. */
+async function ensureSharePassword(
+  deps: PageDeps,
+  actor: Actor,
+  pageId: string,
+  renew: boolean,
+  signal: AbortSignal,
+): Promise<string> {
+  const current = await deps.prisma.page.findUnique({
+    where: { id: pageId },
+    select: { visibility: true, sharePasswordSecretId: true },
+  });
+  if (!current) throw new IsolationError();
+  if (!renew && current.sharePasswordSecretId) {
+    const existing = await sharePasswordFor(deps, { ...current, visibility: "public" }).catch(
+      (error: unknown) => {
+        getLogger().error("page password load", error);
+        return null;
+      },
+    );
+    if (existing) {
+      if (current.visibility !== "public") {
+        await deps.prisma.page.update({ where: { id: pageId }, data: { visibility: "public" } });
+      }
+      return existing;
+    }
+  }
+  const password = newSharePassword();
+  const stored = await deps.secrets.put(password, {
+    operationId: `page-password:${pageId}`,
+    traceId: `page-password:${pageId}`,
+    spaceId: actor.spaceId,
+    userId: actor.userId,
+    signal,
+  });
+  let replaced: PageShareSecret | null = null;
+  try {
+    replaced = await deps.prisma.$transaction(async (tx) => {
+      const before = await tx.page.findUnique({
+        where: { id: pageId },
+        select: { sharePasswordSecretId: true },
+      });
+      if (!before) throw new IsolationError();
+      await tx.secret.create({
+        data: {
+          id: stored.id,
+          userId: actor.userId,
+          spaceId: actor.spaceId,
+          kind: PAGE_SHARE_PASSWORD_SECRET_KIND,
+          ciphertext: stored.ciphertext,
+        },
+      });
+      await tx.page.update({
+        where: { id: pageId },
+        data: {
+          visibility: "public",
+          sharePasswordHash: hashSharePassword(password),
+          sharePasswordSecretId: stored.id,
+        },
+      });
+      if (!before.sharePasswordSecretId) return null;
+      const old = await tx.secret.findUnique({
+        where: { id: before.sharePasswordSecretId },
+        select: { id: true, ciphertext: true },
+      });
+      await tx.secret.deleteMany({ where: { id: before.sharePasswordSecretId } });
+      return old;
+    });
+  } catch (error) {
+    await forgetPageShareSecrets(deps.secrets, [stored]);
+    throw error;
+  }
+  if (replaced) await forgetPageShareSecrets(deps.secrets, [replaced]);
+  return password;
 }
 
 export async function getPage(
@@ -176,6 +347,12 @@ export async function getPage(
     shareUrl: input.link
       ? await shareUrlFor(deps, row).catch((error: unknown) => {
           getLogger().error("page link token load", error);
+          return null;
+        })
+      : null,
+    sharePassword: input.link
+      ? await sharePasswordFor(deps, row).catch((error: unknown) => {
+          getLogger().error("page password load", error);
           return null;
         })
       : null,
@@ -251,7 +428,7 @@ async function swapPageShare(
         const moved = await tx.page.updateMany({
           where: { id: pageId, shareSecretId: current.shareSecretId },
           data: next
-            ? { visibility: "link", shareTokenHash: next.tokenHash, shareSecretId: next.secret.id }
+            ? { shareTokenHash: next.tokenHash, shareSecretId: next.secret.id }
             : { visibility: "private", shareTokenHash: null, shareSecretId: null },
         });
         // Rolling back drops the new secret with the failed swap.
@@ -280,22 +457,46 @@ async function swapPageShare(
 export async function setPageVisibility(
   deps: PageDeps,
   actor: Actor,
-  input: { pageId: string; visibility: PageVisibility },
+  input: { pageId: string; visibility: PageVisibility; renewPassword?: boolean },
   signal: AbortSignal,
-): Promise<{ visibility: PageVisibility; shareUrl: string | null }> {
+): Promise<{ visibility: PageVisibility; shareUrl: string | null; sharePassword: string | null }> {
   const row = await requirePage(deps.prisma, actor, input.pageId);
   if (input.visibility === "private") {
+    await clearSharePassword(deps, row.id);
     const { replaced } = await swapPageShare(deps.prisma, row.id, null);
     if (replaced) await forgetPageShareSecrets(deps.secrets, [replaced]);
-    return { visibility: "private", shareUrl: null };
+    return { visibility: "private", shareUrl: null, sharePassword: null };
   }
+  const shareUrl = await ensureShareLink(deps, actor, row, signal);
+  if (input.visibility === "link") {
+    await clearSharePassword(deps, row.id);
+    await deps.prisma.page.update({ where: { id: row.id }, data: { visibility: "link" } });
+    return { visibility: "link", shareUrl, sharePassword: null };
+  }
+  const sharePassword = await ensureSharePassword(
+    deps,
+    actor,
+    row.id,
+    input.renewPassword === true,
+    signal,
+  );
+  return { visibility: "public", shareUrl, sharePassword };
+}
+
+/** The page's live link, made now when it has none that can be read. */
+async function ensureShareLink(
+  deps: PageDeps,
+  actor: Actor,
+  row: Awaited<ReturnType<typeof requirePage>>,
+  signal: AbortSignal,
+): Promise<string> {
   let unreadable: string | null = null;
-  const existing = await shareUrlFor(deps, row).catch((error: unknown) => {
+  const existing = await linkUrlFor(deps, row).catch((error: unknown) => {
     getLogger().error("page link token load", error);
     unreadable = row.shareSecretId;
     return null;
   });
-  if (existing) return { visibility: "link", shareUrl: existing };
+  if (existing) return existing;
   const token = randomBytes(32).toString("base64url");
   const stored = await deps.secrets.put(token, {
     operationId: `page-share:${row.id}`,
@@ -327,12 +528,12 @@ export async function setPageVisibility(
   if (swapped.kept) {
     // Another turn-on won while this one sealed its token: both callers get the winner's link.
     await forgetPageShareSecrets(deps.secrets, [stored]);
-    const winner = await shareUrlFor(deps, await requirePage(deps.prisma, actor, row.id));
-    if (winner) return { visibility: "link", shareUrl: winner };
+    const winner = await linkUrlFor(deps, await requirePage(deps.prisma, actor, row.id));
+    if (winner) return winner;
     throw new PageShareConflictError();
   }
   if (swapped.replaced) await forgetPageShareSecrets(deps.secrets, [swapped.replaced]);
-  return { visibility: "link", shareUrl: pageShareUrl(deps.webOrigin, row.title, token) };
+  return pageShareUrl(deps.webOrigin, row.title, token);
 }
 
 export async function removePage(deps: PageDeps, actor: Actor, pageId: string) {
@@ -340,17 +541,23 @@ export async function removePage(deps: PageDeps, actor: Actor, pageId: string) {
   const removed = await deps.prisma.$transaction(async (tx) => {
     // The deleted row's link, not the one read before: a share may have swapped it since.
     const deleted = await stillThere(
-      tx.page.delete({ where: { id: row.id }, select: { shareSecretId: true } }),
+      tx.page.delete({
+        where: { id: row.id },
+        select: { shareSecretId: true, sharePasswordSecretId: true },
+      }),
     );
-    if (!deleted.shareSecretId) return null;
-    const secret = await tx.secret.findUnique({
-      where: { id: deleted.shareSecretId },
+    const ids = [deleted.shareSecretId, deleted.sharePasswordSecretId].filter((id): id is string =>
+      Boolean(id),
+    );
+    if (ids.length === 0) return [];
+    const secrets = await tx.secret.findMany({
+      where: { id: { in: ids } },
       select: { id: true, ciphertext: true },
     });
-    await tx.secret.deleteMany({ where: { id: deleted.shareSecretId } });
-    return secret;
+    await tx.secret.deleteMany({ where: { id: { in: ids } } });
+    return secrets;
   });
-  if (removed) await forgetPageShareSecrets(deps.secrets, [removed]);
+  if (removed.length) await forgetPageShareSecrets(deps.secrets, removed);
   return { ok: true as const };
 }
 
@@ -358,7 +565,12 @@ export async function removePage(deps: PageDeps, actor: Actor, pageId: string) {
 export async function readSharedPage(
   prisma: PrismaClient,
   token: string,
-): Promise<SharedPage | null> {
+): Promise<{
+  page: Omit<SharedPage, "canSaveState">;
+  pageId: string;
+  visibility: "link" | "public";
+  passwordHash: string | null;
+} | null> {
   if (pageShareTokenFromSlug(token) !== token) return null;
   const page = await runAsSystem("page share link", () =>
     prisma.page.findUnique({
@@ -370,11 +582,13 @@ export async function readSharedPage(
         updatedAt: true,
         id: true,
         shareSecretId: true,
+        sharePasswordHash: true,
       },
     }),
   );
   // A link lives only while its sealed token does, whatever removed the token.
-  if (page?.visibility !== "link" || !page.shareSecretId) return null;
+  const visibility = page ? shownVisibility(page.visibility) : "private";
+  if (!page || visibility === "private" || !page.shareSecretId) return null;
   const version = await runAsSystem("page share link", () =>
     prisma.pageVersion.findUnique({
       where: { pageId_version: { pageId: page.id, version: page.currentVersion } },
@@ -383,9 +597,103 @@ export async function readSharedPage(
   );
   if (!version) return null;
   return {
-    title: page.title,
-    code: version.code,
-    version: page.currentVersion,
-    updatedAt: page.updatedAt.toISOString(),
+    page: {
+      title: page.title,
+      code: version.code,
+      version: page.currentVersion,
+      updatedAt: page.updatedAt.toISOString(),
+    },
+    pageId: page.id,
+    visibility,
+    passwordHash: visibility === "public" ? page.sharePasswordHash : null,
   };
+}
+
+/** A page's saved value was too large, or the page already keeps as many keys as it may. */
+export class PageStateRefusedError extends Error {}
+
+async function readStateRows(prisma: PrismaClient, pageId: string): Promise<PageStateValues> {
+  const rows = await prisma.pageState.findMany({
+    where: { pageId },
+    select: { key: true, value: true },
+    orderBy: { key: "asc" },
+  });
+  return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+}
+
+async function writeStateRow(
+  prisma: PrismaClient,
+  pageId: string,
+  key: string,
+  value: unknown,
+  userId: string | null,
+) {
+  if (!PAGE_STATE_KEY.test(key)) throw new PageStateRefusedError("That key cannot be saved");
+  if (value === null || value === undefined) {
+    await prisma.pageState.deleteMany({ where: { pageId, key } });
+    return;
+  }
+  const json = JSON.stringify(value);
+  if (json === undefined || json.length > PAGE_STATE_MAX_BYTES) {
+    throw new PageStateRefusedError("That value is too large to save");
+  }
+  const stored = JSON.parse(json) as Prisma.InputJsonValue;
+  const existing = await prisma.pageState.findUnique({
+    where: { pageId_key: { pageId, key } },
+    select: { id: true },
+  });
+  if (existing) {
+    await prisma.pageState.update({
+      where: { id: existing.id },
+      data: { value: stored, updatedBy: userId },
+    });
+    return;
+  }
+  if ((await prisma.pageState.count({ where: { pageId } })) >= PAGE_STATE_MAX_KEYS) {
+    throw new PageStateRefusedError("This page keeps as many values as it can");
+  }
+  await prisma.pageState
+    .create({ data: { pageId, key, value: stored, updatedBy: userId } })
+    .catch(async (error: unknown) => {
+      // Two readers saving a new key at once: the later save wins, as for an existing key.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        await prisma.pageState.update({
+          where: { pageId_key: { pageId, key } },
+          data: { value: stored, updatedBy: userId },
+        });
+        return;
+      }
+      throw error;
+    });
+}
+
+export async function getPageState(prisma: PrismaClient, actor: Actor, pageId: string) {
+  await requirePage(prisma, actor, pageId);
+  return { values: await readStateRows(prisma, pageId) };
+}
+
+export async function savePageState(
+  prisma: PrismaClient,
+  actor: Actor,
+  input: { pageId: string; key: string; value: unknown },
+) {
+  await requirePage(prisma, actor, input.pageId);
+  await writeStateRow(prisma, input.pageId, input.key, input.value, actor.userId);
+  return { ok: true as const };
+}
+
+/** For a shared link, whose reader the link (and password, or sign-in) already admitted. */
+export function readSharedPageState(prisma: PrismaClient, pageId: string) {
+  return runAsSystem("page share state", () => readStateRows(prisma, pageId));
+}
+
+/** Only for someone signed in to the page's company; a password reader cannot save. */
+export function saveSharedPageState(
+  prisma: PrismaClient,
+  pageId: string,
+  key: string,
+  value: unknown,
+  userId: string | null,
+) {
+  return runAsSystem("page share state", () => writeStateRow(prisma, pageId, key, value, userId));
 }

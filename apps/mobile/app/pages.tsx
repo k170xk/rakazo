@@ -109,7 +109,7 @@ export default function PagesScreen() {
         { id: "open", title: t("Open") },
         { id: "rename", title: t("Rename") },
         { id: "share", title: t("Share") },
-        ...(page.visibility === "link" ? [{ id: "copy", title: t("Copy link") }] : []),
+        ...(page.visibility !== "private" ? [{ id: "copy", title: t("Copy link") }] : []),
         { id: "pin", title: page.pinned ? t("Unpin") : t("Pin") },
         { id: "delete", title: t("Delete"), attributes: { destructive: true } },
       ]}
@@ -119,7 +119,7 @@ export default function PagesScreen() {
         accessibilityRole="button"
         chevron="right"
         title={page.title}
-        detail={`${page.visibility === "link" ? `${t("Shared")} · ` : ""}${formatActivityRelativeTime(page.updatedAt)}`}
+        detail={`${page.visibility !== "private" ? `${t("Shared")} · ` : ""}${formatActivityRelativeTime(page.updatedAt)}`}
         leading={<PageIcon colors={tokens} width={26} />}
         onPress={() => open(page)}
       />

@@ -187,7 +187,7 @@ export function checkPageSource(source: string): PageSourceCheck {
       "Do not add a side navigation rail; Evolve already has a left drawer. Use Segmented along the top for view switches.",
     );
   }
-  if (/<\s*table\b/i.test(source) || /createElement\(\s*['"]table['"]/.test(source)) {
+  if (/<\s*table\b/.test(source) || /createElement\(\s*['"]table['"]/.test(source)) {
     warnings.push(
       "Use the kit Table component instead of a hand-rolled HTML table so the page gets Evolve borders and spacing.",
     );

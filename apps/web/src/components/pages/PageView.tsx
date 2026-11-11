@@ -5,6 +5,7 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web"
 import { Pencil, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { PageStateStore } from "../../lib/page-state";
 import { DownloadPdfButton } from "./DownloadPdfButton";
 import { PageFrame } from "./PageFrame";
 import { PageLoading, PageNotice } from "./PageNotice";
@@ -27,6 +28,7 @@ export function PageView({
   share,
   composer,
   onReply,
+  state,
   returnFocus,
   compact = false,
   notice = null,
@@ -42,6 +44,8 @@ export function PageView({
   composer?: ReactNode;
   /** Takes a page's reply text into the docked composer. */
   onReply?: (text: unknown) => void;
+  /** Where the page keeps what it saves for itself. */
+  state?: PageStateStore;
   /** Puts focus back on close; false tells the dialog it is done. */
   returnFocus?: () => boolean;
   /** Touch screens get larger round controls. */
@@ -162,6 +166,7 @@ export function PageView({
                       interactive
                       onReply={onReply}
                       onHeight={onDrawn}
+                      state={state}
                     />
                   </div>
                 ) : null}

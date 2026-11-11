@@ -1,8 +1,9 @@
 import { useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { pageMutationOptions } from "../../lib/page-actions";
+import { ownerPageState } from "../../lib/page-state";
 import type { PageSession } from "../../lib/pages";
 import { PAGE_PARAM, useMedia, usePageDocument, usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
@@ -54,6 +55,10 @@ function OpenPage({
   });
   // Always the Evolve canvas (background), never the slate card chrome — pages looked grey.
   const viewer = usePageDocument(page.data?.code, "background", true, DOCK_CLEARANCE);
+  const pageState = useMemo(
+    () => (shownId ? ownerPageState(queries, shownId) : undefined),
+    [queries, shownId],
+  );
   const [shareOpen, setShareOpen] = useState(false);
   const link = useQuery({
     ...queries.pages.get.queryOptions({ input: { pageId: shownId, link: true } }),
@@ -109,6 +114,7 @@ function OpenPage({
       }}
       title={data?.title ?? ""}
       document={viewer.document}
+      state={pageState}
       returnFocus={session.restoreFocus}
       compact={compact}
       notice={
@@ -148,6 +154,12 @@ function OpenPage({
             owner={data.owner}
             visibility={shownVisibility}
             shareUrl={link.data?.shareUrl ?? null}
+            sharePassword={link.data?.sharePassword ?? null}
+            onRenewPassword={() => {
+              if (pageId && !visibility.isPending) {
+                visibility.mutate({ pageId, visibility: "public", renewPassword: true });
+              }
+            }}
             open={shareOpen}
             onOpenChange={setShareOpen}
             pending={visibility.isPending}

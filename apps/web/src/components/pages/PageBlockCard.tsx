@@ -1,3 +1,4 @@
+import { pageIsShared } from "@rakazo/contracts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type { PageBlock } from "../../lib/page-cards";
@@ -41,7 +42,7 @@ export function PageBlockCard({ block, updated }: { block: PageBlock; updated: b
       failed={viewer.failed || unread}
       updated={updated}
       updatedAt={current.data?.updatedAt}
-      shared={current.data?.visibility === "link"}
+      shared={current.data ? pageIsShared(current.data.visibility) : false}
       onOpen={deleted ? undefined : () => openPage(block.pageId)}
     />
   );

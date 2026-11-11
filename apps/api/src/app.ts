@@ -1008,8 +1008,11 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   mountApiRequestBodyLimits(app);
   mountScreenTarget(app, prisma, env.screenProxySecret);
   mountScriptAssets(app);
-  mountSharedPages(app, prisma, requestClientIp, async (request) =>
-    Boolean((await auth.api.getSession({ headers: request.headers }))?.user),
+  mountSharedPages(
+    app,
+    prisma,
+    requestClientIp,
+    async (request) => (await auth.api.getSession({ headers: request.headers }))?.user?.id ?? null,
   );
   const auditAuthResponse = createAuthResponseAudit();
   // Account and session tables, signup bootstrap and account deletion span tenants;

@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { useCallback, useRef, useState } from "react";
 import { writeClipboard } from "../../lib/copy-text";
 import { pageFrameHeight } from "../../lib/page-cards";
+import type { PageStateStore } from "../../lib/page-state";
 import { SandboxedHtmlViewer } from "../SandboxedHtmlViewer";
 
 /**
@@ -13,6 +14,8 @@ import { SandboxedHtmlViewer } from "../SandboxedHtmlViewer";
  * has not been used for another action yet. Previews draw only.
  * An interactive frame prints whole: on paper it keeps the width the page was drawn at, so the
  * page's last reported height still fits it, and the browser scales it to the paper.
+ * With `state`, an interactive frame also reads and keeps the page's own saved values; those
+ * touch nothing outside the page, so they need no click.
  */
 export function PageFrame({
   document,
@@ -20,6 +23,7 @@ export function PageFrame({
   interactive = false,
   onHeight,
   onReply,
+  state,
 }: {
   document: string;
   title: string;
@@ -27,6 +31,8 @@ export function PageFrame({
   onHeight?: (height: number) => void;
   /** Where a page's reply button puts its text; without it the page offers no replies. */
   onReply?: (text: unknown) => void;
+  /** Where the page's usePageState values live; without it they last for the visit. */
+  state?: PageStateStore;
 }) {
   const { open, dialog } = useExternalLinkOpener();
   const box = useRef<HTMLDivElement>(null);
@@ -52,6 +58,21 @@ export function PageFrame({
         onHeight?.(height);
         return;
       }
+      if (interactive && state && message.type === "rakazo-page:state-read") {
+        void state.read().then(
+          ({ values, writable }) => answer({ type: "rakazo-page:state", values, writable }),
+          () => answer({ type: "rakazo-page:state", values: {}, writable: false }),
+        );
+        return;
+      }
+      if (interactive && state && message.type === "rakazo-page:state-write") {
+        const { key, value } = data as { key?: unknown; value?: unknown };
+        if (typeof key !== "string") return;
+        void state
+          .write(key, value)
+          .then((ok) => answer({ type: "rakazo-page:state-saved", key, ok }));
+        return;
+      }
       const { gesture } = message;
       if (!interactive || !focused || typeof gesture !== "string") return;
       if (gesture === usedGesture.current) return;
@@ -64,7 +85,7 @@ export function PageFrame({
       else if (url) open(url);
       else if (reply) reply(message.text);
     },
-    [interactive, onHeight, onReply, open],
+    [interactive, onHeight, onReply, open, state],
   );
   return (
     <>

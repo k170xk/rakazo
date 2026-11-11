@@ -26,6 +26,7 @@ function context(
               title: "Plan",
               currentVersion: existing.currentVersion,
               versions: [{ source: source("Plan") }],
+              state: [{ key: "done", value: { W407: true } }],
             }
           : null,
       ),
@@ -94,7 +95,13 @@ describe("save_page", () => {
       context({}, { currentVersion: 3 }),
       call({ pageId: "page-1", edits: [], source: "" }),
     )) as Record<string, unknown>;
-    expect(read).toEqual({ pageId: "page-1", version: 3, title: "Plan", source: source("Plan") });
+    expect(read).toEqual({
+      pageId: "page-1",
+      version: 3,
+      title: "Plan",
+      source: source("Plan"),
+      state: { done: { W407: true } },
+    });
   });
 
   it("never stores a run secret in a page's source, title or chat card", async () => {
@@ -164,5 +171,42 @@ describe("save_page", () => {
     });
     expect(JSON.stringify(tx.pageVersion.create.mock.calls)).not.toContain(secret);
     expect(JSON.stringify(publishMessage.mock.calls)).not.toContain(secret);
+  });
+
+  it("refreshes a page's data for a routine without touching its code or posting a card", async () => {
+    const tx = {
+      page: {
+        updateMany: vi.fn(async () => ({ count: 1 })),
+        findUniqueOrThrow: vi.fn(async () => ({ title: "Plan" })),
+        update: vi.fn(),
+      },
+      pageVersion: { create: vi.fn() },
+    };
+    const ctx = context(tx, { currentVersion: 3 }) as unknown as { run: { trigger?: string } };
+    ctx.run.trigger = "routine";
+    const result = (await pageTools.save_page!(
+      ctx as never,
+      call({ pageId: "page-1", data: { jobs: [{ id: "W407" }] } }),
+    )) as Record<string, unknown>;
+    expect(result).toMatchObject({ pageId: "page-1", version: 4 });
+    expect(result.warnings).toEqual([
+      'data "jobs" was saved, but the page never calls useSource("jobs"), so it shows nothing.',
+    ]);
+    const saved = (
+      tx.pageVersion.create.mock.calls[0] as unknown as [{ data: { source: string } }]
+    )[0].data.source;
+    expect(saved.startsWith('/* page-sources\n{"jobs":{"snapshot":[{"id":"W407"}],"asOf":"')).toBe(
+      true,
+    );
+    expect(saved.endsWith(source("Plan"))).toBe(true);
+    expect(publishMessage).not.toHaveBeenCalled();
+  });
+
+  it("refuses data that is not keyed by source ids", async () => {
+    const result = (await pageTools.save_page!(
+      context({}, { currentVersion: 3 }),
+      call({ pageId: "page-1", data: { "bad id": 1 } }),
+    )) as Record<string, unknown>;
+    expect(result).toMatchObject({ unchanged: true });
   });
 });

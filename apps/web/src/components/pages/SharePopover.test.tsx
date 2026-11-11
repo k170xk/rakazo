@@ -64,12 +64,14 @@ it("says under a choice only what its title does not", async () => {
   expect(choices()).toEqual([
     "Only you",
     "Anyone at the company with the linkThey sign in to view",
+    "Anyone with the link and passwordFor clients and partners; a password is made for you",
   ]);
   // Turning the link off warns what that does to everyone holding it.
   await show("link");
   expect(choices()).toEqual([
     "Only youThe shared link stops working",
     "Anyone at the company with the linkThey sign in to view",
+    "Anyone with the link and passwordFor clients and partners; a password is made for you",
   ]);
   await act(async () => root.unmount());
 });

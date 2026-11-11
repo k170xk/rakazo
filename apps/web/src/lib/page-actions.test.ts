@@ -18,6 +18,7 @@ const detail = (id: string, title: string): PageDetail => ({
   code: "",
   owner: { name: "Elie", image: null },
   shareUrl: null,
+  sharePassword: null,
 });
 
 describe("pageMutationOptions", () => {
@@ -38,7 +39,7 @@ describe("pageMutationOptions", () => {
     expect(client.getQueryState(linked)?.isInvalidated).toBe(true);
     expect(client.getQueryState(key("B"))?.isInvalidated).toBe(false);
     options.setVisibility.onSuccess(
-      { visibility: "link", shareUrl: "https://rakazo.example/p/a-x" },
+      { visibility: "link", shareUrl: "https://rakazo.example/p/a-x", sharePassword: null },
       { pageId: "A" },
     );
 

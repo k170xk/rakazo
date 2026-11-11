@@ -17,7 +17,8 @@ function guard() {
 }
 addEventListener("message", (event) => {
   const preview = document.getElementById("preview");
-  // A page asks the app to open a link, offer a reply, copy text or make room for its height; only those pass up.
+  // A page asks the app to open a link, offer a reply, copy text, make room for its height, or read or
+  // keep its own saved values; only those pass up.
   if (event.source === preview.contentWindow && parent !== window) {
     const data = event.data;
     // A click or key in the page also activates this shell, which the page cannot fake; the guard
@@ -39,6 +40,10 @@ addEventListener("message", (event) => {
       parent.postMessage({ type: data.type, id: data.id, text: data.text, gesture: fresh }, "*");
     } else if (data && data.type === "rakazo-page:height" && Number.isFinite(data.height)) {
       parent.postMessage({ type: data.type, height: data.height }, "*");
+    } else if (data && data.type === "rakazo-page:state-read") {
+      parent.postMessage({ type: data.type }, "*");
+    } else if (data && data.type === "rakazo-page:state-write" && typeof data.key === "string" && data.key.length <= 64) {
+      parent.postMessage({ type: data.type, key: data.key, value: data.value }, "*");
     }
     return;
   }
@@ -46,6 +51,15 @@ addEventListener("message", (event) => {
   // The app's answer to a copy: only whether it worked comes back down, never clipboard contents.
   if (event.data && event.data.type === "rakazo-page:copied") {
     preview.contentWindow.postMessage({ type: event.data.type, id: String(event.data.id), ok: event.data.ok === true }, "*");
+    return;
+  }
+  // The page's own saved values, and whether each save was kept.
+  if (event.data && event.data.type === "rakazo-page:state") {
+    preview.contentWindow.postMessage({ type: event.data.type, values: event.data.values, writable: event.data.writable === true }, "*");
+    return;
+  }
+  if (event.data && event.data.type === "rakazo-page:state-saved") {
+    preview.contentWindow.postMessage({ type: event.data.type, key: String(event.data.key), ok: event.data.ok === true }, "*");
     return;
   }
   if (typeof event.data !== "string") return;

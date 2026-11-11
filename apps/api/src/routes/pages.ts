@@ -1,12 +1,15 @@
 import { ORPCError } from "@orpc/server";
 import {
   getPage,
+  getPageState,
   listPages,
   PageListCursorError,
   PageShareConflictError,
+  PageStateRefusedError,
   pinPage,
   removePage,
   renamePage,
+  savePageState,
   setPageVisibility,
 } from "../pages.js";
 import type { RouterContext } from "./context.js";
@@ -57,6 +60,19 @@ export function pagesRoutes(ctx: RouterContext) {
       remove: authed.pages.remove.handler(({ context, input }) =>
         removePage(pageDeps(), context.actor, input.pageId),
       ),
+      state: authed.pages.state.handler(({ context, input }) =>
+        getPageState(deps.prisma, context.actor, input.pageId),
+      ),
+      saveState: authed.pages.saveState.handler(async ({ context, input }) => {
+        try {
+          return await savePageState(deps.prisma, context.actor, input);
+        } catch (error) {
+          if (error instanceof PageStateRefusedError) {
+            throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
+          throw error;
+        }
+      }),
     },
   };
 }

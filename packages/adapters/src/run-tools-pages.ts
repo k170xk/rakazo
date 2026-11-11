@@ -1,6 +1,7 @@
 import type { MessageBlock } from "@rakazo/contracts";
 import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
 import { containsSecret, redactSecrets } from "@rakazo/core";
+import { withSourceData } from "@rakazo/page-kit/compile";
 import { checkPageSource, PAGE_KIT_GUIDE } from "@rakazo/page-kit/validate";
 import type { RunContext } from "./run-context.js";
 import { isUniqueViolation, publishMessage } from "./run-messages.js";
@@ -8,6 +9,19 @@ import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { argumentGiven } from "./update-bot-patch.js";
 
 const MAX_EDITS = 50;
+const SOURCE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** New snapshots by source id, as a routine sends them to refresh a page's figures. */
+function parseData(value: unknown): Record<string, unknown> | string {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return 'data must be an object of source ids, e.g. {"jobs": [...]}.';
+  }
+  const entries = Object.entries(value);
+  if (entries.length === 0) return "data names no source.";
+  const bad = entries.find(([id]) => !SOURCE_ID.test(id));
+  if (bad) return `data: "${bad[0]}" is not a source id (letters, digits, _ and -).`;
+  return Object.fromEntries(entries);
+}
 
 type PageEdit = { find: string; replace: string };
 
@@ -56,6 +70,11 @@ async function savePage(ctx: RunContext, call: ToolCall) {
   // Serializers send unused optional fields blank, an empty list included.
   const hasEdits = Array.isArray(args.edits) ? args.edits.length > 0 : argumentGiven(args.edits);
   if (hasSource && hasEdits) return { error: "Send either source or edits, not both." };
+  const hasData =
+    args.data !== null &&
+    typeof args.data === "object" &&
+    !Array.isArray(args.data) &&
+    Object.keys(args.data).length > 0;
   let title: string | undefined;
   if (argumentGiven(args.title)) {
     const parsed = PageTitleSchema.safeParse(args.title);
@@ -76,17 +95,24 @@ async function savePage(ctx: RunContext, call: ToolCall) {
           title: true,
           currentVersion: true,
           versions: { orderBy: { version: "desc" }, take: 1, select: { source: true } },
+          state: { select: { key: true, value: true }, orderBy: { key: "asc" } },
         },
       })
     : null;
   if (pageId && !page) return { error: "No page with that pageId belongs to this bot or chat." };
   const current = page?.versions[0]?.source ?? "";
 
-  if (page && !hasSource && !hasEdits && !title) {
-    // The stored source may hold outside text an earlier run put in the page, so reading it
-    // taints this run like any other outside content; saves only confirm this run's own write.
+  if (page && !hasSource && !hasEdits && !hasData && !title) {
+    // The stored source and what readers saved may hold outside text, so reading them taints
+    // this run like any other outside content; saves only confirm this run's own write.
     ctx.state.tainted = true;
-    return { pageId: page.id, version: page.currentVersion, title: page.title, source: current };
+    return {
+      pageId: page.id,
+      version: page.currentVersion,
+      title: page.title,
+      source: current,
+      state: Object.fromEntries(page.state.map((row) => [row.key, row.value])),
+    };
   }
   if (!page && hasEdits) return { error: "edits need the pageId of the page to change." };
   if (!page && !hasSource) return { error: "A new page needs source." };
@@ -99,6 +125,15 @@ async function savePage(ctx: RunContext, call: ToolCall) {
     const applied = applyPageEdits(current, edits);
     if (!applied.ok) return { error: applied.error, unchanged: true };
     source = applied.source;
+  }
+  let unusedSources: string[] = [];
+  if (hasData) {
+    const data = parseData(args.data);
+    if (typeof data === "string") return { error: data, unchanged: true };
+    const refreshed = withSourceData(source, data, new Date().toISOString());
+    if (!refreshed.ok) return { error: refreshed.error, unchanged: true };
+    source = refreshed.source;
+    unusedSources = refreshed.unused;
   }
   const check = checkPageSource(source);
   if (!check.ok) {
@@ -176,7 +211,14 @@ async function savePage(ctx: RunContext, call: ToolCall) {
     ...saved,
     mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})`,
   };
-  return check.warnings?.length ? { ...result, warnings: check.warnings } : result;
+  const warnings = [
+    ...(check.warnings ?? []),
+    ...unusedSources.map(
+      (id) =>
+        `data "${id}" was saved, but the page never calls useSource("${id}"), so it shows nothing.`,
+    ),
+  ];
+  return warnings.length ? { ...result, warnings } : result;
 }
 
 class PageChangedError extends Error {}

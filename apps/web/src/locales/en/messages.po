@@ -1252,6 +1252,10 @@ msgstr "Any model, with your own key"
 msgid "Anyone at the company with the link"
 msgstr "Anyone at the company with the link"
 
+#: src/components/pages/SharePopover.tsx
+msgid "Anyone with the link and password"
+msgstr "Anyone with the link and password"
+
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/kinds.tsx
@@ -2738,6 +2742,7 @@ msgstr "Conversations"
 msgid "Copied"
 msgstr "Copied"
 
+#: src/components/pages/SharePopover.tsx
 #: src/components/UiCardView.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -4388,6 +4393,10 @@ msgstr "Enter role..."
 msgid "Enter sends a message on computers. On phones and tablets Enter always adds a new line."
 msgstr "Enter sends a message on computers. On phones and tablets Enter always adds a new line."
 
+#: src/pages/SharedPage.tsx
+msgid "Enter the password you were sent with the link."
+msgstr "Enter the password you were sent with the link."
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
 msgstr "Environment ID"
@@ -4802,6 +4811,10 @@ msgstr "Focus message"
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Folders assistants can read"
 msgstr "Folders assistants can read"
+
+#: src/components/pages/SharePopover.tsx
+msgid "For clients and partners; a password is made for you"
+msgstr "For clients and partners; a password is made for you"
 
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
@@ -6407,6 +6420,7 @@ msgstr "New note"
 msgid "New open-work item"
 msgstr "New open-work item"
 
+#: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "New password"
@@ -7089,6 +7103,10 @@ msgstr "Open navigation"
 msgid "Open OCSC Intelligence"
 msgstr "Open OCSC Intelligence"
 
+#: src/pages/SharedPage.tsx
+msgid "Open page"
+msgstr "Open page"
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "Open work"
@@ -7276,6 +7294,7 @@ msgid "Passkeys"
 msgstr "Passkeys"
 
 #: src/components/ConfirmIdentityDialog.tsx
+#: src/components/pages/SharePopover.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7283,6 +7302,10 @@ msgstr "Passkeys"
 #: src/pages/Auth.tsx
 msgid "Password"
 msgstr "Password"
+
+#: src/components/pages/SharePopover.tsx
+msgid "Password copied"
+msgstr "Password copied"
 
 #: src/lib/user-error.ts
 msgid "Password must be {MAX_PASSWORD_LENGTH} characters or fewer"
@@ -8682,6 +8705,10 @@ msgstr "Send recording"
 msgid "Send reset link"
 msgstr "Send reset link"
 
+#: src/components/pages/SharePopover.tsx
+msgid "Send the password separately from the link."
+msgstr "Send the password separately from the link."
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Send with Enter"
 msgstr "Send with Enter"
@@ -8798,6 +8825,10 @@ msgstr "Share your dashboards, tools and functions so colleagues can use them to
 #: src/components/pages/SharePopover.tsx
 msgid "Share, anyone at the company with the link can view"
 msgstr "Share, anyone at the company with the link can view"
+
+#: src/components/pages/SharePopover.tsx
+msgid "Share, anyone with the link and password can view"
+msgstr "Share, anyone with the link and password can view"
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -9470,6 +9501,10 @@ msgstr "Testing…"
 msgid "That file could not be read. Try saving it again, or paste its text in."
 msgstr "That file could not be read. Try saving it again, or paste its text in."
 
+#: src/pages/SharedPage.tsx
+msgid "That password is not right. Check it and try again."
+msgstr "That password is not right. Check it and try again."
+
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "The bot can use the file but won't see the picture."
@@ -9744,6 +9779,10 @@ msgstr "This page couldn't be shown."
 msgid "This page couldn't load"
 msgstr "This page couldn't load"
 
+#: src/pages/SharedPage.tsx
+msgid "This page is password protected"
+msgstr "This page is password protected"
+
 #: src/components/pages/PageViewHost.tsx
 #: src/pages/SharedPage.tsx
 msgid "This page isn't available"
@@ -9871,6 +9910,10 @@ msgstr "Tokens"
 #: src/pages/KnowledgeSection.tsx
 msgid "Tone, spelling, sentence length, words to avoid"
 msgstr "Tone, spelling, sentence length, words to avoid"
+
+#: src/pages/SharedPage.tsx
+msgid "Too many tries. Wait 15 minutes and try again."
+msgstr "Too many tries. Wait 15 minutes and try again."
 
 #: src/pages/RoutineEditor.tsx
 msgid "Tool arguments (JSON)"
@@ -10633,6 +10676,10 @@ msgstr "Words:"
 #: src/components/SignupSurvey.tsx
 msgid "Work"
 msgstr "Work"
+
+#: src/pages/SharedPage.tsx
+msgid "Work at OCSC? Sign in instead"
+msgstr "Work at OCSC? Sign in instead"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx

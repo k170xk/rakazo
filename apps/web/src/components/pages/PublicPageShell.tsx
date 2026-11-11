@@ -3,6 +3,7 @@ import { Button } from "@rakazo/ui-web";
 import { Check, Link } from "lucide-react";
 import { useState } from "react";
 import { useCopyText } from "../../lib/copy-text";
+import type { PageStateStore } from "../../lib/page-state";
 import { DownloadPdfButton } from "./DownloadPdfButton";
 import { PageFrame } from "./PageFrame";
 import { ManualCopy } from "./SharePopover";
@@ -11,7 +12,15 @@ const ACTION =
   "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] leading-[18px] font-medium whitespace-nowrap text-foreground ring-[0.5px] ring-border outline-none hover:bg-foreground/[0.08] focus-visible:ring-2 focus-visible:ring-ring";
 
 /** A shared page for someone without a Rakazo account: a slim header and the page. */
-export function PublicPageShell({ title, document }: { title: string; document: string | null }) {
+export function PublicPageShell({
+  title,
+  document,
+  state,
+}: {
+  title: string;
+  document: string | null;
+  state?: PageStateStore;
+}) {
   const { t } = useLingui();
   const [copied, copy, copyFailed] = useCopyText();
   const [height, setHeight] = useState(0);
@@ -65,7 +74,13 @@ export function PublicPageShell({ title, document }: { title: string; document: 
         style={{ height: height || undefined }}
       >
         {document !== null ? (
-          <PageFrame document={document} title={title} interactive onHeight={setHeight} />
+          <PageFrame
+            document={document}
+            title={title}
+            interactive
+            onHeight={setHeight}
+            state={state}
+          />
         ) : null}
       </div>
     </div>

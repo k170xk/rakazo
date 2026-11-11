@@ -85,7 +85,13 @@ export const PAGE_HOOKS = [
 ] as const;
 
 /** Functions from the kit that are not components: the theme, sources and diagram layout. */
-export const PAGE_HELPERS = ["useTheme", "useSource", "computeDAGLayout", "copyText"] as const;
+export const PAGE_HELPERS = [
+  "useTheme",
+  "useSource",
+  "usePageState",
+  "computeDAGLayout",
+  "copyText",
+] as const;
 
 export type PageHelperName = (typeof PAGE_HELPERS)[number];
 

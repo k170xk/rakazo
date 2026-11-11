@@ -1248,6 +1248,10 @@ msgstr "使用自己的金鑰連接任何模型"
 msgid "Anyone at the company with the link"
 msgstr ""
 
+#: src/components/pages/SharePopover.tsx
+msgid "Anyone with the link and password"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/kinds.tsx
@@ -2734,6 +2738,7 @@ msgstr "對話"
 msgid "Copied"
 msgstr "已複製"
 
+#: src/components/pages/SharePopover.tsx
 #: src/components/UiCardView.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
@@ -4376,6 +4381,10 @@ msgstr ""
 msgid "Enter sends a message on computers. On phones and tablets Enter always adds a new line."
 msgstr ""
 
+#: src/pages/SharedPage.tsx
+msgid "Enter the password you were sent with the link."
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
 msgstr ""
@@ -4790,6 +4799,10 @@ msgstr "移至訊息欄"
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Folders assistants can read"
 msgstr "Folders assistants can read"
+
+#: src/components/pages/SharePopover.tsx
+msgid "For clients and partners; a password is made for you"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
@@ -6390,6 +6403,7 @@ msgstr ""
 msgid "New open-work item"
 msgstr "新的待辦"
 
+#: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "New password"
@@ -7072,6 +7086,10 @@ msgstr "開啟導覽"
 msgid "Open OCSC Intelligence"
 msgstr ""
 
+#: src/pages/SharedPage.tsx
+msgid "Open page"
+msgstr ""
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "待辦"
@@ -7259,6 +7277,7 @@ msgid "Passkeys"
 msgstr "通行金鑰"
 
 #: src/components/ConfirmIdentityDialog.tsx
+#: src/components/pages/SharePopover.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7266,6 +7285,10 @@ msgstr "通行金鑰"
 #: src/pages/Auth.tsx
 msgid "Password"
 msgstr "密碼"
+
+#: src/components/pages/SharePopover.tsx
+msgid "Password copied"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Password must be {MAX_PASSWORD_LENGTH} characters or fewer"
@@ -8665,6 +8688,10 @@ msgstr "傳送錄製內容"
 msgid "Send reset link"
 msgstr "傳送重設連結"
 
+#: src/components/pages/SharePopover.tsx
+msgid "Send the password separately from the link."
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Send with Enter"
 msgstr "按 Enter 傳送"
@@ -8780,6 +8807,10 @@ msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 msgid "Share, anyone at the company with the link can view"
+msgstr ""
+
+#: src/components/pages/SharePopover.tsx
+msgid "Share, anyone with the link and password can view"
 msgstr ""
 
 #: src/components/pages/PagesList.tsx
@@ -9450,6 +9481,10 @@ msgstr "正在測試…"
 msgid "That file could not be read. Try saving it again, or paste its text in."
 msgstr ""
 
+#: src/pages/SharedPage.tsx
+msgid "That password is not right. Check it and try again."
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "機器人可以使用這個檔案，但看不到圖片內容。"
@@ -9724,6 +9759,10 @@ msgstr "無法顯示此頁面。"
 msgid "This page couldn't load"
 msgstr "無法載入此頁面"
 
+#: src/pages/SharedPage.tsx
+msgid "This page is password protected"
+msgstr ""
+
 #: src/components/pages/PageViewHost.tsx
 #: src/pages/SharedPage.tsx
 msgid "This page isn't available"
@@ -9850,6 +9889,10 @@ msgstr "Token"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Tone, spelling, sentence length, words to avoid"
+msgstr ""
+
+#: src/pages/SharedPage.tsx
+msgid "Too many tries. Wait 15 minutes and try again."
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -10608,6 +10651,10 @@ msgstr ""
 #: src/components/SignupSurvey.tsx
 msgid "Work"
 msgstr "工作"
+
+#: src/pages/SharedPage.tsx
+msgid "Work at OCSC? Sign in instead"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx

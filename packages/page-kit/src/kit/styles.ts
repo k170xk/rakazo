@@ -129,6 +129,13 @@ body{font-size:1rem}
 .rk-table-scroll[data-long] thead th{position:sticky;top:0;z-index:1;box-shadow:0 1px 0 var(--rk-line)}
 .rk-table tr>:first-child{border-left:0}
 .rk-table tbody tr:hover td{background:var(--rk-hover)}
+.rk-table tbody tr[data-selectable]{cursor:pointer}
+.rk-table tbody tr[data-selectable]:focus-visible{outline:2px solid var(--ring);outline-offset:-2px}
+.rk-table tbody tr[data-selected] td{background:color-mix(in srgb,var(--primary) 12%,transparent)}
+.rk-row[data-selectable]{cursor:pointer;margin:0 -.5rem;padding-left:.5rem;padding-right:.5rem;border-radius:8px}
+.rk-row[data-selectable]:hover{background:var(--rk-hover)}
+.rk-row[data-selectable]:focus-visible{outline:2px solid var(--ring);outline-offset:-2px}
+.rk-row[data-selected]{background:color-mix(in srgb,var(--primary) 12%,transparent);box-shadow:inset 3px 0 0 var(--primary)}
 .rk-table .rk-align-end{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .rk-table .rk-align-center{text-align:center}
 .rk-table .rk-emphasis{font-weight:500}

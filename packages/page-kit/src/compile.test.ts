@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { pageViewerCode } from "./compile.js";
+import { declaredSources, pageViewerCode, withSourceData } from "./compile.js";
 
 /** Runs viewer code the way the runtime's factory does, with only `exports` and `require`. */
 function run(code: string) {
@@ -36,5 +36,33 @@ describe("pageViewerCode", () => {
       "The page-sources comment at the top of the page is not valid JSON.",
     );
     expect(() => run(badSyntax)).toThrow(/Unexpected token/);
+  });
+});
+
+describe("withSourceData", () => {
+  const page = `/* page-sources\n{"sales": {"snapshot": {"total": 1}, "asOf": "2026-11-01"}, "team": {"snapshot": []}}\n*/\nexport default function P() { const s = useSource("sales"); return null; }`;
+
+  it("replaces the named snapshots and keeps the rest of the page", () => {
+    const next = withSourceData(page, { sales: { total: 2, note: "a */ b" } }, "2026-11-11");
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    expect(next.unused).toEqual([]);
+    expect(
+      next.source.endsWith(
+        `export default function P() { const s = useSource("sales"); return null; }`,
+      ),
+    ).toBe(true);
+    expect(declaredSources(next.source)).toBe(
+      `globalThis.__rakazoPageSources=${JSON.stringify({
+        sales: { snapshot: { total: 2, note: "a */ b" }, asOf: "2026-11-11" },
+        team: { snapshot: [] },
+      })};`,
+    );
+  });
+
+  it("adds the comment to a page without one and names sources the page never reads", () => {
+    const next = withSourceData("export default () => null;", { jobs: [1] }, "2026-11-11");
+    expect(next.ok && next.unused).toEqual(["jobs"]);
+    expect(next.ok && declaredSources(next.source)).toContain('"jobs"');
   });
 });

@@ -1798,9 +1798,9 @@ model Artifact {
 
   // Null on the first version; that row's id is the family's stable id.
   rootArtifactId String?
-  rootArtifact   Artifact?  @relation("ArtifactVersions", fields: [rootArtifactId], references: [id], onDelete: Cascade)
-  versions       Artifact[] @relation("ArtifactVersions")
-  version        Int        @default(1)
+  rootArtifact   Artifact?        @relation("ArtifactVersions", fields: [rootArtifactId], references: [id], onDelete: Cascade)
+  versions       Artifact[]       @relation("ArtifactVersions")
+  version        Int              @default(1)
   // Client-chosen per upload so a retried upload that already landed returns this row.
   clientNonce    String?
   threadNotes    ThreadFileNote[]
@@ -1815,28 +1815,34 @@ model Artifact {
 
 /// A page a bot built: a report, dashboard or tracker the user opens from chat and can share.
 model Page {
-  id             String        @id @default(cuid())
-  spaceId        String
-  space          Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  botId          String?
-  bot            Bot?          @relation(fields: [botId], references: [id], onDelete: SetNull)
-  groupId        String?
-  group          ChatGroup?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  title          String
-  visibility     String        @default("private")
+  id                    String        @id @default(cuid())
+  spaceId               String
+  space                 Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  botId                 String?
+  bot                   Bot?          @relation(fields: [botId], references: [id], onDelete: SetNull)
+  groupId               String?
+  group                 ChatGroup?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  title                 String
+  visibility            String        @default("private")
   /// sha256 of the link token; the public read looks pages up by it.
-  shareTokenHash String?       @unique
+  shareTokenHash        String?       @unique
   /// The link token itself, sealed in the secret store so the owner can copy the link again.
-  shareSecretId  String?       @unique
-  shareSecret    Secret?       @relation(fields: [shareSecretId], references: [id], onDelete: SetNull)
-  pinnedAt       DateTime?
-  currentVersion Int           @default(1)
-  createdAt      DateTime      @default(now())
+  shareSecretId         String?       @unique
+  shareSecret           Secret?       @relation("PageShareToken", fields: [shareSecretId], references: [id], onDelete: SetNull)
+  /// scrypt of the password a link open to anyone asks for; null unless visibility is "public".
+  sharePasswordHash     String?
+  /// That password, sealed in the secret store so the owner can copy it again.
+  sharePasswordSecretId String?       @unique
+  sharePasswordSecret   Secret?       @relation("PageSharePassword", fields: [sharePasswordSecretId], references: [id], onDelete: SetNull)
+  pinnedAt              DateTime?
+  currentVersion        Int           @default(1)
+  createdAt             DateTime      @default(now())
   /// Set when the page's content or title changes; pinning or sharing it is not an update.
-  updatedAt      DateTime      @default(now())
-  versions       PageVersion[]
+  updatedAt             DateTime      @default(now())
+  versions              PageVersion[]
+  state                 PageState[]
 
   @@index([spaceId, userId, updatedAt])
   @@index([botId])
@@ -1857,6 +1863,20 @@ model PageVersion {
 
   @@unique([pageId, version])
   @@map("page_versions")
+}
+
+/// What a page saves for itself through usePageState, shared by everyone who opens it.
+model PageState {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  key       String
+  value     Json
+  updatedAt DateTime @default(now()) @updatedAt
+  updatedBy String?
+
+  @@unique([pageId, key])
+  @@map("page_state")
 }
 
 model UsageRecord {
@@ -1940,7 +1960,8 @@ model Secret {
   mcpServers        McpServer[]
   spaceMemoryConfig SpaceMemoryConfig?
   agentSecret       AgentSecret?
-  pageShare         Page?
+  pageShare         Page?              @relation("PageShareToken")
+  pageSharePassword Page?              @relation("PageSharePassword")
 
   @@index([userId, spaceId])
   @@map("secrets")

@@ -173,7 +173,9 @@ export function savePageVisibility(
 
 /** The link to copy, share or open: only once anyone with it can view the page. */
 export function pageShareLink(state: PageShareState): string | null {
-  return state.pending === null && state.visibility === "link" ? state.shareUrl : null;
+  return state.pending === null && state.visibility !== "private" && state.visibility !== null
+    ? state.shareUrl
+    : null;
 }
 
 const pageReads = new Map<string, { read: Promise<PageDetail>; at: number }>();

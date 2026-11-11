@@ -213,6 +213,8 @@ import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./m
 import {
   PAGE_LIST_MAX_LIMIT,
   PageDetailSchema,
+  PageStateKeySchema,
+  PageStateValuesSchema,
   PageSummarySchema,
   PageTitleSchema,
   PageVisibilitySchema,
@@ -1699,12 +1701,30 @@ export const appContract = {
      * read; turning it off breaks the old link, so the next turn-on issues a new one.
      */
     setVisibility: oc
-      .input(z.strictObject({ pageId: Id, visibility: PageVisibilitySchema }))
+      .input(
+        z.strictObject({
+          pageId: Id,
+          visibility: PageVisibilitySchema,
+          /** With "public", replaces the password so the old one stops working. */
+          renewPassword: z.boolean().optional(),
+        }),
+      )
       .output(
-        z.strictObject({ visibility: PageVisibilitySchema, shareUrl: z.string().nullable() }),
+        z.strictObject({
+          visibility: PageVisibilitySchema,
+          shareUrl: z.string().nullable(),
+          sharePassword: z.string().nullable(),
+        }),
       ),
     pin: oc.input(z.strictObject({ pageId: Id, pinned: z.boolean() })).output(PageSummarySchema),
     remove: oc.input(z.strictObject({ pageId: Id })).output(z.object({ ok: z.literal(true) })),
+    /** What the page saved for itself with usePageState. */
+    state: oc
+      .input(z.strictObject({ pageId: Id }))
+      .output(z.strictObject({ values: PageStateValuesSchema })),
+    saveState: oc
+      .input(z.strictObject({ pageId: Id, key: PageStateKeySchema, value: z.unknown() }))
+      .output(z.object({ ok: z.literal(true) })),
   },
   usage: {
     list: oc.output(z.array(UsageRecordSchema)),

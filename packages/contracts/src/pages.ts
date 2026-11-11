@@ -20,8 +20,14 @@ export const PageSourceSchema = z
     `Page source must fit within ${PAGE_SOURCE_MAX_BYTES} UTF-8 bytes`,
   );
 
-export const PageVisibilitySchema = z.enum(["private", "link"]);
+/** "link" opens for people signed in to this company; "public" for anyone with the password too. */
+export const PageVisibilitySchema = z.enum(["private", "link", "public"]);
 export type PageVisibility = z.infer<typeof PageVisibilitySchema>;
+
+/** A page anyone holding its link can open, signed in or with its password. */
+export function pageIsShared(visibility: PageVisibility): boolean {
+  return visibility !== "private";
+}
 
 /**
  * A page title is one line: control characters and line breaks fold into single spaces, since
@@ -54,6 +60,8 @@ export const PageDetailSchema = z.strictObject({
   owner: z.strictObject({ name: z.string(), image: z.string().nullable() }),
   /** Set while anyone with the link can open the page. */
   shareUrl: z.string().nullable(),
+  /** Set while the link is open to anyone, who must type it. */
+  sharePassword: z.string().nullable(),
 });
 export type PageDetail = z.infer<typeof PageDetailSchema>;
 
@@ -64,6 +72,8 @@ export const SharedPageSchema = z.strictObject({
   code: z.string(),
   version: z.number().int().positive(),
   updatedAt: IsoDate,
+  /** Whether this reader may save the page's own data; a password reader only reads it. */
+  canSaveState: z.boolean(),
 });
 export type SharedPage = z.infer<typeof SharedPageSchema>;
 
@@ -71,6 +81,8 @@ export type SharedPage = z.infer<typeof SharedPageSchema>;
 const PAGE_SHARE_TOKEN_LENGTH = 43;
 
 export const SHARED_PAGE_PATH_PREFIX = "/api/v1/pages/shared/";
+/** The header a password reader sends with each shared page request. */
+export const SHARED_PAGE_PASSWORD_HEADER = "x-page-password";
 
 /** `<web origin>/p/<title slug>-<token>`; the token is the last 43 characters. */
 export function pageShareUrl(webOrigin: string, title: string, token: string): string {
@@ -89,3 +101,16 @@ export function pageShareTokenFromSlug(segment: string): string | null {
   const token = segment.slice(-PAGE_SHARE_TOKEN_LENGTH);
   return token.length === PAGE_SHARE_TOKEN_LENGTH && /^[A-Za-z0-9_-]+$/.test(token) ? token : null;
 }
+
+/** What a page keeps for itself (usePageState): one JSON value per key, shared by its readers. */
+export const PAGE_STATE_KEY = /^[A-Za-z0-9_.:-]{1,64}$/;
+export const PAGE_STATE_MAX_BYTES = 64_000;
+export const PAGE_STATE_MAX_KEYS = 200;
+export const PageStateKeySchema = z.string().regex(PAGE_STATE_KEY);
+export const PageStateValuesSchema = z.record(z.string(), z.unknown());
+export type PageStateValues = z.infer<typeof PageStateValuesSchema>;
+/** A null value forgets the key. */
+export const PageStateWriteSchema = z.strictObject({
+  key: PageStateKeySchema,
+  value: z.unknown(),
+});

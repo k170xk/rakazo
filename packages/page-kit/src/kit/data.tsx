@@ -175,8 +175,41 @@ export type Row = {
 
 const present = (node: unknown) => node != null && node !== "" && node !== false;
 
-/** A hairline-separated list: optional lead, the title with its status, detail, and meta. */
-export function Rows({ rows = [] }: { rows?: Row[] }) {
+/** Click or Enter/Space on a row picks it, for pages that open a detail view. */
+function selectable(
+  index: number,
+  onSelect: ((index: number) => void) | undefined,
+  selected?: number,
+) {
+  if (typeof onSelect !== "function") return {};
+  return {
+    tabIndex: 0,
+    "data-selectable": true,
+    "data-selected": selected === index || undefined,
+    "aria-current": selected === index ? ("true" as const) : undefined,
+    onClick: () => onSelect(index),
+    onKeyDown: (event: { key: string; preventDefault: () => void }) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onSelect(index);
+      }
+    },
+  };
+}
+
+/**
+ * A hairline-separated list: optional lead, the title with its status, detail, and meta. With
+ * onSelect each row can be picked, and selected marks the picked one.
+ */
+export function Rows({
+  rows = [],
+  onSelect,
+  selected,
+}: {
+  rows?: Row[];
+  onSelect?: (index: number) => void;
+  selected?: number;
+}) {
   const shown = objectItems(rows);
   if (shown.length === 0) return null;
   const leads = shown.some((row) => present(row.lead));
@@ -188,7 +221,7 @@ export function Rows({ rows = [] }: { rows?: Row[] }) {
             ? row.status
             : undefined;
         return (
-          <li className="rk-row" key={index}>
+          <li className="rk-row" key={index} {...selectable(index, onSelect, selected)}>
             {leads ? <span className="rk-row-lead">{row.lead}</span> : null}
             <div className="rk-row-main">
               <div className="rk-row-title">
@@ -392,12 +425,17 @@ export function Table({
   align,
   emphasis,
   sortable = false,
+  onSelect,
+  selected,
 }: {
   columns?: ReactNode[];
   rows?: TableCell[][] | Record<string, TableCell>[];
   align?: Align[];
   emphasis?: number;
   sortable?: boolean;
+  /** Picks a row by its index in rows, whatever the sort or filter shows. */
+  onSelect?: (index: number) => void;
+  selected?: number;
 }) {
   const words = useWords();
   const { heads, keys } = tableColumns(columns);
@@ -528,7 +566,7 @@ export function Table({
             </thead>
             <tbody>
               {visible.map(({ row, index: rowIndex }) => (
-                <tr key={rowIndex}>
+                <tr key={rowIndex} {...selectable(rowIndex, onSelect, selected)}>
                   {indexes.map((index) => (
                     <td key={index} className={cellClass(index)}>
                       {cellContent(row[index])}

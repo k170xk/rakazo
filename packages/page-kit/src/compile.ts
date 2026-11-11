@@ -14,7 +14,7 @@ const SOURCES_PRAGMA = /^\uFEFF?\s*\/\*(?!\*)[ \t]*page-sources[ \t]*\r?\n([\s\S
 
 /**
  * A page may open with a comment declaring data sources: `/* page-sources` then a JSON object
- * of snapshots keyed by id. useSource reads them back; nothing refreshes them yet.
+ * of snapshots keyed by id. useSource reads them back; a save with new data rewrites them.
  */
 export function declaredSources(source: string): string {
   const match = SOURCES_PRAGMA.exec(source);
@@ -41,4 +41,39 @@ export function pageViewerCode(source: string, compiled?: string): string {
   } catch (error) {
     return `throw new Error(${JSON.stringify(error instanceof Error ? error.message : String(error))});`;
   }
+}
+
+/**
+ * The page with new snapshots for some of its sources, each stamped `asOf`, and the rest of the
+ * page untouched, so a routine can refresh a page's figures without rewriting its code. A page
+ * without the comment gets one.
+ */
+export function withSourceData(
+  source: string,
+  data: Record<string, unknown>,
+  asOf: string,
+): { ok: true; source: string; unused: string[] } | { ok: false; error: string } {
+  const match = SOURCES_PRAGMA.exec(source);
+  let declared: Record<string, unknown> = {};
+  if (match) {
+    try {
+      const parsed: unknown = JSON.parse(match[1]!);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        declared = parsed as Record<string, unknown>;
+      }
+    } catch {
+      return {
+        ok: false,
+        error: "The page-sources comment at the top of the page is not valid JSON.",
+      };
+    }
+  }
+  for (const [id, value] of Object.entries(data)) declared[id] = { snapshot: value, asOf };
+  // "*/" can only sit inside a JSON string, where "\/" reads back the same.
+  const header = `/* page-sources\n${JSON.stringify(declared).replaceAll("*/", "*\\/")}\n*/`;
+  const rest = match ? source.slice(match.index + match[0].length) : `\n${source}`;
+  const unused = Object.keys(data).filter(
+    (id) => !rest.includes(`useSource("${id}")`) && !rest.includes(`useSource('${id}')`),
+  );
+  return { ok: true, source: header + rest, unused };
 }

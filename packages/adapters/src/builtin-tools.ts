@@ -792,7 +792,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_page",
     description:
-      'Save a page the user opens from the chat: a dashboard, report, tracker or comparison. Pass the page as JSX source written against the page kit; call with {"help": true} first for the kit guide. Problems come back with line numbers and nothing is saved. To change a page, pass its pageId with edits (applied together, or not at all) or full source; pass only pageId to read its current source.',
+      'Build or update an interactive OCSC app the user opens from the chat: a dashboard, tracker, planner, register, calculator or report. Pass the page as JSX source written against the page kit; call with {"help": true} first for the kit guide and design rules. Problems come back with line numbers and nothing is saved. To change a page, pass its pageId with edits (applied together, or not at all) or full source; to refresh its figures (as a routine does), pass pageId with data, which replaces those useSource snapshots and leaves the code alone; pass only pageId to read its current source and what its readers saved.',
     inputSchema: {
       type: "object",
       properties: {
@@ -800,6 +800,11 @@ export const builtinAgentTools: ConnectorTool[] = [
         pageId: { type: "string", description: "The page to read or update." },
         title: { type: "string", description: "Page title; required for a new page." },
         source: { type: "string", description: "The whole page as JSX." },
+        data: {
+          type: "object",
+          description:
+            'New snapshots for the page\'s useSource ids, e.g. {"jobs": [...]}; each is stamped with the time of this save.',
+        },
         edits: {
           type: "array",
           description: "Changes to the current source; each find must occur exactly once.",

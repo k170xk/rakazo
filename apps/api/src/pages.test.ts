@@ -1,7 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import { getPage, removePage, setPageVisibility } from "./pages.js";
+import { getPage, removePage, setPageVisibility, sharePasswordMatches } from "./pages.js";
 
-type Row = { id: string; title: string; visibility: string; shareSecretId: string | null };
+type Row = {
+  id: string;
+  title: string;
+  visibility: string;
+  shareSecretId: string | null;
+  sharePasswordHash: string | null;
+  sharePasswordSecretId: string | null;
+};
 
 /** An in-memory page and its secrets, with transactions that roll back on a throw. */
 function fakeDeps(hooks: { onUpdate?: (attempt: number) => void } = {}) {
@@ -10,6 +17,8 @@ function fakeDeps(hooks: { onUpdate?: (attempt: number) => void } = {}) {
     title: "Plan",
     visibility: "private",
     shareSecretId: null,
+    sharePasswordHash: null,
+    sharePasswordSecretId: null,
   };
   let secrets = new Map<string, { id: string; ciphertext: string }>();
   const tokens = new Map<string, string>();
@@ -28,11 +37,15 @@ function fakeDeps(hooks: { onUpdate?: (attempt: number) => void } = {}) {
   });
   const install = (id: string, ciphertext: string) => {
     secrets.set(id, { id, ciphertext });
-    page = { ...page!, visibility: "link", shareSecretId: id };
+    page = { ...page!, shareSecretId: id };
   };
   const tx = {
     page: {
-      findUnique: async () => (page ? { shareSecretId: page.shareSecretId } : null),
+      findUnique: async () => (page ? { ...page } : null),
+      update: async ({ data }: { data: Partial<Row> }) => {
+        page = { ...page!, ...data };
+        return page;
+      },
       updateMany: async ({ where, data }: { where: Row; data: Partial<Row> }) => {
         hooks.onUpdate?.(updates++);
         if (!page || page.shareSecretId !== where.shareSecretId) return { count: 0 };
@@ -42,7 +55,7 @@ function fakeDeps(hooks: { onUpdate?: (attempt: number) => void } = {}) {
       delete: async () => {
         const deleted = page!;
         page = null;
-        return { shareSecretId: deleted.shareSecretId };
+        return deleted;
       },
     },
     secret: {
@@ -50,13 +63,21 @@ function fakeDeps(hooks: { onUpdate?: (attempt: number) => void } = {}) {
         secrets.set(data.id, { id: data.id, ciphertext: data.ciphertext });
       },
       findUnique: async ({ where }: { where: { id: string } }) => secrets.get(where.id) ?? null,
-      deleteMany: async ({ where }: { where: { id: string } }) => {
-        secrets.delete(where.id);
+      findMany: async ({ where }: { where: { id: { in: string[] } } }) =>
+        where.id.in.flatMap((id) => secrets.get(id) ?? []),
+      deleteMany: async ({ where }: { where: { id: string | { in: string[] } } }) => {
+        for (const id of typeof where.id === "string" ? [where.id] : where.id.in) {
+          secrets.delete(id);
+        }
       },
     },
   };
   const prisma = {
-    page: { findFirst: async () => (page ? summary(page) : null) },
+    page: {
+      findFirst: async () => (page ? summary(page) : null),
+      findUnique: tx.page.findUnique,
+      update: tx.page.update,
+    },
     pageVersion: { findUnique: async () => ({ code: "compiled" }) },
     user: { findUnique: async () => ({ name: "Owner", image: null }) },
     secret: tx.secret,
@@ -100,8 +121,8 @@ function fakeDeps(hooks: { onUpdate?: (attempt: number) => void } = {}) {
 
 const actor = { userId: "user-1", spaceId: "space-1" } as never;
 const signal = new AbortController().signal;
-const share = (deps: unknown, visibility: "link" | "private") =>
-  setPageVisibility(deps as never, actor, { pageId: "page-1", visibility }, signal);
+const share = (deps: unknown, visibility: "link" | "private" | "public", renewPassword?: boolean) =>
+  setPageVisibility(deps as never, actor, { pageId: "page-1", visibility, renewPassword }, signal);
 
 describe("page links", () => {
   it("gives a later or racing turn-on the link the page already has", async () => {
@@ -154,6 +175,7 @@ describe("page links", () => {
     await expect(share(fake.deps, "private")).resolves.toEqual({
       visibility: "private",
       shareUrl: null,
+      sharePassword: null,
     });
     expect(fake.page()?.shareSecretId).toBeNull();
   });
@@ -193,5 +215,42 @@ describe("page links", () => {
     fake.store.load.mockRejectedValue(new Error("provider down"));
     const detail = await getPage(fake.deps, actor, { pageId: "page-1", link: true });
     expect(detail).toMatchObject({ code: "compiled", visibility: "link", shareUrl: null });
+  });
+
+  it("gives a link open to anyone a password the owner can read again or renew", async () => {
+    const fake = fakeDeps();
+    const opened = await share(fake.deps, "public");
+    expect(opened.visibility).toBe("public");
+    expect(opened.sharePassword).toMatch(/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/);
+    const hash = fake.page()!.sharePasswordHash!;
+    expect(sharePasswordMatches(hash, opened.sharePassword!)).toBe(true);
+    expect(sharePasswordMatches(hash, opened.sharePassword!.toLowerCase().replace(/-/g, " "))).toBe(
+      true,
+    );
+    expect(sharePasswordMatches(hash, "WRONG-PASS-WORD")).toBe(false);
+    expect(hash).not.toContain(opened.sharePassword!);
+
+    const again = await share(fake.deps, "public");
+    expect(again.sharePassword).toBe(opened.sharePassword);
+    const detail = await getPage(fake.deps, actor, { pageId: "page-1", link: true });
+    expect(detail.sharePassword).toBe(opened.sharePassword);
+
+    const renewed = await share(fake.deps, "public", true);
+    expect(renewed.sharePassword).not.toBe(opened.sharePassword);
+    expect(renewed.shareUrl).toBe(opened.shareUrl);
+    expect(sharePasswordMatches(fake.page()!.sharePasswordHash!, opened.sharePassword!)).toBe(
+      false,
+    );
+  });
+
+  it("drops the password when the link goes back to signed-in people or off", async () => {
+    const fake = fakeDeps();
+    await share(fake.deps, "public");
+    const company = await share(fake.deps, "link");
+    expect(company).toMatchObject({ visibility: "link", sharePassword: null });
+    expect(fake.page()).toMatchObject({ sharePasswordHash: null, sharePasswordSecretId: null });
+    await share(fake.deps, "public");
+    await removePage(fake.deps, actor, "page-1");
+    expect(fake.secretIds()).toEqual([]);
   });
 });

@@ -38,7 +38,7 @@ export function pageMutationOptions(queries: SpaceQueries, queryClient: QueryCli
       mutationFn: (input: Parameters<typeof queries.pages.setVisibility.call>[0]) =>
         queries.pages.setVisibility.call(input),
       onSuccess: (
-        result: Pick<PageDetail, "visibility" | "shareUrl">,
+        result: Pick<PageDetail, "visibility" | "shareUrl" | "sharePassword">,
         input: { pageId: string },
       ) => {
         patch(input.pageId, result);

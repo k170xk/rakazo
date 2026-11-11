@@ -10,7 +10,16 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@rakazo/ui-web";
-import { ArrowUpRight, Check, Globe, Lock, Share } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  Check,
+  Globe,
+  KeyRound,
+  Lock,
+  RefreshCw,
+  Share,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useCopyText } from "../../lib/copy-text";
 
@@ -44,12 +53,17 @@ function OwnerImage({ initial, image }: { initial: string | null; image: string 
   );
 }
 
-/** Who can open a page: only its owner, or anyone holding the link. */
+/**
+ * Who can open a page: only its owner, people at the company holding the link, or anyone
+ * holding the link and the password it was given.
+ */
 export function SharePopover({
   title,
   owner,
   visibility,
   shareUrl,
+  sharePassword = null,
+  onRenewPassword,
   onVisibilityChange,
   pending = false,
   error = null,
@@ -62,6 +76,10 @@ export function SharePopover({
   /** Null when a change's answer was lost and the page couldn't be read since: either choice sends. */
   visibility: PageVisibility | null;
   shareUrl: string | null;
+  /** Shown while the link is open to anyone, who must type it. */
+  sharePassword?: string | null;
+  /** Replaces the password, so anyone holding the old one is locked out. */
+  onRenewPassword?: () => void;
   onVisibilityChange: (visibility: PageVisibility) => void;
   /** A change is being saved; the choice waits for it. */
   pending?: boolean;
@@ -73,7 +91,8 @@ export function SharePopover({
   const { t } = useLingui();
   const shownOwner = accountDisplay(owner, t`You`);
   const [copied, copy, copyFailed] = useCopyText();
-  const shared = visibility === "link";
+  const [passwordCopied, copyPassword, passwordCopyFailed] = useCopyText();
+  const shared = visibility === "link" || visibility === "public";
   const options: { value: PageVisibility; title: string; detail?: string; icon: ReactNode }[] = [
     {
       value: "private",
@@ -86,6 +105,12 @@ export function SharePopover({
       value: "link",
       title: t`Anyone at the company with the link`,
       detail: t`They sign in to view`,
+      icon: <Building2 className="size-4 text-foreground/70!" strokeWidth={1.5} />,
+    },
+    {
+      value: "public",
+      title: t`Anyone with the link and password`,
+      detail: t`For clients and partners; a password is made for you`,
       icon: <Globe className="size-4 text-foreground/70!" strokeWidth={1.5} />,
     },
   ];
@@ -93,11 +118,13 @@ export function SharePopover({
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger
         aria-label={
-          shared
-            ? t`Share, anyone at the company with the link can view`
-            : compact
-              ? t`Share`
-              : undefined
+          visibility === "public"
+            ? t`Share, anyone with the link and password can view`
+            : shared
+              ? t`Share, anyone at the company with the link can view`
+              : compact
+                ? t`Share`
+                : undefined
         }
         data-shared={shared || undefined}
         className={
@@ -194,8 +221,49 @@ export function SharePopover({
             </div>
             {copyFailed ? <ManualCopy url={shareUrl} /> : null}
             <span role="status" className="sr-only">
-              {copied ? t`Link copied` : ""}
+              {copied ? t`Link copied` : passwordCopied ? t`Password copied` : ""}
             </span>
+          </div>
+        ) : null}
+        {visibility === "public" && sharePassword ? (
+          <div className="flex flex-col gap-2 px-4" data-testid="page-share-password">
+            <div className="flex items-center gap-3 rounded-[12px] bg-foreground/[0.04] px-3 py-2.5">
+              <KeyRound className="size-4 shrink-0 text-primary" strokeWidth={1.6} />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-[12px] leading-4 text-foreground/60">
+                  <Trans>Password</Trans>
+                </span>
+                <span className="truncate font-mono text-[15px] leading-5 tracking-[0.08em]">
+                  {sharePassword}
+                </span>
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`h-8 rounded-full px-3 ${passwordCopied ? "text-success" : ""}`}
+                onClick={() => copyPassword(sharePassword)}
+              >
+                {passwordCopied ? <Trans>Copied</Trans> : <Trans>Copy</Trans>}
+              </Button>
+            </div>
+            {passwordCopyFailed ? <ManualCopy url={sharePassword} /> : null}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] leading-4 text-foreground/60">
+                <Trans>Send the password separately from the link.</Trans>
+              </span>
+              {onRenewPassword ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 shrink-0 gap-1.5 rounded-full px-2.5 text-[12px]"
+                  disabled={pending}
+                  onClick={onRenewPassword}
+                >
+                  <RefreshCw className="size-3.5" strokeWidth={1.6} />
+                  <Trans>New password</Trans>
+                </Button>
+              ) : null}
+            </div>
           </div>
         ) : null}
         {error ? (
