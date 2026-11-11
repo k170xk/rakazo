@@ -104,7 +104,12 @@ function SharedPageBody() {
     return (
       <main className="grid min-h-dvh place-items-center bg-background px-6 text-center">
         <div className="flex max-w-[360px] flex-col items-center gap-3">
-          <img src="/favicon-32x32.png" alt="" className="size-8 rounded-full" />
+          <img src="/auth/ocsc-logo-on-light.png" alt="OCSC" className="mb-3 w-36 dark:hidden" />
+          <img
+            src="/auth/ocsc-logo-on-dark.png"
+            alt="OCSC"
+            className="mb-3 hidden w-36 dark:block"
+          />
           <h1 className="text-[18px] leading-6 font-medium text-foreground">
             <Trans>Sign in to view this page</Trans>
           </h1>
@@ -125,7 +130,12 @@ function SharedPageBody() {
     return (
       <main className="grid min-h-dvh place-items-center bg-background px-6 text-center">
         <div className="flex max-w-[360px] flex-col items-center gap-3">
-          <img src="/favicon-32x32.png" alt="" className="size-8 rounded-full" />
+          <img src="/auth/ocsc-logo-on-light.png" alt="OCSC" className="mb-3 w-36 dark:hidden" />
+          <img
+            src="/auth/ocsc-logo-on-dark.png"
+            alt="OCSC"
+            className="mb-3 hidden w-36 dark:block"
+          />
           <h1 className="text-[18px] leading-6 font-medium text-foreground">
             <Trans>This page isn't available</Trans>
           </h1>
@@ -195,7 +205,8 @@ function PasswordPrompt({
         onSubmit={submit}
         className="flex w-full max-w-[360px] flex-col items-center gap-3 text-center"
       >
-        <img src="/favicon-32x32.png" alt="" className="size-8 rounded-full" />
+        <img src="/auth/ocsc-logo-on-light.png" alt="OCSC" className="mb-3 w-36 dark:hidden" />
+        <img src="/auth/ocsc-logo-on-dark.png" alt="OCSC" className="mb-3 hidden w-36 dark:block" />
         <h1 className="text-[18px] leading-6 font-medium text-foreground">
           <Trans>This page is password protected</Trans>
         </h1>

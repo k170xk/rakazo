@@ -8,7 +8,7 @@ Before writing, decide in one line each: who uses it, what they do here (find, c
 - The first screen answers the main question: Metrics or a toned Callout computed from the data (useMemo), never typed in by hand.
 - Views switch with Segmented along the top; each tab shows a count when it is a list ({value, label, count}).
 - Lists can be searched and narrowed: an Input type="search" plus a Select or Segmented filter in the Section actions, filtering in useMemo. Show "No jobs match" style empty states (a short Text or Callout), never a blank card.
-- Rows open detail: Table or Rows with onSelect and selected; the picked item's detail (Properties, Checklist of Toggles, notes, actions) sits beside the list in a Grid columns={2} on wide pages, or below it on column pages. Pick the first item by default so the detail is never empty.
+- Rows open detail: Table or Rows with onSelect and selected; the picked item's detail (Properties, Checklist of Toggles, notes, actions) sits beside the list in a Grid columns={2} on wide pages, or below it on column pages. A table beside a detail panel keeps to 3 or 4 short columns; the rest goes in the detail. Pick the first item by default so the detail is never empty.
 - What people change is kept with usePageState: ticks, statuses, owners, notes, added items, chosen filters worth remembering. Show "Saved" or "Only for this visit" from its status where it matters.
 - Data that changes lives in useSource snapshots so a routine can refresh it without touching the code; everything else is derived from it.
 - Forms are an Input or Select per field and one primary Button that adds or saves; clear the inputs after adding.
@@ -177,8 +177,8 @@ function ProjectQa() {
         <Grid columns={2}>
           {shown.length ? (
             <Table
-              columns={["Job", "Project", "Due", "QA"]}
-              rows={shown.map((item) => [item.id, item.name, item.due, complete(item) ? <Status tone="success">Done</Status> : <Status tone="warning">Open</Status>])}
+              columns={["Job", "Project", "QA"]}
+              rows={shown.map((item) => [item.id, item.name, complete(item) ? <Status tone="success">Done</Status> : <Status tone="warning">Open</Status>])}
               onSelect={(index) => setPicked(shown[index].id)}
               selected={shown.findIndex((item) => item.id === job?.id)}
             />
