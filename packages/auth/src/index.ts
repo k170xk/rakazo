@@ -47,6 +47,12 @@ import { hasRecentIdentityConfirmation, identityConfirmation } from "./identity-
 import type { OidcConfig } from "./oidc.js";
 import { isCurrentOidcAccount, oidcDiscovery } from "./oidc.js";
 import { passkeyRelyingParty } from "./passkey.js";
+import type { StorageDownloadGrant } from "./storage-download-token.js";
+import {
+  consumeStorageDownloadToken,
+  issueStorageDownloadToken,
+  STORAGE_DOWNLOAD_TOKEN_PREFIX,
+} from "./storage-download-token.js";
 import type { TokenKey } from "./token-storage.js";
 import { encryptStoredOAuthTokens, openIdToken, sealIdToken } from "./token-storage.js";
 
@@ -258,6 +264,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
           "delete-account-": "hashed",
           [ACCOUNT_EXPORT_TOKEN_PREFIX]: "hashed",
           [ARTIFACT_DOWNLOAD_TOKEN_PREFIX]: "hashed",
+          [STORAGE_DOWNLOAD_TOKEN_PREFIX]: "hashed",
         },
       },
     },
@@ -783,6 +790,10 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
       issueArtifactDownloadToken((await auth.$context).internalAdapter, grant),
     consumeArtifactDownloadToken: async (token: string) =>
       consumeArtifactDownloadToken((await auth.$context).internalAdapter, token),
+    issueStorageDownloadToken: async (grant: StorageDownloadGrant) =>
+      issueStorageDownloadToken((await auth.$context).internalAdapter, grant),
+    consumeStorageDownloadToken: async (token: string) =>
+      consumeStorageDownloadToken((await auth.$context).internalAdapter, token),
     disposeOidcDiscovery: () => discovery?.dispose(),
   });
 }

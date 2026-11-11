@@ -14,6 +14,7 @@ import {
   Check,
   Download,
   FolderOpen,
+  HardDrive,
   Link2,
   LogOut,
   Monitor,
@@ -56,6 +57,8 @@ type Props = {
   links?: NavLink[];
   onLink?: (link: NavLink) => void;
   onArtifacts: () => void;
+  /** Everything counting against the person's storage limit, with download and delete. */
+  onStorage?: () => void;
   onSettings: () => void;
   onInvite?: () => void;
   onLogOut: () => void;
@@ -91,6 +94,7 @@ export function SidebarFooter({
   links = [],
   onLink,
   onArtifacts,
+  onStorage,
   onSettings,
   onInvite,
   onLogOut,
@@ -236,6 +240,16 @@ export function SidebarFooter({
               <FolderOpen className="text-muted-foreground" strokeWidth={1.75} />
               <Trans>Artifacts</Trans>
             </Button>
+            {onStorage ? (
+              <Button
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2.5 font-normal"
+                onClick={onStorage}
+              >
+                <HardDrive className="text-muted-foreground" strokeWidth={1.75} />
+                <Trans>Manage storage</Trans>
+              </Button>
+            ) : null}
             {onBoard ? (
               <Button
                 variant="ghost"

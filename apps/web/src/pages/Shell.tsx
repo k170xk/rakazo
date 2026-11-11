@@ -48,6 +48,7 @@ import { PageLoading } from "../components/PageLoading";
 import { PageViewHost } from "../components/pages/PageViewHost";
 import { registerRenderStudioHost } from "../components/render-studio/host";
 import { RenderStudioDialog } from "../components/render-studio/RenderStudioDialog";
+import { StorageDialog } from "../components/StorageDialog";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { authClient } from "../lib/auth";
 import { peekBootstrapSeed } from "../lib/bootstrap";
@@ -1571,9 +1572,7 @@ function SpaceShell() {
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}
         host={{ desktop: Boolean(desktopBridge()), apple: isApplePlatform() }}
-        dictation={Boolean(
-          bootstrapMe?.dictationEnabled ?? bootstrapMe?.phoneCallsEnabled,
-        )}
+        dictation={Boolean(bootstrapMe?.dictationEnabled ?? bootstrapMe?.phoneCallsEnabled)}
       />
 
       <EnableNotificationsDialog
@@ -1581,6 +1580,12 @@ function SpaceShell() {
         ready={initialBotsLoaded}
         blockedByOverlay={overlay !== null || shortcutsOpen || computerOpen}
         onEnabled={flushPendingBrowserNotifications}
+      />
+
+      <StorageDialog
+        userId={userId}
+        ready={initialBotsLoaded}
+        blockedByOverlay={overlay !== null || shortcutsOpen || computerOpen}
       />
 
       {computerOpen && computerBot ? (

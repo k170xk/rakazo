@@ -1,11 +1,11 @@
 import { ORPCError } from "@orpc/server";
 import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
 import { VoiceAccountError } from "@rakazo/adapter-kit";
+import type { EvolvePluginsConnection } from "@rakazo/adapters";
 import {
   callEvolveTranscribe,
   companyFeatures,
   createVoiceProvider,
-  type EvolvePluginsConnection,
   isFishSpeechModelId,
   isVoiceProviderId,
   listVoiceCatalog,
@@ -633,7 +633,7 @@ export async function transcribeVoice(
 
 async function transcribeViaEvolve(
   deps: VoiceDeps,
-  actor: Pick<Actor, "email">,
+  actor: { email?: string },
   input: { audio: Uint8Array; mimeType: string; language?: string; signal?: AbortSignal },
 ): Promise<{ text: string } | null> {
   if (!deps.evolvePlugins) return null;

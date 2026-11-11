@@ -1064,6 +1064,9 @@ export const appContract = {
     deleteMyStorage: oc
       .input(z.object({ items: z.array(StorageItemRefSchema).min(1).max(MAX_STORAGE_SELECTION) }))
       .output(MyStorageStateSchema),
+    pinMyStorage: oc
+      .input(z.object({ botId: Id, path: z.string().min(1).max(1024), pinned: z.boolean() }))
+      .output(MyStorageStateSchema),
     /** A one-time link to a zip of the chosen items, opened as a plain download. */
     myStorageDownload: oc
       .input(z.object({ items: z.array(StorageItemRefSchema).min(1).max(MAX_STORAGE_SELECTION) }))

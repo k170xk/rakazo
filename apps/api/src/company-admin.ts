@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import {
   BUILTIN_AGENT_SKILLS,
   COMPANY_MODEL_SECRET_RECORD,
+  chatAttachmentBytesByPerson,
   companyFeatures,
   companyModel,
   companyToolsWithDefaults,
@@ -193,6 +194,9 @@ async function computersState(
     serverDisk(deps.dataDir),
   ]);
   const used = new Map(homes.map((row) => [row.userId, Number(row._sum.homeBytes ?? 0n)]));
+  for (const row of await chatAttachmentBytesByPerson(deps.prisma)) {
+    used.set(row.userId, (used.get(row.userId) ?? 0) + Number(row.bytes));
+  }
   const computersOn = companyFeatures().computers;
   return {
     defaultAccess: policy.defaultComputerAccess,

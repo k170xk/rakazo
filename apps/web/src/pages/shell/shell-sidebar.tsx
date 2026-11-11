@@ -32,6 +32,7 @@ import { useQueryUserId } from "../../lib/query";
 import type { Panel } from "../../lib/right-panel-state";
 import { rpc } from "../../lib/rpc";
 import { useSignOut } from "../../lib/sign-out";
+import { openStorageDialog } from "../../lib/storage-prompt";
 import { ActivityList } from "../ActivityList";
 import { DeleteOrganizationDialog } from "../OrganizationSettingsPanel";
 import { SpaceSearchResults } from "../SpaceSearch";
@@ -473,6 +474,11 @@ function ShellSidebarFooter({
           setMenuOpen(false);
           closeMobileSidebar();
           navigate("/app/artifacts");
+        }}
+        onStorage={() => {
+          setMenuOpen(false);
+          closeMobileSidebar();
+          openStorageDialog();
         }}
         onSettings={() => {
           setMenuOpen(false);

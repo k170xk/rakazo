@@ -63,6 +63,12 @@ import {
   resolveBusyBotName,
   toComputerStatus,
 } from "../computer-status.js";
+import {
+  deleteMyStorage,
+  myStorageDownloadUrl,
+  myStorageState,
+  pinMyStorage,
+} from "../my-storage.js";
 import type { RouterDeps } from "../router.js";
 import {
   deleteStoredFile,
@@ -606,6 +612,18 @@ export function computerRoutes(ctx: RouterContext) {
           attachmentMaxBytes(deps.env),
           attachmentSizeLabel(attachmentMaxBytes(deps.env)),
         ),
+      ),
+      myStorage: authed.computer.myStorage.handler(async ({ context }) =>
+        myStorageState(deps, context.actor),
+      ),
+      deleteMyStorage: authed.computer.deleteMyStorage.handler(async ({ context, input }) =>
+        deleteMyStorage(deps, context.actor, input.items),
+      ),
+      pinMyStorage: authed.computer.pinMyStorage.handler(async ({ context, input }) =>
+        pinMyStorage(deps, context.actor, input),
+      ),
+      myStorageDownload: authed.computer.myStorageDownload.handler(async ({ context, input }) =>
+        myStorageDownloadUrl(deps, context.actor, input.items),
       ),
       readFile: authed.computer.readFile.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);

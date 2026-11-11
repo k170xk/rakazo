@@ -5,10 +5,9 @@ import {
   computerAccessFor,
   listStoredItems,
   openStoredFile,
-  personStorageBytes,
+  personUsage,
   removeStoredItem,
   runnerHomePath,
-  storageLimitBytes,
   storedFileView,
   storedHomePaths,
   toolRunnersShareHome,
@@ -18,16 +17,17 @@ import { runAsSystem } from "@rakazo/db";
 import type { RouterDeps } from "./router.js";
 
 /** A bot its owner opened through `getBot`, which already refuses anyone else's. */
-interface OwnedBot {
+export interface OwnedBot {
   id: string;
   userId: string;
   computer: { id: string; scope: string; homeKey: string; homeBytesAt: Date | null } | null;
 }
 
-type Deps = Pick<RouterDeps, "prisma" | "home" | "dataDir" | "sandbox">;
+export type StoredFilesDeps = Pick<RouterDeps, "prisma" | "home" | "dataDir" | "sandbox">;
+type Deps = StoredFilesDeps;
 
 /** The bot's files where its runs keep them: the home, or the document home kept apart from it. */
-async function located(deps: Deps, bot: OwnedBot) {
+export async function located(deps: Deps, bot: OwnedBot) {
   const computer = bot.computer;
   if (!computer) return null;
   const where = {
@@ -55,15 +55,15 @@ export async function storedFilesState(
   remeasure = false,
 ): Promise<StoredFilesState> {
   const retentionDays = companyTools().fileRetentionDays;
-  const limitBytes = await storageLimitBytes(deps.prisma, bot.userId);
   const where = await located(deps, bot);
   if (!where) {
-    return { available: false, files: [], usedBytes: 0, limitBytes, retentionDays };
+    const { usedBytes, limitBytes } = await personUsage(deps.prisma, bot.userId);
+    return { available: false, files: [], usedBytes, limitBytes, retentionDays };
   }
-  const [items, pins, usedBytes] = await Promise.all([
+  const [items, pins, usage] = await Promise.all([
     listStoredItems(where.home, where.folder),
     botPins(deps, bot.id),
-    personStorageBytes(deps.prisma, bot.userId, {
+    personUsage(deps.prisma, bot.userId, {
       computerId: where.computer.id,
       homes: where.homes,
       measuredAt: remeasure ? null : where.computer.homeBytesAt,
@@ -72,13 +72,13 @@ export async function storedFilesState(
   return {
     available: true,
     files: items.map((item) => storedFileView(item, pins, retentionDays)),
-    usedBytes,
-    limitBytes,
+    usedBytes: usage.usedBytes,
+    limitBytes: usage.limitBytes,
     retentionDays,
   };
 }
 
-async function botPins(deps: Deps, botId: string) {
+export async function botPins(deps: Deps, botId: string) {
   const rows = await runAsSystem("read pinned files", () =>
     deps.prisma.keptFile.findMany({ where: { botId }, select: { path: true } }),
   );

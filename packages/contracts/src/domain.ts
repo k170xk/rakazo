@@ -2545,7 +2545,11 @@ export type StoredFilesState = z.infer<typeof StoredFilesStateSchema>;
 
 /** One item in Manage storage: a bot's computer file or folder, or a file a bot attached in a chat. */
 export const StorageItemRefSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("computer"), botId: z.string().min(1), path: z.string().min(1).max(1024) }),
+  z.object({
+    kind: z.literal("computer"),
+    botId: z.string().min(1),
+    path: z.string().min(1).max(1024),
+  }),
   z.object({ kind: z.literal("chat"), artifactId: z.string().min(1) }),
 ]);
 export type StorageItemRef = z.infer<typeof StorageItemRefSchema>;

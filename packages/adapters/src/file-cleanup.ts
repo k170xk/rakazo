@@ -5,7 +5,16 @@ import type { PrismaClient } from "@rakazo/db";
 import { Prisma, runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { companyTools } from "./company-policy.js";
-import { sweepComputerFiles } from "./file-retention.js";
+import {
+  botFolderInHome,
+  documentHomePath,
+  formatBytes,
+  isPinned,
+  listStoredItems,
+  localHomePath,
+  pinsForBots,
+  sweepComputerFiles,
+} from "./file-retention.js";
 
 /** Scheduled cleanup follows UK time, where every OCSC office keeps its hours. */
 export const FILE_CLEANUP_TIME_ZONE = "Europe/London";
@@ -166,6 +175,129 @@ export async function sweepChatAttachments(deps: {
   }
 }
 
+/** People hear this long before cleanup deletes a file, so they can download it first. */
+export const EXPIRY_WARNING_DAYS = 7;
+
+export interface ExpiringFiles {
+  userId: string;
+  files: number;
+  bytes: number;
+  /** When the first of them is deleted. */
+  firstDeletesAt: Date;
+  /** The bot holding the most of them, whose chat a notice opens. */
+  botId: string;
+}
+
+/**
+ * Per person, the unpinned computer files and bot-made chat files that cleanup deletes within
+ * the warning window, so each gets one notice however many bots and files are involved.
+ */
+export async function expiringFilesByPerson(deps: {
+  prisma: PrismaClient;
+  home: AgentHomeStore;
+  dataDir: string | undefined;
+  now: number;
+}): Promise<ExpiringFiles[]> {
+  const until = deps.now + EXPIRY_WARNING_DAYS * DAY_MS;
+  const people = new Map<
+    string,
+    { files: number; bytes: number; first: number; bots: Map<string, number> }
+  >();
+  const add = (userId: string, botId: string | null, bytes: number, at: number) => {
+    if (!botId || at <= deps.now || at > until) return;
+    const person = people.get(userId) ?? { files: 0, bytes: 0, first: at, bots: new Map() };
+    person.files += 1;
+    person.bytes += bytes;
+    person.first = Math.min(person.first, at);
+    person.bots.set(botId, (person.bots.get(botId) ?? 0) + bytes);
+    people.set(userId, person);
+  };
+
+  const retentionDays = companyTools().fileRetentionDays;
+  const computers = await runAsSystem("list computers for expiring files", () =>
+    deps.prisma.computer.findMany({
+      select: {
+        userId: true,
+        scope: true,
+        homeKey: true,
+        bots: { select: { id: true }, orderBy: { createdAt: "asc" } },
+      },
+    }),
+  );
+  for (const computer of computers) {
+    if (computer.bots.length === 0) continue;
+    const pins = await pinsForBots(
+      deps.prisma,
+      computer.bots.map((bot) => bot.id),
+    );
+    const folders =
+      computer.scope === "team"
+        ? computer.bots.map((bot) => [bot.id, botFolderInHome("team", bot.id)] as const)
+        : [[computer.bots[0]!.id, ""] as const];
+    const homes = [
+      localHomePath(deps.home, computer.homeKey, deps.dataDir),
+      deps.dataDir ? documentHomePath(deps.dataDir, computer.homeKey) : null,
+    ];
+    for (const home of homes) {
+      if (!home) continue;
+      for (const [botId, folder] of folders) {
+        for (const item of await listStoredItems(home, folder)) {
+          if (isPinned(item.path, pins.get(botId) ?? [])) continue;
+          add(computer.userId, botId, item.size, item.modifiedMs + retentionDays * DAY_MS);
+        }
+      }
+    }
+  }
+
+  const chatDays = companyTools().chatFileRetentionDays;
+  if (chatDays !== null) {
+    const shift = chatDays * DAY_MS;
+    const families = await runAsSystem("find chat attachments expiring soon", () =>
+      deps.prisma.$queryRaw<
+        Array<{ userId: string; botId: string | null; size: bigint; createdAt: Date }>
+      >(Prisma.sql`
+        SELECT (array_agg("userId"))[1] AS "userId",
+          (array_agg("botId" ORDER BY version DESC))[1] AS "botId",
+          sum(size)::bigint AS size,
+          max("createdAt") AS "createdAt"
+        FROM "artifacts"
+        GROUP BY COALESCE("rootArtifactId", id)
+        HAVING bool_and("runId" IS NOT NULL)
+          AND max("createdAt") > ${new Date(deps.now - shift)}
+          AND max("createdAt") <= ${new Date(until - shift)}
+      `),
+    );
+    for (const family of families) {
+      add(family.userId, family.botId, Number(family.size), family.createdAt.getTime() + shift);
+    }
+  }
+
+  return [...people].map(([userId, person]) => ({
+    userId,
+    files: person.files,
+    bytes: person.bytes,
+    firstDeletesAt: new Date(person.first),
+    botId: [...person.bots].sort((a, b) => b[1] - a[1])[0]![0],
+  }));
+}
+
+/** The words of an expiry notice, the same in the push and in the open app. */
+export function expiringFilesNotice(
+  expiring: Pick<ExpiringFiles, "files" | "bytes" | "firstDeletesAt">,
+) {
+  const day = new Intl.DateTimeFormat("en-GB", {
+    timeZone: FILE_CLEANUP_TIME_ZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(expiring.firstDeletesAt);
+  const files = expiring.files === 1 ? "1 file" : `${expiring.files} files`;
+  return {
+    title: "Files will be deleted soon",
+    body: `${files} (${formatBytes(expiring.bytes)}) will be deleted from ${day}. Open Manage storage in your account menu to download anything you want to keep.`,
+  };
+}
+
 /** One cleanup: computer files past their retention, then chat attachments when an admin set a period. */
 export async function runFileCleanup(deps: {
   prisma: PrismaClient;
@@ -203,6 +335,8 @@ export async function runDueFileCleanup(deps: {
   artifacts: ArtifactStore;
   dataDir: string | undefined;
   toolRunners?: boolean;
+  /** Tells each person what the next cleanups will delete; failures are logged, never thrown. */
+  notifyExpiring?: (expiring: ExpiringFiles) => Promise<void>;
   now?: number;
 }): Promise<FileCleanupResult | null> {
   const now = deps.now ?? Date.now();
@@ -232,5 +366,17 @@ export async function runDueFileCleanup(deps: {
       data: { fileCleanupLastResult: result as Prisma.InputJsonObject },
     }),
   );
+  if (deps.notifyExpiring) {
+    const notify = deps.notifyExpiring;
+    const expiring = await expiringFilesByPerson({ ...deps, now }).catch((error: unknown) => {
+      getLogger().error("expiring files", error);
+      return [];
+    });
+    for (const person of expiring) {
+      await notify(person).catch((error: unknown) =>
+        getLogger().error("expiring files notice", error, { "user.id": person.userId }),
+      );
+    }
+  }
   return result;
 }

@@ -5,7 +5,7 @@ import path from "node:path";
 import type { AgentHomeStore } from "@rakazo/adapter-kit";
 import type { StoredFile } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
-import { runAsSystem } from "@rakazo/db";
+import { Prisma, runAsSystem } from "@rakazo/db";
 import { companyTools } from "./company-policy.js";
 import { teamBotWorkspaceDirectory } from "./computer-support.js";
 import { fileHandlePath } from "./file-handle-path.js";
@@ -199,8 +199,7 @@ export function expiredItems(
   return items.filter((item) => item.modifiedMs < cutoff && !isPinned(item.path, pins));
 }
 
-/** Deletes one listed item; anything not exactly a listed item, or reached through a link, is refused. */
-export async function removeStoredItem(home: string, botFolder: string, itemPath: string) {
+function storedItemSegments(itemPath: string) {
   const segments = itemPath.split("/");
   const shapeOk =
     segments.every(
@@ -208,6 +207,12 @@ export async function removeStoredItem(home: string, botFolder: string, itemPath
     ) &&
     (segments.length === 1 || (segments.length === 2 && OUTPUT_FOLDERS.includes(segments[0]!)));
   if (!shapeOk) throw new Error("That is not an item in this bot's folder.");
+  return segments;
+}
+
+/** Deletes one listed item; anything not exactly a listed item, or reached through a link, is refused. */
+export async function removeStoredItem(home: string, botFolder: string, itemPath: string) {
+  const segments = storedItemSegments(itemPath);
   await removeEntry(
     home,
     path.posix.join(botFolder, ...segments.slice(0, -1)),
@@ -227,6 +232,58 @@ export async function openStoredFile(home: string, botFolder: string, itemPath: 
     );
   } finally {
     await pinned.close();
+  }
+}
+
+const MAX_ITEM_FILES = 5000;
+
+async function* fileChunks(handle: Awaited<ReturnType<typeof open>>) {
+  try {
+    for await (const chunk of handle.createReadStream()) yield chunk as Uint8Array;
+  } finally {
+    await handle.close().catch(() => undefined);
+  }
+}
+
+/**
+ * Every file in one listed item, for a download: the file itself, or each file inside the
+ * folder. Each folder is opened one real directory at a time and links are skipped, so nothing
+ * outside the bot's folder is read.
+ */
+export async function* readStoredItem(
+  home: string,
+  botFolder: string,
+  itemPath: string,
+): AsyncGenerator<{ path: string; data: AsyncIterable<Uint8Array> }> {
+  const base = path.posix.join(botFolder, ...storedItemSegments(itemPath));
+  const top = await pinnedDirectory(home, base);
+  if (!top) {
+    yield { path: itemPath, data: fileChunks(await openStoredFile(home, botFolder, itemPath)) };
+    return;
+  }
+  await top.close();
+  const pending = [""];
+  let count = 0;
+  while (pending.length > 0 && count < MAX_ITEM_FILES) {
+    const relative = pending.pop()!;
+    const dir = await pinnedDirectory(home, path.posix.join(base, relative));
+    if (!dir) continue;
+    try {
+      for (const entry of await readdir(dir.path, { withFileTypes: true }).catch(() => [])) {
+        const child = path.posix.join(relative, entry.name);
+        if (entry.isDirectory()) pending.push(child);
+        if (!entry.isFile() || count >= MAX_ITEM_FILES) continue;
+        const handle = await open(
+          path.join(dir.path, entry.name),
+          constants.O_RDONLY | constants.O_NOFOLLOW,
+        ).catch(() => null);
+        if (!handle) continue;
+        count += 1;
+        yield { path: path.posix.join(itemPath, child), data: fileChunks(handle) };
+      }
+    } finally {
+      await dir.close();
+    }
   }
 }
 
@@ -552,6 +609,71 @@ export async function personStorageBytes(
   return rows.reduce((sum, row) => sum + Number(row.homeBytes ?? 0n), 0);
 }
 
+/**
+ * Files bots attached in this person's chats, each stored file once however many rows name it.
+ * A file counts as the bot's when every version of it is, which is also what chat cleanup deletes.
+ */
+export async function chatAttachmentBytes(prisma: PrismaClient, userId: string) {
+  const rows = await runAsSystem("measure chat attachments", () =>
+    prisma.$queryRaw<Array<{ bytes: bigint | null }>>(Prisma.sql`
+      SELECT sum(size)::bigint AS bytes FROM (
+        SELECT DISTINCT ON ("storageKey") size
+        FROM "artifacts"
+        WHERE "userId" = ${userId}
+          AND COALESCE("rootArtifactId", id) IN (
+            SELECT COALESCE("rootArtifactId", id)
+            FROM "artifacts"
+            WHERE "userId" = ${userId}
+            GROUP BY 1
+            HAVING bool_and("runId" IS NOT NULL)
+          )
+      ) stored
+    `),
+  );
+  return Number(rows[0]?.bytes ?? 0n);
+}
+
+/** `chatAttachmentBytes` for everyone at once, for the admin's storage list. */
+export async function chatAttachmentBytesByPerson(prisma: PrismaClient) {
+  return runAsSystem("measure everyone's chat attachments", () =>
+    prisma.$queryRaw<Array<{ userId: string; bytes: bigint }>>(Prisma.sql`
+      SELECT "userId", sum(size)::bigint AS bytes FROM (
+        SELECT DISTINCT ON (a."userId", a."storageKey") a."userId", a.size
+        FROM "artifacts" a
+        JOIN (
+          SELECT COALESCE("rootArtifactId", id) AS family
+          FROM "artifacts"
+          GROUP BY 1
+          HAVING bool_and("runId" IS NOT NULL)
+        ) bot_made ON bot_made.family = COALESCE(a."rootArtifactId", a.id)
+      ) stored
+      GROUP BY "userId"
+    `),
+  );
+}
+
+export interface PersonUsage {
+  computerBytes: number;
+  chatBytes: number;
+  usedBytes: number;
+  limitBytes: number;
+}
+
+/** What counts against a person's limit: their computers' files and files bots attached in chats. */
+export async function personUsage(
+  prisma: PrismaClient,
+  userId: string,
+  current?: Parameters<typeof personStorageBytes>[2],
+  now = Date.now(),
+): Promise<PersonUsage> {
+  const [computerBytes, chatBytes, limitBytes] = await Promise.all([
+    personStorageBytes(prisma, userId, current, now),
+    chatAttachmentBytes(prisma, userId),
+    storageLimitBytes(prisma, userId),
+  ]);
+  return { computerBytes, chatBytes, usedBytes: computerBytes + chatBytes, limitBytes };
+}
+
 /** The disk holding every computer's files, or null where it cannot be read. */
 export async function serverDisk(dataDir: string | undefined) {
   const info = await statfs(dataDir ?? "./data").catch(() => null);
@@ -587,14 +709,11 @@ export async function storageRefusal(input: {
     sharesHome: !input.documentsApart,
   });
   if (homes.length === 0) return null;
-  const [used, limit] = await Promise.all([
-    personStorageBytes(input.prisma, input.userId, {
-      computerId: input.computer.id,
-      homes,
-      measuredAt: input.computer.homeBytesAt,
-    }),
-    storageLimitBytes(input.prisma, input.userId),
-  ]);
-  if (used < limit) return null;
-  return `Your computer storage is full (${formatBytes(used)} of ${formatBytes(limit)}). Ask the person to delete or unpin old files in this bot's Files tab, or ask an admin for a higher limit.`;
+  const usage = await personUsage(input.prisma, input.userId, {
+    computerId: input.computer.id,
+    homes,
+    measuredAt: input.computer.homeBytesAt,
+  });
+  if (usage.usedBytes < usage.limitBytes) return null;
+  return `Your storage is full (${formatBytes(usage.usedBytes)} of ${formatBytes(usage.limitBytes)}, counting files bots attached in chats). Ask the person to open Manage storage from their account menu to download or delete old files, or ask an admin for a higher limit.`;
 }

@@ -106,8 +106,8 @@ import {
   StripeBillingProvider,
   sandboxProviderOptionsFromEnv,
   stripeBillingConfigFromEnv,
-  toTeamChatInbound,
   toolRunnerFromEnv,
+  toTeamChatInbound,
   UserDeviceHub,
   UserDevices,
   userDeviceForwardSecret,
@@ -203,6 +203,7 @@ import {
 import { createMessagingReceipts } from "./messaging-receipts.js";
 import { mountMessagingWebhookRoutes } from "./messaging-webhook.js";
 import { monitoringRoutes } from "./monitoring.js";
+import { mountStorageDownloadRoute } from "./my-storage.js";
 import { pluginSubmissionRoutes } from "./plugin-submissions.js";
 import { sendReferralEmails } from "./referral-email.js";
 import { mountApiRequestBodyLimits, rpcBodyLimit } from "./request-body-limit.js";
@@ -1137,6 +1138,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   });
   mountAccountExportRoute(app, { prisma, auth, artifacts, home });
   mountArtifactDownloadRoute(app, { prisma, auth, artifacts });
+  mountStorageDownloadRoute(app, { prisma, auth, artifacts, home, dataDir: env.dataDir, sandbox });
   mountAuditExportRoute(app, { prisma, sessionActor });
   mountVoiceHttpRoutes(app, { prisma, secrets, env, evolvePlugins }, async (c) => {
     const actor = await sessionActor(c.req.raw);

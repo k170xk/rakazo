@@ -9,6 +9,7 @@ import {
   isPinned,
   listStoredItems,
   openStoredFile,
+  readStoredItem,
   removeStoredItem,
   runnerHomePath,
   storedHomePaths,
@@ -123,6 +124,32 @@ describe("removing an item", () => {
     await removeStoredItem(home, "bots/b1", "site");
     expect(existsSync(path.join(home, "bots/b1/site"))).toBe(false);
     expect(await readdir(path.join(data, "file-trash"))).toEqual([]);
+  });
+});
+
+describe("reading an item for a download", () => {
+  async function read(itemPath: string) {
+    const files: Record<string, string> = {};
+    for await (const file of readStoredItem(home, "bots/b1", itemPath)) {
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of file.data) chunks.push(chunk);
+      files[file.path] = Buffer.concat(chunks).toString();
+    }
+    return files;
+  }
+
+  it("reads a file, or every file in a folder", async () => {
+    expect(await read("report.docx")).toEqual({ "report.docx": "12345" });
+    expect(Object.keys(await read("site")).sort()).toEqual(["site/app.js", "site/index.html"]);
+  });
+
+  it("skips links inside a folder and refuses a linked item or a path outside the shape", async () => {
+    await symlink(path.join(other, "bots/b9/secret.txt"), path.join(home, "bots/b1/site/leak.txt"));
+    await symlink(path.join(other, "bots/b9"), path.join(home, "bots/b1/site/elsewhere"));
+    expect(Object.keys(await read("site")).sort()).toEqual(["site/app.js", "site/index.html"]);
+    await symlink(path.join(other, "bots/b9/secret.txt"), path.join(home, "bots/b1/pointer"));
+    await expect(read("pointer")).rejects.toThrow();
+    await expect(read("../b9/secret.txt")).rejects.toThrow();
   });
 });
 

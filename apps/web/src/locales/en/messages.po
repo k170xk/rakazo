@@ -116,6 +116,21 @@ msgstr "{0, plural, one {# still has their own model connection} other {# still 
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, one {# tool} other {# tools}}"
 
+#. placeholder {0}: data.computerRetentionDays
+#: src/components/StorageDialog.tsx
+msgid "{0, plural, one {Computer files nobody changes for # day are deleted unless pinned.} other {Computer files nobody changes for # days are deleted unless pinned.}}"
+msgstr "{0, plural, one {Computer files nobody changes for # day are deleted unless pinned.} other {Computer files nobody changes for # days are deleted unless pinned.}}"
+
+#. placeholder {0}: chosen.length
+#: src/components/StorageDialog.tsx
+msgid "{0, plural, one {Delete # file ({chosenSize})?} other {Delete # files ({chosenSize})?}}"
+msgstr "{0, plural, one {Delete # file ({chosenSize})?} other {Delete # files ({chosenSize})?}}"
+
+#. placeholder {0}: data.chatRetentionDays
+#: src/components/StorageDialog.tsx
+msgid "{0, plural, one {Files bots attach in chats are deleted # day after they were made.} other {Files bots attach in chats are deleted # days after they were made.}}"
+msgstr "{0, plural, one {Files bots attach in chats are deleted # day after they were made.} other {Files bots attach in chats are deleted # days after they were made.}}"
+
 #. placeholder {0}: data.retentionDays
 #: src/pages/shell/files-tab.tsx
 msgid "{0, plural, one {Files nobody changes for # day are deleted automatically. Pin anything you want to keep.} other {Files nobody changes for # days are deleted automatically. Pin anything you want to keep.}}"
@@ -223,10 +238,21 @@ msgstr "{0} MB"
 msgid "{0} of {1} used"
 msgstr "{0} of {1} used"
 
+#. placeholder {0}: formatSize(data.computerBytes)
+#. placeholder {1}: formatSize(data.chatBytes)
+#: src/components/StorageDialog.tsx
+msgid "{0} on bot computers · {1} attached in chats."
+msgstr "{0} on bot computers · {1} attached in chats."
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
 msgstr "{0} rollup hours"
+
+#. placeholder {0}: chosen.length
+#: src/components/StorageDialog.tsx
+msgid "{0} selected · {chosenSize}"
+msgstr "{0} selected · {chosenSize}"
 
 #. placeholder {0}: sharedBy.name
 #: src/pages/AdminCompanyVoice.tsx
@@ -300,6 +326,7 @@ msgstr "{days} days"
 msgid "{days}d ago"
 msgstr "{days}d ago"
 
+#: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "{daysLeft, plural, =0 {Deleted today} one {Deleted in # day} other {Deleted in # days}}"
 msgstr "{daysLeft, plural, =0 {Deleted today} one {Deleted in # day} other {Deleted in # days}}"
@@ -1024,6 +1051,7 @@ msgstr "AI safeguards"
 msgid "AI teammates, each with a job"
 msgstr "AI teammates, each with a job"
 
+#: src/components/StorageDialog.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
@@ -1623,6 +1651,10 @@ msgstr "Bots and browser automation"
 #: src/pages/SharedChats.tsx
 msgid "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
 msgstr "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
+
+#: src/components/StorageDialog.tsx
+msgid "Bots can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
+msgstr "Bots can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
 
 #: src/pages/AdminAssistantModels.tsx
 msgid "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
@@ -2932,6 +2964,10 @@ msgstr "Could not download {name}. Try again."
 msgid "Could not download the file"
 msgstr "Could not download the file"
 
+#: src/components/StorageDialog.tsx
+msgid "Could not download the files"
+msgstr "Could not download the files"
+
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not enable tools"
 msgstr "Could not enable tools"
@@ -3390,6 +3426,7 @@ msgstr "Could not update the company setting"
 msgid "Could not update the default memory scope"
 msgstr "Could not update the default memory scope"
 
+#: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Could not update the file"
 msgstr "Could not update the file"
@@ -3449,6 +3486,10 @@ msgstr "Couldn't load this bot's files."
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "Couldn't load this page. Try again."
+
+#: src/components/StorageDialog.tsx
+msgid "Couldn't load your files."
+msgstr "Couldn't load your files."
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
@@ -3718,6 +3759,7 @@ msgstr "Default Word template saved"
 #: src/components/AccountAccess.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/StorageDialog.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
@@ -3811,6 +3853,10 @@ msgstr "Delete work space"
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
 msgstr "deleted"
+
+#: src/components/StorageDialog.tsx
+msgid "Deleted soon"
+msgstr "Deleted soon"
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Deletes records"
@@ -4036,6 +4082,10 @@ msgstr "Downgrade at renewal"
 #: src/pages/shell/files-tab.tsx
 msgid "Download"
 msgstr "Download"
+
+#: src/components/StorageDialog.tsx
+msgid "Download (.zip)"
+msgstr "Download (.zip)"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Download {name}"
@@ -4402,6 +4452,10 @@ msgstr "Everyone without their own level"
 msgid "Everyone without their own limit"
 msgstr "Everyone without their own limit"
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "Everyone's files"
+msgstr "Everyone's files"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Evolve admins only"
 msgstr "Evolve admins only"
@@ -4592,8 +4646,12 @@ msgid "File"
 msgstr "File"
 
 #: src/pages/AdminComputerAccess.tsx
-msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
-msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+
+#: src/pages/AdminComputerAccess.tsx
+#~ msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+#~ msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
 
 #: src/pages/Artifacts.tsx
 msgid "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
@@ -5103,6 +5161,10 @@ msgstr "Import an agent"
 msgid "Import data"
 msgstr "Import data"
 
+#: src/components/StorageDialog.tsx
+msgid "In a chat"
+msgstr "In a chat"
+
 #: src/components/AskCard.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-status.ts
@@ -5324,6 +5386,10 @@ msgstr "Keeping files"
 msgid "Keeps the limits on everyone, so one admin account cannot change Evolve in bulk either."
 msgstr "Keeps the limits on everyone, so one admin account cannot change Evolve in bulk either."
 
+#: src/components/StorageDialog.tsx
+msgid "Kept"
+msgstr "Kept"
+
 #: src/pages/RoutineEditor.tsx
 msgid "key"
 msgstr "key"
@@ -5355,6 +5421,10 @@ msgstr "Label"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Language"
 msgstr "Language"
+
+#: src/components/StorageDialog.tsx
+msgid "Largest"
+msgstr "Largest"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Lasso"
@@ -5684,6 +5754,10 @@ msgstr "Manage"
 msgid "Manage {0}"
 msgstr "Manage {0}"
 
+#: src/pages/shell/files-tab.tsx
+msgid "Manage all your storage"
+msgstr "Manage all your storage"
+
 #: src/components/ModelCredits.tsx
 #: src/pages/Paywall.tsx
 msgid "Manage billing"
@@ -5696,6 +5770,11 @@ msgstr "Manage MCP servers"
 #: src/pages/shell/bot-panel.tsx
 msgid "Manage other bots"
 msgstr "Manage other bots"
+
+#: src/components/SidebarFooter.tsx
+#: src/components/StorageDialog.tsx
+msgid "Manage storage"
+msgstr "Manage storage"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
@@ -6158,6 +6237,10 @@ msgstr "Name this routine"
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Name your Bot"
 msgstr "Name your Bot"
+
+#: src/pages/AdminComputerAccess.tsx
+msgid "Nearly full (80%+)"
+msgstr "Nearly full (80%+)"
 
 #: src/pages/shell/files-tab.tsx
 msgid "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
@@ -6685,6 +6768,10 @@ msgstr "Nothing here"
 msgid "Nothing in Evolve matches."
 msgstr "Nothing in Evolve matches."
 
+#: src/components/StorageDialog.tsx
+msgid "Nothing is due to be deleted this week."
+msgstr "Nothing is due to be deleted this week."
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "Nothing remembered yet"
@@ -6814,6 +6901,10 @@ msgstr "On"
 #: src/pages/RoutineEditor.tsx
 msgid "On a schedule"
 msgstr "On a schedule"
+
+#: src/components/StorageDialog.tsx
+msgid "On computer"
+msgstr "On computer"
 
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
@@ -7299,6 +7390,7 @@ msgid "Pick a tool to check"
 msgstr "Pick a tool to check"
 
 #: src/components/pages/PagesList.tsx
+#: src/components/StorageDialog.tsx
 #: src/pages/BotContextMenu.tsx
 msgid "Pin"
 msgstr "Pin"
@@ -7312,6 +7404,7 @@ msgstr "Pin, keep it"
 msgid "Pinned"
 msgstr "Pinned"
 
+#: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Pinned, kept"
 msgstr "Pinned, kept"
@@ -8444,9 +8537,18 @@ msgstr "Security & Ops"
 msgid "Security code"
 msgstr "Security code"
 
+#. placeholder {0}: item.name
+#: src/components/StorageDialog.tsx
+msgid "Select {0}"
+msgstr "Select {0}"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Select a bot"
 msgstr "Select a bot"
+
+#: src/components/StorageDialog.tsx
+msgid "Select all"
+msgstr "Select all"
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Select at least one page"
@@ -8649,6 +8751,7 @@ msgstr "Shared with my bots"
 msgid "Shared with you"
 msgstr "Shared with you"
 
+#: src/components/StorageDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/AdminDocumentLibrary.tsx
@@ -8833,6 +8936,10 @@ msgstr "Slides come animated for presenting"
 #: src/components/EvolveChangeEditor.tsx
 msgid "Soft deadline"
 msgstr "Soft deadline"
+
+#: src/components/StorageDialog.tsx
+msgid "Some files will be deleted soon"
+msgstr "Some files will be deleted soon"
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -9108,6 +9215,7 @@ msgstr "Storage limit for {0}"
 msgid "Storage per person"
 msgstr "Storage per person"
 
+#: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Storage used"
 msgstr "Storage used"
@@ -9362,6 +9470,10 @@ msgstr "The screen link expired."
 msgid "The selected memory provider is not available in this build."
 msgstr "The selected memory provider is not available in this build."
 
+#: src/pages/AdminComputerAccess.tsx
+msgid "The server disk is over 80% full. Lower limits or retention, or ask people to clear files. Below 5% free, everyone's new documents and videos are paused."
+msgstr "The server disk is over 80% full. Lower limits or retention, or ask people to clear files. Below 5% free, everyone's new documents and videos are paused."
+
 #. placeholder {0}: state.environmentModel.provider
 #. placeholder {1}: state.environmentModel.modelId
 #: src/pages/AdminCompanyPage.tsx
@@ -9485,6 +9597,10 @@ msgstr "This can't be undone."
 #: src/pages/shell/dialogs.tsx
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
+
+#: src/components/StorageDialog.tsx
+msgid "This cannot be undone. Download them first if you might need them again. Chats keep their messages and show that the file was removed."
+msgstr "This cannot be undone. Download them first if you might need them again. Chats keep their messages and show that the file was removed."
 
 #: src/pages/SharedChats.tsx
 msgid "This chat is no longer shared with you."
@@ -9779,6 +9895,7 @@ msgstr "Try"
 
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
+#: src/components/StorageDialog.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/SharedPage.tsx
@@ -9878,6 +9995,7 @@ msgid "Unnamed project"
 msgstr "Unnamed project"
 
 #: src/components/pages/PagesList.tsx
+#: src/components/StorageDialog.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Unpin"
@@ -10231,6 +10349,10 @@ msgstr "Wallet"
 msgid "Warning:"
 msgstr "Warning:"
 
+#: src/components/StorageDialog.tsx
+msgid "We can't keep every file forever. Download anything you want to keep to your computer, then delete what you no longer need."
+msgstr "We can't keep every file forever. Download anything you want to keep to your computer, then delete what you no longer need."
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Web page"
 msgstr "Web page"
@@ -10581,6 +10703,10 @@ msgstr "Your assistant added this item."
 msgid "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
 msgstr "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
 
+#: src/components/StorageDialog.tsx
+msgid "Your bots haven't made any files yet."
+msgstr "Your bots haven't made any files yet."
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Your bots will use this note from their next reply"
 msgstr "Your bots will use this note from their next reply"
@@ -10667,6 +10793,14 @@ msgstr "Your plan becomes {tierTargetLabel} when your trial ends."
 #: src/pages/KnowledgeSection.tsx
 msgid "Your role, office, team and what you work on"
 msgstr "Your role, office, team and what you work on"
+
+#: src/components/StorageDialog.tsx
+msgid "Your storage is full"
+msgstr "Your storage is full"
+
+#: src/components/StorageDialog.tsx
+msgid "Your storage is nearly full"
+msgstr "Your storage is nearly full"
 
 #: src/components/ModelCredits.tsx
 msgid "Your subscription or API key"

@@ -19,6 +19,7 @@ await unwrapEnvFromKeyManager();
 /** How often the worker checks whether a scheduled or requested file cleanup is owed. */
 const FILE_CLEANUP_CHECK_MS = 60_000;
 
+import type { ExpiringFiles } from "@rakazo/adapters";
 import {
   apnsVoipConfig,
   auditLogConfig,
@@ -54,6 +55,7 @@ import {
   deploymentModelUsageLookup,
   EvolveCompanyTools,
   ExpoPushProvider,
+  expiringFilesNotice,
   GraphileJobPublisher,
   homeStorageSweeper,
   InMemoryJobQueue,
@@ -275,7 +277,14 @@ async function main() {
   const cleanFiles = () => {
     if (cleaning) return;
     cleaning = true;
-    void runDueFileCleanup({ prisma, home, artifacts, dataDir, toolRunners: Boolean(toolRunner) })
+    void runDueFileCleanup({
+      prisma,
+      home,
+      artifacts,
+      dataDir,
+      toolRunners: Boolean(toolRunner),
+      notifyExpiring: (expiring) => notifyExpiringFiles(expiring),
+    })
       .then((result) => {
         if (!result) return;
         const { error, ...counts } = result;
@@ -326,6 +335,31 @@ async function main() {
     accessToken: process.env.EXPO_ACCESS_TOKEN,
     voip: await createApnsVoipProvider(apnsVoipConfig(process.env)),
   });
+  // A tap opens the chat of the bot holding most of the files; the app then opens Manage storage.
+  const notifyExpiringFiles = async (expiring: ExpiringFiles) => {
+    const bot = await runAsSystem("find the bot for an expiring files notice", () =>
+      prisma.bot.findUnique({
+        where: { id: expiring.botId },
+        select: { spaceId: true, thread: { select: { id: true } } },
+      }),
+    );
+    if (!bot?.thread) return;
+    const message = {
+      kind: "completion" as const,
+      ...expiringFilesNotice(expiring),
+      botId: expiring.botId,
+      threadId: bot.thread.id,
+    };
+    await events.publishChatAlert?.(expiring.userId, { ...message, spaceId: bot.spaceId });
+    await notifications.send(message, {
+      operationId: "notify",
+      traceId: expiring.botId,
+      spaceId: bot.spaceId,
+      userId: expiring.userId,
+      botId: expiring.botId,
+      signal: new AbortController().signal,
+    });
+  };
   const executor = createRunExecutor({
     maxUploadSizeBytes: uploadSizeFromEnv(process.env),
     contextStrategy: contextStrategyFromEnv(process.env),

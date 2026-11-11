@@ -244,6 +244,15 @@ export function CompanyStorageSection({
     RETENTION_DAYS.map((days) => [String(days), t`${days} days`]),
   ) as Record<string, string>;
   const limitLabel = (mb: number) => limits[String(mb)] ?? formatSize(mb * 1024 * 1024);
+  const diskNearlyFull = Boolean(
+    storage.disk && storage.disk.usedBytes > storage.disk.totalBytes * 0.8,
+  );
+  const totalStored = people.reduce((sum, person) => sum + (person.storageUsedBytes ?? 0), 0);
+  const nearlyFull = people.filter(
+    (person) =>
+      person.storageUsedBytes !== null &&
+      person.storageUsedBytes >= person.effectiveStorageLimitMb * 1024 * 1024 * 0.8,
+  ).length;
 
   return (
     <section id="storage" className="space-y-6" data-testid="company-storage">
@@ -251,8 +260,10 @@ export function CompanyStorageSection({
         <Trans>
           Files bots make stay on each person's own computer and are never visible to anyone else.
           Anything nobody changes for the period below is deleted at the next cleanup unless its
-          owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop
-          making new documents and videos until they delete something.
+          owner pins it in the bot's Files tab. Files bots attach in chats count towards the same
+          limit. People are told a week before files are deleted and when they are nearly full, and
+          can download or delete them from Manage storage. Once someone reaches their limit, their
+          bots stop making new documents and videos until they delete something.
         </Trans>
       </SectionHeading>
 
@@ -264,9 +275,19 @@ export function CompanyStorageSection({
               ? `${formatSize(storage.disk.usedBytes)} / ${formatSize(storage.disk.totalBytes)}`
               : "—"
           }
-          warn={Boolean(storage.disk && storage.disk.usedBytes > storage.disk.totalBytes * 0.8)}
+          warn={diskNearlyFull}
         />
+        <Stat label={t`Everyone's files`} value={formatSize(totalStored)} />
+        <Stat label={t`Nearly full (80%+)`} value={String(nearlyFull)} warn={nearlyFull > 0} />
       </dl>
+      {diskNearlyFull ? (
+        <p role="alert" className="px-1 text-[13px] text-destructive">
+          <Trans>
+            The server disk is over 80% full. Lower limits or retention, or ask people to clear
+            files. Below 5% free, everyone's new documents and videos are paused.
+          </Trans>
+        </p>
+      ) : null}
 
       <div className="space-y-2">
         <h3 className="px-1 text-sm font-medium">

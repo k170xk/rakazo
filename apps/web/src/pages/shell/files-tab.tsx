@@ -14,6 +14,7 @@ import { File, Folder, MoreHorizontal, Pin } from "lucide-react";
 import { useState } from "react";
 import { decodeArtifactBase64, downloadArtifactBytes } from "../../lib/artifact-open";
 import { useSpaceQueries } from "../../lib/query";
+import { openStorageDialog } from "../../lib/storage-prompt";
 import { errorText } from "../../lib/user-error";
 import { DeleteItemDialog } from "./dialogs";
 
@@ -119,7 +120,14 @@ export function FilesTab({ botId }: { botId: string }) {
               one="Files nobody changes for # day are deleted automatically. Pin anything you want to keep."
               other="Files nobody changes for # days are deleted automatically. Pin anything you want to keep."
             />
-          )}
+          )}{" "}
+          <button
+            type="button"
+            className="font-medium text-foreground underline-offset-2 hover:underline"
+            onClick={() => openStorageDialog("largest")}
+          >
+            <Trans>Manage all your storage</Trans>
+          </button>
         </p>
       </div>
 
