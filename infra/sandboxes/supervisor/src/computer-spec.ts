@@ -443,19 +443,30 @@ export function computerNetworkOwnerFor(
   return createHash("sha256").update(root).digest("hex").slice(0, 32);
 }
 
+export const NETWORK_NO_ICC = "com.docker.network.bridge.enable_icc";
+
+/**
+ * `separate` stops containers on the network reaching each other, for a network that many
+ * people's short-lived containers share at once.
+ */
 export function computerNetworkCreateOptions(
   botId: string,
   owner: string,
   egress: ComputerEgressMode = "open",
+  separate = false,
 ) {
+  const options = {
+    ...(egress === "restricted"
+      ? { "com.docker.network.bridge.name": computerBridgeNameFor(botId) }
+      : {}),
+    ...(separate ? { [NETWORK_NO_ICC]: "false" } : {}),
+  };
   return {
     Name: computerNetworkNameFor(botId),
     Driver: "bridge",
     CheckDuplicate: true,
     Labels: { "rakazo.computerOwner": owner, "rakazo.botId": botId },
-    ...(egress === "restricted"
-      ? { Options: { "com.docker.network.bridge.name": computerBridgeNameFor(botId) } }
-      : {}),
+    ...(Object.keys(options).length > 0 ? { Options: options } : {}),
   };
 }
 

@@ -39,6 +39,7 @@ import {
   hostComputerUser,
   isRegistryQualifiedImage,
   legacyNetworkOwnedSolelyBy,
+  NETWORK_NO_ICC,
   parseMemoryBytes,
   publishedLoopbackControlHostPort,
   resolveComputerControlEndpoint,
@@ -406,6 +407,16 @@ describe("graphical computer spec", () => {
     // The bridge name differs from the network name so `docker network` output
     // still shows the readable rakazo-computer-* name while iptables matches the interface.
     expect(restricted.Options?.["com.docker.network.bridge.name"]).not.toBe(restricted.Name);
+  });
+
+  it("keeps containers on a separate network from reaching each other", () => {
+    expect(computerNetworkCreateOptions("tool-runs", "owner", "open", true).Options).toEqual({
+      [NETWORK_NO_ICC]: "false",
+    });
+    expect(computerNetworkCreateOptions("tool-runs", "owner", "restricted", true).Options).toEqual({
+      "com.docker.network.bridge.name": computerBridgeNameFor("tool-runs"),
+      [NETWORK_NO_ICC]: "false",
+    });
   });
 
   it("lists prior network name variants for cleanup", () => {

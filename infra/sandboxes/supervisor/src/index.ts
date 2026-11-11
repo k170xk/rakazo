@@ -46,6 +46,7 @@ import {
   homeVolumeMatches,
   hostComputerUser,
   legacyNetworkOwnedSolelyBy,
+  NETWORK_NO_ICC,
   publishedLoopbackControlHostPort,
   resolveComputerControlEndpoint,
   resolveComputerDns,
@@ -2199,15 +2200,35 @@ async function reclaimComputerNetwork(container: Docker.Container, botId: string
   });
 }
 
+/** Tool runs from many people share one network, so their containers must not reach each other. */
+const separateNetwork = (botId: string) => botId === TOOL_RUN_NETWORK_ID;
+
 async function ensureBotNetwork(botId: string, owner: string) {
+  const separate = separateNetwork(botId);
   return docker
-    .createNetwork(computerNetworkCreateOptions(botId, owner, computerEgressMode))
+    .createNetwork(computerNetworkCreateOptions(botId, owner, computerEgressMode, separate))
     .catch(async (error) => {
       // Existing networks and concurrent provision requests are both safe.
       if (!/already exists/i.test(String(error))) throw error;
+      if (separate) await replaceUnseparatedNetwork(botId, owner);
       if (computerEgressMode === "restricted") {
         await rekeyRestrictedBotNetwork(computerNetworkNameFor(botId), botId, owner);
       }
+    });
+}
+
+// A tool-run network made before separation lets containers reach each other. Replace it once
+// nothing is attached; a run still using it finishes first and the next one replaces it.
+async function replaceUnseparatedNetwork(botId: string, owner: string) {
+  const network = docker.getNetwork(computerNetworkNameFor(botId));
+  const info = await network.inspect().catch(() => undefined);
+  if (!info || info.Options?.[NETWORK_NO_ICC] === "false") return;
+  if (Object.keys(info.Containers ?? {}).length > 0) return;
+  await network.remove().catch(() => undefined);
+  await docker
+    .createNetwork(computerNetworkCreateOptions(botId, owner, computerEgressMode, true))
+    .catch((error) => {
+      if (!/already exists/i.test(String(error))) throw error;
     });
 }
 
@@ -2246,7 +2267,9 @@ async function rekeyRestrictedBotNetwork(name: string, botId: string, owner: str
   }
   if (!info || !hasNamedBridge(info)) {
     await docker
-      .createNetwork(computerNetworkCreateOptions(botId, owner, "restricted"))
+      .createNetwork(
+        computerNetworkCreateOptions(botId, owner, "restricted", separateNetwork(botId)),
+      )
       .catch((error) => {
         if (!/already exists/i.test(String(error))) throw error;
       });
