@@ -55,6 +55,7 @@ import { queryOptions, skipToken, useQuery, useQueryClient } from "@tanstack/rea
 import { ChevronDown, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { CompanyMcpApp } from "../components/integrations/CompanyMcpApp";
 import { IntegrationSetup } from "../components/integrations/IntegrationSetup";
 import type {
   ManagedAppLink,
@@ -757,6 +758,8 @@ export function PluginsOverlay({
         </SectionHeading>
         <div className="grid grid-cols-2 gap-2">
           {companyApps.map((app) => {
+            if (app.mcpEndpoint && app.state === "enabled")
+              return <CompanyMcpApp key={app.slug} app={app} endpoint={app.mcpEndpoint} />;
             const item =
               app.ready && app.state === "enabled"
                 ? catalog.find(

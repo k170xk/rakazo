@@ -18,6 +18,7 @@ import {
 } from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import {
+  availableInSpace,
   IsolationError,
   ProviderTransactionBusyError,
   recordSecurityEvent,
@@ -315,12 +316,37 @@ export function connectionsRoutes(ctx: RouterContext) {
               .map((provider) => provider.catalog(adapterContext).catch(() => [])),
           )
         ).flat();
+        const mcpEndpoints = COMPANY_APPS.flatMap((app) =>
+          "mcpEndpoint" in app ? [app.mcpEndpoint] : [],
+        );
+        const ownMcp = new Set(
+          (
+            await deps.prisma.mcpServer.findMany({
+              where: { ...availableInSpace(context.actor), endpoint: { in: mcpEndpoints } },
+              select: { endpoint: true },
+            })
+          ).map((row) => row.endpoint),
+        );
         const listed = new Set<string>();
         const apps: CompanyApp[] = COMPANY_APPS.map((app) => {
+          listed.add(app.slug);
+          if ("mcpEndpoint" in app) {
+            return {
+              slug: app.slug,
+              name: app.name,
+              logo: app.logo,
+              state: staffApps?.[app.slug] ?? "hidden",
+              ready: true,
+              connectorId: null,
+              provider: null,
+              connected: ownMcp.has(app.mcpEndpoint),
+              mcpEndpoint: app.mcpEndpoint,
+              tokenHelp: app.tokenHelp,
+            };
+          }
           // The company's own Microsoft sign-in comes before any catalog app of the same name.
           const matching = catalog.filter((entry) => staffAppKey(entry.slug) === app.slug);
           const item = matching.find((entry) => entry.connectorId === "microsoft") ?? matching[0];
-          listed.add(app.slug);
           return {
             slug: app.slug,
             name: app.name,

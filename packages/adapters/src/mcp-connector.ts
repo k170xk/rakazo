@@ -21,6 +21,7 @@ import type {
 import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
 import type { McpOAuthEnvField } from "@rakazo/contracts";
 import {
+  companyMcpEndpoints,
   isLocalhostOrLoopbackIp,
   mcpOAuthEnvReferences,
   resolveMcpOAuthEnv,
@@ -31,6 +32,7 @@ import { availableInSpace, itemSecretIn } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { sanitizedError } from "@rakazo/logging/monitoring";
 import { catalogToolPrefix } from "./approval-effect.js";
+import { companyFeatures, companyTools } from "./company-policy.js";
 import { composioToolBatch } from "./composio-batch.js";
 import {
   combineSignals,
@@ -102,6 +104,13 @@ export const DEFAULT_MCP_DISCOVERY_TIMEOUT_MS = 20_000;
 /** After a failed discovery, runs skip the server for this long, doubling up to the max. */
 const DISCOVERY_BACKOFF_MS = 30_000;
 const DISCOVERY_BACKOFF_MAX_MS = 5 * 60_000;
+
+/** With custom MCP servers off, only the company's own MCP apps open to staff still run. */
+function usableServers(context: { spaceId: string; userId: string }) {
+  const usable = { enabled: true, ...availableInSpace(context) };
+  if (companyFeatures().mcpServers) return usable;
+  return { ...usable, endpoint: { in: companyMcpEndpoints(companyTools().staffApps) } };
+}
 /** A server that needs new credentials or a new address waits longer: retrying rarely
  * helps, but a failure that was only brief still gets another try. */
 const RECONNECT_BACKOFF_MS = 60 * 60_000;
@@ -440,7 +449,7 @@ export class McpConnector implements ConnectorProvider {
 
   private async authorizedTools(context: AdapterContext): Promise<ConnectorTool[]> {
     if (!context.botId) return [];
-    const usable = { enabled: true, ...availableInSpace(context) };
+    const usable = usableServers(context);
     const [assigned, shared] = await Promise.all([
       this.prisma.botMcpServer.findMany({
         where: {
@@ -650,7 +659,7 @@ export class McpConnector implements ConnectorProvider {
       yield { type: "error", message: "MCP tools require a bot context" };
       return;
     }
-    const usable = { enabled: true, ...availableInSpace(context) };
+    const usable = usableServers(context);
     const assignment =
       (await this.prisma.botMcpServer.findFirst({
         where: {

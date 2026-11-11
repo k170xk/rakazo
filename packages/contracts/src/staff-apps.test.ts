@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CompanyToolsSchema,
+  companyMcpEndpoints,
   companyToolsFrom,
   pluginStaffKey,
   staffAppKey,
@@ -25,6 +26,14 @@ describe("staff apps", () => {
     expect(staffAppKey("MICROSOFT_TEAMS")).toBe("microsoft-teams");
     expect(staffAppKey("gmail")).toBe("gmail");
     expect(staffAppState({ sharepoint: "enabled" }, "share_point")).toBe("enabled");
+  });
+
+  it("runs the company's MCP apps only while they are enabled for staff", () => {
+    const infragrid = "https://qtmriibdnwhabfwmcfst.supabase.co/functions/v1/mcp";
+    expect(companyMcpEndpoints({ infragrid3d: "enabled" })).toEqual([infragrid]);
+    expect(companyMcpEndpoints({ infragrid3d: "soon" })).toEqual([]);
+    expect(companyMcpEndpoints({ outlook: "enabled" })).toEqual([]);
+    expect(companyMcpEndpoints(undefined)).toEqual([]);
   });
 
   it("lets staff use only enabled app connections", () => {

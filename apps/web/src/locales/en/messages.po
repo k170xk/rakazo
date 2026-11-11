@@ -179,11 +179,21 @@ msgstr "{0} {unitLabel}"
 msgid "{0} connection"
 msgstr "{0} connection"
 
+#. placeholder {0}: app.name
+#: src/components/integrations/CompanyMcpApp.tsx
+msgid "{0} connection token"
+msgstr "{0} connection token"
+
 #. placeholder {0}: storage.chatFileRetentionDays
 #. placeholder {0}: storage.fileRetentionDays
 #: src/pages/AdminComputerAccess.tsx
 msgid "{0} days"
 msgstr "{0} days"
+
+#. placeholder {0}: app.name
+#: src/components/integrations/CompanyMcpApp.tsx
+msgid "{0} did not accept this token. Check it and try again."
+msgstr "{0} did not accept this token. Check it and try again."
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
@@ -199,6 +209,11 @@ msgstr "{0} handling"
 #: src/components/call/IncomingCall.tsx
 msgid "{0} is calling you"
 msgstr "{0} is calling you"
+
+#. placeholder {0}: app.name
+#: src/components/integrations/CompanyMcpApp.tsx
+msgid "{0} is connected"
+msgstr "{0} is connected"
 
 #. placeholder {0}: updated.name
 #: src/pages/McpServersOverlay.tsx
@@ -1783,6 +1798,7 @@ msgstr "Can't read images"
 
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/integrations/CompanyMcpApp.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
@@ -1909,6 +1925,10 @@ msgstr "Change model"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "Change password"
+
+#: src/components/integrations/CompanyMcpApp.tsx
+msgid "Change token"
+msgstr "Change token"
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Change work packages"
@@ -2502,6 +2522,7 @@ msgstr "Confirm removal"
 msgid "Confirm the URL is reachable from this browser session, then test again."
 msgstr "Confirm the URL is reachable from this browser session, then test again."
 
+#: src/components/integrations/CompanyMcpApp.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -2514,6 +2535,11 @@ msgstr "Confirm the URL is reachable from this browser session, then test again.
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Connect"
 msgstr "Connect"
+
+#. placeholder {0}: app.name
+#: src/components/integrations/CompanyMcpApp.tsx
+msgid "Connect {0}"
+msgstr "Connect {0}"
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Connect {selectedProviderName}"
@@ -2569,6 +2595,7 @@ msgid "Connect your own API key in Models or choose OCSC Intelligence credits in
 msgstr "Connect your own API key in Models or choose OCSC Intelligence credits in Billing."
 
 #: src/components/ComputerDeviceSettings.tsx
+#: src/components/integrations/CompanyMcpApp.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/AdminCompanyTools.tsx
@@ -2594,6 +2621,7 @@ msgstr "Connected apps"
 msgid "Connecting apps such as Outlook, Teams and Stripe, and adding plugins, is being tested and will be available to everyone soon."
 msgstr "Connecting apps such as Outlook, Teams and Stripe, and adding plugins, is being tested and will be available to everyone soon."
 
+#: src/components/integrations/CompanyMcpApp.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
@@ -2616,6 +2644,10 @@ msgstr "Connection test failed."
 #: src/pages/PluginsOverlay.tsx
 msgid "Connection to {0} is still pending. You can close this and check again."
 msgstr "Connection to {0} is still pending. You can close this and check again."
+
+#: src/components/integrations/CompanyMcpApp.tsx
+msgid "Connection token"
+msgstr "Connection token"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Connector"
@@ -2827,7 +2859,9 @@ msgstr "Could not complete the update. Try again."
 msgid "Could not connect"
 msgstr "Could not connect"
 
+#. placeholder {0}: app.name
 #. placeholder {0}: registration.name
+#: src/components/integrations/CompanyMcpApp.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not connect {0}"
 msgstr "Could not connect {0}"
@@ -4648,10 +4682,6 @@ msgstr "File"
 #: src/pages/AdminComputerAccess.tsx
 msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
 msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
-
-#: src/pages/AdminComputerAccess.tsx
-#~ msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
-#~ msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
 
 #: src/pages/Artifacts.tsx
 msgid "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
@@ -7268,6 +7298,11 @@ msgstr "Paste your API key"
 #: src/lib/model-connection-preflight.ts
 msgid "Paste your API key, then test again."
 msgstr "Paste your API key, then test again."
+
+#. placeholder {0}: app.name
+#: src/components/integrations/CompanyMcpApp.tsx
+msgid "Paste your connection token from {0}."
+msgstr "Paste your connection token from {0}."
 
 #: src/pages/AdminComputerAccess.tsx
 #: src/pages/RoutineEditor.tsx
@@ -10805,6 +10840,10 @@ msgstr "Your storage is nearly full"
 #: src/components/ModelCredits.tsx
 msgid "Your subscription or API key"
 msgstr "Your subscription or API key"
+
+#: src/components/integrations/CompanyMcpApp.tsx
+msgid "Your token is stored encrypted and only your assistants use it."
+msgstr "Your token is stored encrypted and only your assistants use it."
 
 #: src/components/ModelCredits.tsx
 msgid "Your trial ends and your card is charged {price} today."

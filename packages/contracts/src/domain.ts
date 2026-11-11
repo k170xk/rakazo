@@ -2225,6 +2225,14 @@ export const COMPANY_APPS = [
     aliases: ["autodesk_forma"],
   },
   {
+    slug: "infragrid3d",
+    name: "InfraGrid 3D",
+    logo: "/apps/infragrid3d.png",
+    aliases: ["infragrid", "infragrid_3d"],
+    mcpEndpoint: "https://qtmriibdnwhabfwmcfst.supabase.co/functions/v1/mcp",
+    tokenHelp: "In InfraGrid 3D, open Settings → Connections and copy your connection token.",
+  },
+  {
     slug: "autodesk-acc",
     name: "Autodesk Construction Cloud",
     logo: "/apps/autodesk.svg",
@@ -2235,6 +2243,9 @@ export const COMPANY_APPS = [
   name: string;
   logo: string;
   aliases: readonly string[];
+  /** Connects as a remote MCP server where each person pastes their own token. */
+  mcpEndpoint?: string;
+  tokenHelp?: string;
 }>;
 
 /** Connectors whose connections are apps governed by the staff app settings. */
@@ -2260,6 +2271,17 @@ export function staffAppState(
   const key = staffAppKey(provider);
   if (staffApps) return staffApps[key] ?? "hidden";
   return COMPANY_APPS.some((app) => app.slug === key) ? "hidden" : "enabled";
+}
+
+/** Endpoints of the company's own MCP apps that staff may use, which run even with custom MCP servers off. */
+export function companyMcpEndpoints(
+  staffApps: Record<string, StaffAppState> | undefined,
+): string[] {
+  return COMPANY_APPS.flatMap((app) =>
+    "mcpEndpoint" in app && staffAppState(staffApps, app.slug) === "enabled"
+      ? [app.mcpEndpoint]
+      : [],
+  );
 }
 
 /** The settings key for a marketplace plugin, from its installed source. */
@@ -2295,6 +2317,9 @@ export const CompanyAppSchema = z.object({
   connectorId: z.string().nullable(),
   provider: z.string().nullable(),
   connected: z.boolean(),
+  /** Set for an app that connects as a remote MCP server with the person's own token. */
+  mcpEndpoint: z.string().url().nullable().optional(),
+  tokenHelp: z.string().nullable().optional(),
 });
 export type CompanyApp = z.infer<typeof CompanyAppSchema>;
 

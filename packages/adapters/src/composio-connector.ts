@@ -14,8 +14,9 @@ import type {
   ManagedConnectorProvider,
 } from "@rakazo/adapter-kit";
 import { ConnectorAuthUnavailableError } from "@rakazo/adapter-kit";
+import { companyMcpEndpoints } from "@rakazo/contracts";
 import { getLogger } from "@rakazo/logging";
-import { companyFeatures } from "./company-policy.js";
+import { companyFeatures, companyTools } from "./company-policy.js";
 import { COMPOSIO_MULTI_EXECUTE_TOOL, composioToolBatch } from "./composio-batch.js";
 import type { ToolkitDirectoryEntry } from "./composio-catalog-cache.js";
 import {
@@ -850,7 +851,8 @@ export class ConnectorRegistry implements ConnectorProvider {
   /** Whether the company lets bots use this provider: apps, custom MCP servers, plugins. */
   private allowed(id: string, provider: ConnectorProvider): boolean {
     const features = companyFeatures();
-    if (id === "mcp") return features.mcpServers;
+    if (id === "mcp")
+      return features.mcpServers || companyMcpEndpoints(companyTools().staffApps).length > 0;
     if (id === "installed") return features.plugins;
     if (id === EVOLVE_COMPANY_CONNECTOR_ID) return features.evolveTools;
     return isManagedConnectorProvider(provider) ? features.connectedApps : true;

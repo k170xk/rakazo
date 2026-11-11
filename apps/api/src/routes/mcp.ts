@@ -17,7 +17,11 @@ import {
   verifyMcpInstall,
 } from "@rakazo/adapters";
 import type { Actor } from "@rakazo/contracts";
-import { signupSurveyAsksTeamSize, staffPluginEnabled } from "@rakazo/contracts";
+import {
+  companyMcpEndpoints,
+  signupSurveyAsksTeamSize,
+  staffPluginEnabled,
+} from "@rakazo/contracts";
 import { comparePlugins, containsSecret, matchesPluginQuery } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
@@ -84,6 +88,19 @@ export function mcpRoutes(ctx: RouterContext) {
     authed,
   } = ctx;
   const pluginMarketplace = createPluginMarketplace(deps.pluginMarketplaceRead);
+  /** With custom MCP servers off, staff still connect the company's own MCP apps. */
+  const requireMcpServers = async (actor: Actor, ...endpoints: Array<string | null>) => {
+    const companyApps = companyMcpEndpoints(companyTools().staffApps);
+    if (endpoints.every((endpoint) => endpoint && companyApps.includes(endpoint))) return;
+    await requireCompanyFeature(deps, actor, "mcpServers");
+  };
+  const serverEndpoint = async (actor: Actor, id: string) =>
+    (
+      await deps.prisma.mcpServer.findFirst({
+        where: { id, ...availableInSpace(actor) },
+        select: { endpoint: true },
+      })
+    )?.endpoint ?? null;
   /** Removes an install and, for a plugin, the servers, secrets and skills it added. */
   const removeInstall = async (actor: Actor, id: string) => {
     const notify: Array<{ threadId: string; seq: number }> = [];
@@ -427,7 +444,7 @@ export function mcpRoutes(ctx: RouterContext) {
           );
         }),
         create: authed.mcp.servers.create.handler(async ({ context, input }) => {
-          await requireCompanyFeature(deps, context.actor, "mcpServers");
+          await requireMcpServers(context.actor, "endpoint" in input ? input.endpoint : null);
           await requireCompanyFeature(deps, context.actor, "staffIntegrations");
           const stored = await prepareMcpServer(context.actor, input);
           const row = await deps.prisma
@@ -446,7 +463,13 @@ export function mcpRoutes(ctx: RouterContext) {
           return announceMcpServer(row, context.actor);
         }),
         update: authed.mcp.servers.update.handler(async ({ context, input }) => {
-          await requireCompanyFeature(deps, context.actor, "mcpServers");
+          await requireMcpServers(
+            context.actor,
+            await serverEndpoint(context.actor, input.id),
+            ...("config" in input
+              ? ["endpoint" in input.config ? input.config.endpoint : null]
+              : []),
+          );
           await requireCompanyFeature(deps, context.actor, "staffIntegrations");
           for (let attempt = 0; attempt < 5; attempt++) {
             const { existing, existingSecret } = await deps.prisma.$transaction(async (tx) => {
@@ -641,7 +664,7 @@ export function mcpRoutes(ctx: RouterContext) {
           throw new ORPCError("CONFLICT", { message: "MCP credentials changed; retry" });
         }),
         test: authed.mcp.servers.test.handler(async ({ context, input }) => {
-          await requireCompanyFeature(deps, context.actor, "mcpServers");
+          await requireMcpServers(context.actor, await serverEndpoint(context.actor, input.id));
           await requireCompanyFeature(deps, context.actor, "staffIntegrations");
           const scope = { id: input.id, ...availableInSpace(context.actor) };
           const server = await deps.prisma.mcpServer.findFirst({ where: scope });
