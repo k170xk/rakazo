@@ -24,9 +24,9 @@ const OWNER_TRIGGERS = new Set([
 ]);
 
 /**
- * True only for the person's own one-to-one chat with their own bot, on a turn they set off:
- * group chats, Slack or Teams conversations and messages from other bots all fall outside it,
- * so nobody else can read the replies.
+ * True only for the person's own one-to-one chat with their own bot, on a turn they set off
+ * (or that another of their own bots woke in that same private chat). Group chats, Slack or Teams,
+ * and messages from someone else's bot all fall outside it, so nobody else can read the replies.
  */
 export function isOwnersPrivateChat(input: {
   run: { userId: string; trigger: string };
@@ -37,10 +37,15 @@ export function isOwnersPrivateChat(input: {
     groupId: string | null;
     externalConversationId: string | null;
   };
+  /** Owner of the bot that sent a bot_message wake; same-person PA handoffs keep mail and todos. */
+  peerBotUserId?: string | null;
 }): boolean {
-  const { run, bot, thread } = input;
+  const { run, bot, thread, peerBotUserId } = input;
+  const ownerTurn =
+    OWNER_TRIGGERS.has(run.trigger) ||
+    (run.trigger === "bot_message" && peerBotUserId != null && peerBotUserId === bot.userId);
   return (
-    OWNER_TRIGGERS.has(run.trigger) &&
+    ownerTurn &&
     bot.userId === run.userId &&
     thread.userId === run.userId &&
     thread.botId === bot.id &&

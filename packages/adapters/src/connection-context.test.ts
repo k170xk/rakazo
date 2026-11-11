@@ -31,6 +31,21 @@ describe("private mail stays in the owner's own chat", () => {
     for (const trigger of ["bot_message", "messaging", "webhook", "spawn", "tickets"]) {
       expect(isOwnersPrivateChat({ ...own, run: { ...own.run, trigger } })).toBe(false);
     }
+    // Another of Keith's bots waking Pip in Keith's private chat keeps Outlook and todos.
+    expect(
+      isOwnersPrivateChat({
+        ...own,
+        run: { ...own.run, trigger: "bot_message" },
+        peerBotUserId: "keith",
+      }),
+    ).toBe(true);
+    expect(
+      isOwnersPrivateChat({
+        ...own,
+        run: { ...own.run, trigger: "bot_message" },
+        peerBotUserId: "anne",
+      }),
+    ).toBe(false);
   });
 
   it("drops Outlook and SharePoint outside the private chat", () => {

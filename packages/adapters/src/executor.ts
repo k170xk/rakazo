@@ -852,9 +852,23 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             ? () => true
             : (connection: { connectorId: string; provider: string }) =>
                 staffMayUseConnection(staffApps, connection);
+        const peerBotUserId = peerMessage?.fromBotId
+          ? (
+              await deps.prisma.bot.findUnique({
+                where: { id: peerMessage.fromBotId },
+                select: { userId: true },
+              })
+            )?.userId
+          : undefined;
+        const ownersPrivateChat = isOwnersPrivateChat({
+          run,
+          bot,
+          thread,
+          peerBotUserId,
+        });
         const usableConnections = withoutPrivateApps(
           storedConnections.filter(ownerMayUse),
-          isOwnersPrivateChat({ run, bot, thread }),
+          ownersPrivateChat,
         );
         const composioRows = usableConnections.filter(
           (connection) => connection.connectorId === "composio",
@@ -1656,7 +1670,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const builtins = [
           ...selectBuiltinToolsForRun({
             ticketBoardEnabled: deps.ticketBoardEnabled,
-            personalTodos: isOwnersPrivateChat({ run, bot, thread }),
+            personalTodos: ownersPrivateChat,
             phoneCallsEnabled: deps.phoneCallsEnabled,
             historyRetrievalEnabled: contextStrategy !== "current",
             graphicalToolsAllowed,
@@ -1910,6 +1924,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             callEndRun,
             callClientNonce: callClientNonceForRun,
             peerMessage,
+            peerBotUserId,
             userComputerOwner: userComputerOwnerId,
           },
           computer: {

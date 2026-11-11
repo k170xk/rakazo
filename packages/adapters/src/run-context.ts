@@ -260,6 +260,8 @@ export interface RunSource {
   callEndRun: boolean;
   callClientNonce: string | null;
   peerMessage: Awaited<ReturnType<typeof loadBotMessageContext>>;
+  /** Owner of the bot that woke this bot_message turn; same-person handoffs keep private tools. */
+  peerBotUserId?: string | null;
   /** Whose own computer user_computer_shell may reach (see userComputerOwner). */
   userComputerOwner: string | undefined;
 }

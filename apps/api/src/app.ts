@@ -107,6 +107,7 @@ import {
   sandboxProviderOptionsFromEnv,
   stripeBillingConfigFromEnv,
   toTeamChatInbound,
+  toolRunnerFromEnv,
   UserDeviceHub,
   UserDevices,
   userDeviceForwardSecret,
@@ -439,6 +440,12 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       prisma,
       secrets,
     }));
+  // Chat turns often run in this API process; without the document runners here, Tools-only /
+  // computers-off people get no ocsc/write_file and are told PowerPoint cannot be made.
+  const toolRunner = toolRunnerFromEnv(process.env, env.sandboxProvider, {
+    url: env.sandboxSupervisorUrl,
+    token: env.sandboxSupervisorToken,
+  });
   const mcpOAuth = new McpOAuthBroker(
     prisma,
     secrets,
@@ -723,6 +730,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     deploymentModelKey: env.deploymentModelKey,
     deploymentModelConfigured: env.deploymentModelConfigured,
     dataDir: env.dataDir,
+    toolRunner,
     runPool,
     notifications,
     jobs,

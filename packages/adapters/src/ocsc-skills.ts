@@ -220,7 +220,7 @@ SENDING THE POWERPOINT
 ${SEND_NOTE} In a scheduled routine, do the same and also give the file's path.
 
 IF IT FAILS
-If the JSON says "ok": false, read the error, fix the spec, and run the command again. Stop after three attempts and tell the person what went wrong. Without a computer, give the slide outline in the chat and say that a PowerPoint file needs a Bot with a computer.
+If the JSON says "ok": false, read the error, fix the spec, and run the command again. Stop after three attempts and tell the person what went wrong. A full computer (shell or screen) is not required: use the ocsc tool on the document runners. Only if the ocsc tool is not in your tools should you give the slide outline in the chat and say the company document runners were not available on that turn.
 
 ON THE SCREEN
 ${SCREEN_NOTE}

@@ -23,7 +23,15 @@ export const PRIVATE_TODOS =
 /** The person's list, reachable only from their own private chat or routine. */
 function ownerOf(ctx: RunContext): TodoOwner | undefined {
   const { run, bot, thread } = ctx;
-  if (!isOwnersPrivateChat({ run, bot, thread })) return undefined;
+  if (
+    !isOwnersPrivateChat({
+      run,
+      bot,
+      thread,
+      peerBotUserId: ctx.source?.peerBotUserId,
+    })
+  )
+    return undefined;
   return { spaceId: run.spaceId, userId: run.userId };
 }
 
