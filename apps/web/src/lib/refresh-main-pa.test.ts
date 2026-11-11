@@ -19,7 +19,7 @@ describe("refreshMainPaInstructions", () => {
     ).resolves.toBe(true);
     expect(update).toHaveBeenCalledWith({
       botId: "bot-1",
-      instructions: expect.stringContaining("OCSC QA agent"),
+      instructions: expect.stringContaining("set up my own team and agents"),
     });
   });
 
@@ -29,7 +29,7 @@ describe("refreshMainPaInstructions", () => {
         id: "bot-1",
         name: "Rok",
         spawnKey: "onboarding:first",
-        instructions: "… OCSC QA agent …",
+        instructions: "… set up my own team and agents …",
       }),
     ).resolves.toBe(false);
     await expect(

@@ -1,7 +1,7 @@
 import { isMainPaBot, paBotInstructions, paBotTeamInstructions } from "@rakazo/core";
 import { rpc } from "./rpc";
 
-const MARKER = "OCSC QA agent";
+const MARKER = "set up my own team and agents";
 const TEAM_MARKER = "Do not run the organisation agent setup";
 
 /** Refresh standing instructions for an early Main PA that still has the short first version. */

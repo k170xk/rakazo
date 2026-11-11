@@ -45,6 +45,8 @@ describe("pa-bot", () => {
     expect(text).toContain("OCSC Research agent");
     expect(text).toContain("spawn_bot");
     expect(text).toContain("four OCSC agents");
+    expect(text).toContain("No, I'll set up my own team and agents");
+    expect(text).toContain("skip every offer");
     expect(text).toContain("Leave the spawn name empty");
     expect(text).toContain("Creating an agent never ends the setup");
     expect(text).toContain("Weekday mornings at 8:30");
@@ -109,6 +111,7 @@ describe("pa-bot", () => {
     expect(prompt).toContain("Do not stop after the first card");
     expect(prompt).toContain("Leave the spawn name empty");
     expect(prompt).toContain("Creating an agent never ends the setup");
+    expect(prompt).toContain("No, I'll set up my own team and agents");
     expect(prompt).toContain("Weekday mornings at 8:30");
     expect(prompt).toContain("Never offer a generic construction roundup");
     expect(prompt).toContain("Milo");
