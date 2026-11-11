@@ -14,9 +14,11 @@ A page is JSX source whose default export is a React component. It renders in an
 ## Design rules (OCSC / Evolve branding)
 Pages must look like Evolve (the OCSC CV Generator app), not a generic AI dashboard.
 - Type: Urbanist is already the kit font. Do not set fontFamily to Inter, Roboto, Arial or a system stack, and do not load fonts from the web.
-- Colour: use kit components and useTheme() only. Brand green is primary (fill.primary / the kit's accent). No hex colours, no purple/indigo marketing themes, no gradients or glows, no emoji as icons or bullets. Tones (success, warning, danger, info) are for meaning, not decoration.
+- Colour: use kit components and useTheme() only. Brand green is primary (fill.primary / the kit's accent). No hex colours, no purple/indigo marketing themes, no gradients or glows, no emoji as icons or bullets. Tones (success, warning, danger, info) are for meaning, not decoration. Never paint a full-bleed grey banner with bg.subtle / muted fills; use Callout (with tone) instead.
 - Light and dark: the viewer follows the reader's theme. Always take colours from useTheme() for custom SVG/HTML so both modes work; never hard-code white/black backgrounds.
-- Layout: section menus and view switches go along the top with Segmented (Evolve already has a left drawer outside the page). Do not invent a side navigation rail inside the page.
+- Layout: section menus and view switches go along the top with Segmented (muted pill tabs, like Evolve's feature tabs). Evolve already has a left drawer outside the page — do not invent a side navigation rail. Put Segmented in the first Section's actions (or just under the title) so the top of the page reads as the menu.
+- Tables: always use the kit Table (bordered, filterable). Do not hand-roll HTML <table> or div grids that look like tables — they miss Evolve borders and spacing.
+- Dashboards: use width "wide". Top-level headed Sections are bordered cards automatically on wide/full pages. Prefer kit Input/Select/Button over raw <input>/<select> styled by hand.
 - Show, don't narrate: pick the richest component that fits the data. Numbers become Metrics, trends a LineChart, comparisons Bars, shares a Pie, flows a Diagram, sequences Steps, options ProsCons, statuses toned Status pills. A paragraph is for the one thing a visual cannot say.
 - Lead with the answer: a Callout (lead + tone) or Metrics first, evidence below. The reader should get the point in two seconds.
 - Long pages (five or more sections) start with a TableOfContents whose ids match the Section ids. Number sections in reading order when the order matters.
@@ -27,7 +29,7 @@ Pages must look like Evolve (the OCSC CV Generator app), not a generic AI dashbo
 - End research with LinkCards of the sources (site and date), after a Divider.
 
 ## Recipes
-- Dashboard (width "wide"): Section with a Segmented period switch in actions -> Metrics -> Grid of two charts -> Table with toned Status cells -> Callout with the takeaway.
+- Dashboard (width "wide"): first Section with Segmented view switch in actions -> Metrics -> kit Table (not a custom HTML table) with toned Status cells -> Callout for priority notes -> more Sections for detail.
 - Report or research dossier: TableOfContents -> Callout summary (lead + tone) -> numbered Sections, each a short Text plus a Table, Bars or BulletList -> Quote for primary evidence -> ProsCons for trade-offs -> Divider -> LinkCards (numbered) of sources -> Footnote for method notes.
 - Tracker: Metrics of progress -> Checklist or Rows with Status -> Steps for what is next -> Properties for owners and dates.
 - Plan: Callout with the goal -> Steps or a Diagram of the phases -> Table of milestones with Status -> NumberedList of open questions.

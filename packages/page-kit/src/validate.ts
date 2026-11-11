@@ -187,6 +187,16 @@ export function checkPageSource(source: string): PageSourceCheck {
       "Do not add a side navigation rail; Evolve already has a left drawer. Use Segmented along the top for view switches.",
     );
   }
+  if (/<\s*table\b/i.test(source) || /createElement\(\s*['"]table['"]/.test(source)) {
+    warnings.push(
+      "Use the kit Table component instead of a hand-rolled HTML table so the page gets Evolve borders and spacing.",
+    );
+  }
+  if (/background\s*:\s*t\.bg\.subtle|background:\s*[^;]*muted/i.test(source)) {
+    warnings.push(
+      "Avoid full-bleed grey banners (bg.subtle / muted). Use Callout with a tone for priority notes.",
+    );
+  }
   // The list goes back to the model, so a file with the same mistake on every line stays cheap.
   if (errors.length > MAX_REPORTED_ERRORS) {
     const more = errors.length - MAX_REPORTED_ERRORS;

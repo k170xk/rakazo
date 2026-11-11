@@ -29,8 +29,9 @@ describe("page kit", () => {
     );
     expect(markup).toContain('<p class="rk-summary">Updated <strong>Monday</strong></p>');
     expect(markup).toContain('data-width="wide"');
+    // Wide pages card top-level headed sections (Evolve borders); Segmented is the top menu.
     expect(markup).toMatch(
-      /<section class="rk-section" id="headline" data-headed="true"><div class="rk-section-head"><h2 class="rk-heading">Headline<\/h2><div class="rk-actions"><fieldset class="rk-segmented"/,
+      /<section class="rk-section" id="headline" data-card="true" data-headed="true"><div class="rk-section-head"><h2 class="rk-heading">Headline<\/h2><div class="rk-actions"><fieldset class="rk-segmented"/,
     );
     expect(markup).toContain('x<p class="rk-caption" data-figure="true">As of Oct 31</p>');
     expect(markup).toContain(

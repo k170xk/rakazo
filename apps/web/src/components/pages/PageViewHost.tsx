@@ -12,8 +12,6 @@ import { PageView } from "./PageView";
 import { SharePopover } from "./SharePopover";
 
 const COARSE = "(pointer: coarse)";
-/** A tablet: the page is a sheet over the chat, with the chat's composer docked over it. */
-const SHEET = "(pointer: coarse) and (min-width: 900px)";
 /** The docked composer's height plus its gap to the screen edge and to what scrolls above it. */
 const DOCK_CLEARANCE = 72;
 
@@ -46,7 +44,6 @@ function OpenPage({
   session: PageSession;
 }) {
   const compact = useMedia(COARSE);
-  const sheet = useMedia(SHEET);
   const { t } = useLingui();
   const [, setSearchParams] = useSearchParams();
   const queries = useSpaceQueries();
@@ -55,12 +52,8 @@ function OpenPage({
     ...queries.pages.get.queryOptions({ input: { pageId: shownId } }),
     enabled: pageId !== null,
   });
-  const viewer = usePageDocument(
-    page.data?.code,
-    sheet ? "background" : "card",
-    true,
-    DOCK_CLEARANCE,
-  );
+  // Always the Evolve canvas (background), never the slate card chrome — pages looked grey.
+  const viewer = usePageDocument(page.data?.code, "background", true, DOCK_CLEARANCE);
   const [shareOpen, setShareOpen] = useState(false);
   const link = useQuery({
     ...queries.pages.get.queryOptions({ input: { pageId: shownId, link: true } }),

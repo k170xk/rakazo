@@ -139,15 +139,14 @@ body{font-size:1rem}
 .rk-table-more button{height:1.75rem;padding:0 .75rem;border:0;border-radius:8px;background:var(--rk-fill-strong);color:var(--foreground);font:inherit;cursor:pointer}
 .rk-table-more button:hover{background:var(--rk-hover-strong)}
 .rk-table-more button:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
-.rk-segmented{display:flex;flex-wrap:wrap;align-self:flex-start;max-width:100%;gap:.3rem .85rem}
-.rk-segmented{min-width:0;margin:0;padding:0;border:0;display:flex;flex-wrap:wrap;align-self:flex-start;max-width:100%;gap:16px}
-.rk-segmented button{appearance:none;display:block;border:0;margin:0;padding:0;background:transparent;color:var(--rk-secondary);font:inherit;font-size:13px;line-height:18px;letter-spacing:.195px;white-space:nowrap;cursor:pointer;transition:color .14s}
-.rk-segment{display:inline-block;padding:2px 0;border-bottom:1px solid transparent;transition:border-color .14s}
+/* Evolve muted pill tabs (same idea as TopNav / Project Health), not underline-only links. */
+.rk-segmented{min-width:0;margin:0;padding:4px;border:0;display:inline-flex;flex-wrap:wrap;align-self:flex-start;align-items:center;max-width:100%;gap:4px;border-radius:10px;background:var(--rk-fill)}
+.rk-segmented button{appearance:none;display:inline-flex;align-items:center;border:0;margin:0;padding:6px 12px;border-radius:8px;background:transparent;color:var(--rk-secondary);font:inherit;font-size:13px;line-height:18px;letter-spacing:.195px;font-weight:500;white-space:nowrap;cursor:pointer;transition:color .14s,background .14s,box-shadow .14s}
+.rk-segment{display:inline-block}
 .rk-segment-count{margin-left:5px;font-size:12px;line-height:16px;letter-spacing:.12px;color:var(--rk-secondary);font-variant-numeric:tabular-nums}
-.rk-segmented button:hover{color:color-mix(in srgb,var(--foreground) 80%,transparent)}
-.rk-segmented button[aria-pressed="true"]{color:var(--foreground);font-weight:500}
-.rk-segmented button[aria-pressed="true"] .rk-segment{border-bottom-color:currentColor}
-.rk-segmented button:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:2px}
+.rk-segmented button:hover{color:var(--foreground)}
+.rk-segmented button[aria-pressed="true"]{color:var(--foreground);background:var(--background);box-shadow:0 1px 2px color-mix(in srgb,var(--foreground) 12%,transparent)}
+.rk-segmented button:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
 .rk-chart{display:flex;flex-direction:column;gap:.75rem;min-width:0}
 .rk-chart svg{display:block;width:100%;overflow:visible}
 .rk-line{fill:none;stroke:var(--rk-series,var(--rk-c1));stroke-width:2;stroke-linejoin:round;stroke-linecap:round}

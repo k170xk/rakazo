@@ -23,6 +23,8 @@ export const FIGURES = new Set<unknown>();
 export const InGrid = createContext(false);
 // Nested sections step down a heading level: h2 at the top of the page, then h3, and so on.
 const Depth = createContext(0);
+/** Wide/full dashboards card their top-level headed sections so they get Evolve borders. */
+export const PageWidth = createContext<"column" | "wide" | "full">("column");
 
 const WIDTHS = new Set(["column", "wide", "full"]);
 const InPage = createContext(false);
@@ -82,39 +84,42 @@ export function Page({
           .filter(([, color]) => typeof color === "string" && COLOR.test(color.trim())),
       )
     : undefined;
+  const pageWidth = (WIDTHS.has(width) ? width : "column") as "column" | "wide" | "full";
   return (
     <InPage.Provider value={true}>
       <PageLanguage.Provider value={language}>
-        <main
-          className="rk-page"
-          data-width={WIDTHS.has(width) ? width : "column"}
-          lang={own}
-          dir={own ? words.dir : undefined}
-          style={colors as CSSProperties}
-        >
-          <header className="rk-header">
-            {hero}
-            <h1 className="rk-title">{title}</h1>
-            {summary ? (
-              <p className="rk-summary">
-                <Inline>{summary}</Inline>
-              </p>
+        <PageWidth.Provider value={pageWidth}>
+          <main
+            className="rk-page"
+            data-width={pageWidth}
+            lang={own}
+            dir={own ? words.dir : undefined}
+            style={colors as CSSProperties}
+          >
+            <header className="rk-header">
+              {hero}
+              <h1 className="rk-title">{title}</h1>
+              {summary ? (
+                <p className="rk-summary">
+                  <Inline>{summary}</Inline>
+                </p>
+              ) : null}
+              {meta}
+            </header>
+            {blocks}
+            {links.length ? (
+              <footer className="rk-sources">
+                <h2 className="rk-sources-heading">{words.t("sources")}</h2>
+                <ol>
+                  {links.map((source, index) => {
+                    const href = webUrl(source);
+                    return <li key={index}>{href ? <Link href={href}>{source}</Link> : source}</li>;
+                  })}
+                </ol>
+              </footer>
             ) : null}
-            {meta}
-          </header>
-          {blocks}
-          {links.length ? (
-            <footer className="rk-sources">
-              <h2 className="rk-sources-heading">{words.t("sources")}</h2>
-              <ol>
-                {links.map((source, index) => {
-                  const href = webUrl(source);
-                  return <li key={index}>{href ? <Link href={href}>{source}</Link> : source}</li>;
-                })}
-              </ol>
-            </footer>
-          ) : null}
-        </main>
+          </main>
+        </PageWidth.Provider>
       </PageLanguage.Provider>
     </InPage.Provider>
   );
@@ -137,8 +142,11 @@ export function Section({
   defaultOpen?: boolean;
   children?: ReactNode;
 }) {
-  const card = useContext(InGrid);
+  const inGrid = useContext(InGrid);
   const depth = useContext(Depth);
+  const pageWidth = useContext(PageWidth);
+  // Dashboards (wide/full) get bordered top-level sections; reading pages stay open.
+  const card = inGrid || (pageWidth !== "column" && depth === 0 && Boolean(heading));
   const folds = Boolean(collapsible && heading);
   const [open, setOpen] = useState(Boolean(defaultOpen));
   const anchor =

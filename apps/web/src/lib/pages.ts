@@ -59,8 +59,11 @@ async function fetchPageRuntime(): Promise<string> {
  */
 export function usePageDocument(
   code: string | undefined,
-  /** The app surface behind the page; a tablet sheet sits on the background. */
-  on: "card" | "background" = "card",
+  /**
+   * The host colour painted behind the page. Prefer "background" (white / Evolve canvas):
+   * "card" is the slate grey used for chrome and makes OCSC pages look washed-out.
+   */
+  on: "card" | "background" = "background",
   /** The chat's composer is beside the page, so its reply buttons can fill it. */
   reply = false,
   /** Pixels a composer docked over the page's bottom covers. */

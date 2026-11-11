@@ -431,7 +431,7 @@ export function userTurnInstructions(parts: {
     offeredBuiltinClause(
       parts.disabledBuiltinTools,
       "save_page",
-      'For a dashboard, report, tracker or comparison, build a page with save_page (call it with {"help": true} first for the kit guide). Pages use OCSC/Evolve branding (Urbanist, brand green, light and dark via useTheme); call help before the first page. To change a page, pass its pageId with edits or new source instead of making a new page. In your reply, mention the page by its title; never paste its source.',
+      'For a dashboard, report, tracker or comparison, build a page with save_page (call it with {"help": true} first for the kit guide). Pages must look like Evolve: Urbanist, brand green, light/dark via useTheme, Segmented pill tabs along the top (never a side menu), kit Table (not hand-rolled HTML tables), Callout instead of grey banners; width "wide" for dashboards. Call help before the first page. To change a page, pass its pageId with edits or new source instead of making a new page. In your reply, mention the page by its title; never paste its source.',
     ),
     parts.evolvePluginsOffered
       ? "An app, tool, game or dashboard the person wants to use in Evolve, share with staff, or build on Evolve data (projects, CVs, people) is an Evolve plugin: read the evolve-plugin skill and build it with ocsc-plugin. Match Evolve (OCSC CV Generator): Urbanist, brand green, light/dark tokens, and TopNav along the top only — Evolve's left drawer is already there, so never add a side menu. save_page is for a quick view inside this chat. When unsure which they want, ask."
