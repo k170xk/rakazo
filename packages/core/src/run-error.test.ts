@@ -205,6 +205,10 @@ describe("normalizeRunError", () => {
       ["socket hang up", tookTooLong],
       ["fetch failed", tookTooLong],
       ["Model stream ended without a terminal event", tookTooLong],
+      [
+        "OpenAI Responses stream ended before a terminal response event",
+        "Your OpenAI took too long to respond. Try again.",
+      ],
       ["Request timed out.", tookTooLong],
     ])("summarizes %s without recovery advice", (details, summary) => {
       expect(normalizeRunError(details)).toEqual({

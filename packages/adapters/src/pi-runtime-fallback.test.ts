@@ -847,6 +847,41 @@ describe("Pi runtime ordered model fallback", () => {
     expect(providerState.stream).toHaveBeenCalledTimes(2);
   });
 
+  it("advances when OpenAI closes the Responses stream before a terminal event", async () => {
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) => {
+      if (target.provider === primary.provider) {
+        throw new Error("OpenAI Responses stream ended before a terminal response event");
+      }
+      return stream(target, message(target, [{ type: "text", text: "backup answer" }], "stop"));
+    });
+    const events = await run(
+      request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]),
+    );
+    expect(events).toContainEqual({ type: "text", text: "backup answer" });
+    expect(events.at(-1)).toEqual({ type: "done", text: "backup answer" });
+    expect(providerState.stream).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries the same model when a mid-reply stream drop has no backup", async () => {
+    let attempts = 0;
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) => {
+      attempts += 1;
+      if (attempts === 1) {
+        throw new Error("OpenAI Responses stream ended before a terminal response event");
+      }
+      return stream(target, message(target, [{ type: "text", text: "recovered" }], "stop"));
+    });
+    vi.useFakeTimers();
+    try {
+      const pending = run(request([]));
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(await pending).toContainEqual({ type: "text", text: "recovered" });
+      expect(providerState.stream).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("completes on the backup when the primary throws a Kimi 403 usage-limit error", async () => {
     const kimiUsageLimit =
       '403 {"error":{"type":"permission_error","message":"You\'ve reached your 5-hour usage limit. Your quota will reset when the current 5-hour window ends. To continue now, purchase extra usage or upgrade your plan: https://www.kimi.com/membership/subscription?tab=quota"},"type":"error"}';

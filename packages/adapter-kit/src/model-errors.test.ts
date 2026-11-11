@@ -93,7 +93,6 @@ describe("transient model errors", () => {
     ["bad request", { status: 400, message: "Unsupported parameter: temperature" }],
     ["auth failure mentioning a connection error", { status: 401, message: "Connection error." }],
     ["cancellation", new Error("Request was aborted")],
-    ["unknown", new Error("Model stream ended without a terminal event")],
     [
       "a key that is not a valid header value",
       new TypeError(
@@ -102,6 +101,15 @@ describe("transient model errors", () => {
     ],
   ])("treats %s as permanent", (_label, error) => {
     expect(isTransientModelError(error)).toBe(false);
+  });
+
+  it.each([
+    ["Model stream ended without a terminal event"],
+    ["OpenAI Responses stream ended before a terminal response event"],
+    ["Anthropic stream ended before message_stop"],
+  ])("treats a dropped mid-reply stream as transient: %s", (message) => {
+    expect(isRetryableProviderUnavailable(new Error(message))).toBe(true);
+    expect(isTransientModelError(new Error(message))).toBe(true);
   });
 
   it.each([
