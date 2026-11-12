@@ -1351,6 +1351,10 @@ msgstr ""
 msgid "App actions"
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "App icon"
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "App link"
 msgstr ""
@@ -4334,6 +4338,18 @@ msgstr "טיוטת מיומנות"
 msgid "Drag, drop, or paste an image"
 msgstr "אפשר לגרור, לשחרר או להדביק תמונה"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Draw a new icon"
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Drawing a new OCSC icon with GPT Image. This takes about a minute."
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Drawn for this app in the OCSC style. Describe one object to draw something else."
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
@@ -4657,6 +4673,10 @@ msgstr "כל יום שני"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every month"
 msgstr "כל חודש"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Every new app gets an OCSC icon drawn for it. If it hasn't appeared, draw one here."
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Every plugin is reviewed before it reaches colleagues, so shared apps stay safe"
@@ -9863,6 +9883,10 @@ msgstr ""
 msgid "The group was created, but these people could not be added: {list}"
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "The icon couldn't be drawn."
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "The key is checked with the provider, then stored encrypted on the server."
 msgstr ""
@@ -10939,6 +10963,10 @@ msgstr ""
 msgid "What it can do"
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "What it shows, e.g. a hard hat on a clipboard"
+msgstr ""
+
 #: src/components/apps/AppPublishSection.tsx
 msgid "What it's for and who uses it"
 msgstr ""
@@ -10958,6 +10986,10 @@ msgstr "איזו תוצאה תודגם?"
 #: src/pages/RoutineEditor.tsx
 msgid "What should this routine do each time it runs?"
 msgstr "מה הרוטינה הזו צריכה לעשות בכל הרצה?"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "What the icon shows"
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "What this bot is for"

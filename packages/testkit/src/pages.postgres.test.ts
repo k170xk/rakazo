@@ -98,6 +98,29 @@ describePages("pages", () => {
     });
     return effect?.result as Record<string, unknown> | undefined;
   };
+  let seeded = 0;
+  /** A page made before the App Studio; save_page now only changes pages like it. */
+  const olderPage = async (
+    cookie: string,
+    botId: string,
+    title: string,
+    options: { source?: string; groupId?: string } = {},
+  ) => {
+    const owner = await rpc<{ userId: string; spaceId: string }>(app, cookie, "me");
+    const source = options.source ?? page(title);
+    const created = await db().page.create({
+      data: {
+        spaceId: owner.spaceId,
+        userId: owner.userId,
+        botId,
+        groupId: options.groupId,
+        title,
+        updatedAt: new Date(Date.now() + seeded++),
+        versions: { create: { version: 1, title, source, code: pageViewerCode(source) } },
+      },
+    });
+    return created.id;
+  };
 
   it("saves, edits and guards pages through the bot's save_page", async () => {
     const cookie = await signup(app, `pages-${stamp}@rakazo.test`, "Page Owner");
@@ -108,17 +131,17 @@ describePages("pages", () => {
     await save({ help: true });
     expect((await lastResult(bot.id))?.guide).toContain("export default");
 
+    // New apps are built with save_app; save_page makes no new page.
+    await save({ title: "Weekly KPIs", source: page("First") });
+    expect(await lastResult(bot.id)).toEqual({ error: expect.stringContaining("use save_app") });
+    expect(await db().page.count({ where: { userId: (await me(app, cookie)).id } })).toBe(0);
+
+    const pageId = await olderPage(cookie, bot.id, "Weekly KPIs", { source: page("First") });
     // A page that fails the kit check is never stored; the bot gets line-numbered problems.
-    await save({ title: "Broken", source: "const App = () => <Card />;\nexport default App;\n" });
+    await save({ pageId, source: "const App = () => <Card />;\nexport default App;\n" });
     expect((await lastResult(bot.id))?.problems).toEqual([
       expect.stringMatching(/^line 1: <Card> is not a kit component/),
     ]);
-    expect(await db().page.count({ where: { userId: (await me(app, cookie)).id } })).toBe(0);
-
-    await save({ title: "Weekly KPIs", source: page("First") });
-    const created = (await lastResult(bot.id)) as { pageId: string; version: number };
-    expect(created).toMatchObject({ version: 1, title: "Weekly KPIs" });
-    const { pageId } = created;
 
     // Edits apply together into one version, or not at all.
     await save({
@@ -161,13 +184,14 @@ describePages("pages", () => {
     // A page that saves but has a likely mistake carries the kit's warnings back to the bot.
     const helper = await createBot(app, cookie, "Helper");
     const scratch = `const note = "Q&amp;A";\n${page("Scratch")}`;
-    await save({ title: "Scratch [draft]", source: scratch }, helper.id);
+    const scratchId = await olderPage(cookie, helper.id, "Scratch [draft]");
+    await save({ pageId: scratchId, source: scratch }, helper.id);
     const scratchResult = await lastResult(helper.id);
     expect(scratchResult?.mention).toBe(
-      `Mention it in your reply as [Scratch \\[draft\\]](page:${scratchResult?.pageId})`,
+      `Mention it in your reply as [Scratch \\[draft\\]](page:${scratchId})`,
     );
     expect(scratchResult).toMatchObject({
-      version: 1,
+      version: 2,
       warnings: [expect.stringMatching(/^line 1: &amp;/)],
     });
     await save({ pageId });
@@ -206,12 +230,11 @@ describePages("pages", () => {
         (message) => message.blocks.filter((b) => b.kind === "page" || b.kind === "file"),
       );
     expect(await blocks(bot.id)).toEqual([
-      { kind: "page", pageId, version: 1, title: "Weekly KPIs" },
       { kind: "page", pageId, version: 2, title: "Weekly KPIs" },
       { kind: "page", pageId, version: 3, title: "KPIs" },
     ]);
     expect(await blocks(helper.id)).toEqual([
-      { kind: "page", pageId: expect.any(String), version: 1, title: "Scratch [draft]" },
+      { kind: "page", pageId: scratchId, version: 2, title: "Scratch [draft]" },
     ]);
     expect(await rpc(app, cookie, "artifacts/listSpace", {})).toMatchObject({ items: [] });
 
@@ -251,8 +274,7 @@ describePages("pages", () => {
     const other = await createBot(app, cookie, "Other");
     const save = (botId: string, args: unknown) =>
       sendAndWait(app, cookie, botId, { text: `call save_page with ${JSON.stringify(args)}` });
-    await save(maker.id, { title: "Private plan", source: page("Mine") });
-    const { pageId } = (await lastResult(maker.id)) as { pageId: string };
+    const pageId = await olderPage(cookie, maker.id, "Private plan", { source: page("Mine") });
     const group = await rpc<{ id: string; threadId: string }>(app, cookie, "groups/create", {
       name: "Desk",
       botIds: [maker.id, other.id],
@@ -301,8 +323,10 @@ describePages("pages", () => {
     ).toMatchObject({ pageId, version: 2 });
 
     // A page made in the group is the group's: its other bots reach it there, but not outside.
-    const made = await inGroup(maker, "Maker", { title: "Group plan", source: page("Desk") });
-    const groupPageId = made!.pageId as string;
+    const groupPageId = await olderPage(cookie, maker.id, "Group plan", {
+      source: page("Desk"),
+      groupId: group.id,
+    });
     expect(await inGroup(other, "Other", { pageId: groupPageId })).toMatchObject({
       version: 1,
       source: page("Desk"),
@@ -312,9 +336,10 @@ describePages("pages", () => {
     expect(await db().pageVersion.count({ where: { pageId } })).toBe(2);
   });
 
-  it("shows a routine's new page once and refreshes it each run without a new card", async () => {
+  it("makes no new page from a routine and refreshes an older one each run without a new card", async () => {
     const cookie = await signup(app, `pages-routine-${stamp}@rakazo.test`, "Routine Owner");
     const bot = await createBot(app, cookie, "Refresher");
+    const pageId = await olderPage(cookie, bot.id, "Hourly board", { source: page("v1") });
     const routine = await rpc<{ id: string }>(app, cookie, "routines/create", {
       botId: bot.id,
       name: "Hourly board",
@@ -348,12 +373,13 @@ describePages("pages", () => {
       throw new Error("the routine never ran");
     };
 
-    // The first save is news: the page's card arrives in the chat.
+    // A new page is refused there too: the routine builds an app instead.
     const first = await fire();
-    expect(JSON.stringify(first)).toContain('"kind":"page"');
-    const { pageId } = (await lastResult(bot.id)) as { pageId: string };
+    expect(JSON.stringify(first)).not.toContain('"kind":"page"');
+    expect(await lastResult(bot.id)).toEqual({ error: expect.stringContaining("use save_app") });
+    expect(await db().page.count({ where: { botId: bot.id } })).toBe(1);
 
-    // Later runs edit it in place; one with nothing to report stays silent.
+    // Runs edit the older page in place; one with nothing to report stays silent.
     await db().routine.update({
       where: { id: routine.id },
       data: {
@@ -378,10 +404,7 @@ describePages("pages", () => {
       [bot.id, "Newest"],
       [other.id, "Elsewhere"],
     ] as const) {
-      await sendAndWait(app, cookie, botId, {
-        text: `call save_page with ${JSON.stringify({ title, source: page(title) })}`,
-      });
-      ids.push((await lastResult(botId))!.pageId as string);
+      ids.push(await olderPage(cookie, botId, title));
     }
     const [oldest, middle, newest] = ids;
     const titles = (items: PageSummary[]) => items.map((item) => item.title);
@@ -517,10 +540,7 @@ describePages("pages", () => {
     const userId = (await me(app, cookie)).id;
     const bot = await createBot(app, cookie, "Racer");
     const partner = await createBot(app, cookie, "Partner");
-    await sendAndWait(app, cookie, bot.id, {
-      text: `call save_page with ${JSON.stringify({ title: "Race", source: page("Race") })}`,
-    });
-    const pageId = (await lastResult(bot.id))!.pageId as string;
+    const pageId = await olderPage(cookie, bot.id, "Race");
     const share = (visibility: "private" | "link") =>
       rpc<{ visibility: string; shareUrl: string | null }>(app, cookie, "pages/setVisibility", {
         pageId,
@@ -546,10 +566,7 @@ describePages("pages", () => {
     expect(Boolean(after?.shareSecretId)).toBe(after?.visibility === "link");
 
     // Removing while a link is being turned on leaves no sealed token behind.
-    await sendAndWait(app, cookie, bot.id, {
-      text: `call save_page with ${JSON.stringify({ title: "Gone", source: page("Gone") })}`,
-    });
-    const goneId = (await lastResult(bot.id))!.pageId as string;
+    const goneId = await olderPage(cookie, bot.id, "Gone");
     const before = await secrets();
     // The link's swap waits on the held row first; the remove reads the row, then waits behind it.
     const racing = await holdingPageRow(goneId, async (waitFor) => {
@@ -641,10 +658,7 @@ describePages("pages", () => {
     // Three members, so the group outlives one of them.
     const third = await createBot(app, cookie, "Also staying");
     const saved = async (title: string) => {
-      await sendAndWait(app, cookie, bot.id, {
-        text: `call save_page with ${JSON.stringify({ title, source: page(title) })}`,
-      });
-      const pageId = (await lastResult(bot.id))!.pageId as string;
+      const pageId = await olderPage(cookie, bot.id, title);
       const link = await rpc<{ shareUrl: string }>(app, cookie, "pages/setVisibility", {
         pageId,
         visibility: "link",
@@ -676,7 +690,8 @@ describePages("pages", () => {
     const cookie = await signup(app, `pages-peer-${stamp}@rakazo.test`, "Peer Owner");
     const asker = await createBot(app, cookie, "Asker");
     const builder = await createBot(app, cookie, "Builder");
-    const args = { title: "Peer report", source: page("Peer report") };
+    const pageId = await olderPage(cookie, builder.id, "Peer report");
+    const args = { pageId, source: page("Peer report v2") };
     await sendAndWait(app, cookie, asker.id, {
       text: `message the bot named Builder saying call save_page with ${JSON.stringify(args)}`,
     });
@@ -688,9 +703,7 @@ describePages("pages", () => {
       if (blocks.length) break;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    expect(blocks).toEqual([
-      { kind: "page", pageId: expect.any(String), version: 1, title: "Peer report" },
-    ]);
+    expect(blocks).toEqual([{ kind: "page", pageId, version: 2, title: "Peer report" }]);
   });
 
   it("ends a member's shared pages with their account, and any link whose sealed token is gone", async () => {
@@ -887,10 +900,7 @@ describePages("pages", () => {
     const cookie = await signup(app, `pages-save-race-${stamp}@rakazo.test`, "Save Racer");
     const first = await createBot(app, cookie, "First");
     const second = await createBot(app, cookie, "Second");
-    await sendAndWait(app, cookie, first.id, {
-      text: `call save_page with ${JSON.stringify({ title: "Race", source: page("One") })}`,
-    });
-    const pageId = (await lastResult(first.id))!.pageId as string;
+    const pageId = await olderPage(cookie, first.id, "Race", { source: page("One") });
     // A page of both bots' group: its maker saves from its own chat, the other in the group.
     const group = await rpc<{ id: string; threadId: string }>(app, cookie, "groups/create", {
       name: "Racers",
@@ -929,7 +939,7 @@ describePages("pages", () => {
       orderBy: { createdAt: "asc" },
       select: { result: true },
     });
-    const outcomes = results.slice(1).map((effect) => effect.result as Record<string, unknown>);
+    const outcomes = results.map((effect) => effect.result as Record<string, unknown>);
     expect(outcomes).toHaveLength(2);
     expect(outcomes.filter((result) => result.version === 2)).toHaveLength(1);
     expect(outcomes.filter((result) => result.unchanged === true)).toEqual([
@@ -941,10 +951,7 @@ describePages("pages", () => {
   it("keeps a page editable after importing an export that a save raced", async () => {
     const cookie = await signup(app, `pages-export-race-${stamp}@rakazo.test`, "Export Racer");
     const bot = await createBot(app, cookie, "Builder");
-    await sendAndWait(app, cookie, bot.id, {
-      text: `call save_page with ${JSON.stringify({ title: "Plan", source: page("One") })}`,
-    });
-    const pageId = (await lastResult(bot.id))!.pageId as string;
+    const pageId = await olderPage(cookie, bot.id, "Plan", { source: page("One") });
     const confirmed = await app.request("/api/auth/confirm-identity", {
       method: "POST",
       headers: { "content-type": "application/json", cookie, origin: "http://127.0.0.1:5173" },
@@ -987,10 +994,7 @@ describePages("pages", () => {
   it("keeps a rename that lands while a bot's untitled save is in flight", async () => {
     const cookie = await signup(app, `pages-rename-race-${stamp}@rakazo.test`, "Rename Racer");
     const bot = await createBot(app, cookie, "Builder");
-    await sendAndWait(app, cookie, bot.id, {
-      text: `call save_page with ${JSON.stringify({ title: "Q3 plan", source: page("One") })}`,
-    });
-    const pageId = (await lastResult(bot.id))!.pageId as string;
+    const pageId = await olderPage(cookie, bot.id, "Q3 plan", { source: page("One") });
     const edits = [{ find: 'title="One"', replace: 'title="Two"' }];
     // The save has read the page and waits to write; the user's rename commits first.
     await holdingPageRow(pageId, async (waitFor, tx) => {

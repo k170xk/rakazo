@@ -24,6 +24,7 @@ import {
   undoAppChange,
   updateAppRow,
 } from "@rakazo/db";
+import { drawAppIconLater } from "./app-icon.js";
 import { canLookAtApps, lookAtApp, lookProblems } from "./app-look.js";
 import type { RunContext } from "./run-context.js";
 import { isUniqueViolation, publishMessage } from "./run-messages.js";
@@ -93,7 +94,8 @@ async function findApp(ctx: RunContext, appId: string): Promise<App | null> {
 
 const notFound = { error: "No app with that appId belongs to this bot or chat." };
 const notAnApp = {
-  error: "That id is a page, not an app; change it with save_page.",
+  error:
+    "That id is an older page, not an App Studio app. Build it again as an app with save_app (a new appId); the page stays as it is.",
 };
 
 function parseFiles(value: unknown): Record<string, string> | string {
@@ -283,6 +285,7 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
     tables: imported.tables,
     via: "import",
   });
+  const icon = drawIcon(ctx, saved, "");
   const cardError = await postCard(ctx, saved, true);
   const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
   return {
@@ -297,6 +300,7 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
       columns: table.schema.columns.map((column) => `${column.key}:${column.type}`),
     })),
     next: "The app is built from the sheet's structure. Read it with {appId} and improve its screens for how this person works.",
+    ...(icon ? { icon } : {}),
     ...(cardError
       ? { error: cardError }
       : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
@@ -318,6 +322,9 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     ? args.deleteFiles.filter((name): name is string => typeof name === "string")
     : [];
   const hasTables = Array.isArray(args.tables) && args.tables.length > 0;
+  const iconSubject = argumentGiven(args.icon)
+    ? redactSecrets(String(args.icon), ctx.secrets).replace(/\s+/g, " ").trim().slice(0, 300)
+    : "";
   let title: string | undefined;
   if (argumentGiven(args.title)) {
     const parsed = PageTitleSchema.safeParse(args.title);
@@ -349,6 +356,12 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     title ??= template.title;
   }
 
+  if (app && iconSubject && !hasFiles && !hasEdits && !deletes.length && !hasTables && !title) {
+    const drawing = drawIcon(ctx, { pageId: app.id, title: app.title }, iconSubject);
+    return drawing
+      ? { appId: app.id, icon: drawing }
+      : { error: "Icons can't be drawn here: Evolve is not linked." };
+  }
   if (app && !hasFiles && !hasEdits && !deletes.length && !hasTables && !title) {
     // Rows can be written by colleagues through a shared link, so reading them taints the run.
     ctx.state.tainted = true;
@@ -477,6 +490,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     }
     throw error;
   }
+  const icon = !app || iconSubject ? drawIcon(ctx, saved, iconSubject) : null;
   const cardError = codeChanged ? await postCard(ctx, saved, !app) : null;
   const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
   const check = codeChanged && args.check !== false ? await runCheck(ctx, saved, files) : null;
@@ -492,11 +506,26 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         }
       : {}),
     ...(warnings.length ? { warnings } : {}),
+    ...(icon ? { icon } : {}),
     ...(check ?? {}),
     ...(cardError
       ? { error: cardError }
       : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
   };
+}
+
+/** Starts drawing the app's OCSC icon in the background; says so, or null without Evolve. */
+function drawIcon(
+  ctx: RunContext,
+  saved: { pageId: string; title: string },
+  subject: string,
+): string | null {
+  if (!ctx.deps.evolvePlugins) return null;
+  void drawAppIconLater(
+    { prisma: ctx.deps.prisma, connection: ctx.deps.evolvePlugins },
+    { pageId: saved.pageId, userId: ctx.run.userId, title: saved.title, subject: subject || null },
+  );
+  return "An OCSC icon is being drawn for the app; it shows in about a minute.";
 }
 
 /**

@@ -5,7 +5,9 @@ import type { PageBlock } from "../../lib/page-cards";
 import { useOpenPage, usePageDocument } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import { errorCode } from "../../lib/user-error";
+import { AppIcon } from "../apps/AppIcon";
 import { PageCard } from "./PageCard";
+import { PageTileIcon } from "./page-icon";
 
 /**
  * A page saved in this chat. The newest card for a page draws its current version and title;
@@ -44,6 +46,16 @@ export function PageBlockCard({ block, updated }: { block: PageBlock; updated: b
       updatedAt={current.data?.updatedAt}
       shared={current.data ? pageIsShared(current.data.visibility) : false}
       onOpen={deleted ? undefined : () => openPage(block.pageId)}
+      icon={
+        current.data?.kind === "app" && current.data.icon ? (
+          <AppIcon
+            pageId={block.pageId}
+            icon={current.data.icon}
+            className="size-[41px]"
+            fallback={<PageTileIcon />}
+          />
+        ) : undefined
+      }
     />
   );
 }

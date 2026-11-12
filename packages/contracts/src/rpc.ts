@@ -1748,6 +1748,10 @@ export const appContract = {
     revision: oc
       .input(z.strictObject({ pageId: Id }))
       .output(z.object({ revision: z.number().int(), version: z.number().int() })),
+    /** Draws the app's OCSC icon again with gpt-image-2, optionally of a chosen object. */
+    redrawIcon: oc
+      .input(z.strictObject({ pageId: Id, subject: z.string().trim().max(300).optional() }))
+      .output(z.object({ icon: z.string() })),
     insertRow: oc
       .input(z.strictObject({ pageId: Id, table: AppTableNameSchema, row: AppRowValuesSchema }))
       .output(z.object({ row: AppRowSchema, revision: z.number().int() })),

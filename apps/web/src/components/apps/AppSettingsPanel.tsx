@@ -2,15 +2,24 @@ import { useLingui } from "@lingui/react/macro";
 import type { AppDataAccess } from "@rakazo/contracts";
 import { Button, Spinner } from "@rakazo/ui-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { ImagePlus, Sparkles, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
+import { AppIcon } from "./AppIcon";
 import { AppPublishSection } from "./AppPublishSection";
 
 const PICTURE_TYPES = "image/png,image/jpeg,image/webp,image/gif,image/svg+xml";
 
 /** Who may change the app's data, where it is published, and the pictures the app can show. */
-export function AppSettingsPanel({ pageId, title }: { pageId: string; title: string }) {
+export function AppSettingsPanel({
+  pageId,
+  title,
+  icon,
+}: {
+  pageId: string;
+  title: string;
+  icon: string | null;
+}) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -47,11 +56,67 @@ export function AppSettingsPanel({ pageId, title }: { pageId: string; title: str
     mutationFn: (assetId: string) => queries.apps.removeAsset.call({ pageId, assetId }),
     onSuccess: () => void refresh(),
   });
+  const [subject, setSubject] = useState("");
+  const redraw = useMutation({
+    mutationFn: () =>
+      queries.apps.redrawIcon.call({ pageId, subject: subject.trim() || undefined }),
+    onSuccess: () => {
+      void refresh();
+      void queryClient.invalidateQueries({ queryKey: queries.pages.key() });
+    },
+  });
   const fileInput = useRef<HTMLInputElement>(null);
   const current = data.data?.dataAccess;
 
   return (
     <div className="flex flex-col gap-6 p-4">
+      <section className="flex flex-col gap-2">
+        <h3 className="text-[13px] font-medium text-foreground">{t`App icon`}</h3>
+        <div className="flex items-center gap-3">
+          <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-foreground/[0.04]">
+            {redraw.isPending ? (
+              <Spinner />
+            ) : (
+              <AppIcon
+                pageId={pageId}
+                icon={icon}
+                className="size-14"
+                fallback={<Sparkles className="size-5 text-muted-foreground" strokeWidth={1.7} />}
+              />
+            )}
+          </span>
+          <p className="text-[12px] text-muted-foreground">
+            {redraw.isPending
+              ? t`Drawing a new OCSC icon with GPT Image. This takes about a minute.`
+              : icon
+                ? t`Drawn for this app in the OCSC style. Describe one object to draw something else.`
+                : t`Every new app gets an OCSC icon drawn for it. If it hasn't appeared, draw one here.`}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={subject}
+            maxLength={300}
+            onChange={(event) => setSubject(event.target.value)}
+            placeholder={t`What it shows, e.g. a hard hat on a clipboard`}
+            aria-label={t`What the icon shows`}
+            className="h-8 min-w-0 flex-1 rounded-lg border border-foreground/[0.1] bg-background px-2.5 text-[13px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={redraw.isPending}
+            onClick={() => redraw.mutate()}
+          >
+            {t`Draw a new icon`}
+          </Button>
+        </div>
+        {redraw.isError ? (
+          <p role="alert" className="text-[12px] text-destructive">
+            {redraw.error instanceof Error ? redraw.error.message : t`The icon couldn't be drawn.`}
+          </p>
+        ) : null}
+      </section>
       <section className="flex flex-col gap-2">
         <h3 className="text-[13px] font-medium text-foreground">{t`Who can change the data`}</h3>
         <p className="text-[12px] text-muted-foreground">
@@ -127,27 +192,29 @@ export function AppSettingsPanel({ pageId, title }: { pageId: string; title: str
           </p>
         ) : null}
         <ul className="flex flex-col gap-1">
-          {(assets.data ?? []).map((asset) => (
-            <li
-              key={asset.id}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-foreground/[0.03]"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] text-foreground">{asset.name}</p>
-                <p className="truncate font-mono text-[11px] text-muted-foreground">
-                  {asset.id} · {Math.ceil(asset.size / 1024)} KB · {asset.source}
-                </p>
-              </div>
-              <button
-                type="button"
-                aria-label={t`Remove ${asset.name}`}
-                onClick={() => remove.mutate(asset.id)}
-                className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          {(assets.data ?? [])
+            .filter((asset) => asset.source !== "icon")
+            .map((asset) => (
+              <li
+                key={asset.id}
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-foreground/[0.03]"
               >
-                <Trash2 className="size-3.5" />
-              </button>
-            </li>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] text-foreground">{asset.name}</p>
+                  <p className="truncate font-mono text-[11px] text-muted-foreground">
+                    {asset.id} · {Math.ceil(asset.size / 1024)} KB · {asset.source}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label={t`Remove ${asset.name}`}
+                  onClick={() => remove.mutate(asset.id)}
+                  className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              </li>
+            ))}
           {assets.data?.length === 0 ? (
             <li className="px-2 text-[12px] text-muted-foreground">{t`No pictures yet.`}</li>
           ) : null}

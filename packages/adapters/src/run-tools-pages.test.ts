@@ -49,6 +49,21 @@ const call = (args: Record<string, unknown>) =>
 describe("save_page", () => {
   beforeEach(() => publishMessage.mockReset());
 
+  it("makes no new page where save_app is offered, so new apps are built in the App Studio", async () => {
+    const tx = { page: { create: vi.fn() } };
+    const ctx = Object.assign(context(tx), { tools: { offered: [{ name: "save_app" }] } });
+    const finish = vi.fn((result: unknown) => result);
+    const result = (await pageTools.save_page!(
+      ctx as never,
+      {
+        args: { title: "Plan", source: source("Plan") },
+        finish,
+      } as never,
+    )) as { error?: string };
+    expect(result.error).toMatch(/save_app/);
+    expect(tx.page.create).not.toHaveBeenCalled();
+  });
+
   it("keeps a saved page when its chat card cannot be posted, and says how to link it", async () => {
     publishMessage.mockRejectedValueOnce(new Error("run was cancelled"));
     const tx = { page: { create: vi.fn(async () => ({ id: "page-1", title: "Plan" })) } };

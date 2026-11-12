@@ -1356,6 +1356,10 @@ msgstr "App · Updated below"
 msgid "App actions"
 msgstr "App actions"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "App icon"
+msgstr "App icon"
+
 #: src/components/pages/SharePopover.tsx
 msgid "App link"
 msgstr "App link"
@@ -4343,6 +4347,18 @@ msgstr "Draft skill"
 msgid "Drag, drop, or paste an image"
 msgstr "Drag, drop, or paste an image"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Draw a new icon"
+msgstr "Draw a new icon"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Drawing a new OCSC icon with GPT Image. This takes about a minute."
+msgstr "Drawing a new OCSC icon with GPT Image. This takes about a minute."
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Drawn for this app in the OCSC style. Describe one object to draw something else."
+msgstr "Drawn for this app in the OCSC style. Describe one object to draw something else."
+
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
@@ -4670,6 +4686,10 @@ msgstr "Every Monday"
 #: src/pages/RoutineSchedule.tsx
 msgid "Every month"
 msgstr "Every month"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "Every new app gets an OCSC icon drawn for it. If it hasn't appeared, draw one here."
+msgstr "Every new app gets an OCSC icon drawn for it. If it hasn't appeared, draw one here."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Every plugin is reviewed before it reaches colleagues, so shared apps stay safe"
@@ -9884,6 +9904,10 @@ msgstr "The first version: every line is new."
 msgid "The group was created, but these people could not be added: {list}"
 msgstr "The group was created, but these people could not be added: {list}"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "The icon couldn't be drawn."
+msgstr "The icon couldn't be drawn."
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "The key is checked with the provider, then stored encrypted on the server."
 msgstr "The key is checked with the provider, then stored encrypted on the server."
@@ -10960,6 +10984,10 @@ msgstr "What each person's chats, bots and routines have cost in model usage. Up
 msgid "What it can do"
 msgstr "What it can do"
 
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "What it shows, e.g. a hard hat on a clipboard"
+msgstr "What it shows, e.g. a hard hat on a clipboard"
+
 #: src/components/apps/AppPublishSection.tsx
 msgid "What it's for and who uses it"
 msgstr "What it's for and who uses it"
@@ -10979,6 +11007,10 @@ msgstr "What result will you demonstrate?"
 #: src/pages/RoutineEditor.tsx
 msgid "What should this routine do each time it runs?"
 msgstr "What should this routine do each time it runs?"
+
+#: src/components/apps/AppSettingsPanel.tsx
+msgid "What the icon shows"
+msgstr "What the icon shows"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "What this bot is for"

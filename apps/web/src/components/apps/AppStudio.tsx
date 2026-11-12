@@ -21,6 +21,7 @@ import { AppDataPanel } from "./AppDataPanel";
 import type { AppPick } from "./AppFrame";
 import { AppFrame } from "./AppFrame";
 import { AppHistoryPanel } from "./AppHistoryPanel";
+import { AppIcon } from "./AppIcon";
 import { AppSettingsPanel } from "./AppSettingsPanel";
 
 type Panel = "data" | "code" | "history" | "settings";
@@ -168,6 +169,9 @@ export function AppStudio({
           <DialogClose ref={closeButton} aria-label={t`Close app`} className={`${control} ${size}`}>
             <X className="size-[18px]" strokeWidth={1.7} />
           </DialogClose>
+          {page?.icon ? (
+            <AppIcon pageId={page.id} icon={page.icon} className="size-8 max-sm:hidden" />
+          ) : null}
           <DialogTitle className="min-w-0 flex-1 truncate px-1 text-[14px] leading-5 font-medium text-foreground">
             {page?.title ?? t`App`}
           </DialogTitle>
@@ -357,7 +361,7 @@ export function AppStudio({
                   />
                 ) : null}
                 {panel === "settings" ? (
-                  <AppSettingsPanel pageId={page.id} title={page.title} />
+                  <AppSettingsPanel pageId={page.id} title={page.title} icon={page.icon ?? null} />
                 ) : null}
               </div>
             </aside>

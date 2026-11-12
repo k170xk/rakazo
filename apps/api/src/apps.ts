@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { EvolvePluginsConnection } from "@rakazo/adapters";
-import { callEvolvePlugins, EvolvePluginsError } from "@rakazo/adapters";
+import { callEvolvePlugins, drawAppIconLater, EvolvePluginsError } from "@rakazo/adapters";
 import type { BuildProblem } from "@rakazo/app-kit/build";
 import { buildApp, pluginBundle } from "@rakazo/app-kit/build";
 import { exportTable, importWorkbook, scaffoldApp } from "@rakazo/app-kit/import";
@@ -43,7 +43,7 @@ import { readStateRows } from "./pages.js";
 async function requireApp(prisma: PrismaClient, actor: Actor, pageId: string) {
   const row = await prisma.page.findFirst({
     where: { id: pageId, spaceId: actor.spaceId, userId: actor.userId, kind: "app" },
-    select: { id: true, title: true, currentVersion: true, dataAccess: true },
+    select: { id: true, title: true, currentVersion: true, dataAccess: true, iconAssetId: true },
   });
   if (!row) throw new IsolationError();
   return row;
@@ -130,7 +130,22 @@ export async function getAppData(
     state,
     revision,
     dataAccess: access(app.dataAccess),
+    icon: app.iconAssetId,
   };
+}
+
+/** Draws the owner's app icon again now; null when Evolve is not linked or the drawing failed. */
+export async function redrawAppIcon(
+  prisma: PrismaClient,
+  actor: Actor,
+  connection: EvolvePluginsConnection | null,
+  input: { pageId: string; subject?: string },
+): Promise<string | null> {
+  const app = await requireApp(prisma, actor, input.pageId);
+  return drawAppIconLater(
+    { prisma, connection },
+    { pageId: app.id, userId: actor.userId, title: app.title, subject: input.subject ?? null },
+  );
 }
 
 export async function getAppRevision(prisma: PrismaClient, actor: Actor, pageId: string) {
@@ -490,6 +505,7 @@ export async function createTemplateApp(
   prisma: PrismaClient,
   actor: Actor,
   input: { templateId: string; title?: string; botId?: string; groupId?: string },
+  drawIcon?: (app: { pageId: string; title: string; subject?: string }) => void,
 ) {
   const template = findTemplate(input.templateId);
   if (!template) throw new WorkbookImportError("That starter app doesn't exist.");
@@ -512,6 +528,7 @@ export async function createTemplateApp(
     dataAccess: template.access,
     via: "template",
   });
+  drawIcon?.({ pageId: created.pageId, title, subject: template.icon });
   return { pageId: created.pageId };
 }
 
@@ -520,6 +537,7 @@ export async function importWorkbookApp(
   prisma: PrismaClient,
   actor: Actor,
   input: { title?: string; fileName: string; base64: string; botId?: string; groupId?: string },
+  drawIcon?: (app: { pageId: string; title: string }) => void,
 ) {
   const { bot, group } = await ownHome(prisma, actor, input);
   let imported: ReturnType<typeof importWorkbook>;
@@ -558,6 +576,7 @@ export async function importWorkbookApp(
     tables: imported.tables,
     via: "import",
   });
+  drawIcon?.({ pageId: created.pageId, title: title.slice(0, 200) });
   return { pageId: created.pageId, report: imported.report };
 }
 
@@ -593,6 +612,9 @@ export async function readSharedAppData(prisma: PrismaClient, pageId: string, vi
     tables: await readAppTables(prisma, pageId),
     state: await readStateRows(prisma, pageId),
     revision: await appRevision(prisma, pageId),
+    icon:
+      (await prisma.page.findUnique({ where: { id: pageId }, select: { iconAssetId: true } }))
+        ?.iconAssetId ?? null,
   }));
   return { ...data, tables: await tablesForViewer(prisma, pageId, data.tables, viewer) };
 }

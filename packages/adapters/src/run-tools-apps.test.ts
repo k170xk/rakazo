@@ -210,7 +210,7 @@ describe("save_app", () => {
     expect((ctx as { state: { tainted: boolean } }).state.tainted).toBe(true);
   });
 
-  it("reaches only this bot's or its group's apps, and sends pages back to save_page", async () => {
+  it("reaches only this bot's or its group's apps, and rebuilds older pages as apps", async () => {
     const { ctx, findFirst } = context(undefined, { groupId: "group-1" });
     expect(await appTools.save_app!(ctx, call({ appId: "app-9" }))).toMatchObject({
       error: expect.stringMatching(/No app/),
@@ -227,7 +227,7 @@ describe("save_app", () => {
       context({ kind: "page" }).ctx,
       call({ appId: "app-1" }),
     )) as Result;
-    expect(page.error).toMatch(/save_page/);
+    expect(page.error).toMatch(/save_app/);
   });
 });
 

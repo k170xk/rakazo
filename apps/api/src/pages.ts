@@ -35,6 +35,7 @@ const summarySelect = {
   visibility: true,
   currentVersion: true,
   pinnedAt: true,
+  iconAssetId: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.PageSelect;
@@ -51,6 +52,7 @@ function pageSummary(row: SummaryRow): PageSummary {
     visibility: shownVisibility(row.visibility),
     currentVersion: row.currentVersion,
     pinned: row.pinnedAt !== null,
+    ...(row.kind === "app" ? { icon: row.iconAssetId } : {}),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

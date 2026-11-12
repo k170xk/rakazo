@@ -4,6 +4,7 @@ export * from "./agent-import-settings.js";
 export * from "./ai-consent.js";
 export type { ApnsVoipConfig } from "./apns-voip.js";
 export { apnsVoipConfig, createApnsVoipProvider } from "./apns-voip-config.js";
+export * from "./app-icon.js";
 export { buildApprovalAskBlock } from "./approval-ask.js";
 export * from "./artifact-store-factory.js";
 export * from "./artifacts.js";

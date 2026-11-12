@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { useId, useState } from "react";
+import { useApp, useAsset } from "../sdk/index.js";
 import { cn, ease, stagger } from "./cn.js";
 
 export type AppPage = {
@@ -30,6 +31,17 @@ type ShellProps = {
 };
 
 function Mark({ icon }: { icon?: ReactNode }) {
+  const drawn = useAsset(useApp().app.icon);
+  if (drawn) {
+    return (
+      <img
+        src={drawn}
+        alt=""
+        aria-hidden="true"
+        className="size-10 shrink-0 object-contain drop-shadow-sm"
+      />
+    );
+  }
   return (
     <div className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,hsl(var(--primary)),hsl(110_45%_38%))] text-white shadow-glow [&_svg]:size-[18px]">
       <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(0_0%_100%/0.35),transparent_60%)]" />

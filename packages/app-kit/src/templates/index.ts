@@ -8,6 +8,8 @@ export type AppTemplate = {
   id: string;
   title: string;
   description: string;
+  /** The one object its OCSC icon shows. */
+  icon: string;
   /** Who may change rows when it is made; contribute suits forms people fill in. */
   access: "owner" | "contribute";
   files: Record<string, string>;
@@ -611,6 +613,7 @@ const text = (key: string, label: string, required = false) => ({
 export const APP_TEMPLATES: AppTemplate[] = [
   {
     id: "project-tracker",
+    icon: "a project folder with a small gantt timeline card",
     title: "Project tracker",
     description:
       "Live jobs with fees, stages, leads and due dates: overview, board, programme and list.",
@@ -649,6 +652,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
   },
   {
     id: "client-pipeline",
+    icon: "a funnel with three stacked cards flowing into it",
     title: "Client pipeline",
     description:
       "Opportunities by stage with value, probability and owner: funnel, win rate and board.",
@@ -698,6 +702,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
   },
   {
     id: "site-inspection",
+    icon: "a hard hat resting on a clipboard with a checklist",
     title: "Site inspections",
     description:
       "A step-by-step inspection with a safety and quality checklist and photos; colleagues add their own.",
@@ -743,6 +748,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
   },
   {
     id: "timesheet",
+    icon: "a stopwatch beside a calendar page",
     title: "Timesheets",
     description:
       "Everyone logs their own hours by project; the team view shows hours per person and project.",
@@ -766,6 +772,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
   },
   {
     id: "asset-register",
+    icon: "a toolbox with a barcode tag attached",
     title: "Asset register",
     description:
       "Equipment with tags, photos, locations, owners and service dates, and what is due next.",

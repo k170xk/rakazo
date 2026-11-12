@@ -514,6 +514,35 @@ export async function addAppAsset(
   });
 }
 
+/** Keeps a PNG as the app's icon, replacing any icon it had; returns the new asset's id. */
+export async function setAppIcon(
+  prisma: PrismaClient,
+  pageId: string,
+  png: Uint8Array,
+): Promise<string> {
+  if (png.byteLength > MAX_ASSET_BYTES) throw new AppDataError("That icon is too large.");
+  return prisma.$transaction(async (tx) => {
+    await tx.appAsset.deleteMany({ where: { pageId, source: "icon" } });
+    const asset = await tx.appAsset.create({
+      data: {
+        pageId,
+        name: "App icon",
+        mime: "image/png",
+        size: png.byteLength,
+        bytes: Buffer.from(png),
+        source: "icon",
+      },
+      select: { id: true },
+    });
+    // The revision moves so open copies read the app again and show the new icon.
+    await tx.page.update({
+      where: { id: pageId },
+      data: { iconAssetId: asset.id, dataRevision: { increment: 1 } },
+    });
+    return asset.id;
+  });
+}
+
 const UPLOAD_KINDS: Array<{ mime: string; matches: (bytes: Uint8Array) => boolean }> = [
   { mime: "image/jpeg", matches: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
   {

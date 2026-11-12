@@ -792,7 +792,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_page",
     description:
-      'Build or update a one-off report, briefing or snapshot the user opens from the chat. Not for apps: anything someone calls an app or tool, or that tracks, edits or collects records (trackers, registers, dashboards, forms), is built with save_app. Pass the page as JSX source written against the page kit; call with {"help": true} first for the kit guide and design rules. Problems come back with line numbers and nothing is saved. To change a page, pass its pageId with edits (applied together, or not at all) or full source; to refresh its figures (as a routine does), pass pageId with data, which replaces those useSource snapshots and leaves the code alone; pass only pageId to read its current source and what its readers saved.',
+      'Update an existing older page by its pageId, such as a routine refreshing its figures. It does not make new pages: every new app, dashboard, report or form is built with save_app. Pass the page as JSX source written against the page kit; call with {"help": true} first for the kit guide and design rules. Problems come back with line numbers and nothing is saved. To change a page, pass its pageId with edits (applied together, or not at all) or full source; to refresh its figures (as a routine does), pass pageId with data, which replaces those useSource snapshots and leaves the code alone; pass only pageId to read its current source and what its readers saved.',
     inputSchema: {
       type: "object",
       properties: {
@@ -827,6 +827,11 @@ export const builtinAgentTools: ConnectorTool[] = [
         help: { type: "boolean", description: "Return the App Studio guide instead of saving." },
         appId: { type: "string", description: "The app to read or change." },
         title: { type: "string", description: "App title; required for a new app." },
+        icon: {
+          type: "string",
+          description:
+            'One object for the app\'s OCSC icon, e.g. "a hard hat on a clipboard" for a site inspection app. Give it for every new app; a new app always gets an icon drawn, and passing icon with appId redraws it.',
+        },
         files: {
           type: "object",
           description:

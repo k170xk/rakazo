@@ -17,6 +17,8 @@ export type AppSource = {
     state: Record<string, unknown>;
     revision: number;
     viewer: AppViewer;
+    /** The app's generated icon asset, once drawn. */
+    icon?: string | null;
   }>;
   revision: () => Promise<number>;
   insert: (table: string, row: Row) => Promise<Row>;
@@ -48,6 +50,7 @@ export function ownerAppSource(
         state: data.state,
         revision: data.revision,
         viewer: { name, canEdit: true, role: "owner" },
+        icon: data.icon,
       };
     },
     revision: async () => (await queries.apps.revision.call({ pageId })).revision,
@@ -128,6 +131,7 @@ export function sharedAppSource(
         tables: data.tables,
         state: data.state,
         revision: data.revision,
+        icon: data.icon,
         viewer: {
           name: null,
           canEdit: data.canEdit === true,

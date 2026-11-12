@@ -82,6 +82,7 @@ export function AppFrame({
       event: "tables",
       revision: data.revision,
       tables: data.tables,
+      ...(data.icon ? { icon: data.icon } : {}),
     });
     latest.current.onChange?.(data.revision);
   }, []);
@@ -123,6 +124,7 @@ export function AppFrame({
               id: latest.current.app.id,
               title: latest.current.title,
               version: latest.current.app.version,
+              ...(data.icon ? { icon: data.icon } : {}),
             },
             viewer: data.viewer,
             theme: latest.current.theme,

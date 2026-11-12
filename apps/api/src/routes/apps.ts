@@ -1,4 +1,5 @@
 import { ORPCError } from "@orpc/server";
+import { drawAppIconLater } from "@rakazo/adapters";
 import { AppHistoryError, isAppDataError } from "@rakazo/db";
 import { AppAskError } from "../app-ask.js";
 import {
@@ -24,6 +25,7 @@ import {
   ownerUpdateRow,
   previewApp,
   publishAppToEvolve,
+  redrawAppIcon,
   reimportWorkbookApp,
   restoreAppVersion,
   saveAppFiles,
@@ -60,6 +62,13 @@ async function refusals<T>(work: () => Promise<T>): Promise<T> {
 export function appsRoutes(ctx: RouterContext) {
   const { deps, authed } = ctx;
   const db = deps.prisma;
+  // A new app gets its OCSC icon drawn in the background; the person does not wait for it.
+  const drawIcon =
+    (actor: { userId: string }) => (app: { pageId: string; title: string; subject?: string }) =>
+      void drawAppIconLater(
+        { prisma: db, connection: deps.evolvePlugins ?? null },
+        { pageId: app.pageId, userId: actor.userId, title: app.title, subject: app.subject },
+      );
   return {
     apps: {
       evolvePublication: authed.apps.evolvePublication.handler(({ context, input }) =>
@@ -88,6 +97,16 @@ export function appsRoutes(ctx: RouterContext) {
       revision: authed.apps.revision.handler(({ context, input }) =>
         getAppRevision(db, context.actor, input.pageId),
       ),
+      redrawIcon: authed.apps.redrawIcon.handler(async ({ context, input }) => {
+        const icon = await redrawAppIcon(db, context.actor, deps.evolvePlugins ?? null, input);
+        if (!icon)
+          throw new ORPCError("SERVICE_UNAVAILABLE", {
+            message: deps.evolvePlugins
+              ? "The icon could not be drawn. Try again in a moment."
+              : "Icons are drawn through Evolve, which is not linked to this server.",
+          });
+        return { icon };
+      }),
       insertRow: authed.apps.insertRow.handler(({ context, input }) =>
         refusals(() => ownerInsertRow(db, context.actor, input)),
       ),
@@ -143,10 +162,10 @@ export function appsRoutes(ctx: RouterContext) {
         ownerExportTable(db, context.actor, input),
       ),
       importWorkbook: authed.apps.importWorkbook.handler(({ context, input }) =>
-        refusals(() => importWorkbookApp(db, context.actor, input)),
+        refusals(() => importWorkbookApp(db, context.actor, input, drawIcon(context.actor))),
       ),
       createFromTemplate: authed.apps.createFromTemplate.handler(({ context, input }) =>
-        refusals(() => createTemplateApp(db, context.actor, input)),
+        refusals(() => createTemplateApp(db, context.actor, input, drawIcon(context.actor))),
       ),
     },
   };

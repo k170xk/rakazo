@@ -51,6 +51,8 @@ export const PageSummarySchema = z.strictObject({
   visibility: PageVisibilitySchema,
   currentVersion: z.number().int().positive(),
   pinned: z.boolean(),
+  /** An app's generated icon (an asset id), once drawn. */
+  icon: Id.nullable().optional(),
   createdAt: IsoDate,
   updatedAt: IsoDate,
 });

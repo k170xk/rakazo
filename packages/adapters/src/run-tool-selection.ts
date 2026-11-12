@@ -276,7 +276,13 @@ export function selectBuiltinToolsForRun(options: {
           !tool.name.startsWith("scratchpad_") &&
           !tool.name.startsWith("ticket_"))),
   );
-  return withOcscProgramsOffered(selected);
+  // Apps are built only in the App Studio; save_page stays for routines refreshing a page they name.
+  const appsOffered = selected.some((tool) => tool.name === "save_app");
+  return withOcscProgramsOffered(
+    appsOffered && options.trigger !== "routine"
+      ? selected.filter((tool) => tool.name !== "save_page")
+      : selected,
+  );
 }
 
 export const PAGE_BROWSER_TOOL_NAMES = new Set([

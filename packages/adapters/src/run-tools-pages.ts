@@ -66,6 +66,12 @@ async function savePage(ctx: RunContext, call: ToolCall) {
   const { args } = call;
   if (args.help === true) return { guide: PAGE_KIT_GUIDE };
   const pageId = argumentGiven(args.pageId) ? String(args.pageId) : undefined;
+  if (!pageId && ctx.tools?.offered.some((tool) => tool.name === "save_app")) {
+    return {
+      error:
+        'New apps, dashboards and reports are built in the App Studio: use save_app (call it with {"help": true} first). save_page only updates an existing page by its pageId.',
+    };
+  }
   const hasSource = argumentGiven(args.source);
   // Serializers send unused optional fields blank, an empty list included.
   const hasEdits = Array.isArray(args.edits) ? args.edits.length > 0 : argumentGiven(args.edits);

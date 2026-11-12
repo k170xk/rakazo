@@ -117,6 +117,16 @@ function send<T = unknown>(request: EvolveRequest, timeoutMs = 20_000): Promise<
   });
 }
 
+/** The app's init with newer tables, and its icon once one has been drawn. */
+function withData(data: Pick<AppInit, "tables" | "revision"> & { icon?: string | null }): AppInit {
+  return {
+    ...store.init,
+    app: data.icon ? { ...store.init.app, icon: data.icon } : store.init.app,
+    tables: data.tables,
+    revision: data.revision,
+  };
+}
+
 function receive(event: MessageEvent) {
   const data = event.data as AppResponseMessage | AppEventMessage | null;
   if (!data || typeof data !== "object") return;
@@ -136,7 +146,7 @@ function receive(event: MessageEvent) {
     changed();
   } else if (data.event === "tables") {
     if (data.revision < store.init.revision) return;
-    store.init = { ...store.init, tables: data.tables, revision: data.revision };
+    store.init = withData(data);
     changed();
   } else if (data.event === "select") {
     setPicking(data.enabled);
@@ -173,9 +183,11 @@ function startInEvolve(bridge: EvolveBridge) {
         send<{ revision: number }>({ op: "revision" })
           .then(async ({ revision }) => {
             if (revision <= store.init.revision) return;
-            const data = await send<Pick<AppInit, "tables" | "revision">>({ op: "data" });
+            const data = await send<Pick<AppInit, "tables" | "revision"> & { icon?: string }>({
+              op: "data",
+            });
             if (data.revision < store.init.revision) return;
-            store.init = { ...store.init, tables: data.tables, revision: data.revision };
+            store.init = withData(data);
             changed();
           })
           .catch(() => {})

@@ -1845,6 +1845,8 @@ model Page {
   dataRevision          Int           @default(0)
   /// Who besides the owner may change an app's rows: "owner" or "company" (signed-in colleagues).
   dataAccess            String        @default("owner")
+  /// The app's own icon: an AppAsset (source "icon") drawn for it when it was made.
+  iconAssetId           String?
   /// The Evolve plugin this app was last published as; Evolve's calls for that plugin read it.
   evolvePluginSlug      String?       @unique
   /// How many times it was published, which numbers the plugin's versions.

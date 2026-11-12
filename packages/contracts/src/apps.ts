@@ -41,6 +41,8 @@ export const AppDataSchema = z.object({
   state: z.record(z.string(), z.unknown()),
   revision: z.number().int(),
   dataAccess: AppDataAccessSchema,
+  /** The asset id of the app's generated icon, once it has been drawn. */
+  icon: z.string().nullable().default(null),
 });
 export type AppData = z.infer<typeof AppDataSchema>;
 

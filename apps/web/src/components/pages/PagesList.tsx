@@ -20,6 +20,7 @@ import { useOpenPage } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import { formatRelativeTime } from "../../lib/relative-time";
 import { DeleteItemDialog } from "../../pages/shell/dialogs";
+import { AppIcon } from "../apps/AppIcon";
 import { ImportWorkbookButton } from "../apps/ImportWorkbookButton";
 import { TemplateAppButton } from "../apps/TemplateAppButton";
 
@@ -154,10 +155,17 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
         >
           <span className="grid size-8 shrink-0 place-items-center rounded-[8px] bg-muted text-foreground">
             {page.kind === "app" ? (
-              <AppWindow
-                aria-hidden="true"
-                className="size-[18px] text-primary"
-                strokeWidth={1.7}
+              <AppIcon
+                pageId={page.id}
+                icon={page.icon}
+                className="size-8"
+                fallback={
+                  <AppWindow
+                    aria-hidden="true"
+                    className="size-[18px] text-primary"
+                    strokeWidth={1.7}
+                  />
+                }
               />
             ) : (
               <PageIcon className="h-5 w-4" />

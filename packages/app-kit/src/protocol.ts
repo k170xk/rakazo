@@ -21,7 +21,8 @@ export type AppViewer = {
 };
 
 export type AppInit = {
-  app: { id: string; title: string; version: number };
+  /** icon: the asset id of the app's generated OCSC icon, shown in its AppShell. */
+  app: { id: string; title: string; version: number; icon?: string };
   viewer: AppViewer;
   theme: "light" | "dark";
   tables: Record<string, { schema: TableSchema; rows: Row[] }>;
@@ -61,6 +62,8 @@ export type AppEventMessage =
       type: typeof APP_EVENT;
       event: "tables";
       revision: number;
+      /** The app's icon asset, when it has one. */
+      icon?: string;
       tables: Record<string, { schema: TableSchema; rows: Row[] }>;
     }
   | { type: typeof APP_EVENT; event: "select"; enabled: boolean };

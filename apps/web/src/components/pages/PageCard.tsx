@@ -1,4 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatRelativeTime } from "../../lib/relative-time";
 import { PageFrame } from "./PageFrame";
@@ -136,6 +137,7 @@ export function PageCard({
   updatedAt,
   shared = false,
   failed = false,
+  icon,
 }: {
   title: string;
   /** When the page last changed, said under its title. */
@@ -149,6 +151,8 @@ export function PageCard({
   onOpen?: () => void;
   /** A newer version of this page appears further down the chat. */
   updated?: boolean;
+  /** Shown in place of the page tile, such as an app's own icon. */
+  icon?: ReactNode;
 }) {
   const { t } = useLingui();
   const when = updatedAt ? formatRelativeTime(updatedAt) : "";
@@ -160,7 +164,7 @@ export function PageCard({
     >
       {onOpen ? <PagePreview document={document} title={title} failed={failed} /> : null}
       <div className="flex h-[73px] items-center gap-[14px] border-t border-foreground/[0.04] px-5">
-        <PageTileIcon />
+        {icon ?? <PageTileIcon />}
         <div className="min-w-0">
           <div className="relative top-[1px] truncate text-[15px] leading-[21px] text-foreground">
             {title}

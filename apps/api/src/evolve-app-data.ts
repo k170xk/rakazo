@@ -85,9 +85,18 @@ export function mountEvolveAppData(
         names: viewer !== null,
       });
       if (op === "data")
-        return c.json({ tables: data.tables, revision: data.revision }, 200, headers);
+        return c.json(
+          { tables: data.tables, revision: data.revision, icon: data.icon ?? undefined },
+          200,
+          headers,
+        );
       const init: AppInit = {
-        app: { id: page.id, title: page.title, version: page.currentVersion },
+        app: {
+          id: page.id,
+          title: page.title,
+          version: page.currentVersion,
+          ...(data.icon ? { icon: data.icon } : {}),
+        },
         viewer: {
           name: viewer?.name ?? null,
           canEdit,
