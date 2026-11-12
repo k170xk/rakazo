@@ -9857,6 +9857,10 @@ msgstr "That change wasn't saved."
 msgid "That file could not be read. Try saving it again, or paste its text in."
 msgstr "That file could not be read. Try saving it again, or paste its text in."
 
+#: src/pages/IntegrationCallback.tsx
+msgid "That Microsoft account is not yours. Close this window and sign in with your own work account."
+msgstr "That Microsoft account is not yours. Close this window and sign in with your own work account."
+
 #: src/pages/SharedPage.tsx
 msgid "That password is not right. Check it and try again."
 msgstr "That password is not right. Check it and try again."

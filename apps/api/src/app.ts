@@ -83,6 +83,7 @@ import {
   McpOAuthBroker,
   MICROSOFT_CALLBACK_PATH,
   MicrosoftConnector,
+  MicrosoftOtherAccountError,
   messagingPlatformsFromEnv,
   microsoftConfigFromEnv,
   ObjectAgentHomeStore,
@@ -1106,8 +1107,12 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         });
         if (!finished) target.searchParams.set("error", "not_finished");
       } catch (error) {
-        getLogger().error("microsoft sign-in failed", error);
-        target.searchParams.set("error", "failed");
+        if (error instanceof MicrosoftOtherAccountError) {
+          target.searchParams.set("error", "other_account");
+        } else {
+          getLogger().error("microsoft sign-in failed", error);
+          target.searchParams.set("error", "failed");
+        }
       }
       return c.redirect(target.toString());
     });

@@ -9,6 +9,8 @@ import {
   isMicrosoftEnabled,
   MICROSOFT_SCOPES,
   MicrosoftConnector,
+  MicrosoftOtherAccountError,
+  microsoftAccountIsPerson,
   savedFolders,
   withinFolders,
 } from "./microsoft-connector.js";
@@ -520,6 +522,62 @@ describe("MicrosoftConnector", () => {
     expect(requests).toEqual([]);
   });
 
+  it("accepts only the person's own Microsoft account", () => {
+    expect(microsoftAccountIsPerson({ mail: "Ann@OCSC.ie" }, "ann@ocsc.ie")).toBe(true);
+    expect(
+      microsoftAccountIsPerson({ mail: null, userPrincipalName: "ann@ocsc.ie" }, "ann@ocsc.ie"),
+    ).toBe(true);
+    expect(
+      microsoftAccountIsPerson(
+        { mail: "ann.b@ocsc.ie", userPrincipalName: "ann@ocsc.ie" },
+        "ann@ocsc.ie",
+      ),
+    ).toBe(true);
+    expect(microsoftAccountIsPerson({ mail: "bob@ocsc.ie" }, "ann@ocsc.ie")).toBe(false);
+    expect(microsoftAccountIsPerson({ mail: "ann@ocsc.ie" }, null)).toBe(false);
+  });
+
+  it("stores nothing when someone signs in to another person's mailbox", async () => {
+    const row = {
+      id: "c1",
+      spaceId: "space-1",
+      userId: "user-1",
+      connectorId: "microsoft",
+      provider: "outlook",
+      status: "pending",
+      secretId: null,
+      providerRef: "s1",
+      metadata: {},
+    };
+    const connection = {
+      findFirst: vi.fn(async () => structuredClone(row)),
+      updateMany: vi.fn(async ({ data }: { data: { status?: string } }) => {
+        Object.assign(row, data);
+        return { count: 1 };
+      }),
+    };
+    const prisma = {
+      connection,
+      user: { findUnique: vi.fn(async () => ({ email: "ann@ocsc.ie" })) },
+      $transaction: vi.fn(),
+    } as unknown as PrismaClient;
+    const secrets = { put: vi.fn() } as unknown as SecretStore;
+    const fetch = vi.fn(async (input: string | URL | Request) => {
+      const url = new URL(String(input instanceof Request ? input.url : input));
+      if (url.hostname === "login.microsoftonline.com") {
+        return Response.json({ access_token: "a", refresh_token: "r", expires_in: 3_600 });
+      }
+      return Response.json({ displayName: "Bob", mail: "bob@ocsc.ie" });
+    }) as unknown as typeof globalThis.fetch;
+    const connector = new MicrosoftConnector(CONFIG, prisma, secrets, { fetch });
+
+    await expect(
+      connector.finishSignIn("user-1", { state: "s1", code: "code" }),
+    ).rejects.toBeInstanceOf(MicrosoftOtherAccountError);
+    expect(secrets.put).not.toHaveBeenCalled();
+    expect(row.status).toBe("error");
+  });
+
   it("finishes a sign-in even when earlier attempts were abandoned, closing them", async () => {
     type Row = {
       id: string;
@@ -612,6 +670,7 @@ describe("MicrosoftConnector", () => {
     const prisma = {
       connection,
       secret,
+      user: { findUnique: vi.fn(async () => ({ email: "Anne@example.com" })) },
       $transaction: async (run: (tx: unknown) => Promise<unknown>) => run({ connection, secret }),
     } as unknown as PrismaClient;
     const secrets = {

@@ -9837,6 +9837,10 @@ msgstr ""
 msgid "That file could not be read. Try saving it again, or paste its text in."
 msgstr ""
 
+#: src/pages/IntegrationCallback.tsx
+msgid "That Microsoft account is not yours. Close this window and sign in with your own work account."
+msgstr ""
+
 #: src/pages/SharedPage.tsx
 msgid "That password is not right. Check it and try again."
 msgstr ""

@@ -27,6 +27,24 @@ import { isVitestRuntime } from "./test-runtime.js";
 import { readBodyCapped } from "./web-ssrf.js";
 
 export const MICROSOFT_CONNECTOR_ID = "microsoft";
+
+/** Someone signed in to Microsoft as another person than their Rakazo account. */
+export class MicrosoftOtherAccountError extends Error {
+  constructor() {
+    super("That Microsoft account belongs to someone else.");
+    this.name = "MicrosoftOtherAccountError";
+  }
+}
+
+/** A mailbox may be connected only by its own person: Microsoft's address or sign-in name is theirs. */
+export function microsoftAccountIsPerson(
+  me: { mail?: string | null; userPrincipalName?: string | null },
+  email: string | null | undefined,
+): boolean {
+  const own = email?.trim().toLowerCase();
+  if (!own) return false;
+  return [me.mail, me.userPrincipalName].some((address) => address?.trim().toLowerCase() === own);
+}
 export const SHAREPOINT_PROVIDER = "sharepoint";
 export const MICROSOFT_CALLBACK_PATH = "/api/v1/connections/microsoft/callback";
 /** Read-only by design: nothing here lets the app change or delete a file. */
@@ -371,6 +389,16 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
         mail?: string;
         userPrincipalName?: string;
       }>(tokens.access_token, "/me?$select=displayName,mail,userPrincipalName");
+      const person = await runAsSystem("read whose Microsoft sign-in this is", () =>
+        this.prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+      );
+      if (!microsoftAccountIsPerson(me, person?.email)) {
+        await this.prisma.connection.updateMany({
+          where: { id: row.id, status: "pending" },
+          data: { status: "error" },
+        });
+        throw new MicrosoftOtherAccountError();
+      }
       const account = {
         name: me.displayName,
         email: me.mail ?? me.userPrincipalName,
