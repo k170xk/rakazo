@@ -128,6 +128,7 @@ import {
   PLUGIN_SUBMISSIONS_PATH,
   SERVER_BUILD_HEADER,
 } from "@rakazo/contracts";
+import { CSP_REPORT_PATH } from "@rakazo/contracts/content-security-policy";
 import { encryptionKeyWarning, signupPolicyFromEnv } from "@rakazo/core";
 import type { Pool, PrismaClient } from "@rakazo/db";
 import {
@@ -184,6 +185,7 @@ import {
   withClientIp,
 } from "./client-ip.js";
 import { keepAdminsOnFullComputers } from "./company-admin.js";
+import { crossSiteGuard } from "./cross-site-guard.js";
 import { cspReportRoutes } from "./csp-report.js";
 import { configuredEmailProvider } from "./email.js";
 import type { AppEnv } from "./env.js";
@@ -194,7 +196,7 @@ import { homeRetentionSweep } from "./home-retention.js";
 import { startHourlySweep } from "./hourly-sweep.js";
 import { trackInFlightRequests } from "./in-flight-requests.js";
 import { mountLocalComputerHost } from "./local-settings.js";
-import { marketingEmailRoutes, sendWelcomeEmail } from "./marketing-email.js";
+import { marketingEmailRoutes, sendWelcomeEmail, UNSUBSCRIBE_PATH } from "./marketing-email.js";
 import { moveMcpArgsIntoSecrets } from "./mcp-args-migration.js";
 import {
   createMessagingInboundHandler,
@@ -950,6 +952,14 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       credentials: true,
       exposeHeaders: [SERVER_BUILD_HEADER],
     }),
+  );
+  // These read no session, so a request from another site cannot act as anyone.
+  app.use(
+    "*",
+    crossSiteGuard(
+      (origin) => isTrustedOrigin(origin, env),
+      [PLUGIN_SUBMISSIONS_PATH, CSP_REPORT_PATH, UNSUBSCRIBE_PATH],
+    ),
   );
   // Session and account replies must never be stored by a client or an HTTP cache.
   for (const path of ["/api/auth/*", "/rpc/*"]) {

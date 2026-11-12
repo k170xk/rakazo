@@ -1,10 +1,10 @@
+import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
 import {
   PageStateWriteSchema,
   SHARED_PAGE_PASSWORD_HEADER,
   SHARED_PAGE_PATH_PREFIX,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
-import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
 import { isAppDataError } from "@rakazo/db";
 import type { Context, Hono } from "hono";
 import { AppAskError, askForApp } from "./app-ask.js";
@@ -37,6 +37,15 @@ const PASSWORD_TRIES = 20;
 const WRITES_PER_MINUTE = 120;
 /** Photos per address and app a minute. */
 const UPLOADS_PER_MINUTE = 30;
+
+/**
+ * A page's saved values follow an app's data setting, since an app keeps data in them too; as in
+ * Evolve, someone who may only add their own rows cannot change the app's shared settings.
+ */
+export function sharedStateWritable(kind: string, dataAccess: string, userId: string | null) {
+  if (userId === null) return false;
+  return kind !== "app" || dataAccess === "company";
+}
 
 /**
  * Anyone signed in to this company with a page's link reads its current version here. A page
@@ -99,7 +108,11 @@ export function mountSharedPages(
     return c.json(
       {
         ...admitted.found.page,
-        canSaveState: admitted.userId !== null,
+        canSaveState: sharedStateWritable(
+          admitted.found.page.kind,
+          admitted.found.dataAccess,
+          admitted.userId,
+        ),
         canEditData: admitted.userId !== null && colleaguesMayWrite(admitted.found.dataAccess),
       },
       200,
@@ -121,7 +134,11 @@ export function mountSharedPages(
         ...data,
         canEdit,
         ownRowsOnly: canEdit && admitted.found.dataAccess === "contribute",
-        canSaveState: admitted.userId !== null,
+        canSaveState: sharedStateWritable(
+          admitted.found.page.kind,
+          admitted.found.dataAccess,
+          admitted.userId,
+        ),
       },
       200,
       headers,
@@ -196,7 +213,10 @@ export function mountSharedPages(
         return c.json({ error: "Only the owner can add photos to this app" }, 403, headers);
       }
       if (uploads(`${throttleKey(clientIp(c))}:${admitted.found.pageId}`) > UPLOADS_PER_MINUTE) {
-        return c.json({ error: "Too many photos at once" }, 429, { ...headers, "retry-after": "60" });
+        return c.json({ error: "Too many photos at once" }, 429, {
+          ...headers,
+          "retry-after": "60",
+        });
       }
       const body = readUploadBody(await c.req.json().catch(() => null));
       if (!body) return c.json({ error: "That is not a photo" }, 400, headers);
@@ -208,7 +228,11 @@ export function mountSharedPages(
         );
       } catch (error) {
         if (isAppDataError(error))
-          return c.json({ error: error instanceof Error ? error.message : "Refused" }, 400, headers);
+          return c.json(
+            { error: error instanceof Error ? error.message : "Refused" },
+            400,
+            headers,
+          );
         throw error;
       }
     },
@@ -276,12 +300,28 @@ export function mountSharedPages(
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
     const values = await readSharedPageState(prisma, admitted.found.pageId);
-    return c.json({ values, writable: admitted.userId !== null }, 200, headers);
+    return c.json(
+      {
+        values,
+        writable: sharedStateWritable(
+          admitted.found.page.kind,
+          admitted.found.dataAccess,
+          admitted.userId,
+        ),
+      },
+      200,
+      headers,
+    );
   });
   app.put(`${SHARED_PAGE_PATH_PREFIX}:token/state`, async (c) => {
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
     if (!admitted.userId) return c.json({ error: "Sign in to save" }, 403, headers);
+    if (
+      !sharedStateWritable(admitted.found.page.kind, admitted.found.dataAccess, admitted.userId)
+    ) {
+      return c.json({ error: "Only the owner can change this app's data" }, 403, headers);
+    }
     const body = PageStateWriteSchema.safeParse(await c.req.json().catch(() => null));
     if (!body.success) return c.json({ error: "Invalid value" }, 400, headers);
     try {

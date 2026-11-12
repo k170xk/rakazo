@@ -4,7 +4,6 @@ import {
   APP_GESTURE_OPS,
   APP_PICK,
   APP_RESPONSE,
-  APP_WRITE_OPS,
   MAX_UPLOAD_BASE64,
   readAppRequest,
   requestRef,
@@ -14,6 +13,7 @@ import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import type { AppSource } from "../../lib/app-host";
 import { saveFile } from "../../lib/app-host";
+import { appWriteDecision } from "../../lib/app-write-rule";
 import { readTheme, subscribeTheme } from "../../lib/pages";
 import { SandboxedHtmlViewer } from "../SandboxedHtmlViewer";
 
@@ -35,7 +35,8 @@ export type AppPick = { loc: string; tag: string; text: string };
  * An app built by the App Studio, in the same sandboxed viewer as pages. The app has no network:
  * it asks this host for its tables, saves and pictures, and the host answers through `source` as
  * the person looking. Writes are refused unless that person may edit; downloads, exports and links
- * need a click inside the frame first, each click usable once.
+ * need a click inside the frame first, each click usable once. For a colleague, the app saves only
+ * while they are using it and removes rows only just after a click, so opening it changes nothing.
  */
 export function AppFrame({
   document: html,
@@ -68,7 +69,8 @@ export function AppFrame({
   const { open, dialog } = useExternalLinkOpener();
   const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "dark" as const);
   const post = useRef<((message: object) => void) | null>(null);
-  const known = useRef<{ revision: number; canEdit: boolean } | null>(null);
+  const known = useRef<{ revision: number; canEdit: boolean; colleague: boolean } | null>(null);
+  const clickedAt = useRef(0);
   const usedGesture = useRef<string | null>(null);
   const ready = useRef(false);
   const latest = useRef({
@@ -91,7 +93,11 @@ export function AppFrame({
     if (revision === current.revision) return;
     const data = await latest.current.source.load().catch(() => null);
     if (!data || !post.current) return;
-    known.current = { revision: data.revision, canEdit: data.viewer.canEdit };
+    known.current = {
+      revision: data.revision,
+      canEdit: data.viewer.canEdit,
+      colleague: isColleague(data.viewer.role),
+    };
     post.current({
       type: APP_EVENT,
       event: "tables",
@@ -121,9 +127,16 @@ export function AppFrame({
   const handle = useCallback(
     async (request: AppRequestMessage, gesture: unknown, focused: boolean): Promise<unknown> => {
       const { source } = latest.current;
-      if (APP_WRITE_OPS.has(request.op) && request.op !== "state.set" && !known.current?.canEdit) {
-        throw new Error("You can view this app but not change its data.");
-      }
+      if (typeof gesture === "string" && focused) clickedAt.current = Date.now();
+      const decision = appWriteDecision({
+        op: request.op,
+        canEdit: known.current?.canEdit === true,
+        colleague: known.current?.colleague === true,
+        focused,
+        msSinceClick: Date.now() - clickedAt.current,
+      });
+      if (decision === "skip") return false;
+      if (decision !== "ok") throw new Error(decision);
       if (APP_GESTURE_OPS.has(request.op)) {
         if (!focused || typeof gesture !== "string" || gesture === usedGesture.current) {
           throw new Error("Click the button again to do that.");
@@ -133,7 +146,11 @@ export function AppFrame({
       switch (request.op) {
         case "init": {
           const data = await source.load();
-          known.current = { revision: data.revision, canEdit: data.viewer.canEdit };
+          known.current = {
+            revision: data.revision,
+            canEdit: data.viewer.canEdit,
+            colleague: isColleague(data.viewer.role),
+          };
           const init: AppInit = {
             app: {
               id: latest.current.app.id,
@@ -259,6 +276,11 @@ export function AppFrame({
       {dialog}
     </>
   );
+}
+
+/** Someone viewing another person's app through its link, not the owner or the Studio. */
+function isColleague(role: AppInit["viewer"]["role"]): boolean {
+  return role === "member" || role === "visitor";
 }
 
 function objectOf(value: unknown): Record<string, unknown> {
