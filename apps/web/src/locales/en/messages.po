@@ -2351,6 +2351,11 @@ msgstr "Code changes are versioned. Data is not: restoring a version keeps today
 msgid "Collapse {0}"
 msgstr "Collapse {0}"
 
+#: src/components/apps/AppSettingsPanel.tsx
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Colleagues add their own"
+msgstr "Colleagues add their own"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Colleagues and agents, together"
 msgstr "Colleagues and agents, together"
@@ -4278,6 +4283,10 @@ msgstr "Duration (days)"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
 msgstr "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
+msgstr "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Each name can be used once."
@@ -6470,6 +6479,10 @@ msgstr "New · Granular Editing — follow the 3 steps below"
 #: src/components/VaultSettings.tsx
 msgid "New API key"
 msgstr "New API key"
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "New app from a starter"
+msgstr "New app from a starter"
 
 #: src/components/apps/ImportWorkbookButton.tsx
 msgid "New app from Excel"
@@ -9131,6 +9144,10 @@ msgid "Sign-in cancelled. Try again."
 msgstr "Sign-in cancelled. Try again."
 
 #: src/components/apps/AppSettingsPanel.tsx
+msgid "Signed-in colleagues add rows and change only the ones they added (forms, timesheets, inspections)."
+msgstr "Signed-in colleagues add rows and change only the ones they added (forms, timesheets, inspections)."
+
+#: src/components/apps/AppSettingsPanel.tsx
 msgid "Signed-in colleagues can add, edit and remove rows."
 msgstr "Signed-in colleagues can add, edit and remove rows."
 
@@ -9355,6 +9372,10 @@ msgstr "Start a group chat with colleagues from Evolve and the agents you choose
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Start from"
 msgstr "Start from"
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Start from a starter app"
+msgstr "Start from a starter app"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Start in the chat: a live app appears and changes each time you ask"
@@ -9666,6 +9687,10 @@ msgstr "Testing"
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Testing…"
 msgstr "Testing…"
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "That app couldn't be made."
+msgstr "That app couldn't be made."
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "That change wasn't saved."

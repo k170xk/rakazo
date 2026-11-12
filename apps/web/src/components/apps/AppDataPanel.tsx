@@ -294,7 +294,8 @@ function Cell({
   const shown = formatValue(column, value);
   const base =
     "w-full rounded-md px-1.5 py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring";
-  if (column.formula) return <span className={`${base} block text-muted-foreground`}>{shown}</span>;
+  if (column.formula || column.type === "image")
+    return <span className={`${base} block text-muted-foreground`}>{shown || "—"}</span>;
   if (column.type === "boolean") {
     return (
       <input
@@ -417,7 +418,9 @@ function AddColumn({
         onChange={(event) => setType(event.target.value as ColumnType)}
         className="h-8 rounded-md border border-border bg-transparent px-2 text-[13px]"
       >
-        {COLUMN_TYPES.filter((option) => option !== "relation" && option !== "enum").map(
+        {COLUMN_TYPES.filter(
+          (option) => option !== "relation" && option !== "enum" && option !== "image",
+        ).map(
           (option) => (
             <option key={option} value={option}>
               {option}

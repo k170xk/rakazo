@@ -2346,6 +2346,11 @@ msgstr ""
 msgid "Collapse {0}"
 msgstr "Zwiń {0}"
 
+#: src/components/apps/AppSettingsPanel.tsx
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Colleagues add their own"
+msgstr "Współpracownicy dodają własne"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Colleagues and agents, together"
 msgstr ""
@@ -4269,6 +4274,10 @@ msgstr ""
 #: src/pages/AdminCompanyPage.tsx
 msgid "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
 msgstr ""
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
+msgstr "Każda ma gotowe ekrany i puste tabele. Dodaj swoje wiersze albo poproś bota, aby dopasował ją do Twojej pracy."
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Each name can be used once."
@@ -6452,6 +6461,10 @@ msgstr ""
 #: src/components/VaultSettings.tsx
 msgid "New API key"
 msgstr "Nowy klucz API"
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "New app from a starter"
+msgstr "Nowa aplikacja z szablonu"
 
 #: src/components/apps/ImportWorkbookButton.tsx
 msgid "New app from Excel"
@@ -9113,6 +9126,10 @@ msgid "Sign-in cancelled. Try again."
 msgstr "Anulowano logowanie. Spróbuj ponownie."
 
 #: src/components/apps/AppSettingsPanel.tsx
+msgid "Signed-in colleagues add rows and change only the ones they added (forms, timesheets, inspections)."
+msgstr "Zalogowani współpracownicy dodają wiersze i zmieniają tylko te, które sami dodali (formularze, karty czasu pracy, inspekcje)."
+
+#: src/components/apps/AppSettingsPanel.tsx
 msgid "Signed-in colleagues can add, edit and remove rows."
 msgstr ""
 
@@ -9337,6 +9354,10 @@ msgstr ""
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Start from"
 msgstr ""
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Start from a starter app"
+msgstr "Zacznij od gotowej aplikacji"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Start in the chat: a live app appears and changes each time you ask"
@@ -9645,6 +9666,10 @@ msgstr "Testowanie"
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Testing…"
 msgstr "Testowanie…"
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "That app couldn't be made."
+msgstr "Nie udało się utworzyć tej aplikacji."
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "That change wasn't saved."

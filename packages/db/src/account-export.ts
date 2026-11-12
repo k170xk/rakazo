@@ -265,7 +265,10 @@ async function* spaceRecords(
         pinnedAt: isoOrNull(page.pinnedAt),
         currentVersion: page.currentVersion,
         kind: page.kind === "app" ? "app" : "page",
-        dataAccess: page.dataAccess === "company" ? "company" : "owner",
+        dataAccess:
+          page.dataAccess === "company" || page.dataAccess === "contribute"
+            ? page.dataAccess
+            : "owner",
         createdAt: iso(page.createdAt),
         updatedAt: iso(page.updatedAt),
       };

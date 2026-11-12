@@ -98,6 +98,8 @@ export function AppShell({
                   <button
                     key={item.id}
                     type="button"
+                    data-app-page={item.id}
+                    data-app-label={typeof item.label === "string" ? item.label : undefined}
                     onClick={() => navigate(item.id)}
                     className={cn(
                       "relative inline-flex items-center gap-2 px-3 text-[13px] font-semibold transition-colors [&_svg]:size-4",
@@ -123,7 +125,9 @@ export function AppShell({
               })}
             </nav>
           )}
-          <div className="ml-auto flex items-center gap-2">{actions}</div>
+          <div className="ml-auto flex shrink-0 items-center gap-2 [&_a]:whitespace-nowrap [&_button]:whitespace-nowrap">
+            {actions}
+          </div>
         </div>
         {items.length > 1 && (
           <div className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
@@ -131,6 +135,8 @@ export function AppShell({
               <button
                 key={item.id}
                 type="button"
+                data-app-page={item.id}
+                data-app-label={typeof item.label === "string" ? item.label : undefined}
                 onClick={() => navigate(item.id)}
                 className={cn(
                   "shrink-0 rounded-full px-3 py-1.5 text-[13px] font-semibold",

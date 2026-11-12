@@ -1,6 +1,7 @@
 import { buildApp } from "@rakazo/app-kit/build";
 import { APP_KIT_GUIDE } from "@rakazo/app-kit/guide";
 import { importWorkbook, MAX_WORKBOOK_BYTES, scaffoldApp } from "@rakazo/app-kit/import";
+import { APP_TEMPLATES, findTemplate } from "@rakazo/app-kit/templates";
 import type { MessageBlock } from "@rakazo/contracts";
 import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
 import { containsSecret, redactSecrets } from "@rakazo/core";
@@ -20,6 +21,7 @@ import {
   removeAppRow,
   updateAppRow,
 } from "@rakazo/db";
+import { canLookAtApps, lookAtApp, lookProblems } from "./app-look.js";
 import type { RunContext } from "./run-context.js";
 import { isUniqueViolation, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
@@ -332,6 +334,17 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
 
   if (argumentGiven(args.workbook)) return importIntoApp(ctx, call, app, title);
 
+  const template = argumentGiven(args.template) ? findTemplate(String(args.template)) : undefined;
+  if (argumentGiven(args.template)) {
+    if (app) return { error: "template starts a new app; leave out appId." };
+    if (!template) {
+      return {
+        error: `Unknown template. Use one of: ${APP_TEMPLATES.map((t) => t.id).join(", ")}.`,
+      };
+    }
+    title ??= template.title;
+  }
+
   if (app && !hasFiles && !hasEdits && !deletes.length && !hasTables && !title) {
     // Rows can be written by colleagues through a shared link, so reading them taints the run.
     ctx.state.tainted = true;
@@ -350,10 +363,10 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     };
   }
   if (!app && hasEdits) return { error: "edits need the appId of the app to change." };
-  if (!app && !hasFiles) return { error: 'A new app needs files with "App.tsx".' };
+  if (!app && !hasFiles && !template) return { error: 'A new app needs files with "App.tsx".' };
   if (!app && !title) return { error: "A new app needs a title." };
 
-  let files = { ...(app?.files ?? {}) };
+  let files = { ...(app?.files ?? template?.files ?? {}) };
   if (hasFiles) {
     const given = parseFiles(args.files);
     if (typeof given === "string") return { error: given, unchanged: true };
@@ -368,7 +381,9 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     if (name === "App.tsx") return { error: "App.tsx can't be deleted.", unchanged: true };
     delete files[name];
   }
-  const tables = hasTables ? parseTables(args.tables) : [];
+  const tables: TableInput[] | string = hasTables
+    ? parseTables(args.tables)
+    : (template?.tables.map((schema) => ({ schema })) ?? []);
   if (typeof tables === "string") return { error: tables, unchanged: true };
 
   const codeChanged = !app || hasFiles || hasEdits || deletes.length > 0;
@@ -411,6 +426,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         title: title!,
         files,
         code: code!,
+        dataAccess: template?.access,
       });
     } else if (codeChanged) {
       const next = await appendAppVersion(deps.prisma, {
@@ -455,15 +471,147 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   }
   const cardError = codeChanged ? await postCard(ctx, saved, !app) : null;
   const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
+  const check = codeChanged && args.check !== false ? await runCheck(ctx, saved, files) : null;
   return {
     appId: saved.pageId,
     version: saved.version,
     title: saved.title,
     ...(tableResults.length ? { tables: tableResults } : {}),
+    ...(template?.access === "contribute"
+      ? {
+          access:
+            "Colleagues who open it can add rows and change only their own; the owner can change this in the app's settings.",
+        }
+      : {}),
     ...(warnings.length ? { warnings } : {}),
+    ...(check ?? {}),
     ...(cardError
       ? { error: cardError }
       : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
+  };
+}
+
+/**
+ * Opens the saved app on a runner and clicks through its pages, so a crash or a page that breaks
+ * on a phone comes back to the bot rather than to the person. Silent where there are no runners.
+ */
+async function runCheck(
+  ctx: RunContext,
+  saved: { pageId: string; title: string },
+  files: Record<string, string>,
+) {
+  if (!canLookAtApps(ctx.deps)) return null;
+  try {
+    const look = await lookAtApp(
+      ctx.deps,
+      {
+        pageId: saved.pageId,
+        title: saved.title,
+        files,
+        owner: ctx.run.userId,
+        viewerName: null,
+        signal: ctx.context.signal,
+      },
+      { check: true },
+    );
+    if (!look) return null;
+    const problems = lookProblems(look.report);
+    return problems.length
+      ? {
+          runCheck: "problems",
+          problems,
+          next: "The app was saved, but these appear when it runs. Fix them with edits and save again.",
+        }
+      : {
+          runCheck: `ran cleanly on ${look.report.pages.length || 1} page(s), desktop and phone`,
+          ...(look.report.pages.length ? { pages: look.report.pages } : {}),
+        };
+  } catch (error) {
+    if (ctx.context.signal.aborted) throw error;
+    return {
+      runCheck: `not run (${error instanceof Error ? error.message.slice(0, 200) : "unknown error"})`,
+    };
+  }
+}
+
+const PAGE_ID = /^[A-Za-z0-9_-]{1,60}$/;
+
+/** Screenshots of the app as people see it, with its real data, for the bot to judge and refine. */
+async function appLook(ctx: RunContext, call: ToolCall) {
+  const { args } = call;
+  const appId = String(args.appId ?? "");
+  let app: App | null;
+  try {
+    app = appId ? await findApp(ctx, appId) : null;
+  } catch (error) {
+    if (error instanceof NotAnApp) return notAnApp;
+    throw error;
+  }
+  if (!app) return notFound;
+  if (!canLookAtApps(ctx.deps))
+    return { error: "This server cannot open apps to look at them; save_app still checks builds." };
+  const pages = Array.isArray(args.pages)
+    ? args.pages
+        .map(String)
+        .filter((id) => PAGE_ID.test(id))
+        .slice(0, 4)
+    : [];
+  const theme = args.theme === "dark" ? "dark" : "light";
+  // The screenshots show rows colleagues can write, as reading them does.
+  ctx.state.tainted = true;
+  let look: Awaited<ReturnType<typeof lookAtApp>>;
+  try {
+    look = await lookAtApp(
+      ctx.deps,
+      {
+        pageId: app.id,
+        title: app.title,
+        files: app.files,
+        owner: ctx.run.userId,
+        viewerName: null,
+        signal: ctx.context.signal,
+      },
+      { pages, phone: args.phone === true, theme },
+    );
+  } catch (error) {
+    if (ctx.context.signal.aborted) throw error;
+    return {
+      error: `The app could not be opened: ${error instanceof Error ? error.message : "unknown error"}`,
+    };
+  }
+  if (!look) return { error: "This server cannot open apps to look at them." };
+  const problems = lookProblems(look.report);
+  const summary = {
+    appId: app.id,
+    version: app.currentVersion,
+    pages: look.report.pages,
+    shots: look.report.shots.map(({ page, viewport, width, height, cut }) => ({
+      page,
+      viewport,
+      width,
+      height,
+      ...(cut ? { note: "cut off; the page continues below" } : {}),
+    })),
+    ...(problems.length ? { problems } : {}),
+    next: "Judge it as the person would: hierarchy, spacing, empty or cramped areas, unclear labels, charts that say nothing, anything that looks unfinished. Fix with save_app edits, then look again.",
+  };
+  if (!ctx.computer.acceptsImages || !look.images.length) {
+    return {
+      ...summary,
+      note: "This model cannot see images; use the problems and page list.",
+    };
+  }
+  return {
+    kind: "agent_tool_result",
+    content: [
+      { type: "text", text: JSON.stringify(summary) },
+      ...look.images.map((image) => ({
+        type: "image" as const,
+        data: image.data,
+        mimeType: image.mimeType,
+      })),
+    ],
+    details: summary,
   };
 }
 
@@ -668,5 +816,8 @@ export const appTools: ToolHandlers = {
   },
   async app_asset(ctx, call) {
     return call.finish(await appAsset(ctx, call));
+  },
+  async app_look(ctx, call) {
+    return call.finish(await appLook(ctx, call));
   },
 };

@@ -349,7 +349,10 @@ export function Tabs<T extends string>({
   const id = useId();
   return (
     <div
-      className={cn("inline-flex items-center gap-1 rounded-xl bg-muted/80 p-1", className)}
+      className={cn(
+        "inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-xl bg-muted/80 p-1",
+        className,
+      )}
       role="tablist"
     >
       {items.map((item) => {
@@ -362,7 +365,7 @@ export function Tabs<T extends string>({
             aria-selected={active}
             onClick={() => onChange(item.value)}
             className={cn(
-              "relative inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold transition-colors [&_svg]:size-4",
+              "relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap transition-colors [&_svg]:size-4",
               active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >

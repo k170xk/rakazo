@@ -9,6 +9,7 @@ case "$tool" in
   ocsc-video) script="/opt/ocsc-video/ocsc-video.mjs" ;;
   ocsc-plugin) script="/opt/evolve-plugin/ocsc-plugin.mjs" ;;
   ocsc-pdf-studio) script="/opt/pdf-studio/ocsc-pdf-studio.mjs" ;;
+  ocsc-app-shot) script="/opt/ocsc-app-shot/ocsc-app-shot.mjs" ;;
   *) echo "unknown OCSC command: $tool" >&2; exit 2 ;;
 esac
 if [ -z "${WORKSPACE_DIR:-}" ]; then

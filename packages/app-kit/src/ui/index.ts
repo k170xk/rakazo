@@ -25,7 +25,29 @@ export {
 } from "./basic.js";
 export { AreaChart, BarChart, BarList, DonutChart, LineChart, type Series } from "./charts.js";
 export { CHART_COLORS, cn, ease, motionPresets, stagger, toneFor } from "./cn.js";
-export { byMonth, countBy, groupBy, sumBy } from "./data.js";
+export {
+  byMonth,
+  countBy,
+  groupBy,
+  inPeriod,
+  PERIODS,
+  type Period,
+  periodChange,
+  periodRange,
+  readJson,
+  sumBy,
+} from "./data.js";
+export {
+  Checklist,
+  type ChecklistItem,
+  type ChecklistValue,
+  type CheckResult,
+  checklistSummary,
+  PeriodFilter,
+  type Step,
+  Steps,
+} from "./flows.js";
+export { CalendarHeatmap, FunnelChart, Gauge, Heatmap, ScatterChart } from "./insights.js";
 export {
   CountUp,
   formatNumber,
@@ -34,7 +56,15 @@ export {
   type NumberFormat,
   Sparkline,
 } from "./kpi.js";
-export { AssetImage, Gallery, Hero, ImageCard } from "./media.js";
+export {
+  AssetImage,
+  Gallery,
+  Hero,
+  ImageCard,
+  Lightbox,
+  PhotoInput,
+  Photos,
+} from "./media.js";
 export { ConfirmDialog, Dialog, Drawer, Menu, toast } from "./overlay.js";
 export { RecordDetail, RecordForm, TableView } from "./records.js";
 export {

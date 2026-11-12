@@ -1,5 +1,5 @@
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
-import { animate, motion, useInView } from "motion/react";
+import { animate, motion, useInView, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import type { Tone } from "../schema.js";
@@ -53,9 +53,15 @@ export function CountUp({
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const seen = useInView(ref, { once: true });
+  const still = useReducedMotion();
   const from = useRef(0);
-  const [shown, setShown] = useState(0);
+  const [shown, setShown] = useState(still ? value : 0);
   useEffect(() => {
+    if (still) {
+      from.current = value;
+      setShown(value);
+      return;
+    }
     if (!seen) return;
     const controls = animate(from.current, value, {
       duration,
@@ -64,7 +70,7 @@ export function CountUp({
     });
     from.current = value;
     return () => controls.stop();
-  }, [seen, value, duration]);
+  }, [seen, still, value, duration]);
   const decimals = Number.isInteger(value) ? 0 : 1;
   const display = Math.abs(value - shown) < 1e-9 ? value : Number(shown.toFixed(decimals));
   return (

@@ -131,7 +131,7 @@ export const AccountExportRecordSchema = z.discriminatedUnion("type", [
     currentVersion: PageVersionNumber,
     /** Archives from before apps hold only pages. */
     kind: z.enum(["page", "app"]).optional(),
-    dataAccess: z.enum(["owner", "company"]).optional(),
+    dataAccess: z.enum(["owner", "contribute", "company"]).optional(),
     createdAt: IsoDate,
     updatedAt: IsoDate,
   }),

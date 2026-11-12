@@ -1,24 +1,30 @@
 import type { EvolvePluginsConnection } from "@rakazo/adapters";
 import { verifyAppDataToken } from "@rakazo/adapters";
 import type { AppInit } from "@rakazo/app-kit/protocol";
+import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
 import { PageStateWriteSchema } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { isAppDataError, runAsSystem } from "@rakazo/db";
 import type { Hono } from "hono";
 import type { SharedRowWrite } from "./apps.js";
 import {
+  addSharedAppUpload,
+  colleaguesMayWrite,
   readSharedAppAsset,
   readSharedAppData,
   readSharedAppRevision,
+  readUploadBody,
   writeSharedAppRow,
 } from "./apps.js";
 import { PageStateRefusedError, saveSharedPageState } from "./pages.js";
+import { requestBodyLimit } from "./request-body-limit.js";
 import { windowCounter } from "./window-counter.js";
 
 export const EVOLVE_APP_DATA_PATH = "/api/evolve/app-data";
 
 const MINUTE_MS = 60_000;
 const WRITES_PER_PERSON_PER_MINUTE = 120;
+const UPLOADS_PER_PERSON_PER_MINUTE = 30;
 const TABLE = /^[a-z][a-z0-9_]{0,39}$/;
 
 /**
@@ -33,9 +39,10 @@ export function mountEvolveAppData(
   connection: EvolvePluginsConnection | null,
 ) {
   const writes = windowCounter(MINUTE_MS);
+  const uploads = windowCounter(MINUTE_MS);
   const headers = { "cache-control": "no-store" };
 
-  app.post(EVOLVE_APP_DATA_PATH, async (c) => {
+  app.post(EVOLVE_APP_DATA_PATH, requestBodyLimit(MAX_UPLOAD_BASE64 + 8192), async (c) => {
     const token = (c.req.header("authorization") ?? "").replace(/^Bearer\s+/i, "");
     const caller = connection && token ? verifyAppDataToken(connection.secret, token) : null;
     if (!caller) return c.json({ error: "Unauthorized" }, 401, headers);
@@ -62,7 +69,8 @@ export function mountEvolveAppData(
     const { page, viewer } = found;
     const isOwner = page.user.email.trim().toLowerCase() === caller.email;
     // Rows remember who changed them, so only people with an account here write.
-    const canEdit = viewer !== null && (isOwner || page.dataAccess === "company");
+    const canEdit = viewer !== null && (isOwner || colleaguesMayWrite(page.dataAccess));
+    const ownRowsOnly = canEdit && !isOwner && page.dataAccess === "contribute";
 
     const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
     const op = typeof body?.op === "string" ? body.op : "";
@@ -72,7 +80,10 @@ export function mountEvolveAppData(
         : null;
 
     if (op === "init" || op === "data") {
-      const data = await readSharedAppData(prisma, page.id);
+      const data = await readSharedAppData(prisma, page.id, {
+        userId: viewer?.id ?? null,
+        names: viewer !== null,
+      });
       if (op === "data")
         return c.json({ tables: data.tables, revision: data.revision }, 200, headers);
       const init: AppInit = {
@@ -80,13 +91,14 @@ export function mountEvolveAppData(
         viewer: {
           name: viewer?.name ?? null,
           canEdit,
+          ...(ownRowsOnly ? { ownRowsOnly } : {}),
           role: isOwner ? "owner" : "member",
         },
         theme: "light",
         tables: data.tables,
         state: data.state as Record<string, unknown>,
         revision: data.revision,
-        features: ["assets"],
+        features: canEdit ? ["assets", "uploads"] : ["assets"],
       };
       return c.json(init, 200, headers);
     }
@@ -103,16 +115,31 @@ export function mountEvolveAppData(
       );
     }
 
-    if (!["rows.insert", "rows.update", "rows.remove", "state.set"].includes(op))
+    if (!["rows.insert", "rows.update", "rows.remove", "state.set", "upload"].includes(op))
       return c.json({ error: "That is not available in Evolve." }, 400, headers);
     if (!canEdit || !viewer)
       return c.json({ error: "Only the app's owner can change its data." }, 403, headers);
+    if (op === "upload") {
+      if (uploads(`${caller.email}:${page.id}`) > UPLOADS_PER_PERSON_PER_MINUTE)
+        return c.json({ error: "Too many photos at once. Wait a minute." }, 429, headers);
+      const upload = readUploadBody(body);
+      if (!upload) return c.json({ error: "That is not a photo." }, 400, headers);
+      try {
+        return c.json(await addSharedAppUpload(prisma, page.id, upload, viewer.id), 200, headers);
+      } catch (error) {
+        if (isAppDataError(error))
+          return c.json({ error: error instanceof Error ? error.message : "Refused" }, 400, headers);
+        throw error;
+      }
+    }
     if (writes(`${caller.email}:${page.id}`) > WRITES_PER_PERSON_PER_MINUTE)
       return c.json({ error: "Too many changes. Wait a minute." }, 429, headers);
     if (JSON.stringify(body).length > 64_000)
       return c.json({ error: "That change is too large." }, 413, headers);
 
     if (op === "state.set") {
+      if (ownRowsOnly)
+        return c.json({ error: "Only the app's owner can change its settings." }, 403, headers);
       const state = PageStateWriteSchema.safeParse({ key: body?.key, value: body?.value });
       if (!state.success) return c.json({ error: "Invalid value" }, 400, headers);
       try {
@@ -135,7 +162,13 @@ export function mountEvolveAppData(
     else if (table && op === "rows.remove" && id) write = { op: "remove", table, id };
     if (!write) return c.json({ error: "Invalid change" }, 400, headers);
     try {
-      const saved = await writeSharedAppRow(prisma, page.id, write, viewer.id);
+      const saved = await writeSharedAppRow(
+        prisma,
+        page.id,
+        write,
+        viewer.id,
+        isOwner ? "company" : page.dataAccess,
+      );
       return c.json("row" in saved ? saved.row : saved, 200, headers);
     } catch (error) {
       if (isAppDataError(error))

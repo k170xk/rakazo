@@ -1900,6 +1900,17 @@ export const appContract = {
         }),
       )
       .output(z.object({ pageId: Id, report: z.array(z.string()) })),
+    /** A new app from one of the App Studio's starters, with its tables and no rows. */
+    createFromTemplate: oc
+      .input(
+        z.strictObject({
+          templateId: z.string().min(1).max(60),
+          title: z.string().trim().min(1).max(200).optional(),
+          botId: Id.optional(),
+          groupId: Id.optional(),
+        }),
+      )
+      .output(z.object({ pageId: Id })),
   },
   usage: {
     list: oc.output(z.array(UsageRecordSchema)),

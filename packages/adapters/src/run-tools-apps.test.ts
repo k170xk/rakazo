@@ -97,6 +97,51 @@ describe("save_app", () => {
     expect(publishMessage).toHaveBeenCalledTimes(1);
   });
 
+  it("starts an app from a template with its tables and access", async () => {
+    db.defineAppTable.mockResolvedValue({
+      table: "inspections",
+      rows: 0,
+      inserted: 0,
+      updated: 0,
+      removed: 0,
+      skipped: [],
+    });
+    const result = (await appTools.save_app!(
+      context().ctx,
+      call({ template: "site-inspection" }),
+    )) as Result;
+    expect(result).toMatchObject({ appId: "app-1", access: expect.stringContaining("their own") });
+    expect(db.createAppPage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ title: "Site inspections", dataAccess: "contribute" }),
+    );
+    expect(db.defineAppTable).toHaveBeenCalledWith(
+      expect.anything(),
+      "app-1",
+      expect.objectContaining({ schema: expect.objectContaining({ name: "inspections" }) }),
+    );
+  });
+
+  it("refuses an unknown template and a template on an existing app", async () => {
+    const unknown = (await appTools.save_app!(context().ctx, call({ template: "nope" }))) as Result;
+    expect(String(unknown.error)).toContain("project-tracker");
+    const existing = (await appTools.save_app!(
+      context({}).ctx,
+      call({ appId: "app-1", template: "timesheet" }),
+    )) as Result;
+    expect(String(existing.error)).toContain("new app");
+    expect(db.createAppPage).not.toHaveBeenCalled();
+  });
+
+  it("lists every template in the tool schema", async () => {
+    const { APP_TEMPLATES } = await import("@rakazo/app-kit/templates");
+    const { builtinAgentTools } = await import("./builtin-tools.js");
+    const tool = builtinAgentTools.find((entry) => entry.name === "save_app") as unknown as {
+      inputSchema: { properties: { template: { enum: string[] } } };
+    };
+    expect(tool.inputSchema.properties.template.enum).toEqual(APP_TEMPLATES.map((t) => t.id));
+  });
+
   it("saves nothing when the code does not build", async () => {
     const result = (await appTools.save_app!(
       context().ctx,

@@ -1,9 +1,13 @@
-import { ImageIcon } from "lucide-react";
-import { motion } from "motion/react";
+import { Camera, ChevronLeft, ChevronRight, ImageIcon, LoaderCircle, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
-import { useAsset } from "../sdk/index.js";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { imageIds, MAX_IMAGES_PER_CELL } from "../schema.js";
+import { uploadImage, useAsset, useCanUpload } from "../sdk/index.js";
 import { Skeleton } from "./basic.js";
 import { cn, ease } from "./cn.js";
+import { toast } from "./overlay.js";
 
 /** A picture the app keeps, by asset id, with a shimmer while it loads. */
 export function AssetImage({
@@ -150,26 +154,277 @@ export function Gallery({
   assets: Array<{ id: string; caption?: string }>;
   columns?: 2 | 3 | 4;
 }) {
+  const [open, setOpen] = useState<number | null>(null);
   const cols = {
     2: "sm:grid-cols-2",
     3: "sm:grid-cols-2 lg:grid-cols-3",
     4: "sm:grid-cols-3 lg:grid-cols-4",
   }[columns];
   return (
-    <div className={cn("grid grid-cols-1 gap-3", cols)}>
-      {assets.map((item) => (
-        <figure
-          key={item.id}
-          className="overflow-hidden rounded-xl border border-border/70 bg-card"
+    <>
+      <div className={cn("grid grid-cols-1 gap-3", cols)}>
+        {assets.map((item, index) => (
+          <figure
+            key={item.id}
+            className="overflow-hidden rounded-xl border border-border/70 bg-card"
+          >
+            <button type="button" className="block w-full" onClick={() => setOpen(index)}>
+              <AssetImage asset={item.id} className="aspect-[4/3] w-full" />
+            </button>
+            {item.caption && (
+              <figcaption className="px-3 py-2 text-xs text-muted-foreground">
+                {item.caption}
+              </figcaption>
+            )}
+          </figure>
+        ))}
+      </div>
+      <Lightbox
+        ids={assets.map((item) => item.id)}
+        captions={assets.map((item) => item.caption)}
+        index={open}
+        onIndex={setOpen}
+      />
+    </>
+  );
+}
+
+/** Pictures full screen, with arrows and keys to move between them and Escape to close. */
+export function Lightbox({
+  ids,
+  captions,
+  index,
+  onIndex,
+}: {
+  ids: string[];
+  captions?: Array<string | undefined>;
+  index: number | null;
+  onIndex: (index: number | null) => void;
+}) {
+  const current = index === null ? null : ids[index];
+  useEffect(() => {
+    if (index === null) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onIndex(null);
+      if (event.key === "ArrowRight") onIndex((index + 1) % ids.length);
+      if (event.key === "ArrowLeft") onIndex((index - 1 + ids.length) % ids.length);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [index, ids.length, onIndex]);
+  if (typeof document === "undefined") return null;
+  const arrow =
+    "absolute top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20";
+  return createPortal(
+    <AnimatePresence>
+      {current && index !== null && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/85 p-4 sm:p-10"
+          onClick={() => onIndex(null)}
         >
-          <AssetImage asset={item.id} className="aspect-[4/3] w-full" />
-          {item.caption && (
-            <figcaption className="px-3 py-2 text-xs text-muted-foreground">
-              {item.caption}
-            </figcaption>
+          <motion.div
+            key={current}
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.25, ease }}
+            className="flex max-h-full w-full max-w-5xl flex-1 items-center justify-center"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <AssetImage asset={current} fit="contain" className="max-h-[80vh] w-full rounded-xl" />
+          </motion.div>
+          <p className="mt-3 text-sm text-white/80 tabular">
+            {captions?.[index] ? `${captions[index]} · ` : ""}
+            {index + 1} / {ids.length}
+          </p>
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+            onClick={() => onIndex(null)}
+          >
+            <X className="size-5" />
+          </button>
+          {ids.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous"
+                className={cn(arrow, "left-3")}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onIndex((index - 1 + ids.length) % ids.length);
+                }}
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next"
+                className={cn(arrow, "right-3")}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onIndex((index + 1) % ids.length);
+                }}
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </>
           )}
-        </figure>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
+  );
+}
+
+/** The photos of an image cell as small thumbnails that open full size. */
+export function Photos({
+  value,
+  size = "md",
+  limit = 4,
+}: {
+  value: unknown;
+  size?: "sm" | "md" | "lg";
+  limit?: number;
+}) {
+  const ids = imageIds(value);
+  const [open, setOpen] = useState<number | null>(null);
+  if (!ids.length) return null;
+  const box = { sm: "size-8 rounded-md", md: "size-14 rounded-lg", lg: "size-24 rounded-xl" }[size];
+  const extra = ids.length - limit;
+  return (
+    <div className="flex items-center gap-1.5">
+      {ids.slice(0, limit).map((id, index) => (
+        <button
+          key={id}
+          type="button"
+          className={cn("relative shrink-0 overflow-hidden ring-1 ring-border/70", box)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen(index);
+          }}
+        >
+          <AssetImage asset={id} className="h-full w-full" />
+          {index === limit - 1 && extra > 0 && (
+            <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-xs font-bold text-white">
+              +{extra}
+            </span>
+          )}
+        </button>
       ))}
+      <Lightbox ids={ids} index={open} onIndex={setOpen} />
+    </div>
+  );
+}
+
+/**
+ * Photos for an image column: take one with the camera or choose from the library (several at
+ * once), see them as thumbnails, open full size and remove. The value is the cell's text (picture
+ * ids joined by commas), so it goes straight into insert and update.
+ */
+export function PhotoInput({
+  value,
+  onChange,
+  max = MAX_IMAGES_PER_CELL,
+  label = "Add photo",
+  disabled,
+}: {
+  value: unknown;
+  onChange: (value: string | null) => void;
+  max?: number;
+  label?: string;
+  disabled?: boolean;
+}) {
+  const ids = imageIds(value);
+  const canUpload = useCanUpload() && !disabled;
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(0);
+  const [open, setOpen] = useState<number | null>(null);
+  const latest = useRef(ids);
+  latest.current = ids;
+  const limit = Math.min(max, MAX_IMAGES_PER_CELL);
+
+  const add = async (files: FileList | null) => {
+    const picked = Array.from(files ?? []).slice(0, Math.max(0, limit - ids.length));
+    if (!picked.length) return;
+    setBusy((count) => count + picked.length);
+    for (const file of picked) {
+      try {
+        const id = await uploadImage(file);
+        const next = [...latest.current, id].slice(0, limit);
+        latest.current = next;
+        onChange(next.join(","));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "That photo could not be added.");
+      } finally {
+        setBusy((count) => count - 1);
+      }
+    }
+  };
+  const remove = (id: string) => {
+    const next = ids.filter((item) => item !== id);
+    onChange(next.length ? next.join(",") : null);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {ids.map((id, index) => (
+        <motion.div
+          key={id}
+          layout
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="group relative size-24 overflow-hidden rounded-xl ring-1 ring-border/70"
+        >
+          <button type="button" className="h-full w-full" onClick={() => setOpen(index)}>
+            <AssetImage asset={id} className="h-full w-full" />
+          </button>
+          {canUpload && (
+            <button
+              type="button"
+              aria-label="Remove photo"
+              onClick={() => remove(id)}
+              className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </motion.div>
+      ))}
+      {Array.from({ length: busy }, (_, index) => (
+        <div
+          key={`busy-${index}`}
+          className="flex size-24 items-center justify-center rounded-xl bg-muted"
+        >
+          <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
+        </div>
+      ))}
+      {canUpload && ids.length + busy < limit && (
+        <button
+          type="button"
+          onClick={() => input.current?.click()}
+          className="flex size-24 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+        >
+          <Camera className="size-5" />
+          {label}
+        </button>
+      )}
+      {!canUpload && ids.length === 0 && <p className="text-sm text-muted-foreground">No photos</p>}
+      <input
+        ref={input}
+        type="file"
+        accept="image/*"
+        multiple={limit - ids.length > 1}
+        className="hidden"
+        onChange={(event) => {
+          void add(event.target.files);
+          event.target.value = "";
+        }}
+      />
+      <Lightbox ids={ids} index={open} onIndex={setOpen} />
     </div>
   );
 }

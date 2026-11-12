@@ -75,7 +75,7 @@ const AREAS: Array<[area: string, matches: (name: string) => boolean]> = [
     "media",
     (name) =>
       name.startsWith("generate_") ||
-      ["render_plot", "save_page", "save_app", "app_data", "app_asset"].includes(name),
+      ["render_plot", "save_page", "save_app", "app_data", "app_asset", "app_look"].includes(name),
   ],
   ["cloud agents", (name) => name.startsWith("cloud_agent_")],
   ["purchases", (name) => name.includes("purchase") || name === "paid_request"],

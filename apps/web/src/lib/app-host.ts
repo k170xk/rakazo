@@ -24,6 +24,8 @@ export type AppSource = {
   remove: (table: string, id: string) => Promise<void>;
   setState: (key: string, value: unknown) => Promise<boolean>;
   asset: (id: string) => Promise<{ mime: string; base64: string }>;
+  /** Keeps a photo the person added in the app; answers with its picture id. */
+  upload: (name: string, mime: string, base64: string) => Promise<{ id: string }>;
   exportTable: (
     table: string,
     format: "xlsx" | "csv",
@@ -63,6 +65,10 @@ export function ownerAppSource(
           )
         : Promise.resolve(false),
     asset: (assetId) => queries.apps.asset.call({ pageId, assetId }),
+    upload: async (fileName, mime, base64) => {
+      const saved = await queries.apps.addAsset.call({ pageId, name: fileName, mime, base64 });
+      return { id: saved.id };
+    },
     exportTable: (table, format) => queries.apps.export.call({ pageId, table, format }),
     ask: async (prompt, json) => (await queries.apps.ask.call({ pageId, prompt, json })).answer,
   };
@@ -114,7 +120,10 @@ export function sharedAppSource(
     load: async () => {
       const response = await get("app/data");
       if (!response.ok) throw await refused(response);
-      const data = (await response.json()) as AppData & { canEdit?: boolean };
+      const data = (await response.json()) as AppData & {
+        canEdit?: boolean;
+        ownRowsOnly?: boolean;
+      };
       return {
         tables: data.tables,
         state: data.state,
@@ -122,6 +131,7 @@ export function sharedAppSource(
         viewer: {
           name: null,
           canEdit: data.canEdit === true,
+          ...(data.ownRowsOnly === true ? { ownRowsOnly: true } : {}),
           role: signedIn ? "member" : "visitor",
         },
       };
@@ -152,6 +162,17 @@ export function sharedAppSource(
       if (!response.ok) throw await refused(response);
       const blob = await response.blob();
       return { mime: blob.type || "application/octet-stream", base64: await toBase64(blob) };
+    },
+    upload: async (name, _mime, base64) => {
+      const response = await fetch(`${base}/app/uploads`, {
+        method: "POST",
+        credentials: "same-origin",
+        referrerPolicy: "no-referrer",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ name, base64 }),
+      });
+      if (!response.ok) throw await refused(response);
+      return (await response.json()) as { id: string };
     },
     exportTable: async (table, format) => {
       const response = await get(

@@ -1,6 +1,12 @@
 import * as XLSX from "xlsx";
 import type { Column, ColumnType, TableSchema } from "../schema.js";
-import { evaluateFormula, MAX_COLUMNS, MAX_ROWS_PER_TABLE, MAX_TABLES } from "../schema.js";
+import {
+  evaluateFormula,
+  formatValue,
+  MAX_COLUMNS,
+  MAX_ROWS_PER_TABLE,
+  MAX_TABLES,
+} from "../schema.js";
 
 /**
  * Reads a spreadsheet into app tables the same way every time: the header row is found by
@@ -533,6 +539,7 @@ export function exportTable(
     schema.columns.map((column) => {
       const value = column.formula ? evaluateFormula(column.formula, row) : row[column.key];
       if (value === null || value === undefined) return null;
+      if (column.type === "image") return formatValue(column, value) || null;
       if (column.type === "date") {
         const date = new Date(`${String(value).slice(0, 10)}T00:00:00Z`);
         return Number.isNaN(date.getTime()) ? String(value) : date;

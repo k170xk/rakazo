@@ -15,6 +15,7 @@ import type { Column, Row, TableSchema, Tone } from "../schema.js";
 import { formatValue } from "../schema.js";
 import { Avatar, Badge, EmptyState, FilterChips, SearchInput, Skeleton } from "./basic.js";
 import { cn, toneFor } from "./cn.js";
+import { Photos } from "./media.js";
 
 export type TableColumn<T> = {
   key: string;
@@ -61,6 +62,8 @@ export function CellValue({
           <Minus className="size-3" strokeWidth={3} />
         </span>
       );
+    case "image":
+      return <Photos value={value} size="sm" limit={3} />;
     case "person":
       return (
         <span className="inline-flex items-center gap-2">

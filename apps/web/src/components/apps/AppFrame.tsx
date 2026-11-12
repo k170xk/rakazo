@@ -5,7 +5,9 @@ import {
   APP_PICK,
   APP_RESPONSE,
   APP_WRITE_OPS,
+  MAX_UPLOAD_BASE64,
   readAppRequest,
+  UPLOAD_MIMES,
 } from "@rakazo/app-kit/protocol";
 import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
@@ -121,7 +123,12 @@ export function AppFrame({
             tables: data.tables as AppInit["tables"],
             state: data.state,
             revision: data.revision,
-            features: ["export", "assets", ...(source.ask ? ["ai"] : [])],
+            features: [
+              "export",
+              "assets",
+              ...(data.viewer.canEdit ? ["uploads"] : []),
+              ...(source.ask ? ["ai"] : []),
+            ],
           };
           if (latest.current.picking) {
             queueMicrotask(() =>
@@ -141,6 +148,14 @@ export function AppFrame({
           return source.setState(String(request.key), request.value);
         case "asset":
           return source.asset(String(request.id));
+        case "upload": {
+          const mime = String(request.mime);
+          const base64 = String(request.base64);
+          if (!UPLOAD_MIMES.has(mime) || !base64 || base64.length > MAX_UPLOAD_BASE64) {
+            throw new Error("That photo can't be added.");
+          }
+          return source.upload(String(request.name).slice(0, 120) || "photo.jpg", mime, base64);
+        }
         case "ai.ask": {
           if (!source.ask) throw new Error("AI answers are not available here.");
           return source.ask(String(request.prompt).slice(0, 8000), request.json === true);

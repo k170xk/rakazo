@@ -57,6 +57,7 @@ export const BUILTIN_TOOL_NAMES = [
   "save_app",
   "app_data",
   "app_asset",
+  "app_look",
   "generate_image",
   "add_mcp_server",
   "remember",

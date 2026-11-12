@@ -5,6 +5,7 @@ import type { Column, Row, TableSchema } from "../schema.js";
 import { coerceRow } from "../schema.js";
 import { Button, Checkbox, Field, Input, Select, Stat, Textarea } from "./basic.js";
 import { cn } from "./cn.js";
+import { PhotoInput, Photos } from "./media.js";
 import { ConfirmDialog, Drawer, toast } from "./overlay.js";
 import type { TableColumn } from "./table.js";
 import { CellValue, DataTable } from "./table.js";
@@ -37,7 +38,7 @@ export function RecordForm({
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {list.map((column) => {
-        const wide = column.type === "longtext" || column.type === "url";
+        const wide = column.type === "longtext" || column.type === "url" || column.type === "image";
         const label = (
           <>
             {column.label}
@@ -63,7 +64,9 @@ export function RecordForm({
             className={cn(wide && "sm:col-span-2")}
           >
             {(id) =>
-              column.type === "longtext" ? (
+              column.type === "image" ? (
+                <PhotoInput value={value[column.key]} onChange={(next) => set(column.key, next)} />
+              ) : column.type === "longtext" ? (
                 <Textarea
                   id={id}
                   value={inputValue(column, value[column.key])}
@@ -128,8 +131,15 @@ export function RecordDetail({
           className={cn(
             column.type === "longtext" &&
               "sm:col-span-2 [&>div]:whitespace-pre-wrap [&>div]:overflow-visible",
+            column.type === "image" && "sm:col-span-2 [&>div]:overflow-visible",
           )}
-          value={<CellValue column={column} value={row[column.key]} />}
+          value={
+            column.type === "image" ? (
+              <Photos value={row[column.key]} size="lg" limit={8} />
+            ) : (
+              <CellValue column={column} value={row[column.key]} />
+            )
+          }
         />
       ))}
     </div>
@@ -141,6 +151,7 @@ type TableLike = {
   schema: TableSchema | null;
   loading: boolean;
   canEdit: boolean;
+  canEditRow?: (row: Row) => boolean;
   insert: (row: Record<string, unknown>) => Promise<Row>;
   update: (id: string, patch: Record<string, unknown>) => Promise<void>;
   remove: (id: string) => Promise<void>;
@@ -286,10 +297,16 @@ export function TableView({
         open={drawerOpen}
         onClose={close}
         title={mode === "new" ? `${newLabel} to ${schema.label}` : open ? nameOf(open) : ""}
-        description={mode === "view" ? schema.label : undefined}
+        description={
+          mode === "view"
+            ? open && typeof open._by === "string"
+              ? `${schema.label} · added by ${open._by}`
+              : schema.label
+            : undefined
+        }
         footer={
           mode === "view" ? (
-            table.canEdit && open ? (
+            open && (table.canEditRow ? table.canEditRow(open) : table.canEdit) ? (
               <>
                 <Button
                   variant="ghost"

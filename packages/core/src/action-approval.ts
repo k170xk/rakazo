@@ -268,6 +268,7 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "save_app",
   "app_data",
   "app_asset",
+  "app_look",
   "save_shared_memory",
   "schedule_cancel",
   "schedule_create",

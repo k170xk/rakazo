@@ -2346,6 +2346,11 @@ msgstr ""
 msgid "Collapse {0}"
 msgstr ""
 
+#: src/components/apps/AppSettingsPanel.tsx
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Colleagues add their own"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Colleagues and agents, together"
 msgstr ""
@@ -4268,6 +4273,10 @@ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
+msgstr ""
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
 msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
@@ -6451,6 +6460,10 @@ msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "New API key"
+msgstr ""
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "New app from a starter"
 msgstr ""
 
 #: src/components/apps/ImportWorkbookButton.tsx
@@ -9113,6 +9126,10 @@ msgid "Sign-in cancelled. Try again."
 msgstr ""
 
 #: src/components/apps/AppSettingsPanel.tsx
+msgid "Signed-in colleagues add rows and change only the ones they added (forms, timesheets, inspections)."
+msgstr ""
+
+#: src/components/apps/AppSettingsPanel.tsx
 msgid "Signed-in colleagues can add, edit and remove rows."
 msgstr ""
 
@@ -9336,6 +9353,10 @@ msgstr ""
 
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Start from"
+msgstr ""
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "Start from a starter app"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -9645,6 +9666,10 @@ msgstr ""
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Testing…"
 msgstr "Testando…"
+
+#: src/components/apps/TemplateAppButton.tsx
+msgid "That app couldn't be made."
+msgstr ""
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "That change wasn't saved."

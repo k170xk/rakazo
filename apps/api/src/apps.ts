@@ -4,11 +4,14 @@ import { callEvolvePlugins, EvolvePluginsError } from "@rakazo/adapters";
 import type { BuildProblem } from "@rakazo/app-kit/build";
 import { buildApp, pluginBundle } from "@rakazo/app-kit/build";
 import { exportTable, importWorkbook, scaffoldApp } from "@rakazo/app-kit/import";
+import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
+import { findTemplate } from "@rakazo/app-kit/templates";
 import type { Actor, AppData, AppDataAccess } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import {
   AppVersionConflictError,
   addAppAsset,
+  addAppUpload,
   appendAppVersion,
   appFilesFrom,
   appRevision,
@@ -20,6 +23,7 @@ import {
   listAppAssets,
   mergeImportedTables,
   readAppAsset,
+  readAppRowCreators,
   readAppTables,
   removeAppRow,
   runAsSystem,
@@ -43,7 +47,70 @@ async function requireApp(prisma: PrismaClient, actor: Actor, pageId: string) {
   return row;
 }
 
-const access = (value: string): AppDataAccess => (value === "company" ? "company" : "owner");
+const access = (value: string): AppDataAccess =>
+  value === "company" || value === "contribute" ? value : "owner";
+
+type Tables = Awaited<ReturnType<typeof readAppTables>>;
+type RowOut = Tables[string]["rows"][number];
+/** Who is looking at rows: their user id (null for a visitor) and whether they see who added them. */
+export type RowViewer = { userId: string | null; names: boolean };
+
+async function creatorNames(prisma: PrismaClient, ids: Iterable<string>) {
+  const unique = [...new Set(ids)];
+  if (!unique.length) return new Map<string, string | null>();
+  const users = await runAsSystem("app row creator names", () =>
+    prisma.user.findMany({ where: { id: { in: unique } }, select: { id: true, name: true } }),
+  );
+  return new Map(users.map((user) => [user.id, user.name]));
+}
+
+function marked(
+  row: RowOut,
+  creator: string | undefined,
+  viewer: RowViewer,
+  names: Map<string, string | null>,
+): RowOut {
+  if (!creator) return row;
+  return {
+    ...row,
+    _mine: creator === viewer.userId,
+    ...(viewer.names ? { _by: names.get(creator) ?? null } : {}),
+  };
+}
+
+/**
+ * Tables as one viewer sees them: _mine on the rows they added (contribute apps let them change
+ * only those) and, for people signed in, _by with the name of whoever added each row.
+ */
+export async function tablesForViewer(
+  prisma: PrismaClient,
+  pageId: string,
+  tables: Tables,
+  viewer: RowViewer,
+): Promise<Tables> {
+  const creators = await runAsSystem("app row creators", () => readAppRowCreators(prisma, pageId));
+  if (!creators.size) return tables;
+  const names = viewer.names ? await creatorNames(prisma, creators.values()) : new Map();
+  return Object.fromEntries(
+    Object.entries(tables).map(([name, table]) => [
+      name,
+      {
+        ...table,
+        rows: table.rows.map((row) => marked(row, creators.get(row._id), viewer, names)),
+      },
+    ]),
+  );
+}
+
+/** One row just written, marked the same way for the person who wrote it. */
+async function rowForViewer(prisma: PrismaClient, row: RowOut, viewer: RowViewer): Promise<RowOut> {
+  const found = await runAsSystem("app row creator", () =>
+    prisma.appRow.findUnique({ where: { id: row._id }, select: { createdBy: true } }),
+  );
+  const creator = found?.createdBy ?? undefined;
+  const names = viewer.names && creator ? await creatorNames(prisma, [creator]) : new Map();
+  return marked(row, creator, viewer, names);
+}
 
 export async function getAppData(
   prisma: PrismaClient,
@@ -56,7 +123,12 @@ export async function getAppData(
     readStateRows(prisma, pageId),
     appRevision(prisma, pageId),
   ]);
-  return { tables, state, revision, dataAccess: access(app.dataAccess) };
+  return {
+    tables: await tablesForViewer(prisma, pageId, tables, { userId: actor.userId, names: true }),
+    state,
+    revision,
+    dataAccess: access(app.dataAccess),
+  };
 }
 
 export async function getAppRevision(prisma: PrismaClient, actor: Actor, pageId: string) {
@@ -70,7 +142,11 @@ export async function ownerInsertRow(
   input: { pageId: string; table: string; row: Record<string, unknown> },
 ) {
   await requireApp(prisma, actor, input.pageId);
-  return insertAppRow(prisma, input.pageId, input.table, input.row, actor.userId);
+  const saved = await insertAppRow(prisma, input.pageId, input.table, input.row, actor.userId);
+  return {
+    ...saved,
+    row: await rowForViewer(prisma, saved.row, { userId: actor.userId, names: true }),
+  };
 }
 
 export async function ownerUpdateRow(
@@ -79,7 +155,18 @@ export async function ownerUpdateRow(
   input: { pageId: string; table: string; id: string; patch: Record<string, unknown> },
 ) {
   await requireApp(prisma, actor, input.pageId);
-  return updateAppRow(prisma, input.pageId, input.table, input.id, input.patch, actor.userId);
+  const saved = await updateAppRow(
+    prisma,
+    input.pageId,
+    input.table,
+    input.id,
+    input.patch,
+    actor.userId,
+  );
+  return {
+    ...saved,
+    row: await rowForViewer(prisma, saved.row, { userId: actor.userId, names: true }),
+  };
 }
 
 export async function ownerRemoveRow(
@@ -317,13 +404,12 @@ export async function ownerAsk(
 
 export class WorkbookImportError extends Error {}
 
-/** A new app from a workbook the person uploaded: the importer's tables and its scaffold. */
-export async function importWorkbookApp(
+/** The app is listed with the bot or group it was made from, when that is the caller's own. */
+async function ownHome(
   prisma: PrismaClient,
   actor: Actor,
-  input: { title?: string; fileName: string; base64: string; botId?: string; groupId?: string },
+  input: { botId?: string; groupId?: string },
 ) {
-  // The app is listed with the bot or group it was made from, when that is the caller's own.
   const bot = input.botId
     ? await prisma.bot.findFirst({
         where: { id: input.botId, spaceId: actor.spaceId, userId: actor.userId },
@@ -336,6 +422,45 @@ export async function importWorkbookApp(
         select: { id: true },
       })
     : null;
+  return { bot, group };
+}
+
+/** A new app from one of the App Studio's starters, with its tables empty and its access. */
+export async function createTemplateApp(
+  prisma: PrismaClient,
+  actor: Actor,
+  input: { templateId: string; title?: string; botId?: string; groupId?: string },
+) {
+  const template = findTemplate(input.templateId);
+  if (!template) throw new WorkbookImportError("That starter app doesn't exist.");
+  const { bot, group } = await ownHome(prisma, actor, input);
+  const title = (input.title?.trim() || template.title).slice(0, 200);
+  const built = await buildApp(template.files, { title });
+  if (!built.ok)
+    throw new WorkbookImportError(
+      `The app could not be built: ${built.errors[0]?.message ?? "unknown problem"}`,
+    );
+  const created = await createAppPage(prisma, {
+    spaceId: actor.spaceId,
+    userId: actor.userId,
+    botId: bot?.id ?? null,
+    groupId: group?.id ?? null,
+    title,
+    files: template.files,
+    code: built.html,
+    tables: template.tables.map((schema) => ({ schema, rows: [] })),
+    dataAccess: template.access,
+  });
+  return { pageId: created.pageId };
+}
+
+/** A new app from a workbook the person uploaded: the importer's tables and its scaffold. */
+export async function importWorkbookApp(
+  prisma: PrismaClient,
+  actor: Actor,
+  input: { title?: string; fileName: string; base64: string; botId?: string; groupId?: string },
+) {
+  const { bot, group } = await ownHome(prisma, actor, input);
   let imported: ReturnType<typeof importWorkbook>;
   try {
     imported = importWorkbook(new Uint8Array(Buffer.from(input.base64, "base64")));
@@ -401,12 +526,13 @@ export async function reimportWorkbookApp(
 }
 
 /** Shared-link reads, for a reader the link, password or sign-in already admitted. */
-export function readSharedAppData(prisma: PrismaClient, pageId: string) {
-  return runAsSystem("app share data", async () => ({
+export async function readSharedAppData(prisma: PrismaClient, pageId: string, viewer: RowViewer) {
+  const data = await runAsSystem("app share data", async () => ({
     tables: await readAppTables(prisma, pageId),
     state: await readStateRows(prisma, pageId),
     revision: await appRevision(prisma, pageId),
   }));
+  return { ...data, tables: await tablesForViewer(prisma, pageId, data.tables, viewer) };
 }
 
 export function readSharedAppRevision(prisma: PrismaClient, pageId: string) {
@@ -432,18 +558,59 @@ export type SharedRowWrite =
   | { op: "remove"; table: string; id: string };
 
 /** Only for a signed-in colleague, and only while the owner lets colleagues change the data. */
-export function writeSharedAppRow(
+/**
+ * A change from someone a shared route admitted and allowed to edit. In a contribute app they
+ * change and remove only the rows they added; in a company app, any row.
+ */
+export async function writeSharedAppRow(
   prisma: PrismaClient,
   pageId: string,
   write: SharedRowWrite,
   userId: string,
+  dataAccess: string,
+): Promise<{ row: RowOut; revision: number } | { revision: number }> {
+  const scope = dataAccess === "company" ? {} : { onlyCreatedBy: userId };
+  const saved: { row: RowOut; revision: number } | { revision: number } = await runAsSystem(
+    "app share write",
+    (): Promise<{ row: RowOut; revision: number } | { revision: number }> => {
+      if (write.op === "insert")
+        return insertAppRow(prisma, pageId, write.table, write.row, userId);
+      if (write.op === "update")
+        return updateAppRow(prisma, pageId, write.table, write.id, write.patch, userId, scope);
+      return removeAppRow(prisma, pageId, write.table, write.id, scope);
+    },
+  );
+  if (!("row" in saved)) return saved;
+  return { ...saved, row: await rowForViewer(prisma, saved.row, { userId, names: true }) };
+}
+
+/** Whether someone signed in, who is not the owner, may change an app's rows (theirs or all). */
+export const colleaguesMayWrite = (dataAccess: string) =>
+  dataAccess === "company" || dataAccess === "contribute";
+
+/** A photo added by someone the shared link or Evolve already admitted and allowed to edit. */
+export function addSharedAppUpload(
+  prisma: PrismaClient,
+  pageId: string,
+  input: { name: string; base64: string },
+  userId: string,
 ) {
-  return runAsSystem("app share write", () => {
-    if (write.op === "insert") return insertAppRow(prisma, pageId, write.table, write.row, userId);
-    if (write.op === "update")
-      return updateAppRow(prisma, pageId, write.table, write.id, write.patch, userId);
-    return removeAppRow(prisma, pageId, write.table, write.id);
-  });
+  return runAsSystem("app share upload", () =>
+    addAppUpload(prisma, pageId, {
+      name: input.name,
+      bytes: new Uint8Array(Buffer.from(input.base64, "base64")),
+      userId,
+    }),
+  );
+}
+
+/** The body of an upload request, or null when it is not a reasonable photo. */
+export function readUploadBody(body: unknown): { name: string; base64: string } | null {
+  if (!body || typeof body !== "object") return null;
+  const { name, base64 } = body as { name?: unknown; base64?: unknown };
+  if (typeof base64 !== "string" || !base64 || base64.length > MAX_UPLOAD_BASE64) return null;
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) return null;
+  return { name: typeof name === "string" ? name.slice(0, 200) : "photo", base64 };
 }
 
 export { AppVersionConflictError };

@@ -17,9 +17,23 @@ export const COLUMN_TYPES = [
   "url",
   "person",
   "relation",
+  "image",
 ] as const;
 
 export type ColumnType = (typeof COLUMN_TYPES)[number];
+
+/** How many pictures one image cell keeps; its value is their ids joined by commas. */
+export const MAX_IMAGES_PER_CELL = 12;
+const ASSET_ID = /^[A-Za-z0-9_-]{8,64}$/;
+
+/** The picture ids an image cell holds, in order. */
+export function imageIds(value: unknown): string[] {
+  const list = Array.isArray(value) ? value : typeof value === "string" ? value.split(",") : [];
+  return list
+    .map((item) => String(item).trim())
+    .filter((item) => ASSET_ID.test(item))
+    .slice(0, MAX_IMAGES_PER_CELL);
+}
 
 export type ColumnOption = { value: string; tone?: Tone };
 
@@ -254,6 +268,12 @@ export function coerceValue(
         ? { ok: false, error: `${column.label} must be a date (YYYY-MM-DD).` }
         : { ok: true, value: new Date(parsed).toISOString().slice(0, 10) };
     }
+    case "image": {
+      const ids = imageIds(value);
+      return ids.length
+        ? { ok: true, value: ids.join(",") }
+        : { ok: false, error: `${column.label} must hold pictures added in the app.` };
+    }
     case "enum": {
       const text = String(value).trim().slice(0, 80);
       const option = column.options?.find(
@@ -324,6 +344,10 @@ export function formatValue(column: Pick<Column, "type" | "currency">, value: un
     }
     case "boolean":
       return value ? "Yes" : "No";
+    case "image": {
+      const count = imageIds(value).length;
+      return count ? `${count} ${count === 1 ? "photo" : "photos"}` : "";
+    }
     default:
       return String(value);
   }

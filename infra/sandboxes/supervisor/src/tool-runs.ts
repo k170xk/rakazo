@@ -12,7 +12,7 @@ import { parseMemoryBytes, parseNanoCpus, parsePidsLimit } from "./computer-spec
  * nothing else. Colleague conversations and Tools-only people work here, so their files never
  * sit where somebody's own computer, and so their shell, could reach them.
  */
-export const TOOL_RUN_PROGRAMS = ["word", "pptx", "xlsx", "pdf", "video"] as const;
+export const TOOL_RUN_PROGRAMS = ["word", "pptx", "xlsx", "pdf", "video", "app-shot"] as const;
 export const TOOL_RUN_LABEL = "rakazo.toolRun";
 /** Network id shared by every tool run, kept apart from each person's computer network. */
 export const TOOL_RUN_NETWORK_ID = "tool-runs";

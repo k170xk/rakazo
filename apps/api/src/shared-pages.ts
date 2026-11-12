@@ -4,15 +4,19 @@ import {
   SHARED_PAGE_PATH_PREFIX,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
+import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
 import { isAppDataError } from "@rakazo/db";
 import type { Context, Hono } from "hono";
 import { AppAskError, askForApp } from "./app-ask.js";
 import type { SharedRowWrite } from "./apps.js";
 import {
+  addSharedAppUpload,
+  colleaguesMayWrite,
   exportSharedAppTable,
   readSharedAppAsset,
   readSharedAppData,
   readSharedAppRevision,
+  readUploadBody,
   writeSharedAppRow,
 } from "./apps.js";
 import {
@@ -22,6 +26,7 @@ import {
   saveSharedPageState,
   sharePasswordMatches,
 } from "./pages.js";
+import { requestBodyLimit } from "./request-body-limit.js";
 import { throttleKey, windowCounter } from "./window-counter.js";
 
 const MINUTE_MS = 60_000;
@@ -30,6 +35,8 @@ const READS_PER_IP_PER_MINUTE = 120;
 const PASSWORD_TRIES = 20;
 /** Row writes per address and app a minute, so a script on an open link cannot flood a table. */
 const WRITES_PER_MINUTE = 120;
+/** Photos per address and app a minute. */
+const UPLOADS_PER_MINUTE = 30;
 
 /**
  * Anyone signed in to this company with a page's link reads its current version here. A page
@@ -46,6 +53,7 @@ export function mountSharedPages(
 ) {
   const reads = windowCounter(MINUTE_MS);
   const writes = windowCounter(MINUTE_MS);
+  const uploads = windowCounter(MINUTE_MS);
   const tries = windowCounter(15 * MINUTE_MS);
   const headers = {
     "cache-control": "no-store",
@@ -92,7 +100,7 @@ export function mountSharedPages(
       {
         ...admitted.found.page,
         canSaveState: admitted.userId !== null,
-        canEditData: admitted.userId !== null && admitted.found.dataAccess === "company",
+        canEditData: admitted.userId !== null && colleaguesMayWrite(admitted.found.dataAccess),
       },
       200,
       headers,
@@ -103,9 +111,21 @@ export function mountSharedPages(
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
     if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
-    const data = await readSharedAppData(prisma, admitted.found.pageId);
-    const canEdit = admitted.userId !== null && admitted.found.dataAccess === "company";
-    return c.json({ ...data, canEdit, canSaveState: admitted.userId !== null }, 200, headers);
+    const data = await readSharedAppData(prisma, admitted.found.pageId, {
+      userId: admitted.userId,
+      names: admitted.userId !== null,
+    });
+    const canEdit = admitted.userId !== null && colleaguesMayWrite(admitted.found.dataAccess);
+    return c.json(
+      {
+        ...data,
+        canEdit,
+        ownRowsOnly: canEdit && admitted.found.dataAccess === "contribute",
+        canSaveState: admitted.userId !== null,
+      },
+      200,
+      headers,
+    );
   });
   app.get(`${SHARED_PAGE_PATH_PREFIX}:token/app/revision`, async (c) => {
     const admitted = await admit(c);
@@ -121,7 +141,7 @@ export function mountSharedPages(
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
     if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
-    if (!admitted.userId || admitted.found.dataAccess !== "company") {
+    if (!admitted.userId || !colleaguesMayWrite(admitted.found.dataAccess)) {
       return c.json({ error: "Only the owner can change this app's data" }, 403, headers);
     }
     if (writes(`${throttleKey(clientIp(c))}:${admitted.found.pageId}`) > WRITES_PER_MINUTE) {
@@ -148,7 +168,13 @@ export function mountSharedPages(
       return c.json({ error: "That change is too large" }, 413, headers);
     try {
       return c.json(
-        await writeSharedAppRow(prisma, admitted.found.pageId, write, admitted.userId),
+        await writeSharedAppRow(
+          prisma,
+          admitted.found.pageId,
+          write,
+          admitted.userId,
+          admitted.found.dataAccess,
+        ),
         200,
         headers,
       );
@@ -158,6 +184,35 @@ export function mountSharedPages(
       throw error;
     }
   });
+  /** A photo from a colleague allowed to change the app's data; answers with its picture id. */
+  app.post(
+    `${SHARED_PAGE_PATH_PREFIX}:token/app/uploads`,
+    requestBodyLimit(MAX_UPLOAD_BASE64 + 4096, "That photo is too large"),
+    async (c) => {
+      const admitted = await admit(c);
+      if (admitted instanceof Response) return admitted;
+      if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+      if (!admitted.userId || !colleaguesMayWrite(admitted.found.dataAccess)) {
+        return c.json({ error: "Only the owner can add photos to this app" }, 403, headers);
+      }
+      if (uploads(`${throttleKey(clientIp(c))}:${admitted.found.pageId}`) > UPLOADS_PER_MINUTE) {
+        return c.json({ error: "Too many photos at once" }, 429, { ...headers, "retry-after": "60" });
+      }
+      const body = readUploadBody(await c.req.json().catch(() => null));
+      if (!body) return c.json({ error: "That is not a photo" }, 400, headers);
+      try {
+        return c.json(
+          await addSharedAppUpload(prisma, admitted.found.pageId, body, admitted.userId),
+          200,
+          headers,
+        );
+      } catch (error) {
+        if (isAppDataError(error))
+          return c.json({ error: error instanceof Error ? error.message : "Refused" }, 400, headers);
+        throw error;
+      }
+    },
+  );
   app.get(`${SHARED_PAGE_PATH_PREFIX}:token/app/assets/:assetId`, async (c) => {
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;

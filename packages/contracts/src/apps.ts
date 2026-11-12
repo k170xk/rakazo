@@ -2,7 +2,7 @@ import * as z from "zod";
 import { Id } from "./ids.js";
 
 /** Who besides the owner may change an app's rows. */
-export const AppDataAccessSchema = z.enum(["owner", "company"]);
+export const AppDataAccessSchema = z.enum(["owner", "contribute", "company"]);
 export type AppDataAccess = z.infer<typeof AppDataAccessSchema>;
 
 export const AppTableNameSchema = z.string().regex(/^[a-z][a-z0-9_]{0,39}$/);

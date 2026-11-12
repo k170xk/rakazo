@@ -820,7 +820,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_app",
     description:
-      'Build or change an OCSC app in the App Studio: a real multi-screen React app with its own live tables that people use, edit and share (Lovable-quality, inside OCSC). Prefer it over save_page when people will add, change or track records, or when the person gives a spreadsheet. Call with {"help": true} first for the guide. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save. To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures.',
+      'Build or change an OCSC app in the App Studio: a real multi-screen React app with its own live tables that people use, edit and share (Lovable-quality, inside OCSC). Prefer it over save_page when people will add, change or track records, or when the person gives a spreadsheet. Call with {"help": true} first for the guide. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save. To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save then runs the app: fix what runCheck reports (crashes, errors, blank or too-wide pages).',
     inputSchema: {
       type: "object",
       properties: {
@@ -846,6 +846,18 @@ export const builtinAgentTools: ConnectorTool[] = [
           },
         },
         deleteFiles: { type: "array", items: { type: "string" } },
+        template: {
+          type: "string",
+          enum: [
+            "project-tracker",
+            "client-pipeline",
+            "site-inspection",
+            "timesheet",
+            "asset-register",
+          ],
+          description:
+            "Start a new app from a polished starter with its tables (no rows); add files, edits or tables in the same or later saves to fit it to the person. site-inspection and timesheet let colleagues add their own rows.",
+        },
         workbook: {
           type: "object",
           description:
@@ -857,6 +869,10 @@ export const builtinAgentTools: ConnectorTool[] = [
           description:
             "Tables to define or change: [{schema: {name, label, key?, title?, columns: [{key, label, type, options?, currency?, relation?, formula?}]}, rows?: [...], mode?: replace|append|upsert}]. A schema without rows keeps the rows.",
           items: { type: "object" },
+        },
+        check: {
+          type: "boolean",
+          description: "false skips the run check (small text edits).",
         },
       },
     },
@@ -898,6 +914,25 @@ export const builtinAgentTools: ConnectorTool[] = [
         artifactId: { type: "string" },
         url: { type: "string" },
         name: { type: "string" },
+      },
+      required: ["appId"],
+    },
+  },
+  {
+    name: "app_look",
+    description:
+      "Screenshots of an app with its real data (desktop; phone: true adds a phone) for the pages named, plus any runtime problems. Look after building and after design changes, judge it like a demanding designer, fix with save_app edits and look again.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        appId: { type: "string" },
+        pages: {
+          type: "array",
+          items: { type: "string" },
+          description: "Page ids to photograph (up to 4); the first page when left out.",
+        },
+        phone: { type: "boolean", description: "Also photograph them on a phone." },
+        theme: { type: "string", enum: ["light", "dark"] },
       },
       required: ["appId"],
     },

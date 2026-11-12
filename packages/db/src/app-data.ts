@@ -65,6 +65,19 @@ export async function readAppTables(db: Db, pageId: string): Promise<AppTables> 
   );
 }
 
+/** Who added each row of an app (rows from the agent, imports and older rows have no one). */
+export async function readAppRowCreators(db: Db, pageId: string): Promise<Map<string, string>> {
+  const rows = await db.appRow.findMany({
+    where: { pageId, createdBy: { not: null } },
+    select: { id: true, createdBy: true },
+    take: MAX_ROWS_READ,
+  });
+  return new Map(rows.map((row) => [row.id, row.createdBy!]));
+}
+
+/** Changes limited to the rows one person added, for apps where colleagues contribute. */
+export type RowScope = { onlyCreatedBy?: string };
+
 export async function appRevision(db: Db, pageId: string): Promise<number> {
   const page = await db.page.findUnique({ where: { id: pageId }, select: { dataRevision: true } });
   return page?.dataRevision ?? 0;
@@ -116,6 +129,7 @@ export async function insertAppRow(
         data: json(checked.row),
         position: (last?.position ?? 0) + 1,
         updatedBy: userId,
+        createdBy: userId,
       },
       select: { id: true, data: true, updatedAt: true },
     });
@@ -130,14 +144,17 @@ export async function updateAppRow(
   rowId: string,
   patch: Record<string, unknown>,
   userId: string | null,
+  scope: RowScope = {},
 ): Promise<{ row: Row; revision: number }> {
   return prisma.$transaction(async (tx) => {
     const table = await tableFor(tx, pageId, tableName);
     const existing = await tx.appRow.findFirst({
       where: { id: rowId, tableId: table.id },
-      select: { data: true },
+      select: { data: true, createdBy: true },
     });
     if (!existing) throw new AppDataError("That row is no longer there.");
+    if (scope.onlyCreatedBy && existing.createdBy !== scope.onlyCreatedBy)
+      throw new AppDataError("You can change only the rows you added.");
     const checked = coerceRow(table.schema, patch, { partial: true });
     if (!checked.ok) throw new AppDataError(checked.error);
     const before =
@@ -158,10 +175,25 @@ export async function removeAppRow(
   pageId: string,
   tableName: string,
   rowId: string,
+  scope: RowScope = {},
 ) {
   return prisma.$transaction(async (tx) => {
     const table = await tableFor(tx, pageId, tableName);
-    const removed = await tx.appRow.deleteMany({ where: { id: rowId, tableId: table.id } });
+    if (scope.onlyCreatedBy) {
+      const existing = await tx.appRow.findFirst({
+        where: { id: rowId, tableId: table.id },
+        select: { createdBy: true },
+      });
+      if (existing && existing.createdBy !== scope.onlyCreatedBy)
+        throw new AppDataError("You can remove only the rows you added.");
+    }
+    const removed = await tx.appRow.deleteMany({
+      where: {
+        id: rowId,
+        tableId: table.id,
+        ...(scope.onlyCreatedBy ? { createdBy: scope.onlyCreatedBy } : {}),
+      },
+    });
     if (removed.count === 0) throw new AppDataError("That row is no longer there.");
     return { revision: await bump(tx, pageId) };
   });
@@ -378,6 +410,54 @@ export async function addAppAsset(
   });
 }
 
+const UPLOAD_KINDS: Array<{ mime: string; matches: (bytes: Uint8Array) => boolean }> = [
+  { mime: "image/jpeg", matches: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  {
+    mime: "image/png",
+    matches: (b) => b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47,
+  },
+  {
+    mime: "image/webp",
+    matches: (b) =>
+      String.fromCharCode(...b.subarray(0, 4)) === "RIFF" &&
+      String.fromCharCode(...b.subarray(8, 12)) === "WEBP",
+  },
+];
+
+/** The kind of picture these bytes really are (JPEG, PNG or WebP), whatever they claim. */
+export function sniffUploadMime(bytes: Uint8Array): string | null {
+  return UPLOAD_KINDS.find((kind) => kind.matches(bytes))?.mime ?? null;
+}
+
+export const MAX_APP_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+/**
+ * A photo someone added while using the app (not the owner's Studio pictures): JPEG, PNG or WebP
+ * only, checked by its bytes, within the app's picture budget, and remembered as theirs.
+ */
+export async function addAppUpload(
+  prisma: PrismaClient,
+  pageId: string,
+  input: { name: string; bytes: Uint8Array; userId: string | null },
+): Promise<{ id: string }> {
+  const mime = sniffUploadMime(input.bytes);
+  if (!mime) throw new AppDataError("Photos must be JPEG, PNG or WebP pictures.");
+  if (input.bytes.byteLength > MAX_APP_UPLOAD_BYTES)
+    throw new AppDataError("That photo is larger than 4 MB.");
+  const name =
+    input.name
+      .replace(/[^\w .()-]+/g, "")
+      .trim()
+      .slice(0, 120) || "photo";
+  const asset = await addAppAsset(prisma, pageId, {
+    name,
+    mime,
+    bytes: input.bytes,
+    source: input.userId ? `app:${input.userId}` : "app",
+  });
+  return { id: asset.id };
+}
+
 export async function listAppAssets(db: Db, pageId: string) {
   return db.appAsset.findMany({
     where: { pageId },
@@ -426,6 +506,7 @@ export async function createAppPage(
     files: Record<string, string>;
     code: string;
     tables?: Array<{ schema: TableSchema; rows: Array<Record<string, unknown>> }>;
+    dataAccess?: "owner" | "contribute";
   },
 ): Promise<{ pageId: string; version: number; title: string }> {
   const created = await prisma.page.create({
@@ -436,6 +517,7 @@ export async function createAppPage(
       groupId: input.groupId,
       title: input.title,
       kind: "app",
+      ...(input.dataAccess ? { dataAccess: input.dataAccess } : {}),
       versions: {
         create: {
           version: 1,

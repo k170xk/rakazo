@@ -51,6 +51,7 @@ export const COMPUTER_IMAGE_CONTEXT_FILES = [
   "ocsc/ocsc-word",
   "ocsc/ocsc-video",
   "ocsc/ocsc-tool",
+  "ocsc/ocsc-app-shot",
   "ocsc/evolve-plugin",
   "ocsc/pdf-studio",
 ] as const;

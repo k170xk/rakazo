@@ -62,6 +62,11 @@ export function AppSettingsPanel({ pageId, title }: { pageId: string; title: str
             [
               ["owner", t`Only me`, t`Others see the data but can't change it.`],
               [
+                "contribute",
+                t`Colleagues add their own`,
+                t`Signed-in colleagues add rows and change only the ones they added (forms, timesheets, inspections).`,
+              ],
+              [
                 "company",
                 t`Anyone at OCSC with the link`,
                 t`Signed-in colleagues can add, edit and remove rows.`,

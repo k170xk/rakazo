@@ -21,6 +21,7 @@ import { useSpaceQueries } from "../../lib/query";
 import { formatRelativeTime } from "../../lib/relative-time";
 import { DeleteItemDialog } from "../../pages/shell/dialogs";
 import { ImportWorkbookButton } from "../apps/ImportWorkbookButton";
+import { TemplateAppButton } from "../apps/TemplateAppButton";
 
 /** Enough to fill the panel; Show more brings the next batch. */
 const PAGE_SIZE = 20;
@@ -100,7 +101,10 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
             </Trans>
           )}
         </p>
-        <ImportWorkbookButton botId={botId} groupId={groupId} />
+        <div className="flex flex-wrap items-start gap-2">
+          <ImportWorkbookButton botId={botId} groupId={groupId} />
+          <TemplateAppButton botId={botId} groupId={groupId} />
+        </div>
       </div>
     );
   }
@@ -217,7 +221,10 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
   );
   return (
     <div data-testid="bot-pages" className="flex flex-col gap-3">
-      <ImportWorkbookButton botId={botId} groupId={groupId} />
+      <div className="flex flex-wrap items-start gap-2">
+        <ImportWorkbookButton botId={botId} groupId={groupId} />
+        <TemplateAppButton botId={botId} groupId={groupId} />
+      </div>
       {searchable ? (
         <label className="flex h-9 items-center gap-2 rounded-[10px] bg-muted px-2.5 text-muted-foreground focus-within:ring-2 focus-within:ring-ring">
           <Search aria-hidden="true" className="size-4 shrink-0" />

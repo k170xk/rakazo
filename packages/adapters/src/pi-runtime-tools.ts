@@ -218,6 +218,7 @@ export function describeToolActivity(toolName: string, args: unknown): string {
       : "Updating the app's data";
   }
   if (toolName === "app_asset") return "Adding a picture to the app";
+  if (toolName === "app_look") return "Looking at the app";
   if (toolName === "add_mcp_server") return `Connecting MCP server: ${detail(record.name)}`;
   if (toolName === "computer_observe") return "Looking at the screen";
   if (toolName === "browser_navigate")

@@ -11,8 +11,16 @@ and code. Build apps people use every day, not reports: real screens, real actio
   \`export default function App()\`. Other files (Board.tsx, lib.ts, theme.css) import with "./Board".
 - Change an app with {appId, edits: [{file, find, replace}]} (all apply or none; each find occurs once),
   or {appId, files: {...}} to replace whole files (files you omit stay), deleteFiles: ["Old.tsx"].
+- save_app {template: "project-tracker"|"client-pipeline"|"site-inspection"|"timesheet"|"asset-register",
+  title?} starts from a polished starter with its tables; then read it and fit it to the person with edits.
+  site-inspection and timesheet let colleagues add their own rows (contribute access).
 - {appId} alone returns its files, tables (schemas, counts, sample rows) and pictures. Read before editing.
 - Every save builds first: problems come back with file:line:column and nothing is saved. Fix and resend.
+- Each code save then opens the app and clicks through every page on a desktop and a phone: runCheck
+  lists crashes, console errors, blank pages and sideways scrolling. Fix them before you reply.
+- app_look {appId, pages?: ["overview", "board"], phone?: true, theme?: "dark"} returns screenshots
+  with the real data. Look after the first build and after design changes; judge hierarchy, spacing,
+  empty or cramped areas and charts that say nothing; fix with edits and look again.
 - Data is separate from code: app_data reads and changes rows (routines refresh data there), and
   restoring an older code version keeps today's rows.
 
@@ -23,7 +31,9 @@ schema = {name: "projects", label: "Projects", key?: "job_no", title?: "name", c
 column = {key, label, type, options?, currency?, relation?, formula?, required?, hidden?}
 types: text, longtext, number, currency (currency: "EUR"|"GBP"), percent (0.25 = 25%), date (YYYY-MM-DD),
 boolean, enum (options: [{value: "Live", tone: "success"}], tones: neutral success warning danger info accent),
-email, url, person (a name), relation (relation: "clients" — stores the other table's key or row _id).
+email, url, person (a name), relation (relation: "clients" — stores the other table's key or row _id),
+image (photos people add in the app: up to 12 picture ids joined by commas; TableView, RecordForm and
+RecordDetail show and take them on their own).
 formula: arithmetic over the row's number columns, e.g. "fee * progress" or "(hours - budget) / budget";
 formula columns are computed, never stored. Rows carry _id and _updatedAt. Up to 30 tables, 20,000 rows each.
 Use the real data: gather it with your tools, or the person's spreadsheet. Never invent figures.
@@ -33,12 +43,20 @@ react, motion/react (animation), lucide-react (icons), recharts (only if the kit
 @ocsc/ui (the component kit), @ocsc/app (data and host). Nothing else resolves.
 
 ## @ocsc/app
-- useTable(name) → {rows, schema, loading, canEdit, insert(row), update(id, patch), remove(id), exportFile("xlsx"|"csv"), canExport}
+- useTable(name) → {rows, schema, loading, canEdit, canEditRow(row), insert(row), update(id, patch), remove(id), exportFile("xlsx"|"csv"), canExport}
   Live: colleagues' edits and routine refreshes arrive on their own. Writes show at once and roll back
   if refused. Hide add/edit/delete when canEdit is false (visitors, read-only viewers).
+  When the owner lets colleagues contribute (Settings: "Colleagues add their own"), anyone signed in adds
+  rows but changes only their own: gate per-row edit/delete with canEditRow(row). Rows people added carry
+  _mine (true for the viewer's own) and _by (who added it), so "My entries" is rows.filter((r) => r._mine)
+  and the owner can group by _by. Forms, timesheets, inspections and surveys suit this mode.
 - useTables() → every table. useApp() → {ready, app: {id, title, version}, viewer: {name, canEdit, role}, theme}.
 - useAppState(key, initial) → [value, set]: small shared settings for the app (not per person).
 - useAsset(id) → an image URL for a picture added with app_asset (or <AssetImage asset={id}/>).
+- Photos from the people using the app (site photos, defects, receipts): an image column with
+  <PhotoInput value={row.photos} onChange={(photos) => ...}/> (camera or library, shrunk before sending),
+  shown with <Photos value={row.photos}/> (thumbnails that open full size). useCanUpload() says whether this
+  viewer may add them; uploadImage(file) → picture id for custom pickers. Never ask for photos as URLs.
 - ai.available() / await ai.ask(prompt, {json?}) → a short answer from the company model, no tools or
   data access: pass the rows it needs in the prompt. Use for summaries, drafting, classification.
 - download(filename, text, mime) and openLink(url): call from a click.
@@ -50,12 +68,22 @@ Layout: AppShell {title, subtitle?, icon?, actions?, pages: [{id, label, icon?, 
   Stagger/StaggerItem (children fade up in sequence), Hero {eyebrow?, title, description?, asset?, actions?}.
 Numbers: KpiCard {label, value, format?: "number"|"currency"|"percent"|"compact" or (n) => string, currency?,
   delta? (% vs last period), downIsGood?, trend?: number[], icon?, hint?, tone?, onClick?}. CountUp, Sparkline,
-  Stat, Progress {value 0-1, tone?}, Ring {value 0-1, label?}, formatNumber(value, format, currency).
+  Stat, Progress {value 0-100, tone?}, Ring {value 0-100, label?}, formatNumber(value, format, currency).
+  Percent scale: percent columns store 0.25 for 25%, but KpiCard/formatNumber "percent", Progress and Ring take 25;
+  multiply a percent column or a ratio by 100 before passing it. Gauge takes a 0-1 ratio (or value with max).
 Charts (animated, themed): AreaChart/BarChart/LineChart {data, x, series: ["fee"] or [{key, label, color?}],
   format?, stacked?, horizontal? (bar), height?}, DonutChart {data, label="label", value="value", centerLabel?},
   BarList {data, label, value, format?, onSelect?}. Helpers: byMonth(rows, dateKey, [valueKeys]) → [{month,...}],
   countBy(rows, key) → [{label, value}], sumBy(rows, field) → total or sumBy(rows, field, byKey) →
   [{label, value}], groupBy(rows, key) → Map.
+More charts: Gauge {value 0-1 or value+max, label?, format?, tone?, hint?} (budget used, capacity),
+  FunnelChart {data, label, value, format?, onSelect?} (enquiry → quote → won with conversion),
+  ScatterChart {data, x, y, size?, groupBy?, labelKey?, xLabel?, yLabel?, xFormat?, yFormat?, onSelect?},
+  CalendarHeatmap {rows, dateKey, valueKey?, weeks?=52, onSelect?(day, rows)} (activity per day),
+  Heatmap {rows, x, y, valueKey?, format?, onSelect?({x, y, rows})} (office × month, discipline × stage).
+Periods: PeriodFilter {value, onChange} with Period "7d"|"30d"|"90d"|"ytd"|"12m"|"all"; inPeriod(rows,
+  dateKey, period) filters, periodChange(rows, dateKey, period, field?) → {value, previous, delta} feeds
+  KpiCard straight away: <KpiCard label="Fees" value={fees.value} delta={fees.delta} deltaLabel="vs previous" />.
 Data: TableView {table: useTable(...), columns?: ["name", "stage", {key, label, render}], filterBy?: "stage",
   formColumns?, title?, renderDetail?, toolbar?} — search, filter chips, sort, paging, a drawer to view/edit,
   add, delete with confirm and export, all wired to the table. DataTable {rows, columns or schema, search?,
@@ -63,7 +91,12 @@ Data: TableView {table: useTable(...), columns?: ["name", "stage", {key, label, 
   RecordForm {schema, value, onChange, columns?} and RecordDetail {schema, row}.
 Views: Kanban {rows, groupBy: "stage", columns?, renderCard, onMove(row, value), onOpen?},
   CalendarMonth {rows, dateKey, titleKey, toneKey?, onOpen?}, Timeline {rows, startKey, endKey, titleKey},
-  ActivityFeed {items: [{id, title, description?, date?, tone?, icon?}]}.
+  ActivityFeed {items: [{id, title, description?, date?, tone?, icon?}]}. Timeline is the Gantt/planner.
+Flows: Steps {steps: [{id, label, description?, render: () => fields, valid?}], onFinish, finishLabel?,
+  onCancel?} for multi-step forms (put it in a Dialog or a page). Checklist {items: [{id, label, hint?,
+  section?}], value, onChange, readOnly?} for inspections and audits (pass/fail/N-A, a note on fail); keep its
+  value in a longtext column as JSON.stringify(value) and read it with readJson(row.checks, {});
+  checklistSummary(items, value) → {total, answered, passed, failed, complete}.
 Controls: Button {variant: "primary"|"secondary"|"outline"|"ghost"|"danger"|"link", size: "sm"|"md"|"lg"|"icon", icon?, loading?},
   Badge {tone?, dot?}, Card {interactive?} with CardHeader {title, description?, action?, icon?} and CardBody,
   Field {label, hint?, error?, children: (id) => <Input id={id}/>}, Input, Textarea, Select {options},
@@ -72,7 +105,9 @@ Controls: Button {variant: "primary"|"secondary"|"outline"|"ghost"|"danger"|"lin
   {icon?, title, description?, action?}, Divider, Menu {trigger, items}.
 Overlays: Dialog {open, onClose, title, footer?, size?}, Drawer {open, onClose, title, footer?},
   ConfirmDialog {open, onClose, onConfirm, danger?}, toast("Saved") / toast.success / toast.error.
-Pictures: AssetImage {asset, fit?}, ImageCard {asset?, title, description?}, Gallery {assets: [{id, caption?}]}.
+Pictures: AssetImage {asset, fit?}, ImageCard {asset?, title, description?}, Gallery {assets: [{id, caption?}]}
+  (opens full size), Lightbox {ids, index, onIndex}, PhotoInput {value, onChange, max?, label?}, Photos {value,
+  size?: "sm"|"md"|"lg", limit?}.
 Motion: motion from "motion/react" with motionPresets (fadeUp, fade, pop, spring), stagger.container /
   stagger.item variants, ease.
 cn(...classes) merges classes, later wins.

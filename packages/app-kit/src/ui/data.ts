@@ -88,3 +88,85 @@ export function byMonth<T extends AnyRow>(
   }
   return out;
 }
+
+export type Period = "7d" | "30d" | "90d" | "ytd" | "12m" | "all";
+
+export const PERIODS: Record<Period, string> = {
+  "7d": "7 days",
+  "30d": "30 days",
+  "90d": "Quarter",
+  ytd: "This year",
+  "12m": "12 months",
+  all: "All time",
+};
+
+const DAY = 86_400_000;
+
+/** The [start, end) times of a period ending now, and of the same length just before it. */
+export function periodRange(period: Period, now = Date.now()) {
+  if (period === "all") return null;
+  const start =
+    period === "ytd"
+      ? new Date(new Date(now).getFullYear(), 0, 1).getTime()
+      : period === "12m"
+        ? new Date(new Date(now).setFullYear(new Date(now).getFullYear() - 1)).getTime()
+        : now - Number.parseInt(period, 10) * DAY;
+  const length = now - start;
+  return { start, end: now, previousStart: start - length, previousEnd: start };
+}
+
+/** The rows whose date falls in the period (all rows for "all"). */
+export function inPeriod<T extends AnyRow>(
+  rows: T[],
+  dateKey: string,
+  period: Period,
+  now?: number,
+): T[] {
+  const range = periodRange(period, now);
+  if (!range) return rows;
+  return rows.filter((row) => {
+    const time = Date.parse(String(row[dateKey] ?? ""));
+    return time >= range.start && time < range.end + 1;
+  });
+}
+
+/**
+ * A figure for the period against the one before it, ready for KpiCard: rows counted, or
+ * `field` summed. `delta` is the change in percent (12 = up 12%), null without a baseline.
+ */
+export function periodChange<T extends AnyRow>(
+  rows: T[],
+  dateKey: string,
+  period: Period,
+  field?: string,
+  now?: number,
+): { value: number; previous: number; delta: number | null } {
+  const range = periodRange(period, now);
+  const total = (items: T[]) =>
+    field ? items.reduce((sum, row) => sum + num(row[field]), 0) : items.length;
+  if (!range) return { value: total(rows), previous: 0, delta: null };
+  let value = 0;
+  let previous = 0;
+  for (const row of rows) {
+    const time = Date.parse(String(row[dateKey] ?? ""));
+    if (Number.isNaN(time)) continue;
+    const amount = field ? num(row[field]) : 1;
+    if (time >= range.start && time <= range.end) value += amount;
+    else if (time >= range.previousStart && time < range.previousEnd) previous += amount;
+  }
+  return {
+    value,
+    previous,
+    delta: previous ? Math.round(((value - previous) / Math.abs(previous)) * 1000) / 10 : null,
+  };
+}
+
+/** A JSON value kept in a longtext column (checklists, line items), or the fallback. */
+export function readJson<T>(value: unknown, fallback: T): T {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}

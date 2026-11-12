@@ -1,3 +1,4 @@
+import { MotionConfig } from "motion/react";
 import type { ComponentType, ReactNode } from "react";
 import { Component, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
@@ -8,7 +9,7 @@ import type {
   AppResponseMessage,
   AppViewer,
 } from "../protocol.js";
-import { APP_EVENT, APP_PICK, APP_REQUEST, APP_RESPONSE } from "../protocol.js";
+import { APP_EVENT, APP_PICK, APP_REQUEST, APP_RESPONSE, MAX_UPLOAD_BYTES } from "../protocol.js";
 import type { Row, TableSchema } from "../schema.js";
 import { withFormulas } from "../schema.js";
 
@@ -265,6 +266,11 @@ export type TableApi<T extends Record<string, unknown> = Record<string, unknown>
   loading: boolean;
   /** False for visitors and read-only viewers: hide add, edit and delete controls. */
   canEdit: boolean;
+  /**
+   * Whether this viewer may change or remove this row: every row when they can edit, or only the
+   * ones they added (row._mine) in apps where colleagues contribute. Rows carry _by, who added them.
+   */
+  canEditRow: (row: Row) => boolean;
   insert: (row: Partial<T>) => Promise<Row & T>;
   update: (id: string, patch: Partial<T>) => Promise<void>;
   remove: (id: string) => Promise<void>;
@@ -291,7 +297,13 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
   );
   const insert = useCallback(
     async (row: Partial<T>) => {
-      const optimistic = { ...row, _id: newId(), _updatedAt: new Date().toISOString() } as Row & T;
+      const optimistic = {
+        ...row,
+        _id: newId(),
+        _updatedAt: new Date().toISOString(),
+        _mine: true,
+        _by: store.init.viewer.name,
+      } as unknown as Row & T;
       replaceRows(name, (list) => [...list, optimistic]);
       if (store.local) return optimistic;
       try {
@@ -360,11 +372,17 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
     },
     [name],
   );
+  const { canEdit, ownRowsOnly } = current.init.viewer;
+  const canEditRow = useCallback(
+    (row: Row) => canEdit && (!ownRowsOnly || row._mine === true),
+    [canEdit, ownRowsOnly],
+  );
   return {
     rows,
     schema,
     loading: current.status !== "ready",
-    canEdit: current.init.viewer.canEdit,
+    canEdit,
+    canEditRow,
     insert,
     update,
     remove,
@@ -439,6 +457,73 @@ export function useAsset(id: string | null | undefined): string | null {
     };
   }, [id]);
   return url;
+}
+
+const LONGEST_EDGE = 1600;
+
+async function shrinkImage(file: Blob, longest: number): Promise<Blob> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  try {
+    const scale = Math.min(1, longest / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("This browser cannot prepare photos.");
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.82, 0.7, 0.55]) {
+      const blob = await new Promise<Blob | null>((done) =>
+        canvas.toBlob(done, "image/jpeg", quality),
+      );
+      if (blob && blob.size <= MAX_UPLOAD_BYTES) return blob;
+    }
+  } finally {
+    bitmap.close();
+  }
+  throw new Error("That photo is too large to add.");
+}
+
+async function blobBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let text = "";
+  for (let at = 0; at < bytes.length; at += 0x8000) {
+    text += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
+  }
+  return btoa(text);
+}
+
+/**
+ * Adds a photo the person picked (a file input or the camera) to the app and returns its picture
+ * id, for an image column or useAsset. Photos are shrunk to 1600 px JPEG first, so a phone photo
+ * sends in a moment. Previews keep it in the page only.
+ */
+export async function uploadImage(file: Blob, options: { longest?: number } = {}): Promise<string> {
+  if (!file.type.startsWith("image/")) throw new Error("Choose a photo or picture.");
+  if (!store.init.viewer.canEdit) throw new Error("You can view this app but not add photos.");
+  const blob = await shrinkImage(file, Math.min(options.longest ?? LONGEST_EDGE, 2400));
+  const base64 = await blobBase64(blob);
+  const name = (file instanceof File ? file.name : "photo").replace(/\.[^.]+$/, "").slice(0, 80);
+  if (store.local || !hosted()) {
+    const id = `local_${newId().slice(2)}`;
+    assetUrls.set(id, Promise.resolve(`data:image/jpeg;base64,${base64}`));
+    return id;
+  }
+  const saved = await send<{ id: string }>(
+    { op: "upload", name: `${name || "photo"}.jpg`, mime: "image/jpeg", base64 },
+    60_000,
+  );
+  assetUrls.set(saved.id, Promise.resolve(`data:image/jpeg;base64,${base64}`));
+  return saved.id;
+}
+
+/** True where the viewer can add photos (they may edit, and the host keeps uploads). */
+export function useCanUpload(): boolean {
+  const current = useStore();
+  return (
+    current.init.viewer.canEdit && (current.local || current.init.features.includes("uploads"))
+  );
 }
 
 export const ai = {
@@ -581,8 +666,10 @@ export function mount(App: ComponentType) {
   const element =
     document.getElementById("root") ?? document.body.appendChild(document.createElement("div"));
   createRoot(element).render(
-    <Boundary>
-      <App />
-    </Boundary>,
+    <MotionConfig reducedMotion="user">
+      <Boundary>
+        <App />
+      </Boundary>
+    </MotionConfig>,
   );
 }

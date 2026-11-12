@@ -14,6 +14,8 @@ export type AppViewer = {
   name: string | null;
   /** May add, change and remove rows. */
   canEdit: boolean;
+  /** Changes and removes only the rows they added (rows marked _mine); adding is open. */
+  ownRowsOnly?: boolean;
   /** Who is looking: the owner, someone at OCSC, or a visitor with the password. */
   role: "owner" | "member" | "visitor" | "preview";
 };
@@ -25,7 +27,7 @@ export type AppInit = {
   tables: Record<string, { schema: TableSchema; rows: Row[] }>;
   state: Record<string, unknown>;
   revision: number;
-  /** Features the host offers: ai, export, assets. */
+  /** Features the host offers: ai, export, assets, uploads. */
   features: string[];
 };
 
@@ -36,6 +38,8 @@ export type AppRequest =
   | { op: "rows.remove"; table: string; id: string }
   | { op: "state.set"; key: string; value: unknown }
   | { op: "asset"; id: string }
+  /** A photo the person picked, already shrunk by the app; answers with its picture id. */
+  | { op: "upload"; name: string; mime: string; base64: string }
   | { op: "ai.ask"; prompt: string; json?: boolean }
   | { op: "export"; table: string; format: "xlsx" | "csv" }
   | { op: "download"; filename: string; mime: string; text: string }
@@ -68,6 +72,7 @@ export const APP_OPS = new Set<AppRequest["op"]>([
   "rows.remove",
   "state.set",
   "asset",
+  "upload",
   "ai.ask",
   "export",
   "download",
@@ -80,7 +85,13 @@ export const APP_WRITE_OPS = new Set<AppRequest["op"]>([
   "rows.update",
   "rows.remove",
   "state.set",
+  "upload",
 ]);
+
+/** Photos people add from an app: kinds, the largest one after shrinking, and the base64 cap. */
+export const UPLOAD_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+export const MAX_UPLOAD_BASE64 = Math.ceil(MAX_UPLOAD_BYTES / 3) * 4;
 /** Ops that need a click or key in the frame first (downloads and links). */
 export const APP_GESTURE_OPS = new Set<AppRequest["op"]>(["download", "open", "export"]);
 

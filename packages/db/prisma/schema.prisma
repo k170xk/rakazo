@@ -1922,6 +1922,8 @@ model AppRow {
   updatedAt DateTime @default(now()) @updatedAt
   /// Who last changed it: a user id, or null for the agent and imports.
   updatedBy String?
+  /// Who added it: a user id, or null for the agent, imports and rows from before this was kept.
+  createdBy String?
 
   @@index([tableId, position])
   @@index([pageId])

@@ -4,6 +4,7 @@ import { AppAskError } from "../app-ask.js";
 import {
   AppPublishError,
   AppVersionConflictError,
+  createTemplateApp,
   deleteAppAsset,
   getAppAsset,
   getAppAssets,
@@ -134,6 +135,9 @@ export function appsRoutes(ctx: RouterContext) {
       ),
       importWorkbook: authed.apps.importWorkbook.handler(({ context, input }) =>
         refusals(() => importWorkbookApp(db, context.actor, input)),
+      ),
+      createFromTemplate: authed.apps.createFromTemplate.handler(({ context, input }) =>
+        refusals(() => createTemplateApp(db, context.actor, input)),
       ),
     },
   };

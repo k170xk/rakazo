@@ -5,11 +5,13 @@ import {
   createAppPage,
   createDb,
   provisionMessagingIdentity,
+  readAppTables,
   runAsSystem,
   runAsTenant,
 } from "@rakazo/db";
 import { Hono } from "hono";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createTemplateApp } from "./apps.js";
 import { EVOLVE_APP_DATA_PATH, mountEvolveAppData } from "./evolve-app-data.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -160,6 +162,125 @@ describePostgres("Evolve app data (PostgreSQL)", () => {
       revision: number;
     };
     expect(revision.revision).toBeGreaterThanOrEqual(2);
+  });
+
+  it("keeps photos from people who may edit, checked by their bytes", async () => {
+    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, ...Array(60).fill(7)]).toString("base64");
+    const init = (await (await call(owner.email, { op: "init" })).json()) as { features: string[] };
+    expect(init.features).toEqual(["assets", "uploads"]);
+    const added = await call(owner.email, { op: "upload", name: "crack.jpg", base64: jpeg });
+    expect(added.status).toBe(200);
+    const { id } = (await added.json()) as { id: string };
+    const stored = await asSystem(prisma).appAsset.findUniqueOrThrow({ where: { id } });
+    expect(stored).toMatchObject({
+      pageId: appId,
+      mime: "image/jpeg",
+      source: `app:${owner.userId}`,
+    });
+    const read = (await (await call(colleague.email, { op: "asset", id })).json()) as {
+      base64: string;
+    };
+    expect(read.base64).toBe(jpeg);
+
+    const script = Buffer.from("<svg onload=alert(1)>").toString("base64");
+    expect((await call(owner.email, { op: "upload", name: "x.jpg", base64: script })).status).toBe(
+      400,
+    );
+    expect(
+      (await call(owner.email, { op: "upload", name: "x", base64: "not base64!" })).status,
+    ).toBe(400);
+    const stranger = await call("someone@elsewhere.example", {
+      op: "upload",
+      name: "x.jpg",
+      base64: jpeg,
+    });
+    expect(stranger.status).toBe(403);
+  });
+
+  it("lets colleagues contribute rows and change only their own", async () => {
+    await asSystem(prisma).page.update({
+      where: { id: appId },
+      data: { dataAccess: "contribute" },
+    });
+    const init = (await (await call(colleague.email, { op: "init" })).json()) as Record<
+      string,
+      any
+    >;
+    expect(init.viewer).toMatchObject({ canEdit: true, ownRowsOnly: true });
+    const ownerRow = init.tables.jobs.rows.find((row: { name: string }) => row.name === "Depot");
+    expect(ownerRow).toMatchObject({ _mine: false });
+
+    const added = await call(colleague.email, {
+      op: "rows.insert",
+      table: "jobs",
+      row: { name: "Timesheet week 46" },
+    });
+    expect(added.status).toBe(200);
+    const mine = (await added.json()) as { _id: string; _mine: boolean };
+    expect(mine._mine).toBe(true);
+    expect(
+      (
+        await call(colleague.email, {
+          op: "rows.update",
+          table: "jobs",
+          id: mine._id,
+          patch: { name: "Week 46" },
+        })
+      ).status,
+    ).toBe(200);
+    const theirs = await call(colleague.email, {
+      op: "rows.update",
+      table: "jobs",
+      id: ownerRow._id,
+      patch: { name: "Changed" },
+    });
+    expect(theirs.status).toBe(400);
+    expect(((await theirs.json()) as { error: string }).error).toMatch(/only the rows you added/);
+    expect(
+      (await call(colleague.email, { op: "rows.remove", table: "jobs", id: ownerRow._id })).status,
+    ).toBe(400);
+    expect(
+      (await call(colleague.email, { op: "state.set", key: "view", value: "board" })).status,
+    ).toBe(403);
+
+    const seen = (await (await call(owner.email, { op: "data" })).json()) as Record<string, any>;
+    const contributed = seen.tables.jobs.rows.find((row: { _id: string }) => row._id === mine._id);
+    expect(contributed).toMatchObject({ name: "Week 46", _mine: false });
+    expect(Object.hasOwn(contributed, "_by")).toBe(true);
+    expect(
+      (
+        await call(owner.email, {
+          op: "rows.update",
+          table: "jobs",
+          id: mine._id,
+          patch: { name: "Wk 46" },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (await call(colleague.email, { op: "rows.remove", table: "jobs", id: mine._id })).status,
+    ).toBe(200);
+  });
+
+  it("starts an app from a starter with its empty tables and colleagues' access", async () => {
+    const { pageId } = await runAsTenant(owner, () =>
+      createTemplateApp(
+        prisma,
+        { ...owner, isDeploymentOwner: false },
+        { templateId: "timesheet" },
+      ),
+    );
+    const page = await runAsTenant(owner, () =>
+      prisma.page.findUniqueOrThrow({ where: { id: pageId } }),
+    );
+    expect(page).toMatchObject({ kind: "app", title: "Timesheets", dataAccess: "contribute" });
+    const tables = await runAsTenant(owner, () => readAppTables(prisma, pageId));
+    expect(tables.entries?.rows).toEqual([]);
+    await expect(
+      runAsTenant(owner, () =>
+        createTemplateApp(prisma, { ...owner, isDeploymentOwner: false }, { templateId: "nope" }),
+      ),
+    ).rejects.toThrow("doesn't exist");
   });
 
   it("refuses bad tokens, other slugs, and the Studio's own operations", async () => {
