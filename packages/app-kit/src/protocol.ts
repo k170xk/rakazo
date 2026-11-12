@@ -46,7 +46,26 @@ export type AppRequest =
   | { op: "download"; filename: string; mime: string; text: string }
   | { op: "open"; url: string };
 
-export type AppRequestMessage = { type: typeof APP_REQUEST; id: string } & AppRequest;
+/**
+ * id names the message, so a request's own id (a row or picture) travels as ref; frames built
+ * before ref existed sent that id in place of the message id, which hosts still accept.
+ */
+export type AppRequestMessage = { type: typeof APP_REQUEST; id: string; ref?: string } & AppRequest;
+
+/** The row or picture a request names, from ref or, for older frames, id. */
+export function requestRef(message: AppRequestMessage): string {
+  return String(typeof message.ref === "string" ? message.ref : message.id);
+}
+
+/** A request as a frame posts it: its own id moves to ref so the message id is kept. */
+export function requestMessage(id: string, request: AppRequest): AppRequestMessage {
+  return {
+    ...request,
+    type: APP_REQUEST,
+    id,
+    ...("id" in request ? { ref: request.id } : {}),
+  } as AppRequestMessage;
+}
 
 export type AppResponseMessage = {
   type: typeof APP_RESPONSE;

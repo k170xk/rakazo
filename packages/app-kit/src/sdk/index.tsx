@@ -9,7 +9,13 @@ import type {
   AppResponseMessage,
   AppViewer,
 } from "../protocol.js";
-import { APP_EVENT, APP_PICK, APP_REQUEST, APP_RESPONSE, MAX_UPLOAD_BYTES } from "../protocol.js";
+import {
+  APP_EVENT,
+  APP_PICK,
+  APP_RESPONSE,
+  MAX_UPLOAD_BYTES,
+  requestMessage,
+} from "../protocol.js";
 import type { Row, TableSchema } from "../schema.js";
 import { withFormulas } from "../schema.js";
 
@@ -113,7 +119,7 @@ function send<T = unknown>(request: EvolveRequest, timeoutMs = 20_000): Promise<
       reject(new Error("The app did not get an answer in time."));
     }, timeoutMs);
     pending.set(id, { resolve: resolve as (value: unknown) => void, reject, timer });
-    window.parent.postMessage({ type: APP_REQUEST, id, ...request }, "*");
+    window.parent.postMessage(requestMessage(id, request as AppRequest), "*");
   });
 }
 

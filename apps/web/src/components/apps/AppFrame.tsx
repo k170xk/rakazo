@@ -7,6 +7,7 @@ import {
   APP_WRITE_OPS,
   MAX_UPLOAD_BASE64,
   readAppRequest,
+  requestRef,
   UPLOAD_MIMES,
 } from "@rakazo/app-kit/protocol";
 import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
@@ -162,14 +163,14 @@ export function AppFrame({
         case "rows.insert":
           return source.insert(String(request.table), objectOf(request.row));
         case "rows.update":
-          return source.update(String(request.table), String(request.id), objectOf(request.patch));
+          return source.update(String(request.table), requestRef(request), objectOf(request.patch));
         case "rows.remove":
-          await source.remove(String(request.table), String(request.id));
+          await source.remove(String(request.table), requestRef(request));
           return null;
         case "state.set":
           return source.setState(String(request.key), request.value);
         case "asset":
-          return source.asset(String(request.id));
+          return source.asset(requestRef(request));
         case "upload": {
           const mime = String(request.mime);
           const base64 = String(request.base64);
