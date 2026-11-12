@@ -544,7 +544,7 @@ export function DeleteItemDialog({
                         : noun === "section"
                           ? t`Could not delete section`
                           : noun === "page"
-                            ? t`Could not delete page`
+                            ? t`Could not delete app`
                             : noun === "file"
                               ? t`Could not delete file`
                               : t`Could not delete routine`,

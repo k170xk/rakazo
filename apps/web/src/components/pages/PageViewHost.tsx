@@ -116,13 +116,13 @@ function OpenPage({
   }, [session, dockPage?.id, dockPage?.title]);
   const notice = gone ? (
     <PageNotice
-      title={t`This page isn't available`}
+      title={t`This app isn't available`}
       detail={t`It may have been deleted, or it belongs to someone else.`}
       onClose={close}
     />
   ) : failed || (!isApp && viewer.failed) ? (
     <PageNotice
-      title={t`This page couldn't load`}
+      title={t`This app couldn't load`}
       detail={t`Check your connection and try again.`}
       onRetry={() => {
         if (failed) void page.refetch();
@@ -147,7 +147,7 @@ function OpenPage({
       open={shareOpen}
       onOpenChange={setShareOpen}
       pending={visibility.isPending}
-      error={visibility.isError ? t`Could not change who can view this page. Try again.` : null}
+      error={visibility.isError ? t`Could not change who can view this app. Try again.` : null}
       onVisibilityChange={(next) => {
         if (pageId && next !== shownVisibility && !visibility.isPending) {
           visibility.mutate({ pageId, visibility: next });
@@ -185,7 +185,7 @@ function OpenPage({
       returnFocus={session.restoreFocus}
       compact={compact}
       notice={notice}
-      renameError={rename.isError ? t`Could not rename this page. Try again.` : null}
+      renameError={rename.isError ? t`Could not rename this app. Try again.` : null}
       onRename={
         rename.isPending || !data
           ? undefined

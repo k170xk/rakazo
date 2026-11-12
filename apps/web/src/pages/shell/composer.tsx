@@ -991,9 +991,7 @@ const ComposerBody = memo(function Composer({
             <HoldToTalkControls talk={talk} />
           ) : running ? (
             <>
-              {canDictate ? (
-                <HoldToTalkControls talk={talk} disabled={disabled || onCall} />
-              ) : null}
+              {canDictate ? <HoldToTalkControls talk={talk} disabled={disabled || onCall} /> : null}
               <Button
                 size="icon"
                 aria-label={t`Send`}
@@ -1016,9 +1014,7 @@ const ComposerBody = memo(function Composer({
             </>
           ) : (
             <>
-              {canDictate ? (
-                <HoldToTalkControls talk={talk} disabled={disabled || onCall} />
-              ) : null}
+              {canDictate ? <HoldToTalkControls talk={talk} disabled={disabled || onCall} /> : null}
               <Button
                 size="icon"
                 aria-label={t`Send`}

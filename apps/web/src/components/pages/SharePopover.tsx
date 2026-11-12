@@ -171,7 +171,7 @@ export function SharePopover({
             </span>
           </div>
           <RadioGroup
-            aria-label={t`Who can open this page`}
+            aria-label={t`Who can open this app`}
             value={visibility}
             disabled={pending}
             onValueChange={(value) => onVisibilityChange(value as PageVisibility)}
@@ -287,7 +287,7 @@ export function ManualCopy({ url }: { url: string }) {
       <input
         readOnly
         value={url}
-        aria-label={t`Page link`}
+        aria-label={t`App link`}
         // biome-ignore lint/a11y/noAutofocus: shown only once copying failed, to copy by hand
         autoFocus
         onFocus={(event) => event.currentTarget.select()}

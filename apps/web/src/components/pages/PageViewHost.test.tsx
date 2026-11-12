@@ -119,10 +119,10 @@ it("announces why a page is not showing", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const root = createRoot(document.body.appendChild(document.createElement("div")));
   await act(async () =>
-    root.render(<PageNotice title="This page couldn't load" detail="Check your connection." />),
+    root.render(<PageNotice title="This app couldn't load" detail="Check your connection." />),
   );
   expect(document.querySelector('[role="alert"]')?.textContent).toContain(
-    "This page couldn't load",
+    "This app couldn't load",
   );
   root.unmount();
 });

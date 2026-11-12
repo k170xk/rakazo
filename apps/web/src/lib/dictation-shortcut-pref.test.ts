@@ -85,9 +85,9 @@ describe("matchesDictationShortcut", () => {
 
 describe("formatDictationShortcut", () => {
   it("labels Space and modifiers", () => {
-    expect(
-      formatDictationShortcut({ key: " ", mod: true, shift: true, alt: false }, true),
-    ).toEqual(["⌘", "⇧", "Space"]);
+    expect(formatDictationShortcut({ key: " ", mod: true, shift: true, alt: false }, true)).toEqual(
+      ["⌘", "⇧", "Space"],
+    );
   });
 });
 

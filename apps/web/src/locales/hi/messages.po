@@ -1302,12 +1302,42 @@ msgid "API URL"
 msgstr ""
 
 #: src/components/apps/AppStudio.tsx
-#: src/components/pages/PagesList.tsx
+#: src/components/pages/PageCard.tsx
+#: src/components/pages/PageView.tsx
 msgid "App"
+msgstr ""
+
+#: src/components/pages/PageCard.tsx
+msgid "App · {when}"
+msgstr ""
+
+#: src/components/pages/PageCard.tsx
+msgid "App · Deleted"
+msgstr ""
+
+#: src/components/pages/PageCard.tsx
+msgid "App · Shared · {when}"
+msgstr ""
+
+#: src/components/pages/PageCard.tsx
+msgid "App · Updated below"
+msgstr ""
+
+#: src/components/pages/PublicPageShell.tsx
+msgid "App actions"
+msgstr ""
+
+#: src/components/pages/SharePopover.tsx
+msgid "App link"
 msgstr ""
 
 #: src/components/apps/AppStudio.tsx
 msgid "App Studio"
+msgstr ""
+
+#: src/components/pages/PagesList.tsx
+#: src/components/pages/PageView.tsx
+msgid "App title"
 msgstr ""
 
 #: src/components/SidebarFooter.tsx
@@ -1371,7 +1401,10 @@ msgid "Approving…"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/GroupPanel.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/command-palette.tsx
 msgid "Apps"
 msgstr ""
 
@@ -1382,6 +1415,14 @@ msgstr ""
 #: src/pages/AdminStaffApps.tsx
 msgid "Apps for staff"
 msgstr "स्टाफ़ के लिए ऐप"
+
+#: src/components/pages/PagesList.tsx
+msgid "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+msgstr ""
+
+#: src/components/pages/PagesList.tsx
+msgid "Apps this group builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Apps, Connectors and Routines that extend what agents can do"
@@ -2243,6 +2284,7 @@ msgid "Close"
 msgstr "बंद करें"
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/pages/PageView.tsx
 msgid "Close app"
 msgstr ""
 
@@ -2275,10 +2317,6 @@ msgstr "मॉडल सेटिंग्स बंद करें"
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "नेविगेशन बंद करें"
-
-#: src/components/pages/PageView.tsx
-msgid "Close page"
-msgstr "पेज बंद करें"
 
 #: src/components/apps/AppStudio.tsx
 #: src/pages/GroupPanel.tsx
@@ -2904,8 +2942,8 @@ msgid "Could not change where this is available"
 msgstr ""
 
 #: src/components/pages/PageViewHost.tsx
-msgid "Could not change who can view this page. Try again."
-msgstr "यह नहीं बदला जा सका कि इस पेज को कौन देख सकता है। फिर कोशिश करें।"
+msgid "Could not change who can view this app. Try again."
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Could not check stored credentials."
@@ -2992,6 +3030,10 @@ msgid "Could not create your bot"
 msgstr "आपका बॉट नहीं बनाया जा सका"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Could not delete app"
+msgstr ""
+
+#: src/pages/shell/dialogs.tsx
 msgid "Could not delete bot"
 msgstr "बॉट डिलीट नहीं किया जा सका"
 
@@ -3010,10 +3052,6 @@ msgstr ""
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not delete MCP server"
 msgstr "MCP सर्वर डिलीट नहीं किया जा सका"
-
-#: src/pages/shell/dialogs.tsx
-msgid "Could not delete page"
-msgstr "पेज हटाया नहीं जा सका"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete routine"
@@ -3223,8 +3261,8 @@ msgid "Could not open this in SharePoint."
 msgstr "Could not open this in SharePoint."
 
 #: src/components/pages/PagesList.tsx
-msgid "Could not pin this page. Try again."
-msgstr "यह पेज पिन नहीं हो सका। फिर से कोशिश करें।"
+msgid "Could not pin this app. Try again."
+msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not play a test clip"
@@ -3314,8 +3352,8 @@ msgstr "स्पेस का नाम नहीं बदला जा सक
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageViewHost.tsx
-msgid "Could not rename this page. Try again."
-msgstr "इस पेज का नाम नहीं बदला जा सका। फिर कोशिश करें।"
+msgid "Could not rename this app. Try again."
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 msgid "Could not rename work space"
@@ -3563,6 +3601,10 @@ msgstr ""
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "कॉपी नहीं हो सका। लिंक चुनें और उसे कॉपी करें।"
 
+#: src/components/pages/PagesList.tsx
+msgid "Couldn't load apps."
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Couldn't load company settings"
 msgstr ""
@@ -3574,10 +3616,6 @@ msgstr ""
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't load messaging settings"
 msgstr ""
-
-#: src/components/pages/PagesList.tsx
-msgid "Couldn't load pages."
-msgstr "पेज लोड नहीं हो सके।"
 
 #: src/pages/AdminStaffSpending.tsx
 msgid "Couldn't load staff spending"
@@ -3591,13 +3629,13 @@ msgstr ""
 msgid "Couldn't load the Document Library"
 msgstr "Couldn't load the Document Library"
 
+#: src/pages/SharedPage.tsx
+msgid "Couldn't load this app. Try again."
+msgstr ""
+
 #: src/pages/shell/files-tab.tsx
 msgid "Couldn't load this bot's files."
 msgstr ""
-
-#: src/pages/SharedPage.tsx
-msgid "Couldn't load this page. Try again."
-msgstr "यह पेज लोड नहीं हो सका। फिर से कोशिश करें।"
 
 #: src/components/StorageDialog.tsx
 msgid "Couldn't load your files."
@@ -4834,12 +4872,12 @@ msgstr ""
 msgid "Find a document"
 msgstr "Find a document"
 
-#: src/components/pages/PagesList.tsx
-msgid "Find a page"
-msgstr "पेज खोजें"
-
 #: src/pages/AdminComputerAccess.tsx
 msgid "Find a person"
+msgstr ""
+
+#: src/components/pages/PagesList.tsx
+msgid "Find an app"
 msgstr ""
 
 #: src/pages/shell/chat-find-bar.tsx
@@ -5719,6 +5757,10 @@ msgstr "सुन रहा है"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
 msgstr "सुन रहा है…"
+
+#: src/components/pages/PagesList.tsx
+msgid "Live data"
+msgstr ""
 
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
@@ -6601,6 +6643,10 @@ msgstr ""
 msgid "No active Evolve profile matches."
 msgstr ""
 
+#: src/components/pages/PagesList.tsx
+msgid "No apps match “{query}”."
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
 msgstr "आपकी खोज से कोई ऐप मेल नहीं खाता।"
@@ -6745,10 +6791,6 @@ msgstr "कोई मॉडल सूचीबद्ध नहीं।"
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "कोई OpenClaw, Hermes या एजेंट दस्तावेज़ नहीं मिला।"
-
-#: src/components/pages/PagesList.tsx
-msgid "No pages match “{query}”."
-msgstr "“{query}” से कोई पेज मेल नहीं खाता।"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "No people match your search."
@@ -7161,6 +7203,10 @@ msgstr ""
 msgid "Open any agent and ask for what you need, or create a new agent from the + button for a job you do often."
 msgstr ""
 
+#: src/pages/SharedPage.tsx
+msgid "Open app"
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr "कॉल खोलें"
@@ -7206,10 +7252,6 @@ msgstr "नेविगेशन खोलें"
 #: src/components/pages/PublicPageShell.tsx
 #: src/pages/SharedPage.tsx
 msgid "Open OCSC Intelligence"
-msgstr ""
-
-#: src/pages/SharedPage.tsx
-msgid "Open page"
 msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
@@ -7323,27 +7365,6 @@ msgstr ""
 msgid "Owner"
 msgstr "मालिक"
 
-#: src/components/pages/PageCard.tsx
-#: src/components/pages/PageView.tsx
-msgid "Page"
-msgstr "पेज"
-
-#: src/components/pages/PageCard.tsx
-msgid "Page · {when}"
-msgstr "पेज · {when}"
-
-#: src/components/pages/PageCard.tsx
-msgid "Page · Deleted"
-msgstr "पेज · हटाया गया"
-
-#: src/components/pages/PageCard.tsx
-msgid "Page · Shared · {when}"
-msgstr "पेज · शेयर किया गया · {when}"
-
-#: src/components/pages/PageCard.tsx
-msgid "Page · Updated below"
-msgstr "पेज · नीचे अपडेट हुआ"
-
 #. placeholder {0}: p.pageNumber
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Page {0}"
@@ -7363,36 +7384,9 @@ msgstr ""
 msgid "Page {page} of {count}"
 msgstr "पृष्ठ {page} / {count}"
 
-#: src/components/pages/PublicPageShell.tsx
-msgid "Page actions"
-msgstr "पेज कार्रवाइयाँ"
-
-#: src/components/pages/SharePopover.tsx
-msgid "Page link"
-msgstr "पेज का लिंक"
-
 #: src/pages/NotFound.tsx
 msgid "Page not found"
 msgstr "पेज नहीं मिला"
-
-#: src/components/pages/PagesList.tsx
-#: src/components/pages/PageView.tsx
-msgid "Page title"
-msgstr "पेज का शीर्षक"
-
-#: src/pages/GroupPanel.tsx
-#: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/command-palette.tsx
-msgid "Pages"
-msgstr "पेज"
-
-#: src/components/pages/PagesList.tsx
-msgid "Pages this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
-msgstr "यह बॉट आपके लिए जो पेज बनाता है, वे यहाँ दिखते हैं। कोई डैशबोर्ड, ट्रैकर या योजना माँगकर एक बनवाएँ।"
-
-#: src/components/pages/PagesList.tsx
-msgid "Pages this group builds for you appear here. Ask for a dashboard, tracker or plan to make one."
-msgstr "यह समूह आपके लिए जो पेज बनाता है, वे यहाँ दिखते हैं। कोई डैशबोर्ड, ट्रैकर या योजना माँगकर एक बनवाएँ।"
 
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
@@ -8993,7 +8987,7 @@ msgid "Shared"
 msgstr "साझा"
 
 #: src/pages/SharedPage.tsx
-msgid "Shared pages are only for people at your company."
+msgid "Shared apps are only for people at your company."
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -9102,7 +9096,7 @@ msgid "Sign in to OCSC Intelligence"
 msgstr ""
 
 #: src/pages/SharedPage.tsx
-msgid "Sign in to view this page"
+msgid "Sign in to view this app"
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -9855,8 +9849,27 @@ msgstr ""
 msgid "Thinking: {0}"
 msgstr "सोच: {0}"
 
+#: src/lib/pages.ts
+msgid "This app couldn't be shown."
+msgstr ""
+
+#: src/components/pages/PageCard.tsx
+#: src/components/pages/PageView.tsx
+#: src/components/pages/PageViewHost.tsx
+msgid "This app couldn't load"
+msgstr ""
+
 #: src/components/apps/AppDataPanel.tsx
 msgid "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
+msgstr ""
+
+#: src/pages/SharedPage.tsx
+msgid "This app is password protected"
+msgstr ""
+
+#: src/components/pages/PageViewHost.tsx
+#: src/pages/SharedPage.tsx
+msgid "This app isn't available"
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -9978,25 +9991,6 @@ msgstr ""
 #: src/pages/KnowledgeSection.tsx
 msgid "This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes."
 msgstr ""
-
-#: src/lib/pages.ts
-msgid "This page couldn't be shown."
-msgstr "यह पेज दिखाया नहीं जा सका।"
-
-#: src/components/pages/PageCard.tsx
-#: src/components/pages/PageView.tsx
-#: src/components/pages/PageViewHost.tsx
-msgid "This page couldn't load"
-msgstr "यह पेज लोड नहीं हो सका"
-
-#: src/pages/SharedPage.tsx
-msgid "This page is password protected"
-msgstr ""
-
-#: src/components/pages/PageViewHost.tsx
-#: src/pages/SharedPage.tsx
-msgid "This page isn't available"
-msgstr "यह पेज उपलब्ध नहीं है"
 
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
@@ -10870,8 +10864,8 @@ msgid "Who can change the data"
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx
-msgid "Who can open this page"
-msgstr "यह पेज कौन खोल सकता है"
+msgid "Who can open this app"
+msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Who gets a computer"

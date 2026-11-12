@@ -118,7 +118,7 @@ function PagePreview({
             <div className="h-12 rounded-[8px] bg-foreground/[0.05]" />
           </div>
           {failed ? (
-            <p className="text-center text-muted-foreground text-sm">{t`This page couldn't load`}</p>
+            <p className="text-center text-muted-foreground text-sm">{t`This app couldn't load`}</p>
           ) : null}
         </div>
       )}
@@ -167,17 +167,17 @@ export function PageCard({
           </div>
           <div className="truncate text-[14px] leading-[20px] text-muted-foreground">
             {onOpen === undefined ? (
-              <Trans>Page · Deleted</Trans>
+              <Trans>App · Deleted</Trans>
             ) : updated ? (
-              <Trans>Page · Updated below</Trans>
+              <Trans>App · Updated below</Trans>
             ) : when ? (
               shared ? (
-                <Trans>Page · Shared · {when}</Trans>
+                <Trans>App · Shared · {when}</Trans>
               ) : (
-                <Trans>Page · {when}</Trans>
+                <Trans>App · {when}</Trans>
               )
             ) : (
-              <Trans>Page</Trans>
+              <Trans>App</Trans>
             )}
           </div>
         </div>

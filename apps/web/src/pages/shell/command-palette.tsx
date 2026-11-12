@@ -99,7 +99,7 @@ export function CommandPalette({
     needle !== "" && filteredPages.some((page) => page.title.toLowerCase().startsWith(needle));
   const pagesGroup =
     filteredPages.length > 0 && onSelectPage ? (
-      <CommandGroup heading={t`Pages`}>
+      <CommandGroup heading={t`Apps`}>
         {filteredPages.map((page) => (
           <CommandItem
             key={page.id}

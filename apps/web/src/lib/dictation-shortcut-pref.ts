@@ -51,9 +51,7 @@ export function normalizeDictationShortcut(
   };
 }
 
-function readStored(
-  storage: ShortcutStorage | null,
-): DictationShortcut {
+function readStored(storage: ShortcutStorage | null): DictationShortcut {
   if (!storage) return { ...DEFAULT_DICTATION_SHORTCUT };
   try {
     const raw = storage.getItem(DICTATION_SHORTCUT_STORAGE_KEY);
@@ -122,14 +120,13 @@ export function matchesDictationShortcut(
   if (!shortcut.mod) {
     return !event.metaKey && !event.ctrlKey;
   }
-  return apple ? Boolean(event.metaKey) && !event.ctrlKey : Boolean(event.ctrlKey) && !event.metaKey;
+  return apple
+    ? Boolean(event.metaKey) && !event.ctrlKey
+    : Boolean(event.ctrlKey) && !event.metaKey;
 }
 
 /** Labels for the shortcuts dialog / settings row. */
-export function formatDictationShortcut(
-  shortcut: DictationShortcut,
-  apple: boolean,
-): string[] {
+export function formatDictationShortcut(shortcut: DictationShortcut, apple: boolean): string[] {
   const parts: string[] = [];
   if (shortcut.mod) parts.push(apple ? "⌘" : "Ctrl");
   if (shortcut.alt) parts.push(apple ? "⌥" : "Alt");
@@ -142,7 +139,14 @@ export function dictationShortcutFromEvent(
   event: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey">,
 ): DictationShortcut | null {
   const key = event.key?.trim().toLowerCase() ?? "";
-  if (!key || key === "meta" || key === "control" || key === "alt" || key === "shift" || key === "escape") {
+  if (
+    !key ||
+    key === "meta" ||
+    key === "control" ||
+    key === "alt" ||
+    key === "shift" ||
+    key === "escape"
+  ) {
     return null;
   }
   if (!event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey) {

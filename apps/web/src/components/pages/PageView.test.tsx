@@ -48,11 +48,11 @@ it("waits for an updated page to draw, and offers a retry when it never does", a
   const view = mount({ document: "<p>v1</p>" });
   await view.render({ document: "<p>v1</p>" });
   await act(async () => frame.drawn?.());
-  expect(document.body.textContent).not.toContain("This page couldn't load");
+  expect(document.body.textContent).not.toContain("This app couldn't load");
 
   await view.render({ document: "<p>v2</p>" });
   await act(async () => vi.advanceTimersByTime(16_000));
-  expect(document.body.textContent).toContain("This page couldn't load");
+  expect(document.body.textContent).toContain("This app couldn't load");
   await view.unmount();
 });
 

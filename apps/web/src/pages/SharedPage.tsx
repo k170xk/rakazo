@@ -118,10 +118,10 @@ function SharedPageBody() {
             className="mb-3 hidden w-36 dark:block"
           />
           <h1 className="text-[18px] leading-6 font-medium text-foreground">
-            <Trans>Sign in to view this page</Trans>
+            <Trans>Sign in to view this app</Trans>
           </h1>
           <p className="text-[14px] leading-5 text-muted-foreground">
-            <Trans>Shared pages are only for people at your company.</Trans>
+            <Trans>Shared apps are only for people at your company.</Trans>
           </p>
           <a
             href={`/sign-in?next=${next}`}
@@ -144,7 +144,7 @@ function SharedPageBody() {
             className="mb-3 hidden w-36 dark:block"
           />
           <h1 className="text-[18px] leading-6 font-medium text-foreground">
-            <Trans>This page isn't available</Trans>
+            <Trans>This app isn't available</Trans>
           </h1>
           <p className="text-[14px] leading-5 text-muted-foreground">
             <Trans>The owner may have turned off its link or deleted it.</Trans>
@@ -163,7 +163,7 @@ function SharedPageBody() {
       <div className="grid min-h-dvh place-items-center bg-background px-6 text-center text-[15px] text-muted-foreground">
         <div className="flex flex-col items-center gap-3">
           <p role="alert">
-            <Trans>Couldn't load this page. Try again.</Trans>
+            <Trans>Couldn't load this app. Try again.</Trans>
           </p>
           <Button
             variant="outline"
@@ -227,7 +227,7 @@ function PasswordPrompt({
         <img src="/auth/ocsc-logo-on-light.png" alt="OCSC" className="mb-3 w-36 dark:hidden" />
         <img src="/auth/ocsc-logo-on-dark.png" alt="OCSC" className="mb-3 hidden w-36 dark:block" />
         <h1 className="text-[18px] leading-6 font-medium text-foreground">
-          <Trans>This page is password protected</Trans>
+          <Trans>This app is password protected</Trans>
         </h1>
         <p className="text-[14px] leading-5 text-muted-foreground">
           <Trans>Enter the password you were sent with the link.</Trans>
@@ -252,7 +252,7 @@ function PasswordPrompt({
           </p>
         ) : null}
         <Button type="submit" className="w-full" disabled={pending || !value.trim()}>
-          {pending ? <Spinner /> : <Trans>Open page</Trans>}
+          {pending ? <Spinner /> : <Trans>Open app</Trans>}
         </Button>
         <a
           href={signInHref}

@@ -114,7 +114,7 @@ export function PageView({
         >
           <DialogClose
             ref={closeButton}
-            aria-label={t`Close page`}
+            aria-label={t`Close app`}
             className={`absolute z-10 grid place-items-center print:hidden ${compact ? "top-[6px] left-[6px] size-11" : "top-[6px] left-[11px] size-9"} rounded-full border border-foreground/[0.06] text-foreground/90 outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring`}
           >
             <X className={compact ? "size-6" : "size-[18px]"} strokeWidth={compact ? 2.2 : 1.7} />
@@ -126,7 +126,7 @@ export function PageView({
               {title ? (
                 <TitlePill title={title} onRename={onRename} />
               ) : (
-                <DialogTitle className="sr-only">{t`Page`}</DialogTitle>
+                <DialogTitle className="sr-only">{t`App`}</DialogTitle>
               )}
               {renameError ? (
                 <p role="alert" className="text-[12px] leading-4 text-destructive">
@@ -172,7 +172,7 @@ export function PageView({
                 ) : null}
                 {stalled ? (
                   <PageNotice
-                    title={t`This page couldn't load`}
+                    title={t`This app couldn't load`}
                     detail={t`Check your connection and try again.`}
                     onRetry={() => {
                       setStalled(false);
@@ -218,7 +218,7 @@ function TitlePill({ title, onRename }: { title: string; onRename?: (title: stri
           ref={input}
           // biome-ignore lint/a11y/noAutofocus: the field appears because the title was clicked.
           autoFocus
-          aria-label={t`Page title`}
+          aria-label={t`App title`}
           value={draft}
           maxLength={PAGE_TITLE_MAX_LENGTH}
           onChange={(event) => setDraft(event.target.value)}

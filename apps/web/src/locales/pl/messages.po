@@ -1302,13 +1302,43 @@ msgid "API URL"
 msgstr "Adres API"
 
 #: src/components/apps/AppStudio.tsx
-#: src/components/pages/PagesList.tsx
+#: src/components/pages/PageCard.tsx
+#: src/components/pages/PageView.tsx
 msgid "App"
-msgstr ""
+msgstr "Aplikacja"
+
+#: src/components/pages/PageCard.tsx
+msgid "App · {when}"
+msgstr "Aplikacja · {when}"
+
+#: src/components/pages/PageCard.tsx
+msgid "App · Deleted"
+msgstr "Aplikacja · Usunięta"
+
+#: src/components/pages/PageCard.tsx
+msgid "App · Shared · {when}"
+msgstr "Aplikacja · Udostępniona · {when}"
+
+#: src/components/pages/PageCard.tsx
+msgid "App · Updated below"
+msgstr "Aplikacja · Zaktualizowana poniżej"
+
+#: src/components/pages/PublicPageShell.tsx
+msgid "App actions"
+msgstr "Działania aplikacji"
+
+#: src/components/pages/SharePopover.tsx
+msgid "App link"
+msgstr "Link do aplikacji"
 
 #: src/components/apps/AppStudio.tsx
 msgid "App Studio"
 msgstr ""
+
+#: src/components/pages/PagesList.tsx
+#: src/components/pages/PageView.tsx
+msgid "App title"
+msgstr "Tytuł aplikacji"
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -1371,7 +1401,10 @@ msgid "Approving…"
 msgstr "Zatwierdzanie…"
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/GroupPanel.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/command-palette.tsx
 msgid "Apps"
 msgstr "Aplikacje"
 
@@ -1382,6 +1415,14 @@ msgstr ""
 #: src/pages/AdminStaffApps.tsx
 msgid "Apps for staff"
 msgstr "Aplikacje dla pracowników"
+
+#: src/components/pages/PagesList.tsx
+msgid "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+msgstr "Tutaj pojawiają się aplikacje, które ten bot dla Ciebie tworzy. Poproś o pulpit, tracker lub plan, aby utworzyć aplikację."
+
+#: src/components/pages/PagesList.tsx
+msgid "Apps this group builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+msgstr "Tutaj pojawiają się aplikacje, które ta grupa dla Ciebie tworzy. Poproś o pulpit, tracker lub plan, aby utworzyć aplikację."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Apps, Connectors and Routines that extend what agents can do"
@@ -2243,8 +2284,9 @@ msgid "Close"
 msgstr "Zamknij"
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/pages/PageView.tsx
 msgid "Close app"
-msgstr ""
+msgstr "Zamknij aplikację"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Close chart"
@@ -2275,10 +2317,6 @@ msgstr "Zamknij ustawienia modeli"
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "Zamknij nawigację"
-
-#: src/components/pages/PageView.tsx
-msgid "Close page"
-msgstr "Zamknij stronę"
 
 #: src/components/apps/AppStudio.tsx
 #: src/pages/GroupPanel.tsx
@@ -2904,8 +2942,8 @@ msgid "Could not change where this is available"
 msgstr "Nie udało się zmienić dostępności"
 
 #: src/components/pages/PageViewHost.tsx
-msgid "Could not change who can view this page. Try again."
-msgstr "Nie udało się zmienić uprawnień do wyświetlania tej strony. Spróbuj ponownie."
+msgid "Could not change who can view this app. Try again."
+msgstr "Nie udało się zmienić, kto może wyświetlać tę aplikację. Spróbuj ponownie."
 
 #: src/lib/model-connection-preflight.ts
 msgid "Could not check stored credentials."
@@ -2992,6 +3030,10 @@ msgid "Could not create your bot"
 msgstr "Nie udało się utworzyć Twojego bota"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Could not delete app"
+msgstr "Nie udało się usunąć aplikacji"
+
+#: src/pages/shell/dialogs.tsx
 msgid "Could not delete bot"
 msgstr "Nie udało się usunąć bota"
 
@@ -3010,10 +3052,6 @@ msgstr ""
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not delete MCP server"
 msgstr "Nie udało się usunąć serwera MCP"
-
-#: src/pages/shell/dialogs.tsx
-msgid "Could not delete page"
-msgstr "Nie udało się usunąć strony"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete routine"
@@ -3223,8 +3261,8 @@ msgid "Could not open this in SharePoint."
 msgstr "Could not open this in SharePoint."
 
 #: src/components/pages/PagesList.tsx
-msgid "Could not pin this page. Try again."
-msgstr "Nie udało się przypiąć tej strony. Spróbuj ponownie."
+msgid "Could not pin this app. Try again."
+msgstr "Nie udało się przypiąć tej aplikacji. Spróbuj ponownie."
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Could not play a test clip"
@@ -3314,8 +3352,8 @@ msgstr "Nie udało się zmienić nazwy przestrzeni"
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageViewHost.tsx
-msgid "Could not rename this page. Try again."
-msgstr "Nie udało się zmienić nazwy tej strony. Spróbuj ponownie."
+msgid "Could not rename this app. Try again."
+msgstr "Nie udało się zmienić nazwy tej aplikacji. Spróbuj ponownie."
 
 #: src/components/SidebarFooter.tsx
 msgid "Could not rename work space"
@@ -3563,6 +3601,10 @@ msgstr "Nie udało się sprawdzić konfiguracji komputera ({failureMessage}). Na
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "Nie udało się skopiować. Zaznacz link i go skopiuj."
 
+#: src/components/pages/PagesList.tsx
+msgid "Couldn't load apps."
+msgstr "Nie udało się wczytać aplikacji."
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Couldn't load company settings"
 msgstr ""
@@ -3574,10 +3616,6 @@ msgstr "Nie udało się wczytać uprawnień"
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't load messaging settings"
 msgstr "Nie udało się wczytać ustawień komunikacji"
-
-#: src/components/pages/PagesList.tsx
-msgid "Couldn't load pages."
-msgstr "Nie udało się wczytać stron."
 
 #: src/pages/AdminStaffSpending.tsx
 msgid "Couldn't load staff spending"
@@ -3591,13 +3629,13 @@ msgstr "Nie udało się wczytać zgłoszeń"
 msgid "Couldn't load the Document Library"
 msgstr "Couldn't load the Document Library"
 
+#: src/pages/SharedPage.tsx
+msgid "Couldn't load this app. Try again."
+msgstr "Nie udało się wczytać tej aplikacji. Spróbuj ponownie."
+
 #: src/pages/shell/files-tab.tsx
 msgid "Couldn't load this bot's files."
 msgstr ""
-
-#: src/pages/SharedPage.tsx
-msgid "Couldn't load this page. Try again."
-msgstr "Nie udało się wczytać tej strony. Spróbuj ponownie."
 
 #: src/components/StorageDialog.tsx
 msgid "Couldn't load your files."
@@ -4834,13 +4872,13 @@ msgstr "Finanse"
 msgid "Find a document"
 msgstr "Find a document"
 
-#: src/components/pages/PagesList.tsx
-msgid "Find a page"
-msgstr "Znajdź stronę"
-
 #: src/pages/AdminComputerAccess.tsx
 msgid "Find a person"
 msgstr ""
+
+#: src/components/pages/PagesList.tsx
+msgid "Find an app"
+msgstr "Znajdź aplikację"
 
 #: src/pages/shell/chat-find-bar.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
@@ -5719,6 +5757,10 @@ msgstr "Nasłuchiwanie"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
 msgstr "Nasłuchiwanie…"
+
+#: src/components/pages/PagesList.tsx
+msgid "Live data"
+msgstr "Dane na żywo"
 
 #: src/pages/shell/transcript.tsx
 msgid "Load earlier messages"
@@ -6601,6 +6643,10 @@ msgstr ""
 msgid "No active Evolve profile matches."
 msgstr ""
 
+#: src/components/pages/PagesList.tsx
+msgid "No apps match “{query}”."
+msgstr "Żadna aplikacja nie pasuje do „{query}”."
+
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
 msgstr "Żadna aplikacja nie pasuje do wyszukiwania."
@@ -6745,10 +6791,6 @@ msgstr "Brak modeli na liście."
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "Nie znaleziono dokumentu OpenClaw, Hermes ani agenta."
-
-#: src/components/pages/PagesList.tsx
-msgid "No pages match “{query}”."
-msgstr "Żadna strona nie pasuje do \"{query}\"."
 
 #: src/pages/shell/references-dialog.tsx
 msgid "No people match your search."
@@ -7161,6 +7203,10 @@ msgstr "Otwórz <0>{0}</0> i wpisz ten kod:"
 msgid "Open any agent and ask for what you need, or create a new agent from the + button for a job you do often."
 msgstr ""
 
+#: src/pages/SharedPage.tsx
+msgid "Open app"
+msgstr "Otwórz aplikację"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
 msgstr "Otwórz rozmowę"
@@ -7206,10 +7252,6 @@ msgstr "Otwórz nawigację"
 #: src/components/pages/PublicPageShell.tsx
 #: src/pages/SharedPage.tsx
 msgid "Open OCSC Intelligence"
-msgstr ""
-
-#: src/pages/SharedPage.tsx
-msgid "Open page"
 msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
@@ -7323,27 +7365,6 @@ msgstr ""
 msgid "Owner"
 msgstr "Właściciel"
 
-#: src/components/pages/PageCard.tsx
-#: src/components/pages/PageView.tsx
-msgid "Page"
-msgstr "Strona"
-
-#: src/components/pages/PageCard.tsx
-msgid "Page · {when}"
-msgstr "Strona · {when}"
-
-#: src/components/pages/PageCard.tsx
-msgid "Page · Deleted"
-msgstr "Strona · Usunięta"
-
-#: src/components/pages/PageCard.tsx
-msgid "Page · Shared · {when}"
-msgstr "Strona · Udostępniona · {when}"
-
-#: src/components/pages/PageCard.tsx
-msgid "Page · Updated below"
-msgstr "Strona · Zaktualizowana poniżej"
-
 #. placeholder {0}: p.pageNumber
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Page {0}"
@@ -7363,36 +7384,9 @@ msgstr ""
 msgid "Page {page} of {count}"
 msgstr "Strona {page} z {count}"
 
-#: src/components/pages/PublicPageShell.tsx
-msgid "Page actions"
-msgstr "Działania strony"
-
-#: src/components/pages/SharePopover.tsx
-msgid "Page link"
-msgstr "Link do strony"
-
 #: src/pages/NotFound.tsx
 msgid "Page not found"
 msgstr "Nie znaleziono strony"
-
-#: src/components/pages/PagesList.tsx
-#: src/components/pages/PageView.tsx
-msgid "Page title"
-msgstr "Tytuł strony"
-
-#: src/pages/GroupPanel.tsx
-#: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/command-palette.tsx
-msgid "Pages"
-msgstr "Strony"
-
-#: src/components/pages/PagesList.tsx
-msgid "Pages this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
-msgstr "Tutaj pojawią się strony tworzone dla Ciebie przez tego bota. Poproś o panel, rejestr lub plan."
-
-#: src/components/pages/PagesList.tsx
-msgid "Pages this group builds for you appear here. Ask for a dashboard, tracker or plan to make one."
-msgstr "Tutaj pojawią się strony tworzone dla Ciebie przez tę grupę. Poproś o panel, rejestr lub plan."
 
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
@@ -8993,8 +8987,8 @@ msgid "Shared"
 msgstr "Udostępnione"
 
 #: src/pages/SharedPage.tsx
-msgid "Shared pages are only for people at your company."
-msgstr ""
+msgid "Shared apps are only for people at your company."
+msgstr "Udostępnione aplikacje są tylko dla osób z Twojej firmy."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared with my bots"
@@ -9102,8 +9096,8 @@ msgid "Sign in to OCSC Intelligence"
 msgstr ""
 
 #: src/pages/SharedPage.tsx
-msgid "Sign in to view this page"
-msgstr ""
+msgid "Sign in to view this app"
+msgstr "Zaloguj się, aby wyświetlić tę aplikację"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -9855,9 +9849,28 @@ msgstr ""
 msgid "Thinking: {0}"
 msgstr "Rozumowanie: {0}"
 
+#: src/lib/pages.ts
+msgid "This app couldn't be shown."
+msgstr "Nie udało się wyświetlić tej aplikacji."
+
+#: src/components/pages/PageCard.tsx
+#: src/components/pages/PageView.tsx
+#: src/components/pages/PageViewHost.tsx
+msgid "This app couldn't load"
+msgstr "Nie udało się wczytać tej aplikacji"
+
 #: src/components/apps/AppDataPanel.tsx
 msgid "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
 msgstr ""
+
+#: src/pages/SharedPage.tsx
+msgid "This app is password protected"
+msgstr "Ta aplikacja jest chroniona hasłem"
+
+#: src/components/pages/PageViewHost.tsx
+#: src/pages/SharedPage.tsx
+msgid "This app isn't available"
+msgstr "Ta aplikacja jest niedostępna"
 
 #: src/lib/user-error.ts
 msgid "This app needs its own sign-in setup to connect."
@@ -9978,25 +9991,6 @@ msgstr "Ten miesiąc"
 #: src/pages/KnowledgeSection.tsx
 msgid "This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes."
 msgstr ""
-
-#: src/lib/pages.ts
-msgid "This page couldn't be shown."
-msgstr "Nie udało się wyświetlić tej strony."
-
-#: src/components/pages/PageCard.tsx
-#: src/components/pages/PageView.tsx
-#: src/components/pages/PageViewHost.tsx
-msgid "This page couldn't load"
-msgstr "Nie udało się wczytać tej strony"
-
-#: src/pages/SharedPage.tsx
-msgid "This page is password protected"
-msgstr ""
-
-#: src/components/pages/PageViewHost.tsx
-#: src/pages/SharedPage.tsx
-msgid "This page isn't available"
-msgstr "Ta strona jest niedostępna"
 
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
@@ -10870,8 +10864,8 @@ msgid "Who can change the data"
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx
-msgid "Who can open this page"
-msgstr "Kto może otworzyć tę stronę"
+msgid "Who can open this app"
+msgstr "Kto może otworzyć tę aplikację"
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Who gets a computer"

@@ -76,7 +76,7 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
     return (
       <div role="alert" className="flex flex-col items-start gap-2 px-1 py-2">
         <p className="text-[13px] text-muted-foreground">
-          <Trans>Couldn't load pages.</Trans>
+          <Trans>Couldn't load apps.</Trans>
         </p>
         <Button size="sm" variant="outline" onClick={() => void pages.refetch()}>
           <Trans>Try again</Trans>
@@ -91,13 +91,13 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
         <p className="text-[13px] text-muted-foreground">
           {groupId ? (
             <Trans>
-              Pages this group builds for you appear here. Ask for a dashboard, tracker or plan to
+              Apps this group builds for you appear here. Ask for a dashboard, tracker or plan to
               make one.
             </Trans>
           ) : (
             <Trans>
-              Pages this bot builds for you appear here. Ask for a dashboard, tracker or plan to
-              make one.
+              Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make
+              one.
             </Trans>
           )}
         </p>
@@ -130,7 +130,7 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
           <input
             // biome-ignore lint/a11y/noAutofocus: the field appears because Rename was chosen.
             autoFocus
-            aria-label={t`Page title`}
+            aria-label={t`App title`}
             value={renaming.draft}
             maxLength={PAGE_TITLE_MAX_LENGTH}
             onChange={(event) => setRenaming({ id: page.id, draft: event.target.value })}
@@ -177,7 +177,7 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
               ) : null}
               {page.kind === "app" ? (
                 <>
-                  <Trans>App</Trans>
+                  <Trans>Live data</Trans>
                   <span aria-hidden="true">·</span>
                 </>
               ) : null}
@@ -230,8 +230,8 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
           <Search aria-hidden="true" className="size-4 shrink-0" />
           <input
             type="search"
-            aria-label={t`Find a page`}
-            placeholder={t`Find a page`}
+            aria-label={t`Find an app`}
+            placeholder={t`Find an app`}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground"
@@ -240,16 +240,16 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
       ) : null}
       {rename.isError ? (
         <p role="alert" className="px-2 text-[12px] text-destructive">
-          <Trans>Could not rename this page. Try again.</Trans>
+          <Trans>Could not rename this app. Try again.</Trans>
         </p>
       ) : pin.isError ? (
         <p role="alert" className="px-2 text-[12px] text-destructive">
-          <Trans>Could not pin this page. Try again.</Trans>
+          <Trans>Could not pin this app. Try again.</Trans>
         </p>
       ) : null}
       {items.length === 0 ? (
         <p className="px-2 py-1 text-[13px] text-muted-foreground">
-          <Trans>No pages match “{query}”.</Trans>
+          <Trans>No apps match “{query}”.</Trans>
         </p>
       ) : null}
       {pinned.length ? (
@@ -264,7 +264,7 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
       {pages.isError ? (
         // A later read failed (Show more, or reading the list again): the pages above may be stale.
         <div role="alert" className="flex items-center gap-2 px-2 text-[12px] text-destructive">
-          <Trans>Couldn't load pages.</Trans>
+          <Trans>Couldn't load apps.</Trans>
           <Button
             size="sm"
             variant="ghost"

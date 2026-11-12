@@ -420,13 +420,11 @@ function AddColumn({
       >
         {COLUMN_TYPES.filter(
           (option) => option !== "relation" && option !== "enum" && option !== "image",
-        ).map(
-          (option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ),
-        )}
+        ).map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
       </select>
       <Button size="sm" type="submit" disabled={!key || pending}>
         {t`Add`}

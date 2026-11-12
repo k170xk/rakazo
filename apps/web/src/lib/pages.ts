@@ -76,7 +76,7 @@ export function usePageDocument(
   const touch = useMedia("(pointer: coarse)");
   // Fetched again on every mount; the browser revalidates the server's no-cache runtime.
   const runtime = useQuery({ queryKey: ["page-runtime"], queryFn: fetchPageRuntime });
-  const errorTitle = t`This page couldn't be shown.`;
+  const errorTitle = t`This app couldn't be shown.`;
   const viewerDocument = useMemo(
     () =>
       runtime.data === undefined || code === undefined

@@ -31,12 +31,12 @@ import { syncCallIdentity } from "./lib/call-session";
 import { desktopBridge } from "./lib/desktop";
 import { syncWebLogoAvatarIdentity } from "./lib/logo-avatar-activity";
 import { identifyMonitoringUser } from "./lib/monitoring";
+import { ensureDefaultCompanySpace } from "./lib/organizations";
 import { markAfterPaint, markOnce } from "./lib/performance";
 import { lazyComponent } from "./lib/preload-recovery";
 import { QueryUserProvider, setQueryUser } from "./lib/query";
 import { getRemoteImagesEnabled, subscribeRemoteImages } from "./lib/remote-images-preference";
 import { hasSignedInBefore, rememberSignedIn } from "./lib/returning-user";
-import { ensureDefaultCompanySpace } from "./lib/organizations";
 import { rpc, selectedSpaceId } from "./lib/rpc";
 import {
   holdAnonymousGate,
@@ -198,10 +198,7 @@ function SessionApp() {
       .catch(() => undefined);
   }, [analyticsUserId, screen]);
   const gate = sessionGate(session);
-  const spaceReady = useDefaultCompanySpaceReady(
-    analyticsUserId ?? null,
-    gate === "authenticated",
-  );
+  const spaceReady = useDefaultCompanySpaceReady(analyticsUserId ?? null, gate === "authenticated");
   useLayoutEffect(() => {
     if (gate !== "authenticated" && gate !== "anonymous") return;
     syncWebLogoAvatarIdentity(analyticsUserId ?? null);

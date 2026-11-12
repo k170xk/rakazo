@@ -594,7 +594,7 @@ export function BotSettings({
             </TabsTrigger>
           ) : null}
           <TabsTrigger value="pages">
-            <Trans>Pages</Trans>
+            <Trans>Apps</Trans>
           </TabsTrigger>
           {filesOn ? (
             <TabsTrigger value="files">

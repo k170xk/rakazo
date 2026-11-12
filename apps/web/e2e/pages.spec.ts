@@ -86,7 +86,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   await captureScreenshot(page, testInfo, "page-full-screen");
   // Opening lands on Close, and Tab reaches the title, Download PDF and Share before anything in
   // the page.
-  await expect(view.getByRole("button", { name: "Close page" })).toBeFocused();
+  await expect(view.getByRole("button", { name: "Close app" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(view.getByRole("button", { name: title })).toBeFocused();
   await page.keyboard.press("Tab");
@@ -106,7 +106,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   await view.getByRole("button", { name: "Download PDF" }).click();
   expect(await page.evaluate(() => (window as Window & { printed?: number }).printed)).toBe(1);
   await page.emulateMedia({ media: "print" });
-  for (const name of ["Close page", title, "Download PDF", "Share"]) {
+  for (const name of ["Close app", title, "Download PDF", "Share"]) {
     await expect(view.getByRole("button", { name })).toBeHidden();
   }
   await expect(page.getByRole("combobox", { name: /^Message/ })).toBeHidden();
@@ -164,8 +164,8 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   await popup.close();
 
   await view.getByRole("button", { name: title }).click();
-  await view.getByRole("textbox", { name: "Page title" }).fill("Signups dashboard");
-  await view.getByRole("textbox", { name: "Page title" }).press("Enter");
+  await view.getByRole("textbox", { name: "App title" }).fill("Signups dashboard");
+  await view.getByRole("textbox", { name: "App title" }).press("Enter");
   await expect(view.getByRole("button", { name: "Signups dashboard" })).toBeVisible();
 
   await view.getByRole("button", { name: "Share" }).click();
@@ -212,8 +212,8 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   });
   await share.getByRole("button", { name: "Copy link" }).click();
   await expect(share.getByText("Couldn't copy. Select the link and copy it.")).toBeVisible();
-  await expect(share.getByRole("textbox", { name: "Page link" })).toHaveValue(shareUrl);
-  await expect(share.getByRole("textbox", { name: "Page link" })).toBeFocused();
+  await expect(share.getByRole("textbox", { name: "App link" })).toHaveValue(shareUrl);
+  await expect(share.getByRole("textbox", { name: "App link" })).toBeFocused();
   await captureScreenshot(page, testInfo, "page-share-copy-fallback");
   await restore();
   await page.evaluate(() => Reflect.deleteProperty(document, "execCommand"));
@@ -266,7 +266,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
     route.fulfill({ status: 503 }),
   );
   await outside.reload();
-  await expect(outside.getByRole("alert")).toHaveText("Couldn't load this page. Try again.");
+  await expect(outside.getByRole("alert")).toHaveText("Couldn't load this app. Try again.");
   await outside.unroute("**/api/v1/assets/page-runtime.js");
   await outside.getByRole("button", { name: "Try again" }).click();
   await expect(pageFrame(outside, "Signups dashboard").getByText("$12,400")).toBeVisible();
@@ -276,7 +276,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   await page.keyboard.press("Escape");
   await expect(view).toBeHidden();
   await expect(page).not.toHaveURL(/[?&]page=/);
-  await expect(card).toContainText(/Page · Shared · \S/);
+  await expect(card).toContainText(/App · Shared · \S/);
   await captureScreenshot(page, testInfo, "page-card-shared");
   await expect(
     page.getByTestId("message-user-bubble").filter({ hasText: "make the churn tile red" }),
@@ -323,7 +323,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   await expect(pageFrame(page, "Signups dashboard").getByText("1.9%")).toBeVisible();
   await page.keyboard.press("Escape");
 
-  await openBotPanelTab(page, "Pages");
+  await openBotPanelTab(page, "Apps");
   await page
     .getByTestId("bot-pages")
     .getByRole("button", { name: /^Signups dashboard/ })
@@ -336,17 +336,17 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   await share.getByRole("radio", { name: /Only you/ }).click();
   await expect(share.getByRole("link", { name: "Open link" })).toBeHidden();
   await outside.reload();
-  await expect(outside.getByRole("heading", { name: "This page isn't available" })).toBeVisible();
+  await expect(outside.getByRole("heading", { name: "This app isn't available" })).toBeVisible();
   await expect(outside.getByRole("link", { name: "Open Rakazo" })).toBeVisible();
   await captureScreenshot(outside, testInfo, "page-public-unavailable");
   // Busy or unreachable is not gone: the visitor is asked to try again.
   await outside.route("**/api/v1/pages/shared/**", (route) => route.fulfill({ status: 503 }));
   await outside.reload();
-  await expect(outside.getByRole("alert")).toHaveText("Couldn't load this page. Try again.");
+  await expect(outside.getByRole("alert")).toHaveText("Couldn't load this app. Try again.");
   await captureScreenshot(outside, testInfo, "page-public-error");
   await outside.unroute("**/api/v1/pages/shared/**");
   await outside.getByRole("button", { name: "Try again" }).click();
-  await expect(outside.getByRole("heading", { name: "This page isn't available" })).toBeVisible();
+  await expect(outside.getByRole("heading", { name: "This app isn't available" })).toBeVisible();
   await visitor.close();
   await page.keyboard.press("Escape");
   await expect(share).toBeHidden();
@@ -366,7 +366,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   const confirm = page.getByRole("alertdialog", { name: "Delete Signups dashboard?" });
   await captureScreenshot(page, testInfo, "page-delete-confirm");
   await confirm.getByRole("button", { name: "Delete" }).click();
-  await expect(page.getByText("Pages this bot builds for you appear here.")).toBeVisible();
+  await expect(page.getByText("Apps this bot builds for you appear here.")).toBeVisible();
   await captureScreenshot(page, testInfo, "page-library-empty");
 
   // The header pill reopens the bot panel on the Pages tab it closed on.
@@ -375,7 +375,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   await expect(pill).toHaveAttribute("aria-expanded", "false");
   await pill.click();
   await expect(
-    page.getByTestId("bot-settings").getByRole("tab", { name: "Pages", exact: true }),
+    page.getByTestId("bot-settings").getByRole("tab", { name: "Apps", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
 });
 
@@ -467,7 +467,7 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
   const anyone = share.getByRole("radio", { name: /Anyone with the link/ });
   await anyone.click();
   await expect(share.getByRole("alert")).toHaveText(
-    "Could not change who can view this page. Try again.",
+    "Could not change who can view this app. Try again.",
   );
   await expect(anyone).toBeChecked();
   await expect(share.getByRole("button", { name: "Copy link" })).toBeVisible();
@@ -503,9 +503,9 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
   await expect(share).toBeHidden();
   await page.route("**/rpc/pages/rename", (route) => route.abort("failed"));
   await view.getByRole("button", { name: "Beta" }).click();
-  await view.getByRole("textbox", { name: "Page title" }).fill("Gamma");
-  await view.getByRole("textbox", { name: "Page title" }).press("Enter");
-  await expect(view.getByRole("alert")).toHaveText("Could not rename this page. Try again.");
+  await view.getByRole("textbox", { name: "App title" }).fill("Gamma");
+  await view.getByRole("textbox", { name: "App title" }).press("Enter");
+  await expect(view.getByRole("alert")).toHaveText("Could not rename this app. Try again.");
   await captureScreenshot(page, testInfo, "page-rename-error");
   await page.unroute("**/rpc/pages/rename");
   await closePage(page);
@@ -533,13 +533,13 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
   await expect(stillLoading).toHaveCount(0, { timeout: 15_000 });
   await open("Beta");
   const betaId = new URL(page.url()).searchParams.get("page")!;
-  await expect(view.getByRole("heading", { name: "This page couldn't load" })).toBeVisible({
+  await expect(view.getByRole("heading", { name: "This app couldn't load" })).toBeVisible({
     timeout: 15_000,
   });
   await captureScreenshot(page, testInfo, "page-view-load-error");
   await page.unroute("**/rpc/pages/get");
   await view.getByRole("button", { name: "Try again" }).click();
-  await expect(view.getByRole("heading", { name: "This page couldn't load" })).toBeHidden();
+  await expect(view.getByRole("heading", { name: "This app couldn't load" })).toBeHidden();
   await expect(view.getByRole("button", { name: "Beta" })).toBeVisible();
   await closePage(page);
   // So does a page whose code failed to download, and Try again downloads it again.
@@ -548,7 +548,7 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
   await expect(betaCard).toBeVisible();
   await expect(stillLoading).toHaveCount(0, { timeout: 15_000 });
   await open("Beta");
-  await expect(view.getByRole("heading", { name: "This page couldn't load" })).toBeVisible({
+  await expect(view.getByRole("heading", { name: "This app couldn't load" })).toBeVisible({
     timeout: 15_000,
   });
   await page.unroute("**/api/v1/assets/page-runtime.js");
@@ -587,7 +587,7 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
   await closePage(page);
 
   // The Library's Share opens the popover, every time.
-  await openBotPanelTab(page, "Pages");
+  await openBotPanelTab(page, "Apps");
   const library = page.getByTestId("bot-pages");
   for (let round = 0; round < 2; round++) {
     await library.getByRole("button", { name: "Actions for Alpha" }).click();
@@ -616,41 +616,41 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
 
   // The deleted page's card stays in the chat, calm and closed.
   const deleted = cards.filter({ hasText: "Beta" });
-  await expect(deleted).toContainText("Page · Deleted");
+  await expect(deleted).toContainText("App · Deleted");
   await expect(deleted.getByRole("button")).toHaveCount(0);
   await captureScreenshot(page, testInfo, "page-card-deleted");
 
   // A link to the deleted page opens to a clear message, not a silent close.
   await page.goto(`${page.url().split("?")[0]}?page=${betaId}`);
-  await expect(view.getByRole("heading", { name: "This page isn't available" })).toBeVisible();
+  await expect(view.getByRole("heading", { name: "This app isn't available" })).toBeVisible();
   await captureScreenshot(page, testInfo, "page-view-deleted");
   await view.getByRole("button", { name: "Back to chat" }).click();
   await expect(view).toBeHidden();
 
   // A longer list gets a field to find a page by title.
   for (const title of ["One", "Two", "Three", "Four", "Five", "Six", "Seven"]) await save(title);
-  await openBotPanelTab(page, "Pages");
+  await openBotPanelTab(page, "Apps");
   await expect(library.getByRole("listitem")).toHaveCount(8);
   await expect(library.getByRole("button", { name: "Show more" })).toBeHidden();
-  await library.getByRole("searchbox", { name: "Find a page" }).fill("sev");
+  await library.getByRole("searchbox", { name: "Find an app" }).fill("sev");
   await expect(library.getByRole("listitem")).toHaveCount(1);
-  await library.getByRole("searchbox", { name: "Find a page" }).fill("nothing like it");
-  await expect(library.getByText("No pages match “nothing like it”.")).toBeVisible();
-  await library.getByRole("searchbox", { name: "Find a page" }).fill("");
+  await library.getByRole("searchbox", { name: "Find an app" }).fill("nothing like it");
+  await expect(library.getByText("No apps match “nothing like it”.")).toBeVisible();
+  await library.getByRole("searchbox", { name: "Find an app" }).fill("");
 
   // Rename is in each page's menu, on every screen size.
   await library.getByRole("button", { name: "Actions for Alpha" }).click();
   await page.getByRole("menuitem", { name: "Rename" }).click();
-  await library.getByRole("textbox", { name: "Page title" }).fill("Alpha renamed");
+  await library.getByRole("textbox", { name: "App title" }).fill("Alpha renamed");
   await captureScreenshot(page, testInfo, "page-library-rename");
-  await library.getByRole("textbox", { name: "Page title" }).press("Enter");
+  await library.getByRole("textbox", { name: "App title" }).press("Enter");
   await expect(library.getByRole("button", { name: /^Alpha renamed/ })).toBeVisible();
 
   // A pin the server made but whose answer was lost: the list shows it pinned, and says it failed.
   await page.route("**/rpc/pages/pin", loseAnswer);
   await library.getByRole("button", { name: "Actions for Alpha renamed" }).click();
   await page.getByRole("menuitem", { name: "Pin" }).click();
-  await expect(library.getByRole("alert")).toHaveText("Could not pin this page. Try again.");
+  await expect(library.getByRole("alert")).toHaveText("Could not pin this app. Try again.");
   await expect(library.getByRole("heading", { name: "Pinned" })).toBeVisible();
   await captureScreenshot(page, testInfo, "page-library-pin-error");
   await page.unroute("**/rpc/pages/pin");
@@ -659,18 +659,18 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
   await page.route("**/rpc/pages/list", (route) => route.fulfill({ status: 500 }));
   await library.getByRole("button", { name: "Actions for Alpha renamed" }).click();
   await page.getByRole("menuitem", { name: "Rename" }).click();
-  await library.getByRole("textbox", { name: "Page title" }).fill("Alpha");
-  await library.getByRole("textbox", { name: "Page title" }).press("Enter");
+  await library.getByRole("textbox", { name: "App title" }).fill("Alpha");
+  await library.getByRole("textbox", { name: "App title" }).press("Enter");
   const listError = library.getByRole("alert");
-  await expect(listError).toContainText("Couldn't load pages.");
+  await expect(listError).toContainText("Couldn't load apps.");
   await expect(library.getByRole("listitem")).toHaveCount(8);
   await captureScreenshot(page, testInfo, "page-library-stale-error");
   // A list that can't be read at all is not shown as empty.
   await page.reload();
-  await openBotPanelTab(page, "Pages");
+  await openBotPanelTab(page, "Apps");
   const unread = page.getByTestId("bot-settings").getByRole("alert");
-  await expect(unread).toContainText("Couldn't load pages.");
-  await expect(page.getByText("Pages this bot builds for you appear here.")).toBeHidden();
+  await expect(unread).toContainText("Couldn't load apps.");
+  await expect(page.getByText("Apps this bot builds for you appear here.")).toBeHidden();
   await captureScreenshot(page, testInfo, "page-library-error");
   await page.unroute("**/rpc/pages/list");
   await unread.getByRole("button", { name: "Try again" }).click();
@@ -695,7 +695,7 @@ test("a group's pages show in its settings, and the palette finds and opens a pa
   await page.getByTestId("bot-settings-trigger").click();
   const settings = page.getByTestId("side-panel");
   await expect(settings).toHaveAttribute("data-panel", "group-settings");
-  await expect(settings.getByRole("heading", { name: "Pages" })).toBeVisible();
+  await expect(settings.getByRole("heading", { name: "Apps" })).toBeVisible();
   await expect(
     settings.getByText(
       "Pages this group builds for you appear here. Ask for a dashboard, tracker or plan to make one.",
@@ -719,7 +719,7 @@ test("a group's pages show in its settings, and the palette finds and opens a pa
   const palette = page.getByTestId("command-palette");
   await expect(palette).toBeVisible();
   await page.keyboard.type("launch che");
-  await expect(palette.getByText("Pages", { exact: true })).toBeVisible();
+  await expect(palette.getByText("Apps", { exact: true })).toBeVisible();
   const row = palette.getByRole("option", { name: /Launch checklist/ });
   await expect(row).toBeVisible();
   await captureScreenshot(page, testInfo, "page-palette");

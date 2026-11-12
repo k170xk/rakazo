@@ -46,7 +46,7 @@ export function PublicPageShell({
           <Trans>Open OCSC Intelligence</Trans>
         </a>
         <h1 className="sr-only">{title}</h1>
-        <nav aria-label={t`Page actions`} className="flex shrink-0 items-center gap-1.5">
+        <nav aria-label={t`App actions`} className="flex shrink-0 items-center gap-1.5">
           <Button
             variant="ghost"
             className={`${ACTION} ${copied ? "text-success" : ""}`}

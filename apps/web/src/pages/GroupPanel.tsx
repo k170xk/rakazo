@@ -461,7 +461,7 @@ export function GroupSettings({
       {pages ? (
         <section className="mt-6">
           <SectionHeading variant="label" className="mb-2">
-            <Trans>Pages</Trans>
+            <Trans>Apps</Trans>
           </SectionHeading>
           {pages}
         </section>

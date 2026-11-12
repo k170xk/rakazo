@@ -116,6 +116,6 @@ it("stops pulsing once its page can't be read", async () => {
   expect(pulsing()).toBe(0);
   expect(document.body.textContent).toContain("Plan");
   // A preview that cannot load says so rather than leaving a still outline.
-  expect(document.body.textContent).toContain("This page couldn't load");
+  expect(document.body.textContent).toContain("This app couldn't load");
   act(() => root.unmount());
 });

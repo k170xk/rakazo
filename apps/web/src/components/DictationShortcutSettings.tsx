@@ -1,6 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Button, Kbd, KbdGroup } from "@rakazo/ui-web";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import type { DictationShortcut } from "../lib/dictation-shortcut-pref";
 import {
   dictationShortcutFromEvent,
   formatDictationShortcut,
@@ -8,7 +9,6 @@ import {
   resetDictationShortcut,
   setDictationShortcut,
   subscribeDictationShortcut,
-  type DictationShortcut,
 } from "../lib/dictation-shortcut-pref";
 import { isApplePlatform } from "../pages/shell/shell-shortcuts";
 import { SettingsRow } from "./SettingsRows";
@@ -17,10 +17,8 @@ import { SettingsRow } from "./SettingsRows";
 export function DictationShortcutSettings() {
   const { t } = useLingui();
   const apple = isApplePlatform();
-  const shortcut = useSyncExternalStore(
-    subscribeDictationShortcut,
-    getDictationShortcut,
-    () => getDictationShortcut(null),
+  const shortcut = useSyncExternalStore(subscribeDictationShortcut, getDictationShortcut, () =>
+    getDictationShortcut(null),
   );
   const [capturing, setCapturing] = useState(false);
 
@@ -57,7 +55,10 @@ export function DictationShortcutSettings() {
         </div>
       }
       control={
-        <div className="flex flex-wrap items-center gap-2" data-testid="dictation-shortcut-settings">
+        <div
+          className="flex flex-wrap items-center gap-2"
+          data-testid="dictation-shortcut-settings"
+        >
           <KbdGroup aria-label={t`Current dictate shortcut`}>
             {labels.map((part) => (
               <Kbd key={part}>{part}</Kbd>
