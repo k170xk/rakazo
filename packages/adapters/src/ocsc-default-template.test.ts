@@ -15,7 +15,9 @@ function ctx(evolvePlugins: unknown = connection) {
   return {
     deps: {
       evolvePlugins,
-      prisma: { user: { findUnique: async () => ({ email: "keith@ocsc.co.uk" }) } },
+      prisma: {
+        user: { findUnique: async () => ({ email: "keith@ocsc.co.uk", emailVerified: true }) },
+      },
     },
     run: { userId: "u1" },
   } as never;

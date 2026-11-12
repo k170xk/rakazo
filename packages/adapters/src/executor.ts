@@ -31,6 +31,7 @@ import {
   nextFence,
   nonOwnerChatPrivacyBlock,
   promptInvokesSkill,
+  provenEmail,
   redactSecrets,
   renderBotDirectory,
   userRunError,
@@ -1141,12 +1142,12 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         if (bot.evolveAssistantId) {
           const people = await deps.prisma.user.findMany({
             where: { id: { in: [...new Set([bot.userId, run.userId])] } },
-            select: { email: true },
+            select: { email: true, emailVerified: true },
           });
           for (const person of people) {
             const denied = await evolveAssistantAccessError(
               deps.evolvePlugins,
-              person.email,
+              provenEmail(person),
               bot.evolveAssistantId,
             );
             if (denied) {
@@ -2044,10 +2045,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         try {
           const owner = await deps.prisma.user.findUnique({
             where: { id: run.userId },
-            select: { timezone: true, email: true },
+            select: { timezone: true, email: true, emailVerified: true },
           });
           userTimeZone = owner?.timezone;
-          ownerEmail = owner?.email;
+          ownerEmail = provenEmail(owner) ?? undefined;
         } catch {
           // Timezone is optional context; a lookup failure must not prevent a run.
         }

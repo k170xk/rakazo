@@ -1023,7 +1023,11 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     app,
     prisma,
     requestClientIp,
-    async (request) => (await auth.api.getSession({ headers: request.headers }))?.user?.id ?? null,
+    // A link opens for colleagues by their account, so only an address they proved counts.
+    async (request) => {
+      const user = (await auth.api.getSession({ headers: request.headers }))?.user;
+      return user?.emailVerified ? user.id : null;
+    },
   );
   mountEvolveAppData(app, prisma, evolvePlugins);
   const auditAuthResponse = createAuthResponseAudit();

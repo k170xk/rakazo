@@ -55,19 +55,20 @@ export function mountEvolveAppData(
           kind: true,
           currentVersion: true,
           dataAccess: true,
-          user: { select: { email: true } },
+          user: { select: { email: true, emailVerified: true } },
         },
       });
       if (page?.kind !== "app") return null;
       const viewer = await prisma.user.findFirst({
-        where: { email: { equals: caller.email, mode: "insensitive" } },
+        where: { email: { equals: caller.email, mode: "insensitive" }, emailVerified: true },
         select: { id: true, name: true },
       });
       return { page, viewer };
     });
     if (!found) return c.json({ error: "This app is no longer published." }, 404, headers);
     const { page, viewer } = found;
-    const isOwner = page.user.email.trim().toLowerCase() === caller.email;
+    const isOwner =
+      page.user.emailVerified && page.user.email.trim().toLowerCase() === caller.email;
     // Rows remember who changed them, so only people with an account here write.
     const canEdit = viewer !== null && (isOwner || colleaguesMayWrite(page.dataAccess));
     const ownRowsOnly = canEdit && !isOwner && page.dataAccess === "contribute";

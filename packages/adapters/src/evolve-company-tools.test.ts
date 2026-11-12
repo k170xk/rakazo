@@ -36,7 +36,7 @@ const KNOWN_EVOLVE_TOOLS = [
 const SECRET = "s".repeat(40);
 const connection = { url: "https://evolve.test/functions/v1/", secret: SECRET };
 const prisma = {
-  user: { findUnique: vi.fn(async () => ({ email: "Keith@ocsc.ie" })) },
+  user: { findUnique: vi.fn(async () => ({ email: "Keith@ocsc.ie", emailVerified: true })) },
 } as unknown as PrismaClient;
 const context = {
   operationId: "op",

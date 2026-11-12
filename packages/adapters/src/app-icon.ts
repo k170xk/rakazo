@@ -1,3 +1,4 @@
+import { provenEmail } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem, setAppIcon } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -100,10 +101,14 @@ export function drawAppIconLater(
   return (async () => {
     try {
       const user = await runAsSystem("read the app owner's email for its icon", () =>
-        prisma.user.findUnique({ where: { id: input.userId }, select: { email: true } }),
+        prisma.user.findUnique({
+          where: { id: input.userId },
+          select: { email: true, emailVerified: true },
+        }),
       );
-      if (!user?.email) return null;
-      const png = await generateAppIcon(connection, user.email, input);
+      const email = provenEmail(user);
+      if (!email) return null;
+      const png = await generateAppIcon(connection, email, input);
       return await runAsSystem("keep an app's generated icon", () =>
         setAppIcon(prisma, input.pageId, png),
       );

@@ -7,6 +7,7 @@ import type {
 } from "@rakazo/adapter-kit";
 import type { CompanyToolsState, EvolveToolAccess } from "@rakazo/contracts";
 import { EvolveToolAccessSchema } from "@rakazo/contracts";
+import { provenEmail } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -326,16 +327,20 @@ export class EvolveCompanyTools implements ConnectorProvider {
       return;
     }
     const user = await runAsSystem("read the run owner's email for Evolve tools", () =>
-      this.prisma.user.findUnique({ where: { id: context.userId }, select: { email: true } }),
+      this.prisma.user.findUnique({
+        where: { id: context.userId },
+        select: { email: true, emailVerified: true },
+      }),
     );
-    if (!user?.email) {
-      yield { type: "error", message: "Evolve's tools need an account with an email address." };
+    const email = provenEmail(user);
+    if (!email) {
+      yield { type: "error", message: "Evolve's tools need an account with a verified email." };
       return;
     }
     try {
       const result = await this.rpc(
         this.connection,
-        user.email,
+        email,
         "tools/call",
         { name: toolName, arguments: call.args },
         CALL_TIMEOUT_MS,

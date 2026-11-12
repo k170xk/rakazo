@@ -163,7 +163,7 @@ describe("save_app", () => {
         secret: "s".repeat(40),
       };
       (deps.prisma as Record<string, unknown>).user = {
-        findUnique: vi.fn(async () => ({ email: "ann@ocsc.ie" })),
+        findUnique: vi.fn(async () => ({ email: "ann@ocsc.ie", emailVerified: true })),
       };
       const args = {
         title: "Site inspections",

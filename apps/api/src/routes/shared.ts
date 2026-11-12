@@ -17,6 +17,7 @@ import {
   canonicalPiProviderId,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
+import { provenEmail } from "@rakazo/core";
 import { isAdmin } from "../admins.js";
 import { effectiveSandboxProvider } from "../computer-provider-config.js";
 import { syncEvolvePhoto } from "../evolve-photo.js";
@@ -36,6 +37,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
       where: { id: actor.userId },
       select: {
         email: true,
+        emailVerified: true,
         name: true,
         image: true,
         timezone: true,
@@ -48,7 +50,9 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     modelSetup(deps, actor),
     isAdmin(deps, actor.userId),
   ]);
-  void syncEvolvePhoto(deps, { id: actor.userId, email: user.email, image: user.image });
+  const evolveEmail = provenEmail(user);
+  if (evolveEmail)
+    void syncEvolvePhoto(deps, { id: actor.userId, email: evolveEmail, image: user.image });
   // Where the deployment runs computers once an admin's choice in Settings applies.
   // The app treats "none" as computers being unavailable, which is what the company switch
   // means, and so is a person without full access: their bots' computers only run OCSC tools.

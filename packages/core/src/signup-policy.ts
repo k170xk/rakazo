@@ -23,6 +23,17 @@ export function isMessagingEmail(email: string): boolean {
   return email.trim().toLowerCase().endsWith(MESSAGING_EMAIL_SUFFIX);
 }
 
+/**
+ * The address to name someone by to Evolve, which trusts it as their staff identity: only one
+ * they proved they receive mail at, never an internal messaging address.
+ */
+export function provenEmail(
+  user: { email: string | null; emailVerified: boolean } | null | undefined,
+): string | null {
+  if (!user?.email || !user.emailVerified || isMessagingEmail(user.email)) return null;
+  return user.email;
+}
+
 /** A successful signup with an explicit null token awaits mailbox proof. */
 export function signupRequiresEmailVerification(response: unknown): boolean {
   return Boolean(
@@ -30,8 +41,9 @@ export function signupRequiresEmailVerification(response: unknown): boolean {
   );
 }
 
+/** Sign-ups open only when the operator says so; a missing setting keeps them closed. */
 export function signupsOpen(enabled: string | undefined): boolean {
-  if (enabled === undefined) return true;
+  if (enabled === undefined || enabled.trim() === "") return false;
   return enabled !== "false" && enabled !== "0";
 }
 

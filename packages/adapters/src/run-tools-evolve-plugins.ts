@@ -1,3 +1,4 @@
+import { provenEmail } from "@rakazo/core";
 import { runAsSystem } from "@rakazo/db";
 import { z } from "zod";
 import { resolveBotWorkspacePath } from "./computer-support.js";
@@ -55,9 +56,12 @@ const issues = (error: z.ZodError) =>
 
 export async function personEmail(ctx: RunContext): Promise<string | null> {
   const user = await runAsSystem("read the run owner's email for Evolve plugins", () =>
-    ctx.deps.prisma.user.findUnique({ where: { id: ctx.run.userId }, select: { email: true } }),
+    ctx.deps.prisma.user.findUnique({
+      where: { id: ctx.run.userId },
+      select: { email: true, emailVerified: true },
+    }),
   );
-  return user?.email ?? null;
+  return provenEmail(user);
 }
 
 const DEDICATED_ONLY =

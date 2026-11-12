@@ -1,3 +1,4 @@
+import { provenEmail } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -191,12 +192,16 @@ async function libraryTemplate(
   let template: LibraryTemplate | null = null;
   try {
     const user = await runAsSystem("read the run owner's email", () =>
-      ctx.deps.prisma.user.findUnique({ where: { id: ctx.run.userId }, select: { email: true } }),
+      ctx.deps.prisma.user.findUnique({
+        where: { id: ctx.run.userId },
+        select: { email: true, emailVerified: true },
+      }),
     );
-    if (user?.email) {
+    const email = provenEmail(user);
+    if (email) {
       const found = await callEvolveDocumentLibrary<{ title?: unknown; fileUrl?: unknown }>(
         connection,
-        user.email,
+        email,
         { action: "template", id },
       );
       if (typeof found.fileUrl === "string" && found.fileUrl.startsWith("https://")) {

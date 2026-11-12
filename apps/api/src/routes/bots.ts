@@ -44,6 +44,7 @@ import {
   isMainPaBot,
   paBotIntroPrompt,
   paBotTeamInstructions,
+  provenEmail,
 } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
@@ -253,9 +254,9 @@ export function botIntroPrompt(input: {
 export async function actorEmail(deps: RouterDeps, actor: Actor): Promise<string | null> {
   const user = await deps.prisma.user.findUnique({
     where: { id: actor.userId },
-    select: { email: true },
+    select: { email: true, emailVerified: true },
   });
-  return user?.email ?? null;
+  return provenEmail(user);
 }
 
 /** The Evolve assistant a new bot starts from, checked against what this person may open. */

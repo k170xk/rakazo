@@ -7,6 +7,8 @@ import { resolveSignupPolicy } from "./signup-policy.js";
 export const EVOLVE_SSO_AUD = "rakazo";
 export const EVOLVE_SSO_ISS = "evolve-computer";
 export const EVOLVE_SSO_TTL_SEC = 120;
+/** Allowance for the clocks of Evolve and this server disagreeing. */
+const CLOCK_SKEW_SEC = 60;
 
 export class EvolveSsoInvalidTokenError extends Error {
   constructor(message = "Invalid Evolve SSO token") {
@@ -121,7 +123,7 @@ export function verifyEvolveComputerSsoToken(
   }
 
   if (typeof payload.email !== "string" || !payload.email.includes("@")) return null;
-  if (typeof payload.jti !== "string" || !payload.jti) return null;
+  if (typeof payload.jti !== "string" || !payload.jti || payload.jti.length > 128) return null;
   if (
     typeof payload.evolve_profile_id !== "number" ||
     !Number.isFinite(payload.evolve_profile_id)
@@ -130,6 +132,8 @@ export function verifyEvolveComputerSsoToken(
   }
   if (payload.aud !== EVOLVE_SSO_AUD || payload.iss !== EVOLVE_SSO_ISS) return null;
   if (typeof payload.exp !== "number" || payload.exp * 1000 <= Date.now()) return null;
+  // A token that lives longer than Evolve ever signs one for was not made for a single sign-in.
+  if (payload.exp * 1000 > Date.now() + (EVOLVE_SSO_TTL_SEC + CLOCK_SKEW_SEC) * 1000) return null;
 
   return {
     ...payload,
@@ -156,14 +160,20 @@ export async function exchangeEvolveSso(input: {
   });
   if (replayed) throw new EvolveSsoReplayError();
 
-  await input.prisma.verification.create({
-    data: {
-      id: newId(),
-      identifier,
-      value: claims.email,
-      expiresAt: new Date(claims.exp * 1000),
-    },
-  });
+  // The token's own id is the row's key, so two uses arriving together cannot both be recorded.
+  try {
+    await input.prisma.verification.create({
+      data: {
+        id: identifier,
+        identifier,
+        value: claims.email,
+        expiresAt: new Date(claims.exp * 1000),
+      },
+    });
+  } catch (error) {
+    if ((error as { code?: unknown } | null)?.code === "P2002") throw new EvolveSsoReplayError();
+    throw error;
+  }
 
   const email = claims.email;
   let user = await input.prisma.user.findUnique({ where: { email } });

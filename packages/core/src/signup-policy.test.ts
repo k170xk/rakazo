@@ -3,6 +3,7 @@ import {
   emailAllowed,
   isMessagingEmail,
   parseAllowlist,
+  provenEmail,
   signupPolicyFromEnv,
   signupRequiresEmailVerification,
   signupsOpen,
@@ -47,7 +48,9 @@ describe("signup policy", () => {
   });
 
   it("honors SIGNUPS_ENABLED", () => {
-    expect(signupsOpen(undefined)).toBe(true);
+    expect(signupsOpen(undefined)).toBe(false);
+    expect(signupsOpen("")).toBe(false);
+    expect(signupsOpen("true")).toBe(true);
     expect(signupsOpen("false")).toBe(false);
     expect(signupsOpen("0")).toBe(false);
   });
@@ -59,5 +62,12 @@ describe("signup policy", () => {
         signupAllowlist: " You@Example.com, @company.test ",
       }),
     ).toEqual({ enabled: false, allowlist: ["you@example.com", "@company.test"] });
+  });
+
+  it("names someone to Evolve only by an address they proved", () => {
+    expect(provenEmail({ email: "ann@ocsc.ie", emailVerified: true })).toBe("ann@ocsc.ie");
+    expect(provenEmail({ email: "ann@ocsc.ie", emailVerified: false })).toBeNull();
+    expect(provenEmail({ email: "bot@messaging.invalid", emailVerified: true })).toBeNull();
+    expect(provenEmail(null)).toBeNull();
   });
 });
