@@ -75,6 +75,46 @@ export function sitesInText(text: string): Set<string> {
   return sites;
 }
 
+const COMMAND_URL = /\b(?:https?|ftps?|wss?|sftp|scp|rsync|ssh|git):\/\/[^\s<>"'`;|&)]*/gi;
+// Programs and constructs that can reach another machine, matched as words anywhere in the command
+// so pipelines, subshells and `sudo`/`env` prefixes count too.
+const NETWORK_COMMAND =
+  /(?:^|[\s;|&(`$!{])(?:curl|wget|nc|ncat|netcat|socat|telnet|ssh|scp|sftp|rsync|ftp|tftp|lftp|openssl|dig|nslookup|host|ping|traceroute|mail|mailx|sendmail|mutt|smbclient|gh|aws|gcloud|gsutil|az|kubectl|docker|podman|ngrok|cloudflared|tailscale|deno|powershell|pwsh|iwr|irm|invoke-webrequest|invoke-restmethod)(?=$|[\s;|&)`'"])|(?:^|[\s;|&(`$!{])(?:python[0-9.]*\s+-[a-zA-Z]*c|python[0-9.]*\s+-m\s+(?:http|urllib|smtplib|ftplib)|node\s+(?:-[a-z]*[ep]\b|--eval|--print)|bun\s+-e|perl\s+-[a-zA-Z]*e|ruby\s+-[a-zA-Z]*e|php\s+-r)|\/dev\/(?:tcp|udp)\/|\bgit\s+(?:push|pull|fetch|clone|remote|ls-remote|submodule)\b|\b(?:pip[0-9.]*|npm|npx|pnpm|yarn|uv|poetry|cargo|go|gem|brew|apt|apt-get|dnf|yum|apk)\s+(?:install|add|get|update|upgrade|publish|exec|dlx|x|i)\b/i;
+
+/**
+ * Where a shell command could send data. `sites` are the hosts of the full URLs it names; bare
+ * names do not count, since files like `run.sh` or `notes.md` look like domains. `unresolved` is
+ * a URL whose host cannot be read, as when a variable builds it. `network` is whether the command
+ * can reach another machine at all.
+ */
+export function commandDestinations(command: string): {
+  sites: Set<string>;
+  unresolved: boolean;
+  network: boolean;
+} {
+  const sites = new Set<string>();
+  let unresolved = false;
+  for (const [match] of command.matchAll(COMMAND_URL)) {
+    // A shell expansion in the host means the command decides where it goes when it runs.
+    if (/[$`{}()\\%*?[\]]/.test(match.split("://")[1]?.split("/")[0] ?? "")) {
+      unresolved = true;
+      continue;
+    }
+    const site = urlSite(
+      match
+        .replace(/[.,;:!?)\]}]+$/, "")
+        .replace(/^(?:ftps?|wss?|sftp|scp|rsync|ssh|git):/i, "https:"),
+    );
+    if (site) sites.add(site);
+    else unresolved = true;
+  }
+  return {
+    sites,
+    unresolved,
+    network: sites.size > 0 || unresolved || NETWORK_COMMAND.test(command),
+  };
+}
+
 function httpUrl(input: string): URL | undefined {
   let url: URL;
   try {

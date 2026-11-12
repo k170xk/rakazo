@@ -73,6 +73,9 @@ import type { ToolRunnerClient } from "./tool-runner.js";
 import { conversationFolderRefusal, RUNNER_PROGRAMS } from "./tool-runner.js";
 import { vaultCardUseOf } from "./vault-card-use.js";
 
+const CREDENTIALS_WITHHELD_NOTICE =
+  "Saved command credentials were not given to this command because this run has read outside content. To use one, name its variable in the command itself (for example $GITHUB_TOKEN) so the command is checked first.";
+
 function appendComputerCommand(ctx: RunContext, payload: ComputerCommand) {
   const { deps, run, runId, bot, thread } = ctx;
   return (
@@ -369,14 +372,20 @@ async function runOcscOnRunner(
 async function runComputerCommand(
   ctx: RunContext,
   call: ToolCall,
-  input: { command: string; cwd: string | undefined; botSecrets: boolean },
+  input: {
+    command: string;
+    cwd: string | undefined;
+    botSecrets: boolean;
+    /** Load the credentials for redaction but do not hand them to the command. */
+    withholdCredentials?: boolean;
+  },
 ) {
   const { deps, run, runId, context } = ctx;
   const { name, executionId, observer } = call;
   const { command, cwd } = input;
   // Loaded per command so a command variable added, replaced, or removed mid-run
   // applies to the next command. Registered for redaction before anything runs.
-  const commandEnvironment = input.botSecrets
+  const loadedEnvironment = input.botSecrets
     ? await shellCommandEnvironment({
         prisma: deps.prisma,
         secretStore: deps.secretStore,
@@ -384,6 +393,12 @@ async function runComputerCommand(
         registerRedactions: (values) => addRunSecrets(ctx, values),
       })
     : { env: {}, unsetEnv: undefined };
+  const withheld =
+    input.withholdCredentials === true && Object.keys(loadedEnvironment.env).length > 0;
+  const commandEnvironment = withheld
+    ? { env: {} as Record<string, string>, unsetEnv: Object.keys(loadedEnvironment.env) }
+    : loadedEnvironment;
+  const withheldNotice = withheld ? CREDENTIALS_WITHHELD_NOTICE : undefined;
   const author = input.botSecrets ? await documentAuthor(ctx) : undefined;
   if (author) commandEnvironment.env = { ...commandEnvironment.env, OCSC_AUTHOR: author };
   ctx.computer.checkpoint.markDirty();
@@ -489,7 +504,9 @@ async function runComputerCommand(
         stderr: observed.result.stderr,
         code: null,
         running: true,
-        notice: SHELL_STILL_RUNNING_NOTICE,
+        notice: withheldNotice
+          ? `${SHELL_STILL_RUNNING_NOTICE} ${withheldNotice}`
+          : SHELL_STILL_RUNNING_NOTICE,
       });
       if (isRunningShellCommand(returned)) observer?.onShellStillRunning?.(completion);
       return returned;
@@ -502,7 +519,7 @@ async function runComputerCommand(
       exitCode: redacted.code,
       output: commandOutput(redacted, false).slice(-COMPUTER_COMMAND_OUTPUT_MAX_CHARS),
     });
-    return call.finish(redacted);
+    return call.finish(withheldNotice ? { ...redacted, notice: withheldNotice } : redacted);
   } catch (error) {
     await appendComputerCommand(ctx, {
       ...commandEvent,
@@ -576,7 +593,14 @@ export const computerTools: ToolHandlers = {
       ctx.bot.id,
       args.cwd ? String(args.cwd) : undefined,
     );
-    return runComputerCommand(ctx, call, { command, cwd, botSecrets: true });
+    return runComputerCommand(ctx, call, {
+      command,
+      cwd,
+      botSecrets: true,
+      // Text the run read from outside could have written this command to send them away.
+      // The gate settled the run's taint for this call (see isRunTainted).
+      withholdCredentials: !call.checked && ctx.state.tainted,
+    });
   },
   async ocsc(ctx, call) {
     const program = String(call.args.program ?? "");

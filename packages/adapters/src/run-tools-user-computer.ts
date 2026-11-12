@@ -62,15 +62,18 @@ export function userComputerOwner(input: {
  * rules allow, until they choose "Allow in this space"; a block still refuses it. These tools run
  * only in the user's own runs (see userComputerOwner), so any effect of them past "intended" in
  * this space traces back to that approval. Removing every paired computer ends it, so pairing again
- * asks again. Screen control is approved per app.
+ * asks again. Screen control is approved per app. Once outside content entered the run, every
+ * call asks again, since that text could have chosen it.
  */
 export async function userComputerGate(
   ctx: RunContext,
   blocked: boolean,
   name: string,
   args: Record<string, unknown>,
+  tainted: boolean,
 ): Promise<"deny" | "allow" | "ask"> {
   if (blocked) return "deny";
+  if (tainted) return "ask";
   const { deps, run } = ctx;
   const pairedSince = await deps.userDevices?.pairedSince(run.userId);
   if (!pairedSince) return "ask";

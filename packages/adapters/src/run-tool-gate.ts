@@ -23,12 +23,15 @@ import {
   repeatsDeniedAction,
   resolveActionApprovalForTools,
   SITE_SENDING_TOOLS,
+  siteAlwaysAllowed,
+  toolGatedWhenTainted,
   toolNeedsApprovalEveryTime,
+  toolNeedsPersonWhenTainted,
   toolRequiresApproval,
   toolRequiresExplicitApproval,
   unattendedTriggerToolRequiresApproval,
 } from "@rakazo/core";
-import { normalizedHttpUrl, urlSite } from "@rakazo/core/egress";
+import { commandDestinations, normalizedHttpUrl, urlSite } from "@rakazo/core/egress";
 import { approvalEffectKey, toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
 import type { AuditEventInput } from "@rakazo/db";
 import { recordAuditEvent, runSecretKind } from "@rakazo/db";
@@ -49,6 +52,7 @@ import {
   resolveAutoReviewChecker,
 } from "./auto-review.js";
 import { reviewWithBackups } from "./auto-review-backups.js";
+import { shellCommandEnvironment } from "./bot-secrets.js";
 import { RAKAZO_DOCS_URLS } from "./builtin-skills.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { CATALOG_LOAD, CATALOG_SEARCH } from "./lazy-tool-catalog.js";
@@ -58,6 +62,7 @@ import { PURCHASE_CHECKED_TOOLS, purchaseApprovalOf } from "./purchase-gate.js";
 import { autoReviewCheckerProvider } from "./run-auto-review.js";
 import type { RunContext, RunTrust } from "./run-context.js";
 import {
+  addRunSecrets,
   isRunTainted,
   nextMutatingEffectOccurrence,
   pauseForApproval,
@@ -68,6 +73,7 @@ import {
   CATALOG_APPROVAL_TOOL,
   claimEffect,
   completeEffect,
+  PASSED_EFFECT_STATUSES,
   recordEffect,
   uncertainEffectError,
 } from "./run-effects.js";
@@ -103,6 +109,8 @@ export interface ToolCall {
   readonly nextApprovedTool: string | undefined;
   /** A gated call that policy or the reviewer allowed without asking. */
   readonly bypassApproval: boolean;
+  /** This call needed approval or review and passed it: a person, a rule or the reviewer. */
+  readonly checked: boolean;
   /** This call moved its effect to executing. request_secret can hand the claim back. */
   claimedEffect: boolean;
   /** Store the result on the effect; false when it could not be stored. */
@@ -196,6 +204,13 @@ export async function gateToolCall(
     args = { ...args, url: fetchUrl };
     effectRequest = name === "paid_request" ? paidRequestEffect(args) : args;
   }
+  let taintCheck: Promise<boolean> | undefined;
+  const runTainted = () => (taintCheck ??= isRunTainted(ctx));
+  const computerGate =
+    COMPUTER_EGRESS_TOOLS.has(name) && (await runTainted())
+      ? await computerEgressGate(ctx, name, args)
+      : "allow";
+  const taintGated = toolGatedWhenTainted(name) && (await runTainted());
   const connectorTrusts = connectorTrustKeys(
     batch?.actions,
     connectorCall.route,
@@ -234,7 +249,7 @@ export async function gateToolCall(
   const connectorReadGated =
     readTrusts !== undefined &&
     connectorReadRequiresApproval({
-      tainted: await isRunTainted(ctx),
+      tainted: await runTainted(),
       connectorTrusted: await ctx.trust
         .loadTrustedConnectors()
         .then((trusted) => readTrusts.every((trust) => trusted.has(trust))),
@@ -250,7 +265,7 @@ export async function gateToolCall(
     (name === "schedule_create" ||
       name === "create_child_routine" ||
       (name === "schedule_update" && Boolean(args.prompt))) &&
-    (await isRunTainted(ctx)) &&
+    (await runTainted()) &&
     (await ctx.trust.routineNamesNewSite(String(args.prompt ?? "")));
   const { purchase, cardUse } = request;
   // Typing a saved card is approved like a purchase: every time, by a person.
@@ -262,6 +277,8 @@ export async function gateToolCall(
     commandWatch ||
     requiresUnattendedApproval ||
     siteGate === "new" ||
+    computerGate !== "allow" ||
+    taintGated ||
     unidentifiedAction ||
     (!catalogControlRead &&
       approvalToolNames.some((toolName) =>
@@ -273,9 +290,10 @@ export async function gateToolCall(
     paying ||
     commandWatch ||
     scheduleNamesNewSite ||
+    (toolNeedsPersonWhenTainted(name) && (await runTainted())) ||
     requiresUnattendedApproval ||
     toolRequiresExplicitApproval(name);
-  // Never ask runs everything else: only another owner's connection could have been steered into it.
+  // Another owner's connection request is outside text even in a run the owner started.
   const guardedInNeverAsk = name === "respond_agent_connection";
   const resolvedRules = resolveActionApprovalForTools({
     tools: approvalToolNames.map((toolName) => ({
@@ -296,7 +314,13 @@ export async function gateToolCall(
       ? { ...resolvedRules, decision: "ask" as const }
       : resolvedRules;
   const mode = approvalModeFromPreference(await ctx.trust.loadAutoReviewPreference());
-  const reviewable = mode === "auto" && !requiresMandatoryApproval;
+  // Never ask runs a gated call unchecked only while nothing from outside could have chosen it;
+  // after that the approval model checks it, as in Auto.
+  const neverAskTainted =
+    mode === "never" &&
+    (requiresMandatoryApproval || requiresApprovalByDefault) &&
+    (await runTainted());
+  const reviewable = (mode === "auto" || neverAskTainted) && !requiresMandatoryApproval;
   const injectedReview = reviewable ? deps.autoReview : undefined;
   const reviewSettings = !reviewable || injectedReview ? null : await ctx.trust.loadApprovalModel();
   const memberChecker = reviewSettings?.primarySource === "member";
@@ -329,21 +353,28 @@ export async function gateToolCall(
           )
         : false));
   const plan = USER_COMPUTER_TOOLS.has(name)
-    ? await userComputerGate(ctx, approvalResolved.decision === "deny", name, args)
+    ? await userComputerGate(
+        ctx,
+        approvalResolved.decision === "deny",
+        name,
+        args,
+        await runTainted(),
+      )
     : planActionGate({
         resolved: approvalResolved,
         mode,
         mandatory: requiresMandatoryApproval,
         steerable:
-          guardedInNeverAsk && mode === "never"
-            ? !ctx.source.ownerStartedRun || (await isRunTainted(ctx))
+          mode === "never"
+            ? neverAskTainted || (guardedInNeverAsk && !ctx.source.ownerStartedRun)
             : undefined,
         consequential: requiresApprovalByDefault,
         reviewOnly: connectorReadGated,
         checkerConfigured,
-        newDestination: siteGate === "new",
+        newDestination: siteGate === "new" || computerGate === "new",
         purchase: paying,
         everyTime,
+        tainted: neverAskTainted,
       });
   // Nobody is there to approve a purchase a webhook run reaches.
   if (paying && run.trigger === "webhook" && plan !== "deny") {
@@ -532,6 +563,7 @@ export async function gateToolCall(
     applied,
     nextApprovedTool,
     bypassApproval: gateDecision === "allow" && gated,
+    checked: gated,
   });
   const card = { reviewReason, summary: request.fleetSummary, batch: connectorTool?.batch };
 
@@ -606,11 +638,130 @@ export async function gateToolCall(
   // Past the gate: this destination is now one the run was given. A search result's exact
   // URL trusts only that URL, never the rest of its site.
   if (fetchSite && siteGate === "new") (await ctx.trust.loadTrustedSites()).add(fetchSite);
+  if (computerGate === "new") {
+    const trusted = await ctx.trust.loadTrustedSites();
+    for (const site of commandDestinations(computerDestinationText(name, args)).sites) {
+      trusted.add(site);
+    }
+  }
+  if (connectorCall.route?.connectorId === "microsoft") ctx.state.privateAppsRead = true;
   if (viaConnector) {
     const trusted = await ctx.trust.loadTrustedConnectors();
     for (const trust of connectorTrusts) trusted.add(trust);
   }
   return { call };
+}
+
+/** Computer tools whose arguments can send what the run read to somewhere else. */
+const COMPUTER_EGRESS_TOOLS = new Set([
+  "shell",
+  "browser_navigate",
+  "browser_act",
+  "computer_act",
+  "open_path",
+  "launch_app",
+]);
+
+const URI_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+const SINGLE_TARGET_TOOLS = new Set(["browser_navigate", "open_path", "launch_app"]);
+// Two letters at least, so a Windows drive such as C: stays a path.
+const OTHER_SCHEME = /^(?!(?:https?|file|about):)[a-z][a-z0-9+.-]+:/i;
+
+/** The text of a computer call that could name where data goes: a command, a URL, typed text. */
+export function computerDestinationText(name: string, args: Record<string, unknown>): string {
+  switch (name) {
+    case "shell":
+      return String(args.command ?? args.cmd ?? "");
+    case "browser_navigate": {
+      // The browser treats a bare host as a web address.
+      const url = String(args.url ?? "").trim();
+      return url && !URI_SCHEME.test(url) ? `https://${url}` : url;
+    }
+    case "open_path":
+      return String(args.path ?? "");
+    case "launch_app":
+      return String(args.uri ?? "");
+    case "computer_act":
+    case "browser_act": {
+      const actions = Array.isArray(args.actions) ? args.actions : [];
+      return actions
+        .flatMap((action) =>
+          action && typeof action === "object"
+            ? [(action as { text?: unknown }).text, (action as { uri?: unknown }).uri]
+            : [],
+        )
+        .filter((value): value is string => typeof value === "string")
+        .join("\n");
+    }
+    default:
+      return "";
+  }
+}
+
+const earlierPrivateReads = new WeakMap<object, Promise<boolean>>();
+
+/** The run has read the person's own mail or SharePoint, in this attempt or an earlier one. */
+async function runReadPrivateApps(ctx: RunContext): Promise<boolean> {
+  if (ctx.state.privateAppsRead) return true;
+  let earlier = earlierPrivateReads.get(ctx.state);
+  if (!earlier) {
+    earlier = ctx.deps.prisma.externalEffect
+      .findFirst({
+        where: {
+          runId: ctx.runId,
+          status: { in: PASSED_EFFECT_STATUSES },
+          OR: [{ kind: { startsWith: "outlook_" } }, { kind: { startsWith: "sharepoint_" } }],
+        },
+        select: { id: true },
+      })
+      .then((row) => Boolean(row));
+    earlierPrivateReads.set(ctx.state, earlier);
+  }
+  return earlier;
+}
+
+/** Saved command credentials a shell command names, as `$NAME` or `${NAME}`. */
+async function commandNamesCredential(ctx: RunContext, command: string): Promise<boolean> {
+  if (!command.includes("$")) return false;
+  const { env } = await shellCommandEnvironment({
+    prisma: ctx.deps.prisma,
+    secretStore: ctx.deps.secretStore,
+    scope: ctx.run,
+    registerRedactions: (values) => addRunSecrets(ctx, values),
+  });
+  return Object.keys(env).some((variable) =>
+    new RegExp(`\\$\\{?${variable.replace(/[^A-Za-z0-9_]/g, "")}\\b`).test(command),
+  );
+}
+
+/**
+ * How a computer call in a tainted run is checked. Text the run read could steer the computer
+ * into sending what it read elsewhere: once the run read the person's mail or SharePoint every
+ * computer action is checked; otherwise a site the run was not given is a new destination, and
+ * a command that can reach the network without saying where, or that uses a saved credential,
+ * is checked as consequential.
+ */
+export async function computerEgressGate(
+  ctx: RunContext,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<"allow" | "new" | "check"> {
+  if (!COMPUTER_EGRESS_TOOLS.has(name)) return "allow";
+  if (await runReadPrivateApps(ctx)) return "check";
+  const text = computerDestinationText(name, args);
+  // mailto:, sms: and app links hand their text to another program, wherever it sends it.
+  if (SINGLE_TARGET_TOOLS.has(name) && OTHER_SCHEME.test(text.trim())) return "new";
+  const { sites, unresolved, network } = commandDestinations(text);
+  const trusted = await ctx.trust.loadTrustedSites();
+  const rules = await ctx.trust.loadApprovalRules();
+  if (
+    unresolved ||
+    [...sites].some((site) => !trusted.has(site) && !siteAlwaysAllowed(rules, site))
+  )
+    return "new";
+  if (name !== "shell") return "allow";
+  if (network && sites.size === 0) return "check";
+  return (await commandNamesCredential(ctx, text)) ? "check" : "allow";
 }
 
 /** A bot's consequential tool call, recorded in its organization's audit log. */
@@ -776,15 +927,16 @@ async function reviewToolCall(
   if (!injectedReview && !checker && !reviewSettings?.backups.length) return;
   try {
     const botDescription = redactSecrets(`${bot.name}\n${bot.description}`, ctx.secrets);
-    // A new site is judged on the full URL and the owner's own words only: the task
-    // prompt of a webhook or bot-started run carries text someone else wrote.
+    // The reviewer is told only the owner's own words: the task prompt of a webhook or
+    // bot-started run carries text someone else wrote, and could vouch for the call.
+    const userTask = redactSecrets(await ctx.trust.loadOwnerWords(), ctx.secrets);
     const reviewRequest: AutoReviewRequest =
       review.newSite && fetchUrl
         ? {
             toolName: name,
             connectorKind,
             args: { url: redactSecrets(fetchUrl, ctx.secrets) },
-            userTask: redactSecrets(await ctx.trust.loadOwnerWords(), ctx.secrets),
+            userTask,
             botDescription,
             matchingRules: review.matchingRules,
             newSite: true,
@@ -793,7 +945,7 @@ async function reviewToolCall(
             toolName: name,
             connectorKind,
             args: redactToolArgsForReview(args, ctx.secrets),
-            userTask: redactSecrets(ctx.task.prompt, ctx.secrets),
+            userTask,
             botDescription,
             matchingRules: review.matchingRules,
           };

@@ -163,12 +163,19 @@ function fixture(runId = "run-1") {
       async ({
         where,
       }: {
-        where: { runId?: string; kind?: string; request?: { equals: string } };
+        where: {
+          runId?: string;
+          kind?: string;
+          request?: { equals: string };
+          OR?: { kind: { startsWith: string } }[];
+        };
       }) =>
         effects.find(
           (effect) =>
             (!where.runId || effect.runId === where.runId) &&
             (!where.kind || effect.kind === where.kind) &&
+            (!where.OR ||
+              where.OR.some((match) => effect.kind.startsWith(match.kind.startsWith))) &&
             (!where.request ||
               (effect.request as { executionId?: string }).executionId === where.request.equals),
         ) ?? null,
@@ -254,8 +261,10 @@ function fixture(runId = "run-1") {
       })),
       findMany: vi.fn(async () => []),
     },
+    steeringMessage: { findFirst: vi.fn(async () => null) },
     attempt: {
       findMany: vi.fn(async () => []),
+      count: vi.fn(async () => 1),
       create: vi.fn(async () => ({ id: "attempt-1" })),
       update: vi.fn(),
       updateMany: vi.fn(async () => ({ count: 1 })),

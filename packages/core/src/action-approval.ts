@@ -77,6 +77,39 @@ export function toolNeedsApprovalEveryTime(toolName: string): boolean {
   return EVERY_TIME_APPROVAL_TOOLS.has(toolName);
 }
 
+/**
+ * Free while only the owner's words drive the run. Once outside content entered it, each one could
+ * carry what the run read out of the private chat (to a group, another bot or another owner) or
+ * keep an injected instruction for later runs, so it is checked like a consequential action.
+ */
+const TAINT_GATED_TOOLS = new Set([
+  "handoff_to_bot",
+  "message_bot",
+  "message_agent",
+  "connect_agent",
+  "remember",
+  "save_memory",
+  "save_shared_memory",
+  "skill_create",
+  "skill_update",
+  "schedule_create",
+  "schedule_update",
+]);
+
+/**
+ * A routine's prompt counts as the owner's words whenever it runs, and the reviewer would judge one
+ * written by a tainted run against that same run's context, so a person approves it.
+ */
+const TAINT_PERSON_TOOLS = new Set(["schedule_create", "schedule_update"]);
+
+export function toolGatedWhenTainted(toolName: string): boolean {
+  return TAINT_GATED_TOOLS.has(toolName);
+}
+
+export function toolNeedsPersonWhenTainted(toolName: string): boolean {
+  return TAINT_PERSON_TOOLS.has(toolName);
+}
+
 const UNATTENDED_SAFE_BUILTIN_TOOLS = new Set([
   "browser_snapshot",
   "cloud_agent_status",
@@ -594,8 +627,10 @@ export type AutoReviewJudgeDecision = "pass" | "ask" | "error";
  * The gate after rule resolution. A block refuses in every mode. A purchase asks in every mode, Never
  * ask included, and no allow rule or review passes it. An approval a person must give
  * asks, except in Never ask, which never waits: there it runs, unless `steerable` says outside
- * text could have asked for it. Otherwise Never ask runs it, an ask rule asks, and anything that
- * would ask goes to the approval model in Auto, falling back to asking when no model is set up.
+ * text could have asked for it. Otherwise Never ask runs it while only the owner's words drive the
+ * run; once outside content entered it (`tainted`), Never ask gates like Ask, since the request
+ * may not be the owner's. An ask rule asks, and anything that would ask goes to the approval model
+ * in Auto, falling back to asking when no model is set up.
  */
 export function planActionGate(input: {
   resolved: ActionApprovalResolved;
@@ -617,6 +652,8 @@ export function planActionGate(input: {
   purchase?: boolean;
   /** Approved on a card each time in every mode, like a purchase (see toolNeedsApprovalEveryTime). */
   everyTime?: boolean;
+  /** Outside content entered the run, or someone other than the owner started it. */
+  tainted?: boolean;
 }): "ask" | "allow" | "judge" | "deny" {
   if (input.resolved.decision === "deny") return "deny";
   if (input.purchase || input.everyTime) return "ask";
@@ -624,9 +661,12 @@ export function planActionGate(input: {
     if (input.mode !== "never") return "ask";
     return input.steerable ? "deny" : "allow";
   }
-  if (input.mode === "never") return "allow";
+  // Never ask still checks a write or new destination that outside text could have chosen; a
+  // read only brings text in, and everything it could carry out is checked here.
+  if (input.mode === "never" && !(input.tainted && (input.consequential || input.newDestination)))
+    return "allow";
   if (input.resolved.decision === "ask") return "ask";
-  const review = input.mode === "auto" && input.checkerConfigured ? "judge" : "ask";
+  const review = input.mode !== "ask" && input.checkerConfigured ? "judge" : "ask";
   // A rule for the whole tool is not a choice of sites, so it never allows a new one; only a site
   // rule does, and that makes the site no longer new. The approval model judges a new site on the
   // owner's own words and the full URL: it never sees tool results or inbound messages, so text
@@ -634,7 +674,9 @@ export function planActionGate(input: {
   if (input.newDestination) return review;
   if (input.resolved.source === "always_allow") return "allow";
   if (input.consequential) return review;
-  return input.reviewOnly && review === "judge" ? "judge" : "allow";
+  // Ask mode is the strictest, so a read whose arguments outside content may have chosen asks
+  // there rather than going unchecked.
+  return input.reviewOnly ? review : "allow";
 }
 
 /** Map a judge outcome onto ask/allow. Errors fail closed on consequential tools. */

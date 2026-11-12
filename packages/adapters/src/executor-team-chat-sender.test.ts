@@ -296,15 +296,19 @@ describe("team chat runs from the owner", () => {
   it.each([
     ["the person who installed the workspace", { ownerAddress: "T1:U-OWNER" }],
     ["a sender the owner linked", { ownerAddress: null, linkedAddresses: ["T1:U-OWNER"] }],
-  ])("keep full owner context for %s", async (_who, owner) => {
-    const result = await teamChatRun({
-      senders: [{ senderId: "T1:U-OWNER" }, { senderId: "T1:U-OWNER" }],
-      ...owner,
-    });
-    expect(result.sawOwnerState).toBe(true);
-    expect(result.toldNonOwner).toBe(false);
-    for (const tool of ownerOnlyTools) expect(result.tools).toContain(tool);
-  });
+  ])(
+    "are the owner's turns for %s, but load no private notes others could read",
+    async (_who, owner) => {
+      const result = await teamChatRun({
+        senders: [{ senderId: "T1:U-OWNER" }, { senderId: "T1:U-OWNER" }],
+        ...owner,
+      });
+      expect(result.toldNonOwner).toBe(false);
+      expect(result.tools).toContain("remember");
+      expect(result.sawOwnerState).toBe(false);
+      expect(result.tools).not.toContain("scratchpad_add");
+    },
+  );
 
   it("keeps the owner's own files and computer out of a chat other people can read", async () => {
     const result = await teamChatRun({

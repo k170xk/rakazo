@@ -155,6 +155,11 @@ export function selectBuiltinToolsForRun(options: {
   paymentWalletEnabled?: boolean;
   mediaImagesEnabled?: boolean;
   messagingChannelRun: boolean;
+  /**
+   * People besides the owner can read this conversation, so even the owner's turns there get
+   * no tool that reads notes kept from their private chats.
+   */
+  sharedConversation?: boolean;
   /** Hanging up is only offered to a turn the caller spoke on a live call. */
   voiceCall?: boolean;
   /** Built-in names this bot turned off. Unknown names are ignored. */
@@ -261,6 +266,8 @@ export function selectBuiltinToolsForRun(options: {
         tool.name !== "call_user") &&
       (options.historyRetrievalEnabled ||
         !["search_history", "read_history"].includes(tool.name)) &&
+      (!options.sharedConversation ||
+        (tool.name !== "recall_memory" && !tool.name.startsWith("scratchpad_"))) &&
       (!options.messagingChannelRun ||
         (!SCHEDULE_TOOL_NAMES.has(tool.name) &&
           !SKILL_TOOL_NAMES.has(tool.name) &&

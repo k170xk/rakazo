@@ -1060,7 +1060,7 @@ describe("connector read-only metadata and approval enforcement", () => {
       expect(f.pauseRunForInput).not.toHaveBeenCalled();
     });
 
-    it("runs a webhook-triggered write in Never ask", async () => {
+    it("refuses a webhook-triggered write in Never ask, since the payload could have chosen it", async () => {
       const f = fixture({
         catalog,
         name: "demo_send_message",
@@ -1068,8 +1068,9 @@ describe("connector read-only metadata and approval enforcement", () => {
         skipApprovals: true,
       });
       await f.run();
-      expect(f.execute).toHaveBeenCalledOnce();
+      expect(f.execute).not.toHaveBeenCalled();
       expect(f.pauseRunForInput).not.toHaveBeenCalled();
+      expect(JSON.stringify(f.results[0])).toContain("never asks");
     });
 
     it("keeps an original action block on account-scoped tools even with Auto Review", async () => {
@@ -1141,11 +1142,16 @@ describe("connector read-only metadata and approval enforcement", () => {
       expect(isApprovalPausedResult(f.results[0])).toBe(true);
     });
 
-    it("lets a webhook-triggered declared read run unattended", async () => {
-      const f = fixture({ catalog, trigger: "webhook" });
-      await f.run();
-      expect(f.execute).toHaveBeenCalledOnce();
-      expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    it("lets a webhook-triggered declared read run unattended in Never ask, and asks in Ask", async () => {
+      const unattended = fixture({ catalog, trigger: "webhook", skipApprovals: true });
+      await unattended.run();
+      expect(unattended.execute).toHaveBeenCalledOnce();
+      expect(unattended.pauseRunForInput).not.toHaveBeenCalled();
+
+      const asked = fixture({ catalog, trigger: "webhook" });
+      await asked.run();
+      expect(asked.execute).not.toHaveBeenCalled();
+      expect(asked.pauseRunForInput).toHaveBeenCalledOnce();
     });
 
     it("treats a read-named write operation as consequential for automatic review", async () => {
@@ -1192,12 +1198,13 @@ describe("connector read-only metadata and approval enforcement", () => {
       expect(f.pauseRunForInput).not.toHaveBeenCalled();
     });
 
-    it("redacts run secrets from automatic review task and bot context", async () => {
+    it("tells the reviewer the owner's own words, with run secrets redacted", async () => {
       reviewMock.mockResolvedValue({ decision: "pass", model: "mock" });
       const f = fixture({
         catalog,
         name: "demo_send_message",
         autoReview: true,
+        sourceRole: "user",
         secrets: ["super-secret-token"],
         prompt: "Send mail with super-secret-token",
         bot: {
@@ -1464,14 +1471,13 @@ describe("create_space", () => {
     expect(skipped.effects[0]?.status).not.toBe("intended");
   });
 
-  it("creates it in Never ask after outside content", async () => {
+  it("refuses it in Never ask after outside content", async () => {
     const f = fixture({ name: "create_space", builtin: true, skipApprovals: true });
     f.claimedOutsideSteering(true);
     f.setCalls([{ args: { name: "Support" }, executionId: "call-1" }]);
     await f.run(true);
     expect(f.pauseRunForInput).not.toHaveBeenCalled();
-    expect(f.effects).toHaveLength(1);
-    expect(f.effects[0]?.status).not.toBe("intended");
+    expect(JSON.stringify(f.results.at(-1))).toContain("never asks");
   });
 });
 
@@ -2401,7 +2407,7 @@ describe("command watch creation approval", () => {
     },
   );
 
-  it("saves a command watch in Never ask after outside content", async () => {
+  it("refuses a command watch in Never ask after outside content", async () => {
     const f = fixture({ name: "schedule_create", builtin: true, skipApprovals: true });
     f.setCalls([
       { name: "web_search", args: { query: "news" }, executionId: "call-1" },
@@ -2414,10 +2420,9 @@ describe("command watch creation approval", () => {
         executionId: "call-2",
       },
     ]);
-    // Saving the routine itself is outside this fixture; only the gate is under test.
     await f.run(true);
     expect(f.pauseRunForInput).not.toHaveBeenCalled();
-    expect(JSON.stringify(f.results.at(-1))).not.toContain("never asks");
+    expect(JSON.stringify(f.results.at(-1))).toContain("never asks");
   });
 });
 
@@ -2434,26 +2439,24 @@ describe("tool watch creation", () => {
   };
   beforeEach(() => reviewMock.mockReset());
 
-  it("reviews a watched read once outside content entered the run", async () => {
-    reviewMock.mockResolvedValue({ decision: "ask", reason: "Unexpected lookup", model: "mock" });
+  it("asks a person before saving a watch once outside content entered the run", async () => {
     const f = fixture({ autoReview: true });
     f.setCalls([search, watchCall]);
     await f.run();
-    expect(reviewMock).toHaveBeenCalledOnce();
+    expect(reviewMock).not.toHaveBeenCalled();
     expect(isApprovalPausedResult(f.results[1])).toBe(true);
   });
 
-  it("keeps a watched read free on a connector the run used before outside content", async () => {
+  it("asks even for a watched read on a connector the run used before outside content", async () => {
     const f = fixture({ autoReview: true });
     f.setCalls([
       { args: { id: "item-1" }, executionId: "call-0" },
       search,
       { ...watchCall, executionId: "call-3" },
     ]);
-    // Saving the routine itself is outside this fixture; only the gate is under test.
     await f.run(true);
     expect(reviewMock).not.toHaveBeenCalled();
-    expect(f.pauseRunForInput).not.toHaveBeenCalled();
+    expect(f.pauseRunForInput).toHaveBeenCalledOnce();
   });
 });
 
@@ -2857,7 +2860,7 @@ describe("Auto Review of new sites", () => {
       expect(isApprovalPausedResult(f.results[1])).toBe(true);
     });
 
-    it("saves it in Never ask, where the bot can already fetch any site", async () => {
+    it("refuses it in Never ask, where nobody would see a card", async () => {
       const f = fixture({
         builtin: true,
         skipApprovals: true,
@@ -2867,24 +2870,36 @@ describe("Auto Review of new sites", () => {
       f.setCalls([search, schedule("Every day fetch https://news.example.org/")]);
       await f.run(true);
       expect(f.pauseRunForInput).not.toHaveBeenCalled();
-      expect(JSON.stringify(f.results.at(-1))).not.toContain("never asks");
+      expect(JSON.stringify(f.results.at(-1))).toContain("never asks");
     });
 
-    it.each([
-      ["before outside content", false, "Every day fetch https://attacker.test/"],
-      ["naming only sites the owner named", true, "Every day read https://docs.example.com"],
-    ])("does not ask %s", async (_label, tainted, prompt) => {
+    it("asks after outside content even naming only sites the owner named", async () => {
       const f = fixture({
         builtin: true,
         sourceRole: "user",
         prompt: "Watch https://docs.example.com",
       });
-      f.setCalls(tainted ? [search, schedule(prompt)] : [schedule(prompt)]);
-      // Saving the routine itself is outside this fixture; only the gate is under test.
-      await f.run(true);
-      expect(f.pauseRunForInput).not.toHaveBeenCalled();
-      expect(isApprovalPausedResult(f.results.at(-1))).toBe(false);
+      f.setCalls([search, schedule("Every day read https://docs.example.com")]);
+      await f.run();
+      expect(reviewMock).not.toHaveBeenCalled();
+      expect(isApprovalPausedResult(f.results.at(-1))).toBe(true);
     });
+
+    it.each([["before outside content", false, "Every day fetch https://attacker.test/"]])(
+      "does not ask %s",
+      async (_label, tainted, prompt) => {
+        const f = fixture({
+          builtin: true,
+          sourceRole: "user",
+          prompt: "Watch https://docs.example.com",
+        });
+        f.setCalls(tainted ? [search, schedule(prompt)] : [schedule(prompt)]);
+        // Saving the routine itself is outside this fixture; only the gate is under test.
+        await f.run(true);
+        expect(f.pauseRunForInput).not.toHaveBeenCalled();
+        expect(isApprovalPausedResult(f.results.at(-1))).toBe(false);
+      },
+    );
   });
 
   describe("in a webhook run", () => {

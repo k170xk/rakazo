@@ -71,12 +71,32 @@ describe("userComputerGate", () => {
       run: { spaceId: "space-1", userId: "user-1" },
     } as unknown as RunContext;
     await expect(
-      userComputerGate(ctx, false, "user_computer_observe", { app: "mail" }),
+      userComputerGate(ctx, false, "user_computer_observe", { app: "mail" }, false),
     ).resolves.toBe("allow");
     expect(findMany).toHaveBeenCalledTimes(3);
     await expect(
-      userComputerGate(ctx, false, "user_computer_observe", { app: "Notes" }),
+      userComputerGate(ctx, false, "user_computer_observe", { app: "Notes" }, false),
     ).resolves.toBe("ask");
+  });
+
+  it("asks again once outside content entered the run, whatever was allowed before", async () => {
+    const findFirst = vi.fn(async () => ({ id: "approved-shell" }));
+    const ctx = {
+      deps: {
+        userDevices: { pairedSince: async () => new Date(0) },
+        prisma: { externalEffect: { findFirst } },
+      },
+      run: { spaceId: "space-1", userId: "user-1" },
+    } as unknown as RunContext;
+    await expect(
+      userComputerGate(ctx, false, "user_computer_shell", { command: "ls" }, false),
+    ).resolves.toBe("allow");
+    await expect(
+      userComputerGate(ctx, false, "user_computer_shell", { command: "ls" }, true),
+    ).resolves.toBe("ask");
+    await expect(
+      userComputerGate(ctx, true, "user_computer_shell", { command: "ls" }, true),
+    ).resolves.toBe("deny");
   });
 });
 

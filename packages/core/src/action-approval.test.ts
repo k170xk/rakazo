@@ -19,7 +19,9 @@ import {
   resolveActionApproval,
   resolveActionApprovalDetail,
   resolveActionApprovalForTools,
+  toolGatedWhenTainted,
   toolNeedsApprovalEveryTime,
+  toolNeedsPersonWhenTainted,
   toolRequiresApproval,
   toolRequiresExplicitApproval,
   toolResultTaintsRun,
@@ -516,6 +518,28 @@ describe("planActionGate", () => {
     expect(toolNeedsApprovalEveryTime("mcp__evolve__get_project_details")).toBe(false);
   });
 
+  it("checks handoffs, lasting notes and routines once outside content entered the run", () => {
+    for (const tool of [
+      "handoff_to_bot",
+      "message_bot",
+      "message_agent",
+      "connect_agent",
+      "remember",
+      "save_memory",
+      "save_shared_memory",
+      "skill_create",
+      "skill_update",
+      "schedule_create",
+      "schedule_update",
+    ]) {
+      expect(toolGatedWhenTainted(tool)).toBe(true);
+    }
+    expect(toolGatedWhenTainted("web_search")).toBe(false);
+    expect(toolNeedsPersonWhenTainted("schedule_create")).toBe(true);
+    expect(toolNeedsPersonWhenTainted("schedule_update")).toBe(true);
+    expect(toolNeedsPersonWhenTainted("remember")).toBe(false);
+  });
+
   it("runs an allowlisted change in every mode without judging", () => {
     for (const mode of ["never", "auto", "ask"] as const) {
       expect(gate(mode, { resolved: allowed })).toBe("allow");
@@ -561,12 +585,23 @@ describe("planActionGate", () => {
     expect(gate("never", { mandatory: true, steerable: true })).toBe("deny");
   });
 
-  it("only lets the approval model check a read outside content may have chosen", () => {
+  it("checks a read outside content may have chosen, never letting it through unchecked", () => {
     const read = { consequential: false, reviewOnly: true };
     expect(gate("auto", read)).toBe("judge");
-    expect(gate("auto", { ...read, checkerConfigured: false })).toBe("allow");
-    expect(gate("ask", read)).toBe("allow");
-    expect(gate("never", read)).toBe("allow");
+    expect(gate("auto", { ...read, checkerConfigured: false })).toBe("ask");
+    expect(gate("ask", read)).toBe("ask");
+    expect(gate("never", { ...read, tainted: true })).toBe("allow");
+  });
+
+  it("keeps Never ask's guards once outside content entered the run", () => {
+    expect(gate("never", { consequential: true })).toBe("allow");
+    expect(gate("never", { consequential: true, tainted: true })).toBe("judge");
+    expect(gate("never", { consequential: true, tainted: true, checkerConfigured: false })).toBe(
+      "ask",
+    );
+    expect(gate("never", { newDestination: true, tainted: true })).toBe("judge");
+    expect(gate("never", { consequential: false, tainted: true })).toBe("allow");
+    expect(gate("never", { mandatory: true, steerable: true, tainted: true })).toBe("deny");
   });
 
   it("judges a new site in Auto even with a rule for the whole tool, and asks in Ask", () => {

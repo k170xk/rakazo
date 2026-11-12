@@ -1,5 +1,6 @@
 import { DEFAULT_COMPANY_FEATURES, DEFAULT_COMPANY_TOOLS } from "@rakazo/contracts";
 import { afterEach, describe, expect, it } from "vitest";
+import { builtinAgentTools } from "./builtin-tools.js";
 import { companyToolsWithDefaults, setCompanyPolicy } from "./company-policy.js";
 import {
   effectiveComputerAccess,
@@ -17,7 +18,6 @@ import {
   wordRebuildRefusal,
 } from "./ocsc-tool.js";
 import { limitedComputerInstruction } from "./run-instructions.js";
-import { builtinAgentTools } from "./builtin-tools.js";
 import {
   COMPUTER_TOOL_NAMES,
   computerAccessRefusal,
@@ -145,6 +145,22 @@ describe("tools for each level", () => {
     expect(computerAccessRefusal("write_file", "none")).toContain("no computer access");
     expect(computerAccessRefusal("web_search", "none")).toBeUndefined();
     expect(computerAccessRefusal("shell", "full")).toBeUndefined();
+  });
+
+  it("offers no private notes in a conversation others can read, even on the owner's turn", () => {
+    const tools = (sharedConversation: boolean) =>
+      new Set(
+        selectBuiltinToolsForRun({ ...base, semanticMemoryEnabled: true, sharedConversation }).map(
+          (tool) => tool.name,
+        ),
+      );
+    const own = tools(false);
+    expect(own.has("scratchpad_list")).toBe(true);
+    expect(own.has("recall_memory")).toBe(true);
+    const shared = tools(true);
+    expect([...shared].filter((name) => name.startsWith("scratchpad_"))).toEqual([]);
+    expect(shared.has("recall_memory")).toBe(false);
+    expect(shared.has("shell")).toBe(true);
   });
 });
 

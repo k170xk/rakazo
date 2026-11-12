@@ -1051,16 +1051,18 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         ] = await Promise.all([
           discoveredPromise,
           loadCurrentTurnImages(deps, turnBlocks, context),
-          nonOwnerChatRun
+          // Others can read a shared conversation, the owner's turns there included, so
+          // nothing the bot keeps from the owner's private chats is loaded into it.
+          sharedConversation
             ? Promise.resolve("")
             : loadAgentMemoryContext(deps.memory, bot.id, context),
-          nonOwnerChatRun
+          sharedConversation
             ? Promise.resolve("")
             : loadAgentScratchpadContext(deps, {
                 spaceId: run.spaceId,
                 botId: bot.id,
               }),
-          nonOwnerChatRun || !deps.ticketBoardEnabled
+          sharedConversation || !deps.ticketBoardEnabled
             ? Promise.resolve(undefined)
             : loadAgentTicketContext(deps, {
                 spaceId: run.spaceId,
@@ -1068,7 +1070,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               }),
           recallPromise,
         ]);
-        const semanticMemoryEnabled = Boolean(semanticMemory) && !nonOwnerChatRun;
+        const semanticMemoryEnabled = Boolean(semanticMemory) && !sharedConversation;
         let recalledMemory = "";
         let recallSucceeded = false;
         if (recalled) {
@@ -1683,6 +1685,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             cloudAgentEnabled: cloudAgentsEnabled(cloudAgent, run.spaceId),
             paymentWalletEnabled,
             messagingChannelRun: nonOwnerChatRun,
+            sharedConversation,
             voiceCall,
             // Every member already got a message that names nobody, so a handoff only repeats it.
             disabledBuiltinTools: groupReplyOptional
@@ -1913,7 +1916,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             myChatsAllowed: historyMyChatsAllowed(
               run,
               sourceMessage,
-              nonOwnerChatRun ||
+              sharedConversation ||
                 Boolean(
                   channelId ||
                     thread.externalConversationId ||

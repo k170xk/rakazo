@@ -114,7 +114,7 @@ async function runTool(
     spaceId: scope.spaceId,
     userId: scope.userId,
     status: "queued",
-    trigger: "message",
+    trigger: "user",
     routineId: null,
     retryOfRunId: null,
     leaseFence: 0,
@@ -169,6 +169,7 @@ async function runTool(
       },
       attempt: {
         create: async () => ({ id: "attempt-1" }),
+        count: async () => 1,
         updateMany: async () => ({ count: 1 }),
       },
       thread: {

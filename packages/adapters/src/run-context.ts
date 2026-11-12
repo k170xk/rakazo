@@ -178,6 +178,8 @@ export interface RunState {
    * and so does a later attempt, including one with restored untrusted tool results.
    */
   tainted: boolean;
+  /** A call in this attempt read the person's own Outlook or SharePoint. */
+  privateAppsRead?: boolean;
   /**
    * The taint refusal for owner settings was returned in this attempt. A model that calls
    * again gets the turn ended instead of the same error a second time.
