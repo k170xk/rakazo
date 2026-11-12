@@ -1,5 +1,6 @@
 export * from "./account-export.js";
 export * from "./app-data.js";
+export * from "./app-history.js";
 export * from "./approval-settings.js";
 export * from "./artifact-versions.js";
 export * from "./audit-events.js";

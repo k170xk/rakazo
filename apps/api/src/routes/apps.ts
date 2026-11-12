@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import { isAppDataError } from "@rakazo/db";
+import { AppHistoryError, isAppDataError } from "@rakazo/db";
 import { AppAskError } from "../app-ask.js";
 import {
   AppPublishError,
@@ -14,6 +14,7 @@ import {
   getEvolvePublication,
   importWorkbookApp,
   listAppVersions,
+  listOwnerAppChanges,
   ownerAsk,
   ownerDefineTable,
   ownerDropTable,
@@ -27,6 +28,7 @@ import {
   restoreAppVersion,
   saveAppFiles,
   setAppDataAccess,
+  undoOwnerAppChange,
   uploadAppAsset,
   WorkbookImportError,
 } from "../apps.js";
@@ -40,6 +42,7 @@ async function refusals<T>(work: () => Promise<T>): Promise<T> {
   } catch (error) {
     if (
       isAppDataError(error) ||
+      error instanceof AppHistoryError ||
       error instanceof WorkbookImportError ||
       error instanceof AppAskError ||
       error instanceof AppPublishError
@@ -114,6 +117,12 @@ export function appsRoutes(ctx: RouterContext) {
       ),
       restore: authed.apps.restore.handler(({ context, input }) =>
         refusals(() => restoreAppVersion(db, context.actor, input)),
+      ),
+      changes: authed.apps.changes.handler(({ context, input }) =>
+        listOwnerAppChanges(db, context.actor, input.pageId),
+      ),
+      undoChange: authed.apps.undoChange.handler(({ context, input }) =>
+        refusals(() => undoOwnerAppChange(db, context.actor, input)),
       ),
       setDataAccess: authed.apps.setDataAccess.handler(({ context, input }) =>
         setAppDataAccess(db, context.actor, input),

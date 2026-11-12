@@ -296,6 +296,18 @@ msgstr "{botCount, plural, one {Excluir {name} e seu # bot?} other {Excluir {nam
 msgid "{botName}’s computer"
 msgstr "Computador do {botName}"
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "{by} by link"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "{by} in Evolve"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "{by} in the Studio"
+msgstr ""
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{commandVariable} é reservada e não pode ser usada como variável de comando. Escolha outro nome."
@@ -544,6 +556,10 @@ msgstr "{size} B"
 msgid "{skillCount, plural, one {# skill} other {# skills}}"
 msgstr ""
 
+#: src/components/apps/CodeDiff.tsx
+msgid "{skipped} unchanged lines"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} Backup models failed or were unavailable for this request."
@@ -619,6 +635,10 @@ msgstr ""
 msgid "1 space"
 msgstr ""
 
+#: src/components/apps/CodeDiff.tsx
+msgid "1 unchanged line"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "A bid writer drafts the response as an OCSC Word document"
 msgstr ""
@@ -668,6 +688,10 @@ msgstr ""
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "A sign-in tab opened at <0>{0}</0>. Enter this code there — this window keeps waiting:"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "a spreadsheet import"
 msgstr ""
 
 #: src/pages/model-settings/use-model-settings.ts
@@ -1834,6 +1858,14 @@ msgstr "Built-in OCSC report"
 msgid "Built-in skills"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "By the assistant"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "By the assistant, for {by}"
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
 msgstr ""
@@ -1883,6 +1915,7 @@ msgid "Can't read images"
 msgstr "Não pode ler imagens"
 
 #: src/components/apps/AppDataPanel.tsx
+#: src/components/apps/AppHistoryPanel.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/integrations/CompanyMcpApp.tsx
@@ -2376,7 +2409,7 @@ msgid "Code"
 msgstr "Código"
 
 #: src/components/apps/AppHistoryPanel.tsx
-msgid "Code changes are versioned. Data is not: restoring a version keeps today's rows."
+msgid "Code changes"
 msgstr ""
 
 #. placeholder {0}: headerName(group)
@@ -3846,6 +3879,10 @@ msgstr "Escuro"
 msgid "Data"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Data changes"
+msgstr ""
+
 #: src/lib/billing.ts
 #: src/lib/cron.ts
 msgid "day"
@@ -4018,6 +4055,10 @@ msgstr ""
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
 msgstr "excluído"
+
+#: src/components/apps/CodeDiff.tsx
+msgid "Deleted"
+msgstr ""
 
 #: src/components/StorageDialog.tsx
 msgid "Deleted soon"
@@ -4365,6 +4406,14 @@ msgstr "Editar Perfil"
 msgid "Edit References"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Edited in the Studio"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Edited in the Studio by {by}"
+msgstr ""
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "EDITING"
 msgstr ""
@@ -4609,6 +4658,14 @@ msgstr "A cada mês"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Every plugin is reviewed before it reaches colleagues, so shared apps stay safe"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Every row added, changed or removed, and every bulk load, is kept here. Undo the newest change to a row first; anything undone can be redone."
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Every save is a version. Open one to see what it changed; restoring keeps the current version too."
 msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
@@ -5226,6 +5283,7 @@ msgstr "Alto"
 msgid "High (slow)"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
 #: src/components/apps/AppStudio.tsx
 msgid "History"
 msgstr ""
@@ -5914,6 +5972,10 @@ msgstr "Baixo"
 msgid "Low (fastest)"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Made from a spreadsheet"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Modelo principal"
@@ -6531,6 +6593,7 @@ msgid "New contact"
 msgstr ""
 
 #: src/components/apps/AppCodePanel.tsx
+#: src/components/apps/CodeDiff.tsx
 msgid "New file"
 msgstr ""
 
@@ -6609,6 +6672,10 @@ msgstr "New Word documents start from this unless the person asks for another te
 msgid "New work package"
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Newer changes replaced this one."
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/shell/references-dialog.tsx
 msgid "Next"
@@ -6677,6 +6744,10 @@ msgstr ""
 msgid "No cleanup has run yet."
 msgstr ""
 
+#: src/components/apps/CodeDiff.tsx
+msgid "No code changed."
+msgstr ""
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "No computer"
 msgstr ""
@@ -6687,6 +6758,10 @@ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "No CV was sent for this person: only their name and role."
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "No data changes yet."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -8002,6 +8077,10 @@ msgstr ""
 msgid "Redirect URI"
 msgstr "URI de redirecionamento"
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Redo"
+msgstr ""
+
 #: src/pages/shell/evolve-references.tsx
 msgid "References"
 msgstr ""
@@ -8338,9 +8417,26 @@ msgstr "Restaurar o último espaço de trabalho salvo."
 msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
 msgstr "Restaure o último espaço de trabalho salvo. O trabalho não salvo no computador será perdido."
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Restore version {version}"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Restore version {version}?"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Restored"
 msgstr "Restaurado"
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Restored an earlier version"
+msgstr ""
+
+#. placeholder {0}: entry.restoredFrom
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Restored version {0}"
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"
@@ -9211,6 +9307,14 @@ msgstr ""
 msgid "Some settings are not imported"
 msgstr "Algumas configurações não são importadas"
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "someone by link"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "someone in Evolve"
+msgstr ""
+
 #: src/components/apps/AppCodePanel.tsx
 msgid "Someone saved a newer version. Reload the code to see it."
 msgstr ""
@@ -9384,6 +9488,10 @@ msgstr "Começou com {count} h de atraso"
 #: src/pages/RoutineRunHistory.tsx
 msgid "Started {count}m late"
 msgstr "Começou com {count} min de atraso"
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Started from a template"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Starting"
@@ -9665,6 +9773,10 @@ msgstr "Testando…"
 msgid "That app couldn't be made."
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "That change couldn't be undone."
+msgstr ""
+
 #: src/components/apps/AppDataPanel.tsx
 msgid "That change wasn't saved."
 msgstr ""
@@ -9705,6 +9817,10 @@ msgstr ""
 msgid "The app shows these by id, and the bot can add infographics and generated images here."
 msgstr ""
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "the assistant"
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
 msgstr "O bot pode usar o arquivo, mas não verá a imagem."
@@ -9728,6 +9844,10 @@ msgstr "The connection did not finish. Close this window and try again."
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "O tempo da conexão se esgotou."
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "The first version: every line is new."
+msgstr ""
 
 #: src/pages/shell/side-panel.tsx
 msgid "The group was created, but these people could not be added: {list}"
@@ -9790,6 +9910,14 @@ msgstr ""
 msgid "The shared link stops working"
 msgstr "O link compartilhado deixará de funcionar"
 
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "the Studio"
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "the template"
+msgstr ""
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
 msgstr ""
@@ -9808,6 +9936,10 @@ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "These apply to everyone in the company and take effect within a few seconds."
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
 msgstr ""
 
 #: src/pages/shell/agent-import.tsx
@@ -10288,9 +10420,18 @@ msgstr "Digite sua resposta"
 msgid "Unassigned"
 msgstr "Não atribuído"
 
+#: src/components/apps/AppHistoryPanel.tsx
 #: src/components/AskCard.tsx
 msgid "Undo"
 msgstr "Desfazer"
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Undo the newer change to this first."
+msgstr ""
+
+#: src/components/apps/AppHistoryPanel.tsx
+msgid "Undone"
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Uninstall"

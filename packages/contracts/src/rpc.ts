@@ -17,6 +17,7 @@ import {
   AppAssetSchema,
   AppBuildProblemSchema,
   AppDataAccessSchema,
+  AppDataChangeSchema,
   AppDataSchema,
   AppFilesSchema,
   AppRowIdSchema,
@@ -1809,6 +1810,12 @@ export const appContract = {
     restore: oc
       .input(z.strictObject({ pageId: Id, version: z.number().int().positive() }))
       .output(z.object({ version: z.number().int() })),
+    /** Recent changes to the app's data, newest first, each with whether it can be undone. */
+    changes: oc.input(z.strictObject({ pageId: Id })).output(z.array(AppDataChangeSchema)),
+    /** Undoes one data change, or with redo applies an undone one again, keeping their order. */
+    undoChange: oc
+      .input(z.strictObject({ pageId: Id, changeId: Id, redo: z.boolean().optional() }))
+      .output(z.object({ revision: z.number().int() })),
     setDataAccess: oc
       .input(z.strictObject({ pageId: Id, access: AppDataAccessSchema }))
       .output(z.object({ access: AppDataAccessSchema })),

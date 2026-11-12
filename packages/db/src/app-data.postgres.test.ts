@@ -6,6 +6,7 @@ import {
   appRevision,
   createAppPage,
   defineAppTable,
+  dropAppTable,
   insertAppRow,
   mergeImportedTables,
   readAppAsset,
@@ -13,6 +14,7 @@ import {
   removeAppRow,
   updateAppRow,
 } from "./app-data.js";
+import { listAppChanges, undoAppChange } from "./app-history.js";
 import type { PrismaClient } from "./client.js";
 import { createDb } from "./client.js";
 import { provisionMessagingIdentity } from "./messaging.js";
@@ -226,11 +228,71 @@ describePostgres("app data (PostgreSQL)", () => {
     });
   });
 
+  it("keeps every data change and undoes them newest first, with redo", async () => {
+    await runAsTenant(owner, async () => {
+      const { row } = await insertAppRow(prisma, appId, "jobs", { name: "Harbour" }, owner.userId, {
+        via: "studio",
+      });
+      await updateAppRow(prisma, appId, "jobs", row._id, { stage: "Live" }, owner.userId);
+      await updateAppRow(prisma, appId, "jobs", row._id, { fee: 900 }, owner.userId);
+      const [fee, stage, added] = await listAppChanges(prisma, appId, 3);
+      expect(fee).toMatchObject({ action: "changed", summary: "Changed Fee on “Harbour”" });
+      expect(fee!.fields).toEqual([{ key: "fee", label: "Fee", before: null, after: 900 }]);
+      expect(added).toMatchObject({ action: "added", via: "studio", userId: owner.userId });
+
+      // An older change waits until the newer one on the same row is undone.
+      await expect(undoAppChange(prisma, appId, stage!.id)).rejects.toThrow(/later change/);
+      await undoAppChange(prisma, appId, fee!.id);
+      await undoAppChange(prisma, appId, stage!.id);
+      const harbour = () =>
+        readAppTables(prisma, appId).then((t) => t.jobs!.rows.find((r) => r._id === row._id));
+      expect(await harbour()).toMatchObject({ name: "Harbour" });
+      expect((await harbour())?.stage ?? null).toBeNull();
+      await expect(undoAppChange(prisma, appId, fee!.id, { redo: true })).rejects.toThrow(
+        /earlier change/,
+      );
+      await undoAppChange(prisma, appId, stage!.id, { redo: true });
+      expect(await harbour()).toMatchObject({ stage: "Live" });
+
+      await removeAppRow(prisma, appId, "jobs", row._id);
+      const [removed] = await listAppChanges(prisma, appId, 1);
+      expect(removed!.summary).toBe("Removed “Harbour” from Jobs");
+      await undoAppChange(prisma, appId, removed!.id);
+      expect(await harbour()).toMatchObject({ name: "Harbour", stage: "Live" });
+    });
+  });
+
+  it("restores a whole table after a bulk replace or a drop, keeping row ids", async () => {
+    await runAsTenant(owner, async () => {
+      const before = (await readAppTables(prisma, appId)).jobs!.rows;
+      await defineAppTable(prisma, appId, { table: "jobs", rows: [{ name: "Only" }] });
+      const [replaced] = await listAppChanges(prisma, appId, 1);
+      expect(replaced!.summary).toMatch(/^Replaced every row of Jobs/);
+      await undoAppChange(prisma, appId, replaced!.id);
+      const restored = (await readAppTables(prisma, appId)).jobs!.rows;
+      expect(restored.map((r) => r._id)).toEqual(before.map((r) => r._id));
+      await undoAppChange(prisma, appId, replaced!.id, { redo: true });
+      expect((await readAppTables(prisma, appId)).jobs!.rows.map((r) => r.name)).toEqual(["Only"]);
+      await undoAppChange(prisma, appId, replaced!.id);
+
+      await dropAppTable(prisma, appId, "jobs", { via: "assistant" });
+      expect((await readAppTables(prisma, appId)).jobs).toBeUndefined();
+      const [dropped] = await listAppChanges(prisma, appId, 1);
+      expect(dropped).toMatchObject({ action: "table", via: "assistant" });
+      await undoAppChange(prisma, appId, dropped!.id);
+      expect((await readAppTables(prisma, appId)).jobs!.rows.map((r) => r._id)).toEqual(
+        before.map((r) => r._id),
+      );
+    });
+  });
+
   it("hides one person's app tables, rows and pictures from everyone else", async () => {
     await runAsTenant(stranger, async () => {
       expect(await prisma.appTable.count({ where: { pageId: appId } })).toBe(0);
       expect(await prisma.appRow.count({ where: { pageId: appId } })).toBe(0);
       expect(await prisma.appAsset.count({ where: { pageId: appId } })).toBe(0);
+      expect(await prisma.appDataChange.count({ where: { pageId: appId } })).toBe(0);
+      await expect(undoAppChange(prisma, appId, "anything")).rejects.toThrow();
       await expect(
         prisma.appRow.create({
           data: { pageId: appId, tableId: "x", data: {}, position: 1 },

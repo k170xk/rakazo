@@ -4,6 +4,7 @@ import {
   asSystem,
   createAppPage,
   createDb,
+  listAppChanges,
   provisionMessagingIdentity,
   readAppTables,
   runAsSystem,
@@ -260,6 +261,13 @@ describePostgres("Evolve app data (PostgreSQL)", () => {
     expect(
       (await call(colleague.email, { op: "rows.remove", table: "jobs", id: mine._id })).status,
     ).toBe(200);
+  });
+
+  it("keeps who changed rows from Evolve in the app's history", async () => {
+    const changes = await runAsTenant(owner, () => listAppChanges(prisma, appId, 50));
+    const fromEvolve = changes.filter((change) => change.via === "evolve");
+    expect(fromEvolve.length).toBeGreaterThan(0);
+    expect(fromEvolve.some((change) => change.userId === colleague.userId)).toBe(true);
   });
 
   it("starts an app from a starter with its empty tables and colleagues' access", async () => {

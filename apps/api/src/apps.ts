@@ -21,12 +21,14 @@ import {
   IsolationError,
   insertAppRow,
   listAppAssets,
+  listAppChanges,
   mergeImportedTables,
   readAppAsset,
   readAppRowCreators,
   readAppTables,
   removeAppRow,
   runAsSystem,
+  undoAppChange,
   updateAppRow,
 } from "@rakazo/db";
 import { askForApp } from "./app-ask.js";
@@ -142,7 +144,9 @@ export async function ownerInsertRow(
   input: { pageId: string; table: string; row: Record<string, unknown> },
 ) {
   await requireApp(prisma, actor, input.pageId);
-  const saved = await insertAppRow(prisma, input.pageId, input.table, input.row, actor.userId);
+  const saved = await insertAppRow(prisma, input.pageId, input.table, input.row, actor.userId, {
+    via: "studio",
+  });
   return {
     ...saved,
     row: await rowForViewer(prisma, saved.row, { userId: actor.userId, names: true }),
@@ -162,6 +166,8 @@ export async function ownerUpdateRow(
     input.id,
     input.patch,
     actor.userId,
+    {},
+    { via: "studio" },
   );
   return {
     ...saved,
@@ -175,7 +181,14 @@ export async function ownerRemoveRow(
   input: { pageId: string; table: string; id: string },
 ) {
   await requireApp(prisma, actor, input.pageId);
-  return removeAppRow(prisma, input.pageId, input.table, input.id);
+  return removeAppRow(
+    prisma,
+    input.pageId,
+    input.table,
+    input.id,
+    {},
+    { userId: actor.userId, via: "studio" },
+  );
 }
 
 export async function ownerDefineTable(
@@ -189,6 +202,7 @@ export async function ownerDefineTable(
     rows: input.rows,
     mode: "replace",
     userId: actor.userId,
+    via: "studio",
   });
   return { table: result.table, rows: result.rows, revision: result.revision };
 }
@@ -199,7 +213,7 @@ export async function ownerDropTable(
   input: { pageId: string; table: string },
 ) {
   await requireApp(prisma, actor, input.pageId);
-  return dropAppTable(prisma, input.pageId, input.table);
+  return dropAppTable(prisma, input.pageId, input.table, { userId: actor.userId, via: "studio" });
 }
 
 export async function getAppFiles(
@@ -230,6 +244,8 @@ export async function saveAppFiles(
     baseVersion: input.baseVersion,
     files: input.files,
     code: built.html,
+    authorId: actor.userId,
+    via: "studio",
   });
   return { version: saved.version, problems: [] };
 }
@@ -268,9 +284,50 @@ export async function listAppVersions(prisma: PrismaClient, actor: Actor, pageId
     where: { pageId },
     orderBy: { version: "desc" },
     take: 100,
-    select: { version: true, title: true, createdAt: true },
+    select: {
+      version: true,
+      title: true,
+      createdAt: true,
+      via: true,
+      authorId: true,
+      restoredFrom: true,
+    },
   });
-  return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
+  const names = await creatorNames(
+    prisma,
+    rows.flatMap((row) => (row.authorId ? [row.authorId] : [])),
+  );
+  return rows.map(({ authorId, ...row }) => ({
+    ...row,
+    author: authorId ? (names.get(authorId) ?? null) : null,
+    createdAt: row.createdAt.toISOString(),
+  }));
+}
+
+/** The app's recent data changes, with who made each. */
+export async function listOwnerAppChanges(prisma: PrismaClient, actor: Actor, pageId: string) {
+  await requireApp(prisma, actor, pageId);
+  const changes = await listAppChanges(prisma, pageId);
+  const names = await creatorNames(
+    prisma,
+    changes.flatMap((change) => (change.userId ? [change.userId] : [])),
+  );
+  return changes.map(({ userId, ...change }) => ({
+    ...change,
+    author: userId ? (names.get(userId) ?? null) : null,
+  }));
+}
+
+export async function undoOwnerAppChange(
+  prisma: PrismaClient,
+  actor: Actor,
+  input: { pageId: string; changeId: string; redo?: boolean },
+) {
+  await requireApp(prisma, actor, input.pageId);
+  return undoAppChange(prisma, input.pageId, input.changeId, {
+    redo: input.redo,
+    userId: actor.userId,
+  });
 }
 
 export async function restoreAppVersion(
@@ -300,6 +357,9 @@ export async function restoreAppVersion(
     baseVersion: app.currentVersion,
     files,
     code,
+    authorId: actor.userId,
+    via: "restore",
+    restoredFrom: input.version,
   });
   return { version: saved.version };
 }
@@ -450,6 +510,7 @@ export async function createTemplateApp(
     code: built.html,
     tables: template.tables.map((schema) => ({ schema, rows: [] })),
     dataAccess: template.access,
+    via: "template",
   });
   return { pageId: created.pageId };
 }
@@ -495,6 +556,7 @@ export async function importWorkbookApp(
     files,
     code: built.html,
     tables: imported.tables,
+    via: "import",
   });
   return { pageId: created.pageId, report: imported.report };
 }
@@ -568,16 +630,19 @@ export async function writeSharedAppRow(
   write: SharedRowWrite,
   userId: string,
   dataAccess: string,
+  via: "shared" | "evolve" = "shared",
 ): Promise<{ row: RowOut; revision: number } | { revision: number }> {
   const scope = dataAccess === "company" ? {} : { onlyCreatedBy: userId };
   const saved: { row: RowOut; revision: number } | { revision: number } = await runAsSystem(
     "app share write",
     (): Promise<{ row: RowOut; revision: number } | { revision: number }> => {
       if (write.op === "insert")
-        return insertAppRow(prisma, pageId, write.table, write.row, userId);
+        return insertAppRow(prisma, pageId, write.table, write.row, userId, { via });
       if (write.op === "update")
-        return updateAppRow(prisma, pageId, write.table, write.id, write.patch, userId, scope);
-      return removeAppRow(prisma, pageId, write.table, write.id, scope);
+        return updateAppRow(prisma, pageId, write.table, write.id, write.patch, userId, scope, {
+          via,
+        });
+      return removeAppRow(prisma, pageId, write.table, write.id, scope, { userId, via });
     },
   );
   if (!("row" in saved)) return saved;

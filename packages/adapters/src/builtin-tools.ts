@@ -880,7 +880,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "app_data",
     description:
-      "Read or change an app's rows without touching its code: query (where, search, limit, offset), insert (row), update (id, patch), remove (id), replace/append/upsert (rows; upsert matches the table's key) or drop a table. Open copies of the app update within seconds, so a routine can keep an app live by gathering data and calling this.",
+      "Read or change an app's rows without touching its code: query (where, search, limit, offset), insert (row), update (id, patch), remove (id), replace/append/upsert (rows; upsert matches the table's key) or drop a table. Every change is kept: history lists recent changes, and undo or redo (id from history) reverses one, newest first, when someone asks to take back a change. Open copies of the app update within seconds, so a routine can keep an app live by gathering data and calling this.",
     inputSchema: {
       type: "object",
       properties: {
@@ -888,7 +888,19 @@ export const builtinAgentTools: ConnectorTool[] = [
         table: { type: "string", description: "Omit with query to list every table." },
         action: {
           type: "string",
-          enum: ["query", "insert", "update", "remove", "replace", "append", "upsert", "drop"],
+          enum: [
+            "query",
+            "insert",
+            "update",
+            "remove",
+            "replace",
+            "append",
+            "upsert",
+            "drop",
+            "history",
+            "undo",
+            "redo",
+          ],
         },
         where: { type: "object", description: "query: column values that must match exactly." },
         search: { type: "string", description: "query: words that must all appear in the row." },
@@ -896,7 +908,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         offset: { type: "number" },
         row: { type: "object" },
         rows: { type: "array", items: { type: "object" } },
-        id: { type: "string", description: "The row's _id." },
+        id: { type: "string", description: "The row's _id; for undo or redo, the change's id." },
         patch: { type: "object" },
       },
       required: ["appId"],

@@ -128,7 +128,11 @@ export function mountEvolveAppData(
         return c.json(await addSharedAppUpload(prisma, page.id, upload, viewer.id), 200, headers);
       } catch (error) {
         if (isAppDataError(error))
-          return c.json({ error: error instanceof Error ? error.message : "Refused" }, 400, headers);
+          return c.json(
+            { error: error instanceof Error ? error.message : "Refused" },
+            400,
+            headers,
+          );
         throw error;
       }
     }
@@ -168,6 +172,7 @@ export function mountEvolveAppData(
         write,
         viewer.id,
         isOwner ? "company" : page.dataAccess,
+        "evolve",
       );
       return c.json("row" in saved ? saved.row : saved, 200, headers);
     } catch (error) {

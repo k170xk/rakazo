@@ -6,6 +6,7 @@ import type { MessageBlock } from "@rakazo/contracts";
 import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
 import { containsSecret, redactSecrets } from "@rakazo/core";
 import {
+  AppHistoryError,
   AppVersionConflictError,
   addAppAsset,
   appendAppVersion,
@@ -16,9 +17,11 @@ import {
   insertAppRow,
   isAppDataError,
   listAppAssets,
+  listAppChanges,
   mergeImportedTables,
   readAppTables,
   removeAppRow,
+  undoAppChange,
   updateAppRow,
 } from "@rakazo/db";
 import { canLookAtApps, lookAtApp, lookProblems } from "./app-look.js";
@@ -278,6 +281,7 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
     files,
     code: built.html,
     tables: imported.tables,
+    via: "import",
   });
   const cardError = await postCard(ctx, saved, true);
   const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
@@ -427,6 +431,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         files,
         code: code!,
         dataAccess: template?.access,
+        via: template ? "template" : "assistant",
       });
     } else if (codeChanged) {
       const next = await appendAppVersion(deps.prisma, {
@@ -435,6 +440,8 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         files,
         code: code!,
         title,
+        authorId: run.userId,
+        via: "assistant",
       });
       saved = { pageId: app.id, ...next };
     } else {
@@ -447,6 +454,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         rows: table.rows,
         mode: table.mode,
         userId: run.userId,
+        via: template && !app ? "template" : "assistant",
       });
       tableResults.push({
         table: result.table,
@@ -647,6 +655,8 @@ async function appData(ctx: RunContext, call: ToolCall) {
   if (args.patch && containsSecret([JSON.stringify(args.patch)], ctx.secrets)) {
     return { error: "The change contains a secret value; nothing was saved.", unchanged: true };
   }
+  const assistant = { via: "assistant" as const };
+  const assistantBy = { userId: run.userId, via: "assistant" as const };
   try {
     switch (action) {
       case "query": {
@@ -676,7 +686,7 @@ async function appData(ctx: RunContext, call: ToolCall) {
       case "insert": {
         const row = (rows?.[0] ?? args.row) as Record<string, unknown> | undefined;
         if (!row || typeof row !== "object") return { error: "insert needs row." };
-        const saved = await insertAppRow(deps.prisma, app.id, table, row, run.userId);
+        const saved = await insertAppRow(deps.prisma, app.id, table, row, run.userId, assistant);
         return { row: saved.row, revision: saved.revision };
       }
       case "update": {
@@ -684,13 +694,22 @@ async function appData(ctx: RunContext, call: ToolCall) {
         const patch = args.patch as Record<string, unknown> | undefined;
         if (!id || !patch || typeof patch !== "object")
           return { error: "update needs id and patch." };
-        const saved = await updateAppRow(deps.prisma, app.id, table, id, patch, run.userId);
+        const saved = await updateAppRow(
+          deps.prisma,
+          app.id,
+          table,
+          id,
+          patch,
+          run.userId,
+          {},
+          assistant,
+        );
         return { row: saved.row, revision: saved.revision };
       }
       case "remove": {
         const id = String(args.id ?? "");
         if (!id) return { error: "remove needs id." };
-        return await removeAppRow(deps.prisma, app.id, table, id);
+        return await removeAppRow(deps.prisma, app.id, table, id, {}, assistantBy);
       }
       case "replace":
       case "append":
@@ -701,6 +720,7 @@ async function appData(ctx: RunContext, call: ToolCall) {
           rows,
           mode: action,
           userId: run.userId,
+          via: "assistant",
         });
         return {
           table: result.table,
@@ -713,14 +733,40 @@ async function appData(ctx: RunContext, call: ToolCall) {
         };
       }
       case "drop":
-        return await dropAppTable(deps.prisma, app.id, table);
+        return await dropAppTable(deps.prisma, app.id, table, assistantBy);
+      case "history": {
+        // Summaries name rows colleagues may have written.
+        ctx.state.tainted = true;
+        const changes = await listAppChanges(deps.prisma, app.id, 30);
+        return {
+          changes: changes.map((change) => ({
+            id: change.id,
+            summary: change.summary,
+            via: change.via,
+            at: change.createdAt,
+            undone: change.undone,
+            canUndo: change.canUndo,
+            canRedo: change.canRedo,
+          })),
+        };
+      }
+      case "undo":
+      case "redo": {
+        const id = String(args.id ?? "");
+        if (!id) return { error: `${action} needs the id of a change from history.` };
+        return await undoAppChange(deps.prisma, app.id, id, {
+          redo: action === "redo",
+          userId: run.userId,
+        });
+      }
       default:
         return {
-          error: "action is one of query, insert, update, remove, replace, append, upsert, drop.",
+          error:
+            "action is one of query, insert, update, remove, replace, append, upsert, drop, history, undo, redo.",
         };
     }
   } catch (error) {
-    if (isAppDataError(error))
+    if (isAppDataError(error) || error instanceof AppHistoryError)
       return { error: error instanceof Error ? error.message : "Refused", unchanged: true };
     throw error;
   }

@@ -68,7 +68,32 @@ export const AppVersionSchema = z.object({
   version: z.number().int().positive(),
   title: z.string(),
   createdAt: z.string(),
+  /** assistant, studio, restore, import or template; null for versions saved before this was kept. */
+  via: z.string().nullable().optional(),
+  author: z.string().nullable().optional(),
+  restoredFrom: z.number().int().nullable().optional(),
 });
+
+/** One change to an app's data, for the Studio's history. */
+export const AppDataChangeSchema = z.object({
+  id: z.string(),
+  table: z.string(),
+  label: z.string(),
+  action: z.enum(["added", "changed", "removed", "table"]),
+  summary: z.string(),
+  via: z.string().nullable(),
+  author: z.string().nullable(),
+  createdAt: z.string(),
+  undone: z.boolean(),
+  canUndo: z.boolean(),
+  canRedo: z.boolean(),
+  fields: z
+    .array(
+      z.object({ key: z.string(), label: z.string(), before: z.unknown(), after: z.unknown() }),
+    )
+    .optional(),
+});
+export type AppDataChange = z.infer<typeof AppDataChangeSchema>;
 
 export const SHARED_APP_ROWS_PATH = "app/rows";
 export const SHARED_APP_ASSETS_PATH = "app/assets";

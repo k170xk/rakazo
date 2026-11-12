@@ -1857,6 +1857,7 @@ model Page {
   appTables             AppTable[]
   appRows               AppRow[]
   appAssets             AppAsset[]
+  appDataChanges        AppDataChange[]
 
   @@index([spaceId, userId, updatedAt])
   @@index([botId])
@@ -1874,6 +1875,12 @@ model PageVersion {
   /// The source compiled for the viewer when it was saved, so reads never run the compiler.
   code      String
   createdAt DateTime @default(now())
+  /// Who saved it (a user id; null for versions from before this was kept).
+  authorId  String?
+  /// How it was made: assistant, studio, restore, import or template; null before this was kept.
+  via       String?
+  /// For a restore, the version it brought back.
+  restoredFrom Int?
 
   @@unique([pageId, version])
   @@map("page_versions")
@@ -1928,6 +1935,30 @@ model AppRow {
   @@index([tableId, position])
   @@index([pageId])
   @@map("app_rows")
+}
+
+/// One change to an app's data, kept so the owner can see it and undo it: a row added, changed or
+/// removed, or a whole table's schema and rows as they were before a bulk load, import or drop.
+model AppDataChange {
+  id        String    @id @default(cuid())
+  pageId    String
+  page      Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  table     String
+  label     String
+  /// added, changed, removed, or table (a snapshot taken before a bulk change).
+  action    String
+  rowId     String?
+  before    Json?
+  after     Json?
+  summary   String
+  userId    String?
+  /// assistant, studio, shared, evolve, import or undo.
+  via       String?
+  undoneAt  DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([pageId, createdAt])
+  @@map("app_data_changes")
 }
 
 /// A picture an app shows (an infographic, generated image or upload), served to its frame as bytes.

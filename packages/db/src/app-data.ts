@@ -6,6 +6,8 @@ import {
   MAX_TABLES,
   withFormulas,
 } from "@rakazo/app-kit/schema";
+import type { ChangeMeta } from "./app-history.js";
+import { recordChange, rowName, snapshotTable } from "./app-history.js";
 import type { PrismaClient } from "./generated/prisma/client.js";
 import { Prisma } from "./generated/prisma/client.js";
 
@@ -98,7 +100,12 @@ async function tableFor(tx: Prisma.TransactionClient, pageId: string, name: stri
     select: { id: true, name: true, label: true, schema: true },
   });
   if (!table) throw new AppDataError(`This app has no table called ${name}.`);
-  return { id: table.id, schema: storedSchema(table.schema, table.name, table.label) };
+  return {
+    id: table.id,
+    name: table.name,
+    label: table.label,
+    schema: storedSchema(table.schema, table.name, table.label),
+  };
 }
 
 const json = (value: Record<string, unknown>) => value as Prisma.InputJsonObject;
@@ -109,6 +116,7 @@ export async function insertAppRow(
   tableName: string,
   input: Record<string, unknown>,
   userId: string | null,
+  meta: ChangeMeta = {},
 ): Promise<{ row: Row; revision: number }> {
   return prisma.$transaction(async (tx) => {
     const table = await tableFor(tx, pageId, tableName);
@@ -131,8 +139,26 @@ export async function insertAppRow(
         updatedBy: userId,
         createdBy: userId,
       },
-      select: { id: true, data: true, updatedAt: true },
+      select: { id: true, data: true, updatedAt: true, position: true },
     });
+    await recordChange(
+      tx,
+      pageId,
+      {
+        table: table.name,
+        label: table.label,
+        action: "added",
+        rowId: created.id,
+        after: {
+          data: checked.row,
+          position: created.position,
+          createdBy: userId,
+          updatedBy: userId,
+        },
+        summary: `Added ${rowName(table.schema, checked.row)} to ${table.label}`,
+      },
+      { userId, ...meta },
+    );
     return { row: asRow(created), revision: await bump(tx, pageId) };
   });
 }
@@ -145,6 +171,7 @@ export async function updateAppRow(
   patch: Record<string, unknown>,
   userId: string | null,
   scope: RowScope = {},
+  meta: ChangeMeta = {},
 ): Promise<{ row: Row; revision: number }> {
   return prisma.$transaction(async (tx) => {
     const table = await tableFor(tx, pageId, tableName);
@@ -161,11 +188,32 @@ export async function updateAppRow(
       existing.data && typeof existing.data === "object"
         ? (existing.data as Record<string, unknown>)
         : {};
+    const next = { ...before, ...checked.row };
     const updated = await tx.appRow.update({
       where: { id: rowId },
-      data: { data: json({ ...before, ...checked.row }), updatedBy: userId },
+      data: { data: json(next), updatedBy: userId },
       select: { id: true, data: true, updatedAt: true },
     });
+    const columns = new Map(table.schema.columns.map((column) => [column.key, column.label]));
+    const touched = Object.keys(checked.row)
+      .filter((key) => JSON.stringify(before[key] ?? null) !== JSON.stringify(next[key] ?? null))
+      .map((key) => columns.get(key) ?? key);
+    if (touched.length) {
+      await recordChange(
+        tx,
+        pageId,
+        {
+          table: table.name,
+          label: table.label,
+          action: "changed",
+          rowId,
+          before,
+          after: next,
+          summary: `Changed ${touched.slice(0, 4).join(", ")}${touched.length > 4 ? "…" : ""} on ${rowName(table.schema, next)}`,
+        },
+        { userId, ...meta },
+      );
+    }
     return { row: asRow(updated), revision: await bump(tx, pageId) };
   });
 }
@@ -176,17 +224,16 @@ export async function removeAppRow(
   tableName: string,
   rowId: string,
   scope: RowScope = {},
+  meta: ChangeMeta = {},
 ) {
   return prisma.$transaction(async (tx) => {
     const table = await tableFor(tx, pageId, tableName);
-    if (scope.onlyCreatedBy) {
-      const existing = await tx.appRow.findFirst({
-        where: { id: rowId, tableId: table.id },
-        select: { createdBy: true },
-      });
-      if (existing && existing.createdBy !== scope.onlyCreatedBy)
-        throw new AppDataError("You can remove only the rows you added.");
-    }
+    const existing = await tx.appRow.findFirst({
+      where: { id: rowId, tableId: table.id },
+      select: { data: true, position: true, createdBy: true, updatedBy: true },
+    });
+    if (scope.onlyCreatedBy && existing && existing.createdBy !== scope.onlyCreatedBy)
+      throw new AppDataError("You can remove only the rows you added.");
     const removed = await tx.appRow.deleteMany({
       where: {
         id: rowId,
@@ -194,7 +241,21 @@ export async function removeAppRow(
         ...(scope.onlyCreatedBy ? { createdBy: scope.onlyCreatedBy } : {}),
       },
     });
-    if (removed.count === 0) throw new AppDataError("That row is no longer there.");
+    if (removed.count === 0 || !existing) throw new AppDataError("That row is no longer there.");
+    const data = (existing.data ?? {}) as Record<string, unknown>;
+    await recordChange(
+      tx,
+      pageId,
+      {
+        table: table.name,
+        label: table.label,
+        action: "removed",
+        rowId,
+        before: { ...existing, data },
+        summary: `Removed ${rowName(table.schema, data)} from ${table.label}`,
+      },
+      meta,
+    );
     return { revision: await bump(tx, pageId) };
   });
 }
@@ -225,12 +286,20 @@ export async function defineAppTable(
     rows?: unknown[];
     mode?: RowsMode;
     userId?: string | null;
+    via?: ChangeMeta["via"];
   },
 ): Promise<DefineTableResult> {
   return prisma.$transaction(
     async (tx) => {
       let tableId: string;
       let schema: TableSchema;
+      const name =
+        input.schema !== undefined
+          ? (checkSchema(input.schema) as { schema?: TableSchema }).schema?.name
+          : input.table;
+      const snapshot = name
+        ? await snapshotTable(tx, pageId, name, input.rows !== undefined)
+        : ({ existed: false } as const);
       if (input.schema !== undefined) {
         const checked = checkSchema(input.schema);
         if (!checked.ok) throw new AppDataError(checked.error);
@@ -352,6 +421,19 @@ export async function defineAppTable(
         }
       }
       const rows = await tx.appRow.count({ where: { tableId } });
+      const summary = !snapshot.existed
+        ? `Created ${schema.label}${inserted ? ` with ${inserted} rows` : ""}`
+        : input.rows === undefined
+          ? `Changed the columns of ${schema.label}`
+          : (input.mode ?? "replace") === "replace"
+            ? `Replaced every row of ${schema.label} (${removed} → ${inserted})`
+            : `Loaded rows into ${schema.label} (${updated} updated, ${inserted} added)`;
+      await recordChange(
+        tx,
+        pageId,
+        { table: schema.name, label: schema.label, action: "table", before: snapshot, summary },
+        { userId: input.userId ?? null, via: input.via },
+      );
       return {
         table: schema.name,
         rows,
@@ -366,12 +448,34 @@ export async function defineAppTable(
   );
 }
 
-export async function dropAppTable(prisma: PrismaClient, pageId: string, name: string) {
-  return prisma.$transaction(async (tx) => {
-    const removed = await tx.appTable.deleteMany({ where: { pageId, name } });
-    if (removed.count === 0) throw new AppDataError(`This app has no table called ${name}.`);
-    return { revision: await bump(tx, pageId) };
-  });
+export async function dropAppTable(
+  prisma: PrismaClient,
+  pageId: string,
+  name: string,
+  meta: ChangeMeta = {},
+) {
+  return prisma.$transaction(
+    async (tx) => {
+      const snapshot = await snapshotTable(tx, pageId, name, true);
+      const removed = await tx.appTable.deleteMany({ where: { pageId, name } });
+      if (removed.count === 0 || !snapshot.existed)
+        throw new AppDataError(`This app has no table called ${name}.`);
+      await recordChange(
+        tx,
+        pageId,
+        {
+          table: name,
+          label: snapshot.label,
+          action: "table",
+          before: snapshot,
+          summary: `Removed the table ${snapshot.label} (${snapshot.rows?.length ?? 0} rows)`,
+        },
+        meta,
+      );
+      return { revision: await bump(tx, pageId) };
+    },
+    { timeout: 60_000, maxWait: 10_000 },
+  );
 }
 
 export const MAX_ASSET_BYTES = 6 * 1024 * 1024;
@@ -507,6 +611,7 @@ export async function createAppPage(
     code: string;
     tables?: Array<{ schema: TableSchema; rows: Array<Record<string, unknown>> }>;
     dataAccess?: "owner" | "contribute";
+    via?: "assistant" | "studio" | "import" | "template";
   },
 ): Promise<{ pageId: string; version: number; title: string }> {
   const created = await prisma.page.create({
@@ -524,6 +629,8 @@ export async function createAppPage(
           title: input.title,
           source: JSON.stringify(input.files),
           code: input.code,
+          authorId: input.userId,
+          via: input.via ?? null,
         },
       },
     },
@@ -535,6 +642,7 @@ export async function createAppPage(
         schema: table.schema,
         rows: table.rows,
         mode: "replace",
+        via: input.via,
       });
     }
   } catch (error) {
@@ -553,6 +661,9 @@ export async function appendAppVersion(
     files: Record<string, string>;
     code: string;
     title?: string;
+    authorId?: string | null;
+    via?: "assistant" | "studio" | "restore" | "import";
+    restoredFrom?: number;
   },
 ): Promise<{ version: number; title: string }> {
   return prisma.$transaction(async (tx) => {
@@ -577,6 +688,9 @@ export async function appendAppVersion(
         title,
         source: JSON.stringify(input.files),
         code: input.code,
+        authorId: input.authorId ?? null,
+        via: input.via ?? null,
+        restoredFrom: input.restoredFrom ?? null,
       },
     });
     return { version, title };
@@ -611,6 +725,7 @@ export async function mergeImportedTables(
         rows: table.rows,
         mode: "replace",
         userId,
+        via: "import",
       });
       report.push(`New table ${table.schema.label}: ${result.inserted} rows.`);
       continue;
@@ -622,6 +737,7 @@ export async function mergeImportedTables(
       rows: table.rows,
       mode: current.key ? "upsert" : "append",
       userId,
+      via: "import",
     });
     report.push(
       `${current.label}: ${result.updated} updated, ${result.inserted} added` +
