@@ -126,6 +126,7 @@ import {
   withoutPrivateApps,
 } from "./connection-context.js";
 import { formatCurrentTimeInstruction } from "./current-time.js";
+import { dailyLimitRefusal, dailyRunLimitsFromEnv } from "./daily-run-limits.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
 import { evolveAssistantAccessError } from "./evolve-assistants.js";
 import { evolvePersonContext } from "./evolve-person-context.js";
@@ -355,6 +356,7 @@ const COLLEAGUE_BLOCKED_TOOLS: ReadonlySet<string> = new Set([
 ]);
 export function createRunExecutor(executorDeps: ExecutorDeps) {
   const contextStrategy = executorDeps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY;
+  const dailyRunLimits = executorDeps.dailyRunLimits ?? dailyRunLimitsFromEnv({});
   const web = executorDeps.web ?? createWebProvider();
   const mediaGeneration = executorDeps.mediaGeneration ?? createMediaGenerationProvider();
   const browser =
@@ -1137,6 +1139,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         };
         if (pinnedComputerFailure) {
           await failRunBeforeModel(pinnedComputerFailure, true);
+          return;
+        }
+        // A limit that cannot be read never stops work; it only exists to end a runaway.
+        const overDailyLimit = await dailyLimitRefusal(deps.prisma, run, dailyRunLimits).catch(
+          () => null,
+        );
+        if (overDailyLimit) {
+          await failRunBeforeModel(overDailyLimit, true);
           return;
         }
         if (bot.evolveAssistantId) {

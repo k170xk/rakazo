@@ -187,6 +187,7 @@ export function resolveScheduleTiming(
     if (intervalError) return { ok: false, error: intervalError };
     try {
       const nextRunAt = nextCronDate(cron, from, timezone);
+      if (runsTooOften(cron, from, timezone)) return { ok: false, error: TOO_OFTEN };
       return { ok: true, cron, nextRunAt, oneShot: false };
     } catch {
       return { ok: false, error: "cron must be a valid 5-field cron expression." };
@@ -198,15 +199,11 @@ export function resolveScheduleTiming(
   if (!Number.isFinite(every) || every <= 0 || !Number.isInteger(every)) {
     return { ok: false, error: "every must be a positive whole number." };
   }
-  if (unit === "seconds") {
-    return { ok: false, error: "minimum interval is 1 minute" };
-  }
+  if (unit === "seconds") return { ok: false, error: TOO_OFTEN };
   if (!["minutes", "hours", "days"].includes(unit)) {
     return { ok: false, error: 'unit must be "minutes", "hours", or "days".' };
   }
-  if (unit === "minutes" && every < 1) {
-    return { ok: false, error: "minimum interval is 1 minute" };
-  }
+  if (unit === "minutes" && every < MIN_ROUTINE_GAP_MINUTES) return { ok: false, error: TOO_OFTEN };
   const cron = cronFromPreset({ freq: "Interval", n: every, unit });
   const intervalError = validateRepeatingCron(cron);
   if (intervalError) return { ok: false, error: intervalError };
@@ -236,6 +233,21 @@ export function describeRoutineTiming(row: {
       ? (localDateTime(row.nextRunAt, row.timezone) ?? row.nextRunAt.toISOString())
       : null,
   };
+}
+
+/** The most often a bot may schedule itself; each run calls the model, so faster is a cost runaway. */
+const MIN_ROUTINE_GAP_MINUTES = 15;
+const TOO_OFTEN = `A routine can repeat at most every ${MIN_ROUTINE_GAP_MINUTES} minutes. To react sooner, add a watch: it checks every 5 minutes without a model and runs only on a change.`;
+
+/** Whether any two of the cron's next runs come closer than the minimum, whatever its fields say. */
+function runsTooOften(cron: string, from: Date, timezone: string): boolean {
+  let previous = nextCronDate(cron, from, timezone);
+  for (let i = 0; i < 24; i += 1) {
+    const next = nextCronDate(cron, previous, timezone);
+    if (next.getTime() - previous.getTime() < MIN_ROUTINE_GAP_MINUTES * 60_000) return true;
+    previous = next;
+  }
+  return false;
 }
 
 function validateRepeatingCron(cron: string): string | null {

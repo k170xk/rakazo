@@ -18,6 +18,7 @@ import type {
 } from "@rakazo/adapter-kit";
 import type { PrismaClient, RunLease, ThreadEvents } from "@rakazo/db";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
+import type { DailyRunLimits } from "./daily-run-limits.js";
 import type { EvolvePluginsConnection } from "./evolve-plugins.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
@@ -29,6 +30,8 @@ import type { UserDeviceGateway } from "./user-device-protocol.js";
 
 export interface ExecutorDeps {
   maxUploadSizeBytes?: number;
+  /** Caps on runs nobody started by hand; the defaults apply when unset. */
+  dailyRunLimits?: DailyRunLimits;
   contextStrategy?: AgentContextStrategy;
   prisma: PrismaClient;
   events: ThreadEvents;

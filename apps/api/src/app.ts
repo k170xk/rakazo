@@ -64,6 +64,7 @@ import {
   createStrategicInitiativeReconciler,
   createTicketChangeNotifier,
   createWebProvider,
+  dailyRunLimitsFromEnv,
   deploymentModelUsageLookup,
   EmailEmulator,
   EvolveCompanyTools,
@@ -699,6 +700,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   // resolution alike, so a list call warms the run path in this process.
   const codexCatalog = new CodexCatalogCache();
   const executor = createRunExecutor({
+    dailyRunLimits: dailyRunLimitsFromEnv(process.env),
     billingEnabled: modelCreditsEnabled,
     maxUploadSizeBytes: env.maxUploadSizeBytes,
     contextStrategy: contextStrategy ?? contextStrategyFromEnv(process.env),

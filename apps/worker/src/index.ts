@@ -51,6 +51,7 @@ import {
   createStrategicInitiativeReconciler,
   createTicketChangeNotifier,
   createWebProvider,
+  dailyRunLimitsFromEnv,
   databaseCapacityBackoffMs,
   deploymentModelUsageLookup,
   EvolveCompanyTools,
@@ -361,6 +362,7 @@ async function main() {
     });
   };
   const executor = createRunExecutor({
+    dailyRunLimits: dailyRunLimitsFromEnv(process.env),
     maxUploadSizeBytes: uploadSizeFromEnv(process.env),
     contextStrategy: contextStrategyFromEnv(process.env),
     prisma,
