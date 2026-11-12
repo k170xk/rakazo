@@ -1111,6 +1111,10 @@ msgstr "AI safeguards"
 msgid "AI teammates, each with a job"
 msgstr "AI teammates, each with a job"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "AI technical review"
+msgstr "AI technical review"
+
 #: src/components/StorageDialog.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1813,6 +1817,10 @@ msgstr "Branded videos, explainers and social clips."
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Branded Word reports, letters, memos and specifications."
 msgstr "Branded Word reports, letters, memos and specifications."
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Brief: what it's for, who uses it and how"
+msgstr "Brief: what it's for, who uses it and how"
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Browse"
@@ -4774,6 +4782,10 @@ msgstr "Evolve tools"
 msgid "Evolve tools for everyone"
 msgstr "Evolve tools for everyone"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Evolve's peer reviewers and developers get it with the brief: the app's functions, data, connectors, how it was built and any security or data-protection points."
+msgstr "Evolve's peer reviewers and developers get it with the brief: the app's functions, data, connectors, how it was built and any security or data-protection points."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Example"
 msgstr "Example"
@@ -5289,6 +5301,7 @@ msgstr "Hidden from AI"
 msgid "Hidden from staff"
 msgstr "Hidden from staff"
 
+#: src/components/apps/AppPublishSection.tsx
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Hide"
 msgstr "Hide"
@@ -7957,6 +7970,10 @@ msgstr "React"
 msgid "Reactions"
 msgstr "Reactions"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Read it"
+msgstr "Read it"
+
 #: src/pages/AdminCompanyTools.tsx
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Read only"
@@ -8675,6 +8692,10 @@ msgstr "Save a company model first; assistant models run on its key."
 #: src/components/apps/AppPublishSection.tsx
 msgid "Save as draft"
 msgstr "Save as draft"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Save brief"
+msgstr "Save brief"
 
 #: src/components/AskCard.tsx
 msgid "Save changes"
@@ -9935,6 +9956,10 @@ msgstr "The owner may have turned off its link or deleted it."
 msgid "The provider is rate-limiting requests."
 msgstr "The provider is rate-limiting requests."
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "The review couldn't be written just now. Try again."
+msgstr "The review couldn't be written just now. Try again."
+
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
 msgstr "The screen connection closed."
@@ -10536,6 +10561,10 @@ msgstr "Unsupported file type: {0}"
 msgid "Up to date"
 msgstr "Up to date"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Up to date with this version."
+msgstr "Up to date with this version."
+
 #: src/components/ModelCredits.tsx
 msgid "Update"
 msgstr "Update"
@@ -10816,8 +10845,14 @@ msgstr "Version {0} is saved as a draft in Evolve."
 
 #. placeholder {0}: result.version
 #: src/components/apps/AppPublishSection.tsx
-msgid "Version {0} is waiting for Evolve's reviewers."
-msgstr "Version {0} is waiting for Evolve's reviewers."
+msgid "Version {0} is waiting for Evolve's developers."
+msgstr "Version {0} is waiting for Evolve's developers."
+
+#. placeholder {0}: result.version
+#. placeholder {1}: result.peerReviewers ?? 3
+#: src/components/apps/AppPublishSection.tsx
+msgid "Version {0} was sent to {1} colleagues for peer review. After three approvals Evolve's developers do the final review and security check."
+msgstr "Version {0} was sent to {1} colleagues for peer review. After three approvals Evolve's developers do the final review and security check."
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Version history"
@@ -10987,10 +11022,6 @@ msgstr "What it can do"
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "What it shows, e.g. a hard hat on a clipboard"
 msgstr "What it shows, e.g. a hard hat on a clipboard"
-
-#: src/components/apps/AppPublishSection.tsx
-msgid "What it's for and who uses it"
-msgstr "What it's for and who uses it"
 
 #: src/components/todos/todo-board.tsx
 msgid "What needs doing?"
@@ -11184,6 +11215,14 @@ msgstr "Workspace"
 msgid "Write a flood risk assessment for HEL18, then tighten the conclusions"
 msgstr "Write a flood risk assessment for HEL18, then tighten the conclusions"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Write it again"
+msgstr "Write it again"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Write it now"
+msgstr "Write it now"
+
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Write its instructions yourself"
 msgstr "Write its instructions yourself"
@@ -11191,6 +11230,14 @@ msgstr "Write its instructions yourself"
 #: src/pages/KnowledgeSection.tsx
 msgid "Writing style"
 msgstr "Writing style"
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Written for an earlier version; it is written again when you send it."
+msgstr "Written for an earlier version; it is written again when you send it."
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Written when you send it for review."
+msgstr "Written when you send it for review."
 
 #: src/lib/billing.ts
 msgid "year"

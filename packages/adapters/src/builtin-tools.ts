@@ -827,6 +827,16 @@ export const builtinAgentTools: ConnectorTool[] = [
         help: { type: "boolean", description: "Return the App Studio guide instead of saving." },
         appId: { type: "string", description: "The app to read or change." },
         title: { type: "string", description: "App title; required for a new app." },
+        brief: {
+          type: "string",
+          description:
+            "Required for a new app: two to four plain sentences for staff on what it is for, who uses it and how (no technical detail). Evolve's library and reviewers show it. Pass with appId to update it when the app's purpose changes.",
+        },
+        confirmNew: {
+          type: "boolean",
+          description:
+            "A new app is first checked against the Evolve library and apps in review; when similarApps come back, tell the person who built each and pass true only once they still want their own.",
+        },
         icon: {
           type: "string",
           description:

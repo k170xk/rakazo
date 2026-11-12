@@ -83,7 +83,7 @@ describe("save_app", () => {
   it("builds and saves a new app, posting its card", async () => {
     const result = (await appTools.save_app!(
       context().ctx,
-      call({ title: "Jobs", files: { "App.tsx": APP } }),
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": APP } }),
     )) as Result;
     expect(result).toMatchObject({ appId: "app-1", version: 1 });
     expect(db.createAppPage).toHaveBeenCalledWith(
@@ -95,6 +95,105 @@ describe("save_app", () => {
       }),
     );
     expect(publishMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a new app's brief, and asks for one when it is missing", async () => {
+    const missing = (await appTools.save_app!(
+      context().ctx,
+      call({ title: "Jobs", files: { "App.tsx": APP } }),
+    )) as Result;
+    expect(String(missing.error)).toContain("brief");
+    expect(db.createAppPage).not.toHaveBeenCalled();
+    await appTools.save_app!(
+      context().ctx,
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": APP } }),
+    );
+    expect(db.createAppPage).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ brief: "Tracks jobs." }),
+    );
+  });
+
+  it("updates only the brief of an existing app", async () => {
+    const { ctx } = context({});
+    const result = (await appTools.save_app!(
+      ctx,
+      call({ appId: "app-1", brief: "Now for site teams." }),
+    )) as Result;
+    expect(result).toMatchObject({ appId: "app-1", version: 1 });
+    const prisma = (
+      ctx as unknown as { deps: { prisma: { page: { update: ReturnType<typeof vi.fn> } } } }
+    ).deps.prisma;
+    expect(prisma.page.update).toHaveBeenCalledWith({
+      where: { id: "app-1" },
+      data: { brief: "Now for site teams." },
+    });
+    expect(db.appendAppVersion).not.toHaveBeenCalled();
+  });
+
+  it("points to a colleague's similar app before building, and builds once confirmed", async () => {
+    const evolve = vi.fn(async (_url: string, _init: RequestInit) =>
+      Response.json({
+        apps: [
+          {
+            slug: "site-inspections",
+            name: "Site inspection log",
+            description: "Record site inspections with photos and defects.",
+            brief: "Engineers log each site inspection, its defects and photos.",
+            state: "library",
+            mine: false,
+            url: "https://evolve.example/plugins/site-inspections",
+            creator: {
+              name: "Joe Bloggs",
+              email: "joe@ocsc.ie",
+              role: "Engineer",
+              discipline: "Civil",
+              office: "Cork",
+            },
+          },
+        ],
+      }),
+    );
+    vi.stubGlobal("fetch", evolve);
+    try {
+      const { ctx } = context();
+      const deps = (ctx as unknown as { deps: Record<string, unknown> }).deps;
+      deps.evolvePlugins = {
+        url: "https://evolve.example/functions/v1/plugin-builder",
+        secret: "s".repeat(40),
+      };
+      (deps.prisma as Record<string, unknown>).user = {
+        findUnique: vi.fn(async () => ({ email: "ann@ocsc.ie" })),
+      };
+      const args = {
+        title: "Site inspections",
+        brief: "Log site inspections with defects and photos.",
+        files: { "App.tsx": APP },
+      };
+      const first = (await appTools.save_app!(ctx, call(args))) as Result;
+      expect(first.unchanged).toBe(true);
+      expect(first.similarApps).toEqual([
+        expect.objectContaining({
+          name: "Site inspection log",
+          note: expect.stringContaining("Check in with Joe to share it with you"),
+        }),
+      ]);
+      expect(JSON.parse(String(evolve.mock.calls[0]?.[1]?.body))).toEqual({ action: "catalogue" });
+      expect((ctx as unknown as { state: { tainted: boolean } }).state.tainted).toBe(true);
+      expect(db.createAppPage).not.toHaveBeenCalled();
+
+      const confirmed = (await appTools.save_app!(
+        ctx,
+        call({ ...args, confirmNew: true }),
+      )) as Result;
+      expect(confirmed).toMatchObject({ appId: "app-1" });
+      const catalogueCalls = evolve.mock.calls.filter(
+        ([, init]) => JSON.parse(String(init?.body ?? "{}")).action === "catalogue",
+      );
+      expect(catalogueCalls).toHaveLength(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("starts an app from a template with its tables and access", async () => {
@@ -145,7 +244,11 @@ describe("save_app", () => {
   it("saves nothing when the code does not build", async () => {
     const result = (await appTools.save_app!(
       context().ctx,
-      call({ title: "Jobs", files: { "App.tsx": "export default function App( {" } }),
+      call({
+        title: "Jobs",
+        brief: "Tracks jobs.",
+        files: { "App.tsx": "export default function App( {" },
+      }),
     )) as Result;
     expect(result.unchanged).toBe(true);
     expect(result.problems).toBeTruthy();
@@ -157,6 +260,7 @@ describe("save_app", () => {
       context().ctx,
       call({
         title: "Jobs",
+        brief: "Tracks jobs.",
         files: { "App.tsx": `import fs from "node:fs";\nexport default () => String(fs);` },
       }),
     )) as Result;
@@ -168,7 +272,11 @@ describe("save_app", () => {
     const secret = "sk-live-abcdefghijklmnop";
     const result = (await appTools.save_app!(
       context(undefined, { secrets: [secret] }).ctx,
-      call({ title: "Jobs", files: { "App.tsx": APP.replace("Hi", secret) } }),
+      call({
+        title: "Jobs",
+        brief: "Tracks jobs.",
+        files: { "App.tsx": APP.replace("Hi", secret) },
+      }),
     )) as Result;
     expect(result.error).toMatch(/secret/);
     expect(db.createAppPage).not.toHaveBeenCalled();

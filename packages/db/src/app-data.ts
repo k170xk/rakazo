@@ -636,6 +636,8 @@ export async function createAppPage(
     botId: string | null;
     groupId: string | null;
     title: string;
+    /** The plain-English brief for staff: what the app is for, who uses it and how. */
+    brief?: string | null;
     files: Record<string, string>;
     code: string;
     tables?: Array<{ schema: TableSchema; rows: Array<Record<string, unknown>> }>;
@@ -651,6 +653,7 @@ export async function createAppPage(
       groupId: input.groupId,
       title: input.title,
       kind: "app",
+      ...(input.brief ? { brief: input.brief } : {}),
       ...(input.dataAccess ? { dataAccess: input.dataAccess } : {}),
       versions: {
         create: {

@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import { Button, Spinner } from "@rakazo/ui-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ExternalLink, Send, TriangleAlert } from "lucide-react";
+import { Check, ExternalLink, FileSearch, Send, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
 
@@ -20,8 +20,9 @@ function slugFrom(title: string) {
 const safeLink = (url: string | undefined) => (url?.startsWith("https://") ? url : null);
 
 /**
- * Sends the app to Evolve as a staff plugin. Evolve's reviewers publish it, after which it opens
- * from Evolve's menu with this app's live data.
+ * Sends the app to Evolve as a staff plugin with its brief and AI technical review. Three
+ * colleagues peer review it, Evolve's developers publish it, and it then opens from Evolve's menu
+ * with this app's live data.
  */
 export function AppPublishSection({ pageId, title }: { pageId: string; title: string }) {
   const { t } = useLingui();
@@ -29,24 +30,50 @@ export function AppPublishSection({ pageId, title }: { pageId: string; title: st
   const queryClient = useQueryClient();
   const publication = useQuery(queries.apps.evolvePublication.queryOptions({ input: { pageId } }));
   const [slug, setSlug] = useState<string | null>(null);
-  const [purpose, setPurpose] = useState("");
+  const [draftBrief, setDraftBrief] = useState<string | null>(null);
+  const [showDossier, setShowDossier] = useState(false);
   const chosen = slug ?? publication.data?.slug ?? slugFrom(title);
+  const brief = draftBrief ?? publication.data?.brief ?? "";
+  const refresh = () =>
+    void queryClient.invalidateQueries({
+      queryKey: queries.apps.evolvePublication.queryKey({ input: { pageId } }),
+    });
   const publish = useMutation({
-    mutationFn: (submitForReview: boolean) =>
-      queries.apps.publishToEvolve.call({
+    mutationFn: async (submitForReview: boolean) => {
+      if (brief.trim() !== (publication.data?.brief ?? ""))
+        await queries.apps.saveBrief.call({ pageId, brief });
+      return queries.apps.publishToEvolve.call({
         pageId,
         slug: chosen,
         submitForReview,
-        purpose: purpose.trim() || undefined,
-      }),
-    onSuccess: () =>
-      void queryClient.invalidateQueries({
-        queryKey: queries.apps.evolvePublication.queryKey({ input: { pageId } }),
-      }),
+        purpose: brief.trim() || undefined,
+      });
+    },
+    onSuccess: () => {
+      setDraftBrief(null);
+      refresh();
+    },
+  });
+  const saveBrief = useMutation({
+    mutationFn: () => queries.apps.saveBrief.call({ pageId, brief }),
+    onSuccess: () => {
+      setDraftBrief(null);
+      refresh();
+    },
+  });
+  const dossier = useMutation({
+    mutationFn: () => queries.apps.writeDossier.call({ pageId }),
+    onSuccess: () => {
+      setShowDossier(true);
+      refresh();
+    },
   });
   if (!publication.data?.available) return null;
   const valid = SLUG.test(chosen);
   const result = publish.data;
+  const briefChanged = brief.trim() !== (publication.data.brief ?? "");
+  const review = publication.data.dossier;
+  const reviewCurrent = publication.data.dossierVersion === publication.data.currentVersion;
   const preview = safeLink(result?.previewUrl);
   const mine = safeLink(result?.myPluginsUrl);
 
@@ -71,19 +98,74 @@ export function AppPublishSection({ pageId, title }: { pageId: string; title: st
         </p>
       ) : null}
       <label className="flex flex-col gap-1">
-        <span className="text-[12px] text-muted-foreground">{t`What it's for and who uses it`}</span>
+        <span className="text-[12px] text-muted-foreground">{t`Brief: what it's for, who uses it and how`}</span>
         <textarea
-          value={purpose}
+          value={brief}
           maxLength={2000}
-          rows={3}
-          onChange={(event) => setPurpose(event.target.value)}
+          rows={4}
+          onChange={(event) => setDraftBrief(event.target.value)}
           className="resize-y rounded-md border border-foreground/[0.12] bg-transparent px-2 py-1.5 text-[13px] text-foreground outline-none focus:border-primary/60"
         />
       </label>
+      {briefChanged ? (
+        <div>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={saveBrief.isPending}
+            onClick={() => saveBrief.mutate()}
+          >
+            {saveBrief.isPending ? <Spinner /> : null}
+            {t`Save brief`}
+          </Button>
+        </div>
+      ) : null}
+      <div className="flex flex-col gap-1.5 rounded-lg border border-foreground/[0.08] p-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <FileSearch className="size-3.5 text-muted-foreground" />
+          <span className="text-[13px] text-foreground">{t`AI technical review`}</span>
+          <span className="text-[12px] text-muted-foreground">
+            {!review
+              ? t`Written when you send it for review.`
+              : reviewCurrent
+                ? t`Up to date with this version.`
+                : t`Written for an earlier version; it is written again when you send it.`}
+          </span>
+        </div>
+        <p className="text-[12px] text-muted-foreground">
+          {t`Evolve's peer reviewers and developers get it with the brief: the app's functions, data, connectors, how it was built and any security or data-protection points.`}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {review ? (
+            <Button size="sm" variant="ghost" onClick={() => setShowDossier((open) => !open)}>
+              {showDossier ? t`Hide` : t`Read it`}
+            </Button>
+          ) : null}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={dossier.isPending || publish.isPending}
+            onClick={() => dossier.mutate()}
+          >
+            {dossier.isPending ? <Spinner /> : null}
+            {review ? t`Write it again` : t`Write it now`}
+          </Button>
+        </div>
+        {dossier.error ? (
+          <p role="alert" className="text-[12px] text-destructive">
+            {t`The review couldn't be written just now. Try again.`}
+          </p>
+        ) : null}
+        {showDossier && review ? (
+          <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md bg-foreground/[0.03] p-2 font-sans text-[12px] text-foreground">
+            {review}
+          </pre>
+        ) : null}
+      </div>
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
-          disabled={!valid || !purpose.trim() || publish.isPending}
+          disabled={!valid || !brief.trim() || publish.isPending}
           onClick={() => publish.mutate(true)}
         >
           {publish.isPending ? <Spinner /> : <Send />}
@@ -111,9 +193,11 @@ export function AppPublishSection({ pageId, title }: { pageId: string; title: st
       {result ? (
         <div className="flex flex-col gap-1.5 rounded-lg border border-foreground/[0.08] p-2.5">
           <p className="text-[13px] text-foreground">
-            {result.status === "submitted"
-              ? t`Version ${result.version} is waiting for Evolve's reviewers.`
-              : t`Version ${result.version} is saved as a draft in Evolve.`}
+            {result.status === "peer_review"
+              ? t`Version ${result.version} was sent to ${result.peerReviewers ?? 3} colleagues for peer review. After three approvals Evolve's developers do the final review and security check.`
+              : result.status === "submitted"
+                ? t`Version ${result.version} is waiting for Evolve's developers.`
+                : t`Version ${result.version} is saved as a draft in Evolve.`}
           </p>
           <ul className="flex flex-col gap-1">
             {(result.checks ?? [])

@@ -500,6 +500,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["apps/ask"],
       ["apps/evolvePublication"],
       ["apps/publishToEvolve"],
+      ["apps/saveBrief"],
+      ["apps/writeDossier"],
       ["usage/list"],
       ["usage/summary"],
       ["export/bot", { botId: "missing-bot" }],

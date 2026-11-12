@@ -101,7 +101,10 @@ beforeEach(async () => {
   db.createAppPage.mockResolvedValue({ pageId: "app-1", version: 1, title: "Jobs" });
   db.appendAppVersion.mockResolvedValue({ version: 4, title: "Jobs" });
   db.readAppTables.mockResolvedValue({
-    jobs: { schema: { name: "jobs", label: "Jobs", columns: [] }, rows: [{ _id: "r1", name: "Quay" }] },
+    jobs: {
+      schema: { name: "jobs", label: "Jobs", columns: [] },
+      rows: [{ _id: "r1", name: "Quay" }],
+    },
   });
   db.listAppAssets.mockResolvedValue([{ id: "pic-1", size: 4, mime: "image/png" }]);
   db.readAppAsset.mockResolvedValue({ mime: "image/png", bytes: new Uint8Array([1, 2, 3, 4]) });
@@ -176,7 +179,7 @@ describe("save_app run check", () => {
   it("reports a clean run with the page ids", async () => {
     const result = (await appTools.save_app!(
       context(runner(CLEAN)),
-      call({ title: "Jobs", files: { "App.tsx": APP } }),
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": APP } }),
     )) as Result;
     expect(result.runCheck).toBe("ran cleanly on 1 page(s), desktop and phone");
     expect(result.pages).toEqual([{ id: "overview", label: "Overview" }]);
@@ -204,7 +207,7 @@ describe("save_app run check", () => {
     const failing = { run: vi.fn(async () => ({ stdout: "", stderr: "no browser\n", code: 2 })) };
     const result = (await appTools.save_app!(
       context(failing),
-      call({ title: "Jobs", files: { "App.tsx": APP } }),
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": APP } }),
     )) as Result;
     expect(result.appId).toBe("app-1");
     expect(result.runCheck).toBe("not run (no browser)");
@@ -215,8 +218,22 @@ describe("app_look", () => {
   const shots = {
     ...CLEAN,
     shots: [
-      { file: "desktop-1.jpg", page: "Overview", viewport: "desktop", width: 1440, height: 900, cut: false },
-      { file: "phone-1.jpg", page: "Overview", viewport: "phone", width: 390, height: 1600, cut: true },
+      {
+        file: "desktop-1.jpg",
+        page: "Overview",
+        viewport: "desktop",
+        width: 1440,
+        height: 900,
+        cut: false,
+      },
+      {
+        file: "phone-1.jpg",
+        page: "Overview",
+        viewport: "phone",
+        width: 390,
+        height: 1600,
+        cut: true,
+      },
     ],
   };
 
@@ -243,7 +260,10 @@ describe("app_look", () => {
   });
 
   it("says so where there are no runners", async () => {
-    const result = (await appTools.app_look!(context(undefined), call({ appId: "app-1" }))) as Result;
+    const result = (await appTools.app_look!(
+      context(undefined),
+      call({ appId: "app-1" }),
+    )) as Result;
     expect(String(result.error)).toMatch(/cannot open apps/);
   });
 });

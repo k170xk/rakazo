@@ -1851,6 +1851,11 @@ model Page {
   evolvePluginSlug      String?       @unique
   /// How many times it was published, which numbers the plugin's versions.
   evolvePluginRelease   Int           @default(0)
+  /// An app's plain-English brief for staff: what it is for, who uses it and how.
+  brief                 String?
+  /// The AI's detailed review of an app for its reviewers (markdown), and the version it describes.
+  dossier               String?
+  dossierVersion        Int?
   createdAt             DateTime      @default(now())
   /// Set when the page's content or title changes; pinning or sharing it is not an update.
   updatedAt             DateTime      @default(now())

@@ -28,11 +28,13 @@ import {
   redrawAppIcon,
   reimportWorkbookApp,
   restoreAppVersion,
+  saveAppBrief,
   saveAppFiles,
   setAppDataAccess,
   undoOwnerAppChange,
   uploadAppAsset,
   WorkbookImportError,
+  writeAppDossier,
 } from "../apps.js";
 import { actorEmail } from "./bots.js";
 import type { RouterContext } from "./context.js";
@@ -84,6 +86,12 @@ export function appsRoutes(ctx: RouterContext) {
             input,
           ),
         ),
+      ),
+      saveBrief: authed.apps.saveBrief.handler(({ context, input }) =>
+        saveAppBrief(db, context.actor, input),
+      ),
+      writeDossier: authed.apps.writeDossier.handler(({ context, input }) =>
+        writeAppDossier(db, context.actor, input.pageId),
       ),
       reimportWorkbook: authed.apps.reimportWorkbook.handler(({ context, input }) =>
         refusals(() => reimportWorkbookApp(db, context.actor, input)),

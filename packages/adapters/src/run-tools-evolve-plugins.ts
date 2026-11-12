@@ -53,7 +53,7 @@ const SubmissionSchema = z.object({
 const issues = (error: z.ZodError) =>
   error.issues.map((issue) => `${issue.path.join(".") || "input"}: ${issue.message}`).join(" ");
 
-async function personEmail(ctx: RunContext): Promise<string | null> {
+export async function personEmail(ctx: RunContext): Promise<string | null> {
   const user = await runAsSystem("read the run owner's email for Evolve plugins", () =>
     ctx.deps.prisma.user.findUnique({ where: { id: ctx.run.userId }, select: { email: true } }),
   );

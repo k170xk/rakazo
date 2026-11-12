@@ -1106,6 +1106,10 @@ msgstr ""
 msgid "AI teammates, each with a job"
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "AI technical review"
+msgstr ""
+
 #: src/components/StorageDialog.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1807,6 +1811,10 @@ msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Branded Word reports, letters, memos and specifications."
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Brief: what it's for, who uses it and how"
 msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
@@ -4761,6 +4769,10 @@ msgstr ""
 msgid "Evolve tools for everyone"
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Evolve's peer reviewers and developers get it with the brief: the app's functions, data, connectors, how it was built and any security or data-protection points."
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Example"
 msgstr ""
@@ -5276,6 +5288,7 @@ msgstr "Hidden from AI"
 msgid "Hidden from staff"
 msgstr "Für Mitarbeitende ausgeblendet"
 
+#: src/components/apps/AppPublishSection.tsx
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Hide"
 msgstr "Ausblenden"
@@ -7939,6 +7952,10 @@ msgstr "Reagieren"
 msgid "Reactions"
 msgstr "Reaktionen"
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Read it"
+msgstr ""
+
 #: src/pages/AdminCompanyTools.tsx
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Read only"
@@ -8656,6 +8673,10 @@ msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Save as draft"
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Save brief"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -9914,6 +9935,10 @@ msgstr "Der Eigentümer hat den Link vielleicht deaktiviert oder die Seite gelö
 msgid "The provider is rate-limiting requests."
 msgstr "Der Anbieter drosselt die Anfragen."
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "The review couldn't be written just now. Try again."
+msgstr ""
+
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
 msgstr "Die Bildschirmverbindung wurde geschlossen."
@@ -10515,6 +10540,10 @@ msgstr "Nicht unterstützter Dateityp: {0}"
 msgid "Up to date"
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Up to date with this version."
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Update"
 msgstr ""
@@ -10795,7 +10824,13 @@ msgstr ""
 
 #. placeholder {0}: result.version
 #: src/components/apps/AppPublishSection.tsx
-msgid "Version {0} is waiting for Evolve's reviewers."
+msgid "Version {0} is waiting for Evolve's developers."
+msgstr ""
+
+#. placeholder {0}: result.version
+#. placeholder {1}: result.peerReviewers ?? 3
+#: src/components/apps/AppPublishSection.tsx
+msgid "Version {0} was sent to {1} colleagues for peer review. After three approvals Evolve's developers do the final review and security check."
 msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -10965,10 +11000,6 @@ msgstr ""
 
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "What it shows, e.g. a hard hat on a clipboard"
-msgstr ""
-
-#: src/components/apps/AppPublishSection.tsx
-msgid "What it's for and who uses it"
 msgstr ""
 
 #: src/components/todos/todo-board.tsx
@@ -11158,12 +11189,28 @@ msgstr ""
 msgid "Write a flood risk assessment for HEL18, then tighten the conclusions"
 msgstr ""
 
+#: src/components/apps/AppPublishSection.tsx
+msgid "Write it again"
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Write it now"
+msgstr ""
+
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Write its instructions yourself"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Writing style"
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Written for an earlier version; it is written again when you send it."
+msgstr ""
+
+#: src/components/apps/AppPublishSection.tsx
+msgid "Written when you send it for review."
 msgstr ""
 
 #: src/lib/billing.ts

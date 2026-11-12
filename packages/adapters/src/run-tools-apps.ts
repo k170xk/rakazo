@@ -24,11 +24,13 @@ import {
   undoAppChange,
   updateAppRow,
 } from "@rakazo/db";
+import { findSimilarApps, similarAppNote } from "./app-duplicates.js";
 import { drawAppIconLater } from "./app-icon.js";
 import { canLookAtApps, lookAtApp, lookProblems } from "./app-look.js";
 import type { RunContext } from "./run-context.js";
 import { isUniqueViolation, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
+import { personEmail } from "./run-tools-evolve-plugins.js";
 import { runFilePath, runFiles } from "./run-tools-files.js";
 import { argumentGiven } from "./update-bot-patch.js";
 
@@ -46,6 +48,9 @@ const QUERY_LIMIT = 500;
 const MAX_PICTURE_BYTES = 6 * 1024 * 1024;
 const INFOGRAPHIC_PATH =
   /^\/storage\/v1\/object\/public\/slide-assets\/infographics\/[A-Za-z0-9-]+\.png$/;
+const MAX_BRIEF = 2000;
+const BRIEF_NEEDED =
+  "A new app needs a brief: two to four plain sentences for staff saying what it is for, who uses it and how. Evolve's reviewers and the library show it.";
 const PICTURE_MIMES: Record<string, string> = {
   png: "image/png",
   jpg: "image/jpeg",
@@ -60,6 +65,7 @@ type App = {
   title: string;
   currentVersion: number;
   dataAccess: string;
+  brief: string | null;
   files: Record<string, string>;
 };
 
@@ -78,6 +84,7 @@ async function findApp(ctx: RunContext, appId: string): Promise<App | null> {
       kind: true,
       currentVersion: true,
       dataAccess: true,
+      brief: true,
       versions: { orderBy: { version: "desc" }, take: 1, select: { source: true } },
     },
   });
@@ -88,6 +95,7 @@ async function findApp(ctx: RunContext, appId: string): Promise<App | null> {
     title: page.title,
     currentVersion: page.currentVersion,
     dataAccess: page.dataAccess,
+    brief: page.brief,
     files: appFilesFrom(page.versions[0]?.source ?? "{}"),
   };
 }
@@ -174,6 +182,40 @@ function tableSummary(tables: Awaited<ReturnType<typeof readAppTables>>) {
       },
     ]),
   );
+}
+
+/**
+ * Other people's apps in the Evolve library or in review that already do this job. The bot is
+ * told who built each so the person can ask them to share it; confirmNew builds anyway.
+ */
+async function similarApps(ctx: RunContext, title: string, brief: string) {
+  const connection = ctx.deps.evolvePlugins;
+  if (!connection) return null;
+  const email = await personEmail(ctx);
+  if (!email) return null;
+  const similar = await findSimilarApps(
+    connection,
+    email,
+    { title, brief },
+    {
+      signal: ctx.context.signal,
+    },
+  );
+  if (!similar.length) return null;
+  // Their names and briefs were written by other people.
+  ctx.state.tainted = true;
+  return {
+    unchanged: true,
+    similarApps: similar.map((app) => ({
+      name: app.name,
+      state: app.state === "library" ? "in the Evolve library" : "in review",
+      creator: app.creator,
+      url: app.url,
+      brief: app.brief,
+      note: similarAppNote(app),
+    })),
+    next: "Nothing was built yet. Tell the person about each similar app in plain words, naming its creator and saying they can check in with that person to share it. Ask whether they still want their own; only if they do, call save_app again with the same arguments plus confirmNew: true.",
+  };
 }
 
 async function postCard(
@@ -280,6 +322,11 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
     botId: bot.id,
     groupId: thread.groupId,
     title: name,
+    brief:
+      `Made from the spreadsheet ${file.name}: ${imported.tables.map((table) => table.schema.label).join(", ")}.`.slice(
+        0,
+        MAX_BRIEF,
+      ),
     files,
     code: built.html,
     tables: imported.tables,
@@ -356,13 +403,23 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     title ??= template.title;
   }
 
-  if (app && iconSubject && !hasFiles && !hasEdits && !deletes.length && !hasTables && !title) {
+  const briefGiven = argumentGiven(args.brief);
+  if (
+    app &&
+    iconSubject &&
+    !hasFiles &&
+    !hasEdits &&
+    !deletes.length &&
+    !hasTables &&
+    !title &&
+    !briefGiven
+  ) {
     const drawing = drawIcon(ctx, { pageId: app.id, title: app.title }, iconSubject);
     return drawing
       ? { appId: app.id, icon: drawing }
       : { error: "Icons can't be drawn here: Evolve is not linked." };
   }
-  if (app && !hasFiles && !hasEdits && !deletes.length && !hasTables && !title) {
+  if (app && !hasFiles && !hasEdits && !deletes.length && !hasTables && !title && !briefGiven) {
     // Rows can be written by colleagues through a shared link, so reading them taints the run.
     ctx.state.tainted = true;
     const [tables, assets] = await Promise.all([
@@ -373,6 +430,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
       appId: app.id,
       version: app.currentVersion,
       title: app.title,
+      brief: app.brief,
       dataAccess: app.dataAccess,
       files: app.files,
       tables: tableSummary(tables),
@@ -382,6 +440,14 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   if (!app && hasEdits) return { error: "edits need the appId of the app to change." };
   if (!app && !hasFiles && !template) return { error: 'A new app needs files with "App.tsx".' };
   if (!app && !title) return { error: "A new app needs a title." };
+  const brief = briefGiven
+    ? redactSecrets(String(args.brief), ctx.secrets).trim().slice(0, MAX_BRIEF)
+    : (template?.description ?? "");
+  if (!app && !brief) return { error: BRIEF_NEEDED };
+  if (!app && args.confirmNew !== true) {
+    const similar = await similarApps(ctx, title!, brief);
+    if (similar) return similar;
+  }
 
   let files = { ...(app?.files ?? template?.files ?? {}) };
   if (hasFiles) {
@@ -441,6 +507,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         botId: bot.id,
         groupId: thread.groupId,
         title: title!,
+        brief,
         files,
         code: code!,
         dataAccess: template?.access,
@@ -460,6 +527,9 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     } else {
       if (title) await deps.prisma.page.update({ where: { id: app.id }, data: { title } });
       saved = { pageId: app.id, version: app.currentVersion, title: title ?? app.title };
+    }
+    if (app && briefGiven) {
+      await deps.prisma.page.update({ where: { id: app.id }, data: { brief: brief || null } });
     }
     for (const table of tables) {
       const result = await defineAppTable(deps.prisma, saved.pageId, {

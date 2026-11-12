@@ -32,6 +32,7 @@ import {
   updateAppRow,
 } from "@rakazo/db";
 import { askForApp } from "./app-ask.js";
+import { writeDossier } from "./app-dossier.js";
 import { readStateRows } from "./pages.js";
 
 /**
@@ -723,13 +724,75 @@ export async function getEvolvePublication(
   await requireApp(prisma, actor, pageId);
   const page = await prisma.page.findUniqueOrThrow({
     where: { id: pageId },
-    select: { evolvePluginSlug: true, evolvePluginRelease: true },
+    select: {
+      evolvePluginSlug: true,
+      evolvePluginRelease: true,
+      brief: true,
+      dossier: true,
+      dossierVersion: true,
+      currentVersion: true,
+    },
   });
   return {
     available: connection !== null,
     slug: page.evolvePluginSlug,
     release: page.evolvePluginRelease,
+    brief: page.brief,
+    dossier: page.dossier,
+    dossierVersion: page.dossierVersion,
+    currentVersion: page.currentVersion,
   };
+}
+
+export async function saveAppBrief(
+  prisma: PrismaClient,
+  actor: Actor,
+  input: { pageId: string; brief: string },
+) {
+  const app = await requireApp(prisma, actor, input.pageId);
+  const brief = input.brief.trim() || null;
+  await prisma.page.update({ where: { id: app.id }, data: { brief } });
+  return { brief };
+}
+
+/** Writes the AI review of the app's current version and keeps it with the app. */
+export async function writeAppDossier(prisma: PrismaClient, actor: Actor, pageId: string) {
+  const app = await requireApp(prisma, actor, pageId);
+  const page = await prisma.page.findUniqueOrThrow({
+    where: { id: app.id },
+    select: {
+      brief: true,
+      visibility: true,
+      createdAt: true,
+      user: { select: { name: true, email: true } },
+      bot: { select: { name: true } },
+      versions: { where: { version: app.currentVersion }, select: { source: true } },
+      _count: { select: { versions: true, appAssets: true } },
+    },
+  });
+  const tables = await readAppTables(prisma, app.id);
+  const dossier = await writeDossier({
+    title: app.title,
+    brief: page.brief,
+    version: app.currentVersion,
+    versions: page._count.versions,
+    createdAt: page.createdAt,
+    creator: { name: page.user.name, email: page.user.email },
+    builtBy: page.bot?.name ?? null,
+    dataAccess: app.dataAccess,
+    visibility: page.visibility,
+    files: appFilesFrom(page.versions[0]?.source ?? "{}"),
+    tables: Object.values(tables).map((table) => ({
+      schema: table.schema,
+      rows: table.rows.length,
+    })),
+    assets: page._count.appAssets,
+  });
+  await prisma.page.update({
+    where: { id: app.id },
+    data: { dossier, dossierVersion: app.currentVersion },
+  });
+  return { dossier, dossierVersion: app.currentVersion };
 }
 
 export async function publishAppToEvolve(
@@ -745,6 +808,9 @@ export async function publishAppToEvolve(
     where: { id: app.id },
     select: {
       evolvePluginRelease: true,
+      brief: true,
+      dossier: true,
+      dossierVersion: true,
       versions: { where: { version: app.currentVersion }, select: { source: true } },
     },
   });
@@ -755,7 +821,8 @@ export async function publishAppToEvolve(
     }),
   );
   if (taken) throw new AppPublishError("Another app already uses that plugin name.");
-  if (input.submitForReview && !input.purpose)
+  const purpose = input.purpose?.trim() || page.brief || undefined;
+  if (input.submitForReview && !purpose)
     throw new AppPublishError("Say what the app is for and who uses it, for Evolve's reviewers.");
 
   const files = appFilesFrom(page.versions[0]?.source ?? "{}");
@@ -767,6 +834,10 @@ export async function publishAppToEvolve(
   const bundle = pluginBundle(built, app.title);
   if (Buffer.byteLength(JSON.stringify(bundle)) > MAX_PLUGIN_BUNDLE_BYTES)
     throw new AppPublishError("The app is larger than Evolve allows for a plugin (2 MB).");
+  const dossier =
+    page.dossier && page.dossierVersion === app.currentVersion
+      ? page.dossier
+      : (await writeAppDossier(prisma, actor, app.id)).dossier;
   const release = page.evolvePluginRelease + 1;
   let result: {
     slug: string;
@@ -775,6 +846,7 @@ export async function publishAppToEvolve(
     checks?: Array<{ label: string; ok: boolean; detail?: string }>;
     previewUrl?: string;
     myPluginsUrl?: string;
+    peerReviewers?: number;
   };
   try {
     result = await callEvolvePlugins(connection, email, {
@@ -782,7 +854,9 @@ export async function publishAppToEvolve(
       manifest: {
         slug: input.slug,
         name: app.title.slice(0, 80),
-        description: `${app.title}, an OCSC App Studio app.`,
+        description: (
+          page.brief?.split(/(?<=[.!?])\s/)[0] ?? `${app.title}, an OCSC App Studio app.`
+        ).slice(0, 280),
         version: `1.0.${release}`,
         icon: "LayoutDashboard",
         scopes: ["app.data"],
@@ -791,7 +865,9 @@ export async function publishAppToEvolve(
       source: { ...files, "ocsc-app-host.ts": HOST_NOTE },
       engine: "ocsc-intelligence",
       submitForReview: input.submitForReview,
-      purpose: input.purpose,
+      purpose,
+      brief: page.brief ?? undefined,
+      dossier,
     });
   } catch (error) {
     if (error instanceof EvolvePluginsError) throw new AppPublishError(error.message);
@@ -812,5 +888,6 @@ export async function publishAppToEvolve(
     })),
     previewUrl: typeof result.previewUrl === "string" ? result.previewUrl : undefined,
     myPluginsUrl: typeof result.myPluginsUrl === "string" ? result.myPluginsUrl : undefined,
+    peerReviewers: typeof result.peerReviewers === "number" ? result.peerReviewers : undefined,
   };
 }

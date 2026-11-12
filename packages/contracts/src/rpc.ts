@@ -1862,8 +1862,21 @@ export const appContract = {
         available: z.boolean(),
         slug: z.string().nullable(),
         release: z.number().int(),
+        /** The staff brief, and the AI review with the app version it was written for. */
+        brief: z.string().nullable(),
+        dossier: z.string().nullable(),
+        dossierVersion: z.number().int().nullable(),
+        currentVersion: z.number().int(),
       }),
     ),
+    /** Changes the app's staff brief; an empty brief clears it. */
+    saveBrief: oc
+      .input(z.strictObject({ pageId: Id, brief: z.string().trim().max(2000) }))
+      .output(z.object({ brief: z.string().nullable() })),
+    /** Writes the AI review of the app's current version again. */
+    writeDossier: oc
+      .input(z.strictObject({ pageId: Id }))
+      .output(z.object({ dossier: z.string(), dossierVersion: z.number().int() })),
     /**
      * Sends the app to Evolve as a staff plugin, a draft or for review; once Evolve publishes it,
      * it opens from Evolve's menu with this app's data.
@@ -1887,6 +1900,8 @@ export const appContract = {
             .optional(),
           previewUrl: z.string().optional(),
           myPluginsUrl: z.string().optional(),
+          /** How many colleagues Evolve asked to peer review it. */
+          peerReviewers: z.number().int().optional(),
         }),
       ),
     /** An app's `ai.ask`, answered on the company model for the signed-in owner. */
