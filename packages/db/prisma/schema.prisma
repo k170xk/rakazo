@@ -790,7 +790,7 @@ model Bot {
   webhookSecretId         String?
   teamChatAmbientEnabled  Boolean                  @default(false)
   teamChatRules           String                   @default("")
-  crossSpaceCommunication Boolean                  @default(true)
+  crossSpaceCommunication Boolean                  @default(false)
   dailyCheckIns           Boolean                  @default(true)
   fleetManagement         Boolean                  @default(true)
   /// The Evolve chat assistant this bot was started from; its knowledge files answer evolve_knowledge_search.

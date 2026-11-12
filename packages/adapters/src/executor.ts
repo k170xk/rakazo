@@ -1722,8 +1722,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             ? agentConnectionTools.filter((tool) => !disabledBuiltinTools.has(tool.name))
             : []),
         ];
+        // Anyone besides the owner in the conversation (a colleague, a channel, team chat) sees the
+        // reply, so none of those turns reaches the owner's tools or connected apps.
         const strategicBuiltins = filterStrategicInitiativeTools(
-          colleagueGroupRun
+          nonOwnerChatRun
             ? builtins.filter((tool) => !COLLEAGUE_BLOCKED_TOOLS.has(tool.name))
             : builtins,
           { trigger: run.trigger, clientNonce: run.clientNonce },
@@ -1741,8 +1743,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         ]
           .filter(Boolean)
           .join("\n\n");
-        // A colleague's run never reaches the owner's connected apps.
-        const exposedConnectorTools = colleagueGroupRun
+        const exposedConnectorTools = nonOwnerChatRun
           ? []
           : discovered.filter(
               (tool) => !builtinAgentTools.some((builtin) => builtin.name === tool.name),
