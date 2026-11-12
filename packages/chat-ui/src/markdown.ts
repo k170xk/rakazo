@@ -353,8 +353,8 @@ export function remoteMarkdownImage(url: string): { href: string; host: string }
 export const RemoteImagesContext = createContext(false);
 
 /**
- * Hosts whose images always load without a tap, such as the organisation's own file store. A
- * host also covers its subdomains.
+ * Hosts whose images always load over HTTPS without a tap, such as the organisation's own file
+ * store. Each host is matched exactly, so a subdomain must be listed on its own.
  */
 export const TrustedImageHostsContext = createContext<readonly string[]>([]);
 
@@ -364,13 +364,13 @@ export const ImagePreviewContext = createContext<
 >(null);
 
 export function imageHostTrusted(href: string, trustedHosts: readonly string[]): boolean {
-  let host: string;
+  let url: URL;
   try {
-    host = new URL(href).hostname.toLowerCase();
+    url = new URL(href);
   } catch {
     return false;
   }
-  return trustedHosts.some((trusted) => host === trusted || host.endsWith(`.${trusted}`));
+  return url.protocol === "https:" && trustedHosts.includes(url.hostname.toLowerCase());
 }
 
 // Images the reader chose to load stay loaded for the session, even after a bubble remounts.

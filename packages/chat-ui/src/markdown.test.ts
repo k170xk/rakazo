@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
 import {
   closeUnterminatedFence,
+  imageHostTrusted,
   inlineMarkdownImageSrc,
   linkFaviconOrigin,
   linkifyExplicitUrls,
@@ -124,6 +125,19 @@ describe("plainTextLinkParts", () => {
     const parts = plainTextLinkParts(text);
     expect(performance.now() - started).toBeLessThan(250);
     expect(parts).toEqual([{ type: "text", value: text }]);
+  });
+});
+
+describe("imageHostTrusted", () => {
+  const hosts = ["ocsc.me", "evolve.ocsc.me"];
+
+  it("trusts only the listed hosts over HTTPS", () => {
+    expect(imageHostTrusted("https://evolve.ocsc.me/logo.png", hosts)).toBe(true);
+    expect(imageHostTrusted("https://OCSC.me/logo.png", hosts)).toBe(true);
+    expect(imageHostTrusted("https://other.ocsc.me/pixel.png", hosts)).toBe(false);
+    expect(imageHostTrusted("http://evolve.ocsc.me/logo.png", hosts)).toBe(false);
+    expect(imageHostTrusted("https://evilocsc.me/logo.png", hosts)).toBe(false);
+    expect(imageHostTrusted("not a url", hosts)).toBe(false);
   });
 });
 

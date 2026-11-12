@@ -97,7 +97,16 @@ const linkFavicons: LinkFavicons = {
 };
 
 // OCSC's own sites and the Evolve file store, where project photos and generated images live.
-const trustedImageHosts = ["ocsc.me", "ocsc.co.uk", "ocsc.ie", "axywhnegcerpjqjiuhhn.supabase.co"];
+const trustedImageHosts = [
+  "ocsc.me",
+  "evolve.ocsc.me",
+  "rakazo.ocsc.me",
+  "ocsc.co.uk",
+  "www.ocsc.co.uk",
+  "ocsc.ie",
+  "www.ocsc.ie",
+  "axywhnegcerpjqjiuhhn.supabase.co",
+];
 
 export function App() {
   const loadRemoteImages = useSyncExternalStore(
