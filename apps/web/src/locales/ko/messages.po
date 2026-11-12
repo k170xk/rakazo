@@ -2066,6 +2066,7 @@ msgstr ""
 msgid "Chart failed to render: {error}"
 msgstr "차트를 표시하지 못했습니다: {error}"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Chat"
 msgstr ""
@@ -4218,6 +4219,7 @@ msgid "Disconnecting…"
 msgstr "연결 해제 중…"
 
 #: src/components/apps/AppDataPanel.tsx
+#: src/components/apps/AppStudio.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/PasskeyOffer.tsx
@@ -8864,6 +8866,10 @@ msgstr ""
 msgid "Security code"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "See what changed"
+msgstr ""
+
 #. placeholder {0}: item.name
 #: src/components/StorageDialog.tsx
 msgid "Select {0}"
@@ -9136,6 +9142,10 @@ msgstr "비밀번호 표시"
 
 #: src/pages/GroupPanel.tsx
 msgid "Show selected"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "Show the chat beside the app"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -10525,6 +10535,10 @@ msgstr "업데이트가 필요합니다"
 msgid "Updated from Excel"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Updated to version {updated}"
+msgstr ""
+
 #: src/pages/settings-nav.ts
 msgid "Updates"
 msgstr "업데이트"
@@ -11088,6 +11102,10 @@ msgstr "작업 중"
 #: src/pages/shell/agent-import.tsx
 msgid "Working instructions"
 msgstr "작업 지침"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Working on your app…"
+msgstr ""
 
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts

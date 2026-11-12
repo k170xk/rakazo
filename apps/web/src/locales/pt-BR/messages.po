@@ -2066,6 +2066,7 @@ msgstr ""
 msgid "Chart failed to render: {error}"
 msgstr "Falha na renderização do gráfico: {error}"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Chat"
 msgstr ""
@@ -4218,6 +4219,7 @@ msgid "Disconnecting…"
 msgstr "Desconectando…"
 
 #: src/components/apps/AppDataPanel.tsx
+#: src/components/apps/AppStudio.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/PasskeyOffer.tsx
@@ -8864,6 +8866,10 @@ msgstr ""
 msgid "Security code"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "See what changed"
+msgstr ""
+
 #. placeholder {0}: item.name
 #: src/components/StorageDialog.tsx
 msgid "Select {0}"
@@ -9136,6 +9142,10 @@ msgstr ""
 
 #: src/pages/GroupPanel.tsx
 msgid "Show selected"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "Show the chat beside the app"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -10525,6 +10535,10 @@ msgstr "Atualização necessária"
 msgid "Updated from Excel"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Updated to version {updated}"
+msgstr ""
+
 #: src/pages/settings-nav.ts
 msgid "Updates"
 msgstr "Atualizações"
@@ -11088,6 +11102,10 @@ msgstr "Trabalhando"
 #: src/pages/shell/agent-import.tsx
 msgid "Working instructions"
 msgstr "Instruções de trabalho"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Working on your app…"
+msgstr ""
 
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts

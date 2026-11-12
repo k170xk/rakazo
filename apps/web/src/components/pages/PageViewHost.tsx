@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "react-router-dom";
 import { pageMutationOptions } from "../../lib/page-actions";
 import { ownerPageState } from "../../lib/page-state";
@@ -107,6 +107,14 @@ function OpenPage({
     (node: HTMLDivElement | null) => session.dock.set({ node }),
     [session],
   );
+  const setChatNode = useCallback(
+    (chat: HTMLDivElement | null) => session.dock.set({ chat }),
+    [session],
+  );
+  const running = useSyncExternalStore(
+    session.dock.subscribe,
+    () => session.dock.get().running === true,
+  );
   const data = page.data;
   const open = pageId !== null && (data !== undefined || failed || page.isPending);
   const dockPage = pageId !== null && data ? { id: data.id, title: data.title } : null;
@@ -166,6 +174,8 @@ function OpenPage({
         ownerName={data?.owner.name ?? null}
         share={share}
         composer={<div ref={setDockNode} />}
+        chat={<div ref={setChatNode} className="flex min-h-0 flex-1 flex-col" />}
+        running={running}
         onReply={session.offerReply}
         returnFocus={session.restoreFocus}
         compact={compact}

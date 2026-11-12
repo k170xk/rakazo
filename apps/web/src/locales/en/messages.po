@@ -2071,6 +2071,7 @@ msgstr "characters"
 msgid "Chart failed to render: {error}"
 msgstr "Chart failed to render: {error}"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Chat"
 msgstr "Chat"
@@ -4227,6 +4228,7 @@ msgid "Disconnecting…"
 msgstr "Disconnecting…"
 
 #: src/components/apps/AppDataPanel.tsx
+#: src/components/apps/AppStudio.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/PasskeyOffer.tsx
@@ -8882,6 +8884,10 @@ msgstr "Security & Ops"
 msgid "Security code"
 msgstr "Security code"
 
+#: src/components/apps/AppStudio.tsx
+msgid "See what changed"
+msgstr "See what changed"
+
 #. placeholder {0}: item.name
 #: src/components/StorageDialog.tsx
 msgid "Select {0}"
@@ -9155,6 +9161,10 @@ msgstr "Show password"
 #: src/pages/GroupPanel.tsx
 msgid "Show selected"
 msgstr "Show selected"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Show the chat beside the app"
+msgstr "Show the chat beside the app"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Show tool activity"
@@ -10546,6 +10556,10 @@ msgstr "Update required"
 msgid "Updated from Excel"
 msgstr "Updated from Excel"
 
+#: src/components/apps/AppStudio.tsx
+msgid "Updated to version {updated}"
+msgstr "Updated to version {updated}"
+
 #: src/pages/settings-nav.ts
 msgid "Updates"
 msgstr "Updates"
@@ -11114,6 +11128,10 @@ msgstr "Working"
 #: src/pages/shell/agent-import.tsx
 msgid "Working instructions"
 msgstr "Working instructions"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Working on your app…"
+msgstr "Working on your app…"
 
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts

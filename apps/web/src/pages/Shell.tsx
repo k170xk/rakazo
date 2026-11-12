@@ -106,6 +106,7 @@ import { Composer } from "./shell/composer";
 import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
+import { DockedTranscript } from "./shell/docked-transcript";
 import { DrawingsButton, MAX_DRAWING_PAGES } from "./shell/drawings-dialog";
 import { EvolveArchive } from "./shell/evolve-history";
 import { EvolveReferencesAction } from "./shell/evolve-references";
@@ -303,6 +304,8 @@ function SpaceShell() {
   const { mobileSidebarOpen, setMobileSidebarOpen, swipeHandlers } = useMobileSidebar();
   const isMobileSidebar = useIsMobile();
   const pages = usePagesForChat();
+  const dockState = useSyncExternalStore(pages.session.dock.subscribe, pages.session.dock.get);
+  const transcriptDocked = Boolean(dockState.chat);
   const miniSidebar = botsSidebarCollapsed && !isMobileSidebar;
   const [botMenu, setBotMenu] = useState<{ kind: "bot" | "group"; id: string } | null>(null);
   const closeBotMenu = useCallback(() => setBotMenu(null), []);
@@ -652,6 +655,10 @@ function SpaceShell() {
   const workingRuns = currentRuns.filter((run) => isRunWorking(run.status));
   const transcriptRunning = workingRuns.length > 0;
   const composerRunning = currentRuns.some((run) => isActive(run.status));
+  const botWorking = transcriptRunning || composerRunning;
+  useEffect(() => {
+    pages.session.dock.set({ running: botWorking });
+  }, [pages.session, botWorking]);
   const transcript = useMemo(
     () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
     [activeSnapshot?.messages],
@@ -1271,51 +1278,53 @@ function SpaceShell() {
               </Button>
             </div>
           ) : (
-            <Transcript
-              key={activeSnapshot?.threadId}
-              scrollRef={thread.messageScroll}
-              scrollRequest={scrollRequest}
-              onScrollRequestHandled={clearScrollRequest}
-              followRequest={composer.sentCount}
-              artifactTarget={transcriptArtifactTarget}
-              markedUnreadMessageId={read.markedUnreadMessageId}
-              transcript={transcript}
-              showToolActivity={showToolActivity}
-              olderCursor={activeSnapshot?.olderCursor ?? null}
-              unreadAfterSeq={read.unreadAfterSeq}
-              loadingOlder={loadingOlder}
-              answerableAskIds={answerableAskIds}
-              dismissableAskIds={dismissableAskIds}
-              running={transcriptRunning}
-              workingBots={workingBots}
-              onCallBack={
-                bootstrapMe?.phoneCallsEnabled && !inGroup && active
-                  ? () => callBot(active)
-                  : undefined
-              }
-              onLoadOlder={loadOlder}
-              onOpenBot={openBot}
-              onAnswer={composer.answerMessage}
-              onReply={replyToMessage}
-              onMarkUnread={markMessageUnread}
-              onQuote={quoteMessage}
-              onReact={composer.reactToMessage}
-              onJumpToMessage={jumpToReplyMessage}
-              onOpenPeerMessages={openPeerMessages}
-              memberName={resolveTranscriptMemberName}
-              authorName={resolveTranscriptAuthorName}
-              peerBot={resolveTranscriptBot}
-              me={transcriptMe}
-              onRefresh={refreshActiveThread}
-              onBotChanged={refreshBots}
-              onAddRoutine={addSkillRoutine}
-              voiceReady={Boolean(voiceStatus?.ready)}
-              speakingMessageId={speakingMessageId}
-              onSpeak={speakMessage}
-              onOpenComputer={computerControls.onOpenComputer}
-              onOpenImportSetup={openImportSetup}
-              rpc={rpc}
-            />
+            <DockedTranscript>
+              <Transcript
+                key={activeSnapshot?.threadId}
+                scrollRef={thread.messageScroll}
+                scrollRequest={scrollRequest}
+                onScrollRequestHandled={clearScrollRequest}
+                followRequest={composer.sentCount}
+                artifactTarget={transcriptArtifactTarget}
+                markedUnreadMessageId={read.markedUnreadMessageId}
+                transcript={transcript}
+                showToolActivity={showToolActivity || transcriptDocked}
+                olderCursor={activeSnapshot?.olderCursor ?? null}
+                unreadAfterSeq={read.unreadAfterSeq}
+                loadingOlder={loadingOlder}
+                answerableAskIds={answerableAskIds}
+                dismissableAskIds={dismissableAskIds}
+                running={transcriptRunning}
+                workingBots={workingBots}
+                onCallBack={
+                  bootstrapMe?.phoneCallsEnabled && !inGroup && active
+                    ? () => callBot(active)
+                    : undefined
+                }
+                onLoadOlder={loadOlder}
+                onOpenBot={openBot}
+                onAnswer={composer.answerMessage}
+                onReply={replyToMessage}
+                onMarkUnread={markMessageUnread}
+                onQuote={quoteMessage}
+                onReact={composer.reactToMessage}
+                onJumpToMessage={jumpToReplyMessage}
+                onOpenPeerMessages={openPeerMessages}
+                memberName={resolveTranscriptMemberName}
+                authorName={resolveTranscriptAuthorName}
+                peerBot={resolveTranscriptBot}
+                me={transcriptMe}
+                onRefresh={refreshActiveThread}
+                onBotChanged={refreshBots}
+                onAddRoutine={addSkillRoutine}
+                voiceReady={Boolean(voiceStatus?.ready)}
+                speakingMessageId={speakingMessageId}
+                onSpeak={speakMessage}
+                onOpenComputer={computerControls.onOpenComputer}
+                onOpenImportSetup={openImportSetup}
+                rpc={rpc}
+              />
+            </DockedTranscript>
           )}
         </div>
         {active || activeGroup ? (

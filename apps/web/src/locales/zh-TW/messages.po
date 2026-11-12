@@ -2067,6 +2067,7 @@ msgstr ""
 msgid "Chart failed to render: {error}"
 msgstr "圖表渲染失敗：{error}"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Chat"
 msgstr ""
@@ -4219,6 +4220,7 @@ msgid "Disconnecting…"
 msgstr "正在中斷…"
 
 #: src/components/apps/AppDataPanel.tsx
+#: src/components/apps/AppStudio.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/PasskeyOffer.tsx
@@ -8865,6 +8867,10 @@ msgstr ""
 msgid "Security code"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "See what changed"
+msgstr ""
+
 #. placeholder {0}: item.name
 #: src/components/StorageDialog.tsx
 msgid "Select {0}"
@@ -9138,6 +9144,10 @@ msgstr "顯示密碼"
 #: src/pages/GroupPanel.tsx
 msgid "Show selected"
 msgstr "顯示已選取項目"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Show the chat beside the app"
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Show tool activity"
@@ -10526,6 +10536,10 @@ msgstr "需要更新"
 msgid "Updated from Excel"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Updated to version {updated}"
+msgstr ""
+
 #: src/pages/settings-nav.ts
 msgid "Updates"
 msgstr "更新"
@@ -11089,6 +11103,10 @@ msgstr "工作中"
 #: src/pages/shell/agent-import.tsx
 msgid "Working instructions"
 msgstr "工作指示"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Working on your app…"
+msgstr ""
 
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts

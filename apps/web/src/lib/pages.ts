@@ -99,7 +99,14 @@ export function usePageDocument(
   return { document: viewerDocument, failed: runtime.isError && runtime.data === undefined, retry };
 }
 
-type Dock = { node: HTMLElement | null; page: { id: string; title: string } | null };
+type Dock = {
+  node: HTMLElement | null;
+  page: { id: string; title: string } | null;
+  /** Where the chat's transcript shows beside an open app, so its steps stay in view. */
+  chat?: HTMLElement | null;
+  /** The chat's bot is working on a reply. */
+  running?: boolean;
+};
 
 /**
  * One chat's open-page state: what opened the page (for focus), a Share asked for with it, and
@@ -140,7 +147,9 @@ export function createPageSession() {
         if (
           merged.node === dock.node &&
           merged.page?.title === dock.page?.title &&
-          merged.page?.id === dock.page?.id
+          merged.page?.id === dock.page?.id &&
+          (merged.chat ?? null) === (dock.chat ?? null) &&
+          Boolean(merged.running) === Boolean(dock.running)
         )
           return;
         dock = merged;

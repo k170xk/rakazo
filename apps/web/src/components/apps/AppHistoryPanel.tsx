@@ -22,7 +22,16 @@ type View = "code" | "data";
  * The app's history: every code version with what it changed, line by line, and every change to
  * its data. Restoring a version or undoing a change is kept too, so a mistake is never final.
  */
-export function AppHistoryPanel({ pageId, current }: { pageId: string; current: number }) {
+export function AppHistoryPanel({
+  pageId,
+  current,
+  focus,
+}: {
+  pageId: string;
+  current: number;
+  /** A version to open straight away, from "See what changed". */
+  focus?: number;
+}) {
   const { t } = useLingui();
   const [view, setView] = useState<View>("code");
   return (
@@ -51,7 +60,7 @@ export function AppHistoryPanel({ pageId, current }: { pageId: string; current: 
         ))}
       </div>
       {view === "code" ? (
-        <CodeHistory pageId={pageId} current={current} />
+        <CodeHistory pageId={pageId} current={current} focus={focus} />
       ) : (
         <DataHistory pageId={pageId} />
       )}
@@ -77,11 +86,19 @@ function useVersionFiles(pageId: string, version: number | null) {
   });
 }
 
-function CodeHistory({ pageId, current }: { pageId: string; current: number }) {
+function CodeHistory({
+  pageId,
+  current,
+  focus,
+}: {
+  pageId: string;
+  current: number;
+  focus?: number;
+}) {
   const { t, i18n } = useLingui();
   const queries = useSpaceQueries();
   const versions = useQuery(queries.apps.versions.queryOptions({ input: { pageId } }));
-  const [open, setOpen] = useState<number | null>(null);
+  const [open, setOpen] = useState<number | null>(focus ?? null);
   const [restoring, setRestoring] = useState<number | null>(null);
 
   const how = (entry: NonNullable<typeof versions.data>[number]) => {

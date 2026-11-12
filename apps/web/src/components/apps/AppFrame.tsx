@@ -45,6 +45,7 @@ export function AppFrame({
   onPick,
   onProblem,
   onChange,
+  refreshSignal,
 }: {
   document: string;
   title: string;
@@ -57,6 +58,8 @@ export function AppFrame({
   onProblem?: (message: string) => void;
   /** The app's data changed (here or elsewhere). */
   onChange?: (revision: number) => void;
+  /** Changes whenever the host learns the data moved on, so the app reads it at once. */
+  refreshSignal?: number;
 }) {
   const { open, dialog } = useExternalLinkOpener();
   const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "dark" as const);
@@ -89,6 +92,9 @@ export function AppFrame({
     }, POLL_MS);
     return () => clearInterval(timer);
   }, [refresh]);
+  useEffect(() => {
+    if (refreshSignal !== undefined) void refresh();
+  }, [refreshSignal, refresh]);
   useEffect(() => {
     post.current?.({ type: APP_EVENT, event: "theme", theme });
   }, [theme]);

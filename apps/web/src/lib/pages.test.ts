@@ -28,6 +28,22 @@ describe("page session", () => {
     // Back to the same page in history does not ask again.
     expect(session.takeShare("A")).toBe(false);
   });
+
+  it("tells the open app when the chat moves beside it and while the bot works", () => {
+    const session = createPageSession();
+    const listener = vi.fn();
+    session.dock.subscribe(listener);
+    const slot = {} as HTMLElement;
+    session.dock.set({ chat: slot });
+    session.dock.set({ chat: slot });
+    expect(listener).toHaveBeenCalledTimes(1);
+    session.dock.set({ running: true });
+    session.dock.set({ running: true });
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(session.dock.get()).toMatchObject({ chat: slot, running: true });
+    session.dock.set({ chat: null, running: false });
+    expect(listener).toHaveBeenCalledTimes(3);
+  });
 });
 
 describe("page replies", () => {
