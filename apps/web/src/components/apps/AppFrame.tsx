@@ -46,6 +46,7 @@ export function AppFrame({
   onProblem,
   onChange,
   refreshSignal,
+  onReady,
 }: {
   document: string;
   title: string;
@@ -60,14 +61,27 @@ export function AppFrame({
   onChange?: (revision: number) => void;
   /** Changes whenever the host learns the data moved on, so the app reads it at once. */
   refreshSignal?: number;
+  /** The app answered its first request, so it has drawn. */
+  onReady?: () => void;
 }) {
   const { open, dialog } = useExternalLinkOpener();
   const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "dark" as const);
   const post = useRef<((message: object) => void) | null>(null);
   const known = useRef<{ revision: number; canEdit: boolean } | null>(null);
   const usedGesture = useRef<string | null>(null);
-  const latest = useRef({ source, onPick, onProblem, onChange, title, app, theme, picking });
-  latest.current = { source, onPick, onProblem, onChange, title, app, theme, picking };
+  const ready = useRef(false);
+  const latest = useRef({
+    source,
+    onPick,
+    onProblem,
+    onChange,
+    onReady,
+    title,
+    app,
+    theme,
+    picking,
+  });
+  latest.current = { source, onPick, onProblem, onChange, onReady, title, app, theme, picking };
 
   const refresh = useCallback(async () => {
     const current = known.current;
@@ -214,7 +228,13 @@ export function AppFrame({
       if (!request) return;
       const gesture = (data as { gesture?: unknown }).gesture;
       handle(request, gesture, focused).then(
-        (result) => answer({ type: APP_RESPONSE, id: request.id, ok: true, result }),
+        (result) => {
+          answer({ type: APP_RESPONSE, id: request.id, ok: true, result });
+          if (!ready.current) {
+            ready.current = true;
+            latest.current.onReady?.();
+          }
+        },
         (error: unknown) =>
           answer({
             type: APP_RESPONSE,

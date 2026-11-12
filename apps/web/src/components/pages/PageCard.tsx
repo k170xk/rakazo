@@ -1,7 +1,9 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AppSource } from "../../lib/app-host";
 import { formatRelativeTime } from "../../lib/relative-time";
+import { AppFrame } from "../apps/AppFrame";
 import { PageFrame } from "./PageFrame";
 import { PageTileIcon } from "./page-icon";
 
@@ -9,6 +11,9 @@ import { PageTileIcon } from "./page-icon";
 // Large enough that the preview's body text stays readable, not grey texture.
 const PREVIEW_SCALE = 0.75;
 const PREVIEW_ASPECT = 630 / 1200;
+
+/** An App Studio app drawn in the card from its own data, in place of a page document. */
+export type PageCardApp = { id: string; version: number; document: string; source: AppSource };
 
 /** The nearest ancestor that scrolls, so "near view" is measured along the chat, not the window. */
 function scrollParent(element: HTMLElement): HTMLElement | null {
@@ -29,10 +34,12 @@ const livePreviews = new Map<object, { near: boolean; drop: () => void }>();
  */
 function PagePreview({
   document,
+  app,
   title,
   failed,
 }: {
   document: string | null;
+  app?: PageCardApp;
   title: string;
   failed: boolean;
 }) {
@@ -91,7 +98,7 @@ function PagePreview({
       className="pointer-events-none relative w-full overflow-hidden bg-card pointer-coarse:min-[900px]:min-h-[335px]"
       style={{ aspectRatio: `${1 / PREVIEW_ASPECT}` }}
     >
-      {live && document !== null && size.width > 0 ? (
+      {live && (app || document !== null) && size.width > 0 ? (
         <div
           inert
           // On a touch tablet the preview starts 13px further up the page.
@@ -103,7 +110,17 @@ function PagePreview({
             transform: `scale(${PREVIEW_SCALE})`,
           }}
         >
-          <PageFrame document={document} title={title} onHeight={onDrawn} />
+          {app ? (
+            <AppFrame
+              document={app.document}
+              title={title}
+              app={{ id: app.id, version: app.version }}
+              source={app.source}
+              onReady={onDrawn}
+            />
+          ) : (
+            <PageFrame document={document ?? ""} title={title} onHeight={onDrawn} />
+          )}
         </div>
       ) : null}
       {drawn ? null : (
@@ -138,6 +155,7 @@ export function PageCard({
   shared = false,
   failed = false,
   icon,
+  app,
 }: {
   title: string;
   /** When the page last changed, said under its title. */
@@ -153,6 +171,8 @@ export function PageCard({
   updated?: boolean;
   /** Shown in place of the page tile, such as an app's own icon. */
   icon?: ReactNode;
+  /** Draws this app in the preview instead of `document`. */
+  app?: PageCardApp;
 }) {
   const { t } = useLingui();
   const when = updatedAt ? formatRelativeTime(updatedAt) : "";
@@ -162,7 +182,7 @@ export function PageCard({
       data-deleted={onOpen === undefined || undefined}
       className="relative w-full max-w-[561px] overflow-hidden pointer-coarse:min-[900px]:max-w-[639px] rounded-[24px] bg-card ring-[0.5px] ring-border has-focus-visible:ring-2 has-focus-visible:ring-ring data-deleted:bg-transparent data-deleted:opacity-70"
     >
-      {onOpen ? <PagePreview document={document} title={title} failed={failed} /> : null}
+      {onOpen ? <PagePreview document={document} app={app} title={title} failed={failed} /> : null}
       <div className="flex h-[73px] items-center gap-[14px] border-t border-foreground/[0.04] px-5">
         {icon ?? <PageTileIcon />}
         <div className="min-w-0">
