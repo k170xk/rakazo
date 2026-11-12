@@ -193,6 +193,8 @@ import { configuredEmailProvider } from "./email.js";
 import type { AppEnv } from "./env.js";
 import { loadEnv } from "./env.js";
 import { mountEvolveAppData } from "./evolve-app-data.js";
+import { evolveProfileActive } from "./evolve-directory.js";
+import { evolveLeaverSweep } from "./evolve-leavers.js";
 import { healthRoutes } from "./health.js";
 import { homeRetentionSweep } from "./home-retention.js";
 import { startHourlySweep } from "./hourly-sweep.js";
@@ -833,6 +835,19 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
             onError: (error) => getLogger().error("saved home retention failed", error),
           }),
           (error) => getLogger().error("saved home retention failed", error),
+        )
+      : undefined;
+
+  const evolveSsoSecret = env.evolveSsoSecret;
+  const stopLeaverSweep =
+    evolveSsoSecret && env.nodeEnv === "production"
+      ? startHourlySweep(
+          evolveLeaverSweep({
+            prisma,
+            isActive: (email) =>
+              evolveProfileActive({ secret: evolveSsoSecret, url: env.evolveDirectoryUrl, email }),
+          }),
+          (error) => getLogger().error("evolve leaver check failed", error),
         )
       : undefined;
 
@@ -1638,6 +1653,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       await stopInstalledBridges?.();
       await stopReferralEmails?.();
       await stopHomeRetention?.();
+      await stopLeaverSweep?.();
       await reconciler?.stop();
       await oauthTokenUpgrade;
       await mcpArgsMove;

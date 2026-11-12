@@ -33,6 +33,29 @@ function directoryToken(secret: string): string {
 
 const text = (value: unknown) => (typeof value === "string" && value.trim() ? value.trim() : null);
 
+/** Whether Evolve has an active profile with exactly this email; throws when Evolve cannot say. */
+export async function evolveProfileActive(input: {
+  secret: string;
+  url: string | undefined;
+  email: string;
+  fetch?: typeof fetch;
+}): Promise<boolean> {
+  const email = input.email.trim().toLowerCase();
+  const response = await (input.fetch ?? fetch)(input.url || DEFAULT_DIRECTORY_URL, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${directoryToken(input.secret)}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ query: email, limit: 10 }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (!response.ok) throw new Error(`Evolve directory answered ${response.status}`);
+  const body = (await response.json()) as { profiles?: EvolveProfile[] };
+  if (!Array.isArray(body.profiles)) throw new Error("Evolve directory sent no profiles");
+  return body.profiles.some((profile) => text(profile.email)?.toLowerCase() === email);
+}
+
 /** Active Evolve profiles matching the query, marked against who is already in the group. */
 export async function searchEvolveDirectory(input: {
   secret: string | undefined;
