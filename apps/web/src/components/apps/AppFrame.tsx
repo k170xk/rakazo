@@ -12,20 +12,20 @@ import {
 import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import type { AppSource } from "../../lib/app-host";
-import { saveFile } from "../../lib/app-host";
+import { downloadName, saveFile } from "../../lib/app-host";
 import { appWriteDecision } from "../../lib/app-write-rule";
 import { readTheme, subscribeTheme } from "../../lib/pages";
 import { SandboxedHtmlViewer } from "../SandboxedHtmlViewer";
 
 /** How often an open app asks whether its data changed elsewhere. */
 const POLL_MS = 3000;
-/** Files an app may hand the person; nothing that would run when opened. */
-const DOWNLOAD_TYPES = new Set([
-  "text/csv",
-  "text/plain",
-  "text/markdown",
-  "application/json",
-  "text/calendar",
+/** Files an app may hand the person, each with the endings it may be saved under; nothing that would run when opened. */
+const DOWNLOAD_TYPES = new Map<string, readonly string[]>([
+  ["text/csv", ["csv"]],
+  ["text/plain", ["txt", "log"]],
+  ["text/markdown", ["md", "markdown"]],
+  ["application/json", ["json"]],
+  ["text/calendar", ["ics"]],
 ]);
 const MAX_DOWNLOAD = 5_000_000;
 
@@ -209,10 +209,11 @@ export function AppFrame({
         case "download": {
           const mime = String(request.mime).split(";")[0]?.trim().toLowerCase() ?? "";
           const text = String(request.text);
-          if (!DOWNLOAD_TYPES.has(mime) || text.length > MAX_DOWNLOAD) {
+          const endings = DOWNLOAD_TYPES.get(mime);
+          if (!endings || text.length > MAX_DOWNLOAD) {
             throw new Error("That file can't be downloaded from an app.");
           }
-          saveFile(String(request.filename), mime, text, false);
+          saveFile(downloadName(String(request.filename), endings), mime, text, false);
           return null;
         }
         case "open": {

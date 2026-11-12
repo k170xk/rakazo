@@ -17,6 +17,10 @@ const PHONE = { width: 390, height: 844, scale: 2, maxHeight: 1600 };
 const MAX_PAGES = 8;
 const SETTLE_MS = 900;
 const CRASH_TEXT = "This app hit a problem";
+/** The policy the app runs under in Rakazo's viewer, so it is checked as it will run and reaches nothing. */
+const APP_POLICY =
+  "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src data: blob:; font-src data:; form-action 'none'; base-uri 'none'";
+const RTC = ["RTCPeerConnection", "webkitRTCPeerConnection", "RTCDataChannel", "RTCIceCandidate", "RTCSessionDescription"];
 
 function fail(message) {
   console.error(message);
@@ -47,7 +51,10 @@ const wanted = (option("--pages") ?? "")
   .filter((id) => /^[A-Za-z0-9_-]{1,60}$/.test(id))
   .slice(0, MAX_PAGES);
 
-const html = await readFile(htmlPath, "utf8");
+const source = await readFile(htmlPath, "utf8");
+const policy = `<meta http-equiv="Content-Security-Policy" content="${APP_POLICY}">`;
+const doctype = /^\s*<!doctype html>/i.exec(source);
+const html = doctype ? doctype[0] + policy + source.slice(doctype[0].length) : policy + source;
 await mkdir(outDir, { recursive: true });
 
 let chromium;
@@ -83,6 +90,10 @@ async function open(browser, viewport) {
     note(report.blocked, url.slice(0, 160));
     return route.abort("blockedbyclient");
   });
+  // Requests above are routed, but WebSockets and WebRTC are not; neither exists for the app.
+  await context.addInitScript((names) => {
+    for (const name of names) Object.defineProperty(window, name, { value: undefined, writable: false, configurable: false });
+  }, RTC);
   const page = await context.newPage();
   let where = "first page";
   page.on("console", (message) => {
@@ -141,7 +152,15 @@ async function shoot(page, viewport, label, index) {
 
 const browser = await chromium.launch({
   headless: true,
-  args: ["--disable-background-networking", "--disable-component-update", "--disable-sync", "--no-first-run"],
+  args: [
+    "--disable-background-networking",
+    "--disable-component-update",
+    "--disable-sync",
+    "--no-first-run",
+    // Nothing listens here, so a WebSocket or anything else that skips the routing above fails.
+    "--proxy-server=socks5://127.0.0.1:9",
+    "--force-webrtc-ip-handling-policy=disable_non_proxied_udp",
+  ],
   ...(process.env.OCSC_CHROMIUM ? { executablePath: process.env.OCSC_CHROMIUM } : {}),
 });
 /** Opens the app at one size and visits `targets` in order, checking each and shooting unless --check. */

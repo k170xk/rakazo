@@ -203,6 +203,13 @@ export function sharedAppSource(
   };
 }
 
+/** The name a download is saved under, ending as its type does so the computer opens it as that. */
+export function downloadName(filename: string, endings: readonly string[]): string {
+  const name = filename.trim() || "download";
+  const ending = name.includes(".") ? name.slice(name.lastIndexOf(".") + 1).toLowerCase() : "";
+  return endings.includes(ending) ? name : `${name}.${endings[0]}`;
+}
+
 /** Saves a file the app produced, from the host page (the sandboxed frame cannot download). */
 export function saveFile(filename: string, mime: string, data: string, base64: boolean) {
   const bytes = base64 ? Uint8Array.from(atob(data), (char) => char.charCodeAt(0)) : data;
