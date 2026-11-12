@@ -1,6 +1,8 @@
 /** Returned by save_page {"help": true}, so ordinary turns do not pay for it. */
 export const PAGE_KIT_GUIDE = `# Pages
 
+Pages are for one-off reports and briefings. If the person wants an app, tool, tracker, register, dashboard or form, stop and build it with save_app instead (live tables, Studio editing, data and code views).
+
 A page is a small app: JSX source whose default export is a React component. It renders in an isolated viewer in the user's light or dark theme, prints cleanly, keeps what its readers save, and can be shared with staff or, with a password, with anyone. Build something people use every week, not a static report.
 
 ## Build an app, not a report

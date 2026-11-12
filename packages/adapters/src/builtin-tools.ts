@@ -792,7 +792,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_page",
     description:
-      'Build or update an interactive OCSC app the user opens from the chat: a dashboard, tracker, planner, register, calculator or report. Pass the page as JSX source written against the page kit; call with {"help": true} first for the kit guide and design rules. Problems come back with line numbers and nothing is saved. To change a page, pass its pageId with edits (applied together, or not at all) or full source; to refresh its figures (as a routine does), pass pageId with data, which replaces those useSource snapshots and leaves the code alone; pass only pageId to read its current source and what its readers saved.',
+      'Build or update a one-off report, briefing or snapshot the user opens from the chat. Not for apps: anything someone calls an app or tool, or that tracks, edits or collects records (trackers, registers, dashboards, forms), is built with save_app. Pass the page as JSX source written against the page kit; call with {"help": true} first for the kit guide and design rules. Problems come back with line numbers and nothing is saved. To change a page, pass its pageId with edits (applied together, or not at all) or full source; to refresh its figures (as a routine does), pass pageId with data, which replaces those useSource snapshots and leaves the code alone; pass only pageId to read its current source and what its readers saved.',
     inputSchema: {
       type: "object",
       properties: {
@@ -820,7 +820,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_app",
     description:
-      'Build or change an OCSC app in the App Studio: a real multi-screen React app with its own live tables that people use, edit and share (Lovable-quality, inside OCSC). Prefer it over save_page when people will add, change or track records, or when the person gives a spreadsheet. Call with {"help": true} first for the guide. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save. To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save then runs the app: fix what runCheck reports (crashes, errors, blank or too-wide pages).',
+      'Build or change an OCSC app in the App Studio: a real multi-screen React app with its own live tables that people use, edit and share (Lovable-quality, inside OCSC). Use it for every app, tool, tracker, register, dashboard or form, and whenever the person gives a spreadsheet; save_page is only for one-off reports. Call with {"help": true} first for the guide. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save. To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save then runs the app: fix what runCheck reports (crashes, errors, blank or too-wide pages).',
     inputSchema: {
       type: "object",
       properties: {
