@@ -53,6 +53,7 @@ import {
   matchesDictationShortcut,
   subscribeDictationShortcut,
 } from "../../lib/dictation-shortcut-pref";
+import { haptic } from "../../lib/haptics";
 import { hasOpenDialog } from "../../lib/has-open-dialog";
 import { usePageSession } from "../../lib/pages";
 import { isFileDrag, isFilePaste } from "../../lib/pending-attachments";
@@ -515,6 +516,7 @@ const ComposerBody = memo(function Composer({
 
   async function send(imageHandling?: "file") {
     if (!canSend || sending || disabled) return;
+    haptic("tap");
     const revision = editRevision.current;
     const clientNonce = retryNonce.current ?? newClientId();
     retryNonce.current = null;

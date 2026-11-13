@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { haptic } from "./haptics";
 
 /**
  * Copies by selecting the text in a hidden field, which works in the click that asked for it
@@ -30,13 +31,16 @@ function copyBySelection(text: string): boolean {
  * pages, so its absence is the insecure case.
  */
 export function writeClipboard(text: string): Promise<boolean> {
-  if (navigator.clipboard?.writeText) {
-    return navigator.clipboard.writeText(text).then(
-      () => true,
-      () => copyBySelection(text),
-    );
-  }
-  return Promise.resolve(copyBySelection(text));
+  const copied = navigator.clipboard?.writeText
+    ? navigator.clipboard.writeText(text).then(
+        () => true,
+        () => copyBySelection(text),
+      )
+    : Promise.resolve(copyBySelection(text));
+  return copied.then((done) => {
+    if (done) haptic("tap");
+    return done;
+  });
 }
 
 /**

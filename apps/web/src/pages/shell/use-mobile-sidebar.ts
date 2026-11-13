@@ -1,5 +1,6 @@
 import type { TouchEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { haptic } from "../../lib/haptics";
 
 const MOBILE_SIDEBAR_SWIPE_EDGE_PX = 32;
 const MOBILE_SIDEBAR_SWIPE_DISTANCE_PX = 56;
@@ -26,6 +27,13 @@ export function useMobileSidebar() {
     desktop.addEventListener("change", closeMobileSidebar);
     return () => desktop.removeEventListener("change", closeMobileSidebar);
   }, []);
+
+  const wasOpen = useRef(mobileSidebarOpen);
+  useEffect(() => {
+    if (wasOpen.current === mobileSidebarOpen) return;
+    wasOpen.current = mobileSidebarOpen;
+    haptic("tap");
+  }, [mobileSidebarOpen]);
 
   const swipeHandlers = {
     onTouchStartCapture: (event: TouchEvent) => {

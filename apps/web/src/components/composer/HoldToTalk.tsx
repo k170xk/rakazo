@@ -4,6 +4,7 @@ import { ArrowUp, ChevronUp, Lock, Mic, Trash2 } from "lucide-react";
 import type { PointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { dictation } from "../../lib/dictation";
+import { haptic } from "../../lib/haptics";
 import { IconTooltip } from "../IconTooltip";
 
 /** How far the finger travels up before the recording locks hands-free. */
@@ -103,6 +104,7 @@ export function useHoldToTalk({
   const start = useCallback(
     (locked: boolean) => {
       started.current = false;
+      haptic("press");
       setNotice(null);
       setTranscript("");
       const next = { locked, startedAt: Date.now() };
@@ -131,6 +133,7 @@ export function useHoldToTalk({
     setLift(0);
     const current = recordingRef.current;
     if (!current) return;
+    haptic("select");
     const next = { ...current, locked: true };
     recordingRef.current = next;
     setRecording(next);

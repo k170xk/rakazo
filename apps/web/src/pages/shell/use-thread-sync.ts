@@ -17,6 +17,7 @@ import {
 import { fetchFresh } from "@rakazo/core/query";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { chatEventHaptic } from "../../lib/haptics";
 import {
   newLogoAvatarActivitySource,
   openLogoAvatarActivityFeed,
@@ -359,6 +360,7 @@ export function useThreadSync({
       applyEvent: (event) =>
         applyThreadEvent(event, commitSnapshot, commitComputer, snapshotRef, computerRef),
       onEvent: (event, initial) => {
+        chatEventHaptic(event, initial.cursor);
         const currentBot = botsRef.current.find((bot) => bot.id === active.id);
         notifyBrowserForEvent(
           event,
@@ -463,6 +465,7 @@ export function useThreadSync({
           computerRef,
         ),
       onEvent: (event, initial) => {
+        chatEventHaptic(event, initial.cursor);
         const eventBot = botsRef.current.find((bot) => bot.id === event.botId);
         notifyBrowserForEvent(
           event,
