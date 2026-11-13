@@ -32,6 +32,7 @@ vi.mock("@rakazo/ui-web", () => ({
   Button: ({ children, ...props }: { children: ReactNode }) => (
     <button {...props}>{children}</button>
   ),
+  Spinner: () => <span role="status" />,
 }));
 vi.mock("@rakazo/core", async (importOriginal) => ({
   ...(await importOriginal<typeof CoreModule>()),
@@ -78,6 +79,9 @@ vi.mock("./lib/rpc", () => {
     selectedSpaceId: () => null,
   };
 });
+vi.mock("./lib/organizations", () => ({
+  ensureDefaultCompanySpace: vi.fn(async () => false),
+}));
 vi.mock("./lib/performance", () => ({ markOnce: () => {}, markAfterPaint: () => {} }));
 vi.mock("./components/SubscriptionGate", () => ({
   SubscriptionGate: ({ children }: { children: ReactNode }) => children,
@@ -108,6 +112,14 @@ async function settle() {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  }
+}
+
+async function untilText(text: string) {
+  for (let attempt = 0; attempt < 100 && !container.textContent?.includes(text); attempt += 1) {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
     });
   }
 }
@@ -156,7 +168,7 @@ it("keeps an ongoing call in reach after leaving the shell", async () => {
   startCall({ botId: "bot-1", botName: "Test bot" });
   await render("/app/bot-1");
   await act(async () => find('a[href="/app/artifacts"]')?.click());
-  await settle();
+  await untilText("Artifacts page");
   expect(container.textContent).toContain("Artifacts page");
   expect(find('[data-testid="call-view"]')).not.toBeNull();
   expect(button("Mute")).not.toBeNull();
@@ -186,6 +198,7 @@ it("rings for an incoming call on a page outside the shell", async () => {
     } as Bot,
   ];
   await render("/app/artifacts");
+  await untilText("Artifacts page");
   expect(container.textContent).toContain("Artifacts page");
   expect(find('[data-testid="incoming-call"]')?.getAttribute("aria-label")).toBe(
     "Test bot is calling you",

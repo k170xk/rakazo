@@ -511,8 +511,7 @@ export const OCSC_SKILLS: OcscSkill[] = [
   },
   {
     name: "ocsc-work-packages",
-    description:
-      "Add, change or delete work packages (tasks) on an OCSC project, approved on a card",
+    description: "Add, change or delete OCSC work packages (tasks), approved on a card",
     body: WORK_PACKAGE_INSTRUCTIONS,
   },
   {

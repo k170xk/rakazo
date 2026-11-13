@@ -128,7 +128,7 @@ it("renders only string messages from the embedding app", () => {
   shellFrame.send(shellFrame.parent, "<p>Hello</p>");
   // The gesture guard goes first, ahead of anything the page runs.
   expect(shellFrame.preview.srcdoc).toMatch(
-    /^<script>[^<]*rakazo-page:gesture[^<]*<\/script><p>Hello<\/p>$/,
+    /^<script>(?:(?!<\/script>)[\s\S])*rakazo-page:gesture(?:(?!<\/script>)[\s\S])*<\/script><p>Hello<\/p>$/,
   );
 
   const topLevel = run(false);

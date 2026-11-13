@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { i18n } from "@lingui/core";
 import { I18nProvider } from "@lingui/react";
+import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -9,6 +10,14 @@ const { folders, setFolders, browse } = vi.hoisted(() => ({
   folders: vi.fn(),
   setFolders: vi.fn(),
   browse: vi.fn(),
+}));
+
+const lingui = vi.hoisted(() => ({
+  t: (parts: TemplateStringsArray, ...values: unknown[]) => String.raw({ raw: parts }, ...values),
+}));
+vi.mock("@lingui/react/macro", () => ({
+  useLingui: () => lingui,
+  Trans: ({ children }: { children: ReactNode }) => children,
 }));
 
 vi.mock("../../lib/rpc", () => ({

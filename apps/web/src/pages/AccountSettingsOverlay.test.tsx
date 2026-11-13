@@ -29,6 +29,8 @@ vi.mock("@rakazo/ui-web", async (importOriginal) => ({
     <label htmlFor={htmlFor}>{children}</label>
   ),
   Input: (props: React.ComponentProps<"input">) => <input {...props} />,
+  Kbd: ({ children }: { children?: ReactNode }) => <kbd>{children}</kbd>,
+  KbdGroup: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
   Label: ({ children, htmlFor }: { children?: ReactNode; htmlFor?: string }) => (
     <label htmlFor={htmlFor}>{children}</label>
   ),

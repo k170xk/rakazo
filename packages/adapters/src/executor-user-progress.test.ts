@@ -175,6 +175,7 @@ async function runTurn(
         memoryScope: null,
         computer: { id: "computer-1", scope: "dedicated" },
       })),
+      findUnique: vi.fn(async () => ({ userId: run.userId })),
       findMany: vi.fn(async () => []),
     },
     attempt: {

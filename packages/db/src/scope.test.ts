@@ -18,6 +18,9 @@ function prismaForMembership(
       findUnique: vi.fn(async () => ({ activeOrganizationId: pins.shift() ?? null })),
       updateMany: vi.fn(async () => ({ count: session.winner ? 0 : 1 })),
     },
+    organization: {
+      findFirst: vi.fn(async () => null),
+    },
     space: {
       findUnique: vi.fn(async ({ where }: { where: { id: string } }) => ({
         organizationId: `org-of-${where.id}`,
