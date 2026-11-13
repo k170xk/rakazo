@@ -272,6 +272,20 @@ describe("marketplace service", () => {
     ]);
     expect(skippedEntries).toBe(6);
   });
+  it("leaves out a remote connector that cannot sign this app in", async () => {
+    const read = registryReader({
+      cursor: [
+        { name: "app", source: "app" },
+        { name: "pack", source: "pack" },
+      ],
+      tree: ["app/mcp.json", "pack/skills/plan/SKILL.md"],
+      text: { "/app/mcp.json": remoteMcp },
+    });
+    const { entries } = await createPluginMarketplace(read, {
+      connectorUsable: async () => false,
+    }).catalog("");
+    expect(entries.map((entry) => entry.name)).toEqual(["pack"]);
+  });
   it("returns explicit unavailability without leaking provider errors", async () => {
     const service = createPluginMarketplace(async () => {
       throw new Error("private diagnostic");

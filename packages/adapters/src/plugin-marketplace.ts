@@ -3,6 +3,7 @@ import { comparePlugins, matchesPluginQuery, pluginCategory } from "@rakazo/core
 import { z } from "zod";
 import type { PluginCompleteness, PluginTextReader } from "./plugin-connectors.js";
 import { classifyPluginFiles, parsePluginSource } from "./plugin-connectors.js";
+import { remoteMcpConnectorUsable } from "./remote-mcp-usable.js";
 import { fetchSafeWebText } from "./web-ssrf.js";
 
 const REGISTRIES = [
@@ -174,12 +175,30 @@ function displayName(name: string): string {
     .join(" ");
 }
 
+function remoteEndpoints(raw: string): string[] {
+  try {
+    const doc = JSON.parse(raw) as { mcpServers?: Record<string, { url?: unknown }> };
+    return Object.values(doc.mcpServers ?? {})
+      .map((entry) => entry?.url)
+      .filter(
+        (url): url is string =>
+          typeof url === "string" && url.startsWith("https://") && !url.includes("${"),
+      );
+  } catch {
+    return [];
+  }
+}
+
 const publicRead: PluginTextReader = async (url, maxBytes, signal) =>
   (await fetchSafeWebText(url, { maxBytes, signal })).body;
 
 /** Cache is per API router instance; failures are never cached. Concurrent
  * requests share one bounded fetch, without sharing an actor's abort signal. */
-export function createPluginMarketplace(read: PluginTextReader = publicRead) {
+export function createPluginMarketplace(
+  read: PluginTextReader = publicRead,
+  options: { connectorUsable?: (endpoint: string) => Promise<boolean | null> } = {},
+) {
+  const connectorUsable = options.connectorUsable ?? remoteMcpConnectorUsable;
   const cache = new Map<
     string,
     { expires: number; data: ReturnType<typeof parsePluginMarketplace> }
@@ -261,6 +280,7 @@ export function createPluginMarketplace(read: PluginTextReader = publicRead) {
           : undefined;
         const manifest = manifestText ? parseManifest(manifestText) : undefined;
         let parts: PluginCompleteness | null = null;
+        let mcpText: string | undefined;
         if (index) {
           const indexed = index.plugins[entry.name];
           const pin = /@([a-f0-9]{40})/.exec(entry.source)?.[1];
@@ -271,14 +291,26 @@ export function createPluginMarketplace(read: PluginTextReader = publicRead) {
             .filter((path) => path.startsWith(`${dir}/`))
             .map((path) => path.slice(dir.length + 1));
           const mcpPath = own.find((path) => path === "mcp.json" || path === ".mcp.json");
-          const mcpText = mcpPath
-            ? await cachedText(`${raw}${dir}/${mcpPath}`, 256_000, signal)
-            : undefined;
+          mcpText =
+            (mcpPath
+              ? await cachedText(`${raw}${dir}/${mcpPath}`, 256_000, signal)
+              : undefined) ?? undefined;
           const ownSizes = new Map(
             own.map((path) => [path, sizes.get(`${dir}/${path}`) ?? 0] as const),
           );
           const classified = classifyPluginFiles(own, mcpText ?? undefined, ownSizes);
           parts = classified === "incomplete" ? null : classified;
+          // A remote connector that cannot sign this app in would install and then fail, so it
+          // is left out with the other plugins that do not run here. A check that cannot finish
+          // keeps the plugin.
+          if (parts?.hasConnector && mcpText) {
+            for (const endpoint of remoteEndpoints(mcpText)) {
+              if ((await connectorUsable(endpoint)) === false) {
+                parts = null;
+                break;
+              }
+            }
+          }
         }
         details.set(entry.id, { manifest, parts });
       }
