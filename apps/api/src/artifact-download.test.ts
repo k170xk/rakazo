@@ -24,13 +24,17 @@ describe("artifactContentDisposition", () => {
     expect(artifactContentDisposition("Présentation.pptx")).toContain(
       "filename*=UTF-8''Pr%C3%A9sentation.pptx",
     );
-    expect(artifactContentDisposition("Présentation.pptx")).toContain('filename="Pr_sentation.pptx"');
+    expect(artifactContentDisposition("Présentation.pptx")).toContain(
+      'filename="Pr_sentation.pptx"',
+    );
   });
 
   it("keeps em dashes out of the ASCII filename= header", () => {
     const header = artifactContentDisposition("Cherry Orchard — Criterion A Working Draft.docx");
     expect(header).toContain('filename="Cherry Orchard _ Criterion A Working Draft.docx"');
-    expect(header).toContain("filename*=UTF-8''Cherry%20Orchard%20%E2%80%94%20Criterion%20A%20Working%20Draft.docx");
+    expect(header).toContain(
+      "filename*=UTF-8''Cherry%20Orchard%20%E2%80%94%20Criterion%20A%20Working%20Draft.docx",
+    );
     expect([...header].every((ch) => ch.codePointAt(0)! < 128 || header.includes("UTF-8''"))).toBe(
       true,
     );
@@ -89,6 +93,8 @@ describe("GET /api/artifacts/download", () => {
     expect(response.headers.get("content-type")).toContain("presentationml.presentation");
     expect(response.headers.get("content-disposition")).toContain("OCSC%20BIM.pptx");
     expect(response.headers.get("content-length")).toBe("4");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(response.headers.get("content-security-policy")).toMatch(/default-src 'none'.*sandbox/);
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes);
     expect(get).toHaveBeenCalledOnce();
   });

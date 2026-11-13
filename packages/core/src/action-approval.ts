@@ -59,6 +59,8 @@ const EXPLICIT_APPROVAL_BUILTIN_TOOLS = new Set([
   "create_space",
   "set_child_instructions",
   "set_child_bot_model",
+  // Publishes code to Evolve under the person's name, so only they can say yes.
+  "evolve_plugin_submit",
 ]);
 
 /**

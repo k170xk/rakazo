@@ -2666,6 +2666,19 @@ export const LibraryDocumentSchema = z.object({
 });
 export type LibraryDocument = z.infer<typeof LibraryDocumentSchema>;
 
+/** A page or app anyone besides its owner can open: shared by link, published to Evolve, or frozen. */
+export const SharedAppAdminSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  kind: z.enum(["page", "app"]),
+  owner: z.string(),
+  visibility: z.enum(["private", "link", "public"]),
+  evolvePluginSlug: z.string().nullable(),
+  frozenAt: z.string().nullable(),
+  updatedAt: z.string(),
+});
+export type SharedAppAdmin = z.infer<typeof SharedAppAdminSchema>;
+
 export const CompanyModelInputSchema = z.object({
   provider: z.string().trim().min(1).max(80),
   modelId: z.string().trim().min(1).max(200),

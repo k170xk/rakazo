@@ -1294,6 +1294,7 @@ msgid "Anyone at the company with the link"
 msgstr "Anyone at the company with the link"
 
 #: src/components/pages/SharePopover.tsx
+#: src/pages/AdminSharedApps.tsx
 msgid "Anyone with the link and password"
 msgstr "Anyone with the link and password"
 
@@ -1337,6 +1338,7 @@ msgstr "API URL"
 #: src/components/apps/AppStudio.tsx
 #: src/components/pages/PageCard.tsx
 #: src/components/pages/PageView.tsx
+#: src/pages/AdminSharedApps.tsx
 msgid "App"
 msgstr "App"
 
@@ -2448,6 +2450,10 @@ msgstr "Colleagues and agents, together"
 msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
 msgstr "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Colleagues with the link"
+msgstr "Colleagues with the link"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "Color"
@@ -2980,6 +2986,10 @@ msgstr "Could not change"
 msgid "Could not change AI access"
 msgstr "Could not change AI access"
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Could not change it"
+msgstr "Could not change it"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not change password"
 msgstr "Could not change password"
@@ -3244,6 +3254,10 @@ msgstr "Could not load people"
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
 msgstr "Could not load run history"
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Could not load shared apps"
+msgstr "Could not load shared apps"
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Could not load SharePoint folders."
@@ -4766,6 +4780,11 @@ msgstr "Evolve didn't accept it."
 msgid "Evolve people"
 msgstr "Evolve people"
 
+#. placeholder {0}: app.evolvePluginSlug
+#: src/pages/AdminSharedApps.tsx
+msgid "Evolve plugin {0}"
+msgstr "Evolve plugin {0}"
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Evolve plugins"
 msgstr "Evolve plugins"
@@ -5061,6 +5080,10 @@ msgstr "Free months"
 msgid "Free plan ends {day}"
 msgstr "Free plan ends {day}"
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Freeze"
+msgstr "Freeze"
+
 #: src/lib/cron.ts
 msgid "Friday"
 msgstr "Friday"
@@ -5095,6 +5118,15 @@ msgstr "From the company vault"
 #: src/components/todos/todo-board.tsx
 msgid "From:"
 msgstr "From:"
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Frozen"
+msgstr "Frozen"
+
+#. placeholder {0}: i18n.date(new Date(app.frozenAt), { dateStyle: "medium" })
+#: src/pages/AdminSharedApps.tsx
+msgid "Frozen {0}"
+msgstr "Frozen {0}"
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Full computer"
@@ -7119,6 +7151,10 @@ msgstr "Nothing in Evolve matches."
 msgid "Nothing is due to be deleted this week."
 msgstr "Nothing is due to be deleted this week."
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Nothing is shared right now."
+msgstr "Nothing is shared right now."
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "Nothing remembered yet"
@@ -7493,6 +7529,10 @@ msgstr "Owned by {0}"
 msgid "Owner"
 msgstr "Owner"
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Page"
+msgstr "Page"
+
 #. placeholder {0}: p.pageNumber
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Page {0}"
@@ -7515,6 +7555,10 @@ msgstr "Page {page} of {count}"
 #: src/pages/NotFound.tsx
 msgid "Page not found"
 msgstr "Page not found"
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Pages and apps people have shared by link or published to Evolve. Freeze one to take it offline for everyone else at once; its owner keeps their copy and can't share it again until you unfreeze it."
+msgstr "Pages and apps people have shared by link or published to Evolve. Freeze one to take it offline for everyone else at once; its owner keeps their copy and can't share it again until you unfreeze it."
 
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
@@ -9147,6 +9191,11 @@ msgstr "Share, anyone with the link and password can view"
 msgid "Shared"
 msgstr "Shared"
 
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminSharedApps.tsx
+msgid "Shared apps"
+msgstr "Shared apps"
+
 #: src/pages/SharedPage.tsx
 msgid "Shared apps are only for people at your company."
 msgstr "Shared apps are only for people at your company."
@@ -9990,6 +10039,10 @@ msgstr "The server disk is over 80% full. Lower limits or retention, or ask peop
 msgid "The server's own model is in use: {0} · {1}. Saving a company model here replaces it."
 msgstr "The server's own model is in use: {0} · {1}. Saving a company model here replaces it."
 
+#: src/pages/McpOAuthCallback.tsx
+msgid "The service refused the connection. Try again, or ask your admin."
+msgstr "The service refused the connection. Try again, or ask your admin."
+
 #: src/components/pages/SharePopover.tsx
 msgid "The shared link stops working"
 msgstr "The shared link stops working"
@@ -10516,6 +10569,14 @@ msgstr "Undo the newer change to this first."
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Undone"
 msgstr "Undone"
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Unfreeze"
+msgstr "Unfreeze"
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Unfrozen"
+msgstr "Unfrozen"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Uninstall"

@@ -63,6 +63,7 @@ import {
   setLibraryDocumentAccess,
 } from "../company-document-library.js";
 import { getEvolveSafeguards, setEvolveSafeguards } from "../company-evolve-safeguards.js";
+import { listSharedApps, setSharedAppFrozen } from "../company-shared-apps.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -229,6 +230,14 @@ export function accountRoutes(ctx: RouterContext) {
         ),
         set: authed.companyAdmin.evolveSafeguards.set.handler(({ context, input }) =>
           setEvolveSafeguards(deps, context.actor, input),
+        ),
+      },
+      sharedApps: {
+        list: authed.companyAdmin.sharedApps.list.handler(({ context }) =>
+          listSharedApps(deps, context.actor),
+        ),
+        setFrozen: authed.companyAdmin.sharedApps.setFrozen.handler(({ context, input }) =>
+          setSharedAppFrozen(deps, context.actor, input),
         ),
       },
     },

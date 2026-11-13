@@ -637,6 +637,53 @@ export function containsSecret(value: unknown, secrets: string[]): boolean {
   return false;
 }
 
+/** Secrets shorter than this have encodings too short to tell apart from ordinary text. */
+const MIN_ENCODED_SECRET_LENGTH = 8;
+
+function base64Of(bytes: Uint8Array): string {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+/**
+ * How a secret reads once hex, base64, base64url or URL encoded. Base64 is taken at each of its
+ * three alignments, keeping only the characters the secret alone decides, so it is found inside
+ * a longer encoded string too.
+ */
+function encodedForms(secret: string): string[] {
+  const bytes = new TextEncoder().encode(secret);
+  const forms = new Set<string>();
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  forms.add(hex);
+  forms.add(hex.toUpperCase());
+  const uri = encodeURIComponent(secret);
+  if (uri !== secret) forms.add(uri);
+  for (let shift = 0; shift < 3; shift++) {
+    const padded = new Uint8Array(shift + bytes.length);
+    padded.set(bytes, shift);
+    const start = Math.ceil((shift * 8) / 6);
+    const end = Math.floor(((shift + bytes.length) * 8) / 6);
+    const core = base64Of(padded).slice(start, end);
+    if (core.length < MIN_ENCODED_SECRET_LENGTH) continue;
+    forms.add(core);
+    forms.add(core.replace(/\+/g, "-").replace(/\//g, "_"));
+  }
+  return [...forms].filter((form) => form !== secret);
+}
+
+/**
+ * Whether text that others can read (a shared page or app) holds a secret in an encoded form,
+ * which the plain check above would miss.
+ */
+export function containsEncodedSecret(texts: string[], secrets: string[]): boolean {
+  const forms = protectedValues(secrets)
+    .filter((secret) => secret.length >= MIN_ENCODED_SECRET_LENGTH)
+    .flatMap(encodedForms);
+  if (forms.length === 0) return false;
+  return texts.some((text) => forms.some((form) => text.includes(form)));
+}
+
 /** UTF-16 high surrogates (0xD800–0xDBFF) must be paired with a low surrogate for valid JSON. */
 const HIGH_SURROGATE_START = 0xd800;
 const HIGH_SURROGATE_END = 0xdbff;

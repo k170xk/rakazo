@@ -43,6 +43,9 @@ const DECLARATION_ROLES: ReadonlySet<IdentifierRole | null> = new Set([
   IdentifierRole.ImportDeclaration,
 ]);
 
+const CREDENTIAL_FIELD =
+  /\btype\s*[=:]\s*\{?\s*["'`]password["'`]|["'`](?:current|new)-password["'`]|text-security\s*:|["'`]type["'`]\s*,\s*["'`]password["'`]/i;
+
 /**
  * Catches mistakes before the user sees the page, with line numbers the bot can act on. It is
  * not a security boundary: page code runs only inside the sandboxed viewer, which is the boundary.
@@ -54,6 +57,15 @@ export function checkPageSource(source: string): PageSourceCheck {
       ok: false,
       errors: [
         `The page is ${bytes} bytes; the limit is ${PAGE_SOURCE_MAX_BYTES}. Move data out or split the page.`,
+      ],
+    };
+  }
+  // Same rule as App Studio apps: a page shared by link must never pose as a sign-in.
+  if (CREDENTIAL_FIELD.test(source)) {
+    return {
+      ok: false,
+      errors: [
+        "Pages never ask for passwords or sign-in details; remove the password field. People are already signed in to OCSC.",
       ],
     };
   }

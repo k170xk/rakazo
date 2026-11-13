@@ -95,6 +95,19 @@ describe("checkFiles", () => {
     expect(checkFiles({ "App.tsx": "", "a/b/c/d/e/f.ts": "" })).toMatch(/file names/);
     expect(checkFiles({ "App.tsx": "", "lib/data.json": "{}" })).toBeNull();
   });
+
+  it("refuses password and sign-in fields", () => {
+    const asking: Array<Record<string, string>> = [
+      { "App.tsx": '<input type="password" />' },
+      { "App.tsx": "<Input type={'password'} />" },
+      { "App.tsx": 'el.setAttribute("type", "password")' },
+      { "App.tsx": '<input autoComplete="current-password" />' },
+      { "App.tsx": "", "app.css": "input { -webkit-text-security: disc; }" },
+    ];
+    for (const files of asking) expect(checkFiles(files)).toMatch(/passwords/);
+    expect(checkFiles({ "App.tsx": 'const label = "Password reset date";' })).toBeNull();
+    expect(checkFiles({ "App.tsx": "", "README.md": 'Never use type="password".' })).toBeNull();
+  });
 });
 
 describe("helpers", () => {

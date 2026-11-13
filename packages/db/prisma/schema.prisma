@@ -1815,50 +1815,54 @@ model Artifact {
 
 /// A page a bot built: a report, dashboard or tracker the user opens from chat and can share.
 model Page {
-  id                    String        @id @default(cuid())
+  id                    String          @id @default(cuid())
   spaceId               String
-  space                 Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  space                 Space           @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   userId                String
-  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   botId                 String?
-  bot                   Bot?          @relation(fields: [botId], references: [id], onDelete: SetNull)
+  bot                   Bot?            @relation(fields: [botId], references: [id], onDelete: SetNull)
   groupId               String?
-  group                 ChatGroup?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group                 ChatGroup?      @relation(fields: [groupId], references: [id], onDelete: Cascade)
   title                 String
-  visibility            String        @default("private")
+  visibility            String          @default("private")
   /// sha256 of the link token; the public read looks pages up by it.
-  shareTokenHash        String?       @unique
+  shareTokenHash        String?         @unique
   /// The link token itself, sealed in the secret store so the owner can copy the link again.
-  shareSecretId         String?       @unique
-  shareSecret           Secret?       @relation("PageShareToken", fields: [shareSecretId], references: [id], onDelete: SetNull)
+  shareSecretId         String?         @unique
+  shareSecret           Secret?         @relation("PageShareToken", fields: [shareSecretId], references: [id], onDelete: SetNull)
   /// scrypt of the password a link open to anyone asks for; null unless visibility is "public".
   sharePasswordHash     String?
   /// That password, sealed in the secret store so the owner can copy it again.
-  sharePasswordSecretId String?       @unique
-  sharePasswordSecret   Secret?       @relation("PageSharePassword", fields: [sharePasswordSecretId], references: [id], onDelete: SetNull)
+  sharePasswordSecretId String?         @unique
+  sharePasswordSecret   Secret?         @relation("PageSharePassword", fields: [sharePasswordSecretId], references: [id], onDelete: SetNull)
   pinnedAt              DateTime?
-  currentVersion        Int           @default(1)
+  currentVersion        Int             @default(1)
   /// "page" is one JSX file on the page kit; "app" is a set of files built with the app kit,
   /// whose version source holds the files as JSON and whose code is the built document.
-  kind                  String        @default("page")
+  kind                  String          @default("page")
   /// Goes up whenever an app's rows change, so open copies know to fetch them again.
-  dataRevision          Int           @default(0)
+  dataRevision          Int             @default(0)
   /// Who besides the owner may change an app's rows: "owner" or "company" (signed-in colleagues).
-  dataAccess            String        @default("owner")
+  dataAccess            String          @default("owner")
   /// The app's own icon: an AppAsset (source "icon") drawn for it when it was made.
   iconAssetId           String?
   /// The Evolve plugin this app was last published as; Evolve's calls for that plugin read it.
-  evolvePluginSlug      String?       @unique
+  evolvePluginSlug      String?         @unique
   /// How many times it was published, which numbers the plugin's versions.
-  evolvePluginRelease   Int           @default(0)
+  evolvePluginRelease   Int             @default(0)
+  /// Set by a company admin: nobody opens it by link or from Evolve, and it cannot be shared again.
+  frozenAt              DateTime?
+  /// The admin who froze it.
+  frozenBy              String?
   /// An app's plain-English brief for staff: what it is for, who uses it and how.
   brief                 String?
   /// The AI's detailed review of an app for its reviewers (markdown), and the version it describes.
   dossier               String?
   dossierVersion        Int?
-  createdAt             DateTime      @default(now())
+  createdAt             DateTime        @default(now())
   /// Set when the page's content or title changes; pinning or sharing it is not an update.
-  updatedAt             DateTime      @default(now())
+  updatedAt             DateTime        @default(now())
   versions              PageVersion[]
   state                 PageState[]
   appTables             AppTable[]
@@ -1873,21 +1877,23 @@ model Page {
 }
 
 model PageVersion {
-  id        String   @id @default(cuid())
-  pageId    String
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  version   Int
-  title     String
-  source    String
+  id           String   @id @default(cuid())
+  pageId       String
+  page         Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  version      Int
+  title        String
+  source       String
   /// The source compiled for the viewer when it was saved, so reads never run the compiler.
-  code      String
-  createdAt DateTime @default(now())
+  code         String
+  createdAt    DateTime @default(now())
   /// Who saved it (a user id; null for versions from before this was kept).
-  authorId  String?
+  authorId     String?
   /// How it was made: assistant, studio, restore, import or template; null before this was kept.
-  via       String?
+  via          String?
   /// For a restore, the version it brought back.
   restoredFrom Int?
+  /// The assistant run that saved it, so a change made after outside content can be traced.
+  runId        String?
 
   @@unique([pageId, version])
   @@map("page_versions")
@@ -1961,6 +1967,8 @@ model AppDataChange {
   userId    String?
   /// assistant, studio, shared, evolve, import or undo.
   via       String?
+  /// The assistant run that made it; null for people's own changes.
+  runId     String?
   undoneAt  DateTime?
   createdAt DateTime  @default(now())
 

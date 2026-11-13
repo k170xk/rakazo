@@ -22,7 +22,12 @@ export function McpOAuthCallbackPage() {
     const code = params.get("code");
     const state = params.get("state");
     if (!code || !state) {
-      setError(params.get("error_description") ?? t`OAuth authorization was cancelled.`);
+      // Never the provider's error_description: anyone can put words on this page through the URL.
+      setError(
+        params.get("error")
+          ? t`The service refused the connection. Try again, or ask your admin.`
+          : t`OAuth authorization was cancelled.`,
+      );
       return;
     }
     if (handledState.current === state) return;

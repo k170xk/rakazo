@@ -11,7 +11,7 @@ import { Prisma } from "./generated/prisma/client.js";
  */
 
 export type ChangeVia = "assistant" | "studio" | "shared" | "evolve" | "import" | "template";
-export type ChangeMeta = { userId?: string | null; via?: ChangeVia };
+export type ChangeMeta = { userId?: string | null; via?: ChangeVia; runId?: string | null };
 export type ChangeAction = "added" | "changed" | "removed" | "table";
 
 type Tx = Prisma.TransactionClient;
@@ -20,6 +20,14 @@ type Data = Record<string, unknown>;
 /** How many changes an app keeps, and how many of them may hold a whole table. */
 export const MAX_APP_CHANGES = 500;
 export const MAX_TABLE_SNAPSHOTS = 20;
+/**
+ * Changes younger than this stay past those limits, up to the hard caps, so a burst of removes or
+ * table replaces cannot push earlier changes out before anyone notices; the history list still
+ * shows the newest MAX_APP_CHANGES, and older recent ones stay recoverable by an admin.
+ */
+export const APP_CHANGE_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
+export const HARD_MAX_APP_CHANGES = 5000;
+export const HARD_MAX_TABLE_SNAPSHOTS = 60;
 
 export class AppHistoryError extends Error {}
 
@@ -110,26 +118,29 @@ export async function recordChange(
       summary: entry.summary.slice(0, 300),
       userId: meta.userId ?? null,
       via: meta.via ?? null,
+      runId: meta.runId ?? null,
     },
   });
-  const stale = await tx.appDataChange.findMany({
-    where: { pageId },
-    orderBy: { createdAt: "desc" },
-    skip: MAX_APP_CHANGES,
-    take: 200,
-    select: { id: true },
-  });
-  const staleTables =
-    entry.action === "table"
-      ? await tx.appDataChange.findMany({
-          where: { pageId, action: "table" },
-          orderBy: { createdAt: "desc" },
-          skip: MAX_TABLE_SNAPSHOTS,
-          take: 50,
-          select: { id: true },
-        })
-      : [];
-  const ids = [...stale, ...staleTables].map((change) => change.id);
+  const old = { lt: new Date(Date.now() - APP_CHANGE_KEEP_MS) };
+  const beyond = (where: Prisma.AppDataChangeWhereInput, skip: number, take: number) =>
+    tx.appDataChange.findMany({
+      where: { pageId, ...where },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take,
+      select: { id: true },
+    });
+  const stale = [
+    ...(await beyond({ createdAt: old }, MAX_APP_CHANGES, 200)),
+    ...(await beyond({}, HARD_MAX_APP_CHANGES, 200)),
+  ];
+  if (entry.action === "table") {
+    stale.push(
+      ...(await beyond({ action: "table", createdAt: old }, MAX_TABLE_SNAPSHOTS, 50)),
+      ...(await beyond({ action: "table" }, HARD_MAX_TABLE_SNAPSHOTS, 50)),
+    );
+  }
+  const ids = [...new Set(stale.map((change) => change.id))];
   if (ids.length) await tx.appDataChange.deleteMany({ where: { id: { in: ids } } });
 }
 

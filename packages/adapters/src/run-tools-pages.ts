@@ -1,6 +1,6 @@
 import type { MessageBlock } from "@rakazo/contracts";
 import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
-import { containsSecret, redactSecrets } from "@rakazo/core";
+import { containsEncodedSecret, containsSecret, redactSecrets } from "@rakazo/core";
 import { withSourceData } from "@rakazo/page-kit/compile";
 import { checkPageSource, PAGE_KIT_GUIDE } from "@rakazo/page-kit/validate";
 import type { RunContext } from "./run-context.js";
@@ -150,7 +150,10 @@ async function savePage(ctx: RunContext, call: ToolCall) {
     return { error: "The page has problems; nothing was saved.", problems: check.errors };
   }
   // A page can be shared by link, so it never stores a value this run keeps secret.
-  if (containsSecret([source, check.code], ctx.secrets)) {
+  if (
+    containsSecret([source, check.code], ctx.secrets) ||
+    containsEncodedSecret([source], ctx.secrets)
+  ) {
     return {
       error: "The page contains a secret value; nothing was saved. Remove it and save again.",
       unchanged: true,
@@ -168,7 +171,9 @@ async function savePage(ctx: RunContext, call: ToolCall) {
             botId: bot.id,
             groupId: thread.groupId,
             title: title!,
-            versions: { create: { version: 1, title: title!, source, code: check.code } },
+            versions: {
+              create: { version: 1, title: title!, source, code: check.code, runId: ctx.runId },
+            },
           },
         });
         return { pageId: created.id, version: 1, title: created.title };
@@ -192,7 +197,14 @@ async function savePage(ctx: RunContext, call: ToolCall) {
         await tx.page.update({ where: { id: page.id }, data: { title: kept } });
       }
       await tx.pageVersion.create({
-        data: { pageId: page.id, version, title: nextTitle, source, code: check.code },
+        data: {
+          pageId: page.id,
+          version,
+          title: nextTitle,
+          source,
+          code: check.code,
+          runId: ctx.runId,
+        },
       });
       return { pageId: page.id, version, title: nextTitle };
     });

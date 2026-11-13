@@ -3,6 +3,7 @@ import {
   getPage,
   getPageState,
   listPages,
+  PageFrozenError,
   PageListCursorError,
   PageShareConflictError,
   PageStateRefusedError,
@@ -50,6 +51,9 @@ export function pagesRoutes(ctx: RouterContext) {
         } catch (error) {
           if (error instanceof PageShareConflictError) {
             throw new ORPCError("CONFLICT", { message: error.message });
+          }
+          if (error instanceof PageFrozenError) {
+            throw new ORPCError("FORBIDDEN", { message: error.message });
           }
           throw error;
         }

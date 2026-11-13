@@ -36,6 +36,7 @@ import { approvalEffectKey, toolEffectIdempotencyKey } from "@rakazo/core/node/a
 import type { AuditEventInput } from "@rakazo/db";
 import { recordAuditEvent, runSecretKind } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
+import { APP_CHANGE_TOOLS, appChangeNeedsPerson } from "./app-change-gate.js";
 import type { FleetCardSummary } from "./approval-ask.js";
 import { buildApprovalAskBlock, MAX_FETCH_URL_LENGTH } from "./approval-ask.js";
 import {
@@ -211,6 +212,10 @@ export async function gateToolCall(
       ? await computerEgressGate(ctx, name, args)
       : "allow";
   const taintGated = toolGatedWhenTainted(name) && (await runTainted());
+  const appChangeGated =
+    APP_CHANGE_TOOLS.has(name) &&
+    (await runTainted()) &&
+    (await appChangeNeedsPerson(ctx, name, args));
   const connectorTrusts = connectorTrustKeys(
     batch?.actions,
     connectorCall.route,
@@ -279,6 +284,7 @@ export async function gateToolCall(
     siteGate === "new" ||
     computerGate !== "allow" ||
     taintGated ||
+    appChangeGated ||
     unidentifiedAction ||
     (!catalogControlRead &&
       approvalToolNames.some((toolName) =>
@@ -290,6 +296,7 @@ export async function gateToolCall(
     paying ||
     commandWatch ||
     scheduleNamesNewSite ||
+    appChangeGated ||
     (toolNeedsPersonWhenTainted(name) && (await runTainted())) ||
     requiresUnattendedApproval ||
     toolRequiresExplicitApproval(name);

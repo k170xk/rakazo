@@ -317,6 +317,8 @@ describeWithDatabase("API authorization and resource isolation", () => {
       ["computer/deleteStoredFile", {}],
       ["computer/downloadStoredFile", {}],
       ["companyAdmin/spending", {}],
+      ["companyAdmin/sharedApps/list", {}],
+      ["companyAdmin/sharedApps/setFrozen", {}],
       ["evolveHistory/open", {}],
       ["evolveImages/available", {}],
       ["evolveImages/edit", {}],

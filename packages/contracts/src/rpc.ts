@@ -165,6 +165,7 @@ import {
   ServerUpdateRunSchema,
   ServerUpdateStatusSchema,
   SHAREPOINT_FOLDER_LIMIT,
+  SharedAppAdminSchema,
   SharedGroupSchema,
   SharePointBrowseEntrySchema,
   SharePointFolderSchema,
@@ -486,6 +487,16 @@ export const appContract = {
     evolveSafeguards: {
       get: oc.output(EvolveSafeguardsStateSchema),
       set: oc.input(EvolveSafeguardsSchema).output(EvolveSafeguardsStateSchema),
+    },
+    /**
+     * Every shared or published page and app on this server. Freezing one closes its link and its
+     * Evolve plugin data and stops it being shared again, without changing the owner's copy.
+     */
+    sharedApps: {
+      list: oc.output(z.array(SharedAppAdminSchema)),
+      setFrozen: oc
+        .input(z.object({ pageId: z.string().min(1).max(64), frozen: z.boolean() }))
+        .output(SharedAppAdminSchema),
     },
   },
   /** Admins only, on deployments that sell model credits. */

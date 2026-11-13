@@ -17,7 +17,7 @@ import {
   pageShareUrl,
 } from "@rakazo/contracts";
 import type { PageShareSecret, PrismaClient } from "@rakazo/db";
-import { IsolationError, Prisma, runAsSystem } from "@rakazo/db";
+import { IsolationError, Prisma, recordAuditEvent, runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 
 const PAGE_SHARE_SECRET_KIND = "page_share";
@@ -58,7 +58,7 @@ function pageSummary(row: SummaryRow): PageSummary {
   };
 }
 
-function shownVisibility(stored: string): PageVisibility {
+export function shownVisibility(stored: string): PageVisibility {
   return stored === "link" || stored === "public" ? stored : "private";
 }
 
@@ -114,10 +114,22 @@ async function stillThere<T>(write: Promise<T>): Promise<T> {
 async function requirePage(prisma: PrismaClient, actor: Actor, pageId: string) {
   const row = await prisma.page.findFirst({
     where: { id: pageId, spaceId: actor.spaceId, userId: actor.userId },
-    select: { ...summarySelect, shareSecretId: true, sharePasswordSecretId: true },
+    select: {
+      ...summarySelect,
+      shareSecretId: true,
+      sharePasswordSecretId: true,
+      frozenAt: true,
+    },
   });
   if (!row) throw new IsolationError();
   return row;
+}
+
+/** A company admin froze the page, so it stays private until they unfreeze it. */
+export class PageFrozenError extends Error {
+  constructor() {
+    super("A company admin has frozen this page, so it can't be shared until they unfreeze it.");
+  }
 }
 
 export class PageListCursorError extends Error {
@@ -465,16 +477,31 @@ export async function setPageVisibility(
   signal: AbortSignal,
 ): Promise<{ visibility: PageVisibility; shareUrl: string | null; sharePassword: string | null }> {
   const row = await requirePage(deps.prisma, actor, input.pageId);
+  const audit = () =>
+    recordAuditEvent({
+      action: "page.visibility_changed",
+      actor: { type: "user", id: actor.userId },
+      spaceId: actor.spaceId,
+      target: { type: row.kind === "app" ? "app" : "page", id: row.id, label: row.title },
+      metadata: {
+        from: shownVisibility(row.visibility),
+        to: input.visibility,
+        renewPassword: input.renewPassword === true,
+      },
+    });
   if (input.visibility === "private") {
     await clearSharePassword(deps, row.id);
     const { replaced } = await swapPageShare(deps.prisma, row.id, null);
     if (replaced) await forgetPageShareSecrets(deps.secrets, [replaced]);
+    await audit();
     return { visibility: "private", shareUrl: null, sharePassword: null };
   }
+  if (row.frozenAt) throw new PageFrozenError();
   const shareUrl = await ensureShareLink(deps, actor, row, signal);
   if (input.visibility === "link") {
     await clearSharePassword(deps, row.id);
     await deps.prisma.page.update({ where: { id: row.id }, data: { visibility: "link" } });
+    await audit();
     return { visibility: "link", shareUrl, sharePassword: null };
   }
   const sharePassword = await ensureSharePassword(
@@ -484,6 +511,7 @@ export async function setPageVisibility(
     input.renewPassword === true,
     signal,
   );
+  await audit();
   return { visibility: "public", shareUrl, sharePassword };
 }
 
@@ -575,6 +603,7 @@ export async function readSharedPage(
   visibility: "link" | "public";
   passwordHash: string | null;
   dataAccess: string;
+  ownerId: string;
 } | null> {
   if (pageShareTokenFromSlug(token) !== token) return null;
   const page = await runAsSystem("page share link", () =>
@@ -590,12 +619,15 @@ export async function readSharedPage(
         id: true,
         shareSecretId: true,
         sharePasswordHash: true,
+        frozenAt: true,
+        userId: true,
       },
     }),
   );
-  // A link lives only while its sealed token does, whatever removed the token.
+  // A link lives only while its sealed token does, whatever removed the token, and never while
+  // an admin has frozen the page.
   const visibility = page ? shownVisibility(page.visibility) : "private";
-  if (!page || visibility === "private" || !page.shareSecretId) return null;
+  if (!page || visibility === "private" || !page.shareSecretId || page.frozenAt) return null;
   const version = await runAsSystem("page share link", () =>
     prisma.pageVersion.findUnique({
       where: { pageId_version: { pageId: page.id, version: page.currentVersion } },
@@ -615,6 +647,7 @@ export async function readSharedPage(
     visibility,
     passwordHash: visibility === "public" ? page.sharePasswordHash : null,
     dataAccess: page.dataAccess,
+    ownerId: page.userId,
   };
 }
 

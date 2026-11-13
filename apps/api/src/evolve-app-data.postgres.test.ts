@@ -303,4 +303,16 @@ describePostgres("Evolve app data (PostgreSQL)", () => {
       expect((await call(owner.email, { op })).status).toBe(400);
     }
   });
+
+  it("closes an app a company admin froze, and opens it again when unfrozen", async () => {
+    const system = asSystem(prisma, "test fixture");
+    await system.page.update({ where: { id: appId }, data: { frozenAt: new Date() } });
+    try {
+      expect((await call(owner.email, { op: "init" })).status).toBe(404);
+      expect((await call(colleague.email, { op: "data" })).status).toBe(404);
+    } finally {
+      await system.page.update({ where: { id: appId }, data: { frozenAt: null } });
+    }
+    expect((await call(colleague.email, { op: "init" })).status).toBe(200);
+  });
 });

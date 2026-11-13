@@ -26,6 +26,7 @@ import {
   readAppAsset,
   readAppRowCreators,
   readAppTables,
+  recordAuditEvent,
   removeAppRow,
   runAsSystem,
   undoAppChange,
@@ -808,6 +809,7 @@ export async function publishAppToEvolve(
     where: { id: app.id },
     select: {
       evolvePluginRelease: true,
+      frozenAt: true,
       brief: true,
       dossier: true,
       dossierVersion: true,
@@ -821,6 +823,8 @@ export async function publishAppToEvolve(
     }),
   );
   if (taken) throw new AppPublishError("Another app already uses that plugin name.");
+  if (page.frozenAt)
+    throw new AppPublishError("A company admin has frozen this app, so it can't be published.");
   const purpose = input.purpose?.trim() || page.brief || undefined;
   if (input.submitForReview && !purpose)
     throw new AppPublishError("Say what the app is for and who uses it, for Evolve's reviewers.");
@@ -876,6 +880,13 @@ export async function publishAppToEvolve(
   await prisma.page.update({
     where: { id: app.id },
     data: { evolvePluginSlug: input.slug, evolvePluginRelease: release },
+  });
+  await recordAuditEvent({
+    action: "app.published_to_evolve",
+    actor: { type: "user", id: actor.userId },
+    spaceId: actor.spaceId,
+    target: { type: "app", id: app.id, label: app.title },
+    metadata: { slug: input.slug, release, submitForReview: input.submitForReview },
   });
   return {
     slug: result.slug,

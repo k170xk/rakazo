@@ -3,6 +3,7 @@ import {
   appendTextSegment,
   appendToolCallSegment,
   appendToolStep,
+  containsEncodedSecret,
   containsSecret,
   createStreamingRedactor,
   endsSentence,
@@ -1102,5 +1103,32 @@ describe("liveActivityLine", () => {
     expect(
       liveActivityLine([{ id: "m1", blocks: [{ kind: "text", text: "Done" }] }]),
     ).toBeUndefined();
+  });
+});
+
+describe("containsEncodedSecret", () => {
+  const secret = "sk-live-Abc123/xyz+QQ";
+  const b64 = (text: string) => Buffer.from(text).toString("base64");
+
+  it("finds hex, base64, base64url and URL encodings", () => {
+    expect(containsEncodedSecret([Buffer.from(secret).toString("hex")], [secret])).toBe(true);
+    expect(
+      containsEncodedSecret([Buffer.from(secret).toString("hex").toUpperCase()], [secret]),
+    ).toBe(true);
+    expect(containsEncodedSecret([`const k = atob("${b64(secret)}")`], [secret])).toBe(true);
+    expect(containsEncodedSecret([Buffer.from(secret).toString("base64url")], [secret])).toBe(true);
+    expect(containsEncodedSecret([`?key=${encodeURIComponent(secret)}`], [secret])).toBe(true);
+  });
+
+  it("finds base64 of a secret inside longer text at any alignment", () => {
+    for (const prefix of ["", "a", "ab", "abc"]) {
+      expect(containsEncodedSecret([b64(`${prefix}${secret}-tail`)], [secret])).toBe(true);
+    }
+  });
+
+  it("ignores ordinary text and short secrets", () => {
+    expect(containsEncodedSecret([b64("nothing secret here at all")], [secret])).toBe(false);
+    expect(containsEncodedSecret([Buffer.from("pin").toString("hex")], ["pin"])).toBe(false);
+    expect(containsEncodedSecret(["anything"], [])).toBe(false);
   });
 });

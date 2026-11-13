@@ -55,10 +55,11 @@ export function mountEvolveAppData(
           kind: true,
           currentVersion: true,
           dataAccess: true,
+          frozenAt: true,
           user: { select: { email: true, emailVerified: true } },
         },
       });
-      if (page?.kind !== "app") return null;
+      if (page?.kind !== "app" || page.frozenAt) return null;
       const viewer = await prisma.user.findFirst({
         where: { email: { equals: caller.email, mode: "insensitive" }, emailVerified: true },
         select: { id: true, name: true },

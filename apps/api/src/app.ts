@@ -141,7 +141,6 @@ import {
   createSecurityEventPruner,
   createThreadEvents,
   describeRowSecurity,
-  groupGuestActor,
   IsolationError,
   installAuditEventStore,
   installSecurityEventStore,
@@ -1077,19 +1076,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     sandboxProvider: env.sandboxProvider,
     prisma,
   });
-  /** `allowGuest` lets a colleague reach another Space's groups they were added to (RPC only). */
-  const requestSession = async (request: Request, allowGuest = false) => {
+  const requestSession = async (request: Request) => {
     // The bearer plugin turns a signed `Authorization: Bearer` into the session cookie.
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) return null;
     const requestedSpaceId = request.headers.get("x-rakazo-space-id");
-    const actor =
-      (await actorFromMembership(
-        requireMembership(prisma, session.user.id, requestedSpaceId, session.session.id),
-      )) ??
-      (allowGuest && requestedSpaceId
-        ? await groupGuestActor(prisma, session.user, requestedSpaceId)
-        : null);
+    // Groups are one person and their bots, so nobody reaches a Space as a group guest.
+    const actor = await actorFromMembership(
+      requireMembership(prisma, session.user.id, requestedSpaceId, session.session.id),
+    );
     return actor && { actor, sessionId: session.session.id };
   };
   const sessionActor = async (request: Request) => (await requestSession(request))?.actor ?? null;
@@ -1151,7 +1146,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   );
   const limitRpcBody = rpcBodyLimit(env.maxUploadSizeBytes);
   app.use("/rpc/*", async (c, next) => {
-    const session = await requestSession(c.req.raw, true);
+    const session = await requestSession(c.req.raw);
     const actor = session?.actor ?? null;
     const tooLarge = await limitRpcBody(c, actor !== null);
     if (tooLarge) return tooLarge;
@@ -1167,7 +1162,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
         // Same user in the same space, so leaving the space also ends a stream.
         // A database failure rejects this check; only a missing membership is unauthorized.
         stillAuthorized: async () => {
-          const current = (await requestSession(c.req.raw, true))?.actor;
+          const current = (await requestSession(c.req.raw))?.actor;
           return Boolean(
             actor && current?.userId === actor.userId && current.spaceId === actor.spaceId,
           );

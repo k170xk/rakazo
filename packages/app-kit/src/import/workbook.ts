@@ -491,8 +491,64 @@ function linkTables(tables: ImportedTable[], report: string[]) {
   }
 }
 
+/** What an .xlsx or .ods may unpack to; a few MB of cells compress to far less than this. */
+export const MAX_WORKBOOK_UNPACKED_BYTES = 200 * 1024 * 1024;
+const MAX_ZIP_ENTRIES = 5000;
+
+/**
+ * The total size a zip says its files unpack to, read from its central directory before anything
+ * is inflated; null when that directory is missing, damaged or in zip64 form (never needed by a
+ * workbook this small), so the caller refuses the file rather than unpacking it blind.
+ */
+export function zipUnpackedSize(bytes: Uint8Array): number | null {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const lowest = Math.max(0, bytes.byteLength - 22 - 0xffff);
+  let end = -1;
+  for (let at = bytes.byteLength - 22; at >= lowest; at--) {
+    if (view.getUint32(at, true) === 0x06054b50) {
+      end = at;
+      break;
+    }
+  }
+  if (end < 0) return null;
+  const entries = view.getUint16(end + 10, true);
+  const size = view.getUint32(end + 12, true);
+  const offset = view.getUint32(end + 16, true);
+  if (entries === 0xffff || offset === 0xffffffff || entries > MAX_ZIP_ENTRIES) return null;
+  if (offset + size > end) return null;
+  let total = 0;
+  let at = offset;
+  for (let index = 0; index < entries; index++) {
+    if (at + 46 > end || view.getUint32(at, true) !== 0x02014b50) return null;
+    const unpacked = view.getUint32(at + 24, true);
+    if (unpacked === 0xffffffff) return null;
+    total += unpacked;
+    at +=
+      46 +
+      view.getUint16(at + 28, true) +
+      view.getUint16(at + 30, true) +
+      view.getUint16(at + 32, true);
+  }
+  return total;
+}
+
 export function importWorkbook(bytes: Uint8Array): WorkbookImport {
   if (bytes.byteLength > MAX_WORKBOOK_BYTES) throw new Error("That workbook is larger than 20 MB.");
+  // xlsx and ods are zips; a small one can unpack to gigabytes and exhaust the server's memory.
+  if (
+    bytes.byteLength >= 4 &&
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    bytes[2] === 3 &&
+    bytes[3] === 4
+  ) {
+    const unpacked = zipUnpackedSize(bytes);
+    if (unpacked === null)
+      throw new Error("That file could not be read as a spreadsheet (xlsx, xls, csv or ods).");
+    if (unpacked > MAX_WORKBOOK_UNPACKED_BYTES) {
+      throw new Error("That workbook unpacks to more than 200 MB, so it can't be imported.");
+    }
+  }
   let workbook: XLSX.WorkBook;
   try {
     workbook = XLSX.read(bytes, {

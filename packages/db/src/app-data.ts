@@ -287,6 +287,7 @@ export async function defineAppTable(
     mode?: RowsMode;
     userId?: string | null;
     via?: ChangeMeta["via"];
+    runId?: string | null;
   },
 ): Promise<DefineTableResult> {
   return prisma.$transaction(
@@ -432,7 +433,7 @@ export async function defineAppTable(
         tx,
         pageId,
         { table: schema.name, label: schema.label, action: "table", before: snapshot, summary },
-        { userId: input.userId ?? null, via: input.via },
+        { userId: input.userId ?? null, via: input.via, runId: input.runId },
       );
       return {
         table: schema.name,
@@ -643,6 +644,7 @@ export async function createAppPage(
     tables?: Array<{ schema: TableSchema; rows: Array<Record<string, unknown>> }>;
     dataAccess?: "owner" | "contribute";
     via?: "assistant" | "studio" | "import" | "template";
+    runId?: string | null;
   },
 ): Promise<{ pageId: string; version: number; title: string }> {
   const created = await prisma.page.create({
@@ -663,6 +665,7 @@ export async function createAppPage(
           code: input.code,
           authorId: input.userId,
           via: input.via ?? null,
+          runId: input.runId ?? null,
         },
       },
     },
@@ -675,6 +678,7 @@ export async function createAppPage(
         rows: table.rows,
         mode: "replace",
         via: input.via,
+        runId: input.runId,
       });
     }
   } catch (error) {
@@ -696,6 +700,7 @@ export async function appendAppVersion(
     authorId?: string | null;
     via?: "assistant" | "studio" | "restore" | "import";
     restoredFrom?: number;
+    runId?: string | null;
   },
 ): Promise<{ version: number; title: string }> {
   return prisma.$transaction(async (tx) => {
@@ -723,6 +728,7 @@ export async function appendAppVersion(
         authorId: input.authorId ?? null,
         via: input.via ?? null,
         restoredFrom: input.restoredFrom ?? null,
+        runId: input.runId ?? null,
       },
     });
     return { version, title };
@@ -746,6 +752,7 @@ export async function mergeImportedTables(
   pageId: string,
   imported: Array<{ schema: TableSchema; rows: Array<Record<string, unknown>> }>,
   userId: string | null,
+  runId?: string | null,
 ): Promise<string[]> {
   const existing = await readAppTables(prisma, pageId);
   const report: string[] = [];
@@ -758,6 +765,7 @@ export async function mergeImportedTables(
         mode: "replace",
         userId,
         via: "import",
+        runId,
       });
       report.push(`New table ${table.schema.label}: ${result.inserted} rows.`);
       continue;
@@ -770,6 +778,7 @@ export async function mergeImportedTables(
       mode: current.key ? "upsert" : "append",
       userId,
       via: "import",
+      runId,
     });
     report.push(
       `${current.label}: ${result.updated} updated, ${result.inserted} added` +

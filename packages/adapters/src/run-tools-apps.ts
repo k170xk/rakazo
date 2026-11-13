@@ -4,7 +4,7 @@ import { importWorkbook, MAX_WORKBOOK_BYTES, scaffoldApp } from "@rakazo/app-kit
 import { APP_TEMPLATES, findTemplate } from "@rakazo/app-kit/templates";
 import type { MessageBlock } from "@rakazo/contracts";
 import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
-import { containsSecret, redactSecrets } from "@rakazo/core";
+import { containsEncodedSecret, containsSecret, redactSecrets } from "@rakazo/core";
 import {
   AppHistoryError,
   AppVersionConflictError,
@@ -297,7 +297,13 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
     return { error: "The workbook contains a secret value; nothing was saved.", unchanged: true };
   }
   if (app) {
-    const report = await mergeImportedTables(deps.prisma, app.id, imported.tables, run.userId);
+    const report = await mergeImportedTables(
+      deps.prisma,
+      app.id,
+      imported.tables,
+      run.userId,
+      ctx.runId,
+    );
     return { appId: app.id, report: [...imported.report, ...report] };
   }
   const name =
@@ -331,6 +337,7 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
     code: built.html,
     tables: imported.tables,
     via: "import",
+    runId: ctx.runId,
   });
   const icon = drawIcon(ctx, saved, "");
   const cardError = await postCard(ctx, saved, true);
@@ -489,7 +496,8 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     containsSecret(
       [...Object.values(files), ...tables.map((table) => JSON.stringify(table))],
       ctx.secrets,
-    )
+    ) ||
+    containsEncodedSecret(Object.values(files), ctx.secrets)
   ) {
     return {
       error: "The app contains a secret value; nothing was saved. Remove it and save again.",
@@ -512,6 +520,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         code: code!,
         dataAccess: template?.access,
         via: template ? "template" : "assistant",
+        runId: ctx.runId,
       });
     } else if (codeChanged) {
       const next = await appendAppVersion(deps.prisma, {
@@ -522,6 +531,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         title,
         authorId: run.userId,
         via: "assistant",
+        runId: ctx.runId,
       });
       saved = { pageId: app.id, ...next };
     } else {
@@ -538,6 +548,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         mode: table.mode,
         userId: run.userId,
         via: template && !app ? "template" : "assistant",
+        runId: ctx.runId,
       });
       tableResults.push({
         table: result.table,
@@ -754,8 +765,8 @@ async function appData(ctx: RunContext, call: ToolCall) {
   if (args.patch && containsSecret([JSON.stringify(args.patch)], ctx.secrets)) {
     return { error: "The change contains a secret value; nothing was saved.", unchanged: true };
   }
-  const assistant = { via: "assistant" as const };
-  const assistantBy = { userId: run.userId, via: "assistant" as const };
+  const assistant = { via: "assistant" as const, runId: ctx.runId };
+  const assistantBy = { userId: run.userId, via: "assistant" as const, runId: ctx.runId };
   try {
     switch (action) {
       case "query": {
@@ -820,6 +831,7 @@ async function appData(ctx: RunContext, call: ToolCall) {
           mode: action,
           userId: run.userId,
           via: "assistant",
+          runId: ctx.runId,
         });
         return {
           table: result.table,

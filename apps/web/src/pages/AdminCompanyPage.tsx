@@ -31,6 +31,7 @@ import {
   Mic,
   Monitor,
   Receipt,
+  Share2,
   ShieldCheck,
   ToggleRight,
   Users,
@@ -50,6 +51,7 @@ import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
 import { DocumentLibrarySection } from "./AdminDocumentLibrary";
 import { EvolveSafeguardsSection } from "./AdminEvolveSafeguards";
+import { SharedAppsSection } from "./AdminSharedApps";
 import { StaffAppsSection } from "./AdminStaffApps";
 import { StaffSpendingSection } from "./AdminStaffSpending";
 import { WindowChrome } from "./WindowChrome";
@@ -63,6 +65,7 @@ const ADMIN_SECTIONS = [
   "vault",
   "library",
   "safeguards",
+  "apps",
   "computer",
   "storage",
   "people",
@@ -127,6 +130,7 @@ function CompanyAdminPanels() {
     { id: "vault", label: t`Company vault`, icon: KeyRound },
     { id: "library", label: t`Document library`, icon: FileText },
     { id: "safeguards", label: t`AI safeguards`, icon: ShieldCheck },
+    { id: "apps", label: t`Shared apps`, icon: Share2 },
     { id: "computer", label: t`Computers`, icon: Monitor },
     { id: "storage", label: t`Storage and cleanup`, icon: HardDrive },
     { id: "people", label: t`People`, icon: Users },
@@ -166,6 +170,8 @@ function CompanyAdminPanels() {
         return <DocumentLibrarySection />;
       case "safeguards":
         return <EvolveSafeguardsSection />;
+      case "apps":
+        return <SharedAppsSection />;
       case "computer":
         return <CompanyComputerAccessSection state={data} onSaved={saved} />;
       case "storage":

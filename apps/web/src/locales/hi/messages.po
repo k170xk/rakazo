@@ -1289,6 +1289,7 @@ msgid "Anyone at the company with the link"
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx
+#: src/pages/AdminSharedApps.tsx
 msgid "Anyone with the link and password"
 msgstr ""
 
@@ -1332,6 +1333,7 @@ msgstr ""
 #: src/components/apps/AppStudio.tsx
 #: src/components/pages/PageCard.tsx
 #: src/components/pages/PageView.tsx
+#: src/pages/AdminSharedApps.tsx
 msgid "App"
 msgstr ""
 
@@ -2443,6 +2445,10 @@ msgstr ""
 msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
 msgstr ""
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Colleagues with the link"
+msgstr ""
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
 msgstr "रंग"
@@ -2975,6 +2981,10 @@ msgstr ""
 msgid "Could not change AI access"
 msgstr "Could not change AI access"
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Could not change it"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not change password"
 msgstr "पासवर्ड बदला नहीं जा सका"
@@ -3239,6 +3249,10 @@ msgstr ""
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
 msgstr "रन का इतिहास लोड नहीं हो सका"
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Could not load shared apps"
+msgstr ""
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Could not load SharePoint folders."
@@ -4753,6 +4767,11 @@ msgstr ""
 msgid "Evolve people"
 msgstr ""
 
+#. placeholder {0}: app.evolvePluginSlug
+#: src/pages/AdminSharedApps.tsx
+msgid "Evolve plugin {0}"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Evolve plugins"
 msgstr ""
@@ -5048,6 +5067,10 @@ msgstr ""
 msgid "Free plan ends {day}"
 msgstr "मुफ़्त प्लान {day} को खत्म होगा"
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Freeze"
+msgstr ""
+
 #: src/lib/cron.ts
 msgid "Friday"
 msgstr "शुक्रवार"
@@ -5081,6 +5104,15 @@ msgstr ""
 
 #: src/components/todos/todo-board.tsx
 msgid "From:"
+msgstr ""
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Frozen"
+msgstr ""
+
+#. placeholder {0}: i18n.date(new Date(app.frozenAt), { dateStyle: "medium" })
+#: src/pages/AdminSharedApps.tsx
+msgid "Frozen {0}"
 msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
@@ -7101,6 +7133,10 @@ msgstr ""
 msgid "Nothing is due to be deleted this week."
 msgstr ""
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Nothing is shared right now."
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "अभी तक कुछ याद नहीं किया गया"
@@ -7475,6 +7511,10 @@ msgstr ""
 msgid "Owner"
 msgstr "मालिक"
 
+#: src/pages/AdminSharedApps.tsx
+msgid "Page"
+msgstr ""
+
 #. placeholder {0}: p.pageNumber
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Page {0}"
@@ -7497,6 +7537,10 @@ msgstr "पृष्ठ {page} / {count}"
 #: src/pages/NotFound.tsx
 msgid "Page not found"
 msgstr "पेज नहीं मिला"
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Pages and apps people have shared by link or published to Evolve. Freeze one to take it offline for everyone else at once; its owner keeps their copy and can't share it again until you unfreeze it."
+msgstr ""
 
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
@@ -9129,6 +9173,11 @@ msgstr ""
 msgid "Shared"
 msgstr "साझा"
 
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminSharedApps.tsx
+msgid "Shared apps"
+msgstr ""
+
 #: src/pages/SharedPage.tsx
 msgid "Shared apps are only for people at your company."
 msgstr ""
@@ -9969,6 +10018,10 @@ msgstr ""
 msgid "The server's own model is in use: {0} · {1}. Saving a company model here replaces it."
 msgstr ""
 
+#: src/pages/McpOAuthCallback.tsx
+msgid "The service refused the connection. Try again, or ask your admin."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "The shared link stops working"
 msgstr "शेयर किया गया लिंक काम करना बंद कर देगा"
@@ -10494,6 +10547,14 @@ msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Undone"
+msgstr ""
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Unfreeze"
+msgstr ""
+
+#: src/pages/AdminSharedApps.tsx
+msgid "Unfrozen"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx

@@ -68,6 +68,11 @@ export function mountArtifactDownloadRoute(
         "content-length": String(payload.bytes.byteLength),
         "content-disposition": artifactContentDisposition(fileName),
         "cache-control": "no-store",
+        // Files the bot made can be HTML or SVG; if a browser ever shows one instead of saving it,
+        // it runs no script and reaches nothing on this site.
+        "x-content-type-options": "nosniff",
+        "content-security-policy":
+          "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
       },
     });
   });

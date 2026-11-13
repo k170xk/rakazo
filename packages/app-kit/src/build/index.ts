@@ -87,8 +87,19 @@ export function checkFiles(files: AppFiles): string | null {
     total += bytes;
   }
   if (total > MAX_SOURCE_BYTES) return "The app's files are too large together.";
+  const asking = names.find((name) => !name.endsWith(".md") && CREDENTIAL_FIELD.test(files[name]!));
+  if (asking) return `${asking}: ${CREDENTIAL_FIELD_MESSAGE}`;
   return null;
 }
+
+/**
+ * A password box, a browser password hint, a masked text field or a password attribute set from
+ * code. Staff are already signed in, so an app asking for a password is impersonating a sign-in.
+ */
+export const CREDENTIAL_FIELD =
+  /\btype\s*[=:]\s*\{?\s*["'`]password["'`]|["'`](?:current|new)-password["'`]|text-security\s*:|["'`]type["'`]\s*,\s*["'`]password["'`]/i;
+export const CREDENTIAL_FIELD_MESSAGE =
+  "apps never ask for passwords or sign-in details; remove the password field. People are already signed in to OCSC.";
 
 const CODE_EXTENSIONS = [".tsx", ".ts", ".jsx", ".js", ".json"];
 

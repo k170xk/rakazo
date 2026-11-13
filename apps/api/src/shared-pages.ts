@@ -5,7 +5,7 @@ import {
   SHARED_PAGE_PATH_PREFIX,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
-import { isAppDataError } from "@rakazo/db";
+import { isAppDataError, runAsSystem } from "@rakazo/db";
 import type { Context, Hono } from "hono";
 import { AppAskError, askForApp } from "./app-ask.js";
 import type { SharedRowWrite } from "./apps.js";
@@ -37,6 +37,32 @@ const PASSWORD_TRIES = 20;
 const WRITES_PER_MINUTE = 120;
 /** Photos per address and app a minute. */
 const UPLOADS_PER_MINUTE = 30;
+
+/** OCSC's UK and Irish staff share one company across both email domains. */
+const STAFF_DOMAINS = new Set(["ocsc.co.uk", "ocsc.ie"]);
+
+const domainOf = (email: string) => email.trim().toLowerCase().split("@").pop() ?? "";
+
+/** Whether two verified work emails belong to the same company: both OCSC staff, else one domain. */
+export function sameCompanyEmail(viewer: string, owner: string) {
+  const a = domainOf(viewer);
+  const b = domainOf(owner);
+  if (!a || !b) return false;
+  return a === b || (STAFF_DOMAINS.has(a) && STAFF_DOMAINS.has(b));
+}
+
+async function colleagueOfOwner(prisma: PrismaClient, viewerId: string, ownerId: string) {
+  if (viewerId === ownerId) return true;
+  const people = await runAsSystem("check a shared page reader's company", () =>
+    prisma.user.findMany({
+      where: { id: { in: [viewerId, ownerId] } },
+      select: { id: true, email: true, emailVerified: true },
+    }),
+  );
+  const viewer = people.find((person) => person.id === viewerId);
+  const owner = people.find((person) => person.id === ownerId);
+  return Boolean(viewer?.emailVerified && owner && sameCompanyEmail(viewer.email, owner.email));
+}
 
 /**
  * A page's saved values follow an app's data setting, since an app keeps data in them too; as in
@@ -82,10 +108,15 @@ export function mountSharedPages(
       return c.json({ error: "Too many requests" }, 429, { ...headers, "retry-after": "60" });
     }
     const found = await readSharedPage(prisma, c.req.param("token") ?? "");
-    const userId = await signedInUser(c.req.raw);
-    if (userId) {
-      if (!found) return c.json({ error: "Not found" }, 404, headers);
-      return { found, userId };
+    const signedIn = await signedInUser(c.req.raw);
+    if (signedIn && !found) return c.json({ error: "Not found" }, 404, headers);
+    // Only the owner's colleagues open a link by being signed in; any other account needs the
+    // password like a visitor, and gets the same answers.
+    if (signedIn && found && (await colleagueOfOwner(prisma, signedIn, found.ownerId))) {
+      return { found, userId: signedIn };
+    }
+    if (signedIn && found?.visibility !== "public") {
+      return c.json({ error: "Not found" }, 404, headers);
     }
     if (found?.visibility !== "public" || !found.passwordHash) {
       return c.json({ error: "Sign in to view this page" }, 401, headers);

@@ -286,6 +286,36 @@ describePostgres("app data (PostgreSQL)", () => {
     });
   });
 
+  it("keeps a week of changes past the usual limit, so a burst cannot push them out", async () => {
+    await runAsTenant(owner, async () => {
+      await prisma.appDataChange.deleteMany({ where: { pageId: appId } });
+      const change = (createdAt: Date) => ({
+        pageId: appId,
+        table: "jobs",
+        label: "Jobs",
+        action: "removed",
+        summary: "removed a row",
+        createdAt,
+      });
+      const weekOld = Date.now() - 10 * 24 * 60 * 60 * 1000;
+      await prisma.appDataChange.createMany({
+        data: [
+          ...Array.from({ length: 520 }, (_, i) => change(new Date(weekOld - i * 1000))),
+          ...Array.from({ length: 600 }, (_, i) => change(new Date(Date.now() - 60_000 - i))),
+        ],
+      });
+      await insertAppRow(prisma, appId, "jobs", { name: "Trigger" }, owner.userId);
+      const total = await prisma.appDataChange.count({ where: { pageId: appId } });
+      expect(total).toBe(500 + 600 + 1);
+      const oldest = await prisma.appDataChange.findFirst({
+        where: { pageId: appId },
+        orderBy: { createdAt: "asc" },
+        select: { createdAt: true },
+      });
+      expect(oldest!.createdAt.getTime()).toBe(weekOld - 499 * 1000);
+    });
+  });
+
   it("hides one person's app tables, rows and pictures from everyone else", async () => {
     await runAsTenant(stranger, async () => {
       expect(await prisma.appTable.count({ where: { pageId: appId } })).toBe(0);

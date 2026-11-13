@@ -56,7 +56,6 @@ import {
   InstructionConflictError,
   IsolationError,
   listGroupPeople,
-  listSharedGroups,
   recordComputerRunEnd,
   recordSecurityEvent,
   removeGroupPerson,
@@ -848,9 +847,8 @@ export function botsRoutes(ctx: RouterContext) {
         available: false,
         people: [],
       })),
-      shared: authed.groups.shared.handler(({ context }) =>
-        listSharedGroups(deps.prisma, { id: context.actor.userId, email: context.actor.email }),
-      ),
+      // Groups are private, so none is shared and old invites are never turned into access.
+      shared: authed.groups.shared.handler(() => []),
     },
     botSections: {
       list: authed.botSections.list.handler(async ({ context }) =>

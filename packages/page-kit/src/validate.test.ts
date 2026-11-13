@@ -310,3 +310,12 @@ describe("checkPageSource", () => {
     expect(checkPageSource(source)).toEqual({ ok: true, code: expect.any(String) });
   });
 });
+
+describe("credential fields", () => {
+  it("refuses a page that asks for a password", () => {
+    const source = 'export default function Page() { return <input type="password" />; }';
+    const check = checkPageSource(source);
+    expect(check.ok).toBe(false);
+    expect(check.ok ? [] : check.errors).toEqual([expect.stringMatching(/passwords/)]);
+  });
+});
