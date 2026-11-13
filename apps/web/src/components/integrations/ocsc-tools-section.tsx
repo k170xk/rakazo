@@ -131,7 +131,7 @@ export function OcscToolsSection({ available }: { available: ReadonlySet<string>
                 <img
                   src={tool.image}
                   alt=""
-                  className="h-14 w-21 flex-none rounded-lg bg-muted object-cover"
+                  className="h-14 w-21 flex-none max-sm:h-12 max-sm:w-16 rounded-lg bg-muted object-cover"
                   loading="lazy"
                 />
                 <span className="min-w-0 flex-1">
@@ -141,7 +141,9 @@ export function OcscToolsSection({ available }: { available: ReadonlySet<string>
                   <span className="block text-[13px] text-muted-foreground">{story.tagline}</span>
                 </span>
                 <span className="flex flex-none items-center gap-1 pe-1 text-[12.5px] text-primary">
-                  {open ? <Trans>Less</Trans> : <Trans>What it can do</Trans>}
+                  <span className="max-sm:sr-only">
+                    {open ? <Trans>Less</Trans> : <Trans>What it can do</Trans>}
+                  </span>
                   <ChevronDown
                     className={`size-4 transition-transform ${open ? "rotate-180" : ""}`}
                   />

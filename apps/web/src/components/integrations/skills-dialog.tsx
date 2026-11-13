@@ -17,6 +17,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, X } from "lucide-react";
 import { useState } from "react";
+import { PHONE_SHEET } from "../../lib/phone-sheet";
 import { useSpaceQueries } from "../../lib/query";
 import { AgentSkills } from "../../pages/KnowledgeSection";
 import { OcscToolsSection } from "./ocsc-tools-section";
@@ -184,7 +185,7 @@ export function SkillsDialog({
             <h3 className="mb-2 px-2.5 text-[14px] font-medium text-muted-foreground">
               <Trans>Plugins</Trans>
             </h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {skillSets.map((install) => {
                 const set = installedSelection(install);
                 return (
@@ -237,7 +238,7 @@ export function SkillsDialog({
                 </Button>
               </div>
             ) : null}
-            <div data-testid="skill-packs" className="grid grid-cols-2 gap-2">
+            <div data-testid="skill-packs" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {packs.map((entry) => {
                 const pack = pluginSelection(entry);
                 return (
@@ -268,7 +269,7 @@ export function SkillsDialog({
     >
       <DialogContent
         showCloseButton={false}
-        className="flex h-[680px] max-h-[calc(100%-2rem)] w-[920px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 sm:max-w-[920px]"
+        className={`flex h-[680px] max-h-[calc(100%-2rem)] w-[920px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 sm:max-w-[920px] ${PHONE_SHEET}`}
       >
         <DialogHeader className="flex-row items-start justify-between px-8 pt-7">
           <DialogTitle className="text-heading2 text-foreground">

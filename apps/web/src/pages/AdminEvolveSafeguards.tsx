@@ -306,7 +306,7 @@ function SelectRow({
   const id = useId();
   return (
     <li className="flex flex-wrap items-center gap-4 px-4 py-3">
-      <label htmlFor={id} className="min-w-0 flex-1">
+      <label htmlFor={id} className="min-w-0 flex-1 basis-56">
         <span className="block text-sm font-medium">{label}</span>
         <span className="block text-[13px] text-muted-foreground">{detail}</span>
       </label>

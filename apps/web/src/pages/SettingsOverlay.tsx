@@ -7,6 +7,7 @@ import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
 import { PersonalVault } from "../components/PersonalVault";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { desktopBridge } from "../lib/desktop";
+import { PHONE_SHEET } from "../lib/phone-sheet";
 import { SpaceRpcProvider } from "../lib/space-rpc";
 import { UpdatesSettingsPanel, UsageSettingsPanel } from "./AccountSettingsOverlay";
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
@@ -196,7 +197,7 @@ export function SettingsOverlay({
         initialFocus={() =>
           section === "usage" ? (usageRef.current ?? panelRef.current) : panelRef.current
         }
-        className="flex h-[min(760px,calc(100%-2rem))] max-h-[calc(100%-2rem)] w-[min(1080px,calc(100%-2rem))] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-h-[calc(100%-5rem)] sm:max-w-[1080px]"
+        className={`flex h-[min(760px,calc(100%-2rem))] max-h-[calc(100%-2rem)] w-[min(1080px,calc(100%-2rem))] flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:max-h-[calc(100%-5rem)] sm:max-w-[1080px] ${PHONE_SHEET}`}
       >
         <div className="flex min-h-0 flex-1 flex-col md:flex-row">
           <div className="flex shrink-0 items-center gap-1 border-b border-border px-3 md:contents">

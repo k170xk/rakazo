@@ -19,6 +19,7 @@ import {
   Textarea,
   toast,
 } from "@rakazo/ui-web";
+import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
@@ -32,6 +33,7 @@ import {
 } from "lucide-react";
 import type { DragEvent, FormEvent } from "react";
 import { useState } from "react";
+import { PHONE_SHEET } from "../../lib/phone-sheet";
 import { useSpaceQueries } from "../../lib/query";
 import { TODO_REFRESH_MS as REFRESH_MS, TODO_NEW_MS } from "./todo-count";
 
@@ -148,6 +150,8 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
   const [editing, setEditing] = useState<TodoItem | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ status: TodoStatus; beforeId: string | null }>();
+  const phone = useIsMobile();
+  const [shown, setShown] = useState<TodoStatus>("todo");
   const listOptions = queries.todos.list.queryOptions({ input: {} });
   const list = useQuery({ ...listOptions, refetchInterval: REFRESH_MS });
   const archived = useQuery({
@@ -173,6 +177,10 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
     setDragging(null);
     setDropTarget(undefined);
     if (!itemId || itemId === beforeId) return;
+    move(itemId, status, beforeId);
+  }
+
+  function move(itemId: string, status: TodoStatus, beforeId: string | null) {
     queryClient.setQueryData(listOptions.queryKey, (current: TodoItem[] | undefined) =>
       current ? reorderTodos(current, itemId, status, beforeId) : current,
     );
@@ -198,9 +206,9 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
       <DialogContent
         showCloseButton={false}
         data-testid="todo-board"
-        className="flex h-[760px] max-h-[calc(100%-2rem)] w-[1200px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 sm:max-w-[1200px]"
+        className={`flex h-[760px] max-h-[calc(100%-2rem)] w-[1200px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 sm:max-w-[1200px] ${PHONE_SHEET}`}
       >
-        <DialogHeader className="flex-row items-start justify-between gap-4 px-6 pt-6 pb-4">
+        <DialogHeader className="flex-row items-start justify-between gap-4 px-6 pt-6 pb-4 max-sm:px-4 max-sm:pt-4 max-sm:pb-3">
           <div className="min-w-0">
             <DialogTitle className="text-heading2 text-foreground">
               <Trans>To do list</Trans>
@@ -251,8 +259,46 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
             <Trans>Could not load your to do list.</Trans>
           </div>
         ) : (
-          <div className="grid min-h-0 flex-1 grid-cols-[repeat(4,minmax(240px,1fr))] gap-3 overflow-x-auto items-start bg-muted/60 px-6 pt-5 pb-6">
-            {TODO_STATUSES.map((status) => {
+          <div
+            className={`grid min-h-0 flex-1 items-start gap-3 bg-muted/60 ${
+              phone
+                ? "grid-cols-1 grid-rows-[auto_minmax(0,1fr)] px-3 pt-3 pb-3"
+                : "grid-cols-[repeat(4,minmax(240px,1fr))] overflow-x-auto px-6 pt-5 pb-6"
+            }`}
+          >
+            {phone ? (
+              <div
+                role="tablist"
+                aria-label={t`To do list`}
+                className="-mx-3 flex gap-1.5 overflow-x-auto px-3"
+              >
+                {TODO_STATUSES.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    role="tab"
+                    aria-selected={shown === status}
+                    data-testid={`todo-tab-${status}`}
+                    onClick={() => setShown(status)}
+                    className={`flex h-9 flex-none items-center gap-2 rounded-full border px-3 text-[13px] font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                      shown === status
+                        ? "border-transparent bg-card text-foreground shadow-sm"
+                        : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`size-2 rounded-full ${COLUMN_STYLE[status].dot}`}
+                    />
+                    {columns[status]}
+                    <span className={`${CHIP} ${COLUMN_STYLE[status].count}`}>
+                      {items.filter((item) => item.status === status).length}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {(phone ? [shown] : TODO_STATUSES).map((status) => {
               const column = items.filter((item) => item.status === status);
               const target = dropTarget?.status === status;
               const style = COLUMN_STYLE[status];
@@ -321,6 +367,13 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                             setDropTarget(undefined);
                           }}
                           onOpen={() => setEditing(item)}
+                          onMove={
+                            phone
+                              ? (next) => {
+                                  if (next !== item.status) move(item.id, next, null);
+                                }
+                              : undefined
+                          }
                         />
                       </li>
                     ))}
@@ -436,19 +489,23 @@ function TodoCard({
   onDragStart,
   onDragEnd,
   onOpen,
+  onMove,
 }: {
   item: TodoItem;
   dragging: boolean;
   onDragStart: (event: DragEvent) => void;
   onDragEnd: () => void;
   onOpen: () => void;
+  /** Shown where dragging is unavailable (touch screens). */
+  onMove?: (status: TodoStatus) => void;
 }) {
   const { t, i18n } = useLingui();
   const priorities = usePriorityLabels();
+  const columns = useColumnLabels();
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: dragging is pointer-only; the edit dialog's Status moves a card by keyboard.
     <div
-      draggable
+      draggable={!onMove}
       data-testid="todo-card"
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
@@ -514,6 +571,22 @@ function TodoCard({
           <span className={`${CHIP} min-w-0 max-w-full bg-muted`}>
             <span className="truncate">{item.source.label}</span>
           </span>
+        ) : null}
+        {onMove ? (
+          <NativeSelect
+            size="sm"
+            className="ms-auto"
+            aria-label={t`Move to`}
+            data-testid="todo-move"
+            value={item.status}
+            onChange={(event) => onMove(event.target.value as TodoStatus)}
+          >
+            {TODO_STATUSES.map((value) => (
+              <NativeSelectOption key={value} value={value}>
+                {columns[value]}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
         ) : null}
       </div>
     </div>
@@ -614,7 +687,7 @@ function TodoEditDialog({
               onChange={(event) => setNotes(event.target.value)}
             />
           </Field>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Field>
               <FieldLabel htmlFor="todo-status">
                 <Trans>Status</Trans>

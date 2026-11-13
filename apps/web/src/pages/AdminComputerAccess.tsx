@@ -81,7 +81,7 @@ function SettingLine({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-3">
-      <label htmlFor={id} className="flex-1 text-sm font-medium">
+      <label htmlFor={id} className="flex-1 basis-56 text-sm font-medium">
         {label}
       </label>
       {children}
