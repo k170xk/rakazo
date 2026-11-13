@@ -70,7 +70,7 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
 
   if (isAttachmentAudioMimeType(props.mimeType)) {
     return (
-      <BuiCard className="min-w-[280px] p-4 text-foreground">
+      <BuiCard className="min-w-[min(280px,100%)] p-4 text-foreground">
         <AudioArtifactPreview
           key={JSON.stringify([props.target, props.artifactId, props.mimeType])}
           {...props}
@@ -113,7 +113,7 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   return (
     <>
       <div>
-        <BuiCard className="flex w-[min(420px,100%)] min-w-[280px] items-center gap-2 overflow-hidden border border-border py-2.5 ps-3 pe-2.5 text-left text-foreground dark:border-transparent">
+        <BuiCard className="flex w-[min(420px,100%)] min-w-[min(280px,100%)] items-center gap-2 overflow-hidden border border-border py-2.5 ps-3 pe-2.5 text-left text-foreground dark:border-transparent">
           {previewable ? (
             <button
               ref={previewButton}

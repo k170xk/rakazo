@@ -1,6 +1,7 @@
 import UIKit
 import AuthenticationServices
 import Capacitor
+import QuickLook
 import WebKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -33,6 +34,7 @@ class AppViewController: CAPBridgeViewController {
 
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(SystemSignInPlugin())
+        bridge?.registerPluginInstance(NativeFilesPlugin())
         let appHost = bridge?.config.serverURL.host ?? ""
         let script = WKUserScript(
             source: """
@@ -120,5 +122,106 @@ class SystemSignInPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresen
 
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         bridge?.viewController?.view.window ?? ASPresentationAnchor()
+    }
+}
+
+/// Downloads open in Quick Look instead of replacing the chat: Done returns to the chat and the
+/// share button saves the file to Files or sends it on. Types Quick Look cannot show go straight
+/// to the share sheet. `url` is fetched here (single-use download links); `base64` is a file the
+/// page already holds.
+@objc(NativeFilesPlugin)
+class NativeFilesPlugin: CAPPlugin, CAPBridgedPlugin, QLPreviewControllerDataSource {
+    let identifier = "NativeFilesPlugin"
+    let jsName = "NativeFiles"
+    let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "open", returnType: CAPPluginReturnPromise)
+    ]
+    private var shown: URL?
+    private var spinner: UIActivityIndicatorView?
+
+    @objc func open(_ call: CAPPluginCall) {
+        if let data = call.getString("base64").flatMap({ Data(base64Encoded: $0) }) {
+            do {
+                present(try store(data, named: call.getString("name")), call)
+            } catch {
+                call.reject("Could not save the file")
+            }
+            return
+        }
+        guard let url = call.getString("url").flatMap(URL.init(string:)), url.scheme == "https" else {
+            call.reject("Missing file")
+            return
+        }
+        DispatchQueue.main.async { self.showSpinner(true) }
+        URLSession.shared.downloadTask(with: url) { [weak self] location, response, error in
+            guard let self else { return }
+            DispatchQueue.main.async { self.showSpinner(false) }
+            guard let location, error == nil,
+                  ((response as? HTTPURLResponse)?.statusCode ?? 500) < 400 else {
+                call.reject("Could not download the file")
+                return
+            }
+            do {
+                let data = try Data(contentsOf: location)
+                self.present(try self.store(data, named: call.getString("name") ?? response?.suggestedFilename), call)
+            } catch {
+                call.reject("Could not save the file")
+            }
+        }.resume()
+    }
+
+    private func store(_ data: Data, named name: String?) throws -> URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Downloads", isDirectory: true)
+        try? FileManager.default.removeItem(at: folder)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let cleaned = (name ?? "")
+            .components(separatedBy: CharacterSet(charactersIn: "/\\:\0")).joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let file = folder.appendingPathComponent(String((cleaned.isEmpty ? "download" : cleaned).prefix(120)))
+        try data.write(to: file)
+        return file
+    }
+
+    private func present(_ file: URL, _ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard let host = self.bridge?.viewController else {
+                call.reject("No window")
+                return
+            }
+            if QLPreviewController.canPreview(file as NSURL) {
+                self.shown = file
+                let preview = QLPreviewController()
+                preview.dataSource = self
+                host.present(preview, animated: true)
+            } else {
+                let share = UIActivityViewController(activityItems: [file], applicationActivities: nil)
+                share.popoverPresentationController?.sourceView = host.view
+                share.popoverPresentationController?.sourceRect = CGRect(
+                    x: host.view.bounds.midX, y: host.view.bounds.midY, width: 0, height: 0)
+                host.present(share, animated: true)
+            }
+            call.resolve()
+        }
+    }
+
+    private func showSpinner(_ on: Bool) {
+        guard let view = bridge?.viewController?.view else { return }
+        spinner?.removeFromSuperview()
+        spinner = nil
+        guard on else { return }
+        let spinner = UIActivityIndicatorView(style: .large)
+        spinner.center = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
+        spinner.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin, .flexibleTopMargin, .flexibleBottomMargin]
+        spinner.startAnimating()
+        view.addSubview(spinner)
+        self.spinner = spinner
+    }
+
+    func numberOfPreviewItems(in controller: QLPreviewController) -> Int {
+        shown == nil ? 0 : 1
+    }
+
+    func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem {
+        (shown ?? URL(fileURLWithPath: "/")) as NSURL
     }
 }

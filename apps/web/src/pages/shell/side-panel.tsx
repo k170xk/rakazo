@@ -235,7 +235,7 @@ export function ShellSidePanel({
                 a.href = url;
                 a.download = `${active.name.toLowerCase().replace(/\s+/g, "-")}-export.json`;
                 a.click();
-                URL.revokeObjectURL(url);
+                window.setTimeout(() => URL.revokeObjectURL(url), 1000);
               }}
               onClear={() => onClearBot(active)}
             />
