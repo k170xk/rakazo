@@ -95,6 +95,11 @@ msgstr "{0, plural, one {# message} other {# messages}}"
 msgid "{0, plural, one {# more} other {# more}}"
 msgstr "{0, plural, one {# more} other {# more}}"
 
+#. placeholder {0}: group.userIds.length
+#: src/pages/AdminAccess.tsx
+msgid "{0, plural, one {# person} other {# people}}"
+msgstr "{0, plural, one {# person} other {# people}}"
+
 #. placeholder {0}: skillCount(install)
 #: src/components/integrations/skills-dialog.tsx
 msgid "{0, plural, one {# skill} other {# skills}}"
@@ -850,6 +855,7 @@ msgstr "Actual size"
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
+#: src/pages/shell/composer.tsx
 msgid "Add"
 msgstr "Add"
 
@@ -877,6 +883,14 @@ msgstr "Add a note"
 #: src/components/PasskeyOffer.tsx
 msgid "Add a passkey for faster sign-in?"
 msgstr "Add a passkey for faster sign-in?"
+
+#: src/pages/AdminAccess.tsx
+msgid "Add a person"
+msgstr "Add a person"
+
+#: src/pages/AdminAccess.tsx
+msgid "Add a person or group"
+msgstr "Add a person or group"
 
 #: src/pages/shell/use-routine-editor.ts
 msgid "Add a run time for this one-shot."
@@ -942,6 +956,10 @@ msgstr "Add field"
 #: src/components/apps/AppDataPanel.tsx
 msgid "Add from Excel"
 msgstr "Add from Excel"
+
+#: src/pages/AdminAccess.tsx
+msgid "Add group"
+msgstr "Add group"
 
 #: src/components/ModelHeadersEditor.tsx
 msgid "Add header"
@@ -2127,6 +2145,10 @@ msgstr "Change token"
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Change work packages"
 msgstr "Change work packages"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Changes take effect within a few seconds. A switch that is on can be limited to chosen people and groups; admins can always use everything."
+msgstr "Changes take effect within a few seconds. A switch that is on can be limited to chosen people and groups; admins can always use everything."
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -3763,6 +3785,10 @@ msgstr "Could not update the default memory scope"
 msgid "Could not update the file"
 msgstr "Could not update the file"
 
+#: src/pages/AdminAccess.tsx
+msgid "Could not update the group"
+msgstr "Could not update the group"
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Could not update the skill"
 msgstr "Could not update the skill"
@@ -3774,6 +3800,14 @@ msgstr "Could not update the tool"
 #: src/pages/AdminCompanyVoice.tsx
 msgid "Could not update voice"
 msgstr "Could not update voice"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Could not update who can use this"
+msgstr "Could not update who can use this"
+
+#: src/pages/AdminStaffApps.tsx
+msgid "Could not update who can use this app"
+msgstr "Could not update who can use this app"
 
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
@@ -4126,6 +4160,7 @@ msgstr "Default Word template saved"
 #: src/components/PasskeySettings.tsx
 #: src/components/StorageDialog.tsx
 #: src/components/todos/todo-board.tsx
+#: src/pages/AdminAccess.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -4877,6 +4912,10 @@ msgstr "Every save is a version. Open one to see what it changed; restoring keep
 msgid "Every week"
 msgstr "Every week"
 
+#: src/pages/AdminAccess.tsx
+msgid "Everyone"
+msgstr "Everyone"
+
 #: src/pages/AdminStaffLimits.tsx
 msgid "Everyone follows these unless you set something different for them below. Changes apply within a minute."
 msgstr "Everyone follows these unless you set something different for them below. Changes apply within a minute."
@@ -5420,6 +5459,15 @@ msgstr "Group settings"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Group updates"
 msgstr "Group updates"
+
+#. placeholder {0}: group.name
+#: src/pages/AdminAccess.tsx
+msgid "Group: {0}"
+msgstr "Group: {0}"
+
+#: src/pages/AdminAccess.tsx
+msgid "Groups"
+msgstr "Groups"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Grow it into an Evolve plugin with OCSC branding and approved company data"
@@ -6716,6 +6764,7 @@ msgstr "Move down"
 msgid "Move them to your shared memory."
 msgstr "Move them to your shared memory."
 
+#: src/components/todos/todo-board.tsx
 #: src/pages/BotContextMenu.tsx
 msgid "Move to"
 msgstr "Move to"
@@ -6912,6 +6961,14 @@ msgstr "New group"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "New group chat"
 msgstr "New group chat"
+
+#: src/pages/AdminAccess.tsx
+msgid "New group name"
+msgstr "New group name"
+
+#: src/pages/AdminAccess.tsx
+msgid "New group, for example Developers"
+msgstr "New group, for example Developers"
 
 #: src/components/todos/todo-board.tsx
 msgid "New item"
@@ -7551,6 +7608,10 @@ msgstr "One-time"
 msgid "One-time purchase. Credits do not expire."
 msgstr "One-time purchase. Credits do not expire."
 
+#: src/pages/AdminAccess.tsx
+msgid "Only admins can use it until you add someone."
+msgstr "Only admins can use it until you add someone."
+
 #: src/components/SecretAskCard.tsx
 msgid "Only enter a code {codeHost} sent you."
 msgstr "Only enter a code {codeHost} sent you."
@@ -7562,6 +7623,10 @@ msgstr "Only I start them"
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Only me"
 msgstr "Only me"
+
+#: src/pages/AdminAccess.tsx
+msgid "Only people I choose"
+msgstr "Only people I choose"
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Only people on the project's Design Team, and Evolve admins, can add or change its deadlines."
@@ -8252,6 +8317,10 @@ msgstr "Pull request"
 msgid "Put OCSC Intelligence to work"
 msgstr "Put OCSC Intelligence to work"
 
+#: src/pages/AdminAccess.tsx
+msgid "Put people in groups, such as Developers, then open a feature or app to a group on the Features page. Removing someone from a group takes their access away within a few seconds. Admins can always use everything."
+msgstr "Put people in groups, such as Developers, then open a feature or app to a group on the Features page. Removing someone from a group takes their access away within a few seconds. Admins can always use everything."
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Quality"
 msgstr "Quality"
@@ -8541,6 +8610,10 @@ msgstr "Remove {0}"
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
 msgstr "Remove {0} from the group"
+
+#: src/pages/AdminAccess.tsx
+msgid "Remove {name}"
+msgstr "Remove {name}"
 
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Remove {secretName}? Bots will no longer be able to use it."
@@ -10437,8 +10510,8 @@ msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "Their own model is cleared. You can pick one again in each bot."
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "These apply to everyone in the company and take effect within a few seconds."
-msgstr "These apply to everyone in the company and take effect within a few seconds."
+#~ msgid "These apply to everyone in the company and take effect within a few seconds."
+#~ msgstr "These apply to everyone in the company and take effect within a few seconds."
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
@@ -11572,6 +11645,14 @@ msgstr "Who can change the data"
 #: src/components/pages/SharePopover.tsx
 msgid "Who can open this app"
 msgstr "Who can open this app"
+
+#: src/pages/AdminAccess.tsx
+msgid "Who can use {name}"
+msgstr "Who can use {name}"
+
+#: src/pages/AdminAccess.tsx
+msgid "Who can use it"
+msgstr "Who can use it"
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Who gets a computer"
