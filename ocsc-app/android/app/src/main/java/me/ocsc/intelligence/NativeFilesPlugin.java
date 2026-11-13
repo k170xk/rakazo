@@ -1,5 +1,6 @@
 package me.ocsc.intelligence;
 
+import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -102,8 +103,12 @@ public class NativeFilesPlugin extends Plugin {
         getActivity().runOnUiThread(() -> {
             try {
                 getActivity().startActivity(view);
-            } catch (ActivityNotFoundException ignored) {
-                // No app opens this type; the file is still in Downloads.
+            } catch (ActivityNotFoundException noViewer) {
+                try {
+                    getActivity().startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                } catch (ActivityNotFoundException ignored) {
+                    // The file is still in Downloads.
+                }
             }
         });
     }
