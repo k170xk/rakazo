@@ -213,9 +213,10 @@ export function mcpRoutes(ctx: RouterContext) {
         }
         try {
           const tools = companyTools();
-          // An empty browse lists the services this person is allowed, not the first page of
-          // the public directory, which would hide one an admin enabled further down.
-          if (input.browse && !input.manage && !input.query.trim()) {
+          // Outside the admin list, people see only the services enabled for them, so this reads
+          // those rather than a page of the public directory that might not include them.
+          if (input.browse && !input.manage) {
+            const words = input.query.trim().toLowerCase();
             const open = Object.keys(tools.catalogItems ?? {})
               .filter((domain) => catalogItemOpenTo(tools, domain, context.actor.userId, admin))
               .slice(0, 40);
@@ -239,7 +240,12 @@ export function mcpRoutes(ctx: RouterContext) {
                 );
               }),
             );
-            return { enabled: true, configured: true, results: listed };
+            const matching = words
+              ? listed.filter((item) =>
+                  `${item.name} ${item.domain} ${item.description}`.toLowerCase().includes(words),
+                )
+              : listed;
+            return { enabled: true, configured: true, results: matching };
           }
           const results = await searchIntegrationCatalog({
             baseUrl,

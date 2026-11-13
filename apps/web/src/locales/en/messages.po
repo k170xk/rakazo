@@ -1037,6 +1037,10 @@ msgstr "Add work packages"
 msgid "Add workspace"
 msgstr "Add workspace"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Add your own MCP server"
+msgstr "Add your own MCP server"
+
 #: src/components/GroupPeople.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
@@ -1164,6 +1168,7 @@ msgstr "Align"
 
 #: src/components/StorageDialog.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
 msgstr "All"
@@ -1393,6 +1398,7 @@ msgstr "API URL"
 #: src/components/apps/AppStudio.tsx
 #: src/components/pages/PageCard.tsx
 #: src/components/pages/PageView.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminSharedApps.tsx
 msgid "App"
 msgstr "App"
@@ -1495,20 +1501,13 @@ msgid "Approving…"
 msgstr "Approving…"
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
 msgid "Apps"
 msgstr "Apps"
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Apps and plugins for staff"
-msgstr "Apps and plugins for staff"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Apps for staff"
-msgstr "Apps for staff"
 
 #: src/components/pages/PagesList.tsx
 msgid "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
@@ -1521,10 +1520,6 @@ msgstr "Apps this group builds for you appear here. Ask for a dashboard, tracker
 #: src/components/tour/ocsc-tour.tsx
 msgid "Apps, Connectors and Routines that extend what agents can do"
 msgstr "Apps, Connectors and Routines that extend what agents can do"
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Apps, plugins and messaging"
-msgstr "Apps, plugins and messaging"
 
 #: src/pages/BotContextMenu.tsx
 msgid "Archive"
@@ -2598,7 +2593,7 @@ msgstr "Comfortable"
 
 #: src/components/integrations/integrations-coming-soon.tsx
 #: src/components/tour/ocsc-tour.tsx
-#: src/pages/AdminStaffApps.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Coming soon"
 msgstr "Coming soon"
@@ -2911,8 +2906,8 @@ msgstr "Connect your own API key in Models or choose OCSC Intelligence credits i
 #: src/components/integrations/CompanyMcpApp.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminCompanyTools.tsx
-#: src/pages/AdminStaffApps.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -3703,7 +3698,7 @@ msgstr "Could not save your changes."
 msgid "Could not save your signature"
 msgstr "Could not save your signature"
 
-#: src/pages/AdminCatalog.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not search catalog"
 msgstr "Could not search catalog"
@@ -3798,7 +3793,7 @@ msgstr "Could not update reaction"
 msgid "Could not update storage"
 msgstr "Could not update storage"
 
-#: src/pages/AdminStaffApps.tsx
+#: src/pages/AdminApps.tsx
 msgid "Could not update the app"
 msgstr "Could not update the app"
 
@@ -3810,10 +3805,6 @@ msgstr "Could not update the company setting"
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not update the default memory scope"
 msgstr "Could not update the default memory scope"
-
-#: src/pages/AdminCatalog.tsx
-msgid "Could not update the directory"
-msgstr "Could not update the directory"
 
 #: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
@@ -3836,12 +3827,11 @@ msgstr "Could not update the tool"
 msgid "Could not update voice"
 msgstr "Could not update voice"
 
-#: src/pages/AdminCatalog.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not update who can use this"
 msgstr "Could not update who can use this"
 
-#: src/pages/AdminStaffApps.tsx
+#: src/pages/AdminApps.tsx
 msgid "Could not update who can use this app"
 msgstr "Could not update who can use this app"
 
@@ -4404,9 +4394,10 @@ msgstr "Dictation failed."
 msgid "Did you mean <0>{emailSuggestion}</0>?"
 msgstr "Did you mean <0>{emailSuggestion}</0>?"
 
-#: src/pages/AdminCatalog.tsx
-msgid "Directory for staff"
-msgstr "Directory for staff"
+#: src/pages/AdminApps.tsx
+#: src/pages/PluginsOverlay.tsx
+msgid "Directory"
+msgstr "Directory"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
@@ -4789,15 +4780,6 @@ msgstr "Emails:\n"
 msgid "Enable {0}"
 msgstr "Enable {0}"
 
-#: src/pages/AdminCatalog.tsx
-#: src/pages/AdminStaffApps.tsx
-msgid "Enabled"
-msgstr "Enabled"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
-msgstr "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
-
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr "End user ID"
@@ -4898,6 +4880,10 @@ msgstr "every {intervalAmountSelect} {intervalUnitSelect}"
 #: src/lib/cron.ts
 msgid "Every {n} hours at :{minute}"
 msgstr "Every {n} hours at :{minute}"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Every app, plugin and directory service staff can add in Integrations, in one list."
+msgstr "Every app, plugin and directory service staff can add in Integrations, in one list."
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
@@ -5600,8 +5586,6 @@ msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "Hi, this is how I'll sound when I read replies out loud."
 
 #: src/components/vault/LoginFieldsInput.tsx
-#: src/pages/AdminCatalog.tsx
-#: src/pages/AdminStaffApps.tsx
 msgid "Hidden"
 msgstr "Hidden"
 
@@ -5889,6 +5873,10 @@ msgstr "Integration domain"
 #: src/pages/PluginsOverlay.tsx
 msgid "Integrations"
 msgstr "Integrations"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Integrations for staff"
+msgstr "Integrations for staff"
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Intended use is to add no more than {MAX_DRAWING_PAGES} drawing pages at a time. Please select only the most relevant pages."
@@ -6551,6 +6539,10 @@ msgstr "MCP server"
 msgid "MCP servers"
 msgstr "MCP servers"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "MCP servers from the directory and company apps such as InfraGrid 3D are turned on under Apps."
+msgstr "MCP servers from the directory and company apps such as InfraGrid 3D are turned on under Apps."
+
 #: src/components/AskCard.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -6575,10 +6567,6 @@ msgstr "Member"
 #: src/pages/GroupPanel.tsx
 msgid "Members ({0})"
 msgstr "Members ({0})"
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Members add their own MCP servers."
-msgstr "Members add their own MCP servers."
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Members choose models"
@@ -6685,6 +6673,10 @@ msgstr "Messaged {peer}"
 #: src/pages/settings-nav.ts
 msgid "Messaging"
 msgstr "Messaging"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Messaging and Evolve"
+msgstr "Messaging and Evolve"
 
 #: src/lib/call-session.ts
 #: src/lib/dictation.ts
@@ -7173,9 +7165,14 @@ msgstr "No active Evolve profile matches."
 msgid "No apps match “{query}”."
 msgstr "No apps match “{query}”."
 
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
 msgstr "No apps match your search."
+
+#: src/pages/AdminApps.tsx
+msgid "No apps yet."
+msgstr "No apps yet."
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No auth"
@@ -7342,10 +7339,6 @@ msgstr "No people match your search."
 msgid "No pictures yet."
 msgstr "No pictures yet."
 
-#: src/pages/AdminStaffApps.tsx
-msgid "No plugins are in the catalog."
-msgstr "No plugins are in the catalog."
-
 #: src/pages/shell/references-dialog.tsx
 msgid "No projects match your filters. Try adjusting your criteria."
 msgstr "No projects match your filters. Try adjusting your criteria."
@@ -7490,7 +7483,7 @@ msgstr "Not now"
 msgid "Not set up"
 msgstr "Not set up"
 
-#: src/pages/AdminStaffApps.tsx
+#: src/pages/AdminApps.tsx
 msgid "Not set up yet. Staff see it as being set up until it is."
 msgstr "Not set up yet. Staff see it as being set up until it is."
 
@@ -7540,10 +7533,6 @@ msgstr "Nothing here"
 #: src/components/EvolveChangeEditor.tsx
 msgid "Nothing in Evolve matches."
 msgstr "Nothing in Evolve matches."
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Nothing in the directory has been turned on for you yet."
-msgstr "Nothing in the directory has been turned on for you yet."
 
 #: src/components/StorageDialog.tsx
 msgid "Nothing is due to be deleted this week."
@@ -7598,6 +7587,10 @@ msgstr "OAuth expired"
 msgid "OCSC"
 msgstr "OCSC"
 
+#: src/pages/AdminApps.tsx
+msgid "OCSC app"
+msgstr "OCSC app"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "OCSC apps"
 msgstr "OCSC apps"
@@ -7645,6 +7638,7 @@ msgstr "OCSC Vision Intelligence creates infographics and pictures, drawing on E
 msgid "OCSC-branded animations and social clips, with voiceover and stock footage."
 msgstr "OCSC-branded animations and social clips, with voiceover and stock footage."
 
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminCompanyTools.tsx
 msgid "Off"
 msgstr "Off"
@@ -7658,8 +7652,8 @@ msgid "Off: only admins connect models or change a bot's model; everyone runs on
 msgstr "Off: only admins connect models or change a bot's model; everyone runs on the company model."
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test."
-msgstr "Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test."
+msgid "Off: staff see Integrations as Coming soon and cannot add anything. Admins always can, to test."
+msgstr "Off: staff see Integrations as Coming soon and cannot add anything. Admins always can, to test."
 
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Offline"
@@ -7679,6 +7673,7 @@ msgstr "Ollama API key"
 msgid "Ollama Cloud"
 msgstr "Ollama Cloud"
 
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminComputerAccess.tsx
 msgid "On"
 msgstr "On"
@@ -7694,6 +7689,10 @@ msgstr "On computer"
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
 msgstr "on day {day} at {time}"
+
+#: src/pages/AdminApps.tsx
+msgid "On for staff"
+msgstr "On for staff"
 
 #: src/components/AskCard.tsx
 msgid "On hold"
@@ -8248,6 +8247,7 @@ msgstr "Please add roles for the following people before adding references: {nam
 msgid "Please select PDF files only"
 msgstr "Please select PDF files only"
 
+#: src/pages/AdminApps.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Plugin"
 msgstr "Plugin"
@@ -8269,14 +8269,6 @@ msgstr "Plugin submissions"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Plugins"
 msgstr "Plugins"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Plugins for staff"
-msgstr "Plugins for staff"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
-msgstr "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
 
 #: src/components/apps/AppStudio.tsx
 msgid "Point at something in the app to change it"
@@ -8505,10 +8497,6 @@ msgstr "Reads PDFs you send it, so you can ask questions about them"
 #: src/pages/shell/import-status.ts
 msgid "Ready"
 msgstr "Ready"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Ready to connect."
-msgstr "Ready to connect."
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
@@ -9382,9 +9370,14 @@ msgid "Search & Filter"
 msgstr "Search & Filter"
 
 #: src/components/integrations/IntegrationSetup.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Search apps"
 msgstr "Search apps"
+
+#: src/pages/AdminApps.tsx
+msgid "Search apps and the directory"
+msgstr "Search apps and the directory"
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Search bots"
@@ -9414,10 +9407,6 @@ msgstr "Search Evolve people to add"
 msgid "Search files…"
 msgstr "Search files…"
 
-#: src/pages/AdminCatalog.tsx
-msgid "Search for a service, then enable it."
-msgstr "Search for a service, then enable it."
-
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "Search integrations.sh"
@@ -9428,10 +9417,6 @@ msgstr "Search integrations.sh"
 #: src/pages/shell/chat-model-picker.tsx
 msgid "Search models"
 msgstr "Search models"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Search plugins"
-msgstr "Search plugins"
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "Search rows"
@@ -9448,10 +9433,6 @@ msgstr "Search sites"
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
 msgstr "Search skills"
-
-#: src/pages/AdminCatalog.tsx
-msgid "Search the directory"
-msgstr "Search the directory"
 
 #: src/components/VaultSettings.tsx
 msgid "Search Vault"
@@ -9644,10 +9625,6 @@ msgstr "Server name"
 msgid "Server URL"
 msgstr "Server URL"
 
-#: src/pages/AdminCatalog.tsx
-msgid "Services from the integrations directory. Nothing is shown until you enable it. Everyone means the whole company, or limit it to people and groups. Admins can connect anything enabled here."
-msgstr "Services from the integrations directory. Nothing is shown until you enable it. Everyone means the whole company, or limit it to people and groups. Admins can connect anything enabled here."
-
 #: src/pages/AdminStaffLimits.tsx
 msgid "Set amount"
 msgstr "Set amount"
@@ -9770,6 +9747,7 @@ msgstr "Shared: colleagues see every row. Click to make rows personal."
 #: src/components/StorageDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Show"
 msgstr "Show"
@@ -9833,6 +9811,10 @@ msgstr "Showing every app and plugin, including ones hidden from staff."
 #: src/pages/PluginsOverlay.tsx
 msgid "Showing what staff see."
 msgstr "Showing what staff see."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Shows Add custom in Integrations, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included."
+msgstr "Shows Add custom in Integrations, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included."
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Sidebar density"
@@ -10090,15 +10072,10 @@ msgstr "SSO"
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO is temporarily unavailable. Try again."
 
-#. placeholder {0}: app.name
-#. placeholder {0}: entry.displayName
-#: src/pages/AdminStaffApps.tsx
+#. placeholder {0}: row.name
+#: src/pages/AdminApps.tsx
 msgid "Staff access to {0}"
 msgstr "Staff access to {0}"
-
-#: src/pages/AdminCatalog.tsx
-msgid "Staff access to {name}"
-msgstr "Staff access to {name}"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
@@ -10108,9 +10085,13 @@ msgstr "Staff can write their own skills, browse skill packs and add them from G
 msgid "Staff limits"
 msgstr "Staff limits"
 
-#: src/pages/AdminStaffApps.tsx
-msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
-msgstr "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
+#: src/pages/AdminApps.tsx
+msgid "Staff see every managed app and plugin until you change one here. After that they see only the ones that are on."
+msgstr "Staff see every managed app and plugin until you change one here. After that they see only the ones that are on."
+
+#: src/pages/AdminApps.tsx
+msgid "Staff see only what is on here, in Integrations, for everyone or the people and groups you choose. Coming soon shows an app with a badge. Admins always see every app, to test."
+msgstr "Staff see only what is on here, in Integrations, for everyone or the people and groups you choose. Coming soon shows an app with a badge. Admins always see every app, to test."
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Staff skills"
@@ -10373,6 +10354,10 @@ msgstr "Switch to yearly?"
 #: src/pages/AdminRoutineActivity.tsx
 msgid "Switched on now"
 msgstr "Switched on now"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Switches for a whole kind of app"
+msgstr "Switches for a whole kind of app"
 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Switching…"
@@ -10701,6 +10686,10 @@ msgstr "These files or choices no longer match. Choose the files again."
 #: src/components/VaultSettings.tsx
 msgid "These saved settings can't be read. Remove it and add it again."
 msgstr "These saved settings can't be read. Remove it and add it again."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "These stop every app of one kind, even ones that are on in the list. Most companies leave them on."
+msgstr "These stop every app of one kind, even ones that are on in the list. Most companies leave them on."
 
 #: src/components/InviteDialog.tsx
 msgid "They get {weeks} weeks free."

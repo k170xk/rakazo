@@ -21,12 +21,15 @@ import type {
 import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
 import type { McpOAuthEnvField } from "@rakazo/contracts";
 import {
+  catalogEndpointOpenTo,
   companyMcpEndpoints,
   companyMcpEndpointsFor,
   isLocalhostOrLoopbackIp,
   mcpOAuthEnvReferences,
   resolveMcpOAuthEnv,
   resolveMcpOAuthFileTemplate,
+  staffPluginEnabled,
+  staffPluginEnabledFor,
 } from "@rakazo/contracts";
 import type { McpServer, PrismaClient, ThreadEvents } from "@rakazo/db";
 import { availableInSpace, itemSecretIn } from "@rakazo/db";
@@ -106,17 +109,39 @@ export const DEFAULT_MCP_DISCOVERY_TIMEOUT_MS = 20_000;
 const DISCOVERY_BACKOFF_MS = 30_000;
 const DISCOVERY_BACKOFF_MAX_MS = 5 * 60_000;
 
-/** With custom MCP servers off, only the company's own MCP apps open to staff still run. */
+/**
+ * With custom MCP servers off, a person's servers still run when they are the company's own MCP
+ * apps, or come from a directory service or plugin an admin turned on for them.
+ */
 async function usableServers(
-  prisma: Pick<PrismaClient, "user">,
+  prisma: Pick<PrismaClient, "user" | "mcpServer">,
   context: { spaceId: string; userId: string },
 ) {
   const usable = { enabled: true, ...availableInSpace(context) };
   if (await companyFeatureOpenForRun(prisma, "mcpServers", context.userId)) return usable;
-  const endpoints = (await isDeploymentAdmin(prisma, context.userId))
-    ? companyMcpEndpoints(companyTools().staffApps)
-    : companyMcpEndpointsFor(companyTools(), context.userId);
-  return { ...usable, endpoint: { in: endpoints } };
+  const admin = await isDeploymentAdmin(prisma, context.userId);
+  const tools = companyTools();
+  const endpoints = admin
+    ? companyMcpEndpoints(tools.staffApps)
+    : companyMcpEndpointsFor(tools, context.userId);
+  const owned = await prisma.mcpServer.findMany({
+    where: usable,
+    select: { id: true, endpoint: true, install: { select: { kind: true, source: true } } },
+  });
+  const allowed = owned.flatMap((server) =>
+    (server.endpoint && catalogEndpointOpenTo(tools, server.endpoint, context.userId, admin)) ||
+    (server.install?.kind === "plugin" &&
+      tools.staffApps &&
+      (admin
+        ? staffPluginEnabled(tools.staffApps, server.install.source)
+        : staffPluginEnabledFor(tools, server.install.source, context.userId)))
+      ? [server.id]
+      : [],
+  );
+  return {
+    ...usable,
+    AND: [{ OR: [{ endpoint: { in: endpoints } }, { id: { in: allowed } }] }],
+  };
 }
 /** A server that needs new credentials or a new address waits longer: retrying rarely
  * helps, but a failure that was only brief still gets another try. */

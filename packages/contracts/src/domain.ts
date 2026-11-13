@@ -2417,6 +2417,26 @@ export function catalogItemOpenTo(
   return inAudience(tools.appAudiences?.[catalogItemKey(key)], tools.accessGroups, userId);
 }
 
+/** Whether an MCP address belongs to a directory service this person may use, by its host. */
+export function catalogEndpointOpenTo(
+  tools: Pick<CompanyTools, "catalogItems" | "appAudiences" | "accessGroups">,
+  endpoint: string,
+  userId: string,
+  admin: boolean,
+): boolean {
+  let host: string;
+  try {
+    host = new URL(endpoint).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return Object.keys(tools.catalogItems ?? {}).some(
+    (domain) =>
+      (host === domain || host.endsWith(`.${domain}`)) &&
+      catalogItemOpenTo(tools, domain, userId, admin),
+  );
+}
+
 export function companyMcpEndpointsFor(policy: StaffAppPolicy, userId: string): string[] {
   return COMPANY_APPS.flatMap((app) =>
     "mcpEndpoint" in app && staffAppStateFor(policy, app.slug, userId) === "enabled"

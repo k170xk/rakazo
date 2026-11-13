@@ -31,11 +31,13 @@ import {
   Gauge,
   HardDrive,
   KeyRound,
+  LayoutGrid,
   MessageSquare,
   Mic,
   Monitor,
   Receipt,
   Repeat,
+  Server,
   Share2,
   ShieldCheck,
   ToggleRight,
@@ -51,8 +53,8 @@ import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { AccessGroupsSection, AudienceControl } from "./AdminAccess";
+import { AppsList } from "./AdminApps";
 import { CompanyAssistantModelsSection } from "./AdminAssistantModels";
-import { CatalogSection } from "./AdminCatalog";
 import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
@@ -60,7 +62,6 @@ import { DocumentLibrarySection } from "./AdminDocumentLibrary";
 import { EvolveSafeguardsSection } from "./AdminEvolveSafeguards";
 import { RoutineActivitySection } from "./AdminRoutineActivity";
 import { SharedAppsSection } from "./AdminSharedApps";
-import { StaffAppsSection } from "./AdminStaffApps";
 import { StaffLimitsSection } from "./AdminStaffLimits";
 import { StaffSpendingSection } from "./AdminStaffSpending";
 import { WindowChrome } from "./WindowChrome";
@@ -68,6 +69,8 @@ import { WindowChrome } from "./WindowChrome";
 const ADMIN_SECTIONS = [
   "models",
   "features",
+  "integrations",
+  "mcp",
   "chat",
   "tools",
   "voice",
@@ -135,6 +138,8 @@ function CompanyAdminPanels() {
   const nav: { id: AdminSection; label: string; icon: LucideIcon }[] = [
     { id: "models", label: t`Model`, icon: Cpu },
     { id: "features", label: t`Features`, icon: ToggleRight },
+    { id: "integrations", label: t`Apps`, icon: LayoutGrid },
+    { id: "mcp", label: t`MCP servers`, icon: Server },
     { id: "chat", label: t`Chat`, icon: MessageSquare },
     { id: "tools", label: t`Tools and skills`, icon: Wrench },
     { id: "voice", label: t`Voice`, icon: Mic },
@@ -171,6 +176,10 @@ function CompanyAdminPanels() {
         );
       case "features":
         return <CompanyFeaturesSection state={data} onSaved={saved} />;
+      case "integrations":
+        return <CompanyAppsSection state={data} onSaved={saved} />;
+      case "mcp":
+        return <CompanyMcpSection state={data} onSaved={saved} />;
       case "chat":
         return <CompanyChatSection state={data} onSaved={saved} />;
       case "tools":
@@ -534,30 +543,6 @@ function CompanyFeaturesSection({
       description: t`Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners.`,
     },
     {
-      id: "staffIntegrations",
-      group: "apps",
-      label: t`Apps and plugins for staff`,
-      description: t`Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test.`,
-    },
-    {
-      id: "connectedApps",
-      group: "apps",
-      label: t`Connected apps`,
-      description: t`Members connect apps such as Gmail, Slack or Notion to their assistants.`,
-    },
-    {
-      id: "plugins",
-      group: "apps",
-      label: t`Plugins`,
-      description: t`Members install plugins from the catalog.`,
-    },
-    {
-      id: "mcpServers",
-      group: "apps",
-      label: t`MCP servers`,
-      description: t`Members add their own MCP servers.`,
-    },
-    {
       id: "messaging",
       group: "apps",
       label: t`Messaging`,
@@ -616,7 +601,7 @@ function CompanyFeaturesSection({
   const groups: { id: FeatureGroup; title: string }[] = [
     { id: "models", title: t`Models and agents` },
     { id: "computers", title: t`Computers and routines` },
-    { id: "apps", title: t`Apps, plugins and messaging` },
+    { id: "apps", title: t`Messaging and Evolve` },
     { id: "people", title: t`What people manage themselves` },
   ];
 
@@ -633,16 +618,94 @@ function CompanyFeaturesSection({
             state={state}
             onSaved={onSaved}
           />
-          {group.id === "apps" ? (
-            <div className="pt-4">
-              <StaffAppsSection state={state} onSaved={onSaved} />
-              <div className="pt-4">
-                <CatalogSection state={state} onSaved={onSaved} />
-              </div>
-            </div>
-          ) : null}
         </div>
       ))}
+    </Section>
+  );
+}
+
+function CompanyAppsSection({
+  state,
+  onSaved,
+}: {
+  state: CompanyAdminState;
+  onSaved: (next: CompanyAdminState) => Promise<void>;
+}) {
+  const { t } = useLingui();
+  return (
+    <Section
+      title={t`Apps`}
+      description={t`Every app, plugin and directory service staff can add in Integrations, in one list.`}
+    >
+      <CompanySwitchList
+        rows={[
+          {
+            id: "staffIntegrations",
+            label: t`Integrations for staff`,
+            description: t`Off: staff see Integrations as Coming soon and cannot add anything. Admins always can, to test.`,
+          },
+        ]}
+        state={state}
+        onSaved={onSaved}
+      />
+      <AppsList state={state} onSaved={onSaved} />
+      <details className="group rounded-xl border border-border">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
+          <Trans>Switches for a whole kind of app</Trans>
+        </summary>
+        <div className="space-y-2 px-4 pb-4">
+          <p className="text-[13px] text-muted-foreground">
+            <Trans>
+              These stop every app of one kind, even ones that are on in the list. Most companies
+              leave them on.
+            </Trans>
+          </p>
+          <CompanySwitchList
+            rows={[
+              {
+                id: "connectedApps",
+                label: t`Connected apps`,
+                description: t`Members connect apps such as Gmail, Slack or Notion to their assistants.`,
+              },
+              {
+                id: "plugins",
+                label: t`Plugins`,
+                description: t`Members install plugins from the catalog.`,
+              },
+            ]}
+            state={state}
+            onSaved={onSaved}
+          />
+        </div>
+      </details>
+    </Section>
+  );
+}
+
+function CompanyMcpSection({
+  state,
+  onSaved,
+}: {
+  state: CompanyAdminState;
+  onSaved: (next: CompanyAdminState) => Promise<void>;
+}) {
+  const { t } = useLingui();
+  return (
+    <Section
+      title={t`MCP servers`}
+      description={t`MCP servers from the directory and company apps such as InfraGrid 3D are turned on under Apps.`}
+    >
+      <CompanySwitchList
+        rows={[
+          {
+            id: "mcpServers",
+            label: t`Add your own MCP server`,
+            description: t`Shows Add custom in Integrations, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included.`,
+          },
+        ]}
+        state={state}
+        onSaved={onSaved}
+      />
     </Section>
   );
 }

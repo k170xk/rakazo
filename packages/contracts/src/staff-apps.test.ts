@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CompanyToolsSchema,
+  catalogEndpointOpenTo,
   catalogItemOpenTo,
   companyMcpEndpoints,
   companyMcpEndpointsFor,
@@ -135,6 +136,20 @@ describe("staff apps", () => {
     expect(catalogItemOpenTo(tools, "canva.com", "bob", false)).toBe(false);
     expect(catalogItemOpenTo(tools, "canva.com", "bob", true)).toBe(true);
     expect(catalogItemOpenTo(tools, "clay.com", "ann", true)).toBe(false);
+  });
+
+  it("matches an MCP address to the directory service it belongs to", () => {
+    const tools = {
+      catalogItems: { "canva.com": "enabled" as const },
+      appAudiences: { "catalog:canva.com": { userIds: ["ann"], groupIds: [] } },
+      accessGroups: [],
+    };
+    expect(catalogEndpointOpenTo(tools, "https://mcp.canva.com/mcp", "ann", false)).toBe(true);
+    expect(catalogEndpointOpenTo(tools, "https://canva.com/mcp", "ann", false)).toBe(true);
+    expect(catalogEndpointOpenTo(tools, "https://mcp.canva.com/mcp", "bob", false)).toBe(false);
+    expect(catalogEndpointOpenTo(tools, "https://notcanva.com/mcp", "ann", false)).toBe(false);
+    expect(catalogEndpointOpenTo(tools, "https://evil.test/?u=canva.com", "ann", true)).toBe(false);
+    expect(catalogEndpointOpenTo(tools, "not a url", "ann", true)).toBe(false);
   });
 
   it("accepts audiences only for switches that can be limited", () => {

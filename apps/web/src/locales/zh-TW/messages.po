@@ -1033,6 +1033,10 @@ msgstr ""
 msgid "Add workspace"
 msgstr "新增工作區"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Add your own MCP server"
+msgstr ""
+
 #: src/components/GroupPeople.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
@@ -1160,6 +1164,7 @@ msgstr ""
 
 #: src/components/StorageDialog.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
 msgstr ""
@@ -1389,6 +1394,7 @@ msgstr ""
 #: src/components/apps/AppStudio.tsx
 #: src/components/pages/PageCard.tsx
 #: src/components/pages/PageView.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminSharedApps.tsx
 msgid "App"
 msgstr ""
@@ -1491,20 +1497,13 @@ msgid "Approving…"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/AdminCompanyPage.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
 msgid "Apps"
 msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Apps and plugins for staff"
-msgstr ""
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Apps for staff"
-msgstr "員工應用程式"
 
 #: src/components/pages/PagesList.tsx
 msgid "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
@@ -1516,10 +1515,6 @@ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Apps, Connectors and Routines that extend what agents can do"
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Apps, plugins and messaging"
 msgstr ""
 
 #: src/pages/BotContextMenu.tsx
@@ -2594,7 +2589,7 @@ msgstr "寬鬆"
 
 #: src/components/integrations/integrations-coming-soon.tsx
 #: src/components/tour/ocsc-tour.tsx
-#: src/pages/AdminStaffApps.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Coming soon"
 msgstr ""
@@ -2907,8 +2902,8 @@ msgstr "請在「模型」中連接你自己的 API 金鑰，或在「帳務」�
 #: src/components/integrations/CompanyMcpApp.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminCompanyTools.tsx
-#: src/pages/AdminStaffApps.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -3699,7 +3694,7 @@ msgstr ""
 msgid "Could not save your signature"
 msgstr ""
 
-#: src/pages/AdminCatalog.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not search catalog"
 msgstr "無法搜尋目錄"
@@ -3794,7 +3789,7 @@ msgstr "無法更新反應"
 msgid "Could not update storage"
 msgstr ""
 
-#: src/pages/AdminStaffApps.tsx
+#: src/pages/AdminApps.tsx
 msgid "Could not update the app"
 msgstr "無法更新此應用程式"
 
@@ -3806,10 +3801,6 @@ msgstr ""
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not update the default memory scope"
 msgstr "無法更新預設記憶範圍"
-
-#: src/pages/AdminCatalog.tsx
-msgid "Could not update the directory"
-msgstr ""
 
 #: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
@@ -3832,12 +3823,11 @@ msgstr ""
 msgid "Could not update voice"
 msgstr ""
 
-#: src/pages/AdminCatalog.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not update who can use this"
 msgstr ""
 
-#: src/pages/AdminStaffApps.tsx
+#: src/pages/AdminApps.tsx
 msgid "Could not update who can use this app"
 msgstr ""
 
@@ -4396,8 +4386,9 @@ msgstr ""
 msgid "Did you mean <0>{emailSuggestion}</0>?"
 msgstr "你是指 <0>{emailSuggestion}</0> 嗎？"
 
-#: src/pages/AdminCatalog.tsx
-msgid "Directory for staff"
+#: src/pages/AdminApps.tsx
+#: src/pages/PluginsOverlay.tsx
+msgid "Directory"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -4777,15 +4768,6 @@ msgstr ""
 msgid "Enable {0}"
 msgstr "啟用 {0}"
 
-#: src/pages/AdminCatalog.tsx
-#: src/pages/AdminStaffApps.tsx
-msgid "Enabled"
-msgstr "已啟用"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Enabled apps can be connected. Coming soon apps show to staff with a badge. Hidden apps are not shown, and their tools are not offered to staff assistants. Admins always see every app, to test."
-msgstr "已啟用的應用程式可以連線。即將推出的應用程式會帶標記顯示給員工。隱藏的應用程式不會顯示，其工具也不會提供給員工的助理。管理員一律可以看到所有應用程式，以便測試。"
-
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -4886,6 +4868,10 @@ msgstr "每 {intervalAmountSelect} {intervalUnitSelect}"
 #: src/lib/cron.ts
 msgid "Every {n} hours at :{minute}"
 msgstr "每 {n} 小時 {minute} 分"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Every app, plugin and directory service staff can add in Integrations, in one list."
+msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
@@ -5588,8 +5574,6 @@ msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "你好，這是我朗讀回覆時的聲音。"
 
 #: src/components/vault/LoginFieldsInput.tsx
-#: src/pages/AdminCatalog.tsx
-#: src/pages/AdminStaffApps.tsx
 msgid "Hidden"
 msgstr "隱藏"
 
@@ -5871,6 +5855,10 @@ msgstr "整合服務網域"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Integrations"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Integrations for staff"
 msgstr ""
 
 #: src/pages/shell/drawings-dialog.tsx
@@ -6534,6 +6522,10 @@ msgstr ""
 msgid "MCP servers"
 msgstr "MCP 伺服器"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "MCP servers from the directory and company apps such as InfraGrid 3D are turned on under Apps."
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -6558,10 +6550,6 @@ msgstr "成員"
 #: src/pages/GroupPanel.tsx
 msgid "Members ({0})"
 msgstr "成員（{0}）"
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Members add their own MCP servers."
-msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Members choose models"
@@ -6668,6 +6656,10 @@ msgstr "已發給 {peer}"
 #: src/pages/settings-nav.ts
 msgid "Messaging"
 msgstr "訊息"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Messaging and Evolve"
+msgstr ""
 
 #: src/lib/call-session.ts
 #: src/lib/dictation.ts
@@ -7156,9 +7148,14 @@ msgstr ""
 msgid "No apps match “{query}”."
 msgstr ""
 
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
 msgstr "沒有符合搜尋條件的應用程式。"
+
+#: src/pages/AdminApps.tsx
+msgid "No apps yet."
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No auth"
@@ -7325,10 +7322,6 @@ msgstr ""
 msgid "No pictures yet."
 msgstr ""
 
-#: src/pages/AdminStaffApps.tsx
-msgid "No plugins are in the catalog."
-msgstr "目錄中沒有外掛程式。"
-
 #: src/pages/shell/references-dialog.tsx
 msgid "No projects match your filters. Try adjusting your criteria."
 msgstr ""
@@ -7473,7 +7466,7 @@ msgstr "暫不"
 msgid "Not set up"
 msgstr ""
 
-#: src/pages/AdminStaffApps.tsx
+#: src/pages/AdminApps.tsx
 msgid "Not set up yet. Staff see it as being set up until it is."
 msgstr "尚未設定。在設定完成前，員工會看到它正在設定。"
 
@@ -7522,10 +7515,6 @@ msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Nothing in Evolve matches."
-msgstr ""
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Nothing in the directory has been turned on for you yet."
 msgstr ""
 
 #: src/components/StorageDialog.tsx
@@ -7581,6 +7570,10 @@ msgstr "OAuth 已過期"
 msgid "OCSC"
 msgstr ""
 
+#: src/pages/AdminApps.tsx
+msgid "OCSC app"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "OCSC apps"
 msgstr "OCSC 應用程式"
@@ -7628,6 +7621,7 @@ msgstr ""
 msgid "OCSC-branded animations and social clips, with voiceover and stock footage."
 msgstr ""
 
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminCompanyTools.tsx
 msgid "Off"
 msgstr ""
@@ -7641,7 +7635,7 @@ msgid "Off: only admins connect models or change a bot's model; everyone runs on
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Off: staff see Connect apps as Coming soon and cannot connect apps, install plugins or add MCP servers. Admins always can, to test."
+msgid "Off: staff see Integrations as Coming soon and cannot add anything. Admins always can, to test."
 msgstr ""
 
 #: src/components/ComputerDeviceSettings.tsx
@@ -7662,6 +7656,7 @@ msgstr "Ollama API 金鑰"
 msgid "Ollama Cloud"
 msgstr "Ollama Cloud"
 
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminComputerAccess.tsx
 msgid "On"
 msgstr ""
@@ -7677,6 +7672,10 @@ msgstr ""
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
 msgstr "{day} 日 {time}"
+
+#: src/pages/AdminApps.tsx
+msgid "On for staff"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "On hold"
@@ -8231,6 +8230,7 @@ msgstr ""
 msgid "Please select PDF files only"
 msgstr ""
 
+#: src/pages/AdminApps.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Plugin"
 msgstr "外掛程式"
@@ -8252,14 +8252,6 @@ msgstr ""
 #: src/pages/AdminCompanyPage.tsx
 msgid "Plugins"
 msgstr ""
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Plugins for staff"
-msgstr "員工外掛程式"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Plugins from the catalog that connect an app, such as Stripe, Figma or Cal.com. Staff see only the ones enabled here, and add them while Plugins is on. Skill-only packs follow Staff skills."
-msgstr "目錄中用於連線應用程式的外掛程式，例如 Stripe、Figma 或 Cal.com。員工只會看到此處啟用的外掛程式，並可在外掛程式功能開啟時新增。僅含技能的套件依循員工技能設定。"
 
 #: src/components/apps/AppStudio.tsx
 msgid "Point at something in the app to change it"
@@ -8488,10 +8480,6 @@ msgstr ""
 #: src/pages/shell/import-status.ts
 msgid "Ready"
 msgstr "就緒"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Ready to connect."
-msgstr "可以連線。"
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
@@ -9365,9 +9353,14 @@ msgid "Search & Filter"
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Search apps"
 msgstr "搜尋應用程式"
+
+#: src/pages/AdminApps.tsx
+msgid "Search apps and the directory"
+msgstr ""
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Search bots"
@@ -9397,10 +9390,6 @@ msgstr ""
 msgid "Search files…"
 msgstr ""
 
-#: src/pages/AdminCatalog.tsx
-msgid "Search for a service, then enable it."
-msgstr ""
-
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "搜尋 integrations.sh"
@@ -9411,10 +9400,6 @@ msgstr "搜尋 integrations.sh"
 #: src/pages/shell/chat-model-picker.tsx
 msgid "Search models"
 msgstr "搜尋模型"
-
-#: src/pages/AdminStaffApps.tsx
-msgid "Search plugins"
-msgstr "搜尋外掛程式"
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "Search rows"
@@ -9430,10 +9415,6 @@ msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
-msgstr ""
-
-#: src/pages/AdminCatalog.tsx
-msgid "Search the directory"
 msgstr ""
 
 #: src/components/VaultSettings.tsx
@@ -9627,10 +9608,6 @@ msgstr "伺服器名稱"
 msgid "Server URL"
 msgstr "伺服器 URL"
 
-#: src/pages/AdminCatalog.tsx
-msgid "Services from the integrations directory. Nothing is shown until you enable it. Everyone means the whole company, or limit it to people and groups. Admins can connect anything enabled here."
-msgstr ""
-
 #: src/pages/AdminStaffLimits.tsx
 msgid "Set amount"
 msgstr ""
@@ -9753,6 +9730,7 @@ msgstr ""
 #: src/components/StorageDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/AdminApps.tsx
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Show"
 msgstr "顯示"
@@ -9816,6 +9794,10 @@ msgstr "正在顯示所有應用程式和外掛程式，包括對員工隱藏的
 #: src/pages/PluginsOverlay.tsx
 msgid "Showing what staff see."
 msgstr "正在顯示員工看到的內容。"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Shows Add custom in Integrations, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included."
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Sidebar density"
@@ -10073,15 +10055,10 @@ msgstr ""
 msgid "SSO is temporarily unavailable. Try again."
 msgstr "SSO 暫時不可用，請重試。"
 
-#. placeholder {0}: app.name
-#. placeholder {0}: entry.displayName
-#: src/pages/AdminStaffApps.tsx
+#. placeholder {0}: row.name
+#: src/pages/AdminApps.tsx
 msgid "Staff access to {0}"
 msgstr "員工對 {0} 的存取權"
-
-#: src/pages/AdminCatalog.tsx
-msgid "Staff access to {name}"
-msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
@@ -10091,9 +10068,13 @@ msgstr ""
 msgid "Staff limits"
 msgstr ""
 
-#: src/pages/AdminStaffApps.tsx
-msgid "Staff see every plugin until you save a choice on this page. After that they see only the ones enabled here."
-msgstr "在此頁面儲存選擇之前，員工可以看到所有外掛程式。之後只會看到此處啟用的外掛程式。"
+#: src/pages/AdminApps.tsx
+msgid "Staff see every managed app and plugin until you change one here. After that they see only the ones that are on."
+msgstr ""
+
+#: src/pages/AdminApps.tsx
+msgid "Staff see only what is on here, in Integrations, for everyone or the people and groups you choose. Coming soon shows an app with a badge. Admins always see every app, to test."
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Staff skills"
@@ -10355,6 +10336,10 @@ msgstr "切換為按年付費？"
 
 #: src/pages/AdminRoutineActivity.tsx
 msgid "Switched on now"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Switches for a whole kind of app"
 msgstr ""
 
 #: src/pages/model-settings/space-bots-model.tsx
@@ -10681,6 +10666,10 @@ msgstr "這些檔案或選項已不再相符。請重新選擇檔案。"
 #: src/components/VaultSettings.tsx
 msgid "These saved settings can't be read. Remove it and add it again."
 msgstr "無法讀取已儲存的設定，請移除後重新新增。"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "These stop every app of one kind, even ones that are on in the list. Most companies leave them on."
+msgstr ""
 
 #: src/components/InviteDialog.tsx
 msgid "They get {weeks} weeks free."

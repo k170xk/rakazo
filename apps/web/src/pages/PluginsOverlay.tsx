@@ -228,11 +228,11 @@ export function PluginsOverlay({
   const catalogConfigured = integrations.data?.catalogConfigured === true;
   const pluginCatalog = useQuery({
     ...queries.marketplace.catalog.queryOptions({
-      input: { query: "", staffView: !showEverything },
+      // With the integrations.sh directory as the catalogue, plugins show only once enabled.
+      input: { query: "", staffView: catalogConfigured || !showEverything },
       staleTime: 60_000,
     }),
-    // The integrations.sh directory replaces the Cursor catalogue once one is configured.
-    enabled: catalogLoaded && !catalogConfigured,
+    enabled: catalogLoaded,
   });
   const assignmentsQuery = useQuery(
     queries.mcp.assignments.list.queryOptions({
@@ -1084,16 +1084,11 @@ export function PluginsOverlay({
           <div className="grid place-items-center py-10">
             <Spinner className="size-5 text-muted-foreground" aria-label={t`Loading…`} />
           </div>
-        ) : results.length === 0 ? (
-          <p className="px-2.5 text-muted-foreground/80">
-            {directoryQuery ? (
-              <Trans>No results</Trans>
-            ) : (
-              <Trans>Nothing in the directory has been turned on for you yet.</Trans>
-            )}
-          </p>
-        ) : (
+        ) : results.length === 0 ? null : (
           <>
+            <SectionHeading as="h2" className="mb-2 px-2.5">
+              <Trans>Directory</Trans>
+            </SectionHeading>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {results.map((result) => {
                 const surface = addableSurface(result);
@@ -2005,18 +2000,16 @@ export function PluginsOverlay({
               visible.length === 0 &&
               !showFeatured &&
               !pluginMatches.length &&
-              !brandMatches.length ? (
+              !brandMatches.length &&
+              !(directory && directorySearch.data?.results.length) ? (
                 <p className="text-muted-foreground/80">
                   <Trans>No apps match your search.</Trans>
                 </p>
               ) : null}
               {showFeatured ? (
                 <>
-                  {directory
-                    ? renderDirectory()
-                    : catalogConfigured
-                      ? null
-                      : renderPluginSections()}
+                  {renderPluginSections()}
+                  {directory ? renderDirectory() : null}
                   {catalogLoaded && rendered.length > 0 && !category ? (
                     <SectionHeading as="h2" className="mt-8 mb-2 px-2.5">
                       <Trans>More apps</Trans>
@@ -2057,6 +2050,7 @@ export function PluginsOverlay({
                     </div>
                   ) : null}
                   {renderPluginSections()}
+                  {directory ? renderDirectory() : null}
                   {rendered.length > 0 && !category ? (
                     <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {rendered.map((item) =>
