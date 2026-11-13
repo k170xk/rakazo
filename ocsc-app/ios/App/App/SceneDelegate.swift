@@ -45,5 +45,19 @@ class AppViewController: CAPBridgeViewController {
             forMainFrameOnly: true
         )
         webView?.configuration.userContentController.addUserScript(script)
+
+        // The keyboard shrinks the web view, uncovering the window behind its rounded corners;
+        // paint the window the page's own colour so the two meet without a hard edge.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(matchWindowToPage),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+    }
+
+    @objc private func matchWindowToPage() {
+        guard let color = webView?.underPageBackgroundColor else { return }
+        view.window?.backgroundColor = color
     }
 }
