@@ -3,6 +3,7 @@ import { MessageBlock } from "./events.js";
 import {
   EVOLVE_REFERENCE_CONTEXT_MAX_CHARS,
   EvolveConversationMessagesSchema,
+  EvolveHistoryAssistantSchema,
   evolveConversationPromptText,
   evolveConversationTranscript,
   evolveHistoryMessageText,
@@ -16,6 +17,22 @@ const message = (id: string, role: "user" | "assistant", content: string) =>
     content,
     createdAt: "2026-10-03T10:00:00Z",
   });
+
+describe("EvolveHistoryAssistantSchema", () => {
+  it("accepts a bot look that is an uploaded avatar image", () => {
+    const image = `data:image/webp;base64,${"A".repeat(26_000)}`;
+    const parsed = EvolveHistoryAssistantSchema.safeParse({
+      id: "60a43063-4b8f-4f40-bd38-6a884cf0002d",
+      name: "Assistant",
+      available: true,
+      conversations: 3,
+      lastMessageAt: null,
+      botId: "cmwc0t3vj8x1qcjiza221amj6",
+      look: { color: image, avatarSet: "rakazo", identity: "cmwc0t3vj8x1qcjiza221amj6" },
+    });
+    expect(parsed.success).toBe(true);
+  });
+});
 
 describe("evolveHistoryMessageText", () => {
   it("names the speaker and lists references, files and images", () => {

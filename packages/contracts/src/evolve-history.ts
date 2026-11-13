@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { BOT_AVATAR_VALUE_MAX_LENGTH } from "./bot-avatar.js";
 
 /**
  * Evolve chat history: each person's own conversations with Evolve's chat assistants, read live
@@ -28,7 +29,8 @@ export const EvolveHistoryAssistantSchema = z.object({
   /** The assistant's bot avatar: its bot's look, or a fixed one, shared by its archived chats. */
   look: z
     .object({
-      color: z.string().min(1).max(64),
+      /** The bot's stored avatar value, which may be an uploaded image. */
+      color: z.string().min(1).max(BOT_AVATAR_VALUE_MAX_LENGTH),
       avatarSet: z.enum(["organic", "rakazo"]),
       /** Draw with this identity so the organic body matches. */
       identity: z.string().min(1).max(64),
