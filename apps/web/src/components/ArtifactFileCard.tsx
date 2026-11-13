@@ -112,8 +112,8 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
 
   return (
     <>
-      <div>
-        <BuiCard className="flex w-[min(420px,100%)] min-w-[min(280px,100%)] items-center gap-2 overflow-hidden border border-border py-2.5 ps-3 pe-2.5 text-left text-foreground dark:border-transparent">
+      <div className="w-[min(420px,100%)] min-w-0">
+        <BuiCard className="flex w-full min-w-[min(280px,100%)] items-center gap-2 overflow-hidden border border-border py-2.5 ps-3 pe-2.5 text-left text-foreground dark:border-transparent">
           {previewable ? (
             <button
               ref={previewButton}
