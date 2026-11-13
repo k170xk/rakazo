@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /** Above one line (~28px); two lines clear this. */
 const COMPOSER_SINGLE_LINE_MAX_PX = 36;
@@ -60,6 +60,15 @@ export function useComposerLayout(draft: string, hasChips: boolean) {
   const composerLayoutRef = useRef<ComposerLayout | null>(null);
   const previousExpandedRef = useRef(false);
   const composerAnimationsRef = useRef<Animation[]>([]);
+  // A draft restored when the composer mounts (switching chats) takes its size at once; only
+  // typing across the line edge animates.
+  const settledRef = useRef(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      settledRef.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const expanded = composerExpanded || hasChips;
 
   useLayoutEffect(() => {
@@ -134,6 +143,7 @@ export function useComposerLayout(draft: string, hasChips: boolean) {
     // A send or a cleared draft snaps back; nothing is left to follow.
     if (
       !start ||
+      !settledRef.current ||
       textarea.value === "" ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
