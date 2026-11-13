@@ -13,7 +13,7 @@ const FIREFOX = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100
 
 function host(
   agent: string,
-  options: { framed?: boolean; standalone?: boolean; desktop?: boolean } = {},
+  options: { framed?: boolean; standalone?: boolean; desktop?: boolean; phoneApp?: boolean } = {},
 ) {
   const self = {};
   return {
@@ -24,6 +24,7 @@ function host(
     self,
     top: options.framed ? {} : self,
     ...(options.desktop ? { rakazoDesktop: {} } : {}),
+    ...(options.phoneApp ? { Capacitor: {} } : {}),
   } as never;
 }
 
@@ -46,9 +47,10 @@ describe("installOffer", () => {
     expect(installOffer(host(MAC_SAFARI), null)).toBe("safari-mac");
   });
 
-  it("offers nothing once installed, in the desktop app, or where browsers cannot install", () => {
+  it("offers nothing once installed, in the desktop or phone app, or where browsers cannot install", () => {
     expect(installOffer(host(CHROME, { standalone: true }), prompt)).toBeNull();
     expect(installOffer(host(CHROME, { desktop: true }), prompt)).toBeNull();
+    expect(installOffer(host(IPHONE, { phoneApp: true }), null)).toBeNull();
     expect(installOffer(host(FIREFOX), null)).toBeNull();
   });
 });

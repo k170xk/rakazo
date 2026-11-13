@@ -21,7 +21,9 @@
       "!**/verify-report",
       "!**/data",
       "!**/*.astro",
-      "!**/apps/www"
+      "!**/apps/www",
+      "!**/ocsc-app/ios",
+      "!**/ocsc-app/android"
     ]
   },
   "plugins": [

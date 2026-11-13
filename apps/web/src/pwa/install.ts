@@ -22,6 +22,8 @@ type InstallHost = Pick<Window, "document" | "matchMedia" | "addEventListener"> 
   self: unknown;
   top: unknown;
   rakazoDesktop?: unknown;
+  /** Present only inside the OCSC Intelligence phone app, which is already installed. */
+  Capacitor?: unknown;
 };
 
 let held: InstallPromptEvent | null = null;
@@ -74,7 +76,7 @@ export function inFrame(target: { self: unknown; top: unknown } = window): boole
 }
 
 export function installOffer(target: InstallHost, prompt: InstallPromptEvent | null): InstallOffer {
-  if (target.rakazoDesktop || isStandalone(target)) return null;
+  if (target.rakazoDesktop || target.Capacitor || isStandalone(target)) return null;
   if (inFrame(target)) return "open-standalone";
   if (prompt) return "prompt";
   const agent = target.navigator.userAgent;

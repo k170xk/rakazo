@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OCSC Intelligence</string>
+    <string name="title_activity_main">OCSC Intelligence</string>
+    <string name="package_name">me.ocsc.intelligence</string>
+    <string name="custom_url_scheme">me.ocsc.intelligence</string>
+</resources>
