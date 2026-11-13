@@ -23,6 +23,11 @@ const config: CapacitorConfig = {
     contentInset: "never",
   },
   plugins: {
+    // The web view shrinks to sit above the keyboard, so the message box stays visible.
+    Keyboard: {
+      resize: "native",
+      resizeOnFullScreen: true,
+    },
     SystemBars: {
       insetsHandling: "css",
       initialViewportFitValueHint: "cover",
