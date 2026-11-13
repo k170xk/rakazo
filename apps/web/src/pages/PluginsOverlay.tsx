@@ -1641,11 +1641,16 @@ export function PluginsOverlay({
         showCloseButton={false}
         className={`flex h-[760px] max-h-[calc(100%-2rem)] w-[1080px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 sm:max-w-[1080px] ${PHONE_SHEET}`}
       >
-        <DialogHeader className="flex-row items-start justify-between px-8 pt-7">
-          <DialogTitle className="text-heading2 text-foreground">
-            <Trans>OCSC Intelligence integrations</Trans>
+        <DialogHeader className="flex-row items-center justify-between gap-3 px-8 pt-7 max-sm:px-5 max-sm:pt-4">
+          <DialogTitle className="min-w-0 truncate text-heading2 text-foreground max-sm:text-[18px] max-sm:font-semibold">
+            <span className="max-sm:hidden">
+              <Trans>OCSC Intelligence integrations</Trans>
+            </span>
+            <span className="sm:hidden">
+              <Trans>Integrations</Trans>
+            </span>
           </DialogTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             {browsing && connectedCount > 0 ? (
               <Button
                 variant="ghost"
@@ -1669,13 +1674,22 @@ export function PluginsOverlay({
                     </span>
                   ))}
                 </span>
-                <Plural value={connectedCount} one="# connected" other="# connected" />
+                <span className="max-sm:sr-only">
+                  <Plural value={connectedCount} one="# connected" other="# connected" />
+                </span>
                 <ChevronRight />
               </Button>
             ) : null}
             {canAddCustom && (browsing || view === "manage") ? renderAddMenu() : null}
             <DialogClose
-              render={<Button variant="ghost" size="icon-sm" aria-label={t`Close integrations`} />}
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="max-sm:size-9"
+                  aria-label={t`Close integrations`}
+                />
+              }
             >
               <X />
             </DialogClose>
@@ -1683,7 +1697,7 @@ export function PluginsOverlay({
         </DialogHeader>
 
         {browsing ? (
-          <div className="space-y-4 px-8 pt-4">
+          <div className="space-y-4 px-8 pt-4 max-sm:space-y-3 max-sm:px-5 max-sm:pt-3">
             <Input
               disabled={loading}
               value={query}
@@ -1696,7 +1710,10 @@ export function PluginsOverlay({
               className="h-11 rounded-xl px-4 md:text-[15px]"
             />
             {categories.length >= 2 || category ? (
-              <div className="flex flex-wrap gap-2" data-testid="integration-categories">
+              <div
+                className="flex flex-wrap gap-2 max-sm:-mx-5 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:px-5 max-sm:[&>*]:shrink-0"
+                data-testid="integration-categories"
+              >
                 {[null, ...categories.slice(0, CHIP_COUNT)].map((name) => (
                   <Button
                     key={name ?? "all"}
@@ -1768,7 +1785,7 @@ export function PluginsOverlay({
         <div
           id="integration-list"
           hidden={loading}
-          className="rk-scroll flex-1 overflow-y-auto px-8 py-6"
+          className="rk-scroll flex-1 overflow-y-auto px-8 py-6 max-sm:px-3 max-sm:py-4"
         >
           {catalogError || loadError ? (
             <div className="mb-4 flex items-center gap-3">

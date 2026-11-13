@@ -235,17 +235,17 @@ describe("Composer", () => {
       );
       const tray = pdf?.parentElement;
       expect(add?.getAttribute("aria-expanded")).toBe("false");
-      expect(tray?.className).toContain("hidden");
+      expect(tray?.className).toContain("invisible");
       expect(container?.querySelectorAll('button[aria-label="Add PDF drawings"]')).toHaveLength(1);
 
       act(() => add?.click());
       expect(add?.getAttribute("aria-expanded")).toBe("true");
-      expect(tray?.className).not.toContain("hidden");
+      expect(tray?.className).not.toContain("invisible");
       expect(tray?.querySelector('button[aria-label="Attach file"]')).not.toBeNull();
 
       act(() => pdf?.click());
       expect(onPdf).toHaveBeenCalledOnce();
-      expect(tray?.className).toContain("hidden");
+      expect(tray?.className).toContain("invisible");
       expect(pdf?.isConnected).toBe(true);
     } finally {
       window.innerWidth = width;

@@ -860,10 +860,11 @@ const ComposerBody = memo(function Composer({
                 className={`transition-transform ${toolsOpen ? "rotate-45" : ""}`}
               />
             </Button>
-            {/* Hidden rather than unmounted: each tool keeps its own dialog open after the tray closes. */}
+            {/* Invisible rather than unmounted or display:none: each tool keeps its dialog open after the
+                tray closes, and its popover still has a laid-out button to anchor to. */}
             <div
               onClickCapture={() => setToolsOpen(false)}
-              className={`${toolsOpen ? "flex" : "hidden"} absolute bottom-full start-0 z-40 mb-3 items-center gap-2 rounded-full border border-border bg-card p-1.5 shadow-lg`}
+              className={`${toolsOpen ? "visible" : "invisible"} absolute bottom-full start-0 z-40 mb-3 flex items-center gap-2 rounded-full border border-border bg-card p-1.5 shadow-lg`}
             >
               <Button
                 ref={attachButtonRef}

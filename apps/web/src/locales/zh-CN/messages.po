@@ -205,11 +205,6 @@ msgstr ""
 msgid "{0} earlier entries are only visible to you. Move them to:"
 msgstr ""
 
-#. placeholder {0}: saved.unfiled
-#: src/components/apps/AppWorkspacesSection.tsx
-#~ msgid "{0} entries were made before this and belong to none, so only you see them. Put them in:"
-#~ msgstr ""
-
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} GB"
@@ -288,11 +283,6 @@ msgstr ""
 #: src/pages/AdminCompanyVoice.tsx
 msgid "{0} shares their voice connection, but it has been removed. Connect one again below."
 msgstr ""
-
-#. placeholder {0}: saved.workspaces
-#: src/components/apps/AppWorkspacesSection.tsx
-#~ msgid "{0} so far."
-#~ msgstr ""
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
@@ -658,14 +648,6 @@ msgstr ""
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "1 earlier entry is only visible to you. Move it to:"
 msgstr ""
-
-#: src/components/apps/AppWorkspacesSection.tsx
-#~ msgid "1 entry was made before this and belongs to none, so only you see it. Put it in:"
-#~ msgstr ""
-
-#: src/components/apps/AppWorkspacesSection.tsx
-#~ msgid "1 so far."
-#~ msgstr ""
 
 #: src/components/integrations/space-availability.tsx
 msgid "1 space"
@@ -2389,10 +2371,6 @@ msgstr ""
 #: src/components/apps/AppStudio.tsx
 msgid "Click something in the app to change it"
 msgstr ""
-
-#: src/components/apps/AppStudio.tsx
-#~ msgid "Click something in the app to tell the bot what to change"
-#~ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Client"
@@ -5794,6 +5772,10 @@ msgstr "指令已更新"
 msgid "Integration domain"
 msgstr "集成域名"
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Integrations"
+msgstr ""
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Intended use is to add no more than {MAX_DRAWING_PAGES} drawing pages at a time. Please select only the most relevant pages."
 msgstr ""
@@ -6116,10 +6098,6 @@ msgstr "聆听"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
 msgstr "正在聆听…"
-
-#: src/components/apps/AppWorkspacesSection.tsx
-#~ msgid "Lists everyone needs (staff, rates, checklists) stay shared when the app marks those tables shared."
-#~ msgstr ""
 
 #: src/components/pages/PagesList.tsx
 msgid "Live data"
@@ -7522,10 +7500,6 @@ msgstr ""
 #: src/pages/AdminCompanyVoice.tsx
 msgid "Off hides voice, dictation and calls for every member, admins included."
 msgstr ""
-
-#: src/components/apps/AppWorkspacesSection.tsx
-#~ msgid "Off, everyone you share the app with works in one set of data. On, each project, bridge or site keeps its own entries, seen only by the people added to it. You see them all."
-#~ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Off: only admins connect models or change a bot's model; everyone runs on the company model."
@@ -10487,10 +10461,6 @@ msgstr ""
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "已清除各自的模型。你可以在每个 Bot 里重新选择。"
-
-#: src/pages/AdminCompanyPage.tsx
-#~ msgid "These apply to everyone in the company and take effect within a few seconds."
-#~ msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
