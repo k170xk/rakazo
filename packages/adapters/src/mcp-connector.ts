@@ -22,6 +22,7 @@ import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
 import type { McpOAuthEnvField } from "@rakazo/contracts";
 import {
   companyMcpEndpoints,
+  companyMcpEndpointsFor,
   isLocalhostOrLoopbackIp,
   mcpOAuthEnvReferences,
   resolveMcpOAuthEnv,
@@ -32,7 +33,7 @@ import { availableInSpace, itemSecretIn } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { sanitizedError } from "@rakazo/logging/monitoring";
 import { catalogToolPrefix } from "./approval-effect.js";
-import { companyFeatures, companyTools } from "./company-policy.js";
+import { companyFeatureOpenForRun, companyTools, isDeploymentAdmin } from "./company-policy.js";
 import { composioToolBatch } from "./composio-batch.js";
 import {
   combineSignals,
@@ -106,10 +107,16 @@ const DISCOVERY_BACKOFF_MS = 30_000;
 const DISCOVERY_BACKOFF_MAX_MS = 5 * 60_000;
 
 /** With custom MCP servers off, only the company's own MCP apps open to staff still run. */
-function usableServers(context: { spaceId: string; userId: string }) {
+async function usableServers(
+  prisma: Pick<PrismaClient, "user">,
+  context: { spaceId: string; userId: string },
+) {
   const usable = { enabled: true, ...availableInSpace(context) };
-  if (companyFeatures().mcpServers) return usable;
-  return { ...usable, endpoint: { in: companyMcpEndpoints(companyTools().staffApps) } };
+  if (await companyFeatureOpenForRun(prisma, "mcpServers", context.userId)) return usable;
+  const endpoints = (await isDeploymentAdmin(prisma, context.userId))
+    ? companyMcpEndpoints(companyTools().staffApps)
+    : companyMcpEndpointsFor(companyTools(), context.userId);
+  return { ...usable, endpoint: { in: endpoints } };
 }
 /** A server that needs new credentials or a new address waits longer: retrying rarely
  * helps, but a failure that was only brief still gets another try. */
@@ -449,7 +456,7 @@ export class McpConnector implements ConnectorProvider {
 
   private async authorizedTools(context: AdapterContext): Promise<ConnectorTool[]> {
     if (!context.botId) return [];
-    const usable = usableServers(context);
+    const usable = await usableServers(this.prisma, context);
     const [assigned, shared] = await Promise.all([
       this.prisma.botMcpServer.findMany({
         where: {
@@ -659,7 +666,7 @@ export class McpConnector implements ConnectorProvider {
       yield { type: "error", message: "MCP tools require a bot context" };
       return;
     }
-    const usable = usableServers(context);
+    const usable = await usableServers(this.prisma, context);
     const assignment =
       (await this.prisma.botMcpServer.findFirst({
         where: {

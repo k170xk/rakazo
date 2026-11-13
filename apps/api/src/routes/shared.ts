@@ -1,5 +1,6 @@
 import {
   companyFeatures,
+  companyFeaturesFor,
   companyModel,
   deploymentModelRole,
   effectiveComputerAccess,
@@ -74,7 +75,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
   const modelAccess = ModelAccessSchema.safeParse(user.modelAccess);
   return {
     features: {
-      ...companyFeatures(),
+      ...companyFeaturesFor(actor.userId, admin),
       memberModels: modelAccess.success
         ? modelAccess.data === "choose"
         : companyFeatures().memberModels,

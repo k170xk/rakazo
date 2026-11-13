@@ -3,6 +3,7 @@ import {
   BUILTIN_AGENT_SKILLS,
   COMPANY_MODEL_SECRET_RECORD,
   chatAttachmentBytesByPerson,
+  companyFeatureOpenTo,
   companyFeatures,
   companyModel,
   companyToolsWithDefaults,
@@ -22,6 +23,7 @@ import {
 } from "@rakazo/adapters";
 import type {
   Actor,
+  Audience,
   BotSecretMetadata,
   CompanyAdminState,
   CompanyComputersState,
@@ -107,9 +109,28 @@ export async function requireCompanyFeature(
       throw new ORPCError("FORBIDDEN", { message: FEATURE_OFF[feature] });
     }
   }
-  if (companyFeatures()[feature]) return;
-  if (ADMIN_EXEMPT.has(feature) && (await isAdmin(deps, actor.userId))) return;
-  throw new ORPCError("FORBIDDEN", { message: FEATURE_OFF[feature] });
+  const on = companyFeatures()[feature];
+  if (on && companyFeatureOpenTo(feature, actor.userId)) return;
+  // Admins keep a switch limited to other people, and the member-only switches even when off.
+  if ((on || ADMIN_EXEMPT.has(feature)) && (await isAdmin(deps, actor.userId))) return;
+  throw new ORPCError("FORBIDDEN", {
+    message: on ? "Your administrator has not turned this on for you." : FEATURE_OFF[feature],
+  });
+}
+
+/** requireCompanyFeature as a yes or no, for showing or hiding something. */
+export async function companyFeatureOnFor(
+  deps: Pick<RouterDeps, "prisma"> & { env: Pick<RouterDeps["env"], "adminEmails"> },
+  actor: Pick<Actor, "userId">,
+  feature: CompanyFeatureId,
+): Promise<boolean> {
+  return requireCompanyFeature(deps, actor, feature).then(
+    () => true,
+    (error: unknown) => {
+      if (error instanceof ORPCError) return false;
+      throw error;
+    },
+  );
 }
 
 function readSettings(deps: Pick<RouterDeps, "prisma">) {
@@ -165,6 +186,11 @@ export async function companyAdminState(
     thinkingLevel: ThinkingLevelSchema.safeParse(row?.companyThinkingLevel).data ?? null,
     assistantModels: companyToolsWithDefaults(row?.companyTools).assistantModels ?? {},
     staffApps: companyToolsWithDefaults(row?.companyTools).staffApps ?? null,
+    access: {
+      groups: companyToolsWithDefaults(row?.companyTools).accessGroups ?? [],
+      featureAudiences: companyToolsWithDefaults(row?.companyTools).featureAudiences ?? {},
+      appAudiences: companyToolsWithDefaults(row?.companyTools).appAudiences ?? {},
+    },
     environmentModel: environment.configured
       ? { provider: environment.provider, modelId: environment.model }
       : null,
@@ -540,6 +566,22 @@ export async function setCompanyTools(
   const tools = { ...companyToolsWithDefaults(row?.companyTools), ...input };
   tools.disabledSkills = [...new Set(tools.disabledSkills)];
   tools.disabledTools = [...new Set(tools.disabledTools)];
+  const groupIds = new Set<string>();
+  tools.accessGroups = (tools.accessGroups ?? [])
+    .filter((group) => !groupIds.has(group.id) && Boolean(groupIds.add(group.id)))
+    .map((group) => ({ ...group, userIds: [...new Set(group.userIds)] }));
+  const tidy = (audience: Audience): Audience => ({
+    userIds: [...new Set(audience.userIds)],
+    groupIds: [...new Set(audience.groupIds)].filter((id) => groupIds.has(id)),
+  });
+  tools.featureAudiences = Object.fromEntries(
+    Object.entries(tools.featureAudiences ?? {}).flatMap(([feature, audience]) =>
+      audience ? [[feature, tidy(audience)]] : [],
+    ),
+  );
+  tools.appAudiences = Object.fromEntries(
+    Object.entries(tools.appAudiences ?? {}).map(([key, audience]) => [key, tidy(audience)]),
+  );
   if (input.assistantModels) {
     const catalog = listPiCatalog();
     for (const chosen of Object.values(input.assistantModels)) {

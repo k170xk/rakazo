@@ -2172,6 +2172,53 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   chatFileSearch: true,
 };
 
+/** Switches an admin can open to chosen people and groups instead of everyone. */
+export const AUDIENCE_FEATURES = [
+  "cursorAgents",
+  "staffIntegrations",
+  "connectedApps",
+  "plugins",
+  "mcpServers",
+  "messaging",
+  "routines",
+  "evolvePlugins",
+  "staffSkills",
+  "personalVault",
+] as const satisfies readonly CompanyFeatureId[];
+export type AudienceFeatureId = (typeof AUDIENCE_FEATURES)[number];
+
+export function isAudienceFeature(feature: CompanyFeatureId): feature is AudienceFeatureId {
+  return (AUDIENCE_FEATURES as readonly string[]).includes(feature);
+}
+
+/** Only these people and the members of these groups; no audience at all means everyone. */
+export const AudienceSchema = z.object({
+  userIds: z.array(z.string().trim().min(1).max(64)).max(2000),
+  groupIds: z.array(z.string().trim().min(1).max(64)).max(100),
+});
+export type Audience = z.infer<typeof AudienceSchema>;
+
+/** A named set of staff, such as Developers, that audiences can name. */
+export const AccessGroupSchema = z.object({
+  id: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(80),
+  userIds: z.array(z.string().trim().min(1).max(64)).max(2000),
+});
+export type AccessGroup = z.infer<typeof AccessGroupSchema>;
+
+/** Whether this person is in the audience; a group that no longer exists admits nobody. */
+export function inAudience(
+  audience: Audience | undefined,
+  groups: readonly AccessGroup[] | undefined,
+  userId: string,
+): boolean {
+  if (!audience) return true;
+  if (audience.userIds.includes(userId)) return true;
+  return audience.groupIds.some((id) =>
+    groups?.some((group) => group.id === id && group.userIds.includes(userId)),
+  );
+}
+
 /** Stored switches over the defaults, so a switch added later starts at its default. */
 export function companyFeaturesFrom(stored: unknown): CompanyFeatures {
   const parsed = CompanyFeaturesSchema.partial().safeParse(stored);
@@ -2306,6 +2353,50 @@ export function staffMayUseConnection(
   return staffAppState(staffApps, connection.provider) === "enabled";
 }
 
+/** The company tools that decide which apps one person may use. */
+export type StaffAppPolicy = Pick<CompanyTools, "staffApps" | "appAudiences" | "accessGroups">;
+
+/** staffAppState for one person: an enabled app limited to other people is hidden from them. */
+export function staffAppStateFor(
+  policy: StaffAppPolicy,
+  provider: string,
+  userId: string,
+): StaffAppState {
+  const state = staffAppState(policy.staffApps, provider);
+  if (state !== "enabled") return state;
+  return inAudience(policy.appAudiences?.[staffAppKey(provider)], policy.accessGroups, userId)
+    ? "enabled"
+    : "hidden";
+}
+
+export function staffPluginEnabledFor(
+  policy: StaffAppPolicy,
+  installedSource: string,
+  userId: string,
+): boolean {
+  return (
+    staffPluginEnabled(policy.staffApps, installedSource) &&
+    inAudience(policy.appAudiences?.[pluginStaffKey(installedSource)], policy.accessGroups, userId)
+  );
+}
+
+export function staffMayUseConnectionFor(
+  policy: StaffAppPolicy,
+  connection: { connectorId: string; provider: string },
+  userId: string,
+): boolean {
+  if (!COMPANY_APP_CONNECTORS.includes(connection.connectorId)) return true;
+  return staffAppStateFor(policy, connection.provider, userId) === "enabled";
+}
+
+export function companyMcpEndpointsFor(policy: StaffAppPolicy, userId: string): string[] {
+  return COMPANY_APPS.flatMap((app) =>
+    "mcpEndpoint" in app && staffAppStateFor(policy, app.slug, userId) === "enabled"
+      ? [app.mcpEndpoint]
+      : [],
+  );
+}
+
 /** A company app as staff and admins see it; ready means it can be connected now. */
 export const CompanyAppSchema = z.object({
   slug: z.string(),
@@ -2385,6 +2476,12 @@ export const CompanyToolsSchema = z.object({
   assistantModels: z.record(z.string().uuid(), CompanyAssistantModelSchema).optional(),
   /** Keyed by app slug or pluginStaffKey; once saved, apps not listed are hidden from staff. */
   staffApps: z.record(z.string().trim().min(1).max(2100), StaffAppStateSchema).optional(),
+  /** Groups of staff that feature and app audiences name. */
+  accessGroups: z.array(AccessGroupSchema).max(100).optional(),
+  /** Switches open only to chosen people and groups; a switch not listed is open to everyone. */
+  featureAudiences: z.partialRecord(z.enum(AUDIENCE_FEATURES), AudienceSchema).optional(),
+  /** Keyed like staffApps; an enabled app not listed is open to all staff. */
+  appAudiences: z.record(z.string().trim().min(1).max(2100), AudienceSchema).optional(),
   /**
    * The Document Library template `ocsc word new` uses when nobody names one; null or absent
    * keeps the built-in OCSC report.
@@ -2626,6 +2723,12 @@ export const CompanyAdminStateSchema = z.object({
   assistantModels: z.record(z.string(), CompanyAssistantModelSchema),
   /** Null until an admin first saves which apps and plugins staff see. */
   staffApps: z.record(z.string(), StaffAppStateSchema).nullable(),
+  /** Who each limited switch and app is open to, and the groups those name. */
+  access: z.object({
+    groups: z.array(AccessGroupSchema),
+    featureAudiences: z.partialRecord(z.enum(AUDIENCE_FEATURES), AudienceSchema),
+    appAudiences: z.record(z.string(), AudienceSchema),
+  }),
   /** The model set in the server environment, used while no company model is saved. */
   environmentModel: z.object({ provider: z.string(), modelId: z.string() }).nullable(),
   features: CompanyFeaturesSchema,

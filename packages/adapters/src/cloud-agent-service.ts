@@ -7,6 +7,7 @@ import { getLogger } from "@rakazo/logging";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import { cloudAgentLaunchSchema, cloudAgentReplySchema } from "./cloud-agent-tools.js";
+import { companyFeatureOpenForRun } from "./company-policy.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { runLeaseFor } from "./run-messages.js";
 
@@ -31,7 +32,14 @@ export async function executeCloudAgentTool(
   args: Record<string, unknown>,
 ) {
   const connection = deps.cloudAgent;
-  if (!connection || !cloudAgentsEnabled(connection, context.spaceId)) {
+  if (
+    !connection ||
+    !cloudAgentsEnabled(
+      connection,
+      context.spaceId,
+      await companyFeatureOpenForRun(deps.prisma, "cursorAgents", context.userId),
+    )
+  ) {
     return { error: "Cloud agents are not configured for this space." };
   }
   let agent: CloudAgent;

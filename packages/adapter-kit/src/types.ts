@@ -26,6 +26,8 @@ export interface AdapterContext {
   connectedConnections?: ConnectedConnector[];
   /** @deprecated Prefer connectedConnections so providers with the same app slug cannot collide. */
   connectedProviders?: string[];
+  /** The company switches as they apply to this run's owner, when the caller worked them out. */
+  companyFeatures?: Readonly<Record<string, boolean>>;
 }
 
 export interface ConnectedConnector {

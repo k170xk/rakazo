@@ -8,13 +8,14 @@ import {
   prepareManagedConnectorForTransaction,
   sanitizeComposioError,
 } from "@rakazo/adapters";
-import type { Actor, CompanyApp } from "@rakazo/contracts";
+import type { Actor, CompanyApp, StaffAppState } from "@rakazo/contracts";
 import {
   COMPANY_APP_CONNECTORS,
   COMPANY_APPS,
   staffAppKey,
   staffAppState,
-  staffMayUseConnection,
+  staffAppStateFor,
+  staffMayUseConnectionFor,
 } from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import {
@@ -237,10 +238,11 @@ export function connectionsRoutes(ctx: RouterContext) {
       throw new ORPCError("BAD_REQUEST", { message: "SharePoint is not set up on this server." });
     }
     if (
-      !staffMayUseConnection(companyTools().staffApps, {
-        connectorId: "microsoft",
-        provider: "sharepoint",
-      }) &&
+      !staffMayUseConnectionFor(
+        companyTools(),
+        { connectorId: "microsoft", provider: "sharepoint" },
+        actor.userId,
+      ) &&
       !(await isAdmin(deps, actor.userId))
     ) {
       throw new ORPCError("FORBIDDEN", { message: "This app is not available yet." });
@@ -298,12 +300,20 @@ export function connectionsRoutes(ctx: RouterContext) {
         );
         const items = catalogs.flat();
         if (await isAdmin(deps, context.actor.userId)) return items;
-        const staffApps = companyTools().staffApps;
-        return items.filter((item) => staffAppState(staffApps, item.slug) === "enabled");
+        const policy = companyTools();
+        return items.filter(
+          (item) => staffAppStateFor(policy, item.slug, context.actor.userId) === "enabled",
+        );
       }),
       companyApps: authed.connections.companyApps.handler(async ({ context }) => {
         const admin = await isAdmin(deps, context.actor.userId);
-        const staffApps = companyTools().staffApps;
+        const policy = companyTools();
+        const staffApps = policy.staffApps;
+        // Admins manage the company-wide state; staff see an app limited to others as hidden.
+        const stateOf = (slug: string, saved: StaffAppState) =>
+          admin || saved !== "enabled"
+            ? saved
+            : staffAppStateFor(policy, slug, context.actor.userId);
         const adapterContext = connectionContext(
           context.actor,
           "connections.companyApps",
@@ -335,7 +345,7 @@ export function connectionsRoutes(ctx: RouterContext) {
               slug: app.slug,
               name: app.name,
               logo: app.logo,
-              state: staffApps?.[app.slug] ?? "hidden",
+              state: stateOf(app.slug, staffApps?.[app.slug] ?? "hidden"),
               ready: true,
               connectorId: null,
               provider: null,
@@ -351,7 +361,7 @@ export function connectionsRoutes(ctx: RouterContext) {
             slug: app.slug,
             name: app.name,
             logo: app.logo,
-            state: staffApps?.[app.slug] ?? "hidden",
+            state: stateOf(app.slug, staffApps?.[app.slug] ?? "hidden"),
             ready: Boolean(item),
             connectorId: item?.connectorId ?? null,
             provider: item?.slug ?? null,
@@ -362,7 +372,7 @@ export function connectionsRoutes(ctx: RouterContext) {
         // staff see only the catalog apps an admin listed here.
         for (const item of catalog) {
           const key = staffAppKey(item.slug);
-          const state = staffAppState(staffApps, item.slug);
+          const state = stateOf(item.slug, staffAppState(staffApps, item.slug));
           if (listed.has(key) || (!admin && (!staffApps?.[key] || state === "hidden"))) continue;
           listed.add(key);
           apps.push({
@@ -396,7 +406,7 @@ export function connectionsRoutes(ctx: RouterContext) {
         await requireCompanyFeature(deps, context.actor, "staffIntegrations");
         if (
           COMPANY_APP_CONNECTORS.includes(input.connectorId) &&
-          staffAppState(companyTools().staffApps, input.provider) !== "enabled" &&
+          staffAppStateFor(companyTools(), input.provider, context.actor.userId) !== "enabled" &&
           !(await isAdmin(deps, context.actor.userId))
         ) {
           throw new ORPCError("FORBIDDEN", { message: "This app is not available yet." });

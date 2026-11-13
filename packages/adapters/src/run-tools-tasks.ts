@@ -1,4 +1,4 @@
-import { companyFeatures } from "./company-policy.js";
+import { companyFeatureOpenForRun } from "./company-policy.js";
 import {
   desktopGuardApplies,
   desktopProtectionGuardMessage,
@@ -273,7 +273,9 @@ export const taskTools: ToolHandlers = {
   async skill_create(ctx, call) {
     const { deps, run } = ctx;
     const { args } = call;
-    if (!companyFeatures().staffSkills) return call.finish({ error: STAFF_SKILLS_OFF });
+    if (!(await companyFeatureOpenForRun(deps.prisma, "staffSkills", run.userId))) {
+      return call.finish({ error: STAFF_SKILLS_OFF });
+    }
     return call.finish(
       await skillCreateFromTool(
         deps.prisma,
@@ -293,7 +295,9 @@ export const taskTools: ToolHandlers = {
   async skill_update(ctx, call) {
     const { deps, run } = ctx;
     const { args } = call;
-    if (!companyFeatures().staffSkills) return call.finish({ error: STAFF_SKILLS_OFF });
+    if (!(await companyFeatureOpenForRun(deps.prisma, "staffSkills", run.userId))) {
+      return call.finish({ error: STAFF_SKILLS_OFF });
+    }
     return call.finish(
       await skillUpdateFromTool(
         deps.prisma,
@@ -315,7 +319,9 @@ export const taskTools: ToolHandlers = {
   async skill_delete(ctx, call) {
     const { deps, run } = ctx;
     const { args } = call;
-    if (!companyFeatures().staffSkills) return call.finish({ error: STAFF_SKILLS_OFF });
+    if (!(await companyFeatureOpenForRun(deps.prisma, "staffSkills", run.userId))) {
+      return call.finish({ error: STAFF_SKILLS_OFF });
+    }
     return call.finish(
       await skillDeleteFromTool(
         deps.prisma,

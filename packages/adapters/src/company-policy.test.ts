@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   COMPANY_MODEL_SECRET_RECORD,
   companyAssistantModel,
+  companyFeatureOpenForRun,
+  companyFeatureOpenTo,
   companyFeatures,
+  companyFeaturesFor,
   companyModel,
   liveDeploymentModelConfigured,
   liveDeploymentModelKey,
@@ -25,6 +28,37 @@ afterEach(() => {
 });
 
 describe("company policy", () => {
+  it("limits a switch to its audience for everyone but admins", async () => {
+    setCompanyPolicy({
+      features: { ...DEFAULT_COMPANY_FEATURES, cursorAgents: true, messaging: false },
+      tools: {
+        ...DEFAULT_COMPANY_TOOLS,
+        accessGroups: [{ id: "dev", name: "Developers", userIds: ["ann"] }],
+        featureAudiences: {
+          cursorAgents: { userIds: [], groupIds: ["dev"] },
+          messaging: { userIds: ["bob"], groupIds: [] },
+        },
+      },
+    });
+    expect(companyFeatureOpenTo("cursorAgents", "ann")).toBe(true);
+    expect(companyFeatureOpenTo("cursorAgents", "bob")).toBe(false);
+    // Being in the audience never turns on a switch the company has off.
+    expect(companyFeatureOpenTo("messaging", "bob")).toBe(false);
+    expect(companyFeaturesFor("bob", false).cursorAgents).toBe(false);
+    expect(companyFeaturesFor("bob", true).cursorAgents).toBe(true);
+    expect(companyFeaturesFor("bob", false).computers).toBe(DEFAULT_COMPANY_FEATURES.computers);
+    const admin = {
+      user: { findUnique: vi.fn(async () => ({ email: "boss@ocsc.me", emailVerified: true })) },
+    } as unknown as PrismaClient;
+    vi.stubEnv("RAKAZO_ADMIN_EMAILS", "boss@ocsc.me");
+    try {
+      expect(await companyFeatureOpenForRun(admin, "cursorAgents", "bob")).toBe(true);
+      expect(await companyFeatureOpenForRun(admin, "messaging", "bob")).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("allows everything until an admin turns something off", () => {
     expect(companyFeatures()).toEqual(DEFAULT_COMPANY_FEATURES);
     expect(companyModel()).toBeNull();

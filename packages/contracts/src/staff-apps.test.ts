@@ -2,12 +2,17 @@ import { describe, expect, it } from "vitest";
 import {
   CompanyToolsSchema,
   companyMcpEndpoints,
+  companyMcpEndpointsFor,
   companyToolsFrom,
+  inAudience,
   pluginStaffKey,
   staffAppKey,
   staffAppState,
+  staffAppStateFor,
   staffMayUseConnection,
+  staffMayUseConnectionFor,
   staffPluginEnabled,
+  staffPluginEnabledFor,
 } from "./domain.js";
 
 describe("staff apps", () => {
@@ -72,5 +77,61 @@ describe("staff apps", () => {
     expect(companyToolsFrom({ staffApps: { sharepoint: "soon" } }).staffApps).toEqual({
       sharepoint: "soon",
     });
+  });
+
+  it("opens an audience to its people and the members of its groups", () => {
+    const groups = [{ id: "dev", name: "Developers", userIds: ["ann"] }];
+    expect(inAudience(undefined, groups, "anyone")).toBe(true);
+    expect(inAudience({ userIds: ["bob"], groupIds: [] }, groups, "bob")).toBe(true);
+    expect(inAudience({ userIds: [], groupIds: ["dev"] }, groups, "ann")).toBe(true);
+    expect(inAudience({ userIds: [], groupIds: ["dev"] }, groups, "bob")).toBe(false);
+    expect(inAudience({ userIds: [], groupIds: [] }, groups, "ann")).toBe(false);
+    // A deleted group admits nobody rather than everyone.
+    expect(inAudience({ userIds: [], groupIds: ["gone"] }, groups, "ann")).toBe(false);
+  });
+
+  it("hides an enabled app from people outside its audience", () => {
+    const infragrid = "https://qtmriibdnwhabfwmcfst.supabase.co/functions/v1/mcp";
+    const source = "https://github.com/example/plugins#figma";
+    const policy = {
+      staffApps: {
+        sharepoint: "enabled",
+        infragrid3d: "enabled",
+        outlook: "soon",
+        [pluginStaffKey(source)]: "enabled",
+      } as const,
+      accessGroups: [{ id: "dev", name: "Developers", userIds: ["ann"] }],
+      appAudiences: {
+        sharepoint: { userIds: [], groupIds: ["dev"] },
+        infragrid3d: { userIds: ["bob"], groupIds: [] },
+        outlook: { userIds: ["bob"], groupIds: [] },
+        [pluginStaffKey(source)]: { userIds: [], groupIds: ["dev"] },
+      },
+    };
+    expect(staffAppStateFor(policy, "share_point", "ann")).toBe("enabled");
+    expect(staffAppStateFor(policy, "share_point", "bob")).toBe("hidden");
+    // An audience never turns a coming-soon app into an enabled one.
+    expect(staffAppStateFor(policy, "outlook", "bob")).toBe("soon");
+    expect(
+      staffMayUseConnectionFor(policy, { connectorId: "microsoft", provider: "sharepoint" }, "bob"),
+    ).toBe(false);
+    expect(staffMayUseConnectionFor(policy, { connectorId: "mcp", provider: "x" }, "bob")).toBe(
+      true,
+    );
+    expect(companyMcpEndpointsFor(policy, "bob")).toEqual([infragrid]);
+    expect(companyMcpEndpointsFor(policy, "ann")).toEqual([]);
+    expect(staffPluginEnabledFor(policy, source, "ann")).toBe(true);
+    expect(staffPluginEnabledFor(policy, source, "bob")).toBe(false);
+  });
+
+  it("accepts audiences only for switches that can be limited", () => {
+    const audience = { userIds: ["ann"], groupIds: [] };
+    expect(
+      CompanyToolsSchema.partial().safeParse({ featureAudiences: { cursorAgents: audience } })
+        .success,
+    ).toBe(true);
+    expect(
+      CompanyToolsSchema.partial().safeParse({ featureAudiences: { computers: audience } }).success,
+    ).toBe(false);
   });
 });

@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { ORPCError } from "@orpc/server";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import {
-  companyFeatures,
   companyTools,
   createPluginMarketplace,
   isTransientFetchError,
@@ -19,8 +18,9 @@ import {
 import type { Actor } from "@rakazo/contracts";
 import {
   companyMcpEndpoints,
+  companyMcpEndpointsFor,
   signupSurveyAsksTeamSize,
-  staffPluginEnabled,
+  staffPluginEnabledFor,
 } from "@rakazo/contracts";
 import { comparePlugins, containsSecret, matchesPluginQuery } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
@@ -39,7 +39,7 @@ import {
   serverAvailability,
   serverSecretSpace,
 } from "../availability.js";
-import { requireCompanyFeature } from "../company-admin.js";
+import { companyFeatureOnFor, requireCompanyFeature } from "../company-admin.js";
 import { searchIntegrationCatalog } from "../integration-catalog.js";
 import {
   queueMcpConnectedRun,
@@ -90,8 +90,15 @@ export function mcpRoutes(ctx: RouterContext) {
   const pluginMarketplace = createPluginMarketplace(deps.pluginMarketplaceRead);
   /** With custom MCP servers off, staff still connect the company's own MCP apps. */
   const requireMcpServers = async (actor: Actor, ...endpoints: Array<string | null>) => {
-    const companyApps = companyMcpEndpoints(companyTools().staffApps);
-    if (endpoints.every((endpoint) => endpoint && companyApps.includes(endpoint))) return;
+    const companyApp = (allowed: string[]) =>
+      endpoints.every((endpoint) => endpoint && allowed.includes(endpoint));
+    if (companyApp(companyMcpEndpointsFor(companyTools(), actor.userId))) return;
+    if (
+      companyApp(companyMcpEndpoints(companyTools().staffApps)) &&
+      (await isAdmin(deps, actor.userId))
+    ) {
+      return;
+    }
     await requireCompanyFeature(deps, actor, "mcpServers");
   };
   const serverEndpoint = async (actor: Actor, id: string) =>
@@ -152,11 +159,13 @@ export function mcpRoutes(ctx: RouterContext) {
         ].sort(comparePlugins);
         if (admin && !input.staffView) return { ...catalog, entries };
         // Skill packs stay under the staff skills switch; plugins that add an app need a grant.
-        const staffApps = companyTools().staffApps;
+        const policy = companyTools();
         return {
           ...catalog,
           entries: entries.filter(
-            (entry) => !entry.hasConnector || staffPluginEnabled(staffApps, entry.installedSource),
+            (entry) =>
+              !entry.hasConnector ||
+              staffPluginEnabledFor(policy, entry.installedSource, context.actor.userId),
           ),
         };
       }),
@@ -210,15 +219,15 @@ export function mcpRoutes(ctx: RouterContext) {
       install: authed.capabilities.install.handler(async ({ context, input }) => {
         await requireCompanyFeature(deps, context.actor, "plugins");
         // Staff skills covers skill packs and GitHub. Connecting other apps stays on its own switch.
-        if (!companyFeatures().staffSkills) {
+        if (!(await companyFeatureOnFor(deps, context.actor, "staffSkills"))) {
           await requireCompanyFeature(deps, context.actor, "staffIntegrations");
         }
         if (input.kind === "plugin") {
-          const staffApps = companyTools().staffApps;
+          const policy = companyTools();
           const connectorAllowed =
-            !staffApps || (await isAdmin(deps, context.actor.userId))
+            !policy.staffApps || (await isAdmin(deps, context.actor.userId))
               ? undefined
-              : (source: string) => staffPluginEnabled(staffApps, source);
+              : (source: string) => staffPluginEnabledFor(policy, source, context.actor.userId);
           return installPlugin(
             {
               prisma: deps.prisma,
@@ -389,7 +398,7 @@ export function mcpRoutes(ctx: RouterContext) {
       }),
       pluginParts: authed.capabilities.pluginParts.handler(async ({ context, input }) => {
         const notify: Array<{ threadId: string; seq: number }> = [];
-        const staffApps = companyTools().staffApps;
+        const policy = companyTools();
         const install = await setPluginParts(
           {
             prisma: deps.prisma,
@@ -397,9 +406,9 @@ export function mcpRoutes(ctx: RouterContext) {
             fetcher: deps.pluginRepoFetcher,
             assertEndpoint: (endpoint) => assertMcpRemoteEndpoint(endpoint, deps),
             connectorAllowed:
-              !staffApps || (await isAdmin(deps, context.actor.userId))
+              !policy.staffApps || (await isAdmin(deps, context.actor.userId))
                 ? undefined
-                : (source: string) => staffPluginEnabled(staffApps, source),
+                : (source: string) => staffPluginEnabledFor(policy, source, context.actor.userId),
             removeServer: async (tx, server) =>
               notify.push(...(await removeMcpServerInTransaction(tx, context.actor, server))),
           },

@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { CompanyAdminState, StaffAppState } from "@rakazo/contracts";
+import type { Audience, CompanyAdminState, StaffAppState } from "@rakazo/contracts";
 import { pluginStaffKey, staffPluginEnabled } from "@rakazo/contracts";
 import { Badge, Input, NativeSelect, NativeSelectOption, Spinner, toast } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
+import { AudienceControl } from "./AdminAccess";
 
 /** Which apps and plugins staff can connect, see as coming soon, or not see at all. */
 export function StaffAppsSection({
@@ -35,6 +36,28 @@ export function StaffAppsSection({
   );
   const [busy, setBusy] = useState<string | null>(null);
 
+  async function refresh() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queries.connections.companyApps.key() }),
+      queryClient.invalidateQueries({ queryKey: queries.marketplace.catalog.key() }),
+    ]);
+  }
+
+  async function limit(key: string, audience: Audience | undefined) {
+    const appAudiences = { ...state.access.appAudiences };
+    if (audience) appAudiences[key] = audience;
+    else delete appAudiences[key];
+    setBusy(key);
+    try {
+      await onSaved(await rpc.companyAdmin.setTools({ appAudiences }));
+      await refresh();
+    } catch (err) {
+      toast.error(errorText(err, t`Could not update who can use this app`));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function choose(key: string, value: StaffAppState) {
     // The first save turns the list on, so it carries every app's current choice with it.
     const next: Record<string, StaffAppState> = {};
@@ -46,10 +69,7 @@ export function StaffAppsSection({
     setBusy(key);
     try {
       await onSaved(await rpc.companyAdmin.setTools({ staffApps: next }));
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queries.connections.companyApps.key() }),
-        queryClient.invalidateQueries({ queryKey: queries.marketplace.catalog.key() }),
-      ]);
+      await refresh();
     } catch (err) {
       toast.error(errorText(err, t`Could not update the app`));
     } finally {
@@ -79,7 +99,7 @@ export function StaffAppsSection({
             {(apps.data ?? []).map((app) => (
               <li key={app.slug} className="flex items-center gap-4 px-4 py-3">
                 <AppLogo name={app.name} logo={app.logo} />
-                <span className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 space-y-2">
                   <span className="flex items-center gap-2 text-sm font-medium">
                     {app.name}
                     {app.connected ? (
@@ -95,7 +115,16 @@ export function StaffAppsSection({
                       <Trans>Not set up yet. Staff see it as being set up until it is.</Trans>
                     )}
                   </span>
-                </span>
+                  {app.state === "enabled" ? (
+                    <AudienceControl
+                      name={app.name}
+                      audience={state.access.appAudiences[app.slug]}
+                      state={state}
+                      disabled={busy !== null}
+                      onChange={(audience) => limit(app.slug, audience)}
+                    />
+                  ) : null}
+                </div>
                 <NativeSelect
                   aria-label={t`Staff access to ${app.name}`}
                   value={app.state}
@@ -152,14 +181,27 @@ export function StaffAppsSection({
                 return (
                   <li key={entry.installedSource} className="flex items-center gap-4 px-4 py-3">
                     <AppLogo name={entry.displayName} logo={entry.logo} tile="accent" />
-                    <span className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 space-y-2">
                       <span className="block truncate text-sm font-medium">
                         {entry.displayName}
                       </span>
                       <span className="block truncate text-[13px] text-muted-foreground">
                         {entry.description}
                       </span>
-                    </span>
+                      {enabled && state.staffApps ? (
+                        <AudienceControl
+                          name={entry.displayName}
+                          audience={
+                            state.access.appAudiences[pluginStaffKey(entry.installedSource)]
+                          }
+                          state={state}
+                          disabled={busy !== null}
+                          onChange={(audience) =>
+                            limit(pluginStaffKey(entry.installedSource), audience)
+                          }
+                        />
+                      ) : null}
+                    </div>
                     <NativeSelect
                       aria-label={t`Staff access to ${entry.displayName}`}
                       value={enabled ? "enabled" : "hidden"}

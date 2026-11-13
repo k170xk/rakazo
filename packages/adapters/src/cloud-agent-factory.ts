@@ -22,12 +22,14 @@ export interface CloudAgentConnection {
 export function cloudAgentsEnabled(
   connection: CloudAgentConnection | null | undefined,
   spaceId: string,
+  /** Whether the company switch admits this person; defaults to the switch alone. */
+  companyOpen: boolean = companyFeatures().cursorAgents,
 ) {
   if (!connection) return false;
   if (connection.provider.describe().capabilities.offline) {
     return !connection.spaceId || connection.spaceId === spaceId;
   }
-  return connection.spaceId === spaceId || companyFeatures().cursorAgents;
+  return connection.spaceId === spaceId || companyOpen;
 }
 
 export const DEFAULT_CLOUD_AGENT_MONTHLY_LAUNCHES = 100;

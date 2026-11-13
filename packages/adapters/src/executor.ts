@@ -10,7 +10,7 @@ import type { ComputerAccess, MessageBlock, ModelRoleChoice, RunStatus } from "@
 import {
   COMPANY_APP_CONNECTORS,
   disabledBuiltinToolSet,
-  staffMayUseConnection,
+  staffMayUseConnectionFor,
 } from "@rakazo/contracts";
 import {
   assertTransition,
@@ -84,6 +84,7 @@ import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import {
   companyAssistantModel,
   companyFeatures,
+  companyFeaturesFor,
   companyModel,
   companyThinkingLevel,
   companyTools,
@@ -859,15 +860,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const onShutdown = () => runAbortController?.abort(deps.shutdownSignal?.reason);
         deps.shutdownSignal?.addEventListener("abort", onShutdown);
         detachShutdown = () => deps.shutdownSignal?.removeEventListener("abort", onShutdown);
-        // Admins keep every app so they can try one before staff see it.
-        const staffApps = companyTools().staffApps;
-        const ownerMayUse =
-          !storedConnections.some((connection) =>
-            COMPANY_APP_CONNECTORS.includes(connection.connectorId),
-          ) || (await isDeploymentAdmin(deps.prisma, run.userId))
-            ? () => true
-            : (connection: { connectorId: string; provider: string }) =>
-                staffMayUseConnection(staffApps, connection);
+        // Admins keep every app and switch so they can try one before staff see it.
+        const ownerAdmin = await isDeploymentAdmin(deps.prisma, run.userId);
+        const ownerFeatures = companyFeaturesFor(run.userId, ownerAdmin);
+        const appPolicy = companyTools();
+        const ownerMayUse = (connection: { connectorId: string; provider: string }) =>
+          !COMPANY_APP_CONNECTORS.includes(connection.connectorId) ||
+          (ownerFeatures.connectedApps &&
+            (ownerAdmin || staffMayUseConnectionFor(appPolicy, connection, run.userId)));
         const peerBotUserId = peerMessage?.fromBotId
           ? (
               await deps.prisma.bot.findUnique({
@@ -917,6 +917,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           signal: runAbortController.signal,
           ...connectedContext(connectedPlugins),
           connectedProviders: connectedComposio.map((row) => row.provider),
+          companyFeatures: ownerFeatures,
         };
         const memoryScope = configuredMemory
           ? effectiveMemoryScope(bot.memoryScope, configuredMemory.defaultScope)
@@ -1712,7 +1713,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             semanticMemoryEnabled,
             semanticMemoryForgets: Boolean(semanticMemory?.forget),
             mediaImagesEnabled: Boolean(deps.artifacts && mediaGeneration?.capabilities.images),
-            cloudAgentEnabled: cloudAgentsEnabled(cloudAgent, run.spaceId),
+            cloudAgentEnabled: cloudAgentsEnabled(
+              cloudAgent,
+              run.spaceId,
+              ownerFeatures.cursorAgents,
+            ),
             paymentWalletEnabled,
             messagingChannelRun: nonOwnerChatRun,
             sharedConversation,
@@ -1731,17 +1736,17 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             documentsApart: documentsApart && Boolean(runToolRunner),
             conversationFiles: conversationFiles.size > 0,
             conversationFileSearch,
-            connectedAppsEnabled: companyFeatures().connectedApps,
-            mcpServersEnabled: companyFeatures().mcpServers,
-            routinesEnabled: companyFeatures().routines,
-            evolvePluginsEnabled: Boolean(deps.evolvePlugins) && companyFeatures().evolvePlugins,
+            connectedAppsEnabled: ownerFeatures.connectedApps,
+            mcpServersEnabled: ownerFeatures.mcpServers,
+            routinesEnabled: ownerFeatures.routines,
+            evolvePluginsEnabled: Boolean(deps.evolvePlugins) && ownerFeatures.evolvePlugins,
             evolveKnowledgeEnabled: Boolean(deps.evolvePlugins && bot.evolveAssistantId),
             evolveInfographicsEnabled: Boolean(deps.evolvePlugins),
             evolveProfileEnabled: Boolean(deps.evolvePlugins),
             pluginBranchImportEnabled:
               Boolean(deps.evolvePlugins?.repo) &&
-              companyFeatures().cursorAgents &&
-              cloudAgentsEnabled(cloudAgent, run.spaceId),
+              ownerFeatures.cursorAgents &&
+              cloudAgentsEnabled(cloudAgent, run.spaceId, ownerFeatures.cursorAgents),
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
           ...(hasMessagingIdentity &&

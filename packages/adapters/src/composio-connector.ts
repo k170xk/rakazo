@@ -849,8 +849,18 @@ export class ConnectorRegistry implements ConnectorProvider {
   }
 
   /** Whether the company lets bots use this provider: apps, custom MCP servers, plugins. */
-  private allowed(id: string, provider: ConnectorProvider): boolean {
-    const features = companyFeatures();
+  private allowed(id: string, provider: ConnectorProvider, context?: AdapterContext): boolean {
+    const company = companyFeatures();
+    // A run carries its owner's switches, which can only narrow the company's.
+    const own = context?.companyFeatures;
+    const features = own
+      ? {
+          ...company,
+          mcpServers: company.mcpServers && own.mcpServers !== false,
+          plugins: company.plugins && own.plugins !== false,
+          connectedApps: company.connectedApps && own.connectedApps !== false,
+        }
+      : company;
     if (id === "mcp")
       return features.mcpServers || companyMcpEndpoints(companyTools().staffApps).length > 0;
     if (id === "installed") return features.plugins;
@@ -858,8 +868,8 @@ export class ConnectorRegistry implements ConnectorProvider {
     return isManagedConnectorProvider(provider) ? features.connectedApps : true;
   }
 
-  private active(): [string, ConnectorProvider][] {
-    return [...this.providers].filter(([id, provider]) => this.allowed(id, provider));
+  private active(context?: AdapterContext): [string, ConnectorProvider][] {
+    return [...this.providers].filter(([id, provider]) => this.allowed(id, provider, context));
   }
 
   managedProviders(): ManagedConnectorProvider[] {
@@ -893,7 +903,7 @@ export class ConnectorRegistry implements ConnectorProvider {
     const discovered: ConnectorTool[] = [];
     const used = new Set<string>();
     const providerTools = await Promise.all(
-      this.active().map(async ([connectorId, provider]) => {
+      this.active(context).map(async ([connectorId, provider]) => {
         try {
           return [connectorId, await provider.discoverTools(context)] as const;
         } catch (error) {
@@ -931,7 +941,7 @@ export class ConnectorRegistry implements ConnectorProvider {
       yield { type: "error", message: `unknown connector ${connectorId}` };
       return;
     }
-    if (!this.allowed(connectorId, provider)) {
+    if (!this.allowed(connectorId, provider, context)) {
       yield { type: "error", message: "Your company has turned this off." };
       return;
     }
@@ -967,14 +977,14 @@ export class ConnectorRegistry implements ConnectorProvider {
   ): Promise<{ call: ConnectorCall; tool: ConnectorTool } | undefined> {
     const connectorId = call.route?.connectorId;
     if (!connectorId) {
-      for (const [, provider] of this.active()) {
+      for (const [, provider] of this.active(context)) {
         const resolved = await provider.resolveCall?.(call, context);
         if (resolved) return resolved;
       }
       return undefined;
     }
     const provider = this.providers.get(connectorId);
-    if (provider && !this.allowed(connectorId, provider)) return undefined;
+    if (provider && !this.allowed(connectorId, provider, context)) return undefined;
     return provider?.resolveCall?.({ ...call, tool: call.route?.toolName ?? call.tool }, context);
   }
 }

@@ -15,7 +15,7 @@ import type { ComputerAccess, RoutineWatch, RoutineWatchState } from "@rakazo/co
 import {
   RoutineWatchSchema,
   RoutineWatchStateSchema,
-  staffMayUseConnection,
+  staffMayUseConnectionFor,
 } from "@rakazo/contracts";
 import type { ActionApprovalRule } from "@rakazo/core";
 import { connectorKindFromToolName, redactSecrets, watchToolRefusal } from "@rakazo/core";
@@ -369,12 +369,13 @@ async function toolContext(
       status: true,
     },
   });
-  const staffApps = companyTools().staffApps;
+  const policy = companyTools();
+  const mayUse = (row: (typeof rows)[number]) =>
+    staffMayUseConnectionFor(policy, row, routine.userId);
   const allowed =
-    rows.every((row) => staffMayUseConnection(staffApps, row)) ||
-    (await isDeploymentAdmin(prisma, routine.userId))
+    rows.every(mayUse) || (await isDeploymentAdmin(prisma, routine.userId))
       ? rows
-      : rows.filter((row) => staffMayUseConnection(staffApps, row));
+      : rows.filter(mayUse);
   // What a check finds goes into the routine's chat, so private apps need a private chat.
   const usable = withoutPrivateApps(allowed, await routineIsPrivate(prisma, routine));
   return { ...context(routine), ...connectedContext(selectRunConnections(usable, [])) };

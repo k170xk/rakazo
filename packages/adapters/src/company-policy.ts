@@ -1,17 +1,21 @@
 import type { SecretStore } from "@rakazo/adapter-kit";
 import type {
   CompanyAssistantModel,
+  CompanyFeatureId,
   CompanyFeatures,
   CompanyTools,
   StaffLimits,
   ThinkingLevel,
 } from "@rakazo/contracts";
 import {
+  AUDIENCE_FEATURES,
   ComputerAccessSchema,
   companyFeaturesFrom,
   companyToolsFrom,
   DEFAULT_COMPANY_FEATURES,
   DEFAULT_STAFF_LIMITS,
+  inAudience,
+  isAudienceFeature,
   staffLimitsFrom,
   ThinkingLevelSchema,
 } from "@rakazo/contracts";
@@ -42,6 +46,34 @@ export function companyFeatures(): CompanyFeatures {
   // The browser suite sets this so its skill specs can open the staff sections.
   if (process.env.RAKAZO_E2E_STAFF_SKILLS === "1") features = { ...features, staffSkills: true };
   return features;
+}
+
+/** Whether a switch is on and, if an admin limited it, this person is in its audience. Admins are not exempt here. */
+export function companyFeatureOpenTo(feature: CompanyFeatureId, userId: string): boolean {
+  if (!companyFeatures()[feature]) return false;
+  if (!isAudienceFeature(feature)) return true;
+  const tools = companyTools();
+  return inAudience(tools.featureAudiences?.[feature], tools.accessGroups, userId);
+}
+
+/** The company switches as they apply to one person; admins see every switch as the company set it. */
+export function companyFeaturesFor(userId: string, admin: boolean): CompanyFeatures {
+  const features = { ...companyFeatures() };
+  if (admin) return features;
+  for (const feature of AUDIENCE_FEATURES) {
+    if (features[feature]) features[feature] = companyFeatureOpenTo(feature, userId);
+  }
+  return features;
+}
+
+/** companyFeatureOpenTo for a run's owner, letting deployment admins through, so they can test. */
+export async function companyFeatureOpenForRun(
+  prisma: Pick<PrismaClient, "user">,
+  feature: CompanyFeatureId,
+  userId: string,
+): Promise<boolean> {
+  if (companyFeatureOpenTo(feature, userId)) return true;
+  return companyFeatures()[feature] && (await isDeploymentAdmin(prisma, userId));
 }
 
 /** Company routine and spend limits that people without their own override follow. */

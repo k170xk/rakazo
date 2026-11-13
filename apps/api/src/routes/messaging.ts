@@ -1,6 +1,5 @@
 import { ORPCError } from "@orpc/server";
 import { messagingDeliverJob } from "@rakazo/adapter-kit";
-import { companyFeatures } from "@rakazo/adapters";
 import { displayName } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import {
@@ -10,7 +9,7 @@ import {
   runAsSystem,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
-import { requireCompanyFeature } from "../company-admin.js";
+import { companyFeatureOnFor, requireCompanyFeature } from "../company-admin.js";
 import type { RouterContext } from "./context.js";
 import { isUniqueViolation } from "./shared.js";
 
@@ -56,7 +55,9 @@ export function messagingRoutes(ctx: RouterContext) {
           }),
         );
         return {
-          enabled: (deps.messaging?.enabled ?? false) && companyFeatures().messaging,
+          enabled:
+            (deps.messaging?.enabled ?? false) &&
+            (await companyFeatureOnFor(deps, context.actor, "messaging")),
           providers: deps.messaging?.providers ?? [],
           addresses: deps.messaging?.addresses ?? {},
           openSignup: deps.messaging?.openSignup ?? false,

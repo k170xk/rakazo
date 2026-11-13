@@ -1,10 +1,13 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import type {
+  Audience,
+  AudienceFeatureId,
   CompanyAdminState,
   CompanyFeatureId,
   CompanyFeatures,
   ModelCatalogEntry,
 } from "@rakazo/contracts";
+import { isAudienceFeature } from "@rakazo/contracts";
 import {
   Badge,
   Button,
@@ -47,6 +50,7 @@ import { thinkingLevelLabel } from "../lib/model-catalog";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
+import { AccessGroupsSection, AudienceControl } from "./AdminAccess";
 import { CompanyAssistantModelsSection } from "./AdminAssistantModels";
 import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
@@ -185,7 +189,12 @@ function CompanyAdminPanels() {
       case "storage":
         return <CompanyStorageSection state={data} onSaved={saved} />;
       case "people":
-        return <CompanyPeopleSection state={data} />;
+        return (
+          <div className="space-y-10">
+            <CompanyPeopleSection state={data} />
+            <AccessGroupsSection state={data} onSaved={saved} />
+          </div>
+        );
       case "limits":
         return <StaffLimitsSection />;
       case "routines":
@@ -607,7 +616,7 @@ function CompanyFeaturesSection({
   return (
     <Section
       title={t`Features`}
-      description={t`These apply to everyone in the company and take effect within a few seconds.`}
+      description={t`Changes take effect within a few seconds. A switch that is on can be limited to chosen people and groups; admins can always use everything.`}
     >
       {groups.map((group) => (
         <div key={group.id} className="space-y-2">
@@ -694,14 +703,39 @@ function CompanySwitchList({
     }
   }
 
+  async function limit(id: AudienceFeatureId, audience: Audience | undefined) {
+    setBusy(id);
+    try {
+      const featureAudiences = { ...state.access.featureAudiences };
+      if (audience) featureAudiences[id] = audience;
+      else delete featureAudiences[id];
+      await onSaved(await rpc.companyAdmin.setTools({ featureAudiences }));
+    } catch (err) {
+      toast.error(errorText(err, t`Could not update who can use this`));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <ul className="divide-y divide-border rounded-xl border border-border">
       {rows.map((row) => (
         <li key={row.id} className="flex items-center gap-4 px-4 py-3">
-          <label htmlFor={`company-feature-${row.id}`} className="min-w-0 flex-1 cursor-pointer">
-            <span className="block text-sm font-medium">{row.label}</span>
-            <span className="block text-[13px] text-muted-foreground">{row.description}</span>
-          </label>
+          <div className="min-w-0 flex-1 space-y-2">
+            <label htmlFor={`company-feature-${row.id}`} className="block cursor-pointer">
+              <span className="block text-sm font-medium">{row.label}</span>
+              <span className="block text-[13px] text-muted-foreground">{row.description}</span>
+            </label>
+            {isAudienceFeature(row.id) && state.features[row.id] ? (
+              <AudienceControl
+                name={row.label}
+                audience={state.access.featureAudiences[row.id]}
+                state={state}
+                disabled={busy !== null}
+                onChange={(audience) => limit(row.id as AudienceFeatureId, audience)}
+              />
+            ) : null}
+          </div>
           <Switch
             id={`company-feature-${row.id}`}
             checked={state.features[row.id]}

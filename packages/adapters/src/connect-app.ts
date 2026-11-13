@@ -1,6 +1,6 @@
 import type { AdapterContext, ManagedConnectorProvider } from "@rakazo/adapter-kit";
 import type { MessageBlock } from "@rakazo/contracts";
-import { staffAppState } from "@rakazo/contracts";
+import { staffAppStateFor } from "@rakazo/contracts";
 import { appConnectCard, matchAppCatalog, matchesAppConnection } from "@rakazo/core";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import { appendEventInTransaction, createThreadMessageInTransaction } from "@rakazo/db";
@@ -34,12 +34,13 @@ export async function connectApp(
       }),
     )
   ).flat();
-  const staffApps = companyTools().staffApps;
+  const policy = companyTools();
+  const open = (slug: string) => staffAppStateFor(policy, slug, context.userId) === "enabled";
   const catalog =
-    allCatalog.every((item) => staffAppState(staffApps, item.slug) === "enabled") ||
+    allCatalog.every((item) => open(item.slug)) ||
     (await isDeploymentAdmin(deps.prisma, context.userId))
       ? allCatalog
-      : allCatalog.filter((item) => staffAppState(staffApps, item.slug) === "enabled");
+      : allCatalog.filter((item) => open(item.slug));
   // An app connected through any provider counts, even if another provider lists it first.
   const entry =
     matchAppCatalog(
