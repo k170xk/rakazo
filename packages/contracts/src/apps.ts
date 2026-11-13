@@ -26,6 +26,8 @@ export const AppTableSchemaSchema = z.object({
   label: z.string(),
   key: z.string().optional(),
   title: z.string().optional(),
+  personal: z.boolean().optional(),
+  large: z.boolean().optional(),
   columns: z.array(AppColumnSchema),
 });
 
@@ -33,7 +35,12 @@ export const AppRowSchema = z.record(z.string(), z.unknown());
 
 export const AppTablesSchema = z.record(
   z.string(),
-  z.object({ schema: AppTableSchemaSchema, rows: z.array(AppRowSchema) }),
+  z.object({
+    schema: AppTableSchemaSchema,
+    rows: z.array(AppRowSchema),
+    /** Set for a large table, sent without rows: how many it has. */
+    count: z.number().int().optional(),
+  }),
 );
 
 export const AppDataSchema = z.object({

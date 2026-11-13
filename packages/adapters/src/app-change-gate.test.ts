@@ -5,9 +5,11 @@ import type { RunContext } from "./run-context.js";
 function ctxWith(
   page: { visibility: string; evolvePluginSlug: string | null } | null,
   colleagueRow = false,
+  tables: Array<{ schema: unknown }> = [],
 ) {
   const appRow = { findFirst: vi.fn(async () => (colleagueRow ? { id: "row-1" } : null)) };
-  const prisma = { page: { findFirst: vi.fn(async () => page) }, appRow };
+  const appTable = { findMany: vi.fn(async () => tables) };
+  const prisma = { page: { findFirst: vi.fn(async () => page) }, appRow, appTable };
   const ctx = {
     deps: { prisma },
     run: { spaceId: "space-1", userId: "owner-1" },
@@ -26,6 +28,7 @@ describe("appChangeOf", () => {
       pageId: "a",
       code: true,
       wipes: [],
+      unprivate: [],
     });
     expect(appChangeOf("save_page", { pageId: "p", data: { rows: [] } })?.code).toBe(false);
     expect(appChangeOf("save_page", { pageId: "p", source: "x" })?.code).toBe(true);
@@ -34,6 +37,7 @@ describe("appChangeOf", () => {
       pageId: "a",
       code: false,
       wipes: [],
+      unprivate: [],
     });
     expect(appChangeOf("save_app", { appId: "a", edits: [] })?.code).toBe(false);
   });
@@ -54,12 +58,14 @@ describe("appChangeOf", () => {
       pageId: "a",
       code: false,
       wipes: ["jobs"],
+      unprivate: [],
     });
     // A workbook merges into an existing app's tables (upsert or append), like a data refresh.
     expect(appChangeOf("save_app", { appId: "a", workbook: { path: "x.xlsx" } })).toEqual({
       pageId: "a",
       code: false,
       wipes: [],
+      unprivate: [],
     });
   });
 });
@@ -117,6 +123,27 @@ describe("appChangeNeedsPerson", () => {
       },
       select: { id: true },
     });
+  });
+
+  it("asks before a personal table is opened to everyone", async () => {
+    const unprivate = { appId: "a", tables: [{ schema: { name: "visits", personal: false } }] };
+    expect(appChangeOf("save_app", unprivate)?.unprivate).toEqual(["visits"]);
+    const personal = ctxWith({ visibility: "private", evolvePluginSlug: null }, false, [
+      { schema: { name: "visits", personal: true } },
+    ]);
+    expect(await appChangeNeedsPerson(personal.ctx, "save_app", unprivate)).toBe(true);
+    expect(personal.prisma.appTable.findMany).toHaveBeenCalledWith({
+      where: { pageId: "a", name: { in: ["visits"] } },
+      select: { schema: true },
+    });
+    const already = ctxWith({ visibility: "private", evolvePluginSlug: null }, false, [
+      { schema: { name: "visits" } },
+    ]);
+    expect(await appChangeNeedsPerson(already.ctx, "save_app", unprivate)).toBe(false);
+    // A schema sent without the flag keeps the table personal, so it is a plain refresh.
+    expect(
+      appChangeOf("save_app", { appId: "a", tables: [{ schema: { name: "visits" } }] })?.unprivate,
+    ).toEqual([]);
   });
 
   it("only looks at the run owner's own apps", async () => {

@@ -16,6 +16,22 @@ import {
   SCHEDULE_TOOL_NAMES,
   updateScheduleFromTool,
 } from "./schedule-tools.js";
+import * as staffLimits from "./staff-limits.js";
+
+vi.mock("./staff-limits.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./staff-limits.js")>();
+  return {
+    ...actual,
+    activeRoutineCapRefusal: vi.fn(async () => null),
+    personStaffLimits: vi.fn(async () => ({
+      routineRunsPerDay: 96,
+      maxActiveRoutines: 200,
+      monthlyBudgetUsd: null,
+      mayChooseModels: true,
+      allowedModels: [],
+    })),
+  };
+});
 
 const noRoutines = async () => [];
 const impossibleOffsetDates = ["2030-02-30T10:00Z", "2030-04-31T10:00+05:30"];
@@ -318,6 +334,56 @@ describe("isOneShotRoutineCron", () => {
   it("detects the one-shot sentinel", () => {
     expect(isOneShotRoutineCron(ONCE_ROUTINE_CRON)).toBe(true);
     expect(isOneShotRoutineCron("0 9 * * *")).toBe(false);
+  });
+});
+
+describe("schedule tool staff limits", () => {
+  const input = {
+    spaceId: "ws-1",
+    botId: "bot-1",
+    userId: "user-1",
+    threadId: "thread-1",
+    name: "Hourly",
+    prompt: "Check",
+    timezone: "UTC",
+  };
+
+  it("refuses a schedule that runs more often than the owner may", async () => {
+    vi.mocked(staffLimits.personStaffLimits).mockResolvedValueOnce({
+      routineRunsPerDay: 1,
+      maxActiveRoutines: 5,
+      monthlyBudgetUsd: null,
+      mayChooseModels: true,
+      allowedModels: [],
+    });
+    const create = vi.fn();
+    const deps = {
+      prisma: { routine: { create, findMany: noRoutines } },
+      events: { append: vi.fn() },
+      jobs: { enqueue: vi.fn() },
+    } as unknown as Parameters<typeof createScheduleFromTool>[0];
+    const result = await createScheduleFromTool(deps, {
+      ...input,
+      schedule: { cron: "0 * * * *" },
+    });
+    expect(result).toEqual({ error: expect.stringMatching(/at most once a day/) });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a new routine past the owner's active-routine limit", async () => {
+    vi.mocked(staffLimits.activeRoutineCapRefusal).mockResolvedValueOnce("Too many routines.");
+    const create = vi.fn();
+    const deps = {
+      prisma: { routine: { create, findMany: noRoutines } },
+      events: { append: vi.fn() },
+      jobs: { enqueue: vi.fn() },
+    } as unknown as Parameters<typeof createScheduleFromTool>[0];
+    const result = await createScheduleFromTool(deps, {
+      ...input,
+      schedule: { cron: "0 9 * * *" },
+    });
+    expect(result).toEqual({ error: "Too many routines." });
+    expect(create).not.toHaveBeenCalled();
   });
 });
 

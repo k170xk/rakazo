@@ -1,14 +1,17 @@
 import { Download, Pencil, Plus, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { RowQuery } from "../query.js";
 import type { Column, Row, TableSchema } from "../schema.js";
 import { coerceRow } from "../schema.js";
+import { useAggregate, useApp, useFocus, useRows } from "../sdk/index.js";
 import { Button, Checkbox, Field, Input, Select, Stat, Textarea } from "./basic.js";
 import { cn } from "./cn.js";
 import { PhotoInput, Photos } from "./media.js";
 import { ConfirmDialog, Drawer, toast } from "./overlay.js";
-import type { TableColumn } from "./table.js";
+import type { RemoteQuery, TableColumn } from "./table.js";
 import { CellValue, DataTable } from "./table.js";
+import { PresenceStack, RowActivity } from "./together.js";
 
 function inputValue(column: Column, value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -147,6 +150,10 @@ export function RecordDetail({
 }
 
 type TableLike = {
+  /** The table's name (useTable gives it): adds comments, history and presence. */
+  name?: string;
+  /** Read page by page from the server instead of rows. */
+  large?: boolean;
   rows: Row[];
   schema: TableSchema | null;
   loading: boolean;
@@ -159,9 +166,12 @@ type TableLike = {
   canExport?: boolean;
 };
 
+const LARGE_PAGE = 25;
+
 /**
- * A whole screen for one table: search, filter chips, sorting, a drawer to read and edit a row,
- * adding, deleting (with a check first) and export. Pass what useTable returns.
+ * A whole screen for one table: search, filter chips, sorting, a drawer to read and edit a row
+ * (with its comments and history), adding, deleting (with a check first) and export, plus the
+ * faces of who else is looking. Pass what useTable returns; large tables page from the server.
  */
 export function TableView({
   table,
@@ -172,6 +182,7 @@ export function TableView({
   newLabel = "Add",
   renderDetail,
   toolbar,
+  activity,
 }: {
   table: TableLike;
   /** Columns for the list; the first eight by default. */
@@ -184,15 +195,48 @@ export function TableView({
   /** Extra content under a row's details (related rows, a chart). */
   renderDetail?: (row: Row) => ReactNode;
   toolbar?: ReactNode;
+  /** Show comments and history in the drawer (on when the table has a name). */
+  activity?: boolean;
 }) {
   const { schema } = table;
+  const large = Boolean(table.large && table.name);
+  const { features, local } = useApp();
+  const [remoteQuery, setRemoteQuery] = useState<RemoteQuery | null>(null);
+  const rowQuery = useMemo<RowQuery>(() => {
+    if (!remoteQuery) return { pageSize: LARGE_PAGE };
+    return {
+      search: remoteQuery.search,
+      filters:
+        remoteQuery.chip && filterBy
+          ? [{ column: filterBy, op: "eq", value: remoteQuery.chip }]
+          : undefined,
+      sort: remoteQuery.sort
+        ? { column: remoteQuery.sort.key, dir: remoteQuery.sort.dir }
+        : undefined,
+      page: remoteQuery.page,
+      pageSize: remoteQuery.pageSize,
+    };
+  }, [remoteQuery, filterBy]);
+  const paged = useRows(table.name ?? "", rowQuery, { skip: !large });
+  const chipCounts = useAggregate(
+    table.name ?? "",
+    { groupBy: filterBy, metrics: [{ op: "count", as: "count" }], limit: 30 },
+    { skip: !large || !filterBy },
+  );
+  const onQuery = useCallback((next: RemoteQuery) => setRemoteQuery(next), []);
+  const rows = large ? paged.rows : table.rows;
   const [openId, setOpenId] = useState<string | null>(null);
   const [mode, setMode] = useState<"view" | "edit" | "new">("view");
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const open = openId ? table.rows.find((row) => row._id === openId) : undefined;
+  const open = openId ? rows.find((row) => row._id === openId) : undefined;
+  useFocus(table.name, open?._id);
+  const showActivity =
+    activity !== false &&
+    Boolean(table.name) &&
+    (local || features.includes("comments") || features.includes("history"));
   const cols = useMemo(() => {
     if (!schema || !columns) return undefined;
     return columns
@@ -251,10 +295,27 @@ export function TableView({
   return (
     <>
       <DataTable
-        rows={table.rows}
+        rows={rows}
         schema={schema}
         columns={cols}
-        loading={table.loading}
+        loading={table.loading || (large && paged.loading && !paged.rows.length)}
+        pageSize={large ? LARGE_PAGE : undefined}
+        remote={
+          large
+            ? {
+                total: paged.total,
+                onQuery,
+                chips: filterBy
+                  ? chipCounts.groups
+                      .filter((group) => group.key !== null)
+                      .map((group) => ({
+                        value: String(group.key),
+                        count: group.values.count ?? undefined,
+                      }))
+                  : undefined,
+              }
+            : undefined
+        }
         filterBy={filterBy}
         selectedId={openId}
         onRowClick={(row) => {
@@ -264,6 +325,7 @@ export function TableView({
         searchPlaceholder={`Search ${schema.label.toLowerCase()}`}
         toolbar={
           <>
+            {table.name && <PresenceStack table={table.name} className="mr-1" />}
             {toolbar}
             {table.canExport !== false && (
               <Button
@@ -347,6 +409,14 @@ export function TableView({
           <div className="flex flex-col gap-6">
             <RecordDetail schema={schema} row={open} />
             {renderDetail?.(open)}
+            {showActivity && table.name && (
+              <RowActivity
+                table={table.name}
+                rowId={open._id}
+                schema={schema}
+                className="border-t border-border/70 pt-5"
+              />
+            )}
           </div>
         ) : (
           <RecordForm

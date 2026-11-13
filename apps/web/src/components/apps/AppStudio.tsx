@@ -18,11 +18,12 @@ import { ownerAppSource } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
 import { AppCodePanel } from "./AppCodePanel";
 import { AppDataPanel } from "./AppDataPanel";
-import type { AppPick } from "./AppFrame";
+import type { AppPatch, AppPick } from "./AppFrame";
 import { AppFrame } from "./AppFrame";
 import { AppHistoryPanel } from "./AppHistoryPanel";
 import { AppIcon } from "./AppIcon";
 import { AppSettingsPanel } from "./AppSettingsPanel";
+import { AppVisualEdit } from "./AppVisualEdit";
 
 type Panel = "data" | "code" | "history" | "settings";
 
@@ -75,6 +76,10 @@ export function AppStudio({
   const [historyFocus, setHistoryFocus] = useState<number | null>(null);
   const [updated, setUpdated] = useState<number | null>(null);
   const [picking, setPicking] = useState(false);
+  const [editing, setEditing] = useState<AppPick | null>(null);
+  const [patch, setPatch] = useState<AppPatch | null>(null);
+  // Discarding an unsaved visual edit draws the app again from its code.
+  const [redraws, setRedraws] = useState(0);
   const [problem, setProblem] = useState<string | null>(null);
   const pageId = page?.id ?? null;
   const source = useMemo(
@@ -87,13 +92,14 @@ export function AppStudio({
     enabled: open && pageId !== null,
     refetchInterval: running ? 1200 : 4000,
   });
-  // The picker needs the preview build, whose elements carry their source lines.
+  // The picker and visual edits need the preview build, whose elements carry their source lines.
+  const tagging = picking || editing !== null;
   const preview = useQuery({
     ...queries.apps.preview.queryOptions({ input: { pageId: pageId ?? "" } }),
-    enabled: picking && pageId !== null,
+    enabled: tagging && pageId !== null,
     staleTime: 60_000,
   });
-  const tagged = picking ? preview.data?.html : null;
+  const tagged = tagging ? preview.data?.html : null;
   const newest = revision.data?.version;
   useEffect(() => {
     if (pageId && newest && page && newest !== page.currentVersion) {
@@ -102,6 +108,9 @@ export function AppStudio({
     }
   }, [newest, page, pageId, queries, queryClient]);
   useEffect(() => setProblem(null), [page?.version]);
+  useEffect(() => {
+    if (!open) setEditing(null);
+  }, [open]);
   // Rows the bot adds show as they land, in the app and in the Data panel.
   const dataRevision = revision.data?.revision;
   useEffect(() => {
@@ -135,10 +144,21 @@ export function AppStudio({
 
   function pick(selected: AppPick) {
     setPicking(false);
+    setPatch(null);
+    setEditing(selected);
+  }
+
+  function askBot(selected: AppPick) {
     const what = selected.text
       ? `the ${selected.tag} "${selected.text.slice(0, 60)}"`
       : `this ${selected.tag}`;
     onReply?.(`In ${selected.loc}, ${what}: `);
+  }
+
+  function stopEditing(saved: boolean) {
+    if (!saved && patch) setRedraws((count) => count + 1);
+    setPatch(null);
+    setEditing(null);
   }
 
   const tabs: { id: Panel; label: string; icon: ReactNode }[] = [
@@ -209,6 +229,7 @@ export function AppStudio({
                 aria-label={t`Select an element`}
                 onClick={() => {
                   setPicking((on) => !on);
+                  stopEditing(false);
                   if (compact) setPanel(null);
                 }}
                 className={`${control} ${size} max-sm:hidden`}
@@ -256,7 +277,7 @@ export function AppStudio({
               (page && source ? (
                 <>
                   <AppFrame
-                    key={`${page.version}:${tagged ? "tagged" : "built"}`}
+                    key={`${page.version}:${tagged ? "tagged" : "built"}:${redraws}`}
                     document={tagged ?? page.code}
                     title={page.title}
                     app={{ id: page.id, version: page.version }}
@@ -265,7 +286,25 @@ export function AppStudio({
                     onPick={pick}
                     onProblem={setProblem}
                     refreshSignal={dataRevision}
+                    maps
+                    patch={patch}
+                    selectedLoc={editing?.loc ?? null}
                   />
+                  {editing ? (
+                    <div className="pointer-events-none absolute right-3 bottom-3 z-20 flex justify-end max-sm:inset-x-3">
+                      <AppVisualEdit
+                        key={editing.loc}
+                        pageId={page.id}
+                        pick={editing}
+                        onPatch={setPatch}
+                        onAskBot={() => {
+                          askBot(editing);
+                          stopEditing(false);
+                        }}
+                        onClose={stopEditing}
+                      />
+                    </div>
+                  ) : null}
                   {updated !== null && !picking && !problem ? (
                     <div className="absolute inset-x-3 top-3 z-10 flex justify-center">
                       <div
@@ -299,7 +338,7 @@ export function AppStudio({
                   {picking ? (
                     <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
                       <p className="rounded-full bg-foreground px-3 py-1.5 text-[12px] text-background shadow-lg">
-                        {t`Click something in the app to tell the bot what to change`}
+                        {t`Click something in the app to change it`}
                       </p>
                     </div>
                   ) : null}

@@ -137,6 +137,25 @@ type Props<T extends Record<string, unknown>> = {
   /** Bare table without the card around it. */
   plain?: boolean;
   className?: string;
+  /**
+   * The server searches, filters, sorts and pages (a large table): rows is the current page,
+   * total how many match, and onQuery is told whenever the reader changes what they want.
+   */
+  remote?: {
+    total: number;
+    onQuery: (query: RemoteQuery) => void;
+    /** Chip values and counts for filterBy, from useAggregate. */
+    chips?: Array<{ value: string; count?: number }>;
+  };
+};
+
+export type RemoteQuery = {
+  search: string;
+  /** The chosen filterBy value. */
+  chip: string | null;
+  sort: { key: string; dir: "asc" | "desc" } | null;
+  page: number;
+  pageSize: number;
 };
 
 function compare(a: unknown, b: unknown) {
@@ -164,6 +183,7 @@ export function DataTable<T extends Record<string, unknown>>({
   initialSort,
   plain,
   className,
+  remote,
 }: Props<T>) {
   const cols = useMemo(
     () =>
@@ -178,6 +198,10 @@ export function DataTable<T extends Record<string, unknown>>({
   );
   const [page, setPage] = useState(0);
   useEffect(() => setPage(0), [query, chip, sort]);
+  const onQuery = remote?.onQuery;
+  useEffect(() => {
+    onQuery?.({ search: query, chip, sort, page, pageSize });
+  }, [onQuery, query, chip, sort, page, pageSize]);
   const cellOf = (row: T, column: TableColumn<T>) =>
     column.value ? column.value(row) : row[column.key];
   const chipColumn = filterBy
@@ -185,6 +209,17 @@ export function DataTable<T extends Record<string, unknown>>({
     : undefined;
   const chipOptions = useMemo(() => {
     if (!filterBy) return [];
+    if (remote)
+      return (
+        remote.chips ??
+        chipColumn?.options?.map((option) => ({ value: option.value, count: undefined })) ??
+        []
+      ).map((option) => ({
+        ...option,
+        tone: chipColumn?.options?.find((item) => item.value === option.value)?.tone as
+          | Tone
+          | undefined,
+      }));
     const counts = new Map<string, number>();
     for (const row of rows) {
       const value = row[filterBy];
@@ -199,8 +234,9 @@ export function DataTable<T extends Record<string, unknown>>({
       count: counts.get(value),
       tone: chipColumn?.options?.find((option) => option.value === value)?.tone as Tone | undefined,
     }));
-  }, [rows, filterBy, chipColumn]);
+  }, [rows, filterBy, chipColumn, remote]);
   const filtered = useMemo(() => {
+    if (remote) return rows;
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
     let list = rows;
     if (chip && filterBy) list = list.filter((row) => String(row[filterBy] ?? "") === chip);
@@ -222,9 +258,11 @@ export function DataTable<T extends Record<string, unknown>>({
       }
     }
     return list;
-  }, [rows, query, chip, filterBy, sort, cols]);
-  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const visible = filtered.slice(page * pageSize, page * pageSize + pageSize);
+  }, [rows, query, chip, filterBy, sort, cols, remote]);
+  const matching = remote ? remote.total : filtered.length;
+  const pages = Math.max(1, Math.ceil(matching / pageSize));
+  const visible = remote ? rows : filtered.slice(page * pageSize, page * pageSize + pageSize);
+  const anything = remote ? remote.total > 0 || query !== "" || chip !== null : rows.length > 0;
   const toggleSort = (key: string) =>
     setSort((current) =>
       current?.key !== key
@@ -360,20 +398,20 @@ export function DataTable<T extends Record<string, unknown>>({
                 })}
           </tbody>
         </table>
-        {!loading && filtered.length === 0 && (
+        {!loading && visible.length === 0 && (
           <EmptyState
             icon={<Inbox />}
-            title={rows.length ? "Nothing matches" : "No rows yet"}
-            description={rows.length ? "Try a different search or filter." : undefined}
+            title={anything ? "Nothing matches" : "No rows yet"}
+            description={anything ? "Try a different search or filter." : undefined}
             action={empty}
           />
         )}
       </div>
-      {filtered.length > pageSize && (
+      {matching > pageSize && (
         <div className="flex items-center justify-between border-t border-border/70 px-4 py-2.5 text-[13px] text-muted-foreground">
           <span className="tabular">
-            {page * pageSize + 1}–{Math.min(filtered.length, (page + 1) * pageSize)} of{" "}
-            {filtered.length}
+            {page * pageSize + 1}–{Math.min(matching, (page + 1) * pageSize)} of{" "}
+            {matching.toLocaleString("en-IE")}
           </span>
           <div className="flex items-center gap-1">
             <button

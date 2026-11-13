@@ -8,10 +8,12 @@ import type {
   ThinkingLevel,
 } from "@rakazo/contracts";
 import {
+  allowedModelKey,
   BOT_COMPUTER_MODES,
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_NAME_MAX_LENGTH,
   BUILTIN_TOOL_NAMES,
+  canonicalPiProviderId,
   isBuiltinToolName,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
@@ -314,7 +316,15 @@ export function BotSettings({
     setSavedAdvanced(JSON.stringify(next));
   }, [bot]);
 
-  const connectedOptions = connectedModelChoices(credentials, catalog);
+  // An admin can limit someone to some models; the server refuses the rest anyway.
+  const allowedModels = me?.allowedModels ?? [];
+  const connectedOptions = connectedModelChoices(credentials, catalog).filter(
+    (choice) =>
+      allowedModels.length === 0 ||
+      allowedModels.includes(
+        allowedModelKey(canonicalPiProviderId(choice.provider), choice.modelId),
+      ),
+  );
   const storedModel = modelKey ? parseModelOptionKey(modelKey) : null;
   const selectedModel = storedModel
     ? {

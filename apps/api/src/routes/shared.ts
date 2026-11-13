@@ -15,6 +15,7 @@ import {
   attachmentMaxBytes,
   attachmentMaxCount,
   canonicalPiProviderId,
+  ModelAccessSchema,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
 import { provenEmail } from "@rakazo/core";
@@ -44,6 +45,8 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
         locale: true,
         botAvatarSet: true,
         computerAccess: true,
+        modelAccess: true,
+        allowedModels: true,
         signupSurvey: { select: { userId: true } },
       },
     }),
@@ -67,8 +70,16 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
   // companyFeatures.voice for the Evolve path — that switch is the company voice connection,
   // and OCSC keeps it off while still wanting dictation through Evolve's OpenAI key.
   const dictationEnabled = phoneCallsEnabled || Boolean(deps.evolvePlugins);
+  // The app reads model choice from features, so it reports this person's own access.
+  const modelAccess = ModelAccessSchema.safeParse(user.modelAccess);
   return {
-    features: companyFeatures(),
+    features: {
+      ...companyFeatures(),
+      memberModels: modelAccess.success
+        ? modelAccess.data === "choose"
+        : companyFeatures().memberModels,
+    },
+    allowedModels: user.allowedModels,
     companyModelReady: Boolean(companyModel()),
     computerAccess,
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,

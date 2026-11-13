@@ -4,12 +4,17 @@ import type { Actor, BotSettingsValues, VoiceInfo } from "@rakazo/contracts";
 import { ThinkingLevelSchema } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { findDefaultVoiceCredential } from "@rakazo/db";
-import { companyFeatures } from "./company-policy.js";
 import type { FleetPrepareDeps } from "./fleet-tools.js";
 import { modelLabel } from "./fleet-tools.js";
 import { connectedModelChoices, echoedQuery, resolveModelChoice, words } from "./model-choice.js";
 import { prepareAllowedThinkingLevels, validateBotModelChange } from "./model-selection.js";
 import { OPENAI_COMPATIBLE_VOICE_PROVIDER_ID } from "./openai-compatible-voice.js";
+import {
+  applyPersonLimits,
+  MODEL_NOT_ALLOWED,
+  modelAllowed,
+  personStaffLimits,
+} from "./staff-limits.js";
 import { createVoiceProvider } from "./voice-factory.js";
 
 export type OwnBotSettingsRow = {
@@ -214,7 +219,10 @@ export async function prepareOwnBotSettings(
   const model = typeof args.model === "string" ? args.model.trim() : "";
   const level = typeof args.thinkingLevel === "string" ? args.thinkingLevel.trim() : "";
   if (!model && !level) return { data };
-  if (!companyFeatures().memberModels)
+  const limits = await personStaffLimits(deps.prisma, scope.userId).catch(() =>
+    applyPersonLimits(null),
+  );
+  if (!limits.mayChooseModels)
     return {
       error:
         "Your administrator chooses the model and thinking level for every bot in the admin panel, so they cannot be changed here.",
@@ -246,6 +254,8 @@ export async function prepareOwnBotSettings(
   // A new model keeps the current thinking level when it supports it, else uses its default.
   if (!validated.ok && !level && bot.thinkingLevel) validated = await validate(null);
   if (!validated.ok) return { error: validated.error };
+  if (model && !modelAllowed(limits, validated.provider, validated.model))
+    return { error: MODEL_NOT_ALLOWED };
   if (model) {
     data.modelProvider = validated.provider;
     data.modelId = validated.model;

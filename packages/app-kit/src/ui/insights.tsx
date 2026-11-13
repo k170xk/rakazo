@@ -1,20 +1,11 @@
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
-import { useLayoutEffect, useMemo, useRef } from "react";
-import {
-  CartesianGrid,
-  ResponsiveContainer,
-  ScatterChart as RScatterChart,
-  Scatter,
-  Tooltip,
-  XAxis,
-  YAxis,
-  ZAxis,
-} from "recharts";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Tone } from "../schema.js";
 import { CHART_COLORS, cn, ease } from "./cn.js";
 import type { NumberFormat } from "./kpi.js";
 import { formatNumber } from "./kpi.js";
+import { AXIS_TEXT, axisNumber, GRID_STROKE, Legend, linear, niceTicks, useWidth } from "./plot.js";
 
 type AnyRow = Record<string, unknown>;
 
@@ -199,86 +190,151 @@ export function ScatterChart({
     }
     return [...out];
   }, [data, x, y, groupBy]);
-  const axis = {
-    tickLine: false,
-    axisLine: false,
-    tick: { fill: "hsl(var(--muted-foreground))", fontSize: 12 },
-  } as const;
+  const [ref, width] = useWidth<HTMLDivElement>();
+  const [active, setActive] = useState<AnyRow | null>(null);
+  const legendShown = Boolean(groupBy && groups.length > 1);
+  const svgHeight = height - (legendShown ? 26 : 0);
+  const margin = { top: 8, right: 12, bottom: 28, left: 56 };
+  const plotWidth = Math.max(width - margin.left - margin.right, 10);
+  const plotHeight = Math.max(svgHeight - margin.top - margin.bottom, 10);
+  const rows = groups.flatMap(([, list]) => list);
+  const xs = rows.map((row) => Number(row[x]));
+  const ys = rows.map((row) => Number(row[y]));
+  const xTicks = niceTicks(
+    Math.min(0, ...xs),
+    Math.max(0, ...xs),
+    Math.max(2, Math.floor(plotWidth / 90)),
+  );
+  const yTicks = niceTicks(Math.min(0, ...ys), Math.max(0, ...ys));
+  const sx = linear(
+    [xTicks[0]!, xTicks[xTicks.length - 1]!],
+    [margin.left, margin.left + plotWidth],
+  );
+  const sy = linear(
+    [yTicks[0]!, yTicks[yTicks.length - 1]!],
+    [margin.top + plotHeight, margin.top],
+  );
+  const sizes = size ? rows.map((row) => Number(row[size]) || 0) : [];
+  const sizeMin = Math.min(...sizes);
+  const sizeMax = Math.max(...sizes);
+  // Point area from 40 to 400 square pixels, as the previous scatter drew them.
+  const radius = (row: AnyRow) => {
+    if (!size) return 4.5;
+    const share =
+      sizeMax > sizeMin ? ((Number(row[size]) || 0) - sizeMin) / (sizeMax - sizeMin) : 0.5;
+    return Math.sqrt((40 + share * 360) / Math.PI);
+  };
   return (
-    <div className="w-full" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <RScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
-          <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 4" />
-          <XAxis
-            type="number"
-            dataKey={x}
-            name={xLabel ?? x}
-            {...axis}
-            tickFormatter={(value: number) =>
-              formatNumber(value, xFormat === "currency" ? "compact" : xFormat, currency)
-            }
-          />
-          <YAxis
-            type="number"
-            dataKey={y}
-            name={yLabel ?? y}
-            width={56}
-            {...axis}
-            tickFormatter={(value: number) =>
-              formatNumber(value, yFormat === "currency" ? "compact" : yFormat, currency)
-            }
-          />
-          {size && <ZAxis type="number" dataKey={size} range={[40, 400]} />}
-          <Tooltip
-            cursor={{ strokeDasharray: "3 4" }}
-            content={({ active, payload }) => {
-              const row = active ? (payload?.[0]?.payload as AnyRow | undefined) : undefined;
-              if (!row) return null;
-              return (
-                <div className="rounded-xl border border-border bg-popover/95 px-3 py-2 text-xs shadow-lift">
-                  {labelKey && <p className="mb-1 font-bold">{String(row[labelKey] ?? "")}</p>}
-                  <p className="text-muted-foreground">
-                    {xLabel ?? x}:{" "}
-                    <b className="text-foreground">
-                      {formatNumber(Number(row[x]), xFormat, currency)}
-                    </b>
-                  </p>
-                  <p className="text-muted-foreground">
-                    {yLabel ?? y}:{" "}
-                    <b className="text-foreground">
-                      {formatNumber(Number(row[y]), yFormat, currency)}
-                    </b>
-                  </p>
-                </div>
-              );
-            }}
-          />
-          {groups.map(([name, rows], index) => (
-            <Scatter
-              key={name}
-              name={name}
-              data={rows}
-              fill={CHART_COLORS[index % CHART_COLORS.length]}
-              fillOpacity={0.8}
-              animationDuration={800}
-              onClick={(point: { payload?: AnyRow }) => point.payload && onSelect?.(point.payload)}
-              className={onSelect ? "cursor-pointer" : undefined}
+    <div ref={ref} className="relative w-full" style={{ height }}>
+      {width > 0 && (
+        <>
+          <svg
+            width={width}
+            height={svgHeight}
+            role="img"
+            aria-label={`Scatter of ${yLabel ?? y} against ${xLabel ?? x}`}
+            className="block"
+          >
+            {yTicks.map((tick) => (
+              <g key={`y${tick}`}>
+                <line
+                  x1={margin.left}
+                  x2={margin.left + plotWidth}
+                  y1={sy(tick)}
+                  y2={sy(tick)}
+                  stroke={GRID_STROKE}
+                  strokeDasharray="3 4"
+                />
+                <text
+                  x={margin.left - 8}
+                  y={sy(tick)}
+                  textAnchor="end"
+                  dominantBaseline="middle"
+                  {...AXIS_TEXT}
+                >
+                  {axisNumber(tick, yFormat, currency)}
+                </text>
+              </g>
+            ))}
+            {xTicks.map((tick) => (
+              <g key={`x${tick}`}>
+                <line
+                  x1={sx(tick)}
+                  x2={sx(tick)}
+                  y1={margin.top}
+                  y2={margin.top + plotHeight}
+                  stroke={GRID_STROKE}
+                  strokeDasharray="3 4"
+                />
+                <text
+                  x={sx(tick)}
+                  y={margin.top + plotHeight + 20}
+                  textAnchor="middle"
+                  {...AXIS_TEXT}
+                >
+                  {axisNumber(tick, xFormat, currency)}
+                </text>
+              </g>
+            ))}
+            {groups.map(([name, list], groupIndex) =>
+              list.map((row, index) => (
+                <motion.circle
+                  key={`${name}-${index}`}
+                  cx={sx(Number(row[x]))}
+                  cy={sy(Number(row[y]))}
+                  fill={CHART_COLORS[groupIndex % CHART_COLORS.length]}
+                  fillOpacity={active === row ? 1 : 0.8}
+                  stroke={active === row ? "hsl(var(--card))" : "none"}
+                  strokeWidth={2}
+                  initial={{ r: 0 }}
+                  animate={{ r: radius(row) }}
+                  transition={{ duration: 0.6, ease, delay: Math.min(index * 0.01, 0.4) }}
+                  onPointerEnter={() => setActive(row)}
+                  onPointerLeave={() => setActive(null)}
+                  onClick={() => onSelect?.(row)}
+                  className={onSelect ? "cursor-pointer" : undefined}
+                />
+              )),
+            )}
+          </svg>
+          {active && (
+            <div
+              role="status"
+              className="pointer-events-none absolute z-10 rounded-xl border border-border bg-popover/95 px-3 py-2 text-xs shadow-lift"
+              style={{
+                left: sx(Number(active[x])) + 12,
+                top: Math.max(0, sy(Number(active[y])) - 12),
+                transform:
+                  sx(Number(active[x])) > width * 0.6
+                    ? "translateX(calc(-100% - 24px))"
+                    : undefined,
+              }}
+            >
+              {labelKey && <p className="mb-1 font-bold">{String(active[labelKey] ?? "")}</p>}
+              <p className="text-muted-foreground">
+                {xLabel ?? x}:{" "}
+                <b className="text-foreground">
+                  {formatNumber(Number(active[x]), xFormat, currency)}
+                </b>
+              </p>
+              <p className="text-muted-foreground">
+                {yLabel ?? y}:{" "}
+                <b className="text-foreground">
+                  {formatNumber(Number(active[y]), yFormat, currency)}
+                </b>
+              </p>
+            </div>
+          )}
+          {legendShown && (
+            <Legend
+              className="mt-1"
+              items={groups.map(([name], index) => ({
+                name,
+                color: CHART_COLORS[index % CHART_COLORS.length]!,
+              }))}
             />
-          ))}
-        </RScatterChart>
-      </ResponsiveContainer>
-      {groupBy && groups.length > 1 && (
-        <div className="mt-1 flex flex-wrap justify-center gap-3 text-xs text-muted-foreground">
-          {groups.map(([name], index) => (
-            <span key={name} className="inline-flex items-center gap-1.5">
-              <span
-                className="size-2 rounded-full"
-                style={{ background: CHART_COLORS[index % CHART_COLORS.length] }}
-              />
-              {name}
-            </span>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -101,6 +101,8 @@ function setup(
     // Saved choices that keep a model listed after new users stop being offered it.
     bot: { findMany: vi.fn(async () => []) },
     routine: { findMany: vi.fn(async () => []) },
+    // No staff-limit overrides: every model stays allowed.
+    user: { findUnique: vi.fn(async () => null) },
     space: {
       findFirst: vi.fn(async () => ({ organization: { modelCredits: { mode: "credits" } } })),
     },

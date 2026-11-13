@@ -1,8 +1,11 @@
+import { Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { useId, useState } from "react";
 import { useApp, useAsset } from "../sdk/index.js";
 import { cn, ease, stagger } from "./cn.js";
+import type { Command } from "./command.js";
+import { CommandPalette } from "./command.js";
 
 export type AppPage = {
   id: string;
@@ -27,8 +30,62 @@ type ShellProps = {
   onNavigate?: (id: string) => void;
   /** Full-width content instead of the centred column. */
   wide?: boolean;
+  /**
+   * Adds ⌘K search: true lists the pages; pass commands to add records and actions too. A search
+   * button appears in the bar.
+   */
+  commands?: boolean | Command[];
   children?: ReactNode;
 };
+
+type NavItem = { id: string; label: string; icon?: ReactNode; count?: number };
+
+function SearchButton({ onOpen }: { onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label="Search (⌘K)"
+      className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/80 bg-card/70 px-2.5 text-[13px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground [&_svg]:size-4"
+    >
+      <Search />
+      <span className="hidden lg:inline">Search</span>
+      <kbd className="hidden rounded border border-border px-1 text-[10px] font-semibold lg:inline">
+        ⌘K
+      </kbd>
+    </button>
+  );
+}
+
+function MobileNav({
+  items,
+  current,
+  onNavigate,
+}: {
+  items: NavItem[];
+  current?: string;
+  onNavigate: (id: string) => void;
+}) {
+  return (
+    <div className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          data-app-page={item.id}
+          data-app-label={typeof item.label === "string" ? item.label : undefined}
+          onClick={() => onNavigate(item.id)}
+          className={cn(
+            "shrink-0 rounded-full px-3 py-1.5 text-[13px] font-semibold",
+            item.id === current ? "bg-foreground text-background" : "text-muted-foreground",
+          )}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function Mark({ icon }: { icon?: ReactNode }) {
   const drawn = useAsset(useApp().app.icon);
@@ -77,10 +134,12 @@ export function AppShell({
   active,
   onNavigate,
   wide,
+  commands,
   children,
 }: ShellProps) {
   const [own, setOwn] = useState(pages?.[0]?.id ?? "");
-  const items = pages ?? nav ?? [];
+  const [searching, setSearching] = useState(false);
+  const items: NavItem[] = pages ?? nav ?? [];
   const current = active ?? own;
   const navigate = (id: string) => {
     setOwn(id);
@@ -88,6 +147,38 @@ export function AppShell({
   };
   const id = useId();
   const page = pages?.find((item) => item.id === current) ?? pages?.[0];
+  const selectedId = page?.id ?? current;
+  const palette: Command[] | null = commands
+    ? [
+        ...items.map((item) => ({
+          id: `page:${item.id}`,
+          label: item.label,
+          group: "Pages",
+          icon: item.icon,
+          run: () => navigate(item.id),
+        })),
+        ...(Array.isArray(commands) ? commands : []),
+      ]
+    : null;
+  const content = (
+    <main className={cn("mx-auto px-5 py-7 sm:px-8", !wide && "max-w-[1320px]")}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={page?.id ?? current ?? "page"}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.28, ease }}
+        >
+          {page ? page.render() : children}
+        </motion.div>
+      </AnimatePresence>
+    </main>
+  );
+  const paletteElement = palette && (
+    <CommandPalette commands={palette} open={searching} onOpenChange={setSearching} />
+  );
+
   return (
     <div className="min-h-screen bg-surface">
       <header className="glass sticky top-0 z-30 border-b border-border/70">
@@ -105,7 +196,7 @@ export function AppShell({
           {items.length > 1 && (
             <nav className="ml-4 hidden h-16 items-stretch gap-1 md:flex">
               {items.map((item) => {
-                const selected = item.id === (page?.id ?? current);
+                const selected = item.id === selectedId;
                 return (
                   <button
                     key={item.id}
@@ -138,44 +229,14 @@ export function AppShell({
             </nav>
           )}
           <div className="ml-auto flex shrink-0 items-center gap-2 [&_a]:whitespace-nowrap [&_button]:whitespace-nowrap">
+            {palette && <SearchButton onOpen={() => setSearching(true)} />}
             {actions}
           </div>
         </div>
-        {items.length > 1 && (
-          <div className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
-            {items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                data-app-page={item.id}
-                data-app-label={typeof item.label === "string" ? item.label : undefined}
-                onClick={() => navigate(item.id)}
-                className={cn(
-                  "shrink-0 rounded-full px-3 py-1.5 text-[13px] font-semibold",
-                  item.id === (page?.id ?? current)
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground",
-                )}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        )}
+        {items.length > 1 && <MobileNav items={items} current={selectedId} onNavigate={navigate} />}
       </header>
-      <main className={cn("mx-auto px-5 py-7 sm:px-8", !wide && "max-w-[1320px]")}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={page?.id ?? current ?? "page"}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.28, ease }}
-          >
-            {page ? page.render() : children}
-          </motion.div>
-        </AnimatePresence>
-      </main>
+      {content}
+      {paletteElement}
     </div>
   );
 }

@@ -105,6 +105,16 @@
   --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-fade-up: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-pulse-soft: pulse-soft 2.4s ease-in-out infinite;
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
 }
 
 @keyframes shimmer {
@@ -202,4 +212,9 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+@utility bg-dots {
+  background-image: radial-gradient(hsl(var(--muted-foreground) / 0.22) 1px, transparent 1px);
+  background-size: 18px 18px;
 }

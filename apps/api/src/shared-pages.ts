@@ -1,4 +1,4 @@
-import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
+import { MAX_UPLOAD_BASE64, SHARED_APP_CALL_PATH } from "@rakazo/app-kit/protocol";
 import {
   PageStateWriteSchema,
   SHARED_PAGE_PASSWORD_HEADER,
@@ -8,6 +8,8 @@ import type { PrismaClient } from "@rakazo/db";
 import { isAppDataError, runAsSystem } from "@rakazo/db";
 import type { Context, Hono } from "hono";
 import { AppAskError, askForApp } from "./app-ask.js";
+import type { AppCalls } from "./app-calls.js";
+import { appCallFailure } from "./app-calls.js";
 import type { SharedRowWrite } from "./apps.js";
 import {
   addSharedAppUpload,
@@ -85,6 +87,8 @@ export function mountSharedPages(
   clientIp: (c: Context) => string | undefined,
   /** The signed-in user's id, or null. */
   signedInUser: (request: Request) => Promise<string | null>,
+  /** Live changes, queries, comments and the rest, answered as the reader the link admitted. */
+  calls?: AppCalls,
 ) {
   const reads = windowCounter(MINUTE_MS);
   const writes = windowCounter(MINUTE_MS);
@@ -165,6 +169,7 @@ export function mountSharedPages(
         ...data,
         canEdit,
         ownRowsOnly: canEdit && admitted.found.dataAccess === "contribute",
+        isOwner: admitted.userId !== null && admitted.userId === admitted.found.ownerId,
         canSaveState: sharedStateWritable(
           admitted.found.page.kind,
           admitted.found.dataAccess,
@@ -276,6 +281,7 @@ export function mountSharedPages(
       prisma,
       admitted.found.pageId,
       (c.req.param("assetId") ?? "").slice(0, 64),
+      admitted.userId,
     );
     if (!asset) return c.json({ error: "Not found" }, 404, headers);
     return c.body(new Uint8Array(asset.bytes), 200, {
@@ -309,6 +315,31 @@ export function mountSharedPages(
       throw error;
     }
   });
+  app.post(
+    `${SHARED_PAGE_PATH_PREFIX}:token/${SHARED_APP_CALL_PATH}`,
+    requestBodyLimit(64_000, "That request is too large"),
+    async (c) => {
+      const admitted = await admit(c);
+      if (admitted instanceof Response) return admitted;
+      if (admitted.found.page.kind !== "app" || !calls)
+        return c.json({ error: "Not found" }, 404, headers);
+      try {
+        const result = await calls.handle(
+          {
+            pageId: admitted.found.pageId,
+            ownerId: admitted.found.ownerId,
+            userId: admitted.userId,
+            via: "shared",
+          },
+          await c.req.json().catch(() => null),
+        );
+        return c.json({ result: result ?? null }, 200, headers);
+      } catch (error) {
+        const failure = appCallFailure(error);
+        return c.json({ error: failure.error }, failure.status, headers);
+      }
+    },
+  );
   app.get(`${SHARED_PAGE_PATH_PREFIX}:token/app/export`, async (c) => {
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
@@ -319,7 +350,7 @@ export function mountSharedPages(
       return c.json({ error: "Invalid table" }, 400, headers);
     try {
       return c.json(
-        await exportSharedAppTable(prisma, admitted.found.pageId, table, format),
+        await exportSharedAppTable(prisma, admitted.found.pageId, table, format, admitted.userId),
         200,
         headers,
       );

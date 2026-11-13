@@ -438,7 +438,7 @@ export async function wakeMessageRoutines(
       : {}),
   });
   await deliverWebhookEvent(
-    { events: deps.events, jobs: deps.jobs },
+    { events: deps.events, jobs: deps.jobs, prisma: deps.prisma },
     {
       bot: { id: target.botId, spaceId: target.spaceId, userId: target.userId },
       threadId: target.threadId,

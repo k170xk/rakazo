@@ -1,6 +1,17 @@
 import { ORPCError } from "@orpc/server";
 import { routineWakeupJob } from "@rakazo/adapter-kit";
-import { parseRoutineWatch, parseRoutineWatchState, routineRunModelPin } from "@rakazo/adapters";
+import {
+  activeRoutineCapRefusal,
+  applyPersonLimits,
+  MODEL_NOT_ALLOWED,
+  modelAllowed,
+  PERSON_LIMIT_SELECT,
+  parseRoutineWatch,
+  parseRoutineWatchState,
+  personStaffLimits,
+  routineRunModelPin,
+  routineScheduleRefusal,
+} from "@rakazo/adapters";
 import type { Actor, CreateRoutineInput, Routine } from "@rakazo/contracts";
 import { canonicalPiProviderId } from "@rakazo/contracts";
 import {
@@ -10,7 +21,7 @@ import {
   routineScheduleDelayed,
 } from "@rakazo/core";
 import type { Prisma, PrismaClient } from "@rakazo/db";
-import { IsolationError } from "@rakazo/db";
+import { IsolationError, runAsSystem } from "@rakazo/db";
 import { isAdmin } from "./admins.js";
 import type { RouterDeps } from "./router.js";
 import type { RouterContext } from "./routes/context.js";
@@ -44,11 +55,41 @@ export async function assertMemberMaySetRoutineModel(
   const pinning = Boolean(next.modelProvider || next.modelId || next.thinkingLevel);
   if (!pinning && !previous?.modelProvider && !previous?.modelId && !previous?.thinkingLevel)
     return;
+  const person = await runAsSystem("read a person's model access", () =>
+    deps.prisma.user.findUnique({
+      where: { id: actor.userId },
+      select: PERSON_LIMIT_SELECT,
+    }),
+  );
+  if (pinning && !modelAllowed(applyPersonLimits(person), next.modelProvider, next.modelId))
+    throw new ORPCError("BAD_REQUEST", { message: MODEL_NOT_ALLOWED });
   const admins = deps.env.adminEmails ?? [];
   if (admins.length === 0 || (await isAdmin(deps, actor.userId))) return;
+  // Someone an admin lets choose models may also choose one for a routine.
+  if (person?.modelAccess === "choose") return;
   throw new ORPCError("FORBIDDEN", {
     message: "Your administrator chooses the model for routines.",
   });
+}
+
+/**
+ * Refuses a schedule that runs more often than the owner's runs-per-day limit, and switching on
+ * a routine past their active-routine limit. Admins follow these limits too.
+ */
+export async function assertRoutineWithinStaffLimits(
+  deps: Pick<RouterDeps, "prisma">,
+  actor: Pick<Actor, "userId">,
+  input: { crons: string[]; timezone: string; active: boolean },
+  options: { routineId?: string; wasActive?: boolean } = {},
+): Promise<void> {
+  const limits = await personStaffLimits(deps.prisma, actor.userId);
+  const scheduleRefusal = routineScheduleRefusal(limits, input);
+  if (scheduleRefusal) throw new ORPCError("BAD_REQUEST", { message: scheduleRefusal });
+  if (!input.active || options.wasActive) return;
+  const capRefusal = await activeRoutineCapRefusal(deps.prisma, actor.userId, {
+    excludeRoutineId: options.routineId,
+  });
+  if (capRefusal) throw new ORPCError("FORBIDDEN", { message: capRefusal });
 }
 
 export function assertRoutineSchedule(input: CreateRoutineInput): void {

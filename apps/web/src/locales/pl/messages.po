@@ -627,6 +627,10 @@ msgstr ""
 msgid "✅ Good context usage - {remaining}% remaining"
 msgstr ""
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "0 stops people switching on routines."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "1 day"
 msgstr ""
@@ -1110,6 +1114,10 @@ msgstr ""
 msgid "AI technical review"
 msgstr "Przegląd techniczny AI"
 
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Align"
+msgstr ""
+
 #: src/components/StorageDialog.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1210,6 +1218,10 @@ msgstr "Zawsze dozwolone"
 #: src/components/markdown-link-prompt.tsx
 msgid "Always open {site}"
 msgstr "Zawsze otwieraj {site}"
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Always uses the company model"
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "An agent is an AI teammate with its own name, job and instructions. Talk to it like a colleague: give it a task, attach files, and it plans the work, does it and tells you when it's finished."
@@ -1509,6 +1521,10 @@ msgstr ""
 msgid "Ask it anything, or for any OCSC deliverable"
 msgstr ""
 
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Ask the bot"
+msgstr ""
+
 #: src/components/apps/AppStudio.tsx
 msgid "Ask the bot to fix it"
 msgstr ""
@@ -1663,6 +1679,10 @@ msgstr "Wróć do logowania"
 
 #: src/pages/SharedChats.tsx
 msgid "Back to your chats"
+msgstr ""
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Background"
 msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
@@ -1833,6 +1853,10 @@ msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Brush radius: {brushRadius}px"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Budget in US dollars"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -2232,6 +2256,15 @@ msgstr ""
 msgid "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
 msgstr "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Chooses"
+msgstr ""
+
+#. placeholder {0}: person.allowedModels.length
+#: src/pages/AdminStaffLimits.tsx
+msgid "Chooses from {0}"
+msgstr ""
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
 msgstr "Miejscowość"
@@ -2301,8 +2334,12 @@ msgid "Click \"Select PDF\" to choose a document"
 msgstr ""
 
 #: src/components/apps/AppStudio.tsx
-msgid "Click something in the app to tell the bot what to change"
+msgid "Click something in the app to change it"
 msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+#~ msgid "Click something in the app to tell the bot what to change"
+#~ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Client"
@@ -2316,10 +2353,12 @@ msgstr ""
 msgid "Clients and projects"
 msgstr ""
 
+#: src/components/apps/AppVisualEdit.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ImageLightbox.tsx
 #: src/components/InstallAppBanner.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
+#: src/pages/AdminStaffLimits.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -2519,6 +2558,20 @@ msgstr "Komunikacja"
 msgid "Compact"
 msgstr "Kompaktowy"
 
+#. placeholder {0}: state.defaults.maxActiveRoutines
+#. placeholder {0}: state.defaults.routineRunsPerDay
+#: src/pages/AdminStaffLimits.tsx
+msgid "Company ({0})"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Company (${companyBudget})"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Company (none)"
+msgstr ""
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Company admin"
@@ -2533,7 +2586,16 @@ msgstr ""
 msgid "Company default ({0})"
 msgstr ""
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Company limits"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Company limits saved"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminStaffLimits.tsx
 msgid "Company model"
 msgstr ""
 
@@ -2543,6 +2605,14 @@ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Company plugins"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Company setting (company model)"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Company setting (may choose)"
 msgstr ""
 
 #: src/pages/AdminAssistantModels.tsx
@@ -2927,6 +2997,10 @@ msgstr "Kopiuj prompt"
 #: src/components/markdown-copy.tsx
 msgid "Copy rows"
 msgstr "Kopiuj wiersze"
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Corners"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -3505,6 +3579,10 @@ msgstr "Nie udało się zapisać głosu"
 msgid "Could not save the assistant model"
 msgstr ""
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Could not save the company limits"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not save the company model"
 msgstr ""
@@ -3523,6 +3601,10 @@ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not save the thinking level"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Could not save these limits"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
@@ -3677,6 +3759,14 @@ msgstr "Nie udało się wczytać uprawnień"
 msgid "Couldn't load messaging settings"
 msgstr "Nie udało się wczytać ustawień komunikacji"
 
+#: src/pages/AdminRoutineActivity.tsx
+msgid "Couldn't load routine activity"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Couldn't load staff limits"
+msgstr ""
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "Couldn't load staff spending"
 msgstr ""
@@ -3737,6 +3827,10 @@ msgstr ""
 msgid "Country"
 msgstr "Kraj"
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Covers schedules, change checks, webhooks and messages. A run past the limit waits until the day's window clears."
+msgstr ""
+
 #: src/components/CreateOrganizationDialog.tsx
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
@@ -3792,6 +3886,7 @@ msgid "Create your OCSC Intelligence account"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/pages/AdminRoutineActivity.tsx
 msgid "Created"
 msgstr "Utworzono"
 
@@ -3941,6 +4036,7 @@ msgstr ""
 msgid "Decline"
 msgstr "Odrzuć"
 
+#: src/components/apps/AppVisualEdit.tsx
 #: src/pages/AdminDocumentLibrary.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -4202,6 +4298,7 @@ msgid "Disabled"
 msgstr "Wyłączone"
 
 #: src/components/apps/AppCodePanel.tsx
+#: src/components/apps/AppVisualEdit.tsx
 msgid "Discard"
 msgstr ""
 
@@ -4296,6 +4393,7 @@ msgid "Don’t have an account?"
 msgstr "Nie masz konta?"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/apps/AppVisualEdit.tsx
 #: src/components/AskCard.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -4410,6 +4508,7 @@ msgstr ""
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminStaffLimits.tsx
 #: src/pages/McpServersOverlay.tsx
 msgid "Edit"
 msgstr "Edytuj"
@@ -4444,6 +4543,10 @@ msgstr "Edytuj profil"
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Edit References"
+msgstr ""
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Edit this element"
 msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
@@ -4718,6 +4821,10 @@ msgstr "Każdy zapis to wersja. Otwórz ją, aby zobaczyć zmiany; przywrócenie
 msgid "Every week"
 msgstr "Co tydzień"
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Everyone follows these unless you set something different for them below. Changes apply within a minute."
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Everyone now uses this model"
 msgstr ""
@@ -4969,6 +5076,10 @@ msgstr "Filtruj boty"
 msgid "Filter by date"
 msgstr "Filtruj według daty"
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Filter models"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Filters"
@@ -5204,6 +5315,10 @@ msgstr "Podaruj znajomemu {weeks} tyg. za darmo"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Give each agent a clear job and it will get better at it"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Give one person different limits, let them choose models or not, and pick which models they may use. Admins follow these limits too."
 msgstr ""
 
 #: src/components/GroupPeople.tsx
@@ -5664,9 +5779,17 @@ msgstr "Boty i grupy pozostaną, ale opuszczą tę sekcję."
 msgid "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
 msgstr "Rozmowa, pliki i rutyny tego bota zostaną trwale usunięte. Utworzone przez niego boty pozostaną na liście."
 
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Its look is set in code; ask the bot to change it."
+msgstr ""
+
 #: src/components/pages/PagesList.tsx
 msgid "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
 msgstr "Link udostępniania przestanie działać, a karty w czacie pokażą stronę jako usuniętą. Tej operacji nie można cofnąć."
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Its words come from data, so only its look can be changed here."
+msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Job number, project or client"
@@ -5748,14 +5871,17 @@ msgstr ""
 msgid "Lasso"
 msgstr ""
 
+#: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last 30 days"
 msgstr ""
 
+#: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last 7 days"
 msgstr ""
 
+#: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last 90 days"
 msgstr ""
@@ -5793,6 +5919,10 @@ msgstr ""
 #. placeholder {2}: formatSize(last.freedBytes)
 #: src/pages/AdminComputerAccess.tsx
 msgid "Last cleanup {0}: {1} removed, {2} freed."
+msgstr ""
+
+#: src/pages/AdminRoutineActivity.tsx
+msgid "Last created"
 msgstr ""
 
 #: src/pages/AdminStaffSpending.tsx
@@ -5847,6 +5977,11 @@ msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Limits per person"
+msgstr ""
+
+#. placeholder {0}: person.name
+#: src/pages/AdminStaffLimits.tsx
+msgid "Limits saved for {0}"
 msgstr ""
 
 #: src/pages/SpaceSearch.tsx
@@ -5978,6 +6113,8 @@ msgstr "Wczytywanie dostawców głosu…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminDocumentLibrary.tsx
+#: src/pages/AdminRoutineActivity.tsx
+#: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
@@ -6178,6 +6315,10 @@ msgstr "Maksymalna liczba obrazów w żądaniu"
 #: src/pages/Onboarding.tsx
 msgid "Maximum output tokens"
 msgstr "Maksymalna liczba tokenów odpowiedzi"
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "May choose models"
+msgstr ""
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "MCP endpoint"
@@ -6390,6 +6531,10 @@ msgstr "Model \"{modelId}\" nie znajduje się na liście."
 msgid "Model calls"
 msgstr ""
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Model choice"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Model connections"
 msgstr "Połączenia modeli"
@@ -6413,6 +6558,7 @@ msgstr "Identyfikator modelu"
 msgid "Model options"
 msgstr "Opcje modelu"
 
+#: src/pages/AdminStaffLimits.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Models"
@@ -6435,6 +6581,10 @@ msgstr "Modele z serwera"
 msgid "Models list OK. {modelCount, plural, one {# model} other {# models}} available. Chat was not tested."
 msgstr "Lista modeli działa. {modelCount, plural, one {Dostępny jest # model.} few {Dostępne są # modele.} many {Dostępnych jest # modeli.} other {Dostępne jest # modelu.}} Czat nie został przetestowany."
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Models they may pick"
+msgstr ""
+
 #: src/lib/cron.ts
 msgid "Monday"
 msgstr "poniedziałek"
@@ -6447,6 +6597,14 @@ msgstr "miesiąc"
 #: src/lib/cron.ts
 msgid "Monthly"
 msgstr "Miesięcznie"
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Monthly AI budget"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Monthly AI budget per person (USD)"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Monthly credits"
@@ -6802,6 +6960,10 @@ msgstr "Brak botów"
 msgid "No bots match"
 msgstr "Brak pasujących botów"
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "No budget"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "No category"
@@ -6973,6 +7135,10 @@ msgstr "Brak odpowiedzi"
 msgid "No results"
 msgstr "Brak wyników"
 
+#: src/pages/AdminRoutineActivity.tsx
+msgid "No routines in this period."
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "No rows"
 msgstr "Brak wierszy"
@@ -7024,6 +7190,10 @@ msgstr ""
 #: src/components/vault/VaultItemEditor.tsx
 msgid "None"
 msgstr "Brak"
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "None ticked: every model is allowed."
+msgstr ""
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
@@ -7279,6 +7449,10 @@ msgstr "dnia {day} o {time}"
 msgid "On hold"
 msgstr ""
 
+#: src/pages/AdminRoutineActivity.tsx
+msgid "On now"
+msgstr ""
+
 #. placeholder {0}: preset.time
 #: src/lib/cron.ts
 msgid "on the 1st at {0}"
@@ -7306,6 +7480,10 @@ msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Only people on the project's Design Team, and Evolve admins, can add, change or delete its work packages."
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Only the ticked models are allowed."
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx
@@ -7511,6 +7689,10 @@ msgstr ""
 msgid "Owner"
 msgstr "Właściciel"
 
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Padding"
+msgstr ""
+
 #: src/pages/AdminSharedApps.tsx
 msgid "Page"
 msgstr ""
@@ -7643,6 +7825,7 @@ msgstr ""
 
 #: src/components/GroupPeople.tsx
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
 #: src/pages/shell/references-dialog.tsx
 msgid "People"
@@ -7669,6 +7852,7 @@ msgstr ""
 msgid "Per hour"
 msgstr ""
 
+#: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Period"
 msgstr ""
@@ -7677,6 +7861,8 @@ msgstr ""
 msgid "Permissions"
 msgstr "Uprawnienia"
 
+#: src/pages/AdminRoutineActivity.tsx
+#: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Person"
@@ -7697,6 +7883,10 @@ msgstr "Osobowość"
 #: src/components/SignupSurvey.tsx
 msgid "Personal"
 msgstr "Osobiste"
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Personal: each colleague sees only their own rows. Click to share all rows."
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -8532,6 +8722,8 @@ msgstr "Przywracanie obszaru roboczego"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminDocumentLibrary.tsx
+#: src/pages/AdminRoutineActivity.tsx
+#: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
 #: src/pages/Auth.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -8601,10 +8793,31 @@ msgid "Routine"
 msgstr "Rutyna"
 
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminRoutineActivity.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
 msgstr "Rutyny"
+
+#: src/pages/AdminRoutineActivity.tsx
+msgid "Routines created each day and by whom, including ones since deleted. Updates every minute."
+msgstr ""
+
+#: src/pages/AdminRoutineActivity.tsx
+msgid "Routines created per day"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Routines on"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Routines switched on"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Routines switched on per person"
+msgstr ""
 
 #: src/pages/Paywall.tsx
 msgid "Routines that run while you're away"
@@ -8654,11 +8867,16 @@ msgid "Running…"
 msgstr "Działa…"
 
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminRoutineActivity.tsx
 msgid "Runs"
 msgstr "Uruchomienia"
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Runs in a locked-down sandbox and is reviewed before it is published"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Runs per routine per day"
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -8686,6 +8904,7 @@ msgid "Saturday"
 msgstr "sobota"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/apps/AppVisualEdit.tsx
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/SecretAskCard.tsx
@@ -8693,6 +8912,7 @@ msgstr "sobota"
 #: src/components/todos/todo-board.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminStaffLimits.tsx
 #: src/pages/Board.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/GroupPanel.tsx
@@ -8725,6 +8945,10 @@ msgstr "Zapisz opis"
 
 #: src/components/AskCard.tsx
 msgid "Save changes"
+msgstr ""
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "Save company limits"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -9084,6 +9308,10 @@ msgstr "Nazwa serwera"
 msgid "Server URL"
 msgstr "Adres URL serwera"
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Set amount"
+msgstr ""
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Set EVOLVE_PLUGINS_URL and EVOLVE_PLUGINS_SECRET on the server to connect."
 msgstr ""
@@ -9127,6 +9355,10 @@ msgstr "Konfiguracja zakończona"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Setup help"
 msgstr "Pomoc w konfiguracji"
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Shadow"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -9189,6 +9421,10 @@ msgstr ""
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Shared with you"
+msgstr ""
+
+#: src/components/apps/AppDataPanel.tsx
+msgid "Shared: colleagues see every row. Click to make rows personal."
 msgstr ""
 
 #: src/components/StorageDialog.tsx
@@ -9419,6 +9655,10 @@ msgstr "ktoś w Evolve"
 msgid "Someone saved a newer version. Reload the code to see it."
 msgstr ""
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Someone who may choose can change their assistants' and routines' models. Anyone else runs on the company model."
+msgstr ""
+
 #: src/App.tsx
 #: src/lib/user-error.ts
 msgid "Something went wrong. Try again."
@@ -9482,6 +9722,10 @@ msgstr "Model mowy"
 msgid "Spending"
 msgstr ""
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Spent this month"
+msgstr ""
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Split"
 msgstr ""
@@ -9514,6 +9758,10 @@ msgstr "Dostęp pracowników do {0}"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Staff limits"
 msgstr ""
 
 #: src/pages/AdminStaffApps.tsx
@@ -9774,6 +10022,10 @@ msgstr "Przejdź na plan roczny"
 msgid "Switch to yearly?"
 msgstr "Przejść na plan roczny?"
 
+#: src/pages/AdminRoutineActivity.tsx
+msgid "Switched on now"
+msgstr ""
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Switching…"
 msgstr "Przełączanie…"
@@ -9869,13 +10121,33 @@ msgstr "Testowanie"
 msgid "Testing…"
 msgstr "Testowanie…"
 
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Text"
+msgstr ""
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Text colour"
+msgstr ""
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Text size"
+msgstr ""
+
 #: src/components/apps/TemplateAppButton.tsx
 msgid "That app couldn't be made."
 msgstr "Nie udało się utworzyć tej aplikacji."
 
+#: src/components/apps/AppVisualEdit.tsx
+msgid "That change couldn't be saved."
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "That change couldn't be undone."
 msgstr "Nie udało się cofnąć tej zmiany."
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "That change didn't build."
+msgstr ""
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "That change wasn't saved."
@@ -9919,6 +10191,14 @@ msgstr ""
 
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "The app shows these by id, and the bot can add infographics and generated images here."
+msgstr ""
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "The app's code couldn't be loaded."
+msgstr ""
+
+#: src/components/apps/AppVisualEdit.tsx
+msgid "The app's code is still loading."
 msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
@@ -10202,6 +10482,10 @@ msgstr "Ta rozmowa jest zbyt długa dla modelu. Ponawianie nie pomoże. Rozpoczn
 msgid "This deletes all {0} versions of this file. This can't be undone."
 msgstr ""
 
+#: src/components/apps/AppVisualEdit.tsx
+msgid "This element is built from data or code, so ask the bot to change it."
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "Ten plik nie jest prawidłowym tekstem UTF-8."
@@ -10438,6 +10722,10 @@ msgstr "Traktuj jak osobę"
 #: src/pages/PluginsOverlay.tsx
 msgid "Treg token"
 msgstr "Token Treg"
+
+#: src/pages/AdminRoutineActivity.tsx
+msgid "Trend"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Trial"
@@ -10738,6 +11026,10 @@ msgstr "Użyj znalezionego modelu"
 msgid "Use a new name like Chart.tsx or theme.css."
 msgstr ""
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "Use company settings"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
 msgstr "Wybierz Połącz, aby zweryfikować klucz."
@@ -11023,6 +11315,10 @@ msgstr "Dni robocze"
 msgid "Weekends"
 msgstr "Weekendy"
 
+#: src/components/apps/AppVisualEdit.tsx
+msgid "Weight"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Welcome to a new era of AI at OCSC"
 msgstr ""
@@ -11106,6 +11402,10 @@ msgstr "Gdy zadziała webhook"
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"
 msgstr "Gdy skończy lub potrzebuje danych"
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "When someone reaches it, their chats and routines stop until next month or until you raise it. Leave empty for no budget."
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "When something changes"

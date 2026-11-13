@@ -2,7 +2,7 @@ import type { RunContext } from "./run-context.js";
 
 export const APP_CHANGE_TOOLS = new Set(["save_app", "save_page", "app_data", "app_asset"]);
 
-type AppChange = { pageId: string; code: boolean; wipes: string[] };
+type AppChange = { pageId: string; code: boolean; wipes: string[]; unprivate: string[] };
 
 const given = (value: unknown) =>
   value !== undefined && value !== null && value !== "" && !(Array.isArray(value) && !value.length);
@@ -27,27 +27,40 @@ export function appChangeOf(name: string, args: Record<string, unknown>): AppCha
       pageId,
       code: given(args.source) || given(args.edits) || given(args.title),
       wipes: [],
+      unprivate: [],
     };
   }
-  if (name === "app_asset") return { pageId, code: true, wipes: [] };
+  if (name === "app_asset") return { pageId, code: true, wipes: [], unprivate: [] };
   if (name === "app_data") {
     const action = typeof args.action === "string" ? args.action : "query";
     const table = typeof args.table === "string" ? args.table : "";
-    return { pageId, code: false, wipes: action === "replace" || action === "drop" ? [table] : [] };
+    return {
+      pageId,
+      code: false,
+      wipes: action === "replace" || action === "drop" ? [table] : [],
+      unprivate: [],
+    };
   }
   if (name !== "save_app") return null;
-  const wipes = Array.isArray(args.tables)
-    ? args.tables.flatMap((item) => {
-        const table = item as {
-          schema?: { name?: unknown };
-          rows?: unknown;
-          mode?: unknown;
-        } | null;
-        const replaces = Array.isArray(table?.rows) && (table?.mode ?? "replace") === "replace";
-        return replaces && typeof table?.schema?.name === "string" ? [table.schema.name] : [];
-      })
-    : [];
+  const tables = (Array.isArray(args.tables) ? args.tables : []).map(
+    (item) =>
+      item as {
+        schema?: { name?: unknown; personal?: unknown };
+        rows?: unknown;
+        mode?: unknown;
+      } | null,
+  );
+  const wipes = tables.flatMap((table) => {
+    const replaces = Array.isArray(table?.rows) && (table?.mode ?? "replace") === "replace";
+    return replaces && typeof table?.schema?.name === "string" ? [table.schema.name] : [];
+  });
+  const unprivate = tables.flatMap((table) =>
+    table?.schema?.personal === false && typeof table.schema.name === "string"
+      ? [table.schema.name]
+      : [],
+  );
   return {
+    unprivate,
     pageId,
     code:
       nonEmptyObject(args.files) ||
@@ -80,7 +93,16 @@ export async function appChangeNeedsPerson(
     select: { visibility: true, evolvePluginSlug: true },
   });
   if (!page) return false;
-  if (change.code && (page.visibility !== "private" || page.evolvePluginSlug)) return true;
+  const shared = page.visibility !== "private" || Boolean(page.evolvePluginSlug);
+  if (change.code && shared) return true;
+  if (change.unprivate.length) {
+    const personal = await prisma.appTable.findMany({
+      where: { pageId: change.pageId, name: { in: change.unprivate } },
+      select: { schema: true },
+    });
+    if (personal.some((table) => (table.schema as { personal?: unknown } | null)?.personal === true))
+      return true;
+  }
   if (change.wipes.length === 0) return false;
   const colleagueRow = await prisma.appRow.findFirst({
     where: {

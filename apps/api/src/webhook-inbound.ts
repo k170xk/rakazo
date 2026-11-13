@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { JobPublisher, SecretStore } from "@rakazo/adapter-kit";
 import { runContinueJob, SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import { inboundRoutineModelPin } from "@rakazo/adapters";
+import { inboundRoutineModelPin, routinesWithinDailyLimit } from "@rakazo/adapters";
 import type { MessageBlock } from "@rakazo/contracts";
 import { escapePromptData, inboundRoutineBlock, messageBlockForArtifact } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
@@ -259,12 +259,13 @@ export function inboundDeliveryClientNonce(
 }
 
 export async function deliverWebhookEvent(
-  deps: Pick<WebhookDeps, "events" | "jobs">,
+  deps: Pick<WebhookDeps, "events" | "jobs" | "prisma">,
   target: InboundTarget,
   input: {
     prompt: string;
     artifacts?: Array<{ id: string; name: string; mimeType: string; size: number }>;
     routines: Array<{
+      id: string;
       name: string;
       prompt: string;
       modelProvider: string | null;
@@ -277,10 +278,20 @@ export async function deliverWebhookEvent(
     allowParallelRun?: boolean;
   },
 ) {
+  // Routines past their owner's runs-per-day limit sit this event out; with none left there is
+  // nothing to do, while a plain bot webhook without routines still runs.
+  const routines = await routinesWithinDailyLimit(
+    deps.prisma,
+    target.bot.userId,
+    input.routines,
+    input.source,
+  );
+  if (input.routines.length > 0 && routines.length === 0)
+    return { ok: true as const, skipped: "routine_daily_limit" as const };
   const promptText =
-    input.routines.length > 0
+    routines.length > 0
       ? [
-          ...input.routines.map(inboundRoutineBlock),
+          ...routines.map(inboundRoutineBlock),
           "",
           input.source === "github"
             ? "Inbound GitHub event metadata:"
@@ -294,7 +305,7 @@ export async function deliverWebhookEvent(
   const clientNonce = input.idempotencyKey
     ? inboundDeliveryClientNonce(input.source, target.bot.id, input.idempotencyKey)
     : undefined;
-  const pin = inboundRoutineModelPin(input.routines);
+  const pin = inboundRoutineModelPin(routines);
 
   const sent = await deps.events.sendUserMessage({
     spaceId: target.bot.spaceId,

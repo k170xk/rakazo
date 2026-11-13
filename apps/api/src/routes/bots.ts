@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { ORPCError } from "@orpc/server";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import {
+  applyPersonLimits,
   archiveBot,
   checkpointAndStopComputer,
   companyVaultRows,
@@ -12,9 +13,12 @@ import {
   isSecretAlreadySaved,
   listEvolveAssistants,
   listVaultItems,
+  MODEL_NOT_ALLOWED,
+  modelAllowed,
   newVaultItemName,
   normalizeSecretDestination,
   pageUrlOrigin,
+  personStaffLimits,
   relabelVaultItem,
   removeConversationFolders,
   revealBotSecret,
@@ -484,6 +488,17 @@ export function botsRoutes(ctx: RouterContext) {
           current: { provider: existing.modelProvider, model: existing.modelId },
         });
         if (!modelChange.ok) throw new ORPCError("BAD_REQUEST", { message: modelChange.error });
+        const modelChanged =
+          (input.modelProvider !== undefined &&
+            (input.modelProvider ?? null) !== (existing.modelProvider ?? null)) ||
+          (input.modelId !== undefined && (input.modelId ?? null) !== (existing.modelId ?? null));
+        if (modelChanged) {
+          const limits = await personStaffLimits(deps.prisma, context.actor.userId).catch(() =>
+            applyPersonLimits(null),
+          );
+          if (!modelAllowed(limits, modelChange.provider, modelChange.model))
+            throw new ORPCError("BAD_REQUEST", { message: MODEL_NOT_ALLOWED });
+        }
         const thinkingLevel = input.thinkingLevel;
         if (!existing.thread) throw new IsolationError();
         // Picking a set on one bot pins it unless it is the owner's default, which unpins it.

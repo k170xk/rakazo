@@ -25,12 +25,14 @@ import {
   ChevronLeft,
   Cpu,
   FileText,
+  Gauge,
   HardDrive,
   KeyRound,
   MessageSquare,
   Mic,
   Monitor,
   Receipt,
+  Repeat,
   Share2,
   ShieldCheck,
   ToggleRight,
@@ -51,8 +53,10 @@ import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
 import { DocumentLibrarySection } from "./AdminDocumentLibrary";
 import { EvolveSafeguardsSection } from "./AdminEvolveSafeguards";
+import { RoutineActivitySection } from "./AdminRoutineActivity";
 import { SharedAppsSection } from "./AdminSharedApps";
 import { StaffAppsSection } from "./AdminStaffApps";
+import { StaffLimitsSection } from "./AdminStaffLimits";
 import { StaffSpendingSection } from "./AdminStaffSpending";
 import { WindowChrome } from "./WindowChrome";
 
@@ -69,6 +73,8 @@ const ADMIN_SECTIONS = [
   "computer",
   "storage",
   "people",
+  "limits",
+  "routines",
   "spending",
 ] as const;
 type AdminSection = (typeof ADMIN_SECTIONS)[number];
@@ -134,6 +140,8 @@ function CompanyAdminPanels() {
     { id: "computer", label: t`Computers`, icon: Monitor },
     { id: "storage", label: t`Storage and cleanup`, icon: HardDrive },
     { id: "people", label: t`People`, icon: Users },
+    { id: "limits", label: t`Staff limits`, icon: Gauge },
+    { id: "routines", label: t`Routines`, icon: Repeat },
     { id: "spending", label: t`Spending`, icon: Receipt },
   ];
 
@@ -178,6 +186,10 @@ function CompanyAdminPanels() {
         return <CompanyStorageSection state={data} onSaved={saved} />;
       case "people":
         return <CompanyPeopleSection state={data} />;
+      case "limits":
+        return <StaffLimitsSection />;
+      case "routines":
+        return <RoutineActivitySection />;
       case "spending":
         return <StaffSpendingSection />;
     }

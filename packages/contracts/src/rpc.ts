@@ -246,6 +246,13 @@ import {
 import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
+import {
+  ROUTINE_ACTIVITY_PERIODS,
+  RoutineActivitySchema,
+  StaffLimitsSchema,
+  StaffLimitsStateSchema,
+  StaffPersonLimitsSchema,
+} from "./staff-limits.js";
 
 const botId = z.object({ botId: Id });
 const groupId = z.object({ groupId: Id });
@@ -460,6 +467,18 @@ export const appContract = {
     spending: oc
       .input(z.object({ period: z.enum(STAFF_SPENDING_PERIODS).default("30d") }))
       .output(StaffSpendingSchema),
+    /** Routine and spend limits for everyone, admins included, and each person's overrides. */
+    staffLimits: {
+      get: oc.output(StaffLimitsStateSchema),
+      setDefaults: oc.input(StaffLimitsSchema.partial()).output(StaffLimitsStateSchema),
+      setPerson: oc
+        .input(StaffPersonLimitsSchema.partial().extend({ userId: z.string().min(1) }))
+        .output(StaffLimitsStateSchema),
+    },
+    /** Routines created over time, per person. */
+    routineActivity: oc
+      .input(z.object({ period: z.enum(ROUTINE_ACTIVITY_PERIODS).default("30d") }))
+      .output(RoutineActivitySchema),
     /**
      * What AI may do with each Evolve Document Library item, read and changed in Evolve as the
      * admin, who must also be an Evolve admin or Document Library manager.

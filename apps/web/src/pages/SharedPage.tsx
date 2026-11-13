@@ -194,6 +194,8 @@ function SharedPageBody() {
           title={page.title}
           app={{ id: token ?? "", version: page.version }}
           source={appSource}
+          // A link that opened without a password opened by the viewer's company sign-in.
+          maps={password === null}
         />
       </PublicPageShell>
     );

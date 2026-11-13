@@ -3,6 +3,7 @@ import type {
   CompanyAssistantModel,
   CompanyFeatures,
   CompanyTools,
+  StaffLimits,
   ThinkingLevel,
 } from "@rakazo/contracts";
 import {
@@ -10,6 +11,8 @@ import {
   companyFeaturesFrom,
   companyToolsFrom,
   DEFAULT_COMPANY_FEATURES,
+  DEFAULT_STAFF_LIMITS,
+  staffLimitsFrom,
   ThinkingLevelSchema,
 } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
@@ -28,6 +31,7 @@ let loadedFeatures: CompanyFeatures | null = null;
 let loadedModel: LiveCompanyModel | null = null;
 let loadedTools: CompanyTools | null = null;
 let loadedThinkingLevel: ThinkingLevel | null = null;
+let loadedStaffLimits: StaffLimits | null = null;
 
 export function companyFeatures(): CompanyFeatures {
   let features = loadedFeatures ?? DEFAULT_COMPANY_FEATURES;
@@ -38,6 +42,11 @@ export function companyFeatures(): CompanyFeatures {
   // The browser suite sets this so its skill specs can open the staff sections.
   if (process.env.RAKAZO_E2E_STAFF_SKILLS === "1") features = { ...features, staffSkills: true };
   return features;
+}
+
+/** Company routine and spend limits that people without their own override follow. */
+export function companyStaffLimits(): StaffLimits {
+  return loadedStaffLimits ?? DEFAULT_STAFF_LIMITS;
 }
 
 /** Built-in skills and company tools switched off for every account. */
@@ -110,7 +119,9 @@ export function setCompanyPolicy(policy: {
   model?: LiveCompanyModel | null;
   tools?: CompanyTools | null;
   thinkingLevel?: ThinkingLevel | null;
+  staffLimits?: StaffLimits | null;
 }): void {
+  if (policy.staffLimits !== undefined) loadedStaffLimits = policy.staffLimits;
   if (policy.thinkingLevel !== undefined) loadedThinkingLevel = policy.thinkingLevel;
   if (policy.tools !== undefined) loadedTools = policy.tools;
   if (policy.features !== undefined) loadedFeatures = policy.features;
@@ -131,9 +142,11 @@ export async function refreshCompanyPolicy(
         defaultModelId: true,
         deploymentModelCredentialCipher: true,
         companyThinkingLevel: true,
+        staffLimits: true,
       },
     }),
   );
+  loadedStaffLimits = staffLimitsFrom(row?.staffLimits);
   loadedFeatures = companyFeaturesFrom(row?.companyFeatures);
   loadedThinkingLevel = ThinkingLevelSchema.safeParse(row?.companyThinkingLevel).data ?? null;
   loadedTools = companyToolsWithDefaults(row?.companyTools);

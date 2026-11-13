@@ -116,6 +116,7 @@ function PagePreview({
               title={title}
               app={{ id: app.id, version: app.version }}
               source={app.source}
+              maps
               onReady={onDrawn}
             />
           ) : (

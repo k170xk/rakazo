@@ -67,6 +67,12 @@ import { listSharedApps, setSharedAppFrozen } from "../company-shared-apps.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
+import {
+  routineActivity,
+  setStaffLimitDefaults,
+  setStaffPersonLimits,
+  staffLimitsState,
+} from "../staff-limits-admin.js";
 import { staffSpending } from "../staff-spending.js";
 import {
   disconnectVoiceCredential,
@@ -212,6 +218,20 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       spending: authed.companyAdmin.spending.handler(({ context, input }) =>
         staffSpending(deps, context.actor.userId, input.period),
+      ),
+      staffLimits: {
+        get: authed.companyAdmin.staffLimits.get.handler(({ context }) =>
+          staffLimitsState(deps, context.actor.userId),
+        ),
+        setDefaults: authed.companyAdmin.staffLimits.setDefaults.handler(({ context, input }) =>
+          setStaffLimitDefaults(deps, context.actor.userId, input),
+        ),
+        setPerson: authed.companyAdmin.staffLimits.setPerson.handler(({ context, input }) =>
+          setStaffPersonLimits(deps, context.actor.userId, input),
+        ),
+      },
+      routineActivity: authed.companyAdmin.routineActivity.handler(({ context, input }) =>
+        routineActivity(deps, context.actor.userId, input.period),
       ),
       documentLibrary: {
         list: authed.companyAdmin.documentLibrary.list.handler(({ context }) =>

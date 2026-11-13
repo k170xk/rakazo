@@ -2,12 +2,21 @@ import { MotionConfig } from "motion/react";
 import type { ComponentType, ReactNode } from "react";
 import { Component, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
+import { LOC_CLASS_PREFIX, locFromClass } from "../loc.js";
 import type {
+  AppComment,
+  AppDelta,
   AppEventMessage,
+  AppFocus,
   AppInit,
+  AppLive,
+  AppPresence,
   AppRequest,
   AppResponseMessage,
+  AppRowChange,
   AppViewer,
+  MapPlace,
+  MapStyle,
 } from "../protocol.js";
 import {
   APP_EVENT,
@@ -16,11 +25,36 @@ import {
   MAX_UPLOAD_BYTES,
   requestMessage,
 } from "../protocol.js";
+import type {
+  AggregateQuery,
+  AggregateResult,
+  QueryResult,
+  RowFilter,
+  RowQuery,
+  RowSort,
+} from "../query.js";
+import { runAggregate, runQuery } from "../query.js";
 import type { Row, TableSchema } from "../schema.js";
-import { withFormulas } from "../schema.js";
+import { isLargeTable, withFormulas } from "../schema.js";
+import { mergeDelta } from "./delta.js";
 
 export { formatValue } from "../schema.js";
-export type { AppViewer, Row, TableSchema };
+export type {
+  AggregateQuery,
+  AggregateResult,
+  AppComment,
+  AppPresence,
+  AppRowChange,
+  AppViewer,
+  MapPlace,
+  MapStyle,
+  QueryResult,
+  Row,
+  RowFilter,
+  RowQuery,
+  RowSort,
+  TableSchema,
+};
 
 /** The bridge Evolve gives every staff plugin, when the app runs as one. */
 type EvolveBridge = {
@@ -41,6 +75,7 @@ declare global {
 type EvolveRequest = AppRequest | { op: "revision" } | { op: "data" };
 
 const EVOLVE_POLL_MS = 5000;
+const EVOLVE_LIVE_POLL_MS = 3000;
 
 function evolveBridge(): EvolveBridge | null {
   const bridge = typeof window === "undefined" ? undefined : window.evolve;
@@ -66,6 +101,12 @@ const EMPTY: AppInit = {
 };
 
 const store: Store = { status: "loading", local: false, init: EMPTY, version: 0 };
+/** Everyone signed in who has the app open, from the host's live checks. */
+let presence: AppPresence[] = [];
+/** The row this viewer has open, for others' presence. */
+let focus: AppFocus | null = null;
+/** The events this kit understands beyond the first ones, told to the host in init. */
+const ACCEPTS = ["delta", "presence"];
 const listeners = new Set<() => void>();
 const pending = new Map<
   string,
@@ -133,6 +174,22 @@ function withData(data: Pick<AppInit, "tables" | "revision"> & { icon?: string |
   };
 }
 
+/** Merges rows others changed into the tables this copy holds. */
+function applyDelta(delta: AppDelta) {
+  if (delta.revision <= store.init.revision) return;
+  store.init = {
+    ...store.init,
+    tables: mergeDelta(store.init.tables, delta),
+    revision: delta.revision,
+  };
+  changed();
+}
+
+function setPresence(people: AppPresence[]) {
+  presence = Array.isArray(people) ? people : [];
+  changed();
+}
+
 function receive(event: MessageEvent) {
   const data = event.data as AppResponseMessage | AppEventMessage | null;
   if (!data || typeof data !== "object") return;
@@ -156,6 +213,14 @@ function receive(event: MessageEvent) {
     changed();
   } else if (data.event === "select") {
     setPicking(data.enabled);
+  } else if (data.event === "patch") {
+    patchElements(data);
+  } else if (data.event === "selected") {
+    markSelected(data.loc);
+  } else if (data.event === "delta") {
+    applyDelta(data.delta);
+  } else if (data.event === "presence") {
+    setPresence(data.people);
   }
 }
 
@@ -172,7 +237,7 @@ function startInEvolve(bridge: EvolveBridge) {
   bridge
     .ready()
     .then(async (context) => {
-      const init = await send<AppInit>({ op: "init" });
+      const init = await send<AppInit>({ op: "init", accepts: ACCEPTS });
       store.init = { ...init, theme: themeOf(context?.theme?.mode) };
       store.status = "ready";
       applyTheme(store.init.theme);
@@ -183,24 +248,39 @@ function startInEvolve(bridge: EvolveBridge) {
         changed();
       });
       let checking = false;
-      setInterval(() => {
-        if (checking || document.visibilityState !== "visible") return;
-        checking = true;
-        send<{ revision: number }>({ op: "revision" })
-          .then(async ({ revision }) => {
-            if (revision <= store.init.revision) return;
-            const data = await send<Pick<AppInit, "tables" | "revision"> & { icon?: string }>({
-              op: "data",
+      const readAll = async () => {
+        const data = await send<Pick<AppInit, "tables" | "revision"> & { icon?: string }>({
+          op: "data",
+        });
+        if (data.revision < store.init.revision) return;
+        store.init = withData(data);
+        changed();
+      };
+      const live = store.init.features.includes("live");
+      setInterval(
+        () => {
+          if (checking || document.visibilityState !== "visible") return;
+          checking = true;
+          const check = live
+            ? send<AppLive>({ op: "live", since: store.init.revision, focus }).then(
+                async (answer) => {
+                  setPresence(answer.presence);
+                  if (answer.revision <= store.init.revision) return;
+                  if (answer.full || !answer.delta) await readAll();
+                  else applyDelta(answer.delta);
+                },
+              )
+            : send<{ revision: number }>({ op: "revision" }).then(async ({ revision }) => {
+                if (revision > store.init.revision) await readAll();
+              });
+          check
+            .catch(() => {})
+            .finally(() => {
+              checking = false;
             });
-            if (data.revision < store.init.revision) return;
-            store.init = withData(data);
-            changed();
-          })
-          .catch(() => {})
-          .finally(() => {
-            checking = false;
-          });
-      }, EVOLVE_POLL_MS);
+        },
+        live ? EVOLVE_LIVE_POLL_MS : EVOLVE_POLL_MS,
+      );
     })
     .catch(() => goLocal());
 }
@@ -219,7 +299,7 @@ function start() {
     startInEvolve(bridge);
     return;
   }
-  send<AppInit>({ op: "init" }, 8000).then(
+  send<AppInit>({ op: "init", accepts: ACCEPTS }, 8000).then(
     (init) => {
       store.init = init;
       store.status = "ready";
@@ -267,9 +347,13 @@ function newId() {
     .slice(0, 14)}`;
 }
 
+/** Saves this copy made, so server-read pages (useRows) read again at once. */
+let writes = 0;
+
 function replaceRows(table: string, update: (rows: Row[]) => Row[]) {
   const current = store.init.tables[table];
-  if (!current) return;
+  // A large table's rows live on the server; useRows reads them again after the write.
+  if (!current || (!store.local && isLargeTable(current.schema))) return;
   store.init = {
     ...store.init,
     tables: { ...store.init.tables, [table]: { ...current, rows: update(current.rows) } },
@@ -277,9 +361,23 @@ function replaceRows(table: string, update: (rows: Row[]) => Row[]) {
   changed();
 }
 
+function wrote(table: string) {
+  const current = store.init.tables[table];
+  if (current && isLargeTable(current.schema)) {
+    writes += 1;
+    changed();
+  }
+}
+
 export type TableApi<T extends Record<string, unknown> = Record<string, unknown>> = {
-  /** Rows with formula columns filled in; empty while loading. */
+  /** The table's name, for comments, history and presence. */
+  name: string;
+  /** Rows with formula columns filled in; empty while loading, and always for a large table. */
   rows: Array<Row & T>;
+  /** A large table: read it with useRows and useAggregate, not rows. */
+  large: boolean;
+  /** How many rows it has (for a large table, from the server). */
+  count: number;
   schema: TableSchema | null;
   loading: boolean;
   /** False for visitors and read-only viewers: hide add, edit and delete controls. */
@@ -330,9 +428,13 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
           table: name,
           row: row as Record<string, unknown>,
         });
+        // A live check may have brought the saved row in already.
         replaceRows(name, (list) =>
-          list.map((item) => (item._id === optimistic._id ? saved : item)),
+          list
+            .filter((item) => item._id !== saved._id)
+            .map((item) => (item._id === optimistic._id ? saved : item)),
         );
+        wrote(name);
         return saved;
       } catch (error) {
         replaceRows(name, (list) => list.filter((item) => item._id !== optimistic._id));
@@ -356,6 +458,7 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
           patch: patch as Record<string, unknown>,
         });
         replaceRows(name, (list) => list.map((item) => (item._id === id ? saved : item)));
+        wrote(name);
       } catch (error) {
         if (before)
           replaceRows(name, (list) => list.map((item) => (item._id === id ? before : item)));
@@ -371,6 +474,7 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
       if (store.local) return;
       try {
         await send({ op: "rows.remove", table: name, id });
+        wrote(name);
       } catch (error) {
         if (before) replaceRows(name, () => before);
         throw error;
@@ -396,7 +500,10 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
     [canEdit, ownRowsOnly],
   );
   return {
+    name,
     rows,
+    large: isLargeTable(schema),
+    count: table?.count ?? rows.length,
     schema,
     loading: current.status !== "ready",
     canEdit,
@@ -553,6 +660,402 @@ export const ai = {
   },
 };
 
+const MAX_TILES = 400;
+const tiles = new Map<string, Promise<string | null>>();
+
+export const maps = {
+  /** True when the host can draw map backgrounds and look up places for this app. */
+  available: () => store.init.features.includes("maps") && !store.local,
+  /** One map square as a picture URL, or null when it can't be had; kept while the app is open. */
+  tile(style: MapStyle, z: number, x: number, y: number): Promise<string | null> {
+    if (!maps.available()) return Promise.resolve(null);
+    const key = `${style}/${z}/${x}/${y}`;
+    const known = tiles.get(key);
+    if (known) {
+      tiles.delete(key);
+      tiles.set(key, known);
+      return known;
+    }
+    const promise = send<{ mime: string; base64: string }>(
+      { op: "map.tile", style, z, x, y },
+      15_000,
+    ).then(
+      (tile) => `data:${tile.mime};base64,${tile.base64}`,
+      () => {
+        tiles.delete(key);
+        return null;
+      },
+    );
+    tiles.set(key, promise);
+    if (tiles.size > MAX_TILES) tiles.delete(tiles.keys().next().value!);
+    return promise;
+  },
+  /** Places matching an address, Eircode, postcode or name, best first (up to five). */
+  async find(query: string): Promise<MapPlace[]> {
+    const text = query.trim().slice(0, 200);
+    if (!text || !maps.available()) return [];
+    return send<MapPlace[]>({ op: "map.find", query: text }, 15_000);
+  },
+};
+
+const has = (feature: string) => !store.local && store.init.features.includes(feature);
+
+/** Waits a moment before asking, so typing a search sends one request, not one per key. */
+function useServerAnswer<T>(
+  ask: (() => Promise<T>) | null,
+  local: () => T,
+  deps: unknown[],
+  empty: T,
+  delayMs = 200,
+): { data: T; loading: boolean; error: string | null } {
+  const current = useStore();
+  const [state, setState] = useState<{ data: T; loading: boolean; error: string | null }>({
+    data: empty,
+    loading: true,
+    error: null,
+  });
+  const ready = current.status === "ready";
+  const revision = current.init.revision;
+  const saved = writes;
+  useEffect(() => {
+    if (!ready) return;
+    if (!ask) {
+      setState({ data: local(), loading: false, error: null });
+      return;
+    }
+    let cancelled = false;
+    setState((before) => ({ ...before, loading: true }));
+    const timer = setTimeout(() => {
+      ask().then(
+        (data) => {
+          if (!cancelled) setState({ data, loading: false, error: null });
+        },
+        (error: unknown) => {
+          if (!cancelled)
+            setState((before) => ({
+              ...before,
+              loading: false,
+              error: error instanceof Error ? error.message : "That did not load.",
+            }));
+        },
+      );
+    }, delayMs);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [ready, revision, saved, ...deps]);
+  return state;
+}
+
+export type RowsApi<T extends Record<string, unknown> = Record<string, unknown>> = {
+  rows: Array<Row & T>;
+  /** How many rows match, across every page. */
+  total: number;
+  pages: number;
+  loading: boolean;
+  error: string | null;
+  schema: TableSchema | null;
+};
+
+/**
+ * One page of a table's rows, searched, filtered and sorted by the server: the way to show a
+ * large table (and fine for any). It reads again when anyone changes the data, so it stays live.
+ * Search needs every word somewhere in the row; filters compare one column each.
+ */
+export function useRows<T extends Record<string, unknown> = Record<string, unknown>>(
+  table: string,
+  query: RowQuery = {},
+  options: { skip?: boolean } = {},
+): RowsApi<T> {
+  const current = useStore();
+  const schema = current.init.tables[table]?.schema ?? null;
+  const key = JSON.stringify(query);
+  const skip = Boolean(options.skip);
+  const { data, loading, error } = useServerAnswer<QueryResult>(
+    has("query") && !skip ? () => send<QueryResult>({ op: "rows.query", table, query }) : null,
+    () => {
+      const held = store.init.tables[table];
+      return held && !skip ? runQuery(held.schema, held.rows, query) : { rows: [], total: 0 };
+    },
+    [table, key, skip],
+    { rows: [], total: 0 },
+  );
+  const pageSize = Math.min(Math.max(query.pageSize ?? 50, 1), 200);
+  const rows = useMemo(
+    () =>
+      (schema ? data.rows.map((row) => withFormulas(schema, row)) : data.rows) as Array<Row & T>,
+    [data.rows, schema],
+  );
+  return {
+    rows,
+    total: data.total,
+    pages: Math.max(1, Math.ceil(data.total / pageSize)),
+    loading,
+    error,
+    schema,
+  };
+}
+
+/**
+ * Counts, sums, averages, minimums and maximums over a table (or the rows matching filters),
+ * optionally one group per value of a column or per day, week, month or year of a date column.
+ * Worked out by the server, so it suits large tables and dashboards; it stays live.
+ */
+export function useAggregate(
+  table: string,
+  query: AggregateQuery = {},
+  options: { skip?: boolean } = {},
+): AggregateResult & { loading: boolean; error: string | null } {
+  const key = JSON.stringify(query);
+  const skip = Boolean(options.skip);
+  const { data, loading, error } = useServerAnswer<AggregateResult>(
+    has("query") && !skip
+      ? () => send<AggregateResult>({ op: "rows.aggregate", table, query })
+      : null,
+    () => {
+      const held = store.init.tables[table];
+      return held && !skip ? runAggregate(held.schema, held.rows, query) : { groups: [], total: 0 };
+    },
+    [table, key, skip],
+    { groups: [], total: 0 },
+    0,
+  );
+  return { ...data, loading, error };
+}
+
+/**
+ * Who else has the app open right now (people signed in), and what each has open. Pair it with
+ * useFocus so others see which row you are on.
+ */
+export function usePresence(): { others: AppPresence[]; me: AppPresence | null } {
+  useStore();
+  return {
+    others: presence.filter((person) => !person.me),
+    me: presence.find((person) => person.me) ?? null,
+  };
+}
+
+/** Tells others which row this viewer has open while the component is shown. */
+export function useFocus(table: string | null | undefined, rowId: string | null | undefined) {
+  useEffect(() => {
+    const next = table && rowId ? { table, rowId } : null;
+    focus = next;
+    if (!store.local && hosted() && !evolveBridge())
+      void send({ op: "presence.set", focus: next }).catch(() => {});
+    return () => {
+      if (focus?.table !== next?.table || focus?.rowId !== next?.rowId) return;
+      focus = null;
+      if (!store.local && hosted() && !evolveBridge())
+        void send({ op: "presence.set", focus: null }).catch(() => {});
+    };
+  }, [table, rowId]);
+}
+
+const localComments = new Map<string, AppComment[]>();
+
+/**
+ * The conversation on one row: comments oldest first, adding (needs a click, like saving) and
+ * removing your own. available is false for visitors with only the password, and in previews
+ * comments stay in the page.
+ */
+export function useComments(table: string, rowId: string | null | undefined) {
+  const current = useStore();
+  const available = has("comments");
+  const localKey = `${table}:${rowId}`;
+  const [, redraw] = useState(0);
+  const { data, loading, error } = useServerAnswer<AppComment[]>(
+    available && rowId ? () => send<AppComment[]>({ op: "comments.list", table, rowId }) : null,
+    () => (rowId ? (localComments.get(localKey) ?? []) : []),
+    [table, rowId, available],
+    [],
+    0,
+  );
+  const [added, setAdded] = useState<AppComment[]>([]);
+  useEffect(() => setAdded([]), [data]);
+  const comments = useMemo(() => {
+    const known = new Set(data.map((comment) => comment.id));
+    return [...data, ...added.filter((comment) => !known.has(comment.id))];
+  }, [data, added]);
+  const add = useCallback(
+    async (body: string) => {
+      const text = body.trim();
+      if (!text || !rowId) return;
+      if (!available) {
+        const comment: AppComment = {
+          id: newId(),
+          body: text,
+          by: current.init.viewer.name ?? "You",
+          mine: true,
+          createdAt: new Date().toISOString(),
+        };
+        localComments.set(localKey, [...(localComments.get(localKey) ?? []), comment]);
+        redraw((value) => value + 1);
+        return;
+      }
+      const saved = await send<AppComment>({ op: "comments.add", table, rowId, body: text });
+      setAdded((list) => [...list, saved]);
+    },
+    [available, table, rowId, localKey, current.init.viewer.name],
+  );
+  const remove = useCallback(
+    async (commentId: string) => {
+      if (!available) {
+        localComments.set(
+          localKey,
+          (localComments.get(localKey) ?? []).filter((comment) => comment.id !== commentId),
+        );
+        redraw((value) => value + 1);
+        return;
+      }
+      await send({ op: "comments.remove", commentId });
+      setAdded((list) => list.filter((comment) => comment.id !== commentId));
+    },
+    [available, localKey],
+  );
+  return {
+    comments: available ? comments : rowId ? (localComments.get(localKey) ?? []) : [],
+    loading: available && loading,
+    error,
+    /** Comments are kept on the server for everyone (false for visitors and previews). */
+    available,
+    /** Whether this viewer may write one: anyone signed in, or anyone in a preview. */
+    canComment: available || current.local,
+    /** The owner may remove anyone's comment; others only their own (comment.mine). */
+    canRemoveAny: current.init.viewer.role === "owner",
+    add,
+    remove,
+  };
+}
+
+/** How many comments each row of a table has, for badges in lists. */
+export function useCommentCounts(table: string): Record<string, number> {
+  const { data } = useServerAnswer<Record<string, number>>(
+    has("comments") ? () => send<Record<string, number>>({ op: "comments.counts", table }) : null,
+    () => {
+      const counts: Record<string, number> = {};
+      for (const [key, list] of localComments) {
+        const [name, rowId] = key.split(":");
+        if (name === table && rowId && list.length) counts[rowId] = list.length;
+      }
+      return counts;
+    },
+    [table],
+    {},
+    0,
+  );
+  return data;
+}
+
+/** What happened to one row, newest first: who added and changed it, and each change's columns. */
+export function useRowHistory(table: string, rowId: string | null | undefined) {
+  const available = has("history");
+  const { data, loading, error } = useServerAnswer<AppRowChange[]>(
+    available && rowId ? () => send<AppRowChange[]>({ op: "rows.history", table, rowId }) : null,
+    () => [],
+    [table, rowId, available],
+    [],
+    0,
+  );
+  return { changes: data, loading: available && loading, error, available };
+}
+
+/**
+ * Evolve's records, read as the person viewing: only tools that read, and only what they could
+ * see in Evolve themselves. When someone else's app shows them Evolve data, that copy then stops
+ * saving, commenting and opening links until reopened, so their data stays with them.
+ */
+export const evolve = {
+  available: () => has("evolve"),
+  async read<T = unknown>(tool: string, args: Record<string, unknown> = {}): Promise<T> {
+    return send<T>({ op: "evolve.read", tool, args }, 70_000);
+  },
+};
+
+/** An Evolve read that loads with the component and again when asked (refresh). */
+export function useEvolve<T = unknown>(tool: string, args: Record<string, unknown> = {}) {
+  const [nonce, setNonce] = useState(0);
+  const key = JSON.stringify(args);
+  const available = has("evolve");
+  const { data, loading, error } = useServerAnswer<T | null>(
+    available ? () => evolve.read<T>(tool, args) : null,
+    () => null,
+    [tool, key, nonce, available],
+    null,
+    0,
+  );
+  return {
+    data,
+    loading: available && loading,
+    error: available ? error : "Evolve data shows when the app is opened in OCSC Intelligence.",
+    available,
+    refresh: () => setNonce((value) => value + 1),
+  };
+}
+
+export type WeatherDay = {
+  date: string;
+  max: number | null;
+  min: number | null;
+  rain: number | null;
+  rainChance: number | null;
+  wind: number | null;
+  code: number | null;
+  summary: string | null;
+};
+export type Weather = {
+  timezone: string | null;
+  current: {
+    temperature: number | null;
+    wind: number | null;
+    code: number | null;
+    summary: string | null;
+  } | null;
+  days: WeatherDay[];
+  units: { temperature: string; rain: string; wind: string };
+  source: string;
+};
+export type Rates = {
+  base: string;
+  date: string | null;
+  rates: Record<string, number>;
+  source: string;
+};
+export type Holiday = {
+  date: string;
+  name: string;
+  localName: string | null;
+  /** Regions it applies to (GB-ENG, GB-SCT…), or null for the whole country. */
+  regions: string[] | null;
+};
+
+/** Free public data fetched by the server: no keys, no charge, cached. */
+export const services = {
+  available: () => has("services"),
+  /** Today and the next days (1–16) at a place: temperatures °C, rain mm and chance %, wind km/h. */
+  weather: (lat: number, lon: number, days = 7) =>
+    send<Weather>({ op: "service", name: "weather", params: { lat, lon, days } }, 20_000),
+  /** The European Central Bank's reference rates from a base currency (EUR by default). */
+  rates: (base = "EUR", to?: string[]) =>
+    send<Rates>({ op: "service", name: "rates", params: { base, to } }, 20_000),
+  /** Public holidays for a country (IE, GB…) and year. */
+  holidays: (country = "IE", year?: number) =>
+    send<Holiday[]>({ op: "service", name: "holidays", params: { country, year } }, 20_000),
+};
+
+/** A service answer that loads with the component; null until it arrives or where unavailable. */
+export function useService<T>(ask: () => Promise<T>, deps: unknown[]) {
+  const available = has("services");
+  const { data, loading, error } = useServerAnswer<T | null>(
+    available ? ask : null,
+    () => null,
+    [available, ...deps],
+    null,
+    0,
+  );
+  return { data, loading: available && loading, error, available };
+}
+
 /** Saves text as a file for the reader (call from a click). */
 export async function download(filename: string, text: string, mime = "text/plain") {
   if (store.local) {
@@ -604,14 +1107,60 @@ function setPicking(enabled: boolean) {
   }
 }
 
+const LOC_SELECTOR = `[data-loc],[class*="${LOC_CLASS_PREFIX}"]`;
+
 function pickTarget(target: EventTarget | null): HTMLElement | null {
-  return target instanceof Element ? (target.closest("[data-loc]") as HTMLElement | null) : null;
+  return target instanceof Element ? (target.closest(LOC_SELECTOR) as HTMLElement | null) : null;
+}
+
+/** Where an element was written: its data-loc, or the place class a kit component passed on. */
+function locOf(element: Element): string {
+  const attribute = element.getAttribute("data-loc");
+  if (attribute) return attribute;
+  for (const name of element.classList) {
+    const loc = locFromClass(name);
+    if (loc) return loc;
+  }
+  return "";
+}
+
+function elementsAt(loc: string): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>(LOC_SELECTOR)].filter(
+    (element) => locOf(element) === loc,
+  );
+}
+
+function patchElements(patch: Extract<AppEventMessage, { event: "patch" }>) {
+  for (const element of elementsAt(patch.loc)) {
+    element.classList.remove(...patch.remove);
+    element.classList.add(...patch.add);
+    for (const { from, to } of patch.texts) {
+      if (!from || from === to) continue;
+      for (const attribute of ["placeholder", "title", "alt", "aria-label"]) {
+        if (element.getAttribute(attribute) === from) element.setAttribute(attribute, to);
+      }
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const value = node.nodeValue ?? "";
+        if (value.replace(/\s+/g, " ").trim() === from) {
+          node.nodeValue = value.replace(value.trim(), to);
+          break;
+        }
+      }
+    }
+  }
+}
+
+function markSelected(loc: string | null) {
+  for (const element of document.querySelectorAll("[data-ocsc-selected]"))
+    element.removeAttribute("data-ocsc-selected");
+  if (loc) for (const element of elementsAt(loc)) element.setAttribute("data-ocsc-selected", "");
 }
 
 function installPicker() {
   const style = document.createElement("style");
   style.textContent =
-    "[data-ocsc-picking] *{cursor:crosshair!important}[data-ocsc-hover]{outline:2px solid hsl(95 49% 51%)!important;outline-offset:2px;border-radius:6px}";
+    "[data-ocsc-picking] *{cursor:crosshair!important}[data-ocsc-hover],[data-ocsc-selected]{outline:2px solid hsl(95 49% 51%)!important;outline-offset:2px}[data-ocsc-selected]{outline-style:dashed!important}";
   document.head.append(style);
   document.addEventListener(
     "mouseover",
@@ -635,7 +1184,7 @@ function installPicker() {
       window.parent.postMessage(
         {
           type: APP_PICK,
-          loc: element.getAttribute("data-loc") ?? "",
+          loc: locOf(element),
           tag: element.tagName.toLowerCase(),
           text: (element.innerText || "").replace(/\s+/g, " ").trim().slice(0, 160),
         },

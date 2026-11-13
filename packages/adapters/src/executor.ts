@@ -256,6 +256,7 @@ import {
 import { loadAgentScratchpadContext } from "./scratchpad-context.js";
 import { inferScript } from "./scripted-runtime.js";
 import { builtinAgentSkillRecords, listAgentSkillRecords } from "./skill-tools.js";
+import { modelAllowed, monthlyBudgetRefusal, personStaffLimits } from "./staff-limits.js";
 import {
   filterStrategicInitiativeTools,
   isStrategicInitiativeRun,
@@ -808,7 +809,19 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         );
         // While members cannot choose models, every run uses the company model and thinking level,
         // whatever its bot, routine or owner's own connections say.
-        const companyChoosesModel = !companyFeatures().memberModels;
+        // An admin can let one person choose or not, and limit them to some models; a choice off
+        // that list also runs on the company model.
+        const ownerLimits = await personStaffLimits(deps.prisma, run.userId).catch(() => null);
+        const memberModelChoice = runModelChoice(run, bot);
+        const companyChoosesModel = ownerLimits
+          ? !ownerLimits.mayChooseModels ||
+            !modelAllowed(
+              ownerLimits,
+              memberModelChoice.modelProvider,
+              memberModelChoice.modelId,
+            ) ||
+            !modelAllowed(ownerLimits, settings?.defaultModelProvider, settings?.defaultModelId)
+          : !companyFeatures().memberModels;
         // modelPinned distinguishes the captured choice from an attempt's recorded model.
         const modelPinned = run.modelPinned && !companyChoosesModel;
         // A bot started from an Evolve assistant takes the model an admin chose for that
@@ -828,7 +841,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               modelId: null,
               thinkingLevel: assistantModel?.thinkingLevel ?? companyThinkingLevel(),
             }
-          : runModelChoice(run, bot);
+          : memberModelChoice;
         const hasModelOverride = Boolean(modelChoice.modelProvider && modelChoice.modelId);
         const overrideCredential =
           !pinnedComputerModels && hasModelOverride && modelChoice.modelProvider
@@ -1147,6 +1160,12 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         );
         if (overDailyLimit) {
           await failRunBeforeModel(overDailyLimit, true);
+          return;
+        }
+        // Covers chats and automatic work alike; an unreadable budget never stops work.
+        const overBudget = await monthlyBudgetRefusal(deps.prisma, run.userId).catch(() => null);
+        if (overBudget) {
+          await failRunBeforeModel(overBudget, true);
           return;
         }
         if (bot.evolveAssistantId) {

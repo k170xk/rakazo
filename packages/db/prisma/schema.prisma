@@ -48,6 +48,17 @@ model User {
   computerAccess              String?
   /// Computer storage limit an admin set for this person; null follows the company default.
   storageLimitMb              Int?
+  /// Times each of this person's routines may run in 24 hours; null follows the company limit.
+  routineRunsPerDay           Int?
+  /// Routines this person may keep switched on at once; null follows the company limit.
+  maxActiveRoutines           Int?
+  /// AI spend allowed per calendar month (UTC) in US dollars; null follows the company
+  /// budget and a negative value means no budget for this person.
+  monthlyBudgetUsd            Float?
+  /// "choose" or "fixed" as an admin set it; null follows the company memberModels switch.
+  modelAccess                 String?
+  /// "provider/modelId" entries this person may pick; empty allows every model.
+  allowedModels               String[]  @default([])
   sessions                    Session[]
   accounts                    Account[]
   passkeys                    Passkey[]
@@ -565,6 +576,8 @@ model DeploymentSettings {
   companyFeatures                 Json      @default("{}")
   /// Built-in skills and company tools an admin switched off for every account.
   companyTools                    Json      @default("{}")
+  /// Company routine and spend limits for staff; absent keys take their defaults.
+  staffLimits                     Json      @default("{}")
   /// When the company model (defaultModelProvider, defaultModelId and its key) last changed.
   companyModelUpdatedAt           DateTime?
   /// How hard every bot thinks on the company model while members cannot choose models.
@@ -1869,6 +1882,9 @@ model Page {
   appRows               AppRow[]
   appAssets             AppAsset[]
   appDataChanges        AppDataChange[]
+  appRowRemovals        AppRowRemoval[]
+  appPresence           AppPresence[]
+  appComments           AppComment[]
 
   @@index([spaceId, userId, updatedAt])
   @@index([botId])
@@ -1944,10 +1960,57 @@ model AppRow {
   updatedBy String?
   /// Who added it: a user id, or null for the agent, imports and rows from before this was kept.
   createdBy String?
+  /// The app revision its last write moved to, set by a trigger, so open copies fetch only newer rows.
+  revision  Int      @default(0)
 
   @@index([tableId, position])
   @@index([pageId])
+  @@index([pageId, revision])
   @@map("app_rows")
+}
+
+/// A row that was removed, noted by a trigger so open copies drop it without reading every row.
+model AppRowRemoval {
+  id        BigInt   @id @default(autoincrement())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  tableId   String
+  rowId     String
+  revision  Int
+  createdAt DateTime @default(now())
+
+  @@index([pageId, revision])
+  @@map("app_row_removals")
+}
+
+/// Someone signed in who has an app open, refreshed while they look; focus is the row they have open.
+model AppPresence {
+  id     String   @id @default(cuid())
+  pageId String
+  page   Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  userId String
+  focus  Json?
+  seenAt DateTime @default(now())
+
+  @@unique([pageId, userId])
+  @@index([pageId, seenAt])
+  @@map("app_presence")
+}
+
+/// A comment on one row of an app; kept when the row is removed so undoing that brings them back.
+model AppComment {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  table     String
+  rowId     String
+  /// Who wrote it; null once their account is gone.
+  userId    String?
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([pageId, table, rowId])
+  @@map("app_comments")
 }
 
 /// One change to an app's data, kept so the owner can see it and undo it: a row added, changed or
@@ -2030,6 +2093,34 @@ model UsageRecord {
 
   @@index([spaceId, userId, createdAt])
   @@map("usage_records")
+}
+
+/// One row each time a routine starts work, from its schedule, a change check or an inbound
+/// event, counted against the owner's runs-per-day limit. Not a relation so the count and the
+/// admin dashboard keep a deleted routine's history.
+model RoutineFiring {
+  id        String   @id @default(cuid())
+  routineId String
+  userId    String
+  /// "schedule", "watch", "webhook", "github" or "messaging".
+  source    String
+  firedAt   DateTime @default(now())
+
+  @@index([routineId, firedAt])
+  @@index([userId, firedAt])
+  @@map("routine_firings")
+}
+
+/// Every routine ever created, written by a database trigger on routines and kept after the
+/// routine is deleted, for the admin dashboard.
+model RoutineCreation {
+  id        String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  routineId String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("routine_creations")
 }
 
 model NotificationPreference {

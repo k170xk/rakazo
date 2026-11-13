@@ -1,11 +1,13 @@
 import type { EvolvePluginsConnection } from "@rakazo/adapters";
 import { verifyAppDataToken } from "@rakazo/adapters";
 import type { AppInit } from "@rakazo/app-kit/protocol";
-import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
+import { APP_CALL_OPS, MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
 import { PageStateWriteSchema } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { isAppDataError, runAsSystem } from "@rakazo/db";
 import type { Hono } from "hono";
+import type { AppCalls } from "./app-calls.js";
+import { appCallFailure } from "./app-calls.js";
 import type { SharedRowWrite } from "./apps.js";
 import {
   addSharedAppUpload,
@@ -37,6 +39,8 @@ export function mountEvolveAppData(
   app: Hono,
   prisma: PrismaClient,
   connection: EvolvePluginsConnection | null,
+  /** Live changes, queries, comments and the rest, answered as the person Evolve signed. */
+  calls?: AppCalls,
 ) {
   const writes = windowCounter(MINUTE_MS);
   const uploads = windowCounter(MINUTE_MS);
@@ -56,6 +60,7 @@ export function mountEvolveAppData(
           currentVersion: true,
           dataAccess: true,
           frozenAt: true,
+          userId: true,
           user: { select: { email: true, emailVerified: true } },
         },
       });
@@ -109,15 +114,34 @@ export function mountEvolveAppData(
         tables: data.tables,
         state: data.state as Record<string, unknown>,
         revision: data.revision,
-        features: canEdit ? ["assets", "uploads"] : ["assets"],
+        features: [
+          "assets",
+          ...(canEdit ? ["uploads"] : []),
+          ...(calls
+            ? ["live", "query", ...(viewer ? ["comments", "history", "services"] : [])]
+            : []),
+          ...(calls && isOwner ? ["evolve"] : []),
+        ],
       };
       return c.json(init, 200, headers);
     }
     if (op === "revision")
       return c.json({ revision: await readSharedAppRevision(prisma, page.id) }, 200, headers);
+    if (calls && APP_CALL_OPS.has(op as never)) {
+      try {
+        const result = await calls.handle(
+          { pageId: page.id, ownerId: page.userId, userId: viewer?.id ?? null, via: "evolve" },
+          body,
+        );
+        return c.json(result ?? null, 200, headers);
+      } catch (error) {
+        const failure = appCallFailure(error);
+        return c.json({ error: failure.error }, failure.status, headers);
+      }
+    }
     if (op === "asset") {
       const id = typeof body?.id === "string" ? body.id.slice(0, 64) : "";
-      const asset = id ? await readSharedAppAsset(prisma, page.id, id) : null;
+      const asset = id ? await readSharedAppAsset(prisma, page.id, id, viewer?.id ?? null) : null;
       if (!asset) return c.json({ error: "That picture is not in this app." }, 404, headers);
       return c.json(
         { mime: asset.mime, base64: Buffer.from(asset.bytes).toString("base64") },

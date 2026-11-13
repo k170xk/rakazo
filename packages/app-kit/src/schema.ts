@@ -66,8 +66,26 @@ export type TableSchema = {
   key?: string;
   /** The column used as a row's title. */
   title?: string;
+  /**
+   * Each person sees and changes only the rows they added; the app's owner sees everyone's.
+   * Enforced by the server for shared links and Evolve, not only by the app.
+   */
+  personal?: boolean;
+  /**
+   * Too many rows to send to every open copy: the app reads pages of it with useRows and totals
+   * with useAggregate, and the server searches, filters and sorts it.
+   */
+  large?: boolean;
   columns: Column[];
 };
+
+/** Whether a table is read a page at a time rather than sent whole. */
+export const isLargeTable = (schema: { large?: unknown } | null | undefined) =>
+  schema?.large === true;
+
+/** Whether a table keeps each person's rows to themselves (and the app's owner). */
+export const isPersonalTable = (schema: { personal?: unknown } | null | undefined) =>
+  schema?.personal === true;
 
 export type Row = { _id: string; _updatedAt?: string } & Record<string, unknown>;
 
@@ -230,6 +248,8 @@ export function checkSchema(
       columns,
       ...(schema.key && keys.has(schema.key) ? { key: schema.key } : {}),
       ...(schema.title && keys.has(schema.title) ? { title: schema.title } : {}),
+      ...(schema.personal === true ? { personal: true } : {}),
+      ...(schema.large === true ? { large: true } : {}),
     },
   };
 }

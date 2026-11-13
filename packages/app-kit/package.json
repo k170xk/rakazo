@@ -7,11 +7,14 @@
     "./build": "./src/build/index.ts",
     "./import": "./src/import/index.ts",
     "./protocol": "./src/protocol.ts",
+    "./query": "./src/query.ts",
     "./schema": "./src/schema.ts",
     "./guide": "./src/guide.ts",
+    "./guide-extras": "./src/guide-extras.ts",
     "./ui": "./src/ui/index.ts",
     "./sdk": "./src/sdk/index.tsx",
     "./templates": "./src/templates/index.ts",
+    "./visual-edit": "./src/visual-edit.ts",
     "./package.json": "./package.json"
   },
   "scripts": {

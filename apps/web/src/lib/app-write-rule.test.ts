@@ -29,6 +29,15 @@ describe("appWriteDecision", () => {
     }
   });
 
+  it("lets anyone signed in comment, but a colleague's copy only while they use it", () => {
+    for (const op of ["comments.add", "comments.remove"]) {
+      expect(appWriteDecision({ ...colleague, canEdit: false, op })).toMatch(/Click/);
+      expect(appWriteDecision({ ...colleague, canEdit: false, focused: true, op })).toBe("ok");
+      expect(appWriteDecision({ ...colleague, msSinceClick: 500, op })).toBe("ok");
+    }
+    expect(appWriteDecision({ ...colleague, op: "comments.list" })).toBe("ok");
+  });
+
   it("removes rows only just after a click, which covers a bulk delete", () => {
     const focused = { ...colleague, focused: true };
     expect(appWriteDecision({ ...focused, op: "rows.remove" })).toMatch(/Click/);

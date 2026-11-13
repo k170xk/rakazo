@@ -1,9 +1,19 @@
-import type { AppInit, AppPickMessage, AppRequestMessage } from "@rakazo/app-kit/protocol";
+import type {
+  AppFocus,
+  AppInit,
+  AppLive,
+  AppPickMessage,
+  AppRequestMessage,
+} from "@rakazo/app-kit/protocol";
 import {
+  APP_CALL_OPS,
+  APP_COMMENT_OPS,
   APP_EVENT,
   APP_GESTURE_OPS,
+  APP_MAPS_PATH,
   APP_PICK,
   APP_RESPONSE,
+  APP_WRITE_OPS,
   MAX_UPLOAD_BASE64,
   readAppRequest,
   requestRef,
@@ -19,6 +29,8 @@ import { SandboxedHtmlViewer } from "../SandboxedHtmlViewer";
 
 /** How often an open app asks whether its data changed elsewhere. */
 const POLL_MS = 3000;
+/** How often a copy that takes deltas checks, which also keeps the viewer's presence fresh. */
+const LIVE_POLL_MS = 2000;
 /** Files an app may hand the person, each with the endings it may be saved under; nothing that would run when opened. */
 const DOWNLOAD_TYPES = new Map<string, readonly string[]>([
   ["text/csv", ["csv"]],
@@ -30,6 +42,14 @@ const DOWNLOAD_TYPES = new Map<string, readonly string[]>([
 const MAX_DOWNLOAD = 5_000_000;
 
 export type AppPick = { loc: string; tag: string; text: string };
+
+/** A visual edit shown in the running app before it is saved. */
+export type AppPatch = {
+  loc: string;
+  remove: string[];
+  add: string[];
+  texts: Array<{ from: string; to: string }>;
+};
 
 /**
  * An app built by the App Studio, in the same sandboxed viewer as pages. The app has no network:
@@ -49,6 +69,9 @@ export function AppFrame({
   onChange,
   refreshSignal,
   onReady,
+  maps = false,
+  patch = null,
+  selectedLoc = null,
 }: {
   document: string;
   title: string;
@@ -65,11 +88,28 @@ export function AppFrame({
   refreshSignal?: number;
   /** The app answered its first request, so it has drawn. */
   onReady?: () => void;
+  /** Map tiles and place search, for a signed-in viewer (the server refuses anyone else). */
+  maps?: boolean;
+  /** A visual edit to show at once, before it is saved. */
+  patch?: AppPatch | null;
+  /** The element the Studio is editing, outlined in the app. */
+  selectedLoc?: string | null;
 }) {
   const { open, dialog } = useExternalLinkOpener();
   const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "dark" as const);
   const post = useRef<((message: object) => void) | null>(null);
   const known = useRef<{ revision: number; canEdit: boolean; colleague: boolean } | null>(null);
+  /** The app's kit understands delta and presence events (it said so in init). */
+  const takesDeltas = useRef(false);
+  /** The row the viewer has open, sent with each live check. */
+  const focus = useRef<AppFocus | null>(null);
+  /**
+   * Set once an app shows someone other than its owner Evolve data. The owner wrote the app, so
+   * from then on it may not save, comment, share presence or open links as them: nothing they
+   * could see in Evolve can leave through the app.
+   */
+  const sawEvolve = useRef(false);
+  const liveBroken = useRef(false);
   const clickedAt = useRef(0);
   const usedGesture = useRef<string | null>(null);
   const ready = useRef(false);
@@ -83,14 +123,22 @@ export function AppFrame({
     app,
     theme,
     picking,
+    maps,
   });
-  latest.current = { source, onPick, onProblem, onChange, onReady, title, app, theme, picking };
+  latest.current = {
+    source,
+    onPick,
+    onProblem,
+    onChange,
+    onReady,
+    title,
+    app,
+    theme,
+    picking,
+    maps,
+  };
 
-  const refresh = useCallback(async () => {
-    const current = known.current;
-    if (!current || !post.current) return;
-    const revision = await latest.current.source.revision().catch(() => current.revision);
-    if (revision === current.revision) return;
+  const reload = useCallback(async () => {
     const data = await latest.current.source.load().catch(() => null);
     if (!data || !post.current) return;
     known.current = {
@@ -108,12 +156,61 @@ export function AppFrame({
     latest.current.onChange?.(data.revision);
   }, []);
 
+  /** A live check: who is here and what changed, sent to the app as a delta when it takes them. */
+  const checkLive = useCallback(async (): Promise<boolean> => {
+    const current = known.current;
+    const call = latest.current.source.call;
+    if (!current || !post.current || !call || liveBroken.current) return false;
+    let live: AppLive;
+    try {
+      live = (await call({
+        op: "live",
+        since: current.revision,
+        focus: sawEvolve.current ? null : focus.current,
+      })) as AppLive;
+    } catch (error) {
+      // An older server without the route: go back to reading everything on a timer.
+      if (error instanceof Error && /\b404\b|Not found/.test(error.message))
+        liveBroken.current = true;
+      return liveBroken.current ? false : true;
+    }
+    if (!post.current || known.current !== current) return true;
+    post.current({ type: APP_EVENT, event: "presence", people: live.presence });
+    if (live.revision === current.revision) return true;
+    if (live.full || !live.delta || !takesDeltas.current) {
+      await reload();
+      return true;
+    }
+    known.current = { ...current, revision: live.revision };
+    post.current({ type: APP_EVENT, event: "delta", delta: live.delta });
+    latest.current.onChange?.(live.revision);
+    return true;
+  }, [reload]);
+
+  const refresh = useCallback(async () => {
+    const current = known.current;
+    if (!current || !post.current) return;
+    if (await checkLive()) return;
+    const revision = await latest.current.source.revision().catch(() => current.revision);
+    if (revision === current.revision) return;
+    await reload();
+  }, [checkLive, reload]);
+
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (document.visibilityState === "visible") void refresh();
-    }, POLL_MS);
+    let checking = false;
+    const live = Boolean(source.call);
+    const timer = setInterval(
+      () => {
+        if (checking || document.visibilityState !== "visible") return;
+        checking = true;
+        void refresh().finally(() => {
+          checking = false;
+        });
+      },
+      live ? LIVE_POLL_MS : POLL_MS,
+    );
     return () => clearInterval(timer);
-  }, [refresh]);
+  }, [refresh, source.call]);
   useEffect(() => {
     if (refreshSignal !== undefined) void refresh();
   }, [refreshSignal, refresh]);
@@ -123,6 +220,12 @@ export function AppFrame({
   useEffect(() => {
     post.current?.({ type: APP_EVENT, event: "select", enabled: picking });
   }, [picking]);
+  useEffect(() => {
+    if (patch) post.current?.({ type: APP_EVENT, event: "patch", ...patch });
+  }, [patch]);
+  useEffect(() => {
+    post.current?.({ type: APP_EVENT, event: "selected", loc: selectedLoc });
+  }, [selectedLoc]);
 
   const handle = useCallback(
     async (request: AppRequestMessage, gesture: unknown, focused: boolean): Promise<unknown> => {
@@ -137,6 +240,15 @@ export function AppFrame({
       });
       if (decision === "skip") return false;
       if (decision !== "ok") throw new Error(decision);
+      if (
+        sawEvolve.current &&
+        (APP_WRITE_OPS.has(request.op) || APP_COMMENT_OPS.has(request.op) || request.op === "open")
+      ) {
+        if (request.op === "state.set") return false;
+        throw new Error(
+          "This app showed you Evolve data, so it can't save, comment or open links this time. Reopen it to make changes.",
+        );
+      }
       if (APP_GESTURE_OPS.has(request.op)) {
         if (!focused || typeof gesture !== "string" || gesture === usedGesture.current) {
           throw new Error("Click the button again to do that.");
@@ -145,6 +257,7 @@ export function AppFrame({
       }
       switch (request.op) {
         case "init": {
+          takesDeltas.current = Array.isArray(request.accepts) && request.accepts.includes("delta");
           const data = await source.load();
           known.current = {
             revision: data.revision,
@@ -168,6 +281,16 @@ export function AppFrame({
               "assets",
               ...(data.viewer.canEdit ? ["uploads"] : []),
               ...(source.ask ? ["ai"] : []),
+              ...(latest.current.maps ? ["maps"] : []),
+              ...(source.call
+                ? [
+                    "live",
+                    "query",
+                    ...(data.viewer.role === "visitor"
+                      ? []
+                      : ["comments", "history", "services", "evolve"]),
+                  ]
+                : []),
             ],
           };
           if (latest.current.picking) {
@@ -221,6 +344,47 @@ export function AppFrame({
           if (!url) throw new Error("Only web links can be opened.");
           open(url);
           return null;
+        }
+        case "map.tile": {
+          if (!latest.current.maps) throw new Error("Maps are not available here.");
+          const square = [request.z, request.x, request.y].map(Number);
+          if (!square.every(Number.isInteger)) throw new Error("That is not part of a map.");
+          const response = await fetch(
+            `${APP_MAPS_PATH}/tile/${encodeURIComponent(String(request.style))}/${square.join("/")}`,
+            { credentials: "same-origin", referrerPolicy: "no-referrer" },
+          );
+          if (!response.ok) throw new Error("That part of the map isn't available.");
+          const blob = await response.blob();
+          return { mime: blob.type || "image/png", base64: await blobBase64(blob) };
+        }
+        case "presence.set": {
+          focus.current = sawEvolve.current ? null : readFocus(request.focus);
+          return null;
+        }
+        case "map.find": {
+          if (!latest.current.maps) throw new Error("Place search is not available here.");
+          const response = await fetch(
+            `${APP_MAPS_PATH}/find?q=${encodeURIComponent(String(request.query).slice(0, 200))}`,
+            { credentials: "same-origin", referrerPolicy: "no-referrer" },
+          );
+          const body = (await response.json().catch(() => null)) as {
+            places?: unknown;
+            error?: unknown;
+          } | null;
+          if (!response.ok) {
+            throw new Error(typeof body?.error === "string" ? body.error : "Place search failed.");
+          }
+          return Array.isArray(body?.places) ? body.places : [];
+        }
+        default: {
+          if (!APP_CALL_OPS.has(request.op) || request.op === "live" || !source.call)
+            throw new Error("That is not available here.");
+          if (request.op === "evolve.read" && known.current?.colleague) {
+            sawEvolve.current = true;
+            focus.current = null;
+          }
+          const { type: _type, id: _id, ref: _ref, ...body } = request;
+          return source.call(body);
         }
       }
     },
@@ -279,9 +443,25 @@ export function AppFrame({
   );
 }
 
+function readFocus(value: unknown): AppFocus | null {
+  const focus = value as Partial<AppFocus> | null;
+  return focus && typeof focus.table === "string" && typeof focus.rowId === "string"
+    ? { table: focus.table.slice(0, 40), rowId: focus.rowId.slice(0, 64) }
+    : null;
+}
+
 /** Someone viewing another person's app through its link, not the owner or the Studio. */
 function isColleague(role: AppInit["viewer"]["role"]): boolean {
   return role === "member" || role === "visitor";
+}
+
+async function blobBase64(blob: Blob): Promise<string> {
+  const buffer = new Uint8Array(await blob.arrayBuffer());
+  let text = "";
+  for (let at = 0; at < buffer.length; at += 0x8000) {
+    text += String.fromCharCode(...buffer.subarray(at, at + 0x8000));
+  }
+  return btoa(text);
 }
 
 function objectOf(value: unknown): Record<string, unknown> {

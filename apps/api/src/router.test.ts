@@ -7681,10 +7681,12 @@ describe("routines.update", () => {
           },
         ]),
       },
+      user: { findUnique: vi.fn(async () => null) },
       routine: {
         findFirst: vi.fn(async (args: { where: { bot?: { archivedAt: null } } }) =>
           botArchived && args.where.bot?.archivedAt === null ? null : savedRoutine,
         ),
+        count: vi.fn(async () => 0),
         update,
       },
       bot: {

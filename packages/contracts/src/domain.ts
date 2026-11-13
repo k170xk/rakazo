@@ -2690,6 +2690,8 @@ export type CompanyModelInput = z.infer<typeof CompanyModelInputSchema>;
 export const MeSchema = z.object({
   /** Company-wide switches. Absent from older servers, which allow everything. */
   features: CompanyFeaturesSchema.optional(),
+  /** "provider/modelId" choices an admin limited this person to; empty or absent allows every model. */
+  allowedModels: z.array(z.string()).optional(),
   /** Whether a company model runs for everyone who has none of their own. Absent from older servers. */
   companyModelReady: z.boolean().optional(),
   /** What this person's bots may do on their computer. Absent from older servers, which allow everything. */

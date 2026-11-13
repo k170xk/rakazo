@@ -40,6 +40,7 @@ import {
   canonicalPiProviderId,
   companyFeaturesFrom,
   FileCleanupResultSchema,
+  ModelAccessSchema,
   ThinkingLevelSchema,
 } from "@rakazo/contracts";
 import type { Prisma } from "@rakazo/db";
@@ -94,6 +95,18 @@ export async function requireCompanyFeature(
   actor: Pick<Actor, "userId">,
   feature: CompanyFeatureId,
 ): Promise<void> {
+  if (feature === "memberModels") {
+    // An admin's choice for this person outranks the company switch, for admins too.
+    // Unreadable falls back to the company switch below.
+    const person = await runAsSystem("read a person's model access", () =>
+      deps.prisma.user.findUnique({ where: { id: actor.userId }, select: { modelAccess: true } }),
+    ).catch(() => null);
+    const access = ModelAccessSchema.safeParse(person?.modelAccess);
+    if (access.success) {
+      if (access.data === "choose") return;
+      throw new ORPCError("FORBIDDEN", { message: FEATURE_OFF[feature] });
+    }
+  }
   if (companyFeatures()[feature]) return;
   if (ADMIN_EXEMPT.has(feature) && (await isAdmin(deps, actor.userId))) return;
   throw new ORPCError("FORBIDDEN", { message: FEATURE_OFF[feature] });

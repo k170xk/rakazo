@@ -22,6 +22,12 @@ import { tickRoutineWatch } from "./routine-watch.js";
 import { isUniqueViolation } from "./run-messages.js";
 import { notifyRun } from "./run-notifications.js";
 import { listAgentSkillRecords } from "./skill-tools.js";
+import {
+  nextScheduledAfter,
+  personStaffLimits,
+  recordRoutineFiring,
+  routineDailyAllowance,
+} from "./staff-limits.js";
 
 /** A routine run stopped by a transient model error gets one more try this much later. */
 const ROUTINE_RETRY_DELAY_MS = 12 * 60_000;
@@ -112,6 +118,87 @@ async function notifyFailedRoutineRun(
   );
 }
 
+/** What the owner is told when a routine is held back by their runs-per-day limit. */
+export function dailyLimitNotice(limit: number, resumeAt: Date, timezone: string): string {
+  let when: string;
+  try {
+    when = resumeAt.toLocaleString("en-IE", {
+      timeZone: timezone,
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    when = resumeAt.toISOString().slice(0, 16).replace("T", " ");
+  }
+  const runs = limit === 1 ? "once" : `${limit} times`;
+  return `It has run ${runs} in the last 24 hours, the most your administrator allows, so it is paused until ${when}. Ask your administrator if it needs to run more often.`;
+}
+
+/**
+ * Moves a routine that already ran as often today as its owner may to its first time after the
+ * oldest of those runs leaves the window, and tells the owner once per hold. A limit that cannot
+ * be read never stops work.
+ */
+async function deferPastDailyLimit(
+  deps: ExecutorDeps,
+  routine: {
+    id: string;
+    name: string;
+    userId: string;
+    spaceId: string;
+    botId: string;
+    crons: string[];
+    timezone: string;
+    watch: unknown;
+  },
+  threadId: string,
+  scheduledAt: Date,
+): Promise<boolean> {
+  const held = await personStaffLimits(deps.prisma, routine.userId)
+    .then(async (limits) => ({
+      limit: limits.routineRunsPerDay,
+      allowance: await routineDailyAllowance(deps.prisma, routine.id, limits.routineRunsPerDay),
+    }))
+    .catch(() => null);
+  const resumeAt = held?.allowance.resumeAt;
+  if (!held || !resumeAt) return false;
+  const deferTo =
+    (routine.watch == null
+      ? nextScheduledAfter(routine.crons, routine.timezone, resumeAt)
+      : null) ?? resumeAt;
+  const moved = await deps.prisma.routine.updateMany({
+    where: { id: routine.id, active: true, nextRunAt: scheduledAt },
+    data: { nextRunAt: deferTo },
+  });
+  if (moved.count === 1) {
+    await deps.jobs.enqueue(routineWakeupJob(routine.id, deferTo));
+    await notifyRun(
+      deps,
+      {
+        spaceId: routine.spaceId,
+        userId: routine.userId,
+        botId: routine.botId,
+        threadId,
+        trigger: "routine",
+        routineId: routine.id,
+      },
+      {
+        kind: "failure",
+        title: `${displayName(routine.name, "Routine")} reached its daily limit`,
+        body: dailyLimitNotice(held.limit, deferTo, routine.timezone),
+        botId: routine.botId,
+        threadId,
+      },
+    ).catch((error) => getLogger().error("routine daily limit notice", error));
+  }
+  getLogger().info("routine.daily_limit_deferred", {
+    "routine.id": routine.id,
+    deferTo: deferTo.toISOString(),
+  });
+  return true;
+}
+
 export async function wakeRoutine(deps: ExecutorDeps, routineId: string, scheduledFor: string) {
   const scheduledAt = new Date(scheduledFor);
   if (!Number.isFinite(scheduledAt.getTime())) return;
@@ -152,6 +239,8 @@ export async function wakeRoutine(deps: ExecutorDeps, routineId: string, schedul
       })
     : null;
   const thread = targetThread ?? bot.thread;
+  // Checked before a change trigger looks, so a change seen while held back is still news later.
+  if (await deferPastDailyLimit(deps, routine, thread.id, scheduledAt)) return;
   // A change trigger checks first, without a model; only news becomes a run.
   const watchTick =
     routine.watch == null
@@ -256,6 +345,13 @@ export async function wakeRoutine(deps: ExecutorDeps, routineId: string, schedul
   if (claimed === "fired") {
     if (nextRunAt) await deps.jobs.enqueue(routineWakeupJob(routine.id, nextRunAt));
     return;
+  }
+  if (!claimed.coalesced) {
+    await recordRoutineFiring(deps.prisma, {
+      routineId: routine.id,
+      userId: routine.userId,
+      source: watchTick ? "watch" : "schedule",
+    }).catch((error) => getLogger().error("routine firing record", error));
   }
   if ("cancelledEvents" in claimed && claimed.cancelledEvents) {
     for (const event of claimed.cancelledEvents) {

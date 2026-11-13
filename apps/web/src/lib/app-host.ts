@@ -1,4 +1,5 @@
 import type { AppViewer } from "@rakazo/app-kit/protocol";
+import { APP_CALLS_PATH, SHARED_APP_CALL_PATH } from "@rakazo/app-kit/protocol";
 import type { AppData } from "@rakazo/contracts";
 import { SHARED_PAGE_PASSWORD_HEADER, SHARED_PAGE_PATH_PREFIX } from "@rakazo/contracts";
 import type { SpaceQueries } from "./query";
@@ -33,7 +34,26 @@ export type AppSource = {
     format: "xlsx" | "csv",
   ) => Promise<{ filename: string; mime: string; base64: string }>;
   ask?: (prompt: string, json: boolean) => Promise<unknown>;
+  /** Live changes, queries, comments, history, Evolve reads and services (APP_CALL_OPS). */
+  call?: (request: Record<string, unknown>) => Promise<unknown>;
 };
+
+/** Posts one APP_CALL_OPS request and unwraps its {result}, or throws the server's reason. */
+async function postCall(
+  url: string,
+  headers: Record<string, string>,
+  request: Record<string, unknown>,
+): Promise<unknown> {
+  const response = await fetch(url, {
+    method: "POST",
+    credentials: "same-origin",
+    referrerPolicy: "no-referrer",
+    headers: { ...headers, "content-type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) throw await refused(response);
+  return ((await response.json()) as { result?: unknown }).result ?? null;
+}
 
 const STATE_KEY = /^[A-Za-z0-9_.:-]{1,64}$/;
 
@@ -74,6 +94,7 @@ export function ownerAppSource(
     },
     exportTable: (table, format) => queries.apps.export.call({ pageId, table, format }),
     ask: async (prompt, json) => (await queries.apps.ask.call({ pageId, prompt, json })).answer,
+    call: (request) => postCall(`${APP_CALLS_PATH}/${encodeURIComponent(pageId)}`, {}, request),
   };
 }
 
@@ -126,6 +147,7 @@ export function sharedAppSource(
       const data = (await response.json()) as AppData & {
         canEdit?: boolean;
         ownRowsOnly?: boolean;
+        isOwner?: boolean;
       };
       return {
         tables: data.tables,
@@ -136,7 +158,7 @@ export function sharedAppSource(
           name: null,
           canEdit: data.canEdit === true,
           ...(data.ownRowsOnly === true ? { ownRowsOnly: true } : {}),
-          role: signedIn ? "member" : "visitor",
+          role: data.isOwner === true ? "owner" : signedIn ? "member" : "visitor",
         },
       };
     },
@@ -185,6 +207,7 @@ export function sharedAppSource(
       if (!response.ok) throw await refused(response);
       return (await response.json()) as { filename: string; mime: string; base64: string };
     },
+    call: (request) => postCall(`${base}/${SHARED_APP_CALL_PATH}`, headers, request),
     ...(signedIn
       ? {
           ask: async (prompt: string, json: boolean) => {

@@ -104,6 +104,7 @@ function fakeFleet(input: {
     routine: {
       findFirst: vi.fn(async () => input.routines?.[0] ?? null),
       findMany: vi.fn(async () => []),
+      count: vi.fn(async () => 0),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
         id: "routine-new",
         ...data,

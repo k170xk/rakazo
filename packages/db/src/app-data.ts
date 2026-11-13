@@ -2,6 +2,8 @@ import type { Row, TableSchema } from "@rakazo/app-kit/schema";
 import {
   checkSchema,
   coerceRow,
+  isLargeTable,
+  isPersonalTable,
   MAX_ROWS_PER_TABLE,
   MAX_TABLES,
   withFormulas,
@@ -21,7 +23,8 @@ export class AppDataError extends Error {}
 
 type Db = PrismaClient | Prisma.TransactionClient;
 
-export type AppTables = Record<string, { schema: TableSchema; rows: Row[] }>;
+/** count is set for a large table, whose rows are read a page at a time instead. */
+export type AppTables = Record<string, { schema: TableSchema; rows: Row[]; count?: number }>;
 
 const MAX_ROWS_READ = 50_000;
 
@@ -38,14 +41,29 @@ function storedSchema(value: unknown, name: string, label: string): TableSchema 
   return checked.ok ? checked.schema : { name, label, columns: [] };
 }
 
-export async function readAppTables(db: Db, pageId: string): Promise<AppTables> {
+/** Every table and its rows; with skipLarge, large tables come with their row count instead. */
+export async function readAppTables(
+  db: Db,
+  pageId: string,
+  options: { skipLarge?: boolean } = {},
+): Promise<AppTables> {
   const tables = await db.appTable.findMany({
     where: { pageId },
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
     select: { id: true, name: true, label: true, schema: true },
   });
+  const large = options.skipLarge
+    ? tables.filter((table) => isLargeTable(table.schema as TableSchema)).map((table) => table.id)
+    : [];
+  const counts = large.length
+    ? await db.appRow.groupBy({
+        by: ["tableId"],
+        where: { tableId: { in: large } },
+        _count: { _all: true },
+      })
+    : [];
   const rows = await db.appRow.findMany({
-    where: { pageId },
+    where: { pageId, ...(large.length ? { tableId: { notIn: large } } : {}) },
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
     select: { id: true, tableId: true, data: true, updatedAt: true },
     take: MAX_ROWS_READ,
@@ -59,10 +77,10 @@ export async function readAppTables(db: Db, pageId: string): Promise<AppTables> 
   return Object.fromEntries(
     tables.map((table) => {
       const schema = storedSchema(table.schema, table.name, table.label);
-      return [
-        table.name,
-        { schema, rows: (byTable.get(table.id) ?? []).map((row) => withFormulas(schema, row)) },
-      ];
+      const rows = (byTable.get(table.id) ?? []).map((row) => withFormulas(schema, row));
+      if (!large.includes(table.id)) return [table.name, { schema, rows }];
+      const count = counts.find((entry) => entry.tableId === table.id)?._count._all ?? 0;
+      return [table.name, { schema, rows, count }];
     }),
   );
 }
@@ -307,9 +325,19 @@ export async function defineAppTable(
         schema = checked.schema;
         const existing = await tx.appTable.findUnique({
           where: { pageId_name: { pageId, name: schema.name } },
-          select: { id: true },
+          select: { id: true, schema: true },
         });
         if (existing) {
+          // A schema sent without the flag (to add rows or columns) keeps a table personal.
+          const keepsPersonal =
+            isPersonalTable(existing.schema as TableSchema) &&
+            (input.schema as { personal?: unknown }).personal !== false;
+          if (keepsPersonal) schema = { ...schema, personal: true };
+          if (
+            isLargeTable(existing.schema as TableSchema) &&
+            (input.schema as { large?: unknown }).large !== false
+          )
+            schema = { ...schema, large: true };
           await tx.appTable.update({
             where: { id: existing.id },
             data: { label: schema.label, schema: schema as unknown as Prisma.InputJsonObject },

@@ -172,6 +172,9 @@ import { deleteAccountContent } from "./account-deletion.js";
 import { mountAccountExportRoute } from "./account-export.js";
 import { mountAccountImportRoute } from "./account-import.js";
 import { mountAppAssociation, nativePasskeys } from "./app-association.js";
+import { appCalls, mountAppCalls } from "./app-calls.js";
+import { mountAppMaps } from "./app-maps.js";
+import { appServices } from "./app-services.js";
 import { mountArtifactDownloadRoute } from "./artifact-download.js";
 import { storeInboundAttachment } from "./artifacts.js";
 import { mountAuditExportRoute } from "./audit-export.js";
@@ -1036,17 +1039,29 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   mountApiRequestBodyLimits(app);
   mountScreenTarget(app, prisma, env.screenProxySecret);
   mountScriptAssets(app);
-  mountSharedPages(
-    app,
+  // A link opens for colleagues by their account, so only an address they proved counts.
+  const verifiedUser = async (request: Request) => {
+    const user = (await auth.api.getSession({ headers: request.headers }))?.user;
+    return user?.emailVerified ? user.id : null;
+  };
+  const calls = appCalls({
     prisma,
-    requestClientIp,
-    // A link opens for colleagues by their account, so only an address they proved counts.
-    async (request) => {
-      const user = (await auth.api.getSession({ headers: request.headers }))?.user;
-      return user?.emailVerified ? user.id : null;
-    },
-  );
-  mountEvolveAppData(app, prisma, evolvePlugins);
+    services: appServices(),
+    evolve: evolvePlugins
+      ? {
+          connection: evolvePlugins,
+          readTools: () =>
+            evolveTools
+              .health()
+              .tools.filter((tool) => tool.enabled && tool.access === "read")
+              .map((tool) => tool.name),
+        }
+      : null,
+  });
+  mountSharedPages(app, prisma, requestClientIp, verifiedUser, calls);
+  mountEvolveAppData(app, prisma, evolvePlugins, calls);
+  mountAppMaps(app, verifiedUser);
+  mountAppCalls(app, prisma, verifiedUser, calls);
   const auditAuthResponse = createAuthResponseAudit();
   // Account and session tables, signup bootstrap and account deletion span tenants;
   // webhooks authenticate a bot or provider, then resolve the tenant from it.

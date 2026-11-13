@@ -5,6 +5,8 @@ import type { BuildProblem } from "@rakazo/app-kit/build";
 import { buildApp, pluginBundle } from "@rakazo/app-kit/build";
 import { exportTable, importWorkbook, scaffoldApp } from "@rakazo/app-kit/import";
 import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
+import type { TableSchema } from "@rakazo/app-kit/schema";
+import { isPersonalTable } from "@rakazo/app-kit/schema";
 import { findTemplate } from "@rakazo/app-kit/templates";
 import type { Actor, AppData, AppDataAccess } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
@@ -84,26 +86,70 @@ function marked(
 
 /**
  * Tables as one viewer sees them: _mine on the rows they added (contribute apps let them change
- * only those) and, for people signed in, _by with the name of whoever added each row.
+ * only those) and, for people signed in, _by with the name of whoever added each row. In a
+ * personal table anyone but the owner sees only the rows they added; a visitor sees none.
  */
 export async function tablesForViewer(
   prisma: PrismaClient,
   pageId: string,
   tables: Tables,
   viewer: RowViewer,
+  ownerId: string | null,
 ): Promise<Tables> {
+  const isOwner = ownerId !== null && viewer.userId === ownerId;
+  const hidesRows =
+    !isOwner && Object.values(tables).some((table) => isPersonalTable(table.schema));
   const creators = await runAsSystem("app row creators", () => readAppRowCreators(prisma, pageId));
-  if (!creators.size) return tables;
-  const names = viewer.names ? await creatorNames(prisma, creators.values()) : new Map();
+  if (!creators.size && !hidesRows) return tables;
+  const ownRow = (row: RowOut) => viewer.userId !== null && creators.get(row._id) === viewer.userId;
+  const visible = (table: Tables[string]) =>
+    hidesRows && isPersonalTable(table.schema) ? table.rows.filter(ownRow) : table.rows;
+  const shown = Object.entries(tables).map(
+    ([name, table]) => [name, table, visible(table)] as const,
+  );
+  const names = viewer.names
+    ? await creatorNames(
+        prisma,
+        shown.flatMap(([, , rows]) => rows.flatMap((row) => creators.get(row._id) ?? [])),
+      )
+    : new Map();
   return Object.fromEntries(
-    Object.entries(tables).map(([name, table]) => [
+    shown.map(([name, table, rows]) => [
       name,
       {
         ...table,
-        rows: table.rows.map((row) => marked(row, creators.get(row._id), viewer, names)),
+        rows: rows.map((row) => marked(row, creators.get(row._id), viewer, names)),
+        // A large personal table's count would reveal how many rows others added.
+        ...(hidesRows && isPersonalTable(table.schema) ? { count: undefined } : {}),
       },
     ]),
   );
+}
+
+async function appOwnerId(prisma: PrismaClient, pageId: string): Promise<string | null> {
+  const page = await runAsSystem("app owner", () =>
+    prisma.page.findUnique({ where: { id: pageId }, select: { userId: true } }),
+  );
+  return page?.userId ?? null;
+}
+
+/** Whether someone other than the owner is changing a row of a personal table. */
+async function othersPersonalTable(
+  prisma: PrismaClient,
+  pageId: string,
+  table: string,
+  userId: string,
+): Promise<boolean> {
+  const [ownerId, found] = await Promise.all([
+    appOwnerId(prisma, pageId),
+    runAsSystem("app table personal", () =>
+      prisma.appTable.findUnique({
+        where: { pageId_name: { pageId, name: table } },
+        select: { schema: true },
+      }),
+    ),
+  ]);
+  return ownerId !== userId && isPersonalTable(found?.schema as TableSchema | null);
 }
 
 /** One row just written, marked the same way for the person who wrote it. */
@@ -123,12 +169,18 @@ export async function getAppData(
 ): Promise<AppData> {
   const app = await requireApp(prisma, actor, pageId);
   const [tables, state, revision] = await Promise.all([
-    readAppTables(prisma, pageId),
+    readAppTables(prisma, pageId, { skipLarge: true }),
     readStateRows(prisma, pageId),
     appRevision(prisma, pageId),
   ]);
   return {
-    tables: await tablesForViewer(prisma, pageId, tables, { userId: actor.userId, names: true }),
+    tables: await tablesForViewer(
+      prisma,
+      pageId,
+      tables,
+      { userId: actor.userId, names: true },
+      actor.userId,
+    ),
     state,
     revision,
     dataAccess: access(app.dataAccess),
@@ -440,7 +492,10 @@ export async function exportAppTable(
   table: string,
   format: "xlsx" | "csv",
 ) {
-  const tables = await readAppTables(prisma, pageId);
+  return tableFile(await readAppTables(prisma, pageId), table, format);
+}
+
+function tableFile(tables: Tables, table: string, format: "xlsx" | "csv") {
   const found = tables[table];
   if (!found) throw new IsolationError();
   const bytes = exportTable(found.schema, found.rows, format);
@@ -611,31 +666,94 @@ export async function reimportWorkbookApp(
 /** Shared-link reads, for a reader the link, password or sign-in already admitted. */
 export async function readSharedAppData(prisma: PrismaClient, pageId: string, viewer: RowViewer) {
   const data = await runAsSystem("app share data", async () => ({
-    tables: await readAppTables(prisma, pageId),
+    tables: await readAppTables(prisma, pageId, { skipLarge: true }),
     state: await readStateRows(prisma, pageId),
     revision: await appRevision(prisma, pageId),
-    icon:
-      (await prisma.page.findUnique({ where: { id: pageId }, select: { iconAssetId: true } }))
-        ?.iconAssetId ?? null,
+    page: await prisma.page.findUnique({
+      where: { id: pageId },
+      select: { iconAssetId: true, userId: true },
+    }),
   }));
-  return { ...data, tables: await tablesForViewer(prisma, pageId, data.tables, viewer) };
+  const { page, ...rest } = data;
+  return {
+    ...rest,
+    icon: page?.iconAssetId ?? null,
+    tables: await tablesForViewer(prisma, pageId, data.tables, viewer, page?.userId ?? null),
+  };
 }
 
 export function readSharedAppRevision(prisma: PrismaClient, pageId: string) {
   return runAsSystem("app share revision", () => appRevision(prisma, pageId));
 }
 
-export function readSharedAppAsset(prisma: PrismaClient, pageId: string, assetId: string) {
-  return runAsSystem("app share asset", () => readAppAsset(prisma, pageId, assetId));
+/**
+ * A picture for someone a shared route admitted. When the app has personal tables, a photo a
+ * colleague added is shown to others only while a row they can see holds it.
+ */
+export async function readSharedAppAsset(
+  prisma: PrismaClient,
+  pageId: string,
+  assetId: string,
+  viewerId: string | null,
+) {
+  return runAsSystem("app share asset", async () => {
+    const asset = await prisma.appAsset.findFirst({
+      where: { id: assetId, pageId },
+      select: { mime: true, bytes: true, name: true, source: true },
+    });
+    if (!asset) return null;
+    const { source, ...shown } = asset;
+    const uploader = source.startsWith("app:") ? source.slice(4) : null;
+    if (!uploader || uploader === viewerId) return shown;
+    const ownerId = await appOwnerId(prisma, pageId);
+    if (uploader === ownerId || (ownerId !== null && viewerId === ownerId)) return shown;
+    const tables = await prisma.appTable.findMany({
+      where: { pageId },
+      select: { id: true, schema: true },
+    });
+    const schemas = tables.map((table) => ({ id: table.id, schema: table.schema as TableSchema }));
+    if (!schemas.some((table) => isPersonalTable(table.schema))) return shown;
+    for (const { id, schema } of schemas) {
+      const personal = isPersonalTable(schema);
+      if (personal && !viewerId) continue;
+      for (const column of schema.columns ?? []) {
+        if (column.type !== "image") continue;
+        const holder = await prisma.appRow.findFirst({
+          where: {
+            pageId,
+            tableId: id,
+            data: { path: [column.key], string_contains: assetId },
+            ...(personal ? { createdBy: viewerId } : {}),
+          },
+          select: { id: true },
+        });
+        if (holder) return shown;
+      }
+    }
+    return null;
+  });
 }
 
-export function exportSharedAppTable(
+/** One table's rows as a file, holding only the rows this viewer may see. */
+export async function exportSharedAppTable(
   prisma: PrismaClient,
   pageId: string,
   table: string,
   format: "xlsx" | "csv",
+  viewerId: string | null,
 ) {
-  return runAsSystem("app share export", () => exportAppTable(prisma, pageId, table, format));
+  const [tables, ownerId] = await Promise.all([
+    runAsSystem("app share export", () => readAppTables(prisma, pageId)),
+    appOwnerId(prisma, pageId),
+  ]);
+  const visible = await tablesForViewer(
+    prisma,
+    pageId,
+    tables,
+    { userId: viewerId, names: false },
+    ownerId,
+  );
+  return tableFile(visible, table, format);
 }
 
 export type SharedRowWrite =
@@ -643,10 +761,9 @@ export type SharedRowWrite =
   | { op: "update"; table: string; id: string; patch: Record<string, unknown> }
   | { op: "remove"; table: string; id: string };
 
-/** Only for a signed-in colleague, and only while the owner lets colleagues change the data. */
 /**
- * A change from someone a shared route admitted and allowed to edit. In a contribute app they
- * change and remove only the rows they added; in a company app, any row.
+ * A change from someone a shared route admitted and allowed to edit. In a contribute app, and in
+ * any personal table, they change and remove only the rows they added; otherwise any row.
  */
 export async function writeSharedAppRow(
   prisma: PrismaClient,
@@ -656,7 +773,10 @@ export async function writeSharedAppRow(
   dataAccess: string,
   via: "shared" | "evolve" = "shared",
 ): Promise<{ row: RowOut; revision: number } | { revision: number }> {
-  const scope = dataAccess === "company" ? {} : { onlyCreatedBy: userId };
+  const anyRow =
+    dataAccess === "company" &&
+    (write.op === "insert" || !(await othersPersonalTable(prisma, pageId, write.table, userId)));
+  const scope = anyRow ? {} : { onlyCreatedBy: userId };
   const saved: { row: RowOut; revision: number } | { revision: number } = await runAsSystem(
     "app share write",
     (): Promise<{ row: RowOut; revision: number } | { revision: number }> => {
@@ -713,7 +833,8 @@ const MAX_PLUGIN_BUNDLE_BYTES = 2 * 1024 * 1024;
 const HOST_NOTE = `// Built by the OCSC App Studio. Inside Evolve the app kit sends every read and change
 // through the plugin bridge as evolve.call('app.data', request), and Evolve's plugin-api forwards
 // it to OCSC Intelligence, which answers for the app published under this plugin's slug only.
-// Everyone who can open the plugin may read the app's data; changes follow the app's own setting.
+// Everyone who can open the plugin may read the app's data, except rows of personal tables,
+// which only the person who added them and the app's owner see; changes follow the app's setting.
 `;
 
 export async function getEvolvePublication(

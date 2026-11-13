@@ -1,17 +1,18 @@
 import { createHash } from "node:crypto";
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { build, type Message, type Plugin, transform } from "esbuild";
 import { compile } from "tailwindcss";
 import type { AppInit } from "../protocol.js";
+import { VISUAL_EDIT_CLASSES } from "../visual-edit.js";
 import { URBANIST_FACE } from "./urbanist-face.js";
 
 /**
  * Turns an app's source files into one self-contained HTML document (and the same code as a
  * plugin bundle for Evolve). Everything runs on the server: esbuild bundles the files with React,
- * motion, recharts, lucide and the OCSC kit, and Tailwind generates only the classes the app
- * uses. App code can import nothing else and read nothing from the server's disk.
+ * motion, recharts, lucide and the OCSC kit, and Tailwind generates only the classes used by the
+ * app and by the kit components it actually bundles. App code can import nothing else and read nothing from the server's disk.
  */
 
 const require = createRequire(import.meta.url);
@@ -56,6 +57,8 @@ export type BuildResult =
       css: string;
       bytes: number;
       hash: string;
+      /** Script kilobytes by package, largest first, so a heavy app shows what to drop. */
+      weight: Array<{ part: string; kb: number }>;
       warnings: BuildProblem[];
     }
   | { ok: false; errors: BuildProblem[]; warnings: BuildProblem[] };
@@ -158,15 +161,33 @@ const problem = (message: Message): BuildProblem => ({
   message: message.text,
 });
 
-async function readKitSources(): Promise<string> {
-  const ui = path.join(SRC, "ui");
-  const names = await readdir(ui);
-  const texts = await Promise.all(names.filter((name) => /\.tsx?$/.test(name)).map((name) => readFile(path.join(ui, name), "utf8")));
-  return texts.join("\n");
-}
-
-let kitSources: Promise<string> | undefined;
 let kitStyles: Promise<string> | undefined;
+
+type BundledInputs = Record<string, { bytesInOutput: number }>;
+
+const PART_NAMES: Array<[RegExp, string]> = [
+  [/^(?:react|react-dom|scheduler)$/, "react"],
+  [/^(?:motion|motion-dom|motion-utils|framer-motion)$/, "motion"],
+  [/^(?:recharts|victory-vendor|d3-.+|es-toolkit|decimal\.js-light|@reduxjs\/toolkit|redux|redux-thunk|reselect|react-redux|immer|use-sync-external-store|eventemitter3|tiny-invariant|clsx|internmap)$/, "recharts"],
+];
+
+/** Groups bundled bytes by what the app pulled in: react, motion, recharts, lucide, the kit, the app. */
+export function bundleWeight(inputs: BundledInputs): Array<{ part: string; kb: number }> {
+  const totals = new Map<string, number>();
+  for (const [name, info] of Object.entries(inputs)) {
+    let part: string;
+    const pkg = /node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?((?:@[^/]+\/)?[^/]+)/.exec(name)?.[1];
+    if (name.startsWith("app:")) part = "app code";
+    else if (pkg) part = PART_NAMES.find(([pattern]) => pattern.test(pkg))?.[1] ?? pkg;
+    else part = name.includes(`${path.sep}sdk${path.sep}`) || name.includes("/sdk/") ? "@ocsc/app" : "@ocsc/ui";
+    totals.set(part, (totals.get(part) ?? 0) + info.bytesInOutput);
+  }
+  return [...totals]
+    .map(([part, bytes]) => ({ part, kb: Math.round(bytes / 1000) }))
+    .filter((item) => item.kb > 0)
+    .sort((a, b) => b.kb - a.kb)
+    .slice(0, 8);
+}
 
 const CANDIDATE_SPLIT = /[\s"'`{};,<>()]+/;
 
@@ -191,10 +212,13 @@ async function loadStylesheet(id: string, base: string) {
   throw new Error(`Stylesheets can only import tailwindcss (not ${id}) — put styles in styles.css.`);
 }
 
-async function buildCss(source: string, extraCss: string): Promise<string> {
-  kitSources ??= readKitSources();
+/**
+ * CSS for the classes in the bundled script, which holds the app's code and only the kit code it
+ * uses (minifying keeps class strings whole), plus the app's own source for anything else.
+ */
+async function buildCss(js: string, source: string, extraCss: string): Promise<string> {
   kitStyles ??= readFile(path.join(SRC, "ui/styles.css"), "utf8");
-  const [kit, styles] = await Promise.all([kitSources, kitStyles]);
+  const styles = await kitStyles;
   const compiler = await compile(`${styles}\n${extraCss}`, {
     base: SRC,
     loadStylesheet,
@@ -202,7 +226,7 @@ async function buildCss(source: string, extraCss: string): Promise<string> {
       throw new Error(`Tailwind plugins are not available in apps (${id}).`);
     },
   });
-  const css = compiler.build([...classCandidates(kit), ...classCandidates(source)]);
+  const css = compiler.build([...classCandidates(js), ...classCandidates(source)]);
   const minified = await transform(css, { loader: "css", minify: true, target: ["chrome111", "safari16.4"] });
   return minified.code;
 }
@@ -254,6 +278,7 @@ export async function buildApp(files: AppFiles, options: BuildOptions = {}): Pro
       logLevel: "silent",
       charset: "utf8",
       plugins: [appPlugin(files)],
+      metafile: true,
     });
   } catch (error) {
     const failure = error as { errors?: Message[]; warnings?: Message[] };
@@ -264,6 +289,7 @@ export async function buildApp(files: AppFiles, options: BuildOptions = {}): Pro
     };
   }
   const js = output.outputFiles?.[0]?.text ?? "";
+  const inputs: BundledInputs = Object.values(output.metafile?.outputs ?? {})[0]?.inputs ?? {};
   const source = Object.entries(files)
     .filter(([name]) => /\.(tsx|ts|jsx|js)$/.test(name))
     .map(([, text]) => text)
@@ -278,7 +304,8 @@ export async function buildApp(files: AppFiles, options: BuildOptions = {}): Pro
   }
   let css: string;
   try {
-    css = await buildCss(source, extraCss);
+    // The Studio's preview can show a visual edit before it is saved, so it carries those classes.
+    css = await buildCss(js, preview ? `${source}\n${VISUAL_EDIT_CLASSES.join(" ")}` : source, extraCss);
   } catch (error) {
     return { ok: false, errors: [{ file: "styles.css", message: error instanceof Error ? error.message : String(error) }], warnings: [] };
   }
@@ -298,6 +325,7 @@ export async function buildApp(files: AppFiles, options: BuildOptions = {}): Pro
     css,
     bytes,
     hash: createHash("sha256").update(js).update(css).digest("base64url").slice(0, 22),
+    weight: bundleWeight(inputs),
     warnings: output.warnings.map(problem).slice(0, 20),
   };
 }

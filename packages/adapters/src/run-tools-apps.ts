@@ -1,5 +1,6 @@
 import { buildApp } from "@rakazo/app-kit/build";
 import { APP_KIT_GUIDE } from "@rakazo/app-kit/guide";
+import { APP_KIT_GUIDE_EXTRAS } from "@rakazo/app-kit/guide-extras";
 import { importWorkbook, MAX_WORKBOOK_BYTES, scaffoldApp } from "@rakazo/app-kit/import";
 import { APP_TEMPLATES, findTemplate } from "@rakazo/app-kit/templates";
 import type { MessageBlock } from "@rakazo/contracts";
@@ -364,7 +365,7 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
 async function saveApp(ctx: RunContext, call: ToolCall) {
   const { deps, run, bot, thread } = ctx;
   const { args } = call;
-  if (args.help === true) return { guide: APP_KIT_GUIDE };
+  if (args.help === true) return { guide: `${APP_KIT_GUIDE}\n\n${APP_KIT_GUIDE_EXTRAS}` };
   const appId = argumentGiven(args.appId) ? String(args.appId) : undefined;
   const hasFiles =
     args.files !== null &&
@@ -479,6 +480,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   const codeChanged = !app || hasFiles || hasEdits || deletes.length > 0;
   let code: string | null = null;
   let warnings: unknown[] = [];
+  let size: ReturnType<typeof appSize> = null;
   if (codeChanged) {
     const built = await buildApp(files, { title: title ?? app?.title ?? "App" });
     if (!built.ok) {
@@ -490,6 +492,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     }
     code = built.html;
     warnings = built.warnings;
+    size = appSize(built);
   }
   // An app can be shared by link, so it never stores a value this run keeps secret.
   if (
@@ -587,11 +590,28 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         }
       : {}),
     ...(warnings.length ? { warnings } : {}),
+    ...(size ? { size } : {}),
     ...(icon ? { icon } : {}),
     ...(check ?? {}),
     ...(cardError
       ? { error: cardError }
       : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
+  };
+}
+
+/** Above this an app is slow to open on a phone on site; the save result says what weighs most. */
+export const HEAVY_APP_BYTES = 600_000;
+
+/** The built size and its largest parts when an app is heavy, or null when it is light. */
+export function appSize(built: { bytes: number; weight: Array<{ part: string; kb: number }> }) {
+  if (built.bytes <= HEAVY_APP_BYTES) return null;
+  const recharts = built.weight.find((item) => item.part === "recharts");
+  return {
+    kb: Math.round(built.bytes / 1000),
+    largest: built.weight.slice(0, 5),
+    hint: recharts
+      ? `Importing recharts adds ${recharts.kb} KB; the kit's AreaChart, BarChart, LineChart, DonutChart and ScatterChart draw the same in a few KB.`
+      : "Move data out of the code into tables and drop imports the app doesn't need.",
   };
 }
 

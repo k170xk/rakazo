@@ -161,7 +161,8 @@ export type AppChangeEntry = {
   fields?: Array<{ key: string; label: string; before: unknown; after: unknown }>;
 };
 
-function changedFields(schema: TableSchema | null, before: Data, after: Data) {
+/** The columns that differ between two versions of a row, labelled from its schema. */
+export function changedFields(schema: TableSchema | null, before: Data, after: Data) {
   const labels = new Map(schema?.columns.map((column) => [column.key, column.label]) ?? []);
   const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
   return [...keys]

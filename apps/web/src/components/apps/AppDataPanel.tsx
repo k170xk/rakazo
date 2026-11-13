@@ -3,7 +3,7 @@ import type { Column, ColumnType, TableSchema } from "@rakazo/app-kit/schema";
 import { COLUMN_KEY, COLUMN_TYPES, formatValue } from "@rakazo/app-kit/schema";
 import { Button, Input, Spinner } from "@rakazo/ui-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, FileSpreadsheet, Plus, Search, Trash2 } from "lucide-react";
+import { Download, FileSpreadsheet, Lock, Plus, Search, Trash2, Users } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { saveFile } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
@@ -138,6 +138,9 @@ export function AppDataPanel({ pageId }: { pageId: string }) {
               className="rounded-full px-2.5 py-1 text-[13px] text-foreground/70 hover:bg-foreground/[0.05] aria-pressed:bg-primary/15 aria-pressed:font-medium aria-pressed:text-primary"
             >
               {data.data?.tables[tableName]?.schema.label ?? tableName}
+              {data.data?.tables[tableName]?.schema.personal ? (
+                <Lock className="ml-1 inline size-3 align-[-1px] text-foreground/45" aria-hidden />
+              ) : null}
               <span className="ml-1 text-foreground/40 tabular-nums">
                 {data.data?.tables[tableName]?.rows.length ?? 0}
               </span>
@@ -169,6 +172,26 @@ export function AppDataPanel({ pageId }: { pageId: string }) {
             pending={define.isPending}
             onAdd={(column) => define.mutate({ ...schema, columns: [...schema.columns, column] })}
           />
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            aria-pressed={schema.personal === true}
+            aria-label={
+              schema.personal
+                ? t`Personal: each colleague sees only their own rows. Click to share all rows.`
+                : t`Shared: colleagues see every row. Click to make rows personal.`
+            }
+            title={
+              schema.personal
+                ? t`Personal: each colleague sees only their own rows. Click to share all rows.`
+                : t`Shared: colleagues see every row. Click to make rows personal.`
+            }
+            disabled={define.isPending}
+            onClick={() => define.mutate({ ...schema, personal: !schema.personal })}
+            className="aria-pressed:text-primary"
+          >
+            {schema.personal ? <Lock /> : <Users />}
+          </Button>
           <Button
             size="icon-sm"
             variant="ghost"

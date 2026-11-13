@@ -44,6 +44,7 @@ export * from "./search.js";
 export * from "./security-events.js";
 export * from "./server-headers.js";
 export * from "./settings-scope.js";
+export * from "./staff-limits.js";
 export * from "./terminal.js";
 export * from "./ui-cards.js";
 export * from "./user-devices.js";

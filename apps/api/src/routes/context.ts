@@ -15,8 +15,11 @@ import {
   kickModelCredentialRefresh,
   listAvailablePiCatalog,
   McpOAuthBroker,
+  MODEL_NOT_ALLOWED,
+  modelAllowed,
   modelCredentialAuthKindsForSpace,
   offeredCatalog,
+  personStaffLimits,
   providerCatalogCache,
   providerLiveCatalogsForSpace,
   savedCatalogSelections,
@@ -287,6 +290,13 @@ export function createRouterContext(deps: RouterDeps) {
     choices: ModelRoleChoice[],
   ): Promise<void> => {
     if (choices.length === 0) return;
+    const limits = await personStaffLimits(deps.prisma, actor.userId);
+    if (
+      choices.some(
+        (choice) => !modelAllowed(limits, canonicalPiProviderId(choice.provider), choice.modelId),
+      )
+    )
+      throw new ORPCError("BAD_REQUEST", { message: MODEL_NOT_ALLOWED });
     const catalog = await modelRoleCatalog(actor, role);
     for (const choice of choices) {
       const entry = catalog.find(

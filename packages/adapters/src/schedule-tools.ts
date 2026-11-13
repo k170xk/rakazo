@@ -21,6 +21,11 @@ import { getLogger } from "@rakazo/logging";
 import { computerAccessFor } from "./computer-access.js";
 import { localDateTime } from "./current-time.js";
 import { validateRoutineWatch } from "./routine-watch.js";
+import {
+  activeRoutineCapRefusal,
+  personStaffLimits,
+  routineScheduleRefusal,
+} from "./staff-limits.js";
 
 export { isOneShotRoutineCron, ONCE_ROUTINE_CRON };
 
@@ -485,6 +490,9 @@ export async function createScheduleFromTool(
       error: `This bot already has ${MAX_ACTIVE_ROUTINES_PER_BOT} active routines. Cancel one before adding another.`,
     };
   }
+  const capRefusal = await activeRoutineCapRefusal(deps.prisma, input.userId);
+  if (capRefusal) return { error: capRefusal };
+  const limits = await personStaffLimits(deps.prisma, input.userId);
 
   if (input.timezone !== undefined) {
     const parsedTimezone = TimeZoneSchema.safeParse(input.timezone);
@@ -501,6 +509,8 @@ export async function createScheduleFromTool(
   const insertRoutine = (client: Pick<Prisma.TransactionClient, "routine">, timezone: string) => {
     const resolved = resolveScheduleTiming(input.schedule, timezone);
     if (!resolved.ok) return { error: resolved.error } as const;
+    const tooOften = routineScheduleRefusal(limits, { crons: [resolved.cron], timezone });
+    if (tooOften) return { error: tooOften } as const;
     wakeAt = resolved.nextRunAt;
     return client.routine.create({
       data: {
@@ -818,6 +828,17 @@ export async function updateScheduleFromTool(
     } else nextRunAt = nextCronDateAcross(crons, new Date(), timezone);
   }
   if (!active) nextRunAt = null;
+  if (retime || (active && !existing.active)) {
+    const limits = await personStaffLimits(deps.prisma, input.userId);
+    const tooOften = routineScheduleRefusal(limits, { crons, timezone });
+    if (tooOften) return { error: tooOften };
+    if (active && !existing.active) {
+      const capRefusal = await activeRoutineCapRefusal(deps.prisma, input.userId, {
+        excludeRoutineId: existing.id,
+      });
+      if (capRefusal) return { error: capRefusal };
+    }
+  }
   const timingChanged =
     retime || active !== existing.active || nextRunAt?.getTime() !== existing.nextRunAt?.getTime();
 

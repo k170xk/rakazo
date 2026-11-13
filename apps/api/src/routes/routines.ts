@@ -15,6 +15,7 @@ import { listRoutineRuns } from "../routine-runs.js";
 import {
   assertMemberMaySetRoutineModel,
   assertRoutineSchedule,
+  assertRoutineWithinStaffLimits,
   createRoutineTestRun,
   firstWatchCheck,
   listRoutinesDto,
@@ -85,6 +86,7 @@ export function routinesRoutes(ctx: RouterContext) {
           thinkingLevel: input.thinkingLevel ?? null,
         });
         await assertRoutineModel(deps, context.actor, input, codexCatalog);
+        await assertRoutineWithinStaffLimits(deps, context.actor, input);
         const row = await deps.prisma.routine.create({
           data: routineRowData(context.actor, input, routineNextRunAt(input)),
         });
@@ -187,6 +189,18 @@ export function routinesRoutes(ctx: RouterContext) {
             message: "A one-time schedule can't be combined with other schedules.",
           });
         }
+        // Other edits leave a routine set up before a limit tightened as it is.
+        if (
+          input.crons !== undefined ||
+          input.timezone !== undefined ||
+          (active && !existing.active)
+        )
+          await assertRoutineWithinStaffLimits(
+            deps,
+            context.actor,
+            { crons, timezone, active },
+            { routineId: existing.id, wasActive: existing.active },
+          );
         if (active && isOneShotRoutineCrons(crons)) {
           if (!isOneShotRoutineCrons(existing.crons)) {
             throw new ORPCError("BAD_REQUEST", {
