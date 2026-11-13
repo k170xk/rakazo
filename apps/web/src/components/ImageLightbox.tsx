@@ -36,7 +36,7 @@ export function ImageLightbox({
     <Dialog open={image !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent
         showCloseButton={false}
-        className="top-0 left-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none bg-black/95 p-0 text-white ring-0 sm:max-w-none"
+        className="top-0 left-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none bg-black/95 p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)] text-white ring-0 sm:max-w-none"
       >
         {image ? <Viewer key={image.src} image={image} onClose={onClose} /> : null}
       </DialogContent>

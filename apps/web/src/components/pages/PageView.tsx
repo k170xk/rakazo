@@ -100,7 +100,7 @@ export function PageView({
         finalFocus={returnFocus}
         data-testid="page-view"
         data-page-print
-        className={`print:static print:h-auto print:overflow-visible print:bg-transparent print:animate-none top-0 left-0 block h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-card p-0 ring-0 sm:max-w-none ease-[cubic-bezier(0.16,1,0.3,1)] data-open:duration-[260ms] data-open:zoom-in-[0.98] data-open:slide-in-from-bottom-3 data-closed:duration-150 data-closed:zoom-out-100 motion-reduce:data-open:zoom-in-100 motion-reduce:data-open:slide-in-from-bottom-0 ${
+        className={`print:static print:h-auto print:overflow-visible print:bg-transparent print:animate-none top-0 left-0 block h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-card p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)] print:p-0 ring-0 sm:max-w-none ease-[cubic-bezier(0.16,1,0.3,1)] data-open:duration-[260ms] data-open:zoom-in-[0.98] data-open:slide-in-from-bottom-3 data-closed:duration-150 data-closed:zoom-out-100 motion-reduce:data-open:zoom-in-100 motion-reduce:data-open:slide-in-from-bottom-0 ${
           compact ? "min-[900px]:bg-transparent" : ""
         }`}
       >

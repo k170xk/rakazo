@@ -163,7 +163,7 @@ export function SubscriptionGate({
         <Dialog open={plansOpen} onOpenChange={setPlansOpen}>
           <DialogContent
             aria-label={t`Choose how to use OCSC Intelligence`}
-            className="inset-0 top-0 left-0 block h-dvh max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none bg-background p-0 ring-0 sm:max-w-none"
+            className="inset-0 top-0 left-0 block h-dvh max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none bg-background p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)] ring-0 sm:max-w-none"
           >
             <Suspense fallback={fallback}>
               <PaywallPage status={state.status} dismissible />

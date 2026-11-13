@@ -193,7 +193,7 @@ export function AppStudio({
         initialFocus={closeButton}
         finalFocus={returnFocus}
         data-testid="app-studio"
-        className="top-0 left-0 block h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-background p-0 ring-0 sm:max-w-none data-open:duration-[260ms] data-open:zoom-in-[0.98] data-open:slide-in-from-bottom-3 data-closed:duration-150 motion-reduce:data-open:zoom-in-100"
+        className="top-0 left-0 block h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-background p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)] ring-0 sm:max-w-none data-open:duration-[260ms] data-open:zoom-in-[0.98] data-open:slide-in-from-bottom-3 data-closed:duration-150 motion-reduce:data-open:zoom-in-100"
       >
         <header className="absolute inset-x-0 top-0 z-10 flex h-[48px] items-center gap-2 px-2.5 max-sm:gap-1 max-sm:px-1.5">
           <DialogClose ref={closeButton} aria-label={t`Close app`} className={`${control} ${size}`}>
