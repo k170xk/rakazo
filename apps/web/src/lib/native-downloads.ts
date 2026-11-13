@@ -53,6 +53,8 @@ function bridge(): FilesBridge | undefined {
   return cap?.isPluginAvailable?.("NativeFiles") ? cap : undefined;
 }
 
+const objectUrls = new Map<string, Blob>();
+
 function base64(bytes: ArrayBuffer): string {
   const view = new Uint8Array(bytes);
   let binary = "";
@@ -67,8 +69,10 @@ function open(cap: FilesBridge, download: NativeDownload) {
     void cap.nativePromise?.("NativeFiles", "open", download)?.catch(() => undefined);
     return;
   }
-  // Started before returning: some callers revoke the object URL straight after the click.
-  const blob = fetch(download.url).then((response) => response.blob());
+  const made = objectUrls.get(download.url);
+  const blob = made
+    ? Promise.resolve(made)
+    : fetch(download.url).then((response) => response.blob());
   void blob
     .then(async (file) =>
       cap.nativePromise?.("NativeFiles", "open", {
@@ -84,6 +88,19 @@ function open(cap: FilesBridge, download: NativeDownload) {
 export function installNativeDownloads(): void {
   const cap = bridge();
   if (!cap) return;
+  // WebKit in the app cannot fetch object URLs, and some callers revoke them straight after the
+  // click, so each one keeps its file until shortly after it is revoked.
+  const create = URL.createObjectURL;
+  const revoke = URL.revokeObjectURL;
+  URL.createObjectURL = (object: Blob | MediaSource) => {
+    const url = create(object);
+    if (object instanceof Blob) objectUrls.set(url, object);
+    return url;
+  };
+  URL.revokeObjectURL = (url: string) => {
+    revoke(url);
+    window.setTimeout(() => objectUrls.delete(url), 60_000);
+  };
   const click = HTMLAnchorElement.prototype.click;
   // Downloads are mostly a detached link clicked in code, which no document listener sees.
   HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
