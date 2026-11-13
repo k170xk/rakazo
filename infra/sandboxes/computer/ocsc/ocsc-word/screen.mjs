@@ -26,6 +26,8 @@ import {
 } from "node:fs";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { prepareDocx } from "./docx-fallback.mjs";
+import { PAGE_MARK, SECTION_MARK } from "./docx-pages.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORKSPACE = process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
@@ -133,6 +135,7 @@ pre.ob-text{max-width:1000px;margin:0 auto;padding:20px;background:#fff;white-sp
 iframe.ob-html{display:block;width:100%;max-width:1100px;height:calc(100vh - 90px);margin:0 auto;border:0;background:#fff}
 .docx-wrapper{background:transparent!important;padding:0!important}
 .docx-wrapper>section.docx{box-shadow:0 2px 6px rgba(0,0,0,.2);margin-bottom:22px!important}
+.docx svg>g>foreignObject>*{padding-left:var(--ob-inset-l,0);padding-right:var(--ob-inset-r,0);box-sizing:border-box}
 .docx ins{color:#1a7f37;text-decoration:underline;background:#e6ffec}
 .docx del{color:#c62828;text-decoration:line-through;background:#ffebe9}
 @media print{.ob-bar,.ob-note{display:none}.ob-main{padding:0}html,body{background:#fff}.ob-sheet,.ob-slide,.ob-page,.ob-image,.docx-wrapper>section.docx{box-shadow:none!important}.ob-slide,.ob-page,.docx-wrapper>section.docx{break-after:page;margin:0!important}.docx-wrapper>section.docx:last-child{break-after:auto}}
@@ -152,11 +155,54 @@ function page({ name, kind, body, script = "", note = "", ready = true }) {
 
 // ---------- renderers ----------
 
-function renderDocx(bytes, changes = true) {
+function renderDocx(bytes, changes = true, numbering = []) {
   const script = `<script>${lib("jszip/dist/jszip.min.js")}</script><script>${lib("docx-preview/dist/docx-preview.min.js")}</script>
 <script>
 (function(){
   var host=document.getElementById("ob-doc");
+  var NUMBERING=${JSON.stringify(numbering)},PAGE_MARK=${JSON.stringify(PAGE_MARK)},SECTION_MARK=${JSON.stringify(SECTION_MARK)};
+  // Page numbers as Word counts them: each section continues from the page before or restarts,
+  // in its own format (front matter in roman numerals).
+  function roman(n){var out="",r=[[1000,"m"],[900,"cm"],[500,"d"],[400,"cd"],[100,"c"],[90,"xc"],[50,"l"],[40,"xl"],[10,"x"],[9,"ix"],[5,"v"],[4,"iv"],[1,"i"]];if(n<1)return String(n);r.forEach(function(p){while(n>=p[0]){out+=p[1];n-=p[0];}});return out;}
+  function letter(n){if(n<1)return String(n);var c=String.fromCharCode(96+((n-1)%26)+1);return new Array(Math.floor((n-1)/26)+2).join(c);}
+  function shown(n,format){
+    if(format==="lowerRoman")return roman(n);
+    if(format==="upperRoman")return roman(n).toUpperCase();
+    if(format==="lowerLetter")return letter(n);
+    if(format==="upperLetter")return letter(n).toUpperCase();
+    return String(n);
+  }
+  function number(){
+    var n=0,format="decimal",started=false;
+    document.querySelectorAll(".docx-wrapper>section.docx").forEach(function(page){
+      var marks=[].slice.call(page.querySelectorAll('[id^="'+SECTION_MARK+'"]'));
+      var first=marks.length?NUMBERING[Number(marks[0].id.slice(SECTION_MARK.length))]:null;
+      if(first){format=first.format||"decimal";n=first.start!==null&&first.start!==undefined?first.start:(started?n+1:1);}
+      else n=started?n+1:1;
+      started=true;
+      var walker=document.createTreeWalker(page,NodeFilter.SHOW_TEXT),text,label=shown(n,format);
+      while((text=walker.nextNode()))if(text.nodeValue.indexOf(PAGE_MARK)>=0)text.nodeValue=text.nodeValue.split(PAGE_MARK).join(label);
+      marks.slice(1).forEach(function(mark){var s=NUMBERING[Number(mark.id.slice(SECTION_MARK.length))];if(s){format=s.format||"decimal";if(s.start!==null&&s.start!==undefined)n=s.start-1;}});
+    });
+  }
+  // Word draws a list number in the paragraph style's font (a heading's number is as large and
+  // green as the heading); the renderer gives that font to the runs only, so the number would
+  // print as body text. A plain run in the paragraph shows the style's font.
+  var NUMBER_FONT=["fontFamily","fontSize","fontWeight","fontStyle","color","textTransform"];
+  function numberFonts(){
+    document.querySelectorAll("#ob-doc p").forEach(function(p){
+      var before=getComputedStyle(p,"::before").content;
+      if(!before||before==="none"||before==="normal")return;
+      var probe=document.createElement("span");p.appendChild(probe);
+      var font=getComputedStyle(probe);
+      NUMBER_FONT.forEach(function(key){p.style[key]=font[key];});
+      probe.remove();
+    });
+  }
+  function unmarked(){
+    var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),text;
+    while((text=walker.nextNode()))if(text.nodeValue.indexOf(PAGE_MARK)>=0)text.nodeValue=text.nodeValue.split(PAGE_MARK).join("");
+  }
   function bleed(){
     // Full-width header and footer artwork is anchored to the page edge in Word; the renderer places
     // it inside the margins instead, which pushes it off the page and leaves the banner's text boxes
@@ -264,7 +310,10 @@ function renderDocx(bytes, changes = true) {
   function done(){
     settle().then(function(){
       try{bleed();}catch(e){}
+      try{numberFonts();}catch(e){console.error(e);}
       try{paginate();}catch(e){console.error(e);}
+      try{number();}catch(e){console.error(e);}
+      unmarked();
       document.body.dataset.ready="1";
     });
   }
@@ -765,8 +814,10 @@ export async function renderPreview(full, name = basename(full), { changes = tru
   const ext = extname(name).slice(1).toLowerCase();
   let part;
   try {
-    if (kind === "Word") part = renderDocx(bytes, changes);
-    else if (kind === "Excel") part = await renderXlsx(full, print);
+    if (kind === "Word") {
+      const prepared = await prepareDocx(bytes).catch(() => ({ bytes, numbering: [] }));
+      part = renderDocx(prepared.bytes, changes, prepared.numbering);
+    } else if (kind === "Excel") part = await renderXlsx(full, print);
     else if (kind === "CSV") part = renderCsv(bytes, name);
     else if (kind === "PowerPoint") part = await renderPptx(bytes);
     else if (kind === "PDF") part = renderPdf(bytes);
