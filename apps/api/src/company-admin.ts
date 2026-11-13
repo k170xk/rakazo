@@ -187,6 +187,7 @@ export async function companyAdminState(
     thinkingLevel: ThinkingLevelSchema.safeParse(row?.companyThinkingLevel).data ?? null,
     assistantModels: companyToolsWithDefaults(row?.companyTools).assistantModels ?? {},
     staffApps: companyToolsWithDefaults(row?.companyTools).staffApps ?? null,
+    catalogItems: companyToolsWithDefaults(row?.companyTools).catalogItems ?? {},
     access: {
       groups: companyToolsWithDefaults(row?.companyTools).accessGroups ?? [],
       featureAudiences: companyToolsWithDefaults(row?.companyTools).featureAudiences ?? {},
@@ -582,6 +583,12 @@ export async function setCompanyTools(
   );
   tools.appAudiences = Object.fromEntries(
     Object.entries(tools.appAudiences ?? {}).map(([key, audience]) => [key, tidy(audience)]),
+  );
+  tools.catalogItems = Object.fromEntries(
+    Object.entries(tools.catalogItems ?? {}).flatMap(([domain, state]) => {
+      const key = domain.trim().toLowerCase();
+      return state === "enabled" && key ? [[key, "enabled" as const]] : [];
+    }),
   );
   if (input.assistantModels) {
     const catalog = listPiCatalog();

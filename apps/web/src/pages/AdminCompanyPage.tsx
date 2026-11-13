@@ -52,6 +52,7 @@ import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { AccessGroupsSection, AudienceControl } from "./AdminAccess";
 import { CompanyAssistantModelsSection } from "./AdminAssistantModels";
+import { CatalogSection } from "./AdminCatalog";
 import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
@@ -635,6 +636,9 @@ function CompanyFeaturesSection({
           {group.id === "apps" ? (
             <div className="pt-4">
               <StaffAppsSection state={state} onSaved={onSaved} />
+              <div className="pt-4">
+                <CatalogSection state={state} onSaved={onSaved} />
+              </div>
             </div>
           ) : null}
         </div>

@@ -3698,6 +3698,7 @@ msgstr ""
 msgid "Could not save your signature"
 msgstr ""
 
+#: src/pages/AdminCatalog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not search catalog"
 msgstr "לא ניתן לחפש בקטלוג"
@@ -3805,6 +3806,10 @@ msgstr ""
 msgid "Could not update the default memory scope"
 msgstr "לא ניתן לעדכן את היקף הזיכרון המוגדר כברירת מחדל"
 
+#: src/pages/AdminCatalog.tsx
+msgid "Could not update the directory"
+msgstr ""
+
 #: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Could not update the file"
@@ -3826,6 +3831,7 @@ msgstr ""
 msgid "Could not update voice"
 msgstr ""
 
+#: src/pages/AdminCatalog.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not update who can use this"
 msgstr ""
@@ -4389,6 +4395,10 @@ msgstr ""
 msgid "Did you mean <0>{emailSuggestion}</0>?"
 msgstr "האם התכוונת ל-<0>{emailSuggestion}</0>?"
 
+#: src/pages/AdminCatalog.tsx
+msgid "Directory for staff"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "השבתת כלי"
@@ -4766,6 +4776,7 @@ msgstr ""
 msgid "Enable {0}"
 msgstr "הפעלת {0}"
 
+#: src/pages/AdminCatalog.tsx
 #: src/pages/AdminStaffApps.tsx
 msgid "Enabled"
 msgstr "מופעלת"
@@ -5576,6 +5587,7 @@ msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "היי, כך אשמע כשאקריא תשובות בקול."
 
 #: src/components/vault/LoginFieldsInput.tsx
+#: src/pages/AdminCatalog.tsx
 #: src/pages/AdminStaffApps.tsx
 msgid "Hidden"
 msgstr "מוסתר"
@@ -6305,6 +6317,7 @@ msgstr "טוען ספקי קול…"
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/drawings-dialog.tsx
@@ -7508,6 +7521,10 @@ msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Nothing in Evolve matches."
+msgstr ""
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Nothing in the directory has been turned on for you yet."
 msgstr ""
 
 #: src/components/StorageDialog.tsx
@@ -9379,6 +9396,10 @@ msgstr ""
 msgid "Search files…"
 msgstr ""
 
+#: src/pages/AdminCatalog.tsx
+msgid "Search for a service, then enable it."
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "חיפוש ב-integrations.sh"
@@ -9408,6 +9429,10 @@ msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
+msgstr ""
+
+#: src/pages/AdminCatalog.tsx
+msgid "Search the directory"
 msgstr ""
 
 #: src/components/VaultSettings.tsx
@@ -9600,6 +9625,10 @@ msgstr "שם השרת"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Server URL"
 msgstr "URL של השרת"
+
+#: src/pages/AdminCatalog.tsx
+msgid "Services from the integrations directory. Nothing is shown until you enable it. Everyone means the whole company, or limit it to people and groups. Admins can connect anything enabled here."
+msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Set amount"
@@ -10048,6 +10077,10 @@ msgstr "SSO אינו זמין כרגע. אפשר לנסות שוב."
 #: src/pages/AdminStaffApps.tsx
 msgid "Staff access to {0}"
 msgstr "גישת הצוות אל {0}"
+
+#: src/pages/AdminCatalog.tsx
+msgid "Staff access to {name}"
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."

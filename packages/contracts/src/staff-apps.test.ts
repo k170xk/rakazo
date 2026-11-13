@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CompanyToolsSchema,
+  catalogItemOpenTo,
   companyMcpEndpoints,
   companyMcpEndpointsFor,
   companyToolsFrom,
@@ -122,6 +123,18 @@ describe("staff apps", () => {
     expect(companyMcpEndpointsFor(policy, "ann")).toEqual([]);
     expect(staffPluginEnabledFor(policy, source, "ann")).toBe(true);
     expect(staffPluginEnabledFor(policy, source, "bob")).toBe(false);
+  });
+
+  it("shows a directory service only after an admin enables it for that person", () => {
+    const tools = {
+      catalogItems: { "canva.com": "enabled" as const },
+      appAudiences: { "catalog:canva.com": { userIds: [], groupIds: ["design"] } },
+      accessGroups: [{ id: "design", name: "Design", userIds: ["ann"] }],
+    };
+    expect(catalogItemOpenTo(tools, "Canva.com", "ann", false)).toBe(true);
+    expect(catalogItemOpenTo(tools, "canva.com", "bob", false)).toBe(false);
+    expect(catalogItemOpenTo(tools, "canva.com", "bob", true)).toBe(true);
+    expect(catalogItemOpenTo(tools, "clay.com", "ann", true)).toBe(false);
   });
 
   it("accepts audiences only for switches that can be limited", () => {

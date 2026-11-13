@@ -2396,6 +2396,27 @@ export function staffMayUseConnectionFor(
   return staffAppStateFor(policy, connection.provider, userId) === "enabled";
 }
 
+/** Audience key for one integrations.sh domain. */
+export function catalogItemKey(domain: string): string {
+  return `catalog:${domain.trim().toLowerCase()}`;
+}
+
+/**
+ * Whether this person may see and add an integrations.sh domain. It has to be enabled first.
+ * Admins may use every enabled domain, including one limited to other people.
+ */
+export function catalogItemOpenTo(
+  tools: Pick<CompanyTools, "catalogItems" | "appAudiences" | "accessGroups">,
+  domain: string,
+  userId: string,
+  admin: boolean,
+): boolean {
+  const key = domain.trim().toLowerCase();
+  if (tools.catalogItems?.[key] !== "enabled") return false;
+  if (admin) return true;
+  return inAudience(tools.appAudiences?.[catalogItemKey(key)], tools.accessGroups, userId);
+}
+
 export function companyMcpEndpointsFor(policy: StaffAppPolicy, userId: string): string[] {
   return COMPANY_APPS.flatMap((app) =>
     "mcpEndpoint" in app && staffAppStateFor(policy, app.slug, userId) === "enabled"
@@ -2489,6 +2510,11 @@ export const CompanyToolsSchema = z.object({
   featureAudiences: z.partialRecord(z.enum(AUDIENCE_FEATURES), AudienceSchema).optional(),
   /** Keyed like staffApps; an enabled app not listed is open to all staff. */
   appAudiences: z.record(z.string().trim().min(1).max(2100), AudienceSchema).optional(),
+  /**
+   * integrations.sh domains an admin has turned on. A domain not listed is hidden from everyone.
+   * Who may use an enabled domain is appAudiences["catalog:<domain>"]; no audience means everyone.
+   */
+  catalogItems: z.record(z.string().trim().min(1).max(253), z.literal("enabled")).optional(),
   /**
    * The Document Library template `ocsc word new` uses when nobody names one; null or absent
    * keeps the built-in OCSC report.
@@ -2730,6 +2756,8 @@ export const CompanyAdminStateSchema = z.object({
   assistantModels: z.record(z.string(), CompanyAssistantModelSchema),
   /** Null until an admin first saves which apps and plugins staff see. */
   staffApps: z.record(z.string(), StaffAppStateSchema).nullable(),
+  /** integrations.sh domains turned on for the company. Missing domains are hidden. */
+  catalogItems: z.record(z.string(), z.literal("enabled")),
   /** Who each limited switch and app is open to, and the groups those name. */
   access: z.object({
     groups: z.array(AccessGroupSchema),

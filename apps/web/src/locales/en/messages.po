@@ -3703,6 +3703,7 @@ msgstr "Could not save your changes."
 msgid "Could not save your signature"
 msgstr "Could not save your signature"
 
+#: src/pages/AdminCatalog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not search catalog"
 msgstr "Could not search catalog"
@@ -3810,6 +3811,10 @@ msgstr "Could not update the company setting"
 msgid "Could not update the default memory scope"
 msgstr "Could not update the default memory scope"
 
+#: src/pages/AdminCatalog.tsx
+msgid "Could not update the directory"
+msgstr "Could not update the directory"
+
 #: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Could not update the file"
@@ -3831,6 +3836,7 @@ msgstr "Could not update the tool"
 msgid "Could not update voice"
 msgstr "Could not update voice"
 
+#: src/pages/AdminCatalog.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Could not update who can use this"
 msgstr "Could not update who can use this"
@@ -4398,6 +4404,10 @@ msgstr "Dictation failed."
 msgid "Did you mean <0>{emailSuggestion}</0>?"
 msgstr "Did you mean <0>{emailSuggestion}</0>?"
 
+#: src/pages/AdminCatalog.tsx
+msgid "Directory for staff"
+msgstr "Directory for staff"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Disable a tool"
 msgstr "Disable a tool"
@@ -4779,6 +4789,7 @@ msgstr "Emails:\n"
 msgid "Enable {0}"
 msgstr "Enable {0}"
 
+#: src/pages/AdminCatalog.tsx
 #: src/pages/AdminStaffApps.tsx
 msgid "Enabled"
 msgstr "Enabled"
@@ -5589,6 +5600,7 @@ msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "Hi, this is how I'll sound when I read replies out loud."
 
 #: src/components/vault/LoginFieldsInput.tsx
+#: src/pages/AdminCatalog.tsx
 #: src/pages/AdminStaffApps.tsx
 msgid "Hidden"
 msgstr "Hidden"
@@ -6323,6 +6335,7 @@ msgstr "Loading voice providers…"
 #: src/pages/Artifacts.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/PeerMessagesOverlay.tsx
+#: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/drawings-dialog.tsx
@@ -7527,6 +7540,10 @@ msgstr "Nothing here"
 #: src/components/EvolveChangeEditor.tsx
 msgid "Nothing in Evolve matches."
 msgstr "Nothing in Evolve matches."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Nothing in the directory has been turned on for you yet."
+msgstr "Nothing in the directory has been turned on for you yet."
 
 #: src/components/StorageDialog.tsx
 msgid "Nothing is due to be deleted this week."
@@ -9397,6 +9414,10 @@ msgstr "Search Evolve people to add"
 msgid "Search files…"
 msgstr "Search files…"
 
+#: src/pages/AdminCatalog.tsx
+msgid "Search for a service, then enable it."
+msgstr "Search for a service, then enable it."
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "Search integrations.sh"
@@ -9427,6 +9448,10 @@ msgstr "Search sites"
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
 msgstr "Search skills"
+
+#: src/pages/AdminCatalog.tsx
+msgid "Search the directory"
+msgstr "Search the directory"
 
 #: src/components/VaultSettings.tsx
 msgid "Search Vault"
@@ -9618,6 +9643,10 @@ msgstr "Server name"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Server URL"
 msgstr "Server URL"
+
+#: src/pages/AdminCatalog.tsx
+msgid "Services from the integrations directory. Nothing is shown until you enable it. Everyone means the whole company, or limit it to people and groups. Admins can connect anything enabled here."
+msgstr "Services from the integrations directory. Nothing is shown until you enable it. Everyone means the whole company, or limit it to people and groups. Admins can connect anything enabled here."
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Set amount"
@@ -10066,6 +10095,10 @@ msgstr "SSO is temporarily unavailable. Try again."
 #: src/pages/AdminStaffApps.tsx
 msgid "Staff access to {0}"
 msgstr "Staff access to {0}"
+
+#: src/pages/AdminCatalog.tsx
+msgid "Staff access to {name}"
+msgstr "Staff access to {name}"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."

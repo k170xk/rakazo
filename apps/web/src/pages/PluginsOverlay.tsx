@@ -1086,7 +1086,11 @@ export function PluginsOverlay({
           </div>
         ) : results.length === 0 ? (
           <p className="px-2.5 text-muted-foreground/80">
-            <Trans>No results</Trans>
+            {directoryQuery ? (
+              <Trans>No results</Trans>
+            ) : (
+              <Trans>Nothing in the directory has been turned on for you yet.</Trans>
+            )}
           </p>
         ) : (
           <>

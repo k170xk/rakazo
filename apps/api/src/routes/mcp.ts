@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { ORPCError } from "@orpc/server";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import {
-  companyFeatureOpenTo,
   companyTools,
   createPluginMarketplace,
   isTransientFetchError,
@@ -18,6 +17,7 @@ import {
 } from "@rakazo/adapters";
 import type { Actor } from "@rakazo/contracts";
 import {
+  catalogItemOpenTo,
   companyMcpEndpoints,
   companyMcpEndpointsFor,
   signupSurveyAsksTeamSize,
@@ -203,14 +203,44 @@ export function mcpRoutes(ctx: RouterContext) {
           deps.env.integrationsCatalogUrl ??
           (input.usePublicCatalog ? "https://integrations.sh" : undefined);
         if (!baseUrl) return { enabled: false, configured: false, results: [] };
-        // The same people and groups as the MCP servers switch, admins included.
-        if (!companyFeatureOpenTo("mcpServers", context.actor.userId)) {
-          return { enabled: false, configured: true, results: [] };
+        const admin = await isAdmin(deps, context.actor.userId);
+        // The manage view is the company-admin list, which shows services that are still off.
+        if (input.manage && !admin) {
+          throw new ORPCError("FORBIDDEN", { message: "Only an admin can manage the directory" });
         }
         if (!input.browse && !input.query.trim()) {
           return { enabled: true, configured: true, results: [] };
         }
         try {
+          const tools = companyTools();
+          // An empty browse lists the services this person is allowed, not the first page of
+          // the public directory, which would hide one an admin enabled further down.
+          if (input.browse && !input.manage && !input.query.trim()) {
+            const open = Object.keys(tools.catalogItems ?? {})
+              .filter((domain) => catalogItemOpenTo(tools, domain, context.actor.userId, admin))
+              .slice(0, 40);
+            const listed = await Promise.all(
+              open.map(async (domain) => {
+                const found = await searchIntegrationCatalog({
+                  baseUrl,
+                  query: domain,
+                  limit: 4,
+                  signal: context.signal ?? new AbortController().signal,
+                  fetch: deps.remoteConnectors?.fetch,
+                }).catch(() => []);
+                return (
+                  found.find((item) => item.domain.toLowerCase() === domain) ?? {
+                    domain,
+                    name: domain,
+                    description: "",
+                    pageUrl: null,
+                    surfaces: [],
+                  }
+                );
+              }),
+            );
+            return { enabled: true, configured: true, results: listed };
+          }
           const results = await searchIntegrationCatalog({
             baseUrl,
             query: input.query,
@@ -221,7 +251,15 @@ export function mcpRoutes(ctx: RouterContext) {
             signal: context.signal ?? new AbortController().signal,
             fetch: deps.remoteConnectors?.fetch,
           });
-          return { enabled: true, configured: true, results };
+          return {
+            enabled: true,
+            configured: true,
+            results: input.manage
+              ? results
+              : results.filter((item) =>
+                  catalogItemOpenTo(tools, item.domain, context.actor.userId, admin),
+                ),
+          };
         } catch (error) {
           throw new ORPCError("BAD_GATEWAY", {
             message: error instanceof Error ? error.message : "Integration catalog search failed",

@@ -1399,6 +1399,8 @@ export const appContract = {
           usePublicCatalog: z.boolean().default(false),
           /** Empty query lists the catalogue. A plain search still needs text. */
           browse: z.boolean().default(false),
+          /** Company admin: return services that are still hidden. Admins only. */
+          manage: z.boolean().default(false),
           offset: z.number().int().min(0).max(10_000).default(0),
           limit: z.number().int().min(1).max(100).default(8),
           kind: z.enum(["mcp", "openapi", "graphql", "cli"]).optional(),
