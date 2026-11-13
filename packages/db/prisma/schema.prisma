@@ -24,6 +24,9 @@ model AiDataConsent {
 model User {
   aiDataConsents              AiDataConsent[]
   todoItems                   TodoItem[]
+  emailDrafts                 EmailDraft[]
+  /// The person's own Outlook signature as sanitized HTML, added under every email they send from here.
+  emailSignature              String?                         @db.Text
   pages                       Page[]
   groupPeople                 ChatGroupPerson[]
   id                          String                          @id
@@ -58,7 +61,7 @@ model User {
   /// "choose" or "fixed" as an admin set it; null follows the company memberModels switch.
   modelAccess                 String?
   /// "provider/modelId" entries this person may pick; empty allows every model.
-  allowedModels               String[]  @default([])
+  allowedModels               String[]                        @default([])
   sessions                    Session[]
   accounts                    Account[]
   passkeys                    Passkey[]
@@ -457,6 +460,7 @@ model Space {
   routines                    Routine[]
   scratchpadItems             ScratchpadItem[]
   todoItems                   TodoItem[]
+  emailDrafts                 EmailDraft[]
   taughtSkills                TaughtSkill[]
   agentSkills                 AgentSkill[]
   agentImports                AgentImport[]
@@ -812,6 +816,7 @@ model Bot {
   routines                Routine[]
   scratchpadItems         ScratchpadItem[]
   todoItems               TodoItem[]
+  emailDrafts             EmailDraft[]
   taughtSkills            TaughtSkill[]
   memoryDocuments         MemoryDocument[]
   agentHome               AgentHome?
@@ -982,6 +987,7 @@ model Thread {
   tasks                          Task[]
   runs                           Run[]
   routines                       Routine[]
+  emailDrafts                    EmailDraft[]
 
   @@index([spaceId])
   @@index([spaceId, userId])
@@ -1441,6 +1447,40 @@ model ScratchpadItem {
   @@map("scratchpad_items")
 }
 
+/// An Outlook email an assistant drafted in its person's own chat. Nothing is sent until that
+/// person presses Send on the card; recipients, subject, body and attachments are encrypted in
+/// `content`.
+model EmailDraft {
+  id               String    @id @default(cuid())
+  spaceId          String
+  space            Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  threadId         String
+  thread           Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  botId            String?
+  bot              Bot?      @relation(fields: [botId], references: [id], onDelete: SetNull)
+  runId            String?
+  /// new, reply or reply_all.
+  mode             String    @default("new")
+  /// Outlook's id of the message a reply answers.
+  replyToMessageId String?
+  content          Json
+  /// draft, sending, sent, discarded or failed.
+  status           String    @default("draft")
+  /// Raised on every edit, so Send goes out only with the version the person last saw.
+  version          Int       @default(1)
+  error            String?
+  sentAt           DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([spaceId, userId, threadId])
+  @@index([threadId])
+  @@index([botId])
+  @@map("email_drafts")
+}
+
 /// A person's own to-do list, shared by all of their assistants and private to them. The
 /// title, notes and source (such as the email it came from) are encrypted in `content`.
 model TodoItem {
@@ -1828,46 +1868,46 @@ model Artifact {
 
 /// A page a bot built: a report, dashboard or tracker the user opens from chat and can share.
 model Page {
-  id                    String          @id @default(cuid())
+  id                    String               @id @default(cuid())
   spaceId               String
-  space                 Space           @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  space                 Space                @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   userId                String
-  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   botId                 String?
-  bot                   Bot?            @relation(fields: [botId], references: [id], onDelete: SetNull)
+  bot                   Bot?                 @relation(fields: [botId], references: [id], onDelete: SetNull)
   groupId               String?
-  group                 ChatGroup?      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group                 ChatGroup?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
   title                 String
-  visibility            String          @default("private")
+  visibility            String               @default("private")
   /// sha256 of the link token; the public read looks pages up by it.
-  shareTokenHash        String?         @unique
+  shareTokenHash        String?              @unique
   /// The link token itself, sealed in the secret store so the owner can copy the link again.
-  shareSecretId         String?         @unique
-  shareSecret           Secret?         @relation("PageShareToken", fields: [shareSecretId], references: [id], onDelete: SetNull)
+  shareSecretId         String?              @unique
+  shareSecret           Secret?              @relation("PageShareToken", fields: [shareSecretId], references: [id], onDelete: SetNull)
   /// scrypt of the password a link open to anyone asks for; null unless visibility is "public".
   sharePasswordHash     String?
   /// That password, sealed in the secret store so the owner can copy it again.
-  sharePasswordSecretId String?         @unique
-  sharePasswordSecret   Secret?         @relation("PageSharePassword", fields: [sharePasswordSecretId], references: [id], onDelete: SetNull)
+  sharePasswordSecretId String?              @unique
+  sharePasswordSecret   Secret?              @relation("PageSharePassword", fields: [sharePasswordSecretId], references: [id], onDelete: SetNull)
   pinnedAt              DateTime?
-  currentVersion        Int             @default(1)
+  currentVersion        Int                  @default(1)
   /// "page" is one JSX file on the page kit; "app" is a set of files built with the app kit,
   /// whose version source holds the files as JSON and whose code is the built document.
-  kind                  String          @default("page")
+  kind                  String               @default("page")
   /// Goes up whenever an app's rows change, so open copies know to fetch them again.
-  dataRevision          Int             @default(0)
+  dataRevision          Int                  @default(0)
   /// Who besides the owner may change an app's rows: "owner" or "company" (signed-in colleagues).
-  dataAccess            String          @default("owner")
+  dataAccess            String               @default("owner")
   /// What an app's workspaces are called ("Bridge", "Project"); null when it keeps one dataset.
   workspaceLabel        String?
   /// Who may start a workspace: "anyone" who can open the app, or only the "owner".
-  workspaceCreate       String          @default("anyone")
+  workspaceCreate       String               @default("anyone")
   /// The app's own icon: an AppAsset (source "icon") drawn for it when it was made.
   iconAssetId           String?
   /// The Evolve plugin this app was last published as; Evolve's calls for that plugin read it.
-  evolvePluginSlug      String?         @unique
+  evolvePluginSlug      String?              @unique
   /// How many times it was published, which numbers the plugin's versions.
-  evolvePluginRelease   Int             @default(0)
+  evolvePluginRelease   Int                  @default(0)
   /// Set by a company admin: nobody opens it by link or from Evolve, and it cannot be shared again.
   frozenAt              DateTime?
   /// The admin who froze it.
@@ -1877,9 +1917,9 @@ model Page {
   /// The AI's detailed review of an app for its reviewers (markdown), and the version it describes.
   dossier               String?
   dossierVersion        Int?
-  createdAt             DateTime        @default(now())
+  createdAt             DateTime             @default(now())
   /// Set when the page's content or title changes; pinning or sharing it is not an update.
-  updatedAt             DateTime        @default(now())
+  updatedAt             DateTime             @default(now())
   versions              PageVersion[]
   state                 PageState[]
   appTables             AppTable[]
@@ -1954,21 +1994,21 @@ model AppTable {
 }
 
 model AppRow {
-  id        String   @id @default(cuid())
-  pageId    String
-  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  tableId   String
-  table     AppTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
-  data      Json
-  position  Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id          String        @id @default(cuid())
+  pageId      String
+  page        Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  tableId     String
+  table       AppTable      @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  data        Json
+  position    Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
   /// Who last changed it: a user id, or null for the agent and imports.
-  updatedBy String?
+  updatedBy   String?
   /// Who added it: a user id, or null for the agent, imports and rows from before this was kept.
-  createdBy String?
+  createdBy   String?
   /// The app revision its last write moved to, set by a trigger, so open copies fetch only newer rows.
-  revision  Int      @default(0)
+  revision    Int           @default(0)
   /// The workspace it belongs to, in an app with workspaces; null in shared tables and older rows.
   workspaceId String?
   workspace   AppWorkspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)

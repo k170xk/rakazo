@@ -475,6 +475,11 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     intent: BotMessageIntent.optional(),
   }),
   z.object({
+    /** An Outlook draft its person edits and sends from the card; the bot never sends it. */
+    kind: z.literal("email_draft"),
+    draftId: Id,
+  }),
+  z.object({
     /** Delivered into the receiving bot's own chat as the prompt that woke it. */
     kind: z.literal("bot_message_received"),
     fromBotId: Id,

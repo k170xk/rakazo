@@ -45,6 +45,10 @@ msgstr "\"Turn these site visit notes into an OCSC report with two infographics.
 msgid "(cleared)"
 msgstr "(cleared)"
 
+#: src/components/EmailDraftCard.tsx
+msgid "(no subject)"
+msgstr "(no subject)"
+
 #. placeholder {0}: state.staff.accounts
 #: src/pages/AdminCompanyPage.tsx
 msgid "{0, plural, one {# account} other {# accounts}}"
@@ -895,6 +899,10 @@ msgstr "Add a trigger to run this routine."
 msgid "Add a voice provider key and pick a voice in Voice settings."
 msgstr "Add a voice provider key and pick a voice in Voice settings."
 
+#: src/components/EmailDraftCard.tsx
+msgid "Add an email address"
+msgstr "Add an email address"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Add an HTTPS server URL."
 msgstr "Add an HTTPS server URL."
@@ -1048,6 +1056,10 @@ msgstr "Added by your assistant"
 #: src/pages/shell/evolve-references.tsx
 msgid "Added References:"
 msgstr "Added References:"
+
+#: src/components/EmailSignatureSettings.tsx
+msgid "Added under every Outlook email you send from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
+msgstr "Added under every Outlook email you send from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Adding a line above a total grows the total to include it"
@@ -1607,6 +1619,10 @@ msgstr "at {timeSelect}"
 msgid "Attach file"
 msgstr "Attach file"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Attach from chat"
+msgstr "Attach from chat"
+
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/chat-shared.ts
 msgid "Attachment"
@@ -1733,6 +1749,10 @@ msgstr "Basic auth"
 msgid "Basic auth ({username})"
 msgstr "Basic auth ({username})"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Bcc"
+msgstr "Bcc"
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -1777,6 +1797,10 @@ msgstr "Blocked"
 #: src/pages/Board.tsx
 msgid "Board"
 msgstr "Board"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Bold"
+msgstr "Bold"
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -1932,6 +1956,10 @@ msgstr "Built-in OCSC report"
 msgid "Built-in skills"
 msgstr "Built-in skills"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Bulleted list"
+msgstr "Bulleted list"
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "By the assistant"
 msgstr "By the assistant"
@@ -2078,6 +2106,14 @@ msgstr "category"
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
 msgstr "Category"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Cc"
+msgstr "Cc"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Cc / Bcc"
+msgstr "Cc / Bcc"
 
 #: src/components/DictationShortcutSettings.tsx
 #: src/pages/AdminEvolveSafeguards.tsx
@@ -3308,6 +3344,10 @@ msgstr "Could not install connector"
 msgid "Could not install plugin"
 msgstr "Could not install plugin"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Could not list the files in this chat"
+msgstr "Could not list the files in this chat"
+
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
 #: src/lib/user-devices.ts
@@ -3651,9 +3691,17 @@ msgstr "Could not save these limits"
 msgid "Could not save this choice"
 msgstr "Could not save this choice"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Could not save this draft"
+msgstr "Could not save this draft"
+
 #: src/components/todos/todo-board.tsx
 msgid "Could not save your changes."
 msgstr "Could not save your changes."
+
+#: src/components/EmailSignatureSettings.tsx
+msgid "Could not save your signature"
+msgstr "Could not save your signature"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not search catalog"
@@ -3671,6 +3719,10 @@ msgstr "Could not send that"
 #: src/pages/SharedChats.tsx
 msgid "Could not send that message"
 msgstr "Could not send that message"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Could not send this email"
+msgstr "Could not send this email"
 
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
@@ -4356,6 +4408,7 @@ msgstr "Disabled"
 
 #: src/components/apps/AppCodePanel.tsx
 #: src/components/apps/AppVisualEdit.tsx
+#: src/components/EmailDraftCard.tsx
 msgid "Discard"
 msgstr "Discard"
 
@@ -4366,6 +4419,10 @@ msgstr "Discard changes"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
 msgstr "Discard recording"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Discard this draft?"
+msgstr "Discard this draft?"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -4506,6 +4563,10 @@ msgstr "Download PNG"
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "Downloading…"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Draft · not sent until you press Send"
+msgstr "Draft · not sent until you press Send"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -4667,6 +4728,15 @@ msgstr "Edits Word files you send it, keeping your original untouched"
 msgid "Email"
 msgstr "Email"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Email body"
+msgstr "Email body"
+
+#. placeholder {0}: draft.subject || t`(no subject)`
+#: src/components/EmailDraftCard.tsx
+msgid "Email draft discarded: {0}"
+msgstr "Email draft discarded: {0}"
+
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "Email is not allowed to register"
@@ -4674,6 +4744,11 @@ msgstr "Email is not allowed to register"
 #: src/components/ConfirmIdentityDialog.tsx
 msgid "Email me a code"
 msgstr "Email me a code"
+
+#: src/components/EmailSignatureSettings.tsx
+#: src/pages/settings-nav.ts
+msgid "Email signature"
+msgstr "Email signature"
 
 #: src/lib/user-error.ts
 msgid "Email verification required"
@@ -5235,6 +5310,10 @@ msgstr "For clients and partners; a password is made for you"
 msgid "Forgot password?"
 msgstr "Forgot password?"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Formatting"
+msgstr "Formatting"
+
 #: src/components/ModelCredits.tsx
 msgid "Free"
 msgstr "Free"
@@ -5259,6 +5338,7 @@ msgstr "Freeze"
 msgid "Friday"
 msgstr "Friday"
 
+#: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
 msgstr "From"
@@ -5699,6 +5779,10 @@ msgstr "In review"
 msgid "In Safari's File menu, choose Add to Dock."
 msgstr "In Safari's File menu, choose Add to Dock."
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below."
+msgstr "In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below."
+
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "In this bot"
 msgstr "In this bot"
@@ -5866,6 +5950,10 @@ msgstr "It may have been deleted, or it belongs to someone else."
 msgid "It stopped early: {0}"
 msgstr "It stopped early: {0}"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Italic"
+msgstr "Italic"
+
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
 msgstr "Its bots and groups are kept and leave the section."
@@ -5905,6 +5993,10 @@ msgstr "Jump to replied message: {excerpt}"
 #: src/lib/relative-time.ts
 msgid "just now"
 msgstr "just now"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Keep"
+msgstr "Keep"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Keep memories"
@@ -6083,9 +6175,14 @@ msgstr "Limits per person"
 msgid "Limits saved for {0}"
 msgstr "Limits saved for {0}"
 
+#: src/components/EmailDraftCard.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Link"
 msgstr "Link"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Link address"
+msgstr "Link address"
 
 #: src/components/ImageLightbox.tsx
 #: src/components/pages/PublicPageShell.tsx
@@ -6156,9 +6253,17 @@ msgstr "Loading activity…"
 msgid "Loading assistants…"
 msgstr "Loading assistants…"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Loading email draft"
+msgstr "Loading email draft"
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Loading exemplar responses..."
 msgstr "Loading exemplar responses..."
+
+#: src/components/EmailDraftCard.tsx
+msgid "Loading files…"
+msgstr "Loading files…"
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Loading folders…"
@@ -7212,6 +7317,10 @@ msgstr "No models listed."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "No OpenClaw, Hermes or agent document found."
 
+#: src/components/EmailDraftCard.tsx
+msgid "No other files in this chat"
+msgstr "No other files in this chat"
+
 #: src/pages/shell/references-dialog.tsx
 msgid "No people match your search."
 msgstr "No people match your search."
@@ -7270,6 +7379,10 @@ msgstr "No runs match these filters."
 #: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr "No runs yet"
+
+#: src/components/EmailDraftCard.tsx
+msgid "No signature saved. Paste your Outlook signature in Settings, under Email signature."
+msgstr "No signature saved. Paste your Outlook signature in Settings, under Email signature."
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "No sites or OneDrive found."
@@ -7434,6 +7547,10 @@ msgstr "Notifications"
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Number"
 msgstr "Number"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Numbered list"
+msgstr "Numbered list"
 
 #: src/pages/McpOAuthCallback.tsx
 msgid "OAuth authorization was cancelled."
@@ -7789,6 +7906,18 @@ msgstr "Other model…"
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Others see the data but can't change it."
 msgstr "Others see the data but can't change it."
+
+#: src/components/EmailDraftCard.tsx
+msgid "Outlook email"
+msgstr "Outlook email"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Outlook not connected"
+msgstr "Outlook not connected"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Outlook reply"
+msgstr "Outlook reply"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -8556,6 +8685,7 @@ msgid "Reload"
 msgstr "Reload"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/EmailSignatureSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
 #: src/components/vault/LoginFieldsInput.tsx
@@ -8573,6 +8703,7 @@ msgstr "Remove"
 #. placeholder {0}: device.name
 #: src/components/apps/AppSettingsPanel.tsx
 #: src/components/ComputerDeviceSettings.tsx
+#: src/components/EmailDraftCard.tsx
 #: src/components/GroupPeople.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/composer.tsx
@@ -8596,6 +8727,10 @@ msgstr "Remove {secretName}? Bots will no longer be able to use it."
 #: src/components/TrustedLinkSitesSettings.tsx
 msgid "Remove {site}"
 msgstr "Remove {site}"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Remove {value}"
+msgstr "Remove {value}"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
@@ -8742,6 +8877,12 @@ msgstr "Reply cancelled"
 #: src/pages/shell/composer.tsx
 msgid "Replying to {0}"
 msgstr "Replying to {0}"
+
+#. placeholder {0}: draft.replyTo.from
+#. placeholder {1}: draft.replyTo.subject
+#: src/components/EmailDraftCard.tsx
+msgid "Replying to {0}: “{1}”"
+msgstr "Replying to {0}: “{1}”"
 
 #: src/lib/user-error.ts
 msgid "Request a new code"
@@ -9093,6 +9234,10 @@ msgstr "Save changes"
 msgid "Save company limits"
 msgstr "Save company limits"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Save draft"
+msgstr "Save draft"
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Save for everyone"
 msgstr "Save for everyone"
@@ -9105,6 +9250,10 @@ msgstr "Save note"
 msgid "Save safeguards"
 msgstr "Save safeguards"
 
+#: src/components/EmailSignatureSettings.tsx
+msgid "Save signature"
+msgstr "Save signature"
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "Save the workspace and install current software."
@@ -9114,6 +9263,7 @@ msgid "Save to Vault"
 msgstr "Save to Vault"
 
 #: src/components/ComputerProviderSettings.tsx
+#: src/components/EmailSignatureSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AdminAssistantModels.tsx
@@ -9362,6 +9512,7 @@ msgstr "Selected References"
 msgid "Self-hosted"
 msgstr "Self-hosted"
 
+#: src/components/EmailDraftCard.tsx
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
@@ -9399,6 +9550,10 @@ msgstr "Send it"
 msgid "Send me that report as a PDF with the changes marked up"
 msgstr "Send me that report as a PDF with the changes marked up"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Send Outlook email"
+msgstr "Send Outlook email"
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Send recording"
 msgstr "Send recording"
@@ -9416,6 +9571,7 @@ msgid "Send with Enter"
 msgstr "Send with Enter"
 
 #: src/components/AskCard.tsx
+#: src/components/EmailDraftCard.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Sending…"
@@ -9426,9 +9582,18 @@ msgid "Sends back the marked-up PDF with a list of findings by page"
 msgstr "Sends back the marked-up PDF with a list of findings by page"
 
 #: src/components/AskCard.tsx
+#: src/components/EmailDraftCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
 msgstr "Sent"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Sent from {sender}"
+msgstr "Sent from {sender}"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Sent from {sender} on {sentAt}"
+msgstr "Sent from {sender} on {sentAt}"
 
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Separate data per project"
@@ -10099,6 +10264,10 @@ msgstr "Stream replies"
 msgid "subagent"
 msgstr "subagent"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Subject"
+msgstr "Subject"
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Submit"
@@ -10635,6 +10804,10 @@ msgstr "This deletes all {0} versions of this file. This can't be undone."
 msgid "This element is built from data or code, so ask the bot to change it."
 msgstr "This element is built from data or code, so ask the bot to change it."
 
+#: src/components/EmailDraftCard.tsx
+msgid "This email draft is not available"
+msgstr "This email draft is not available"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "This file is not valid UTF-8 text."
@@ -10759,6 +10932,7 @@ msgstr "Tip:"
 msgid "Title"
 msgstr "Title"
 
+#: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "To"
 msgstr "To"
@@ -10976,6 +11150,10 @@ msgstr "Type your answer"
 #: src/pages/Shell.tsx
 msgid "Unassigned"
 msgstr "Unassigned"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Underline"
+msgstr "Underline"
 
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/AskCard.tsx

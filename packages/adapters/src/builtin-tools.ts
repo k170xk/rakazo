@@ -1440,6 +1440,32 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "outlook_draft_email",
+    description:
+      "Draft an Outlook email for the person to check, edit and send themselves. It shows an email card in this chat; you cannot send it, and nothing is sent until the person presses Send on the card. For a reply, pass reply_to_message_id from an Outlook search or read result, and reply_all true when everyone on it should get the answer; recipients then default to the original's. Write body as plain text: blank lines between paragraphs, - or 1. lists, **bold**, [links](https://…). End with a sign-off such as Kind regards, but not the person's name or contact details: their saved Outlook signature is added under the body. attachments: files shown in this conversation, by path (attachments/…) or exact name. Afterwards say in one line that the draft is ready for them to check; do not repeat the email.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        to: { type: "array", items: { type: "string" }, description: "Email addresses." },
+        cc: { type: "array", items: { type: "string" } },
+        bcc: { type: "array", items: { type: "string" } },
+        subject: {
+          type: "string",
+          description:
+            "Required for a new email; a reply keeps RE: and the original subject when left out.",
+        },
+        body: { type: "string" },
+        reply_to_message_id: {
+          type: "string",
+          description: "Outlook message id of the email this replies to.",
+        },
+        reply_all: { type: "boolean" },
+        attachments: { type: "array", items: { type: "string" }, maxItems: 10 },
+      },
+      required: ["body"],
+    },
+  },
+  {
     name: "todo_add",
     description:
       "Add an item to the person's to-do list, such as an action found in their email or one they mention. Keep the title short and actionable; put context in notes; for an email give source_kind email, a source_label like 'Email from Anne Byrne: Drawings' and its web_link as source_link.",

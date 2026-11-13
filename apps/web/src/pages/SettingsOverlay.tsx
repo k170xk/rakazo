@@ -4,6 +4,7 @@ import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
+import { EmailSignatureSettings } from "../components/EmailSignatureSettings";
 import { PersonalVault } from "../components/PersonalVault";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { desktopBridge } from "../lib/desktop";
@@ -34,6 +35,7 @@ export function SettingsOverlay({
   billingEnabled = false,
   messagingEnabled = false,
   personalVaultEnabled = false,
+  outlookSendEnabled = false,
   paymentWalletProvider = null,
   memoryConfig,
   onMemoryConfigChange,
@@ -65,6 +67,8 @@ export function SettingsOverlay({
   messagingEnabled?: boolean;
   /** The company lets people keep their own vault. Off hides My vault for everyone. */
   personalVaultEnabled?: boolean;
+  /** This person may send Outlook email from draft cards. Off hides Email signature. */
+  outlookSendEnabled?: boolean;
   /** The wallet this deployment lets bots spend from; none hides Wallet. */
   paymentWalletProvider?: { id: string; name: string } | null;
   memoryConfig: SpaceMemoryConfig | null | undefined;
@@ -87,6 +91,7 @@ export function SettingsOverlay({
     (requestedSection === "billing" && !billingEnabled) ||
     (requestedSection === "messaging" && !messagingEnabled) ||
     (requestedSection === "vault" && !personalVaultEnabled) ||
+    (requestedSection === "email" && !outlookSendEnabled) ||
     (requestedSection === "wallet" && !paymentWalletProvider) ||
     (requestedSection === "updates" && !showUpdates)
       ? "organization"
@@ -108,6 +113,7 @@ export function SettingsOverlay({
     billing: billingEnabled,
     updates: showUpdates,
     vault: personalVaultEnabled,
+    email: outlookSendEnabled,
   });
 
   useEffect(() => {
@@ -144,6 +150,7 @@ export function SettingsOverlay({
     messagingEnabled,
     paymentWalletProvider,
     personalVaultEnabled,
+    outlookSendEnabled,
     showUpdates,
     i18n.locale,
   ]);
@@ -343,6 +350,7 @@ export function SettingsOverlay({
                   ) : null}
                   {section === "confirmations" ? <ApprovalRulesSettings scope="account" /> : null}
                   {section === "vault" && personalVaultEnabled ? <PersonalVault /> : null}
+                  {section === "email" && outlookSendEnabled ? <EmailSignatureSettings /> : null}
                   {section === "messaging" && messagingEnabled ? <MessagingSettingsPanel /> : null}
                   {section === "wallet" && paymentWalletProvider ? (
                     <PaymentWalletSettingsPanel provider={paymentWalletProvider} />

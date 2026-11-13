@@ -190,6 +190,7 @@ export function SettingsOverlays({
           billingEnabled={bootstrapMe?.billingEnabled === true}
           messagingEnabled={messagingEnabled}
           personalVaultEnabled={bootstrapMe?.features?.personalVault === true}
+          outlookSendEnabled={bootstrapMe?.features?.outlookSend === true}
           paymentWalletProvider={bootstrapMe?.paymentWalletProvider ?? null}
           timezone={bootstrapMe?.timezone ?? null}
           onTimezoneChange={async (timezone) => {

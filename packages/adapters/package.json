@@ -66,6 +66,7 @@
     "novita-sandbox": "2.1.2",
     "pg": "8.23.1",
     "railway": "3.16.0",
+    "sanitize-html": "2.18.2",
     "sendblue": "3.21.2",
     "sharp": "0.35.5",
     "shell-quote": "1.12.0",
@@ -80,6 +81,7 @@
     "@types/jsdom": "30.0.0",
     "@types/nodemailer": "8.0.2",
     "@types/pg": "8.23.1",
+    "@types/sanitize-html": "2.16.2",
     "@types/ws": "8.18.2",
     "typescript": "7.0.2",
     "vitest": "4.1.12"

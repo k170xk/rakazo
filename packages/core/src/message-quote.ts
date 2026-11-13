@@ -185,6 +185,8 @@ function replyBlockText(block: MessageBlock): string {
       return block.name || blocksToAgentHistoryText([block]);
     case "evolve_conversation":
       return block.title;
+    case "email_draft":
+      return "Email draft";
     case "evolve_references":
       return [
         ...block.projects.map((project) => project.name),

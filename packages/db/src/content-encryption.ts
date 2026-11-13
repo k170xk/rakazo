@@ -88,6 +88,13 @@ export const ENCRYPTED_MODELS: Record<string, ModelSpec> = {
     space: { column: "spaceId" },
     ownerRelation: "user",
   },
+  /** An Outlook email an assistant drafted: recipients, subject, body and the original it answers. */
+  EmailDraft: {
+    table: "email_drafts",
+    fields: { content: { plainKeys: new Set() } },
+    space: { column: "spaceId" },
+    ownerRelation: "user",
+  },
   /** The compacted summary of older history is derived message content. */
   Thread: {
     table: "threads",

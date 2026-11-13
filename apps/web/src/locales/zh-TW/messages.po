@@ -46,6 +46,10 @@ msgstr ""
 msgid "(cleared)"
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
+msgid "(no subject)"
+msgstr ""
+
 #. placeholder {0}: state.staff.accounts
 #: src/pages/AdminCompanyPage.tsx
 msgid "{0, plural, one {# account} other {# accounts}}"
@@ -891,6 +895,10 @@ msgstr "新增觸發器以執行此例行任務。"
 msgid "Add a voice provider key and pick a voice in Voice settings."
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
+msgid "Add an email address"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Add an HTTPS server URL."
 msgstr "請填寫 HTTPS 伺服器 URL。"
@@ -1043,6 +1051,10 @@ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Added References:"
+msgstr ""
+
+#: src/components/EmailSignatureSettings.tsx
+msgid "Added under every Outlook email you send from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -1603,6 +1615,10 @@ msgstr "{timeSelect}"
 msgid "Attach file"
 msgstr "附加檔案"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Attach from chat"
+msgstr ""
+
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/chat-shared.ts
 msgid "Attachment"
@@ -1729,6 +1745,10 @@ msgstr "基本驗證"
 msgid "Basic auth ({username})"
 msgstr "基本驗證（{username}）"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Bcc"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
@@ -1773,6 +1793,10 @@ msgstr "受阻"
 #: src/pages/Board.tsx
 msgid "Board"
 msgstr "看板"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Bold"
+msgstr ""
 
 #: src/pages/shell/computer-view.tsx
 #: src/pages/shell/use-computer.tsx
@@ -1928,6 +1952,10 @@ msgstr "Built-in OCSC report"
 msgid "Built-in skills"
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
+msgid "Bulleted list"
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "By the assistant"
 msgstr ""
@@ -2073,6 +2101,14 @@ msgstr ""
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Cc"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Cc / Bcc"
 msgstr ""
 
 #: src/components/DictationShortcutSettings.tsx
@@ -3304,6 +3340,10 @@ msgstr "無法安裝連接器"
 msgid "Could not install plugin"
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
+msgid "Could not list the files in this chat"
+msgstr ""
+
 #: src/components/ErrorBoundary.tsx
 #: src/components/PasskeySettings.tsx
 #: src/lib/user-devices.ts
@@ -3647,8 +3687,16 @@ msgstr ""
 msgid "Could not save this choice"
 msgstr "無法儲存此選擇"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Could not save this draft"
+msgstr ""
+
 #: src/components/todos/todo-board.tsx
 msgid "Could not save your changes."
+msgstr ""
+
+#: src/components/EmailSignatureSettings.tsx
+msgid "Could not save your signature"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -3666,6 +3714,10 @@ msgstr "無法傳送"
 
 #: src/pages/SharedChats.tsx
 msgid "Could not send that message"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Could not send this email"
 msgstr ""
 
 #: src/components/VaultSettings.tsx
@@ -4348,6 +4400,7 @@ msgstr "已停用"
 
 #: src/components/apps/AppCodePanel.tsx
 #: src/components/apps/AppVisualEdit.tsx
+#: src/components/EmailDraftCard.tsx
 msgid "Discard"
 msgstr ""
 
@@ -4358,6 +4411,10 @@ msgstr ""
 #: src/components/composer/HoldToTalk.tsx
 msgid "Discard recording"
 msgstr "捨棄錄製內容"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Discard this draft?"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -4498,6 +4555,10 @@ msgstr ""
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "下載中…"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Draft · not sent until you press Send"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -4659,12 +4720,26 @@ msgstr ""
 msgid "Email"
 msgstr "電子信箱"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Email body"
+msgstr ""
+
+#. placeholder {0}: draft.subject || t`(no subject)`
+#: src/components/EmailDraftCard.tsx
+msgid "Email draft discarded: {0}"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "該電子信箱不允許註冊"
 
 #: src/components/ConfirmIdentityDialog.tsx
 msgid "Email me a code"
+msgstr ""
+
+#: src/components/EmailSignatureSettings.tsx
+#: src/pages/settings-nav.ts
+msgid "Email signature"
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -5223,6 +5298,10 @@ msgstr ""
 msgid "Forgot password?"
 msgstr "忘記密碼？"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Formatting"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Free"
 msgstr "免費"
@@ -5247,6 +5326,7 @@ msgstr ""
 msgid "Friday"
 msgstr "週五"
 
+#: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
 msgstr "從"
@@ -5682,6 +5762,10 @@ msgstr "審查中"
 msgid "In Safari's File menu, choose Add to Dock."
 msgstr "In Safari's File menu, choose Add to Dock."
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below."
+msgstr ""
+
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "In this bot"
 msgstr ""
@@ -5849,6 +5933,10 @@ msgstr "它可能已被刪除，或屬於其他人。"
 msgid "It stopped early: {0}"
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
+msgid "Italic"
+msgstr ""
+
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
 msgstr "其中的機器人和群組會保留，並移出該分組。"
@@ -5888,6 +5976,10 @@ msgstr "跳轉到回覆的訊息：{excerpt}"
 #: src/lib/relative-time.ts
 msgid "just now"
 msgstr "剛剛"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Keep"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Keep memories"
@@ -6066,8 +6158,13 @@ msgstr ""
 msgid "Limits saved for {0}"
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Link"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Link address"
 msgstr ""
 
 #: src/components/ImageLightbox.tsx
@@ -6139,8 +6236,16 @@ msgstr "正在載入動態…"
 msgid "Loading assistants…"
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
+msgid "Loading email draft"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Loading exemplar responses..."
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Loading files…"
 msgstr ""
 
 #: src/components/integrations/SharePointFolders.tsx
@@ -7195,6 +7300,10 @@ msgstr "未列出模型。"
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "找不到 OpenClaw、Hermes 或代理程式文件。"
 
+#: src/components/EmailDraftCard.tsx
+msgid "No other files in this chat"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "No people match your search."
 msgstr ""
@@ -7253,6 +7362,10 @@ msgstr "沒有符合篩選條件的執行紀錄。"
 #: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr "還沒有執行紀錄"
+
+#: src/components/EmailDraftCard.tsx
+msgid "No signature saved. Paste your Outlook signature in Settings, under Email signature."
+msgstr ""
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "No sites or OneDrive found."
@@ -7416,6 +7529,10 @@ msgstr "通知"
 
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Number"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Numbered list"
 msgstr ""
 
 #: src/pages/McpOAuthCallback.tsx
@@ -7771,6 +7888,18 @@ msgstr "其他模型…"
 
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Others see the data but can't change it."
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Outlook email"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Outlook not connected"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Outlook reply"
 msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -8539,6 +8668,7 @@ msgid "Reload"
 msgstr "重新載入"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/EmailSignatureSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
 #: src/components/vault/LoginFieldsInput.tsx
@@ -8556,6 +8686,7 @@ msgstr "移除"
 #. placeholder {0}: device.name
 #: src/components/apps/AppSettingsPanel.tsx
 #: src/components/ComputerDeviceSettings.tsx
+#: src/components/EmailDraftCard.tsx
 #: src/components/GroupPeople.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/composer.tsx
@@ -8579,6 +8710,10 @@ msgstr "要移除 {secretName} 嗎？機器人將無法再使用它。"
 #: src/components/TrustedLinkSitesSettings.tsx
 msgid "Remove {site}"
 msgstr "移除 {site}"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Remove {value}"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Remove change trigger"
@@ -8725,6 +8860,12 @@ msgstr "已取消回覆"
 #: src/pages/shell/composer.tsx
 msgid "Replying to {0}"
 msgstr "正在回覆 {0}"
+
+#. placeholder {0}: draft.replyTo.from
+#. placeholder {1}: draft.replyTo.subject
+#: src/components/EmailDraftCard.tsx
+msgid "Replying to {0}: “{1}”"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Request a new code"
@@ -9076,6 +9217,10 @@ msgstr ""
 msgid "Save company limits"
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
+msgid "Save draft"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Save for everyone"
 msgstr ""
@@ -9088,6 +9233,10 @@ msgstr ""
 msgid "Save safeguards"
 msgstr ""
 
+#: src/components/EmailSignatureSettings.tsx
+msgid "Save signature"
+msgstr ""
+
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "儲存工作空間並安裝最新軟體。"
@@ -9097,6 +9246,7 @@ msgid "Save to Vault"
 msgstr "儲存到保管庫"
 
 #: src/components/ComputerProviderSettings.tsx
+#: src/components/EmailSignatureSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AdminAssistantModels.tsx
@@ -9345,6 +9495,7 @@ msgstr ""
 msgid "Self-hosted"
 msgstr "自行託管"
 
+#: src/components/EmailDraftCard.tsx
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
@@ -9382,6 +9533,10 @@ msgstr "傳送"
 msgid "Send me that report as a PDF with the changes marked up"
 msgstr ""
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Send Outlook email"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Send recording"
 msgstr "傳送錄製內容"
@@ -9399,6 +9554,7 @@ msgid "Send with Enter"
 msgstr "按 Enter 傳送"
 
 #: src/components/AskCard.tsx
+#: src/components/EmailDraftCard.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Sending…"
@@ -9409,8 +9565,17 @@ msgid "Sends back the marked-up PDF with a list of findings by page"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/EmailDraftCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Sent from {sender}"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Sent from {sender} on {sentAt}"
 msgstr ""
 
 #: src/components/apps/AppWorkspacesSection.tsx
@@ -10082,6 +10247,10 @@ msgstr "串流回覆"
 msgid "subagent"
 msgstr "子代理程式"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Subject"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Submit"
@@ -10615,6 +10784,10 @@ msgstr ""
 msgid "This element is built from data or code, so ask the bot to change it."
 msgstr ""
 
+#: src/components/EmailDraftCard.tsx
+msgid "This email draft is not available"
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "此檔案不是有效的 UTF-8 文字。"
@@ -10739,6 +10912,7 @@ msgstr ""
 msgid "Title"
 msgstr "標題"
 
+#: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "To"
 msgstr "到"
@@ -10956,6 +11130,10 @@ msgstr "輸入你的回答"
 #: src/pages/Shell.tsx
 msgid "Unassigned"
 msgstr "未分配"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Underline"
+msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/AskCard.tsx

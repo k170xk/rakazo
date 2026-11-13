@@ -575,6 +575,12 @@ function CompanyFeaturesSection({
       description: t`Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review.`,
     },
     {
+      id: "outlookSend",
+      group: "apps",
+      label: t`Send Outlook email`,
+      description: t`In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below.`,
+    },
+    {
       id: "accountData",
       group: "people",
       label: t`Export, import and delete accounts`,

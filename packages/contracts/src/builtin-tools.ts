@@ -121,6 +121,7 @@ export const BUILTIN_TOOL_NAMES = [
   "connect_agent",
   "respond_agent_connection",
   "message_agent",
+  "outlook_draft_email",
 ] as const;
 
 export const BuiltinToolNameSchema = z.enum(BUILTIN_TOOL_NAMES);

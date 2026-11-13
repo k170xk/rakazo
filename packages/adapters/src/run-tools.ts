@@ -14,6 +14,7 @@ import {
 } from "./run-tool-selection.js";
 import { appTools } from "./run-tools-apps.js";
 import { computerTools, pageBrowserTool } from "./run-tools-computer.js";
+import { emailTools } from "./run-tools-email.js";
 import { evolvePluginTools } from "./run-tools-evolve-plugins.js";
 import { feedbackTools } from "./run-tools-feedback.js";
 import { fileTools } from "./run-tools-files.js";
@@ -47,6 +48,7 @@ const TOOL_HANDLERS = new Map<string, ToolHandler>([
   ...Object.entries(integrationTools),
   ...Object.entries(taskTools),
   ...Object.entries(todoTools),
+  ...Object.entries(emailTools),
   ...Object.entries(messagingTools),
   ...Object.entries(secretTools),
   ...Object.entries(fleetTools),

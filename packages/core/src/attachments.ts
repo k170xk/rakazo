@@ -174,6 +174,10 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
       if (block.kind === "chart") return `[chart: ${block.name}]`;
       if (block.kind === "ui_card") return `[${block.card.type} card: ${uiCardText(block.card)}]`;
       if (block.kind === "image") return `[image: ${block.name}]`;
+      // Only the person can send it, so a later turn must not claim it went out.
+      if (block.kind === "email_draft") {
+        return `[Outlook email draft card ${block.draftId}: only the person can send it]`;
+      }
       if (block.kind === "evolve_references") return evolveReferencesPromptText(block);
       if (block.kind === "evolve_conversation") return evolveConversationPromptText(block);
       // The id lets a later turn, or another chat, update this page instead of making a new one.

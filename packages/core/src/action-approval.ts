@@ -323,6 +323,7 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "task_catalog",
   "todo_add",
   "todo_archive",
+  "outlook_draft_email",
   "todo_update",
   "update_preferences",
   "write_file",

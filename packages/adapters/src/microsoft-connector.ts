@@ -13,9 +13,11 @@ import { SHAREPOINT_FOLDER_LIMIT } from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import { runAsSystem, runAsTenant } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
+import { companyFeatureOpenForRun } from "./company-policy.js";
 import { combineSignals, sanitizeConnectorError } from "./connector-safety.js";
-import type { MailGraph } from "./microsoft-mail.js";
+import type { MailGraph, Recipient } from "./microsoft-mail.js";
 import {
+  address,
   assertMailRead,
   OUTLOOK_PROVIDER,
   OUTLOOK_SCOPES,
@@ -23,6 +25,7 @@ import {
   outlookTools,
   runMailTool,
 } from "./microsoft-mail.js";
+import { OUTLOOK_SEND_SCOPES } from "./microsoft-mail-send.js";
 import { isVitestRuntime } from "./test-runtime.js";
 import { readBodyCapped } from "./web-ssrf.js";
 
@@ -307,9 +310,16 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
 
   async begin(
     request: { provider: string; redirectUrl: string },
-    _context: AdapterContext,
+    context: AdapterContext,
   ): Promise<{ authorizationUrl: string | null; state: string }> {
     if (!isMicrosoftApp(request.provider)) throw new Error("Unknown Microsoft app");
+    // Only people allowed to send are asked to consent to sending; everyone else's sign-in
+    // cannot grant it.
+    const scope =
+      request.provider === OUTLOOK_PROVIDER &&
+      (await companyFeatureOpenForRun(this.prisma, "outlookSend", context.userId))
+        ? OUTLOOK_SEND_SCOPES
+        : MICROSOFT_APPS[request.provider].scopes;
     const state = randomBytes(32).toString("base64url");
     const url = new URL(
       `https://login.microsoftonline.com/${encodeURIComponent(this.config.tenantId)}/oauth2/v2.0/authorize`,
@@ -319,7 +329,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       response_type: "code",
       redirect_uri: this.redirectUrl,
       response_mode: "query",
-      scope: MICROSOFT_APPS[request.provider].scopes,
+      scope,
       state,
       code_challenge: createHash("sha256").update(this.verifier(state)).digest("base64url"),
       code_challenge_method: "S256",
@@ -880,6 +890,103 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     return savedFolders((await this.ownedRow(owner, connectionId)).metadata);
   }
 
+  /** The address the person's Outlook is connected as, or null when it is not connected. */
+  async outlookAccount(owner: Pick<AdapterContext, "spaceId" | "userId">): Promise<string | null> {
+    const [row] = await this.rows(
+      owner,
+      { status: "connected", secretId: { not: null } },
+      OUTLOOK_PROVIDER,
+    );
+    if (!row) return null;
+    const account = metadataRecord(row.metadata).account as StoredTokens["account"];
+    return account?.email ?? "";
+  }
+
+  /** Who sent the email a reply answers and who else got it, read with the read-only client. */
+  async outlookMessageSummary(
+    owner: Pick<AdapterContext, "spaceId" | "userId">,
+    messageId: string,
+    signal?: AbortSignal,
+  ): Promise<{
+    subject: string;
+    from: string;
+    fromAddress: string | null;
+    to: string[];
+    cc: string[];
+    receivedAt: string | null;
+  }> {
+    const [row] = await this.rows(owner, { status: "connected" }, OUTLOOK_PROVIDER);
+    if (!row) throw new MicrosoftReconnectError("Outlook");
+    const account = metadataRecord(row.metadata).account as StoredTokens["account"];
+    const graph = this.mailGraph(await this.accessToken(row, owner), signal, account?.email);
+    const message = await graph.json<{
+      subject?: string;
+      from?: Recipient;
+      toRecipients?: Recipient[];
+      ccRecipients?: Recipient[];
+      receivedDateTime?: string;
+    }>(
+      `/me/messages/${encodeURIComponent(messageId)}?$select=subject,from,toRecipients,ccRecipients,receivedDateTime`,
+    );
+    const addresses = (list?: Recipient[]) =>
+      (list ?? []).flatMap((entry) => entry.emailAddress?.address?.toLowerCase() ?? []);
+    return {
+      subject: message.subject ?? "",
+      from: address(message.from) ?? "",
+      fromAddress: message.from?.emailAddress?.address?.toLowerCase() ?? null,
+      to: addresses(message.toRecipients),
+      cc: addresses(message.ccRecipients),
+      receivedAt: message.receivedDateTime ?? null,
+    };
+  }
+
+  /**
+   * A token that can send mail as the person, only for their own press of Send on a draft card.
+   * Runs never get it: their Outlook token is asked for without Mail.Send.
+   */
+  async outlookSendToken(
+    owner: Pick<AdapterContext, "spaceId" | "userId">,
+  ): Promise<{ token: string } | { reconnect: string }> {
+    const reconnect = {
+      reconnect: "Reconnect Outlook in Plugins to allow sending, then press Send again.",
+    };
+    const [row] = await this.rows(owner, { status: "connected" }, OUTLOOK_PROVIDER);
+    if (!row?.secretId) return reconnect;
+    const material = await runAsTenant(owner, async () => {
+      const secret = await this.prisma.secret.findFirst({
+        where: { id: row.secretId!, userId: owner.userId },
+        select: { id: true, ciphertext: true },
+      });
+      if (!secret) return null;
+      return {
+        id: secret.id,
+        tokens: JSON.parse(await this.secrets.load(secret.ciphertext, secret.id)) as StoredTokens,
+      };
+    });
+    if (!material) return reconnect;
+    let tokens: Awaited<ReturnType<MicrosoftConnector["tokenRequest"]>>;
+    try {
+      tokens = await this.tokenRequest(
+        OUTLOOK_PROVIDER,
+        { grant_type: "refresh_token", refresh_token: material.tokens.refreshToken },
+        OUTLOOK_SEND_SCOPES,
+      );
+    } catch (error) {
+      if (error instanceof MicrosoftGrantError) return reconnect;
+      throw error;
+    }
+    if (!/(^|\s)Mail\.Send(\s|$)/i.test(tokens.scope ?? "")) return reconnect;
+    if (tokens.refresh_token && tokens.refresh_token !== material.tokens.refreshToken) {
+      await this.replaceRefreshToken(row, owner, material, tokens.refresh_token).catch((error) =>
+        getLogger().warn("microsoft refresh token not saved", {
+          "connection.id": row.id,
+          reason: sanitizeConnectorError(error, [tokens.refresh_token ?? ""]),
+        }),
+      );
+    }
+    return { token: tokens.access_token };
+  }
+
   // ---- internals ----
 
   private verifier(state: string): string {
@@ -1025,10 +1132,12 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
   private async tokenRequest(
     app: MicrosoftApp,
     fields: Record<string, string>,
+    scope: string = MICROSOFT_APPS[app].scopes,
   ): Promise<{
     access_token: string;
     refresh_token?: string;
     expires_in?: number;
+    scope?: string;
   }> {
     const response = await this.fetch()(
       `https://login.microsoftonline.com/${encodeURIComponent(this.config.tenantId)}/oauth2/v2.0/token`,
@@ -1038,7 +1147,7 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
         body: new URLSearchParams({
           client_id: this.config.clientId,
           client_secret: this.config.clientSecret,
-          scope: MICROSOFT_APPS[app].scopes,
+          scope,
           ...fields,
         }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -1061,7 +1170,12 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
         }`,
       );
     }
-    return body as { access_token: string; refresh_token?: string; expires_in?: number };
+    return body as {
+      access_token: string;
+      refresh_token?: string;
+      expires_in?: number;
+      scope?: string;
+    };
   }
 
   private async graphJson<T>(

@@ -20,7 +20,8 @@ interface TableSpec {
     | "memoryDocument"
     | "memoryRevision"
     | "thread"
-    | "todoItem";
+    | "todoItem"
+    | "emailDraft";
   column: string;
   json: boolean;
   /** Preserve @updatedAt so a migration does not reorder recently edited documents. */
@@ -97,6 +98,18 @@ const TABLES: TableSpec[] = [
       WHERE id > ${cursor} ORDER BY id LIMIT ${limit}`,
     writePlaintext: (id, value) =>
       Prisma.sql`UPDATE todo_items SET content = ${JSON.stringify(value)}::jsonb WHERE id = ${id}`,
+  },
+  {
+    model: "EmailDraft",
+    delegate: "emailDraft",
+    column: "content",
+    json: true,
+    updatedAt: true,
+    scan: (cursor, limit) => Prisma.sql`
+      SELECT id, content AS value, "spaceId", "userId" AS owner FROM email_drafts
+      WHERE id > ${cursor} ORDER BY id LIMIT ${limit}`,
+    writePlaintext: (id, value) =>
+      Prisma.sql`UPDATE email_drafts SET content = ${JSON.stringify(value)}::jsonb WHERE id = ${id}`,
   },
   {
     model: "MemoryRevision",
@@ -338,6 +351,8 @@ export async function contentEncryptionStatus(
     SELECT 'memory_documents', count(*), count(*) FILTER (WHERE content NOT LIKE 'rkz1:%') FROM memory_documents
     UNION ALL
     SELECT 'todo_items', count(*), count(*) FILTER (WHERE NOT jsonb_exists(content, '$sealed')) FROM todo_items
+    UNION ALL
+    SELECT 'email_drafts', count(*), count(*) FILTER (WHERE NOT jsonb_exists(content, '$sealed')) FROM email_drafts
     UNION ALL
     SELECT 'memory_revisions', count(*), count(*) FILTER (WHERE content NOT LIKE 'rkz1:%') FROM memory_revisions
     UNION ALL

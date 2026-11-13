@@ -151,6 +151,8 @@ import {
 } from "./history-speakers.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
+import { OUTLOOK_PROVIDER } from "./microsoft-mail.js";
+import { sendsOutlookMail } from "./microsoft-mail-send.js";
 import { HostedModelCreditsRequiredError } from "./model-credit-observer.js";
 import {
   effectiveModelRole,
@@ -1747,6 +1749,17 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               Boolean(deps.evolvePlugins?.repo) &&
               ownerFeatures.cursorAgents &&
               cloudAgentsEnabled(cloudAgent, run.spaceId, ownerFeatures.cursorAgents),
+            outlookDrafts:
+              ownerFeatures.outlookSend &&
+              ownersPrivateChat &&
+              !nonOwnerChatRun &&
+              Boolean(
+                context.connectedConnections?.some(
+                  (connection) =>
+                    connection.connectorId === "microsoft" &&
+                    connection.externalId === OUTLOOK_PROVIDER,
+                ),
+              ),
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
           ...(hasMessagingIdentity &&
@@ -1780,7 +1793,9 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const exposedConnectorTools = nonOwnerChatRun
           ? []
           : discovered.filter(
-              (tool) => !builtinAgentTools.some((builtin) => builtin.name === tool.name),
+              (tool) =>
+                !builtinAgentTools.some((builtin) => builtin.name === tool.name) &&
+                !sendsOutlookMail(tool.name),
             );
         const strategicConnectorTools = filterStrategicInitiativeTools(exposedConnectorTools, {
           trigger: run.trigger,

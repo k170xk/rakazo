@@ -192,6 +192,11 @@ export function selectBuiltinToolsForRun(options: {
   evolveProfileEnabled?: boolean;
   /** Cursor agents are on and a plugins repository is set up, so their branches can be imported. */
   pluginBranchImportEnabled?: boolean;
+  /**
+   * The owner may send Outlook email, has Outlook connected and this is their private chat.
+   * Without it the draft tool is not offered, so the model never learns sending exists.
+   */
+  outlookDrafts?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
   const computerAccess: ComputerAccess =
@@ -245,6 +250,12 @@ export function selectBuiltinToolsForRun(options: {
       (options.ticketBoardEnabled ||
         (tool.name !== "board_tickets" && !tool.name.startsWith("ticket_"))) &&
       (Boolean(options.personalTodos) || !tool.name.startsWith("todo_")) &&
+      (tool.name !== "outlook_draft_email" ||
+        (Boolean(options.outlookDrafts) &&
+          ownerStartedRun &&
+          !options.groupId &&
+          !options.messagingChannelRun &&
+          !isBackgroundRunTrigger(options.trigger))) &&
       (!isBackgroundRunTrigger(options.trigger) ||
         ![
           "message_user",

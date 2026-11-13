@@ -201,6 +201,12 @@ import {
   VoiceStatusSchema,
 } from "./domain.js";
 import {
+  EmailDraftAttachmentSchema,
+  EmailDraftEditSchema,
+  EmailDraftSchema,
+  EmailSignatureSchema,
+} from "./email-draft.js";
+import {
   ComputerCommandSchema,
   EvolveChangeEditsSchema,
   EvolveChangeOptionKindSchema,
@@ -1255,6 +1261,25 @@ export const appContract = {
       )
       .output(ScratchpadItemSchema),
     remove: oc.input(z.object({ itemId: Id })).output(z.object({ ok: z.literal(true) })),
+  },
+  /**
+   * Outlook drafts an assistant made in its person's own chat. Only that person reads or edits
+   * them, and only their own Send sends one; a bot has no route to sending.
+   */
+  emailDrafts: {
+    get: oc.input(z.object({ id: Id })).output(EmailDraftSchema),
+    update: oc.input(EmailDraftEditSchema).output(EmailDraftSchema),
+    /** Sends exactly the version the person last saw; a draft sends at most once. */
+    send: oc
+      .input(z.object({ id: Id, version: z.number().int().positive() }))
+      .output(EmailDraftSchema),
+    discard: oc.input(z.object({ id: Id })).output(EmailDraftSchema),
+    /** Files in the draft's chat that can be attached. */
+    files: oc.input(z.object({ id: Id })).output(z.array(EmailDraftAttachmentSchema)),
+    signature: {
+      get: oc.input(z.object({})).output(EmailSignatureSchema),
+      set: oc.input(EmailSignatureSchema).output(EmailSignatureSchema),
+    },
   },
   todos: {
     list: oc

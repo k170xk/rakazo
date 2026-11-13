@@ -2145,6 +2145,11 @@ export const CompanyFeaturesSchema = z.object({
   staffSkills: z.boolean(),
   /** Files attached to a chat are indexed with OpenAI so assistants search them by passage. */
   chatFileSearch: z.boolean(),
+  /**
+   * Assistants draft Outlook emails as cards the person edits and sends themselves. Off, the
+   * draft tool is never offered and the send route refuses.
+   */
+  outlookSend: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -2170,6 +2175,7 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   personalVault: false,
   staffSkills: false,
   chatFileSearch: true,
+  outlookSend: false,
 };
 
 /** Switches an admin can open to chosen people and groups instead of everyone. */
@@ -2184,6 +2190,7 @@ export const AUDIENCE_FEATURES = [
   "evolvePlugins",
   "staffSkills",
   "personalVault",
+  "outlookSend",
 ] as const satisfies readonly CompanyFeatureId[];
 export type AudienceFeatureId = (typeof AUDIENCE_FEATURES)[number];
 

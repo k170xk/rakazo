@@ -85,7 +85,9 @@ export * from "./destination-emulator.js";
 export * from "./docker-sandbox.js";
 export * from "./e2b-sandbox.js";
 export * from "./elevenlabs-voice.js";
+export * from "./email-drafts.js";
 export * from "./email-emulator.js";
+export * from "./email-html.js";
 export * from "./evolve-assistants.js";
 export {
   editedEvolveChangeArgs,
@@ -149,6 +151,7 @@ export * from "./messaging-installations.js";
 export * from "./messaging-platforms.js";
 export * from "./messaging-team-chat-emulator.js";
 export * from "./microsoft-connector.js";
+export * from "./microsoft-mail-send.js";
 export * from "./model-connect.js";
 export * from "./model-connect-check.js";
 export { hostedModelCreditObserver } from "./model-credit-observer.js";

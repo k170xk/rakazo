@@ -82,6 +82,7 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   staffSkills:
     "Writing skills, browsing skill packs and adding them from GitHub is turned off for your company.",
   chatFileSearch: "Searching chat files is turned off for your company.",
+  outlookSend: "Sending Outlook email is not turned on for you.",
 };
 
 /** Switches that only limit members; admins keep these so they can configure and test. */
