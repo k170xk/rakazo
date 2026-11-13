@@ -29,6 +29,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 /// tapped, pushing the chat off the right edge. Only the app's own site pads itself for the
 /// status bar and home indicator, so other sites (sign-in pages) stay inside the safe area.
 class AppViewController: CAPBridgeViewController {
+    private var pageHostObserver: NSKeyValueObservation?
+
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(SystemSignInPlugin())
         let appHost = bridge?.config.serverURL.host ?? ""
@@ -50,6 +52,10 @@ class AppViewController: CAPBridgeViewController {
             forMainFrameOnly: true
         )
         webView?.configuration.userContentController.addUserScript(script)
+        pageHostObserver = webView?.observe(\.url, options: [.initial, .new]) { webView, _ in
+            webView.scrollView.contentInsetAdjustmentBehavior =
+                webView.url?.host == appHost ? .never : .automatic
+        }
 
         // The keyboard shrinks the web view, uncovering the window behind its rounded corners;
         // paint the window the page's own colour so the two meet without a hard edge.
