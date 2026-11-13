@@ -17,6 +17,8 @@ const DOWNLOAD_PATHS = new Set([
   "/api/account/export",
 ]);
 
+const DOCUMENT = /\.(pdf|docx?|xlsx?|pptx?|csv|rtf|pages|numbers|key)$/i;
+
 export type NativeDownload =
   | { kind: "url"; url: string; name?: string }
   | { kind: "inline"; url: string; name: string };
@@ -39,7 +41,15 @@ export function nativeDownloadFor(
       ? { kind: "inline", url: url.href, name: name ?? "download" }
       : null;
   }
-  if (url.origin !== origin) return null;
+  if (url.origin !== origin) {
+    // A linked document (a signed library PDF, say) would otherwise leave the app for Safari.
+    if (url.protocol !== "https:" || !DOCUMENT.test(url.pathname)) return null;
+    return {
+      kind: "url",
+      url: url.href,
+      name: decodeURIComponent(url.pathname.split("/").pop() ?? ""),
+    };
+  }
   if (DOWNLOAD_PATHS.has(url.pathname))
     return { kind: "url", url: url.href, ...(name ? { name } : {}) };
   // Anything else may need the session cookie, which only the page sends.

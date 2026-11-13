@@ -33,9 +33,19 @@ describe("nativeDownloadFor", () => {
     });
   });
 
+  it("opens documents linked from other sites in the app", () => {
+    expect(
+      nativeDownloadFor(link("https://files.example/docs/AI%20policy.pdf?token=x"), origin),
+    ).toEqual({
+      kind: "url",
+      url: "https://files.example/docs/AI%20policy.pdf?token=x",
+      name: "AI policy.pdf",
+    });
+  });
+
   it("ignores ordinary links and other sites", () => {
     expect(nativeDownloadFor(link(`${origin}/app/1`), origin)).toBeNull();
-    expect(nativeDownloadFor(link("https://other.example/a.pdf", "a.pdf"), origin)).toBeNull();
+    expect(nativeDownloadFor(link("https://other.example/page", "a.pdf"), origin)).toBeNull();
     expect(nativeDownloadFor(link("blob:https://computer.example/2"), origin)).toBeNull();
   });
 });
