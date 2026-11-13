@@ -23,6 +23,7 @@ import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react
 import type { ClipboardEvent, ComponentProps, DragEvent, ReactNode, RefObject } from "react";
 import {
   memo,
+  useCallback,
   useEffect,
   useId,
   useLayoutEffect,
@@ -1110,7 +1111,15 @@ export function Composer(props: Omit<ComponentProps<typeof ComposerBody>, "docke
     element.style.display = "contents";
     return element;
   });
-  const slot = useRef<HTMLDivElement>(null);
+  const slot = useRef<HTMLDivElement | null>(null);
+  // Refs attach before the body's layout effects, so the field first measures on the page.
+  const attachSlot = useCallback(
+    (node: HTMLDivElement | null) => {
+      slot.current = node;
+      if (node && !host.parentNode) node.append(host);
+    },
+    [host],
+  );
   useLayoutEffect(() => {
     const target = dockNode ?? slot.current;
     if (!target || host.parentNode === target) return;
@@ -1121,7 +1130,7 @@ export function Composer(props: Omit<ComponentProps<typeof ComposerBody>, "docke
   useEffect(() => () => host.remove(), [host]);
   return (
     <>
-      <div ref={slot} className="contents" />
+      <div ref={attachSlot} className="contents" />
       {createPortal(<ComposerBody {...props} docked={dockNode !== null} />, host)}
     </>
   );
