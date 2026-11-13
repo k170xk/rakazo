@@ -130,7 +130,7 @@ export async function message(
                 letterSpacing: "-0.5px",
               }}
             >
-              rakazo
+              OCSC Intelligence
             </Text>
             {content}
             {unsubscribeUrl ? (
