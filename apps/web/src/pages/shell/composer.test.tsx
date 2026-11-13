@@ -217,6 +217,41 @@ function pressEnter(textarea: HTMLTextAreaElement) {
 }
 
 describe("Composer", () => {
+  it("keeps attach and the extra actions behind Add on a phone", () => {
+    const width = window.innerWidth;
+    window.innerWidth = 390;
+    try {
+      const onPdf = vi.fn();
+      renderComposer(vi.fn(), {
+        extraActions: (
+          <button type="button" aria-label="Add PDF drawings" onClick={onPdf}>
+            PDF
+          </button>
+        ),
+      });
+      const add = container?.querySelector<HTMLButtonElement>('button[aria-label="Add"]');
+      const pdf = container?.querySelector<HTMLButtonElement>(
+        'button[aria-label="Add PDF drawings"]',
+      );
+      const tray = pdf?.parentElement;
+      expect(add?.getAttribute("aria-expanded")).toBe("false");
+      expect(tray?.className).toContain("hidden");
+      expect(container?.querySelectorAll('button[aria-label="Add PDF drawings"]')).toHaveLength(1);
+
+      act(() => add?.click());
+      expect(add?.getAttribute("aria-expanded")).toBe("true");
+      expect(tray?.className).not.toContain("hidden");
+      expect(tray?.querySelector('button[aria-label="Attach file"]')).not.toBeNull();
+
+      act(() => pdf?.click());
+      expect(onPdf).toHaveBeenCalledOnce();
+      expect(tray?.className).toContain("hidden");
+      expect(pdf?.isConnected).toBe(true);
+    } finally {
+      window.innerWidth = width;
+    }
+  });
+
   it.each(["Enter", "Tab", "pointer"])(
     "completes an inline bot at the caret with %s",
     async (method) => {

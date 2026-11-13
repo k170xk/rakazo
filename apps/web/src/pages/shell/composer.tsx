@@ -18,7 +18,8 @@ import {
   updateComposerMentionBindings,
 } from "@rakazo/core";
 import { Button } from "@rakazo/ui-web";
-import { ArrowUp, Box, Paperclip, Settings, Square, X } from "lucide-react";
+import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
+import { ArrowUp, Box, Paperclip, Plus, Settings, Square, X } from "lucide-react";
 import type { ClipboardEvent, ComponentProps, DragEvent, ReactNode, RefObject } from "react";
 import {
   memo,
@@ -157,6 +158,27 @@ const ComposerBody = memo(function Composer({
   docked?: boolean;
 }) {
   const { t } = useLingui();
+  // Phones keep attach and the extra actions behind one button so the message box keeps its width.
+  const compactTools = useIsMobile() && Boolean(extraActions);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const close = (event: PointerEvent | KeyboardEvent) => {
+      if (
+        event instanceof KeyboardEvent
+          ? event.key === "Escape"
+          : !toolsRef.current?.contains(event.target as Node)
+      )
+        setToolsOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [toolsOpen]);
   const [composition, setComposition] = useState(() => ({
     text: readComposerDraft(draftKey),
     bindings: readComposerDraftBindings(draftKey),
@@ -819,20 +841,58 @@ const ComposerBody = memo(function Composer({
           className="hidden"
           onChange={(event) => pickAttachments(event.target.files)}
         />
-        <Button
-          ref={attachButtonRef}
-          variant="ghost"
-          size="icon"
-          aria-label={t`Attach file`}
-          title={t`Upload files, documents and images`}
-          disabled={disabled}
-          onClick={() => fileInputRef.current?.click()}
-          className={`col-start-1 size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground ${
-            expanded ? "row-start-2" : ""
-          }`}
-        >
-          <Paperclip size={16} strokeWidth={2} />
-        </Button>
+        {compactTools ? (
+          <div ref={toolsRef} className={`relative col-start-1 ${expanded ? "row-start-2" : ""}`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t`Add`}
+              aria-expanded={toolsOpen}
+              disabled={disabled}
+              onClick={() => setToolsOpen((open) => !open)}
+              className="size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Plus
+                size={16}
+                strokeWidth={2}
+                className={`transition-transform ${toolsOpen ? "rotate-45" : ""}`}
+              />
+            </Button>
+            {/* Hidden rather than unmounted: each tool keeps its own dialog open after the tray closes. */}
+            <div
+              onClickCapture={() => setToolsOpen(false)}
+              className={`${toolsOpen ? "flex" : "hidden"} absolute bottom-full start-0 z-40 mb-3 items-center gap-2 rounded-full border border-border bg-card p-1.5 shadow-lg`}
+            >
+              <Button
+                ref={attachButtonRef}
+                variant="outline"
+                size="icon"
+                aria-label={t`Attach file`}
+                title={t`Upload files, documents and images`}
+                onClick={() => fileInputRef.current?.click()}
+                className="size-8 shrink-0 rounded-full"
+              >
+                <Paperclip size={16} strokeWidth={2} />
+              </Button>
+              {extraActions}
+            </div>
+          </div>
+        ) : (
+          <Button
+            ref={attachButtonRef}
+            variant="ghost"
+            size="icon"
+            aria-label={t`Attach file`}
+            title={t`Upload files, documents and images`}
+            disabled={disabled}
+            onClick={() => fileInputRef.current?.click()}
+            className={`col-start-1 size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground ${
+              expanded ? "row-start-2" : ""
+            }`}
+          >
+            <Paperclip size={16} strokeWidth={2} />
+          </Button>
+        )}
         <div
           ref={composerFieldRef}
           data-testid="composer-field"
@@ -986,7 +1046,7 @@ const ComposerBody = memo(function Composer({
             expanded ? "row-start-2" : ""
           }`}
         >
-          {talk.recording?.locked ? null : extraActions}
+          {talk.recording?.locked || compactTools ? null : extraActions}
           {talk.recording?.locked ? (
             <HoldToTalkControls talk={talk} />
           ) : running ? (
