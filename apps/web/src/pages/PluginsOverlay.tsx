@@ -202,6 +202,7 @@ export function PluginsOverlay({
       ),
       plugins: installs.filter((install) => install.kind === "plugin"),
       catalogFeedEnabled: catalogFeed.enabled,
+      catalogConfigured: "configured" in catalogFeed && catalogFeed.configured === true,
     };
   }
   const integrationsOptions = queryOptions({
@@ -224,12 +225,15 @@ export function PluginsOverlay({
   const connections = integrations.data?.connections ?? NO_CONNECTIONS;
   const sources = integrations.data?.sources ?? NO_SOURCES;
   const pluginInstalls = integrations.data?.plugins ?? NO_SOURCES;
-  const pluginCatalog = useQuery(
-    queries.marketplace.catalog.queryOptions({
+  const catalogConfigured = integrations.data?.catalogConfigured === true;
+  const pluginCatalog = useQuery({
+    ...queries.marketplace.catalog.queryOptions({
       input: { query: "", staffView: !showEverything },
       staleTime: 60_000,
     }),
-  );
+    // The integrations.sh directory replaces the Cursor catalogue once one is configured.
+    enabled: catalogLoaded && !catalogConfigured,
+  });
   const assignmentsQuery = useQuery(
     queries.mcp.assignments.list.queryOptions({
       input: activeBotId ? { botId: activeBotId } : skipToken,
@@ -240,6 +244,26 @@ export function PluginsOverlay({
     [assignmentsQuery.data],
   );
   const catalogFeedEnabled = integrations.data?.catalogFeedEnabled ?? false;
+  const directory = catalogConfigured && catalogFeedEnabled;
+  const [directoryQuery, setDirectoryQuery] = useState("");
+  const [directoryLimit, setDirectoryLimit] = useState(24);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDirectoryQuery(query.trim());
+      setDirectoryLimit(24);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+  const directorySearch = useQuery({
+    queryKey: ["integration-directory", directoryQuery, directoryLimit],
+    enabled: directory,
+    queryFn: () =>
+      rpc.capabilities.catalogSearch({
+        query: directoryQuery,
+        browse: true,
+        limit: directoryLimit,
+      }),
+  });
   // A failed refresh is shown even over what was cached, so stale apps never pass as current.
   const loadError = integrations.error
     ? errorText(integrations.error, t`Could not load integrations`)
@@ -267,6 +291,7 @@ export function PluginsOverlay({
           sources: NO_SOURCES,
           plugins: NO_SOURCES,
           catalogFeedEnabled: false,
+          catalogConfigured: false,
         },
       ),
     );
@@ -628,11 +653,16 @@ export function PluginsOverlay({
   function beginCatalogSurface(
     result: IntegrationCatalogResult,
     surface: IntegrationCatalogSurface,
+    back: OverlayView = "browse",
   ) {
-    if (!surface.source || (surface.kind !== "mcp" && surface.kind !== "openapi")) return;
-    setSourceBack("domain");
+    if (
+      !surface.source ||
+      (surface.kind !== "mcp" && surface.kind !== "openapi" && surface.kind !== "graphql")
+    )
+      return;
+    setSourceBack(back);
     setView("source");
-    setSourceKind(surface.kind === "mcp" ? "mcp" : "api");
+    setSourceKind(surface.kind === "mcp" ? "mcp" : surface.kind === "graphql" ? "graphql" : "api");
     setSourceName(result.name);
     setSourceUrl(surface.source);
     setCredential("");
@@ -1025,6 +1055,89 @@ export function PluginsOverlay({
         installed={Boolean(installedPlugin(entry.installedSource))}
         onOpen={() => openPlugin(selection)}
       />
+    );
+  }
+
+  function addableSurface(result: IntegrationCatalogResult) {
+    return result.surfaces.find(
+      (surface) =>
+        Boolean(surface.source) &&
+        (surface.kind === "mcp" || surface.kind === "openapi" || surface.kind === "graphql"),
+    );
+  }
+
+  function renderDirectory() {
+    const results = directorySearch.data?.results ?? [];
+    return (
+      <section data-testid="integration-directory" className="mt-8">
+        {directorySearch.isError ? (
+          <div className="mb-4 flex items-center gap-3">
+            <p className="text-sm text-destructive">
+              {errorText(directorySearch.error, t`Could not search catalog`)}
+            </p>
+            <Button variant="outline" size="sm" onClick={() => void directorySearch.refetch()}>
+              <Trans>Retry</Trans>
+            </Button>
+          </div>
+        ) : null}
+        {directorySearch.isPending ? (
+          <div className="grid place-items-center py-10">
+            <Spinner className="size-5 text-muted-foreground" aria-label={t`Loading…`} />
+          </div>
+        ) : results.length === 0 ? (
+          <p className="px-2.5 text-muted-foreground/80">
+            <Trans>No results</Trans>
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {results.map((result) => {
+                const surface = addableSurface(result);
+                return (
+                  <div
+                    key={`${result.domain}:${result.name}`}
+                    className={`flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2 ${ROW_HOVER}`}
+                  >
+                    <PluginLogo name={result.name} site={`https://${result.domain}`} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-medium text-foreground">
+                        {result.name}
+                      </span>
+                      {result.description ? (
+                        <span className="block truncate text-[13px] text-muted-foreground">
+                          {result.description}
+                        </span>
+                      ) : null}
+                    </span>
+                    {surface ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => beginCatalogSurface(result, surface)}
+                      >
+                        <Trans>Add</Trans>
+                      </Button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            {results.length >= directoryLimit && directoryLimit < 96 ? (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={directorySearch.isFetching}
+                  onClick={() => setDirectoryLimit((count) => count + 24)}
+                >
+                  <Trans>Show more</Trans>
+                </Button>
+              </div>
+            ) : null}
+          </>
+        )}
+      </section>
     );
   }
 
@@ -1430,7 +1543,9 @@ export function PluginsOverlay({
                 {result.surfaces.map((surface) => {
                   const canAdd =
                     Boolean(surface.source) &&
-                    (surface.kind === "mcp" || surface.kind === "openapi");
+                    (surface.kind === "mcp" ||
+                      surface.kind === "openapi" ||
+                      surface.kind === "graphql");
                   return (
                     <Button
                       key={`${result.domain}:${surface.slug}`}
@@ -1439,7 +1554,7 @@ export function PluginsOverlay({
                       size="sm"
                       disabled={!canAdd}
                       title={canAdd ? undefined : t`Manual setup required`}
-                      onClick={() => beginCatalogSurface(result, surface)}
+                      onClick={() => beginCatalogSurface(result, surface, "domain")}
                     >
                       <span>{surface.kind.toUpperCase()}</span>
                       <span>{canAdd ? t`Add` : t`Manual`}</span>
@@ -1893,7 +2008,11 @@ export function PluginsOverlay({
               ) : null}
               {showFeatured ? (
                 <>
-                  {renderPluginSections()}
+                  {directory
+                    ? renderDirectory()
+                    : catalogConfigured
+                      ? null
+                      : renderPluginSections()}
                   {catalogLoaded && rendered.length > 0 && !category ? (
                     <SectionHeading as="h2" className="mt-8 mb-2 px-2.5">
                       <Trans>More apps</Trans>

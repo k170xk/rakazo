@@ -10,9 +10,16 @@ export async function searchIntegrationCatalog(input: {
   query: string;
   signal: AbortSignal;
   fetch?: typeof globalThis.fetch;
+  /** An empty query lists the catalogue from the start. Search still requires text. */
+  browse?: boolean;
+  offset?: number;
+  limit?: number;
+  kind?: "mcp" | "openapi" | "graphql" | "cli";
 }): Promise<IntegrationCatalogResult[]> {
   const query = input.query.trim();
-  if (!query) return [];
+  if (!query && !input.browse) return [];
+  const limit = Math.min(Math.max(input.limit ?? SEARCH_LIMIT, 1), 100);
+  const offset = Math.max(input.offset ?? 0, 0);
 
   const baseUrl = new URL(input.baseUrl);
   if (baseUrl.protocol !== "http:" && baseUrl.protocol !== "https:") {
@@ -21,7 +28,9 @@ export async function searchIntegrationCatalog(input: {
   if (!baseUrl.pathname.endsWith("/")) baseUrl.pathname += "/";
   const searchUrl = new URL("api/search", baseUrl);
   searchUrl.searchParams.set("q", query);
-  searchUrl.searchParams.set("limit", String(SEARCH_LIMIT));
+  searchUrl.searchParams.set("limit", String(limit));
+  if (offset > 0) searchUrl.searchParams.set("offset", String(offset));
+  if (input.kind) searchUrl.searchParams.set("kind", input.kind);
 
   // Admin-configured bases may be private (LAN mirrors). Do not reuse connector
   // SSRF checks that block private hosts. Still refuse redirects so a mirror
@@ -42,7 +51,7 @@ export async function searchIntegrationCatalog(input: {
   if (!isRecord(payload) || !Array.isArray(payload.results)) {
     throw new Error("Integration catalog returned an invalid response");
   }
-  return payload.results.slice(0, SEARCH_LIMIT).flatMap(normalizeResult);
+  return payload.results.slice(0, limit).flatMap(normalizeResult);
 }
 
 async function readBoundedResponse(response: Response): Promise<string> {

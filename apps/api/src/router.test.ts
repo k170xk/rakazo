@@ -369,7 +369,9 @@ describe("account preferences", () => {
         { prefix: "/rpc", context: { actor } },
       );
     const response = await request();
-    await expect(response.json()).resolves.toEqual({ json: { enabled: false, results: [] } });
+    await expect(response.json()).resolves.toEqual({
+      json: { enabled: false, configured: false, results: [] },
+    });
     expect(fetch).not.toHaveBeenCalled();
     await request(true);
     expect(fetch).toHaveBeenCalled();

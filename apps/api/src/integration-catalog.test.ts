@@ -183,6 +183,24 @@ describe("searchIntegrationCatalog", () => {
       },
     ]);
   });
+
+  it("lists a page of the catalogue when the query is empty", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+      const url = new URL(input instanceof Request ? input.url : input.toString());
+      expect(url.href).toBe("https://integrations.sh/api/search?q=&limit=24&offset=24&kind=mcp");
+      return Response.json({ results: [] });
+    });
+    await searchIntegrationCatalog({
+      baseUrl: "https://integrations.sh",
+      query: "",
+      browse: true,
+      offset: 24,
+      limit: 24,
+      kind: "mcp",
+      signal: new AbortController().signal,
+      fetch,
+    });
+  });
 });
 
 const RESPONSE_SIZE_OVER_LIMIT = 1_000_001;

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { ORPCError } from "@orpc/server";
 import { runContinueJob } from "@rakazo/adapter-kit";
 import {
+  companyFeatureOpenTo,
   companyTools,
   createPluginMarketplace,
   isTransientFetchError,
@@ -201,15 +202,26 @@ export function mcpRoutes(ctx: RouterContext) {
         const baseUrl =
           deps.env.integrationsCatalogUrl ??
           (input.usePublicCatalog ? "https://integrations.sh" : undefined);
-        if (!baseUrl) return { enabled: false, results: [] };
+        if (!baseUrl) return { enabled: false, configured: false, results: [] };
+        // The same people and groups as the MCP servers switch, admins included.
+        if (!companyFeatureOpenTo("mcpServers", context.actor.userId)) {
+          return { enabled: false, configured: true, results: [] };
+        }
+        if (!input.browse && !input.query.trim()) {
+          return { enabled: true, configured: true, results: [] };
+        }
         try {
           const results = await searchIntegrationCatalog({
             baseUrl,
             query: input.query,
+            browse: input.browse,
+            offset: input.offset,
+            limit: input.limit,
+            kind: input.kind,
             signal: context.signal ?? new AbortController().signal,
             fetch: deps.remoteConnectors?.fetch,
           });
-          return { enabled: true, results };
+          return { enabled: true, configured: true, results };
         } catch (error) {
           throw new ORPCError("BAD_GATEWAY", {
             message: error instanceof Error ? error.message : "Integration catalog search failed",

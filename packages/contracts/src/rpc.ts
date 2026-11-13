@@ -1397,11 +1397,19 @@ export const appContract = {
         z.object({
           query: z.string().trim().max(253).default(""),
           usePublicCatalog: z.boolean().default(false),
+          /** Empty query lists the catalogue. A plain search still needs text. */
+          browse: z.boolean().default(false),
+          offset: z.number().int().min(0).max(10_000).default(0),
+          limit: z.number().int().min(1).max(100).default(8),
+          kind: z.enum(["mcp", "openapi", "graphql", "cli"]).optional(),
         }),
       )
       .output(
         z.object({
+          /** This person may see the catalogue. */
           enabled: z.boolean(),
+          /** The deployment has a catalogue configured, whether or not this person may see it. */
+          configured: z.boolean(),
           results: z.array(IntegrationCatalogResultSchema),
         }),
       ),
