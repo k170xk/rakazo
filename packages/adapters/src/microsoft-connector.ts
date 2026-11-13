@@ -13,7 +13,6 @@ import { SHAREPOINT_FOLDER_LIMIT } from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 import { runAsSystem, runAsTenant } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
-import { companyFeatureOpenForRun } from "./company-policy.js";
 import { combineSignals, sanitizeConnectorError } from "./connector-safety.js";
 import type { MailGraph, Recipient } from "./microsoft-mail.js";
 import {
@@ -313,13 +312,9 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
     context: AdapterContext,
   ): Promise<{ authorizationUrl: string | null; state: string }> {
     if (!isMicrosoftApp(request.provider)) throw new Error("Unknown Microsoft app");
-    // Only people allowed to send are asked to consent to sending; everyone else's sign-in
-    // cannot grant it.
-    const scope =
-      request.provider === OUTLOOK_PROVIDER &&
-      (await companyFeatureOpenForRun(this.prisma, "outlookSend", context.userId))
-        ? OUTLOOK_SEND_SCOPES
-        : MICROSOFT_APPS[request.provider].scopes;
+    // Sign-in asks only for what the app registration lists. Sending relies on an admin
+    // granting Mail.Send in Entra, so an unlisted permission can never block connecting.
+    const scope = MICROSOFT_APPS[request.provider].scopes;
     const state = randomBytes(32).toString("base64url");
     const url = new URL(
       `https://login.microsoftonline.com/${encodeURIComponent(this.config.tenantId)}/oauth2/v2.0/authorize`,
@@ -942,13 +937,15 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
 
   /**
    * A token that can send mail as the person, only for their own press of Send on a draft card.
-   * Runs never get it: their Outlook token is asked for without Mail.Send.
+   * Runs never get it: their Outlook token is asked for without Mail.Send. It works once an
+   * admin has granted Mail.Send to the app for the organisation.
    */
   async outlookSendToken(
     owner: Pick<AdapterContext, "spaceId" | "userId">,
   ): Promise<{ token: string } | { reconnect: string }> {
     const reconnect = {
-      reconnect: "Reconnect Outlook in Plugins to allow sending, then press Send again.",
+      reconnect:
+        "Outlook has not allowed sending yet. An admin must add the Mail.Send permission to the OCSC app in Microsoft Entra and grant admin consent; then press Send again.",
     };
     const [row] = await this.rows(owner, { status: "connected" }, OUTLOOK_PROVIDER);
     if (!row?.secretId) return reconnect;
