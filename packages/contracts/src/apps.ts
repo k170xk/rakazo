@@ -27,6 +27,7 @@ export const AppTableSchemaSchema = z.object({
   key: z.string().optional(),
   title: z.string().optional(),
   personal: z.boolean().optional(),
+  shared: z.boolean().optional(),
   large: z.boolean().optional(),
   columns: z.array(AppColumnSchema),
 });
@@ -43,6 +44,24 @@ export const AppTablesSchema = z.record(
   }),
 );
 
+export const AppWorkspaceRoleSchema = z.enum(["owner", "lead", "member", "viewer"]);
+
+export const AppWorkspaceSummarySchema = z.object({
+  label: z.string(),
+  create: z.enum(["anyone", "owner"]),
+  current: z.object({ id: z.string(), name: z.string(), role: AppWorkspaceRoleSchema }).nullable(),
+  canCreate: z.boolean(),
+  workspaces: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      role: AppWorkspaceRoleSchema,
+      archived: z.boolean().optional(),
+    }),
+  ),
+});
+export type AppWorkspaceSummary = z.infer<typeof AppWorkspaceSummarySchema>;
+
 export const AppDataSchema = z.object({
   tables: AppTablesSchema,
   state: z.record(z.string(), z.unknown()),
@@ -50,8 +69,27 @@ export const AppDataSchema = z.object({
   dataAccess: AppDataAccessSchema,
   /** The asset id of the app's generated icon, once it has been drawn. */
   icon: z.string().nullable().default(null),
+  /** The app's workspaces as this person sees them; null when it keeps one dataset. */
+  workspace: AppWorkspaceSummarySchema.nullable().default(null),
 });
 export type AppData = z.infer<typeof AppDataSchema>;
+
+/** The owner's workspace setting: a label turns them on ("Bridge"); null turns them off. */
+export const AppWorkspaceSettingsInputSchema = z.object({
+  label: z.string().trim().max(30).nullable(),
+  create: z.enum(["anyone", "owner"]),
+  /** Puts rows that belong to no workspace into the one with this name (started if needed). */
+  fileInto: z.string().trim().min(1).max(80).nullable().optional(),
+});
+export type AppWorkspaceSettingsInput = z.infer<typeof AppWorkspaceSettingsInputSchema>;
+
+export const AppWorkspaceSettingsSchema = z.object({
+  label: z.string().nullable(),
+  create: z.enum(["anyone", "owner"]),
+  workspaces: z.number().int(),
+  /** Rows of tables that are not shared which belong to no workspace yet. */
+  unfiled: z.number().int(),
+});
 
 /** An app's source: file name to text, App.tsx at least. */
 export const AppFilesSchema = z.record(z.string().max(120), z.string());

@@ -67,6 +67,74 @@ Free data (no keys, no cost): services.weather(lat, lon, days?) → {current, da
   year?) → [{date, name, regions}]; useService(() => services.weather(lat, lon), [lat, lon]) → {data,
   loading}. services.available() is false for visitors.
 
+## PDF reports (OCSC template)
+When someone asks to print, export or send a report as a PDF, use printPdf from @ocsc/app, or put a
+<PrintButton document={() => buildReport()} filename?/> (from @ocsc/ui) where the report is; it hides itself
+where printing isn't available (canPrintPdf()). Never import jsPDF, html2canvas or window.print, and never
+draw the page yourself: describe it and the host lays it out on OCSC's standard template (green header banner,
+skyline footer, Helvetica, "Page n of N", searchable text), the same template Evolve's inspection and tender
+reports use. Keep that template unless the person explicitly asks for another look: then template {plain: true}
+(no artwork) or {accent: "#rrggbb"}.
+await printPdf({title, subtitle?, kind? ("SITE INSPECTION REPORT"), reference? (job number), date?, author?,
+  footer?, orientation? "portrait"|"landscape", blocks: [...]}, {filename?}) downloads the PDF. Blocks:
+  {type: "heading", text, subtitle?, newPage?} (numbered 01, 02… automatically), {type: "subheading", text},
+  {type: "text", text (blank line = new paragraph, **bold**), size? "small"|"normal"|"large", muted?},
+  {type: "bullets", items, numbered?}, {type: "stats", items: [{label, value, tone?}]} (≤4 figure tiles),
+  {type: "facts", items: [{label, value}]} (client, job, inspector), {type: "table", columns: ["Item",
+  {label: "Cost", align: "right"}], rows: [[…]], caption?, total? (bold last row)}, {type: "photos", photos:
+  [{asset: pictureId, caption?, lat?, lon?, takenAt?}], columns? 1|2|3}, {type: "image", asset or src (PNG/JPEG
+  data URL), caption?, width? "full"|"half"}, {type: "checklist", items: [{label, result: "pass"|"fail"|"na"|null,
+  note?}]}, {type: "callout", title?, text, tone?}, {type: "bars", title?, items: [{label, value}], format?
+  "number"|"currency"|"percent"}, {type: "map", points?: [{lat, lon, label?}], lines?, areas?, style?
+  "streets"|"satellite"|"terrain", caption?} (numbered pins with a legend), {type: "signatures", items: [{label,
+  name?, date?, signature?: {asset}}]}, {type: "divider"}, {type: "pageBreak"}. tone: accent|neutral|success|
+  warning|danger|info. Build blocks from the rows on screen (respect the filters shown); pictures go by id.
+
+## Site work, signatures and planning
+Geotagged photos: PhotoInput onPhoto={(photo) => …} hears {id, lat?, lon?, altitude?, heading?, takenAt?,
+  located? "photo"|"device"} for each photo added: the camera's GPS and time, read before the photo is shrunk,
+  else the device's position for a photo just taken. Save lat, lon and taken_at columns with the photo row.
+  uploadPhoto(file, {locate?}) does the same in code. markup on PhotoInput adds a pencil to draw arrows, boxes
+  and labels on a photo (saved as a new picture); PhotoMarkup {photo, open, onClose, onSave(id)} on its own.
+Location: getLocation() → {lat, lon, accuracy (m), altitude?, heading?, at} from @ocsc/app; call it from a
+  tap the first time (the browser asks once); canLocate() says whether it works here. MapView shows a "my
+  location" button by itself (locate? onLocate?(here)). useRouteRecorder({every?}) → {points, recording,
+  meters, start (from a tap), stop, clear} traces a walk (pass points as a MapView line).
+Drawing on maps: MapView draw="area"|"line" with onDraw({kind, points}) and onDrawCancel lets people tap out a
+  site boundary or route, showing its size; save points as JSON in a longtext column. distanceMeters(points),
+  areaSquareMeters(points), formatDistance, formatArea measure them. Markers take photo: pictureId for photo
+  pins. PhotoMap {photos: [{photo, lat?, lon?, label?, takenAt?}], height?, mapStyle?} shows site photos as
+  thumbnail pins with a strip of every photo and full-size viewing.
+Signatures: SignaturePad {value, onChange, label?} (finger, pen or mouse) saves a picture id for an image
+  column; print it with a signatures block {signature: {asset: id}}.
+Planning: Gantt {rows, startKey, endKey?, titleKey, groupKey? (phases), progressKey?, dependsKey? (_ids of rows
+  that finish first, comma separated), toneKey?, scale? "day"|"week"|"month", onChange?(row, {start, end}),
+  onOpen?, renderLabel?} — bars drag to move and their ends to resize (dates "YYYY-MM-DD"), milestones when start
+  equals end, arrows for dependencies (red when they overlap), a today line. Keep dates as date columns.
+
+## Boards, galleries, editors and inputs
+Whiteboard {value, onChange?, readOnly?, height?}: sticky notes, text, boxes, circles, arrows that stay joined
+  to the items they connect, pen and pictures; pan, zoom and pinch, select (drag a box), move, resize,
+  recolour, double-click to write, undo, keyboard tools (V H N T R O A P). Keep its value in a longtext column
+  as JSON.stringify(value) and pass readBoard(row.board) back in; onChange fires per finished change, so
+  everyone with the app open sees edits live. Use it for workshops, retrospectives, mind maps, flow diagrams,
+  site sketches over a photo, and option studies; one row per board.
+GalleryView {rows, imageKey, titleKey, subtitleKey?, badgeKey?, footer?(row), columns? 2-5, aspect?
+  "square"|"landscape"|"portrait", onOpen?} shows records as picture cards (projects, sites, products,
+  people); offer it next to TableView with a SegmentedControl view switch. CompareImages {before, after
+  (picture ids), beforeLabel?, afterLabel?} slides between two photos (before/after works, defects fixed).
+OrgChart {rows, parentKey (the manager's _id), titleKey, subtitleKey?, photoKey?, onOpen?} draws a team
+  top-down with folding; TreeView {rows, parentKey, titleKey, renderRow?(row, depth), onOpen?} is an indented
+  folding tree (work breakdown, cost codes, folders, locations). buildTree(rows, parentKey) gives the nodes.
+MarkdownEditor {value, onChange, placeholder?, minRows?, mentions?: names, onMention?(name)}: notes with
+  bold/heading/list/checklist/link/quote/table buttons and a preview; Markdown text for a longtext column,
+  shown elsewhere with <Markdown>. Use it for minutes, method statements, briefs and long notes, not Textarea.
+Inputs: RangeSlider {value: [from, to], onChange, min?, max?, step?, format?, label?} (budget and area
+  filters), Slider for one value, Rating {value, onChange?, max?} (stars; read-only without onChange),
+  SegmentedControl {options: ["List", "Board"] or [{value, label?, icon?}], value, onChange, size?} (a view or
+  mode switch), NumberStepper {value, onChange, min?, max?, step?, suffix?}, TagInput {value: string[], onChange,
+  suggestions?} (store joined by commas), ColorPicker {value, onChange} (OCSC swatches or #rrggbb).
+
 ## Size
 Apps load on phones on site, so keep them light. The kit charts are drawn in-house in a few kilobytes:
 importing recharts yourself adds about 380 KB, so only do it for a chart the kit truly lacks (say why).

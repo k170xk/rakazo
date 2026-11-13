@@ -6,6 +6,8 @@
   "exports": {
     "./build": "./src/build/index.ts",
     "./import": "./src/import/index.ts",
+    "./pdf": "./src/pdf/model.ts",
+    "./pdf/render": "./src/pdf/render.ts",
     "./protocol": "./src/protocol.ts",
     "./query": "./src/query.ts",
     "./schema": "./src/schema.ts",
@@ -15,6 +17,7 @@
     "./sdk": "./src/sdk/index.tsx",
     "./templates": "./src/templates/index.ts",
     "./visual-edit": "./src/visual-edit.ts",
+    "./workspace": "./src/workspace.ts",
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -23,6 +26,8 @@
   },
   "dependencies": {
     "esbuild": "0.28.2",
+    "jspdf": "4.2.1",
+    "jspdf-autotable": "5.0.9",
     "lucide-react": "1.68.0",
     "motion": "14.1.0",
     "react": "19.2.3",

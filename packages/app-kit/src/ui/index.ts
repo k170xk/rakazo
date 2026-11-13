@@ -25,6 +25,13 @@ export {
 } from "./basic.js";
 export { AreaChart, BarChart, BarList, DonutChart, LineChart, type Series } from "./charts.js";
 export { CHART_COLORS, cn, ease, motionPresets, stagger, toneFor } from "./cn.js";
+export {
+  buildTree,
+  CompareImages,
+  GalleryView,
+  OrgChart,
+  TreeView,
+} from "./collections.js";
 export { type Command, CommandPalette, useHotkey } from "./command.js";
 export { Accordion, Carousel, Markdown, SortableList, Typewriter } from "./content.js";
 export {
@@ -39,6 +46,7 @@ export {
   readJson,
   sumBy,
 } from "./data.js";
+export { MarkdownEditor, prefixLines, wrapSelection } from "./editor.js";
 export {
   Aurora,
   BentoCard,
@@ -60,6 +68,15 @@ export {
   type Step,
   Steps,
 } from "./flows.js";
+export { dayNumber, dayText, Gantt, type GanttScale } from "./gantt.js";
+export {
+  ColorPicker,
+  NumberStepper,
+  RangeSlider,
+  Rating,
+  SegmentedControl,
+  TagInput,
+} from "./inputs.js";
 export { CalendarHeatmap, FunnelChart, Gauge, Heatmap, ScatterChart } from "./insights.js";
 export {
   CountUp,
@@ -70,18 +87,27 @@ export {
   Sparkline,
 } from "./kpi.js";
 export {
+  areaSquareMeters,
   clusterMarkers,
+  distanceMeters,
   fitPoints,
+  formatArea,
+  formatDistance,
   type LatLon,
   type MapArea,
+  type MapDrawing,
   type MapLine,
   type MapMarker,
+  type MapPhoto,
   MapView,
   type MapViewProps,
+  PhotoMap,
   PlaceSearch,
   project,
   unproject,
+  useRouteRecorder,
 } from "./map.js";
+export { PhotoMarkup, SignaturePad } from "./markup.js";
 export {
   AssetImage,
   Gallery,
@@ -104,6 +130,7 @@ export {
   Slider,
   Tooltip,
 } from "./pickers.js";
+export { PrintButton } from "./print.js";
 export { RecordDetail, RecordForm, TableView } from "./records.js";
 export {
   type AppPage,
@@ -131,4 +158,14 @@ export {
   themeCss,
 } from "./theme.js";
 export { ago, Comments, PresenceStack, RowActivity, RowHistory } from "./together.js";
-export { ActivityFeed, CalendarMonth, Kanban, Timeline } from "./views.js";
+export { ActivityFeed, CalendarMonth, Kanban, type KanbanDrop, Timeline } from "./views.js";
+export {
+  type BoardColor,
+  type BoardEnd,
+  type BoardItem,
+  type BoardKind,
+  type BoardValue,
+  boardBounds,
+  readBoard,
+  Whiteboard,
+} from "./whiteboard.js";

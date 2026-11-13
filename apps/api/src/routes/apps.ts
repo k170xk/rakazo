@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { drawAppIconLater } from "@rakazo/adapters";
 import { AppHistoryError, isAppDataError } from "@rakazo/db";
 import { AppAskError } from "../app-ask.js";
+import { WorkspaceRefused } from "../app-workspaces.js";
 import {
   AppPublishError,
   AppVersionConflictError,
@@ -12,6 +13,7 @@ import {
   getAppData,
   getAppFiles,
   getAppRevision,
+  getAppWorkspaces,
   getEvolvePublication,
   importWorkbookApp,
   listAppVersions,
@@ -31,6 +33,7 @@ import {
   saveAppBrief,
   saveAppFiles,
   setAppDataAccess,
+  setAppWorkspaceSettings,
   undoOwnerAppChange,
   uploadAppAsset,
   WorkbookImportError,
@@ -49,7 +52,8 @@ async function refusals<T>(work: () => Promise<T>): Promise<T> {
       error instanceof AppHistoryError ||
       error instanceof WorkbookImportError ||
       error instanceof AppAskError ||
-      error instanceof AppPublishError
+      error instanceof AppPublishError ||
+      error instanceof WorkspaceRefused
     ) {
       throw new ORPCError("BAD_REQUEST", {
         message: error instanceof Error ? error.message : "Refused",
@@ -153,6 +157,12 @@ export function appsRoutes(ctx: RouterContext) {
       ),
       setDataAccess: authed.apps.setDataAccess.handler(({ context, input }) =>
         setAppDataAccess(db, context.actor, input),
+      ),
+      workspaces: authed.apps.workspaces.handler(({ context, input }) =>
+        getAppWorkspaces(db, context.actor, input.pageId),
+      ),
+      setWorkspaces: authed.apps.setWorkspaces.handler(({ context, input }) =>
+        refusals(() => setAppWorkspaceSettings(db, context.actor, input)),
       ),
       assets: authed.apps.assets.handler(({ context, input }) =>
         getAppAssets(db, context.actor, input.pageId),

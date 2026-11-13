@@ -1,37 +1,75 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactNode,
+  PointerEvent as ReactPointerEvent,
+} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Tone } from "../schema.js";
 import { Badge, Button } from "./basic.js";
 import { cn, TONE_DOT, toneFor } from "./cn.js";
 
 type AnyRow = Record<string, unknown> & { _id?: string };
 
+/** Where a card was dropped: its lane, its place in the lane and an order value to save. */
+export type KanbanDrop<T> = {
+  index: number;
+  before: T | null;
+  after: T | null;
+  /** A number between its new neighbours' orderBy values, ready to save in that field. */
+  order: number;
+};
+
+const HOLD_MS = 260;
+
 /**
- * Cards in columns by a field (status, stage, owner). Cards drag between columns when onMove is
- * given; the move shows at once.
+ * Cards in columns by a field (status, stage, owner). With onMove, cards drag between columns and
+ * (with orderBy) up and down within one: mouse drag, press and hold on touch, or Alt + arrow keys.
+ * The move shows at once.
  */
 export function Kanban<T extends AnyRow>({
   rows,
   groupBy,
+  orderBy,
   columns,
   renderCard,
   onMove,
   onOpen,
+  onAdd,
   className,
 }: {
   rows: T[];
   groupBy: string;
+  /** A number field that orders cards in a column; dragging up or down saves a new value. */
+  orderBy?: string;
   /** Column order and tones; values found in rows are added after. */
   columns?: Array<{ value: string; label?: string; tone?: Tone }>;
   renderCard: (row: T) => ReactNode;
-  onMove?: (row: T, value: string) => void;
+  /** A card moved: save row[groupBy] = value (and row[orderBy] = drop.order when ordering). */
+  onMove?: (row: T, value: string, drop: KanbanDrop<T>) => void;
   onOpen?: (row: T) => void;
+  /** An Add button under each column. */
+  onAdd?: (value: string) => void;
   className?: string;
 }) {
-  const [dragging, setDragging] = useState<string | null>(null);
-  const [over, setOver] = useState<string | null>(null);
+  const board = useRef<HTMLDivElement>(null);
+  const [drag, setDrag] = useState<{
+    id: string;
+    lane: string;
+    index: number;
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const dragRef = useRef(drag);
+  dragRef.current = drag;
+  const justDropped = useRef(0);
+  const touched = useRef(false);
   const lanes = useMemo(() => {
     const list = [...(columns ?? [])];
     for (const row of rows) {
@@ -42,32 +80,187 @@ export function Kanban<T extends AnyRow>({
       list.push({ value: "", label: "Unassigned", tone: "neutral" });
     return list;
   }, [rows, groupBy, columns]);
+  const laneRows = useCallback(
+    (value: string, without?: string) => {
+      const items = rows.filter(
+        (row) => String(row[groupBy] ?? "") === value && row._id !== without,
+      );
+      if (!orderBy) return items;
+      const rank = (row: T) => {
+        const n = Number(row[orderBy]);
+        return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+      };
+      return [...items].sort((a, b) => rank(a) - rank(b));
+    },
+    [rows, groupBy, orderBy],
+  );
+
+  const drop = useCallback(
+    (row: T, value: string, index: number) => {
+      if (!onMove) return;
+      const items = laneRows(value, row._id);
+      const at = Math.min(Math.max(index, 0), items.length);
+      const before = items[at - 1] ?? null;
+      const after = items[at] ?? null;
+      const value_ = (item: T | null, fallback: number) => {
+        const n = orderBy && item ? Number(item[orderBy]) : Number.NaN;
+        return Number.isFinite(n) ? n : fallback;
+      };
+      const low = value_(before, at - 1);
+      const high = value_(after, at + 1);
+      const order = before && after ? (low + high) / 2 : before ? low + 1 : after ? high - 1 : 0;
+      const sameLane = String(row[groupBy] ?? "") === value;
+      const oldIndex = laneRows(value).findIndex((item) => item._id === row._id);
+      if (sameLane && (!orderBy || oldIndex === at)) return;
+      onMove(row, value, { index: at, before, after, order });
+    },
+    [onMove, laneRows, orderBy, groupBy],
+  );
+
+  // The lane and slot under the pointer, from the cards' boxes on screen.
+  const target = (x: number, y: number, id: string) => {
+    const lane = (document.elementFromPoint(x, y) as Element | null)?.closest<HTMLElement>(
+      "[data-kanban-lane]",
+    );
+    if (!lane || !board.current?.contains(lane)) return null;
+    const cards = [...lane.querySelectorAll<HTMLElement>("[data-kanban-card]")].filter(
+      (card) => card.dataset.kanbanCard !== id,
+    );
+    const index = orderBy
+      ? cards.filter((card) => {
+          const box = card.getBoundingClientRect();
+          return box.top + box.height / 2 < y;
+        }).length
+      : cards.length;
+    return { lane: lane.dataset.kanbanLane ?? "", index };
+  };
+
+  useEffect(() => {
+    if (!drag) return;
+    const move = (event: PointerEvent) => {
+      const now = dragRef.current;
+      if (!now) return;
+      const spot = target(event.clientX, event.clientY, now.id);
+      setDrag({ ...now, x: event.clientX, y: event.clientY, ...(spot ?? {}) });
+      const box = board.current?.getBoundingClientRect();
+      if (box && board.current) {
+        if (event.clientX > box.right - 48) board.current.scrollLeft += 14;
+        else if (event.clientX < box.left + 48) board.current.scrollLeft -= 14;
+      }
+    };
+    const end = () => {
+      const now = dragRef.current;
+      setDrag(null);
+      justDropped.current = Date.now();
+      const row = now && rows.find((item) => item._id === now.id);
+      if (row && now) drop(row, now.lane, now.index);
+    };
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDrag(null);
+    };
+    const holdStill = (event: TouchEvent) => event.preventDefault();
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    window.addEventListener("keydown", cancel);
+    document.addEventListener("touchmove", holdStill, { passive: false });
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      window.removeEventListener("keydown", cancel);
+      document.removeEventListener("touchmove", holdStill);
+    };
+  }, [Boolean(drag)]);
+
+  const pickUp = (event: ReactPointerEvent<HTMLElement>, row: T, lane: string, index: number) => {
+    touched.current = event.pointerType !== "mouse";
+    if (!onMove || !row._id || (event.pointerType === "mouse" && event.button !== 0)) return;
+    const card = event.currentTarget;
+    const start = { x: event.clientX, y: event.clientY };
+    const begin = (x: number, y: number) => {
+      const box = card.getBoundingClientRect();
+      setDrag({
+        id: row._id as string,
+        lane,
+        index,
+        x,
+        y,
+        dx: start.x - box.left,
+        dy: start.y - box.top,
+        width: box.width,
+        height: box.height,
+      });
+    };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const stop = () => {
+      clearTimeout(timer);
+      window.removeEventListener("pointermove", watch);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+    const watch = (next: PointerEvent) => {
+      const far = Math.hypot(next.clientX - start.x, next.clientY - start.y);
+      if (event.pointerType === "mouse" && far > 5) {
+        stop();
+        begin(next.clientX, next.clientY);
+      } else if (event.pointerType !== "mouse" && far > 8) stop();
+    };
+    if (event.pointerType !== "mouse") {
+      timer = setTimeout(() => {
+        stop();
+        navigator.vibrate?.(12);
+        begin(start.x, start.y);
+      }, HOLD_MS);
+    }
+    window.addEventListener("pointermove", watch);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+  };
+
+  const keyMove = (
+    event: ReactKeyboardEvent<HTMLElement>,
+    row: T,
+    laneAt: number,
+    index: number,
+  ) => {
+    if (event.key === "Enter") return onOpen?.(row);
+    if (!onMove || !event.altKey) return;
+    const sideways = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
+    const upDown = { ArrowUp: -1, ArrowDown: 1 }[event.key];
+    if (sideways) {
+      const lane = lanes[laneAt + sideways];
+      if (!lane) return;
+      event.preventDefault();
+      drop(row, lane.value, orderBy ? index : laneRows(lane.value).length);
+    } else if (upDown && orderBy) {
+      event.preventDefault();
+      drop(row, lanes[laneAt]?.value ?? "", index + upDown);
+    }
+  };
+
+  const dragged = drag ? rows.find((row) => row._id === drag.id) : undefined;
   return (
-    <div className={cn("flex gap-4 overflow-x-auto pb-2", className)}>
-      {lanes.map((lane) => {
-        const items = rows.filter((row) => String(row[groupBy] ?? "") === lane.value);
+    <div ref={board} className={cn("flex gap-4 overflow-x-auto pb-2", className)}>
+      {lanes.map((lane, laneAt) => {
+        const items = laneRows(lane.value);
         const tone = lane.tone ?? toneFor(lane.value, "accent");
+        const here = drag?.lane === lane.value;
+        const placeholder = (
+          <div
+            key="__drop"
+            className="rounded-xl border-2 border-dashed border-primary/50 bg-primary/5"
+            style={{ height: drag?.height ?? 60 }}
+          />
+        );
+        let slot = 0;
         return (
-          // biome-ignore lint/a11y/noStaticElementInteractions: a drop target for dragged cards; moving is also possible by editing the row
           <div
             key={lane.value || "_none"}
-            onDragOver={(event) => {
-              if (!onMove) return;
-              event.preventDefault();
-              setOver(lane.value);
-            }}
-            onDragLeave={() => setOver((current) => (current === lane.value ? null : current))}
-            onDrop={(event) => {
-              event.preventDefault();
-              setOver(null);
-              const row = rows.find((item) => item._id === dragging);
-              setDragging(null);
-              if (row && onMove && String(row[groupBy] ?? "") !== lane.value)
-                onMove(row, lane.value);
-            }}
+            data-kanban-lane={lane.value}
             className={cn(
               "flex w-[300px] shrink-0 flex-col rounded-2xl bg-muted/50 p-2 transition-colors",
-              over === lane.value && "bg-primary/10 ring-2 ring-primary/30",
+              here && "bg-primary/10 ring-2 ring-primary/30",
             )}
           >
             <div className="flex items-center gap-2 px-2 pt-1.5 pb-2.5">
@@ -81,42 +274,73 @@ export function Kanban<T extends AnyRow>({
             </div>
             <div className="flex min-h-16 flex-col gap-2">
               <AnimatePresence initial={false}>
-                {items.map((row) => (
-                  <motion.div
-                    key={row._id}
-                    layout
-                    layoutId={`card-${row._id}`}
-                    initial={{ opacity: 0, scale: 0.97 }}
-                    animate={{ opacity: dragging === row._id ? 0.45 : 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.97 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 40 }}
-                  >
-                    {/* biome-ignore lint/a11y/useSemanticElements: a draggable card holding block content */}
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") onOpen?.(row);
-                      }}
-                      draggable={Boolean(onMove)}
-                      onDragStart={() => setDragging(row._id ?? null)}
-                      onDragEnd={() => setDragging(null)}
-                      onClick={() => onOpen?.(row)}
-                      className={cn(
-                        "rounded-xl border border-border/70 bg-card p-3.5 shadow-card transition-shadow hover:shadow-lift",
-                        onMove && "cursor-grab active:cursor-grabbing",
-                        onOpen && !onMove && "cursor-pointer",
-                      )}
+                {items.flatMap((row) => {
+                  const lifted = drag?.id === row._id;
+                  const index = slot;
+                  if (!lifted) slot++;
+                  const card = (
+                    <motion.div
+                      key={row._id}
+                      layout
+                      className={cn(lifted && "hidden")}
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 40 }}
                     >
-                      {renderCard(row)}
-                    </div>
-                  </motion.div>
-                ))}
+                      {/* biome-ignore lint/a11y/useSemanticElements: a draggable card holding block content */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        data-kanban-card={row._id}
+                        aria-roledescription={onMove ? "Draggable card" : undefined}
+                        aria-keyshortcuts={onMove ? "Alt+ArrowLeft Alt+ArrowRight" : undefined}
+                        onKeyDown={(event) => keyMove(event, row, laneAt, index)}
+                        onPointerDown={(event) => pickUp(event, row, lane.value, index)}
+                        onContextMenu={(event) => {
+                          if (onMove && touched.current) event.preventDefault();
+                        }}
+                        onClick={() => {
+                          if (Date.now() - justDropped.current > 300) onOpen?.(row);
+                        }}
+                        className={cn(
+                          "rounded-xl border border-border/70 bg-card p-3.5 shadow-card transition-shadow select-none hover:shadow-lift [-webkit-touch-callout:none]",
+                          onMove && "cursor-grab active:cursor-grabbing",
+                          onOpen && !onMove && "cursor-pointer",
+                        )}
+                      >
+                        {renderCard(row)}
+                      </div>
+                    </motion.div>
+                  );
+                  return here && !lifted && drag.index === index ? [placeholder, card] : [card];
+                })}
+                {here && drag.index >= slot && placeholder}
               </AnimatePresence>
             </div>
+            {onAdd && (
+              <button
+                type="button"
+                onClick={() => onAdd(lane.value)}
+                className="mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+              >
+                <Plus className="size-4" /> Add
+              </button>
+            )}
           </div>
         );
       })}
+      {drag &&
+        dragged &&
+        createPortal(
+          <div
+            className="pointer-events-none fixed z-50 rotate-2 rounded-xl border border-primary/40 bg-card p-3.5 shadow-2xl"
+            style={{ left: drag.x - drag.dx, top: drag.y - drag.dy, width: drag.width }}
+          >
+            {renderCard(dragged)}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

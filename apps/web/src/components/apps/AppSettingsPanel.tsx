@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
 import { AppIcon } from "./AppIcon";
 import { AppPublishSection } from "./AppPublishSection";
+import { AppWorkspacesSection } from "./AppWorkspacesSection";
 
 const PICTURE_TYPES = "image/png,image/jpeg,image/webp,image/gif,image/svg+xml";
 
@@ -158,6 +159,7 @@ export function AppSettingsPanel({
           ))}
         </div>
       </section>
+      <AppWorkspacesSection pageId={pageId} />
       <AppPublishSection pageId={pageId} title={title} />
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { appWriteDecision, CLICK_WINDOW_MS } from "./app-write-rule";
+import {
+  appLocationDecision,
+  appWriteDecision,
+  CLICK_WINDOW_MS,
+  LOCATION_TAP_MS,
+} from "./app-write-rule";
 
 const colleague = { canEdit: true, colleague: true, focused: false, msSinceClick: Infinity };
 
@@ -29,6 +34,19 @@ describe("appWriteDecision", () => {
     }
   });
 
+  it("changes workspaces only from the person's own clicks, even if they may only view", () => {
+    for (const op of ["workspaces.open", "workspaces.save", "workspaces.member"]) {
+      expect(appWriteDecision({ ...colleague, colleague: false, canEdit: false, op })).toMatch(
+        /Click/,
+      );
+      expect(appWriteDecision({ ...colleague, canEdit: false, focused: true, op })).toBe("ok");
+      expect(
+        appWriteDecision({ ...colleague, canEdit: false, msSinceClick: CLICK_WINDOW_MS - 1, op }),
+      ).toBe("ok");
+    }
+    expect(appWriteDecision({ ...colleague, canEdit: false, op: "workspaces.members" })).toBe("ok");
+  });
+
   it("lets anyone signed in comment, but a colleague's copy only while they use it", () => {
     for (const op of ["comments.add", "comments.remove"]) {
       expect(appWriteDecision({ ...colleague, canEdit: false, op })).toMatch(/Click/);
@@ -45,5 +63,21 @@ describe("appWriteDecision", () => {
     expect(
       appWriteDecision({ ...focused, op: "rows.remove", msSinceClick: CLICK_WINDOW_MS + 1 }),
     ).toMatch(/Click/);
+  });
+});
+
+describe("appLocationDecision", () => {
+  it("asks for a tap the first time, then allows reads while the app is in front", () => {
+    expect(appLocationDecision({ focused: true, msSinceClick: 800, shared: false })).toBe("ok");
+    expect(
+      appLocationDecision({ focused: true, msSinceClick: LOCATION_TAP_MS + 1, shared: false }),
+    ).toMatch(/Tap/);
+    expect(appLocationDecision({ focused: true, msSinceClick: Infinity, shared: true })).toBe("ok");
+  });
+
+  it("never tells a background app where someone is", () => {
+    expect(appLocationDecision({ focused: false, msSinceClick: 100, shared: true })).toMatch(
+      /Open/,
+    );
   });
 });

@@ -1,7 +1,9 @@
+import { PDF_LIMITS } from "@rakazo/app-kit/pdf";
 import type {
   AppFocus,
   AppInit,
   AppLive,
+  AppLocation,
   AppPickMessage,
   AppRequestMessage,
 } from "@rakazo/app-kit/protocol";
@@ -23,7 +25,7 @@ import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import type { AppSource } from "../../lib/app-host";
 import { downloadName, saveFile } from "../../lib/app-host";
-import { appWriteDecision } from "../../lib/app-write-rule";
+import { appLocationDecision, appWriteDecision } from "../../lib/app-write-rule";
 import { readTheme, subscribeTheme } from "../../lib/pages";
 import { SandboxedHtmlViewer } from "../SandboxedHtmlViewer";
 
@@ -98,7 +100,13 @@ export function AppFrame({
   const { open, dialog } = useExternalLinkOpener();
   const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "dark" as const);
   const post = useRef<((message: object) => void) | null>(null);
-  const known = useRef<{ revision: number; canEdit: boolean; colleague: boolean } | null>(null);
+  const known = useRef<{
+    revision: number;
+    canEdit: boolean;
+    colleague: boolean;
+    /** The workspace open when the app last started; null without workspaces or for "all". */
+    workspace: string | null;
+  } | null>(null);
   /** The app's kit understands delta and presence events (it said so in init). */
   const takesDeltas = useRef(false);
   /** The row the viewer has open, sent with each live check. */
@@ -111,6 +119,7 @@ export function AppFrame({
   const sawEvolve = useRef(false);
   const liveBroken = useRef(false);
   const clickedAt = useRef(0);
+  const sharedLocation = useRef(false);
   const usedGesture = useRef<string | null>(null);
   const ready = useRef(false);
   const latest = useRef({
@@ -141,10 +150,17 @@ export function AppFrame({
   const reload = useCallback(async () => {
     const data = await latest.current.source.load().catch(() => null);
     if (!data || !post.current) return;
+    const workspace = data.workspace?.current?.id ?? null;
+    if (known.current && workspace !== known.current.workspace) {
+      known.current = { ...known.current, workspace };
+      post.current({ type: APP_EVENT, event: "workspace" });
+      return;
+    }
     known.current = {
       revision: data.revision,
       canEdit: data.viewer.canEdit,
       colleague: isColleague(data.viewer.role),
+      workspace,
     };
     post.current({
       type: APP_EVENT,
@@ -175,6 +191,11 @@ export function AppFrame({
       return liveBroken.current ? false : true;
     }
     if (!post.current || known.current !== current) return true;
+    if (live.workspace !== undefined && live.workspace !== current.workspace) {
+      known.current = { ...current, workspace: live.workspace };
+      post.current({ type: APP_EVENT, event: "workspace" });
+      return true;
+    }
     post.current({ type: APP_EVENT, event: "presence", people: live.presence });
     if (live.revision === current.revision) return true;
     if (live.full || !live.delta || !takesDeltas.current) {
@@ -263,6 +284,7 @@ export function AppFrame({
             revision: data.revision,
             canEdit: data.viewer.canEdit,
             colleague: isColleague(data.viewer.role),
+            workspace: data.workspace?.current?.id ?? null,
           };
           const init: AppInit = {
             app: {
@@ -276,9 +298,12 @@ export function AppFrame({
             tables: data.tables as AppInit["tables"],
             state: data.state,
             revision: data.revision,
+            ...(data.workspace ? { workspace: data.workspace } : {}),
             features: [
               "export",
               "assets",
+              "pdf",
+              ...("geolocation" in navigator ? ["location"] : []),
               ...(data.viewer.canEdit ? ["uploads"] : []),
               ...(source.ask ? ["ai"] : []),
               ...(latest.current.maps ? ["maps"] : []),
@@ -338,6 +363,31 @@ export function AppFrame({
           }
           saveFile(downloadName(String(request.filename), endings), mime, text, false);
           return null;
+        }
+        case "pdf": {
+          if (JSON.stringify(request.document ?? null).length > PDF_LIMITS.bytes) {
+            throw new Error("That report is too large to print; use fewer or smaller pictures.");
+          }
+          const { buildAppPdf } = await import("../../lib/app-pdf");
+          const file = await buildAppPdf({
+            document: request.document,
+            filename: request.filename,
+            asset: source.asset,
+            maps: latest.current.maps,
+          });
+          saveFile(file.filename, "application/pdf", file.base64, true);
+          return null;
+        }
+        case "location": {
+          const allowed = appLocationDecision({
+            focused,
+            msSinceClick: Date.now() - clickedAt.current,
+            shared: sharedLocation.current,
+          });
+          if (allowed !== "ok") throw new Error(allowed);
+          const here = await currentPosition();
+          sharedLocation.current = true;
+          return here;
         }
         case "open": {
           const url = safeUrl(request.url);
@@ -468,6 +518,33 @@ function objectOf(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
+}
+
+function currentPosition(): Promise<AppLocation> {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      ({ coords, timestamp }) =>
+        resolve({
+          lat: coords.latitude,
+          lon: coords.longitude,
+          accuracy: Math.round(coords.accuracy),
+          ...(coords.altitude !== null ? { altitude: coords.altitude } : {}),
+          ...(coords.heading !== null && Number.isFinite(coords.heading)
+            ? { heading: coords.heading }
+            : {}),
+          at: new Date(timestamp).toISOString(),
+        }),
+      (error) =>
+        reject(
+          new Error(
+            error.code === error.PERMISSION_DENIED
+              ? "Location is turned off for this site. Allow it in the browser's settings."
+              : "Your location couldn't be found. Try again outside or near a window.",
+          ),
+        ),
+      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 10_000 },
+    );
+  });
 }
 
 function safeUrl(value: unknown): string | null {

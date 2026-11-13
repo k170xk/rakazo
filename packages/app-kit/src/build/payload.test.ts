@@ -102,6 +102,28 @@ describe("guide extras", () => {
       "RowActivity",
       "Comments",
       "RowHistory",
+      "PrintButton",
+      "PhotoMap",
+      "PhotoMarkup",
+      "SignaturePad",
+      "useRouteRecorder",
+      "distanceMeters",
+      "areaSquareMeters",
+      "Gantt",
+      "Whiteboard",
+      "readBoard",
+      "GalleryView",
+      "CompareImages",
+      "OrgChart",
+      "TreeView",
+      "buildTree",
+      "MarkdownEditor",
+      "RangeSlider",
+      "Rating",
+      "SegmentedControl",
+      "NumberStepper",
+      "TagInput",
+      "ColorPicker",
     ]) {
       expect(kit, name).toHaveProperty(name);
       expect(APP_KIT_GUIDE_EXTRAS, name).toContain(name);
@@ -119,6 +141,11 @@ describe("guide extras", () => {
       "useEvolve",
       "services",
       "useService",
+      "printPdf",
+      "canPrintPdf",
+      "uploadPhoto",
+      "getLocation",
+      "canLocate",
     ]) {
       expect(sdk, name).toHaveProperty(name);
       expect(APP_KIT_GUIDE_EXTRAS, name).toContain(name);

@@ -72,6 +72,11 @@ export type TableSchema = {
    */
   personal?: boolean;
   /**
+   * In an app with workspaces, one list for every workspace (checklists, rates, sites) instead of
+   * each workspace keeping its own rows. Ignored when the app has no workspaces.
+   */
+  shared?: boolean;
+  /**
    * Too many rows to send to every open copy: the app reads pages of it with useRows and totals
    * with useAggregate, and the server searches, filters and sorts it.
    */
@@ -249,6 +254,7 @@ export function checkSchema(
       ...(schema.key && keys.has(schema.key) ? { key: schema.key } : {}),
       ...(schema.title && keys.has(schema.title) ? { title: schema.title } : {}),
       ...(schema.personal === true ? { personal: true } : {}),
+      ...(schema.shared === true ? { shared: true } : {}),
       ...(schema.large === true ? { large: true } : {}),
     },
   };

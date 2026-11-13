@@ -1,12 +1,22 @@
-import { Camera, ChevronLeft, ChevronRight, ImageIcon, LoaderCircle, X } from "lucide-react";
+import {
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  ImageIcon,
+  LoaderCircle,
+  Pencil,
+  X,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { imageIds, MAX_IMAGES_PER_CELL } from "../schema.js";
-import { uploadImage, useAsset, useCanUpload } from "../sdk/index.js";
+import type { PhotoInfo } from "../sdk/index.js";
+import { uploadImage, uploadPhoto, useAsset, useCanUpload } from "../sdk/index.js";
 import { Skeleton } from "./basic.js";
 import { cn, ease } from "./cn.js";
+import { PhotoMarkup } from "./markup.js";
 import { toast } from "./overlay.js";
 
 /** A picture the app keeps, by asset id, with a shimmer while it loads. */
@@ -323,17 +333,24 @@ export function Photos({
 /**
  * Photos for an image column: take one with the camera or choose from the library (several at
  * once), see them as thumbnails, open full size and remove. The value is the cell's text (picture
- * ids joined by commas), so it goes straight into insert and update.
+ * ids joined by commas), so it goes straight into insert and update. onPhoto hears each added
+ * photo with where and when it was taken (the camera's GPS, else the device's position for a
+ * photo just taken), for geotagged site photos.
  */
 export function PhotoInput({
   value,
   onChange,
+  onPhoto,
+  markup,
   max = MAX_IMAGES_PER_CELL,
   label = "Add photo",
   disabled,
 }: {
   value: unknown;
   onChange: (value: string | null) => void;
+  onPhoto?: (photo: PhotoInfo) => void;
+  /** A pencil on each photo to mark it up; the marked-up copy takes the original's place. */
+  markup?: boolean;
   max?: number;
   label?: string;
   disabled?: boolean;
@@ -343,6 +360,7 @@ export function PhotoInput({
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(0);
   const [open, setOpen] = useState<number | null>(null);
+  const [marking, setMarking] = useState<string | null>(null);
   const latest = useRef(ids);
   latest.current = ids;
   const limit = Math.min(max, MAX_IMAGES_PER_CELL);
@@ -353,10 +371,13 @@ export function PhotoInput({
     setBusy((count) => count + picked.length);
     for (const file of picked) {
       try {
-        const id = await uploadImage(file);
-        const next = [...latest.current, id].slice(0, limit);
+        const photo = onPhoto
+          ? await uploadPhoto(file, { locate: true })
+          : { id: await uploadImage(file) };
+        const next = [...latest.current, photo.id].slice(0, limit);
         latest.current = next;
         onChange(next.join(","));
+        onPhoto?.(photo);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "That photo could not be added.");
       } finally {
@@ -382,6 +403,16 @@ export function PhotoInput({
           <button type="button" className="h-full w-full" onClick={() => setOpen(index)}>
             <AssetImage asset={id} className="h-full w-full" />
           </button>
+          {canUpload && markup && (
+            <button
+              type="button"
+              aria-label="Mark up photo"
+              onClick={() => setMarking(id)}
+              className="absolute top-1 left-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+            >
+              <Pencil className="size-3" />
+            </button>
+          )}
           {canUpload && (
             <button
               type="button"
@@ -425,6 +456,18 @@ export function PhotoInput({
         }}
       />
       <Lightbox ids={ids} index={open} onIndex={setOpen} />
+      {markup && (
+        <PhotoMarkup
+          photo={marking}
+          open={marking !== null}
+          onClose={() => setMarking(null)}
+          onSave={(saved) => {
+            const next = latest.current.map((item) => (item === marking ? saved : item));
+            latest.current = next;
+            onChange(next.join(","));
+          }}
+        />
+      )}
     </div>
   );
 }

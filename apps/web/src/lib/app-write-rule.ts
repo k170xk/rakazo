@@ -1,4 +1,4 @@
-import { APP_COMMENT_OPS, APP_WRITE_OPS } from "@rakazo/app-kit/protocol";
+import { APP_COMMENT_OPS, APP_WORKSPACE_WRITE_OPS, APP_WRITE_OPS } from "@rakazo/app-kit/protocol";
 
 /** How long after a click in a colleague's view the app may still remove rows or save unprompted. */
 export const CLICK_WINDOW_MS = 15_000;
@@ -22,6 +22,13 @@ export function appWriteDecision(input: {
       ? "ok"
       : "Click in the app first to comment.";
   }
+  // Who is in a workspace, and which one is open, change only from a person's own clicks; the
+  // server decides whether they may.
+  if (APP_WORKSPACE_WRITE_OPS.has(input.op as never)) {
+    return input.focused || input.msSinceClick <= CLICK_WINDOW_MS
+      ? "ok"
+      : "Click in the app first to change workspaces.";
+  }
   if (!APP_WRITE_OPS.has(input.op as never)) return "ok";
   if (!input.canEdit) {
     return input.op === "state.set" ? "skip" : "You can view this app but not change its data.";
@@ -31,4 +38,22 @@ export function appWriteDecision(input: {
   const allowed = input.op === "rows.remove" ? recentClick : input.focused || recentClick;
   if (allowed) return "ok";
   return input.op === "state.set" ? "skip" : "Click in the app first to change its data.";
+}
+
+/** How long after a tap an app may first ask where the device is. */
+export const LOCATION_TAP_MS = 60_000;
+
+/**
+ * Whether an app may read the device's position: the first time only just after a tap in it, then
+ * (once the person has shared it) while it stays in front, so a walk can be traced. An app open in
+ * the background never learns where someone is.
+ */
+export function appLocationDecision(input: {
+  focused: boolean;
+  msSinceClick: number;
+  shared: boolean;
+}): "ok" | string {
+  if (!input.focused) return "Open the app to share your location.";
+  if (input.shared || input.msSinceClick <= LOCATION_TAP_MS) return "ok";
+  return "Tap a button in the app to share your location.";
 }

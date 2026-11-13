@@ -11,9 +11,10 @@ import { APP_CALL_OPS, APP_CALLS_PATH } from "@rakazo/app-kit/protocol";
 import type { AggregateQuery, RowQuery } from "@rakazo/app-kit/query";
 import { QueryError, runAggregate, runQuery } from "@rakazo/app-kit/query";
 import type { Row, TableSchema } from "@rakazo/app-kit/schema";
-import { checkSchema, isPersonalTable, withFormulas } from "@rakazo/app-kit/schema";
+import { checkSchema, withFormulas } from "@rakazo/app-kit/schema";
+import { inWorkspaces, narrowsRows, seesRow } from "@rakazo/app-kit/workspace";
 import { provenEmail } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import type { PrismaClient, RowFacts } from "@rakazo/db";
 import {
   AppCommentError,
   addAppComment,
@@ -33,6 +34,8 @@ import {
 import type { Hono } from "hono";
 import type { AppServices } from "./app-services.js";
 import { AppServiceError } from "./app-services.js";
+import type { ResolvedLooker } from "./app-workspaces.js";
+import { resolveLooker, WorkspaceRefused, workspaceOp } from "./app-workspaces.js";
 import { requestBodyLimit } from "./request-body-limit.js";
 import { windowCounter } from "./window-counter.js";
 
@@ -49,6 +52,8 @@ export type AppCaller = {
   ownerId: string;
   /** The signed-in person; null for a visitor who opened the link with its password. */
   userId: string | null;
+  /** The email Evolve signed for them, which can admit them to workspaces before they have an account. */
+  email?: string | null;
   via: "owner" | "shared" | "evolve";
 };
 
@@ -82,8 +87,12 @@ type CachedTable = {
   revision: number;
   schema: TableSchema;
   rows: Row[];
-  creators: Map<string, string | null>;
+  facts: Map<string, RowFacts>;
 };
+
+const NO_FACTS: RowFacts = { createdBy: null, workspaceId: null };
+/** How long one person's workspace stays known between their requests. */
+const LOOKER_CACHE_MS = 3000;
 
 const objectOf = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value)
@@ -145,8 +154,28 @@ export function appCalls(deps: AppCallDeps) {
     return new Map(users.map((user) => [user.id, user.name]));
   }
 
+  const lookers = new Map<string, { at: number; looker: ResolvedLooker }>();
+  const lookerKey = (caller: AppCaller) =>
+    `${caller.pageId}\0${caller.userId ?? ""}\0${caller.email ?? ""}`;
+
+  /** Who the caller is to the app's rules: owner or not, and the workspace they have open. */
+  async function lookerFor(caller: AppCaller): Promise<ResolvedLooker> {
+    const key = lookerKey(caller);
+    const known = lookers.get(key);
+    if (known && now() - known.at < LOOKER_CACHE_MS) return known.looker;
+    const looker = await resolveLooker(prisma, {
+      pageId: caller.pageId,
+      userId: caller.userId,
+      ...(caller.email !== undefined ? { email: caller.email } : {}),
+    });
+    lookers.set(key, { at: now(), looker });
+    if (lookers.size > 2000) lookers.delete(lookers.keys().next().value!);
+    return looker;
+  }
+
   /** Rows as this caller sees them: _mine on their own and, when signed in, _by with who added it. */
-  async function marked(caller: AppCaller, rows: Row[], creators: Map<string, string | null>) {
+  async function marked(caller: AppCaller, rows: Row[], facts: Map<string, RowFacts>) {
+    const creators = new Map([...facts].map(([id, fact]) => [id, fact.createdBy]));
     const names = caller.userId ? await namesOf(rows.map((row) => creators.get(row._id))) : null;
     return rows.map((row) => {
       const creator = creators.get(row._id);
@@ -157,12 +186,6 @@ export function appCalls(deps: AppCallDeps) {
         ...(names ? { _by: names.get(creator) ?? null } : {}),
       };
     });
-  }
-
-  /** Whether the caller sees a row of this table: everyone does, except others' personal rows. */
-  function seesRow(caller: AppCaller, schema: TableSchema, creator: string | null | undefined) {
-    if (!isPersonalTable(schema) || caller.userId === caller.ownerId) return true;
-    return caller.userId !== null && creator === caller.userId;
   }
 
   async function loadTable(pageId: string, name: string): Promise<CachedTable> {
@@ -184,7 +207,7 @@ export function appCalls(deps: AppCallDeps) {
       const rows = await prisma.appRow.findMany({
         where: { tableId: table.id },
         orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        select: { id: true, data: true, updatedAt: true, createdBy: true },
+        select: { id: true, data: true, updatedAt: true, createdBy: true, workspaceId: true },
       });
       return {
         revision,
@@ -196,7 +219,9 @@ export function appCalls(deps: AppCallDeps) {
             _updatedAt: row.updatedAt.toISOString(),
           } as Row),
         ),
-        creators: new Map(rows.map((row) => [row.id, row.createdBy])),
+        facts: new Map(
+          rows.map((row) => [row.id, { createdBy: row.createdBy, workspaceId: row.workspaceId }]),
+        ),
       };
     });
     if (!loaded) throw new AppCallError(`This app has no table called ${name}.`, 404);
@@ -211,11 +236,13 @@ export function appCalls(deps: AppCallDeps) {
   }
 
   async function visibleRows(caller: AppCaller, name: string) {
-    const table = await loadTable(caller.pageId, name);
-    const rows = isPersonalTable(table.schema)
-      ? table.rows.filter((row) => seesRow(caller, table.schema, table.creators.get(row._id)))
+    const [table, looker] = await Promise.all([loadTable(caller.pageId, name), lookerFor(caller)]);
+    const rows = narrowsRows(looker, table.schema)
+      ? table.rows.filter((row) =>
+          seesRow(looker, table.schema, table.facts.get(row._id) ?? NO_FACTS),
+        )
       : table.rows;
-    return { table, rows };
+    return { table, rows, looker };
   }
 
   /** The table's schema, after checking the caller may see this row of it. */
@@ -228,14 +255,15 @@ export function appCalls(deps: AppCallDeps) {
       if (!table) return null;
       const row = await prisma.appRow.findFirst({
         where: { id, tableId: table.id },
-        select: { createdBy: true },
+        select: { createdBy: true, workspaceId: true },
       });
       return { schema: schemaOf(table.schema, table.name, table.label), row };
     });
     if (!found) throw new AppCallError(`This app has no table called ${name}.`, 404);
-    if ((mustExist || isPersonalTable(found.schema)) && !found.row)
+    const looker = await lookerFor(caller);
+    if ((mustExist || narrowsRows(looker, found.schema)) && !found.row)
       throw new AppCallError("That row is no longer there.", 404);
-    if (!seesRow(caller, found.schema, found.row?.createdBy))
+    if (!seesRow(looker, found.schema, found.row ?? NO_FACTS))
       throw new AppCallError("That row is no longer there.", 404);
     return found.schema;
   }
@@ -249,12 +277,14 @@ export function appCalls(deps: AppCallDeps) {
         touchAppPresence(prisma, caller.pageId, userId, presenceFocus(request.focus)),
       );
     }
-    const read = await system("app changes since a revision", () =>
-      readAppDelta(prisma, caller.pageId, since),
-    );
-    const people = caller.userId
+    const [read, looker] = await Promise.all([
+      system("app changes since a revision", () => readAppDelta(prisma, caller.pageId, since)),
+      lookerFor(caller),
+    ]);
+    const present = caller.userId
       ? await system("app presence", () => readAppPresence(prisma, caller.pageId))
       : [];
+    const people = await sameWorkspace(caller, looker, present);
     const names = await namesOf(people.map((person) => person.userId));
     const presence: AppPresence[] = people.map((person) => ({
       id: person.userId,
@@ -268,21 +298,31 @@ export function appCalls(deps: AppCallDeps) {
         await pruneAppPresence(prisma, caller.pageId);
       }).catch(() => {});
     }
-    if (read.full) return { revision: read.revision, presence, delta: null, full: true };
+    const workspace = looker.view ? { workspace: looker.view.current?.id ?? null } : {};
+    if (read.full)
+      return { revision: read.revision, presence, delta: null, full: true, ...workspace };
     const byId = new Map(read.tables.map((table) => [table.id, table]));
     const delta: AppDelta = { revision: read.revision, tables: {}, rows: {}, removed: {} };
     for (const table of read.tables) {
-      const hidden = isPersonalTable(table.schema) && caller.userId !== caller.ownerId;
+      const hidden = narrowsRows(looker, table.schema);
       delta.tables[table.name] = {
         schema: table.schema,
         ...(table.count !== undefined && !hidden ? { count: table.count } : {}),
       };
     }
-    const creators = new Map(read.rows.map((row) => [row.id, row.createdBy]));
+    const facts = new Map(
+      read.rows.map((row) => [row.id, { createdBy: row.createdBy, workspaceId: row.workspaceId }]),
+    );
     const changed: Array<{ table: string; row: Row }> = [];
     for (const row of read.rows) {
       const table = byId.get(row.tableId);
-      if (!table || !seesRow(caller, table.schema, row.createdBy)) continue;
+      if (!table) continue;
+      if (!seesRow(looker, table.schema, row)) {
+        // A row moved out of the workspace this copy shows leaves it.
+        if (looker.view && inWorkspaces(looker.view, table.schema))
+          addTo(delta.removed, table.name, row.id);
+        continue;
+      }
       changed.push({
         table: table.name,
         row: withFormulas(table.schema, {
@@ -295,7 +335,7 @@ export function appCalls(deps: AppCallDeps) {
     const shown = await marked(
       caller,
       changed.map((entry) => entry.row),
-      creators,
+      facts,
     );
     changed.forEach((entry, index) => {
       addTo(delta.rows, entry.table, shown[index]!);
@@ -304,14 +344,41 @@ export function appCalls(deps: AppCallDeps) {
       const table = byId.get(gone.tableId);
       if (table) addTo(delta.removed, table.name, gone.rowId);
     }
-    return { revision: read.revision, presence, delta, full: false };
+    return { revision: read.revision, presence, delta, full: false, ...workspace };
+  }
+
+  /**
+   * In an app with workspaces, the people here who belong to the workspace this caller has open
+   * (the owner looking at every workspace sees everyone), so no one learns who works on others.
+   */
+  async function sameWorkspace<T extends { userId: string }>(
+    caller: AppCaller,
+    looker: ResolvedLooker,
+    present: T[],
+  ): Promise<T[]> {
+    if (!looker.view || (looker.isOwner && !looker.view.current)) return present;
+    const open = looker.view.current;
+    if (!open) return present.filter((person) => person.userId === caller.userId);
+    const others = present.map((person) => person.userId);
+    const members = await system("app workspace members here", () =>
+      prisma.appWorkspaceMember.findMany({
+        where: { workspaceId: open.id, userId: { in: others } },
+        select: { userId: true },
+      }),
+    );
+    const allowed = new Set([
+      caller.ownerId,
+      ...(caller.userId ? [caller.userId] : []),
+      ...members.flatMap((member) => (member.userId ? [member.userId] : [])),
+    ]);
+    return present.filter((person) => allowed.has(person.userId));
   }
 
   async function query(caller: AppCaller, request: Record<string, unknown>) {
     throttle("query", caller, 240);
     const { table, rows } = await visibleRows(caller, tableName(request.table));
     const result = runQuery(table.schema, rows, objectOf(request.query) as RowQuery);
-    return { rows: await marked(caller, result.rows, table.creators), total: result.total };
+    return { rows: await marked(caller, result.rows, table.facts), total: result.total };
   }
 
   async function aggregate(caller: AppCaller, request: Record<string, unknown>) {
@@ -358,11 +425,11 @@ export function appCalls(deps: AppCallDeps) {
     try {
       if (op === "comments.counts") {
         throttle("query", caller, 240);
-        const { table, rows } = await visibleRows(caller, tableName(request.table));
+        const { table, rows, looker } = await visibleRows(caller, tableName(request.table));
         const counts = await system("app comment counts", () =>
           countAppComments(prisma, caller.pageId, table.schema.name),
         );
-        if (!isPersonalTable(table.schema) || isOwner) return counts;
+        if (!narrowsRows(looker, table.schema)) return counts;
         const own = new Set(rows.map((row) => row._id));
         return Object.fromEntries(Object.entries(counts).filter(([id]) => own.has(id)));
       }
@@ -446,6 +513,32 @@ export function appCalls(deps: AppCallDeps) {
     return value;
   }
 
+  async function workspaces(caller: AppCaller, op: string, request: Record<string, unknown>) {
+    throttle(
+      "comments",
+      caller,
+      op === "workspaces.list" || op === "workspaces.members" ? 120 : 30,
+    );
+    try {
+      return await workspaceOp(
+        prisma,
+        {
+          pageId: caller.pageId,
+          userId: caller.userId,
+          ...(caller.email !== undefined ? { email: caller.email } : {}),
+        },
+        op,
+        request,
+      );
+    } catch (error) {
+      if (error instanceof WorkspaceRefused) throw new AppCallError(error.message, error.status);
+      throw error;
+    } finally {
+      if (op !== "workspaces.list" && op !== "workspaces.members")
+        lookers.delete(lookerKey(caller));
+    }
+  }
+
   async function service(caller: AppCaller, request: Record<string, unknown>) {
     signedIn(caller, "use outside data");
     if (!deps.services) throw new AppCallError("Outside data is not available here.", 404);
@@ -479,6 +572,12 @@ export function appCalls(deps: AppCallDeps) {
             return await evolveRead(caller, request);
           case "service":
             return await service(caller, request);
+          case "workspaces.list":
+          case "workspaces.open":
+          case "workspaces.save":
+          case "workspaces.members":
+          case "workspaces.member":
+            return await workspaces(caller, op, request);
           default:
             return await comments(caller, op, request);
         }

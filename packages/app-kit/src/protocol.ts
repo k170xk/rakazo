@@ -1,5 +1,6 @@
 import type { AggregateQuery, RowQuery } from "./query.js";
 import type { Row, TableSchema } from "./schema.js";
+import type { WorkspaceSummary } from "./workspace.js";
 
 /**
  * How an app talks to whatever shows it. The app runs in a sandboxed frame with no network, so
@@ -34,6 +35,8 @@ export type AppInit = {
    * live (presence), query (large tables), comments, history, evolve and services.
    */
   features: string[];
+  /** The app's workspaces as this person sees them; absent when it keeps one dataset. */
+  workspace?: WorkspaceSummary | null;
 };
 
 /** The row someone has open, so others see who is looking at what. */
@@ -81,6 +84,11 @@ export type AppLive = {
   delta: AppDelta | null;
   /** Too much changed (or too long ago) for a delta; read everything again. */
   full: boolean;
+  /**
+   * The workspace the server now counts this person as having open, in an app with workspaces;
+   * a copy showing another (switched in a second window) loads again.
+   */
+  workspace?: string | null;
 };
 
 /** Free public data an app may ask the server for, with no keys and no charge. */
@@ -100,6 +108,10 @@ export type AppRequest =
   | { op: "ai.ask"; prompt: string; json?: boolean }
   | { op: "export"; table: string; format: "xlsx" | "csv" }
   | { op: "download"; filename: string; mime: string; text: string }
+  /** A report printed to PDF on OCSC's template; answers once the file is saved. */
+  | { op: "pdf"; document: unknown; filename?: string }
+  /** The device's position, read by the host; allowed shortly after a tap, then while open. */
+  | { op: "location" }
   | { op: "open"; url: string }
   /** One square of a map: style is a MAP_STYLES id; answers as an asset ({mime, base64}). */
   | { op: "map.tile"; style: string; z: number; x: number; y: number }
@@ -122,7 +134,24 @@ export type AppRequest =
   | { op: "comments.counts"; table: string }
   /** An Evolve tool that only reads, run as the viewer: what they could see in Evolve. */
   | { op: "evolve.read"; tool: string; args?: Record<string, unknown> }
-  | { op: "service"; name: AppService; params?: Record<string, unknown> };
+  | { op: "service"; name: AppService; params?: Record<string, unknown> }
+  /** The app's workspaces as this person sees them (WorkspaceSummary). */
+  | { op: "workspaces.list" }
+  /** Opens one of theirs (the owner may pass null for every workspace); answers the summary. */
+  | { op: "workspaces.open"; workspace: string | null }
+  /** Starts one (no workspace), or renames or archives one they lead; answers the summary. */
+  | { op: "workspaces.save"; workspace?: string; name?: string; archived?: boolean }
+  /** Who is in a workspace: [{id, name, role, joined, email?, me?}] (emails for its leads). */
+  | { op: "workspaces.members"; workspace: string }
+  /** Adds someone by work email, or changes or removes a member; answers the members. */
+  | {
+      op: "workspaces.member";
+      workspace: string;
+      email?: string;
+      memberId?: string;
+      role?: "lead" | "member" | "viewer";
+      remove?: boolean;
+    };
 
 /**
  * id names the message, so a request's own id (a row or picture) travels as ref; frames built
@@ -180,7 +209,9 @@ export type AppEventMessage =
   | { type: typeof APP_EVENT; event: "selected"; loc: string | null }
   /** Rows others changed, for an app whose init accepted delta. */
   | { type: typeof APP_EVENT; event: "delta"; delta: AppDelta }
-  | { type: typeof APP_EVENT; event: "presence"; people: AppPresence[] };
+  | { type: typeof APP_EVENT; event: "presence"; people: AppPresence[] }
+  /** The person now has another workspace open (chosen in a second window): start again. */
+  | { type: typeof APP_EVENT; event: "workspace" };
 
 export const APP_OPS = new Set<AppRequest["op"]>([
   "init",
@@ -193,6 +224,8 @@ export const APP_OPS = new Set<AppRequest["op"]>([
   "ai.ask",
   "export",
   "download",
+  "pdf",
+  "location",
   "open",
   "map.tile",
   "map.find",
@@ -207,6 +240,11 @@ export const APP_OPS = new Set<AppRequest["op"]>([
   "comments.counts",
   "evolve.read",
   "service",
+  "workspaces.list",
+  "workspaces.open",
+  "workspaces.save",
+  "workspaces.members",
+  "workspaces.member",
 ]);
 
 /** Ops the server answers through one call route, as the person looking. */
@@ -221,6 +259,18 @@ export const APP_CALL_OPS = new Set<AppRequest["op"]>([
   "comments.counts",
   "evolve.read",
   "service",
+  "workspaces.list",
+  "workspaces.open",
+  "workspaces.save",
+  "workspaces.members",
+  "workspaces.member",
+]);
+
+/** Ops that change who is in a workspace or which one is open; the host lets them follow a click. */
+export const APP_WORKSPACE_WRITE_OPS = new Set<AppRequest["op"]>([
+  "workspaces.open",
+  "workspaces.save",
+  "workspaces.member",
 ]);
 
 /** Ops that write as the viewer without needing edit rights: anyone signed in may comment. */
@@ -240,7 +290,7 @@ export const UPLOAD_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 export const MAX_UPLOAD_BASE64 = Math.ceil(MAX_UPLOAD_BYTES / 3) * 4;
 /** Ops that need a click or key in the frame first (downloads and links). */
-export const APP_GESTURE_OPS = new Set<AppRequest["op"]>(["download", "open", "export"]);
+export const APP_GESTURE_OPS = new Set<AppRequest["op"]>(["download", "open", "export", "pdf"]);
 
 /** A request from a frame, or null when it is not one this protocol knows. */
 export function readAppRequest(data: unknown): AppRequestMessage | null {
@@ -251,6 +301,17 @@ export function readAppRequest(data: unknown): AppRequestMessage | null {
   if (!APP_OPS.has(message.op as AppRequest["op"])) return null;
   return message as AppRequestMessage;
 }
+
+/** Where the device is, as the host's browser reports it. */
+export type AppLocation = {
+  lat: number;
+  lon: number;
+  /** Metres. */
+  accuracy: number;
+  altitude?: number;
+  heading?: number;
+  at: string;
+};
 
 /** Messages the element picker in the Studio sends up: which source line was clicked. */
 export const APP_PICK = "ocsc-app:pick";

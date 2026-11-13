@@ -95,8 +95,26 @@ export async function readAppRowCreators(db: Db, pageId: string): Promise<Map<st
   return new Map(rows.map((row) => [row.id, row.createdBy!]));
 }
 
-/** Changes limited to the rows one person added, for apps where colleagues contribute. */
-export type RowScope = { onlyCreatedBy?: string };
+/** Who added a row and the workspace it belongs to, as the visibility rules need them. */
+export type RowFacts = { createdBy: string | null; workspaceId: string | null };
+
+/**
+ * Limits on a change: only the rows one person added (apps where colleagues contribute), and a
+ * check run on the stored row inside the change's transaction, answering why it is refused.
+ */
+export type RowScope = { onlyCreatedBy?: string; check?: (row: RowFacts) => string | null };
+
+/** Who added each row and its workspace, for rows with either (others belong to no one). */
+export async function readAppRowFacts(db: Db, pageId: string): Promise<Map<string, RowFacts>> {
+  const rows = await db.appRow.findMany({
+    where: { pageId, OR: [{ createdBy: { not: null } }, { workspaceId: { not: null } }] },
+    select: { id: true, createdBy: true, workspaceId: true },
+    take: MAX_ROWS_READ,
+  });
+  return new Map(
+    rows.map((row) => [row.id, { createdBy: row.createdBy, workspaceId: row.workspaceId }]),
+  );
+}
 
 export async function appRevision(db: Db, pageId: string): Promise<number> {
   const page = await db.page.findUnique({ where: { id: pageId }, select: { dataRevision: true } });
@@ -134,8 +152,9 @@ export async function insertAppRow(
   tableName: string,
   input: Record<string, unknown>,
   userId: string | null,
-  meta: ChangeMeta = {},
+  meta: ChangeMeta & { workspaceId?: string | null } = {},
 ): Promise<{ row: Row; revision: number }> {
+  const { workspaceId = null, ...change } = meta;
   return prisma.$transaction(async (tx) => {
     const table = await tableFor(tx, pageId, tableName);
     const checked = coerceRow(table.schema, input);
@@ -156,6 +175,7 @@ export async function insertAppRow(
         position: (last?.position ?? 0) + 1,
         updatedBy: userId,
         createdBy: userId,
+        workspaceId,
       },
       select: { id: true, data: true, updatedAt: true, position: true },
     });
@@ -172,10 +192,11 @@ export async function insertAppRow(
           position: created.position,
           createdBy: userId,
           updatedBy: userId,
+          workspaceId,
         },
         summary: `Added ${rowName(table.schema, checked.row)} to ${table.label}`,
       },
-      { userId, ...meta },
+      { userId, ...change },
     );
     return { row: asRow(created), revision: await bump(tx, pageId) };
   });
@@ -195,11 +216,13 @@ export async function updateAppRow(
     const table = await tableFor(tx, pageId, tableName);
     const existing = await tx.appRow.findFirst({
       where: { id: rowId, tableId: table.id },
-      select: { data: true, createdBy: true },
+      select: { data: true, createdBy: true, workspaceId: true },
     });
     if (!existing) throw new AppDataError("That row is no longer there.");
     if (scope.onlyCreatedBy && existing.createdBy !== scope.onlyCreatedBy)
       throw new AppDataError("You can change only the rows you added.");
+    const refused = scope.check?.(existing);
+    if (refused) throw new AppDataError(refused);
     const checked = coerceRow(table.schema, patch, { partial: true });
     if (!checked.ok) throw new AppDataError(checked.error);
     const before =
@@ -248,10 +271,12 @@ export async function removeAppRow(
     const table = await tableFor(tx, pageId, tableName);
     const existing = await tx.appRow.findFirst({
       where: { id: rowId, tableId: table.id },
-      select: { data: true, position: true, createdBy: true, updatedBy: true },
+      select: { data: true, position: true, createdBy: true, updatedBy: true, workspaceId: true },
     });
     if (scope.onlyCreatedBy && existing && existing.createdBy !== scope.onlyCreatedBy)
       throw new AppDataError("You can remove only the rows you added.");
+    const refused = existing && scope.check?.(existing);
+    if (refused) throw new AppDataError(refused);
     const removed = await tx.appRow.deleteMany({
       where: {
         id: rowId,
@@ -306,6 +331,12 @@ export async function defineAppTable(
     userId?: string | null;
     via?: ChangeMeta["via"];
     runId?: string | null;
+    /**
+     * The workspace the rows are for: replace and upsert touch only its rows and new rows join
+     * it. Without one, rows join no workspace, and replacing a table that holds workspaces' rows
+     * is refused so a refresh never wipes what people entered.
+     */
+    workspaceId?: string | null;
   },
 ): Promise<DefineTableResult> {
   return prisma.$transaction(
@@ -333,6 +364,11 @@ export async function defineAppTable(
             isPersonalTable(existing.schema as TableSchema) &&
             (input.schema as { personal?: unknown }).personal !== false;
           if (keepsPersonal) schema = { ...schema, personal: true };
+          if (
+            (existing.schema as TableSchema | null)?.shared === true &&
+            (input.schema as { shared?: unknown }).shared !== false
+          )
+            schema = { ...schema, shared: true };
           if (
             isLargeTable(existing.schema as TableSchema) &&
             (input.schema as { large?: unknown }).large !== false
@@ -373,6 +409,28 @@ export async function defineAppTable(
         const mode = input.mode ?? "replace";
         if (input.rows.length > MAX_ROWS_PER_TABLE)
           throw new AppDataError(`Send at most ${MAX_ROWS_PER_TABLE} rows.`);
+        const workspaceId = input.workspaceId ?? null;
+        if (workspaceId) {
+          const found = await tx.appWorkspace.findFirst({
+            where: { id: workspaceId, pageId },
+            select: { id: true },
+          });
+          if (!found) throw new AppDataError("That workspace is not in this app.");
+        }
+        const page = await tx.page.findUnique({
+          where: { id: pageId },
+          select: { workspaceLabel: true },
+        });
+        const partitioned = Boolean(page?.workspaceLabel) && schema.shared !== true;
+        // Rows these rows replace or match: one workspace's, else (with workspaces) unfiled ones.
+        const partition = workspaceId || partitioned ? { workspaceId } : {};
+        if (mode === "replace" && partitioned && !workspaceId) {
+          const filed = await tx.appRow.count({ where: { tableId, workspaceId: { not: null } } });
+          if (filed)
+            throw new AppDataError(
+              `${schema.label} holds rows from the app's workspaces. Load into one workspace, or use append or upsert.`,
+            );
+        }
         const clean: Array<Record<string, unknown>> = [];
         const given: Array<Set<string>> = [];
         input.rows.forEach((raw, index) => {
@@ -387,22 +445,32 @@ export async function defineAppTable(
           } else skipped.push({ index, error: checked.error });
         });
         if (mode === "replace") {
-          removed = (await tx.appRow.deleteMany({ where: { tableId } })).count;
+          removed = (await tx.appRow.deleteMany({ where: { tableId, ...partition } })).count;
+          const kept = await tx.appRow.aggregate({ where: { tableId }, _max: { position: true } });
+          const start = kept._max.position ?? 0;
+          if ((await tx.appRow.count({ where: { tableId } })) + clean.length > MAX_ROWS_PER_TABLE)
+            throw new AppDataError(
+              `${schema.label} would have more than ${MAX_ROWS_PER_TABLE} rows.`,
+            );
           await tx.appRow.createMany({
             data: clean.map((data, index) => ({
               pageId,
               tableId,
               data: json(data),
-              position: index + 1,
+              position: start + index + 1,
               updatedBy: input.userId ?? null,
+              workspaceId,
             })),
           });
           inserted = clean.length;
         } else {
           const existingRows = await tx.appRow.findMany({
             where: { tableId },
-            select: { id: true, data: true, position: true },
+            select: { id: true, data: true, position: true, workspaceId: true },
           });
+          const matchable = existingRows.filter(
+            (row) => !("workspaceId" in partition) || row.workspaceId === workspaceId,
+          );
           let position = Math.max(0, ...existingRows.map((row) => row.position));
           const keyed = new Map<string, { id: string; data: Record<string, unknown> }>();
           if (mode === "upsert") {
@@ -410,7 +478,7 @@ export async function defineAppTable(
               throw new AppDataError(
                 `upsert needs the table to have a key column; set "key" in ${schema.name}'s schema.`,
               );
-            for (const row of existingRows) {
+            for (const row of matchable) {
               const data = (row.data ?? {}) as Record<string, unknown>;
               const key = data[schema.key];
               if (key !== null && key !== undefined && key !== "")
@@ -444,6 +512,7 @@ export async function defineAppTable(
               data: json(data),
               position: ++position,
               updatedBy: input.userId ?? null,
+              workspaceId,
             })),
           });
           inserted = fresh.length;

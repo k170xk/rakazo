@@ -6,11 +6,14 @@ import { buildApp, pluginBundle } from "@rakazo/app-kit/build";
 import { exportTable, importWorkbook, scaffoldApp } from "@rakazo/app-kit/import";
 import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
 import type { TableSchema } from "@rakazo/app-kit/schema";
-import { isPersonalTable } from "@rakazo/app-kit/schema";
+import { checkSchema, isPersonalTable } from "@rakazo/app-kit/schema";
 import { findTemplate } from "@rakazo/app-kit/templates";
-import type { Actor, AppData, AppDataAccess } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { Looker } from "@rakazo/app-kit/workspace";
+import { addsRow, editsRow, inWorkspaces, narrowsRows, seesRow } from "@rakazo/app-kit/workspace";
+import type { Actor, AppData, AppDataAccess, AppWorkspaceSettingsInput } from "@rakazo/contracts";
+import type { PrismaClient, RowFacts } from "@rakazo/db";
 import {
+  AppDataError,
   AppVersionConflictError,
   addAppAsset,
   addAppUpload,
@@ -26,7 +29,7 @@ import {
   listAppChanges,
   mergeImportedTables,
   readAppAsset,
-  readAppRowCreators,
+  readAppRowFacts,
   readAppTables,
   recordAuditEvent,
   removeAppRow,
@@ -36,6 +39,12 @@ import {
 } from "@rakazo/db";
 import { askForApp } from "./app-ask.js";
 import { writeDossier } from "./app-dossier.js";
+import {
+  readAppWorkspaceSettings,
+  resolveLooker,
+  setAppWorkspaces,
+  workspaceSummary,
+} from "./app-workspaces.js";
 import { readStateRows } from "./pages.js";
 
 /**
@@ -85,71 +94,66 @@ function marked(
 }
 
 /**
- * Tables as one viewer sees them: _mine on the rows they added (contribute apps let them change
- * only those) and, for people signed in, _by with the name of whoever added each row. In a
- * personal table anyone but the owner sees only the rows they added; a visitor sees none.
+ * Tables as one viewer sees them, by the rules in @rakazo/app-kit/workspace: others' rows of a
+ * personal table and rows of workspaces they have not opened are left out. Rows carry _mine for
+ * the viewer's own and, for people signed in, _by with who added them; the owner looking at every
+ * workspace also gets _workspace, the name of each row's workspace.
  */
 export async function tablesForViewer(
   prisma: PrismaClient,
   pageId: string,
   tables: Tables,
   viewer: RowViewer,
-  ownerId: string | null,
+  looker: Looker,
 ): Promise<Tables> {
-  const isOwner = ownerId !== null && viewer.userId === ownerId;
-  const hidesRows =
-    !isOwner && Object.values(tables).some((table) => isPersonalTable(table.schema));
-  const creators = await runAsSystem("app row creators", () => readAppRowCreators(prisma, pageId));
-  if (!creators.size && !hidesRows) return tables;
-  const ownRow = (row: RowOut) => viewer.userId !== null && creators.get(row._id) === viewer.userId;
-  const visible = (table: Tables[string]) =>
-    hidesRows && isPersonalTable(table.schema) ? table.rows.filter(ownRow) : table.rows;
+  const facts = await runAsSystem("app row facts", () => readAppRowFacts(prisma, pageId));
+  const narrowed = (schema: TableSchema) => narrowsRows(looker, schema);
+  const filters = Object.values(tables).some((table) => narrowed(table.schema));
+  const tagsWorkspace = looker.isOwner && looker.view !== null && looker.view.current === null;
+  if (!facts.size && !filters) return tables;
+  const none: RowFacts = { createdBy: null, workspaceId: null };
+  const factsOf = (row: RowOut) => facts.get(row._id) ?? none;
   const shown = Object.entries(tables).map(
-    ([name, table]) => [name, table, visible(table)] as const,
+    ([name, table]) =>
+      [
+        name,
+        table,
+        narrowed(table.schema)
+          ? table.rows.filter((row) => seesRow(looker, table.schema, factsOf(row)))
+          : table.rows,
+      ] as const,
   );
   const names = viewer.names
     ? await creatorNames(
         prisma,
-        shown.flatMap(([, , rows]) => rows.flatMap((row) => creators.get(row._id) ?? [])),
+        shown.flatMap(([, , rows]) => rows.flatMap((row) => factsOf(row).createdBy ?? [])),
       )
     : new Map();
+  const spaces = tagsWorkspace ? await workspaceNames(prisma, pageId) : null;
   return Object.fromEntries(
     shown.map(([name, table, rows]) => [
       name,
       {
         ...table,
-        rows: rows.map((row) => marked(row, creators.get(row._id), viewer, names)),
-        // A large personal table's count would reveal how many rows others added.
-        ...(hidesRows && isPersonalTable(table.schema) ? { count: undefined } : {}),
+        rows: rows.map((row) => {
+          const { createdBy, workspaceId } = factsOf(row);
+          const out = marked(row, createdBy ?? undefined, viewer, names);
+          return spaces && inWorkspaces(looker.view, table.schema)
+            ? { ...out, _workspace: workspaceId ? (spaces.get(workspaceId) ?? null) : null }
+            : out;
+        }),
+        // A large table's count would reveal how many rows others (or other workspaces) hold.
+        ...(narrowed(table.schema) ? { count: undefined } : {}),
       },
     ]),
   );
 }
 
-async function appOwnerId(prisma: PrismaClient, pageId: string): Promise<string | null> {
-  const page = await runAsSystem("app owner", () =>
-    prisma.page.findUnique({ where: { id: pageId }, select: { userId: true } }),
+async function workspaceNames(prisma: PrismaClient, pageId: string) {
+  const spaces = await runAsSystem("app workspace names", () =>
+    prisma.appWorkspace.findMany({ where: { pageId }, select: { id: true, name: true } }),
   );
-  return page?.userId ?? null;
-}
-
-/** Whether someone other than the owner is changing a row of a personal table. */
-async function othersPersonalTable(
-  prisma: PrismaClient,
-  pageId: string,
-  table: string,
-  userId: string,
-): Promise<boolean> {
-  const [ownerId, found] = await Promise.all([
-    appOwnerId(prisma, pageId),
-    runAsSystem("app table personal", () =>
-      prisma.appTable.findUnique({
-        where: { pageId_name: { pageId, name: table } },
-        select: { schema: true },
-      }),
-    ),
-  ]);
-  return ownerId !== userId && isPersonalTable(found?.schema as TableSchema | null);
+  return new Map(spaces.map((space) => [space.id, space.name]));
 }
 
 /** One row just written, marked the same way for the person who wrote it. */
@@ -168,10 +172,11 @@ export async function getAppData(
   pageId: string,
 ): Promise<AppData> {
   const app = await requireApp(prisma, actor, pageId);
-  const [tables, state, revision] = await Promise.all([
+  const [tables, state, revision, looker] = await Promise.all([
     readAppTables(prisma, pageId, { skipLarge: true }),
     readStateRows(prisma, pageId),
     appRevision(prisma, pageId),
+    resolveLooker(prisma, { pageId, userId: actor.userId }),
   ]);
   return {
     tables: await tablesForViewer(
@@ -179,12 +184,13 @@ export async function getAppData(
       pageId,
       tables,
       { userId: actor.userId, names: true },
-      actor.userId,
+      looker,
     ),
     state,
     revision,
     dataAccess: access(app.dataAccess),
     icon: app.iconAssetId,
+    workspace: workspaceSummary(looker),
   };
 }
 
@@ -213,8 +219,18 @@ export async function ownerInsertRow(
   input: { pageId: string; table: string; row: Record<string, unknown> },
 ) {
   await requireApp(prisma, actor, input.pageId);
+  const looker = await resolveLooker(prisma, { pageId: input.pageId, userId: actor.userId });
+  const workspaceId = await rowWorkspace(
+    prisma,
+    input.pageId,
+    input.table,
+    input.row,
+    looker,
+    "company",
+  );
   const saved = await insertAppRow(prisma, input.pageId, input.table, input.row, actor.userId, {
     via: "studio",
+    workspaceId,
   });
   return {
     ...saved,
@@ -443,6 +459,21 @@ export async function setAppDataAccess(
   return { access: input.access };
 }
 
+export async function getAppWorkspaces(prisma: PrismaClient, actor: Actor, pageId: string) {
+  await requireApp(prisma, actor, pageId);
+  return readAppWorkspaceSettings(prisma, pageId);
+}
+
+/** Turns workspaces on or off; fileInto puts rows that belong to none into a workspace by name. */
+export async function setAppWorkspaceSettings(
+  prisma: PrismaClient,
+  actor: Actor,
+  input: { pageId: string } & AppWorkspaceSettingsInput,
+) {
+  await requireApp(prisma, actor, input.pageId);
+  return setAppWorkspaces(prisma, input.pageId, input);
+}
+
 export async function getAppAssets(prisma: PrismaClient, actor: Actor, pageId: string) {
   await requireApp(prisma, actor, pageId);
   const rows = await listAppAssets(prisma, pageId);
@@ -485,20 +516,21 @@ export async function deleteAppAsset(
   return { ok: true as const };
 }
 
-/** One table as a file, for the owner or a link reader the shared route already admitted. */
-export async function exportAppTable(
-  prisma: PrismaClient,
-  pageId: string,
-  table: string,
-  format: "xlsx" | "csv",
-) {
-  return tableFile(await readAppTables(prisma, pageId), table, format);
-}
-
-function tableFile(tables: Tables, table: string, format: "xlsx" | "csv") {
+function tableFile(tables: Tables, table: string, format: "xlsx" | "csv", workspaceLabel?: string) {
   const found = tables[table];
   if (!found) throw new IsolationError();
-  const bytes = exportTable(found.schema, found.rows, format);
+  // The owner's file of every workspace says which one each row belongs to.
+  const tagged = Boolean(workspaceLabel) && found.rows.some((row) => "_workspace" in row);
+  const schema: TableSchema = tagged
+    ? {
+        ...found.schema,
+        columns: [
+          { key: "_workspace", label: workspaceLabel!, type: "text" },
+          ...found.schema.columns,
+        ],
+      }
+    : found.schema;
+  const bytes = exportTable(schema, found.rows, format);
   const stamp = new Date().toISOString().slice(0, 10);
   return {
     filename: `${found.schema.label.replace(/[^\w -]+/g, "").trim() || table} ${stamp}.${format}`,
@@ -516,7 +548,15 @@ export async function ownerExportTable(
   input: { pageId: string; table: string; format: "xlsx" | "csv" },
 ) {
   await requireApp(prisma, actor, input.pageId);
-  return exportAppTable(prisma, input.pageId, input.table, input.format);
+  const looker = await resolveLooker(prisma, { pageId: input.pageId, userId: actor.userId });
+  const tables = await tablesForViewer(
+    prisma,
+    input.pageId,
+    await readAppTables(prisma, input.pageId),
+    { userId: actor.userId, names: true },
+    looker,
+  );
+  return tableFile(tables, input.table, input.format, looker.view?.label);
 }
 
 export async function ownerAsk(
@@ -664,21 +704,23 @@ export async function reimportWorkbookApp(
 }
 
 /** Shared-link reads, for a reader the link, password or sign-in already admitted. */
-export async function readSharedAppData(prisma: PrismaClient, pageId: string, viewer: RowViewer) {
+export async function readSharedAppData(
+  prisma: PrismaClient,
+  pageId: string,
+  viewer: RowViewer,
+  looker: Looker,
+) {
   const data = await runAsSystem("app share data", async () => ({
     tables: await readAppTables(prisma, pageId, { skipLarge: true }),
     state: await readStateRows(prisma, pageId),
     revision: await appRevision(prisma, pageId),
-    page: await prisma.page.findUnique({
-      where: { id: pageId },
-      select: { iconAssetId: true, userId: true },
-    }),
+    page: await prisma.page.findUnique({ where: { id: pageId }, select: { iconAssetId: true } }),
   }));
   const { page, ...rest } = data;
   return {
     ...rest,
     icon: page?.iconAssetId ?? null,
-    tables: await tablesForViewer(prisma, pageId, data.tables, viewer, page?.userId ?? null),
+    tables: await tablesForViewer(prisma, pageId, data.tables, viewer, looker),
   };
 }
 
@@ -686,15 +728,19 @@ export function readSharedAppRevision(prisma: PrismaClient, pageId: string) {
   return runAsSystem("app share revision", () => appRevision(prisma, pageId));
 }
 
+/** Columns that can hold a picture id: photo columns, and text a board or markup keeps. */
+const HOLDS_PICTURES = new Set(["image", "text", "longtext"]);
+
 /**
- * A picture for someone a shared route admitted. When the app has personal tables, a photo a
- * colleague added is shown to others only while a row they can see holds it.
+ * A picture for someone a shared route admitted. Pictures the app itself carries show to anyone
+ * who can open it. A photo someone added in the app shows to them and the owner, and to others
+ * only while a row they can see holds it, when the app has personal tables or workspaces.
  */
 export async function readSharedAppAsset(
   prisma: PrismaClient,
   pageId: string,
   assetId: string,
-  viewerId: string | null,
+  looker: Looker,
 ) {
   return runAsSystem("app share asset", async () => {
     const asset = await prisma.appAsset.findFirst({
@@ -704,30 +750,29 @@ export async function readSharedAppAsset(
     if (!asset) return null;
     const { source, ...shown } = asset;
     const uploader = source.startsWith("app:") ? source.slice(4) : null;
-    if (!uploader || uploader === viewerId) return shown;
-    const ownerId = await appOwnerId(prisma, pageId);
-    if (uploader === ownerId || (ownerId !== null && viewerId === ownerId)) return shown;
+    if (!uploader || uploader === looker.userId || looker.isOwner) return shown;
     const tables = await prisma.appTable.findMany({
       where: { pageId },
-      select: { id: true, schema: true },
+      select: { id: true, name: true, label: true, schema: true },
     });
-    const schemas = tables.map((table) => ({ id: table.id, schema: table.schema as TableSchema }));
-    if (!schemas.some((table) => isPersonalTable(table.schema))) return shown;
+    const schemas = tables.map((table) => ({
+      id: table.id,
+      schema: checkSchema(table.schema).ok
+        ? (table.schema as TableSchema)
+        : { name: table.name, label: table.label, columns: [] },
+    }));
+    const narrows = (schema: TableSchema) =>
+      isPersonalTable(schema) || inWorkspaces(looker.view, schema);
+    if (!schemas.some((table) => narrows(table.schema))) return shown;
     for (const { id, schema } of schemas) {
-      const personal = isPersonalTable(schema);
-      if (personal && !viewerId) continue;
       for (const column of schema.columns ?? []) {
-        if (column.type !== "image") continue;
-        const holder = await prisma.appRow.findFirst({
-          where: {
-            pageId,
-            tableId: id,
-            data: { path: [column.key], string_contains: assetId },
-            ...(personal ? { createdBy: viewerId } : {}),
-          },
-          select: { id: true },
+        if (!HOLDS_PICTURES.has(column.type)) continue;
+        const holders = await prisma.appRow.findMany({
+          where: { pageId, tableId: id, data: { path: [column.key], string_contains: assetId } },
+          select: { createdBy: true, workspaceId: true },
+          take: 50,
         });
-        if (holder) return shown;
+        if (holders.some((row) => seesRow(looker, schema, row))) return shown;
       }
     }
     return null;
@@ -740,20 +785,17 @@ export async function exportSharedAppTable(
   pageId: string,
   table: string,
   format: "xlsx" | "csv",
-  viewerId: string | null,
+  looker: Looker,
 ) {
-  const [tables, ownerId] = await Promise.all([
-    runAsSystem("app share export", () => readAppTables(prisma, pageId)),
-    appOwnerId(prisma, pageId),
-  ]);
+  const tables = await runAsSystem("app share export", () => readAppTables(prisma, pageId));
   const visible = await tablesForViewer(
     prisma,
     pageId,
     tables,
-    { userId: viewerId, names: false },
-    ownerId,
+    { userId: looker.userId, names: false },
+    looker,
   );
-  return tableFile(visible, table, format);
+  return tableFile(visible, table, format, looker.view?.label);
 }
 
 export type SharedRowWrite =
@@ -761,27 +803,76 @@ export type SharedRowWrite =
   | { op: "update"; table: string; id: string; patch: Record<string, unknown> }
   | { op: "remove"; table: string; id: string };
 
+async function tableSchema(prisma: PrismaClient, pageId: string, name: string) {
+  const table = await runAsSystem("app table schema", () =>
+    prisma.appTable.findUnique({
+      where: { pageId_name: { pageId, name } },
+      select: { name: true, label: true, schema: true },
+    }),
+  );
+  if (!table) throw new AppDataError(`This app has no table called ${name}.`);
+  const checked = checkSchema(table.schema);
+  return checked.ok ? checked.schema : { name: table.name, label: table.label, columns: [] };
+}
+
 /**
- * A change from someone a shared route admitted and allowed to edit. In a contribute app, and in
- * any personal table, they change and remove only the rows they added; otherwise any row.
+ * The workspace a new row joins, after checking the person may add to this table. A row from a
+ * copy still showing another workspace (switched in a second window) is refused, not misfiled.
+ */
+export async function rowWorkspace(
+  prisma: PrismaClient,
+  pageId: string,
+  table: string,
+  row: Record<string, unknown>,
+  looker: Looker,
+  access: string,
+): Promise<string | null> {
+  const schema = await tableSchema(prisma, pageId, table);
+  const allowed = addsRow(looker, schema, access);
+  if (allowed !== true) throw new AppDataError(allowed);
+  if (!inWorkspaces(looker.view, schema)) return null;
+  const open = looker.view.current!;
+  const meant = row._workspace;
+  if (typeof meant === "string" && meant !== open.id)
+    throw new AppDataError(
+      `You opened another ${looker.view.label.toLowerCase()} in a different window. Reload to carry on.`,
+    );
+  return open.id;
+}
+
+/**
+ * A change from someone a shared route admitted. What they may change follows the rules in
+ * @rakazo/app-kit/workspace, checked against the stored row inside the change itself.
  */
 export async function writeSharedAppRow(
   prisma: PrismaClient,
   pageId: string,
   write: SharedRowWrite,
-  userId: string,
+  looker: Looker & { userId: string },
   dataAccess: string,
   via: "shared" | "evolve" = "shared",
 ): Promise<{ row: RowOut; revision: number } | { revision: number }> {
-  const anyRow =
-    dataAccess === "company" &&
-    (write.op === "insert" || !(await othersPersonalTable(prisma, pageId, write.table, userId)));
-  const scope = anyRow ? {} : { onlyCreatedBy: userId };
+  const userId = looker.userId;
+  const workspaceId =
+    write.op === "insert"
+      ? await rowWorkspace(prisma, pageId, write.table, write.row, looker, dataAccess)
+      : null;
+  const schema = write.op === "insert" ? null : await tableSchema(prisma, pageId, write.table);
+  const verb = write.op === "remove" ? "remove" : "change";
+  const scope = {
+    check: (row: RowFacts) => {
+      if (!schema || editsRow(looker, schema, row, dataAccess)) return null;
+      if (!seesRow(looker, schema, row)) return "That row is no longer there.";
+      return editsRow(looker, schema, { ...row, createdBy: userId }, dataAccess)
+        ? `You can ${verb} only the rows you added.`
+        : `You can't ${verb} that row.`;
+    },
+  };
   const saved: { row: RowOut; revision: number } | { revision: number } = await runAsSystem(
     "app share write",
     (): Promise<{ row: RowOut; revision: number } | { revision: number }> => {
       if (write.op === "insert")
-        return insertAppRow(prisma, pageId, write.table, write.row, userId, { via });
+        return insertAppRow(prisma, pageId, write.table, write.row, userId, { via, workspaceId });
       if (write.op === "update")
         return updateAppRow(prisma, pageId, write.table, write.id, write.patch, userId, scope, {
           via,

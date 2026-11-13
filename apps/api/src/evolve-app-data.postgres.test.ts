@@ -71,8 +71,14 @@ describePostgres("Evolve app data (PostgreSQL)", () => {
       );
     const first = await provision(addresses[0]!);
     const second = await provision(addresses[1]!);
+    // Evolve names people by a verified work email; messaging accounts start unverified.
     const email = async (userId: string) =>
-      (await system.user.findUniqueOrThrow({ where: { id: userId } })).email;
+      (
+        await system.user.update({
+          where: { id: userId },
+          data: { email: `${userId}@evolve-test.example`, emailVerified: true },
+        })
+      ).email;
     owner = { ...first!, email: await email(first!.userId) };
     colleague = { ...second!, email: await email(second!.userId) };
     const created = await runAsTenant(owner, () =>

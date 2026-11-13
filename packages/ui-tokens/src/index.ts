@@ -413,6 +413,38 @@ export const pageKitPalette = {
   },
 } as const;
 
+/** Code highlighting in editors, One Dark and One Light so code reads as it does elsewhere. */
+export const codeSyntaxColors = {
+  dark: {
+    keyword: "#c678dd",
+    string: "#98c379",
+    number: "#d19a66",
+    comment: "#7f848e",
+    function: "#61afef",
+    type: "#e5c07b",
+    tag: "#e06c75",
+    attribute: "#d19a66",
+    punctuation: "#abb2bf",
+    definition: "#e06c75",
+    invalid: "#ff6b6b",
+    searchMatch: "#e5c07b",
+  },
+  light: {
+    keyword: "#a626a4",
+    string: "#50a14f",
+    number: "#986801",
+    comment: "#a0a1a7",
+    function: "#4078f2",
+    type: "#c18401",
+    tag: "#e45649",
+    attribute: "#986801",
+    punctuation: "#383a42",
+    definition: "#e45649",
+    invalid: "#e45649",
+    searchMatch: "#c18401",
+  },
+} as const;
+
 /** The ink of a drawn bot's eyes, the same on every body colour and in both themes. */
 export const botEyeColor = "#101014";
 

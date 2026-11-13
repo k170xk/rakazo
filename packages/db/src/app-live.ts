@@ -40,6 +40,7 @@ export type DeltaRow = {
   data: Data;
   updatedAt: Date;
   createdBy: string | null;
+  workspaceId: string | null;
 };
 
 export type AppDeltaRead =
@@ -99,7 +100,14 @@ export async function readAppDelta(
           ...(large.length ? { tableId: { notIn: large.map((table) => table.id) } } : {}),
         },
         orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        select: { id: true, tableId: true, data: true, updatedAt: true, createdBy: true },
+        select: {
+          id: true,
+          tableId: true,
+          data: true,
+          updatedAt: true,
+          createdBy: true,
+          workspaceId: true,
+        },
         take: MAX_DELTA_ROWS + 1,
       });
       if (rows.length > MAX_DELTA_ROWS) return { revision, full: true };

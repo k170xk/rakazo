@@ -3,7 +3,11 @@ import { appChangeNeedsPerson, appChangeOf } from "./app-change-gate.js";
 import type { RunContext } from "./run-context.js";
 
 function ctxWith(
-  page: { visibility: string; evolvePluginSlug: string | null } | null,
+  page: {
+    visibility: string;
+    evolvePluginSlug: string | null;
+    workspaceLabel?: string | null;
+  } | null,
   colleagueRow = false,
   tables: Array<{ schema: unknown }> = [],
 ) {
@@ -29,6 +33,8 @@ describe("appChangeOf", () => {
       code: true,
       wipes: [],
       unprivate: [],
+      unshare: [],
+      workspaces: false,
     });
     expect(appChangeOf("save_page", { pageId: "p", data: { rows: [] } })?.code).toBe(false);
     expect(appChangeOf("save_page", { pageId: "p", source: "x" })?.code).toBe(true);
@@ -38,6 +44,8 @@ describe("appChangeOf", () => {
       code: false,
       wipes: [],
       unprivate: [],
+      unshare: [],
+      workspaces: false,
     });
     expect(appChangeOf("save_app", { appId: "a", edits: [] })?.code).toBe(false);
   });
@@ -59,6 +67,8 @@ describe("appChangeOf", () => {
       code: false,
       wipes: ["jobs"],
       unprivate: [],
+      unshare: [],
+      workspaces: false,
     });
     // A workbook merges into an existing app's tables (upsert or append), like a data refresh.
     expect(appChangeOf("save_app", { appId: "a", workbook: { path: "x.xlsx" } })).toEqual({
@@ -66,6 +76,8 @@ describe("appChangeOf", () => {
       code: false,
       wipes: [],
       unprivate: [],
+      unshare: [],
+      workspaces: false,
     });
   });
 });
@@ -151,7 +163,37 @@ describe("appChangeNeedsPerson", () => {
     expect(await appChangeNeedsPerson(ctx, "app_asset", { appId: "a", url: "u" })).toBe(false);
     expect(prisma.page.findFirst).toHaveBeenCalledWith({
       where: { id: "a", spaceId: "space-1", userId: "owner-1" },
-      select: { visibility: true, evolvePluginSlug: true },
+      select: { visibility: true, evolvePluginSlug: true, workspaceLabel: true },
     });
+  });
+
+  it("asks before workspaces stop keeping a shared app's data apart", async () => {
+    const off = { appId: "a", workspaces: { off: true } };
+    expect(appChangeOf("save_app", off)?.workspaces).toBe(true);
+    const page = { visibility: "link", evolvePluginSlug: null, workspaceLabel: "Bridge" };
+    expect(await appChangeNeedsPerson(ctxWith(page).ctx, "save_app", off)).toBe(true);
+    expect(
+      await appChangeNeedsPerson(ctxWith({ ...page, visibility: "private" }).ctx, "save_app", off),
+    ).toBe(false);
+    expect(
+      await appChangeNeedsPerson(ctxWith({ ...page, workspaceLabel: null }).ctx, "save_app", {
+        appId: "a",
+        workspaces: { label: "Bridge" },
+      }),
+    ).toBe(false);
+  });
+
+  it("asks before a workspace table is shown in every workspace", async () => {
+    const share = { appId: "a", tables: [{ schema: { name: "visits", shared: true } }] };
+    expect(appChangeOf("save_app", share)?.unshare).toEqual(["visits"]);
+    const page = { visibility: "private", evolvePluginSlug: null, workspaceLabel: "Bridge" };
+    const scoped = ctxWith(page, false, [{ schema: { name: "visits" } }]);
+    expect(await appChangeNeedsPerson(scoped.ctx, "save_app", share)).toBe(true);
+    const already = ctxWith(page, false, [{ schema: { name: "visits", shared: true } }]);
+    expect(await appChangeNeedsPerson(already.ctx, "save_app", share)).toBe(false);
+    const single = ctxWith({ ...page, workspaceLabel: null }, false, [
+      { schema: { name: "visits" } },
+    ]);
+    expect(await appChangeNeedsPerson(single.ctx, "save_app", share)).toBe(false);
   });
 });

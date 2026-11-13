@@ -2,9 +2,11 @@ import { useLingui } from "@lingui/react/macro";
 import { Button, Spinner } from "@rakazo/ui-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FilePlus2 } from "lucide-react";
-import { useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
 import { errorCode } from "../../lib/user-error";
+
+const CodeEditor = lazy(() => import("./CodeEditor"));
 
 const FILE_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,60}\.(tsx|ts|css|json)$/;
 
@@ -26,6 +28,13 @@ export function AppCodePanel({ pageId, version }: { pageId: string; version: num
   const shown = drafts ?? loaded ?? {};
   const names = Object.keys(shown).sort((a, b) =>
     a === "App.tsx" ? -1 : b === "App.tsx" ? 1 : a.localeCompare(b),
+  );
+  const fileProblems = useMemo(
+    () =>
+      problems.filter(
+        (problem) => problem.file?.replace(/^.*\//, "") === current && problem.line !== undefined,
+      ),
+    [problems, current],
   );
   const changed = loaded
     ? names.some((name) => shown[name] !== loaded[name]) ||
@@ -104,27 +113,26 @@ export function AppCodePanel({ pageId, version }: { pageId: string; version: num
           <FilePlus2 className="size-4" />
         </button>
       </div>
-      <textarea
-        aria-label={current}
-        spellCheck={false}
-        value={shown[current] ?? ""}
-        onChange={(event) => setDrafts({ ...shown, [current]: event.target.value })}
-        onKeyDown={(event) => {
-          if (event.key === "Tab" && !event.shiftKey) {
-            event.preventDefault();
-            const area = event.currentTarget;
-            const { selectionStart: start, selectionEnd: end, value } = area;
-            const next = `${value.slice(0, start)}  ${value.slice(end)}`;
-            setDrafts({ ...shown, [current]: next });
-            requestAnimationFrame(() => area.setSelectionRange(start + 2, start + 2));
+      <Suspense
+        fallback={
+          <div className="grid min-h-0 flex-1 place-items-center">
+            <Spinner />
+          </div>
+        }
+      >
+        <CodeEditor
+          file={current}
+          label={current}
+          value={shown[current] ?? ""}
+          problems={fileProblems}
+          onChange={(text) =>
+            setDrafts((previous) => ({ ...(previous ?? loaded ?? {}), [current]: text }))
           }
-          if ((event.metaKey || event.ctrlKey) && event.key === "s") {
-            event.preventDefault();
+          onSave={() => {
             if (changed && !save.isPending) save.mutate();
-          }
-        }}
-        className="min-h-0 flex-1 resize-none bg-background p-3 font-mono text-[12.5px] leading-[1.55] text-foreground outline-none"
-      />
+          }}
+        />
+      </Suspense>
       <div className="flex shrink-0 flex-col gap-1.5 border-t border-foreground/[0.06] p-2.5">
         {problems.length ? (
           <ul className="max-h-32 overflow-auto rounded-md bg-destructive/10 px-2.5 py-1.5 font-mono text-[11.5px] text-destructive">

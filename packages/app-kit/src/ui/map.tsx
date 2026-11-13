@@ -1,4 +1,15 @@
-import { Layers, LocateFixed, MapPin, Minus, Plus, Search } from "lucide-react";
+import {
+  Check,
+  Layers,
+  LocateFixed,
+  MapPin,
+  Minus,
+  Navigation,
+  Plus,
+  Search,
+  Undo2,
+  X,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type {
   KeyboardEvent,
@@ -7,10 +18,12 @@ import type {
   WheelEvent,
 } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { MapPlace, MapStyle } from "../protocol.js";
+import type { AppLocation, MapPlace, MapStyle } from "../protocol.js";
 import { MAP_STYLES } from "../protocol.js";
-import { maps, useApp } from "../sdk/index.js";
+import { canLocate, getLocation, maps, useApp } from "../sdk/index.js";
 import { cn } from "./cn.js";
+import { AssetImage, Lightbox } from "./media.js";
+import { toast } from "./overlay.js";
 
 /**
  * A map drawn by the kit: square tiles placed by Web Mercator maths, pins, groups of pins, routes
@@ -34,7 +47,55 @@ export type MapMarker = {
   tone?: "neutral" | "accent" | "success" | "warning" | "danger" | 1 | 2 | 3 | 4 | 5 | 6;
   /** Anything the pin's card shows when it is chosen (falls back to the label). */
   detail?: ReactNode;
+  /** A picture id: the pin shows the photo as a round thumbnail and its card shows it larger. */
+  photo?: string;
 };
+
+/** A shape someone drew on the map: an area (3+ corners) or a route (2+ points). */
+export type MapDrawing = { kind: "area" | "line"; points: LatLon[] };
+
+const EARTH_RADIUS = 6_371_008.8;
+const radians = (degrees: number) => (degrees * Math.PI) / 180;
+
+/** Metres along a route of points. */
+export function distanceMeters(points: LatLon[]): number {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    const [lat1, lon1] = points[i - 1]!;
+    const [lat2, lon2] = points[i]!;
+    const a =
+      Math.sin(radians(lat2 - lat1) / 2) ** 2 +
+      Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(radians(lon2 - lon1) / 2) ** 2;
+    total += 2 * EARTH_RADIUS * Math.asin(Math.min(1, Math.sqrt(a)));
+  }
+  return total;
+}
+
+/** Square metres inside an area's corners (on the globe, so large sites stay accurate). */
+export function areaSquareMeters(points: LatLon[]): number {
+  if (points.length < 3) return 0;
+  let sum = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [lat1, lon1] = points[i]!;
+    const [lat2, lon2] = points[(i + 1) % points.length]!;
+    sum += radians(lon2 - lon1) * (2 + Math.sin(radians(lat1)) + Math.sin(radians(lat2)));
+  }
+  return Math.abs((sum * EARTH_RADIUS * EARTH_RADIUS) / 2);
+}
+
+/** "350 m", "1.24 km". */
+export function formatDistance(meters: number): string {
+  return meters < 1000
+    ? `${Math.round(meters)} m`
+    : `${(meters / 1000).toFixed(meters < 10_000 ? 2 : 1)} km`;
+}
+
+/** "820 m²", "1.35 ha" (hectares past 10,000 m²). */
+export function formatArea(squareMeters: number): string {
+  return squareMeters < 10_000
+    ? `${Math.round(squareMeters).toLocaleString("en-GB")} m²`
+    : `${(squareMeters / 10_000).toFixed(2)} ha`;
+}
 
 export type MapLine = { points: LatLon[]; tone?: MapMarker["tone"]; dashed?: boolean };
 export type MapArea = { points: LatLon[]; tone?: MapMarker["tone"]; label?: string };
@@ -197,6 +258,17 @@ export type MapViewProps = {
   onMapClick?: (point: LatLon) => void;
   /** Groups nearby pins into numbered bubbles (default true past 30 pins). */
   cluster?: boolean;
+  /** A "show my location" button (default true where the device can share it). */
+  locate?: boolean;
+  /** Hears the device's position each time the person shows their location. */
+  onLocate?: (here: AppLocation) => void;
+  /**
+   * Draw mode: taps add corners of an area or points of a route, with its size shown, until the
+   * person taps Done (onDraw hears the shape) or Cancel (onDrawCancel). null or omitted: off.
+   */
+  draw?: "area" | "line" | null;
+  onDraw?: (shape: MapDrawing) => void;
+  onDrawCancel?: () => void;
   className?: string;
 };
 
@@ -214,9 +286,19 @@ export function MapView({
   onSelect,
   onMapClick,
   cluster,
+  locate,
+  onLocate,
+  draw = null,
+  onDraw,
+  onDrawCancel,
   className,
 }: MapViewProps) {
   const { theme } = useApp();
+  const [draft, setDraft] = useState<LatLon[]>([]);
+  const [here, setHere] = useState<AppLocation | null>(null);
+  const [locating, setLocating] = useState(false);
+  const canShowHere = (locate ?? true) && canLocate();
+  useEffect(() => setDraft([]), [draw]);
   const [ref, size] = useSize<HTMLDivElement>();
   const [chosenStyle, setChosenStyle] = useState<MapStyle | null>(null);
   const style: MapStyle =
@@ -322,13 +404,17 @@ export function MapView({
     if (
       state &&
       !state.moved &&
-      onMapClick &&
-      !(event.target as Element).closest("[data-map-pin]")
+      (onMapClick || draw) &&
+      !(event.target as Element).closest("[data-map-pin],[data-map-control]")
     ) {
       const box = event.currentTarget.getBoundingClientRect();
-      onMapClick(
-        unproject(origin.x + event.clientX - box.left, origin.y + event.clientY - box.top, zoom),
+      const point = unproject(
+        origin.x + event.clientX - box.left,
+        origin.y + event.clientY - box.top,
+        zoom,
       );
+      if (draw) setDraft((points) => [...points, point].slice(0, 500));
+      else onMapClick?.(point);
     }
   };
   const wheelAt = useRef(0);
@@ -354,7 +440,31 @@ export function MapView({
       panBy(...moves[event.key]!);
     } else if (event.key === "+" || event.key === "=") setZoom(zoom + 1);
     else if (event.key === "-") setZoom(zoom - 1);
-    else if (event.key === "Escape") choose(null);
+    else if (event.key === "Escape") {
+      if (draw) onDrawCancel?.();
+      else choose(null);
+    } else if (event.key === "Enter" && draw) finishDrawing();
+    else if (event.key === "Backspace" && draw) setDraft((points) => points.slice(0, -1));
+  };
+
+  const showHere = async () => {
+    setLocating(true);
+    try {
+      const found = await getLocation();
+      setHere(found);
+      setView({ center: [found.lat, found.lon], zoom: Math.max(zoom, Math.min(17, maxZoom)) });
+      onLocate?.(found);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Your location couldn't be found.");
+    } finally {
+      setLocating(false);
+    }
+  };
+  const drawReady = draw === "area" ? draft.length >= 3 : draft.length >= 2;
+  const finishDrawing = () => {
+    if (!draw || !drawReady) return;
+    onDraw?.({ kind: draw, points: draft });
+    setDraft([]);
   };
 
   const choose = (marker: MapMarker | null) => {
@@ -422,7 +532,7 @@ export function MapView({
       className={cn(
         "relative touch-none overflow-hidden rounded-2xl border border-border/70 bg-muted/40 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring",
         !maps.available() && "bg-dots",
-        drag.current?.moved ? "cursor-grabbing" : "cursor-grab",
+        draw ? "cursor-crosshair" : drag.current?.moved ? "cursor-grabbing" : "cursor-grab",
         className,
       )}
       style={{ height }}
@@ -456,6 +566,68 @@ export function MapView({
             strokeDasharray={line.dashed ? "8 7" : undefined}
           />
         ))}
+        {here &&
+          (() => {
+            const [x, y] = screen([here.lat, here.lon]).split(",").map(Number) as [number, number];
+            const perPixel = (156_543.03392 * Math.cos(radians(here.lat))) / 2 ** zoom;
+            return (
+              <g>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={Math.max(here.accuracy / perPixel, 9)}
+                  fill="hsl(var(--info))"
+                  fillOpacity={0.12}
+                  stroke="hsl(var(--info))"
+                  strokeOpacity={0.4}
+                />
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={7}
+                  fill="hsl(var(--info))"
+                  stroke="white"
+                  strokeWidth={3}
+                />
+              </g>
+            );
+          })()}
+        {draw && draft.length > 0 && (
+          <g>
+            {draw === "area" && draft.length >= 3 ? (
+              <polygon
+                points={draft.map(screen).join(" ")}
+                fill="hsl(var(--primary))"
+                fillOpacity={0.18}
+                stroke="hsl(var(--primary))"
+                strokeWidth={2.5}
+                strokeDasharray="7 5"
+              />
+            ) : (
+              <polyline
+                points={draft.map(screen).join(" ")}
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth={3}
+                strokeDasharray="7 5"
+              />
+            )}
+            {draft.map((point, index) => {
+              const [x, y] = screen(point).split(",").map(Number) as [number, number];
+              return (
+                <circle
+                  key={index}
+                  cx={x}
+                  cy={y}
+                  r={index === 0 ? 6.5 : 5}
+                  fill="white"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2.5}
+                />
+              );
+            })}
+          </g>
+        )}
       </svg>
       {clusters.map((group) => {
         const left = group.x - origin.x;
@@ -497,15 +669,30 @@ export function MapView({
               transition={{ type: "spring", stiffness: 420, damping: 26 }}
               className="block drop-shadow-[0_4px_6px_rgb(0_0_0/0.25)]"
             >
-              <svg width="30" height="38" viewBox="0 0 30 38" aria-hidden="true">
-                <path
-                  d="M15 37s12-12.2 12-22A12 12 0 0 0 3 15c0 9.8 12 22 12 22Z"
-                  fill={toneColor(marker.tone)}
-                  stroke="white"
-                  strokeWidth="2"
-                />
-                <circle cx="15" cy="15" r="4.5" fill="white" />
-              </svg>
+              {marker.photo ? (
+                <span className="flex flex-col items-center">
+                  <span
+                    className="block size-11 overflow-hidden rounded-full border-[3px] bg-muted"
+                    style={{ borderColor: toneColor(marker.tone) }}
+                  >
+                    <AssetImage asset={marker.photo} className="h-full w-full" />
+                  </span>
+                  <span
+                    className="-mt-px h-2 w-0.5"
+                    style={{ background: toneColor(marker.tone) }}
+                  />
+                </span>
+              ) : (
+                <svg width="30" height="38" viewBox="0 0 30 38" aria-hidden="true">
+                  <path
+                    d="M15 37s12-12.2 12-22A12 12 0 0 0 3 15c0 9.8 12 22 12 22Z"
+                    fill={toneColor(marker.tone)}
+                    stroke="white"
+                    strokeWidth="2"
+                  />
+                  <circle cx="15" cy="15" r="4.5" fill="white" />
+                </svg>
+              )}
             </motion.span>
             {marker.label && !isActive && (
               <span className="pointer-events-none absolute bottom-full left-1/2 mb-1 hidden -translate-x-1/2 rounded-md bg-foreground px-2 py-1 text-[11px] font-semibold whitespace-nowrap text-background shadow group-hover:block">
@@ -527,6 +714,9 @@ export function MapView({
             className="absolute z-10 w-64 max-w-[80%] -translate-x-1/2 rounded-xl border border-border bg-popover p-3 text-[13px] text-popover-foreground shadow-xl"
             style={{ left: activePoint.x - origin.x, top: activePoint.y - origin.y + 8 }}
           >
+            {active.photo && (
+              <AssetImage asset={active.photo} className="mb-2 h-36 w-full rounded-lg" />
+            )}
             {active.label && <p className="font-semibold">{active.label}</p>}
             {active.detail && <div className="mt-1 text-muted-foreground">{active.detail}</div>}
           </motion.div>
@@ -541,11 +731,18 @@ export function MapView({
             <Minus />
           </MapButton>
         </div>
-        {points.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-border/80 bg-card/90 shadow-sm backdrop-blur">
-            <MapButton label="Show every place" onClick={fitAll}>
-              <LocateFixed />
-            </MapButton>
+        {(points.length > 0 || canShowHere) && (
+          <div className="flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card/90 shadow-sm backdrop-blur">
+            {canShowHere && (
+              <MapButton label="Show my location" onClick={showHere} disabled={locating}>
+                <Navigation className={cn(locating && "animate-pulse", here && "fill-current")} />
+              </MapButton>
+            )}
+            {points.length > 0 && (
+              <MapButton label="Show every place" onClick={fitAll}>
+                <LocateFixed />
+              </MapButton>
+            )}
           </div>
         )}
         {styleSwitcher && maps.available() && (
@@ -578,6 +775,43 @@ export function MapView({
           </div>
         )}
       </div>
+      {draw && (
+        <div
+          data-map-control=""
+          className="absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-border bg-card/95 p-1 pl-3 text-[12.5px] shadow-lg backdrop-blur"
+        >
+          <span className="mr-1 font-semibold whitespace-nowrap">
+            {draft.length === 0
+              ? draw === "area"
+                ? "Tap the corners of the area"
+                : "Tap along the route"
+              : draw === "area" && draft.length >= 3
+                ? formatArea(areaSquareMeters(draft))
+                : formatDistance(distanceMeters(draft))}
+          </span>
+          <MapButton
+            label="Undo last point"
+            onClick={() => setDraft((points) => points.slice(0, -1))}
+            disabled={!draft.length}
+          >
+            <Undo2 />
+          </MapButton>
+          {onDrawCancel && (
+            <MapButton label="Cancel drawing" onClick={onDrawCancel}>
+              <X />
+            </MapButton>
+          )}
+          <button
+            type="button"
+            onClick={finishDrawing}
+            disabled={!drawReady}
+            className="flex h-9 items-center gap-1 rounded-lg bg-primary px-3 font-semibold text-primary-foreground disabled:opacity-40"
+          >
+            <Check className="size-4" />
+            Done
+          </button>
+        </div>
+      )}
       {maps.available() && (
         <p className="pointer-events-none absolute right-2 bottom-1.5 rounded bg-card/80 px-1.5 text-[10px] text-muted-foreground">
           {MAP_STYLES[style].attribution}
@@ -585,6 +819,170 @@ export function MapView({
       )}
     </div>
   );
+}
+
+/** A geotagged photo for PhotoMap: a picture id with where (and when) it was taken. */
+export type MapPhoto = {
+  photo: string;
+  lat?: number | null;
+  lon?: number | null;
+  label?: string;
+  takenAt?: string | null;
+  tone?: MapMarker["tone"];
+};
+
+/**
+ * Site photos on a map: each located photo is a round thumbnail pin, with a strip of every photo
+ * underneath (those without a location are marked) and full-size viewing.
+ */
+export function PhotoMap({
+  photos,
+  height = 420,
+  mapStyle = "satellite",
+  className,
+}: {
+  photos: MapPhoto[];
+  height?: number;
+  mapStyle?: MapViewProps["mapStyle"];
+  className?: string;
+}) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [open, setOpen] = useState<number | null>(null);
+  const [center, setCenter] = useState<LatLon | undefined>(undefined);
+  const ids = photos.map((item) => item.photo);
+  const captions = photos.map((item) =>
+    [item.label, item.takenAt ? new Date(item.takenAt).toLocaleString("en-GB") : null]
+      .filter(Boolean)
+      .join(" · "),
+  );
+  const markers: MapMarker[] = photos.flatMap((item, index) =>
+    typeof item.lat === "number" && typeof item.lon === "number"
+      ? [
+          {
+            id: String(index),
+            lat: item.lat,
+            lon: item.lon,
+            photo: item.photo,
+            ...(item.tone ? { tone: item.tone } : {}),
+            ...(item.label ? { label: item.label } : {}),
+            detail: (
+              <div className="space-y-1.5">
+                {item.takenAt && <p>{new Date(item.takenAt).toLocaleString("en-GB")}</p>}
+                <button
+                  type="button"
+                  onClick={() => setOpen(index)}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  View full size
+                </button>
+              </div>
+            ),
+          },
+        ]
+      : [],
+  );
+  return (
+    <div className={cn("space-y-2", className)}>
+      <MapView
+        markers={markers}
+        height={height}
+        mapStyle={mapStyle}
+        selected={selected}
+        onSelect={(marker) => setSelected(marker?.id ?? null)}
+        {...(center ? { center } : {})}
+      />
+      {photos.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {photos.map((item, index) => {
+            const located = typeof item.lat === "number" && typeof item.lon === "number";
+            return (
+              <button
+                key={`${item.photo}-${index}`}
+                type="button"
+                onClick={() => {
+                  if (!located) return setOpen(index);
+                  setSelected(String(index));
+                  setCenter([item.lat as number, item.lon as number]);
+                }}
+                className={cn(
+                  "relative size-16 shrink-0 overflow-hidden rounded-lg ring-2 transition",
+                  selected === String(index)
+                    ? "ring-primary"
+                    : "ring-transparent hover:ring-border",
+                )}
+              >
+                <AssetImage asset={item.photo} className="h-full w-full" />
+                {!located && (
+                  <span className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-[9.5px] font-semibold text-white">
+                    No location
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <Lightbox ids={ids} captions={captions} index={open} onIndex={setOpen} />
+    </div>
+  );
+}
+
+/**
+ * Records a walked route from the device's position. Call start from a tap; points are added
+ * every few seconds while the app stays open and the person has moved, ignoring poor fixes.
+ */
+export function useRouteRecorder({
+  every = 5000,
+  minMeters = 5,
+  maxAccuracy = 50,
+}: {
+  every?: number;
+  minMeters?: number;
+  maxAccuracy?: number;
+} = {}) {
+  const [points, setPoints] = useState<LatLon[]>([]);
+  const [recording, setRecording] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const add = useCallback(
+    (here: AppLocation) => {
+      if (here.accuracy > maxAccuracy) return;
+      setPoints((now) => {
+        const last = now[now.length - 1];
+        const next: LatLon = [here.lat, here.lon];
+        if (last && distanceMeters([last, next]) < minMeters) return now;
+        return [...now, next].slice(-5000);
+      });
+    },
+    [maxAccuracy, minMeters],
+  );
+  useEffect(() => {
+    if (!recording) return;
+    const timer = setInterval(
+      () => {
+        void getLocation().then(add, () => undefined);
+      },
+      Math.max(every, 2000),
+    );
+    return () => clearInterval(timer);
+  }, [recording, every, add]);
+  const start = async () => {
+    setError(null);
+    try {
+      add(await getLocation());
+      setRecording(true);
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : "Location isn't available.");
+    }
+  };
+  return {
+    points,
+    recording,
+    error,
+    meters: distanceMeters(points),
+    start,
+    stop: () => setRecording(false),
+    clear: () => setPoints([]),
+  };
 }
 
 function MapButton({

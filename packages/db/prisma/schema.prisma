@@ -1858,6 +1858,10 @@ model Page {
   dataRevision          Int             @default(0)
   /// Who besides the owner may change an app's rows: "owner" or "company" (signed-in colleagues).
   dataAccess            String          @default("owner")
+  /// What an app's workspaces are called ("Bridge", "Project"); null when it keeps one dataset.
+  workspaceLabel        String?
+  /// Who may start a workspace: "anyone" who can open the app, or only the "owner".
+  workspaceCreate       String          @default("anyone")
   /// The app's own icon: an AppAsset (source "icon") drawn for it when it was made.
   iconAssetId           String?
   /// The Evolve plugin this app was last published as; Evolve's calls for that plugin read it.
@@ -1885,6 +1889,9 @@ model Page {
   appRowRemovals        AppRowRemoval[]
   appPresence           AppPresence[]
   appComments           AppComment[]
+  appWorkspaces         AppWorkspace[]
+  appWorkspaceMembers   AppWorkspaceMember[]
+  appWorkspaceChoices   AppWorkspaceChoice[]
 
   @@index([spaceId, userId, updatedAt])
   @@index([botId])
@@ -1962,11 +1969,69 @@ model AppRow {
   createdBy String?
   /// The app revision its last write moved to, set by a trigger, so open copies fetch only newer rows.
   revision  Int      @default(0)
+  /// The workspace it belongs to, in an app with workspaces; null in shared tables and older rows.
+  workspaceId String?
+  workspace   AppWorkspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   @@index([tableId, position])
   @@index([pageId])
   @@index([pageId, revision])
+  @@index([pageId, workspaceId])
   @@map("app_rows")
+}
+
+/// One of an app's workspaces (a bridge, a project): its rows are seen only by its members.
+model AppWorkspace {
+  id         String               @id @default(cuid())
+  pageId     String
+  page       Page                 @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  name       String
+  createdBy  String?
+  createdAt  DateTime             @default(now())
+  /// Hidden from members' lists; the owner can bring it back. Its rows are kept.
+  archivedAt DateTime?
+  members    AppWorkspaceMember[]
+  rows       AppRow[]
+  choices    AppWorkspaceChoice[]
+
+  @@unique([pageId, name])
+  @@map("app_workspaces")
+}
+
+/// Someone in a workspace, added by work email so colleagues without an account yet can be added.
+model AppWorkspaceMember {
+  id          String       @id @default(cuid())
+  workspaceId String
+  workspace   AppWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  pageId      String
+  page        Page         @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  /// Lower case.
+  email       String
+  /// Filled in once someone with that verified email opens the app.
+  userId      String?
+  /// "lead" (manages members), "member" (changes rows) or "viewer" (reads).
+  role        String       @default("member")
+  addedBy     String?
+  createdAt   DateTime     @default(now())
+
+  @@unique([workspaceId, email])
+  @@index([pageId, userId])
+  @@index([pageId, email])
+  @@map("app_workspace_members")
+}
+
+/// The workspace someone last opened in an app; null is the owner's view of every workspace.
+model AppWorkspaceChoice {
+  id          String        @id @default(cuid())
+  pageId      String
+  page        Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  userId      String
+  workspaceId String?
+  workspace   AppWorkspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  chosenAt    DateTime      @default(now())
+
+  @@unique([pageId, userId])
+  @@map("app_workspace_choices")
 }
 
 /// A row that was removed, noted by a trigger so open copies drop it without reading every row.

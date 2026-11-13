@@ -2,12 +2,14 @@ import type { EvolvePluginsConnection } from "@rakazo/adapters";
 import { verifyAppDataToken } from "@rakazo/adapters";
 import type { AppInit } from "@rakazo/app-kit/protocol";
 import { APP_CALL_OPS, MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
+import { editsAnything } from "@rakazo/app-kit/workspace";
 import { PageStateWriteSchema } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { isAppDataError, runAsSystem } from "@rakazo/db";
 import type { Hono } from "hono";
 import type { AppCalls } from "./app-calls.js";
 import { appCallFailure } from "./app-calls.js";
+import { resolveLooker, workspaceSummary } from "./app-workspaces.js";
 import type { SharedRowWrite } from "./apps.js";
 import {
   addSharedAppUpload,
@@ -75,8 +77,14 @@ export function mountEvolveAppData(
     const { page, viewer } = found;
     const isOwner =
       page.user.emailVerified && page.user.email.trim().toLowerCase() === caller.email;
+    const looker = await resolveLooker(prisma, {
+      pageId: page.id,
+      userId: viewer?.id ?? null,
+      email: caller.email,
+    });
     // Rows remember who changed them, so only people with an account here write.
     const canEdit = viewer !== null && (isOwner || colleaguesMayWrite(page.dataAccess));
+    const editsSomething = viewer !== null && (isOwner || editsAnything(looker, page.dataAccess));
     const ownRowsOnly = canEdit && !isOwner && page.dataAccess === "contribute";
 
     const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
@@ -87,10 +95,12 @@ export function mountEvolveAppData(
         : null;
 
     if (op === "init" || op === "data") {
-      const data = await readSharedAppData(prisma, page.id, {
-        userId: viewer?.id ?? null,
-        names: viewer !== null,
-      });
+      const data = await readSharedAppData(
+        prisma,
+        page.id,
+        { userId: viewer?.id ?? null, names: viewer !== null },
+        looker,
+      );
       if (op === "data")
         return c.json(
           { tables: data.tables, revision: data.revision, icon: data.icon ?? undefined },
@@ -111,12 +121,13 @@ export function mountEvolveAppData(
           role: isOwner ? "owner" : "member",
         },
         theme: "light",
+        workspace: workspaceSummary(looker),
         tables: data.tables,
         state: data.state as Record<string, unknown>,
         revision: data.revision,
         features: [
           "assets",
-          ...(canEdit ? ["uploads"] : []),
+          ...(editsSomething ? ["uploads"] : []),
           ...(calls
             ? ["live", "query", ...(viewer ? ["comments", "history", "services"] : [])]
             : []),
@@ -130,7 +141,13 @@ export function mountEvolveAppData(
     if (calls && APP_CALL_OPS.has(op as never)) {
       try {
         const result = await calls.handle(
-          { pageId: page.id, ownerId: page.userId, userId: viewer?.id ?? null, via: "evolve" },
+          {
+            pageId: page.id,
+            ownerId: page.userId,
+            userId: viewer?.id ?? null,
+            email: caller.email,
+            via: "evolve",
+          },
           body,
         );
         return c.json(result ?? null, 200, headers);
@@ -141,7 +158,7 @@ export function mountEvolveAppData(
     }
     if (op === "asset") {
       const id = typeof body?.id === "string" ? body.id.slice(0, 64) : "";
-      const asset = id ? await readSharedAppAsset(prisma, page.id, id, viewer?.id ?? null) : null;
+      const asset = id ? await readSharedAppAsset(prisma, page.id, id, looker) : null;
       if (!asset) return c.json({ error: "That picture is not in this app." }, 404, headers);
       return c.json(
         { mime: asset.mime, base64: Buffer.from(asset.bytes).toString("base64") },
@@ -152,7 +169,7 @@ export function mountEvolveAppData(
 
     if (!["rows.insert", "rows.update", "rows.remove", "state.set", "upload"].includes(op))
       return c.json({ error: "That is not available in Evolve." }, 400, headers);
-    if (!canEdit || !viewer)
+    if (!editsSomething || !viewer)
       return c.json({ error: "Only the app's owner can change its data." }, 403, headers);
     if (op === "upload") {
       if (uploads(`${caller.email}:${page.id}`) > UPLOADS_PER_PERSON_PER_MINUTE)
@@ -177,7 +194,7 @@ export function mountEvolveAppData(
       return c.json({ error: "That change is too large." }, 413, headers);
 
     if (op === "state.set") {
-      if (ownRowsOnly)
+      if (!canEdit || ownRowsOnly)
         return c.json({ error: "Only the app's owner can change its settings." }, 403, headers);
       const state = PageStateWriteSchema.safeParse({ key: body?.key, value: body?.value });
       if (!state.success) return c.json({ error: "Invalid value" }, 400, headers);
@@ -205,8 +222,8 @@ export function mountEvolveAppData(
         prisma,
         page.id,
         write,
-        viewer.id,
-        isOwner ? "company" : page.dataAccess,
+        { ...looker, isOwner: looker.isOwner || isOwner, userId: viewer.id },
+        page.dataAccess,
         "evolve",
       );
       return c.json("row" in saved ? saved.row : saved, 200, headers);

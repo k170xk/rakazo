@@ -14,6 +14,7 @@ const db = vi.hoisted(() => ({
   listAppAssets: vi.fn(),
   insertAppRow: vi.fn(),
   addAppAsset: vi.fn(),
+  readAppRowFacts: vi.fn(),
 }));
 vi.mock("@rakazo/db", async (importActual) => ({
   ...(await importActual<typeof import("@rakazo/db")>()),
@@ -29,7 +30,12 @@ export default function App() {
 `;
 
 function context(
-  page?: { kind?: string; currentVersion?: number; files?: Record<string, string> },
+  page?: {
+    kind?: string;
+    currentVersion?: number;
+    files?: Record<string, string>;
+    workspaceLabel?: string;
+  },
   extra: { secrets?: string[]; evolveUrl?: string; groupId?: string | null } = {},
 ) {
   const findFirst = vi.fn(async (_query: unknown) =>
@@ -40,6 +46,8 @@ function context(
           kind: page.kind ?? "app",
           currentVersion: page.currentVersion ?? 1,
           dataAccess: "owner",
+          workspaceLabel: page.workspaceLabel ?? null,
+          workspaceCreate: "anyone",
           versions: [{ source: JSON.stringify(page.files ?? { "App.tsx": APP }) }],
         }
       : null,
@@ -47,7 +55,16 @@ function context(
   return {
     ctx: {
       deps: {
-        prisma: { page: { findFirst, update: vi.fn() } },
+        prisma: {
+          page: { findFirst, update: vi.fn() },
+          appWorkspace: {
+            findMany: vi.fn(async () => [
+              { id: "ws-athlone", name: "Athlone", archivedAt: null },
+              { id: "ws-kells", name: "Kells", archivedAt: null },
+            ]),
+          },
+          appTable: { findFirst: vi.fn(async () => ({ schema: {} })) },
+        },
         evolvePlugins: extra.evolveUrl ? { url: extra.evolveUrl } : null,
       },
       run: { id: "run-1", spaceId: "space-1", userId: "user-1", threadId: "t-1", botId: "bot-1" },
@@ -128,6 +145,33 @@ describe("save_app", () => {
       where: { id: "app-1" },
       data: { brief: "Now for site teams." },
     });
+    expect(db.appendAppVersion).not.toHaveBeenCalled();
+  });
+
+  it("turns workspaces on and off without touching the code", async () => {
+    const { ctx } = context({});
+    const prisma = (
+      ctx as unknown as { deps: { prisma: { page: { update: ReturnType<typeof vi.fn> } } } }
+    ).deps.prisma;
+    const on = (await appTools.save_app!(
+      ctx,
+      call({ appId: "app-1", workspaces: { label: " Bridge ", create: "owner" } }),
+    )) as Result;
+    expect(String(on.workspaces)).toContain("Each bridge now keeps its own rows");
+    expect(prisma.page.update).toHaveBeenCalledWith({
+      where: { id: "app-1" },
+      data: { workspaceLabel: "Bridge", workspaceCreate: "owner" },
+    });
+    await appTools.save_app!(ctx, call({ appId: "app-1", workspaces: { off: true } }));
+    expect(prisma.page.update).toHaveBeenLastCalledWith({
+      where: { id: "app-1" },
+      data: { workspaceLabel: null },
+    });
+    const bad = (await appTools.save_app!(
+      ctx,
+      call({ appId: "app-1", workspaces: { label: "x", create: "everyone" } }),
+    )) as Result;
+    expect(String(bad.error)).toContain("anyone");
     expect(db.appendAppVersion).not.toHaveBeenCalled();
   });
 
@@ -362,6 +406,93 @@ describe("app_data", () => {
     )) as Result;
     expect(result).toMatchObject({ total: 1, rows: [{ _id: "1" }] });
     expect((ctx as { state: { tainted: boolean } }).state.tainted).toBe(true);
+  });
+
+  it("reads, adds and loads one workspace's rows", async () => {
+    db.readAppTables.mockResolvedValue({
+      visits: {
+        schema: { name: "visits", label: "Visits", columns: [] },
+        rows: [
+          { _id: "1", note: "Joint" },
+          { _id: "2", note: "Deck" },
+        ],
+      },
+    });
+    db.readAppRowFacts.mockResolvedValue(
+      new Map([
+        ["1", { createdBy: null, workspaceId: "ws-athlone" }],
+        ["2", { createdBy: null, workspaceId: "ws-kells" }],
+      ]),
+    );
+    const { ctx } = context({ workspaceLabel: "Bridge" });
+    const all = (await appTools.app_data!(
+      ctx,
+      call({ appId: "app-1", table: "visits" }),
+    )) as Result;
+    expect(all.rows).toEqual([
+      { _id: "1", note: "Joint", _workspace: "Athlone" },
+      { _id: "2", note: "Deck", _workspace: "Kells" },
+    ]);
+    const one = (await appTools.app_data!(
+      ctx,
+      call({ appId: "app-1", table: "visits", workspace: "athlone" }),
+    )) as Result;
+    expect(one).toMatchObject({ total: 1, rows: [{ _id: "1" }] });
+
+    const unplaced = (await appTools.app_data!(
+      ctx,
+      call({ appId: "app-1", table: "visits", action: "insert", row: { note: "x" } }),
+    )) as Result;
+    expect(String(unplaced.error)).toContain("pass workspace");
+    db.insertAppRow.mockResolvedValue({ row: { _id: "3" }, revision: 2 });
+    await appTools.app_data!(
+      ctx,
+      call({
+        appId: "app-1",
+        table: "visits",
+        action: "insert",
+        row: { note: "x" },
+        workspace: "Kells",
+      }),
+    );
+    expect(db.insertAppRow).toHaveBeenCalledWith(
+      expect.anything(),
+      "app-1",
+      "visits",
+      { note: "x" },
+      "user-1",
+      expect.objectContaining({ workspaceId: "ws-kells" }),
+    );
+
+    db.defineAppTable.mockResolvedValue({ table: "visits", rows: 1, skipped: [] });
+    await appTools.app_data!(
+      ctx,
+      call({
+        appId: "app-1",
+        table: "visits",
+        action: "replace",
+        rows: [{}],
+        workspace: "ws-kells",
+      }),
+    );
+    expect(db.defineAppTable).toHaveBeenCalledWith(
+      expect.anything(),
+      "app-1",
+      expect.objectContaining({ workspaceId: "ws-kells", mode: "replace" }),
+    );
+    const unknown = (await appTools.app_data!(
+      ctx,
+      call({ appId: "app-1", table: "visits", workspace: "Trim" }),
+    )) as Result;
+    expect(unknown).toMatchObject({ workspaces: ["Athlone", "Kells"] });
+  });
+
+  it("refuses a workspace in an app that keeps one set of data", async () => {
+    const result = (await appTools.app_data!(
+      context({}).ctx,
+      call({ appId: "app-1", table: "visits", workspace: "Athlone" }),
+    )) as Result;
+    expect(String(result.error)).toContain("one set of data");
   });
 
   it("refuses rows that hold a secret", async () => {

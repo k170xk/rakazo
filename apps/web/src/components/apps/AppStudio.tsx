@@ -76,6 +76,9 @@ export function AppStudio({
   const [historyFocus, setHistoryFocus] = useState<number | null>(null);
   const [updated, setUpdated] = useState<number | null>(null);
   const [picking, setPicking] = useState(false);
+  // Once the picker is used the app stays on its tagged build, so turning the picker off and on
+  // again leaves the app on the same screen instead of starting it over.
+  const [tagsWanted, setTagsWanted] = useState(false);
   const [editing, setEditing] = useState<AppPick | null>(null);
   const [patch, setPatch] = useState<AppPatch | null>(null);
   // Discarding an unsaved visual edit draws the app again from its code.
@@ -93,11 +96,15 @@ export function AppStudio({
     refetchInterval: running ? 1200 : 4000,
   });
   // The picker and visual edits need the preview build, whose elements carry their source lines.
-  const tagging = picking || editing !== null;
+  // It is fetched as the Studio opens so the picker works on the first click.
+  const tagging = tagsWanted || picking || editing !== null;
+  const viewedVersion = page?.version;
   const preview = useQuery({
-    ...queries.apps.preview.queryOptions({ input: { pageId: pageId ?? "" } }),
-    enabled: tagging && pageId !== null,
-    staleTime: 60_000,
+    ...queries.apps.preview.queryOptions({
+      input: { pageId: pageId ?? "", version: viewedVersion },
+    }),
+    enabled: open && pageId !== null && viewedVersion !== undefined,
+    staleTime: Number.POSITIVE_INFINITY,
   });
   const tagged = tagging ? preview.data?.html : null;
   const newest = revision.data?.version;
@@ -109,7 +116,10 @@ export function AppStudio({
   }, [newest, page, pageId, queries, queryClient]);
   useEffect(() => setProblem(null), [page?.version]);
   useEffect(() => {
-    if (!open) setEditing(null);
+    if (open) return;
+    setEditing(null);
+    setPicking(false);
+    setTagsWanted(false);
   }, [open]);
   // Rows the bot adds show as they land, in the app and in the Data panel.
   const dataRevision = revision.data?.revision;
@@ -229,6 +239,7 @@ export function AppStudio({
                 aria-label={t`Select an element`}
                 onClick={() => {
                   setPicking((on) => !on);
+                  setTagsWanted(true);
                   stopEditing(false);
                   if (compact) setPanel(null);
                 }}
@@ -282,7 +293,7 @@ export function AppStudio({
                     title={page.title}
                     app={{ id: page.id, version: page.version }}
                     source={source}
-                    picking={picking}
+                    picking={picking && Boolean(tagged)}
                     onPick={pick}
                     onProblem={setProblem}
                     refreshSignal={dataRevision}
@@ -338,7 +349,11 @@ export function AppStudio({
                   {picking ? (
                     <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center">
                       <p className="rounded-full bg-foreground px-3 py-1.5 text-[12px] text-background shadow-lg">
-                        {t`Click something in the app to change it`}
+                        {tagged
+                          ? t`Click something in the app to change it`
+                          : preview.data
+                            ? t`This version can't be picked from. Ask the bot instead.`
+                            : t`Getting the app ready to pick from…`}
                       </p>
                     </div>
                   ) : null}

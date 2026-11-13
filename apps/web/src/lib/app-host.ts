@@ -1,5 +1,6 @@
 import type { AppViewer } from "@rakazo/app-kit/protocol";
 import { APP_CALLS_PATH, SHARED_APP_CALL_PATH } from "@rakazo/app-kit/protocol";
+import type { WorkspaceSummary } from "@rakazo/app-kit/workspace";
 import type { AppData } from "@rakazo/contracts";
 import { SHARED_PAGE_PASSWORD_HEADER, SHARED_PAGE_PATH_PREFIX } from "@rakazo/contracts";
 import type { SpaceQueries } from "./query";
@@ -20,6 +21,8 @@ export type AppSource = {
     viewer: AppViewer;
     /** The app's generated icon asset, once drawn. */
     icon?: string | null;
+    /** The app's workspaces as this person sees them; null when it keeps one dataset. */
+    workspace?: WorkspaceSummary | null;
   }>;
   revision: () => Promise<number>;
   insert: (table: string, row: Row) => Promise<Row>;
@@ -71,6 +74,7 @@ export function ownerAppSource(
         revision: data.revision,
         viewer: { name, canEdit: true, role: "owner" },
         icon: data.icon,
+        workspace: (data.workspace as WorkspaceSummary | null | undefined) ?? null,
       };
     },
     revision: async () => (await queries.apps.revision.call({ pageId })).revision,
@@ -154,6 +158,7 @@ export function sharedAppSource(
         state: data.state,
         revision: data.revision,
         icon: data.icon,
+        workspace: (data.workspace as WorkspaceSummary | null | undefined) ?? null,
         viewer: {
           name: null,
           canEdit: data.canEdit === true,

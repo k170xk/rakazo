@@ -1,4 +1,5 @@
 import { MAX_UPLOAD_BASE64, SHARED_APP_CALL_PATH } from "@rakazo/app-kit/protocol";
+import { editsAnything } from "@rakazo/app-kit/workspace";
 import {
   PageStateWriteSchema,
   SHARED_PAGE_PASSWORD_HEADER,
@@ -10,6 +11,7 @@ import type { Context, Hono } from "hono";
 import { AppAskError, askForApp } from "./app-ask.js";
 import type { AppCalls } from "./app-calls.js";
 import { appCallFailure } from "./app-calls.js";
+import { resolveLooker, workspaceSummary } from "./app-workspaces.js";
 import type { SharedRowWrite } from "./apps.js";
 import {
   addSharedAppUpload,
@@ -21,6 +23,7 @@ import {
   readUploadBody,
   writeSharedAppRow,
 } from "./apps.js";
+import { sameCompanyEmail } from "./company-email.js";
 import {
   PageStateRefusedError,
   readSharedPage,
@@ -40,18 +43,7 @@ const WRITES_PER_MINUTE = 120;
 /** Photos per address and app a minute. */
 const UPLOADS_PER_MINUTE = 30;
 
-/** OCSC's UK and Irish staff share one company across both email domains. */
-const STAFF_DOMAINS = new Set(["ocsc.co.uk", "ocsc.ie"]);
-
-const domainOf = (email: string) => email.trim().toLowerCase().split("@").pop() ?? "";
-
-/** Whether two verified work emails belong to the same company: both OCSC staff, else one domain. */
-export function sameCompanyEmail(viewer: string, owner: string) {
-  const a = domainOf(viewer);
-  const b = domainOf(owner);
-  if (!a || !b) return false;
-  return a === b || (STAFF_DOMAINS.has(a) && STAFF_DOMAINS.has(b));
-}
+export { sameCompanyEmail };
 
 async function colleagueOfOwner(prisma: PrismaClient, viewerId: string, ownerId: string) {
   if (viewerId === ownerId) return true;
@@ -137,9 +129,12 @@ export function mountSharedPages(
     }
     return { found, userId: null };
   }
+  const lookerOf = (admitted: { found: { pageId: string }; userId: string | null }) =>
+    resolveLooker(prisma, { pageId: admitted.found.pageId, userId: admitted.userId });
   app.get(`${SHARED_PAGE_PATH_PREFIX}:token`, async (c) => {
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
+    const looker = admitted.found.page.kind === "app" ? await lookerOf(admitted) : null;
     return c.json(
       {
         ...admitted.found.page,
@@ -148,7 +143,7 @@ export function mountSharedPages(
           admitted.found.dataAccess,
           admitted.userId,
         ),
-        canEditData: admitted.userId !== null && colleaguesMayWrite(admitted.found.dataAccess),
+        canEditData: looker !== null && editsAnything(looker, admitted.found.dataAccess),
       },
       200,
       headers,
@@ -159,15 +154,19 @@ export function mountSharedPages(
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
     if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
-    const data = await readSharedAppData(prisma, admitted.found.pageId, {
-      userId: admitted.userId,
-      names: admitted.userId !== null,
-    });
+    const looker = await lookerOf(admitted);
+    const data = await readSharedAppData(
+      prisma,
+      admitted.found.pageId,
+      { userId: admitted.userId, names: admitted.userId !== null },
+      looker,
+    );
     const canEdit = admitted.userId !== null && colleaguesMayWrite(admitted.found.dataAccess);
     return c.json(
       {
         ...data,
         canEdit,
+        workspace: workspaceSummary(looker),
         ownRowsOnly: canEdit && admitted.found.dataAccess === "contribute",
         isOwner: admitted.userId !== null && admitted.userId === admitted.found.ownerId,
         canSaveState: sharedStateWritable(
@@ -194,7 +193,9 @@ export function mountSharedPages(
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
     if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
-    if (!admitted.userId || !colleaguesMayWrite(admitted.found.dataAccess)) {
+    const looker = await lookerOf(admitted);
+    const userId = admitted.userId;
+    if (!userId || !editsAnything(looker, admitted.found.dataAccess)) {
       return c.json({ error: "Only the owner can change this app's data" }, 403, headers);
     }
     if (writes(`${throttleKey(clientIp(c))}:${admitted.found.pageId}`) > WRITES_PER_MINUTE) {
@@ -225,7 +226,7 @@ export function mountSharedPages(
           prisma,
           admitted.found.pageId,
           write,
-          admitted.userId,
+          { ...looker, userId },
           admitted.found.dataAccess,
         ),
         200,
@@ -245,7 +246,7 @@ export function mountSharedPages(
       const admitted = await admit(c);
       if (admitted instanceof Response) return admitted;
       if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
-      if (!admitted.userId || !colleaguesMayWrite(admitted.found.dataAccess)) {
+      if (!admitted.userId || !editsAnything(await lookerOf(admitted), admitted.found.dataAccess)) {
         return c.json({ error: "Only the owner can add photos to this app" }, 403, headers);
       }
       if (uploads(`${throttleKey(clientIp(c))}:${admitted.found.pageId}`) > UPLOADS_PER_MINUTE) {
@@ -281,7 +282,7 @@ export function mountSharedPages(
       prisma,
       admitted.found.pageId,
       (c.req.param("assetId") ?? "").slice(0, 64),
-      admitted.userId,
+      await lookerOf(admitted),
     );
     if (!asset) return c.json({ error: "Not found" }, 404, headers);
     return c.body(new Uint8Array(asset.bytes), 200, {
@@ -350,7 +351,13 @@ export function mountSharedPages(
       return c.json({ error: "Invalid table" }, 400, headers);
     try {
       return c.json(
-        await exportSharedAppTable(prisma, admitted.found.pageId, table, format, admitted.userId),
+        await exportSharedAppTable(
+          prisma,
+          admitted.found.pageId,
+          table,
+          format,
+          await lookerOf(admitted),
+        ),
         200,
         headers,
       );

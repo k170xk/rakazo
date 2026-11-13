@@ -889,6 +889,16 @@ export const builtinAgentTools: ConnectorTool[] = [
           type: "boolean",
           description: "false skips the run check (small text edits).",
         },
+        workspaces: {
+          type: "object",
+          description:
+            'Separate data per project, bridge or site: {label: "Bridge", create?: "anyone" | "owner"}. Each workspace\'s rows are seen only by the people added to it (the owner sees all); tables with schema shared: true stay app-wide. {off: true} turns them off.',
+          properties: {
+            label: { type: "string" },
+            create: { type: "string", enum: ["anyone", "owner"] },
+            off: { type: "boolean" },
+          },
+        },
       },
     },
   },
@@ -925,6 +935,11 @@ export const builtinAgentTools: ConnectorTool[] = [
         rows: { type: "array", items: { type: "object" } },
         id: { type: "string", description: "The row's _id; for undo or redo, the change's id." },
         patch: { type: "object" },
+        workspace: {
+          type: "string",
+          description:
+            "In an app with workspaces, the one (name or id) to query, insert into or load rows for; replace then empties only that workspace's rows.",
+        },
       },
       required: ["appId"],
     },

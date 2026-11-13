@@ -29,12 +29,27 @@ OCSC's own sign-in, or exists to deceive, harass or break the law; saves with a 
 ## Tables
 tables: [{schema, rows?, mode?}] defines or changes tables in the same save. mode: "replace" (default when
 rows are sent), "append", or "upsert" (match on schema.key). Sending a schema without rows keeps rows.
-schema = {name: "projects", label: "Projects", key?: "job_no", title?: "name", personal?: true, large?: true, columns: [...]}
+schema = {name: "projects", label: "Projects", key?: "job_no", title?: "name", personal?: true, shared?: true, large?: true, columns: [...]}
 large: true for tables past a few thousand rows: the server pages them (see "Large tables" below).
 personal: true keeps each person's rows private: colleagues see and change only the rows they added, the
 owner (and their routines) sees everyone's, visitors see none. The server enforces it. Use it when people
 must not see each other's entries (their own inspections, expenses, reviews), with colleagues allowed to add
 rows (contribute or company). Keep shared lists (checklists, sites, rates) in ordinary tables of the same app.
+
+## Workspaces (separate data per project, bridge or site)
+An app either keeps one set of data, or (workspaces on) a separate set per project, bridge, site or
+client: each workspace's rows are seen only by the people added to it, as lead (changes everything and
+chooses who is in it), member (adds and changes entries; only their own in contribute mode or personal
+tables) or viewer (reads). The owner sees every workspace. Turn them on whenever the person says the app
+is for many projects/sites/teams or "each one has its own data": save_app workspaces: {label: "Bridge",
+create: "anyone"} (colleagues start their own) or "owner" (only the owner starts them and adds people).
+The kit then shows a slim bar above the app to switch, start one and manage people, and a "not in one yet"
+screen, so never build workspace pickers, member lists or your own project filter for this; build the app
+as if it holds one bridge's data. Mark tables everyone needs (staff, rates, checklists, sites list)
+schema shared: true so they stay app-wide. useWorkspace() says which one is open. In the owner's "All"
+view rows carry _workspace (its name): group or filter by it on overview pages, and adding rows waits until
+one is opened (useTable's canAdd is false; show a hint). useAppState is app-wide; keep per-workspace
+settings in a table. Load a workspace's rows with app_data workspace: "<name>".
 column = {key, label, type, options?, currency?, relation?, formula?, required?, hidden?}
 types: text, longtext, number, currency (currency: "EUR"|"GBP"), percent (0.25 = 25%), date (YYYY-MM-DD),
 boolean, enum (options: [{value: "Live", tone: "success"}], tones: neutral success warning danger info accent),
@@ -61,6 +76,9 @@ react, motion/react (animation), lucide-react (icons), recharts (only if the kit
   rows are all their own, so write the screens for "my entries" and give the owner (viewer.role "owner")
   the team view, grouped by _by.
 - useTables() → every table. useApp() → {ready, app: {id, title, version}, viewer: {name, canEdit, role}, theme}.
+- useWorkspace() → {enabled, label, current: {id, name, role} | null, workspaces, canCreate, canManage}
+  (the kit's bar already switches and manages; use it for headings like "Inspections — {current.name}").
+  useTable(name).canAdd is false when the viewer can't add here (viewers, the owner's All view).
 - useAppState(key, initial) → [value, set]: small shared settings for the app (not per person).
 - useAsset(id) → an image URL for a picture added with app_asset (or <AssetImage asset={id}/>).
 - Photos from the people using the app (site photos, defects, receipts): an image column with
@@ -99,9 +117,11 @@ Data: TableView {table: useTable(...), columns?: ["name", "stage", {key, label, 
   add, delete with confirm and export, all wired to the table. DataTable {rows, columns or schema, search?,
   filterBy?, onRowClick?} for read-only lists. CellValue {column, value} renders a typed value.
   RecordForm {schema, value, onChange, columns?} and RecordDetail {schema, row}.
-Views: Kanban {rows, groupBy: "stage", columns?, renderCard, onMove(row, value), onOpen?},
+Views: Kanban {rows, groupBy: "stage", orderBy? (a number column), columns?, renderCard, onMove(row, value,
+  drop {index, order}), onOpen?, onAdd?(value)} — drag with a mouse, press and hold on touch, or Alt+arrows;
+  with orderBy cards also reorder in a column: save {[groupBy]: value, [orderBy]: drop.order}.
   CalendarMonth {rows, dateKey, titleKey, toneKey?, onOpen?}, Timeline {rows, startKey, endKey, titleKey},
-  ActivityFeed {items: [{id, title, description?, date?, tone?, icon?}]}. Timeline is the Gantt/planner.
+  ActivityFeed {items: [{id, title, description?, date?, tone?, icon?}]}. Gantt (see below) is the planner.
 Flows: Steps {steps: [{id, label, description?, render: () => fields, valid?}], onFinish, finishLabel?,
   onCancel?} for multi-step forms (put it in a Dialog or a page). Checklist {items: [{id, label, hint?,
   section?}], value, onChange, readOnly?} for inspections and audits (pass/fail/N-A, a note on fail); keep its
@@ -116,7 +136,7 @@ Controls: Button {variant: "primary"|"secondary"|"outline"|"ghost"|"danger"|"lin
 Overlays: Dialog {open, onClose, title, footer?, size?}, Drawer {open, onClose, title, footer?},
   ConfirmDialog {open, onClose, onConfirm, danger?}, toast("Saved") / toast.success / toast.error.
 Pictures: AssetImage {asset, fit?}, ImageCard {asset?, title, description?}, Gallery {assets: [{id, caption?}]}
-  (opens full size), Lightbox {ids, index, onIndex}, PhotoInput {value, onChange, max?, label?}, Photos {value,
+  (opens full size), Lightbox {ids, index, onIndex}, PhotoInput {value, onChange, onPhoto?, markup?, max?, label?}, Photos {value,
   size?: "sm"|"md"|"lg", limit?}.
 Motion: motion from "motion/react" with motionPresets (fadeUp, fade, pop, spring), stagger.container /
   stagger.item variants, ease.

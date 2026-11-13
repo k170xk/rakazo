@@ -37,6 +37,8 @@ type StoredRow = {
   position: number;
   createdBy: string | null;
   updatedBy: string | null;
+  /** Absent in changes recorded before apps had workspaces. */
+  workspaceId?: string | null;
 };
 
 /** A table as it was: absent, its schema only, or its schema and every row. */
@@ -79,7 +81,14 @@ export async function snapshotTable(tx: Tx, pageId: string, name: string, withRo
         await tx.appRow.findMany({
           where: { tableId: table.id },
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-          select: { id: true, data: true, position: true, createdBy: true, updatedBy: true },
+          select: {
+            id: true,
+            data: true,
+            position: true,
+            createdBy: true,
+            updatedBy: true,
+            workspaceId: true,
+          },
         })
       ).map((row) => ({ ...row, data: asData(row.data) }))
     : null;
@@ -285,6 +294,7 @@ async function restoreTable(tx: Tx, pageId: string, name: string, snapshot: Tabl
       position: row.position,
       createdBy: row.createdBy,
       updatedBy: row.updatedBy,
+      workspaceId: row.workspaceId ?? null,
     })),
   });
 }
@@ -369,6 +379,7 @@ export async function undoAppChange(
                   position: row.position,
                   createdBy: row.createdBy,
                   updatedBy: options.userId ?? row.updatedBy,
+                  workspaceId: row.workspaceId ?? null,
                 },
               });
             }

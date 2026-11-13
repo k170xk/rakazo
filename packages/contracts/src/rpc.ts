@@ -26,6 +26,8 @@ import {
   AppTableNameSchema,
   AppTableSchemaSchema,
   AppVersionSchema,
+  AppWorkspaceSettingsInputSchema,
+  AppWorkspaceSettingsSchema,
 } from "./apps.js";
 import {
   ARTIFACT_DESCRIPTION_MAX_LENGTH,
@@ -1853,6 +1855,15 @@ export const appContract = {
     setDataAccess: oc
       .input(z.strictObject({ pageId: Id, access: AppDataAccessSchema }))
       .output(z.object({ access: AppDataAccessSchema })),
+    workspaces: oc.input(z.strictObject({ pageId: Id })).output(AppWorkspaceSettingsSchema),
+    setWorkspaces: oc.input(AppWorkspaceSettingsInputSchema.extend({ pageId: Id }).strict()).output(
+      z.object({
+        label: z.string().nullable(),
+        create: z.enum(["anyone", "owner"]),
+        filed: z.number().int(),
+        unfiled: z.number().int(),
+      }),
+    ),
     assets: oc.input(z.strictObject({ pageId: Id })).output(z.array(AppAssetSchema)),
     asset: oc
       .input(z.strictObject({ pageId: Id, assetId: Id }))

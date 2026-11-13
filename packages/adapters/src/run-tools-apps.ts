@@ -20,6 +20,7 @@ import {
   listAppAssets,
   listAppChanges,
   mergeImportedTables,
+  readAppRowFacts,
   readAppTables,
   removeAppRow,
   undoAppChange,
@@ -67,6 +68,8 @@ type App = {
   currentVersion: number;
   dataAccess: string;
   brief: string | null;
+  workspaceLabel: string | null;
+  workspaceCreate: string;
   files: Record<string, string>;
 };
 
@@ -86,6 +89,8 @@ async function findApp(ctx: RunContext, appId: string): Promise<App | null> {
       currentVersion: true,
       dataAccess: true,
       brief: true,
+      workspaceLabel: true,
+      workspaceCreate: true,
       versions: { orderBy: { version: "desc" }, take: 1, select: { source: true } },
     },
   });
@@ -97,6 +102,8 @@ async function findApp(ctx: RunContext, appId: string): Promise<App | null> {
     currentVersion: page.currentVersion,
     dataAccess: page.dataAccess,
     brief: page.brief,
+    workspaceLabel: page.workspaceLabel ?? null,
+    workspaceCreate: page.workspaceCreate ?? "anyone",
     files: appFilesFrom(page.versions[0]?.source ?? "{}"),
   };
 }
@@ -170,6 +177,49 @@ function parseTables(value: unknown): TableInput[] | string {
     out.push({ schema: table.schema, rows: table.rows ?? undefined, mode });
   }
   return out;
+}
+
+type WorkspaceChange = { label: string | null; create?: "anyone" | "owner" };
+
+/** save_app's workspaces: {label, create?} turns them on or renames them; {off: true} turns them off. */
+function parseWorkspaces(value: unknown): WorkspaceChange | string | undefined {
+  if (value === undefined) return undefined;
+  const given = (value ?? {}) as { label?: unknown; create?: unknown; off?: unknown };
+  if (value === null || given.off === true) return { label: null };
+  if (typeof value !== "object" || Array.isArray(value) || typeof given.label !== "string")
+    return 'workspaces must be {label: "Bridge", create?: "anyone" | "owner"}, or {off: true}.';
+  const label = given.label.replace(/\s+/g, " ").trim();
+  if (!label || label.length > 30) return "workspaces.label must be 1 to 30 characters.";
+  if (given.create !== undefined && given.create !== "anyone" && given.create !== "owner")
+    return 'workspaces.create is "anyone" or "owner".';
+  return { label, ...(given.create ? { create: given.create as "anyone" | "owner" } : {}) };
+}
+
+/** The app's workspaces, or null when it keeps one set of data. */
+async function workspacesOf(ctx: RunContext, app: App) {
+  if (!app.workspaceLabel) return null;
+  const list = await ctx.deps.prisma.appWorkspace.findMany({
+    where: { pageId: app.id },
+    orderBy: { name: "asc" },
+    take: 500,
+    select: { id: true, name: true, archivedAt: true },
+  });
+  return {
+    label: app.workspaceLabel,
+    create: app.workspaceCreate,
+    workspaces: list.map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+      ...(entry.archivedAt ? { archived: true } : {}),
+    })),
+  };
+}
+
+type Workspaces = NonNullable<Awaited<ReturnType<typeof workspacesOf>>>;
+
+function findWorkspace(spaces: Workspaces, ref: string) {
+  const wanted = ref.trim().toLowerCase();
+  return spaces.workspaces.find((entry) => entry.id === ref || entry.name.toLowerCase() === wanted);
 }
 
 function tableSummary(tables: Awaited<ReturnType<typeof readAppTables>>) {
@@ -377,6 +427,9 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     ? args.deleteFiles.filter((name): name is string => typeof name === "string")
     : [];
   const hasTables = Array.isArray(args.tables) && args.tables.length > 0;
+  const workspaces = parseWorkspaces(args.workspaces);
+  if (typeof workspaces === "string") return { error: workspaces, unchanged: true };
+  const hasWorkspaces = workspaces !== undefined;
   const iconSubject = argumentGiven(args.icon)
     ? redactSecrets(String(args.icon), ctx.secrets).replace(/\s+/g, " ").trim().slice(0, 300)
     : "";
@@ -419,6 +472,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     !hasEdits &&
     !deletes.length &&
     !hasTables &&
+    !hasWorkspaces &&
     !title &&
     !briefGiven
   ) {
@@ -427,12 +481,22 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
       ? { appId: app.id, icon: drawing }
       : { error: "Icons can't be drawn here: Evolve is not linked." };
   }
-  if (app && !hasFiles && !hasEdits && !deletes.length && !hasTables && !title && !briefGiven) {
+  if (
+    app &&
+    !hasFiles &&
+    !hasEdits &&
+    !deletes.length &&
+    !hasTables &&
+    !hasWorkspaces &&
+    !title &&
+    !briefGiven
+  ) {
     // Rows can be written by colleagues through a shared link, so reading them taints the run.
     ctx.state.tainted = true;
-    const [tables, assets] = await Promise.all([
+    const [tables, assets, spaces] = await Promise.all([
       readAppTables(deps.prisma, app.id),
       listAppAssets(deps.prisma, app.id),
+      workspacesOf(ctx, app),
     ]);
     return {
       appId: app.id,
@@ -442,6 +506,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
       dataAccess: app.dataAccess,
       files: app.files,
       tables: tableSummary(tables),
+      ...(spaces ? { workspaces: spaces } : {}),
       assets: assets.map((asset) => ({ id: asset.id, name: asset.name, mime: asset.mime })),
     };
   }
@@ -544,6 +609,15 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     if (app && briefGiven) {
       await deps.prisma.page.update({ where: { id: app.id }, data: { brief: brief || null } });
     }
+    if (workspaces) {
+      await deps.prisma.page.update({
+        where: { id: saved.pageId },
+        data: {
+          workspaceLabel: workspaces.label,
+          ...(workspaces.create ? { workspaceCreate: workspaces.create } : {}),
+        },
+      });
+    }
     for (const table of tables) {
       const result = await defineAppTable(deps.prisma, saved.pageId, {
         schema: table.schema,
@@ -583,6 +657,13 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     version: saved.version,
     title: saved.title,
     ...(tableResults.length ? { tables: tableResults } : {}),
+    ...(workspaces
+      ? {
+          workspaces: workspaces.label
+            ? `Each ${workspaces.label.toLowerCase()} now keeps its own rows, seen by the people added to it; the owner sees all. Load a workspace's rows with app_data and workspace.`
+            : "Workspaces are off: everyone the app is shared with sees every row.",
+        }
+      : {}),
     ...(template?.access === "contribute"
       ? {
           access:
@@ -785,16 +866,49 @@ async function appData(ctx: RunContext, call: ToolCall) {
   if (args.patch && containsSecret([JSON.stringify(args.patch)], ctx.secrets)) {
     return { error: "The change contains a secret value; nothing was saved.", unchanged: true };
   }
-  const assistant = { via: "assistant" as const, runId: ctx.runId };
   const assistantBy = { userId: run.userId, via: "assistant" as const, runId: ctx.runId };
+  const spaces = await workspacesOf(ctx, app);
+  const workspaceRef = typeof args.workspace === "string" ? args.workspace.trim() : "";
+  if (workspaceRef && !spaces)
+    return { error: "This app keeps one set of data; turn workspaces on with save_app first." };
+  const workspace = workspaceRef && spaces ? findWorkspace(spaces, workspaceRef) : undefined;
+  if (workspaceRef && !workspace) {
+    return {
+      error: `This app has no ${spaces!.label.toLowerCase()} called ${workspaceRef}.`,
+      workspaces: spaces!.workspaces.slice(0, 50).map((entry) => entry.name),
+    };
+  }
+  const assistant = {
+    via: "assistant" as const,
+    runId: ctx.runId,
+    ...(workspace ? { workspaceId: workspace.id } : {}),
+  };
+  const sharedTable = async () => {
+    const found = await deps.prisma.appTable.findFirst({
+      where: { pageId: app.id, name: table },
+      select: { schema: true },
+    });
+    return (found?.schema as { shared?: unknown } | null)?.shared === true;
+  };
   try {
     switch (action) {
       case "query": {
         ctx.state.tainted = true;
         const tables = await readAppTables(deps.prisma, app.id);
-        if (!table) return { tables: tableSummary(tables) };
+        if (!table)
+          return { tables: tableSummary(tables), ...(spaces ? { workspaces: spaces } : {}) };
         const found = tables[table];
         if (!found) return { error: `This app has no table called ${table}.` };
+        let rowsHere = found.rows;
+        if (spaces && found.schema.shared !== true) {
+          const facts = await readAppRowFacts(deps.prisma, app.id);
+          const names = new Map(spaces.workspaces.map((entry) => [entry.id, entry.name]));
+          rowsHere = rowsHere.flatMap((row) => {
+            const id = facts.get(String(row._id))?.workspaceId ?? null;
+            if (workspace && id !== workspace.id) return [];
+            return [{ ...row, _workspace: id ? (names.get(id) ?? null) : null }];
+          });
+        }
         const where =
           args.where && typeof args.where === "object" && !Array.isArray(args.where)
             ? (args.where as Record<string, unknown>)
@@ -803,7 +917,7 @@ async function appData(ctx: RunContext, call: ToolCall) {
           typeof args.search === "string"
             ? args.search.toLowerCase().split(/\s+/).filter(Boolean)
             : [];
-        const hits = found.rows.filter((row) => matches(row, where, search));
+        const hits = rowsHere.filter((row) => matches(row, where, search));
         const limit = Math.min(Math.max(Number(args.limit) || 50, 1), QUERY_LIMIT);
         const offset = Math.max(Number(args.offset) || 0, 0);
         return {
@@ -816,6 +930,11 @@ async function appData(ctx: RunContext, call: ToolCall) {
       case "insert": {
         const row = (rows?.[0] ?? args.row) as Record<string, unknown> | undefined;
         if (!row || typeof row !== "object") return { error: "insert needs row." };
+        if (spaces && !workspace && !(await sharedTable())) {
+          return {
+            error: `Each ${spaces.label.toLowerCase()} keeps its own ${table} rows: pass workspace (its name or id).`,
+          };
+        }
         const saved = await insertAppRow(deps.prisma, app.id, table, row, run.userId, assistant);
         return { row: saved.row, revision: saved.revision };
       }
@@ -852,6 +971,7 @@ async function appData(ctx: RunContext, call: ToolCall) {
           userId: run.userId,
           via: "assistant",
           runId: ctx.runId,
+          ...(workspace ? { workspaceId: workspace.id } : {}),
         });
         return {
           table: result.table,

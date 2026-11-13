@@ -195,6 +195,16 @@ msgstr "{0} days"
 msgid "{0} did not accept this token. Check it and try again."
 msgstr "{0} did not accept this token. Check it and try again."
 
+#. placeholder {0}: saved.unfiled
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "{0} earlier entries are only visible to you. Move them to:"
+msgstr "{0} earlier entries are only visible to you. Move them to:"
+
+#. placeholder {0}: saved.unfiled
+#: src/components/apps/AppWorkspacesSection.tsx
+#~ msgid "{0} entries were made before this and belong to none, so only you see them. Put them in:"
+#~ msgstr "{0} entries were made before this and belong to none, so only you see them. Put them in:"
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} GB"
@@ -273,6 +283,11 @@ msgstr "{0} selected · {chosenSize}"
 #: src/pages/AdminCompanyVoice.tsx
 msgid "{0} shares their voice connection, but it has been removed. Connect one again below."
 msgstr "{0} shares their voice connection, but it has been removed. Connect one again below."
+
+#. placeholder {0}: saved.workspaces
+#: src/components/apps/AppWorkspacesSection.tsx
+#~ msgid "{0} so far."
+#~ msgstr "{0} so far."
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
@@ -634,6 +649,18 @@ msgstr "0 stops people switching on routines."
 #: src/components/AskCard.tsx
 msgid "1 day"
 msgstr "1 day"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "1 earlier entry is only visible to you. Move it to:"
+msgstr "1 earlier entry is only visible to you. Move it to:"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+#~ msgid "1 entry was made before this and belongs to none, so only you see it. Put it in:"
+#~ msgstr "1 entry was made before this and belongs to none, so only you see it. Put it in:"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+#~ msgid "1 so far."
+#~ msgstr "1 so far."
 
 #: src/components/integrations/space-availability.tsx
 msgid "1 space"
@@ -1296,6 +1323,10 @@ msgstr "Any active staff member"
 #: src/pages/Paywall.tsx
 msgid "Any model, with your own key"
 msgstr "Any model, with your own key"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Anyone at OCSC with the app can start one and lead it."
+msgstr "Anyone at OCSC with the app can start one and lead it."
 
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Anyone at OCSC with the link"
@@ -2488,6 +2519,10 @@ msgstr "Colleagues and agents, together"
 #: src/components/GroupPeople.tsx
 msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
 msgstr "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Colleagues start their own"
+msgstr "Colleagues start their own"
 
 #: src/pages/AdminSharedApps.tsx
 msgid "Colleagues with the link"
@@ -4509,6 +4544,14 @@ msgstr "Each comes with its screens and empty tables. Add your rows, or ask the 
 msgid "Each name can be used once."
 msgstr "Each name can be used once."
 
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Each one is called a"
+msgstr "Each one is called a"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Each project, bridge or site keeps its own entries, seen only by the people added to it. You see them all."
+msgstr "Each project, bridge or site keeps its own entries, seen only by the people added to it. You see them all."
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
 msgstr "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
@@ -5318,6 +5361,10 @@ msgstr "Gets to know you over time"
 msgid "Getting ready"
 msgstr "Getting ready"
 
+#: src/components/apps/AppStudio.tsx
+msgid "Getting the app ready to pick from…"
+msgstr "Getting the app ready to pick from…"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Git event"
 msgstr "Git event"
@@ -5833,6 +5880,10 @@ msgstr "just now"
 msgid "Keep memories"
 msgstr "Keep memories"
 
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Keep separate data for each one"
+msgstr "Keep separate data for each one"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Keep tool results whole"
 msgstr "Keep tool results whole"
@@ -6035,6 +6086,10 @@ msgstr "Listening"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Listening…"
 msgstr "Listening…"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+#~ msgid "Lists everyone needs (staff, rates, checklists) stay shared when the app marks those tables shared."
+#~ msgstr "Lists everyone needs (staff, rates, checklists) stay shared when the app marks those tables shared."
 
 #: src/components/pages/PagesList.tsx
 msgid "Live data"
@@ -6649,6 +6704,10 @@ msgstr "More computer actions"
 msgid "Most deadlines a project may hold"
 msgstr "Most deadlines a project may hold"
 
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Move"
+msgstr "Move"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "Move down"
@@ -6743,6 +6802,10 @@ msgstr "Name this routine"
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Name your Bot"
 msgstr "Name your Bot"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Name, new or existing"
+msgstr "Name, new or existing"
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Nearly full (80%+)"
@@ -7421,6 +7484,10 @@ msgstr "Off"
 msgid "Off hides voice, dictation and calls for every member, admins included."
 msgstr "Off hides voice, dictation and calls for every member, admins included."
 
+#: src/components/apps/AppWorkspacesSection.tsx
+#~ msgid "Off, everyone you share the app with works in one set of data. On, each project, bridge or site keeps its own entries, seen only by the people added to it. You see them all."
+#~ msgstr "Off, everyone you share the app with works in one set of data. On, each project, bridge or site keeps its own entries, seen only by the people added to it. You see them all."
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Off: only admins connect models or change a bot's model; everyone runs on the company model."
 msgstr "Off: only admins connect models or change a bot's model; everyone runs on the company model."
@@ -7487,6 +7554,10 @@ msgstr "One-time purchase. Credits do not expire."
 #: src/components/SecretAskCard.tsx
 msgid "Only enter a code {codeHost} sent you."
 msgstr "Only enter a code {codeHost} sent you."
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Only I start them"
+msgstr "Only I start them"
 
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Only me"
@@ -8116,6 +8187,7 @@ msgstr "Program: {name}"
 msgid "project"
 msgstr "project"
 
+#: src/components/apps/AppWorkspacesSection.tsx
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
@@ -8125,6 +8197,10 @@ msgstr "Project"
 #: src/pages/shell/evolve-references.tsx
 msgid "Project reference, as sent to the AI"
 msgstr "Project reference, as sent to the AI"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Project, Bridge, Site"
+msgstr "Project, Bridge, Site"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "projects"
@@ -8923,6 +8999,7 @@ msgstr "Saturday"
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/apps/AppVisualEdit.tsx
+#: src/components/apps/AppWorkspacesSection.tsx
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/SecretAskCard.tsx
@@ -9305,6 +9382,10 @@ msgstr "Sends back the marked-up PDF with a list of findings by page"
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
 msgstr "Sent"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Separate data per project"
+msgstr "Separate data per project"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Serenity endpoint is required."
@@ -10194,6 +10275,10 @@ msgstr "That picture wasn't added."
 msgid "That version couldn't be restored."
 msgstr "That version couldn't be restored."
 
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "That wasn't saved."
+msgstr "That wasn't saved."
+
 #: src/components/apps/ImportWorkbookButton.tsx
 msgid "That workbook couldn't be read."
 msgstr "That workbook couldn't be read."
@@ -10597,6 +10682,10 @@ msgstr "This server's tool result does not fit the model. Turn off Keep tool res
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in OCSC Intelligence yet. Use a deployment credential or choose another provider."
 msgstr "This subscription sign-in is not available in OCSC Intelligence yet. Use a deployment credential or choose another provider."
+
+#: src/components/apps/AppStudio.tsx
+msgid "This version can't be picked from. Ask the bot instead."
+msgstr "This version can't be picked from. Ask the bot instead."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -11372,6 +11461,10 @@ msgstr "What do you most want OCSC Intelligence to help with?"
 msgid "What do you want me on first?"
 msgstr "What do you want me on first?"
 
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "What each one is called"
+msgstr "What each one is called"
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "What each person's chats, bots and routines have cost in model usage. Updates every minute."
 msgstr "What each person's chats, bots and routines have cost in model usage. Updates every minute."
@@ -11455,6 +11548,10 @@ msgstr "When you answer me:\n"
 "- Keep it under 200 words unless I ask for more\n"
 "- Show sums step by step\n"
 ""
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "Where earlier entries go"
+msgstr "Where earlier entries go"
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Where should bots run?"
@@ -11650,6 +11747,10 @@ msgstr "You get a free month when they start their trial with a new card."
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"
 msgstr "You have control"
+
+#: src/components/apps/AppWorkspacesSection.tsx
+msgid "You start each one and choose its leads."
+msgstr "You start each one and choose its leads."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "You're all set"

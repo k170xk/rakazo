@@ -3,6 +3,7 @@ import type { ComponentType, ReactNode } from "react";
 import { Component, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import { LOC_CLASS_PREFIX, locFromClass } from "../loc.js";
+import type { PdfDocument } from "../pdf/model.js";
 import type {
   AppComment,
   AppDelta,
@@ -10,6 +11,7 @@ import type {
   AppFocus,
   AppInit,
   AppLive,
+  AppLocation,
   AppPresence,
   AppRequest,
   AppResponseMessage,
@@ -35,10 +37,19 @@ import type {
 } from "../query.js";
 import { runAggregate, runQuery } from "../query.js";
 import type { Row, TableSchema } from "../schema.js";
-import { isLargeTable, withFormulas } from "../schema.js";
+import { isLargeTable, isPersonalTable, withFormulas } from "../schema.js";
+import type { MemberRole, WorkspaceCurrent, WorkspaceSummary } from "../workspace.js";
+import { managesWorkspace } from "../workspace.js";
 import { mergeDelta } from "./delta.js";
+import type { PhotoExif } from "./exif.js";
+import { readPhotoExif } from "./exif.js";
+import { hostNodes, nodesForLoc, sourceAt } from "./pick.js";
+import { WorkspaceFrame } from "./workspace-bar.js";
 
+export type { PdfBlock, PdfDocument, PdfPhoto, PdfPicture, PdfTone } from "../pdf/model.js";
+export type { AppLocation } from "../protocol.js";
 export { formatValue } from "../schema.js";
+export type { PhotoExif } from "./exif.js";
 export type {
   AggregateQuery,
   AggregateResult,
@@ -101,6 +112,8 @@ const EMPTY: AppInit = {
 };
 
 const store: Store = { status: "loading", local: false, init: EMPTY, version: 0 };
+/** Goes up when the app starts again in another workspace, so its screens start fresh too. */
+let generation = 0;
 /** Everyone signed in who has the app open, from the host's live checks. */
 let presence: AppPresence[] = [];
 /** The row this viewer has open, for others' presence. */
@@ -221,7 +234,21 @@ function receive(event: MessageEvent) {
     applyDelta(data.delta);
   } else if (data.event === "presence") {
     setPresence(data.people);
+  } else if (data.event === "workspace") {
+    void restart().catch(() => {});
   }
+}
+
+/**
+ * Starts the app again from the host, after this person opened another workspace (here or in a
+ * second window): new rows, new rights, and the app's screens mounted afresh.
+ */
+async function restart() {
+  if (store.local) return;
+  const init = await send<AppInit>({ op: "init", accepts: ACCEPTS });
+  store.init = { ...init, theme: store.init.theme };
+  generation += 1;
+  changed();
 }
 
 function goLocal(fixture?: Partial<AppInit>) {
@@ -265,6 +292,13 @@ function startInEvolve(bridge: EvolveBridge) {
             ? send<AppLive>({ op: "live", since: store.init.revision, focus }).then(
                 async (answer) => {
                   setPresence(answer.presence);
+                  if (
+                    answer.workspace !== undefined &&
+                    answer.workspace !== (store.init.workspace?.current?.id ?? null)
+                  ) {
+                    await restart();
+                    return;
+                  }
                   if (answer.revision <= store.init.revision) return;
                   if (answer.full || !answer.delta) await readAll();
                   else applyDelta(answer.delta);
@@ -325,6 +359,12 @@ function useStore(): Store {
   return store;
 }
 
+/** Goes up each time the app starts again in another workspace; the kit remounts the app on it. */
+export function useAppGeneration(): number {
+  useStore();
+  return generation;
+}
+
 /** The app, who is viewing it and the host's theme. ready turns true once data has arrived. */
 export function useApp() {
   const current = useStore();
@@ -383,6 +423,11 @@ export type TableApi<T extends Record<string, unknown> = Record<string, unknown>
   /** False for visitors and read-only viewers: hide add, edit and delete controls. */
   canEdit: boolean;
   /**
+   * Whether this viewer may add rows now. Usually the same as canEdit; false for the owner looking
+   * at every workspace at once (they open one to add to it).
+   */
+  canAdd: boolean;
+  /**
    * Whether this viewer may change or remove this row: every row when they can edit, or only the
    * ones they added (row._mine) in apps where colleagues contribute. Rows carry _by, who added them.
    */
@@ -423,10 +468,16 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
       replaceRows(name, (list) => [...list, optimistic]);
       if (store.local) return optimistic;
       try {
+        const open = store.init.workspace?.current;
+        const shared = store.init.tables[name]?.schema.shared === true;
         const saved = await send<Row & T>({
           op: "rows.insert",
           table: name,
-          row: row as Record<string, unknown>,
+          // Lets the server refuse a row from a copy showing a workspace no longer open.
+          row: { ...row, ...(open && !shared ? { _workspace: open.id } : {}) } as Record<
+            string,
+            unknown
+          >,
         });
         // A live check may have brought the saved row in already.
         replaceRows(name, (list) =>
@@ -494,7 +545,8 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
     },
     [name],
   );
-  const { canEdit, ownRowsOnly } = current.init.viewer;
+  const rights = tableRights(current.init, schema);
+  const { canEdit, ownRowsOnly } = rights;
   const canEditRow = useCallback(
     (row: Row) => canEdit && (!ownRowsOnly || row._mine === true),
     [canEdit, ownRowsOnly],
@@ -507,12 +559,118 @@ export function useTable<T extends Record<string, unknown> = Record<string, unkn
     schema,
     loading: current.status !== "ready",
     canEdit,
+    canAdd: rights.canAdd,
     canEditRow,
     insert,
     update,
     remove,
     exportFile,
     canExport: current.local || current.init.features.includes("export"),
+  };
+}
+
+/**
+ * What this viewer may do to one table. Outside workspaces (and in shared tables) the app's own
+ * setting decides; in a workspace, their role there does: leads change every row, members every
+ * row unless people keep to their own, viewers read.
+ */
+export function tableRights(
+  init: AppInit,
+  schema: TableSchema | null,
+): { canEdit: boolean; canAdd: boolean; ownRowsOnly: boolean } {
+  const { canEdit, ownRowsOnly = false } = init.viewer;
+  const space = init.workspace;
+  if (!space || schema?.shared === true) return { canEdit, canAdd: canEdit, ownRowsOnly };
+  const role = space.current?.role;
+  const edits = role === "owner" || role === "lead" || role === "member";
+  return {
+    canEdit: edits,
+    canAdd: edits && space.current !== null,
+    ownRowsOnly: role === "member" && (ownRowsOnly || isPersonalTable(schema)),
+  };
+}
+
+export type WorkspaceMember = {
+  id: string;
+  /** Null until they have opened the app, when only their email is known. */
+  name: string | null;
+  role: MemberRole;
+  /** Has opened the app since being added. */
+  joined: boolean;
+  /** Shown to the workspace's leads and the app's owner. */
+  email?: string;
+  me?: boolean;
+};
+
+export type WorkspaceApi = {
+  /** The app keeps its data in workspaces (set by the owner in the app's settings). */
+  enabled: boolean;
+  /** What one workspace is called, e.g. "Bridge". */
+  label: string;
+  /** The open workspace; null for the owner looking at every one, or someone in none yet. */
+  current: WorkspaceCurrent | null;
+  workspaces: WorkspaceSummary["workspaces"];
+  /** May start a new workspace. */
+  canCreate: boolean;
+  /** May rename the open workspace and choose who is in it (its leads and the owner). */
+  canManage: boolean;
+  /** Opens another of theirs (the owner may pass null for all); the app starts again in it. */
+  open: (id: string | null) => Promise<void>;
+  /** Starts a workspace and opens it; whoever starts one leads it. */
+  create: (name: string) => Promise<void>;
+  rename: (id: string, name: string) => Promise<void>;
+  /** Hides it from its members (its rows are kept); only the owner can bring it back. */
+  archive: (id: string, archived: boolean) => Promise<void>;
+  members: (id: string) => Promise<WorkspaceMember[]>;
+  /** Adds a colleague by work email; they see it the next time they open the app. */
+  addMember: (id: string, email: string, role: MemberRole) => Promise<WorkspaceMember[]>;
+  setRole: (id: string, memberId: string, role: MemberRole) => Promise<WorkspaceMember[]>;
+  removeMember: (id: string, memberId: string) => Promise<WorkspaceMember[]>;
+};
+
+/** The answer to a change of workspace: the app starts again in the one now open. */
+async function switched(request: AppRequest) {
+  if (store.local) throw new Error("Workspaces work once the app is shared.");
+  await send(request);
+  await restart();
+}
+
+const workspaceActions = {
+  open: (id: string | null) => switched({ op: "workspaces.open", workspace: id }),
+  create: (name: string) => switched({ op: "workspaces.save", name }),
+  rename: async (id: string, name: string) => {
+    store.init = {
+      ...store.init,
+      workspace: await send<WorkspaceSummary>({ op: "workspaces.save", workspace: id, name }),
+    };
+    changed();
+  },
+  archive: (id: string, archived: boolean) =>
+    switched({ op: "workspaces.save", workspace: id, archived }),
+  members: (id: string) => send<WorkspaceMember[]>({ op: "workspaces.members", workspace: id }),
+  addMember: (id: string, email: string, role: MemberRole) =>
+    send<WorkspaceMember[]>({ op: "workspaces.member", workspace: id, email, role }),
+  setRole: (id: string, memberId: string, role: MemberRole) =>
+    send<WorkspaceMember[]>({ op: "workspaces.member", workspace: id, memberId, role }),
+  removeMember: (id: string, memberId: string) =>
+    send<WorkspaceMember[]>({ op: "workspaces.member", workspace: id, memberId, remove: true }),
+};
+
+/**
+ * The app's workspaces (a bridge, a project, a client): which one is open, the others this person
+ * may open, and managing them. The kit already shows a bar to switch and manage them above every
+ * app with workspaces, so most apps only read label and current (for titles and reports).
+ */
+export function useWorkspace(): WorkspaceApi {
+  const space = useStore().init.workspace;
+  return {
+    enabled: Boolean(space),
+    label: space?.label ?? "Workspace",
+    current: space?.current ?? null,
+    workspaces: space?.workspaces ?? [],
+    canCreate: space?.canCreate ?? false,
+    canManage: managesWorkspace(space?.current?.role),
+    ...workspaceActions,
   };
 }
 
@@ -641,6 +799,76 @@ export async function uploadImage(file: Blob, options: { longest?: number } = {}
   );
   assetUrls.set(saved.id, Promise.resolve(`data:image/jpeg;base64,${base64}`));
   return saved.id;
+}
+
+/** A photo added to the app, with where and when it was taken when that is known. */
+export type PhotoInfo = PhotoExif & {
+  id: string;
+  /** photo: from the camera's GPS; device: the phone's position when it was added. */
+  located?: "photo" | "device";
+};
+
+/** Whether the device's position can be asked for here. */
+export function canLocate(): boolean {
+  return store.local
+    ? typeof navigator !== "undefined" && "geolocation" in navigator
+    : has("location");
+}
+
+/**
+ * The device's position (call from a tap the first time; the browser may ask the person). Later
+ * calls while the app stays open don't need a tap, so a route can be recorded as someone walks.
+ */
+export async function getLocation(): Promise<AppLocation> {
+  if (!store.local && hosted()) return send<AppLocation>({ op: "location" }, 30_000);
+  if (typeof navigator === "undefined" || !navigator.geolocation)
+    throw new Error("This device can't share its location.");
+  const position = await new Promise<GeolocationPosition>((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 20_000,
+      maximumAge: 10_000,
+    }),
+  ).catch(() => {
+    throw new Error("Location isn't available.");
+  });
+  return {
+    lat: position.coords.latitude,
+    lon: position.coords.longitude,
+    accuracy: Math.round(position.coords.accuracy),
+    ...(position.coords.altitude !== null ? { altitude: position.coords.altitude } : {}),
+    ...(position.coords.heading !== null ? { heading: position.coords.heading } : {}),
+    at: new Date(position.timestamp).toISOString(),
+  };
+}
+
+/**
+ * Adds a photo like uploadImage and also returns where and when it was taken, read from the
+ * camera's GPS before the photo is shrunk. With locate, a photo that has no GPS and was just
+ * taken gets the device's position instead.
+ */
+export async function uploadPhoto(
+  file: Blob,
+  options: { longest?: number; locate?: boolean } = {},
+): Promise<PhotoInfo> {
+  const [id, exif] = await Promise.all([uploadImage(file, options), readPhotoExif(file)]);
+  if (exif.lat !== undefined) return { id, ...exif, located: "photo" };
+  const fresh = !(file instanceof File) || Date.now() - file.lastModified < 10 * 60_000;
+  if (options.locate && fresh && canLocate()) {
+    const here = await getLocation().catch(() => null);
+    if (here) {
+      return {
+        id,
+        ...exif,
+        lat: here.lat,
+        lon: here.lon,
+        ...(here.altitude !== undefined ? { altitude: here.altitude } : {}),
+        takenAt: exif.takenAt ?? here.at,
+        located: "device",
+      };
+    }
+  }
+  return { id, ...exif };
 }
 
 /** True where the viewer can add photos (they may edit, and the host keeps uploads). */
@@ -1065,6 +1293,30 @@ export async function download(filename: string, text: string, mime = "text/plai
   await send({ op: "download", filename: filename.slice(0, 120), mime, text });
 }
 
+/** Whether reports can be printed to PDF here (inside OCSC Intelligence). */
+export function canPrintPdf(): boolean {
+  return !store.local && has("pdf");
+}
+
+/**
+ * Prints a report to PDF on OCSC's standard template (the green banner, skyline footer and page
+ * numbers of Evolve's reports) and saves it for the reader. Call it from a click; describe the
+ * report with blocks rather than drawing it, and pictures by their asset ids.
+ */
+export async function printPdf(document: PdfDocument, options: { filename?: string } = {}) {
+  if (!canPrintPdf()) {
+    throw new Error("Printing to PDF works when the app is open in OCSC Intelligence.");
+  }
+  await send(
+    {
+      op: "pdf",
+      document,
+      ...(options.filename ? { filename: options.filename.slice(0, 120) } : {}),
+    },
+    180_000,
+  );
+}
+
 /** Opens a web or mail link through the host (call from a click). */
 export async function openLink(url: string) {
   if (!/^(https?:|mailto:)/i.test(url)) return;
@@ -1096,22 +1348,23 @@ function toCsv(schema: TableSchema, rows: Row[]) {
 }
 
 let picking = false;
-let hovered: HTMLElement | null = null;
+let hovered: Element[] = [];
+/** A pick happens on press; the click that follows must not reach the app after picking stops. */
+let swallowClickUntil = 0;
 
 function setPicking(enabled: boolean) {
   picking = enabled;
   document.documentElement.toggleAttribute("data-ocsc-picking", enabled);
-  if (!enabled && hovered) {
-    hovered.removeAttribute("data-ocsc-hover");
-    hovered = null;
-  }
+  if (!enabled) hover([]);
+}
+
+function hover(nodes: Element[]) {
+  for (const node of hovered) if (!nodes.includes(node)) node.removeAttribute("data-ocsc-hover");
+  for (const node of nodes) node.setAttribute("data-ocsc-hover", "");
+  hovered = nodes;
 }
 
 const LOC_SELECTOR = `[data-loc],[class*="${LOC_CLASS_PREFIX}"]`;
-
-function pickTarget(target: EventTarget | null): HTMLElement | null {
-  return target instanceof Element ? (target.closest(LOC_SELECTOR) as HTMLElement | null) : null;
-}
 
 /** Where an element was written: its data-loc, or the place class a kit component passed on. */
 function locOf(element: Element): string {
@@ -1125,9 +1378,27 @@ function locOf(element: Element): string {
 }
 
 function elementsAt(loc: string): HTMLElement[] {
-  return [...document.querySelectorAll<HTMLElement>(LOC_SELECTOR)].filter(
+  const tagged = [...document.querySelectorAll<HTMLElement>(LOC_SELECTOR)].filter(
     (element) => locOf(element) === loc,
   );
+  const drawn = nodesForLoc(loc).filter(
+    (node): node is HTMLElement => node instanceof HTMLElement && !tagged.includes(node),
+  );
+  return [...tagged, ...drawn];
+}
+
+/** What a press at this point would pick: its place and the elements to outline. */
+function pickAt(target: EventTarget | null): { loc: string; nodes: Element[] } | null {
+  if (!(target instanceof Node)) return null;
+  const source = sourceAt(target);
+  if (!source) return null;
+  const nodes = source.fiber ? hostNodes(source.fiber) : [];
+  if (!nodes.length) {
+    const element = target instanceof Element ? target : target.parentElement;
+    const tagged = element?.closest(LOC_SELECTOR);
+    if (tagged) nodes.push(tagged);
+  }
+  return { loc: source.loc, nodes };
 }
 
 function patchElements(patch: Extract<AppEventMessage, { event: "patch" }>) {
@@ -1157,42 +1428,75 @@ function markSelected(loc: string | null) {
   if (loc) for (const element of elementsAt(loc)) element.setAttribute("data-ocsc-selected", "");
 }
 
+/**
+ * While picking, presses, hovers and menus never reach the app, so tabs don't switch, menus don't
+ * open and tooltips don't move under the pointer. Disabled buttons fire no click, so the pick is
+ * made on press.
+ */
+const HELD_EVENTS = [
+  "pointerdown",
+  "pointerup",
+  "mousedown",
+  "mouseup",
+  "click",
+  "dblclick",
+  "auxclick",
+  "contextmenu",
+  "touchstart",
+  "touchend",
+  "pointermove",
+  "mousemove",
+  "pointerover",
+  "pointerout",
+  "mouseover",
+  "mouseout",
+  "dragstart",
+  "submit",
+] as const;
+const QUIET_EVENTS = new Set(["pointermove", "mousemove", "pointerout", "mouseout"]);
+
 function installPicker() {
   const style = document.createElement("style");
   style.textContent =
     "[data-ocsc-picking] *{cursor:crosshair!important}[data-ocsc-hover],[data-ocsc-selected]{outline:2px solid hsl(95 49% 51%)!important;outline-offset:2px}[data-ocsc-selected]{outline-style:dashed!important}";
   document.head.append(style);
-  document.addEventListener(
-    "mouseover",
-    (event) => {
-      if (!picking) return;
-      const element = pickTarget(event.target);
-      if (hovered && hovered !== element) hovered.removeAttribute("data-ocsc-hover");
-      hovered = element;
-      element?.setAttribute("data-ocsc-hover", "");
-    },
-    true,
-  );
-  document.addEventListener(
-    "click",
-    (event) => {
-      if (!picking) return;
-      event.preventDefault();
-      event.stopPropagation();
-      const element = pickTarget(event.target);
-      if (!element) return;
-      window.parent.postMessage(
-        {
-          type: APP_PICK,
-          loc: locOf(element),
-          tag: element.tagName.toLowerCase(),
-          text: (element.innerText || "").replace(/\s+/g, " ").trim().slice(0, 160),
-        },
-        "*",
-      );
-    },
-    true,
-  );
+  const hold = (event: Event) => {
+    if (!picking) {
+      if (event.type === "click" && Date.now() < swallowClickUntil) {
+        swallowClickUntil = 0;
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+    if (!QUIET_EVENTS.has(event.type)) event.preventDefault();
+    event.stopPropagation();
+    if (event.type === "pointerover" || event.type === "mouseover") {
+      hover(pickAt(event.target)?.nodes ?? []);
+      return;
+    }
+    if (event.type !== "pointerdown") return;
+    if ((event as PointerEvent).button > 0) return;
+    const found = pickAt(event.target);
+    if (!found) return;
+    swallowClickUntil = Date.now() + 1500;
+    const first = found.nodes[0];
+    window.parent.postMessage(
+      {
+        type: APP_PICK,
+        loc: found.loc,
+        tag: first?.tagName.toLowerCase() ?? "element",
+        text: ((first as HTMLElement | undefined)?.innerText || first?.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 160),
+      },
+      "*",
+    );
+  };
+  for (const type of HELD_EVENTS) {
+    document.addEventListener(type, hold, { capture: true, passive: false });
+  }
 }
 
 class Boundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -1235,7 +1539,9 @@ export function mount(App: ComponentType) {
   createRoot(element).render(
     <MotionConfig reducedMotion="user">
       <Boundary>
-        <App />
+        <WorkspaceFrame>
+          <App />
+        </WorkspaceFrame>
       </Boundary>
     </MotionConfig>,
   );
