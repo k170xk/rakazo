@@ -1555,7 +1555,7 @@ function SpaceShell() {
           stdioEnabled={bootstrapMe?.mcpStdioEnabled === true}
           mcpEnabled={companyFeatures?.mcpServers !== false && !integrationsComingSoon}
           integrationsComingSoon={integrationsComingSoon}
-          canAddCustom={bootstrapMe?.isAdmin === true}
+          canAddCustom={bootstrapMe?.isAdmin === true && companyFeatures?.mcpServers !== false}
           canManageSkills={
             bootstrapMe?.isAdmin === true || bootstrapMe?.features?.staffSkills === true
           }
