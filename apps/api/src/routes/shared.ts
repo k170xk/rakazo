@@ -1,4 +1,5 @@
 import {
+  companyFeatureOpenTo,
   companyFeatures,
   companyFeaturesFor,
   companyModel,
@@ -76,6 +77,8 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
   return {
     features: {
       ...companyFeaturesFor(actor.userId, admin),
+      // The app's MCP menus follow the switch's chosen people and groups, for admins too.
+      mcpServers: companyFeatureOpenTo("mcpServers", actor.userId),
       memberModels: modelAccess.success
         ? modelAccess.data === "choose"
         : companyFeatures().memberModels,

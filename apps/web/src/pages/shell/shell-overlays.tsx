@@ -74,7 +74,7 @@ export function AppOverlays({
   mcpEnabled?: boolean;
   /** A member while the company keeps integrations to admins. */
   integrationsComingSoon?: boolean;
-  /** The Add custom menu: GitHub, MCP and other sources. Admins only. */
+  /** The Add custom menu: GitHub, MCP and other sources. Whoever the MCP servers switch is open to. */
   canAddCustom?: boolean;
   /** Own skills, skill packs and From GitHub. Admins, or staff once the company allows it. */
   canManageSkills?: boolean;
