@@ -1674,9 +1674,7 @@ export function PluginsOverlay({
                     </span>
                   ))}
                 </span>
-                <span className="max-sm:sr-only">
-                  <Plural value={connectedCount} one="# connected" other="# connected" />
-                </span>
+                <Plural value={connectedCount} one="# connected" other="# connected" />
                 <ChevronRight />
               </Button>
             ) : null}
