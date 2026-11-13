@@ -15,6 +15,7 @@ import type { AuthCapabilities } from "../lib/auth-capabilities";
 import { fetchAuthCapabilities } from "../lib/auth-capabilities";
 import { clearSpaceSelection } from "../lib/rpc";
 import { runSsoFlow } from "../lib/sso-flow";
+import { systemSignIn } from "../lib/system-sign-in";
 import { authErrorText, credentialIssueText } from "../lib/user-error";
 import { WindowChrome } from "./WindowChrome";
 
@@ -25,10 +26,12 @@ const CODE_LENGTH = 6;
 export const submitClass = "mt-3 h-12 w-full rounded-xl text-base";
 
 /** Evolve checks the person, then returns them to this checkout with a session. */
-function continueWithEvolve(startUrl: string) {
+async function continueWithEvolve(startUrl: string) {
   const start = new URL(startUrl);
   start.searchParams.set("return", window.location.origin);
-  window.location.assign(start.href);
+  const finished = await systemSignIn(start.href, "/api/auth/evolve");
+  if (finished === undefined) window.location.assign(start.href);
+  else if (finished) window.location.assign(finished);
 }
 
 export function AuthPage({ mode }: { mode: AuthMode }) {
@@ -263,7 +266,11 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
               type="button"
               disabled={pending}
               className={submitClass}
-              onClick={() => continueWithEvolve(reset.evolveSsoUrl!)}
+              onClick={() =>
+                void continueWithEvolve(reset.evolveSsoUrl!).catch(() =>
+                  setError(t`Could not continue`),
+                )
+              }
             >
               <Trans>
                 Continue with{" "}
