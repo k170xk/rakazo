@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 /** Above one line (~28px); two lines clear this. */
 const COMPOSER_SINGLE_LINE_MAX_PX = 36;
@@ -60,15 +60,10 @@ export function useComposerLayout(draft: string, hasChips: boolean) {
   const composerLayoutRef = useRef<ComposerLayout | null>(null);
   const previousExpandedRef = useRef(false);
   const composerAnimationsRef = useRef<Animation[]>([]);
-  // A draft restored when the composer mounts (switching chats) takes its size at once; only
-  // typing across the line edge animates.
-  const settledRef = useRef(false);
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      settledRef.current = true;
-    });
-    return () => cancelAnimationFrame(frame);
-  }, []);
+  // A draft restored when the composer mounts (switching chats) takes its size at once; only an
+  // edit or a chip after that animates.
+  const restoringRef = useRef(true);
+  const measuredRef = useRef<{ draft: string; hasChips: boolean } | null>(null);
   const expanded = composerExpanded || hasChips;
 
   useLayoutEffect(() => {
@@ -77,7 +72,13 @@ export function useComposerLayout(draft: string, hasChips: boolean) {
 
     function syncHeight() {
       const textarea = textareaRef.current;
-      if (!textarea) return;
+      // The portal host joins the page after this effect; a detached field measures as empty.
+      if (!textarea?.isConnected) return;
+      const measured = measuredRef.current;
+      if (measured && (measured.draft !== draft || measured.hasChips !== hasChips)) {
+        restoringRef.current = false;
+      }
+      measuredRef.current = { draft, hasChips };
       const bar = composerBarRef.current;
       // A chip can switch the grid in this commit; keep the previous box as the animation start.
       if ((bar?.dataset.expanded === "true") === previousExpandedRef.current) {
@@ -127,7 +128,7 @@ export function useComposerLayout(draft: string, hasChips: boolean) {
       observer.disconnect();
       el.removeEventListener("scroll", scrolled);
     };
-  }, [draft]);
+  }, [draft, hasChips]);
 
   useLayoutEffect(() => {
     if (previousExpandedRef.current === expanded) return;
@@ -143,7 +144,7 @@ export function useComposerLayout(draft: string, hasChips: boolean) {
     // A send or a cleared draft snaps back; nothing is left to follow.
     if (
       !start ||
-      !settledRef.current ||
+      restoringRef.current ||
       textarea.value === "" ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
