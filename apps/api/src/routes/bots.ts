@@ -48,7 +48,6 @@ import {
 } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
-  addGroupPerson,
   BotSectionNameConflictError,
   botProfileLabelsChanged,
   ComputerLimitError,
@@ -71,7 +70,6 @@ import { agentImportSetupState, createImportedBot, previewAgentImport } from "..
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";
 import { changedBotSettings } from "../bot-setting-analytics.js";
 import { requireCompanyFeature } from "../company-admin.js";
-import { searchEvolveDirectory } from "../evolve-directory.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
 import type { RouterDeps } from "../router.js";
 import { loadMessagePage } from "../thread-message-pages.js";
@@ -82,6 +80,9 @@ import {
   modelSetup,
   THREAD_MESSAGE_PAGE_SIZE,
 } from "./shared.js";
+
+/** Group chats hold one person and their bots, so nothing in one account reaches another. */
+const GROUPS_ARE_PRIVATE = "Group chats are just you and your bots; other people can't be added.";
 
 /** Surface a Space deletion race as a retryable conflict instead of a generic failure. */
 function mapSpaceLifecycleError(error: unknown): unknown {
@@ -837,22 +838,16 @@ export function botsRoutes(ctx: RouterContext) {
       people: authed.groups.people.handler(({ context, input }) =>
         listGroupPeople(deps.prisma, context.actor, input.groupId),
       ),
-      addPerson: authed.groups.addPerson.handler(({ context, input }) =>
-        addGroupPerson(deps.prisma, context.actor, input.groupId, input.email),
-      ),
+      addPerson: authed.groups.addPerson.handler(() => {
+        throw new ORPCError("FORBIDDEN", { message: GROUPS_ARE_PRIVATE });
+      }),
       removePerson: authed.groups.removePerson.handler(({ context, input }) =>
         removeGroupPerson(deps.prisma, context.actor, input.groupId, input),
       ),
-      searchDirectory: authed.groups.searchDirectory.handler(async ({ context, input }) =>
-        searchEvolveDirectory({
-          secret: deps.env.evolveSsoSecret,
-          url: deps.env.evolveDirectoryUrl,
-          query: input.query,
-          people: input.groupId
-            ? await listGroupPeople(deps.prisma, context.actor, input.groupId)
-            : { people: [], invites: [] },
-        }),
-      ),
+      searchDirectory: authed.groups.searchDirectory.handler(() => ({
+        available: false,
+        people: [],
+      })),
       shared: authed.groups.shared.handler(({ context }) =>
         listSharedGroups(deps.prisma, { id: context.actor.userId, email: context.actor.email }),
       ),

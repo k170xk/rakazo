@@ -154,7 +154,6 @@ export function ShellSidePanel({
               bots={bots}
               onCancel={() => setPanel(null)}
               onCreate={(input) => createGroup(input)}
-              searchPeople={(query) => rpc.groups.searchDirectory({ query })}
               onOpenBot={(botId) => {
                 setPanel(null);
                 openBot(botId);
