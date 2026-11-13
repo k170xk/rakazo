@@ -16,7 +16,6 @@ import type {
   Actor,
 } from "@rakazo/contracts";
 import {
-  ACCOUNT_EXPORT_FORMAT,
   ACCOUNT_EXPORT_MANIFEST_PATH,
   ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES,
   ACCOUNT_EXPORT_VERSION,
@@ -24,6 +23,7 @@ import {
   AccountExportManifestSchema,
   AccountExportRecordSchema,
   attachmentSizeLabel,
+  isAccountExportFormat,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
 import { organicAvatarFamily } from "@rakazo/core";
@@ -1135,7 +1135,7 @@ function parseManifest(bytes: Uint8Array): AccountExportManifest {
   }
   const format = (parsed as { format?: unknown } | null)?.format;
   const version = (parsed as { version?: unknown } | null)?.version;
-  if (format !== ACCOUNT_EXPORT_FORMAT) throw unreadable();
+  if (!isAccountExportFormat(format)) throw unreadable();
   const manifest = AccountExportManifestSchema.safeParse(parsed);
   if (manifest.success) return manifest.data;
   if (version !== ACCOUNT_EXPORT_VERSION)

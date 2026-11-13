@@ -24,7 +24,11 @@ const APP_SOURCE_MAX_BYTES = 4_000_000;
 /** A 6 MB picture as base64. */
 const APP_ASSET_MAX_BASE64 = 8_400_000;
 
-export const ACCOUNT_EXPORT_FORMAT = "rakazo-account-export";
+export const ACCOUNT_EXPORT_FORMAT = "ocsc-intelligence-account-export";
+/** The tag exports carried before the product was named OCSC Intelligence; still imported. */
+export const LEGACY_ACCOUNT_EXPORT_FORMAT = "rakazo-account-export";
+export const isAccountExportFormat = (value: unknown) =>
+  value === ACCOUNT_EXPORT_FORMAT || value === LEGACY_ACCOUNT_EXPORT_FORMAT;
 export const ACCOUNT_EXPORT_VERSION = 1;
 export const ACCOUNT_EXPORT_MANIFEST_PATH = "manifest.json";
 /** Larger workspace files stay behind, matching the workspace export limit elsewhere. */
@@ -42,7 +46,7 @@ export const AccountExportExecutablesSchema = z.array(z.object({ botId: Id, path
 export type AccountExportExecutables = z.infer<typeof AccountExportExecutablesSchema>;
 
 export const AccountExportManifestSchema = z.object({
-  format: z.literal(ACCOUNT_EXPORT_FORMAT),
+  format: z.enum([ACCOUNT_EXPORT_FORMAT, LEGACY_ACCOUNT_EXPORT_FORMAT]),
   version: z.literal(ACCOUNT_EXPORT_VERSION),
   exportedAt: IsoDate,
   user: z.object({ name: z.string(), email: z.string(), timezone: z.string().nullable() }),

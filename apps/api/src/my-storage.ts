@@ -289,7 +289,7 @@ export function mountStorageDownloadRoute(
     return new Response(zipStream(archiveFiles(deps, grant.userId, grant.items)), {
       headers: {
         "content-type": "application/zip",
-        "content-disposition": `attachment; filename="rakazo-files-${day}.zip"`,
+        "content-disposition": `attachment; filename="ocsc-intelligence-files-${day}.zip"`,
         "cache-control": "no-store",
       },
     });

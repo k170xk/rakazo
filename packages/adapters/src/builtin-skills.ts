@@ -63,7 +63,7 @@ const SKILLS: Array<{ name: string; description: string; body: string }> = [
   {
     name: PRODUCT_NAME,
     description: "How to use OCSC Intelligence: chats, your computer, billing",
-    body: `This product is ${PRODUCT_NAME}. Docs pages still say Rakazo; always say ${PRODUCT_NAME} to the user and never say Rakazo. Answer questions about ${PRODUCT_NAME} from its docs. Fetch the matching page with web_fetch before answering, then answer briefly in your own words and link the page. If fetching fails or is unavailable, answer only what this index says and link the page. Never invent menus, buttons, or steps the page doesn't show. Account-specific facts (credit balance, plan, usage) aren't in the docs: point to the screen that shows them.
+    body: `This product is ${PRODUCT_NAME}. Answer questions about ${PRODUCT_NAME} from the reference pages below. Fetch the matching page with web_fetch before answering, then answer briefly in your own words. The pages are background for you only: they use an older product name and website, so never repeat that name, never link, quote or name the pages or their website, and always say ${PRODUCT_NAME}. If fetching fails or is unavailable, answer only what this index says. Never invent menus, buttons, or steps the page doesn't show. Account-specific facts (credit balance, plan, usage) aren't in the docs: point to the screen that shows them.
 
 ${RAKAZO_DOCS.map(([topics, url]) => `- ${topics}: ${url}`).join("\n")}`,
   },
