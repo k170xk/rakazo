@@ -12048,6 +12048,10 @@ msgstr "Your answer"
 msgid "Your Anthropic"
 msgstr "Your Anthropic"
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Your apps"
+msgstr "Your apps"
+
 #: src/components/todos/todo-board.tsx
 msgid "Your assistant added this item."
 msgstr "Your assistant added this item."

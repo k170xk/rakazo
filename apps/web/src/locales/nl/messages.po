@@ -12022,6 +12022,10 @@ msgstr "Jouw antwoord"
 msgid "Your Anthropic"
 msgstr "Jouw Anthropic"
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Your apps"
+msgstr ""
+
 #: src/components/todos/todo-board.tsx
 msgid "Your assistant added this item."
 msgstr ""

@@ -83,6 +83,17 @@ import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
+/** The site whose icon stands for a connection someone added by address, such as cursor.com. */
+function sourceSite(name: string, address: string): string | null {
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(name.trim())) return `https://${name.trim()}`;
+  try {
+    const host = new URL(address).hostname.replace(/^(api|mcp|www)\./i, "");
+    return `https://${host}`;
+  } catch {
+    return null;
+  }
+}
+
 function ConnectorIcon({ name, logo }: { name: string; logo?: string | null }) {
   return logo ? (
     <img
@@ -783,11 +794,69 @@ export function PluginsOverlay({
     );
   }
 
+  function renderOwnConnection(key: string, name: string, icon: ReactNode) {
+    return (
+      <button
+        key={key}
+        type="button"
+        data-testid="own-connection"
+        onClick={() => setView("manage")}
+        className={`flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2 text-start focus-visible:outline-none ${ROW_HOVER}`}
+      >
+        {icon}
+        <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-foreground">
+          {name}
+        </span>
+        <Badge variant="outline">
+          <Trans>Connected</Trans>
+        </Badge>
+      </button>
+    );
+  }
+
+  /** What the person connected themselves, beside the company's apps, so there is one list. */
+  function renderOwnConnections() {
+    const companyEndpoints = new Set(companyApps.flatMap((app) => app.mcpEndpoint ?? []));
+    const companyItems = new Set(
+      companyApps.map((app) => `${app.connectorId}:${app.provider}`.toLowerCase()),
+    );
+    return [
+      ...connectedItems
+        .filter((item) => !companyItems.has(`${item.connectorId}:${item.slug}`.toLowerCase()))
+        .map((item) => renderCatalogTile(item, item.name, item.logo, { tileTestId: false })),
+      ...connectorInstalls.map((install) => {
+        const selection = installedSelection(install);
+        return renderOwnConnection(
+          install.id,
+          selection.name,
+          <PluginLogo name={selection.name} logo={selection.logo} site={selection.site} />,
+        );
+      }),
+      ...sources.map((source) =>
+        renderOwnConnection(
+          source.id,
+          source.name,
+          <PluginLogo name={source.name} site={sourceSite(source.name, source.source)} />,
+        ),
+      ),
+      ...standaloneServers
+        .filter((server) => !companyEndpoints.has(server.endpoint ?? ""))
+        .map((server) =>
+          renderOwnConnection(
+            server.id,
+            server.name,
+            <PluginLogo name={server.name} site={sourceSite(server.name, server.endpoint ?? "")} />,
+          ),
+        ),
+    ];
+  }
+
   function renderCompanyApps() {
+    const own = renderOwnConnections();
     return (
       <div className="mb-6" data-testid="company-apps">
         <SectionHeading as="h2" className="mb-2 px-2.5">
-          <Trans>OCSC apps</Trans>
+          {own.length ? <Trans>Your apps</Trans> : <Trans>OCSC apps</Trans>}
         </SectionHeading>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {companyApps.map((app) => {
@@ -838,6 +907,7 @@ export function PluginsOverlay({
               </div>
             );
           })}
+          {own}
         </div>
       </div>
     );
@@ -1094,6 +1164,11 @@ export function PluginsOverlay({
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {results.map((result) => {
                 const surface = addableSurface(result);
+                const added = sources.some(
+                  (source) =>
+                    source.source === surface?.source ||
+                    sourceSite(source.name, source.source) === `https://${result.domain}`,
+                );
                 return (
                   <div
                     key={`${result.domain}:${result.name}`}
@@ -1110,7 +1185,11 @@ export function PluginsOverlay({
                         </span>
                       ) : null}
                     </span>
-                    {surface ? (
+                    {added ? (
+                      <Badge variant="outline">
+                        <Trans>Connected</Trans>
+                      </Badge>
+                    ) : surface ? (
                       <Button
                         type="button"
                         variant="secondary"
@@ -1673,7 +1752,10 @@ export function PluginsOverlay({
                     data-testid="registered-mcp-server"
                     className="flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2"
                   >
-                    <ConnectorIcon name={server.name} />
+                    <PluginLogo
+                      name={server.name}
+                      site={sourceSite(server.name, server.endpoint ?? "")}
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-medium">{server.name}</span>
                       <span className="block truncate text-[13px] text-muted-foreground">
@@ -1718,7 +1800,7 @@ export function PluginsOverlay({
                     data-testid="tool-source"
                     className="flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2"
                   >
-                    <ConnectorIcon name={source.name} />
+                    <PluginLogo name={source.name} site={sourceSite(source.name, source.source)} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-medium">{source.name}</span>
                       <span className="block truncate text-[13px] text-muted-foreground">
@@ -1955,7 +2037,9 @@ export function PluginsOverlay({
             renderBrowseMcp()
           ) : (
             <>
-              {showFeatured && !category && companyApps.length > 0 ? renderCompanyApps() : null}
+              {showFeatured && !category && (companyApps.length > 0 || connectedCount > 0)
+                ? renderCompanyApps()
+                : null}
               {catalogLoaded && showFeatured && !category ? (
                 <div className="mb-6" data-testid="featured-connectors">
                   {catalog.length === 0 ? (
