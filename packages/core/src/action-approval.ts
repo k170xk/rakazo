@@ -73,6 +73,11 @@ const EVERY_TIME_APPROVAL_TOOLS = new Set([
   "mcp__evolve__add_work_package",
   "mcp__evolve__update_work_package",
   "mcp__evolve__delete_work_package",
+  "mcp__evolve__add_project_comment",
+  "mcp__evolve__update_project_comment",
+  "mcp__evolve__delete_project_comment",
+  "mcp__evolve__join_project_team",
+  "mcp__evolve__leave_project_team",
 ]);
 
 export function toolNeedsApprovalEveryTime(toolName: string): boolean {

@@ -985,6 +985,10 @@ msgstr "Add PDF drawings as images"
 msgid "Add picture"
 msgstr "Add picture"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Add project comments"
+msgstr "Add project comments"
+
 #: src/pages/model-settings/providers-section.tsx
 msgid "Add provider"
 msgstr "Add provider"
@@ -2146,6 +2150,10 @@ msgstr "Change in Company admin"
 #: src/pages/shell/composer-error.tsx
 msgid "Change model"
 msgstr "Change model"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Change own project comments"
+msgstr "Change own project comments"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
@@ -4251,6 +4259,10 @@ msgstr "Delete group"
 msgid "Delete memories too"
 msgstr "Delete memories too"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Delete own project comments"
+msgstr "Delete own project comments"
+
 #: src/components/apps/AppDataPanel.tsx
 msgid "Delete row"
 msgstr "Delete row"
@@ -5982,6 +5994,10 @@ msgstr "Its words come from data, so only its look can be changed here."
 msgid "Job number, project or client"
 msgstr "Job number, project or client"
 
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Join a Design Team"
+msgstr "Join a Design Team"
+
 #: src/components/GroupPeople.tsx
 msgid "Joins when they open OCSC Intelligence from Evolve"
 msgstr "Joins when they open OCSC Intelligence from Evolve"
@@ -6131,6 +6147,10 @@ msgstr "Later"
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Leave"
 msgstr "Leave"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Leave a Design Team"
+msgstr "Leave a Design Team"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Leave blank to keep the saved key"

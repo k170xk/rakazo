@@ -2584,6 +2584,11 @@ export const EVOLVE_CHANGE_TOOLS = [
   "add_work_package",
   "update_work_package",
   "delete_work_package",
+  "add_project_comment",
+  "update_project_comment",
+  "delete_project_comment",
+  "join_project_team",
+  "leave_project_team",
 ] as const;
 export type EvolveChangeTool = (typeof EVOLVE_CHANGE_TOOLS)[number];
 
@@ -2610,6 +2615,11 @@ export const EvolveSafeguardsSchema = z.object({
     add_work_package: EvolveChangeLimitSchema,
     update_work_package: EvolveChangeLimitSchema,
     delete_work_package: EvolveChangeLimitSchema,
+    add_project_comment: EvolveChangeLimitSchema,
+    update_project_comment: EvolveChangeLimitSchema,
+    delete_project_comment: EvolveChangeLimitSchema,
+    join_project_team: EvolveChangeLimitSchema,
+    leave_project_team: EvolveChangeLimitSchema,
   }),
 });
 export type EvolveSafeguards = z.infer<typeof EvolveSafeguardsSchema>;

@@ -50,6 +50,11 @@ export function EvolveSafeguardsSection() {
     add_work_package: t`Add work packages`,
     update_work_package: t`Change work packages`,
     delete_work_package: t`Delete work packages`,
+    add_project_comment: t`Add project comments`,
+    update_project_comment: t`Change own project comments`,
+    delete_project_comment: t`Delete own project comments`,
+    join_project_team: t`Join a Design Team`,
+    leave_project_team: t`Leave a Design Team`,
   };
 
   if (state.isPending) return <Spinner />;

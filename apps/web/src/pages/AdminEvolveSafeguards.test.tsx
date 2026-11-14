@@ -21,6 +21,11 @@ const limits = {
   add_work_package: { hour: 40, day: 100, projects: 10 },
   update_work_package: { hour: 60, day: 200, projects: 10 },
   delete_work_package: { hour: 10, day: 25, projects: 3 },
+  add_project_comment: { hour: 30, day: 100, projects: 10 },
+  update_project_comment: { hour: 30, day: 100, projects: 10 },
+  delete_project_comment: { hour: 10, day: 30, projects: 5 },
+  join_project_team: { hour: 5, day: 10, projects: 5 },
+  leave_project_team: { hour: 5, day: 10, projects: 5 },
 };
 const defaults: EvolveSafeguards = {
   deadlinesTeamOnly: true,

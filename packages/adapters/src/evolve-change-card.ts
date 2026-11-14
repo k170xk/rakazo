@@ -254,6 +254,95 @@ export function deadlineCardSummary(preview: DeadlinePreview): FleetCardSummary 
   };
 }
 
+type ChangeProject = { job_number?: string | null; name?: string | null; client?: string | null };
+type CommentPreview = {
+  action: "add" | "update" | "delete";
+  comment_id?: number;
+  project: ChangeProject;
+  before?: { text: string; date?: string | null };
+  comment?: { text: string; author: string };
+};
+type TeamPreview = {
+  action: "add" | "delete";
+  project: ChangeProject;
+  member: { name: string; role: string };
+  current_roles?: string[];
+  warnings?: string[];
+};
+
+function projectLines(project: ChangeProject | undefined): { job: string; lines: string[] } {
+  const label = [project?.job_number, project?.name].filter(Boolean).join(" · ");
+  return {
+    job: project?.job_number ?? "the project",
+    lines: [
+      `Project: ${label || "Unnamed project"}`,
+      ...(project?.client ? [`Client: ${project.client}`] : []),
+    ],
+  };
+}
+
+/**
+ * The card for a project comment or Design Team change, which has no editor of its own: a title and
+ * the lines Evolve resolved. Null for any other preview.
+ */
+export function plainChangeSummary(raw: unknown): FleetCardSummary | null {
+  if (!raw || typeof raw !== "object") return null;
+  const preview = raw as Record<string, unknown>;
+  if ("member" in preview) {
+    const team = preview as unknown as TeamPreview;
+    const { job, lines } = projectLines(team.project);
+    const others = (team.current_roles ?? []).filter((role) => role !== team.member.role);
+    return {
+      title:
+        team.action === "add"
+          ? `Join ${job}'s Design Team as ${team.member.role}?`
+          : `Leave ${job}'s Design Team as ${team.member.role}?`,
+      lines: [
+        ...lines,
+        `Person: ${team.member.name}`,
+        `Role: ${team.member.role}`,
+        ...(others.length ? [`Other roles on this team: ${others.join(", ")}`] : []),
+        ...(team.warnings ?? []).map((warning) => `Check: ${warning}`),
+      ],
+      onceOnly: true,
+    };
+  }
+  if (!("comment" in preview) && !("comment_id" in preview)) return null;
+  const comment = preview as unknown as CommentPreview;
+  const { job, lines } = projectLines(comment.project);
+  if (comment.action === "delete") {
+    return {
+      title: `Delete your comment on ${job}?`,
+      lines: [
+        ...lines,
+        `Comment${comment.before?.date ? ` (${day(comment.before.date)})` : ""}: ${comment.before?.text ?? ""}`,
+      ],
+      onceOnly: true,
+    };
+  }
+  if (comment.action === "update") {
+    return {
+      title: `Change your comment on ${job}?`,
+      lines: [
+        ...lines,
+        `Now: ${comment.before?.text ?? ""}`,
+        `After: ${comment.comment?.text ?? ""}`,
+      ],
+      onceOnly: true,
+    };
+  }
+  return {
+    title: `Add this comment to ${job}?`,
+    lines: [
+      ...lines,
+      `From: ${comment.comment?.author ?? "you"}`,
+      `Comment: ${comment.comment?.text ?? ""}`,
+      "The project's director and manager are emailed, as for a comment added in Evolve.",
+    ],
+    onceOnly: true,
+  };
+}
+
 /**
  * Ask Evolve what a deadline or work package call would do without saving it. Returns the card and
  * the arguments the approval covers, or the reply to hand straight back (an error, or choices).
@@ -283,6 +372,11 @@ export function evolveChangePreview(
   args: Record<string, unknown>,
 ): { summary: FleetCardSummary; args: Record<string, unknown> } | { error: string } {
   const reply = evolveReply(data);
+  const plain = reply && reply.ok !== false ? plainChangeSummary(reply.preview) : null;
+  if (reply && plain) {
+    const before = (reply.preview as { before?: unknown }).before;
+    return { summary: plain, args: before ? { ...args, _expected: before } : args };
+  }
   const preview = reply?.preview as (DeadlinePreview | WorkPackagePreview) | undefined;
   const workPackage =
     preview && "work_package" in preview
