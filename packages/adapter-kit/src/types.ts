@@ -712,6 +712,8 @@ export type AgentRuntimeEvent =
       executionId?: string;
       text: string;
       detail?: string;
+      /** The individual-or-tenant question shown before an app is created. */
+      appScope?: true;
       actions?: Array<{ id: string; label: string }>;
     }
   | { type: "takeover"; reason: string; executionId?: string }

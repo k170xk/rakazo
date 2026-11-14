@@ -1,6 +1,12 @@
 import type { RunContext } from "./run-context.js";
 
-export const APP_CHANGE_TOOLS = new Set(["save_app", "save_page", "app_data", "app_asset"]);
+export const APP_CHANGE_TOOLS = new Set([
+  "save_app",
+  "save_page",
+  "save_whiteboard",
+  "app_data",
+  "app_asset",
+]);
 
 type AppChange = {
   pageId: string;
@@ -28,13 +34,28 @@ const nonEmptyObject = (value: unknown) =>
  * calls naming one are returned.
  */
 export function appChangeOf(name: string, args: Record<string, unknown>): AppChange | null {
-  const id = name === "save_page" ? args.pageId : args.appId;
+  const id =
+    name === "save_page"
+      ? args.pageId
+      : name === "save_whiteboard"
+        ? (args.whiteboardId ?? args.pageId)
+        : args.appId;
   if (!given(id)) return null;
   const pageId = String(id);
   if (name === "save_page") {
     return {
       pageId,
       code: given(args.source) || given(args.edits) || given(args.title),
+      wipes: [],
+      unprivate: [],
+      unshare: [],
+      workspaces: false,
+    };
+  }
+  if (name === "save_whiteboard") {
+    return {
+      pageId,
+      code: given(args.items) || given(args.ops) || given(args.title),
       wipes: [],
       unprivate: [],
       unshare: [],

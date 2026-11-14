@@ -39,6 +39,7 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "browser_snapshot",
   "browser_act",
   "ask_user",
+  "ask_app_scope",
   "show_card",
   "message_user",
   "request_takeover",
@@ -75,7 +76,9 @@ const AREAS: Array<[area: string, matches: (name: string) => boolean]> = [
     "media",
     (name) =>
       name.startsWith("generate_") ||
-      ["render_plot", "save_page", "save_app", "app_data", "app_asset", "app_look"].includes(name),
+      ["render_plot", "save_page", "save_app", "save_whiteboard", "app_data", "app_asset", "app_look"].includes(
+        name,
+      ),
   ],
   ["cloud agents", (name) => name.startsWith("cloud_agent_")],
   ["purchases", (name) => name.includes("purchase") || name === "paid_request"],

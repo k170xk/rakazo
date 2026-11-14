@@ -114,6 +114,76 @@ describe("save_app", () => {
     expect(publishMessage).toHaveBeenCalledTimes(1);
   });
 
+  it("asks which kind of app before creating one in a chat", async () => {
+    const { ctx } = context();
+    const live = ctx as unknown as {
+      run: { trigger?: string };
+      deps: { prisma: { message?: { findMany: () => Promise<unknown[]> } } };
+      source?: { voiceCall?: boolean };
+    };
+    live.run.trigger = "user";
+    live.deps.prisma.message = { findMany: async () => [] };
+    const refused = (await appTools.save_app!(
+      ctx,
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": APP } }),
+    )) as Result;
+    expect(String(refused.error)).toContain("ask_app_scope");
+    expect(db.createAppPage).not.toHaveBeenCalled();
+
+    live.deps.prisma.message = {
+      findMany: async () => [
+        {
+          blocks: [{ kind: "ask", appScope: true, status: "answered", answer: "personal" }],
+        },
+      ],
+    };
+    const built = (await appTools.save_app!(
+      ctx,
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": APP } }),
+    )) as Result;
+    expect(built).toMatchObject({ appId: "app-1" });
+  });
+
+  it("requires a workspace label after they choose a tenant app", async () => {
+    const { ctx } = context();
+    const live = ctx as unknown as {
+      run: { trigger?: string };
+      deps: {
+        prisma: {
+          message?: { findMany: () => Promise<unknown[]> };
+          page: { update: ReturnType<typeof vi.fn> };
+        };
+      };
+    };
+    live.run.trigger = "user";
+    live.deps.prisma.message = {
+      findMany: async () => [
+        { blocks: [{ kind: "ask", appScope: true, status: "answered", answer: "tenant" }] },
+      ],
+    };
+    const missing = (await appTools.save_app!(
+      ctx,
+      call({ title: "Inspections", brief: "Bridge inspections.", files: { "App.tsx": APP } }),
+    )) as Result;
+    expect(String(missing.error)).toContain("workspaces");
+    expect(db.createAppPage).not.toHaveBeenCalled();
+
+    const built = (await appTools.save_app!(
+      ctx,
+      call({
+        title: "Inspections",
+        brief: "Bridge inspections.",
+        files: { "App.tsx": APP },
+        workspaces: { label: "Bridge", create: "anyone" },
+      }),
+    )) as Result;
+    expect(built).toMatchObject({ appId: "app-1" });
+    expect(live.deps.prisma.page.update).toHaveBeenCalledWith({
+      where: { id: "app-1" },
+      data: { workspaceLabel: "Bridge", workspaceCreate: "anyone" },
+    });
+  });
+
   it("keeps a new app's brief, and asks for one when it is missing", async () => {
     const missing = (await appTools.save_app!(
       context().ctx,

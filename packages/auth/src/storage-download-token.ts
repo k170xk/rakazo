@@ -7,7 +7,7 @@ export const STORAGE_DOWNLOAD_TOKEN_MS = 60_000;
 export const STORAGE_DOWNLOAD_TOKEN_PREFIX = "storage-download-";
 
 export type StorageDownloadItem =
-  | { kind: "computer"; botId: string; path: string }
+  | { kind: "computer"; botId: string; path: string; source?: "documents" | "home" }
   | { kind: "chat"; artifactId: string };
 
 /** The person the zip is for and what they chose; each item is checked again as theirs. */
@@ -18,8 +18,10 @@ type Verification = { value: string; expiresAt: Date };
 function decodeItem(value: unknown): StorageDownloadItem | null {
   if (!value || typeof value !== "object") return null;
   const item = value as Record<string, unknown>;
-  if (item.kind === "computer" && typeof item.botId === "string" && typeof item.path === "string")
-    return { kind: "computer", botId: item.botId, path: item.path };
+  if (item.kind === "computer" && typeof item.botId === "string" && typeof item.path === "string") {
+    const source = item.source === "home" || item.source === "documents" ? item.source : undefined;
+    return { kind: "computer", botId: item.botId, path: item.path, ...(source ? { source } : {}) };
+  }
   if (item.kind === "chat" && typeof item.artifactId === "string")
     return { kind: "chat", artifactId: item.artifactId };
   return null;

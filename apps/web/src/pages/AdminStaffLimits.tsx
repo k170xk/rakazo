@@ -269,9 +269,15 @@ function CompanyLimitsForm({
           <FieldDescription>
             <Trans>
               When someone reaches it, their chats and routines stop until next month or until you
-              raise it. Leave empty for no budget.
+              raise it. Staff see how much is left, not the amount. Leave this empty and nothing
+              stops their spend.
             </Trans>
           </FieldDescription>
+          {budget.trim() ? null : (
+            <p className="text-[13px] text-destructive" role="status">
+              <Trans>No monthly allowance is set, so chats and routines can keep spending.</Trans>
+            </p>
+          )}
         </Field>
       </div>
       <Button type="submit" disabled={!valid || busy}>

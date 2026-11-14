@@ -27,6 +27,7 @@ export function PageView({
   renameError = null,
   share,
   composer,
+  canvas,
   onReply,
   state,
   returnFocus,
@@ -42,6 +43,8 @@ export function PageView({
   renameError?: string | null;
   share: ReactNode;
   composer?: ReactNode;
+  /** Drawn instead of the page, for a whiteboard. */
+  canvas?: ReactNode;
   /** Takes a page's reply text into the docked composer. */
   onReply?: (text: unknown) => void;
   /** Where the page keeps what it saves for itself. */
@@ -67,7 +70,7 @@ export function PageView({
     setDrawn(false);
     setStalled(false);
   }
-  const waiting = document !== null && !drawn && notice === null;
+  const waiting = canvas == null && document !== null && !drawn && notice === null;
   useEffect(() => {
     if (!waiting) return;
     const timer = window.setTimeout(() => setStalled(true), FRAME_TIMEOUT_MS);
@@ -141,7 +144,7 @@ export function PageView({
             <div
               className={`absolute z-10 flex items-center gap-1.5 print:hidden ${compact ? "top-[6px] right-[6px]" : "top-[6.5px] right-3"}`}
             >
-              {drawn && !stalled && notice === null ? (
+              {canvas == null && drawn && !stalled && notice === null ? (
                 <DownloadPdfButton
                   className={control}
                   iconClassName={compact ? "size-5" : "size-[18px]"}
@@ -155,38 +158,41 @@ export function PageView({
               aria-label={title || undefined}
               className={`absolute inset-x-0 bottom-0 print:static ${compact ? "top-[50px]" : "top-[34px]"}`}
             >
-              {notice ?? (
-                <>
-                  {document !== null && !stalled ? (
-                    <div
-                      key={attempt}
-                      className={`h-full transition-opacity duration-200 motion-reduce:transition-none ${drawn ? "opacity-100" : "opacity-0"}`}
-                    >
-                      <PageFrame
-                        document={document}
-                        title={title}
-                        interactive
-                        onReply={onReply}
-                        onHeight={onDrawn}
-                        state={state}
+              {notice ??
+                (canvas != null ? (
+                  <div className="h-full">{canvas}</div>
+                ) : (
+                  <>
+                    {document !== null && !stalled ? (
+                      <div
+                        key={attempt}
+                        className={`h-full transition-opacity duration-200 motion-reduce:transition-none ${drawn ? "opacity-100" : "opacity-0"}`}
+                      >
+                        <PageFrame
+                          document={document}
+                          title={title}
+                          interactive
+                          onReply={onReply}
+                          onHeight={onDrawn}
+                          state={state}
+                        />
+                      </div>
+                    ) : null}
+                    {stalled ? (
+                      <PageNotice
+                        title={t`This app couldn't load`}
+                        detail={t`Check your connection and try again.`}
+                        onRetry={() => {
+                          setStalled(false);
+                          setAttempt((count) => count + 1);
+                        }}
+                        onClose={() => onOpenChange(false)}
                       />
-                    </div>
-                  ) : null}
-                  {stalled ? (
-                    <PageNotice
-                      title={t`This app couldn't load`}
-                      detail={t`Check your connection and try again.`}
-                      onRetry={() => {
-                        setStalled(false);
-                        setAttempt((count) => count + 1);
-                      }}
-                      onClose={() => onOpenChange(false)}
-                    />
-                  ) : !drawn ? (
-                    <PageLoading />
-                  ) : null}
-                </>
-              )}
+                    ) : !drawn ? (
+                      <PageLoading />
+                    ) : null}
+                  </>
+                ))}
             </section>
           </div>
           {composer ? (

@@ -240,7 +240,18 @@ export async function spentThisMonthUsd(
   return usd;
 }
 
-/** Why a run must not start because its owner used their monthly budget, or null. */
+/**
+ * How much of a monthly allowance is used, from 0 to 100. Null when no allowance is set.
+ * The amount itself stays with administrators.
+ */
+export function monthlyAllowancePercent(spentUsd: number, budgetUsd: number | null): number | null {
+  if (budgetUsd === null) return null;
+  if (!(budgetUsd > 0)) return 100;
+  if (!(spentUsd > 0)) return 0;
+  return Math.min(100, Math.round((spentUsd / budgetUsd) * 100));
+}
+
+/** Why a run must not start because its owner used their monthly allowance, or null. */
 export async function monthlyBudgetRefusal(
   prisma: Pick<PrismaClient, "usageRecord" | "user">,
   userId: string,
@@ -250,7 +261,7 @@ export async function monthlyBudgetRefusal(
   if (monthlyBudgetUsd === null) return null;
   const spent = await spentThisMonthUsd(prisma, userId, now);
   if (spent < monthlyBudgetUsd) return null;
-  return `You have reached your monthly AI budget ($${monthlyBudgetUsd.toFixed(2)}; used $${spent.toFixed(2)}). Your assistants are paused until next month or until an administrator raises your budget.`;
+  return "You have used your monthly allowance. Your assistants are paused until next month or until an administrator raises it.";
 }
 
 /** Test seam. */

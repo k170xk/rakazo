@@ -1,4 +1,4 @@
-import type { Actor, SharedAppAdmin } from "@rakazo/contracts";
+import { type Actor, type SharedAppAdmin, shownPageKind } from "@rakazo/contracts";
 import { IsolationError, recordAuditEvent, runAsSystem } from "@rakazo/db";
 import { requireAdmin } from "./admins.js";
 import { shownVisibility } from "./pages.js";
@@ -31,7 +31,7 @@ type Row = {
 const shown = (row: Row): SharedAppAdmin => ({
   id: row.id,
   title: row.title,
-  kind: row.kind === "app" ? "app" : "page",
+  kind: shownPageKind(row.kind),
   owner: row.user.name?.trim() || row.user.email,
   visibility: shownVisibility(row.visibility),
   evolvePluginSlug: row.evolvePluginSlug,
@@ -84,7 +84,7 @@ export async function setSharedAppFrozen(
     action: input.frozen ? "page.frozen" : "page.unfrozen",
     actor: { type: "user", id: actor.userId },
     spaceId: actor.spaceId,
-    target: { type: row.kind === "app" ? "app" : "page", id: row.id, label: row.title },
+    target: { type: shownPageKind(row.kind), id: row.id, label: row.title },
   });
   return shown(row);
 }

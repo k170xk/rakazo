@@ -1,4 +1,8 @@
-import type { AccountExportManifest, AccountExportRecord } from "@rakazo/contracts";
+import {
+  type AccountExportManifest,
+  type AccountExportRecord,
+  shownPageKind,
+} from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
 import { runAsTenant } from "./row-security.js";
 
@@ -264,7 +268,7 @@ async function* spaceRecords(
         title: page.title,
         pinnedAt: isoOrNull(page.pinnedAt),
         currentVersion: page.currentVersion,
-        kind: page.kind === "app" ? "app" : "page",
+        kind: shownPageKind(page.kind),
         dataAccess:
           page.dataAccess === "company" || page.dataAccess === "contribute"
             ? page.dataAccess

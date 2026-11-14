@@ -31,6 +31,7 @@ describe("built-in tool bridge", () => {
   it("lists a pinned tool set within a byte budget on an owner chat run", () => {
     const { listed, deferred } = partitionTools(ownerChat);
     expect(listed.map((tool) => tool.name).sort()).toEqual([
+      "ask_app_scope",
       "ask_user",
       "attach_file",
       "connect_app",
@@ -59,7 +60,9 @@ describe("built-in tool bridge", () => {
     ]);
     // request_secret carries the card and contact kinds; update_bot carries instructions paging;
     // ocsc runs Word/PowerPoint/Excel/PDF/video on the document runners without a full computer.
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(33_845);
+    // ask_app_scope is listed so a new app asks individual-or-tenant before it exists.
+    // save_whiteboard is deferred; its name is listed in the find_tool catalog.
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(34_279);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining(["render_plot", "create_space", "generate_secret", "scratchpad_add"]),
     );

@@ -65,6 +65,7 @@ import {
 } from "../computer-status.js";
 import {
   deleteMyStorage,
+  myMeters,
   myStorageDownloadUrl,
   myStorageState,
   pinMyStorage,
@@ -612,6 +613,9 @@ export function computerRoutes(ctx: RouterContext) {
           attachmentMaxBytes(deps.env),
           attachmentSizeLabel(attachmentMaxBytes(deps.env)),
         ),
+      ),
+      myMeters: authed.computer.myMeters.handler(async ({ context }) =>
+        myMeters(deps, context.actor),
       ),
       myStorage: authed.computer.myStorage.handler(async ({ context }) =>
         myStorageState(deps, context.actor),

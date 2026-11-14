@@ -10,11 +10,16 @@ import type {
   SharedPage,
 } from "@rakazo/contracts";
 import {
+  PAGE_SOURCE_MAX_BYTES,
   PAGE_STATE_KEY,
   PAGE_STATE_MAX_BYTES,
   PAGE_STATE_MAX_KEYS,
+  type BoardItem,
+  boardSource,
   pageShareTokenFromSlug,
   pageShareUrl,
+  pageSourceBytes,
+  shownPageKind,
 } from "@rakazo/contracts";
 import type { PageShareSecret, PrismaClient } from "@rakazo/db";
 import { IsolationError, Prisma, recordAuditEvent, runAsSystem } from "@rakazo/db";
@@ -46,7 +51,7 @@ function pageSummary(row: SummaryRow): PageSummary {
   return {
     id: row.id,
     title: row.title,
-    kind: row.kind === "app" ? "app" : "page",
+    kind: shownPageKind(row.kind),
     botId: row.botId,
     groupId: row.groupId,
     visibility: shownVisibility(row.visibility),
@@ -375,6 +380,59 @@ export async function getPage(
   };
 }
 
+/** The board changed after this edit was made, so the save did not land. */
+export class BoardChangedError extends Error {
+  constructor() {
+    super("The whiteboard changed. Read it again.");
+  }
+}
+
+/** A board save that cannot be stored, such as a page that is not a whiteboard. */
+export class BoardSaveError extends Error {}
+
+/** The person's own edits, saved as the next version when they still match the board they changed. */
+export async function saveWhiteboard(
+  prisma: PrismaClient,
+  actor: Actor,
+  input: { pageId: string; baseVersion: number; items: BoardItem[] },
+): Promise<{ version: number }> {
+  const row = await requirePage(prisma, actor, input.pageId);
+  if (row.frozenAt) throw new PageFrozenError();
+  if (row.kind !== "whiteboard") throw new BoardSaveError("That is not a whiteboard.");
+  const source = boardSource(input.items);
+  if (pageSourceBytes(source) > PAGE_SOURCE_MAX_BYTES) {
+    throw new BoardSaveError("That whiteboard is too large.");
+  }
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const version = row.currentVersion + 1;
+      const moved = await tx.page.updateMany({
+        where: { id: row.id, currentVersion: input.baseVersion },
+        data: { currentVersion: version, updatedAt: new Date() },
+      });
+      if (moved.count === 0) throw new BoardChangedError();
+      await tx.pageVersion.create({
+        data: {
+          pageId: row.id,
+          version,
+          title: row.title,
+          source,
+          code: source,
+          authorId: actor.userId,
+          via: "board",
+        },
+      });
+      return { version };
+    });
+  } catch (error) {
+    if (error instanceof BoardChangedError) throw error;
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new BoardChangedError();
+    }
+    throw error;
+  }
+}
+
 export async function renamePage(
   prisma: PrismaClient,
   actor: Actor,
@@ -482,7 +540,7 @@ export async function setPageVisibility(
       action: "page.visibility_changed",
       actor: { type: "user", id: actor.userId },
       spaceId: actor.spaceId,
-      target: { type: row.kind === "app" ? "app" : "page", id: row.id, label: row.title },
+      target: { type: shownPageKind(row.kind), id: row.id, label: row.title },
       metadata: {
         from: shownVisibility(row.visibility),
         to: input.visibility,
@@ -638,7 +696,7 @@ export async function readSharedPage(
   return {
     page: {
       title: page.title,
-      kind: page.kind === "app" ? "app" : "page",
+      kind: shownPageKind(page.kind),
       code: version.code,
       version: page.currentVersion,
       updatedAt: page.updatedAt.toISOString(),

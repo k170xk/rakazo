@@ -36,6 +36,14 @@ owner (and their routines) sees everyone's, visitors see none. The server enforc
 must not see each other's entries (their own inspections, expenses, reviews), with colleagues allowed to add
 rows (contribute or company). Keep shared lists (checklists, sites, rates) in ordinary tables of the same app.
 
+## Who the app is for
+A new app in a chat starts only after the person answers the ask_app_scope card.
+Individual user app: one person, one set of rows. Example: their private site diary of visits,
+notes and photos. Leave workspaces off.
+Tenant app: one tool the company reuses, with a separate set of data for each project, bridge or
+site and the people on it. Example: a bridge inspection tool, where Athlone Bridge, Kells Bridge and
+Sligo Bridge each keep their own inspections, defects and team. Pass workspaces and build the screens for one.
+
 ## Workspaces (separate data per project, bridge or site)
 An app either keeps one set of data, or (workspaces on) a separate set per project, bridge, site or
 client: each workspace's rows are seen only by the people added to it, as lead (changes everything and

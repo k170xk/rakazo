@@ -113,7 +113,8 @@ Planning: Gantt {rows, startKey, endKey?, titleKey, groupKey? (phases), progress
   equals end, arrows for dependencies (red when they overlap), a today line. Keep dates as date columns.
 
 ## Boards, galleries, editors and inputs
-Whiteboard {value, onChange?, readOnly?, height?}: sticky notes, text, boxes, circles, arrows that stay joined
+Whiteboard {value, onChange?, onSelectionChange?(ids), readOnly?, height?}: sticky notes, text, boxes,
+  circles, diamonds, cylinders, documents, clouds, queues, sections, arrows that stay joined
   to the items they connect, pen and pictures; pan, zoom and pinch, select (drag a box), move, resize,
   recolour, double-click to write, undo, keyboard tools (V H N T R O A P). Keep its value in a longtext column
   as JSON.stringify(value) and pass readBoard(row.board) back in; onChange fires per finished change, so

@@ -7,6 +7,7 @@ import {
   busiestDayRuns,
   clearSpendCache,
   modelAllowed,
+  monthlyAllowancePercent,
   monthlyBudgetRefusal,
   nextScheduledAfter,
   routineDailyAllowance,
@@ -200,9 +201,18 @@ describe("monthlyBudgetRefusal", () => {
     clearSpendCache();
     await expect(monthlyBudgetRefusal(prisma(9.99, 10) as never, "u1")).resolves.toBeNull();
     clearSpendCache();
-    await expect(monthlyBudgetRefusal(prisma(10, 10) as never, "u1")).resolves.toMatch(
-      /reached your monthly AI budget \(\$10\.00; used \$10\.00\)/,
-    );
+    const message = await monthlyBudgetRefusal(prisma(10, 10) as never, "u1");
+    expect(message).toMatch(/used your monthly allowance/);
+    expect(message).not.toMatch(/\$/);
+  });
+
+  it("reports a percentage and never an amount", () => {
+    expect(monthlyAllowancePercent(0, null)).toBeNull();
+    expect(monthlyAllowancePercent(0, 20)).toBe(0);
+    expect(monthlyAllowancePercent(5, 20)).toBe(25);
+    expect(monthlyAllowancePercent(20, 20)).toBe(100);
+    expect(monthlyAllowancePercent(40, 20)).toBe(100);
+    expect(monthlyAllowancePercent(1, 0)).toBe(100);
   });
 
   it("follows the company budget for people without their own", async () => {
@@ -213,6 +223,8 @@ describe("monthlyBudgetRefusal", () => {
       user: { findUnique: vi.fn(async () => ({ ...NO_OVERRIDES })) },
       usageRecord: { aggregate: vi.fn(async () => ({ _sum: { costUsd: 25 } })) },
     };
-    await expect(monthlyBudgetRefusal(prisma as never, "u1")).resolves.toMatch(/\$20\.00/);
+    await expect(monthlyBudgetRefusal(prisma as never, "u1")).resolves.toMatch(
+      /used your monthly allowance/,
+    );
   });
 });

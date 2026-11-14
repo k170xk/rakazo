@@ -649,7 +649,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "ask_user",
     description:
-      "Ask the user one short question with two to four tappable options, then wait for their answer. The card also lets them type their own answer, so never add an 'Other' option.",
+      "Ask the user one short question with two to four tappable options, then wait for their answer. The card also lets them type their own answer, so never add an 'Other' option. For a new app, use ask_app_scope instead of this.",
     inputSchema: {
       type: "object",
       properties: {
@@ -664,6 +664,12 @@ export const builtinAgentTools: ConnectorTool[] = [
       },
       required: ["question", "options"],
     },
+  },
+  {
+    name: "ask_app_scope",
+    description:
+      "Before planning or creating a new app, ask whether it is an individual user app or a tenant app, then wait. Call with no arguments. The card explains both and gives the examples. Do not describe the choice yourself, and do not call save_app until they answer.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
     name: "show_card",
@@ -818,9 +824,40 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "save_whiteboard",
+    description:
+      "Draw or change a shared whiteboard: a board of blocks and arrows the person can move, recolour and rewrite, not a picture. Use it when they ask to sketch, map, diagram or think something through (an architecture, a process, a plan, options, a retro). Create it with a title and items. Each item has a stable id, a kind and text. Kinds: rect, diamond (a decision), cylinder (a database), queue, document, cloud, section (a group behind other blocks), sticky, text, ellipse. Arrows use from and to, each {item: id} or {x, y}. Set x and y (origin top-left) so the drawing reads; omit them to stack new blocks. To change a board, pass only whiteboardId to read it, then ops with the baseVersion you were given: {op: add, item}, {op: update, id, patch} or {op: remove, id}. Change only the items the request touches. When the message lists selected items, change those. A board that changed comes back for you to read again; never replace the whole board to edit one block. Mention it as [title](page:whiteboardId). Call it a whiteboard. When they ask to turn it into a plan or a deck, read it and build that the usual way.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        whiteboardId: {
+          type: "string",
+          description: "The board to read or change. Omit to create one.",
+        },
+        title: { type: "string", description: "Board title. Required for a new board." },
+        baseVersion: {
+          type: "number",
+          description: "The version from the last read or save. Required with ops.",
+        },
+        items: {
+          type: "array",
+          description:
+            "Every block on a new board. Each is {id, kind, text, x, y, w, h, color, from, to}.",
+          items: { type: "object" },
+        },
+        ops: {
+          type: "array",
+          description:
+            "Changes to the current board, applied together or not at all. add, update or remove.",
+          items: { type: "object" },
+        },
+      },
+    },
+  },
+  {
     name: "save_app",
     description:
-      'Build or change an OCSC app in the App Studio: a real multi-screen React app with its own live tables that people use, edit and share (Lovable-quality, inside OCSC). Use it for every app, tool, tracker, register, dashboard or form, and whenever the person gives a spreadsheet; save_page is only for one-off reports. Call with {"help": true} first for the guide. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save. To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save then runs the app: fix what runCheck reports (crashes, errors, blank or too-wide pages).',
+      'Build or change an OCSC app in the App Studio: a real multi-screen React app with its own live tables that people use, edit and share (Lovable-quality, inside OCSC). Use it for every app, tool, tracker, register, dashboard or form, and whenever the person gives a spreadsheet; save_page is only for one-off reports. In a chat, call ask_app_scope and wait before the first save of a new app; that save is refused until they choose an individual user app or a tenant app. Call with {"help": true} first for the guide. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save. To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save then runs the app: fix what runCheck reports (crashes, errors, blank or too-wide pages).',
     inputSchema: {
       type: "object",
       properties: {

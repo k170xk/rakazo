@@ -2744,6 +2744,11 @@ export const StorageItemRefSchema = z.discriminatedUnion("kind", [
     kind: z.literal("computer"),
     botId: z.string().min(1),
     path: z.string().min(1).max(1024),
+    /**
+     * `home` is a file inside the computer's saved copy. Absent means the document folder
+     * Manage storage has always listed.
+     */
+    source: z.enum(["documents", "home"]).optional(),
   }),
   z.object({ kind: z.literal("chat"), artifactId: z.string().min(1) }),
 ]);
@@ -2777,6 +2782,19 @@ export const MyStorageStateSchema = z.object({
   items: z.array(MyStorageItemSchema),
 });
 export type MyStorageState = z.infer<typeof MyStorageStateSchema>;
+
+/**
+ * The sidebar meters. Storage is bytes. Usage is how much of the monthly allowance is used,
+ * with no amount attached, and null when an administrator has not set one.
+ */
+export const MyMetersSchema = z.object({
+  usedBytes: z.number().nonnegative(),
+  limitBytes: z.number().nonnegative(),
+  usagePercent: z.number().int().min(0).max(100).nullable(),
+  /** A chat file will be deleted within a week. */
+  chatExpiring: z.boolean(),
+});
+export type MyMeters = z.infer<typeof MyMetersSchema>;
 
 export const CompanyModelSchema = z.object({
   provider: z.string(),
@@ -2848,7 +2866,7 @@ export type LibraryDocument = z.infer<typeof LibraryDocumentSchema>;
 export const SharedAppAdminSchema = z.object({
   id: z.string(),
   title: z.string(),
-  kind: z.enum(["page", "app"]),
+  kind: z.enum(["page", "app", "whiteboard"]),
   owner: z.string(),
   visibility: z.enum(["private", "link", "public"]),
   evolvePluginSlug: z.string().nullable(),

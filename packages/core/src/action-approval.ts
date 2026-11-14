@@ -293,6 +293,7 @@ export function unattendedTriggerToolRequiresApproval(
  */
 const OWN_STATE_RESULT_TOOLS = new Set([
   "ask_user",
+  "ask_app_scope",
   "connect_app",
   "attach_file",
   "copy_file",
@@ -311,6 +312,7 @@ const OWN_STATE_RESULT_TOOLS = new Set([
   "request_secret",
   "save_memory",
   "save_page",
+  "save_whiteboard",
   "save_app",
   "app_data",
   "app_asset",

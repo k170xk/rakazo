@@ -143,5 +143,11 @@ describe("page replies", () => {
     });
     expect(pageReply("B", messages, { id: "p1", title: "Plan" }, "m4")).toEqual({ text: "B" });
     expect(pageReply("B", messages, null)).toEqual({ text: "B" });
+    expect(
+      pageReply("B", messages, { id: "p2", title: "Older", note: "Selected on the whiteboard:\n- api (rect): API" }),
+    ).toEqual({
+      text: "B\n\nSelected on the whiteboard:\n- api (rect): API",
+      replyToMessageId: "m2",
+    });
   });
 });

@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Whiteboard } from "@rakazo/app-kit/ui";
 import { AppFrame } from "../components/apps/AppFrame";
 import { PublicPageShell } from "../components/pages/PublicPageShell";
 import { sharedAppSource } from "../lib/app-host";
@@ -82,7 +83,8 @@ function SharedPageBody() {
     [token, password],
   );
   const isApp = page?.kind === "app";
-  const viewer = usePageDocument(isApp ? undefined : page?.code);
+  const isBoard = page?.kind === "whiteboard";
+  const viewer = usePageDocument(isApp || isBoard ? undefined : page?.code);
   const appSource = useMemo(
     () => (token && isApp ? sharedAppSource(token, password, page?.canSaveState === true) : null),
     [token, password, isApp, page?.canSaveState],
@@ -158,7 +160,7 @@ function SharedPageBody() {
   }
   // Busy or unreachable is not gone; a failed refresh keeps the page being read.
   const failed = shared.isError && !page;
-  if (failed || (!isApp && viewer.failed)) {
+  if (failed || (!isApp && !isBoard && viewer.failed)) {
     return (
       <div className="grid min-h-dvh place-items-center bg-background px-6 text-center text-[15px] text-muted-foreground">
         <div className="flex flex-col items-center gap-3">
@@ -184,6 +186,13 @@ function SharedPageBody() {
       <div className="grid min-h-dvh place-items-center bg-background text-muted-foreground">
         <Spinner />
       </div>
+    );
+  }
+  if (isBoard) {
+    return (
+      <PublicPageShell title={page.title} document={null} fill>
+        <Whiteboard value={page.code} readOnly height="100%" className="h-full rounded-none border-0" />
+      </PublicPageShell>
     );
   }
   if (isApp && appSource) {

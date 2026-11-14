@@ -101,7 +101,7 @@ export function usePageDocument(
 
 type Dock = {
   node: HTMLElement | null;
-  page: { id: string; title: string } | null;
+  page: { id: string; title: string; note?: string } | null;
   /** Where the chat's transcript shows beside an open app, so its steps stay in view. */
   chat?: HTMLElement | null;
   /** The chat's bot is working on a reply. */
@@ -148,6 +148,7 @@ export function createPageSession() {
           merged.node === dock.node &&
           merged.page?.title === dock.page?.title &&
           merged.page?.id === dock.page?.id &&
+          (merged.page?.note ?? "") === (dock.page?.note ?? "") &&
           (merged.chat ?? null) === (dock.chat ?? null) &&
           Boolean(merged.running) === Boolean(dock.running)
         )

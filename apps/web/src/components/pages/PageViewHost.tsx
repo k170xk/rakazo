@@ -12,6 +12,7 @@ import { AppStudio } from "../apps/AppStudio";
 import { PageNotice } from "./PageNotice";
 import { PageView } from "./PageView";
 import { SharePopover } from "./SharePopover";
+import { WhiteboardCanvas } from "./WhiteboardCanvas";
 
 const COARSE = "(pointer: coarse)";
 /** The docked composer's height plus its gap to the screen edge and to what scrolls above it. */
@@ -53,12 +54,14 @@ function OpenPage({
   const page = useQuery({
     ...queries.pages.get.queryOptions({ input: { pageId: shownId } }),
     enabled: pageId !== null,
+    refetchInterval: (query) => (query.state.data?.kind === "whiteboard" ? 4_000 : false),
   });
   // Always the Evolve canvas (background), never the slate card chrome — pages looked grey.
   const isApp = page.data?.kind === "app";
-  // An app is a whole document of its own; only pages are wrapped in the page runtime.
+  const isBoard = page.data?.kind === "whiteboard";
+  // An app is a whole document of its own; a whiteboard is the board. Only pages use the runtime.
   const viewer = usePageDocument(
-    isApp ? undefined : page.data?.code,
+    isApp || isBoard ? undefined : page.data?.code,
     "background",
     true,
     DOCK_CLEARANCE,
@@ -119,7 +122,12 @@ function OpenPage({
   const open = pageId !== null && (data !== undefined || failed || page.isPending);
   const dockPage = pageId !== null && data ? { id: data.id, title: data.title } : null;
   useEffect(() => {
-    session.dock.set({ page: dockPage });
+    // The board writes a selection note onto this same page. Keep it when the title changes.
+    const current = session.dock.get().page;
+    const note = current?.id === dockPage?.id ? current.note : undefined;
+    session.dock.set({
+      page: dockPage ? { ...dockPage, ...(note ? { note } : {}) } : null,
+    });
     return () => session.dock.set({ page: null });
   }, [session, dockPage?.id, dockPage?.title]);
   const notice = gone ? (
@@ -128,7 +136,7 @@ function OpenPage({
       detail={t`It may have been deleted, or it belongs to someone else.`}
       onClose={close}
     />
-  ) : failed || (!isApp && viewer.failed) ? (
+  ) : failed || (!isApp && !isBoard && viewer.failed) ? (
     <PageNotice
       title={t`This app couldn't load`}
       detail={t`Check your connection and try again.`}
@@ -206,6 +214,17 @@ function OpenPage({
       }
       composer={<div ref={setDockNode} />}
       onReply={session.offerReply}
+      canvas={
+        isBoard && data ? (
+          <WhiteboardCanvas
+            pageId={data.id}
+            title={data.title}
+            code={data.code}
+            version={data.version}
+            session={session}
+          />
+        ) : undefined
+      }
       share={share}
     />
   );

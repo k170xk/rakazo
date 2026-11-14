@@ -204,9 +204,15 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   if (toolName === "search_conversation_files") return "Searching the conversation's files";
   if (toolName === "open_path") return `Opening ${detail(record.path)}`;
   if (toolName === "render_plot") return "Rendering a chart";
+  if (toolName === "ask_app_scope") return "Asking who the app is for";
   if (toolName === "show_card") return "Drawing a card";
   if (toolName === "save_page") {
     return record.help === true ? "Reading the page kit reference" : "Writing the page code";
+  }
+  if (toolName === "save_whiteboard") {
+    if (Array.isArray(record.ops) && record.ops.length > 0) return "Updating the whiteboard";
+    if (record.whiteboardId && !record.items && !record.title) return "Reading the whiteboard";
+    return "Drawing a whiteboard";
   }
   if (toolName === "save_app") {
     if (record.help === true) return "Reading the App Studio guide";
@@ -349,7 +355,8 @@ function toAgentTool(
     // so a sibling request cannot start after one pauses for its card and share its answer.
     ...(SCHEDULE_TOOL_NAMES.has(tool.name) ||
     tool.name === "remember" ||
-    tool.name === "request_secret"
+    tool.name === "request_secret" ||
+    tool.name === "ask_app_scope"
       ? { executionMode: "sequential" as const }
       : {}),
     parameters: parametersFor(tool),
@@ -525,6 +532,36 @@ function toAgentTool(
                 return {
                   content: [{ type: "text", text: "Waiting for the user's choice." }],
                   details: args,
+                  terminate: true,
+                };
+              }
+              if (tool.name === "ask_app_scope") {
+                host.pausePending = true;
+                host.queue.push({
+                  type: "ask",
+                  ...(host.request.onCheckpoint ? { executionId } : {}),
+                  appScope: true,
+                  text: "Is this an individual user app, or a tenant app?",
+                  detail: [
+                    "Individual user app — one person, one set of rows.",
+                    "Example: a private site diary. Your visit notes, photos and reminders stay yours. Colleagues do not see them, and the diary is not split by project.",
+                    "",
+                    "Tenant app — one tool the company reuses, with a separate set of data for each project and the people on it.",
+                    "Example: a bridge inspection tool. Athlone Bridge, Kells Bridge and Sligo Bridge each keep their own inspections, defects and photos, and their own team. Someone on one bridge does not see the other. A new bridge is another workspace in this same app, not a new app.",
+                  ].join("\n"),
+                  actions: [
+                    { id: "personal", label: "Just for me" },
+                    { id: "tenant", label: "For the company" },
+                  ],
+                });
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: "Waiting for them to choose an individual user app or a tenant app.",
+                    },
+                  ],
+                  details: {},
                   terminate: true,
                 };
               }

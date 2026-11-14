@@ -60,19 +60,24 @@ export function StorageDialog({
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
-  const options = queries.computer.myStorage.queryOptions();
-  const state = useQuery({
-    ...options,
-    enabled: Boolean(userId) && ready,
-    staleTime: RECHECK_MS / 2,
-    refetchInterval: RECHECK_MS,
-  });
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<StoragePromptReason | null>(null);
   const [tab, setTab] = useState<StorageTab>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const options = queries.computer.myStorage.queryOptions();
+  const meters = useQuery({
+    ...queries.computer.myMeters.queryOptions(),
+    enabled: Boolean(userId) && ready,
+    staleTime: RECHECK_MS / 2,
+    refetchInterval: RECHECK_MS,
+  });
+  const state = useQuery({
+    ...options,
+    enabled: Boolean(userId) && ready && open,
+    staleTime: RECHECK_MS / 2,
+  });
 
   useEffect(
     () =>
@@ -102,10 +107,36 @@ export function StorageDialog({
   }, []);
 
   const data = state.data;
+  const meter = meters.data;
   useEffect(() => {
-    if (!data || !userId || open || blockedByOverlay) return;
+    if (!meter || !userId || open || blockedByOverlay) return;
     const now = Date.now();
-    const why = storagePromptReason(data, now);
+    const why = storagePromptReason(
+      {
+        usedBytes: meter.usedBytes,
+        limitBytes: meter.limitBytes,
+        computerBytes: 0,
+        chatBytes: 0,
+        computerRetentionDays: 0,
+        chatRetentionDays: null,
+        items: meter.chatExpiring
+          ? [
+              {
+                ref: { kind: "chat", artifactId: "expiring" },
+                name: "",
+                botName: null,
+                kind: "file",
+                size: 0,
+                modifiedAt: new Date(now).toISOString(),
+                pinnable: false,
+                pinned: false,
+                deletesAt: new Date(now).toISOString(),
+              },
+            ]
+          : [],
+      },
+      now,
+    );
     if (!why || !shouldPromptStorage(userId, why, now)) return;
     const timer = window.setTimeout(() => {
       markStoragePromptSeen(userId, why, Date.now());
@@ -115,7 +146,7 @@ export function StorageDialog({
       setOpen(true);
     }, OFFER_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [data, userId, open, blockedByOverlay]);
+  }, [meter, userId, open, blockedByOverlay]);
 
   const now = Date.now();
   const shown = useMemo(() => (data ? itemsForTab(data.items, tab, now) : []), [data, tab, now]);
@@ -340,7 +371,8 @@ export function StorageDialog({
                         onPin={
                           item.ref.kind === "computer" && item.pinnable
                             ? () => {
-                                const ref = item.ref as { botId: string; path: string };
+                                const ref = item.ref;
+                                if (ref.kind !== "computer") return;
                                 void run(
                                   storageItemKey(item),
                                   async () =>
@@ -349,6 +381,7 @@ export function StorageDialog({
                                         botId: ref.botId,
                                         path: ref.path,
                                         pinned: !item.pinned,
+                                        source: ref.source,
                                       }),
                                     ),
                                   t`Could not update the file`,

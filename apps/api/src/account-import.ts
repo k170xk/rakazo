@@ -23,7 +23,9 @@ import {
   AccountExportManifestSchema,
   AccountExportRecordSchema,
   attachmentSizeLabel,
+  boardSource,
   isAccountExportFormat,
+  readBoardItems,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
 import { organicAvatarFamily } from "@rakazo/core";
@@ -272,6 +274,8 @@ class SpaceImport {
   readonly seenPageVersions = new Set<string>();
   /** Apps by source id, with their tables' and rows' counts, so limits hold as on save. */
   readonly apps = new Map<string, { tables: number }>();
+  /** Whiteboards, whose versions are the board JSON and are not compiled as pages. */
+  readonly whiteboards = new Set<string>();
   readonly appTables = new Map<string, { pageId: string; rows: number }>();
   /** Source asset id to new, for the app files that name their pictures. */
   readonly appAssets = new Map<string, string>();
@@ -651,6 +655,7 @@ class AccountImporter implements ArchiveSink {
           },
         });
         if (record.kind === "app") space.apps.set(record.id, { tables: 0 });
+        if (record.kind === "whiteboard") space.whiteboards.add(record.id);
         return;
       case "app_version": {
         const newest = space.pageVersions.get(record.pageId);
@@ -741,6 +746,21 @@ class AccountImporter implements ArchiveSink {
         if (space.seenPageVersions.has(key)) throw unreadable();
         space.seenPageVersions.add(key);
         space.pageVersions.set(record.pageId, Math.max(newest, record.version));
+        if (space.whiteboards.has(record.pageId)) {
+          const source = boardSource(readBoardItems(record.source));
+          await prisma.pageVersion.create({
+            data: {
+              id: newId(),
+              pageId,
+              version: record.version,
+              title: record.title,
+              source,
+              code: source,
+              createdAt: new Date(record.createdAt),
+            },
+          });
+          return;
+        }
         // The checker tightens over time and is not the security boundary (the viewer's sandbox
         // is), so a version an older release saved still imports and opens on its own error.
         const check = checkPageSource(record.source);

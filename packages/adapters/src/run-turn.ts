@@ -414,6 +414,7 @@ async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
         text: safeText,
         detail: safeDetail,
         status: "pending",
+        ...(event.appScope ? { appScope: true as const } : {}),
         actions: safeActions,
       },
     ],
@@ -520,7 +521,7 @@ async function onToolCalled(ctx: RunContext, event: RuntimeEvent<"tool">): Promi
   reply.pendingToolNames.push(event.name);
   // Text before ask_user stays pending: the run pauses next, and the question needs it.
   const heldNote =
-    event.name === "message_user" || event.name === "ask_user"
+    event.name === "message_user" || event.name === "ask_user" || event.name === "ask_app_scope"
       ? undefined
       : await publishMidTurnNarration(ctx);
   // A step without a note of its own replaces the earlier one in the live view, so its status

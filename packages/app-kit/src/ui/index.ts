@@ -165,6 +165,7 @@ export {
   type BoardItem,
   type BoardKind,
   type BoardValue,
+  BoardThumbnail,
   boardBounds,
   readBoard,
   Whiteboard,

@@ -37,11 +37,13 @@ function PagePreview({
   app,
   title,
   failed,
+  preview,
 }: {
   document: string | null;
   app?: PageCardApp;
   title: string;
   failed: boolean;
+  preview?: ReactNode;
 }) {
   const { t } = useLingui();
   const box = useRef<HTMLDivElement>(null);
@@ -49,6 +51,9 @@ function PagePreview({
   const [live, setLive] = useState(false);
   const [drawn, setDrawn] = useState(false);
   const onDrawn = useCallback(() => setDrawn(true), []);
+  useEffect(() => {
+    if (preview) onDrawn();
+  }, [preview, onDrawn]);
   useEffect(() => {
     const element = box.current;
     if (!element) return;
@@ -98,7 +103,8 @@ function PagePreview({
       className="pointer-events-none relative w-full overflow-hidden bg-card pointer-coarse:min-[900px]:min-h-[335px]"
       style={{ aspectRatio: `${1 / PREVIEW_ASPECT}` }}
     >
-      {live && (app || document !== null) && size.width > 0 ? (
+      {preview ? <div className="absolute inset-0">{preview}</div> : null}
+      {live && !preview && (app || document !== null) && size.width > 0 ? (
         <div
           inert
           // On a touch tablet the preview starts 13px further up the page.
@@ -157,6 +163,7 @@ export function PageCard({
   failed = false,
   icon,
   app,
+  preview,
 }: {
   title: string;
   /** When the page last changed, said under its title. */
@@ -174,6 +181,8 @@ export function PageCard({
   icon?: ReactNode;
   /** Draws this app in the preview instead of `document`. */
   app?: PageCardApp;
+  /** A finished picture of the page, such as a whiteboard, in place of the live frame. */
+  preview?: ReactNode;
 }) {
   const { t } = useLingui();
   const when = updatedAt ? formatRelativeTime(updatedAt) : "";
@@ -183,7 +192,9 @@ export function PageCard({
       data-deleted={onOpen === undefined || undefined}
       className="relative w-full max-w-[561px] overflow-hidden pointer-coarse:min-[900px]:max-w-[639px] rounded-[24px] bg-card ring-[0.5px] ring-border has-focus-visible:ring-2 has-focus-visible:ring-ring data-deleted:bg-transparent data-deleted:opacity-70"
     >
-      {onOpen ? <PagePreview document={document} app={app} title={title} failed={failed} /> : null}
+      {onOpen ? (
+        <PagePreview document={document} app={app} title={title} failed={failed} preview={preview} />
+      ) : null}
       <div className="flex h-[73px] items-center gap-[14px] border-t border-foreground/[0.04] px-5">
         {icon ?? <PageTileIcon />}
         <div className="min-w-0">

@@ -1,5 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import {
+  BoardChangedError,
+  BoardSaveError,
   getPage,
   getPageState,
   listPages,
@@ -11,6 +13,7 @@ import {
   removePage,
   renamePage,
   savePageState,
+  saveWhiteboard,
   setPageVisibility,
 } from "../pages.js";
 import type { RouterContext } from "./context.js";
@@ -73,6 +76,22 @@ export function pagesRoutes(ctx: RouterContext) {
         } catch (error) {
           if (error instanceof PageStateRefusedError) {
             throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
+          throw error;
+        }
+      }),
+      saveBoard: authed.pages.saveBoard.handler(async ({ context, input }) => {
+        try {
+          return await saveWhiteboard(deps.prisma, context.actor, input);
+        } catch (error) {
+          if (error instanceof BoardChangedError) {
+            throw new ORPCError("CONFLICT", { message: error.message });
+          }
+          if (error instanceof BoardSaveError) {
+            throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
+          if (error instanceof PageFrozenError) {
+            throw new ORPCError("FORBIDDEN", { message: error.message });
           }
           throw error;
         }

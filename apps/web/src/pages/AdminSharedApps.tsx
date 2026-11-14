@@ -78,7 +78,8 @@ export function SharedAppsSection() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{app.title}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {app.kind === "app" ? t`App` : t`Page`} · {app.owner}
+                  {app.kind === "app" ? t`App` : app.kind === "whiteboard" ? t`Whiteboard` : t`Page`} ·{" "}
+                  {app.owner}
                   {reach(app) ? ` · ${reach(app)}` : ""}
                   {app.frozenAt
                     ? ` · ${t`Frozen ${i18n.date(new Date(app.frozenAt), { dateStyle: "medium" })}`}`

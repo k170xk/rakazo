@@ -44,6 +44,7 @@ import { useState } from "react";
 import type { RpcClient } from "../lib/rpc";
 import { rpc as selectedSpaceRpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
+import { AppScopeAskCard } from "./AppScopeAskCard";
 import { BuiCard } from "./ai/primitives";
 import type { LoadChangeOptions } from "./EvolveChangeEditor";
 import {
@@ -117,6 +118,7 @@ export type AskCardProps = {
 /** A question, approval or protected-input request from the bot. */
 export function AskCard(props: AskCardProps) {
   if (isSecretAskBlock(props.block)) return <SecretAskCard {...props} />;
+  if (props.block.appScope) return <AppScopeAskCard {...props} />;
   if (props.block.deadlineChange && isApprovalAskBlock(props.block))
     return <DeadlineAskCard {...props} change={props.block.deadlineChange} />;
   if (props.block.workPackageChange && isApprovalAskBlock(props.block))

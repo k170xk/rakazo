@@ -1263,3 +1263,28 @@ it("previews a Design Team join with its role and changes the role from Evolve's
   await click(button("Update card"));
   expect(onReviseChange).toHaveBeenCalledWith({ role: "PSDP" });
 });
+
+it("explains an individual app and a tenant app before anything is built", async () => {
+  const onAnswer = vi.fn(async () => undefined);
+  await render(
+    {
+      kind: "ask",
+      appScope: true,
+      text: "Is this an individual user app, or a tenant app?",
+      status: "pending",
+      actions: [
+        { id: "personal", label: "Just for me" },
+        { id: "tenant", label: "For the company" },
+      ],
+    },
+    async () => undefined,
+    onAnswer,
+  );
+  const card = container.querySelector('[data-testid="app-scope-card"]')!;
+  expect(card.textContent).toContain("private site diary");
+  expect(card.textContent).toContain("Athlone Bridge");
+  expect(card.textContent).toContain("Kells Bridge");
+  expect(card.textContent).toContain("Nothing is built until you choose");
+  await click(button("For the company"));
+  expect(onAnswer).toHaveBeenCalledWith("tenant");
+});

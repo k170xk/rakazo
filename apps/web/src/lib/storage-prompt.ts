@@ -75,6 +75,6 @@ export function itemsForTab(items: readonly MyStorageItem[], tab: StorageTab, no
 
 export function storageItemKey(item: Pick<MyStorageItem, "ref">) {
   return item.ref.kind === "computer"
-    ? `computer:${item.ref.botId}:${item.ref.path}`
+    ? `computer:${item.ref.source ?? "documents"}:${item.ref.botId}:${item.ref.path}`
     : `chat:${item.ref.artifactId}`;
 }

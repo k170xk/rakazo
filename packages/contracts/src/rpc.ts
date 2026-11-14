@@ -148,6 +148,7 @@ import {
   ModelCreditAmountSchema,
   ModelOAuthBeginSchema,
   MoveTodoItemInput,
+  MyMetersSchema,
   MyStorageStateSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   PluginMarketplaceCatalogSchema,
@@ -251,6 +252,7 @@ import {
   PageVisibilitySchema,
 } from "./pages.js";
 import { PaymentWalletStatusSchema } from "./payments.js";
+import { BOARD_MAX_ITEMS, BoardItemSchema } from "./whiteboard.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
 import {
@@ -1138,13 +1140,22 @@ export const appContract = {
     downloadStoredFile: oc
       .input(z.object({ botId: Id, path: z.string().min(1).max(1024) }))
       .output(z.object({ path: z.string(), contentBase64: z.string() })),
+    /** Sidebar meters: storage bytes and the share of the monthly allowance used, with no amount. */
+    myMeters: oc.output(MyMetersSchema),
     /** Manage storage: everything counting against the caller's limit, across all their bots. */
     myStorage: oc.output(MyStorageStateSchema),
     deleteMyStorage: oc
       .input(z.object({ items: z.array(StorageItemRefSchema).min(1).max(MAX_STORAGE_SELECTION) }))
       .output(MyStorageStateSchema),
     pinMyStorage: oc
-      .input(z.object({ botId: Id, path: z.string().min(1).max(1024), pinned: z.boolean() }))
+      .input(
+        z.object({
+          botId: Id,
+          path: z.string().min(1).max(1024),
+          pinned: z.boolean(),
+          source: z.enum(["documents", "home"]).optional(),
+        }),
+      )
       .output(MyStorageStateSchema),
     /** A one-time link to a zip of the chosen items, opened as a plain download. */
     myStorageDownload: oc
@@ -1831,6 +1842,16 @@ export const appContract = {
     saveState: oc
       .input(z.strictObject({ pageId: Id, key: PageStateKeySchema, value: z.unknown() }))
       .output(z.object({ ok: z.literal(true) })),
+    /** The person's edits to a whiteboard, kept only when the board is still the version they changed. */
+    saveBoard: oc
+      .input(
+        z.strictObject({
+          pageId: Id,
+          baseVersion: z.number().int().positive(),
+          items: z.array(BoardItemSchema).max(BOARD_MAX_ITEMS),
+        }),
+      )
+      .output(z.object({ version: z.number().int().positive() })),
   },
   /** Apps: pages built from several files with their own tables of data. Owner only. */
   apps: {

@@ -1893,6 +1893,7 @@ model Page {
   currentVersion        Int                  @default(1)
   /// "page" is one JSX file on the page kit; "app" is a set of files built with the app kit,
   /// whose version source holds the files as JSON and whose code is the built document.
+  /// "whiteboard" stores the board JSON in both source and code.
   kind                  String               @default("page")
   /// Goes up whenever an app's rows change, so open copies know to fetch them again.
   dataRevision          Int                  @default(0)

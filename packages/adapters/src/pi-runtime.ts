@@ -1020,7 +1020,9 @@ export class PiAgentRuntime implements AgentRuntime {
                 if (!tool) throw new Error("Pending checkpoint tool is no longer available");
                 const interaction =
                   call.id === restored.pendingToolCallId &&
-                  (call.name === "ask_user" || call.name === "request_takeover");
+                  (call.name === "ask_user" ||
+                    call.name === "ask_app_scope" ||
+                    call.name === "request_takeover");
                 let result: AgentToolResult<JsonValue | undefined>;
                 try {
                   signal.throwIfAborted();

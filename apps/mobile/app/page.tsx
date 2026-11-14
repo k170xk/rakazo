@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeActionButton } from "../components/native-action-button";
+import { BoardReading } from "../components/pages/board-reading";
 import { PageLoadFailure } from "../components/pages/page-load-failure";
 import { SandboxedHtmlPreview } from "../components/sandboxed-html-preview";
 import { currentApiBase } from "../lib/api";
@@ -53,6 +54,11 @@ export default function PageScreen() {
     setLoaded({ status: "loading" });
     void getLatestPage(pageId, { refresh: true })
       .then(async (page) => {
+        if (page.kind === "whiteboard") {
+          if (!active) return;
+          setLoaded({ status: "ready", page, document: "" });
+          return;
+        }
         const document = await pageDocument(
           currentApiBase(),
           page.code,
@@ -131,11 +137,15 @@ export default function PageScreen() {
             tapStart.current = null;
           }}
         >
-          <SandboxedHtmlPreview
-            html={loaded.document}
-            background={pageBackground}
-            onMessage={receive}
-          />
+          {loaded.page.kind === "whiteboard" ? (
+            <BoardReading code={loaded.page.code} color={tokens.foreground} />
+          ) : (
+            <SandboxedHtmlPreview
+              html={loaded.document}
+              background={pageBackground}
+              onMessage={receive}
+            />
+          )}
         </View>
       ) : loaded.status === "error" ? (
         <View style={styles.center}>

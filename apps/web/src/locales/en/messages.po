@@ -1879,6 +1879,10 @@ msgstr "Before"
 msgid "BEFORE"
 msgstr "BEFORE"
 
+#: src/components/AppScopeAskCard.tsx
+msgid "Before the app is created"
+msgstr "Before the app is created"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Being set up"
 msgstr "Being set up"
@@ -2063,10 +2067,6 @@ msgstr "Builds a deck from a brief, with the company fonts, colours, logo and fo
 msgid "Builds OCSC-styled workbooks with real formulas, totals and number formats"
 msgstr "Builds OCSC-styled workbooks with real formulas, totals and number formats"
 
-#: src/components/integrations/ocsc-tools-section.tsx
-#~ msgid "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
-#~ msgstr "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
-
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
@@ -2142,6 +2142,7 @@ msgstr "Can't read images"
 
 #: src/components/apps/AppDataPanel.tsx
 #: src/components/apps/AppHistoryPanel.tsx
+#: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/integrations/CompanyMcpApp.tsx
@@ -3940,6 +3941,7 @@ msgstr "Could not stop computer"
 msgid "Could not submit the quiz"
 msgstr "Could not submit the quiz"
 
+#: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Could not submit this answer"
@@ -5600,6 +5602,14 @@ msgstr "Folders assistants can read"
 msgid "For clients and partners; a password is made for you"
 msgstr "For clients and partners; a password is made for you"
 
+#: src/components/AppScopeAskCard.tsx
+msgid "For example: one shared list the whole office sees"
+msgstr "For example: one shared list the whole office sees"
+
+#: src/components/AppScopeAskCard.tsx
+msgid "For the company"
+msgstr "For the company"
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "Forgot password?"
@@ -6108,6 +6118,10 @@ msgstr "Include API keys"
 msgid "Incoming call"
 msgstr "Incoming call"
 
+#: src/components/AppScopeAskCard.tsx
+msgid "Individual user app"
+msgstr "Individual user app"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Infographics on most slides, plus editable charts, tables and timelines"
 msgstr "Infographics on most slides, plus editable charts, tables and timelines"
@@ -6229,6 +6243,10 @@ msgstr "Invited"
 msgid "Invited by email"
 msgstr "Invited by email"
 
+#: src/components/AppScopeAskCard.tsx
+msgid "Is this an individual user app, or a tenant app?"
+msgstr "Is this an individual user app, or a tenant app?"
+
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Isolated"
@@ -6315,6 +6333,10 @@ msgstr "Jump to latest"
 #: src/pages/shell/chat-context.tsx
 msgid "Jump to replied message: {excerpt}"
 msgstr "Jump to replied message: {excerpt}"
+
+#: src/components/AppScopeAskCard.tsx
+msgid "Just for me"
+msgstr "Just for me"
 
 #: src/lib/relative-time.ts
 msgid "just now"
@@ -7673,6 +7695,7 @@ msgstr "No image"
 msgid "No job"
 msgstr "No job"
 
+#: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "No longer active"
@@ -8131,6 +8154,22 @@ msgstr "On now"
 #: src/lib/cron.ts
 msgid "on the 1st at {0}"
 msgstr "on the 1st at {0}"
+
+#: src/components/AppScopeAskCard.tsx
+msgid "One bridge inspection app, with a separate team and records for Athlone, Kells and Sligo."
+msgstr "One bridge inspection app, with a separate team and records for Athlone, Kells and Sligo."
+
+#: src/components/AppScopeAskCard.tsx
+msgid "One person writing their own site diary. Nobody else has those notes."
+msgstr "One person writing their own site diary. Nobody else has those notes."
+
+#: src/components/AppScopeAskCard.tsx
+msgid "One person, one use. Example: your private site diary — notes, photos and reminders from the visits you make. Those rows are yours. Colleagues do not see them, and the diary is not split into projects."
+msgstr "One person, one use. Example: your private site diary — notes, photos and reminders from the visits you make. Those rows are yours. Colleagues do not see them, and the diary is not split into projects."
+
+#: src/components/AppScopeAskCard.tsx
+msgid "One tool, reused. Example: a bridge inspection app. Athlone Bridge, Kells Bridge and Sligo Bridge each keep their own inspections, defects and photos, and their own people. Someone on one bridge does not see the other. A new bridge is another workspace in this same app."
+msgstr "One tool, reused. Example: a bridge inspection app. Athlone Bridge, Kells Bridge and Sligo Bridge each keep their own inspections, defects and photos, and their own people. Someone on one bridge does not see the other. A new bridge is another workspace in this same app."
 
 #: src/lib/cron.ts
 msgid "One-time"
@@ -10014,6 +10053,7 @@ msgstr "Send <0>{linkCode}</0> from {linkApp} within 10 minutes."
 msgid "Send <0>{linkCode}</0> to <1>{linkAddress}</1> from {linkApp} within 10 minutes."
 msgstr "Send <0>{linkCode}</0> to <1>{linkAddress}</1> from {linkApp} within 10 minutes."
 
+#: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 msgid "Send answer"
 msgstr "Send answer"
@@ -10058,6 +10098,7 @@ msgstr "Send the password separately from the link."
 msgid "Send with Enter"
 msgstr "Send with Enter"
 
+#: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -10941,6 +10982,10 @@ msgstr "Template"
 msgid "Templates"
 msgstr "Templates"
 
+#: src/components/AppScopeAskCard.tsx
+msgid "Tenant app"
+msgstr "Tenant app"
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Terms I use:\n"
 "- OCSC: our company name, always in capitals\n"
@@ -11341,6 +11386,10 @@ msgstr "This connection's request limit is too small. Choose another model."
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 
+#: src/components/AppScopeAskCard.tsx
+msgid "This decides who the data belongs to. Nothing is built until you choose."
+msgstr "This decides who the data belongs to. Nothing is built until you choose."
+
 #. placeholder {0}: pendingDelete.versionCount
 #: src/pages/Artifacts.tsx
 msgid "This deletes all {0} versions of this file. This can't be undone."
@@ -11680,6 +11729,7 @@ msgstr "Type {name} to confirm"
 msgid "Type a clear, specific instruction in the box below."
 msgstr "Type a clear, specific instruction in the box below."
 
+#: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 msgid "Type my own answer"
 msgstr "Type my own answer"
@@ -12522,6 +12572,10 @@ msgstr "Yesterday"
 msgid "You"
 msgstr "You"
 
+#: src/components/AppScopeAskCard.tsx
+msgid "You answered: {chosen}"
+msgstr "You answered: {chosen}"
+
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "You approve every time"
 msgstr "You approve every time"
@@ -12587,6 +12641,7 @@ msgstr "Your administrator sets up voice for the company."
 msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
 msgstr "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
 
+#: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 msgid "Your answer"
 msgstr "Your answer"
@@ -12752,3 +12807,26 @@ msgstr "Zoom in"
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
 msgstr "Zoom out"
+
+#: src/components/pages/WhiteboardCanvas.tsx
+msgid "Couldn't save the whiteboard."
+msgstr "Couldn't save the whiteboard."
+
+#: src/components/pages/PagesList.tsx
+msgid "Whiteboard"
+msgstr "Whiteboard"
+
+msgid "{left}% left"
+msgstr "{left}% left"
+
+msgid "No monthly allowance is set, so chats and routines can keep spending."
+msgstr "No monthly allowance is set, so chats and routines can keep spending."
+
+msgid "None left"
+msgstr "None left"
+
+msgid "Storage"
+msgstr "Storage"
+
+msgid "When someone reaches it, their chats and routines stop until next month or until you raise it. Staff see how much is left, not the amount. Leave this empty and nothing stops their spend."
+msgstr "When someone reaches it, their chats and routines stop until next month or until you raise it. Staff see how much is left, not the amount. Leave this empty and nothing stops their spend."

@@ -38,9 +38,14 @@ export const PageTitleSchema = z
   .transform((title) => title.replace(/[\p{Cc}\u2028\u2029\s]+/gu, " ").trim())
   .pipe(z.string().min(1).max(PAGE_TITLE_MAX_LENGTH));
 
-/** A page is one JSX file; an app is a set of files with its own tables of data. */
-export const PageKindSchema = z.enum(["page", "app"]);
+/** A page is one JSX file; an app is a set of files; a whiteboard is a board of shapes stored as JSON. */
+export const PageKindSchema = z.enum(["page", "app", "whiteboard"]);
 export type PageKind = z.infer<typeof PageKindSchema>;
+
+/** Unknown stored values stay pages, so a future kind does not fail a read from this release. */
+export function shownPageKind(kind: string): PageKind {
+  return kind === "app" || kind === "whiteboard" ? kind : "page";
+}
 
 export const PageSummarySchema = z.strictObject({
   id: Id,

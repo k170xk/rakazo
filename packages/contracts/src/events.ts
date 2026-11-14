@@ -333,6 +333,11 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     siteVisitChange: SiteVisitChangeSchema.optional(),
     detail: z.string().optional(),
     detailFormat: z.enum(["text", "code"]).optional(),
+    /**
+     * The card that asks, before an app exists, whether it is one person's app or a tenant app
+     * with a separate set of data per project. The web card draws the explanation itself.
+     */
+    appScope: z.literal(true).optional(),
     input: z.enum(["text", "secret"]).optional(),
     /** Why the secret is needed; drives field label on the masked card. */
     purpose: SecretAskPurpose.optional(),

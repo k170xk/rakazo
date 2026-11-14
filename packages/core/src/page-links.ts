@@ -182,12 +182,13 @@ export function pageReplyTargetId(
 export function pageReply(
   text: string,
   messages: readonly { id: string; blocks: readonly MessageBlock[] }[],
-  page: { id: string; title: string } | null,
+  page: { id: string; title: string; note?: string } | null,
   chosenReplyId?: string,
 ): { text: string; replyToMessageId?: string } {
-  if (!page || chosenReplyId) return { text };
+  const noted = page?.note ? `${text}\n\n${page.note}` : text;
+  if (!page || chosenReplyId) return { text: noted };
   const target = pageReplyTargetId(messages, page.id);
-  if (target) return { text, replyToMessageId: target };
+  if (target) return { text: noted, replyToMessageId: target };
   const title = page.title.replace(/[\\[\]]/g, "\\$&");
-  return { text: `[${title}](page:${page.id})\n${text}` };
+  return { text: `[${title}](page:${page.id})\n${noted}` };
 }

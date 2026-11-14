@@ -1,3 +1,4 @@
+import { BoardThumbnail } from "@rakazo/app-kit/ui";
 import { pageIsShared } from "@rakazo/contracts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
@@ -49,8 +50,9 @@ export function PageBlockCard({ block, updated }: { block: PageBlock; updated: b
   }, [updated, currentVersion, block.version, block.pageId, queries, queryClient]);
   const shown = updated ? saved.data : current.data;
   const isApp = current.data?.kind === "app";
-  // An App Studio app is not a page document: it draws in its own frame from its data.
-  const viewer = usePageDocument(isApp ? undefined : shown?.code);
+  const isBoard = current.data?.kind === "whiteboard";
+  // An app draws from its own data, a whiteboard from its shapes. Only pages use the runtime.
+  const viewer = usePageDocument(isApp || isBoard ? undefined : shown?.code);
   const source = useMemo(
     () => (isApp ? ownerAppSource(queries, block.pageId, current.data?.owner.name ?? null) : null),
     [isApp, queries, block.pageId, current.data?.owner.name],
@@ -70,7 +72,10 @@ export function PageBlockCard({ block, updated }: { block: PageBlock; updated: b
     <PageCard
       title={current.data?.title ?? block.title}
       document={deleted ? null : viewer.document}
-      failed={(!isApp && viewer.failed) || unread}
+      failed={(!isApp && !isBoard && viewer.failed) || unread}
+      preview={
+        isBoard && shown?.code ? <BoardThumbnail value={shown.code} /> : undefined
+      }
       app={app}
       updated={updated}
       updatedAt={current.data?.updatedAt}

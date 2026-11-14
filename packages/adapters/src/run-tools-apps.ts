@@ -195,6 +195,83 @@ function parseWorkspaces(value: unknown): WorkspaceChange | string | undefined {
   return { label, ...(given.create ? { create: given.create as "anyone" | "owner" } : {}) };
 }
 
+const CHAT_APP_TRIGGERS = new Set(["user", "messaging"]);
+
+type AppScopeChoice = "personal" | "tenant" | "custom";
+
+/** The latest answered individual-or-tenant card in this chat, if they have chosen. */
+async function answeredAppScope(ctx: RunContext): Promise<AppScopeChoice | null> {
+  const findMany = ctx.deps.prisma.message?.findMany;
+  if (typeof findMany !== "function") return null;
+  const rows = await findMany({
+    where: { threadId: ctx.run.threadId },
+    orderBy: { seq: "desc" },
+    take: 40,
+    select: { blocks: true },
+  });
+  for (const row of rows) {
+    const blocks = Array.isArray(row.blocks) ? row.blocks : [];
+    for (let index = blocks.length - 1; index >= 0; index -= 1) {
+      const block = blocks[index] as {
+        kind?: unknown;
+        appScope?: unknown;
+        status?: unknown;
+        answer?: unknown;
+      } | null;
+      if (!block) continue;
+      if (block.kind !== "ask" || block.appScope !== true || block.status !== "answered") continue;
+      if (block.answer === "personal" || block.answer === "tenant") return block.answer;
+      return "custom";
+    }
+  }
+  return null;
+}
+
+/**
+ * A new app in a live chat waits for the individual-or-tenant card. Routines, voice calls and
+ * tests that do not record a trigger still create, so unattended work is not stuck on a card.
+ */
+async function newAppScopeRefusal(
+  ctx: RunContext,
+  args: Record<string, unknown>,
+  workspaces: WorkspaceChange | undefined,
+): Promise<{ error: string; unchanged: true } | null> {
+  if (ctx.source?.voiceCall) return null;
+  if (!CHAT_APP_TRIGGERS.has(ctx.run.trigger ?? "")) return null;
+  const choice = await answeredAppScope(ctx);
+  if (!choice) {
+    return {
+      unchanged: true,
+      error:
+        "Before creating this app, call ask_app_scope and wait. The card asks whether it is an individual user app or a tenant app. Do not plan or save until they answer.",
+    };
+  }
+  const givenScope = args.scope === "personal" || args.scope === "tenant" ? args.scope : null;
+  const scope = choice === "custom" ? givenScope : choice;
+  if (!scope) {
+    return {
+      unchanged: true,
+      error:
+        'They typed their own answer. Pass scope "personal" or "tenant" to match what they said, then save again.',
+    };
+  }
+  if (scope === "tenant" && !workspaces?.label) {
+    return {
+      unchanged: true,
+      error:
+        'They chose a tenant app. Pass workspaces: {label: "Bridge", create: "anyone"} using the thing each copy is for (Bridge, Project, Site or Client), and build the screens for one of them. Lists everyone needs (staff, rates, checklists) stay shared: true.',
+    };
+  }
+  if (scope === "personal" && workspaces?.label) {
+    return {
+      unchanged: true,
+      error:
+        "They chose an individual user app, so leave workspaces off. One person, one set of rows.",
+    };
+  }
+  return null;
+}
+
 /** The app's workspaces, or null when it keeps one set of data. */
 async function workspacesOf(ctx: RunContext, app: App) {
   if (!app.workspaceLabel) return null;
@@ -449,6 +526,11 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
       throw error;
     }
     if (!app) return notFound;
+  }
+
+  if (!app) {
+    const refused = await newAppScopeRefusal(ctx, args, workspaces);
+    if (refused) return refused;
   }
 
   if (argumentGiven(args.workbook)) return importIntoApp(ctx, call, app, title);

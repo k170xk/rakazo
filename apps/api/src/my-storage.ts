@@ -2,14 +2,26 @@ import { ORPCError } from "@orpc/server";
 import type { ArtifactStore } from "@rakazo/adapter-kit";
 import { createAdapterContext } from "@rakazo/adapter-kit";
 import {
+  botFolderInHome,
   companyTools,
   listStoredItems,
+  monthlyAllowancePercent,
+  ObjectAgentHomeStore,
+  personStaffLimits,
   personUsage,
   readStoredItem,
+  removeStoredItem,
+  spentThisMonthUsd,
   storedFileView,
 } from "@rakazo/adapters";
 import type { Auth } from "@rakazo/auth";
-import type { Actor, MyStorageItem, MyStorageState, StorageItemRef } from "@rakazo/contracts";
+import type {
+  Actor,
+  MyMeters,
+  MyStorageItem,
+  MyStorageState,
+  StorageItemRef,
+} from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { IsolationError, Prisma, runAsSystem, runAsTenant } from "@rakazo/db";
 import type { Hono } from "hono";
@@ -81,34 +93,75 @@ async function chatFamilies(prisma: PrismaClient, userId: string, familyIds?: re
   );
 }
 
+/** The computer's saved copy in object storage, brought down for this read. */
+async function savedHome(deps: Deps, bot: NamedBot, hydrated: Set<string>) {
+  const computer = bot.computer;
+  if (!computer || !(deps.home instanceof ObjectAgentHomeStore)) return null;
+  if (!hydrated.has(computer.homeKey)) {
+    await deps.home.hydrate(computer.homeKey);
+    hydrated.add(computer.homeKey);
+  }
+  return {
+    homeKey: computer.homeKey,
+    root: deps.home.pathFor(computer.homeKey),
+    folder: botFolderInHome(computer.scope, bot.id),
+  };
+}
+
+function pushStored(
+  items: MyStorageItem[],
+  bot: NamedBot,
+  stored: Awaited<ReturnType<typeof listStoredItems>>,
+  pins: readonly string[],
+  retentionDays: number,
+  source?: "home",
+) {
+  for (const item of stored) {
+    const view = storedFileView(item, pins, retentionDays);
+    items.push({
+      ref: { kind: "computer", botId: bot.id, path: item.path, ...(source ? { source } : {}) },
+      name: item.path,
+      botName: bot.name,
+      kind: item.kind,
+      size: item.size,
+      modifiedAt: view.modifiedAt,
+      pinnable: true,
+      pinned: view.pinned,
+      deletesAt: view.deletesAt,
+    });
+  }
+}
+
 /** Computers several bots share are listed once, under the first bot using each folder. */
 async function computerItems(deps: Deps, bots: readonly NamedBot[]) {
   const retentionDays = companyTools().fileRetentionDays;
   const seen = new Set<string>();
+  const hydrated = new Set<string>();
   const items: MyStorageItem[] = [];
   for (const bot of bots) {
     const where = await located(deps, bot).catch(() => null);
-    if (!where) continue;
-    const key = `${where.home}\0${where.folder}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const [stored, pins] = await Promise.all([
-      listStoredItems(where.home, where.folder),
-      botPins(deps, bot.id),
-    ]);
-    for (const item of stored) {
-      const view = storedFileView(item, pins, retentionDays);
-      items.push({
-        ref: { kind: "computer", botId: bot.id, path: item.path },
-        name: item.path,
-        botName: bot.name,
-        kind: item.kind,
-        size: item.size,
-        modifiedAt: view.modifiedAt,
-        pinnable: true,
-        pinned: view.pinned,
-        deletesAt: view.deletesAt,
-      });
+    const saved = await savedHome(deps, bot, hydrated).catch(() => null);
+    const pins = where || saved ? await botPins(deps, bot.id) : [];
+    if (where) {
+      const key = `${where.home}\0${where.folder}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        pushStored(items, bot, await listStoredItems(where.home, where.folder), pins, retentionDays);
+      }
+    }
+    if (saved && (!where || saved.root !== where.home)) {
+      const key = `${saved.root}\0${saved.folder}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        pushStored(
+          items,
+          bot,
+          await listStoredItems(saved.root, saved.folder),
+          pins,
+          retentionDays,
+          "home",
+        );
+      }
     }
   }
   return items;
@@ -147,6 +200,37 @@ export async function myStorageState(deps: Deps, actor: Actor): Promise<MyStorag
   };
 }
 
+/** Storage and allowance for the sidebar. This does not download any saved computer. */
+export async function myMeters(deps: Deps, actor: Actor): Promise<MyMeters> {
+  const [usage, limits, spent, chatExpiring] = await Promise.all([
+    personUsage(deps.prisma, actor.userId),
+    personStaffLimits(deps.prisma, actor.userId),
+    spentThisMonthUsd(deps.prisma, actor.userId),
+    chatFileExpiring(deps.prisma, actor.userId),
+  ]);
+  return {
+    usedBytes: usage.usedBytes,
+    limitBytes: usage.limitBytes,
+    usagePercent: monthlyAllowancePercent(spent, limits.monthlyBudgetUsd),
+    chatExpiring,
+  };
+}
+
+/** True when a chat file this person owns is deleted within a week. */
+async function chatFileExpiring(prisma: PrismaClient, userId: string) {
+  const days = companyTools().chatFileRetentionDays;
+  if (days === null) return false;
+  const cutoff = new Date(Date.now() - Math.max(0, days - 7) * DAY_MS);
+  const rows = await runAsSystem("see if a chat file expires this week", () =>
+    prisma.$queryRaw<Array<{ hit: number }>>(Prisma.sql`
+      SELECT 1 AS hit FROM "artifacts"
+      WHERE "userId" = ${userId} AND "runId" IS NOT NULL AND "createdAt" <= ${cutoff}
+      LIMIT 1
+    `),
+  );
+  return rows.length > 0;
+}
+
 /** Deletes each chosen item the caller owns; anything else is refused before anything is deleted. */
 export async function deleteMyStorage(
   deps: Deps,
@@ -167,9 +251,16 @@ export async function deleteMyStorage(
   }
   for (const item of items) {
     if (item.kind === "computer") {
-      await deleteStoredFile(deps, bots.get(item.botId)!, item.path).catch((error: unknown) => {
-        if (!(error instanceof ORPCError && error.code === "NOT_FOUND")) throw error;
-      });
+      const bot = bots.get(item.botId)!;
+      if (item.source === "home") {
+        await deleteSavedFile(deps, bot, item.path).catch((error: unknown) => {
+          if (!(error instanceof ORPCError && error.code === "NOT_FOUND")) throw error;
+        });
+      } else {
+        await deleteStoredFile(deps, bot, item.path).catch((error: unknown) => {
+          if (!(error instanceof ORPCError && error.code === "NOT_FOUND")) throw error;
+        });
+      }
       continue;
     }
     const family = families.get(item.artifactId)!;
@@ -186,11 +277,59 @@ export async function deleteMyStorage(
 export async function pinMyStorage(
   deps: Deps,
   actor: Actor,
-  input: { botId: string; path: string; pinned: boolean },
+  input: { botId: string; path: string; pinned: boolean; source?: "documents" | "home" },
 ): Promise<MyStorageState> {
   const bot = await ownedBot(deps.prisma, actor.userId, input.botId);
-  await pinStoredFile(deps, bot, input.path, input.pinned);
+  if (input.source === "home") await pinSavedFile(deps, bot, input.path, input.pinned);
+  else await pinStoredFile(deps, bot, input.path, input.pinned);
   return myStorageState(deps, actor);
+}
+
+/** Deletes one file from the saved computer and uploads that copy, so the deletion stays. */
+async function deleteSavedFile(deps: Deps, bot: NamedBot, itemPath: string) {
+  const saved = await savedHome(deps, bot, new Set());
+  if (!saved) throw new ORPCError("NOT_FOUND", { message: "That file is no longer there." });
+  const items = await listStoredItems(saved.root, saved.folder);
+  if (!items.some((item) => item.path === itemPath)) {
+    throw new ORPCError("NOT_FOUND", { message: "That file is no longer there." });
+  }
+  await removeStoredItem(saved.root, saved.folder, itemPath);
+  await runAsSystem("unpin deleted file", () =>
+    deps.prisma.keptFile.deleteMany({
+      where: {
+        botId: bot.id,
+        OR: [{ path: itemPath }, { path: { startsWith: `${itemPath}/` } }],
+      },
+    }),
+  );
+  if (deps.home instanceof ObjectAgentHomeStore) await deps.home.revise(saved.homeKey);
+}
+
+async function pinSavedFile(deps: Deps, bot: NamedBot, itemPath: string, pinned: boolean) {
+  if (pinned) {
+    const saved = await savedHome(deps, bot, new Set());
+    if (!saved) throw new ORPCError("NOT_FOUND", { message: "That file is no longer there." });
+    const items = await listStoredItems(saved.root, saved.folder);
+    if (!items.some((item) => item.path === itemPath)) {
+      throw new ORPCError("NOT_FOUND", { message: "That file is no longer there." });
+    }
+    await runAsSystem("pin file", () =>
+      deps.prisma.keptFile.upsert({
+        where: { botId_path: { botId: bot.id, path: itemPath } },
+        create: { botId: bot.id, userId: bot.userId, path: itemPath },
+        update: {},
+      }),
+    );
+    return;
+  }
+  await runAsSystem("unpin file", () =>
+    deps.prisma.keptFile.deleteMany({
+      where: {
+        botId: bot.id,
+        OR: [{ path: itemPath }, { path: { startsWith: `${itemPath}/` } }],
+      },
+    }),
+  );
 }
 
 export async function myStorageDownloadUrl(
@@ -234,9 +373,16 @@ async function* archiveFiles(deps: Deps, userId: string, items: readonly Storage
   for (const item of items) {
     if (item.kind === "computer") {
       const bot = bots.get(item.botId);
-      const where = bot ? await located(deps, bot).catch(() => null) : null;
-      if (!bot || !where) continue;
-      const files = readStoredItem(where.home, where.folder, item.path);
+      const where =
+        bot && item.source === "home"
+          ? await savedHome(deps, bot, new Set()).catch(() => null)
+          : bot
+            ? await located(deps, bot).catch(() => null)
+            : null;
+      const root = where && "root" in where ? where.root : where?.home;
+      const folder = where?.folder;
+      if (!bot || !root || folder === undefined) continue;
+      const files = readStoredItem(root, folder, item.path);
       for (;;) {
         const next = await files.next().catch(() => null);
         if (!next || next.done) break;

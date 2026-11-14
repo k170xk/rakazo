@@ -1,6 +1,11 @@
 import {
   ArrowUpRight,
   Circle,
+  Cloud,
+  Database,
+  Diamond,
+  FileText,
+  Frame,
   Hand,
   ImagePlus,
   Maximize,
@@ -9,6 +14,7 @@ import {
   Pencil,
   Plus,
   Redo2,
+  Rows3,
   Square,
   StickyNote,
   Trash2,
@@ -35,7 +41,20 @@ export type BoardColor =
   | "purple"
   | "grey"
   | "ink";
-export type BoardKind = "sticky" | "text" | "rect" | "ellipse" | "arrow" | "pen" | "image";
+export type BoardKind =
+  | "sticky"
+  | "text"
+  | "rect"
+  | "ellipse"
+  | "diamond"
+  | "cylinder"
+  | "document"
+  | "cloud"
+  | "queue"
+  | "section"
+  | "arrow"
+  | "pen"
+  | "image";
 /** An arrow end: a point on the board, or another item it stays attached to. */
 export type BoardEnd = { x: number; y: number } | { item: string };
 
@@ -85,8 +104,42 @@ const INK: Record<BoardColor, string> = {
   ink: "hsl(var(--foreground))",
 };
 const COLORS = Object.keys(FILL) as BoardColor[];
-const BOXED = new Set<BoardKind>(["sticky", "text", "rect", "ellipse", "image"]);
-const WORDS = new Set<BoardKind>(["sticky", "text", "rect", "ellipse", "arrow"]);
+const BOXED = new Set<BoardKind>([
+  "sticky",
+  "text",
+  "rect",
+  "ellipse",
+  "diamond",
+  "cylinder",
+  "document",
+  "cloud",
+  "queue",
+  "section",
+  "image",
+]);
+const WORDS = new Set<BoardKind>([
+  "sticky",
+  "text",
+  "rect",
+  "ellipse",
+  "diamond",
+  "cylinder",
+  "document",
+  "cloud",
+  "queue",
+  "section",
+  "arrow",
+]);
+const CLICK_SIZE: Partial<Record<BoardKind, { w: number; h: number }>> = {
+  sticky: { w: 180, h: 180 },
+  text: { w: 220, h: 48 },
+  section: { w: 480, h: 280 },
+  diamond: { w: 160, h: 110 },
+  cylinder: { w: 150, h: 100 },
+  document: { w: 140, h: 110 },
+  cloud: { w: 180, h: 110 },
+  queue: { w: 170, h: 80 },
+};
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 4;
 
@@ -182,23 +235,26 @@ function BoardImage({ item }: { item: BoardItem }) {
 }
 
 /**
- * A whiteboard: sticky notes, text, boxes, circles, arrows that stay attached to what they join,
- * freehand pen and pictures, on a board that pans and zooms (scroll, pinch, or the hand). Select to
- * move, resize, recolour or delete; double-click to edit words; undo with Ctrl/Cmd+Z. The value is
- * plain JSON ({items}) for a longtext column, and onChange hears each finished change, so
- * colleagues' saves arrive live.
+ * A whiteboard: sticky notes, text, boxes, diamonds, cylinders, documents, clouds, queues and
+ * sections, arrows that stay attached to what they join, freehand pen and pictures, on a board
+ * that pans and zooms (scroll, pinch, or the hand). Select to move, resize, recolour or delete;
+ * double-click to edit words; undo with Ctrl/Cmd+Z. The value is plain JSON ({items}) for a
+ * longtext column, and onChange hears each finished change, so colleagues' saves arrive live.
  */
 export function Whiteboard({
   value,
   onChange,
+  onSelectionChange,
   readOnly,
   height = 560,
   className,
 }: {
   value: BoardValue | string | null | undefined;
   onChange?: (value: BoardValue) => void;
+  /** Ids selected now, including an empty list, so a chat can tell the assistant which blocks. */
+  onSelectionChange?: (ids: string[]) => void;
   readOnly?: boolean;
-  height?: number;
+  height?: number | string;
   className?: string;
 }) {
   const editable = !readOnly && Boolean(onChange);
@@ -305,6 +361,9 @@ export function Whiteboard({
   useEffect(() => {
     if (items.length) showAll();
   }, []);
+  useEffect(() => {
+    onSelectionChange?.(selected);
+  }, [selected, onSelectionChange]);
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if ((event.target as Element).closest("[data-board-control]")) return;
@@ -547,12 +606,7 @@ export function Whiteboard({
           };
         }
       } else if (draft.w < 12 && draft.h < 12) {
-        const size =
-          draft.kind === "sticky"
-            ? { w: 180, h: 180 }
-            : draft.kind === "text"
-              ? { w: 220, h: 48 }
-              : { w: 160, h: 110 };
+        const size = CLICK_SIZE[draft.kind] ?? { w: 160, h: 110 };
         made = {
           ...draft,
           ...size,
@@ -726,6 +780,12 @@ export function Whiteboard({
       t: "text",
       r: "rect",
       o: "ellipse",
+      d: "diamond",
+      c: "cylinder",
+      f: "document",
+      k: "cloud",
+      q: "queue",
+      s: "section",
       a: "arrow",
       p: "pen",
     };
@@ -739,6 +799,12 @@ export function Whiteboard({
     { tool: "text", label: "Text", icon: <Type />, key: "T" },
     { tool: "rect", label: "Box", icon: <Square />, key: "R" },
     { tool: "ellipse", label: "Circle", icon: <Circle />, key: "O" },
+    { tool: "diamond", label: "Decision", icon: <Diamond />, key: "D" },
+    { tool: "cylinder", label: "Database", icon: <Database />, key: "C" },
+    { tool: "document", label: "Document", icon: <FileText />, key: "F" },
+    { tool: "cloud", label: "Cloud", icon: <Cloud />, key: "K" },
+    { tool: "queue", label: "Queue", icon: <Rows3 />, key: "Q" },
+    { tool: "section", label: "Section", icon: <Frame />, key: "S" },
     {
       tool: "arrow",
       label: "Arrow (drag from one item to another to join them)",
@@ -748,7 +814,9 @@ export function Whiteboard({
     { tool: "pen", label: "Pen", icon: <Pencil />, key: "P" },
   ];
 
-  const shown = draft ? [...items, draft] : items;
+  const shown = [...(draft ? [...items, draft] : items)].sort((a, b) =>
+    a.kind === b.kind ? 0 : a.kind === "section" ? -1 : b.kind === "section" ? 1 : 0,
+  );
   const single = selected.length === 1 ? byId.get(selected[0]!) : undefined;
 
   const words = (item: BoardItem, align: "center" | "start") => {
@@ -952,6 +1020,102 @@ export function Whiteboard({
             }
             return (
               <g key={item.id} data-board-item={item.id === draft?.id ? undefined : item.id}>
+                {item.kind === "diamond" && (
+                  <polygon
+                    points={`${item.x + item.w / 2},${item.y} ${item.x + item.w},${item.y + item.h / 2} ${item.x + item.w / 2},${item.y + item.h} ${item.x},${item.y + item.h / 2}`}
+                    fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "orange"]}
+                    fillOpacity={0.7}
+                    stroke={ink}
+                    strokeWidth={2.5}
+                  />
+                )}
+                {item.kind === "cylinder" && (
+                  <>
+                    <path
+                      d={`M${item.x},${item.y + 16} L${item.x},${item.y + item.h - 16} A${item.w / 2},16 0 0 0 ${item.x + item.w},${item.y + item.h - 16} L${item.x + item.w},${item.y + 16}`}
+                      fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "blue"]}
+                      fillOpacity={0.7}
+                      stroke={ink}
+                      strokeWidth={2.5}
+                    />
+                    <ellipse
+                      cx={item.x + item.w / 2}
+                      cy={item.y + 16}
+                      rx={item.w / 2}
+                      ry={16}
+                      fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "blue"]}
+                      stroke={ink}
+                      strokeWidth={2.5}
+                    />
+                  </>
+                )}
+                {item.kind === "document" && (
+                  <>
+                    <path
+                      d={`M${item.x},${item.y} H${item.x + item.w - 22} L${item.x + item.w},${item.y + 22} V${item.y + item.h} H${item.x} Z`}
+                      fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "grey"]}
+                      fillOpacity={0.7}
+                      stroke={ink}
+                      strokeWidth={2.5}
+                    />
+                    <path
+                      d={`M${item.x + item.w - 22},${item.y} V${item.y + 22} H${item.x + item.w}`}
+                      fill="none"
+                      stroke={ink}
+                      strokeWidth={2}
+                    />
+                  </>
+                )}
+                {item.kind === "cloud" && (
+                  <path
+                    d={cloudPath(item)}
+                    fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "green"]}
+                    fillOpacity={0.7}
+                    stroke={ink}
+                    strokeWidth={2.5}
+                  />
+                )}
+                {item.kind === "queue" && (
+                  <>
+                    <rect
+                      x={item.x}
+                      y={item.y}
+                      width={item.w}
+                      height={item.h}
+                      rx={10}
+                      fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "purple"]}
+                      fillOpacity={0.55}
+                      stroke={ink}
+                      strokeWidth={2.5}
+                    />
+                    {[0.32, 0.52, 0.72].map((at) => (
+                      <line
+                        key={at}
+                        x1={item.x + 14}
+                        x2={item.x + item.w - 14}
+                        y1={item.y + item.h * at}
+                        y2={item.y + item.h * at}
+                        stroke={ink}
+                        strokeWidth={1.5}
+                        strokeOpacity={0.55}
+                      />
+                    ))}
+                  </>
+                )}
+                {item.kind === "section" && (
+                  <rect
+                    x={item.x}
+                    y={item.y}
+                    width={item.w}
+                    height={item.h}
+                    rx={16}
+                    fill={FILL[item.color ?? "grey"]}
+                    fillOpacity={0.35}
+                    stroke={ink}
+                    strokeWidth={1.5}
+                    strokeDasharray="7 5"
+                  />
+                )}
                 {item.kind === "sticky" && (
                   <rect
                     x={item.x}
@@ -992,7 +1156,8 @@ export function Whiteboard({
                   <rect x={item.x} y={item.y} width={item.w} height={item.h} fill="transparent" />
                 )}
                 {item.kind === "image" && <BoardImage item={item} />}
-                {WORDS.has(item.kind) && words(item, item.kind === "text" ? "start" : "center")}
+                {WORDS.has(item.kind) &&
+                  words(item, item.kind === "text" || item.kind === "section" ? "start" : "center")}
                 {isSelected && (
                   <rect
                     x={item.x - 3}
@@ -1096,7 +1261,8 @@ export function Whiteboard({
               view.zoom / 1.25,
               (box.current?.getBoundingClientRect().left ?? 0) +
                 (box.current?.clientWidth ?? 0) / 2,
-              (box.current?.getBoundingClientRect().top ?? 0) + height / 2,
+              (box.current?.getBoundingClientRect().top ?? 0) +
+                (box.current?.clientHeight ?? 560) / 2,
             )
           }
         >
@@ -1112,7 +1278,8 @@ export function Whiteboard({
               view.zoom * 1.25,
               (box.current?.getBoundingClientRect().left ?? 0) +
                 (box.current?.clientWidth ?? 0) / 2,
-              (box.current?.getBoundingClientRect().top ?? 0) + height / 2,
+              (box.current?.getBoundingClientRect().top ?? 0) +
+                (box.current?.clientHeight ?? 560) / 2,
             )
           }
         >
@@ -1140,6 +1307,69 @@ export function Whiteboard({
         }}
       />
     </div>
+  );
+}
+
+function cloudPath(item: BoardItem): string {
+  const { x, y, w, h } = item;
+  const p = (px: number, py: number) => `${x + w * px},${y + h * py}`;
+  return `M ${p(0.22, 0.62)} C ${p(0.02, 0.62)} ${p(0.04, 0.32)} ${p(0.28, 0.34)} C ${p(0.32, 0.12)} ${p(0.58, 0.08)} ${p(0.64, 0.32)} C ${p(0.88, 0.16)} ${p(1.02, 0.42)} ${p(0.84, 0.58)} C ${p(1, 0.78)} ${p(0.72, 0.96)} ${p(0.5, 0.76)} C ${p(0.32, 0.98)} ${p(0.04, 0.86)} ${p(0.22, 0.62)} Z`;
+}
+
+/** The board fitted into a chat card, without the editor. */
+export function BoardThumbnail({
+  value,
+  className,
+}: {
+  value: BoardValue | string | null | undefined;
+  className?: string;
+}) {
+  const items = readBoard(value).items;
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const bounds = boardBounds(items) ?? { x: 0, y: 0, w: 320, h: 180 };
+  const pad = 28;
+  return (
+    <svg
+      viewBox={`${bounds.x - pad} ${bounds.y - pad} ${Math.max(bounds.w, 40) + pad * 2} ${Math.max(bounds.h, 40) + pad * 2}`}
+      className={cn("h-full w-full bg-card", className)}
+      role="img"
+      aria-label="Whiteboard"
+    >
+      {items.map((item) => {
+        const ink = INK[item.color ?? "ink"];
+        const fill = item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "grey"];
+        if (item.kind === "arrow") {
+          const ends = arrowEnds(item, byId);
+          if (!ends) return null;
+          return (
+            <line
+              key={item.id}
+              x1={ends[0].x}
+              y1={ends[0].y}
+              x2={ends[1].x}
+              y2={ends[1].y}
+              stroke={ink}
+              strokeWidth={2}
+            />
+          );
+        }
+        if (item.kind === "pen" || item.kind === "image") return null;
+        return (
+          <rect
+            key={item.id}
+            x={item.x}
+            y={item.y}
+            width={Math.max(item.w, 1)}
+            height={Math.max(item.h, 1)}
+            rx={item.kind === "ellipse" || item.kind === "cloud" ? item.h / 2 : 8}
+            fill={fill}
+            fillOpacity={item.kind === "section" ? 0.35 : 0.8}
+            stroke={ink}
+            strokeWidth={1.5}
+          />
+        );
+      })}
+    </svg>
   );
 }
 

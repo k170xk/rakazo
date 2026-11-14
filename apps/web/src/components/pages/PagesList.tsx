@@ -183,7 +183,12 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
                   <span aria-hidden="true">·</span>
                 </>
               ) : null}
-              {page.kind === "app" ? (
+              {page.kind === "whiteboard" ? (
+                <>
+                  <Trans>Whiteboard</Trans>
+                  <span aria-hidden="true">·</span>
+                </>
+              ) : page.kind === "app" ? (
                 <>
                   <Trans>Live data</Trans>
                   <span aria-hidden="true">·</span>

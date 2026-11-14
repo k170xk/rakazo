@@ -14,6 +14,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { IconTooltip } from "../../components/IconTooltip";
+import { SidebarMeters } from "../../components/SidebarMeters";
 import { InviteDialog } from "../../components/InviteDialog";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
@@ -308,6 +309,7 @@ export function ShellSidebar({
               openTodos();
             }}
           />
+          <SidebarMeters mini={mini} onOpenStorage={() => setMobileOpen(false)} />
         </div>
         <div className={mini ? "flex justify-center px-1 pt-1" : "px-2.5 pt-1"}>
           {mini ? (
