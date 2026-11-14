@@ -37,7 +37,13 @@ export function markTourSeen(userId: string): void {
   }
 }
 
-type ToolCard = { icon: LucideIcon; title: string; text: string };
+type ToolCard = {
+  icon?: LucideIcon;
+  image?: string;
+  title: string;
+  text: string;
+  soon?: boolean;
+};
 
 type Step = {
   id: string;
@@ -48,6 +54,8 @@ type Step = {
   points?: string[];
   example?: { label: string; text: string };
   cards?: ToolCard[];
+  /** Studio icons shown in place of the step photograph. */
+  showcase?: { src: string; title: string }[];
   badge?: string;
 };
 
@@ -70,8 +78,56 @@ function useSteps(mode: "first-run" | "revisit", availability: TourAvailability)
       body: t`OCSC Intelligence is our own AI workspace. Its agents know OCSC, use our branded tools and work alongside you on real project work. It runs on OCSC's own platform, so your chats, agents and files stay private to you unless you share them.`,
       points: [
         t`Agents that work like teammates`,
+        t`Studios for the work itself, with the chat beside a list, an app or a board`,
         t`OCSC Tools that produce branded deliverables`,
         t`Apps, Connectors and Routines that extend what agents can do`,
+      ],
+    },
+    {
+      id: "studios",
+      image: "",
+      showcase: [
+        { src: "/icons/studios/todo.png", title: t`To-do List Studio` },
+        { src: "/icons/studios/apps.png", title: t`App Studio` },
+        { src: "/icons/studios/board.png", title: t`Whiteboard Studio` },
+      ],
+      eyebrow: t`Get to know Studios`,
+      title: t`A studio for each kind of work`,
+      body: t`A studio opens over the chat, with the conversation on the left and the work on the right. Ask for a change and that studio updates. We are starting with three.`,
+      cards: [
+        {
+          image: "/icons/studios/todo.png",
+          title: t`To-do List Studio`,
+          text: t`Your lists, including the personal one your email routines already update.`,
+        },
+        {
+          image: "/icons/studios/apps.png",
+          title: t`App Studio`,
+          text: t`Describe an app and build it here, with the app open beside the chat.`,
+        },
+        {
+          image: "/icons/studios/board.png",
+          title: t`Whiteboard Studio`,
+          text: t`Sketch a process or a plan, then ask for the board to be tidied or extended.`,
+        },
+        {
+          icon: FileText,
+          title: t`Word Studio`,
+          text: t`Reports and letters, edited in the studio.`,
+          soon: true,
+        },
+        {
+          icon: Presentation,
+          title: t`PowerPoint Studio`,
+          text: t`Decks, built and revised beside the chat.`,
+          soon: true,
+        },
+        {
+          icon: FileSpreadsheet,
+          title: t`Excel Studio`,
+          text: t`Trackers, cost plans and schedules.`,
+          soon: true,
+        },
       ],
     },
     {
@@ -259,7 +315,7 @@ export function OcscTour({
 
   useEffect(() => {
     const following = steps[index + 1];
-    if (!following) return;
+    if (!following?.image) return;
     const image = new Image();
     image.src = following.image;
   }, [index, steps]);
@@ -319,12 +375,33 @@ export function OcscTour({
 
       <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto px-6 py-5 md:grid-cols-[1.1fr_1fr] md:gap-8 md:px-8">
         <div className="overflow-hidden rounded-2xl bg-muted">
-          <img
-            key={step.image}
-            src={step.image}
-            alt=""
-            className="aspect-[3/2] size-full object-cover motion-safe:animate-in motion-safe:fade-in"
-          />
+          {step.showcase ? (
+            <div className="flex h-full min-h-[240px] flex-col items-center justify-center gap-5 p-6 md:p-8">
+              <div className="grid w-full max-w-md grid-cols-3 gap-3">
+                {step.showcase.map((item) => (
+                  <div
+                    key={item.title}
+                    className="flex flex-col items-center gap-2 rounded-2xl bg-background px-2 py-4"
+                  >
+                    <img src={item.src} alt="" className="h-16 w-16 object-contain" />
+                    <span className="text-center text-[13px] leading-4 font-medium text-foreground">
+                      {item.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-center text-[13px] text-muted-foreground">
+                <Trans>Coming soon: Word Studio, PowerPoint Studio and Excel Studio</Trans>
+              </p>
+            </div>
+          ) : (
+            <img
+              key={step.image}
+              src={step.image}
+              alt=""
+              className="aspect-[3/2] size-full object-cover motion-safe:animate-in motion-safe:fade-in"
+            />
+          )}
         </div>
         <div className="flex min-w-0 flex-col justify-center">
           <div className="flex flex-wrap items-center gap-2">
@@ -354,8 +431,17 @@ export function OcscTour({
               {step.cards.map((card) => (
                 <div key={card.title} className="rounded-xl border border-border/70 px-3 py-2.5">
                   <div className="flex items-center gap-2 text-[14px] font-medium text-foreground">
-                    <card.icon size={16} className="text-primary" aria-hidden />
-                    {card.title}
+                    {card.image ? (
+                      <img src={card.image} alt="" className="size-5 object-contain" />
+                    ) : card.icon ? (
+                      <card.icon size={16} className="text-primary" aria-hidden />
+                    ) : null}
+                    <span className="min-w-0 truncate">{card.title}</span>
+                    {card.soon ? (
+                      <span className="ml-auto shrink-0 text-[11px] font-medium text-muted-foreground">
+                        {t`Coming soon`}
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-1 text-[12.5px] leading-5 text-muted-foreground">{card.text}</p>
                 </div>
