@@ -9,8 +9,33 @@ import {
   resolveAskChoice,
   selectedAskActionLabel,
 } from "@rakazo/core";
-import { Button, Input, Textarea } from "@rakazo/ui-web";
-import { Check } from "lucide-react";
+import { Button, cn, Input, Spinner, Textarea } from "@rakazo/ui-web";
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  CalendarClock,
+  CalendarRange,
+  Check,
+  CircleCheck,
+  CircleHelp,
+  CircleX,
+  ClipboardList,
+  FilePenLine,
+  Flag,
+  LogOut,
+  Mail,
+  MessageSquareText,
+  Pencil,
+  ShieldCheck,
+  Tag,
+  Trash2,
+  TriangleAlert,
+  UserPlus,
+  UserRound,
+  UsersRound,
+  X,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import type { RpcClient } from "../lib/rpc";
@@ -104,7 +129,6 @@ type DeadlineValues = DeadlineChange["after"];
 type WorkPackageChange = NonNullable<AskBlock["workPackageChange"]>;
 type WorkPackageValues = NonNullable<WorkPackageChange["after"]>;
 type ProjectCommentChange = NonNullable<AskBlock["projectCommentChange"]>;
-type ProjectCommentValues = NonNullable<ProjectCommentChange["after"]>;
 type DesignTeamChange = NonNullable<AskBlock["designTeamChange"]>;
 type ChangeRow = { key: string; label: string; value: string };
 
@@ -197,34 +221,278 @@ function workPackageRows(values: WorkPackageValues): ChangeRow[] {
   ];
 }
 
-/** The deadline's or work package's fields, with each changed value struck through beside its new one. */
-function ChangeRows({ rows, before }: { rows: ChangeRow[]; before?: ChangeRow[] }) {
+/** The deadline's or work package's fields, each changed value struck through before its new one. */
+function ChangeRows({
+  rows,
+  before,
+  hide = [],
+}: {
+  rows: ChangeRow[];
+  before?: ChangeRow[];
+  /** Fields the card already shows above; listed here only when they change. */
+  hide?: string[];
+}) {
   const { t } = useLingui();
-  const shown = rows.filter(
-    (row) => row.value || before?.find((item) => item.key === row.key)?.value,
-  );
+  const shown = rows.flatMap((row) => {
+    const previous = before?.find((item) => item.key === row.key)?.value;
+    const changed = before !== undefined && previous !== row.value;
+    if (!row.value && !previous) return [];
+    if (hide.includes(row.key) && !changed) return [];
+    return [{ ...row, previous, changed }];
+  });
+  if (shown.length === 0) return null;
   return (
-    <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[14.5px] leading-[1.45]">
-      {shown.map((row) => {
-        const previous = before?.find((item) => item.key === row.key)?.value;
-        const changed = before !== undefined && previous !== row.value;
-        return (
-          <div key={row.key} className="contents">
-            <dt className="text-muted-foreground">{row.label}</dt>
-            <dd className="min-w-0 whitespace-pre-wrap break-words text-foreground">
-              {changed && previous ? (
-                <span className="me-1.5 text-muted-foreground line-through">{previous}</span>
-              ) : null}
-              <span className={changed ? "font-medium" : undefined}>
-                {row.value || (changed ? t`(cleared)` : "")}
-              </span>
-            </dd>
-          </div>
-        );
-      })}
+    <dl className="mt-3.5 divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 text-[14px] leading-[1.45]">
+      {shown.map((row) => (
+        <div
+          key={row.key}
+          className={cn(
+            "flex flex-col gap-0.5 px-3 py-2 sm:flex-row sm:items-baseline sm:gap-4",
+            row.changed && "bg-primary/[0.05]",
+          )}
+        >
+          <dt className="flex shrink-0 items-center gap-1.5 text-[12.5px] text-muted-foreground sm:w-28">
+            {row.changed ? (
+              <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-primary" />
+            ) : null}
+            {row.label}
+          </dt>
+          <dd className="min-w-0 flex-1 whitespace-pre-wrap break-words text-foreground">
+            {row.changed && row.previous ? (
+              <>
+                <span className="text-muted-foreground line-through">{row.previous}</span>
+                <ArrowRight
+                  aria-hidden
+                  className="mx-1.5 inline size-3.5 align-[-2px] text-muted-foreground"
+                />
+              </>
+            ) : null}
+            <span className={row.changed ? "font-medium" : undefined}>
+              {row.value || (row.changed ? t`(cleared)` : "")}
+            </span>
+          </dd>
+        </div>
+      ))}
     </dl>
   );
 }
+
+type Tone = "neutral" | "primary" | "success" | "warning" | "danger";
+
+const CHIP_TONES: Record<Tone, string> = {
+  neutral: "bg-foreground/[0.06] text-foreground/80",
+  primary: "bg-primary/10 text-primary",
+  success: "bg-success/10 text-success",
+  warning: "bg-warning/15 text-warning",
+  danger: "bg-destructive/10 text-destructive",
+};
+
+function Chip({
+  tone = "neutral",
+  icon: Icon,
+  children,
+}: {
+  tone?: Tone;
+  icon?: LucideIcon;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium",
+        CHIP_TONES[tone],
+      )}
+    >
+      {Icon ? <Icon aria-hidden className="size-3 shrink-0" /> : null}
+      <span className="truncate">{children}</span>
+    </span>
+  );
+}
+
+function initials(name: string): string {
+  const parts = name.split(/[\s@.]+/).filter(Boolean);
+  return (
+    parts
+      .slice(0, 2)
+      .map((part) => part[0]!.toUpperCase())
+      .join("") || "?"
+  );
+}
+
+function Avatar({ name, large }: { name: string; large?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "grid shrink-0 place-items-center rounded-full bg-primary/15 font-semibold text-primary",
+        large ? "size-10 text-[14px]" : "size-6 text-[10.5px]",
+      )}
+    >
+      {initials(name)}
+    </span>
+  );
+}
+
+/** Part of a card that opens its editor when clicked, while the card can still be edited. */
+function EditableArea({
+  onEdit,
+  label,
+  className,
+  children,
+}: {
+  onEdit?: () => void;
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  if (!onEdit) return <div className={className}>{children}</div>;
+  return (
+    <button
+      type="button"
+      title={label}
+      onClick={onEdit}
+      className={cn(
+        "group/edit relative block w-full rounded-xl text-start transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        className,
+      )}
+    >
+      {children}
+      <Pencil
+        aria-hidden
+        className="absolute end-2 top-2 size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/edit:opacity-100 group-focus-visible/edit:opacity-100"
+      />
+    </button>
+  );
+}
+
+function daysFromToday(value: string): number {
+  const today = new Date();
+  const start = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.round((Date.parse(`${value}T00:00:00Z`) - start) / 86_400_000);
+}
+
+/** "in 6 days", "tomorrow", "3 days ago". */
+function relativeDay(value: string | null): string | null {
+  if (!value) return null;
+  const days = daysFromToday(value);
+  if (!Number.isFinite(days)) return null;
+  return new Intl.RelativeTimeFormat(undefined, { numeric: "auto" }).format(days, "day");
+}
+
+/** A due date drawn as a small calendar leaf. */
+function DateTile({ value, done }: { value: string | null; done?: boolean }) {
+  const date = value ? new Date(`${value}T00:00:00Z`) : null;
+  const overdue = value && !done ? daysFromToday(value) < 0 : false;
+  return (
+    <div
+      aria-hidden
+      className="flex w-14 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-background text-center shadow-xs"
+    >
+      <span
+        className={cn(
+          "py-0.5 text-[10.5px] font-semibold uppercase tracking-wide",
+          overdue ? "bg-destructive text-white" : "bg-primary text-primary-foreground",
+        )}
+      >
+        {date ? date.toLocaleDateString(undefined, { month: "short", timeZone: "UTC" }) : "—"}
+      </span>
+      <span className="text-[21px] font-semibold leading-8 text-foreground">
+        {date ? date.getUTCDate() : "?"}
+      </span>
+      <span className="pb-1 text-[10.5px] text-muted-foreground">
+        {date ? date.toLocaleDateString(undefined, { weekday: "short", timeZone: "UTC" }) : ""}
+      </span>
+    </div>
+  );
+}
+
+type HeaderTone = "primary" | "danger" | "soft" | "muted";
+
+const HEADER_TONES: Record<HeaderTone, string> = {
+  primary: "bg-primary text-primary-foreground",
+  danger: "bg-destructive text-white",
+  soft: "bg-muted/70 text-foreground",
+  muted: "bg-muted/70 text-muted-foreground",
+};
+
+/** The coloured strip on top of every approval card: what it is and where it stands. */
+function CardHeader({
+  icon: Icon,
+  tone,
+  title,
+  state,
+}: {
+  icon: LucideIcon;
+  tone: HeaderTone;
+  title: ReactNode;
+  state: "waiting" | "done" | "closed";
+}) {
+  const strong = tone === "primary" || tone === "danger";
+  return (
+    <div className={cn("flex items-center gap-2.5 px-4 py-2.5", HEADER_TONES[tone])}>
+      <Icon aria-hidden className="size-4 shrink-0" />
+      <span className="min-w-0 truncate text-[13.5px] font-semibold">{title}</span>
+      <span
+        className={cn(
+          "ms-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-medium",
+          strong ? "bg-white/20" : "bg-foreground/[0.06] text-muted-foreground",
+        )}
+      >
+        {state === "waiting" ? (
+          <>
+            <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-current" />
+            <Trans>Needs your approval</Trans>
+          </>
+        ) : state === "done" ? (
+          <>
+            <Check aria-hidden className="size-3" />
+            <Trans>Done</Trans>
+          </>
+        ) : (
+          <Trans>Closed</Trans>
+        )}
+      </span>
+    </div>
+  );
+}
+
+function Warnings({ warnings }: { warnings?: string[] }) {
+  if (!warnings?.length) return null;
+  return (
+    <ul className="mt-3.5 space-y-1.5 rounded-xl border border-warning/25 bg-warning/10 px-3 py-2.5 text-[13.5px] text-warning">
+      {warnings.map((warning) => (
+        <li key={warning} className="flex gap-2">
+          <TriangleAlert aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+          <span className="min-w-0">{warning}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Small facts under a card's main content: who asked, who is emailed. */
+function Footnotes({
+  items,
+}: {
+  items: Array<{ key: string; icon: LucideIcon; label: ReactNode; value: ReactNode } | null>;
+}) {
+  const shown = items.filter((item) => item !== null);
+  if (shown.length === 0) return null;
+  return (
+    <dl className="mt-3.5 space-y-1.5 text-[13px] leading-[1.45]">
+      {shown.map((item) => (
+        <div key={item.key} className="flex gap-2">
+          <item.icon aria-hidden className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+          <dt className="shrink-0 text-muted-foreground">{item.label}</dt>
+          <dd className="min-w-0 whitespace-pre-wrap break-words text-foreground">{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+const projectLabel = (project: DeadlineChange["project"]) =>
+  [project.jobNumber, project.name].filter(Boolean).join(" · ");
 
 /**
  * The frame every Evolve change card shares: the project, what changes, warnings, and the once-only
@@ -235,6 +503,7 @@ function EvolveChangeCard({
   canAnswer,
   onAnswer,
   testId,
+  icon,
   heading,
   project,
   children,
@@ -246,9 +515,11 @@ function EvolveChangeCard({
   editor,
 }: Pick<AskCardProps, "block" | "canAnswer" | "onAnswer"> & {
   testId: string;
+  icon: LucideIcon;
   heading: ReactNode;
   project: DeadlineChange["project"];
-  children: ReactNode;
+  /** The preview; given a function, it hears how to open the editor while the card can be edited. */
+  children: ReactNode | ((edit: (() => void) | undefined) => ReactNode);
   warnings?: string[];
   allowLabel: string;
   approvedText: string;
@@ -266,6 +537,13 @@ function EvolveChangeCard({
   const answer = block.status === "answered" ? block.answer : acceptedAnswer;
   const answered = answer !== undefined;
   const editable = Boolean(editor) && canAnswer && !answered;
+  const startEditing =
+    editable && pendingAction === null
+      ? () => {
+          setError(null);
+          setEditing(true);
+        }
+      : undefined;
 
   async function answerWith(id: string) {
     if (pendingAction) return;
@@ -281,99 +559,117 @@ function EvolveChangeCard({
     }
   }
 
+  const live = canAnswer && !answered;
   return (
     <BuiCard
       data-testid={testId}
-      className="w-full min-w-0 max-w-xl overflow-hidden border border-border dark:border-transparent"
+      className={cn(
+        "w-full min-w-0 max-w-xl overflow-hidden border border-border shadow-sm transition-shadow dark:border-transparent",
+        live && "hover:shadow-md",
+      )}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-2.5">
-        <span className="text-[13px] font-medium text-muted-foreground">{heading}</span>
-        <StatusBadge tone={answered ? "positive" : canAnswer ? "caution" : "neutral"}>
-          {answered ? (
-            <Trans>Done</Trans>
-          ) : canAnswer ? (
-            <Trans>Needs your approval</Trans>
-          ) : (
-            <Trans>Closed</Trans>
-          )}
-        </StatusBadge>
-      </div>
-      <div className="px-5 py-4">
-        <div className="rounded-lg bg-background px-3 py-2.5">
-          <div className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
-            <Trans>Project</Trans>
-          </div>
-          <div className="mt-0.5 text-[15px] font-medium text-foreground">
-            {[project.jobNumber, project.name].filter(Boolean).join(" · ") || t`Unnamed project`}
-          </div>
-          {project.client ? (
-            <div className="text-[13.5px] text-muted-foreground">{project.client}</div>
-          ) : null}
-          {movedFrom ? (
-            <div className="mt-1 text-[13px] text-muted-foreground">
-              <Trans>
-                Moved from{" "}
-                <span className="line-through">
-                  {[movedFrom.jobNumber, movedFrom.name].filter(Boolean).join(" · ") ||
-                    t`Unnamed project`}
-                </span>
-              </Trans>
+      <CardHeader
+        icon={icon}
+        tone={!live ? "muted" : destructive ? "danger" : "primary"}
+        title={heading}
+        state={answered ? "done" : canAnswer ? "waiting" : "closed"}
+      />
+      <div className={cn("px-4 pt-3.5 pb-4", !live && "opacity-90")}>
+        <div className="flex items-start gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Building2 aria-hidden className="size-[18px]" />
+          </span>
+          <div className="min-w-0 pt-px">
+            <div className="text-[14.5px] font-semibold leading-snug text-foreground break-words">
+              {projectLabel(project) || t`Unnamed project`}
             </div>
-          ) : null}
-        </div>
-        {editing && editable && editor ? editor(() => setEditing(false)) : children}
-        {warnings?.length ? (
-          <ul className="mt-3 space-y-1 rounded-lg bg-warning/10 px-3 py-2 text-[13.5px] text-warning">
-            {warnings.map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
-        ) : null}
-        {answered ? (
-          <div className="mt-3.5 flex items-center gap-1.5 text-[13.5px] font-medium text-muted-foreground">
-            {answer === "deny" ? null : <Check aria-hidden className="size-4" />}
-            {answer === "deny" ? t`Cancelled` : approvedText}
-          </div>
-        ) : !canAnswer ? (
-          <div className="mt-3.5 text-[13.5px] font-medium text-muted-foreground">
-            <Trans>No longer active</Trans>
-          </div>
-        ) : editing && editable ? null : (
-          <div className="mt-3.5 flex flex-wrap gap-2">
-            {block.actions?.map((action) => (
-              <Button
-                key={action.id}
-                variant={
-                  action.id !== "allow" ? "outline" : destructive ? "destructive" : "default"
-                }
-                disabled={pendingAction !== null}
-                onClick={() => void answerWith(action.id)}
-              >
-                {pendingAction === action.id ? (
-                  <Trans>Sending…</Trans>
-                ) : action.id === "allow" ? (
-                  allowLabel
-                ) : (
-                  t`Cancel`
-                )}
-              </Button>
-            ))}
-            {editable ? (
-              <Button
-                variant="outline"
-                disabled={pendingAction !== null}
-                onClick={() => {
-                  setError(null);
-                  setEditing(true);
-                }}
-              >
-                <Trans>Edit</Trans>
-              </Button>
+            {project.client ? (
+              <div className="truncate text-[12.5px] text-muted-foreground">{project.client}</div>
+            ) : null}
+            {movedFrom ? (
+              <div className="mt-0.5 text-[12.5px] text-muted-foreground">
+                <Trans>
+                  Moved from{" "}
+                  <span className="line-through">
+                    {projectLabel(movedFrom) || t`Unnamed project`}
+                  </span>
+                </Trans>
+              </div>
             ) : null}
           </div>
-        )}
-        {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
+        </div>
+        {editing && editable && editor
+          ? editor(() => setEditing(false))
+          : typeof children === "function"
+            ? children(startEditing)
+            : children}
+        <Warnings warnings={warnings} />
       </div>
+      {editing && editable ? null : (
+        <div className="flex flex-wrap items-center gap-2 border-t border-border/70 bg-muted/30 px-4 py-3">
+          {answered ? (
+            <div
+              className={cn(
+                "flex items-center gap-1.5 text-[13.5px] font-medium",
+                answer === "deny" ? "text-muted-foreground" : "text-success",
+              )}
+            >
+              {answer === "deny" ? (
+                <CircleX aria-hidden className="size-4" />
+              ) : (
+                <CircleCheck aria-hidden className="size-4" />
+              )}
+              {answer === "deny" ? t`Cancelled` : approvedText}
+            </div>
+          ) : !canAnswer ? (
+            <div className="text-[13.5px] font-medium text-muted-foreground">
+              <Trans>No longer active</Trans>
+            </div>
+          ) : (
+            <>
+              {block.actions?.map((action) => {
+                const allow = action.id === "allow";
+                const AllowIcon = destructive ? Trash2 : Check;
+                return (
+                  <Button
+                    key={action.id}
+                    variant={!allow ? "ghost" : destructive ? "destructive" : "default"}
+                    className="gap-1.5"
+                    disabled={pendingAction !== null}
+                    onClick={() => void answerWith(action.id)}
+                  >
+                    {pendingAction === action.id ? (
+                      <>
+                        <Spinner />
+                        <Trans>Sending…</Trans>
+                      </>
+                    ) : allow ? (
+                      <>
+                        <AllowIcon aria-hidden className="size-4" />
+                        {allowLabel}
+                      </>
+                    ) : (
+                      t`Cancel`
+                    )}
+                  </Button>
+                );
+              })}
+              {editable ? (
+                <Button
+                  variant="outline"
+                  className="ms-auto gap-1.5"
+                  disabled={pendingAction !== null}
+                  onClick={startEditing}
+                >
+                  <Pencil aria-hidden className="size-3.5" />
+                  <Trans>Edit</Trans>
+                </Button>
+              ) : null}
+            </>
+          )}
+          {error ? <p className="w-full text-[13px] text-destructive">{error}</p> : null}
+        </div>
+      )}
     </BuiCard>
   );
 }
@@ -382,10 +678,13 @@ function EvolveChangeCard({
 function DeadlineAskCard({ change, ...props }: AskCardProps & { change: DeadlineChange }) {
   const { t } = useLingui();
   const adding = change.action === "add";
+  const after = change.after;
+  const when = relativeDay(after.date);
   return (
     <EvolveChangeCard
       {...props}
       testId="deadline-approval-card"
+      icon={CalendarClock}
       heading={adding ? <Trans>New project deadline</Trans> : <Trans>Deadline change</Trans>}
       project={change.project}
       warnings={change.warnings}
@@ -404,12 +703,65 @@ function DeadlineAskCard({ change, ...props }: AskCardProps & { change: Deadline
           : undefined
       }
     >
-      <ChangeRows
-        rows={deadlineRows(change.after)}
-        before={change.before ? deadlineRows(change.before) : undefined}
-      />
+      {(edit) => (
+        <>
+          <EditableArea
+            onEdit={edit}
+            label={t`Edit deadline`}
+            className="-mx-2 mt-3 flex w-[calc(100%+1rem)] items-center gap-3.5 px-2 py-2"
+          >
+            <DateTile value={after.date} done={after.completed} />
+            <div className="min-w-0">
+              <div className="text-[15.5px] font-semibold leading-snug text-foreground break-words">
+                {after.name}
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <Chip tone={after.hardDeadline ? "danger" : "neutral"} icon={Flag}>
+                  {after.hardDeadline ? t`Hard deadline` : t`Soft deadline`}
+                </Chip>
+                {after.completed ? (
+                  <Chip tone="success" icon={CircleCheck}>
+                    {t`Completed`}
+                  </Chip>
+                ) : null}
+                {when && !after.completed ? (
+                  <span className="text-[12.5px] text-muted-foreground">{when}</span>
+                ) : null}
+              </div>
+            </div>
+          </EditableArea>
+          <ChangeRows
+            rows={deadlineRows(after)}
+            before={change.before ? deadlineRows(change.before) : undefined}
+            hide={["name", "date", "type", "status"]}
+          />
+        </>
+      )}
     </EvolveChangeCard>
   );
+}
+
+const STATUS_TONES: Record<string, Tone> = {
+  pending: "neutral",
+  in_progress: "primary",
+  on_hold: "warning",
+  completed: "success",
+  cancelled: "neutral",
+};
+
+const PRIORITY_TONES: Record<string, Tone> = {
+  low: "neutral",
+  medium: "primary",
+  high: "warning",
+  urgent: "danger",
+};
+
+function shortDay(value: string): string {
+  return new Date(`${value}T00:00:00Z`).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
 }
 
 /**
@@ -419,10 +771,17 @@ function DeadlineAskCard({ change, ...props }: AskCardProps & { change: Deadline
 function WorkPackageAskCard({ change, ...props }: AskCardProps & { change: WorkPackageChange }) {
   const { t } = useLingui();
   const shown = change.after ?? change.before;
+  const deleting = change.action === "delete";
+  const days = shown?.durationDays ?? 0;
+  const span =
+    shown?.canStart || shown?.due
+      ? [shown.canStart ? shortDay(shown.canStart) : "…", shown.due ? shortDay(shown.due) : "…"]
+      : null;
   return (
     <EvolveChangeCard
       {...props}
       testId="work-package-approval-card"
+      icon={ClipboardList}
       heading={
         change.action === "add" ? (
           <Trans>New work package</Trans>
@@ -434,7 +793,7 @@ function WorkPackageAskCard({ change, ...props }: AskCardProps & { change: WorkP
       }
       project={change.project}
       warnings={change.warnings}
-      destructive={change.action === "delete"}
+      destructive={deleting}
       allowLabel={
         change.action === "add"
           ? t`Add work package`
@@ -451,10 +810,7 @@ function WorkPackageAskCard({ change, ...props }: AskCardProps & { change: WorkP
       }
       movedFrom={change.movedFrom}
       editor={
-        change.action !== "delete" &&
-        change.after &&
-        props.onReviseChange &&
-        props.loadChangeOptions
+        !deleting && change.after && props.onReviseChange && props.loadChangeOptions
           ? (close) => (
               <WorkPackageEditor
                 change={change}
@@ -468,53 +824,139 @@ function WorkPackageAskCard({ change, ...props }: AskCardProps & { change: WorkP
           : undefined
       }
     >
-      {shown ? (
-        <ChangeRows
-          rows={workPackageRows(shown)}
-          before={
-            change.action === "update" && change.before ? workPackageRows(change.before) : undefined
-          }
-        />
-      ) : null}
-      {change.requester || change.statusComment || change.emails?.length ? (
-        <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-border pt-3 text-[13.5px] leading-[1.45]">
-          {change.requester ? (
-            <div className="contents">
-              <dt className="text-muted-foreground">
-                <Trans>Requested by</Trans>
-              </dt>
-              <dd className="min-w-0 text-foreground">{change.requester}</dd>
-            </div>
-          ) : null}
-          {change.statusComment ? (
-            <div className="contents">
-              <dt className="text-muted-foreground">
-                <Trans>Status comment</Trans>
-              </dt>
-              <dd className="min-w-0 whitespace-pre-wrap break-words text-foreground">
-                {change.statusComment}
-              </dd>
-            </div>
-          ) : null}
-          {change.emails?.length ? (
-            <div className="contents">
-              <dt className="text-muted-foreground">
-                <Trans>Emails</Trans>
-              </dt>
-              <dd className="min-w-0 break-words text-foreground">{change.emails.join(", ")}</dd>
-            </div>
-          ) : null}
-        </dl>
-      ) : null}
+      {(edit) =>
+        shown ? (
+          <>
+            <EditableArea
+              onEdit={edit}
+              label={t`Edit work package`}
+              className={cn("-mx-2 mt-3 w-[calc(100%+1rem)] px-2 py-2", deleting && "opacity-70")}
+            >
+              <div className="pe-5 text-[15.5px] font-semibold leading-snug text-foreground break-words">
+                {shown.title}
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <Chip tone={STATUS_TONES[shown.status] ?? "neutral"}>
+                  {workPackageStatus(shown.status)}
+                </Chip>
+                <Chip tone={PRIORITY_TONES[shown.priority] ?? "neutral"} icon={Flag}>
+                  {workPackagePriority(shown.priority)}
+                </Chip>
+                {shown.category ? <Chip icon={Tag}>{shown.category}</Chip> : null}
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-muted-foreground">
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  {shown.assignee ? (
+                    <>
+                      <Avatar name={shown.assignee} />
+                      <span className="truncate text-foreground">{shown.assignee}</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserRound aria-hidden className="size-4" />
+                      {t`Unassigned`}
+                    </>
+                  )}
+                </span>
+                {span ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarRange aria-hidden className="size-4" />
+                    <span className="text-foreground">
+                      {span[0]} – {span[1]}
+                    </span>
+                    · {days === 1 ? t`1 day` : t`${days} days`}
+                  </span>
+                ) : null}
+              </div>
+              {shown.percentComplete > 0 ? (
+                <div className="mt-2.5 flex items-center gap-2">
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-foreground/[0.08]">
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-500"
+                      style={{ width: `${Math.min(100, shown.percentComplete)}%` }}
+                    />
+                  </div>
+                  <span className="text-[12px] tabular-nums text-muted-foreground">
+                    {shown.percentComplete}%
+                  </span>
+                </div>
+              ) : null}
+            </EditableArea>
+            <ChangeRows
+              rows={workPackageRows(shown)}
+              before={
+                change.action === "update" && change.before
+                  ? workPackageRows(change.before)
+                  : undefined
+              }
+              hide={[
+                "title",
+                "category",
+                "assignee",
+                "status",
+                "priority",
+                "duration",
+                "canStart",
+                "due",
+                "complete",
+              ]}
+            />
+            <Footnotes
+              items={[
+                change.requester
+                  ? {
+                      key: "requester",
+                      icon: UserRound,
+                      label: <Trans>Requested by</Trans>,
+                      value: change.requester,
+                    }
+                  : null,
+                change.statusComment
+                  ? {
+                      key: "statusComment",
+                      icon: MessageSquareText,
+                      label: <Trans>Status comment</Trans>,
+                      value: change.statusComment,
+                    }
+                  : null,
+                change.emails?.length
+                  ? {
+                      key: "emails",
+                      icon: Mail,
+                      label: <Trans>Emails</Trans>,
+                      value: change.emails.join(", "),
+                    }
+                  : null,
+              ]}
+            />
+          </>
+        ) : null
+      }
     </EvolveChangeCard>
   );
 }
 
-function commentRows(values: ProjectCommentValues): ChangeRow[] {
-  return [
-    { key: "category", label: t`Category`, value: values.category },
-    { key: "text", label: t`Comment`, value: values.text },
-  ];
+/** A comment as a speech bubble; a reworded one shows its old wording faded above. */
+function CommentBubble({
+  text,
+  faded,
+  struck,
+}: {
+  text: string;
+  faded?: boolean;
+  struck?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl rounded-ss-md bg-muted/70 px-4 py-3 pe-8 text-[14.5px] leading-relaxed whitespace-pre-wrap break-words text-foreground",
+        faded && "bg-muted/40 text-muted-foreground",
+        struck && "text-muted-foreground line-through decoration-muted-foreground/60",
+      )}
+    >
+      {text}
+    </div>
+  );
 }
 
 /**
@@ -524,10 +966,14 @@ function commentRows(values: ProjectCommentValues): ChangeRow[] {
 function CommentAskCard({ change, ...props }: AskCardProps & { change: ProjectCommentChange }) {
   const { t } = useLingui();
   const shown = change.after ?? change.before;
+  const deleting = change.action === "delete";
+  const reworded = change.action === "update" && change.before;
+  const recategorised = reworded && change.before!.category !== change.after?.category;
   return (
     <EvolveChangeCard
       {...props}
       testId="project-comment-approval-card"
+      icon={MessageSquareText}
       heading={
         change.action === "add" ? (
           <Trans>New project comment</Trans>
@@ -538,7 +984,7 @@ function CommentAskCard({ change, ...props }: AskCardProps & { change: ProjectCo
         )
       }
       project={change.project}
-      destructive={change.action === "delete"}
+      destructive={deleting}
       allowLabel={
         change.action === "add"
           ? t`Add comment`
@@ -554,10 +1000,7 @@ function CommentAskCard({ change, ...props }: AskCardProps & { change: ProjectCo
             : t`Approved: deleting it from Evolve`
       }
       editor={
-        change.action !== "delete" &&
-        change.after &&
-        props.onReviseChange &&
-        props.loadChangeOptions
+        !deleting && change.after && props.onReviseChange && props.loadChangeOptions
           ? (close) => (
               <CommentEditor
                 change={change}
@@ -569,40 +1012,73 @@ function CommentAskCard({ change, ...props }: AskCardProps & { change: ProjectCo
           : undefined
       }
     >
-      {shown ? (
-        <ChangeRows
-          rows={commentRows(shown)}
-          before={
-            change.action === "update" && change.before ? commentRows(change.before) : undefined
-          }
-        />
-      ) : null}
-      <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-border pt-3 text-[13.5px] leading-[1.45]">
-        <div className="contents">
-          <dt className="text-muted-foreground">
-            <Trans>From</Trans>
-          </dt>
-          <dd className="min-w-0 text-foreground">{change.author}</dd>
-        </div>
-        {change.date ? (
-          <div className="contents">
-            <dt className="text-muted-foreground">
-              <Trans>Written</Trans>
-            </dt>
-            <dd className="min-w-0 text-foreground">{dueDay(change.date)}</dd>
+      {(edit) =>
+        shown ? (
+          <div className="mt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Avatar name={change.author || "?"} />
+              <span className="text-[13.5px] font-medium text-foreground">
+                {change.author || t`You`}
+              </span>
+              {change.date ? (
+                <span className="text-[12.5px] text-muted-foreground">· {dueDay(change.date)}</span>
+              ) : null}
+              <span className="ms-auto inline-flex items-center gap-1">
+                {recategorised ? (
+                  <>
+                    <span className="text-[12px] text-muted-foreground line-through">
+                      {change.before!.category}
+                    </span>
+                    <ArrowRight aria-hidden className="size-3 text-muted-foreground" />
+                  </>
+                ) : null}
+                {edit ? (
+                  <button
+                    type="button"
+                    title={t`Change category`}
+                    onClick={edit}
+                    className="rounded-full transition hover:ring-2 hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <Chip tone="primary" icon={Tag}>
+                      {shown.category}
+                    </Chip>
+                  </button>
+                ) : (
+                  <Chip tone={deleting ? "neutral" : "primary"} icon={Tag}>
+                    {shown.category}
+                  </Chip>
+                )}
+              </span>
+            </div>
+            {reworded && change.before!.text !== change.after?.text ? (
+              <div className="mt-2.5">
+                <div className="mb-1 text-[11.5px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <Trans>Before</Trans>
+                </div>
+                <CommentBubble text={change.before!.text} faded />
+                <div className="mt-2.5 mb-1 text-[11.5px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <Trans>After</Trans>
+                </div>
+              </div>
+            ) : null}
+            <EditableArea
+              onEdit={edit}
+              label={t`Edit comment`}
+              className={cn(!reworded && "mt-2.5", "rounded-2xl rounded-ss-md")}
+            >
+              <CommentBubble text={shown.text} struck={deleting} />
+            </EditableArea>
+            {change.action === "add" ? (
+              <p className="mt-3 flex items-start gap-1.5 text-[12.5px] text-muted-foreground">
+                <Mail aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+                <Trans>
+                  Emails the project's director and manager, as for a comment added in Evolve
+                </Trans>
+              </p>
+            ) : null}
           </div>
-        ) : null}
-        {change.action === "add" ? (
-          <div className="contents">
-            <dt className="text-muted-foreground">
-              <Trans>Emails</Trans>
-            </dt>
-            <dd className="min-w-0 text-foreground">
-              <Trans>The project's director and manager, as for a comment added in Evolve</Trans>
-            </dd>
-          </div>
-        ) : null}
-      </dl>
+        ) : null
+      }
     </EvolveChangeCard>
   );
 }
@@ -616,6 +1092,7 @@ function DesignTeamAskCard({ change, ...props }: AskCardProps & { change: Design
     <EvolveChangeCard
       {...props}
       testId="design-team-approval-card"
+      icon={joining ? UserPlus : LogOut}
       heading={joining ? <Trans>Join Design Team</Trans> : <Trans>Leave Design Team</Trans>}
       project={change.project}
       warnings={change.warnings}
@@ -637,17 +1114,43 @@ function DesignTeamAskCard({ change, ...props }: AskCardProps & { change: Design
           : undefined
       }
     >
-      <ChangeRows
-        rows={[
-          { key: "person", label: t`Person`, value: change.person },
-          {
-            key: "role",
-            label: t`Role`,
-            value: change.emoji ? `${change.emoji} ${change.role}` : change.role,
-          },
-          { key: "others", label: t`Other roles on this team`, value: others.join(", ") },
-        ]}
-      />
+      {(edit) => (
+        <div className="mt-4">
+          <div className="flex items-center gap-3">
+            <Avatar name={change.person} large />
+            <div className="min-w-0">
+              <div className="truncate text-[15px] font-semibold text-foreground">
+                {change.person}
+              </div>
+              <div className="mt-1">
+                <EditableArea
+                  onEdit={edit}
+                  label={t`Change role`}
+                  className="inline-flex w-auto rounded-full pe-7"
+                >
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium",
+                      joining ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive",
+                    )}
+                  >
+                    {change.emoji ? `${change.emoji} ${change.role}` : change.role}
+                  </span>
+                </EditableArea>
+              </div>
+            </div>
+          </div>
+          {others.length ? (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[12.5px] text-muted-foreground">
+              <UsersRound aria-hidden className="size-3.5" />
+              <Trans>Other roles on this team</Trans>
+              {others.map((role) => (
+                <Chip key={role}>{role}</Chip>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      )}
     </EvolveChangeCard>
   );
 }
@@ -755,40 +1258,68 @@ function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: A
       </BuiCard>
     );
 
+  const live = canAnswer && !answered;
+  const approval = Boolean(block.instructionUpdate || approvalActions || !askActions?.length);
+  const fields = block.detail && block.detailFormat === "text" ? detailFields(block.detail) : null;
   return (
     <BuiCard
       data-testid={block.instructionUpdate ? "instruction-approval-card" : undefined}
-      className="w-full min-w-0 max-w-xl overflow-hidden border border-border dark:border-transparent"
+      className={cn(
+        "w-full min-w-0 max-w-xl overflow-hidden border border-border shadow-sm transition-shadow dark:border-transparent",
+        live && "hover:shadow-md",
+      )}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-2.5">
-        <span className="text-[13px] font-medium text-muted-foreground">
-          {block.instructionUpdate ? (
+      <CardHeader
+        icon={block.instructionUpdate ? FilePenLine : approval ? ShieldCheck : CircleHelp}
+        tone={!live ? "muted" : approval ? "primary" : "soft"}
+        title={
+          block.instructionUpdate ? (
             <Trans>Instructions</Trans>
-          ) : approvalActions || !askActions?.length ? (
-            <Trans>Needs your approval</Trans>
+          ) : approval ? (
+            <Trans>Approval</Trans>
           ) : (
             <Trans>Question</Trans>
-          )}
-        </span>
-        <StatusBadge tone={answered ? "positive" : canAnswer ? "caution" : "neutral"}>
-          {answered ? (
-            <Trans>Done</Trans>
-          ) : canAnswer ? (
-            <Trans>Waiting on you</Trans>
-          ) : (
-            <Trans>Closed</Trans>
-          )}
-        </StatusBadge>
-      </div>
-      <div className="px-5 py-4">
-        <div className="text-[15.5px] leading-[1.5] text-foreground">
+          )
+        }
+        state={answered ? "done" : canAnswer ? "waiting" : "closed"}
+      />
+      <div className="px-4 pt-3.5 pb-4">
+        <div className="text-[15.5px] font-medium leading-[1.5] text-foreground">
           {block.instructionUpdate ? (
             <Trans>Update instructions?</Trans>
           ) : (
             <ChatMarkdown>{block.text}</ChatMarkdown>
           )}
         </div>
-        {block.detail ? (
+        {fields ? (
+          <dl
+            data-testid="ask-detail"
+            className="mt-3 max-h-80 divide-y divide-border/60 overflow-auto rounded-xl border border-border/70 text-[14px] leading-[1.45]"
+          >
+            {fields.map((field, index) =>
+              field.label ? (
+                <div
+                  key={index}
+                  className="flex flex-col gap-0.5 px-3 py-2 sm:flex-row sm:items-baseline sm:gap-4"
+                >
+                  <dt className="shrink-0 text-[12.5px] text-muted-foreground sm:w-28">
+                    {field.label}
+                  </dt>
+                  <dd className="min-w-0 flex-1 whitespace-pre-wrap break-words text-foreground">
+                    {field.value}
+                  </dd>
+                </div>
+              ) : (
+                <p
+                  key={index}
+                  className="px-3 py-2 whitespace-pre-wrap break-words text-[13.5px] text-muted-foreground"
+                >
+                  {field.value}
+                </p>
+              ),
+            )}
+          </dl>
+        ) : block.detail ? (
           <pre
             data-testid="ask-detail"
             className={
@@ -921,9 +1452,11 @@ function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: A
             {displayActions.map((action) => (
               <Button
                 key={action.id}
-                variant={action.id === "allow" ? "default" : "outline"}
+                variant={
+                  action.id === "allow" ? "default" : action.id === "deny" ? "ghost" : "outline"
+                }
                 // Wraps long site names like the other cards' buttons.
-                className="h-auto min-h-8 min-w-0 whitespace-normal py-1 text-start"
+                className="h-auto min-h-8 min-w-0 gap-1.5 whitespace-normal py-1 text-start"
                 disabled={submitting}
                 onClick={() =>
                   action.id === "edit" && block.instructionUpdate
@@ -942,7 +1475,16 @@ function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: A
                     t`Dismiss`
                   )
                 ) : (
-                  approvalActionLabel(action.id, action.label, action.outcome, block.site)
+                  <>
+                    {action.id === "allow" ? (
+                      <Check aria-hidden className="size-4 shrink-0" />
+                    ) : action.id === "always" ? (
+                      <ShieldCheck aria-hidden className="size-4 shrink-0" />
+                    ) : action.id === "deny" ? (
+                      <X aria-hidden className="size-4 shrink-0" />
+                    ) : null}
+                    {approvalActionLabel(action.id, action.label, action.outcome, block.site)}
+                  </>
                 )}
               </Button>
             ))}
@@ -993,18 +1535,18 @@ function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: A
   );
 }
 
-const BADGE_TONES = {
-  neutral: "bg-foreground/5 text-muted-foreground",
-  positive: "bg-success/10 text-success",
-  caution: "bg-warning/15 text-warning",
-} as const;
+const FIELD_LINE = /^([A-Z][A-Za-z0-9 &/()'-]{0,30}):\s+(.+)$/;
 
-function StatusBadge({ tone, children }: { tone: keyof typeof BADGE_TONES; children: ReactNode }) {
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[12px] font-medium ${BADGE_TONES[tone]}`}
-    >
-      {children}
-    </span>
-  );
+/**
+ * A plain-text detail written as "Label: value" lines, as fields; null when it is not mostly such
+ * lines, so prose and code keep their own layout.
+ */
+function detailFields(detail: string): Array<{ label: string | null; value: string }> | null {
+  const lines = detail.split("\n").filter((line) => line.trim());
+  const fields = lines.map((line) => {
+    const match = FIELD_LINE.exec(line.trim());
+    return match ? { label: match[1]!, value: match[2]! } : { label: null, value: line.trim() };
+  });
+  const labelled = fields.filter((field) => field.label).length;
+  return labelled >= 2 && labelled >= fields.length / 2 ? fields : null;
 }

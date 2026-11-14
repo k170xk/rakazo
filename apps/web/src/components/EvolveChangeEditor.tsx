@@ -11,9 +11,10 @@ import {
   Input,
   NativeSelect,
   NativeSelectOption,
+  Spinner,
   Textarea,
 } from "@rakazo/ui-web";
-import { Search } from "lucide-react";
+import { Pencil, RefreshCw, Search } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useId, useState } from "react";
 import { errorText } from "../lib/user-error";
@@ -213,8 +214,11 @@ function Row({
   children: ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[7.5rem_1fr] items-start gap-x-3 gap-y-1">
-      <label htmlFor={htmlFor} className="pt-2 text-[13.5px] text-muted-foreground">
+    <div className="grid items-start gap-1 sm:grid-cols-[7.5rem_1fr] sm:gap-x-3">
+      <label
+        htmlFor={htmlFor}
+        className="text-[12.5px] font-medium text-muted-foreground sm:pt-2 sm:text-[13px]"
+      >
         {label}
       </label>
       <div className="min-w-0">{children}</div>
@@ -246,29 +250,47 @@ function EditorFrame({
 }) {
   return (
     <form
-      className="mt-3 space-y-2.5"
+      className="mt-3.5 animate-in fade-in-0 slide-in-from-top-1 overflow-hidden rounded-xl border border-primary/30 bg-primary/[0.03] duration-200"
       data-testid="evolve-change-editor"
       onSubmit={(event) => {
         event.preventDefault();
         onSave();
       }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && !saving) {
+          event.preventDefault();
+          onClose();
+        }
+      }}
     >
-      {children}
-      {error ? (
-        <p role="alert" className="text-[13px] text-destructive">
-          {error}
+      <div className="flex items-center gap-1.5 border-b border-primary/20 px-3.5 py-2 text-[12.5px] font-medium text-primary">
+        <Pencil aria-hidden className="size-3.5" />
+        <Trans>Editing</Trans>
+      </div>
+      <div className="space-y-3 p-3.5">
+        {children}
+        {error ? (
+          <p
+            role="alert"
+            className="rounded-lg bg-destructive/10 px-3 py-2 text-[13px] text-destructive"
+          >
+            {error}
+          </p>
+        ) : null}
+        <p className="text-[12.5px] text-muted-foreground">
+          <Trans>
+            Evolve checks the change again; nothing is saved until you approve the card.
+          </Trans>
         </p>
-      ) : null}
-      <p className="text-[12.5px] text-muted-foreground">
-        <Trans>Evolve checks the change again; nothing is saved until you approve the card.</Trans>
-      </p>
-      <div className="flex flex-wrap gap-2 pt-1">
-        <Button type="submit" disabled={saving}>
-          {saving ? <Trans>Checking with Evolve…</Trans> : <Trans>Update card</Trans>}
-        </Button>
-        <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
-          <Trans>Back</Trans>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={saving} className="gap-1.5">
+            {saving ? <Spinner /> : <RefreshCw aria-hidden className="size-4" />}
+            {saving ? <Trans>Checking with Evolve…</Trans> : <Trans>Update card</Trans>}
+          </Button>
+          <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>
+            <Trans>Back</Trans>
+          </Button>
+        </div>
       </div>
     </form>
   );
@@ -665,6 +687,8 @@ export function CommentEditor({
       <Row label={<Trans>Comment</Trans>} htmlFor={textId}>
         <Textarea
           id={textId}
+          // The comment is what this editor was opened to change.
+          autoFocus
           rows={4}
           maxLength={2000}
           value={text}

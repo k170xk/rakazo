@@ -1167,6 +1167,46 @@ it("previews a project comment with its category and edits the text and category
   });
 });
 
+it("opens the comment editor from the comment itself, with its text ready to type", async () => {
+  await renderEditable(
+    commentCard({
+      action: "add",
+      project: { jobNumber: "C1078", name: "Cork Library", client: null },
+      author: "Keith Knox",
+      after: { text: "Survey booked", category: "General" },
+    }),
+    vi.fn(async () => undefined),
+  );
+  await click(container.querySelector('button[title="Edit comment"]'));
+  const text = container.querySelector<HTMLTextAreaElement>("textarea")!;
+  expect(text.value).toBe("Survey booked");
+  expect(document.activeElement).toBe(text);
+  expect(button("Add comment")).toBeUndefined();
+  await click(button("Back"));
+  expect(button("Add comment")).toBeDefined();
+});
+
+it("lays out a plain approval's Label: value lines as fields", async () => {
+  await render({
+    kind: "ask",
+    approvalEffectId: "effect-1",
+    text: "Add this comment to B123?",
+    detail:
+      "Project: B123 · The Mount\nClient: OTT1\nComment: Test comment\nThe director is emailed.",
+    detailFormat: "text",
+    status: "pending",
+    actions: [
+      { id: "allow", label: "Allow once" },
+      { id: "deny", label: "Deny" },
+    ],
+  });
+  const fields = [...container.querySelectorAll('[data-testid="ask-detail"] dt')].map(
+    (term) => term.textContent,
+  );
+  expect(fields).toEqual(["Project", "Client", "Comment"]);
+  expect(container.textContent).toContain("The director is emailed.");
+});
+
 it("shows a comment deletion with its category and offers no edit", async () => {
   await renderEditable(
     commentCard({
