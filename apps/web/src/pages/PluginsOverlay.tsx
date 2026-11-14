@@ -52,7 +52,7 @@ import {
   Spinner,
 } from "@rakazo/ui-web";
 import { queryOptions, skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Lock, Plus, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CompanyMcpApp } from "../components/integrations/CompanyMcpApp";
@@ -213,7 +213,9 @@ export function PluginsOverlay({
   const catalogLoaded = integrations.data !== undefined;
   const loading = !catalogLoaded && integrations.isFetching;
   const catalog = integrations.data?.catalog ?? NO_CATALOG;
-  const isAdmin = useQuery(queries.me.queryOptions()).data?.isAdmin === true;
+  const me = useQuery(queries.me.queryOptions()).data;
+  const isAdmin = me?.isAdmin === true;
+  const companyEvolve = me?.companyEvolveTools === true;
   // Admins see the window as staff do unless they ask for everything, to test.
   const [showEverything, setShowEverything] = useState(false);
   const allCompanyApps = useQuery(queries.connections.companyApps.queryOptions()).data ?? NO_APPS;
@@ -1626,7 +1628,7 @@ export function PluginsOverlay({
 
   function renderManage() {
     const appPlugins = connectorInstalls;
-    const hasApps = connectedCount > 0 || Boolean(mcpError);
+    const hasApps = connectedCount > 0 || Boolean(mcpError) || companyEvolve;
     return (
       <div data-testid="integrations-manage" className="space-y-8">
         {renderViewTitle(<Trans>Connected</Trans>, () => setView("browse"))}
@@ -1692,6 +1694,23 @@ export function PluginsOverlay({
                   </div>
                 ))}
               </div>
+              {companyEvolve ? (
+                <div
+                  data-testid="company-evolve-tools"
+                  className="flex min-w-0 items-center gap-3 rounded-xl px-2.5 py-2"
+                >
+                  <ConnectorIcon name="OCSC Evolve" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-medium">
+                      <Trans>OCSC Evolve</Trans>
+                    </span>
+                    <span className="block truncate text-[13px] text-muted-foreground">
+                      <Trans>Company tool, managed by your administrator</Trans>
+                    </span>
+                  </span>
+                  <Lock size={15} className="shrink-0 text-muted-foreground" aria-hidden />
+                </div>
+              ) : null}
               <div data-testid="tool-sources" className="contents">
                 {sources.map((source) => (
                   <div

@@ -2690,6 +2690,10 @@ msgstr "Company setting (may choose)"
 msgid "Company thinking"
 msgstr "Company thinking"
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Company tool, managed by your administrator"
+msgstr "Company tool, managed by your administrator"
+
 #: src/components/VaultSettings.tsx
 msgid "Company values stay hidden once saved. Edit the item to replace its value."
 msgstr "Company values stay hidden once saved. Edit the item to replace its value."
@@ -7602,6 +7606,10 @@ msgstr "OCSC Apps put coding in every member of staff's hands. Describe the dash
 #: src/components/tour/ocsc-tour.tsx
 msgid "OCSC decks with an infographic on most slides, real project photos and a closing slide from your Evolve CV. Changes arrive as a new version with review comments."
 msgstr "OCSC decks with an infographic on most slides, real project photos and a closing slide from your Evolve CV. Changes arrive as a new version with review comments."
+
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC Evolve"
+msgstr "OCSC Evolve"
 
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx

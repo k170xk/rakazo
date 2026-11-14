@@ -2864,6 +2864,11 @@ export const MeSchema = z.object({
    * Absent from older servers (treat as phoneCallsEnabled).
    */
   dictationEnabled: z.boolean().optional(),
+  /**
+   * Assistants reach Evolve through the company connection, signed in as each person. It is
+   * set up for the whole company, so nobody can remove it. Absent from older servers.
+   */
+  companyEvolveTools: z.boolean().optional(),
   /** Operator-configured menu links. Absent from older servers. */
   navLinks: z.array(NavLinkSchema).default([]),
   userId: Id,

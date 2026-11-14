@@ -89,6 +89,7 @@ export async function meDto(deps: RouterDeps, actor: Actor): Promise<Me> {
     ticketBoardEnabled: deps.env.ticketBoardEnabled === true,
     phoneCallsEnabled,
     dictationEnabled,
+    companyEvolveTools: Boolean(deps.evolvePlugins) && companyFeatures().evolveTools,
     navLinks: deps.env.navLinks ?? [],
     maxUploadSizeBytes: attachmentMaxBytes(deps.env),
     maxAttachmentsPerMessage: attachmentMaxCount(deps.env),
