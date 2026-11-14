@@ -5791,6 +5791,14 @@ msgstr "Bevat animaties"
 msgid "Has a slide transition"
 msgstr "Bevat een diaovergang"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "Alle hulpmiddelen"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "Tik op een formaat om een tabel in te voegen"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

@@ -5791,6 +5791,14 @@ msgstr "Tem animações"
 msgid "Has a slide transition"
 msgstr "Tem uma transição de slide"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "Todas as ferramentas"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "Toque em um tamanho para inserir uma tabela"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

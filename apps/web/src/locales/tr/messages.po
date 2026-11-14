@@ -5791,6 +5791,14 @@ msgstr "Animasyon içerir"
 msgid "Has a slide transition"
 msgstr "Slayt geçişi içerir"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "Tüm araçlar"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "Tablo eklemek için bir boyut seçin"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

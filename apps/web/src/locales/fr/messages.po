@@ -5791,6 +5791,14 @@ msgstr "Contient des animations"
 msgid "Has a slide transition"
 msgstr "Contient une transition de diapositive"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "Tous les outils"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "Appuyez sur une taille pour insérer un tableau"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

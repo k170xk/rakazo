@@ -5791,6 +5791,14 @@ msgstr "Enthält Animationen"
 msgid "Has a slide transition"
 msgstr "Enthält einen Folienübergang"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "Alle Werkzeuge"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "Tippen Sie auf eine Größe, um eine Tabelle einzufügen"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

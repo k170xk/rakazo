@@ -5791,6 +5791,14 @@ msgstr "इसमें एनिमेशन हैं"
 msgid "Has a slide transition"
 msgstr "इसमें स्लाइड ट्रांज़िशन है"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "सभी उपकरण"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "तालिका सम्मिलित करने के लिए आकार पर टैप करें"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

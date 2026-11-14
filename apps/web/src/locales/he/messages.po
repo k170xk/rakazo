@@ -5791,6 +5791,14 @@ msgstr "כולל אנימציות"
 msgid "Has a slide transition"
 msgstr "כולל מעבר שקופית"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "כל הכלים"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "הקישו על גודל כדי להוסיף טבלה"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

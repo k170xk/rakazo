@@ -5791,6 +5791,14 @@ msgstr "애니메이션 있음"
 msgid "Has a slide transition"
 msgstr "슬라이드 전환 있음"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "모든 도구"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "크기를 탭하여 표 삽입"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

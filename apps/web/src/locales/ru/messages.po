@@ -5791,6 +5791,14 @@ msgstr "Есть анимация"
 msgid "Has a slide transition"
 msgstr "Есть переход слайда"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "Все инструменты"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "Нажмите размер, чтобы вставить таблицу"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""

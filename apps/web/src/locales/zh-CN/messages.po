@@ -5791,6 +5791,14 @@ msgstr "包含动画"
 msgid "Has a slide transition"
 msgstr "包含幻灯片切换效果"
 
+
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "全部工具"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "点按尺寸以插入表格"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
