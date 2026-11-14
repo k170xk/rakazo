@@ -1112,6 +1112,7 @@ msgstr "詳細設定"
 msgid "Advanced..."
 msgstr "詳細設定..."
 
+#: src/components/AskCard.tsx
 #: src/components/render-studio/CompareSlider.tsx
 msgid "After"
 msgstr ""
@@ -1456,6 +1457,10 @@ msgstr ""
 msgid "Apply"
 msgstr "適用"
 
+#: src/components/AskCard.tsx
+msgid "Approval"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Approval boundaries"
 msgstr "承認の範囲"
@@ -1766,6 +1771,7 @@ msgstr ""
 msgid "Bearer token"
 msgstr "Bearerトークン"
 
+#: src/components/AskCard.tsx
 #: src/components/render-studio/CompareSlider.tsx
 msgid "Before"
 msgstr ""
@@ -2146,6 +2152,10 @@ msgstr ""
 msgid "Change any scene and render again"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Change category"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Change deadlines"
 msgstr ""
@@ -2165,6 +2175,10 @@ msgstr ""
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "パスワードを変更"
+
+#: src/components/AskCard.tsx
+msgid "Change role"
+msgstr ""
 
 #: src/components/integrations/CompanyMcpApp.tsx
 msgid "Change token"
@@ -2627,7 +2641,6 @@ msgstr ""
 msgid "Command variable"
 msgstr "コマンド変数"
 
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/Board.tsx
 msgid "Comment"
@@ -4678,6 +4691,14 @@ msgid "Edit any slide later; each changed slide gets a review comment saying wha
 msgstr ""
 
 #: src/components/AskCard.tsx
+msgid "Edit comment"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Edit deadline"
+msgstr ""
+
+#: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "先に編集"
 
@@ -4709,12 +4730,20 @@ msgstr ""
 msgid "Edit this element"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Edit work package"
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Edited in the Studio"
 msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Edited in the Studio by {by}"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Editing"
 msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -4794,6 +4823,10 @@ msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Emails and sign-off"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Emails the project's director and manager, as for a comment added in Evolve"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -5364,7 +5397,6 @@ msgstr ""
 msgid "Friday"
 msgstr "金曜日"
 
-#: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
@@ -6911,7 +6943,7 @@ msgstr "移動先"
 msgid "Move up"
 msgstr "上へ移動"
 
-#. placeholder {0}: [movedFrom.jobNumber, movedFrom.name].filter(Boolean).join(" · ") || t`Unnamed project`
+#. placeholder {0}: projectLabel(movedFrom) || t`Unnamed project`
 #: src/components/AskCard.tsx
 msgid "Moved from <0>{0}</0>"
 msgstr ""
@@ -8196,7 +8228,6 @@ msgstr ""
 msgid "Permissions"
 msgstr "権限"
 
-#: src/components/AskCard.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -8428,7 +8459,6 @@ msgid "project"
 msgstr ""
 
 #: src/components/apps/AppWorkspacesSection.tsx
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Project"
@@ -9119,7 +9149,6 @@ msgstr ""
 msgid "role"
 msgstr ""
 
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Role"
 msgstr ""
@@ -10674,10 +10703,6 @@ msgstr "モデルが利用できない応答を返しました。もう一度お
 msgid "The owner may have turned off its link or deleted it."
 msgstr "所有者がリンクをオフにしたか、ページを削除した可能性があります。"
 
-#: src/components/AskCard.tsx
-msgid "The project's director and manager, as for a comment added in Evolve"
-msgstr ""
-
 #: src/lib/model-connection-preflight.ts
 msgid "The provider is rate-limiting requests."
 msgstr "プロバイダーがリクエストを制限しています。"
@@ -11684,10 +11709,6 @@ msgstr "順番待ち…"
 msgid "Waiting on others"
 msgstr ""
 
-#: src/components/AskCard.tsx
-msgid "Waiting on you"
-msgstr ""
-
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
 msgstr "待機中…"
@@ -12017,10 +12038,6 @@ msgstr ""
 msgid "Writing style"
 msgstr ""
 
-#: src/components/AskCard.tsx
-msgid "Written"
-msgstr ""
-
 #: src/components/apps/AppPublishSection.tsx
 msgid "Written for an earlier version; it is written again when you send it."
 msgstr ""
@@ -12042,6 +12059,7 @@ msgstr "年払い"
 msgid "Yesterday"
 msgstr "昨日"
 
+#: src/components/AskCard.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/SharedChats.tsx

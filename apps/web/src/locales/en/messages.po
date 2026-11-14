@@ -1117,6 +1117,7 @@ msgstr "Advanced"
 msgid "Advanced..."
 msgstr "Advanced..."
 
+#: src/components/AskCard.tsx
 #: src/components/render-studio/CompareSlider.tsx
 msgid "After"
 msgstr "After"
@@ -1461,6 +1462,10 @@ msgstr "Appearance: {label}"
 msgid "Apply"
 msgstr "Apply"
 
+#: src/components/AskCard.tsx
+msgid "Approval"
+msgstr "Approval"
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Approval boundaries"
 msgstr "Approval boundaries"
@@ -1771,6 +1776,7 @@ msgstr "Bcc"
 msgid "Bearer token"
 msgstr "Bearer token"
 
+#: src/components/AskCard.tsx
 #: src/components/render-studio/CompareSlider.tsx
 msgid "Before"
 msgstr "Before"
@@ -2151,6 +2157,10 @@ msgstr "Change an agent's job, instructions or model whenever you like"
 msgid "Change any scene and render again"
 msgstr "Change any scene and render again"
 
+#: src/components/AskCard.tsx
+msgid "Change category"
+msgstr "Change category"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Change deadlines"
 msgstr "Change deadlines"
@@ -2170,6 +2180,10 @@ msgstr "Change own project comments"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "Change password"
+
+#: src/components/AskCard.tsx
+msgid "Change role"
+msgstr "Change role"
 
 #: src/components/integrations/CompanyMcpApp.tsx
 msgid "Change token"
@@ -2632,7 +2646,6 @@ msgstr "Command menu"
 msgid "Command variable"
 msgstr "Command variable"
 
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/Board.tsx
 msgid "Comment"
@@ -4687,6 +4700,14 @@ msgid "Edit any slide later; each changed slide gets a review comment saying wha
 msgstr "Edit any slide later; each changed slide gets a review comment saying what changed"
 
 #: src/components/AskCard.tsx
+msgid "Edit comment"
+msgstr "Edit comment"
+
+#: src/components/AskCard.tsx
+msgid "Edit deadline"
+msgstr "Edit deadline"
+
+#: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "Edit first"
 
@@ -4718,6 +4739,10 @@ msgstr "Edit References"
 msgid "Edit this element"
 msgstr "Edit this element"
 
+#: src/components/AskCard.tsx
+msgid "Edit work package"
+msgstr "Edit work package"
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Edited in the Studio"
 msgstr "Edited in the Studio"
@@ -4725,6 +4750,10 @@ msgstr "Edited in the Studio"
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Edited in the Studio by {by}"
 msgstr "Edited in the Studio by {by}"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Editing"
+msgstr "Editing"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "EDITING"
@@ -4804,6 +4833,10 @@ msgstr "Emails"
 #: src/pages/KnowledgeSection.tsx
 msgid "Emails and sign-off"
 msgstr "Emails and sign-off"
+
+#: src/components/AskCard.tsx
+msgid "Emails the project's director and manager, as for a comment added in Evolve"
+msgstr "Emails the project's director and manager, as for a comment added in Evolve"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Emails:\n"
@@ -5377,7 +5410,6 @@ msgstr "Freeze"
 msgid "Friday"
 msgstr "Friday"
 
-#: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
@@ -6929,7 +6961,7 @@ msgstr "Move to"
 msgid "Move up"
 msgstr "Move up"
 
-#. placeholder {0}: [movedFrom.jobNumber, movedFrom.name].filter(Boolean).join(" · ") || t`Unnamed project`
+#. placeholder {0}: projectLabel(movedFrom) || t`Unnamed project`
 #: src/components/AskCard.tsx
 msgid "Moved from <0>{0}</0>"
 msgstr "Moved from <0>{0}</0>"
@@ -8214,7 +8246,6 @@ msgstr "Period"
 msgid "Permissions"
 msgstr "Permissions"
 
-#: src/components/AskCard.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -8446,7 +8477,6 @@ msgid "project"
 msgstr "project"
 
 #: src/components/apps/AppWorkspacesSection.tsx
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Project"
@@ -9137,7 +9167,6 @@ msgstr "Revoked"
 msgid "role"
 msgstr "role"
 
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Role"
 msgstr "Role"
@@ -10695,10 +10724,6 @@ msgstr "The model returned an unusable response. Try again."
 msgid "The owner may have turned off its link or deleted it."
 msgstr "The owner may have turned off its link or deleted it."
 
-#: src/components/AskCard.tsx
-msgid "The project's director and manager, as for a comment added in Evolve"
-msgstr "The project's director and manager, as for a comment added in Evolve"
-
 #: src/lib/model-connection-preflight.ts
 msgid "The provider is rate-limiting requests."
 msgstr "The provider is rate-limiting requests."
@@ -11705,10 +11730,6 @@ msgstr "Waiting in line…"
 msgid "Waiting on others"
 msgstr "Waiting on others"
 
-#: src/components/AskCard.tsx
-msgid "Waiting on you"
-msgstr "Waiting on you"
-
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
 msgstr "Waiting…"
@@ -12043,10 +12064,6 @@ msgstr "Write its instructions yourself"
 msgid "Writing style"
 msgstr "Writing style"
 
-#: src/components/AskCard.tsx
-msgid "Written"
-msgstr "Written"
-
 #: src/components/apps/AppPublishSection.tsx
 msgid "Written for an earlier version; it is written again when you send it."
 msgstr "Written for an earlier version; it is written again when you send it."
@@ -12068,6 +12085,7 @@ msgstr "Yearly"
 msgid "Yesterday"
 msgstr "Yesterday"
 
+#: src/components/AskCard.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/SharedChats.tsx

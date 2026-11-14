@@ -1112,6 +1112,7 @@ msgstr "Zaawansowane"
 msgid "Advanced..."
 msgstr "Zaawansowane..."
 
+#: src/components/AskCard.tsx
 #: src/components/render-studio/CompareSlider.tsx
 msgid "After"
 msgstr ""
@@ -1456,6 +1457,10 @@ msgstr "Wygląd: {label}"
 msgid "Apply"
 msgstr "Zastosuj"
 
+#: src/components/AskCard.tsx
+msgid "Approval"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Approval boundaries"
 msgstr "Granice zatwierdzania"
@@ -1766,6 +1771,7 @@ msgstr ""
 msgid "Bearer token"
 msgstr "Token Bearer"
 
+#: src/components/AskCard.tsx
 #: src/components/render-studio/CompareSlider.tsx
 msgid "Before"
 msgstr ""
@@ -2146,6 +2152,10 @@ msgstr ""
 msgid "Change any scene and render again"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Change category"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Change deadlines"
 msgstr ""
@@ -2165,6 +2175,10 @@ msgstr ""
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "Zmień hasło"
+
+#: src/components/AskCard.tsx
+msgid "Change role"
+msgstr ""
 
 #: src/components/integrations/CompanyMcpApp.tsx
 msgid "Change token"
@@ -2627,7 +2641,6 @@ msgstr "Menu poleceń"
 msgid "Command variable"
 msgstr "Zmienna polecenia"
 
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/Board.tsx
 msgid "Comment"
@@ -4678,6 +4691,14 @@ msgid "Edit any slide later; each changed slide gets a review comment saying wha
 msgstr ""
 
 #: src/components/AskCard.tsx
+msgid "Edit comment"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Edit deadline"
+msgstr ""
+
+#: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "Najpierw edytuj"
 
@@ -4709,6 +4730,10 @@ msgstr ""
 msgid "Edit this element"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Edit work package"
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Edited in the Studio"
 msgstr "Edytowano w Studio"
@@ -4716,6 +4741,10 @@ msgstr "Edytowano w Studio"
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Edited in the Studio by {by}"
 msgstr "Edytowano w Studio przez {by}"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Editing"
+msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "EDITING"
@@ -4794,6 +4823,10 @@ msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Emails and sign-off"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Emails the project's director and manager, as for a comment added in Evolve"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -5364,7 +5397,6 @@ msgstr ""
 msgid "Friday"
 msgstr "piątek"
 
-#: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
@@ -6911,7 +6943,7 @@ msgstr "Przenieś do"
 msgid "Move up"
 msgstr "Przenieś w górę"
 
-#. placeholder {0}: [movedFrom.jobNumber, movedFrom.name].filter(Boolean).join(" · ") || t`Unnamed project`
+#. placeholder {0}: projectLabel(movedFrom) || t`Unnamed project`
 #: src/components/AskCard.tsx
 msgid "Moved from <0>{0}</0>"
 msgstr ""
@@ -8196,7 +8228,6 @@ msgstr ""
 msgid "Permissions"
 msgstr "Uprawnienia"
 
-#: src/components/AskCard.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -8428,7 +8459,6 @@ msgid "project"
 msgstr ""
 
 #: src/components/apps/AppWorkspacesSection.tsx
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Project"
@@ -9119,7 +9149,6 @@ msgstr "Cofnięto"
 msgid "role"
 msgstr ""
 
-#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Role"
 msgstr ""
@@ -10674,10 +10703,6 @@ msgstr "Model zwrócił odpowiedź, której nie można użyć. Spróbuj ponownie
 msgid "The owner may have turned off its link or deleted it."
 msgstr "Właściciel mógł wyłączyć link lub usunąć stronę."
 
-#: src/components/AskCard.tsx
-msgid "The project's director and manager, as for a comment added in Evolve"
-msgstr ""
-
 #: src/lib/model-connection-preflight.ts
 msgid "The provider is rate-limiting requests."
 msgstr "Dostawca ogranicza liczbę żądań."
@@ -11684,10 +11709,6 @@ msgstr "Oczekiwanie w kolejce…"
 msgid "Waiting on others"
 msgstr ""
 
-#: src/components/AskCard.tsx
-msgid "Waiting on you"
-msgstr ""
-
 #: src/pages/shell/message-cards.tsx
 msgid "Waiting…"
 msgstr "Oczekiwanie…"
@@ -12017,10 +12038,6 @@ msgstr ""
 msgid "Writing style"
 msgstr ""
 
-#: src/components/AskCard.tsx
-msgid "Written"
-msgstr ""
-
 #: src/components/apps/AppPublishSection.tsx
 msgid "Written for an earlier version; it is written again when you send it."
 msgstr "Napisany dla wcześniejszej wersji; zostanie napisany ponownie przy wysyłce."
@@ -12042,6 +12059,7 @@ msgstr "Rocznie"
 msgid "Yesterday"
 msgstr "Wczoraj"
 
+#: src/components/AskCard.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/SharedChats.tsx
