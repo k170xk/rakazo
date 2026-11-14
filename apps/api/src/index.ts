@@ -13,6 +13,7 @@ import { createApp } from "./app.js";
 import { loadEnv } from "./env.js";
 
 const logger = createRootLogger(SERVICE_NAMES.api);
+const UPLOAD_REQUEST_TIMEOUT_MS = 30 * 60_000;
 
 try {
   const env = loadEnv();
@@ -20,6 +21,8 @@ try {
   const server = serve({ fetch: app.fetch, port: env.port, hostname: env.apiHost }, () => {
     logger.info("api listening", { "http.host": env.apiHost, "http.port": env.port });
   });
+  // Node ends a request after 5 minutes by default, which cuts off large uploads on slow links.
+  if ("requestTimeout" in server) server.requestTimeout = UPLOAD_REQUEST_TIMEOUT_MS;
   // Desktop apps hold an outbound socket so bots can reach the user's own computer.
   if (handleUpgrade) server.on("upgrade", handleUpgrade);
 

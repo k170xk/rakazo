@@ -660,6 +660,14 @@ export default defineConfig(({ command, mode }) => {
         },
       },
       {
+        // Node ends a request after 5 minutes by default, which cuts off large uploads to /api.
+        name: "rakazo-upload-timeout",
+        configurePreviewServer: (server) => {
+          const http = server.httpServer;
+          if (http && "requestTimeout" in http) http.requestTimeout = 30 * 60_000;
+        },
+      },
+      {
         name: "rakazo-novnc-proxy",
         configureServer: (server) => attachNovncProxy(server, screenProxySecret(), api),
         configurePreviewServer: (server) => attachNovncProxy(server, screenProxySecret(), api),
