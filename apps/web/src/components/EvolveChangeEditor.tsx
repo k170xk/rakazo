@@ -26,12 +26,21 @@ export type LoadChangeOptions = (
 type AskBlock = Extract<ThreadMessage["blocks"][number], { kind: "ask" }>;
 type DeadlineChange = NonNullable<AskBlock["deadlineChange"]>;
 type WorkPackageChange = NonNullable<AskBlock["workPackageChange"]>;
+type ProjectCommentChange = NonNullable<AskBlock["projectCommentChange"]>;
+type DesignTeamChange = NonNullable<AskBlock["designTeamChange"]>;
 type Choice = { value: string; label: string; detail?: string | null };
 
 const SEARCH_DELAY_MS = 250;
 
+/** Kinds Evolve lists in full, filtered here as you type rather than searched. */
+const LISTED_KINDS = new Set<EvolveChangeOptionKind>([
+  "categories",
+  "comment_categories",
+  "team_roles",
+]);
+
 function choicesOf(kind: EvolveChangeOptionKind, options: EvolveChangeOptions): Choice[] {
-  if (kind === "categories") {
+  if (LISTED_KINDS.has(kind)) {
     return (options.categories ?? []).map((name) => ({ value: name, label: name }));
   }
   if (kind === "people") {
@@ -73,7 +82,7 @@ function EvolvePicker({
   const [query, setQuery] = useState("");
   const [choices, setChoices] = useState<Choice[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const searched = kind === "categories" ? "" : query.trim();
+  const searched = LISTED_KINDS.has(kind) ? "" : query.trim();
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +108,7 @@ function EvolvePicker({
 
   const lower = query.trim().toLowerCase();
   const shown =
-    kind === "categories" && lower
+    LISTED_KINDS.has(kind) && lower
       ? (choices ?? []).filter((choice) => choice.label.toLowerCase().includes(lower))
       : (choices ?? []);
 
@@ -133,7 +142,9 @@ function EvolvePicker({
             ? t`Job number, project or client`
             : kind === "people"
               ? t`Name`
-              : t`Category`
+              : kind === "team_roles"
+                ? t`Role`
+                : t`Category`
         }
         value={query}
         onChange={(event) => setQuery(event.target.value)}
@@ -602,6 +613,104 @@ export function WorkPackageEditor({
           maxLength={5000}
           value={form.notes}
           onChange={(event) => set("notes", event.target.value)}
+        />
+      </Row>
+    </EditorFrame>
+  );
+}
+
+/** A comment card's wording and category, changed before it is approved. */
+export function CommentEditor({
+  change,
+  loadOptions,
+  onRevise,
+  onClose,
+}: {
+  change: ProjectCommentChange;
+  loadOptions: LoadChangeOptions;
+  onRevise: (edits: EvolveChangeEdits) => Promise<void>;
+  onClose: () => void;
+}) {
+  const { t } = useLingui();
+  const textId = useId();
+  const values = change.after!;
+  const [text, setText] = useState(values.text);
+  const [category, setCategory] = useState<string | null>(null);
+  const revision = useRevision(onRevise, onClose);
+
+  return (
+    <EditorFrame
+      error={revision.error}
+      saving={revision.saving}
+      onClose={onClose}
+      onSave={() => {
+        const edits: EvolveChangeEdits = {};
+        if (text.trim() && text !== values.text) edits.text = text;
+        if (category !== null && category !== values.category) edits.category = category;
+        void revision.send(edits);
+      }}
+    >
+      <Row label={<Trans>Category</Trans>}>
+        <EvolvePicker
+          kind="comment_categories"
+          label={t`category`}
+          current={category ?? values.category}
+          loadOptions={loadOptions}
+          onPick={(choice) => {
+            setCategory(choice.value);
+            revision.clearError();
+          }}
+        />
+      </Row>
+      <Row label={<Trans>Comment</Trans>} htmlFor={textId}>
+        <Textarea
+          id={textId}
+          rows={4}
+          maxLength={2000}
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value);
+            revision.clearError();
+          }}
+        />
+      </Row>
+    </EditorFrame>
+  );
+}
+
+/** A Design Team join card's role, chosen from Evolve's Design Team roles before it is approved. */
+export function TeamRoleEditor({
+  change,
+  loadOptions,
+  onRevise,
+  onClose,
+}: {
+  change: DesignTeamChange;
+  loadOptions: LoadChangeOptions;
+  onRevise: (edits: EvolveChangeEdits) => Promise<void>;
+  onClose: () => void;
+}) {
+  const { t } = useLingui();
+  const [role, setRole] = useState<string | null>(null);
+  const revision = useRevision(onRevise, onClose);
+
+  return (
+    <EditorFrame
+      error={revision.error}
+      saving={revision.saving}
+      onClose={onClose}
+      onSave={() => void revision.send(role && role !== change.role ? { role } : {})}
+    >
+      <Row label={<Trans>Role</Trans>}>
+        <EvolvePicker
+          kind="team_roles"
+          label={t`role`}
+          current={role ?? change.role}
+          loadOptions={loadOptions}
+          onPick={(choice) => {
+            setRole(choice.value);
+            revision.clearError();
+          }}
         />
       </Row>
     </EditorFrame>

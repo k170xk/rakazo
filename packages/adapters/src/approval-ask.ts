@@ -1,5 +1,11 @@
 import type { ToolBatch } from "@rakazo/adapter-kit";
-import type { MessageBlock, ProjectDeadlineChange, WorkPackageChange } from "@rakazo/contracts";
+import type {
+  DesignTeamChange,
+  MessageBlock,
+  ProjectCommentChange,
+  ProjectDeadlineChange,
+  WorkPackageChange,
+} from "@rakazo/contracts";
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
 import {
   batchActions,
@@ -21,19 +27,27 @@ export const MAX_FETCH_URL_LENGTH = 2_048;
 
 /** A fleet card built from the resolved request: a title and the lines under it. */
 /** `onceOnly`: the card never offers Always allow, as for a purchase. */
-/** `deadline`, `workPackage`: the Evolve change the card previews, drawn as its own card. */
+/** `deadline` … `designTeam`: the Evolve change the card previews, drawn as its own card. */
 export type FleetCardSummary = {
   title: string;
   lines: string[];
   onceOnly?: boolean;
   deadline?: ProjectDeadlineChange;
   workPackage?: WorkPackageChange;
+  projectComment?: ProjectCommentChange;
+  designTeam?: DesignTeamChange;
 };
 
 const WORK_PACKAGE_ALLOW_LABEL = {
   add: "Add work package",
   update: "Save changes",
   delete: "Delete work package",
+} as const;
+
+const COMMENT_ALLOW_LABEL = {
+  add: "Add comment",
+  update: "Save changes",
+  delete: "Delete comment",
 } as const;
 
 /**
@@ -87,6 +101,34 @@ export function buildApprovalAskBlock(
       status: "pending",
       actions: [
         { id: "allow", label: WORK_PACKAGE_ALLOW_LABEL[workPackage.action] },
+        { id: "deny", label: "Cancel" },
+      ],
+    };
+  }
+  if (options?.summary?.projectComment || options?.summary?.designTeam) {
+    const { projectComment, designTeam } = options.summary;
+    return {
+      kind: "ask",
+      approvalEffectId: effectId,
+      text: truncate(redactSecrets(options.summary.title, secrets), MAX_APPROVAL_SUMMARY_LENGTH),
+      detail: truncate(
+        redactSecrets(options.summary.lines.join("\n"), secrets),
+        MAX_APPROVAL_DETAIL_LENGTH,
+      ),
+      detailFormat: "text",
+      ...(projectComment
+        ? { projectCommentChange: redactLeaves(projectComment, secrets) as ProjectCommentChange }
+        : { designTeamChange: redactLeaves(designTeam, secrets) as DesignTeamChange }),
+      status: "pending",
+      actions: [
+        {
+          id: "allow",
+          label: projectComment
+            ? COMMENT_ALLOW_LABEL[projectComment.action]
+            : designTeam?.action === "delete"
+              ? "Leave team"
+              : "Join team",
+        },
         { id: "deny", label: "Cancel" },
       ],
     };

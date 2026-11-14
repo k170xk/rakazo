@@ -1116,3 +1116,110 @@ it("offers no edit on a work package delete", async () => {
   );
   expect(button("Edit")).toBeUndefined();
 });
+
+const commentCard = (change: NonNullable<AskBlock["projectCommentChange"]>): AskBlock => ({
+  kind: "ask",
+  approvalEffectId: "effect-1",
+  text: "Add this comment to C1078?",
+  detail: "Project: C1078 · Cork Library",
+  detailFormat: "text",
+  projectCommentChange: change,
+  status: "pending",
+  actions: [
+    { id: "allow", label: change.action === "delete" ? "Delete comment" : "Add comment" },
+    { id: "deny", label: "Cancel" },
+  ],
+});
+
+it("previews a project comment with its category and edits the text and category", async () => {
+  const onReviseChange = vi.fn(async () => undefined);
+  const load = await renderEditable(
+    commentCard({
+      action: "add",
+      project: { jobNumber: "C1078", name: "Cork Library", client: null },
+      author: "Keith Knox",
+      after: { text: "Survey booked", category: "General" },
+    }),
+    onReviseChange,
+    vi.fn(async () => ({ categories: ["General", "Design", "Construction"] })),
+  );
+  const card = container.querySelector('[data-testid="project-comment-approval-card"]')!;
+  expect(card.textContent).toContain("New project comment");
+  expect(card.textContent).toContain("General");
+  expect(card.textContent).toContain("Survey booked");
+  expect(card.textContent).toContain("Keith Knox");
+  expect(button("Add comment")).toBeDefined();
+  await click(button("Edit"));
+  await pick("category", "Construction");
+  expect(load).toHaveBeenCalledWith("comment_categories", "");
+  const text = container.querySelector<HTMLTextAreaElement>("textarea")!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(
+      text,
+      "Survey booked for Tuesday",
+    );
+    text.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await click(button("Update card"));
+  expect(onReviseChange).toHaveBeenCalledWith({
+    text: "Survey booked for Tuesday",
+    category: "Construction",
+  });
+});
+
+it("shows a comment deletion with its category and offers no edit", async () => {
+  await renderEditable(
+    commentCard({
+      action: "delete",
+      project: { jobNumber: "C1078", name: "Cork Library", client: null },
+      author: "Keith Knox",
+      before: { text: "Drainage layout issued", category: "Design" },
+      date: "2026-11-10",
+    }),
+    vi.fn(async () => undefined),
+  );
+  const card = container.querySelector('[data-testid="project-comment-approval-card"]')!;
+  expect(card.textContent).toContain("Delete project comment");
+  expect(card.textContent).toContain("Design");
+  expect(card.textContent).toContain("Drainage layout issued");
+  expect(button("Delete comment")).toBeDefined();
+  expect(button("Edit")).toBeUndefined();
+});
+
+it("previews a Design Team join with its role and changes the role from Evolve's list", async () => {
+  const onReviseChange = vi.fn(async () => undefined);
+  const load = await renderEditable(
+    {
+      kind: "ask",
+      approvalEffectId: "effect-1",
+      text: "Join C1078's Design Team as Drainage Civil Engineer?",
+      detailFormat: "text",
+      designTeamChange: {
+        action: "add",
+        project: { jobNumber: "C1078", name: "Cork Library", client: null },
+        person: "Keith Knox",
+        role: "Drainage Civil Engineer",
+        emoji: "💧",
+        currentRoles: ["Structural Engineer"],
+        warnings: ["Design Team members can change this project's deadlines and work packages."],
+      },
+      status: "pending",
+      actions: [
+        { id: "allow", label: "Join team" },
+        { id: "deny", label: "Cancel" },
+      ],
+    },
+    onReviseChange,
+    vi.fn(async () => ({ categories: ["Drainage Civil Engineer", "PSDP"] })),
+  );
+  const card = container.querySelector('[data-testid="design-team-approval-card"]')!;
+  expect(card.textContent).toContain("💧 Drainage Civil Engineer");
+  expect(card.textContent).toContain("Structural Engineer");
+  expect(card.textContent).toContain("deadlines and work packages");
+  expect(button("Join team")).toBeDefined();
+  await click(button("Edit"));
+  await pick("role", "PSDP");
+  expect(load).toHaveBeenCalledWith("team_roles", "");
+  await click(button("Update card"));
+  expect(onReviseChange).toHaveBeenCalledWith({ role: "PSDP" });
+});

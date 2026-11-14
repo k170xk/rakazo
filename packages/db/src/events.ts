@@ -981,7 +981,10 @@ async function commitAnswerRunInput(
     }
     // The change is made in Evolve as the person the run belongs to, so only they approve it.
     if (
-      (pendingAsk.deadlineChange || pendingAsk.workPackageChange) &&
+      (pendingAsk.deadlineChange ||
+        pendingAsk.workPackageChange ||
+        pendingAsk.projectCommentChange ||
+        pendingAsk.designTeamChange) &&
       run.userId !== input.answeredByUserId
     )
       return null;

@@ -911,6 +911,10 @@ msgstr "Add an HTTPS server URL."
 msgid "Add another"
 msgstr "Add another"
 
+#: src/components/AskCard.tsx
+msgid "Add comment"
+msgstr "Add comment"
+
 #: src/components/ModelCredits.tsx
 msgid "Add credits"
 msgstr "Add credits"
@@ -1493,12 +1497,20 @@ msgid "Approved: adding it to Evolve"
 msgstr "Approved: adding it to Evolve"
 
 #: src/components/AskCard.tsx
+msgid "Approved: adding you to the team"
+msgstr "Approved: adding you to the team"
+
+#: src/components/AskCard.tsx
 msgid "Approved: deleting it from Evolve"
 msgstr "Approved: deleting it from Evolve"
 
 #: src/components/AskCard.tsx
 msgid "Approved: saving it in Evolve"
 msgstr "Approved: saving it in Evolve"
+
+#: src/components/AskCard.tsx
+msgid "Approved: taking you off the team"
+msgstr "Approved: taking you off the team"
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Approving…"
@@ -2620,9 +2632,15 @@ msgstr "Command menu"
 msgid "Command variable"
 msgstr "Command variable"
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/pages/Board.tsx
 msgid "Comment"
 msgstr "Comment"
+
+#: src/components/AskCard.tsx
+msgid "Comment change"
+msgstr "Comment change"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
@@ -4247,6 +4265,10 @@ msgstr "Delete {name}"
 msgid "Delete account"
 msgstr "Delete account"
 
+#: src/components/AskCard.tsx
+msgid "Delete comment"
+msgstr "Delete comment"
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "Delete files bots attached in chats after"
 msgstr "Delete files bots attached in chats after"
@@ -4262,6 +4284,10 @@ msgstr "Delete memories too"
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Delete own project comments"
 msgstr "Delete own project comments"
+
+#: src/components/AskCard.tsx
+msgid "Delete project comment"
+msgstr "Delete project comment"
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "Delete row"
@@ -5351,6 +5377,7 @@ msgstr "Freeze"
 msgid "Friday"
 msgstr "Friday"
 
+#: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
@@ -5998,6 +6025,14 @@ msgstr "Job number, project or client"
 msgid "Join a Design Team"
 msgstr "Join a Design Team"
 
+#: src/components/AskCard.tsx
+msgid "Join Design Team"
+msgstr "Join Design Team"
+
+#: src/components/AskCard.tsx
+msgid "Join team"
+msgstr "Join team"
+
 #: src/components/GroupPeople.tsx
 msgid "Joins when they open OCSC Intelligence from Evolve"
 msgstr "Joins when they open OCSC Intelligence from Evolve"
@@ -6155,6 +6190,14 @@ msgstr "Leave a Design Team"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Leave blank to keep the saved key"
 msgstr "Leave blank to keep the saved key"
+
+#: src/components/AskCard.tsx
+msgid "Leave Design Team"
+msgstr "Leave Design Team"
+
+#: src/components/AskCard.tsx
+msgid "Leave team"
+msgstr "Leave team"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Length, format, bullet points or prose"
@@ -7110,6 +7153,10 @@ msgid "New password"
 msgstr "New password"
 
 #: src/components/AskCard.tsx
+msgid "New project comment"
+msgstr "New project comment"
+
+#: src/components/AskCard.tsx
 msgid "New project deadline"
 msgstr "New project deadline"
 
@@ -7948,6 +7995,10 @@ msgstr "Original source image"
 msgid "Other model…"
 msgstr "Other model…"
 
+#: src/components/AskCard.tsx
+msgid "Other roles on this team"
+msgstr "Other roles on this team"
+
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Others see the data but can't change it."
 msgstr "Others see the data but can't change it."
@@ -8163,6 +8214,7 @@ msgstr "Period"
 msgid "Permissions"
 msgstr "Permissions"
 
+#: src/components/AskCard.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -9080,6 +9132,15 @@ msgstr "Revoke"
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
 msgstr "Revoked"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "role"
+msgstr "role"
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Role"
+msgstr "Role"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "Role is required for this person reference"
@@ -10634,6 +10695,10 @@ msgstr "The model returned an unusable response. Try again."
 msgid "The owner may have turned off its link or deleted it."
 msgstr "The owner may have turned off its link or deleted it."
 
+#: src/components/AskCard.tsx
+msgid "The project's director and manager, as for a comment added in Evolve"
+msgstr "The project's director and manager, as for a comment added in Evolve"
+
 #: src/lib/model-connection-preflight.ts
 msgid "The provider is rate-limiting requests."
 msgstr "The provider is rate-limiting requests."
@@ -11977,6 +12042,10 @@ msgstr "Write its instructions yourself"
 #: src/pages/KnowledgeSection.tsx
 msgid "Writing style"
 msgstr "Writing style"
+
+#: src/components/AskCard.tsx
+msgid "Written"
+msgstr "Written"
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Written for an earlier version; it is written again when you send it."

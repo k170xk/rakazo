@@ -18,7 +18,12 @@ import { rpc as selectedSpaceRpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { BuiCard } from "./ai/primitives";
 import type { LoadChangeOptions } from "./EvolveChangeEditor";
-import { DeadlineEditor, WorkPackageEditor } from "./EvolveChangeEditor";
+import {
+  CommentEditor,
+  DeadlineEditor,
+  TeamRoleEditor,
+  WorkPackageEditor,
+} from "./EvolveChangeEditor";
 import { OptionRow, optionLetter } from "./OptionRow";
 import { SecretAskCard } from "./SecretAskCard";
 
@@ -87,6 +92,10 @@ export function AskCard(props: AskCardProps) {
     return <DeadlineAskCard {...props} change={props.block.deadlineChange} />;
   if (props.block.workPackageChange && isApprovalAskBlock(props.block))
     return <WorkPackageAskCard {...props} change={props.block.workPackageChange} />;
+  if (props.block.projectCommentChange && isApprovalAskBlock(props.block))
+    return <CommentAskCard {...props} change={props.block.projectCommentChange} />;
+  if (props.block.designTeamChange && isApprovalAskBlock(props.block))
+    return <DesignTeamAskCard {...props} change={props.block.designTeamChange} />;
   return <PromptAskCard {...props} />;
 }
 
@@ -94,6 +103,9 @@ type DeadlineChange = NonNullable<AskBlock["deadlineChange"]>;
 type DeadlineValues = DeadlineChange["after"];
 type WorkPackageChange = NonNullable<AskBlock["workPackageChange"]>;
 type WorkPackageValues = NonNullable<WorkPackageChange["after"]>;
+type ProjectCommentChange = NonNullable<AskBlock["projectCommentChange"]>;
+type ProjectCommentValues = NonNullable<ProjectCommentChange["after"]>;
+type DesignTeamChange = NonNullable<AskBlock["designTeamChange"]>;
 type ChangeRow = { key: string; label: string; value: string };
 
 function dueDay(value: string | null): string {
@@ -494,6 +506,148 @@ function WorkPackageAskCard({ change, ...props }: AskCardProps & { change: WorkP
           ) : null}
         </dl>
       ) : null}
+    </EvolveChangeCard>
+  );
+}
+
+function commentRows(values: ProjectCommentValues): ChangeRow[] {
+  return [
+    { key: "category", label: t`Category`, value: values.category },
+    { key: "text", label: t`Comment`, value: values.text },
+  ];
+}
+
+/**
+ * A project comment to add, reword or delete as the person themselves, with its tracker category;
+ * it is saved only when approved.
+ */
+function CommentAskCard({ change, ...props }: AskCardProps & { change: ProjectCommentChange }) {
+  const { t } = useLingui();
+  const shown = change.after ?? change.before;
+  return (
+    <EvolveChangeCard
+      {...props}
+      testId="project-comment-approval-card"
+      heading={
+        change.action === "add" ? (
+          <Trans>New project comment</Trans>
+        ) : change.action === "update" ? (
+          <Trans>Comment change</Trans>
+        ) : (
+          <Trans>Delete project comment</Trans>
+        )
+      }
+      project={change.project}
+      destructive={change.action === "delete"}
+      allowLabel={
+        change.action === "add"
+          ? t`Add comment`
+          : change.action === "update"
+            ? t`Save changes`
+            : t`Delete comment`
+      }
+      approvedText={
+        change.action === "add"
+          ? t`Approved: adding it to Evolve`
+          : change.action === "update"
+            ? t`Approved: saving it in Evolve`
+            : t`Approved: deleting it from Evolve`
+      }
+      editor={
+        change.action !== "delete" &&
+        change.after &&
+        props.onReviseChange &&
+        props.loadChangeOptions
+          ? (close) => (
+              <CommentEditor
+                change={change}
+                loadOptions={props.loadChangeOptions!}
+                onRevise={props.onReviseChange!}
+                onClose={close}
+              />
+            )
+          : undefined
+      }
+    >
+      {shown ? (
+        <ChangeRows
+          rows={commentRows(shown)}
+          before={
+            change.action === "update" && change.before ? commentRows(change.before) : undefined
+          }
+        />
+      ) : null}
+      <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-border pt-3 text-[13.5px] leading-[1.45]">
+        <div className="contents">
+          <dt className="text-muted-foreground">
+            <Trans>From</Trans>
+          </dt>
+          <dd className="min-w-0 text-foreground">{change.author}</dd>
+        </div>
+        {change.date ? (
+          <div className="contents">
+            <dt className="text-muted-foreground">
+              <Trans>Written</Trans>
+            </dt>
+            <dd className="min-w-0 text-foreground">{dueDay(change.date)}</dd>
+          </div>
+        ) : null}
+        {change.action === "add" ? (
+          <div className="contents">
+            <dt className="text-muted-foreground">
+              <Trans>Emails</Trans>
+            </dt>
+            <dd className="min-w-0 text-foreground">
+              <Trans>The project's director and manager, as for a comment added in Evolve</Trans>
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+    </EvolveChangeCard>
+  );
+}
+
+/** The person joining or leaving a project's Design Team in one role; saved only when approved. */
+function DesignTeamAskCard({ change, ...props }: AskCardProps & { change: DesignTeamChange }) {
+  const { t } = useLingui();
+  const joining = change.action === "add";
+  const others = change.currentRoles.filter((role) => role !== change.role);
+  return (
+    <EvolveChangeCard
+      {...props}
+      testId="design-team-approval-card"
+      heading={joining ? <Trans>Join Design Team</Trans> : <Trans>Leave Design Team</Trans>}
+      project={change.project}
+      warnings={change.warnings}
+      destructive={!joining}
+      allowLabel={joining ? t`Join team` : t`Leave team`}
+      approvedText={
+        joining ? t`Approved: adding you to the team` : t`Approved: taking you off the team`
+      }
+      editor={
+        joining && props.onReviseChange && props.loadChangeOptions
+          ? (close) => (
+              <TeamRoleEditor
+                change={change}
+                loadOptions={props.loadChangeOptions!}
+                onRevise={props.onReviseChange!}
+                onClose={close}
+              />
+            )
+          : undefined
+      }
+    >
+      <ChangeRows
+        rows={[
+          { key: "person", label: t`Person`, value: change.person },
+          {
+            key: "role",
+            label: t`Role`,
+            value: change.emoji ? `${change.emoji} ${change.role}` : change.role,
+          },
+          { key: "others", label: t`Other roles on this team`, value: others.join(", ") },
+        ]}
+      />
     </EvolveChangeCard>
   );
 }

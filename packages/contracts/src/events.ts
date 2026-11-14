@@ -174,6 +174,43 @@ export const WorkPackageChangeSchema = z.object({
 });
 export type WorkPackageChange = z.infer<typeof WorkPackageChangeSchema>;
 
+const ProjectCommentValues = z.object({ text: z.string(), category: z.string() });
+
+/** A comment the run owner adds to, rewords on or deletes from an Evolve project, as its card previews it. */
+export const ProjectCommentChangeSchema = z.object({
+  action: z.enum(["add", "update", "delete"]),
+  project: z.object({
+    jobNumber: z.string().nullable(),
+    name: z.string().nullable(),
+    client: z.string().nullable(),
+  }),
+  author: z.string(),
+  /** The comment as it is now; an update and a delete have one. */
+  before: ProjectCommentValues.optional(),
+  /** The comment once saved; a delete has none. */
+  after: ProjectCommentValues.optional(),
+  /** The day a deleted comment was written. */
+  date: z.string().nullable().optional(),
+});
+export type ProjectCommentChange = z.infer<typeof ProjectCommentChangeSchema>;
+
+/** The run owner joining or leaving an Evolve project's Design Team in one role. */
+export const DesignTeamChangeSchema = z.object({
+  action: z.enum(["add", "delete"]),
+  project: z.object({
+    jobNumber: z.string().nullable(),
+    name: z.string().nullable(),
+    client: z.string().nullable(),
+  }),
+  person: z.string(),
+  role: z.string(),
+  emoji: z.string().nullable().optional(),
+  /** The roles they already hold on this team. */
+  currentRoles: z.array(z.string()),
+  warnings: z.array(z.string()).optional(),
+});
+export type DesignTeamChange = z.infer<typeof DesignTeamChangeSchema>;
+
 const EditDay = z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]);
 const EditText = (max: number) => z.string().max(max);
 
@@ -201,12 +238,20 @@ export const EvolveChangeEditsSchema = z
     priority: z.enum(["low", "medium", "high", "urgent"]),
     completion_percentage: z.number().int().min(0).max(100),
     notes: EditText(5000),
+    text: EditText(2000).min(1),
+    role: EditText(120).min(1),
   })
   .partial()
   .refine((edits) => Object.keys(edits).length > 0, "Change at least one field");
 export type EvolveChangeEdits = z.infer<typeof EvolveChangeEditsSchema>;
 
-export const EvolveChangeOptionKindSchema = z.enum(["projects", "people", "categories"]);
+export const EvolveChangeOptionKindSchema = z.enum([
+  "projects",
+  "people",
+  "categories",
+  "comment_categories",
+  "team_roles",
+]);
 export type EvolveChangeOptionKind = z.infer<typeof EvolveChangeOptionKindSchema>;
 
 /** The live Evolve choices a card's project, assignee and category pickers offer. */
@@ -251,6 +296,8 @@ export const MessageBlock = z.discriminatedUnion("kind", [
       .optional(),
     deadlineChange: ProjectDeadlineChangeSchema.optional(),
     workPackageChange: WorkPackageChangeSchema.optional(),
+    projectCommentChange: ProjectCommentChangeSchema.optional(),
+    designTeamChange: DesignTeamChangeSchema.optional(),
     detail: z.string().optional(),
     detailFormat: z.enum(["text", "code"]).optional(),
     input: z.enum(["text", "secret"]).optional(),

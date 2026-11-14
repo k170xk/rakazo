@@ -281,15 +281,16 @@ describe("Evolve replies", () => {
 });
 
 describe("project comment and Design Team cards", () => {
-  it("shows a comment deletion on a plain card and carries the comment it showed", async () => {
+  it("shows a comment deletion on its own card and carries the comment it showed", async () => {
+    const before = {
+      text: "Drainage layout issued",
+      category: "Design",
+      author: "Keith Knox",
+      date: "2026-11-10",
+    };
     const { connector } = evolveAnswering({
       ok: true,
-      preview: {
-        action: "delete",
-        comment_id: 41,
-        project,
-        before: { text: "Drainage layout issued", author: "Keith Knox", date: "2026-11-10" },
-      },
+      preview: { action: "delete", comment_id: 41, project, before },
     });
     const result = await previewEvolveChange(
       connector,
@@ -297,30 +298,35 @@ describe("project comment and Design Team cards", () => {
       context,
     );
     if ("error" in result) throw new Error(result.error);
-    expect(result.summary.workPackage).toBeUndefined();
     expect(result.summary.title).toBe("Delete your comment on C1078?");
-    expect(result.summary.lines).toContain("Comment (10/11/2026): Drainage layout issued");
-    expect(result.args).toEqual({
-      comment_id: 41,
-      _expected: { text: "Drainage layout issued", author: "Keith Knox", date: "2026-11-10" },
+    expect(result.summary.lines).toContain("Category: Design");
+    expect(result.summary.projectComment).toMatchObject({
+      action: "delete",
+      author: "Keith Knox",
+      date: "2026-11-10",
+      before: { text: "Drainage layout issued", category: "Design" },
     });
+    expect(result.summary.projectComment?.after).toBeUndefined();
+    expect(result.args).toEqual({ comment_id: 41, _expected: before });
     const block = buildApprovalAskBlock(
       "effect",
       "mcp__evolve__delete_project_comment",
       result.args,
       [],
-      {
-        summary: result.summary,
-      },
+      { summary: result.summary },
     );
-    expect(block).toMatchObject({ kind: "ask", status: "pending" });
-    expect((block as { actions: { id: string }[] }).actions.map((action) => action.id)).toEqual([
-      "allow",
-      "deny",
-    ]);
+    expect(block).toMatchObject({
+      kind: "ask",
+      status: "pending",
+      projectCommentChange: { action: "delete" },
+      actions: [
+        { id: "allow", label: "Delete comment" },
+        { id: "deny", label: "Cancel" },
+      ],
+    });
   });
 
-  it("shows a new comment and a Design Team join with what Evolve resolved", async () => {
+  it("shows a new comment with its category, General when Evolve gives none", async () => {
     const comment = evolveAnswering({
       ok: true,
       preview: { action: "add", project, comment: { text: "Survey booked", author: "Keith Knox" } },
@@ -333,14 +339,52 @@ describe("project comment and Design Team cards", () => {
     if ("error" in added) throw new Error(added.error);
     expect(added.summary.title).toBe("Add this comment to C1078?");
     expect(added.summary.lines).toContain("Comment: Survey booked");
+    expect(added.summary.projectComment?.after).toEqual({
+      text: "Survey booked",
+      category: "General",
+    });
     expect(added.args).toEqual({ project_id: 7, text: "Survey booked" });
+  });
 
+  it("shows a reworded comment before and after, and lets the owner edit its text and category", async () => {
+    const { connector } = evolveAnswering({
+      ok: true,
+      preview: {
+        action: "update",
+        comment_id: 41,
+        project,
+        before: { text: "Survey booked", category: "General" },
+        comment: { text: "Survey booked for Tuesday", category: "Construction", author: "Keith" },
+      },
+    });
+    const result = await previewEvolveChange(
+      connector,
+      { ...call({ comment_id: 41, text: "x" }), tool: "mcp__evolve__update_project_comment" },
+      context,
+    );
+    if ("error" in result) throw new Error(result.error);
+    expect(result.summary.projectComment).toMatchObject({
+      before: { text: "Survey booked", category: "General" },
+      after: { text: "Survey booked for Tuesday", category: "Construction" },
+    });
+    expect(
+      editedEvolveChangeArgs("mcp__evolve__update_project_comment", result.args, {
+        text: "Booked",
+        category: "Design",
+      }),
+    ).toEqual({ args: { comment_id: 41, text: "Booked", category: "Design" } });
+    expect(
+      editedEvolveChangeArgs("mcp__evolve__update_project_comment", result.args, { role: "PSDP" }),
+    ).toEqual({ error: "This card cannot change role." });
+  });
+
+  it("shows a Design Team join with its role and lets only the role be edited", async () => {
     const team = evolveAnswering({
       ok: true,
       preview: {
         action: "add",
         project,
-        member: { name: "Keith Knox", role: "Drainage Civil Engineer" },
+        member: { name: "Keith Knox", role: "Drainage Civil Engineer", emoji: "💧" },
         current_roles: ["Structural Engineer"],
         warnings: ["Design Team members can change this project's deadlines and work packages."],
       },
@@ -353,7 +397,32 @@ describe("project comment and Design Team cards", () => {
     if ("error" in joined) throw new Error(joined.error);
     expect(joined.summary.title).toBe("Join C1078's Design Team as Drainage Civil Engineer?");
     expect(joined.summary.lines).toContain("Other roles on this team: Structural Engineer");
-    expect(joined.summary.lines.some((line) => line.startsWith("Check: "))).toBe(true);
+    expect(joined.summary.designTeam).toMatchObject({
+      action: "add",
+      person: "Keith Knox",
+      role: "Drainage Civil Engineer",
+      emoji: "💧",
+      currentRoles: ["Structural Engineer"],
+    });
+    const block = buildApprovalAskBlock(
+      "effect",
+      "mcp__evolve__join_project_team",
+      joined.args,
+      [],
+      {
+        summary: joined.summary,
+      },
+    );
+    expect(block).toMatchObject({
+      designTeamChange: { role: "Drainage Civil Engineer" },
+      actions: [{ id: "allow", label: "Join team" }, { id: "deny" }],
+    });
+    expect(
+      editedEvolveChangeArgs("mcp__evolve__join_project_team", joined.args, { role: "PSDP" }),
+    ).toEqual({ args: { project_id: 7, role: "PSDP" } });
+    expect(
+      editedEvolveChangeArgs("mcp__evolve__leave_project_team", joined.args, { role: "PSDP" }),
+    ).toEqual({ error: "This card cannot be edited." });
   });
 
   it("hands a role choice back to the model without a card", async () => {

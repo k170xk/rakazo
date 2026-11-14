@@ -31,7 +31,13 @@ function pendingChangeAsk(blocks: unknown): { blocks: MessageBlock[]; ask: AskBl
   if (!parsed.success) return null;
   const ask = parsed.data.find((block) => block.kind === "ask" && block.status !== "answered");
   if (ask?.kind !== "ask" || !isApprovalAskBlock(ask)) return null;
-  if (!ask.deadlineChange && !ask.workPackageChange) return null;
+  if (
+    !ask.deadlineChange &&
+    !ask.workPackageChange &&
+    !ask.projectCommentChange &&
+    !ask.designTeamChange
+  )
+    return null;
   return { blocks: parsed.data, ask };
 }
 

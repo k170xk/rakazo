@@ -1,8 +1,10 @@
 import type { AdapterContext, ConnectorCall, ConnectorProvider } from "@rakazo/adapter-kit";
 import type {
+  DesignTeamChange,
   EvolveChangeEdits,
   EvolveChangeOptionKind,
   EvolveChangeOptions,
+  ProjectCommentChange,
   ProjectDeadlineChange,
 } from "@rakazo/contracts";
 import { toolNeedsApprovalEveryTime } from "@rakazo/core";
@@ -66,6 +68,9 @@ const EDITABLE: Record<string, readonly (keyof EvolveChangeEdits)[]> = {
     "completion_percentage",
     "notes",
   ],
+  add_project_comment: ["text", "category"],
+  update_project_comment: ["text", "category"],
+  join_project_team: ["role"],
 };
 
 /** The Evolve tool an approval effect calls, such as add_work_package. */
@@ -145,7 +150,7 @@ export async function listEvolveChangeOptions(
     throw new Error(String(data?.error ?? reply.error?.message ?? "Evolve did not list choices."));
   }
   const text = (value: unknown) => (typeof value === "string" && value ? value : null);
-  if (kind === "categories") {
+  if (kind === "categories" || kind === "comment_categories" || kind === "team_roles") {
     return {
       categories: (Array.isArray(data.categories) ? data.categories : []).map(String).slice(0, 200),
     };
@@ -259,88 +264,143 @@ type CommentPreview = {
   action: "add" | "update" | "delete";
   comment_id?: number;
   project: ChangeProject;
-  before?: { text: string; date?: string | null };
-  comment?: { text: string; author: string };
+  before?: { text: string; category?: string; date?: string | null };
+  comment?: { text: string; category?: string; author: string };
 };
 type TeamPreview = {
   action: "add" | "delete";
   project: ChangeProject;
-  member: { name: string; role: string };
+  member: { name: string; role: string; emoji?: string | null };
   current_roles?: string[];
   warnings?: string[];
 };
 
-function projectLines(project: ChangeProject | undefined): { job: string; lines: string[] } {
-  const label = [project?.job_number, project?.name].filter(Boolean).join(" · ");
+function changeProject(project: ChangeProject | undefined): ProjectCommentChange["project"] {
   return {
-    job: project?.job_number ?? "the project",
+    jobNumber: project?.job_number ?? null,
+    name: project?.name ?? null,
+    client: project?.client ?? null,
+  };
+}
+
+function projectLines(project: ProjectCommentChange["project"]): { job: string; lines: string[] } {
+  const label = [project.jobNumber, project.name].filter(Boolean).join(" · ");
+  return {
+    job: project.jobNumber ?? "the project",
     lines: [
       `Project: ${label || "Unnamed project"}`,
-      ...(project?.client ? [`Client: ${project.client}`] : []),
+      ...(project.client ? [`Client: ${project.client}`] : []),
     ],
   };
 }
 
-/**
- * The card for a project comment or Design Team change, which has no editor of its own: a title and
- * the lines Evolve resolved. Null for any other preview.
- */
-export function plainChangeSummary(raw: unknown): FleetCardSummary | null {
-  if (!raw || typeof raw !== "object") return null;
-  const preview = raw as Record<string, unknown>;
-  if ("member" in preview) {
-    const team = preview as unknown as TeamPreview;
-    const { job, lines } = projectLines(team.project);
-    const others = (team.current_roles ?? []).filter((role) => role !== team.member.role);
-    return {
-      title:
-        team.action === "add"
-          ? `Join ${job}'s Design Team as ${team.member.role}?`
-          : `Leave ${job}'s Design Team as ${team.member.role}?`,
-      lines: [
-        ...lines,
-        `Person: ${team.member.name}`,
-        `Role: ${team.member.role}`,
-        ...(others.length ? [`Other roles on this team: ${others.join(", ")}`] : []),
-        ...(team.warnings ?? []).map((warning) => `Check: ${warning}`),
-      ],
-      onceOnly: true,
-    };
-  }
-  if (!("comment" in preview) && !("comment_id" in preview)) return null;
-  const comment = preview as unknown as CommentPreview;
-  const { job, lines } = projectLines(comment.project);
-  if (comment.action === "delete") {
+const GENERAL_COMMENTS = "General";
+
+function commentValues(value: { text?: unknown; category?: unknown } | undefined) {
+  return value
+    ? {
+        text: String(value.text ?? ""),
+        category:
+          typeof value.category === "string" && value.category ? value.category : GENERAL_COMMENTS,
+      }
+    : undefined;
+}
+
+/** The card for a Design Team join or leave. */
+function teamCardSummary(team: TeamPreview): FleetCardSummary {
+  const change: DesignTeamChange = {
+    action: team.action === "delete" ? "delete" : "add",
+    project: changeProject(team.project),
+    person: String(team.member?.name ?? ""),
+    role: String(team.member?.role ?? ""),
+    emoji: typeof team.member?.emoji === "string" && team.member.emoji ? team.member.emoji : null,
+    currentRoles: (team.current_roles ?? []).map(String),
+    ...(team.warnings?.length ? { warnings: team.warnings.map(String) } : {}),
+  };
+  const { job, lines } = projectLines(change.project);
+  const others = change.currentRoles.filter((role) => role !== change.role);
+  return {
+    title:
+      change.action === "add"
+        ? `Join ${job}'s Design Team as ${change.role}?`
+        : `Leave ${job}'s Design Team as ${change.role}?`,
+    lines: [
+      ...lines,
+      `Person: ${change.person}`,
+      `Role: ${change.role}`,
+      ...(others.length ? [`Other roles on this team: ${others.join(", ")}`] : []),
+      ...(change.warnings ?? []).map((warning) => `Check: ${warning}`),
+    ],
+    onceOnly: true,
+    designTeam: change,
+  };
+}
+
+/** The card for a project comment added, reworded or deleted. */
+function commentCardSummary(comment: CommentPreview): FleetCardSummary {
+  const action =
+    comment.action === "delete" ? "delete" : comment.action === "update" ? "update" : "add";
+  const before = commentValues(comment.before);
+  const after = action === "delete" ? undefined : commentValues(comment.comment);
+  const change: ProjectCommentChange = {
+    action,
+    project: changeProject(comment.project),
+    author: String(
+      comment.comment?.author ?? (comment.before as { author?: unknown } | undefined)?.author ?? "",
+    ),
+    ...(action !== "add" && before ? { before } : {}),
+    ...(after ? { after } : {}),
+    ...(action === "delete" && comment.before?.date ? { date: comment.before.date } : {}),
+  };
+  const { job, lines } = projectLines(change.project);
+  const describe = (value: { text: string; category: string }) => [
+    `Category: ${value.category}`,
+    `Comment: ${value.text}`,
+  ];
+  if (action === "delete") {
     return {
       title: `Delete your comment on ${job}?`,
       lines: [
         ...lines,
-        `Comment${comment.before?.date ? ` (${day(comment.before.date)})` : ""}: ${comment.before?.text ?? ""}`,
+        ...(change.date ? [`Written: ${day(change.date)}`] : []),
+        ...(change.before ? describe(change.before) : []),
       ],
       onceOnly: true,
+      projectComment: change,
     };
   }
-  if (comment.action === "update") {
+  if (action === "update") {
     return {
       title: `Change your comment on ${job}?`,
       lines: [
         ...lines,
-        `Now: ${comment.before?.text ?? ""}`,
-        `After: ${comment.comment?.text ?? ""}`,
+        ...(change.before ? ["Now:", ...describe(change.before), "After:"] : []),
+        ...(change.after ? describe(change.after) : []),
       ],
       onceOnly: true,
+      projectComment: change,
     };
   }
   return {
     title: `Add this comment to ${job}?`,
     lines: [
       ...lines,
-      `From: ${comment.comment?.author ?? "you"}`,
-      `Comment: ${comment.comment?.text ?? ""}`,
+      `From: ${change.author || "you"}`,
+      ...(change.after ? describe(change.after) : []),
       "The project's director and manager are emailed, as for a comment added in Evolve.",
     ],
     onceOnly: true,
+    projectComment: change,
   };
+}
+
+/** The card for a project comment or Design Team preview; null for any other preview. */
+export function commentOrTeamChangeSummary(raw: unknown): FleetCardSummary | null {
+  if (!raw || typeof raw !== "object") return null;
+  const preview = raw as Record<string, unknown>;
+  if ("member" in preview) return teamCardSummary(preview as unknown as TeamPreview);
+  if (!("comment" in preview) && !("comment_id" in preview)) return null;
+  return commentCardSummary(preview as unknown as CommentPreview);
 }
 
 /**
@@ -372,10 +432,11 @@ export function evolveChangePreview(
   args: Record<string, unknown>,
 ): { summary: FleetCardSummary; args: Record<string, unknown> } | { error: string } {
   const reply = evolveReply(data);
-  const plain = reply && reply.ok !== false ? plainChangeSummary(reply.preview) : null;
-  if (reply && plain) {
+  const commentOrTeam =
+    reply && reply.ok !== false ? commentOrTeamChangeSummary(reply.preview) : null;
+  if (reply && commentOrTeam) {
     const before = (reply.preview as { before?: unknown }).before;
-    return { summary: plain, args: before ? { ...args, _expected: before } : args };
+    return { summary: commentOrTeam, args: before ? { ...args, _expected: before } : args };
   }
   const preview = reply?.preview as (DeadlinePreview | WorkPackagePreview) | undefined;
   const workPackage =

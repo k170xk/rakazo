@@ -657,7 +657,11 @@ export const MessageView = memo(function MessageView({
                   }
                   onDismiss={() => onAnswer(message, "", undefined, true)}
                   rpc={rpc}
-                  {...(message.runId && (block.deadlineChange || block.workPackageChange)
+                  {...(message.runId &&
+                  (block.deadlineChange ||
+                    block.workPackageChange ||
+                    block.projectCommentChange ||
+                    block.designTeamChange)
                     ? {
                         onReviseChange: async (edits: EvolveChangeEdits) => {
                           await rpc.threads.reviseEvolveChange({

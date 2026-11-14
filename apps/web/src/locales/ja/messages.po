@@ -906,6 +906,10 @@ msgstr "HTTPSのサーバーURLを追加してください。"
 msgid "Add another"
 msgstr "別のものを追加"
 
+#: src/components/AskCard.tsx
+msgid "Add comment"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Add credits"
 msgstr "クレジットを追加"
@@ -1488,11 +1492,19 @@ msgid "Approved: adding it to Evolve"
 msgstr ""
 
 #: src/components/AskCard.tsx
+msgid "Approved: adding you to the team"
+msgstr ""
+
+#: src/components/AskCard.tsx
 msgid "Approved: deleting it from Evolve"
 msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Approved: saving it in Evolve"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Approved: taking you off the team"
 msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -2615,9 +2627,15 @@ msgstr ""
 msgid "Command variable"
 msgstr "コマンド変数"
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
 #: src/pages/Board.tsx
 msgid "Comment"
 msgstr "コメント"
+
+#: src/components/AskCard.tsx
+msgid "Comment change"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
@@ -4238,6 +4256,10 @@ msgstr ""
 msgid "Delete account"
 msgstr "アカウントを削除"
 
+#: src/components/AskCard.tsx
+msgid "Delete comment"
+msgstr ""
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "Delete files bots attached in chats after"
 msgstr ""
@@ -4252,6 +4274,10 @@ msgstr "メモリも削除"
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Delete own project comments"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Delete project comment"
 msgstr ""
 
 #: src/components/apps/AppDataPanel.tsx
@@ -5338,6 +5364,7 @@ msgstr ""
 msgid "Friday"
 msgstr "金曜日"
 
+#: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
 msgid "From"
@@ -5980,6 +6007,14 @@ msgstr ""
 msgid "Join a Design Team"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Join Design Team"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Join team"
+msgstr ""
+
 #: src/components/GroupPeople.tsx
 msgid "Joins when they open OCSC Intelligence from Evolve"
 msgstr ""
@@ -6136,6 +6171,14 @@ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Leave blank to keep the saved key"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Leave Design Team"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Leave team"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -7092,6 +7135,10 @@ msgid "New password"
 msgstr "新しいパスワード"
 
 #: src/components/AskCard.tsx
+msgid "New project comment"
+msgstr ""
+
+#: src/components/AskCard.tsx
 msgid "New project deadline"
 msgstr ""
 
@@ -7930,6 +7977,10 @@ msgstr ""
 msgid "Other model…"
 msgstr "その他のモデル…"
 
+#: src/components/AskCard.tsx
+msgid "Other roles on this team"
+msgstr ""
+
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Others see the data but can't change it."
 msgstr ""
@@ -8145,6 +8196,7 @@ msgstr ""
 msgid "Permissions"
 msgstr "権限"
 
+#: src/components/AskCard.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -9061,6 +9113,15 @@ msgstr "取り消す"
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "role"
+msgstr ""
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Role"
 msgstr ""
 
 #: src/pages/shell/references-dialog.tsx
@@ -10613,6 +10674,10 @@ msgstr "モデルが利用できない応答を返しました。もう一度お
 msgid "The owner may have turned off its link or deleted it."
 msgstr "所有者がリンクをオフにしたか、ページを削除した可能性があります。"
 
+#: src/components/AskCard.tsx
+msgid "The project's director and manager, as for a comment added in Evolve"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "The provider is rate-limiting requests."
 msgstr "プロバイダーがリクエストを制限しています。"
@@ -11950,6 +12015,10 @@ msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Writing style"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Written"
 msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
