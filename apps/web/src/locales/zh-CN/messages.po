@@ -15180,3 +15180,7 @@ msgstr ""
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
 msgstr ""
+
+#: src/pages/RoutineEditor.tsx
+msgid "Slack not enabled"
+msgstr "未启用 Slack"
