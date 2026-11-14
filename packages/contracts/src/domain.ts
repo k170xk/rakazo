@@ -2125,7 +2125,7 @@ export const CompanyFeaturesSchema = z.object({
   cursorAgents: z.boolean(),
   /** Evolve's tools (voiceover, stock media, project datasheets, people, images, infographics) for every bot. */
   evolveTools: z.boolean(),
-  /** Staff may open Connect apps, install plugins and add MCP servers; off shows them Coming soon. Admins always can. */
+  /** Staff may open Connectors, install plugins and add MCP servers; off shows them Coming soon. Admins always can. */
   staffIntegrations: z.boolean(),
   /** Speaking replies, dictation and calls for everyone, on the company voice connection. */
   voice: z.boolean(),

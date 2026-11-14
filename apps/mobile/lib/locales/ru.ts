@@ -597,7 +597,7 @@ export const RU_MESSAGES: Record<string, string> = {
     "Привет, вот как я буду звучать, когда буду читать ответы вслух.",
   "I’m done": "Готово",
   "If you heard that, voice is ready.": "Если вы это услышали, голос готов.",
-  Integrations: "Интеграции",
+  Connectors: "Коннекторы",
   "If an account exists for that address, we sent a password reset link.":
     "Если для этого адреса существует учетная запись, мы отправили ссылку для сброса пароля.",
   "Its conversation, files, and routines will be permanently deleted. What should happen to its memories?":

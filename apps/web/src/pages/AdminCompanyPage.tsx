@@ -138,7 +138,7 @@ function CompanyAdminPanels() {
   const nav: { id: AdminSection; label: string; icon: LucideIcon }[] = [
     { id: "models", label: t`Model`, icon: Cpu },
     { id: "features", label: t`Features`, icon: ToggleRight },
-    { id: "integrations", label: t`Apps`, icon: LayoutGrid },
+    { id: "integrations", label: t`Connectors`, icon: LayoutGrid },
     { id: "mcp", label: t`MCP servers`, icon: Server },
     { id: "chat", label: t`Chat`, icon: MessageSquare },
     { id: "tools", label: t`Tools and skills`, icon: Wrench },
@@ -634,15 +634,15 @@ function CompanyAppsSection({
   const { t } = useLingui();
   return (
     <Section
-      title={t`Apps`}
-      description={t`Every app, plugin and directory service staff can add in Integrations, in one list.`}
+      title={t`Connectors`}
+      description={t`Every connector, plugin and directory service staff can add in Connectors, in one list.`}
     >
       <CompanySwitchList
         rows={[
           {
             id: "staffIntegrations",
-            label: t`Integrations for staff`,
-            description: t`Off: staff see Integrations as Coming soon and cannot add anything. Admins always can, to test.`,
+            label: t`Connectors for staff`,
+            description: t`Off: staff see Connectors as Coming soon and cannot add anything. Admins always can, to test.`,
           },
         ]}
         state={state}
@@ -651,21 +651,21 @@ function CompanyAppsSection({
       <AppsList state={state} onSaved={onSaved} />
       <details className="group rounded-xl border border-border">
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
-          <Trans>Switches for a whole kind of app</Trans>
+          <Trans>Switches for a whole kind of connector</Trans>
         </summary>
         <div className="space-y-2 px-4 pb-4">
           <p className="text-[13px] text-muted-foreground">
             <Trans>
-              These stop every app of one kind, even ones that are on in the list. Most companies
-              leave them on.
+              These stop every connector of one kind, even ones that are on in the list. Most
+              companies leave them on.
             </Trans>
           </p>
           <CompanySwitchList
             rows={[
               {
                 id: "connectedApps",
-                label: t`Connected apps`,
-                description: t`Members connect apps such as Gmail, Slack or Notion to their assistants.`,
+                label: t`Service connectors`,
+                description: t`Members connect services such as Gmail, Slack or Notion to their assistants.`,
               },
               {
                 id: "plugins",
@@ -693,14 +693,14 @@ function CompanyMcpSection({
   return (
     <Section
       title={t`MCP servers`}
-      description={t`MCP servers from the directory and company apps such as InfraGrid 3D are turned on under Apps.`}
+      description={t`MCP servers from the directory and company connectors such as InfraGrid 3D are turned on under Connectors.`}
     >
       <CompanySwitchList
         rows={[
           {
             id: "mcpServers",
             label: t`Add your own MCP server`,
-            description: t`Shows Add custom in Integrations, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included.`,
+            description: t`Shows Add custom in Connectors, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included.`,
           },
         ]}
         state={state}

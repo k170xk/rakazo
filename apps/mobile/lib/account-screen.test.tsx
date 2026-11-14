@@ -467,7 +467,7 @@ it.each([false, true])(
         "Voice",
         "Approvals",
         "Vault",
-        "Integrations",
+        "Connectors",
         "Skills",
         "Messaging",
         "AI data sharing",

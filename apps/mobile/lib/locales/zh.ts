@@ -251,7 +251,6 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Ask the server owner to configure this provider.": "请联系服务器所有者配置此服务。",
   "Client ID": "客户端 ID",
   "Client secret": "客户端密钥",
-  "Connect apps": "连接应用",
   Continue: "继续",
   "Could not verify or save these credentials": "无法验证或保存这些凭据",
   "Direct MCP": "直连 MCP",
@@ -574,7 +573,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Hi, this is how I'll sound when I read replies out loud.": "你好，这是我朗读回复时的声音。",
   "I’m done": "我完成了",
   "If you heard that, voice is ready.": "如果你听到了，说明语音已就绪。",
-  Integrations: "集成",
+  Connectors: "连接器",
   "If an account exists for that address, we sent a password reset link.":
     "如果该地址已有账户，我们已发送密码重置链接。",
   "Its conversation, files, and routines will be permanently deleted. What should happen to its memories?":

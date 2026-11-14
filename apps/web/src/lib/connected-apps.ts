@@ -9,7 +9,7 @@ function isFamiliarApp(item: ConnectionCatalogItem) {
   );
 }
 
-/** Connected apps, or familiar artwork-first suggestions from the loaded catalog. */
+/** Connected connectors, or familiar artwork-first suggestions from the loaded catalog. */
 export function connectedAppMarks(
   catalog: readonly ConnectionCatalogItem[],
   connections: readonly Connection[],

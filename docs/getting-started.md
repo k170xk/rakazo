@@ -15,7 +15,7 @@ More in [Bots and chats](./bots-and-chats.md).
 
 Bots work in the apps you already use: Gmail, Slack, Notion, GitHub, and
 [1,400+ more](/integrations/). Ask a bot to connect one and approve the sign-in it sends you. See
-[Connect apps](./integrations.md).
+[Connectors](./integrations.md).
 
 ## Give it a schedule
 

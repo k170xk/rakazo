@@ -29,7 +29,7 @@ test("a failed integrations load offers Retry instead of an empty catalog", asyn
       },
     });
   });
-  await page.getByRole("button", { name: "Connect apps", exact: true }).click();
+  await page.getByRole("button", { name: "Connectors", exact: true }).click();
 
   const retry = page.getByRole("button", { name: "Retry", exact: true });
   await expect(retry).toBeVisible();

@@ -79,8 +79,8 @@ export function IntegrationSetup({ onDone, botId }: { onDone?: () => void; botId
         }}
       >
         <Input
-          aria-label={t`Search apps`}
-          placeholder={t`Search apps`}
+          aria-label={t`Search connectors`}
+          placeholder={t`Search connectors`}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />

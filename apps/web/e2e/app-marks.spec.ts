@@ -42,7 +42,7 @@ for (const theme of ["light", "dark"]) {
     await signup(page, `app-marks-${theme}-${Date.now()}@rakazo.test`, "password12", "Demo User");
     await completeOnboarding(page);
     const footer = page.getByTestId("sidebar-footer");
-    const pill = footer.getByRole("button", { name: "Connect apps", exact: true });
+    const pill = footer.getByRole("button", { name: "Connectors", exact: true });
     const tiles = pill.locator('span[aria-hidden="true"] > span');
     await expect(tiles).toHaveCount(3);
     const images = tiles.locator("img");

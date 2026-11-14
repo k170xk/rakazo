@@ -228,7 +228,7 @@ export function SidebarFooter({
                 onClick={onIntegrations}
               >
                 <Plug className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Connect apps</Trans>
+                <Trans>Connectors</Trans>
               </Button>
             ) : null}
             <Button
@@ -335,7 +335,7 @@ export function SidebarFooter({
           className="h-9 min-w-0 flex-1 justify-between bg-sidebar-accent hover:border-foreground/30 hover:bg-sidebar-accent dark:hover:bg-sidebar-accent"
         >
           <span ref={labelRef} className="min-w-0 truncate">
-            <Trans>Connect apps</Trans>
+            <Trans>Connectors</Trans>
           </span>
           <AppMarkStack marks={logos.slice(0, markCount)} ringClassName="ring-sidebar-accent" />
         </Button>

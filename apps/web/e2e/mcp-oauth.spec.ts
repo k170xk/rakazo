@@ -88,7 +88,7 @@ test("connects an MCP server through the OAuth popup callback", async ({ page },
     });
   });
 
-  await page.getByRole("button", { name: "Connect apps", exact: true }).click();
+  await page.getByRole("button", { name: "Connectors", exact: true }).click();
   await openIntegrationsAdd(page, "Manage MCP servers");
   await expect(page.getByText("Linear MCP", { exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "mcp-oauth-ready");
@@ -175,7 +175,7 @@ test("adds an MCP server with a pre-registered OAuth client", async ({ page }, t
     });
   });
 
-  await page.getByRole("button", { name: "Connect apps", exact: true }).click();
+  await page.getByRole("button", { name: "Connectors", exact: true }).click();
   await openIntegrationsAdd(page, "Manage MCP servers");
 
   await page.getByLabel("Server name").fill("Gmail");
@@ -255,7 +255,7 @@ test("asks for a client ID when the MCP server cannot register one", async ({ pa
     });
   });
 
-  await page.getByRole("button", { name: "Connect apps", exact: true }).click();
+  await page.getByRole("button", { name: "Connectors", exact: true }).click();
   await openIntegrationsAdd(page, "Manage MCP servers");
   await page.getByRole("button", { name: "Connect OAuth", exact: true }).click();
 

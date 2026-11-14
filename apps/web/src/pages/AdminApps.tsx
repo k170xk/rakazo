@@ -241,7 +241,7 @@ export function AppsList({
       <p className="px-1 text-[13px] text-muted-foreground">
         {state.staffApps ? (
           <Trans>
-            Staff see only what is on here, in Integrations, for everyone or the people and groups
+            Staff see only what is on here, in Connectors, for everyone or the people and groups
             you choose. Coming soon shows an app with a badge. Admins always see every app, to test.
           </Trans>
         ) : (
@@ -255,8 +255,8 @@ export function AppsList({
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          aria-label={t`Search apps`}
-          placeholder={directoryOn ? t`Search apps and the directory` : t`Search apps`}
+          aria-label={t`Search connectors`}
+          placeholder={directoryOn ? t`Search connectors and the directory` : t`Search connectors`}
         />
         <NativeSelect
           aria-label={t`Show`}

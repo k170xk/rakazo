@@ -263,7 +263,7 @@ export const DE_MESSAGES: Record<string, string> = {
   Computer: "Computer",
   Group: "Gruppe",
   "Group settings": "Gruppeneinstellungen",
-  Integrations: "Integrationen",
+  Connectors: "Konnektoren",
   Models: "Modelle",
   "New bot": "Neuer Bot",
   "New group chat": "Neuer Gruppenchat",

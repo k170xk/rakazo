@@ -249,7 +249,7 @@ export const ES_MESSAGES: Record<string, string> = {
   Computer: "Computadora",
   Group: "Grupo",
   "Group settings": "Configuración del grupo",
-  Integrations: "Integraciones",
+  Connectors: "Conectores",
   Models: "Modelos",
   "New bot": "Nuevo bot",
   "New group chat": "Nuevo chat grupal",

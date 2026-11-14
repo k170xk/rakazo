@@ -129,20 +129,20 @@ test("takeover, routine, plugins, and export are reachable", async ({ page }, te
     await catalogGate;
     await route.continue();
   });
-  await page.getByRole("button", { name: "Connect apps", exact: true }).click();
+  await page.getByRole("button", { name: "Connectors", exact: true }).click();
   const catalogSpinner = page.getByRole("status", { name: "Loading integrations…" });
   const featured = page.getByTestId("featured-connectors");
   try {
     await expect(catalogSpinner).toBeVisible();
     await expect(featured).toBeHidden();
-    await expect(page.getByPlaceholder("Search apps")).toBeDisabled();
+    await expect(page.getByPlaceholder("Search connectors")).toBeDisabled();
     await expect(page.getByText("Not in the plugin catalog", { exact: true })).toBeHidden();
     await captureScreenshot(page, testInfo, "11-plugins-loading");
   } finally {
     releaseCatalog();
   }
   await expect(catalogSpinner).toBeHidden();
-  await expect(page.getByPlaceholder("Search apps")).toBeEnabled();
+  await expect(page.getByPlaceholder("Search connectors")).toBeEnabled();
   await expect(featured).toContainText(
     /Gmail[\s\S]*Google Calendar[\s\S]*Google Drive[\s\S]*Slack[\s\S]*Notion/,
   );
@@ -201,9 +201,9 @@ test("takeover, routine, plugins, and export are reachable", async ({ page }, te
   await expect(detail.getByText("Send email", { exact: true })).toBeVisible();
   await captureScreenshot(page, testInfo, "11a3-plugin-tools");
 
-  await page.getByRole("button", { name: "Close integrations" }).click();
-  await page.getByRole("button", { name: "Connect apps", exact: true }).click();
-  await expect(page.getByPlaceholder("Search apps")).toBeVisible();
+  await page.getByRole("button", { name: "Close connectors" }).click();
+  await page.getByRole("button", { name: "Connectors", exact: true }).click();
+  await expect(page.getByPlaceholder("Search connectors")).toBeVisible();
   const gmailTileAgain = page.getByTestId("connection-tile-gmail");
   await expect(gmailTileAgain.getByRole("button", { name: "Added", exact: true })).toBeVisible();
   await gmailTileAgain.click();
@@ -324,7 +324,7 @@ test("takeover, routine, plugins, and export are reachable", async ({ page }, te
   ).toBeVisible();
   await captureScreenshot(page, testInfo, "02-graphql-installed");
 
-  await page.getByRole("button", { name: "Close integrations" }).click();
+  await page.getByRole("button", { name: "Close connectors" }).click();
 
   await page.getByText("Chief").first().click();
   await openBotPanelTab(page, "Settings");

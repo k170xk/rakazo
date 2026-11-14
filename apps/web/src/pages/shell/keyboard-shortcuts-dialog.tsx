@@ -45,7 +45,7 @@ export function KeyboardShortcutsDialog({
       keys: [formatDictationShortcut(dictateShortcut, host.apple)],
     },
     { label: t`Chat details`, keys: [[mod, shift, ","]] },
-    { label: t`Connect apps`, keys: [[mod, shift, "M"]] },
+    { label: t`Connectors`, keys: [[mod, shift, "M"]] },
     host.desktop && { label: t`Go to bot`, keys: [[mod, "1–9"]] },
     {
       label: t`Next or previous bot`,

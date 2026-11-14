@@ -717,7 +717,7 @@ export default function Account() {
               ...(me?.paymentWalletProvider
                 ? [{ title: t("Wallet"), href: "/wallet" } as const]
                 : []),
-              { title: t("Integrations"), href: "/integrations" },
+              { title: t("Connectors"), href: "/integrations" },
               { title: t("Skills"), href: "/skills" },
               ...(messagingEnabled ? [{ title: t("Messaging"), href: "/messaging" } as const] : []),
               { title: t("AI data sharing"), href: "/ai-data-sharing" },

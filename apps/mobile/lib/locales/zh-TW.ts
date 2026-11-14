@@ -240,7 +240,6 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Ask the server owner to configure this provider.": "請聯絡伺服器擁有者設定此供應商。",
   "Client ID": "客戶端 ID",
   "Client secret": "客戶端金鑰",
-  "Connect apps": "連接應用程式",
   Continue: "繼續",
   "Could not verify or save these credentials": "無法驗證或儲存這些憑證",
   "Direct MCP": "直連 MCP",
@@ -552,7 +551,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Hi, this is how I'll sound when I read replies out loud.": "你好，這是我朗讀回覆時的聲音。",
   "I’m done": "我完成了",
   "If you heard that, voice is ready.": "如果你聽到了，說明語音已就緒。",
-  Integrations: "整合",
+  Connectors: "連接器",
   "If an account exists for that address, we sent a password reset link.":
     "如果該地址已有帳號，我們已傳送密碼重設連結。",
   "Its conversation, files, and routines will be permanently deleted. What should happen to its memories?":

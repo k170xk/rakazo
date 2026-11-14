@@ -279,7 +279,7 @@ export function PluginsOverlay({
   });
   // A failed refresh is shown even over what was cached, so stale apps never pass as current.
   const loadError = integrations.error
-    ? errorText(integrations.error, t`Could not load integrations`)
+    ? errorText(integrations.error, t`Could not load connectors`)
     : null;
   const toolsQuery = useQuery(
     queries.connections.tools.queryOptions({
@@ -1658,7 +1658,7 @@ export function PluginsOverlay({
           onDone={() => {
             setView("manage");
             void refresh().catch((err: unknown) =>
-              setCatalogError(errorText(err, t`Could not load integrations`)),
+              setCatalogError(errorText(err, t`Could not load connectors`)),
             );
           }}
         />
@@ -1859,10 +1859,10 @@ export function PluginsOverlay({
         <DialogHeader className="flex-row items-center justify-between gap-3 px-8 pt-7 max-sm:px-5 max-sm:pt-4">
           <DialogTitle className="min-w-0 truncate text-heading2 text-foreground max-sm:text-[18px] max-sm:font-semibold">
             <span className="max-sm:hidden">
-              <Trans>OCSC Intelligence integrations</Trans>
+              <Trans>OCSC Intelligence connectors</Trans>
             </span>
             <span className="sm:hidden">
-              <Trans>Integrations</Trans>
+              <Trans>Connectors</Trans>
             </span>
           </DialogTitle>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
@@ -1900,7 +1900,7 @@ export function PluginsOverlay({
                   variant="ghost"
                   size="icon-sm"
                   className="max-sm:size-9"
-                  aria-label={t`Close integrations`}
+                  aria-label={t`Close connectors`}
                 />
               }
             >
@@ -1918,8 +1918,8 @@ export function PluginsOverlay({
                 setQuery(event.target.value);
                 setVisibleCount(CONNECTION_CATALOG_PAGE_SIZE);
               }}
-              aria-label={t`Search apps`}
-              placeholder={t`Search apps`}
+              aria-label={t`Search connectors`}
+              placeholder={t`Search connectors`}
               className="h-11 rounded-xl px-4 md:text-[15px]"
             />
             {categories.length >= 2 || category ? (
@@ -1990,7 +1990,7 @@ export function PluginsOverlay({
           <div className="grid flex-1 place-items-center" aria-busy="true">
             <Spinner
               className="size-5 text-muted-foreground"
-              aria-label={t`Loading integrations…`}
+              aria-label={t`Loading connectors…`}
             />
           </div>
         ) : null}
@@ -2045,7 +2045,7 @@ export function PluginsOverlay({
                   {catalog.length === 0 ? (
                     plugins.length || companyApps.length || !isAdmin ? null : (
                       <p className="text-[13.5px] leading-6 text-muted-foreground/80">
-                        <Trans>Configure a plugin catalog on the server to connect apps.</Trans>
+                        <Trans>Configure a plugin catalog on the server to add connectors.</Trans>
                       </p>
                     )
                   ) : featuredTiles.length === 0 ? null : (

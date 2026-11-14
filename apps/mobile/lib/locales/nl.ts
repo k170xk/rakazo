@@ -258,7 +258,7 @@ export const NL_MESSAGES: Record<string, string> = {
   Computer: "Computer",
   Group: "Groep",
   "Group settings": "Groepsinstellingen",
-  Integrations: "Integraties",
+  Connectors: "Connectors",
   Models: "Modellen",
   "New bot": "Nieuwe bot",
   "New group chat": "Nieuwe groepschat",

@@ -71,7 +71,7 @@ export function GroupPeopleSection({ groupId, spaceId }: { groupId: string; spac
       <p className="mb-3 text-sm text-muted-foreground">
         <Trans>
           Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved
-          logins or connected apps.
+          logins or connectors.
         </Trans>
       </p>
       <PeoplePicker inputId={emailId} busy={busy} search={searchDirectory} onPick={add} />

@@ -26,14 +26,14 @@ test("Integrations installs a plugin, completes real broker OAuth against a fake
     return route.fulfill({ status: 302, headers: { location: redirect.toString() } });
   });
 
-  await page.getByRole("button", { name: "Connect apps", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Integrations", exact: true });
+  await page.getByRole("button", { name: "Connectors", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Connectors", exact: true });
   const section = dialog.getByTestId("plugin-section").filter({ hasText: "Productivity" });
   await expect(section.getByText("Planning Notes", { exact: true })).toBeVisible();
   // A skill pack has nothing to connect, so it is offered under Skills instead.
   await expect(dialog.getByText("Review Kit", { exact: true })).toHaveCount(0);
   await captureScreenshot(page, testInfo, "integrations-plugins");
-  await dialog.getByRole("textbox", { name: "Search apps", exact: true }).fill("planning");
+  await dialog.getByRole("textbox", { name: "Search connectors", exact: true }).fill("planning");
   const row = dialog.getByTestId("plugin-results").getByTestId("plugin-row");
   await expect(row).toHaveCount(1);
   await row.getByRole("button", { name: "Add", exact: true }).click();
@@ -94,9 +94,9 @@ test("Integrations installs a plugin, completes real broker OAuth against a fake
   );
   await captureScreenshot(page, testInfo, "integrations-plugin-connected");
 
-  await dialog.getByRole("button", { name: "Close integrations", exact: true }).click();
+  await dialog.getByRole("button", { name: "Close connectors", exact: true }).click();
   await page.reload();
-  await page.getByRole("button", { name: "Connect apps", exact: true }).click();
+  await page.getByRole("button", { name: "Connectors", exact: true }).click();
   await dialog.getByRole("button", { name: /^\d+ connected$/ }).click();
   const apps = dialog.getByTestId("connected-apps").getByTestId("installed-plugin");
   await expect(apps).toContainText("Planning Notes");

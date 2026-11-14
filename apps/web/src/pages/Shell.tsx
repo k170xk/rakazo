@@ -1011,7 +1011,7 @@ function SpaceShell() {
       ? [
           {
             id: "integrations",
-            label: t`Connect apps`,
+            label: t`Connectors`,
             icon: Plug,
             onSelect: () => setOverlay({ kind: "integrations" }),
           },

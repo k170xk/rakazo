@@ -245,7 +245,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Computer: "コンピューター",
   Group: "グループ",
   "Group settings": "グループ設定",
-  Integrations: "連携",
+  Connectors: "コネクタ",
   Models: "モデル",
   "New bot": "新しいボット",
   "New group chat": "新しいグループチャット",
@@ -1188,7 +1188,6 @@ export const JA_MESSAGES: Record<string, string> = {
     "スマートフォン内蔵の音声 — 無料、アカウント不要",
   "Speaks with your phone's own text-to-speech instead of a connected provider.":
     "接続したプロバイダーの代わりに、スマートフォン本体の読み上げ機能で話します。",
-  "Connect apps": "アプリを接続",
   "Bring your own key. ElevenLabs, OpenAI, Cartesia, and Fish Audio all plug into the same speak buttons.":
     "ご自身のキーを使用できます。ElevenLabs、OpenAI、Cartesia、Fish Audioはすべて同じ読み上げボタンで使えます。",
   Messaging: "メッセージ",

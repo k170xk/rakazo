@@ -1517,7 +1517,6 @@ msgid "Approving…"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
-#: src/pages/AdminCompanyPage.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
@@ -2481,8 +2480,8 @@ msgstr "कंप्यूटर बंद करें"
 
 #: src/components/integrations/integrations-coming-soon.tsx
 #: src/pages/PluginsOverlay.tsx
-msgid "Close integrations"
-msgstr "इंटीग्रेशन बंद करें"
+msgid "Close connectors"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Close MCP servers"
@@ -2577,7 +2576,7 @@ msgid "Colleagues and agents, together"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
-msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connected apps."
+msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connectors."
 msgstr ""
 
 #: src/components/apps/AppWorkspacesSection.tsx
@@ -2836,7 +2835,7 @@ msgid "Computers running"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
-msgid "Configure a plugin catalog on the server to connect apps."
+msgid "Configure a plugin catalog on the server to add connectors."
 msgstr ""
 
 #: src/pages/shell/evolve-history.tsx
@@ -2909,12 +2908,6 @@ msgstr "बॉट चलाने से पहले सेटिंग्स �
 msgid "Connect API key"
 msgstr "API कुंजी कनेक्ट करें"
 
-#: src/components/SidebarFooter.tsx
-#: src/pages/Shell.tsx
-#: src/pages/shell/keyboard-shortcuts-dialog.tsx
-msgid "Connect apps"
-msgstr "ऐप कनेक्ट करें"
-
 #: src/pages/shell/message-cards.tsx
 msgid "Connect MCP server “{name}”"
 msgstr "MCP सर्वर “{name}” कनेक्ट करें"
@@ -2959,12 +2952,8 @@ msgstr "कनेक्टेड"
 msgid "Connected {0}."
 msgstr "{0} कनेक्ट किया गया।"
 
-#: src/pages/AdminCompanyPage.tsx
-msgid "Connected apps"
-msgstr ""
-
 #: src/components/integrations/integrations-coming-soon.tsx
-msgid "Connecting apps such as Outlook, Teams and Stripe, and adding plugins, is being tested and will be available to everyone soon."
+msgid "Connecting services such as Outlook, Teams and Stripe, and adding plugins, is being tested and will be available to everyone soon."
 msgstr ""
 
 #: src/components/integrations/CompanyMcpApp.tsx
@@ -2997,6 +2986,18 @@ msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Connector"
+msgstr ""
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/PluginsOverlay.tsx
+#: src/pages/Shell.tsx
+#: src/pages/shell/keyboard-shortcuts-dialog.tsx
+msgid "Connectors"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Connectors for staff"
 msgstr ""
 
 #: src/components/vault/kinds.tsx
@@ -3408,6 +3409,10 @@ msgstr ""
 msgid "Could not load computer settings"
 msgstr ""
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Could not load connectors"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Could not load credentials."
 msgstr ""
@@ -3415,10 +3420,6 @@ msgstr ""
 #: src/pages/Artifacts.tsx
 msgid "Could not load files."
 msgstr ""
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Could not load integrations"
-msgstr "इंटीग्रेशन लोड नहीं हो सके"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -4943,10 +4944,6 @@ msgstr "हर {intervalAmountSelect} {intervalUnitSelect}"
 msgid "Every {n} hours at :{minute}"
 msgstr "हर {n} घंटे :{minute} मिनट पर"
 
-#: src/pages/AdminCompanyPage.tsx
-msgid "Every app, plugin and directory service staff can add in Integrations, in one list."
-msgstr ""
-
 #: src/pages/AdminCompanyTools.tsx
 msgid "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
 msgstr ""
@@ -4961,6 +4958,10 @@ msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Every check passed."
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Every connector, plugin and directory service staff can add in Connectors, in one list."
 msgstr ""
 
 #: src/lib/cron.ts
@@ -5927,14 +5928,6 @@ msgstr "निर्देश अपडेट किए गए"
 msgid "Integration domain"
 msgstr ""
 
-#: src/pages/PluginsOverlay.tsx
-msgid "Integrations"
-msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Integrations for staff"
-msgstr ""
-
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Intended use is to add no more than {MAX_DRAWING_PAGES} drawing pages at a time. Please select only the most relevant pages."
 msgstr ""
@@ -6334,6 +6327,10 @@ msgstr "गतिविधि लोड हो रही है…"
 msgid "Loading assistants…"
 msgstr ""
 
+#: src/pages/PluginsOverlay.tsx
+msgid "Loading connectors…"
+msgstr ""
+
 #: src/components/EmailDraftCard.tsx
 msgid "Loading email draft"
 msgstr ""
@@ -6353,10 +6350,6 @@ msgstr "Loading folders…"
 #: src/components/EvolveChangeEditor.tsx
 msgid "Loading from Evolve…"
 msgstr ""
-
-#: src/pages/PluginsOverlay.tsx
-msgid "Loading integrations…"
-msgstr "इंटीग्रेशन लोड हो रहे हैं…"
 
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Loading memory settings…"
@@ -6621,7 +6614,7 @@ msgid "MCP servers"
 msgstr "MCP सर्वर"
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "MCP servers from the directory and company apps such as InfraGrid 3D are turned on under Apps."
+msgid "MCP servers from the directory and company connectors such as InfraGrid 3D are turned on under Connectors."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -6654,7 +6647,7 @@ msgid "Members choose models"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Members connect apps such as Gmail, Slack or Notion to their assistants."
+msgid "Members connect services such as Gmail, Slack or Notion to their assistants."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -7693,14 +7686,14 @@ msgstr ""
 msgid "OCSC Evolve"
 msgstr ""
 
+#: src/components/integrations/integrations-coming-soon.tsx
+#: src/pages/PluginsOverlay.tsx
+msgid "OCSC Intelligence connectors"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 #: src/pages/Onboarding.tsx
 msgid "OCSC Intelligence credits"
-msgstr ""
-
-#: src/components/integrations/integrations-coming-soon.tsx
-#: src/pages/PluginsOverlay.tsx
-msgid "OCSC Intelligence integrations"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -7742,7 +7735,7 @@ msgid "Off: only admins connect models or change a bot's model; everyone runs on
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Off: staff see Integrations as Coming soon and cannot add anything. Admins always can, to test."
+msgid "Off: staff see Connectors as Coming soon and cannot add anything. Admins always can, to test."
 msgstr ""
 
 #: src/components/ComputerDeviceSettings.tsx
@@ -7962,7 +7955,7 @@ msgid "Optional header value"
 msgstr "वैकल्पिक हेडर मान"
 
 #: src/pages/GroupPanel.tsx
-msgid "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connected apps."
+msgid "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connectors."
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
@@ -9470,16 +9463,6 @@ msgstr ""
 msgid "Search & Filter"
 msgstr ""
 
-#: src/components/integrations/IntegrationSetup.tsx
-#: src/pages/AdminApps.tsx
-#: src/pages/PluginsOverlay.tsx
-msgid "Search apps"
-msgstr "ऐप खोजें"
-
-#: src/pages/AdminApps.tsx
-msgid "Search apps and the directory"
-msgstr ""
-
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Search bots"
 msgstr "बॉट खोजें"
@@ -9495,6 +9478,16 @@ msgstr ""
 #: src/pages/AdminCompanyPage.tsx
 msgid "Search chat files"
 msgstr "चैट फ़ाइलें खोजें"
+
+#: src/components/integrations/IntegrationSetup.tsx
+#: src/pages/AdminApps.tsx
+#: src/pages/PluginsOverlay.tsx
+msgid "Search connectors"
+msgstr ""
+
+#: src/pages/AdminApps.tsx
+msgid "Search connectors and the directory"
+msgstr ""
 
 #: src/components/GroupPeople.tsx
 msgid "Search Evolve people"
@@ -9726,6 +9719,10 @@ msgstr "सर्वर का नाम"
 msgid "Server URL"
 msgstr "सर्वर URL"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Service connectors"
+msgstr ""
+
 #: src/pages/AdminStaffLimits.tsx
 msgid "Set amount"
 msgstr ""
@@ -9915,7 +9912,7 @@ msgid "Showing what staff see."
 msgstr "स्टाफ़ जो देखता है वह दिखाया जा रहा है।"
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Shows Add custom in Integrations, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included."
+msgid "Shows Add custom in Connectors, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included."
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
@@ -10192,7 +10189,7 @@ msgid "Staff see every managed app and plugin until you change one here. After t
 msgstr ""
 
 #: src/pages/AdminApps.tsx
-msgid "Staff see only what is on here, in Integrations, for everyone or the people and groups you choose. Coming soon shows an app with a badge. Admins always see every app, to test."
+msgid "Staff see only what is on here, in Connectors, for everyone or the people and groups you choose. Coming soon shows an app with a badge. Admins always see every app, to test."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -10458,7 +10455,7 @@ msgid "Switched on now"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Switches for a whole kind of app"
+msgid "Switches for a whole kind of connector"
 msgstr ""
 
 #: src/pages/model-settings/space-bots-model.tsx
@@ -10787,7 +10784,7 @@ msgid "These saved settings can't be read. Remove it and add it again."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "These stop every app of one kind, even ones that are on in the list. Most companies leave them on."
+msgid "These stop every connector of one kind, even ones that are on in the list. Most companies leave them on."
 msgstr ""
 
 #: src/components/InviteDialog.tsx

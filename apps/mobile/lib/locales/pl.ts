@@ -255,7 +255,7 @@ export const PL_MESSAGES: Record<string, string> = {
   Computer: "Komputer",
   Group: "Grupa",
   "Group settings": "Ustawienia grupy",
-  Integrations: "Integracje",
+  Connectors: "Konektory",
   Models: "Modele",
   "New bot": "Nowy bot",
   "New group chat": "Nowy czat grupowy",

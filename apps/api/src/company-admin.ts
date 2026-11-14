@@ -62,7 +62,7 @@ type CompanyAdminDeps = Pick<
 
 const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   computers: "Computers are turned off for your company.",
-  connectedApps: "Connected apps are turned off for your company.",
+  connectedApps: "Connectors are turned off for your company.",
   mcpServers: "Custom MCP servers are turned off for your company.",
   plugins: "Plugins are turned off for your company.",
   messaging: "Messaging apps are turned off for your company.",

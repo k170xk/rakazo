@@ -10,7 +10,7 @@ import {
 } from "@rakazo/ui-web";
 import { Plug, X } from "lucide-react";
 
-/** What a member sees in place of Connect apps while the company keeps integrations to admins. */
+/** What a member sees in place of Connectors while the company keeps integrations to admins. */
 export function IntegrationsComingSoon({ onClose }: { onClose: () => void }) {
   const { t } = useLingui();
   return (
@@ -26,13 +26,13 @@ export function IntegrationsComingSoon({ onClose }: { onClose: () => void }) {
       >
         <DialogHeader className="flex-row items-start justify-between px-8 pt-7">
           <DialogTitle className="flex items-center gap-3 text-heading2 text-foreground">
-            <Trans>OCSC Intelligence integrations</Trans>
+            <Trans>OCSC Intelligence connectors</Trans>
             <Badge variant="secondary" className="h-6 px-2.5 text-[12px] font-medium">
               <Trans>Coming soon</Trans>
             </Badge>
           </DialogTitle>
           <DialogClose
-            render={<Button variant="ghost" size="icon-sm" aria-label={t`Close integrations`} />}
+            render={<Button variant="ghost" size="icon-sm" aria-label={t`Close connectors`} />}
           >
             <X />
           </DialogClose>
@@ -46,8 +46,8 @@ export function IntegrationsComingSoon({ onClose }: { onClose: () => void }) {
           </div>
           <p className="max-w-[420px] text-[14.5px] leading-6 text-muted-foreground">
             <Trans>
-              Connecting apps such as Outlook, Teams and Stripe, and adding plugins, is being tested
-              and will be available to everyone soon.
+              Connecting services such as Outlook, Teams and Stripe, and adding plugins, is being
+              tested and will be available to everyone soon.
             </Trans>
           </p>
         </div>

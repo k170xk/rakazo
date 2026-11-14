@@ -245,7 +245,7 @@ export function CreateGroupForm({
           <p className="mt-1 mb-2 text-xs text-muted-foreground">
             <Trans>
               Optional. Evolve colleagues chat with this group's bots, without your memory, notes,
-              saved logins or connected apps.
+              saved logins or connectors.
             </Trans>
           </p>
           <PeoplePicker

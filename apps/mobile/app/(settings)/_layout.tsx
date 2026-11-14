@@ -109,7 +109,7 @@ export default function SettingsLayout() {
       />
       <Stack.Screen name="messaging" options={glassHeaderOptions(t("Messaging"))} />
       <Stack.Screen name="team-conversation" />
-      <Stack.Screen name="integrations" options={glassHeaderOptions(t("Integrations"))} />
+      <Stack.Screen name="integrations" options={glassHeaderOptions(t("Connectors"))} />
       <Stack.Screen name="skills" options={glassHeaderOptions(t("Skills"))} />
       {/* Titled by the screen once the skill loads. */}
       <Stack.Screen name="skill" options={glassHeaderOptions("")} />

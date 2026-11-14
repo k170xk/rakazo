@@ -106,4 +106,4 @@ export function filterConnectionCatalogItems(
 }
 
 export const EMPTY_PLUGIN_CATALOG_MESSAGE =
-  "Configure a plugin catalog on the server to connect apps.";
+  "Configure a plugin catalog on the server to add connectors.";
