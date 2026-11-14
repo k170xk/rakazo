@@ -20,22 +20,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   ChevronDown,
-  Download,
   LayoutGrid,
-  Loader2,
   MessageSquare,
   Pencil,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
-import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { pageMutationOptions } from "../../lib/page-actions";
 import { useMedia, usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
+import type { StudioCard } from "../../lib/studio-activity";
 import { SharePopover } from "../pages/SharePopover";
 import { WhiteboardCanvas } from "../pages/WhiteboardCanvas";
+import { StudioActivityCarousel, studioChromeClass } from "../studio/StudioActivityCarousel";
 import { boardBoundsWithArrows, exportWhiteboardPdf } from "./whiteboard-export";
 
 const COARSE = "(pointer: coarse)";
@@ -43,6 +42,7 @@ const COARSE = "(pointer: coarse)";
 /** One empty-list create at a time, including React's remount of the dialog. */
 let openingBoard: Promise<unknown> | null = null;
 const idleSubscribe = () => () => {};
+const NO_ACTIVITY: StudioCard[] = [];
 
 const control =
   "grid shrink-0 place-items-center rounded-full border border-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring";
@@ -72,13 +72,12 @@ function download(filename: string, mime: string, body: BlobPart) {
 export function WhiteboardStudio({
   onClose,
   initialBoardId,
-  share,
 }: {
   onClose: () => void;
   initialBoardId?: string;
-  share?: ReactNode;
 }) {
   const compact = useMedia(COARSE);
+  const narrow = useMedia("(max-width: 840px)");
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -99,6 +98,12 @@ export function WhiteboardStudio({
     () => session?.dock.get().running === true,
     () => false,
   );
+  const activity = useSyncExternalStore(
+    session?.dock.subscribe ?? idleSubscribe,
+    () => session?.dock.get().activity ?? NO_ACTIVITY,
+    () => NO_ACTIVITY,
+  );
+  const showActivity = !chatOpen && (running || activity.length > 0);
 
   const list = useQuery({
     ...queries.pages.list.queryOptions({ input: { kind: "whiteboard", limit: 60 } }),
@@ -296,10 +301,9 @@ export function WhiteboardStudio({
   }
 
   const shareControl =
-    share ??
-    (page.data && selected ? (
+    page.data && selected ? (
       <SharePopover
-        compact={compact}
+        compact={compact || narrow}
         title={page.data.title}
         owner={page.data.owner}
         visibility={shownVisibility}
@@ -319,8 +323,14 @@ export function WhiteboardStudio({
             visibility.mutate({ pageId: selected, visibility: next });
           }
         }}
+        downloads={{
+          disabled: !page.data,
+          pdfPending: exportingPdf,
+          onSvg: exportSvg,
+          onPdf: () => void exportPdf(),
+        }}
       />
-    ) : null);
+    ) : null;
 
   const composer = <div ref={setDockNode} />;
 
@@ -349,7 +359,7 @@ export function WhiteboardStudio({
         className="top-0 left-0 block h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-background p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)] ring-0 sm:max-w-none data-open:duration-[260ms] data-open:zoom-in-[0.98] data-open:slide-in-from-bottom-3 data-closed:duration-150 motion-reduce:data-open:zoom-in-100"
       >
         <div className="relative size-full">
-          <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-2 px-2.5 print:hidden">
+          <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 print:hidden sm:gap-2">
             <DialogClose
               ref={closeButton}
               aria-label={t`Close app`}
@@ -357,6 +367,17 @@ export function WhiteboardStudio({
             >
               <X className="size-[18px]" strokeWidth={1.7} />
             </DialogClose>
+            <button
+              type="button"
+              data-testid="whiteboard-new"
+              data-haptic="tap"
+              aria-label={t`New whiteboard`}
+              title={t`New whiteboard`}
+              onClick={() => void create(t`Whiteboard`)}
+              className={`${control} size-[35px]`}
+            >
+              <Plus className="size-[18px]" strokeWidth={1.7} />
+            </button>
             <DialogTitle className="sr-only">{page.data?.title ?? t`Whiteboards`}</DialogTitle>
             {renaming ? (
               <Input
@@ -379,7 +400,7 @@ export function WhiteboardStudio({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="max-w-[280px] gap-1.5 font-medium"
+                      className="min-w-0 max-w-[38vw] gap-1.5 font-medium sm:max-w-[280px]"
                     />
                   }
                 >
@@ -429,17 +450,16 @@ export function WhiteboardStudio({
               </DropdownMenu>
             )}
             <div className="flex-1" />
-            <Button variant="ghost" size="sm" onClick={() => void create(t`Whiteboard`)}>
-              <Plus />
-              <Trans>New whiteboard</Trans>
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger
                 disabled={!page.data}
+                aria-label={t`Tidy layout`}
                 render={<Button variant="ghost" size="sm" />}
               >
                 <LayoutGrid />
-                <Trans>Tidy layout</Trans>
+                <span className="max-sm:sr-only">
+                  <Trans>Tidy layout</Trans>
+                </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => void tidy("right")}>
@@ -456,33 +476,24 @@ export function WhiteboardStudio({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="ghost" size="sm" onClick={exportSvg} disabled={!page.data}>
-              <Download />
-              <Trans>Download SVG</Trans>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!page.data || exportingPdf}
-              onClick={() => void exportPdf()}
-            >
-              {exportingPdf ? <Loader2 className="animate-spin" /> : <Download />}
-              <Trans>Download PDF</Trans>
-            </Button>
             {shareControl}
             <button
               type="button"
               aria-pressed={chatOpen}
+              data-haptic="select"
               title={t`Show the chat beside the app`}
               aria-label={t`Chat`}
               onClick={() => setChatOpen((open) => !open)}
-              className={`${control} size-[35px]`}
+              className={`${control} relative size-[35px]`}
             >
               <MessageSquare className="size-[18px]" strokeWidth={1.7} />
+              {running && !chatOpen ? (
+                <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
+              ) : null}
             </button>
           </header>
           <div
-            className={`absolute inset-x-0 top-12 flex ${chatOpen ? "bottom-0" : "bottom-[72px]"}`}
+            className={`absolute inset-x-0 top-12 flex ${studioChromeClass(chatOpen, showActivity)}`}
           >
             {chatOpen ? (
               <aside
@@ -512,7 +523,16 @@ export function WhiteboardStudio({
           </div>
           {chatOpen ? null : (
             <div className="absolute inset-x-0 bottom-[12.5px] flex justify-center px-3 print:hidden">
-              <div className="w-full max-w-[551px]">{composer}</div>
+              <div className="flex w-full max-w-[551px] flex-col gap-2">
+                {showActivity ? (
+                  <StudioActivityCarousel
+                    cards={activity}
+                    running={running}
+                    onOpen={() => setChatOpen(true)}
+                  />
+                ) : null}
+                {composer}
+              </div>
             </div>
           )}
         </div>

@@ -79,13 +79,34 @@ describe("haptics", () => {
 
   it("ticks for switches but not plain buttons", () => {
     withBridge();
+    let now = 1_000;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
     const stop = installSelectionHaptics(document);
     document.body.innerHTML =
       '<button id="plain"></button><button role="switch" id="toggle"><span></span></button>';
     document.getElementById("plain")!.click();
     expect(calls).toEqual([]);
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      '<button id="tool" data-haptic="select"></button><button id="place" data-haptic="tap"></button>',
+    );
+    now += 100;
+    document.getElementById("tool")!.click();
+    now += 100;
+    document.getElementById("place")!.click();
+    expect(calls.map(([method, options]) => [method, options])).toEqual([
+      ["selectionStart", undefined],
+      ["selectionChanged", undefined],
+      ["impact", { style: "LIGHT" }],
+    ]);
+    now += 100;
+    window.dispatchEvent(new CustomEvent("rakazo:haptic", { detail: "tap" }));
+    expect(calls.at(-1)).toEqual(["impact", { style: "LIGHT" }]);
+    calls.length = 0;
+    now += 100;
     document.querySelector<HTMLElement>("#toggle span")!.click();
-    expect(calls.map(([method]) => method)).toEqual(["selectionStart", "selectionChanged"]);
+    expect(calls.map(([method]) => method)).toEqual(["selectionChanged"]);
     stop();
+    vi.restoreAllMocks();
   });
 });

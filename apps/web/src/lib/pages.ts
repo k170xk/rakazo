@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSpaceQueries } from "./query";
+import { sameStudioCards, type StudioCard } from "./studio-activity";
 import { errorCode } from "./user-error";
 
 /** The search parameter naming the page open full screen over a chat. */
@@ -108,6 +109,8 @@ type Dock = {
   chat?: HTMLElement | null;
   /** The chat's bot is working on a reply. */
   running?: boolean;
+  /** Latest messages and actions, for the strip over a whiteboard or app. */
+  activity?: StudioCard[];
 };
 
 /**
@@ -152,7 +155,8 @@ export function createPageSession() {
           merged.page?.id === dock.page?.id &&
           (merged.page?.note ?? "") === (dock.page?.note ?? "") &&
           (merged.chat ?? null) === (dock.chat ?? null) &&
-          Boolean(merged.running) === Boolean(dock.running)
+          Boolean(merged.running) === Boolean(dock.running) &&
+          sameStudioCards(merged.activity, dock.activity)
         )
           return;
         dock = merged;

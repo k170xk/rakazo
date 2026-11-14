@@ -13927,3 +13927,64 @@ msgstr ""
 #: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
 msgid "Your folders"
 msgstr ""
+
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Action"
+msgstr ""
+
+#: src/pages/shell/composer.tsx
+msgid "Ask for a change"
+msgstr ""
+
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Now"
+msgstr ""
+
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Recent messages and actions"
+msgstr ""
+
+
+#: src/components/EmailDraftCard.tsx
+msgid "Open in the browser"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Add an instruction filing should follow"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not forget that"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not load what filing remembers"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not save this instruction"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Filing reads these the next time it chooses a folder. An instruction guides that choice. A sender, domain or conversation rule is ready on its own."
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Graduate applications from careers@ go in Inbox › HR"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Nothing remembered yet."
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Remember"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "What filing remembers"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here. Instructions you add on a filing card show here too."
+msgstr ""

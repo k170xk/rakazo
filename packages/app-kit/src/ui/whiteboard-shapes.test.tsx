@@ -63,6 +63,61 @@ describe("whiteboard shapes", () => {
     ]);
   });
 
+  it("edits the words under a double-click instead of adding a sticky", () => {
+    const onChange = vi.fn();
+    const withWords = {
+      items: [
+        ...board.items,
+        {
+          id: "title",
+          kind: "text" as const,
+          x: 40,
+          y: 320,
+          w: 220,
+          h: 48,
+          text: "Heading",
+          color: "ink" as const,
+        },
+        {
+          id: "link",
+          kind: "arrow" as const,
+          x: 0,
+          y: 0,
+          w: 0,
+          h: 0,
+          from: { item: "decide" },
+          to: { item: "db" },
+          text: "yes",
+          color: "ink" as const,
+        },
+      ],
+    };
+    act(() => {
+      root.render(<Whiteboard value={withWords} onChange={onChange} />);
+    });
+    const heading = [...host.querySelectorAll("[data-board-item='title']")].find((node) =>
+      node.textContent?.includes("Heading"),
+    );
+    const label = [...host.querySelectorAll("[data-board-item='link']")].find((node) =>
+      node.textContent?.includes("yes"),
+    );
+    expect(heading).toBeTruthy();
+    expect(label).toBeTruthy();
+    act(() => {
+      heading?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    });
+    expect((host.querySelector("textarea") as HTMLTextAreaElement).value).toBe("Heading");
+    expect(onChange).not.toHaveBeenCalled();
+    act(() => {
+      (host.querySelector("textarea") as HTMLTextAreaElement | null)?.blur();
+    });
+    act(() => {
+      label?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    });
+    expect((host.querySelector("textarea") as HTMLTextAreaElement).value).toBe("yes");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("fits a chat card around the blocks", () => {
     act(() => {
       root.render(<BoardThumbnail value={board} />);

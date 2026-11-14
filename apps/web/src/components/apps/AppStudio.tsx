@@ -28,6 +28,8 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ownerAppSource } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
+import type { StudioCard } from "../../lib/studio-activity";
+import { StudioActivityCarousel, studioChromeClass } from "../studio/StudioActivityCarousel";
 import { AppCodePanel } from "./AppCodePanel";
 import { AppDataPanel } from "./AppDataPanel";
 import type { AppPatch, AppPick } from "./AppFrame";
@@ -55,6 +57,7 @@ export function AppStudio({
   composer,
   chat,
   running = false,
+  activity = [],
   onReply,
   returnFocus,
   compact = false,
@@ -72,6 +75,8 @@ export function AppStudio({
   chat?: ReactNode;
   /** The bot is working on a reply: the app is checked for changes more often. */
   running?: boolean;
+  /** Latest messages and actions, shown while the chat panel is closed. */
+  activity?: readonly StudioCard[];
   onReply?: (text: unknown) => void;
   returnFocus?: () => boolean;
   compact?: boolean;
@@ -200,6 +205,7 @@ export function AppStudio({
     "grid shrink-0 place-items-center rounded-full border border-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-primary/15 aria-pressed:text-primary";
   const size = compact ? "size-11" : "size-[35px]";
   const docked = chatOpen && Boolean(chat) && page !== undefined;
+  const showActivity = Boolean(composer) && !docked && (running || activity.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={(next) => onOpenChange(next)}>
@@ -230,6 +236,7 @@ export function AppStudio({
               <button
                 type="button"
                 onClick={() => setChatOpen(true)}
+                data-haptic="tap"
                 className="flex h-[28px] shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-2.5 text-[12px] font-medium text-primary"
               >
                 <Loader2 className="size-3.5 animate-spin" strokeWidth={2} aria-hidden="true" />
@@ -242,6 +249,7 @@ export function AppStudio({
                   <button
                     type="button"
                     aria-pressed={chatOpen}
+                    data-haptic="select"
                     title={t`Show the chat beside the app`}
                     aria-label={t`Chat`}
                     onClick={() => {
@@ -256,6 +264,7 @@ export function AppStudio({
                 <button
                   type="button"
                   aria-pressed={picking}
+                  data-haptic="select"
                   title={t`Point at something in the app to change it`}
                   aria-label={t`Select an element`}
                   onClick={() => {
@@ -306,6 +315,7 @@ export function AppStudio({
                       key={tab.id}
                       type="button"
                       aria-pressed={panel === tab.id}
+                      data-haptic="select"
                       onClick={() => {
                         setPanel((current) => (current === tab.id ? null : tab.id));
                         if (compact) setChatOpen(false);
@@ -329,7 +339,7 @@ export function AppStudio({
             )}
           </header>
           <div
-            className={`absolute inset-x-0 top-[48px] flex ${composer && !docked ? "bottom-[72px]" : "bottom-0"}`}
+            className={`absolute inset-x-0 top-[48px] flex ${composer && !docked ? studioChromeClass(false, showActivity) : "bottom-0"}`}
           >
             {docked ? (
               <aside
@@ -486,7 +496,16 @@ export function AppStudio({
             <div
               className={`absolute bottom-[12.5px] flex justify-center px-3 ${panel ? "inset-x-0 sm:right-[min(46vw,560px)]" : "inset-x-0"}`}
             >
-              <div className="w-full max-w-[551px]">{composer}</div>
+              <div className="flex w-full max-w-[551px] flex-col gap-2">
+                {showActivity ? (
+                  <StudioActivityCarousel
+                    cards={activity}
+                    running={running}
+                    onOpen={() => setChatOpen(true)}
+                  />
+                ) : null}
+                {composer}
+              </div>
             </div>
           ) : null}
         </div>

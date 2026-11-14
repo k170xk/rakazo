@@ -279,6 +279,7 @@ function SharedPageBody() {
             value={page.code}
             resolveAsset={resolveSharedAsset}
             readOnly
+            blankArt="/whiteboards/blank-canvas.png"
             height="100%"
             className="h-full rounded-none border-0"
           />

@@ -79,6 +79,7 @@ import {
 import { desktopBridge } from "../lib/desktop";
 import { hasOpenDialog } from "../lib/has-open-dialog";
 import { PagesProvider, usePagesForChat } from "../lib/pages";
+import { studioActivity } from "../lib/studio-activity";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
 import { lastChatKey, lastChatOf, queryClient, spaceQueries, spaceSeedKey } from "../lib/query";
@@ -656,13 +657,16 @@ function SpaceShell() {
   const transcriptRunning = workingRuns.length > 0;
   const composerRunning = currentRuns.some((run) => isActive(run.status));
   const botWorking = transcriptRunning || composerRunning;
-  useEffect(() => {
-    pages.session.dock.set({ running: botWorking });
-  }, [pages.session, botWorking]);
   const transcript = useMemo(
     () => foldPeerReplies(activeSnapshot?.messages ?? [], { includePeerReceipts: true }),
     [activeSnapshot?.messages],
   );
+  useEffect(() => {
+    pages.session.dock.set({
+      running: botWorking,
+      activity: studioActivity(activeSnapshot?.messages ?? [], botWorking),
+    });
+  }, [pages.session, botWorking, activeSnapshot?.messages]);
   const transcriptArtifactTarget = useMemo<ArtifactTarget>(
     () => (inGroup ? { groupId: groupId ?? "" } : { botId: active?.id ?? "" }),
     [active?.id, groupId, inGroup],

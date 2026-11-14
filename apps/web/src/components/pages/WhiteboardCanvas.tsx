@@ -228,6 +228,7 @@ export function WhiteboardCanvas({
         onSelectionChange={onSelectionChange}
         onUploadImage={onUploadImage}
         resolveAsset={resolveAsset}
+        blankArt="/whiteboards/blank-canvas.png"
         height="100%"
         className="h-full rounded-none border-0"
       />

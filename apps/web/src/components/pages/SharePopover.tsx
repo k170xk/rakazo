@@ -15,7 +15,9 @@ import {
   Building2,
   Check,
   Globe,
+  Download,
   KeyRound,
+  Loader2,
   Lock,
   RefreshCw,
   Share,
@@ -70,6 +72,7 @@ export function SharePopover({
   open,
   onOpenChange,
   compact = false,
+  downloads,
 }: {
   title: string;
   owner: { name: string; image: string | null };
@@ -87,6 +90,13 @@ export function SharePopover({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   compact?: boolean;
+  /** Extra ways to hand the page on, shown under the link. Apps leave this unset. */
+  downloads?: {
+    onSvg: () => void;
+    onPdf: () => void;
+    pdfPending?: boolean;
+    disabled?: boolean;
+  };
 }) {
   const { t } = useLingui();
   const shownOwner = accountDisplay(owner, t`You`);
@@ -153,12 +163,12 @@ export function SharePopover({
         align="end"
         sideOffset={7.5}
         data-testid="page-share"
-        className="w-[360px] max-w-[calc(100vw-32px)] gap-3 rounded-[16px] ring-[0.5px] ring-border px-0 pt-[17px] pb-4 shadow-lg"
+        className="w-[360px] max-w-[calc(100vw-32px)] gap-3 overflow-hidden rounded-[16px] px-0 pt-[17px] pb-4 shadow-lg ring-[0.5px] ring-border"
       >
         <PopoverTitle className="truncate px-4 text-[16px] leading-[22px] font-medium tracking-[-0.44px]">
           <Trans>Share “{title}”</Trans>
         </PopoverTitle>
-        <div className="flex flex-col gap-[11px] px-4">
+        <div className="flex min-w-0 flex-col gap-[11px] px-4">
           <div className="flex min-h-11 items-center gap-3">
             <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full">
               <OwnerImage initial={shownOwner.initial} image={shownOwner.image} />
@@ -175,13 +185,13 @@ export function SharePopover({
             value={visibility}
             disabled={pending}
             onValueChange={(value) => onVisibilityChange(value as PageVisibility)}
-            className="-mx-1.5 gap-0.5"
+            className="-mx-1.5 min-w-0 gap-0.5"
           >
             {options.map((option) => (
               // biome-ignore lint/a11y/noLabelWithoutControl: the radio inside is the control.
               <label
                 key={option.value}
-                className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-[10px] px-1.5 py-[5px] hover:bg-foreground/[0.04] has-data-checked:bg-foreground/[0.06] has-disabled:cursor-default"
+                className="flex min-h-11 min-w-0 cursor-pointer items-center gap-2.5 rounded-[10px] px-1.5 py-[5px] hover:bg-foreground/[0.04] has-data-checked:bg-foreground/[0.06] has-disabled:cursor-default"
               >
                 <span className={TILE}>{option.icon}</span>
                 <span className="flex min-w-0 flex-1 flex-col">
@@ -264,6 +274,32 @@ export function SharePopover({
                 </Button>
               ) : null}
             </div>
+          </div>
+        ) : null}
+        {downloads ? (
+          <div className="mx-4 flex min-w-0 flex-col gap-1.5 border-t border-foreground/[0.08] pt-3">
+            <Button
+              variant="ghost"
+              className="h-9 justify-start gap-2 rounded-[10px] px-2.5"
+              disabled={downloads.disabled}
+              onClick={downloads.onSvg}
+            >
+              <Download className="size-4" strokeWidth={1.6} />
+              <Trans>Download SVG</Trans>
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-9 justify-start gap-2 rounded-[10px] px-2.5"
+              disabled={downloads.disabled || downloads.pdfPending}
+              onClick={downloads.onPdf}
+            >
+              {downloads.pdfPending ? (
+                <Loader2 className="size-4 animate-spin" strokeWidth={1.6} />
+              ) : (
+                <Download className="size-4" strokeWidth={1.6} />
+              )}
+              <Trans>Download PDF</Trans>
+            </Button>
           </div>
         ) : null}
         {error ? (

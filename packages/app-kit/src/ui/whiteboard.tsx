@@ -233,6 +233,18 @@ function arrowEnds(item: BoardItem, byId: Map<string, BoardItem>): [Point, Point
 
 type ResizeCorner = "nw" | "ne" | "sw" | "se";
 
+/** A gesture the native app can feel. Browsers ignore it; the shell plays the same ticks as the chat. */
+function nativeFeedback(kind: "tap" | "select") {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("rakazo:haptic", { detail: kind }));
+}
+
+/** A phone, or a window too narrow for a selection box, where a drag should move the board. */
+function fingerBoard(): boolean {
+  if (typeof matchMedia !== "function") return false;
+  return matchMedia("(pointer: coarse)").matches || matchMedia("(max-width: 840px)").matches;
+}
+
 function useDarkTheme(): boolean {
   const [dark, setDark] = useState(
     () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
@@ -351,6 +363,7 @@ export function Whiteboard({
   onUploadImage,
   resolveAsset,
   readOnly,
+  blankArt,
   height = 560,
   className,
 }: {
@@ -363,6 +376,8 @@ export function Whiteboard({
   /** Optional host asset resolver returning a displayable data/https URL for an asset id. */
   resolveAsset?: (assetId: string) => Promise<string | null>;
   readOnly?: boolean;
+  /** Picture shown on an empty board, beside a short note on what the board is for. */
+  blankArt?: string;
   height?: number | string;
   className?: string;
 }) {
@@ -379,6 +394,18 @@ export function Whiteboard({
   const [items, setItems] = useState<BoardItem[]>(() => readBoard(value).items);
   const [view, setView] = useState<View>({ x: -40, y: -40, zoom: 1 });
   const [tool, setTool] = useState<Tool>("select");
+  const [narrowTools, setNarrowTools] = useState(
+    () => typeof matchMedia === "function" && matchMedia("(max-width: 840px)").matches,
+  );
+  const [moreTools, setMoreTools] = useState(false);
+  useEffect(() => {
+    if (typeof matchMedia !== "function") return;
+    const query = matchMedia("(max-width: 840px)");
+    const apply = () => setNarrowTools(query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
   const [color, setColor] = useState<BoardColor>("yellow");
   const [selected, setSelected] = useState<string[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
@@ -391,7 +418,7 @@ export function Whiteboard({
     | { kind: "move"; start: Point; origin: Map<string, BoardItem> }
     | { kind: "resize"; id: string; corner: ResizeCorner; start: Point; origin: BoardItem }
     | { kind: "arrow-end"; id: string; end: "from" | "to"; origin: BoardItem }
-    | { kind: "pan"; start: Point; origin: View }
+    | { kind: "pan"; start: Point; origin: View; fromEmpty?: boolean }
     | { kind: "marquee"; start: Point }
     | { kind: "create"; start: Point }
     | { kind: "pinch"; distance: number; mid: Point; origin: View }
@@ -484,17 +511,19 @@ export function Whiteboard({
     const wy = sy / from.zoom + from.y;
     setView({ zoom: next, x: wx - sx / next, y: wy - sy / next });
   };
-  const showAll = (list: BoardItem[] = items) => {
+  const showAll = (list: BoardItem[] = items, readable = false) => {
     const bounds = boardBounds(list);
     const rect = box.current?.getBoundingClientRect();
     if (!bounds || !rect || rect.width < 10) return setView({ x: -40, y: -40, zoom: 1 });
     const topBar = editable ? 72 : 24;
     const availH = Math.max(120, rect.height - topBar - 56);
     const availW = Math.max(160, rect.width - 96);
+    // A phone starts close enough to read. Show everything still fits the whole board.
+    const floor = readable ? 0.6 : MIN_ZOOM;
     const zoom = Math.min(
       MAX_ZOOM,
       Math.max(
-        MIN_ZOOM,
+        floor,
         Math.min(availW / Math.max(bounds.w, 120), availH / Math.max(bounds.h, 120), 1.15),
       ),
     );
@@ -506,17 +535,46 @@ export function Whiteboard({
   };
   const fittedOnce = useRef(items.length > 0);
   useEffect(() => {
-    if (items.length) showAll(items);
+    if (items.length) showAll(items, fingerBoard());
   }, []);
   useEffect(() => {
     if (!fittedOnce.current && items.length > 0) {
       fittedOnce.current = true;
-      showAll(items);
+      showAll(items, fingerBoard());
     }
   }, [items]);
   useEffect(() => {
     onSelectionChange?.(selected);
   }, [selected, onSelectionChange]);
+
+  /** The block under the cursor, including a label whose box sits above the shapes. */
+  const hitItem = (clientX: number, clientY: number, target: EventTarget | null) => {
+    const element =
+      target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
+    const directId = element?.closest("[data-board-item]")?.dataset.boardItem;
+    const direct = directId ? byId.get(directId) : undefined;
+    if (direct) return direct;
+    const at = toBoard(clientX, clientY);
+    const inside = (x: number, y: number, w: number, h: number) =>
+      at.x >= x && at.y >= y && at.x <= x + w && at.y <= y + h;
+    for (const item of items) {
+      if (item.kind !== "arrow") continue;
+      const label = routedArrows.get(item.id)?.label;
+      if (label && inside(label.x, label.y, label.w, label.h)) return item;
+    }
+    for (let index = items.length - 1; index >= 0; index--) {
+      const item = items[index]!;
+      if (item.kind === "arrow" || item.kind === "section") continue;
+      if (item.w > 0 && item.h > 0 && inside(item.x, item.y, item.w, item.h)) return item;
+    }
+    for (let index = items.length - 1; index >= 0; index--) {
+      const item = items[index]!;
+      if (item.kind === "section" && inside(item.x, item.y, item.w, Math.min(50, item.h))) {
+        return item;
+      }
+    }
+    return undefined;
+  };
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if ((event.target as Element).closest("[data-board-control]")) return;
@@ -574,8 +632,13 @@ export function Whiteboard({
       return;
     }
     if (tool === "select") {
-      const id = (event.target as Element).closest<HTMLElement | SVGElement>("[data-board-item]")
-        ?.dataset.boardItem;
+      const hit = hitItem(event.clientX, event.clientY, event.target);
+      if (hit && event.detail >= 2 && WORDS.has(hit.kind)) {
+        setSelected([hit.id]);
+        setEditing(hit.id);
+        return;
+      }
+      const id = hit?.id;
       if (id) {
         const chosen = event.shiftKey
           ? selected.includes(id)
@@ -585,6 +648,7 @@ export function Whiteboard({
             ? selected
             : [id];
         setSelected(chosen);
+        nativeFeedback("select");
         const movingIds = new Set(chosen);
         for (const key of chosen) {
           const picked = byId.get(key);
@@ -613,6 +677,14 @@ export function Whiteboard({
               byId.get(key) ? [[key, byId.get(key) as BoardItem]] : [],
             ),
           ),
+        };
+      } else if (fingerBoard()) {
+        // A finger on empty board moves it. A tap, with almost no travel, still clears the selection.
+        gesture.current = {
+          kind: "pan",
+          start: { x: event.clientX, y: event.clientY },
+          origin: view,
+          fromEmpty: true,
         };
       } else {
         if (!event.shiftKey) setSelected([]);
@@ -663,6 +735,12 @@ export function Whiteboard({
       return;
     }
     if (now.kind === "pan") {
+      if (
+        now.fromEmpty &&
+        Math.hypot(event.clientX - now.start.x, event.clientY - now.start.y) < 8
+      ) {
+        return;
+      }
       setView({
         ...now.origin,
         x: now.origin.x - (event.clientX - now.start.x) / now.origin.zoom,
@@ -746,6 +824,10 @@ export function Whiteboard({
     }
     gesture.current = null;
     if (!now) return;
+    if (now.kind === "pan" && now.fromEmpty) {
+      const moved = Math.hypot(event.clientX - now.start.x, event.clientY - now.start.y);
+      if (moved < 8 && !event.shiftKey) setSelected([]);
+    }
     if (now.kind === "move" || now.kind === "resize" || now.kind === "arrow-end") {
       const before = now.kind === "move" ? [...now.origin.values()] : [now.origin];
       const changed = before.some((origin) => {
@@ -840,6 +922,7 @@ export function Whiteboard({
         }
         commit([...items, made]);
         setSelected([made.id]);
+        nativeFeedback("tap");
         if (WORDS.has(made.kind) && made.kind !== "arrow" && made.kind !== "image") {
           setEditing(made.id);
         }
@@ -1037,6 +1120,24 @@ export function Whiteboard({
     },
     { tool: "pen", label: "Pen", icon: <Pencil />, key: "P" },
   ];
+  const primaryTools = narrowTools ? tools.slice(0, 3) : tools;
+  const extraTools = narrowTools ? tools.slice(3) : [];
+  const colourSwatches = COLORS.map((name) => (
+    <button
+      key={name}
+      type="button"
+      aria-label={`Colour ${name}`}
+      aria-pressed={color === name}
+      data-haptic="select"
+      title={name}
+      onClick={() => recolour(name)}
+      className={cn(
+        "size-6 shrink-0 rounded-full border border-black/10 transition-transform [@media(pointer:coarse)]:size-8",
+        color === name && "scale-110 ring-2 ring-primary ring-offset-1 ring-offset-card",
+      )}
+      style={{ background: FILL[name] }}
+    />
+  ));
 
   const shown = useMemo(
     () =>
@@ -1080,7 +1181,7 @@ export function Whiteboard({
         y={boxY}
         width={Math.max(item.w, 1)}
         height={boxH}
-        style={{ pointerEvents: isEditing || isSection ? "auto" : "none" }}
+        style={{ pointerEvents: "auto" }}
       >
         {isEditing ? (
           <textarea
@@ -1112,6 +1213,7 @@ export function Whiteboard({
           />
         ) : (
           <div
+            data-board-item={item.id}
             className={cn(
               "flex h-full w-full overflow-hidden break-words whitespace-pre-wrap select-none",
               label
@@ -1167,10 +1269,13 @@ export function Whiteboard({
       }}
       onDoubleClick={(event) => {
         if (!editable) return;
-        const id = (event.target as Element).closest<HTMLElement | SVGElement>("[data-board-item]")
-          ?.dataset.boardItem;
-        const item = id ? byId.get(id) : undefined;
-        if (item && WORDS.has(item.kind)) return setEditing(item.id);
+        if ((event.target as Element | null)?.closest?.("[data-board-control]")) return;
+        const item = hitItem(event.clientX, event.clientY, event.target);
+        if (item && WORDS.has(item.kind)) {
+          setSelected([item.id]);
+          setEditing(item.id);
+          return;
+        }
         if (!item && tool === "select") {
           const at = toBoard(event.clientX, event.clientY);
           const made: BoardItem = {
@@ -1608,49 +1713,71 @@ export function Whiteboard({
       {editable && (
         <div
           data-board-control=""
-          className="absolute top-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 items-center gap-0.5 overflow-x-auto rounded-xl border border-border bg-card/95 p-1 shadow-lg backdrop-blur"
+          className="absolute top-2 right-2 left-2 z-10 flex flex-col items-center gap-1 sm:top-3 sm:right-auto sm:left-1/2 sm:w-max sm:-translate-x-1/2"
         >
-          {tools.map((option) => (
-            <BoardButton
-              key={option.tool}
-              label={`${option.label} (${option.key})`}
-              active={tool === option.tool}
-              onClick={() => setTool(option.tool)}
-            >
-              {option.icon}
+          <div className="flex max-w-full items-center gap-0.5 overflow-x-auto rounded-xl border border-border bg-card/95 p-1 shadow-lg backdrop-blur">
+            {primaryTools.map((option) => (
+              <BoardButton
+                key={option.tool}
+                label={`${option.label} (${option.key})`}
+                active={tool === option.tool}
+                onClick={() => setTool(option.tool)}
+              >
+                {option.icon}
+              </BoardButton>
+            ))}
+            {extraTools.length > 0 ? (
+              <BoardButton
+                label="More tools"
+                active={moreTools || extraTools.some((option) => option.tool === tool)}
+                onClick={() => setMoreTools((open) => !open)}
+              >
+                <Plus />
+              </BoardButton>
+            ) : null}
+            {extraTools.length === 0 && canUpload ? (
+              <BoardButton label="Add a picture" onClick={() => picker.current?.click()}>
+                <ImagePlus />
+              </BoardButton>
+            ) : null}
+            {extraTools.length === 0 ? (
+              <>
+                <span className="mx-1 h-6 w-px shrink-0 bg-border" />
+                {colourSwatches}
+              </>
+            ) : null}
+            <span className="mx-1 h-6 w-px shrink-0 bg-border" />
+            <BoardButton label="Undo (Ctrl+Z)" onClick={undo}>
+              <Undo2 />
             </BoardButton>
-          ))}
-          {canUpload && (
-            <BoardButton label="Add a picture" onClick={() => picker.current?.click()}>
-              <ImagePlus />
+            <BoardButton label="Redo (Ctrl+Shift+Z)" onClick={redo}>
+              <Redo2 />
             </BoardButton>
-          )}
-          <span className="mx-1 h-6 w-px shrink-0 bg-border" />
-          {COLORS.map((name) => (
-            <button
-              key={name}
-              type="button"
-              aria-label={`Colour ${name}`}
-              aria-pressed={color === name}
-              title={name}
-              onClick={() => recolour(name)}
-              className={cn(
-                "size-6 shrink-0 rounded-full border border-black/10 transition-transform",
-                color === name && "scale-110 ring-2 ring-primary ring-offset-1 ring-offset-card",
-              )}
-              style={{ background: FILL[name] }}
-            />
-          ))}
-          <span className="mx-1 h-6 w-px shrink-0 bg-border" />
-          <BoardButton label="Undo (Ctrl+Z)" onClick={undo}>
-            <Undo2 />
-          </BoardButton>
-          <BoardButton label="Redo (Ctrl+Shift+Z)" onClick={redo}>
-            <Redo2 />
-          </BoardButton>
-          <BoardButton label="Delete selected" onClick={remove} disabled={!selected.length}>
-            <Trash2 />
-          </BoardButton>
+            <BoardButton label="Delete selected" onClick={remove} disabled={!selected.length}>
+              <Trash2 />
+            </BoardButton>
+          </div>
+          {extraTools.length > 0 && moreTools ? (
+            <div className="flex max-w-full flex-wrap justify-center gap-0.5 rounded-xl border border-border bg-card/95 p-1 shadow-lg backdrop-blur">
+              {extraTools.map((option) => (
+                <BoardButton
+                  key={option.tool}
+                  label={`${option.label} (${option.key})`}
+                  active={tool === option.tool}
+                  onClick={() => setTool(option.tool)}
+                >
+                  {option.icon}
+                </BoardButton>
+              ))}
+              {canUpload ? (
+                <BoardButton label="Add a picture" onClick={() => picker.current?.click()}>
+                  <ImagePlus />
+                </BoardButton>
+              ) : null}
+              <span className="mx-1 h-6 w-px shrink-0 bg-border" />
+              {colourSwatches}
+            </div>
+          ) : null}
         </div>
       )}
       <div
@@ -1693,11 +1820,42 @@ export function Whiteboard({
         </BoardButton>
       </div>
       {!items.length && !draft && (
-        <p className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-muted-foreground">
-          {editable
-            ? "Double-click to add a sticky note, or pick a tool above"
-            : "Nothing on this board yet"}
-        </p>
+        <div
+          data-testid="whiteboard-empty"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 pb-24"
+        >
+          <div className="flex w-full max-w-[440px] flex-col items-center text-center">
+            {blankArt ? (
+              <img
+                src={blankArt}
+                alt=""
+                draggable={false}
+                className="mb-4 h-auto w-auto max-w-full object-contain"
+                style={{
+                  maxHeight: "min(260px, 32vh)",
+                  filter: "drop-shadow(0 12px 22px rgb(0 0 0 / 0.08))",
+                }}
+              />
+            ) : null}
+            {editable || blankArt ? (
+              <>
+                <p className="text-[15px] font-medium tracking-tight text-foreground">
+                  A place to think things through
+                </p>
+                <p className="mt-1.5 text-sm leading-5 text-muted-foreground">
+                  Process charts, ideas, and flow diagrams.
+                </p>
+                {editable ? (
+                  <p className="mt-3 text-sm leading-5 text-foreground/75">
+                    Type what you want to create, and it will be drawn here.
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nothing on this board yet</p>
+            )}
+          </div>
+        </div>
       )}
       <input
         ref={picker}
@@ -1796,10 +1954,11 @@ function BoardButton({
       aria-label={label}
       title={label}
       aria-pressed={active}
+      data-haptic={active === undefined ? "tap" : "select"}
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "grid size-8 shrink-0 place-items-center rounded-lg transition-colors disabled:opacity-35 [&_svg]:size-4",
+        "grid size-8 shrink-0 place-items-center rounded-lg transition-colors disabled:opacity-35 [&_svg]:size-4 [@media(pointer:coarse)]:size-11",
         active ? "bg-primary/12 text-primary" : "text-foreground hover:bg-muted",
       )}
     >

@@ -13,6 +13,7 @@ import {
   usePageSession,
 } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
+import type { StudioCard } from "../../lib/studio-activity";
 import { errorCode } from "../../lib/user-error";
 import { AppStudio } from "../apps/AppStudio";
 import { AppViewer } from "../apps/AppViewer";
@@ -22,6 +23,7 @@ import { PageView } from "./PageView";
 import { SharePopover } from "./SharePopover";
 
 const COARSE = "(pointer: coarse)";
+const NO_ACTIVITY: StudioCard[] = [];
 /** The docked composer's height plus its gap to the screen edge and to what scrolls above it. */
 const DOCK_CLEARANCE = 72;
 
@@ -127,6 +129,10 @@ function OpenPage({
     session.dock.subscribe,
     () => session.dock.get().running === true,
   );
+  const activity = useSyncExternalStore(
+    session.dock.subscribe,
+    () => session.dock.get().activity ?? NO_ACTIVITY,
+  );
   const data = page.data;
   const open = pageId !== null && (data !== undefined || failed || page.isPending);
   const dockPage = pageId !== null && data && !viewing ? { id: data.id, title: data.title } : null;
@@ -220,6 +226,7 @@ function OpenPage({
         composer={<div ref={setDockNode} />}
         chat={<div ref={setChatNode} className="flex min-h-0 flex-1 flex-col" />}
         running={running}
+        activity={activity}
         onReply={session.offerReply}
         returnFocus={session.restoreFocus}
         compact={compact}
@@ -228,7 +235,7 @@ function OpenPage({
     );
   }
   if (isBoard && data) {
-    return <WhiteboardStudio initialBoardId={data.id} share={share} onClose={close} />;
+    return <WhiteboardStudio initialBoardId={data.id} onClose={close} />;
   }
   return (
     <PageView

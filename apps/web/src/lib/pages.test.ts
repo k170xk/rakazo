@@ -43,6 +43,13 @@ describe("page session", () => {
     expect(session.dock.get()).toMatchObject({ chat: slot, running: true });
     session.dock.set({ chat: null, running: false });
     expect(listener).toHaveBeenCalledTimes(3);
+    const card = { id: "a", who: "action" as const, text: "Saving the board", live: true };
+    session.dock.set({ activity: [card] });
+    session.dock.set({ activity: [{ ...card }] });
+    expect(listener).toHaveBeenCalledTimes(4);
+    session.dock.set({ activity: [{ ...card, text: "Saved the board" }] });
+    expect(listener).toHaveBeenCalledTimes(5);
+    expect(session.dock.get().activity?.[0]?.text).toBe("Saved the board");
   });
 });
 

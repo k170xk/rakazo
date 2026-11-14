@@ -13952,3 +13952,64 @@ msgstr "Your company files Sent Items as well as your Inbox."
 #: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
 msgid "Your folders"
 msgstr "Your folders"
+
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Action"
+msgstr "Action"
+
+#: src/pages/shell/composer.tsx
+msgid "Ask for a change"
+msgstr "Ask for a change"
+
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Now"
+msgstr "Now"
+
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Recent messages and actions"
+msgstr "Recent messages and actions"
+
+
+#: src/components/EmailDraftCard.tsx
+msgid "Open in the browser"
+msgstr "Open in the browser"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Add an instruction filing should follow"
+msgstr "Add an instruction filing should follow"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not forget that"
+msgstr "Could not forget that"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not load what filing remembers"
+msgstr "Could not load what filing remembers"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not save this instruction"
+msgstr "Could not save this instruction"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Filing reads these the next time it chooses a folder. An instruction guides that choice. A sender, domain or conversation rule is ready on its own."
+msgstr "Filing reads these the next time it chooses a folder. An instruction guides that choice. A sender, domain or conversation rule is ready on its own."
+
+#: src/components/EmailFilingCard.tsx
+msgid "Graduate applications from careers@ go in Inbox › HR"
+msgstr "Graduate applications from careers@ go in Inbox › HR"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Nothing remembered yet."
+msgstr "Nothing remembered yet."
+
+#: src/components/EmailFilingCard.tsx
+msgid "Remember"
+msgstr "Remember"
+
+#: src/components/EmailFilingCard.tsx
+msgid "What filing remembers"
+msgstr "What filing remembers"
+
+#: src/components/EmailFilingCard.tsx
+msgid "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here. Instructions you add on a filing card show here too."
+msgstr "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here. Instructions you add on a filing card show here too."

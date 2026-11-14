@@ -72,6 +72,7 @@ import { isApplePlatform, isEditableTarget } from "./shell-shortcuts";
 import { useComposerLayout } from "./use-composer-layout";
 
 const ATTACHMENT_ACCEPT = attachmentPickerAccept(navigator.userAgent);
+const idleSubscribe = () => () => {};
 const COMPOSER_TEXT = "rk-scroll whitespace-pre-wrap break-words px-0.5 py-0.5 text-body1";
 const ComposerBody = memo(function Composer({
   artifactTarget,
@@ -160,6 +161,12 @@ const ComposerBody = memo(function Composer({
   docked?: boolean;
 }) {
   const { t } = useLingui();
+  const pageSession = usePageSession();
+  const dockTitle = useSyncExternalStore(
+    pageSession ? pageSession.dock.subscribe : idleSubscribe,
+    () => (docked ? (pageSession?.dock.get().page?.title ?? "") : ""),
+    () => "",
+  );
   // Phones keep attach and the extra actions behind one button so the message box keeps its width.
   const compactTools = useIsMobile() && Boolean(extraActions);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -311,7 +318,6 @@ const ComposerBody = memo(function Composer({
   });
   // A reply button on the open page adds its text here for the user to send, about that page
   // rather than a message picked before it.
-  const pageSession = usePageSession();
   const clearReply = useRef(onClearReply);
   clearReply.current = onClearReply;
   useEffect(
@@ -1017,9 +1023,13 @@ const ComposerBody = memo(function Composer({
               disabled={disabled}
               placeholder={
                 showComposerPlaceholder
-                  ? activeName
-                    ? t`Message ${activeName}`
-                    : t`Message…`
+                  ? docked && dockTitle
+                    ? running
+                      ? t`Working…`
+                      : t`Ask for a change`
+                    : activeName
+                      ? t`Message ${activeName}`
+                      : t`Message…`
                   : undefined
               }
               aria-label={activeName ? t`Message ${activeName}` : t`Message`}

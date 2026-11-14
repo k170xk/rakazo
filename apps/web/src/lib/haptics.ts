@@ -18,6 +18,8 @@ const MIN_GAP_MS = 60;
 const SELECTOR =
   '[role="switch"],[role="tab"],[role="checkbox"],[role="radio"],[role="option"],[role="menuitem"],[role="menuitemradio"],[role="menuitemcheckbox"],input[type="checkbox"],input[type="radio"]';
 
+const HAPTIC_EVENT = "rakazo:haptic";
+
 let last = 0;
 let lastStep = 0;
 let selectionStarted = false;
@@ -93,21 +95,46 @@ export function chatEventHaptic(event: { type: string; seq: number }, cursor: nu
   if (kind) haptic(kind);
 }
 
-/** Ticks for switches, tabs, checkboxes, menus and pickers across the app; returns a cleanup. */
+function explicitHaptic(element: Element): HapticKind | undefined {
+  const marked = element.closest("[data-haptic]");
+  if (!marked || marked.getAttribute("aria-disabled") === "true" || marked.hasAttribute("disabled"))
+    return undefined;
+  const kind = marked.getAttribute("data-haptic");
+  if (kind === "tap" || kind === "press" || kind === "select") return kind;
+  return undefined;
+}
+
+/**
+ * Ticks for switches, tabs, checkboxes, menus and pickers across the app, and for controls
+ * marked `data-haptic`. A `rakazo:haptic` event covers gestures that are not clicks, such as
+ * picking up a shape on the whiteboard. Returns a cleanup.
+ */
 export function installSelectionHaptics(doc: Document = document): () => void {
   if (!bridge()) return () => undefined;
   const onClick = (event: Event) => {
-    const target = event.target instanceof Element ? event.target.closest(SELECTOR) : null;
+    if (!(event.target instanceof Element)) return;
+    const marked = explicitHaptic(event.target);
+    if (marked) {
+      haptic(marked);
+      return;
+    }
+    const target = event.target.closest(SELECTOR);
     if (target && target.getAttribute("aria-disabled") !== "true") haptic("select");
   };
   const onChange = (event: Event) => {
     if (event.target instanceof HTMLSelectElement) haptic("select");
   };
+  const onSignal = (event: Event) => {
+    const kind = (event as CustomEvent<unknown>).detail;
+    if (kind === "tap" || kind === "press" || kind === "select") haptic(kind);
+  };
   doc.addEventListener("click", onClick, true);
   doc.addEventListener("change", onChange, true);
+  doc.defaultView?.addEventListener(HAPTIC_EVENT, onSignal);
   return () => {
     doc.removeEventListener("click", onClick, true);
     doc.removeEventListener("change", onChange, true);
+    doc.defaultView?.removeEventListener(HAPTIC_EVENT, onSignal);
   };
 }
 
