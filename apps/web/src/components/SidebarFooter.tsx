@@ -11,7 +11,6 @@ import {
   ToggleGroupItem,
 } from "@rakazo/ui-web";
 import {
-  Building2,
   Check,
   Download,
   FolderOpen,
@@ -22,6 +21,7 @@ import {
   Moon,
   Pencil,
   Plug,
+  Plus,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -176,9 +176,31 @@ export function SidebarFooter({
                 <p className="truncate text-xs text-muted-foreground">{email}</p>
               ) : null}
             </div>
-            {organizations.length > 1 ? (
+            {organizations.length > 1 || onCreateWorkSpace ? (
               <>
-                {organizations.map((organization) => (
+                <div
+                  data-testid="account-work-spaces"
+                  className="flex h-8 items-center gap-1 px-1 text-xs font-medium text-muted-foreground"
+                >
+                  {onCreateWorkSpace ? (
+                    <IconTooltip label={t`Create work space`}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 text-muted-foreground"
+                        aria-label={t`Create work space`}
+                        data-testid="account-new-work-space"
+                        onClick={onCreateWorkSpace}
+                      >
+                        <Plus aria-hidden="true" strokeWidth={2} />
+                      </Button>
+                    </IconTooltip>
+                  ) : null}
+                  <span className={onCreateWorkSpace ? undefined : "px-1.5"}>
+                    <Trans>Work spaces</Trans>
+                  </span>
+                </div>
+                {(organizations.length > 1 ? organizations : []).map((organization) => (
                   <OrganizationRow
                     key={organization.id}
                     organization={organization}
@@ -198,17 +220,6 @@ export function SidebarFooter({
                 ))}
                 <div className="my-1 border-t border-border" />
               </>
-            ) : null}
-            {onCreateWorkSpace ? (
-              <Button
-                variant="ghost"
-                className="h-9 w-full justify-start gap-2.5 font-normal"
-                data-testid="account-new-work-space"
-                onClick={onCreateWorkSpace}
-              >
-                <Building2 className="text-muted-foreground" strokeWidth={1.75} />
-                <Trans>Create work space</Trans>
-              </Button>
             ) : null}
             {mini && onIntegrations ? (
               <Button

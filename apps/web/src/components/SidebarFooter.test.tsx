@@ -191,7 +191,10 @@ it("offers a new work space from the account menu and opens the create dialog", 
   const create = document.querySelector<HTMLButtonElement>(
     '[data-testid="account-new-work-space"]',
   )!;
-  expect(create.textContent).toContain("Create work space");
+  expect(create.getAttribute("aria-label")).toBe("Create work space");
+  expect(document.querySelector('[data-testid="account-work-spaces"]')?.textContent).toContain(
+    "Work spaces",
+  );
   await act(async () => create.click());
   expect(onCreateWorkSpace).toHaveBeenCalledOnce();
 });

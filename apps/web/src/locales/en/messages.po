@@ -11901,6 +11901,10 @@ msgstr "Work packages: Design Team only"
 msgid "Work Space"
 msgstr "Work Space"
 
+#: src/components/SidebarFooter.tsx
+msgid "Work spaces"
+msgstr "Work spaces"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Work that runs itself"
 msgstr "Work that runs itself"

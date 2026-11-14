@@ -11876,6 +11876,10 @@ msgstr ""
 msgid "Work Space"
 msgstr ""
 
+#: src/components/SidebarFooter.tsx
+msgid "Work spaces"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Work that runs itself"
 msgstr ""
