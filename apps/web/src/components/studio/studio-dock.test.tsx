@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
+import { i18n } from "@lingui/core";
+import { I18nProvider } from "@lingui/react";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { createPageSession, PagesProvider } from "../../lib/pages";
 import type { StudioCard } from "../../lib/studio-activity";
 import { StudioFloatingDock, studioDockStyle } from "./studio-dock";
@@ -15,11 +17,16 @@ vi.mock("@lingui/react/macro", () => ({
         "",
       ),
   }),
+  Trans: ({ children }: { children: ReactNode }) => children,
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let host: HTMLDivElement | undefined;
+beforeEach(() => {
+  i18n.load("en", {});
+  i18n.activate("en");
+});
 afterEach(() => {
   document.body.replaceChildren();
   host = undefined;
@@ -31,11 +38,15 @@ it("reserves room under the floating composer only while the chat is closed", ()
   expect(studioDockStyle(false, true)).toEqual({ "--studio-dock-space": "7rem" });
 });
 
+function wrap(node: ReactNode) {
+  return <I18nProvider i18n={i18n}>{node}</I18nProvider>;
+}
+
 function render(node: ReactNode) {
   host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
-  act(() => root.render(node));
+  act(() => root.render(wrap(node)));
   return root;
 }
 
@@ -77,7 +88,7 @@ it("marks new activity and lists it as rows that open the chat", async () => {
   );
   const root = render(dock(cards, false));
   const reply: StudioCard = { id: "m3:text", who: "agent", text: "Done", live: false };
-  act(() => root.render(dock([...cards, reply], true)));
+  act(() => root.render(wrap(dock([...cards, reply], true))));
   const button = host?.querySelector<HTMLElement>("[data-testid=studio-activity-button]");
   expect(button?.dataset.unseen).toBe("true");
   expect(button?.dataset.running).toBe("true");
@@ -117,11 +128,13 @@ it("floats the dock without a band that blocks the canvas", () => {
   const root = createRoot(host);
   act(() => {
     root.render(
-      <PagesProvider value={{ open: () => {}, session: createPageSession() }}>
-        <StudioFloatingDock lift="2.25rem">
-          <span>composer</span>
-        </StudioFloatingDock>
-      </PagesProvider>,
+      wrap(
+        <PagesProvider value={{ open: () => {}, session: createPageSession() }}>
+          <StudioFloatingDock lift="2.25rem">
+            <span>composer</span>
+          </StudioFloatingDock>
+        </PagesProvider>,
+      ),
     );
   });
   const dock = host.querySelector<HTMLElement>("[data-testid=studio-floating-dock]");

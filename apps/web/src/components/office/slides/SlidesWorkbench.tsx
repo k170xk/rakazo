@@ -220,7 +220,7 @@ export function SlidesWorkbench({
               </button>
             )}
           </div>
-          <label className="flex shrink-0 flex-col gap-1 border-t border-border px-3 pt-2 pb-3 md:px-6">
+          <label className="flex shrink-0 flex-col gap-1 border-t border-border px-3 pt-2 pb-[max(0.75rem,var(--studio-dock-space,0.75rem))] md:px-6">
             <span className="text-[12px] font-medium text-muted-foreground">
               <Trans>Speaker notes</Trans>
             </span>

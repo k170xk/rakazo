@@ -3,6 +3,7 @@ import type { DocumentVersion } from "@rakazo/contracts";
 import {
   Button,
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -21,6 +22,8 @@ import {
   Download,
   FilePenLine,
   FileText,
+  History,
+  ListChecks,
   Loader2,
   Plus,
   RefreshCw,
@@ -35,7 +38,7 @@ import { formatRelativeTime } from "../../lib/relative-time";
 import { selectedSpaceId } from "../../lib/rpc";
 import { useBoundSpaceId } from "../../lib/space-rpc";
 import { errorCode } from "../../lib/user-error";
-import { control, pill, StudioFrame, useStudioDock } from "../studio/StudioFrame";
+import { control, pill, StudioFrame, StudioMoreMenu, useStudioDock } from "../studio/StudioFrame";
 import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-send";
 import { documentDockPage } from "./context";
 import { useDocumentBotId } from "./document-bot";
@@ -116,6 +119,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
   const [saveState, setSaveState] = useState<SaveQueueState | null>(null);
   const [flash, setFlash] = useState<number | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [restoring, setRestoring] = useState<number | null>(null);
   const [review, setReview] = useState<ReviewItem[]>([]);
   const [busy, setBusy] = useState(false);
@@ -569,12 +573,12 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               disabled={busy || uploader.busy}
               aria-label={t`New document`}
               title={t`New document`}
-              className={`${control} size-[35px] disabled:opacity-40`}
+              className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
             >
               {busy || uploader.busy ? (
                 <Loader2 className="size-[18px] animate-spin" strokeWidth={1.7} />
               ) : (
-                <Plus className="size-[18px]" strokeWidth={1.7} />
+                <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
               )}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
@@ -672,6 +676,33 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               {statusText}
             </span>
           ) : null}
+          {/* Phones: one More menu so Track / Review / History / Share cannot clip Close. */}
+          <StudioMoreMenu>
+            <DropdownMenuCheckboxItem
+              checked={trackChanges}
+              disabled={!doc || readOnlyView}
+              onCheckedChange={() => toggleTrackChanges()}
+            >
+              <FilePenLine className="size-4" strokeWidth={1.8} />
+              <Trans>Track changes</Trans>
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuItem disabled={review.length === 0} onClick={() => setReviewOpen(true)}>
+              <ListChecks className="size-4" strokeWidth={1.8} />
+              <Trans>Review</Trans>
+              {review.length > 0 ? (
+                <span className="ms-auto text-[12px] text-muted-foreground">{review.length}</span>
+              ) : null}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={!doc} onClick={() => void openHistory(true)}>
+              <History className="size-4" strokeWidth={1.8} />
+              <Trans>History</Trans>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled={!doc} onClick={() => void download()}>
+              <Download className="size-4" />
+              <Trans>Download .docx</Trans>
+            </DropdownMenuItem>
+          </StudioMoreMenu>
           <button
             type="button"
             role="switch"
@@ -684,7 +715,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
                 ? t`Your edits are marked as tracked changes, so they can be accepted or rejected`
                 : t`Your edits change the document directly`
             }
-            className={`${pill} disabled:opacity-40 ${trackChanges ? "bg-primary/15 text-primary hover:bg-primary/20" : ""}`}
+            className={`${pill} max-sm:hidden disabled:opacity-40 ${trackChanges ? "bg-primary/15 text-primary hover:bg-primary/20" : ""}`}
           >
             <FilePenLine className="size-4" strokeWidth={1.8} aria-hidden="true" />
             <span className="max-sm:sr-only">
@@ -694,12 +725,16 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
           <ReviewPanel
             items={review}
             disabled={locked || readOnlyView}
+            open={reviewOpen}
+            onOpenChange={setReviewOpen}
+            triggerClassName="max-sm:hidden"
             onResolve={resolve}
             onShow={(ids) => editor.current?.show(ids)}
           />
           <HistoryButton
             open={historyOpen}
             disabled={!doc}
+            className="max-sm:hidden"
             onOpenChange={(next) => void openHistory(next)}
           />
         </>
@@ -710,7 +745,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
             disabled={!doc}
             data-testid="word-share"
             aria-label={t`Share`}
-            className={`${pill} disabled:opacity-40`}
+            className={`${pill} disabled:opacity-40 max-sm:hidden`}
           >
             <Share className="size-4" strokeWidth={1.8} />
             <span className="max-sm:sr-only">

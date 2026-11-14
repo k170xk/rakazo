@@ -30,10 +30,13 @@ export function HistoryButton({
   open,
   disabled,
   onOpenChange,
+  className,
 }: {
   open: boolean;
   disabled: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Extra classes (e.g. hide on phones when a More menu replaces it). */
+  className?: string;
 }) {
   const { t } = useLingui();
   return (
@@ -44,7 +47,7 @@ export function HistoryButton({
       aria-pressed={open}
       aria-label={t`Version history`}
       onClick={() => onOpenChange(!open)}
-      className={`${pill} disabled:opacity-40 aria-pressed:bg-foreground/[0.06]`}
+      className={`${pill} disabled:opacity-40 aria-pressed:bg-foreground/[0.06] ${className ?? ""}`}
     >
       <History className="size-4" strokeWidth={1.8} />
       <span className="max-sm:sr-only">

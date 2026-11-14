@@ -14,21 +14,29 @@ export function ReviewPanel({
   disabled,
   onResolve,
   onShow,
+  open,
+  onOpenChange,
+  triggerClassName,
 }: {
   items: readonly ReviewItem[];
   disabled: boolean;
   onResolve: (ids: number[], accept: boolean) => void;
   onShow: (ids: number[]) => void;
+  /** Controlled open state; used when a phone More menu opens the panel. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Extra classes on the header trigger (e.g. hide it on phones). */
+  triggerClassName?: string;
 }) {
   const { t } = useLingui();
   const count = items.length;
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger
         data-testid="word-review"
         disabled={count === 0}
         aria-label={t`Review suggested changes`}
-        className={`${pill} disabled:opacity-40`}
+        className={`${pill} disabled:opacity-40 ${triggerClassName ?? ""}`}
       >
         <ListChecks className="size-4" strokeWidth={1.8} />
         <span className="max-sm:sr-only">
@@ -40,7 +48,10 @@ export function ReviewPanel({
           </span>
         ) : null}
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0">
+      <PopoverContent
+        align="end"
+        className="w-[min(24rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] p-0"
+      >
         <div className="flex items-center gap-1 border-b border-border px-3 py-2">
           <PopoverTitle className="min-w-0 flex-1 text-[13px] font-medium">
             <Trans>Suggested changes</Trans>

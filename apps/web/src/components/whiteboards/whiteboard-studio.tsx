@@ -327,9 +327,9 @@ export function WhiteboardStudio({
             aria-label={t`New whiteboard`}
             title={t`New whiteboard`}
             onClick={() => void create(t`Whiteboard`)}
-            className={`${control} size-[35px]`}
+            className={`${control} size-8 sm:size-[35px]`}
           >
-            <Plus className="size-[18px]" strokeWidth={1.7} />
+            <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
           </button>
           {renaming ? (
             <Input

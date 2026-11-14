@@ -680,21 +680,28 @@ function SidebarPills({
       </div>
     );
   }
+  // Very small 3-column tiles on phones; slightly larger on desktop.
+  const tileClass =
+    "relative flex min-h-8 min-w-0 flex-col items-center justify-center gap-px rounded-md border border-border bg-background px-0.5 py-0.5 text-foreground hover:bg-accent md:min-h-9 md:gap-0.5 md:rounded-lg md:py-1";
+  const tileDisabledClass =
+    "relative flex min-h-8 min-w-0 cursor-default flex-col items-center justify-center gap-px rounded-md border border-border bg-background px-0.5 py-0.5 text-muted-foreground grayscale opacity-50 md:min-h-9 md:gap-0.5 md:rounded-lg md:py-1";
+  const iconClass = "size-5 object-contain md:size-6";
+  const labelClass = "max-w-full truncate text-[8px] leading-none md:text-[9px]";
   return (
     // biome-ignore lint/a11y/useSemanticElements: groups sidebar links, not form fields.
     <div role="group" aria-label={t`Studios`}>
-      <div className="mx-2.5 mb-1.5 px-0.5 text-[11px] font-medium tracking-wide text-muted-foreground">
+      <div className="mx-2.5 mb-0.5 px-0.5 text-[9px] font-medium tracking-wide text-muted-foreground md:mb-1 md:text-[10px]">
         <Trans>Studios</Trans>
       </div>
-      <div className="mx-2.5 grid grid-cols-3 gap-1.5">
+      <div className="mx-2.5 grid grid-cols-3 gap-0.5 md:gap-1">
         <button
           type="button"
           data-testid="open-todo-list"
           onClick={onOpenTodos}
-          className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-foreground hover:bg-accent"
+          className={tileClass}
         >
-          <img src="/icons/studios/todo.png" alt="" className="h-16 w-16 object-contain" />
-          <span className="truncate text-[11px] leading-none">
+          <img src="/icons/studios/todo.png" alt="" className={iconClass} />
+          <span className={labelClass}>
             <Trans>To do</Trans>
           </span>
           {open > 0 ? (
@@ -725,10 +732,10 @@ function SidebarPills({
           type="button"
           data-testid="open-apps"
           onClick={onOpenApps}
-          className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-foreground hover:bg-accent"
+          className={tileClass}
         >
-          <img src="/icons/studios/apps.png" alt="" className="h-16 w-16 object-contain" />
-          <span className="truncate text-[11px] leading-none">
+          <img src="/icons/studios/apps.png" alt="" className={iconClass} />
+          <span className={labelClass}>
             <Trans>Apps</Trans>
           </span>
           <CornerCount count={appCount} />
@@ -737,10 +744,10 @@ function SidebarPills({
           type="button"
           data-testid="open-whiteboards"
           onClick={onOpenWhiteboards}
-          className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-foreground hover:bg-accent"
+          className={tileClass}
         >
-          <img src="/icons/studios/board.png" alt="" className="h-16 w-16 object-contain" />
-          <span className="truncate text-[11px] leading-none">
+          <img src="/icons/studios/board.png" alt="" className={iconClass} />
+          <span className={labelClass}>
             <Trans>Board</Trans>
           </span>
           <CornerCount count={boardCount} />
@@ -752,10 +759,10 @@ function SidebarPills({
               type="button"
               data-testid={`open-${studio.format}`}
               onClick={() => onOpenDocuments(studio.format)}
-              className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-foreground hover:bg-accent"
+              className={tileClass}
             >
-              <img src={studio.src} alt="" className="h-16 w-16 object-contain" />
-              <span className="truncate text-[11px] leading-none">{studio.name}</span>
+              <img src={studio.src} alt="" className={iconClass} />
+              <span className={labelClass}>{studio.name}</span>
               <CornerCount count={studio.count} />
             </button>
           ) : (
@@ -765,10 +772,10 @@ function SidebarPills({
               disabled
               aria-label={`${studio.name}. ${soon}`}
               title={soon}
-              className="relative flex min-w-0 cursor-default flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-muted-foreground grayscale opacity-50"
+              className={tileDisabledClass}
             >
-              <img src={studio.src} alt="" className="h-16 w-16 object-contain" />
-              <span className="truncate text-[11px] leading-none">{studio.name}</span>
+              <img src={studio.src} alt="" className={iconClass} />
+              <span className={labelClass}>{studio.name}</span>
             </button>
           ),
         )}

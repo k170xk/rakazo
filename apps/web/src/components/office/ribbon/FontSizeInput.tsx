@@ -93,12 +93,12 @@ export function FontSizeInput({
             }
           }}
           // Phones zoom into fields set below 16px, so the roomy layouts use 16px.
-          className={`rounded-s-full bg-transparent ps-2.5 tabular-nums outline-none disabled:opacity-40 ${
+          className={`rounded-s-full bg-transparent ps-2 tabular-nums outline-none disabled:opacity-40 ${
             layout === "bar"
               ? "h-8 w-10 text-[13px] pointer-coarse:h-10"
               : layout === "sheet"
-                ? "h-11 min-w-0 flex-1 text-[16px]"
-                : "h-11 w-12 text-[16px]"
+                ? "h-8 min-w-0 flex-1 text-[16px]"
+                : "h-8 w-11 text-[16px]"
           }`}
         />
       </RibbonTip>
@@ -133,8 +133,8 @@ export function FontSizeInput({
 
   if (layout !== "sheet") return box;
   return (
-    <div className="col-span-2 flex min-h-16 flex-col justify-center gap-1 rounded-xl bg-background px-3 py-2 ring-1 ring-foreground/[0.07]">
-      <span className="text-[11px] text-muted-foreground">{label}</span>
+    <div className="col-span-2 flex min-h-12 flex-col justify-center gap-0.5 rounded-lg bg-background px-2.5 py-1.5 ring-1 ring-foreground/[0.07]">
+      <span className="text-[10px] text-muted-foreground">{label}</span>
       {box}
     </div>
   );

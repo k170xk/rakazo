@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@rakazo/ui-web";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ArrowDownUp, Settings, Trash2 } from "lucide-react";
+import { Archive, ArrowDownUp, Settings, Trash2 } from "lucide-react";
 import type { ComponentProps, RefObject } from "react";
 import { useCallback, useDeferredValue, useEffect, useRef, useState } from "react";
 import { chatForPage } from "../../lib/app-chat";
@@ -65,6 +65,7 @@ export function useShellDialogs() {
   const [createWorkSpaceOpen, setCreateWorkSpaceOpen] = useState(false);
   const [createBotOpen, setCreateBotOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   return {
     deleteTarget,
     setDeleteTarget,
@@ -92,6 +93,8 @@ export function useShellDialogs() {
     setCreateBotOpen,
     commandPaletteOpen,
     setCommandPaletteOpen,
+    archiveOpen,
+    setArchiveOpen,
   };
 }
 
@@ -118,6 +121,7 @@ export function ShellDialogs({
   discardChatAttachments,
   deleteRoutineDialogProps,
   paletteActions,
+  archivedCount = 0,
 }: {
   dialogs: ShellDialogsState;
   rpc: ReturnType<typeof createSpaceRpc>;
@@ -140,6 +144,8 @@ export function ShellDialogs({
   discardChatAttachments: (threadKey: string) => void;
   deleteRoutineDialogProps: ComponentProps<typeof DeleteItemDialog> | null;
   paletteActions: CommandPaletteAction[];
+  /** Known archived bots + groups; the dialog may show more once Evolve chats load. */
+  archivedCount?: number;
 }) {
   const { t } = useLingui();
   const {
@@ -166,6 +172,7 @@ export function ShellDialogs({
     setCreateBotOpen,
     commandPaletteOpen,
     setCommandPaletteOpen,
+    setArchiveOpen,
   } = dialogs;
   const sidebarSort = useSidebarSort();
   const spaceMenuTarget = spaceMenu
@@ -225,6 +232,20 @@ export function ShellDialogs({
                 </DropdownMenuRadioGroup>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            <DropdownMenuItem
+              onClick={() => {
+                setSpaceMenu(null);
+                setArchiveOpen(true);
+              }}
+            >
+              <Archive />
+              <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                <span>{t`Archived`}</span>
+                {archivedCount > 0 ? (
+                  <span className="text-xs text-muted-foreground">{archivedCount}</span>
+                ) : null}
+              </span>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             {spaceMenuTarget ? (
               <DropdownMenuItem

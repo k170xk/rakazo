@@ -1191,23 +1191,7 @@ function SpaceShell() {
             botMenuContent={botMenuContent}
           />
         }
-        archived={
-          <EvolveArchive
-            rpc={rpc}
-            hidden={search.showSpaceSearch}
-            archivedBots={archivedBots}
-            archivedGroups={archivedGroups}
-            refreshBots={refreshBots}
-            setDeleteTarget={dialogs.setDeleteTarget}
-            setDeleteGroupTarget={dialogs.setDeleteGroupTarget}
-            onRestore={async (conversationId) => {
-              const opened = await rpc.evolveHistory.open({ conversationId });
-              await refreshBots(true).catch(() => undefined);
-              setMobileSidebarOpen(false);
-              navigate(`/app/${opened.botId}`);
-            }}
-          />
-        }
+        archived={null}
         footerLogos={footerLogos}
         user={session.data?.user}
         ticketBoardEnabled={Boolean(bootstrapMe?.ticketBoardEnabled)}
@@ -1569,6 +1553,24 @@ function SpaceShell() {
           }}
           deleteRoutineDialogProps={deleteRoutineDialogProps}
           paletteActions={paletteActions}
+          archivedCount={archivedBots.length + archivedGroups.length}
+        />
+        <EvolveArchive
+          open={dialogs.archiveOpen}
+          onOpenChange={dialogs.setArchiveOpen}
+          rpc={rpc}
+          archivedBots={archivedBots}
+          archivedGroups={archivedGroups}
+          refreshBots={refreshBots}
+          setDeleteTarget={dialogs.setDeleteTarget}
+          setDeleteGroupTarget={dialogs.setDeleteGroupTarget}
+          onRestore={async (conversationId) => {
+            const opened = await rpc.evolveHistory.open({ conversationId });
+            await refreshBots(true).catch(() => undefined);
+            dialogs.setArchiveOpen(false);
+            setMobileSidebarOpen(false);
+            navigate(`/app/${opened.botId}`);
+          }}
         />
         <AppOverlays
           overlay={overlay}

@@ -244,7 +244,7 @@ export function AppStudio({
   const docked = chatOpen && Boolean(chat) && page !== undefined;
 
   return (
-    <Dialog open={open} onOpenChange={(next) => onOpenChange(next)}>
+    <Dialog open={open} disablePointerDismissal onOpenChange={(next) => onOpenChange(next)}>
       <DialogContent
         overlay={false}
         showCloseButton={false}
@@ -255,7 +255,7 @@ export function AppStudio({
       >
         {/* Absolute children ignore the dialog's safe-area padding, so they sit in this box. */}
         <div className="relative size-full">
-          <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 max-sm:gap-1 max-sm:px-1.5 sm:gap-2">
+          <header className="absolute inset-x-0 top-0 z-10 flex h-10 items-center gap-1 overflow-hidden border-b border-border bg-muted px-1.5 sm:h-12 sm:gap-2 sm:px-2.5">
             {chat ? (
               <button
                 type="button"
@@ -267,11 +267,11 @@ export function AppStudio({
                   setChatOpen((on) => !on);
                   if (compact) setPanel(null);
                 }}
-                className={`${control} relative size-[35px]`}
+                className={`${control} relative size-8 sm:size-[35px]`}
               >
-                <MessageSquare className="size-[18px]" strokeWidth={1.7} />
+                <MessageSquare className="size-4 sm:size-[18px]" strokeWidth={1.7} />
                 {running && !chatOpen ? (
-                  <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
+                  <span className="absolute end-1 top-1 size-1.5 rounded-full bg-primary sm:size-2" />
                 ) : null}
               </button>
             ) : null}
@@ -285,9 +285,9 @@ export function AppStudio({
                 setAsking(true);
                 setChatOpen(true);
               }}
-              className={`${control} size-[35px]`}
+              className={`${control} size-8 sm:size-[35px]`}
             >
-              <Plus className="size-[18px]" strokeWidth={1.7} />
+              <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </button>
             <DialogTitle className="sr-only">{page?.title ?? t`Apps`}</DialogTitle>
             <DropdownMenu>
@@ -374,9 +374,9 @@ export function AppStudio({
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       aria-label={t`More`}
-                      className={`${control} size-[35px] data-popup-open:bg-foreground/[0.06] sm:hidden`}
+                      className={`${control} size-8 sm:size-[35px] data-popup-open:bg-foreground/[0.06] sm:hidden`}
                     >
-                      <Ellipsis className="size-[18px]" strokeWidth={1.7} />
+                      <Ellipsis className="size-4 sm:size-[18px]" strokeWidth={1.7} />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="min-w-[180px]">
                       {tabs.map((tab) => (
@@ -435,9 +435,9 @@ export function AppStudio({
                   stopEditing(false);
                   if (compact) setPanel(null);
                 }}
-                className={`${control} size-[35px] max-sm:hidden`}
+                className={`${control} size-8 sm:size-[35px] max-sm:hidden`}
               >
-                <MousePointerClick className="size-[18px]" strokeWidth={1.7} />
+                <MousePointerClick className="size-4 sm:size-[18px]" strokeWidth={1.7} />
               </button>
             ) : null}
             {onShare ? (
@@ -451,13 +451,13 @@ export function AppStudio({
             <DialogClose
               ref={closeButton}
               aria-label={t`Close app`}
-              className={`${control} size-[35px]`}
+              className={`${control} size-8 sm:size-[35px]`}
             >
-              <X className="size-[18px]" strokeWidth={1.7} />
+              <X className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </DialogClose>
           </header>
           <div
-            className="absolute inset-x-0 top-[48px] bottom-0 flex"
+            className="absolute inset-x-0 top-10 bottom-0 flex sm:top-12"
             style={studioDockStyle(!composer || docked, running)}
           >
             {docked ? (

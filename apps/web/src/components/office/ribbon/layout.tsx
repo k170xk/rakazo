@@ -67,21 +67,21 @@ export function useCompactRibbon(): boolean {
   return useSyncExternalStore(subscribeCompact, readCompact, () => false);
 }
 
-/** A round 44px tool in the phone toolbar. */
+/** A compact round tool in the phone toolbar (~32px). */
 export const quickControl =
-  "flex h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-full px-2 text-[14px] leading-5 text-foreground outline-none transition-colors active:bg-foreground/[0.1] focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-primary/15 aria-pressed:text-primary data-popup-open:bg-foreground/[0.08]";
+  "flex h-8 min-w-8 shrink-0 items-center justify-center gap-0.5 rounded-full px-1.5 text-[12px] leading-4 text-foreground outline-none transition-colors active:bg-foreground/[0.1] focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-primary/15 aria-pressed:text-primary data-popup-open:bg-foreground/[0.08]";
 
-/** A labelled tile in the tools sheet. */
+/** A labelled tile in the tools sheet — dense so more fit on a phone screen. */
 export const sheetTile =
-  "flex min-h-16 min-w-0 flex-col items-center justify-center gap-1.5 rounded-xl bg-background px-1.5 py-2 text-center text-[12px] leading-tight text-foreground ring-1 ring-foreground/[0.07] outline-none transition-colors active:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-primary/15 aria-pressed:text-primary aria-pressed:ring-primary/30 data-popup-open:bg-foreground/[0.06]";
+  "flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-lg bg-background px-1 py-1.5 text-center text-[11px] leading-tight text-foreground ring-1 ring-foreground/[0.07] outline-none transition-colors active:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-primary/15 aria-pressed:text-primary aria-pressed:ring-primary/30 data-popup-open:bg-foreground/[0.06]";
 
 /** Pins a menu or popover to the bottom of the screen as a sheet on phones. */
 export const sheetPositioner =
   "!fixed !inset-x-0 !top-auto !bottom-0 !left-0 !right-0 !h-auto !w-auto ![transform:none]";
 
-/** The sheet look of a menu or popover on phones, with roomy rows. */
+/** The sheet look of a menu or popover on phones. */
 export const sheetPopup =
-  "!w-full !max-w-none max-h-[min(70dvh,34rem)] rounded-t-2xl rounded-b-none px-2 pt-0 pb-[max(0.75rem,env(safe-area-inset-bottom))] ps-[max(0.5rem,env(safe-area-inset-left))] pe-[max(0.5rem,env(safe-area-inset-right))] shadow-[0_-12px_40px_-16px_rgb(0_0_0/0.35)] data-open:zoom-in-100 data-open:slide-in-from-bottom-10 data-closed:zoom-out-100 data-closed:slide-out-to-bottom-10 [&_[role=menuitem]]:min-h-11 [&_[role=menuitem]]:text-[15px] [&_[role=menuitemradio]]:min-h-11 [&_[role=menuitemradio]]:text-[15px] [&_[role=menuitemcheckbox]]:min-h-11";
+  "!w-full !max-w-none max-h-[min(70dvh,34rem)] rounded-t-2xl rounded-b-none px-2 pt-0 pb-[max(0.75rem,env(safe-area-inset-bottom))] ps-[max(0.5rem,env(safe-area-inset-left))] pe-[max(0.5rem,env(safe-area-inset-right))] shadow-[0_-12px_40px_-16px_rgb(0_0_0/0.35)] data-open:zoom-in-100 data-open:slide-in-from-bottom-10 data-closed:zoom-out-100 data-closed:slide-out-to-bottom-10 [&_[role=menuitem]]:min-h-9 [&_[role=menuitem]]:text-[13px] [&_[role=menuitemradio]]:min-h-9 [&_[role=menuitemradio]]:text-[13px] [&_[role=menuitemcheckbox]]:min-h-9";
 
 const SWIPE_CLOSE = 72;
 

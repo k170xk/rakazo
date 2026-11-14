@@ -10,13 +10,14 @@ import type {
 import {
   BotAvatar,
   Button,
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
   GroupAvatar,
   toast,
 } from "@rakazo/ui-web";
-import { Archive, ChevronDown, History, Loader2, MessagesSquare } from "lucide-react";
+import { Archive, History, Loader2, MessagesSquare, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
@@ -35,12 +36,13 @@ function filesLabel(count: number): string {
 }
 
 /**
- * One archive list: archived bots and groups, and archived Evolve chats.
- * Restore on an Evolve chat makes it a chatbot in the list above, the same as opening it used to.
+ * Archived bots, groups and Evolve chats. Opened from the space actions menu so the
+ * sidebar stays clear of the list.
  */
 export function EvolveArchive({
+  open,
+  onOpenChange,
   rpc,
-  hidden,
   archivedBots,
   archivedGroups,
   refreshBots,
@@ -48,8 +50,9 @@ export function EvolveArchive({
   setDeleteGroupTarget,
   onRestore,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   rpc: SpaceRpc;
-  hidden: boolean;
   archivedBots: Bot[];
   archivedGroups: Group[];
   refreshBots: (includeArchived?: boolean) => Promise<void>;
@@ -65,36 +68,47 @@ export function EvolveArchive({
   const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!open) return;
     let live = true;
+    setLoading(true);
     void (async () => {
       try {
+        await refreshBots(true).catch(() => undefined);
         const result = await rpc.evolveHistory.assistants();
-        if (!live || !result.available) return;
-        setLooks(new Map(result.assistants.map((assistant) => [assistant.id, assistant.look])));
-        const page = await rpc.evolveHistory.conversations({
-          search: "",
-          page: 0,
-          archived: false,
-        });
         if (!live) return;
-        setItems(page.conversations);
-        setNextPage(page.nextPage);
+        if (result.available) {
+          setLooks(new Map(result.assistants.map((assistant) => [assistant.id, assistant.look])));
+          const page = await rpc.evolveHistory.conversations({
+            search: "",
+            page: 0,
+            archived: false,
+          });
+          if (!live) return;
+          setItems(page.conversations);
+          setNextPage(page.nextPage);
+        } else {
+          setItems([]);
+          setNextPage(null);
+        }
       } catch {
-        // Evolve unreachable: the section stays hidden.
+        if (live) {
+          setItems([]);
+          setNextPage(null);
+        }
+      } finally {
+        if (live) setLoading(false);
       }
     })();
     return () => {
       live = false;
     };
-  }, [rpc]);
+  }, [open, rpc, refreshBots]);
 
   const chats = items.filter((item) => item.continuedIn.length === 0);
-  if (hidden || chats.length + archivedBots.length + archivedGroups.length === 0) {
-    return null;
-  }
+  const empty = !loading && chats.length + archivedBots.length + archivedGroups.length === 0;
 
   function drop(id: string) {
     setItems((current) => current.filter((item) => item.id !== id));
@@ -144,151 +158,179 @@ export function EvolveArchive({
   }
 
   return (
-    <Collapsible
-      open={expanded}
-      onOpenChange={setExpanded}
-      className={hidden ? "hidden" : "mt-2 border-t border-border pt-2"}
-      data-testid="evolve-archive"
-    >
-      <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-[13.5px] text-muted-foreground hover:bg-sidebar-accent">
-        <Archive className="size-4 shrink-0" aria-hidden="true" />
-        <span className="flex-1 text-start">{t`Archived`}</span>
-        <span className="text-xs">
-          {archivedBots.length + archivedGroups.length + chats.length}
-        </span>
-        <ChevronDown
-          className={`size-3.5 shrink-0 transition-transform ${expanded ? "" : "-rotate-90"}`}
-          aria-hidden="true"
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="flex flex-col gap-0.5">
-        {archivedBots.map((bot) => (
-          <div key={bot.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2">
-            <BotAvatar
-              avatarSet={bot.avatarSet}
-              color={bot.color}
-              identity={bot.id}
-              size={28}
-              status={bot.status}
-            />
-            <span className="min-w-0 flex-1 truncate text-[14px] text-foreground/75" dir="auto">
-              {bot.name}
-            </span>
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={() => void rpc.bots.restore({ botId: bot.id }).then(() => refreshBots(true))}
-            >
-              {t`Restore`}
-            </Button>
-            <Button
-              variant="ghost"
-              size="xs"
-              className="text-destructive hover:text-destructive"
-              aria-label={t`Delete ${bot.name}`}
-              onClick={() => setDeleteTarget(bot)}
-            >
-              {t`Delete`}
-            </Button>
-          </div>
-        ))}
-        {archivedGroups.map((group) => (
-          <div key={group.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2">
-            <GroupAvatar members={group.members} size={28} />
-            <span className="min-w-0 flex-1 truncate text-[14px] text-foreground/75" dir="auto">
-              {group.name}
-            </span>
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={() =>
-                void rpc.groups.restore({ groupId: group.id }).then(() => refreshBots(true))
-              }
-            >
-              {t`Restore`}
-            </Button>
-            <Button
-              variant="ghost"
-              size="xs"
-              className="text-destructive hover:text-destructive"
-              aria-label={t`Delete ${group.name}`}
-              onClick={() => setDeleteGroupTarget(group)}
-            >
-              {t`Delete`}
-            </Button>
-          </div>
-        ))}
-        {chats.map((item) => {
-          const look = looks.get(item.assistantId);
-          const working = busy === item.id;
-          return (
-            <div key={item.id} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5">
-              {look ? (
-                <span className="shrink-0" aria-hidden="true">
-                  <BotAvatar
-                    avatarSet={look.avatarSet}
-                    color={look.color}
-                    identity={look.identity}
-                    size={24}
-                  />
-                </span>
-              ) : (
-                <MessagesSquare
-                  className="size-4 shrink-0 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13.5px] text-foreground/85" dir="auto">
-                  {item.title}
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {item.assistantName} · {shortDate(item.lastMessageAt)}
-                </span>
-              </span>
-              <Button
-                variant="ghost"
-                size="xs"
-                disabled={working}
-                onClick={() => void restore(item.id)}
-              >
-                {t`Restore`}
-              </Button>
-              <Button
-                variant="ghost"
-                size="xs"
-                className="text-destructive hover:text-destructive"
-                disabled={working}
-                aria-label={t`Delete ${item.title}`}
-                onClick={() => {
-                  if (confirming === item.id) void remove(item.id);
-                  else setConfirming(item.id);
-                }}
-              >
-                {working ? (
-                  <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-                ) : confirming === item.id ? (
-                  t`Confirm`
-                ) : (
-                  t`Delete`
-                )}
-              </Button>
-            </div>
-          );
-        })}
-        {nextPage !== null ? (
-          <button
-            type="button"
-            disabled={loadingMore}
-            onClick={() => void loadMore()}
-            className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-[13px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        data-testid="evolve-archive"
+        className="flex max-h-[min(85dvh,640px)] w-[min(420px,calc(100vw-1.5rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
+      >
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
+          <Archive className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <DialogTitle className="min-w-0 flex-1 truncate text-[15px] font-medium">
+            {t`Archived`}
+          </DialogTitle>
+          <DialogClose
+            aria-label={t`Close`}
+            className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
           >
-            {loadingMore ? <Loader2 className="size-3.5 animate-spin" /> : null}
-            {t`Load more`}
-          </button>
-        ) : null}
-      </CollapsibleContent>
-    </Collapsible>
+            <X className="size-4" strokeWidth={1.8} />
+          </DialogClose>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto p-2">
+          {loading ? (
+            <div className="grid place-items-center py-10 text-muted-foreground">
+              <Loader2 className="size-5 animate-spin" aria-label={t`Loading`} />
+            </div>
+          ) : empty ? (
+            <p className="px-3 py-10 text-center text-sm text-muted-foreground">
+              {t`Nothing archived.`}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-0.5">
+              {archivedBots.map((bot) => (
+                <div key={bot.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2">
+                  <BotAvatar
+                    avatarSet={bot.avatarSet}
+                    color={bot.color}
+                    identity={bot.id}
+                    size={28}
+                    status={bot.status}
+                  />
+                  <span
+                    className="min-w-0 flex-1 truncate text-[14px] text-foreground/75"
+                    dir="auto"
+                  >
+                    {bot.name}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() =>
+                      void rpc.bots.restore({ botId: bot.id }).then(() => refreshBots(true))
+                    }
+                  >
+                    {t`Restore`}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="text-destructive hover:text-destructive"
+                    aria-label={t`Delete ${bot.name}`}
+                    onClick={() => {
+                      setDeleteTarget(bot);
+                      onOpenChange(false);
+                    }}
+                  >
+                    {t`Delete`}
+                  </Button>
+                </div>
+              ))}
+              {archivedGroups.map((group) => (
+                <div key={group.id} className="flex items-center gap-2 rounded-lg px-2.5 py-2">
+                  <GroupAvatar members={group.members} size={28} />
+                  <span
+                    className="min-w-0 flex-1 truncate text-[14px] text-foreground/75"
+                    dir="auto"
+                  >
+                    {group.name}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={() =>
+                      void rpc.groups.restore({ groupId: group.id }).then(() => refreshBots(true))
+                    }
+                  >
+                    {t`Restore`}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="text-destructive hover:text-destructive"
+                    aria-label={t`Delete ${group.name}`}
+                    onClick={() => {
+                      setDeleteGroupTarget(group);
+                      onOpenChange(false);
+                    }}
+                  >
+                    {t`Delete`}
+                  </Button>
+                </div>
+              ))}
+              {chats.map((item) => {
+                const look = looks.get(item.assistantId);
+                const working = busy === item.id;
+                return (
+                  <div key={item.id} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5">
+                    {look ? (
+                      <span className="shrink-0" aria-hidden="true">
+                        <BotAvatar
+                          avatarSet={look.avatarSet}
+                          color={look.color}
+                          identity={look.identity}
+                          size={24}
+                        />
+                      </span>
+                    ) : (
+                      <MessagesSquare
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13.5px] text-foreground/85" dir="auto">
+                        {item.title}
+                      </span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {item.assistantName} · {shortDate(item.lastMessageAt)}
+                      </span>
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      disabled={working}
+                      onClick={() => void restore(item.id)}
+                    >
+                      {t`Restore`}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      className="text-destructive hover:text-destructive"
+                      disabled={working}
+                      aria-label={t`Delete ${item.title}`}
+                      onClick={() => {
+                        if (confirming === item.id) void remove(item.id);
+                        else setConfirming(item.id);
+                      }}
+                    >
+                      {working ? (
+                        <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                      ) : confirming === item.id ? (
+                        t`Confirm`
+                      ) : (
+                        t`Delete`
+                      )}
+                    </Button>
+                  </div>
+                );
+              })}
+              {nextPage !== null ? (
+                <button
+                  type="button"
+                  disabled={loadingMore}
+                  onClick={() => void loadMore()}
+                  className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground"
+                >
+                  {loadingMore ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                  {t`Load more`}
+                </button>
+              ) : null}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

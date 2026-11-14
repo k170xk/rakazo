@@ -48,7 +48,7 @@ const ICON = "size-[17px] shrink-0";
 const STROKE = 1.8;
 
 function iconClass(layout: RibbonLayout) {
-  return layout === "bar" ? ICON : "size-5 shrink-0";
+  return layout === "bar" ? ICON : "size-4 shrink-0";
 }
 
 export type RibbonTabSpec = {
@@ -156,15 +156,15 @@ export function RibbonGroup({ label, children }: { label: string; children: Reac
   const id = useId();
   if (layout === "sheet") {
     return (
-      <section aria-labelledby={id} className="flex flex-col gap-2 [&:not(:has(>[role=group]>*))]:hidden">
-        <h3 id={id} className="px-1 text-[12px] font-medium text-muted-foreground">
+      <section aria-labelledby={id} className="flex flex-col gap-1.5 [&:not(:has(>[role=group]>*))]:hidden">
+        <h3 id={id} className="px-0.5 text-[11px] font-medium text-muted-foreground">
           {label}
         </h3>
         {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would add a border and legend layout. */}
         <div
           role="group"
           aria-labelledby={id}
-          className="grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2"
+          className="grid grid-cols-[repeat(auto-fill,minmax(3.75rem,1fr))] gap-1.5"
         >
           {children}
         </div>

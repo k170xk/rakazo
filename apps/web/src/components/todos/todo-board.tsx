@@ -330,6 +330,7 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
   return (
     <Dialog
       open
+      disablePointerDismissal
       onOpenChange={(open, details) => {
         const target = details.event?.target;
         if (
@@ -352,18 +353,18 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
         className="overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)]"
       >
         <div className="relative size-full">
-          <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 sm:gap-2">
+          <header className="absolute inset-x-0 top-0 z-10 flex h-10 items-center gap-1 overflow-hidden border-b border-border bg-muted px-1.5 sm:h-12 sm:gap-2 sm:px-2.5">
             <button
               type="button"
               aria-pressed={chatOpen}
               title={t`Show the chat beside the list`}
               aria-label={t`Chat`}
               onClick={() => setChatOpen((open) => !open)}
-              className={`${control} relative size-[35px]`}
+              className={`${control} relative size-8 sm:size-[35px]`}
             >
-              <MessageSquare className="size-[18px]" strokeWidth={1.7} />
+              <MessageSquare className="size-4 sm:size-[18px]" strokeWidth={1.7} />
               {running && !chatOpen ? (
-                <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
+                <span className="absolute end-1 top-1 size-1.5 rounded-full bg-primary sm:size-2" />
               ) : null}
             </button>
             <button
@@ -372,9 +373,9 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
               aria-label={t`New to-do list`}
               title={t`New to-do list`}
               onClick={() => void createList()}
-              className={`${control} size-[35px]`}
+              className={`${control} size-8 sm:size-[35px]`}
             >
-              <Plus className="size-[18px]" strokeWidth={1.7} />
+              <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </button>
             <DialogTitle className="sr-only">{selectedTitle}</DialogTitle>
             <DialogDescription className="sr-only">
@@ -481,13 +482,13 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
             <DialogClose
               ref={closeButton}
               aria-label={t`Close to do list`}
-              className={`${control} size-[35px]`}
+              className={`${control} size-8 sm:size-[35px]`}
             >
-              <X className="size-[18px]" strokeWidth={1.7} />
+              <X className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </DialogClose>
           </header>
           <div
-            className="absolute inset-x-0 top-12 bottom-0 flex"
+            className="absolute inset-x-0 top-10 bottom-0 flex sm:top-12"
             style={studioDockStyle(chatOpen, running)}
           >
             {chatOpen ? (
@@ -534,7 +535,7 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                     <div
                       role="tablist"
                       aria-label={t`To do list`}
-                      className="-mx-3 flex gap-1.5 overflow-x-auto px-3"
+                      className="-mx-3 flex gap-1.5 overflow-x-auto overscroll-x-contain px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                     >
                       {TODO_STATUSES.map((status) => (
                         <button

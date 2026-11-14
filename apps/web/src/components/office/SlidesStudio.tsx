@@ -14,6 +14,7 @@ import {
   Check,
   ChevronDown,
   Download,
+  History,
   Loader2,
   Plus,
   Presentation,
@@ -27,7 +28,7 @@ import { formatRelativeTime } from "../../lib/relative-time";
 import { selectedSpaceId } from "../../lib/rpc";
 import { useBoundSpaceId } from "../../lib/space-rpc";
 import { errorCode } from "../../lib/user-error";
-import { control, pill, StudioFrame, useStudioDock } from "../studio/StudioFrame";
+import { control, pill, StudioFrame, StudioMoreMenu, useStudioDock } from "../studio/StudioFrame";
 import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-send";
 import { documentDockPage } from "./context";
 import { useDocumentBotId } from "./document-bot";
@@ -510,12 +511,12 @@ export default function SlidesStudio({
               disabled={busy || uploader.busy}
               aria-label={t`New presentation`}
               title={t`New presentation`}
-              className={`${control} size-[35px] disabled:opacity-40`}
+              className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
             >
               {busy || uploader.busy ? (
                 <Loader2 className="size-[18px] animate-spin" strokeWidth={1.7} />
               ) : (
-                <Plus className="size-[18px]" strokeWidth={1.7} />
+                <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
               )}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
@@ -589,9 +590,20 @@ export default function SlidesStudio({
               {statusText}
             </span>
           ) : null}
+          <StudioMoreMenu>
+            <DropdownMenuItem disabled={!doc} onClick={() => void openHistory(true)}>
+              <History className="size-4" strokeWidth={1.8} />
+              <Trans>History</Trans>
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={!doc && !loadError} onClick={() => void download()}>
+              <Download className="size-4" />
+              <Trans>Download .pptx</Trans>
+            </DropdownMenuItem>
+          </StudioMoreMenu>
           <HistoryButton
             open={historyOpen}
             disabled={!doc}
+            className="max-sm:hidden"
             onOpenChange={(next) => void openHistory(next)}
           />
         </>
@@ -602,7 +614,7 @@ export default function SlidesStudio({
             disabled={!doc && !loadError}
             data-testid="slides-share"
             aria-label={t`Share`}
-            className={`${pill} disabled:opacity-40`}
+            className={`${pill} disabled:opacity-40 max-sm:hidden`}
           >
             <Share className="size-4" strokeWidth={1.8} />
             <span className="max-sm:sr-only">

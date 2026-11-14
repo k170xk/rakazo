@@ -80,7 +80,7 @@ export function CompactRibbon({
       data-ribbon=""
       data-compact=""
     >
-      <div className="flex h-[52px] items-center gap-1 ps-[max(0.375rem,env(safe-area-inset-left))] pe-[max(0.375rem,env(safe-area-inset-right))]">
+      <div className="flex h-10 items-center gap-0.5 ps-[max(0.375rem,env(safe-area-inset-left))] pe-[max(0.375rem,env(safe-area-inset-right))]">
         <button
           ref={picker}
           type="button"
@@ -89,10 +89,10 @@ export function CompactRibbon({
           aria-label={t`${open?.label ?? ""} tools`}
           data-testid={testId ? `${testId}-tab-picker` : undefined}
           onClick={() => setSheetOpen(true)}
-          className="flex h-11 shrink-0 items-center gap-1 rounded-full bg-background px-3.5 text-[14px] font-medium text-foreground shadow-xs ring-1 ring-foreground/[0.06] outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex h-8 shrink-0 items-center gap-0.5 rounded-full bg-background px-2.5 text-[12px] font-medium text-foreground shadow-xs ring-1 ring-foreground/[0.06] outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {open?.label}
-          <ChevronUp className="size-3.5 opacity-60" aria-hidden="true" />
+          <ChevronUp className="size-3 opacity-60" aria-hidden="true" />
         </button>
         <div className="relative min-w-0 flex-1">
           <div
@@ -101,7 +101,7 @@ export function CompactRibbon({
             aria-label={label}
             data-testid={testId ? `${testId}-quick` : undefined}
             onScroll={measure}
-            className="flex h-11 items-center gap-0.5 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex h-8 items-center gap-0.5 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {contextual.length ? (
               <>
@@ -110,7 +110,7 @@ export function CompactRibbon({
                     <Fragment key={tab.id}>{tab.content}</Fragment>
                   ))}
                 </RibbonLayoutProvider>
-                <span aria-hidden="true" className="mx-1 h-6 w-px shrink-0 bg-foreground/10" />
+                <span aria-hidden="true" className="mx-0.5 h-4 w-px shrink-0 bg-foreground/10" />
               </>
             ) : null}
             <RibbonLayoutProvider value={PINNED}>
@@ -118,18 +118,18 @@ export function CompactRibbon({
                 <Fragment key={tab.id}>{tab.content}</Fragment>
               ))}
             </RibbonLayoutProvider>
-            <span aria-hidden="true" className="mx-1 h-6 w-px shrink-0 bg-foreground/10" />
+            <span aria-hidden="true" className="mx-0.5 h-4 w-px shrink-0 bg-foreground/10" />
             <RibbonLayoutProvider value={QUICK}>{open?.content}</RibbonLayoutProvider>
           </div>
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-0 start-0 w-6 bg-gradient-to-r from-muted to-transparent transition-opacity rtl:bg-gradient-to-l ${
+            className={`pointer-events-none absolute inset-y-0 start-0 w-4 bg-gradient-to-r from-muted to-transparent transition-opacity rtl:bg-gradient-to-l ${
               edges.start ? "opacity-100" : "opacity-0"
             }`}
           />
           <span
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-y-0 end-0 w-8 bg-gradient-to-l from-muted to-transparent transition-opacity rtl:bg-gradient-to-r ${
+            className={`pointer-events-none absolute inset-y-0 end-0 w-6 bg-gradient-to-l from-muted to-transparent transition-opacity rtl:bg-gradient-to-r ${
               edges.end ? "opacity-100" : "opacity-0"
             }`}
           />
@@ -147,7 +147,7 @@ export function CompactRibbon({
           onClick={() => setSheetOpen(true)}
           className={quickControl}
         >
-          <Ellipsis className="size-5" strokeWidth={1.8} aria-hidden="true" />
+          <Ellipsis className="size-4" strokeWidth={1.8} aria-hidden="true" />
         </button>
       </div>
       {children}
@@ -168,12 +168,12 @@ export function CompactRibbon({
           <div className="px-2">
             <SheetGrip sheet={sheet} onClose={close} />
           </div>
-          <div className="flex shrink-0 items-center gap-2 ps-3 pe-2 pb-2">
+          <div className="flex shrink-0 items-center gap-1.5 ps-2 pe-1.5 pb-1.5">
             <SheetTitle className="sr-only">{label}</SheetTitle>
             <div
               role="tablist"
               aria-label={label}
-              className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {tabs.map((tab, index) => {
                 const selected = tab.id === open?.id;
@@ -189,7 +189,7 @@ export function CompactRibbon({
                     data-testid={testId ? `${testId}-sheet-tab-${tab.id}` : undefined}
                     onClick={() => onValueChange(tab.id)}
                     onKeyDown={(event) => onTabKey(event, index)}
-                    className={`h-10 shrink-0 rounded-full px-4 text-[14px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`h-8 shrink-0 rounded-full px-2.5 text-[12px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${
                       selected
                         ? "bg-background font-medium text-foreground shadow-xs ring-1 ring-foreground/[0.06]"
                         : "text-muted-foreground active:bg-foreground/[0.06]"
@@ -199,7 +199,7 @@ export function CompactRibbon({
                     {tab.contextual ? (
                       <span
                         aria-hidden="true"
-                        className="ms-1.5 inline-block size-1.5 rounded-full bg-primary align-middle"
+                        className="ms-1 inline-block size-1 rounded-full bg-primary align-middle"
                       />
                     ) : null}
                   </button>
@@ -208,16 +208,16 @@ export function CompactRibbon({
             </div>
             <SheetClose
               aria-label={t`Close`}
-              className="grid size-11 shrink-0 place-items-center rounded-full text-foreground outline-none active:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring"
+              className="grid size-8 shrink-0 place-items-center rounded-full text-foreground outline-none active:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <X className="size-5" strokeWidth={1.8} aria-hidden="true" />
+              <X className="size-4" strokeWidth={1.8} aria-hidden="true" />
             </SheetClose>
           </div>
           <div
             id={`${base}-panel`}
             role="tabpanel"
             aria-labelledby={open ? `${base}-tab-${open.id}` : undefined}
-            className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-3 pt-1 pb-2"
+            className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-2.5 pt-0.5 pb-2"
           >
             <RibbonLayoutProvider value={{ layout: "sheet", pass: "all", close }}>
               {open?.content}

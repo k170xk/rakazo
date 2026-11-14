@@ -233,9 +233,9 @@ function EmptyStudio({
         disabled={busy}
         aria-label={t`New blank document`}
         title={t`New blank document`}
-        className={`${control} size-[35px] disabled:opacity-40`}
+        className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
       >
-        <Plus className="size-[18px]" strokeWidth={1.7} />
+        <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
       </DropdownMenuTrigger>
     ) : (
       <button
@@ -245,9 +245,9 @@ function EmptyStudio({
         aria-label={t`New blank document`}
         title={t`New blank document`}
         onClick={() => void create()}
-        className={`${control} size-[35px] disabled:opacity-40`}
+        className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
       >
-        <Plus className="size-[18px]" strokeWidth={1.7} />
+        <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
       </button>
     );
 

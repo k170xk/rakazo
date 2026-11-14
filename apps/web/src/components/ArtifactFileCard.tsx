@@ -18,7 +18,7 @@ import {
   SquarePen,
   X,
 } from "lucide-react";
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useInRouterContext, useNavigate, useSearchParams } from "react-router-dom";
 import type { ArtifactTarget } from "../lib/artifact-open";
@@ -99,7 +99,7 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
 
   const type = fileType(props.name, props.mimeType);
   const office = officeFormatOfFile(props.name, props.mimeType);
-  const studioFormat = office && officeStudioReady(office) ? office : null;
+  const studioFormat = office && officeStudioReady(office) && inRouter ? office : null;
   const details = (
     <>
       <span
@@ -122,28 +122,38 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   return (
     <>
       <div className="w-[min(420px,100%)] min-w-0">
-        <BuiCard className="flex w-full min-w-[min(280px,100%)] items-center gap-2 overflow-hidden border border-border py-2.5 ps-3 pe-2.5 text-left text-foreground dark:border-transparent">
+        <BuiCard className="flex w-full min-w-0 flex-col gap-2.5 border border-border p-3 text-left text-foreground dark:border-transparent sm:flex-row sm:items-center sm:gap-2 sm:overflow-hidden sm:py-2.5 sm:ps-3 sm:pe-2.5">
           {previewable ? (
             <button
               ref={previewButton}
               type="button"
               aria-label={t`Preview ${props.name}`}
               onClick={() => setPreviewOpen(true)}
-              className="-my-1 -ms-1 flex min-w-0 flex-1 items-center gap-3 rounded-[14px] p-1 text-left hover:bg-accent"
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-[14px] text-left hover:bg-accent sm:-my-1 sm:-ms-1 sm:p-1"
             >
               {details}
             </button>
-          ) : (
-            <span className="flex min-w-0 flex-1 items-center gap-3">{details}</span>
-          )}
-          {studioFormat && inRouter ? (
-            <OpenInStudioPill
+          ) : studioFormat ? (
+            <OpenStudioHitArea
               name={props.name}
               artifactId={props.artifactId}
               format={studioFormat}
-            />
-          ) : null}
-          <DownloadPill name={props.name} onDownload={startDownload} />
+            >
+              {details}
+            </OpenStudioHitArea>
+          ) : (
+            <span className="flex min-w-0 flex-1 items-center gap-3">{details}</span>
+          )}
+          <span className="grid w-full grid-cols-1 gap-2 sm:ms-auto sm:flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-1.5">
+            {studioFormat ? (
+              <OpenInStudioPill
+                name={props.name}
+                artifactId={props.artifactId}
+                format={studioFormat}
+              />
+            ) : null}
+            <DownloadPill name={props.name} onDownload={startDownload} />
+          </span>
         </BuiCard>
         {downloadError ? <DownloadError message={downloadError} /> : null}
       </div>
@@ -163,6 +173,44 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   );
 }
 
+/** Navigates to the document studio for this file. Only mounted inside the app router. */
+function useOpenStudio(artifactId: string, format: DocumentFormat) {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  return () => {
+    const next = withShellOverlay(searchParams, { kind: "doc", id: artifactId, format });
+    next.delete(PAGE_PARAM);
+    next.delete(APP_VIEW_PARAM);
+    navigate({ search: searchString(next) }, { replace: true });
+  };
+}
+
+/** Tapping the file name/icon opens the studio on phones, where Open/Edit is easy to miss. */
+function OpenStudioHitArea({
+  name,
+  artifactId,
+  format,
+  children,
+}: {
+  name: string;
+  artifactId: string;
+  format: DocumentFormat;
+  children: ReactNode;
+}) {
+  const { t } = useLingui();
+  const open = useOpenStudio(artifactId, format);
+  return (
+    <button
+      type="button"
+      aria-label={t`Open or edit ${name}`}
+      onClick={open}
+      className="flex min-w-0 flex-1 items-center gap-3 rounded-[14px] text-left hover:bg-accent sm:-my-1 sm:-ms-1 sm:p-1"
+    >
+      {children}
+    </button>
+  );
+}
+
 /** Opens the file in its document studio; the studio reads any version id as its family. */
 function OpenInStudioPill({
   name,
@@ -174,23 +222,17 @@ function OpenInStudioPill({
   format: DocumentFormat;
 }) {
   const { t } = useLingui();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const open = useOpenStudio(artifactId, format);
   return (
     <button
       type="button"
       aria-label={t`Open or edit ${name}`}
       data-testid="artifact-open-studio"
-      onClick={() => {
-        const next = withShellOverlay(searchParams, { kind: "doc", id: artifactId, format });
-        next.delete(PAGE_PARAM);
-        next.delete(APP_VIEW_PARAM);
-        navigate({ search: searchString(next) }, { replace: true });
-      }}
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border px-2.5 text-[13px] font-medium text-foreground hover:bg-accent"
+      onClick={open}
+      className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border px-3 text-[13px] font-medium text-foreground hover:bg-accent sm:h-8 sm:flex-none sm:rounded-lg sm:px-2.5"
     >
-      <SquarePen aria-hidden className="size-3.5" strokeWidth={2} />
-      {t`Open/Edit`}
+      <SquarePen aria-hidden className="size-3.5 shrink-0" strokeWidth={2} />
+      <span className="truncate">{t`Open/Edit`}</span>
     </button>
   );
 }
@@ -209,10 +251,10 @@ function DownloadPill({ name, onDownload }: { name: string; onDownload: () => Pr
         setBusy(true);
         void onDownload().finally(() => setBusy(false));
       }}
-      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-foreground px-2.5 text-[13px] font-medium text-background hover:bg-foreground/85 disabled:opacity-60"
+      className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl bg-foreground px-3 text-[13px] font-medium text-background hover:bg-foreground/85 disabled:opacity-60 sm:h-8 sm:flex-none sm:rounded-lg sm:px-2.5"
     >
-      <Download aria-hidden className="size-3.5" strokeWidth={2} />
-      {busy ? t`Downloading…` : t`Download`}
+      <Download aria-hidden className="size-3.5 shrink-0" strokeWidth={2} />
+      <span className="truncate">{busy ? t`Downloading…` : t`Download`}</span>
     </button>
   );
 }
