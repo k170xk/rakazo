@@ -461,12 +461,12 @@ describe("lazy tool catalog", () => {
     expect(() => loadCatalogEntry(entries, { id: "missing" })).toThrow(/unknown/i);
   });
 
-  it("does not execute args when JSON Schema is unsupported", async () => {
+  it("does not execute args that a schema Zod cannot build rejects", async () => {
     const entries = catalogEntries([
       {
         name: "exotic",
-        description: "Unsupported schema",
-        // unevaluatedProperties is rejected by z.fromJSONSchema
+        description: "Schema Zod cannot build",
+        // unevaluatedProperties is rejected by z.fromJSONSchema, so Ajv validates it.
         inputSchema: {
           type: "object",
           properties: { payload: { type: "string" } },
@@ -496,6 +496,73 @@ describe("lazy tool catalog", () => {
 
     await expect(execute()).rejects.toThrow();
     expect(executeResolved).not.toHaveBeenCalled();
+  });
+
+  it("validates schemas that use keywords Zod cannot build, such as not", () => {
+    // Shape of Cursor's createAgent image entry: a URL or inline data, never both.
+    const image = {
+      type: "object",
+      oneOf: [
+        { not: { required: ["url"] }, required: ["data", "mimeType"] },
+        { not: { anyOf: [{ required: ["data"] }, { required: ["mimeType"] }] }, required: ["url"] },
+      ],
+      properties: {
+        url: { type: "string", format: "uri" },
+        data: { type: "string" },
+        mimeType: { type: "string" },
+      },
+    };
+    const schema = {
+      type: "object",
+      required: ["body"],
+      properties: {
+        body: {
+          type: "object",
+          required: ["prompt"],
+          properties: {
+            prompt: { type: "string", minLength: 1 },
+            mode: { enum: ["agent", "plan"], default: "agent" },
+            images: { type: "array", items: image },
+          },
+        },
+      },
+    };
+    expect(
+      parseConnectorToolArgs(schema, {
+        body: { prompt: "Plan it", images: [{ url: "https://example.com/a.png" }] },
+      }),
+    ).toEqual({
+      body: { prompt: "Plan it", mode: "agent", images: [{ url: "https://example.com/a.png" }] },
+    });
+    expect(() =>
+      parseConnectorToolArgs(schema, {
+        body: {
+          prompt: "Plan it",
+          images: [{ url: "https://example.com/a.png", data: "x", mimeType: "image/png" }],
+        },
+      }),
+    ).toThrow(/invalid/i);
+    expect(() => parseConnectorToolArgs(schema, { body: { mode: "plan" } })).toThrow(/invalid/i);
+    expect(() =>
+      parseConnectorToolArgs(schema, { body: { prompt: "x", images: [{ url: "not a uri" }] } }),
+    ).toThrow(/invalid/i);
+  });
+
+  it("validates conditional and dependent schemas", () => {
+    const schema = {
+      type: "object",
+      properties: { kind: { type: "string" }, url: { type: "string" } },
+      if: { properties: { kind: { const: "link" } } },
+      // biome-ignore lint/suspicious/noThenProperty: JSON Schema keyword
+      then: { required: ["url"] },
+      dependentRequired: { url: ["kind"] },
+    };
+    expect(parseConnectorToolArgs(schema, { kind: "link", url: "u" })).toEqual({
+      kind: "link",
+      url: "u",
+    });
+    expect(() => parseConnectorToolArgs(schema, { kind: "link" })).toThrow(/invalid/i);
+    expect(() => parseConnectorToolArgs(schema, { url: "u" })).toThrow(/invalid/i);
   });
 
   it("validates args against local refs that point inside the schema", () => {

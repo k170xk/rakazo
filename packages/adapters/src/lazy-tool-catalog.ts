@@ -4,6 +4,10 @@ import type {
   ConnectorRoute,
   ConnectorTool,
 } from "@rakazo/adapter-kit";
+import type { ValidateFunction } from "ajv";
+import { Ajv } from "ajv";
+import { Ajv2020 } from "ajv/dist/2020.js";
+import addFormatsModule from "ajv-formats";
 import { z } from "zod";
 import { catalogIdForRoute } from "./approval-effect.js";
 
@@ -360,12 +364,54 @@ export function parseConnectorToolArgs(
       "Tool schema is unsupported: patternProperties with additionalProperties false",
     );
   }
-  const schema = z.fromJSONSchema(hoistPointerRefs(inputSchema) as never);
+  let schema: z.ZodType;
+  try {
+    schema = z.fromJSONSchema(hoistPointerRefs(inputSchema) as never);
+  } catch {
+    // Zod refuses some standard keywords (not, if/then/else, dependentSchemas,
+    // unevaluatedProperties), which real APIs such as Cursor's use.
+    return validateWithAjv(inputSchema, args);
+  }
   const parsed = schema.safeParse(args);
   if (!parsed.success) {
     throw new Error(`Tool arguments are invalid: ${z.prettifyError(parsed.error)}`);
   }
   return parsed.data as Record<string, unknown>;
+}
+
+type AddFormats = (ajv: Ajv) => Ajv;
+const addFormats = ((addFormatsModule as unknown as { default?: AddFormats }).default ??
+  addFormatsModule) as unknown as AddFormats;
+const ajvValidators = new WeakMap<object, ValidateFunction>();
+
+function validateWithAjv(
+  inputSchema: Record<string, unknown>,
+  args: Record<string, unknown>,
+): Record<string, unknown> {
+  let validate = ajvValidators.get(inputSchema);
+  if (!validate) {
+    const legacyDraft =
+      typeof inputSchema.$schema === "string" && /draft-0[467]/.test(inputSchema.$schema);
+    const options = { strict: false, allErrors: true, useDefaults: true } as const;
+    const ajv = legacyDraft ? new Ajv(options) : new Ajv2020(options);
+    addFormats(ajv);
+    try {
+      validate = ajv.compile(inputSchema);
+    } catch (error) {
+      throw new Error(
+        `Tool schema is unsupported: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    ajvValidators.set(inputSchema, validate);
+  }
+  const data = structuredClone(args);
+  if (!validate(data)) {
+    const issues = (validate.errors ?? [])
+      .slice(0, 10)
+      .map((issue) => `${issue.instancePath || "(root)"} ${issue.message ?? "is invalid"}`);
+    throw new Error(`Tool arguments are invalid: ${issues.join("; ")}`);
+  }
+  return data;
 }
 
 // Values under these keywords are data, so a `$ref` key inside them is not a reference.
