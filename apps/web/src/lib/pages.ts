@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock, StudioNoteChip } from "@rakazo/contracts";
 import { PAGE_RUNTIME_PATH, pageReply, pageReplyText, pageViewerDocument } from "@rakazo/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,7 +12,8 @@ import {
 } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSpaceQueries } from "./query";
-import { sameStudioCards, type StudioCard } from "./studio-activity";
+import type { StudioCard } from "./studio-activity";
+import { sameStudioCards } from "./studio-activity";
 import { errorCode } from "./user-error";
 
 /** The search parameter naming the page open full screen over a chat. */
@@ -102,10 +103,20 @@ export function usePageDocument(
   return { document: viewerDocument, failed: runtime.isError && runtime.data === undefined, retry };
 }
 
+type DockPage = {
+  id?: string;
+  title?: string;
+  note?: string;
+  /** A document studio's note without the selection, sent when the person drops it. */
+  bareNote?: string;
+  /** A document studio's context chip; its label names the selection when there is one. */
+  chip?: StudioNoteChip & { bareLabel: string; hasSelection: boolean };
+};
+
 type Dock = {
   node: HTMLElement | null;
   /** A page, or a studio with nothing open yet (a note and no id). */
-  page: { id?: string; title?: string; note?: string } | null;
+  page: DockPage | null;
   /** Where the chat's transcript shows beside an open app, so its steps stay in view. */
   chat?: HTMLElement | null;
   /** The chat's bot is working on a reply. */
@@ -127,6 +138,8 @@ export function createPageSession() {
   const submitListeners = new Set<(text: string) => void>();
   // The next send is a new app, so it is not attached to the app already open.
   let plainSend = false;
+  // The person dropped the document selection for the next message; the document stays.
+  let selectionDropped = false;
   return {
     rememberOpener() {
       const element = document.activeElement;
@@ -158,11 +171,16 @@ export function createPageSession() {
           merged.page?.title === dock.page?.title &&
           merged.page?.id === dock.page?.id &&
           (merged.page?.note ?? "") === (dock.page?.note ?? "") &&
+          (merged.page?.bareNote ?? "") === (dock.page?.bareNote ?? "") &&
+          (merged.page?.chip?.label ?? "") === (dock.page?.chip?.label ?? "") &&
+          (merged.page?.chip?.title ?? "") === (dock.page?.chip?.title ?? "") &&
           (merged.chat ?? null) === (dock.chat ?? null) &&
           Boolean(merged.running) === Boolean(dock.running) &&
           sameStudioCards(merged.activity, dock.activity)
         )
           return;
+        // A new selection is offered again, even after the last one was dropped.
+        if (merged.page?.chip?.label !== dock.page?.chip?.label) selectionDropped = false;
         dock = merged;
         for (const listener of dockListeners) listener();
       },
@@ -171,6 +189,14 @@ export function createPageSession() {
         return () => dockListeners.delete(listener);
       },
       get: () => dock,
+      /** Leaves the document selection out of the next message; the document stays attached. */
+      dropSelection() {
+        if (selectionDropped || !dock.page?.chip?.hasSelection) return;
+        selectionDropped = true;
+        dock = { ...dock };
+        for (const listener of dockListeners) listener();
+      },
+      selectionDropped: () => selectionDropped,
     },
     /** A page's reply button hands its text to the chat's composer; the user still sends it. */
     offerReply(text: unknown) {
@@ -205,8 +231,16 @@ export function createPageSession() {
     ): { text: string; replyToMessageId?: string } {
       const fresh = plainSend;
       plainSend = false;
+      const dropped = selectionDropped;
+      if (dropped) {
+        selectionDropped = false;
+        dock = { ...dock };
+        for (const listener of dockListeners) listener();
+      }
       // A new app is not a change to the one already open. A blank studio still says so.
-      const attached = fresh && dock.page?.id ? null : dock.page;
+      const open = fresh && dock.page?.id ? null : dock.page;
+      const attached =
+        open && dropped && open.bareNote !== undefined ? { ...open, note: open.bareNote } : open;
       return pageReply(text, messages, attached, chosenReplyId);
     },
   };

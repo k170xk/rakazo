@@ -1,3 +1,6 @@
+import type { DocumentFormat } from "@rakazo/contracts";
+import { DocumentFormatSchema } from "@rakazo/contracts";
+
 const SETTINGS_SECTIONS = [
   "general",
   "organization",
@@ -36,9 +39,13 @@ export type ShellOverlay =
   | { kind: "todos" }
   | { kind: "whiteboards" }
   | { kind: "apps" }
+  /** A Word, PowerPoint or Excel studio: `?doc=<rootArtifactId>[&kind=docx]`; no id opens the newest. */
+  | { kind: "doc"; id: string | null; format: DocumentFormat | null }
   | null;
 
 const OVERLAY_KEYS = [
+  "doc",
+  "kind",
   "settings",
   "space",
   "integrations",
@@ -70,6 +77,14 @@ export function readShellOverlay(params: URLSearchParams): ShellOverlay {
   if (params.has("todos")) return { kind: "todos" };
   if (params.has("whiteboards")) return { kind: "whiteboards" };
   if (params.has("apps")) return { kind: "apps" };
+  if (params.has("doc")) {
+    const format = DocumentFormatSchema.safeParse(params.get("kind"));
+    return {
+      kind: "doc",
+      id: params.get("doc") || null,
+      format: format.success ? format.data : null,
+    };
+  }
   if (params.has("mcp")) {
     const serverId = params.get("mcp");
     return serverId ? { kind: "mcp", serverId } : { kind: "mcp" };
@@ -88,6 +103,9 @@ export function withShellOverlay(params: URLSearchParams, overlay: ShellOverlay)
     if (overlay.spaceId) next.set("space", overlay.spaceId);
   } else if (overlay?.kind === "mcp") {
     next.set("mcp", overlay.serverId ?? "");
+  } else if (overlay?.kind === "doc") {
+    next.set("doc", overlay.id ?? "");
+    if (overlay.format) next.set("kind", overlay.format);
   } else if (overlay) {
     next.set(overlay.kind, "");
   }

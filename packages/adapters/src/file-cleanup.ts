@@ -12,6 +12,7 @@ import {
   isPinned,
   listStoredItems,
   localHomePath,
+  MADE_VERSION_SQL,
   pinsForBots,
   sweepComputerFiles,
 } from "./file-retention.js";
@@ -106,7 +107,8 @@ export function cleanupDue(
 }
 
 /**
- * Deletes files bots attached in chats once every version is older than the retention. Files
+ * Deletes files bots attached in chats, with any versions the person saved from a studio, once
+ * every version is older than the retention. Files
  * people uploaded themselves are never touched. Rows go first, so a chat never points at a
  * record whose file is half gone; a stored file is removed only when no row still names it.
  */
@@ -124,7 +126,7 @@ export async function sweepChatAttachments(deps: {
         SELECT COALESCE("rootArtifactId", id) AS family
         FROM "artifacts"
         GROUP BY 1
-        HAVING max("createdAt") < ${cutoff} AND bool_and("runId" IS NOT NULL)
+        HAVING max("createdAt") < ${cutoff} AND bool_and(${MADE_VERSION_SQL})
         LIMIT ${FAMILY_BATCH}
       `),
     );
@@ -262,7 +264,7 @@ export async function expiringFilesByPerson(deps: {
           max("createdAt") AS "createdAt"
         FROM "artifacts"
         GROUP BY COALESCE("rootArtifactId", id)
-        HAVING bool_and("runId" IS NOT NULL)
+        HAVING bool_and(${MADE_VERSION_SQL})
           AND max("createdAt") > ${new Date(deps.now - shift)}
           AND max("createdAt") <= ${new Date(until - shift)}
       `),

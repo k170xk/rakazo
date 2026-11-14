@@ -191,6 +191,7 @@ import {
 import { keepAdminsOnFullComputers } from "./company-admin.js";
 import { crossSiteGuard } from "./cross-site-guard.js";
 import { cspReportRoutes } from "./csp-report.js";
+import { mountDocumentVersionsRoute } from "./documents.js";
 import { configuredEmailProvider } from "./email.js";
 import type { AppEnv } from "./env.js";
 import { loadEnv } from "./env.js";
@@ -901,6 +902,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     email,
     onEmailError,
     dataDir: env.dataDir,
+    toolRunner,
     billing,
     messagingInstallations,
     messaging: {
@@ -1189,6 +1191,18 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   });
   mountAccountExportRoute(app, { prisma, auth, artifacts, home });
   mountArtifactDownloadRoute(app, { prisma, auth, artifacts });
+  mountDocumentVersionsRoute(
+    app,
+    {
+      prisma,
+      artifacts,
+      home,
+      dataDir: env.dataDir,
+      sandbox,
+      maxUploadSizeBytes: env.maxUploadSizeBytes,
+    },
+    sessionActor,
+  );
   mountStorageDownloadRoute(app, { prisma, auth, artifacts, home, dataDir: env.dataDir, sandbox });
   mountAuditExportRoute(app, { prisma, sessionActor });
   mountVoiceHttpRoutes(app, { prisma, secrets, env, evolvePlugins }, async (c) => {

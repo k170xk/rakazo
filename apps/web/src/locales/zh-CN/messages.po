@@ -13,16 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. js-lingui-explicit-id
-#: src/lib/browser-notifications.ts
-#~ msgid "Bot"
-#~ msgstr "Bot"
-
-#. js-lingui-explicit-id
-#: src/lib/run-error.ts
-#~ msgid "Connect a model in Settings before running bots."
-#~ msgstr "运行机器人前，请先在设置中连接模型。"
-
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
 msgstr ""
@@ -55,9 +45,22 @@ msgstr ""
 msgid "(cleared)"
 msgstr ""
 
+#: src/components/office/sheet/history.tsx
+msgid "(empty)"
+msgstr "（空）"
+
 #: src/components/EmailDraftCard.tsx
 msgid "(no subject)"
 msgstr ""
+
+#: src/components/office/slides/history.tsx
+msgid "(no text)"
+msgstr "（无文本）"
+
+#. placeholder {0}: group.total - group.cells.length
+#: src/components/office/sheet/history.tsx
+msgid "{0, plural, one {… and # more changed cell} other {… and # more changed cells}}"
+msgstr "{0, plural, other {… 另有 # 个单元格已更改}}"
 
 #. placeholder {0}: state.staff.accounts
 #: src/pages/AdminCompanyPage.tsx
@@ -69,20 +72,15 @@ msgstr ""
 msgid "{0, plural, one {# agent has its own model:} other {# agents have their own model:}}"
 msgstr ""
 
-#. placeholder {0}: pinned.length
-#: src/pages/model-settings/space-bots-model.tsx
-#~ msgid "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
-#~ msgstr "{0, plural, one {# 个 Bot 使用自己的模型：} other {# 个 Bot 使用自己的模型：}}"
-
 #. placeholder {0}: data.totals.unmeasuredCalls
 #: src/pages/AdminStaffSpending.tsx
 msgid "{0, plural, one {# call reported no cost, usually because it failed before the model replied, and is left out of the totals.} other {# calls reported no cost, usually because they failed before the model replied, and are left out of the totals.}}"
 msgstr ""
 
-#. placeholder {0}: usage.unmeasuredCalls
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "{0, plural, one {# call reported no cost, usually because it failed before the model replied. It is not included in the totals.} other {# calls reported no cost, usually because they failed before the model replied. They are not included in the totals.}}"
-msgstr ""
+#. placeholder {0}: diff.cells
+#: src/components/office/sheet/history.tsx
+msgid "{0, plural, one {# cell changed} other {# cells changed}}"
+msgstr "{0, plural, other {已更改 # 个单元格}}"
 
 #. placeholder {0}: servers.length
 #: src/pages/PluginsOverlay.tsx
@@ -114,6 +112,21 @@ msgstr ""
 msgid "{0, plural, one {# more} other {# more}}"
 msgstr "{0, plural, one {还有 # 个} other {还有 # 个}}"
 
+#. placeholder {0}: diff.added
+#: src/components/office/word/history.tsx
+msgid "{0, plural, one {# paragraph added} other {# paragraphs added}}"
+msgstr "{0, plural, other {已添加 # 个段落}}"
+
+#. placeholder {0}: diff.changed
+#: src/components/office/word/history.tsx
+msgid "{0, plural, one {# paragraph edited} other {# paragraphs edited}}"
+msgstr "{0, plural, other {已编辑 # 个段落}}"
+
+#. placeholder {0}: diff.removed
+#: src/components/office/word/history.tsx
+msgid "{0, plural, one {# paragraph removed} other {# paragraphs removed}}"
+msgstr "{0, plural, other {已删除 # 个段落}}"
+
 #. placeholder {0}: group.userIds.length
 #: src/pages/AdminAccess.tsx
 msgid "{0, plural, one {# person} other {# people}}"
@@ -123,6 +136,21 @@ msgstr ""
 #: src/components/integrations/skills-dialog.tsx
 msgid "{0, plural, one {# skill} other {# skills}}"
 msgstr "{0, plural, one {# 个技能} other {# 个技能}}"
+
+#. placeholder {0}: diff.added
+#: src/components/office/slides/history.tsx
+msgid "{0, plural, one {# slide added} other {# slides added}}"
+msgstr "{0, plural, other {已添加 # 张幻灯片}}"
+
+#. placeholder {0}: diff.moved
+#: src/components/office/slides/history.tsx
+msgid "{0, plural, one {# slide moved} other {# slides moved}}"
+msgstr "{0, plural, other {已移动 # 张幻灯片}}"
+
+#. placeholder {0}: diff.removed
+#: src/components/office/slides/history.tsx
+msgid "{0, plural, one {# slide removed} other {# slides removed}}"
+msgstr "{0, plural, other {已删除 # 张幻灯片}}"
 
 #. placeholder {0}: availability.spaceIds.length
 #. placeholder {0}: chosen.length
@@ -155,11 +183,6 @@ msgstr ""
 msgid "{0, plural, one {Files agents attach in chats are deleted # day after they were made.} other {Files agents attach in chats are deleted # days after they were made.}}"
 msgstr ""
 
-#. placeholder {0}: data.chatRetentionDays
-#: src/components/StorageDialog.tsx
-#~ msgid "{0, plural, one {Files bots attach in chats are deleted # day after they were made.} other {Files bots attach in chats are deleted # days after they were made.}}"
-#~ msgstr ""
-
 #. placeholder {0}: data.retentionDays
 #: src/pages/shell/files-tab.tsx
 msgid "{0, plural, one {Files nobody changes for # day are deleted automatically. Pin anything you want to keep.} other {Files nobody changes for # days are deleted automatically. Pin anything you want to keep.}}"
@@ -174,11 +197,6 @@ msgstr ""
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{0, plural, one {Switch # agent to the space default?} other {Switch # agents to the space default?}}"
 msgstr ""
-
-#. placeholder {0}: pinned.length
-#: src/pages/model-settings/space-bots-model.tsx
-#~ msgid "{0, plural, one {Switch # bot to the space default?} other {Switch # bots to the space default?}}"
-#~ msgstr "{0, plural, one {将 # 个 Bot 切换为工作区默认？} other {将 # 个 Bot 切换为工作区默认？}}"
 
 #. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
 #: src/pages/model-settings/connection-controls.tsx
@@ -321,12 +339,6 @@ msgstr ""
 msgid "{0} on agent computers · {1} attached in chats."
 msgstr ""
 
-#. placeholder {0}: formatSize(data.computerBytes)
-#. placeholder {1}: formatSize(data.chatBytes)
-#: src/components/StorageDialog.tsx
-#~ msgid "{0} on bot computers · {1} attached in chats."
-#~ msgstr ""
-
 #. placeholder {0}: questions.length
 #: src/components/LearningClinicCard.tsx
 msgid "{0} questions · pass mark {passPercent}%"
@@ -362,11 +374,6 @@ msgstr ""
 msgid "{0} was removed by your company's file cleanup. Ask the agent to make it again."
 msgstr ""
 
-#. placeholder {0}: props.name
-#: src/components/ArtifactFileCard.tsx
-#~ msgid "{0} was removed by your company's file cleanup. Ask the bot to make it again."
-#~ msgstr ""
-
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
@@ -383,10 +390,6 @@ msgstr ""
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # agent?} other {Delete {name} and its # agents?}}"
 msgstr ""
-
-#: src/pages/shell/dialogs.tsx
-#~ msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
-#~ msgstr "{botCount, plural, other {删除 {name} 及其 # 个机器人？}}"
 
 #: src/pages/shell/computer-view.tsx
 msgid "{botName}’s computer"
@@ -454,6 +457,10 @@ msgstr "{days} 天前"
 msgid "{daysLeft, plural, =0 {Deleted today} one {Deleted in # day} other {Deleted in # days}}"
 msgstr ""
 
+#: src/components/office/slides/history.tsx
+msgid "{edited, plural, one {# slide edited} other {# slides edited}}"
+msgstr "{edited, plural, other {已编辑 # 张幻灯片}}"
+
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
 msgstr "第 {from}–{to} 行，共 {total} 行"
@@ -469,6 +476,10 @@ msgstr ""
 #: src/components/markdown-copy.tsx
 msgid "{header}, column {index}"
 msgstr "{header}，第 {index} 列"
+
+#: src/components/office/word/history.tsx
+msgid "{hidden, plural, one {… and # more changed paragraph} other {… and # more changed paragraphs}}"
+msgstr "{hidden, plural, other {… 另有 # 个段落已更改}}"
 
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
@@ -505,10 +516,6 @@ msgstr ""
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{moved, plural, one {# agent now uses the space default.} other {# agents now use the space default.}}"
 msgstr ""
-
-#: src/pages/model-settings/space-bots-model.tsx
-#~ msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
-#~ msgstr "{moved, plural, one {# 个 Bot 已改用工作区默认。} other {# 个 Bot 已改用工作区默认。}}"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{name} (same name as a built-in skill)"
@@ -640,6 +647,10 @@ msgstr "{provider}响应超时。请重试。"
 msgid "{reads} only read Evolve, {files} only make new files, and {changes} add, edit or delete Evolve records. Those always show the person an approval card first and follow the AI safeguards."
 msgstr ""
 
+#: src/components/office/SheetStudio.tsx
+msgid "{ref} ({count} cells)"
+msgstr "{ref}（{count} 个单元格）"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "剩余 {remaining}"
@@ -651,6 +662,10 @@ msgstr "{seats, plural, one {# 个席位} other {# 个席位}}"
 #: src/pages/shell/drawings-dialog.tsx
 msgid "{selectedCount} / {maxPages} pages selected"
 msgstr ""
+
+#: src/components/office/sheet/history.tsx
+msgid "{sheets, plural, one {on # sheet} other {on # sheets}}"
+msgstr "{sheets, plural, other {涉及 # 个工作表}}"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
@@ -767,10 +782,6 @@ msgstr "什么都做一点"
 msgid "A blank agent"
 msgstr ""
 
-#: src/pages/shell/create-bot-dialog.tsx
-#~ msgid "A blank bot"
-#~ msgstr ""
-
 #: src/pages/SharedChats.tsx
 #: src/pages/Shell.tsx
 msgid "A colleague"
@@ -786,6 +797,28 @@ msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "A deadline with the same name and date as one already on the project is not added again."
+msgstr ""
+
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+msgid "A newer version arrived first, so it has been loaded. Restore again if you still want the older one."
+msgstr "较新的版本先到达，因此已加载该版本。如果仍需要旧版本，请再次恢复。"
+
+#: src/components/office/WordStudio.tsx
+msgid "A newer version of this document was saved, so it has been loaded. Make your last change again."
+msgstr "此文档已保存了较新的版本，因此已加载该版本。请重新进行上一次更改。"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "A newer version of this presentation was saved, so it has been loaded. Make your last change again."
+msgstr "此演示文稿已保存了较新的版本，因此已加载该版本。请重新进行上一次更改。"
+
+#: src/components/office/SheetStudio.tsx
+msgid "A newer version of this spreadsheet was saved, so it has been loaded. Make your last change again."
+msgstr "此电子表格已保存了较新的版本，因此已加载该版本。请重新进行上一次更改。"
+
+#: src/components/apps/AppStudio.tsx
+msgid "A place to build the work you do"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -808,10 +841,6 @@ msgstr ""
 msgid "A separate work space. It opens straight away, with its own agents and apps."
 msgstr ""
 
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "A separate work space. It opens straight away, with its own bots and apps."
-#~ msgstr ""
-
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -822,8 +851,20 @@ msgstr "已在 <0>{0}</0> 打开登录页。请在那里输入验证码，这个
 msgid "a site"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "A site diary for the visits I make"
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "a spreadsheet import"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A studio for each kind of work"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "A studio opens over the chat, with the conversation on the left and the work on the right. Ask for a change and that studio updates. We are starting with three."
 msgstr ""
 
 #: src/pages/model-settings/use-model-settings.ts
@@ -834,10 +875,6 @@ msgstr "订阅凭据已安全存储。"
 msgid "A team inside this work space, with its own agents, chats and files."
 msgstr ""
 
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "A team inside this work space, with its own bots, chats and files."
-#~ msgstr ""
-
 #: src/components/tour/ocsc-tour.tsx
 msgid "A team keeps its chats and files separate from the rest of the work space"
 msgstr ""
@@ -846,13 +883,13 @@ msgstr ""
 msgid "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "A workbook needs at least one sheet."
+msgstr "工作簿至少需要一个工作表。"
+
 #: src/pages/KnowledgeSection.tsx
 msgid "About {kb} KB of memory no longer reaches the agent."
 msgstr ""
-
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "About {kb} KB of memory no longer reaches the bot."
-#~ msgstr ""
 
 #: src/components/InfoTooltip.tsx
 msgid "About {label}"
@@ -874,6 +911,23 @@ msgstr ""
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "About one in ten projects has no Design Team set in Evolve."
 msgstr ""
+
+#: src/components/office/word/ReviewPanel.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Accept"
+msgstr "接受"
+
+#: src/components/office/word/ReviewPanel.tsx
+msgid "Accept all"
+msgstr "全部接受"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Accept all changes"
+msgstr "接受所有修订"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Accept this change"
+msgstr "接受此修订"
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Accepted: PDF. Select a file to preview and choose pages."
@@ -917,6 +971,10 @@ msgstr "{name} 的账户菜单"
 msgid "Acronyms, product names and how to spell them"
 msgstr ""
 
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Action"
+msgstr ""
+
 #. placeholder {0}: bot.name
 #. placeholder {0}: file.path
 #. placeholder {0}: group.spaceName
@@ -951,6 +1009,7 @@ msgid "Actual size"
 msgstr ""
 
 #: src/components/apps/AppDataPanel.tsx
+#: src/components/EmailFilingSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/SecretAskCard.tsx
@@ -967,6 +1026,10 @@ msgstr "添加"
 msgid "Add {0} to the group"
 msgstr "把 {0} 加入群组"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Add a chart or table, or restyle the deck"
+msgstr "添加图表或表格，或更换演示文稿样式"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Add a command to run"
 msgstr "添加要运行的命令"
@@ -974,6 +1037,14 @@ msgstr "添加要运行的命令"
 #: src/pages/RoutineEditor.tsx
 msgid "Add a file or folder to watch"
 msgstr "添加要监视的文件或文件夹"
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Add a folder never to suggest"
+msgstr ""
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Add a folder…"
+msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Add a hard deadline for the planning submission on C1078 next Friday"
@@ -1032,6 +1103,14 @@ msgstr ""
 msgid "Add an HTTPS server URL."
 msgstr "请填写 HTTPS 服务器 URL。"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Add an infographic, a diagram or project photos"
+msgstr "添加信息图、示意图或项目照片"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Add an instruction filing should follow"
+msgstr ""
+
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Add and update a project's deadlines, as on Project Tracker."
 msgstr ""
@@ -1039,6 +1118,10 @@ msgstr ""
 #: src/pages/PluginsOverlay.tsx
 msgid "Add another"
 msgstr "再添加一个"
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Add columns or a table"
+msgstr "添加列或表格"
 
 #: src/components/AskCard.tsx
 msgid "Add comment"
@@ -1088,6 +1171,10 @@ msgstr ""
 msgid "Add header"
 msgstr "添加请求头"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Add infographics, project photos or tables"
+msgstr "添加信息图、项目照片或表格"
+
 #: src/components/todos/todo-board.tsx
 #: src/pages/ScratchpadSection.tsx
 msgid "Add item"
@@ -1100,6 +1187,10 @@ msgstr "添加 MCP 服务器"
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Add me to C1078's Design Team as Civil Engineer"
 msgstr ""
+
+#: src/components/office/slides/SlidesWorkbench.tsx
+msgid "Add notes for this slide"
+msgstr "为此幻灯片添加备注"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
@@ -1210,10 +1301,6 @@ msgstr ""
 msgid "Added under every Outlook draft you create from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
 msgstr ""
 
-#: src/components/EmailSignatureSettings.tsx
-#~ msgid "Added under every Outlook email you send from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
-#~ msgstr ""
-
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Adding a line above a total grows the total to include it"
 msgstr ""
@@ -1244,6 +1331,10 @@ msgstr ""
 #: src/pages/AdminCompanyTools.tsx
 msgid "Adds records"
 msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Adds to the formula in {activeRef}"
+msgstr "添加到 {activeRef} 的公式中"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Admins come from the server's RAKAZO_ADMIN_EMAILS setting."
@@ -1384,6 +1475,42 @@ msgstr ""
 msgid "Align"
 msgstr ""
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Align bottom"
+msgstr "底端对齐"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Align centre"
+msgstr "居中"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Align left"
+msgstr "左对齐"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Align middle"
+msgstr "垂直居中"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Align right"
+msgstr "右对齐"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Align to slide"
+msgstr "相对于幻灯片对齐"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Align top"
+msgstr "顶端对齐"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Alignment"
+msgstr "对齐方式"
+
 #: src/components/StorageDialog.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/AdminApps.tsx
@@ -1401,15 +1528,17 @@ msgstr "全部 {credit} 都用于模型用量。"
 msgid "All agents"
 msgstr ""
 
-#: src/components/integrations/agent-access.tsx
-#: src/pages/Artifacts.tsx
-#: src/pages/shell/agent-import.tsx
-#~ msgid "All bots"
-#~ msgstr "全部 Bot"
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "All borders"
+msgstr "所有框线"
 
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "All documents"
 msgstr "All documents"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "All markup"
+msgstr "所有标记"
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1428,10 +1557,6 @@ msgstr "全部时间"
 msgid "All your agents work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' agents never use it."
 msgstr ""
 
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
-#~ msgstr ""
-
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "允许"
@@ -1439,10 +1564,6 @@ msgstr "允许"
 #: src/pages/shell/bot-panel.tsx
 msgid "Allow cross-space agent communication"
 msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Allow cross-space bot communication"
-#~ msgstr "允许跨空间机器人通信"
 
 #: src/components/AskCard.tsx
 msgid "Allow in this space"
@@ -1479,6 +1600,10 @@ msgstr "已连接"
 #: src/pages/Auth.tsx
 msgid "Already have an account?"
 msgstr "已有账户？"
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Also file Sent Items"
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Always act"
@@ -1544,6 +1669,10 @@ msgstr ""
 msgid "Animations, staggered entrances, light and dark themes, and phone layouts."
 msgstr ""
 
+#: src/components/EmailFilingSettings.tsx
+msgid "ann@example.com or @example.com"
+msgstr ""
+
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
 msgstr "其他 Agent"
@@ -1551,6 +1680,10 @@ msgstr "其他 Agent"
 #: src/pages/shell/agent-import.tsx
 msgid "Another assistant"
 msgstr "其他助手"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Another sheet already has that name."
+msgstr "已有工作表使用此名称。"
 
 #: src/components/AskCard.tsx
 msgid "Answer"
@@ -1639,7 +1772,6 @@ msgstr ""
 msgid "API URL"
 msgstr ""
 
-#: src/components/apps/AppStudio.tsx
 #: src/components/apps/AppViewer.tsx
 #: src/components/pages/PageCard.tsx
 #: src/components/pages/PageView.tsx
@@ -1677,6 +1809,7 @@ msgid "App link"
 msgstr ""
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/tour/ocsc-tour.tsx
 msgid "App Studio"
 msgstr ""
 
@@ -1699,6 +1832,7 @@ msgid "Appearance: {label}"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Apply"
 msgstr "应用"
 
@@ -1770,6 +1904,7 @@ msgid "Approving…"
 msgstr "正在批准…"
 
 #: src/components/apps/AppsDialog.tsx
+#: src/components/apps/AppStudio.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -1782,10 +1917,6 @@ msgstr "应用"
 #: src/components/pages/PagesList.tsx
 msgid "Apps this agent builds for you appear here. Ask for a dashboard, tracker or plan to make one."
 msgstr ""
-
-#: src/components/pages/PagesList.tsx
-#~ msgid "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
-#~ msgstr ""
 
 #: src/components/pages/PagesList.tsx
 msgid "Apps this group builds for you appear here. Ask for a dashboard, tracker or plan to make one."
@@ -1816,10 +1947,6 @@ msgstr ""
 msgid "Archived agents"
 msgstr ""
 
-#: src/pages/shell/archived-chats.tsx
-#~ msgid "Archived bots"
-#~ msgstr ""
-
 #: src/components/apps/AppsDialog.tsx
 msgid "Area, bar, line, donut, funnel, gauge, scatter, sparklines and KPI trends."
 msgstr ""
@@ -1827,6 +1954,14 @@ msgstr ""
 #: src/pages/McpServersOverlay.tsx
 msgid "Arguments"
 msgstr "参数"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Arrange"
+msgstr "排列"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Arrow"
+msgstr "箭头"
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/Artifacts.tsx
@@ -1840,6 +1975,10 @@ msgstr "询问"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Ask \"What do you remember about me?\" at any time"
+msgstr ""
+
+#: src/pages/shell/composer.tsx
+msgid "Ask for a change"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -1858,13 +1997,9 @@ msgstr ""
 msgid "Ask the agent to fix it"
 msgstr ""
 
-#: src/components/apps/AppVisualEdit.tsx
-#~ msgid "Ask the bot"
-#~ msgstr ""
-
-#: src/components/apps/AppStudio.tsx
-#~ msgid "Ask the bot to fix it"
-#~ msgstr ""
+#: src/components/office/StudioWelcome.tsx
+msgid "Ask the assistant to:"
+msgstr "你可以让助手："
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Ask your administrator if you need one."
@@ -1883,12 +2018,24 @@ msgstr ""
 msgid "assignee"
 msgstr ""
 
+#: src/components/office/history/VersionHistory.tsx
+msgid "Assistant"
+msgstr "助手"
+
+#: src/components/office/use-live-draft.tsx
+msgid "Assistant draft (live)"
+msgstr "助手草稿（实时）"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Assistant's model"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Assistants can hand coding work to Cursor cloud agents on the company's Cursor key, up to the monthly run cap."
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Assistants, in chat and in routines, look through a person's Inbox and propose a folder for each email, using Evolve job numbers and the person's own folders. Nothing moves until the person presses File on the card; assistants only ever read mail. Set confidence, new project folders and Sent Items under Email filing below."
 msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
@@ -1962,6 +2109,15 @@ msgstr "自动"
 msgid "Automated senders"
 msgstr "自动发送者"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Automatic"
+msgstr "自动"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "AutoSum"
+msgstr "自动求和"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
 msgstr "保存例行任务后可用"
@@ -1981,6 +2137,10 @@ msgstr "Shell 命令可通过 {commandVariable} 使用"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Avatar Studio"
 msgstr "头像工作室"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Average"
+msgstr "平均值"
 
 #: src/components/EvolveChangeEditor.tsx
 #: src/components/integrations/plugin-marketplace.tsx
@@ -2111,6 +2271,9 @@ msgid "Boards & to-dos"
 msgstr ""
 
 #: src/components/EmailDraftCard.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Bold"
 msgstr ""
 
@@ -2119,68 +2282,17 @@ msgstr ""
 msgid "Booting live desktop…"
 msgstr "正在启动实时桌面…"
 
-#: src/pages/shell/message-view.tsx
-#~ msgid "bot"
-#~ msgstr "Bot"
-
-#: src/lib/identity-display.ts
-#: src/pages/IntegrationSetup.tsx
-#: src/pages/MessagingSettingsPanel.tsx
-#: src/pages/Shell.tsx
-#: src/pages/shell/avatar-studio-popover.tsx
-#: src/pages/shell/message-view.tsx
-#: src/pages/SpaceSearch.tsx
-#~ msgid "Bot"
-#~ msgstr "Bot"
-
-#: src/components/teach/TeachRecordingChrome.tsx
-#~ msgid "Bot is watching, not acting"
-#~ msgstr "Bot 只看不操作"
-
-#: src/pages/model-settings/space-bots-model.tsx
-#~ msgid "Bot models"
-#~ msgstr "Bot 模型"
-
-#: src/pages/shell/computer-overlay.tsx
-#~ msgid "Bot screen"
-#~ msgstr "Bot 屏幕"
-
-#: src/pages/shell/computer-panel.tsx
-#~ msgid "Bot screen preview"
-#~ msgstr "Bot 屏幕预览"
-
-#: src/pages/AccountSettingsOverlay.tsx
-#~ msgid "Bot style"
-#~ msgstr ""
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Borders"
+msgstr "边框"
 
 #: src/components/SignupSurvey.tsx
 msgid "Both"
 msgstr "两者"
 
-#: src/pages/Artifacts.tsx
-#~ msgid "Bots"
-#~ msgstr "机器人"
-
-#: src/components/ModelCredits.tsx
-#~ msgid "Bots and browser automation"
-#~ msgstr "Bot 和浏览器自动化"
-
-#. placeholder {0}: group.ownerName
-#: src/pages/SharedChats.tsx
-#~ msgid "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
-#~ msgstr ""
-
-#: src/components/StorageDialog.tsx
-#~ msgid "Bots can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
-#~ msgstr ""
-
-#: src/pages/AdminAssistantModels.tsx
-#~ msgid "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
-#~ msgstr ""
-
-#: src/pages/Paywall.tsx
-#~ msgid "Bots with their own computer and browser"
-#~ msgstr "每个 Bot 都有自己的电脑和浏览器"
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Bottom align"
+msgstr "底端对齐"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
@@ -2210,9 +2322,13 @@ msgstr ""
 msgid "Brief: what it's for, who uses it and how"
 msgstr ""
 
-#: src/components/integrations/skills-dialog.tsx
-msgid "Browse"
-msgstr "浏览"
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Bring forward"
+msgstr "上移一层"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Bring to front"
+msgstr "置于顶层"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Browse MCP servers"
@@ -2237,6 +2353,14 @@ msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Budget in US dollars"
+msgstr ""
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Build a chart or a summary, or clean up the data"
+msgstr "创建图表或摘要，或清理数据"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Build it"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -2276,6 +2400,11 @@ msgstr ""
 msgid "Bulleted list"
 msgstr ""
 
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Bullets"
+msgstr "项目符号"
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "By the assistant"
 msgstr ""
@@ -2286,6 +2415,10 @@ msgstr ""
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Calendars & planning"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "Calendars, checklists, charts, maps and registers, kept inside Evolve."
 msgstr ""
 
 #: src/pages/shell/chat-header.tsx
@@ -2342,6 +2475,7 @@ msgstr "无法读取图像"
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/components/EmailDraftCard.tsx
+#: src/components/EmailFilingCard.tsx
 #: src/components/integrations/CompanyMcpApp.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/markdown-link-prompt.tsx
@@ -2372,10 +2506,6 @@ msgstr "取消"
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new agent"
 msgstr ""
-
-#: src/pages/shell/agent-import.tsx
-#~ msgid "Cancel new bot"
-#~ msgstr "取消新建 Bot"
 
 #: src/pages/GroupPanel.tsx
 msgid "Cancel new group"
@@ -2441,6 +2571,24 @@ msgstr ""
 msgid "Cc / Bcc"
 msgstr ""
 
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Cell contents"
+msgstr "单元格内容"
+
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Cell or range"
+msgstr "单元格或区域"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Cells"
+msgstr "单元格"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Center"
+msgstr "居中"
+
 #: src/components/DictationShortcutSettings.tsx
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Change"
@@ -2474,6 +2622,10 @@ msgstr ""
 msgid "Change deadlines"
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+msgid "Change folder"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Change in Company admin"
 msgstr ""
@@ -2502,6 +2654,10 @@ msgstr ""
 msgid "Change work packages"
 msgstr ""
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Changes"
+msgstr "修订"
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Changes take effect within a few seconds. A switch that is on can be limited to chosen people and groups; admins can always use everything."
 msgstr ""
@@ -2518,8 +2674,14 @@ msgstr ""
 msgid "Chart failed to render: {error}"
 msgstr "图表渲染失败：{error}"
 
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Charts and pictures on this sheet are kept but not shown here."
+msgstr "此工作表上的图表和图片会保留，但不会在此处显示。"
+
 #: src/components/apps/AppStudio.tsx
-#: src/components/whiteboards/whiteboard-studio.tsx
+#: src/components/studio/StudioChatPane.tsx
+#: src/components/studio/StudioFrame.tsx
+#: src/components/todos/todo-board.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Chat"
 msgstr ""
@@ -2540,10 +2702,6 @@ msgstr "聊天设置"
 msgid "Chat with your agent from Slack."
 msgstr ""
 
-#: src/pages/MessagingSettingsPanel.tsx
-#~ msgid "Chat with your bot from Slack."
-#~ msgstr "在 Slack 中与你的机器人聊天。"
-
 #: src/lib/localized-provider-hint.ts
 msgid "ChatGPT subscription"
 msgstr "ChatGPT 订阅"
@@ -2551,10 +2709,6 @@ msgstr "ChatGPT 订阅"
 #: src/lib/identity-display.ts
 msgid "Chats"
 msgstr "聊天"
-
-#: src/pages/AdminCompanyPage.tsx
-#~ msgid "Chats show a card for each tool a bot runs."
-#~ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Chats show a card for each tool an agent runs."
@@ -2655,13 +2809,17 @@ msgstr ""
 msgid "Checking…"
 msgstr "正在检查…"
 
-#: src/pages/shell/avatar-studio-popover.tsx
-#~ msgid "Choose a bot shape, color, or upload an image"
-#~ msgstr "选择机器人形状和颜色，或上传图片"
+#: src/components/office/use-document-upload.tsx
+msgid "Choose a {extension} file."
+msgstr "请选择一个 {extension} 文件。"
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Choose a buddy"
 msgstr ""
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Choose a layout"
+msgstr "选择版式"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
@@ -2693,6 +2851,7 @@ msgstr "选择备份"
 msgid "Choose file"
 msgstr "选择文件"
 
+#: src/components/EmailFilingCard.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Choose folder"
 msgstr "选择文件夹"
@@ -2753,6 +2912,8 @@ msgstr ""
 msgid "Cleanup started {0}."
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/SecretAskCard.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Clear"
@@ -2763,6 +2924,14 @@ msgstr "清空"
 msgid "Clear {0}’s conversation?"
 msgstr "清空与 {0} 的对话？"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Clear all"
+msgstr "全部清除"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Clear contents"
+msgstr "清除内容"
+
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Clear conversation"
@@ -2771,6 +2940,14 @@ msgstr "清空对话"
 #: src/pages/ActivityList.tsx
 msgid "Clear filter {label}"
 msgstr "清除筛选 {label}"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Clear formats"
+msgstr "清除格式"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Clear formatting"
+msgstr "清除格式"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Clear mask"
@@ -2816,6 +2993,7 @@ msgstr ""
 #: src/components/ErrorBoundary.tsx
 #: src/components/ImageLightbox.tsx
 #: src/components/InstallAppBanner.tsx
+#: src/components/office/OfficeStudioHost.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -2832,7 +3010,7 @@ msgstr "关闭"
 #: src/components/apps/AppStudio.tsx
 #: src/components/apps/AppViewer.tsx
 #: src/components/pages/PageView.tsx
-#: src/components/whiteboards/whiteboard-studio.tsx
+#: src/components/studio/StudioFrame.tsx
 msgid "Close app"
 msgstr ""
 
@@ -2848,6 +3026,11 @@ msgstr "关闭电脑"
 #: src/pages/PluginsOverlay.tsx
 msgid "Close connectors"
 msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Close document"
+msgstr "关闭文档"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Close MCP servers"
@@ -2872,6 +3055,10 @@ msgstr "关闭导航"
 msgid "Close panel"
 msgstr "关闭面板"
 
+#: src/components/office/SlidesStudio.tsx
+msgid "Close presentation"
+msgstr "关闭演示文稿"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Close preview"
 msgstr "关闭预览"
@@ -2879,6 +3066,10 @@ msgstr "关闭预览"
 #: src/components/integrations/skills-dialog.tsx
 msgid "Close skills"
 msgstr "关闭技能"
+
+#: src/components/office/SheetStudio.tsx
+msgid "Close spreadsheet"
+msgstr "关闭电子表格"
 
 #: src/components/markdown-copy.tsx
 msgid "Close table"
@@ -2895,6 +3086,10 @@ msgstr ""
 #: src/pages/SettingsOverlay.tsx
 msgid "Close user settings"
 msgstr "关闭用户设置"
+
+#: src/components/office/history/VersionHistory.tsx
+msgid "Close version history"
+msgstr "关闭版本历史记录"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Close voice settings"
@@ -2951,10 +3146,6 @@ msgstr ""
 msgid "Colleagues chat with this group's agents. Agents answer them without your memory, notes, saved logins or connectors."
 msgstr ""
 
-#: src/components/GroupPeople.tsx
-#~ msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connectors."
-#~ msgstr ""
-
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Colleagues start their own"
 msgstr ""
@@ -3004,7 +3195,13 @@ msgstr "舒适"
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/RoutineEditor.tsx
+#: src/pages/shell/shell-sidebar.tsx
 msgid "Coming soon"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Coming soon: Word Studio, PowerPoint Studio and Excel Studio"
 msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
@@ -3022,6 +3219,7 @@ msgid "Command variable"
 msgstr "命令变量"
 
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/word/WordRibbon.tsx
 #: src/pages/Board.tsx
 msgid "Comment"
 msgstr "评论"
@@ -3032,6 +3230,7 @@ msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Comments"
 msgstr ""
 
@@ -3042,6 +3241,10 @@ msgstr "沟通"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Compact"
 msgstr "紧凑"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Company"
+msgstr ""
 
 #. placeholder {0}: state.defaults.maxActiveRoutines
 #. placeholder {0}: state.defaults.routineRunsPerDay
@@ -3197,10 +3400,6 @@ msgid "Computers and routines"
 msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
-#~ msgid "Computers are available. Reload or open a bot to continue."
-#~ msgstr "电脑已经可用。重新加载，或打开一个 Bot 继续。"
-
-#: src/components/ComputersUnavailableHint.tsx
 msgid "Computers are available. Reload or open an agent to continue."
 msgstr ""
 
@@ -3218,6 +3417,14 @@ msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Computers running"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Confidence"
+msgstr ""
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Confidence for Ready"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -3298,10 +3505,6 @@ msgstr "连接 API 密钥"
 msgid "Connect MCP server “{name}”"
 msgstr "连接 MCP 服务器“{name}”"
 
-#: src/pages/MemorySettingsOverlay.tsx
-msgid "Connect memory provider"
-msgstr "连接记忆提供方"
-
 #: src/components/ModelCredits.tsx
 msgid "Connect my own"
 msgstr "连接自己的"
@@ -3309,6 +3512,10 @@ msgstr "连接自己的"
 #: src/pages/McpServersOverlay.tsx
 msgid "Connect OAuth"
 msgstr "连接 OAuth"
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Connect Outlook in Connectors to use filing."
+msgstr ""
 
 #: src/lib/agent-import-errors.ts
 msgid "Connect this model's provider first."
@@ -3326,7 +3533,6 @@ msgstr "请在“模型”中连接你自己的 API 密钥，或在“账单”�
 #: src/pages/AdminApps.tsx
 #: src/pages/AdminCompanyTools.tsx
 #: src/pages/McpOAuthCallback.tsx
-#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-cards.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -3502,7 +3708,6 @@ msgstr ""
 msgid "Corners"
 msgstr ""
 
-#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Cost"
 msgstr "费用"
@@ -3567,10 +3772,15 @@ msgstr "无法修改密码"
 msgid "Could not change the default Word template"
 msgstr "Could not change the default Word template"
 
+#: src/components/EmailFilingCard.tsx
+msgid "Could not change the folder"
+msgstr ""
+
 #: src/components/integrations/space-availability.tsx
 msgid "Could not change where this is available"
 msgstr "无法更改可用的工作区"
 
+#: src/components/apps/AppsStudio.tsx
 #: src/components/pages/PageViewHost.tsx
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Could not change who can view this app. Try again."
@@ -3607,9 +3817,7 @@ msgid "Could not connect"
 msgstr "无法连接"
 
 #. placeholder {0}: app.name
-#. placeholder {0}: registration.name
 #: src/components/integrations/CompanyMcpApp.tsx
-#: src/pages/MemorySettingsOverlay.tsx
 msgid "Could not connect {0}"
 msgstr "无法连接 {0}"
 
@@ -3644,11 +3852,6 @@ msgstr "无法继续"
 msgid "Could not create agent"
 msgstr ""
 
-#: src/pages/shell/agent-import.tsx
-#: src/pages/shell/create-bot-dialog.tsx
-#~ msgid "Could not create bot"
-#~ msgstr "无法创建 Bot"
-
 #: src/pages/GroupPanel.tsx
 msgid "Could not create group"
 msgstr "无法创建群组"
@@ -3661,6 +3864,10 @@ msgstr "无法创建分组"
 msgid "Could not create team"
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
+msgid "Could not create that list."
+msgstr ""
+
 #: src/components/EmailDraftCard.tsx
 msgid "Could not create this draft in Outlook"
 msgstr ""
@@ -3669,10 +3876,6 @@ msgstr ""
 msgid "Could not create your agent"
 msgstr ""
 
-#: src/pages/Onboarding.tsx
-#~ msgid "Could not create your bot"
-#~ msgstr "无法创建你的 Bot"
-
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete agent"
 msgstr ""
@@ -3680,10 +3883,6 @@ msgstr ""
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete app"
 msgstr ""
-
-#: src/pages/shell/dialogs.tsx
-#~ msgid "Could not delete bot"
-#~ msgstr "无法删除 Bot"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete file"
@@ -3721,13 +3920,13 @@ msgstr "无法删除工作区"
 msgid "Could not delete that chat."
 msgstr ""
 
+#: src/components/todos/todo-board.tsx
+msgid "Could not delete that list."
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Could not delete this file."
 msgstr ""
-
-#: src/pages/MemorySettingsOverlay.tsx
-msgid "Could not disconnect memory provider"
-msgstr "无法断开记忆提供方"
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not disconnect OAuth"
@@ -3769,6 +3968,14 @@ msgstr ""
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not enable tools"
 msgstr "无法启用工具"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not file these emails"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not forget that"
+msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Could not grant access"
@@ -3812,10 +4019,6 @@ msgstr "无法加载审批规则"
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Could not load billing"
 msgstr "无法加载账单"
-
-#: src/pages/IntegrationSetup.tsx
-#~ msgid "Could not load bots. Reload to try again."
-#~ msgstr "无法加载 Bot。请重新加载后再试。"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Could not load computer settings"
@@ -3893,8 +4096,20 @@ msgstr ""
 msgid "Could not load voice settings"
 msgstr "无法加载语音设置"
 
+#: src/components/EmailFilingCard.tsx
+msgid "Could not load what filing remembers"
+msgstr ""
+
 #: src/pages/shell/evolve-history.tsx
 msgid "Could not load your archived chats."
+msgstr ""
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Could not load your filing settings"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not load your folders"
 msgstr ""
 
 #: src/pages/SharedChats.tsx
@@ -3935,6 +4150,10 @@ msgstr "无法播放测试片段"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not preview plugin"
 msgstr "无法预览插件"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not put these emails back"
+msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Could not reach Evolve"
@@ -4013,6 +4232,10 @@ msgstr "无法重命名分组"
 #: src/pages/SpaceSettingsPanel.tsx
 msgid "Could not rename space"
 msgstr "无法重命名工作区"
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not rename that list."
+msgstr ""
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageViewHost.tsx
@@ -4121,6 +4344,10 @@ msgstr ""
 msgid "Could not save the credential"
 msgstr "无法保存凭据"
 
+#: src/pages/AdminEmailFiling.tsx
+msgid "Could not save the email filing settings"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not save the note"
 msgstr ""
@@ -4145,8 +4372,16 @@ msgstr "无法保存此选择"
 msgid "Could not save this draft"
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+msgid "Could not save this instruction"
+msgstr ""
+
 #: src/components/todos/todo-board.tsx
 msgid "Could not save your changes."
+msgstr ""
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Could not save your filing settings"
 msgstr ""
 
 #: src/components/EmailDraftCard.tsx
@@ -4172,10 +4407,6 @@ msgstr "无法发送"
 msgid "Could not send that message"
 msgstr ""
 
-#: src/components/EmailDraftCard.tsx
-#~ msgid "Could not send this email"
-#~ msgstr ""
-
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
 msgstr "无法显示凭据"
@@ -4183,6 +4414,10 @@ msgstr "无法显示凭据"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not sign in"
 msgstr "无法登录"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Could not skip these emails"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
@@ -4234,10 +4469,6 @@ msgstr ""
 msgid "Could not update billing"
 msgstr "无法更新账单"
 
-#: src/pages/McpServersOverlay.tsx
-#~ msgid "Could not update bot access"
-#~ msgstr ""
-
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Could not update computer"
 msgstr "无法更新电脑"
@@ -4266,10 +4497,6 @@ msgstr "无法更新该应用"
 #: src/pages/AdminCompanyTools.tsx
 msgid "Could not update the company setting"
 msgstr ""
-
-#: src/pages/MemorySettingsOverlay.tsx
-msgid "Could not update the default memory scope"
-msgstr "无法更新默认记忆范围"
 
 #: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
@@ -4304,9 +4531,18 @@ msgstr ""
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "无法确认电脑是否就绪（{failureMessage}）。请修复连接后再检查一次。"
 
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Couldn't add that picture."
+msgstr "无法添加该图片。"
+
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Couldn't change the whiteboard."
 msgstr ""
+
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Couldn't copy those cells."
+msgstr "无法复制这些单元格。"
 
 #: src/components/pages/SharePopover.tsx
 msgid "Couldn't copy. Select the link and copy it."
@@ -4315,6 +4551,18 @@ msgstr "无法复制。请选中链接后复制。"
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Couldn't create the whiteboard."
 msgstr ""
+
+#: src/components/office/WordStudio.tsx
+msgid "Couldn't download the document."
+msgstr "无法下载文档。"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Couldn't download the presentation."
+msgstr "无法下载演示文稿。"
+
+#: src/components/office/SheetStudio.tsx
+msgid "Couldn't download the spreadsheet."
+msgstr "无法下载电子表格。"
 
 #: src/components/apps/AppsDialog.tsx
 #: src/components/pages/PagesList.tsx
@@ -4361,10 +4609,6 @@ msgstr ""
 msgid "Couldn't load this app. Try again."
 msgstr ""
 
-#: src/pages/shell/files-tab.tsx
-#~ msgid "Couldn't load this bot's files."
-#~ msgstr ""
-
 #: src/components/StorageDialog.tsx
 msgid "Couldn't load your files."
 msgstr ""
@@ -4372,6 +4616,25 @@ msgstr ""
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
 msgstr "无法加载钱包"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Couldn't make a new document."
+msgstr "无法新建文档。"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Couldn't make a new presentation."
+msgstr "无法新建演示文稿。"
+
+#: src/components/office/SheetStudio.tsx
+msgid "Couldn't make a new spreadsheet."
+msgstr "无法新建电子表格。"
+
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Couldn't restore that version."
+msgstr "无法恢复该版本。"
 
 #: src/components/pages/WhiteboardCanvas.tsx
 msgid "Couldn't save the whiteboard."
@@ -4381,13 +4644,13 @@ msgstr "Couldn't save the whiteboard."
 msgid "Couldn't save."
 msgstr ""
 
+#: src/components/office/slides/SlidesWorkbench.tsx
+msgid "Couldn't undo that change."
+msgstr "无法撤销该更改。"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Couldn't update agent style"
 msgstr ""
-
-#: src/pages/AccountSettingsOverlay.tsx
-#~ msgid "Couldn't update bot style"
-#~ msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't update messaging settings"
@@ -4401,6 +4664,23 @@ msgstr "无法更新你的时区"
 msgid "Couldn't update your wallet"
 msgstr "无法更新钱包"
 
+#: src/components/office/use-document-upload.tsx
+msgid "Couldn't upload the file (error {status}). Try again."
+msgstr "无法上传文件（错误 {status}）。请重试。"
+
+#. placeholder {0}: result.message
+#: src/components/office/use-document-upload.tsx
+msgid "Couldn't upload the file: {0} (error {status})"
+msgstr "无法上传文件：{0}（错误 {status}）"
+
+#: src/components/office/use-document-upload.tsx
+msgid "Couldn't upload the file. Check your connection and try again."
+msgstr "无法上传文件。请检查网络连接后重试。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Count numbers"
+msgstr "计数"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Counted from the changes each person has saved through the AI. Set a tool's hourly limit to 0 to pause it for everyone. Deletes count projects over 24 hours, everything else over an hour."
 msgstr ""
@@ -4408,10 +4688,6 @@ msgstr ""
 #: src/pages/AdminComputerAccess.tsx
 msgid "Counted from when the agent made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
 msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-#~ msgid "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
-#~ msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Country"
@@ -4455,6 +4731,10 @@ msgstr ""
 msgid "Create group"
 msgstr "创建群组"
 
+#: src/pages/AdminEmailFiling.tsx
+msgid "Create missing project folders"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Create my first chat"
 msgstr ""
@@ -4487,6 +4767,14 @@ msgstr ""
 #: src/pages/AdminRoutineActivity.tsx
 msgid "Created"
 msgstr "已创建"
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Created once under each person's Inbox when first needed, unless they chose their own folder in Settings."
+msgstr ""
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Created once, when you first file into a new project."
+msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Creates a finished OCSC document from a short brief, on the company template"
@@ -4538,7 +4826,20 @@ msgstr "Cron 表达式"
 msgid "CSV"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Currency ($)"
+msgstr "货币 ($)"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Currency (£)"
+msgstr "货币 (£)"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Currency (€)"
+msgstr "货币 (€)"
+
 #: src/components/apps/AppHistoryPanel.tsx
+#: src/components/office/history/VersionHistory.tsx
 msgid "Current"
 msgstr ""
 
@@ -4562,6 +4863,16 @@ msgstr "当前密码"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Cursor cloud agents"
 msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Custom"
+msgstr "自定义"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Custom colour…"
+msgstr "自定义颜色…"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
@@ -4587,10 +4898,6 @@ msgstr "自定义{label}"
 msgid "Customize agent avatar"
 msgstr ""
 
-#: src/pages/shell/avatar-studio-popover.tsx
-#~ msgid "Customize bot avatar"
-#~ msgstr "自定义机器人头像"
-
 #: src/pages/shell/evolve-references.tsx
 msgid "CV"
 msgstr ""
@@ -4606,6 +4913,7 @@ msgid "Dark"
 msgstr "深色"
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Data"
@@ -4614,6 +4922,10 @@ msgstr "数据"
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Data changes"
 msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Date and time"
+msgstr "日期和时间"
 
 #: src/lib/billing.ts
 #: src/lib/cron.ts
@@ -4641,10 +4953,27 @@ msgstr ""
 msgid "Deadlines: Design Team only"
 msgstr ""
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Decks, built and revised beside the chat."
+msgstr ""
+
 #: src/components/call/IncomingCall.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Decline"
 msgstr "拒绝"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Decrease decimals"
+msgstr "减少小数位数"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Decrease font size"
+msgstr "减小字号"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Decrease indent"
+msgstr "减少缩进量"
 
 #: src/components/apps/AppVisualEdit.tsx
 #: src/pages/AdminDocumentLibrary.tsx
@@ -4669,10 +4998,6 @@ msgstr "Hermes 默认内容"
 #: src/pages/shell/agent-import.tsx
 msgid "Default from OpenClaw"
 msgstr "OpenClaw 默认内容"
-
-#: src/pages/MemorySettingsOverlay.tsx
-msgid "Default scope"
-msgstr "默认范围"
 
 #. placeholder {0}: limitLabel(storage.defaultStorageLimitMb)
 #: src/pages/AdminComputerAccess.tsx
@@ -4737,6 +5062,10 @@ msgstr "删除 {0}？"
 msgid "Delete {name}"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Delete {rowCount} rows"
+msgstr "删除 {rowCount} 行"
+
 #: src/components/AccountAccess.tsx
 #: src/components/AccountMenu.tsx
 msgid "Delete account"
@@ -4749,10 +5078,6 @@ msgstr ""
 #: src/pages/AdminComputerAccess.tsx
 msgid "Delete files agents attached in chats after"
 msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-#~ msgid "Delete files bots attached in chats after"
-#~ msgstr ""
 
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
@@ -4771,12 +5096,26 @@ msgid "Delete project comment"
 msgstr ""
 
 #: src/components/apps/AppDataPanel.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
 msgid "Delete row"
 msgstr ""
 
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
 msgstr "删除分组"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Delete shape"
+msgstr "删除形状"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Delete sheet"
+msgstr "删除工作表"
+
+#: src/components/office/slides/SlideRail.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Delete slide"
+msgstr "删除幻灯片"
 
 #: src/pages/shell/shell-dialogs.tsx
 #: src/pages/SpaceSettingsPanel.tsx
@@ -4854,6 +5193,10 @@ msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Describe a dashboard or tool and the agent builds it as an Evolve plugin"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Describe an app and build it here, with the app open beside the chat."
 msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -4958,7 +5301,6 @@ msgid "Discard this draft?"
 msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
-#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
@@ -4982,7 +5324,6 @@ msgstr "断开自托管"
 msgid "Disconnected {disconnectName}."
 msgstr "已断开 {disconnectName}。"
 
-#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Disconnecting…"
@@ -5026,9 +5367,9 @@ msgstr "Docker 已配置，但电脑没有响应。请确认 sandbox supervisor 
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets agents work with your local files and tools."
 msgstr ""
 
-#: src/pages/HostComputerPrompt.tsx
-#~ msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
-#~ msgstr "Docker 限制对你电脑的访问，以提高安全性。使用{hostLabel}时，Bot 可以处理你的本地文件并使用本地工具。"
+#: src/components/office/OfficeStudioHost.tsx
+msgid "Document"
+msgstr "文档"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
@@ -5039,13 +5380,30 @@ msgstr "文档已更改。请重新打开以编辑最新版本。"
 msgid "Document library"
 msgstr "Document library"
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Document tools"
+msgstr "文档工具"
+
+#: src/components/office/WordStudio.tsx
+msgid "Document: {title}"
+msgstr "文档：{title}"
+
+#: src/components/office/WordStudio.tsx
+msgid "Documents"
+msgstr "文档"
+
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
 msgstr "还没有账户？"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Don't show again"
+msgstr "不再显示"
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/apps/AppVisualEdit.tsx
 #: src/components/AskCard.tsx
+#: src/components/EmailFilingCard.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/todos/todo-board.tsx
@@ -5071,6 +5429,18 @@ msgstr "续订时降级"
 msgid "Download"
 msgstr "下载"
 
+#: src/components/office/WordStudio.tsx
+msgid "Download .docx"
+msgstr "下载 .docx"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Download .pptx"
+msgstr "下载 .pptx"
+
+#: src/components/office/SheetStudio.tsx
+msgid "Download .xlsx"
+msgstr "下载 .xlsx"
+
 #: src/components/StorageDialog.tsx
 msgid "Download (.zip)"
 msgstr ""
@@ -5089,7 +5459,7 @@ msgid "Download CSV"
 msgstr "下载 CSV"
 
 #: src/components/pages/DownloadPdfButton.tsx
-#: src/components/whiteboards/whiteboard-studio.tsx
+#: src/components/pages/SharePopover.tsx
 #: src/pages/SharedPage.tsx
 msgid "Download PDF"
 msgstr "下载 PDF"
@@ -5098,7 +5468,7 @@ msgstr "下载 PDF"
 msgid "Download PNG"
 msgstr ""
 
-#: src/components/whiteboards/whiteboard-studio.tsx
+#: src/components/pages/SharePopover.tsx
 #: src/pages/SharedPage.tsx
 msgid "Download SVG"
 msgstr ""
@@ -5111,10 +5481,6 @@ msgstr "正在下载…"
 #: src/components/EmailDraftCard.tsx
 msgid "Draft · creates a draft in Outlook"
 msgstr ""
-
-#: src/components/EmailDraftCard.tsx
-#~ msgid "Draft · not sent until you press Send"
-#~ msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 msgid "Draft created in {sender}"
@@ -5155,9 +5521,14 @@ msgstr ""
 msgid "Due {0}"
 msgstr ""
 
+#: src/components/office/slides/SlideRail.tsx
 #: src/pages/BotContextMenu.tsx
 msgid "Duplicate"
 msgstr "复制"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Duplicate slide"
+msgstr "复制幻灯片"
 
 #: src/components/AskCard.tsx
 msgid "Duration"
@@ -5174,10 +5545,6 @@ msgstr ""
 #: src/components/apps/TemplateAppButton.tsx
 msgid "Each comes with its screens and empty tables. Add your rows, or ask the agent to fit it to your work."
 msgstr ""
-
-#: src/components/apps/TemplateAppButton.tsx
-#~ msgid "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
-#~ msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Each name can be used once."
@@ -5198,6 +5565,7 @@ msgstr ""
 #: src/components/apps/AppsDialog.tsx
 #: src/components/apps/AppViewer.tsx
 #: src/components/AskCard.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
 #: src/components/pages/PageCard.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -5276,12 +5644,17 @@ msgid "Edited in the Studio by {by}"
 msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Editing"
 msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "EDITING"
 msgstr ""
+
+#: src/components/office/slides/SlidesWorkbench.tsx
+msgid "Editing couldn't start for this presentation, so it is shown read-only. Download it to edit it in a presentation app, or ask the assistant for changes."
+msgstr "无法开始编辑此演示文稿，因此以只读方式显示。请下载后在演示文稿应用中编辑，或请助手进行更改。"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Editing ORIGINAL"
@@ -5325,6 +5698,7 @@ msgstr ""
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
+#: src/pages/settings-nav.ts
 msgid "Email"
 msgstr "邮箱"
 
@@ -5337,6 +5711,19 @@ msgstr ""
 msgid "Email draft discarded: {0}"
 msgstr ""
 
+#: src/components/EmailFilingSettings.tsx
+#: src/pages/AdminEmailFiling.tsx
+msgid "Email filing"
+msgstr ""
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Email filing settings saved"
+msgstr ""
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Email from these senders or domains stays in your Inbox."
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "该邮箱不允许注册"
@@ -5347,7 +5734,6 @@ msgstr "把验证码发到我的邮箱"
 
 #: src/components/EmailDraftCard.tsx
 #: src/components/EmailSignatureSettings.tsx
-#: src/pages/settings-nav.ts
 msgid "Email signature"
 msgstr ""
 
@@ -5361,6 +5747,15 @@ msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Emails and sign-off"
+msgstr ""
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Emails at or above this start ticked on the card. Less certain ones wait for the person to choose a folder."
+msgstr ""
+
+#. placeholder {0}: policy.minConfidence
+#: src/components/EmailFilingSettings.tsx
+msgid "Emails at or above this start ticked. Your company's lowest is {0}%."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -5379,6 +5774,14 @@ msgstr ""
 #: src/pages/shell/bot-panel.tsx
 msgid "Enable {0}"
 msgstr "启用 {0}"
+
+#: src/components/office/slides/Presenter.tsx
+msgid "End of slideshow. Click to exit."
+msgstr "放映结束，单击退出。"
+
+#: src/components/office/slides/Presenter.tsx
+msgid "End slideshow"
+msgstr "结束放映"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
@@ -5423,6 +5826,10 @@ msgstr "请输入 1 到 {MAX_MODEL_MAX_TOKENS} 之间的整数作为最大输出
 #: src/pages/Onboarding.tsx
 msgid "Enter a whole number from 1 to 1000 for the image limit."
 msgstr "请输入 1 到 1000 之间的整数作为图像限制。"
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Enter an address such as ann@example.com, or a whole domain such as @example.com."
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Enter an API key before testing."
@@ -5502,14 +5909,6 @@ msgstr ""
 msgid "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
 msgstr ""
 
-#: src/pages/AdminCompanyPage.tsx
-#~ msgid "Every bot now thinks at this level"
-#~ msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
-#~ msgstr ""
-
 #: src/components/apps/AppPublishSection.tsx
 msgid "Every check passed."
 msgstr ""
@@ -5570,6 +5969,7 @@ msgid "Every row added, changed or removed, and every bulk load, is kept here. U
 msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
+#: src/components/office/history/VersionHistory.tsx
 msgid "Every save is a version. Open one to see what it changed; restoring keeps the current version too."
 msgstr ""
 
@@ -5658,6 +6058,10 @@ msgstr ""
 msgid "Evolve plugins"
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+msgid "Evolve projects"
+msgstr ""
+
 #: src/components/GroupPeople.tsx
 msgid "Evolve search is unavailable. Type a full work email instead."
 msgstr ""
@@ -5687,8 +6091,13 @@ msgstr ""
 msgid "Example: Autodesk Construction Cloud and Forma"
 msgstr ""
 
+#: src/components/office/registry.ts
 #: src/components/tour/ocsc-tour.tsx
 msgid "Excel"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Excel Studio"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -5837,21 +6246,28 @@ msgstr "要比较的字段，例如 id, modifiedTime（可选）"
 msgid "File"
 msgstr "文件"
 
+#. placeholder {0}: chosen.length
+#: src/components/EmailFilingCard.tsx
+msgid "File {0} selected"
+msgstr ""
+
 #: src/components/apps/AppCodePanel.tsx
 msgid "File name, like Chart.tsx"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+#: src/pages/AdminCompanyPage.tsx
+msgid "File Outlook email"
+msgstr ""
+
+#. placeholder {0}: item.filedPath
+#: src/components/EmailFilingCard.tsx
+msgid "Filed in {0}"
 msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Files agents make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the agent's Files tab. Files agents attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their agents stop making new documents and videos until they delete something."
 msgstr ""
-
-#: src/pages/AdminComputerAccess.tsx
-#~ msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
-#~ msgstr ""
-
-#: src/pages/Artifacts.tsx
-#~ msgid "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
-#~ msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Files from your chats in this work space. They appear here when an agent sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
@@ -5865,13 +6281,29 @@ msgstr "计算机上的文件或文件夹"
 msgid "Files or folders, one per line"
 msgstr "文件或文件夹，每行一个"
 
+#: src/pages/AdminEmailFiling.tsx
+msgid "Filing always waits for each person to press File; assistants cannot move email on their own. People can raise their own confidence bar in Settings, but not lower it below yours."
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Filing groups"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Filing reads these the next time it chooses a folder. An instruction guides that choice. A sender, domain or conversation rule is ready on its own."
+msgstr ""
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Fill"
+msgstr "填充"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Fill colour"
+msgstr "填充颜色"
+
 #: src/pages/GroupPanel.tsx
 msgid "Filter agents"
 msgstr ""
-
-#: src/pages/GroupPanel.tsx
-#~ msgid "Filter bots"
-#~ msgstr "筛选 Bot"
 
 #: src/pages/Artifacts.tsx
 msgid "Filter by date"
@@ -5889,6 +6321,10 @@ msgstr "筛选器"
 #: src/pages/PluginsOverlay.tsx
 msgid "Finance"
 msgstr "财务"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Find"
+msgstr "查找"
 
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Find a document"
@@ -5967,6 +6403,14 @@ msgstr "正在完成 MCP 连接…"
 msgid "Fit to screen"
 msgstr ""
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Fit to window"
+msgstr "适应窗口大小"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Fit width"
+msgstr "适应宽度"
+
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Flow left to right"
 msgstr ""
@@ -5979,9 +6423,34 @@ msgstr ""
 msgid "Focus message"
 msgstr "聚焦消息框"
 
+#: src/pages/AdminEmailFiling.tsx
+msgid "Folder for new project folders"
+msgstr ""
+
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Folders assistants can read"
 msgstr "Folders assistants can read"
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Folders never suggested as a destination."
+msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Font"
+msgstr "字体"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Font colour"
+msgstr "字体颜色"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Font size"
+msgstr "字号"
 
 #: src/components/pages/SharePopover.tsx
 msgid "For clients and partners; a password is made for you"
@@ -5995,6 +6464,18 @@ msgstr ""
 msgid "For the company"
 msgstr ""
 
+#: src/components/EmailFilingSettings.tsx
+msgid "Forget"
+msgstr ""
+
+#. placeholder {0}: item.label
+#. placeholder {0}: memory.text
+#. placeholder {0}: rule.label
+#: src/components/EmailFilingCard.tsx
+#: src/components/EmailFilingSettings.tsx
+msgid "Forget {0}"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
 msgstr "忘记密码？"
@@ -6002,6 +6483,14 @@ msgstr "忘记密码？"
 #: src/components/EmailDraftCard.tsx
 msgid "Formatting"
 msgstr ""
+
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Formula results update when the file is opened in a spreadsheet app."
+msgstr "在电子表格应用中打开文件时，公式结果会更新。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Formulas"
+msgstr "公式"
 
 #: src/components/ModelCredits.tsx
 msgid "Free"
@@ -6023,6 +6512,22 @@ msgstr "免费方案将于 {day} 结束"
 msgid "Freeze"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Freeze above and left of {activeRef}"
+msgstr "冻结 {activeRef} 上方和左侧"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Freeze first column"
+msgstr "冻结首列"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Freeze panes"
+msgstr "冻结窗格"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Freeze top row"
+msgstr "冻结首行"
+
 #: src/lib/cron.ts
 msgid "Friday"
 msgstr "周五"
@@ -6042,10 +6547,13 @@ msgstr "从 {0}"
 msgid "From archived agents ({0})"
 msgstr ""
 
-#. placeholder {0}: archived.length
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "From archived bots ({0})"
-#~ msgstr ""
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "From beginning"
+msgstr "从头开始"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "From current slide"
+msgstr "从当前幻灯片开始"
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6090,6 +6598,10 @@ msgstr ""
 msgid "Fullscreen"
 msgstr "全屏"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Functions"
+msgstr "函数"
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Gateway ID"
@@ -6103,6 +6615,10 @@ msgstr ""
 msgid "Gateway URL"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "General"
+msgstr "常规"
+
 #: src/components/InstallAppBanner.tsx
 msgid "Get its own icon and window, and open it straight from your desktop."
 msgstr "Get its own icon and window, and open it straight from your desktop."
@@ -6110,6 +6626,10 @@ msgstr "Get its own icon and window, and open it straight from your desktop."
 #: src/components/EnableNotificationsDialog.tsx
 msgid "Get notified when your work finishes, an agent needs your input, or a routine completes — even when you are in another tab."
 msgstr ""
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Get started"
+msgstr "开始使用"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Get to know agent teamwork"
@@ -6146,6 +6666,10 @@ msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Get to know routines"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know Studios"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -6188,9 +6712,9 @@ msgstr "返回首页"
 msgid "Go to agent"
 msgstr ""
 
-#: src/pages/shell/keyboard-shortcuts-dialog.tsx
-#~ msgid "Go to bot"
-#~ msgstr "前往 Bot"
+#: src/components/EmailFilingCard.tsx
+msgid "Graduate applications from careers@ go in Inbox › HR"
+msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Grant"
@@ -6207,6 +6731,10 @@ msgstr ""
 #: src/pages/KnowledgeSection.tsx
 msgid "Greetings, sign-off and your signature"
 msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Gridlines"
+msgstr "网格线"
 
 #: src/lib/identity-display.ts
 #: src/pages/MessagingSettingsPanel.tsx
@@ -6258,9 +6786,17 @@ msgstr ""
 msgid "Hard delete"
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+msgid "Has a folder"
+msgstr ""
+
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Has AI instructions"
 msgstr "Has AI instructions"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Has attachments"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "header"
@@ -6286,6 +6822,18 @@ msgstr "请求头值"
 msgid "Headers"
 msgstr "请求头"
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Heading 1"
+msgstr "标题 1"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Heading 2"
+msgstr "标题 2"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Heading 3"
+msgstr "标题 3"
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Hear a sample"
 msgstr "试听"
@@ -6294,6 +6842,7 @@ msgstr "试听"
 msgid "Hi, this is how I'll sound when I read replies out loud."
 msgstr "你好，这是我朗读回复时的声音。"
 
+#: src/components/office/slides/SlideRail.tsx
 #: src/components/vault/LoginFieldsInput.tsx
 msgid "Hidden"
 msgstr "隐藏"
@@ -6306,10 +6855,18 @@ msgstr "Hidden from AI"
 msgid "Hidden from staff"
 msgstr "对员工隐藏"
 
+#: src/components/office/slides/history.tsx
+msgid "Hidden in the slide show"
+msgstr "放映时隐藏"
+
 #: src/components/apps/AppPublishSection.tsx
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Hide"
 msgstr "隐藏"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Hide in slideshow"
+msgstr "在放映时隐藏"
 
 #: src/components/I18nBootstrap.tsx
 msgid "Hide password"
@@ -6336,8 +6893,24 @@ msgstr "高"
 msgid "High (slow)"
 msgstr ""
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Highlight"
+msgstr "突出显示"
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Highlight a paragraph, table or image and ask for a change. The assistant receives your selection as context."
+msgstr "选中一个段落、表格或图片，然后提出修改要求。助手会将你的选择作为上下文。"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Highlight colours"
+msgstr "突出显示颜色"
+
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/apps/AppStudio.tsx
+#: src/components/office/history/VersionHistory.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "History"
 msgstr ""
 
@@ -6349,6 +6922,9 @@ msgstr "按住说话"
 msgid "Hold to talk, release to send"
 msgstr "按住说话，松开发送"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Home"
 msgstr ""
@@ -6378,10 +6954,6 @@ msgstr "你是怎么知道我们的？"
 msgid "How hard every agent thinks before answering. Higher is better for hard problems but slower and costs more."
 msgstr ""
 
-#: src/pages/AdminCompanyPage.tsx
-#~ msgid "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
-#~ msgstr ""
-
 #: src/pages/KnowledgeSection.tsx
 msgid "How I like answers"
 msgstr ""
@@ -6402,10 +6974,6 @@ msgstr "频率"
 #: src/pages/shell/bot-panel.tsx
 msgid "How other agents see it"
 msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "How other bots see it"
-#~ msgstr "其他机器人如何了解它"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "How to check"
@@ -6439,6 +7007,15 @@ msgstr "如果听到了，说明语音已就绪。"
 msgid "Ignore"
 msgstr "忽略"
 
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Illustrations"
+msgstr "插图"
+
+#: src/components/office/WordStudio.tsx
+msgid "Image"
+msgstr "图像"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -6451,6 +7028,10 @@ msgstr "此模型尚未配置图片输入。"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "图片上传区域"
+
+#: src/components/office/WordStudio.tsx
+msgid "Image: {name}"
+msgstr "图像：{name}"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Images and Evolve data"
@@ -6496,10 +7077,6 @@ msgid "In Safari's File menu, choose Add to Dock."
 msgstr "In Safari's File menu, choose Add to Dock."
 
 #: src/pages/AdminCompanyPage.tsx
-#~ msgid "In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below."
-#~ msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
 msgid "In their own private chat, assistants prepare Outlook emails and replies as editable cards. Pressing Create draft saves the email to the person's Outlook Drafts folder so they can send it from Outlook; assistants never write to Outlook themselves. People without this are never offered drafting. Limit this to chosen people below."
 msgstr ""
 
@@ -6507,17 +7084,30 @@ msgstr ""
 msgid "In this agent"
 msgstr ""
 
-#: src/components/integrations/plugin-marketplace.tsx
-#~ msgid "In this bot"
-#~ msgstr "已在此 Bot"
-
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Inactive"
 msgstr "未启用"
 
+#. placeholder {0}: policy.defaultParentFolder
+#: src/components/EmailFilingSettings.tsx
+msgid "Inbox › {0}"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Inbox & email"
 msgstr "收件箱和邮件"
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Inbox and Sent Items for everyone"
+msgstr ""
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Inbox only"
+msgstr ""
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Inbox; each person may add Sent Items"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Include API keys"
@@ -6526,6 +7116,19 @@ msgstr "包含 API 密钥"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "来电"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Increase decimals"
+msgstr "增加小数位数"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Increase font size"
+msgstr "增大字号"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Increase indent"
+msgstr "增加缩进量"
 
 #: src/components/AppScopeAskCard.tsx
 msgid "Individual user app"
@@ -6546,6 +7149,28 @@ msgstr "输入"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "输入"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Insert"
+msgstr "插入"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Insert {rowCount} rows above"
+msgstr "在上方插入 {rowCount} 行"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Insert function"
+msgstr "插入函数"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Insert row above"
+msgstr "在上方插入行"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Insert table"
+msgstr "插入表格"
 
 #: src/components/InstallAppBanner.tsx
 msgid "Install"
@@ -6576,6 +7201,7 @@ msgid "Instruction history"
 msgstr "指令历史"
 
 #: src/components/AskCard.tsx
+#: src/components/EmailFilingCard.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
@@ -6656,7 +7282,6 @@ msgstr ""
 msgid "Is this an individual user app, or a tenant app?"
 msgstr ""
 
-#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Isolated"
 msgstr "隔离"
@@ -6679,6 +7304,9 @@ msgid "It stopped early: {0}"
 msgstr ""
 
 #: src/components/EmailDraftCard.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Italic"
 msgstr ""
 
@@ -6686,25 +7314,13 @@ msgstr ""
 msgid "Its agents and groups are kept and leave the section."
 msgstr ""
 
-#: src/pages/shell/shell-dialogs.tsx
-#~ msgid "Its bots and groups are kept and leave the section."
-#~ msgstr "其中的 Bot 和群组会保留，并移出该分组。"
-
 #: src/pages/shell/dialogs.tsx
 msgid "Its conversation, files, and routines will be permanently deleted. Agents it created stay in your list."
 msgstr ""
 
-#: src/pages/shell/dialogs.tsx
-#~ msgid "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
-#~ msgstr "它的对话、文件和例行任务将被永久删除。它创建的 Bot 仍留在列表中。"
-
 #: src/components/apps/AppVisualEdit.tsx
 msgid "Its look is set in code; ask the agent to change it."
 msgstr ""
-
-#: src/components/apps/AppVisualEdit.tsx
-#~ msgid "Its look is set in code; ask the bot to change it."
-#~ msgstr ""
 
 #: src/components/pages/PagesList.tsx
 msgid "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
@@ -6762,6 +7378,15 @@ msgstr ""
 #: src/lib/relative-time.ts
 msgid "just now"
 msgstr "刚刚"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Just this email"
+msgstr ""
+
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Justify"
+msgstr "两端对齐"
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Kanban, checklists, guided steps, sortable lists and a command menu."
@@ -6902,6 +7527,10 @@ msgstr ""
 msgid "Later"
 msgstr "稍后"
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Layouts"
+msgstr "版式"
+
 #: src/components/LearningClinicCard.tsx
 msgid "Learning Centre clinic"
 msgstr ""
@@ -6926,6 +7555,10 @@ msgstr ""
 msgid "Leave team"
 msgstr ""
 
+#: src/pages/shell/composer.tsx
+msgid "Leave the selection out of this message"
+msgstr "此消息不附带所选内容"
+
 #: src/components/AskCard.tsx
 msgid "Left"
 msgstr ""
@@ -6942,25 +7575,29 @@ msgstr ""
 msgid "Let agents use this computer"
 msgstr ""
 
-#: src/components/ComputerDeviceSettings.tsx
-#~ msgid "Let bots use this computer"
-#~ msgstr "允许 Bot 使用这台电脑"
+#: src/components/EmailFilingSettings.tsx
+msgid "Let assistants suggest filing"
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Let it suggest specialists, then create more from the + button"
 msgstr ""
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Let the assistant edit your document"
+msgstr "让助手编辑你的文档"
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Let the assistant edit your presentation"
+msgstr "让助手编辑你的演示文稿"
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Let the assistant edit your spreadsheet"
+msgstr "让助手编辑你的电子表格"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Let's begin"
 msgstr ""
-
-#: src/pages/MemorySettingsOverlay.tsx
-msgid "Lets agents save and recall facts by meaning, alongside MEMORY.md."
-msgstr ""
-
-#: src/pages/MemorySettingsOverlay.tsx
-#~ msgid "Lets bots save and recall facts by meaning, alongside MEMORY.md."
-#~ msgstr "让机器人在 MEMORY.md 之外，按语义保存和回忆事实。"
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -6981,7 +7618,16 @@ msgstr ""
 msgid "Limits saved for {0}"
 msgstr ""
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Line"
+msgstr "直线"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Line spacing"
+msgstr "行距"
+
 #: src/components/EmailDraftCard.tsx
+#: src/components/office/word/WordRibbon.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Link"
 msgstr ""
@@ -7005,6 +7651,7 @@ msgid "Link SSO"
 msgstr "关联 SSO"
 
 #: src/components/AskCard.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Links"
 msgstr ""
 
@@ -7051,6 +7698,13 @@ msgstr ""
 msgid "Loaded {pageCount} pages from {0} PDF(s)"
 msgstr ""
 
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Loading"
+msgstr "正在加载"
+
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
 msgstr "正在加载动态…"
@@ -7065,6 +7719,10 @@ msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 msgid "Loading email draft"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Loading email filing"
 msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
@@ -7091,10 +7749,6 @@ msgstr ""
 msgid "Loading from the Learning Centre…"
 msgstr ""
 
-#: src/pages/MemorySettingsOverlay.tsx
-msgid "Loading memory settings…"
-msgstr "正在加载记忆设置…"
-
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Loading model catalog…"
@@ -7116,6 +7770,12 @@ msgstr "正在加载预览…"
 msgid "Loading projects..."
 msgstr ""
 
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Loading the newest version…"
+msgstr "正在加载最新版本…"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading video…"
 msgstr ""
@@ -7126,7 +7786,6 @@ msgstr "正在加载语音提供方…"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
-#: src/components/integrations/skills-dialog.tsx
 #: src/components/PageLoading.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
@@ -7150,10 +7809,6 @@ msgid "Local access lets agents run commands without asking. Avoid it on shared 
 msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
-#~ msgid "Local access lets bots run commands without asking. Avoid it on shared or public servers."
-#~ msgstr "本地访问权限允许 Bot 无需询问就执行命令。请勿在共享或公开服务器上启用。"
-
-#: src/pages/HostComputerPrompt.tsx
 msgid "Local computer access requires the latest desktop app."
 msgstr "访问本机电脑需要最新版桌面应用。"
 
@@ -7161,6 +7816,10 @@ msgstr "访问本机电脑需要最新版桌面应用。"
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
 msgstr "退出登录"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Logical"
+msgstr "逻辑"
 
 #: src/components/vault/kinds.tsx
 msgid "Login"
@@ -7177,6 +7836,10 @@ msgstr ""
 #: src/pages/shell/agent-import.tsx
 msgid "Looks like it contains a key"
 msgstr "似乎包含密钥"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Lookup"
+msgstr "查找与引用"
 
 #: src/pages/SharedChats.tsx
 msgid "Lost the connection. Reconnecting…"
@@ -7197,6 +7860,10 @@ msgstr "低"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Low (fastest)"
+msgstr ""
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Lowest confidence for Ready"
 msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
@@ -7262,10 +7929,6 @@ msgstr "管理 MCP 服务器"
 msgid "Manage other agents"
 msgstr ""
 
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Manage other bots"
-#~ msgstr "管理其他机器人"
-
 #: src/components/SidebarFooter.tsx
 #: src/components/StorageDialog.tsx
 msgid "Manage storage"
@@ -7327,6 +7990,11 @@ msgstr ""
 msgid "masked"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Maths"
+msgstr "数学"
+
+#: src/components/office/sheet/SheetRibbon.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Max"
@@ -7419,6 +8087,7 @@ msgstr ""
 msgid "Members use it with the voice you picked, and their use is billed to this connection's account."
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
@@ -7460,6 +8129,14 @@ msgstr "提到：{mentions}"
 msgid "Mentor: {0}"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Merge and centre"
+msgstr "合并后居中"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Merge cells"
+msgstr "合并单元格"
+
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
@@ -7476,11 +8153,6 @@ msgstr "消息"
 #: src/pages/SharedChats.tsx
 msgid "Message {0}. Use @Name to ask one agent."
 msgstr ""
-
-#. placeholder {0}: group.name
-#: src/pages/SharedChats.tsx
-#~ msgid "Message {0}. Use @Name to ask one bot."
-#~ msgstr ""
 
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
@@ -7524,6 +8196,14 @@ msgstr ""
 msgid "Microphone failed"
 msgstr "麦克风失败"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Middle align"
+msgstr "垂直居中"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Min"
+msgstr "最小值"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Minimal"
@@ -7541,10 +8221,6 @@ msgstr "最小化"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Minimize agents"
 msgstr ""
-
-#: src/pages/shell/sidebar-header.tsx
-#~ msgid "Minimize bots"
-#~ msgstr "最小化 Bot"
 
 #: src/components/call/CallCard.tsx
 msgid "Minimize call"
@@ -7694,9 +8370,52 @@ msgstr "更多应用"
 msgid "More computer actions"
 msgstr "更多电脑操作"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "More fill colours"
+msgstr "其他填充颜色"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "More font colours"
+msgstr "其他字体颜色"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "More merge options"
+msgstr "其他合并选项"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "More outline colours"
+msgstr "其他轮廓颜色"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "More quick totals"
+msgstr "其他快速汇总"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "More ways to accept"
+msgstr "其他接受方式"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "More ways to reject"
+msgstr "其他拒绝方式"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Most deadlines a project may hold"
 msgstr ""
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Most emails per card"
+msgstr ""
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Most people only file incoming email, so Sent Items is off for each person until they add it."
+msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Most used"
+msgstr "常用函数"
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Motion & layout"
@@ -7706,6 +8425,7 @@ msgstr ""
 msgid "Move"
 msgstr ""
 
+#: src/components/office/slides/SlideRail.tsx
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
 msgstr "下移"
@@ -7719,6 +8439,7 @@ msgstr "把它们移到共享记忆。"
 msgid "Move to"
 msgstr "移动到"
 
+#: src/components/office/slides/SlideRail.tsx
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move up"
 msgstr "上移"
@@ -7790,10 +8511,6 @@ msgstr ""
 msgid "Name this agent"
 msgstr ""
 
-#: src/pages/shell/agent-import.tsx
-#~ msgid "Name this bot"
-#~ msgstr "给这个 Bot 命名"
-
 #: src/pages/GroupPanel.tsx
 msgid "Name this group"
 msgstr "给这个群组命名"
@@ -7805,10 +8522,6 @@ msgstr "给这个例行任务命名"
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Name your Agent"
 msgstr ""
-
-#: src/pages/shell/create-bot-dialog.tsx
-#~ msgid "Name your Bot"
-#~ msgstr "给 Bot 命名"
 
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Name, new or existing"
@@ -7822,9 +8535,9 @@ msgstr ""
 msgid "Nearly full. When it is full, agents stop making new documents and videos until you delete something."
 msgstr ""
 
-#: src/pages/shell/files-tab.tsx
-#~ msgid "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
-#~ msgstr ""
+#: src/components/EmailFilingCard.tsx
+msgid "Needs a decision"
+msgstr ""
 
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
@@ -7879,6 +8592,10 @@ msgstr ""
 msgid "Never ask"
 msgstr "从不询问"
 
+#: src/components/EmailFilingSettings.tsx
+msgid "Never suggest"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
@@ -7899,6 +8616,10 @@ msgstr ""
 msgid "New API key"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "New app"
+msgstr ""
+
 #: src/components/apps/TemplateAppButton.tsx
 msgid "New app from a starter"
 msgstr ""
@@ -7907,15 +8628,18 @@ msgstr ""
 msgid "New app from Excel"
 msgstr ""
 
-#: src/pages/Shell.tsx
-#: src/pages/shell/bot-picker.tsx
-#: src/pages/shell/create-bot-dialog.tsx
-#~ msgid "New bot"
-#~ msgstr "新建 Bot"
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "New blank document"
+msgstr "新建空白文档"
 
 #: src/components/VaultSettings.tsx
 msgid "New card"
 msgstr ""
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "New comment"
+msgstr "新建批注"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "New computers run on"
@@ -7925,9 +8649,31 @@ msgstr ""
 msgid "New contact"
 msgstr ""
 
+#: src/components/office/WordStudio.tsx
+msgid "New document"
+msgstr "新建文档"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "New document for which office?"
+msgstr "为哪个办公室新建文档？"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "New documents can't be made here yet."
+msgstr "这里暂时无法新建文档。"
+
 #: src/components/apps/AppCodePanel.tsx
 #: src/components/apps/CodeDiff.tsx
 msgid "New file"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "New folder"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "New folder: {path}"
 msgstr ""
 
 #: src/pages/GroupPanel.tsx
@@ -7974,12 +8720,24 @@ msgstr "新的待办"
 msgid "New password"
 msgstr "新密码"
 
+#: src/components/office/SlidesStudio.tsx
+msgid "New presentation"
+msgstr "新建演示文稿"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "New presentations can't be made here yet."
+msgstr "此处暂时无法新建演示文稿。"
+
 #: src/components/AskCard.tsx
 msgid "New project comment"
 msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "New project deadline"
+msgstr ""
+
+#: src/components/EmailFilingSettings.tsx
+msgid "New project folders go in"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -7991,9 +8749,30 @@ msgstr ""
 msgid "New section"
 msgstr "新建分组"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "New sheet"
+msgstr "新建工作表"
+
 #: src/pages/KnowledgeSection.tsx
 msgid "New skill"
 msgstr "新建技能"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/slides/SlidesWorkbench.tsx
+msgid "New slide"
+msgstr "新建幻灯片"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "New slide after this"
+msgstr "在此后新建幻灯片"
+
+#: src/components/office/SheetStudio.tsx
+msgid "New spreadsheet"
+msgstr "新建电子表格"
+
+#: src/components/office/SheetStudio.tsx
+msgid "New spreadsheets can't be made here yet."
+msgstr "此处暂时无法新建电子表格。"
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
@@ -8004,6 +8783,10 @@ msgstr ""
 #: src/pages/Board.tsx
 msgid "New ticket"
 msgstr "新建工单"
+
+#: src/components/todos/todo-board.tsx
+msgid "New to-do list"
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "New variable"
@@ -8034,6 +8817,10 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Next change"
+msgstr "下一处修订"
+
 #. placeholder {0}: when(cleanup.nextRunAt)
 #: src/pages/AdminComputerAccess.tsx
 msgid "Next cleanup {0}."
@@ -8050,10 +8837,6 @@ msgstr ""
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Next or previous agent"
 msgstr ""
-
-#: src/pages/shell/keyboard-shortcuts-dialog.tsx
-#~ msgid "Next or previous bot"
-#~ msgstr "下一个或上一个 Bot"
 
 #: src/components/markdown-copy.tsx
 msgid "Next page"
@@ -8105,14 +8888,9 @@ msgstr "无认证"
 msgid "No authentication"
 msgstr "无认证"
 
-#: src/components/integrations/agent-access.tsx
-#~ msgid "No bots"
-#~ msgstr ""
-
-#: src/pages/GroupPanel.tsx
-#: src/pages/shell/bot-picker.tsx
-#~ msgid "No bots match"
-#~ msgstr "没有匹配的 Bot"
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "No border"
+msgstr "无框线"
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "No budget"
@@ -8122,6 +8900,10 @@ msgstr ""
 #: src/components/EvolveChangeEditor.tsx
 msgid "No category"
 msgstr ""
+
+#: src/components/office/sheet/history.tsx
+msgid "No cell changes"
+msgstr "单元格无更改"
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "No cleanup has run yet."
@@ -8171,6 +8953,10 @@ msgstr ""
 msgid "No Evolve assistants are available. Check that Evolve is linked."
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+msgid "No Evolve project matches."
+msgstr ""
+
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "No Evolve tool matches."
 msgstr ""
@@ -8187,9 +8973,26 @@ msgstr ""
 msgid "No files yet"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "No fill"
+msgstr "无填充"
+
+#: src/components/EmailFilingCard.tsx
+msgid "No folder matches."
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "No folder suggested."
+msgstr ""
+
 #: src/components/integrations/SharePointFolders.tsx
 msgid "No folders here."
 msgstr "No folders here."
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "No highlight"
+msgstr "无突出显示"
 
 #: src/components/render-studio/StageCanvas.tsx
 msgid "No image"
@@ -8209,6 +9012,10 @@ msgstr "已停用"
 #: src/pages/PluginsOverlay.tsx
 msgid "No managed app catalog is configured on this deployment."
 msgstr "此部署未配置托管应用目录。"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "No markup"
+msgstr "无标记"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "No mask — the whole image will be edited. Tip: draw a mask above for granular edits."
@@ -8264,9 +9071,25 @@ msgstr "No monthly allowance is set, so chats and routines can keep spending."
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "未找到 OpenClaw、Hermes 或 Agent 文档。"
 
+#: src/components/office/WordStudio.tsx
+msgid "No other documents yet"
+msgstr "暂无其他文档"
+
 #: src/components/EmailDraftCard.tsx
 msgid "No other files in this chat"
 msgstr ""
+
+#: src/components/office/SlidesStudio.tsx
+msgid "No other presentations yet"
+msgstr "暂无其他演示文稿"
+
+#: src/components/office/SheetStudio.tsx
+msgid "No other spreadsheets yet"
+msgstr "暂无其他电子表格"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "No outline"
+msgstr "无轮廓"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "No people match your search."
@@ -8275,6 +9098,10 @@ msgstr ""
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "No pictures yet."
 msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "No presentations yet"
+msgstr "还没有演示文稿"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "No projects match your filters. Try adjusting your criteria."
@@ -8327,10 +9154,6 @@ msgstr "还没有运行记录"
 msgid "No signature saved. Paste your Outlook signature here or under Settings → Email signature."
 msgstr ""
 
-#: src/components/EmailDraftCard.tsx
-#~ msgid "No signature saved. Paste your Outlook signature in Settings, under Email signature."
-#~ msgstr ""
-
 #: src/components/integrations/SharePointFolders.tsx
 msgid "No sites or OneDrive found."
 msgstr ""
@@ -8343,9 +9166,18 @@ msgstr "暂无技能"
 msgid "No source image"
 msgstr ""
 
+#: src/components/office/OfficeStudioHost.tsx
+msgid "No spreadsheets yet"
+msgstr "还没有电子表格"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "No submissions"
 msgstr "暂无提交"
+
+#: src/components/office/slides/history.tsx
+#: src/components/office/word/history.tsx
+msgid "No text changes"
+msgstr "文本无更改"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "No text was found in that file. A scanned PDF has no text to read; paste the words in instead."
@@ -8358,6 +9190,10 @@ msgstr "还没有工单"
 #: src/pages/RoutineEditor.tsx
 msgid "No trigger"
 msgstr "无触发器"
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "No Word documents yet"
+msgstr "还没有 Word 文档"
 
 #: src/pages/SharedChats.tsx
 msgid "Nobody has added you to a group chat yet."
@@ -8379,6 +9215,7 @@ msgstr ""
 msgid "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
 msgstr "None yet. Assistants cannot read SharePoint until you choose folders. They only ever read, never change anything."
 
+#: src/components/office/word/WordRibbon.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 msgid "Normal"
@@ -8436,6 +9273,18 @@ msgstr "暂不"
 msgid "Not passed yet"
 msgstr ""
 
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Not saved"
+msgstr "未保存"
+
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Not saved. Trying again…"
+msgstr "未保存。正在重试…"
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Not set up"
 msgstr ""
@@ -8483,8 +9332,16 @@ msgstr ""
 msgid "Notes (PDF)"
 msgstr ""
 
+#: src/components/office/slides/history.tsx
+msgid "Notes:"
+msgstr "备注："
+
 #: src/components/todos/todo-board.tsx
 msgid "Nothing archived."
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Nothing filed yet."
 msgstr ""
 
 #: src/components/todos/todo-board.tsx
@@ -8499,25 +9356,51 @@ msgstr ""
 msgid "Nothing is due to be deleted this week."
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+msgid "Nothing is ready to file."
+msgstr ""
+
 #: src/pages/AdminSharedApps.tsx
 msgid "Nothing is shared right now."
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Nothing needs your decision."
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "暂无记忆"
 
+#: src/components/EmailFilingCard.tsx
+msgid "Nothing remembered yet."
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Notifications"
 msgstr "通知"
 
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Now"
+msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Number"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Number format"
+msgstr "数字格式"
+
 #: src/components/EmailDraftCard.tsx
 msgid "Numbered list"
 msgstr ""
+
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Numbering"
+msgstr "编号"
 
 #: src/pages/McpOAuthCallback.tsx
 msgid "OAuth authorization was cancelled."
@@ -8613,11 +9496,11 @@ msgid "Off hides voice, dictation and calls for every member, admins included."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
-#~ msgid "Off: only admins connect models or change a bot's model; everyone runs on the company model."
-#~ msgstr ""
-
-#: src/pages/AdminCompanyPage.tsx
 msgid "Off: only admins connect models or change an agent's model; everyone runs on the company model."
+msgstr ""
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Off: only email you receive is suggested."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -8680,10 +9563,6 @@ msgstr "1 日 {0}"
 msgid "One bridge inspection app, with a separate team and records for Athlone, Kells and Sligo."
 msgstr ""
 
-#: src/components/apps/AppsDialog.tsx
-msgid "One Evolve window holding a calendar, checklist, board, charts, a map and photos."
-msgstr ""
-
 #: src/components/AppScopeAskCard.tsx
 msgid "One person writing their own site diary. Nobody else has those notes."
 msgstr ""
@@ -8735,6 +9614,14 @@ msgstr ""
 #: src/pages/AdminStaffLimits.tsx
 msgid "Only the ticked models are allowed."
 msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Only the top-left cell can keep its value. Clear the other cells first, then merge."
+msgstr "只有左上角的单元格能保留其值。请先清除其他单元格，再进行合并。"
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "Only Word, PowerPoint and Excel files open here."
+msgstr "这里只能打开 Word、PowerPoint 和 Excel 文件。"
 
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
@@ -8812,7 +9699,12 @@ msgid "Open in new tab"
 msgstr ""
 
 #: src/components/EmailDraftCard.tsx
+#: src/components/EmailFilingCard.tsx
 msgid "Open in Outlook"
+msgstr ""
+
+#: src/components/EmailDraftCard.tsx
+msgid "Open in the browser"
 msgstr ""
 
 #: src/components/InstallAppBanner.tsx
@@ -8837,6 +9729,10 @@ msgstr ""
 msgid "Open one full screen, or edit an app you built."
 msgstr ""
 
+#: src/components/ArtifactFileCard.tsx
+msgid "Open or edit {name}"
+msgstr "打开或编辑 {name}"
+
 #: src/components/LearningClinicCard.tsx
 msgid "Open the video"
 msgstr ""
@@ -8852,6 +9748,10 @@ msgstr "待办"
 #: src/components/EmailDraftCard.tsx
 msgid "Open your Outlook Drafts folder to review and send this email."
 msgstr ""
+
+#: src/components/ArtifactFileCard.tsx
+msgid "Open/Edit"
+msgstr "打开/编辑"
 
 #: src/pages/Onboarding.tsx
 msgid "OpenAI API"
@@ -8886,10 +9786,6 @@ msgstr "可选请求头值"
 msgid "Optional. Evolve colleagues chat with this group's agents, without your memory, notes, saved logins or connectors."
 msgstr ""
 
-#: src/pages/GroupPanel.tsx
-#~ msgid "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connectors."
-#~ msgstr ""
-
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Or paste an API key"
@@ -8899,6 +9795,10 @@ msgstr "或粘贴 API 密钥"
 msgid "or sign in with email"
 msgstr "或使用邮箱登录"
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Order"
+msgstr "排列顺序"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Organization"
 msgstr "组织"
@@ -8907,6 +9807,7 @@ msgstr "组织"
 msgid "Organization API key"
 msgstr "组织 API 密钥"
 
+#: src/components/office/word/WordRibbon.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -8942,13 +9843,17 @@ msgstr ""
 msgid "Others see the data but can't change it."
 msgstr ""
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Outline"
+msgstr "轮廓"
+
 #: src/components/EmailDraftCard.tsx
 msgid "Outlook email"
 msgstr ""
 
-#: src/pages/AdminCompanyPage.tsx
-#~ msgid "Outlook email drafts"
-#~ msgstr ""
+#: src/pages/RoutineEditor.tsx
+msgid "Outlook email message"
+msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 msgid "Outlook not connected"
@@ -8972,6 +9877,14 @@ msgstr ""
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Output size is locked to the original image. Every render inherits this size — no resizing, no cropping."
 msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Outside borders"
+msgstr "外侧框线"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Oval"
+msgstr "椭圆"
 
 #. placeholder {0}: group.ownerName
 #: src/pages/SharedChats.tsx
@@ -9008,17 +9921,38 @@ msgstr ""
 msgid "Page {curPage}"
 msgstr ""
 
+#: src/components/office/WordStudio.tsx
+msgid "Page {page}"
+msgstr "第 {page} 页"
+
 #: src/components/markdown-copy.tsx
 msgid "Page {page} of {count}"
 msgstr "第 {page} 页，共 {count} 页"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Page break"
+msgstr "分页符"
 
 #: src/pages/NotFound.tsx
 msgid "Page not found"
 msgstr "找不到页面"
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Pages"
+msgstr "页面"
+
 #: src/pages/AdminSharedApps.tsx
 msgid "Pages and apps people have shared by link or published to Evolve. Freeze one to take it offline for everyone else at once; its owner keeps their copy and can't share it again until you unfreeze it."
 msgstr ""
+
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Paragraph"
+msgstr "段落"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Paragraph style"
+msgstr "段落样式"
 
 #: src/components/LearningClinicCard.tsx
 msgid "Passed"
@@ -9164,6 +10098,10 @@ msgstr ""
 msgid "Per hour"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Percentage"
+msgstr "百分比"
+
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Period"
@@ -9193,6 +10131,7 @@ msgid "Persona"
 msgstr "人设"
 
 #: src/components/SignupSurvey.tsx
+#: src/components/todos/todo-board.tsx
 msgid "Personal"
 msgstr "个人"
 
@@ -9226,10 +10165,6 @@ msgstr "选 {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} 个"
 msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} agents, or just 1 when you add people below"
 msgstr ""
 
-#: src/pages/GroupPanel.tsx
-#~ msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below"
-#~ msgstr ""
-
 #: src/lib/model-connection-preflight.ts
 msgid "Pick a model from the catalog."
 msgstr "请从目录中选择模型。"
@@ -9241,6 +10176,16 @@ msgstr "请从列表中选择模型，或输入此端点提供的模型 ID。"
 #: src/pages/RoutineEditor.tsx
 msgid "Pick a tool to check"
 msgstr "选择要检查的工具"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Picture"
+msgstr "图片"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Picture: {name}"
+msgstr "图片：{name}"
 
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Pictures"
@@ -9326,6 +10271,7 @@ msgid "POST to"
 msgstr "POST 到"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/components/office/registry.ts
 #: src/components/tour/ocsc-tour.tsx
 msgid "PowerPoint"
 msgstr ""
@@ -9334,9 +10280,25 @@ msgstr ""
 msgid "PowerPoint decks on the OCSC template, ready to present."
 msgstr ""
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "PowerPoint Studio"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "偏好设置"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Present"
+msgstr "放映"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Presentation tools"
+msgstr "演示文稿工具"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Presentations"
+msgstr "演示文稿"
 
 #: src/components/DictationShortcutSettings.tsx
 msgid "Press a shortcut with ⌘ or Ctrl. Escape cancels."
@@ -9367,6 +10329,10 @@ msgstr "这种文件无法预览，请下载后查看。"
 #: src/pages/shell/references-dialog.tsx
 msgid "Previous"
 msgstr ""
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Previous change"
+msgstr "上一处修订"
 
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Previous match"
@@ -9451,7 +10417,6 @@ msgid "Protocol"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
-#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Provider"
@@ -9495,12 +10460,12 @@ msgstr ""
 msgid "Put people in groups, such as Developers, then open a feature or app to a group on the Features page. Removing someone from a group takes their access away within a few seconds. Admins can always use everything."
 msgstr ""
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Put the cursor in a tracked change first."
+msgstr "请先将光标放在一处修订中。"
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Quality"
-msgstr ""
-
-#: src/components/apps/AppsDialog.tsx
-msgid "Quality for the client, speed for the work"
 msgstr ""
 
 #: src/pages/shell/references-dialog.tsx
@@ -9514,6 +10479,10 @@ msgstr ""
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "排队中"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Quote"
+msgstr "引用"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for OCSC Intelligence."
@@ -9561,9 +10530,15 @@ msgstr ""
 msgid "Reads PDFs you send it, so you can ask questions about them"
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
 #: src/pages/shell/import-status.ts
 msgid "Ready"
 msgstr "就绪"
+
+#. placeholder {0}: batch.threshold
+#: src/components/EmailFilingCard.tsx
+msgid "Ready at {0}%"
+msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
@@ -9600,6 +10575,10 @@ msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Recent AI changes in Evolve"
+msgstr ""
+
+#: src/components/studio/StudioActivityCarousel.tsx
+msgid "Recent messages and actions"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -9684,11 +10663,18 @@ msgstr "招聘与人事"
 msgid "Rect"
 msgstr ""
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Rectangle"
+msgstr "矩形"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Redirect URI"
 msgstr "重定向 URI"
 
 #: src/components/apps/AppHistoryPanel.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Redo"
 msgstr ""
 
@@ -9738,6 +10724,8 @@ msgstr ""
 msgid "Registration is closed"
 msgstr "注册已关闭"
 
+#: src/components/office/word/ReviewPanel.tsx
+#: src/components/office/word/WordRibbon.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Reject"
 msgstr "拒绝"
@@ -9746,6 +10734,18 @@ msgstr "拒绝"
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Reject {0}"
 msgstr "拒绝 {0}"
+
+#: src/components/office/word/ReviewPanel.tsx
+msgid "Reject all"
+msgstr "全部拒绝"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Reject all changes"
+msgstr "拒绝所有修订"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Reject this change"
+msgstr "拒绝此修订"
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Rejected"
@@ -9763,6 +10763,26 @@ msgstr "交还控制权"
 #: src/lib/client-update.ts
 msgid "Reload"
 msgstr "重新加载"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Remember"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Remember for this conversation"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Remember for this sender"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Remember for this sender's domain"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Remember this choice"
+msgstr ""
 
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/EmailSignatureSettings.tsx
@@ -9784,6 +10804,7 @@ msgstr "移除"
 #: src/components/apps/AppSettingsPanel.tsx
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/EmailDraftCard.tsx
+#: src/components/EmailFilingSettings.tsx
 #: src/components/GroupPeople.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/composer.tsx
@@ -9796,6 +10817,10 @@ msgstr "移除 {0}"
 msgid "Remove {0} from the group"
 msgstr "把 {0} 移出群组"
 
+#: src/components/EmailFilingSettings.tsx
+msgid "Remove {entry}"
+msgstr ""
+
 #: src/pages/AdminAccess.tsx
 msgid "Remove {name}"
 msgstr ""
@@ -9803,10 +10828,6 @@ msgstr ""
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Remove {secretName}? Agents will no longer be able to use it."
 msgstr ""
-
-#: src/components/vault/VaultItemDetail.tsx
-#~ msgid "Remove {secretName}? Bots will no longer be able to use it."
-#~ msgstr "要移除 {secretName} 吗？机器人将无法再使用它。"
 
 #: src/components/TrustedLinkSitesSettings.tsx
 msgid "Remove {site}"
@@ -9839,6 +10860,10 @@ msgstr "移除 Git 事件"
 msgid "Remove header"
 msgstr "移除请求头"
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Remove link"
+msgstr "删除链接"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Remove message trigger"
 msgstr "移除消息触发器"
@@ -9870,9 +10895,11 @@ msgstr "已移除，但列表刷新失败"
 msgid "Removing…"
 msgstr "正在移除…"
 
+#: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageView.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/todos/todo-board.tsx
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Rename"
 msgstr "重命名"
@@ -9886,6 +10913,10 @@ msgstr ""
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Rename section"
 msgstr "重命名分组"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Rename sheet"
+msgstr "重命名工作表"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Render"
@@ -9925,6 +10956,10 @@ msgstr "将于 {day} 续订"
 msgid "Reopen"
 msgstr "重新打开"
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Replace"
+msgstr "替换"
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Replace API key"
 msgstr "替换 API 密钥"
@@ -9949,6 +10984,7 @@ msgstr ""
 msgid "Replies to"
 msgstr "回复对象"
 
+#: src/components/studio/StudioActivityCarousel.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/quote-selection-button.tsx
 msgid "Reply"
@@ -9967,6 +11003,10 @@ msgstr "正在回复 {0}"
 #. placeholder {1}: draft.replyTo.subject
 #: src/components/EmailDraftCard.tsx
 msgid "Replying to {0}: “{1}”"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Reports and letters, edited in the studio."
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -10028,9 +11068,9 @@ msgstr "正在重置…"
 msgid "Resize agents sidebar"
 msgstr ""
 
-#: src/pages/shell/sidebar-layout.tsx
-#~ msgid "Resize bots sidebar"
-#~ msgstr "调整 Bot 侧边栏大小"
+#: src/components/studio/StudioChatPane.tsx
+msgid "Resize chat"
+msgstr "调整聊天大小"
 
 #: src/pages/ResizableSidePanel.tsx
 msgid "Resize panel"
@@ -10051,6 +11091,7 @@ msgstr "重启后更新"
 
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/InstructionSettings.tsx
+#: src/components/office/history/VersionHistory.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/evolve-history.tsx
@@ -10064,6 +11105,11 @@ msgstr "恢复上次保存的工作区。"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
 msgstr "还原上次保存的工作区。电脑上未保存的工作会丢失。"
+
+#. placeholder {0}: row.version
+#: src/components/office/history/VersionHistory.tsx
+msgid "Restore version {0}"
+msgstr "恢复版本 {0}"
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Restore version {version}"
@@ -10096,7 +11142,6 @@ msgstr ""
 
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
-#: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
@@ -10139,9 +11184,18 @@ msgstr "返回与 {0} 的通话"
 msgid "Return to OCSC Intelligence"
 msgstr ""
 
+#: src/components/office/word/ReviewPanel.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Review"
+msgstr "审阅"
+
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
 msgstr "请检查提供方设置并重新测试。"
+
+#: src/components/office/word/ReviewPanel.tsx
+msgid "Review suggested changes"
+msgstr "审阅建议的更改"
 
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -10179,6 +11233,10 @@ msgstr ""
 #: src/pages/RoutineEditor.tsx
 msgid "Rotate key"
 msgstr "轮换密钥"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Rounded rectangle"
+msgstr "圆角矩形"
 
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
@@ -10223,7 +11281,12 @@ msgstr "你不在时也会运行的例行任务"
 msgid "Row"
 msgstr "行"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Rows"
+msgstr "行"
+
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/EmailFilingCard.tsx
 msgid "Rules"
 msgstr ""
 
@@ -10277,10 +11340,6 @@ msgstr ""
 #: src/pages/RoutineEditor.tsx
 msgid "Runs when this agent receives a verified message from this provider."
 msgstr ""
-
-#: src/pages/RoutineEditor.tsx
-#~ msgid "Runs when this bot receives a verified message from this provider."
-#~ msgstr "这个 Bot 收到该提供方发来的已验证消息时会运行。"
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Safeguards saved in Evolve"
@@ -10352,9 +11411,9 @@ msgstr ""
 msgid "Save company limits"
 msgstr ""
 
-#: src/components/EmailDraftCard.tsx
-#~ msgid "Save draft"
-#~ msgstr ""
+#: src/pages/AdminEmailFiling.tsx
+msgid "Save email filing"
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Save for everyone"
@@ -10383,6 +11442,9 @@ msgstr "保存到保管库"
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/EmailSignatureSettings.tsx
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/AdminAssistantModels.tsx
@@ -10427,9 +11489,13 @@ msgstr "正在保存工作区"
 msgid "Saving..."
 msgstr "正在保存…"
 
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/pages/AdminEmailFiling.tsx
 #: src/pages/AdminEvolveSafeguards.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -10495,14 +11561,6 @@ msgstr ""
 msgid "Search agents, actions, and settings"
 msgstr ""
 
-#: src/pages/shell/keyboard-shortcuts-dialog.tsx
-#~ msgid "Search bots"
-#~ msgstr "搜索 Bot"
-
-#: src/pages/shell/command-palette.tsx
-#~ msgid "Search bots, actions, and settings"
-#~ msgstr ""
-
 #: src/pages/PluginsOverlay.tsx
 msgid "Search by domain"
 msgstr "按域名搜索"
@@ -10537,6 +11595,14 @@ msgstr ""
 msgid "Search files…"
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+msgid "Search folders or Evolve projects"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Search folders, or an Evolve job number or title"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "搜索 integrations.sh"
@@ -10559,10 +11625,6 @@ msgstr "搜索运行记录"
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Search sites"
 msgstr ""
-
-#: src/components/integrations/skills-dialog.tsx
-msgid "Search skills"
-msgstr "搜索技能"
 
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Search staff by name, skill, sector or experience."
@@ -10620,14 +11682,17 @@ msgid "See what changed"
 msgstr ""
 
 #. placeholder {0}: item.name
+#. placeholder {0}: item.subject
+#: src/components/EmailFilingCard.tsx
 #: src/components/StorageDialog.tsx
 msgid "Select {0}"
 msgstr ""
 
-#: src/pages/shell/chat-header.tsx
-#~ msgid "Select a bot"
-#~ msgstr "选择 Bot"
+#: src/components/office/StudioWelcome.tsx
+msgid "Select a text box, image or shape and ask for a change. The assistant receives your selection as context."
+msgstr "选中一个文本框、图片或形状，然后提出修改要求。助手会将你的选择作为上下文。"
 
+#: src/components/EmailFilingCard.tsx
 #: src/components/StorageDialog.tsx
 msgid "Select all"
 msgstr ""
@@ -10644,13 +11709,33 @@ msgstr ""
 msgid "Select at least one page"
 msgstr ""
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Select cells and ask for a change. The assistant receives your selection as context."
+msgstr "选中单元格，然后提出修改要求。助手会将你的选择作为上下文。"
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Select Drawing(s)"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "Select ready"
 msgstr ""
 
 #: src/pages/shell/references-dialog.tsx
 msgid "Select References"
 msgstr ""
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Select the words to comment on first."
+msgstr "请先选择要批注的文字。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Select two or more cells to merge."
+msgstr "请选择两个或更多单元格进行合并。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Select two or more rows to sort."
+msgstr "请选择两行或更多行进行排序。"
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Selected pages will be converted to images and added to your message."
@@ -10690,6 +11775,10 @@ msgstr "发送回答"
 msgid "Send as file"
 msgstr "作为文件发送"
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Send backward"
+msgstr "下移一层"
+
 #: src/components/AccountAccess.tsx
 msgid "Send deletion code"
 msgstr "发送删除验证码"
@@ -10706,10 +11795,6 @@ msgstr "发送"
 msgid "Send me that report as a PDF with the changes marked up"
 msgstr ""
 
-#: src/pages/AdminCompanyPage.tsx
-#~ msgid "Send Outlook email"
-#~ msgstr ""
-
 #: src/components/composer/HoldToTalk.tsx
 msgid "Send recording"
 msgstr "发送录音"
@@ -10722,9 +11807,17 @@ msgstr "发送重置链接"
 msgid "Send the password separately from the link."
 msgstr ""
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Send to back"
+msgstr "置于底层"
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Send with Enter"
 msgstr "按 Enter 发送"
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Sender or @domain"
+msgstr ""
 
 #: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
@@ -10740,6 +11833,7 @@ msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
+#: src/components/EmailFilingCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "Sent"
 msgstr "已发送"
@@ -10751,6 +11845,14 @@ msgstr ""
 #: src/components/EmailDraftCard.tsx
 msgid "Sent from {sender} on {sentAt}"
 msgstr ""
+
+#: src/pages/AdminEmailFiling.tsx
+msgid "Sent Items"
+msgstr ""
+
+#: src/pages/shell/composer.tsx
+msgid "Sent with your message so the assistant knows what you're looking at"
+msgstr "随消息一起发送，让助手知道你正在查看的内容"
 
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Separate data per project"
@@ -10842,7 +11944,22 @@ msgstr "形状"
 msgid "Shape {0}"
 msgstr "形状 {0}"
 
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Shape style"
+msgstr "形状样式"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Shape: {name}"
+msgstr "形状：{name}"
+
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Shapes"
+msgstr "形状"
+
 #: src/components/apps/AppStudio.tsx
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
 msgid "Share"
@@ -10873,7 +11990,6 @@ msgid "Share, anyone with the link and password can view"
 msgstr ""
 
 #: src/components/pages/PagesList.tsx
-#: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared"
 msgstr "共享"
@@ -10891,10 +12007,6 @@ msgstr ""
 msgid "Shared with my agents"
 msgstr ""
 
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Shared with my bots"
-#~ msgstr ""
-
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Shared with you"
@@ -10904,6 +12016,55 @@ msgstr ""
 msgid "Shared: colleagues see every row. Click to make rows personal."
 msgstr ""
 
+#. placeholder {0}: group.sheet
+#: src/components/office/sheet/history.tsx
+msgid "Sheet “{0}”"
+msgstr "工作表“{0}”"
+
+#. placeholder {0}: group.sheet
+#: src/components/office/sheet/history.tsx
+msgid "Sheet “{0}” added"
+msgstr "已添加工作表“{0}”"
+
+#. placeholder {0}: group.sheet
+#: src/components/office/sheet/history.tsx
+msgid "Sheet “{0}” removed"
+msgstr "已删除工作表“{0}”"
+
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Sheet {sheet}"
+msgstr "工作表 {sheet}"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sheet {sheet} deleted."
+msgstr "已删除工作表 {sheet}。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sheet name"
+msgstr "工作表名称"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sheet names can be up to 31 characters."
+msgstr "工作表名称最多 31 个字符。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sheet names can't contain slashes, question marks, asterisks, square brackets or colons."
+msgstr "工作表名称不能包含斜杠、问号、星号、方括号或冒号。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sheet names can't start or end with an apostrophe."
+msgstr "工作表名称不能以撇号开头或结尾。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Sheets"
+msgstr "工作表"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Short date"
+msgstr "短日期"
+
+#: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/StorageDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
@@ -10920,17 +12081,21 @@ msgstr ""
 msgid "Show all"
 msgstr "显示全部"
 
-#: src/pages/shell/sidebar-header.tsx
-#~ msgid "Show bots"
-#~ msgstr "显示 Bot"
-
 #: src/pages/PluginsOverlay.tsx
 msgid "Show everything (admins)"
 msgstr "显示全部（管理员）"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Show in slideshow"
+msgstr "在放映时显示"
+
 #: src/pages/Artifacts.tsx
 msgid "Show list"
 msgstr "显示列表"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Show markup"
+msgstr "显示标记"
 
 #: src/components/apps/AppsDialog.tsx
 #: src/components/pages/PagesList.tsx
@@ -10958,8 +12123,12 @@ msgid "Show selected"
 msgstr "显示已选"
 
 #: src/components/apps/AppStudio.tsx
-#: src/components/whiteboards/whiteboard-studio.tsx
+#: src/components/studio/StudioFrame.tsx
 msgid "Show the chat beside the app"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Show the chat beside the list"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -10981,6 +12150,10 @@ msgstr "正在显示所有应用和插件，包括对员工隐藏的。"
 #: src/pages/PluginsOverlay.tsx
 msgid "Showing what staff see."
 msgstr "正在显示员工看到的内容。"
+
+#: src/components/office/slides/history.tsx
+msgid "Shown in the slide show again"
+msgstr "放映时重新显示"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Shows Add custom in Connectors, so people can add any MCP server by its address. Limit it to chosen people and groups; admins see it only when they are included."
@@ -11043,6 +12216,10 @@ msgstr "注册"
 msgid "Sign-in cancelled. Try again."
 msgstr "登录已取消。请重试。"
 
+#: src/components/EmailSignatureSettings.tsx
+msgid "Signature"
+msgstr ""
+
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Signed-in colleagues add rows and change only the ones they added (forms, timesheets, inspections)."
 msgstr ""
@@ -11080,6 +12257,10 @@ msgstr ""
 msgid "Sites & OneDrive"
 msgstr ""
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "Sketch a process or a plan, then ask for the board to be tidied or extended."
+msgstr ""
+
 #. placeholder {0}: skill.name
 #: src/pages/shell/composer.tsx
 msgid "Skill {0}"
@@ -11100,10 +12281,7 @@ msgstr "技能"
 msgid "Skills join the library all your agents share."
 msgstr ""
 
-#: src/pages/shell/agent-import.tsx
-#~ msgid "Skills join the library all your bots share."
-#~ msgstr "技能会加入所有 Bot 共享的技能库。"
-
+#: src/components/EmailFilingCard.tsx
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
 msgstr "跳过"
@@ -11125,32 +12303,89 @@ msgstr ""
 msgid "Skipped {0}"
 msgstr "已跳过 {0}"
 
+#: src/components/EmailFilingCard.tsx
+msgid "Skipped; left where it is."
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Slack message"
 msgstr "Slack 消息"
 
-#: src/pages/RoutineEditor.tsx
-msgid "Slack not enabled"
-msgstr "未启用 Slack"
+#. placeholder {0}: change.at + 1
+#: src/components/office/slides/history.tsx
+msgid "Slide {0}"
+msgstr "幻灯片 {0}"
+
+#. placeholder {0}: change.at + 1
+#. placeholder {1}: change.from + 1
+#: src/components/office/slides/history.tsx
+msgid "Slide {0} (was {1})"
+msgstr "幻灯片 {0}（原为 {1}）"
+
+#. placeholder {0}: change.at + 1
+#: src/components/office/slides/history.tsx
+msgid "Slide {0} added"
+msgstr "已添加幻灯片 {0}"
+
+#. placeholder {0}: change.from + 1
+#. placeholder {1}: change.at + 1
+#: src/components/office/slides/history.tsx
+msgid "Slide {0} moved to position {1}"
+msgstr "幻灯片 {0} 已移到第 {1} 位"
+
+#. placeholder {0}: change.from + 1
+#: src/components/office/slides/history.tsx
+msgid "Slide {0} removed"
+msgstr "已删除幻灯片 {0}"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Slide {n}"
+msgstr "幻灯片 {n}"
+
+#: src/components/office/slides/SlideRail.tsx
+#: src/components/office/slides/SlidesWorkbench.tsx
+msgid "Slide {number}"
+msgstr "幻灯片 {number}"
+
+#: src/components/office/slides/Presenter.tsx
+msgid "Slide {number} of {total}"
+msgstr "第 {number} 张，共 {total} 张"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Slide {number} options"
+msgstr "幻灯片 {number} 选项"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Slide up to lock"
 msgstr "上滑锁定"
 
+#: src/components/office/slides/SlideRail.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Slides"
+msgstr "幻灯片"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Slides come animated for presenting"
 msgstr ""
+
+#: src/components/office/slides/Presenter.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+msgid "Slideshow"
+msgstr "幻灯片放映"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Soft deadline"
 msgstr ""
 
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Some cells couldn't be pasted into and were left as they were."
+msgstr "部分单元格无法粘贴，已保持原样。"
+
 #: src/components/StorageDialog.tsx
 msgid "Some files will be deleted soon"
 msgstr ""
 
-#: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Some plugins could not be loaded."
 msgstr "部分插件无法加载。"
@@ -11188,6 +12423,14 @@ msgstr "刚刚添加了同名项目。请重试。"
 msgid "Something you chose cannot work here. Untick it and try again."
 msgstr "所选的某项在此无法使用。取消勾选后重试。"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sort"
+msgstr "排序"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sort A to Z"
+msgstr "升序排序"
+
 #: src/components/markdown-copy.tsx
 #: src/components/UiCardView.tsx
 msgid "Sort by {column}"
@@ -11201,6 +12444,10 @@ msgstr ""
 msgid "Sort cleared"
 msgstr "已清除排序"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sort Z to A"
+msgstr "降序排序"
+
 #: src/components/markdown-copy.tsx
 msgid "Sorted by {column}, ascending"
 msgstr "按 {column} 排序，升序"
@@ -11208,6 +12455,14 @@ msgstr "按 {column} 排序，升序"
 #: src/components/markdown-copy.tsx
 msgid "Sorted by {column}, descending"
 msgstr "按 {column} 排序，降序"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sorting cells with formulas could change what they add up, so it isn't done here."
+msgstr "对含公式的单元格排序可能改变其计算结果，因此此处不执行排序。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sorting doesn't work across merged cells. Unmerge them first."
+msgstr "无法对合并单元格排序。请先取消合并。"
 
 #: src/lib/identity-display.ts
 #: src/pages/SettingsOverlay.tsx
@@ -11225,6 +12480,10 @@ msgstr "朗读"
 #: src/pages/shell/message-view.tsx
 msgid "Speak this reply"
 msgstr "朗读这条回复"
+
+#: src/components/office/slides/SlidesWorkbench.tsx
+msgid "Speaker notes"
+msgstr "演讲者备注"
 
 #: src/components/call/CallCard.tsx
 msgid "Speaking"
@@ -11254,6 +12513,14 @@ msgstr ""
 msgid "Spreadsheet"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Spreadsheet tools"
+msgstr "电子表格工具"
+
+#: src/components/office/SheetStudio.tsx
+msgid "Spreadsheets"
+msgstr "电子表格"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Spreadsheets, cost plans, registers and trackers."
 msgstr ""
@@ -11272,7 +12539,7 @@ msgid "Staff access to {0}"
 msgstr "员工对 {0} 的访问权限"
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
+msgid "Staff can write their own skills and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch. Connectors stay on the list you enable."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -11311,6 +12578,10 @@ msgstr "启动"
 #: src/pages/Paywall.tsx
 msgid "Start {trialDays}-day free trial"
 msgstr "开始 {trialDays} 天免费试用"
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "Start a blank one, upload a {extension} file from your computer, or ask the assistant to make one."
+msgstr "新建一个空白文档、从电脑上传 {extension} 文件，或让助手为你创建一个。"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
@@ -11477,6 +12748,23 @@ msgstr "已加密存储"
 msgid "Stream replies"
 msgstr "流式回复"
 
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Strikethrough"
+msgstr "删除线"
+
+#: src/pages/shell/shell-sidebar.tsx
+msgid "Studios"
+msgstr "工作室"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Studios for the work itself, with the chat beside a list, an app or a board"
+msgstr ""
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Styles"
+msgstr "样式"
+
 #: src/lib/identity-display.ts
 msgid "subagent"
 msgstr "子 Agent"
@@ -11522,6 +12810,14 @@ msgstr "需要订阅"
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Suggest a name"
 msgstr ""
+
+#: src/components/office/word/ReviewPanel.tsx
+msgid "Suggested changes"
+msgstr "建议的更改"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Sum"
+msgstr "求和"
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Summary"
@@ -11577,7 +12873,21 @@ msgid "System"
 msgstr "系统"
 
 #: src/components/markdown-copy.tsx
+#: src/components/office/word/WordRibbon.tsx
+#: src/components/office/WordStudio.tsx
 msgid "Table"
+msgstr "表格"
+
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Table headers can only be renamed in a spreadsheet app."
+msgstr "只能在电子表格应用中重命名表格标题。"
+
+#: src/components/office/WordStudio.tsx
+msgid "Table: {name}"
+msgstr "表格：{name}"
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tables"
 msgstr "表格"
 
 #: src/pages/shell/computer-overlay.tsx
@@ -11607,10 +12917,6 @@ msgstr "示范任务"
 #: src/pages/KnowledgeSection.tsx
 msgid "Teach your agents about you. Every agent you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
 msgstr ""
-
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "Teach your bots about you. Every bot you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
-#~ msgstr ""
 
 #: src/pages/Shell.tsx
 msgid "Teaching in progress. Stop teaching before sending a new message."
@@ -11678,8 +12984,21 @@ msgid "Testing…"
 msgstr "正在测试…"
 
 #: src/components/apps/AppVisualEdit.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Text"
 msgstr ""
+
+#: src/components/office/slides/SlideCanvas.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/SlidesStudio.tsx
+msgid "Text box"
+msgstr "文本框"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Text box: “{excerpt}”"
+msgstr "文本框：“{excerpt}”"
 
 #: src/components/apps/AppVisualEdit.tsx
 msgid "Text colour"
@@ -11688,6 +13007,10 @@ msgstr ""
 #: src/components/apps/AppVisualEdit.tsx
 msgid "Text size"
 msgstr ""
+
+#: src/components/office/WordStudio.tsx
+msgid "Text: “{excerpt}”"
+msgstr "文本：“{excerpt}”"
 
 #: src/components/apps/TemplateAppButton.tsx
 msgid "That app couldn't be made."
@@ -11713,6 +13036,10 @@ msgstr ""
 msgid "That file could not be read. Try saving it again, or paste its text in."
 msgstr ""
 
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "That formula couldn't be read. Check it and try again."
+msgstr "无法读取该公式。请检查后重试。"
+
 #: src/pages/IntegrationCallback.tsx
 msgid "That Microsoft account is not yours. Close this window and sign in with your own work account."
 msgstr ""
@@ -11724,6 +13051,14 @@ msgstr ""
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "That picture wasn't added."
 msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "That selection cuts across merged cells. Unmerge them first."
+msgstr "所选区域只包含部分合并单元格。请先取消合并。"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "That selection is too large to format at once. Select fewer cells."
+msgstr "所选区域太大，无法一次设置格式。请选择更少的单元格。"
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "That version couldn't be restored."
@@ -11761,10 +13096,6 @@ msgstr ""
 msgid "The app shows these by id, and the agent can add infographics and generated images here."
 msgstr ""
 
-#: src/components/apps/AppSettingsPanel.tsx
-#~ msgid "The app shows these by id, and the bot can add infographics and generated images here."
-#~ msgstr ""
-
 #: src/components/apps/AppVisualEdit.tsx
 msgid "The app's code couldn't be loaded."
 msgstr ""
@@ -11777,17 +13108,17 @@ msgstr ""
 msgid "the assistant"
 msgstr ""
 
-#: src/pages/shell/composer-error.tsx
-#~ msgid "The bot can use the file but won't see the picture."
-#~ msgstr "Bot 可以使用该文件，但看不到图片内容。"
-
-#: src/pages/shell/create-bot-dialog.tsx
-#~ msgid "The bot starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
-#~ msgstr ""
-
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."
 msgstr ""
+
+#: src/components/office/sheet/history.tsx
+msgid "The cells are the same as in the version before; only formatting or layout changed."
+msgstr "单元格与上一版本相同；只更改了格式或布局。"
+
+#: src/components/office/history/VersionHistory.tsx
+msgid "The changes in this version couldn't be shown."
+msgstr "无法显示此版本中的更改。"
 
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "The chosen document is no longer a template, so new Word documents use the built-in OCSC report until you choose another."
@@ -11804,6 +13135,10 @@ msgstr "连接超时。"
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "The first version: every line is new."
 msgstr ""
+
+#: src/components/office/history/VersionHistory.tsx
+msgid "The first version: everything in it is new."
+msgstr "第一个版本：其中的所有内容都是新的。"
 
 #: src/pages/shell/side-panel.tsx
 msgid "The group was created, but these people could not be added: {list}"
@@ -11856,10 +13191,6 @@ msgstr "屏幕未响应。"
 msgid "The screen link expired."
 msgstr "屏幕链接已过期。"
 
-#: src/pages/MemorySettingsOverlay.tsx
-msgid "The selected memory provider is not available in this build."
-msgstr "所选记忆提供方在此构建中不可用。"
-
 #: src/pages/AdminComputerAccess.tsx
 msgid "The server disk is over 80% full. Lower limits or retention, or ask people to clear files. Below 5% free, everyone's new documents and videos are paused."
 msgstr ""
@@ -11878,6 +13209,10 @@ msgstr ""
 msgid "The shared link stops working"
 msgstr "共享链接将失效"
 
+#: src/components/office/slides/history.tsx
+msgid "The slides' text and notes are the same as in the version before; only design or layout changed."
+msgstr "幻灯片的文本和备注与上一版本相同；只更改了设计或布局。"
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "the Studio"
 msgstr ""
@@ -11885,6 +13220,10 @@ msgstr ""
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "the template"
 msgstr ""
+
+#: src/components/office/word/history.tsx
+msgid "The text is the same as in the version before; only formatting or layout changed."
+msgstr "文本与上一版本相同；只更改了格式或布局。"
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
@@ -11902,14 +13241,31 @@ msgstr ""
 msgid "Their own model is cleared. You can pick one again in each agent."
 msgstr ""
 
-#: src/pages/model-settings/space-bots-model.tsx
-#~ msgid "Their own model is cleared. You can pick one again in each bot."
-#~ msgstr "已清除各自的模型。你可以在每个 Bot 里重新选择。"
+#: src/components/office/word/WordRibbon.tsx
+msgid "There are no more tracked changes."
+msgstr "没有更多修订了。"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "There was an issue"
 msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "There's no room for a new document. Free up storage and try again."
+msgstr "没有空间保存新文档。请释放存储空间后重试。"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "There's no room for a new presentation. Free up storage and try again."
+msgstr "没有空间新建演示文稿。请释放存储空间后重试。"
+
+#: src/components/office/SheetStudio.tsx
+msgid "There's no room for a new spreadsheet. Free up storage and try again."
+msgstr "没有空间新建电子表格。请释放存储空间后重试。"
+
+#: src/components/office/use-document-upload.tsx
+msgid "There's no room for this file. Free up storage and try again."
+msgstr "没有空间保存此文件。请释放存储空间后重试。"
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
@@ -12000,10 +13356,6 @@ msgstr ""
 msgid "This app has no tables yet. Ask the agent to add one, or bring in a spreadsheet."
 msgstr ""
 
-#: src/components/apps/AppDataPanel.tsx
-#~ msgid "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
-#~ msgstr ""
-
 #: src/pages/SharedPage.tsx
 msgid "This app is password protected"
 msgstr ""
@@ -12020,30 +13372,6 @@ msgstr "此应用需要单独设置登录后才能连接。"
 #: src/pages/shell/agent-import.tsx
 msgid "This backup could not be read."
 msgstr "无法读取此备份。"
-
-#: src/pages/shell/agent-import.tsx
-#~ msgid "This bot"
-#~ msgstr "此 Bot"
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
-#~ msgstr ""
-
-#: src/pages/shell/files-tab.tsx
-#~ msgid "This bot has no files on a computer yet."
-#~ msgstr ""
-
-#: src/pages/shell/files-tab.tsx
-#~ msgid "This bot hasn't made any files yet."
-#~ msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "This bot only"
-#~ msgstr ""
-
-#: src/pages/shell/computer-view.tsx
-#~ msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
-#~ msgstr "此 Bot 运行在这台电脑上，而不是 Linux 桌面。Shell 和文件使用你的主目录。"
 
 #: src/lib/dictation.ts
 msgid "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer."
@@ -12072,6 +13400,29 @@ msgstr "此操作无法撤销。"
 msgid "This cannot be undone. Download them first if you might need them again. Chats keep their messages and show that the file was removed."
 msgstr ""
 
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "This cell is part of an array formula, so it can only be changed in a spreadsheet app."
+msgstr "此单元格属于数组公式，只能在电子表格应用中更改。"
+
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "This cell's formula is shared with other cells, so it can only be changed in a spreadsheet app."
+msgstr "此单元格的公式与其他单元格共享，只能在电子表格应用中更改。"
+
+#: src/components/office/WordStudio.tsx
+msgid "This change wasn't saved because the document didn't pass its checks. Undo the last change or try again."
+msgstr "由于文档未通过检查，此更改未保存。请撤消上一次更改或重试。"
+
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+msgid "This change wasn't saved because the file didn't check out after saving. Make the change again or download the file."
+msgstr "由于文件保存后未通过检查，此更改未保存。请重新进行更改或下载文件。"
+
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+msgid "This change wasn't saved. There may be no room left, or the file is too large."
+msgstr "此更改未保存。可能空间不足，或文件过大。"
+
 #: src/pages/SharedChats.tsx
 msgid "This chat is no longer shared with you."
 msgstr ""
@@ -12099,21 +13450,53 @@ msgstr ""
 msgid "This deletes all {0} versions of this file. This can't be undone."
 msgstr ""
 
+#: src/components/office/WordStudio.tsx
+msgid "This document can't be edited here, so it is shown read-only. Download it to edit it, or ask the assistant for changes."
+msgstr "此文档无法在此处编辑，因此以只读方式显示。请下载后编辑，或请助手进行更改。"
+
+#: src/components/office/WordStudio.tsx
+msgid "This document couldn't be opened."
+msgstr "无法打开此文档。"
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "This document couldn't be opened. Check your connection and try again."
+msgstr "无法打开此文档。请检查网络连接后重试。"
+
+#: src/components/office/WordStudio.tsx
+msgid "This document couldn't be shown."
+msgstr "无法显示此文档。"
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "This document isn't available. It may have been deleted, or it belongs to someone else."
+msgstr "此文档不可用。它可能已被删除，或属于其他人。"
+
 #: src/components/apps/AppVisualEdit.tsx
 msgid "This element is built from data or code, so ask the agent to change it."
 msgstr ""
-
-#: src/components/apps/AppVisualEdit.tsx
-#~ msgid "This element is built from data or code, so ask the bot to change it."
-#~ msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 msgid "This email draft is not available"
 msgstr ""
 
+#: src/components/office/use-document-upload.tsx
+msgid "This file ({fileSize}) is over the upload limit."
+msgstr "此文件（{fileSize}）超出上传限制。"
+
+#: src/components/office/use-document-upload.tsx
+msgid "This file couldn't be read. Check it is a {extension} file without macros."
+msgstr "无法读取此文件。请确认它是不含宏的 {extension} 文件。"
+
+#: src/components/office/use-document-upload.tsx
+msgid "This file is {fileSize}, over the {maxSize} upload limit."
+msgstr "此文件大小为 {fileSize}，超出 {maxSize} 的上传限制。"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "这个文件不是有效的 UTF-8 文本。"
+
+#: src/components/EmailFilingCard.tsx
+msgid "This filing card is not available"
+msgstr ""
 
 #: src/components/ImageLightbox.tsx
 msgid "This image could not be shown."
@@ -12153,10 +13536,6 @@ msgstr "本月"
 msgid "This note is too long for your agents to read in full. Keep the parts that matter most, or split it into several notes."
 msgstr ""
 
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes."
-#~ msgstr ""
-
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
 msgstr ""
@@ -12168,6 +13547,14 @@ msgstr "此操作将永久删除您的账户和数据。"
 #: src/pages/shell/dialogs.tsx
 msgid "This permanently removes every message and stops current work. The chat remains available."
 msgstr "将永久删除全部消息并停止当前工作。聊天仍可使用。"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "This presentation couldn't be opened here. Download it to open it in a presentation app, or ask the assistant for changes."
+msgstr "无法在此处打开此演示文稿。请下载后在演示文稿应用中打开，或请助手进行更改。"
+
+#: src/components/office/slides/SlidesWorkbench.tsx
+msgid "This presentation has no slides."
+msgstr "此演示文稿没有幻灯片。"
 
 #: src/lib/model-connection-preflight.ts
 msgid "This provider cannot be tested without saving."
@@ -12190,10 +13577,6 @@ msgid "This role overrides any role or job title in their CV."
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
-#~ msgid "This server cannot be assigned without a bot."
-#~ msgstr "没有 Bot 就无法分配此服务器。"
-
-#: src/pages/shell/message-cards.tsx
 msgid "This server cannot be assigned without an agent."
 msgstr ""
 
@@ -12210,6 +13593,18 @@ msgstr "此服务器已连接。请先断开再重新授权。"
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 msgstr ""
 
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "This sheet holds a chart. Download the file to see it."
+msgstr "此工作表包含图表。请下载文件查看。"
+
+#: src/components/office/SheetStudio.tsx
+msgid "This spreadsheet couldn't be opened here. Download it to open it in a spreadsheet app, or ask the assistant for changes."
+msgstr "无法在此处打开此电子表格。请下载后在电子表格应用中打开，或请助手进行更改。"
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "This studio is coming soon. Download the file from the chat to open it."
+msgstr "此工作室即将推出。请从聊天中下载文件来打开它。"
+
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in OCSC Intelligence yet. Use a deployment credential or choose another provider."
 msgstr ""
@@ -12217,10 +13612,6 @@ msgstr ""
 #: src/components/apps/AppStudio.tsx
 msgid "This version can't be picked from. Ask the agent instead."
 msgstr ""
-
-#: src/components/apps/AppStudio.tsx
-#~ msgid "This version can't be picked from. Ask the bot instead."
-#~ msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -12233,6 +13624,10 @@ msgstr "周四"
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Tidy layout"
 msgstr ""
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Tidy the formatting"
+msgstr "整理格式"
 
 #: src/pages/RoutineSchedule.tsx
 msgid "Time of day"
@@ -12250,6 +13645,8 @@ msgstr "运行时间可能不同"
 msgid "Tip:"
 msgstr ""
 
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/word/WordRibbon.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Title"
@@ -12273,6 +13670,14 @@ msgstr "待办"
 
 #: src/components/todos/todo-board.tsx
 msgid "To do list"
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "To-do list"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "To-do List Studio"
 msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
@@ -12337,6 +13742,10 @@ msgstr ""
 msgid "Tools only"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Top align"
+msgstr "顶端对齐"
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "Total cost"
 msgstr ""
@@ -12344,6 +13753,18 @@ msgstr ""
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Totals quantities into a take-off schedule"
 msgstr ""
+
+#: src/components/office/WordStudio.tsx
+msgid "Track changes"
+msgstr "修订"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Trackers, cost plans and schedules."
+msgstr ""
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tracking"
+msgstr "修订"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
@@ -12398,6 +13819,9 @@ msgid "Try"
 msgstr ""
 
 #: src/components/LearningClinicCard.tsx
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
@@ -12449,9 +13873,17 @@ msgstr "类型"
 msgid "Type {name} to confirm"
 msgstr "输入 {name} 以确认"
 
+#: src/components/office/sheet/SheetWorkbench.tsx
+msgid "Type a cell like B2 or a range like B2:D9."
+msgstr "输入单元格（如 B2）或区域（如 B2:D9）。"
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Type a clear, specific instruction in the box below."
 msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Type a name for the sheet."
+msgstr "请输入工作表名称。"
 
 #: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
@@ -12460,6 +13892,10 @@ msgstr "输入我自己的回答"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Type or paste here. Plain sentences or bullet points both work."
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "Type what you want to create, and it will be built here."
 msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
@@ -12478,11 +13914,18 @@ msgid "Unassigned"
 msgstr "未分配"
 
 #: src/components/EmailDraftCard.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Underline"
 msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/AskCard.tsx
+#: src/components/EmailFilingCard.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "Undo"
 msgstr "撤销"
 
@@ -12494,6 +13937,7 @@ msgstr ""
 msgid "Undone"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
 #: src/pages/AdminSharedApps.tsx
 msgid "Unfreeze"
 msgstr ""
@@ -12506,6 +13950,10 @@ msgstr ""
 msgid "Uninstall"
 msgstr "卸载"
 
+#: src/components/office/word/ReviewPanel.tsx
+msgid "Unknown author"
+msgstr "未知作者"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Unknown person"
 msgstr ""
@@ -12513,6 +13961,10 @@ msgstr ""
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Unlink"
 msgstr "取消关联"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Unmerge cells"
+msgstr "取消单元格合并"
 
 #: src/components/call/CallCard.tsx
 msgid "Unmute"
@@ -12546,6 +13998,21 @@ msgstr ""
 msgid "Unsupported file type: {0}"
 msgstr "不支持的文件类型：{0}"
 
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Untitled document"
+msgstr "未命名文档"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/SlidesStudio.tsx
+msgid "Untitled presentation"
+msgstr "未命名演示文稿"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/SheetStudio.tsx
+msgid "Untitled spreadsheet"
+msgstr "未命名电子表格"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Up to date"
 msgstr "已是最新"
@@ -12569,6 +14036,10 @@ msgstr "更新电脑"
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Update failed"
 msgstr "更新失败"
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Update figures, or add formulas and totals"
+msgstr "更新数字，或添加公式和合计"
 
 #: src/lib/activity-list-filters.ts
 msgid "Update from {name}"
@@ -12594,21 +14065,30 @@ msgstr "更新进度"
 msgid "Update required"
 msgstr "需要更新"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Update slides or rewrite a slide"
+msgstr "更新幻灯片或重写某张幻灯片"
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Update the document, or rewrite and change paragraphs"
+msgstr "更新文档，或重写和修改段落"
+
 #: src/components/apps/AppDataPanel.tsx
 msgid "Updated from Excel"
 msgstr ""
 
-#: src/components/pages/PageCard.tsx
-#~ msgid "Updated to v{version} · newer version below"
-#~ msgstr ""
+#: src/components/office/WordStudio.tsx
+msgid "Updated to version {flash}"
+msgstr "已更新到版本 {flash}"
+
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+msgid "Updated to version {flashVersion}"
+msgstr "已更新到版本 {flashVersion}"
 
 #: src/components/apps/AppStudio.tsx
 msgid "Updated to version {updated}"
 msgstr ""
-
-#: src/components/pages/PageCard.tsx
-#~ msgid "Updated to version {version}"
-#~ msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Updates"
@@ -12624,6 +14104,9 @@ msgid "Updating Team Computer"
 msgstr "正在更新团队电脑"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
 msgid "Updating…"
 msgstr "正在更新…"
 
@@ -12635,9 +14118,25 @@ msgstr "升级"
 msgid "Upgrade now"
 msgstr "立即升级"
 
+#: src/components/office/OfficeStudioHost.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
 msgstr "上传"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Upload a .docx file"
+msgstr "上传 .docx 文件"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/SlidesStudio.tsx
+msgid "Upload a .pptx file"
+msgstr "上传 .pptx 文件"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/SheetStudio.tsx
+msgid "Upload a .xlsx file"
+msgstr "上传 .xlsx 文件"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Upload a file"
@@ -12711,10 +14210,6 @@ msgstr "{label}使用默认设置"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Use in this agent"
 msgstr ""
-
-#: src/components/integrations/plugin-marketplace.tsx
-#~ msgid "Use in this bot"
-#~ msgstr "用于此 Bot"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Use Lasso, Rect or Brush to outline what should change. Optional — skip to edit the whole image."
@@ -12840,9 +14335,18 @@ msgid "Version"
 msgstr "版本"
 
 #. placeholder {0}: files.data?.version ?? version
+#. placeholder {0}: row.version
 #: src/components/apps/AppCodePanel.tsx
+#: src/components/office/history/VersionHistory.tsx
 msgid "Version {0}"
 msgstr ""
+
+#. placeholder {0}: row.version
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Version {0} is now the newest version."
+msgstr "版本 {0} 现在是最新版本。"
 
 #. placeholder {0}: result.version
 #: src/components/apps/AppPublishSection.tsx
@@ -12860,6 +14364,7 @@ msgstr ""
 msgid "Version {0} was sent to {1} colleagues for peer review. After three approvals Evolve's developers do the final review and security check."
 msgstr ""
 
+#: src/components/office/history/VersionHistory.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Version history"
 msgstr ""
@@ -12884,6 +14389,9 @@ msgid "Video renders"
 msgstr ""
 
 #: src/components/apps/AppsDialog.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 msgid "View"
 msgstr ""
 
@@ -12954,6 +14462,10 @@ msgstr ""
 #: src/components/apps/AppsDialog.tsx
 msgid "We want our staff to create apps and tools that make the work faster and more efficient. That speed is there so the result for the client is better. Quality comes before convenience."
 msgstr ""
+
+#: src/components/office/word/WordRibbon.tsx
+msgid "Web address"
+msgstr "网址"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Web page"
@@ -13029,6 +14541,10 @@ msgstr ""
 msgid "What do you want me on first?"
 msgstr "你想让我先做什么？"
 
+#: src/components/apps/AppStudio.tsx
+msgid "What do you want to build?"
+msgstr ""
+
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "What each one is called"
 msgstr ""
@@ -13037,9 +14553,13 @@ msgstr ""
 msgid "What each person's chats, agents and routines have cost in model usage. Updates every minute."
 msgstr ""
 
-#: src/pages/AdminStaffSpending.tsx
-#~ msgid "What each person's chats, bots and routines have cost in model usage. Updates every minute."
-#~ msgstr ""
+#: src/components/EmailFilingSettings.tsx
+msgid "What filing has learned"
+msgstr ""
+
+#: src/components/EmailFilingCard.tsx
+msgid "What filing remembers"
+msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "What happened"
@@ -13077,10 +14597,6 @@ msgstr ""
 msgid "What this agent is for"
 msgstr ""
 
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "What this bot is for"
-#~ msgstr "这个 Bot 是做什么的"
-
 #: src/components/teach/SkillDraftCard.tsx
 msgid "What to return"
 msgstr "返回什么"
@@ -13097,13 +14613,13 @@ msgstr ""
 msgid "When a webhook fires"
 msgstr "当 Webhook 触发时"
 
+#: src/pages/AdminEmailFiling.tsx
+msgid "When an email is about an Evolve project with no folder yet, the card proposes one named from Evolve's job number and title. It is made only when the person presses File, and never twice."
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"
 msgstr "完成任务或需要输入时"
-
-#: src/pages/AdminStaffLimits.tsx
-#~ msgid "When someone reaches it, their chats and routines stop until next month or until you raise it. Leave empty for no budget."
-#~ msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "When someone reaches it, their chats and routines stop until next month or until you raise it. Staff see how much is left, not the amount. Leave this empty and nothing stops their spend."
@@ -13132,6 +14648,10 @@ msgid "When you answer me:\n"
 ""
 msgstr ""
 
+#: src/components/EmailFilingSettings.tsx
+msgid "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here. Instructions you add on a filing card show here too."
+msgstr ""
+
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Where earlier entries go"
 msgstr ""
@@ -13140,15 +14660,15 @@ msgstr ""
 msgid "Where should agents run?"
 msgstr ""
 
-#: src/pages/HostComputerPrompt.tsx
-#~ msgid "Where should bots run?"
-#~ msgstr "Bot 应在哪里运行？"
-
 #: src/components/pages/PagesList.tsx
 #: src/components/whiteboards/whiteboard-studio.tsx
 #: src/pages/AdminSharedApps.tsx
 msgid "Whiteboard"
 msgstr "Whiteboard"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Whiteboard Studio"
+msgstr ""
 
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Whiteboards"
@@ -13190,10 +14710,19 @@ msgstr ""
 msgid "Who you work with and what matters to them"
 msgstr ""
 
+#: src/components/EmailFilingCard.tsx
+msgid "Why"
+msgstr ""
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Window"
+msgstr "窗口"
+
 #: src/lib/ticket-status.ts
 msgid "Won't do"
 msgstr "不做"
 
+#: src/components/office/registry.ts
 #: src/components/tour/ocsc-tour.tsx
 msgid "Word"
 msgstr ""
@@ -13209,6 +14738,10 @@ msgstr ""
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Word files"
 msgstr "Word files"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Word Studio"
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Word, PDF, PowerPoint and text files attached to a chat are indexed with OpenAI in the background, so assistants find the right passages quickly instead of rereading every file. Works while the company model runs on OpenAI. Off stops indexing and removes the indexes."
@@ -13271,9 +14804,27 @@ msgstr "工作指令"
 msgid "Working on your app…"
 msgstr ""
 
+#: src/components/office/WordStudio.tsx
+msgid "Working on your document…"
+msgstr "正在处理你的文档…"
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Working on your presentation…"
+msgstr "正在处理你的演示文稿…"
+
+#: src/components/office/SheetStudio.tsx
+msgid "Working on your spreadsheet…"
+msgstr "正在处理你的电子表格…"
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Working on your whiteboard…"
+msgstr "正在处理你的 Whiteboard…"
+
+#: src/components/studio/StudioActivityCarousel.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
+#: src/pages/shell/composer.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Working…"
 msgstr "处理中…"
@@ -13289,6 +14840,10 @@ msgstr ""
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Workspace"
 msgstr "工作区"
+
+#: src/components/office/sheet/SheetRibbon.tsx
+msgid "Wrap text"
+msgstr "自动换行"
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Write a flood risk assessment for HEL18, then tighten the conclusions"
@@ -13337,7 +14892,10 @@ msgid "Yesterday"
 msgstr "昨天"
 
 #: src/components/AskCard.tsx
+#: src/components/office/history/VersionHistory.tsx
+#: src/components/office/WordStudio.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/components/studio/StudioActivityCarousel.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/SharedChats.tsx
 #: src/pages/Shell.tsx
@@ -13371,6 +14929,10 @@ msgstr ""
 msgid "You declined"
 msgstr "你已拒接"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "You don't have to edit by hand. Ask in the chat and the assistant updates the document for you."
+msgstr "无需手动编辑。在聊天中提出需求，助手会为你更新文档。"
+
 #: src/components/InviteDialog.tsx
 msgid "You get a free month when they start their trial with a new card."
 msgstr "对方用新卡开始试用后，你将获得一个月免费。"
@@ -13402,10 +14964,6 @@ msgstr ""
 #: src/pages/shell/bot-panel.tsx
 msgid "Your administrator sets the model and thinking level for every agent."
 msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-#~ msgid "Your administrator sets the model and thinking level for every bot."
-#~ msgstr ""
 
 #: src/pages/Shell.tsx
 msgid "Your administrator sets up computers for the company."
@@ -13446,17 +15004,13 @@ msgstr ""
 msgid "Your assistant added this item."
 msgstr ""
 
+#: src/components/EmailFilingSettings.tsx
+msgid "Your assistants can look through your Inbox, in chat or in a routine, and suggest a folder for each email. Nothing moves until you press File on the card, and Undo puts an email back."
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
 msgstr ""
-
-#: src/components/StorageDialog.tsx
-#~ msgid "Your bots haven't made any files yet."
-#~ msgstr ""
-
-#: src/pages/KnowledgeSection.tsx
-#~ msgid "Your bots will use this note from their next reply"
-#~ msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Your card is charged {annualPrice} today, less the unused part of this month."
@@ -13465,6 +15019,10 @@ msgstr "今天将从你的卡中扣款 {annualPrice}，并抵扣本月未使用�
 #: src/components/ModelCredits.tsx
 msgid "Your card is charged the prorated difference today."
 msgstr "今天将从你的卡中扣除按比例计算的差额。"
+
+#: src/components/EmailFilingSettings.tsx
+msgid "Your company files Sent Items as well as your Inbox."
+msgstr ""
 
 #: src/pages/shell/files-tab.tsx
 msgid "Your computer storage"
@@ -13482,9 +15040,25 @@ msgstr ""
 msgid "Your defaults"
 msgstr "你的默认设置"
 
+#: src/components/office/WordStudio.tsx
+msgid "Your edits are marked as tracked changes, so they can be accepted or rejected"
+msgstr "你的编辑会标记为修订，可以接受或拒绝"
+
+#: src/components/office/WordStudio.tsx
+msgid "Your edits change the document directly"
+msgstr "你的编辑会直接更改文档"
+
 #: src/pages/Auth.tsx
 msgid "Your email address"
 msgstr "你的邮箱"
+
+#: src/components/EmailFilingCard.tsx
+msgid "Your folders"
+msgstr ""
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Your lists, including the personal one your email routines already update."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -13528,10 +15102,6 @@ msgstr ""
 #: src/components/tour/ocsc-tour.tsx
 msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email agent."
 msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
-#~ msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot."
-#~ msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {annualPrice} / year when your trial ends."
@@ -13589,401 +15159,24 @@ msgstr ""
 msgid "ZIP or postal code"
 msgstr ""
 
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
+msgid "Zoom"
+msgstr "缩放"
+
 #: src/components/ImageLightbox.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom in"
 msgstr ""
 
 #: src/components/ImageLightbox.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/word/WordRibbon.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Add a folder never to suggest"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Add a folder…"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Also file Sent Items"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "ann@example.com or @example.com"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminCompanyPage.tsx
-msgid "Assistants, in chat and in routines, look through a person's Inbox and propose a folder for each email, using Evolve job numbers and the person's own folders. Nothing moves until the person presses File on the card; assistants only ever read mail. Set confidence, new project folders and Sent Items under Email filing below."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Change folder"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Confidence"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Confidence for Ready"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Connect Outlook in Connectors to use filing."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Could not change the folder"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Could not file these emails"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Could not load your filing settings"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Could not load your folders"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Could not put these emails back"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Could not save the email filing settings"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Could not save your filing settings"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Could not skip these emails"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Create missing project folders"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Created once under each person's Inbox when first needed, unless they chose their own folder in Settings."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Created once, when you first file into a new project."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Email filing"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Email filing settings saved"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Email from these senders or domains stays in your Inbox."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Emails at or above this start ticked on the card. Less certain ones wait for the person to choose a folder."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Emails at or above this start ticked. Your company's lowest is {0}%."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Enter an address such as ann@example.com, or a whole domain such as @example.com."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Evolve projects"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "File {0} selected"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "File Outlook email"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Filed in {0}"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Filing always waits for each person to press File; assistants cannot move email on their own. People can raise their own confidence bar in Settings, but not lower it below yours."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Filing groups"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Folder for new project folders"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Folders never suggested as a destination."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Forget"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Forget {0}"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Has a folder"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Has attachments"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Inbox › {0}"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Inbox and Sent Items for everyone"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Inbox only"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Inbox; each person may add Sent Items"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Just this email"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Let assistants suggest filing"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Loading email filing"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Lowest confidence for Ready"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Most emails per card"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Most people only file incoming email, so Sent Items is off for each person until they add it."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Needs a decision"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Never suggest"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "New folder"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "New folder: {path}"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "New project folders go in"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "No Evolve project matches."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "No folder matches."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "No folder suggested."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Nothing filed yet."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Nothing is ready to file."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Nothing needs your decision."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Off: only email you receive is suggested."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Ready at {0}%"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Remember for this conversation"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Remember for this sender"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Remember for this sender's domain"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Remember this choice"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Remove {entry}"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Save email filing"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Search folders or Evolve projects"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Search folders, or an Evolve job number or title"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Select ready"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Sender or @domain"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "Sent Items"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailSignatureSettings.tsx
-msgid "Signature"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Skipped; left where it is."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "This filing card is not available"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "What filing has learned"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
-msgid "When an email is about an Evolve project with no folder yet, the card proposes one named from Evolve's job number and title. It is made only when the person presses File, and never twice."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Why"
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Your assistants can look through your Inbox, in chat or in a routine, and suggest a folder for each email. Nothing moves until you press File on the card, and Undo puts an email back."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
-msgid "Your company files Sent Items as well as your Inbox."
-msgstr ""
-
-#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
-msgid "Your folders"
-msgstr ""
-
-#: src/components/studio/StudioActivityCarousel.tsx
-msgid "Action"
-msgstr ""
-
-#: src/pages/shell/composer.tsx
-msgid "Ask for a change"
-msgstr ""
-
-#: src/components/studio/StudioActivityCarousel.tsx
-msgid "Now"
-msgstr ""
-
-#: src/components/studio/StudioActivityCarousel.tsx
-msgid "Recent messages and actions"
-msgstr ""
-
-
-#: src/components/EmailDraftCard.tsx
-msgid "Open in the browser"
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "Add an instruction filing should follow"
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "Could not forget that"
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "Could not load what filing remembers"
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "Could not save this instruction"
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "Filing reads these the next time it chooses a folder. An instruction guides that choice. A sender, domain or conversation rule is ready on its own."
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "Graduate applications from careers@ go in Inbox › HR"
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "Nothing remembered yet."
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "Remember"
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "What filing remembers"
-msgstr ""
-
-#: src/components/EmailFilingCard.tsx
-msgid "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here. Instructions you add on a filing card show here too."
 msgstr ""

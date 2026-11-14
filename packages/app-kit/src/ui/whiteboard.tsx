@@ -551,7 +551,7 @@ export function Whiteboard({
   const hitItem = (clientX: number, clientY: number, target: EventTarget | null) => {
     const element =
       target instanceof Element ? target : target instanceof Node ? target.parentElement : null;
-    const directId = element?.closest("[data-board-item]")?.dataset.boardItem;
+    const directId = element?.closest<HTMLElement>("[data-board-item]")?.dataset.boardItem;
     const direct = directId ? byId.get(directId) : undefined;
     if (direct) return direct;
     const at = toBoard(clientX, clientY);

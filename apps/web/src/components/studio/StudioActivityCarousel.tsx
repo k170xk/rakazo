@@ -36,7 +36,10 @@ export function StudioActivityCarousel({
     card.live ? t`Now` : card.who === "you" ? t`You` : card.who === "agent" ? t`Reply` : t`Action`;
 
   return (
-    <div ref={scroller} className="rk-scroll -mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5">
+    <div
+      ref={scroller}
+      className="-mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
       <div className="sr-only">{t`Recent messages and actions`}</div>
       {shown.map((card) => (
         <button
@@ -46,10 +49,10 @@ export function StudioActivityCarousel({
           data-testid="studio-activity-card"
           data-live={card.live || undefined}
           onClick={onOpen}
-          className={`flex w-[min(240px,70vw)] shrink-0 snap-start flex-col gap-0.5 rounded-2xl border px-3 py-2 text-left shadow-sm ${
+          className={`flex w-[min(220px,62vw)] shrink-0 snap-start flex-col rounded-xl border px-2.5 py-1.5 text-left shadow-[0_4px_16px_-8px_rgb(0_0_0/0.25)] backdrop-blur-md ${
             card.live
-              ? "border-primary/30 bg-primary/10"
-              : "border-foreground/[0.08] bg-card/95 backdrop-blur"
+              ? "border-primary/25 bg-primary/10 dark:bg-primary/15"
+              : "border-foreground/[0.08] bg-background/75 hover:bg-background/90"
           }`}
         >
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
@@ -63,10 +66,4 @@ export function StudioActivityCarousel({
       ))}
     </div>
   );
-}
-
-/** How far the board sits above a closed chat: the composer, plus the strip when it is showing. */
-export function studioChromeClass(chatOpen: boolean, showActivity: boolean): string {
-  if (chatOpen) return "bottom-0";
-  return showActivity ? "bottom-[9.25rem]" : "bottom-[72px]";
 }

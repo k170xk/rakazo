@@ -1,14 +1,28 @@
 // @vitest-environment jsdom
+import { i18n } from "@lingui/core";
+import { I18nProvider } from "@lingui/react";
 import type { Bot, ComputerStatus, Me, ThreadSnapshot } from "@rakazo/contracts";
 import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { setStudioBeforeSend } from "../../components/studio/studio-send";
 import { composerHoldsUnsavedWork } from "../../lib/composer-draft";
 import type { PageSession } from "../../lib/pages";
 import { createPageSession } from "../../lib/pages";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { useComposerActions } from "./use-composer-actions";
+
+i18n.load("en", {});
+i18n.activate("en");
+
+function Harnessed(props: { extras?: Record<string, unknown> }) {
+  return (
+    <I18nProvider i18n={i18n}>
+      <Harness {...props} />
+    </I18nProvider>
+  );
+}
 
 vi.mock("@lingui/react/macro", () => ({
   useLingui: () => ({
@@ -71,7 +85,7 @@ function Harness({ extras }: { extras?: Record<string, unknown> }) {
 
 function switchChat(activeId: string) {
   activeChat = activeId;
-  act(() => root.render(<Harness />));
+  act(() => root.render(<Harnessed />));
 }
 
 async function flush() {
@@ -92,7 +106,7 @@ beforeEach(() => {
     threads: { send: vi.fn(), sendWithRoutines: vi.fn() },
   };
   root = createRoot(document.createElement("div"));
-  act(() => root.render(<Harness />));
+  act(() => root.render(<Harnessed />));
 });
 
 afterEach(() => {
@@ -104,7 +118,7 @@ it.each([undefined, 1, 8])(
   "uses the server attachment count with a fallback (%s)",
   (maxAttachmentsPerMessage) => {
     me = { maxAttachmentsPerMessage } as Me;
-    act(() => root.render(<Harness />));
+    act(() => root.render(<Harnessed />));
     const files = Array.from(
       { length: 9 },
       (_, i) => new File(["a"], `${i}.txt`, { type: "text/plain" }),
@@ -186,7 +200,7 @@ it("keeps an attachment and its preview when the chat is archived and restored",
     // Archiving drops the chat from the active roster and restore brings the
     // same id back. The roster-driven cleanup used to discard the file here;
     // only a confirmed deletion may.
-    act(() => root.render(<Harness extras={{ rosterChatIds: new Set() }} />));
+    act(() => root.render(<Harnessed extras={{ rosterChatIds: new Set() }} />));
     switchChat("bot-2");
     switchChat("bot-1");
     const restored = latest.activePendingAttachments;
@@ -418,4 +432,30 @@ it("names the open page only on text the chat itself sends", async () => {
   expect(rpc.threads.sendWithRoutines).toHaveBeenLastCalledWith(
     expect.objectContaining({ botId: "bot-1", text: "[Sales](page:p1)\nand notes" }),
   );
+});
+
+it("saves the open document studio first and attaches its newest version with the note", async () => {
+  const order: string[] = [];
+  const off = setStudioBeforeSend(pageSession, async () => {
+    order.push("studio");
+    pageSession.dock.set({ page: { title: "Report", note: "[studio: Report v3]" } });
+    return { artifactId: "v3", familyArtifactIds: ["v1", "v3"], botId: "bot-1", groupId: null };
+  });
+  rpc.threads.send.mockImplementation(async () => {
+    order.push("send");
+    return null;
+  });
+  try {
+    await send("tighten the intro", []);
+    expect(order).toEqual(["studio", "send"]);
+    expect(rpc.threads.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        botId: "bot-1",
+        artifactIds: ["v3"],
+        text: "tighten the intro\n\n[studio: Report v3]",
+      }),
+    );
+  } finally {
+    off();
+  }
 });

@@ -92,6 +92,25 @@ describe("withShellOverlay", () => {
     const overlay = { kind: "settings", section: "billing", spaceId: "sp_2" } as const;
     expect(readShellOverlay(withShellOverlay(new URLSearchParams(), overlay))).toEqual(overlay);
   });
+
+  it("opens a document studio by id and type, or the newest of a type", () => {
+    expect(write("?m=msg_1", { kind: "doc", id: "art_1", format: "docx" })).toBe(
+      "?m=msg_1&doc=art_1&kind=docx",
+    );
+    expect(write("?whiteboards", { kind: "doc", id: null, format: "xlsx" })).toBe("?doc&kind=xlsx");
+    expect(write("?doc=art_1&kind=docx&m=msg_1", null)).toBe("?m=msg_1");
+    expect(write("?doc=art_1&kind=docx", { kind: "apps" })).toBe("?apps");
+    const overlay = { kind: "doc", id: "art_2", format: "pptx" } as const;
+    expect(readShellOverlay(withShellOverlay(new URLSearchParams(), overlay))).toEqual(overlay);
+  });
+});
+
+describe("readShellOverlay documents", () => {
+  it("reads the id, ignoring an unknown type", () => {
+    expect(read("?doc=art_1")).toEqual({ kind: "doc", id: "art_1", format: null });
+    expect(read("?doc=art_1&kind=pdf")).toEqual({ kind: "doc", id: "art_1", format: null });
+    expect(read("?doc&kind=docx")).toEqual({ kind: "doc", id: null, format: "docx" });
+  });
 });
 
 describe("shellOverlaySearch", () => {

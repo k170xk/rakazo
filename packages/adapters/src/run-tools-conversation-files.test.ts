@@ -164,8 +164,57 @@ describe("fetch_file", () => {
       const result = await fileTools.fetch_file!(h.ctx, h.call("fetch_file", { path }) as never);
       expect(result).toEqual({ error: expect.stringContaining("in this conversation") });
     }
-    expect(h.findFirst).not.toHaveBeenCalled();
+    expect(h.artifacts.get).not.toHaveBeenCalled();
     expect(h.runner.writeFile).not.toHaveBeenCalled();
+  });
+
+  it("fetches a newer version of a listed file, such as one saved in a studio", async () => {
+    const h = harness();
+    const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const family = [
+      { id: "spec1", rootArtifactId: null, version: 1 },
+      { id: "spec2", rootArtifactId: "spec1", version: 2 },
+      { id: "spec3", rootArtifactId: "spec1", version: 3 },
+    ].map((row) => ({
+      ...row,
+      name: "Spec.docx",
+      mimeType: DOCX,
+      source: "studio",
+      storageKey: `key-${row.id}`,
+      size: 10,
+      spaceId: "space",
+      userId: "owner",
+    }));
+    type Where = {
+      id?: string | { in: string[] };
+      OR?: Array<{ id?: string; rootArtifactId?: string }>;
+    };
+    const inFamily = (where: Where) =>
+      family
+        .filter((row) =>
+          typeof where.id === "string"
+            ? row.id === where.id
+            : !where.id || where.id.in.includes(row.id),
+        )
+        .filter(
+          (row) =>
+            !where.OR ||
+            where.OR.some((or) => row.id === or.id || row.rootArtifactId === or.rootArtifactId),
+        )
+        .sort((a, b) => b.version - a.version);
+    (h.ctx as { deps: { prisma: { artifact: unknown } } }).deps.prisma.artifact = {
+      findFirst: async ({ where }: { where: Where }) => inFamily(where)[0] ?? null,
+      count: async ({ where }: { where: Where }) => inFamily(where).length,
+    };
+
+    const newest = "attachments/spec3.docx";
+    expect(
+      await fileTools.fetch_file!(h.ctx, h.call("fetch_file", { path: newest }) as never),
+    ).toEqual({ ok: true, path: newest, bytes: 10 });
+    const older = "attachments/spec2.docx";
+    expect(
+      await fileTools.fetch_file!(h.ctx, h.call("fetch_file", { path: older }) as never),
+    ).toEqual({ error: expect.stringContaining("in this conversation") });
   });
 
   it("refuses a listed file that does not belong to the person in this space", async () => {

@@ -63,6 +63,16 @@ import {
   VaultRevealInput,
 } from "./bot-secrets.js";
 import {
+  DocumentCreatedSchema,
+  DocumentCreateInput,
+  DocumentDetailSchema,
+  DocumentListInput,
+  DocumentRefInput,
+  DocumentRevisionInput,
+  DocumentRevisionSchema,
+  DocumentSummarySchema,
+} from "./documents.js";
+import {
   AccessGrantInputSchema,
   AccessGrantSchema,
   AccountItemSchema,
@@ -149,7 +159,6 @@ import {
   ModelCreditAmountSchema,
   ModelOAuthBeginSchema,
   MoveTodoItemInput,
-  RenameTodoListInput,
   MyMetersSchema,
   MyStorageStateSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
@@ -160,6 +169,7 @@ import {
   PluginSubmissionSchema,
   PluginSubmissionStatusSchema,
   REPLY_QUOTE_MAX_LENGTH,
+  RenameTodoListInput,
   ReorderBotsInput,
   ROUTINE_MENTION_BATCH_MAX,
   RoutineSchema,
@@ -1840,6 +1850,16 @@ export const appContract = {
       )
       .output(z.object({ token: z.string(), url: z.string() })),
     remove: oc.input(z.object({ artifactId: Id })).output(z.object({ ok: z.literal(true) })),
+  },
+  /** Word, PowerPoint and Excel files as studios open them: one file with all its versions. */
+  documents: {
+    get: oc.input(DocumentRefInput).output(DocumentDetailSchema),
+    /** Polled by an open studio: load the file again when the version moves. */
+    revision: oc.input(DocumentRevisionInput).output(DocumentRevisionSchema),
+    /** The newest version of each recent file, for the studio's switcher. */
+    list: oc.input(DocumentListInput).output(z.object({ items: z.array(DocumentSummarySchema) })),
+    /** A blank file from the OCSC template, made by the document runners. */
+    create: oc.input(DocumentCreateInput).output(DocumentCreatedSchema),
   },
   /** Pages bots built for the caller in this Space. */
   pages: {

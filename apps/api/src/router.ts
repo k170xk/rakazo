@@ -31,6 +31,7 @@ import type {
   PushTokenStore,
   RemoteConnectorDependencies,
   TicketChangeNotifier,
+  ToolRunnerClient,
   verifyModelServesAgents,
 } from "@rakazo/adapters";
 import type { Auth } from "@rakazo/auth";
@@ -47,6 +48,7 @@ import { computerProviderRoutes } from "./routes/computer-provider.js";
 import { connectionsRoutes } from "./routes/connections.js";
 import { contentRoutes } from "./routes/content.js";
 import { createRouterContext } from "./routes/context.js";
+import { documentsRoutes } from "./routes/documents.js";
 import { emailDraftsRoutes } from "./routes/email-drafts.js";
 import { emailFilingRoutes } from "./routes/email-filing.js";
 import { evolveHistoryRoutes } from "./routes/evolve-history.js";
@@ -122,6 +124,8 @@ export interface RouterDeps {
   pluginMarketplaceRead?: PluginTextReader;
   artifacts: ArtifactStore;
   dataDir: string;
+  /** The document runners; absent, a studio cannot make a blank document. */
+  toolRunner?: ToolRunnerClient;
   messagingInstallations?: MessagingInstallations;
   messaging?: {
     enabled: boolean;
@@ -192,6 +196,7 @@ export function createRouter(deps: RouterDeps) {
     ...connectionsRoutes(ctx),
     ...messagingRoutes(ctx),
     ...contentRoutes(ctx),
+    ...documentsRoutes(ctx),
     ...pagesRoutes(ctx),
     ...appsRoutes(ctx),
     ...paymentWalletRoutes(ctx),

@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, Group, NavLink, PageKind } from "@rakazo/contracts";
-import { PAGE_LIST_MAX_LIMIT } from "@rakazo/contracts";
+import type { Bot, DocumentFormat, Group, NavLink, PageKind } from "@rakazo/contracts";
+import { DOCUMENT_LIST_MAX_LIMIT, PAGE_LIST_MAX_LIMIT } from "@rakazo/contracts";
 import { accountDisplay } from "@rakazo/core";
 import {
   Button,
@@ -10,22 +10,18 @@ import {
   InputGroupInput,
   Sidebar,
 } from "@rakazo/ui-web";
-import {
-  AppWindow,
-  ListTodo,
-  Presentation,
-  Search,
-  SlidersHorizontal,
-  Sparkles,
-  Star,
-  UsersRound,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, SlidersHorizontal, Sparkles, Star, UsersRound } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
+import {
+  OFFICE_FORMATS,
+  OFFICE_STUDIOS,
+  officeStudioReady,
+} from "../../components/office/registry";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
 import { SidebarMeters } from "../../components/SidebarMeters";
@@ -98,6 +94,7 @@ export function ShellSidebar({
   openTodos,
   openWhiteboards,
   openApps,
+  openDocuments,
   openSpaceChat,
 }: {
   isMobile: boolean;
@@ -133,6 +130,8 @@ export function ShellSidebar({
   openTodos: () => void;
   openWhiteboards: () => void;
   openApps: () => void;
+  /** Opens the newest Word, PowerPoint or Excel file in its studio. */
+  openDocuments: (format: DocumentFormat) => void;
   openSpaceChat: (spaceId: string, path: string) => void;
 }) {
   const { t } = useLingui();
@@ -330,6 +329,10 @@ export function ShellSidebar({
             onOpenApps={() => {
               setMobileOpen(false);
               openApps();
+            }}
+            onOpenDocuments={(format) => {
+              setMobileOpen(false);
+              openDocuments(format);
             }}
           />
           <SidebarMeters mini={mini} onOpenStorage={() => setMobileOpen(false)} />
@@ -566,26 +569,38 @@ function ShellSidebarFooter({
   );
 }
 
-/** To do, Apps and Board. Apps opens the studio; boards open the whiteboard studio. */
+/** Studio: to-do lists, apps, boards, and the studios that join them later. */
 function SidebarPills({
   mini,
   onOpenTodos,
   onOpenWhiteboards,
   onOpenApps,
+  onOpenDocuments,
 }: {
   mini: boolean;
   onOpenTodos: () => void;
   onOpenWhiteboards: () => void;
   onOpenApps: () => void;
+  onOpenDocuments: (format: DocumentFormat) => void;
 }) {
   const { t } = useLingui();
   const { open, arrivals } = useTodoBadge();
   const celebrating = useCelebration(arrivals);
   const appCount = useOwnPageCount("app");
   const boardCount = useOwnPageCount("whiteboard");
+  const soon = t`Coming soon`;
+  const documentCounts = useOwnDocumentCounts();
+  const offices = OFFICE_FORMATS.map((format) => ({
+    format,
+    src: OFFICE_STUDIOS[format].icon,
+    name: OFFICE_STUDIOS[format].label(),
+    ready: officeStudioReady(format),
+    count: documentCounts[format],
+  }));
   if (mini) {
     return (
-      <div className="flex flex-col items-center gap-1 px-1">
+      // biome-ignore lint/a11y/useSemanticElements: groups sidebar links, not form fields.
+      <div role="group" aria-label={t`Studios`} className="flex flex-col items-center gap-1 px-1">
         <IconTooltip label={t`To do`}>
           <Button
             variant="ghost"
@@ -595,7 +610,7 @@ function SidebarPills({
             className="relative"
             onClick={onOpenTodos}
           >
-            <ListTodo />
+            <img src="/icons/studios/todo.png" alt="" className="size-7 object-contain" />
             {open > 0 ? (
               <span
                 key={arrivals}
@@ -616,7 +631,7 @@ function SidebarPills({
             className="relative"
             onClick={onOpenApps}
           >
-            <AppWindow />
+            <img src="/icons/studios/apps.png" alt="" className="size-7 object-contain" />
             <CornerCount count={appCount} />
           </Button>
         </IconTooltip>
@@ -629,24 +644,57 @@ function SidebarPills({
             className="relative"
             onClick={onOpenWhiteboards}
           >
-            <Presentation />
+            <img src="/icons/studios/board.png" alt="" className="size-7 object-contain" />
             <CornerCount count={boardCount} />
           </Button>
         </IconTooltip>
+        {offices.map((studio) =>
+          studio.ready ? (
+            <IconTooltip key={studio.format} label={studio.name}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={studio.name}
+                data-testid={`open-${studio.format}`}
+                className="relative"
+                onClick={() => onOpenDocuments(studio.format)}
+              >
+                <img src={studio.src} alt="" className="size-7 object-contain" />
+                <CornerCount count={studio.count} />
+              </Button>
+            </IconTooltip>
+          ) : (
+            <IconTooltip key={studio.format} label={`${studio.name}. ${soon}`}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`${studio.name}. ${soon}`}
+                disabled
+                className="grayscale opacity-45"
+              >
+                <img src={studio.src} alt="" className="size-7 object-contain" />
+              </Button>
+            </IconTooltip>
+          ),
+        )}
       </div>
     );
   }
   return (
-    <>
-      <div className="mx-2.5 flex gap-1.5">
+    // biome-ignore lint/a11y/useSemanticElements: groups sidebar links, not form fields.
+    <div role="group" aria-label={t`Studios`}>
+      <div className="mx-2.5 mb-1.5 px-0.5 text-[11px] font-medium tracking-wide text-muted-foreground">
+        <Trans>Studios</Trans>
+      </div>
+      <div className="mx-2.5 grid grid-cols-3 gap-1.5">
         <button
           type="button"
           data-testid="open-todo-list"
           onClick={onOpenTodos}
-          className="relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-foreground hover:bg-accent"
         >
-          <ListTodo size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
-          <span className="truncate">
+          <img src="/icons/studios/todo.png" alt="" className="h-16 w-16 object-contain" />
+          <span className="truncate text-[11px] leading-none">
             <Trans>To do</Trans>
           </span>
           {open > 0 ? (
@@ -677,10 +725,10 @@ function SidebarPills({
           type="button"
           data-testid="open-apps"
           onClick={onOpenApps}
-          className="relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-foreground hover:bg-accent"
         >
-          <AppWindow size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
-          <span className="truncate">
+          <img src="/icons/studios/apps.png" alt="" className="h-16 w-16 object-contain" />
+          <span className="truncate text-[11px] leading-none">
             <Trans>Apps</Trans>
           </span>
           <CornerCount count={appCount} />
@@ -689,16 +737,43 @@ function SidebarPills({
           type="button"
           data-testid="open-whiteboards"
           onClick={onOpenWhiteboards}
-          className="relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-foreground hover:bg-accent"
         >
-          <Presentation size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
-          <span className="truncate">
+          <img src="/icons/studios/board.png" alt="" className="h-16 w-16 object-contain" />
+          <span className="truncate text-[11px] leading-none">
             <Trans>Board</Trans>
           </span>
           <CornerCount count={boardCount} />
         </button>
+        {offices.map((studio) =>
+          studio.ready ? (
+            <button
+              key={studio.format}
+              type="button"
+              data-testid={`open-${studio.format}`}
+              onClick={() => onOpenDocuments(studio.format)}
+              className="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-foreground hover:bg-accent"
+            >
+              <img src={studio.src} alt="" className="h-16 w-16 object-contain" />
+              <span className="truncate text-[11px] leading-none">{studio.name}</span>
+              <CornerCount count={studio.count} />
+            </button>
+          ) : (
+            <button
+              key={studio.format}
+              type="button"
+              disabled
+              aria-label={`${studio.name}. ${soon}`}
+              title={soon}
+              className="relative flex min-w-0 cursor-default flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-background px-1 py-2 text-muted-foreground grayscale opacity-50"
+            >
+              <img src={studio.src} alt="" className="h-16 w-16 object-contain" />
+              <span className="truncate text-[11px] leading-none">{studio.name}</span>
+            </button>
+          ),
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -712,6 +787,26 @@ function useOwnPageCount(kind: PageKind): string | null {
   const loaded = list.data?.items.length ?? 0;
   if (loaded === 0) return null;
   return list.data?.nextCursor ? `${loaded}+` : String(loaded);
+}
+
+/** How many Word, PowerPoint and Excel files this person has, from one capped list of each. */
+function useOwnDocumentCounts(): Record<DocumentFormat, string | null> {
+  const queries = useSpaceQueries();
+  const read = (format: DocumentFormat) => ({
+    ...queries.documents.list.queryOptions({
+      input: { format, limit: DOCUMENT_LIST_MAX_LIMIT },
+    }),
+    staleTime: 60_000,
+    enabled: officeStudioReady(format),
+  });
+  const counts = {
+    docx: useQuery(read("docx")).data?.items.length ?? 0,
+    pptx: useQuery(read("pptx")).data?.items.length ?? 0,
+    xlsx: useQuery(read("xlsx")).data?.items.length ?? 0,
+  };
+  const shown = (count: number) =>
+    count === 0 ? null : count >= DOCUMENT_LIST_MAX_LIMIT ? `${count}+` : String(count);
+  return { docx: shown(counts.docx), pptx: shown(counts.pptx), xlsx: shown(counts.xlsx) };
 }
 
 /** The same corner count the To do pill uses, sitting on the pill rather than in its label. */

@@ -30,6 +30,7 @@ import { partitionTools } from "./builtin-tool-bridge.js";
 import type { ComputerExecutionLease } from "./computer-lifecycle.js";
 import type { UnchangedVisualStreak } from "./computer-tools.js";
 import type { selectRunConnections } from "./connection-context.js";
+import type { StudioDocument } from "./document-versions.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { FleetRun } from "./fleet-tools.js";
 import { namedAgentTools } from "./pi-runtime-tools.js";
@@ -202,8 +203,11 @@ export interface RunState {
   walletHosts: Set<string>;
   handedOff: boolean;
   terminalCheckpointComplete: boolean;
-  /** Paths this attempt's ocsc commands made or changed, and whether it attached any file. */
-  documents: { made: string[]; attached: boolean };
+  /**
+   * Paths this attempt's ocsc commands made or changed, whether it attached any file, and
+   * whether an ocsc edit started from the open studio document.
+   */
+  documents: { made: string[]; attached: boolean; studioEdited?: boolean };
 }
 
 export interface RunComputerContext {
@@ -242,6 +246,8 @@ export interface RunComputerContext {
   wordDocuments?: readonly { name: string; path: string }[];
   /** The person's files in this conversation, newest first, by attachment path; fetch_file, note_file and list_conversation_files accept only these. */
   conversationFiles?: ReadonlyMap<string, EarlierThreadFile>;
+  /** The document the person has open in a studio, named by their message; its versions are in conversationFiles. */
+  studioDocument?: StudioDocument;
 }
 
 export interface RunToolRunner {

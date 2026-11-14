@@ -19,6 +19,11 @@ import {
 } from "@rakazo/core";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  hasStudioBeforeSend,
+  runStudioBeforeSend,
+  studioSelectionImage,
+} from "../../components/studio/studio-send";
 import { requestBrowserNotificationPermission } from "../../lib/browser-notifications";
 import { setComposerUnsavedWork } from "../../lib/composer-draft";
 import { scheduleFocusPrompt } from "../../lib/focus-prompt";
@@ -425,6 +430,26 @@ export function useComposerActions({
         const permissionRequest = requestBrowserNotificationPermission();
         if (permissionRequest) void permissionRequest.then(flushPendingBrowserNotifications);
       }
+      sendingRef.current = true;
+      setSending(true);
+      setSendError(null);
+      clearReadBoundary();
+      setSentCount((count) => count + 1);
+      // An open document studio saves first and names its newest version, so the note and the
+      // attached file below both describe what the person sees.
+      const studioIds =
+        plan.shouldSend && !reroutedToGroup && hasStudioBeforeSend(pageSession)
+          ? await runStudioBeforeSend(
+              pageSession,
+              { botId: botTarget, groupId: groupTarget },
+              activeSnapshot?.messages ?? [],
+            )
+          : [];
+      // A picture selected in the studio goes along, unless the person dropped the selection.
+      const selectedPicture =
+        studioIds.length && !pageSession.dock.selectionDropped()
+          ? await studioSelectionImage(pageSession)
+          : null;
       // The open page rides only on text this chat sends, never on a group or routine-only send.
       const fromPage =
         plan.shouldSend && !reroutedToGroup
@@ -432,11 +457,6 @@ export function useComposerActions({
           : { text: plan.trimmed, replyToMessageId: undefined };
       const trimmed = fromPage.text.trim();
       const replyToMessageId = fromPage.replyToMessageId;
-      sendingRef.current = true;
-      setSending(true);
-      setSendError(null);
-      clearReadBoundary();
-      setSentCount((count) => count + 1);
       const dropDelayedSetup = () => {
         // Only after successful engagement so a failed upload/send keeps the setup card.
         if (initialBotTarget && focusPromptBotIdRef.current === initialBotTarget) {
@@ -493,6 +513,16 @@ export function useComposerActions({
           const artifactId = earlyId ?? (await uploadAttachment(pending.file, sendTarget));
           uploaded.set(pending.file, artifactId);
           artifactIds.push(artifactId);
+        }
+        for (const id of studioIds) if (!artifactIds.includes(id)) artifactIds.push(id);
+        if (selectedPicture) {
+          const pictureId =
+            uploaded.get(selectedPicture) ??
+            (await uploadAttachment(selectedPicture, sendTarget).catch(() => null));
+          if (pictureId) {
+            uploaded.set(selectedPicture, pictureId);
+            artifactIds.push(pictureId);
+          }
         }
         const payload = {
           ...(groupTarget ? { groupId: groupTarget } : { botId: botTarget! }),

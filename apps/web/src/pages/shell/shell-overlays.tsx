@@ -12,6 +12,7 @@ import type { RefObject } from "react";
 import { useCallback } from "react";
 import { lazyOverlay } from "../../components/ErrorBoundary";
 import { IntegrationsComingSoon } from "../../components/integrations/integrations-coming-soon";
+import { DocumentBotContext } from "../../components/office/document-bot";
 import type { TourAvailability } from "../../components/tour/ocsc-tour";
 import type { connectedAppMarks } from "../../lib/connected-apps";
 import type { SpaceQueries } from "../../lib/query";
@@ -45,6 +46,9 @@ const WhiteboardStudio = lazyOverlay(() =>
 );
 const AppsStudio = lazyOverlay(() =>
   import("../../components/apps/AppsStudio").then((module) => module.AppsStudio),
+);
+const OfficeStudioHost = lazyOverlay(() =>
+  import("../../components/office/OfficeStudioHost").then((module) => module.default),
 );
 const McpServersOverlay = lazyOverlay(() =>
   import("../McpServersOverlay").then((module) => module.McpServersOverlay),
@@ -110,6 +114,16 @@ export function AppOverlays({
         <WhiteboardStudio onClose={() => setOverlay(null)} />
       ) : null}
       {overlay?.kind === "apps" ? <AppsStudio onClose={() => setOverlay(null)} /> : null}
+      {overlay?.kind === "doc" ? (
+        <DocumentBotContext.Provider value={activeBotId}>
+          <OfficeStudioHost
+            id={overlay.id}
+            format={overlay.format}
+            onClose={() => setOverlay(null)}
+            onOpen={(id, format) => setOverlay({ kind: "doc", id, format })}
+          />
+        </DocumentBotContext.Provider>
+      ) : null}
       {overlay?.kind === "skills" ? (
         <SkillsDialog canManageSkills={canManageSkills} onClose={() => setOverlay(null)} />
       ) : null}

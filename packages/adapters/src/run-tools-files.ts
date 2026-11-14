@@ -5,12 +5,18 @@ import { searchChatFiles } from "./chat-file-search.js";
 import { resolveRunFilePath } from "./computer-support.js";
 import { desktopGuardApplies, desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
+import {
+  attachmentPathFor,
+  newerConversationVersion,
+  studioAttachTarget,
+} from "./document-versions.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";
 import type { RunContext } from "./run-context.js";
 import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { recordComputerAction } from "./run-tools-computer.js";
 import {
+  artifactIdFromAttachmentPath,
   attachWorkspaceFileToThread,
   cleanFileNote,
   conversationFilesPage,
@@ -75,6 +81,20 @@ function copySides(ctx: RunContext, call: ToolCall) {
       },
     },
   };
+}
+
+/** A newer version of a conversation file, by its attachment path; not on a colleague's turn. */
+async function newerVersionId(ctx: RunContext, filePath: string) {
+  const files = ctx.computer.conversationFiles;
+  const artifactId = artifactIdFromAttachmentPath(filePath);
+  if (!files?.size || !artifactId || ctx.computer.folder) return undefined;
+  const found = await newerConversationVersion(
+    ctx.deps.prisma,
+    { spaceId: ctx.context.spaceId, userId: ctx.context.userId },
+    artifactId,
+    [...files.values()].map((file) => file.artifactId),
+  );
+  return found && attachmentPathFor(found) === filePath ? found.id : undefined;
 }
 
 async function fileExists(
@@ -275,7 +295,9 @@ export const fileTools: ToolHandlers = {
   async fetch_file(ctx, call) {
     const { deps, context } = ctx;
     const filePath = String(call.args.path ?? "").trim();
-    const artifactId = ctx.computer.conversationFiles?.get(filePath)?.artifactId;
+    const artifactId =
+      ctx.computer.conversationFiles?.get(filePath)?.artifactId ??
+      (await newerVersionId(ctx, filePath));
     if (!artifactId) {
       return call.finish({
         error:
@@ -400,6 +422,12 @@ export const fileTools: ToolHandlers = {
     }
     const mimeType = inferAttachmentMimeType(filePath);
     if (!mimeType) return failAttach("unsupported attachment type");
+    const name = typeof args.name === "string" ? args.name : undefined;
+    const studio = studioAttachTarget(ctx.computer.studioDocument, {
+      name,
+      mimeType,
+      studioEdited: ctx.state.documents.studioEdited,
+    });
     try {
       const attached = await attachWorkspaceFileToThread(
         {
@@ -410,13 +438,13 @@ export const fileTools: ToolHandlers = {
         {
           spaceId: run.spaceId,
           userId: run.userId,
-          botId: bot.id,
-          groupId: thread.groupId ?? undefined,
+          botId: studio?.botId ?? bot.id,
+          groupId: studio ? studio.groupId : (thread.groupId ?? undefined),
           runId: run.id,
           filePath,
           bytes,
           operationId: executionId,
-          name: typeof args.name === "string" ? args.name : undefined,
+          name: studio?.name ?? name,
           description: typeof args.description === "string" ? args.description : undefined,
         },
       );

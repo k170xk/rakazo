@@ -2,6 +2,7 @@ import { i18n } from "@lingui/core";
 import { t as translate } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo/chat-ui/web";
+import type { DocumentFormat } from "@rakazo/contracts";
 import { artifactPreviewKind, isAttachmentAudioMimeType } from "@rakazo/contracts";
 import { artifactTypeLabel, attachmentExtensionForMimeType, fileSizeParts } from "@rakazo/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@rakazo/ui-web";
@@ -14,15 +15,20 @@ import {
   FileText,
   Play,
   Presentation,
+  SquarePen,
   X,
 } from "lucide-react";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useInRouterContext, useNavigate, useSearchParams } from "react-router-dom";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
+import { APP_VIEW_PARAM, PAGE_PARAM } from "../lib/pages";
 import { errorCode, errorText } from "../lib/user-error";
+import { searchString, withShellOverlay } from "../pages/shell-overlay";
 import { BuiCard } from "./ai/primitives";
 import { IconTooltip } from "./IconTooltip";
+import { officeFormatOfFile, officeStudioReady } from "./office/registry";
 import { PdfViewer } from "./PdfViewer";
 import { SandboxedHtmlViewer } from "./SandboxedHtmlViewer";
 
@@ -49,6 +55,7 @@ function isPreviewable(mimeType: string) {
 
 export function ArtifactFileCard(props: ArtifactFileCardProps) {
   const { t } = useLingui();
+  const inRouter = useInRouterContext();
   const previewable = isPreviewable(props.mimeType);
   const previewButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -91,6 +98,8 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   }
 
   const type = fileType(props.name, props.mimeType);
+  const office = officeFormatOfFile(props.name, props.mimeType);
+  const studioFormat = office && officeStudioReady(office) ? office : null;
   const details = (
     <>
       <span
@@ -127,6 +136,13 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
           ) : (
             <span className="flex min-w-0 flex-1 items-center gap-3">{details}</span>
           )}
+          {studioFormat && inRouter ? (
+            <OpenInStudioPill
+              name={props.name}
+              artifactId={props.artifactId}
+              format={studioFormat}
+            />
+          ) : null}
           <DownloadPill name={props.name} onDownload={startDownload} />
         </BuiCard>
         {downloadError ? <DownloadError message={downloadError} /> : null}
@@ -144,6 +160,38 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
         </Dialog>
       ) : null}
     </>
+  );
+}
+
+/** Opens the file in its document studio; the studio reads any version id as its family. */
+function OpenInStudioPill({
+  name,
+  artifactId,
+  format,
+}: {
+  name: string;
+  artifactId: string;
+  format: DocumentFormat;
+}) {
+  const { t } = useLingui();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  return (
+    <button
+      type="button"
+      aria-label={t`Open or edit ${name}`}
+      data-testid="artifact-open-studio"
+      onClick={() => {
+        const next = withShellOverlay(searchParams, { kind: "doc", id: artifactId, format });
+        next.delete(PAGE_PARAM);
+        next.delete(APP_VIEW_PARAM);
+        navigate({ search: searchString(next) }, { replace: true });
+      }}
+      className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border px-2.5 text-[13px] font-medium text-foreground hover:bg-accent"
+    >
+      <SquarePen aria-hidden className="size-3.5" strokeWidth={2} />
+      {t`Open/Edit`}
+    </button>
   );
 }
 

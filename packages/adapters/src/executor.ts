@@ -129,6 +129,8 @@ import {
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { dailyLimitRefusal, dailyRunLimitsFromEnv } from "./daily-run-limits.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
+import type { StudioDocument } from "./document-versions.js";
+import { studioDocumentFiles, studioDocumentForTurn } from "./document-versions.js";
 import { loadFilingProfile } from "./email-filing.js";
 import { evolveAssistantAccessError } from "./evolve-assistants.js";
 import { evolvePersonContext } from "./evolve-person-context.js";
@@ -1534,6 +1536,26 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             conversationFiles.set(file.path, { ...file, artifactId });
           }
         }
+        // The document open in the person's studio is theirs to edit here even when another
+        // agent or group made it; never on a turn someone else in the conversation sent.
+        let studioDocument: StudioDocument | undefined;
+        if (artifacts && !nonOwnerChatRun) {
+          try {
+            studioDocument = await studioDocumentForTurn(
+              deps.prisma,
+              { spaceId: run.spaceId, userId: context.userId },
+              turnBlocks,
+            );
+          } catch (error) {
+            if (context.signal.aborted) throw error;
+            getLogger().warn("studio document was not resolved", {
+              reason: error instanceof Error ? error.message : String(error),
+            });
+          }
+          for (const file of studioDocumentFiles(studioDocument)) {
+            if (!conversationFiles.has(file.path)) conversationFiles.set(file.path, file);
+          }
+        }
         let conversationFileSearch = false;
         if (conversationFiles.size && deps.artifacts && chatFileSearchKey()) {
           const artifactIds = [...conversationFiles.values()].map((file) => file.artifactId);
@@ -2018,6 +2040,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               .filter((file) => isWordDocument(file.name, file.mimeType))
               .map(({ name, path }) => ({ name, path })),
             conversationFiles,
+            studioDocument,
           },
           tools: {
             offered: tools,

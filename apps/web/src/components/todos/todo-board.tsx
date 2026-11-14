@@ -1,6 +1,11 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { TodoItem, TodoPriority, TodoStatus } from "@rakazo/contracts";
-import { openStudioNote, PERSONAL_TODO_LIST, TODO_STATUSES, TODO_TITLE_MAX } from "@rakazo/contracts";
+import {
+  openStudioNote,
+  PERSONAL_TODO_LIST,
+  TODO_STATUSES,
+  TODO_TITLE_MAX,
+} from "@rakazo/contracts";
 import {
   Button,
   Dialog,
@@ -46,14 +51,15 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
-import { StudioActivityCarousel, studioChromeClass } from "../studio/StudioActivityCarousel";
+import { StudioActivityCarousel } from "../studio/StudioActivityCarousel";
+import { StudioChatPane } from "../studio/StudioChatPane";
+import { control } from "../studio/StudioFrame";
+import { StudioFloatingDock, studioDockStyle } from "../studio/studio-dock";
 import { TODO_REFRESH_MS as REFRESH_MS, TODO_NEW_MS } from "./todo-count";
 
 const DRAG_TYPE = "application/x-rakazo-todo";
 const NO_ACTIVITY: StudioCard[] = [];
 const idleSubscribe = () => () => {};
-const control =
-  "grid shrink-0 place-items-center rounded-full border border-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring";
 const pill =
   "flex h-[35px] items-center gap-1.5 rounded-full border border-foreground/[0.06] px-2.5 text-[14px] leading-5 text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-foreground/[0.08] sm:px-[15px]";
 
@@ -187,8 +193,7 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
   const [titleDraft, setTitleDraft] = useState("");
   const phone = useIsMobile();
   const [shown, setShown] = useState<TodoStatus>("todo");
-  const listInput =
-    selected === PERSONAL_TODO_LIST ? {} : { listId: selected };
+  const listInput = selected === PERSONAL_TODO_LIST ? {} : { listId: selected };
   const listOptions = queries.todos.list.queryOptions({ input: listInput });
   const list = useQuery({ ...listOptions, refetchInterval: REFRESH_MS });
   const archived = useQuery({
@@ -349,333 +354,345 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
         className="overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)]"
       >
         <div className="relative size-full">
-        <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 sm:gap-2">
-          <DialogClose
-            ref={closeButton}
-            aria-label={t`Close to do list`}
-            className={`${control} size-[35px]`}
-          >
-            <X className="size-[18px]" strokeWidth={1.7} />
-          </DialogClose>
-          <button
-            type="button"
-            data-testid="todo-new"
-            aria-label={t`New to-do list`}
-            title={t`New to-do list`}
-            onClick={() => void createList()}
-            className={`${control} size-[35px]`}
-          >
-            <Plus className="size-[18px]" strokeWidth={1.7} />
-          </button>
-          <DialogTitle className="sr-only">{selectedTitle}</DialogTitle>
-          <DialogDescription className="sr-only">
-            <Trans>
-              Only you can see this list. Your assistants can add to it from your emails and chats
-              when you ask them, including in routines.
-            </Trans>
-          </DialogDescription>
-          {renaming ? (
-            <Input
-              autoFocus
-              value={titleDraft}
-              aria-label={t`Rename`}
-              className="h-8 max-w-xs"
-              onChange={(event) => setTitleDraft(event.target.value)}
-              onBlur={() => void renameList(titleDraft)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void renameList(titleDraft);
-                if (event.key === "Escape") setRenaming(false);
-              }}
-            />
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                data-testid="todo-switcher"
-                render={
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="min-w-0 max-w-[38vw] gap-1.5 font-medium sm:max-w-[280px]"
-                  />
-                }
-              >
-                <ListMark />
-                <span className="truncate">{selectedTitle}</span>
-                <ChevronDown className="size-3.5 shrink-0 opacity-65" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-72">
-                <DropdownMenuItem
-                  onClick={() => setSelected(PERSONAL_TODO_LIST)}
-                  className="flex items-center gap-2"
+          <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 sm:gap-2">
+            <button
+              type="button"
+              aria-pressed={chatOpen}
+              title={t`Show the chat beside the list`}
+              aria-label={t`Chat`}
+              onClick={() => setChatOpen((open) => !open)}
+              className={`${control} relative size-[35px]`}
+            >
+              <MessageSquare className="size-[18px]" strokeWidth={1.7} />
+              {running && !chatOpen ? (
+                <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
+              ) : null}
+            </button>
+            <button
+              type="button"
+              data-testid="todo-new"
+              aria-label={t`New to-do list`}
+              title={t`New to-do list`}
+              onClick={() => void createList()}
+              className={`${control} size-[35px]`}
+            >
+              <Plus className="size-[18px]" strokeWidth={1.7} />
+            </button>
+            <DialogTitle className="sr-only">{selectedTitle}</DialogTitle>
+            <DialogDescription className="sr-only">
+              <Trans>
+                Only you can see this list. Your assistants can add to it from your emails and chats
+                when you ask them, including in routines.
+              </Trans>
+            </DialogDescription>
+            {renaming ? (
+              <Input
+                autoFocus
+                value={titleDraft}
+                aria-label={t`Rename`}
+                className="h-8 max-w-xs"
+                onChange={(event) => setTitleDraft(event.target.value)}
+                onBlur={() => void renameList(titleDraft)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void renameList(titleDraft);
+                  if (event.key === "Escape") setRenaming(false);
+                }}
+              />
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  data-testid="todo-switcher"
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="min-w-0 max-w-[38vw] gap-1.5 font-medium sm:max-w-[280px]"
+                    />
+                  }
                 >
                   <ListMark />
-                  <span className="min-w-0 flex-1 truncate">
-                    <Trans>Personal</Trans>
-                  </span>
-                  {selected === PERSONAL_TODO_LIST ? (
-                    <Check className="size-4 shrink-0 text-primary" />
-                  ) : null}
-                </DropdownMenuItem>
-                {extraLists.map((entry) => (
+                  <span className="truncate">{selectedTitle}</span>
+                  <ChevronDown className="size-3.5 shrink-0 opacity-65" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-72">
                   <DropdownMenuItem
-                    key={entry.id}
-                    onClick={() => setSelected(entry.id)}
+                    onClick={() => setSelected(PERSONAL_TODO_LIST)}
                     className="flex items-center gap-2"
                   >
                     <ListMark />
-                    <span className="min-w-0 flex-1 truncate">{entry.title}</span>
-                    {entry.id === selected ? (
+                    <span className="min-w-0 flex-1 truncate">
+                      <Trans>Personal</Trans>
+                    </span>
+                    {selected === PERSONAL_TODO_LIST ? (
                       <Check className="size-4 shrink-0 text-primary" />
                     ) : null}
                   </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => void createList()}>
-                  <Plus className="size-4" />
-                  <Trans>New to-do list</Trans>
-                </DropdownMenuItem>
-                {selected !== PERSONAL_TODO_LIST ? (
-                  <>
+                  {extraLists.map((entry) => (
                     <DropdownMenuItem
-                      onClick={() => {
-                        setTitleDraft(selectedList?.title ?? "");
-                        setRenaming(true);
-                      }}
+                      key={entry.id}
+                      onClick={() => setSelected(entry.id)}
+                      className="flex items-center gap-2"
                     >
-                      <Pencil className="size-4" />
-                      <Trans>Rename</Trans>
+                      <ListMark />
+                      <span className="min-w-0 flex-1 truncate">{entry.title}</span>
+                      {entry.id === selected ? (
+                        <Check className="size-4 shrink-0 text-primary" />
+                      ) : null}
                     </DropdownMenuItem>
-                    <DropdownMenuItem variant="destructive" onClick={() => void removeList(selected)}>
-                      <Trash2 className="size-4" />
-                      <Trans>Delete</Trans>
-                    </DropdownMenuItem>
-                  </>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          <div className="flex-1" />
-          <button
-            type="button"
-            aria-pressed={showArchived}
-            onClick={() => setShowArchived((value) => !value)}
-            className={pill}
-          >
-            <Archive className="size-4" strokeWidth={1.8} />
-            <span className="max-sm:sr-only">
-              {showArchived ? <Trans>Back to board</Trans> : <Trans>Archived</Trans>}
-            </span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={chatOpen}
-            title={t`Show the chat beside the list`}
-            aria-label={t`Chat`}
-            onClick={() => setChatOpen((open) => !open)}
-            className={`${control} relative size-[35px]`}
-          >
-            <MessageSquare className="size-[18px]" strokeWidth={1.7} />
-            {running && !chatOpen ? (
-              <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
-            ) : null}
-          </button>
-        </header>
-        <div className={`absolute inset-x-0 top-12 flex ${studioChromeClass(chatOpen, showActivity)}`}>
-          {chatOpen ? (
-            <aside
-              aria-label={t`Chat`}
-              className="absolute inset-0 z-30 flex min-h-0 flex-col border-foreground/[0.06] bg-background sm:static sm:w-[min(36vw,420px)] sm:shrink-0 sm:border-r [&_[data-testid=transcript]]:px-3 [&_[data-testid=transcript]]:pt-3 [&_[data-testid=transcript]]:pb-4"
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => void createList()}>
+                    <Plus className="size-4" />
+                    <Trans>New to-do list</Trans>
+                  </DropdownMenuItem>
+                  {selected !== PERSONAL_TODO_LIST ? (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setTitleDraft(selectedList?.title ?? "");
+                          setRenaming(true);
+                        }}
+                      >
+                        <Pencil className="size-4" />
+                        <Trans>Rename</Trans>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => void removeList(selected)}
+                      >
+                        <Trash2 className="size-4" />
+                        <Trans>Delete</Trans>
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <div className="flex-1" />
+            <button
+              type="button"
+              aria-pressed={showArchived}
+              onClick={() => setShowArchived((value) => !value)}
+              className={pill}
             >
-              <div ref={setChatNode} className="flex min-h-0 flex-1 flex-col" />
-              <div className="shrink-0 px-2 pb-2">{composer}</div>
-            </aside>
-          ) : null}
-          <section aria-label={selectedTitle} className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {showArchived ? (
-          <ArchivedList
-            items={(archived.data ?? []).filter((item) => item.archivedAt)}
-            loading={archived.isPending}
-            onRestore={(item) =>
-              run(() => queries.todos.restore.call({ itemId: item.id }), t`Could not restore it.`)
-            }
-            onDelete={(item) =>
-              run(
-                () => queries.todos.remove.call({ itemId: item.id }),
-                t`Could not hard delete it.`,
-              )
-            }
-          />
-        ) : list.isPending ? (
-          <div className="flex flex-1 items-center justify-center">
-            <Spinner />
-          </div>
-        ) : list.isError ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-            <Trans>Could not load your to do list.</Trans>
-          </div>
-        ) : (
+              <Archive className="size-4" strokeWidth={1.8} />
+              <span className="max-sm:sr-only">
+                {showArchived ? <Trans>Back to board</Trans> : <Trans>Archived</Trans>}
+              </span>
+            </button>
+            <DialogClose
+              ref={closeButton}
+              aria-label={t`Close to do list`}
+              className={`${control} size-[35px]`}
+            >
+              <X className="size-[18px]" strokeWidth={1.7} />
+            </DialogClose>
+          </header>
           <div
-            className={`grid min-h-0 flex-1 items-start gap-3 bg-muted/60 ${
-              phone
-                ? "grid-cols-1 grid-rows-[auto_minmax(0,1fr)] px-3 pt-3 pb-3"
-                : "grid-cols-[repeat(4,minmax(240px,1fr))] overflow-x-auto px-6 pt-5 pb-6"
-            }`}
+            className="absolute inset-x-0 top-12 bottom-0 flex"
+            style={studioDockStyle(chatOpen, showActivity)}
           >
-            {phone ? (
-              <div
-                role="tablist"
-                aria-label={t`To do list`}
-                className="-mx-3 flex gap-1.5 overflow-x-auto px-3"
-              >
-                {TODO_STATUSES.map((status) => (
-                  <button
-                    key={status}
-                    type="button"
-                    role="tab"
-                    aria-selected={shown === status}
-                    data-testid={`todo-tab-${status}`}
-                    onClick={() => setShown(status)}
-                    className={`flex h-9 flex-none items-center gap-2 rounded-full border px-3 text-[13px] font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
-                      shown === status
-                        ? "border-transparent bg-card text-foreground shadow-sm"
-                        : "border-border text-muted-foreground"
-                    }`}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`size-2 rounded-full ${COLUMN_STYLE[status].dot}`}
-                    />
-                    {columns[status]}
-                    <span className={`${CHIP} ${COLUMN_STYLE[status].count}`}>
-                      {items.filter((item) => item.status === status).length}
-                    </span>
-                  </button>
-                ))}
-              </div>
+            {chatOpen ? (
+              <StudioChatPane>
+                <div ref={setChatNode} className="flex min-h-0 flex-1 flex-col" />
+                <div className="shrink-0 px-2 pb-2">{composer}</div>
+              </StudioChatPane>
             ) : null}
-            {(phone ? [shown] : TODO_STATUSES).map((status) => {
-              const column = items.filter((item) => item.status === status);
-              const target = dropTarget?.status === status;
-              const style = COLUMN_STYLE[status];
-              return (
-                <section
-                  key={status}
-                  aria-label={columns[status]}
-                  data-testid={`todo-column-${status}`}
-                  className={`flex max-h-full min-h-0 flex-col overflow-hidden rounded-xl shadow-md ${style.list} ${
-                    target ? `ring-2 ${style.drop}` : ""
+            <section aria-label={selectedTitle} className="flex min-h-0 min-w-0 flex-1 flex-col">
+              {showArchived ? (
+                <ArchivedList
+                  items={(archived.data ?? []).filter((item) => item.archivedAt)}
+                  loading={archived.isPending}
+                  onRestore={(item) =>
+                    run(
+                      () => queries.todos.restore.call({ itemId: item.id }),
+                      t`Could not restore it.`,
+                    )
+                  }
+                  onDelete={(item) =>
+                    run(
+                      () => queries.todos.remove.call({ itemId: item.id }),
+                      t`Could not hard delete it.`,
+                    )
+                  }
+                />
+              ) : list.isPending ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <Spinner />
+                </div>
+              ) : list.isError ? (
+                <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+                  <Trans>Could not load your to do list.</Trans>
+                </div>
+              ) : (
+                <div
+                  className={`grid min-h-0 flex-1 items-start gap-3 bg-muted/60 ${
+                    phone
+                      ? "grid-cols-1 grid-rows-[auto_minmax(0,1fr)] px-3 pt-3 pb-3"
+                      : "grid-cols-[repeat(4,minmax(240px,1fr))] overflow-x-auto px-6 pt-5 pb-6"
                   }`}
-                  onDragOver={(event) => {
-                    if (!dragging) return;
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = "move";
-                    if (dropTarget?.status !== status) setDropTarget({ status, beforeId: null });
-                  }}
-                  onDragLeave={(event) => {
-                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                      setDropTarget(undefined);
-                    }
-                  }}
-                  onDrop={(event) => drop(status, target ? dropTarget.beforeId : null, event)}
                 >
-                  <div aria-hidden="true" className={`h-1.5 ${style.bar}`} />
-                  <header className="flex items-center justify-between px-3 pt-2.5 pb-2">
-                    <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <span aria-hidden="true" className={`size-2.5 rounded-full ${style.dot}`} />
-                      {columns[status]}
-                    </h3>
-                    <span className={`${CHIP} ${style.count}`}>{column.length}</span>
-                  </header>
-                  <AddTodo
-                    status={status}
-                    onAdd={(title) =>
-                      run(
-                        () =>
-                          queries.todos.create.call({
-                            title,
-                            status,
-                            ...(selected === PERSONAL_TODO_LIST ? {} : { listId: selected }),
-                          }),
-                        t`Could not add that item.`,
-                      )
-                    }
-                  />
-                  <ol className="flex min-h-12 flex-col gap-2 overflow-y-auto px-2 pt-1 pb-3">
-                    {column.map((item, index) => (
-                      <li
-                        key={item.id}
+                  {phone ? (
+                    <div
+                      role="tablist"
+                      aria-label={t`To do list`}
+                      className="-mx-3 flex gap-1.5 overflow-x-auto px-3"
+                    >
+                      {TODO_STATUSES.map((status) => (
+                        <button
+                          key={status}
+                          type="button"
+                          role="tab"
+                          aria-selected={shown === status}
+                          data-testid={`todo-tab-${status}`}
+                          onClick={() => setShown(status)}
+                          className={`flex h-9 flex-none items-center gap-2 rounded-full border px-3 text-[13px] font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                            shown === status
+                              ? "border-transparent bg-card text-foreground shadow-sm"
+                              : "border-border text-muted-foreground"
+                          }`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`size-2 rounded-full ${COLUMN_STYLE[status].dot}`}
+                          />
+                          {columns[status]}
+                          <span className={`${CHIP} ${COLUMN_STYLE[status].count}`}>
+                            {items.filter((item) => item.status === status).length}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  {(phone ? [shown] : TODO_STATUSES).map((status) => {
+                    const column = items.filter((item) => item.status === status);
+                    const target = dropTarget?.status === status;
+                    const style = COLUMN_STYLE[status];
+                    return (
+                      <section
+                        key={status}
+                        aria-label={columns[status]}
+                        data-testid={`todo-column-${status}`}
+                        className={`flex max-h-full min-h-0 flex-col overflow-hidden rounded-xl shadow-md ${style.list} ${
+                          target ? `ring-2 ${style.drop}` : ""
+                        }`}
                         onDragOver={(event) => {
                           if (!dragging) return;
                           event.preventDefault();
-                          event.stopPropagation();
-                          setDropTarget({ status, beforeId: beforeIdAt(column, index, event) });
+                          event.dataTransfer.dropEffect = "move";
+                          if (dropTarget?.status !== status)
+                            setDropTarget({ status, beforeId: null });
                         }}
-                      >
-                        {target && dropTarget?.beforeId === item.id ? (
-                          <DropLine color={style.line} />
-                        ) : null}
-                        <TodoCard
-                          item={item}
-                          dragging={dragging === item.id}
-                          onDragStart={(event) => {
-                            event.dataTransfer.effectAllowed = "move";
-                            event.dataTransfer.setData(DRAG_TYPE, item.id);
-                            setDragging(item.id);
-                          }}
-                          onDragEnd={() => {
-                            setDragging(null);
+                        onDragLeave={(event) => {
+                          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
                             setDropTarget(undefined);
-                          }}
-                          onOpen={() => setEditing(item)}
-                          onMove={
-                            phone
-                              ? (next) => {
-                                  if (next !== item.status) move(item.id, next, null);
-                                }
-                              : undefined
+                          }
+                        }}
+                        onDrop={(event) => drop(status, target ? dropTarget.beforeId : null, event)}
+                      >
+                        <div aria-hidden="true" className={`h-1.5 ${style.bar}`} />
+                        <header className="flex items-center justify-between px-3 pt-2.5 pb-2">
+                          <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <span
+                              aria-hidden="true"
+                              className={`size-2.5 rounded-full ${style.dot}`}
+                            />
+                            {columns[status]}
+                          </h3>
+                          <span className={`${CHIP} ${style.count}`}>{column.length}</span>
+                        </header>
+                        <AddTodo
+                          status={status}
+                          onAdd={(title) =>
+                            run(
+                              () =>
+                                queries.todos.create.call({
+                                  title,
+                                  status,
+                                  ...(selected === PERSONAL_TODO_LIST ? {} : { listId: selected }),
+                                }),
+                              t`Could not add that item.`,
+                            )
                           }
                         />
-                      </li>
-                    ))}
-                    {target && dropTarget?.beforeId === null ? (
-                      <DropLine color={style.line} />
-                    ) : null}
-                    {column.length === 0 && !target ? (
-                      <li className="px-2 py-4 text-center text-xs text-muted-foreground">
-                        <Trans>Nothing here</Trans>
-                      </li>
-                    ) : null}
-                  </ol>
-                </section>
-              );
-            })}
+                        <ol className="flex min-h-12 flex-col gap-2 overflow-y-auto px-2 pt-1 pb-3">
+                          {column.map((item, index) => (
+                            <li
+                              key={item.id}
+                              onDragOver={(event) => {
+                                if (!dragging) return;
+                                event.preventDefault();
+                                event.stopPropagation();
+                                setDropTarget({
+                                  status,
+                                  beforeId: beforeIdAt(column, index, event),
+                                });
+                              }}
+                            >
+                              {target && dropTarget?.beforeId === item.id ? (
+                                <DropLine color={style.line} />
+                              ) : null}
+                              <TodoCard
+                                item={item}
+                                dragging={dragging === item.id}
+                                onDragStart={(event) => {
+                                  event.dataTransfer.effectAllowed = "move";
+                                  event.dataTransfer.setData(DRAG_TYPE, item.id);
+                                  setDragging(item.id);
+                                }}
+                                onDragEnd={() => {
+                                  setDragging(null);
+                                  setDropTarget(undefined);
+                                }}
+                                onOpen={() => setEditing(item)}
+                                onMove={
+                                  phone
+                                    ? (next) => {
+                                        if (next !== item.status) move(item.id, next, null);
+                                      }
+                                    : undefined
+                                }
+                              />
+                            </li>
+                          ))}
+                          {target && dropTarget?.beforeId === null ? (
+                            <DropLine color={style.line} />
+                          ) : null}
+                          {column.length === 0 && !target ? (
+                            <li className="px-2 py-4 text-center text-xs text-muted-foreground">
+                              <Trans>Nothing here</Trans>
+                            </li>
+                          ) : null}
+                        </ol>
+                      </section>
+                    );
+                  })}
+                </div>
+              )}
+              {editing ? (
+                <TodoEditDialog
+                  item={editing}
+                  onClose={() => setEditing(null)}
+                  onSave={async (patch) => {
+                    await run(
+                      () => queries.todos.update.call({ itemId: editing.id, ...patch }),
+                      t`Could not save your changes.`,
+                    );
+                    setEditing(null);
+                  }}
+                  onArchive={async () => {
+                    await run(
+                      () => queries.todos.archive.call({ itemId: editing.id }),
+                      t`Could not delete it.`,
+                    );
+                    setEditing(null);
+                  }}
+                />
+              ) : null}
+            </section>
           </div>
-        )}
-        {editing ? (
-          <TodoEditDialog
-            item={editing}
-            onClose={() => setEditing(null)}
-            onSave={async (patch) => {
-              await run(
-                () => queries.todos.update.call({ itemId: editing.id, ...patch }),
-                t`Could not save your changes.`,
-              );
-              setEditing(null);
-            }}
-            onArchive={async () => {
-              await run(
-                () => queries.todos.archive.call({ itemId: editing.id }),
-                t`Could not delete it.`,
-              );
-              setEditing(null);
-            }}
-          />
-        ) : null}
-          </section>
-        </div>
-        {chatOpen ? null : (
-          <div className="absolute inset-x-0 bottom-[12.5px] z-20 flex justify-center px-3">
-            <div className="flex w-full max-w-[551px] flex-col gap-2">
+          {chatOpen ? null : (
+            <StudioFloatingDock>
               {showActivity ? (
                 <StudioActivityCarousel
                   cards={activity}
@@ -684,9 +701,8 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                 />
               ) : null}
               {composer}
-            </div>
-          </div>
-        )}
+            </StudioFloatingDock>
+          )}
         </div>
       </DialogContent>
     </Dialog>

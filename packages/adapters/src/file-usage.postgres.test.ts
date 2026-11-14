@@ -75,6 +75,7 @@ describePostgres("storage counted against a person (PostgreSQL)", () => {
     createdAt: Date;
     rootArtifactId?: string;
     storageKey?: string;
+    source?: string;
   }) {
     return runAsSystem("test fixture", () =>
       prisma.artifact.create({
@@ -91,6 +92,7 @@ describePostgres("storage counted against a person (PostgreSQL)", () => {
           createdAt: input.createdAt,
           rootArtifactId: input.rootArtifactId ?? null,
           version: input.rootArtifactId ? 2 : 1,
+          source: input.source ?? null,
         },
       }),
     );
@@ -144,5 +146,35 @@ describePostgres("storage counted against a person (PostgreSQL)", () => {
     expect(expiringFilesNotice(mine!).body).toMatch(
       /^2 files \(2 KB\) will be deleted from .+ Open Manage storage/,
     );
+  });
+
+  it("counts and expires versions a person saved from a studio with the agent's file", async () => {
+    const soon = new Date(now - 55 * DAY);
+    const report = await artifact({ name: "report", runId: "run", size: 400, createdAt: soon });
+    await artifact({
+      name: "report-studio",
+      runId: null,
+      source: "studio",
+      size: 600,
+      createdAt: soon,
+      rootArtifactId: report.id,
+    });
+    const upload = await artifact({ name: "own", runId: null, size: 9000, createdAt: soon });
+    await artifact({
+      name: "own-studio",
+      runId: null,
+      source: "studio",
+      size: 9000,
+      createdAt: soon,
+      rootArtifactId: upload.id,
+    });
+
+    expect(await chatAttachmentBytes(prisma, id)).toBe(2000);
+    const home = { describe: () => ({ id: "test" }) } as unknown as AgentHomeStore;
+    const expiring = await expiringFilesByPerson({ prisma, home, dataDir: undefined, now });
+    expect(expiring.find((person) => person.userId === id)).toMatchObject({
+      files: 3,
+      bytes: 3000,
+    });
   });
 });

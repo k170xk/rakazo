@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Input,
+  Textarea,
 } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -36,7 +36,10 @@ import { useNavigate } from "react-router-dom";
 import { ownerAppSource } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
-import { StudioActivityCarousel, studioChromeClass } from "../studio/StudioActivityCarousel";
+import { StudioActivityCarousel } from "../studio/StudioActivityCarousel";
+import { StudioChatPane } from "../studio/StudioChatPane";
+import { control } from "../studio/StudioFrame";
+import { StudioFloatingDock, studioDockStyle } from "../studio/studio-dock";
 import { AppCodePanel } from "./AppCodePanel";
 import { AppDataPanel } from "./AppDataPanel";
 import type { AppPatch, AppPick } from "./AppFrame";
@@ -239,8 +242,6 @@ export function AppStudio({
       icon: <Settings2 className="size-4" strokeWidth={1.8} />,
     },
   ];
-  const control =
-    "grid shrink-0 place-items-center rounded-full border border-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-primary/15 aria-pressed:text-primary";
   const docked = chatOpen && Boolean(chat) && page !== undefined;
   const showActivity = Boolean(composer) && !docked && (running || activity.length > 0);
 
@@ -257,13 +258,25 @@ export function AppStudio({
         {/* Absolute children ignore the dialog's safe-area padding, so they sit in this box. */}
         <div className="relative size-full">
           <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 max-sm:gap-1 max-sm:px-1.5 sm:gap-2">
-            <DialogClose
-              ref={closeButton}
-              aria-label={t`Close app`}
-              className={`${control} size-[35px]`}
-            >
-              <X className="size-[18px]" strokeWidth={1.7} />
-            </DialogClose>
+            {chat ? (
+              <button
+                type="button"
+                aria-pressed={chatOpen}
+                data-haptic="select"
+                title={t`Show the chat beside the app`}
+                aria-label={t`Chat`}
+                onClick={() => {
+                  setChatOpen((on) => !on);
+                  if (compact) setPanel(null);
+                }}
+                className={`${control} relative size-[35px]`}
+              >
+                <MessageSquare className="size-[18px]" strokeWidth={1.7} />
+                {running && !chatOpen ? (
+                  <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
+                ) : null}
+              </button>
+            ) : null}
             <button
               type="button"
               data-testid="app-new"
@@ -437,37 +450,23 @@ export function AppStudio({
             ) : (
               share
             )}
-            {chat ? (
-              <button
-                type="button"
-                aria-pressed={chatOpen}
-                data-haptic="select"
-                title={t`Show the chat beside the app`}
-                aria-label={t`Chat`}
-                onClick={() => {
-                  setChatOpen((on) => !on);
-                  if (compact) setPanel(null);
-                }}
-                className={`${control} relative size-[35px]`}
-              >
-                <MessageSquare className="size-[18px]" strokeWidth={1.7} />
-                {running && !chatOpen ? (
-                  <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
-                ) : null}
-              </button>
-            ) : null}
+            <DialogClose
+              ref={closeButton}
+              aria-label={t`Close app`}
+              className={`${control} size-[35px]`}
+            >
+              <X className="size-[18px]" strokeWidth={1.7} />
+            </DialogClose>
           </header>
           <div
-            className={`absolute inset-x-0 top-[48px] flex ${composer && !docked ? studioChromeClass(false, showActivity) : "bottom-0"}`}
+            className="absolute inset-x-0 top-[48px] bottom-0 flex"
+            style={studioDockStyle(!composer || docked, showActivity)}
           >
             {docked ? (
-              <aside
-                aria-label={t`Chat`}
-                className="absolute inset-0 z-30 flex min-h-0 flex-col border-foreground/[0.06] bg-background sm:static sm:w-[min(36vw,420px)] sm:shrink-0 sm:border-r [&_[data-testid=transcript]]:px-3 [&_[data-testid=transcript]]:pt-3 [&_[data-testid=transcript]]:pb-4"
-              >
+              <StudioChatPane>
                 {chat}
                 <div className="shrink-0 px-2 pb-2">{composer}</div>
-              </aside>
+              </StudioChatPane>
             ) : null}
             <section aria-label={page?.title ?? t`Apps`} className="relative min-w-0 flex-1">
               {notice ??
@@ -619,20 +618,18 @@ export function AppStudio({
             ) : null}
           </div>
           {composer && !docked ? (
-            <div
-              className={`absolute bottom-[12.5px] flex justify-center px-3 ${panel ? "inset-x-0 sm:right-[min(46vw,560px)]" : "inset-x-0"}`}
+            <StudioFloatingDock
+              className={panel ? "inset-x-0 sm:right-[min(46vw,560px)]" : "inset-x-0"}
             >
-              <div className="flex w-full max-w-[551px] flex-col gap-2">
-                {showActivity ? (
-                  <StudioActivityCarousel
-                    cards={activity}
-                    running={running}
-                    onOpen={() => setChatOpen(true)}
-                  />
-                ) : null}
-                {composer}
-              </div>
-            </div>
+              {showActivity ? (
+                <StudioActivityCarousel
+                  cards={activity}
+                  running={running}
+                  onOpen={() => setChatOpen(true)}
+                />
+              ) : null}
+              {composer}
+            </StudioFloatingDock>
           ) : null}
         </div>
       </DialogContent>
@@ -668,7 +665,9 @@ function AppStudioBlank({
           <Trans>Calendars, checklists, charts, maps and registers, kept inside Evolve.</Trans>
         </p>
         {asking ? (
-          <BuildPrompt idea={idea} onIdea={onIdea} onBuild={onBuild} />
+          <div className="mt-4 w-full">
+            <BuildPrompt idea={idea} onIdea={onIdea} onBuild={onBuild} />
+          </div>
         ) : (
           <p className="mt-3 text-sm leading-5 text-foreground/75">
             <Trans>Type what you want to create, and it will be built here.</Trans>
@@ -690,17 +689,27 @@ function BuildPrompt({
 }) {
   const { t } = useLingui();
   return (
-    <form onSubmit={onBuild} className="mt-4 flex w-full max-w-sm flex-col gap-2 text-start">
-      <label htmlFor="app-idea" className="text-[13px] font-medium text-foreground">
+    <form
+      onSubmit={onBuild}
+      className="flex w-full max-w-lg flex-col gap-3 rounded-2xl border border-border bg-card p-4 text-start shadow-lg"
+    >
+      <label htmlFor="app-idea" className="text-sm font-medium text-foreground">
         <Trans>What do you want to build?</Trans>
       </label>
-      <Input
+      <Textarea
         id="app-idea"
         autoFocus
+        rows={4}
         value={idea}
         maxLength={500}
         placeholder={t`A site diary for the visits I make`}
         onChange={(event) => onIdea(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" || event.shiftKey || (!event.metaKey && !event.ctrlKey)) return;
+          event.preventDefault();
+          event.currentTarget.form?.requestSubmit();
+        }}
+        className="min-h-28 resize-y bg-background"
       />
       <Button type="submit" disabled={!idea.trim()} className="self-end">
         <Trans>Build it</Trans>

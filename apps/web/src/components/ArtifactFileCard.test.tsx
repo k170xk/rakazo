@@ -244,3 +244,45 @@ it("previews plain text in the app instead of only offering a download", async (
     ),
   );
 });
+
+it("opens a Word file in its studio from the card, keeping the chat's other params", async () => {
+  const { MemoryRouter, useLocation } = await import("react-router-dom");
+  let search = "";
+  function Location() {
+    search = useLocation().search;
+    return null;
+  }
+  await act(async () =>
+    root?.render(
+      <MemoryRouter initialEntries={["/app/bot-1?m=msg_1&page=p1"]}>
+        <ArtifactFileCard
+          target={{ botId: "bot-1" }}
+          artifactId="art-2"
+          name="Report.docx"
+          mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          size={10}
+        />
+        <Location />
+      </MemoryRouter>,
+    ),
+  );
+  const open = container.querySelector<HTMLButtonElement>('[data-testid="artifact-open-studio"]');
+  expect(open?.textContent).toContain("Open");
+  await act(async () => open?.click());
+  expect(search).toBe("?m=msg_1&doc=art-2&kind=docx");
+});
+
+it("offers no Open button outside the app's routes", async () => {
+  await act(async () =>
+    root?.render(
+      <ArtifactFileCard
+        target={{ botId: "bot-1" }}
+        artifactId="art-2"
+        name="Report.docx"
+        mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        size={10}
+      />,
+    ),
+  );
+  expect(container.querySelector('[data-testid="artifact-open-studio"]')).toBeNull();
+});

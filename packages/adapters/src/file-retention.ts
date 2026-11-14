@@ -610,6 +610,12 @@ export async function personStorageBytes(
 }
 
 /**
+ * An `artifacts` row a bot attached in a chat or the person saved from a studio, rather than a
+ * file they uploaded. Studio saves have no run but continue a bot's file, so they count with it.
+ */
+export const MADE_VERSION_SQL = Prisma.sql`("runId" IS NOT NULL OR "source" IS NOT DISTINCT FROM 'studio')`;
+
+/**
  * Files bots attached in this person's chats, each stored file once however many rows name it.
  * A file counts as the bot's when every version of it is, which is also what chat cleanup deletes.
  */
@@ -625,7 +631,7 @@ export async function chatAttachmentBytes(prisma: PrismaClient, userId: string) 
             FROM "artifacts"
             WHERE "userId" = ${userId}
             GROUP BY 1
-            HAVING bool_and("runId" IS NOT NULL)
+            HAVING bool_and(${MADE_VERSION_SQL})
           )
       ) stored
     `),
@@ -644,7 +650,7 @@ export async function chatAttachmentBytesByPerson(prisma: PrismaClient) {
           SELECT COALESCE("rootArtifactId", id) AS family
           FROM "artifacts"
           GROUP BY 1
-          HAVING bool_and("runId" IS NOT NULL)
+          HAVING bool_and(${MADE_VERSION_SQL})
         ) bot_made ON bot_made.family = COALESCE(a."rootArtifactId", a.id)
       ) stored
       GROUP BY "userId"

@@ -130,8 +130,9 @@ export function ComposerChip({
 }: {
   icon: ReactNode;
   label: string;
-  removeLabel: string;
-  onRemove: () => void;
+  removeLabel?: string;
+  /** Without it the chip has no remove button. */
+  onRemove?: () => void;
 } & ComponentProps<"span">) {
   return (
     <span
@@ -142,14 +143,16 @@ export function ComposerChip({
       <span dir="auto" className="truncate">
         {label}
       </span>
-      <button
-        type="button"
-        aria-label={removeLabel}
-        onClick={onRemove}
-        className="text-muted-foreground hover:text-foreground"
-      >
-        <X size={12} strokeWidth={2} />
-      </button>
+      {onRemove ? (
+        <button
+          type="button"
+          aria-label={removeLabel}
+          onClick={onRemove}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <X size={12} strokeWidth={2} />
+        </button>
+      ) : null}
     </span>
   );
 }

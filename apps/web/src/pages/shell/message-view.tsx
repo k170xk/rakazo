@@ -21,6 +21,7 @@ import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { EmailDraftCard } from "../../components/EmailDraftCard";
 import { EmailFilingCard } from "../../components/EmailFilingCard";
 import { LearningClinicCard } from "../../components/LearningClinicCard";
+import { MessageStudioChip } from "../../components/office/StudioContextChip";
 import { PageBlockCard } from "../../components/pages/PageBlockCard";
 import { SubagentCard } from "../../components/SubagentCard";
 import {
@@ -607,6 +608,7 @@ export const MessageView = memo(function MessageView({
                   className="max-w-full whitespace-pre-wrap wrap-anywhere rounded-[20px] bg-chat-user px-[18px] py-3 text-body1 text-chat-user-foreground"
                   dir="auto"
                 >
+                  <MessageStudioChip text={block.text} />
                   <LinkifiedText onOpenPage={openPage}>{block.text}</LinkifiedText>
                 </div>
                 {i === hoverAnchorIndex ? hoverActions : null}

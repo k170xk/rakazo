@@ -3,10 +3,13 @@ import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { companyTools } from "./company-policy.js";
+import type { FamilyVersion } from "./document-versions.js";
+import { attachmentPathFor, newestFamilyVersion } from "./document-versions.js";
 import type { EvolvePluginsConnection } from "./evolve-plugins.js";
 import { callEvolveDocumentLibrary } from "./evolve-plugins.js";
 import { storageRefusal } from "./file-retention.js";
 import type { RunContext } from "./run-context.js";
+import { artifactIdFromAttachmentPath } from "./thread-artifacts.js";
 
 /** The OCSC commands the ocsc tool runs; none of them needs a shell, the screen or the browser. */
 export const OCSC_PROGRAMS: ReadonlySet<string> = new Set(["word", "pptx", "xlsx", "pdf", "video"]);
@@ -269,6 +272,56 @@ export function wordRebuildRefusal(
   return `${existing} To change a document, never make it again: run ocsc word read --in <its path>, then ocsc word edit --in <its path> --spec <edits>.json --out <new version>.docx, so the changes show as tracked changes. Only when the person explicitly asked for a brand-new, separate document (not changes to an existing one), run the same new command again with ${NEW_DOCUMENT_FLAG}.`;
 }
 
+/** The ocsc steps that change the document given with --in; the rest only read it. */
+const EDITS_IN: Readonly<Record<string, readonly string[]>> = {
+  word: ["edit", "accept"],
+  pptx: ["edit"],
+  xlsx: ["edit"],
+};
+
+/** The attachment an ocsc edit starts from, `--in attachments/<artifactId>.<ext>`. */
+export function editedAttachmentId(program: string, args: readonly string[]): string | undefined {
+  if (!EDITS_IN[program]?.includes(args[0] ?? "")) return undefined;
+  const at = args.indexOf("--in");
+  const given = at >= 0 ? args[at + 1] : undefined;
+  return given ? artifactIdFromAttachmentPath(given.replace(/^\.\//, "")) : undefined;
+}
+
+/**
+ * Why an edit must not start from this attachment: its file has a newer version, usually the
+ * person's own edit in a studio, which editing the old one would silently throw away.
+ */
+export function staleBaseRefusal(
+  given: Pick<FamilyVersion, "id" | "version">,
+  newest: FamilyVersion,
+): string | undefined {
+  if (newest.id === given.id || newest.version <= given.version) return undefined;
+  const latestPath = attachmentPathFor(newest);
+  const who =
+    newest.source === "studio"
+      ? `The person edited "${newest.name}" in the studio, so the newest version is ${newest.version}`
+      : `"${newest.name}" has a newer version, ${newest.version}`;
+  return `${attachmentPathFor({ id: given.id, mimeType: newest.mimeType })} is version ${given.version}. ${who}, and editing the older one would lose those changes. Call fetch_file with ${latestPath}, then run this command again with --in ${latestPath}. Attach the result with the same name, "${newest.name}", so it becomes the next version.`;
+}
+
+/** `staleBaseRefusal` for an ocsc command, looking the file up as the run's owner. */
+export async function staleDocumentBase(
+  prisma: Pick<PrismaClient, "artifact">,
+  owner: { spaceId: string; userId: string },
+  program: string,
+  args: readonly string[],
+): Promise<string | undefined> {
+  const artifactId = editedAttachmentId(program, args);
+  if (!artifactId) return undefined;
+  try {
+    const family = await newestFamilyVersion(prisma, owner, artifactId);
+    return family ? staleBaseRefusal(family.given, family.newest) : undefined;
+  } catch (error) {
+    getLogger().warn("document version check failed", { error: String(error) });
+    return undefined;
+  }
+}
+
 type SlotRow = { key: string; userId: string; state: string };
 
 /**
@@ -373,7 +426,7 @@ function renderSlotKey(ctx: RunContext): string {
 }
 
 /** The JSON an OCSC command printed, when its output is one JSON object. */
-function printedJson(result: unknown): Record<string, unknown> | undefined {
+export function printedJson(result: unknown): Record<string, unknown> | undefined {
   if (typeof result !== "object" || result === null || !("stdout" in result)) return undefined;
   const stdout = String((result as { stdout: unknown }).stdout ?? "").trim();
   const start = stdout.indexOf("{");

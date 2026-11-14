@@ -13,6 +13,9 @@ const SEND_NOTE = `Every successful command prints JSON with "ok": true and the 
 
 const THEIR_FILES_NOTE = `When the person attaches a file, check whether it is in the agent's folder (list_files, or the path the message gives) and work on it there. Keep their original: always save your changes under a new name.`;
 
+const STUDIO_NOTE = (program: string, extension: string) =>
+  `When a studio note names a document (documentId, artifactId), the person has it open in a studio and may have changed it by hand. Edit that newest version: fetch_file attachments/<artifactId>${extension} if it is not on your computer, run ocsc-${program} edit --in that path with --out a new path, then attach_file the result under the document's same name so it becomes the next version in their studio. Never rebuild it from scratch with ocsc-${program} new, which loses their edits. If ocsc refuses because a newer version exists, fetch that version and edit it instead.`;
+
 const PROJECT_PHOTOS_NOTE = `PROJECT PHOTOS: for each project, call mcp__evolve__search_project_datasheets with its name, job number or client (or, when the person wants you to choose, the topic, sector or client of the document, then pick the two to four closest matches). A result's "images" lists its photos, the cover first. Use only https URLs ending in .jpg, .jpeg or .png and skip the others. Every fact you write about a project (client, sector, value, dates, scope, summary) comes from its datasheet; never invent or embellish one. If a project is not found or has no photos, say so and carry on with an infographic.`;
 
 const SETUP_QUESTIONS_NOTE = `Ask with ask_user, one question at a time, waiting for each answer. Skip any question the person has already answered in their request, and ask none in a scheduled routine or when nobody is there to answer (use the defaults given). Never ask more than three.`;
@@ -139,6 +142,9 @@ Write in UK and Irish English, in a professional engineering consultancy voice. 
 THEIR OWN FILES
 ${THEIR_FILES_NOTE} To change their Word file, run ocsc-word read --in <their file>.docx, then ocsc-word edit on that path with --out set to a new name (for example <their file> v2.docx), and send it. A .doc, PDF or other format cannot be edited in place: offer to rebuild it as an OCSC Word document from its contents.
 
+STUDIOS
+${STUDIO_NOTE("word", ".docx")}
+
 ON THE SCREEN
 ${SCREEN_NOTE}`;
 
@@ -222,6 +228,9 @@ Slide numbers count from 1 and each edit sees the deck as the edits before it le
 Run: ocsc-pptx edit --in <file>.pptx --spec work/<short-name>-edits.json --out outputs/<Name>-v2.pptx
 PowerPoint has no tracked changes, so every changed slide gets a review comment saying what changed instead, for the person to check in PowerPoint; add --clean only if they ask for no comments. Save each round as a new version (-v2, -v3) unless they ask you to overwrite, and list the changes from "summary".
 
+STUDIOS
+${STUDIO_NOTE("pptx", ".pptx")}
+
 SENDING THE POWERPOINT
 ${SEND_NOTE} In a scheduled routine, do the same and also give the file's path.
 
@@ -275,6 +284,9 @@ Arithmetic, SUM, AVERAGE, MIN, MAX, COUNT, ROUND and ABS on the same sheet are w
 THEIR OWN FILES
 ${THEIR_FILES_NOTE} When the person asks you to fill in, update or change their spreadsheet (a pricing schedule, register, tender return), edit THEIR workbook: ocsc-xlsx read it, then ocsc-xlsx edit --in <their file>.xlsx --out outputs/<their name>-v2.xlsx. Never rebuild it as a new workbook with ocsc-xlsx new, which loses their layout, formatting and formulas. Their formulas stay and recalculate, so fill in the input cells (hours, rates, quantities) and leave the formula cells alone.
 If read or edit gives a "warning" (charts, pivot tables or macros an edited copy cannot keep), tell the person before you send the edited copy. Only .xlsx and .xlsm work; ask for an .xlsx copy of an .xls file, or build a new workbook from a .csv.
+
+STUDIOS
+${STUDIO_NOTE("xlsx", ".xlsx")}
 
 PDF
 ${PDF_EXPORT_NOTE("workbook")} Each sheet prints landscape, scaled to fit the page width.

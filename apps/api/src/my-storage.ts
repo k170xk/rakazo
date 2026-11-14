@@ -5,6 +5,7 @@ import {
   botFolderInHome,
   companyTools,
   listStoredItems,
+  MADE_VERSION_SQL,
   monthlyAllowancePercent,
   ObjectAgentHomeStore,
   personStaffLimits,
@@ -86,7 +87,7 @@ async function chatFamilies(prisma: PrismaClient, userId: string, familyIds?: re
       WHERE "userId" = ${userId}
       ${familyIds ? Prisma.sql`AND COALESCE("rootArtifactId", id) IN (${Prisma.join(familyIds)})` : Prisma.empty}
       GROUP BY 1
-      HAVING bool_and("runId" IS NOT NULL)
+      HAVING bool_and(${MADE_VERSION_SQL})
       ORDER BY 5 DESC
       LIMIT ${MAX_CHAT_FAMILIES}
     `),
@@ -146,7 +147,13 @@ async function computerItems(deps: Deps, bots: readonly NamedBot[]) {
       const key = `${where.home}\0${where.folder}`;
       if (!seen.has(key)) {
         seen.add(key);
-        pushStored(items, bot, await listStoredItems(where.home, where.folder), pins, retentionDays);
+        pushStored(
+          items,
+          bot,
+          await listStoredItems(where.home, where.folder),
+          pins,
+          retentionDays,
+        );
       }
     }
     if (saved && (!where || saved.root !== where.home)) {
@@ -224,7 +231,7 @@ async function chatFileExpiring(prisma: PrismaClient, userId: string) {
   const rows = await runAsSystem("see if a chat file expires this week", () =>
     prisma.$queryRaw<Array<{ hit: number }>>(Prisma.sql`
       SELECT 1 AS hit FROM "artifacts"
-      WHERE "userId" = ${userId} AND "runId" IS NOT NULL AND "createdAt" <= ${cutoff}
+      WHERE "userId" = ${userId} AND ${MADE_VERSION_SQL} AND "createdAt" <= ${cutoff}
       LIMIT 1
     `),
   );

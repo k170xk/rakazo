@@ -79,7 +79,6 @@ import {
 import { desktopBridge } from "../lib/desktop";
 import { hasOpenDialog } from "../lib/has-open-dialog";
 import { APP_VIEW_PARAM, PAGE_PARAM, PagesProvider, usePagesForChat } from "../lib/pages";
-import { studioActivity } from "../lib/studio-activity";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
 import { lastChatKey, lastChatOf, queryClient, spaceQueries, spaceSeedKey } from "../lib/query";
@@ -89,6 +88,7 @@ import { rightPanelStorageKey } from "../lib/right-panel-state";
 import { createSpaceRpc, selectedSpaceId, selectSpace } from "../lib/rpc";
 import { useSidebarSort } from "../lib/sidebar-sort";
 import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
+import { studioActivity } from "../lib/studio-activity";
 import { activeThreadRuns } from "../lib/thread-events";
 import { getToolActivityEnabled, subscribeToolActivity } from "../lib/tool-activity-preference";
 import type { AppearancePreference } from "../lib/ui-appearance";
@@ -1224,6 +1224,12 @@ function SpaceShell() {
           navigate({ search: searchString(next) }, { replace: true });
         }}
         openWhiteboards={() => setOverlay({ kind: "whiteboards" })}
+        openDocuments={(format) => {
+          const next = withShellOverlay(searchParams, { kind: "doc", id: null, format });
+          next.delete(PAGE_PARAM);
+          next.delete(APP_VIEW_PARAM);
+          navigate({ search: searchString(next) }, { replace: true });
+        }}
         openApps={() => {
           const next = withShellOverlay(searchParams, { kind: "apps" });
           next.delete(PAGE_PARAM);

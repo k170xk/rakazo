@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { SandboxProvider } from "@rakazo/adapter-kit";
+import type { ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
 import type { ComputerCommand } from "@rakazo/contracts";
 import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
 import { redactSecrets, sandboxCommandTimeoutMs } from "@rakazo/core";
@@ -25,6 +25,7 @@ import {
   resolveBotUploadPath,
   resolveBotWorkspaceCwd,
   resolveBotWorkspacePath,
+  resolveRunFilePath,
   teamBotWorkspaceDirectory,
 } from "./computer-support.js";
 import {
@@ -41,9 +42,11 @@ import {
   desktopProtectionGuardMessage,
   protectedComputerLifecycleRefusal,
 } from "./desktop-command-guard.js";
+import { saveDocumentDraft } from "./document-drafts.js";
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import {
   documentAuthor,
+  editedAttachmentId,
   noteDocumentWrite,
   OCSC_PROGRAMS,
   ocscAfterRun,
@@ -52,6 +55,7 @@ import {
   ocscProgramArgs,
   ocscProgramRefusal,
   ocscShellRefusal,
+  staleDocumentBase,
   withDefaultWordTemplate,
   wordRebuildRefusal,
 } from "./ocsc-tool.js";
@@ -69,8 +73,8 @@ import {
 } from "./shell-command-stream.js";
 import { DESKTOP_HELD_FOR_TAKEOVER_MESSAGE } from "./takeover-resume.js";
 import { getActiveTeachingSession } from "./teaching-session.js";
-import type { ToolRunnerClient } from "./tool-runner.js";
-import { conversationFolderRefusal, RUNNER_PROGRAMS } from "./tool-runner.js";
+import type { ToolRunnerClient, WorkspaceFiles } from "./tool-runner.js";
+import { conversationFolderRefusal, RUNNER_PROGRAMS, TOOL_RUNNER_COMPUTER } from "./tool-runner.js";
 import { vaultCardUseOf } from "./vault-card-use.js";
 
 const CREDENTIALS_WITHHELD_NOTICE =
@@ -297,6 +301,36 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
     );
     return browserResultForModel(result);
   }, call.finish);
+}
+
+/** Keeps a successful ocsc edit's output as the file's live draft for an open studio. */
+async function keepDocumentDraft(
+  ctx: RunContext,
+  program: string,
+  args: readonly string[],
+  result: unknown,
+  files: WorkspaceFiles,
+  computer: () => Promise<ComputerRef>,
+) {
+  await saveDocumentDraft(
+    { prisma: ctx.deps.prisma, artifacts: ctx.deps.artifacts },
+    {
+      context: ctx.context,
+      program,
+      args,
+      result,
+      read: async (filePath, maxBytes) =>
+        files.readFile(
+          await computer(),
+          resolveRunFilePath(
+            { mode: ctx.computer.mode, botId: ctx.bot.id, folder: ctx.computer.folder },
+            filePath,
+          ),
+          ctx.context,
+          { maxBytes },
+        ),
+    },
+  );
 }
 
 /**
@@ -612,6 +646,12 @@ export const computerTools: ToolHandlers = {
     if (switchedOff) return call.finish({ error: switchedOff });
     const rebuild = wordRebuildRefusal(program, given, ctx.computer.wordDocuments ?? []);
     if (rebuild) return call.finish({ error: rebuild });
+    const stale = await staleDocumentBase(ctx.deps.prisma, ctx.context, program, given);
+    if (stale) return call.finish({ error: stale });
+    const editedId = editedAttachmentId(program, given);
+    if (editedId && ctx.computer.studioDocument?.versions.some((v) => v.id === editedId)) {
+      ctx.state.documents.studioEdited = true;
+    }
     const args = await withDefaultWordTemplate(ctx, program, ocscProgramArgs(given));
     const author = await documentAuthor(ctx);
     const runner = ctx.computer.documents ?? ctx.computer.runner;
@@ -628,6 +668,10 @@ export const computerTools: ToolHandlers = {
         author,
       );
       noteDocumentWrite(ctx, program, args, result);
+      await keepDocumentDraft(ctx, program, args, result, runner.files, async () => {
+        await runner.prepare();
+        return TOOL_RUNNER_COMPUTER;
+      });
       return result;
     }
     if (ctx.computer.computerOff) {
@@ -651,6 +695,9 @@ export const computerTools: ToolHandlers = {
     });
     await ocscAfterRun(ctx, program, args, result);
     noteDocumentWrite(ctx, program, args, result);
+    await keepDocumentDraft(ctx, program, args, result, ctx.deps.sandbox, () =>
+      ctx.computer.get("tool", call.name),
+    );
     return result;
   },
   async open_path(ctx, call) {

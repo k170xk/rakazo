@@ -9,6 +9,33 @@ import type { Hono } from "hono";
 /** Path the browser opens after `artifacts.downloadToken`; the token is the only credential. */
 export const ARTIFACT_DOWNLOAD_PATH = "/api/artifacts/download";
 
+/** A grant whose artifact id starts with this names a document draft, not an artifact row. */
+export const DRAFT_DOWNLOAD_PREFIX = "draft:";
+
+type DownloadPayload = { name: string; mimeType: string; bytes: Uint8Array };
+
+async function draftPayload(
+  deps: { prisma: PrismaClient; artifacts: ArtifactStore },
+  tenant: { spaceId: string; userId: string },
+  draftId: string,
+): Promise<DownloadPayload | null> {
+  const draft = await deps.prisma.documentDraft.findFirst({
+    where: { id: draftId, ...tenant },
+    select: {
+      storageKey: true,
+      botId: true,
+      rootArtifactId: true,
+      rootArtifact: { select: { name: true, mimeType: true } },
+    },
+  });
+  if (!draft) return null;
+  const bytes = await deps.artifacts.get(
+    draft.storageKey,
+    createAdapterContext(tenant, draft.botId ?? draft.rootArtifactId, `draft-download:${draftId}`),
+  );
+  return { name: draft.rootArtifact.name, mimeType: draft.rootArtifact.mimeType, bytes };
+}
+
 /**
  * RFC 5987 disposition so names with spaces and non-ASCII stay intact.
  * `filename=` must be ASCII (HTTP header ByteString); `filename*` carries the real UTF-8 name.
@@ -39,7 +66,10 @@ export function mountArtifactDownloadRoute(
     }
     const tenant = { spaceId: grant.spaceId, userId: grant.userId };
     // The token is the credential; read as that person so row-level security allows the file.
-    const payload = await runAsTenant(tenant, async () => {
+    const payload = await runAsTenant(tenant, async (): Promise<DownloadPayload | null> => {
+      if (grant.artifactId.startsWith(DRAFT_DOWNLOAD_PREFIX)) {
+        return draftPayload(deps, tenant, grant.artifactId.slice(DRAFT_DOWNLOAD_PREFIX.length));
+      }
       const row = await deps.prisma.artifact.findFirst({
         where: {
           id: grant.artifactId,
@@ -53,18 +83,18 @@ export function mountArtifactDownloadRoute(
         row.storageKey,
         createAdapterContext(tenant, contextBotId, `artifact-download:${row.id}`),
       );
-      return { row, bytes };
+      return { name: row.name, mimeType: row.mimeType, bytes };
     });
     if (!payload) {
       return c.text("File not found", 404, { "cache-control": "no-store" });
     }
     const fileName = artifactDownloadFileName(
-      payload.row.name,
-      payload.row.mimeType || "application/octet-stream",
+      payload.name,
+      payload.mimeType || "application/octet-stream",
     );
     return new Response(Uint8Array.from(payload.bytes), {
       headers: {
-        "content-type": payload.row.mimeType || "application/octet-stream",
+        "content-type": payload.mimeType || "application/octet-stream",
         "content-length": String(payload.bytes.byteLength),
         "content-disposition": artifactContentDisposition(fileName),
         "cache-control": "no-store",

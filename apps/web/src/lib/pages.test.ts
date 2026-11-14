@@ -103,4 +103,29 @@ describe("page replies", () => {
     expect(sentBlank[0]).toContain("the canvas is blank");
     expect(sentBlank[0]).toContain("Build me an app: a diary");
   });
+
+  it("leaves the selection out of one message when it is dropped, then sends it again", () => {
+    const session = createPageSession();
+    const chip = {
+      kind: "word" as const,
+      title: "Brief",
+      label: "Page 3 · Table",
+      bareLabel: "Page 3",
+      hasSelection: true,
+    };
+    session.dock.set({
+      page: {
+        id: "doc:r1",
+        title: "Brief",
+        note: "WITH-SELECTION",
+        bareNote: "WITHOUT-SELECTION",
+        chip,
+      },
+    });
+    session.dock.dropSelection();
+    expect(session.dock.selectionDropped()).toBe(true);
+    expect(session.send("shorter", []).text).toContain("WITHOUT-SELECTION");
+    expect(session.dock.selectionDropped()).toBe(false);
+    expect(session.send("shorter", []).text).toContain("WITH-SELECTION");
+  });
 });

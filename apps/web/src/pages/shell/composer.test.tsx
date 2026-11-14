@@ -252,6 +252,41 @@ describe("Composer", () => {
     }
   });
 
+  it.each([
+    { width: 320, tucked: true },
+    { width: 640, tucked: false },
+  ])(
+    "keeps extra actions behind Add at $width px only while the box is narrow",
+    ({ width: barWidth, tucked }) => {
+      const viewport = window.innerWidth;
+      window.innerWidth = 1400;
+      const rect = HTMLElement.prototype.getBoundingClientRect;
+      HTMLElement.prototype.getBoundingClientRect = function () {
+        const box = rect.call(this);
+        if (this instanceof HTMLElement && this.dataset.testid === "composer-bar") {
+          return { ...box, width: barWidth, right: barWidth };
+        }
+        return box;
+      };
+      try {
+        renderComposer(vi.fn(), {
+          extraActions: (
+            <button type="button" aria-label="Add PDF drawings">
+              PDF
+            </button>
+          ),
+        });
+        const add = container?.querySelector('button[aria-label="Add"]');
+        const pdf = container?.querySelector('button[aria-label="Add PDF drawings"]');
+        expect(Boolean(add)).toBe(tucked);
+        expect(pdf?.parentElement?.className.includes("invisible") ?? false).toBe(tucked);
+      } finally {
+        window.innerWidth = viewport;
+        HTMLElement.prototype.getBoundingClientRect = rect;
+      }
+    },
+  );
+
   it.each(["Enter", "Tab", "pointer"])(
     "completes an inline agent at the caret with %s",
     async (method) => {

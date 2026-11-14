@@ -38,6 +38,7 @@ import {
   HoldToTalkStrip,
   useHoldToTalk,
 } from "../../components/composer/HoldToTalk";
+import { studioChipIcon, studioChipText } from "../../components/office/StudioContextChip";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { attachmentPickerAccept } from "../../lib/attachment-picker-accept";
 import { useCallSession } from "../../lib/call-session";
@@ -74,6 +75,14 @@ import { useComposerLayout } from "./use-composer-layout";
 const ATTACHMENT_ACCEPT = attachmentPickerAccept(navigator.userAgent);
 const idleSubscribe = () => () => {};
 const COMPOSER_TEXT = "rk-scroll whitespace-pre-wrap break-words px-0.5 py-0.5 text-body1";
+
+/** Extra actions sit beside Send once the message box is at least this wide. */
+export const COMPOSER_INLINE_ACTIONS_MIN = 420;
+
+/** A width of 0 means the box has not been measured yet, so the actions stay where they are. */
+export function composerActionsFitInline(barWidth: number): boolean {
+  return barWidth <= 0 || barWidth >= COMPOSER_INLINE_ACTIONS_MIN;
+}
 const ComposerBody = memo(function Composer({
   artifactTarget,
   activeName,
@@ -167,8 +176,17 @@ const ComposerBody = memo(function Composer({
     () => (docked ? (pageSession?.dock.get().page?.title ?? "") : ""),
     () => "",
   );
-  // Phones keep attach and the extra actions behind one button so the message box keeps its width.
-  const compactTools = useIsMobile() && Boolean(extraActions);
+  const studioChip = useSyncExternalStore(
+    pageSession ? pageSession.dock.subscribe : idleSubscribe,
+    () => (docked ? (pageSession?.dock.get().page?.chip ?? null) : null),
+    () => null,
+  );
+  const selectionDropped = useSyncExternalStore(
+    pageSession ? pageSession.dock.subscribe : idleSubscribe,
+    () => pageSession?.dock.selectionDropped() ?? false,
+    () => false,
+  );
+  const phone = useIsMobile();
   const [toolsOpen, setToolsOpen] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -278,6 +296,23 @@ const ComposerBody = memo(function Composer({
     composerFieldRef,
     expanded,
   } = useComposerLayout(draft, selectedSkill !== null);
+  const [barWidth, setBarWidth] = useState(0);
+  useLayoutEffect(() => {
+    const bar = composerBarRef.current;
+    if (!bar) return;
+    const read = () => {
+      const width = Math.round(bar.getBoundingClientRect().width);
+      setBarWidth((current) => (current === width ? current : width));
+    };
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(read);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, [composerBarRef]);
+  // A narrow message box, including a studio chat that has not been dragged wider, keeps attach
+  // and the extra actions behind one button.
+  const compactTools = Boolean(extraActions) && (phone || !composerActionsFitInline(barWidth));
   // The configured shortcut starts hands-free dictation in the message field, and finishes it
   // when pressed again. The field hides while recording, so the key is heard window-wide.
   const dictateKey = useRef({ talk, available: false, shortcut: dictateShortcut });
@@ -834,6 +869,32 @@ const ComposerBody = memo(function Composer({
               </button>
             );
           })}
+        </div>
+      ) : null}
+      {studioChip ? (
+        <div className="mb-2 flex min-w-0" data-testid="composer-studio-context">
+          <ComposerChip
+            data-testid="studio-context-chip"
+            icon={
+              <img
+                src={studioChipIcon(studioChip.kind)}
+                alt=""
+                aria-hidden="true"
+                className="size-[14px] shrink-0 object-contain"
+              />
+            }
+            label={studioChipText({
+              title: studioChip.title,
+              label: selectionDropped ? studioChip.bareLabel : studioChip.label,
+            })}
+            title={t`Sent with your message so the assistant knows what you're looking at`}
+            removeLabel={t`Leave the selection out of this message`}
+            onRemove={
+              studioChip.hasSelection && !selectionDropped
+                ? () => pageSession?.dock.dropSelection()
+                : undefined
+            }
+          />
         </div>
       ) : null}
       <div

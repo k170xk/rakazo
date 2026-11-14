@@ -116,6 +116,7 @@ export async function attachWorkspaceFileToThread(
           storageKey: stored.id,
           rootArtifactId,
           version,
+          source: "assistant",
         },
       });
       await input.onAttached?.(tx, artifact);

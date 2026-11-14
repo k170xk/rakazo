@@ -25,6 +25,7 @@ model User {
   aiDataConsents              AiDataConsent[]
   todoItems                   TodoItem[]
   todoLists                   TodoList[]
+  documentDrafts              DocumentDraft[]
   emailDrafts                 EmailDraft[]
   emailFilingBatches          EmailFilingBatch[]
   emailFilingProfiles         EmailFilingProfile[]
@@ -465,6 +466,7 @@ model Space {
   scratchpadItems             ScratchpadItem[]
   todoItems                   TodoItem[]
   todoLists                   TodoList[]
+  documentDrafts              DocumentDraft[]
   emailDrafts                 EmailDraft[]
   emailFilingBatches          EmailFilingBatch[]
   emailFilingProfiles         EmailFilingProfile[]
@@ -1946,6 +1948,9 @@ model Artifact {
   hash        String
   storageKey  String
   createdAt   DateTime   @default(now())
+  /// Who made this version: "assistant" or "studio" (the person, editing it in a studio).
+  /// Null on rows written before the column existed and on uploads.
+  source      String?
 
   // Null on the first version; that row's id is the family's stable id.
   rootArtifactId String?
@@ -1955,6 +1960,7 @@ model Artifact {
   // Client-chosen per upload so a retried upload that already landed returns this row.
   clientNonce    String?
   threadNotes    ThreadFileNote[]
+  drafts         DocumentDraft[]
 
   @@unique([spaceId, userId, clientNonce])
   @@index([spaceId, botId])
@@ -1962,6 +1968,30 @@ model Artifact {
   @@index([rootArtifactId])
   // artifacts_family_version_key is raw SQL: Prisma cannot express COALESCE indexes.
   @@map("artifacts")
+}
+
+/// The assistant's latest unsent write to an Office file family during a run, shown live in the
+/// studio. Not a version or a chat file; one per family and person, replaced on each write.
+model DocumentDraft {
+  id             String   @id @default(cuid())
+  spaceId        String
+  space          Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rootArtifactId String
+  rootArtifact   Artifact @relation(fields: [rootArtifactId], references: [id], onDelete: Cascade)
+  botId          String?
+  /// Key in the artifact store; no artifacts row points at it.
+  storageKey     String
+  size           Int
+  /// The version the assistant's edit started from.
+  baseVersion    Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([spaceId, userId, rootArtifactId])
+  @@index([rootArtifactId])
+  @@map("document_drafts")
 }
 
 /// A page a bot built: a report, dashboard or tracker the user opens from chat and can share.
