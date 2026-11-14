@@ -1,12 +1,15 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@rakazo/ui-web";
+import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@rakazo/ui-web";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { keepSelection, RibbonTip, ribbonControl } from "./Ribbon";
+import type { Quick } from "./layout";
+import { quickControl } from "./layout";
+import {
+  keepSelection,
+  RibbonMenuContent,
+  RibbonTip,
+  ribbonControl,
+  useRibbonControl,
+} from "./Ribbon";
 
 export const FONT_SIZES: readonly number[] = [
   8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 54, 60, 72, 96,
@@ -38,6 +41,7 @@ export function FontSizeInput({
   value,
   disabled,
   testId,
+  quick,
   onCommit,
 }: {
   label: string;
@@ -45,10 +49,15 @@ export function FontSizeInput({
   value: number | undefined;
   disabled?: boolean;
   testId?: string;
+  quick?: Quick;
   onCommit: (size: number) => void;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   useEffect(() => setDraft(null), [value]);
+  const control = useRibbonControl(quick);
+  if (!control.visible) return null;
+  const { layout } = control;
 
   function commit(text: string) {
     setDraft(null);
@@ -56,8 +65,12 @@ export function FontSizeInput({
     if (size !== null && size !== value) onCommit(size);
   }
 
-  return (
-    <div className="flex shrink-0 items-center rounded-full ring-1 ring-foreground/[0.08] focus-within:ring-2 focus-within:ring-ring">
+  const box = (
+    <div
+      className={`flex shrink-0 items-center rounded-full ring-1 ring-foreground/[0.08] focus-within:ring-2 focus-within:ring-ring ${
+        layout === "sheet" ? "w-full bg-muted" : ""
+      }`}
+    >
       <RibbonTip label={label}>
         <input
           aria-label={label}
@@ -79,19 +92,31 @@ export function FontSizeInput({
               setDraft(null);
             }
           }}
-          className="h-8 w-10 rounded-s-full bg-transparent ps-2.5 text-[13px] tabular-nums outline-none disabled:opacity-40"
+          // Phones zoom into fields set below 16px, so the roomy layouts use 16px.
+          className={`rounded-s-full bg-transparent ps-2.5 tabular-nums outline-none disabled:opacity-40 ${
+            layout === "bar"
+              ? "h-8 w-10 text-[13px] pointer-coarse:h-10"
+              : layout === "sheet"
+                ? "h-11 min-w-0 flex-1 text-[16px]"
+                : "h-11 w-12 text-[16px]"
+          }`}
         />
       </RibbonTip>
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
           disabled={disabled}
           aria-label={label}
           onMouseDown={keepSelection}
-          className={`${ribbonControl} min-w-5 rounded-s-none px-1`}
+          className={`${layout === "bar" ? ribbonControl : quickControl} min-w-5 rounded-s-none px-1`}
         >
           <ChevronDown className="size-3 opacity-60" aria-hidden="true" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="max-h-72 w-20">
+        <RibbonMenuContent
+          align="end"
+          width="w-20"
+          className="max-h-72"
+          onClose={() => setOpen(false)}
+        >
           {FONT_SIZES.map((size) => (
             <DropdownMenuItem
               key={size}
@@ -101,8 +126,16 @@ export function FontSizeInput({
               {size}
             </DropdownMenuItem>
           ))}
-        </DropdownMenuContent>
+        </RibbonMenuContent>
       </DropdownMenu>
+    </div>
+  );
+
+  if (layout !== "sheet") return box;
+  return (
+    <div className="col-span-2 flex min-h-16 flex-col justify-center gap-1 rounded-xl bg-background px-3 py-2 ring-1 ring-foreground/[0.07]">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+      {box}
     </div>
   );
 }

@@ -155,8 +155,22 @@ export default function WordEditor({
   readOnlyRef.current = readOnly;
   const callbacks = useRef({ onEdit, onReviewChange, onSelection, onScroll, onFail });
   callbacks.current = { onEdit, onReviewChange, onSelection, onScroll, onFail };
-  // The editor may keep the buffer it is given, so each mount gets its own copy.
+  // The editor may keep the buffer it is given, so each load gets its own copy.
   const input = useMemo(() => bytes.slice(0), [bytes]);
+  // New bytes reload in place behind the pages already shown. Changes that loading makes are
+  // never the person's edit, and a file that fails to open falls back like a first load.
+  // The editor scrolls to the top on every load and then to `initialScrollTop`, so the person's
+  // place is kept by passing where they were when the bytes changed.
+  const swapping = useRef(false);
+  const shownInput = useRef(input);
+  const scrollTop = useRef(0);
+  const restoreTop = useRef<number | undefined>(undefined);
+  if (shownInput.current !== input) {
+    shownInput.current = input;
+    swapping.current = true;
+    lastIntent.current = null;
+    restoreTop.current = scrollTop.current;
+  }
   const folioLocale = isFolioLocale(locale) ? locale : "en";
   const messages = useMemo(() => getFolioMessages(folioLocale), [folioLocale]);
   const [selection] = useState(createSelectionStore);
@@ -268,13 +282,39 @@ export default function WordEditor({
     [],
   );
 
-  // Scrolling to another page changes what the person is looking at.
+  // Scrolling to another page changes what the person is looking at. While new bytes load, the
+  // editor's jump to the top is undone before it paints, until the person scrolls themselves.
   useEffect(() => {
     const host = root.current;
     if (!host) return;
-    const onScroll = () => callbacks.current.onScroll?.();
+    const onScroll = (event: Event) => {
+      const target = event.target;
+      const top = restoreTop.current;
+      if (
+        swapping.current &&
+        top &&
+        target instanceof HTMLElement &&
+        target.hasAttribute("data-folio-scroll") &&
+        target.scrollTop === 0
+      ) {
+        target.scrollTop = top;
+        return;
+      }
+      callbacks.current.onScroll?.();
+    };
+    const release = () => {
+      swapping.current = false;
+    };
     host.addEventListener("scroll", onScroll, { capture: true, passive: true });
-    return () => host.removeEventListener("scroll", onScroll, { capture: true });
+    host.addEventListener("wheel", release, { passive: true });
+    host.addEventListener("pointerdown", release);
+    host.addEventListener("keydown", release);
+    return () => {
+      host.removeEventListener("scroll", onScroll, { capture: true });
+      host.removeEventListener("wheel", release);
+      host.removeEventListener("pointerdown", release);
+      host.removeEventListener("keydown", release);
+    };
   }, []);
 
   return (
@@ -301,6 +341,11 @@ export default function WordEditor({
           reviewDisplayMode={display}
           initialZoom={fitWidth ? "fit-width" : 1}
           showPrintButton={false}
+          preserveDocumentWhileLoading
+          initialScrollTop={restoreTop.current}
+          onScrollTopChange={(top) => {
+            scrollTop.current = top;
+          }}
           className="min-h-0 flex-1"
           onSelectionChange={selection.set}
           loadingIndicator={
@@ -314,13 +359,14 @@ export default function WordEditor({
               callbacks.current.onReviewChange();
               return;
             }
+            swapping.current = false;
             callbacks.current.onReviewChange();
             if (readOnlyRef.current) return;
             if (isPersonEdit(lastIntent.current, performance.now())) callbacks.current.onEdit();
           }}
           onSelectionTextChange={(selection) => callbacks.current.onSelection(selection.text)}
           onError={(error) => {
-            if (!ready.current) callbacks.current.onFail(error);
+            if (!ready.current || swapping.current) callbacks.current.onFail(error);
           }}
         />
       </IntlProvider>

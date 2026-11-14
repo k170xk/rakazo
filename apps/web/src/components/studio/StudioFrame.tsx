@@ -5,7 +5,6 @@ import type { ReactNode, Ref } from "react";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePageSession } from "../../lib/pages";
 import type { StudioCard } from "../../lib/studio-activity";
-import { StudioActivityCarousel } from "./StudioActivityCarousel";
 import { StudioChatPane } from "./StudioChatPane";
 import { StudioFloatingDock, studioDockStyle } from "./studio-dock";
 
@@ -136,7 +135,6 @@ export function StudioFrame({
   const { t } = useLingui();
   const closeButton = useRef<HTMLButtonElement>(null);
   const { running, activity, chatOpen, setChatOpen, chatRef, composer } = dock;
-  const showActivity = !chatOpen && (running || activity.length > 0);
 
   return (
     <Dialog
@@ -206,7 +204,7 @@ export function StudioFrame({
           </header>
           <div
             className="absolute inset-x-0 top-12 bottom-0 flex"
-            style={studioDockStyle(chatOpen, showActivity)}
+            style={studioDockStyle(chatOpen, running)}
           >
             {chatOpen ? (
               <StudioChatPane>
@@ -223,14 +221,12 @@ export function StudioFrame({
             </section>
           </div>
           {chatOpen ? null : (
-            <StudioFloatingDock lift={dockLift}>
-              {showActivity ? (
-                <StudioActivityCarousel
-                  cards={activity}
-                  running={running}
-                  onOpen={() => setChatOpen(true)}
-                />
-              ) : null}
+            <StudioFloatingDock
+              lift={dockLift}
+              activity={activity}
+              running={running}
+              onOpenChat={() => setChatOpen(true)}
+            >
               {composer}
             </StudioFloatingDock>
           )}

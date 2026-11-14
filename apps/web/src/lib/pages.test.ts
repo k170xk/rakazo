@@ -52,6 +52,21 @@ describe("page session", () => {
     expect(listener).toHaveBeenCalledTimes(5);
     expect(session.dock.get().activity?.[0]?.text).toBe("Saved the board");
   });
+
+  it("offers opening the studio chat only while the floating dock is mounted", () => {
+    const session = createPageSession();
+    const listener = vi.fn();
+    session.dock.subscribeOpenChat(listener);
+    const open = () => {};
+    session.dock.setOpenChat(open);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(session.dock.getOpenChat()).toBe(open);
+    session.dock.setOpenChat(open);
+    expect(listener).toHaveBeenCalledTimes(1);
+    session.dock.setOpenChat(null);
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(session.dock.getOpenChat()).toBeNull();
+  });
 });
 
 describe("page replies", () => {

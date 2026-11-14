@@ -5784,6 +5784,14 @@ msgstr "投影片放映結束。按一下即可結束。"
 msgid "End slideshow"
 msgstr "結束放映"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "包含動畫"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "包含投影片轉場"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -10580,7 +10588,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "最近的訊息與操作"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

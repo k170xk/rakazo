@@ -5783,6 +5783,14 @@ msgstr "Slayt gösterisi sona erdi. Çıkmak için tıklayın."
 msgid "End slideshow"
 msgstr "Slayt gösterisini bitir"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "Animasyon içerir"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "Slayt geçişi içerir"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -10579,7 +10587,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "Son mesajlar ve işlemler"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

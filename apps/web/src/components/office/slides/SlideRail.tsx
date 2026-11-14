@@ -8,9 +8,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@rakazo/ui-web";
-import { ArrowDown, ArrowUp, Copy, Eye, EyeOff, MoreHorizontal, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Copy,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  Plus,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import type { Deck } from "./deck";
+import { motionSummary } from "./motion";
 import { slideSvg } from "./render";
 
 export type SlideOp = "add" | "duplicate" | "up" | "down" | "hide" | "delete";
@@ -69,6 +80,7 @@ function Thumb({
   const { t } = useLingui();
   const url = useSlideImage(deck, slide, rev);
   const hidden = isSlideHidden(slide);
+  const motion = useMemo(() => motionSummary(slide), [slide, rev]);
   const number = index + 1;
   const [over, setOver] = useState(false);
 
@@ -119,6 +131,18 @@ function Thumb({
         {hidden ? (
           <span className="absolute right-1 bottom-1 rounded bg-background/90 p-0.5">
             <EyeOff className="size-3 text-muted-foreground" aria-label={t`Hidden`} />
+          </span>
+        ) : null}
+        {motion ? (
+          <span
+            className="absolute bottom-1 left-1 rounded bg-background/90 p-0.5"
+            title={motion === "animations" ? t`Has animations` : t`Has a slide transition`}
+            data-testid="slides-thumb-motion"
+          >
+            <Sparkles
+              className="size-3 text-muted-foreground"
+              aria-label={motion === "animations" ? t`Has animations` : t`Has a slide transition`}
+            />
           </span>
         ) : null}
         <span className="absolute top-1 left-1 rounded bg-background/90 px-1 text-[10px] tabular-nums md:hidden">

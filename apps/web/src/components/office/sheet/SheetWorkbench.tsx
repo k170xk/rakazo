@@ -95,6 +95,21 @@ export function SheetWorkbench({
   const perSheet = useRef(new Map<string, Selection>());
   const undo = useMemo(() => createWorkbookUndo(wb), [wb]);
 
+  // Another workbook (a new version or the assistant's draft) replaces this one in place, so the
+  // sheet, selection, zoom and scroll stay; only a half-typed cell is dropped.
+  const shownWb = useRef(wb);
+  useEffect(() => {
+    if (shownWb.current === wb) return;
+    shownWb.current = wb;
+    draft.current = null;
+    setEditing(null);
+    setNameBox(null);
+    if (!sheetTabs(wb).some((tab) => tab.title === sheet && !tab.hidden)) {
+      setSheet(firstSheetTitle(wb) ?? "");
+      setSelection(ORIGIN);
+    }
+  }, [wb, sheet]);
+
   const ws = worksheetOf(wb, sheet);
   const [zoom, setZoom] = useState(() => (ws ? sheetZoom(ws) : 1));
   const bump = () => setTick((n) => n + 1);

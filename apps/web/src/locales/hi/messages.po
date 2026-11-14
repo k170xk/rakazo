@@ -5783,6 +5783,14 @@ msgstr "स्लाइड शो समाप्त। बाहर निक�
 msgid "End slideshow"
 msgstr "स्लाइड शो समाप्त करें"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "इसमें एनिमेशन हैं"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "इसमें स्लाइड ट्रांज़िशन है"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -10579,7 +10587,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "हाल के संदेश और क्रियाएँ"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

@@ -5783,6 +5783,14 @@ msgstr "Fin du diaporama. Cliquez pour quitter."
 msgid "End slideshow"
 msgstr "Arrêter le diaporama"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "Contient des animations"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "Contient une transition de diapositive"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -10579,7 +10587,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "Messages et actions récents"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

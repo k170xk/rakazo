@@ -71,8 +71,6 @@ type Latest = { artifactId: string; version: number; name: string; versions: Doc
 const CLOSE_SAVE_WAIT_MS = 5000;
 const FLASH_MS = 4000;
 const NO_SLIDES: ReadonlySet<number> = new Set();
-const ignore = () => {};
-
 function displayName(name: string): string {
   return name.replace(/\.pptx$/i, "");
 }
@@ -292,13 +290,9 @@ export default function SlidesStudio({
     else void load("newer");
   }, [newest, load]);
 
-  const wasRunning = useRef(running);
-  const { refetch } = revision;
   useEffect(() => {
     if (running && queue.current?.state().dirty) void queue.current.flush();
-    if (wasRunning.current && !running) void refetch();
-    wasRunning.current = running;
-  }, [running, refetch]);
+  }, [running]);
 
   // The chat saves this presentation, then attaches its newest version, before each message.
   useEffect(() => {
@@ -661,36 +655,22 @@ export default function SlidesStudio({
             flash !== null ? "ring-2 ring-primary" : ""
           }`}
         >
-          <EditorBoundary key={doc.loaded} onError={() => setBroken(true)} fallback={null}>
+          <EditorBoundary key={doc.rootArtifactId} onError={() => setBroken(true)} fallback={null}>
             {editBroken ? (
-              <SlidesPreview deck={doc.deck} />
+              <SlidesPreview deck={draft?.value ?? doc.deck} />
             ) : (
               <EditorBoundary onError={() => setEditBroken(true)} fallback={null}>
                 <SlidesWorkbench
-                  deck={doc.deck}
-                  readOnly={locked}
+                  deck={draft?.value ?? doc.deck}
+                  readOnly={locked || draft !== null}
                   initialIndex={view.current?.index ?? 0}
-                  changed={flash?.slides ?? NO_SLIDES}
+                  changed={draft ? NO_SLIDES : (flash?.slides ?? NO_SLIDES)}
                   onEdit={onEdit}
                   onView={onView}
                 />
               </EditorBoundary>
             )}
           </EditorBoundary>
-          {draft ? (
-            <div className="absolute inset-0 bg-background" data-testid="slides-live-draft">
-              <EditorBoundary key={draft.updatedAt} onError={ignore} fallback={null}>
-                <SlidesWorkbench
-                  deck={draft.value}
-                  readOnly
-                  initialIndex={view.current?.index ?? 0}
-                  changed={NO_SLIDES}
-                  onEdit={ignore}
-                  onView={ignore}
-                />
-              </EditorBoundary>
-            </div>
-          ) : null}
           {draft ? (
             <LiveDraftPill className="top-12" />
           ) : running ? (

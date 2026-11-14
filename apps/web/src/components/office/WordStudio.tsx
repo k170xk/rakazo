@@ -60,7 +60,8 @@ import type { VersionRow } from "./word/versions";
 import { versionRows, withSavedVersion } from "./word/versions";
 import type { WordEditorHandle } from "./word/WordEditor";
 
-const WordEditor = lazy(() => import("./word/WordEditor"));
+const loadWordEditor = () => import("./word/WordEditor");
+const WordEditor = lazy(loadWordEditor);
 const WordPreview = lazy(() => import("./word/WordPreview"));
 
 export type WordStudioProps = {
@@ -88,6 +89,7 @@ const CLOSE_SAVE_WAIT_MS = 5000;
 const FLASH_MS = 4000;
 
 const keepBytes = async (bytes: ArrayBuffer) => bytes;
+const EMPTY = new ArrayBuffer(0);
 
 function displayName(name: string): string {
   return name.replace(/\.docx$/i, "");
@@ -282,6 +284,11 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
     void latestCallbacks.current.load("open");
   }, [rootArtifactId]);
 
+  // The editor downloads while the document does, so opening never waits on it twice.
+  useEffect(() => {
+    void loadWordEditor();
+  }, []);
+
   useEffect(
     () => () => {
       window.clearTimeout(timers.current.note);
@@ -311,13 +318,9 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
     else void load("newer");
   }, [newest, load]);
 
-  const wasRunning = useRef(running);
-  const { refetch } = revision;
   useEffect(() => {
     if (running && queue.current?.state().dirty) void queue.current.flush();
-    if (wasRunning.current && !running) void refetch();
-    wasRunning.current = running;
-  }, [running, refetch]);
+  }, [running]);
 
   // The chat saves this document, then attaches its newest version, before each message.
   useEffect(() => {
@@ -514,6 +517,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
   const rows = useMemo(() => (doc ? versionRows(doc.versions, doc.version) : []), [doc]);
   const title = doc ? displayName(doc.name) : t`Documents`;
   const locked = running || restoring !== null || saveState?.status === "conflict";
+  const shownBytes = draft?.value ?? doc?.bytes ?? EMPTY;
 
   const status = saveState?.status;
   const statusText =
@@ -742,7 +746,9 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
         <div
           className={`relative size-full ring-inset transition-shadow duration-700 ${
             flash !== null ? "ring-2 ring-primary" : ""
-          }`}
+          } ${running || draft ? "[&_.layout-page-content]:cursor-default" : ""}`}
+          data-testid="word-canvas"
+          data-live-draft={draft ? "true" : undefined}
         >
           {readOnlyView ? (
             <div className="flex size-full flex-col">
@@ -755,8 +761,8 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               <div className="min-h-0 flex-1">
                 <Suspense fallback={null}>
                   <WordPreview
-                    key={doc.loaded}
-                    bytes={doc.bytes}
+                    key={draft?.updatedAt ?? doc.loaded}
+                    bytes={shownBytes}
                     label={title}
                     failedText={t`This document couldn't be shown.`}
                   />
@@ -764,7 +770,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               </div>
             </div>
           ) : (
-            <EditorBoundary key={doc.loaded} onError={() => setReadOnlyView(true)} fallback={null}>
+            <EditorBoundary onError={() => setReadOnlyView(true)} fallback={null}>
               <Suspense
                 fallback={
                   <div className="grid size-full place-items-center">
@@ -776,11 +782,11 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
                 }
               >
                 <WordEditor
-                  bytes={doc.bytes}
+                  bytes={shownBytes}
                   accessibleName={t`Document: ${title}`}
                   author={userName || t`You`}
                   locale={i18n.locale}
-                  readOnly={locked}
+                  readOnly={locked || draft !== null}
                   trackChanges={trackChanges}
                   fitWidth={narrow}
                   handleRef={editor}
@@ -793,18 +799,6 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               </Suspense>
             </EditorBoundary>
           )}
-          {draft ? (
-            <div className="absolute inset-0 bg-background" data-testid="word-live-draft">
-              <Suspense fallback={null}>
-                <WordPreview
-                  key={draft.updatedAt}
-                  bytes={draft.value}
-                  label={title}
-                  failedText={t`This document couldn't be shown.`}
-                />
-              </Suspense>
-            </div>
-          ) : null}
           {draft ? (
             <LiveDraftPill className="top-3" />
           ) : running ? (

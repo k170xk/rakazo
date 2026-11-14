@@ -87,9 +87,6 @@ function displayName(name: string): string {
   return name.replace(/\.xlsx$/i, "");
 }
 
-const ignoreEdit = () => {};
-const ignoreView = () => {};
-
 /**
  * Excel workbooks full screen beside the chat. The person edits the newest version; their edits
  * save as new versions a moment after they stop, and the assistant's arrive as new versions too.
@@ -323,13 +320,9 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
     else void load("newer");
   }, [newest, load]);
 
-  const wasRunning = useRef(running);
-  const { refetch } = revision;
   useEffect(() => {
     if (running && queue.current?.state().dirty) void queue.current.flush();
-    if (wasRunning.current && !running) void refetch();
-    wasRunning.current = running;
-  }, [running, refetch]);
+  }, [running]);
 
   // The chat saves this workbook, then attaches its newest version, before each message.
   useEffect(() => {
@@ -702,30 +695,16 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
             flash !== null ? "ring-2 ring-primary" : ""
           }`}
         >
-          <EditorBoundary key={doc.loaded} onError={() => setBroken(true)} fallback={null}>
+          <EditorBoundary key={doc.rootArtifactId} onError={() => setBroken(true)} fallback={null}>
             <SheetWorkbench
-              wb={doc.wb}
-              readOnly={locked}
+              wb={draft?.value ?? doc.wb}
+              readOnly={locked || draft !== null}
               initialView={view.current}
-              highlight={flash}
+              highlight={draft ? null : flash}
               onEdit={onEdit}
               onView={onView}
             />
           </EditorBoundary>
-          {draft ? (
-            <div className="absolute inset-0 bg-background" data-testid="sheet-live-draft">
-              <EditorBoundary key={draft.updatedAt} onError={ignoreView} fallback={null}>
-                <SheetWorkbench
-                  wb={draft.value}
-                  readOnly
-                  initialView={view.current}
-                  highlight={null}
-                  onEdit={ignoreEdit}
-                  onView={ignoreView}
-                />
-              </EditorBoundary>
-            </div>
-          ) : null}
           {draft ? (
             <LiveDraftPill className="top-12" />
           ) : running ? (

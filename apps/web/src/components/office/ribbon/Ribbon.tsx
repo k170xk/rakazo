@@ -4,42 +4,65 @@ import {
   DropdownMenuTrigger,
   Kbd,
   KbdGroup,
+  PopoverContent,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@rakazo/ui-web";
 import type { LucideIcon } from "lucide-react";
 import { ChevronDown } from "lucide-react";
-import type { KeyboardEvent, MouseEvent, ReactElement, ReactNode, RefObject } from "react";
-import { useEffect, useId, useRef } from "react";
+import type {
+  ComponentProps,
+  KeyboardEvent,
+  MouseEvent,
+  ReactElement,
+  ReactNode,
+  RefObject,
+} from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { CompactRibbon } from "./CompactRibbon";
+import type { Quick, RibbonLayout } from "./layout";
+import {
+  quickControl,
+  SheetGrip,
+  sheetPopup,
+  sheetPositioner,
+  sheetTile,
+  showsIn,
+  useCompactRibbon,
+  useRibbonLayout,
+} from "./layout";
 import type { Shortcut } from "./shortcuts";
 import { isTypingTarget, matchesShortcut, shortcutKeys } from "./shortcuts";
 
 /** Shared look of every ribbon control: the studio header's round controls, a size smaller. */
 export const ribbonControl =
-  "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 rounded-full px-1.5 text-[13px] leading-5 text-foreground outline-none transition-colors hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-primary/15 aria-pressed:text-primary data-popup-open:bg-foreground/[0.06]";
+  "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 rounded-full px-1.5 text-[13px] leading-5 text-foreground outline-none transition-colors hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-primary/15 aria-pressed:text-primary data-popup-open:bg-foreground/[0.06] pointer-coarse:h-10 pointer-coarse:min-w-10";
+
+/** The control look for where a tool is drawn. */
+export function controlClass(layout: RibbonLayout): string {
+  return layout === "sheet" ? sheetTile : layout === "quick" ? quickControl : ribbonControl;
+}
 
 const ICON = "size-[17px] shrink-0";
 const STROKE = 1.8;
+
+function iconClass(layout: RibbonLayout) {
+  return layout === "bar" ? ICON : "size-5 shrink-0";
+}
 
 export type RibbonTabSpec = {
   id: string;
   label: string;
   content: ReactNode;
+  /**
+   * The tab answers the current selection, such as shape tools while a shape is selected. On
+   * phones its toolbar tools come first whichever tab is open.
+   */
+  contextual?: boolean;
 };
 
-/**
- * Tabs of tools above a document: a row of tab names, then the open tab's tools in one row that
- * scrolls sideways on narrow screens.
- */
-export function Ribbon({
-  label,
-  tabs,
-  value,
-  onValueChange,
-  end,
-  testId,
-}: {
+export type RibbonProps = {
   label: string;
   tabs: readonly RibbonTabSpec[];
   value: string;
@@ -47,7 +70,20 @@ export function Ribbon({
   /** Shown at the end of the tab row, such as the save status. */
   end?: ReactNode;
   testId?: string;
-}) {
+  /** Drawn once whatever the layout, such as a hidden file input the tools open. */
+  children?: ReactNode;
+};
+
+/**
+ * Tabs of tools above a document: a row of tab names, then the open tab's tools in one row that
+ * scrolls sideways. Phones get one row of the most used tools and a sheet with the rest.
+ */
+export function Ribbon(props: RibbonProps) {
+  const compact = useCompactRibbon();
+  return compact ? <CompactRibbon {...props} /> : <FullRibbon {...props} />;
+}
+
+function FullRibbon({ label, tabs, value, onValueChange, end, testId, children }: RibbonProps) {
   const base = useId();
   const open = tabs.find((tab) => tab.id === value) ?? tabs[0];
 
@@ -68,7 +104,7 @@ export function Ribbon({
       data-testid={testId}
       data-ribbon=""
     >
-      <div className="flex h-8 items-center gap-1 px-2 pt-1 max-sm:px-1.5">
+      <div className="flex h-8 items-center gap-1 px-2 pt-1 max-sm:px-1.5 pointer-coarse:h-10">
         <div
           role="tablist"
           aria-label={label}
@@ -88,7 +124,7 @@ export function Ribbon({
                 data-testid={testId ? `${testId}-tab-${tab.id}` : undefined}
                 onClick={() => onValueChange(tab.id)}
                 onKeyDown={(event) => onTabKey(event, index)}
-                className={`h-7 shrink-0 rounded-full px-3 text-[13px] leading-5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring ${
+                className={`h-7 shrink-0 rounded-full px-3 text-[13px] leading-5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:h-9 ${
                   selected
                     ? "bg-background font-medium text-foreground shadow-xs ring-1 ring-foreground/[0.06]"
                     : "text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
@@ -105,16 +141,48 @@ export function Ribbon({
         id={`${base}-panel`}
         role="tabpanel"
         aria-labelledby={open ? `${base}-tab-${open.id}` : undefined}
-        className="flex h-11 items-center overflow-x-auto overscroll-x-contain px-2 [scrollbar-width:none] max-sm:px-1.5"
+        className="flex h-11 items-center overflow-x-auto overscroll-x-contain px-2 [scrollbar-width:none] max-sm:px-1.5 pointer-coarse:h-12"
       >
         {open?.content}
       </div>
+      {children}
     </div>
   );
 }
 
 /** A labelled set of tools, set apart from the next by a thin rule. */
 export function RibbonGroup({ label, children }: { label: string; children: ReactNode }) {
+  const { layout } = useRibbonLayout();
+  const id = useId();
+  if (layout === "sheet") {
+    return (
+      <section aria-labelledby={id} className="flex flex-col gap-2 [&:not(:has(>[role=group]>*))]:hidden">
+        <h3 id={id} className="px-1 text-[12px] font-medium text-muted-foreground">
+          {label}
+        </h3>
+        {/* biome-ignore lint/a11y/useSemanticElements: a fieldset would add a border and legend layout. */}
+        <div
+          role="group"
+          aria-labelledby={id}
+          className="grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2"
+        >
+          {children}
+        </div>
+      </section>
+    );
+  }
+  if (layout === "quick") {
+    return (
+      // biome-ignore lint/a11y/useSemanticElements: a fieldset would add a border and legend layout.
+      <div
+        role="group"
+        aria-label={label}
+        className="flex shrink-0 items-center gap-0.5 empty:hidden"
+      >
+        {children}
+      </div>
+    );
+  }
   return (
     // biome-ignore lint/a11y/useSemanticElements: a fieldset would add a border and legend layout.
     <div
@@ -137,7 +205,7 @@ function ShortcutKeys({ shortcut }: { shortcut: Shortcut }) {
   );
 }
 
-/** Names a control on hover and focus, with its shortcut when it has one. */
+/** Names a control on hover and focus, with its shortcut when it has one. Not drawn on phones. */
 export function RibbonTip({
   label,
   shortcut,
@@ -147,6 +215,8 @@ export function RibbonTip({
   shortcut?: Shortcut;
   children: ReactElement;
 }) {
+  const { layout } = useRibbonLayout();
+  if (layout !== "bar") return children;
   return (
     <Tooltip>
       <TooltipTrigger render={children} />
@@ -160,6 +230,23 @@ export function RibbonTip({
 
 /** Keeps the document's selection when a tool is pressed with the mouse. */
 export const keepSelection = (event: MouseEvent) => event.preventDefault();
+
+/**
+ * The trigger class and label handling for a tool drawn by its own component, and whether the
+ * current phone toolbar pass draws it at all.
+ */
+export function useRibbonControl(quick?: Quick) {
+  const value = useRibbonLayout();
+  return {
+    layout: value.layout,
+    visible: showsIn(value, quick),
+    className: controlClass(value.layout),
+    icon: iconClass(value.layout),
+    /** Text beside an icon: hidden in the phone toolbar, where the icon carries the name. */
+    labelClass: value.layout === "quick" ? "sr-only" : "whitespace-nowrap",
+    close: value.close,
+  };
+}
 
 export type RibbonButtonProps = {
   icon?: LucideIcon;
@@ -175,6 +262,7 @@ export type RibbonButtonProps = {
   /** Drawn under the icon, such as the current colour. */
   children?: ReactNode;
   className?: string;
+  quick?: Quick;
 };
 
 export function RibbonButton({
@@ -188,30 +276,117 @@ export function RibbonButton({
   testId,
   children,
   className,
+  quick,
 }: RibbonButtonProps) {
+  const control = useRibbonControl(quick);
+  if (!control.visible) return null;
+  const { layout } = control;
+  const labelled = layout === "bar" ? showLabel : layout === "sheet" || !Icon;
   return (
     <RibbonTip label={label} shortcut={shortcut}>
       <button
         type="button"
-        aria-label={showLabel ? undefined : label}
+        aria-label={labelled ? undefined : label}
         aria-pressed={pressed}
         disabled={disabled}
         data-testid={testId}
         onMouseDown={keepSelection}
-        onClick={onClick}
-        className={`${ribbonControl} ${showLabel ? "px-2.5" : ""} ${className ?? ""}`}
+        onClick={() => {
+          onClick();
+          // A toggle stays in the open sheet so its state can be seen; an action closes it.
+          if (layout === "sheet" && pressed === undefined) control.close();
+        }}
+        className={`${control.className} ${layout === "bar" && showLabel ? "px-2.5" : ""} ${
+          layout === "sheet" ? "" : (className ?? "")
+        }`}
       >
         {Icon ? (
           <span className="relative grid place-items-center">
-            <Icon className={ICON} strokeWidth={STROKE} aria-hidden="true" />
+            <Icon className={control.icon} strokeWidth={STROKE} aria-hidden="true" />
             {children}
           </span>
         ) : (
           children
         )}
-        {showLabel ? <span className="whitespace-nowrap">{label}</span> : null}
+        {labelled ? (
+          <span className={layout === "sheet" ? "line-clamp-2" : "whitespace-nowrap"}>
+            {label}
+          </span>
+        ) : null}
       </button>
     </RibbonTip>
+  );
+}
+
+/**
+ * The open part of a tool's menu: below the tool on desktop, a sheet along the bottom of the
+ * screen on phones. `onClose` lets the sheet's grip close it.
+ */
+export function RibbonMenuContent({
+  width = "w-56",
+  align = "start",
+  className,
+  onClose,
+  children,
+}: {
+  width?: string;
+  align?: "start" | "center" | "end";
+  className?: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const { layout } = useRibbonLayout();
+  const sheet = useRef<HTMLDivElement>(null);
+  if (layout === "bar") {
+    return (
+      <DropdownMenuContent
+        align={align}
+        className={`${width} max-w-[calc(100vw-1rem)] ${className ?? ""}`}
+      >
+        {children}
+      </DropdownMenuContent>
+    );
+  }
+  return (
+    <DropdownMenuContent
+      ref={sheet}
+      positionerClassName={sheetPositioner}
+      className={`${sheetPopup} ${className ?? ""} !max-h-[min(70dvh,34rem)]`}
+      data-ribbon-sheet=""
+    >
+      <SheetGrip sheet={sheet} onClose={onClose} />
+      {children}
+    </DropdownMenuContent>
+  );
+}
+
+/** A popover's open part for a ribbon tool, as a bottom sheet on phones. */
+export function RibbonPopoverContent({
+  className,
+  onClose,
+  children,
+  ...props
+}: ComponentProps<typeof PopoverContent> & { onClose: () => void }) {
+  const { layout } = useRibbonLayout();
+  const sheet = useRef<HTMLDivElement>(null);
+  if (layout === "bar") {
+    return (
+      <PopoverContent className={className} {...props}>
+        {children}
+      </PopoverContent>
+    );
+  }
+  return (
+    <PopoverContent
+      {...props}
+      ref={sheet}
+      positionerClassName={sheetPositioner}
+      className={`${className ?? ""} ${sheetPopup} gap-3 overflow-y-auto`}
+      data-ribbon-sheet=""
+    >
+      <SheetGrip sheet={sheet} onClose={onClose} />
+      {children}
+    </PopoverContent>
   );
 }
 
@@ -226,6 +401,7 @@ export function RibbonMenu({
   width = "w-56",
   align = "start",
   triggerClassName,
+  quick,
   children,
 }: {
   icon?: LucideIcon;
@@ -238,27 +414,57 @@ export function RibbonMenu({
   width?: string;
   align?: "start" | "center" | "end";
   triggerClassName?: string;
+  quick?: Quick;
   children: ReactNode;
 }) {
-  const shown = text ?? (showLabel ? label : undefined);
+  const [open, setOpen] = useState(false);
+  const control = useRibbonControl(quick);
+  if (!control.visible) return null;
+  const { layout } = control;
+  const named = layout === "bar" ? showLabel : !Icon;
+  const shown = text ?? (named ? label : undefined);
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <RibbonTip label={label}>
         <DropdownMenuTrigger
           disabled={disabled}
           aria-label={label}
           data-testid={testId}
           onMouseDown={keepSelection}
-          className={`${ribbonControl} ${shown ? "px-2.5" : ""} ${triggerClassName ?? ""}`}
+          className={
+            layout === "sheet"
+              ? `${sheetTile} ${text ? "col-span-2 !items-stretch px-3 text-start" : ""}`
+              : `${control.className} ${shown ? "px-2.5" : ""} ${
+                  layout === "quick" && text ? "max-w-36" : (triggerClassName ?? "")
+                }`
+          }
         >
-          {Icon ? <Icon className={ICON} strokeWidth={STROKE} aria-hidden="true" /> : null}
-          {shown ? <span className="min-w-0 truncate whitespace-nowrap">{shown}</span> : null}
-          <ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden="true" />
+          {layout === "sheet" && text ? (
+            <>
+              <span className="text-[11px] text-muted-foreground">{label}</span>
+              <span className="flex min-w-0 items-center gap-1.5 text-[14px]">
+                {Icon ? <Icon className="size-4 shrink-0" strokeWidth={STROKE} aria-hidden="true" /> : null}
+                <span className="min-w-0 flex-1 truncate">{text}</span>
+                <ChevronDown className="size-3.5 shrink-0 opacity-60" aria-hidden="true" />
+              </span>
+            </>
+          ) : layout === "sheet" ? (
+            <>
+              {Icon ? <Icon className={control.icon} strokeWidth={STROKE} aria-hidden="true" /> : null}
+              <span className="line-clamp-2">{label}</span>
+            </>
+          ) : (
+            <>
+              {Icon ? <Icon className={control.icon} strokeWidth={STROKE} aria-hidden="true" /> : null}
+              {shown ? <span className="min-w-0 truncate whitespace-nowrap">{shown}</span> : null}
+              <ChevronDown className="size-3 shrink-0 opacity-60" aria-hidden="true" />
+            </>
+          )}
         </DropdownMenuTrigger>
       </RibbonTip>
-      <DropdownMenuContent align={align} className={`${width} max-w-[calc(100vw-1rem)]`}>
+      <RibbonMenuContent width={width} align={align} onClose={() => setOpen(false)}>
         {children}
-      </DropdownMenuContent>
+      </RibbonMenuContent>
     </DropdownMenu>
   );
 }
@@ -274,6 +480,7 @@ export function RibbonSplit({
   testId,
   marker,
   width = "w-56",
+  quick,
   children,
 }: {
   icon: LucideIcon;
@@ -286,10 +493,15 @@ export function RibbonSplit({
   testId?: string;
   marker?: ReactNode;
   width?: string;
+  quick?: Quick;
   children: ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
+  const control = useRibbonControl(quick);
+  if (!control.visible) return null;
+  const { layout } = control;
   return (
-    <div className="flex shrink-0 items-center rounded-full">
+    <div className={layout === "sheet" ? "contents" : "flex shrink-0 items-center rounded-full"}>
       <RibbonButton
         icon={icon}
         label={label}
@@ -298,24 +510,38 @@ export function RibbonSplit({
         onClick={onClick}
         testId={testId}
         className="rounded-e-none pe-1"
+        quick={quick}
       >
         {marker}
       </RibbonButton>
-      <DropdownMenu>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <RibbonTip label={menuLabel}>
           <DropdownMenuTrigger
             disabled={disabled}
-            aria-label={menuLabel}
+            aria-label={layout === "sheet" ? undefined : menuLabel}
             data-testid={testId ? `${testId}-menu` : undefined}
             onMouseDown={keepSelection}
-            className={`${ribbonControl} min-w-5 rounded-s-none px-0.5`}
+            className={
+              layout === "sheet"
+                ? sheetTile
+                : layout === "quick"
+                  ? `${quickControl} -ms-1 min-w-7 rounded-s-none px-0.5`
+                  : `${ribbonControl} min-w-5 rounded-s-none px-0.5`
+            }
           >
-            <ChevronDown className="size-3 opacity-60" aria-hidden="true" />
+            {layout === "sheet" ? (
+              <>
+                <ChevronDown className={control.icon} strokeWidth={STROKE} aria-hidden="true" />
+                <span className="line-clamp-2">{menuLabel}</span>
+              </>
+            ) : (
+              <ChevronDown className="size-3 opacity-60" aria-hidden="true" />
+            )}
           </DropdownMenuTrigger>
         </RibbonTip>
-        <DropdownMenuContent align="start" className={`${width} max-w-[calc(100vw-1rem)]`}>
+        <RibbonMenuContent width={width} onClose={() => setOpen(false)}>
           {children}
-        </DropdownMenuContent>
+        </RibbonMenuContent>
       </DropdownMenu>
     </div>
   );

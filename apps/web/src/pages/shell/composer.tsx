@@ -39,6 +39,10 @@ import {
   useHoldToTalk,
 } from "../../components/composer/HoldToTalk";
 import { studioChipIcon, studioChipText } from "../../components/office/StudioContextChip";
+import {
+  StudioActivityPlusMarks,
+  StudioActivityToolsItem,
+} from "../../components/studio/StudioActivity";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { attachmentPickerAccept } from "../../lib/attachment-picker-accept";
 import { useCallSession } from "../../lib/call-session";
@@ -59,6 +63,7 @@ import { haptic } from "../../lib/haptics";
 import { hasOpenDialog } from "../../lib/has-open-dialog";
 import { usePageSession } from "../../lib/pages";
 import { isFileDrag, isFilePaste } from "../../lib/pending-attachments";
+import type { StudioCard } from "../../lib/studio-activity";
 import { ComposerReplyPreview } from "./chat-context";
 import type { PendingAttachment } from "./chat-shared";
 import { previewMessageText } from "./chat-shared";
@@ -74,6 +79,7 @@ import { useComposerLayout } from "./use-composer-layout";
 
 const ATTACHMENT_ACCEPT = attachmentPickerAccept(navigator.userAgent);
 const idleSubscribe = () => () => {};
+const NO_ACTIVITY: StudioCard[] = [];
 const COMPOSER_TEXT = "rk-scroll whitespace-pre-wrap break-words px-0.5 py-0.5 text-body1";
 
 /** Extra actions sit beside Send once the message box is at least this wide. */
@@ -186,7 +192,24 @@ const ComposerBody = memo(function Composer({
     () => pageSession?.dock.selectionDropped() ?? false,
     () => false,
   );
+  const studioActivity = useSyncExternalStore(
+    pageSession ? pageSession.dock.subscribe : idleSubscribe,
+    () => (docked ? (pageSession?.dock.get().activity ?? NO_ACTIVITY) : NO_ACTIVITY),
+    () => NO_ACTIVITY,
+  );
+  const studioRunning = useSyncExternalStore(
+    pageSession ? pageSession.dock.subscribe : idleSubscribe,
+    () => (docked ? pageSession?.dock.get().running === true : false),
+    () => false,
+  );
+  const studioOpenChat = useSyncExternalStore(
+    pageSession?.dock.subscribeOpenChat ?? idleSubscribe,
+    () => (docked ? pageSession?.dock.getOpenChat() : null),
+    () => null,
+  );
   const phone = useIsMobile();
+  const showStudioActivity =
+    Boolean(studioOpenChat) && phone && (studioRunning || studioActivity.length > 0);
   const [toolsOpen, setToolsOpen] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -311,8 +334,9 @@ const ComposerBody = memo(function Composer({
     return () => observer.disconnect();
   }, [composerBarRef]);
   // A narrow message box, including a studio chat that has not been dragged wider, keeps attach
-  // and the extra actions behind one button.
-  const compactTools = Boolean(extraActions) && (phone || !composerActionsFitInline(barWidth));
+  // and the extra actions behind one button. Phones also fold studio activity into that tray.
+  const compactTools =
+    (Boolean(extraActions) || showStudioActivity) && (phone || !composerActionsFitInline(barWidth));
   // The configured shortcut starts hands-free dictation in the message field, and finishes it
   // when pressed again. The field hides while recording, so the key is heard window-wide.
   const dictateKey = useRef({ talk, available: false, shortcut: dictateShortcut });
@@ -928,18 +952,34 @@ const ComposerBody = memo(function Composer({
               aria-expanded={toolsOpen}
               disabled={disabled}
               onClick={() => setToolsOpen((open) => !open)}
-              className="size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="relative size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <Plus
                 size={16}
                 strokeWidth={2}
                 className={`transition-transform ${toolsOpen ? "rotate-45" : ""}`}
               />
+              {showStudioActivity ? (
+                <StudioActivityPlusMarks
+                  cards={studioActivity}
+                  running={studioRunning}
+                  toolsOpen={toolsOpen}
+                />
+              ) : null}
             </Button>
             {/* Invisible rather than unmounted or display:none: each tool keeps its dialog open after the
                 tray closes, and its popover still has a laid-out button to anchor to. */}
             <div
-              onClickCapture={() => setToolsOpen(false)}
+              onClickCapture={(event) => {
+                // Keep the tray laid out so the activity popover can open from its trigger.
+                if (
+                  (event.target as Element | null)?.closest?.(
+                    "[data-testid=studio-activity-tools-item]",
+                  )
+                )
+                  return;
+                setToolsOpen(false);
+              }}
               className={`${toolsOpen ? "visible" : "invisible"} absolute bottom-full start-0 z-40 mb-3 flex items-center gap-2 rounded-full border border-border bg-card p-1.5 shadow-lg`}
             >
               <Button
@@ -953,6 +993,14 @@ const ComposerBody = memo(function Composer({
               >
                 <Paperclip size={16} strokeWidth={2} />
               </Button>
+              {showStudioActivity && studioOpenChat ? (
+                <StudioActivityToolsItem
+                  cards={studioActivity}
+                  running={studioRunning}
+                  onOpen={studioOpenChat}
+                  onOpened={() => setToolsOpen(false)}
+                />
+              ) : null}
               {extraActions}
             </div>
           </div>

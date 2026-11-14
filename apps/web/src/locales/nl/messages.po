@@ -5783,6 +5783,14 @@ msgstr "Einde van de diavoorstelling. Klik om af te sluiten."
 msgid "End slideshow"
 msgstr "Diavoorstelling beëindigen"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "Bevat animaties"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "Bevat een diaovergang"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -10579,7 +10587,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "Recente berichten en acties"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

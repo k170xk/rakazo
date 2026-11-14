@@ -5783,6 +5783,14 @@ msgstr "Koniec pokazu slajdów. Kliknij, aby wyjść."
 msgid "End slideshow"
 msgstr "Zakończ pokaz slajdów"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "Zawiera animacje"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "Zawiera przejście slajdu"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr "Identyfikator użytkownika końcowego"
@@ -10579,7 +10587,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "Ostatnie wiadomości i działania"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

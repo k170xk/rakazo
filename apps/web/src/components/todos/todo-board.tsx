@@ -51,7 +51,6 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
-import { StudioActivityCarousel } from "../studio/StudioActivityCarousel";
 import { StudioChatPane } from "../studio/StudioChatPane";
 import { control } from "../studio/StudioFrame";
 import { StudioFloatingDock, studioDockStyle } from "../studio/studio-dock";
@@ -218,7 +217,6 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
     () => session?.dock.get().activity ?? NO_ACTIVITY,
     () => NO_ACTIVITY,
   );
-  const showActivity = !chatOpen && (running || activity.length > 0);
   const setDockNode = useCallback(
     (node: HTMLDivElement | null) => session?.dock.set({ node }),
     [session],
@@ -490,7 +488,7 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
           </header>
           <div
             className="absolute inset-x-0 top-12 bottom-0 flex"
-            style={studioDockStyle(chatOpen, showActivity)}
+            style={studioDockStyle(chatOpen, running)}
           >
             {chatOpen ? (
               <StudioChatPane>
@@ -692,14 +690,11 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
             </section>
           </div>
           {chatOpen ? null : (
-            <StudioFloatingDock>
-              {showActivity ? (
-                <StudioActivityCarousel
-                  cards={activity}
-                  running={running}
-                  onOpen={() => setChatOpen(true)}
-                />
-              ) : null}
+            <StudioFloatingDock
+              activity={activity}
+              running={running}
+              onOpenChat={() => setChatOpen(true)}
+            >
               {composer}
             </StudioFloatingDock>
           )}

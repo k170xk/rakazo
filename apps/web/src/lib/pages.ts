@@ -136,6 +136,9 @@ export function createPageSession() {
   const dockListeners = new Set<() => void>();
   const replyListeners = new Set<(text: string) => void>();
   const submitListeners = new Set<(text: string) => void>();
+  // Opens the studio chat column from the floating composer; null while the chat is already open.
+  let openChat: (() => void) | null = null;
+  const openChatListeners = new Set<() => void>();
   // The next send is a new app, so it is not attached to the app already open.
   let plainSend = false;
   // The person dropped the document selection for the next message; the document stays.
@@ -197,6 +200,22 @@ export function createPageSession() {
         for (const listener of dockListeners) listener();
       },
       selectionDropped: () => selectionDropped,
+      /**
+       * While the composer floats over a studio, opens its chat column. Cleared when the floating
+       * dock unmounts so the plus menu only offers recent activity then.
+       */
+      setOpenChat(next: (() => void) | null) {
+        if (openChat === next) return;
+        openChat = next;
+        for (const listener of openChatListeners) listener();
+      },
+      subscribeOpenChat(listener: () => void) {
+        openChatListeners.add(listener);
+        return () => {
+          openChatListeners.delete(listener);
+        };
+      },
+      getOpenChat: () => openChat,
     },
     /** A page's reply button hands its text to the chat's composer; the user still sends it. */
     offerReply(text: unknown) {

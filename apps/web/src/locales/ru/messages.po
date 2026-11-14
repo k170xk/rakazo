@@ -5783,6 +5783,14 @@ msgstr "Конец показа слайдов. Нажмите, чтобы вы�
 msgid "End slideshow"
 msgstr "Завершить показ"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "Есть анимация"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "Есть переход слайда"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -10579,7 +10587,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "Недавние сообщения и действия"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

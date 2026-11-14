@@ -19,12 +19,16 @@ function PopoverContent({
   side = "bottom",
   sideOffset = 4,
   collisionAvoidance,
+  positionerClassName,
   ...props
 }: PopoverPrimitive.Popup.Props &
   Pick<
     PopoverPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset" | "collisionAvoidance"
-  >) {
+  > & {
+    /** Classes on the positioning wrapper, such as pinning the popover to the screen's edge. */
+    positionerClassName?: string;
+  }) {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Positioner
@@ -33,7 +37,7 @@ function PopoverContent({
         side={side}
         sideOffset={sideOffset}
         collisionAvoidance={collisionAvoidance}
-        className="isolate z-50"
+        className={cn("isolate z-50", positionerClassName)}
       >
         <PopoverPrimitive.Popup
           data-slot="popover-content"

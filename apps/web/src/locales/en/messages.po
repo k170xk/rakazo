@@ -5796,6 +5796,14 @@ msgstr "End of slideshow. Click to exit."
 msgid "End slideshow"
 msgstr "End slideshow"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "Has animations"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "Has a slide transition"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr "End user ID"

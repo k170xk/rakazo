@@ -15,8 +15,9 @@ export type LiveDraft<T> = { updatedAt: string; baseVersion: number; value: T };
 
 /**
  * Polls the open file's newest version, quickly while the assistant works, and while it works
- * loads its live draft when that is newer than the version shown. The draft is dropped when the
- * run ends or once the studio shows a version past the draft's base.
+ * loads its live draft when that is newer than the version shown. The draft stays after the run
+ * until the check that follows it finds no newer version, or the studio shows a version past the
+ * draft's base, so the studio never falls back to the older version in between.
  */
 export function useLiveDraft<T>(options: {
   rootArtifactId: string;
@@ -37,9 +38,14 @@ export function useLiveDraft<T>(options: {
 
   // A new run or file starts with no draft.
   useEffect(() => {
+    if (!running) return;
     setLoaded(null);
     pending.current = null;
-  }, [running, rootArtifactId]);
+  }, [running]);
+  useEffect(() => {
+    setLoaded(null);
+    pending.current = null;
+  }, [rootArtifactId]);
 
   const revision = useQuery({
     ...queries.documents.revision.queryOptions({
@@ -73,13 +79,47 @@ export function useLiveDraft<T>(options: {
     })();
   }, [running, token, offeredAt, offeredBase, shownVersion, rootArtifactId]);
 
+  // After a run, one fresh check decides whether a newer version is coming; until it answers the
+  // draft stays on screen.
+  const wasRunning = useRef(running);
+  const justEnded = wasRunning.current && !running;
+  const [settling, setSettling] = useState(false);
+  const shown = useRef(shownVersion);
+  shown.current = shownVersion;
+  const { refetch } = revision;
+  useEffect(() => {
+    const ended = wasRunning.current && !running;
+    wasRunning.current = running;
+    if (!ended) return;
+    let live = true;
+    setSettling(true);
+    void refetch()
+      .then((result) => {
+        // Nothing newer came of the run, so its draft is finished with.
+        if (live && (result.data?.version ?? 0) <= (shown.current ?? 0)) setLoaded(null);
+      })
+      .finally(() => {
+        if (live) setSettling(false);
+      });
+    return () => {
+      live = false;
+      setSettling(false);
+    };
+  }, [running, refetch]);
+
+  const passed = loaded !== null && shownVersion !== undefined && shownVersion > loaded.baseVersion;
+  useEffect(() => {
+    if (passed) setLoaded(null);
+  }, [passed]);
+
   const newest = revision.data?.version ?? 0;
   const showing =
-    running &&
     loaded !== null &&
     shownVersion !== undefined &&
     shownVersion <= loaded.baseVersion &&
-    (offered !== undefined || newest > shownVersion);
+    (running
+      ? offered !== undefined || newest > shownVersion
+      : justEnded || settling || newest > shownVersion);
   return { revision, draft: showing ? loaded : null };
 }
 

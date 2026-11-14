@@ -7,7 +7,6 @@ import {
   DropdownMenuSeparator,
   Input,
   Popover,
-  PopoverContent,
   PopoverTrigger,
   toast,
 } from "@rakazo/ui-web";
@@ -56,6 +55,7 @@ import type { RefObject } from "react";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { ColorPicker } from "../ribbon/ColorPicker";
 import { FontSizeInput, stepFontSize } from "../ribbon/FontSizeInput";
+import type { Quick } from "../ribbon/layout";
 import {
   ColorMark,
   keepSelection,
@@ -63,9 +63,10 @@ import {
   RibbonButton,
   RibbonGroup,
   RibbonMenu,
+  RibbonPopoverContent,
   RibbonSplit,
   RibbonTip,
-  ribbonControl,
+  useRibbonControl,
 } from "../ribbon/Ribbon";
 import { DEFAULT_TEXT_COLOR, normalizeHex } from "../ribbon/swatches";
 import type { Alignment, WordAction } from "./commands";
@@ -238,6 +239,7 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={() => editor.current?.undo()}
           testId="word-undo"
+          quick="pinned"
         />
         <RibbonButton
           icon={Redo2}
@@ -246,6 +248,7 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={() => editor.current?.redo()}
           testId="word-redo"
+          quick="pinned"
         />
       </RibbonGroup>
       <RibbonGroup label={t`Styles`}>
@@ -254,6 +257,7 @@ export function WordRibbon({
           text={styleNames[styleId] ?? styleId}
           disabled={readOnly}
           testId="word-style"
+          quick
           triggerClassName="w-[118px] justify-between"
         >
           <DropdownMenuRadioGroup
@@ -318,6 +322,7 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={() => format("bold")}
           testId="word-bold"
+          quick
         />
         <RibbonButton
           icon={Italic}
@@ -327,6 +332,7 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={() => format("italic")}
           testId="word-italic"
+          quick
         />
         <RibbonButton
           icon={Underline}
@@ -336,6 +342,7 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={() => format("underline")}
           testId="word-underline"
+          quick
         />
         <RibbonButton
           icon={Strikethrough}
@@ -353,9 +360,11 @@ export function WordRibbon({
           customLabel={t`Custom colour…`}
           disabled={readOnly}
           testId="word-text-color"
+          quick
           onPick={(hex) => format(hex ? { type: "textColor", hex } : "clearTextColor")}
         />
         <HighlightPicker
+          quick
           disabled={readOnly}
           current={text?.highlight}
           onPick={(name) => format(name ? { type: "highlight", name } : "clearHighlight")}
@@ -386,10 +395,12 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={() => format("bulletList")}
           testId="word-bullets"
+          quick
         />
         <RibbonButton
           icon={ListOrdered}
           label={t`Numbering`}
+          quick
           pressed={listType === "numbered"}
           disabled={readOnly}
           onClick={() => format("numberedList")}
@@ -442,6 +453,7 @@ export function WordRibbon({
     <>
       <RibbonGroup label={t`Tables`}>
         <TablePicker
+          quick
           disabled={readOnly}
           onPick={(rows, columns) => act((v) => insertTableInView(v, rows, columns))}
         />
@@ -454,21 +466,7 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={() => imageInput.current?.click()}
           testId="word-insert-image"
-        />
-        <input
-          ref={imageInput}
-          type="file"
-          accept="image/png,image/jpeg,image/gif,image/bmp,image/webp"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.target.value = "";
-            const v = view();
-            if (!file || !v || readOnly) return;
-            insertImageFromFile(v, file, () => v.focus()).catch(() =>
-              toast.error(t`Couldn't add that picture.`),
-            );
-          }}
+          quick
         />
       </RibbonGroup>
       <RibbonGroup label={t`Pages`}>
@@ -479,10 +477,12 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={() => act((v) => insertPageBreakInView(v))}
           testId="word-page-break"
+          quick
         />
       </RibbonGroup>
       <RibbonGroup label={t`Links`}>
         <LinkPicker
+          quick
           disabled={readOnly}
           onApply={(href) => act((v) => insertLink(v, href))}
           onRemove={() => format("removeLink")}
@@ -496,6 +496,7 @@ export function WordRibbon({
           disabled={readOnly}
           onClick={addComment}
           testId="word-insert-comment"
+          quick
         />
       </RibbonGroup>
     </>
@@ -508,6 +509,7 @@ export function WordRibbon({
         <RibbonMenu
           icon={Eye}
           label={t`Show markup`}
+          quick
           text={
             display === "final"
               ? t`No markup`
@@ -531,6 +533,7 @@ export function WordRibbon({
         <RibbonButton
           icon={ChevronLeft}
           label={t`Previous change`}
+          quick
           onClick={() => review((v) => previousChange(v, scrollTo), noChange)}
         />
         <RibbonButton
@@ -538,6 +541,7 @@ export function WordRibbon({
           label={t`Next change`}
           onClick={() => review((v) => nextChange(v, scrollTo), noChange)}
           testId="word-next-change"
+          quick
         />
         <RibbonSplit
           icon={Check}
@@ -551,6 +555,7 @@ export function WordRibbon({
             )
           }
           testId="word-accept"
+          quick
         >
           <DropdownMenuItem
             onClick={() =>
@@ -569,6 +574,7 @@ export function WordRibbon({
         <RibbonSplit
           icon={X}
           label={t`Reject`}
+          quick
           menuLabel={t`More ways to reject`}
           disabled={readOnly}
           onClick={() =>
@@ -606,6 +612,7 @@ export function WordRibbon({
           showLabel
           onClick={toggleComments}
           testId="word-comments"
+          quick
         />
       </RibbonGroup>
     </>
@@ -618,9 +625,11 @@ export function WordRibbon({
         <RibbonButton
           icon={ZoomOut}
           label={t`Zoom out`}
+          quick
           onClick={() => setZoom(currentZoom() - 0.1)}
         />
-        <RibbonMenu label={t`Zoom`} text={`${zoomPercent}%`} width="w-28" testId="word-zoom">
+        <RibbonMenu label={t`Zoom`} text={`${zoomPercent}%`} width="w-28" testId="word-zoom"
+          quick>
           {ZOOMS.map((level) => (
             <DropdownMenuItem key={level} onClick={() => setZoom(level)}>
               {Math.round(level * 100)}%
@@ -632,6 +641,7 @@ export function WordRibbon({
         <RibbonButton
           icon={ZoomIn}
           label={t`Zoom in`}
+          quick
           onClick={() => setZoom(currentZoom() + 0.1)}
         />
         <RibbonButton
@@ -640,6 +650,7 @@ export function WordRibbon({
           showLabel
           onClick={fitWidth}
           testId="word-fit-width"
+          quick
         />
       </RibbonGroup>
     </>
@@ -657,7 +668,23 @@ export function WordRibbon({
         { id: "review", label: t`Review`, content: reviewTab },
         { id: "view", label: t`View`, content: viewTab },
       ]}
-    />
+    >
+      <input
+        ref={imageInput}
+        type="file"
+        accept="image/png,image/jpeg,image/gif,image/bmp,image/webp"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          const v = view();
+          if (!file || !v || readOnly) return;
+          insertImageFromFile(v, file, () => v.focus()).catch(() =>
+            toast.error(t`Couldn't add that picture.`),
+          );
+        }}
+      />
+    </Ribbon>
   );
 }
 
@@ -673,10 +700,12 @@ function styleClass(id: string): string {
 function HighlightPicker({
   disabled,
   current,
+  quick,
   onPick,
 }: {
   disabled: boolean;
   current: string | undefined;
+  quick?: Quick;
   onPick: (name: string | null) => void;
 }) {
   const { t } = useLingui();
@@ -696,14 +725,15 @@ function HighlightPicker({
       marker={<ColorMark color={hex} />}
       width="w-auto"
       testId="word-highlight"
+      quick={quick}
     >
-      <div className="grid grid-cols-5 gap-1 p-1">
+      <div className="grid grid-cols-5 gap-1 p-1 [[data-ribbon-sheet]_&]:gap-2 [[data-ribbon-sheet]_&]:self-center">
         {HIGHLIGHTS.map((item) => (
           <DropdownMenuItem
             key={item.name}
             aria-label={item.name}
             onClick={() => pick(item.name)}
-            className={`size-6 justify-center rounded-[5px] p-0 ring-1 ring-foreground/15 ${
+            className={`size-6 justify-center rounded-[5px] p-0 ring-1 ring-foreground/15 [[data-ribbon-sheet]_&]:size-11 ${
               current === item.name ? "ring-2 ring-primary" : ""
             }`}
             style={{ background: normalizeHex(item.hex) ?? undefined }}
@@ -718,19 +748,28 @@ function HighlightPicker({
 
 function TablePicker({
   disabled,
+  quick,
   onPick,
 }: {
   disabled: boolean;
+  quick?: Quick;
   onPick: (rows: number, columns: number) => void;
 }) {
   const { t } = useLingui();
   const [open, setOpen] = useState(false);
+  const control = useRibbonControl(quick);
   const [hover, setHover] = useState({ rows: 0, columns: 0 });
   const cells = Array.from({ length: TABLE_GRID * TABLE_GRID }, (_, index) => ({
     row: Math.floor(index / TABLE_GRID) + 1,
     column: (index % TABLE_GRID) + 1,
   }));
-  const size = hover.rows ? `${hover.columns} × ${hover.rows}` : t`Insert table`;
+  if (!control.visible) return null;
+  const touch = control.layout !== "bar";
+  const size = hover.rows
+    ? `${hover.columns} × ${hover.rows}`
+    : touch
+      ? t`Tap a size to insert a table`
+      : t`Insert table`;
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <RibbonTip label={t`Table`}>
@@ -739,20 +778,24 @@ function TablePicker({
           aria-label={t`Table`}
           data-testid="word-insert-table"
           onMouseDown={keepSelection}
-          className={`${ribbonControl} px-2.5`}
+          className={`${control.className} ${touch ? "" : "px-2.5"}`}
         >
-          <Table className="size-[17px]" strokeWidth={1.8} aria-hidden="true" />
-          <span>{t`Table`}</span>
+          <Table className={control.icon} strokeWidth={1.8} aria-hidden="true" />
+          <span className={control.labelClass}>{t`Table`}</span>
         </PopoverTrigger>
       </RibbonTip>
-      <PopoverContent
+      <RibbonPopoverContent
         align="start"
         className="w-auto gap-2 p-2"
         initialFocus={false}
+        onClose={() => setOpen(false)}
         onMouseLeave={() => setHover({ rows: 0, columns: 0 })}
       >
         <p className="text-center text-[12px] text-muted-foreground">{size}</p>
-        <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${TABLE_GRID}, 1fr)` }}>
+        <div
+          className={`grid ${touch ? "gap-1 self-center" : "gap-0.5"}`}
+          style={{ gridTemplateColumns: `repeat(${TABLE_GRID}, 1fr)` }}
+        >
           {cells.map((cell) => {
             const lit = cell.row <= hover.rows && cell.column <= hover.columns;
             return (
@@ -765,37 +808,46 @@ function TablePicker({
                 onFocus={() => setHover({ rows: cell.row, columns: cell.column })}
                 onClick={() => {
                   setOpen(false);
+                  control.close();
                   onPick(cell.row, cell.column);
                 }}
-                className={`size-4 rounded-[3px] ring-1 outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                className={`rounded-[3px] ring-1 outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  touch ? "size-8" : "size-4"
+                } ${
                   lit ? "bg-primary/30 ring-primary" : "bg-background ring-foreground/15"
                 }`}
               />
             );
           })}
         </div>
-      </PopoverContent>
+      </RibbonPopoverContent>
     </Popover>
   );
 }
 
 function LinkPicker({
   disabled,
+  quick,
   onApply,
   onRemove,
 }: {
   disabled: boolean;
+  quick?: Quick;
   onApply: (href: string) => void;
   onRemove: () => void;
 }) {
   const { t } = useLingui();
   const [open, setOpen] = useState(false);
   const [address, setAddress] = useState("");
+  const control = useRibbonControl(quick);
+  if (!control.visible) return null;
+  const touch = control.layout !== "bar";
   function apply() {
     const href = normalizeLink(address);
     if (!href) return;
     setOpen(false);
     setAddress("");
+    control.close();
     onApply(href);
   }
   return (
@@ -806,13 +858,13 @@ function LinkPicker({
           aria-label={t`Link`}
           data-testid="word-insert-link"
           onMouseDown={keepSelection}
-          className={`${ribbonControl} px-2.5`}
+          className={`${control.className} ${touch ? "" : "px-2.5"}`}
         >
-          <Link className="size-[17px]" strokeWidth={1.8} aria-hidden="true" />
-          <span>{t`Link`}</span>
+          <Link className={control.icon} strokeWidth={1.8} aria-hidden="true" />
+          <span className={control.labelClass}>{t`Link`}</span>
         </PopoverTrigger>
       </RibbonTip>
-      <PopoverContent align="start" className="w-72 gap-2">
+      <RibbonPopoverContent align="start" className="w-72 gap-2" onClose={() => setOpen(false)}>
         <form
           className="flex flex-col gap-2"
           onSubmit={(event) => {
@@ -826,25 +878,33 @@ function LinkPicker({
             placeholder={t`Web address`}
             value={address}
             onChange={(event) => setAddress(event.target.value)}
+            className={touch ? "h-11 text-[16px]" : undefined}
           />
           <div className="flex justify-between gap-2">
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size={touch ? "lg" : "sm"}
+              className={touch ? "h-11 px-4" : undefined}
               onClick={() => {
                 setOpen(false);
+                control.close();
                 onRemove();
               }}
             >
               {t`Remove link`}
             </Button>
-            <Button type="submit" size="sm" disabled={!address.trim()}>
+            <Button
+              type="submit"
+              size={touch ? "lg" : "sm"}
+              className={touch ? "h-11 px-4" : undefined}
+              disabled={!address.trim()}
+            >
               {t`Apply`}
             </Button>
           </div>
         </form>
-      </PopoverContent>
+      </RibbonPopoverContent>
     </Popover>
   );
 }

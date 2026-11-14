@@ -5783,6 +5783,14 @@ msgstr "Fin de la presentación. Haz clic para salir."
 msgid "End slideshow"
 msgstr "Terminar presentación"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "Tiene animaciones"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "Tiene una transición de diapositiva"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -10579,7 +10587,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "Mensajes y acciones recientes"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

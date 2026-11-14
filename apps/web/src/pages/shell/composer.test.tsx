@@ -1429,6 +1429,80 @@ it.each([10, -30, window.innerHeight - 10])(
   },
 );
 
+it("puts studio activity behind Add on a phone so the floating field stays full width", async () => {
+  const width = window.innerWidth;
+  window.innerWidth = 390;
+  const session = createPageSession();
+  const dockHost = document.createElement("div");
+  document.body.append(dockHost);
+  session.dock.set({
+    node: dockHost,
+    activity: [{ id: "m1:text", who: "you", text: "Add a chart", live: false }],
+    running: false,
+  });
+  session.dock.setOpenChat(() => {});
+  try {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    globalThis.ResizeObserver ??= class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+    window.matchMedia ??= () =>
+      ({
+        matches: false,
+        addEventListener() {},
+        removeEventListener() {},
+      }) as unknown as MediaQueryList;
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+    composerProps = {
+      artifactTarget: { botId: "bot-1" },
+      running: false,
+      pendingAttachments: [],
+      attachmentNotice: null,
+      sendError: null,
+      onOpenModels: () => {},
+      onOpenConnections: () => {},
+      runError: null,
+      runErrorId: null,
+      onRunErrorPresented: () => {},
+      onDismissError: () => {},
+      sending: false,
+      fileInputRef: createRef(),
+      onAttachmentPick: () => true,
+      onRemoveAttachment: () => {},
+      onSend: async () => true,
+      onStop: async () => {},
+      draftKey: "agent:bot-1",
+      enterToSend: true,
+    };
+    await act(async () => {
+      root?.render(
+        <PagesProvider value={{ open: () => {}, session }}>
+          <Composer {...composerProps} />
+        </PagesProvider>,
+      );
+    });
+    const add = dockHost.querySelector<HTMLButtonElement>('button[aria-label="Add"]');
+    expect(add).not.toBeNull();
+    // The round dock sibling is not rendered here; activity is only in the plus tray on phones.
+    expect(dockHost.querySelector("[data-testid=studio-activity-button]")).toBeNull();
+    expect(dockHost.querySelector("[data-testid=studio-activity-tools-item]")).not.toBeNull();
+    await act(async () => add?.click());
+    await act(async () =>
+      dockHost.querySelector<HTMLElement>("[data-testid=studio-activity-tools-item]")?.click(),
+    );
+    expect(document.querySelector("[data-testid=studio-activity-row]")?.textContent).toContain(
+      "Add a chart",
+    );
+  } finally {
+    window.innerWidth = width;
+    dockHost.remove();
+  }
+});
+
 it("answers the page, not an earlier picked message, when the page's reply button fills it", () => {
   const onClearReply = vi.fn();
   renderComposer(vi.fn(), {

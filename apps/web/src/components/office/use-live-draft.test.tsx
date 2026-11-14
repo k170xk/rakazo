@@ -140,3 +140,37 @@ it("switches back once the studio shows the final version", async () => {
   await render({ running: true, shownVersion: 3 });
   expect(latest.draft).toBeNull();
 });
+
+it("keeps the draft after the run until the final version is shown", async () => {
+  answer({ artifactId: "v2", version: 2, draft });
+  await render({ running: true, shownVersion: 2 });
+  await settle();
+  expect(latest.draft).not.toBeNull();
+  answer({ artifactId: "v3", version: 3 });
+  await render({ running: false, shownVersion: 2 });
+  // Never back to version 2 between the draft and version 3.
+  expect(latest.draft).not.toBeNull();
+  await settle();
+  expect(latest.version).toBe(3);
+  expect(latest.draft).not.toBeNull();
+  await render({ running: false, shownVersion: 3 });
+  expect(latest.draft).toBeNull();
+});
+
+it("drops the draft after the run when no newer version came of it", async () => {
+  answer({ artifactId: "v2", version: 2, draft });
+  await render({ running: true, shownVersion: 2 });
+  await settle();
+  expect(latest.draft).not.toBeNull();
+  answer({ artifactId: "v2", version: 2 });
+  await render({ running: false, shownVersion: 2 });
+  await settle();
+  expect(latest.draft).toBeNull();
+  // A later version saved elsewhere loads as itself, never as the old draft.
+  answer({ artifactId: "v3", version: 3 });
+  await act(async () => {
+    await client.refetchQueries();
+  });
+  await settle();
+  expect(latest.draft).toBeNull();
+});

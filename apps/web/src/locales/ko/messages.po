@@ -5783,6 +5783,14 @@ msgstr "슬라이드 쇼가 끝났습니다. 클릭하면 종료합니다."
 msgid "End slideshow"
 msgstr "슬라이드 쇼 마침"
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "애니메이션 있음"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "슬라이드 전환 있음"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr ""
@@ -10579,7 +10587,7 @@ msgstr ""
 
 #: src/components/studio/StudioActivityCarousel.tsx
 msgid "Recent messages and actions"
-msgstr ""
+msgstr "최근 메시지 및 작업"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Recommended"

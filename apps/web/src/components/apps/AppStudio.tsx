@@ -36,7 +36,6 @@ import { useNavigate } from "react-router-dom";
 import { ownerAppSource } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
-import { StudioActivityCarousel } from "../studio/StudioActivityCarousel";
 import { StudioChatPane } from "../studio/StudioChatPane";
 import { control } from "../studio/StudioFrame";
 import { StudioFloatingDock, studioDockStyle } from "../studio/studio-dock";
@@ -243,7 +242,6 @@ export function AppStudio({
     },
   ];
   const docked = chatOpen && Boolean(chat) && page !== undefined;
-  const showActivity = Boolean(composer) && !docked && (running || activity.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={(next) => onOpenChange(next)}>
@@ -460,7 +458,7 @@ export function AppStudio({
           </header>
           <div
             className="absolute inset-x-0 top-[48px] bottom-0 flex"
-            style={studioDockStyle(!composer || docked, showActivity)}
+            style={studioDockStyle(!composer || docked, running)}
           >
             {docked ? (
               <StudioChatPane>
@@ -620,14 +618,10 @@ export function AppStudio({
           {composer && !docked ? (
             <StudioFloatingDock
               className={panel ? "inset-x-0 sm:right-[min(46vw,560px)]" : "inset-x-0"}
+              activity={activity}
+              running={running}
+              onOpenChat={() => setChatOpen(true)}
             >
-              {showActivity ? (
-                <StudioActivityCarousel
-                  cards={activity}
-                  running={running}
-                  onOpen={() => setChatOpen(true)}
-                />
-              ) : null}
               {composer}
             </StudioFloatingDock>
           ) : null}
