@@ -8,6 +8,7 @@ import type {
 } from "@rakazo/adapter-kit";
 import { messagingDeliverJob, runContinueJob } from "@rakazo/adapter-kit";
 import type { MessageBlock } from "@rakazo/contracts";
+import { stripStudioNote } from "@rakazo/contracts";
 import { botMessageHopExhausted, nextBotMessageHop, pageLinksAsTitles } from "@rakazo/core";
 import type { PrismaClient, ThreadEvents } from "@rakazo/db";
 import {
@@ -764,7 +765,7 @@ function extractText(blocks: unknown, linkedPages: ReadonlySet<string>): string 
     .flatMap(
       (block: { kind?: unknown; text?: unknown; pageId?: unknown; title?: unknown } | null) => {
         if (block?.kind === "text" && typeof block.text === "string")
-          return [pageLinksAsTitles(block.text)];
+          return [pageLinksAsTitles(stripStudioNote(block.text))];
         if (
           block?.kind === "page" &&
           typeof block.title === "string" &&

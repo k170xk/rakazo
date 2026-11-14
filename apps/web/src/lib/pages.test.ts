@@ -1,3 +1,4 @@
+import { openStudioNote } from "@rakazo/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { createPageSession } from "./pages";
 
@@ -68,5 +69,38 @@ describe("page replies", () => {
     stop();
     session.offerReply("after unsubscribe");
     expect(received).toEqual(["Watch the shirt", "x".repeat(300)]);
+  });
+
+  it("sends a new app as its own message, then keeps later sends on the open page", () => {
+    const session = createPageSession();
+    session.dock.set({ page: { id: "p1", title: "Plan" } });
+    const sent: string[] = [];
+    session.subscribeSubmit((text) => {
+      sent.push(text);
+      expect(session.send(text, [card])).toEqual({ text });
+    });
+    session.submit("  Build me an app: a diary  ");
+    expect(sent).toEqual(["Build me an app: a diary"]);
+    expect(session.send("tweak", [card])).toEqual({ text: "tweak", replyToMessageId: "m1" });
+  });
+
+  it("tells the model which studio is open, including a blank app canvas", () => {
+    const session = createPageSession();
+    const note = openStudioNote({ kind: "app", title: "Site diary", id: "p1" });
+    session.dock.set({ page: { id: "p1", title: "Site diary", note } });
+    const sent = session.send("add a map", [card]);
+    expect(sent.replyToMessageId).toBe("m1");
+    expect(sent.text).toContain("App Studio");
+    expect(sent.text).toContain("appId p1");
+    expect(sent.text).toContain("add a map");
+
+    session.dock.set({ page: { note: openStudioNote({ kind: "app", blank: true }) } });
+    const sentBlank: string[] = [];
+    session.subscribeSubmit((text) => {
+      sentBlank.push(session.send(text, []).text);
+    });
+    session.submit("Build me an app: a diary");
+    expect(sentBlank[0]).toContain("the canvas is blank");
+    expect(sentBlank[0]).toContain("Build me an app: a diary");
   });
 });

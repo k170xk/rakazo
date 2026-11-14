@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { TodoItem, TodoPriority, TodoStatus } from "@rakazo/contracts";
-import { TODO_STATUSES, TODO_TITLE_MAX } from "@rakazo/contracts";
+import { openStudioNote, PERSONAL_TODO_LIST, TODO_STATUSES, TODO_TITLE_MAX } from "@rakazo/contracts";
 import {
   Button,
   Dialog,
@@ -10,6 +10,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Field,
   FieldLabel,
   Input,
@@ -24,7 +29,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
   CalendarDays,
+  Check,
+  ChevronDown,
   ExternalLink,
+  ListTodo,
+  MessageSquare,
+  Pencil,
   Plus,
   RotateCcw,
   Sparkles,
@@ -32,12 +42,28 @@ import {
   X,
 } from "lucide-react";
 import type { DragEvent, FormEvent } from "react";
-import { useState } from "react";
-import { PHONE_SHEET } from "../../lib/phone-sheet";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
+import type { StudioCard } from "../../lib/studio-activity";
+import { StudioActivityCarousel, studioChromeClass } from "../studio/StudioActivityCarousel";
 import { TODO_REFRESH_MS as REFRESH_MS, TODO_NEW_MS } from "./todo-count";
 
 const DRAG_TYPE = "application/x-rakazo-todo";
+const NO_ACTIVITY: StudioCard[] = [];
+const idleSubscribe = () => () => {};
+const control =
+  "grid shrink-0 place-items-center rounded-full border border-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring";
+const pill =
+  "flex h-[35px] items-center gap-1.5 rounded-full border border-foreground/[0.06] px-2.5 text-[14px] leading-5 text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-foreground/[0.08] sm:px-[15px]";
+
+function ListMark() {
+  return (
+    <span className="grid size-5 shrink-0 place-items-center rounded-md bg-background text-foreground/70">
+      <ListTodo className="size-3.5" strokeWidth={1.8} />
+    </span>
+  );
+}
 
 /** Each column's colour: accent bar, header dot, count pill and its drop highlight. */
 const COLUMN_STYLE: Record<
@@ -140,25 +166,125 @@ export function reorderTodos(
   return [...rest, { ...moving, status, position }].sort((a, b) => a.position - b.position);
 }
 
-/** The person's own to-do board: their items and the ones their assistants added. */
+/** The person's to-do studio: chat on the left, the open list on the right. */
 export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
   const columns = useColumnLabels();
+  const session = usePageSession();
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const [selected, setSelected] = useState(PERSONAL_TODO_LIST);
   const [showArchived, setShowArchived] = useState(false);
   const [editing, setEditing] = useState<TodoItem | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ status: TodoStatus; beforeId: string | null }>();
+  const [chatOpen, setChatOpen] = useState(
+    () =>
+      typeof window.matchMedia === "function" && window.matchMedia("(min-width: 1024px)").matches,
+  );
+  const [renaming, setRenaming] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
   const phone = useIsMobile();
   const [shown, setShown] = useState<TodoStatus>("todo");
-  const listOptions = queries.todos.list.queryOptions({ input: {} });
+  const listInput =
+    selected === PERSONAL_TODO_LIST ? {} : { listId: selected };
+  const listOptions = queries.todos.list.queryOptions({ input: listInput });
   const list = useQuery({ ...listOptions, refetchInterval: REFRESH_MS });
   const archived = useQuery({
-    ...queries.todos.list.queryOptions({ input: { includeArchived: true } }),
+    ...queries.todos.list.queryOptions({
+      input: { ...listInput, includeArchived: true },
+    }),
     enabled: showArchived,
   });
+  const lists = useQuery(queries.todos.lists.queryOptions());
   const items = list.data ?? [];
+  const extraLists = (lists.data ?? []).filter((entry) => !entry.personal);
+  const selectedList = extraLists.find((entry) => entry.id === selected);
+  const selectedTitle =
+    selected === PERSONAL_TODO_LIST ? t`Personal` : (selectedList?.title ?? t`To-do list`);
+  const running = useSyncExternalStore(
+    session?.dock.subscribe ?? idleSubscribe,
+    () => session?.dock.get().running === true,
+    () => false,
+  );
+  const activity = useSyncExternalStore(
+    session?.dock.subscribe ?? idleSubscribe,
+    () => session?.dock.get().activity ?? NO_ACTIVITY,
+    () => NO_ACTIVITY,
+  );
+  const showActivity = !chatOpen && (running || activity.length > 0);
+  const setDockNode = useCallback(
+    (node: HTMLDivElement | null) => session?.dock.set({ node }),
+    [session],
+  );
+  const setChatNode = useCallback(
+    (chat: HTMLDivElement | null) => session?.dock.set({ chat }),
+    [session],
+  );
+
+  useEffect(() => {
+    if (selected === PERSONAL_TODO_LIST || !lists.isSuccess || lists.isFetching) return;
+    if (!extraLists.some((entry) => entry.id === selected)) setSelected(PERSONAL_TODO_LIST);
+  }, [extraLists, lists.isFetching, lists.isSuccess, selected]);
+
+  useEffect(() => {
+    setRenaming(false);
+    setShowArchived(false);
+  }, [selected]);
+
+  useEffect(() => {
+    if (!session || !list.isSuccess) return;
+    session.dock.set({
+      page: {
+        note: openStudioNote({
+          kind: "todo",
+          title: selected === PERSONAL_TODO_LIST ? "Personal" : selectedTitle,
+          id: selected,
+          blank: items.length === 0,
+        }),
+      },
+    });
+  }, [session, list.isSuccess, items.length, selected, selectedTitle]);
+
+  useEffect(
+    () => () => {
+      session?.dock.set({ page: null, node: null, chat: null });
+    },
+    [session],
+  );
+
+  async function createList() {
+    try {
+      const created = await queries.todos.createList.call({ title: t`To-do list` });
+      setSelected(created.id);
+      await queryClient.invalidateQueries({ queryKey: queries.todos.key() });
+    } catch {
+      toast.error(t`Could not create that list.`);
+    }
+  }
+
+  async function renameList(title: string) {
+    const next = title.trim();
+    setRenaming(false);
+    if (!next || selected === PERSONAL_TODO_LIST || next === selectedList?.title) return;
+    try {
+      await queries.todos.renameList.call({ listId: selected, title: next });
+      await queryClient.invalidateQueries({ queryKey: queries.todos.key() });
+    } catch {
+      toast.error(t`Could not rename that list.`);
+    }
+  }
+
+  async function removeList(listId: string) {
+    try {
+      await queries.todos.removeList.call({ listId });
+      setSelected(PERSONAL_TODO_LIST);
+      await refresh();
+    } catch {
+      toast.error(t`Could not delete that list.`);
+    }
+  }
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: queries.todos.key() });
   async function run(work: () => Promise<unknown>, failure: string) {
@@ -196,46 +322,175 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
     return lowerHalf ? (column[index + 1]?.id ?? null) : column[index]!.id;
   }
 
+  const composer = <div ref={setDockNode} />;
+
   return (
     <Dialog
       open
-      onOpenChange={(open) => {
+      onOpenChange={(open, details) => {
+        const target = details.event?.target;
+        if (
+          !open &&
+          details.reason === "escape-key" &&
+          target instanceof Element &&
+          target.closest('[data-slot="popover-content"], [data-slot="dropdown-menu-content"]')
+        ) {
+          details.cancel();
+          return;
+        }
         if (!open) onClose();
       }}
     >
       <DialogContent
+        overlay={false}
         showCloseButton={false}
+        initialFocus={closeButton}
         data-testid="todo-board"
-        className={`flex h-[760px] max-h-[calc(100%-2rem)] w-[1200px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 sm:max-w-[1200px] ${PHONE_SHEET}`}
+        className="overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)]"
       >
-        <DialogHeader className="flex-row items-start justify-between gap-4 px-6 pt-6 pb-4 max-sm:px-4 max-sm:pt-4 max-sm:pb-3">
-          <div className="min-w-0">
-            <DialogTitle className="text-heading2 text-foreground">
-              <Trans>To do list</Trans>
-            </DialogTitle>
-            <DialogDescription>
-              <Trans>
-                Only you can see this list. Your assistants can add to it from your emails and chats
-                when you ask them, including in routines.
-              </Trans>
-            </DialogDescription>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button
-              variant={showArchived ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setShowArchived((value) => !value)}
-            >
-              <Archive />
+        <div className="relative size-full">
+        <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 sm:gap-2">
+          <DialogClose
+            ref={closeButton}
+            aria-label={t`Close to do list`}
+            className={`${control} size-[35px]`}
+          >
+            <X className="size-[18px]" strokeWidth={1.7} />
+          </DialogClose>
+          <button
+            type="button"
+            data-testid="todo-new"
+            aria-label={t`New to-do list`}
+            title={t`New to-do list`}
+            onClick={() => void createList()}
+            className={`${control} size-[35px]`}
+          >
+            <Plus className="size-[18px]" strokeWidth={1.7} />
+          </button>
+          <DialogTitle className="sr-only">{selectedTitle}</DialogTitle>
+          <DialogDescription className="sr-only">
+            <Trans>
+              Only you can see this list. Your assistants can add to it from your emails and chats
+              when you ask them, including in routines.
+            </Trans>
+          </DialogDescription>
+          {renaming ? (
+            <Input
+              autoFocus
+              value={titleDraft}
+              aria-label={t`Rename`}
+              className="h-8 max-w-xs"
+              onChange={(event) => setTitleDraft(event.target.value)}
+              onBlur={() => void renameList(titleDraft)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void renameList(titleDraft);
+                if (event.key === "Escape") setRenaming(false);
+              }}
+            />
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                data-testid="todo-switcher"
+                render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-w-0 max-w-[38vw] gap-1.5 font-medium sm:max-w-[280px]"
+                  />
+                }
+              >
+                <ListMark />
+                <span className="truncate">{selectedTitle}</span>
+                <ChevronDown className="size-3.5 shrink-0 opacity-65" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-72">
+                <DropdownMenuItem
+                  onClick={() => setSelected(PERSONAL_TODO_LIST)}
+                  className="flex items-center gap-2"
+                >
+                  <ListMark />
+                  <span className="min-w-0 flex-1 truncate">
+                    <Trans>Personal</Trans>
+                  </span>
+                  {selected === PERSONAL_TODO_LIST ? (
+                    <Check className="size-4 shrink-0 text-primary" />
+                  ) : null}
+                </DropdownMenuItem>
+                {extraLists.map((entry) => (
+                  <DropdownMenuItem
+                    key={entry.id}
+                    onClick={() => setSelected(entry.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <ListMark />
+                    <span className="min-w-0 flex-1 truncate">{entry.title}</span>
+                    {entry.id === selected ? (
+                      <Check className="size-4 shrink-0 text-primary" />
+                    ) : null}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => void createList()}>
+                  <Plus className="size-4" />
+                  <Trans>New to-do list</Trans>
+                </DropdownMenuItem>
+                {selected !== PERSONAL_TODO_LIST ? (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setTitleDraft(selectedList?.title ?? "");
+                        setRenaming(true);
+                      }}
+                    >
+                      <Pencil className="size-4" />
+                      <Trans>Rename</Trans>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onClick={() => void removeList(selected)}>
+                      <Trash2 className="size-4" />
+                      <Trans>Delete</Trans>
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          <div className="flex-1" />
+          <button
+            type="button"
+            aria-pressed={showArchived}
+            onClick={() => setShowArchived((value) => !value)}
+            className={pill}
+          >
+            <Archive className="size-4" strokeWidth={1.8} />
+            <span className="max-sm:sr-only">
               {showArchived ? <Trans>Back to board</Trans> : <Trans>Archived</Trans>}
-            </Button>
-            <DialogClose
-              render={<Button variant="ghost" size="icon-sm" aria-label={t`Close to do list`} />}
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={chatOpen}
+            title={t`Show the chat beside the list`}
+            aria-label={t`Chat`}
+            onClick={() => setChatOpen((open) => !open)}
+            className={`${control} relative size-[35px]`}
+          >
+            <MessageSquare className="size-[18px]" strokeWidth={1.7} />
+            {running && !chatOpen ? (
+              <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
+            ) : null}
+          </button>
+        </header>
+        <div className={`absolute inset-x-0 top-12 flex ${studioChromeClass(chatOpen, showActivity)}`}>
+          {chatOpen ? (
+            <aside
+              aria-label={t`Chat`}
+              className="absolute inset-0 z-30 flex min-h-0 flex-col border-foreground/[0.06] bg-background sm:static sm:w-[min(36vw,420px)] sm:shrink-0 sm:border-r [&_[data-testid=transcript]]:px-3 [&_[data-testid=transcript]]:pt-3 [&_[data-testid=transcript]]:pb-4"
             >
-              <X />
-            </DialogClose>
-          </div>
-        </DialogHeader>
+              <div ref={setChatNode} className="flex min-h-0 flex-1 flex-col" />
+              <div className="shrink-0 px-2 pb-2">{composer}</div>
+            </aside>
+          ) : null}
+          <section aria-label={selectedTitle} className="flex min-h-0 min-w-0 flex-1 flex-col">
         {showArchived ? (
           <ArchivedList
             items={(archived.data ?? []).filter((item) => item.archivedAt)}
@@ -335,7 +590,12 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                     status={status}
                     onAdd={(title) =>
                       run(
-                        () => queries.todos.create.call({ title, status }),
+                        () =>
+                          queries.todos.create.call({
+                            title,
+                            status,
+                            ...(selected === PERSONAL_TODO_LIST ? {} : { listId: selected }),
+                          }),
                         t`Could not add that item.`,
                       )
                     }
@@ -411,6 +671,23 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
             }}
           />
         ) : null}
+          </section>
+        </div>
+        {chatOpen ? null : (
+          <div className="absolute inset-x-0 bottom-[12.5px] z-20 flex justify-center px-3">
+            <div className="flex w-full max-w-[551px] flex-col gap-2">
+              {showActivity ? (
+                <StudioActivityCarousel
+                  cards={activity}
+                  running={running}
+                  onOpen={() => setChatOpen(true)}
+                />
+              ) : null}
+              {composer}
+            </div>
+          </div>
+        )}
+        </div>
       </DialogContent>
     </Dialog>
   );

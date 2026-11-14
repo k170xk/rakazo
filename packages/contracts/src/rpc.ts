@@ -111,6 +111,7 @@ import {
   CreateRoutineInput,
   CreateScratchpadItemInput,
   CreateTodoItemInput,
+  CreateTodoListInput,
   DeploymentSettingsSchema,
   DirectoryPersonSchema,
   EvolveAssistantSchema,
@@ -148,6 +149,7 @@ import {
   ModelCreditAmountSchema,
   ModelOAuthBeginSchema,
   MoveTodoItemInput,
+  RenameTodoListInput,
   MyMetersSchema,
   MyStorageStateSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
@@ -189,6 +191,7 @@ import {
   ThreadSnapshotSchema,
   TimeZoneSchema,
   TodoItemSchema,
+  TodoListSchema,
   UpdateAgentSkillInput,
   UpdateBotInput,
   UpdateExternalConversationPolicyInput,
@@ -209,6 +212,7 @@ import {
   EmailSignatureSchema,
 } from "./email-draft.js";
 import {
+  EMAIL_FILING_LIMITS,
   EmailFilingBatchSchema,
   EmailFilingFolderSchema,
   EmailFilingItemsInput,
@@ -1349,6 +1353,12 @@ export const appContract = {
     settings: {
       get: oc.input(z.object({})).output(EmailFilingProfileSchema),
       set: oc.input(EmailFilingSettingsSchema.partial()).output(EmailFilingProfileSchema),
+      remember: oc
+        .input(z.object({ text: z.string().trim().min(3).max(EMAIL_FILING_LIMITS.memory) }))
+        .output(EmailFilingProfileSchema),
+      forgetMemory: oc
+        .input(z.object({ memoryId: z.string().min(1).max(40) }))
+        .output(EmailFilingProfileSchema),
       removeRule: oc
         .input(z.object({ ruleId: z.string().min(1).max(40) }))
         .output(EmailFilingProfileSchema),
@@ -1356,8 +1366,19 @@ export const appContract = {
   },
   todos: {
     list: oc
-      .input(z.object({ includeArchived: z.boolean().optional() }))
+      .input(
+        z.object({
+          includeArchived: z.boolean().optional(),
+          listId: z.string().trim().min(1).max(64).optional(),
+        }),
+      )
       .output(z.array(TodoItemSchema)),
+    lists: oc.output(z.array(TodoListSchema)),
+    createList: oc.input(CreateTodoListInput).output(TodoListSchema),
+    renameList: oc.input(RenameTodoListInput).output(TodoListSchema),
+    removeList: oc
+      .input(z.object({ listId: z.string().trim().min(1).max(64) }))
+      .output(z.object({ ok: z.literal(true) })),
     create: oc.input(CreateTodoItemInput).output(TodoItemSchema),
     update: oc.input(UpdateTodoItemInput).output(TodoItemSchema),
     move: oc.input(MoveTodoItemInput).output(TodoItemSchema),

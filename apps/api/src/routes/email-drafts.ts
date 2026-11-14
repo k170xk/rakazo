@@ -170,6 +170,7 @@ export function emailDraftsRoutes(ctx: RouterContext) {
       attachments: content.attachments,
       cannotSend,
       outlookWebLink: content.outlookWebLink ?? null,
+      outlookMessageId: content.outlookMessageId ?? null,
       error: stuckSending ? MAYBE_SENT : stuckCreating ? MAYBE_CREATED : row.error,
       sentAt: row.sentAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),

@@ -2,6 +2,7 @@ import { DEFAULT_EMAIL_FILING_POLICY, DEFAULT_EMAIL_FILING_SETTINGS } from "@rak
 import { describe, expect, it } from "vitest";
 import type { FolderNode, StoredFilingItem } from "./email-filing.js";
 import {
+  addFilingMemory,
   blockedFolderIds,
   confidenceCap,
   evidenceFor,
@@ -219,6 +220,17 @@ describe("presentFilingBatch", () => {
   });
 });
 
+describe("filing memory", () => {
+  it("keeps one copy of an instruction and drops one that is too short", () => {
+    const first = addFilingMemory([], "  Graduate applications go in HR  ");
+    expect(first).toHaveLength(1);
+    expect(first[0]?.text).toBe("Graduate applications go in HR");
+    const again = addFilingMemory(first, "graduate applications go in hr");
+    expect(again).toHaveLength(1);
+    expect(addFilingMemory(first, "no")).toEqual(first);
+  });
+});
+
 describe("tool selection", () => {
   const names = (options: {
     outlookFiling?: boolean;
@@ -242,8 +254,9 @@ describe("tool selection", () => {
     expect(names({ outlookFiling: true })).toEqual([
       "outlook_filing_candidates",
       "outlook_propose_filing",
+      "outlook_filing_remember",
     ]);
-    expect(names({ outlookFiling: true, trigger: "routine" })).toHaveLength(2);
+    expect(names({ outlookFiling: true, trigger: "routine" })).toHaveLength(3);
     expect(names({ outlookFiling: true, trigger: "tickets" })).toEqual([]);
   });
 

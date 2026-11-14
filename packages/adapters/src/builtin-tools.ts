@@ -1482,10 +1482,14 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "todo_list",
     description:
-      "List the person's own to-do list (shared by all their assistants and shown to them as a board with To do, In progress, Waiting on others and Done). Open items by default. Check it before adding so nothing is added twice.",
+      "List one of the person's to-do lists (a board with To do, In progress, Waiting on others and Done). Open items by default. Check it before adding so nothing is added twice. Omit list_id, or pass personal, for their day-to-day list, the one email routines update. When they are in the To-do studio, pass the todoListId from that note.",
     inputSchema: {
       type: "object",
       properties: {
+        list_id: {
+          type: "string",
+          description: "personal, or the todoListId of another list they have open.",
+        },
         status: { type: "string", enum: ["todo", "in_progress", "waiting", "done"] },
         include_done: { type: "boolean", description: "Include done items." },
       },
@@ -1524,7 +1528,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "outlook_filing_candidates",
     description:
-      "Start here to help the person file their Outlook email into their own folders; it suits routines. In one call it lists the emails still in their Inbox (and Sent Items when they allow it) from recent days, their mail folders, and the evidence for each email: job numbers that match a folder name, rules they taught, earlier mail of the same conversation already filed, and folder words in the subject, plus job numbers with no folder yet. Read-only: nothing is moved. Then call outlook_propose_filing.",
+      "Start here to help the person file their Outlook email into their own folders; it suits routines. In one call it lists emails they have already read that are still in their Inbox (and Sent Items when they allow it) from recent days, plus the memories and rules the person has taught filing. Unread mail is left alone and must not be filed. It also lists their mail folders and the evidence for each email: job numbers that match a folder name, rules they taught, earlier mail of the same conversation already filed, and folder words in the subject, plus job numbers with no folder yet. Read-only: nothing is moved. Then call outlook_propose_filing. When the person corrects you, call outlook_filing_remember first.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1546,7 +1550,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "outlook_propose_filing",
     description:
-      "Show the person a filing card: each email with the folder you propose and your confidence. Use message_id and folder_id values from outlook_filing_candidates. For an email about an Evolve project that has no folder yet, give evolve_job (the job number) instead of folder_id; the server looks the project up in Evolve and proposes a new folder named from it, never from your text. Include emails you are unsure about with no folder_id so they stay on the card for the person. Confidence is 0-100; the server lowers it where its own evidence does not support it. Nothing is moved or created: only the person's press of File on the card does that.",
+      "Show the person a filing card: each read email with the folder you propose and your confidence. Use message_id and folder_id values from outlook_filing_candidates. Follow the memories and rules that call returned. Unread mail is refused. For an email about an Evolve project that has no folder yet, give evolve_job (the job number) instead of folder_id; the server looks the project up in Evolve and proposes a new folder named from it, never from your text. Include emails you are unsure about with no folder_id so they stay on the card for the person. Confidence is 0-100; the server lowers it where its own evidence does not support it. Nothing is moved or created: only the person's press of File on the card does that.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1576,12 +1580,31 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
-    name: "todo_add",
+    name: "outlook_filing_remember",
     description:
-      "Add an item to the person's to-do list, such as an action found in their email or one they mention. Keep the title short and actionable; put context in notes; for an email give source_kind email, a source_label like 'Email from Anne Byrne: Drawings' and its web_link as source_link.",
+      "Remember a filing preference the person just stated or a correction they made, so the next filing follows it. Pass text as one short instruction in their words. When the preference is mail from one sender or one domain into one of their folders, also pass sender or domain and folder_id from outlook_filing_candidates; that becomes a rule filing can apply on its own. Pass forget_id to remove an instruction or rule they no longer want. Nothing is moved.",
     inputSchema: {
       type: "object",
       properties: {
+        text: { type: "string", description: "The instruction, in the person's words." },
+        sender: { type: "string", description: "Email address, when the rule is for one sender." },
+        domain: { type: "string", description: "A domain such as @example.com." },
+        folder_id: { type: "string", description: "folder_id from outlook_filing_candidates." },
+        forget_id: { type: "string", description: "Id of an instruction or rule to remove." },
+      },
+    },
+  },
+  {
+    name: "todo_add",
+    description:
+      "Add an item to one of the person's to-do lists, such as an action found in their email, a document or one they mention. Omit list_id, or pass personal, for the day-to-day list email routines update. When they are in the To-do studio, pass the todoListId from that note so the item lands on the list they are looking at. Keep the title short and actionable; put context in notes; for an email give source_kind email, a source_label like 'Email from Anne Byrne: Drawings' and its web_link as source_link.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        list_id: {
+          type: "string",
+          description: "personal, or the todoListId of the list they have open. Omit for personal.",
+        },
         title: { type: "string", description: "Short, actionable title." },
         notes: { type: "string" },
         status: {

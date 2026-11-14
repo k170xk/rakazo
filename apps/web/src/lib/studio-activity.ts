@@ -1,3 +1,5 @@
+import { stripStudioNote } from "@rakazo/contracts";
+
 /** One card in the strip shown over a whiteboard or app while the chat is tucked away. */
 export type StudioCard = {
   id: string;
@@ -25,7 +27,7 @@ const SNIP = 96;
 const EMPTY: StudioCard[] = [];
 
 function clip(text: string): string {
-  const clean = text
+  const clean = stripStudioNote(text)
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/\s*\(page:[^)]+\)/g, " ")
     .replace(/[#>*_`[\]]/g, " ")

@@ -1,6 +1,7 @@
 /// <reference path="./linkify-it.d.ts" />
 
 import type { MessageBlock } from "@rakazo/contracts";
+import { stripStudioNote } from "@rakazo/contracts";
 import { urlSite } from "@rakazo/core/egress";
 import LinkifyIt from "linkify-it";
 import type { ReactNode } from "react";
@@ -182,6 +183,7 @@ function appendPlainText(parts: PlainTextPart[], value: string) {
  * parenthesis stays inside the URL and one wrapping the prose does not.
  */
 export function plainTextLinkParts(text: string): PlainTextPart[] {
+  text = stripStudioNote(text);
   const parts: PlainTextPart[] = [];
   let cursor = 0;
   for (const match of text.matchAll(PLAIN_PAGE_LINK)) {

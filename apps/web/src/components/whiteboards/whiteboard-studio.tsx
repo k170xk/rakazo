@@ -18,8 +18,11 @@ import {
 } from "@rakazo/ui-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowDown,
+  ArrowRight,
   Check,
   ChevronDown,
+  Columns3,
   LayoutGrid,
   MessageSquare,
   Pencil,
@@ -32,6 +35,7 @@ import { pageMutationOptions } from "../../lib/page-actions";
 import { useMedia, usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
+import { AppIcon } from "../apps/AppIcon";
 import { SharePopover } from "../pages/SharePopover";
 import { WhiteboardCanvas } from "../pages/WhiteboardCanvas";
 import { StudioActivityCarousel, studioChromeClass } from "../studio/StudioActivityCarousel";
@@ -46,6 +50,23 @@ const NO_ACTIVITY: StudioCard[] = [];
 
 const control =
   "grid shrink-0 place-items-center rounded-full border border-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring";
+const pill =
+  "flex h-[35px] items-center gap-1.5 rounded-full border border-foreground/[0.06] px-2.5 text-[14px] leading-5 text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-foreground/[0.06] sm:px-[15px]";
+
+function BoardMark({ pageId, icon }: { pageId: string; icon?: string | null }) {
+  return (
+    <AppIcon
+      pageId={pageId}
+      icon={icon}
+      className="size-5"
+      fallback={
+        <span className="grid size-5 shrink-0 place-items-center rounded-md bg-background text-foreground/70">
+          <LayoutGrid className="size-3.5" strokeWidth={1.8} />
+        </span>
+      }
+    />
+  );
+}
 
 function fileName(title: string, ext: string): string {
   const slug = title
@@ -352,11 +373,12 @@ export function WhiteboardStudio({
       }}
     >
       <DialogContent
+        overlay={false}
         showCloseButton={false}
         initialFocus={closeButton}
         data-testid="whiteboard-studio"
         data-page-print=""
-        className="top-0 left-0 block h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-background p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)] ring-0 sm:max-w-none data-open:duration-[260ms] data-open:zoom-in-[0.98] data-open:slide-in-from-bottom-3 data-closed:duration-150 motion-reduce:data-open:zoom-in-100"
+        className="overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)]"
       >
         <div className="relative size-full">
           <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 print:hidden sm:gap-2">
@@ -404,6 +426,7 @@ export function WhiteboardStudio({
                     />
                   }
                 >
+                  {selected ? <BoardMark pageId={selected} icon={page.data?.icon} /> : null}
                   <span className="truncate">
                     {page.data?.title ??
                       boards.find((b) => b.id === selected)?.title ??
@@ -416,9 +439,10 @@ export function WhiteboardStudio({
                     <DropdownMenuItem
                       key={board.id}
                       onClick={() => setSelected(board.id)}
-                      className="flex items-center justify-between gap-2"
+                      className="flex items-center gap-2"
                     >
-                      <span className="truncate">{board.title}</span>
+                      <BoardMark pageId={board.id} icon={board.icon} />
+                      <span className="min-w-0 flex-1 truncate">{board.title}</span>
                       {board.id === selected ? (
                         <Check className="size-4 shrink-0 text-primary" />
                       ) : null}
@@ -454,24 +478,28 @@ export function WhiteboardStudio({
               <DropdownMenuTrigger
                 disabled={!page.data}
                 aria-label={t`Tidy layout`}
-                render={<Button variant="ghost" size="sm" />}
+                className={`${pill} disabled:opacity-40`}
               >
-                <LayoutGrid />
+                <LayoutGrid className="size-4" strokeWidth={1.8} />
                 <span className="max-sm:sr-only">
                   <Trans>Tidy layout</Trans>
                 </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => void tidy("right")}>
+                  <ArrowRight className="size-4" />
                   <Trans>Flow left to right</Trans>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => void tidy("down")}>
+                  <ArrowDown className="size-4" />
                   <Trans>Flow top to bottom</Trans>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => void tidy("lanes")}>
+                  <Columns3 className="size-4" />
                   <Trans>Columns by section</Trans>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => void tidy("grid")}>
+                  <LayoutGrid className="size-4" />
                   <Trans>Balanced grid</Trans>
                 </DropdownMenuItem>
               </DropdownMenuContent>

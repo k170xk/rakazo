@@ -33,6 +33,24 @@ import { errorText } from "../lib/user-error";
 
 const EMAIL_PATTERN = /^[^\s@<>()[\],;:"]+@[^\s@<>()[\],;:"]+\.[^\s@<>()[\],;:"]+$/;
 
+/**
+ * Where "Open in Outlook" should go. Phones open the Outlook app through its own address.
+ * Computers use the https link the Outlook app has claimed, so the system can hand it over;
+ * a plain Outlook website address, or a link that opens in a new tab, stays in the browser.
+ */
+export function outlookDraftAppLink(
+  messageId: string | null | undefined,
+  userAgent: string,
+): string | null {
+  const id = messageId?.trim();
+  if (!id) return null;
+  const encoded = encodeURIComponent(id);
+  if (/iPhone|iPad|iPod|Android/i.test(userAgent)) {
+    return `ms-outlook://emails/message/open?restID=${encoded}`;
+  }
+  return `https://outlook.office.com/mail/0/applink/read/${encoded}/?ai=1`;
+}
+
 type RecipientKey = "to" | "cc" | "bcc";
 
 type Form = {
@@ -825,15 +843,30 @@ function EmailDraftEditor({
                 </p>
               </div>
             </div>
-            <a
-              href={draft.outlookWebLink || "https://outlook.office.com/mail/drafts"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12.5px] font-medium text-primary-foreground hover:opacity-90"
-            >
-              <Trans>Open in Outlook</Trans>
-              <ExternalLink size={13} />
-            </a>
+            <span className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+              <a
+                href={
+                  outlookDraftAppLink(draft.outlookMessageId, navigator.userAgent) ||
+                  draft.outlookWebLink ||
+                  "https://outlook.office.com/mail/drafts"
+                }
+                rel="noopener"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12.5px] font-medium text-primary-foreground hover:opacity-90"
+              >
+                <Trans>Open in Outlook</Trans>
+                <ExternalLink size={13} />
+              </a>
+              {draft.outlookWebLink ? (
+                <a
+                  href={draft.outlookWebLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[12.5px] text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  <Trans>Open in the browser</Trans>
+                </a>
+              ) : null}
+            </span>
           </div>
         ) : sent ? (
           <div className="mt-3 flex items-center gap-2 text-[13px] text-success">

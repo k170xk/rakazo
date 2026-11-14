@@ -89,6 +89,8 @@ export const EmailDraftSchema = z.object({
   cannotSend: z.string().nullable(),
   /** Link to open the created draft in Outlook on the web, when Outlook returned one. */
   outlookWebLink: z.string().nullable().optional(),
+  /** Outlook's id for the created draft, used to open it in the Outlook app. */
+  outlookMessageId: z.string().nullable().optional(),
   error: z.string().nullable(),
   sentAt: z.string().nullable(),
   createdAt: z.string(),

@@ -2,7 +2,7 @@ import { useLingui } from "@lingui/react/macro";
 import type { BoardItem } from "@rakazo/app-kit/ui";
 import { readBoard, Whiteboard } from "@rakazo/app-kit/ui";
 import type { PageDetail } from "@rakazo/contracts";
-import { whiteboardSelectionNote } from "@rakazo/contracts";
+import { openStudioNote } from "@rakazo/contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PageSession } from "../../lib/pages";
@@ -86,6 +86,7 @@ export function WhiteboardCanvas({
   const gen = useRef(0);
   const timer = useRef<number | null>(null);
   const itemsRef = useRef<BoardItem[]>(readBoard(code).items);
+  const selectedRef = useRef<string[]>([]);
   const assetCache = useRef(new Map<string, Promise<string | null>>());
   const [items, setItems] = useState<BoardItem[]>(() => readBoard(code).items);
   const [failed, setFailed] = useState(false);
@@ -161,6 +162,27 @@ export function WhiteboardCanvas({
     };
   }, [save]);
 
+  const publishLook = useCallback(() => {
+    const chosen = itemsRef.current.filter((item) => selectedRef.current.includes(item.id));
+    session.dock.set({
+      page: {
+        id: pageId,
+        title,
+        note: openStudioNote({
+          kind: "whiteboard",
+          title,
+          id: pageId,
+          blank: itemsRef.current.length === 0,
+          selection: chosen,
+        }),
+      },
+    });
+  }, [pageId, session, title]);
+
+  useEffect(() => {
+    publishLook();
+  }, [publishLook, items]);
+
   const onChange = useCallback(
     (value: { items: BoardItem[] }) => {
       const mine = ++gen.current;
@@ -185,11 +207,10 @@ export function WhiteboardCanvas({
 
   const onSelectionChange = useCallback(
     (ids: string[]) => {
-      const chosen = itemsRef.current.filter((item) => ids.includes(item.id));
-      const note = whiteboardSelectionNote(chosen);
-      session.dock.set({ page: { id: pageId, title, ...(note ? { note } : {}) } });
+      selectedRef.current = ids;
+      publishLook();
     },
-    [pageId, session, title],
+    [publishLook],
   );
 
   const onUploadImage = useCallback(

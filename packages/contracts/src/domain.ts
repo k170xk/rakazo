@@ -698,6 +698,9 @@ export const TodoPrioritySchema = z.enum(TODO_PRIORITIES);
 export type TodoPriority = z.infer<typeof TodoPrioritySchema>;
 export const TODO_TITLE_MAX = 300;
 export const TODO_NOTES_MAX = 8_000;
+export const TODO_LIST_TITLE_MAX = 80;
+/** Items with no list, and the list email routines already update. */
+export const PERSONAL_TODO_LIST = "personal";
 
 export const TodoSourceSchema = z.object({
   kind: z.enum(["email", "chat", "other"]),
@@ -732,6 +735,24 @@ export const CreateTodoItemInput = z.object({
   status: TodoStatusSchema.default("todo"),
   priority: TodoPrioritySchema.default("normal"),
   dueAt: z.string().datetime({ offset: true }).nullable().default(null),
+  /** Omit, or pass personal, for the day-to-day list. */
+  listId: z.string().trim().min(1).max(64).optional(),
+});
+
+export const TodoListSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  personal: z.boolean(),
+});
+export type TodoList = z.infer<typeof TodoListSchema>;
+
+export const CreateTodoListInput = z.object({
+  title: z.string().trim().min(1).max(TODO_LIST_TITLE_MAX),
+});
+
+export const RenameTodoListInput = z.object({
+  listId: z.string().trim().min(1).max(64),
+  title: z.string().trim().min(1).max(TODO_LIST_TITLE_MAX),
 });
 
 export const UpdateTodoItemInput = z.object({
@@ -2142,7 +2163,7 @@ export const CompanyFeaturesSchema = z.object({
   accountData: z.boolean(),
   /** Each person's own logins, cards, API keys and contacts, used by their assistants. */
   personalVault: z.boolean(),
-  /** Staff write their own skills, browse skill packs and add them from GitHub. Admins always can. */
+  /** Staff write their own skills and add them from GitHub. Admins always can. Skill packs are not listed. */
   staffSkills: z.boolean(),
   /** Files attached to a chat are indexed with OpenAI so assistants search them by passage. */
   chatFileSearch: z.boolean(),

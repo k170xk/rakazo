@@ -1,6 +1,8 @@
-import { useLingui } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { PageDetail } from "@rakazo/contracts";
+import { PAGE_LIST_MAX_LIMIT } from "@rakazo/contracts";
 import {
+  Button,
   Dialog,
   DialogClose,
   DialogContent,
@@ -10,9 +12,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  Input,
 } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Check,
+  ChevronDown,
   Code2,
   Database,
   Ellipsis,
@@ -20,12 +25,14 @@ import {
   Loader2,
   MessageSquare,
   MousePointerClick,
+  Plus,
   Settings2,
   Share,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ownerAppSource } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
@@ -59,6 +66,8 @@ export function AppStudio({
   running = false,
   activity = [],
   onReply,
+  onSelectApp,
+  onBuild,
   returnFocus,
   compact = false,
   notice = null,
@@ -78,6 +87,10 @@ export function AppStudio({
   /** Latest messages and actions, shown while the chat panel is closed. */
   activity?: readonly StudioCard[];
   onReply?: (text: unknown) => void;
+  /** Switches the studio to another app this person owns. */
+  onSelectApp?: (pageId: string) => void;
+  /** Sends a new-app request into the chat beside the studio. */
+  onBuild?: (idea: string) => void;
   returnFocus?: () => boolean;
   compact?: boolean;
   notice?: ReactNode;
@@ -104,6 +117,21 @@ export function AppStudio({
   // Discarding an unsaved visual edit draws the app again from its code.
   const [redraws, setRedraws] = useState(0);
   const [problem, setProblem] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [idea, setIdea] = useState("");
+  const navigate = useNavigate();
+  const mine = useQuery({
+    ...queries.pages.list.queryOptions({ input: { kind: "app", limit: PAGE_LIST_MAX_LIMIT } }),
+    enabled: open,
+  });
+  const published = useQuery({
+    ...queries.pages.published.queryOptions(),
+    enabled: open,
+  });
+  const ownApps = mine.data?.items ?? [];
+  const companyApps = (published.data?.items ?? []).filter(
+    (app) => !ownApps.some((own) => own.id === app.id),
+  );
   const pageId = page?.id ?? null;
   const source = useMemo(
     () => (pageId ? ownerAppSource(queries, pageId, ownerName) : null),
@@ -185,6 +213,16 @@ export function AppStudio({
     onReply?.(`In ${selected.loc}, ${what}: `);
   }
 
+  function build(event: { preventDefault: () => void }) {
+    event.preventDefault();
+    const next = idea.trim();
+    if (!next) return;
+    setIdea("");
+    setAsking(false);
+    setChatOpen(true);
+    onBuild?.(next);
+  }
+
   function stopEditing(saved: boolean) {
     if (!saved && patch) setRedraws((count) => count + 1);
     setPatch(null);
@@ -203,35 +241,111 @@ export function AppStudio({
   ];
   const control =
     "grid shrink-0 place-items-center rounded-full border border-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring aria-pressed:bg-primary/15 aria-pressed:text-primary";
-  const size = compact ? "size-11" : "size-[35px]";
   const docked = chatOpen && Boolean(chat) && page !== undefined;
   const showActivity = Boolean(composer) && !docked && (running || activity.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={(next) => onOpenChange(next)}>
       <DialogContent
+        overlay={false}
         showCloseButton={false}
         initialFocus={closeButton}
         finalFocus={returnFocus}
         data-testid="app-studio"
-        className="top-0 left-0 block h-dvh w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-background p-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)] ring-0 sm:max-w-none data-open:duration-[260ms] data-open:zoom-in-[0.98] data-open:slide-in-from-bottom-3 data-closed:duration-150 motion-reduce:data-open:zoom-in-100"
+        className="overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)]"
       >
         {/* Absolute children ignore the dialog's safe-area padding, so they sit in this box. */}
         <div className="relative size-full">
-          <header className="absolute inset-x-0 top-0 z-10 flex h-[48px] items-center gap-2 px-2.5 max-sm:gap-1 max-sm:px-1.5">
+          <header className="absolute inset-x-0 top-0 z-10 flex h-12 items-center gap-1.5 overflow-hidden border-b border-border bg-muted px-2.5 max-sm:gap-1 max-sm:px-1.5 sm:gap-2">
             <DialogClose
               ref={closeButton}
               aria-label={t`Close app`}
-              className={`${control} ${size}`}
+              className={`${control} size-[35px]`}
             >
               <X className="size-[18px]" strokeWidth={1.7} />
             </DialogClose>
-            {page?.icon ? (
-              <AppIcon pageId={page.id} icon={page.icon} className="size-8 max-sm:hidden" />
-            ) : null}
-            <DialogTitle className="min-w-0 flex-1 truncate px-1 text-[14px] leading-5 font-medium text-foreground">
-              {page?.title ?? t`App`}
-            </DialogTitle>
+            <button
+              type="button"
+              data-testid="app-new"
+              data-haptic="tap"
+              aria-label={t`New app`}
+              title={t`New app`}
+              onClick={() => {
+                setAsking(true);
+                setChatOpen(true);
+              }}
+              className={`${control} size-[35px]`}
+            >
+              <Plus className="size-[18px]" strokeWidth={1.7} />
+            </button>
+            <DialogTitle className="sr-only">{page?.title ?? t`Apps`}</DialogTitle>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                data-testid="app-switcher"
+                render={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-w-0 max-w-[38vw] gap-1.5 font-medium sm:max-w-[280px]"
+                  />
+                }
+              >
+                {page?.icon ? (
+                  <AppIcon pageId={page.id} icon={page.icon} className="size-5" />
+                ) : null}
+                <span className="truncate">{page?.title ?? t`Apps`}</span>
+                <ChevronDown className="size-3.5 shrink-0 opacity-65" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-72">
+                {ownApps.map((app) => (
+                  <DropdownMenuItem
+                    key={app.id}
+                    onClick={() => onSelectApp?.(app.id)}
+                    className="flex items-center gap-2"
+                  >
+                    <AppIcon
+                      pageId={app.id}
+                      icon={app.icon}
+                      className="size-5"
+                      fallback={<span className="size-5 shrink-0 rounded-md bg-muted" />}
+                    />
+                    <span className="min-w-0 flex-1 truncate">{app.title}</span>
+                    {app.id === page?.id ? (
+                      <Check className="size-4 shrink-0 text-primary" />
+                    ) : null}
+                  </DropdownMenuItem>
+                ))}
+                {companyApps.length ? (
+                  <>
+                    {ownApps.length ? <DropdownMenuSeparator /> : null}
+                    <div className="px-2 py-1.5 text-[12px] font-medium text-muted-foreground">
+                      <Trans>Company</Trans>
+                    </div>
+                    {companyApps.map((app) => (
+                      <DropdownMenuItem
+                        key={app.id}
+                        disabled={!app.path}
+                        onClick={() => {
+                          if (!app.path) return;
+                          onOpenChange(false);
+                          navigate(app.path);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <AppIcon
+                          pageId={app.id}
+                          icon={app.icon}
+                          className="size-5"
+                          fallback={<span className="size-5 shrink-0 rounded-md bg-muted" />}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{app.title}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div className="min-w-0 flex-1" />
             {running ? (
               <button
                 type="button"
@@ -245,43 +359,11 @@ export function AppStudio({
             ) : null}
             {page ? (
               <>
-                {chat ? (
-                  <button
-                    type="button"
-                    aria-pressed={chatOpen}
-                    data-haptic="select"
-                    title={t`Show the chat beside the app`}
-                    aria-label={t`Chat`}
-                    onClick={() => {
-                      setChatOpen((on) => !on);
-                      if (compact) setPanel(null);
-                    }}
-                    className={`${control} ${size}`}
-                  >
-                    <MessageSquare className="size-[18px]" strokeWidth={1.7} />
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  aria-pressed={picking}
-                  data-haptic="select"
-                  title={t`Point at something in the app to change it`}
-                  aria-label={t`Select an element`}
-                  onClick={() => {
-                    setPicking((on) => !on);
-                    setTagsWanted(true);
-                    stopEditing(false);
-                    if (compact) setPanel(null);
-                  }}
-                  className={`${control} ${size} max-sm:hidden`}
-                >
-                  <MousePointerClick className="size-[18px]" strokeWidth={1.7} />
-                </button>
                 {onShare ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       aria-label={t`More`}
-                      className={`${control} ${size} data-popup-open:bg-foreground/[0.06] sm:hidden`}
+                      className={`${control} size-[35px] data-popup-open:bg-foreground/[0.06] sm:hidden`}
                     >
                       <Ellipsis className="size-[18px]" strokeWidth={1.7} />
                     </DropdownMenuTrigger>
@@ -329,14 +411,51 @@ export function AppStudio({
                 </nav>
               </>
             ) : null}
+            {page ? (
+              <button
+                type="button"
+                aria-pressed={picking}
+                data-haptic="select"
+                title={t`Point at something in the app to change it`}
+                aria-label={t`Select an element`}
+                onClick={() => {
+                  setPicking((on) => !on);
+                  setTagsWanted(true);
+                  stopEditing(false);
+                  if (compact) setPanel(null);
+                }}
+                className={`${control} size-[35px] max-sm:hidden`}
+              >
+                <MousePointerClick className="size-[18px]" strokeWidth={1.7} />
+              </button>
+            ) : null}
             {onShare ? (
               // On phones the More menu opens Share; its popover still anchors to this hidden spot.
-              <div className="max-sm:invisible max-sm:absolute max-sm:end-1.5 max-sm:top-1/2 max-sm:-translate-y-1/2">
+              <div className="max-sm:invisible max-sm:absolute max-sm:end-12 max-sm:top-1/2 max-sm:-translate-y-1/2">
                 {share}
               </div>
             ) : (
               share
             )}
+            {chat ? (
+              <button
+                type="button"
+                aria-pressed={chatOpen}
+                data-haptic="select"
+                title={t`Show the chat beside the app`}
+                aria-label={t`Chat`}
+                onClick={() => {
+                  setChatOpen((on) => !on);
+                  if (compact) setPanel(null);
+                }}
+                className={`${control} relative size-[35px]`}
+              >
+                <MessageSquare className="size-[18px]" strokeWidth={1.7} />
+                {running && !chatOpen ? (
+                  <span className="absolute end-1 top-1 size-2 rounded-full bg-primary" />
+                ) : null}
+              </button>
+            ) : null}
           </header>
           <div
             className={`absolute inset-x-0 top-[48px] flex ${composer && !docked ? studioChromeClass(false, showActivity) : "bottom-0"}`}
@@ -350,7 +469,7 @@ export function AppStudio({
                 <div className="shrink-0 px-2 pb-2">{composer}</div>
               </aside>
             ) : null}
-            <section aria-label={page?.title} className="relative min-w-0 flex-1">
+            <section aria-label={page?.title ?? t`Apps`} className="relative min-w-0 flex-1">
               {notice ??
                 (page && source ? (
                   <>
@@ -448,7 +567,14 @@ export function AppStudio({
                       </div>
                     ) : null}
                   </>
-                ) : null)}
+                ) : (
+                  <AppStudioBlank asking={asking} idea={idea} onIdea={setIdea} onBuild={build} />
+                ))}
+              {asking && page ? (
+                <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 px-6">
+                  <BuildPrompt idea={idea} onIdea={setIdea} onBuild={build} />
+                </div>
+              ) : null}
             </section>
             {page && panel ? (
               <aside
@@ -511,5 +637,74 @@ export function AppStudio({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function AppStudioBlank({
+  asking,
+  idea,
+  onIdea,
+  onBuild,
+}: {
+  asking: boolean;
+  idea: string;
+  onIdea: (idea: string) => void;
+  onBuild: (event: { preventDefault: () => void }) => void;
+}) {
+  return (
+    <div className="flex h-full items-center justify-center px-6 pb-24">
+      <div className="flex w-full max-w-[440px] flex-col items-center text-center">
+        <img
+          src="/apps/studio-blank.png"
+          alt=""
+          draggable={false}
+          className="mb-4 h-auto w-auto max-w-full object-contain"
+          style={{ maxHeight: "min(260px, 32vh)" }}
+        />
+        <p className="text-[15px] font-medium tracking-tight text-foreground">
+          <Trans>A place to build the work you do</Trans>
+        </p>
+        <p className="mt-1.5 text-sm leading-5 text-muted-foreground">
+          <Trans>Calendars, checklists, charts, maps and registers, kept inside Evolve.</Trans>
+        </p>
+        {asking ? (
+          <BuildPrompt idea={idea} onIdea={onIdea} onBuild={onBuild} />
+        ) : (
+          <p className="mt-3 text-sm leading-5 text-foreground/75">
+            <Trans>Type what you want to create, and it will be built here.</Trans>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BuildPrompt({
+  idea,
+  onIdea,
+  onBuild,
+}: {
+  idea: string;
+  onIdea: (idea: string) => void;
+  onBuild: (event: { preventDefault: () => void }) => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <form onSubmit={onBuild} className="mt-4 flex w-full max-w-sm flex-col gap-2 text-start">
+      <label htmlFor="app-idea" className="text-[13px] font-medium text-foreground">
+        <Trans>What do you want to build?</Trans>
+      </label>
+      <Input
+        id="app-idea"
+        autoFocus
+        value={idea}
+        maxLength={500}
+        placeholder={t`A site diary for the visits I make`}
+        onChange={(event) => onIdea(event.target.value)}
+      />
+      <Button type="submit" disabled={!idea.trim()} className="self-end">
+        <Trans>Build it</Trans>
+      </Button>
+    </form>
   );
 }

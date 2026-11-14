@@ -14,6 +14,8 @@ vi.mock("@lingui/react/macro", () => ({
     i18n: { locale: "en" },
   }),
   Trans: ({ children }: { children: ReactNode }) => children,
+  Plural: ({ value, one, other }: { value: number; one: string; other: string }) =>
+    (value === 1 ? one : other).replaceAll("#", String(value)),
 }));
 
 vi.mock("@rakazo/ui-web", async (importOriginal) => ({
@@ -223,7 +225,7 @@ it("leaves chat behaviour to the company admin", async () => {
   }
 });
 
-it("shows usage totals and a per-model breakdown", async () => {
+it("shows staff usage without costs or the stored model name", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const container = document.createElement("div");
   const root = createRoot(container);
@@ -265,16 +267,61 @@ it("shows usage totals and a per-model breakdown", async () => {
     expect([...container.querySelectorAll("dd")].map((node) => node.textContent)).toEqual([
       "2",
       "1,234",
-      "$0.50",
     ]);
+    expect(container.textContent).not.toContain("$0.50");
+    expect(container.textContent).not.toContain("model-a");
+    expect(container.textContent).not.toContain("openai");
     expect(
       [...container.querySelectorAll("tbody tr")].map((row) =>
         [...row.querySelectorAll("td")].map((cell) => cell.textContent),
       ),
-    ).toEqual([
-      ["model-aopenai", "2", "1,000", "30", "$0.50"],
-      ["model-blocal", "1", "200", "4", "—"],
+    ).toEqual([["GPT-6 Astra", "3", "1,200", "34"]]);
+  } finally {
+    await act(async () => root.unmount());
+    vi.unstubAllGlobals();
+  }
+});
+
+it("hides cost from everyone, including an admin", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(
+        <UsageSettingsPanel
+          usage={{
+            runs: 2,
+            inputTokens: 1200,
+            outputTokens: 34,
+            totalTokens: 1234,
+            costUsd: 0.5,
+            unmeasuredCalls: 1,
+            modelCalls: 3,
+            models: [
+              {
+                provider: "openai",
+                model: "model-a",
+                modelCalls: 3,
+                inputTokens: 1200,
+                outputTokens: 34,
+                totalTokens: 1234,
+                costUsd: 0.5,
+              },
+            ],
+          }}
+        />,
+      ),
+    );
+    expect([...container.querySelectorAll("dd")].map((node) => node.textContent)).toEqual([
+      "2",
+      "1,234",
     ]);
+    expect(container.textContent).toContain("GPT-6 Astra");
+    expect(container.textContent).not.toContain("$0.50");
+    expect(container.textContent).not.toContain("Cost");
+    expect(container.textContent).not.toContain("reported no cost");
+    expect(container.textContent).not.toContain("model-a");
   } finally {
     await act(async () => root.unmount());
     vi.unstubAllGlobals();

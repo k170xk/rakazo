@@ -16,9 +16,7 @@ import { findSpaceMemoryConfig, IsolationError } from "@rakazo/db";
 import { requireCompanyFeature } from "../company-admin.js";
 import {
   disconnectMemoryProvider,
-  persistMemoryProviderConfig,
   serializeSpaceMemoryConfig,
-  updateMemoryProviderDefaultScope,
 } from "../memory-provider-config.js";
 import type { RouterContext } from "./context.js";
 
@@ -183,12 +181,16 @@ export function memoryRoutes(ctx: RouterContext) {
         const config = await findSpaceMemoryConfig(deps.prisma, context.actor.spaceId);
         return config ? serializeSpaceMemoryConfig(config) : null;
       }),
-      connectProvider: authed.memory.connectProvider.handler(async ({ context, input }) =>
-        persistMemoryProviderConfig(deps, context.actor, input),
-      ),
-      setDefaultScope: authed.memory.setDefaultScope.handler(async ({ context, input }) =>
-        updateMemoryProviderDefaultScope(deps, context.actor, input.defaultMemoryScope),
-      ),
+      connectProvider: authed.memory.connectProvider.handler(async () => {
+        throw new ORPCError("FORBIDDEN", {
+          message: "External memory providers are turned off.",
+        });
+      }),
+      setDefaultScope: authed.memory.setDefaultScope.handler(async () => {
+        throw new ORPCError("FORBIDDEN", {
+          message: "External memory providers are turned off.",
+        });
+      }),
       disconnectProvider: authed.memory.disconnectProvider.handler(async ({ context }) =>
         disconnectMemoryProvider(deps, context.actor),
       ),

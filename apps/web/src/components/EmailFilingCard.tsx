@@ -2,12 +2,21 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   EmailFilingBatch,
   EmailFilingItem,
+  EmailFilingProfile,
   EmailFilingProject,
   EmailFilingRetarget,
 } from "@rakazo/contracts";
 import { Button, cn, Input, NativeSelect, NativeSelectOption, Spinner } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, FolderInput, FolderPlus, Paperclip, Undo2 } from "lucide-react";
+import {
+  ArrowRight,
+  BookMarked,
+  ExternalLink,
+  FolderInput,
+  FolderPlus,
+  Paperclip,
+  Undo2,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
@@ -21,6 +30,35 @@ const selectable = (item: EmailFilingItem) =>
 export function tabOf(item: EmailFilingItem): Tab {
   if (item.status === "filed" || item.status === "skipped" || item.status === "gone") return "done";
   return item.ready ? "ready" : "decide";
+}
+
+/** Name and address from "Ada Lovelace <ada@example.com>", or the whole string when it is already an address. */
+export function filingSender(from: string): { address: string; name: string | null } {
+  const match = /^(.*?)\s*<([^>]+)>\s*$/.exec(from.trim());
+  if (!match?.[2]) return { address: from.trim(), name: null };
+  const address = match[2].trim();
+  const name = match[1]?.trim() ?? "";
+  return { address, name: name && name.toLowerCase() !== address.toLowerCase() ? name : null };
+}
+
+/** The folder the email is heading to, split so the destination itself is the line you read. */
+function filingDestination(
+  item: EmailFilingItem,
+): { parents: string; leaf: string; path: string } | null {
+  const path =
+    item.status === "filed" && item.filedPath
+      ? item.filedPath
+      : item.target?.kind === "project"
+        ? `${item.target.parentPath} › ${item.target.folderName}`
+        : item.target?.kind === "folder"
+          ? item.target.path
+          : null;
+  if (!path) return null;
+  const parts = path
+    .split(" › ")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return { parents: parts.slice(0, -1).join(" › "), leaf: parts.at(-1) ?? path, path };
 }
 
 /** Only Outlook's own https links open from the card. */
@@ -84,6 +122,7 @@ function FilingBoard({
   const [picking, setPicking] = useState<string | null>(null);
   const [busy, setBusy] = useState<"file" | "skip" | "undo" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [memoryOpen, setMemoryOpen] = useState(false);
 
   useEffect(() => {
     setSelected((current) => {
@@ -152,10 +191,19 @@ function FilingBoard({
         <p className="min-w-0 flex-1 font-medium">
           <Trans>File Outlook email</Trans>
         </p>
+        <Button
+          variant="ghost"
+          size="xs"
+          aria-expanded={memoryOpen}
+          onClick={() => setMemoryOpen((open) => !open)}
+        >
+          <BookMarked size={12} /> <Trans>Memory</Trans>
+        </Button>
         <span className="text-[12.5px] text-muted-foreground">
           <Trans>Ready at {batch.threshold}%</Trans>
         </span>
       </div>
+      {memoryOpen ? <FilingMemory /> : null}
       {batch.cannotFile ? (
         <p role="status" className="border-b border-border bg-muted/50 px-4 py-2 text-[13px]">
           {batch.cannotFile}
@@ -198,38 +246,22 @@ function FilingBoard({
                 {tab !== "done" ? (
                   <input
                     type="checkbox"
-                    className="mt-1 size-4 shrink-0 accent-primary"
+                    className="mt-3.5 size-4 shrink-0 accent-primary"
                     aria-label={t`Select ${item.subject}`}
                     checked={selected.has(item.id)}
                     disabled={!selectable(item) || locked}
                     onChange={(event) => toggle(item.id, event.target.checked)}
                   />
                 ) : null}
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex items-start gap-2">
-                    <p className="min-w-0 flex-1 truncate font-medium" title={item.subject}>
-                      {item.subject}
-                    </p>
-                    <ConfidencePill value={item.confidence} threshold={batch.threshold} />
-                  </div>
-                  <p className="truncate text-[12.5px] text-muted-foreground">
-                    {item.from}
-                    {item.receivedAt
-                      ? ` · ${i18n.date(new Date(item.receivedAt), { dateStyle: "medium" })}`
-                      : ""}
-                    {item.source === "sentitems" ? ` · ${t`Sent`}` : ""}
-                    {item.hasAttachments ? (
-                      <Paperclip
-                        size={12}
-                        className="ms-1 inline align-[-1px]"
-                        aria-label={t`Has attachments`}
-                      />
-                    ) : null}
-                  </p>
-                  <TargetLine item={item} />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <FilingRoute
+                    item={item}
+                    threshold={batch.threshold}
+                    dateLabel={dateLabel(i18n, item.receivedAt)}
+                  />
                   {item.reason || item.evidence.length ? (
                     <details className="text-[12.5px] text-muted-foreground">
-                      <summary className="cursor-pointer select-none">
+                      <summary className="cursor-pointer select-none truncate">
                         {item.reason || t`Why`}
                       </summary>
                       <ul className="mt-1 list-disc space-y-0.5 ps-5">
@@ -242,7 +274,7 @@ function FilingBoard({
                   {item.error ? (
                     <p className="text-[12.5px] text-destructive">{item.error}</p>
                   ) : null}
-                  <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                  <div className="flex flex-wrap items-center gap-1">
                     {outlookLink(item.webLink) ? (
                       <a
                         href={outlookLink(item.webLink) ?? undefined}
@@ -366,6 +398,158 @@ function FilingBoard({
   );
 }
 
+function FilingMemory() {
+  const { t } = useLingui();
+  const queries = useSpaceQueries();
+  const queryClient = useQueryClient();
+  const options = queries.emailFiling.settings.get.queryOptions({ input: {} });
+  const profile = useQuery(options);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function keep(next: EmailFilingProfile) {
+    queryClient.setQueryData(options.queryKey, next);
+  }
+
+  async function remember() {
+    const value = text.trim();
+    if (value.length < 3) return;
+    setBusy(true);
+    setError(null);
+    try {
+      keep(await rpc.emailFiling.settings.remember({ text: value }));
+      setText("");
+    } catch (err) {
+      setError(errorText(err, t`Could not save this instruction`));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function forget(kind: "memory" | "rule", id: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      keep(
+        kind === "memory"
+          ? await rpc.emailFiling.settings.forgetMemory({ memoryId: id })
+          : await rpc.emailFiling.settings.removeRule({ ruleId: id }),
+      );
+    } catch (err) {
+      setError(errorText(err, t`Could not forget that`));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const memories = profile.data?.memories ?? [];
+  const rules = profile.data?.rules ?? [];
+
+  return (
+    <div className="space-y-2 border-b border-border bg-muted/40 px-4 py-3">
+      <p className="font-medium">
+        <Trans>What filing remembers</Trans>
+      </p>
+      <p className="text-[12.5px] text-muted-foreground">
+        <Trans>
+          Filing reads these the next time it chooses a folder. An instruction guides that choice. A
+          sender, domain or conversation rule is ready on its own.
+        </Trans>
+      </p>
+      <form
+        className="flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void remember();
+        }}
+      >
+        <Input
+          aria-label={t`Add an instruction filing should follow`}
+          placeholder={t`Graduate applications from careers@ go in Inbox › HR`}
+          value={text}
+          disabled={busy}
+          onChange={(event) => setText(event.target.value)}
+        />
+        <Button type="submit" size="sm" disabled={busy || text.trim().length < 3}>
+          {busy ? <Spinner /> : <Trans>Remember</Trans>}
+        </Button>
+      </form>
+      {profile.isPending ? <Spinner /> : null}
+      {profile.isError ? (
+        <p className="text-[12.5px] text-destructive">
+          {errorText(profile.error, t`Could not load what filing remembers`)}
+        </p>
+      ) : null}
+      {profile.data && memories.length === 0 && rules.length === 0 ? (
+        <p className="text-[12.5px] text-muted-foreground">
+          <Trans>Nothing remembered yet.</Trans>
+        </p>
+      ) : null}
+      {memories.length > 0 ? (
+        <MemoryList
+          title={t`Instructions`}
+          items={memories.map((memory) => ({ id: memory.id, label: memory.text }))}
+          busy={busy}
+          onForget={(id) => void forget("memory", id)}
+        />
+      ) : null}
+      {rules.length > 0 ? (
+        <MemoryList
+          title={t`Rules`}
+          items={rules.map((rule) => ({
+            id: rule.id,
+            label: `${rule.label} → ${rule.folderPath}`,
+          }))}
+          busy={busy}
+          onForget={(id) => void forget("rule", id)}
+        />
+      ) : null}
+      {error ? <p className="text-[12.5px] text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
+function MemoryList({
+  title,
+  items,
+  busy,
+  onForget,
+}: {
+  title: string;
+  items: Array<{ id: string; label: string }>;
+  busy: boolean;
+  onForget: (id: string) => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <div className="space-y-1">
+      <p className="text-[11.5px] font-medium uppercase tracking-wide text-muted-foreground">
+        {title}
+      </p>
+      <ul className="flex flex-wrap gap-1.5">
+        {items.map((item) => (
+          <li
+            key={item.id}
+            className="flex max-w-full items-center gap-1 rounded-full bg-background px-2.5 py-1 text-[12.5px]"
+          >
+            <span className="min-w-0 break-words">{item.label}</span>
+            <button
+              type="button"
+              className="shrink-0 text-muted-foreground hover:text-foreground"
+              aria-label={t`Forget ${item.label}`}
+              disabled={busy}
+              onClick={() => onForget(item.id)}
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ConfidencePill({ value, threshold }: { value: number; threshold: number }) {
   const { t } = useLingui();
   return (
@@ -377,7 +561,7 @@ function ConfidencePill({ value, threshold }: { value: number; threshold: number
           ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
           : value >= 70
             ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-            : "bg-muted text-muted-foreground",
+            : "bg-background text-muted-foreground",
       )}
     >
       {value}%
@@ -385,49 +569,94 @@ function ConfidencePill({ value, threshold }: { value: number; threshold: number
   );
 }
 
-function TargetLine({ item }: { item: EmailFilingItem }) {
-  if (item.status === "filed" && item.filedPath) {
-    return (
-      <p className="flex items-center gap-1 text-[12.5px]">
-        <FolderInput size={12} className="shrink-0" />
-        <span className="truncate">
-          <Trans>Filed in {item.filedPath}</Trans>
-        </span>
-      </p>
-    );
-  }
-  if (item.status === "skipped") {
-    return (
-      <p className="text-[12.5px] text-muted-foreground">
-        <Trans>Skipped; left where it is.</Trans>
-      </p>
-    );
-  }
-  if (!item.target) {
-    return (
-      <p className="text-[12.5px] text-muted-foreground">
-        <Trans>No folder suggested.</Trans>
-      </p>
-    );
-  }
-  if (item.target.kind === "project") {
-    const path = `${item.target.parentPath} › ${item.target.folderName}`;
-    return (
-      <p className="flex items-center gap-1 text-[12.5px]">
-        <FolderPlus size={12} className="shrink-0" />
-        <span className="truncate" title={path}>
-          <Trans>New folder: {path}</Trans>
-        </span>
-      </p>
-    );
-  }
+function dateLabel(
+  i18n: { date: (value: Date, options: { dateStyle: "medium" }) => string },
+  receivedAt: string | null,
+) {
+  return receivedAt ? i18n.date(new Date(receivedAt), { dateStyle: "medium" }) : null;
+}
+
+const pill = "flex min-w-0 flex-1 items-center gap-2 rounded-full bg-muted px-3 py-2";
+
+function FilingRoute({
+  item,
+  threshold,
+  dateLabel: when,
+}: {
+  item: EmailFilingItem;
+  threshold: number;
+  dateLabel: string | null;
+}) {
+  const { t } = useLingui();
+  const sender = filingSender(item.from);
+  const skipped = item.status === "skipped";
+  const filed = item.status === "filed" && Boolean(item.filedPath);
+  const creating = item.target?.kind === "project" && !filed;
+  const destination = skipped ? null : filingDestination(item);
+  const path = destination?.path ?? "";
+  const destinationLabel = skipped
+    ? t`Skipped; left where it is.`
+    : filed && item.filedPath
+      ? t`Filed in ${item.filedPath}`
+      : creating && destination
+        ? t`New folder: ${path}`
+        : destination
+          ? destination.path
+          : t`No folder suggested.`;
+
   return (
-    <p className="flex items-center gap-1 text-[12.5px]">
-      <FolderInput size={12} className="shrink-0" />
-      <span className="truncate" title={item.target.path}>
-        {item.target.path}
-      </span>
-    </p>
+    <div className="flex min-w-0 flex-col gap-1">
+      <div className={pill} title={item.from}>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12.5px] leading-5">
+            <span className="font-medium">{sender.address}</span>
+            {sender.name ? <span className="text-muted-foreground"> {sender.name}</span> : null}
+            {when ? <span className="text-muted-foreground"> · {when}</span> : null}
+            {item.source === "sentitems" ? (
+              <span className="text-muted-foreground"> · {t`Sent`}</span>
+            ) : null}
+            {item.hasAttachments ? (
+              <Paperclip
+                size={12}
+                className="ms-1 inline align-[-1px] text-muted-foreground"
+                aria-label={t`Has attachments`}
+              />
+            ) : null}
+          </p>
+          <p className="line-clamp-2 font-medium leading-5" title={item.subject}>
+            {item.subject}
+          </p>
+        </div>
+        <ConfidencePill value={item.confidence} threshold={threshold} />
+      </div>
+      <ArrowRight
+        size={16}
+        aria-hidden
+        className="mx-auto shrink-0 rotate-90 text-muted-foreground"
+      />
+      <div className={cn(pill, !destination && "text-muted-foreground")} title={destinationLabel}>
+        {creating ? (
+          <FolderPlus size={14} className="shrink-0" />
+        ) : (
+          <FolderInput size={14} className="shrink-0" />
+        )}
+        <div className="min-w-0 flex-1">
+          {destination?.parents ? (
+            <p className="truncate text-[11.5px] leading-4 text-muted-foreground">
+              {destination.parents}
+            </p>
+          ) : null}
+          <p className="line-clamp-2 font-medium leading-5">
+            {destination?.leaf ?? destinationLabel}
+          </p>
+          {creating ? (
+            <p className="truncate text-[11.5px] leading-4 text-muted-foreground">
+              <Trans>New folder</Trans>
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -3,9 +3,13 @@ import type { TodoOwner } from "@rakazo/adapters";
 import {
   archiveTodoItem,
   createTodoItem,
+  createTodoList,
   deleteTodoItem,
+  deleteTodoList,
   listTodoItems,
+  listTodoLists,
   moveTodoItem,
+  renameTodoList,
   restoreTodoItem,
   TodoNotFoundError,
   updateTodoItem,
@@ -35,8 +39,24 @@ export function todosRoutes(ctx: RouterContext) {
       list: authed.todos.list.handler(({ context, input }) =>
         listTodoItems(deps.prisma, owner(context.actor), {
           includeArchived: input.includeArchived ?? false,
+          listId: input.listId,
         }),
       ),
+      lists: authed.todos.lists.handler(({ context }) =>
+        listTodoLists(deps.prisma, owner(context.actor)),
+      ),
+      createList: authed.todos.createList.handler(({ context, input }) =>
+        guarded(() => createTodoList(deps.prisma, owner(context.actor), input.title)),
+      ),
+      renameList: authed.todos.renameList.handler(({ context, input }) =>
+        guarded(() =>
+          renameTodoList(deps.prisma, owner(context.actor), input.listId, input.title),
+        ),
+      ),
+      removeList: authed.todos.removeList.handler(async ({ context, input }) => {
+        await guarded(() => deleteTodoList(deps.prisma, owner(context.actor), input.listId));
+        return { ok: true as const };
+      }),
       create: authed.todos.create.handler(({ context, input }) =>
         guarded(() =>
           createTodoItem(deps.prisma, owner(context.actor), { ...input, origin: "user" }),

@@ -104,7 +104,8 @@ export function usePageDocument(
 
 type Dock = {
   node: HTMLElement | null;
-  page: { id: string; title: string; note?: string } | null;
+  /** A page, or a studio with nothing open yet (a note and no id). */
+  page: { id?: string; title?: string; note?: string } | null;
   /** Where the chat's transcript shows beside an open app, so its steps stay in view. */
   chat?: HTMLElement | null;
   /** The chat's bot is working on a reply. */
@@ -123,6 +124,9 @@ export function createPageSession() {
   let dock: Dock = { node: null, page: null };
   const dockListeners = new Set<() => void>();
   const replyListeners = new Set<(text: string) => void>();
+  const submitListeners = new Set<(text: string) => void>();
+  // The next send is a new app, so it is not attached to the app already open.
+  let plainSend = false;
   return {
     rememberOpener() {
       const element = document.activeElement;
@@ -180,13 +184,30 @@ export function createPageSession() {
         replyListeners.delete(listener);
       };
     },
+    /** Sends a new-app request as its own message, not as a change to the app that is open. */
+    submit(text: string) {
+      const clean = text.trim();
+      if (!clean || submitListeners.size === 0) return;
+      plainSend = true;
+      for (const listener of submitListeners) listener(clean);
+    },
+    subscribeSubmit(listener: (text: string) => void) {
+      submitListeners.add(listener);
+      return () => {
+        submitListeners.delete(listener);
+      };
+    },
     /** From the open page: reply to its card, or name the page if this chat has none. */
     send(
       text: string,
       messages: readonly { id: string; blocks: readonly MessageBlock[] }[],
       chosenReplyId?: string,
     ): { text: string; replyToMessageId?: string } {
-      return pageReply(text, messages, dock.page, chosenReplyId);
+      const fresh = plainSend;
+      plainSend = false;
+      // A new app is not a change to the one already open. A blank studio still says so.
+      const attached = fresh && dock.page?.id ? null : dock.page;
+      return pageReply(text, messages, attached, chosenReplyId);
     },
   };
 }

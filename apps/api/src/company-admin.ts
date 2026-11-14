@@ -81,7 +81,7 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   accountData: "Exporting, importing and deleting accounts is turned off for your company.",
   personalVault: "Personal vaults are turned off for your company.",
   staffSkills:
-    "Writing skills, browsing skill packs and adding them from GitHub is turned off for your company.",
+    "Writing skills and adding them from GitHub is turned off for your company.",
   chatFileSearch: "Searching chat files is turned off for your company.",
   outlookSend: "Outlook email drafts are not turned on for you.",
   outlookFiling: "Outlook email filing is not turned on for you.",

@@ -590,7 +590,7 @@ function CompanyFeaturesSection({
       id: "staffSkills",
       group: "people",
       label: t`Staff skills`,
-      description: t`Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch.`,
+      description: t`Staff can write their own skills and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch. Connectors stay on the list you enable.`,
     },
     {
       id: "personalVault",

@@ -24,6 +24,7 @@ model AiDataConsent {
 model User {
   aiDataConsents              AiDataConsent[]
   todoItems                   TodoItem[]
+  todoLists                   TodoList[]
   emailDrafts                 EmailDraft[]
   emailFilingBatches          EmailFilingBatch[]
   emailFilingProfiles         EmailFilingProfile[]
@@ -463,6 +464,7 @@ model Space {
   routines                    Routine[]
   scratchpadItems             ScratchpadItem[]
   todoItems                   TodoItem[]
+  todoLists                   TodoList[]
   emailDrafts                 EmailDraft[]
   emailFilingBatches          EmailFilingBatch[]
   emailFilingProfiles         EmailFilingProfile[]
@@ -1556,14 +1558,34 @@ model EmailFilingFolder {
   @@map("email_filing_folders")
 }
 
-/// A person's own to-do list, shared by all of their assistants and private to them. The
+/// One extra to-do list. Items with no list are the person's day-to-day Personal list,
+/// which email routines already update.
+model TodoList {
+  id        String     @id @default(cuid())
+  spaceId   String
+  space     Space      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     TodoItem[]
+
+  @@index([spaceId, userId])
+  @@map("todo_lists")
+}
+
+/// A person's own to-do item, private to them and shared by all of their assistants. The
 /// title, notes and source (such as the email it came from) are encrypted in `content`.
+/// No list means the day-to-day Personal list.
 model TodoItem {
   id          String    @id @default(cuid())
   spaceId     String
   space       Space     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listId      String?
+  list        TodoList? @relation(fields: [listId], references: [id], onDelete: Cascade)
   /// The assistant that added it, when one did.
   botId       String?
   bot         Bot?      @relation(fields: [botId], references: [id], onDelete: SetNull)
@@ -1586,6 +1608,7 @@ model TodoItem {
   updatedAt   DateTime  @updatedAt
 
   @@index([spaceId, userId, archivedAt, status, position])
+  @@index([spaceId, userId, listId])
   @@index([botId])
   @@map("todo_items")
 }

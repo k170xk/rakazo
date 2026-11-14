@@ -1,4 +1,4 @@
-import { Plural, Trans, useLingui } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { AccountSecurity, BotAvatarSet, UsageSummary } from "@rakazo/contracts";
 import {
   accountDisplay,
@@ -436,6 +436,20 @@ export function GeneralSettingsPanels({
   );
 }
 
+/** The name shown for every model on personal usage. The stored model stays unchanged. */
+const USAGE_MODEL_LABEL = "GPT-6 Astra";
+
+function sumUsage(values: (number | null | undefined)[]): number | null {
+  let total = 0;
+  let any = false;
+  for (const value of values) {
+    if (value == null) continue;
+    total += value;
+    any = true;
+  }
+  return any ? total : null;
+}
+
 export function UsageSettingsPanel({
   usage,
   panelRef,
@@ -445,23 +459,24 @@ export function UsageSettingsPanel({
 }) {
   const { t, i18n } = useLingui();
   const count = new Intl.NumberFormat(i18n.locale);
-  const usd = new Intl.NumberFormat(i18n.locale, {
-    style: "currency",
-    currency: "USD",
-  });
   const number = (value: number | null | undefined) => (value == null ? "—" : count.format(value));
-  const cost = (value: number | null | undefined) =>
-    value == null ? "—" : value > 0 && value < 0.01 ? `<${usd.format(0.01)}` : usd.format(value);
   const models = usage?.models ?? [];
+  const combined = models.length
+    ? {
+        modelCalls: models.reduce((total, row) => total + row.modelCalls, 0),
+        inputTokens: sumUsage(models.map((row) => row.inputTokens)),
+        outputTokens: sumUsage(models.map((row) => row.outputTokens)),
+      }
+    : null;
+  const stats = [
+    { label: t`Runs`, value: number(usage?.runs) },
+    { label: t`Tokens`, value: number(usage?.totalTokens) },
+  ];
   return (
     <div ref={panelRef} tabIndex={-1} data-testid="usage-settings" className="outline-none">
       {usage ? (
-        <dl className="grid grid-cols-3 gap-3">
-          {[
-            { label: t`Runs`, value: number(usage.runs) },
-            { label: t`Tokens`, value: number(usage.totalTokens) },
-            { label: t`Cost`, value: cost(usage.costUsd) },
-          ].map((stat) => (
+        <dl className="grid grid-cols-2 gap-3">
+          {stats.map((stat) => (
             <div key={stat.label} className="rounded-xl border border-border px-4 py-3">
               <dt className="text-[12.5px] text-muted-foreground">{stat.label}</dt>
               <dd className="mt-1 text-[18px] font-medium tabular-nums text-foreground">
@@ -471,16 +486,7 @@ export function UsageSettingsPanel({
           ))}
         </dl>
       ) : null}
-      {usage?.unmeasuredCalls ? (
-        <p className="mt-3 text-[12.5px] text-muted-foreground">
-          <Plural
-            value={usage.unmeasuredCalls}
-            one="# call reported no cost, usually because it failed before the model replied. It is not included in the totals."
-            other="# calls reported no cost, usually because they failed before the model replied. They are not included in the totals."
-          />
-        </p>
-      ) : null}
-      {models.length > 0 ? (
+      {combined ? (
         <div className="mt-4 rounded-xl border border-border px-2">
           <Table className="text-[13.5px]">
             <TableHeader>
@@ -497,30 +503,23 @@ export function UsageSettingsPanel({
                 <TableHead className="text-right text-muted-foreground">
                   <Trans>Output</Trans>
                 </TableHead>
-                <TableHead className="text-right text-muted-foreground">
-                  <Trans>Cost</Trans>
-                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {models.map((row) => (
-                <TableRow key={`${row.provider}:${row.model}`} className="hover:bg-transparent">
-                  <TableCell>
-                    <div className="text-foreground">{row.model}</div>
-                    <div className="text-[12px] text-muted-foreground">{row.provider}</div>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {number(row.modelCalls)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {number(row.inputTokens)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {number(row.outputTokens)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{cost(row.costUsd)}</TableCell>
-                </TableRow>
-              ))}
+              <TableRow className="hover:bg-transparent">
+                <TableCell>
+                  <div className="text-foreground">{USAGE_MODEL_LABEL}</div>
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {number(combined.modelCalls)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {number(combined.inputTokens)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {number(combined.outputTokens)}
+                </TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </div>

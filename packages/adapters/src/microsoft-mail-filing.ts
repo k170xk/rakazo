@@ -78,6 +78,7 @@ export interface OutlookMessageState {
   id: string;
   parentFolderId: string | null;
   webLink: string | null;
+  isRead: boolean;
 }
 
 /** Where the email is now, or null once it is deleted or no longer in this mailbox. */
@@ -86,13 +87,17 @@ export async function readMessageState(
   messageId: string,
 ): Promise<OutlookMessageState | null> {
   try {
-    const message = await graph.get<{ id: string; parentFolderId?: string; webLink?: string }>(
-      `/me/messages/${segment(messageId)}?$select=id,parentFolderId,webLink`,
-    );
+    const message = await graph.get<{
+      id: string;
+      parentFolderId?: string;
+      webLink?: string;
+      isRead?: boolean;
+    }>(`/me/messages/${segment(messageId)}?$select=id,parentFolderId,webLink,isRead`);
     return {
       id: message.id,
       parentFolderId: message.parentFolderId ?? null,
       webLink: message.webLink ?? null,
+      isRead: message.isRead === true,
     };
   } catch (error) {
     if (error instanceof OutlookFilingError && error.status === 404) return null;
@@ -114,6 +119,7 @@ export async function moveOutlookMessage(
     id: moved.id,
     parentFolderId: moved.parentFolderId ?? destinationId,
     webLink: moved.webLink ?? null,
+    isRead: true,
   };
 }
 

@@ -29,6 +29,7 @@ import {
 
 const OUTLOOK_FILING_TOOLS: ReadonlySet<string> = new Set([
   "outlook_filing_candidates",
+  "outlook_filing_remember",
   "outlook_propose_filing",
 ]);
 

@@ -11290,8 +11290,8 @@ msgid "Staff access to {0}"
 msgstr "Staff access to {0}"
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
-msgstr "Staff can write their own skills, browse skill packs and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch."
+msgid "Staff can write their own skills and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch. Connectors stay on the list you enable."
+msgstr "Staff can write their own skills and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch. Connectors stay on the list you enable."
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Staff limits"
@@ -14013,3 +14013,59 @@ msgstr "What filing remembers"
 #: src/components/EmailFilingCard.tsx
 msgid "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here. Instructions you add on a filing card show here too."
 msgstr "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here. Instructions you add on a filing card show here too."
+
+#: src/components/apps/AppStudio.tsx
+msgid "A place to build the work you do"
+msgstr "A place to build the work you do"
+
+#: src/components/apps/AppStudio.tsx
+msgid "A site diary for the visits I make"
+msgstr "A site diary for the visits I make"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Build it"
+msgstr "Build it"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Calendars, checklists, charts, maps and registers, kept inside Evolve."
+msgstr "Calendars, checklists, charts, maps and registers, kept inside Evolve."
+
+#: src/components/apps/AppStudio.tsx
+msgid "Company"
+msgstr "Company"
+
+#: src/components/apps/AppStudio.tsx
+msgid "New app"
+msgstr "New app"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Type what you want to create, and it will be built here."
+msgstr "Type what you want to create, and it will be built here."
+
+#: src/components/apps/AppStudio.tsx
+msgid "What do you want to build?"
+msgstr "What do you want to build?"
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not create that list."
+msgstr "Could not create that list."
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not delete that list."
+msgstr "Could not delete that list."
+
+#: src/components/todos/todo-board.tsx
+msgid "Could not rename that list."
+msgstr "Could not rename that list."
+
+#: src/components/todos/todo-board.tsx
+msgid "New to-do list"
+msgstr "New to-do list"
+
+#: src/components/todos/todo-board.tsx
+msgid "Show the chat beside the list"
+msgstr "Show the chat beside the list"
+
+#: src/components/todos/todo-board.tsx
+msgid "To-do list"
+msgstr "To-do list"

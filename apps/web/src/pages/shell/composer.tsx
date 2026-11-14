@@ -332,6 +332,14 @@ const ComposerBody = memo(function Composer({
       }),
     [pageSession, draftKey],
   );
+  // A new app from the studio is its own message, not a change to the app already open.
+  useEffect(
+    () =>
+      pageSession?.subscribeSubmit((text) => {
+        void onSend(text, [], newClientId());
+      }),
+    [pageSession, onSend],
+  );
   const [replyAnnouncement, setReplyAnnouncement] = useState("");
   // What the live region currently holds — a send disarming the reply clears
   // "reply" text, while an explicit cancel must keep "Reply cancelled".

@@ -1,5 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, Group, NavLink } from "@rakazo/contracts";
+import type { Bot, Group, NavLink, PageKind } from "@rakazo/contracts";
+import { PAGE_LIST_MAX_LIMIT } from "@rakazo/contracts";
 import { accountDisplay } from "@rakazo/core";
 import {
   Button,
@@ -21,8 +22,8 @@ import {
 } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { AppsDialog } from "../../components/apps/AppsDialog";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
@@ -39,7 +40,7 @@ import {
   switchOrganization,
   useOrganizations,
 } from "../../lib/organizations";
-import { useQueryUserId } from "../../lib/query";
+import { useQueryUserId, useSpaceQueries } from "../../lib/query";
 import type { Panel } from "../../lib/right-panel-state";
 import { rpc } from "../../lib/rpc";
 import { useSignOut } from "../../lib/sign-out";
@@ -96,6 +97,7 @@ export function ShellSidebar({
   openTour,
   openTodos,
   openWhiteboards,
+  openApps,
   openSpaceChat,
 }: {
   isMobile: boolean;
@@ -130,6 +132,7 @@ export function ShellSidebar({
   openTour: () => void;
   openTodos: () => void;
   openWhiteboards: () => void;
+  openApps: () => void;
   openSpaceChat: (spaceId: string, path: string) => void;
 }) {
   const { t } = useLingui();
@@ -316,7 +319,6 @@ export function ShellSidebar({
         <div className={mini ? "pt-2" : "pt-3"}>
           <SidebarPills
             mini={mini}
-            bots={bots}
             onOpenTodos={() => {
               setMobileOpen(false);
               openTodos();
@@ -325,9 +327,9 @@ export function ShellSidebar({
               setMobileOpen(false);
               openWhiteboards();
             }}
-            onNavigate={(path) => {
+            onOpenApps={() => {
               setMobileOpen(false);
-              navigate(path);
+              openApps();
             }}
           />
           <SidebarMeters mini={mini} onOpenStorage={() => setMobileOpen(false)} />
@@ -564,35 +566,23 @@ function ShellSidebarFooter({
   );
 }
 
-/** To do and Apps, as two pills. Apps opens the person's apps and published company apps. */
+/** To do, Apps and Board. Apps opens the studio; boards open the whiteboard studio. */
 function SidebarPills({
   mini,
-  bots,
   onOpenTodos,
   onOpenWhiteboards,
-  onNavigate,
+  onOpenApps,
 }: {
   mini: boolean;
-  bots: Bot[];
   onOpenTodos: () => void;
   onOpenWhiteboards: () => void;
-  onNavigate: (path: string) => void;
+  onOpenApps: () => void;
 }) {
   const { t } = useLingui();
   const { open, arrivals } = useTodoBadge();
   const celebrating = useCelebration(arrivals);
-  const [appsOpen, setAppsOpen] = useState(false);
-  const todoBadge =
-    open > 0 ? (
-      <span
-        key={arrivals}
-        className={`inline-block rounded-full bg-primary/15 px-1.5 text-xs font-medium text-primary ${
-          celebrating ? "rk-todo-pop bg-primary text-primary-foreground" : ""
-        }`}
-      >
-        {open}
-      </span>
-    ) : null;
+  const appCount = useOwnPageCount("app");
+  const boardCount = useOwnPageCount("whiteboard");
   if (mini) {
     return (
       <div className="flex flex-col items-center gap-1 px-1">
@@ -623,9 +613,11 @@ function SidebarPills({
             size="icon"
             aria-label={t`Apps`}
             data-testid="open-apps"
-            onClick={() => setAppsOpen(true)}
+            className="relative"
+            onClick={onOpenApps}
           >
             <AppWindow />
+            <CornerCount count={appCount} />
           </Button>
         </IconTooltip>
         <IconTooltip label={t`Board`}>
@@ -634,12 +626,13 @@ function SidebarPills({
             size="icon"
             aria-label={t`Board`}
             data-testid="open-whiteboards"
+            className="relative"
             onClick={onOpenWhiteboards}
           >
             <Presentation />
+            <CornerCount count={boardCount} />
           </Button>
         </IconTooltip>
-        <AppsDialog open={appsOpen} onOpenChange={setAppsOpen} bots={bots} onOpen={onNavigate} />
       </div>
     );
   }
@@ -650,52 +643,84 @@ function SidebarPills({
           type="button"
           data-testid="open-todo-list"
           onClick={onOpenTodos}
-          className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          className="relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
         >
           <ListTodo size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
           <span className="truncate">
             <Trans>To do</Trans>
           </span>
-          <span className="relative shrink-0">
-            {todoBadge}
-            {celebrating ? (
-              <>
-                <TodoStars key={arrivals} className="top-1/2 left-1/2" />
-                <span
-                  aria-hidden="true"
-                  className="rk-todo-plus pointer-events-none absolute -top-3 right-0 text-xs font-semibold text-primary"
-                >
-                  +1
-                </span>
-              </>
-            ) : null}
-          </span>
+          {open > 0 ? (
+            <span className="pointer-events-none absolute -top-1.5 -right-1 z-10">
+              <span
+                key={arrivals}
+                className={`grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground ${
+                  celebrating ? "rk-todo-pop" : ""
+                }`}
+              >
+                {open}
+              </span>
+              {celebrating ? (
+                <>
+                  <TodoStars key={arrivals} className="top-1/2 left-1/2" />
+                  <span
+                    aria-hidden="true"
+                    className="rk-todo-plus pointer-events-none absolute -top-3 right-0 text-xs font-semibold text-primary"
+                  >
+                    +1
+                  </span>
+                </>
+              ) : null}
+            </span>
+          ) : null}
         </button>
         <button
           type="button"
           data-testid="open-apps"
-          onClick={() => setAppsOpen(true)}
-          className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          onClick={onOpenApps}
+          className="relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
         >
           <AppWindow size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
           <span className="truncate">
             <Trans>Apps</Trans>
           </span>
+          <CornerCount count={appCount} />
         </button>
         <button
           type="button"
           data-testid="open-whiteboards"
           onClick={onOpenWhiteboards}
-          className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+          className="relative flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
         >
           <Presentation size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
           <span className="truncate">
             <Trans>Board</Trans>
           </span>
+          <CornerCount count={boardCount} />
         </button>
       </div>
-      <AppsDialog open={appsOpen} onOpenChange={setAppsOpen} bots={bots} onOpen={onNavigate} />
     </>
+  );
+}
+
+/** How many apps or boards this person has. The list caps at one page; a fuller list shows that cap with a plus. */
+function useOwnPageCount(kind: PageKind): string | null {
+  const queries = useSpaceQueries();
+  const list = useQuery({
+    ...queries.pages.list.queryOptions({ input: { kind, limit: PAGE_LIST_MAX_LIMIT } }),
+    staleTime: 60_000,
+  });
+  const loaded = list.data?.items.length ?? 0;
+  if (loaded === 0) return null;
+  return list.data?.nextCursor ? `${loaded}+` : String(loaded);
+}
+
+/** The same corner count the To do pill uses, sitting on the pill rather than in its label. */
+function CornerCount({ count }: { count: string | null }) {
+  if (!count) return null;
+  return (
+    <span className="pointer-events-none absolute -top-1.5 -right-1 z-10 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground">
+      {count}
+    </span>
   );
 }
 

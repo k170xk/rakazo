@@ -218,17 +218,10 @@ export default function Account() {
   }, []);
 
   const count = new Intl.NumberFormat(dateLocaleForUi(locale));
-  const usd = new Intl.NumberFormat(dateLocaleForUi(locale), {
-    style: "currency",
-    currency: "USD",
-  });
   const tokens = (value: number | null | undefined) => (value == null ? "—" : count.format(value));
-  const cost = (value: number | null | undefined) =>
-    value == null
-      ? undefined
-      : value > 0 && value < 0.01
-        ? `<${usd.format(0.01)}`
-        : usd.format(value);
+  const usageModels = usage?.models ?? [];
+  const usageCalls = usageModels.reduce((total, row) => total + row.modelCalls, 0);
+  const usageModelTokens = usageModels.reduce((total, row) => total + (row.totalTokens ?? 0), 0);
   const usageBlock = (
     <SettingsRow
       accessible
@@ -241,23 +234,18 @@ export default function Account() {
             })
           : undefined
       }
-      value={cost(usage?.costUsd)}
     />
   );
-  const usageModels = usage?.models?.length ? (
+  const usageModelsBlock = usageModels.length ? (
     <SettingsGroup>
-      {usage.models.map((row) => (
-        <SettingsRow
-          key={`${row.provider}:${row.model}`}
-          accessible
-          title={row.model}
-          detail={`${row.provider}, ${t("{calls} calls, {tokens} tokens", {
-            calls: count.format(row.modelCalls),
-            tokens: tokens(row.totalTokens),
-          })}`}
-          value={cost(row.costUsd)}
-        />
-      ))}
+      <SettingsRow
+        accessible
+        title="GPT-6 Astra"
+        detail={t("{calls} calls, {tokens} tokens", {
+          calls: count.format(usageCalls),
+          tokens: tokens(usageModelTokens),
+        })}
+      />
     </SettingsGroup>
   ) : null;
 
@@ -423,7 +411,7 @@ export default function Account() {
         {focus === "usage" ? (
           <>
             <SettingsGroup>{usageBlock}</SettingsGroup>
-            {usageModels}
+            {usageModelsBlock}
           </>
         ) : null}
         <SettingsGroup>

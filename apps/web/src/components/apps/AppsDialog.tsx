@@ -8,6 +8,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  Disclosure,
   Spinner,
 } from "@rakazo/ui-web";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -18,7 +19,6 @@ import {
   ChartColumn,
   Eye,
   Images,
-  LayoutGrid,
   ListTodo,
   Pencil,
   Sparkles,
@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { chatForPage } from "../../lib/app-chat";
-import { groupByAppCategory, type AppCategoryId } from "../../lib/app-category";
+import { categoryForAppTitle, type AppCategoryId } from "../../lib/app-category";
 import { APP_VIEW_PARAM, PAGE_PARAM } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import { formatRelativeTime } from "../../lib/relative-time";
@@ -48,8 +48,7 @@ type PublishedApp = {
 /**
  * The person's apps, plus apps colleagues published for the company. An own app opens full screen
  * to use, or in the editor. A company app opens only through its share link, which has no editor.
- * The top of the dialog is the story: apps stay inside Evolve, and the kit already covers the
- * kinds of screen staff ask for.
+ * A short banner sits above the apps. What an app can include stays folded until someone opens it.
  */
 export function AppsDialog({
   open,
@@ -179,65 +178,7 @@ export function AppsDialog({
             <Trans>Open one full screen, or edit an app you built.</Trans>
           </DialogDescription>
         </DialogHeader>
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pe-1">
-          <div className="flex h-[220px] items-center justify-center overflow-hidden rounded-2xl border border-border bg-[#F6F6F4] sm:h-[248px]">
-            <img
-              src="/apps/ecosystem-banner.png"
-              alt={t`One Evolve window holding a calendar, checklist, board, charts, a map and photos.`}
-              className="h-full w-full object-contain"
-            />
-          </div>
-          <section className="flex flex-col gap-2">
-            <h3 className="px-1 text-sm font-medium text-foreground">
-              <Trans>Quality for the client, speed for the work</Trans>
-            </h3>
-            <p className="px-1 text-[13px] leading-relaxed text-muted-foreground">
-              <Trans>
-                We want our staff to create apps and tools that make the work faster and more
-                efficient. That speed is there so the result for the client is better. Quality
-                comes before convenience.
-              </Trans>
-            </p>
-            <p className="px-1 text-[13px] leading-relaxed text-muted-foreground">
-              <Trans>
-                An OCSC app is containerized inside Evolve, in our own ecosystem. It uses the
-                company sign-in and the data we already trust, and it stays in that sandbox rather
-                than becoming a separate website.
-              </Trans>
-            </p>
-          </section>
-          <section className="flex flex-col gap-2">
-            <div className="px-1">
-              <h3 className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                <LayoutGrid className="size-3.5 text-primary" strokeWidth={1.8} />
-                <Trans>What an app can include</Trans>
-              </h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-                <Trans>
-                  These libraries are already switched on. Describe the job to an agent and it can
-                  use any of them on day one.
-                </Trans>
-              </p>
-            </div>
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {kits.map((kit) => (
-                <li
-                  key={kit.title}
-                  className="flex gap-2.5 rounded-2xl border border-border bg-background p-3"
-                >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                    <kit.icon className="size-4" strokeWidth={1.8} />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-foreground">{kit.title}</span>
-                    <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                      {kit.detail}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pe-1">
           {notice ? (
             <p role="status" className="text-[13px] text-muted-foreground">
               {notice}
@@ -262,56 +203,52 @@ export function AppsDialog({
                 </Trans>
               </p>
             ) : (
-              groupByAppCategory(apps, (page) => page.title).map((group) => (
-                <div key={group.id} className="flex flex-col gap-2">
-                  <ul className="flex flex-col gap-2">
-                    {group.items.map((page) => (
-                      <li key={page.id}>
-                        <AppCard
-                          title={page.title}
-                          category={categoryLabel(group.id)}
-                          detail={
-                            page.botId
-                              ? formatRelativeTime(page.updatedAt)
-                              : `${t`No agent`} · ${formatRelativeTime(page.updatedAt)}`
-                          }
-                          icon={
-                            <AppIcon
-                              pageId={page.id}
-                              icon={page.icon}
-                              className="size-10"
-                              fallback={
-                                <AppWindow className="size-5 text-primary" strokeWidth={1.7} />
-                              }
-                            />
-                          }
-                          actions={
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                data-testid="open-app-view"
-                                onClick={() => openMine(page, "view")}
-                              >
-                                <Eye className="size-3.5" strokeWidth={1.8} />
-                                <Trans>View</Trans>
-                              </Button>
-                              <Button
-                                size="sm"
-                                data-testid="open-app-edit"
-                                onClick={() => openMine(page, "edit")}
-                              >
-                                <Pencil className="size-3.5" strokeWidth={1.8} />
-                                <Trans>Edit</Trans>
-                              </Button>
-                            </>
+              <ul className="flex flex-col gap-2">
+                {apps.map((page) => (
+                  <li key={page.id}>
+                    <AppCard
+                      title={page.title}
+                      category={categoryLabel(categoryForAppTitle(page.title))}
+                      detail={
+                        page.botId
+                          ? formatRelativeTime(page.updatedAt)
+                          : `${t`No agent`} · ${formatRelativeTime(page.updatedAt)}`
+                      }
+                      icon={
+                        <AppIcon
+                          pageId={page.id}
+                          icon={page.icon}
+                          className="size-10"
+                          fallback={
+                            <AppWindow className="size-5 text-primary" strokeWidth={1.7} />
                           }
                         />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))
+                      }
+                      actions={
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            data-testid="open-app-view"
+                            onClick={() => openMine(page, "view")}
+                          >
+                            <Eye className="size-3.5" strokeWidth={1.8} />
+                            <Trans>View</Trans>
+                          </Button>
+                          <Button
+                            size="sm"
+                            data-testid="open-app-edit"
+                            onClick={() => openMine(page, "edit")}
+                          >
+                            <Pencil className="size-3.5" strokeWidth={1.8} />
+                            <Trans>Edit</Trans>
+                          </Button>
+                        </>
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
             )}
             {mine.hasNextPage ? (
               <Button
@@ -341,38 +278,81 @@ export function AppsDialog({
                 <Trans>Published company apps appear here.</Trans>
               </p>
             ) : (
-              groupByAppCategory(company, (app) => app.title).map((group) => (
-                <div key={group.id} className="flex flex-col gap-2">
-                  <ul className="flex flex-col gap-2">
-                    {group.items.map((app) => (
-                      <li key={app.id}>
-                        <AppCard
-                          title={app.title}
-                          category={categoryLabel(group.id)}
-                          detail={
-                            app.path
-                              ? app.owner
-                              : app.publishedToEvolve
-                                ? t`Published in Evolve`
-                                : app.owner
-                          }
-                          icon={<AppWindow className="size-5 text-primary" strokeWidth={1.7} />}
-                          actions={
-                            app.path ? (
-                              <Button size="sm" variant="outline" onClick={() => openCompany(app)}>
-                                <Eye className="size-3.5" strokeWidth={1.8} />
-                                <Trans>View</Trans>
-                              </Button>
-                            ) : null
-                          }
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))
+              <ul className="flex flex-col gap-2">
+                {company.map((app) => (
+                  <li key={app.id}>
+                    <AppCard
+                      title={app.title}
+                      category={categoryLabel(categoryForAppTitle(app.title))}
+                      detail={
+                        app.path
+                          ? app.owner
+                          : app.publishedToEvolve
+                            ? t`Published in Evolve`
+                            : app.owner
+                      }
+                      icon={<AppWindow className="size-5 text-primary" strokeWidth={1.7} />}
+                      actions={
+                        app.path ? (
+                          <Button size="sm" variant="outline" onClick={() => openCompany(app)}>
+                            <Eye className="size-3.5" strokeWidth={1.8} />
+                            <Trans>View</Trans>
+                          </Button>
+                        ) : null
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
+          <Disclosure
+            className="rounded-xl border border-border px-3 py-2.5"
+            summaryClassName="w-full text-sm font-medium text-foreground"
+            contentClassName="mt-3"
+            summary={<Trans>What an app can include</Trans>}
+          >
+            <div className="flex flex-col gap-3">
+              <p className="text-[13px] leading-relaxed text-muted-foreground">
+                <Trans>
+                  We want our staff to create apps and tools that make the work faster and more
+                  efficient. That speed is there so the result for the client is better. Quality
+                  comes before convenience.
+                </Trans>
+              </p>
+              <p className="text-[13px] leading-relaxed text-muted-foreground">
+                <Trans>
+                  An OCSC app is containerized inside Evolve, in our own ecosystem. It uses the
+                  company sign-in and the data we already trust, and it stays in that sandbox rather
+                  than becoming a separate website.
+                </Trans>
+              </p>
+              <p className="text-[13px] leading-relaxed text-muted-foreground">
+                <Trans>
+                  These libraries are already switched on. Describe the job to an agent and it can
+                  use any of them on day one.
+                </Trans>
+              </p>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {kits.map((kit) => (
+                  <li
+                    key={kit.title}
+                    className="flex gap-2.5 rounded-xl border border-border bg-background p-3"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <kit.icon className="size-4" strokeWidth={1.8} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-foreground">{kit.title}</span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                        {kit.detail}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Disclosure>
         </div>
       </DialogContent>
     </Dialog>

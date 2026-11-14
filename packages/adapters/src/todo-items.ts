@@ -1,9 +1,16 @@
-import type { TodoItem, TodoPriority, TodoSource, TodoStatus } from "@rakazo/contracts";
-import { TODO_NOTES_MAX, TODO_PRIORITIES, TODO_STATUSES, TODO_TITLE_MAX } from "@rakazo/contracts";
+import type { TodoItem, TodoList, TodoPriority, TodoSource, TodoStatus } from "@rakazo/contracts";
+import {
+  PERSONAL_TODO_LIST,
+  TODO_LIST_TITLE_MAX,
+  TODO_NOTES_MAX,
+  TODO_PRIORITIES,
+  TODO_STATUSES,
+  TODO_TITLE_MAX,
+} from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "@rakazo/db";
 
 export type TodoOwner = { spaceId: string; userId: string };
-type TodoPrisma = Pick<PrismaClient, "todoItem">;
+type TodoPrisma = Pick<PrismaClient, "todoItem" | "todoList">;
 
 const LABEL_MAX = 300;
 const LINK_MAX = 2_000;
@@ -95,14 +102,27 @@ function ownerWhere(owner: TodoOwner) {
   return { spaceId: owner.spaceId, userId: owner.userId };
 }
 
+/** Missing, empty or "personal" is the day-to-day list, stored as no list id. */
+export function todoListId(listId: string | null | undefined): string | null {
+  const trimmed = listId?.trim() ?? "";
+  if (!trimmed || trimmed === PERSONAL_TODO_LIST) return null;
+  return trimmed;
+}
+
 export async function listTodoItems(
   prisma: TodoPrisma,
   owner: TodoOwner,
-  options: { includeArchived?: boolean; status?: TodoStatus; includeDone?: boolean } = {},
+  options: {
+    includeArchived?: boolean;
+    status?: TodoStatus;
+    includeDone?: boolean;
+    listId?: string | null;
+  } = {},
 ): Promise<TodoItem[]> {
   const rows = await prisma.todoItem.findMany({
     where: {
       ...ownerWhere(owner),
+      listId: todoListId(options.listId),
       ...(options.includeArchived ? {} : { archivedAt: null }),
       ...(options.status
         ? { status: options.status }
@@ -127,9 +147,14 @@ export class TodoNotFoundError extends Error {
   }
 }
 
-async function topPosition(prisma: TodoPrisma, owner: TodoOwner, status: TodoStatus) {
+async function topPosition(
+  prisma: TodoPrisma,
+  owner: TodoOwner,
+  status: TodoStatus,
+  listId: string | null,
+) {
   const first = await prisma.todoItem.findFirst({
-    where: { ...ownerWhere(owner), status, archivedAt: null },
+    where: { ...ownerWhere(owner), listId, status, archivedAt: null },
     orderBy: { position: "asc" },
     select: { position: true },
   });
@@ -159,6 +184,7 @@ export interface TodoDraft {
   source?: Record<string, unknown> | null;
   origin: "user" | "ai";
   botId?: string | null;
+  listId?: string | null;
 }
 
 export async function createTodoItem(
@@ -168,6 +194,11 @@ export async function createTodoItem(
 ): Promise<TodoItem> {
   const title = text(draft.title, TODO_TITLE_MAX, "title");
   if (!title) throw new Error("title is required.");
+  const listId = todoListId(draft.listId);
+  if (listId) {
+    const list = await prisma.todoList.findFirst({ where: { id: listId, ...ownerWhere(owner) } });
+    if (!list) throw new TodoNotFoundError();
+  }
   const status = draft.status ?? "todo";
   const content: StoredContent = {
     title,
@@ -177,11 +208,12 @@ export async function createTodoItem(
   const row = await prisma.todoItem.create({
     data: {
       ...ownerWhere(owner),
+      listId,
       botId: draft.botId ?? null,
       content: content as unknown as Prisma.InputJsonValue,
       status,
       priority: draft.priority ?? "normal",
-      position: await topPosition(prisma, owner, status),
+      position: await topPosition(prisma, owner, status, listId),
       dueAt: dueDate(draft.dueAt) ?? null,
       origin: draft.origin,
       sourceKind: content.source?.kind ?? null,
@@ -226,7 +258,7 @@ export async function updateTodoItem(
       ...(moved && patch.status
         ? {
             status: patch.status,
-            position: await topPosition(prisma, owner, patch.status),
+            position: await topPosition(prisma, owner, patch.status, existing.listId),
             completedAt: patch.status === "done" ? new Date() : null,
           }
         : {}),
@@ -244,7 +276,12 @@ export async function moveTodoItem(
   const existing = await findOwned(prisma, owner, input.itemId);
   const column = (
     await prisma.todoItem.findMany({
-      where: { ...ownerWhere(owner), status: input.status, archivedAt: null },
+      where: {
+        ...ownerWhere(owner),
+        listId: existing.listId,
+        status: input.status,
+        archivedAt: null,
+      },
       orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       select: { id: true, position: true },
     })
@@ -306,6 +343,7 @@ export async function restoreTodoItem(prisma: TodoPrisma, owner: TodoOwner, item
         prisma,
         owner,
         isTodoStatus(existing.status) ? existing.status : "todo",
+        existing.listId,
       ),
     },
   });
@@ -316,4 +354,61 @@ export async function restoreTodoItem(prisma: TodoPrisma, owner: TodoOwner, item
 export async function deleteTodoItem(prisma: TodoPrisma, owner: TodoOwner, itemId: string) {
   const existing = await findOwned(prisma, owner, itemId);
   await prisma.todoItem.delete({ where: { id: existing.id } });
+}
+
+function listTitle(value: string): string {
+  const title = text(value, TODO_LIST_TITLE_MAX, "title");
+  if (!title) throw new Error("title is required.");
+  return title;
+}
+
+/** Personal first, then the lists this person has created. */
+export async function listTodoLists(prisma: TodoPrisma, owner: TodoOwner): Promise<TodoList[]> {
+  const rows = await prisma.todoList.findMany({
+    where: ownerWhere(owner),
+    orderBy: { createdAt: "asc" },
+  });
+  return [
+    { id: PERSONAL_TODO_LIST, title: "Personal", personal: true },
+    ...rows.map((row) => ({ id: row.id, title: row.title, personal: false })),
+  ];
+}
+
+export async function createTodoList(
+  prisma: TodoPrisma,
+  owner: TodoOwner,
+  title: string,
+): Promise<TodoList> {
+  const row = await prisma.todoList.create({
+    data: { ...ownerWhere(owner), title: listTitle(title) },
+  });
+  return { id: row.id, title: row.title, personal: false };
+}
+
+export async function renameTodoList(
+  prisma: TodoPrisma,
+  owner: TodoOwner,
+  listId: string,
+  title: string,
+): Promise<TodoList> {
+  if (todoListId(listId) === null) throw new Error("The personal list keeps its name.");
+  const existing = await prisma.todoList.findFirst({
+    where: { id: listId, ...ownerWhere(owner) },
+  });
+  if (!existing) throw new TodoNotFoundError();
+  const row = await prisma.todoList.update({
+    where: { id: existing.id },
+    data: { title: listTitle(title) },
+  });
+  return { id: row.id, title: row.title, personal: false };
+}
+
+/** Removes the list and the items on it. The personal list stays. */
+export async function deleteTodoList(prisma: TodoPrisma, owner: TodoOwner, listId: string) {
+  if (todoListId(listId) === null) throw new Error("The personal list stays.");
+  const existing = await prisma.todoList.findFirst({
+    where: { id: listId, ...ownerWhere(owner) },
+  });
+  if (!existing) throw new TodoNotFoundError();
+  await prisma.todoList.delete({ where: { id: existing.id } });
 }

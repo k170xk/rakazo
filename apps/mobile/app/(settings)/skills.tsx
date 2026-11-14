@@ -6,7 +6,6 @@ import type {
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,18 +24,12 @@ import { useI18n } from "../../lib/i18n";
 import { native, useThemedStyles } from "../../lib/native";
 import { iosAtLeast } from "../../lib/native-controls";
 import type { PluginParams } from "../../lib/plugin-marketplace";
-import {
-  gitImportParams,
-  pluginParams,
-  pluginSite,
-  pluginSkillCount,
-  skillPacks,
-} from "../../lib/plugin-marketplace";
+import { gitImportParams, pluginParams, pluginSkillCount } from "../../lib/plugin-marketplace";
 import { useSideInsets } from "../../lib/side-insets";
 
 const LOGO_SIZE = 32;
 
-/** Your skills in this space, the skills plugins added, and skill packs to browse. */
+/** Your skills in this space, and the skills plugins added. Skill packs are not listed. */
 export default function SkillsScreen() {
   const navigation = useNavigation();
   const router = useRouter();
@@ -46,8 +39,6 @@ export default function SkillsScreen() {
   const [entries, setEntries] = useState<PluginMarketplaceEntry[]>([]);
   const [installs, setInstalls] = useState<CapabilityInstall[]>([]);
   const [ownSkills, setOwnSkills] = useState<AgentSkillCatalogEntry[]>([]);
-  const [state, setState] = useState<"loading" | "ready" | "partial">("loading");
-  const [query, setQuery] = useState("");
   const [importing, setImporting] = useState(false);
   const [canManageSkills, setCanManageSkills] = useState(false);
   const [gitUrl, setGitUrl] = useState("");
@@ -73,11 +64,8 @@ export default function SkillsScreen() {
         if (!live.current) return;
         setEntries(catalog.entries);
         setInstalls(rows.filter((row) => row.kind === "plugin"));
-        setState(catalog.unavailableRegistries.length ? "partial" : "ready");
       })
-      .catch(() => {
-        if (live.current) setState("partial");
-      });
+      .catch(() => undefined);
   }, []);
 
   useFocusEffect(
@@ -119,8 +107,6 @@ export default function SkillsScreen() {
     );
   }, [canManageSkills, navigation, t]);
 
-  const installed = new Set(installs.map((row) => row.source));
-  const packs = skillPacks(entries, query);
   const skillSets = installs.filter((install) => pluginSkillCount(install) > 0);
   const openSkills = (params: PluginParams) =>
     router.push({ pathname: "/plugin", params: { ...params, skillsOnly: "1" } });
@@ -234,74 +220,6 @@ export default function SkillsScreen() {
               );
             })}
           </View>
-        ) : null}
-        {canManageSkills ? (
-          <>
-            <Text style={styles.section}>{t("Browse")}</Text>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              accessibilityLabel={t("Search skills")}
-              placeholder={t("Search skills")}
-              placeholderTextColor={native.tertiaryLabel}
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="search"
-              style={styles.input}
-            />
-            {state === "partial" ? (
-              <View style={styles.row}>
-                <Text style={[styles.secondary, styles.grow]}>
-                  {t("Some plugins could not be loaded.")}
-                </Text>
-                <NativeActionButton
-                  fill={false}
-                  label={t("Retry")}
-                  onPress={() => {
-                    setState("loading");
-                    load();
-                  }}
-                  prominence="secondary"
-                />
-              </View>
-            ) : null}
-            {state === "loading" ? (
-              <ActivityIndicator color={native.secondaryLabel} accessibilityLabel={t("Loading…")} />
-            ) : null}
-            <View testID="skill-packs" style={styles.list}>
-              {packs.map((entry) => (
-                <Pressable
-                  key={entry.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={entry.displayName}
-                  onPress={() => openSkills(pluginParams(entry))}
-                  style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-                >
-                  <PluginIcon
-                    logo={entry.logo}
-                    name={entry.displayName}
-                    site={pluginSite(entry)}
-                    size={LOGO_SIZE}
-                  />
-                  <View style={styles.grow}>
-                    <Text numberOfLines={1} style={styles.title}>
-                      {entry.displayName}
-                    </Text>
-                    {entry.description ? (
-                      <Text numberOfLines={1} style={styles.secondary}>
-                        {entry.description}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {installed.has(entry.installedSource) ? (
-                    <Text style={styles.secondary}>{t("Added")}</Text>
-                  ) : (
-                    <Chevron />
-                  )}
-                </Pressable>
-              ))}
-            </View>
-          </>
         ) : null}
       </ScrollView>
     </SafeAreaView>

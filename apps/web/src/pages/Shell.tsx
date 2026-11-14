@@ -78,7 +78,7 @@ import {
 } from "../lib/composer-enter-to-send-pref";
 import { desktopBridge } from "../lib/desktop";
 import { hasOpenDialog } from "../lib/has-open-dialog";
-import { PagesProvider, usePagesForChat } from "../lib/pages";
+import { APP_VIEW_PARAM, PAGE_PARAM, PagesProvider, usePagesForChat } from "../lib/pages";
 import { studioActivity } from "../lib/studio-activity";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
@@ -141,7 +141,7 @@ import { useOpenSpaceChat } from "./shell/use-space-switch";
 import { useThreadState } from "./shell/use-thread-state";
 import { useThreadSync } from "./shell/use-thread-sync";
 import type { SettingsSection } from "./shell-overlay";
-import { isCompanySettingsSection } from "./shell-overlay";
+import { isCompanySettingsSection, searchString, withShellOverlay } from "./shell-overlay";
 
 const NO_AGENT_SKILLS: AgentSkillCatalogEntry[] = [];
 const NO_PROVIDERS: string[] = [];
@@ -1217,8 +1217,19 @@ function SpaceShell() {
         openAdmin={bootstrapMe?.isAdmin ? () => navigate("/admin") : undefined}
         openSkills={() => setOverlay({ kind: "skills" })}
         openTour={() => setOverlay({ kind: "tour" })}
-        openTodos={() => setOverlay({ kind: "todos" })}
+        openTodos={() => {
+          const next = withShellOverlay(searchParams, { kind: "todos" });
+          next.delete(PAGE_PARAM);
+          next.delete(APP_VIEW_PARAM);
+          navigate({ search: searchString(next) }, { replace: true });
+        }}
         openWhiteboards={() => setOverlay({ kind: "whiteboards" })}
+        openApps={() => {
+          const next = withShellOverlay(searchParams, { kind: "apps" });
+          next.delete(PAGE_PARAM);
+          next.delete(APP_VIEW_PARAM);
+          navigate({ search: searchString(next) }, { replace: true });
+        }}
         openSpaceChat={openSpaceChat}
       />
 

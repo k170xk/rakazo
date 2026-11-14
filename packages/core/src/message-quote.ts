@@ -1,5 +1,5 @@
 import type { MessageBlock, ReplyPreview } from "@rakazo/contracts";
-import { droppedTableHtmlText, truncateReplyQuote } from "@rakazo/contracts";
+import { droppedTableHtmlText, stripStudioNote, truncateReplyQuote } from "@rakazo/contracts";
 import { toText } from "hast-util-to-text";
 import { toHast } from "mdast-util-to-hast";
 import remarkGfm from "remark-gfm";
@@ -127,7 +127,7 @@ export function messageReplyExcerpt(blocks: MessageBlock[], role: string): strin
     ...blocks.filter((block) => block.kind === "text"),
     ...blocks.filter((block) => block.kind !== "text"),
   ]) {
-    const source = replyBlockText(block).slice(0, MAX_QUOTABLE_SOURCE_LENGTH);
+    const source = stripStudioNote(replyBlockText(block)).slice(0, MAX_QUOTABLE_SOURCE_LENGTH);
     const visible =
       block.kind === "text" && role !== "user" ? visibleTextFromMarkdown(source) : source;
     const first = visible

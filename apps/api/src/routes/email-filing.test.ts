@@ -51,7 +51,7 @@ function item(id: string, overrides: Partial<StoredFilingItem>): StoredFilingIte
   };
 }
 
-function setup() {
+function setup(unread: readonly string[] = []) {
   const batch = {
     id: "b1",
     spaceId: actor.spaceId,
@@ -167,7 +167,7 @@ function setup() {
           webLink: "https://outlook/x",
         });
       }
-      return json({ id, parentFolderId: location[id] });
+      return json({ id, parentFolderId: location[id], isRead: !unread.includes(id) });
     }
     const child = /^\/me\/mailFolders\/([^/]+)\/childFolders/.exec(path);
     if (child) {
@@ -309,7 +309,7 @@ describe("filing on the person's press of File", () => {
     const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn<GraphFetch>>;
     const original = fetchMock.getMockImplementation() as GraphFetch;
     fetchMock.mockImplementation(async (url: string, init: RequestInit) => {
-      if (url.endsWith("/me/messages/m-i1-moved?$select=id,parentFolderId,webLink")) {
+      if (url.endsWith("/me/messages/m-i1-moved?$select=id,parentFolderId,webLink,isRead")) {
         return new Response(JSON.stringify({ id: "m-i1-moved", parentFolderId: "p1" }));
       }
       if (url.includes("/me/messages/m-i1-moved/move")) {
@@ -324,5 +324,20 @@ describe("filing on the person's press of File", () => {
     })) as { items: Array<{ id: string; status: string }> };
     expect(moves.at(-1)).toEqual(["m-i1-moved", "inbox-id"]);
     expect(card.items[0]?.status).toBe("proposed");
+  });
+
+  it("leaves an unread email where it is", async () => {
+    setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, outlookFiling: true } });
+    const { routes, moves } = setup(["m-i1"]);
+    const card = (await routes.file!({
+      context: { actor },
+      input: { id: "b1", itemIds: ["i1"] },
+    })) as { items: Array<{ id: string; status: string; error: string | null }> };
+    expect(moves).toEqual([]);
+    expect(card.items[0]).toMatchObject({
+      id: "i1",
+      status: "proposed",
+      error: "This email is still unread, so it was left where it is.",
+    });
   });
 });

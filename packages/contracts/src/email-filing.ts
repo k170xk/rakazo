@@ -8,6 +8,8 @@ export const EMAIL_FILING_LIMITS = {
   folderName: 120,
   preview: 240,
   rules: 300,
+  memories: 40,
+  memory: 280,
   excludedSenders: 200,
   excludedFolders: 50,
   outlookId: 512,
@@ -107,9 +109,18 @@ export const EmailFilingRuleSchema = z.object({
 });
 export type EmailFilingRule = z.infer<typeof EmailFilingRuleSchema>;
 
+/** An instruction the person taught filing, in their own words. */
+export const EmailFilingMemorySchema = z.object({
+  id: Id,
+  text: z.string(),
+  createdAt: z.string(),
+});
+export type EmailFilingMemory = z.infer<typeof EmailFilingMemorySchema>;
+
 export const EmailFilingProfileSchema = z.object({
   settings: EmailFilingSettingsSchema,
   rules: z.array(EmailFilingRuleSchema),
+  memories: z.array(EmailFilingMemorySchema),
   policy: EmailFilingPolicySchema,
   outlookConnected: z.boolean(),
 });

@@ -1,7 +1,7 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
 import type { CapabilityInstall, PluginMarketplaceEntry } from "@rakazo/contracts";
 import { PluginPreviewSchema } from "@rakazo/contracts";
-import { installedPluginParts, matchesPluginQuery } from "@rakazo/core";
+import { installedPluginParts } from "@rakazo/core";
 import {
   Button,
   Dialog,
@@ -12,7 +12,6 @@ import {
   Field,
   FieldLabel,
   Input,
-  Spinner,
 } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, X } from "lucide-react";
@@ -23,13 +22,7 @@ import { AgentSkills } from "../../pages/KnowledgeSection";
 import { EvolveToolsSection } from "./evolve-tools-section";
 import { OcscToolsSection } from "./ocsc-tools-section";
 import type { PluginSelection } from "./plugin-marketplace";
-import {
-  PluginDetail,
-  PluginLogo,
-  PluginRow,
-  pluginSelection,
-  ROW_HOVER,
-} from "./plugin-marketplace";
+import { PluginDetail, PluginLogo, pluginSelection, ROW_HOVER } from "./plugin-marketplace";
 
 const NO_ENTRIES: PluginMarketplaceEntry[] = [];
 const NO_SERVERS: never[] = [];
@@ -41,8 +34,8 @@ function skillCount(install: CapabilityInstall) {
 }
 
 /**
- * OCSC Tools, and, when the company allows it, your skills, the skills plugins added, and skill
- * packs to browse. Admins always see the extra sections so they can add the company's skills.
+ * OCSC Tools, and, when the company allows it, your skills and the skills plugins added.
+ * Skill packs are not listed here. Connectors are the list an admin enables.
  */
 export function SkillsDialog({
   onClose,
@@ -54,7 +47,6 @@ export function SkillsDialog({
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
-  const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<PluginSelection | null>(null);
   const [importing, setImporting] = useState(false);
   const [gitSource, setGitSource] = useState("");
@@ -67,9 +59,6 @@ export function SkillsDialog({
   const skillNames = agentSkills.data
     ? new Set(agentSkills.data.map((skill) => skill.name))
     : undefined;
-  const packs = (catalog.data?.entries ?? NO_ENTRIES).filter(
-    (entry) => !entry.hasConnector && matchesPluginQuery(entry, query),
-  );
   const pluginInstalls = (installs.data ?? []).filter((row) => row.kind === "plugin");
   const skillSets = pluginInstalls.filter(
     (row) => installedPluginParts(row.config).includes("skills") && skillCount(row) > 0,
@@ -206,53 +195,6 @@ export function SkillsDialog({
                       </span>
                     </span>
                   </button>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
-        {canManageSkills ? (
-          <section data-testid="skill-packs-section">
-            <h3 className="mb-2 px-2.5 text-[14px] font-medium text-muted-foreground">
-              <Trans>Browse</Trans>
-            </h3>
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label={t`Search skills`}
-              placeholder={t`Search skills`}
-              maxLength={200}
-              className="mb-5 h-11 rounded-xl"
-            />
-            {catalog.isPending ? (
-              <div className="grid place-items-center py-10">
-                <Spinner className="size-5 text-muted-foreground" aria-label={t`Loading…`} />
-              </div>
-            ) : null}
-            {catalog.error || catalog.data?.unavailableRegistries.length ? (
-              <div
-                role="alert"
-                className="mb-4 flex items-center gap-3 text-sm text-muted-foreground"
-              >
-                <Trans>Some plugins could not be loaded.</Trans>
-                <Button variant="outline" size="sm" onClick={() => void catalog.refetch()}>
-                  <Trans>Retry</Trans>
-                </Button>
-              </div>
-            ) : null}
-            <div data-testid="skill-packs" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {packs.map((entry) => {
-                const pack = pluginSelection(entry);
-                return (
-                  <PluginRow
-                    key={entry.id}
-                    name={entry.displayName}
-                    description={entry.description}
-                    logo={entry.logo}
-                    site={pack.site}
-                    installed={pluginInstalls.some((row) => row.source === entry.installedSource)}
-                    onOpen={() => setSelection(pack)}
-                  />
                 );
               })}
             </div>

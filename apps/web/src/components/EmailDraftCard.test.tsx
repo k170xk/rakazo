@@ -57,7 +57,7 @@ vi.mock("../lib/query", () => ({
   }),
 }));
 
-import { EmailDraftCard, parseRecipientInput } from "./EmailDraftCard";
+import { EmailDraftCard, outlookDraftAppLink, parseRecipientInput } from "./EmailDraftCard";
 
 function sampleDraft(patch: Partial<EmailDraft> = {}): EmailDraft {
   return {
@@ -84,6 +84,24 @@ function sampleDraft(patch: Partial<EmailDraft> = {}): EmailDraft {
     ...patch,
   };
 }
+
+describe("outlookDraftAppLink", () => {
+  const id = "AAMkAGI2/draft=";
+
+  it("opens the Outlook app on a phone", () => {
+    expect(outlookDraftAppLink(id, "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)")).toBe(
+      "ms-outlook://emails/message/open?restID=AAMkAGI2%2Fdraft%3D",
+    );
+    expect(outlookDraftAppLink(id, "Mozilla/5.0 (Linux; Android 14)")).toContain("ms-outlook://");
+  });
+
+  it("uses the link the Outlook app claims on a computer", () => {
+    expect(outlookDraftAppLink(id, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")).toBe(
+      "https://outlook.office.com/mail/0/applink/read/AAMkAGI2%2Fdraft%3D/?ai=1",
+    );
+    expect(outlookDraftAppLink("  ", "Mozilla/5.0")).toBeNull();
+  });
+});
 
 describe("EmailDraftCard", () => {
   let host: HTMLDivElement;

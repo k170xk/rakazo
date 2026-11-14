@@ -1,4 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
+import { openStudioNote } from "@rakazo/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -137,19 +138,27 @@ function OpenPage({
   const open = pageId !== null && (data !== undefined || failed || page.isPending);
   const dockPage = pageId !== null && data && !viewing ? { id: data.id, title: data.title } : null;
   useEffect(() => {
-    // A full-screen view has no chat docked over it. The board writes a selection note onto this
-    // same page; keep it when the title changes.
+    // A full-screen view has no chat docked over it. The board writes its own note onto this
+    // same page; keep it when the title changes. With no page in the URL, a studio overlay owns the dock.
     if (viewing) {
       session.dock.set({ page: null, node: null, chat: null });
       return () => session.dock.set({ page: null });
     }
+    if (!dockPage) return;
     const current = session.dock.get().page;
-    const note = current && current.id === dockPage?.id ? current.note : undefined;
+    const kept = current?.id === dockPage.id ? current.note : undefined;
+    const note =
+      kept ??
+      (isApp
+        ? openStudioNote({ kind: "app", title: dockPage.title, id: dockPage.id })
+        : undefined);
     session.dock.set({
-      page: dockPage ? { ...dockPage, ...(note ? { note } : {}) } : null,
+      page: { ...dockPage, ...(note ? { note } : {}) },
     });
-    return () => session.dock.set({ page: null });
-  }, [session, viewing, dockPage?.id, dockPage?.title]);
+    return () => {
+      if (session.dock.get().page?.id === dockPage.id) session.dock.set({ page: null });
+    };
+  }, [session, viewing, isApp, dockPage?.id, dockPage?.title]);
   const notice = gone ? (
     <PageNotice
       title={t`This app isn't available`}
@@ -228,6 +237,15 @@ function OpenPage({
         running={running}
         activity={activity}
         onReply={session.offerReply}
+        onSelectApp={(id) => {
+          setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            next.set(PAGE_PARAM, id);
+            next.delete(APP_VIEW_PARAM);
+            return next;
+          });
+        }}
+        onBuild={(idea) => session.submit(`Build me an app: ${idea}`)}
         returnFocus={session.restoreFocus}
         compact={compact}
         notice={notice}

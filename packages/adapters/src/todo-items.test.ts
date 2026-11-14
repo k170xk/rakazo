@@ -61,7 +61,13 @@ function fakePrisma() {
       );
     },
   };
-  return { prisma: { todoItem } as never, rows };
+  const todoList = {
+    findFirst: async ({ where }: { where: Record<string, unknown> }) =>
+      where.id === "list-1" && where.spaceId === "s1" && where.userId === "u1"
+        ? { id: "list-1", title: "Site" }
+        : null,
+  };
+  return { prisma: { todoItem, todoList } as never, rows };
 }
 
 const ME = { spaceId: "s1", userId: "u1" };
@@ -165,5 +171,21 @@ describe("to-do items", () => {
     expect(await listTodoItems(prisma, ME, { includeArchived: true })).toHaveLength(1);
     await restoreTodoItem(prisma, ME, item.id);
     expect((await listTodoItems(prisma, ME)).map((row) => row.title)).toEqual(["Old"]);
+  });
+
+  it("keeps another list apart from the personal one", async () => {
+    const { prisma } = fakePrisma();
+    await createTodoItem(prisma, ME, { title: "Send drawings", origin: "user" });
+    await createTodoItem(prisma, ME, { title: "Book the lab", origin: "user", listId: "list-1" });
+    expect((await listTodoItems(prisma, ME)).map((item) => item.title)).toEqual(["Send drawings"]);
+    expect((await listTodoItems(prisma, ME, { listId: "personal" })).map((item) => item.title)).toEqual([
+      "Send drawings",
+    ]);
+    expect((await listTodoItems(prisma, ME, { listId: "list-1" })).map((item) => item.title)).toEqual([
+      "Book the lab",
+    ]);
+    await expect(
+      createTodoItem(prisma, ME, { title: "Missing", origin: "user", listId: "list-2" }),
+    ).rejects.toBeInstanceOf(TodoNotFoundError);
   });
 });

@@ -8,14 +8,17 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getBatch, fileItems, skipItems, undoItems, retarget, listFolders } = vi.hoisted(() => ({
-  getBatch: vi.fn(),
-  fileItems: vi.fn(),
-  skipItems: vi.fn(),
-  undoItems: vi.fn(),
-  retarget: vi.fn(),
-  listFolders: vi.fn(),
-}));
+const { getBatch, fileItems, skipItems, undoItems, retarget, listFolders, getSettings, remember } =
+  vi.hoisted(() => ({
+    getBatch: vi.fn(),
+    fileItems: vi.fn(),
+    skipItems: vi.fn(),
+    undoItems: vi.fn(),
+    retarget: vi.fn(),
+    listFolders: vi.fn(),
+    getSettings: vi.fn(),
+    remember: vi.fn(),
+  }));
 
 const lingui = vi.hoisted(() => ({
   t: (parts: TemplateStringsArray, ...values: unknown[]) => String.raw({ raw: parts }, ...values),
@@ -36,6 +39,7 @@ vi.mock("../lib/rpc", () => ({
       undo: undoItems,
       retarget,
       searchProjects: vi.fn(async () => ({ projects: [] })),
+      settings: { get: getSettings, remember, forgetMemory: vi.fn(), removeRule: vi.fn() },
     },
   },
 }));
@@ -52,11 +56,19 @@ vi.mock("../lib/query", () => ({
       folders: {
         queryOptions: () => ({ queryKey: ["emailFiling.folders"], queryFn: () => listFolders() }),
       },
+      settings: {
+        get: {
+          queryOptions: () => ({
+            queryKey: ["emailFiling.settings"],
+            queryFn: () => getSettings(),
+          }),
+        },
+      },
     },
   }),
 }));
 
-import { EmailFilingCard } from "./EmailFilingCard";
+import { EmailFilingCard, filingSender } from "./EmailFilingCard";
 
 function item(id: string, patch: Partial<EmailFilingItem> = {}): EmailFilingItem {
   return {
@@ -95,6 +107,16 @@ function batch(items: EmailFilingItem[], patch: Partial<EmailFilingBatch> = {}):
   };
 }
 
+describe("filingSender", () => {
+  it("keeps the address and the name together", () => {
+    expect(filingSender("OCSC Careers <careers@evolve.ocsc.me>")).toEqual({
+      address: "careers@evolve.ocsc.me",
+      name: "OCSC Careers",
+    });
+    expect(filingSender("ada@example.com")).toEqual({ address: "ada@example.com", name: null });
+  });
+});
+
 describe("EmailFilingCard", () => {
   let host: HTMLDivElement;
   let root: ReturnType<typeof createRoot>;
@@ -104,7 +126,16 @@ describe("EmailFilingCard", () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     i18n.load("en", {});
     i18n.activate("en");
-    for (const mock of [getBatch, fileItems, skipItems, undoItems, retarget, listFolders]) {
+    for (const mock of [
+      getBatch,
+      fileItems,
+      skipItems,
+      undoItems,
+      retarget,
+      listFolders,
+      getSettings,
+      remember,
+    ]) {
       mock.mockReset();
     }
     client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -159,6 +190,11 @@ describe("EmailFilingCard", () => {
       "Ready",
     );
     expect(host.querySelectorAll('[data-testid^="filing-item-"]')).toHaveLength(2);
+    const ready = host.querySelector('[data-testid="filing-item-a"]');
+    expect(ready?.textContent).toContain("ann@client.com");
+    expect(ready?.textContent).toContain("Subject a");
+    expect(ready?.textContent).toContain("Inbox › Projects");
+    expect(ready?.textContent).toContain("1234 - Riverside");
     expect(button("File 2 selected")).toBeTruthy();
 
     const boxB = host.querySelector<HTMLInputElement>('input[aria-label="Select Subject b"]');
@@ -206,5 +242,61 @@ describe("EmailFilingCard", () => {
     await render();
     const links = [...host.querySelectorAll("a")].map((link) => link.getAttribute("href"));
     expect(links).toEqual(["https://outlook.office.com/mail/id/1"]);
+  });
+
+  it("opens filing memory and saves an instruction", async () => {
+    getBatch.mockResolvedValueOnce(batch([item("a")]));
+    getSettings.mockResolvedValue({
+      settings: {
+        enabled: true,
+        confidence: 90,
+        parentFolderId: null,
+        parentFolderPath: null,
+        includeSentItems: false,
+        excludedFolderIds: [],
+        excludedSenders: [],
+      },
+      rules: [
+        {
+          id: "r1",
+          kind: "sender",
+          label: "careers@evolve.ocsc.me",
+          folderId: "hr",
+          folderPath: "Inbox › HR",
+          createdAt: "2026-11-14T00:00:00.000Z",
+        },
+      ],
+      memories: [],
+      policy: {
+        minConfidence: 90,
+        allowFolderCreation: true,
+        defaultParentFolder: "Projects",
+        sentItems: "optional",
+        maxPerBatch: 50,
+        autonomy: "off",
+      },
+      outlookConnected: true,
+    });
+    remember.mockImplementation(async ({ text }: { text: string }) => ({
+      ...(await getSettings()),
+      memories: [{ id: "m1", text, createdAt: "2026-11-14T00:00:00.000Z" }],
+    }));
+    await render();
+    await act(async () => button("Memory")?.click());
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(host.textContent).toContain("careers@evolve.ocsc.me → Inbox › HR");
+    const field = host.querySelector<HTMLInputElement>(
+      'input[aria-label="Add an instruction filing should follow"]',
+    );
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+    await act(async () => {
+      setValue?.call(field, "Graduate applications go in HR");
+      field?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => button("Remember")?.click());
+    expect(remember).toHaveBeenCalledWith({ text: "Graduate applications go in HR" });
+    expect(host.textContent).toContain("Graduate applications go in HR");
   });
 });

@@ -121,12 +121,9 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   await expect(settings).toHaveAttribute("data-settings-section", "memory");
   await expect(settings.getByTestId("memory-settings")).toBeVisible();
   const memory = settings.getByTestId("memory-settings");
-  await memory.getByRole("button", { name: "Connect memory provider", exact: true }).click();
-  await expect(memory.getByLabel("Provider")).toBeVisible();
-  await memory.getByLabel("Provider").selectOption("serenity");
-  await expect(memory.getByLabel("MCP endpoint")).toBeVisible();
-  await expect(memory.getByLabel("Bearer token")).toBeVisible();
-  await expect(memory.getByRole("button", { name: "Recall only" })).toBeVisible();
+  await expect(
+    memory.getByRole("button", { name: "Connect memory provider", exact: true }),
+  ).toHaveCount(0);
   await captureScreenshot(page, testInfo, "settings-shell-memory-serenity");
 
   await page.getByRole("button", { name: "Close memory settings" }).click();
@@ -138,79 +135,17 @@ test("settings shell is two-pane and deep-links Models Memory Voice Usage", asyn
   await captureScreenshot(page, testInfo, "settings-shell-usage");
 });
 
-test("Honcho memory settings empty and filled", async ({ page }, testInfo) => {
-  // These screenshots never submit credentials or contact Honcho.
+test("Memory settings do not offer an external provider", async ({ page }, testInfo) => {
   const stamp = Date.now();
   await signup(page, `memory-honcho-${stamp}@rakazo.test`, "password12", "Memory settings");
   await completeOnboarding(page);
   const settings = await openUserSettings(page, "memory");
   const memory = settings.getByTestId("memory-settings");
-  await expect(memory.getByLabel("Provider")).toHaveCount(0);
-  await captureScreenshot(page, testInfo, "memory-default");
-  await memory.getByRole("button", { name: "Connect memory provider", exact: true }).click();
-  await memory.getByLabel("Provider").selectOption("honcho");
-  await expect(memory.getByLabel("API key", { exact: true })).toBeVisible();
-  await expect(memory.getByLabel("Workspace", { exact: true })).toBeVisible();
-  await expect(memory.getByLabel("User peer", { exact: true })).toHaveCount(0);
-  await expect(memory.getByRole("button", { name: "Connect", exact: true })).toBeDisabled();
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await captureScreenshot(page, testInfo, "memory-honcho-empty");
-  await memory.getByLabel("API key", { exact: true }).fill("hch-test-key");
-  await memory.getByLabel("Workspace", { exact: true }).fill("team-notes");
-  const userPeer = memory.getByLabel("User peer", { exact: true });
-  await userPeer.fill("bot-123");
-  await expect(userPeer).toHaveAttribute("aria-invalid", "true");
   await expect(
-    memory.getByText(
-      "rakazo-shared and IDs starting with bot- are reserved for OCSC Intelligence.",
-    ),
-  ).toBeVisible();
-  await expect(memory.getByRole("button", { name: "Connect", exact: true })).toBeDisabled();
-  await captureScreenshot(page, testInfo, "memory-honcho-user-peer-reserved");
-  await userPeer.fill("user-alex");
-  await expect(memory.getByRole("button", { name: "Connect", exact: true })).toBeEnabled();
-  await captureScreenshot(page, testInfo, "memory-honcho-filled");
-  await memory.getByRole("button", { name: "Self-hosted", exact: true }).click();
-  await expect(memory.getByLabel("Base URL", { exact: true })).toHaveValue("");
-  await memory
-    .getByLabel("Base URL", { exact: true })
-    .fill("http://honcho-api.railway.internal:8000");
-  await expect(memory.getByRole("button", { name: "Connect", exact: true })).toBeEnabled();
-  await memory.getByLabel("Base URL", { exact: true }).fill("");
-  await expect(memory.getByRole("button", { name: "Connect", exact: true })).toBeDisabled();
-  await memory
-    .getByLabel("Base URL", { exact: true })
-    .fill("http://honcho-api.railway.internal:8000");
-  await captureScreenshot(page, testInfo, "memory-honcho-local");
+    memory.getByRole("button", { name: "Connect memory provider", exact: true }),
+  ).toHaveCount(0);
+  await expect(memory.getByLabel("Provider")).toHaveCount(0);
   const documents = memory.getByTestId("space-memory-documents");
-  await documents.scrollIntoViewIfNeeded();
   await expect(documents).toBeVisible();
-  await captureScreenshot(page, testInfo, "memory-honcho-local-bottom");
-
-  const scrollToTop = () =>
-    memory.locator(".rk-scroll").evaluate((element) => {
-      element.scrollTop = 0;
-    });
-  await memory.getByLabel("Provider").selectOption("supermemory");
-  await scrollToTop();
-  await expect(memory.getByLabel("Organization API key", { exact: true })).toBeVisible();
-  await captureScreenshot(page, testInfo, "memory-supermemory-cloud");
-  await memory.getByRole("button", { name: "Self-hosted", exact: true }).click();
-  await expect(memory.getByLabel("Base URL", { exact: true })).toHaveValue("");
-  await expect(memory.getByLabel("Instance API key", { exact: true })).toBeVisible();
-  await captureScreenshot(page, testInfo, "memory-supermemory-local");
-
-  await page.emulateMedia({ colorScheme: "dark" });
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await memory.getByLabel("Provider").selectOption("honcho");
-  await scrollToTop();
-  await expect(memory.getByRole("button", { name: "Cloud", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await expect(memory.getByLabel("API key", { exact: true })).toBeVisible();
-  await captureScreenshot(page, testInfo, "memory-honcho-cloud-dark");
-  await documents.scrollIntoViewIfNeeded();
-  await expect(documents).toBeVisible();
-  await captureScreenshot(page, testInfo, "memory-dark-bottom");
+  await captureScreenshot(page, testInfo, "memory-default");
 });

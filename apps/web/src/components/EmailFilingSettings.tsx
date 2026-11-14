@@ -36,6 +36,18 @@ export function EmailFilingSettings() {
     if (profile.data) setConfidence(String(profile.data.settings.confidence));
   }, [profile.data]);
 
+  async function forgetMemory(id: string) {
+    setBusy(true);
+    try {
+      const next = await rpc.emailFiling.settings.forgetMemory({ memoryId: id });
+      queryClient.setQueryData(options.queryKey, next);
+    } catch (err) {
+      toast.error(errorText(err, t`Could not save your filing settings`));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function update(patch: Partial<Settings>, rule?: string) {
     setBusy(true);
     try {
@@ -324,36 +336,53 @@ export function EmailFilingSettings() {
       </SettingsGroup>
 
       <SettingsGroup title={t`What filing has learned`}>
-        {rules.length === 0 ? (
+        {profile.data.memories.length === 0 && rules.length === 0 ? (
           <p className="px-4 py-3 text-[13px] text-muted-foreground">
             <Trans>
               When you file an email somewhere else and choose to remember it, the choice for that
-              sender, domain or conversation shows here.
+              sender, domain or conversation shows here. Instructions you add on a filing card show
+              here too.
             </Trans>
           </p>
-        ) : (
-          rules.map((rule) => (
-            <SettingsRow
-              key={rule.id}
-              label={
-                <p className="break-words text-[13px]">
-                  {rule.label} <span className="text-muted-foreground">→</span> {rule.folderPath}
-                </p>
-              }
-              control={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={busy}
-                  aria-label={t`Forget ${rule.label}`}
-                  onClick={() => void update({}, rule.id)}
-                >
-                  <Trans>Forget</Trans>
-                </Button>
-              }
-            />
-          ))
-        )}
+        ) : null}
+        {profile.data.memories.map((memory) => (
+          <SettingsRow
+            key={memory.id}
+            label={<p className="break-words text-[13px]">{memory.text}</p>}
+            control={
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                aria-label={t`Forget ${memory.text}`}
+                onClick={() => void forgetMemory(memory.id)}
+              >
+                <Trans>Forget</Trans>
+              </Button>
+            }
+          />
+        ))}
+        {rules.map((rule) => (
+          <SettingsRow
+            key={rule.id}
+            label={
+              <p className="break-words text-[13px]">
+                {rule.label} <span className="text-muted-foreground">→</span> {rule.folderPath}
+              </p>
+            }
+            control={
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                aria-label={t`Forget ${rule.label}`}
+                onClick={() => void update({}, rule.id)}
+              >
+                <Trans>Forget</Trans>
+              </Button>
+            }
+          />
+        ))}
       </SettingsGroup>
     </div>
   );

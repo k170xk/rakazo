@@ -7,6 +7,7 @@ import type {
   StoredFilingTarget,
 } from "./email-filing.js";
 import {
+  addFilingMemory,
   candidateFrom,
   companyEmailFilingPolicy,
   confidenceCap,
@@ -16,15 +17,18 @@ import {
   evidenceFor,
   fileableFolders,
   filingIncludesSentItems,
+  filingMemoryText,
   filingThreshold,
   folderForJob,
   jobKeyOf,
+  learnRule,
   listMailFolders,
   loadFilingProfile,
   pendingFilingMessageIds,
   projectFolderName,
   resolveEvolveJob,
   textJobReferences,
+  updateFilingProfile,
   wellKnownFolderIds,
 } from "./email-filing.js";
 import type { MicrosoftConnector } from "./microsoft-connector.js";
@@ -38,14 +42,16 @@ import { personEmail } from "./run-tools-evolve-plugins.js";
 
 export const FILING_CANDIDATES_TOOL = "outlook_filing_candidates";
 export const PROPOSE_FILING_TOOL = "outlook_propose_filing";
+export const REMEMBER_FILING_TOOL = "outlook_filing_remember";
 export const FILING_TOOL_NAMES: ReadonlySet<string> = new Set([
   FILING_CANDIDATES_TOOL,
   PROPOSE_FILING_TOOL,
+  REMEMBER_FILING_TOOL,
 ]);
 
 const UNAVAILABLE = "Filing Outlook email is not available here.";
 const MESSAGE_FIELDS =
-  "id,subject,from,receivedDateTime,sentDateTime,hasAttachments,bodyPreview,conversationId,parentFolderId,webLink";
+  "id,subject,from,receivedDateTime,sentDateTime,hasAttachments,isRead,bodyPreview,conversationId,parentFolderId,webLink";
 const EXPAND_ATTACHMENTS = encodeURIComponent("attachments($select=name,isInline)");
 const DAYS_DEFAULT = 7;
 const DAYS_MAX = 30;
@@ -103,12 +109,16 @@ async function listFolderMail(
   max: number,
 ): Promise<MailMessage[]> {
   const field = folder === "inbox" ? "receivedDateTime" : "sentDateTime";
-  const path = (expand: boolean) =>
-    `/me/mailFolders/${folder}/messages?$top=${max}&$filter=${encodeURIComponent(`${field} ge ${since}`)}&$orderby=${encodeURIComponent(`${field} desc`)}&$select=${MESSAGE_FIELDS}${expand ? `&$expand=${EXPAND_ATTACHMENTS}` : ""}`;
+  const path = (readOnly: boolean, expand: boolean) => {
+    const window = `${field} ge ${since}`;
+    const filter = readOnly ? `isRead eq true and ${window}` : window;
+    return `/me/mailFolders/${folder}/messages?$top=${max}&$filter=${encodeURIComponent(filter)}&$orderby=${encodeURIComponent(`${field} desc`)}&$select=${MESSAGE_FIELDS}${expand ? `&$expand=${EXPAND_ATTACHMENTS}` : ""}`;
+  };
   const listed = await graph
-    .json<{ value?: MailMessage[] }>(path(true))
-    .catch(() => graph.json<{ value?: MailMessage[] }>(path(false)));
-  return listed.value ?? [];
+    .json<{ value?: MailMessage[] }>(path(true, true))
+    .catch(() => graph.json<{ value?: MailMessage[] }>(path(true, false)))
+    .catch(() => graph.json<{ value?: MailMessage[] }>(path(false, false)));
+  return (listed.value ?? []).filter((message) => message.isRead === true);
 }
 
 const pathOf = (folders: readonly FolderNode[], id: string) =>
@@ -207,13 +217,21 @@ export const emailFilingTools: ToolHandlers = {
     });
 
     return call.finish({
+      memories: profile.memories.map((memory) => ({ id: memory.id, instruction: memory.text })),
+      rules: profile.rules.map((rule) => ({
+        id: rule.id,
+        kind: rule.kind,
+        label: rule.label,
+        folder_id: rule.folderId,
+        folder: rule.folderPath,
+      })),
       threshold: filingThreshold(policy, settings),
       new_project_folders: policy.allowFolderCreation
         ? `allowed, created under ${parentPath}`
         : "not allowed by the company",
       folders: targets.map((folder) => ({ folder_id: folder.id, path: folder.path })),
       candidates,
-      note: `Decide a folder for each candidate, then call ${PROPOSE_FILING_TOOL} once with all of them (include the ones you are unsure about with no folder). Use folder_id values from this list only. For a job reference with no folder${policy.allowFolderCreation ? ", give evolve_job with the job number so a project folder can be created from Evolve" : ", leave it without a folder"}. Confidence is 0-100 and honest: high only when evidence supports it; the server lowers confidence that its evidence does not support. Nothing is moved: the person files from the card. ${PRIVATE} ${UNTRUSTED}`,
+      note: `Follow memories and rules before you choose a folder. When the person corrects a choice or states a preference, call ${REMEMBER_FILING_TOOL} with their instruction; when it is mail from one sender or domain into one folder, also pass sender or domain and that folder_id so it becomes a rule. These are read emails only; unread mail is left in the inbox. Decide a folder for each candidate, then call ${PROPOSE_FILING_TOOL} once with all of them (include the ones you are unsure about with no folder). Use folder_id values from this list only. For a job reference with no folder${policy.allowFolderCreation ? ", give evolve_job with the job number so a project folder can be created from Evolve" : ", leave it without a folder"}. Confidence is 0-100 and honest: high only when evidence supports it; the server lowers confidence that its evidence does not support. Nothing is moved: the person files from the card. ${PRIVATE} ${UNTRUSTED}`,
     });
   },
 
@@ -293,6 +311,8 @@ export const emailFilingTools: ToolHandlers = {
       if (!message) dropped.push({ message_id: want.messageId, why: "not found in the mailbox" });
       else if (!source)
         dropped.push({ message_id: want.messageId, why: "no longer in a folder filing reads" });
+      else if (message.isRead !== true)
+        dropped.push({ message_id: want.messageId, why: "still unread" });
       else if (pending.has(message.id))
         dropped.push({ message_id: want.messageId, why: "already waiting on another card" });
       else found.push({ want, message, source });
@@ -436,6 +456,90 @@ export const emailFilingTools: ToolHandlers = {
       needs_decision: items.length - readyCount,
       ...(dropped.length ? { dropped } : {}),
       note: "The filing card is in the chat. Nothing has moved: the person checks the folders and presses File. Say in one line how many are ready and how many need their decision; do not list the emails again.",
+    });
+  },
+
+  /** Writes only the person's filing memory. Their press of File is still what moves mail. */
+  async outlook_filing_remember(ctx, call) {
+    const ready = await readyToFile(ctx, call);
+    if ("error" in ready) return call.finish(ready);
+    const { graph, owner, profile } = ready;
+    const forgetId = typeof call.args.forget_id === "string" ? call.args.forget_id.trim() : "";
+    const text = filingMemoryText(typeof call.args.text === "string" ? call.args.text : "");
+    const sender =
+      typeof call.args.sender === "string" ? call.args.sender.trim().toLowerCase() : "";
+    const rawDomain =
+      typeof call.args.domain === "string" ? call.args.domain.trim().toLowerCase() : "";
+    const domain = rawDomain ? (rawDomain.startsWith("@") ? rawDomain : `@${rawDomain}`) : "";
+    let folderId: string | undefined;
+    try {
+      folderId = mailId(call.args.folder_id, "folder_id");
+    } catch (error) {
+      return call.finish({
+        error: error instanceof Error ? error.message : "That folder is not one Outlook gave.",
+      });
+    }
+    if (!text && !forgetId && !(folderId && (sender || domain))) {
+      return call.finish({
+        error:
+          "Give text for an instruction, forget_id to remove one, or a sender or domain with folder_id.",
+      });
+    }
+    if (sender && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sender)) {
+      return call.finish({ error: "sender must be an email address." });
+    }
+    if (domain && !/^@[^\s@]+\.[^\s@]+$/.test(domain)) {
+      return call.finish({ error: "domain must look like @example.com." });
+    }
+
+    let folder: { id: string; path: string } | null = null;
+    if (folderId && (sender || domain)) {
+      const [folders, known] = await Promise.all([
+        listMailFolders(graph),
+        wellKnownFolderIds(graph),
+      ]);
+      const found = fileableFolders(folders, known, profile.settings).find(
+        (entry) => entry.id === folderId,
+      );
+      if (!found) {
+        return call.finish({
+          error:
+            "That folder_id is not one filing can use. Take it from outlook_filing_candidates.",
+        });
+      }
+      folder = found;
+    }
+
+    const saved = await updateFilingProfile(ctx.deps.prisma, owner, (current) => {
+      let rules = forgetId ? current.rules.filter((rule) => rule.id !== forgetId) : current.rules;
+      if (folder && (sender || domain)) {
+        rules = learnRule(
+          rules,
+          { fromAddress: sender || `someone${domain}`, conversationId: null, subject: text ?? "" },
+          sender ? "sender" : "domain",
+          folder,
+        );
+      }
+      const forgotten = forgetId
+        ? current.memories.filter((memory) => memory.id !== forgetId)
+        : current.memories;
+      return {
+        ...current,
+        rules,
+        memories: text ? addFilingMemory(forgotten, text) : forgotten,
+      };
+    });
+    return call.finish({
+      ok: true,
+      memories: saved.memories.map((memory) => ({ id: memory.id, instruction: memory.text })),
+      rules: saved.rules.map((rule) => ({
+        id: rule.id,
+        kind: rule.kind,
+        label: rule.label,
+        folder_id: rule.folderId,
+        folder: rule.folderPath,
+      })),
+      note: `Saved. The next filing reads this. Nothing was moved. If the person wants the open card updated, call ${PROPOSE_FILING_TOOL} again for the emails they still want filed.`,
     });
   },
 };

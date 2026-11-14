@@ -125,6 +125,7 @@ export const BUILTIN_TOOL_NAMES = [
   "message_agent",
   "outlook_draft_email",
   "outlook_filing_candidates",
+  "outlook_filing_remember",
   "outlook_propose_filing",
 ] as const;
 

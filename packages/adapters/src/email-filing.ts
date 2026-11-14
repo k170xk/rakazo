@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type {
   EmailFilingBatch,
   EmailFilingItemStatus,
+  EmailFilingMemory,
   EmailFilingPolicy,
   EmailFilingRule,
   EmailFilingRuleKind,
@@ -544,9 +545,17 @@ const StoredRuleSchema = z.object({
 });
 export type StoredFilingRule = z.infer<typeof StoredRuleSchema>;
 
+const StoredMemorySchema = z.object({
+  id: z.string(),
+  text: z.string(),
+  createdAt: z.string(),
+});
+export type StoredFilingMemory = z.infer<typeof StoredMemorySchema>;
+
 const StoredProfileSchema = z.object({
   settings: EmailFilingSettingsSchema.partial().default({}),
   rules: z.array(StoredRuleSchema).default([]),
+  memories: z.array(StoredMemorySchema).default([]),
 });
 
 export interface FilingProfile {
@@ -554,6 +563,7 @@ export interface FilingProfile {
   version: number;
   settings: EmailFilingSettings;
   rules: StoredFilingRule[];
+  memories: StoredFilingMemory[];
 }
 
 export async function loadFilingProfile(
@@ -566,12 +576,13 @@ export async function loadFilingProfile(
     }),
   );
   const parsed = StoredProfileSchema.safeParse(row?.content ?? {});
-  const stored = parsed.success ? parsed.data : { settings: {}, rules: [] };
+  const stored = parsed.success ? parsed.data : { settings: {}, rules: [], memories: [] };
   return {
     id: row?.id ?? null,
     version: row?.version ?? 0,
     settings: { ...DEFAULT_EMAIL_FILING_SETTINGS, ...stored.settings },
     rules: stored.rules,
+    memories: stored.memories,
   };
 }
 
@@ -584,6 +595,7 @@ export async function saveFilingProfile(
   const content = {
     settings: profile.settings,
     rules: profile.rules.slice(-EMAIL_FILING_LIMITS.rules),
+    memories: profile.memories.slice(-EMAIL_FILING_LIMITS.memories),
   } as Prisma.InputJsonValue;
   return runAsTenant(owner, async () => {
     if (!profile.id) {
@@ -658,6 +670,30 @@ export function publicRule(rule: StoredFilingRule): EmailFilingRule {
     folderPath: rule.folderPath,
     createdAt: rule.createdAt,
   };
+}
+
+/** The instruction filing will read next time, or null when there is nothing to keep. */
+export function filingMemoryText(text: string): string | null {
+  const cleaned = text.replace(/\s+/g, " ").trim().slice(0, EMAIL_FILING_LIMITS.memory);
+  return cleaned.length >= 3 ? cleaned : null;
+}
+
+/** Adds one instruction, replacing an earlier one that says the same thing. */
+export function addFilingMemory(
+  memories: readonly StoredFilingMemory[],
+  text: string,
+): StoredFilingMemory[] {
+  const cleaned = filingMemoryText(text);
+  if (!cleaned) return [...memories];
+  const kept = memories.filter((memory) => memory.text.toLowerCase() !== cleaned.toLowerCase());
+  return [
+    ...kept,
+    { id: randomUUID().slice(0, 12), text: cleaned, createdAt: new Date().toISOString() },
+  ].slice(-EMAIL_FILING_LIMITS.memories);
+}
+
+export function publicMemory(memory: StoredFilingMemory): EmailFilingMemory {
+  return { id: memory.id, text: memory.text, createdAt: memory.createdAt };
 }
 
 /** Message ids still waiting on an open card, so a new proposal does not repeat them. */

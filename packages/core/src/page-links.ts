@@ -182,13 +182,14 @@ export function pageReplyTargetId(
 export function pageReply(
   text: string,
   messages: readonly { id: string; blocks: readonly MessageBlock[] }[],
-  page: { id: string; title: string; note?: string } | null,
+  page: { id?: string; title?: string; note?: string } | null,
   chosenReplyId?: string,
 ): { text: string; replyToMessageId?: string } {
   const noted = page?.note ? `${text}\n\n${page.note}` : text;
-  if (!page || chosenReplyId) return { text: noted };
+  // A studio with nothing open still carries its note. A reply the user picked is left as they chose it.
+  if (!page?.id || chosenReplyId) return { text: noted };
   const target = pageReplyTargetId(messages, page.id);
   if (target) return { text: noted, replyToMessageId: target };
-  const title = page.title.replace(/[\\[\]]/g, "\\$&");
+  const title = (page.title ?? "").replace(/[\\[\]]/g, "\\$&");
   return { text: `[${title}](page:${page.id})\n${noted}` };
 }

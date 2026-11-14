@@ -1,4 +1,5 @@
 import type { TodoPriority, TodoStatus } from "@rakazo/contracts";
+import { todoListId } from "./todo-items.js";
 import { isOwnersPrivateChat } from "./connection-context.js";
 import type { RunContext } from "./run-context.js";
 import type { ToolHandlers } from "./run-tool-gate.js";
@@ -78,6 +79,7 @@ export const todoTools: ToolHandlers = {
     const items = await listTodoItems(ctx.deps.prisma, owner, {
       status: statusArg(call.args.status),
       includeDone: call.args.include_done === true,
+      listId: todoListId(optionalText(call.args.list_id)),
     });
     return {
       items: items.slice(0, TODO_LIST_LIMIT).map((item) => ({
@@ -117,6 +119,7 @@ export const todoTools: ToolHandlers = {
           source: sourceArg(args) ?? null,
           origin: "ai",
           botId: ctx.bot.id,
+          listId: todoListId(optionalText(args.list_id)),
         });
         return { ok: true, item_id: item.id, status: item.status };
       }),

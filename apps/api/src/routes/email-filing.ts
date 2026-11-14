@@ -6,6 +6,7 @@ import type {
   StoredFilingItem,
 } from "@rakazo/adapters";
 import {
+  addFilingMemory,
   batchStatus,
   blockedFolderIds,
   companyEmailFilingPolicy,
@@ -23,6 +24,7 @@ import {
   OutlookFilingError,
   presentFilingBatch,
   projectFolderName,
+  publicMemory,
   publicRule,
   readMessageState,
   resolveEvolveJob,
@@ -187,6 +189,7 @@ export function emailFilingRoutes(ctx: RouterContext) {
     return {
       settings: profile.settings,
       rules: profile.rules.map(publicRule),
+      memories: profile.memories.map(publicMemory),
       policy: companyEmailFilingPolicy(),
       outlookConnected: Boolean(account),
     };
@@ -354,6 +357,13 @@ export function emailFilingRoutes(ctx: RouterContext) {
               error: now
                 ? "This email was moved in Outlook since the card was made, so it was left where it is."
                 : "This email is no longer in your mailbox.",
+            };
+          }
+          if (!now.isRead) {
+            return {
+              ...item,
+              status: "proposed",
+              error: "This email is still unread, so it was left where it is.",
             };
           }
           const target = item.target;
@@ -720,6 +730,27 @@ export function emailFilingRoutes(ctx: RouterContext) {
           });
           return profileView(actor);
         }),
+
+        remember: authed.emailFiling.settings.remember.handler(async ({ context, input }) => {
+          await requireCompanyFeature(deps, context.actor, "outlookFiling");
+          const text = input.text.replace(/\s+/g, " ").trim();
+          await updateFilingProfile(deps.prisma, own(context.actor), (current) => ({
+            ...current,
+            memories: addFilingMemory(current.memories, text),
+          }));
+          return profileView(context.actor);
+        }),
+
+        forgetMemory: authed.emailFiling.settings.forgetMemory.handler(
+          async ({ context, input }) => {
+            await requireCompanyFeature(deps, context.actor, "outlookFiling");
+            await updateFilingProfile(deps.prisma, own(context.actor), (current) => ({
+              ...current,
+              memories: current.memories.filter((memory) => memory.id !== input.memoryId),
+            }));
+            return profileView(context.actor);
+          },
+        ),
 
         removeRule: authed.emailFiling.settings.removeRule.handler(async ({ context, input }) => {
           await requireCompanyFeature(deps, context.actor, "outlookFiling");

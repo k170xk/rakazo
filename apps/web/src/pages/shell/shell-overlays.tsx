@@ -43,6 +43,9 @@ const WhiteboardStudio = lazyOverlay(() =>
     (module) => module.WhiteboardStudio,
   ),
 );
+const AppsStudio = lazyOverlay(() =>
+  import("../../components/apps/AppsStudio").then((module) => module.AppsStudio),
+);
 const McpServersOverlay = lazyOverlay(() =>
   import("../McpServersOverlay").then((module) => module.McpServersOverlay),
 );
@@ -81,7 +84,7 @@ export function AppOverlays({
   integrationsComingSoon?: boolean;
   /** The Add custom menu: GitHub, MCP and other sources. Whoever the MCP servers switch is open to. */
   canAddCustom?: boolean;
-  /** Own skills, skill packs and From GitHub. Admins, or staff once the company allows it. */
+  /** Own skills and From GitHub. Admins, or staff once the company allows it. Skill packs are not listed. */
   canManageSkills?: boolean;
   tourAvailability: TourAvailability;
   onConnectedAppsChange: (apps: ReturnType<typeof connectedAppMarks>) => void;
@@ -106,6 +109,7 @@ export function AppOverlays({
       {overlay?.kind === "whiteboards" ? (
         <WhiteboardStudio onClose={() => setOverlay(null)} />
       ) : null}
+      {overlay?.kind === "apps" ? <AppsStudio onClose={() => setOverlay(null)} /> : null}
       {overlay?.kind === "skills" ? (
         <SkillsDialog canManageSkills={canManageSkills} onClose={() => setOverlay(null)} />
       ) : null}
