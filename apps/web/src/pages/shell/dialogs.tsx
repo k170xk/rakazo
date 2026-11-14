@@ -389,7 +389,7 @@ export function DeleteBotDialog({
           </AlertDialogTitle>
           <AlertDialogDescription>
             <Trans>
-              Its conversation, files, and routines will be permanently deleted. Bots it created
+              Its conversation, files, and routines will be permanently deleted. Agents it created
               stay in your list.
             </Trans>
           </AlertDialogDescription>
@@ -441,7 +441,7 @@ export function DeleteBotDialog({
               setDeleting(true);
               setError(null);
               void onConfirm(deleteMemories).catch((err: unknown) => {
-                setError(errorText(err, t`Could not delete bot`));
+                setError(errorText(err, t`Could not delete agent`));
                 setDeleting(false);
               });
             }}
@@ -483,8 +483,8 @@ export function DeleteSpaceDialog({
         botCount > 0 ? (
           <Plural
             value={botCount}
-            one={`Delete ${name} and its # bot?`}
-            other={`Delete ${name} and its # bots?`}
+            one={`Delete ${name} and its # agent?`}
+            other={`Delete ${name} and its # agents?`}
           />
         ) : undefined
       }

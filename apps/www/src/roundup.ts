@@ -12,7 +12,7 @@ export const ROUNDUP_DESCRIPTION = ALTERNATIVES_HUB.description;
 
 export const ROUNDUP_TLDR = [
   ALTERNATIVES_HUB.intro,
-  "Rakazo is the open source option you run yourself. Like Grok Bot, it is just chat once it is running: you set up a bot and manage it from that chat. You bring the model key. The license is Apache-2.0, and there is no seat fee.",
+  "Rakazo is the open source option you run yourself. Like Grok Bot, it is just chat once it is running: you set up an agent and manage it from that chat. You bring the model key. The license is Apache-2.0, and there is no seat fee.",
   "Grok Bot, Meta Muse, OpenAI Dots, Instinct, Claude Duet, and Hark Pro are hosted. You do not install their service. Grok Bot comes with paid Cursor plans and SuperGrok. Muse runs on a virtual machine Meta operates. Dots sit on eligible ChatGPT plans. Instinct is the assistant you text or call. Hark Pro has a free tier, with $20 and $100 monthly tiers for more usage.",
   "OpenClaw and Hermes Agent are also open source and self-hosted. Their docs describe installers, config files, and a gateway. Hermes Desktop can reach a first chat without the command line. OpenClaw can chat while its Gateway runs in the terminal.",
 ] as const;
@@ -46,17 +46,17 @@ export const ROUNDUP_ROWS: readonly RoundupRow[] = [
     model: "Yes. Your key, including a local server.",
     price: "No seat fee. You pay the model and computer.",
     setup: "Docker or the desktop app, then an account and a model.",
-    chat: "Yes. You manage the bot from the chat.",
+    chat: "Yes. You manage the agent from the chat.",
   },
   {
     product: "Grok Bot",
     href: GROK_ALTERNATIVE_PATH,
-    license: "Hosted. No source for the bot service.",
+    license: "Hosted. No source for the agent service.",
     selfHost: "No. Cloud computer. Optional local commands.",
     model: "No. Included with the plan.",
     price: "Paid Cursor plans and SuperGrok at $30 a month.",
     setup: "Install the app. The service stays hosted.",
-    chat: "Yes. Named bots, routines, and approvals.",
+    chat: "Yes. Named agents, routines, and approvals.",
   },
   {
     product: "Meta Muse",
@@ -139,7 +139,7 @@ export type RoundupCard = {
 
 const CARD_BODY: Record<string, readonly string[]> = {
   "claude-duet-alternative": [
-    "Anthropic released Claude Duet as a research preview on October 21, 2026. It is a standalone app you message like a person, with one ongoing thread. Each morning it reviews your email and calendar, then checks connected accounts at intervals and stays quiet until something needs you. It works on a cloud computer Anthropic runs, uses Claude Opus 5.5, and you cannot choose a model. It asks before it sends a message, pays, signs, or deletes, and it will not trade securities or move money between accounts. Duet is included with Claude Pro and Max in the US, from a waitlist, and uses the plan's limits. Rakazo can sign in with that same Claude subscription, on a computer you run, with as many bots as you set up.",
+    "Anthropic released Claude Duet as a research preview on October 21, 2026. It is a standalone app you message like a person, with one ongoing thread. Each morning it reviews your email and calendar, then checks connected accounts at intervals and stays quiet until something needs you. It works on a cloud computer Anthropic runs, uses Claude Opus 5.5, and you cannot choose a model. It asks before it sends a message, pays, signs, or deletes, and it will not trade securities or move money between accounts. Duet is included with Claude Pro and Max in the US, from a waitlist, and uses the plan's limits. Rakazo can sign in with that same Claude subscription, on a computer you run, with as many agents as you set up.",
   ],
   "muse-alternative": [
     "Meta introduced Muse on September 8, 2026. You talk to it in the Muse app or on WhatsApp, and Meta says it keeps working after you close the app. The computer is Muse Secure VM, a cloud machine Meta operates. The launch post names Muse Spark, so you do not bring a model key. Meta says it checks before sensitive actions such as sending email or paying, and that you can opt out of using interactions to train Meta's models. The posts used here do not list a price. Rakazo is the opposite on hosting: you run the stack, and you pick the model.",
@@ -164,7 +164,7 @@ const DEDICATED_CARDS: readonly RoundupCard[] = [
     href: SELF_HOST_GUIDE_PATH,
     heading: "Open source AI agent you run yourself",
     paragraphs: [
-      "Rakazo is an open source AI agent for persistent teammates. It is in beta. The clients are the web app, the Electron desktop app, and the Expo mobile app. You bring a model key, including a local server, and each bot can use a different model. The default computer is local Docker. Optional computers include E2B, Daytona, CreateOS, Boat, and a trusted local computer. Like Grok Bot, Rakazo is just chat once it is running: a new bot interviews you, and you manage schedules, memory, and approvals from that chat. Routines are readable Markdown. There is no seat fee. Hosted Rakazo Cloud is in beta.",
+      "Rakazo is an open source AI agent for persistent teammates. It is in beta. The clients are the web app, the Electron desktop app, and the Expo mobile app. You bring a model key, including a local server, and each agent can use a different model. The default computer is local Docker. Optional computers include E2B, Daytona, CreateOS, Boat, and a trusted local computer. Like Grok Bot, Rakazo is just chat once it is running: a new agent interviews you, and you manage schedules, memory, and approvals from that chat. Routines are readable Markdown. There is no seat fee. Hosted Rakazo Cloud is in beta.",
     ],
   },
   {
@@ -172,7 +172,7 @@ const DEDICATED_CARDS: readonly RoundupCard[] = [
     href: GROK_ALTERNATIVE_PATH,
     heading: GROK_ALTERNATIVE_H1,
     paragraphs: [
-      "Grok Bot is xAI's hosted product for named bots that can use a computer, keep routines, and pause for approval. The docs describe a cloud computer on your account, shared by the bots on that account. They do not describe installing the service yourself or connecting your own model provider. Grok Build and the older Grok-1 weights are separate open source releases, not this service. Grok Bot is included with paid Cursor plans and SuperGrok, listed at $30 a month. The free plan on the pricing page does not list it. Rakazo is this shape you host, with a model key you bring.",
+      "Grok Bot is xAI's hosted product for named agents that can use a computer, keep routines, and pause for approval. The docs describe a cloud computer on your account, shared by the agents on that account. They do not describe installing the service yourself or connecting your own model provider. Grok Build and the older Grok-1 weights are separate open source releases, not this service. Grok Bot is included with paid Cursor plans and SuperGrok, listed at $30 a month. The free plan on the pricing page does not list it. Rakazo is this shape you host, with a model key you bring.",
     ],
   },
 ];
@@ -290,7 +290,7 @@ export const ROUNDUP_FAQ: readonly FaqItem[] = [
   {
     question: "Is Rakazo just chat, like Grok Bot?",
     answer:
-      "Yes, after it is running. You install with Docker or the desktop app, create an account, and connect a model. A new bot interviews you, and you manage it from that chat. Grok Bot is also a chat for named bots. OpenClaw adds a command-line setup and a Gateway. Hermes Desktop can reach a first message without the CLI, and messaging apps use a separate gateway. Claude Duet, Hark Pro, Muse, Dots, and Instinct are conversations too, on services you do not host.",
+      "Yes, after it is running. You install with Docker or the desktop app, create an account, and connect a model. A new agent interviews you, and you manage it from that chat. Grok Bot is also a chat for named agents. OpenClaw adds a command-line setup and a Gateway. Hermes Desktop can reach a first message without the CLI, and messaging apps use a separate gateway. Claude Duet, Hark Pro, Muse, Dots, and Instinct are conversations too, on services you do not host.",
   },
   {
     question: "Is this a ranking?",

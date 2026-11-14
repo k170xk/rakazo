@@ -79,7 +79,7 @@ describe("commitConsumedRunSecret", () => {
 });
 
 describe("createRunSecretWriter", () => {
-  it("refuses to store an answer for a run whose bot changed", async () => {
+  it("refuses to store an answer for a run whose agent changed", async () => {
     const prisma = {
       run: { findFirst: async () => ({ botId: "bot", userId: "user" }) },
       message: {

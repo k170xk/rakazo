@@ -38,7 +38,7 @@ export function ArchivedChats({
     >
       <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13.5px] text-muted-foreground hover:bg-sidebar-accent">
         <span>
-          <Trans>Archived bots</Trans>
+          <Trans>Archived agents</Trans>
         </span>
         <span>{archivedBots.length + archivedGroups.length}</span>
       </CollapsibleTrigger>

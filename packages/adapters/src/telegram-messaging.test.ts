@@ -44,7 +44,7 @@ function createSurface(sendErrors: string[] = []) {
           message_id: 42,
           date: 1_700_000_000,
           chat: { id: 123, type: "private" },
-          from: { id: 999, is_bot: true, first_name: "Test Bot" },
+          from: { id: 999, is_bot: true, first_name: "Test Agent" },
           text: payload.text,
         },
       });
@@ -166,7 +166,7 @@ describe("Telegram messaging Markdown", () => {
   });
 });
 
-describe("Telegram bots side by side", () => {
+describe("Telegram agents side by side", () => {
   const telegramUpdate = (text: string) => ({
     update_id: 1,
     message: {
@@ -241,7 +241,7 @@ describe("Telegram bots side by side", () => {
       body: JSON.stringify(telegramUpdate(text)),
     });
 
-  it("keeps the same Telegram user's chats with each bot apart, inbound and outbound", async () => {
+  it("keeps the same Telegram user's chats with each agent apart, inbound and outbound", async () => {
     const { surface, sends, inbound } = createTwoBotSurface();
 
     expect(
@@ -266,7 +266,7 @@ describe("Telegram bots side by side", () => {
     );
   });
 
-  it("rejects an update signed with another bot's webhook secret", async () => {
+  it("rejects an update signed with another agent's webhook secret", async () => {
     const { surface, inbound } = createTwoBotSurface();
 
     const response = await surface.handleWebhook("telegram-work", webhook("home-secret", "x"));
@@ -311,7 +311,7 @@ describe("Telegram groups", () => {
             message_id: 42,
             date: 1_700_000_000,
             chat: { id: payload.chat_id, type: "supergroup" },
-            from: { id: 999, is_bot: true, first_name: "Test Bot" },
+            from: { id: 999, is_bot: true, first_name: "Test Agent" },
             text: payload.text,
           },
         });
@@ -425,8 +425,8 @@ describe("Telegram groups", () => {
                 message_id: 9,
                 date: 1_700_000_000,
                 chat: familyChat,
-                from: { id: 999, is_bot: true, first_name: "Test Bot" },
-                text: "earlier bot reply",
+                from: { id: 999, is_bot: true, first_name: "Test Agent" },
+                text: "earlier agent reply",
               },
             }),
           ),
@@ -478,12 +478,12 @@ describe("Telegram groups", () => {
     expect(inbound).toEqual([]);
   });
 
-  it("keeps each bot's group threads apart and posts replies to the right chat", async () => {
+  it("keeps each agent's group threads apart and posts replies to the right chat", async () => {
     const { surface, sends, inbound } = createGroupSurface();
 
     await surface.handleWebhook(
       "telegram-work",
-      webhook("work-secret", groupMessage({ message_id: 15, text: "hi work bot" })),
+      webhook("work-secret", groupMessage({ message_id: 15, text: "hi work agent" })),
     );
     expect(inbound).toMatchObject([
       {
@@ -540,7 +540,7 @@ describe("Telegram groups", () => {
     ]);
   });
 
-  it("flags the bot's own removal as the channel's end", async () => {
+  it("flags the agent's own removal as the channel's end", async () => {
     const { surface, inbound } = createGroupSurface();
 
     expect(
@@ -594,7 +594,7 @@ describe("Telegram messaging files", () => {
             message_id: 43,
             date: 1_700_000_000,
             chat: { id: 123, type: "private" },
-            from: { id: 999, is_bot: true, first_name: "Test Bot" },
+            from: { id: 999, is_bot: true, first_name: "Test Agent" },
           },
         });
       }),

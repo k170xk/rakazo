@@ -98,7 +98,7 @@ afterEach(() => {
 });
 
 describe("useChatRead automatic reads", () => {
-  it("reads an open bot and clears its unread flag", async () => {
+  it("reads an open agent and clears its unread flag", async () => {
     await open({ active: botA });
     expect(sent()).toEqual([["markRead", "bot-a"]]);
     await settle(0);
@@ -106,7 +106,7 @@ describe("useChatRead automatic reads", () => {
     expect(latest.read.unreadAfterSeq).toBe(5);
   });
 
-  it("skips a queued bot read once the window loses focus", async () => {
+  it("skips a queued agent read once the window loses focus", async () => {
     await open({ active: botA });
     await focus();
     focused = false;
@@ -114,7 +114,7 @@ describe("useChatRead automatic reads", () => {
     expect(sent()).toEqual([["markRead", "bot-a"]]);
   });
 
-  it("skips a queued bot read once the user opens another chat", async () => {
+  it("skips a queued agent read once the user opens another chat", async () => {
     await open({ active: botA });
     await focus();
     await open({ active: botB });
@@ -146,7 +146,7 @@ describe("useChatRead automatic reads", () => {
 });
 
 describe("useChatRead Mark as Unread", () => {
-  it("leaves a group marked unread alone until it is opened again, like a bot", async () => {
+  it("leaves a group marked unread alone until it is opened again, like an agent", async () => {
     await open({ group: groupG });
     await settle(0);
     act(() => latest.read.markGroupUnreadFrom("group-g", "message-1"));
@@ -166,7 +166,7 @@ describe("useChatRead Mark as Unread", () => {
     expect(sent().at(-1)).toEqual(["markRead", "group-g"]);
   });
 
-  it("queues a bot's unread write behind its read and skips reads queued before the hold", async () => {
+  it("queues an agent's unread write behind its read and skips reads queued before the hold", async () => {
     await open({ active: botA });
     await focus();
     const unread = latest.read.markBotUnread("bot-a", "message-1");

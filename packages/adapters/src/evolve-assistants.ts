@@ -27,9 +27,9 @@ export const EVOLVE_ACCESS_TTL_MS = 5 * 60_000;
 export const EVOLVE_ACCESS_GRACE_MS = 60 * 60_000;
 
 export const EVOLVE_ASSISTANT_NO_ACCESS =
-  "This bot is built on an Evolve assistant you no longer have access to. An Evolve admin can give you access in Access Control → Assistants.";
+  "This agent is built on an Evolve assistant you no longer have access to. An Evolve admin can give you access in Access Control → Assistants.";
 export const EVOLVE_ASSISTANT_UNCONFIRMED =
-  "Evolve could not confirm you still have access to this bot's assistant. Try again in a few minutes.";
+  "Evolve could not confirm you still have access to this agent's assistant. Try again in a few minutes.";
 
 const accessCache = new Map<string, { ids: ReadonlySet<string>; at: number }>();
 

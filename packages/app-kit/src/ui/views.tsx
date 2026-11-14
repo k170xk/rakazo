@@ -8,7 +8,7 @@ import type {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Tone } from "../schema.js";
-import { Badge, Button } from "./basic.js";
+import { Avatar, Badge, Button } from "./basic.js";
 import { cn, TONE_DOT, toneFor } from "./cn.js";
 
 type AnyRow = Record<string, unknown> & { _id?: string };
@@ -304,7 +304,7 @@ export function Kanban<T extends AnyRow>({
                           if (Date.now() - justDropped.current > 300) onOpen?.(row);
                         }}
                         className={cn(
-                          "rounded-xl border border-border/70 bg-card p-3.5 shadow-card transition-shadow select-none hover:shadow-lift [-webkit-touch-callout:none]",
+                          "rounded-xl border border-border/70 bg-card p-3.5 shadow-card transition-[transform,box-shadow,border-color] duration-200 select-none hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lift [-webkit-touch-callout:none]",
                           onMove && "cursor-grab active:cursor-grabbing",
                           onOpen && !onMove && "cursor-pointer",
                         )}
@@ -351,27 +351,35 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const isoDay = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
-/** A month grid with each row placed on its date. */
+export type CalendarViewMode = "month" | "week" | "agenda";
+
+/** A month, week or agenda calendar view with each row placed on its date. */
 export function CalendarMonth<T extends AnyRow>({
   rows,
   dateKey,
   titleKey,
+  subtitleKey,
   toneKey,
   onOpen,
   initialMonth,
+  defaultView = "month",
 }: {
   rows: T[];
   dateKey: string;
   titleKey: string;
+  subtitleKey?: string;
   /** A field whose value colours the entry (a status). */
   toneKey?: string;
   onOpen?: (row: T) => void;
   initialMonth?: string;
+  defaultView?: CalendarViewMode;
 }) {
-  const [month, setMonth] = useState(() => {
+  const [view, setView] = useState<CalendarViewMode>(defaultView);
+  const [cursor, setCursor] = useState(() => {
     const base = initialMonth ? new Date(`${initialMonth.slice(0, 7)}-01T00:00:00`) : new Date();
-    return new Date(base.getFullYear(), base.getMonth(), 1);
+    return Number.isNaN(base.getTime()) ? new Date() : base;
   });
+  const month = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor]);
   const byDay = useMemo(() => {
     const map = new Map<string, T[]>();
     for (const row of rows) {
@@ -381,104 +389,201 @@ export function CalendarMonth<T extends AnyRow>({
     }
     return map;
   }, [rows, dateKey]);
-  const start = new Date(month.getTime() - ((month.getDay() + 6) % 7) * DAY);
+  const monthStart = new Date(month.getTime() - ((month.getDay() + 6) % 7) * DAY);
+  const weekStart = new Date(cursor.getTime() - ((cursor.getDay() + 6) % 7) * DAY);
   const cells = Array.from(
-    { length: 42 },
-    (_, index) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + index),
+    { length: view === "week" ? 7 : 42 },
+    (_, index) => {
+      const origin = view === "week" ? weekStart : monthStart;
+      return new Date(origin.getFullYear(), origin.getMonth(), origin.getDate() + index);
+    },
   );
   const today = isoDay(new Date());
+  const agendaDays = useMemo(
+    () => [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)),
+    [byDay],
+  );
+  const step = (dir: -1 | 1) => {
+    if (view === "week") {
+      setCursor(new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() + dir * 7));
+    } else {
+      setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + dir, 1));
+    }
+  };
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card">
-      <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 px-4 py-3">
         <h3 className="text-[15px] font-bold">
-          {month.toLocaleDateString("en-IE", { month: "long", year: "numeric" })}
+          {view === "week"
+            ? `${weekStart.toLocaleDateString("en-IE", { day: "numeric", month: "short" })} – ${new Date(weekStart.getTime() + 6 * DAY).toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" })}`
+            : month.toLocaleDateString("en-IE", { month: "long", year: "numeric" })}
         </h3>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))}
-          >
-            Today
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Previous month"
-            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-          >
-            <ChevronLeft />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Next month"
-            onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-          >
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
-      <div className="grid grid-cols-7 border-b border-border/70 bg-muted/40">
-        {WEEKDAYS.map((day) => (
-          <div
-            key={day}
-            className="px-2 py-2 text-center text-xs font-bold text-muted-foreground uppercase"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7">
-        {cells.map((date) => {
-          const key = isoDay(date);
-          const entries = byDay.get(key) ?? [];
-          const inMonth = date.getMonth() === month.getMonth();
-          return (
-            <div
-              key={key}
-              className={cn(
-                "min-h-[104px] border-r border-b border-border/50 p-1.5 [&:nth-child(7n)]:border-r-0",
-                !inMonth && "bg-muted/25",
-              )}
-            >
-              <div
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className="inline-flex rounded-lg bg-muted p-0.5 text-xs font-semibold" data-dense="">
+            {(["month", "week", "agenda"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                aria-pressed={view === mode}
+                onClick={() => setView(mode)}
                 className={cn(
-                  "mb-1 flex size-6 items-center justify-center rounded-full text-xs font-semibold tabular",
-                  key === today
-                    ? "bg-primary text-primary-foreground"
-                    : inMonth
-                      ? "text-foreground"
-                      : "text-muted-foreground/50",
+                  "rounded-md px-2.5 py-1 capitalize transition-colors",
+                  view === mode
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {date.getDate()}
-              </div>
-              <div className="flex flex-col gap-1">
-                {entries.slice(0, 3).map((row) => {
-                  const tone = toneKey ? toneFor(row[toneKey], "accent") : "accent";
-                  return (
-                    <button
-                      key={row._id}
-                      type="button"
-                      onClick={() => onOpen?.(row)}
-                      className="flex items-center gap-1.5 truncate rounded-md bg-muted/70 px-1.5 py-1 text-left text-[11px] font-semibold hover:bg-muted"
-                    >
-                      <span className={cn("size-1.5 shrink-0 rounded-full", TONE_DOT[tone])} />
-                      <span className="truncate">{String(row[titleKey] ?? "")}</span>
-                    </button>
-                  );
-                })}
-                {entries.length > 3 && (
-                  <span className="px-1.5 text-[11px] font-semibold text-muted-foreground">
-                    +{entries.length - 3} more
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
+                {mode}
+              </button>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setCursor(new Date())}>
+            Today
+          </Button>
+          {view !== "agenda" && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Previous"
+                onClick={() => step(-1)}
+              >
+                <ChevronLeft />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Next"
+                onClick={() => step(1)}
+              >
+                <ChevronRight />
+              </Button>
+            </>
+          )}
+        </div>
       </div>
+      {view === "agenda" ? (
+        <div className="divide-y divide-border/50">
+          {agendaDays.length === 0 ? (
+            <p className="px-5 py-10 text-center text-sm text-muted-foreground">No dated entries yet.</p>
+          ) : (
+            agendaDays.map(([day, list]) => (
+              <div key={day} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start sm:gap-5">
+                <div className="w-32 shrink-0 pt-0.5">
+                  <p className={cn("text-xs font-bold uppercase tracking-wide", day === today ? "text-primary" : "text-muted-foreground")}>
+                    {new Date(`${day}T12:00:00`).toLocaleDateString("en-IE", { weekday: "short", day: "numeric", month: "short" })}
+                  </p>
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  {list.map((row) => {
+                    const tone = toneKey ? toneFor(row[toneKey], "accent") : "accent";
+                    const label = subtitleKey && row[subtitleKey]
+                      ? `${String(row[subtitleKey])} · ${String(row[titleKey] ?? "")}`
+                      : String(row[titleKey] ?? "");
+                    return (
+                      <div
+                        key={row._id}
+                        onClick={onOpen ? () => onOpen(row) : undefined}
+                        className={cn(
+                          "flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-sm transition-[transform,background-color,border-color] duration-150 hover:border-primary/30 hover:bg-muted/60",
+                          onOpen && "cursor-pointer hover:translate-x-0.5",
+                        )}
+                      >
+                        <span className="flex min-w-0 items-center gap-2 font-medium">
+                          <span className={cn("size-2 shrink-0 rounded-full", TONE_DOT[tone])} />
+                          <span className="truncate">{label}</span>
+                        </span>
+                        {toneKey && row[toneKey] ? (
+                          <Badge tone={tone} dot>{String(row[toneKey])}</Badge>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-7 border-b border-border/70 bg-muted/40">
+            {WEEKDAYS.map((day) => (
+              <div
+                key={day}
+                className="px-2 py-2 text-center text-xs font-bold text-muted-foreground uppercase"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7">
+            {cells.map((date) => {
+              const key = isoDay(date);
+              const entries = byDay.get(key) ?? [];
+              const inMonth = view === "week" || date.getMonth() === month.getMonth();
+              const limit = view === "week" ? 8 : 3;
+              return (
+                <div
+                  key={key}
+                  className={cn(
+                    view === "week" ? "min-h-[180px]" : "min-h-[104px]",
+                    "border-r border-b border-border/50 p-1.5 transition-colors duration-150 hover:bg-primary/[0.025] [&:nth-child(7n)]:border-r-0",
+                    !inMonth && "bg-muted/25",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "mb-1 flex size-6 items-center justify-center rounded-full text-xs font-semibold tabular",
+                      key === today
+                        ? "bg-primary text-primary-foreground"
+                        : inMonth
+                          ? "text-foreground"
+                          : "text-muted-foreground/50",
+                    )}
+                  >
+                    {date.getDate()}
+                  </div>
+                  <div className="flex flex-col gap-1" data-dense="">
+                    {entries.slice(0, limit).map((row) => {
+                      const tone = toneKey ? toneFor(row[toneKey], "accent") : "accent";
+                      const label = subtitleKey && row[subtitleKey]
+                        ? `${String(row[subtitleKey])} · ${String(row[titleKey] ?? "")}`
+                        : String(row[titleKey] ?? "");
+                      if (!onOpen) {
+                        return (
+                          <span
+                            key={row._id}
+                            className="flex items-center gap-1.5 truncate rounded-md bg-muted/70 px-1.5 py-1 text-left text-xs font-semibold transition-colors hover:bg-muted"
+                          >
+                            <span className={cn("size-1.5 shrink-0 rounded-full", TONE_DOT[tone])} />
+                            <span className="truncate">{label}</span>
+                          </span>
+                        );
+                      }
+                      return (
+                        <button
+                          key={row._id}
+                          type="button"
+                          onClick={() => onOpen(row)}
+                          className="flex items-center gap-1.5 truncate rounded-md bg-muted/70 px-1.5 py-1 text-left text-xs font-semibold transition-[transform,background-color] duration-150 hover:translate-x-0.5 hover:bg-primary/14"
+                        >
+                          <span className={cn("size-1.5 shrink-0 rounded-full", TONE_DOT[tone])} />
+                          <span className="truncate">{label}</span>
+                        </button>
+                      );
+                    })}
+                    {entries.length > limit && (
+                      <span className="px-1.5 text-xs font-semibold text-muted-foreground">
+                        +{entries.length - limit} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -598,7 +703,7 @@ export function Timeline<T extends AnyRow>({
   );
 }
 
-/** A vertical list of dated events, newest first. */
+/** A vertical list of dated events, newest first, with subtle hover highlights. */
 export function ActivityFeed({
   items,
 }: {
@@ -607,29 +712,43 @@ export function ActivityFeed({
     title: ReactNode;
     description?: ReactNode;
     date?: string;
+    badge?: ReactNode;
     tone?: Tone;
     icon?: ReactNode;
+    onClick?: () => void;
   }>;
 }) {
   return (
-    <ol className="relative flex flex-col gap-5 pl-6 before:absolute before:top-1 before:bottom-1 before:left-[7px] before:w-px before:bg-border">
+    <ol className="relative flex flex-col gap-2 pl-6 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-px before:bg-border">
       {items.map((item, index) => (
         <motion.li
           key={item.id}
           initial={{ opacity: 0, x: -6 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.04 }}
-          className="relative"
+          transition={{ delay: Math.min(index, 12) * 0.035 }}
+          onClick={item.onClick}
+          className={cn(
+            "group relative rounded-xl px-3 py-2.5 -ml-2 transition-[transform,background-color] duration-150 hover:bg-muted/45",
+            item.onClick && "cursor-pointer hover:translate-x-0.5",
+          )}
         >
           <span
             className={cn(
-              "absolute top-1 -left-6 size-[15px] rounded-full border-[3px] border-card",
+              "absolute top-3.5 -left-4 size-[15px] rounded-full border-[3px] border-card transition-transform duration-150 group-hover:scale-110",
               TONE_DOT[item.tone ?? "accent"],
             )}
           />
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm font-semibold">{item.title}</p>
-            {item.date && <span className="text-xs text-muted-foreground">{item.date}</span>}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {item.icon && <span className="text-primary [&_svg]:size-4">{item.icon}</span>}
+              <p className="truncate text-sm font-semibold">{item.title}</p>
+              {item.badge && (
+                <Badge tone={item.tone ?? "neutral"} dot>
+                  {item.badge}
+                </Badge>
+              )}
+            </div>
+            {item.date && <span className="text-xs tabular text-muted-foreground">{item.date}</span>}
           </div>
           {item.description && (
             <p className="mt-0.5 text-[13px] text-muted-foreground">{item.description}</p>
@@ -637,6 +756,109 @@ export function ActivityFeed({
         </motion.li>
       ))}
     </ol>
+  );
+}
+
+export type ActionListItem = {
+  id: string;
+  title: ReactNode;
+  subtitle?: ReactNode;
+  meta?: ReactNode;
+  badge?: ReactNode;
+  tone?: Tone;
+  /** Person name for an avatar, or pass a custom icon. */
+  avatar?: string;
+  icon?: ReactNode;
+  actions?: ReactNode;
+  onClick?: () => void;
+};
+
+/**
+ * Animated interactive list with staggered entrance and tactile hover elevation — ideal for
+ * priority queues, recent records, attention items, and team lists.
+ */
+export function ActionList({
+  items,
+  empty = "Nothing to show",
+  className,
+}: {
+  items: ActionListItem[];
+  empty?: ReactNode;
+  className?: string;
+}) {
+  if (!items.length) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">{empty}</p>;
+  }
+  return (
+    <ul className={cn("flex flex-col gap-2", className)}>
+      {items.map((item, index) => {
+        const tone = item.tone ?? (typeof item.badge === "string" ? toneFor(item.badge, "accent") : "accent");
+        const content = (
+          <>
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-2.5 left-0 w-[3px] origin-center scale-y-0 rounded-r-full bg-primary transition-transform duration-200 group-hover:scale-y-100"
+            />
+            {item.avatar ? (
+              <Avatar name={item.avatar} size={34} />
+            ) : item.icon ? (
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary transition-transform duration-200 group-hover:scale-105 [&_svg]:size-4">
+                {item.icon}
+              </span>
+            ) : null}
+            <span className="min-w-0 flex-1">
+              <span className="flex flex-wrap items-center gap-2">
+                <span className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                  {item.title}
+                </span>
+                {item.badge !== undefined && item.badge !== null && item.badge !== "" && (
+                  <Badge tone={tone} dot>
+                    {item.badge}
+                  </Badge>
+                )}
+              </span>
+              {item.subtitle && (
+                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                  {item.subtitle}
+                </span>
+              )}
+            </span>
+            {item.meta && (
+              <span className="shrink-0 text-xs font-medium tabular text-muted-foreground">
+                {item.meta}
+              </span>
+            )}
+            {item.actions && <span className="flex shrink-0 items-center gap-1.5">{item.actions}</span>}
+            {item.onClick && !item.actions && (
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground/60 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
+            )}
+          </>
+        );
+        const rowClass =
+          "group relative flex w-full items-center gap-3 overflow-hidden rounded-xl border border-border/70 bg-card px-3.5 py-3 text-left transition-[transform,box-shadow,border-color,background-color] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-card";
+        return (
+          <motion.li
+            key={item.id}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: Math.min(index, 10) * 0.03 }}
+          >
+            {item.onClick && !item.actions ? (
+              <button type="button" onClick={item.onClick} className={cn(rowClass, "cursor-pointer")}>
+                {content}
+              </button>
+            ) : (
+              <div
+                onClick={item.onClick}
+                className={cn(rowClass, item.onClick && "cursor-pointer")}
+              >
+                {content}
+              </div>
+            )}
+          </motion.li>
+        );
+      })}
+    </ul>
   );
 }
 

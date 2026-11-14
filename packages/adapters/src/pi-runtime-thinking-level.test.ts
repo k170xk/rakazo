@@ -200,7 +200,7 @@ describe("Pi agent thinking level", () => {
     expect(levels.every((level) => level !== "off")).toBe(true);
   });
 
-  it("uses a stable provider session for each bot thread", async () => {
+  it("uses a stable provider session for each agent thread", async () => {
     await runWithModel("plain-model");
 
     expect(fakeAgentState.sessionIds[0]).toBe("t:b");

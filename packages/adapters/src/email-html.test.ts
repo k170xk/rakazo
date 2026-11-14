@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   composeEmailHtml,
   emailTextToHtml,
+  extractOutlookSignatureHtml,
   sanitizeEmailBody,
   sanitizeEmailSignature,
 } from "./email-html.js";
@@ -54,8 +55,33 @@ describe("sanitizeEmailSignature", () => {
   });
 });
 
+describe("extractOutlookSignatureHtml", () => {
+  it("extracts an Outlook Web signature with inline cid logos before quoted reply history", () => {
+    const html = `<html><body>
+      <div>Hi Alex,</div>
+      <div id="Signature">
+        <table><tr><td style="color:#76BF43">Keith Knox</td><td><img src="cid:logo01@ocsc.ie" width="90"></td></tr></table>
+      </div>
+      <div id="divRplyFwdMsg"><div id="Signature">Other Person</div></div>
+    </body></html>`;
+    const extracted = extractOutlookSignatureHtml(html, {
+      "logo01@ocsc.ie": "data:image/png;base64,iVBORw0KGgo=",
+    });
+    expect(extracted).toContain("Keith Knox");
+    expect(extracted).toContain('src="data:image/png;base64,iVBORw0KGgo="');
+    expect(extracted).not.toContain("Other Person");
+  });
+
+  it("extracts a classic Outlook Word _MailAutoSig signature", () => {
+    const html = `<html><body><div class="WordSection1"><p>Thanks,</p><p><a name="_MailAutoSig"><b>Keith Knox</b><br>Director</a></p></div></body></html>`;
+    const extracted = extractOutlookSignatureHtml(html);
+    expect(extracted).toContain("<b>Keith Knox</b>");
+    expect(extracted).toContain("Director");
+  });
+});
+
 describe("composeEmailHtml", () => {
-  it("puts the body, then the signature, above a reply's quoted history", () => {
+  it("puts professionally styled body paragraphs, then the signature, above a reply's quoted history", () => {
     const html = composeEmailHtml({
       bodyHtml: "<p>Thanks</p>",
       signatureHtml: "<p>Keith</p>",
@@ -63,7 +89,7 @@ describe("composeEmailHtml", () => {
         '<html><head></head><body dir="ltr"><div id="divRplyFwdMsg">From: Sam</div></body></html>',
     });
     expect(html).toMatch(
-      /<body dir="ltr"><div style="[^"]+"><p>Thanks<\/p><br ?\/?><p>Keith<\/p><\/div><br><div id="divRplyFwdMsg">/,
+      /<body dir="ltr"><div style="[^"]+"><p style="margin:0 0 12px 0;line-height:1\.45;">Thanks<\/p><div id="Signature" style="margin-top:12px;"><p>Keith<\/p><\/div><\/div><br><div id="divRplyFwdMsg">/,
     );
   });
 });

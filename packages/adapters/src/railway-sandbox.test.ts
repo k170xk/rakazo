@@ -861,7 +861,7 @@ describe("Railway computers", () => {
     );
   });
 
-  it("runs a bot's commands on that bot's own screen", async () => {
+  it("runs an agent's commands on that agent's own screen", async () => {
     sandbox.exec.mockResolvedValue({ stdout: "", stderr: "", exitCode: 0, timedOut: false });
     for await (const _event of provider.execute(
       computer,

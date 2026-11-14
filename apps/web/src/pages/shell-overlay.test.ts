@@ -49,6 +49,7 @@ describe("readShellOverlay", () => {
 
   it("reads flag overlays with or without a value", () => {
     expect(read("?integrations")).toEqual({ kind: "integrations" });
+    expect(read("?whiteboards")).toEqual({ kind: "whiteboards" });
     expect(read("?mcp=")).toEqual({ kind: "mcp" });
     expect(read("?mcp=srv_1")).toEqual({ kind: "mcp", serverId: "srv_1" });
   });

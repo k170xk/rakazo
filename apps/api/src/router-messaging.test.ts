@@ -351,7 +351,7 @@ describe("messaging.status", () => {
 });
 
 describe("messaging.link", () => {
-  it("issues a formatted single-use code for an owned unlinked bot", async () => {
+  it("issues a formatted single-use code for an owned unlinked agent", async () => {
     const { handler, actor, prisma } = messagingDeps({ identity: null });
     (prisma.messagingIdentity.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     const response = await call(handler, actor, "messaging/link/start", { botId: "bot-2" });
@@ -366,7 +366,7 @@ describe("messaging.link", () => {
     );
   });
 
-  it("refuses to issue a code for an already-linked bot", async () => {
+  it("refuses to issue a code for an already-linked agent", async () => {
     const { handler, actor } = messagingDeps();
     // messagingIdentity.findUnique resolves an identity for bot-1 by default.
     const response = await call(handler, actor, "messaging/link/start", { botId: "bot-1" });
@@ -375,7 +375,7 @@ describe("messaging.link", () => {
 });
 
 describe("messaging.identities", () => {
-  it("re-points an identity at another owned bot", async () => {
+  it("re-points an identity at another owned agent", async () => {
     const { handler, actor } = messagingDeps();
     const response = await call(handler, actor, "messaging/identities/setBot", {
       identityId: "mi-1",

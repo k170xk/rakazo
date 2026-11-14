@@ -1,4 +1,4 @@
-import { ChevronDown, LoaderCircle, Search, X } from "lucide-react";
+import { ChevronDown, Info, LoaderCircle, Search, Sparkles, X } from "lucide-react";
 import { motion } from "motion/react";
 import type {
   ButtonHTMLAttributes,
@@ -8,7 +8,7 @@ import type {
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
-import { useId } from "react";
+import { useId, useState } from "react";
 import type { Tone } from "../schema.js";
 import { cn, TONE_CLASSES, TONE_DOT, toneFor } from "./cn.js";
 
@@ -71,14 +71,17 @@ export function Button({
 export function Card({
   className,
   interactive,
+  onClick,
   ...props
 }: HTMLAttributes<HTMLDivElement> & { interactive?: boolean }) {
+  const clickable = Boolean(interactive || onClick);
   return (
     <div
+      onClick={onClick}
       className={cn(
-        "rounded-2xl border border-border/70 bg-card text-card-foreground shadow-card",
-        interactive &&
-          "cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift",
+        "rounded-2xl border border-border/70 bg-card text-card-foreground shadow-card transition-[transform,box-shadow,border-color] duration-200 hover:border-border hover:shadow-[0_2px_6px_hsl(220_30%_10%/0.05),0_10px_24px_-8px_hsl(220_30%_10%/0.1)]",
+        clickable &&
+          "cursor-pointer hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lift active:translate-y-0",
         className,
       )}
       {...props}
@@ -149,7 +152,7 @@ export function Badge({
 }
 
 const FIELD =
-  "w-full rounded-lg border border-input bg-card px-3 text-sm pointer-coarse:text-base text-foreground shadow-[0_1px_1px_hsl(220_30%_10%/0.03)] transition-[border,box-shadow] outline-none placeholder:text-muted-foreground/70 focus:border-primary/60 focus:ring-4 focus:ring-primary/15 disabled:opacity-60";
+  "w-full rounded-lg border border-input bg-card px-3 text-sm pointer-coarse:text-[16px] max-sm:text-[16px] text-foreground shadow-[0_1px_1px_hsl(220_30%_10%/0.03)] transition-[border,box-shadow] outline-none placeholder:text-muted-foreground/70 focus:border-primary/60 focus:ring-4 focus:ring-primary/15 disabled:opacity-60";
 
 export function Field({
   label,
@@ -643,5 +646,120 @@ export function Stat({
       <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</p>
       <div className="mt-1 truncate text-sm font-medium">{value ?? "—"}</div>
     </div>
+  );
+}
+
+const CALLOUT_SURFACES: Record<Tone, string> = {
+  neutral: "border-border bg-muted/50 text-foreground",
+  success: "border-success/25 bg-success/[0.08] text-foreground",
+  warning: "border-warning/30 bg-warning/[0.09] text-foreground",
+  danger: "border-destructive/25 bg-destructive/[0.08] text-foreground",
+  info: "border-info/25 bg-info/[0.08] text-foreground",
+  accent: "border-primary/25 bg-primary/[0.08] text-foreground",
+};
+
+/** A theme-safe notice or highlight banner that adapts cleanly to light and dark modes. */
+export function Callout({
+  tone = "accent",
+  title,
+  icon,
+  action,
+  children,
+  className,
+}: {
+  tone?: Tone;
+  title?: ReactNode;
+  icon?: ReactNode;
+  action?: ReactNode;
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm",
+        CALLOUT_SURFACES[tone],
+        className,
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <span
+          className={cn(
+            "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset [&_svg]:size-4",
+            TONE_CLASSES[tone],
+          )}
+        >
+          {icon ?? <Info />}
+        </span>
+        <div className="min-w-0 flex-1">
+          {title && <p className="font-semibold leading-snug">{title}</p>}
+          {children && (
+            <div className={cn("text-[13px] text-muted-foreground", Boolean(title) && "mt-0.5")}>
+              {children}
+            </div>
+          )}
+        </div>
+      </div>
+      {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
+    </div>
+  );
+}
+
+type SampleTableLike = {
+  rows: ReadonlyArray<{ _id: string } & Record<string, unknown>>;
+  canEdit: boolean;
+  remove: (id: string) => Promise<void>;
+};
+
+/**
+ * Shown while starter sample rows (`is_sample: true`) are present so a new app opens with rich
+ * charts and boards on day one, and lets the owner clear only those sample rows in one click.
+ */
+export function SampleBanner({
+  tables,
+  sampleKey = "is_sample",
+  label,
+  onCleared,
+  className,
+}: {
+  tables: readonly SampleTableLike[];
+  sampleKey?: string;
+  label?: ReactNode;
+  onCleared?: (removed: number) => void;
+  className?: string;
+}) {
+  const [clearing, setClearing] = useState(false);
+  const targets = tables.flatMap((table) =>
+    table.rows
+      .filter((row) => row[sampleKey] === true)
+      .map((row) => ({ table, id: row._id })),
+  );
+  if (targets.length === 0) return null;
+  const canClear = tables.some((table) => table.canEdit);
+  const clear = async () => {
+    setClearing(true);
+    try {
+      await Promise.all(targets.map(({ table, id }) => table.remove(id)));
+      onCleared?.(targets.length);
+    } finally {
+      setClearing(false);
+    }
+  };
+  return (
+    <Callout
+      tone="accent"
+      icon={<Sparkles />}
+      title={label ?? `Exploring with ${targets.length} sample ${targets.length === 1 ? "record" : "records"}`}
+      className={className}
+      action={
+        canClear ? (
+          <Button variant="outline" size="sm" loading={clearing} onClick={() => void clear()}>
+            Clear sample data
+          </Button>
+        ) : undefined
+      }
+    >
+      Illustrative starter entries populate the charts and boards. Add your own records any time or clear the sample set in one click.
+    </Callout>
   );
 }

@@ -18,7 +18,7 @@ const thread = [
 ];
 
 describe("unreadDividerMessageId", () => {
-  it("sits above the first bot message after the read cursor, skipping the user's own", () => {
+  it("sits above the first agent message after the read cursor, skipping the user's own", () => {
     expect(unreadDividerMessageId(thread, 0, null)).toBe("m3");
     expect(unreadDividerMessageId(thread, 3, null)).toBe("m4");
   });
@@ -147,11 +147,11 @@ describe("createChatQueues", () => {
     const answered: string[] = [];
     let releaseA!: () => void;
     const openingA = inOrder(
-      "bot:a",
+      "agent:a",
       () => new Promise<string>((resolve) => (releaseA = () => resolve("a1"))),
     ).then((value) => answered.push(value));
-    const liveA = inOrder("bot:a", async () => "a2").then((value) => answered.push(value));
-    await inOrder("bot:b", async () => "b1").then((value) => answered.push(value));
+    const liveA = inOrder("agent:a", async () => "a2").then((value) => answered.push(value));
+    await inOrder("agent:b", async () => "b1").then((value) => answered.push(value));
     expect(answered).toEqual(["b1"]);
     releaseA();
     await Promise.all([openingA, liveA]);
@@ -186,11 +186,11 @@ describe("marking unread through a chat's read queue", () => {
       const started: string[] = [];
       let unread = false;
       let finishMarkUnread!: () => void;
-      void inOrder("bot:a", () => {
+      void inOrder("agent:a", () => {
         started.push("opening");
         return new Promise<never>(() => undefined);
       });
-      const mark = inOrder("bot:a", () => {
+      const mark = inOrder("agent:a", () => {
         started.push("mark-unread");
         return new Promise<void>((resolve) => {
           finishMarkUnread = () => {
@@ -199,7 +199,7 @@ describe("marking unread through a chat's read queue", () => {
           };
         });
       });
-      const read = inOrder("bot:a", async () => {
+      const read = inOrder("agent:a", async () => {
         started.push("read");
         unread = false;
       });
@@ -223,7 +223,7 @@ describe("marking unread through a chat's read queue", () => {
     let finishRead!: () => void;
     // An automatic read is already on its way when the user marks a message unread.
     const inFlight = inOrder(
-      "bot:a",
+      "agent:a",
       () =>
         new Promise<void>((resolve) => {
           finishRead = () => {
@@ -233,11 +233,11 @@ describe("marking unread through a chat's read queue", () => {
         }),
     );
     // Another automatic read was queued; it checks the hold when its turn comes.
-    const queued = inOrder("bot:a", async () => {
+    const queued = inOrder("agent:a", async () => {
       if (!held) unread = false;
     });
     held = true;
-    const mark = inOrder("bot:a", async () => {
+    const mark = inOrder("agent:a", async () => {
       unread = true;
     });
     // The queue starts the read on the next tick; finish it once it has started.

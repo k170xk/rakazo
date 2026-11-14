@@ -104,7 +104,7 @@ export function teamChatPrompt(provider: string, senderName: string, content: st
 
 export function teamChatResponseText(
   blocks: MessageBlock[],
-  botName = "Bot",
+  botName = "Agent",
   allowSilence = false,
 ): string {
   const text = blocks
@@ -210,7 +210,7 @@ export class TeamChatBridge {
       },
     });
     throwIfStopped();
-    if (!target) throw new Error(`Team chat target bot ${this.deps.botId} was not found`);
+    if (!target) throw new Error(`Team chat target agent ${this.deps.botId} was not found`);
     this.target = target;
     // Release abandoned routes before any later setup that might throw and leave
     // start() unfinished (for example transcript mirroring).

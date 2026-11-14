@@ -43,7 +43,7 @@ describe("inferScript save_page", () => {
 describe("inferScript message_bot", () => {
   const messageBotScript = (confirmName: string, message: string) => [
     {
-      assistant: "messaging that bot now.",
+      assistant: "messaging that agent now.",
       toolCalls: [
         {
           name: "message_bot",
@@ -58,8 +58,8 @@ describe("inferScript message_bot", () => {
     },
   ];
 
-  it("messages another bot by name", () => {
-    expect(inferScript("message the bot named Researcher saying peer-exchange-alpha")).toEqual(
+  it("messages another agent by name", () => {
+    expect(inferScript("message the agent named Researcher saying peer-exchange-alpha")).toEqual(
       messageBotScript("Researcher", "peer-exchange-alpha"),
     );
   });
@@ -67,21 +67,21 @@ describe("inferScript message_bot", () => {
   it("keeps message_bot when the payload mentions delete or subagent", () => {
     expect(
       inferScript(
-        "message the bot named Researcher saying please delete the bot named Scout and use a subagent",
+        "message the agent named Researcher saying please delete the agent named Scout and use a subagent",
       ),
     ).toEqual(
-      messageBotScript("Researcher", "please delete the bot named Scout and use a subagent"),
+      messageBotScript("Researcher", "please delete the agent named Scout and use a subagent"),
     );
   });
 
   it("keeps message_bot when the payload mentions sign in", () => {
-    expect(inferScript("message the bot named Researcher saying please sign in")).toEqual(
+    expect(inferScript("message the agent named Researcher saying please sign in")).toEqual(
       messageBotScript("Researcher", "please sign in"),
     );
   });
 
   it("preserves multiline message content", () => {
-    expect(inferScript("message the bot named Researcher saying line one\nline two")).toEqual(
+    expect(inferScript("message the agent named Researcher saying line one\nline two")).toEqual(
       messageBotScript("Researcher", "line one\nline two"),
     );
   });
@@ -302,7 +302,7 @@ describe("inferScript write_file", () => {
 });
 
 describe("inferScript update_bot", () => {
-  it("silences finish notifications on this bot", () => {
+  it("silences finish notifications on this agent", () => {
     expect(inferScript("silence finish notifications")).toEqual([
       {
         assistant: "silencing finish notifications.",
@@ -312,7 +312,7 @@ describe("inferScript update_bot", () => {
     ]);
   });
 
-  it("resumes finish notifications on this bot", () => {
+  it("resumes finish notifications on this agent", () => {
     expect(inferScript("resume finish notifications")).toEqual([
       {
         assistant: "enabling finish notifications.",
@@ -523,8 +523,8 @@ describe("ScriptedAgentRuntime steering", () => {
     expect(await collect(request(`${quoted}\n\nremember the plan`))).toContainEqual(remembered);
   });
 
-  it("does not hang the bot that asks another bot to keep working", async () => {
-    const events = await collect(request("message the bot named Researcher saying keep working"));
+  it("does not hang the agent that asks another agent to keep working", async () => {
+    const events = await collect(request("message the agent named Researcher saying keep working"));
     expect(events).toContainEqual(expect.objectContaining({ type: "tool", name: "message_bot" }));
   });
 

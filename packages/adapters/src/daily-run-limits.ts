@@ -60,10 +60,10 @@ export async function dailyLimitRefusal(
     ]),
   );
   if (runs >= limits.runs) {
-    return `This bot has started ${runs} runs on its own in the last day, the most allowed. It will carry on once that eases, or when you message it.`;
+    return `This agent has started ${runs} runs on its own in the last day, the most allowed. It will carry on once that eases, or when you message it.`;
   }
   if ((spend._sum.costUsd ?? 0) >= limits.spendUsd) {
-    return `Your bots have used about $${Math.round(spend._sum.costUsd ?? 0)} of AI in the last day, so work nobody asked for is paused. Message a bot to carry on.`;
+    return `Your agents have used about $${Math.round(spend._sum.costUsd ?? 0)} of AI in the last day, so work nobody asked for is paused. Message an agent to carry on.`;
   }
   return null;
 }

@@ -8,7 +8,7 @@ import {
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
 
 describe("computer lifecycle command guard", () => {
-  it("rejects commands that can destroy a graphical bot's desktop", () => {
+  it("rejects commands that can destroy a graphical agent's desktop", () => {
     for (const command of [
       "pkill chromium",
       "killall chrome",

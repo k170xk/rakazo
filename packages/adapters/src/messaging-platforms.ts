@@ -300,7 +300,7 @@ export function messagingPlatformsFromEnv(
   // ids to "telegram-<name>:" so conversations with each bot stay distinct.
   for (const bot of env.telegramBots ?? []) {
     if (telegramTokens.has(bot.botToken.trim())) {
-      getLogger().warn("skipping Telegram bot that reuses another bot's token", {
+      getLogger().warn("skipping Telegram agent that reuses another agent's token", {
         provider: `telegram-${bot.name}`,
       });
       continue;

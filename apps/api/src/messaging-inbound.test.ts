@@ -358,7 +358,7 @@ const dmEvent = {
   fromLabel: null,
   channelName: null,
   participants: ["+15551111111"],
-  content: "hello bot",
+  content: "hello agent",
   mediaUrl: null,
 };
 
@@ -373,7 +373,7 @@ const groupEvent = {
 };
 
 describe("createMessagingInboundHandler DM routing", () => {
-  it("delivers a known sender's message into their bot's existing thread", async () => {
+  it("delivers a known sender's message into their agent's existing thread", async () => {
     const deps = createDeps();
     const handle = createMessagingInboundHandler(deps);
     await handle(dmEvent);
@@ -389,8 +389,8 @@ describe("createMessagingInboundHandler DM routing", () => {
       threadId: "thread-1",
       botId: "bot-1",
       userId: "user-1",
-      blocks: [{ kind: "text", text: "hello bot" }],
-      prompt: "hello bot",
+      blocks: [{ kind: "text", text: "hello agent" }],
+      prompt: "hello agent",
       trigger: "messaging",
       clientNonce: "messaging:sendblue:handle-1",
     });
@@ -868,7 +868,7 @@ describe("createMessagingInboundHandler DM routing", () => {
         blocks: expect.arrayContaining([
           {
             kind: "text",
-            text: `hello bot\n[file: photo-${ATTACHMENT_MAX_COUNT}.jpg (unavailable)]`,
+            text: `hello agent\n[file: photo-${ATTACHMENT_MAX_COUNT}.jpg (unavailable)]`,
           },
         ]),
       }),
@@ -1426,10 +1426,10 @@ describe("createMessagingInboundHandler owner commands", () => {
   });
 
   it.each([
-    ["the bot wrote since the invite", "reply"],
+    ["the agent wrote since the invite", "reply"],
     ["the invite is more than a day old", "stale"],
     ["no prompt was ever sent", "none"],
-  ])("passes YES to the bot when %s", async (_case, setup) => {
+  ])("passes YES to the agent when %s", async (_case, setup) => {
     const deps = createDeps({
       invitedMember: { id: "cm-1", channelId: "ch-1", status: "invited", identityId: "mi-1" },
     });
@@ -1460,7 +1460,7 @@ describe("createMessagingInboundHandler owner commands", () => {
     expect(deps.sendUserMessage).toHaveBeenCalled();
   });
 
-  it("treats YES as a reply once the bot has answered, even before that answer is sent", async () => {
+  it("treats YES as a reply once the agent has answered, even before that answer is sent", async () => {
     const deps = createDeps({
       invitedMember: { id: "cm-1", channelId: "ch-1", status: "invited", identityId: "mi-1" },
     });
@@ -1607,7 +1607,7 @@ describe("createMessagingInboundHandler channel routing", () => {
     expect(deps.outboundRows.filter((row) => row.kind === "intro")).toHaveLength(0);
   });
 
-  it("fans an approved member's message out to every approved member bot", async () => {
+  it("fans an approved member's message out to every approved member agent", async () => {
     const senderMember = {
       id: "cm-1",
       channelId: "ch-1",
@@ -1853,7 +1853,7 @@ describe("createMessagingInboundHandler channel routing", () => {
     expect(runJobs).toHaveLength(0);
   });
 
-  it("wakes no bot for a group event without text, like a pin or a bare photo", async () => {
+  it("wakes no agent for a group event without text, like a pin or a bare photo", async () => {
     const alice = {
       id: "cm-1",
       channelId: "ch-1",
@@ -2089,7 +2089,7 @@ describe("createMessagingInboundHandler channel routing", () => {
 
   it.each([
     ["she leaves the group", { addresses: ["777"], botLeft: false }],
-    ["she removes the bot", { addresses: [], botLeft: true }],
+    ["she removes the agent", { addresses: [], botLeft: true }],
   ])(
     "invites nobody when a linked sender the channel has not seen departs: %s",
     async (_case, departures) => {
@@ -2128,7 +2128,7 @@ describe("createMessagingInboundHandler channel routing", () => {
     },
   );
 
-  it("ends every membership when the Telegram bot itself is removed", async () => {
+  it("ends every membership when the Telegram agent itself is removed", async () => {
     const alice = {
       id: "cm-1",
       channelId: "ch-1",
@@ -2552,7 +2552,7 @@ describe("createMessagingInboundHandler linking", () => {
     ]);
   });
 
-  it("moves a linked sender to another bot, saving the confirmation with the switch", async () => {
+  it("moves a linked sender to another agent, saving the confirmation with the switch", async () => {
     const deps = createDeps({ linkCode: { ...liveCode, userId: "user-1" } });
     const transaction = vi.mocked(deps.prisma.$transaction).getMockImplementation()!;
     vi.mocked(deps.prisma.$transaction).mockImplementation(async (fn) => {

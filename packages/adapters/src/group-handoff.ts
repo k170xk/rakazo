@@ -83,7 +83,7 @@ export async function handoffToGroupBot(
       return { error: "group handoffs must stay in the current group" } as const;
     }
     if (!group.members.some((member) => member.bot.id === run.botId)) {
-      return { error: "source bot is no longer a group member" } as const;
+      return { error: "source agent is no longer a group member" } as const;
     }
 
     // A group stage has one owner; an outside turn can send several independent tasks.
@@ -236,8 +236,8 @@ export async function handoffToGroupBot(
     groupId,
     groupName: committed.groupName,
     note: committed.inGroup
-      ? "Handoff recorded. End this turn without narrating it; the next bot owns the next stage."
-      : "Handoff recorded in the selected group. The next bot will reply there. Continue any independent work.",
+      ? "Handoff recorded. End this turn without narrating it; the next agent owns the next stage."
+      : "Handoff recorded in the selected group. The next agent will reply there. Continue any independent work.",
   };
 }
 

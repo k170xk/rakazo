@@ -41,7 +41,7 @@ export function IntegrationSetupPage() {
       <div className="mx-auto max-w-[560px]">
         {bots.length > 1 ? (
           <NativeSelect
-            aria-label={t`Bot`}
+            aria-label={t`Agent`}
             value={botId}
             onChange={(event) => setBotId(event.target.value)}
             className="mb-6 w-full"
@@ -61,7 +61,7 @@ export function IntegrationSetupPage() {
         ) : (
           <p>
             {error ? (
-              t`Could not load bots. Reload to try again.`
+              t`Could not load agents. Reload to try again.`
             ) : (
               <Spinner aria-label={t`Loading…`} />
             )}

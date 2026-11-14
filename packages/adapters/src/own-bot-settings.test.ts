@@ -76,7 +76,7 @@ async function readSettings(bot: Parameters<typeof readOwnBotSettings>[2], offse
 }
 
 describe("readOwnBotSettings", () => {
-  it("returns the current settings and the values the bot can pick", async () => {
+  it("returns the current settings and the values the agent can pick", async () => {
     const settings = await readSettings(bot);
     expect(settings).toMatchObject({
       name: "Scout",
@@ -306,7 +306,7 @@ describe("resolveVoiceChoice", () => {
 });
 
 describe("prepareOwnBotSettings voice", () => {
-  it("returns an error the bot can act on when listing voices fails", async () => {
+  it("returns an error the agent can act on when listing voices fails", async () => {
     const failing = async () => {
       throw new Error("provider timeout");
     };

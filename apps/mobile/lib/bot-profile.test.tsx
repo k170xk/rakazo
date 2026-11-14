@@ -247,7 +247,7 @@ function profileRpc(
   {
     bot = async () => fixtureBot,
     update = async () => {
-      throw new Error("unexpected bots/update");
+      throw new Error("unexpected agents/update");
     },
     updateRoutine = async () => {
       throw new Error("unexpected routines/update");
@@ -281,8 +281,8 @@ function profileRpc(
 const listCalls = () => rpc.mock.calls.filter(([procedure]) => procedure === "routines/list");
 const routinesRow = () => button("Routines");
 
-describe("bot profile", () => {
-  it("links the bot's settings, routines, pages, artifacts and computer", async () => {
+describe("agent profile", () => {
+  it("links the agent's settings, routines, pages, artifacts and computer", async () => {
     profileRpc(async () => []);
     await render(createElement(BotProfile));
 
@@ -303,7 +303,7 @@ describe("bot profile", () => {
     expect(rows.slice(0, 5)).toEqual(["Edit", "Routines0 on", "Pages", "Artifacts", "Computer"]);
   });
 
-  it("keeps the bot's less common actions in its … menu, and clears the open chat", async () => {
+  it("keeps the agent's less common actions in its … menu, and clears the open chat", async () => {
     profileRpc(async () => []);
     await render(createElement(BotProfile));
     const [menu] = (
@@ -435,12 +435,12 @@ describe("bot profile", () => {
   });
 });
 
-describe("bot profile notifications", () => {
-  const footer = "Get notified when this Bot finishes or needs input";
+describe("agent profile notifications", () => {
+  const footer = "Get notified when this Agent finishes or needs input";
   const notificationsSwitch = () =>
     container.querySelector<HTMLInputElement>('input[aria-label="Notifications"]');
 
-  it("shows no switch until the bot has loaded", async () => {
+  it("shows no switch until the agent has loaded", async () => {
     let load!: (bot: unknown) => void;
     profileRpc(async () => [], { bot: () => new Promise((resolve) => (load = resolve)) });
     await render(createElement(BotProfile));
@@ -452,7 +452,7 @@ describe("bot profile notifications", () => {
   });
 
   it.each([true, false])(
-    "shows the bot's setting (%s) after the routines, with what it covers",
+    "shows the agent's setting (%s) after the routines, with what it covers",
     async (notifyOnFinish) => {
       profileRpc(async () => [routine("r1", "Morning digest")], {
         bot: async () => ({ ...fixtureBot, notifyOnFinish }),
@@ -695,7 +695,7 @@ describe("routines screen", () => {
 
     await act(async () => load([]));
     expect(container.querySelector("progress")).toBeNull();
-    expect(container.textContent).toBe("Ask this Bot in chat to set up a routine.");
+    expect(container.textContent).toBe("Ask this Agent in chat to set up a routine.");
     expect(container.querySelector("button")).toBeNull();
   });
 
@@ -1233,7 +1233,7 @@ describe("routine detail", () => {
   });
 });
 
-describe("artifacts opened for one bot", () => {
+describe("artifacts opened for one agent", () => {
   beforeEach(() => {
     rpc.mockResolvedValue([
       { id: "other-bot", name: "Other", color: "c" },
@@ -1243,7 +1243,7 @@ describe("artifacts opened for one bot", () => {
     params.current = { botId: "bot-fixture" };
   });
 
-  it("loads only the profile bot's artifacts initially", async () => {
+  it("loads only the profile agent's artifacts initially", async () => {
     await render(createElement(ArtifactsScreen));
     expect(listSpaceArtifacts).toHaveBeenCalledTimes(1);
     expect(listSpaceArtifacts).toHaveBeenCalledWith({ botId: "bot-fixture", limit: 30 });

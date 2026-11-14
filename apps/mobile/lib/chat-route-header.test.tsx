@@ -36,7 +36,7 @@ const rightItems = (options: ReturnType<typeof chatRouteHeader>) =>
 const leftItems = (options: ReturnType<typeof chatRouteHeader>) =>
   options.unstable_headerLeftItems?.({ tintColor: undefined } as never) ?? [];
 
-it("declares a bot chat's title and its invite gift when the screen is created", () => {
+it("declares an agent chat's title and its invite gift when the screen is created", () => {
   const options = header({ botId: "bot-1", name: "Helper" }, alone, true);
   expect(options.headerTitle).toBeTypeOf("function");
   expect(options.headerTitleAlign).toBe("center");
@@ -49,7 +49,7 @@ it("declares a bot chat's title and its invite gift when the screen is created",
   expect(options.headerBackVisible).toBe(true);
 });
 
-it("leaves a bot chat's right side empty when the account cannot invite", () => {
+it("leaves an agent chat's right side empty when the account cannot invite", () => {
   const options = header({ botId: "bot-1", name: "Helper" });
   expect(rightItems(options)).toEqual([]);
   expect(options.headerRight).toBeUndefined();

@@ -25,23 +25,23 @@ function memoryStorage(initial: Record<string, string> = {}) {
 
 describe("composer drafts", () => {
   it("scopes stored drafts per thread", () => {
-    expect(composerDraftStorageKey("bot:1")).toBe("rakazo.composerDraft.bot:1");
+    expect(composerDraftStorageKey("agent:1")).toBe("rakazo.composerDraft.bot:1");
     expect(composerDraftStorageKey("group:2")).toBe("rakazo.composerDraft.group:2");
   });
 
   it("round-trips a draft and clears the key when empty", () => {
     const storage = memoryStorage();
-    expect(readComposerDraft("bot:1", storage)).toBe("");
-    writeComposerDraft("bot:1", "hello @ada", storage);
-    expect(readComposerDraft("bot:1", storage)).toBe("hello @ada");
+    expect(readComposerDraft("agent:1", storage)).toBe("");
+    writeComposerDraft("agent:1", "hello @ada", storage);
+    expect(readComposerDraft("agent:1", storage)).toBe("hello @ada");
     expect(readComposerDraft("group:2", storage)).toBe("");
-    writeComposerDraft("bot:1", "", storage);
-    expect(readComposerDraft("bot:1", storage)).toBe("");
+    writeComposerDraft("agent:1", "", storage);
+    expect(readComposerDraft("agent:1", storage)).toBe("");
   });
 
   it("tolerates missing storage", () => {
-    expect(readComposerDraft("bot:1", null)).toBe("");
-    expect(() => writeComposerDraft("bot:1", "hi", null)).not.toThrow();
+    expect(readComposerDraft("agent:1", null)).toBe("");
+    expect(() => writeComposerDraft("agent:1", "hi", null)).not.toThrow();
   });
   it("keeps raw text and restores exact, versioned occurrence bindings", () => {
     const storage = memoryStorage();

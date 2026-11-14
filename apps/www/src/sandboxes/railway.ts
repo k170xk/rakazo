@@ -10,13 +10,13 @@ export const railway: Sandbox = {
   runsOn: "Your Railway account",
   keeps: "The workspace Rakazo saved",
   bestFor: "Running everything in one Railway account",
-  title: "Railway sandboxes for AI agents: host Rakazo and its bot computers in one account",
+  title: "Railway sandboxes for AI agents: host Rakazo and its agent computers in one account",
   description:
     "Deploy Rakazo on Railway from one template: the app, Postgres and your AI agents' sandbox computers all run in your Railway account, with no separate sandbox provider.",
   h1: "Run Rakazo and your agents' computers on Railway",
   intro: [
     "Railway is a cloud platform for deploying apps and databases without managing servers. It also runs sandboxes: short-lived Linux machines that a program can create through Railway's API.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each bot gets its own computer with a desktop, a browser and files. You can watch its screen and take over at any time. On Railway, one template runs the Rakazo app, its Postgres database and those bot computers, all in your own Railway account. You don't need a Docker host or a separate sandbox provider.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and each agent gets its own computer with a desktop, a browser and files. You can watch its screen and take over at any time. On Railway, one template runs the Rakazo app, its Postgres database and those agent computers, all in your own Railway account. You don't need a Docker host or a separate sandbox provider.",
   ],
   scene: {
     bot: "Bug Triage",
@@ -37,18 +37,18 @@ export const railway: Sandbox = {
     {
       heading: "What is Railway?",
       paragraphs: [
-        "[Railway](https://railway.com) deploys services from a repository or image and gives them HTTPS domains, volumes and managed databases. Usage is billed to your Railway workspace. Its [sandboxes](https://docs.railway.com/sandboxes) are separate machines created on demand, which Rakazo uses as bot computers.",
+        "[Railway](https://railway.com) deploys services from a repository or image and gives them HTTPS domains, volumes and managed databases. Usage is billed to your Railway workspace. Its [sandboxes](https://docs.railway.com/sandboxes) are separate machines created on demand, which Rakazo uses as agent computers.",
         "Because the app and the computers live in the same account, you manage one set of credentials and one bill for hosting. Your model provider is still billed separately.",
       ],
       image: true,
     },
     {
-      heading: "What a bot can do on a Railway computer",
+      heading: "What an agent can do on a Railway computer",
       paragraphs: [
-        "Each Railway sandbox becomes a Linux bot computer. You see it in the computer panel next to the chat, and you can step in when a bot asks for help.",
+        "Each Railway sandbox becomes a Linux agent computer. You see it in the computer panel next to the chat, and you can step in when an agent asks for help.",
       ],
       bullets: [
-        "Use a Linux desktop and browser, with each bot on its own screen when several bots share one computer.",
+        "Use a Linux desktop and browser, with each agent on its own screen when several agents share one computer.",
         "Run shell commands and read and write files.",
         "Watch the screen live and take over, for example to finish a login.",
         "Keep its workspace between sessions. Rakazo saves the workspace before a computer stops and restores it on the next start.",
@@ -57,14 +57,14 @@ export const railway: Sandbox = {
     {
       heading: "When to choose Railway",
       paragraphs: [
-        "Choose Railway when you want a personal Rakazo with nothing to run yourself and only one account to manage. It suits bots that browse, research and edit files, where a restart from saved files is fine.",
-        "If bots need to come back to the same open programs, [Novita](/sandboxes/novita/) and [E2B](/sandboxes/e2b/) pause computers with their memory instead. [Boat](/sandboxes/boat/), which Rakazo Cloud uses, keeps each computer's disk and a Chrome profile per bot. If you'd rather use a server you already have, [Docker](/sandboxes/docker/) is the default when you self-host. The [sandbox comparison](/sandboxes/) covers every option.",
+        "Choose Railway when you want a personal Rakazo with nothing to run yourself and only one account to manage. It suits agents that browse, research and edit files, where a restart from saved files is fine.",
+        "If agents need to come back to the same open programs, [Novita](/sandboxes/novita/) and [E2B](/sandboxes/e2b/) pause computers with their memory instead. [Boat](/sandboxes/boat/), which Rakazo Cloud uses, keeps each computer's disk and a Chrome profile per agent. If you'd rather use a server you already have, [Docker](/sandboxes/docker/) is the default when you self-host. The [sandbox comparison](/sandboxes/) covers every option.",
       ],
     },
     {
       heading: "Limits",
       bullets: [
-        "No pause. Stopping deletes the sandbox, and the next start restores the bot's saved workspace. Open programs and anything outside the workspace are lost.",
+        "No pause. Stopping deletes the sandbox, and the next start restores the agent's saved workspace. Open programs and anything outside the workspace are lost.",
         "There is no terminal you can open yourself, and a command's output arrives when it finishes rather than while it runs.",
         "The desktop installs the first time a computer is used, which can take a few minutes.",
         "On Railway's Trial and Free plans, the short idle timeout can delete a computer before its work is saved.",
@@ -81,7 +81,7 @@ export const railway: Sandbox = {
         "Deploy the Rakazo template on Railway. Enter your email in `OWNER_EMAIL` and the token in `RAILWAY_API_TOKEN`.",
         "Wait for Rakazo to become healthy, then open its generated HTTPS domain.",
         "Sign in with your email and the generated `OWNER_PASSWORD` from the Rakazo service's Variables tab, then change the password.",
-        "Connect your model account in Rakazo and send a bot a message. Its computer starts the first time it needs one.",
+        "Connect your model account in Rakazo and send an agent a message. Its computer starts the first time it needs one.",
       ],
     },
     {
@@ -103,22 +103,22 @@ export const railway: Sandbox = {
     {
       question: "Can I host Rakazo on Railway?",
       answer:
-        "Yes. The Rakazo template deploys the app, a Postgres database and its bot computers into your Railway account. It's meant for a personal deployment: public registration stays closed and you sign in as the owner.",
+        "Yes. The Rakazo template deploys the app, a Postgres database and its agent computers into your Railway account. It's meant for a personal deployment: public registration stays closed and you sign in as the owner.",
     },
     {
       question: "Do I need E2B or another sandbox provider on Railway?",
       answer:
-        "No. Railway's own sandboxes run the bot computers. You only need a Railway API token and a model account.",
+        "No. Railway's own sandboxes run the agent computers. You only need a Railway API token and a model account.",
     },
     {
-      question: "Can Railway bot computers reach my database?",
+      question: "Can Railway agent computers reach my database?",
       answer:
         "With the template, no. Computers run in a separate, empty Railway environment, so they can't reach the app's private database network. Don't put trusted services or secrets in that environment.",
     },
     {
       question: "Why choose Railway over E2B or Novita?",
       answer:
-        "Everything runs in one account, from one template. If your bots need to keep programs running between sessions, [E2B](/sandboxes/e2b/) or [Novita](/sandboxes/novita/) pause computers instead of rebuilding them.",
+        "Everything runs in one account, from one template. If your agents need to keep programs running between sessions, [E2B](/sandboxes/e2b/) or [Novita](/sandboxes/novita/) pause computers instead of rebuilding them.",
     },
   ],
   sources: [

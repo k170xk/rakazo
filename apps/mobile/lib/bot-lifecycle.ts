@@ -28,7 +28,7 @@ export function confirmDeleteBot(
       removeFromSearchInbox(bot.id);
       onDeleted();
     } catch (error) {
-      if (current()) Alert.alert(t("Could not delete bot"), errorText(error, t("Try again.")));
+      if (current()) Alert.alert(t("Could not delete agent"), errorText(error, t("Try again.")));
     }
   };
 
@@ -50,7 +50,7 @@ export function confirmDeleteBot(
 }
 
 export function confirmDeleteGroup(group: { id: string; name: string }, onDeleted: () => void) {
-  Alert.alert(t("Delete {name}?", { name: group.name }), t("Bots and their own chats stay."), [
+  Alert.alert(t("Delete {name}?", { name: group.name }), t("Agents and their own chats stay."), [
     { text: t("Cancel"), style: "cancel" },
     {
       text: t("Delete"),
@@ -82,7 +82,7 @@ export function confirmClearConversation(botId: string) {
   Alert.alert(
     t("Clear conversation?"),
     t(
-      "This removes every message and stops current work. The bot, computer, memory, and routines are kept.",
+      "This removes every message and stops current work. The agent, computer, memory, and routines are kept.",
     ),
     [
       { text: t("Cancel"), style: "cancel" },

@@ -457,10 +457,22 @@ describe("MicrosoftConnector", () => {
       },
     ]);
     const token = requests.find((request) => request.url.hostname === "login.microsoftonline.com");
+    expect(token).toBeTruthy();
     expect(new URLSearchParams(token!.body).get("scope")).toBe(
       "openid profile offline_access User.Read Mail.ReadWrite",
     );
     expect(requests.at(-1)!.url.pathname).toBe("/v1.0/me/mailFolders");
+  });
+
+  it("issues an Outlook draft token using Mail.ReadWrite without asking for Mail.Send", async () => {
+    const { connector, requests } = outlookConnector();
+    const grant = await connector.outlookDraftToken({ spaceId: "space-1", userId: "user-1" });
+    expect(grant).toEqual({ token: "fake-mail-access" });
+    const token = requests.find((request) => request.url.hostname === "login.microsoftonline.com");
+    expect(new URLSearchParams(token!.body).get("scope")).toBe(
+      "openid profile offline_access User.Read Mail.ReadWrite",
+    );
+    expect(new URLSearchParams(token!.body).get("scope")).not.toContain("Mail.Send");
   });
 
   it("refuses mail when this run was not given the Outlook connection", async () => {

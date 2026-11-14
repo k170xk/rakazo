@@ -89,7 +89,7 @@ export function GalleryView<T extends AnyRow>({
           </>
         );
         const shell =
-          "group block overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card transition-shadow hover:shadow-lift";
+          "group block overflow-hidden rounded-2xl border border-border/70 bg-card shadow-card transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lift";
         return (
           <motion.div
             key={row._id ?? index}
@@ -301,7 +301,7 @@ export function OrgChart<T extends AnyRow>({
             type="button"
             aria-label={folded.has(node.id) ? "Show team" : "Hide team"}
             onClick={() => toggle(node.id)}
-            className="relative z-10 -mt-2 rounded-full border border-border bg-card px-1.5 text-[10.5px] font-bold text-muted-foreground shadow-sm hover:text-foreground"
+            className="relative z-10 -mt-2 inline-flex min-h-8 min-w-8 items-center justify-center rounded-full border border-border bg-card px-2.5 text-xs font-bold text-muted-foreground shadow-sm hover:text-foreground"
           >
             {folded.has(node.id) ? `+${node.children.length}` : "−"}
           </button>

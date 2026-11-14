@@ -178,7 +178,7 @@ describe("ToolSteps", () => {
     for (let i = 0; i < 9; i++) expect(all).toContain(`step-${i}<`);
   });
 
-  it("shows what the bot wrote before a step above it", () => {
+  it("shows what the agent wrote before a step above it", () => {
     const html = renderToStaticMarkup(
       <ToolSteps
         steps={[

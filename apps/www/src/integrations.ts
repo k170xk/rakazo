@@ -279,7 +279,7 @@ export function integrationsMarkdown(): string {
   );
   return `# Rakazo integrations
 
-Rakazo bots can connect to ${INTEGRATIONS.length} apps. Ask a bot to connect one and approve the sign-in it sends.
+Rakazo agents can connect to ${INTEGRATIONS.length} apps. Ask an agent to connect one and approve the sign-in it sends.
 
 ${lines.join("\n")}
 `;
@@ -294,7 +294,7 @@ export function integrationMarkdown(integration: Integration): string {
 
 ${integration.description}
 
-Category: ${CATEGORY_LABELS[categoryOf(integration)]}. Connect from any Rakazo bot at ${SITE_URL}${integrationPath(integration.slug)}.${integration.website ? ` Website: ${integration.website}.` : ""}
+Category: ${CATEGORY_LABELS[categoryOf(integration)]}. Connect from any Rakazo agent at ${SITE_URL}${integrationPath(integration.slug)}.${integration.website ? ` Website: ${integration.website}.` : ""}
 
 ## Actions
 

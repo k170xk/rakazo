@@ -106,32 +106,32 @@ describe("helpers know who they are talking to", () => {
     }
   });
 
-  it("tells the helper its task comes from the parent bot, not the user", () => {
+  it("tells the helper its task comes from the parent agent, not the user", () => {
     expect(seen.helperSystemPrompt).toContain('You are an OCSC Intelligence subagent named "scout".');
     expect(seen.helperSystemPrompt).toContain(
-      "Your task comes from the parent bot, not from the human user",
+      "Your task comes from the parent agent, not from the human user",
     );
     expect(seen.helperSystemPrompt).toContain(
       "Messages marked as automated come from Rakazo, not from the user.",
     );
     expect(seen.helperPrompt).toBe(
-      "Task from the parent bot (not from the user):\ncount the files",
+      "Task from the parent agent (not from the user):\ncount the files",
     );
   });
 
-  it("never lets the helper inherit any bot management tool", () => {
+  it("never lets the helper inherit any agent management tool", () => {
     expect(seen.helperToolNames.length).toBeGreaterThan(0);
     for (const name of FLEET_TOOL_NAMES) expect(seen.helperToolNames).not.toContain(name);
   });
 
-  it("marks helper calls so the executor refuses update_bot's bot management form from them", () => {
+  it("marks helper calls so the executor refuses update_bot's agent management form from them", () => {
     expect(isSubagentToolExecution(seen.toolExecutionIds.get("update_bot")!)).toBe(true);
     const mainCall = seen.toolExecutionIds.get("list_fleet");
     expect(mainCall).toBeDefined();
     expect(isSubagentToolExecution(mainCall!)).toBe(false);
   });
 
-  it("hands the helper's answer back to the bot as the helper's, not the user's", () => {
+  it("hands the helper's answer back to the agent as the helper's, not the user's", () => {
     const result = seen.resultForParent as
       | { content?: Array<{ type?: string; text?: string }> }
       | string;

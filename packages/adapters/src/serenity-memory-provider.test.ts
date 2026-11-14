@@ -71,7 +71,7 @@ describe("SerenityMemoryProvider", () => {
     }
   });
 
-  it("keeps bot and space entity namespaces inside the adapter", () => {
+  it("keeps agent and space entity namespaces inside the adapter", () => {
     expect(serenityBotEntity("bot-1")).toBe("rakazo-bot/bot-1");
     expect(serenitySpaceEntity("workspace-1")).toBe("rakazo-space/workspace-1");
     expect(serenityBotEntity("bot-1", "Personal Brain")).toBe(
@@ -167,7 +167,7 @@ describe("SerenityMemoryProvider", () => {
     expect(probeSerenityMock).toHaveBeenCalledOnce();
   });
 
-  it("recalls isolated scope only against the bot entity", async () => {
+  it("recalls isolated scope only against the agent entity", async () => {
     recallSerenityMock.mockResolvedValue({
       ok: true,
       value: [
@@ -266,7 +266,7 @@ describe("SerenityMemoryProvider", () => {
     ]);
   });
 
-  it("writes isolated durable saves to the bot entity", async () => {
+  it("writes isolated durable saves to the agent entity", async () => {
     rememberSerenityMock.mockResolvedValue({
       ok: true,
       value: { id: "fact-2", status: "inserted" },
@@ -333,7 +333,7 @@ describe("SerenityMemoryProvider", () => {
     ]);
   });
 
-  it("forgets a fact only after recall shows it in the cited bot entity", async () => {
+  it("forgets a fact only after recall shows it in the cited agent entity", async () => {
     const entity = `rakazo-bot/${PERSONAL_BRAIN}--bot-1`;
     recallSerenityMock.mockResolvedValue({
       ok: true,
@@ -359,7 +359,7 @@ describe("SerenityMemoryProvider", () => {
     expect(forgetSerenityMock.mock.calls[0]?.[2]).not.toHaveProperty("entity");
   });
 
-  it("refuses to forget a fact cited from another bot or Space", async () => {
+  it("refuses to forget a fact cited from another agent or Space", async () => {
     for (const entity of ["rakazo-bot/bot-2", "rakazo-space/workspace-2", "person/someone"]) {
       const result = await provider().forget(
         { id: "fact-9", scope: "shared", botId: "bot-1", entity },
@@ -377,7 +377,7 @@ describe("SerenityMemoryProvider", () => {
     expect(forgetSerenityMock).not.toHaveBeenCalled();
   });
 
-  it("refuses to forget a fact id that is not in the bot's namespaces", async () => {
+  it("refuses to forget a fact id that is not in the agent's namespaces", async () => {
     recallSerenityMock.mockResolvedValue({
       ok: true,
       value: [{ factId: "fact-own", fact: "Prefers tea.", provenance: "chat" }],
@@ -500,7 +500,7 @@ describe("SerenityMemoryProvider", () => {
     expect(forgetSerenityMock.mock.calls[0]?.[2]).not.toHaveProperty("entity");
   });
 
-  it("forgets an uncited fact found in the bot's own namespace", async () => {
+  it("forgets an uncited fact found in the agent's own namespace", async () => {
     recallSerenityMock.mockResolvedValueOnce({ ok: true, value: [] }).mockResolvedValueOnce({
       ok: true,
       value: [{ factId: "fact-1", fact: "Prefers tea.", provenance: "chat" }],

@@ -104,8 +104,8 @@ export async function messageBot(
     botId: input.bot_id,
     name: input.confirm_name,
   });
-  if (!target) return { ok: false as const, error: "no bot found with that id or name" };
-  if (target.id === sender.id) return { ok: false as const, error: "a bot cannot message itself" };
+  if (!target) return { ok: false as const, error: "no agent found with that id or name" };
+  if (target.id === sender.id) return { ok: false as const, error: "an agent cannot message itself" };
   if (!target.thread)
     return { ok: false as const, error: `${target.name} has no chat to deliver to` };
   const returnsToSender =
@@ -119,7 +119,7 @@ export async function messageBot(
     return {
       ok: false as const,
       error:
-        "bot-to-bot message limit reached for this chain; report back to the user instead of messaging another bot",
+        "bot-to-bot message limit reached for this chain; report back to the user instead of messaging another agent",
     };
   }
 
@@ -306,14 +306,14 @@ export async function messageBot(
   if (!committed.ok) return committed;
 
   await deps.events.notify(targetThreadId, committed.targetEventSeq).catch((error) => {
-    getLogger().error("bot message realtime notification", error);
+    getLogger().error("agent message realtime notification", error);
   });
   await deps.events.notify(run.threadId, committed.senderEventSeq).catch((error) => {
-    getLogger().error("bot message sender echo notification", error);
+    getLogger().error("agent message sender echo notification", error);
   });
   await deps.jobs.enqueue(runContinueJob(committed.runId)).catch((error) => {
     // The queued run is durable; the job reconciler repairs a missed wake.
-    getLogger().error("bot message enqueue", error);
+    getLogger().error("agent message enqueue", error);
   });
   return {
     ok: true as const,

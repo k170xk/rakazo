@@ -289,7 +289,7 @@ afterEach(() => {
 });
 
 describe("request_secret for a website login", () => {
-  it("tells the bot a login may not be saved", () => {
+  it("tells the agent a login may not be saved", () => {
     const tool = builtinAgentTools.find((entry) => entry.name === "request_secret")!;
     expect(tool.description).toContain("The user may choose not to save a login");
   });
@@ -302,7 +302,7 @@ describe("request_secret for a website login", () => {
     expect(toolResults).toEqual([{ saved: true, ...DESTINATION }]);
   });
 
-  it("tells the bot a login sent with Save to Vault off is not saved, without its values", async () => {
+  it("tells the agent a login sent with Save to Vault off is not saved, without its values", async () => {
     const { toolResults, calls } = await runTool(requestLogin(), {
       answered: { result: { credentialSaved: DESTINATION } },
       secrets: [await runLogin("run-1")],
@@ -374,7 +374,7 @@ describe("request_secret for a website login", () => {
       expect(asked.toolResults).toMatchObject(paused);
     });
 
-    it("asks when the bot asks to replace it", async () => {
+    it("asks when the agent asks to replace it", async () => {
       const { toolResults } = await runTool(requestLogin({ replace: true }), {
         vault: [savedLogin],
       });
@@ -398,7 +398,7 @@ describe("request_secret for a website login", () => {
     });
   });
 
-  it("can't be told by the bot whether to save the login", async () => {
+  it("can't be told by the agent whether to save the login", async () => {
     const { toolResults, calls } = await runTool(
       requestLogin({ remember: false, persist: false, save: false, once: true }),
     );
@@ -539,7 +539,7 @@ describe("request_secret for a login saved for another site", () => {
 });
 
 describe("this run's login that wasn't saved", () => {
-  it("is hidden from what the run reads before the bot fills anything", async () => {
+  it("is hidden from what the run reads before the agent fills anything", async () => {
     const { toolResults } = await runTool(
       { name: "shell", args: { command: "read-page" } },
       {

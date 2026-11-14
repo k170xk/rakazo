@@ -106,7 +106,7 @@ export function searchHitThreadTarget(hit: {
   groupId?: string;
 }): SearchThreadTarget {
   if (Boolean(hit.botId) === Boolean(hit.groupId)) {
-    throw new Error("Search hit must target exactly one of a bot or group");
+    throw new Error("Search hit must target exactly one of an agent or group");
   }
   return hit.groupId ? { groupId: hit.groupId } : { botId: hit.botId! };
 }

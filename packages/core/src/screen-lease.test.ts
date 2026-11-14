@@ -16,7 +16,7 @@ describe("screenLeaseId", () => {
 });
 
 describe("canTakeScreenLease", () => {
-  it("lets a newer fence reclaim the same bot screen", () => {
+  it("lets a newer fence reclaim the same agent screen", () => {
     expect(canTakeScreenLease("run-1:1", "run-2:2")).toBe(true);
     expect(canTakeScreenLease("run-1:1", "run-1:8")).toBe(true);
   });

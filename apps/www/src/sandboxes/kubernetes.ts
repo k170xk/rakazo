@@ -8,13 +8,13 @@ export const kubernetes: Sandbox = {
   runsOn: "Your own cluster, one pod per computer",
   keeps: "The workspace Rakazo saves, or a volume",
   bestFor: "Teams that already run Kubernetes",
-  title: "AI agent sandboxes on Kubernetes: one pod per bot computer",
+  title: "AI agent sandboxes on Kubernetes: one pod per agent computer",
   description:
-    "How Rakazo runs each AI agent's computer as a locked-down pod on your own Kubernetes cluster, with optional gVisor or Kata isolation. What bots can do, limits, RBAC and setup.",
+    "How Rakazo runs each AI agent's computer as a locked-down pod on your own Kubernetes cluster, with optional gVisor or Kata isolation. What agents can do, limits, RBAC and setup.",
   h1: "AI agent sandboxes on Kubernetes",
   intro: [
     "If your team already runs [Kubernetes](https://kubernetes.io), your AI agents' computers can run there too. Each computer becomes a pod in a namespace you choose, on your own nodes and network, scheduled and limited like any other workload.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each one gets its own computer with a desktop, browser, terminal and files that you can watch and take over. When you [host Rakazo yourself](/self-hosted-ai-agent/) on a cluster, it can create those computers as pods directly through the Kubernetes API, with no Docker socket and no outside sandbox provider.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and each one gets its own computer with a desktop, browser, terminal and files that you can watch and take over. When you [host Rakazo yourself](/self-hosted-ai-agent/) on a cluster, it can create those computers as pods directly through the Kubernetes API, with no Docker socket and no outside sandbox provider.",
   ],
   scene: {
     bot: "Bug Triage",
@@ -36,14 +36,14 @@ export const kubernetes: Sandbox = {
       heading: "What is a Kubernetes sandbox?",
       paragraphs: [
         "Kubernetes runs containers across a cluster of machines and keeps them within the limits and rules you set. An AI agent sandbox on Kubernetes is a pod set aside for one agent's computer, kept apart from your other workloads by the cluster's own controls.",
-        "Rakazo creates one plain pod per bot computer from its published computer image, the same Linux desktop it uses for Docker. The Rakazo API and worker talk to the Kubernetes API with their own service account, run commands and move files through `pods/exec`, and show the screen through a gateway inside the pod. That is why they normally run in the same cluster.",
+        "Rakazo creates one plain pod per agent computer from its published computer image, the same Linux desktop it uses for Docker. The Rakazo API and worker talk to the Kubernetes API with their own service account, run commands and move files through `pods/exec`, and show the screen through a gateway inside the pod. That is why they normally run in the same cluster.",
       ],
       image: true,
     },
     {
-      heading: "What a bot can do on a Kubernetes computer",
+      heading: "What an agent can do on a Kubernetes computer",
       paragraphs: [
-        "From the chat it looks the same as any other Rakazo computer. The bot gets a desktop you can watch and take over, and it can:",
+        "From the chat it looks the same as any other Rakazo computer. The agent gets a desktop you can watch and take over, and it can:",
       ],
       bullets: [
         "Browse the web, sign in to sites and download files.",
@@ -55,7 +55,7 @@ export const kubernetes: Sandbox = {
     {
       heading: "When to choose Kubernetes",
       paragraphs: [
-        "Choose Kubernetes when you already run Rakazo or other services on a cluster and want bot computers under the same scheduling, quotas and network policy. It is also the self-hosted way to get a VM-like boundary: set a runtime class such as gVisor or Kata and every computer pod uses it.",
+        "Choose Kubernetes when you already run Rakazo or other services on a cluster and want agent computers under the same scheduling, quotas and network policy. It is also the self-hosted way to get a VM-like boundary: set a runtime class such as gVisor or Kata and every computer pod uses it.",
         "If you have one server and no cluster, [Docker](/sandboxes/docker/) is simpler and is Rakazo's default. If you don't want to run the computers at all, a hosted sandbox such as [Boat](/sandboxes/boat/), which Rakazo Cloud uses, or [E2B](/sandboxes/e2b/) does it for you. The [sandbox comparison](/sandboxes/) covers every option.",
       ],
     },
@@ -83,7 +83,7 @@ export const kubernetes: Sandbox = {
         "Give the API and worker's service account a Role in that namespace that can create, get and delete `pods` and create and get `pods/exec`, and bind it with a RoleBinding.",
         "Set `SANDBOX_PROVIDER=kubernetes` on the API and worker, plus `KUBERNETES_SANDBOX_NAMESPACE` if you chose another name. Pin `KUBERNETES_SANDBOX_COMPUTER_IMAGE` to a digest for production.",
         "Optionally set `KUBERNETES_SANDBOX_RUNTIME_CLASS_NAME`, `KUBERNETES_SANDBOX_CPU_LIMIT` and `KUBERNETES_SANDBOX_MEMORY_LIMIT`, and add a NetworkPolicy.",
-        "Make sure the API, worker and web pods can reach computer pods on port 6080 and the display ports from 6100 up, then open a bot's computer to check that the desktop comes up.",
+        "Make sure the API, worker and web pods can reach computer pods on port 6080 and the display ports from 6100 up, then open an agent's computer to check that the desktop comes up.",
       ],
     },
   ],
@@ -104,7 +104,7 @@ export const kubernetes: Sandbox = {
         "No. It creates ordinary pods with the Kubernetes API, so it needs no custom resources or extra controllers in your cluster.",
     },
     {
-      question: "Do bots lose their files when a pod is deleted?",
+      question: "Do agents lose their files when a pod is deleted?",
       answer:
         "Not their workspace. Rakazo saves it when a computer stops and restores it into the next pod. Software installed elsewhere on the pod is lost unless you keep the home folder on a persistent volume.",
     },

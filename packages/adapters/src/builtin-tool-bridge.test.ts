@@ -62,7 +62,7 @@ describe("built-in tool bridge", () => {
     // ocsc runs Word/PowerPoint/Excel/PDF/video on the document runners without a full computer.
     // ask_app_scope is listed so a new app asks individual-or-tenant before it exists.
     // save_whiteboard is deferred; its name is listed in the find_tool catalog.
-    expect(definitionBytes(listed)).toBeLessThanOrEqual(34_279);
+    expect(definitionBytes(listed)).toBeLessThanOrEqual(34_340);
     expect(deferred.map((tool) => tool.name)).toEqual(
       expect.arrayContaining(["render_plot", "create_space", "generate_secret", "scratchpad_add"]),
     );
@@ -107,7 +107,7 @@ describe("built-in tool bridge", () => {
     });
   });
 
-  it("never finds a tool the bot turned off", () => {
+  it("never finds a tool the agent turned off", () => {
     const { listed, deferred } = partitionTools(
       selectBuiltinToolsForRun({
         graphicalToolsAllowed: false,

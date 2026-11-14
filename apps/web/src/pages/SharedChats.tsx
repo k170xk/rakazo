@@ -303,7 +303,7 @@ function SharedGroupThread({ group }: { group: SharedGroup }) {
                   void send();
                 }
               }}
-              placeholder={t`Message ${group.name}. Use @Name to ask one bot.`}
+              placeholder={t`Message ${group.name}. Use @Name to ask one agent.`}
               aria-label={t`Message`}
               rows={1}
               className="max-h-40 min-h-11 resize-none"
@@ -320,7 +320,7 @@ function SharedGroupThread({ group }: { group: SharedGroup }) {
           <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck size={13} aria-hidden="true" />
             <Trans>
-              Bots answer you with the web, cards and files, without {group.ownerName}'s private
+              Agents answer you with the web, cards and files, without {group.ownerName}'s private
               memory, logins or apps.
             </Trans>
           </p>

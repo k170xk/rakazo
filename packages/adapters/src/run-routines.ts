@@ -109,7 +109,7 @@ async function notifyFailedRoutineRun(
     failed,
     {
       kind: "failure",
-      title: `${displayName(bot.name, "Bot")} failed`,
+      title: `${displayName(bot.name, "Agent")} failed`,
       body: failed.error ?? "",
       botId: failed.botId,
       threadId: failed.threadId,

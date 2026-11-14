@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, signup } from "./helpers";
 
-test("opening a bot in another space switches in place, without a page reload", async ({
+test("opening an agent in another space switches in place, without a page reload", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();

@@ -409,7 +409,7 @@ export function AppStudio({
                           {tagged
                             ? t`Click something in the app to change it`
                             : preview.data
-                              ? t`This version can't be picked from. Ask the bot instead.`
+                              ? t`This version can't be picked from. Ask the agent instead.`
                               : t`Getting the app ready to pick from…`}
                         </p>
                       </div>
@@ -432,7 +432,7 @@ export function AppStudio({
                               setProblem(null);
                             }}
                           >
-                            {t`Ask the bot to fix it`}
+                            {t`Ask the agent to fix it`}
                           </button>
                         </div>
                       </div>

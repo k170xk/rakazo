@@ -50,20 +50,20 @@ async function confirmSwitch() {
   await act(async () => {
     button("Use space default")!.click();
   });
-  expect(document.body.textContent).toContain("Switch 2 bots to the space default?");
+  expect(document.body.textContent).toContain("Switch 2 agents to the space default?");
   expect(bots.update).not.toHaveBeenCalled();
   await act(async () => {
     button("Switch")!.click();
   });
 }
 
-it("moves every bot with its own model onto the space default after a confirm", async () => {
+it("moves every agent with its own model onto the space default after a confirm", async () => {
   bots.list
     .mockResolvedValueOnce(list)
     .mockResolvedValue(list.map((bot) => ({ ...bot, modelProvider: null, modelId: null })));
   bots.update.mockResolvedValue({});
   const { host, unmount } = await render();
-  expect(host.textContent).toContain("2 bots have their own model: Archie, Inbox");
+  expect(host.textContent).toContain("2 agents have their own model: Archie, Inbox");
   await confirmSwitch();
   expect(bots.update).toHaveBeenCalledTimes(2);
   expect(bots.update).toHaveBeenCalledWith({
@@ -73,12 +73,12 @@ it("moves every bot with its own model onto the space default after a confirm", 
     thinkingLevel: null,
   });
   expect(bots.update).toHaveBeenCalledWith(expect.objectContaining({ botId: "b3" }));
-  expect(host.textContent).toContain("2 bots now use the space default.");
+  expect(host.textContent).toContain("2 agents now use the space default.");
   expect(host.querySelector("button")).toBeNull();
   unmount();
 });
 
-it("names the bots that did not switch and keeps them listed", async () => {
+it("names the agents that did not switch and keeps them listed", async () => {
   bots.list
     .mockResolvedValueOnce(list)
     .mockResolvedValue(
@@ -90,11 +90,11 @@ it("names the bots that did not switch and keeps them listed", async () => {
   });
   const { host, unmount } = await render();
   await confirmSwitch();
-  expect(host.textContent).toContain("1 bot now uses the space default.");
+  expect(host.textContent).toContain("1 agent now uses the space default.");
   expect(host.querySelector('[role="alert"]')?.textContent).toBe(
     "Could not switch Inbox. Try again.",
   );
-  expect(host.textContent).toContain("1 bot has its own model: Inbox");
+  expect(host.textContent).toContain("1 agent has its own model: Inbox");
   unmount();
 });
 
@@ -106,11 +106,11 @@ it("keeps the report on screen when the refresh after a switch fails", async () 
   expect(host.querySelector('[role="alert"]')?.textContent).toBe(
     "Could not switch Archie, Inbox. Try again.",
   );
-  expect(host.textContent).toContain("2 bots have their own model: Archie, Inbox");
+  expect(host.textContent).toContain("2 agents have their own model: Archie, Inbox");
   unmount();
 });
 
-it("shows nothing when every bot already follows the space default", async () => {
+it("shows nothing when every agent already follows the space default", async () => {
   bots.list.mockResolvedValue([list[1]]);
   const { host, unmount } = await render();
   expect(host.textContent).toBe("");

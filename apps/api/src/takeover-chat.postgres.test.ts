@@ -254,7 +254,7 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
   }
 
   it.each(["waiting", "pause-during-revoke", "pause-after-handoff"] as const)(
-    "skips the previous bot's takeover on a shared screen (%s)",
+    "skips the previous agent's takeover on a shared screen (%s)",
     async (timing) => {
       const fixture = await setup();
       const card = await system.message.create({
@@ -608,7 +608,7 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
     },
   );
 
-  it("does not release a bot's takeover when the user sends to a group", async () => {
+  it("does not release an agent's takeover when the user sends to a group", async () => {
     const fixture = await setup();
     const otherBot = await system.bot.create({
       data: {
@@ -1073,8 +1073,8 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
     };
   }
 
-  it.each(["the group settings", "a manager bot"])(
-    "stops and frees the computer of a bot %s removes while it waits for takeover",
+  it.each(["the group settings", "a manager agent"])(
+    "stops and frees the computer of an agent %s removes while it waits for takeover",
     async (path) => {
       const fixture = await groupWithWaitingRun();
       const { ada, run } = fixture;
@@ -1109,7 +1109,7 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
     },
   );
 
-  it("frees the removed bot's computer even when releasing its screen fails", async () => {
+  it("frees the removed agent's computer even when releasing its screen fails", async () => {
     const fixture = await groupWithWaitingRun();
     vi.spyOn(fixture.sandbox, "releaseScreen").mockRejectedValue(new Error("provider unavailable"));
 
@@ -1203,7 +1203,7 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
     },
   );
 
-  it("still announces a manager bot's group change when freeing the computer fails", async () => {
+  it("still announces a manager agent's group change when freeing the computer fails", async () => {
     const fixture = await groupWithWaitingRun();
     const leaseWriteFails = new Proxy(prisma, {
       get(client, key) {

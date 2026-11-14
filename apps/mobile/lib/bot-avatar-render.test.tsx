@@ -178,7 +178,7 @@ describe("BotAvatar", () => {
     expect(latestEye()).toMatchObject({ cx: 40.5, cy: 49 });
   });
 
-  it("uses the same shared seed colour as SSR for a bot without a saved colour", () => {
+  it("uses the same shared seed colour as SSR for an agent without a saved colour", () => {
     const node = render("", "rakazo");
     expect(
       node.querySelector(`stop[data-stop-color="${seededLogoAvatarColor("bot-1").toLowerCase()}"]`),
@@ -288,7 +288,7 @@ describe("BotAvatar", () => {
     expect(nativeMotion.timings.filter((ms) => ms > 0 && ms < 1000)).toEqual([]);
   });
 
-  it("draws a plain-colour bot with the organic body for its identity", () => {
+  it("draws a plain-colour agent with the organic body for its identity", () => {
     const view = render("#3EC5A8");
     expect(bodies(view)).toEqual([organicAvatarPath(avatarIdentitySeed("bot-1"))]);
     // A pale body keeps dark eyes on a light page, the same as a group title's still faces.

@@ -2,7 +2,7 @@ import { BOT_DESCRIPTION_MAX_LENGTH, BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo
 import { describe, expect, it } from "vitest";
 import { botProfilePatch } from "./bot-profile-patch.js";
 
-describe("bot profile patch", () => {
+describe("agent profile patch", () => {
   it("leaves instructions alone when the description field was not touched", () => {
     const stored = "I".repeat(BOT_DESCRIPTION_MAX_LENGTH + 1500);
     expect(botProfilePatch(stored, stored)).toEqual({});

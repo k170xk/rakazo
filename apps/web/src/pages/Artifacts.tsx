@@ -228,7 +228,7 @@ export function ArtifactsPage() {
               className="app-no-drag flex shrink-0 items-center gap-0.5 rounded-lg py-1 pe-1.5 text-[13px] font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <ChevronLeft size={16} strokeWidth={1.9} aria-hidden="true" />
-              <Trans>Bots</Trans>
+              <Trans>Agents</Trans>
             </Link>
             <h1 className="text-heading2 font-semibold">
               <Trans>Artifacts</Trans>
@@ -305,7 +305,7 @@ export function ArtifactsPage() {
               <NativeSelectOption value="month">{t`This month`}</NativeSelectOption>
             </NativeSelect>
             <FilterChip active={activeBotId === null} onClick={() => setActiveBotId(null)}>
-              <Trans>All bots</Trans>
+              <Trans>All agents</Trans>
             </FilterChip>
             {bots.map((bot) => (
               <BotFilterChip
@@ -478,7 +478,7 @@ function FilesIntro() {
   return (
     <p className="mb-5 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
       <Trans>
-        Files from your chats in this work space. They appear here when a bot sends you a document,
+        Files from your chats in this work space. They appear here when an agent sends you a document,
         slide, spreadsheet or other file, and when you attach a file to a message. Each card is the
         latest copy; open it to preview or download.
       </Trans>

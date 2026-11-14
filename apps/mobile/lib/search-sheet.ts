@@ -23,7 +23,7 @@ export type SearchSheetRow = {
 export function searchKindLabel(hit: SearchHit): string {
   switch (hit.kind) {
     case "conversation":
-      return hit.groupId ? t("Group") : t("Bot");
+      return hit.groupId ? t("Group") : t("Agent");
     case "message":
       return t("Message");
     case "file":
@@ -52,7 +52,7 @@ export function searchSheetRows(
         key: `bot-${bot.id}`,
         title: bot.name,
         preview: previewSnippet(bot.preview, 40) || t("No messages yet"),
-        label: t("Bot"),
+        label: t("Agent"),
         bot,
         kind: "conversation",
         spaceId: bot.spaceId,

@@ -688,7 +688,7 @@ export class McpConnector implements ConnectorProvider {
       return;
     }
     if (!context.botId) {
-      yield { type: "error", message: "MCP tools require a bot context" };
+      yield { type: "error", message: "MCP tools require an agent context" };
       return;
     }
     const usable = await usableServers(this.prisma, context);
@@ -721,7 +721,7 @@ export class McpConnector implements ConnectorProvider {
       (!assignment.allowAllTools &&
         !(assignment.allowedTools as unknown[]).includes(call.route.toolName))
     ) {
-      yield { type: "error", message: "MCP tool is not assigned to this bot" };
+      yield { type: "error", message: "MCP tool is not assigned to this agent" };
       return;
     }
     // Capture material before callTool so a concurrent eviction/replace cannot

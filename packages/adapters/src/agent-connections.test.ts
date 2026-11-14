@@ -307,7 +307,7 @@ describe("connectAgent", () => {
 });
 
 describe("respondAgentConnection", () => {
-  it("approves a pending connection addressed to the current bot", async () => {
+  it("approves a pending connection addressed to the current agent", async () => {
     const deps = createDeps({
       pendingConnection: {
         id: "ac-1",
@@ -523,7 +523,7 @@ describe("agent connection enumeration and sender gating", () => {
     );
   });
 
-  it("refuses connection requests from bots without a messaging identity", async () => {
+  it("refuses connection requests from agents without a messaging identity", async () => {
     const deps = createDeps();
     const result = await connectAgent(
       deps,
@@ -539,7 +539,7 @@ describe("agent connection enumeration and sender gating", () => {
     expect(deps.prisma.agentConnection.create).not.toHaveBeenCalled();
   });
 
-  it("refuses connected messages from bots without a messaging identity", async () => {
+  it("refuses connected messages from agents without a messaging identity", async () => {
     const deps = createDeps({
       connection: { id: "ac-1", requesterBotId: "bot-3", targetBotId: "bot-2", status: "approved" },
     });

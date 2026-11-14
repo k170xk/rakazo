@@ -30,7 +30,7 @@ describe("reaction conversation presentation", () => {
     const reply = message("reply", "❤️", "old-parent");
     expect(projectMessageReactions([reply]).visibleMessages).toEqual([reply]);
   });
-  it("does not collapse ordinary replies, standalone emoji, or bot messages", () => {
+  it("does not collapse ordinary replies, standalone emoji, or agent messages", () => {
     expect(messageReaction(message("one", "❤️"))).toBeNull();
     expect(messageReaction(message("two", "❤️ thank you", "parent"))).toBeNull();
     expect(messageReaction({ ...message("three", "❤️", "parent"), role: "bot" })).toBeNull();

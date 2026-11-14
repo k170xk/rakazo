@@ -511,7 +511,7 @@ export async function provisionComputer(
         undefined,
         existing.userId,
       ).catch((error) => {
-        getLogger().error("team bot folder cleanup", error);
+        getLogger().error("team agent folder cleanup", error);
       });
     }
     const activeControl = hasActiveComputerControl(existing);
@@ -1014,7 +1014,7 @@ export async function replaceComputer(
   if (existing.maintenanceId && existing.maintenanceId !== context.operationId)
     throw new ComputerBusyError();
   const botId = context.botId;
-  if (!botId) throw new Error("computer replacement requires a bot id");
+  if (!botId) throw new Error("computer replacement requires an agent id");
   // Leave a takeover a run is waiting on. Expiry would resume that run.
   if (
     options?.handBackIdleTakeover &&

@@ -14,7 +14,7 @@ const group = (id: string, sectionId: string | null, memberIds: string[]) => ({
 });
 
 describe("resolveRosterDrop", () => {
-  it("reorders when a pinned bot is dropped on a pinned sibling", () => {
+  it("reorders when a pinned agent is dropped on a pinned sibling", () => {
     expect(
       resolveRosterDrop({
         dragged: bot("a", null, true),
@@ -55,7 +55,7 @@ describe("resolveRosterDrop", () => {
     ).toBeNull();
   });
 
-  it("moves to the target bot's section when the sections differ", () => {
+  it("moves to the target agent's section when the sections differ", () => {
     expect(
       resolveRosterDrop({
         dragged: bot("a", "s1"),
@@ -99,7 +99,7 @@ describe("resolveRosterDrop", () => {
     ).toBeNull();
   });
 
-  it("never moves a pinned bot into a section; pinned rows only reorder", () => {
+  it("never moves a pinned agent into a section; pinned rows only reorder", () => {
     expect(
       resolveRosterDrop({
         dragged: bot("a", null, true),

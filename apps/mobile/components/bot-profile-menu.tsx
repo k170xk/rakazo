@@ -39,7 +39,7 @@ export function useBotProfileActions(botId: string, name: string): BotProfileAct
         void archiveBot(botId)
           .then(leave)
           .catch((error) =>
-            Alert.alert(t("Could not archive bot"), errorText(error, t("Try again."))),
+            Alert.alert(t("Could not archive agent"), errorText(error, t("Try again."))),
           ),
     },
     {

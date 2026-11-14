@@ -446,7 +446,7 @@ describe("IncusSandboxProvider", () => {
     expect(fake.execs[0]?.body).toMatchObject({ user: 1000, group: 1000, cwd: "/home/rakazo" });
   });
 
-  it("reconnects to a running instance of the same bot without creating one", async () => {
+  it("reconnects to a running instance of the same agent without creating one", async () => {
     const fake = new FakeIncus();
     fake.instances.set("box", running());
     const result = await providerFor(fake).provision(
@@ -459,7 +459,7 @@ describe("IncusSandboxProvider", () => {
     ).toBe(false);
   });
 
-  it("never reuses or replaces another bot's instance", async () => {
+  it("never reuses or replaces another agent's instance", async () => {
     const fake = new FakeIncus();
     fake.instances.set("box", running("bot-b"));
     await expect(
@@ -467,7 +467,7 @@ describe("IncusSandboxProvider", () => {
         { botId: "bot-a", homePath: "/unused", providerKind: "incus", providerRef: "box" },
         context,
       ),
-    ).rejects.toThrow("belongs to another bot");
+    ).rejects.toThrow("belongs to another agent");
     expect(fake.instances.get("box")?.status).toBe("Running");
   });
 
@@ -568,7 +568,7 @@ describe("IncusSandboxProvider", () => {
   it.each([
     ["stopped", { ...running(), status: "Stopped" }],
     ["failed", { ...running(), status: "Error" }],
-  ])("replaces a %s instance of the same bot with a new one", async (_kind, instance) => {
+  ])("replaces a %s instance of the same agent with a new one", async (_kind, instance) => {
     const fake = new FakeIncus();
     fake.instances.set("box", { ...instance, ephemeral: false });
     const result = await providerFor(fake).provision(
@@ -622,18 +622,18 @@ describe("IncusSandboxProvider", () => {
   );
 
   it.each(["stop", "destroy"] as const)(
-    "%s never removes another bot's instance",
+    "%s never removes another agent's instance",
     async (method) => {
       const fake = new FakeIncus();
       fake.instances.set("box", running("bot-b"));
       await expect(providerFor(fake)[method](computer, context)).rejects.toThrow(
-        "belongs to another bot",
+        "belongs to another agent",
       );
       expect(fake.instances.get("box")?.status).toBe("Running");
     },
   );
 
-  it("removes this bot's instances that no saved reference points to before starting", async () => {
+  it("removes this agent's instances that no saved reference points to before starting", async () => {
     const fake = new FakeIncus();
     fake.instances.set("orphan", running());
     fake.instances.set("stopped-ref", { ...running(), status: "Stopped", ephemeral: false });
@@ -929,7 +929,7 @@ describe("IncusSandboxProvider", () => {
     ).rejects.toThrow("no network address");
   });
 
-  it("attaches the controlled terminal without replacing the bot run screen fence", async () => {
+  it("attaches the controlled terminal without replacing the agent run screen fence", async () => {
     const fake = new FakeIncus(() => ({ stdout: "RAKAZO_DESKTOP=0:view-token\n" }));
     fake.instances.set("box", running());
     await providerFor(fake).connectTerminal(

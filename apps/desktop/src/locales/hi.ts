@@ -56,13 +56,13 @@ export const HI_MESSAGES: Record<string, string> = {
     "अपडेट पूरा नहीं हो सका। बाद में फिर से कोशिश करें।",
   "Could not reach the update server.": "अपडेट सर्वर तक नहीं पहुँच सके।",
   "Allow local computer access?": "लोकल कंप्यूटर एक्सेस की अनुमति दें?",
-  "Allow bots to use this computer?": "बॉट को इस कंप्यूटर का इस्तेमाल करने दें?",
+  "Allow agents to use this computer?": "एजेंट को इस कंप्यूटर का इस्तेमाल करने दें?",
   Cancel: "रद्द करें",
   Allow: "अनुमति दें",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
-    "{host} के बॉट आपके खाते की अनुमतियों से कमांड चला सकते हैं, फ़ाइलें पढ़ और बदल सकते हैं, और ऐप खोल सकते हैं। आप सेटिंग्स में एक्सेस वापस ले सकते हैं।",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
-    "इस लोकल इंस्टेंस के बॉट आपके खाते की अनुमतियों से कमांड चला सकते हैं, फ़ाइलें पढ़ और बदल सकते हैं, और ऐप खोल सकते हैं। आप ऐप मेन्यू से एक्सेस वापस ले सकते हैं।",
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+    "{host} के एजेंट आपके खाते की अनुमतियों से कमांड चला सकते हैं, फ़ाइलें पढ़ और बदल सकते हैं, और ऐप खोल सकते हैं। आप सेटिंग्स में एक्सेस वापस ले सकते हैं।",
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+    "इस लोकल इंस्टेंस के एजेंट आपके खाते की अनुमतियों से कमांड चला सकते हैं, फ़ाइलें पढ़ और बदल सकते हैं, और ऐप खोल सकते हैं। आप ऐप मेन्यू से एक्सेस वापस ले सकते हैं।",
   "Local computer access requires an app-managed local instance.":
     "लोकल कंप्यूटर एक्सेस के लिए ऐप से मैनेज होने वाला लोकल इंस्टेंस ज़रूरी है।",
   "Local server is unavailable": "लोकल सर्वर उपलब्ध नहीं है",
@@ -178,12 +178,12 @@ export const HI_MESSAGES: Record<string, string> = {
   Go: "जाएँ",
   Back: "पीछे",
   Forward: "आगे",
-  "Next Bot": "अगला बॉट",
-  "Previous Bot": "पिछला बॉट",
+  "Next Agent": "अगला एजेंट",
+  "Previous Agent": "पिछला एजेंट",
   "Command Menu…": "कमांड मेन्यू…",
   "Toggle Sidebar": "साइडबार दिखाएँ/छिपाएँ",
   "Find…": "खोजें…",
-  "Search Bots…": "बॉट खोजें…",
+  "Search Agents…": "एजेंट खोजें…",
   "The window closed before the app loaded.": "ऐप लोड होने से पहले विंडो बंद हो गई।",
   "New Group Chat": "नई समूह चैट",
   "Connect Apps…": "ऐप्स कनेक्ट करें…",

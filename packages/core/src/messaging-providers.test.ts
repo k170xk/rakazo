@@ -13,7 +13,7 @@ describe("messaging provider labels", () => {
     expect(messagingProviderName("teams")).toBe("teams");
   });
 
-  it("names extra Telegram bots after their configured name", () => {
+  it("names extra Telegram agents after their configured name", () => {
     expect(messagingProviderName("telegram-work")).toBe("Telegram (work)");
     expect(messagingProviderLabel("telegram-work")).toBe("Telegram (work)");
   });

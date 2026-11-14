@@ -10,13 +10,13 @@ export const wuying: Sandbox = {
   runsOn: "Your Alibaba Cloud Windows desktop",
   keeps: "The desktop's own disk",
   bestFor: "Windows apps, Alibaba Cloud and mainland China",
-  title: "Wuying cloud computer for AI agents: let Rakazo bots use a Windows desktop on Alibaba Cloud",
+  title: "Wuying cloud computer for AI agents: let Rakazo agents use a Windows desktop on Alibaba Cloud",
   description:
-    "Let AI agents work on a Wuying (Elastic Desktop Service) Windows cloud computer you already have on Alibaba Cloud. Rakazo bots run PowerShell, use Windows apps and let you watch and take over.",
+    "Let AI agents work on a Wuying (Elastic Desktop Service) Windows cloud computer you already have on Alibaba Cloud. Rakazo agents run PowerShell, use Windows apps and let you watch and take over.",
   h1: "Let your AI agents use a Wuying cloud computer",
   intro: [
     "Wuying (无影) is Alibaba Cloud's cloud computer service, sold outside China as Elastic Desktop Service. It gives you a Windows desktop that runs in Alibaba Cloud and that you open from a browser or the Wuying client.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each bot gets a computer you can watch and take over. With Wuying, that computer is a Windows desktop you already run on Alibaba Cloud. It is the only way to give Rakazo bots Windows, and it suits teams on Alibaba Cloud or in mainland China, where other sandbox providers can be hard to reach.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and each agent gets a computer you can watch and take over. With Wuying, that computer is a Windows desktop you already run on Alibaba Cloud. It is the only way to give Rakazo agents Windows, and it suits teams on Alibaba Cloud or in mainland China, where other sandbox providers can be hard to reach.",
   ],
   scene: {
     bot: "Expense Manager",
@@ -43,23 +43,23 @@ export const wuying: Sandbox = {
       image: true,
     },
     {
-      heading: "What a bot can do on a Wuying desktop",
+      heading: "What an agent can do on a Wuying desktop",
       paragraphs: [
-        "Bots work on the Windows desktop the same way a person would, and you see the live screen in the computer panel next to the chat in the web and desktop apps.",
+        "Agents work on the Windows desktop the same way a person would, and you see the live screen in the computer panel next to the chat in the web and desktop apps.",
       ],
       bullets: [
         "Run PowerShell commands. Output is switched to UTF-8, so Chinese text comes back readable.",
-        "Read and write files. Each bot computer gets its own home folder under `%USERPROFILE%\\rakazo`, kept on the desktop's own disk.",
+        "Read and write files. Each agent computer gets its own home folder under `%USERPROFILE%\\rakazo`, kept on the desktop's own disk.",
         "Take screenshots and use the mouse and keyboard, so it can work in Windows apps such as Excel, not only in a browser.",
         "Let you watch the screen live and take over when it needs a login or a decision.",
-        "Rakazo starts the desktop when a bot needs it and powers it off when the last computer on it stops. Deleting a bot computer removes only its folder, never the desktop.",
+        "Rakazo starts the desktop when an agent needs it and powers it off when the last computer on it stops. Deleting an agent computer removes only its folder, never the desktop.",
       ],
     },
     {
       heading: "When to choose Wuying",
       paragraphs: [
-        "Choose Wuying when bots need Windows software, when your team already runs on Alibaba Cloud, or when you are in mainland China. It also lets a single person bring their own Windows desktop to a shared Rakazo without asking an admin.",
-        "For Linux computers with a desktop and browser, hosted options such as [Boat](/sandboxes/boat/), [E2B](/sandboxes/e2b/) and [Novita](/sandboxes/novita/) give each bot more isolation, a terminal and several screens at once. [Docker](/sandboxes/docker/) and [Kubernetes](/sandboxes/kubernetes/) keep computers on your own servers. To let a bot use your own Windows PC instead, see [your computer](/sandboxes/your-computer/). The [sandbox comparison](/sandboxes/) covers every option.",
+        "Choose Wuying when agents need Windows software, when your team already runs on Alibaba Cloud, or when you are in mainland China. It also lets a single person bring their own Windows desktop to a shared Rakazo without asking an admin.",
+        "For Linux computers with a desktop and browser, hosted options such as [Boat](/sandboxes/boat/), [E2B](/sandboxes/e2b/) and [Novita](/sandboxes/novita/) give each agent more isolation, a terminal and several screens at once. [Docker](/sandboxes/docker/) and [Kubernetes](/sandboxes/kubernetes/) keep computers on your own servers. To let an agent use your own Windows PC instead, see [your computer](/sandboxes/your-computer/). The [sandbox comparison](/sandboxes/) covers every option.",
       ],
     },
     {
@@ -106,7 +106,7 @@ export const wuying: Sandbox = {
     {
       question: "Can an AI agent use a Windows cloud computer?",
       answer:
-        "Yes. With Rakazo, bots can work on a Wuying Windows desktop: they run PowerShell, use files and Windows apps, and you can watch and take over the screen.",
+        "Yes. With Rakazo, agents can work on a Wuying Windows desktop: they run PowerShell, use files and Windows apps, and you can watch and take over the screen.",
     },
     {
       question: "Is this Alibaba Cloud AgentBay?",
@@ -119,9 +119,9 @@ export const wuying: Sandbox = {
         "No. Any account can connect its own Wuying desktop in Settings → Computer for its Team Computers. Only an admin can make Wuying the default for the whole deployment.",
     },
     {
-      question: "Is a shared Wuying desktop isolated between bots?",
+      question: "Is a shared Wuying desktop isolated between agents?",
       answer:
-        "Only by folder. Each bot computer has its own home folder, but everyone on the desktop shares one Windows account, so they can reach each other's files and logins. Give each person their own desktop if that matters.",
+        "Only by folder. Each agent computer has its own home folder, but everyone on the desktop shares one Windows account, so they can reach each other's files and logins. Give each person their own desktop if that matters.",
     },
   ],
   sources: [

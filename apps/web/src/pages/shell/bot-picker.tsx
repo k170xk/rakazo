@@ -37,8 +37,8 @@ export function BotCreatePicker({
   }, [bots, needle]);
   const showCreate =
     !needle ||
-    "new bot".includes(needle) ||
-    needle.split(/\s+/).every((part) => "new bot".includes(part));
+    "new agent".includes(needle) ||
+    needle.split(/\s+/).every((part) => "new agent".includes(part));
 
   return (
     <div data-testid="bot-create-picker" className="w-[min(320px,calc(100vw-2rem))]">
@@ -60,7 +60,7 @@ export function BotCreatePicker({
         </label>
         <CommandList className="flex min-h-0 max-h-none flex-col overflow-hidden p-1 [&>[cmdk-list-sizer]]:flex [&>[cmdk-list-sizer]]:min-h-0 [&>[cmdk-list-sizer]]:flex-col">
           <CommandEmpty>
-            <Trans>No bots match</Trans>
+            <Trans>No agents match</Trans>
           </CommandEmpty>
           <CommandGroup className="shrink-0">
             {showCreate ? (
@@ -73,7 +73,7 @@ export function BotCreatePicker({
                 <span className="flex size-[22px] shrink-0 items-center justify-center">
                   <Plus size={16} strokeWidth={1.8} aria-hidden="true" />
                 </span>
-                <Trans>New bot</Trans>
+                <Trans>New agent</Trans>
               </CommandItem>
             ) : null}
             <CommandItem
@@ -101,7 +101,7 @@ export function BotCreatePicker({
               </span>
               <PickerInfo
                 testId="picker-info-space"
-                label={t`A team inside this work space, with its own bots, chats and files.`}
+                label={t`A team inside this work space, with its own agents, chats and files.`}
               />
             </CommandItem>
             <CommandItem
@@ -118,7 +118,7 @@ export function BotCreatePicker({
               </span>
               <PickerInfo
                 testId="picker-info-work-space"
-                label={t`A separate work space. It opens straight away, with its own bots and apps.`}
+                label={t`A separate work space. It opens straight away, with its own agents and apps.`}
               />
             </CommandItem>
           </CommandGroup>

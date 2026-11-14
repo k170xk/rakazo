@@ -12,7 +12,7 @@ vi.mock("expo-secure-store", () => ({
   },
 }));
 
-describe("last bot shortcut target", () => {
+describe("last agent shortcut target", () => {
   beforeEach(() => saved.clear());
 
   it("does not carry an explicit Space into a later default-Space chat", async () => {

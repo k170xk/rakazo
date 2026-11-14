@@ -1,4 +1,5 @@
 import { Trans } from "@lingui/react/macro";
+import { readBoard, Whiteboard } from "@rakazo/app-kit/ui";
 import type { SharedPage } from "@rakazo/contracts";
 import {
   pageShareTokenFromSlug,
@@ -7,12 +8,16 @@ import {
 } from "@rakazo/contracts";
 import { Button, buttonVariants, Spinner } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
+import { Download } from "lucide-react";
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Whiteboard } from "@rakazo/app-kit/ui";
 import { AppFrame } from "../components/apps/AppFrame";
 import { PublicPageShell } from "../components/pages/PublicPageShell";
+import {
+  boardBoundsWithArrows,
+  exportWhiteboardPdf,
+} from "../components/whiteboards/whiteboard-export";
 import { sharedAppSource } from "../lib/app-host";
 import { sharedPageState } from "../lib/page-state";
 import { usePageDocument } from "../lib/pages";
@@ -86,10 +91,14 @@ function SharedPageBody() {
   const isBoard = page?.kind === "whiteboard";
   const viewer = usePageDocument(isApp || isBoard ? undefined : page?.code);
   const appSource = useMemo(
-    () => (token && isApp ? sharedAppSource(token, password, page?.canSaveState === true) : null),
-    [token, password, isApp, page?.canSaveState],
+    () =>
+      token && (isApp || isBoard)
+        ? sharedAppSource(token, password, page?.canSaveState === true)
+        : null,
+    [token, password, isApp, isBoard, page?.canSaveState],
   );
   const title = page?.title;
+  const sharedBoardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (title) document.title = title;
   }, [title]);
@@ -189,9 +198,91 @@ function SharedPageBody() {
     );
   }
   if (isBoard) {
+    const resolveSharedAsset = appSource
+      ? (assetId: string) =>
+          appSource
+            .asset(assetId)
+            .then((res) => `data:${res.mime};base64,${res.base64}`)
+            .catch(() => null)
+      : undefined;
+    const saveBlob = (ext: string, mime: string, body: BlobPart) => {
+      const slug =
+        page.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 40) || "whiteboard";
+      const url = URL.createObjectURL(new Blob([body], { type: mime }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${slug}.${ext}`;
+      a.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+    };
+    const downloadSharedSvg = () => {
+      const svg = sharedBoardRef.current?.querySelector("svg.absolute");
+      if (!svg) return;
+      const clone = svg.cloneNode(true) as SVGElement;
+      const bounds = boardBoundsWithArrows(readBoard(page.code).items);
+      const pad = 48;
+      const width = bounds.w + pad * 2;
+      const height = bounds.h + pad * 2;
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttribute("viewBox", `${bounds.x - pad} ${bounds.y - pad} ${width} ${height}`);
+      clone.setAttribute("width", String(Math.ceil(width)));
+      clone.setAttribute("height", String(Math.ceil(height)));
+      const g = clone.querySelector("g");
+      g?.removeAttribute("transform");
+      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bg.setAttribute("x", String(bounds.x - pad));
+      bg.setAttribute("y", String(bounds.y - pad));
+      bg.setAttribute("width", String(width));
+      bg.setAttribute("height", String(height));
+      bg.setAttribute("fill", "white");
+      g?.insertBefore(bg, g.firstChild);
+      saveBlob("svg", "image/svg+xml", clone.outerHTML);
+    };
+    const downloadSharedPdf = async () => {
+      const bytes = await exportWhiteboardPdf({
+        title: page.title,
+        code: page.code,
+        resolveAsset: resolveSharedAsset,
+      });
+      saveBlob("pdf", "application/pdf", bytes);
+    };
+    const pillClass =
+      "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] leading-[18px] font-medium whitespace-nowrap text-foreground ring-[0.5px] ring-border outline-none hover:bg-foreground/[0.08] focus-visible:ring-2 focus-visible:ring-ring";
     return (
-      <PublicPageShell title={page.title} document={null} fill>
-        <Whiteboard value={page.code} readOnly height="100%" className="h-full rounded-none border-0" />
+      <PublicPageShell
+        title={page.title}
+        document={null}
+        fill
+        actions={
+          <>
+            <Button variant="ghost" className={pillClass} onClick={downloadSharedSvg}>
+              <Download className="size-4" strokeWidth={1.5} />
+              <span className="max-[560px]:sr-only">
+                <Trans>Download SVG</Trans>
+              </span>
+            </Button>
+            <Button variant="ghost" className={pillClass} onClick={() => void downloadSharedPdf()}>
+              <Download className="size-4" strokeWidth={1.5} />
+              <span className="max-[560px]:sr-only">
+                <Trans>Download PDF</Trans>
+              </span>
+            </Button>
+          </>
+        }
+      >
+        <div ref={sharedBoardRef} className="size-full">
+          <Whiteboard
+            value={page.code}
+            resolveAsset={resolveSharedAsset}
+            readOnly
+            height="100%"
+            className="h-full rounded-none border-0"
+          />
+        </div>
       </PublicPageShell>
     );
   }

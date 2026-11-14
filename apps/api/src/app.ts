@@ -1067,7 +1067,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   // webhooks authenticate a bot or provider, then resolve the tenant from it.
   for (const [path, reason] of [
     ["/api/auth/*", "authentication"],
-    ["/api/v1/bots/*", "bot webhook"],
+    ["/api/v1/bots/*", "agent webhook"],
     ["/api/v1/messaging/*", "messaging webhook"],
     ["/api/v1/phone/*", "messaging webhook"],
   ] as const) {

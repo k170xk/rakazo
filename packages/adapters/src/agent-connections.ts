@@ -80,7 +80,7 @@ async function requestConnection(
   // which addresses are registered.
   if (!targetIdentity) return { ok: false, error: "no agent can be reached at that address" };
   if (targetIdentity.botId === sender.id) {
-    return { ok: false, error: "a bot cannot connect to itself" };
+    return { ok: false, error: "an agent cannot connect to itself" };
   }
   const target = await deps.prisma.bot.findUnique({
     where: { id: targetIdentity.botId },
@@ -204,7 +204,7 @@ export function prepareAgentConnectionResponse(
   targetBotId: string,
   accept: boolean,
 ) {
-  return runAsSystem("prepare an agent connection response for its target bot", async () => {
+  return runAsSystem("prepare an agent connection response for its target agent", async () => {
     const pending = await prisma.agentConnection.findFirst({
       where: { targetBotId, status: "pending" },
       orderBy: { updatedAt: "desc" },
@@ -313,7 +313,7 @@ async function deliverToConnectedAgent(
   // connect_agent: the tool must not enumerate registered addresses.
   if (!targetIdentity) return { ok: false, error: "no agent can be reached at that address" };
   if (targetIdentity.botId === sender.id) {
-    return { ok: false, error: "a bot cannot message itself" };
+    return { ok: false, error: "an agent cannot message itself" };
   }
 
   const connection = await approvedConnectionBetween(deps.prisma, sender.id, targetIdentity.botId);
@@ -328,7 +328,7 @@ async function deliverToConnectedAgent(
     return {
       ok: false,
       error:
-        "bot-to-bot message limit reached for this chain; report back to the user instead of messaging another bot",
+        "bot-to-bot message limit reached for this chain; report back to the user instead of messaging another agent",
     };
   }
 

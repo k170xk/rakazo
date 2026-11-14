@@ -628,27 +628,39 @@ export function BarList({
   const top = Math.max(...sorted.map((item) => Number(item[value]) || 0), 1);
   return (
     <ul className="flex flex-col gap-2">
-      {sorted.map((item, index) => (
-        <li key={String(item[label])}>
-          <button
-            type="button"
-            disabled={!onSelect}
-            onClick={() => onSelect?.(item)}
-            className="group relative flex h-9 w-full items-center justify-between gap-3 overflow-hidden rounded-lg px-3 text-left text-sm disabled:cursor-default"
-          >
+      {sorted.map((item, index) => {
+        const inner = (
+          <>
             <motion.span
-              className="absolute inset-y-0 left-0 rounded-lg bg-primary/14 group-enabled:group-hover:bg-primary/22"
+              className="absolute inset-y-0 left-0 rounded-lg bg-primary/14 transition-colors duration-200 group-hover:bg-primary/24"
               initial={{ width: 0 }}
               animate={{ width: `${((Number(item[value]) || 0) / top) * 100}%` }}
               transition={{ duration: 0.8, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
             />
-            <span className="relative truncate font-medium">{String(item[label])}</span>
+            <span className="relative truncate font-medium transition-transform duration-150 group-hover:translate-x-0.5">{String(item[label])}</span>
             <span className="relative font-bold tabular">
               {formatNumber(Number(item[value]) || 0, format, currency)}
             </span>
-          </button>
-        </li>
-      ))}
+          </>
+        );
+        return (
+          <li key={String(item[label])}>
+            {onSelect ? (
+              <button
+                type="button"
+                onClick={() => onSelect(item)}
+                className="group relative flex h-9 w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-3 text-left text-sm transition-colors duration-150 hover:bg-muted/40"
+              >
+                {inner}
+              </button>
+            ) : (
+              <div className="group relative flex h-9 w-full items-center justify-between gap-3 overflow-hidden rounded-lg px-3 text-left text-sm transition-colors duration-150 hover:bg-muted/40">
+                {inner}
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

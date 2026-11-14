@@ -10,7 +10,7 @@ const t = (text: string) => `translated: ${text}`;
 describe("create menu", () => {
   it("uses SF Symbols on iOS", () => {
     expect(createMenuActions(t, "ios")).toEqual([
-      { id: "bot", title: "translated: New bot", image: "person.crop.circle.badge.plus" },
+      { id: "bot", title: "translated: New agent", image: "person.crop.circle.badge.plus" },
       { id: "group", title: "translated: New group chat", image: "person.2" },
       { id: "space", title: "translated: New team", image: "square.grid.2x2" },
     ]);
@@ -28,7 +28,7 @@ describe("create menu", () => {
     expect(isCreateAction(id)).toBe(true);
   });
 
-  it.each(["", "other", "Bot", "person_add", "constructor"])("rejects %s", (id) => {
+  it.each(["", "other", "Agent", "person_add", "constructor"])("rejects %s", (id) => {
     expect(isCreateAction(id)).toBe(false);
   });
 });

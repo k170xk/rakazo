@@ -35,23 +35,23 @@ beforeEach(async () => {
   data = await mkdtemp(path.join(tmpdir(), "file-retention-"));
   home = path.join(data, "homes", "team-a");
   other = path.join(data, "homes", "team-b");
-  await put(path.join(home, "bots/b1/report.docx"), "12345");
-  await put(path.join(home, "bots/b1/site/index.html"));
-  await put(path.join(home, "bots/b1/site/app.js"));
-  await put(path.join(home, "bots/b1/outputs/deck.pptx"));
-  await put(path.join(home, "bots/b1/outputs/video.mp4"));
-  await put(path.join(home, "bots/b1/work/spec.json"));
-  await put(path.join(home, "bots/b1/.settings/keep.json"));
+  await put(path.join(home, "agents/b1/report.docx"), "12345");
+  await put(path.join(home, "agents/b1/site/index.html"));
+  await put(path.join(home, "agents/b1/site/app.js"));
+  await put(path.join(home, "agents/b1/outputs/deck.pptx"));
+  await put(path.join(home, "agents/b1/outputs/video.mp4"));
+  await put(path.join(home, "agents/b1/work/spec.json"));
+  await put(path.join(home, "agents/b1/.settings/keep.json"));
   await put(path.join(home, "conversations/thread-1/notes.txt"));
-  await put(path.join(other, "bots/b9/outputs/deck.pptx"), "someone else's");
-  await put(path.join(other, "bots/b9/secret.txt"), "someone else's");
+  await put(path.join(other, "agents/b9/outputs/deck.pptx"), "someone else's");
+  await put(path.join(other, "agents/b9/secret.txt"), "someone else's");
 });
 
 afterEach(async () => {
   await rm(data, { recursive: true, force: true });
 });
 
-describe("listing a bot's files", () => {
+describe("listing an agent's files", () => {
   it("lists top-level items and each output separately, never hidden settings", async () => {
     const items = await listStoredItems(home, "bots/b1");
     expect(items.map((item) => item.path).sort()).toEqual([
@@ -75,11 +75,11 @@ describe("listing a bot's files", () => {
     const items = await listStoredItems(home, "bots/b1");
     expect(items.map((item) => item.path)).not.toContain("outputs/deck.pptx");
     await expect(removeStoredItem(home, "bots/b1", "outputs/deck.pptx")).rejects.toThrow();
-    expect(existsSync(path.join(other, "bots/b9/outputs/deck.pptx"))).toBe(true);
+    expect(existsSync(path.join(other, "agents/b9/outputs/deck.pptx"))).toBe(true);
     await expect(openStoredFile(home, "bots/b1", "outputs/deck.pptx")).rejects.toThrow();
   });
 
-  it("finds nothing when the bot folder itself is a link", async () => {
+  it("finds nothing when the agent folder itself is a link", async () => {
     await rm(path.join(home, "bots/b1"), { recursive: true });
     await symlink(path.join(other, "bots/b9"), path.join(home, "bots/b1"));
     expect(await listStoredItems(home, "bots/b1")).toEqual([]);
@@ -110,14 +110,14 @@ describe("removing an item", () => {
     for (const bad of ["../b9", ".settings", "site/index.html", "outputs/a/b", "", "a//b"]) {
       await expect(removeStoredItem(home, "bots/b1", bad)).rejects.toThrow();
     }
-    expect(existsSync(path.join(home, "bots/b1/site/index.html"))).toBe(true);
+    expect(existsSync(path.join(home, "agents/b1/site/index.html"))).toBe(true);
   });
 
   it("removes a link as a link, leaving its target", async () => {
-    await symlink(path.join(other, "bots/b9/secret.txt"), path.join(home, "bots/b1/pointer"));
+    await symlink(path.join(other, "agents/b9/secret.txt"), path.join(home, "bots/b1/pointer"));
     await removeStoredItem(home, "bots/b1", "pointer");
     expect(existsSync(path.join(home, "bots/b1/pointer"))).toBe(false);
-    expect(existsSync(path.join(other, "bots/b9/secret.txt"))).toBe(true);
+    expect(existsSync(path.join(other, "agents/b9/secret.txt"))).toBe(true);
   });
 
   it("leaves nothing behind in the server's trash", async () => {
@@ -144,10 +144,10 @@ describe("reading an item for a download", () => {
   });
 
   it("skips links inside a folder and refuses a linked item or a path outside the shape", async () => {
-    await symlink(path.join(other, "bots/b9/secret.txt"), path.join(home, "bots/b1/site/leak.txt"));
+    await symlink(path.join(other, "agents/b9/secret.txt"), path.join(home, "agents/b1/site/leak.txt"));
     await symlink(path.join(other, "bots/b9"), path.join(home, "bots/b1/site/elsewhere"));
     expect(Object.keys(await read("site")).sort()).toEqual(["site/app.js", "site/index.html"]);
-    await symlink(path.join(other, "bots/b9/secret.txt"), path.join(home, "bots/b1/pointer"));
+    await symlink(path.join(other, "agents/b9/secret.txt"), path.join(home, "bots/b1/pointer"));
     await expect(read("pointer")).rejects.toThrow();
     await expect(read("../b9/secret.txt")).rejects.toThrow();
   });
@@ -166,10 +166,10 @@ describe("sweeping a home", () => {
     expect(await readdir(path.join(home, "bots/b1"))).toEqual(
       expect.arrayContaining([".settings", "site"]),
     );
-    expect(existsSync(path.join(home, "bots/b1/report.docx"))).toBe(false);
-    expect(existsSync(path.join(home, "bots/b1/outputs/video.mp4"))).toBe(false);
+    expect(existsSync(path.join(home, "agents/b1/report.docx"))).toBe(false);
+    expect(existsSync(path.join(home, "agents/b1/outputs/video.mp4"))).toBe(false);
     expect(existsSync(path.join(home, "conversations/thread-1"))).toBe(false);
-    expect(existsSync(path.join(other, "bots/b9/outputs/deck.pptx"))).toBe(true);
+    expect(existsSync(path.join(other, "agents/b9/outputs/deck.pptx"))).toBe(true);
   });
 
   it("deletes nothing that changed within the retention", async () => {
@@ -203,7 +203,7 @@ describe("sweeping a home", () => {
   });
 });
 
-describe("where a person's bot files are kept", () => {
+describe("where a person's agent files are kept", () => {
   it("uses the home, or a document home apart from a computer that keeps its own", () => {
     const store = new LocalAgentHomeStore(data);
     const where = { home: store, dataDir: data, homeKey: "team-a" };

@@ -72,10 +72,10 @@ async function render(value: string, avatarSet?: BotAvatarSet, key = "initial") 
   await act(async () => root.render(<Harness key={key} value={value} avatarSet={avatarSet} />));
 }
 
-describe("selectable bot icon sets", () => {
+describe("selectable agent icon sets", () => {
   it("keeps a legacy appearance on open, saves a Rakazo switch, and restores the saved set on reload", async () => {
     await render("#10B981");
-    await click("Customize bot avatar");
+    await click("Customize agent avatar");
     expect(button("Original").getAttribute("aria-selected")).toBe("true");
     expect(document.querySelector(".rakazo-organic-avatar")).not.toBeNull();
     expect(changed).not.toHaveBeenCalled();
@@ -83,7 +83,7 @@ describe("selectable bot icon sets", () => {
     expect(changed).toHaveBeenLastCalledWith("#10B981", "rakazo");
     expect(document.querySelector(".rakazo-logo-avatar")).not.toBeNull();
     await render("#10B981", "rakazo", "reload");
-    await click("Customize bot avatar");
+    await click("Customize agent avatar");
     expect(button("OCSC").getAttribute("aria-selected")).toBe("true");
     await click("Original");
     expect(changed).toHaveBeenLastCalledWith("#10B981", "organic");
@@ -95,7 +95,7 @@ describe("selectable bot icon sets", () => {
     const photo = "data:image/png;base64,abc";
     await render(photo);
     expect(document.querySelector(`img[src="${photo}"]`)).not.toBeNull();
-    await click("Customize bot avatar");
+    await click("Customize agent avatar");
     expect(changed).not.toHaveBeenCalled();
     expect(document.querySelector(`img[src="${photo}"]`)).not.toBeNull();
     await click("OCSC");
@@ -105,7 +105,7 @@ describe("selectable bot icon sets", () => {
 
   it("keeps explicit original shapes and their chosen set while changing colour", async () => {
     await render("#8B5CF6::shape_2", "organic");
-    await click("Customize bot avatar");
+    await click("Customize agent avatar");
     expect(changed).not.toHaveBeenCalled();
     await click("Color #00C972");
     expect(changed).toHaveBeenLastCalledWith("#00C972::shape_2", undefined);

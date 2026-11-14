@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, openBotPanelTab, signup } from "./helpers";
 
-test("bot settings open Avatar Studio on the Bot tab", async ({ page }, testInfo) => {
+test("agent settings open Avatar Studio on the Agent tab", async ({ page }, testInfo) => {
   const stamp = Date.now();
   await signup(page, `avatar-studio-${stamp}@rakazo.test`, "password12", "Avatar Studio");
   await completeOnboarding(page);
@@ -16,7 +16,7 @@ test("bot settings open Avatar Studio on the Bot tab", async ({ page }, testInfo
   const studio = page.getByTestId("avatar-studio");
   await expect(studio).toBeVisible();
   await expect(studio.getByText("Avatar Studio", { exact: true })).toBeVisible();
-  await expect(studio.getByRole("tab", { name: "Bot", exact: true })).toBeVisible();
+  await expect(studio.getByRole("tab", { name: "Agent", exact: true })).toBeVisible();
   await expect(studio.getByRole("tab", { name: "Upload", exact: true })).toBeVisible();
   await expect(studio.getByTestId("avatar-studio-bot-tab")).toBeVisible();
 

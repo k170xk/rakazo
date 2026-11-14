@@ -352,7 +352,7 @@ export function McpApprovalCard({
 
   async function authorize() {
     if (!botId || busy) {
-      if (!botId) setError(t`This server cannot be assigned without a bot.`);
+      if (!botId) setError(t`This server cannot be assigned without an agent.`);
       return;
     }
     setBusy(true);

@@ -38,7 +38,7 @@ const databaseUrl = process.env.DATABASE_URL;
 const describePostgres =
   process.env.VERIFY_DATABASE && databaseUrl ? describe.sequential : describe.skip;
 
-describePostgres("account deletion on bot computers (PostgreSQL)", () => {
+describePostgres("account deletion on agent computers (PostgreSQL)", () => {
   let prisma: PrismaClient;
   let system: PrismaClient;
   let close: () => Promise<void>;
@@ -199,7 +199,7 @@ describePostgres("account deletion on bot computers (PostgreSQL)", () => {
           spaceId: ids.personalSpace,
           userId: ids.leaver,
           scope: "dedicated",
-          scopeKey: `bot:${ids.dedicatedBot}`,
+          scopeKey: `agent:${ids.dedicatedBot}`,
           homeKey: ids.dedicatedBot,
           kind: "e2b",
           providerRef: `sb-dedicated-${suffix}`,
@@ -347,7 +347,7 @@ describePostgres("account deletion on bot computers (PostgreSQL)", () => {
     );
   });
 
-  it("does not let a running computer's later save bring the deleted bot's folder back", async () => {
+  it("does not let a running computer's later save bring the deleted agent's folder back", async () => {
     await deleteAccount(ids.leaver);
     const legacy = await system.computer.findUniqueOrThrow({
       where: { homeKey: legacyTeamHomeKey(ids.sharedSpace) },

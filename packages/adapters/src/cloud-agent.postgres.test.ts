@@ -306,7 +306,7 @@ describePostgres("cloud agent lifecycle and recovery (PostgreSQL + Cursor emulat
     });
   });
 
-  it("retains ownership and cancels when the original bot is deleted", async () => {
+  it("retains ownership and cancels when the original agent is deleted", async () => {
     const h = await setup();
     const id = await h.launch();
     await h.poll(id);

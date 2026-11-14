@@ -13,24 +13,27 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bold,
   CheckCircle2,
+  ExternalLink,
+  FilePenLine,
   Italic,
   Link2,
   List,
   ListOrdered,
   Mail,
   Paperclip,
-  Send,
   Trash2,
   Underline,
   X,
 } from "lucide-react";
-import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import type { ClipboardEvent, KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
 const EMAIL_PATTERN = /^[^\s@<>()[\],;:"]+@[^\s@<>()[\],;:"]+\.[^\s@<>()[\],;:"]+$/;
+
+type RecipientKey = "to" | "cc" | "bcc";
 
 type Form = {
   to: string[];
@@ -50,6 +53,36 @@ function formOf(draft: EmailDraft): Form {
   };
 }
 
+function sameList(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+export function parseRecipientInput(
+  raw: string,
+  existing: readonly string[],
+): { added: string[]; invalid: string[] } {
+  const candidates = raw.split(/[,;\n]+/).flatMap((chunk) => {
+    const trimmed = chunk.trim();
+    if (!trimmed) return [];
+    const angled = /^.*<([^>]+)>\s*$/.exec(trimmed);
+    if (angled?.[1]) return [angled[1].trim().toLowerCase()];
+    return trimmed
+      .split(/\s+/)
+      .map((part) => part.trim().toLowerCase())
+      .filter(Boolean);
+  });
+  const added: string[] = [];
+  const invalid: string[] = [];
+  for (const candidate of candidates) {
+    if (!EMAIL_PATTERN.test(candidate)) {
+      invalid.push(candidate);
+    } else if (!existing.includes(candidate) && !added.includes(candidate)) {
+      added.push(candidate);
+    }
+  }
+  return { added, invalid };
+}
+
 function fileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -59,35 +92,41 @@ function fileSize(bytes: number): string {
 function RecipientField({
   label,
   values,
+  text,
+  invalid,
   disabled,
   onChange,
+  onTextChange,
 }: {
   label: string;
   values: string[];
+  text: string;
+  invalid: boolean;
   disabled: boolean;
   onChange: (values: string[]) => void;
+  onTextChange: (text: string, invalid: boolean) => void;
 }) {
   const { t } = useLingui();
-  const [text, setText] = useState("");
-  const [invalid, setInvalid] = useState(false);
 
   function commit(raw = text): boolean {
-    const parts = raw
-      .split(/[,;\s]+/)
-      .map((part) => part.trim().toLowerCase())
-      .filter(Boolean);
-    if (parts.length === 0) return true;
-    const bad = parts.filter((part) => !EMAIL_PATTERN.test(part));
-    const good = parts.filter((part) => EMAIL_PATTERN.test(part) && !values.includes(part));
-    if (good.length) onChange([...values, ...good]);
-    setText(bad.join(", "));
-    setInvalid(bad.length > 0);
+    if (!raw.trim()) {
+      if (text || invalid) onTextChange("", false);
+      return true;
+    }
+    const { added, invalid: bad } = parseRecipientInput(raw, values);
+    if (added.length) onChange([...values, ...added]);
+    onTextChange(bad.join(", "), bad.length > 0);
     return bad.length === 0;
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Enter" || event.key === "," || event.key === ";") {
-      event.preventDefault();
+    if (
+      event.key === "Enter" ||
+      event.key === "," ||
+      event.key === ";" ||
+      (event.key === "Tab" && text.trim().length > 0)
+    ) {
+      if (event.key !== "Tab") event.preventDefault();
       commit();
     } else if (event.key === "Backspace" && !text && values.length) {
       onChange(values.slice(0, -1));
@@ -121,10 +160,7 @@ function RecipientField({
             value={text}
             aria-label={label}
             aria-invalid={invalid}
-            onChange={(event) => {
-              setText(event.target.value);
-              setInvalid(false);
-            }}
+            onChange={(event) => onTextChange(event.target.value, false)}
             onKeyDown={onKeyDown}
             onBlur={() => commit()}
             placeholder={values.length ? "" : t`Add an email address`}
@@ -159,106 +195,114 @@ function SignaturePreview({ html }: { html: string }) {
   );
 }
 
-export function EmailDraftCard({ draftId }: { draftId: string }) {
-  const { t, i18n } = useLingui();
+function cleanPastedSignatureHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  for (const node of doc.querySelectorAll(
+    "script, style, meta, link, title, iframe, object, embed, form",
+  )) {
+    node.remove();
+  }
+  for (const element of doc.body.querySelectorAll("*")) {
+    for (const attribute of [...element.attributes]) {
+      const name = attribute.name.toLowerCase();
+      const value = attribute.value.trim().toLowerCase();
+      if (
+        name.startsWith("on") ||
+        ((name === "href" || name === "src") && value.startsWith("javascript:"))
+      ) {
+        element.removeAttribute(attribute.name);
+      }
+    }
+  }
+  return doc.body.innerHTML;
+}
+
+function InlineSignatureEditor({
+  initialHtml,
+  onSaved,
+  onCancel,
+}: {
+  initialHtml: string | null;
+  onSaved: (html: string | null) => void;
+  onCancel: () => void;
+}) {
+  const { t } = useLingui();
+  const editor = useRef<HTMLDivElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    if (editor.current) editor.current.innerHTML = initialHtml ?? "";
+  }, [initialHtml]);
+
+  function onPaste(event: ClipboardEvent<HTMLDivElement>) {
+    const html = event.clipboardData.getData("text/html");
+    if (!html) return;
+    event.preventDefault();
+    document.execCommand("insertHTML", false, cleanPastedSignatureHtml(html));
+  }
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      const raw = editor.current?.innerHTML ?? null;
+      const result = await rpc.emailDrafts.signature.set({ html: raw });
+      onSaved(result.html);
+    } catch (err) {
+      setError(errorText(err, t`Could not save your signature`));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[12px] text-muted-foreground">
+        <Trans>
+          Copy your signature from Outlook (Settings → Signatures) and paste it below. It will be
+          included on every draft you create.
+        </Trans>
+      </p>
+      {/* biome-ignore lint/a11y/useSemanticElements: a pasted signature keeps its formatting; a textarea holds plain text only. */}
+      <div
+        ref={editor}
+        role="textbox"
+        aria-multiline="true"
+        aria-label={t`Email signature`}
+        tabIndex={0}
+        contentEditable={!saving}
+        suppressContentEditableWarning
+        onPaste={onPaste}
+        className="min-h-[76px] rounded-lg border border-border bg-white p-2.5 text-[13.5px] text-black outline-none focus:ring-1 focus:ring-primary/60"
+        style={{ fontFamily: "Aptos, Calibri, Arial, sans-serif" }}
+      />
+      {error ? <p className="text-[12px] text-destructive">{error}</p> : null}
+      <div className="flex items-center justify-end gap-2">
+        <Button type="button" variant="ghost" size="sm" disabled={saving} onClick={onCancel}>
+          <Trans>Cancel</Trans>
+        </Button>
+        <Button type="button" size="sm" disabled={saving} onClick={() => void save()}>
+          {saving ? <Spinner /> : <Trans>Save signature</Trans>}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function EmailDraftCard({ draftId, version }: { draftId: string; version?: number }) {
+  const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
   const options = queries.emailDrafts.get.queryOptions({ input: { id: draftId } });
   const state = useQuery({ ...options, staleTime: 30_000 });
   const draft = state.data;
-  const [form, setForm] = useState<Form | null>(null);
-  const [version, setVersion] = useState(0);
-  const [dirty, setDirty] = useState(false);
-  const [busy, setBusy] = useState<"save" | "send" | "discard" | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [showCopies, setShowCopies] = useState(false);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
-  const [chatFiles, setChatFiles] = useState<EmailDraftAttachment[] | null>(null);
-  const body = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!draft || draft.version === version) return;
-    setForm(formOf(draft));
-    setVersion(draft.version);
-    setDirty(false);
-    setShowCopies((shown) => shown || draft.cc.length > 0 || draft.bcc.length > 0);
-    // The body comes back cleaned by the server, so it is safe to place in the editor.
-    if (body.current) body.current.innerHTML = draft.bodyHtml;
-  }, [draft, version]);
-
-  const editable = draft?.status === "draft" && busy === null;
-
-  function change(patch: Partial<Form>) {
-    setForm((current) => (current ? { ...current, ...patch } : current));
-    setDirty(true);
-  }
-
-  function format(command: string, value?: string) {
-    body.current?.focus();
-    document.execCommand(command, false, value);
-    setDirty(true);
-  }
-
-  function addLink() {
-    const url = window.prompt(t`Link address`, "https://");
-    if (url && /^(https?:|mailto:)/i.test(url.trim())) format("createLink", url.trim());
-  }
-
-  function apply(next: EmailDraft) {
-    queryClient.setQueryData(options.queryKey, next);
-  }
-
-  async function saveNow(): Promise<EmailDraft | null> {
-    if (!draft || !form) return null;
-    const saved = await rpc.emailDrafts.update({
-      id: draft.id,
-      version: draft.version,
-      to: form.to,
-      cc: form.cc,
-      bcc: form.bcc,
-      subject: form.subject,
-      bodyHtml: body.current?.innerHTML ?? draft.bodyHtml,
-      attachmentIds: form.attachments.map((file) => file.artifactId),
-    });
-    apply(saved);
-    return saved;
-  }
-
-  async function run(kind: "save" | "send" | "discard") {
-    if (!draft) return;
-    setBusy(kind);
-    setError(null);
-    try {
-      if (kind === "discard") {
-        apply(await rpc.emailDrafts.discard({ id: draft.id }));
-      } else {
-        const latest = dirty || kind === "save" ? await saveNow() : draft;
-        if (kind === "send" && latest) {
-          apply(await rpc.emailDrafts.send({ id: latest.id, version: latest.version }));
-        }
-      }
-    } catch (err) {
-      setError(
-        errorText(
-          err,
-          kind === "send" ? t`Could not send this email` : t`Could not save this draft`,
-        ),
-      );
+    if (version && draft && draft.version < version && !state.isFetching) {
       void state.refetch();
-    } finally {
-      setBusy(null);
-      setConfirmDiscard(false);
     }
-  }
-
-  async function loadFiles() {
-    if (chatFiles || !draft) return;
-    try {
-      setChatFiles(await rpc.emailDrafts.files({ id: draft.id }));
-    } catch (err) {
-      setError(errorText(err, t`Could not list the files in this chat`));
-    }
-  }
+  }, [version, draft, state.isFetching, state.refetch]);
 
   if (state.isPending) {
     return (
@@ -267,7 +311,7 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
       </div>
     );
   }
-  if (!draft || !form) {
+  if (!draft) {
     return (
       <div className="w-[560px] max-w-full rounded-[20px] bg-card px-4 py-3 text-sm text-muted-foreground">
         {errorText(state.error, t`This email draft is not available`)}
@@ -283,30 +327,243 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
     );
   }
 
+  return (
+    <EmailDraftEditor
+      draft={draft}
+      apply={(next) => queryClient.setQueryData(options.queryKey, next)}
+      refetch={() => void state.refetch()}
+    />
+  );
+}
+
+function EmailDraftEditor({
+  draft,
+  apply,
+  refetch,
+}: {
+  draft: EmailDraft;
+  apply: (next: EmailDraft) => void;
+  refetch: () => void;
+}) {
+  const { t, i18n } = useLingui();
+  const [form, setForm] = useState<Form>(() => formOf(draft));
+  const [bodyHtml, setBodyHtml] = useState(() => draft.bodyHtml);
+  const [pendingRecipients, setPendingRecipients] = useState<Record<RecipientKey, string>>({
+    to: "",
+    cc: "",
+    bcc: "",
+  });
+  const [invalidRecipients, setInvalidRecipients] = useState<Record<RecipientKey, boolean>>({
+    to: false,
+    cc: false,
+    bcc: false,
+  });
+  const [busy, setBusy] = useState<"save" | "create" | "discard" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [showCopies, setShowCopies] = useState(() => draft.cc.length > 0 || draft.bcc.length > 0);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [editingSignature, setEditingSignature] = useState(false);
+  const [chatFiles, setChatFiles] = useState<EmailDraftAttachment[] | null>(null);
+  const body = useRef<HTMLDivElement>(null);
+  const bodyInitialized = useRef(false);
+  const syncedVersion = useRef(draft.version);
+
+  useLayoutEffect(() => {
+    if (!body.current) return;
+    if (!bodyInitialized.current) {
+      // The body comes back cleaned by the server, so it is safe to place in the editor.
+      body.current.innerHTML = draft.bodyHtml;
+      bodyInitialized.current = true;
+      syncedVersion.current = draft.version;
+      return;
+    }
+    if (draft.version !== syncedVersion.current) {
+      syncedVersion.current = draft.version;
+      setForm(formOf(draft));
+      setBodyHtml(draft.bodyHtml);
+      setPendingRecipients({ to: "", cc: "", bcc: "" });
+      setInvalidRecipients({ to: false, cc: false, bcc: false });
+      setShowCopies((shown) => shown || draft.cc.length > 0 || draft.bcc.length > 0);
+      if (body.current.innerHTML !== draft.bodyHtml) {
+        body.current.innerHTML = draft.bodyHtml;
+      }
+    }
+  }, [draft]);
+
+  const editable = draft.status === "draft" && busy === null;
+
+  const hasChanges =
+    !sameList(form.to, draft.to) ||
+    !sameList(form.cc, draft.cc) ||
+    !sameList(form.bcc, draft.bcc) ||
+    form.subject !== draft.subject ||
+    bodyHtml !== draft.bodyHtml ||
+    !sameList(
+      form.attachments.map((file) => file.artifactId),
+      draft.attachments.map((file) => file.artifactId),
+    ) ||
+    Boolean(
+      pendingRecipients.to.trim() || pendingRecipients.cc.trim() || pendingRecipients.bcc.trim(),
+    );
+
+  function syncBody() {
+    if (body.current) setBodyHtml(body.current.innerHTML);
+  }
+
+  function change(patch: Partial<Form>) {
+    setForm((current) => ({ ...current, ...patch }));
+  }
+
+  function setRecipientText(field: RecipientKey, text: string, invalid: boolean) {
+    setPendingRecipients((current) =>
+      current[field] === text ? current : { ...current, [field]: text },
+    );
+    setInvalidRecipients((current) =>
+      current[field] === invalid ? current : { ...current, [field]: invalid },
+    );
+    if (!invalid) setError(null);
+  }
+
+  function flushAllRecipients(): Pick<Form, "to" | "cc" | "bcc"> | null {
+    const nextRecipients: Pick<Form, "to" | "cc" | "bcc"> = {
+      to: form.to,
+      cc: form.cc,
+      bcc: form.bcc,
+    };
+    const nextPending: Record<RecipientKey, string> = { to: "", cc: "", bcc: "" };
+    const nextInvalid: Record<RecipientKey, boolean> = { to: false, cc: false, bcc: false };
+    const allInvalid: string[] = [];
+
+    for (const key of ["to", "cc", "bcc"] as const) {
+      const raw = pendingRecipients[key];
+      if (!raw.trim()) continue;
+      const { added, invalid } = parseRecipientInput(raw, nextRecipients[key]);
+      if (added.length) nextRecipients[key] = [...nextRecipients[key], ...added];
+      if (invalid.length) {
+        nextPending[key] = invalid.join(", ");
+        nextInvalid[key] = true;
+        allInvalid.push(...invalid);
+      }
+    }
+
+    setForm((current) => ({ ...current, ...nextRecipients }));
+    setPendingRecipients(nextPending);
+    setInvalidRecipients(nextInvalid);
+
+    if (allInvalid.length > 0) {
+      const badList = allInvalid.join(", ");
+      setError(t`Enter valid email addresses: ${badList}`);
+      return null;
+    }
+    return nextRecipients;
+  }
+
+  function format(command: string, value?: string) {
+    body.current?.focus();
+    document.execCommand(command, false, value);
+    syncBody();
+  }
+
+  function addLink() {
+    const url = window.prompt(t`Link address`, "https://");
+    if (url && /^(https?:|mailto:)/i.test(url.trim())) format("createLink", url.trim());
+  }
+
+  async function run(kind: "save" | "create" | "discard") {
+    if (kind === "discard") {
+      setBusy("discard");
+      setError(null);
+      try {
+        apply(await rpc.emailDrafts.discard({ id: draft.id }));
+      } catch (err) {
+        setError(errorText(err, t`Could not save this draft`));
+        refetch();
+      } finally {
+        setBusy(null);
+        setConfirmDiscard(false);
+      }
+      return;
+    }
+
+    const recipients = flushAllRecipients();
+    if (!recipients) return;
+    const currentBodyHtml = body.current ? body.current.innerHTML : bodyHtml;
+    setBodyHtml(currentBodyHtml);
+    setBusy(kind);
+    setError(null);
+    try {
+      const payload = {
+        id: draft.id,
+        version: draft.version,
+        to: recipients.to,
+        cc: recipients.cc,
+        bcc: recipients.bcc,
+        subject: form.subject,
+        bodyHtml: currentBodyHtml,
+        attachmentIds: form.attachments.map((file) => file.artifactId),
+      };
+      const updated =
+        kind === "create"
+          ? await rpc.emailDrafts.createDraft(payload)
+          : await rpc.emailDrafts.update(payload);
+      apply(updated);
+    } catch (err) {
+      setError(
+        errorText(
+          err,
+          kind === "create"
+            ? t`Could not create this draft in Outlook`
+            : t`Could not save this draft`,
+        ),
+      );
+      refetch();
+    } finally {
+      setBusy(null);
+      setConfirmDiscard(false);
+    }
+  }
+
+  async function loadFiles() {
+    if (chatFiles) return;
+    try {
+      setChatFiles(await rpc.emailDrafts.files({ id: draft.id }));
+    } catch (err) {
+      setError(errorText(err, t`Could not list the files in this chat`));
+    }
+  }
+
+  const created = draft.status === "created";
   const sent = draft.status === "sent";
+  const completed = created || sent;
   const sender = draft.from ?? "Outlook";
   const sentAt = draft.sentAt
     ? i18n.date(new Date(draft.sentAt), { dateStyle: "medium", timeStyle: "short" })
     : null;
-  const sendBlocked =
-    Boolean(draft.cannotSend) || form.to.length + form.cc.length + form.bcc.length === 0;
+  const createBlocked = Boolean(draft.cannotSend);
   const attached = new Set(form.attachments.map((file) => file.artifactId));
   const addable = (chatFiles ?? []).filter((file) => !attached.has(file.artifactId));
 
   return (
-    <div className="w-[600px] max-w-full overflow-hidden rounded-[20px] border border-border/70 bg-card shadow-sm">
+    <div
+      data-testid="email-draft-card"
+      className="w-[600px] max-w-full overflow-hidden rounded-[20px] border border-border/70 bg-card shadow-sm"
+    >
       <div className="flex items-center gap-2.5 bg-primary px-4 py-2.5 text-primary-foreground">
         <Mail size={16} />
         <span className="text-[13.5px] font-semibold">
           {draft.mode === "new" ? <Trans>Outlook email</Trans> : <Trans>Outlook reply</Trans>}
         </span>
         <span className="ms-auto text-[12px] opacity-90">
-          {sent ? (
+          {created ? (
+            <Trans>Saved in Outlook Drafts</Trans>
+          ) : draft.status === "creating" ? (
+            <Trans>Creating draft…</Trans>
+          ) : sent ? (
             <Trans>Sent</Trans>
           ) : draft.status === "sending" ? (
             <Trans>Sending…</Trans>
           ) : (
-            <Trans>Draft · not sent until you press Send</Trans>
+            <Trans>Draft · creates a draft in Outlook</Trans>
           )}
         </span>
       </div>
@@ -324,7 +581,7 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
             <Trans>From</Trans>
           </span>
           <span className="truncate text-[13px]">{draft.from ?? t`Outlook not connected`}</span>
-          {!showCopies && !sent ? (
+          {!showCopies && !completed ? (
             <button
               type="button"
               className="ms-auto text-[12.5px] text-muted-foreground hover:text-foreground"
@@ -337,22 +594,31 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
         <RecipientField
           label={t`To`}
           values={form.to}
+          text={pendingRecipients.to}
+          invalid={invalidRecipients.to}
           disabled={!editable}
           onChange={(to) => change({ to })}
+          onTextChange={(text, invalid) => setRecipientText("to", text, invalid)}
         />
         {showCopies ? (
           <>
             <RecipientField
               label={t`Cc`}
               values={form.cc}
+              text={pendingRecipients.cc}
+              invalid={invalidRecipients.cc}
               disabled={!editable}
               onChange={(cc) => change({ cc })}
+              onTextChange={(text, invalid) => setRecipientText("cc", text, invalid)}
             />
             <RecipientField
               label={t`Bcc`}
               values={form.bcc}
+              text={pendingRecipients.bcc}
+              invalid={invalidRecipients.bcc}
               disabled={!editable}
               onChange={(bcc) => change({ bcc })}
+              onTextChange={(text, invalid) => setRecipientText("bcc", text, invalid)}
             />
           </>
         ) : null}
@@ -407,7 +673,11 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
           tabIndex={0}
           contentEditable={editable}
           suppressContentEditableWarning
-          onInput={() => setDirty(true)}
+          onInput={syncBody}
+          onKeyUp={syncBody}
+          onPaste={syncBody}
+          onCut={syncBody}
+          onBlur={syncBody}
           className={cn(
             "email-draft-body mt-1 min-h-[120px] rounded-lg px-1 py-2 text-[14px] leading-relaxed outline-none",
             "[&_a]:text-primary [&_a]:underline [&_blockquote]:border-s-2 [&_blockquote]:ps-3 [&_ol]:list-decimal [&_ol]:ps-6 [&_p]:my-1.5 [&_ul]:list-disc [&_ul]:ps-6",
@@ -416,18 +686,52 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
         />
 
         <div className="mt-2 border-t border-dashed border-border/70 pt-2">
-          {draft.signatureHtml ? (
-            <SignaturePreview html={draft.signatureHtml} />
+          {editingSignature && editable ? (
+            <InlineSignatureEditor
+              initialHtml={draft.signatureHtml}
+              onCancel={() => setEditingSignature(false)}
+              onSaved={(signatureHtml) => {
+                setEditingSignature(false);
+                apply({ ...draft, signatureHtml });
+              }}
+            />
+          ) : draft.signatureHtml ? (
+            <div className="space-y-1">
+              <SignaturePreview html={draft.signatureHtml} />
+              {editable ? (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setEditingSignature(true)}
+                    className="text-[12px] text-muted-foreground hover:text-foreground"
+                  >
+                    <Trans>Edit signature</Trans>
+                  </button>
+                </div>
+              ) : null}
+            </div>
           ) : (
-            <p className="text-[12.5px] text-muted-foreground">
-              <Trans>
-                No signature saved. Paste your Outlook signature in Settings, under Email signature.
-              </Trans>
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[12.5px] text-muted-foreground">
+                <Trans>
+                  No signature saved. Paste your Outlook signature here or under Settings → Email
+                  signature.
+                </Trans>
+              </p>
+              {editable ? (
+                <button
+                  type="button"
+                  onClick={() => setEditingSignature(true)}
+                  className="shrink-0 text-[12.5px] font-medium text-primary hover:underline"
+                >
+                  <Trans>Paste signature</Trans>
+                </button>
+              ) : null}
+            </div>
           )}
         </div>
 
-        {form.attachments.length || (editable && !sent) ? (
+        {form.attachments.length || (editable && !completed) ? (
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             {form.attachments.map((file) => (
               <span
@@ -502,7 +806,36 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
           </p>
         ) : null}
 
-        {sent ? (
+        {created ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-success/25 bg-success/10 px-3.5 py-2.5">
+            <div className="flex min-w-0 items-start gap-2">
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-success" />
+              <div className="min-w-0 space-y-0.5">
+                <p className="text-[13px] font-medium text-success">
+                  {sentAt ? (
+                    <Trans>
+                      Draft created in {sender} on {sentAt}
+                    </Trans>
+                  ) : (
+                    <Trans>Draft created in {sender}</Trans>
+                  )}
+                </p>
+                <p className="text-[12px] text-muted-foreground">
+                  <Trans>Open your Outlook Drafts folder to review and send this email.</Trans>
+                </p>
+              </div>
+            </div>
+            <a
+              href={draft.outlookWebLink || "https://outlook.office.com/mail/drafts"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12.5px] font-medium text-primary-foreground hover:opacity-90"
+            >
+              <Trans>Open in Outlook</Trans>
+              <ExternalLink size={13} />
+            </a>
+          </div>
+        ) : sent ? (
           <div className="mt-3 flex items-center gap-2 text-[13px] text-success">
             <CheckCircle2 size={16} />
             {sentAt ? (
@@ -552,7 +885,7 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
               </Button>
             )}
             <div className="ms-auto flex items-center gap-2">
-              {dirty ? (
+              {hasChanges ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -560,18 +893,18 @@ export function EmailDraftCard({ draftId }: { draftId: string }) {
                   disabled={busy !== null}
                   onClick={() => void run("save")}
                 >
-                  {busy === "save" ? <Spinner /> : <Trans>Save draft</Trans>}
+                  {busy === "save" ? <Spinner /> : <Trans>Save changes</Trans>}
                 </Button>
               ) : null}
               <Button
                 type="button"
                 size="sm"
-                disabled={busy !== null || sendBlocked}
-                onClick={() => void run("send")}
+                disabled={busy !== null || createBlocked}
+                onClick={() => void run("create")}
                 className="gap-1.5"
               >
-                {busy === "send" ? <Spinner /> : <Send size={14} />}
-                <Trans>Send</Trans>
+                {busy === "create" ? <Spinner /> : <FilePenLine size={14} />}
+                <Trans>Create draft</Trans>
               </Button>
             </div>
           </div>

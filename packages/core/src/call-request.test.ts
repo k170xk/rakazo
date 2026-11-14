@@ -66,7 +66,7 @@ describe("call requests", () => {
     );
   });
 
-  it("tells the bot how its call ended", () => {
+  it("tells the agent how its call ended", () => {
     expect(blocksToAgentHistoryText([request("missed")])).toBe(
       "[you called the user about: 3 reminders without a reply; the user did not answer]",
     );

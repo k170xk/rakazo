@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { initialBotMemory, isEmptyBotMemory } from "./bot-memory.js";
 
-describe("empty bot memory", () => {
+describe("empty agent memory", () => {
   it.each(["", " \n\t", initialBotMemory("Fixture"), initialBotMemory("Original name")])(
     "hides an empty or untouched index: %j",
     (content) => {

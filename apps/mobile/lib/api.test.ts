@@ -1101,12 +1101,12 @@ describe("mobile API authentication", () => {
       vi
         .fn()
         .mockRejectedValueOnce(new TypeError("Network request failed"))
-        .mockResolvedValueOnce(rpcErrorResponse(404, "NOT_FOUND", "Bot does not exist")),
+        .mockResolvedValueOnce(rpcErrorResponse(404, "NOT_FOUND", "Agent does not exist")),
     );
     try {
       expect(isServerUnreachable(await rpc("bots/list").catch((error) => error))).toBe(true);
       expect(isServerReachable()).toBe(false);
-      await expect(rpc("bots/get", { botId: "bot-1" })).rejects.toThrow("Bot does not exist");
+      await expect(rpc("bots/get", { botId: "bot-1" })).rejects.toThrow("Agent does not exist");
       expect(isServerReachable()).toBe(true);
       expect(changed).toHaveBeenCalledTimes(2);
     } finally {
@@ -1255,7 +1255,7 @@ describe("mobile API authentication", () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ json: { ok: true } }))
-      .mockResolvedValueOnce(rpcErrorResponse(404, "NOT_FOUND", "Bot does not exist"));
+      .mockResolvedValueOnce(rpcErrorResponse(404, "NOT_FOUND", "Agent does not exist"));
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(rpc("bots/get", { botId: "bot-1" })).resolves.toEqual({
@@ -1269,7 +1269,7 @@ describe("mobile API authentication", () => {
         body: JSON.stringify({ json: { botId: "bot-1" } }),
       }),
     );
-    await expect(rpc("bots/get", { botId: "missing" })).rejects.toThrow("Bot does not exist");
+    await expect(rpc("bots/get", { botId: "missing" })).rejects.toThrow("Agent does not exist");
   });
 
   it("shows the server's message instead of the procedure name", async () => {
@@ -2724,7 +2724,7 @@ describe("mobile API authentication", () => {
       .mockResolvedValueOnce(jsonResponse({ json: { spaces: [] } }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(rpc("bots/create", { name: "Wrong space bot" })).rejects.toThrow("Unauthorized");
+    await expect(rpc("bots/create", { name: "Wrong space agent" })).rejects.toThrow("Unauthorized");
     expect(selectedSpaceId()).toBeNull();
     expect(storage.has("rakazo.space_id")).toBe(false);
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -3742,7 +3742,7 @@ describe("mobile thread event reduction", () => {
     );
   });
 
-  it("does not invent members for a start with an unknown bot or run ID", () => {
+  it("does not invent members for a start with an unknown agent or run ID", () => {
     const initial: MobileSnapshot = {
       ...snapshot(),
       groupId: "group-1",
@@ -3760,7 +3760,7 @@ describe("mobile thread event reduction", () => {
     expect(applyMobileThreadEvent(initial, { type: "run.started" })).toBe(initial);
   });
 
-  it("does not infer a started run's bot from the snapshot", () => {
+  it("does not infer a started run's agent from the snapshot", () => {
     const initial: MobileSnapshot = {
       ...snapshot(),
       members: [{ botId: "bot-1", name: "Writer", color: "blue", status: "idle" }],

@@ -17,7 +17,15 @@ export const EmailAddressSchema = z.email().trim().toLowerCase().max(254);
 export const EmailDraftModeSchema = z.enum(["new", "reply", "reply_all"]);
 export type EmailDraftMode = z.infer<typeof EmailDraftModeSchema>;
 
-export const EmailDraftStatusSchema = z.enum(["draft", "sending", "sent", "discarded", "failed"]);
+export const EmailDraftStatusSchema = z.enum([
+  "draft",
+  "creating",
+  "created",
+  "sending",
+  "sent",
+  "discarded",
+  "failed",
+]);
 export type EmailDraftStatus = z.infer<typeof EmailDraftStatusSchema>;
 
 export const EmailDraftAttachmentSchema = z.object({
@@ -30,7 +38,7 @@ export type EmailDraftAttachment = z.infer<typeof EmailDraftAttachmentSchema>;
 
 const Recipients = z.array(EmailAddressSchema).max(EMAIL_DRAFT_LIMITS.recipients);
 
-/** What the person may change on a draft before sending it. */
+/** What the person may change on a draft before saving it to Outlook. */
 export const EmailDraftEditSchema = z.object({
   id: Id,
   /** The version the person was editing; an edit to an older one is refused. */
@@ -43,6 +51,19 @@ export const EmailDraftEditSchema = z.object({
   attachmentIds: z.array(Id).max(EMAIL_DRAFT_LIMITS.attachments),
 });
 export type EmailDraftEdit = z.infer<typeof EmailDraftEditSchema>;
+
+/** Creates the draft in the person's Outlook Drafts folder, saving any live card edits first. */
+export const EmailDraftCreateSchema = z.object({
+  id: Id,
+  version: z.number().int().positive(),
+  to: Recipients.optional(),
+  cc: Recipients.optional(),
+  bcc: Recipients.optional(),
+  subject: z.string().max(EMAIL_DRAFT_LIMITS.subject).optional(),
+  bodyHtml: z.string().max(EMAIL_DRAFT_LIMITS.bodyHtml).optional(),
+  attachmentIds: z.array(Id).max(EMAIL_DRAFT_LIMITS.attachments).optional(),
+});
+export type EmailDraftCreate = z.infer<typeof EmailDraftCreateSchema>;
 
 export const EmailDraftSchema = z.object({
   id: Id,
@@ -64,8 +85,10 @@ export const EmailDraftSchema = z.object({
   /** The person's saved signature, added under the body when it is sent. */
   signatureHtml: z.string().nullable(),
   attachments: z.array(EmailDraftAttachmentSchema),
-  /** Why Send is unavailable right now, such as Outlook needing to be reconnected. */
+  /** Why Create draft is unavailable right now, such as Outlook needing to be reconnected. */
   cannotSend: z.string().nullable(),
+  /** Link to open the created draft in Outlook on the web, when Outlook returned one. */
+  outlookWebLink: z.string().nullable().optional(),
   error: z.string().nullable(),
   sentAt: z.string().nullable(),
   createdAt: z.string(),

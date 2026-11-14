@@ -122,7 +122,7 @@ function createDeps(overrides: {
       findMany: vi.fn(
         async () =>
           overrides.messages ?? [
-            { id: "m-1", blocks: [{ kind: "text", text: "Hello from your bot" }] },
+            { id: "m-1", blocks: [{ kind: "text", text: "Hello from your agent" }] },
           ],
       ),
     },
@@ -248,12 +248,12 @@ function createDeps(overrides: {
 }
 
 describe("deliverMessagingOutbound", () => {
-  it("mirrors a messaging DM run's bot text to the identity's conversation", async () => {
+  it("mirrors a messaging DM run's agent text to the identity's conversation", async () => {
     const deps = createDeps({});
     await deliverMessagingOutbound(deps, { runId: "run-1" }, context);
 
     expect(deps.sendToThread).toHaveBeenCalledWith(
-      { threadId: "sendblue:dm-1", body: "Hello from your bot" },
+      { threadId: "sendblue:dm-1", body: "Hello from your agent" },
       context,
     );
     expect(deps.rows).toEqual([
@@ -275,7 +275,7 @@ describe("deliverMessagingOutbound", () => {
     });
   });
 
-  it("sends a page the bot named as its title, never as an app-only page link", async () => {
+  it("sends a page the agent named as its title, never as an app-only page link", async () => {
     const deps = createDeps({
       messages: [
         {
@@ -396,7 +396,7 @@ describe("deliverMessagingOutbound", () => {
     const deps = createDeps({ run: { ...messagingRun, trigger: "bot_message" } });
     await deliverMessagingOutbound(deps, { runId: "run-1" }, context);
     expect(deps.sendToThread).toHaveBeenCalledWith(
-      { threadId: "sendblue:dm-1", body: "Hello from your bot" },
+      { threadId: "sendblue:dm-1", body: "Hello from your agent" },
       context,
     );
   });
@@ -929,7 +929,7 @@ describe("deliverMessagingOutbound channel runs", () => {
     );
   });
 
-  it("posts the bot reply to the group with owner attribution and fans it out to peers", async () => {
+  it("posts the agent reply to the group with owner attribution and fans it out to peers", async () => {
     const deps = createChannelDeps();
     await deliverMessagingOutbound(deps, { runId: "run-1" }, context);
 
@@ -1005,7 +1005,7 @@ describe("deliverMessagingOutbound channel runs", () => {
     );
   });
 
-  it("wakes an @-mentioned peer bot with a run", async () => {
+  it("wakes an @-mentioned peer agent with a run", async () => {
     const deps = createChannelDeps({ text: "@Helper what do you think?" });
     await deliverMessagingOutbound(deps, { runId: "run-1" }, context);
 

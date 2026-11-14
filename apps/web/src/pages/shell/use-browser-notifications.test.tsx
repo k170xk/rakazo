@@ -178,7 +178,7 @@ describe("useBrowserNotifications chat alerts", () => {
     expect(shown()).toEqual([]);
   });
 
-  it("treats a bot's alert from a group as another chat", async () => {
+  it("treats an agent's alert from a group as another chat", async () => {
     await open({ botId: "bot-b" });
     await send({ groupId: "group-g", threadId: "thread-g" });
     expect(shown()).toHaveLength(1);

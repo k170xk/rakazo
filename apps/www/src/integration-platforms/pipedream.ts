@@ -7,13 +7,13 @@ export const pipedream: IntegrationPlatform = {
   gives: "Hosted app tools over Pipedream's MCP server",
   logins: "Pipedream stores them",
   bestFor: "Teams already on Pipedream Connect",
-  title: "Pipedream Connect for AI agents: app tools for Rakazo bots",
+  title: "Pipedream Connect for AI agents: app tools for Rakazo agents",
   description:
-    "What Pipedream Connect is, and how Rakazo bots use it to work in thousands of apps through its MCP server. Approvals, limits, setup, and how it compares with Composio.",
+    "What Pipedream Connect is, and how Rakazo agents use it to work in thousands of apps through its MCP server. Approvals, limits, setup, and how it compares with Composio.",
   h1: "Pipedream Connect for AI agents: app tools with hosted logins",
   intro: [
     "[Pipedream Connect](https://pipedream.com/connect) is the part of Pipedream that lets AI agents act in other apps on behalf of each user. Pipedream runs the sign-in for each app, stores the tokens, and serves the app's actions as tools from a remote MCP server. Pipedream is owned by Workday.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and bots use tools in your apps as well as their own computer. When you host Rakazo yourself, a Pipedream Connect project can supply the apps people connect. Pipedream supplies the tools and logins. Rakazo picks which connected account each bot acts as and asks you before anything that changes data.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and agents use tools in your apps as well as their own computer. When you host Rakazo yourself, a Pipedream Connect project can supply the apps people connect. Pipedream supplies the tools and logins. Rakazo picks which connected account each agent acts as and asks you before anything that changes data.",
   ],
   scene: {
     bot: "Account Manager",
@@ -37,15 +37,15 @@ export const pipedream: IntegrationPlatform = {
       image: true,
     },
     {
-      heading: "What your bots can do with Pipedream",
+      heading: "What your agents can do with Pipedream",
       paragraphs: [
         "With Pipedream set up, the Apps list under Integrations shows every Pipedream app that has actions. Many are also in the catalog on the [integrations page](/integrations/), such as [HubSpot](/integrations/hubspot/), [Slack](/integrations/slack/), [Zendesk](/integrations/zendesk/), [Google Sheets](/integrations/googlesheets/) and [Jira](/integrations/jira/).",
       ],
       bullets: [
-        "Connect an app on Pipedream's page. Choose Connect under Integrations, or ask a bot to connect it and use the card it posts. Pipedream's Connect Link opens for that app and you sign in there.",
-        "Share it across the space. Once an app is connected, every bot in that space can use it.",
+        "Connect an app on Pipedream's page. Choose Connect under Integrations, or ask an agent to connect it and use the card it posts. Pipedream's Connect Link opens for that app and you sign in there.",
+        "Share it across the space. Once an app is connected, every agent in that space can use it.",
         "Use more than one account of the same app. Each connected account gets its own set of tools, labeled with the account. If that account goes away, Rakazo stops instead of using another one.",
-        "Keep the tool list short. When the connected apps add up to more than 20 tools, bots get a searchable list instead of every tool up front.",
+        "Keep the tool list short. When the connected apps add up to more than 20 tools, agents get a searchable list instead of every tool up front.",
         "Ask before changes. Pipedream tools follow your [approval settings](/docs/approvals/) like any other tool.",
         "Keep identities private. Pipedream sees an opaque ID for each person and space, not their name or email.",
       ],
@@ -76,7 +76,7 @@ export const pipedream: IntegrationPlatform = {
         "In [Pipedream](https://pipedream.com), create a project and an OAuth client for its API. Copy the client ID, client secret and project ID.",
         "Set `PIPEDREAM_CLIENT_ID`, `PIPEDREAM_CLIENT_SECRET` and `PIPEDREAM_PROJECT_ID` on the Rakazo API and worker.",
         "Set `PIPEDREAM_ENVIRONMENT` to `development` to test, or `production` for real users, then restart the API and worker.",
-        "Open Integrations in Rakazo, connect one app, and ask a bot to read something from it.",
+        "Open Integrations in Rakazo, connect one app, and ask an agent to read something from it.",
       ],
     },
   ],
@@ -99,7 +99,7 @@ export const pipedream: IntegrationPlatform = {
     {
       question: "Pipedream vs Composio for AI agents?",
       answer:
-        "Both host app logins and give agents thousands of actions. In Rakazo, [Composio](/integration-platforms/composio/) takes one API key and bots search its actions. Pipedream takes a project and OAuth client, and serves each connected account's tools over its MCP server. You can turn on both.",
+        "Both host app logins and give agents thousands of actions. In Rakazo, [Composio](/integration-platforms/composio/) takes one API key and agents search its actions. Pipedream takes a project and OAuth client, and serves each connected account's tools over its MCP server. You can turn on both.",
     },
     {
       question: "Who owns Pipedream?",
@@ -109,7 +109,7 @@ export const pipedream: IntegrationPlatform = {
     {
       question: "Does Rakazo need Pipedream?",
       answer:
-        "No. Pipedream is optional. Bots can use [Composio](/integration-platforms/composio/), [MCP servers](/integration-platforms/mcp/) or [API connectors](/integration-platforms/api-connectors/) instead, or alongside it.",
+        "No. Pipedream is optional. Agents can use [Composio](/integration-platforms/composio/), [MCP servers](/integration-platforms/mcp/) or [API connectors](/integration-platforms/api-connectors/) instead, or alongside it.",
     },
   ],
   sources: [

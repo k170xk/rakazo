@@ -57,7 +57,7 @@ describe("screen reconnect", () => {
 });
 
 describe("screen reconnects per computer", () => {
-  it("gives each bot's screen its own allowance", () => {
+  it("gives each agent's screen its own allowance", () => {
     const screens = createScreenReconnects();
     screens.for("bot-a").report("connected", 0);
     expect(screens.for("bot-a").report("disconnected", 1_000)).toBe("reconnect");

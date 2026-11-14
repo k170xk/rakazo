@@ -52,7 +52,7 @@ async function send(page: Page, text: string) {
   await composer.press("Enter");
 }
 
-test("a bot's page shows in its reply, opens full screen, is shared by link and updates", async ({
+test("an agent's page shows in its reply, opens full screen, is shared by link and updates", async ({
   page,
   browser,
 }, testInfo) => {
@@ -366,7 +366,7 @@ test("a bot's page shows in its reply, opens full screen, is shared by link and 
   const confirm = page.getByRole("alertdialog", { name: "Delete Signups dashboard?" });
   await captureScreenshot(page, testInfo, "page-delete-confirm");
   await confirm.getByRole("button", { name: "Delete" }).click();
-  await expect(page.getByText("Apps this bot builds for you appear here.")).toBeVisible();
+  await expect(page.getByText("Apps this agent builds for you appear here.")).toBeVisible();
   await captureScreenshot(page, testInfo, "page-library-empty");
 
   // The header pill reopens the bot panel on the Pages tab it closed on.
@@ -670,7 +670,7 @@ test("a page's failures, a deleted page's card, and the Library's Share, search 
   await openBotPanelTab(page, "Apps");
   const unread = page.getByTestId("bot-settings").getByRole("alert");
   await expect(unread).toContainText("Couldn't load apps.");
-  await expect(page.getByText("Apps this bot builds for you appear here.")).toBeHidden();
+  await expect(page.getByText("Apps this agent builds for you appear here.")).toBeHidden();
   await captureScreenshot(page, testInfo, "page-library-error");
   await page.unroute("**/rpc/pages/list");
   await unread.getByRole("button", { name: "Try again" }).click();

@@ -18,7 +18,7 @@ import { createRouter } from "./router.js";
 const databaseUrl = process.env.DATABASE_URL;
 const enabled = process.env.VERIFY_DATABASE === "1" && Boolean(databaseUrl);
 
-describe.skipIf(!enabled)("send model gate with a bot's own model (PostgreSQL)", () => {
+describe.skipIf(!enabled)("send model gate with an agent's own model (PostgreSQL)", () => {
   let prisma: PrismaClient;
   let system: PrismaClient;
   let close: () => Promise<void>;
@@ -116,7 +116,7 @@ describe.skipIf(!enabled)("send model gate with a bot's own model (PostgreSQL)",
     return ((await response.json()) as { json: { runIds: string[] } }).json.runIds;
   };
 
-  it("starts a bot's turn on its own connected model, and refuses one without it", async () => {
+  it("starts an agent's turn on its own connected model, and refuses one without it", async () => {
     const thread = await system.thread.findFirstOrThrow({ where: { botId } });
     // A bot that follows the main model is still refused.
     await expectRefused(await send({ botId, text: "follows main" }));
@@ -161,7 +161,7 @@ describe.skipIf(!enabled)("send model gate with a bot's own model (PostgreSQL)",
     expect(await userMessages(thread.id)).toBe(1);
   });
 
-  it("lets a group send through only when every bot it wakes runs its own model", async () => {
+  it("lets a group send through only when every agent it wakes runs its own model", async () => {
     await system.bot.update({ where: { id: botId }, data: { name: "Alpha" } });
     await useModel(botId, "openrouter");
     const beta = await system.bot.create({

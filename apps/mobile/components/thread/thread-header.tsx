@@ -136,7 +136,7 @@ export function useThreadHeader({
       notifyArchivedChatsChanged();
       router.setParams({ readOnly: "0" });
     } catch (cause) {
-      Alert.alert(t("Could not restore bot"), errorText(cause, t("Try again.")));
+      Alert.alert(t("Could not restore agent"), errorText(cause, t("Try again.")));
     } finally {
       setRestoring(false);
     }

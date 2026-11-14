@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { chatSettingsRoute, chatTitleRoute } from "./chat-settings-route";
 
-it("opens the group's settings from a group chat and the bot's from a one-to-one chat", () => {
+it("opens the group's settings from a group chat and the agent's from a one-to-one chat", () => {
   expect(chatSettingsRoute({ groupId: "group-1", botId: "bot-1" })).toEqual({
     pathname: "/group-settings",
     params: { groupId: "group-1" },
@@ -14,7 +14,7 @@ it("opens the group's settings from a group chat and the bot's from a one-to-one
   expect(chatSettingsRoute({})).toBeNull();
 });
 
-it("opens a one-to-one chat's bot profile, and a group's settings, from the title", () => {
+it("opens a one-to-one chat's agent profile, and a group's settings, from the title", () => {
   expect(chatTitleRoute({ botId: "bot-1", name: "Helper" })).toEqual({
     pathname: "/bot-profile",
     params: { botId: "bot-1", name: "Helper" },

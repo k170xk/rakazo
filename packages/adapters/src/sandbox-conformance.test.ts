@@ -274,7 +274,7 @@ describe("sandbox conformance", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it("reuses one desktop machine per bot", async () => {
+  it("reuses one desktop machine per agent", async () => {
     const root = mkdtempSync(path.join(tmpdir(), "rakazo-desktop-reuse-"));
     const desktop = new DesktopSandboxProvider({ root });
     const first = await desktop.provision({ botId: "stable", homePath: "/unused" }, ctx);

@@ -314,7 +314,7 @@ describe("GroupSettings", () => {
   it("filters the expanded roster by name", async () => {
     await render();
     await click("Show all");
-    const filter = container.querySelector('input[aria-label="Filter bots"]');
+    const filter = container.querySelector('input[aria-label="Filter agents"]');
     expect(filter).not.toBeNull();
     await act(async () => {
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
@@ -329,13 +329,13 @@ describe("GroupSettings", () => {
       filter!.dispatchEvent(new Event("input", { bubbles: true }));
       await Promise.resolve();
     });
-    expect(container.textContent).toContain("No bots match");
+    expect(container.textContent).toContain("No agents match");
     await click("Show selected");
     expect(rowNames()).toEqual(["Researcher", "Writer"]);
-    expect(container.querySelector('input[aria-label="Filter bots"]')).toBeNull();
+    expect(container.querySelector('input[aria-label="Filter agents"]')).toBeNull();
   });
 
-  it("opens the bot profile from the name and keeps unchecked members listed", async () => {
+  it("opens the agent profile from the name and keeps unchecked members listed", async () => {
     const onOpenBot = vi.fn();
     await render({ onOpenBot });
     await act(async () => {

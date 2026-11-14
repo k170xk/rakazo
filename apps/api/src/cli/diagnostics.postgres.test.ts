@@ -9,7 +9,7 @@ const run = promisify(execFile);
 const testDatabase = process.env.VERIFY_DATABASE === "1" ? process.env.DATABASE_URL : undefined;
 
 it.skipIf(!testDatabase)(
-  "reports an MCP server assigned to a bot as the runtime login, without its details",
+  "reports an MCP server assigned to an agent as the runtime login, without its details",
   async () => {
     if (!testDatabase) throw new Error("DATABASE_URL is required");
     const { prisma: client, pool } = createDb(testDatabase);
@@ -23,7 +23,7 @@ it.skipIf(!testDatabase)(
         signupAllowlist: "",
       });
       const bot = await prisma.bot.create({
-        data: { spaceId, userId: user.id, name: "Secret Bot", color: "#000000" },
+        data: { spaceId, userId: user.id, name: "Secret Agent", color: "#000000" },
       });
       const server = await prisma.mcpServer.create({
         data: {
@@ -56,12 +56,12 @@ it.skipIf(!testDatabase)(
       );
       expect(stdout).toContain("- Connection: ok");
       expect(stdout).toContain("- MCP_STDIO_ALLOWED_COMMANDS: 1");
-      expect(stdout).toContain(`#### Bot ${opaque(bot.id)}`);
+      expect(stdout).toContain(`#### Agent ${opaque(bot.id)}`);
       expect(stdout).toContain(`| ${opaque(server.id)} | stdio | on | ok | 7 |`);
       for (const value of [
         "Private",
         "private",
-        "Secret Bot",
+        "Secret Agent",
         "sk-private-token",
         "/opt/",
         user.id,

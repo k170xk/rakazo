@@ -280,7 +280,7 @@ describePostgres("messaging workspace installation (PostgreSQL)", () => {
     expect(await manager.isActive(installation!.id)).toBe(false);
     expect(await manager.getById(installation!.id)).toBeNull();
   });
-  it("deleting a shared channel bot removes its installation and linked personal DMs", async () => {
+  it("deleting a shared channel agent removes its installation and linked personal DMs", async () => {
     const actor = actors[0]!;
     const shared = await asSystem(prisma).bot.create({
       data: { spaceId: actor.spaceId, userId: actor.userId, name: "Shared", color: "ink" },

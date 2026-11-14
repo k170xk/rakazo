@@ -21,7 +21,7 @@ export async function createInboxBot({
   const existing = await rpc("bots/list").catch(() => null);
   const isFirstBot = existing !== null && existing.length === 0;
   const bot = await rpc("bots/create", {
-    name: "New Bot",
+    name: "New Agent",
     notifyOnFinish: true,
     computerMode: "team",
   });

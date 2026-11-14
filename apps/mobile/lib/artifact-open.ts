@@ -107,7 +107,7 @@ async function cacheMobileArtifact(
     scope.namespace,
     `endpoint-${encodeURIComponent(scope.context.apiBase)}`,
     `user-${encodeURIComponent(scope.userId)}`,
-    `target-${encodeURIComponent("botId" in target ? `bot:${target.botId}` : `group:${target.groupId}`)}`,
+    `target-${encodeURIComponent("botId" in target ? `agent:${target.botId}` : `group:${target.groupId}`)}`,
     `artifact-${encodeURIComponent(artifactId)}`,
     `mime-${encodeURIComponent(mimeType)}`,
   );

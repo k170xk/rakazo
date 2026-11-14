@@ -65,7 +65,7 @@ export function FilesTab({ botId }: { botId: string }) {
     return (
       <div className="flex flex-col items-center gap-3 py-8 text-sm text-muted-foreground">
         <p role="alert">
-          <Trans>Couldn't load this bot's files.</Trans>
+          <Trans>Couldn't load this agent's files.</Trans>
         </p>
         <Button variant="outline" size="sm" onClick={() => void state.refetch()}>
           <Trans>Try again</Trans>
@@ -77,7 +77,7 @@ export function FilesTab({ botId }: { botId: string }) {
   if (!data.available) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        <Trans>This bot has no files on a computer yet.</Trans>
+        <Trans>This agent has no files on a computer yet.</Trans>
       </p>
     );
   }
@@ -111,7 +111,7 @@ export function FilesTab({ botId }: { botId: string }) {
         <p className="text-[13px] text-muted-foreground">
           {nearlyFull ? (
             <Trans>
-              Nearly full. When it is full, bots stop making new documents and videos until you
+              Nearly full. When it is full, agents stop making new documents and videos until you
               delete something.
             </Trans>
           ) : (
@@ -133,7 +133,7 @@ export function FilesTab({ botId }: { botId: string }) {
 
       {data.files.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
-          <Trans>This bot hasn't made any files yet.</Trans>
+          <Trans>This agent hasn't made any files yet.</Trans>
         </p>
       ) : (
         <ul className="divide-y divide-border rounded-xl border border-border">

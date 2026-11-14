@@ -20,7 +20,7 @@ test("shows peer lines in transcript and opens view-only peer chat", async ({ pa
   await expect(page.getByRole("combobox", { name: "Message Chief" })).toBeVisible();
 
   const composer = page.getByRole("combobox", { name: "Message Chief" });
-  await composer.fill("message the bot named Researcher saying peer-exchange-alpha");
+  await composer.fill("message the agent named Researcher saying peer-exchange-alpha");
   await composer.press("Enter");
 
   await expect
@@ -233,14 +233,14 @@ async function openFoldedPeerReply(page: Page, name: string, testInfo: TestInfo)
   });
   await page.reload();
   const chiefComposer = page.getByRole("combobox", { name: "Message Chief" });
-  await chiefComposer.fill("message the bot named Researcher saying peer-fold-alpha");
+  await chiefComposer.fill("message the agent named Researcher saying peer-fold-alpha");
   await chiefComposer.press("Enter");
 
   // Researcher's result wakes Chief, which relays it to the user as an ordinary reply. Its
   // marker merges into the "Messaged Researcher" receipt, which already opens the exchange.
   const transcript = page.getByTestId("transcript");
   await expect(transcript.getByText(relayText)).toBeVisible({ timeout: 60_000 });
-  await expect(transcript.getByText("messaging that bot now.")).toBeVisible();
+  await expect(transcript.getByText("messaging that agent now.")).toBeVisible();
   await expect(
     transcript.getByTestId("peer-receipt-chip").filter({ hasText: "Messaged Researcher" }),
   ).toBeVisible();
@@ -304,7 +304,7 @@ test(
     // An ask from the woken run stays inline in the recipient's thread; its text folds.
     await expect(page.getByRole("button", { name: "Send" })).toBeVisible({ timeout: 60_000 });
     await page.goto("/app");
-    await chiefComposer.fill("message the bot named Researcher saying which city peer-fold-beta");
+    await chiefComposer.fill("message the agent named Researcher saying which city peer-fold-beta");
     await chiefComposer.press("Enter");
     await expect(page.getByRole("button", { name: "Send" })).toBeVisible({ timeout: 60_000 });
     await page.goto(`/app/${researcher.id}`);
@@ -332,7 +332,7 @@ test(
   },
 );
 
-test("answers a message sent while the bot works on another bot's request", async ({
+test("answers a message sent while the agent works on another agent's request", async ({
   page,
 }, testInfo) => {
   await signup(page, `peer-busy-${Date.now()}@rakazo.test`, "password12", "Peer Busy");
@@ -347,7 +347,7 @@ test("answers a message sent while the bot works on another bot's request", asyn
   });
   await page.reload();
   const chief = page.getByRole("combobox", { name: "Message Chief" });
-  await chief.fill("message the bot named Researcher saying work for 8 seconds");
+  await chief.fill("message the agent named Researcher saying work for 8 seconds");
   await chief.press("Enter");
 
   // Researcher is busy with Chief's request when the user writes to it.

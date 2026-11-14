@@ -101,7 +101,7 @@ export function renderDiagnostics(input: DiagnosticsInput): string {
   if (!input.database.reachable) return `${lines.join("\n")}\n`;
 
   const archived = input.bots.filter((bot) => bot.archived).length;
-  lines.push("", `### Bots`, "", `- Bots: ${input.bots.length} (${archived} archived)`);
+  lines.push("", `### Agents`, "", `- Agents: ${input.bots.length} (${archived} archived)`);
   const bots = new Map(input.bots.map((bot) => [bot.id, bot]));
   const byBot = new Map<string, DiagnosticsAssignment[]>();
   for (const assignment of input.assignments)
@@ -110,19 +110,19 @@ export function renderDiagnostics(input: DiagnosticsInput): string {
     const bot = bots.get(botId);
     lines.push(
       "",
-      `#### Bot ${opaque(botId)}${bot?.archived ? " (archived)" : ""}`,
+      `#### Agent ${opaque(botId)}${bot?.archived ? " (archived)" : ""}`,
       "",
       "| Server | Transport | Enabled | Health | Tools | Checked | Assignment | Message |",
       "| --- | --- | --- | --- | --- | --- | --- | --- |",
       ...assignments.map((assignment) =>
-        serverRow(assignment.server, bot ? assignmentProblems(assignment, bot) : ["bot missing"]),
+        serverRow(assignment.server, bot ? assignmentProblems(assignment, bot) : ["agent missing"]),
       ),
     );
   }
   if (input.unassignedServers.length) {
     lines.push(
       "",
-      "#### MCP servers on no bot",
+      "#### MCP servers on no agent",
       "",
       "| Server | Transport | Enabled | Health | Tools | Checked | Assignment | Message |",
       "| --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -134,7 +134,7 @@ export function renderDiagnostics(input: DiagnosticsInput): string {
   if (!input.runs.length) lines.push("- None");
   else
     lines.push(
-      "| Run | Bot | Status | Trigger | Created |",
+      "| Run | Agent | Status | Trigger | Created |",
       "| --- | --- | --- | --- | --- |",
       ...input.runs.map(
         (run) =>
@@ -169,8 +169,8 @@ function databaseLines(database: DiagnosticsInput["database"]): string[] {
 function assignmentProblems(assignment: DiagnosticsAssignment, bot: DiagnosticsBot): string[] {
   const { server } = assignment;
   const problems: string[] = [];
-  if (assignment.spaceId !== bot.spaceId) problems.push("space differs from bot");
-  if (assignment.userId !== bot.userId) problems.push("user differs from bot");
+  if (assignment.spaceId !== bot.spaceId) problems.push("space differs from agent");
+  if (assignment.userId !== bot.userId) problems.push("user differs from agent");
   if (server.userId !== assignment.userId) problems.push("user differs from server");
   if (
     server.spaceId !== assignment.spaceId &&

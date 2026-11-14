@@ -161,7 +161,9 @@ export type SpaceSource =
   | "memory_documents"
   | "memory_revisions"
   | "todo_items"
-  | "email_drafts";
+  | "email_drafts"
+  | "email_filing_batches"
+  | "email_filing_profiles";
 
 export interface SpaceKeyStore {
   forSpace(spaceId: string): Promise<SpaceKeyRecord[]>;
@@ -193,6 +195,8 @@ export const ROW_OWNER: Record<SpaceSource, string> = {
   memory_revisions: "documentId",
   todo_items: "userId",
   email_drafts: "userId",
+  email_filing_batches: "userId",
+  email_filing_profiles: "userId",
 };
 
 export interface Queryable {
@@ -207,6 +211,8 @@ const ROW_CONTEXT: Record<SpaceSource, string> = {
   memory_documents: `SELECT "spaceId", "userId" AS owner FROM memory_documents WHERE id = $1`,
   todo_items: `SELECT "spaceId", "userId" AS owner FROM todo_items WHERE id = $1`,
   email_drafts: `SELECT "spaceId", "userId" AS owner FROM email_drafts WHERE id = $1`,
+  email_filing_batches: `SELECT "spaceId", "userId" AS owner FROM email_filing_batches WHERE id = $1`,
+  email_filing_profiles: `SELECT "spaceId", "userId" AS owner FROM email_filing_profiles WHERE id = $1`,
   messages: `SELECT t."spaceId", m."threadId" AS owner FROM messages m JOIN threads t ON t.id = m."threadId" WHERE m.id = $1`,
   memory_revisions: `SELECT d."spaceId", r."documentId" AS owner FROM memory_revisions r JOIN memory_documents d ON d.id = r."documentId" WHERE r.id = $1`,
 };

@@ -69,7 +69,7 @@ describe("computer disk", () => {
     );
   });
 
-  it("tells the bot only once the disk is 85% full", () => {
+  it("tells the agent only once the disk is 85% full", () => {
     expect(diskNoteInstruction({ diskUsedBytes: 84n * GiB, diskFreeBytes: 16n * GiB })).toBe(
       undefined,
     );

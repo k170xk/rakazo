@@ -134,7 +134,7 @@ describe("in-process page browser card fill", () => {
     }
   });
 
-  it("forgets a field's card once the bot types over it", () => {
+  it("forgets a field's card once the agent types over it", () => {
     const { session, ref } = checkoutSession();
     const filled = session.act([cardFill(ref("Card number"), card.number)]);
     const field = filled.elements!.find((el) => el.name === "Card number")!.ref;

@@ -154,7 +154,7 @@ describe("logo avatar activity from public events", () => {
     );
   });
 
-  it("ignores stale events, another bot and completion from a prior run", () => {
+  it("ignores stale events, another agent and completion from a prior run", () => {
     const state = started();
     expect(reduceLogoAvatarSignals(state, event(0, "run.failed"))).toBe(state);
     expect(

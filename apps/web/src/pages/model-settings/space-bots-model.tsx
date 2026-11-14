@@ -69,15 +69,15 @@ export function SpaceBotsModelNotice({ refreshKey }: { refreshKey?: unknown }) {
       className="mt-6 border-t border-border pt-5"
     >
       <h3 id="space-bots-model-title" className="text-[13.5px] text-muted-foreground">
-        <Trans>Bot models</Trans>
+        <Trans>Agent models</Trans>
       </h3>
       {pinned.length ? (
         <>
           <p className="mt-1 text-[13px] leading-[1.5] text-muted-foreground">
             <Plural
               value={pinned.length}
-              one="# bot has its own model:"
-              other="# bots have their own model:"
+              one="# agent has its own model:"
+              other="# agents have their own model:"
             />{" "}
             <span className="text-foreground">{pinned.map((bot) => bot.name).join(", ")}</span>
           </p>
@@ -97,8 +97,8 @@ export function SpaceBotsModelNotice({ refreshKey }: { refreshKey?: unknown }) {
         <p className="mt-2 text-[13px] leading-[1.5] text-success" role="status">
           <Plural
             value={moved}
-            one="# bot now uses the space default."
-            other="# bots now use the space default."
+            one="# agent now uses the space default."
+            other="# agents now use the space default."
           />
         </p>
       ) : null}
@@ -113,12 +113,12 @@ export function SpaceBotsModelNotice({ refreshKey }: { refreshKey?: unknown }) {
             <AlertDialogTitle>
               <Plural
                 value={pinned.length}
-                one="Switch # bot to the space default?"
-                other="Switch # bots to the space default?"
+                one="Switch # agent to the space default?"
+                other="Switch # agents to the space default?"
               />
             </AlertDialogTitle>
             <AlertDialogDescription>
-              <Trans>Their own model is cleared. You can pick one again in each bot.</Trans>
+              <Trans>Their own model is cleared. You can pick one again in each agent.</Trans>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

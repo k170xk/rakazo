@@ -69,7 +69,7 @@ export function purchaseCardSummary(purchase: PurchaseApproval): FleetCardSummar
             `${purchase.amountSource === "button" ? "Amount on the button" : "Total on the page"}: ${purchase.amount}`,
           ]
         : []),
-      "The button label and total are read from the page. The bot has not checked them.",
+      "The button label and total are read from the page. The agent has not checked them.",
     ],
   };
 }

@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
-test("a group a bot creates after approval appears in the sidebar without a reload", async ({
+test("a group an agent creates after approval appears in the sidebar without a reload", async ({
   page,
 }, testInfo) => {
-  await signup(page, `bot-management-groups-${Date.now()}@rakazo.test`, "password12", "Bot Groups");
+  await signup(page, `bot-management-groups-${Date.now()}@rakazo.test`, "password12", "Agent Groups");
   await completeOnboarding(page);
   await page.waitForURL(/\/app\/[^/]+$/);
   const chiefId = activeBotId(page);
@@ -56,14 +56,14 @@ test(
       page,
       `bot-management-model-${Date.now()}@rakazo.test`,
       "password12",
-      "Bot Models",
+      "Agent Models",
     );
     await completeOnboarding(page);
     await page.waitForURL(/\/app\/[^/]+$/);
     const chiefId = activeBotId(page);
     await rpc(page, "bots/update", { botId: chiefId, fleetManagement: true });
     const composer = page.getByPlaceholder("Message Chief");
-    await composer.fill("spawn a bot named Scout to research venues");
+    await composer.fill("spawn an agent named Scout to research venues");
     await page.keyboard.press("Enter");
     await expect(page.locator("[data-roster-bot-name]").filter({ hasText: /^Scout$/ })).toBeVisible(
       {
@@ -72,7 +72,7 @@ test(
     );
     const bots = await rpc<Array<{ id: string; name: string }>>(page, "bots/list", {});
     const scout = bots.find((bot) => bot.name === "Scout");
-    if (!scout) throw new Error("Missing child bot");
+    if (!scout) throw new Error("Missing child agent");
     await rpc(page, "models/connect", {
       provider: "openai",
       apiKey: "test-key-not-a-real-secret",
@@ -85,7 +85,7 @@ test(
       modelId: "gpt-6-sol",
     });
     await expect(composer).toBeEnabled();
-    await composer.fill(`set the model of bot ${scout.id} to openai/gpt-6-luna`);
+    await composer.fill(`set the model of agent ${scout.id} to openai/gpt-6-luna`);
     await page.keyboard.press("Enter");
     const card = page
       .locator("[data-message-id]")

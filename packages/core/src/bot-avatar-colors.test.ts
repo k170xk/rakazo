@@ -18,7 +18,7 @@ describe("botEyeTone", () => {
 });
 
 describe("chatUserBubbleColors", () => {
-  it("wears the bot's color under readable text", () => {
+  it("wears the agent's color under readable text", () => {
     const red = chatUserBubbleColors("#EF4444::shape_2", "bot-1");
     expect(red?.foreground).toBe("#FFFFFF");
     expect(contrastRatio(red!.background, red!.foreground)).toBeGreaterThanOrEqual(4.5);
@@ -52,13 +52,13 @@ describe("chatUserBubbleColors", () => {
     expect(contrastRatio(bubble.background, bubble.foreground)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("keeps the neutral bubble for a photo or the white bot", () => {
+  it("keeps the neutral bubble for a photo or the white agent", () => {
     expect(chatUserBubbleColors("data:image/png;base64,AAAA", "bot-1")).toBeUndefined();
     expect(chatUserBubbleColors("#FFFFFF", "bot-1")).toBeUndefined();
   });
 });
 
-it("cuts bot eyes in the page color unless the body is nearly white", () => {
+it("cuts agent eyes in the page color unless the body is nearly white", () => {
   const dark = { background: "#121212", foreground: "#F5F5F5" };
   const light = { background: "#FFFFFF", foreground: "#1C1C1C" };
   expect(botEyeInk("#FF5EB1", dark)).toBe("#121212");

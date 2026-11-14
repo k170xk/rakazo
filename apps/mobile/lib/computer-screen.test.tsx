@@ -486,7 +486,7 @@ describe("computer screen", () => {
     vi.useRealTimers();
   });
 
-  it("opens the full window from the preview without taking control from the bot", async () => {
+  it("opens the full window from the preview without taking control from the agent", async () => {
     respond(botWorking);
     const view = await render();
     expect(view.querySelector("section")).toBeNull();

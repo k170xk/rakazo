@@ -62,7 +62,7 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
     } catch (error) {
       setDownloadError(
         errorCode(error) === "NOT_FOUND"
-          ? t`${props.name} was removed by your company's file cleanup. Ask the bot to make it again.`
+          ? t`${props.name} was removed by your company's file cleanup. Ask the agent to make it again.`
           : t`Could not download ${props.name}. Try again.`,
       );
     }

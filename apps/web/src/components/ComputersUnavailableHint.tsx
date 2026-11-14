@@ -105,7 +105,7 @@ export function ComputersUnavailableHint({
       ) : null}
 
       {phase === "recovered" ? (
-        <SuccessPop label={t`Computers are available. Reload or open a bot to continue.`} />
+        <SuccessPop label={t`Computers are available. Reload or open an agent to continue.`} />
       ) : null}
 
       {showUnavailableCopy ? <UnavailableCopy kind={kind} failureMessage={failureMessage} /> : null}

@@ -55,13 +55,13 @@ export const HE_MESSAGES: Record<string, string> = {
     "לא ניתן היה להשלים את העדכון. כדאי לנסות שוב מאוחר יותר.",
   "Could not reach the update server.": "לא ניתן היה להתחבר לשרת העדכונים.",
   "Allow local computer access?": "לאפשר גישה למחשב המקומי?",
-  "Allow bots to use this computer?": "לאפשר לבוטים להשתמש במחשב הזה?",
+  "Allow agents to use this computer?": "לאפשר לסוכנים להשתמש במחשב הזה?",
   Cancel: "ביטול",
   Allow: "אישור",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
-    "בוטים ב-{host} יכולים להריץ פקודות, לקרוא ולשנות קבצים ולפתוח אפליקציות עם ההרשאות של החשבון שלך. אפשר לבטל את הגישה בהגדרות.",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
-    "בוטים במופע המקומי הזה יכולים להריץ פקודות, לקרוא ולשנות קבצים ולפתוח אפליקציות עם ההרשאות של החשבון שלך. אפשר לבטל את הגישה מתפריט האפליקציה.",
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+    "סוכנים ב-{host} יכולים להריץ פקודות, לקרוא ולשנות קבצים ולפתוח אפליקציות עם ההרשאות של החשבון שלך. אפשר לבטל את הגישה בהגדרות.",
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+    "סוכנים במופע המקומי הזה יכולים להריץ פקודות, לקרוא ולשנות קבצים ולפתוח אפליקציות עם ההרשאות של החשבון שלך. אפשר לבטל את הגישה מתפריט האפליקציה.",
   "Local computer access requires an app-managed local instance.":
     "גישה למחשב המקומי דורשת מופע מקומי שהאפליקציה מנהלת.",
   "Local server is unavailable": "השרת המקומי לא זמין",
@@ -179,12 +179,12 @@ export const HE_MESSAGES: Record<string, string> = {
   Go: "מעבר",
   Back: "אחורה",
   Forward: "קדימה",
-  "Next Bot": "הבוט הבא",
-  "Previous Bot": "הבוט הקודם",
+  "Next Agent": "הסוכן הבא",
+  "Previous Agent": "הסוכן הקודם",
   "Command Menu…": "תפריט פקודות…",
   "Toggle Sidebar": "הצגה/הסתרה של סרגל הצד",
   "Find…": "חיפוש…",
-  "Search Bots…": "חיפוש בוטים…",
+  "Search Agents…": "חיפוש סוכנים…",
   "The window closed before the app loaded.": "החלון נסגר לפני שהאפליקציה נטענה.",
   "New Group Chat": "צ׳אט קבוצתי חדש",
   "Connect Apps…": "חיבור אפליקציות…",

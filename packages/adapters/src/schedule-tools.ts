@@ -487,7 +487,7 @@ export async function createScheduleFromTool(
   }
   if (active.length >= MAX_ACTIVE_ROUTINES_PER_BOT) {
     return {
-      error: `This bot already has ${MAX_ACTIVE_ROUTINES_PER_BOT} active routines. Cancel one before adding another.`,
+      error: `This agent already has ${MAX_ACTIVE_ROUTINES_PER_BOT} active routines. Cancel one before adding another.`,
     };
   }
   const capRefusal = await activeRoutineCapRefusal(deps.prisma, input.userId);
@@ -612,7 +612,7 @@ async function createWatchFromTool(
       where: { id: input.botId, spaceId: input.spaceId, userId: input.userId, archivedAt: null },
       include: { computer: true },
     });
-    if (!bot) return { error: "Bot not found." };
+    if (!bot) return { error: "Agent not found." };
     await validateRoutineWatch(
       deps,
       parsed.data,

@@ -92,6 +92,20 @@ describe("save_app", () => {
     db.listAppAssets.mockResolvedValue([]);
   });
 
+  it("reaches a person's app from any of their agents", async () => {
+    const { ctx, findFirst } = context({ files: { "App.tsx": APP } });
+    await appTools.save_app!(ctx, call({ appId: "app-1", title: "Jobs" }));
+    expect(findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "app-1",
+        spaceId: "space-1",
+        userId: "user-1",
+        OR: [{ groupId: null }],
+      },
+      select: expect.any(Object),
+    });
+  });
+
   it("returns the app guide on request", async () => {
     const result = (await appTools.save_app!(context().ctx, call({ help: true }))) as Result;
     expect(String(result.guide)).toContain("@ocsc/ui");
@@ -103,6 +117,7 @@ describe("save_app", () => {
       call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": APP } }),
     )) as Result;
     expect(result).toMatchObject({ appId: "app-1", version: 1 });
+    expect(Array.isArray(result.craftNotes) && result.craftNotes.length > 0).toBe(true);
     expect(db.createAppPage).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -324,6 +339,7 @@ describe("save_app", () => {
       call({ template: "site-inspection" }),
     )) as Result;
     expect(result).toMatchObject({ appId: "app-1", access: expect.stringContaining("their own") });
+    expect(result.craftNotes).toBeUndefined();
     expect(db.createAppPage).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ title: "Site inspections", dataAccess: "contribute" }),
@@ -432,7 +448,7 @@ describe("save_app", () => {
     expect((ctx as { state: { tainted: boolean } }).state.tainted).toBe(true);
   });
 
-  it("reaches only this bot's or its group's apps, and rebuilds older pages as apps", async () => {
+  it("reaches the person's apps and this group's apps, and rebuilds older pages as apps", async () => {
     const { ctx, findFirst } = context(undefined, { groupId: "group-1" });
     expect(await appTools.save_app!(ctx, call({ appId: "app-9" }))).toMatchObject({
       error: expect.stringMatching(/No app/),
@@ -442,7 +458,7 @@ describe("save_app", () => {
         id: "app-9",
         spaceId: "space-1",
         userId: "user-1",
-        OR: [{ botId: "bot-1" }, { groupId: "group-1" }],
+        OR: [{ groupId: null }, { groupId: "group-1" }],
       },
     });
     const page = (await appTools.save_app!(

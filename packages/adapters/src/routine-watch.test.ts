@@ -405,7 +405,7 @@ describe("tickRoutineWatch", () => {
     expect(tick.nextRunAt.getTime()).toBeGreaterThan(Date.now() + 14 * 60_000);
   });
 
-  it("pauses the routine and has the bot say why when the check fails", async () => {
+  it("pauses the routine and has the agent say why when the check fails", async () => {
     const { deps, routine, updateMany, messages } = setup({ error: "401 unauthorized" });
     const tick = await tickRoutineWatch(deps, routine, target, scheduledAt);
     expect(tick).toEqual({ run: false });
@@ -641,7 +641,7 @@ describe("tickRoutineWatch on a computer", () => {
     );
   });
 
-  it("runs a team desktop command in the provider-relative bot folder", async () => {
+  it("runs a team desktop command in the provider-relative agent folder", async () => {
     const computer = {
       id: "desktop-computer-1",
       botId: "computer-home",
@@ -1207,7 +1207,7 @@ describe("tickRoutineWatch on a computer", () => {
 
 describe("watchFolder", () => {
   // A team computer refuses "." as a bot path, which failed every files watch live.
-  it("is the bot's own folder on a team computer and the workspace on a private one", () => {
+  it("is the agent's own folder on a team computer and the workspace on a private one", () => {
     expect(watchFolder("team", "bot-1")).toBe("/home/rakazo/bots/bot-1");
     expect(watchFolder("dedicated", "bot-1")).toBe("/home/rakazo");
   });
@@ -1253,7 +1253,7 @@ describe("toolResultText", () => {
 });
 
 describe("file watch boundaries", () => {
-  it("allows normalized team paths inside the bot folder", () => {
+  it("allows normalized team paths inside the agent folder", () => {
     expect(resolveWatchPath("team", "bot-1", "/home/rakazo/bots/bot-1/inbox/../notes")).toBe(
       "/home/rakazo/bots/bot-1/notes",
     );
@@ -1262,7 +1262,7 @@ describe("file watch boundaries", () => {
   it.each(["/etc", "../bot-2", "/home/rakazo/bots/bot-1/../../shared", "shared/../../other"])(
     "refuses team escape %s",
     (path) => {
-      expect(() => resolveWatchPath("team", "bot-1", path)).toThrow("inside the bot's folder");
+      expect(() => resolveWatchPath("team", "bot-1", path)).toThrow("inside the agent's folder");
     },
   );
   it("keeps dedicated computers unrestricted", () => {
@@ -1289,7 +1289,7 @@ describe("files listing script", () => {
     }
   });
 
-  it("refuses a symlink that points outside the bot folder before listing", () => {
+  it("refuses a symlink that points outside the agent folder before listing", () => {
     const temp = realpathSync(mkdtempSync(join(tmpdir(), "routine-watch-")));
     try {
       const folder = join(temp, "bot");
@@ -1305,7 +1305,7 @@ describe("files listing script", () => {
         });
         expect(result.status).toBe(1);
         expect(result.stdout).toBe("");
-        expect(result.stderr).toContain("Path escapes the bot folder");
+        expect(result.stderr).toContain("Path escapes the agent folder");
       }
     } finally {
       rmSync(temp, { recursive: true, force: true });

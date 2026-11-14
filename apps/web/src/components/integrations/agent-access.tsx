@@ -36,9 +36,9 @@ export function AgentAccessControl({
   if (bots.length === 0 || (bots.length === 1 && chosen.length === 1)) return null;
   const picked = bots.filter((bot) => chosen.includes(bot.id));
   const summary = access.allBots ? (
-    <Trans>All bots</Trans>
+    <Trans>All agents</Trans>
   ) : picked.length === 0 ? (
-    <Trans>No bots</Trans>
+    <Trans>No agents</Trans>
   ) : (
     <>
       <span className="flex gap-0.5">
@@ -85,7 +85,7 @@ export function AgentAccessControl({
             checked={access.allBots}
             onCheckedChange={(allBots) => onChange({ ...access, allBots })}
           >
-            <Trans>All bots</Trans>
+            <Trans>All agents</Trans>
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
           {bots.map((bot) => (

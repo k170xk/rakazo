@@ -191,7 +191,7 @@ describe("listSpaceArtifacts", () => {
     expect(sql.values).toContain("version-b");
   });
 
-  it("rejects a cursor from a different bot filter instead of replaying the first page", async () => {
+  it("rejects a cursor from a different agent filter instead of replaying the first page", async () => {
     const queryRaw = vi.fn();
     await expect(
       listSpaceArtifacts(
@@ -215,7 +215,7 @@ describe("listSpaceArtifacts", () => {
     expect(queryRaw).not.toHaveBeenCalled();
   });
 
-  it("applies a bot-scoped cursor with that bot filter", async () => {
+  it("applies a bot-scoped cursor with that agent filter", async () => {
     const queryRaw = vi.fn().mockResolvedValue([]);
     const pageCursor = cursor({
       createdAt: "2026-08-01T00:00:00.000Z",

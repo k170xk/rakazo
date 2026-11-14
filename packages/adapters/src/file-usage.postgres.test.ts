@@ -49,7 +49,7 @@ describePostgres("storage counted against a person (PostgreSQL)", () => {
         data: { id, organizationId: id, name: "Usage test", isDefault: true },
       });
       await prisma.bot.create({
-        data: { id: botId, spaceId: id, userId: id, name: "Usage bot", color: "ink" },
+        data: { id: botId, spaceId: id, userId: id, name: "Usage agent", color: "ink" },
       });
     });
   });
@@ -96,7 +96,7 @@ describePostgres("storage counted against a person (PostgreSQL)", () => {
     );
   }
 
-  it("counts files bots attached once each, never uploads or files a person started", async () => {
+  it("counts files agents attached once each, never uploads or files a person started", async () => {
     const soon = new Date(now - 55 * DAY);
     const made = await artifact({ name: "made", runId: "run", size: 1000, createdAt: soon });
     await artifact({

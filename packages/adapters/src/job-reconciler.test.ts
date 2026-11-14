@@ -323,7 +323,7 @@ describe("createJobReconciler", () => {
     expect(cutoff("run-queued")).toBeGreaterThanOrEqual(before - 5 * 60_000);
   });
 
-  it("restores expiry for orphaned user-control leases without a control bot", async () => {
+  it("restores expiry for orphaned user-control leases without a control agent", async () => {
     const controlExpiresAt = new Date(Date.now() - 5_000);
     const prisma = fakePrisma(
       [],
@@ -642,7 +642,7 @@ describe("createJobReconciler", () => {
     expect(leadership.release).toHaveBeenCalledOnce();
   });
 
-  it("retries terminal bot outcomes that were not returned", async () => {
+  it("retries terminal agent outcomes that were not returned", async () => {
     const terminalRun = {
       id: "run-terminal",
       spaceId: "workspace-1",

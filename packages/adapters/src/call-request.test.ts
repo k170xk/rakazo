@@ -405,7 +405,7 @@ describe("requestUserCall security", () => {
     },
   );
 
-  it("allows only one concurrent ring across a recipient's bots", async () => {
+  it("allows only one concurrent ring across a recipient's agents", async () => {
     const { deps, tx } = fixture();
     const results = await Promise.all([
       requestUserCall(deps, run, input),

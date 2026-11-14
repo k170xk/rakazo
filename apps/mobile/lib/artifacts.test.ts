@@ -25,7 +25,7 @@ describe("matchesArtifactQuery", () => {
 });
 
 describe("artifactThreadTarget", () => {
-  it("points at the bot or the group the artifact belongs to", () => {
+  it("points at the agent or the group the artifact belongs to", () => {
     expect(artifactThreadTarget({ botId: "bot-1", groupId: null })).toEqual({ botId: "bot-1" });
     expect(artifactThreadTarget({ botId: null, groupId: "group-1" })).toEqual({
       groupId: "group-1",

@@ -386,7 +386,7 @@ it("keeps starting computers on the last settings read while the store is unread
 it("describes where a computer will start before it has started there", async () => {
   const { sandbox } = setup({ provider: "desktop", settings });
   await sandbox.refresh();
-  const environment = { home: "C:\\Users\\bot", shell: "powershell.exe", platform: "win32" };
+  const environment = { home: "C:\\Users\\agent", shell: "powershell.exe", platform: "win32" };
   const desktop = await (
     sandbox as unknown as { target(homeKey: string): Promise<FakeSandboxProvider> }
   ).target("new");

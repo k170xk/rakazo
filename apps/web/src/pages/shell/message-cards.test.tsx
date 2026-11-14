@@ -55,7 +55,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-it("approves the bot after OAuth completes while a COOP popup keeps focus", async () => {
+it("approves the agent after OAuth completes while a COOP popup keeps focus", async () => {
   vi.useFakeTimers();
   const { channels } = popupFlow({ focused: false });
   const host = document.createElement("div");

@@ -178,7 +178,7 @@ export async function conversationFolderRefusal(workspace: ToolRunnerWorkspace) 
   if (!workspace.conversation) return undefined;
   const { size } = await measureTree(workspace.conversation);
   if (size <= CONVERSATION_FOLDER_MAX_BYTES) return undefined;
-  return "This conversation's files have reached 1 GB. Start a new chat with the bot to keep making documents.";
+  return "This conversation's files have reached 1 GB. Start a new chat with the agent to keep making documents.";
 }
 
 export interface ToolRunOutput {

@@ -165,7 +165,7 @@ afterEach(async () => {
 });
 
 it("keeps an ongoing call in reach after leaving the shell", async () => {
-  startCall({ botId: "bot-1", botName: "Test bot" });
+  startCall({ botId: "bot-1", botName: "Test agent" });
   await render("/app/bot-1");
   await act(async () => find('a[href="/app/artifacts"]')?.click());
   await untilText("Artifacts page");
@@ -188,7 +188,7 @@ it("rings for an incoming call on a page outside the shell", async () => {
   mocks.bots = [
     {
       id: "bot-1",
-      name: "Test bot",
+      name: "Test agent",
       incomingCall: {
         callId: "call-1",
         reason: "Review",
@@ -201,7 +201,7 @@ it("rings for an incoming call on a page outside the shell", async () => {
   await untilText("Artifacts page");
   expect(container.textContent).toContain("Artifacts page");
   expect(find('[data-testid="incoming-call"]')?.getAttribute("aria-label")).toBe(
-    "Test bot is calling you",
+    "Test agent is calling you",
   );
 
   const decline = [...container.querySelectorAll("button")].find(

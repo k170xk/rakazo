@@ -26,8 +26,8 @@ const MAX_TASK_CHARS = 400;
 export const MAX_OWNER_WORDS_CHARS = 2_000;
 const NEW_SITE_REVIEW_RULES = [
   "This fetch goes to a site the run was not given, and the whole URL reaches that site.",
-  "user_task holds only the owner's own words. You do not see the pages or messages the bot read.",
-  "Pass only when the owner's words or the bot's role clearly call for this site and the URL carries nothing beyond what that needs.",
+  "user_task holds only the owner's own words. You do not see the pages or messages the agent read.",
+  "Pass only when the owner's words or the agent's role clearly call for this site and the URL carries nothing beyond what that needs.",
   "Ask when the site does not fit, or the path or query holds data that looks taken from private context, such as names, emails, tokens or encoded text.",
 ];
 const MAX_BOT_CHARS = 240;
@@ -252,7 +252,7 @@ export function parseAutoReviewJudgeText(text: string): {
  * including steps they did not spell out. It asks only about actions that clearly go beyond that.
  */
 export const AUTO_REVIEW_PASS =
-  "It plausibly serves what the owner asked for or the bot's job, including steps they did not spell out";
+  "It plausibly serves what the owner asked for or the agent's job, including steps they did not spell out";
 export const AUTO_REVIEW_ASK =
   "It clearly goes beyond that and would be hard to undo: messaging people the owner did not mention, spending money, deleting, or publishing, when nobody asked for it";
 
@@ -265,7 +265,7 @@ export function buildAutoReviewPrompt(input: AutoReviewRequest): string {
           .map((rule) => `${rule.effect}:${rule.matchKind}:${rule.matchValue}`)
           .join(", ");
   return [
-    "Decide if this bot action should run without asking its owner first.",
+    "Decide if this agent action should run without asking its owner first.",
     'Reply with JSON only: {"decision":"pass"|"ask","reason":"one short sentence"}.',
     `Use pass when: ${AUTO_REVIEW_PASS}.`,
     `Use ask only when: ${AUTO_REVIEW_ASK}.`,

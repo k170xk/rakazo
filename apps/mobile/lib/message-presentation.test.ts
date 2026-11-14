@@ -43,7 +43,7 @@ describe("mobile message presentation", () => {
         kind: "steps",
         steps: [
           { label: "Read file", count: 1 },
-          { label: "Message bot", count: 1 },
+          { label: "Message agent", count: 1 },
         ],
       },
       { kind: "bot_message_sent", toBotId: "b", toBotName: "Research", text: "Go" },
@@ -57,7 +57,7 @@ describe("mobile message presentation", () => {
     ]);
     expect(
       hasVisibleMessagePresentation([
-        { kind: "steps", steps: [{ label: "Message bot", count: 1 }] },
+        { kind: "steps", steps: [{ label: "Message agent", count: 1 }] },
       ]),
     ).toBe(false);
   });
@@ -102,7 +102,7 @@ describe("mobile message presentation", () => {
 
     expect(
       messagePresentationSegments([
-        { kind: "steps", steps: [{ label: "Message bot", count: 1 }] },
+        { kind: "steps", steps: [{ label: "Message agent", count: 1 }] },
         { kind: "text", text: "Done." },
       ]),
     ).toEqual([{ kind: "content", blocks: [{ kind: "text", text: "Done." }] }]);
@@ -152,7 +152,7 @@ describe("mobile message presentation", () => {
     expect(applyLocalChoiceDismissals(blocks, new Set())).toBe(blocks);
   });
 
-  it("sizes thread cards to the bot row, capped on wide screens", () => {
+  it("sizes thread cards to the agent row, capped on wide screens", () => {
     expect(threadCardWidth(393)).toBe(317);
     expect(threadCardWidth(1024)).toBe(340);
   });

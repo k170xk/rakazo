@@ -328,7 +328,7 @@ export class RunWorkerHost implements JobWorkerHost {
           AND (runs."wakeAt" IS NULL OR runs."wakeAt" <= ${cutoff})
           AND NOT EXISTS (
             SELECT 1 FROM computer_execution_leases lease
-            WHERE lease."botId" = runs."botId" AND lease."computerId" = bot."computerId"
+            WHERE lease."botId" = runs."botId" AND lease."computerId" = agent."computerId"
               AND lease."runId" <> runs.id
               AND (lease."expiresAt" > ${new Date(now)} OR lease."updatedAt" > ${cutoff})
           )

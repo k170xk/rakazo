@@ -274,7 +274,7 @@ describe("explicit group destinations", () => {
   });
 
   it.each(["bot_message", "routine", "webhook", "follow_up"])(
-    "lets a bot coordinate in its group from a %s run",
+    "lets an agent coordinate in its group from a %s run",
     async (trigger) => {
       const h = privateTurn();
       h.tx.run.findFirst.mockResolvedValue({
@@ -414,7 +414,7 @@ describe("explicit group destinations", () => {
     expect(h.tx.$queryRaw.mock.calls[0]?.slice(1)).toEqual(["group-1", run.spaceId, run.userId]);
   });
 
-  it("requires both bots to be active members of the destination", async () => {
+  it("requires both agents to be active members of the destination", async () => {
     for (const memberIds of [["bot-b"], ["bot-a"]]) {
       const h = privateTurn();
       h.tx.chatGroup.findFirst.mockResolvedValue({
@@ -446,7 +446,7 @@ describe("explicit group destinations", () => {
   });
 });
 
-it("discovers only active groups the bot belongs to under the same owner and space", async () => {
+it("discovers only active groups the agent belongs to under the same owner and space", async () => {
   const findMany = vi.fn(async () => []);
   await expect(
     loadBotGroupDirectory({ chatGroup: { findMany } } as unknown as PrismaClient, run),

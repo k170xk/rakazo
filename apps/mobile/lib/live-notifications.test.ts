@@ -55,7 +55,7 @@ describe("notification thread targeting", () => {
     ).toBe(false);
   });
 
-  it("tells a bot's own chat apart from a group it posted in", () => {
+  it("tells an agent's own chat apart from a group it posted in", () => {
     const groupPush = { botId: "bot-1", threadId: "group-thread", groupId: "group-1" };
     expect(notificationTargetsThread(groupPush, { botId: "bot-1" })).toBe(false);
     expect(notificationTargetsThread(groupPush, { groupId: "group-1" })).toBe(true);
@@ -99,7 +99,7 @@ describe("notification thread targeting", () => {
     });
   });
 
-  it("dismisses a group's notifications without dismissing its bots' direct chats", async () => {
+  it("dismisses a group's notifications without dismissing its agents' direct chats", async () => {
     vi.mocked(Notifications.getPresentedNotificationsAsync).mockResolvedValue([
       {
         request: { identifier: "group", content: { data: { groupId: "group-1", botId: "bot-1" } } },

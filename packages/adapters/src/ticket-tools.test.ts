@@ -299,7 +299,7 @@ describe("ticket mutations", () => {
     expect(s.prisma.$transaction).not.toHaveBeenCalled();
     expect(s.changes).not.toHaveBeenCalled();
   });
-  it("allocates a number and wakes the assigned bot once", async () => {
+  it("allocates a number and wakes the assigned agent once", async () => {
     const s = mutationDeps();
     const result = await createTicket(s.deps, {
       spaceId: "ws",
@@ -345,7 +345,7 @@ describe("ticket mutations", () => {
       }),
     );
   });
-  it("does not wake a bot creating or assigning a ticket to itself", async () => {
+  it("does not wake an agent creating or assigning a ticket to itself", async () => {
     const s = mutationDeps();
     await createTicket(s.deps, { spaceId: "ws", userId: "user-1", botId: "bot-1", title: "Ship" });
     await updateTicket(s.deps, {
@@ -382,7 +382,7 @@ describe("ticket mutations", () => {
       where: { number: 1, spaceId: "ws", boardId: "board-1" },
     });
   });
-  it("only assigns the acting user's own bots", async () => {
+  it("only assigns the acting user's own agents", async () => {
     const s = mutationDeps();
     s.prisma.bot.findFirst.mockResolvedValue(null as never);
     await expect(
@@ -393,7 +393,7 @@ describe("ticket mutations", () => {
         title: "Ship",
         ownerBotId: "other-members-bot",
       }),
-    ).resolves.toEqual({ error: "Unknown bot." });
+    ).resolves.toEqual({ error: "Unknown agent." });
     await expect(
       updateTicket(s.deps, {
         spaceId: "ws",
@@ -401,7 +401,7 @@ describe("ticket mutations", () => {
         id: "t1",
         ownerBotId: "other-members-bot",
       }),
-    ).resolves.toEqual({ error: "Unknown bot." });
+    ).resolves.toEqual({ error: "Unknown agent." });
     for (const [query] of s.prisma.bot.findFirst.mock.calls as unknown as [unknown][]) {
       expect(query).toEqual({
         where: { id: "other-members-bot", spaceId: "ws", userId: "user-1", archivedAt: null },

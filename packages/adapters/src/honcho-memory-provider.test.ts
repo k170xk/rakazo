@@ -139,7 +139,7 @@ function calls(fetchMock: ReturnType<typeof honchoFetch>) {
 }
 
 describe("HonchoMemoryProvider", () => {
-  it("saves shared facts for the Space and the bot, then recalls through peer chat", async () => {
+  it("saves shared facts for the Space and the agent, then recalls through peer chat", async () => {
     const fetchMock = honchoFetch({
       "rakazo-shared": "The user's favorite color is teal.",
       "bot-bot-1": "NO_RELEVANT_MEMORY",
@@ -208,14 +208,14 @@ describe("HonchoMemoryProvider", () => {
     expect(calls(fetchMock).filter((call) => call.path.endsWith("/peers"))).toHaveLength(2);
   });
 
-  it("shares facts across members while keeping isolated facts per bot across users and routines", async () => {
+  it("shares facts across members while keeping isolated facts per agent across users and routines", async () => {
     const fetch = honchoFetch();
     const memory = provider(fetch);
     const otherMember = { ...context, userId: "user-2", botId: "bot-2" };
     const save = (content: string, scope: "shared" | "isolated") =>
       memory.save({ content, scope, botId: "bot-1", source: { kind: "durable" } }, context);
     expect(await save("The Space uses teal", "shared")).toEqual({ ok: true, value: undefined });
-    expect(await save("Bot A's private fact", "isolated")).toEqual({ ok: true, value: undefined });
+    expect(await save("Agent A's private fact", "isolated")).toEqual({ ok: true, value: undefined });
 
     const recall = { query: "facts?", scope: "shared" as const, botId: "bot-2", limit: 5 };
     // Bot B sees user 1's shared fact, but never bot A's private fact.
@@ -237,7 +237,7 @@ describe("HonchoMemoryProvider", () => {
         value: [
           { memory: "The Space uses teal\nBot A's private fact", entity: "bot-bot-1" },
           { memory: "The Space uses teal", id: "conclusion-1", entity: "bot-bot-1" },
-          { memory: "Bot A's private fact", id: "conclusion-3", entity: "bot-bot-1" },
+          { memory: "Agent A's private fact", id: "conclusion-3", entity: "bot-bot-1" },
         ],
       });
       expect(await memory.recall(recall, { ...otherMember, userId })).toMatchObject({
@@ -257,7 +257,7 @@ describe("HonchoMemoryProvider", () => {
         { memory: "The Space uses teal\nRoutine fact", entity: "rakazo-shared" },
         { memory: "The Space uses teal\nBot A's private fact", entity: "bot-bot-1" },
         { memory: "The Space uses teal", id: "conclusion-2", entity: "rakazo-shared" },
-        { memory: "Bot A's private fact", id: "conclusion-3", entity: "bot-bot-1" },
+        { memory: "Agent A's private fact", id: "conclusion-3", entity: "bot-bot-1" },
         { memory: "Routine fact", id: "conclusion-5", entity: "rakazo-shared" },
       ],
     });
@@ -415,7 +415,7 @@ describe("existing Honcho user peer", () => {
         { id: "conclusion-1", entity: "user-alex", scope: "shared", botId: "bot-1" },
         context,
       ),
-    ).resolves.toEqual({ ok: false, error: "That memory belongs to another bot or Space." });
+    ).resolves.toEqual({ ok: false, error: "That memory belongs to another agent or Space." });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -423,7 +423,7 @@ describe("existing Honcho user peer", () => {
     const fetchMock = honchoFetch({ "user-alex": "A fact" }, ["existing-app"], ["user-alex"]);
     const memory = provider(fetchMock, settings);
     await memory.save(
-      { content: "Bot fact", scope: "shared", botId: "bot-1", source: { kind: "durable" } },
+      { content: "Agent fact", scope: "shared", botId: "bot-1", source: { kind: "durable" } },
       context,
     );
     await memory.recall({ query: "q", scope: "isolated", botId: "bot-1", limit: 5 }, context);
@@ -440,7 +440,7 @@ describe("existing Honcho user peer", () => {
   });
 
   it("keeps the Space's own memory when the user peer cannot be read", async () => {
-    const normal = honchoFetch({ "bot-bot-1": "A bot fact" }, ["existing-app"], ["user-alex"]);
+    const normal = honchoFetch({ "bot-bot-1": "An agent fact" }, ["existing-app"], ["user-alex"]);
     const fetch = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
       if (String(url).endsWith("/user-alex/chat")) return new Response("", { status: 404 });
       return normal(url, init);
@@ -450,7 +450,7 @@ describe("existing Honcho user peer", () => {
         { query: "q", scope: "isolated", botId: "bot-1", limit: 5 },
         context,
       ),
-    ).resolves.toMatchObject({ ok: true, value: [{ memory: "A bot fact", entity: "bot-bot-1" }] });
+    ).resolves.toMatchObject({ ok: true, value: [{ memory: "An agent fact", entity: "bot-bot-1" }] });
   });
 });
 
@@ -641,12 +641,12 @@ describe("Honcho forget", () => {
     });
   });
 
-  it("removes every copy of a shared fact the bot could recall again", async () => {
+  it("removes every copy of a shared fact the agent could recall again", async () => {
     const fetch = honchoFetch();
     const memory = provider(fetch);
     await save(memory, "The Space uses teal", "shared");
     await save(memory, "the space  uses teal", "isolated");
-    await save(memory, "Bot B's private fact", "isolated", "bot-2");
+    await save(memory, "Agent B's private fact", "isolated", "bot-2");
 
     await expect(
       memory.forget({ id: "conclusion-2", scope: "shared", botId: "bot-1" }, context),
@@ -798,7 +798,7 @@ describe("Honcho forget", () => {
     });
   });
 
-  it("only removes the bot's private copy in isolated scope", async () => {
+  it("only removes the agent's private copy in isolated scope", async () => {
     const fetch = honchoFetch();
     const memory = provider(fetch);
     await save(memory, "The Space uses teal", "shared");
@@ -809,7 +809,7 @@ describe("Honcho forget", () => {
   });
 
   it.each([
-    ["another bot's private fact", "conclusion-3", "shared" as const, undefined],
+    ["another agent's private fact", "conclusion-3", "shared" as const, undefined],
     ["a shared fact outside isolated scope", "conclusion-2", "isolated" as const, undefined],
     ["a fact under a different entity", "conclusion-2", "shared" as const, "bot-bot-1"],
     ["an unknown id", "conclusion-99", "shared" as const, undefined],
@@ -817,12 +817,12 @@ describe("Honcho forget", () => {
     const fetch = honchoFetch();
     const memory = provider(fetch);
     await save(memory, "The Space uses teal", "shared");
-    await save(memory, "Bot B's private fact", "isolated", "bot-2");
+    await save(memory, "Agent B's private fact", "isolated", "bot-2");
     await expect(
       memory.forget({ id, scope, botId: "bot-1", ...(entity ? { entity } : {}) }, context),
     ).resolves.toEqual({
       ok: false,
-      error: "No memory with that id was found in this bot's memory.",
+      error: "No memory with that id was found in this agent's memory.",
     });
     expect(deletes(fetch)).toEqual([]);
   });
@@ -832,10 +832,10 @@ describe("Honcho forget", () => {
     ...[".", "..", "../other", "id/other", "id?query", "x".repeat(513)].map(
       (id) => [{ id, entity: undefined }, "Invalid Honcho conclusion id."] as const,
     ),
-    [{ id: "conclusion-1", entity: "bot-bot-2" }, "That memory belongs to another bot or Space."],
+    [{ id: "conclusion-1", entity: "bot-bot-2" }, "That memory belongs to another agent or Space."],
     [
       { id: "conclusion-1", entity: "rakazo-shared" },
-      "That memory belongs to another bot or Space.",
+      "That memory belongs to another agent or Space.",
     ],
   ] as const)("rejects %o before calling Honcho", async (request, error) => {
     const fetch = honchoFetch();
@@ -894,7 +894,7 @@ describe("Honcho scope and failures", () => {
     ).recall(recall, context);
     expect(result).toMatchObject({ ok: true, value: [{ memory: "First fact" }] });
   });
-  it("keeps isolated saves and recalls in the bot perspective", async () => {
+  it("keeps isolated saves and recalls in the agent perspective", async () => {
     const fetch = honchoFetch({ "bot-bot-1": "A private fact" });
     const memory = provider(fetch);
     await memory.save(

@@ -154,7 +154,7 @@ export function AppVisualEdit({
         ) : null}
         {info && "error" in info ? <p className="text-muted-foreground">{info.error}</p> : null}
         {element && element.texts.length === 0 && element.classes === null ? (
-          <p className="text-muted-foreground">{t`This element is built from data or code, so ask the bot to change it.`}</p>
+          <p className="text-muted-foreground">{t`This element is built from data or code, so ask the agent to change it.`}</p>
         ) : null}
         {element?.texts.map((text) => (
           <label key={text.id} className="block space-y-1">
@@ -177,7 +177,7 @@ export function AppVisualEdit({
           <p className="text-[12px] text-muted-foreground">{t`Its words come from data, so only its look can be changed here.`}</p>
         ) : null}
         {element?.classes === null && element.texts.length > 0 ? (
-          <p className="text-[12px] text-muted-foreground">{t`Its look is set in code; ask the bot to change it.`}</p>
+          <p className="text-[12px] text-muted-foreground">{t`Its look is set in code; ask the agent to change it.`}</p>
         ) : null}
         {element && element.classes !== null
           ? STYLE_GROUPS.map((group) => {
@@ -235,7 +235,7 @@ export function AppVisualEdit({
           className="flex items-center gap-1.5 rounded-full px-2 py-1 text-[12px] font-medium text-primary hover:bg-primary/10"
         >
           <MessageSquare className="size-3.5" />
-          {t`Ask the bot`}
+          {t`Ask the agent`}
         </button>
         <span className="flex-1" />
         <Button

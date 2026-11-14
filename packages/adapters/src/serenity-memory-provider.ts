@@ -322,7 +322,7 @@ export class SerenityMemoryProvider implements SemanticMemoryProvider {
       context.spaceId,
       this.connection.brainLabel,
     );
-    const provenance = `rakazo space:${context.spaceId} bot:${request.botId}`;
+    const provenance = `rakazo space:${context.spaceId} agent:${request.botId}`;
     const result = await rememberSerenity(request.content, provenance, this.connection, {
       entity,
       operationKey: rememberOperationKey(
@@ -363,7 +363,7 @@ export class SerenityMemoryProvider implements SemanticMemoryProvider {
       this.connection.brainLabel,
     );
     if (request.entity && !allowed.includes(request.entity)) {
-      return { ok: false, error: "That memory belongs to another bot or Space." };
+      return { ok: false, error: "That memory belongs to another agent or Space." };
     }
     const factId = request.id.trim();
     if (!factId) return { ok: false, error: "id is required" };
@@ -385,8 +385,8 @@ export class SerenityMemoryProvider implements SemanticMemoryProvider {
       return {
         ok: false,
         error: errors.length
-          ? `Could not confirm this memory belongs to this bot: ${errors.join("; ")}`
-          : "No memory with that id was found in this bot's recall results.",
+          ? `Could not confirm this memory belongs to this agent: ${errors.join("; ")}`
+          : "No memory with that id was found in this agent's recall results.",
       };
     }
     const result = await forgetSerenity(factId, this.connection, {

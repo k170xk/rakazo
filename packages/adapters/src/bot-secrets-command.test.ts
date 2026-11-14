@@ -312,7 +312,7 @@ describe("shell command environment", () => {
     );
   });
 
-  it("removes a failed bot credential from the desktop host environment", async () => {
+  it("removes a failed agent credential from the desktop host environment", async () => {
     const db = fakeDatabase();
     await save(db, "cli-token", "fake-bot-token");
     const requestEnvironment = await shellCommandEnvironment({
@@ -370,7 +370,7 @@ describe("shell command environment", () => {
     for (const form of forms) expect(redacted).not.toContain(form);
   });
 
-  it("redacts base64 and URL-encoded forms of a bot variable from command output", async () => {
+  it("redacts base64 and URL-encoded forms of an agent variable from command output", async () => {
     const db = fakeDatabase();
     const value = "fake token/with+chars=";
     await save(db, "api-token", value);

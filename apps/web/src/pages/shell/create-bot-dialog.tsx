@@ -128,7 +128,7 @@ export function CreateBotDialog({
         ...(assistantId ? { evolveAssistantId: assistantId } : {}),
       });
     } catch (err) {
-      setError(errorText(err, t`Could not create bot`));
+      setError(errorText(err, t`Could not create agent`));
       setSubmitting(false);
     }
   }
@@ -156,7 +156,7 @@ export function CreateBotDialog({
         >
           <DialogHeader>
             <DialogTitle className="text-center">
-              <Trans>New bot</Trans>
+              <Trans>New agent</Trans>
             </DialogTitle>
           </DialogHeader>
           <div className="flex justify-center py-2">
@@ -171,7 +171,7 @@ export function CreateBotDialog({
             <Input
               ref={nameRef}
               aria-label={t`Name`}
-              placeholder={t`Name your Bot`}
+              placeholder={t`Name your Agent`}
               value={name}
               maxLength={BOT_NAME_MAX_LENGTH}
               onChange={(event) => setName(event.target.value)}
@@ -209,7 +209,7 @@ export function CreateBotDialog({
                   >
                     <span className="min-w-0">
                       <span className="block truncate font-medium">
-                        {assistant ? assistant.name : <Trans>A blank bot</Trans>}
+                        {assistant ? assistant.name : <Trans>A blank agent</Trans>}
                       </span>
                       <span className="block truncate text-[12px] text-muted-foreground">
                         {assistant ? (
@@ -230,7 +230,7 @@ export function CreateBotDialog({
               {assistantId ? (
                 <p className="text-[12px] text-muted-foreground">
                   <Trans>
-                    The bot starts with this assistant's Evolve prompt and searches its knowledge
+                    The agent starts with this assistant's Evolve prompt and searches its knowledge
                     files. You can edit its instructions later.
                   </Trans>
                 </p>

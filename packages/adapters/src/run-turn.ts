@@ -429,7 +429,7 @@ async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
   }
   await notifyRun(deps, run, {
     kind: "help",
-    title: `${displayName(bot.name, "Bot")} needs an answer`,
+    title: `${displayName(bot.name, "Agent")} needs an answer`,
     body: safeText,
     botId: bot.id,
     threadId: thread.id,
@@ -503,7 +503,7 @@ async function pauseForTakeover(ctx: RunContext, event: RuntimeEvent<"takeover">
   ctx.state.lease.retainComputer = true;
   await notifyRun(deps, run, {
     kind: "takeover",
-    title: `${displayName(bot.name, "Bot")} needs you on the screen`,
+    title: `${displayName(bot.name, "Agent")} needs you on the screen`,
     body: safeReason,
     botId: bot.id,
     threadId: thread.id,
@@ -651,7 +651,7 @@ async function stopStuckToolLoop(ctx: RunContext, toolName: string) {
       stuckText,
       "result",
       { forceUnread: true },
-    ).catch((error) => getLogger().error("bot message loop-guard return", error));
+    ).catch((error) => getLogger().error("agent message loop-guard return", error));
   }
   ctx.abortController.abort();
 }
@@ -919,13 +919,13 @@ export async function completeRun(ctx: RunContext) {
       { id: bot.id, name: bot.name },
       botMessageOutcome.text,
       botMessageOutcome.intent,
-    ).catch((error) => getLogger().error("bot message result return", error));
+    ).catch((error) => getLogger().error("agent message result return", error));
   }
   const notifyBody = completionNotificationPreview(text);
   if (runSendsFinishNotification(run.trigger) && notifyBody && !completed.continuationRunId) {
     await notifyRun(deps, run, {
       kind: "completion",
-      title: `${displayName(bot.name, "Bot")} finished`,
+      title: `${displayName(bot.name, "Agent")} finished`,
       body: notifyBody,
       botId: bot.id,
       threadId: thread.id,
@@ -1068,7 +1068,7 @@ export async function failRun(
       `Could not complete the delegated request: ${message}`,
       "status",
       { forceUnread: true },
-    ).catch((returnError) => getLogger().error("bot message failure return", returnError));
+    ).catch((returnError) => getLogger().error("agent message failure return", returnError));
   }
   // A refusal of the deployment's own key is the operator's problem, not the user's.
   const refusal =
@@ -1091,7 +1091,7 @@ export async function failRun(
   ) {
     await notifyRun(deps, run, {
       kind: "failure",
-      title: `${displayName(bot.name, "Bot")} failed`,
+      title: `${displayName(bot.name, "Agent")} failed`,
       body: message,
       botId: bot.id,
       threadId: thread.id,

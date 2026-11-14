@@ -75,11 +75,11 @@ export function EmailSignatureSettings() {
   }
 
   return (
-    <SettingsGroup data-testid="email-signature">
+    <SettingsGroup title={t`Signature`} data-testid="email-signature">
       <div className="space-y-3 px-4 py-3">
         <p className="text-[13px] leading-relaxed text-muted-foreground">
           <Trans>
-            Added under every Outlook email you send from a draft card. In Outlook, open Settings,
+            Added under every Outlook draft you create from a draft card. In Outlook, open Settings,
             then Signatures, select your signature, copy it and paste it below.
           </Trans>
         </p>

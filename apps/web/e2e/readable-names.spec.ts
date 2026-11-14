@@ -34,7 +34,7 @@ test("legacy opaque names never appear in navigation, account, chats or Activity
     });
     await db.space.update({ where: { id: me.spaceId }, data: { name: "__SpaceTok1__" } });
     await page.goto(`/app/${bot.id}`);
-    await expect(page.getByPlaceholder("Message Bot")).toBeVisible();
+    await expect(page.getByPlaceholder("Message Agent")).toBeVisible();
     const accountTrigger = page.getByTestId("user-menu-trigger");
     await expect(accountTrigger).toHaveAccessibleName(`Account menu for ${email}`);
     await accountTrigger.click();

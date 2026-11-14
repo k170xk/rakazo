@@ -9,11 +9,11 @@ export const fishAudio: VoiceProvider = {
   bestFor: "Expressive voices and your own cloned voice",
   title: "Fish Audio for AI agents: expressive voices, cloning and transcription",
   description:
-    "How to use the Fish Audio API to give AI agents a voice in Rakazo: pick from your cloned voices or Fish Audio's public library, hear replies, talk by voice and call your bots. Limits and setup.",
+    "How to use the Fish Audio API to give AI agents a voice in Rakazo: pick from your cloned voices or Fish Audio's public library, hear replies, talk by voice and call your agents. Limits and setup.",
   h1: "Give your AI agents a Fish Audio voice",
   intro: [
     "[Fish Audio](https://fish.audio) is a hosted voice platform for text to speech, voice cloning and speech to text. It has a large library of voices that its users have published, and you can clone a voice of your own from a short recording. Everything it does in the app is also available through its API.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and you can also talk to it by voice: hold the mic to speak, have replies read aloud, or call a bot in real time. With a Fish Audio key, your bots speak in a Fish Audio voice and Fish Audio turns what you say into text.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and you can also talk to it by voice: hold the mic to speak, have replies read aloud, or call an agent in real time. With a Fish Audio key, your agents speak in a Fish Audio voice and Fish Audio turns what you say into text.",
   ],
   scene: {
     bot: "Chief of Staff",
@@ -42,11 +42,11 @@ export const fishAudio: VoiceProvider = {
         "Fish Audio both speaks and transcribes, so one key covers every voice feature. The [voice and calls guide](/docs/voice-and-calls/) walks through each one.",
       ],
       bullets: [
-        "Talk instead of typing. Hold the mic in the composer and speak; Fish Audio transcribes it and the bot gets your message.",
-        "Hear replies. Choose **Speak this reply** on any message, or turn on **Read replies aloud** in a bot's settings to hear every reply in its voice.",
-        "Call a bot. Choose **Call** at the top of the chat to talk in real time. The transcript stays in the chat afterwards.",
-        "Let bots call you. Ask \"call me at 5 to go over the day\", and the bot rings you at five.",
-        "Give each bot its own voice. The **Voice** picker lists your own Fish Audio voices first, including ones you cloned, then popular public voices. A bot's settings can override your default.",
+        "Talk instead of typing. Hold the mic in the composer and speak; Fish Audio transcribes it and the agent gets your message.",
+        "Hear replies. Choose **Speak this reply** on any message, or turn on **Read replies aloud** in an agent's settings to hear every reply in its voice.",
+        "Call an agent. Choose **Call** at the top of the chat to talk in real time. The transcript stays in the chat afterwards.",
+        "Let agents call you. Ask \"call me at 5 to go over the day\", and the agent rings you at five.",
+        "Give each agent its own voice. The **Voice** picker lists your own Fish Audio voices first, including ones you cloned, then popular public voices. An agent's settings can override your default.",
       ],
     },
     {
@@ -59,11 +59,11 @@ export const fishAudio: VoiceProvider = {
     {
       heading: "Limits",
       bullets: [
-        "Fish Audio is a hosted service. The text your bots speak and the audio you record are sent to it, and use comes out of your Fish Audio account. Its free plan is for personal use only.",
+        "Fish Audio is a hosted service. The text your agents speak and the audio you record are sent to it, and use comes out of your Fish Audio account. Its free plan is for personal use only.",
         "Rakazo asks Fish Audio for each reply as a finished clip. It doesn't use Fish Audio's realtime streaming API.",
         "The voice picker shows your own voices and the top public voices, not the whole library.",
         "When your Fish Audio credit runs out or the key is rejected, speaking and transcribing stop until you fix the account.",
-        "On the mobile app, calls can use your phone's own voices if you pick a **Device voice** in the bot's settings. Otherwise replies use this provider.",
+        "On the mobile app, calls can use your phone's own voices if you pick a **Device voice** in the agent's settings. Otherwise replies use this provider.",
       ],
     },
     {

@@ -17,7 +17,7 @@ const bot = (id: string, blocks: MessageBlock[], botId = "chief") => ({
 const text = (value: string): MessageBlock => ({ kind: "text", text: value });
 
 describe("projectBotMentions", () => {
-  it("folds an announcement into the same bot's next reply, past tool activity", () => {
+  it("folds an announcement into the same agent's next reply, past tool activity", () => {
     const view = projectBotMentions([
       bot("a", [created]),
       bot("b", [{ kind: "steps", steps: [] }]),
@@ -28,7 +28,7 @@ describe("projectBotMentions", () => {
     expect(view.foldedInto.get("a")).toBe("c");
   });
 
-  it("keeps an announcement with no reply from that bot yet", () => {
+  it("keeps an announcement with no reply from that agent yet", () => {
     for (const messages of [
       [bot("a", [created])],
       [bot("a", [created]), { id: "u", role: "user", blocks: [text("thanks")] }],

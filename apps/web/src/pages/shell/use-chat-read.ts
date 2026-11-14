@@ -36,7 +36,7 @@ export function useChatRead({
   const [readBoundary, setReadBoundary] = useState<ReadBoundary | null>(null);
   // A chat's markRead calls run one at a time so the request that opened it answers first.
   const [readInOrder] = useState(createChatQueues);
-  const openChat = groupId ? `group:${groupId}` : active ? `bot:${active.id}` : null;
+  const openChat = groupId ? `group:${groupId}` : active ? `agent:${active.id}` : null;
   if (readVisit.current.chat !== openChat) {
     readVisit.current = { chat: openChat, visit: readVisit.current.visit + 1 };
   }
@@ -65,9 +65,9 @@ export function useChatRead({
     async (id: string, stillWanted?: () => boolean) => {
       if (!stillWanted) {
         manuallyUnread.current.delete(id);
-        if (readVisit.current.chat === `bot:${id}`) setMarkedUnread(null);
+        if (readVisit.current.chat === `agent:${id}`) setMarkedUnread(null);
       }
-      const answer = await readInOrder(`bot:${id}`, () =>
+      const answer = await readInOrder(`agent:${id}`, () =>
         !stillWanted || stillWanted() ? rpc.threads.markRead({ botId: id }) : Promise.resolve(null),
       );
       if (!answer) return undefined;
@@ -82,7 +82,7 @@ export function useChatRead({
       const visit = readVisit.current.visit;
       try {
         // Through the chat's read queue, so a read already sent lands first and this one wins.
-        await readInOrder(`bot:${id}`, () =>
+        await readInOrder(`agent:${id}`, () =>
           rpc.threads.markUnread({ botId: id, ...(messageId ? { messageId } : {}) }),
         );
       } catch (err) {

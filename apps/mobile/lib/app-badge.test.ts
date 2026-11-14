@@ -12,7 +12,7 @@ async function load() {
 beforeEach(() => vi.mocked(Notifications.setBadgeCountAsync).mockReset().mockResolvedValue(true));
 
 describe("app icon badge", () => {
-  it("counts unread chats, bots and groups, across every Space", async () => {
+  it("counts unread chats, agents and groups, across every Space", async () => {
     const { unreadChatCount } = await load();
     expect(
       unreadChatCount([

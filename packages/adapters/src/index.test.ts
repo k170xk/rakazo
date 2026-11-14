@@ -71,8 +71,8 @@ describe("scripted runtime", () => {
     );
   });
 
-  it("spawns a named bot", () => {
-    const script = inferScript("spawn a bot named Scout to research venues");
+  it("spawns a named agent", () => {
+    const script = inferScript("spawn an agent named Scout to research venues");
     expect(script?.some((t) => t.toolCalls?.some((c) => c.name === "spawn_bot"))).toBe(true);
     expect(script?.some((t) => t.toolCalls?.some((c) => c.args.name === "Scout"))).toBe(true);
   });
@@ -160,8 +160,8 @@ describe("scripted runtime", () => {
     ).toBe(true);
   });
 
-  it("archives a spawned bot by exact name", () => {
-    const script = inferScript("delete the bot named Scout");
+  it("archives a spawned agent by exact name", () => {
+    const script = inferScript("delete the agent named Scout");
     expect(
       script?.some((t) =>
         t.toolCalls?.some((c) => c.name === "archive_bot" && c.args.confirm_name === "Scout"),
@@ -171,7 +171,7 @@ describe("scripted runtime", () => {
 });
 
 describe("builtin tools", () => {
-  it("keeps every bot management tool out of helper tool lists", () => {
+  it("keeps every agent management tool out of helper tool lists", () => {
     for (const name of FLEET_TOOL_NAMES) expect(DELEGATION_TOOL_NAMES.has(name), name).toBe(true);
   });
 

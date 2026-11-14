@@ -246,7 +246,7 @@ export function StorageDialog({
             <DialogDescription>
               {reason === "full" ? (
                 <Trans>
-                  Bots can't make new documents or videos until you free up space. Download anything
+                  Agents can't make new documents or videos until you free up space. Download anything
                   you want to keep, then delete it here.
                 </Trans>
               ) : (
@@ -297,7 +297,7 @@ export function StorageDialog({
                 </div>
                 <p className="text-[13px] text-muted-foreground">
                   <Trans>
-                    {formatSize(data.computerBytes)} on bot computers · {formatSize(data.chatBytes)}{" "}
+                    {formatSize(data.computerBytes)} on agent computers · {formatSize(data.chatBytes)}{" "}
                     attached in chats.
                   </Trans>{" "}
                   <Plural
@@ -308,8 +308,8 @@ export function StorageDialog({
                   {data.chatRetentionDays === null ? null : (
                     <Plural
                       value={data.chatRetentionDays}
-                      one="Files bots attach in chats are deleted # day after they were made."
-                      other="Files bots attach in chats are deleted # days after they were made."
+                      one="Files agents attach in chats are deleted # day after they were made."
+                      other="Files agents attach in chats are deleted # days after they were made."
                     />
                   )}
                 </p>
@@ -355,7 +355,7 @@ export function StorageDialog({
                     {tab === "expiring" ? (
                       <Trans>Nothing is due to be deleted this week.</Trans>
                     ) : (
-                      <Trans>Your bots haven't made any files yet.</Trans>
+                      <Trans>Your agents haven't made any files yet.</Trans>
                     )}
                   </p>
                 ) : (

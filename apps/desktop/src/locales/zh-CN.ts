@@ -52,13 +52,13 @@ export const ZH_CN_MESSAGES: Record<string, string> = {
   "The update could not be completed. Try again later.": "无法完成更新。请稍后重试。",
   "Could not reach the update server.": "无法连接更新服务器。",
   "Allow local computer access?": "允许访问本地电脑？",
-  "Allow bots to use this computer?": "允许机器人使用这台电脑？",
+  "Allow agents to use this computer?": "允许智能体使用这台电脑？",
   Cancel: "取消",
   Allow: "允许",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
-    "{host} 上的机器人可以使用你账户的权限运行命令、读取和更改文件以及打开应用。你可以在设置中撤销访问权限。",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
-    "此本地实例上的机器人可以使用你账户的权限运行命令、读取和更改文件以及打开应用。你可以在应用菜单中撤销访问权限。",
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+    "{host} 上的智能体可以使用你账户的权限运行命令、读取和更改文件以及打开应用。你可以在设置中撤销访问权限。",
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+    "此本地实例上的智能体可以使用你账户的权限运行命令、读取和更改文件以及打开应用。你可以在应用菜单中撤销访问权限。",
   "Local computer access requires an app-managed local instance.":
     "本地电脑访问需要由应用管理的本地实例。",
   "Local server is unavailable": "本地服务器不可用",
@@ -167,12 +167,12 @@ export const ZH_CN_MESSAGES: Record<string, string> = {
   Go: "前往",
   Back: "后退",
   Forward: "前进",
-  "Next Bot": "下一个机器人",
-  "Previous Bot": "上一个机器人",
+  "Next Agent": "下一个智能体",
+  "Previous Agent": "上一个智能体",
   "Command Menu…": "命令菜单…",
   "Toggle Sidebar": "切换边栏",
   "Find…": "查找…",
-  "Search Bots…": "搜索 Bot…",
+  "Search Agents…": "搜索 智能体…",
   "The window closed before the app loaded.": "应用加载完成前窗口已关闭。",
   "New Group Chat": "新建群聊",
   "Connect Apps…": "连接应用…",

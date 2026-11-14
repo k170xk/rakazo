@@ -89,7 +89,7 @@ export async function botPins(deps: Deps, botId: string) {
 async function listedItem(deps: Deps, bot: OwnedBot, itemPath: string) {
   const where = await located(deps, bot);
   if (!where)
-    throw new ORPCError("CONFLICT", { message: "This bot's files are not on this server." });
+    throw new ORPCError("CONFLICT", { message: "This agent's files are not on this server." });
   const items = await listStoredItems(where.home, where.folder);
   const item = items.find((candidate) => candidate.path === itemPath);
   if (!item) throw new ORPCError("NOT_FOUND", { message: "That file is no longer there." });
@@ -132,7 +132,7 @@ export async function downloadStoredFile(
   }
   if (item.size > maxBytes) {
     throw new ORPCError("BAD_REQUEST", {
-      message: `File exceeds the ${sizeLabel} download limit. Ask the bot to send it in the chat.`,
+      message: `File exceeds the ${sizeLabel} download limit. Ask the agent to send it in the chat.`,
     });
   }
   const handle = await openStoredFile(where.home, where.folder, itemPath);

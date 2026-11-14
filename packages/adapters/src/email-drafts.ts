@@ -24,6 +24,9 @@ export const StoredEmailDraftSchema = z.object({
     .object({ subject: z.string(), from: z.string(), receivedAt: z.string().nullable() })
     .nullable()
     .optional(),
+  /** Outlook's draft message id and web link once created in the person's Drafts folder. */
+  outlookMessageId: z.string().nullable().optional(),
+  outlookWebLink: z.string().nullable().optional(),
 });
 export type StoredEmailDraft = z.infer<typeof StoredEmailDraftSchema>;
 
@@ -117,7 +120,7 @@ export async function createEmailDraft(
     replyToMessageId: string | null;
     content: StoredEmailDraft;
   },
-): Promise<{ id: string }> {
+): Promise<{ id: string; version: number }> {
   const content: StoredEmailDraft = {
     ...input.content,
     bodyHtml: sanitizeEmailBody(input.content.bodyHtml),
@@ -134,7 +137,79 @@ export async function createEmailDraft(
         replyToMessageId: input.replyToMessageId,
         content: content as Prisma.InputJsonValue,
       },
-      select: { id: true },
+      select: { id: true, version: true },
     }),
   );
+}
+
+/**
+ * Updates an uncreated draft in the same chat when the person asks the assistant to revise it.
+ * Returns null if the draft was already created in Outlook, discarded or belongs elsewhere.
+ */
+export async function reviseEmailDraft(
+  prisma: PrismaClient,
+  owner: EmailDraftOwner,
+  input: {
+    draftId: string;
+    threadId: string;
+    patch: {
+      mode?: EmailDraftMode;
+      replyToMessageId?: string | null;
+      to?: string[];
+      cc?: string[];
+      bcc?: string[];
+      subject?: string;
+      bodyHtml?: string;
+      attachments?: EmailDraftAttachment[];
+    };
+  },
+): Promise<{ id: string; version: number } | null> {
+  return runAsTenant(owner, async () => {
+    const existing = await prisma.emailDraft.findFirst({
+      where: {
+        id: input.draftId,
+        spaceId: owner.spaceId,
+        userId: owner.userId,
+        threadId: input.threadId,
+        status: "draft",
+      },
+    });
+    if (!existing) return null;
+    const current = storedEmailDraft(existing.content);
+    const modeChanged =
+      (input.patch.mode && input.patch.mode !== existing.mode) ||
+      (input.patch.replyToMessageId !== undefined &&
+        input.patch.replyToMessageId !== existing.replyToMessageId);
+    const nextContent: StoredEmailDraft = {
+      ...current,
+      ...(input.patch.to !== undefined ? { to: input.patch.to } : {}),
+      ...(input.patch.cc !== undefined ? { cc: input.patch.cc } : {}),
+      ...(input.patch.bcc !== undefined ? { bcc: input.patch.bcc } : {}),
+      ...(input.patch.subject !== undefined ? { subject: input.patch.subject } : {}),
+      ...(input.patch.bodyHtml !== undefined
+        ? { bodyHtml: sanitizeEmailBody(input.patch.bodyHtml) }
+        : {}),
+      ...(input.patch.attachments !== undefined ? { attachments: input.patch.attachments } : {}),
+      ...(modeChanged ? { replyTo: null } : {}),
+    };
+    const nextVersion = existing.version + 1;
+    const { count } = await prisma.emailDraft.updateMany({
+      where: {
+        id: existing.id,
+        userId: owner.userId,
+        status: "draft",
+        version: existing.version,
+      },
+      data: {
+        ...(input.patch.mode ? { mode: input.patch.mode } : {}),
+        ...(input.patch.replyToMessageId !== undefined
+          ? { replyToMessageId: input.patch.replyToMessageId }
+          : {}),
+        content: nextContent as Prisma.InputJsonValue,
+        version: nextVersion,
+        error: null,
+      },
+    });
+    return count === 1 ? { id: existing.id, version: nextVersion } : null;
+  });
 }

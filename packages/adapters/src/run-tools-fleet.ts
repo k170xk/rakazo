@@ -74,7 +74,7 @@ async function archiveBot(ctx: RunContext, call: ToolCall) {
       payload: { childBotId: archived.botId, name: archived.name },
     });
   } catch (error) {
-    getLogger().error("archived bot notification", error);
+    getLogger().error("archived agent notification", error);
   }
   return archived;
 }
@@ -211,7 +211,7 @@ export const fleetTools: ToolHandlers = {
         payload: { childBotId: spawned.botId, name: spawned.name },
       });
     } catch (error) {
-      getLogger().error("spawned bot notification", error);
+      getLogger().error("spawned agent notification", error);
     }
     if (runsPaAgentSetup(bot)) {
       return {

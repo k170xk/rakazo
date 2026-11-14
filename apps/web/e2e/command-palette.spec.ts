@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
-test("command palette switches bots and runs actions", async ({ page }, testInfo) => {
+test("command palette switches agents and runs actions", async ({ page }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `cmdk-bots-${stamp}@rakazo.test`, "password12", "CmdK Bots");
+  await signup(page, `cmdk-bots-${stamp}@rakazo.test`, "password12", "CmdK Agents");
   await completeOnboarding(page);
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);

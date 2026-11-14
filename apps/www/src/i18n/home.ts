@@ -180,7 +180,7 @@ const EN_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "Prepare briefings and coordinate your bots.",
+    desc: "Prepare briefings and coordinate your agents.",
   },
 ];
 
@@ -231,7 +231,7 @@ const DE_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "Erstellt Briefings und koordiniert deine Bots.",
+    desc: "Erstellt Briefings und koordiniert deine Agents.",
   },
 ];
 
@@ -282,7 +282,7 @@ const KO_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "브리핑을 준비하고 봇을 조율합니다.",
+    desc: "브리핑을 준비하고 에이전트을 조율합니다.",
   },
 ];
 
@@ -333,7 +333,7 @@ const ZH_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "准备简报，协调 Bot。",
+    desc: "准备简报，协调 Agent。",
   },
 ];
 
@@ -435,7 +435,7 @@ const ES_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "Prepara resúmenes y coordina a tus bots.",
+    desc: "Prepara resúmenes y coordina a tus agents.",
   },
 ];
 
@@ -486,7 +486,7 @@ const FR_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "Prépare des briefings et coordonne vos bots.",
+    desc: "Prépare des briefings et coordonne vos agents.",
   },
 ];
 
@@ -537,7 +537,7 @@ const PT_BR_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "Prepara resumos e coordena seus bots.",
+    desc: "Prepara resumos e coordena seus agents.",
   },
 ];
 
@@ -588,7 +588,7 @@ const NL_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "Maakt briefings en coördineert je bots.",
+    desc: "Maakt briefings en coördineert je agents.",
   },
 ];
 
@@ -639,7 +639,7 @@ const RU_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "Готовит сводки и координирует ваших ботов.",
+    desc: "Готовит сводки и координирует ваших агентов.",
   },
 ];
 
@@ -741,7 +741,7 @@ const HE_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "מכין תדריכים ומתאם את הבוטים שלך.",
+    desc: "מכין תדריכים ומתאם את הסוכנים שלך.",
   },
 ];
 
@@ -792,7 +792,7 @@ const HI_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "ब्रीफ़िंग तैयार करता है और आपके बॉट्स के बीच तालमेल बिठाता है।",
+    desc: "ब्रीफ़िंग तैयार करता है और आपके एजेंट के बीच तालमेल बिठाता है।",
   },
 ];
 
@@ -894,14 +894,14 @@ const PL_ROSTER: RosterBot[] = [
     name: "Chief of Staff",
     color: "#8B93A8",
     slug: "rakazo/chief-of-staff",
-    desc: "Przygotowuje podsumowania i koordynuje pracę botów.",
+    desc: "Przygotowuje podsumowania i koordynuje pracę agentów.",
   },
 ];
 
 const TESTIMONIALS: HomeCopy["testimonials"]["items"] = [
   {
     quote:
-      "landed here after a first experience with Grok Bot … then found this alternative, and i can confirm that your work rocks. it replaced totally grok bot for me. mobile app is very smooth too",
+      "landed here after a first experience with Grok Bot … then found this alternative, and i can confirm that your work rocks. it replaced totally grok agent for me. mobile app is very smooth too",
     attribution: "@dilog1114",
   },
   {
@@ -971,7 +971,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     },
     selfHost: {
       heading: "Na własnym serwerze",
-      copy: "Uruchom Rakazo na swoim komputerze i wybierz modele dla swoich botów.",
+      copy: "Uruchom Rakazo na swoim komputerze i wybierz modele dla swoich agentów.",
       worksWith: "Współpracuje z",
       mock: {
         weekdays: "W dni robocze o 9:00",
@@ -992,7 +992,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "Telefon",
     },
     roster: {
-      eyebrow: "Twój zespół botów",
+      eyebrow: "Twój zespół agentów",
       heading: "Przydziel każdemu botowi zadanie",
       copy: "Zacznij od szablonu i dostosuj go do siebie.",
       bots: PL_ROSTER,
@@ -1008,7 +1008,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     features: {
       heading: "Rozmowa i działanie",
       items: {
-        call: { title: "Dzwoni do Ciebie", body: "Gdy potrzebuje Twojej decyzji, bot dzwoni przez aplikację. Możecie omówić sprawę." },
+        call: { title: "Dzwoni do Ciebie", body: "Gdy potrzebuje Twojej decyzji, agent dzwoni przez aplikację. Możecie omówić sprawę." },
         apps: { title: "Pracuje w Twoich aplikacjach", body: "Połącz Gmail, GitHub, Notion i dowolny serwer MCP." },
         memory: { title: "Pamięta", body: "Boty zapamiętują to, czego się uczą, i dzielą się wiedzą z zespołem." },
         triggers: { title: "Sam zaczyna pracę", body: "Uruchamia go harmonogram, webhook, zdarzenie na GitHubie lub obserwowana zmiana." },
@@ -1046,7 +1046,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "Czy mogę uruchomić model lokalnie?",
           answer:
-            "Tak. Połącz bota z lokalnym serwerem zgodnym z OpenAI, np. Ollama lub LM Studio. Każdy bot może korzystać z innego modelu.",
+            "Tak. Połącz bota z lokalnym serwerem zgodnym z OpenAI, np. Ollama lub LM Studio. Każdy agent może korzystać z innego modelu.",
         },
         {
           question: "Co obejmuje plan w chmurze?",
@@ -1123,7 +1123,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "Open source",
       heading: "The open source Grok Bot alternative you actually own",
-      lead: "Give your bots a job. Check in from any device.",
+      lead: "Give your agents a job. Check in from any device.",
       getStarted: "Get started",
       download: {
         mac: "Download for macOS",
@@ -1143,7 +1143,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "Works with",
       mock: { weekdays: "Weekdays at 9:00", approval: "Approval required", approve: "Approve", deny: "Deny" },
       features: [
-        { title: "Your model", body: "Choose a different model for each bot." },
+        { title: "Your model", body: "Choose a different model for each agent." },
         { title: "Work on a schedule", body: "Keeps working while your computer is off." },
         { title: "You set the limits", body: "Decide which actions need your approval." },
       ],
@@ -1155,24 +1155,24 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "Mobile",
     },
     roster: {
-      eyebrow: "Your bot team",
-      heading: "Give each bot a job",
+      eyebrow: "Your agent team",
+      heading: "Give each agent a job",
       copy: "Start with a template. Make it yours.",
       bots: EN_ROSTER,
     },
     channels: {
       heading: "Message them anywhere",
-      copy: "Mention a bot in Slack or text it from your phone.",
+      copy: "Mention an agent in Slack or text it from your phone.",
       mock: { ask: "who needs a follow-up today?", reply: "Three leads went quiet this week. Drafts are in the thread." },
     },
     features: {
       heading: "More than chat",
       items: {
-        call: { title: "It calls you", body: "When something needs you, your bot calls you in the app. Talk it through." },
+        call: { title: "It calls you", body: "When something needs you, your agent calls you in the app. Talk it through." },
         apps: { title: "Works in your apps", body: "Connect Gmail, GitHub, Notion, and any MCP server." },
-        memory: { title: "Remembers", body: "Bots keep what they learn and share it with the team." },
+        memory: { title: "Remembers", body: "Agents keep what they learn and share it with the team." },
         triggers: { title: "Wakes up on its own", body: "On a schedule, a webhook, a GitHub event, or a change it watches." },
-        team: { title: "Hands off work", body: "Bots delegate to each other and work together in groups." },
+        team: { title: "Hands off work", body: "Agents delegate to each other and work together in groups." },
         teach: { title: "Learns by watching", body: "Show a task once on its computer. It saves the steps as a skill." },
       },
       mock: {
@@ -1202,7 +1202,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "Can I run a local model?",
           answer:
-            "Yes. Point a bot at a local OpenAI-compatible server such as Ollama or LM Studio. Each bot can use a different model.",
+            "Yes. Point an agent at a local OpenAI-compatible server such as Ollama or LM Studio. Each agent can use a different model.",
         },
         {
           question: "What does the hosted plan include?",
@@ -1220,7 +1220,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "Beta",
     },
     cta: {
-      heading: "Meet your first bot",
+      heading: "Meet your first agent",
       copy: "Hand over your next task.",
       openSourceValue: "Open source",
       selfHostValue: "Self-host",
@@ -1280,7 +1280,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "Open Source",
       heading: "Die Open-Source-Alternative zu Grok Bot, die dir wirklich gehört",
-      lead: "Gib deinen Bots eine Aufgabe. Schau von jedem Gerät nach.",
+      lead: "Gib deinen Agents eine Aufgabe. Schau von jedem Gerät nach.",
       getStarted: "Loslegen",
       download: {
         mac: "Für macOS laden",
@@ -1300,7 +1300,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "Funktioniert mit",
       mock: { weekdays: "Mo–Fr um 9:00", approval: "Freigabe erforderlich", approve: "Genehmigen", deny: "Ablehnen" },
       features: [
-        { title: "Dein Modell", body: "Wähle für jeden Bot ein anderes Modell." },
+        { title: "Dein Modell", body: "Wähle für jeden Agent ein anderes Modell." },
         { title: "Arbeitet nach Zeitplan", body: "Arbeitet weiter, auch wenn dein Computer aus ist." },
         { title: "Du setzt die Grenzen", body: "Bestimme, welche Aktionen deine Freigabe brauchen." },
       ],
@@ -1312,24 +1312,24 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "Mobil",
     },
     roster: {
-      eyebrow: "Dein Bot-Team",
-      heading: "Gib jedem Bot eine Aufgabe",
+      eyebrow: "Dein Agent-Team",
+      heading: "Gib jedem Agent eine Aufgabe",
       copy: "Wähle eine Vorlage und passe sie an.",
       bots: DE_ROSTER,
     },
     channels: {
       heading: "Schreib ihnen überall",
-      copy: "Erwähne einen Bot in Slack oder schreib ihm vom Handy.",
+      copy: "Erwähne einen Agent in Slack oder schreib ihm vom Handy.",
       mock: { ask: "wer braucht heute ein Follow-up?", reply: "Drei Leads sind diese Woche still geworden. Die Entwürfe sind im Thread." },
     },
     features: {
       heading: "Mehr als Chat",
       items: {
-        call: { title: "Er ruft dich an", body: "Wenn etwas dich braucht, ruft dein Bot dich in der App an. Sprecht es durch." },
+        call: { title: "Er ruft dich an", body: "Wenn etwas dich braucht, ruft dein Agent dich in der App an. Sprecht es durch." },
         apps: { title: "Arbeitet in deinen Apps", body: "Verbinde Gmail, GitHub, Notion und jeden MCP-Server." },
-        memory: { title: "Merkt sich Dinge", body: "Bots behalten, was sie lernen, und teilen es mit dem Team." },
+        memory: { title: "Merkt sich Dinge", body: "Agents behalten, was sie lernen, und teilen es mit dem Team." },
         triggers: { title: "Wird von selbst aktiv", body: "Nach Zeitplan, per Webhook, bei GitHub-Events oder wenn sich etwas ändert." },
-        team: { title: "Gibt Arbeit ab", body: "Bots delegieren untereinander und arbeiten in Gruppen zusammen." },
+        team: { title: "Gibt Arbeit ab", body: "Agents delegieren untereinander und arbeiten in Gruppen zusammen." },
         teach: { title: "Lernt durch Zuschauen", body: "Zeig eine Aufgabe einmal auf seinem Computer. Er speichert die Schritte als Skill." },
       },
       mock: {
@@ -1363,7 +1363,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "Kann ich ein lokales Modell nutzen?",
           answer:
-            "Ja. Richte einen Bot auf einen lokalen OpenAI-kompatiblen Server wie Ollama oder LM Studio. Jeder Bot kann ein anderes Modell nutzen.",
+            "Ja. Richte einen Agent auf einen lokalen OpenAI-kompatiblen Server wie Ollama oder LM Studio. Jeder Agent kann ein anderes Modell nutzen.",
         },
         {
           question: "Was ist im gehosteten Plan enthalten?",
@@ -1381,7 +1381,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "Beta",
     },
     cta: {
-      heading: "Triff deinen ersten Bot",
+      heading: "Triff deinen ersten Agent",
       copy: "Gib deine nächste Aufgabe ab.",
       openSourceValue: "Open Source",
       selfHostValue: "Self-host",
@@ -1440,7 +1440,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "오픈 소스",
       heading: "진짜로 내 것인 오픈소스 Grok Bot 대안",
-      lead: "봇에게 일을 맡기세요. 어떤 기기에서든 확인하세요.",
+      lead: "에이전트에게 일을 맡기세요. 어떤 기기에서든 확인하세요.",
       getStarted: "시작하기",
       download: {
         mac: "macOS용 다운로드",
@@ -1460,7 +1460,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "지원 모델·서비스",
       mock: { weekdays: "평일 9:00", approval: "승인 필요", approve: "승인", deny: "거부" },
       features: [
-        { title: "원하는 모델", body: "봇마다 다른 모델을 선택하세요." },
+        { title: "원하는 모델", body: "에이전트마다 다른 모델을 선택하세요." },
         { title: "예약한 시간에 실행", body: "컴퓨터가 꺼져 있어도 계속 일합니다." },
         { title: "내가 정하는 권한", body: "승인이 필요한 작업을 정하세요." },
       ],
@@ -1472,25 +1472,25 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "모바일",
     },
     roster: {
-      eyebrow: "나만의 봇 팀",
-      heading: "봇마다 역할을 주세요",
+      eyebrow: "나만의 에이전트 팀",
+      heading: "에이전트마다 역할을 주세요",
       copy: "템플릿을 골라 내 일에 맞추세요.",
       bots: KO_ROSTER,
     },
     channels: {
       heading: "어디서든 메시지하세요",
-      copy: "Slack에서 봇을 멘션하거나 휴대폰으로 문자를 보내세요.",
+      copy: "Slack에서 에이전트을 멘션하거나 휴대폰으로 문자를 보내세요.",
       mock: { ask: "오늘 팔로업할 사람이 누구야?", reply: "이번 주에 연락이 끊긴 리드가 세 명 있어요. 초안은 스레드에 있어요." },
     },
     features: {
       heading: "채팅 그 이상",
       items: {
-        call: { title: "먼저 전화해요", body: "당신이 필요할 때 봇이 앱에서 전화를 걸어요. 말로 해결하세요." },
+        call: { title: "먼저 전화해요", body: "당신이 필요할 때 에이전트이 앱에서 전화를 걸어요. 말로 해결하세요." },
         apps: { title: "쓰던 앱에서 일해요", body: "Gmail, GitHub, Notion, 그리고 모든 MCP 서버를 연결하세요." },
-        memory: { title: "기억해요", body: "봇은 배운 것을 기억하고 팀과 공유해요." },
+        memory: { title: "기억해요", body: "에이전트은 배운 것을 기억하고 팀과 공유해요." },
         triggers: { title: "스스로 깨어나요", body: "일정, 웹훅, GitHub 이벤트, 또는 지켜보던 변화에 맞춰 움직여요." },
-        team: { title: "일을 넘겨요", body: "봇끼리 일을 맡기고 그룹으로 함께 일해요." },
-        teach: { title: "보고 배워요", body: "봇의 컴퓨터에서 한 번 보여 주세요. 그 과정을 스킬로 저장해요." },
+        team: { title: "일을 넘겨요", body: "에이전트끼리 일을 맡기고 그룹으로 함께 일해요." },
+        teach: { title: "보고 배워요", body: "에이전트의 컴퓨터에서 한 번 보여 주세요. 그 과정을 스킬로 저장해요." },
       },
       mock: {
         calling: "전화 거는 중…",
@@ -1523,7 +1523,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "로컬 모델을 쓸 수 있나요?",
           answer:
-            "네. Ollama나 LM Studio 같은 로컬 OpenAI 호환 서버에 봇을 연결하세요. 봇마다 다른 모델을 쓸 수 있습니다.",
+            "네. Ollama나 LM Studio 같은 로컬 OpenAI 호환 서버에 에이전트을 연결하세요. 에이전트마다 다른 모델을 쓸 수 있습니다.",
         },
         {
           question: "호스팅 플랜에는 무엇이 포함되나요?",
@@ -1541,7 +1541,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "베타",
     },
     cta: {
-      heading: "첫 봇을 만나보세요",
+      heading: "첫 에이전트을 만나보세요",
       copy: "다음 할 일을 맡겨 보세요.",
       openSourceValue: "오픈소스",
       selfHostValue: "셀프 호스트",
@@ -1600,7 +1600,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "开源",
       heading: "真正属于你的开源 Grok Bot 替代品",
-      lead: "把工作交给 Bot，随时用任意设备查看。",
+      lead: "把工作交给 Agent，随时用任意设备查看。",
       getStarted: "开始使用",
       download: {
         mac: "下载 macOS 版",
@@ -1620,7 +1620,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "支持",
       mock: { weekdays: "工作日 9:00", approval: "需要审批", approve: "批准", deny: "拒绝" },
       features: [
-        { title: "自选模型", body: "为每个 Bot 选择不同的模型。" },
+        { title: "自选模型", body: "为每个 Agent 选择不同的模型。" },
         { title: "按时自动执行", body: "电脑关机时也照常工作。" },
         { title: "由你设定权限", body: "决定哪些操作需要你批准。" },
       ],
@@ -1632,14 +1632,14 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "移动端",
     },
     roster: {
-      eyebrow: "你的 Bot 团队",
-      heading: "给每个 Bot 分配工作",
+      eyebrow: "你的 Agent 团队",
+      heading: "给每个 Agent 分配工作",
       copy: "选个模板，按你的需求调整。",
       bots: ZH_ROSTER,
     },
     channels: {
       heading: "随时随地发消息",
-      copy: "在 Slack 里 @ 一个机器人，或用手机给它发短信。",
+      copy: "在 Slack 里 @ 一个智能体，或用手机给它发短信。",
       mock: { ask: "今天该跟进谁？", reply: "本周有三个潜在客户没回音了。草稿已放在线程里。" },
     },
     features: {
@@ -1683,7 +1683,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "可以用本地模型吗？",
           answer:
-            "可以。把 Bot 指向 Ollama 或 LM Studio 这类本地 OpenAI 兼容服务。每个 Bot 可以使用不同的模型。",
+            "可以。把 Agent 指向 Ollama 或 LM Studio 这类本地 OpenAI 兼容服务。每个 Agent 可以使用不同的模型。",
         },
         {
           question: "托管套餐包含什么？",
@@ -1701,8 +1701,8 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "测试版",
     },
     cta: {
-      heading: "认识你的第一个 Bot",
-      copy: "把下一项任务交给 Bot。",
+      heading: "认识你的第一个 Agent",
+      copy: "把下一项任务交给 Agent。",
       openSourceValue: "开源",
       selfHostValue: "自托管",
       stats: [
@@ -1800,7 +1800,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     },
     channels: {
       heading: "どこからでもメッセージ",
-      copy: "Slack でボットをメンション。スマホからテキストも送れます。",
+      copy: "Slack でエージェントをメンション。スマホからテキストも送れます。",
       mock: { ask: "今日フォローすべき相手は？", reply: "今週返信が止まったリードが3件あります。下書きはスレッドにあります。" },
     },
     features: {
@@ -1844,7 +1844,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "ローカルモデルを使えますか？",
           answer:
-            "はい。Ollama や LM Studio などのローカルの OpenAI 互換サーバーにボットを接続できます。ボットごとに別のモデルを使えます。",
+            "はい。Ollama や LM Studio などのローカルの OpenAI 互換サーバーにエージェントを接続できます。エージェントごとに別のモデルを使えます。",
         },
         {
           question: "ホスト型プランには何が含まれますか？",
@@ -1922,7 +1922,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "Código abierto",
       heading: "La alternativa de código abierto a Grok Bot que de verdad es tuya",
-      lead: "Dale un trabajo a tus bots. Síguelos desde cualquier dispositivo.",
+      lead: "Dale un trabajo a tus agents. Síguelos desde cualquier dispositivo.",
       getStarted: "Empezar",
       download: {
         mac: "Descargar para macOS",
@@ -1942,7 +1942,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "Funciona con",
       mock: { weekdays: "Días laborables a las 9:00", approval: "Requiere aprobación", approve: "Aprobar", deny: "Denegar" },
       features: [
-        { title: "Tu modelo", body: "Elige un modelo distinto para cada bot." },
+        { title: "Tu modelo", body: "Elige un modelo distinto para cada agent." },
         { title: "Trabaja según un horario", body: "Sigue trabajando con tu computadora apagada." },
         { title: "Tú pones los límites", body: "Decide qué acciones necesitan tu aprobación." },
       ],
@@ -1954,24 +1954,24 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "Móvil",
     },
     roster: {
-      eyebrow: "Tu equipo de bots",
-      heading: "Dale un trabajo a cada bot",
+      eyebrow: "Tu equipo de agents",
+      heading: "Dale un trabajo a cada agent",
       copy: "Empieza con una plantilla. Hazla tuya.",
       bots: ES_ROSTER,
     },
     channels: {
       heading: "Escríbeles desde cualquier lugar",
-      copy: "Menciona a un bot en Slack o escríbele desde tu teléfono.",
+      copy: "Menciona a un agent en Slack o escríbele desde tu teléfono.",
       mock: { ask: "¿quién necesita un seguimiento hoy?", reply: "Tres leads dejaron de responder esta semana. Los borradores están en el hilo." },
     },
     features: {
       heading: "Más que un chat",
       items: {
-        call: { title: "Te llama", body: "Cuando algo te necesita, tu bot te llama en la app. Háblalo con él." },
+        call: { title: "Te llama", body: "Cuando algo te necesita, tu agent te llama en la app. Háblalo con él." },
         apps: { title: "Trabaja en tus apps", body: "Conecta Gmail, GitHub, Notion y cualquier servidor MCP." },
-        memory: { title: "Recuerda", body: "Los bots guardan lo que aprenden y lo comparten con el equipo." },
+        memory: { title: "Recuerda", body: "Los agents guardan lo que aprenden y lo comparten con el equipo." },
         triggers: { title: "Se activa solo", body: "Según un horario, un webhook, un evento de GitHub o un cambio que vigila." },
-        team: { title: "Reparte el trabajo", body: "Los bots se delegan tareas entre sí y trabajan juntos en grupos." },
+        team: { title: "Reparte el trabajo", body: "Los agents se delegan tareas entre sí y trabajan juntos en grupos." },
         teach: { title: "Aprende observando", body: "Muéstrale una tarea una vez en su computadora. Guarda los pasos como una habilidad." },
       },
       mock: {
@@ -2005,7 +2005,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "¿Puedo usar un modelo local?",
           answer:
-            "Sí. Conecta un bot a un servidor local compatible con OpenAI, como Ollama o LM Studio. Cada bot puede usar un modelo distinto.",
+            "Sí. Conecta un agent a un servidor local compatible con OpenAI, como Ollama o LM Studio. Cada agent puede usar un modelo distinto.",
         },
         {
           question: "¿Qué incluye el plan alojado?",
@@ -2023,7 +2023,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "Beta",
     },
     cta: {
-      heading: "Conoce a tu primer bot",
+      heading: "Conoce a tu primer agent",
       copy: "Delégale tu próxima tarea.",
       openSourceValue: "Código abierto",
       selfHostValue: "Autoalojado",
@@ -2083,7 +2083,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "Open source",
       heading: "L’alternative open source à Grok Bot qui vous appartient vraiment",
-      lead: "Confiez une mission à vos bots. Suivez-les depuis n’importe quel appareil.",
+      lead: "Confiez une mission à vos agents. Suivez-les depuis n’importe quel appareil.",
       getStarted: "Commencer",
       download: {
         mac: "Télécharger pour macOS",
@@ -2103,7 +2103,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "Fonctionne avec",
       mock: { weekdays: "Jours ouvrés à 9:00", approval: "Approbation requise", approve: "Approuver", deny: "Refuser" },
       features: [
-        { title: "Votre modèle", body: "Choisissez un modèle différent pour chaque bot." },
+        { title: "Votre modèle", body: "Choisissez un modèle différent pour chaque agent." },
         { title: "Travaille selon un planning", body: "Continue de travailler, même ordinateur éteint." },
         { title: "Vous fixez les limites", body: "Décidez quelles actions nécessitent votre approbation." },
       ],
@@ -2115,24 +2115,24 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "Mobile",
     },
     roster: {
-      eyebrow: "Votre équipe de bots",
-      heading: "Confiez une mission à chaque bot",
+      eyebrow: "Votre équipe de agents",
+      heading: "Confiez une mission à chaque agent",
       copy: "Partez d’un modèle. Adaptez-le à vos besoins.",
       bots: FR_ROSTER,
     },
     channels: {
       heading: "Écrivez-leur partout",
-      copy: "Mentionnez un bot dans Slack ou envoyez-lui un SMS depuis votre téléphone.",
+      copy: "Mentionnez un agent dans Slack ou envoyez-lui un SMS depuis votre téléphone.",
       mock: { ask: "qui a besoin d’une relance aujourd’hui ?", reply: "Trois prospects ne répondent plus cette semaine. Les brouillons sont dans le fil." },
     },
     features: {
       heading: "Plus qu’un chat",
       items: {
-        call: { title: "Il vous appelle", body: "Quand quelque chose a besoin de vous, votre bot vous appelle dans l’app. Parlez-en ensemble." },
+        call: { title: "Il vous appelle", body: "Quand quelque chose a besoin de vous, votre agent vous appelle dans l’app. Parlez-en ensemble." },
         apps: { title: "Travaille dans vos apps", body: "Connectez Gmail, GitHub, Notion et n’importe quel serveur MCP." },
-        memory: { title: "Se souvient", body: "Les bots retiennent ce qu’ils apprennent et le partagent avec l’équipe." },
+        memory: { title: "Se souvient", body: "Les agents retiennent ce qu’ils apprennent et le partagent avec l’équipe." },
         triggers: { title: "Se lance tout seul", body: "Selon un planning, un webhook, un événement GitHub ou un changement qu’il surveille." },
-        team: { title: "Passe le relais", body: "Les bots se délèguent des tâches et travaillent ensemble en groupes." },
+        team: { title: "Passe le relais", body: "Les agents se délèguent des tâches et travaillent ensemble en groupes." },
         teach: { title: "Apprend en observant", body: "Montrez-lui une tâche une fois sur son ordinateur. Il enregistre les étapes comme compétence." },
       },
       mock: {
@@ -2166,7 +2166,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "Puis-je utiliser un modèle local ?",
           answer:
-            "Oui. Reliez un bot à un serveur local compatible OpenAI comme Ollama ou LM Studio. Chaque bot peut utiliser un modèle différent.",
+            "Oui. Reliez un agent à un serveur local compatible OpenAI comme Ollama ou LM Studio. Chaque agent peut utiliser un modèle différent.",
         },
         {
           question: "Que comprend l’offre hébergée ?",
@@ -2184,7 +2184,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "Bêta",
     },
     cta: {
-      heading: "Rencontrez votre premier bot",
+      heading: "Rencontrez votre premier agent",
       copy: "Confiez-lui votre prochaine tâche.",
       openSourceValue: "Open source",
       selfHostValue: "Auto-hébergé",
@@ -2244,7 +2244,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "Código aberto",
       heading: "A alternativa de código aberto ao Grok Bot que é realmente sua",
-      lead: "Dê um trabalho aos seus bots. Acompanhe de qualquer dispositivo.",
+      lead: "Dê um trabalho aos seus agents. Acompanhe de qualquer dispositivo.",
       getStarted: "Começar",
       download: {
         mac: "Baixar para macOS",
@@ -2264,7 +2264,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "Funciona com",
       mock: { weekdays: "Dias úteis às 9:00", approval: "Aprovação necessária", approve: "Aprovar", deny: "Negar" },
       features: [
-        { title: "Seu modelo", body: "Escolha um modelo diferente para cada bot." },
+        { title: "Seu modelo", body: "Escolha um modelo diferente para cada agent." },
         { title: "Trabalha com agendamento", body: "Continua trabalhando com seu computador desligado." },
         { title: "Você define os limites", body: "Decida quais ações precisam da sua aprovação." },
       ],
@@ -2276,24 +2276,24 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "Celular",
     },
     roster: {
-      eyebrow: "Sua equipe de bots",
-      heading: "Dê um trabalho a cada bot",
+      eyebrow: "Sua equipe de agents",
+      heading: "Dê um trabalho a cada agent",
       copy: "Comece com um template. Deixe do seu jeito.",
       bots: PT_BR_ROSTER,
     },
     channels: {
       heading: "Fale com eles em qualquer lugar",
-      copy: "Mencione um bot no Slack ou mande uma mensagem pelo celular.",
+      copy: "Mencione um agent no Slack ou mande uma mensagem pelo celular.",
       mock: { ask: "quem precisa de um follow-up hoje?", reply: "Três leads sumiram esta semana. Os rascunhos estão na conversa." },
     },
     features: {
       heading: "Mais que um chat",
       items: {
-        call: { title: "Ele liga para você", body: "Quando algo precisa de você, seu bot liga para você no app. Converse com ele." },
+        call: { title: "Ele liga para você", body: "Quando algo precisa de você, seu agent liga para você no app. Converse com ele." },
         apps: { title: "Funciona nos seus apps", body: "Conecte Gmail, GitHub, Notion e qualquer servidor MCP." },
-        memory: { title: "Lembra", body: "Os bots guardam o que aprendem e compartilham com a equipe." },
+        memory: { title: "Lembra", body: "Os agents guardam o que aprendem e compartilham com a equipe." },
         triggers: { title: "Entra em ação sozinho", body: "Por agendamento, webhook, evento do GitHub ou uma mudança que ele monitora." },
-        team: { title: "Divide o trabalho", body: "Os bots delegam tarefas entre si e trabalham juntos em grupos." },
+        team: { title: "Divide o trabalho", body: "Os agents delegam tarefas entre si e trabalham juntos em grupos." },
         teach: { title: "Aprende observando", body: "Mostre uma tarefa uma vez no computador dele. Ele salva os passos como uma habilidade." },
       },
       mock: {
@@ -2327,7 +2327,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "Posso usar um modelo local?",
           answer:
-            "Sim. Aponte um bot para um servidor local compatível com OpenAI, como Ollama ou LM Studio. Cada bot pode usar um modelo diferente.",
+            "Sim. Aponte um agent para um servidor local compatível com OpenAI, como Ollama ou LM Studio. Cada agent pode usar um modelo diferente.",
         },
         {
           question: "O que o plano hospedado inclui?",
@@ -2345,7 +2345,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "Beta",
     },
     cta: {
-      heading: "Conheça seu primeiro bot",
+      heading: "Conheça seu primeiro agent",
       copy: "Entregue sua próxima tarefa.",
       openSourceValue: "Código aberto",
       selfHostValue: "Auto-hospedado",
@@ -2405,7 +2405,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "Open source",
       heading: "Het open source alternatief voor Grok Bot dat echt van jou is",
-      lead: "Geef je bots een taak. Kijk mee vanaf elk apparaat.",
+      lead: "Geef je agents een taak. Kijk mee vanaf elk apparaat.",
       getStarted: "Aan de slag",
       download: {
         mac: "Downloaden voor macOS",
@@ -2425,7 +2425,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "Werkt met",
       mock: { weekdays: "Werkdagen om 9:00", approval: "Goedkeuring vereist", approve: "Goedkeuren", deny: "Weigeren" },
       features: [
-        { title: "Jouw model", body: "Kies voor elke bot een ander model." },
+        { title: "Jouw model", body: "Kies voor elke agent een ander model." },
         { title: "Werkt volgens schema", body: "Blijft werken, ook als je computer uit staat." },
         { title: "Jij bepaalt de grenzen", body: "Bepaal welke acties jouw goedkeuring nodig hebben." },
       ],
@@ -2438,23 +2438,23 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     },
     roster: {
       eyebrow: "Je botteam",
-      heading: "Geef elke bot een taak",
+      heading: "Geef elke agent een taak",
       copy: "Begin met een sjabloon. Maak het je eigen.",
       bots: NL_ROSTER,
     },
     channels: {
       heading: "Stuur ze overal een bericht",
-      copy: "Noem een bot in Slack of stuur hem een bericht vanaf je telefoon.",
+      copy: "Noem een agent in Slack of stuur hem een bericht vanaf je telefoon.",
       mock: { ask: "wie heeft vandaag een follow-up nodig?", reply: "Drie leads zijn deze week stil geworden. De concepten staan in de thread." },
     },
     features: {
       heading: "Meer dan chat",
       items: {
-        call: { title: "Hij belt je", body: "Als iets jou nodig heeft, belt je bot je in de app. Bespreek het samen." },
+        call: { title: "Hij belt je", body: "Als iets jou nodig heeft, belt je agent je in de app. Bespreek het samen." },
         apps: { title: "Werkt in je apps", body: "Koppel Gmail, GitHub, Notion en elke MCP-server." },
-        memory: { title: "Onthoudt", body: "Bots bewaren wat ze leren en delen het met het team." },
+        memory: { title: "Onthoudt", body: "Agents bewaren wat ze leren en delen het met het team." },
         triggers: { title: "Komt zelf in actie", body: "Volgens schema, via een webhook, bij een GitHub-event of bij een wijziging die hij in de gaten houdt." },
-        team: { title: "Draagt werk over", body: "Bots delegeren aan elkaar en werken samen in groepen." },
+        team: { title: "Draagt werk over", body: "Agents delegeren aan elkaar en werken samen in groepen." },
         teach: { title: "Leert door te kijken", body: "Doe een taak één keer voor op zijn computer. Hij slaat de stappen op als skill." },
       },
       mock: {
@@ -2488,7 +2488,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "Kan ik een lokaal model draaien?",
           answer:
-            "Ja. Laat een bot naar een lokale OpenAI-compatibele server wijzen, zoals Ollama of LM Studio. Elke bot kan een ander model gebruiken.",
+            "Ja. Laat een agent naar een lokale OpenAI-compatibele server wijzen, zoals Ollama of LM Studio. Elke agent kan een ander model gebruiken.",
         },
         {
           question: "Wat zit er in het gehoste abonnement?",
@@ -2506,7 +2506,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "Bèta",
     },
     cta: {
-      heading: "Maak kennis met je eerste bot",
+      heading: "Maak kennis met je eerste agent",
       copy: "Draag je volgende taak over.",
       openSourceValue: "Open source",
       selfHostValue: "Zelf hosten",
@@ -2566,7 +2566,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "Открытый исходный код",
       heading: "Альтернатива Grok Bot с открытым исходным кодом, которая действительно ваша",
-      lead: "Дайте ботам работу. Следите за ней с любого устройства.",
+      lead: "Дайте агентам работу. Следите за ней с любого устройства.",
       getStarted: "Начать",
       download: {
         mac: "Скачать для macOS",
@@ -2586,7 +2586,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "Работает с",
       mock: { weekdays: "По будням в 9:00", approval: "Требуется одобрение", approve: "Утвердить", deny: "Запретить" },
       features: [
-        { title: "Ваша модель", body: "Выберите свою модель для каждого бота." },
+        { title: "Ваша модель", body: "Выберите свою модель для каждого агента." },
         { title: "Работа по расписанию", body: "Работает, даже когда компьютер выключен." },
         { title: "Границы задаёте вы", body: "Решайте, какие действия требуют вашего одобрения." },
       ],
@@ -2598,24 +2598,24 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "Телефон",
     },
     roster: {
-      eyebrow: "Ваша команда ботов",
-      heading: "Дайте каждому боту работу",
+      eyebrow: "Ваша команда агентов",
+      heading: "Дайте каждому агенту работу",
       copy: "Начните с шаблона. Настройте под себя.",
       bots: RU_ROSTER,
     },
     channels: {
       heading: "Пишите им где угодно",
-      copy: "Упомяните бота в Slack или напишите ему с телефона.",
+      copy: "Упомяните агента в Slack или напишите ему с телефона.",
       mock: { ask: "кому сегодня нужно напомнить о себе?", reply: "Три лида замолчали на этой неделе. Черновики в треде." },
     },
     features: {
       heading: "Больше, чем чат",
       items: {
-        call: { title: "Он вам звонит", body: "Когда нужно ваше участие, бот звонит вам в приложении. Обсудите всё голосом." },
+        call: { title: "Он вам звонит", body: "Когда нужно ваше участие, агент звонит вам в приложении. Обсудите всё голосом." },
         apps: { title: "Работает в ваших приложениях", body: "Подключите Gmail, GitHub, Notion и любой MCP-сервер." },
         memory: { title: "Помнит", body: "Боты сохраняют то, что узнали, и делятся этим с командой." },
         triggers: { title: "Запускается сам", body: "По расписанию, по вебхуку, по событию GitHub или при изменении, за которым он следит." },
-        team: { title: "Передаёт работу", body: "Боты поручают задачи друг другу и работают вместе в группах." },
+        team: { title: "Передаёт работу", body: "Агенты поручают задачи друг другу и работают вместе в группах." },
         teach: { title: "Учится, наблюдая", body: "Покажите задачу один раз на его компьютере. Он сохранит шаги как навык." },
       },
       mock: {
@@ -2649,7 +2649,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "Можно ли запустить локальную модель?",
           answer:
-            "Да. Направьте бота на локальный OpenAI-совместимый сервер, например Ollama или LM Studio. Каждый бот может использовать свою модель.",
+            "Да. Направьте агента на локальный OpenAI-совместимый сервер, например Ollama или LM Studio. Каждый агент может использовать свою модель.",
         },
         {
           question: "Что входит в облачный тариф?",
@@ -2667,7 +2667,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "Бета",
     },
     cta: {
-      heading: "Познакомьтесь с первым ботом",
+      heading: "Познакомьтесь с первым агентом",
       copy: "Передайте ему следующую задачу.",
       openSourceValue: "Открытый код",
       selfHostValue: "Свой сервер",
@@ -2747,7 +2747,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "Şunlarla çalışır",
       mock: { weekdays: "Hafta içi 9:00'da", approval: "Onay gerekli", approve: "Onayla", deny: "Reddet" },
       features: [
-        { title: "Sizin modeliniz", body: "Her bot için farklı bir model seçin." },
+        { title: "Sizin modeliniz", body: "Her agent için farklı bir model seçin." },
         { title: "Zamanlanmış çalışma", body: "Bilgisayarınız kapalıyken bile çalışır." },
         { title: "Sınırları siz belirlersiniz", body: "Hangi işlemlerin onayınızı gerektirdiğine karar verin." },
       ],
@@ -2759,7 +2759,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "Mobil",
     },
     roster: {
-      eyebrow: "Bot ekibiniz",
+      eyebrow: "Agent ekibiniz",
       heading: "Her bota bir iş verin",
       copy: "Bir şablonla başlayın. Size göre uyarlayın.",
       bots: TR_ROSTER,
@@ -2810,7 +2810,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "Yerel bir model çalıştırabilir miyim?",
           answer:
-            "Evet. Bir botu Ollama veya LM Studio gibi yerel bir OpenAI uyumlu sunucuya yönlendirin. Her bot farklı bir model kullanabilir.",
+            "Evet. Bir botu Ollama veya LM Studio gibi yerel bir OpenAI uyumlu sunucuya yönlendirin. Her agent farklı bir model kullanabilir.",
         },
         {
           question: "Barındırılan plana neler dahil?",
@@ -2888,7 +2888,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "קוד פתוח",
       heading: "חלופת הקוד הפתוח ל-Grok Bot ששייכת לך באמת",
-      lead: "נותנים לבוטים משימה. מתעדכנים מכל מכשיר.",
+      lead: "נותנים לסוכנים משימה. מתעדכנים מכל מכשיר.",
       getStarted: "להתחיל",
       download: {
         mac: "הורדה ל-macOS",
@@ -2908,7 +2908,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "עובד עם",
       mock: { weekdays: "שני עד שישי ב-9:00", approval: "נדרש אישור", approve: "אישור", deny: "דחייה" },
       features: [
-        { title: "המודל שלך", body: "אפשר לבחור מודל אחר לכל בוט." },
+        { title: "המודל שלך", body: "אפשר לבחור מודל אחר לכל סוכן." },
         { title: "עבודה לפי לוח זמנים", body: "ממשיך לעבוד גם כשהמחשב שלך כבוי." },
         { title: "הגבולות בידיים שלך", body: "קובעים אילו פעולות דורשות את האישור שלך." },
       ],
@@ -2920,24 +2920,24 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "מובייל",
     },
     roster: {
-      eyebrow: "צוות הבוטים שלך",
-      heading: "לכל בוט תפקיד משלו",
+      eyebrow: "צוות הסוכנים שלך",
+      heading: "לכל סוכן תפקיד משלו",
       copy: "מתחילים מתבנית ומתאימים אותה.",
       bots: HE_ROSTER,
     },
     channels: {
       heading: "שולחים להם הודעה מכל מקום",
-      copy: "מתייגים בוט ב-Slack או שולחים לו הודעה מהטלפון.",
+      copy: "מתייגים סוכן ב-Slack או שולחים לו הודעה מהטלפון.",
       mock: { ask: "למי צריך לחזור היום?", reply: "שלושה לידים השתתקו השבוע. הטיוטות בשרשור." },
     },
     features: {
       heading: "יותר מצ'אט",
       items: {
-        call: { title: "הוא מתקשר אליך", body: "כשמשהו צריך אותך, הבוט מתקשר אליך באפליקציה. מדברים על זה." },
+        call: { title: "הוא מתקשר אליך", body: "כשמשהו צריך אותך, הסוכן מתקשר אליך באפליקציה. מדברים על זה." },
         apps: { title: "עובד באפליקציות שלך", body: "אפשר לחבר את Gmail, GitHub, Notion וכל שרת MCP." },
-        memory: { title: "זוכר", body: "הבוטים שומרים את מה שהם לומדים ומשתפים את זה עם הצוות." },
+        memory: { title: "זוכר", body: "הסוכנים שומרים את מה שהם לומדים ומשתפים את זה עם הצוות." },
         triggers: { title: "מתעורר מעצמו", body: "לפי לוח זמנים, דרך Webhook, באירוע GitHub או כשמשהו שהוא עוקב אחריו משתנה." },
-        team: { title: "מעביר עבודה הלאה", body: "הבוטים מאצילים משימות זה לזה ועובדים יחד בקבוצות." },
+        team: { title: "מעביר עבודה הלאה", body: "הסוכנים מאצילים משימות זה לזה ועובדים יחד בקבוצות." },
         teach: { title: "לומד מצפייה", body: "מראים לו משימה פעם אחת במחשב שלו. הוא שומר את השלבים כמיומנות." },
       },
       mock: {
@@ -2971,7 +2971,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "אפשר להריץ מודל מקומי?",
           answer:
-            "כן. מכוונים בוט לשרת מקומי תואם OpenAI כמו Ollama או LM Studio. כל בוט יכול להשתמש במודל אחר.",
+            "כן. מכוונים סוכן לשרת מקומי תואם OpenAI כמו Ollama או LM Studio. כל סוכן יכול להשתמש במודל אחר.",
         },
         {
           question: "מה כולל המסלול המנוהל?",
@@ -2989,7 +2989,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "בטא",
     },
     cta: {
-      heading: "הכירו את הבוט הראשון שלכם",
+      heading: "הכירו את הסוכן הראשון שלכם",
       copy: "העבירו לו את המשימה הבאה.",
       openSourceValue: "קוד פתוח",
       selfHostValue: "אירוח עצמי",
@@ -3049,7 +3049,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     hero: {
       eyebrow: "ओपन सोर्स",
       heading: "Grok Bot का ओपन सोर्स विकल्प, जो सच में आपका अपना है",
-      lead: "अपने बॉट्स को काम दें। किसी भी डिवाइस से हाल देखें।",
+      lead: "अपने एजेंट को काम दें। किसी भी डिवाइस से हाल देखें।",
       getStarted: "शुरू करें",
       download: {
         mac: "macOS के लिए डाउनलोड करें",
@@ -3069,7 +3069,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       worksWith: "इनके साथ काम करता है",
       mock: { weekdays: "कार्यदिवस, 9:00 बजे", approval: "अनुमोदन ज़रूरी", approve: "अनुमोदित करें", deny: "अस्वीकार करें" },
       features: [
-        { title: "आपका मॉडल", body: "हर बॉट के लिए अलग मॉडल चुनें।" },
+        { title: "आपका मॉडल", body: "हर एजेंट के लिए अलग मॉडल चुनें।" },
         { title: "शेड्यूल पर काम", body: "आपका कंप्यूटर बंद होने पर भी काम चलता रहता है।" },
         { title: "सीमाएं आप तय करें", body: "तय करें कि किन कार्रवाइयों के लिए आपका अनुमोदन चाहिए।" },
       ],
@@ -3081,24 +3081,24 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       mobile: "मोबाइल",
     },
     roster: {
-      eyebrow: "आपकी बॉट टीम",
-      heading: "हर बॉट को एक काम दें",
+      eyebrow: "आपकी एजेंट टीम",
+      heading: "हर एजेंट को एक काम दें",
       copy: "किसी टेम्पलेट से शुरू करें। उसे अपने हिसाब से बनाएं।",
       bots: HI_ROSTER,
     },
     channels: {
       heading: "कहीं से भी मैसेज करें",
-      copy: "Slack में किसी बॉट को मेंशन करें या अपने फ़ोन से उसे मैसेज भेजें।",
+      copy: "Slack में किसी एजेंट को मेंशन करें या अपने फ़ोन से उसे मैसेज भेजें।",
       mock: { ask: "आज किसे फ़ॉलो-अप चाहिए?", reply: "इस हफ़्ते तीन लीड्स ने जवाब देना बंद कर दिया। ड्राफ़्ट थ्रेड में हैं।" },
     },
     features: {
       heading: "चैट से कहीं ज़्यादा",
       items: {
-        call: { title: "यह आपको कॉल करता है", body: "जब किसी काम में आपकी ज़रूरत हो, आपका बॉट ऐप में आपको कॉल करता है। बात करके सुलझाएं।" },
+        call: { title: "यह आपको कॉल करता है", body: "जब किसी काम में आपकी ज़रूरत हो, आपका एजेंट ऐप में आपको कॉल करता है। बात करके सुलझाएं।" },
         apps: { title: "आपके ऐप्स में काम करता है", body: "Gmail, GitHub, Notion और किसी भी MCP सर्वर से कनेक्ट करें।" },
-        memory: { title: "याद रखता है", body: "बॉट्स जो सीखते हैं उसे याद रखते हैं और टीम के साथ शेयर करते हैं।" },
+        memory: { title: "याद रखता है", body: "एजेंट जो सीखते हैं उसे याद रखते हैं और टीम के साथ शेयर करते हैं।" },
         triggers: { title: "अपने आप जाग जाता है", body: "शेड्यूल पर, Webhook से, GitHub इवेंट पर, या जिस चीज़ पर वह नज़र रखता है उसमें बदलाव होने पर।" },
-        team: { title: "काम आगे सौंपता है", body: "बॉट्स एक-दूसरे को काम सौंपते हैं और समूहों में साथ काम करते हैं।" },
+        team: { title: "काम आगे सौंपता है", body: "एजेंट एक-दूसरे को काम सौंपते हैं और समूहों में साथ काम करते हैं।" },
         teach: { title: "देखकर सीखता है", body: "उसके कंप्यूटर पर एक बार काम करके दिखाएं। वह उन स्टेप्स को स्किल के रूप में सहेज लेता है।" },
       },
       mock: {
@@ -3132,7 +3132,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "क्या लोकल मॉडल चलाया जा सकता है?",
           answer:
-            "हाँ। बॉट को Ollama या LM Studio जैसे किसी लोकल OpenAI-संगत सर्वर से जोड़ें। हर बॉट अलग मॉडल इस्तेमाल कर सकता है।",
+            "हाँ। एजेंट को Ollama या LM Studio जैसे किसी लोकल OpenAI-संगत सर्वर से जोड़ें। हर एजेंट अलग मॉडल इस्तेमाल कर सकता है।",
         },
         {
           question: "होस्टेड प्लान में क्या शामिल है?",
@@ -3150,7 +3150,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
       cloudBadge: "बीटा",
     },
     cta: {
-      heading: "अपने पहले बॉट से मिलें",
+      heading: "अपने पहले एजेंट से मिलें",
       copy: "अपना अगला काम सौंप दें।",
       openSourceValue: "ओपन सोर्स",
       selfHostValue: "सेल्फ़-होस्ट",
@@ -3248,13 +3248,13 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
     },
     channels: {
       heading: "隨處傳訊息",
-      copy: "在 Slack 中提及機器人，或用手機傳訊息給它。",
+      copy: "在 Slack 中提及智能體，或用手機傳訊息給它。",
       mock: { ask: "今天該跟進誰？", reply: "這週有三個潛在客戶沒有回音。草稿已放在討論串裡。" },
     },
     features: {
       heading: "不只是聊天",
       items: {
-        call: { title: "它會打電話給你", body: "需要你的時候，機器人會在 App 裡打電話給你。直接講清楚。" },
+        call: { title: "它會打電話給你", body: "需要你的時候，智能體會在 App 裡打電話給你。直接講清楚。" },
         apps: { title: "在你的 App 裡工作", body: "連接 Gmail、GitHub、Notion 和任何 MCP 伺服器。" },
         memory: { title: "記得住", body: "機器人會記住學到的東西，並與團隊分享。" },
         triggers: { title: "自動啟動", body: "依排程、Webhook、GitHub 事件，或它關注的變化觸發。" },
@@ -3292,7 +3292,7 @@ const HOME_COPY: Record<Locale, HomeCopy> = {
         {
           question: "可以執行本機模型嗎？",
           answer:
-            "可以。將機器人指向 Ollama 或 LM Studio 等本機 OpenAI 相容伺服器。每個機器人都可以使用不同的模型。",
+            "可以。將智能體指向 Ollama 或 LM Studio 等本機 OpenAI 相容伺服器。每個智能體都可以使用不同的模型。",
         },
         {
           question: "託管方案包含哪些內容？",

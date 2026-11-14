@@ -98,7 +98,7 @@ function deps(
   };
 }
 
-describe("messaging another bot", () => {
+describe("messaging another agent", () => {
   beforeEach(() => vi.stubEnv("BOT_MESSAGE_MAX_HOPS", undefined));
   afterEach(() => vi.unstubAllEnvs());
 
@@ -179,7 +179,7 @@ describe("messaging another bot", () => {
     expect(sent.ok && sent.note).toContain("Continue independent work");
   });
 
-  it("refuses a bot messaging itself", async () => {
+  it("refuses an agent messaging itself", async () => {
     const harness = deps({
       bots: [{ id: "bot-sender", name: "Researcher", title: "", thread: { id: "thread-sender" } }],
     });
@@ -187,7 +187,7 @@ describe("messaging another bot", () => {
       bot_id: "bot-sender",
       message: "hello",
     });
-    expect(sent).toEqual({ ok: false, error: "a bot cannot message itself" });
+    expect(sent).toEqual({ ok: false, error: "an agent cannot message itself" });
     expect(harness.enqueue).not.toHaveBeenCalled();
   });
 
@@ -197,7 +197,7 @@ describe("messaging another bot", () => {
       bot_id: "bot-missing",
       message: "hello",
     });
-    expect(sent).toEqual({ ok: false, error: "no bot found with that id or name" });
+    expect(sent).toEqual({ ok: false, error: "no agent found with that id or name" });
     expect(harness.tx.run.create).not.toHaveBeenCalled();
   });
 
@@ -299,7 +299,7 @@ describe("messaging another bot", () => {
     );
   });
 
-  it("does not inherit a request reply link when messaging another bot", async () => {
+  it("does not inherit a request reply link when messaging another agent", async () => {
     const harness = deps({
       bots: [
         { id: "bot-target", name: "Analyst", title: "", thread: { id: "thread-target" } },
@@ -383,7 +383,7 @@ describe("messaging another bot", () => {
     expect(harness.tx.run.create).not.toHaveBeenCalled();
   });
 
-  it("does not let a result label bypass the hop limit toward an unrelated bot", async () => {
+  it("does not let a result label bypass the hop limit toward an unrelated agent", async () => {
     const harness = deps({
       bots: [
         { id: "bot-target", name: "Analyst", title: "", thread: { id: "thread-target" } },
@@ -471,7 +471,7 @@ describe("hop lookup", () => {
     expect(prisma.message.findUnique).not.toHaveBeenCalled();
   });
 
-  it("reads the hop back off the message that woke the bot", async () => {
+  it("reads the hop back off the message that woke the agent", async () => {
     const prisma = {
       message: {
         findUnique: vi.fn().mockResolvedValue({
@@ -601,7 +601,7 @@ describe("hardening", () => {
     expect(harness.tx.run.create).toHaveBeenCalled();
   });
 
-  it("does not deliver to a bot archived while the message was being sent", async () => {
+  it("does not deliver to an agent archived while the message was being sent", async () => {
     const harness = deps({ targetArchived: true });
     const sent = await messageBot(harness.deps, run, sender, {
       bot_id: "bot-target",
@@ -766,7 +766,7 @@ describe("automatic outcome return", () => {
     expect(harness.deps.prisma.run.updateMany).toHaveBeenCalled();
   });
 
-  it("counts the outcome as returned once the requesting bot is archived", async () => {
+  it("counts the outcome as returned once the requesting agent is archived", async () => {
     const harness = deps({
       requesterArchived: true,
       hopBlocks: [

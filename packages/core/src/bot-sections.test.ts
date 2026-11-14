@@ -25,7 +25,7 @@ describe("groupBotsForSidebar", () => {
     ]);
     expect(groupBotsForSidebar([bots[1]!], [], { labels })[0]?.title).toBeNull();
   });
-  it("keeps pinned bots in one top-level group without duplicating them", () => {
+  it("keeps pinned agents in one top-level group without duplicating them", () => {
     const groups = groupBotsForSidebar(
       [
         { id: "pinned", pinned: true, sectionId: "home" },
@@ -44,7 +44,7 @@ describe("groupBotsForSidebar", () => {
     ]);
   });
 
-  it("treats bots pointing at an unavailable section as unassigned", () => {
+  it("treats agents pointing at an unavailable section as unassigned", () => {
     const groups = groupBotsForSidebar(
       [{ id: "orphan", pinned: false, sectionId: "missing" }],
       sections,
@@ -67,12 +67,12 @@ describe("groupBotsForSidebar", () => {
 describe("reorderBotTo", () => {
   const bots = [{ id: "a" }, { id: "b" }, { id: "c" }];
 
-  it("moves a bot to the target bot's position in either direction", () => {
+  it("moves an agent to the target agent's position in either direction", () => {
     expect(reorderBotTo(bots, "a", "c").map((bot) => bot.id)).toEqual(["b", "c", "a"]);
     expect(reorderBotTo(bots, "c", "a").map((bot) => bot.id)).toEqual(["c", "a", "b"]);
   });
 
-  it("leaves the list alone when either bot is missing or unchanged", () => {
+  it("leaves the list alone when either agent is missing or unchanged", () => {
     expect(reorderBotTo(bots, "a", "missing")).toBe(bots);
     expect(reorderBotTo(bots, "a", "a")).toBe(bots);
   });

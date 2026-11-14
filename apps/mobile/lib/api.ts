@@ -1358,7 +1358,7 @@ export function blockText(message: MobileMessage) {
         return `${block.name ?? "subagent"}: ${block.result || block.progress || block.task || ""}`;
       }
       if (block.kind === "child_bot") {
-        return `${block.status === "archived" ? "Archived" : block.status === "deleted" ? "Deleted" : "Bot"} ${block.name ?? ""}`;
+        return `${block.status === "archived" ? "Archived" : block.status === "deleted" ? "Deleted" : "Agent"} ${block.name ?? ""}`;
       }
       if (block.kind === "chart") return `[chart: ${block.name ?? "chart"}]`;
       if (block.kind === "page") return `[page: ${block.title}]`;

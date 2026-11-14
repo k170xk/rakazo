@@ -121,7 +121,7 @@ test("logo bodies are vector-only and do not request a body raster", async ({ pa
   expect(requests).toEqual([]);
 });
 
-test("same-state bots keep independent clocks and survive parent rerenders", async ({ page }) => {
+test("same-state agents keep independent clocks and survive parent rerenders", async ({ page }) => {
   await page.goto("/e2e/fixtures/logo-avatars.html");
   const fleet = page.getByTestId("same-state-bots").getByRole("img");
   await expect(fleet).toHaveCount(6);

@@ -383,7 +383,7 @@ describe("thread message pages", () => {
         threadId: "thread-1",
         seq: 5,
         role: "bot",
-        blocks: [{ kind: "steps", steps: [{ label: "Message bot", count: 1 }] }],
+        blocks: [{ kind: "steps", steps: [{ label: "Message agent", count: 1 }] }],
         botId: "bot-1",
         replyToMessageId: null,
         runId: "run-peer",
@@ -481,7 +481,7 @@ describe("thread message pages", () => {
     ]);
   });
 
-  it("returns peer-run output for the dedicated bot messages view", async () => {
+  it("returns peer-run output for the dedicated agent messages view", async () => {
     const findMany = vi.fn(async () => [
       {
         id: "message-peer",

@@ -827,7 +827,7 @@ function installApplicationMenu() {
       // A server page older than this menu handles Cmd/Ctrl+F itself (as bot search) but ignores
       // a click on this item, which it has no command for.
       command(t("Find…"), "CmdOrCtrl+F", "find"),
-      command(t("Search Bots…"), "CmdOrCtrl+Shift+F", "search"),
+      command(t("Search Agents…"), "CmdOrCtrl+Shift+F", "search"),
       ...(isMac ? macEdit : []),
     ],
   };
@@ -837,8 +837,8 @@ function installApplicationMenu() {
       command(t("Back"), isMac ? "Cmd+[" : "Alt+Left", "back"),
       command(t("Forward"), isMac ? "Cmd+]" : "Alt+Right", "forward"),
       { type: "separator" },
-      command(t("Next Bot"), "Ctrl+Tab", "next-bot"),
-      command(t("Previous Bot"), "Ctrl+Shift+Tab", "previous-bot"),
+      command(t("Next Agent"), "Ctrl+Tab", "next-bot"),
+      command(t("Previous Agent"), "Ctrl+Shift+Tab", "previous-bot"),
       { type: "separator" },
       command(t("Command Menu…"), "CmdOrCtrl+K", "command-menu"),
     ],
@@ -1166,7 +1166,7 @@ async function confirmComputerAccess(detail: string) {
   const options: Electron.MessageBoxOptions = {
     type: "warning",
     title: t("Allow local computer access?"),
-    message: t("Allow bots to use this computer?"),
+    message: t("Allow agents to use this computer?"),
     detail,
     buttons: [t("Cancel"), t("Allow")],
     defaultId: 0,
@@ -1186,7 +1186,7 @@ function confirmRemoteComputerAccess(host: string) {
   }
   return confirmComputerAccess(
     t(
-      "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.",
+      "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.",
       { host },
     ),
   );
@@ -1534,7 +1534,7 @@ app.whenReady().then(async () => {
       }
       const allowed = await confirmComputerAccess(
         t(
-          "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.",
+          "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.",
         ),
       );
       if (!allowed || !isManagedComputerRequest(event)) return false;

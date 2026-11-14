@@ -68,7 +68,7 @@ describe("Android live notification resume", () => {
     expect(native.resume).not.toHaveBeenCalled();
   });
 
-  it("passes the muted bot to the native restart even without a thread id", async () => {
+  it("passes the muted agent to the native restart even without a thread id", async () => {
     await afterChatNotifyChange("https://app.example.test", "token-1", "space-1", {
       botId: "bot-1",
       notify: false,

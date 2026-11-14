@@ -10,7 +10,7 @@ import {
   userErrorMessage,
 } from "./user-error.js";
 
-const copy = { fallback: "Could not load bots", offline: "Could not reach the server" };
+const copy = { fallback: "Could not load agents", offline: "Could not reach the server" };
 const authCopy = {
   fallback: "Could not sign up",
   email: "Enter a valid email",
@@ -60,7 +60,7 @@ describe("isNetworkFailure", () => {
   });
 
   it("leaves server responses and non-errors alone", () => {
-    expect(isNetworkFailure(new Error("Bot not found"))).toBe(false);
+    expect(isNetworkFailure(new Error("Agent not found"))).toBe(false);
     expect(isNetworkFailure("fetch failed")).toBe(false);
     expect(isNetworkFailure(null)).toBe(false);
   });
@@ -74,7 +74,7 @@ describe("isTechnicalErrorMessage", () => {
       "TypeError: undefined is not a function",
       "Could not open (at ExpoModulesCore/Promise.swift:56)",
       '{"error":"boom"}',
-      "rpc bots/list failed",
+      "rpc agents/list failed",
       "rpc threads/subscribe failed (502)",
       "Voice failed (500)",
       "connect ECONNREFUSED 127.0.0.1:3000",
@@ -88,7 +88,7 @@ describe("isTechnicalErrorMessage", () => {
 
   it("keeps copy written for people", () => {
     for (const message of [
-      "Bot not found",
+      "Agent not found",
       "Invalid email or password",
       "Request timed out",
       "Update your server to use AI data sharing in this mobile version.",
@@ -109,12 +109,12 @@ describe("userErrorMessage", () => {
   });
 
   it("passes human messages through and replaces technical ones", () => {
-    expect(userErrorMessage(new Error("Bot not found"), copy)).toBe("Bot not found");
-    expect(userErrorMessage(new Error("rpc bots/list failed"), copy)).toBe(copy.fallback);
+    expect(userErrorMessage(new Error("Agent not found"), copy)).toBe("Agent not found");
+    expect(userErrorMessage(new Error("rpc agents/list failed"), copy)).toBe(copy.fallback);
     expect(userErrorMessage(new Error("Input validation failed"), copy)).toBe(copy.fallback);
     expect(userErrorMessage(new Error("  "), copy)).toBe(copy.fallback);
-    expect(userErrorMessage({ message: "Bot not found" }, copy)).toBe(copy.fallback);
-    expect(userErrorMessage("Bot not found", copy)).toBe("Bot not found");
+    expect(userErrorMessage({ message: "Agent not found" }, copy)).toBe(copy.fallback);
+    expect(userErrorMessage("Agent not found", copy)).toBe("Agent not found");
   });
 });
 

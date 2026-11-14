@@ -3,6 +3,7 @@ import type { SecretStore } from "@rakazo/adapter-kit";
 import { forgetPageShareSecrets } from "@rakazo/adapters";
 import type {
   Actor,
+  BoardItem,
   PageDetail,
   PageStateValues,
   PageSummary,
@@ -10,12 +11,11 @@ import type {
   SharedPage,
 } from "@rakazo/contracts";
 import {
+  boardSource,
   PAGE_SOURCE_MAX_BYTES,
   PAGE_STATE_KEY,
   PAGE_STATE_MAX_BYTES,
   PAGE_STATE_MAX_KEYS,
-  type BoardItem,
-  boardSource,
   pageShareTokenFromSlug,
   pageShareUrl,
   pageSourceBytes,
@@ -182,12 +182,20 @@ function afterCursor(cursor: ListCursor): Prisma.PageWhereInput {
 export async function listPages(
   prisma: PrismaClient,
   actor: Actor,
-  input: { botId?: string; groupId?: string; cursor?: string; limit?: number; query?: string },
+  input: {
+    botId?: string;
+    groupId?: string;
+    kind?: string;
+    cursor?: string;
+    limit?: number;
+    query?: string;
+  },
 ) {
   const limit = input.limit ?? DEFAULT_LIST_LIMIT;
   const where: Prisma.PageWhereInput = {
     spaceId: actor.spaceId,
     userId: actor.userId,
+    ...(input.kind ? { kind: input.kind } : {}),
     ...(input.groupId ? { groupId: input.groupId } : {}),
     ...(input.botId ? { botId: input.botId, ...(input.groupId ? {} : { groupId: null }) } : {}),
     ...(input.cursor ? { AND: [afterCursor(decodeCursor(input.cursor))] } : {}),
@@ -204,6 +212,57 @@ export async function listPages(
   return {
     items: page.map(pageSummary),
     nextCursor: rows.length > limit && last ? encodeCursor(last) : null,
+  };
+}
+
+const PUBLISHED_LIMIT = 100;
+
+/**
+ * Apps a colleague in this space published: shared with signed-in people, or sent to Evolve.
+ * Frozen apps stay hidden. The share path is returned only when the app already has a company link.
+ */
+export async function listPublishedApps(deps: PageDeps, actor: Actor) {
+  const rows = await deps.prisma.page.findMany({
+    where: {
+      spaceId: actor.spaceId,
+      kind: "app",
+      frozenAt: null,
+      userId: { not: actor.userId },
+      OR: [{ visibility: { in: ["link", "public"] } }, { evolvePluginSlug: { not: null } }],
+    },
+    orderBy: { updatedAt: "desc" },
+    take: PUBLISHED_LIMIT,
+    select: {
+      id: true,
+      title: true,
+      visibility: true,
+      evolvePluginSlug: true,
+      iconAssetId: true,
+      shareSecretId: true,
+      user: { select: { name: true, email: true } },
+    },
+  });
+  return {
+    items: await Promise.all(
+      rows.map(async (row) => {
+        const shared = row.visibility === "link" || row.visibility === "public";
+        const url =
+          shared && row.shareSecretId
+            ? await linkUrlFor(deps, row).catch((error: unknown) => {
+                getLogger().error("published app link", error);
+                return null;
+              })
+            : null;
+        return {
+          id: row.id,
+          title: row.title,
+          owner: row.user.name?.trim() || row.user.email,
+          icon: row.iconAssetId,
+          path: url ? new URL(url).pathname : null,
+          publishedToEvolve: row.evolvePluginSlug !== null,
+        };
+      }),
+    ),
   };
 }
 
@@ -431,6 +490,36 @@ export async function saveWhiteboard(
     }
     throw error;
   }
+}
+
+/** An empty whiteboard owned by the person, opened from the Whiteboards list rather than a chat card. */
+export async function createWhiteboard(
+  prisma: PrismaClient,
+  actor: Actor,
+  title: string | undefined,
+): Promise<PageSummary> {
+  const name = title?.trim() || "Whiteboard";
+  const source = boardSource([]);
+  const page = await prisma.page.create({
+    data: {
+      spaceId: actor.spaceId,
+      userId: actor.userId,
+      title: name,
+      kind: "whiteboard",
+      versions: {
+        create: {
+          version: 1,
+          title: name,
+          source,
+          code: source,
+          authorId: actor.userId,
+          via: "board",
+        },
+      },
+    },
+    select: summarySelect,
+  });
+  return pageSummary(page);
 }
 
 export async function renamePage(

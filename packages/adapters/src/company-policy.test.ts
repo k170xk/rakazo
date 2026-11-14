@@ -153,7 +153,7 @@ describe("company switches in tool selection", () => {
     expect(off.has("remember")).toBe(all.has("remember"));
   });
 
-  it("runs an Evolve assistant's bots on its own model only on the company provider", () => {
+  it("runs an Evolve assistant's agents on its own model only on the company provider", () => {
     const civil = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
     const chosen = { provider: "openrouter", modelId: "openai/gpt-6", thinkingLevel: null };
     setCompanyPolicy({

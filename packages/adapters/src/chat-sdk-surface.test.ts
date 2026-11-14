@@ -281,7 +281,7 @@ describe("ChatSdkMessagingSurface inbound", () => {
       webhookRequest({
         threadId: "slack:C1:1",
         id: "m-1",
-        text: "@bot inspect this",
+        text: "@agent inspect this",
         isMention: true,
         rawType: "app_mention",
         files: [{ name: "transcript.txt", url: "https://files.slack.com/incomplete" }],
@@ -294,7 +294,7 @@ describe("ChatSdkMessagingSurface inbound", () => {
     const event = events[0];
     if (event?.type !== "message") throw new Error("expected a message");
     expect(event).toMatchObject({
-      content: "@bot inspect this",
+      content: "@agent inspect this",
       handle: "m-1",
       mentionsBot: true,
       provider: "slack",
@@ -323,7 +323,7 @@ describe("ChatSdkMessagingSurface inbound", () => {
       webhookRequest({
         threadId: "slack:C1:1",
         id: "m-no-hydrate",
-        text: "@bot hello",
+        text: "@agent hello",
         isMention: true,
         rawType: "app_mention",
         files,
@@ -356,7 +356,7 @@ describe("ChatSdkMessagingSurface inbound", () => {
       webhookRequest({
         threadId: "slack:C1:1",
         id: "m-missing",
-        text: "@bot inspect this",
+        text: "@agent inspect this",
         isMention: true,
         rawType: "app_mention",
         files: [{ name: "transcript.txt", url: "https://files.slack.com/incomplete" }],
@@ -367,7 +367,7 @@ describe("ChatSdkMessagingSurface inbound", () => {
     if (fetchMessage) expect(fetchMessage).toHaveBeenCalledWith("slack:C1:1", "m-missing");
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
-      content: "@bot inspect this",
+      content: "@agent inspect this",
       handle: "m-missing",
       mentionsBot: true,
       mediaUrl: "https://files.slack.com/incomplete",
@@ -448,7 +448,7 @@ describe("ChatSdkMessagingSurface inbound", () => {
     expect(events[0]).toMatchObject({ content: text });
   });
 
-  it("flags group messages the SDK detects as bot mentions", async () => {
+  it("flags group messages the SDK detects as agent mentions", async () => {
     const { surface, events } = createSurface();
     await surface.handleWebhook(
       "mock",
@@ -465,7 +465,7 @@ describe("ChatSdkMessagingSurface inbound", () => {
     ]);
   });
 
-  it("never surfaces the bot's own messages", async () => {
+  it("never surfaces the agent's own messages", async () => {
     const { surface, events } = createSurface();
     const response = await surface.handleWebhook(
       "mock",
@@ -852,7 +852,7 @@ describe("ChatSdkMessagingSurface outbound", () => {
 
 describe("ChatSdkMessagingSurface thread history", () => {
   it.each(["mock", "mock-work"])(
-    "returns history with provider %s, oldest first, without the bot's own",
+    "returns history with provider %s, oldest first, without the agent's own",
     async (provider) => {
       const message = (id: string, isMe = false) =>
         createTestMessage(id, `text ${id}`, {

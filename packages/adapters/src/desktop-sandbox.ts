@@ -68,7 +68,7 @@ export function assertHostCommandsAllowed(
 ) {
   if (versions.electron || env.NODE_ENV === "development" || env.NODE_ENV === "test") return;
   throw new Error(
-    "SANDBOX_PROVIDER=desktop runs bot commands directly on this host and is limited to local development. Use docker or a remote provider, or local computer access in the desktop app.",
+    "SANDBOX_PROVIDER=desktop runs agent commands directly on this host and is limited to local development. Use docker or a remote provider, or local computer access in the desktop app.",
   );
 }
 

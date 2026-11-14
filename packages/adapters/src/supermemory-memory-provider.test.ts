@@ -93,7 +93,7 @@ describe("SupermemoryMemoryProvider", () => {
     expect(init?.signal.aborted).toBe(true);
   });
 
-  it("mirrors shared durable saves so a later scope change retains bot memory", async () => {
+  it("mirrors shared durable saves so a later scope change retains agent memory", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 

@@ -9,7 +9,7 @@ const databaseUrl = process.env.DATABASE_URL;
 const describePostgres =
   process.env.VERIFY_DATABASE && databaseUrl ? describe.sequential : describe.skip;
 
-describePostgres("the Space of a linked bot (PostgreSQL)", () => {
+describePostgres("the Space of a linked agent (PostgreSQL)", () => {
   const suffix = `${process.pid}-${Date.now()}-${randomBytes(3).toString("hex")}`;
   const users: string[] = [];
   let db: ReturnType<typeof createDb>;
@@ -49,7 +49,7 @@ describePostgres("the Space of a linked bot (PostgreSQL)", () => {
     await db.pool.end();
   });
 
-  it("finds the caller's bot in another organization and never another person's", async () => {
+  it("finds the caller's agent in another organization and never another person's", async () => {
     const ada = await signup();
     const grace = await signup();
     const work = await createOrganizationForUser(system, { userId: ada.userId, name: "Work" });

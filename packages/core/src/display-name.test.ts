@@ -14,7 +14,7 @@ describe("displayName", () => {
   it.each([undefined, null, "", "  ", "__", "💬", ...opaque])(
     "hides opaque or empty names: %s",
     (name) => {
-      expect(displayName(name, "Bot")).toBe("Bot");
+      expect(displayName(name, "Agent")).toBe("Agent");
     },
   );
   it.each([
@@ -33,7 +33,7 @@ describe("displayName", () => {
     "Customer_Support_Bot2026",
     "christopheralexandermorgan",
   ])("keeps names and short handles: %s", (name) => {
-    expect(displayName(` ${name} `, "Bot")).toBe(name);
+    expect(displayName(` ${name} `, "Agent")).toBe(name);
   });
 });
 
@@ -77,7 +77,7 @@ it("guards identity metadata without changing literal message text", () => {
   ).toMatchObject({
     kind: "bot_message_received",
     fromBotId: "peer",
-    fromBotName: "Bot",
+    fromBotName: "Agent",
     text: "Keep __TestTok1__ literal",
   });
   const text = { kind: "text" as const, text: "__TestTok1__" };

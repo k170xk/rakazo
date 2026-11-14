@@ -97,7 +97,7 @@ function OwnerPages({ botId, groupId }: { botId?: string; groupId?: string }) {
             </Trans>
           ) : (
             <Trans>
-              Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make
+              Apps this agent builds for you appear here. Ask for a dashboard, tracker or plan to make
               one.
             </Trans>
           )}

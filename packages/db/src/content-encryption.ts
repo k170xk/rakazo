@@ -95,6 +95,20 @@ export const ENCRYPTED_MODELS: Record<string, ModelSpec> = {
     space: { column: "spaceId" },
     ownerRelation: "user",
   },
+  /** Proposed filing: the subjects, senders and previews of a person's emails and their folders. */
+  EmailFilingBatch: {
+    table: "email_filing_batches",
+    fields: { content: { plainKeys: new Set() } },
+    space: { column: "spaceId" },
+    ownerRelation: "user",
+  },
+  /** A person's filing settings and learned rules, which name their correspondents. */
+  EmailFilingProfile: {
+    table: "email_filing_profiles",
+    fields: { content: { plainKeys: new Set() } },
+    space: { column: "spaceId" },
+    ownerRelation: "user",
+  },
   /** The compacted summary of older history is derived message content. */
   Thread: {
     table: "threads",

@@ -34,7 +34,7 @@ const sampleCredential = {
 };
 
 describe("request_secret parameters", () => {
-  it("tells the bot which login labels start visible, and that the user decides", () => {
+  it("tells the agent which login labels start visible, and that the user decides", () => {
     const { description } = toolNamed("request_secret");
     expect(description).toContain("ID, phone, email or username starts visible");
     expect(description).toContain("The user decides which fields are hidden");

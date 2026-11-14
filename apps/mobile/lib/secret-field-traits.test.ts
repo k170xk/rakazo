@@ -18,7 +18,7 @@ describe("secret field AutoFill traits", () => {
     expect(secretFieldTraits(undefined, undefined)).toEqual(code);
   });
 
-  it("keeps the one-time code off a code saved for a site the bot named", () => {
+  it("keeps the one-time code off a code saved for a site the agent named", () => {
     const none = { textContentType: "none", autoComplete: "off" };
     for (const type of ["bearer", "header", "basic"]) {
       expect(secretFieldTraits("otp", credential(type))).toEqual(none);

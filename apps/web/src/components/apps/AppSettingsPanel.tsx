@@ -186,7 +186,7 @@ export function AppSettingsPanel({
           />
         </div>
         <p className="text-[12px] text-muted-foreground">
-          {t`The app shows these by id, and the bot can add infographics and generated images here.`}
+          {t`The app shows these by id, and the agent can add infographics and generated images here.`}
         </p>
         {uploadError ? (
           <p role="alert" className="text-[12px] text-destructive">

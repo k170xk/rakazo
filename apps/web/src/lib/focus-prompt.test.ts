@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FOCUS_PROMPT_DELAY_MS, scheduleFocusPrompt } from "./focus-prompt";
 
 describe("scheduleFocusPrompt", () => {
-  it("prompts immediately for the first bot", async () => {
+  it("prompts immediately for the first agent", async () => {
     const prompt = vi.fn(async () => undefined);
     const controller = new AbortController();
     await expect(
@@ -11,7 +11,7 @@ describe("scheduleFocusPrompt", () => {
     expect(prompt).toHaveBeenCalledOnce();
   });
 
-  it("waits before prompting a later bot", async () => {
+  it("waits before prompting a later agent", async () => {
     vi.useFakeTimers();
     const prompt = vi.fn(async () => undefined);
     const controller = new AbortController();

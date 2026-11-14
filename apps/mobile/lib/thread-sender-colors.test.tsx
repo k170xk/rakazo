@@ -166,7 +166,7 @@ it.each(["text", "image"] as const)(
   },
 );
 
-it("keeps the bot name when opening a computer without a sender label", () => {
+it("keeps the agent name when opening a computer without a sender label", () => {
   const opened: string[][] = [];
   renderToStaticMarkup(
     <Bubble

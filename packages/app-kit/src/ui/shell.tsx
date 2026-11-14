@@ -67,22 +67,38 @@ function MobileNav({
   onNavigate: (id: string) => void;
 }) {
   return (
-    <div className="flex gap-1 overflow-x-auto px-4 pb-2 md:hidden">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          data-app-page={item.id}
-          data-app-label={typeof item.label === "string" ? item.label : undefined}
-          onClick={() => onNavigate(item.id)}
-          className={cn(
-            "inline-flex h-10 shrink-0 items-center rounded-full px-3.5 text-sm font-semibold",
-            item.id === current ? "bg-foreground text-background" : "text-muted-foreground",
-          )}
-        >
-          {item.label}
-        </button>
-      ))}
+    <div className="flex gap-1.5 overflow-x-auto px-4 pb-2.5 md:hidden">
+      {items.map((item) => {
+        const selected = item.id === current;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            data-app-page={item.id}
+            data-app-label={typeof item.label === "string" ? item.label : undefined}
+            onClick={() => onNavigate(item.id)}
+            className={cn(
+              "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition-colors [&_svg]:size-4",
+              selected
+                ? "bg-primary/14 text-[hsl(95_55%_28%)] ring-1 ring-inset ring-primary/30 dark:bg-primary/20 dark:text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {item.icon}
+            {item.label}
+            {item.count !== undefined && (
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-[11px] tabular",
+                  selected ? "bg-primary/20 text-current" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {item.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

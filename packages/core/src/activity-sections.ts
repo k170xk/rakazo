@@ -18,7 +18,7 @@ export function activityAttention(
   return run.status === "failed" ? "needs_attention" : "unread";
 }
 
-const chatKey = (run: ActivityRun) => (run.groupId ? `group:${run.groupId}` : `bot:${run.botId}`);
+const chatKey = (run: ActivityRun) => (run.groupId ? `group:${run.groupId}` : `agent:${run.botId}`);
 
 /** Splits activity into what needs the user, what is running, unread chats, and the rest. */
 export function activitySections<
@@ -37,7 +37,7 @@ export function activitySections<
   groups: readonly Group[];
 }) {
   const unreadChats = new Set([
-    ...bots.filter((bot) => bot.unread).map((bot) => `bot:${bot.id}`),
+    ...bots.filter((bot) => bot.unread).map((bot) => `agent:${bot.id}`),
     ...groups.filter((group) => group.unread).map((group) => `group:${group.id}`),
   ]);
   const runUnread = (run: Run) => unreadChats.has(chatKey(run));
@@ -58,7 +58,7 @@ export function activitySections<
     attention,
     working,
     unreadGroups: groups.filter((group) => group.unread && !busy.has(`group:${group.id}`)),
-    unreadBots: bots.filter((bot) => bot.unread && !busy.has(`bot:${bot.id}`)),
+    unreadBots: bots.filter((bot) => bot.unread && !busy.has(`agent:${bot.id}`)),
     recent: recent.filter((run) => !attention.includes(run) && !runUnread(run)),
   };
 }

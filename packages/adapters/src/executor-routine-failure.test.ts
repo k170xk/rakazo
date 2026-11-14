@@ -885,7 +885,7 @@ describe("running a routine retry", () => {
     ["the run did not fail", { status: "completed" }],
     ["the run was itself a retry", { retryOfRunId: "run-0" }],
     ["the routine was paused", { active: false }],
-    ["the bot was archived", { archived: true }],
+    ["the agent was archived", { archived: true }],
     ["the next occurrence is near", { nextRunAt: new Date(NOW.getTime() + 20 * MINUTE) }],
     ["a later run of the routine already happened", { laterRun: true }],
   ] satisfies Array<[string, RetryScenario]>)(

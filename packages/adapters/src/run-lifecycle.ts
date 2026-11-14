@@ -101,12 +101,12 @@ export async function failRunBeforeTurn(
       `Could not complete the delegated request: ${message}`,
       "status",
       { forceUnread: true },
-    ).catch((error) => getLogger().error("bot message failure return", error));
+    ).catch((error) => getLogger().error("agent message failure return", error));
   }
   if (!failed.continuationRunId) {
     await notifyRun(deps, run, {
       kind: "failure",
-      title: `${displayName(botName, "Bot")} failed`,
+      title: `${displayName(botName, "Agent")} failed`,
       body: message,
       botId: run.botId,
       threadId: run.threadId,

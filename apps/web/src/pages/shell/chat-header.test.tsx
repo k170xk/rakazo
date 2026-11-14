@@ -91,7 +91,7 @@ function renderHeader({ inGroup = false } = {}) {
 
 const gift = () => container.querySelector<HTMLButtonElement>('[aria-label="Invite a friend"]');
 
-it("shows the Main PA badge and description for the onboarding first bot", () => {
+it("shows the Main PA badge and description for the onboarding first agent", () => {
   billing.status = { referral: null };
   act(() =>
     root.render(
@@ -158,7 +158,7 @@ it("shows no gift when the account cannot invite", () => {
   expect(gift()).toBeNull();
 });
 
-it("shows the gift only in a bot chat, as mobile does", () => {
+it("shows the gift only in an agent chat, as mobile does", () => {
   billing.status = { referral: { url: "https://example.test/sign-up?ref=abc", rewards: 0 } };
   renderHeader({ inGroup: true });
   expect(gift()).toBeNull();

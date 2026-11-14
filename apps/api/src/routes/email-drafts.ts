@@ -3,10 +3,10 @@ import { createAdapterContext } from "@rakazo/adapter-kit";
 import type { StoredEmailDraft } from "@rakazo/adapters";
 import {
   attachmentProblem,
+  createOutlookDraft,
   OutlookNotSentError,
   sanitizeEmailBody,
   sanitizeEmailSignature,
-  sendOutlookEmail,
   storedEmailDraft,
   threadChatFiles,
 } from "@rakazo/adapters";
@@ -14,6 +14,7 @@ import type {
   Actor,
   EmailDraft,
   EmailDraftAttachment,
+  EmailDraftCreate,
   EmailDraftMode,
   EmailDraftStatus,
 } from "@rakazo/contracts";
@@ -43,6 +44,8 @@ type DraftRow = {
 
 const MAYBE_SENT =
   "Outlook stopped answering while sending, so this email may have gone. Check Sent Items in Outlook before sending it again.";
+const MAYBE_CREATED =
+  "Outlook stopped answering while saving this draft. Check Drafts in Outlook before creating it again.";
 
 const STUCK_SENDING_MS = 5 * 60_000;
 
@@ -97,6 +100,8 @@ export function emailDraftsRoutes(ctx: RouterContext) {
       return count === 1;
     });
 
+  const signatureMissUntil = new Map<string, number>();
+
   const signatureOf = async (actor: Actor): Promise<string | null> => {
     const user = await runAsSystem("read a person's email signature", () =>
       deps.prisma.user.findUnique({
@@ -104,26 +109,48 @@ export function emailDraftsRoutes(ctx: RouterContext) {
         select: { emailSignature: true },
       }),
     );
-    return user?.emailSignature?.trim() ? user.emailSignature : null;
+    if (!user) return null;
+    if (user.emailSignature?.trim()) return user.emailSignature;
+    // Empty string means the person explicitly removed their signature.
+    if (user.emailSignature === "") return null;
+    if (!deps.microsoft) return null;
+    const missUntil = signatureMissUntil.get(actor.userId) ?? 0;
+    if (Date.now() < missUntil) return null;
+    const detected = await deps.microsoft.outlookDetectSignature(own(actor)).catch(() => null);
+    if (!detected) {
+      signatureMissUntil.set(actor.userId, Date.now() + 10 * 60_000);
+      return null;
+    }
+    signatureMissUntil.delete(actor.userId);
+    await runAsSystem("save detected Outlook email signature", () =>
+      deps.prisma.user.update({
+        where: { id: actor.userId },
+        data: { emailSignature: detected },
+      }),
+    ).catch(() => undefined);
+    return detected;
   };
 
   const present = async (actor: Actor, row: DraftRow): Promise<EmailDraft> => {
     const content = storedEmailDraft(row.content);
-    // A send cut off by a restart never finishes, so after a while it shows as possibly sent.
-    const stuck =
-      row.status === "sending" && Date.now() - row.updatedAt.getTime() > STUCK_SENDING_MS;
-    const status = stuck ? "failed" : (row.status as EmailDraftStatus);
+    // An in-flight request cut off by a restart never finishes, so after a while surface its state.
+    const timedOut = Date.now() - row.updatedAt.getTime() > STUCK_SENDING_MS;
+    const stuckSending = row.status === "sending" && timedOut;
+    const stuckCreating = row.status === "creating" && timedOut;
+    const status: EmailDraftStatus = stuckSending
+      ? "failed"
+      : stuckCreating
+        ? "draft"
+        : (row.status as EmailDraftStatus);
     const from = deps.microsoft
       ? await deps.microsoft.outlookAccount(own(actor)).catch(() => null)
       : null;
     let cannotSend: string | null = null;
     if (status === "draft") {
       if (!(await companyFeatureOnFor(deps, actor, "outlookSend"))) {
-        cannotSend = "Sending Outlook email is not turned on for you.";
+        cannotSend = "Outlook email drafts are not turned on for you.";
       } else if (!deps.microsoft || from === null) {
-        cannotSend = "Connect Outlook in Plugins to send this email.";
-      } else if (content.to.length + content.cc.length + content.bcc.length === 0) {
-        cannotSend = "Add at least one recipient.";
+        cannotSend = "Connect Outlook in Connectors to create this draft.";
       }
     }
     return {
@@ -142,7 +169,8 @@ export function emailDraftsRoutes(ctx: RouterContext) {
       signatureHtml: await signatureOf(actor),
       attachments: content.attachments,
       cannotSend,
-      error: stuck ? MAYBE_SENT : row.error,
+      outlookWebLink: content.outlookWebLink ?? null,
+      error: stuckSending ? MAYBE_SENT : stuckCreating ? MAYBE_CREATED : row.error,
       sentAt: row.sentAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
@@ -180,10 +208,17 @@ export function emailDraftsRoutes(ctx: RouterContext) {
       }
     }
     if (!content.subject.trim()) next.subject = replySubject(original.subject);
-    if (!(await save(actor, row, { content: next }, { status: "draft", version: row.version }))) {
+    if (
+      !(await save(
+        actor,
+        row,
+        { content: next, bump: true },
+        { status: "draft", version: row.version },
+      ))
+    ) {
       return load(actor, row.id);
     }
-    return { ...row, content: next as Prisma.JsonValue };
+    return { ...row, version: row.version + 1, content: next as Prisma.JsonValue };
   };
 
   const chosenFiles = async (
@@ -235,6 +270,114 @@ export function emailDraftsRoutes(ctx: RouterContext) {
     );
   };
 
+  /**
+   * Saves any live edits from the card and creates the draft in the person's Outlook Drafts folder
+   * via Mail.ReadWrite. No assistant or run can call this, and nothing is sent.
+   */
+  const createInOutlook = async (actor: Actor, input: EmailDraftCreate): Promise<EmailDraft> => {
+    await requireCompanyFeature(deps, actor, "outlookSend");
+    const microsoft = deps.microsoft;
+    if (!microsoft) throw new ORPCError("BAD_REQUEST", { message: "Outlook is not set up here." });
+    const row = await load(actor, input.id);
+    // Recover a draft whose previous creation attempt was cut off by a server restart.
+    if (row.status === "creating" && Date.now() - row.updatedAt.getTime() > STUCK_SENDING_MS) {
+      await save(actor, row, { status: "draft", error: MAYBE_CREATED }, { status: "creating" });
+      row.status = "draft";
+    }
+    const current = storedEmailDraft(row.content);
+    const hasInlineEdits =
+      input.to !== undefined ||
+      input.cc !== undefined ||
+      input.bcc !== undefined ||
+      input.subject !== undefined ||
+      input.bodyHtml !== undefined ||
+      input.attachmentIds !== undefined;
+    const content: StoredEmailDraft = hasInlineEdits
+      ? {
+          ...current,
+          to: input.to ?? current.to,
+          cc: input.cc ?? current.cc,
+          bcc: input.bcc ?? current.bcc,
+          subject: input.subject !== undefined ? input.subject.trim() : current.subject,
+          bodyHtml:
+            input.bodyHtml !== undefined ? sanitizeEmailBody(input.bodyHtml) : current.bodyHtml,
+          attachments:
+            input.attachmentIds !== undefined
+              ? await chosenFiles(actor, row, input.attachmentIds)
+              : current.attachments,
+        }
+      : current;
+    if (
+      !(await save(
+        actor,
+        row,
+        {
+          ...(hasInlineEdits ? { content, bump: true } : {}),
+          status: "creating",
+          error: null,
+        },
+        { status: "draft", version: input.version },
+      ))
+    ) {
+      throw new ORPCError("CONFLICT", {
+        message:
+          "This draft has already been created in Outlook, discarded or changed. Reload it to see the latest.",
+      });
+    }
+    const backToDraft = async (message: string) => {
+      await save(actor, row, { status: "draft", error: message }, { status: "creating" });
+      return present(actor, await load(actor, row.id));
+    };
+    const grant = await microsoft.outlookDraftToken(own(actor)).catch(() => null);
+    if (!grant)
+      return backToDraft(
+        "Outlook could not be reached. No draft was created in Outlook; try again.",
+      );
+    if ("reconnect" in grant) return backToDraft(grant.reconnect);
+    let created: Awaited<ReturnType<typeof createOutlookDraft>>;
+    try {
+      created = await createOutlookDraft(
+        {
+          mode: row.mode as EmailDraftMode,
+          replyToMessageId: row.replyToMessageId,
+          to: content.to,
+          cc: content.cc,
+          bcc: content.bcc,
+          subject: content.subject,
+          bodyHtml: content.bodyHtml,
+          signatureHtml: await signatureOf(actor),
+          attachments: await readBytes(actor, row, content.attachments),
+        },
+        grant.token,
+      );
+    } catch (error) {
+      if (error instanceof OutlookNotSentError) {
+        return backToDraft(`${error.message} No draft was created in Outlook.`);
+      }
+      getLogger().error("outlook draft creation outcome unknown", {
+        error: String(error),
+        draftId: row.id,
+      });
+      return backToDraft(MAYBE_CREATED);
+    }
+    await save(
+      actor,
+      row,
+      {
+        content: {
+          ...content,
+          outlookMessageId: created.id,
+          outlookWebLink: created.webLink,
+        },
+        status: "created",
+        sentAt: new Date(),
+        error: null,
+      },
+      { status: "creating" },
+    );
+    return present(actor, await load(actor, row.id));
+  };
+
   return {
     emailDrafts: {
       get: authed.emailDrafts.get.handler(async ({ context, input }) => {
@@ -246,7 +389,9 @@ export function emailDraftsRoutes(ctx: RouterContext) {
         await requireCompanyFeature(deps, context.actor, "outlookSend");
         const row = await load(context.actor, input.id);
         if (row.status !== "draft") {
-          throw new ORPCError("CONFLICT", { message: "This email is no longer a draft." });
+          throw new ORPCError("CONFLICT", {
+            message: "This email is no longer an editable draft.",
+          });
         }
         const current = storedEmailDraft(row.content);
         const next: StoredEmailDraft = {
@@ -272,75 +417,13 @@ export function emailDraftsRoutes(ctx: RouterContext) {
         return present(context.actor, await load(context.actor, row.id));
       }),
 
-      /**
-       * The only way an email leaves: its person presses Send on their own card. No assistant
-       * or run can call this, and access is checked again here every time.
-       */
-      send: authed.emailDrafts.send.handler(async ({ context, input }) => {
-        const { actor } = context;
-        await requireCompanyFeature(deps, actor, "outlookSend");
-        const microsoft = deps.microsoft;
-        if (!microsoft)
-          throw new ORPCError("BAD_REQUEST", { message: "Outlook is not set up here." });
-        const row = await load(actor, input.id);
-        const content = storedEmailDraft(row.content);
-        if (content.to.length + content.cc.length + content.bcc.length === 0) {
-          throw new ORPCError("BAD_REQUEST", { message: "Add at least one recipient." });
-        }
-        if (
-          !(await save(
-            actor,
-            row,
-            { status: "sending", error: null },
-            { status: "draft", version: input.version },
-          ))
-        ) {
-          throw new ORPCError("CONFLICT", {
-            message:
-              "This draft has already been sent, discarded or changed. Reload it to see the latest.",
-          });
-        }
-        const backToDraft = async (message: string) => {
-          await save(actor, row, { status: "draft", error: message }, { status: "sending" });
-          return present(actor, await load(actor, row.id));
-        };
-        const grant = await microsoft.outlookSendToken(own(actor)).catch(() => null);
-        if (!grant)
-          return backToDraft("Outlook could not be reached. Nothing was sent; try again.");
-        if ("reconnect" in grant) return backToDraft(grant.reconnect);
-        try {
-          await sendOutlookEmail(
-            {
-              mode: row.mode as EmailDraftMode,
-              replyToMessageId: row.replyToMessageId,
-              to: content.to,
-              cc: content.cc,
-              bcc: content.bcc,
-              subject: content.subject,
-              bodyHtml: content.bodyHtml,
-              signatureHtml: await signatureOf(actor),
-              attachments: await readBytes(actor, row, content.attachments),
-            },
-            grant.token,
-          );
-        } catch (error) {
-          if (error instanceof OutlookNotSentError)
-            return backToDraft(`${error.message} Nothing was sent.`);
-          getLogger().error("outlook send outcome unknown", {
-            error: String(error),
-            draftId: row.id,
-          });
-          await save(actor, row, { status: "failed", error: MAYBE_SENT }, { status: "sending" });
-          return present(actor, await load(actor, row.id));
-        }
-        await save(
-          actor,
-          row,
-          { status: "sent", sentAt: new Date(), error: null },
-          { status: "sending" },
-        );
-        return present(actor, await load(actor, row.id));
-      }),
+      createDraft: authed.emailDrafts.createDraft.handler(async ({ context, input }) =>
+        createInOutlook(context.actor, input),
+      ),
+
+      send: authed.emailDrafts.send.handler(async ({ context, input }) =>
+        createInOutlook(context.actor, input),
+      ),
 
       discard: authed.emailDrafts.discard.handler(async ({ context, input }) => {
         const row = await load(context.actor, input.id);
@@ -369,10 +452,11 @@ export function emailDraftsRoutes(ctx: RouterContext) {
               message: "This signature is too large. Use smaller or linked images.",
             });
           }
+          signatureMissUntil.delete(context.actor.userId);
           await runAsSystem("save a person's email signature", () =>
             deps.prisma.user.update({
               where: { id: context.actor.userId },
-              data: { emailSignature: html || null },
+              data: { emailSignature: html },
             }),
           );
           return { html: html || null };

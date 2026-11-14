@@ -205,7 +205,7 @@ it("clears saved drafts and the returning-user mark only once the account is del
   const location = { assign: vi.fn() };
   vi.stubGlobal("location", location);
   try {
-    writeComposerDraft("bot:bot-1", "unsent thought");
+    writeComposerDraft("agent:bot-1", "unsent thought");
     rememberSignedIn();
     vi.mocked(fetchAccountSecurity).mockResolvedValue({ ...security, freshOidcAuth: true });
     vi.mocked(authClient.deleteUser)
@@ -217,11 +217,11 @@ it("clears saved drafts and the returning-user mark only once the account is del
     await render();
     await click("Delete");
     await act(async () => deleteButton().click());
-    expect(readComposerDraft("bot:bot-1")).toBe("unsent thought");
+    expect(readComposerDraft("agent:bot-1")).toBe("unsent thought");
     expect(hasSignedInBefore()).toBe(true);
     await act(async () => deleteButton().click());
     expect(location.assign).toHaveBeenCalledWith("/sign-in");
-    expect(readComposerDraft("bot:bot-1")).toBe("");
+    expect(readComposerDraft("agent:bot-1")).toBe("");
     expect(hasSignedInBefore()).toBe(false);
   } finally {
     vi.unstubAllGlobals();

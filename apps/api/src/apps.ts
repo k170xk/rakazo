@@ -62,6 +62,21 @@ async function requireApp(prisma: PrismaClient, actor: Actor, pageId: string) {
   return row;
 }
 
+/** Apps and whiteboards both store uploaded pictures, infographics and project photos as assets. */
+async function requireAssetPage(prisma: PrismaClient, actor: Actor, pageId: string) {
+  const row = await prisma.page.findFirst({
+    where: {
+      id: pageId,
+      spaceId: actor.spaceId,
+      userId: actor.userId,
+      kind: { in: ["app", "whiteboard"] },
+    },
+    select: { id: true },
+  });
+  if (!row) throw new IsolationError();
+  return row;
+}
+
 const access = (value: string): AppDataAccess =>
   value === "company" || value === "contribute" ? value : "owner";
 
@@ -475,7 +490,7 @@ export async function setAppWorkspaceSettings(
 }
 
 export async function getAppAssets(prisma: PrismaClient, actor: Actor, pageId: string) {
-  await requireApp(prisma, actor, pageId);
+  await requireAssetPage(prisma, actor, pageId);
   const rows = await listAppAssets(prisma, pageId);
   return rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }));
 }
@@ -485,7 +500,7 @@ export async function getAppAsset(
   actor: Actor,
   input: { pageId: string; assetId: string },
 ) {
-  await requireApp(prisma, actor, input.pageId);
+  await requireAssetPage(prisma, actor, input.pageId);
   const asset = await readAppAsset(prisma, input.pageId, input.assetId);
   if (!asset) throw new IsolationError();
   return { mime: asset.mime, base64: Buffer.from(asset.bytes).toString("base64") };
@@ -496,7 +511,7 @@ export async function uploadAppAsset(
   actor: Actor,
   input: { pageId: string; name: string; mime: string; base64: string },
 ) {
-  await requireApp(prisma, actor, input.pageId);
+  await requireAssetPage(prisma, actor, input.pageId);
   const asset = await addAppAsset(prisma, input.pageId, {
     name: input.name,
     mime: input.mime,
@@ -511,7 +526,7 @@ export async function deleteAppAsset(
   actor: Actor,
   input: { pageId: string; assetId: string },
 ) {
-  await requireApp(prisma, actor, input.pageId);
+  await requireAssetPage(prisma, actor, input.pageId);
   await prisma.appAsset.deleteMany({ where: { id: input.assetId, pageId: input.pageId } });
   return { ok: true as const };
 }

@@ -34,7 +34,7 @@ export function RecordForm({
   columns?: string[];
   errors?: Record<string, string>;
 }) {
-  const list = (columns ?? schema.columns.map((column) => column.key))
+  const list = (columns ?? schema.columns.filter((column) => !column.hidden).map((column) => column.key))
     .map((key) => schema.columns.find((column) => column.key === key))
     .filter((column): column is Column => Boolean(column) && !column?.formula);
   const set = (key: string, next: unknown) => onChange({ ...value, [key]: next });
@@ -122,7 +122,7 @@ export function RecordDetail({
   row: Record<string, unknown>;
   columns?: string[];
 }) {
-  const list = (columns ?? schema.columns.map((column) => column.key))
+  const list = (columns ?? schema.columns.filter((column) => !column.hidden).map((column) => column.key))
     .map((key) => schema.columns.find((column) => column.key === key))
     .filter((column): column is Column => Boolean(column));
   return (

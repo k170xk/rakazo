@@ -269,8 +269,11 @@ ${
   Kanban,
   KpiCard,
   PageHeader,
+  PresenceStack,
+  PrintButton,
   sumBy,
   TableView,
+  Theme,
   toast,
 } from "@ocsc/ui";
 import { type TableApi, useTable } from "@ocsc/app";
@@ -279,13 +282,18 @@ import { ${[...icons].sort().join(", ")} } from "lucide-react";
 export default function App() {
 ${tableHooks}
   return (
-    <AppShell
-      title=${str(title)}
-      subtitle=${str(source ? `From ${source}` : "OCSC app")}
-      pages={[
+    <>
+      <Theme preset="crisp" density="comfortable" />
+      <AppShell
+        title=${str(title)}
+        subtitle=${str(source ? `From ${source}` : "OCSC app")}
+        commands
+        actions={<><PresenceStack /><PrintButton size="sm" document={() => ({ title: ${str(title)}, kind: "DATA SUMMARY", blocks: [{ type: "stats", items: [{ label: ${str(main.label)}, value: String(${mainVar}.rows.length) }] }] })} /></>}
+        pages={[
 ${pages.join("\n")}
-      ]}
-    />
+        ]}
+      />
+    </>
   );
 }
 

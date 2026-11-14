@@ -256,7 +256,7 @@ it.each([
     );
     const bot = {
       id: "bot-1",
-      name: "Test bot",
+      name: "Test agent",
       incomingCall: {
         callId: "call-1",
         reason: "Review",

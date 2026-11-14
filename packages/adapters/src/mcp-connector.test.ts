@@ -667,7 +667,7 @@ describe("MCP connector session cache", () => {
     await connector.close();
   });
 
-  it("records a failed lookup of the bot's servers before the registry drops it", async () => {
+  it("records a failed lookup of the agent's servers before the registry drops it", async () => {
     const append = vi.fn().mockResolvedValue(undefined);
     const prisma = {
       mcpServer: NO_SHARED_SERVERS,
@@ -1562,7 +1562,7 @@ describe("MCP connector session cache", () => {
     await connector.close();
   });
 
-  it("gives a bot without an assignment every tool of a server shared with all agents", async () => {
+  it("gives an agent without an assignment every tool of a server shared with all agents", async () => {
     const state = {
       failNext: false,
       initializations: 0,

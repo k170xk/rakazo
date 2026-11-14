@@ -3,7 +3,31 @@ import { newestPageCards, pageCardSuperseded } from "@rakazo/core";
 
 export type PageBlock = Extract<MessageBlock, { kind: "page" }>;
 
-/** Page-only bot messages fold under the same bot's next reply, which introduces them. */
+function mergePageBlocks(existing: readonly PageBlock[], incoming: readonly PageBlock[]): PageBlock[] {
+  const out = [...existing];
+  for (const block of incoming) {
+    const at = out.findIndex((item) => item.pageId === block.pageId);
+    if (at === -1) {
+      out.push(block);
+    } else {
+      const prev = out[at]!;
+      const created = prev.created === true || block.created === true;
+      out[at] = {
+        ...block,
+        ...(created ? { created: true } : {}),
+        ...(!created && (block.summary ?? prev.summary)
+          ? { summary: block.summary ?? prev.summary }
+          : {}),
+      };
+    }
+  }
+  return out;
+}
+
+/**
+ * Page-only bot messages fold under the same bot's next reply, which introduces them, keeping only
+ * the latest version per page within that turn (and collapsing consecutive interim saves while streaming).
+ */
 export function projectPageCards<
   Message extends { id: string; role: string; botId?: string; blocks: MessageBlock[] },
 >(messages: readonly Message[]) {
@@ -16,17 +40,58 @@ export function projectPageCards<
       !message.blocks.every((block) => block.kind === "page")
     )
       return;
+    const blocks = message.blocks as PageBlock[];
+    let laterSamePage: string | null = null;
     for (const next of messages.slice(index + 1)) {
-      if (next.role !== "bot" || next.botId !== message.botId) return;
-      if (!next.blocks.some((block) => block.kind === "text")) continue;
-      pages.set(next.id, [...(pages.get(next.id) ?? []), ...(message.blocks as PageBlock[])]);
-      foldedInto.set(message.id, next.id);
-      return;
+      if (next.role !== "bot" || next.botId !== message.botId) break;
+      if (next.blocks.some((block) => block.kind === "text")) {
+        pages.set(next.id, mergePageBlocks(pages.get(next.id) ?? [], blocks));
+        foldedInto.set(message.id, next.id);
+        return;
+      }
+      if (
+        next.blocks.length > 0 &&
+        next.blocks.every((block) => block.kind === "page") &&
+        blocks.every((block) =>
+          (next.blocks as PageBlock[]).some((later) => later.pageId === block.pageId),
+        )
+      ) {
+        laterSamePage = next.id;
+      }
     }
+    if (laterSamePage) foldedInto.set(message.id, laterSamePage);
   });
-  const lastCard = newestPageCards(messages, (id) => foldedInto.get(id) ?? id);
+  const resolveOwner = (id: string): string => {
+    let cur = id;
+    const seen = new Set<string>();
+    while (foldedInto.has(cur) && !seen.has(cur)) {
+      seen.add(cur);
+      cur = foldedInto.get(cur)!;
+    }
+    return cur;
+  };
+  const lastCard = newestPageCards(messages, resolveOwner);
+  const visibleMessages = messages.filter((message) => !foldedInto.has(message.id));
+  const seenPages = new Set<string>();
+  const markFirst = (block: PageBlock): PageBlock => {
+    const first = !seenPages.has(block.pageId);
+    seenPages.add(block.pageId);
+    if (block.created !== undefined) return block;
+    return { ...block, created: first };
+  };
+  const normalizedMessages = visibleMessages.map((message) => {
+    const attached = pages.get(message.id);
+    const hasInlinePage = message.blocks.some((block) => block.kind === "page");
+    const nextBlocks = hasInlinePage
+      ? message.blocks.map((block) => (block.kind === "page" ? markFirst(block) : block))
+      : message.blocks;
+    if (attached) {
+      pages.set(message.id, attached.map(markFirst));
+    }
+    return hasInlinePage ? { ...message, blocks: nextBlocks } : message;
+  });
   return {
-    visibleMessages: messages.filter((message) => !foldedInto.has(message.id)),
+    visibleMessages: normalizedMessages,
     pages,
     foldedInto,
     /** Changes only when a card becomes the newest one for its page. */

@@ -12,12 +12,12 @@ export const GROK_ALTERNATIVE_DESCRIPTION =
 export const GROK_ALTERNATIVE_H1 = "Grok Bot alternatives (open source and hosted)";
 
 export const GROK_INTRO = [
-  "Grok Bot is xAI's hosted product for named bots, a computer they can use, routines, and approvals. The public docs describe a cloud computer on your account. They do not describe installing the service yourself or connecting your own model provider.",
+  "Grok Bot is xAI's hosted product for named agents, a computer they can use, routines, and approvals. The public docs describe a cloud computer on your account. They do not describe installing the service yourself or connecting your own model provider.",
   "Below are alternatives, open source and hosted. [Rakazo, the open source Grok Bot alternative](/), is one of them: Apache-2.0 software you can run on your own machine, with a model key you bring.",
 ] as const;
 
 export const GROK_HOWTO = [
-  "Choose an agent you run yourself when the computer and the model key should stay with you. Rakazo is Apache-2.0: you host it, you bring the model key, and you manage the bot from chat. OpenClaw is an MIT-licensed agent you run yourself, and its docs add a Gateway and a config file. Hermes Agent is MIT-licensed, with a desktop app that can reach a first message without the command line, and a separate gateway for messaging apps.",
+  "Choose an agent you run yourself when the computer and the model key should stay with you. Rakazo is Apache-2.0: you host it, you bring the model key, and you manage the agent from chat. OpenClaw is an MIT-licensed agent you run yourself, and its docs add a Gateway and a config file. Hermes Agent is MIT-licensed, with a desktop app that can reach a first message without the command line, and a separate gateway for messaging apps.",
   "Choose a hosted assistant when you do not want to install the service. Grok Bot comes with paid Cursor plans and SuperGrok. Meta Muse runs on a virtual machine Meta operates. OpenAI Dots sit on eligible ChatGPT plans. Instinct is the assistant you text or call. Claude Duet comes with Claude Pro and Max in the US, on a computer Anthropic operates. Hark Pro has a free tier. $20 a month is twice the usage, and $100 a month is ten times the usage.",
   "The [alternatives roundup](/alternatives/) lists license, price, and setup side by side. [OpenClaw vs Hermes Agent vs Rakazo](/blog/openclaw-vs-hermes-vs-rakazo/) compares the three you run yourself, and [best open source AI agents in 2026](/blog/best-open-source-ai-agents-2026/) includes libraries as well as apps.",
 ] as const;
@@ -68,8 +68,8 @@ export const GROK_CHAT_FIGURE: GrokFigure = {
   avif: "/graphics/grok/chat.avif",
   width: 1200,
   height: 800,
-  alt: "Rakazo chat with the Inbox bot. The sidebar lists Inbox, Chief, and Sales. The message asks the bot to file demo mail and not send anything.",
-  caption: "The chat. The roster is the sidebar, and you manage the bot from this conversation.",
+  alt: "Rakazo chat with the Inbox agent. The sidebar lists Inbox, Chief, and Sales. The message asks the agent to file demo mail and not send anything.",
+  caption: "The chat. The roster is the sidebar, and you manage the agent from this conversation.",
 };
 
 export const GROK_ROUTINE_FIGURE: GrokFigure = {
@@ -130,7 +130,7 @@ export const GROK_ALTERNATIVES: readonly GrokListCard[] = [
   {
     label: "Rakazo",
     href: "/",
-    note: "Suits someone who wants a persistent bot on a machine they control, with a model key they bring, managed from chat. The license is Apache-2.0. [Rakazo, the open source Grok Bot alternative](/).",
+    note: "Suits someone who wants a persistent agent on a machine they control, with a model key they bring, managed from chat. The license is Apache-2.0. [Rakazo, the open source Grok Bot alternative](/).",
     image: figureImage(GROK_CHAT_FIGURE),
     caption: GROK_CHAT_FIGURE.caption,
   },
@@ -193,17 +193,17 @@ export const GROK_ALTERNATIVE_FAQ = [
   {
     question: "Can I self-host Grok Bot?",
     answer:
-      "The Grok Bot docs describe a cloud computer assigned to your account. They also describe an optional local computer, where a bot runs approved commands on the machine in front of you. They do not describe installing the Grok Bot service on a server you operate. Rakazo can be self-hosted.",
+      "The Grok Bot docs describe a cloud computer assigned to your account. They also describe an optional local computer, where an agent runs approved commands on the machine in front of you. They do not describe installing the Grok Bot service on a server you operate. Rakazo can be self-hosted.",
   },
   {
     question: "How is Rakazo different from Grok Bot?",
     answer:
-      "Both are persistent bots that can use a computer, sign in to tools, keep context, and run routines. Grok Bot hosts that computer for you and comes with paid Cursor plans and SuperGrok subscriptions. Rakazo is open source: you host it or use Rakazo Cloud, in beta, you choose the model, and team computers and private computers stay separate.",
+      "Both are persistent agents that can use a computer, sign in to tools, keep context, and run routines. Grok Bot hosts that computer for you and comes with paid Cursor plans and SuperGrok subscriptions. Rakazo is open source: you host it or use Rakazo Cloud, in beta, you choose the model, and team computers and private computers stay separate.",
   },
   {
     question: "Is Rakazo just chat, like Grok Bot?",
     answer:
-      "After the install, yes. You create an account, connect a model, and manage the bot from that chat. A new bot interviews you. Routines, memory, and approval boundaries stay with the bot. Rakazo is that chat plus the computer you run. Grok Bot is also a chat for named bots. The difference is who hosts the service and who picks the model.",
+      "After the install, yes. You create an account, connect a model, and manage the agent from that chat. A new agent interviews you. Routines, memory, and approval boundaries stay with the agent. Rakazo is that chat plus the computer you run. Grok Bot is also a chat for named agents. The difference is who hosts the service and who picks the model.",
   },
   CLAUDE_CHATGPT_SUBSCRIPTION_FAQ,
   {

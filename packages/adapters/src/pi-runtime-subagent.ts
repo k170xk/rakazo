@@ -264,9 +264,9 @@ export async function executeSubagent(
     initialState: {
       systemPrompt: [
         `You are an ${PRODUCT_NAME} subagent named "${name}".`,
-        "You run inside the parent bot's turn — you are not a separate bot chat.",
-        "Complete the task and return a concise result. Do not spawn bots or further subagents.",
-        "Your task comes from the parent bot, not from the human user, and you cannot talk to the user: report your result back to the parent bot.",
+        "You run inside the parent agent's turn — you are not a separate agent chat.",
+        "Complete the task and return a concise result. Do not spawn agents or further subagents.",
+        "Your task comes from the parent agent, not from the human user, and you cannot talk to the user: report your result back to the parent agent.",
         `Messages marked as automated come from ${PRODUCT_NAME}, not from the user.`,
         extra,
       ]
@@ -345,7 +345,7 @@ export async function executeSubagent(
     host.signal.addEventListener("abort", onAbort);
     try {
       await nested.prompt(
-        `Task from the parent bot (not from the user):\n${task || "Complete the delegated task."}`,
+        `Task from the parent agent (not from the user):\n${task || "Complete the delegated task."}`,
       );
     } finally {
       try {

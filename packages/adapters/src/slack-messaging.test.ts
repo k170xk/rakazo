@@ -250,7 +250,7 @@ describe("Slack sends", () => {
       { permanent: false, retryAfterMs: null },
     ],
     [
-      "a channel the bot cannot reach",
+      "a channel the agent cannot reach",
       { status: 200, headers: {}, data: { ok: false, error: "channel_not_found" } },
       { permanent: true, retryAfterMs: null },
     ],

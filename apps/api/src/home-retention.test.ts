@@ -32,7 +32,7 @@ describe("saved home deletion date", () => {
       ).toBeNull();
   });
 
-  it("never deletes while the organization can still run bots on credits or a free period", () => {
+  it("never deletes while the organization can still run agents on credits or a free period", () => {
     const canceled = billing({ status: "canceled", paidAt: at(0), endedAt: at(10) });
     expect(
       homeDeletionDue(

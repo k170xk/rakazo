@@ -235,7 +235,7 @@ export function MemorySettingsOverlay({
                 <Trans>Provider</Trans>
               </h3>
               <p className="mt-1 text-[13px] text-muted-foreground">
-                <Trans>Lets bots save and recall facts by meaning, alongside MEMORY.md.</Trans>
+                <Trans>Lets agents save and recall facts by meaning, alongside MEMORY.md.</Trans>
               </p>
               {MEMORY_PROVIDER_SETTINGS.length > 1 ? (
                 <div className="mt-3">

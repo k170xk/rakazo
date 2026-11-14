@@ -19,7 +19,7 @@ export function composerDraftScope(
     return {
       apiBase: currentApiBase(),
       userId,
-      threadKey: groupId ? `group:${groupId}` : `bot:${botId}`,
+      threadKey: groupId ? `group:${groupId}` : `agent:${botId}`,
     };
   } catch {
     return undefined;

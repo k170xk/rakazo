@@ -75,7 +75,7 @@ function noGroupMemberships() {
   };
 }
 
-describe("spawned bot creation", () => {
+describe("spawned agent creation", () => {
   it("returns the existing child when a spawn is retried", async () => {
     const findUnique = vi.fn().mockResolvedValue({
       id: "child-1",
@@ -183,7 +183,7 @@ describe("spawned bot creation", () => {
     createReposSpy.mockRestore();
   });
 
-  it("picks a short name none of the person's bots uses when none is given", async () => {
+  it("picks a short name none of the person's agents uses when none is given", async () => {
     const createBot = vi.fn(async (_actor: unknown, input: { name: string }) => ({
       id: "child-3",
       name: input.name,
@@ -215,7 +215,7 @@ describe("spawned bot creation", () => {
     createReposSpy.mockRestore();
   });
 
-  it("queues one hidden welcome turn when the new bot has no first task", async () => {
+  it("queues one hidden welcome turn when the new agent has no first task", async () => {
     const createBot = vi.fn().mockResolvedValue({ id: "child-4", name: "Pip", threadId: "t-4" });
     const createReposSpy = vi.spyOn(await import("@rakazo/db"), "createRepos").mockReturnValue({
       createBot,
@@ -284,7 +284,7 @@ describe("spawned bot creation", () => {
     createReposSpy.mockRestore();
   });
 });
-describe("spawned bot archival", () => {
+describe("spawned agent archival", () => {
   it("scopes management by account and space without requiring a creator", () => {
     expect(managedBotsWhere({ userId: "user-1", spaceId: "space-1" })).toEqual({
       userId: "user-1",
@@ -292,7 +292,7 @@ describe("spawned bot archival", () => {
     });
   });
 
-  it("refuses an out-of-scope bot before stopping work", async () => {
+  it("refuses an out-of-scope agent before stopping work", async () => {
     const findMany = vi.fn().mockResolvedValue([]);
     const prisma = { bot: { findMany } } as unknown as PrismaClient;
     expect(
@@ -452,7 +452,7 @@ describe("destroyBot", () => {
     expect(order).toEqual(["commit", "store delete"]);
   });
 
-  it("moves bot memories into shared memory before the cascading delete", async () => {
+  it("moves agent memories into shared memory before the cascading delete", async () => {
     const createDeletion = vi.fn().mockResolvedValue({});
     const deleteBot = vi.fn().mockResolvedValue({});
     const executeRaw = vi.fn().mockResolvedValue(1);
@@ -532,7 +532,7 @@ describe("destroyBot", () => {
     });
     expect(executeRaw).toHaveBeenCalledOnce();
     expect(executeRaw.mock.calls[0]?.slice(1)).toEqual([
-      "Archived bots/Researcher (bot-1)",
+      "Archived agents/Researcher (bot-1)",
       "bot-1",
     ]);
     expect(createDeletion).toHaveBeenCalledWith({
@@ -558,7 +558,7 @@ describe("destroyBot", () => {
     expect(removeArtifact).toHaveBeenCalledWith("stored-artifact", context);
   });
 
-  it("leaves the deletion to a concurrent removal that already deleted the bot", async () => {
+  it("leaves the deletion to a concurrent removal that already deleted the agent", async () => {
     const createDeletion = vi.fn();
     const deleteBot = vi.fn();
     const removeArtifact = vi.fn();
@@ -696,7 +696,7 @@ describe("destroyBot", () => {
     });
   });
 
-  it("dissolves groups left without an active bot after deleting the bot", async () => {
+  it("dissolves groups left without an active agent after deleting the agent", async () => {
     const deleteGroups = vi.fn().mockResolvedValue({ count: 1 });
     const deleteMemberships = vi.fn().mockResolvedValue({ count: 1 });
     const cancel = vi.fn().mockResolvedValue(undefined);
@@ -957,7 +957,7 @@ describe("destroyBot", () => {
     expect(transaction).toHaveBeenCalledTimes(2);
   });
 
-  it("stops the deleted team bot's screen and removes only its browser profile", async () => {
+  it("stops the deleted team agent's screen and removes only its browser profile", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-delete-"));
     try {
       const home = new LocalAgentHomeStore(root);
@@ -1043,7 +1043,7 @@ describe("destroyBot", () => {
     }
   });
 
-  it("unlinks a profile symlink instead of following it into another bot's profile", async () => {
+  it("unlinks a profile symlink instead of following it into another agent's profile", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-symlink-"));
     try {
       const home = new LocalAgentHomeStore(root);
@@ -1139,7 +1139,7 @@ describe("destroyBot", () => {
   });
 
   it.each(["e2b", "novita", "createos"])(
-    "removes the deleted bot's profile from a %s sandbox after the browser stops",
+    "removes the deleted agent's profile from a %s sandbox after the browser stops",
     async (kind) => {
       const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-remote-delete-"));
       const remote = await mkdtemp(path.join(tmpdir(), "rakazo-team-remote-workspace-"));
@@ -1391,7 +1391,7 @@ describe("destroyBot", () => {
       await rm(remote, { recursive: true, force: true });
     }
   });
-  it("does not wake a stopped remote Team Computer to remove the deleted bot's profile", async () => {
+  it("does not wake a stopped remote Team Computer to remove the deleted agent's profile", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-profile-stopped-"));
     try {
       const home = new LocalAgentHomeStore(root);
@@ -1493,14 +1493,14 @@ describe("destroyBot", () => {
     }
   });
 
-  it("removes the deleted bot's folder inside a running Docker Team Computer and keeps other folders", async () => {
+  it("removes the deleted agent's folder inside a running Docker Team Computer and keeps other folders", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-delete-"));
     try {
       const home = new LocalAgentHomeStore(root);
       const teamHome = home.pathFor("team-workspace-1");
-      await seedFile(teamHome, "bots/bot-1/private.txt", "gone");
-      await seedFile(teamHome, "bots/bot-10/notes.txt", "keep");
-      await seedFile(teamHome, "bots/bot-2/notes.txt", "keep");
+      await seedFile(teamHome, "agents/bot-1/private.txt", "gone");
+      await seedFile(teamHome, "agents/bot-10/notes.txt", "keep");
+      await seedFile(teamHome, "agents/bot-2/notes.txt", "keep");
       await seedFile(teamHome, "shared/plan.txt", "keep");
       const team = {
         id: "team-computer",
@@ -1545,10 +1545,10 @@ describe("destroyBot", () => {
         expect.objectContaining({ botId: "bot-1" }),
       );
       await expect(access(path.join(teamHome, "bots", "bot-1"))).rejects.toThrow();
-      await expect(readFile(path.join(teamHome, "bots/bot-10/notes.txt"), "utf8")).resolves.toBe(
+      await expect(readFile(path.join(teamHome, "agents/bot-10/notes.txt"), "utf8")).resolves.toBe(
         "keep",
       );
-      await expect(readFile(path.join(teamHome, "bots/bot-2/notes.txt"), "utf8")).resolves.toBe(
+      await expect(readFile(path.join(teamHome, "agents/bot-2/notes.txt"), "utf8")).resolves.toBe(
         "keep",
       );
       await expect(readFile(path.join(teamHome, "shared/plan.txt"), "utf8")).resolves.toBe("keep");
@@ -1557,12 +1557,12 @@ describe("destroyBot", () => {
     }
   });
 
-  it("removes the deleted chat's conversation folder and pinned files with the bot's folder", async () => {
+  it("removes the deleted chat's conversation folder and pinned files with the agent's folder", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-conversation-delete-"));
     try {
       const home = new LocalAgentHomeStore(root);
       const teamHome = home.pathFor("team-workspace-1");
-      await seedFile(teamHome, "bots/bot-1/outputs/pinned.mp4", "gone");
+      await seedFile(teamHome, "agents/bot-1/outputs/pinned.mp4", "gone");
       await seedFile(teamHome, "conversations/thread-1/report.pdf", "gone");
       await seedFile(teamHome, "conversations/thread-2/notes.txt", "keep");
       const dataDir = path.join(root, "data");
@@ -1620,12 +1620,12 @@ describe("destroyBot", () => {
     }
   });
 
-  it("removes the Team Computer folder of a bot that moved to its own computer", async () => {
+  it("removes the Team Computer folder of an agent that moved to its own computer", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-moved-"));
     try {
       const home = new LocalAgentHomeStore(root);
       const teamHome = home.pathFor("team-workspace-1");
-      await seedFile(teamHome, "bots/bot-1/private.txt", "gone");
+      await seedFile(teamHome, "agents/bot-1/private.txt", "gone");
       const team = {
         id: "team-computer",
         homeKey: "team-workspace-1",
@@ -1792,7 +1792,7 @@ describe("destroyBot", () => {
     });
   });
 
-  it("reports deletion success when the Team Computer lookup fails after the bot is deleted", async () => {
+  it("reports deletion success when the Team Computer lookup fails after the agent is deleted", async () => {
     const team = { id: "team-computer", homeKey: "team-workspace-1", scope: "team" };
     const prisma = deletionPrisma(team);
     vi.mocked(prisma.computer.findUnique).mockImplementation((async (query: {
@@ -1826,15 +1826,15 @@ describe("destroyBot", () => {
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
-  it("removes the deleted bot's folder from a running remote Team Computer", async () => {
+  it("removes the deleted agent's folder from a running remote Team Computer", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-remote-"));
     const remote = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-remote-workspace-"));
     try {
       const home = new LocalAgentHomeStore(root);
       const teamHome = home.pathFor("team-workspace-1");
-      await seedFile(teamHome, "bots/bot-1/private.txt", "stored-gone");
-      await seedFile(remote, "bots/bot-1/private.txt", "remote-gone");
-      await seedFile(remote, "bots/bot-2/notes.txt", "remote-keep");
+      await seedFile(teamHome, "agents/bot-1/private.txt", "stored-gone");
+      await seedFile(remote, "agents/bot-1/private.txt", "remote-gone");
+      await seedFile(remote, "agents/bot-2/notes.txt", "remote-keep");
       await seedFile(remote, "shared/plan.txt", "remote-keep");
       const execute = vi.fn(async function* (_computer: unknown, request: CommandRequest) {
         const result = runInWorkspace(remote, request.argv);
@@ -1882,7 +1882,7 @@ describe("destroyBot", () => {
       );
       await expect(access(path.join(remote, "bots", "bot-1"))).rejects.toThrow();
       await expect(access(path.join(teamHome, "bots", "bot-1"))).rejects.toThrow();
-      await expect(readFile(path.join(remote, "bots/bot-2/notes.txt"), "utf8")).resolves.toBe(
+      await expect(readFile(path.join(remote, "agents/bot-2/notes.txt"), "utf8")).resolves.toBe(
         "remote-keep",
       );
       await expect(readFile(path.join(remote, "shared/plan.txt"), "utf8")).resolves.toBe(
@@ -1894,15 +1894,15 @@ describe("destroyBot", () => {
     }
   });
 
-  it("removes the deleted bot's folder and profile from the space's shared Team Computer from before each person got their own", async () => {
+  it("removes the deleted agent's folder and profile from the space's shared Team Computer from before each person got their own", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-legacy-"));
     try {
       const home = new LocalAgentHomeStore(root);
       const legacyHome = home.pathFor("team-workspace-1");
       const profile = path.basename(browserProfilePathForScreen("bot-1"));
-      await seedFile(legacyHome, "bots/bot-1/old.txt", "gone");
+      await seedFile(legacyHome, "agents/bot-1/old.txt", "gone");
       await seedFile(legacyHome, `.browser-profiles/${profile}/Cookies`, "gone");
-      await seedFile(legacyHome, "bots/bot-2/work.txt", "another member's");
+      await seedFile(legacyHome, "agents/bot-2/work.txt", "another member's");
       const own = {
         id: "own-team",
         homeKey: "team-own",
@@ -1943,7 +1943,7 @@ describe("destroyBot", () => {
 
       await expect(access(path.join(legacyHome, "bots", "bot-1"))).rejects.toThrow();
       await expect(access(path.join(legacyHome, ".browser-profiles", profile))).rejects.toThrow();
-      await expect(readFile(path.join(legacyHome, "bots/bot-2/work.txt"), "utf8")).resolves.toBe(
+      await expect(readFile(path.join(legacyHome, "agents/bot-2/work.txt"), "utf8")).resolves.toBe(
         "another member's",
       );
     } finally {
@@ -1951,12 +1951,12 @@ describe("destroyBot", () => {
     }
   });
 
-  it("does not wake a stopped Team Computer to remove the deleted bot's folder", async () => {
+  it("does not wake a stopped Team Computer to remove the deleted agent's folder", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-stopped-"));
     try {
       const home = new LocalAgentHomeStore(root);
       const teamHome = home.pathFor("team-workspace-1");
-      await seedFile(teamHome, "bots/bot-1/private.txt", "stored-gone");
+      await seedFile(teamHome, "agents/bot-1/private.txt", "stored-gone");
       const execute = vi.fn(async function* (_computer: unknown, _request: CommandRequest) {
         yield { type: "exit" as const, code: 0 };
       });
@@ -1998,15 +1998,15 @@ describe("destroyBot", () => {
     }
   });
 
-  it("unlinks a symlinked bot folder instead of following it into another bot's folder", async () => {
+  it("unlinks a symlinked agent folder instead of following it into another agent's folder", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-symlink-"));
     const remote = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-symlink-workspace-"));
     try {
       const home = new LocalAgentHomeStore(root);
       const teamHome = home.pathFor("team-workspace-1");
-      await seedFile(teamHome, "bots/bot-2/notes.txt", "stored-keep");
+      await seedFile(teamHome, "agents/bot-2/notes.txt", "stored-keep");
       await symlink(path.join(teamHome, "bots", "bot-2"), path.join(teamHome, "bots", "bot-1"));
-      await seedFile(remote, "bots/bot-2/notes.txt", "remote-keep");
+      await seedFile(remote, "agents/bot-2/notes.txt", "remote-keep");
       await symlink("bot-2", path.join(remote, "bots", "bot-1"));
       const execute = vi.fn(async function* (_computer: unknown, request: CommandRequest) {
         const result = runInWorkspace(remote, request.argv);
@@ -2046,10 +2046,10 @@ describe("destroyBot", () => {
 
       await expect(access(path.join(teamHome, "bots", "bot-1"))).rejects.toThrow();
       await expect(access(path.join(remote, "bots", "bot-1"))).rejects.toThrow();
-      await expect(readFile(path.join(teamHome, "bots/bot-2/notes.txt"), "utf8")).resolves.toBe(
+      await expect(readFile(path.join(teamHome, "agents/bot-2/notes.txt"), "utf8")).resolves.toBe(
         "stored-keep",
       );
-      await expect(readFile(path.join(remote, "bots/bot-2/notes.txt"), "utf8")).resolves.toBe(
+      await expect(readFile(path.join(remote, "agents/bot-2/notes.txt"), "utf8")).resolves.toBe(
         "remote-keep",
       );
     } finally {
@@ -2058,7 +2058,7 @@ describe("destroyBot", () => {
     }
   });
 
-  it("leaves the Team Computer home alone when its bots folder is a symlink", async () => {
+  it("leaves the Team Computer home alone when its agents folder is a symlink", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-parent-symlink-"));
     try {
       const home = new LocalAgentHomeStore(root);
@@ -2108,7 +2108,7 @@ describe("destroyBot", () => {
       try {
         const home = new LocalAgentHomeStore(root);
         const teamHome = home.pathFor("team-workspace-1");
-        await seedFile(teamHome, "bots/bot-1/private.txt", "next-boot");
+        await seedFile(teamHome, "agents/bot-1/private.txt", "next-boot");
         const execute = vi.fn();
         const team = {
           id: "team-computer",
@@ -2139,7 +2139,7 @@ describe("destroyBot", () => {
         );
 
         expect(execute).not.toHaveBeenCalled();
-        await expect(readFile(path.join(teamHome, "bots/bot-1/private.txt"), "utf8")).resolves.toBe(
+        await expect(readFile(path.join(teamHome, "agents/bot-1/private.txt"), "utf8")).resolves.toBe(
           "next-boot",
         );
       } finally {
@@ -2148,13 +2148,13 @@ describe("destroyBot", () => {
     },
   );
 
-  it("does not delete outside a Docker home when a bot swaps bots/ for a symlink mid-cleanup", async () => {
+  it("does not delete outside a Docker home when an agent swaps agents/ for a symlink mid-cleanup", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-folder-swap-"));
     try {
       const home = new LocalAgentHomeStore(root);
       const teamHome = home.pathFor("team-workspace-1");
       const victim = path.join(root, "victim");
-      await seedFile(teamHome, "bots/bot-1/private.txt", "next-boot");
+      await seedFile(teamHome, "agents/bot-1/private.txt", "next-boot");
       await seedFile(victim, "bot-1/keep.txt", "keep");
       const folder = await realpath(path.join(teamHome, "bots", "bot-1"));
       // A bot in the container replaces bots/ with a symlink right after the folder is resolved.
@@ -2199,7 +2199,7 @@ describe("destroyBot", () => {
     }
   });
 
-  it("does not delete outside a Docker home when a bot swaps .browser-profiles/ mid-cleanup", async () => {
+  it("does not delete outside a Docker home when an agent swaps .browser-profiles/ mid-cleanup", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-profile-swap-"));
     try {
       const home = new LocalAgentHomeStore(root);
@@ -2263,7 +2263,7 @@ describe("destroyBot", () => {
 });
 
 describe("archiveBot", () => {
-  it("stops work and routines while preserving the bot", async () => {
+  it("stops work and routines while preserving the agent", async () => {
     const updateBot = vi.fn().mockResolvedValue({});
     const disableRoutines = vi.fn().mockResolvedValue({ count: 2 });
     const groupCleanup = noGroupMemberships();
@@ -2404,7 +2404,7 @@ describe("archiveBot", () => {
     expect(updateComputer).not.toHaveBeenCalled();
   });
 
-  it("stops a provider that finishes booting while the bot is archived", async () => {
+  it("stops a provider that finishes booting while the agent is archived", async () => {
     const stop = vi.fn().mockResolvedValue(undefined);
     const updateMany = vi.fn().mockResolvedValue({ count: 1 });
     const booting = {
@@ -2471,7 +2471,7 @@ describe("archiveBot", () => {
   });
 
   it.each(["running", "quarantined"])(
-    "archives a bot whose dedicated computer is damaged without clearing %s state",
+    "archives an agent whose dedicated computer is damaged without clearing %s state",
     async (state) => {
       const stop = vi.fn().mockResolvedValue(undefined);
       const updates = { updateMany: vi.fn().mockResolvedValue({ count: 1 }), update: vi.fn() };
@@ -2512,7 +2512,7 @@ describe("archiveBot", () => {
     },
   );
 
-  it("releases the archived bot's screen and keeps its browser profile", async () => {
+  it("releases the archived agent's screen and keeps its browser profile", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-team-archive-"));
     try {
       const home = new LocalAgentHomeStore(root);

@@ -15,7 +15,7 @@ const request: AutoReviewRequest = {
   connectorKind: "gmail",
   args: { to: "a@b.test", apiKey: "[redacted]" },
   userTask: "Draft a reply",
-  botDescription: "Mail bot",
+  botDescription: "Mail agent",
   matchingRules: [],
 };
 

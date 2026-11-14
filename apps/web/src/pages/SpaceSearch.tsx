@@ -75,7 +75,7 @@ export function SpaceSearchResults({
 function searchKindLabel(hit: SearchHit): string {
   switch (hit.kind) {
     case "conversation":
-      return hit.groupId ? t`Group` : t`Bot`;
+      return hit.groupId ? t`Group` : t`Agent`;
     case "message":
       return t`Message`;
     case "file":

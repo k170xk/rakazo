@@ -285,7 +285,7 @@ it("starts every field hidden when no label names an identifier", async () => {
   }
 });
 
-it("asks for a visible username and a hidden password when the bot names no fields", async () => {
+it("asks for a visible username and a hidden password when the agent names no fields", async () => {
   const onAnswer = vi.fn(async () => undefined);
   const { loginFields: _, ...defaultLogin } = loginCard;
   await render(defaultLogin, undefined, onAnswer);
@@ -801,7 +801,7 @@ it("leaves a one-time code to the run's user, and reads Sent once answered", asy
   expect(container.textContent).not.toContain("Saved");
 });
 
-it("shows the bot's label on a code card as plain text beneath the site's own title", async () => {
+it("shows the agent's label on a code card as plain text beneath the site's own title", async () => {
   await render({
     ...codeCard,
     text: "Code for login.example.test",

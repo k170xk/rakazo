@@ -153,7 +153,7 @@ function ComputerPreview({
         ) : computer?.state === "running" && embeddedScreenUrl && !computerScreenError ? (
           <iframe
             key={screenFrameKey}
-            title={t`Bot screen preview`}
+            title={t`Agent screen preview`}
             ref={screenFrameRef}
             src={embeddedScreenUrl}
             sandbox={screenIframeSandbox(embeddedScreenUrl)}

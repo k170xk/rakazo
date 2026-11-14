@@ -67,7 +67,7 @@ export async function listRoutineRuns(
         WHERE r.id IN (${Prisma.join(runs.map((run) => run.id))})
           AND r."spaceId" = ${actor.spaceId} AND r."userId" = ${actor.userId}
           AND t."spaceId" = ${actor.spaceId} AND t."userId" = ${actor.userId}
-          AND m.role = 'bot'
+          AND m.role = 'agent'
         ORDER BY m."runId", m.seq
       `)
     : [];

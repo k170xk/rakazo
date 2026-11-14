@@ -525,7 +525,7 @@ describe("recent turn images follow model vision", () => {
     );
   });
 
-  it("puts an earlier turn's image on the computer once the bot uses it", async () => {
+  it("puts an earlier turn's image on the computer once the agent uses it", async () => {
     const { request, writeFile, exportWorkspace } = await runWithModel(
       TEXT_ONLY_MODEL,
       undefined,
@@ -824,7 +824,7 @@ describe("group history speakers", () => {
     { id: "bot-3", name: "Renamed Anya" },
   ];
 
-  it("labels the user and the other bots, and leaves this bot's own replies plain", async () => {
+  it("labels the user and the other agents, and leaves this agent's own replies plain", async () => {
     const { request, prisma } = await runWithModel(VISION_MODEL, undefined, false, false, true, {
       group: { messages: stored, bots },
     });
@@ -833,7 +833,7 @@ describe("group history speakers", () => {
     ).toEqual([
       { role: "user", speaker: "User", content: "Name our project." },
       { role: "assistant", speaker: "Renamed Anya", content: "Bluebird." },
-      { role: "assistant", speaker: "another bot", content: "Mystery." },
+      { role: "assistant", speaker: "another agent", content: "Mystery." },
       {
         role: "assistant",
         speaker: "Anya",

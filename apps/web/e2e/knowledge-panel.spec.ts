@@ -155,7 +155,7 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   await botMemoryRow.click();
   const botDocEditor = botMemory.locator("textarea");
   await expect(botDocEditor).toHaveValue(/# Chief/);
-  const botMarker = `Bot memory e2e ${stamp}`;
+  const botMarker = `Agent memory e2e ${stamp}`;
   await botDocEditor.fill(`# Chief\n\n${botMarker}\n`);
   await botMemory.getByRole("button", { name: "Save", exact: true }).scrollIntoViewIfNeeded();
   await captureScreenshot(page, testInfo, "80-knowledge-bot-memory");
@@ -287,7 +287,7 @@ test("memory and skills are readable and editable in the app", async ({ page }, 
   );
 });
 
-test("a new bot hides its untouched memory index", async ({ page }, testInfo) => {
+test("a new agent hides its untouched memory index", async ({ page }, testInfo) => {
   await signup(page, `empty-memory-${Date.now()}@example.test`, "password12", "Sample");
   await completeOnboarding(page);
   const botId = await createNamedBot(page, "Researcher");

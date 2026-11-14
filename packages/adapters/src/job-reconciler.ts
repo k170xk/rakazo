@@ -274,7 +274,7 @@ export function createJobReconciler(
               : run.status === "failed"
                 ? `Could not complete the delegated request: ${run.error ?? "unknown error"}`
                 : transcript.text ||
-                  "The delegated bot completed its turn without a written summary.";
+                  "The delegated agent completed its turn without a written summary.";
             // Loop-guard stops complete without an error; their persisted final text
             // is the only marker available when the executor's outcome delivery fails.
             const loopGuardStop = isLoopGuardStopText(transcript.text);
@@ -296,7 +296,7 @@ export function createJobReconciler(
               intent,
               { forceUnread: run.status === "failed" || stuckCancel || loopGuardStop },
             ).catch((error) => {
-              getLogger().error("bot message outcome reconciliation", error);
+              getLogger().error("agent message outcome reconciliation", error);
               return false;
             });
             if (!returned) {

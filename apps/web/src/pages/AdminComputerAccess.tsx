@@ -258,12 +258,12 @@ export function CompanyStorageSection({
     <section id="storage" className="space-y-6" data-testid="company-storage">
       <SectionHeading title={<Trans>Storage and cleanup</Trans>}>
         <Trans>
-          Files bots make stay on each person's own computer and are never visible to anyone else.
+          Files agents make stay on each person's own computer and are never visible to anyone else.
           Anything nobody changes for the period below is deleted at the next cleanup unless its
-          owner pins it in the bot's Files tab. Files bots attach in chats count towards the same
+          owner pins it in the agent's Files tab. Files agents attach in chats count towards the same
           limit. People are told a week before files are deleted and when they are nearly full, and
           can download or delete them from Manage storage. Once someone reaches their limit, their
-          bots stop making new documents and videos until they delete something.
+          agents stop making new documents and videos until they delete something.
         </Trans>
       </SectionHeading>
 
@@ -313,7 +313,7 @@ export function CompanyStorageSection({
           <div>
             <SettingLine
               id="chat-file-retention"
-              label={<Trans>Delete files bots attached in chats after</Trans>}
+              label={<Trans>Delete files agents attached in chats after</Trans>}
             >
               <AccessSelect
                 id="chat-file-retention"
@@ -344,7 +344,7 @@ export function CompanyStorageSection({
             </SettingLine>
             <p className="-mt-1 px-4 pb-3 text-[13px] text-muted-foreground">
               <Trans>
-                Counted from when the bot made the file. Files people upload themselves are never
+                Counted from when the agent made the file. Files people upload themselves are never
                 deleted. The chat keeps the message and shows that the file was removed.
               </Trans>
             </p>

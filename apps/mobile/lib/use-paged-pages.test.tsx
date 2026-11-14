@@ -132,7 +132,7 @@ it("reads five at first and never more than the server lists at once", async () 
   read.mockReset();
 });
 
-it("starts from five again when the screen moves to another bot or a group", async () => {
+it("starts from five again when the screen moves to another agent or a group", async () => {
   const read = vi.mocked(rpc);
   read.mockReset();
   read.mockResolvedValue({

@@ -514,7 +514,7 @@ export function applyVisualEdit(
       const source = classSource(element, text);
       if (source === null)
         return {
-          error: "This element's classes are computed in code; ask the bot to change its look.",
+          error: "This element's classes are computed in code; ask the agent to change its look.",
         };
       const current = source === "none" ? [] : source.value.split(/\s+/).filter(Boolean);
       const next = applyStyles(current, edit.styles).join(" ");

@@ -3,9 +3,9 @@ import { companyTools } from "./company-policy.js";
 import { OCSC_SKILLS } from "./ocsc-skills.js";
 
 const RAKAZO_DOCS: ReadonlyArray<readonly [topics: string, url: string]> = [
-  ["Getting started, first bot, what OCSC Intelligence does", "https://rakazo.com/docs.md"],
+  ["Getting started, first agent, what OCSC Intelligence does", "https://rakazo.com/docs.md"],
   [
-    "Creating bots, chatting, bot settings, sidebar, search",
+    "Creating agents, chatting, agent settings, sidebar, search",
     "https://rakazo.com/docs/bots-and-chats.md",
   ],
   ["Importing an OpenClaw, Hermes or ChatGPT agent", "https://rakazo.com/docs/import-an-agent.md"],
@@ -15,11 +15,11 @@ const RAKAZO_DOCS: ReadonlyArray<readonly [topics: string, url: string]> = [
   ],
   ["Slack, Telegram, WhatsApp and other chat apps", "https://rakazo.com/docs/messaging-apps.md"],
   ["Routines, schedules and triggers", "https://rakazo.com/docs/routines.md"],
-  ["The bot's computer, files, using your own computer", "https://rakazo.com/docs/computer.md"],
+  ["The agent's computer, files, using your own computer", "https://rakazo.com/docs/computer.md"],
   ["Memory", "https://rakazo.com/docs/memory.md"],
   ["Skills", "https://rakazo.com/docs/skills.md"],
   ["Approvals, Allow and Block lists", "https://rakazo.com/docs/approvals.md"],
-  ["Group chats, bots working together, subagents", "https://rakazo.com/docs/groups.md"],
+  ["Group chats, agents working together, subagents", "https://rakazo.com/docs/groups.md"],
   ["Voice, calls, spoken replies", "https://rakazo.com/docs/voice-and-calls.md"],
   ["Models, providers, API keys, fallbacks, usage", "https://rakazo.com/docs/models.md"],
   ["Spaces", "https://rakazo.com/docs/spaces.md"],
@@ -30,7 +30,7 @@ const RAKAZO_DOCS: ReadonlyArray<readonly [topics: string, url: string]> = [
   ],
   ["Desktop app", "https://rakazo.com/docs/desktop-app.md"],
   ["Mobile app", "https://rakazo.com/docs/mobile-app.md"],
-  ["Bots that create and manage bots", "https://rakazo.com/docs/fleet-management.md"],
+  ["Agents that create and manage agents", "https://rakazo.com/docs/fleet-management.md"],
   ["Building a plugin", "https://rakazo.com/docs/build-a-plugin.md"],
   ["Self-hosting", "https://rakazo.com/docs/self-host.md"],
   ["Self-hosted server configuration", "https://rakazo.com/docs/self-host-configuration.md"],

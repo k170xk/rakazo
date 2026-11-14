@@ -397,7 +397,7 @@ describe("account preferences", () => {
     });
   });
 
-  it("saves the bot style and restyles only bots not pinned to another set", async () => {
+  it("saves the agent style and restyles only agents not pinned to another set", async () => {
     const { update, botFindMany, actor, handler } = preferencesDeps("organic");
 
     const response = await handle(
@@ -4225,7 +4225,7 @@ describe("computer terminal and file transfer", () => {
     return { sandbox, prisma, call };
   }
 
-  it("prepares an unused bot's folders before listing a running Team Computer", async () => {
+  it("prepares an unused agent's folders before listing a running Team Computer", async () => {
     const { sandbox, call } = setup();
     let prepared = false;
     sandbox.execute.mockImplementation(async function* () {
@@ -4253,7 +4253,7 @@ describe("computer terminal and file transfer", () => {
     );
   });
 
-  it("prepares the bot's folders when boot reuses an already running Team Computer", async () => {
+  it("prepares the agent's folders when boot reuses an already running Team Computer", async () => {
     const { sandbox, call } = setup();
     await expect(call("boot", {})).resolves.toMatchObject({ status: 200 });
     expect(sandbox.execute).toHaveBeenCalledWith(
@@ -4292,7 +4292,7 @@ describe("computer terminal and file transfer", () => {
     expect(prisma.computer.updateMany).not.toHaveBeenCalled();
   });
 
-  it("opens a terminal only for the user holding this bot's control lease", async () => {
+  it("opens a terminal only for the user holding this agent's control lease", async () => {
     const released = setup();
     await expect(released.call("terminalUrl", {})).resolves.toMatchObject({ status: 403 });
     expect(released.sandbox.connectTerminal).not.toHaveBeenCalled();
@@ -4374,7 +4374,7 @@ describe("computer terminal and file transfer", () => {
     );
   });
 
-  it("uploads into the bot workspace only under control", async () => {
+  it("uploads into the agent workspace only under control", async () => {
     const contentBase64 = Buffer.from("notes").toString("base64");
     const released = setup();
     await expect(
@@ -4388,16 +4388,16 @@ describe("computer terminal and file transfer", () => {
     });
     expect(sandbox.writeFile).toHaveBeenCalledWith(
       expect.objectContaining({ id: "sandbox-ref-1" }),
-      { path: "bots/bot-1/notes.txt", content: Buffer.from("notes") },
+      { path: "agents/bot-1/notes.txt", content: Buffer.from("notes") },
       expect.anything(),
     );
   });
 
-  it("rejects team uploads into another bot workspace", async () => {
+  it("rejects team uploads into another agent workspace", async () => {
     const contentBase64 = Buffer.from("x").toString("base64");
     const { sandbox, call } = setup(controlled);
     await expect(
-      call("uploadFile", { path: "bots/bot-2/secret.txt", contentBase64 }),
+      call("uploadFile", { path: "agents/bot-2/secret.txt", contentBase64 }),
     ).resolves.toMatchObject({ status: 400 });
     expect(sandbox.writeFile).not.toHaveBeenCalled();
   });
@@ -4432,7 +4432,7 @@ describe("computer terminal and file transfer", () => {
     });
     expect(sandbox.readFile).toHaveBeenCalledWith(
       expect.anything(),
-      "bots/bot-1/notes.txt",
+      "agents/bot-1/notes.txt",
       expect.anything(),
       { maxBytes: 10 * 1024 * 1024 },
     );
@@ -5736,7 +5736,7 @@ describe("model disconnect", () => {
   });
 });
 
-describe("bot intro run", () => {
+describe("agent intro run", () => {
   const actor = {
     spaceId: "space-1",
     userId: "user-1",
@@ -5787,7 +5787,7 @@ describe("bot intro run", () => {
     return { create, enqueue, deps };
   }
 
-  it("queues an invisible-prompt run so the bot asks what it is for", async () => {
+  it("queues an invisible-prompt run so the agent asks what it is for", async () => {
     const { create, enqueue, deps } = introDeps();
 
     await enqueueBotIntroRun(deps, actor, bot);
@@ -5832,7 +5832,7 @@ describe("bot intro run", () => {
     );
   });
 
-  it("does nothing when the bot has no thread", async () => {
+  it("does nothing when the agent has no thread", async () => {
     const { create, enqueue, deps } = introDeps();
 
     await enqueueBotIntroRun(deps, actor, { id: "bot-1", threadId: null } as unknown as Bot);
@@ -5859,7 +5859,7 @@ describe("bot intro run", () => {
     expect(enqueue).not.toHaveBeenCalled();
   });
 
-  it("does not queue a second intro when an idempotent create returns an existing bot", async () => {
+  it("does not queue a second intro when an idempotent create returns an existing agent", async () => {
     const { create, enqueue, deps } = introDeps({ existingRun: true });
 
     await enqueueBotIntroRun(deps, actor, bot);
@@ -5868,7 +5868,7 @@ describe("bot intro run", () => {
     expect(enqueue).not.toHaveBeenCalled();
   });
 
-  it("names only the intro tools the bot still has", () => {
+  it("names only the intro tools the agent still has", () => {
     const prompt = (disabledBuiltinTools: string[]) =>
       botIntroPrompt({ userName: "Ada", spaceName: null, disabledBuiltinTools });
     expect(prompt([])).toContain("ask_user");
@@ -5877,7 +5877,7 @@ describe("bot intro run", () => {
     expect(prompt(["ask_user", "update_bot"])).not.toContain("update_bot");
   });
 
-  it("uses the Main PA interview for the onboarding first bot", async () => {
+  it("uses the Main PA interview for the onboarding first agent", async () => {
     const { create, deps } = introDeps();
     await enqueueBotIntroRun(deps, actor, {
       ...bot,
@@ -5909,7 +5909,7 @@ describe("bot intro run", () => {
     expect(prompt).not.toContain("OCSC Email agent");
   });
 
-  it("keeps the generic intro for ordinary bots", () => {
+  it("keeps the generic intro for ordinary agents", () => {
     const prompt = botIntroPrompt({
       userName: "Ada",
       spaceName: null,
@@ -6916,7 +6916,7 @@ describe("model set default auth", () => {
   });
 });
 
-describe("bot model auth on save", () => {
+describe("agent model auth on save", () => {
   const actor = {
     spaceId: "workspace-1",
     userId: "user-1",
@@ -7057,7 +7057,7 @@ describe("bot model auth on save", () => {
     };
   }
 
-  it("persists the daily check-in preference through the bot update route", async () => {
+  it("persists the daily check-in preference through the agent update route", async () => {
     const { botUpdate, handler } = saveDeps({ modelId: spark, preferences: () => null });
     const response = await call(handler, "bots/update", { botId: "bot-1", dailyCheckIns: false });
     expect(response.status).toBe(200);
@@ -7182,7 +7182,7 @@ describe("bot model auth on save", () => {
   });
 });
 
-describe("bot restore computer quota", () => {
+describe("agent restore computer quota", () => {
   function fixture(archivedBot: { archivedAt: Date | null } | null, inUse = 0) {
     const bot = archivedBot
       ? {
@@ -7262,7 +7262,7 @@ describe("bot restore computer quota", () => {
   });
 });
 
-describe("group restore with archived bots", () => {
+describe("group restore with archived agents", () => {
   function fixture(archivedBots: Array<{ id: string; computerId: string | null }>, inUse = 0) {
     const bot = { update: vi.fn(async () => ({})) };
     const chatGroup = { update: vi.fn(async () => ({})) };
@@ -7304,7 +7304,7 @@ describe("group restore with archived bots", () => {
     return { tx, call };
   }
 
-  it("brings the group's archived bots back before the group, so it can be opened again", async () => {
+  it("brings the group's archived agents back before the group, so it can be opened again", async () => {
     const { tx, call } = fixture([
       { id: "bot-a", computerId: "computer-a" },
       { id: "bot-b", computerId: null },
@@ -7324,7 +7324,7 @@ describe("group restore with archived bots", () => {
     );
   });
 
-  it("refuses with the quota error and restores nothing when a bot's computer has no room", async () => {
+  it("refuses with the quota error and restores nothing when an agent's computer has no room", async () => {
     process.env.SANDBOX_MAX_COMPUTERS_PER_USER = "1";
     const { tx, call } = fixture([{ id: "bot-a", computerId: "computer-a" }], 1);
     const response = await call();
@@ -7725,7 +7725,7 @@ describe("routines.update", () => {
     return { update, enqueue, cancel, call, findFirst: prisma.routine.findFirst };
   }
 
-  it("refuses to re-arm a routine on an archived bot without writing", async () => {
+  it("refuses to re-arm a routine on an archived agent without writing", async () => {
     const { update, enqueue, call } = fixture(true);
     const response = await call();
     expect(response.status).toBe(404);
@@ -7733,7 +7733,7 @@ describe("routines.update", () => {
     expect(enqueue).not.toHaveBeenCalled();
   });
 
-  it("re-arms a routine on an active bot", async () => {
+  it("re-arms a routine on an active agent", async () => {
     const { update, enqueue, call } = fixture(false);
     const response = await call();
     expect(response.status).toBe(200);
@@ -7746,7 +7746,7 @@ describe("routines.update", () => {
     expect(enqueue).toHaveBeenCalledOnce();
   });
 
-  it("does not re-arm when the bot is archived between the read and the write", async () => {
+  it("does not re-arm when the agent is archived between the read and the write", async () => {
     const { enqueue, call, findFirst } = fixture(false, true);
     findFirst.mockResolvedValueOnce(routine).mockResolvedValueOnce(null);
     const response = await call();
@@ -8357,7 +8357,7 @@ describe("openai-compatible enabled models", () => {
     },
   );
 
-  it("does not let an archived bot pinned on a removed id block the save", async () => {
+  it("does not let an archived agent pinned on a removed id block the save", async () => {
     const { call, secrets } = fixture({
       plaintext: secretText(["m-a", "m-b"]),
       defaultModel: "m-a",
@@ -8376,7 +8376,7 @@ describe("openai-compatible enabled models", () => {
   });
 
   it.each(["models/connect", "models/setDefault"])(
-    "ignores pins from routines on archived bots in %s",
+    "ignores pins from routines on archived agents in %s",
     async (route) => {
       const { call } = fixture({
         plaintext: route === "models/setDefault" ? secretText() : secretText(["m-a", "m-b"]),
@@ -8393,11 +8393,11 @@ describe("openai-compatible enabled models", () => {
     },
   );
 
-  it("ignores another user's bot in the same space", async () => {
+  it("ignores another user's agent in the same space", async () => {
     const { call } = fixture({
       plaintext: secretText(["m-a", "m-b"]),
       defaultModel: "m-a",
-      bots: [{ name: "Teammate bot", modelId: "m-b", userId: "user-2" }],
+      bots: [{ name: "Teammate agent", modelId: "m-b", userId: "user-2" }],
     });
 
     const result = await call("models/connect", {
@@ -8410,7 +8410,7 @@ describe("openai-compatible enabled models", () => {
     expect(result.status).toBe(200);
   });
 
-  it("refuses when the actor's bot in another space pins a removed id", async () => {
+  it("refuses when the actor's agent in another space pins a removed id", async () => {
     const { call, secrets } = fixture({
       plaintext: secretText(["m-a", "m-b"]),
       defaultModel: "m-a",
@@ -8491,7 +8491,7 @@ describe("openai-compatible enabled models", () => {
     expect(secrets.put).toHaveBeenCalledOnce();
   });
 
-  it("refuses disabling a catalog placeholder that a bot pins", async () => {
+  it("refuses disabling a catalog placeholder that an agent pins", async () => {
     const { call } = fixture({
       plaintext: secretText(["m-a"]),
       defaultModel: "m-a",
@@ -8508,7 +8508,7 @@ describe("openai-compatible enabled models", () => {
     expect(result).toEqual({ status: 400, message: refusal("Ada") });
   });
 
-  it("refuses an old client's default change while a bot pins the old default", async () => {
+  it("refuses an old client's default change while an agent pins the old default", async () => {
     const { call, secrets } = fixture({
       plaintext: secretText(),
       defaultModel: "m-a",
@@ -8607,7 +8607,7 @@ describe("openai-compatible enabled models", () => {
     expect(prisma.userModelPreference.upsert).not.toHaveBeenCalled();
   });
 
-  it("switches A to B to A within the list while a bot pins B", async () => {
+  it("switches A to B to A within the list while an agent pins B", async () => {
     const { call, state, enabledInDto } = fixture({
       plaintext: secretText(["m-a", "m-b"]),
       defaultModel: "m-a",
@@ -8626,8 +8626,8 @@ describe("openai-compatible enabled models", () => {
   });
 
   it.each([
-    ["a same-space bot on another non-default id", { name: "Ada", modelId: "m-z" }],
-    ["a bot in another space", { name: "Elsewhere", modelId: "m-w", spaceId: "space-2" }],
+    ["a same-space agent on another non-default id", { name: "Ada", modelId: "m-z" }],
+    ["an agent in another space", { name: "Elsewhere", modelId: "m-w", spaceId: "space-2" }],
   ])("lets setDefault on a legacy secret ignore %s", async (_case, bot) => {
     const { call, state } = fixture({
       plaintext: secretText(),
@@ -8641,7 +8641,7 @@ describe("openai-compatible enabled models", () => {
     expect(state.preference.modelId).toBe("m-x");
   });
 
-  it("refuses setDefault on a legacy secret while another space's bot runs the outgoing default", async () => {
+  it("refuses setDefault on a legacy secret while another space's agent runs the outgoing default", async () => {
     // The connection's own model is the account's, so every Space loses the outgoing one.
     const { call, state } = fixture({
       plaintext: secretText(),
@@ -8681,7 +8681,7 @@ describe("openai-compatible enabled models", () => {
     expect(prisma.userModelPreference.upsert).not.toHaveBeenCalled();
   });
 
-  it("refuses setDefault away from a union-only default that a bot pins", async () => {
+  it("refuses setDefault away from a union-only default that an agent pins", async () => {
     const { call } = fixture({
       plaintext: secretText(["m-x"]),
       defaultModel: "m-y",
@@ -8706,7 +8706,7 @@ describe("openai-compatible enabled models", () => {
     expect(state.preference).toMatchObject({ modelId: "m-y" });
   });
 
-  it("keeps two bots on an enabled connection after successive saves and a failed save", async () => {
+  it("keeps two agents on an enabled connection after successive saves and a failed save", async () => {
     const { call, prisma, secrets, state } = fixture({
       plaintext: secretText(),
       alternatePlaintext: secretText(["Y", "Z"], true),
@@ -8771,7 +8771,7 @@ describe("openai-compatible enabled models", () => {
     await assertRouting();
   });
 
-  it("saves a bot thinking level on a non-default enabled id when the endpoint reasons", async () => {
+  it("saves an agent thinking level on a non-default enabled id when the endpoint reasons", async () => {
     const { call, prisma } = fixture({
       plaintext: secretText(["m-a", "m-b"], true),
       defaultModel: "m-a",
@@ -8792,7 +8792,7 @@ describe("openai-compatible enabled models", () => {
     );
   });
 
-  it("keeps a non-reasoning endpoint's bots at thinking off", async () => {
+  it("keeps a non-reasoning endpoint's agents at thinking off", async () => {
     const { call, prisma } = fixture({
       plaintext: secretText(["m-a", "m-b"], false),
       defaultModel: "m-a",
@@ -8809,7 +8809,7 @@ describe("openai-compatible enabled models", () => {
     expect(prisma.bot.update).not.toHaveBeenCalled();
   });
 
-  it("saves a bot on this space's default when another space wrote the list", async () => {
+  it("saves an agent on this space's default when another space wrote the list", async () => {
     const { call } = fixture({
       plaintext: secretText(["m-x"], true),
       defaultModel: "m-y",
@@ -8826,7 +8826,7 @@ describe("openai-compatible enabled models", () => {
     expect(result.status).toBe(200);
   });
 
-  it("accepts a bot on a listed id that is not the default and refuses an unlisted one", async () => {
+  it("accepts an agent on a listed id that is not the default and refuses an unlisted one", async () => {
     const { call } = fixture({ plaintext: secretText(["m-x"]), defaultModel: "m-y" });
 
     expect(
@@ -8924,7 +8924,7 @@ describe("threads.answerCall and threads.declineCall", () => {
     return { prisma, appended, enqueue, call };
   }
 
-  it("answers a ringing call with the bot's opening", async () => {
+  it("answers a ringing call with the agent's opening", async () => {
     const { call, appended } = fixture();
     const response = await call("answerCall", {});
     expect(response.status).toBe(200);
@@ -9768,13 +9768,13 @@ describe("export.bot", () => {
     },
   );
 
-  it("exports only the bot's own folder from a Team Computer", async () => {
+  it("exports only the agent's own folder from a Team Computer", async () => {
     const home = await homeWith({
-      "bots/bot-1/notes/result.txt": "mine",
-      "bots/bot-1/project/.gitignore": "dist",
-      "bots/bot-1/.cache/pip/wheel": "cache",
-      "bots/bot-10/notes.txt": "prefix-sharing bot",
-      "bots/bot-2/private.txt": "other bot",
+      "agents/bot-1/notes/result.txt": "mine",
+      "agents/bot-1/project/.gitignore": "dist",
+      "agents/bot-1/.cache/pip/wheel": "cache",
+      "agents/bot-10/notes.txt": "prefix-sharing agent",
+      "agents/bot-2/private.txt": "other agent",
       "shared/handoff.txt": "shared",
       ".cache/fontconfig/cache-1": Uint8Array.from([0, 159, 146, 150]),
       ".browser-profiles/chromium-bot-1/Cookies": "session",
@@ -9791,10 +9791,10 @@ describe("export.bot", () => {
     ]);
   });
 
-  it("keeps the bot's files that another bot links to", async () => {
+  it("keeps the agent's files that another agent links to", async () => {
     const home = await homeWith({
-      "bots/bot-1/attachments/photo.bin": Uint8Array.from([0, 255]),
-      "bots/bot-00/notes.txt": "other bot",
+      "agents/bot-1/attachments/photo.bin": Uint8Array.from([0, 255]),
+      "agents/bot-00/notes.txt": "other agent",
     });
     await symlink("../bot-1/attachments", path.join(home.pathFor("home-1"), "bots/bot-00/grab"));
 
@@ -9803,8 +9803,8 @@ describe("export.bot", () => {
     ]);
   });
 
-  it("exports nothing when the bot's Team Computer folder is a link", async () => {
-    const home = await homeWith({ "bots/bot-2/private.txt": "other bot" });
+  it("exports nothing when the agent's Team Computer folder is a link", async () => {
+    const home = await homeWith({ "agents/bot-2/private.txt": "other agent" });
     await symlink("bot-2", path.join(home.pathFor("home-1"), "bots/bot-1"));
 
     expect(await exportFiles("team", home)).toEqual([]);
@@ -10059,11 +10059,11 @@ describe("routine watch creation boundaries", () => {
       client.routines.create({ botId: "bot-1", name: "Check", prompt: "Check changes", watch }),
     ).rejects.toMatchObject({
       code: "BAD_REQUEST",
-      message: expect.stringContaining("inside the bot's folder"),
+      message: expect.stringContaining("inside the agent's folder"),
     });
     await expect(client.routines.update({ routineId: "routine-1", watch })).rejects.toMatchObject({
       code: "BAD_REQUEST",
-      message: expect.stringContaining("inside the bot's folder"),
+      message: expect.stringContaining("inside the agent's folder"),
     });
     expect(create).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();

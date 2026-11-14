@@ -161,7 +161,7 @@ export class KubernetesSandboxProvider implements SandboxProvider {
         : podNameForBot(request.botId);
     let pod = await this.readPod(podName, context.signal);
     if (pod && pod.metadata?.labels?.[BOT_ID_LABEL] !== request.botId) {
-      throw new Error(`Kubernetes pod ${podName} belongs to another bot`);
+      throw new Error(`Kubernetes pod ${podName} belongs to another agent`);
     }
 
     if (pod?.metadata?.deletionTimestamp) {
@@ -189,7 +189,7 @@ export class KubernetesSandboxProvider implements SandboxProvider {
         if (!isApiStatus(error, 409)) throw error;
         const existing = await this.readPod(podName, context.signal);
         if (existing?.metadata?.labels?.[BOT_ID_LABEL] !== request.botId) {
-          throw new Error(`Kubernetes pod ${podName} belongs to another bot`);
+          throw new Error(`Kubernetes pod ${podName} belongs to another agent`);
         }
       }
     }
@@ -660,7 +660,7 @@ function podNameForBot(botId: string): string {
 
 /** The data directory holds `homes/<bot id>`; a bot id must name exactly one folder. */
 function homeSubPath(botId: string): string {
-  if (!/^[A-Za-z0-9_-]+$/.test(botId)) throw new Error("invalid bot id for a mounted home");
+  if (!/^[A-Za-z0-9_-]+$/.test(botId)) throw new Error("invalid agent id for a mounted home");
   return `homes/${botId}`;
 }
 

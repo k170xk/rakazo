@@ -88,7 +88,7 @@ afterEach(() => {
 });
 
 describe("Evolve company tools", () => {
-  it("offers Evolve's tools to every bot under the names the skills use", async () => {
+  it("offers Evolve's tools to every agent under the names the skills use", async () => {
     const fetch = evolve(() => reply(listed));
     const tools = new EvolveCompanyTools(prisma, connection, { fetch });
     const names = (await tools.discoverTools(context)).map((tool) => tool.name);
@@ -177,7 +177,7 @@ describe("Evolve company tools", () => {
     expect(stub?.description).toContain("EVOLVE_PLUGINS_SECRET");
   });
 
-  it("calls a tool as the person running the bot", async () => {
+  it("calls a tool as the person running the agent", async () => {
     const fetch = evolve((body) =>
       body.method === "tools/list"
         ? reply(listed)

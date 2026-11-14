@@ -5,7 +5,7 @@ import type { PrismaClient } from "@rakazo/db";
 /** What the model reads for the one human of a group thread: never their real name. */
 export const USER_SPEAKER = "User";
 /** Label for a bot whose record is gone, so its messages are still not mistaken for the receiver's own. */
-export const UNKNOWN_BOT_SPEAKER = "another bot";
+export const UNKNOWN_BOT_SPEAKER = "another agent";
 
 /**
  * A bot's name as it appears in a label: one line, no brackets (so a name cannot close or fake
@@ -17,7 +17,7 @@ export function speakerName(name: string): string {
     .replace(/\s+/g, " ")
     .trim();
   if (!clean) return UNKNOWN_BOT_SPEAKER;
-  return clean.toLowerCase() === USER_SPEAKER.toLowerCase() ? `${USER_SPEAKER} (bot)` : clean;
+  return clean.toLowerCase() === USER_SPEAKER.toLowerCase() ? `${USER_SPEAKER} (agent)` : clean;
 }
 
 /**

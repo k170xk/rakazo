@@ -414,7 +414,7 @@ describe("repeated identical tool calls through the run loop", () => {
     expectStoppedAt(6, await runLoop(() => ({ calls: [LISTING] }), { listing: unreadable }));
   }, 30_000);
 
-  it("lets the bot wait on an unchanged answer until it changes", async () => {
+  it("lets the agent wait on an unchanged answer until it changes", async () => {
     const { requests, finalText } = await runLoop(
       (n) => (n <= 9 ? { calls: [LISTING] } : { text: "The report is ready." }),
       { listing: (call) => (call <= 8 ? [] : [REPORT]) },

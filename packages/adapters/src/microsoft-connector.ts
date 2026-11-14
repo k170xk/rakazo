@@ -14,6 +14,7 @@ import type { Prisma, PrismaClient } from "@rakazo/db";
 import { runAsSystem, runAsTenant } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { combineSignals, sanitizeConnectorError } from "./connector-safety.js";
+import { extractOutlookSignatureHtml } from "./email-html.js";
 import type { MailGraph, Recipient } from "./microsoft-mail.js";
 import {
   address,
@@ -933,6 +934,125 @@ export class MicrosoftConnector implements ManagedConnectorProvider {
       cc: addresses(message.ccRecipients),
       receivedAt: message.receivedDateTime ?? null,
     };
+  }
+
+  /**
+   * Finds the person's HTML signature from their recent Outlook Sent Items when they have not
+   * pasted one yet, inlining small `cid:` signature logos so they render cleanly in new drafts.
+   */
+  async outlookDetectSignature(
+    owner: Pick<AdapterContext, "spaceId" | "userId">,
+    signal?: AbortSignal,
+  ): Promise<string | null> {
+    const [row] = await this.rows(owner, { status: "connected" }, OUTLOOK_PROVIDER);
+    if (!row?.secretId) return null;
+    const account = metadataRecord(row.metadata).account as StoredTokens["account"];
+    const graph = this.mailGraph(await this.accessToken(row, owner), signal, account?.email);
+    const sent = await graph.json<{
+      value?: Array<{
+        id: string;
+        hasAttachments?: boolean;
+        body?: { contentType?: string; content?: string };
+      }>;
+    }>(
+      `/me/mailFolders/sentitems/messages?$top=5&$orderby=sentDateTime%20desc&$select=id,hasAttachments,body`,
+    );
+    for (const message of sent.value ?? []) {
+      const html = message.body?.content ?? "";
+      if (message.body?.contentType?.toLowerCase() !== "html" || !html) continue;
+      let cidMap: Record<string, string> = {};
+      if (/src=["']cid:/i.test(html)) {
+        const listed = await graph
+          .json<{
+            value?: Array<{
+              id: string;
+              contentType?: string;
+              size?: number;
+              isInline?: boolean;
+              contentId?: string;
+              contentBytes?: string;
+            }>;
+          }>(`/me/messages/${encodeURIComponent(message.id)}/attachments?$top=20`)
+          .catch(() => ({ value: [] }));
+        let totalBytes = 0;
+        cidMap = {};
+        for (const att of listed.value ?? []) {
+          const mime = (att.contentType ?? "").toLowerCase();
+          if (
+            !att.isInline ||
+            !att.contentId ||
+            !att.contentBytes ||
+            !/^image\/(png|jpe?g|gif|webp)$/.test(mime)
+          ) {
+            continue;
+          }
+          const size = att.size ?? Math.floor((att.contentBytes.length * 3) / 4);
+          if (size > 60_000 || totalBytes + size > 70_000) continue;
+          totalBytes += size;
+          const cleanCid = att.contentId.replace(/^<|>$/g, "").trim().toLowerCase();
+          const dataUrl = `data:${mime};base64,${att.contentBytes.replace(/\s+/g, "")}`;
+          cidMap[cleanCid] = dataUrl;
+          const shortCid = cleanCid.split("@")[0];
+          if (shortCid) cidMap[shortCid] = dataUrl;
+        }
+      }
+      const extracted = extractOutlookSignatureHtml(html, cidMap);
+      if (extracted && extracted.length <= 100_000) return extracted;
+    }
+    return null;
+  }
+
+  /**
+   * A token that can create a draft in the person's Outlook Drafts folder using Mail.ReadWrite,
+   * only for their own press of Create draft on a draft card. Runs never reach this: their mail
+   * client is wrapped in readOnlyMail, which refuses anything that is not a GET read path.
+   */
+  async outlookDraftToken(
+    owner: Pick<AdapterContext, "spaceId" | "userId">,
+  ): Promise<{ token: string } | { reconnect: string }> {
+    const reconnect = {
+      reconnect: "Reconnect Outlook in Connectors, then press Create draft again.",
+    };
+    const [row] = await this.rows(owner, { status: "connected" }, OUTLOOK_PROVIDER);
+    if (!row?.secretId) return reconnect;
+    try {
+      return { token: await this.accessToken(row, owner) };
+    } catch (error) {
+      if (error instanceof MicrosoftReconnectError) return reconnect;
+      throw error;
+    }
+  }
+
+  /**
+   * The person's Outlook as the read-only mail client, for filing proposals and the folder picker;
+   * null while Outlook is not connected.
+   */
+  async outlookReader(
+    owner: Pick<AdapterContext, "spaceId" | "userId">,
+    signal?: AbortSignal,
+  ): Promise<MailGraph | null> {
+    const [row] = await this.rows(owner, { status: "connected" }, OUTLOOK_PROVIDER);
+    if (!row?.secretId) return null;
+    const account = metadataRecord(row.metadata).account as StoredTokens["account"];
+    return this.mailGraph(await this.accessToken(row, owner), signal, account?.email);
+  }
+
+  /**
+   * A Mail.ReadWrite token to move email and create folders, only for the person's own press of
+   * File or Undo on a filing card. Runs use outlookReader, which refuses every write.
+   */
+  async outlookFilingToken(
+    owner: Pick<AdapterContext, "spaceId" | "userId">,
+  ): Promise<{ token: string } | { reconnect: string }> {
+    const reconnect = { reconnect: "Reconnect Outlook in Connectors, then press File again." };
+    const [row] = await this.rows(owner, { status: "connected" }, OUTLOOK_PROVIDER);
+    if (!row?.secretId) return reconnect;
+    try {
+      return { token: await this.accessToken(row, owner) };
+    } catch (error) {
+      if (error instanceof MicrosoftReconnectError) return reconnect;
+      throw error;
+    }
   }
 
   /**

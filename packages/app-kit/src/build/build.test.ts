@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { APP_KIT_GUIDE } from "../guide.js";
-import { buildApp, checkFiles, classCandidates, inlineScript, pluginBundle } from "./index.js";
+import { auditAppCraft, buildApp, checkFiles, classCandidates, inlineScript, pluginBundle } from "./index.js";
 
 const APP = `
 import { AppShell, KpiCard, DataTable } from "@ocsc/ui";
@@ -21,9 +21,10 @@ export default function App() {
 }`;
 
 describe("buildApp", () => {
-  it("builds the example the bot's guide teaches, so the guide matches the kit", async () => {
+  it("builds the example the agent's guide teaches, so the guide matches the kit", async () => {
     const example = /## Example\n```tsx\n([\s\S]*?)```/.exec(APP_KIT_GUIDE)?.[1];
     expect(example).toBeTruthy();
+    expect(auditAppCraft({ "App.tsx": example! })).toEqual([]);
     const built = await buildApp({ "App.tsx": example! }, { title: "Example" });
     expect(built.ok ? [] : built.errors).toEqual([]);
   });
@@ -48,6 +49,13 @@ describe("buildApp", () => {
     expect(preview.ok && preview.js).toContain("data-loc");
     expect(preview.ok && preview.js).toContain('"app:App.tsx"');
     expect(published.ok && published.js).not.toContain("app:App.tsx");
+  }, 30_000);
+
+  it("resolves framer-motion as an alias for motion/react", async () => {
+    const result = await buildApp({
+      "App.tsx": 'import { motion } from "framer-motion";\nexport default function App() { return <motion.div whileHover={{ y: -2 }}>Hi</motion.div>; }',
+    });
+    expect(result.ok ? [] : result.errors).toEqual([]);
   }, 30_000);
 
   it("refuses imports outside the allowlist", async () => {
@@ -121,5 +129,23 @@ describe("helpers", () => {
 
   it("keeps script text from closing its element", () => {
     expect(inlineScript('x="</script><img>"; y="<!--"')).toBe('x="<\\/script><img>"; y="<\\!--"');
+  });
+
+  it("flags bare CRUD, light-only slate classes, raw hex, off-brand blue and empty v1s", () => {
+    const bare = `
+      import { AppShell, TableView } from "@ocsc/ui";
+      export default function App() {
+        return <AppShell title="Reg" pages={[{ id: "list", label: "List", render: () => <div className="bg-white text-slate-900 bg-blue-600" style={{ color: "#77c043" }} /> }]} />;
+      }
+    `;
+    const notes = auditAppCraft({ "App.tsx": bare }, { isNew: true, totalRows: 0 });
+    expect(notes.some((note) => note.includes("light-only classes"))).toBe(true);
+    expect(notes.some((note) => note.includes("off-brand blue/purple"))).toBe(true);
+    expect(notes.some((note) => note.includes("#77c043"))).toBe(true);
+    expect(notes.some((note) => note.includes("No @ocsc/ui chart"))).toBe(true);
+    expect(notes.some((note) => note.includes("interactive workflow view"))).toBe(true);
+    expect(notes.some((note) => note.includes("commands on AppShell"))).toBe(true);
+    expect(notes.some((note) => note.includes("<Theme"))).toBe(true);
+    expect(notes.some((note) => note.includes("0 rows"))).toBe(true);
   });
 });

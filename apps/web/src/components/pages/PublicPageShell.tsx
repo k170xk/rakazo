@@ -18,13 +18,15 @@ export function PublicPageShell({
   document,
   state,
   fill = false,
+  actions,
   children,
 }: {
   title: string;
   document: string | null;
   state?: PageStateStore;
-  /** An app: it fills the screen below the header and scrolls inside itself, so no PDF. */
+  /** An app or board: it fills the screen below the header and scrolls inside itself. */
   fill?: boolean;
+  actions?: ReactNode;
   children?: ReactNode;
 }) {
   const { t } = useLingui();
@@ -61,6 +63,7 @@ export function PublicPageShell({
               {copied ? <Trans>Copied</Trans> : <Trans>Copy link</Trans>}
             </span>
           </Button>
+          {actions}
           {fill ? null : (
             <DownloadPdfButton className={ACTION} labelClassName="max-[560px]:sr-only" />
           )}

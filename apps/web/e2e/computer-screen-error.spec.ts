@@ -83,7 +83,7 @@ test(
     await page.getByRole("button", { name: "Cancel", exact: true }).click();
     failScreen = false;
     await page.getByRole("button", { name: "Retry screen" }).click();
-    await expect(page.locator('iframe[title="Bot screen"]')).toHaveAttribute("src", screenUrl);
+    await expect(page.locator('iframe[title="Agent screen"]')).toHaveAttribute("src", screenUrl);
     await expect(page.getByRole("alert")).toHaveCount(0);
   },
 );

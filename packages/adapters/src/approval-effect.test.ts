@@ -396,7 +396,7 @@ describe("uncertainEffectResult", () => {
     },
   );
 
-  it("keeps the destination hint for update_bot on the bot itself", () => {
+  it("keeps the destination hint for update_bot on the agent itself", () => {
     expect(uncertainEffectResult("update_bot", { name: "Me" }).error).not.toContain("list_fleet");
   });
 });

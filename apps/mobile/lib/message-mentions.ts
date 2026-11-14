@@ -32,7 +32,7 @@ export const UserMentionsContext = createContext<
 export function userMentionTargets(
   members: readonly { botId: string; name: string; color: string; avatarSet?: BotAvatarSet }[],
 ): UserMentionTarget[] {
-  const named = members.map((member) => ({ member, name: displayName(member.name, "Bot") }));
+  const named = members.map((member) => ({ member, name: displayName(member.name, "Agent") }));
   const everyone = members.length >= 2;
   const counts = new Map<string, number>(everyone ? [["everyone", 1]] : []);
   for (const { name } of named)

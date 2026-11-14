@@ -566,7 +566,7 @@ describe("message ownership", () => {
         {
           ...message,
           blocks: [
-            { kind: "bot_message_received", fromBotId: "bot", fromBotName: "Bot", text: "Hi" },
+            { kind: "bot_message_received", fromBotId: "bot", fromBotName: "Agent", text: "Hi" },
           ],
         },
         "me",

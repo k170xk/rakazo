@@ -222,7 +222,7 @@ export async function renderPlotFromTool(
       runSecrets,
     );
     if (!checkingSpec)
-      getLogger().error(`render_plot failed for bot ${workspace.botId}: ${message}`);
+      getLogger().error(`render_plot failed for agent ${workspace.botId}: ${message}`);
     return finish({
       error: message,
       hint: 'Call render_plot with {"charts": true} for runnable example specs, or {"help": true} for the full guide.',

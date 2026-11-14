@@ -19,7 +19,7 @@ const writer = {
 const researcher = { ...writer, botId: "researcher" };
 
 describe("Team Computer parallel screens", () => {
-  it("gives fake Team bots distinct observations without ComputerBusyError", async () => {
+  it("gives fake Team agents distinct observations without ComputerBusyError", async () => {
     const fake = new FakeSandboxProvider();
     expect(fake.describe().capabilities.multiScreen).toBe(true);
     const computer = await fake.provision({ botId: "team-home", homePath: "/tmp/team" }, writer);
@@ -59,7 +59,7 @@ describe("Team Computer parallel screens", () => {
     ).toBe("office");
   });
 
-  it("releases a single-screen claim only for the owning bot", () => {
+  it("releases a single-screen claim only for the owning agent", () => {
     const claims = new SingleScreenClaimTracker();
     claims.claim("computer-1", writer);
     claims.release("computer-1", researcher);
@@ -68,7 +68,7 @@ describe("Team Computer parallel screens", () => {
     expect(() => claims.claim("computer-1", researcher)).not.toThrow();
   });
 
-  it("does not let stale cleanup release a replacement claim for the same bot", () => {
+  it("does not let stale cleanup release a replacement claim for the same agent", () => {
     const claims = new SingleScreenClaimTracker();
     const oldRun = { ...writer, screenLeaseId: "run-1:1" };
     const newRun = { ...writer, screenLeaseId: "run-2:2" };
@@ -115,7 +115,7 @@ describe("Team Computer parallel screens", () => {
     expect(isComputerScreenUnavailable(new Error("cannot allocate another screen"))).toBe(true);
   });
 
-  it("lets Team bots use independent Boat screens concurrently", async () => {
+  it("lets Team agents use independent Boat screens concurrently", async () => {
     const boat = fakeBoatProvider();
     expect(boat.describe().capabilities.multiScreen).toBe(true);
     const computer = await boat.provision({ botId: "team-home", homePath: "/tmp" }, writer);

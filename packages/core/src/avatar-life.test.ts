@@ -52,7 +52,7 @@ function seeded(seed: number) {
 }
 
 describe("avatar state", () => {
-  it("shows a busy bot as working, as thinking while it writes, and resting while it waits on you", () => {
+  it("shows a busy agent as working, as thinking while it writes, and resting while it waits on you", () => {
     expect(avatarLifeState("running")).toBe("working");
     expect(avatarLifeState("queued")).toBe("working");
     expect(avatarLifeState("running", true)).toBe("thinking");
@@ -448,7 +448,7 @@ describe("authored motion", () => {
     }
   });
 
-  it("pulses the photo dots slowly while the bot works and quicker while it writes", () => {
+  it("pulses the photo dots slowly while the agent works and quicker while it writes", () => {
     const peaks = (typing: boolean) => {
       let count = 0;
       for (let ms = 10; ms < 6000; ms += 10) {

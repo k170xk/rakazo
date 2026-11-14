@@ -199,21 +199,22 @@ export function KpiCard({
   };
   return (
     <motion.div
-      whileHover={onClick ? { y: -2 } : undefined}
+      whileHover={{ y: -2 }}
+      transition={{ type: "spring", stiffness: 420, damping: 30 }}
       onClick={onClick}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-card",
-        onClick && "cursor-pointer transition-shadow hover:shadow-lift",
+        "group relative overflow-hidden rounded-2xl border border-border/70 bg-card p-5 shadow-card transition-[box-shadow,border-color] duration-200 hover:border-primary/30 hover:shadow-lift",
+        onClick && "cursor-pointer",
         className,
       )}
     >
-      <div className="pointer-events-none absolute -top-16 -right-16 size-40 rounded-full bg-primary/6 blur-2xl transition-opacity group-hover:opacity-100" />
+      <div className="pointer-events-none absolute -top-16 -right-16 size-40 rounded-full bg-primary/8 opacity-55 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
       <div className="relative flex items-start justify-between gap-3">
-        <p className="text-[13px] font-semibold text-muted-foreground">{label}</p>
+        <p className="text-[13px] font-semibold text-muted-foreground transition-colors group-hover:text-foreground/85">{label}</p>
         {icon && (
           <div
             className={cn(
-              "flex size-9 items-center justify-center rounded-xl [&_svg]:size-[18px]",
+              "flex size-9 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 [&_svg]:size-[18px]",
               iconTint[tone],
             )}
           >

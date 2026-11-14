@@ -40,7 +40,7 @@ function bot(id = "bot-1"): Bot {
   };
 }
 
-describe("thread bot roster", () => {
+describe("thread agent roster", () => {
   it.each([{ disabledBuiltinTools: [] }, { disabledBuiltinTools: ["web_search", "shell"] }])(
     "retains full server responses with unchanged disabled tools %j",
     ({ disabledBuiltinTools }) => {

@@ -117,7 +117,7 @@ export function stuckWorkStoppedNotification(
 }
 
 function botLabel(name: string): string {
-  return displayName(name, "Bot");
+  return displayName(name, "Agent");
 }
 
 function stuckWorkExpireAfterMs(status: StuckWorkStatus): number {

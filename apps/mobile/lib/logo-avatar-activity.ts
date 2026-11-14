@@ -31,7 +31,7 @@ export function rememberMobileAvatarSnapshot(
   const key = snapshot.groupId
     ? `group:${snapshot.groupId}`
     : snapshot.botId
-      ? `bot:${snapshot.botId}`
+      ? `agent:${snapshot.botId}`
       : null;
   if (!key) return;
   const previous = snapshots.get(key);
@@ -58,7 +58,7 @@ export function beginMobileAvatarFeed(
   cursor: number,
 ) {
   const source = `mobile-avatar-${++serial}`;
-  const key = "groupId" in target ? `group:${target.groupId}` : `bot:${target.botId}`;
+  const key = "groupId" in target ? `group:${target.groupId}` : `agent:${target.botId}`;
   const snapshot = snapshots.get(key)?.value;
   // A snapshot older than the feed cursor misses runs started since, so it can't vouch for idle.
   if (snapshot && snapshot.cursor >= cursor) projection.hydrate(source, snapshot);

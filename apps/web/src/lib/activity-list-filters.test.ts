@@ -102,7 +102,7 @@ describe("filterActivityRuns", () => {
     expect(runMatchesActivityFilters(run, filters("missing"))).toBe(false);
   });
 
-  it("matches bot name and prompt in search", () => {
+  it("matches agent name and prompt in search", () => {
     const runs = [row(), row({ botName: "Scout", agentMessage: null, promptSnippet: "other" })];
     const filtered = filterActivityRuns(runs, {
       ...emptyActivityFilters(),

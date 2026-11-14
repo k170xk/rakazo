@@ -49,7 +49,7 @@ describe("toComputerStatus", () => {
     );
   });
 
-  it("passes through the busy bot name when takeover is blocked", () => {
+  it("passes through the busy agent name when takeover is blocked", () => {
     const computer = {
       kind: "fake",
       state: "running",

@@ -1,23 +1,33 @@
 import { Printer } from "lucide-react";
 import { useState } from "react";
-import type { PdfDocument } from "../pdf/model.js";
+import type { PdfBlock, PdfDocument } from "../pdf/model.js";
 import { canPrintPdf, printPdf, useApp } from "../sdk/index.js";
 import type { ButtonProps } from "./basic.js";
 import { Button } from "./basic.js";
 import { toast } from "./overlay.js";
 
 /**
- * Prints a report to PDF on OCSC's template when clicked. document can be a function so the
- * report is built from the data at the moment of printing.
+ * Prints a report to PDF on OCSC's template when clicked. Accepts `document` (object or factory)
+ * or shorthand `{ title, subtitle, kind, reference, blocks }` directly on the button.
  */
 export function PrintButton({
   document,
+  title,
+  subtitle,
+  kind,
+  reference,
+  blocks,
   filename,
   children = "Print to PDF",
   variant = "secondary",
   ...props
-}: Omit<ButtonProps, "onClick"> & {
-  document: PdfDocument | (() => PdfDocument | Promise<PdfDocument>);
+}: Omit<ButtonProps, "onClick" | "title"> & {
+  document?: PdfDocument | (() => PdfDocument | Promise<PdfDocument>);
+  title?: string;
+  subtitle?: string;
+  kind?: string;
+  reference?: string;
+  blocks?: PdfBlock[];
   filename?: string;
 }) {
   useApp();
@@ -32,7 +42,20 @@ export function PrintButton({
       onClick={async () => {
         setBusy(true);
         try {
-          const report = typeof document === "function" ? await document() : document;
+          const report: PdfDocument | undefined =
+            typeof document === "function"
+              ? await document()
+              : document ??
+                (blocks
+                  ? {
+                      title: title ?? "Report",
+                      ...(subtitle ? { subtitle } : {}),
+                      ...(kind ? { kind } : {}),
+                      ...(reference ? { reference } : {}),
+                      blocks,
+                    }
+                  : undefined);
+          if (!report) throw new Error("No PDF document was supplied.");
           await printPdf(report, filename ? { filename } : {});
           toast.success("PDF saved");
         } catch (error) {

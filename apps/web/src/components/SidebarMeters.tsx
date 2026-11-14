@@ -68,18 +68,20 @@ export function SidebarMeters({
   }
 
   return (
-    <div className="space-y-2 px-2.5 pt-1 pb-1">
+    <div className="flex items-center px-2 pt-0.5 pb-0.5 text-xs text-muted-foreground">
       <button
         type="button"
         onClick={open}
         data-testid="sidebar-storage"
-        className="block w-full rounded-lg px-2.5 py-1.5 text-start hover:bg-accent"
+        className="flex min-w-0 flex-1 flex-col gap-1 rounded-md px-1.5 py-1 text-start hover:bg-accent"
       >
-        <span className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-          <span>
+        <span className="flex min-w-0 items-baseline gap-1.5">
+          <span className="shrink-0">
             <Trans>Storage</Trans>
           </span>
-          <span className="tabular-nums">
+          <span
+            className={`min-w-0 truncate tabular-nums ${storageFull ? "text-destructive" : ""}`}
+          >
             {formatSize(data.usedBytes)} / {formatSize(data.limitBytes)}
           </span>
         </span>
@@ -88,17 +90,20 @@ export function SidebarMeters({
           warn={storageFull}
           label={t`Storage used`}
           value={Math.round(storageShare * 100)}
+          thin
         />
       </button>
       {usage === null ? null : (
-        <div className="px-2.5 py-1.5" data-testid="sidebar-usage">
-          <span className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+        <div className="flex shrink-0 flex-col gap-1 px-1.5 py-1" data-testid="sidebar-usage">
+          <span className="flex items-baseline gap-1.5">
             <span>
               <Trans>Usage</Trans>
             </span>
-            <span className="tabular-nums">{usageLeft(usage)}</span>
+            <span className={`tabular-nums ${usage >= 100 ? "text-destructive" : ""}`}>
+              {usageLeft(usage)}
+            </span>
           </span>
-          <Bar share={usage / 100} warn={usage >= 100} label={t`Usage`} value={usage} />
+          <Bar share={usage / 100} warn={usage >= 100} label={t`Usage`} value={usage} thin />
         </div>
       )}
     </div>
@@ -147,15 +152,21 @@ function Bar({
   warn,
   label,
   value,
+  thin = false,
 }: {
   share: number;
   warn: boolean;
   label: string;
   value: number;
+  thin?: boolean;
 }) {
   return (
     <span
-      className="mt-1 block h-1.5 overflow-hidden rounded-full bg-border"
+      className={
+        thin
+          ? "block h-0.5 overflow-hidden rounded-full bg-border"
+          : "mt-1 block h-1.5 overflow-hidden rounded-full bg-border"
+      }
       role="progressbar"
       aria-label={label}
       aria-valuenow={value}

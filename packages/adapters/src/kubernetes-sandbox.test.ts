@@ -290,7 +290,7 @@ describe("KubernetesSandboxProvider", () => {
     );
   });
 
-  it("attaches the controlled terminal without replacing the bot run screen fence", async () => {
+  it("attaches the controlled terminal without replacing the agent run screen fence", async () => {
     const exec = successfulExec("RAKAZO_DESKTOP=0:view-token\n");
     const provider = providerFor({}, exec);
 
@@ -331,7 +331,7 @@ describe("KubernetesSandboxProvider", () => {
     ).resolves.toMatchObject({ fresh: false });
   });
 
-  it("rejects a create conflict when the winner belongs to another bot", async () => {
+  it("rejects a create conflict when the winner belongs to another agent", async () => {
     const read = vi
       .fn()
       .mockRejectedValueOnce(Object.assign(new Error("missing"), { code: 404 }))
@@ -340,7 +340,7 @@ describe("KubernetesSandboxProvider", () => {
     const provider = providerFor({ readNamespacedPod: read, createNamespacedPod: create });
     await expect(
       provider.provision({ botId: "bot-a", homePath: "/unused" }, context),
-    ).rejects.toThrow("belongs to another bot");
+    ).rejects.toThrow("belongs to another agent");
   });
 
   describe("mounted home", () => {
@@ -350,7 +350,7 @@ describe("KubernetesSandboxProvider", () => {
       homeColocateLabels: { app: "rakazo-api" },
     };
 
-    it("mounts only the bot's home directory and pins the pod beside the volume", async () => {
+    it("mounts only the agent's home directory and pins the pod beside the volume", async () => {
       const create = vi.fn().mockResolvedValue(readyPod);
       const provider = providerFor(
         {
@@ -387,7 +387,7 @@ describe("KubernetesSandboxProvider", () => {
       expect(provider.describe().capabilities.persistentHome).toBe(true);
     });
 
-    it("refuses a bot id that is not a single folder name", async () => {
+    it("refuses an agent id that is not a single folder name", async () => {
       const provider = providerFor(
         {
           readNamespacedPod: vi
@@ -399,7 +399,7 @@ describe("KubernetesSandboxProvider", () => {
       );
       await expect(
         provider.provision({ botId: "../other", homePath: "/unused" }, context),
-      ).rejects.toThrow("invalid bot id");
+      ).rejects.toThrow("invalid agent id");
     });
 
     it("keeps an unmounted live pod saving until its normal stop", async () => {
@@ -535,7 +535,7 @@ describe("KubernetesSandboxProvider", () => {
     });
   });
 
-  it("rejects a pod carrying another bot's label", async () => {
+  it("rejects a pod carrying another agent's label", async () => {
     const provider = providerFor({
       readNamespacedPod: vi
         .fn()
@@ -546,7 +546,7 @@ describe("KubernetesSandboxProvider", () => {
         { botId: "bot-a", homePath: "/unused", providerKind: "kubernetes", providerRef: "pod" },
         context,
       ),
-    ).rejects.toThrow("belongs to another bot");
+    ).rejects.toThrow("belongs to another agent");
   });
 
   it.each(["Failed", "Succeeded"])(

@@ -10,7 +10,7 @@ const PNG_1X1 = Buffer.from(
   "base64",
 );
 
-describe("bot avatar encoding", () => {
+describe("agent avatar encoding", () => {
   it("encodes an attached image as a square webp data URL", async () => {
     const dataUrl = await encodeBotAvatarImage(PNG_1X1);
     expect(dataUrl.startsWith("data:image/webp;base64,")).toBe(true);

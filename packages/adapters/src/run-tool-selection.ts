@@ -27,6 +27,11 @@ import {
   USER_COMPUTER_SHELL_TOOL,
 } from "./user-computer-tools.js";
 
+const OUTLOOK_FILING_TOOLS: ReadonlySet<string> = new Set([
+  "outlook_filing_candidates",
+  "outlook_propose_filing",
+]);
+
 export const READ_ONLY_AGENT_TOOLS = new Set([
   "computer_observe",
   "list_files",
@@ -52,6 +57,7 @@ export const READ_ONLY_AGENT_TOOLS = new Set([
   "evolve_knowledge_search",
   "evolve_plugin_status",
   "evolve_plugin_scopes",
+  "outlook_filing_candidates",
 ]);
 
 /** Offered only to a user who connected a wallet. */
@@ -119,7 +125,7 @@ export function computerAccessRefusal(name: string, access: ComputerAccess): str
   if (access === "tools" && TOOLS_ONLY_COMPUTER_TOOLS.has(name)) return undefined;
   return access === "none"
     ? "This person has no computer access. Document files still use the ocsc tool and file tools when the company document runners are available; shell, screen and browser do not."
-    : "This computer only runs the OCSC tools (the ocsc tool) and files in the bot's folder.";
+    : "This computer only runs the OCSC tools (the ocsc tool) and files in the agent's folder.";
 }
 
 export const BUILTIN_AGENT_TOOL_NAMES = new Set(builtinAgentTools.map((tool) => tool.name));
@@ -197,6 +203,11 @@ export function selectBuiltinToolsForRun(options: {
    * Without it the draft tool is not offered, so the model never learns sending exists.
    */
   outlookDrafts?: boolean;
+  /**
+   * The owner may file Outlook email, has Outlook connected and filing on, and this is their
+   * private chat, live or a routine. The tools only read mail and make a card.
+   */
+  outlookFiling?: boolean;
 }) {
   const disabled = disabledBuiltinToolSet(options.disabledBuiltinTools);
   const computerAccess: ComputerAccess =
@@ -253,6 +264,11 @@ export function selectBuiltinToolsForRun(options: {
       (tool.name !== "outlook_draft_email" ||
         (Boolean(options.outlookDrafts) &&
           ownerStartedRun &&
+          !options.groupId &&
+          !options.messagingChannelRun &&
+          !isBackgroundRunTrigger(options.trigger))) &&
+      (!OUTLOOK_FILING_TOOLS.has(tool.name) ||
+        (Boolean(options.outlookFiling) &&
           !options.groupId &&
           !options.messagingChannelRun &&
           !isBackgroundRunTrigger(options.trigger))) &&

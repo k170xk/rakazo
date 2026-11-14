@@ -201,7 +201,7 @@ describe("Novita computer backend", () => {
     expect(await provider.readFile(computer, "growing", ctx, { maxBytes: 4 })).toHaveLength(4);
   });
 
-  it("uses token-protected view and control sessions for multiple bot screens", async () => {
+  it("uses token-protected view and control sessions for multiple agent screens", async () => {
     const { provider, computer } = await started();
     const first = await provider.connectScreen(computer, { view: "stream" }, ctx);
     const second = await provider.connectScreen(

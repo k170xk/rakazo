@@ -614,7 +614,7 @@ export function OnboardingPage() {
       navigate(`/app/${bot.id}`);
     } catch (err) {
       createStartedRef.current = false;
-      setError(errorText(err, t`Could not create your bot`));
+      setError(errorText(err, t`Could not create your agent`));
     }
   }
 

@@ -27,7 +27,7 @@ describe("findFirstBot", () => {
     });
   });
 
-  it("returns nothing when there is no first bot yet", () => {
+  it("returns nothing when there is no first agent yet", () => {
     expect(findFirstBot([{ id: "other", name: "Nova", spawnKey: null }])).toBeUndefined();
   });
 });

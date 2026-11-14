@@ -160,7 +160,7 @@ export function withSecretPersistence(prisma: PrismaClient, store: SecretStore):
       });
       filter = { spaceId: { in: spaces.map((row) => row.id) } };
     }
-    if (model !== "Bot") {
+    if (model !== "Agent") {
       state.old.push(...(await lockedRows(state, "Secret", filter)));
       state.old.push(...(await lockedRows(state, "VaultCredential", filter)));
     }

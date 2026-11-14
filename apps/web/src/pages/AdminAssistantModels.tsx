@@ -61,8 +61,8 @@ export function CompanyAssistantModelsSection({
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           <Trans>
-            Bots people start from one of these assistants run on the model chosen here, using the
-            company key. Blank bots, and assistants left on the company model, use the company model
+            Agents people start from one of these assistants run on the model chosen here, using the
+            company key. Blank agents, and assistants left on the company model, use the company model
             above.
           </Trans>
         </p>

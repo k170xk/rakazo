@@ -17,7 +17,7 @@ import {
   toggleEnabledModelId,
 } from "./model-providers.js";
 
-it("counts only bots that pick both a provider and a model", () => {
+it("counts only agents that pick both a provider and a model", () => {
   expect(
     botsWithOwnModel([
       { modelProvider: "anthropic", modelId: "claude-opus-5-5" },

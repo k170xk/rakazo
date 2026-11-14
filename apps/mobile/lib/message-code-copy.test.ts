@@ -105,7 +105,7 @@ beforeEach(() => {
 });
 
 describe("MessageRow code copy accessibility action", () => {
-  it("offers Copy code for a bot reply with one block and dispatches its exact text", () => {
+  it("offers Copy code for an agent reply with one block and dispatches its exact text", () => {
     const code = "const a = 1;\n\n  return a;";
     const menu = messageMenu("bot", [code]);
     expect(mocks.markdownCodeBlocks).toHaveBeenCalledWith(menu.text);

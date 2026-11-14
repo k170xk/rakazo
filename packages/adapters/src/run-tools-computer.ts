@@ -637,7 +637,7 @@ export const computerTools: ToolHandlers = {
     }
     if (ctx.computer.folder) {
       return call.finish({
-        error: `ocsc ${program} needs the bot owner's own computer, so it is not available in a shared chat. Word, PowerPoint, Excel and PDF documents still work here.`,
+        error: `ocsc ${program} needs the agent owner's own computer, so it is not available in a shared chat. Word, PowerPoint, Excel and PDF documents still work here.`,
       });
     }
     const held = await ocscBeforeRun(ctx, program, args);

@@ -83,7 +83,7 @@ describePostgres("direct run dispatch (PostgreSQL)", () => {
   const wait = async (assertion: () => Promise<void> | void) =>
     vi.waitFor(assertion, { timeout: 5_000, interval: 20 });
 
-  it("reports runs left unstarted, not retry backoff or waits on the bot's own earlier run", async () => {
+  it("reports runs left unstarted, not retry backoff or waits on the agent's own earlier run", async () => {
     const now = Date.now();
     const computer = await system.computer.create({
       data: {
@@ -244,7 +244,7 @@ describePostgres("direct run dispatch (PostgreSQL)", () => {
     }
   });
 
-  it("ends an untaken takeover wait so chat work for its bot can start", async () => {
+  it("ends an untaken takeover wait so chat work for its agent can start", async () => {
     const computer = await system.computer.create({
       data: {
         spaceId: identity.spaceId,

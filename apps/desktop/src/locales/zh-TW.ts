@@ -53,13 +53,13 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "The update could not be completed. Try again later.": "無法完成更新。請稍後再試一次。",
   "Could not reach the update server.": "無法連線到更新伺服器。",
   "Allow local computer access?": "要允許存取本機電腦嗎？",
-  "Allow bots to use this computer?": "要允許機器人使用這台電腦嗎？",
+  "Allow agents to use this computer?": "要允許智能體使用這台電腦嗎？",
   Cancel: "取消",
   Allow: "允許",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
-    "{host} 上的機器人可以用你帳號的權限執行指令、讀取和更改檔案，以及開啟 App。你可以在設定中撤銷存取權。",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
-    "此本機執行個體上的機器人可以用你帳號的權限執行指令、讀取和更改檔案，以及開啟 App。你可以從 App 選單撤銷存取權。",
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+    "{host} 上的智能體可以用你帳號的權限執行指令、讀取和更改檔案，以及開啟 App。你可以在設定中撤銷存取權。",
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+    "此本機執行個體上的智能體可以用你帳號的權限執行指令、讀取和更改檔案，以及開啟 App。你可以從 App 選單撤銷存取權。",
   "Local computer access requires an app-managed local instance.":
     "本機電腦存取權需要由 App 管理的本機執行個體。",
   "Local server is unavailable": "無法使用本機伺服器",
@@ -170,12 +170,12 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   Go: "前往",
   Back: "上一頁",
   Forward: "下一頁",
-  "Next Bot": "下一個機器人",
-  "Previous Bot": "上一個機器人",
+  "Next Agent": "下一個智能體",
+  "Previous Agent": "上一個智能體",
   "Command Menu…": "指令選單…",
   "Toggle Sidebar": "切換側邊欄",
   "Find…": "尋找…",
-  "Search Bots…": "搜尋機器人…",
+  "Search Agents…": "搜尋智能體…",
   "The window closed before the app loaded.": "App 載入完成前視窗已關閉。",
   "New Group Chat": "新增群組聊天",
   "Connect Apps…": "連結應用程式…",

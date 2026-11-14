@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, createBotFromPicker, rpc, signup } from "./helpers";
 
-test("a stale roster refresh started before creation keeps the new bot selected", async ({
+test("a stale roster refresh started before creation keeps the new agent selected", async ({
   page,
 }, testInfo) => {
   await signup(page, `stale-create-${Date.now()}@rakazo.test`, "password12", "Stale Create");
@@ -38,8 +38,8 @@ test("a stale roster refresh started before creation keeps the new bot selected"
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await ready;
   try {
-    await createBotFromPicker(page, { name: "Later Bot" });
-    const composer = page.getByRole("combobox", { name: "Message Later Bot", exact: true });
+    await createBotFromPicker(page, { name: "Later Agent" });
+    const composer = page.getByRole("combobox", { name: "Message Later Agent", exact: true });
     await expect(composer).toBeEditable();
     const createdPath = new URL(page.url()).pathname;
     const delivered = page.waitForResponse("**/rpc/spaces/list");
@@ -66,7 +66,7 @@ test("a stale roster refresh started before creation keeps the new bot selected"
   }
 });
 
-test("creation actions stay visible above a long bot list", async ({ page }, testInfo) => {
+test("creation actions stay visible above a long agent list", async ({ page }, testInfo) => {
   await signup(page, `create-menu-${Date.now()}@rakazo.test`, "password12", "Create menu");
   await completeOnboarding(page);
   await page.goto("/app");

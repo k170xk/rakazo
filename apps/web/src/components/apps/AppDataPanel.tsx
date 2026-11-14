@@ -111,7 +111,7 @@ export function AppDataPanel({ pageId }: { pageId: string }) {
   if (!names.length || !schema || !name) {
     return (
       <div className="flex flex-col items-start gap-3 p-4 text-[14px] text-muted-foreground">
-        <p>{t`This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet.`}</p>
+        <p>{t`This app has no tables yet. Ask the agent to add one, or bring in a spreadsheet.`}</p>
         <ImportButton
           pending={reimport.isPending}
           onPick={() => fileInput.current?.click()}

@@ -14,7 +14,7 @@ export const mcp: IntegrationPlatform = {
   h1: "Connect MCP servers to your AI agents",
   intro: [
     "The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is an open standard for connecting AI applications to outside tools and data. An app publishes an MCP server, and any agent that speaks MCP can list its tools and call them. Many apps now host a remote MCP server, so giving an agent their tools takes a URL and a sign-in.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, bots use tools in your apps, and each bot also has its own computer. You can use it on Rakazo Cloud or host it yourself. Every MCP server you add becomes tools your bots can use, alongside the apps in the [integrations catalog](/integrations/).",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, agents use tools in your apps, and each agent also has its own computer. You can use it on Rakazo Cloud or host it yourself. Every MCP server you add becomes tools your agents can use, alongside the apps in the [integrations catalog](/integrations/).",
   ],
   scene: {
     bot: "Bug Triage",
@@ -38,14 +38,14 @@ export const mcp: IntegrationPlatform = {
       image: true,
     },
     {
-      heading: "What bots can do with MCP servers in Rakazo",
+      heading: "What agents can do with MCP servers in Rakazo",
       bullets: [
         "Add a remote server by URL, or find an app's server with **Browse MCP servers**, which searches [integrations.sh](https://integrations.sh). Rakazo speaks Streamable HTTP and the older SSE transport.",
         "Sign in with OAuth. Rakazo registers itself with the provider when it allows that, stores the grant encrypted and refreshes it. Servers that take a bearer token or a custom header work too, and the credential is never sent to the model.",
-        "Choose which bots use a server. A bot asks in the chat before its first use; choose **Approve**, or **Authorize** if you need to sign in.",
-        "See when a server breaks. **Test connection** shows whether it works and why not. A bot whose server is down is told so instead of quietly losing its tools.",
-        "Follow your [approval settings](/docs/approvals/). In **Ask** mode a bot asks before a call that changes something. Tools the server marks as read-only usually run without asking.",
-        "Install a plugin from GitHub that bundles remote MCP servers with skills that teach bots to use them. Anyone can build one and [submit it](/plugins/submit/).",
+        "Choose which agents use a server. An agent asks in the chat before its first use; choose **Approve**, or **Authorize** if you need to sign in.",
+        "See when a server breaks. **Test connection** shows whether it works and why not. An agent whose server is down is told so instead of quietly losing its tools.",
+        "Follow your [approval settings](/docs/approvals/). In **Ask** mode an agent asks before a call that changes something. Tools the server marks as read-only usually run without asking.",
+        "Install a plugin from GitHub that bundles remote MCP servers with skills that teach agents to use them. Anyone can build one and [submit it](/plugins/submit/).",
       ],
     },
     {
@@ -59,11 +59,11 @@ export const mcp: IntegrationPlatform = {
       heading: "Limits and security",
       bullets: [
         "Remote servers must be at a public HTTPS address. Localhost and private networks are refused unless the operator sets `MCP_ALLOW_PRIVATE_ENDPOINT=true` on the API and worker, which allows them for every user. Cloud metadata addresses stay blocked.",
-        "Stdio servers are off unless the API and worker have `MCP_STDIO_ENABLED=true` and the command is in `MCP_STDIO_ALLOWED_COMMANDS`. They run with the server's own access, so only admins, the verified accounts in `RAKAZO_ADMIN_EMAILS`, can add one. Bots never do.",
+        "Stdio servers are off unless the API and worker have `MCP_STDIO_ENABLED=true` and the command is in `MCP_STDIO_ALLOWED_COMMANDS`. They run with the server's own access, so only admins, the verified accounts in `RAKAZO_ADMIN_EMAILS`, can add one. Agents never do.",
         "`npx` packages are installed once without running install scripts. Other runners such as `uvx` are refused; install those servers on the host and allowlist the binary.",
         "Plugins can only include remote servers, and Rakazo never runs code from a plugin's repository.",
-        "Very large tool results are cut to fit the bot's context, unless you turn on **Keep tool results whole** for that server.",
-        "A tool can return text anyone wrote, such as an email. Keep **Ask** or **Auto** approvals on for bots whose servers can make changes.",
+        "Very large tool results are cut to fit the agent's context, unless you turn on **Keep tool results whole** for that server.",
+        "A tool can return text anyone wrote, such as an email. Keep **Ask** or **Auto** approvals on for agents whose servers can make changes.",
       ],
     },
     {
@@ -75,7 +75,7 @@ export const mcp: IntegrationPlatform = {
         "Open **Integrations** from **Connect apps** at the bottom of the sidebar and choose **+**.",
         "Choose **Browse MCP servers**, search for the app and choose **Connect**. To enter a URL yourself, use **Manage MCP servers** → **Add server**.",
         "Choose **Connect OAuth** and sign in if the server asks. If the provider only accepts a client you create in its console, open **Advanced**, add the **Redirect URI** shown there to that client, then enter its client ID, and its secret for a confidential client.",
-        "Ask a bot to use the server and approve its first use, or choose **Use in this bot**.",
+        "Ask an agent to use the server and approve its first use, or choose **Use in this agent**.",
         "For a stdio server, an admin sets `MCP_STDIO_ENABLED` and `MCP_STDIO_ALLOWED_COMMANDS` on the API and worker, then adds it under **Add server** → **STDIO**.",
       ],
     },
@@ -100,14 +100,14 @@ export const mcp: IntegrationPlatform = {
         "Yes, on a self-hosted Rakazo with `MCP_STDIO_ENABLED=true` and the command listed in `MCP_STDIO_ALLOWED_COMMANDS`. Only admins can add one, because it runs with the server's own access.",
     },
     {
-      question: "Can bots reach an MCP server on localhost or my network?",
+      question: "Can agents reach an MCP server on localhost or my network?",
       answer:
         "Only on a self-hosted Rakazo with `MCP_ALLOW_PRIVATE_ENDPOINT=true`. It applies to every user, so leave it off on public installs.",
     },
     {
       question: "Do too many MCP tools slow an agent down?",
       answer:
-        "Every tool description takes room in the model's context. Rakazo gives a bot up to 20 MCP tools directly; past that, the bot searches for the tools it needs and loads only those.",
+        "Every tool description takes room in the model's context. Rakazo gives an agent up to 20 MCP tools directly; past that, the agent searches for the tools it needs and loads only those.",
     },
   ],
   sources: [

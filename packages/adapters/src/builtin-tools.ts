@@ -41,11 +41,11 @@ let secretAskSurface:
 function secretAskToolSurface() {
   const allowPrivateHttpOrigins = allowPrivateHttpSecretOrigins();
   secretAskSurface ??= {
-    description: `Collect a credential in a masked field. Supply credential to save a named API credential for this bot and user at one ${
+    description: `Collect a credential in a masked field. Supply credential to save a named API credential for this agent and user at one ${
       allowPrivateHttpOrigins
         ? "HTTPS origin, or an HTTP origin on a private LAN host"
         : "HTTPS origin"
-    }, or connectionId for a one-use connector code. Credential names must start with a lowercase letter and use only lowercase letters, digits, hyphens, or underscores (max 64 characters). For a website login the user wants saved, use auth {type:"login"} with the HTTPS origin of the sign-in form's page or frame, and fields with the labels the site signs in with (default Username and Password); the card asks for each, and browser_act fill_secret types one by its label. The user decides which fields are hidden: a hidden field is typed only into a password field. A field whose label is an ID, phone, email or username starts visible on the card and any other starts hidden, so label each field by what the site calls it. If one is refused in another field, ask again with replace true so the user can make it visible. The user may choose not to save a login: the result then says saved false, the login works only until this run ends, and a later run must ask again, so never say it was saved. For a value this bot's shell commands need, use auth {type:"command"} with no origin; it is exported to them as an environment variable named after the credential in upper case with hyphens as underscores (netbird-setup-key becomes $NETBIRD_SETUP_KEY). Use auth {type:"card"} for a payment card, which you see only as brand, last four and expiry, and {type:"contact"} for an address, phone or email named for who or where (home, mom); neither has an origin. Existing named credentials are reused unless replace is true, as is a site's saved login. A sign-in without a password, such as fields ["ID number","Phone"], still uses auth {type:"login"}; never ask for those in chat or on the screen. For a code the site texted or emailed, use oneTimeCode {origin} with the page's HTTPS origin: you never see the code, browser_act fill_code types it, and a wrong or new code needs a new request. Never ask for a code in chat. For CAPTCHA, passkeys, or anything else that needs the live desktop, call request_takeover.`,
+    }, or connectionId for a one-use connector code. Credential names must start with a lowercase letter and use only lowercase letters, digits, hyphens, or underscores (max 64 characters). For a website login the user wants saved, use auth {type:"login"} with the HTTPS origin of the sign-in form's page or frame, and fields with the labels the site signs in with (default Username and Password); the card asks for each, and browser_act fill_secret types one by its label. The user decides which fields are hidden: a hidden field is typed only into a password field. A field whose label is an ID, phone, email or username starts visible on the card and any other starts hidden, so label each field by what the site calls it. If one is refused in another field, ask again with replace true so the user can make it visible. The user may choose not to save a login: the result then says saved false, the login works only until this run ends, and a later run must ask again, so never say it was saved. For a value this agent's shell commands need, use auth {type:"command"} with no origin; it is exported to them as an environment variable named after the credential in upper case with hyphens as underscores (netbird-setup-key becomes $NETBIRD_SETUP_KEY). Use auth {type:"card"} for a payment card, which you see only as brand, last four and expiry, and {type:"contact"} for an address, phone or email named for who or where (home, mom); neither has an origin. Existing named credentials are reused unless replace is true, as is a site's saved login. A sign-in without a password, such as fields ["ID number","Phone"], still uses auth {type:"login"}; never ask for those in chat or on the screen. For a code the site texted or emailed, use oneTimeCode {origin} with the page's HTTPS origin: you never see the code, browser_act fill_code types it, and a wrong or new code needs a new request. Never ask for a code in chat. For CAPTCHA, passkeys, or anything else that needs the live desktop, call request_takeover.`,
     inputSchema: {
       oneOf: [
         {
@@ -226,8 +226,8 @@ const scheduleCreateInputSchema = {
 };
 
 const childRoutineTargetProperties = {
-  bot_id: { type: "string", description: "Id of a bot in this space." },
-  bot_name: { type: "string", description: "Exact name of a bot in this space." },
+  bot_id: { type: "string", description: "Id of an agent in this space." },
+  bot_name: { type: "string", description: "Exact name of an agent in this space." },
 };
 
 /** Same exactly-one-timing-method rule as schedule_create, plus the target bot. */
@@ -242,8 +242,8 @@ const createChildRoutineInputSchema = {
 };
 
 const fleetBotTargetProperties = {
-  bot_id: { type: "string", description: "Id of the bot." },
-  bot_name: { type: "string", description: "Exact name of the bot." },
+  bot_id: { type: "string", description: "Id of the agent." },
+  bot_name: { type: "string", description: "Exact name of the agent." },
 };
 
 const fleetGroupTargetProperties = {
@@ -266,13 +266,13 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "computer_observe",
     description:
-      "Capture the current screen of this bot's computer. Returns frame metadata and an image. Observe before coordinate-based actions and whenever another actor may have changed the desktop.",
+      "Capture the current screen of this agent's computer. Returns frame metadata and an image. Observe before coordinate-based actions and whenever another actor may have changed the desktop.",
     inputSchema: { type: "object", properties: {} },
   },
   {
     name: "computer_act",
     description:
-      "Perform up to 24 ordered desktop actions on this bot's computer and return the resulting screen. Batch only predictable actions; stop before an outcome you need to inspect. Action kinds: click, move, down, up, type, key, scroll, wait, focus (raises the application's window, launching it if absent). Scroll turns the wheel at x,y; put them on the area to scroll, as for a click. Without them it scrolls wherever the pointer is. Direction up, down, left or right; amount 1-20 wheel notches, default 3.",
+      "Perform up to 24 ordered desktop actions on this agent's computer and return the resulting screen. Batch only predictable actions; stop before an outcome you need to inspect. Action kinds: click, move, down, up, type, key, scroll, wait, focus (raises the application's window, launching it if absent). Scroll turns the wheel at x,y; put them on the area to scroll, as for a click. Without them it scrolls wherever the pointer is. Direction up, down, left or right; amount 1-20 wheel notches, default 3.",
     inputSchema: {
       type: "object",
       properties: {
@@ -324,7 +324,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "browser_navigate",
     description:
-      'Open a URL in the page browser on this bot\'s computer and return the page like browser_snapshot, or for a file download its saved path in downloads. Prefer this over pixel clicks for web pages. If the result includes fallback:"computer_act", use computer_act on the desktop browser instead.',
+      'Open a URL in the page browser on this agent\'s computer and return the page like browser_snapshot, or for a file download its saved path in downloads. Prefer this over pixel clicks for web pages. If the result includes fallback:"computer_act", use computer_act on the desktop browser instead.',
     inputSchema: {
       type: "object",
       properties: {
@@ -401,7 +401,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "list_files",
     description:
-      "List files and directories in this bot's home. On a Team Computer, relative paths use the bot folder; use shared/... for shared work or bots/... to inspect the Team root.",
+      "List files and directories in this agent's home. On a Team Computer, relative paths use the agent folder; use shared/... for shared work or agents/... to inspect the Team root.",
     inputSchema: {
       type: "object",
       properties: { path: { type: "string" } },
@@ -410,7 +410,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "read_file",
     description:
-      "Read a UTF-8 text file from this bot's home. On a Team Computer, relative paths use the bot folder and shared/... accesses shared work. Open visual or binary files with open_path instead.",
+      "Read a UTF-8 text file from this agent's home. On a Team Computer, relative paths use the agent folder and shared/... accesses shared work. Open visual or binary files with open_path instead.",
     inputSchema: {
       type: "object",
       properties: { path: { type: "string" } },
@@ -420,7 +420,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "write_file",
     description:
-      "Write a UTF-8 file into this bot's home. On a Team Computer, relative paths use the bot folder; use shared/... only for work other bots should share.",
+      "Write a UTF-8 file into this agent's home. On a Team Computer, relative paths use the agent folder; use shared/... only for work other agents should share.",
     inputSchema: {
       type: "object",
       properties: {
@@ -433,7 +433,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "attach_file",
     description:
-      "Attach a workspace file from this bot's home to the chat thread as an image or common file. The file stays in place; users can open it from the message and from the Artifacts tab. For a self-contained HTML page, document, or anything else meant to be opened and viewed on its own (not just downloaded) — give it name and description: a short human-readable title and a one-line summary of what it is. Skip them for an ordinary attachment like a log file or export. To UPDATE something you already made, call this again with the exact same name — it becomes a new version of that same artifact (visible in a version switcher) instead of a separate one; a different name always starts a new artifact.",
+      "Attach a workspace file from this agent's home to the chat thread as an image or common file. The file stays in place; users can open it from the message and from the Artifacts tab. For a self-contained HTML page, document, or anything else meant to be opened and viewed on its own (not just downloaded) — give it name and description: a short human-readable title and a one-line summary of what it is. Skip them for an ordinary attachment like a log file or export. To UPDATE something you already made, call this again with the exact same name — it becomes a new version of that same artifact (visible in a version switcher) instead of a separate one; a different name always starts a new artifact.",
     inputSchema: {
       type: "object",
       properties: {
@@ -510,7 +510,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "shell",
     description:
-      "Run a command inside this bot's computer. cwd defaults to the bot's folder on a Team Computer and the workspace root on a Private Computer. Output can arrive while the command is still running; tell the user any one-time code or sign-in URL in that output. A command is stopped after a few minutes, so on Linux or macOS start longer work, such as a coding agent CLI, as its own statement `nohup <command> < /dev/null > <log> 2>&1 &`, never after `&&`, and read the log to follow it.",
+      "Run a command inside this agent's computer. cwd defaults to the agent's folder on a Team Computer and the workspace root on a Private Computer. Output can arrive while the command is still running; tell the user any one-time code or sign-in URL in that output. A command is stopped after a few minutes, so on Linux or macOS start longer work, such as a coding agent CLI, as its own statement `nohup <command> < /dev/null > <log> 2>&1 &`, never after `&&`, and read the log to follow it.",
     inputSchema: {
       type: "object",
       properties: {
@@ -523,7 +523,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "ocsc",
     description:
-      'Run one OCSC document command (Word, PowerPoint, Excel, PDF or video) in this bot\'s document folder via the company document runners. Does not need a full computer (no shell, screen or browser). args are its command-line words, one per item, e.g. program word, args ["new", "--spec", "work/spec.json", "--out", "outputs/Report.docx"]. Paths are relative to the bot\'s folder. Use this, not shell, for OCSC commands.',
+      'Run one OCSC document command (Word, PowerPoint, Excel, PDF or video) in this agent\'s document folder via the company document runners. Does not need a full computer (no shell, screen or browser). args are its command-line words, one per item, e.g. program word, args ["new", "--spec", "work/spec.json", "--out", "outputs/Report.docx"]. Paths are relative to the agent\'s folder. Use this, not shell, for OCSC commands.',
     inputSchema: {
       type: "object",
       properties: {
@@ -605,7 +605,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "open_path",
     description:
-      "Open a workspace file or an http(s) URL in its default graphical application on this bot's computer and return the resulting screen.",
+      "Open a workspace file or an http(s) URL in its default graphical application on this agent's computer and return the resulting screen.",
     inputSchema: {
       type: "object",
       properties: { path: { type: "string" } },
@@ -615,7 +615,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "launch_app",
     description:
-      "Launch an installed graphical application on this bot's computer, or raise its window if already open; optionally with a URI. Returns the resulting screen.",
+      "Launch an installed graphical application on this agent's computer, or raise its window if already open; optionally with a URI. Returns the resulting screen.",
     inputSchema: {
       type: "object",
       properties: {
@@ -734,7 +734,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "generate_secret",
     description:
-      'Create a random password or key and save it for this bot and user; you never see the value. For a new website account, use type "login" with the sign-up site and the username, then type both into the form with browser_act fill_secret; add command: true only when a CLI also needs the password and the site offers no token or browser sign-in for it; that saves it as the command variable <name>-password too. For a value shell commands need, such as a database password you are setting up, use type "command"; it is exported like a request_secret command variable, so pass it from the environment instead of writing it out. Set rules only when the site or tool restricts characters, for example symbols: false for a value inside a URL. An existing credential is never replaced.',
+      'Create a random password or key and save it for this agent and user; you never see the value. For a new website account, use type "login" with the sign-up site and the username, then type both into the form with browser_act fill_secret; add command: true only when a CLI also needs the password and the site offers no token or browser sign-in for it; that saves it as the command variable <name>-password too. For a value shell commands need, such as a database password you are setting up, use type "command"; it is exported like a request_secret command variable, so pass it from the environment instead of writing it out. Set rules only when the site or tool restricts characters, for example symbols: false for a value inside a URL. An existing credential is never replaced.',
     inputSchema: z.toJSONSchema(GenerateSecretInput, { io: "input" }),
   },
   {
@@ -752,7 +752,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "forget_secret",
     description:
-      "Remove a saved credential for this bot and user, preventing future requests from using it.",
+      "Remove a saved credential for this agent and user, preventing future requests from using it.",
     inputSchema: z.toJSONSchema(z.object({ name: BotSecretName })),
   },
   {
@@ -786,7 +786,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
         path: {
           type: "string",
-          description: "Output PNG path in this bot's home. Default charts/plot-<n>.png.",
+          description: "Output PNG path in this agent's home. Default charts/plot-<n>.png.",
         },
         attach: {
           type: "boolean",
@@ -826,23 +826,33 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_whiteboard",
     description:
-      "Draw or change a shared whiteboard: a board of blocks and arrows the person can move, recolour and rewrite, not a picture. Use it when they ask to sketch, map, diagram or think something through (an architecture, a process, a plan, options, a retro). Create it with a title and items. Each item has a stable id, a kind and text. Kinds: rect, diamond (a decision), cylinder (a database), queue, document, cloud, section (a group behind other blocks), sticky, text, ellipse. Arrows use from and to, each {item: id} or {x, y}. Set x and y (origin top-left) so the drawing reads; omit them to stack new blocks. To change a board, pass only whiteboardId to read it, then ops with the baseVersion you were given: {op: add, item}, {op: update, id, patch} or {op: remove, id}. Change only the items the request touches. When the message lists selected items, change those. A board that changed comes back for you to read again; never replace the whole board to edit one block. Mention it as [title](page:whiteboardId). Call it a whiteboard. When they ask to turn it into a plan or a deck, read it and build that the usual way.",
+      'Draw or change a shared whiteboard: a board of sections, shapes, arrows and pictures the person can move, resize, recolour and rewrite. Create it with title, optional layout ("right" for left-to-right workflows, "down" for hierarchies, "lanes" for side-by-side phases/retros/options, "grid" for cards, or "manual" to keep exact x/y) and items. Group related blocks into sections ({id, kind: "section", text, color}) with section: sectionId on each block inside them; omit x, y, w, h when using layout so every block is sized to its text, wrapped inside its section with header clearance, and joined by orthogonal arrows. When you supply explicit x, y, w, h coordinates (without layout), your exact coordinates are kept and layoutSummary reports containedInSection (valid nesting), overlaps (with pixel intersection — keep only if intentional layering/annotation), headerClashes, outsideSection, textClipping and arrowCrossings so you can verify accuracy. Kinds: section, rect, diamond (decision), cylinder (database), queue, document, cloud, sticky, text, ellipse, pen, image, arrow. Add visuals with kind: "image" by passing url (an infographic imageUrl from evolve_infographics or an https project photo from mcp__evolve__search_project_datasheets / attached Evolve project references), artifactId (from generate_image or chat attachment), path (workspace image), or asset (from app_asset), plus optional text caption. Arrows use from: {item: id} and to: {item: id} (or {x, y}) with optional text. Colours: yellow, green, blue, pink, orange, purple, grey, ink. To change a board, read with whiteboardId only, then send ops with baseVersion ({op: "add", item}, {op: "update", id, patch}, {op: "remove", id}) touching only requested or selected items. Mention it as [title](page:whiteboardId) and call it a whiteboard.',
     inputSchema: {
       type: "object",
       properties: {
+        help: {
+          type: "boolean",
+          description: "Return the full whiteboard design and layout guide instead of saving.",
+        },
         whiteboardId: {
           type: "string",
           description: "The board to read or change. Omit to create one.",
         },
         title: { type: "string", description: "Board title. Required for a new board." },
+        layout: {
+          type: "string",
+          enum: ["right", "down", "lanes", "grid", "manual"],
+          description:
+            'Automatic clean layout: "right" (workflow), "down" (hierarchy), "lanes" (columns/phases/retro), "grid" (cards), or "manual" (exact x/y). Can also be passed with whiteboardId + baseVersion to tidy an existing board.',
+        },
         baseVersion: {
           type: "number",
-          description: "The version from the last read or save. Required with ops.",
+          description: "The version from the last read or save. Required with ops or layout.",
         },
         items: {
           type: "array",
           description:
-            "Every block on a new board. Each is {id, kind, text, x, y, w, h, color, from, to}.",
+            'Every block on a new board: {id, kind, text, section, color, from, to, x, y, w, h, url, artifactId, path, asset}. For kind "image", pass url (evolve_infographics or project datasheet photo), artifactId, path or asset.',
           items: { type: "object" },
         },
         ops: {
@@ -857,7 +867,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_app",
     description:
-      'Build or change an OCSC app in the App Studio: a real multi-screen React app with its own live tables that people use, edit and share (Lovable-quality, inside OCSC). Use it for every app, tool, tracker, register, dashboard or form, and whenever the person gives a spreadsheet; save_page is only for one-off reports. In a chat, call ask_app_scope and wait before the first save of a new app; that save is refused until they choose an individual user app or a tenant app. Call with {"help": true} first for the guide. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save. To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save then runs the app: fix what runCheck reports (crashes, errors, blank or too-wide pages).',
+      'Build or change a flagship OCSC app in the App Studio (multi-screen React, live tables, @ocsc/ui charts, boards, ⌘K and PDF). Use it for every app, tool, tracker, register, dashboard or form, and whenever the person gives a spreadsheet; save_page is only for updating older pages. In a chat, call ask_app_scope and wait before the first save of a new app; that save is refused until they choose an individual user app or a tenant app. Call with {"help": true} before planning or building so your plan uses the full @ocsc/ui and @ocsc/app kit. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save (when starting without real records, seed 8–12 realistic starter rows with hidden boolean column is_sample: true and show <SampleBanner tables={[...]} />). To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save runs the app and audits design craft: resolve both runCheck problems and craftNotes before replying.',
     inputSchema: {
       type: "object",
       properties: {
@@ -868,6 +878,11 @@ export const builtinAgentTools: ConnectorTool[] = [
           type: "string",
           description:
             "Required for a new app: two to four plain sentences for staff on what it is for, who uses it and how (no technical detail). Evolve's library and reviewers show it. Pass with appId to update it when the app's purpose changes.",
+        },
+        summary: {
+          type: "string",
+          description:
+            "When updating an existing app, 1–2 short sentences naming what changed (shown on the compact update card in chat).",
         },
         confirmNew: {
           type: "boolean",
@@ -984,23 +999,23 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "app_asset",
     description:
-      "Add a picture to an app so it can show it with <AssetImage asset={id}/>: a workspace image file (path), an image attached in this chat such as one from generate_image (artifactId), or an infographic url returned by evolve_infographics. PNG, JPEG, WebP, GIF or SVG up to 6 MB.",
+      "Add a picture, video or audio clip to an app or whiteboard: a workspace file (path), an attachment in this chat (artifactId), or an https url from evolve_infographics or Evolve project datasheets (mcp__evolve__search_project_datasheets). PNG, JPEG, WebP, GIF, SVG, MP4, WebM, MP3 or WAV up to 20 MB.",
     inputSchema: {
       type: "object",
       properties: {
-        appId: { type: "string" },
+        appId: { type: "string", description: "App or whiteboard id." },
+        whiteboardId: { type: "string", description: "Whiteboard id (alias for appId)." },
         path: { type: "string" },
         artifactId: { type: "string" },
         url: { type: "string" },
         name: { type: "string" },
       },
-      required: ["appId"],
     },
   },
   {
     name: "app_look",
     description:
-      "Screenshots of an app with its real data (desktop; phone: true adds a phone) for the pages named, plus any runtime problems. Look after building and after design changes, judge it like a demanding designer, fix with save_app edits and look again.",
+      "Screenshots of an app with its real data (pass pages up to 4 and phone: true), plus runtime problems and craftNotes. Always inspect after building and after design edits, judge hierarchy, populated charts, workflow views and mobile layout like a demanding design director, fix with save_app edits and look again.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1065,7 +1080,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_shared_memory",
     description:
-      "Save a Space shared memory document every bot reads. Replaces the full content, so include everything it should keep.",
+      "Save a Space shared memory document every agent reads. Replaces the full content, so include everything it should keep.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1118,7 +1133,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "cloud_agent_launch",
     description:
-      "Launch a remote cloud coding agent on a connected repository. Returns immediately with a tracking id and status; the agent link appears when launched. Opens a PR when openPr is true. Not the bot computer.",
+      "Launch a remote cloud coding agent on a connected repository. Returns immediately with a tracking id and status; the agent link appears when launched. Opens a PR when openPr is true. Not the agent computer.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1271,7 +1286,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         botId: { type: "string" },
         kinds: {
           description:
-            "OR-combined categories: structured bot exchanges/handoffs, user/channel text, or bot text replies.",
+            "OR-combined categories: structured agent exchanges/handoffs, user/channel text, or agent text replies.",
           type: "array",
           items: { type: "string", enum: ["bot_messages", "user_messages", "bot_replies"] },
           minItems: 1,
@@ -1351,7 +1366,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_memory",
     description:
-      "Store a durable fact in this bot's semantic memory (preferences, decisions, recurring context). Use for anything worth recalling in future conversations.",
+      "Store a durable fact in this agent's semantic memory (preferences, decisions, recurring context). Use for anything worth recalling in future conversations.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1362,7 +1377,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "recall_memory",
-    description: "Semantically search this bot's durable memory for facts relevant to a query.",
+    description: "Semantically search this agent's durable memory for facts relevant to a query.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1392,14 +1407,14 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "task_catalog",
     description:
-      "Read-only inventory and source of truth for this bot's real open tasks, saved routines, taught skills, reusable skills, and currently exposed tools. Call it before claiming a task or skill exists. Use the returned ids and exact names; do not infer capabilities from memory or conversation text.",
+      "Read-only inventory and source of truth for this agent's real open tasks, saved routines, taught skills, reusable skills, and currently exposed tools. Call it before claiming a task or skill exists. Use the returned ids and exact names; do not infer capabilities from memory or conversation text.",
     inputSchema: { type: "object", properties: {} },
     readOnly: true,
   },
   {
     name: "scratchpad_list",
     description:
-      "List this bot's scratchpad / open-work items (todos and parked work). By default omits completed items.",
+      "List this agent's scratchpad / open-work items (todos and parked work). By default omits completed items.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1413,7 +1428,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "scratchpad_add",
     description:
-      "Add an open-work item to this bot's scratchpad. Use for the assistant's own todos or parked work that should outlive this turn. Not a reminder or schedule. The person's own tasks and actions go on their to-do list with todo_add when it is offered.",
+      "Add an open-work item to this agent's scratchpad. Use for the assistant's own todos or parked work that should outlive this turn. Not a reminder or schedule. The person's own tasks and actions go on their to-do list with todo_add when it is offered.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1479,10 +1494,14 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "outlook_draft_email",
     description:
-      "Draft an Outlook email for the person to check, edit and send themselves. It shows an email card in this chat; you cannot send it, and nothing is sent until the person presses Send on the card. For a reply, pass reply_to_message_id from an Outlook search or read result, and reply_all true when everyone on it should get the answer; recipients then default to the original's. Write body as plain text: blank lines between paragraphs, - or 1. lists, **bold**, [links](https://…). End with a sign-off such as Kind regards, but not the person's name or contact details: their saved Outlook signature is added under the body. attachments: files shown in this conversation, by path (attachments/…) or exact name. Afterwards say in one line that the draft is ready for them to check; do not repeat the email.",
+      "Prepare an Outlook email draft for the person to check, edit and save to their Outlook Drafts folder. It shows an editable email card in this chat; nothing is written to Outlook until the person presses Create draft on the card, and they send it themselves from Outlook. Pass draft_id to update an earlier draft card in this chat when they ask for changes. For a reply, pass reply_to_message_id from an Outlook search or read result, and reply_all true when everyone on it should get the answer; recipients then default to the original's. Write body as plain text: blank lines between paragraphs, - or 1. lists, **bold**, [links](https://…). End with a sign-off such as Kind regards, but not the person's name or contact details: their saved Outlook signature is added under the body. attachments: files shown in this conversation, by path (attachments/…) or exact name. Afterwards say in one line that the draft card is ready for them to check; do not repeat the email.",
     inputSchema: {
       type: "object",
       properties: {
+        draft_id: {
+          type: "string",
+          description: "Id of an open draft card in this chat to update in place.",
+        },
         to: { type: "array", items: { type: "string" }, description: "Email addresses." },
         cc: { type: "array", items: { type: "string" } },
         bcc: { type: "array", items: { type: "string" } },
@@ -1500,6 +1519,60 @@ export const builtinAgentTools: ConnectorTool[] = [
         attachments: { type: "array", items: { type: "string" }, maxItems: 10 },
       },
       required: ["body"],
+    },
+  },
+  {
+    name: "outlook_filing_candidates",
+    description:
+      "Start here to help the person file their Outlook email into their own folders; it suits routines. In one call it lists the emails still in their Inbox (and Sent Items when they allow it) from recent days, their mail folders, and the evidence for each email: job numbers that match a folder name, rules they taught, earlier mail of the same conversation already filed, and folder words in the subject, plus job numbers with no folder yet. Read-only: nothing is moved. Then call outlook_propose_filing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        days: {
+          type: "number",
+          description: "How many days back to look; 7 by default, up to 30.",
+        },
+        max_messages: {
+          type: "number",
+          description: "Most emails to consider; the company's batch size by default.",
+        },
+        include_sent: {
+          type: "boolean",
+          description: "Also look at Sent Items when the person allows it; true by default.",
+        },
+      },
+    },
+  },
+  {
+    name: "outlook_propose_filing",
+    description:
+      "Show the person a filing card: each email with the folder you propose and your confidence. Use message_id and folder_id values from outlook_filing_candidates. For an email about an Evolve project that has no folder yet, give evolve_job (the job number) instead of folder_id; the server looks the project up in Evolve and proposes a new folder named from it, never from your text. Include emails you are unsure about with no folder_id so they stay on the card for the person. Confidence is 0-100; the server lowers it where its own evidence does not support it. Nothing is moved or created: only the person's press of File on the card does that.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        items: {
+          type: "array",
+          maxItems: 100,
+          items: {
+            type: "object",
+            properties: {
+              message_id: { type: "string" },
+              folder_id: {
+                type: "string",
+                description: "folder_id from outlook_filing_candidates",
+              },
+              evolve_job: {
+                type: "string",
+                description: "Evolve job number, only when no folder exists for it yet",
+              },
+              confidence: { type: "number", description: "0-100" },
+              reason: { type: "string", description: "One short sentence the person will read." },
+            },
+            required: ["message_id", "confidence", "reason"],
+          },
+        },
+      },
+      required: ["items"],
     },
   },
   {
@@ -1565,7 +1638,7 @@ export const builtinAgentTools: ConnectorTool[] = [
       type: "object",
       properties: {
         status: { type: "string", enum: TICKET_STATUSES, description: "Filter by status." },
-        ownerBotId: { type: "string", description: "Filter by owner bot id." },
+        ownerBotId: { type: "string", description: "Filter by owner agent id." },
         cursor: {
           type: "string",
           description: "nextCursor from the previous page. Omit for the first page.",
@@ -1609,7 +1682,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
         ownerBotId: {
           type: "string",
-          description: "Bot in this space to own it. Defaults to you.",
+          description: "Agent in this space to own it. Defaults to you.",
         },
       },
       required: ["title"],
@@ -1650,18 +1723,18 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "schedule_create",
     description:
-      'Create a reminder or recurring job for this bot. Use for "remind me in 10 minutes" or "every morning send a joke". Repeats: cron or every/unit (min 1 minute), optionally from startAt. One-shot: runAt, delayMinutes, or delaySeconds. A repeating job carries out the user\'s lasting request each time, not a copy of what was decided today.',
+      'Create a reminder or recurring job for this agent. Use for "remind me in 10 minutes" or "every morning send a joke". Repeats: cron or every/unit (min 1 minute), optionally from startAt. One-shot: runAt, delayMinutes, or delaySeconds. A repeating job carries out the user\'s lasting request each time, not a copy of what was decided today.',
     inputSchema: scheduleCreateInputSchema,
   },
   {
     name: "schedule_list",
-    description: "List this bot's active and inactive schedules (routines).",
+    description: "List this agent's active and inactive schedules (routines).",
     inputSchema: { type: "object", properties: {} },
   },
   {
     name: "schedule_update",
     description:
-      "Edit one of this bot's schedules by routineId instead of cancelling and recreating it. Send only what changes. Timing fields replace the current timing; startAt alone moves the next run of the current repeat. active false pauses it.",
+      "Edit one of this agent's schedules by routineId instead of cancelling and recreating it. Send only what changes. Timing fields replace the current timing; startAt alone moves the next run of the current repeat. active false pauses it.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1801,7 +1874,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "run_subagent",
     description:
-      "Run a short-lived helper inside this turn only. It is not a bot: no list entry, no thread, no computer of its own, and it disappears when this turn ends. Never call this because the user asked to create a bot — that is spawn_bot, and spawn_bot alone.",
+      "Run a short-lived helper inside this turn only. It is not an agent: no list entry, no thread, no computer of its own, and it disappears when this turn ends. Never call this because the user asked to create an agent — that is spawn_bot, and spawn_bot alone.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1829,7 +1902,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "create_space",
     description:
-      "Propose a new space in the current organization when the user asks for a separate data boundary. A space can contain many bots and groups, but its chats, files, memory, tools, and integrations stay isolated from other spaces. Creating the space is the whole action; do not create bots in it unless the user asks later.",
+      "Propose a new space in the current organization when the user asks for a separate data boundary. A space can contain many agents and groups, but its chats, files, memory, tools, and integrations stay isolated from other spaces. Creating the space is the whole action; do not create agents in it unless the user asks later.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1846,36 +1919,36 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "spawn_bot",
     description:
-      "Create a full, regular bot — the same kind the user creates from the + button. It gets its own thread, computer, and memory, and appears as a peer in the bot list. Do not also call run_subagent. The bot needs no further setup once created. Only set prompt if the user asked that new bot to start work immediately.",
+      "Create a full, regular agent — the same kind the user creates from the + button. It gets its own thread, computer, and memory, and appears as a peer in the agent list. Do not also call run_subagent. The agent needs no further setup once created. Only set prompt if the user asked that new agent to start work immediately.",
     inputSchema: {
       type: "object",
       properties: {
         name: {
           type: "string",
           description:
-            "Use the name the user gave. Otherwise give it a short, friendly robot-style name of 3 or 4 letters, such as Rex, Nova, Bolt, Dex or Juno, that none of the user's bots already has; put its job in description, not the name. Leave empty to have one picked.",
+            "Use the name the user gave. Otherwise give it a short, friendly robot-style name of 3 or 4 letters, such as Rex, Nova, Bolt, Dex or Juno, that none of the user's agents already has; put its job in description, not the name. Leave empty to have one picked.",
         },
         description: {
           type: "string",
           maxLength: BOT_DESCRIPTION_MAX_LENGTH,
           description:
-            "Short public summary of what the new bot is for. Teammates see it in their bot directory.",
+            "Short public summary of what the new agent is for. Teammates see it in their agent directory.",
         },
         instructions: {
           type: "string",
           maxLength: BOT_INSTRUCTIONS_MAX_LENGTH,
           description:
-            "Private operating instructions for the new bot. Only that bot sees them, as its system prompt.",
+            "Private operating instructions for the new agent. Only that agent sees them, as its system prompt.",
         },
         prompt: {
           type: "string",
-          description: "Optional first task to run in the new bot's thread.",
+          description: "Optional first task to run in the new agent's thread.",
         },
         computer_mode: {
           type: "string",
           enum: ["team", "dedicated"],
           description:
-            "Optional. team shares one screen with other Team bots; dedicated (Private) gets its own. Defaults to team.",
+            "Optional. team shares one screen with other Team agents; dedicated (Private) gets its own. Defaults to team.",
         },
       },
     },
@@ -1889,12 +1962,12 @@ export const builtinAgentTools: ConnectorTool[] = [
       properties: {
         name: {
           type: "string",
-          description: "Display name shown in the chat header and bot list.",
+          description: "Display name shown in the chat header and agent list.",
         },
         description: {
           type: "string",
           description:
-            "Short public summary of what this bot does. Teammates see it in their bot directory. It does not change your instructions.",
+            "Short public summary of what this agent does. Teammates see it in their agent directory. It does not change your instructions.",
         },
         color: {
           type: "string",
@@ -1914,7 +1987,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         dailyCheckIns: { type: "boolean" },
         notifyOnFinish: {
           type: "boolean",
-          description: "Notify the user when this bot finishes a run.",
+          description: "Notify the user when this agent finishes a run.",
         },
         instructions: {
           type: "string",
@@ -1947,7 +2020,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         },
         bot_id: {
           type: "string",
-          description: "A bot in this space, to update its profile instead of yours.",
+          description: "An agent in this space, to update its profile instead of yours.",
         },
       },
     },
@@ -1955,14 +2028,14 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "list_fleet",
     description:
-      "List the bots and groups in this space with their ids, sections and pinned state. You can manage every bot listed; createdByMe only says which ones you created. Pass bot_id of a bot in this space to read only its full instructions and instructionsVersion, which set_child_instructions needs as expected_version. Call this before changing the bots you manage.",
+      "List the agents and groups in this space with their ids, sections and pinned state. You can manage every agent listed; createdByMe only says which ones you created. Pass bot_id of an agent in this space to read only its full instructions and instructionsVersion, which set_child_instructions needs as expected_version. Call this before changing the agents you manage.",
     inputSchema: {
       type: "object",
       properties: {
         bot_id: {
           type: "string",
           description:
-            "A bot in this space, to read its instructions and version instead of the roster.",
+            "An agent in this space, to read its instructions and version instead of the roster.",
         },
       },
       additionalProperties: false,
@@ -1971,7 +2044,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "create_group",
     description:
-      "Create a group of 2 to 10 of this user's bots. Pass bot_ids or bot_names (exact).",
+      "Create a group of 2 to 10 of this user's agents. Pass bot_ids or bot_names (exact).",
     inputSchema: {
       type: "object",
       properties: {
@@ -2001,7 +2074,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "organize_bot",
     description:
-      "Move a bot or group into a sidebar section, clear its section, or pin and unpin it. Works on any bot or group of this user, not only ones you created. Identify it by bot_id, bot_name, group_id or group_name (exact). section is a section name; clear_section: true takes it out of its section.",
+      "Move an agent or group into a sidebar section, clear its section, or pin and unpin it. Works on any agent or group of this user, not only ones you created. Identify it by bot_id, bot_name, group_id or group_name (exact). section is a section name; clear_section: true takes it out of its section.",
     inputSchema: {
       type: "object",
       properties: {
@@ -2017,7 +2090,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "set_child_instructions",
     description:
-      "Replace the instructions of a bot in this space. Identify it by bot_id or bot_name (exact). Pass expected_version from list_fleet with that bot_id. One instruction edit per bot per run. Needs the owner's approval.",
+      "Replace the instructions of an agent in this space. Identify it by bot_id or bot_name (exact). Pass expected_version from list_fleet with that bot_id. One instruction edit per agent per run. Needs the owner's approval.",
     inputSchema: {
       type: "object",
       properties: {
@@ -2025,7 +2098,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         instructions: { type: "string", minLength: 1, maxLength: BOT_INSTRUCTIONS_MAX_LENGTH },
         expected_version: {
           type: "string",
-          description: "instructionsVersion from list_fleet for that bot.",
+          description: "instructionsVersion from list_fleet for that agent.",
         },
       },
       required: ["instructions", "expected_version"],
@@ -2035,7 +2108,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "set_child_bot_model",
     description:
-      "Set the model of a bot in this space, or reset it to the default with clear: true. Identify it by bot_id or bot_name (exact). Needs the owner's approval.",
+      "Set the model of an agent in this space, or reset it to the default with clear: true. Identify it by bot_id or bot_name (exact). Needs the owner's approval.",
     inputSchema: {
       type: "object",
       properties: {
@@ -2054,21 +2127,24 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "create_child_routine",
     description:
-      "Schedule a routine that wakes a bot in this space in its own thread. Identify it by bot_id or bot_name (exact). Repeats: cron or every/unit (min 1 minute). One-shot: runAt, delayMinutes, or delaySeconds.",
+      "Schedule a routine that wakes an agent in this space in its own thread. Identify it by bot_id or bot_name (exact). Repeats: cron or every/unit (min 1 minute). One-shot: runAt, delayMinutes, or delaySeconds.",
     inputSchema: createChildRoutineInputSchema,
   },
   {
     name: "archive_bot",
     description:
-      "Archive another bot in this space. Archiving stops its work and routines, hides it from the active list, and preserves its conversation, memory, and files for the user to restore or delete later. confirm_name must exactly match its name. This cannot archive you.",
+      "Archive another agent in this space. Archiving stops its work and routines, hides it from the active list, and preserves its conversation, memory, and files for the user to restore or delete later. confirm_name must exactly match its name. This cannot archive you.",
     inputSchema: {
       type: "object",
       properties: {
-        confirm_name: { type: "string", description: "Exact current name of the bot to archive." },
+        confirm_name: {
+          type: "string",
+          description: "Exact current name of the agent to archive.",
+        },
         bot_id: {
           type: "string",
           description:
-            "Optional bot id. If omitted, the unique bot in this space with confirm_name is archived.",
+            "Optional agent id. If omitted, the unique agent in this space with confirm_name is archived.",
         },
       },
       required: ["confirm_name"],
@@ -2077,14 +2153,14 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "message_bot",
     description:
-      'Send a useful update, question, or result to another of the user\'s bots. You must call this tool to actually deliver it — writing the message in your own reply text (e.g. "[to Comms] ...") does not send anything and the recipient never sees it. Delivery is async and does not end your turn. Continue independent work; do not poll or send ack-only messages. Later updates only if they add something new.',
+      'Send a useful update, question, or result to another of the user\'s agents. You must call this tool to actually deliver it — writing the message in your own reply text (e.g. "[to Comms] ...") does not send anything and the recipient never sees it. Delivery is async and does not end your turn. Continue independent work; do not poll or send ack-only messages. Later updates only if they add something new.',
     inputSchema: {
       type: "object",
       properties: {
-        bot_id: { type: "string", description: "Target bot id from your teammate list." },
+        bot_id: { type: "string", description: "Target agent id from your teammate list." },
         confirm_name: {
           type: "string",
-          description: "Exact name of the target bot when bot_id is omitted.",
+          description: "Exact name of the target agent when bot_id is omitted.",
         },
         message: { type: "string", description: "What to send." },
         intent: {
@@ -2099,7 +2175,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "handoff_to_bot",
     description:
-      "Transfer a genuinely distinct next stage to another current group member. In a group, stay in that group. Outside a group, supply group_id from your groups list to coordinate there. Appends a visible handoff and starts that bot asynchronously. Do not hand a stage back merely to report or repeat the same work; post results in the shared thread.",
+      "Transfer a genuinely distinct next stage to another current group member. In a group, stay in that group. Outside a group, supply group_id from your groups list to coordinate there. Appends a visible handoff and starts that agent asynchronously. Do not hand a stage back merely to report or repeat the same work; post results in the shared thread.",
     inputSchema: {
       type: "object",
       properties: {
@@ -2108,12 +2184,12 @@ export const builtinAgentTools: ConnectorTool[] = [
           description:
             "Explicit destination from your groups list; required outside a group, omitted in a group.",
         },
-        bot_id: { type: "string", description: "Target member bot id." },
+        bot_id: { type: "string", description: "Target member agent id." },
         confirm_name: {
           type: "string",
           description: "Exact name of the target member when bot_id is omitted.",
         },
-        message: { type: "string", description: "What the receiving bot should do next." },
+        message: { type: "string", description: "What the receiving agent should do next." },
       },
       required: ["message"],
     },
@@ -2140,7 +2216,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "feedback",
     description:
-      "Send a bug report or product feedback about OCSC Intelligence to the people who run this server. Only when the user asks you to report something. Describe what happened and what was expected in general terms; leave out names, contact details, message text, credentials and other personal details. The report already identifies this chat, bot and run.",
+      "Send a bug report or product feedback about OCSC Intelligence to the people who run this server. Only when the user asks you to report something. Describe what happened and what was expected in general terms; leave out names, contact details, message text, credentials and other personal details. The report already identifies this chat, agent and run.",
     inputSchema: {
       type: "object",
       properties: {
@@ -2188,7 +2264,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "evolve_infographics",
     description:
-      "Create OCSC infographics with OCSC Vision Intelligence on Evolve (call it that when you mention it to the person; never name the model behind it): clean diagrams, flows, icons and explainer graphics in the OCSC palette on a white canvas. They contain no text unless withText is true, so the words stay editable on the slide or page. Every item renders at the same time, so ask for all of a deck's infographics in one call; it takes one to three minutes. Returns each item's imageUrl (https) in order, or ok false for one that failed. Use them as slide visuals in ocsc-pptx, as infographic scenes in ocsc-video, or in documents.",
+      'Create OCSC infographics with OCSC Vision Intelligence on Evolve (call it that when you mention it to the person; never name the model behind it): clean diagrams, flows, icons and explainer graphics in the OCSC palette on a white canvas. They contain no text unless withText is true, so the words stay editable on the slide, whiteboard or page. Every item renders at the same time, so ask for all infographics in one call; it takes one to three minutes. Returns each item\'s imageUrl (https) in order, or ok false for one that failed. Use them as slide visuals in ocsc-pptx, as infographic scenes in ocsc-video, on whiteboards (save_whiteboard kind: "image" url), in apps (app_asset url), or in documents.',
     inputSchema: {
       type: "object",
       properties: {

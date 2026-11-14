@@ -46,7 +46,7 @@ describe("team chat bridge", () => {
       { kind: "meta", text: "internal metadata" },
     ];
     expect(teamChatResponseText(blocks)).toBe("The plan is ready.");
-    expect(teamChatResponseText([])).toBe("Bot completed the request without a written reply.");
+    expect(teamChatResponseText([])).toBe("Agent completed the request without a written reply.");
   });
 
   it("keeps deferred messages outside reconciliation until routine routing resolves them", async () => {
@@ -654,7 +654,7 @@ describe("team chat bridge", () => {
       });
     });
 
-    it("skips reply threads the bot already has messages from", async () => {
+    it("skips reply threads the agent already has messages from", async () => {
       const { bridge, fetchThreadHistory, findFirst } = setup({ knownThread: true });
       await bridge.receive(mention, { queueAgent: false });
       await bridge.receive(

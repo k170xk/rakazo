@@ -197,7 +197,7 @@ describe("botSecrets router", () => {
     expect(prisma.vaultCredential.create).toHaveBeenCalledOnce();
   });
 
-  it("rejects another user's bot and a missing bot before any secret access", async () => {
+  it("rejects another user's agent and a missing agent before any secret access", async () => {
     vi.stubEnv("RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP", "1");
     const { prisma, secrets, call } = botSecretDeps();
     for (const botId of ["bot-other", "missing-bot"]) {
@@ -439,7 +439,7 @@ describe("botSecrets router", () => {
     ]);
   });
 
-  it("removes a non-regex stored name for the owned bot and rejects another user's bot", async () => {
+  it("removes a non-regex stored name for the owned agent and rejects another user's agent", async () => {
     const owned = botSecretDeps();
     const removed = await owned.call("remove", { botId: "bot-1", name: "Legacy Name" });
     expect(removed.status).toBe(200);
@@ -454,7 +454,7 @@ describe("botSecrets router", () => {
     expect(foreign.prisma.vaultCredential.deleteMany).not.toHaveBeenCalled();
   });
 
-  it("removes a credential by name from the vault the bot's Space uses", async () => {
+  it("removes a credential by name from the vault the agent's Space uses", async () => {
     const { prisma, call } = botSecretDeps();
     const result = await call("remove", { botId: "bot-1", name: "router" });
     expect(result.status).toBe(200);

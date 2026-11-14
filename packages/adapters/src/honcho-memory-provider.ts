@@ -404,7 +404,7 @@ export class HonchoMemoryProvider implements SemanticMemoryProvider {
     if (!isHonchoConclusionId(id)) return { ok: false, error: "Invalid Honcho conclusion id." };
     const observers = recallObservers(request.scope, request.botId);
     if (request.entity && !observers.includes(request.entity)) {
-      return { ok: false, error: "That memory belongs to another bot or Space." };
+      return { ok: false, error: "That memory belongs to another agent or Space." };
     }
     const connection = await this.connectionForRequest();
     if (!connection.ok) return connection;
@@ -421,7 +421,7 @@ export class HonchoMemoryProvider implements SemanticMemoryProvider {
       !recallable(fact) ||
       (request.entity && fact.observerId !== request.entity)
     ) {
-      return { ok: false, error: "No memory with that id was found in this bot's memory." };
+      return { ok: false, error: "No memory with that id was found in this agent's memory." };
     }
     // A shared save writes the fact from two perspectives, repeated saves add more copies, and
     // recall cites only one. Remove every copy this bot could recall again: deleted copies leave

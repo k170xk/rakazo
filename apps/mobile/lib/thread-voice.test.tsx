@@ -88,7 +88,7 @@ describe("useThreadVoiceCall hand-over", () => {
     vi.unstubAllGlobals();
   });
 
-  it("rings the bot the caller was put through to in the same session", async () => {
+  it("rings the agent the caller was put through to in the same session", async () => {
     render("riley");
     const session = currentSessionGeneration();
     openBotChat?.(max, true);

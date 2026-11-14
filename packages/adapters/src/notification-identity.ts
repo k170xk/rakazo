@@ -52,7 +52,7 @@ export async function notificationIdentity(bot: {
   const avatar = await cached.avatar;
   return {
     botId: bot.id,
-    name: bot.name.trim().slice(0, 100) || "Bot",
+    name: bot.name.trim().slice(0, 100) || "Agent",
     ...(avatar ? { avatar } : {}),
   };
 }

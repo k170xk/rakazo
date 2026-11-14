@@ -21,7 +21,7 @@ vi.mock("../../lib/query", async () => {
 
 const bots = Array.from({ length: 100 }, (_, index) => ({
   id: `bot-${index}`,
-  name: `Bot ${index}`,
+  name: `Agent ${index}`,
 })) as Bot[];
 const rows = (botId: string, name = botId) =>
   [{ id: `routine-${botId}`, botId, name, crons: [] }] as unknown as Routine[];

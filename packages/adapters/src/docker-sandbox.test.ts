@@ -318,7 +318,7 @@ describe("Docker sandbox", () => {
     ).resolves.toEqual(new Uint8Array());
   });
 
-  it("releases this bot's screen assignment through the supervisor", async () => {
+  it("releases this agent's screen assignment through the supervisor", async () => {
     const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     const provider = new DockerSandboxProvider("http://supervisor.test", "test-token");

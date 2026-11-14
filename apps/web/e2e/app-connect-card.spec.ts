@@ -8,7 +8,7 @@ import {
   signup,
 } from "./helpers";
 
-test("a bot connects an app inline in a normal chat", async ({ page }, testInfo) => {
+test("an agent connects an app inline in a normal chat", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await signup(page, `inline-connect-${Date.now()}@rakazo.test`, "password12", "Sample");
   await completeOnboarding(page);

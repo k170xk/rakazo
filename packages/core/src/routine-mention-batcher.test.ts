@@ -20,7 +20,7 @@ function deferred<T>() {
 }
 
 describe("routine mention cache-miss batching", () => {
-  it("replaces 100 simultaneous reads with one batch and preserves every bot's routine order", async () => {
+  it("replaces 100 simultaneous reads with one batch and preserves every agent's routine order", async () => {
     const batch = vi.fn(async (ids: string[]) => lists(ids));
     const single = vi.fn(async (id: string) => rows(id));
     const load = createRoutineMentionBatcher(batch, single);
@@ -55,7 +55,7 @@ describe("routine mention cache-miss batching", () => {
     expect(result.filter((entry) => entry.status === "fulfilled")).toHaveLength(99);
   });
 
-  it("retries only omitted bots, preserving existing authorization errors and cached data", async () => {
+  it("retries only omitted agents, preserving existing authorization errors and cached data", async () => {
     const single = vi.fn(async () => {
       throw new Error("not found");
     });

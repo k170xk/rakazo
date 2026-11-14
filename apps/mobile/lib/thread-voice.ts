@@ -229,7 +229,7 @@ export function useThreadVoiceCall({
         );
         return;
       }
-      const botName = displayName ?? t("Bot");
+      const botName = displayName ?? t("Agent");
       const startedCallId = startCall({
         botId: targetBotId,
         botName,

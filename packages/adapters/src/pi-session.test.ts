@@ -224,7 +224,7 @@ describe("Pi JSONL sessions", () => {
     }
   });
 
-  it("removes bot and account session scopes", async () => {
+  it("removes agent and account session scopes", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "rakazo-pi-cleanup-"));
     try {
       const sessionsRoot = path.join(root, "pi-sessions");

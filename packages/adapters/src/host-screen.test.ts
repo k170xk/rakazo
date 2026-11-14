@@ -49,7 +49,7 @@ describe("host screen requests", () => {
     };
   }
 
-  it("observes and acts through the computer's screen, scoped to the bot", async () => {
+  it("observes and acts through the computer's screen, scoped to the agent", async () => {
     const screen = fakeScreen();
     await expect(
       send(screen, { method: "screenObserve", botId: "bot-1", app: "TextEdit", query: "Save" }),

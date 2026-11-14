@@ -1,9 +1,13 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { Callout, SampleBanner } from "./basic.js";
 import { AreaChart, DonutChart } from "./charts.js";
 import { Markdown } from "./content.js";
 import { isoDate, matchesWords } from "./pickers.js";
+import { RecordDetail, RecordForm } from "./records.js";
+import { AudioPlayer, ImageViewer, SketchPad, SplitPane, VideoPlayer } from "./studio-media.js";
 import { themeCss } from "./theme.js";
+import { ActionList, CalendarMonth } from "./views.js";
 
 describe("Markdown", () => {
   it("renders headings, emphasis, lists, tables and code", () => {
@@ -90,5 +94,92 @@ describe("kit charts", () => {
     expect(donut).toContain("Dublin");
     expect(donut).toContain("75%");
     expect(donut).toContain(">4<");
+  });
+});
+
+describe("SampleBanner, Callout and hidden columns", () => {
+  it("shows SampleBanner only while is_sample rows exist", () => {
+    const empty = renderToStaticMarkup(
+      <SampleBanner tables={[{ rows: [{ _id: "1", name: "Real" }], canEdit: true, remove: async () => {} }]} />,
+    );
+    expect(empty).toBe("");
+
+    const shown = renderToStaticMarkup(
+      <SampleBanner
+        tables={[{ rows: [{ _id: "1", is_sample: true }, { _id: "2", is_sample: false }], canEdit: true, remove: async () => {} }]}
+      />,
+    );
+    expect(shown).toContain("Exploring with 1 sample record");
+    expect(shown).toContain("Clear sample data");
+  });
+
+  it("renders theme-safe Callout and hides hidden: true columns in forms and detail", () => {
+    const banner = renderToStaticMarkup(
+      <Callout tone="warning" title="Unverified">
+        Check before issuing.
+      </Callout>,
+    );
+    expect(banner).toContain("Unverified");
+    expect(banner).toContain("Check before issuing.");
+
+    const schema = {
+      name: "items",
+      label: "Items",
+      columns: [
+        { key: "name", label: "Name", type: "text" as const },
+        { key: "is_sample", label: "Sample", type: "boolean" as const, hidden: true },
+      ],
+    };
+    const detail = renderToStaticMarkup(
+      <RecordDetail schema={schema} row={{ _id: "1", name: "Beam", is_sample: true }} />,
+    );
+    expect(detail).toContain("Beam");
+    expect(detail).not.toContain("Sample");
+
+    const form = renderToStaticMarkup(
+      <RecordForm schema={schema} value={{ name: "Beam", is_sample: true }} onChange={() => {}} />,
+    );
+    expect(form).toContain("Name");
+    expect(form).not.toContain("Sample");
+  });
+
+  it("renders ActionList, CalendarMonth modes, VideoPlayer, AudioPlayer, ImageViewer, SketchPad and SplitPane", () => {
+    const list = renderToStaticMarkup(
+      <ActionList
+        items={[
+          { id: "1", title: "STR-001", subtitle: "Riverside Offices", badge: "Overdue", tone: "danger", meta: "2 Nov" },
+        ]}
+      />,
+    );
+    expect(list).toContain("STR-001");
+    expect(list).toContain("Overdue");
+
+    const cal = renderToStaticMarkup(
+      <CalendarMonth
+        rows={[{ _id: "1", due: "2026-11-14", name: "Core pour", status: "Live" }]}
+        dateKey="due"
+        titleKey="name"
+        toneKey="status"
+        defaultView="agenda"
+      />,
+    );
+    expect(cal).toContain("Core pour");
+    expect(cal).toContain("agenda");
+
+    const studio = renderToStaticMarkup(
+      <SplitPane
+        left={<VideoPlayer title="Site walkdown" chapters={[{ time: 0, label: "Entrance" }]} />}
+        right={
+          <div>
+            <AudioPlayer title="Voice note" />
+            <ImageViewer title="GA Plan" />
+            <SketchPad label="Redline" />
+          </div>
+        }
+      />,
+    );
+    expect(studio).toContain("Entrance");
+    expect(studio).toContain("GA Plan");
+    expect(studio).toContain("Redline");
   });
 });

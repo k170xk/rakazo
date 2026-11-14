@@ -46,7 +46,7 @@ it("shows the name at once when the chat opens", () => {
 });
 
 it("cross-fades the placeholder into the real name: one fades out as the other fades in", () => {
-  render("Bot", true);
+  render("Agent", true);
   expect(shown()?.hasAttribute("data-fade")).toBe(false);
   expect(shown()?.getAttribute("data-fade-out")).toBe(String(CHAT_TITLE_FADE_MS));
   render("Helper");

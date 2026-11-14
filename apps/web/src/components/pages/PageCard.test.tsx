@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
-import { PageCard } from "./PageCard";
+import { AppUpdateCard, PageCard } from "./PageCard";
 
 vi.mock("@lingui/react/macro", () => ({
   Trans: ({ children }: { children: ReactNode }) => children,
@@ -117,5 +117,32 @@ it("stops pulsing once its page can't be read", async () => {
   expect(document.body.textContent).toContain("Plan");
   // A preview that cannot load says so rather than leaving a still outline.
   expect(document.body.textContent).toContain("This app couldn't load");
+  act(() => root.unmount());
+});
+
+it("renders a compact summary card with Open and Edit actions when an app is updated", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const opened: string[] = [];
+  const root = createRoot(document.body.appendChild(document.createElement("div")));
+  await act(async () =>
+    root.render(
+      <AppUpdateCard
+        title="Geotechnical Tracker"
+        version={4}
+        summary="Added Kanban fieldwork board, Aurora header and status DonutChart."
+        onOpenPreview={() => opened.push("view")}
+        onEdit={() => opened.push("edit")}
+      />,
+    ),
+  );
+  const card = document.querySelector('[data-testid="app-update-card"]');
+  expect(card?.textContent).toContain("Geotechnical Tracker");
+  expect(card?.textContent).toContain("v4");
+  expect(card?.textContent).toContain("Added Kanban fieldwork board");
+  expect(card?.querySelector("iframe")).toBeNull();
+  act(() => {
+    (card?.querySelector("button") as HTMLButtonElement).click();
+  });
+  expect(opened).toEqual(["view"]);
   act(() => root.unmount());
 });

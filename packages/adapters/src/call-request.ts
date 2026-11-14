@@ -216,7 +216,7 @@ export async function requestUserCall(
         },
         select: { bot: { select: { name: true } } },
       });
-      if (!target?.bot) return { error: "Calls require the bot's own one-to-one chat." };
+      if (!target?.bot) return { error: "Calls require the agent's own one-to-one chat." };
       const refusal = await callRequestRefusal(tx, {
         ...run,
         groupChat: false,

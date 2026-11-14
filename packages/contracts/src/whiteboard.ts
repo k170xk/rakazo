@@ -46,6 +46,10 @@ export const BoardItemSchema = z
     h: z.number().finite().min(0).max(8_000),
     color: z.enum(BOARD_COLORS).optional(),
     text: z.string().max(2_000).optional(),
+    section: z
+      .string()
+      .regex(/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/)
+      .optional(),
     points: z
       .array(z.tuple([z.number().finite(), z.number().finite()]))
       .max(4_000)
@@ -71,6 +75,11 @@ const BoardPatchSchema = z
     h: z.number().finite().min(0).max(8_000).optional(),
     color: z.enum(BOARD_COLORS).optional(),
     text: z.string().max(2_000).optional(),
+    section: z
+      .string()
+      .regex(/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/)
+      .nullable()
+      .optional(),
     points: z
       .array(z.tuple([z.number().finite(), z.number().finite()]))
       .max(4_000)
@@ -143,19 +152,23 @@ export function applyBoardOps(
       if (!next.some((item) => item.id === op.id)) {
         return { ok: false, error: `${label}: nothing on the board has id "${op.id}".` };
       }
-      next = next.filter((item) => {
-        if (item.id === op.id) return false;
-        if (item.kind !== "arrow") return true;
-        const from = item.from && "item" in item.from ? item.from.item : null;
-        const to = item.to && "item" in item.to ? item.to.item : null;
-        return from !== op.id && to !== op.id;
-      });
+      next = next
+        .filter((item) => {
+          if (item.id === op.id) return false;
+          if (item.kind !== "arrow") return true;
+          const from = item.from && "item" in item.from ? item.from.item : null;
+          const to = item.to && "item" in item.to ? item.to.item : null;
+          return from !== op.id && to !== op.id;
+        })
+        .map((item) => (item.section === op.id ? { ...item, section: undefined } : item));
     } else {
       const at = next.findIndex((item) => item.id === op.id);
       if (at < 0) {
         return { ok: false, error: `${label}: nothing on the board has id "${op.id}".` };
       }
-      const parsed = BoardItemSchema.safeParse({ ...next[at], ...op.patch, id: op.id });
+      const merged = { ...next[at], ...op.patch, id: op.id };
+      if (op.patch.section === null) delete (merged as { section?: string }).section;
+      const parsed = BoardItemSchema.safeParse(merged);
       if (!parsed.success) {
         return {
           ok: false,
@@ -203,12 +216,26 @@ export function boardForModel(items: readonly BoardItem[]): unknown[] {
 
 /** Appended to a message sent while blocks are selected, so the edit can name them by id. */
 export function whiteboardSelectionNote(
-  items: readonly { id: string; kind: string; text?: string }[],
+  items: readonly {
+    id: string;
+    kind: string;
+    text?: string;
+    section?: string;
+    x?: number;
+    y?: number;
+    w?: number;
+    h?: number;
+  }[],
 ): string {
   if (!items.length) return "";
   const lines = items.slice(0, 12).map((item) => {
     const label = (item.text ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
-    return `- ${item.id} (${item.kind})${label ? `: ${label}` : ""}`;
+    const where =
+      typeof item.x === "number" && typeof item.y === "number"
+        ? ` @(${Math.round(item.x)},${Math.round(item.y)}${typeof item.w === "number" && item.w > 0 ? ` ${Math.round(item.w)}x${Math.round(item.h ?? 0)}` : ""})`
+        : "";
+    const sec = item.section ? ` in ${item.section}` : "";
+    return `- ${item.id} (${item.kind}${sec}${where})${label ? `: ${label}` : ""}`;
   });
   const extra = items.length > 12 ? `\n- ${items.length - 12} more` : "";
   return `Selected on the whiteboard:\n${lines.join("\n")}${extra}`;

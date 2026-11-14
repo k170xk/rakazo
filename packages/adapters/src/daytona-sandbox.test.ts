@@ -779,7 +779,7 @@ describe("DaytonaSandboxProvider", () => {
     expect(fixture.deleteSandbox).toHaveBeenCalledTimes(2);
   });
 
-  it("gives Team bots distinct Daytona previews using the shared runtime", async () => {
+  it("gives Team agents distinct Daytona previews using the shared runtime", async () => {
     const fixture = daytonaFixture();
     const provider = new DaytonaSandboxProvider({ apiKey: "test-key" }, fixture.client);
     const computer = await provider.provision({ botId: "team-home", homePath: "/unused" }, context);

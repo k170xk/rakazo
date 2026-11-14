@@ -31,7 +31,7 @@ export function useSettingsNavItems(available: {
   updates: boolean;
   /** The company has turned on each person's own vault. */
   vault: boolean;
-  /** This person may send Outlook email, so they keep a signature. */
+  /** This person may draft or file Outlook email. */
   email?: boolean;
 }): SettingsNavItem[] {
   const { t } = useLingui();
@@ -39,7 +39,7 @@ export function useSettingsNavItems(available: {
     { id: "organization", label: t`Work Space`, icon: Building2 },
     { id: "confirmations", label: t`Approvals`, icon: ShieldCheck },
     ...(available.vault ? [{ id: "vault" as const, label: t`My vault`, icon: KeyRound }] : []),
-    ...(available.email ? [{ id: "email" as const, label: t`Email signature`, icon: Mail }] : []),
+    ...(available.email ? [{ id: "email" as const, label: t`Email`, icon: Mail }] : []),
     ...(available.messaging
       ? [{ id: "messaging" as const, label: t`Messaging`, icon: MessageCircle }]
       : []),

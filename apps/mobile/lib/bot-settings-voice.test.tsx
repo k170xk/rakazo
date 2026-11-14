@@ -357,7 +357,7 @@ vi.mock("@expo/ui/community/menu", () => ({
     ),
 }));
 
-describe("bot settings device voice menu", () => {
+describe("agent settings device voice menu", () => {
   let root: Root;
   let container: HTMLDivElement;
   beforeEach(() => {
@@ -411,7 +411,7 @@ describe("bot settings device voice menu", () => {
     mocks.crossSpaceCommunication = enabled;
     await render();
     const toggle = container.querySelector<HTMLButtonElement>(
-      '[aria-label="Allow cross-space bot communication"]',
+      '[aria-label="Allow cross-space agent communication"]',
     )!;
     expect(toggle.getAttribute("aria-checked")).toBe(String(enabled));
     await act(async () => toggle.click());
@@ -679,7 +679,7 @@ describe("bot settings device voice menu", () => {
     mocks.instructions = "First line\nSecond line\nThird line\nFourth line\nFifth line";
     mocks.description = mocks.instructions;
     await render();
-    for (const label of ["Instructions", "How other bots see it"]) {
+    for (const label of ["Instructions", "How other agents see it"]) {
       const input = container.querySelector<HTMLElement>(`[aria-label="${label}"]`)!;
       const style = Object.assign({}, ...JSON.parse(input.dataset.style!).flat(Infinity));
       expect(style).toMatchObject({ position: "absolute", top: 0, bottom: 0, lineHeight: 22 });
@@ -714,7 +714,7 @@ describe("bot settings device voice menu", () => {
       "Computer",
       "Read replies aloud",
       "Device voice",
-      "Manage other bots",
+      "Manage other agents",
       "Instructions",
     ]) {
       expect(container.textContent).not.toContain(label);
@@ -742,8 +742,8 @@ describe("bot settings device voice menu", () => {
       readAloud: "Read replies aloud",
       voice: "Device voice",
       dailyCheckIns: "Daily check-ins on unfinished work",
-      crossSpaceCommunication: "Allow cross-space bot communication",
-      fleetManagement: "Manage other bots",
+      crossSpaceCommunication: "Allow cross-space agent communication",
+      fleetManagement: "Manage other agents",
     };
     const actual = [...container.querySelectorAll("span")].flatMap((span) =>
       Object.entries(labels)
@@ -828,7 +828,7 @@ describe("bot settings device voice menu", () => {
     expect(Notifications.dismissNotificationAsync).toHaveBeenCalledTimes(1);
   });
 
-  it("dismisses direct-chat notifications when muting before the bot loads", async () => {
+  it("dismisses direct-chat notifications when muting before the agent loads", async () => {
     const loading = deferredSave();
     mocks.loadBot.mockReturnValueOnce(loading.promise);
     mocks.rpc.mockResolvedValueOnce({ threadId: "thread-fixture" });
@@ -980,11 +980,11 @@ describe("bot settings device voice menu", () => {
     );
   });
 
-  it("persists bot management toggles immediately without adding them to unrelated saves", async () => {
+  it("persists agent management toggles immediately without adding them to unrelated saves", async () => {
     mocks.rpc.mockResolvedValue(undefined);
     await render();
-    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other bots"]');
-    if (!toggle) throw new Error("Missing bot management switch");
+    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other agents"]');
+    if (!toggle) throw new Error("Missing agent management switch");
     await act(async () => {
       toggle.click();
     });
@@ -1012,7 +1012,7 @@ describe("bot settings device voice menu", () => {
     const last = deferredSave();
     mocks.rpc.mockReturnValueOnce(first.promise).mockReturnValueOnce(last.promise);
     await render();
-    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other bots"]')!;
+    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other agents"]')!;
     const save = [...container.querySelectorAll("button")].find(
       (button) => button.textContent === "Save",
     )!;
@@ -1038,7 +1038,7 @@ describe("bot settings device voice menu", () => {
   });
 
   it.each([false, true])(
-    "waits for the full bot management queue before leaving (failure: %s)",
+    "waits for the full agent management queue before leaving (failure: %s)",
     async (fails) => {
       const first = deferredSave();
       const last = deferredSave();
@@ -1052,7 +1052,7 @@ describe("bot settings device voice menu", () => {
       );
       await render();
       const toggle = container.querySelector<HTMLButtonElement>(
-        '[aria-label="Manage other bots"]',
+        '[aria-label="Manage other agents"]',
       )!;
       await act(async () =>
         container.querySelector<HTMLButtonElement>('[aria-label="Read replies aloud"]')!.click(),
@@ -1069,13 +1069,13 @@ describe("bot settings device voice menu", () => {
       expect(mocks.back).not.toHaveBeenCalled();
       expect(mocks.rpc).toHaveBeenCalledTimes(3);
       await act(async () => {
-        if (fails) last.reject(new Error("bot management write failed"));
+        if (fails) last.reject(new Error("agent management write failed"));
         else last.resolve();
       });
       if (fails) {
         expect(mocks.back).not.toHaveBeenCalled();
         expect(toggle.getAttribute("aria-checked")).toBe("true");
-        expect(container.textContent).toContain("bot management write failed");
+        expect(container.textContent).toContain("agent management write failed");
         expect(toggle.disabled).toBe(false);
       } else {
         expect(mocks.back).toHaveBeenCalledOnce();
@@ -1083,11 +1083,11 @@ describe("bot settings device voice menu", () => {
     },
   );
 
-  it("keeps a failed bot management write visible without an unrelated Save", async () => {
+  it("keeps a failed agent management write visible without an unrelated Save", async () => {
     mocks.rpc.mockRejectedValueOnce(new Error("offline"));
     await render();
     await act(async () =>
-      container.querySelector<HTMLButtonElement>('[aria-label="Manage other bots"]')!.click(),
+      container.querySelector<HTMLButtonElement>('[aria-label="Manage other agents"]')!.click(),
     );
     expect(
       [...container.querySelectorAll("button")].some((button) => button.textContent === "Save"),
@@ -1096,7 +1096,7 @@ describe("bot settings device voice menu", () => {
     expect(container.textContent).toContain("offline");
   });
 
-  it("does not resend saved edits when Save is retried after a failed bot management write", async () => {
+  it("does not resend saved edits when Save is retried after a failed agent management write", async () => {
     mocks.rpc.mockResolvedValue(undefined);
     mocks.rpc.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({
       instructions: "",
@@ -1107,7 +1107,7 @@ describe("bot settings device voice menu", () => {
     });
     await render();
     expect(container.querySelector('[data-menu="Instruction history"]')).toBeNull();
-    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other bots"]')!;
+    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other agents"]')!;
     await act(async () => toggle.click());
     await act(async () =>
       container.querySelector<HTMLButtonElement>('[aria-label="Read replies aloud"]')!.click(),
@@ -1135,7 +1135,7 @@ describe("bot settings device voice menu", () => {
     const first = deferredSave();
     mocks.rpc.mockReturnValueOnce(first.promise);
     await render();
-    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other bots"]')!;
+    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other agents"]')!;
     await act(async () => toggle.click());
     await act(async () => toggle.click());
     await act(async () => toggle.click());
@@ -1144,11 +1144,11 @@ describe("bot settings device voice menu", () => {
     expect(toggle.getAttribute("aria-checked")).toBe("true");
   });
 
-  it("restores the bot management toggle when saving fails", async () => {
+  it("restores the agent management toggle when saving fails", async () => {
     mocks.rpc.mockRejectedValueOnce(new Error("offline"));
     await render();
-    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other bots"]');
-    if (!toggle) throw new Error("Missing bot management switch");
+    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Manage other agents"]');
+    if (!toggle) throw new Error("Missing agent management switch");
     await act(async () => {
       toggle.click();
     });
@@ -1362,7 +1362,7 @@ it("opens a native name prompt from the centred header", async () => {
   const host = document.createElement("div");
   const root = createRoot(host);
   await act(async () => root.render(<BotSettingsScreen />));
-  expect(host.querySelector('[placeholder="Name this bot"]')).toBeNull();
+  expect(host.querySelector('[placeholder="Name this agent"]')).toBeNull();
   await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Edit name"]')!.click());
   expect(mocks.prompt).toHaveBeenCalledWith(
     "Name",

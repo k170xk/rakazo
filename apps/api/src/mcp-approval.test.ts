@@ -115,7 +115,7 @@ describe("resolveMcpApprovalCards", () => {
     });
   });
 
-  it("falls back to owner scope for chats the bot was removed from", async () => {
+  it("falls back to owner scope for chats the agent was removed from", async () => {
     const blocks = [{ kind: "mcp_approval", name: "A", serverId: "srv-a", status: "pending" }];
     const { deps, actor, tx } = fixture(blocks);
     deps.prisma.thread.findMany = vi
@@ -299,7 +299,7 @@ describe("resolveMcpApprovalCards", () => {
     });
   });
 
-  it("does not reset another bot's card in a shared group", async () => {
+  it("does not reset another agent's card in a shared group", async () => {
     const blocks = [{ kind: "mcp_approval", name: "A", serverId: "srv-a", status: "connected" }];
     const { deps, actor, tx } = fixture(blocks);
     tx.message.findMany.mockResolvedValue([{ id: "card-message", botId: "other-bot", blocks }]);
@@ -311,7 +311,7 @@ describe("resolveMcpApprovalCards", () => {
     expect(tx.message.update).not.toHaveBeenCalled();
   });
 
-  it("does not repaint another bot's direct chat when the bot has left", async () => {
+  it("does not repaint another agent's direct chat when the agent has left", async () => {
     const blocks = [{ kind: "mcp_approval", name: "A", serverId: "srv-a", status: "pending" }];
     const { deps, actor, tx } = fixture(blocks);
     vi.mocked(deps.prisma.thread.findMany).mockResolvedValue([]);
@@ -349,7 +349,7 @@ describe("queueMcpConnectedRun", () => {
     return tx as typeof tx & Parameters<typeof queueMcpConnectedRun>[0];
   }
 
-  it("queues a turn for the bot in the card's chat", async () => {
+  it("queues a turn for the agent in the card's chat", async () => {
     const tx = connectedFixture();
     await expect(queueMcpConnectedRun(tx, actor, input)).resolves.toBe("run");
     expect(tx.task.create).toHaveBeenCalledWith({
@@ -365,13 +365,13 @@ describe("queueMcpConnectedRun", () => {
     });
   });
 
-  it("does not queue while the bot is still busy in that chat", async () => {
+  it("does not queue while the agent is still busy in that chat", async () => {
     const tx = connectedFixture({ busy: true });
     await expect(queueMcpConnectedRun(tx, actor, input)).resolves.toBeNull();
     expect(tx.run.create).not.toHaveBeenCalled();
   });
 
-  it("does not restart an archived bot", async () => {
+  it("does not restart an archived agent", async () => {
     const tx = connectedFixture({ archived: true });
     await expect(queueMcpConnectedRun(tx, actor, input)).resolves.toBeNull();
     expect(tx.bot.findFirst).toHaveBeenCalledWith({
@@ -381,7 +381,7 @@ describe("queueMcpConnectedRun", () => {
     expect(tx.task.create).not.toHaveBeenCalled();
   });
 
-  it("does not queue in a chat the bot is not part of", async () => {
+  it("does not queue in a chat the agent is not part of", async () => {
     const tx = connectedFixture({ thread: false });
     await expect(queueMcpConnectedRun(tx, actor, input)).resolves.toBeNull();
     expect(tx.task.create).not.toHaveBeenCalled();

@@ -124,6 +124,11 @@ describe("guide extras", () => {
       "NumberStepper",
       "TagInput",
       "ColorPicker",
+      "ImageViewer",
+      "VideoPlayer",
+      "AudioPlayer",
+      "SketchPad",
+      "SplitPane",
     ]) {
       expect(kit, name).toHaveProperty(name);
       expect(APP_KIT_GUIDE_EXTRAS, name).toContain(name);

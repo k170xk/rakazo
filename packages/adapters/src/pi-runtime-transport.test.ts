@@ -416,7 +416,7 @@ describe("Pi runtime transport", () => {
     expect(result.transformHeaders).toBeUndefined();
   });
 
-  it("keeps a stable conversation session id per bot thread", () => {
+  it("keeps a stable conversation session id per agent thread", () => {
     expect(conversationSessionId("thread-1", "bot-1")).toBe("thread-1:bot-1");
     expect(conversationSessionId("thread-1", "bot-1", "sub-1")).toBe("thread-1:bot-1:sub-1");
   });

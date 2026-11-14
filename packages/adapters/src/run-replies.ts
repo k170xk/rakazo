@@ -54,7 +54,7 @@ export function replyGuidanceForOfferedTools(
 }
 
 export const DELEGATED_EMPTY_NOTICE =
-  "The delegated bot completed its turn without a written summary.";
+  "The delegated agent completed its turn without a written summary.";
 
 /** Failure used when a tool-bearing turn would otherwise complete as the empty notice. */
 export const TOOL_STEPS_WITHOUT_RESPONSE =

@@ -67,7 +67,7 @@ describe("pollPurchase", () => {
     expect(env.enqueued.map((job) => job.name)).toEqual(["purchase.poll"]);
   });
 
-  it("wakes the bot once with a fixed prompt when the owner decides", async () => {
+  it("wakes the agent once with a fixed prompt when the owner decides", async () => {
     const env = await setup();
     env.approve();
     await env.poll();
@@ -97,7 +97,7 @@ describe("pollPurchase", () => {
     expect(env.runs).toHaveLength(1);
   });
 
-  it("does not wake a bot that is gone, and stops polling", async () => {
+  it("does not wake an agent that is gone, and stops polling", async () => {
     const env = await setup();
     env.live.bot = false;
     env.approve();

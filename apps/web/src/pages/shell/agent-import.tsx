@@ -382,7 +382,7 @@ export function AgentImportForm({
       });
       onCreated(bot);
     } catch (err) {
-      failure(err, t`Could not create bot`);
+      failure(err, t`Could not create agent`);
       setCreating(false);
       setBusy(false);
     }
@@ -518,7 +518,7 @@ export function AgentImportForm({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={t`Cancel new bot`}
+          aria-label={t`Cancel new agent`}
           onClick={() => {
             stopReading();
             onClose();
@@ -605,8 +605,8 @@ export function AgentImportForm({
                           }))
                         }
                       >
-                        <NativeSelectOption value="bot">{t`This bot`}</NativeSelectOption>
-                        <NativeSelectOption value="space">{t`All bots`}</NativeSelectOption>
+                        <NativeSelectOption value="bot">{t`This agent`}</NativeSelectOption>
+                        <NativeSelectOption value="space">{t`All agents`}</NativeSelectOption>
                       </NativeSelect>
                       {entry.containsKey || entry.stock
                         ? note(
@@ -627,7 +627,7 @@ export function AgentImportForm({
                 <Trans>Skills</Trans>
               </h3>
               <p className="mt-1 text-[12.5px] text-muted-foreground">
-                <Trans>Skills join the library all your bots share.</Trans>
+                <Trans>Skills join the library all your agents share.</Trans>
               </p>
               <ul className="mt-2">
                 {plan.skills.map(
@@ -786,7 +786,7 @@ export function AgentImportForm({
               value={name}
               maxLength={BOT_NAME_MAX_LENGTH}
               onChange={(event) => setName(event.target.value)}
-              placeholder={t`Name this bot`}
+              placeholder={t`Name this agent`}
               className="mt-2"
             />
           </label>

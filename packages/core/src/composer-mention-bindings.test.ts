@@ -183,7 +183,7 @@ describe("completed mention occurrence bindings", () => {
     ).toMatchObject({ text: "@ ", caret: 1 });
   });
 
-  it("preserves the bot's same-name text when stripping a separate group occurrence", () => {
+  it("preserves the agent's same-name text when stripping a separate group occurrence", () => {
     const draft = "  @Bob and @Bob ";
     const occurrences = bindings.map((binding) => ({
       ...binding,

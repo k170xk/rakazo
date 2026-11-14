@@ -395,7 +395,7 @@ describe("CreateOSSandboxProvider", () => {
     },
   );
 
-  it("launches and links each bot to the Chromium profile hard delete removes", async () => {
+  it("launches and links each agent to the Chromium profile hard delete removes", async () => {
     const fixture = createosFixture();
     const target = provider(fixture);
     await target.prepare(computer, context);

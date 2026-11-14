@@ -26,7 +26,7 @@ const server: McpServer = {
   updatedAt: "2026-10-30T00:00:00.000Z",
 };
 
-test("a server the user adds reaches every bot until they pick some", async ({
+test("a server the user adds reaches every agent until they pick some", async ({
   page,
 }, testInfo) => {
   await signup(page, `mcp-agents-${Date.now()}@rakazo.test`, "password12", "MCP agents");
@@ -77,7 +77,7 @@ test("a server the user adds reaches every bot until they pick some", async ({
   await captureScreenshot(page, testInfo, "mcp-agents-add");
   await page.getByRole("button", { name: "Add server", exact: true }).click();
   const access = page.getByTestId("mcp-server").getByTestId("agent-access");
-  await expect(access).toContainText("All bots");
+  await expect(access).toContainText("All agents");
   await captureScreenshot(page, testInfo, "mcp-agents");
 
   await access.getByRole("button").click();
@@ -90,7 +90,7 @@ test("a server the user adds reaches every bot until they pick some", async ({
   expect(requests).toEqual([{ id: server.id, allBots: false, botIds: [writer.id] }]);
 });
 
-test("shows each server's bots and state with several bots", async ({ page }, testInfo) => {
+test("shows each server's agents and state with several agents", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 1000 });
   await signup(page, `mcp-states-${Date.now()}@rakazo.test`, "password12", "MCP states");
   await completeOnboarding(page);
@@ -180,7 +180,7 @@ test("shows each server's bots and state with several bots", async ({ page }, te
   const rows = page.getByTestId("mcp-server");
   await expect(rows).toHaveCount(servers.length);
   await expect(rows.nth(1).getByTestId("agent-access")).toContainText("Researcher");
-  await expect(rows.nth(3).getByTestId("agent-access")).toContainText("No bots");
+  await expect(rows.nth(3).getByTestId("agent-access")).toContainText("No agents");
   await expect(rows.nth(4).getByTestId("agent-access")).toContainText("+1");
   await captureScreenshot(page, testInfo, "mcp-states");
 

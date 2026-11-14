@@ -27,7 +27,7 @@ const valid = {
   logo: "https://example.test/logo.svg",
   source: "https://github.com/acme/plugins/tree/main/tickets",
   description: "Search Acme tickets.",
-  testing: "Ask a bot to find ticket 42.",
+  testing: "Ask an agent to find ticket 42.",
   tested: true,
 };
 const claim = {

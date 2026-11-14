@@ -53,19 +53,19 @@ export function ogPages(): OgPage[] {
     { id: "sandboxes", kicker: "Comparison", title: SANDBOXES_HUB.h1 },
     ...SANDBOXES.map((sandbox) => ({
       id: `sandbox-${sandbox.slug}`,
-      kicker: "Bot computers",
+      kicker: "Agent computers",
       title: sandbox.h1,
     })),
     { id: "integration-platforms", kicker: "Comparison", title: INTEGRATION_PLATFORMS_HUB.h1 },
     ...INTEGRATION_PLATFORMS.map((platform) => ({
       id: `integration-platform-${platform.slug}`,
-      kicker: "Bot tools",
+      kicker: "Agent tools",
       title: platform.h1,
     })),
     { id: "voice-providers", kicker: "Comparison", title: VOICE_PROVIDERS_HUB.h1 },
     ...VOICE_PROVIDERS.map((provider) => ({
       id: `voice-provider-${provider.slug}`,
-      kicker: "Bot voices",
+      kicker: "Agent voices",
       title: provider.h1,
     })),
     ...BLOG_OG,

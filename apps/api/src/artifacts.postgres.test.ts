@@ -98,7 +98,7 @@ describePostgres("artifact upload nonce (PostgreSQL)", () => {
     expect(stored.size).toBe(2);
   });
 
-  it("replays one artifact when retries of a group upload race under different member bots", async () => {
+  it("replays one artifact when retries of a group upload race under different member agents", async () => {
     const group = await system.chatGroup.create({ data: { spaceId, userId, name: "Race" } });
     const uploads = await Promise.all(
       [botId, otherBotId, botId, otherBotId].map((member) =>

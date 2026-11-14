@@ -16,7 +16,7 @@ function fixture(count: number) {
   const artifacts = Array.from({ length: count }, (_, index) => ({
     id: `artifact-${index}`,
     botId: `bot-${index}`,
-    bot: { name: "Bot" },
+    bot: { name: "Agent" },
     name: "report.txt",
     mimeType: "text/plain",
     size: 10,
@@ -95,7 +95,7 @@ describe("search saturation", () => {
     const messageSearchTokens = vi.fn().mockResolvedValue([]);
     Object.assign(prisma, { $contentEncryption: () => ({ messageSearchTokens }) });
     prisma.bot.findMany.mockResolvedValue(
-      Array.from({ length: scenario.conversations }, (_, i) => ({ id: `bot-${i}`, name: "Bot" })),
+      Array.from({ length: scenario.conversations }, (_, i) => ({ id: `bot-${i}`, name: "Agent" })),
     );
     prisma.artifact.findMany
       .mockReset()
@@ -110,7 +110,7 @@ describe("search saturation", () => {
       Array.from({ length: 25 }, (_, i) => ({
         id: `routine-${i}`,
         botId: "bot",
-        bot: { name: "Bot" },
+        bot: { name: "Agent" },
         name: "report",
         prompt: "report",
       })),
@@ -142,7 +142,7 @@ describe("search saturation", () => {
   it("keeps searching after unreferenced file candidates fail to fill the budget", async () => {
     const { prisma } = fixture(25);
     prisma.routine.findMany.mockResolvedValue([
-      { id: "routine", botId: "bot", bot: { name: "Bot" }, name: "report", prompt: "report" },
+      { id: "routine", botId: "bot", bot: { name: "Agent" }, name: "report", prompt: "report" },
     ]);
     expect(await querySpaceSearch(prisma as never, actor, "report")).toMatchObject([
       { kind: "routine", routineId: "routine" },

@@ -117,7 +117,7 @@ it("redacts known secrets in instruction approval details and editable metadata"
   expect(JSON.stringify(block)).not.toContain("fake-token");
 });
 
-describe("bot management approval cards", () => {
+describe("agent management approval cards", () => {
   it.each([
     "create_group",
     "update_group",
@@ -223,7 +223,7 @@ describe("agent connection response cards", () => {
   });
 });
 
-it("shows a bot's first instructions as plain text", () => {
+it("shows an agent's first instructions as plain text", () => {
   const block = buildApprovalAskBlock(
     "effect-1",
     "update_bot",

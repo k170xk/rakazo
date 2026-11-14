@@ -62,7 +62,7 @@ describe("isEchoOfSpeech", () => {
 });
 
 describe("SpokenMemory", () => {
-  it("catches an echo of a reply the bot has already spoken past", () => {
+  it("catches an echo of a reply the agent has already spoken past", () => {
     const memory = new SpokenMemory();
     memory.remember(SPOKEN, 0);
     memory.remember("Booked for Friday", 1_000);

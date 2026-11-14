@@ -35,7 +35,7 @@ const peerExchange = [
     { kind: "bot_message_sent", toBotId: "coder", toBotName: "Coder", text: "Check this." },
   ]),
   received,
-  message("activity", "run-peer", [{ kind: "steps", steps: [{ label: "Message bot", count: 1 }] }]),
+  message("activity", "run-peer", [{ kind: "steps", steps: [{ label: "Message agent", count: 1 }] }]),
   message("reply", "run-peer", [{ kind: "text", text: "Sent Coder the endpoints." }]),
   message("answer", "run-user", [{ kind: "text", text: "Coder is checking it." }]),
 ];
@@ -59,7 +59,7 @@ describe("user-visible messages", () => {
     expect(transcript.markerOf.size).toBe(0);
   });
 
-  it("hides peer activity but keeps the bot's text reply when there is no marker to fold it under", () => {
+  it("hides peer activity but keeps the agent's text reply when there is no marker to fold it under", () => {
     expect(userVisibleMessages(peerExchange).map((item) => item.id)).toEqual([
       "user",
       "reply",
@@ -111,7 +111,7 @@ describe("user-visible messages", () => {
         replyToMessageId: "sent",
       },
       message("activity", "run-peer", [
-        { kind: "steps", steps: [{ label: "Message bot", count: 1 }] },
+        { kind: "steps", steps: [{ label: "Message agent", count: 1 }] },
       ]),
       message("relay", "run-peer", [{ kind: "text", text: "Coder confirmed it returns 200." }]),
     ];
@@ -372,7 +372,7 @@ describe("user-visible messages", () => {
       expect(view.reactions.get("ask")?.get("👍")).toBe(1);
     });
 
-    it("stays visible as steering while the bot's own reply still folds", () => {
+    it("stays visible as steering while the agent's own reply still folds", () => {
       const transcript = foldPeerReplies([...peerExchange, human("steer", "Use the staging API")], {
         includePeerReceipts: true,
       });

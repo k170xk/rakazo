@@ -78,7 +78,7 @@ describe("the chat a space reopens with", () => {
       thread,
     }) as never;
 
-  it("reopens the bot or group chat a cached space had selected", () => {
+  it("reopens the agent or group chat a cached space had selected", () => {
     expect(lastChatOf(seed(null), { botId: "bot-a" })).toEqual({ botId: "bot-a" });
     expect(lastChatOf(seed(null), { groupId: "group-a" })).toEqual({ groupId: "group-a" });
   });
@@ -90,7 +90,7 @@ describe("the chat a space reopens with", () => {
     expect(lastChatOf(undefined, { botId: "bot-a" })).toBeUndefined();
   });
 
-  it("keeps a selected group that had not loaded yet over the previous bot's snapshot", () => {
+  it("keeps a selected group that had not loaded yet over the previous agent's snapshot", () => {
     const previous = seed({ botId: "bot-old" });
     const botSnapshot = { botId: "bot-a", messages: [] } as never;
     const left = seedOnLeave(previous, {} as never, { groupId: "group-a" }, botSnapshot);

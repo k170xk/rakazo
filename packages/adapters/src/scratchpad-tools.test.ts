@@ -147,7 +147,7 @@ describe("scratchpad tools store", () => {
     );
   });
 
-  it("returns not found when item is outside the bot scope", async () => {
+  it("returns not found when item is outside the agent scope", async () => {
     const prisma = {
       scratchpadItem: { findFirst: vi.fn(async () => null) },
     };

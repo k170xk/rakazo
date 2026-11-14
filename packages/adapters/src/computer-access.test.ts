@@ -78,7 +78,7 @@ describe("computer access levels", () => {
     expect(limitedComputerInstruction("tools", "owner")).toContain(
       "files from the owner's private chats are not here",
     );
-    expect(limitedComputerInstruction("tools", "colleague")).toContain("someone else's bot");
+    expect(limitedComputerInstruction("tools", "colleague")).toContain("someone else's agent");
     expect(limitedComputerInstruction("tools", undefined)).not.toContain("shared");
   });
 
@@ -174,7 +174,7 @@ describe("a colleague's turn stays in its conversation folder", () => {
       "conversations/thread-1/home/rakazo/bots/b1/secret.txt",
     );
     expect(resolve("~/bots/b1/notes.md")).toBe("conversations/thread-1/bots/b1/notes.md");
-    expect(resolve("bots/b1/notes.md")).toBe("conversations/thread-1/bots/b1/notes.md");
+    expect(resolve("agents/b1/notes.md")).toBe("conversations/thread-1/bots/b1/notes.md");
     expect(resolve("conversations/thread-2/x.pdf")).toBe(
       "conversations/thread-1/conversations/thread-2/x.pdf",
     );
@@ -191,10 +191,10 @@ describe("a colleague's turn stays in its conversation folder", () => {
     expect(() => resolve("/home/rakazo/conversations/thread-1/../../bots/b1/x")).toThrow("escapes");
   });
 
-  it("leaves the owner's own turns in the bot's folder", () => {
+  it("leaves the owner's own turns in the agent's folder", () => {
     expect(
       resolveRunFilePath({ mode: "team", botId: "b1", folder: undefined }, "outputs/a.docx"),
-    ).toBe("bots/b1/outputs/a.docx");
+    ).toBe("agents/b1/outputs/a.docx");
   });
 });
 

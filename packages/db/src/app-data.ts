@@ -576,14 +576,19 @@ export async function dropAppTable(
   );
 }
 
-export const MAX_ASSET_BYTES = 6 * 1024 * 1024;
-export const MAX_APP_ASSET_BYTES = 60 * 1024 * 1024;
+export const MAX_ASSET_BYTES = 20 * 1024 * 1024;
+export const MAX_APP_ASSET_BYTES = 80 * 1024 * 1024;
 export const ASSET_MIMES = new Set([
   "image/png",
   "image/jpeg",
   "image/webp",
   "image/gif",
   "image/svg+xml",
+  "video/mp4",
+  "video/webm",
+  "audio/mpeg",
+  "audio/wav",
+  "audio/mp4",
 ]);
 
 export async function addAppAsset(
@@ -592,9 +597,9 @@ export async function addAppAsset(
   input: { name: string; mime: string; bytes: Uint8Array; source: string },
 ): Promise<{ id: string; name: string; mime: string; size: number }> {
   if (!ASSET_MIMES.has(input.mime))
-    throw new AppDataError("Apps keep PNG, JPEG, WebP, GIF or SVG pictures.");
+    throw new AppDataError("Apps keep PNG, JPEG, WebP, GIF or SVG pictures, or MP4, WebM, MP3 or WAV media.");
   if (input.bytes.byteLength > MAX_ASSET_BYTES)
-    throw new AppDataError("That picture is larger than 6 MB.");
+    throw new AppDataError("That asset is larger than 20 MB.");
   const used = await prisma.appAsset.aggregate({ where: { pageId }, _sum: { size: true } });
   if ((used._sum.size ?? 0) + input.bytes.byteLength > MAX_APP_ASSET_BYTES) {
     throw new AppDataError("This app keeps as many pictures as it can; remove some first.");

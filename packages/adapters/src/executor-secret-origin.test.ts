@@ -228,7 +228,7 @@ describe("request_secret with a page URL", () => {
 });
 
 describe("request_secret for a login's fields", () => {
-  it("asks for the named fields and never lets the bot choose which are visible", async () => {
+  it("asks for the named fields and never lets the agent choose which are visible", async () => {
     const { toolResults, events, everything } = await requestSecretWith(
       "https://bank.example.test",
       {

@@ -92,7 +92,7 @@ describe("addMcpServerFromTool", () => {
       "exec-1",
     );
     expect(result).toEqual({
-      error: "Bots can't add local (stdio) MCP servers. Ask an admin to add it in Settings.",
+      error: "Agents can't add local (stdio) MCP servers. Ask an admin to add it in Settings.",
     });
     expect(create).not.toHaveBeenCalled();
   });

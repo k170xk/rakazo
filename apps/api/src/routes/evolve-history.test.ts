@@ -58,7 +58,7 @@ describe("archivedMessageBlocks", () => {
 describe("assistantLook", () => {
   const assistant = "5a3a70fb-af59-42f1-a974-a4d3227111d1";
 
-  it("uses the assistant's own bot avatar", () => {
+  it("uses the assistant's own agent avatar", () => {
     expect(
       assistantLook(assistant, { id: "bot1", color: "#FF781C::shape_4", avatarSet: "organic" }),
     ).toEqual({
@@ -68,7 +68,7 @@ describe("assistantLook", () => {
     });
   });
 
-  it("gives an assistant without a bot the same look every time", () => {
+  it("gives an assistant without an agent the same look every time", () => {
     const look = assistantLook(assistant, undefined);
     expect(look).toEqual(assistantLook(assistant, undefined));
     expect(look.identity).toBe(assistant);

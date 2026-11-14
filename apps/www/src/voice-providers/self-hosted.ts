@@ -13,7 +13,7 @@ export const selfHosted: VoiceProvider = {
   h1: "Self-hosted voice for your AI agents",
   intro: [
     "You don't need a voice vendor to talk to an AI agent. Open models such as [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) for speech and Whisper for transcription run on an ordinary computer, and several open source servers put them behind the same API shape OpenAI uses. Point an agent at that server and no voice vendor ever hears you. The finished audio still goes to whichever device is listening.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and you can also talk to it by voice: hold the mic to speak, have replies read aloud, or call a bot in real time. Its **Self-hosted** voice option connects to any OpenAI-compatible speech server you run, so a [self-hosted Rakazo](/self-hosted-ai-agent/) can have voice with no hosted service at all.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and you can also talk to it by voice: hold the mic to speak, have replies read aloud, or call an agent in real time. Its **Self-hosted** voice option connects to any OpenAI-compatible speech server you run, so a [self-hosted Rakazo](/self-hosted-ai-agent/) can have voice with no hosted service at all.",
   ],
   scene: {
     bot: "Inbox Manager",
@@ -43,8 +43,8 @@ export const selfHosted: VoiceProvider = {
       ],
       bullets: [
         "Talk instead of typing. Hold the mic in the composer and your server transcribes what you say.",
-        "Hear replies. Choose **Speak this reply** on a message, or turn on **Read replies aloud** in a bot's settings.",
-        "Call a bot with **Call** at the top of the chat, or let a bot call you, for example when you ask it to call you at 5.",
+        "Hear replies. Choose **Speak this reply** on a message, or turn on **Read replies aloud** in an agent's settings.",
+        "Call an agent with **Call** at the top of the chat, or let an agent call you, for example when you ask it to call you at 5.",
         "Pick a voice from the server's own list. Kokoro voices show their language, and Rakazo passes that language to the server so a French voice reads with French pronunciation.",
       ],
     },
@@ -63,7 +63,7 @@ export const selfHosted: VoiceProvider = {
         "Addresses on your own network, `localhost` and `host.docker.internal` are refused unless the server sets `MCP_ALLOW_PRIVATE_ENDPOINT=true` on the API and worker. That setting applies to every user, so leave it off on a public install.",
         "A hostname that resolves to a private address must also be listed in `RAKAZO_OPENAI_COMPAT_PRIVATE_HOSTS`. Cloud metadata and link-local addresses are always blocked.",
         "A public address must use HTTPS if you add an API key. Setting `RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC=0` blocks public servers, and hides the option if private ones aren't allowed either.",
-        "On the mobile app, calls can use your phone's own voices if you pick a **Device voice** in the bot's settings. Otherwise replies use this provider.",
+        "On the mobile app, calls can use your phone's own voices if you pick a **Device voice** in the agent's settings. Otherwise replies use this provider.",
       ],
     },
     {

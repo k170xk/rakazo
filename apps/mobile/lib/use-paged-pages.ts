@@ -39,7 +39,7 @@ export function usePagedPages(owner: { botId?: string; groupId?: string }) {
   const load = useCallback(() => {
     const started = ++generation.current;
     loadingMore.current = false;
-    const owner = botId ? `bot:${botId}` : `group:${groupId}`;
+    const owner = botId ? `agent:${botId}` : `group:${groupId}`;
     if (shown.current.owner !== owner) shown.current = { owner, count: 0 };
     const limit = Math.min(Math.max(shown.current.count, PAGE_SIZE), PAGE_LIST_MAX_LIMIT);
     void rpc("pages/list", input(undefined, limit)).then(

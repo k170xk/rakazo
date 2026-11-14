@@ -118,7 +118,7 @@ describe("messagingPlatformsFromEnv", () => {
     expect((telegram.adapter as unknown as { mode: string }).mode).toBe("webhook");
   });
 
-  it("mounts each named Telegram bot as its own telegram-<name> provider", () => {
+  it("mounts each named Telegram agent as its own telegram-<name> provider", () => {
     const platforms = messagingPlatformsFromEnv({
       telegramBotToken: "tg-token",
       telegramWebhookSecret: "tg-webhook-secret",
@@ -133,7 +133,7 @@ describe("messagingPlatformsFromEnv", () => {
     expect(platforms[1]!.capabilities.groups).toBe(true);
   });
 
-  it("reads named Telegram bots from TELEGRAM_BOT_TOKEN_<NAME> pairs", () => {
+  it("reads named Telegram agents from TELEGRAM_BOT_TOKEN_<NAME> pairs", () => {
     expect(
       telegramBotsFromEnv({
         TELEGRAM_BOT_TOKEN: "default",
@@ -153,7 +153,7 @@ describe("messagingPlatformsFromEnv", () => {
     ]);
   });
 
-  it("skips a named Telegram bot that reuses the default or another bot's token", () => {
+  it("skips a named Telegram agent that reuses the default or another agent's token", () => {
     expect(
       providers(
         messagingEnvFromProcess({
@@ -181,7 +181,7 @@ describe("messagingPlatformsFromEnv", () => {
           ],
         }),
       ).toEqual(["telegram-first"]);
-      expect(warn).toHaveBeenCalledWith("skipping Telegram bot that reuses another bot's token", {
+      expect(warn).toHaveBeenCalledWith("skipping Telegram agent that reuses another agent's token", {
         provider: "telegram-second",
       });
       expect(JSON.stringify(warn.mock.calls)).not.toContain("tg-shared");
@@ -191,7 +191,7 @@ describe("messagingPlatformsFromEnv", () => {
   });
 
   it.each([undefined, "", "   "])(
-    "does not reserve an incomplete default bot's token (%s)",
+    "does not reserve an incomplete default agent's token (%s)",
     (secret) => {
       expect(
         providers(
@@ -711,7 +711,7 @@ describe("enrichSlackTeamRoom", () => {
     expect(enrichment.conversationKey).toBe("C1");
   });
 
-  it("keeps ambient when another user is mentioned, not the bot", () => {
+  it("keeps ambient when another user is mentioned, not the agent", () => {
     const enrichment = enrichSlackTeamRoom(
       {
         team_id: "T1",
@@ -728,7 +728,7 @@ describe("enrichSlackTeamRoom", () => {
     expect(enrichment.kind).toBe("ambient");
   });
 
-  it("marks a plain message event as mention when the platform reports a bot mention", () => {
+  it("marks a plain message event as mention when the platform reports an agent mention", () => {
     const raw = {
       type: "message",
       channel: "C1",

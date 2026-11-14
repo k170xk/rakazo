@@ -221,14 +221,14 @@ describe("prepareFleetRequest create_group", () => {
   it.each([1, 11])("refuses %i members with a readable size error", async (count) => {
     const bots = Array.from({ length: count }, (_, index) => ({
       id: `bot-${index}`,
-      name: `Bot ${index}`,
+      name: `Agent ${index}`,
     }));
     const { deps } = fakeFleet({ bots });
     const prepared = await prepareFleetRequest(deps, run, "create_group", {
       name: "Crew",
       bot_ids: bots.map((bot) => bot.id),
     });
-    expect(prepared).toEqual({ ok: false, error: "A group needs 2 to 10 bots." });
+    expect(prepared).toEqual({ ok: false, error: "A group needs 2 to 10 agents." });
   });
 
   it("asks for the id when a name is unknown or ambiguous", async () => {
@@ -238,23 +238,23 @@ describe("prepareFleetRequest create_group", () => {
         name: "Crew",
         bot_names: ["Scout", "Nobody"],
       }),
-    ).toEqual({ ok: false, error: 'No bot named "Nobody". Call list_fleet and pass bot_id.' });
+    ).toEqual({ ok: false, error: 'No agent named "Nobody". Call list_fleet and pass bot_id.' });
     expect(
       await prepareFleetRequest(deps, run, "create_group", {
         name: "Crew",
         bot_names: ["Scout", "Twin"],
       }),
-    ).toEqual({ ok: false, error: 'More than one bot is named "Twin". Pass bot_id instead.' });
+    ).toEqual({ ok: false, error: 'More than one agent is named "Twin". Pass bot_id instead.' });
   });
 
-  it("never resolves archived bots or bots of another user", async () => {
+  it("never resolves archived agents or agents of another user", async () => {
     const { deps } = fakeFleet(fleet);
     expect(
       await prepareFleetRequest(deps, run, "create_group", {
         name: "Crew",
         bot_ids: ["bot-scout", "bot-foreign"],
       }),
-    ).toEqual({ ok: false, error: 'No bot with id "bot-foreign". Call list_fleet for ids.' });
+    ).toEqual({ ok: false, error: 'No agent with id "bot-foreign". Call list_fleet for ids.' });
     expect(
       await prepareFleetRequest(deps, run, "create_group", {
         name: "Crew",
@@ -291,7 +291,7 @@ describe("prepareFleetRequest update_group", () => {
     });
   });
 
-  it("refuses to remove the calling bot from the group it is running in", async () => {
+  it("refuses to remove the calling agent from the group it is running in", async () => {
     const { deps } = fakeFleet(fleet);
     const prepared = await prepareFleetRequest(
       deps,
@@ -322,12 +322,12 @@ describe("prepareFleetRequest update_group", () => {
         group_id: "group-dup-1",
         remove_bot_ids: ["bot-writer"],
       }),
-    ).toEqual({ ok: false, error: "A group needs 2 to 10 bots." });
+    ).toEqual({ ok: false, error: "A group needs 2 to 10 agents." });
   });
 });
 
 describe("prepareFleetRequest set_child_bot_model", () => {
-  it("refuses a bot outside the current space", async () => {
+  it("refuses an agent outside the current space", async () => {
     const { deps } = fakeFleet({
       ...fleet,
       bots: fleet.bots.map((bot) =>
@@ -338,7 +338,7 @@ describe("prepareFleetRequest set_child_bot_model", () => {
       await prepareFleetRequest(deps, run, "set_child_bot_model", { bot_name: "Ops", clear: true }),
     ).toEqual({
       ok: false,
-      error: 'No bot named "Ops". Call list_fleet and pass bot_id.',
+      error: 'No agent named "Ops". Call list_fleet and pass bot_id.',
     });
     expect(
       await prepareFleetRequest(deps, run, "set_child_bot_model", {
@@ -468,7 +468,7 @@ describe("prepareFleetRequest set_child_bot_model", () => {
     });
   });
 
-  it("says when the change resets the bot's thinking level", async () => {
+  it("says when the change resets the agent's thinking level", async () => {
     const { deps } = fakeFleet({
       bots: fleet.bots.map((bot) =>
         bot.id === "bot-scout" ? { ...bot, thinkingLevel: "high" } : bot,
@@ -509,7 +509,7 @@ describe("prepareFleetRequest set_child_bot_model", () => {
         bot_id: "bot-scout",
         clear: true,
       }),
-    ).toEqual({ ok: false, error: "That bot already uses this model." });
+    ).toEqual({ ok: false, error: "That agent already uses this model." });
   });
 
   it("refuses a thinking level outside the shared levels even without catalog levels", async () => {
@@ -603,7 +603,7 @@ describe("prepareFleetRequest create_child_routine", () => {
     });
   });
 
-  it("schedules in the user's timezone when the bot names none", async () => {
+  it("schedules in the user's timezone when the agent names none", async () => {
     const { deps } = fakeFleet({ ...fleet, timezone: "Europe/Paris" });
     const prepared = await prepareFleetRequest(deps, run, "create_child_routine", {
       bot_name: "Writer",
@@ -624,7 +624,7 @@ describe("prepareFleetRequest create_child_routine", () => {
     });
   });
 
-  it("refuses a bot outside the current space", async () => {
+  it("refuses an agent outside the current space", async () => {
     const { deps } = fakeFleet({
       ...fleet,
       bots: fleet.bots.map((bot) =>
@@ -640,13 +640,13 @@ describe("prepareFleetRequest create_child_routine", () => {
       }),
     ).toEqual({
       ok: false,
-      error: 'No bot with id "bot-ops". Call list_fleet for ids.',
+      error: 'No agent with id "bot-ops". Call list_fleet for ids.',
     });
   });
 });
 
 describe("prepareFleetRequest keeps the card whole and honest", () => {
-  it("puts multi-line bot, group and routine names on one line", async () => {
+  it("puts multi-line agent, group and routine names on one line", async () => {
     const { deps } = fakeFleet({
       bots: [
         { id: "bot-self", name: "Designer" },
@@ -773,7 +773,7 @@ describe("prepareFleetRequest keeps the card whole and honest", () => {
     });
   });
 
-  it("escapes Markdown in bot, group and routine names on card titles", async () => {
+  it("escapes Markdown in agent, group and routine names on card titles", async () => {
     const name = "[Click](https://evil.test) *now* _here_";
     const escaped = "\\[Click\\](https://evil.test) \\*now\\* \\_here\\_";
     const { deps } = fakeFleet({
@@ -942,7 +942,7 @@ describe("listFleet", () => {
     });
   });
 
-  it("lists only the user's active bots and groups and flags the bots the caller created", async () => {
+  it("lists only the user's active agents and groups and flags the agents the caller created", async () => {
     const { deps } = fakeFleet({
       ...fleet,
       bots: fleet.bots.map((bot) =>
@@ -1008,7 +1008,7 @@ describe("listFleet", () => {
     });
   });
 
-  it("returns instructions and versions for created bots and peers", async () => {
+  it("returns instructions and versions for created agents and peers", async () => {
     const { deps } = fakeFleet({
       bots: [
         { id: "bot-self", name: "Designer" },
@@ -1038,7 +1038,7 @@ describe("listFleet", () => {
   it("bounds oversized roster output without cutting JSON entries", async () => {
     const bots = Array.from({ length: 100 }, (_, i) => ({
       id: `bot-${i}`,
-      name: `Bot ${i}`,
+      name: `Agent ${i}`,
       description: "x".repeat(2000),
     }));
     const listing = await listFleet(fakeFleet({ bots }).deps, run, {});
@@ -1048,10 +1048,10 @@ describe("listFleet", () => {
       expect(listing.bots.every((bot) => bot.description === "x".repeat(2000))).toBe(true);
   });
 
-  it("caps the lists at 200 bots and 100 groups and says so", async () => {
+  it("caps the lists at 200 agents and 100 groups and says so", async () => {
     const bots = Array.from({ length: 201 }, (_, index) => ({
       id: `bot-${index}`,
-      name: `Bot ${index}`,
+      name: `Agent ${index}`,
     }));
     const groups = Array.from({ length: 101 }, (_, index) => ({
       id: `group-${index}`,
@@ -1073,8 +1073,8 @@ describe("listFleet", () => {
 
   it("does not count groups the sidebar hides toward the cap", async () => {
     const bots = [
-      { id: "bot-0", name: "Bot 0" },
-      { id: "bot-1", name: "Bot 1" },
+      { id: "bot-0", name: "Agent 0" },
+      { id: "bot-1", name: "Agent 1" },
       { id: "bot-gone", name: "Gone", archivedAt: new Date(0) },
     ];
     const hidden = Array.from({ length: 5 }, (_, index) => ({
@@ -1142,7 +1142,7 @@ describe("organizeBot refusals", () => {
     expect(
       await organizeBot(writeDeps(prisma), run, { group_id: "group-small", section: "Research" }),
     ).toEqual({
-      error: "That bot or group is no longer available. Call list_fleet and try again.",
+      error: "That agent or group is no longer available. Call list_fleet and try again.",
     });
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
@@ -1165,9 +1165,9 @@ describe("organizeBot refusals", () => {
     });
   });
 
-  it("cannot target a bot or group of another user in the same space", async () => {
+  it("cannot target an agent or group of another user in the same space", async () => {
     expect(await organize({ bot_name: "Stranger", pinned: true })).toEqual({
-      error: 'No bot named "Stranger". Call list_fleet and pass bot_id.',
+      error: 'No agent named "Stranger". Call list_fleet and pass bot_id.',
     });
     expect(await organize({ group_id: "group-foreign", pinned: true })).toEqual({
       error: 'No group with id "group-foreign". Call list_fleet for ids.',
@@ -1185,13 +1185,13 @@ describe("updateChildBot", () => {
   };
   const bots = [{ id: "bot-self", name: "Designer" }, child, { id: "bot-ops", name: "Ops" }];
 
-  it("refuses a bot outside the current space and changes nothing", async () => {
+  it("refuses an agent outside the current space and changes nothing", async () => {
     const { prisma } = fakeFleet({
       bots: bots.map((bot) => (bot.id === "bot-ops" ? { ...bot, spaceId: "other-space" } : bot)),
     });
     expect(
       await updateChildBot(writeDeps(prisma), run, { bot_id: "bot-ops", name: "Mine now" }),
-    ).toEqual({ error: 'No bot with id "bot-ops". Call list_fleet for ids.' });
+    ).toEqual({ error: 'No agent with id "bot-ops". Call list_fleet for ids.' });
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.bot.update).not.toHaveBeenCalled();
   });
@@ -1205,7 +1205,7 @@ describe("updateChildBot", () => {
         expected_version: "version-2",
       }),
     ).toEqual({
-      error: "Change another bot's instructions with set_child_instructions.",
+      error: "Change another agent's instructions with set_child_instructions.",
     });
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
@@ -1392,7 +1392,7 @@ describe("prepareFleetRequest set_child_instructions", () => {
     ).toEqual({ ok: false, error: "instructions must be at most 20000 characters." });
   });
 
-  it("refuses a bot outside the current space", async () => {
+  it("refuses an agent outside the current space", async () => {
     const { deps } = fakeFleet({
       bots: bots.map((bot) => (bot.id === "bot-ops" ? { ...bot, spaceId: "other-space" } : bot)),
     });
@@ -1403,7 +1403,7 @@ describe("prepareFleetRequest set_child_instructions", () => {
       }),
     ).toEqual({
       ok: false,
-      error: 'No bot with id "bot-ops". Call list_fleet for ids.',
+      error: 'No agent with id "bot-ops". Call list_fleet for ids.',
     });
   });
 
@@ -1414,7 +1414,7 @@ describe("prepareFleetRequest set_child_instructions", () => {
     });
     expect(await prepareFleetRequest(deps, run, "set_child_instructions", edit)).toEqual({
       ok: false,
-      error: "You already changed this bot's instructions in this run.",
+      error: "You already changed this agent's instructions in this run.",
     });
   });
 });
@@ -1457,7 +1457,7 @@ describe("setChildInstructions", () => {
       ],
     });
     expect(await setChildInstructions(writeDeps(prisma), run, canonical)).toEqual({
-      error: 'No bot with id "bot-child". Call list_fleet for ids.',
+      error: 'No agent with id "bot-child". Call list_fleet for ids.',
     });
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
@@ -1468,7 +1468,7 @@ describe("setChildInstructions", () => {
       effects: [{ request: { botId: "bot-child" }, result: { ok: true } }],
     });
     expect(await setChildInstructions(writeDeps(prisma), run, canonical)).toEqual({
-      error: "You already changed this bot's instructions in this run.",
+      error: "You already changed this agent's instructions in this run.",
     });
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
@@ -1483,7 +1483,7 @@ describe("setChildBotModel", () => {
     model: "my-model",
   };
 
-  it("fails at execution when the bot is no longer the caller's active child", async () => {
+  it("fails at execution when the agent is no longer the caller's active child", async () => {
     const { deps, prisma } = fakeFleet({
       bots: fleet.bots.map((bot) =>
         bot.id === "bot-scout" ? { ...bot, archivedAt: new Date(0) } : bot,
@@ -1494,7 +1494,7 @@ describe("setChildBotModel", () => {
       run,
       canonical,
     );
-    expect(result).toEqual({ error: 'No bot with id "bot-scout". Call list_fleet for ids.' });
+    expect(result).toEqual({ error: 'No agent with id "bot-scout". Call list_fleet for ids.' });
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -1509,7 +1509,7 @@ describe("setChildBotModel", () => {
       run,
       canonical,
     );
-    expect(result).toEqual({ error: "That bot's model changed since you approved; ask again." });
+    expect(result).toEqual({ error: "That agent's model changed since you approved; ask again." });
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -1521,7 +1521,7 @@ describe("setChildBotModel", () => {
     });
     expect(
       await setChildBotModel({ ...deps, events: writeDeps(prisma).events }, run, canonical),
-    ).toEqual({ error: "That bot's model changed since you approved; ask again." });
+    ).toEqual({ error: "That agent's model changed since you approved; ask again." });
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -1535,7 +1535,7 @@ describe("setChildBotModel", () => {
     const reset = { ...canonical, provider: null, model: null };
     expect(
       await setChildBotModel({ ...deps, events: writeDeps(prisma).events }, run, reset),
-    ).toEqual({ error: "That bot's model changed since you approved; ask again." });
+    ).toEqual({ error: "That agent's model changed since you approved; ask again." });
     expect(tx.bot.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
@@ -1548,7 +1548,7 @@ describe("setChildBotModel", () => {
     );
   });
 
-  it("validates the model again against the bot's current model", async () => {
+  it("validates the model again against the agent's current model", async () => {
     // The connection was removed while the card waited.
     const { deps, prisma } = fakeFleet({ ...fleet, credentials: [] });
     const result = await setChildBotModel(
@@ -1733,14 +1733,14 @@ describe("createChildRoutine", () => {
     );
   });
 
-  it("refuses a bot that moved outside the current space after approval", async () => {
+  it("refuses an agent that moved outside the current space after approval", async () => {
     const { prisma } = fakeFleet({
       bots: fleet.bots.map((bot) =>
         bot.id === "bot-writer" ? { ...bot, spaceId: "other-space" } : bot,
       ),
     });
     expect(await createChildRoutine(writeDeps(prisma), run, canonical)).toEqual({
-      error: 'No bot with id "bot-writer". Call list_fleet for ids.',
+      error: 'No agent with id "bot-writer". Call list_fleet for ids.',
     });
     expect(prisma.routine.create).not.toHaveBeenCalled();
   });
@@ -1757,7 +1757,7 @@ describe("createChildRoutine", () => {
   });
 });
 
-describe("space bot management", () => {
+describe("space agent management", () => {
   const target = {
     id: "peer",
     name: "Peer",

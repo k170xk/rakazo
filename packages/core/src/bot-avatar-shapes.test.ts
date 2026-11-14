@@ -6,7 +6,7 @@ import {
   shippedBotAvatarShapePath,
 } from "./bot-avatar-shapes.js";
 
-describe("shipped bot avatar shapes", () => {
+describe("shipped agent avatar shapes", () => {
   it("keeps the same eight shapes the parser encodes", () => {
     expect(SHIPPED_BOT_AVATAR_SHAPE_KEYS).toHaveLength(BOT_AVATAR_SHAPE_COUNT);
     expect(shippedBotAvatarShapePath(3)).toBe(SHIPPED_BOT_AVATAR_SHAPES.tablet);

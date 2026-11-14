@@ -70,7 +70,7 @@ describePostgres("chat attachment cleanup (PostgreSQL)", () => {
     );
   }
 
-  it("deletes old files bots made and keeps uploads and files with a recent version", async () => {
+  it("deletes old files agents made and keeps uploads and files with a recent version", async () => {
     const madeOld = await artifact({ name: "made-old", runId: "run", createdAt: old });
     const upload = await artifact({ name: "upload", runId: null, createdAt: old });
     const editedRoot = await artifact({ name: "edited", runId: "run", createdAt: old });

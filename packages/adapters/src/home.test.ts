@@ -161,7 +161,7 @@ describe("LocalAgentHomeStore path containment", () => {
     );
   });
 
-  it("allows symlinks whose resolved target stays inside the bot home", async () => {
+  it("allows symlinks whose resolved target stays inside the agent home", async () => {
     const { store, home } = await fixture();
     await writeFile(path.join(home, "target.txt"), "before");
     await symlink("target.txt", path.join(home, "link.txt"));
@@ -198,7 +198,7 @@ describe("LocalAgentHomeStore path containment", () => {
     expect(await store.readFile("bot-1", "notes/result.txt", context)).toBe("inside");
   });
 
-  it("allows directory symlinks that remain inside the bot home", async () => {
+  it("allows directory symlinks that remain inside the agent home", async () => {
     const { store, home } = await fixture();
     await mkdir(path.join(home, "target-dir"));
     await symlink(path.join(home, "target-dir"), path.join(home, "linked-dir"), "junction");
@@ -210,7 +210,7 @@ describe("LocalAgentHomeStore path containment", () => {
     ]);
   });
 
-  it("rejects reads and writes through symlinks outside the bot home", async () => {
+  it("rejects reads and writes through symlinks outside the agent home", async () => {
     const { root, store, home } = await fixture();
     const outside = path.join(root, "outside.txt");
     await writeFile(outside, "secret");
@@ -255,12 +255,12 @@ describe("LocalAgentHomeStore path containment", () => {
     const { store, home } = await fixture();
     await mkdir(path.join(home, "bots/bot-a/notes"), { recursive: true });
     await mkdir(path.join(home, "bots/bot-b"), { recursive: true });
-    await writeFile(path.join(home, "bots/bot-a/notes/result.txt"), "mine");
-    await writeFile(path.join(home, "bots/bot-b/secret.txt"), "other");
+    await writeFile(path.join(home, "agents/bot-a/notes/result.txt"), "mine");
+    await writeFile(path.join(home, "agents/bot-b/secret.txt"), "other");
     await symlink("../bot-b", path.join(home, "bots/bot-a/peer-dir"), "junction");
     await symlink("../bot-b/secret.txt", path.join(home, "bots/bot-a/peer-file"));
     await symlink("bot-b", path.join(home, "bots/bot-c"), "junction");
-    await symlink("notes/result.txt", path.join(home, "bots/bot-a/latest.txt"));
+    await symlink("notes/result.txt", path.join(home, "agents/bot-a/latest.txt"));
     const exported = async (directory: string) => {
       const files = [];
       for await (const file of store.exportHome("bot-1", context, { directory }))
@@ -360,7 +360,7 @@ describe("LocalAgentHomeStore path containment", () => {
         const targetHome = component === "home" ? target : path.join(target, "bot-1");
         await mkdir(path.join(targetHome, "bots/bot-a"), { recursive: true });
         await writeFile(path.join(targetHome, "secret.txt"), "secret");
-        await writeFile(path.join(targetHome, "bots/bot-a/secret.txt"), "secret");
+        await writeFile(path.join(targetHome, "agents/bot-a/secret.txt"), "secret");
         await rm(linked, { recursive: true });
         await symlink(target, linked, "junction");
         expect(await exported(store, directory)).toEqual([]);
@@ -575,7 +575,7 @@ describe("LocalAgentHomeStore with Go's read-only module cache", () => {
         removeAgentHome({} as AgentHomeStore, "bot-1", root),
     ],
     [
-      "removing a Team bot's folder",
+      "removing a Team agent's folder",
       ["bot-1/bots/gone"],
       (store: LocalAgentHomeStore) => store.removeFolders("bot-1", "bots", ["gone"]),
     ],

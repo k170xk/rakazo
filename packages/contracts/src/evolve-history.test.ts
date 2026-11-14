@@ -19,7 +19,7 @@ const message = (id: string, role: "user" | "assistant", content: string) =>
   });
 
 describe("EvolveHistoryAssistantSchema", () => {
-  it("accepts a bot look that is an uploaded avatar image", () => {
+  it("accepts an agent look that is an uploaded avatar image", () => {
     const image = `data:image/webp;base64,${"A".repeat(26_000)}`;
     const parsed = EvolveHistoryAssistantSchema.safeParse({
       id: "60a43063-4b8f-4f40-bd38-6a884cf0002d",

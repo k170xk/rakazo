@@ -249,7 +249,7 @@ describePostgres("moving routines with the account timezone (PostgreSQL)", () =>
     });
   }
 
-  it("moves routines spread across many bots, retimed rows and label-only rows", async () => {
+  it("moves routines spread across many agents, retimed rows and label-only rows", async () => {
     await resetAccount();
     const retimed: string[] = [];
     const relabeled: string[] = [];

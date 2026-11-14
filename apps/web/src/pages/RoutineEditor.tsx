@@ -961,7 +961,7 @@ function MessageTriggerCard({ provider, onRemove }: { provider: string; onRemove
         </Button>
       </div>
       <p className="mt-2.5 text-[13.5px] text-muted-foreground/70">
-        <Trans>Runs when this bot receives a verified message from this provider.</Trans>
+        <Trans>Runs when this agent receives a verified message from this provider.</Trans>
       </p>
     </div>
   );

@@ -129,7 +129,7 @@ describe.skipIf(!enabled).sequential("items available across a user's spaces (Po
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  it("keeps what a bot writes in the space it wrote it in", async () => {
+  it("keeps what an agent writes in the space it wrote it in", async () => {
     const result = await runAsTenant(actorIn(home), () =>
       skillCreateFromTool(prisma, actorIn(home), {
         name: "home-routine",

@@ -580,10 +580,10 @@ export default function Account() {
         </View>
 
         {me?.botAvatarSet ? (
-          <View accessibilityLabel={t("Bot style")} style={styles.section}>
-            <SettingsLabel>{t("Bot style")}</SettingsLabel>
+          <View accessibilityLabel={t("Agent style")} style={styles.section}>
+            <SettingsLabel>{t("Agent style")}</SettingsLabel>
             <NativeSegmentedControl
-              accessibilityLabel={t("Bot style")}
+              accessibilityLabel={t("Agent style")}
               onChange={(botAvatarSet) => {
                 const previous = me.botAvatarSet;
                 // Only the latest tap's reply may land, so a slower earlier save can't undo it.
@@ -602,7 +602,7 @@ export default function Account() {
                     setMe((current) =>
                       current ? { ...current, botAvatarSet: previous } : current,
                     );
-                    Alert.alert(t("Couldn't update bot style"));
+                    Alert.alert(t("Couldn't update agent style"));
                   });
               }}
               options={[

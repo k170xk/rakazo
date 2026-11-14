@@ -148,14 +148,14 @@ describe("fetch_file", () => {
 
   it("leaves a file that is already there untouched", async () => {
     const h = harness();
-    h.runner.stored.set(SPEC, new TextEncoder().encode("edited by the bot"));
+    h.runner.stored.set(SPEC, new TextEncoder().encode("edited by the agent"));
     const result = await fileTools.fetch_file!(
       h.ctx,
       h.call("fetch_file", { path: SPEC }) as never,
     );
     expect(result).toEqual({ ok: true, path: SPEC, alreadyThere: true });
     expect(h.artifacts.get).not.toHaveBeenCalled();
-    expect(new TextDecoder().decode(h.runner.stored.get(SPEC))).toBe("edited by the bot");
+    expect(new TextDecoder().decode(h.runner.stored.get(SPEC))).toBe("edited by the agent");
   });
 
   it("refuses any path that is not one of this conversation's listed files", async () => {

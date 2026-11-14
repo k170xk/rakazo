@@ -96,7 +96,7 @@ describePostgres("organizations (PostgreSQL)", () => {
         spaceId,
         userId,
         scope: "dedicated",
-        scopeKey: `bot:${providerRef}`,
+        scopeKey: `agent:${providerRef}`,
         homeKey: `home-${providerRef}`,
         kind: "e2b",
         providerRef,

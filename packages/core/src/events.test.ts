@@ -1094,7 +1094,7 @@ describe("liveActivityLine", () => {
     ).toBe("Searching the web: injury news");
   });
 
-  it("is empty while the bot writes text or has no live message", () => {
+  it("is empty while the agent writes text or has no live message", () => {
     expect(
       liveActivityLine([
         { id: "progress:run-1", blocks: [{ kind: "progress", text: "Checking that first." }] },

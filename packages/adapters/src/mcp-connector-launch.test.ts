@@ -458,7 +458,7 @@ describe("MCP connector managed stdio launch", () => {
     });
   });
 
-  it("runs one process per server for every bot of the same user", async () => {
+  it("runs one process per server for every agent of the same user", async () => {
     await publishPackage(root);
     const launches = vi.spyOn(McpSession.prototype, "connectStdio");
     const connector = connectorFor();

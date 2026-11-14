@@ -28,7 +28,9 @@ Effects (sparingly: one or two per screen): Aurora (soft moving green light behi
   GlowCard (turning green border for the one thing to notice), BentoGrid + BentoCard {size "1x1"|"2x1"|"1x2"|
   "2x2"|"3x1", title, description?, icon?, background?, onClick?} for overview tiles, Marquee {children,
   speed?} (client logos, live highlights), Reveal {delay?} (fade up on first scroll into view), celebrate()
-  (confetti for a won tender or finished checklist). Utilities: bg-dots, bg-grid, text-gradient, glass.
+  (confetti for a won tender or finished checklist), Callout {tone?, title?, icon?, action?, children}
+  (theme-safe light/dark status banner), SampleBanner {tables: [table], label?, onCleared?} (one-click clear
+  for starter rows marked is_sample: true). Utilities: bg-dots, bg-grid, text-gradient, glass.
 Maps: MapView {markers: [{id?, lat, lon, label?, tone?, detail?}], lines?: [{points: [[lat, lon]…], tone?,
   dashed?}], areas?: [{points, tone?}], center?: [lat, lon], zoom?, mapStyle? "auto" (light/dark with the
   theme) | "streets" | "satellite" | "terrain", height?, selected?, onSelect?(marker), onMapClick?([lat, lon]),
@@ -127,6 +129,17 @@ GalleryView {rows, imageKey, titleKey, subtitleKey?, badgeKey?, footer?(row), co
 OrgChart {rows, parentKey (the manager's _id), titleKey, subtitleKey?, photoKey?, onOpen?} draws a team
   top-down with folding; TreeView {rows, parentKey, titleKey, renderRow?(row, depth), onOpen?} is an indented
   folding tree (work breakdown, cost codes, folders, locations). buildTree(rows, parentKey) gives the nodes.
+Media, Viewers, Sketching & Split Workspaces:
+  ImageViewer {asset?, assets?: [{id, title?, caption?}], initialIndex?, title?, caption?, height?} gives
+    interactive pan, 50%–500% zoom, 90° rotate, filmstrip and fullscreen inspection for drawings and site photos.
+  VideoPlayer {asset?, src?, poster?, title?, chapters?: [{time, label}], autoPlay?, loop?, muted?} plays
+    MP4/WebM clips added with app_asset inside the zero-network sandbox, with scrubber, speed (1x–2x) and chapters.
+  AudioPlayer {asset?, src?, title?, subtitle?} plays voice notes and briefings added with app_asset.
+  SketchPad {value?, onChange?(assetId), backgroundAsset?, grid?: "dots"|"grid"|"plain", height?, readOnly?, label?}
+    gives pen, highlighter, lines, arrows, boxes, circles, eraser, undo/redo, engineering grid or photo underlay,
+    and one-click Save sketch into an image column.
+  SplitPane {left, right, defaultRatio?, minRatio?, maxRatio?} gives a drag-resizable two-pane workspace on
+    desktop (map + list, drawing + checklist, master + detail) that stacks cleanly on phones.
 MarkdownEditor {value, onChange, placeholder?, minRows?, mentions?: names, onMention?(name)}: notes with
   bold/heading/list/checklist/link/quote/table buttons and a preview; Markdown text for a longtext column,
   shown elsewhere with <Markdown>. Use it for minutes, method statements, briefs and long notes, not Textarea.

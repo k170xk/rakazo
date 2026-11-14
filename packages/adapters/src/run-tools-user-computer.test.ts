@@ -109,7 +109,7 @@ describe("userComputerOwner", () => {
     botUserId: "user-1",
   };
 
-  it("is the bot owner when their own message started the run", () => {
+  it("is the agent owner when their own message started the run", () => {
     expect(userComputerOwner(own)).toBe("user-1");
     expect(userComputerOwner({ ...own, trigger: "follow_up" })).toBe("user-1");
   });

@@ -16,6 +16,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowDownUp, Settings, Trash2 } from "lucide-react";
 import type { ComponentProps, RefObject } from "react";
 import { useCallback, useDeferredValue, useEffect, useRef, useState } from "react";
+import { chatForPage } from "../../lib/app-chat";
 import { PAGE_PARAM } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import type { Panel } from "../../lib/right-panel-state";
@@ -330,7 +331,7 @@ export function ShellDialogs({
         <DeleteItemDialog
           item={deleteSectionTarget.section}
           noun="section"
-          description={<Trans>Its bots and groups are kept and leave the section.</Trans>}
+          description={<Trans>Its agents and groups are kept and leave the section.</Trans>}
           onCancel={() => setDeleteSectionTarget(null)}
           onConfirm={async () => {
             await rpc.botSections.remove(
@@ -351,11 +352,14 @@ export function ShellDialogs({
           closeMobileSidebar();
           navigate(`/app/${id}`);
         }}
-        pages={pages.data?.items.filter((page) => page.groupId || page.botId)}
+        pages={pages.data?.items.filter(
+          (page) => page.groupId || page.botId || page.kind === "app",
+        )}
         onSearchChange={setPageSearch}
         onSelectPage={(page) => {
           closeMobileSidebar();
-          const chat = page.groupId ? `/app/g/${page.groupId}` : `/app/${page.botId}`;
+          const chat = chatForPage(page, bots);
+          if (!chat) return;
           navigate(`${chat}?${PAGE_PARAM}=${encodeURIComponent(page.id)}`);
         }}
         actions={paletteActions.map((action) => ({

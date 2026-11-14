@@ -201,7 +201,7 @@ describe("settings group", () => {
   });
 
   it("renders nothing when every row is hidden", () => {
-    const view = render(<SettingsGroup label="Archived bots">{null}</SettingsGroup>);
+    const view = render(<SettingsGroup label="Archived agents">{null}</SettingsGroup>);
 
     expect(view.innerHTML).toBe("");
   });

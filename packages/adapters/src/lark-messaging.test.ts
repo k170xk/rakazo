@@ -110,7 +110,7 @@ beforeEach(() => {
       return { code: 0, tenant_access_token: "test-access-token", expire: 7200 };
     }
     if (url.endsWith("/bot/v3/info")) {
-      return { code: 0, bot: { open_id: "ou-bot", app_name: "Test bot" } };
+      return { code: 0, bot: { open_id: "ou-bot", app_name: "Test agent" } };
     }
     if (url.endsWith("/contact/v3/users/ou-test")) {
       return { code: 0, data: { user: { name: "Test user" } } };
@@ -697,12 +697,12 @@ describe("Lark messaging conformance", () => {
               { tag: "text", text: "Hello" },
               { tag: "img", image_key: "test-image", text: "ignored" },
               { tag: "unknown", text: "ignored" },
-              { tag: "at", user_name: "Test bot" },
+              { tag: "at", user_name: "Test agent" },
             ],
           ],
         },
       },
-      "Hello@Test bot",
+      "Hello@Test agent",
     ],
   ])("parses rich-text posts: %s", async (_name, content, expected) => {
     const { surface, adapter } = createSurface();

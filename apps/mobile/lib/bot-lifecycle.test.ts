@@ -17,7 +17,7 @@ vi.mock("./user-error", () => ({ errorText: () => "Try again." }));
 import { confirmDeleteBot, confirmDeleteGroup, restoreArchivedBot } from "./bot-lifecycle";
 
 beforeEach(() => vi.clearAllMocks());
-describe("archived bot lifecycle", () => {
+describe("archived agent lifecycle", () => {
   it("waits for restore and propagates failure instead of opening a writable chat", async () => {
     rpc.mockResolvedValueOnce({ ok: true });
     await restoreArchivedBot("bot-fixture");
@@ -25,7 +25,7 @@ describe("archived bot lifecycle", () => {
     rpc.mockRejectedValueOnce(new Error("offline"));
     await expect(restoreArchivedBot("bot-fixture")).rejects.toThrow("offline");
   });
-  it("cancel never removes a bot, and both deletion choices are destructive", () => {
+  it("cancel never removes an agent, and both deletion choices are destructive", () => {
     confirmDeleteBot({ id: "bot-fixture", name: "Fixture" }, vi.fn());
     expect(rpc).not.toHaveBeenCalled();
     const buttons = alert.mock.calls[0]![2];
@@ -55,7 +55,7 @@ describe("group deletion", () => {
     const deleted = vi.fn();
     confirmDeleteGroup({ id: "group-fixture", name: "Team" }, deleted);
     const [title, message, buttons] = alert.mock.calls[0]!;
-    expect([title, message]).toEqual(["Delete Team?", "Bots and their own chats stay."]);
+    expect([title, message]).toEqual(["Delete Team?", "Agents and their own chats stay."]);
     expect(
       buttons.map(({ text, style }: { text: string; style: string }) => [text, style]),
     ).toEqual([
@@ -85,14 +85,14 @@ describe("group deletion", () => {
   });
 });
 
-it("keeps deletion bound to the archived bot's space through confirmation", async () => {
+it("keeps deletion bound to the archived agent's space through confirmation", async () => {
   const requestContext = {
     apiBase: "https://example.test",
     headers: { "x-rakazo-space-id": "space-b" },
   };
   const deleted = vi.fn();
   rpc.mockResolvedValueOnce({ ok: true });
-  confirmDeleteBot({ id: "bot-b", name: "Bot" }, deleted, () => true, requestContext);
+  confirmDeleteBot({ id: "bot-b", name: "Agent" }, deleted, () => true, requestContext);
   await alert.mock.calls[0]![2][1].onPress();
   await Promise.resolve();
   expect(rpc).toHaveBeenCalledWith(

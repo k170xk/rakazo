@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { captureScreenshot, completeOnboarding, openNewSpace, rpc, signup } from "./helpers";
 
-test("a new space auto-completes onboarding, is renamed in its settings, and is deleted with its bots", async ({
+test("a new space auto-completes onboarding, is renamed in its settings, and is deleted with its agents", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();
@@ -56,7 +56,7 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
   // An occupied space is deleted with its bots after one confirmation naming them.
   await settings.getByRole("button", { name: "Delete space" }).click();
   const deleteSpaceDialog = page.getByRole("alertdialog", {
-    name: "Delete Temporary and its 1 bot?",
+    name: "Delete Temporary and its 1 agent?",
   });
   await expect(deleteSpaceDialog).toBeVisible();
   await captureScreenshot(page, testInfo, "delete-space-dialog");
@@ -74,7 +74,7 @@ test("a new space auto-completes onboarding, is renamed in its settings, and is 
   await expect(sidebar.getByRole("button", { name: /^Chief/ })).toHaveCount(1);
 });
 
-test("deleting the last bot in a space stays in the app after first use", {
+test("deleting the last agent in a space stays in the app after first use", {
   tag: "@nightly",
 }, async ({ page }) => {
   const stamp = Date.now();
@@ -112,7 +112,7 @@ test("deleting the last bot in a space stays in the app after first use", {
   await expect(page).not.toHaveURL(/\/onboarding/);
   await expect(sidebar.getByRole("button", { name: "Open Side" })).toBeVisible();
   await expect(
-    page.locator("main").getByRole("button", { name: "New bot", exact: true }),
+    page.locator("main").getByRole("button", { name: "New agent", exact: true }),
   ).toBeVisible();
 
   await sidebar.getByRole("button", { name: "Actions for Side" }).click();

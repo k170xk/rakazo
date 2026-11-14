@@ -208,7 +208,7 @@ describe("searchSupermemory", () => {
 });
 
 describe("searchSupermemoryContainers", () => {
-  it("deduplicates and ranks results from shared and bot containers", async () => {
+  it("deduplicates and ranks results from shared and agent containers", async () => {
     vi.stubGlobal(
       "fetch",
       vi
@@ -290,7 +290,7 @@ describe("saveSupermemoryMemory", () => {
 });
 
 describe("saveSupermemoryMemoryToContainers", () => {
-  it("writes shared memories to both the workspace and bot containers", async () => {
+  it("writes shared memories to both the workspace and agent containers", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 

@@ -13,7 +13,7 @@ const icons: Record<string, string> = {
 const reply =
   "[Post](https://x.example.test/a/status/1) and [odds](https://x.example.test/a/status/2). Guide: https://www.docs.example.test/guide/start/ or [plain](https://plain.example.test/)";
 
-test("links in a bot reply show the site icon the API resolved", async ({ page }, testInfo) => {
+test("links in an agent reply show the site icon the API resolved", async ({ page }, testInfo) => {
   const asked: string[] = [];
   await page.route("**/rpc/links/favicon", async (route) => {
     const { json } = route.request().postDataJSON() as { json: { origin: string } };

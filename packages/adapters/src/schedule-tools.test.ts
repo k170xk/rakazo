@@ -54,7 +54,7 @@ describe("resolveScheduleTiming", () => {
   beforeEach(() => vi.useFakeTimers({ now: new Date("2026-10-20T00:11:59.999Z") }));
   afterEach(() => vi.useRealTimers());
 
-  it("refuses a bot scheduling itself more often than every 15 minutes", () => {
+  it("refuses an agent scheduling itself more often than every 15 minutes", () => {
     for (const timing of [
       { every: 2, unit: "seconds" },
       { every: 1, unit: "minutes" },
@@ -504,7 +504,7 @@ describe("schedule tool persistence", () => {
     expect(other).toMatchObject({ ok: true, routineId: "routine-3" });
   });
 
-  it("refuses a new routine once the bot has the maximum active", async () => {
+  it("refuses a new routine once the agent has the maximum active", async () => {
     const create = vi.fn();
     const deps = {
       prisma: {
@@ -535,7 +535,7 @@ describe("schedule tool persistence", () => {
     });
 
     expect(result).toEqual({
-      error: `This bot already has ${MAX_ACTIVE_ROUTINES_PER_BOT} active routines. Cancel one before adding another.`,
+      error: `This agent already has ${MAX_ACTIVE_ROUTINES_PER_BOT} active routines. Cancel one before adding another.`,
     });
     expect(create).not.toHaveBeenCalled();
   });
@@ -624,7 +624,7 @@ describe("schedule tool persistence", () => {
     );
   });
 
-  it("createScheduleFromTool creates the routine for the target bot and thread", async () => {
+  it("createScheduleFromTool creates the routine for the target agent and thread", async () => {
     const append = vi.fn(async () => undefined);
     const enqueue = vi.fn(async () => undefined);
     const create = vi.fn(async (args: { data: Record<string, unknown> }) => ({
@@ -968,7 +968,7 @@ describe("schedule_create with a watch", () => {
       ...base,
       schedule: { watch: { kind: "files", paths: ["/etc"] } },
     });
-    expect(result).toMatchObject({ error: expect.stringContaining("inside the bot's folder") });
+    expect(result).toMatchObject({ error: expect.stringContaining("inside the agent's folder") });
     expect(create).not.toHaveBeenCalled();
   });
 
@@ -987,14 +987,14 @@ describe("schedule_create with a watch", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it("rejects a caller outside the bot owner boundary", async () => {
+  it("rejects a caller outside the agent owner boundary", async () => {
     const { deps: d, create } = deps();
     vi.mocked(d.prisma.bot.findFirst).mockResolvedValue(null);
     const result = await createScheduleFromTool(d, {
       ...base,
       schedule: { watch: { kind: "command", command: "echo changed" } },
     });
-    expect(result).toMatchObject({ error: "Bot not found." });
+    expect(result).toMatchObject({ error: "Agent not found." });
     expect(d.prisma.bot.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: base.botId, spaceId: base.spaceId, userId: base.userId, archivedAt: null },
@@ -1318,7 +1318,7 @@ describe("updateScheduleFromTool", () => {
     expect(enqueue).toHaveBeenCalledOnce();
   });
 
-  it("does not touch another bot's or thread's routine", async () => {
+  it("does not touch another agent's or thread's routine", async () => {
     const { findFirst, updateMany, update } = setup(null);
     await expect(update({ prompt: "x", scopeThreadId: "group-thread-1" })).resolves.toEqual({
       error: "Schedule not found.",

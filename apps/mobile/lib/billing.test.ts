@@ -63,7 +63,7 @@ describe("plan end", () => {
 });
 
 describe("current plan", () => {
-  it("is only a plan the organization can run bots on", () => {
+  it("is only a plan the organization can run agents on", () => {
     expect(currentPlan(status({ funding: "byok" }))).toBeNull();
     expect(currentPlan(status({ access: true, funding: "byok" }))).toBe("byok");
     expect(currentPlan(status({ access: true, funding: "credits" }))).toBe("credits");

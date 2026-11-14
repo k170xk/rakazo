@@ -144,7 +144,7 @@ export function resolveBotUploadPath(
   ) {
     return normalized;
   }
-  throw new Error("Path escapes the bot workspace");
+  throw new Error("Path escapes the agent workspace");
 }
 
 export function displayBotWorkspacePath(

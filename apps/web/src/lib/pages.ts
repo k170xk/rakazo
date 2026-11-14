@@ -16,6 +16,8 @@ import { errorCode } from "./user-error";
 
 /** The search parameter naming the page open full screen over a chat. */
 export const PAGE_PARAM = "page";
+/** Set beside a page id to open that app full screen, without the editor. */
+export const APP_VIEW_PARAM = "view";
 
 export function readTheme(): "light" | "dark" {
   return document.documentElement.dataset.theme === "light" ? "light" : "dark";
@@ -186,7 +188,7 @@ export function createPageSession() {
 }
 export type PageSession = ReturnType<typeof createPageSession>;
 
-type OpenPage = (pageId: string, options?: { share?: boolean }) => void;
+type OpenPage = (pageId: string, options?: { share?: boolean; view?: boolean }) => void;
 type Pages = { open: OpenPage; session: PageSession };
 
 const PagesContext = createContext<Pages | null>(null);
@@ -219,6 +221,8 @@ export function usePagesForChat(): Pages {
       setSearchParams((current) => {
         const next = new URLSearchParams(current);
         next.set(PAGE_PARAM, pageId);
+        if (options?.view) next.set(APP_VIEW_PARAM, "1");
+        else next.delete(APP_VIEW_PARAM);
         return next;
       });
     },

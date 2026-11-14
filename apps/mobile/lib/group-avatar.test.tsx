@@ -44,7 +44,7 @@ describe("mobile group avatar", () => {
     expect(container.querySelector('[data-icon="people"]')).not.toBeNull();
     expect(container.textContent).not.toContain("👥");
   });
-  it("shows the lone member as their existing bot avatar", () => {
+  it("shows the lone member as their existing agent avatar", () => {
     render([member(0)]);
     expect(container.querySelector('[data-member="bot-0"]')).not.toBeNull();
   });

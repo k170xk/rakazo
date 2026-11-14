@@ -102,7 +102,7 @@ describe("screen capability lifecycle authorization", () => {
     computer.providerRef = "";
     expect((await request()).status).toBe(403);
   });
-  it("revokes archived, reassigned, and restored bots", async () => {
+  it("revokes archived, reassigned, and restored agents", async () => {
     const { request, bot } = fixture();
     bot.archivedAt = new Date();
     expect((await request()).status).toBe(403);

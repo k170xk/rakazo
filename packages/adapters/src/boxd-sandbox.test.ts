@@ -123,7 +123,7 @@ describe("boxd computers", () => {
     );
   });
 
-  it("runs a bot's commands on that bot's own screen unless the caller chose a display", async () => {
+  it("runs an agent's commands on that agent's own screen unless the caller chose a display", async () => {
     const boxd = new FakeBoxd();
     const provider = fakeBoxdProvider(boxd);
     const computer = await provider.provision({ botId: "beto", homePath: "/unused" }, ctx);

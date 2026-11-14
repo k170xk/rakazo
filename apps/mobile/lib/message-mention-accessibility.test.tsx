@@ -105,7 +105,7 @@ type SurfaceProps = {
   onAccessibilityAction?: (event: { nativeEvent: { actionName: string } }) => void;
 };
 
-describe("bots named in a sent message", () => {
+describe("agents named in a sent message", () => {
   let container: HTMLDivElement;
   const onOpenBot = vi.fn();
   const forwarded = vi.fn();
@@ -146,7 +146,7 @@ describe("bots named in a sent message", () => {
   }
   const action = (actionName: string) => ({ nativeEvent: { actionName } });
 
-  it("offers each named bot as an action of the message, next to the message's own", () => {
+  it("offers each named agent as an action of the message, next to the message's own", () => {
     const props = surface("@Ada and @Ben, then @Ada again");
     expect(props!.accessibilityActions).toEqual([
       { name: "reply", label: "Reply" },
@@ -155,7 +155,7 @@ describe("bots named in a sent message", () => {
     ]);
   });
 
-  it("opens the bot from its action and passes the other actions on", () => {
+  it("opens the agent from its action and passes the other actions on", () => {
     const props = surface("hi @Ben");
     props!.onAccessibilityAction!(action("open-bot:bot-ben"));
     expect(onOpenBot).toHaveBeenCalledWith("bot-ben", "Ben");
@@ -165,14 +165,14 @@ describe("bots named in a sent message", () => {
     expect(onOpenBot).toHaveBeenCalledOnce();
   });
 
-  it("names no bot from a page link's title", () => {
+  it("names no agent from a page link's title", () => {
     expect(surface("[@Ada notes](page:pg_1) for @Ben")!.accessibilityActions).toEqual([
       { name: "reply", label: "Reply" },
       { name: "open-bot:bot-ben", label: "Open Ben" },
     ]);
   });
 
-  it("adds nothing when no bot is named or the message is not the user's", () => {
+  it("adds nothing when no agent is named or the message is not the user's", () => {
     expect(surface("no names here")!.accessibilityActions).toEqual([
       { name: "reply", label: "Reply" },
     ]);

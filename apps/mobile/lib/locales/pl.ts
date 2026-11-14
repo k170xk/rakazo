@@ -66,10 +66,10 @@ export const PL_MESSAGES: Record<string, string> = {
   "Could not load this page.": "Nie udało się wczytać tej strony.",
   Pages: "Strony",
   "Could not load pages.": "Nie udało się wczytać stron.",
-  "Pages this bot builds for you appear here.":
+  "Pages this agent builds for you appear here.":
     "Tutaj pojawią się strony utworzone dla Ciebie przez tego bota.",
   Shared: "Udostępnione",
-  "How other bots see it": "Jak widzą go inne boty",
+  "How other agents see it": "Jak widzą go inne boty",
   "Share to": "Udostępnij w",
   "{count} files": "Pliki: {count}",
   "could not read": "nie udało się odczytać",
@@ -77,8 +77,8 @@ export const PL_MESSAGES: Record<string, string> = {
   "Image input is not configured for this model.":
     "Ten model nie ma skonfigurowanej obsługi obrazów.",
   "Send as file": "Wyślij jako plik",
-  "The bot can use the file but won't see the picture.":
-    "Bot może użyć pliku, ale nie zobaczy obrazu.",
+  "The agent can use the file but won't see the picture.":
+    "Agent może użyć pliku, ale nie zobaczy obrazu.",
   "This model cannot read images. Choose a model that supports images.":
     "Ten model nie odczytuje obrazów. Wybierz model obsługujący obrazy.",
   "Could not connect to the computer screen": "Nie udało się połączyć z ekranem komputera",
@@ -127,12 +127,12 @@ export const PL_MESSAGES: Record<string, string> = {
   "To:": "Do:",
   Next: "Dalej",
   "Ex: Project Falcon": "Np. Projekt Falcon",
-  "Search bots": "Szukaj botów",
+  "Search agents": "Szukaj agentów",
   "{count} messages with {peer}": "Wiadomości z {peer}: {count}",
   "About {label}": "O {label}",
-  "Manage other bots": "Zarządzaj innymi botami",
-  "Allow cross-space bot communication": "Zezwól botom na komunikację między przestrzeniami",
-  "Organize the sidebar and edit bots. Instruction, model, routine and group edits need approval.":
+  "Manage other agents": "Zarządzaj innymi botami",
+  "Allow cross-space agent communication": "Zezwól botom na komunikację między przestrzeniami",
+  "Organize the sidebar and edit agents. Instruction, model, routine and group edits need approval.":
     "Organizuj pasek boczny i edytuj boty. Zmiany instrukcji, modeli, rutyn i grup wymagają zatwierdzenia.",
   Headers: "Nagłówki",
   "Add header": "Dodaj nagłówek",
@@ -172,8 +172,8 @@ export const PL_MESSAGES: Record<string, string> = {
   "Your OpenAI": "Twój OpenAI",
   "Your Anthropic": "Twój Anthropic",
   "Your model provider": "Twój dostawca modelu",
-  "Connect a model in Settings before running bots.":
-    "Przed uruchomieniem botów połącz model w Ustawieniach.",
+  "Connect a model in Settings before running agents.":
+    "Przed uruchomieniem agentów połącz model w Ustawieniach.",
   "Connect your own API key in Models or choose Rakazo credits in Billing.":
     "Połącz własny klucz API w Modelach lub wybierz środki Rakazo w Rozliczeniach.",
   "The model provider returned an error.": "Dostawca modelu zwrócił błąd.",
@@ -257,7 +257,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Group settings": "Ustawienia grupy",
   Connectors: "Konektory",
   Models: "Modele",
-  "New bot": "Nowy bot",
+  "New agent": "Nowy agent",
   "New group chat": "Nowy czat grupowy",
   "New private space": "Nowa prywatna przestrzeń",
   Routine: "Rutyna",
@@ -290,9 +290,9 @@ export const PL_MESSAGES: Record<string, string> = {
   "Use default server": "Użyj domyślnego serwera",
   Activity: "Aktywność",
   "Collapse {name}": "Zwiń {name}",
-  "Could not create bot": "Nie udało się utworzyć bota",
+  "Could not create agent": "Nie udało się utworzyć bota",
   "Could not delete space": "Nie udało się usunąć przestrzeni",
-  "Could not load bots": "Nie udało się wczytać botów",
+  "Could not load agents": "Nie udało się wczytać agentów",
   "Could not open this PDF.": "Nie udało się otworzyć tego pliku PDF.",
   "Could not save the default space": "Nie udało się zapisać domyślnej przestrzeni",
   "Could not switch spaces": "Nie udało się zmienić przestrzeni",
@@ -306,7 +306,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Long press to pin or move to a section": "Przytrzymaj, aby przypiąć lub przenieść do sekcji",
   "Long press to pin, move, or silence notifications":
     "Przytrzymaj, aby przypiąć, przenieść lub wyciszyć powiadomienia",
-  "No matching bots": "Brak pasujących botów",
+  "No matching agents": "Brak pasujących agentów",
   "No messages yet": "Nie ma jeszcze wiadomości",
   "No results": "Brak wyników",
   Personal: "Osobiste",
@@ -317,10 +317,10 @@ export const PL_MESSAGES: Record<string, string> = {
   "Space actions for {name}": "Działania dla przestrzeni {name}",
   Customize: "Dostosuj",
   "Customize {setting}": "Dostosuj: {setting}",
-  "Tap + to create a bot": "Dotknij +, aby utworzyć bota",
+  "Tap + to create an agent": "Dotknij +, aby utworzyć bota",
   "This removes the space for everyone.": "Przestrzeń zostanie usunięta dla wszystkich.",
-  "Delete {name} and its bot?": "Usunąć {name} wraz z botem?",
-  "Delete {name} and its {count} bots?": "Usunąć {name} wraz z botami ({count})?",
+  "Delete {name} and its agent?": "Usunąć {name} wraz z botem?",
+  "Delete {name} and its {count} agents?": "Usunąć {name} wraz z botami ({count})?",
   "notifications silenced": "powiadomienia wyciszone",
   unread: "nieprzeczytane",
   "@{name}": "@{name}",
@@ -340,7 +340,7 @@ export const PL_MESSAGES: Record<string, string> = {
   Attach: "Dołącz",
   "Attach file": "Załącz plik",
   Attachment: "Załącznik",
-  "Bot actions": "Działania bota",
+  "Agent actions": "Działania bota",
   Camera: "Aparat",
   "Cancel reply": "Anuluj odpowiedź",
   Cancelled: "Anulowano",
@@ -353,7 +353,7 @@ export const PL_MESSAGES: Record<string, string> = {
   Complete: "Zakończ",
   Completed: "Ukończono",
   Copy: "Kopiuj",
-  "Could not archive bot": "Nie udało się zarchiwizować bota",
+  "Could not archive agent": "Nie udało się zarchiwizować bota",
   "Could not clear conversation": "Nie udało się wyczyścić rozmowy",
   "Could not load earlier messages": "Nie udało się wczytać wcześniejszych wiadomości",
   "Could not open file": "Nie udało się otworzyć pliku",
@@ -417,7 +417,7 @@ export const PL_MESSAGES: Record<string, string> = {
   Play: "Odtwórz",
   Pause: "Wstrzymaj",
   "Select text": "Zaznacz tekst",
-  "All bots": "Wszystkie boty",
+  "All agents": "Wszystkie boty",
   Artifact: "Artefakt",
   Artifacts: "Artefakty",
   "Could not delete this artifact": "Nie udało się usunąć tego artefaktu",
@@ -437,15 +437,15 @@ export const PL_MESSAGES: Record<string, string> = {
     "Wszystkie wersje tego artefaktu ({count}) zostaną usunięte. Tej operacji nie można cofnąć.",
   Versions: "Wersje",
   Stop: "Zatrzymaj",
-  "This removes every message and stops current work. The bot, computer, memory, and routines are kept.":
-    "Wszystkie wiadomości zostaną usunięte, a bieżąca praca zatrzymana. Bot, komputer, pamięć i rutyny zostaną zachowane.",
+  "This removes every message and stops current work. The agent, computer, memory, and routines are kept.":
+    "Wszystkie wiadomości zostaną usunięte, a bieżąca praca zatrzymana. Agent, komputer, pamięć i rutyny zostaną zachowane.",
   "Type your answer": "Wpisz odpowiedź",
   Username: "Nazwa użytkownika",
-  "Waiting for this bot’s response.": "Oczekiwanie na odpowiedź tego bota.",
+  "Waiting for this agent’s response.": "Oczekiwanie na odpowiedź tego bota.",
   "Work stopped, but the thread could not refresh: {detail}":
     "Praca została zatrzymana, ale nie udało się odświeżyć wątku: {detail}",
   archived: "zarchiwizowane",
-  bot: "bot",
+  agent: "agent",
   cancelled: "anulowano",
   deleted: "usunięto",
   expired: "wygasło",
@@ -463,9 +463,9 @@ export const PL_MESSAGES: Record<string, string> = {
   Advanced: "Zaawansowane",
   Color: "Kolor",
   "Color {number}": "Kolor {number}",
-  "Could not load bot": "Nie udało się wczytać bota",
+  "Could not load agent": "Nie udało się wczytać bota",
   "Could not load model settings": "Nie udało się wczytać ustawień modeli",
-  "Could not save bot": "Nie udało się zapisać bota",
+  "Could not save agent": "Nie udało się zapisać bota",
   "Default (medium)": "Domyślne (średnie)",
   Description: "Opis",
   "Extra high": "Bardzo wysoki",
@@ -483,12 +483,12 @@ export const PL_MESSAGES: Record<string, string> = {
   "Can't read images": "Nie odczytuje obrazów",
   Thinking: "Rozumowanie",
   Title: "Tytuł",
-  "What this bot is for": "Do czego służy ten bot",
+  "What this agent is for": "Do czego służy ten agent",
   "Could not delete group": "Nie udało się usunąć grupy",
   "Could not load group": "Nie udało się wczytać grupy",
   "Could not save group": "Nie udało się zapisać grupy",
   "Delete group": "Usuń grupę",
-  "Bots and their own chats stay.": "Boty i ich własne czaty zostaną zachowane.",
+  "Agents and their own chats stay.": "Boty i ich własne czaty zostaną zachowane.",
   "Group name": "Nazwa grupy",
   "Group not found": "Nie znaleziono grupy",
   Members: "Członkowie",
@@ -517,7 +517,7 @@ export const PL_MESSAGES: Record<string, string> = {
   Routines: "Rutyny",
   "Could not load routines": "Nie udało się wczytać rutyn",
   "{count} on": "Włączone: {count}",
-  "Ask this Bot in chat to set up a routine.": "Poproś tego bota na czacie o utworzenie rutyny.",
+  "Ask this Agent in chat to set up a routine.": "Poproś tego bota na czacie o utworzenie rutyny.",
   "{name}, On": "{name}, włączone",
   "{name}, Off": "{name}, wyłączone",
   "Active: {name}": "Aktywne: {name}",
@@ -527,9 +527,9 @@ export const PL_MESSAGES: Record<string, string> = {
     "Rutyna i historia jej uruchomień zostaną trwale usunięte.",
   "Could not delete routine": "Nie udało się usunąć rutyny",
   "Could not update routine": "Nie udało się zaktualizować rutyny",
-  "Get notified when this Bot finishes or needs input":
-    "Otrzymuj powiadomienia, gdy ten bot skończy pracę lub będzie potrzebować Twojej pomocy",
-  Bot: "Bot",
+  "Get notified when this Agent finishes or needs input":
+    "Otrzymuj powiadomienia, gdy ten agent skończy pracę lub będzie potrzebować Twojej pomocy",
+  Bot: "Agent",
   "Close computer": "Zamknij komputer",
   "Computer keyboard": "Klawiatura komputera",
   Control: "Control",
@@ -712,14 +712,14 @@ export const PL_MESSAGES: Record<string, string> = {
   "This device": "To urządzenie",
   "Agent messages": "Wiadomości agentów",
   Appearance: "Wygląd",
-  "Bot style": "Styl bota",
-  "Couldn't update bot style": "Nie udało się zaktualizować stylu bota",
+  "Agent style": "Styl bota",
+  "Couldn't update agent style": "Nie udało się zaktualizować stylu bota",
   Archived: "Zarchiwizowane",
   Cancel: "Anuluj",
   "Could not change language": "Nie udało się zmienić języka",
   "Could not delete account": "Nie udało się usunąć konta",
   "Could not load chats": "Nie udało się wczytać czatów",
-  "Could not restore bot": "Nie udało się przywrócić bota",
+  "Could not restore agent": "Nie udało się przywrócić bota",
   "Could not sign out": "Nie udało się wylogować",
   "Could not update notifications": "Nie udało się zaktualizować powiadomień",
   "Current password": "Bieżące hasło",
@@ -744,7 +744,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Stream replies": "Strumieniuj odpowiedzi",
   "Load web images automatically": "Automatycznie wczytuj obrazy z sieci",
   System: "Systemowy",
-  "This permanently deletes your account, bots, conversations, memories, files, and saved connections. This cannot be undone.":
+  "This permanently deletes your account, agents, conversations, memories, files, and saved connections. This cannot be undone.":
     "Twoje konto, boty, rozmowy, wspomnienia, pliki i zapisane połączenia zostaną trwale usunięte. Tej operacji nie można cofnąć.",
   "Try again.": "Spróbuj ponownie.",
   Usage: "Użycie",
@@ -780,7 +780,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Section actions for {name}": "Działania dla sekcji {name}",
   "Could not delete section": "Nie udało się usunąć sekcji",
   "Delete section": "Usuń sekcję",
-  "Its bots and groups are kept and leave the section.":
+  "Its agents and groups are kept and leave the section.":
     "Boty i grupy pozostaną, ale opuszczą tę sekcję.",
   "Resume notifications": "Wznów powiadomienia",
   "Save section name": "Zapisz nazwę sekcji",
@@ -863,7 +863,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "{channel} {id}": "{channel} {id}",
   "{channel} {id}, {date}": "{channel} {id}, {date}",
   "Saved {name} locally": "Zapisano {name} lokalnie",
-  "Could not delete bot": "Nie udało się usunąć bota",
+  "Could not delete agent": "Nie udało się usunąć bota",
   "Delete memories too": "Usuń również wspomnienia",
   "Its conversation, files, and routines will be permanently deleted. What should happen to its memories?":
     "Rozmowa, pliki i rutyny tego bota zostaną trwale usunięte. Co zrobić z jego wspomnieniami?",
@@ -916,7 +916,7 @@ export const PL_MESSAGES: Record<string, string> = {
     "Oczekiwanie na logowanie. Kod wygaśnie za około {minutes} min.",
   "Waiting for sign-in — the link expires in about {minutes} minutes.":
     "Oczekiwanie na logowanie. Link wygaśnie za około {minutes} min.",
-  "Allow microphone access to call a bot.": "Zezwól na dostęp do mikrofonu, aby zadzwonić do bota.",
+  "Allow microphone access to call an agent.": "Zezwól na dostęp do mikrofonu, aby zadzwonić do bota.",
   "Allow speech recognition in Settings, or connect ElevenLabs, OpenAI, or Fish Audio.":
     "Zezwól na rozpoznawanie mowy w Ustawieniach lub połącz ElevenLabs, OpenAI albo Fish Audio.",
   Call: "Zadzwoń",
@@ -960,12 +960,12 @@ export const PL_MESSAGES: Record<string, string> = {
   "You can turn this off in Account → AI data sharing.":
     "Możesz to wyłączyć w Konto → Udostępnianie danych AI.",
   Allow: "Zezwól",
-  "Messages, chat history, bot instructions, memories, attachments, screenshots and connected-app content are sent to run your bots, including routines.":
-    "Wiadomości, historia czatu, instrukcje botów, wspomnienia, załączniki, zrzuty ekranu i treści z połączonych aplikacji są wysyłane, aby uruchamiać boty, w tym ich rutyny.",
+  "Messages, chat history, agent instructions, memories, attachments, screenshots and connected-app content are sent to run your agents, including routines.":
+    "Wiadomości, historia czatu, instrukcje agentów, wspomnienia, załączniki, zrzuty ekranu i treści z połączonych aplikacji są wysyłane, aby uruchamiać boty, w tym ich rutyny.",
   "Your recordings are sent for transcription, and text you play is sent to generate speech.":
     "Twoje nagrania są wysyłane do transkrypcji, a odtwarzany tekst jest wysyłany do generowania mowy.",
-  "Conversation summaries, memories, searches and bot and Space IDs are sent to store and recall context.":
-    "Podsumowania rozmów, wspomnienia, wyszukiwania oraz identyfikatory botów i przestrzeni są wysyłane, aby zapisywać i odtwarzać kontekst.",
+  "Conversation summaries, memories, searches and agent and Space IDs are sent to store and recall context.":
+    "Podsumowania rozmów, wspomnienia, wyszukiwania oraz identyfikatory agentów i przestrzeni są wysyłane, aby zapisywać i odtwarzać kontekst.",
   "AI data sharing": "Udostępnianie danych AI",
   "Allow {name} on mobile": "Zezwól na {name} w aplikacji mobilnej",
   "Could not load permissions.": "Nie udało się wczytać uprawnień.",
@@ -987,7 +987,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Members ({count})": "Członkowie ({count})",
   "Show all": "Pokaż wszystkie",
   "Show selected": "Pokaż wybrane",
-  "Filter bots": "Filtruj boty",
+  "Filter agents": "Filtruj boty",
   "Pick {min}–{max}": "Wybierz {min}-{max}",
   "No members yet": "Brak członków",
   Applied: "Zastosowano",
@@ -998,7 +998,7 @@ export const PL_MESSAGES: Record<string, string> = {
   Instructions: "Instrukcje",
   "Instructions updated": "Zaktualizowano instrukcje",
   "Settings updated": "Zaktualizowano ustawienia",
-  "Let this bot update its own instructions": "Pozwól temu botowi aktualizować własne instrukcje",
+  "Let this agent update its own instructions": "Pozwól temu botowi aktualizować własne instrukcje",
   Restored: "Przywrócono",
   Undo: "Cofnij",
   "Update instructions?": "Zaktualizować instrukcje?",
@@ -1020,29 +1020,29 @@ export const PL_MESSAGES: Record<string, string> = {
   "Credential saved": "Zapisano dane uwierzytelniające",
   Authentication: "Uwierzytelnianie",
   "No auth": "Bez uwierzytelniania",
-  "The bot couldn't reply because its provider's daily limit was reached.":
-    "Bot nie mógł odpowiedzieć, ponieważ osiągnięto dzienny limit jego dostawcy.",
-  "The bot couldn't reply because its provider's weekly limit was reached.":
-    "Bot nie mógł odpowiedzieć, ponieważ osiągnięto tygodniowy limit jego dostawcy.",
-  "The bot couldn't reply because its provider's monthly limit was reached.":
-    "Bot nie mógł odpowiedzieć, ponieważ osiągnięto miesięczny limit jego dostawcy.",
-  "The bot couldn't reply because its provider's usage limit was reached.":
-    "Bot nie mógł odpowiedzieć, ponieważ osiągnięto limit użycia jego dostawcy.",
-  "The provider received too many requests to answer this bot.":
+  "The agent couldn't reply because its provider's daily limit was reached.":
+    "Agent nie mógł odpowiedzieć, ponieważ osiągnięto dzienny limit jego dostawcy.",
+  "The agent couldn't reply because its provider's weekly limit was reached.":
+    "Agent nie mógł odpowiedzieć, ponieważ osiągnięto tygodniowy limit jego dostawcy.",
+  "The agent couldn't reply because its provider's monthly limit was reached.":
+    "Agent nie mógł odpowiedzieć, ponieważ osiągnięto miesięczny limit jego dostawcy.",
+  "The agent couldn't reply because its provider's usage limit was reached.":
+    "Agent nie mógł odpowiedzieć, ponieważ osiągnięto limit użycia jego dostawcy.",
+  "The provider received too many requests to answer this agent.":
     "Dostawca otrzymał zbyt wiele żądań, aby odpowiedzieć temu botowi.",
-  "The provider refused the key this bot used for its reply.":
+  "The provider refused the key this agent used for its reply.":
     "Dostawca odrzucił klucz użyty przez tego bota do odpowiedzi.",
-  "The provider couldn't serve the model selected for this bot.":
+  "The provider couldn't serve the model selected for this agent.":
     "Dostawca nie mógł obsłużyć modelu wybranego dla tego bota.",
-  "The bot couldn't finish its reply. Technical details includes the reported error.":
-    "Bot nie mógł dokończyć odpowiedzi. Zgłoszony błąd znajduje się w szczegółach technicznych.",
-  "This bot's reply stopped at its key's daily limit. Your own key has its own limits.":
+  "The agent couldn't finish its reply. Technical details includes the reported error.":
+    "Agent nie mógł dokończyć odpowiedzi. Zgłoszony błąd znajduje się w szczegółach technicznych.",
+  "This agent's reply stopped at its key's daily limit. Your own key has its own limits.":
     "Odpowiedź tego bota została przerwana po osiągnięciu dziennego limitu jego klucza. Twój klucz ma osobne limity.",
-  "This bot's reply stopped at its key's weekly limit. Your own key has its own limits.":
+  "This agent's reply stopped at its key's weekly limit. Your own key has its own limits.":
     "Odpowiedź tego bota została przerwana po osiągnięciu tygodniowego limitu jego klucza. Twój klucz ma osobne limity.",
-  "This bot's reply stopped at its key's monthly limit. Your own key has its own limits.":
+  "This agent's reply stopped at its key's monthly limit. Your own key has its own limits.":
     "Odpowiedź tego bota została przerwana po osiągnięciu miesięcznego limitu jego klucza. Twój klucz ma osobne limity.",
-  "This bot's reply stopped at its key's usage limit. Your own key has its own limits.":
+  "This agent's reply stopped at its key's usage limit. Your own key has its own limits.":
     "Odpowiedź tego bota została przerwana po osiągnięciu limitu użycia jego klucza. Twój klucz ma osobne limity.",
   "Sign in with passkey": "Zaloguj się kluczem dostępu",
   Passkeys: "Klucze dostępu",
@@ -1109,8 +1109,8 @@ export const PL_MESSAGES: Record<string, string> = {
   Ends: "Kończy się",
   Renews: "Odnawia się",
   "Could not open billing": "Nie udało się otworzyć rozliczeń",
-  "Put your bots to work": "Zleć pracę swoim botom",
-  "Bots with their own computer": "Boty z własnym komputerem",
+  "Put your agents to work": "Zleć pracę swoim botom",
+  "Agents with their own computer": "Boty z własnym komputerem",
   "Routines that run while you're away": "Rutyny działające podczas Twojej nieobecności",
   "Web, desktop and mobile apps": "Aplikacje webowa, komputerowa i mobilna",
   "Start free trial": "Rozpocznij bezpłatny okres próbny",
@@ -1183,7 +1183,7 @@ export const PL_MESSAGES: Record<string, string> = {
   hours: "godz.",
   "{sender} rollup hours": "{sender}: grupowanie w godzinach",
   "Add workspace": "Dodaj obszar roboczy",
-  "Chat with your bot from Slack.": "Rozmawiaj z botem przez Slack.",
+  "Chat with your agent from Slack.": "Rozmawiaj z botem przez Slack.",
   "Link DMs": "Połącz wiadomości prywatne",
   "One-time": "Jednorazowo",
   "Every hour": "Co godzinę",
@@ -1259,11 +1259,11 @@ export const PL_MESSAGES: Record<string, string> = {
   "Could not preview plugin": "Nie udało się wyświetlić podglądu wtyczki",
   "Could not remove plugin": "Nie udało się usunąć wtyczki",
   "Could not sign in": "Nie udało się zalogować",
-  "In this bot": "W tym bocie",
+  "In this agent": "W tym bocie",
   "Plugin GitHub URL": "Adres GitHub wtyczki",
   Skills: "Umiejętności",
   "Some plugins could not be loaded.": "Nie udało się wczytać części wtyczek.",
-  "Use in this bot": "Użyj w tym bocie",
+  "Use in this agent": "Użyj w tym bocie",
   "View all": "Zobacz wszystkie",
   "View source": "Zobacz źródło",
   "{count} connectors": "Połączenia: {count}",
@@ -1324,19 +1324,19 @@ export const PL_MESSAGES: Record<string, string> = {
   "Won't do": "Nie będzie robione",
   "Could not move the ticket": "Nie udało się przenieść zadania",
   "No tickets yet.": "Nie ma jeszcze zadań.",
-  "Bot models": "Modele botów",
-  "1 bot has its own model:": "1 bot ma własny model:",
-  "{count} bots have their own model:": "Boty z własnym modelem: {count}",
+  "Agent models": "Modele agentów",
+  "1 agent has its own model:": "1 agent ma własny model:",
+  "{count} agents have their own model:": "Boty z własnym modelem: {count}",
   "Use space default": "Użyj domyślnych przestrzeni",
   "Switching…": "Przełączanie…",
-  "Switch 1 bot to the space default?": "Przełączyć 1 bota na domyślny model przestrzeni?",
-  "Switch {count} bots to the space default?":
+  "Switch 1 agent to the space default?": "Przełączyć 1 bota na domyślny model przestrzeni?",
+  "Switch {count} agents to the space default?":
     "Przełączyć boty ({count}) na domyślny model przestrzeni?",
-  "Their own model is cleared. You can pick one again in each bot.":
-    "Własne modele zostaną wyczyszczone. Możesz wybrać je ponownie w ustawieniach poszczególnych botów.",
+  "Their own model is cleared. You can pick one again in each agent.":
+    "Własne modele zostaną wyczyszczone. Możesz wybrać je ponownie w ustawieniach poszczególnych agentów.",
   Switch: "Przełącz",
-  "1 bot now uses the space default.": "1 bot korzysta teraz z domyślnego modelu przestrzeni.",
-  "{count} bots now use the space default.":
+  "1 agent now uses the space default.": "1 agent korzysta teraz z domyślnego modelu przestrzeni.",
+  "{count} agents now use the space default.":
     "Boty korzystające teraz z domyślnego modelu przestrzeni: {count}.",
   "Could not switch {failedNames}. Try again.":
     "Nie udało się przełączyć {failedNames}. Spróbuj ponownie.",

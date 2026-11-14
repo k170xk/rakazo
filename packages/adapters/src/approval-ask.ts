@@ -354,7 +354,7 @@ function formatApprovalDetail(
   }
   if (toolName === "create_space") {
     lines.push(
-      "Bots, groups, chats, files, memory, and integrations in this space stay separate from other spaces.",
+      "Agents, groups, chats, files, memory, and integrations in this space stay separate from other spaces.",
     );
   }
   // A fetch carries data in its path and query, so the card shows the whole URL.

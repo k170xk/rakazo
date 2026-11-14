@@ -725,8 +725,8 @@ function SpaceShell() {
 
   useLayoutEffect(() => {
     if (initialBotsLoaded) {
-      markOnce("rk:renderer:bots-committed");
-      markAfterPaint("rk:renderer:bots-painted");
+      markOnce("rk:renderer:agents-committed");
+      markAfterPaint("rk:renderer:agents-painted");
     }
     if (active && snapshot?.botId === active.id) {
       markOnce("rk:renderer:thread-committed");
@@ -823,7 +823,7 @@ function SpaceShell() {
   const replyTargetName = composer.replyTarget
     ? composer.replyTarget.role === "user"
       ? (channelMessageSender(composer.replyTarget.blocks) ?? t`You`)
-      : (resolveTranscriptMemberName(composer.replyTarget.botId) ?? active?.name ?? t`Bot`)
+      : (resolveTranscriptMemberName(composer.replyTarget.botId) ?? active?.name ?? t`Agent`)
     : undefined;
   useRightPanelRestore({
     rightPanel,
@@ -985,7 +985,7 @@ function SpaceShell() {
   const paletteActions: CommandPaletteAction[] = [
     {
       id: "new-bot",
-      label: t`New bot`,
+      label: t`New agent`,
       icon: Plus,
       onSelect: () => dialogs.setCreateBotOpen(true),
     },
@@ -1214,6 +1214,7 @@ function SpaceShell() {
         openSkills={() => setOverlay({ kind: "skills" })}
         openTour={() => setOverlay({ kind: "tour" })}
         openTodos={() => setOverlay({ kind: "todos" })}
+        openWhiteboards={() => setOverlay({ kind: "whiteboards" })}
         openSpaceChat={openSpaceChat}
       />
 
@@ -1274,7 +1275,7 @@ function SpaceShell() {
             <div className="grid flex-1 place-items-center">
               <Button onClick={() => dialogs.setCreateBotOpen(true)}>
                 <Plus size={16} aria-hidden="true" />
-                <Trans>New bot</Trans>
+                <Trans>New agent</Trans>
               </Button>
             </div>
           ) : (
@@ -1336,8 +1337,8 @@ function SpaceShell() {
               </div>
             ) : null}
             <Composer
-              key={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
-              draftKey={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
+              key={inGroup ? `group:${groupId}` : `agent:${active?.id}`}
+              draftKey={inGroup ? `group:${groupId}` : `agent:${active?.id}`}
               enterToSend={enterToSend}
               extraActions={
                 <>

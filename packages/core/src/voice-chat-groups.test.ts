@@ -191,7 +191,7 @@ describe("groupVoiceChats", () => {
     ).toEqual(["call:call-1", "call:call-1:2"]);
   });
 
-  it("joins the bot reply to the call by runId", () => {
+  it("joins the agent reply to the call by runId", () => {
     const items = groupVoiceChats([
       message({ role: "user", callId: "call-1", runId: "run-1" }),
       message({ role: "bot", runId: "run-1" }),
@@ -241,7 +241,7 @@ describe("groupVoiceChats", () => {
 });
 
 describe("voiceChatSummary", () => {
-  it("takes the first sentence of the first spoken bot reply", () => {
+  it("takes the first sentence of the first spoken agent reply", () => {
     const [group] = groupVoiceChats([
       message({ role: "user", callId: "call-1", runId: "run-1" }),
       message({
@@ -254,7 +254,7 @@ describe("voiceChatSummary", () => {
     expect(group?.kind === "voiceChat" && voiceChatSummary(group)).toBe("Deploy is green.");
   });
 
-  it("prefers the title the bot hung up with", () => {
+  it("prefers the title the agent hung up with", () => {
     const [group] = groupVoiceChats([
       message({ role: "user", callId: "call-1", runId: "run-1" }),
       message({

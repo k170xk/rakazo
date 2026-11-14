@@ -63,12 +63,12 @@ export const PL_MESSAGES: Record<string, string> = {
 
   // Computer access
   "Allow local computer access?": "Zezwolić na dostęp do lokalnego komputera?",
-  "Allow bots to use this computer?": "Zezwolić botom na korzystanie z tego komputera?",
+  "Allow agents to use this computer?": "Zezwolić botom na korzystanie z tego komputera?",
   Cancel: "Anuluj",
   Allow: "Zezwól",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
     "Boty na {host} mogą wykonywać polecenia, odczytywać i zmieniać pliki oraz uruchamiać aplikacje z uprawnieniami Twojego konta. Możesz cofnąć dostęp w Ustawieniach.",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
     "Boty w tej lokalnej instancji mogą wykonywać polecenia, odczytywać i zmieniać pliki oraz uruchamiać aplikacje z uprawnieniami Twojego konta. Możesz cofnąć dostęp w menu aplikacji.",
   "Local computer access requires an app-managed local instance.":
     "Dostęp do lokalnego komputera wymaga lokalnej instancji zarządzanej przez aplikację.",
@@ -198,12 +198,12 @@ export const PL_MESSAGES: Record<string, string> = {
   Go: "Przejdź",
   Back: "Wstecz",
   Forward: "Dalej",
-  "Next Bot": "Następny bot",
-  "Previous Bot": "Poprzedni bot",
+  "Next Agent": "Następny agent",
+  "Previous Agent": "Poprzedni agent",
   "Command Menu…": "Menu poleceń…",
   "Toggle Sidebar": "Pokaż lub ukryj pasek boczny",
   "Find…": "Znajdź…",
-  "Search Bots…": "Szukaj botów…",
+  "Search Agents…": "Szukaj agentów…",
   "The window closed before the app loaded.": "Okno zamknęło się przed wczytaniem aplikacji.",
   "New Group Chat": "Nowy czat grupowy",
   "Connect Apps…": "Połącz aplikacje…",

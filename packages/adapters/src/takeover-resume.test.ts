@@ -18,7 +18,7 @@ describe("takeoverResumeFromRelease", () => {
     }
   });
 
-  it("tells the bot the computer was handed back after I'm done or a plain release", () => {
+  it("tells the agent the computer was handed back after I'm done or a plain release", () => {
     for (const reason of ["done", "released", undefined]) {
       const resume = takeoverResumeFromRelease(reason);
       expect(resume.checkpoint).toBe("takeover");
@@ -27,7 +27,7 @@ describe("takeoverResumeFromRelease", () => {
     }
   });
 
-  it("tells the bot a skipped takeover was not completed", () => {
+  it("tells the agent a skipped takeover was not completed", () => {
     const resume = takeoverResumeFromRelease("skipped");
     expect(resume.checkpoint).toBe("takeover-skipped");
     expect(resume.promptNote).toBe(UNFINISHED_NOTE);

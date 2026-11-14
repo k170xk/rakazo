@@ -2,7 +2,7 @@ import { shippedBotAvatarShapePath } from "@rakazo/core";
 import { describe, expect, it } from "vitest";
 import { mobileBotAvatarPresentation } from "./bot-avatar.js";
 
-describe("mobile bot avatar presentation", () => {
+describe("mobile agent avatar presentation", () => {
   it("keeps the stored shape path instead of dropping it to a color fill", () => {
     const presented = mobileBotAvatarPresentation("#8B5CF6::shape_3");
     expect(presented).toEqual({

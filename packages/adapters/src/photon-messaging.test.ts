@@ -33,7 +33,7 @@ function delivery(direction = "inbound", chatGuid = "any;-;+15550001111") {
       id: "msg-test",
       direction,
       sender: { id: "+15550001111" },
-      content: { type: "text", text: "hello bot" },
+      content: { type: "text", text: "hello agent" },
       timestamp: new Date().toISOString(),
     },
   };
@@ -85,7 +85,7 @@ describe("Photon messaging conformance", () => {
       isDirect: true,
       handle: "msg-test",
       from: "+15550001111",
-      content: "hello bot",
+      content: "hello agent",
     });
     await surface.shutdown();
   });

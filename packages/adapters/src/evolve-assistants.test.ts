@@ -30,7 +30,7 @@ function evolveListing(ids: string[]) {
 afterEach(clearEvolveAccessCache);
 
 describe("evolveAssistantAccessError", () => {
-  it("lets a person run a bot whose assistant Evolve lists for them", async () => {
+  it("lets a person run an agent whose assistant Evolve lists for them", async () => {
     const fetch = evolveListing([TENDER, GENERAL]);
     await expect(
       evolveAssistantAccessError(connection, "a@ocsc.ie", TENDER, { fetch }),

@@ -6,14 +6,14 @@ export const yourComputer: Sandbox = {
   name: "Your computer",
   runsOn: "Your Mac or PC, no isolation",
   keeps: "Everything; it's your machine",
-  bestFor: "Bots that need your real apps and logins",
-  title: "Let an AI agent use your computer: Rakazo bots on your Mac or PC",
+  bestFor: "Agents that need your real apps and logins",
+  title: "Let an AI agent use your computer: Rakazo agents on your Mac or PC",
   description:
     "How the Rakazo desktop app lets AI agents run commands and use apps on your own Mac or PC, when they ask first, what they can reach, and how to turn it off.",
   h1: "Let AI agents use your own computer",
   intro: [
-    "Most of the time an AI agent should work on a computer of its own, away from your files. Sometimes the work is on your machine: a document open in a desktop app, a folder only you have, a program you can't install anywhere else. For that, you can let a bot use your actual Mac or PC, with your files, apps and logins.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each one gets its own computer with a desktop, browser, terminal and files that you can watch and take over. The Rakazo [desktop app](/download/) for Mac, Windows and Linux can also open the computer it runs on to your bots. There are two ways to do that, and they behave quite differently.",
+    "Most of the time an AI agent should work on a computer of its own, away from your files. Sometimes the work is on your machine: a document open in a desktop app, a folder only you have, a program you can't install anywhere else. For that, you can let an agent use your actual Mac or PC, with your files, apps and logins.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and each one gets its own computer with a desktop, browser, terminal and files that you can watch and take over. The Rakazo [desktop app](/download/) for Mac, Windows and Linux can also open the computer it runs on to your agents. There are two ways to do that, and they behave quite differently.",
   ],
   scene: {
     bot: "Chief of Staff",
@@ -32,41 +32,41 @@ export const yourComputer: Sandbox = {
   },
   sections: [
     {
-      heading: "Two ways to let bots use your computer",
+      heading: "Two ways to let agents use your computer",
       paragraphs: [
-        "Let bots use this computer works when the desktop app is connected to Rakazo Cloud or another Rakazo server. The app's own local server uses Use this Mac instead. The bot keeps its own computer and gets your computer as an extra place to work. It asks you before its first command in a space and before it first uses each app, in every approval mode, and you answer Allow in this space or Deny.",
-        "Use this Mac (Use this computer on Windows and Linux) is for when the desktop app runs Rakazo itself on your machine. Your computer then replaces the bot's computer entirely, and bots run commands on it without asking.",
+        "Let agents use this computer works when the desktop app is connected to Rakazo Cloud or another Rakazo server. The app's own local server uses Use this Mac instead. The agent keeps its own computer and gets your computer as an extra place to work. It asks you before its first command in a space and before it first uses each app, in every approval mode, and you answer Allow in this space or Deny.",
+        "Use this Mac (Use this computer on Windows and Linux) is for when the desktop app runs Rakazo itself on your machine. Your computer then replaces the agent's computer entirely, and agents run commands on it without asking.",
       ],
       image: true,
     },
     {
-      heading: "What a bot can do on your computer",
+      heading: "What an agent can do on your computer",
       paragraphs: [
-        "In both modes, commands run as your user account, with your permissions. A bot can:",
+        "In both modes, commands run as your user account, with your permissions. An agent can:",
       ],
       bullets: [
         "Run commands in a shell, so it can read and change your files, use command-line tools you've installed and launch apps.",
-        "With Let bots use this computer on a Mac or Windows PC, see and use apps on your screen: take screenshots, click and type. Each app needs its own approval.",
+        "With Let agents use this computer on a Mac or Windows PC, see and use apps on your screen: take screenshots, click and type. Each app needs its own approval.",
         "Work with the apps and files you already have, without copying anything to a separate computer first.",
       ],
     },
     {
       heading: "When to choose your own computer",
       paragraphs: [
-        "Choose it when the work really lives on your machine and you are there to approve it. For anything you'd leave running overnight or hand to a team, a separate computer is safer: [Docker](/sandboxes/docker/) runs bot computers on your own server, and hosted sandboxes such as [Boat](/sandboxes/boat/), which Rakazo Cloud uses, or [E2B](/sandboxes/e2b/) keep them in the cloud. With those, a mistake stays on the bot's computer and you can reset it. The [sandbox comparison](/sandboxes/) covers every option.",
+        "Choose it when the work really lives on your machine and you are there to approve it. For anything you'd leave running overnight or hand to a team, a separate computer is safer: [Docker](/sandboxes/docker/) runs agent computers on your own server, and hosted sandboxes such as [Boat](/sandboxes/boat/), which Rakazo Cloud uses, or [E2B](/sandboxes/e2b/) keep them in the cloud. With those, a mistake stays on the agent's computer and you can reset it. The [sandbox comparison](/sandboxes/) covers every option.",
       ],
     },
     {
       heading: "Limits and security",
       paragraphs: [
-        "This is not a sandbox. There is no isolation between a bot and your account, so only allow bots you'd trust to work on your computer unattended.",
+        "This is not a sandbox. There is no isolation between an agent and your account, so only allow agents you'd trust to work on your computer unattended.",
       ],
       bullets: [
-        "With Let bots use this computer, a bot can reach your computer only in your own chats with your own bots. Routines, webhooks, chat-app channels and other people's messages can't use it.",
-        "With Let bots use this computer, commands, their output and screenshots pass through the Rakazo server you're connected to. Your files stay on your computer unless a bot reads them.",
-        "Screen control works on Mac and Windows. On a Mac it needs Accessibility and Screen Recording permission in System Settings. On Linux, bots can run commands but not control the screen.",
-        "Use this Mac has no screen control, and bots use it without asking, including in routines. Don't choose it for a server other people use.",
-        "The desktop app has to stay open for bots to reach your computer.",
+        "With Let agents use this computer, an agent can reach your computer only in your own chats with your own agents. Routines, webhooks, chat-app channels and other people's messages can't use it.",
+        "With Let agents use this computer, commands, their output and screenshots pass through the Rakazo server you're connected to. Your files stay on your computer unless an agent reads them.",
+        "Screen control works on Mac and Windows. On a Mac it needs Accessibility and Screen Recording permission in System Settings. On Linux, agents can run commands but not control the screen.",
+        "Use this Mac has no screen control, and agents use it without asking, including in routines. Don't choose it for a server other people use.",
+        "The desktop app has to stay open for agents to reach your computer.",
       ],
     },
     {
@@ -75,11 +75,11 @@ export const yourComputer: Sandbox = {
         "Anyone with the desktop app can do this; no server admin is needed. Install it from the [download page](/download/), then pick the mode that matches how you use Rakazo. The [desktop app guide](/docs/desktop-app/) covers both.",
       ],
       steps: [
-        "To use Let bots use this computer, sign in to Rakazo Cloud or another server in the desktop app, open Settings → General, and turn on Let bots use this computer under Computers. Confirm when the app asks Allow bots to use this computer?",
-        "On a Mac, allow Rakazo in System Settings → Privacy & Security → Accessibility and Screen Recording if you want bots to use apps on screen, then reopen the app.",
-        "Ask a bot to do something on your computer, and choose Allow in this space when it asks.",
-        "To use Use this Mac instead, choose This computer when the app asks which server to use. It runs Rakazo locally in Docker. When it asks Where should bots run?, choose Use this Mac.",
-        "To stop, turn off Let bots use this computer in Settings, or choose Revoke Local Computer Access in the app menu for Use this Mac.",
+        "To use Let agents use this computer, sign in to Rakazo Cloud or another server in the desktop app, open Settings → General, and turn on Let agents use this computer under Computers. Confirm when the app asks Allow agents to use this computer?",
+        "On a Mac, allow Rakazo in System Settings → Privacy & Security → Accessibility and Screen Recording if you want agents to use apps on screen, then reopen the app.",
+        "Ask an agent to do something on your computer, and choose Allow in this space when it asks.",
+        "To use Use this Mac instead, choose This computer when the app asks which server to use. It runs Rakazo locally in Docker. When it asks Where should agents run?, choose Use this Mac.",
+        "To stop, turn off Let agents use this computer in Settings, or choose Revoke Local Computer Access in the app menu for Use this Mac.",
       ],
     },
   ],
@@ -88,19 +88,19 @@ export const yourComputer: Sandbox = {
     avif: "/graphics/sandboxes/your-computer.avif",
     width: 1280,
     height: 720,
-    alt: "A chat where the user asks a bot to look at TextEdit on their computer, and the bot asks: Use TextEdit on your computer? Allow in this space, or Deny.",
-    caption: "A bot asks before it uses an app on your computer.",
+    alt: "A chat where the user asks an agent to look at TextEdit on their computer, and the agent asks: Use TextEdit on your computer? Allow in this space, or Deny.",
+    caption: "An agent asks before it uses an app on your computer.",
   },
   faq: [
     {
       question: "Can an AI agent control my Mac?",
       answer:
-        "Yes, with the Rakazo desktop app and Let bots use this computer turned on. After you grant Accessibility and Screen Recording permission, a bot can see and use apps on your screen, and it asks before it first uses each app in a space.",
+        "Yes, with the Rakazo desktop app and Let agents use this computer turned on. After you grant Accessibility and Screen Recording permission, an agent can see and use apps on your screen, and it asks before it first uses each app in a space.",
     },
     {
       question: "Is it safe to let an AI agent use my computer?",
       answer:
-        "It's as safe as the bot you allow. Commands run as you, with no sandbox, so a bot can read and change anything your account can. Keep it to bots you trust, and use a [Docker](/sandboxes/docker/) or hosted computer for everything else.",
+        "It's as safe as the agent you allow. Commands run as you, with no sandbox, so an agent can read and change anything your account can. Keep it to agents you trust, and use a [Docker](/sandboxes/docker/) or hosted computer for everything else.",
     },
     {
       question: "Does it work on Windows and Linux?",
@@ -110,12 +110,12 @@ export const yourComputer: Sandbox = {
     {
       question: "Can a routine use my computer while I'm away?",
       answer:
-        "Not with Let bots use this computer, which only works in your own chats. With Use this Mac, routines do use your computer, as long as the desktop app is open.",
+        "Not with Let agents use this computer, which only works in your own chats. With Use this Mac, routines do use your computer, as long as the desktop app is open.",
     },
     {
       question: "How do I turn it off?",
       answer:
-        "Turn off Let bots use this computer in Settings → General, or choose Revoke Local Computer Access in the app menu if you use Use this Mac. Let bots use this computer also ends when you sign out of that account.",
+        "Turn off Let agents use this computer in Settings → General, or choose Revoke Local Computer Access in the app menu if you use Use this Mac. Let agents use this computer also ends when you sign out of that account.",
     },
   ],
   sources: [

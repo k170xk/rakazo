@@ -13,8 +13,8 @@ function deps(next: { id: string } | null) {
   };
 }
 
-describe("starting the next run waiting for a bot's computer", () => {
-  it("starts the oldest other due run of the bot, leaving failure backoff alone", async () => {
+describe("starting the next run waiting for an agent's computer", () => {
+  it("starts the oldest other due run of the agent, leaving failure backoff alone", async () => {
     vi.useFakeTimers({ now: new Date("2026-10-28T12:00:00Z") });
     try {
       const f = deps({ id: "waiting" });

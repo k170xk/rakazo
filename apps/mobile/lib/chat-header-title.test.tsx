@@ -98,7 +98,7 @@ const name = () => container.querySelector("b");
 const seats = () => container.querySelector("s");
 const button = () => container.querySelector("button")!;
 
-it("draws the inbox's bot from the route alone, before the chat publishes anything", () => {
+it("draws the inbox's agent from the route alone, before the chat publishes anything", () => {
   setSearchInbox(inbox([helper]));
   render({ botId: "bot-1" });
   expect(avatar()?.getAttribute("data-color")).toBe(helper.color);
@@ -108,10 +108,10 @@ it("draws the inbox's bot from the route alone, before the chat publishes anythi
   expect(button().getAttribute("aria-label")).toBe("Profile");
 });
 
-it("reserves the avatar for an unknown bot and marks a missing name as a placeholder", () => {
+it("reserves the avatar for an unknown agent and marks a missing name as a placeholder", () => {
   render({ botId: "bot-1" });
   expect(avatar()?.getAttribute("data-color")).toBe("slot");
-  expect(name()?.textContent).toBe("Bot");
+  expect(name()?.textContent).toBe("Agent");
   expect(name()?.getAttribute("data-placeholder")).toBe("true");
 });
 
@@ -131,7 +131,7 @@ it("shows what the open chat publishes, in the same title", () => {
   expect(avatar()?.getAttribute("data-color")).toBe("slot");
 });
 
-it("opens a one-to-one chat's bot profile from its title, not the chat's settings", () => {
+it("opens a one-to-one chat's agent profile from its title, not the chat's settings", () => {
   render({ botId: "bot-1", name: "Helper" });
   act(() => button().click());
   expect(push).toHaveBeenCalledWith({

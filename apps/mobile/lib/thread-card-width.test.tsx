@@ -313,7 +313,7 @@ describe("thread cards", () => {
   it.each([
     ["no longer in the roster", child, []],
     ["deleted", { ...child, status: "deleted" }, [{ id: "child-1", name: "Planner" }]],
-  ])("keeps a child bot's name without a link when it is %s", (_, block, bots) => {
+  ])("keeps a child agent's name without a link when it is %s", (_, block, bots) => {
     const onOpenBot = vi.fn();
     renderBlocks([block as MessageBlock], { bots, onOpenBot });
     const row = container.firstElementChild as HTMLElement;

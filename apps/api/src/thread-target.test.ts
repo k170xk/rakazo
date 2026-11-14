@@ -356,7 +356,7 @@ describe("reaction turns", () => {
     expect(enqueue).not.toHaveBeenCalled();
   });
 
-  it("starts the bot's turn when its latest message gets a thumbs up", async () => {
+  it("starts the agent's turn when its latest message gets a thumbs up", async () => {
     const { tx, enqueue, react } = fixture({
       newer: [
         {
@@ -386,7 +386,7 @@ describe("reaction turns", () => {
     expect(enqueue).toHaveBeenCalledWith(expect.objectContaining({ name: "run.continue" }));
   });
 
-  it("lets other emoji wake an idle bot", async () => {
+  it("lets other emoji wake an idle agent", async () => {
     const { tx, react } = fixture({ reaction: "❤️" });
     await react();
     expect(tx.run.create).toHaveBeenCalledOnce();
@@ -401,7 +401,7 @@ describe("reaction turns", () => {
     );
   });
 
-  it("checks a 30-second cooldown for this bot and thread", async () => {
+  it("checks a 30-second cooldown for this agent and thread", async () => {
     const now = Date.parse("2026-10-01T12:00:00Z");
     const clock = vi.spyOn(Date, "now").mockReturnValue(now);
     try {
@@ -489,7 +489,7 @@ describe("reaction turns", () => {
     );
   });
 
-  it("answers the bot's pending ask with a thumbs down", async () => {
+  it("answers the agent's pending ask with a thumbs down", async () => {
     const { tx, enqueue, react } = fixture({
       reaction: "👎",
       parent: { role: "bot", botId: "bot-1", runId: "run-waiting" },
@@ -551,7 +551,7 @@ describe("reaction turns", () => {
 
   it.each([
     ["a recent reaction turn", { recentReaction: true }],
-    ["a departed group bot", { groupMembers: ["bot-2", "bot-3"] }],
+    ["a departed group agent", { groupMembers: ["bot-2", "bot-3"] }],
     [
       "a non-thumb on a pending ask",
       {
@@ -562,7 +562,7 @@ describe("reaction turns", () => {
     ],
     ["an older message", { newer: [{ role: "bot", blocks: [], replyToMessageId: null }] }],
     ["the user's own message", { parent: { role: "user", botId: null, runId: null } }],
-    ["a busy bot", { activeRuns: [{ id: "run-busy", taskId: "task-busy", status: "running" }] }],
+    ["a busy agent", { activeRuns: [{ id: "run-busy", taskId: "task-busy", status: "running" }] }],
     [
       "another run's ask",
       { activeRuns: [{ id: "run-waiting", taskId: "task-1", status: "waiting_input" }] },
@@ -2567,7 +2567,7 @@ describe("sendThreadMessage", () => {
       expect(created.map((run) => run.botId)).toEqual(["bot-a"]);
     });
 
-    it("that replies to a person's message, or to a bot outside the group, reaches everyone", async () => {
+    it("that replies to a person's message, or to an agent outside the group, reaches everyone", async () => {
       for (const replyTo of [
         { role: "user", botId: null },
         { role: "bot", botId: "bot-outside" },
@@ -4467,13 +4467,13 @@ describe("sendTargetBotIds", () => {
     expect(sendTargetBotIds(group, { text: "blue" }, "bot-b")).toEqual(["bot-b"]);
   });
 
-  it("lets a mention beat the reply target, and ignores a bot outside the group", () => {
+  it("lets a mention beat the reply target, and ignores an agent outside the group", () => {
     expect(sendTargetBotIds(group, { text: "@Alpha and you?" }, "bot-b")).toEqual(["bot-a"]);
     expect(sendTargetBotIds(group, { text: "blue" }, "bot-outside")).toEqual(["bot-a", "bot-b"]);
     expect(sendTargetBotIds(group, { text: "blue" })).toEqual(["bot-a", "bot-b"]);
   });
 
-  it("finds the bot a send replies to only for a bot's message", async () => {
+  it("finds the agent a send replies to only for an agent's message", async () => {
     const findFirst = vi.fn().mockResolvedValue({ botId: "bot-b" });
     const prisma = { message: { findFirst } } as unknown as PrismaClient;
     expect(await replyParentBotId(prisma, { threadId: "thread-1" }, {})).toBeUndefined();

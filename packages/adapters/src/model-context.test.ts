@@ -33,7 +33,7 @@ function typicalBotBudget(contextWindow: number) {
 }
 
 describe("model context budget", () => {
-  it("fits a typical bot's instructions and tools in a 32k window", () => {
+  it("fits a typical agent's instructions and tools in a 32k window", () => {
     const budget = typicalBotBudget(32_768);
     // A raw byte count would fill the window before any conversation.
     expect(Buffer.byteLength(JSON.stringify(budget.tools), "utf8")).toBeGreaterThan(

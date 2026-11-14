@@ -15,7 +15,7 @@ import { resolveThreadTarget, stopThreadRuns, threadSnapshot } from "./thread-ta
 
 const enabled = process.env.VERIFY_DATABASE === "1" && Boolean(process.env.DATABASE_URL);
 
-describe.skipIf(!enabled)("working bot visibility (PostgreSQL)", () => {
+describe.skipIf(!enabled)("working agent visibility (PostgreSQL)", () => {
   it("prioritizes running work everywhere, keeps delegated DM progress silent, and stops it", async () => {
     const { prisma, pool } = createDb(process.env.DATABASE_URL!);
     const identity = await runAsSystem("test fixture", () =>

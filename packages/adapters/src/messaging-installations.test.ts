@@ -154,20 +154,20 @@ it("only lets the user who started the install finish it", async () => {
   await f.manager.complete(actor, state, "code");
   expect(f.provider.exchange).toHaveBeenCalledTimes(1);
 });
-it("rechecks membership and bot ownership after authorization", async () => {
+it("rechecks membership and agent ownership after authorization", async () => {
   const f = fixture();
   const state = await begin(f);
   f.prisma.spaceMember.findFirst.mockResolvedValueOnce(null as never);
   await expect(f.manager.complete(actor, state, "code")).rejects.toThrow("owner");
   expect(f.provider.exchange).not.toHaveBeenCalled();
 });
-it("requires an owned, active bot before creating an install URL", async () => {
+it("requires an owned, active agent before creating an install URL", async () => {
   const f = fixture();
   f.prisma.bot.findFirst.mockResolvedValueOnce(null as never);
   await expect(f.manager.start(actor, "bot-b")).rejects.toBeInstanceOf(IsolationError);
   expect(f.prisma.messagingInstallSession.create).not.toHaveBeenCalled();
 });
-it("connects the user's first bot in the current space when no bot is chosen", async () => {
+it("connects the user's first agent in the current space when no agent is chosen", async () => {
   const f = fixture();
   f.prisma.bot.findFirst.mockResolvedValueOnce({ id: "bot-work", spaceId: "space-work" } as never);
   await f.manager.start({ ...actor, spaceId: "space-work" });
@@ -250,7 +250,7 @@ it("does not delete a credential when a write committed before a transport error
   expect(f.secrets.delete).not.toHaveBeenCalled();
 });
 
-it("disconnects installations and deletes their secret references before destroying a bot", async () => {
+it("disconnects installations and deletes their secret references before destroying an agent", async () => {
   const f = fixture();
   f.setInstallation({
     id: "install-a",

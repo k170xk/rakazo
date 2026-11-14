@@ -361,9 +361,9 @@ export function DataTable<T extends Record<string, unknown>>({
                       transition={{ duration: 0.25, delay: Math.min(index, 12) * 0.018 }}
                       onClick={onRowClick ? () => onRowClick(row) : undefined}
                       className={cn(
-                        "border-b border-border/50 transition-colors last:border-0",
-                        onRowClick && "cursor-pointer hover:bg-muted/50",
-                        selectedId === id && "bg-primary/8 hover:bg-primary/10",
+                        "group/row border-b border-border/50 transition-colors duration-150 last:border-0 hover:bg-primary/[0.035] dark:hover:bg-primary/[0.07]",
+                        onRowClick && "cursor-pointer hover:bg-primary/[0.055] dark:hover:bg-primary/[0.1]",
+                        selectedId === id && "bg-primary/10 hover:bg-primary/12",
                       )}
                     >
                       {cols.map((column, columnIndex) => (
@@ -376,7 +376,8 @@ export function DataTable<T extends Record<string, unknown>>({
                               : column.align === "center"
                                 ? "text-center"
                                 : "text-left",
-                            columnIndex === 0 && "font-semibold",
+                            columnIndex === 0 && "font-semibold transition-colors",
+                            columnIndex === 0 && onRowClick && "group-hover/row:text-primary",
                           )}
                         >
                           {column.render ? (

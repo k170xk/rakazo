@@ -211,7 +211,7 @@ function useSteps(mode: "first-run" | "revisit", availability: TourAvailability)
           image: "/tour/start.webp",
           eyebrow: t`Let's begin`,
           title: t`Meet your Main PA`,
-          body: t`Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot.`,
+          body: t`Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email agent.`,
           points: [
             t`Ask it anything, or for any OCSC deliverable`,
             t`Let it suggest specialists, then create more from the + button`,

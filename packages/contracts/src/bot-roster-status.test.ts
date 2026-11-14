@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BotSchema, SpaceBotSchema } from "./domain.js";
 
-describe("bot roster failure compatibility", () => {
-  it("defaults an older bot payload's missing error signal to null", () => {
+describe("agent roster failure compatibility", () => {
+  it("defaults an older agent payload's missing error signal to null", () => {
     expect(BotSchema.shape.runErrorId.parse(undefined)).toBeNull();
     expect(SpaceBotSchema.shape.runErrorId.parse(undefined)).toBeNull();
   });

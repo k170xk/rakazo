@@ -112,7 +112,7 @@ describe("shellShortcut", () => {
     expect(shellShortcut(keyEvent({ key: "ArrowLeft", altKey: true }), windowsBrowser)).toBeNull();
   });
 
-  it("finds in the chat, searches bots and jumps to the first nine in the desktop app", () => {
+  it("finds in the chat, searches agents and jumps to the first nine in the desktop app", () => {
     expect(shellShortcut(keyEvent({ key: "f", metaKey: true }), macApp)).toEqual({
       type: "find",
     });
@@ -157,7 +157,7 @@ describe("shellShortcut", () => {
     expect(shellShortcut(keyEvent({ key: "[", ctrlKey: true }), windowsApp)).toBeNull();
   });
 
-  it("switches bots with Ctrl-Tab, even while typing", () => {
+  it("switches agents with Ctrl-Tab, even while typing", () => {
     expect(
       shellShortcut(keyEvent({ key: "Tab", ctrlKey: true, target: textarea }), macApp),
     ).toEqual({ type: "next-bot" });
@@ -171,7 +171,7 @@ describe("shellShortcut", () => {
   it.each([
     ["ArrowDown", "next-bot"],
     ["ArrowUp", "previous-bot"],
-  ] as const)("switches bots with Cmd/Ctrl-Shift-%s outside text fields", (key, type) => {
+  ] as const)("switches agents with Cmd/Ctrl-Shift-%s outside text fields", (key, type) => {
     for (const modifier of ["metaKey", "ctrlKey"] as const) {
       const chord = { key, [modifier]: true, shiftKey: true };
       expect(shellShortcut(keyEvent(chord), macBrowser)).toEqual({ type });
@@ -220,7 +220,7 @@ describe("cycleBotId", () => {
     expect(cycleBotId(bots, "b", -1)).toBe("a");
   });
 
-  it("starts at an end when the active bot is not in the roster", () => {
+  it("starts at an end when the active agent is not in the roster", () => {
     expect(cycleBotId(bots, undefined, 1)).toBe("a");
     expect(cycleBotId(bots, "missing", -1)).toBe("c");
     expect(cycleBotId([], undefined, 1)).toBeUndefined();

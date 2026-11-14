@@ -25,6 +25,7 @@ export const ALLOWED_IMPORTS = [
   "react-dom",
   "react/jsx-runtime",
   "motion/react",
+  "framer-motion",
   "lucide-react",
   "recharts",
   "@ocsc/ui",
@@ -133,7 +134,8 @@ function appPlugin(files: AppFiles): Plugin {
           return { path: resolved, namespace: "app" };
         }
         if ((ALLOWED_IMPORTS as readonly string[]).includes(args.path) || args.path === "react-dom/client") {
-          return builder.resolve(args.path, { kind: args.kind, resolveDir: SRC, pluginData: { inner: true } });
+          const target = args.path === "framer-motion" ? "motion/react" : args.path;
+          return builder.resolve(target, { kind: args.kind, resolveDir: SRC, pluginData: { inner: true } });
         }
         return {
           errors: [
@@ -337,4 +339,105 @@ export function pluginBundle(result: Extract<BuildResult, { ok: true }>, title: 
     "assets/app.js": result.js,
     "assets/app.css": `${URBANIST_FACE}${result.css}`,
   };
+}
+
+const LIGHT_ONLY_CLASS =
+  /\b(?:bg-white|bg-(?:slate|gray|zinc|stone|neutral)-(?:50|100|200)|text-(?:slate|gray|zinc|stone|neutral)-(?:500|600|700|800|900)|border-(?:slate|gray|zinc|stone|neutral)-(?:100|200|300)|bg-(?:amber|red|green|blue)-50|text-(?:amber|red|green|blue)-900)\b/g;
+const OFF_BRAND_CLASS =
+  /\b(?:bg|text|border|ring)-(?:blue|indigo|purple|violet|fuchsia)-\d{2,3}\b/g;
+const HEX_COLOR = /#[0-9a-fA-F]{6}\b/g;
+const KIT_VISUAL =
+  /\b(?:AreaChart|BarChart|LineChart|DonutChart|BarList|FunnelChart|ScatterChart|CalendarHeatmap|Heatmap|Gauge|Ring|Sparkline)\b/;
+const KIT_WORKFLOW =
+  /\b(?:Kanban|Gantt|CalendarMonth|Timeline|Checklist|Steps|MapView|PhotoMap|GalleryView|CompareImages|Whiteboard|OrgChart|TreeView|SortableList|SketchPad|ImageViewer|VideoPlayer|SplitPane)\b/;
+
+export type CraftAuditOptions = {
+  isNew?: boolean;
+  fromTemplate?: boolean;
+  totalRows?: number;
+};
+
+/**
+ * Non-blocking design and kit-usage notes returned by save_app and app_look so the builder catches
+ * bare layouts, missing visualizations, raw hex/slate styles that break dark mode, and empty v1s.
+ */
+export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}): string[] {
+  const code = Object.entries(files)
+    .filter(([name]) => /\.(tsx|ts|jsx|js)$/.test(name))
+    .map(([, text]) => text)
+    .join("\n");
+  const styles = Object.entries(files)
+    .filter(([name]) => name.endsWith(".css"))
+    .map(([, text]) => text)
+    .join("\n");
+  if (!code.trim()) return [];
+
+  const notes: string[] = [];
+  const lightHits = [...new Set(code.match(LIGHT_ONLY_CLASS) ?? [])].slice(0, 4);
+  if (lightHits.length) {
+    notes.push(
+      `Uses light-only classes (${lightHits.join(", ")}) that break dark mode and Theme presets. Replace with semantic tokens (bg-card, bg-muted, bg-surface, text-foreground, text-muted-foreground, border-border) or <Callout> / <Badge>.`,
+    );
+  }
+  const offBrand = [...new Set(code.match(OFF_BRAND_CLASS) ?? [])].slice(0, 4);
+  if (offBrand.length) {
+    notes.push(
+      `Uses off-brand blue/purple classes (${offBrand.join(", ")}); keep OCSC brand green (primary) and semantic tones (success, warning, danger, info, accent).`,
+    );
+  }
+  const hexWithoutPicker = `${code}\n${styles}`
+    .split("\n")
+    .filter((line) => !line.includes("ColorPicker"))
+    .join("\n");
+  const hexHits = [...new Set(hexWithoutPicker.match(HEX_COLOR) ?? [])].slice(0, 3);
+  if (hexHits.length) {
+    notes.push(
+      `Hardcoded hex colours (${hexHits.join(", ")}) bypass light/dark themes; use <Theme />, hsl(var(--primary)), bg-primary/12, text-primary or CHART_COLORS.`,
+    );
+  }
+  if (!KIT_VISUAL.test(code)) {
+    notes.push(
+      "No @ocsc/ui chart or visual indicator is used. Add kit visuals (AreaChart, BarChart, DonutChart, BarList, FunnelChart, Gauge, Ring, Heatmap, CalendarHeatmap or KpiCard trend) instead of plain counts or hand-rolled div bars.",
+    );
+  }
+  if (/<AppShell\b/.test(code)) {
+    const pageDefs = code.match(/\{\s*id\s*:\s*["'`][A-Za-z0-9_-]+["'`]\s*,\s*label\s*:/g) ?? [];
+    if (pageDefs.length < 3 || !KIT_WORKFLOW.test(code)) {
+      notes.push(
+        "Give the app at least 3 tabs including an interactive workflow view (Kanban, Gantt, CalendarMonth, Timeline, Checklist, MapView, GalleryView, Whiteboard, TreeView or SortableList) alongside Overview and TableView — never just Overview plus table tabs.",
+      );
+    }
+    if (!/\bcommands\b/.test(code)) {
+      notes.push(
+        "Pass commands on AppShell (commands or custom Command[] actions) so staff get instant ⌘K search and quick actions.",
+      );
+    }
+    if (/\b(?:TableView|DataTable)\b/.test(code) && !/\b(?:PrintButton|printPdf)\b/.test(code)) {
+      notes.push(
+        "Add <PrintButton size=\"sm\" document={() => ...} /> in AppShell actions (or page actions) so staff can export a branded OCSC PDF report of the register or summary.",
+      );
+    }
+  }
+  if (/font-size\s*:\s*16px\s*!important/i.test(code) || /font-size\s*:\s*16px\s*!important/i.test(styles)) {
+    notes.push(
+      "Remove manual <style> font-size !important hacks; @ocsc/ui fields already render at 16px on phones and touch screens.",
+    );
+  }
+  if (!/<Theme\b/.test(code)) {
+    notes.push(
+      'Set <Theme preset="evolve"|"crisp"|"soft"|"forest"|"contrast" /> near the top of App so surfaces, corners and density fit the domain.',
+    );
+  }
+  if (options.isNew && !options.fromTemplate && options.totalRows === 0 && !/\buseEvolve\b|\bevolve\.read\b/.test(code)) {
+    notes.push(
+      "Tables were saved with 0 rows, so charts, boards and app_look screenshots render empty. Unless the user asked for an empty slate, seed 8–12 realistic starter rows with hidden boolean column is_sample: true and show <SampleBanner tables={[...]} /> for one-click clearing.",
+    );
+  }
+  const appLines = (files["App.tsx"] ?? "").split("\n").length;
+  if (appLines > 320 && Object.keys(files).length === 1) {
+    notes.push(
+      `App.tsx is ${appLines} lines in a single file; split screens or PDF/report builders into separate files (e.g. Overview.tsx, BoardView.tsx, report.ts) so edits stay fast and clean.`,
+    );
+  }
+  return notes;
 }

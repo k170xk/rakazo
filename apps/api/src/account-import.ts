@@ -984,7 +984,7 @@ class AccountImporter implements ArchiveSink {
         thread: { select: { id: true } },
       },
     });
-    if (!computer || !thread) throw new Error("Imported bot is missing its computer or thread");
+    if (!computer || !thread) throw new Error("Imported agent is missing its computer or thread");
     space.ids.set(record.id, bot.id);
     space.bots.set(record.id, {
       id: bot.id,

@@ -102,7 +102,7 @@ function CreateShot() {
     let frame = 0;
     // The dialog renders in a portal, so wait for it before filling it in.
     const fillWhenOpen = () => {
-      const name = document.querySelector<HTMLInputElement>('input[placeholder="Name your Bot"]');
+      const name = document.querySelector<HTMLInputElement>('input[placeholder="Name your Agent"]');
       if (!name) {
         frame = requestAnimationFrame(fillWhenOpen);
         return;

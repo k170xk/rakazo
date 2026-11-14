@@ -195,7 +195,7 @@ export function AskBlock({
         ) : null}
         {!answered && !canAnswer ? (
           <Text style={{ color: tokens.mutedForeground, ...typeScale.caption }}>
-            {t("Waiting for this bot’s response.")}
+            {t("Waiting for this agent’s response.")}
           </Text>
         ) : null}
         {error ? (
@@ -324,7 +324,7 @@ export function AskBlock({
         </>
       ) : (
         <Text style={{ color: tokens.mutedForeground, ...typeScale.caption }}>
-          {t("Waiting for this bot’s response.")}
+          {t("Waiting for this agent’s response.")}
         </Text>
       )}
       {error ? (

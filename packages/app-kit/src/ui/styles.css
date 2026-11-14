@@ -28,11 +28,11 @@
   --surface: 220 20% 98%;
   --radius: 0.75rem;
   --chart-1: 95 49% 51%;
-  --chart-2: 199 80% 48%;
-  --chart-3: 262 60% 60%;
-  --chart-4: 32 92% 55%;
-  --chart-5: 340 75% 58%;
-  --chart-6: 172 60% 42%;
+  --chart-2: 158 58% 36%;
+  --chart-3: 38 90% 50%;
+  --chart-4: 178 54% 36%;
+  --chart-5: 16 76% 52%;
+  --chart-6: 128 24% 38%;
 }
 
 .dark {
@@ -59,8 +59,11 @@
   --input: 0 0% 22%;
   --ring: 102 48% 50%;
   --surface: 0 0% 6%;
-  --chart-2: 199 80% 58%;
-  --chart-3: 262 70% 70%;
+  --chart-2: 158 54% 48%;
+  --chart-3: 38 92% 58%;
+  --chart-4: 178 52% 48%;
+  --chart-5: 16 78% 60%;
+  --chart-6: 128 24% 58%;
 }
 
 @theme inline {
@@ -168,6 +171,14 @@
   [role="button"],
   [role="tab"] {
     touch-action: manipulation;
+  }
+  /* Keep every text field at least 16px on phones (even with compact density) so iOS never zooms. */
+  @media (pointer: coarse), (max-width: 639px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+    select,
+    textarea {
+      font-size: max(16px, 1rem);
+    }
   }
   html,
   body {

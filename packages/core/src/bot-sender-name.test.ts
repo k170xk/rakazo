@@ -6,11 +6,11 @@ describe("shouldShowBotSenderName", () => {
     [[], ["bot-a", "bot-a", undefined]].map((speakerBotIds) => ({
       speakerBotIds,
     })),
-  )("hides names in a non-group thread with at most one known bot: %j", ({ speakerBotIds }) => {
+  )("hides names in a non-group thread with at most one known agent: %j", ({ speakerBotIds }) => {
     expect(shouldShowBotSenderName({ isGroup: false, speakerBotIds })).toBe(false);
   });
 
-  it("shows names for distinct bots in a non-group thread", () => {
+  it("shows names for distinct agents in a non-group thread", () => {
     expect(
       shouldShowBotSenderName({
         isGroup: false,

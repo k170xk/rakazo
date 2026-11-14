@@ -219,7 +219,7 @@ describe("agent-desktop host screen", () => {
     );
   });
 
-  it("keeps the CLI's internals out of what the bot reads", async () => {
+  it("keeps the CLI's internals out of what the agent reads", async () => {
     const { screen } = cli({
       snapshot: () => refused("INTERNAL", "safe", "private file parent C:\\Users\\someone"),
     });

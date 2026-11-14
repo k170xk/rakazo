@@ -59,6 +59,7 @@ import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
 import { DocumentLibrarySection } from "./AdminDocumentLibrary";
+import { EmailFilingPolicySection } from "./AdminEmailFiling";
 import { EvolveSafeguardsSection } from "./AdminEvolveSafeguards";
 import { RoutineActivitySection } from "./AdminRoutineActivity";
 import { SharedAppsSection } from "./AdminSharedApps";
@@ -175,7 +176,14 @@ function CompanyAdminPanels() {
           </div>
         );
       case "features":
-        return <CompanyFeaturesSection state={data} onSaved={saved} />;
+        return (
+          <div className="space-y-10">
+            <CompanyFeaturesSection state={data} onSaved={saved} />
+            {data.features.outlookFiling ? (
+              <EmailFilingPolicySection state={data} onSaved={saved} />
+            ) : null}
+          </div>
+        );
       case "integrations":
         return <CompanyAppsSection state={data} onSaved={saved} />;
       case "mcp":
@@ -366,7 +374,7 @@ function CompanyModelSection({
       const thinkingLevel = (thinkingLevels.find((level) => level === value) ??
         null) as CompanyAdminState["thinkingLevel"];
       await onSaved(await rpc.companyAdmin.setThinkingLevel({ thinkingLevel }));
-      toast.success(t`Every bot now thinks at this level`);
+      toast.success(t`Every agent now thinks at this level`);
     } catch (err) {
       toast.error(errorText(err, t`Could not save the thinking level`));
     } finally {
@@ -509,7 +517,7 @@ function CompanyModelSection({
           </NativeSelect>
           <FieldDescription>
             <Trans>
-              How hard every bot thinks before answering. Higher is better for hard problems but
+              How hard every agent thinks before answering. Higher is better for hard problems but
               slower and costs more.
             </Trans>
           </FieldDescription>
@@ -534,7 +542,7 @@ function CompanyFeaturesSection({
       id: "memberModels",
       group: "models",
       label: t`Members choose models`,
-      description: t`Off: only admins connect models or change a bot's model; everyone runs on the company model.`,
+      description: t`Off: only admins connect models or change an agent's model; everyone runs on the company model.`,
     },
     {
       id: "computers",
@@ -563,8 +571,14 @@ function CompanyFeaturesSection({
     {
       id: "outlookSend",
       group: "apps",
-      label: t`Send Outlook email`,
-      description: t`In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below.`,
+      label: t`Send / draft Outlook email`,
+      description: t`In their own private chat, assistants prepare Outlook emails and replies as editable cards. Pressing Create draft saves the email to the person's Outlook Drafts folder so they can send it from Outlook; assistants never write to Outlook themselves. People without this are never offered drafting. Limit this to chosen people below.`,
+    },
+    {
+      id: "outlookFiling",
+      group: "apps",
+      label: t`File Outlook email`,
+      description: t`Assistants, in chat and in routines, look through a person's Inbox and propose a folder for each email, using Evolve job numbers and the person's own folders. Nothing moves until the person presses File on the card; assistants only ever read mail. Set confidence, new project folders and Sent Items under Email filing below.`,
     },
     {
       id: "accountData",
@@ -732,7 +746,7 @@ function CompanyChatSection({
     {
       id: "toolActivity",
       label: t`Show tool activity`,
-      description: t`Chats show a card for each tool a bot runs.`,
+      description: t`Chats show a card for each tool an agent runs.`,
     },
     {
       id: "webImages",

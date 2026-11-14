@@ -344,7 +344,7 @@ describe("current image send admission", () => {
     expect(tx.message.create).not.toHaveBeenCalled();
   });
 
-  it("uses a running text-only model even after the bot changes to vision", async () => {
+  it("uses a running text-only model even after the agent changes to vision", async () => {
     const { tx, send } = fixture();
     tx.bot.findFirst.mockResolvedValue({
       id: "bot-1",
@@ -424,7 +424,7 @@ describe("current image send admission", () => {
     expect(tx.message.create).toHaveBeenCalled();
   });
 
-  it("uses a pinned waiting run rather than a vision bot setting", async () => {
+  it("uses a pinned waiting run rather than a vision agent setting", async () => {
     const { tx, send } = fixture();
     tx.message.findMany = vi
       .fn()
@@ -487,7 +487,7 @@ describe("current image send admission", () => {
       message: "Image input is not configured for this model.",
     });
   });
-  it("follows the member's main model when the bot has none", async () => {
+  it("follows the member's main model when the agent has none", async () => {
     const { tx, send } = fixture();
     tx.bot.findFirst.mockResolvedValue({ id: "bot-1", modelProvider: null, modelId: null });
     // The deployment default can see images; the main model chosen by the member cannot.

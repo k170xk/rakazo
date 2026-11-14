@@ -85,7 +85,7 @@ import {
 } from "./shared.js";
 
 /** Group chats hold one person and their bots, so nothing in one account reaches another. */
-const GROUPS_ARE_PRIVATE = "Group chats are just you and your bots; other people can't be added.";
+const GROUPS_ARE_PRIVATE = "Group chats are just you and your agents; other people can't be added.";
 
 /** Surface a Space deletion race as a retryable conflict instead of a generic failure. */
 function mapSpaceLifecycleError(error: unknown): unknown {
@@ -387,7 +387,7 @@ export function botsRoutes(ctx: RouterContext) {
           throw mapSpaceLifecycleError(error);
         }
         await enqueueBotIntroRun(deps, context.actor, bot).catch((error) => {
-          getLogger().error("bot intro run enqueue", error);
+          getLogger().error("agent intro run enqueue", error);
         });
         return bot;
       }),
@@ -617,7 +617,7 @@ export function botsRoutes(ctx: RouterContext) {
             select: { id: true },
           });
           if (active) {
-            throw new ORPCError("BAD_REQUEST", { message: "Stop the bot first" });
+            throw new ORPCError("BAD_REQUEST", { message: "Stop the agent first" });
           }
           if (bot.computer.controlBotId === bot.id && hasActiveComputerControl(bot.computer)) {
             throw new ORPCError("BAD_REQUEST", { message: "Release the computer first" });

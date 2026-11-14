@@ -31,7 +31,7 @@ vi.mock("./session", () => ({
 
 const bots = Array.from({ length: 9 }, (_, index) => ({
   id: `bot-${index}`,
-  name: `Bot ${index}`,
+  name: `Agent ${index}`,
 }));
 type RoutineFixture = { id: string; botId: string; name: string; crons: string[] };
 const routine = (botId: string) => ({ id: `routine-${botId}`, botId, name: botId, crons: [] });
@@ -116,7 +116,7 @@ describe("screen-owned mention catalog", () => {
   it("lazily loads a large roster with one batch and preserves roster and routine order", async () => {
     const roster = Array.from({ length: 100 }, (_, index) => ({
       id: `bot-${index}`,
-      name: `Bot ${index}`,
+      name: `Agent ${index}`,
     }));
     state.rpc.mockImplementation(async (proc: string, body: { botIds: string[] }) =>
       proc === "routines/listForMentions"
@@ -271,7 +271,7 @@ describe("screen-owned mention catalog", () => {
     expect(options.every((option) => option.signal instanceof AbortSignal)).toBe(true);
   });
 
-  it("keeps successful bot lists and preserves connected-first catalog mapping and deduplication", async () => {
+  it("keeps successful agent lists and preserves connected-first catalog mapping and deduplication", async () => {
     state.rpc.mockImplementation(async (proc: string, body: { botId?: string }) => {
       if (proc === "routines/list") {
         if (body.botId === "bot-0") throw new Error("Unavailable");
@@ -290,7 +290,7 @@ describe("screen-owned mention catalog", () => {
     await render("thread-a", bots.slice(0, 2));
     await activate();
     expect(visible()).toEqual({
-      routines: [{ ...routine("bot-1"), botName: "Bot 1" }],
+      routines: [{ ...routine("bot-1"), botName: "Agent 1" }],
       connectors: [
         {
           id: "connection-1",
@@ -373,7 +373,7 @@ describe("screen-owned mention catalog", () => {
     },
   );
 
-  it("aborts invalidated loads, ignores their late responses and stops launching queued bots", async () => {
+  it("aborts invalidated loads, ignores their late responses and stops launching queued agents", async () => {
     const old = deferred<RoutineFixture[]>();
     state.rpc.mockReturnValue(old.promise);
     await render();
@@ -551,7 +551,7 @@ describe("screen-owned mention catalog", () => {
     expect(state.rpc).not.toHaveBeenCalled();
   });
 
-  it("aborts in-flight requests and launches no remaining bots after unmount", async () => {
+  it("aborts in-flight requests and launches no remaining agents after unmount", async () => {
     const pending = deferred<unknown[]>();
     state.rpc.mockReturnValue(pending.promise);
     await render();

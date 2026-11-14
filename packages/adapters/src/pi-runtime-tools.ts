@@ -234,13 +234,13 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   if (toolName === "computer_act") return "Operating the computer";
   if (toolName === "run_subagent") return `Delegating to helper: ${detail(record.name)}`;
   if (toolName === "create_space") return `Creating space: ${detail(record.name)}`;
-  if (toolName === "list_fleet") return "Checking your bots";
+  if (toolName === "list_fleet") return "Checking your agents";
   if (toolName === "create_group") return `Creating group: ${detail(record.name)}`;
   if (toolName === "update_group")
     return `Updating group: ${detail(record.group_name ?? record.name)}`;
   if (toolName === "organize_bot") return "Organizing the sidebar";
-  if (toolName === "set_child_instructions") return "Rewriting a bot's instructions";
-  if (toolName === "set_child_bot_model") return "Setting a bot's model";
+  if (toolName === "set_child_instructions") return "Rewriting an agent's instructions";
+  if (toolName === "set_child_bot_model") return "Setting an agent's model";
   if (toolName === "create_child_routine") return `Scheduling routine: ${detail(record.name)}`;
   if (toolName === "remember") return "Saving a note to memory";
   if (toolName === "save_shared_memory") return `Saving shared memory: ${detail(record.path)}`;

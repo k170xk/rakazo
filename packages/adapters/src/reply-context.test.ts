@@ -204,7 +204,7 @@ it("includes the server-derived first line and author role for an id-only reply"
       blocks: [{ kind: "text", text: "First line\nSecond line" }],
     },
   });
-  expect(text).toContain('"role":"bot"');
+  expect(text).toContain('"role":"agent"');
   expect(text).toContain('"botId":"bot-author"');
   expect(text).toContain('"quotedText":"First line"');
   expect(text).not.toContain("Second line");

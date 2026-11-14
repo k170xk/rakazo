@@ -8,7 +8,7 @@ describe("suggestBotName", () => {
     expect(new Set(BOT_NAME_IDEAS).size).toBe(BOT_NAME_IDEAS.length);
   });
 
-  it("skips names the person's bots already use, ignoring case", () => {
+  it("skips names the person's agents already use, ignoring case", () => {
     const taken = BOT_NAME_IDEAS.filter((name) => name !== "Nova").map((name) =>
       name.toUpperCase(),
     );

@@ -107,7 +107,7 @@ it("sends on/off only when the save changes it", async () => {
   expect(update.mock.calls[1]![0]).toMatchObject({ active: false });
 });
 
-it("shows a revealed webhook secret only for the bot it belongs to", async () => {
+it("shows a revealed webhook secret only for the agent it belongs to", async () => {
   let finishRotate!: (result: { secret: string }) => void;
   rotateWebhookSecret.mockImplementation(() => new Promise((resolve) => (finishRotate = resolve)));
   let ensuring!: Promise<void>;
@@ -129,7 +129,7 @@ it("shows a revealed webhook secret only for the bot it belongs to", async () =>
   expect(editor.editorProps!.webhook.secret).toBe("secret-1");
 });
 
-it("keeps each bot's revealed secret when rotations overlap", async () => {
+it("keeps each agent's revealed secret when rotations overlap", async () => {
   const finishers: ((result: { secret: string }) => void)[] = [];
   rotateWebhookSecret.mockImplementation(() => new Promise((resolve) => finishers.push(resolve)));
   let first!: Promise<void>;

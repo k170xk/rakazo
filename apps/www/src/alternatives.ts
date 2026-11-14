@@ -15,7 +15,7 @@ export const OPEN_SOURCE_REASONS = [
   "The source is Apache-2.0 and public on GitHub.",
   "You can run the published Docker images, or a source checkout, on a machine you control. The desktop app can start that stack locally or connect to a server you already run.",
   "You bring the model credentials. Connector credentials are encrypted on the server and are not returned by the API.",
-  "Routines are readable Markdown. A bot can pause for approval at a boundary you set, and actions are recorded in an audit log.",
+  "Routines are readable Markdown. An agent can pause for approval at a boundary you set, and actions are recorded in an audit log.",
   "The web app, the Electron desktop app, and the Expo mobile app are clients of the same API.",
 ] as const;
 
@@ -228,21 +228,21 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Ongoing work",
         rakazo:
-          "Each bot keeps its own conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. A bot can delegate to a peer bot or a short-lived subagent.",
+          "Each agent keeps its own conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. An agent can delegate to a peer agent or a short-lived subagent.",
         other:
           "Meta says Muse keeps working after you close the app and comes back when something changes or it needs approval.",
       },
       {
         topic: "Approval",
         rakazo:
-          "A bot can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
+          "An agent can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
         other:
           "Meta says Muse checks with you before sensitive actions such as sending an email or paying, and shows an audit trail. The small-business post says nothing publishes, sends, or spends without your approval. You can opt out of using interactions to train Meta's models. Meta says conversations and VM data are not shared with Meta's ad systems, and that stored credentials can be used without Muse seeing the passwords.",
       },
       {
         topic: "Where you use it",
         rakazo:
-          "Web app, Electron desktop app, and Expo mobile app. Voice can speak replies, take dictation, and call a bot, with your own ElevenLabs, OpenAI, Cartesia, or Fish Audio key.",
+          "Web app, Electron desktop app, and Expo mobile app. Voice can speak replies, take dictation, and call an agent, with your own ElevenLabs, OpenAI, Cartesia, or Fish Audio key.",
         other:
           "Muse app on iOS and Android, WhatsApp, and muse.ai, per the launch. The Connect recap adds the Mac app, a voice mode you can shape, and Muse on AI glasses in the coming months.",
       },
@@ -312,21 +312,21 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Connections",
         rakazo:
-          "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Bots also get a sandboxed browser, terminal, files, and a graphical desktop.",
+          "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Agents also get a sandboxed browser, terminal, files, and a graphical desktop.",
         other:
           "OpenAI says plugins connect a dot to more than 4,000 apps, and those permissions are shared with ChatGPT. The help center says you can also give a dot its own Slack account.",
       },
       {
         topic: "Ongoing work",
         rakazo:
-          "Each bot keeps conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. A bot can delegate to a peer bot or a short-lived subagent.",
+          "Each agent keeps conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. An agent can delegate to a peer agent or a short-lived subagent.",
         other:
           "OpenAI says a dot can keep working in the background. Proactive research can read permitted sources and save private notes. The help center says that research cannot send messages, change content through plugins, or control a browser or computer.",
       },
       {
         topic: "Control and availability",
         rakazo:
-          "A bot can pause for approval at a boundary you set, and actions are recorded in an audit log. The web, desktop, and mobile clients are available with self-hosting now.",
+          "An agent can pause for approval at a boundary you set, and actions are recorded in an audit log. The web, desktop, and mobile clients are available with self-hosting now.",
         other:
           "Built-in rules and Custom Rules say what a dot may do, must ask about, or must not do. Custom Rules cannot turn off core safety checks. The help center says changing a password or transferring money requires you to take over, and Activity View shows ongoing work. The first dot is included with Pro and Business Premium. Dots are not available to users under 18. OpenAI is also previewing specialist dots for organizations.",
       },
@@ -407,21 +407,21 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Ongoing work",
         rakazo:
-          "Each bot keeps its own conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. A bot can delegate to a peer bot or a short-lived subagent.",
+          "Each agent keeps its own conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. An agent can delegate to a peer agent or a short-lived subagent.",
         other:
           "The privacy policy says the assistant is designed to be available when you engage it, and that it plans and completes tasks from the permissions you grant.",
       },
       {
         topic: "Approval",
         rakazo:
-          "A bot can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
+          "An agent can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
         other:
           "The terms say Instinct can act on what you send, including purchases, and that you remain responsible for those actions. Confirmation steps may exist but are not promised to prevent an unintended action.",
       },
       {
         topic: "Where you use it",
         rakazo:
-          "Web app, Electron desktop app, and Expo mobile app. Voice can speak replies, take dictation, and call a bot, with your own ElevenLabs, OpenAI, Cartesia, or Fish Audio key.",
+          "Web app, Electron desktop app, and Expo mobile app. Voice can speak replies, take dictation, and call an agent, with your own ElevenLabs, OpenAI, Cartesia, or Fish Audio key.",
         other:
           "The homepage says you text or call it. The privacy policy and terms also describe the Instinct website, Mac apps, and mobile apps.",
       },
@@ -440,7 +440,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         question: "Does Rakazo text, call, or buy things the way Instinct describes?",
         answer:
-          "No. Those are Instinct behaviors described on its homepage, privacy policy, and terms. Rakazo's clients are the web app, the Electron desktop app, and the Expo mobile app. A bot can use a browser, terminal, files, and a desktop you run, and it can pause for approval at a boundary you set.",
+          "No. Those are Instinct behaviors described on its homepage, privacy policy, and terms. Rakazo's clients are the web app, the Electron desktop app, and the Expo mobile app. An agent can use a browser, terminal, files, and a desktop you run, and it can pause for approval at a boundary you set.",
       },
       {
         question: "Where do the Instinct details come from?",
@@ -462,14 +462,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
     otherName: "Hermes Agent",
     intro: [
       "Hermes Agent is Nous Research's open source AI agent, released under the MIT license. You can run it on your own machine. The project site also offers optional Nous Portal credits and cloud hosting.",
-      "The main difference is simplicity. Like Grok Bot, Rakazo is just chat: you set up the bot and manage it from that chat. Hermes documents a desktop app and a command-line quickstart. Desktop onboarding can reach a first message without the CLI. The quickstart is an installer, a setup wizard, a model command, and config files. Messaging platforms are a separate gateway.",
+      "The main difference is simplicity. Like Grok Bot, Rakazo is just chat: you set up the agent and manage it from that chat. Hermes documents a desktop app and a command-line quickstart. Desktop onboarding can reach a first message without the CLI. The quickstart is an installer, a setup wizard, a model command, and config files. Messaging platforms are a separate gateway.",
       "Both are open source and can run on hardware you control. This comparison uses each project's public docs. It is not a measured benchmark.",
     ],
     sections: [
       {
         heading: "Setup",
         paragraphs: [
-          "Rakazo's self-host path is the published Docker installer, or the desktop app starting that stack on this computer. You create an account and connect a model. From there it is just chat, on the web, desktop, and mobile apps. A new bot interviews you about the work, and you manage the bot from that chat. Routines are readable Markdown.",
+          "Rakazo's self-host path is the published Docker installer, or the desktop app starting that stack on this computer. You create an account and connect a model. From there it is just chat, on the web, desktop, and mobile apps. A new agent interviews you about the work, and you manage the agent from that chat. Routines are readable Markdown.",
           "Hermes Desktop is a native app on macOS, Windows, and Linux. It shares config, API keys, sessions, skills, and memory with the CLI. The desktop guide says first-run onboarding gets you to a first message in seconds, and Choose provider later skips provider setup. Settings cover providers, models, tools, credentials, MCP servers, the gateway, and sessions. The app starts its own local `hermes serve` backend. That chat does not require the CLI or the web dashboard.",
           "The CLI quickstart is a separate path: a shell install (`install.sh` on Linux, macOS, and WSL2; a PowerShell script on Windows), then `hermes setup` (Quick Setup with Nous Portal, Full Setup, or Blank Slate) and `hermes model`. Secrets go in `~/.hermes/.env` and other settings in `~/.hermes/config.yaml`. The first terminal chat is `hermes` or `hermes --tui`. Telegram, Discord, Slack, WhatsApp, Signal, Email, and other platforms use `hermes gateway setup` and a gateway process you start separately. The desktop guide says that messaging gateway is a different process from the app's local backend.",
         ],
@@ -477,7 +477,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         heading: "Day-to-day management",
         paragraphs: [
-          "Day to day, you manage Rakazo from the same chat. Schedules, memory, and approval boundaries stay with that bot. Optional connectors can attach Slack, WhatsApp, Telegram, iMessage via Sendblue, and Feishu/Lark. They are not required to use the product.",
+          "Day to day, you manage Rakazo from the same chat. Schedules, memory, and approval boundaries stay with that agent. Optional connectors can attach Slack, WhatsApp, Telegram, iMessage via Sendblue, and Feishu/Lark. They are not required to use the product.",
           "Hermes Desktop manages providers, models, tools, credentials, and sessions in Settings. The CLI quickstart sends a broken setup through `hermes doctor`, `hermes model`, `hermes setup`, `hermes sessions list`, and `hermes gateway status`. Tool access is `hermes tools`. Cron, skills, and MCP servers are further configuration. Messaging platforms still need that separately running gateway.",
         ],
       },
@@ -486,14 +486,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Setup",
         rakazo:
-          "Docker installer or the desktop app's local stack, then an account and a model. After that Rakazo is just chat: a new bot interviews you, and you manage it from the chat.",
+          "Docker installer or the desktop app's local stack, then an account and a model. After that Rakazo is just chat: a new agent interviews you, and you manage it from the chat.",
         other:
           "Desktop: first-run onboarding in the app, with Choose provider later if you skip a provider. The app shares `~/.hermes/` with the CLI and starts its own local backend. CLI: `hermes setup` and `hermes model`, then `hermes` or `hermes --tui`. Messaging platforms use `hermes gateway setup` and a separate gateway process.",
       },
       {
         topic: "Day-to-day management",
         rakazo:
-          "You manage the bot from the same chat on the web, desktop, and mobile apps. Routines are readable Markdown and can run on a schedule. A bot can pause for approval at a boundary you set.",
+          "You manage the agent from the same chat on the web, desktop, and mobile apps. Routines are readable Markdown and can run on a schedule. An agent can pause for approval at a boundary you set.",
         other:
           "Desktop settings cover providers, models, tools, credentials, MCP, and sessions. The CLI recovery commands are `hermes doctor`, `hermes model`, `hermes setup`, and `hermes gateway status`. Chat apps need a gateway process kept running apart from the desktop's local backend.",
       },
@@ -511,7 +511,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Model",
         rakazo:
-          "Bring your own model credentials. Multiple providers are supported, including a custom model server. Each bot can use a different model.",
+          "Bring your own model credentials. Multiple providers are supported, including a custom model server. Each agent can use a different model.",
         other:
           "You choose a provider with `hermes model`. The quickstart lists many, including Nous Portal, OpenAI, Anthropic, OpenRouter, Google, a custom OpenAI-compatible endpoint, and local servers such as Ollama and LM Studio. It says a model needs at least 64,000 tokens of context.",
       },
@@ -539,14 +539,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Ongoing work",
         rakazo:
-          "Each bot keeps conversations, memory, routines, and history. A bot can delegate to a peer bot or a short-lived subagent.",
+          "Each agent keeps conversations, memory, routines, and history. An agent can delegate to a peer agent or a short-lived subagent.",
         other:
           "The README describes agent-curated memory, skills that can be created after a task, a built-in cron scheduler, and isolated subagents. Scheduled jobs can be delivered back to a connected platform.",
       },
       {
         topic: "Approval",
         rakazo:
-          "A bot can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
+          "An agent can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
         other:
           "The security guide documents approval for dangerous shell commands (`approvals.mode` defaults to smart), file-write checks, and allowlists for who can message the gateway. Container backends skip the dangerous-command check. Cron and other unattended sessions deny those commands unless you change that setting.",
       },
@@ -555,7 +555,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         question: "Is Rakazo simpler to set up than Hermes Agent?",
         answer:
-          "The documented paths are different. Rakazo's self-host guide is a Docker installer, or the desktop app starting that stack, then an account and a model. After that Rakazo is just chat, and you manage the bot from that chat. Hermes Desktop can reach a first message from in-app onboarding without the CLI, and you manage providers and tools in Settings. The CLI quickstart is `hermes setup`, `hermes model`, config files under `~/.hermes/`, and a terminal chat. Messaging apps are an extra gateway process on either path.",
+          "The documented paths are different. Rakazo's self-host guide is a Docker installer, or the desktop app starting that stack, then an account and a model. After that Rakazo is just chat, and you manage the agent from that chat. Hermes Desktop can reach a first message from in-app onboarding without the CLI, and you manage providers and tools in Settings. The CLI quickstart is `hermes setup`, `hermes model`, config files under `~/.hermes/`, and a terminal chat. Messaging apps are an extra gateway process on either path.",
       },
       {
         question: "Is Rakazo a drop-in replacement for Hermes Agent?",
@@ -565,7 +565,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         question: "Do both keep the software on my machine?",
         answer:
-          "Yes for the software you run. A Rakazo deployment stores its database and bot data on your host. Hermes stores config, memory, and skills on the machine where you install it, by default under `~/.hermes/`. In both cases, prompts go to the model provider you configure. Hermes's site also offers optional Nous Portal and cloud hosting.",
+          "Yes for the software you run. A Rakazo deployment stores its database and agent data on your host. Hermes stores config, memory, and skills on the machine where you install it, by default under `~/.hermes/`. In both cases, prompts go to the model provider you configure. Hermes's site also offers optional Nous Portal and cloud hosting.",
       },
       {
         question: "Where do the Hermes details come from?",
@@ -587,7 +587,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
     otherName: "Claude Duet",
     intro: [
       "Claude Duet is Anthropic's proactive personal agent, released as a research preview on October 21, 2026. You message it like a person. It sends a morning brief, checks your connected accounts, and works on a cloud computer Anthropic runs.",
-      "Rakazo is open source software for persistent AI teammates. You run it, you choose the model, and you can have more than one bot. Rakazo can also sign in with your Claude Pro or Max subscription.",
+      "Rakazo is open source software for persistent AI teammates. You run it, you choose the model, and you can have more than one agent. Rakazo can also sign in with your Claude Pro or Max subscription.",
     ],
     rows: [
       {
@@ -611,27 +611,27 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Model",
         rakazo:
-          "Bring your own model credentials, including Claude Pro/Max sign-in, other providers, and a local server. Each bot can use a different model.",
+          "Bring your own model credentials, including Claude Pro/Max sign-in, other providers, and a local server. Each agent can use a different model.",
         other: "Claude Opus 5.5. The help center says you cannot choose a model.",
       },
       {
         topic: "Connections",
         rakazo:
-          "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Bots also get a sandboxed browser, terminal, files, and a graphical desktop.",
+          "Composio or Pipedream Connect, or a Treg, remote MCP, or OpenAPI source you install. Agents also get a sandboxed browser, terminal, files, and a graphical desktop.",
         other:
           "Claude's connectors and plugins, which Anthropic puts at more than 6,000. The help center names Gmail, Google Calendar, Google Drive, Slack, QuickBooks, HubSpot, Docusign, and Calendly. Microsoft 365 is not available yet. Purchases use Link by Stripe or Shop Pay with one-time virtual cards.",
       },
       {
         topic: "Ongoing work",
         rakazo:
-          "Each bot keeps conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. A bot can delegate to a peer bot or a short-lived subagent.",
+          "Each agent keeps conversations, memory, routines, and history. Routines are readable Markdown and can run on a schedule. An agent can delegate to a peer agent or a short-lived subagent.",
         other:
           "A morning brief, then check-ins on your accounts. The announcement says every few hours; the help center says set intervals. Duet uses your Claude memory, skills, and connectors.",
       },
       {
         topic: "Control and availability",
         rakazo:
-          "A bot can pause for approval at a boundary you set, and actions are recorded in an audit log. The web, desktop, and mobile clients are available with self-hosting now.",
+          "An agent can pause for approval at a boundary you set, and actions are recorded in an audit log. The web, desktop, and mobile clients are available with self-hosting now.",
         other:
           "Duet asks before it sends a message, makes a payment, signs a document, or deletes anything. Trading securities, moving money between accounts, and accessing someone else's account are blocked. Pro and Max only, in the US, from a waitlist. Usage counts against the plan's limits.",
       },
@@ -640,7 +640,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         question: "Can Rakazo use my Claude subscription?",
         answer:
-          "Yes. Sign in with Claude Pro or Max, or bring an Anthropic key. Claude is one model choice, and each bot can use a different one.",
+          "Yes. Sign in with Claude Pro or Max, or bring an Anthropic key. Claude is one model choice, and each agent can use a different one.",
       },
       {
         question: "Is Claude Duet open source or self-hosted?",
@@ -667,7 +667,7 @@ export const ALTERNATIVES: readonly Alternative[] = [
     otherName: "Hark Pro",
     intro: [
       "Hark Pro is the personal agent at hark.com, launched October 6, 2026. It is a hosted app on the web, iOS, and Android. The launch article says every feature stays free, with $20 a month for twice the usage and $100 a month for ten times the usage.",
-      "Like Grok Bot, Rakazo is just chat: you set up the bot and manage it from that chat. Hark Pro feels like a messaging app. The same article describes Home, Action Buttons, and Panels, Projects as dedicated chats with their own threads, and a cloud computer called Handoff that Hark operates.",
+      "Like Grok Bot, Rakazo is just chat: you set up the agent and manage it from that chat. Hark Pro feels like a messaging app. The same article describes Home, Action Buttons, and Panels, Projects as dedicated chats with their own threads, and a cloud computer called Handoff that Hark operates.",
       "Hark introduced Handoff, its computer-use agent, on August 5, 2026. This comparison uses Hark's public pages. It is not a measured benchmark.",
     ],
     rows: [
@@ -694,14 +694,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Day-to-day management",
         rakazo:
-          "After you connect a model, Rakazo is just chat. You manage the bot from that chat on the web, desktop, and mobile apps. Routines are readable Markdown.",
+          "After you connect a model, Rakazo is just chat. You manage the agent from that chat on the web, desktop, and mobile apps. Routines are readable Markdown.",
         other:
           "The launch article describes a messaging-style conversation. Projects are dedicated chats with their own threads. Home, Action Buttons, and Panels sit beside that. The privacy policy says you can review, edit, or delete memory by asking the agent.",
       },
       {
         topic: "Model",
         rakazo:
-          "Bring your own model credentials. Multiple providers are supported, including a custom model server. Each bot can use a different model.",
+          "Bring your own model credentials. Multiple providers are supported, including a custom model server. Each agent can use a different model.",
         other:
           "The launch article says Hark is training models. The security page says Hark prioritizes its own models, and that models from vetted third parties keep no data. The terms do not name a public model you can swap. They say Hark may train on what you submit unless you opt out, though feedback and material flagged for safety review can still be used.",
       },
@@ -722,14 +722,14 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         topic: "Ongoing work",
         rakazo:
-          "Each bot keeps conversations, memory, routines, and history. A bot can delegate to a peer bot or a short-lived subagent.",
+          "Each agent keeps conversations, memory, routines, and history. An agent can delegate to a peer agent or a short-lived subagent.",
         other:
           "Memory persists unless you ask Hark to forget. You can create scheduled tasks. Action Buttons are suggested from what Hark knows, and a tap runs that action.",
       },
       {
         topic: "Approval",
         rakazo:
-          "A bot can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
+          "An agent can pause for approval when a task crosses a boundary you set. Actions are recorded in an audit log.",
         other:
           "The homepage says Hark checks in before an action that needs approval. The security page says tasks start from consent, you can watch the computer-use agent, and you can cancel. The launch article says that if you allow it, Hark can finish some tasks on its own.",
       },
@@ -755,12 +755,12 @@ export const ALTERNATIVES: readonly Alternative[] = [
       {
         question: "How do you manage each one day to day?",
         answer:
-          "After a Docker or desktop install and a model connection, Rakazo is just chat, like Grok Bot, and you manage the bot from that chat. Hark Pro feels like a messaging app. The launch article adds Home, Action Buttons, and Panels, and Projects as dedicated chats with their own threads.",
+          "After a Docker or desktop install and a model connection, Rakazo is just chat, like Grok Bot, and you manage the agent from that chat. Hark Pro feels like a messaging app. The launch article adds Home, Action Buttons, and Panels, and Projects as dedicated chats with their own threads.",
       },
       {
         question: "Does Rakazo order things or run Handoff the way Hark describes?",
         answer:
-          "No. Ordering, bill pay, and Handoff are Hark behaviors described on its site. Rakazo's clients are the web app, the Electron desktop app, and the Expo mobile app. A bot can use a browser, terminal, files, and a desktop you run, and it can pause for approval at a boundary you set.",
+          "No. Ordering, bill pay, and Handoff are Hark behaviors described on its site. Rakazo's clients are the web app, the Electron desktop app, and the Expo mobile app. An agent can use a browser, terminal, files, and a desktop you run, and it can pause for approval at a boundary you set.",
       },
       {
         question: "Where do the Hark Pro details come from?",
@@ -788,7 +788,7 @@ const GROK_HUB_CARD: HubCard = {
   href: GROK_ALTERNATIVE_PATH,
   name: "Grok Bot",
   h1: GROK_ALTERNATIVE_H1,
-  summary: "xAI's hosted bots, and what is different when you host Rakazo yourself.",
+  summary: "xAI's hosted agents, and what is different when you host Rakazo yourself.",
 };
 
 const OPENCLAW_HUB_CARD: HubCard = {

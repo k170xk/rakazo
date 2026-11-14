@@ -229,7 +229,7 @@ describe("observeShellCommand", () => {
 });
 
 describe("deliverFinishedShells", () => {
-  it("waits until the command exits, then hands the bot the final output", async () => {
+  it("waits until the command exits, then hands the agent the final output", async () => {
     let release: (result: { stdout: string; stderr: string; code: number }) => void = () =>
       undefined;
     const completion = new Promise<{ stdout: string; stderr: string; code: number }>((resolve) => {
@@ -254,7 +254,7 @@ describe("deliverFinishedShells", () => {
     expect(followUps[0]).toContain("logged in");
   });
 
-  it("hands the bot the end of long output, where failures are printed", async () => {
+  it("hands the agent the end of long output, where failures are printed", async () => {
     const followUps: string[] = [];
     await deliverFinishedShells(
       (text) => followUps.push(text),

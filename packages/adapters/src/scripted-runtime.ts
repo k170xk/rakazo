@@ -289,7 +289,7 @@ export function inferScript(
       },
     ];
   }
-  if (lower.includes("message the bot named") || lower.includes("message bot named")) {
+  if (lower.includes("message the agent named") || lower.includes("message agent named")) {
     const name = namedBot(prompt) ?? "Peer";
     const message =
       /named\s+[A-Za-z0-9][A-Za-z0-9_-]{0,39}\s+(?:saying|with|:)\s*([\s\S]+)$/i
@@ -297,7 +297,7 @@ export function inferScript(
         ?.trim() ?? `Please help with: ${prompt}`;
     return [
       {
-        assistant: "messaging that bot now.",
+        assistant: "messaging that agent now.",
         toolCalls: [
           {
             name: "message_bot",
@@ -314,11 +314,11 @@ export function inferScript(
   }
   const childEdit = childEditCalls(prompt);
   if (childEdit) {
-    return [{ assistant: "updating your bots.", toolCalls: childEdit, complete: true }];
+    return [{ assistant: "updating your agents.", toolCalls: childEdit, complete: true }];
   }
   const fleet = fleetCall(prompt);
   if (fleet) {
-    return [{ assistant: "updating your bots.", toolCalls: [fleet], complete: true }];
+    return [{ assistant: "updating your agents.", toolCalls: [fleet], complete: true }];
   }
   if (
     lower.includes("launch a cloud agent") ||
@@ -537,14 +537,14 @@ code-b
     ];
   }
   if (
-    lower.includes("delete the bot named") ||
-    lower.includes("delete the child bot") ||
+    lower.includes("delete the agent named") ||
+    lower.includes("delete the child agent") ||
     lower.includes("delete child")
   ) {
     const name = namedBot(prompt) ?? "Scout";
     return [
       {
-        assistant: "archiving that bot.",
+        assistant: "archiving that agent.",
         toolCalls: [{ name: "archive_bot", args: { confirm_name: name } }],
         complete: true,
       },
@@ -576,15 +576,15 @@ code-b
     ];
   }
   if (
-    lower.includes("spawn a bot") ||
+    lower.includes("spawn an agent") ||
     lower.includes("spawn a child") ||
-    lower.includes("create a bot named") ||
-    lower.includes("create a child bot")
+    lower.includes("create an agent named") ||
+    lower.includes("create a child agent")
   ) {
     const name = namedBot(prompt) ?? "Helper";
     return [
       {
-        assistant: "creating a bot for that.",
+        assistant: "creating an agent for that.",
         toolCalls: [
           {
             name: "spawn_bot",
@@ -799,7 +799,7 @@ function scriptedFailure(prompt: string): string {
 function hangDuration(prompt: string): number | undefined {
   const lower = prompt.toLowerCase();
   // Asking another bot to keep working makes that bot's run hang, not this one.
-  if (lower.includes("message the bot named") || lower.includes("message bot named")) {
+  if (lower.includes("message the agent named") || lower.includes("message agent named")) {
     return undefined;
   }
   const seconds = /\bwork for (\d+) seconds?\b/.exec(lower)?.[1];

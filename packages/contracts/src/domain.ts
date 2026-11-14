@@ -9,6 +9,7 @@ import {
   isCloudflareModelProvider,
 } from "./cloudflare-ai-gateway.js";
 import { MCP_OAUTH_CLIENT_REQUIRED } from "./connector-errors.js";
+import { EmailFilingPolicySchema } from "./email-filing.js";
 import { BotSettingsValuesSchema, ThreadMessageSchema } from "./events.js";
 import { Id, MemoryScope, RunStatus, SandboxKind, ThinkingLevelSchema } from "./ids.js";
 import {
@@ -2150,6 +2151,11 @@ export const CompanyFeaturesSchema = z.object({
    * draft tool is never offered and the send route refuses.
    */
   outlookSend: z.boolean(),
+  /**
+   * Assistants, in chat and routines, propose which Outlook folder each email belongs in; only the
+   * person's press of File on the card moves mail or creates a folder.
+   */
+  outlookFiling: z.boolean(),
 });
 export type CompanyFeatures = z.infer<typeof CompanyFeaturesSchema>;
 export type CompanyFeatureId = keyof CompanyFeatures;
@@ -2176,6 +2182,7 @@ export const DEFAULT_COMPANY_FEATURES: CompanyFeatures = {
   staffSkills: false,
   chatFileSearch: true,
   outlookSend: false,
+  outlookFiling: false,
 };
 
 /** Switches an admin can open to chosen people and groups instead of everyone. */
@@ -2191,6 +2198,7 @@ export const AUDIENCE_FEATURES = [
   "staffSkills",
   "personalVault",
   "outlookSend",
+  "outlookFiling",
 ] as const satisfies readonly CompanyFeatureId[];
 export type AudienceFeatureId = (typeof AUDIENCE_FEATURES)[number];
 
@@ -2540,6 +2548,8 @@ export const CompanyToolsSchema = z.object({
    * keeps the built-in OCSC report.
    */
   defaultWordTemplateId: z.string().uuid().nullable().optional(),
+  /** Rules for Outlook email filing; absent uses DEFAULT_EMAIL_FILING_POLICY. */
+  emailFiling: EmailFilingPolicySchema.optional(),
 });
 export type CompanyTools = z.infer<typeof CompanyToolsSchema>;
 
@@ -2826,6 +2836,7 @@ export const CompanyAdminStateSchema = z.object({
   environmentModel: z.object({ provider: z.string(), modelId: z.string() }).nullable(),
   features: CompanyFeaturesSchema,
   tools: CompanyToolsStateSchema,
+  emailFiling: EmailFilingPolicySchema,
   computers: CompanyComputersStateSchema,
   /** The emails in RAKAZO_ADMIN_EMAILS. */
   admins: z.array(z.string()),

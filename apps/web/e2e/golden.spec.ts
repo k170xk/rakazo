@@ -370,7 +370,7 @@ test("sign-in, spawn, and stop work in the shell", async ({ page }, testInfo) =>
   });
 
   const composer = page.locator('textarea[name="chat-message"]');
-  await composer.fill("spawn a bot named Scout to research venues");
+  await composer.fill("spawn an agent named Scout to research venues");
   await page.keyboard.press("Enter");
   await expect(sidebarBotButton(page, /Scout/)).toBeVisible({
     timeout: 30_000,

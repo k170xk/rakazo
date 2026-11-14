@@ -172,6 +172,9 @@ export const ROW_SECURITY_MODELS: ReadonlySet<string> = new Set([
   "EvolveConversationLink",
   "KeptFile",
   "EmailDraft",
+  "EmailFilingBatch",
+  "EmailFilingProfile",
+  "EmailFilingFolder",
 ]);
 
 /**

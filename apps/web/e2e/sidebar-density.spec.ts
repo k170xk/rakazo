@@ -10,7 +10,7 @@ import {
 
 const DENSITY_KEY = "rakazo.botsSidebarDensity";
 
-test("compact bot sidebar hides previews and preserves roster status accessibly", async ({
+test("compact agent sidebar hides previews and preserves roster status accessibly", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();

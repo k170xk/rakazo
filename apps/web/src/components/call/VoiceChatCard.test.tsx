@@ -73,7 +73,7 @@ describe("VoiceChatCard", () => {
     expect(opened.querySelector('[data-message-id="user-1"]')).not.toBeNull();
   });
 
-  it("shows the bot's missed call with a way to call back", () => {
+  it("shows the agent's missed call with a way to call back", () => {
     const onCallBack = vi.fn();
     const missed: VoiceChatGroup = {
       kind: "voiceChat",
@@ -111,7 +111,7 @@ describe("VoiceChatCard", () => {
     expect(onCallBack).toHaveBeenCalledOnce();
   });
 
-  it("shows an answered call from the bot with its length and spoken opening", () => {
+  it("shows an answered call from the agent with its length and spoken opening", () => {
     const answered: VoiceChatGroup = {
       kind: "voiceChat",
       key: "call:call-3",

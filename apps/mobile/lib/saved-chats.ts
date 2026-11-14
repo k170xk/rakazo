@@ -42,7 +42,7 @@ export const SAVED_CHATS_MAX_BYTES = 20 * 1024 * 1024;
 const SAVED_INBOX_ROWS = 200;
 
 export function savedChatTarget(target: { botId?: string; groupId?: string }): string {
-  return target.groupId ? `group:${target.groupId}` : `bot:${target.botId}`;
+  return target.groupId ? `group:${target.groupId}` : `agent:${target.botId}`;
 }
 
 function spaceFile(scope: SavedChatsScope, name: string): File {

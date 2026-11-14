@@ -124,6 +124,8 @@ export const BUILTIN_TOOL_NAMES = [
   "respond_agent_connection",
   "message_agent",
   "outlook_draft_email",
+  "outlook_filing_candidates",
+  "outlook_propose_filing",
 ] as const;
 
 export const BuiltinToolNameSchema = z.enum(BUILTIN_TOOL_NAMES);

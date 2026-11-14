@@ -179,7 +179,7 @@ export async function createTicket(
   });
   if (!parsed.success) return { error: ticketInputError(parsed.error) };
   const data = parsed.data;
-  if (!(await ownBotInSpace(deps, input, data.assigneeBotId))) return { error: "Unknown bot." };
+  if (!(await ownBotInSpace(deps, input, data.assigneeBotId))) return { error: "Unknown agent." };
   const board = await ensureBoard(deps.prisma, input.spaceId);
   const row = await deps.prisma.$transaction(async (tx) => {
     const number = await allocateTicketNumber(tx, board.id);
@@ -226,7 +226,7 @@ export async function updateTicket(
   if (!parsed.success) return { error: ticketInputError(parsed.error) };
   const data = parsed.data;
   if (data.assigneeBotId && !(await ownBotInSpace(deps, input, data.assigneeBotId)))
-    return { error: "Unknown bot." };
+    return { error: "Unknown agent." };
   const board = await ensureBoard(deps.prisma, input.spaceId);
   const result = await deps.prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM tickets WHERE id = ${data.id} AND "spaceId" = ${input.spaceId} FOR UPDATE`;

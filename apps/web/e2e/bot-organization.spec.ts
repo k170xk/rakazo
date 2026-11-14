@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { activeBotId, captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
-test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
+test("pinned agents and sidebar sections persist", async ({ page }, testInfo) => {
   const stamp = Date.now();
   await signup(page, `bot-organize-${stamp}@rakazo.test`, "password12", "Test User");
   await completeOnboarding(page);
@@ -61,7 +61,7 @@ test("pinned bots and sidebar sections persist", async ({ page }, testInfo) => {
   await expect(sidebar.locator('[data-sidebar-group="unassigned"]')).toContainText("Chief");
 });
 
-test("deleting a section keeps its bots and groups", async ({ page }, testInfo) => {
+test("deleting a section keeps its agents and groups", async ({ page }, testInfo) => {
   await signup(page, `section-delete-${Date.now()}@rakazo.test`, "password12", "Section Delete");
   await completeOnboarding(page);
   const chiefId = activeBotId(page);
@@ -91,7 +91,7 @@ test("deleting a section keeps its bots and groups", async ({ page }, testInfo) 
     .getByRole("menuitem", { name: "Delete section", exact: true })
     .click();
   const dialog = page.getByRole("alertdialog", { name: "Delete Projects?" });
-  await expect(dialog).toContainText("Its bots and groups are kept and leave the section.");
+  await expect(dialog).toContainText("Its agents and groups are kept and leave the section.");
   await captureScreenshot(page, testInfo, "delete-section-dialog");
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
 
@@ -102,9 +102,9 @@ test("deleting a section keeps its bots and groups", async ({ page }, testInfo) 
   await expect(sidebar.getByRole("button", { name: /^Review room/ })).toBeVisible();
   await captureScreenshot(page, testInfo, "section-deleted");
 });
-test("bots can be reordered by drag or keyboard and keep that order", async ({ page }) => {
+test("agents can be reordered by drag or keyboard and keep that order", async ({ page }) => {
   const stamp = Date.now();
-  await signup(page, `bot-reorder-${stamp}@rakazo.test`, "password12", "Bot Order");
+  await signup(page, `bot-reorder-${stamp}@rakazo.test`, "password12", "Agent Order");
   await completeOnboarding(page);
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);

@@ -11,7 +11,7 @@ export const DOCS_NAV = [
     title: "Get started",
     pages: [
       { slug: "getting-started", label: "Getting started" },
-      { slug: "bots-and-chats", label: "Bots and chats" },
+      { slug: "bots-and-chats", label: "Agents and chats" },
       { slug: "import-an-agent", label: "Import an agent" },
     ],
   },
@@ -20,7 +20,7 @@ export const DOCS_NAV = [
     pages: [
       { slug: "integrations", label: "Connect apps" },
       { slug: "routines", label: "Routines" },
-      { slug: "computer", label: "The bot's computer" },
+      { slug: "computer", label: "The agent's computer" },
       { slug: "memory", label: "Memory" },
       { slug: "skills", label: "Skills" },
       { slug: "approvals", label: "Approvals" },
@@ -48,7 +48,7 @@ export const DOCS_NAV = [
   {
     title: "Advanced",
     pages: [
-      { slug: "fleet-management", label: "Bots that manage bots" },
+      { slug: "fleet-management", label: "Agents that manage agents" },
       { slug: "build-a-plugin", label: "Build a plugin" },
     ],
   },

@@ -48,7 +48,7 @@ export class LocalAgentHomeStore implements AgentHomeStore {
 
   private botDir(botId: string) {
     if (!botId || botId === "." || botId === ".." || path.basename(botId) !== botId) {
-      throw new Error("Invalid bot id");
+      throw new Error("Invalid agent id");
     }
     return path.join(this.root, "homes", botId);
   }
@@ -466,7 +466,7 @@ export function isContained(root: string, candidate: string) {
 }
 
 function assertContained(root: string, candidate: string) {
-  if (!isContained(root, candidate)) throw new Error("Path escapes the bot home");
+  if (!isContained(root, candidate)) throw new Error("Path escapes the agent home");
 }
 
 function isHiddenTopEntry(root: string, candidate: string) {

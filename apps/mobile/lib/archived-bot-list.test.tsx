@@ -132,7 +132,7 @@ vi.mock("./native-controls", () => ({ iosAtLeast: () => true }));
 vi.mock("./floating-header", () => ({ useFloatingHeaderInset: () => swift.headerInset }));
 vi.mock("./i18n", () => ({ useI18n: () => ({ t: (text: string) => text }) }));
 
-it("gives archived bot and group rows a rectangular context-menu hit area", () => {
+it("gives archived agent and group rows a rectangular context-menu hit area", () => {
   swift.menus.length = 0;
   renderToStaticMarkup(
     <ArchivedBotList
@@ -149,7 +149,7 @@ it("gives archived bot and group rows a rectangular context-menu hit area", () =
   expect(swift.menus).toEqual([rectangle, rectangle]);
 });
 
-it("lists archived groups after bots with a group symbol, name and Restore only", () => {
+it("lists archived groups after agents with a group symbol, name and Restore only", () => {
   const onRestoreGroup = vi.fn();
   const html = renderToStaticMarkup(
     <ArchivedBotList

@@ -85,7 +85,7 @@ export function useSpaceRoster({
 
   const refreshBots = useCallback(
     async (includeArchived = false, replaceBotOrder = false) => {
-      markOnce("rk:renderer:bots-request-start");
+      markOnce("rk:renderer:agents-request-start");
       const request = ++botsRefreshEpoch.current;
       const botOrderEpoch = botOrderEpochRef.current;
       const preserveBotOrder = savingBotOrderRef.current || pendingBotOrderRef.current !== null;
@@ -98,7 +98,7 @@ export function useSpaceRoster({
           includeArchived ? rpc.groups.listArchived() : Promise.resolve(null),
         ]);
         const { bots: list, botSections: sections, groups: groupList } = navigation.current;
-        markOnce("rk:renderer:bots-response");
+        markOnce("rk:renderer:agents-response");
         const botsFresh = request === botsRefreshEpoch.current;
         const archivedFresh =
           archivedRequest != null && archivedRequest === archivedBotsRefreshEpoch.current;
@@ -387,7 +387,7 @@ export function useSpaceBootstrap({
           commitComputer(bootstrap.thread.computer ?? null);
           setRoutines(bootstrap.routines);
           setRoutinesBotId(bootstrap.thread.botId ?? null);
-          markOnce("rk:renderer:bots-response");
+          markOnce("rk:renderer:agents-response");
           markOnce("rk:renderer:thread-response");
         }
         // Checked before the roster gate: a refresh that landed first may already have moved away.

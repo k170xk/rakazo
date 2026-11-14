@@ -18,10 +18,10 @@ describe("nextAutoSpeakAction", () => {
     lastSpokenBotId: "bot-1",
     lastSpokenMessageId: "msg-1",
     runStatus: "completed" as string | null,
-    messages: [textMessage("msg-1", "Earlier."), textMessage("msg-2", "Hello from the bot.")],
+    messages: [textMessage("msg-1", "Earlier."), textMessage("msg-2", "Hello from the agent.")],
   };
 
-  it("seeds the latest reply when opening a bot so history is not spoken", () => {
+  it("seeds the latest reply when opening an agent so history is not spoken", () => {
     expect(
       nextAutoSpeakAction({
         ...base,
@@ -31,7 +31,7 @@ describe("nextAutoSpeakAction", () => {
     ).toEqual({ action: "seed", messageId: "msg-2" });
   });
 
-  it("waits until the thread snapshot belongs to this bot", () => {
+  it("waits until the thread snapshot belongs to this agent", () => {
     expect(nextAutoSpeakAction({ ...base, snapshotReady: false })).toEqual({ action: "wait" });
   });
 
@@ -56,7 +56,7 @@ describe("nextAutoSpeakAction", () => {
     expect(nextAutoSpeakAction(base)).toEqual({
       action: "speak",
       messageId: "msg-2",
-      text: "Hello from the bot.",
+      text: "Hello from the agent.",
     });
   });
 

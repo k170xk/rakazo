@@ -19,7 +19,7 @@ export function realSandboxTimeout(real: number, emulated: number) {
 
 export function activeBotId(page: Page) {
   const id = new URL(page.url()).pathname.split("/").filter(Boolean).at(-1);
-  if (!id || id === "app") throw new Error(`missing bot id in ${page.url()}`);
+  if (!id || id === "app") throw new Error(`missing agent id in ${page.url()}`);
   return id;
 }
 
@@ -198,11 +198,11 @@ export async function openNewSpace(page: Page) {
 
 export async function createBotFromPicker(
   page: Page,
-  { name = "New Bot" }: { name?: string } = {},
+  { name = "New Agent" }: { name?: string } = {},
 ) {
   await openNewBot(page);
   const dialog = page.getByTestId("create-bot-dialog");
-  await dialog.getByPlaceholder("Name your Bot").fill(name);
+  await dialog.getByPlaceholder("Name your Agent").fill(name);
   await dialog.getByRole("button", { name: "Create", exact: true }).click();
   await page.waitForURL(/\/app\/[^/]+$/);
   await expect(dialog).toBeHidden();

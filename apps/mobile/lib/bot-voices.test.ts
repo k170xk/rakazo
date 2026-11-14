@@ -260,7 +260,7 @@ describe("voiceForBot", () => {
     expect(await voiceForBot("bot-a")).toBe("gb");
   });
 
-  it("gives bots asking at the same time different voices and keeps both", async () => {
+  it("gives agents asking at the same time different voices and keeps both", async () => {
     voices.list = [
       { identifier: "en-us-x-iob-local", language: "en-US" },
       { identifier: "en-us-x-iog-local", language: "en-US" },

@@ -286,14 +286,14 @@ function measure(retain: boolean) {
   return { mount, idle, changed: ui.previews - mount - idle };
 }
 
-it("skips unchanged inbox rows for 12 idle polls and renders the changed bot", () => {
+it("skips unchanged inbox rows for 12 idle polls and renders the changed agent", () => {
   // Without retained poll results every row renders on every poll.
   expect(measure(false)).toEqual({ mount: 30, idle: 360, changed: 30 });
   expect(measure(true)).toEqual({ mount: 30, idle: 0, changed: 1 });
 });
 
 it.each(["midnight", "focus", "foreground"])(
-  "refreshes unchanged bot and group timestamps on %s",
+  "refreshes unchanged agent and group timestamps on %s",
   (trigger) => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 9, 10, 23, 59));
@@ -350,7 +350,7 @@ it.each(["midnight", "focus", "foreground"])(
   },
 );
 
-it("renders saved bot rows without a notification setting", () => {
+it("renders saved agent rows without a notification setting", () => {
   // Inboxes saved before notification settings were kept have bots without them.
   const bots = [
     { id: "bot-a", name: "Alpha", preview: "", notifyOnFinish: true },
@@ -394,7 +394,7 @@ it("renders saved bot rows without a notification setting", () => {
   expect(avatars.every((avatar) => (avatar as HTMLElement).dataset.motion === "lazy")).toBe(true);
 });
 
-it("says working only while the bot works, and shows nothing beside the time", () => {
+it("says working only while the agent works, and shows nothing beside the time", () => {
   const bots = ["running", "waiting_takeover", "waiting_input", "idle"].map(
     (status) => ({ id: status, name: "Helper", preview: "Hi", status }) as MobileBot,
   );
@@ -575,7 +575,7 @@ it("gives the long-press menu, and with it Delete, only to chats in the current 
     { type: "group", group: chat("other-group", "space-other") },
   ] as unknown as InboxItem[];
   render(<List items={items} spaceId="space-current" />);
-  expect(ui.swipeRows).toEqual(["bot:current-bot", "group:current-group"]);
+  expect(ui.swipeRows).toEqual(["agent:current-bot", "group:current-group"]);
 });
 
 it("offers every space heading's Settings, and Delete only where the member may delete it", () => {
@@ -609,8 +609,8 @@ it("offers every space heading's Settings, and Delete only where the member may 
   expect(confirmDeleteSpace).toHaveBeenCalledWith(expect.objectContaining({ id: "space-work" }));
 });
 
-it("adds a bot made from the inbox's Create menu to the inbox roster before opening its chat", async () => {
-  const bot = { id: "bot-new", name: "New Bot", spaceId: "space-a" };
+it("adds an agent made from the inbox's Create menu to the inbox roster before opening its chat", async () => {
+  const bot = { id: "bot-new", name: "New Agent", spaceId: "space-a" };
   const askedIn = { generation: 7, apiBase: "http://api.test" };
   const calls: string[] = [];
   ui.rpc.mockReset().mockImplementation(async (method: string) => {

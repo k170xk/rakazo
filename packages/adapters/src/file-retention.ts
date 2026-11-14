@@ -136,7 +136,7 @@ async function removeEntry(home: string, parent: string, name: string, trash = t
     await rename(path.join(dir, name), moved);
     return true;
   });
-  if (!done) throw new Error("That is not an item in this bot's folder.");
+  if (!done) throw new Error("That is not an item in this agent's folder.");
   await rm(moved, { recursive: true, force: true });
 }
 
@@ -206,7 +206,7 @@ function storedItemSegments(itemPath: string) {
       (segment) => segment !== "" && segment !== "." && segment !== ".." && visible(segment),
     ) &&
     (segments.length === 1 || (segments.length === 2 && OUTPUT_FOLDERS.includes(segments[0]!)));
-  if (!shapeOk) throw new Error("That is not an item in this bot's folder.");
+  if (!shapeOk) throw new Error("That is not an item in this agent's folder.");
   return segments;
 }
 
@@ -224,7 +224,7 @@ export async function removeStoredItem(home: string, botFolder: string, itemPath
 export async function openStoredFile(home: string, botFolder: string, itemPath: string) {
   const segments = itemPath.split("/");
   const pinned = await pinnedDirectory(home, path.posix.join(botFolder, ...segments.slice(0, -1)));
-  if (!pinned) throw new Error("That is not an item in this bot's folder.");
+  if (!pinned) throw new Error("That is not an item in this agent's folder.");
   try {
     return await open(
       path.join(pinned.path, segments[segments.length - 1]!),
@@ -715,5 +715,5 @@ export async function storageRefusal(input: {
     measuredAt: input.computer.homeBytesAt,
   });
   if (usage.usedBytes < usage.limitBytes) return null;
-  return `Your storage is full (${formatBytes(usage.usedBytes)} of ${formatBytes(usage.limitBytes)}, counting files bots attached in chats). Ask the person to open Manage storage from their account menu to download or delete old files, or ask an admin for a higher limit.`;
+  return `Your storage is full (${formatBytes(usage.usedBytes)} of ${formatBytes(usage.limitBytes)}, counting files agents attached in chats). Ask the person to open Manage storage from their account menu to download or delete old files, or ask an admin for a higher limit.`;
 }

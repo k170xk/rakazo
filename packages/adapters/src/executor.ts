@@ -129,6 +129,7 @@ import {
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { dailyLimitRefusal, dailyRunLimitsFromEnv } from "./daily-run-limits.js";
 import { resolveDeploymentModel } from "./deployment-model.js";
+import { loadFilingProfile } from "./email-filing.js";
 import { evolveAssistantAccessError } from "./evolve-assistants.js";
 import { evolvePersonContext } from "./evolve-person-context.js";
 import type { ExecutorDeps } from "./executor-deps.js";
@@ -482,7 +483,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           computer: { select: { scope: true } },
         },
       });
-      if (!leaseTarget.computerId) throw new Error("Bot has no computer");
+      if (!leaseTarget.computerId) throw new Error("Agent has no computer");
       if (leaseTarget.computerSwitching) {
         await requeueComputerRun(deps, runId, workerId, fence, resumeCheckpoint, heldForTakeover);
         return;
@@ -1329,7 +1330,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           });
         }
 
-        if (!bot.computer) throw new Error("Bot has no computer");
+        if (!bot.computer) throw new Error("Agent has no computer");
         const storedComputer = bot.computer;
         const computerMode = parseComputerMode(storedComputer.scope);
         const artifacts = deps.artifacts;
@@ -1702,6 +1703,20 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             userComputer = "offline";
           }
         }
+        const outlookConnected = Boolean(
+          context.connectedConnections?.some(
+            (connection) =>
+              connection.connectorId === "microsoft" && connection.externalId === OUTLOOK_PROVIDER,
+          ),
+        );
+        const outlookFiling =
+          ownerFeatures.outlookFiling &&
+          ownersPrivateChat &&
+          !nonOwnerChatRun &&
+          outlookConnected &&
+          (await loadFilingProfile(deps.prisma, { spaceId: run.spaceId, userId: run.userId })
+            .then((profile) => profile.settings.enabled)
+            .catch(() => false));
         const builtins = [
           ...selectBuiltinToolsForRun({
             ticketBoardEnabled: deps.ticketBoardEnabled,
@@ -1753,13 +1768,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               ownerFeatures.outlookSend &&
               ownersPrivateChat &&
               !nonOwnerChatRun &&
-              Boolean(
-                context.connectedConnections?.some(
-                  (connection) =>
-                    connection.connectorId === "microsoft" &&
-                    connection.externalId === OUTLOOK_PROVIDER,
-                ),
-              ),
+              outlookConnected,
+            outlookFiling,
           }),
           // Cross-owner agent connections only exist for chat-linked bots.
           ...(hasMessagingIdentity &&
@@ -1874,8 +1884,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const hostInstruction = !hostEnvironment
           ? undefined
           : computerKind === "wuying"
-            ? `Commands run on a Windows cloud computer. ${hostShell} Files outside the bot workspace can be accessed through commands. The screen shows the Windows desktop; use the graphical tools for apps without a command line.`
-            : `Commands run on the user's ${hostEnvironment.platform} computer with their account permissions. ${hostShell} Local files outside the bot workspace can be accessed through commands. App launching is available through OS commands; graphical screen control is unavailable.`;
+            ? `Commands run on a Windows cloud computer. ${hostShell} Files outside the agent workspace can be accessed through commands. The screen shows the Windows desktop; use the graphical tools for apps without a command line.`
+            : `Commands run on the user's ${hostEnvironment.platform} computer with their account permissions. ${hostShell} Local files outside the agent workspace can be accessed through commands. App launching is available through OS commands; graphical screen control is unavailable.`;
         const computerInstruction =
           computerAccess !== "full"
             ? limitedComputerInstruction(
@@ -1900,7 +1910,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           : computerAccess === "none"
             ? ""
             : computerMode === "team"
-              ? `Your Team Computer home is ${teamBotWorkspaceDirectory(bot.id)}. Relative file paths and shell working directories start there. Put intentionally shared work under shared/. Other bots' folders are visible under bots/; treat them as their working areas.`
+              ? `Your Team Computer home is ${teamBotWorkspaceDirectory(bot.id)}. Relative file paths and shell working directories start there. Put intentionally shared work under shared/. Other agents' folders are visible under agents/; treat them as their working areas.`
               : "This entire computer workspace is your private home. Relative file paths and shell working directories start at its root.";
 
         const reply = await createReplyState(deps, run, runSecrets);

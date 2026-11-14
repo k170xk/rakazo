@@ -50,7 +50,7 @@ describe("stuck work age", () => {
     expect(stuckWorkStatusMessage("waiting_takeover")).toMatch(/screen/);
     expect(stuckWorkStoppedNotification("waiting_input", "  ")).toEqual({
       kind: "failure",
-      title: "Bot stopped",
+      title: "Agent stopped",
       body: stuckWorkStatusMessage("waiting_input"),
     });
     expect(stuckWorkReminder("waiting_takeover", "Ada")).toMatchObject({

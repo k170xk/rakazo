@@ -16,7 +16,7 @@ function item(name: string, size: number, modifiedDaysAgo: number, deletesInDays
   return {
     ref: { kind: "computer", botId: "bot", path: name },
     name,
-    botName: "Bot",
+    botName: "Agent",
     kind: "file",
     size,
     modifiedAt: new Date(NOW - modifiedDaysAgo * DAY).toISOString(),

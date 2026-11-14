@@ -19,6 +19,7 @@ import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { EmailDraftCard } from "../../components/EmailDraftCard";
+import { EmailFilingCard } from "../../components/EmailFilingCard";
 import { LearningClinicCard } from "../../components/LearningClinicCard";
 import { PageBlockCard } from "../../components/pages/PageBlockCard";
 import { SubagentCard } from "../../components/SubagentCard";
@@ -230,7 +231,7 @@ export const MessageView = memo(function MessageView({
             ? t`You`
             : ((replyBotId ? peerBot(replyBotId)?.name : undefined) ??
               memberName?.(replyBotId) ??
-              t`Bot`)
+              t`Agent`)
         }
         onJump={onJumpToMessage}
       />
@@ -354,8 +355,8 @@ export const MessageView = memo(function MessageView({
           }
           if (isToolActivityBlock(block)) return null;
           if (block.kind === "handoff") {
-            const from = memberName?.(block.fromBotId) ?? t`bot`;
-            const to = memberName?.(block.toBotId) ?? t`bot`;
+            const from = memberName?.(block.fromBotId) ?? t`agent`;
+            const to = memberName?.(block.toBotId) ?? t`agent`;
             return (
               <div
                 key={i}
@@ -507,7 +508,14 @@ export const MessageView = memo(function MessageView({
           if (block.kind === "email_draft") {
             return (
               <div key={i} className="flex justify-start">
-                <EmailDraftCard draftId={block.draftId} />
+                <EmailDraftCard draftId={block.draftId} version={block.version} />
+              </div>
+            );
+          }
+          if (block.kind === "email_filing") {
+            return (
+              <div key={i} className="flex justify-start">
+                <EmailFilingCard batchId={block.batchId} />
               </div>
             );
           }

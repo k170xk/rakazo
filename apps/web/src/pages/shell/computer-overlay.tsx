@@ -196,7 +196,7 @@ export function ComputerOverlay({
             <>
               <iframe
                 key={screenFrameKey}
-                title={t`Bot screen`}
+                title={t`Agent screen`}
                 ref={screenFrameRef}
                 src={embeddedScreenUrl}
                 sandbox={screenIframeSandbox(embeddedScreenUrl)}

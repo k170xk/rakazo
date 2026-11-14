@@ -13,6 +13,16 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. js-lingui-explicit-id
+#: src/lib/browser-notifications.ts
+#~ msgid "Bot"
+#~ msgstr "Bot"
+
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+#~ msgid "Connect a model in Settings before running bots."
+#~ msgstr "Connect a model in Settings before running bots."
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
 msgstr " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
@@ -56,8 +66,13 @@ msgstr "{0, plural, one {# account} other {# accounts}}"
 
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
-msgid "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
-msgstr "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
+msgid "{0, plural, one {# agent has its own model:} other {# agents have their own model:}}"
+msgstr "{0, plural, one {# agent has its own model:} other {# agents have their own model:}}"
+
+#. placeholder {0}: pinned.length
+#: src/pages/model-settings/space-bots-model.tsx
+#~ msgid "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
+#~ msgstr "{0, plural, one {# bot has its own model:} other {# bots have their own model:}}"
 
 #. placeholder {0}: data.totals.unmeasuredCalls
 #: src/pages/AdminStaffSpending.tsx
@@ -137,8 +152,13 @@ msgstr "{0, plural, one {Delete # file ({chosenSize})?} other {Delete # files ({
 
 #. placeholder {0}: data.chatRetentionDays
 #: src/components/StorageDialog.tsx
-msgid "{0, plural, one {Files bots attach in chats are deleted # day after they were made.} other {Files bots attach in chats are deleted # days after they were made.}}"
-msgstr "{0, plural, one {Files bots attach in chats are deleted # day after they were made.} other {Files bots attach in chats are deleted # days after they were made.}}"
+msgid "{0, plural, one {Files agents attach in chats are deleted # day after they were made.} other {Files agents attach in chats are deleted # days after they were made.}}"
+msgstr "{0, plural, one {Files agents attach in chats are deleted # day after they were made.} other {Files agents attach in chats are deleted # days after they were made.}}"
+
+#. placeholder {0}: data.chatRetentionDays
+#: src/components/StorageDialog.tsx
+#~ msgid "{0, plural, one {Files bots attach in chats are deleted # day after they were made.} other {Files bots attach in chats are deleted # days after they were made.}}"
+#~ msgstr "{0, plural, one {Files bots attach in chats are deleted # day after they were made.} other {Files bots attach in chats are deleted # days after they were made.}}"
 
 #. placeholder {0}: data.retentionDays
 #: src/pages/shell/files-tab.tsx
@@ -152,8 +172,13 @@ msgstr "{0, plural, one {Mask active · # region · Render will target selection
 
 #. placeholder {0}: pinned.length
 #: src/pages/model-settings/space-bots-model.tsx
-msgid "{0, plural, one {Switch # bot to the space default?} other {Switch # bots to the space default?}}"
-msgstr "{0, plural, one {Switch # bot to the space default?} other {Switch # bots to the space default?}}"
+msgid "{0, plural, one {Switch # agent to the space default?} other {Switch # agents to the space default?}}"
+msgstr "{0, plural, one {Switch # agent to the space default?} other {Switch # agents to the space default?}}"
+
+#. placeholder {0}: pinned.length
+#: src/pages/model-settings/space-bots-model.tsx
+#~ msgid "{0, plural, one {Switch # bot to the space default?} other {Switch # bots to the space default?}}"
+#~ msgstr "{0, plural, one {Switch # bot to the space default?} other {Switch # bots to the space default?}}"
 
 #. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
 #: src/pages/model-settings/connection-controls.tsx
@@ -293,8 +318,14 @@ msgstr "{0} of {1} used"
 #. placeholder {0}: formatSize(data.computerBytes)
 #. placeholder {1}: formatSize(data.chatBytes)
 #: src/components/StorageDialog.tsx
-msgid "{0} on bot computers · {1} attached in chats."
-msgstr "{0} on bot computers · {1} attached in chats."
+msgid "{0} on agent computers · {1} attached in chats."
+msgstr "{0} on agent computers · {1} attached in chats."
+
+#. placeholder {0}: formatSize(data.computerBytes)
+#. placeholder {1}: formatSize(data.chatBytes)
+#: src/components/StorageDialog.tsx
+#~ msgid "{0} on bot computers · {1} attached in chats."
+#~ msgstr "{0} on bot computers · {1} attached in chats."
 
 #. placeholder {0}: questions.length
 #: src/components/LearningClinicCard.tsx
@@ -328,8 +359,13 @@ msgstr "{0} tools"
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
-msgid "{0} was removed by your company's file cleanup. Ask the bot to make it again."
-msgstr "{0} was removed by your company's file cleanup. Ask the bot to make it again."
+msgid "{0} was removed by your company's file cleanup. Ask the agent to make it again."
+msgstr "{0} was removed by your company's file cleanup. Ask the agent to make it again."
+
+#. placeholder {0}: props.name
+#: src/components/ArtifactFileCard.tsx
+#~ msgid "{0} was removed by your company's file cleanup. Ask the bot to make it again."
+#~ msgstr "{0} was removed by your company's file cleanup. Ask the bot to make it again."
 
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
@@ -345,8 +381,12 @@ msgid "{blocked} need access"
 msgstr "{blocked} need access"
 
 #: src/pages/shell/dialogs.tsx
-msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
-msgstr "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
+msgid "{botCount, plural, one {Delete {name} and its # agent?} other {Delete {name} and its # agents?}}"
+msgstr "{botCount, plural, one {Delete {name} and its # agent?} other {Delete {name} and its # agents?}}"
+
+#: src/pages/shell/dialogs.tsx
+#~ msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
+#~ msgstr "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
 
 #: src/pages/shell/computer-view.tsx
 msgid "{botName}’s computer"
@@ -446,6 +486,10 @@ msgstr "{hours}h ago"
 msgid "{label}, empty"
 msgstr "{label}, empty"
 
+#: src/components/SidebarMeters.tsx
+msgid "{left}% left"
+msgstr "{left}% left"
+
 #: src/lib/relative-time.ts
 msgid "{minutes}m ago"
 msgstr "{minutes}m ago"
@@ -459,8 +503,12 @@ msgid "{modeNoun} selected"
 msgstr "{modeNoun} selected"
 
 #: src/pages/model-settings/space-bots-model.tsx
-msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
-msgstr "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
+msgid "{moved, plural, one {# agent now uses the space default.} other {# agents now use the space default.}}"
+msgstr "{moved, plural, one {# agent now uses the space default.} other {# agents now use the space default.}}"
+
+#: src/pages/model-settings/space-bots-model.tsx
+#~ msgid "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
+#~ msgstr "{moved, plural, one {# bot now uses the space default.} other {# bots now use the space default.}}"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{name} (same name as a built-in skill)"
@@ -716,8 +764,12 @@ msgid "A bit of everything"
 msgstr "A bit of everything"
 
 #: src/pages/shell/create-bot-dialog.tsx
-msgid "A blank bot"
-msgstr "A blank bot"
+msgid "A blank agent"
+msgstr "A blank agent"
+
+#: src/pages/shell/create-bot-dialog.tsx
+#~ msgid "A blank bot"
+#~ msgstr "A blank bot"
 
 #: src/pages/SharedChats.tsx
 #: src/pages/Shell.tsx
@@ -748,9 +800,17 @@ msgstr "A reviewer checks it against the brief and sends it back to you"
 msgid "A routine is a task an agent carries out on a schedule or when something changes, then delivers the result to you."
 msgstr "A routine is a task an agent carries out on a schedule or when something changes, then delivers the result to you."
 
+#: src/components/apps/AppsDialog.tsx
+msgid "A separate dataset per project or site, roles, private rows and avatars."
+msgstr "A separate dataset per project or site, roles, private rows and avatars."
+
 #: src/pages/shell/bot-picker.tsx
-msgid "A separate work space. It opens straight away, with its own bots and apps."
-msgstr "A separate work space. It opens straight away, with its own bots and apps."
+msgid "A separate work space. It opens straight away, with its own agents and apps."
+msgstr "A separate work space. It opens straight away, with its own agents and apps."
+
+#: src/pages/shell/bot-picker.tsx
+#~ msgid "A separate work space. It opens straight away, with its own bots and apps."
+#~ msgstr "A separate work space. It opens straight away, with its own bots and apps."
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
@@ -771,8 +831,12 @@ msgid "A subscription credential is stored securely."
 msgstr "A subscription credential is stored securely."
 
 #: src/pages/shell/bot-picker.tsx
-msgid "A team inside this work space, with its own bots, chats and files."
-msgstr "A team inside this work space, with its own bots, chats and files."
+msgid "A team inside this work space, with its own agents, chats and files."
+msgstr "A team inside this work space, with its own agents, chats and files."
+
+#: src/pages/shell/bot-picker.tsx
+#~ msgid "A team inside this work space, with its own bots, chats and files."
+#~ msgstr "A team inside this work space, with its own bots, chats and files."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "A team keeps its chats and files separate from the rest of the work space"
@@ -783,8 +847,12 @@ msgid "A work package's requester and assignee can change it, and anyone can add
 msgstr "A work package's requester and assignee can change it, and anyone can add one assigned to themselves, even when they are not on the team."
 
 #: src/pages/KnowledgeSection.tsx
-msgid "About {kb} KB of memory no longer reaches the bot."
-msgstr "About {kb} KB of memory no longer reaches the bot."
+msgid "About {kb} KB of memory no longer reaches the agent."
+msgstr "About {kb} KB of memory no longer reaches the agent."
+
+#: src/pages/KnowledgeSection.tsx
+#~ msgid "About {kb} KB of memory no longer reaches the bot."
+#~ msgstr "About {kb} KB of memory no longer reaches the bot."
 
 #: src/components/InfoTooltip.tsx
 msgid "About {label}"
@@ -878,6 +946,10 @@ msgstr "Active"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"
 msgstr "Activity"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Activity feed, comments on a record, who is viewing it, and its change history."
+msgstr "Activity feed, comments on a record, who is viewing it, and its change history."
 
 #: src/components/ImageLightbox.tsx
 msgid "Actual size"
@@ -1140,8 +1212,12 @@ msgid "Added References:"
 msgstr "Added References:"
 
 #: src/components/EmailSignatureSettings.tsx
-msgid "Added under every Outlook email you send from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
-msgstr "Added under every Outlook email you send from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
+msgid "Added under every Outlook draft you create from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
+msgstr "Added under every Outlook draft you create from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
+
+#: src/components/EmailSignatureSettings.tsx
+#~ msgid "Added under every Outlook email you send from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
+#~ msgstr "Added under every Outlook email you send from a draft card. In Outlook, open Settings, then Signatures, select your signature, copy it and paste it below."
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Adding a line above a total grows the total to include it"
@@ -1200,9 +1276,61 @@ msgstr "After"
 msgid "AFTER"
 msgstr "AFTER"
 
+#: src/pages/shell/message-view.tsx
+msgid "agent"
+msgstr "agent"
+
+#: src/lib/identity-display.ts
+#: src/pages/IntegrationSetup.tsx
+#: src/pages/MessagingSettingsPanel.tsx
+#: src/pages/Shell.tsx
+#: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/message-view.tsx
+#: src/pages/SpaceSearch.tsx
+msgid "Agent"
+msgstr "Agent"
+
+#. js-lingui-explicit-id
+#: src/lib/browser-notifications.ts
+msgid "Agent"
+msgstr "Agent"
+
 #: src/components/AccountDataSettings.tsx
 msgid "Agent from another app"
 msgstr "Agent from another app"
+
+#: src/components/teach/TeachRecordingChrome.tsx
+msgid "Agent is watching, not acting"
+msgstr "Agent is watching, not acting"
+
+#: src/pages/model-settings/space-bots-model.tsx
+msgid "Agent models"
+msgstr "Agent models"
+
+#: src/pages/shell/computer-overlay.tsx
+msgid "Agent screen"
+msgstr "Agent screen"
+
+#: src/pages/shell/computer-panel.tsx
+msgid "Agent screen preview"
+msgstr "Agent screen preview"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Agent style"
+msgstr "Agent style"
+
+#: src/pages/Artifacts.tsx
+msgid "Agents"
+msgstr "Agents"
+
+#: src/components/ModelCredits.tsx
+msgid "Agents and browser automation"
+msgstr "Agents and browser automation"
+
+#. placeholder {0}: group.ownerName
+#: src/pages/SharedChats.tsx
+msgid "Agents answer you with the web, cards and files, without {0}'s private memory, logins or apps."
+msgstr "Agents answer you with the web, cards and files, without {0}'s private memory, logins or apps."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Agents can look back through earlier chats when you refer to them"
@@ -1212,6 +1340,10 @@ msgstr "Agents can look back through earlier chats when you refer to them"
 msgid "Agents can message one another and pass tasks along, so each one does what it's best at."
 msgstr "Agents can message one another and pass tasks along, so each one does what it's best at."
 
+#: src/components/StorageDialog.tsx
+msgid "Agents can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
+msgstr "Agents can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Agents hand work to each other"
 msgstr "Agents hand work to each other"
@@ -1220,6 +1352,10 @@ msgstr "Agents hand work to each other"
 msgid "Agents keep working while you get on with something else"
 msgstr "Agents keep working while you get on with something else"
 
+#: src/pages/AdminAssistantModels.tsx
+msgid "Agents people start from one of these assistants run on the model chosen here, using the company key. Blank agents, and assistants left on the company model, use the company model above."
+msgstr "Agents people start from one of these assistants run on the model chosen here, using the company key. Blank agents, and assistants left on the company model, use the company model above."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Agents remember what matters across chats: your preferences, your projects and the decisions you've made. They also know who you are from your Evolve CV, so their work fits your role from the very first message."
 msgstr "Agents remember what matters across chats: your preferences, your projects and the decisions you've made. They also know who you are from your Evolve CV, so their work fits your role from the very first message."
@@ -1227,6 +1363,10 @@ msgstr "Agents remember what matters across chats: your preferences, your projec
 #: src/components/tour/ocsc-tour.tsx
 msgid "Agents that work like teammates"
 msgstr "Agents that work like teammates"
+
+#: src/pages/Paywall.tsx
+msgid "Agents with their own computer and browser"
+msgstr "Agents with their own computer and browser"
 
 #: src/components/todos/todo-board.tsx
 msgid "AI"
@@ -1263,8 +1403,14 @@ msgstr "All {credit} goes to model usage."
 #: src/components/integrations/agent-access.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/agent-import.tsx
-msgid "All bots"
-msgstr "All bots"
+msgid "All agents"
+msgstr "All agents"
+
+#: src/components/integrations/agent-access.tsx
+#: src/pages/Artifacts.tsx
+#: src/pages/shell/agent-import.tsx
+#~ msgid "All bots"
+#~ msgstr "All bots"
 
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "All documents"
@@ -1284,16 +1430,24 @@ msgid "All time"
 msgstr "All time"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
-msgstr "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
+msgid "All your agents work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' agents never use it."
+msgstr "All your agents work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' agents never use it."
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
+#~ msgstr "All your bots work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' bots never use it."
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "Allow"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Allow cross-space bot communication"
-msgstr "Allow cross-space bot communication"
+msgid "Allow cross-space agent communication"
+msgstr "Allow cross-space agent communication"
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "Allow cross-space bot communication"
+#~ msgstr "Allow cross-space bot communication"
 
 #: src/components/AskCard.tsx
 msgid "Allow in this space"
@@ -1383,9 +1537,17 @@ msgstr "An imported API key could not be used. Untick it and try again."
 msgid "An integration tool"
 msgstr "An integration tool"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "An OCSC app is containerized inside Evolve, in our own ecosystem. It uses the company sign-in and the data we already trust, and it stays in that sandbox rather than becoming a separate website."
+msgstr "An OCSC app is containerized inside Evolve, in our own ecosystem. It uses the company sign-in and the data we already trust, and it stays in that sandbox rather than becoming a separate website."
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Animated charts, statements and transitions; widescreen or vertical"
 msgstr "Animated charts, statements and transitions; widescreen or vertical"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Animations, staggered entrances, light and dark themes, and phone layouts."
+msgstr "Animations, staggered entrances, light and dark themes, and phone layouts."
 
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
@@ -1483,6 +1645,7 @@ msgid "API URL"
 msgstr "API URL"
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/apps/AppViewer.tsx
 #: src/components/pages/PageCard.tsx
 #: src/components/pages/PageView.tsx
 #: src/pages/AdminApps.tsx
@@ -1526,6 +1689,10 @@ msgstr "App Studio"
 #: src/components/pages/PageView.tsx
 msgid "App title"
 msgstr "App title"
+
+#: src/components/pages/PageCard.tsx
+msgid "App updated"
+msgstr "App updated"
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -1607,21 +1774,31 @@ msgstr "Approved: taking you off the team"
 msgid "Approving…"
 msgstr "Approving…"
 
+#: src/components/apps/AppsDialog.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/command-palette.tsx
+#: src/pages/shell/shell-sidebar.tsx
 msgid "Apps"
 msgstr "Apps"
 
 #: src/components/pages/PagesList.tsx
-msgid "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
-msgstr "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+msgid "Apps this agent builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+msgstr "Apps this agent builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+
+#: src/components/pages/PagesList.tsx
+#~ msgid "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+#~ msgstr "Apps this bot builds for you appear here. Ask for a dashboard, tracker or plan to make one."
 
 #: src/components/pages/PagesList.tsx
 msgid "Apps this group builds for you appear here. Ask for a dashboard, tracker or plan to make one."
 msgstr "Apps this group builds for you appear here. Ask for a dashboard, tracker or plan to make one."
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Apps you ask an agent to build appear here, and stay if that agent is removed."
+msgstr "Apps you ask an agent to build appear here, and stay if that agent is removed."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Apps, Connectors and Routines that extend what agents can do"
@@ -1641,8 +1818,16 @@ msgid "Archived"
 msgstr "Archived"
 
 #: src/pages/shell/archived-chats.tsx
-msgid "Archived bots"
-msgstr "Archived bots"
+msgid "Archived agents"
+msgstr "Archived agents"
+
+#: src/pages/shell/archived-chats.tsx
+#~ msgid "Archived bots"
+#~ msgstr "Archived bots"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Area, bar, line, donut, funnel, gauge, scatter, sparklines and KPI trends."
+msgstr "Area, bar, line, donut, funnel, gauge, scatter, sparklines and KPI trends."
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Arguments"
@@ -1671,12 +1856,20 @@ msgid "Ask it anything, or for any OCSC deliverable"
 msgstr "Ask it anything, or for any OCSC deliverable"
 
 #: src/components/apps/AppVisualEdit.tsx
-msgid "Ask the bot"
-msgstr "Ask the bot"
+msgid "Ask the agent"
+msgstr "Ask the agent"
 
 #: src/components/apps/AppStudio.tsx
-msgid "Ask the bot to fix it"
-msgstr "Ask the bot to fix it"
+msgid "Ask the agent to fix it"
+msgstr "Ask the agent to fix it"
+
+#: src/components/apps/AppVisualEdit.tsx
+#~ msgid "Ask the bot"
+#~ msgstr "Ask the bot"
+
+#: src/components/apps/AppStudio.tsx
+#~ msgid "Ask the bot to fix it"
+#~ msgstr "Ask the bot to fix it"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Ask your administrator if you need one."
@@ -1847,6 +2040,10 @@ msgstr "Back to your chats"
 msgid "Background"
 msgstr "Background"
 
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Balanced grid"
+msgstr "Balanced grid"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Base URL"
@@ -1910,8 +2107,13 @@ msgstr "Blocked"
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/Board.tsx
+#: src/pages/shell/shell-sidebar.tsx
 msgid "Board"
 msgstr "Board"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Boards & to-dos"
+msgstr "Boards & to-dos"
 
 #: src/components/EmailDraftCard.tsx
 msgid "Bold"
@@ -1923,8 +2125,8 @@ msgid "Booting live desktop…"
 msgstr "Booting live desktop…"
 
 #: src/pages/shell/message-view.tsx
-msgid "bot"
-msgstr "bot"
+#~ msgid "bot"
+#~ msgstr "bot"
 
 #: src/lib/identity-display.ts
 #: src/pages/IntegrationSetup.tsx
@@ -1933,62 +2135,57 @@ msgstr "bot"
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/message-view.tsx
 #: src/pages/SpaceSearch.tsx
-msgid "Bot"
-msgstr "Bot"
-
-#. js-lingui-explicit-id
-#: src/lib/browser-notifications.ts
-msgid "Bot"
-msgstr "Bot"
+#~ msgid "Bot"
+#~ msgstr "Bot"
 
 #: src/components/teach/TeachRecordingChrome.tsx
-msgid "Bot is watching, not acting"
-msgstr "Bot is watching, not acting"
+#~ msgid "Bot is watching, not acting"
+#~ msgstr "Bot is watching, not acting"
 
 #: src/pages/model-settings/space-bots-model.tsx
-msgid "Bot models"
-msgstr "Bot models"
+#~ msgid "Bot models"
+#~ msgstr "Bot models"
 
 #: src/pages/shell/computer-overlay.tsx
-msgid "Bot screen"
-msgstr "Bot screen"
+#~ msgid "Bot screen"
+#~ msgstr "Bot screen"
 
 #: src/pages/shell/computer-panel.tsx
-msgid "Bot screen preview"
-msgstr "Bot screen preview"
+#~ msgid "Bot screen preview"
+#~ msgstr "Bot screen preview"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Bot style"
-msgstr "Bot style"
+#~ msgid "Bot style"
+#~ msgstr "Bot style"
 
 #: src/components/SignupSurvey.tsx
 msgid "Both"
 msgstr "Both"
 
 #: src/pages/Artifacts.tsx
-msgid "Bots"
-msgstr "Bots"
+#~ msgid "Bots"
+#~ msgstr "Bots"
 
 #: src/components/ModelCredits.tsx
-msgid "Bots and browser automation"
-msgstr "Bots and browser automation"
+#~ msgid "Bots and browser automation"
+#~ msgstr "Bots and browser automation"
 
 #. placeholder {0}: group.ownerName
 #: src/pages/SharedChats.tsx
-msgid "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
-msgstr "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
+#~ msgid "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
+#~ msgstr "Bots answer you with the web, cards and files, without {0}'s private memory, logins or apps."
 
 #: src/components/StorageDialog.tsx
-msgid "Bots can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
-msgstr "Bots can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
+#~ msgid "Bots can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
+#~ msgstr "Bots can't make new documents or videos until you free up space. Download anything you want to keep, then delete it here."
 
 #: src/pages/AdminAssistantModels.tsx
-msgid "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
-msgstr "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
+#~ msgid "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
+#~ msgstr "Bots people start from one of these assistants run on the model chosen here, using the company key. Blank bots, and assistants left on the company model, use the company model above."
 
 #: src/pages/Paywall.tsx
-msgid "Bots with their own computer and browser"
-msgstr "Bots with their own computer and browser"
+#~ msgid "Bots with their own computer and browser"
+#~ msgstr "Bots with their own computer and browser"
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
@@ -2092,6 +2289,10 @@ msgstr "By the assistant"
 msgid "By the assistant, for {by}"
 msgstr "By the assistant, for {by}"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Calendars & planning"
+msgstr "Calendars & planning"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
 msgstr "Call"
@@ -2145,6 +2346,7 @@ msgstr "Can't read images"
 #: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/EmailDraftCard.tsx
 #: src/components/integrations/CompanyMcpApp.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/markdown-link-prompt.tsx
@@ -2173,8 +2375,12 @@ msgid "Cancel"
 msgstr "Cancel"
 
 #: src/pages/shell/agent-import.tsx
-msgid "Cancel new bot"
-msgstr "Cancel new bot"
+msgid "Cancel new agent"
+msgstr "Cancel new agent"
+
+#: src/pages/shell/agent-import.tsx
+#~ msgid "Cancel new bot"
+#~ msgstr "Cancel new bot"
 
 #: src/pages/GroupPanel.tsx
 msgid "Cancel new group"
@@ -2318,6 +2524,7 @@ msgid "Chart failed to render: {error}"
 msgstr "Chart failed to render: {error}"
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
 #: src/pages/AdminCompanyPage.tsx
 msgid "Chat"
 msgstr "Chat"
@@ -2335,8 +2542,12 @@ msgid "Chat Settings"
 msgstr "Chat Settings"
 
 #: src/pages/MessagingSettingsPanel.tsx
-msgid "Chat with your bot from Slack."
-msgstr "Chat with your bot from Slack."
+msgid "Chat with your agent from Slack."
+msgstr "Chat with your agent from Slack."
+
+#: src/pages/MessagingSettingsPanel.tsx
+#~ msgid "Chat with your bot from Slack."
+#~ msgstr "Chat with your bot from Slack."
 
 #: src/lib/localized-provider-hint.ts
 msgid "ChatGPT subscription"
@@ -2347,8 +2558,12 @@ msgid "Chats"
 msgstr "Chats"
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Chats show a card for each tool a bot runs."
-msgstr "Chats show a card for each tool a bot runs."
+#~ msgid "Chats show a card for each tool a bot runs."
+#~ msgstr "Chats show a card for each tool a bot runs."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Chats show a card for each tool an agent runs."
+msgstr "Chats show a card for each tool an agent runs."
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/pages/HostComputerPrompt.tsx
@@ -2446,8 +2661,8 @@ msgid "Checking…"
 msgstr "Checking…"
 
 #: src/pages/shell/avatar-studio-popover.tsx
-msgid "Choose a bot shape, color, or upload an image"
-msgstr "Choose a bot shape, color, or upload an image"
+#~ msgid "Choose a bot shape, color, or upload an image"
+#~ msgstr "Choose a bot shape, color, or upload an image"
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Choose a buddy"
@@ -2469,6 +2684,10 @@ msgstr "Choose a project"
 #: src/pages/Onboarding.tsx
 msgid "Choose a provider"
 msgstr "Choose a provider"
+
+#: src/pages/shell/avatar-studio-popover.tsx
+msgid "Choose an agent shape, color, or upload an image"
+msgstr "Choose an agent shape, color, or upload an image"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose backup"
@@ -2590,6 +2809,10 @@ msgstr "Client"
 msgid "Client:"
 msgstr "Client:"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Clients & fees"
+msgstr "Clients & fees"
+
 #: src/pages/KnowledgeSection.tsx
 msgid "Clients and projects"
 msgstr "Clients and projects"
@@ -2612,7 +2835,9 @@ msgid "Close"
 msgstr "Close"
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/apps/AppViewer.tsx
 #: src/components/pages/PageView.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Close app"
 msgstr "Close app"
 
@@ -2728,8 +2953,12 @@ msgid "Colleagues and agents, together"
 msgstr "Colleagues and agents, together"
 
 #: src/components/GroupPeople.tsx
-msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connectors."
-msgstr "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connectors."
+msgid "Colleagues chat with this group's agents. Agents answer them without your memory, notes, saved logins or connectors."
+msgstr "Colleagues chat with this group's agents. Agents answer them without your memory, notes, saved logins or connectors."
+
+#: src/components/GroupPeople.tsx
+#~ msgid "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connectors."
+#~ msgstr "Colleagues chat with this group's bots. Bots answer them without your memory, notes, saved logins or connectors."
 
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Colleagues start their own"
@@ -2762,6 +2991,10 @@ msgstr "Column name"
 #: src/components/apps/AppDataPanel.tsx
 msgid "Column type"
 msgstr "Column type"
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Columns by section"
+msgstr "Columns by section"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Come back to this tour any time from the sidebar"
@@ -2969,8 +3202,12 @@ msgid "Computers and routines"
 msgstr "Computers and routines"
 
 #: src/components/ComputersUnavailableHint.tsx
-msgid "Computers are available. Reload or open a bot to continue."
-msgstr "Computers are available. Reload or open a bot to continue."
+#~ msgid "Computers are available. Reload or open a bot to continue."
+#~ msgstr "Computers are available. Reload or open a bot to continue."
+
+#: src/components/ComputersUnavailableHint.tsx
+msgid "Computers are available. Reload or open an agent to continue."
+msgstr "Computers are available. Reload or open an agent to continue."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Computers are off for the company"
@@ -3055,8 +3292,8 @@ msgstr "Connect a model"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect a model in Settings before running bots."
-msgstr "Connect a model in Settings before running bots."
+msgid "Connect a model in Settings before running agents."
+msgstr "Connect a model in Settings before running agents."
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "Connect API key"
@@ -3262,6 +3499,10 @@ msgstr "Copy prompt"
 msgid "Copy rows"
 msgstr "Copy rows"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Copy your signature from Outlook (Settings → Signatures) and paste it below. It will be included on every draft you create."
+msgstr "Copy your signature from Outlook (Settings → Signatures) and paste it below. It will be included on every draft you create."
+
 #: src/components/apps/AppVisualEdit.tsx
 msgid "Corners"
 msgstr "Corners"
@@ -3336,6 +3577,7 @@ msgid "Could not change where this is available"
 msgstr "Could not change where this is available"
 
 #: src/components/pages/PageViewHost.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Could not change who can view this app. Try again."
 msgstr "Could not change who can view this app. Try again."
 
@@ -3404,8 +3646,13 @@ msgstr "Could not continue"
 
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-dialog.tsx
-msgid "Could not create bot"
-msgstr "Could not create bot"
+msgid "Could not create agent"
+msgstr "Could not create agent"
+
+#: src/pages/shell/agent-import.tsx
+#: src/pages/shell/create-bot-dialog.tsx
+#~ msgid "Could not create bot"
+#~ msgstr "Could not create bot"
 
 #: src/pages/GroupPanel.tsx
 msgid "Could not create group"
@@ -3419,17 +3666,29 @@ msgstr "Could not create section"
 msgid "Could not create team"
 msgstr "Could not create team"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Could not create this draft in Outlook"
+msgstr "Could not create this draft in Outlook"
+
 #: src/pages/Onboarding.tsx
-msgid "Could not create your bot"
-msgstr "Could not create your bot"
+msgid "Could not create your agent"
+msgstr "Could not create your agent"
+
+#: src/pages/Onboarding.tsx
+#~ msgid "Could not create your bot"
+#~ msgstr "Could not create your bot"
+
+#: src/pages/shell/dialogs.tsx
+msgid "Could not delete agent"
+msgstr "Could not delete agent"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete app"
 msgstr "Could not delete app"
 
 #: src/pages/shell/dialogs.tsx
-msgid "Could not delete bot"
-msgstr "Could not delete bot"
+#~ msgid "Could not delete bot"
+#~ msgstr "Could not delete bot"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete file"
@@ -3547,6 +3806,10 @@ msgstr "Could not load"
 msgid "Could not load activity"
 msgstr "Could not load activity"
 
+#: src/pages/IntegrationSetup.tsx
+msgid "Could not load agents. Reload to try again."
+msgstr "Could not load agents. Reload to try again."
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not load approval rules"
 msgstr "Could not load approval rules"
@@ -3556,8 +3819,8 @@ msgid "Could not load billing"
 msgstr "Could not load billing"
 
 #: src/pages/IntegrationSetup.tsx
-msgid "Could not load bots. Reload to try again."
-msgstr "Could not load bots. Reload to try again."
+#~ msgid "Could not load bots. Reload to try again."
+#~ msgstr "Could not load bots. Reload to try again."
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Could not load computer settings"
@@ -3891,6 +4154,7 @@ msgstr "Could not save this draft"
 msgid "Could not save your changes."
 msgstr "Could not save your changes."
 
+#: src/components/EmailDraftCard.tsx
 #: src/components/EmailSignatureSettings.tsx
 msgid "Could not save your signature"
 msgstr "Could not save your signature"
@@ -3914,8 +4178,8 @@ msgid "Could not send that message"
 msgstr "Could not send that message"
 
 #: src/components/EmailDraftCard.tsx
-msgid "Could not send this email"
-msgstr "Could not send this email"
+#~ msgid "Could not send this email"
+#~ msgstr "Could not send this email"
 
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
@@ -3967,13 +4231,17 @@ msgstr "Could not transcribe that recording."
 msgid "Could not update"
 msgstr "Could not update"
 
+#: src/pages/McpServersOverlay.tsx
+msgid "Could not update agent access"
+msgstr "Could not update agent access"
+
 #: src/components/ModelCredits.tsx
 msgid "Could not update billing"
 msgstr "Could not update billing"
 
 #: src/pages/McpServersOverlay.tsx
-msgid "Could not update bot access"
-msgstr "Could not update bot access"
+#~ msgid "Could not update bot access"
+#~ msgstr "Could not update bot access"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Could not update computer"
@@ -4041,10 +4309,19 @@ msgstr "Could not update who can use this app"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Couldn't change the whiteboard."
+msgstr "Couldn't change the whiteboard."
+
 #: src/components/pages/SharePopover.tsx
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "Couldn't copy. Select the link and copy it."
 
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Couldn't create the whiteboard."
+msgstr "Couldn't create the whiteboard."
+
+#: src/components/apps/AppsDialog.tsx
 #: src/components/pages/PagesList.tsx
 msgid "Couldn't load apps."
 msgstr "Couldn't load apps."
@@ -4081,13 +4358,17 @@ msgstr "Couldn't load submissions"
 msgid "Couldn't load the Document Library"
 msgstr "Couldn't load the Document Library"
 
+#: src/pages/shell/files-tab.tsx
+msgid "Couldn't load this agent's files."
+msgstr "Couldn't load this agent's files."
+
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this app. Try again."
 msgstr "Couldn't load this app. Try again."
 
 #: src/pages/shell/files-tab.tsx
-msgid "Couldn't load this bot's files."
-msgstr "Couldn't load this bot's files."
+#~ msgid "Couldn't load this bot's files."
+#~ msgstr "Couldn't load this bot's files."
 
 #: src/components/StorageDialog.tsx
 msgid "Couldn't load your files."
@@ -4097,13 +4378,21 @@ msgstr "Couldn't load your files."
 msgid "Couldn't load your wallet"
 msgstr "Couldn't load your wallet"
 
+#: src/components/pages/WhiteboardCanvas.tsx
+msgid "Couldn't save the whiteboard."
+msgstr "Couldn't save the whiteboard."
+
 #: src/components/apps/AppCodePanel.tsx
 msgid "Couldn't save."
 msgstr "Couldn't save."
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Couldn't update bot style"
-msgstr "Couldn't update bot style"
+msgid "Couldn't update agent style"
+msgstr "Couldn't update agent style"
+
+#: src/pages/AccountSettingsOverlay.tsx
+#~ msgid "Couldn't update bot style"
+#~ msgstr "Couldn't update bot style"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't update messaging settings"
@@ -4122,8 +4411,12 @@ msgid "Counted from the changes each person has saved through the AI. Set a tool
 msgstr "Counted from the changes each person has saved through the AI. Set a tool's hourly limit to 0 to pause it for everyone. Deletes count projects over 24 hours, everything else over an hour."
 
 #: src/pages/AdminComputerAccess.tsx
-msgid "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
-msgstr "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
+msgid "Counted from when the agent made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
+msgstr "Counted from when the agent made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
+
+#: src/pages/AdminComputerAccess.tsx
+#~ msgid "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
+#~ msgstr "Counted from when the bot made the file. Files people upload themselves are never deleted. The chat keeps the message and shows that the file was removed."
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Country"
@@ -4151,9 +4444,17 @@ msgstr "Create a section and move {0} into it."
 msgid "Create account"
 msgstr "Create account"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Create an agent to open this app."
+msgstr "Create an agent to open this app."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Create as many as you need: a bid writer, a drainage checker, a reviewer"
 msgstr "Create as many as you need: a bid writer, a drainage checker, a reviewer"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Create draft"
+msgstr "Create draft"
 
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
@@ -4195,6 +4496,10 @@ msgstr "Created"
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Creates a finished OCSC document from a short brief, on the company template"
 msgstr "Creates a finished OCSC document from a short brief, on the company template"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Creating draft…"
+msgstr "Creating draft…"
 
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/agent-import.tsx
@@ -4271,6 +4576,10 @@ msgstr "Cursor cloud agents"
 msgid "Custom header"
 msgstr "Custom header"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Custom tool"
+msgstr "Custom tool"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Customer support"
 msgstr "Customer support"
@@ -4284,8 +4593,12 @@ msgid "Customize {label}"
 msgstr "Customize {label}"
 
 #: src/pages/shell/avatar-studio-popover.tsx
-msgid "Customize bot avatar"
-msgstr "Customize bot avatar"
+msgid "Customize agent avatar"
+msgstr "Customize agent avatar"
+
+#: src/pages/shell/avatar-studio-popover.tsx
+#~ msgid "Customize bot avatar"
+#~ msgstr "Customize bot avatar"
 
 #: src/pages/shell/evolve-references.tsx
 msgid "CV"
@@ -4388,6 +4701,7 @@ msgstr "Default Word template saved"
 #: src/components/PasskeySettings.tsx
 #: src/components/StorageDialog.tsx
 #: src/components/todos/todo-board.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
 #: src/pages/AdminAccess.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
@@ -4442,8 +4756,12 @@ msgid "Delete comment"
 msgstr "Delete comment"
 
 #: src/pages/AdminComputerAccess.tsx
-msgid "Delete files bots attached in chats after"
-msgstr "Delete files bots attached in chats after"
+msgid "Delete files agents attached in chats after"
+msgstr "Delete files agents attached in chats after"
+
+#: src/pages/AdminComputerAccess.tsx
+#~ msgid "Delete files bots attached in chats after"
+#~ msgstr "Delete files bots attached in chats after"
 
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
@@ -4478,6 +4796,10 @@ msgstr "Delete space"
 msgid "Delete this Space's credentials?"
 msgstr "Delete this Space's credentials?"
 
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Delete this whiteboard?"
+msgstr "Delete this whiteboard?"
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "Delete unpinned files after"
 msgstr "Delete unpinned files after"
@@ -4499,6 +4821,7 @@ msgid "deleted"
 msgstr "deleted"
 
 #: src/components/apps/CodeDiff.tsx
+#: src/components/pages/PageCard.tsx
 msgid "Deleted"
 msgstr "Deleted"
 
@@ -4709,8 +5032,12 @@ msgid "Docker is configured but computers are not responding. Confirm the sandbo
 msgstr "Docker is configured but computers are not responding. Confirm the sandbox supervisor is running, then recreate the stack after changing .env."
 
 #: src/pages/HostComputerPrompt.tsx
-msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
-msgstr "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
+msgid "Docker limits access to your computer for added security. Using {hostLabel} lets agents work with your local files and tools."
+msgstr "Docker limits access to your computer for added security. Using {hostLabel} lets agents work with your local files and tools."
+
+#: src/pages/HostComputerPrompt.tsx
+#~ msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
+#~ msgstr "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
@@ -4771,6 +5098,8 @@ msgid "Download CSV"
 msgstr "Download CSV"
 
 #: src/components/pages/DownloadPdfButton.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
+#: src/pages/SharedPage.tsx
 msgid "Download PDF"
 msgstr "Download PDF"
 
@@ -4778,14 +5107,31 @@ msgstr "Download PDF"
 msgid "Download PNG"
 msgstr "Download PNG"
 
+#: src/components/whiteboards/whiteboard-studio.tsx
+#: src/pages/SharedPage.tsx
+msgid "Download SVG"
+msgstr "Download SVG"
+
 #: src/components/ArtifactFileCard.tsx
 #: src/components/DesktopUpdates.tsx
 msgid "Downloading…"
 msgstr "Downloading…"
 
 #: src/components/EmailDraftCard.tsx
-msgid "Draft · not sent until you press Send"
-msgstr "Draft · not sent until you press Send"
+msgid "Draft · creates a draft in Outlook"
+msgstr "Draft · creates a draft in Outlook"
+
+#: src/components/EmailDraftCard.tsx
+#~ msgid "Draft · not sent until you press Send"
+#~ msgstr "Draft · not sent until you press Send"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Draft created in {sender}"
+msgstr "Draft created in {sender}"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Draft created in {sender} on {sentAt}"
+msgstr "Draft created in {sender} on {sentAt}"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Draft skill"
@@ -4835,8 +5181,12 @@ msgid "Each assistant's cloud computer, browser and routines. Word, PowerPoint, 
 msgstr "Each assistant's cloud computer, browser and routines. Word, PowerPoint, Excel, PDF and video files keep working when off: they run on the company tool runners."
 
 #: src/components/apps/TemplateAppButton.tsx
-msgid "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
-msgstr "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
+msgid "Each comes with its screens and empty tables. Add your rows, or ask the agent to fit it to your work."
+msgstr "Each comes with its screens and empty tables. Add your rows, or ask the agent to fit it to your work."
+
+#: src/components/apps/TemplateAppButton.tsx
+#~ msgid "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
+#~ msgstr "Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work."
 
 #: src/pages/McpServersOverlay.tsx
 msgid "Each name can be used once."
@@ -4854,7 +5204,10 @@ msgstr "Each project, bridge or site keeps its own entries, seen only by the peo
 msgid "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
 msgstr "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
 
+#: src/components/apps/AppsDialog.tsx
+#: src/components/apps/AppViewer.tsx
 #: src/components/AskCard.tsx
+#: src/components/pages/PageCard.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -4862,6 +5215,10 @@ msgstr "Each round is saved as a new version (-v2, -v3), so earlier versions are
 #: src/pages/McpServersOverlay.tsx
 msgid "Edit"
 msgstr "Edit"
+
+#: src/components/pages/PageCard.tsx
+msgid "Edit {title}"
+msgstr "Edit {title}"
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Edit any slide later; each changed slide gets a review comment saying what changed"
@@ -4902,6 +5259,10 @@ msgstr "Edit Profile"
 #: src/pages/shell/evolve-references.tsx
 msgid "Edit References"
 msgstr "Edit References"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Edit signature"
+msgstr "Edit signature"
 
 #: src/components/AskCard.tsx
 msgid "Edit site visit"
@@ -4993,6 +5354,7 @@ msgstr "Email is not allowed to register"
 msgid "Email me a code"
 msgstr "Email me a code"
 
+#: src/components/EmailDraftCard.tsx
 #: src/components/EmailSignatureSettings.tsx
 #: src/pages/settings-nav.ts
 msgid "Email signature"
@@ -5091,6 +5453,10 @@ msgstr "Enter sends a message on computers. On phones and tablets Enter always a
 msgid "Enter the password you were sent with the link."
 msgstr "Enter the password you were sent with the link."
 
+#: src/components/EmailDraftCard.tsx
+msgid "Enter valid email addresses: {badList}"
+msgstr "Enter valid email addresses: {badList}"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
 msgstr "Environment ID"
@@ -5137,17 +5503,25 @@ msgstr "every {intervalAmountSelect} {intervalUnitSelect}"
 msgid "Every {n} hours at :{minute}"
 msgstr "Every {n} hours at :{minute}"
 
+#: src/pages/AdminCompanyPage.tsx
+msgid "Every agent now thinks at this level"
+msgstr "Every agent now thinks at this level"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Every agent uses the company model and thinking level. Change them in the <0>admin panel</0>."
+msgstr "Every agent uses the company model and thinking level. Change them in the <0>admin panel</0>."
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
 msgstr "Every assistant of every member has these. Switch one off to remove it for everyone; it takes effect within a few seconds."
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Every bot now thinks at this level"
-msgstr "Every bot now thinks at this level"
+#~ msgid "Every bot now thinks at this level"
+#~ msgstr "Every bot now thinks at this level"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
-msgstr "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
+#~ msgid "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
+#~ msgstr "Every bot uses the company model and thinking level. Change them in the <0>admin panel</0>."
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Every check passed."
@@ -5459,6 +5833,10 @@ msgstr "Failure handling"
 msgid "Features"
 msgstr "Features"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Feeds & updates"
+msgstr "Feeds & updates"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Fields that mark a change"
 msgstr "Fields that mark a change"
@@ -5477,12 +5855,20 @@ msgid "File name, like Chart.tsx"
 msgstr "File name, like Chart.tsx"
 
 #: src/pages/AdminComputerAccess.tsx
-msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
-msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+msgid "Files agents make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the agent's Files tab. Files agents attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their agents stop making new documents and videos until they delete something."
+msgstr "Files agents make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the agent's Files tab. Files agents attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their agents stop making new documents and videos until they delete something."
+
+#: src/pages/AdminComputerAccess.tsx
+#~ msgid "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
+#~ msgstr "Files bots make stay on each person's own computer and are never visible to anyone else. Anything nobody changes for the period below is deleted at the next cleanup unless its owner pins it in the bot's Files tab. Files bots attach in chats count towards the same limit. People are told a week before files are deleted and when they are nearly full, and can download or delete them from Manage storage. Once someone reaches their limit, their bots stop making new documents and videos until they delete something."
 
 #: src/pages/Artifacts.tsx
-msgid "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
-msgstr "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
+#~ msgid "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
+#~ msgstr "Files from your chats in this work space. They appear here when a bot sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
+
+#: src/pages/Artifacts.tsx
+msgid "Files from your chats in this work space. They appear here when an agent sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
+msgstr "Files from your chats in this work space. They appear here when an agent sends you a document, slide, spreadsheet or other file, and when you attach a file to a message. Each card is the latest copy; open it to preview or download."
 
 #: src/pages/RoutineEditor.tsx
 msgid "Files or folders on the computer"
@@ -5493,8 +5879,12 @@ msgid "Files or folders, one per line"
 msgstr "Files or folders, one per line"
 
 #: src/pages/GroupPanel.tsx
-msgid "Filter bots"
-msgstr "Filter bots"
+msgid "Filter agents"
+msgstr "Filter agents"
+
+#: src/pages/GroupPanel.tsx
+#~ msgid "Filter bots"
+#~ msgstr "Filter bots"
 
 #: src/pages/Artifacts.tsx
 msgid "Filter by date"
@@ -5590,6 +5980,14 @@ msgstr "Finishing MCP connection…"
 msgid "Fit to screen"
 msgstr "Fit to screen"
 
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Flow left to right"
+msgstr "Flow left to right"
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Flow top to bottom"
+msgstr "Flow top to bottom"
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Focus message"
 msgstr "Focus message"
@@ -5654,8 +6052,13 @@ msgstr "From {0}"
 
 #. placeholder {0}: archived.length
 #: src/pages/KnowledgeSection.tsx
-msgid "From archived bots ({0})"
-msgstr "From archived bots ({0})"
+msgid "From archived agents ({0})"
+msgstr "From archived agents ({0})"
+
+#. placeholder {0}: archived.length
+#: src/pages/KnowledgeSection.tsx
+#~ msgid "From archived bots ({0})"
+#~ msgstr "From archived bots ({0})"
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5795,8 +6198,12 @@ msgid "Go home"
 msgstr "Go home"
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
-msgid "Go to bot"
-msgstr "Go to bot"
+msgid "Go to agent"
+msgstr "Go to agent"
+
+#: src/pages/shell/keyboard-shortcuts-dialog.tsx
+#~ msgid "Go to bot"
+#~ msgstr "Go to bot"
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Grant"
@@ -5805,6 +6212,10 @@ msgstr "Grant"
 #: src/pages/AdminAccessPage.tsx
 msgid "Granting…"
 msgstr "Granting…"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Graphs & charts"
+msgstr "Graphs & charts"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Greetings, sign-off and your signature"
@@ -5977,8 +6388,12 @@ msgid "How did you hear about us?"
 msgstr "How did you hear about us?"
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
-msgstr "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
+msgid "How hard every agent thinks before answering. Higher is better for hard problems but slower and costs more."
+msgstr "How hard every agent thinks before answering. Higher is better for hard problems but slower and costs more."
+
+#: src/pages/AdminCompanyPage.tsx
+#~ msgid "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
+#~ msgstr "How hard every bot thinks before answering. Higher is better for hard problems but slower and costs more."
 
 #: src/pages/KnowledgeSection.tsx
 msgid "How I like answers"
@@ -6003,8 +6418,12 @@ msgid "How often"
 msgstr "How often"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "How other bots see it"
-msgstr "How other bots see it"
+msgid "How other agents see it"
+msgstr "How other agents see it"
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "How other bots see it"
+#~ msgstr "How other bots see it"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "How to check"
@@ -6095,12 +6514,20 @@ msgid "In Safari's File menu, choose Add to Dock."
 msgstr "In Safari's File menu, choose Add to Dock."
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below."
-msgstr "In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below."
+#~ msgid "In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below."
+#~ msgstr "In their own private chat, assistants draft Outlook emails and replies as cards. The person edits the card and only their own press of Send sends it; assistants can never send. People without it are never offered drafting. Limit this to chosen people below."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "In their own private chat, assistants prepare Outlook emails and replies as editable cards. Pressing Create draft saves the email to the person's Outlook Drafts folder so they can send it from Outlook; assistants never write to Outlook themselves. People without this are never offered drafting. Limit this to chosen people below."
+msgstr "In their own private chat, assistants prepare Outlook emails and replies as editable cards. Pressing Create draft saves the email to the person's Outlook Drafts folder so they can send it from Outlook; assistants never write to Outlook themselves. People without this are never offered drafting. Limit this to chosen people below."
 
 #: src/components/integrations/plugin-marketplace.tsx
-msgid "In this bot"
-msgstr "In this bot"
+msgid "In this agent"
+msgstr "In this agent"
+
+#: src/components/integrations/plugin-marketplace.tsx
+#~ msgid "In this bot"
+#~ msgstr "In this bot"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Inactive"
@@ -6274,16 +6701,28 @@ msgid "Italic"
 msgstr "Italic"
 
 #: src/pages/shell/shell-dialogs.tsx
-msgid "Its bots and groups are kept and leave the section."
-msgstr "Its bots and groups are kept and leave the section."
+msgid "Its agents and groups are kept and leave the section."
+msgstr "Its agents and groups are kept and leave the section."
+
+#: src/pages/shell/shell-dialogs.tsx
+#~ msgid "Its bots and groups are kept and leave the section."
+#~ msgstr "Its bots and groups are kept and leave the section."
 
 #: src/pages/shell/dialogs.tsx
-msgid "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
-msgstr "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
+msgid "Its conversation, files, and routines will be permanently deleted. Agents it created stay in your list."
+msgstr "Its conversation, files, and routines will be permanently deleted. Agents it created stay in your list."
+
+#: src/pages/shell/dialogs.tsx
+#~ msgid "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
+#~ msgstr "Its conversation, files, and routines will be permanently deleted. Bots it created stay in your list."
 
 #: src/components/apps/AppVisualEdit.tsx
-msgid "Its look is set in code; ask the bot to change it."
-msgstr "Its look is set in code; ask the bot to change it."
+msgid "Its look is set in code; ask the agent to change it."
+msgstr "Its look is set in code; ask the agent to change it."
+
+#: src/components/apps/AppVisualEdit.tsx
+#~ msgid "Its look is set in code; ask the bot to change it."
+#~ msgstr "Its look is set in code; ask the bot to change it."
 
 #: src/components/pages/PagesList.tsx
 msgid "Its shared link stops working and its cards in chat show it as deleted. This can't be undone."
@@ -6341,6 +6780,10 @@ msgstr "Just for me"
 #: src/lib/relative-time.ts
 msgid "just now"
 msgstr "just now"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Kanban, checklists, guided steps, sortable lists and a command menu."
+msgstr "Kanban, checklists, guided steps, sortable lists and a command menu."
 
 #: src/components/EmailDraftCard.tsx
 msgid "Keep"
@@ -6514,8 +6957,12 @@ msgid "Less"
 msgstr "Less"
 
 #: src/components/ComputerDeviceSettings.tsx
-msgid "Let bots use this computer"
-msgstr "Let bots use this computer"
+msgid "Let agents use this computer"
+msgstr "Let agents use this computer"
+
+#: src/components/ComputerDeviceSettings.tsx
+#~ msgid "Let bots use this computer"
+#~ msgstr "Let bots use this computer"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Let it suggest specialists, then create more from the + button"
@@ -6526,8 +6973,12 @@ msgid "Let's begin"
 msgstr "Let's begin"
 
 #: src/pages/MemorySettingsOverlay.tsx
-msgid "Lets bots save and recall facts by meaning, alongside MEMORY.md."
-msgstr "Lets bots save and recall facts by meaning, alongside MEMORY.md."
+msgid "Lets agents save and recall facts by meaning, alongside MEMORY.md."
+msgstr "Lets agents save and recall facts by meaning, alongside MEMORY.md."
+
+#: src/pages/MemorySettingsOverlay.tsx
+#~ msgid "Lets bots save and recall facts by meaning, alongside MEMORY.md."
+#~ msgstr "Lets bots save and recall facts by meaning, alongside MEMORY.md."
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -6713,8 +7164,12 @@ msgid "Loading…"
 msgstr "Loading…"
 
 #: src/pages/HostComputerPrompt.tsx
-msgid "Local access lets bots run commands without asking. Avoid it on shared or public servers."
-msgstr "Local access lets bots run commands without asking. Avoid it on shared or public servers."
+msgid "Local access lets agents run commands without asking. Avoid it on shared or public servers."
+msgstr "Local access lets agents run commands without asking. Avoid it on shared or public servers."
+
+#: src/pages/HostComputerPrompt.tsx
+#~ msgid "Local access lets bots run commands without asking. Avoid it on shared or public servers."
+#~ msgstr "Local access lets bots run commands without asking. Avoid it on shared or public servers."
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Local computer access requires the latest desktop app."
@@ -6822,8 +7277,12 @@ msgid "Manage MCP servers"
 msgstr "Manage MCP servers"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Manage other bots"
-msgstr "Manage other bots"
+msgid "Manage other agents"
+msgstr "Manage other agents"
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "Manage other bots"
+#~ msgstr "Manage other bots"
 
 #: src/components/SidebarFooter.tsx
 #: src/components/StorageDialog.tsx
@@ -6841,6 +7300,10 @@ msgstr "Manual (drag to order)"
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual setup required"
 msgstr "Manual setup required"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Maps & photos"
+msgstr "Maps & photos"
 
 #: src/pages/BotContextMenu.tsx
 msgid "Mark as Read"
@@ -7029,8 +7492,13 @@ msgstr "Message"
 
 #. placeholder {0}: group.name
 #: src/pages/SharedChats.tsx
-msgid "Message {0}. Use @Name to ask one bot."
-msgstr "Message {0}. Use @Name to ask one bot."
+msgid "Message {0}. Use @Name to ask one agent."
+msgstr "Message {0}. Use @Name to ask one agent."
+
+#. placeholder {0}: group.name
+#: src/pages/SharedChats.tsx
+#~ msgid "Message {0}. Use @Name to ask one bot."
+#~ msgstr "Message {0}. Use @Name to ask one bot."
 
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
@@ -7089,8 +7557,12 @@ msgid "Minimize"
 msgstr "Minimize"
 
 #: src/pages/shell/sidebar-header.tsx
-msgid "Minimize bots"
-msgstr "Minimize bots"
+msgid "Minimize agents"
+msgstr "Minimize agents"
+
+#: src/pages/shell/sidebar-header.tsx
+#~ msgid "Minimize bots"
+#~ msgstr "Minimize bots"
 
 #: src/components/call/CallCard.tsx
 msgid "Minimize call"
@@ -7201,6 +7673,10 @@ msgstr "Monday"
 msgid "month"
 msgstr "month"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Month calendar, Gantt chart, timeline, daily heatmap and period comparisons."
+msgstr "Month calendar, Gantt chart, timeline, daily heatmap and period comparisons."
+
 #: src/components/ModelCredits.tsx
 #: src/lib/cron.ts
 msgid "Monthly"
@@ -7239,6 +7715,10 @@ msgstr "More computer actions"
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Most deadlines a project may hold"
 msgstr "Most deadlines a project may hold"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Motion & layout"
+msgstr "Motion & layout"
 
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Move"
@@ -7325,8 +7805,12 @@ msgid "Name on card"
 msgstr "Name on card"
 
 #: src/pages/shell/agent-import.tsx
-msgid "Name this bot"
-msgstr "Name this bot"
+msgid "Name this agent"
+msgstr "Name this agent"
+
+#: src/pages/shell/agent-import.tsx
+#~ msgid "Name this bot"
+#~ msgstr "Name this bot"
 
 #: src/pages/GroupPanel.tsx
 msgid "Name this group"
@@ -7337,8 +7821,12 @@ msgid "Name this routine"
 msgstr "Name this routine"
 
 #: src/pages/shell/create-bot-dialog.tsx
-msgid "Name your Bot"
-msgstr "Name your Bot"
+msgid "Name your Agent"
+msgstr "Name your Agent"
+
+#: src/pages/shell/create-bot-dialog.tsx
+#~ msgid "Name your Bot"
+#~ msgstr "Name your Bot"
 
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Name, new or existing"
@@ -7349,8 +7837,12 @@ msgid "Nearly full (80%+)"
 msgstr "Nearly full (80%+)"
 
 #: src/pages/shell/files-tab.tsx
-msgid "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
-msgstr "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
+msgid "Nearly full. When it is full, agents stop making new documents and videos until you delete something."
+msgstr "Nearly full. When it is full, agents stop making new documents and videos until you delete something."
+
+#: src/pages/shell/files-tab.tsx
+#~ msgid "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
+#~ msgstr "Nearly full. When it is full, bots stop making new documents and videos until you delete something."
 
 #: src/lib/roster-status.ts
 msgid "Needs an answer"
@@ -7415,6 +7907,12 @@ msgstr "New"
 msgid "New · Granular Editing — follow the 3 steps below"
 msgstr "New · Granular Editing — follow the 3 steps below"
 
+#: src/pages/Shell.tsx
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "New agent"
+msgstr "New agent"
+
 #: src/components/VaultSettings.tsx
 msgid "New API key"
 msgstr "New API key"
@@ -7430,8 +7928,8 @@ msgstr "New app from Excel"
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/create-bot-dialog.tsx
-msgid "New bot"
-msgstr "New bot"
+#~ msgid "New bot"
+#~ msgstr "New bot"
 
 #: src/components/VaultSettings.tsx
 msgid "New card"
@@ -7529,6 +8027,10 @@ msgstr "New ticket"
 msgid "New variable"
 msgstr "New variable"
 
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "New whiteboard"
+msgstr "New whiteboard"
+
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
 msgstr "New Word documents start from this unless the person asks for another template. A Library template keeps the OCSC report's prompts, such as asking which office it is from. If Evolve cannot be reached, the built-in copy is used."
@@ -7540,6 +8042,10 @@ msgstr "New work package"
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Newer changes replaced this one."
 msgstr "Newer changes replaced this one."
+
+#: src/components/pages/PageCard.tsx
+msgid "Newer version below"
+msgstr "Newer version below"
 
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/shell/references-dialog.tsx
@@ -7560,8 +8066,12 @@ msgid "Next module"
 msgstr "Next module"
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
-msgid "Next or previous bot"
-msgstr "Next or previous bot"
+msgid "Next or previous agent"
+msgstr "Next or previous agent"
+
+#: src/pages/shell/keyboard-shortcuts-dialog.tsx
+#~ msgid "Next or previous bot"
+#~ msgstr "Next or previous bot"
 
 #: src/components/markdown-copy.tsx
 msgid "Next page"
@@ -7578,6 +8088,19 @@ msgstr "No access yet"
 #: src/components/GroupPeople.tsx
 msgid "No active Evolve profile matches."
 msgstr "No active Evolve profile matches."
+
+#: src/components/apps/AppsDialog.tsx
+msgid "No agent"
+msgstr "No agent"
+
+#: src/components/integrations/agent-access.tsx
+msgid "No agents"
+msgstr "No agents"
+
+#: src/pages/GroupPanel.tsx
+#: src/pages/shell/bot-picker.tsx
+msgid "No agents match"
+msgstr "No agents match"
 
 #: src/components/pages/PagesList.tsx
 msgid "No apps match “{query}”."
@@ -7601,13 +8124,13 @@ msgid "No authentication"
 msgstr "No authentication"
 
 #: src/components/integrations/agent-access.tsx
-msgid "No bots"
-msgstr "No bots"
+#~ msgid "No bots"
+#~ msgstr "No bots"
 
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/bot-picker.tsx
-msgid "No bots match"
-msgstr "No bots match"
+#~ msgid "No bots match"
+#~ msgstr "No bots match"
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "No budget"
@@ -7751,6 +8274,10 @@ msgstr "No model usage in this period."
 msgid "No models listed."
 msgstr "No models listed."
 
+#: src/pages/AdminStaffLimits.tsx
+msgid "No monthly allowance is set, so chats and routines can keep spending."
+msgstr "No monthly allowance is set, so chats and routines can keep spending."
+
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "No OpenClaw, Hermes or agent document found."
@@ -7815,8 +8342,12 @@ msgid "No runs yet"
 msgstr "No runs yet"
 
 #: src/components/EmailDraftCard.tsx
-msgid "No signature saved. Paste your Outlook signature in Settings, under Email signature."
-msgstr "No signature saved. Paste your Outlook signature in Settings, under Email signature."
+msgid "No signature saved. Paste your Outlook signature here or under Settings → Email signature."
+msgstr "No signature saved. Paste your Outlook signature here or under Settings → Email signature."
+
+#: src/components/EmailDraftCard.tsx
+#~ msgid "No signature saved. Paste your Outlook signature in Settings, under Email signature."
+#~ msgstr "No signature saved. Paste your Outlook signature in Settings, under Email signature."
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "No sites or OneDrive found."
@@ -7853,6 +8384,10 @@ msgstr "Nobody has added you to a group chat yet."
 #: src/components/vault/VaultItemEditor.tsx
 msgid "None"
 msgstr "None"
+
+#: src/components/SidebarMeters.tsx
+msgid "None left"
+msgstr "None left"
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "None ticked: every model is allowed."
@@ -8096,8 +8631,12 @@ msgid "Off hides voice, dictation and calls for every member, admins included."
 msgstr "Off hides voice, dictation and calls for every member, admins included."
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Off: only admins connect models or change a bot's model; everyone runs on the company model."
-msgstr "Off: only admins connect models or change a bot's model; everyone runs on the company model."
+#~ msgid "Off: only admins connect models or change a bot's model; everyone runs on the company model."
+#~ msgstr "Off: only admins connect models or change a bot's model; everyone runs on the company model."
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Off: only admins connect models or change an agent's model; everyone runs on the company model."
+msgstr "Off: only admins connect models or change an agent's model; everyone runs on the company model."
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Off: staff see Connectors as Coming soon and cannot add anything. Admins always can, to test."
@@ -8158,6 +8697,10 @@ msgstr "on the 1st at {0}"
 #: src/components/AppScopeAskCard.tsx
 msgid "One bridge inspection app, with a separate team and records for Athlone, Kells and Sligo."
 msgstr "One bridge inspection app, with a separate team and records for Athlone, Kells and Sligo."
+
+#: src/components/apps/AppsDialog.tsx
+msgid "One Evolve window holding a calendar, checklist, board, charts, a map and photos."
+msgstr "One Evolve window holding a calendar, checklist, board, charts, a map and photos."
 
 #: src/components/AppScopeAskCard.tsx
 msgid "One person writing their own site diary. Nobody else has those notes."
@@ -8221,6 +8764,7 @@ msgstr "Only you can see this list. Your assistants can add to it from your emai
 
 #: src/components/AskCard.tsx
 #: src/components/markdown-link-prompt.tsx
+#: src/components/pages/PageCard.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/shell/computer-panel.tsx
@@ -8285,6 +8829,10 @@ msgstr "Open in its own window"
 msgid "Open in new tab"
 msgstr "Open in new tab"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Open in Outlook"
+msgstr "Open in Outlook"
+
 #: src/components/InstallAppBanner.tsx
 msgid "Open it in its own window, then install it to get its own icon and window."
 msgstr "Open it in its own window, then install it to get its own icon and window."
@@ -8303,6 +8851,10 @@ msgstr "Open navigation"
 msgid "Open OCSC Intelligence"
 msgstr "Open OCSC Intelligence"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Open one full screen, or edit an app you built."
+msgstr "Open one full screen, or edit an app you built."
+
 #: src/components/LearningClinicCard.tsx
 msgid "Open the video"
 msgstr "Open the video"
@@ -8314,6 +8866,10 @@ msgstr "Open to everyone at OCSC"
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "Open work"
+
+#: src/components/EmailDraftCard.tsx
+msgid "Open your Outlook Drafts folder to review and send this email."
+msgstr "Open your Outlook Drafts folder to review and send this email."
 
 #: src/pages/Onboarding.tsx
 msgid "OpenAI API"
@@ -8345,8 +8901,12 @@ msgid "Optional header value"
 msgstr "Optional header value"
 
 #: src/pages/GroupPanel.tsx
-msgid "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connectors."
-msgstr "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connectors."
+msgid "Optional. Evolve colleagues chat with this group's agents, without your memory, notes, saved logins or connectors."
+msgstr "Optional. Evolve colleagues chat with this group's agents, without your memory, notes, saved logins or connectors."
+
+#: src/pages/GroupPanel.tsx
+#~ msgid "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connectors."
+#~ msgstr "Optional. Evolve colleagues chat with this group's bots, without your memory, notes, saved logins or connectors."
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -8403,6 +8963,10 @@ msgstr "Others see the data but can't change it."
 #: src/components/EmailDraftCard.tsx
 msgid "Outlook email"
 msgstr "Outlook email"
+
+#: src/pages/AdminCompanyPage.tsx
+#~ msgid "Outlook email drafts"
+#~ msgstr "Outlook email drafts"
 
 #: src/components/EmailDraftCard.tsx
 msgid "Outlook not connected"
@@ -8531,6 +9095,10 @@ msgstr "Past due"
 msgid "Paste a replacement key"
 msgstr "Paste a replacement key"
 
+#: src/components/EmailDraftCard.tsx
+msgid "Paste signature"
+msgstr "Paste signature"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. OCSC Intelligence adds /v1 if needed."
 msgstr "Paste the OpenAI-compatible address from your server. OCSC Intelligence adds /v1 if needed."
@@ -8589,6 +9157,14 @@ msgstr "People"
 #: src/pages/GroupPanel.tsx
 msgid "People ({0})"
 msgstr "People ({0})"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "People & projects"
+msgstr "People & projects"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "People & time"
+msgstr "People & time"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "People keep their own logins, cards, API keys and contacts, and their assistants can use them. Off for everyone until you turn this on. The company vault on this page is separate and stays available."
@@ -8665,8 +9241,12 @@ msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX}"
 msgstr "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX}"
 
 #: src/pages/GroupPanel.tsx
-msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below"
-msgstr "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below"
+msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} agents, or just 1 when you add people below"
+msgstr "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} agents, or just 1 when you add people below"
+
+#: src/pages/GroupPanel.tsx
+#~ msgid "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below"
+#~ msgstr "Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Pick a model from the catalog."
@@ -8851,6 +9431,10 @@ msgstr "project"
 msgid "Project"
 msgstr "Project"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Project delivery"
+msgstr "Project delivery"
+
 #: src/pages/shell/evolve-references.tsx
 msgid "Project reference, as sent to the AI"
 msgstr "Project reference, as sent to the AI"
@@ -8905,6 +9489,18 @@ msgstr "Publish to Evolve"
 msgid "Published as {0}, release {1}. Publishing again sends the current version."
 msgstr "Published as {0}, release {1}. Publishing again sends the current version."
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Published company apps appear here."
+msgstr "Published company apps appear here."
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Published for the company"
+msgstr "Published for the company"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Published in Evolve"
+msgstr "Published in Evolve"
+
 #: src/components/CloudAgentCard.tsx
 msgid "Pull request"
 msgstr "Pull request"
@@ -8920,6 +9516,10 @@ msgstr "Put people in groups, such as Developers, then open a feature or app to 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Quality"
 msgstr "Quality"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Quality for the client, speed for the work"
+msgstr "Quality for the client, speed for the work"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "Quality:"
@@ -9144,6 +9744,14 @@ msgstr "Refuse duplicate deadlines"
 msgid "Region"
 msgstr "Region"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Registers & BIM"
+msgstr "Registers & BIM"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Registers & files"
+msgstr "Registers & files"
+
 #: src/lib/user-error.ts
 msgid "Registration is closed"
 msgstr "Registration is closed"
@@ -9211,8 +9819,12 @@ msgid "Remove {name}"
 msgstr "Remove {name}"
 
 #: src/components/vault/VaultItemDetail.tsx
-msgid "Remove {secretName}? Bots will no longer be able to use it."
-msgstr "Remove {secretName}? Bots will no longer be able to use it."
+msgid "Remove {secretName}? Agents will no longer be able to use it."
+msgstr "Remove {secretName}? Agents will no longer be able to use it."
+
+#: src/components/vault/VaultItemDetail.tsx
+#~ msgid "Remove {secretName}? Bots will no longer be able to use it."
+#~ msgstr "Remove {secretName}? Bots will no longer be able to use it."
 
 #: src/components/TrustedLinkSitesSettings.tsx
 msgid "Remove {site}"
@@ -9279,6 +9891,7 @@ msgstr "Removing…"
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageView.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Rename"
 msgstr "Rename"
 
@@ -9430,8 +10043,12 @@ msgid "Resetting…"
 msgstr "Resetting…"
 
 #: src/pages/shell/sidebar-layout.tsx
-msgid "Resize bots sidebar"
-msgstr "Resize bots sidebar"
+msgid "Resize agents sidebar"
+msgstr "Resize agents sidebar"
+
+#: src/pages/shell/sidebar-layout.tsx
+#~ msgid "Resize bots sidebar"
+#~ msgstr "Resize bots sidebar"
 
 #: src/pages/ResizableSidePanel.tsx
 msgid "Resize panel"
@@ -9676,8 +10293,12 @@ msgid "Runs per routine per day"
 msgstr "Runs per routine per day"
 
 #: src/pages/RoutineEditor.tsx
-msgid "Runs when this bot receives a verified message from this provider."
-msgstr "Runs when this bot receives a verified message from this provider."
+msgid "Runs when this agent receives a verified message from this provider."
+msgstr "Runs when this agent receives a verified message from this provider."
+
+#: src/pages/RoutineEditor.tsx
+#~ msgid "Runs when this bot receives a verified message from this provider."
+#~ msgstr "Runs when this bot receives a verified message from this provider."
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Safeguards saved in Evolve"
@@ -9741,6 +10362,7 @@ msgid "Save brief"
 msgstr "Save brief"
 
 #: src/components/AskCard.tsx
+#: src/components/EmailDraftCard.tsx
 msgid "Save changes"
 msgstr "Save changes"
 
@@ -9749,8 +10371,8 @@ msgid "Save company limits"
 msgstr "Save company limits"
 
 #: src/components/EmailDraftCard.tsx
-msgid "Save draft"
-msgstr "Save draft"
+#~ msgid "Save draft"
+#~ msgstr "Save draft"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Save for everyone"
@@ -9764,6 +10386,7 @@ msgstr "Save note"
 msgid "Save safeguards"
 msgstr "Save safeguards"
 
+#: src/components/EmailDraftCard.tsx
 #: src/components/EmailSignatureSettings.tsx
 msgid "Save signature"
 msgstr "Save signature"
@@ -9789,6 +10412,10 @@ msgstr "Saved"
 #: src/components/apps/AppCodePanel.tsx
 msgid "Saved as version {0}."
 msgstr "Saved as version {0}."
+
+#: src/components/EmailDraftCard.tsx
+msgid "Saved in Outlook Drafts"
+msgstr "Saved in Outlook Drafts"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
@@ -9879,12 +10506,20 @@ msgid "Search & Filter"
 msgstr "Search & Filter"
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
-msgid "Search bots"
-msgstr "Search bots"
+msgid "Search agents"
+msgstr "Search agents"
 
 #: src/pages/shell/command-palette.tsx
-msgid "Search bots, actions, and settings"
-msgstr "Search bots, actions, and settings"
+msgid "Search agents, actions, and settings"
+msgstr "Search agents, actions, and settings"
+
+#: src/pages/shell/keyboard-shortcuts-dialog.tsx
+#~ msgid "Search bots"
+#~ msgstr "Search bots"
+
+#: src/pages/shell/command-palette.tsx
+#~ msgid "Search bots, actions, and settings"
+#~ msgstr "Search bots, actions, and settings"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Search by domain"
@@ -9959,6 +10594,10 @@ msgstr "Search the Document Library's titles and the text inside its documents."
 msgid "Search Vault"
 msgstr "Search Vault"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Search, filters, linked records, Excel, CSV and a branded PDF."
+msgstr "Search, filters, linked records, Excel, CSV and a branded PDF."
+
 #. placeholder {0}: filters.query.trim()
 #: src/pages/ActivityList.tsx
 msgid "Search: {0}"
@@ -10004,12 +10643,16 @@ msgid "Select {0}"
 msgstr "Select {0}"
 
 #: src/pages/shell/chat-header.tsx
-msgid "Select a bot"
-msgstr "Select a bot"
+#~ msgid "Select a bot"
+#~ msgstr "Select a bot"
 
 #: src/components/StorageDialog.tsx
 msgid "Select all"
 msgstr "Select all"
+
+#: src/pages/shell/chat-header.tsx
+msgid "Select an agent"
+msgstr "Select an agent"
 
 #: src/components/apps/AppStudio.tsx
 msgid "Select an element"
@@ -10039,11 +10682,14 @@ msgstr "Selected References"
 msgid "Self-hosted"
 msgstr "Self-hosted"
 
-#: src/components/EmailDraftCard.tsx
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/composer.tsx
 msgid "Send"
 msgstr "Send"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Send / draft Outlook email"
+msgstr "Send / draft Outlook email"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Send <0>{linkCode}</0> from {linkApp} within 10 minutes."
@@ -10079,8 +10725,8 @@ msgid "Send me that report as a PDF with the changes marked up"
 msgstr "Send me that report as a PDF with the changes marked up"
 
 #: src/pages/AdminCompanyPage.tsx
-msgid "Send Outlook email"
-msgstr "Send Outlook email"
+#~ msgid "Send Outlook email"
+#~ msgstr "Send Outlook email"
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Send recording"
@@ -10260,8 +10906,12 @@ msgid "Shared apps are only for people at your company."
 msgstr "Shared apps are only for people at your company."
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Shared with my bots"
-msgstr "Shared with my bots"
+msgid "Shared with my agents"
+msgstr "Shared with my agents"
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "Shared with my bots"
+#~ msgstr "Shared with my bots"
 
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/shell-sidebar.tsx
@@ -10280,13 +10930,17 @@ msgstr "Shared: colleagues see every row. Click to make rows personal."
 msgid "Show"
 msgstr "Show"
 
+#: src/pages/shell/sidebar-header.tsx
+msgid "Show agents"
+msgstr "Show agents"
+
 #: src/pages/GroupPanel.tsx
 msgid "Show all"
 msgstr "Show all"
 
 #: src/pages/shell/sidebar-header.tsx
-msgid "Show bots"
-msgstr "Show bots"
+#~ msgid "Show bots"
+#~ msgstr "Show bots"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Show everything (admins)"
@@ -10296,6 +10950,7 @@ msgstr "Show everything (admins)"
 msgid "Show list"
 msgstr "Show list"
 
+#: src/components/apps/AppsDialog.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -10321,6 +10976,7 @@ msgid "Show selected"
 msgstr "Show selected"
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Show the chat beside the app"
 msgstr "Show the chat beside the app"
 
@@ -10418,6 +11074,10 @@ msgstr "Signed-in colleagues can add, edit and remove rows."
 msgid "Site"
 msgstr "Site"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Site & field"
+msgstr "Site & field"
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "Site address or name"
 msgstr "Site address or name"
@@ -10425,6 +11085,10 @@ msgstr "Site address or name"
 #: src/components/EvolveChangeEditor.tsx
 msgid "Site location"
 msgstr "Site location"
+
+#: src/components/apps/AppsDialog.tsx
+msgid "Site map, photo map, gallery, side-by-side photos, mark-up and signatures."
+msgstr "Site map, photo map, gallery, side-by-side photos, mark-up and signatures."
 
 #: src/components/AskCard.tsx
 msgid "Site not given"
@@ -10451,8 +11115,12 @@ msgid "Skills"
 msgstr "Skills"
 
 #: src/pages/shell/agent-import.tsx
-msgid "Skills join the library all your bots share."
-msgstr "Skills join the library all your bots share."
+msgid "Skills join the library all your agents share."
+msgstr "Skills join the library all your agents share."
+
+#: src/pages/shell/agent-import.tsx
+#~ msgid "Skills join the library all your bots share."
+#~ msgstr "Skills join the library all your bots share."
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
@@ -10795,6 +11463,10 @@ msgstr "Stopped."
 msgid "Stopping…"
 msgstr "Stopping…"
 
+#: src/components/SidebarMeters.tsx
+msgid "Storage"
+msgstr "Storage"
+
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminComputerAccess.tsx
 msgid "Storage and cleanup"
@@ -10809,6 +11481,7 @@ msgstr "Storage limit for {0}"
 msgid "Storage per person"
 msgstr "Storage per person"
 
+#: src/components/SidebarMeters.tsx
 #: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Storage used"
@@ -10950,8 +11623,12 @@ msgid "Teach a task"
 msgstr "Teach a task"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Teach your bots about you. Every bot you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
-msgstr "Teach your bots about you. Every bot you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
+msgid "Teach your agents about you. Every agent you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
+msgstr "Teach your agents about you. Every agent you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
+
+#: src/pages/KnowledgeSection.tsx
+#~ msgid "Teach your bots about you. Every bot you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
+#~ msgstr "Teach your bots about you. Every bot you talk to in this space reads these notes before it replies. Only you see them; each colleague has their own."
 
 #: src/pages/Shell.tsx
 msgid "Teaching in progress. Stop teaching before sending a new message."
@@ -11085,6 +11762,14 @@ msgstr "That workbook couldn't be read."
 msgid "That workbook is over 10 MB."
 msgstr "That workbook is over 10 MB."
 
+#: src/pages/shell/composer-error.tsx
+msgid "The agent can use the file but won't see the picture."
+msgstr "The agent can use the file but won't see the picture."
+
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "The agent starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
+msgstr "The agent starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
+
 #: src/components/apps/AppPublishSection.tsx
 msgid "The app becomes an Evolve staff plugin. Once Evolve's reviewers publish it, it opens from Evolve's menu with this data, and changes follow the setting above."
 msgstr "The app becomes an Evolve staff plugin. Once Evolve's reviewers publish it, it opens from Evolve's menu with this data, and changes follow the setting above."
@@ -11094,8 +11779,12 @@ msgid "The app hit an error."
 msgstr "The app hit an error."
 
 #: src/components/apps/AppSettingsPanel.tsx
-msgid "The app shows these by id, and the bot can add infographics and generated images here."
-msgstr "The app shows these by id, and the bot can add infographics and generated images here."
+msgid "The app shows these by id, and the agent can add infographics and generated images here."
+msgstr "The app shows these by id, and the agent can add infographics and generated images here."
+
+#: src/components/apps/AppSettingsPanel.tsx
+#~ msgid "The app shows these by id, and the bot can add infographics and generated images here."
+#~ msgstr "The app shows these by id, and the bot can add infographics and generated images here."
 
 #: src/components/apps/AppVisualEdit.tsx
 msgid "The app's code couldn't be loaded."
@@ -11110,12 +11799,12 @@ msgid "the assistant"
 msgstr "the assistant"
 
 #: src/pages/shell/composer-error.tsx
-msgid "The bot can use the file but won't see the picture."
-msgstr "The bot can use the file but won't see the picture."
+#~ msgid "The bot can use the file but won't see the picture."
+#~ msgstr "The bot can use the file but won't see the picture."
 
 #: src/pages/shell/create-bot-dialog.tsx
-msgid "The bot starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
-msgstr "The bot starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
+#~ msgid "The bot starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
+#~ msgstr "The bot starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
 
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."
@@ -11231,8 +11920,12 @@ msgid "The video could not be loaded."
 msgstr "The video could not be loaded."
 
 #: src/pages/model-settings/space-bots-model.tsx
-msgid "Their own model is cleared. You can pick one again in each bot."
-msgstr "Their own model is cleared. You can pick one again in each bot."
+msgid "Their own model is cleared. You can pick one again in each agent."
+msgstr "Their own model is cleared. You can pick one again in each agent."
+
+#: src/pages/model-settings/space-bots-model.tsx
+#~ msgid "Their own model is cleared. You can pick one again in each bot."
+#~ msgstr "Their own model is cleared. You can pick one again in each bot."
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
@@ -11250,6 +11943,10 @@ msgstr "These files are too large to import."
 #: src/lib/agent-import-errors.ts
 msgid "These files or choices no longer match. Choose the files again."
 msgstr "These files or choices no longer match. Choose the files again."
+
+#: src/components/apps/AppsDialog.tsx
+msgid "These libraries are already switched on. Describe the job to an agent and it can use any of them on day one."
+msgstr "These libraries are already switched on. Describe the job to an agent and it can use any of them on day one."
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
@@ -11286,6 +11983,30 @@ msgstr "Thinking for {0}"
 msgid "Thinking: {0}"
 msgstr "Thinking: {0}"
 
+#: src/pages/shell/agent-import.tsx
+msgid "This agent"
+msgstr "This agent"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "This agent gets a computer of its own. Your other agents can't see or change its files, apps or browser."
+msgstr "This agent gets a computer of its own. Your other agents can't see or change its files, apps or browser."
+
+#: src/pages/shell/files-tab.tsx
+msgid "This agent has no files on a computer yet."
+msgstr "This agent has no files on a computer yet."
+
+#: src/pages/shell/files-tab.tsx
+msgid "This agent hasn't made any files yet."
+msgstr "This agent hasn't made any files yet."
+
+#: src/pages/shell/bot-panel.tsx
+msgid "This agent only"
+msgstr "This agent only"
+
+#: src/pages/shell/computer-view.tsx
+msgid "This agent runs on this computer, not a Linux desktop. Shell and files use your home folder."
+msgstr "This agent runs on this computer, not a Linux desktop. Shell and files use your home folder."
+
 #: src/lib/pages.ts
 msgid "This app couldn't be shown."
 msgstr "This app couldn't be shown."
@@ -11297,8 +12018,12 @@ msgid "This app couldn't load"
 msgstr "This app couldn't load"
 
 #: src/components/apps/AppDataPanel.tsx
-msgid "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
-msgstr "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
+msgid "This app has no tables yet. Ask the agent to add one, or bring in a spreadsheet."
+msgstr "This app has no tables yet. Ask the agent to add one, or bring in a spreadsheet."
+
+#: src/components/apps/AppDataPanel.tsx
+#~ msgid "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
+#~ msgstr "This app has no tables yet. Ask the bot to add one, or bring in a spreadsheet."
 
 #: src/pages/SharedPage.tsx
 msgid "This app is password protected"
@@ -11318,28 +12043,28 @@ msgid "This backup could not be read."
 msgstr "This backup could not be read."
 
 #: src/pages/shell/agent-import.tsx
-msgid "This bot"
-msgstr "This bot"
+#~ msgid "This bot"
+#~ msgstr "This bot"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
-msgstr "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
+#~ msgid "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
+#~ msgstr "This bot gets a computer of its own. Your other bots can't see or change its files, apps or browser."
 
 #: src/pages/shell/files-tab.tsx
-msgid "This bot has no files on a computer yet."
-msgstr "This bot has no files on a computer yet."
+#~ msgid "This bot has no files on a computer yet."
+#~ msgstr "This bot has no files on a computer yet."
 
 #: src/pages/shell/files-tab.tsx
-msgid "This bot hasn't made any files yet."
-msgstr "This bot hasn't made any files yet."
+#~ msgid "This bot hasn't made any files yet."
+#~ msgstr "This bot hasn't made any files yet."
 
 #: src/pages/shell/bot-panel.tsx
-msgid "This bot only"
-msgstr "This bot only"
+#~ msgid "This bot only"
+#~ msgstr "This bot only"
 
 #: src/pages/shell/computer-view.tsx
-msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
-msgstr "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
+#~ msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
+#~ msgstr "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 
 #: src/lib/dictation.ts
 msgid "This browser can't detect when you stop talking. Use Chrome, the desktop app, or hold-to-talk in the composer."
@@ -11396,8 +12121,12 @@ msgid "This deletes all {0} versions of this file. This can't be undone."
 msgstr "This deletes all {0} versions of this file. This can't be undone."
 
 #: src/components/apps/AppVisualEdit.tsx
-msgid "This element is built from data or code, so ask the bot to change it."
-msgstr "This element is built from data or code, so ask the bot to change it."
+msgid "This element is built from data or code, so ask the agent to change it."
+msgstr "This element is built from data or code, so ask the agent to change it."
+
+#: src/components/apps/AppVisualEdit.tsx
+#~ msgid "This element is built from data or code, so ask the bot to change it."
+#~ msgstr "This element is built from data or code, so ask the bot to change it."
 
 #: src/components/EmailDraftCard.tsx
 msgid "This email draft is not available"
@@ -11442,8 +12171,12 @@ msgid "This month"
 msgstr "This month"
 
 #: src/pages/KnowledgeSection.tsx
-msgid "This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes."
-msgstr "This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes."
+msgid "This note is too long for your agents to read in full. Keep the parts that matter most, or split it into several notes."
+msgstr "This note is too long for your agents to read in full. Keep the parts that matter most, or split it into several notes."
+
+#: src/pages/KnowledgeSection.tsx
+#~ msgid "This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes."
+#~ msgstr "This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes."
 
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
@@ -11478,8 +12211,12 @@ msgid "This role overrides any role or job title in their CV."
 msgstr "This role overrides any role or job title in their CV."
 
 #: src/pages/shell/message-cards.tsx
-msgid "This server cannot be assigned without a bot."
-msgstr "This server cannot be assigned without a bot."
+#~ msgid "This server cannot be assigned without a bot."
+#~ msgstr "This server cannot be assigned without a bot."
+
+#: src/pages/shell/message-cards.tsx
+msgid "This server cannot be assigned without an agent."
+msgstr "This server cannot be assigned without an agent."
 
 #: src/pages/McpServersOverlay.tsx
 msgid "This server did not request browser authorization."
@@ -11499,8 +12236,12 @@ msgid "This subscription sign-in is not available in OCSC Intelligence yet. Use 
 msgstr "This subscription sign-in is not available in OCSC Intelligence yet. Use a deployment credential or choose another provider."
 
 #: src/components/apps/AppStudio.tsx
-msgid "This version can't be picked from. Ask the bot instead."
-msgstr "This version can't be picked from. Ask the bot instead."
+msgid "This version can't be picked from. Ask the agent instead."
+msgstr "This version can't be picked from. Ask the agent instead."
+
+#: src/components/apps/AppStudio.tsx
+#~ msgid "This version can't be picked from. Ask the bot instead."
+#~ msgstr "This version can't be picked from. Ask the bot instead."
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
@@ -11509,6 +12250,10 @@ msgstr "This week"
 #: src/lib/cron.ts
 msgid "Thursday"
 msgstr "Thursday"
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Tidy layout"
+msgstr "Tidy layout"
 
 #: src/pages/RoutineSchedule.tsx
 msgid "Time of day"
@@ -11543,11 +12288,11 @@ msgstr "To {0}"
 
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-status.ts
+#: src/pages/shell/shell-sidebar.tsx
 msgid "To do"
 msgstr "To do"
 
 #: src/components/todos/todo-board.tsx
-#: src/pages/shell/shell-sidebar.tsx
 msgid "To do list"
 msgstr "To do list"
 
@@ -11874,9 +12619,17 @@ msgstr "Update required"
 msgid "Updated from Excel"
 msgstr "Updated from Excel"
 
+#: src/components/pages/PageCard.tsx
+#~ msgid "Updated to v{version} · newer version below"
+#~ msgstr "Updated to v{version} · newer version below"
+
 #: src/components/apps/AppStudio.tsx
 msgid "Updated to version {updated}"
 msgstr "Updated to version {updated}"
+
+#: src/components/pages/PageCard.tsx
+#~ msgid "Updated to version {version}"
+#~ msgstr "Updated to version {version}"
 
 #: src/pages/settings-nav.ts
 msgid "Updates"
@@ -11928,6 +12681,7 @@ msgstr "Uploading drawings here turns pages into images the AI can visually insp
 msgid "Urgent"
 msgstr "Urgent"
 
+#: src/components/SidebarMeters.tsx
 #: src/pages/settings-nav.ts
 msgid "Usage"
 msgstr "Usage"
@@ -11976,8 +12730,12 @@ msgid "Use defaults for {label}"
 msgstr "Use defaults for {label}"
 
 #: src/components/integrations/plugin-marketplace.tsx
-msgid "Use in this bot"
-msgstr "Use in this bot"
+msgid "Use in this agent"
+msgstr "Use in this agent"
+
+#: src/components/integrations/plugin-marketplace.tsx
+#~ msgid "Use in this bot"
+#~ msgstr "Use in this bot"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Use Lasso, Rect or Brush to outline what should change. Optional — skip to edit the whole image."
@@ -12146,6 +12904,10 @@ msgstr "Video"
 msgid "Video renders"
 msgstr "Video renders"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "View"
+msgstr "View"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
 msgstr "View all"
@@ -12210,6 +12972,10 @@ msgstr "Warning:"
 msgid "We can't keep every file forever. Download anything you want to keep to your computer, then delete what you no longer need."
 msgstr "We can't keep every file forever. Download anything you want to keep to your computer, then delete what you no longer need."
 
+#: src/components/apps/AppsDialog.tsx
+msgid "We want our staff to create apps and tools that make the work faster and more efficient. That speed is there so the result for the client is better. Quality comes before convenience."
+msgstr "We want our staff to create apps and tools that make the work faster and more efficient. That speed is there so the result for the client is better. Quality comes before convenience."
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Web page"
 msgstr "Web page"
@@ -12264,6 +13030,10 @@ msgstr "Welcome to OCSC Intelligence V3"
 msgid "What about its memories?"
 msgstr "What about its memories?"
 
+#: src/components/apps/AppsDialog.tsx
+msgid "What an app can include"
+msgstr "What an app can include"
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "What assistants can look up and do in Evolve on the person's behalf, such as project datasheets, stock media and voiceovers. Each person only reaches what Evolve lets them see."
 msgstr "What assistants can look up and do in Evolve on the person's behalf, such as project datasheets, stock media and voiceovers. Each person only reaches what Evolve lets them see."
@@ -12285,8 +13055,12 @@ msgid "What each one is called"
 msgstr "What each one is called"
 
 #: src/pages/AdminStaffSpending.tsx
-msgid "What each person's chats, bots and routines have cost in model usage. Updates every minute."
-msgstr "What each person's chats, bots and routines have cost in model usage. Updates every minute."
+msgid "What each person's chats, agents and routines have cost in model usage. Updates every minute."
+msgstr "What each person's chats, agents and routines have cost in model usage. Updates every minute."
+
+#: src/pages/AdminStaffSpending.tsx
+#~ msgid "What each person's chats, bots and routines have cost in model usage. Updates every minute."
+#~ msgstr "What each person's chats, bots and routines have cost in model usage. Updates every minute."
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "What happened"
@@ -12321,8 +13095,12 @@ msgid "What the icon shows"
 msgstr "What the icon shows"
 
 #: src/pages/shell/bot-panel.tsx
-msgid "What this bot is for"
-msgstr "What this bot is for"
+msgid "What this agent is for"
+msgstr "What this agent is for"
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "What this bot is for"
+#~ msgstr "What this bot is for"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "What to return"
@@ -12345,8 +13123,12 @@ msgid "When it finishes or needs input"
 msgstr "When it finishes or needs input"
 
 #: src/pages/AdminStaffLimits.tsx
-msgid "When someone reaches it, their chats and routines stop until next month or until you raise it. Leave empty for no budget."
-msgstr "When someone reaches it, their chats and routines stop until next month or until you raise it. Leave empty for no budget."
+#~ msgid "When someone reaches it, their chats and routines stop until next month or until you raise it. Leave empty for no budget."
+#~ msgstr "When someone reaches it, their chats and routines stop until next month or until you raise it. Leave empty for no budget."
+
+#: src/pages/AdminStaffLimits.tsx
+msgid "When someone reaches it, their chats and routines stop until next month or until you raise it. Staff see how much is left, not the amount. Leave this empty and nothing stops their spend."
+msgstr "When someone reaches it, their chats and routines stop until next month or until you raise it. Staff see how much is left, not the amount. Leave this empty and nothing stops their spend."
 
 #: src/pages/RoutineEditor.tsx
 msgid "When something changes"
@@ -12381,8 +13163,22 @@ msgid "Where earlier entries go"
 msgstr "Where earlier entries go"
 
 #: src/pages/HostComputerPrompt.tsx
-msgid "Where should bots run?"
-msgstr "Where should bots run?"
+msgid "Where should agents run?"
+msgstr "Where should agents run?"
+
+#: src/pages/HostComputerPrompt.tsx
+#~ msgid "Where should bots run?"
+#~ msgstr "Where should bots run?"
+
+#: src/components/pages/PagesList.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
+#: src/pages/AdminSharedApps.tsx
+msgid "Whiteboard"
+msgstr "Whiteboard"
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Whiteboards"
+msgstr "Whiteboards"
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Who can add, change and delete Evolve deadlines and work packages through the AI, and how much one person can change. Every change also needs the person's approval on a card. Evolve enforces these, and only Evolve admins can change them."
@@ -12512,6 +13308,10 @@ msgstr "Working…"
 msgid "Works with your ChatGPT or Claude plan."
 msgstr "Works with your ChatGPT or Claude plan."
 
+#: src/components/apps/AppsDialog.tsx
+msgid "Workshops & studies"
+msgstr "Workshops & studies"
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Workspace"
 msgstr "Workspace"
@@ -12626,8 +13426,12 @@ msgid "Your administrator is setting up OCSC Intelligence for the company. This 
 msgstr "Your administrator is setting up OCSC Intelligence for the company. This page opens your assistant as soon as it is ready."
 
 #: src/pages/shell/bot-panel.tsx
-msgid "Your administrator sets the model and thinking level for every bot."
-msgstr "Your administrator sets the model and thinking level for every bot."
+msgid "Your administrator sets the model and thinking level for every agent."
+msgstr "Your administrator sets the model and thinking level for every agent."
+
+#: src/pages/shell/bot-panel.tsx
+#~ msgid "Your administrator sets the model and thinking level for every bot."
+#~ msgstr "Your administrator sets the model and thinking level for every bot."
 
 #: src/pages/Shell.tsx
 msgid "Your administrator sets up computers for the company."
@@ -12636,6 +13440,14 @@ msgstr "Your administrator sets up computers for the company."
 #: src/pages/Shell.tsx
 msgid "Your administrator sets up voice for the company."
 msgstr "Your administrator sets up voice for the company."
+
+#: src/components/StorageDialog.tsx
+msgid "Your agents haven't made any files yet."
+msgstr "Your agents haven't made any files yet."
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Your agents will use this note from their next reply"
+msgstr "Your agents will use this note from their next reply"
 
 #: src/pages/Auth.tsx
 msgid "Your AI workspace for engineering: tenders, reports, proposals and project knowledge in one place."
@@ -12651,6 +13463,7 @@ msgstr "Your answer"
 msgid "Your Anthropic"
 msgstr "Your Anthropic"
 
+#: src/components/apps/AppsDialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Your apps"
 msgstr "Your apps"
@@ -12664,12 +13477,12 @@ msgid "Your assistants still make Word, PowerPoint, Excel, PDF and video files a
 msgstr "Your assistants still make Word, PowerPoint, Excel, PDF and video files and use Evolve tools. A desktop adds browsing, a shell and routines."
 
 #: src/components/StorageDialog.tsx
-msgid "Your bots haven't made any files yet."
-msgstr "Your bots haven't made any files yet."
+#~ msgid "Your bots haven't made any files yet."
+#~ msgstr "Your bots haven't made any files yet."
 
 #: src/pages/KnowledgeSection.tsx
-msgid "Your bots will use this note from their next reply"
-msgstr "Your bots will use this note from their next reply"
+#~ msgid "Your bots will use this note from their next reply"
+#~ msgstr "Your bots will use this note from their next reply"
 
 #: src/components/ModelCredits.tsx
 msgid "Your card is charged {annualPrice} today, less the unused part of this month."
@@ -12739,8 +13552,12 @@ msgid "Your own ways of working, written down so your agents follow them every t
 msgstr "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below; the built-in ones come with OCSC Intelligence."
 
 #: src/components/tour/ocsc-tour.tsx
-msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot."
-msgstr "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot."
+msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email agent."
+msgstr "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email agent."
+
+#: src/components/tour/ocsc-tour.tsx
+#~ msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot."
+#~ msgstr "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email bot."
 
 #: src/components/ModelCredits.tsx
 msgid "Your plan becomes {annualPrice} / year when your trial ends."
@@ -12808,25 +13625,330 @@ msgstr "Zoom in"
 msgid "Zoom out"
 msgstr "Zoom out"
 
-#: src/components/pages/WhiteboardCanvas.tsx
-msgid "Couldn't save the whiteboard."
-msgstr "Couldn't save the whiteboard."
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Add a folder never to suggest"
+msgstr "Add a folder never to suggest"
 
-#: src/components/pages/PagesList.tsx
-msgid "Whiteboard"
-msgstr "Whiteboard"
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Add a folder…"
+msgstr "Add a folder…"
 
-msgid "{left}% left"
-msgstr "{left}% left"
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Also file Sent Items"
+msgstr "Also file Sent Items"
 
-msgid "No monthly allowance is set, so chats and routines can keep spending."
-msgstr "No monthly allowance is set, so chats and routines can keep spending."
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "ann@example.com or @example.com"
+msgstr "ann@example.com or @example.com"
 
-msgid "None left"
-msgstr "None left"
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminCompanyPage.tsx
+msgid "Assistants, in chat and in routines, look through a person's Inbox and propose a folder for each email, using Evolve job numbers and the person's own folders. Nothing moves until the person presses File on the card; assistants only ever read mail. Set confidence, new project folders and Sent Items under Email filing below."
+msgstr "Assistants, in chat and in routines, look through a person's Inbox and propose a folder for each email, using Evolve job numbers and the person's own folders. Nothing moves until the person presses File on the card; assistants only ever read mail. Set confidence, new project folders and Sent Items under Email filing below."
 
-msgid "Storage"
-msgstr "Storage"
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Change folder"
+msgstr "Change folder"
 
-msgid "When someone reaches it, their chats and routines stop until next month or until you raise it. Staff see how much is left, not the amount. Leave this empty and nothing stops their spend."
-msgstr "When someone reaches it, their chats and routines stop until next month or until you raise it. Staff see how much is left, not the amount. Leave this empty and nothing stops their spend."
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Confidence"
+msgstr "Confidence"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Confidence for Ready"
+msgstr "Confidence for Ready"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Connect Outlook in Connectors to use filing."
+msgstr "Connect Outlook in Connectors to use filing."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Could not change the folder"
+msgstr "Could not change the folder"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Could not file these emails"
+msgstr "Could not file these emails"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Could not load your filing settings"
+msgstr "Could not load your filing settings"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Could not load your folders"
+msgstr "Could not load your folders"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Could not put these emails back"
+msgstr "Could not put these emails back"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Could not save the email filing settings"
+msgstr "Could not save the email filing settings"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Could not save your filing settings"
+msgstr "Could not save your filing settings"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Could not skip these emails"
+msgstr "Could not skip these emails"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Create missing project folders"
+msgstr "Create missing project folders"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Created once under each person's Inbox when first needed, unless they chose their own folder in Settings."
+msgstr "Created once under each person's Inbox when first needed, unless they chose their own folder in Settings."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Created once, when you first file into a new project."
+msgstr "Created once, when you first file into a new project."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Email filing"
+msgstr "Email filing"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Email filing settings saved"
+msgstr "Email filing settings saved"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Email from these senders or domains stays in your Inbox."
+msgstr "Email from these senders or domains stays in your Inbox."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Emails at or above this start ticked on the card. Less certain ones wait for the person to choose a folder."
+msgstr "Emails at or above this start ticked on the card. Less certain ones wait for the person to choose a folder."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Emails at or above this start ticked. Your company's lowest is {0}%."
+msgstr "Emails at or above this start ticked. Your company's lowest is {0}%."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Enter an address such as ann@example.com, or a whole domain such as @example.com."
+msgstr "Enter an address such as ann@example.com, or a whole domain such as @example.com."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Evolve projects"
+msgstr "Evolve projects"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "File {0} selected"
+msgstr "File {0} selected"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "File Outlook email"
+msgstr "File Outlook email"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Filed in {0}"
+msgstr "Filed in {0}"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Filing always waits for each person to press File; assistants cannot move email on their own. People can raise their own confidence bar in Settings, but not lower it below yours."
+msgstr "Filing always waits for each person to press File; assistants cannot move email on their own. People can raise their own confidence bar in Settings, but not lower it below yours."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Filing groups"
+msgstr "Filing groups"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Folder for new project folders"
+msgstr "Folder for new project folders"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Folders never suggested as a destination."
+msgstr "Folders never suggested as a destination."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Forget"
+msgstr "Forget"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Forget {0}"
+msgstr "Forget {0}"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Has a folder"
+msgstr "Has a folder"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Has attachments"
+msgstr "Has attachments"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Inbox › {0}"
+msgstr "Inbox › {0}"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Inbox and Sent Items for everyone"
+msgstr "Inbox and Sent Items for everyone"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Inbox only"
+msgstr "Inbox only"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Inbox; each person may add Sent Items"
+msgstr "Inbox; each person may add Sent Items"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Just this email"
+msgstr "Just this email"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Let assistants suggest filing"
+msgstr "Let assistants suggest filing"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Loading email filing"
+msgstr "Loading email filing"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Lowest confidence for Ready"
+msgstr "Lowest confidence for Ready"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Most emails per card"
+msgstr "Most emails per card"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Most people only file incoming email, so Sent Items is off for each person until they add it."
+msgstr "Most people only file incoming email, so Sent Items is off for each person until they add it."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Needs a decision"
+msgstr "Needs a decision"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Never suggest"
+msgstr "Never suggest"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "New folder"
+msgstr "New folder"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "New folder: {path}"
+msgstr "New folder: {path}"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "New project folders go in"
+msgstr "New project folders go in"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "No Evolve project matches."
+msgstr "No Evolve project matches."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "No folder matches."
+msgstr "No folder matches."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "No folder suggested."
+msgstr "No folder suggested."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Nothing filed yet."
+msgstr "Nothing filed yet."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Nothing is ready to file."
+msgstr "Nothing is ready to file."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Nothing needs your decision."
+msgstr "Nothing needs your decision."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Off: only email you receive is suggested."
+msgstr "Off: only email you receive is suggested."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Ready at {0}%"
+msgstr "Ready at {0}%"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Remember for this conversation"
+msgstr "Remember for this conversation"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Remember for this sender"
+msgstr "Remember for this sender"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Remember for this sender's domain"
+msgstr "Remember for this sender's domain"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Remember this choice"
+msgstr "Remember this choice"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Remove {entry}"
+msgstr "Remove {entry}"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Save email filing"
+msgstr "Save email filing"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Search folders or Evolve projects"
+msgstr "Search folders or Evolve projects"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Search folders, or an Evolve job number or title"
+msgstr "Search folders, or an Evolve job number or title"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Select ready"
+msgstr "Select ready"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Sender or @domain"
+msgstr "Sender or @domain"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "Sent Items"
+msgstr "Sent Items"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailSignatureSettings.tsx
+msgid "Signature"
+msgstr "Signature"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Skipped; left where it is."
+msgstr "Skipped; left where it is."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "This filing card is not available"
+msgstr "This filing card is not available"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "What filing has learned"
+msgstr "What filing has learned"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/pages/AdminEmailFiling.tsx
+msgid "When an email is about an Evolve project with no folder yet, the card proposes one named from Evolve's job number and title. It is made only when the person presses File, and never twice."
+msgstr "When an email is about an Evolve project with no folder yet, the card proposes one named from Evolve's job number and title. It is made only when the person presses File, and never twice."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here."
+msgstr "When you file an email somewhere else and choose to remember it, the choice for that sender, domain or conversation shows here."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Why"
+msgstr "Why"
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Your assistants can look through your Inbox, in chat or in a routine, and suggest a folder for each email. Nothing moves until you press File on the card, and Undo puts an email back."
+msgstr "Your assistants can look through your Inbox, in chat or in a routine, and suggest a folder for each email. Nothing moves until you press File on the card, and Undo puts an email back."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingSettings.tsx
+msgid "Your company files Sent Items as well as your Inbox."
+msgstr "Your company files Sent Items as well as your Inbox."
+
+#: ../../../../../../Users/keith/AppDesign/EvolveLatest29/rakazo/apps/web/src/components/EmailFilingCard.tsx
+msgid "Your folders"
+msgstr "Your folders"

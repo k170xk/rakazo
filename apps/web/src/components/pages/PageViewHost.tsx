@@ -5,14 +5,21 @@ import { useSearchParams } from "react-router-dom";
 import { pageMutationOptions } from "../../lib/page-actions";
 import { ownerPageState } from "../../lib/page-state";
 import type { PageSession } from "../../lib/pages";
-import { PAGE_PARAM, useMedia, usePageDocument, usePageSession } from "../../lib/pages";
+import {
+  APP_VIEW_PARAM,
+  PAGE_PARAM,
+  useMedia,
+  usePageDocument,
+  usePageSession,
+} from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import { errorCode } from "../../lib/user-error";
 import { AppStudio } from "../apps/AppStudio";
+import { AppViewer } from "../apps/AppViewer";
+import { WhiteboardStudio } from "../whiteboards/whiteboard-studio";
 import { PageNotice } from "./PageNotice";
 import { PageView } from "./PageView";
 import { SharePopover } from "./SharePopover";
-import { WhiteboardCanvas } from "./WhiteboardCanvas";
 
 const COARSE = "(pointer: coarse)";
 /** The docked composer's height plus its gap to the screen edge and to what scrolls above it. */
@@ -48,7 +55,7 @@ function OpenPage({
 }) {
   const compact = useMedia(COARSE);
   const { t } = useLingui();
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
   const page = useQuery({
@@ -58,6 +65,7 @@ function OpenPage({
   });
   // Always the Evolve canvas (background), never the slate card chrome — pages looked grey.
   const isApp = page.data?.kind === "app";
+  const viewing = isApp && searchParams.get(APP_VIEW_PARAM) === "1";
   const isBoard = page.data?.kind === "whiteboard";
   // An app is a whole document of its own; a whiteboard is the board. Only pages use the runtime.
   const viewer = usePageDocument(
@@ -82,6 +90,7 @@ function OpenPage({
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       next.delete(PAGE_PARAM);
+      next.delete(APP_VIEW_PARAM);
       return next;
     });
   }
@@ -120,16 +129,21 @@ function OpenPage({
   );
   const data = page.data;
   const open = pageId !== null && (data !== undefined || failed || page.isPending);
-  const dockPage = pageId !== null && data ? { id: data.id, title: data.title } : null;
+  const dockPage = pageId !== null && data && !viewing ? { id: data.id, title: data.title } : null;
   useEffect(() => {
-    // The board writes a selection note onto this same page. Keep it when the title changes.
+    // A full-screen view has no chat docked over it. The board writes a selection note onto this
+    // same page; keep it when the title changes.
+    if (viewing) {
+      session.dock.set({ page: null, node: null, chat: null });
+      return () => session.dock.set({ page: null });
+    }
     const current = session.dock.get().page;
-    const note = current?.id === dockPage?.id ? current.note : undefined;
+    const note = current && current.id === dockPage?.id ? current.note : undefined;
     session.dock.set({
       page: dockPage ? { ...dockPage, ...(note ? { note } : {}) } : null,
     });
     return () => session.dock.set({ page: null });
-  }, [session, dockPage?.id, dockPage?.title]);
+  }, [session, viewing, dockPage?.id, dockPage?.title]);
   const notice = gone ? (
     <PageNotice
       title={t`This app isn't available`}
@@ -171,6 +185,27 @@ function OpenPage({
       }}
     />
   ) : null;
+  if (isApp && viewing) {
+    return (
+      <AppViewer
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) close();
+        }}
+        page={data}
+        ownerName={data?.owner.name ?? null}
+        onEdit={() => {
+          setSearchParams((current) => {
+            const next = new URLSearchParams(current);
+            next.delete(APP_VIEW_PARAM);
+            return next;
+          });
+        }}
+        returnFocus={session.restoreFocus}
+        notice={notice}
+      />
+    );
+  }
   if (isApp) {
     return (
       <AppStudio
@@ -191,6 +226,9 @@ function OpenPage({
         notice={notice}
       />
     );
+  }
+  if (isBoard && data) {
+    return <WhiteboardStudio initialBoardId={data.id} share={share} onClose={close} />;
   }
   return (
     <PageView
@@ -214,17 +252,6 @@ function OpenPage({
       }
       composer={<div ref={setDockNode} />}
       onReply={session.offerReply}
-      canvas={
-        isBoard && data ? (
-          <WhiteboardCanvas
-            pageId={data.id}
-            title={data.title}
-            code={data.code}
-            version={data.version}
-            session={session}
-          />
-        ) : undefined
-      }
       share={share}
     />
   );

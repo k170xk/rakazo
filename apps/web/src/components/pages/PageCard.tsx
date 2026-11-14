@@ -1,4 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
+import { Button } from "@rakazo/ui-web";
+import { ArrowUpRight, Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppSource } from "../../lib/app-host";
@@ -190,7 +192,7 @@ export function PageCard({
     <div
       data-testid="page-card"
       data-deleted={onOpen === undefined || undefined}
-      className="relative w-full max-w-[561px] overflow-hidden pointer-coarse:min-[900px]:max-w-[639px] rounded-[24px] bg-card ring-[0.5px] ring-border has-focus-visible:ring-2 has-focus-visible:ring-ring data-deleted:bg-transparent data-deleted:opacity-70"
+      className="group relative w-full max-w-[561px] overflow-hidden pointer-coarse:min-[900px]:max-w-[639px] rounded-[24px] bg-card ring-[0.5px] ring-border transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md has-focus-visible:ring-2 has-focus-visible:ring-ring data-deleted:bg-transparent data-deleted:opacity-70"
     >
       {onOpen ? (
         <PagePreview document={document} app={app} title={title} failed={failed} preview={preview} />
@@ -225,6 +227,85 @@ export function PageCard({
           onClick={onOpen}
           className="absolute inset-0 rounded-[24px] outline-none"
         />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Compact summary card shown in chat when an existing app is updated, instead of mounting another
+ * full-height live iframe preview for every edit.
+ */
+export function AppUpdateCard({
+  title,
+  version,
+  summary,
+  updatedAt,
+  updated = false,
+  icon,
+  onOpenPreview,
+  onEdit,
+}: {
+  title: string;
+  version: number;
+  summary?: string;
+  updatedAt?: string;
+  updated?: boolean;
+  icon?: ReactNode;
+  onOpenPreview?: () => void;
+  onEdit?: () => void;
+}) {
+  const { t } = useLingui();
+  const when = updatedAt ? formatRelativeTime(updatedAt) : "";
+  const deleted = onOpenPreview === undefined && onEdit === undefined;
+  return (
+    <div
+      data-testid="app-update-card"
+      data-deleted={deleted || undefined}
+      className="group flex w-full max-w-[561px] items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md data-deleted:bg-transparent data-deleted:opacity-70 pointer-coarse:min-[900px]:max-w-[639px]"
+    >
+      <div className="shrink-0">{icon ?? <PageTileIcon />}</div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[14px] font-semibold text-foreground">{title}</p>
+        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-primary/12 px-1.5 py-0.2 text-[11px] font-semibold tabular-nums text-primary">
+            v{version}
+          </span>
+          {when && !deleted && !updated ? <span className="shrink-0">· {when}</span> : null}
+          <span className="min-w-0 truncate">
+            ·{" "}
+            {deleted ? (
+              <Trans>Deleted</Trans>
+            ) : summary ? (
+              summary
+            ) : updated ? (
+              <Trans>Newer version below</Trans>
+            ) : (
+              <Trans>App updated</Trans>
+            )}
+          </span>
+        </div>
+      </div>
+      {!deleted ? (
+        <div className="flex shrink-0 items-center gap-1">
+          {onOpenPreview ? (
+            <Button size="sm" variant="outline" onClick={onOpenPreview}>
+              <Trans>Open</Trans>
+              <ArrowUpRight className="size-3.5" strokeWidth={1.8} />
+            </Button>
+          ) : null}
+          {onEdit ? (
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              aria-label={t`Edit ${title}`}
+              title={t`Edit`}
+              onClick={onEdit}
+            >
+              <Pencil className="size-3.5" strokeWidth={1.8} />
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

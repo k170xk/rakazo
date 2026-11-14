@@ -729,7 +729,7 @@ describe("notes that can't be posted as messages", () => {
     expect(shown).toContain("[redacted] saved.");
   });
 
-  it("keeps tool status lines from replacing the note until the bot writes again", async () => {
+  it("keeps tool status lines from replacing the note until the agent writes again", async () => {
     const { append } = await runTurn("", false, undefined, [], "fyi", {
       runtimeEvents: [
         { type: "text", text: "Checking the totals." },
@@ -764,7 +764,7 @@ describe("notes that can't be posted as messages", () => {
     expect(lines).toContainEqual({ text: "Reading march.csv", activity: true });
   });
 
-  it("tells the bot whether a message_user update it can't post can be retried", async () => {
+  it("tells the agent whether a message_user update it can't post can be retried", async () => {
     const update = async ({
       startedAt,
       earlier = [],
@@ -897,7 +897,7 @@ describe("text written before a question", () => {
     expect(sentTexts(messages)).toEqual(["The [redacted] is set."]);
   });
 
-  it("posts nothing extra when the bot asks with no text before the question", async () => {
+  it("posts nothing extra when the agent asks with no text before the question", async () => {
     const { messages, pauseRunForInput } = await runTurn("", false, "", [], "fyi", {
       runtimeEvents: [
         { type: "tool", name: "ask_user", args: {}, executionId: "ask-1" },
@@ -926,7 +926,7 @@ describe("text written before a question", () => {
   });
 });
 
-describe("a message from the person while the bot works", () => {
+describe("a message from the person while the agent works", () => {
   const sentTexts = (messages: Awaited<ReturnType<typeof runTurn>>["messages"]) =>
     messages.map((message) =>
       message.blocks.map((block) => ("text" in block ? block.text : "")).join(""),
@@ -1008,7 +1008,7 @@ describe("a message from the person while the bot works", () => {
     expect(finalText(finalizeRun)).toBe(`${summary}\n\nThat's everything.`);
   });
 
-  it("keeps the immediate answer for message_user when the bot writes something before it", async () => {
+  it("keeps the immediate answer for message_user when the agent writes something before it", async () => {
     const { messages } = await runTurn("", false, undefined, [], "fyi", {
       executeTools: true,
       runtimeEvents: [

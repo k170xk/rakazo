@@ -40,7 +40,7 @@ const ChecklistCard = z.object({
   title: Text(120),
   caption: z.string().max(240).optional(),
   items: z
-    .array(z.object({ text: Text(200), done: z.boolean(), note: z.string().max(200).optional() }))
+    .array(z.object({ text: Text(400), done: z.boolean(), note: z.string().max(300).optional() }))
     .min(1)
     .max(20),
 });

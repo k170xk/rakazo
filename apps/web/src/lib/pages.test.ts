@@ -29,7 +29,7 @@ describe("page session", () => {
     expect(session.takeShare("A")).toBe(false);
   });
 
-  it("tells the open app when the chat moves beside it and while the bot works", () => {
+  it("tells the open app when the chat moves beside it and while the agent works", () => {
     const session = createPageSession();
     const listener = vi.fn();
     session.dock.subscribe(listener);

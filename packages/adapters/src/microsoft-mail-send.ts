@@ -31,9 +31,14 @@ export interface OutgoingEmail {
   attachments: Array<{ name: string; mimeType: string; bytes: Uint8Array }>;
 }
 
+export interface CreatedOutlookDraft {
+  id: string;
+  webLink: string | null;
+}
+
 /**
- * Outlook refused or failed before sending, so nothing went out and the person may try again.
- * Anything thrown after the send request started is not this error: the email may have gone.
+ * Outlook refused or failed before completing the draft or send, so the person may try again.
+ * Anything thrown after a send request started is not this error: the email may have gone.
  */
 export class OutlookNotSentError extends Error {
   constructor(message: string) {
@@ -46,29 +51,37 @@ function recipients(addresses: string[]) {
   return addresses.map((address) => ({ emailAddress: { address } }));
 }
 
-function graphMessage(status: number, text: string): string {
+function validOutlookWebLink(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function graphMessage(status: number, text: string, action: "draft" | "send"): string {
   try {
     const parsed = JSON.parse(text) as { error?: { message?: string } };
     if (parsed.error?.message) return `Outlook refused it: ${parsed.error.message}`;
   } catch {}
   if (status === 401 || status === 403) {
-    return "Outlook refused to send for this account. Reconnect Outlook and try again.";
+    return action === "draft"
+      ? "Outlook refused to create a draft for this account. Reconnect Outlook in Connectors and try again."
+      : "Outlook refused to send for this account. Reconnect Outlook and try again.";
   }
   if (status === 404) return "Outlook could not find the email this replies to.";
   return `Outlook refused it (HTTP ${status}).`;
 }
 
-/**
- * Sends one email as the signed-in person: a new message, or a reply in the original's
- * conversation with Outlook's quoted history, with the person's signature and attachments.
- */
-export async function sendOutlookEmail(
-  email: OutgoingEmail,
+function createGraphCaller(
   token: string,
-  options: { fetch?: typeof fetch; signal?: AbortSignal } = {},
-): Promise<void> {
+  action: "draft" | "send",
+  options: { fetch?: typeof fetch; signal?: AbortSignal },
+) {
   const http = options.fetch ?? globalThis.fetch;
-  const call = async <T>(method: string, path: string, body?: unknown): Promise<T> => {
+  return async <T>(method: string, path: string, body?: unknown): Promise<T> => {
     const response = await http(`${GRAPH}${path}`, {
       method,
       headers: {
@@ -80,22 +93,36 @@ export async function sendOutlookEmail(
       signal: combineSignals(options.signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)),
     });
     const text = await response.text().catch(() => "");
-    if (!response.ok) throw new OutlookNotSentError(graphMessage(response.status, text));
+    if (!response.ok) throw new OutlookNotSentError(graphMessage(response.status, text, action));
     return (text ? JSON.parse(text) : {}) as T;
   };
-  const notSent = async <T>(step: () => Promise<T>): Promise<T> => {
+}
+
+/**
+ * Creates one draft in the signed-in person's Outlook Drafts folder using Mail.ReadWrite:
+ * a new message, or a reply in the original's conversation with Outlook's quoted history,
+ * with the person's signature and attachments. Nothing is sent; they review and send in Outlook.
+ */
+export async function createOutlookDraft(
+  email: OutgoingEmail,
+  token: string,
+  options: { fetch?: typeof fetch; signal?: AbortSignal } = {},
+): Promise<CreatedOutlookDraft> {
+  const call = createGraphCaller(token, "draft", options);
+  const notCreated = async <T>(step: () => Promise<T>): Promise<T> => {
     try {
       return await step();
     } catch (error) {
       if (error instanceof OutlookNotSentError) throw error;
-      throw new OutlookNotSentError("Outlook could not be reached, so nothing was sent.");
+      throw new OutlookNotSentError("Outlook could not be reached, so the draft was not created.");
     }
   };
 
   let draftId: string;
+  let webLink: string | null = null;
   if (email.mode === "new") {
-    const created = await notSent(() =>
-      call<{ id: string }>("POST", "/me/messages", {
+    const created = await notCreated(() =>
+      call<{ id: string; webLink?: string }>("POST", "/me/messages", {
         subject: email.subject,
         body: {
           contentType: "HTML",
@@ -110,46 +137,71 @@ export async function sendOutlookEmail(
       }),
     );
     draftId = created.id;
+    webLink = validOutlookWebLink(created.webLink);
   } else {
     if (!email.replyToMessageId) throw new OutlookNotSentError("This reply has no original email.");
     const original = encodeURIComponent(email.replyToMessageId);
     const action = email.mode === "reply_all" ? "createReplyAll" : "createReply";
-    const reply = await notSent(() =>
-      call<{ id: string; body?: { content?: string } }>(
+    const reply = await notCreated(() =>
+      call<{ id: string; webLink?: string; body?: { content?: string } }>(
         "POST",
         `/me/messages/${original}/${action}`,
         {},
       ),
     );
     draftId = reply.id;
-    await discardOnFailure(call, draftId, () =>
-      call("PATCH", `/me/messages/${encodeURIComponent(draftId)}`, {
-        subject: email.subject,
-        body: {
-          contentType: "HTML",
-          content: composeEmailHtml({
-            bodyHtml: email.bodyHtml,
-            signatureHtml: email.signatureHtml,
-            quotedHtml: reply.body?.content ?? "",
-          }),
-        },
-        toRecipients: recipients(email.to),
-        ccRecipients: recipients(email.cc),
-        bccRecipients: recipients(email.bcc),
-      }),
+    const patched = await discardOnFailure(
+      call,
+      draftId,
+      "Outlook could not be reached, so the draft was not created.",
+      () =>
+        call<{ webLink?: string }>("PATCH", `/me/messages/${encodeURIComponent(draftId)}`, {
+          subject: email.subject,
+          body: {
+            contentType: "HTML",
+            content: composeEmailHtml({
+              bodyHtml: email.bodyHtml,
+              signatureHtml: email.signatureHtml,
+              quotedHtml: reply.body?.content ?? "",
+            }),
+          },
+          toRecipients: recipients(email.to),
+          ccRecipients: recipients(email.cc),
+          bccRecipients: recipients(email.bcc),
+        }),
     );
+    webLink = validOutlookWebLink(patched.webLink ?? reply.webLink);
   }
   const draft = encodeURIComponent(draftId);
   for (const attachment of email.attachments) {
-    await discardOnFailure(call, draftId, () =>
-      call("POST", `/me/messages/${draft}/attachments`, {
-        "@odata.type": "#microsoft.graph.fileAttachment",
-        name: attachment.name,
-        contentType: attachment.mimeType,
-        contentBytes: Buffer.from(attachment.bytes).toString("base64"),
-      }),
+    await discardOnFailure(
+      call,
+      draftId,
+      "Outlook could not be reached, so the draft was not created.",
+      () =>
+        call("POST", `/me/messages/${draft}/attachments`, {
+          "@odata.type": "#microsoft.graph.fileAttachment",
+          name: attachment.name,
+          contentType: attachment.mimeType,
+          contentBytes: Buffer.from(attachment.bytes).toString("base64"),
+        }),
     );
   }
+  return { id: draftId, webLink };
+}
+
+/**
+ * Sends one email as the signed-in person: creates the draft with signature, quoted history
+ * and attachments, then sends it via Mail.Send.
+ */
+export async function sendOutlookEmail(
+  email: OutgoingEmail,
+  token: string,
+  options: { fetch?: typeof fetch; signal?: AbortSignal } = {},
+): Promise<void> {
+  const call = createGraphCaller(token, "send", options);
+  const created = await createOutlookDraft(email, token, options);
+  const draft = encodeURIComponent(created.id);
   try {
     await call("POST", `/me/messages/${draft}/send`);
   } catch (error) {
@@ -162,17 +214,18 @@ export async function sendOutlookEmail(
 }
 
 /** A failed step leaves no half-built draft in the person's Drafts folder. */
-async function discardOnFailure(
-  call: <T>(method: string, path: string, body?: unknown) => Promise<T>,
+async function discardOnFailure<T>(
+  call: <R>(method: string, path: string, body?: unknown) => Promise<R>,
   draftId: string,
-  step: () => Promise<unknown>,
-): Promise<void> {
+  unreachableMessage: string,
+  step: () => Promise<T>,
+): Promise<T> {
   try {
-    await step();
+    return await step();
   } catch (error) {
     await call("DELETE", `/me/messages/${encodeURIComponent(draftId)}`).catch(() => undefined);
     throw error instanceof OutlookNotSentError
       ? error
-      : new OutlookNotSentError("Outlook could not be reached, so nothing was sent.");
+      : new OutlookNotSentError(unreachableMessage);
   }
 }

@@ -48,7 +48,7 @@ describe("computer control leases", () => {
     expect(hasActiveComputerControl({ ...active, controlLeaseExpiresAt: now }, now)).toBe(false);
   });
 
-  it("treats only this bot's unbound takeover as idle", () => {
+  it("treats only this agent's unbound takeover as idle", () => {
     const takeover = {
       controlHolder: "user",
       controlBotId: "bot-1",
@@ -352,7 +352,7 @@ describe("computer control leases", () => {
     });
   });
 
-  it("revokes then clears orphaned user control when expiry has no control bot id", async () => {
+  it("revokes then clears orphaned user control when expiry has no control agent id", async () => {
     const harness = controlHarness({ controlBotId: null });
     await expect(expireComputerControl(harness.deps, "computer-id", "lease-1")).resolves.toBe(true);
     expect(harness.setScreenControl).toHaveBeenCalledWith(

@@ -796,7 +796,7 @@ for slot in pathlib.Path(sys.argv[1]).glob("*.slot"):
     try:
         with slot.open() as source: used.add(int(source.readline()))
     except ValueError: pass
-# A damaged assignment must not make a live display available to another bot.
+# A damaged assignment must not make a live display available to another agent.
 for marker in pathlib.Path("/tmp/rakazo").glob("browser-profile-*"):
     display = marker.name.rsplit("-", 1)[-1]
     if display.isascii() and display.isdigit(): used.add(int(display) - ${env.displayStart})

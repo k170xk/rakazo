@@ -198,7 +198,7 @@ describe("native host computer transport", () => {
     ]);
     await client.writeFile(
       computer,
-      { path: "bots/bot-1/file.txt", content: new TextEncoder().encode("test") },
+      { path: "agents/bot-1/file.txt", content: new TextEncoder().encode("test") },
       context,
     );
     await expect(
@@ -207,7 +207,7 @@ describe("native host computer transport", () => {
     expect(await client.workspaceDirectories(computer, { action: "list" }, context)).toEqual([]);
   });
 
-  it("unlinks a deleted bot's symlink without following it and refuses a linked parent", async () => {
+  it("unlinks a deleted agent's symlink without following it and refuses a linked parent", async () => {
     await ensureComputerWorkspaceLayout(client, computer, "team", "bot-1", context);
     const [directory] = await readdir(path.join(root, "desktop-computers"));
     const home = path.join(root, "desktop-computers", directory!);

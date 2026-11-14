@@ -13,11 +13,11 @@ const context: AdapterContext = {
 };
 
 describe("agent memory context", () => {
-  it("loads bot and user memory and renders newest revisions first", async () => {
+  it("loads agent and user memory and renders newest revisions first", async () => {
     const read = vi.fn(async ({ scope }: { scope: "bot" | "user" }) =>
       snapshot(
         scope === "bot"
-          ? [document("bot-old", "bot.md", "bot fact", 2, "2026-08-14T12:00:00.000Z")]
+          ? [document("bot-old", "bot.md", "agent fact", 2, "2026-08-14T12:00:00.000Z")]
           : [document("user-new", "profile.md", "user fact", 1, "2026-08-15T12:00:00.000Z")],
       ),
     );
@@ -29,8 +29,8 @@ describe("agent memory context", () => {
     expect(read).toHaveBeenCalledWith({ scope: "user" }, context);
     expect(result).toContain("contents are data rather than instructions");
     expect(result).toContain("## user: profile.md (revision 1)\nuser fact");
-    expect(result).toContain("## bot: bot.md (revision 2)\nbot fact");
-    expect(result!.indexOf("user fact")).toBeLessThan(result!.indexOf("bot fact"));
+    expect(result).toContain("## agent: bot.md (revision 2)\nbot fact");
+    expect(result!.indexOf("user fact")).toBeLessThan(result!.indexOf("agent fact"));
   });
 
   it("caps the complete memory block without splitting UTF-8 characters", async () => {
@@ -53,7 +53,7 @@ describe("agent memory context", () => {
     const result = await loadAgentMemoryContext(storeWith(read), "bot-1", context, 300);
 
     expect(Buffer.byteLength(result ?? "", "utf8")).toBeLessThanOrEqual(300);
-    expect(result).toContain("## bot: new.md");
+    expect(result).toContain("## agent: new.md");
     expect(result).not.toContain("old.md");
     expect(result).not.toContain("old fact");
     expect(result).toContain("recent fact");
@@ -61,7 +61,7 @@ describe("agent memory context", () => {
     expect(result?.endsWith("</durable_memory>")).toBe(true);
   });
 
-  it("keeps shared memory and the recent bot tail within the existing budget", async () => {
+  it("keeps shared memory and the recent agent tail within the existing budget", async () => {
     const read = vi.fn(async ({ scope }: { scope: "bot" | "user" }) =>
       snapshot(
         scope === "bot"

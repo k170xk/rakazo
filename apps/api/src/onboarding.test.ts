@@ -80,7 +80,7 @@ describe("promptFocus", () => {
     return { deps, actor, run };
   }
 
-  it("posts the fixed focus card when the bot has no creation intro", async () => {
+  it("posts the fixed focus card when the agent has no creation intro", async () => {
     const { deps, actor } = focusFixture();
     await promptFocus(deps, actor, "bot");
     expect(posted.flatMap((message) => message.blocks)).toContainEqual(
@@ -88,7 +88,7 @@ describe("promptFocus", () => {
     );
   });
 
-  it("leaves the question to a bot whose creation intro is queued or running", async () => {
+  it("leaves the question to an agent whose creation intro is queued or running", async () => {
     const { deps, actor, run } = focusFixture({ introRun: true });
     await promptFocus(deps, actor, "bot");
     expect(posted).toEqual([]);
@@ -99,7 +99,7 @@ describe("promptFocus", () => {
     );
   });
 
-  it("does not post over a question the bot already asked", async () => {
+  it("does not post over a question the agent already asked", async () => {
     const { deps, actor } = focusFixture({
       blocks: [{ kind: "ask", text: "What do you want me for?", status: "answered" }],
     });

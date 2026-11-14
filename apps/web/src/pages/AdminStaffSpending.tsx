@@ -50,7 +50,7 @@ export function StaffSpendingSection() {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             <Trans>
-              What each person's chats, bots and routines have cost in model usage. Updates every
+              What each person's chats, agents and routines have cost in model usage. Updates every
               minute.
             </Trans>
           </p>

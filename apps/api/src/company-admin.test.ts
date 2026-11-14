@@ -1,5 +1,5 @@
 import { setCompanyPolicy } from "@rakazo/adapters";
-import { DEFAULT_COMPANY_FEATURES } from "@rakazo/contracts";
+import { DEFAULT_COMPANY_FEATURES, DEFAULT_COMPANY_TOOLS } from "@rakazo/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { requireCompanyFeature } from "./company-admin.js";
 import type { RouterDeps } from "./router.js";
@@ -71,5 +71,47 @@ describe("staff integrations switch", () => {
     await expect(requireCompanyFeature(deps, { userId: "admin" }, "plugins")).rejects.toThrow(
       "Plugins are turned off",
     );
+  });
+});
+
+describe.each([
+  ["outlookSend", "Outlook email drafts are not turned on for you."],
+  ["outlookFiling", "Outlook email filing is not turned on for you."],
+] as const)("%s switch", (feature, offMessage) => {
+  afterEach(() => {
+    setCompanyPolicy({ features: null, tools: null });
+  });
+
+  it("is off by default and refuses everyone, admins included", async () => {
+    expect(DEFAULT_COMPANY_FEATURES[feature]).toBe(false);
+    await expect(requireCompanyFeature(deps, { userId: "member" }, feature)).rejects.toThrow(
+      offMessage,
+    );
+    await expect(requireCompanyFeature(deps, { userId: "admin" }, feature)).rejects.toThrow(
+      offMessage,
+    );
+  });
+
+  it("admits only the chosen people and groups once limited", async () => {
+    setCompanyPolicy({
+      features: { ...DEFAULT_COMPANY_FEATURES, [feature]: true },
+      tools: {
+        ...DEFAULT_COMPANY_TOOLS,
+        accessGroups: [{ id: "g1", name: "Projects", userIds: ["grouped"] }],
+        featureAudiences: { [feature]: { userIds: ["chosen"], groupIds: ["g1"] } },
+      },
+    });
+    await expect(requireCompanyFeature(deps, { userId: "member" }, feature)).rejects.toThrow(
+      "Your administrator has not turned this on for you.",
+    );
+    await expect(
+      requireCompanyFeature(deps, { userId: "chosen" }, feature),
+    ).resolves.toBeUndefined();
+    await expect(
+      requireCompanyFeature(deps, { userId: "grouped" }, feature),
+    ).resolves.toBeUndefined();
+    await expect(
+      requireCompanyFeature(deps, { userId: "admin" }, feature),
+    ).resolves.toBeUndefined();
   });
 });

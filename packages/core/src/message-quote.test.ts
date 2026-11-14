@@ -161,7 +161,7 @@ describe("deriveMessageQuote", () => {
 });
 
 describe("messageReplyExcerpt", () => {
-  it("uses the first visible line and strips bot Markdown", () => {
+  it("uses the first visible line and strips agent Markdown", () => {
     expect(messageReplyExcerpt(textBlock("\n## **First** line\n\nSecond line"), "bot")).toBe(
       "First line",
     );

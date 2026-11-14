@@ -136,7 +136,7 @@ export async function deleteSpaceWithContent(
               deleteMemories: true,
               strictTeardown: true,
             }),
-          "Space bot teardown timed out",
+          "Space agent teardown timed out",
         );
       } catch (error) {
         // A takeover worker may have finished this bot first.

@@ -289,8 +289,8 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   }
   const handoff = message.blocks.find((block) => block.kind === "handoff");
   if (handoff) {
-    const from = memberName(members, handoff.fromBotId) ?? t("bot");
-    const to = memberName(members, handoff.toBotId) ?? t("bot");
+    const from = memberName(members, handoff.fromBotId) ?? t("agent");
+    const to = memberName(members, handoff.toBotId) ?? t("agent");
     return (
       <AgentEventLabel
         actionProps={actionProps}
@@ -317,7 +317,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
     return (
       <PeerReceiptLine
         peerBotId={peerBotId}
-        peerBotName={peerExchange?.peerBotName ?? peer ?? t("Bot")}
+        peerBotName={peerExchange?.peerBotName ?? peer ?? t("Agent")}
         color={peerColor}
         avatarSet={peerBot?.avatarSet ?? peerMember?.avatarSet}
         count={peerExchange?.count ?? 1}
@@ -325,7 +325,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
         actionProps={actionProps}
         onPress={
           !groupId && botId && peerBotId !== botId
-            ? () => onOpenPeerChat({ peerBotId, peerBotName: peer ?? t("Bot") })
+            ? () => onOpenPeerChat({ peerBotId, peerBotName: peer ?? t("Agent") })
             : undefined
         }
       />
@@ -703,7 +703,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
           key={`computer-${index}`}
           block={block}
           onOpen={
-            computerBotId ? () => onOpenComputer(computerBotId, speaker ?? t("Bot")) : undefined
+            computerBotId ? () => onOpenComputer(computerBotId, speaker ?? t("Agent")) : undefined
           }
           accessibilityActions={actionProps.accessibilityActions}
           onAccessibilityAction={actionProps.onAccessibilityAction}

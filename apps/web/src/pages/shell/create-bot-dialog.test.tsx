@@ -58,7 +58,7 @@ function button(name: string) {
 }
 
 async function typeName(value: string) {
-  const input = document.querySelector<HTMLInputElement>('input[placeholder="Name your Bot"]')!;
+  const input = document.querySelector<HTMLInputElement>('input[placeholder="Name your Agent"]')!;
   await act(async () => {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, value);
     input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -75,7 +75,7 @@ describe("CreateBotDialog", () => {
   it("starts with a short suggested name and offers another", async () => {
     const onCreate = vi.fn(async (_input: CreateBotDialogInput) => undefined);
     await render(onCreate);
-    const input = document.querySelector<HTMLInputElement>('input[placeholder="Name your Bot"]')!;
+    const input = document.querySelector<HTMLInputElement>('input[placeholder="Name your Agent"]')!;
     const first = input.value;
     expect(BOT_NAME_IDEAS).toContain(first);
     expect(button("Create").disabled).toBe(false);
@@ -170,12 +170,12 @@ describe("CreateBotDialog", () => {
 
   it("shows the error and stays open when creating fails", async () => {
     await render(async () => {
-      throw new Error("Bot limit reached");
+      throw new Error("Agent limit reached");
     });
     await typeName("Scout");
     await click(button("Create"));
     expect(document.querySelector('[data-testid="create-bot-error"]')?.textContent).toBe(
-      "Bot limit reached",
+      "Agent limit reached",
     );
     expect(document.querySelector('[data-testid="create-bot-dialog"]')).not.toBeNull();
   });

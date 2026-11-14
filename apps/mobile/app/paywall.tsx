@@ -288,7 +288,7 @@ export default function Paywall() {
   const creditPrice = `$${amount / 100}`;
   const features: { label: string; ios: string; android: SymbolName; color: string }[] = [
     {
-      label: t("Bots with their own computer"),
+      label: t("Agents with their own computer"),
       ios: "desktopcomputer",
       android: "desktop-outline",
       color: botColors[2],
@@ -356,7 +356,7 @@ export default function Paywall() {
             ))}
           </View>
           <Text accessibilityRole="header" style={[styles.title, { color: tokens.foreground }]}>
-            {t("Put your bots to work")}
+            {t("Put your agents to work")}
           </Text>
         </View>
         <View style={styles.features}>

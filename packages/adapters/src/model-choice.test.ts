@@ -44,7 +44,7 @@ describe("matchModelChoice", () => {
     expect(matched("Gemini 3.7 Flash")).toBe("google/gemini-3.7-flash");
   });
 
-  it("prefers the bot's current provider", () => {
+  it("prefers the agent's current provider", () => {
     expect(matched("Claude Sonnet", "openrouter")).toBe("openrouter/anthropic/claude-sonnet-5.5");
   });
 

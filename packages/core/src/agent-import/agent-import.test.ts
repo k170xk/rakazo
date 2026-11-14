@@ -101,7 +101,7 @@ describe("OpenClaw workspace", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("names the bot after a named workspace when it has no identity", () => {
+  it("names the agent after a named workspace when it has no identity", () => {
     const result = plan([{ path: "workspace-research/SOUL.md", content: "Curious.\n" }]);
     expect(result.source).toBe("openclaw");
     expect(result.suggestedName).toBe("research");

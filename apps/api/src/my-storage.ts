@@ -42,7 +42,7 @@ type NamedBot = OwnedBot & { name: string; archivedAt: Date | null };
 
 /** Every bot the person owns in any of their spaces, archived ones too, since their files still count. */
 async function ownedBots(prisma: PrismaClient, userId: string): Promise<NamedBot[]> {
-  return runAsSystem("list a person's bots for their storage", () =>
+  return runAsSystem("list a person's agents for their storage", () =>
     prisma.bot.findMany({
       where: { userId },
       select: {

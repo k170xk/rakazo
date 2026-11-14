@@ -779,7 +779,7 @@ describe("thread event reduction", () => {
     ]);
   });
 
-  it("keeps event-sourced waiting_takeover when a stale refresh still shows the bot busy", () => {
+  it("keeps event-sourced waiting_takeover when a stale refresh still shows the agent busy", () => {
     const run = threadRun("run-1");
     const waitingLocal: ThreadSnapshot = {
       ...snapshot([]),
@@ -1487,7 +1487,7 @@ describe("thread event reduction", () => {
       createdAt: "2026-08-16T00:00:00.000Z",
     };
     const otherLive = {
-      ...message("progress:run-b", [{ kind: "progress" as const, text: "Other bot" }]),
+      ...message("progress:run-b", [{ kind: "progress" as const, text: "Other agent" }]),
       botId: "bot-b",
       runId: "run-b",
     };
@@ -1501,7 +1501,7 @@ describe("thread event reduction", () => {
         seq: 8,
         runId: "run-a",
         botId: "bot-a",
-        payload: { text: "Current bot" },
+        payload: { text: "Current agent" },
       }),
     );
 
@@ -1674,7 +1674,7 @@ describe("thread event reduction", () => {
     expect(next?.messages[0]?.callId).toBe("c-1");
   });
 
-  it("preserves botId on durable bot messages", () => {
+  it("preserves botId on durable agent messages", () => {
     const initial = snapshot([]);
     const next = reduceThreadSnapshot(
       initial,
@@ -1779,7 +1779,7 @@ describe("computer event reduction", () => {
     expect(userHoldsComputerControl(granted, "bot-2")).toBe(false);
   });
 
-  it("treats a busy bot name as a blocked takeover", () => {
+  it("treats a busy agent name as a blocked takeover", () => {
     expect(computerTakeoverBlocked(computer({ busyBotName: "Writer" }), "running")).toBe(true);
     expect(computerTakeoverBlocked(computer({ busyBotName: "Writer" }))).toBe(false);
     expect(computerTakeoverBlocked(computer({ busyBotName: null }), "running")).toBe(false);
@@ -1790,7 +1790,7 @@ describe("computer event reduction", () => {
     expect(computerTakeoverBlocked(computer({ busyBotName: "Writer" }), "completed")).toBe(false);
   });
 
-  it("ignores computer events that belong to a different bot", () => {
+  it("ignores computer events that belong to a different agent", () => {
     const prev = computer({ takeoverRequested: false, controlHolder: "bot" });
     expect(
       reduceComputerStatus(

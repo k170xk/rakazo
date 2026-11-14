@@ -22,7 +22,7 @@ function Harness({ userId = "user" }: { userId?: string }) {
     },
     onPreviewCollapsedChange: setCollapsed,
   });
-  return <hr {...current.handleProps} aria-label="Resize bots" data-collapsed={collapsed} />;
+  return <hr {...current.handleProps} aria-label="Resize agents" data-collapsed={collapsed} />;
 }
 
 beforeEach(async () => {

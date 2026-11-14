@@ -8,14 +8,14 @@ import { useOpenPage, usePageDocument } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import { errorCode } from "../../lib/user-error";
 import { AppIcon } from "../apps/AppIcon";
-import { PageCard } from "./PageCard";
+import { AppUpdateCard, PageCard } from "./PageCard";
 import { PageTileIcon } from "./page-icon";
 
 const ICON_WAIT_MS = 5 * 60_000;
 
 /**
- * A page saved in this chat. The newest card for a page draws its current version and title;
- * an older one keeps the version it was saved with and opens the latest.
+ * A page saved in this chat. The initial creation card for an app draws its live preview; later
+ * edits to an existing app render as a compact update card with a summary and Open / Edit buttons.
  */
 export function PageBlockCard({ block, updated }: { block: PageBlock; updated: boolean }) {
   const queries = useSpaceQueries();
@@ -33,9 +33,12 @@ export function PageBlockCard({ block, updated }: { block: PageBlock; updated: b
         : false;
     },
   });
+  const isApp = current.data?.kind === "app";
+  const isBoard = current.data?.kind === "whiteboard";
+  const isAppUpdate = isApp && !(block.created ?? block.version === 1);
   const saved = useQuery({
     ...queries.pages.get.queryOptions({ input: { pageId: block.pageId, version: block.version } }),
-    enabled: updated,
+    enabled: updated && !isAppUpdate,
     staleTime: Number.POSITIVE_INFINITY,
   });
   const currentVersion = current.data?.currentVersion;
@@ -49,16 +52,17 @@ export function PageBlockCard({ block, updated }: { block: PageBlock; updated: b
     }
   }, [updated, currentVersion, block.version, block.pageId, queries, queryClient]);
   const shown = updated ? saved.data : current.data;
-  const isApp = current.data?.kind === "app";
-  const isBoard = current.data?.kind === "whiteboard";
   // An app draws from its own data, a whiteboard from its shapes. Only pages use the runtime.
   const viewer = usePageDocument(isApp || isBoard ? undefined : shown?.code);
   const source = useMemo(
-    () => (isApp ? ownerAppSource(queries, block.pageId, current.data?.owner.name ?? null) : null),
-    [isApp, queries, block.pageId, current.data?.owner.name],
+    () =>
+      isApp && !isAppUpdate
+        ? ownerAppSource(queries, block.pageId, current.data?.owner.name ?? null)
+        : null,
+    [isApp, isAppUpdate, queries, block.pageId, current.data?.owner.name],
   );
   const app =
-    isApp && source && current.data?.code
+    isApp && !isAppUpdate && source && current.data?.code
       ? {
           id: block.pageId,
           version: current.data.version,
@@ -68,29 +72,41 @@ export function PageBlockCard({ block, updated }: { block: PageBlock; updated: b
       : undefined;
   const deleted = errorCode(current.error) === "NOT_FOUND";
   const unread = shown === undefined && (updated ? saved.isError : current.isError);
+  const icon =
+    isApp && current.data?.icon ? (
+      <AppIcon
+        pageId={block.pageId}
+        icon={current.data.icon}
+        className="size-[41px]"
+        fallback={<PageTileIcon />}
+      />
+    ) : undefined;
+  if (isAppUpdate) {
+    return (
+      <AppUpdateCard
+        title={current.data?.title ?? block.title}
+        version={block.version}
+        summary={block.summary}
+        updatedAt={current.data?.updatedAt}
+        updated={updated}
+        icon={icon}
+        onOpenPreview={deleted ? undefined : () => openPage(block.pageId, { view: true })}
+        onEdit={deleted ? undefined : () => openPage(block.pageId)}
+      />
+    );
+  }
   return (
     <PageCard
       title={current.data?.title ?? block.title}
       document={deleted ? null : viewer.document}
       failed={(!isApp && !isBoard && viewer.failed) || unread}
-      preview={
-        isBoard && shown?.code ? <BoardThumbnail value={shown.code} /> : undefined
-      }
+      preview={isBoard && shown?.code ? <BoardThumbnail value={shown.code} /> : undefined}
       app={app}
       updated={updated}
       updatedAt={current.data?.updatedAt}
       shared={current.data ? pageIsShared(current.data.visibility) : false}
       onOpen={deleted ? undefined : () => openPage(block.pageId)}
-      icon={
-        isApp && current.data?.icon ? (
-          <AppIcon
-            pageId={block.pageId}
-            icon={current.data.icon}
-            className="size-[41px]"
-            fallback={<PageTileIcon />}
-          />
-        ) : undefined
-      }
+      icon={icon}
     />
   );
 }

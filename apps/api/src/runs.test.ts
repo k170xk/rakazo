@@ -25,7 +25,7 @@ describe("run activity copy", () => {
       expect(
         activityPreview({
           trigger: "bot_message",
-          prompt: "[bot] private internal routing envelope",
+          prompt: "[agent] private internal routing envelope",
           sourceBlocks: [
             { kind: "bot_message_received", fromBotId: "peer", fromBotName, text, intent },
           ],
@@ -108,7 +108,7 @@ describe("run activity copy", () => {
     expect(
       activityPreview({
         trigger: "bot_message",
-        prompt: "[bot] private internal routing envelope",
+        prompt: "[agent] private internal routing envelope",
         sourceBlocks,
       }),
     ).toEqual({ promptSnippet: "Message from another agent", agentMessage: { kind: "unknown" } });

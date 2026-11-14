@@ -4,6 +4,7 @@ import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
+import { EmailFilingSettings } from "../components/EmailFilingSettings";
 import { EmailSignatureSettings } from "../components/EmailSignatureSettings";
 import { PersonalVault } from "../components/PersonalVault";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
@@ -36,6 +37,7 @@ export function SettingsOverlay({
   messagingEnabled = false,
   personalVaultEnabled = false,
   outlookSendEnabled = false,
+  outlookFilingEnabled = false,
   paymentWalletProvider = null,
   memoryConfig,
   onMemoryConfigChange,
@@ -69,6 +71,8 @@ export function SettingsOverlay({
   personalVaultEnabled?: boolean;
   /** This person may send Outlook email from draft cards. Off hides Email signature. */
   outlookSendEnabled?: boolean;
+  /** This person may have assistants propose filing their Outlook email. Off hides Email filing. */
+  outlookFilingEnabled?: boolean;
   /** The wallet this deployment lets bots spend from; none hides Wallet. */
   paymentWalletProvider?: { id: string; name: string } | null;
   memoryConfig: SpaceMemoryConfig | null | undefined;
@@ -84,6 +88,7 @@ export function SettingsOverlay({
   const [memoryBusy, setMemoryBusy] = useState(false);
   const [voiceBusy, setVoiceBusy] = useState(false);
   const showUpdates = Boolean(desktopBridge()?.update);
+  const emailEnabled = outlookSendEnabled || outlookFilingEnabled;
   // A section that isn't offered (including the removed General page) opens on Work Space.
   const section =
     requestedSection === "general" ||
@@ -91,7 +96,7 @@ export function SettingsOverlay({
     (requestedSection === "billing" && !billingEnabled) ||
     (requestedSection === "messaging" && !messagingEnabled) ||
     (requestedSection === "vault" && !personalVaultEnabled) ||
-    (requestedSection === "email" && !outlookSendEnabled) ||
+    (requestedSection === "email" && !emailEnabled) ||
     (requestedSection === "wallet" && !paymentWalletProvider) ||
     (requestedSection === "updates" && !showUpdates)
       ? "organization"
@@ -113,7 +118,7 @@ export function SettingsOverlay({
     billing: billingEnabled,
     updates: showUpdates,
     vault: personalVaultEnabled,
-    email: outlookSendEnabled,
+    email: emailEnabled,
   });
 
   useEffect(() => {
@@ -150,7 +155,7 @@ export function SettingsOverlay({
     messagingEnabled,
     paymentWalletProvider,
     personalVaultEnabled,
-    outlookSendEnabled,
+    emailEnabled,
     showUpdates,
     i18n.locale,
   ]);
@@ -350,7 +355,12 @@ export function SettingsOverlay({
                   ) : null}
                   {section === "confirmations" ? <ApprovalRulesSettings scope="account" /> : null}
                   {section === "vault" && personalVaultEnabled ? <PersonalVault /> : null}
-                  {section === "email" && outlookSendEnabled ? <EmailSignatureSettings /> : null}
+                  {section === "email" && emailEnabled ? (
+                    <div className="space-y-8">
+                      {outlookSendEnabled ? <EmailSignatureSettings /> : null}
+                      {outlookFilingEnabled ? <EmailFilingSettings /> : null}
+                    </div>
+                  ) : null}
                   {section === "messaging" && messagingEnabled ? <MessagingSettingsPanel /> : null}
                   {section === "wallet" && paymentWalletProvider ? (
                     <PaymentWalletSettingsPanel provider={paymentWalletProvider} />

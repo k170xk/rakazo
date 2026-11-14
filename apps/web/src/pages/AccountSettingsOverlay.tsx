@@ -284,7 +284,7 @@ export function GeneralSettingsPanels({
           <SettingsRow
             label={
               <span id={botStyleLabelId}>
-                <Trans>Bot style</Trans>
+                <Trans>Agent style</Trans>
               </span>
             }
             control={
@@ -297,7 +297,7 @@ export function GeneralSettingsPanels({
                     if (!next || next === botAvatarSet) return;
                     setBotStyleError(null);
                     onBotAvatarSetChange(next as BotAvatarSet).catch(() =>
-                      setBotStyleError(t`Couldn't update bot style`),
+                      setBotStyleError(t`Couldn't update agent style`),
                     );
                   }}
                   spacing={1}

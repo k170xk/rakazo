@@ -87,8 +87,8 @@ function MemberPicker({
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={t`Filter bots`}
-            aria-label={t`Filter bots`}
+            placeholder={t`Filter agents`}
+            aria-label={t`Filter agents`}
             className="mt-2"
           />
           <p className="mt-2 text-sm text-muted-foreground">{hint}</p>
@@ -132,7 +132,7 @@ function MemberPicker({
         })}
         {visible.length === 0 ? (
           <p className="px-2.5 py-2.5 text-sm text-muted-foreground">
-            {expanded ? <Trans>No bots match</Trans> : <Trans>No members yet</Trans>}
+            {expanded ? <Trans>No agents match</Trans> : <Trans>No members yet</Trans>}
           </p>
         ) : null}
       </div>
@@ -228,7 +228,7 @@ export function CreateGroupForm({
         hint={
           searchPeople ? (
             <Trans>
-              Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} bots, or just 1 when you add people below
+              Pick {GROUP_MEMBER_MIN}–{GROUP_MEMBER_MAX} agents, or just 1 when you add people below
             </Trans>
           ) : (
             <Trans>
@@ -244,7 +244,7 @@ export function CreateGroupForm({
           </span>
           <p className="mt-1 mb-2 text-xs text-muted-foreground">
             <Trans>
-              Optional. Evolve colleagues chat with this group's bots, without your memory, notes,
+              Optional. Evolve colleagues chat with this group's agents, without your memory, notes,
               saved logins or connectors.
             </Trans>
           </p>

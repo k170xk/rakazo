@@ -139,7 +139,7 @@ function Study() {
         </div>
       </header>
       <section
-        aria-label="Independent bots in the same state"
+        aria-label="Independent agents in the same state"
         className="mb-6 rounded-2xl border border-border bg-card p-5"
       >
         <div className="mb-4 flex items-center justify-between gap-4">

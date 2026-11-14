@@ -298,7 +298,7 @@ export function loadCatalogEntry(
     );
   }
   throw new Error(
-    "Tool is unknown or not authorized for this bot. Use the exact id returned by search.",
+    "Tool is unknown or not authorized for this agent. Use the exact id returned by search.",
   );
 }
 

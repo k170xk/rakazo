@@ -300,7 +300,7 @@ export function accountRoutes(ctx: RouterContext) {
         if (botAvatarSet !== undefined) {
           // Every bot of this user not pinned to another set follows the new default, in every
           // space they own bots in, announced like any edit so other devices redraw it.
-          const bots = await runAsSystem("restyle the user's own bots in all their spaces", () =>
+          const bots = await runAsSystem("restyle the user's own agents in all their spaces", () =>
             deps.prisma.bot.findMany({
               where: { userId, avatarSetPinned: false, avatarSet: { not: botAvatarSet } },
               select: { id: true, spaceId: true, thread: { select: { id: true } } },
@@ -332,7 +332,7 @@ export function accountRoutes(ctx: RouterContext) {
               if (
                 !(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025")
               )
-                getLogger().error("bot style restyle", error);
+                getLogger().error("agent style restyle", error);
             });
           }
         }

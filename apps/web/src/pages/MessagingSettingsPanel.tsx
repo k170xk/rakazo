@@ -234,7 +234,7 @@ export function MessagingSettingsPanel() {
   const botPicker =
     bots.length > 1 ? (
       <NativeSelect
-        aria-label={t`Bot`}
+        aria-label={t`Agent`}
         value={linkBotId}
         onChange={(event) => {
           setSelectedBotId(event.target.value);
@@ -320,7 +320,7 @@ export function MessagingSettingsPanel() {
                 <>
                   <p>{providerLabel("slack")}</p>
                   <p className="mt-0.5 text-[13px] text-muted-foreground">
-                    <Trans>Chat with your bot from Slack.</Trans>
+                    <Trans>Chat with your agent from Slack.</Trans>
                   </p>
                 </>
               }

@@ -332,19 +332,19 @@ export async function prepareToolRequest(
     (name === "update_bot" && argumentGiven(args.bot_id));
   if (fleetWrite || name === "list_fleet") {
     if (isSubagentToolExecution(executionId))
-      return { error: "Helpers cannot use bot management tools." };
+      return { error: "Helpers cannot use agent management tools." };
     // The run-start snapshot is not enough: the owner can turn the switch off mid-run.
     const live = await deps.prisma.bot.findUnique({
       where: { id: bot.id },
       select: { fleetManagement: true },
     });
-    if (!live?.fleetManagement) return { error: "This tool is disabled for this bot." };
+    if (!live?.fleetManagement) return { error: "This tool is disabled for this agent." };
     if (!ctx.source.ownerStartedRun)
-      return { error: "Bot management tools need a run you started." };
+      return { error: "Agent management tools need a run you started." };
     if (fleetWrite && !(await neverAsks(ctx)) && (await ctx.trust.receivedOutsideMessage()))
       return {
         error:
-          "Changes to the bots you manage are blocked for the rest of this run because it received a channel or webhook message.",
+          "Changes to the agents you manage are blocked for the rest of this run because it received a channel or webhook message.",
       };
   }
   if (name === "update_bot" && !argumentGiven(args.bot_id)) {

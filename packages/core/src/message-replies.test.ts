@@ -137,7 +137,7 @@ describe("channelMessageSender", () => {
 describe("previewMessageText", () => {
   const labels = { photo: "Photo", attachment: "Attachment", message: "Message" };
 
-  it("joins text, reading bot Markdown as plain text", () => {
+  it("joins text, reading agent Markdown as plain text", () => {
     expect(
       previewMessageText(
         {

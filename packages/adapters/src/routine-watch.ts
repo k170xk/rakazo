@@ -391,7 +391,7 @@ for p in "$@"; do
   if [ -e "$p" ]; then
     if [ -n "$root" ]; then
       actual=$(realpath -- "$p") || exit 1
-      case "$actual" in "$root"|"$root"/*) ;; *) echo "Path escapes the bot folder" >&2; exit 1 ;; esac
+      case "$actual" in "$root"|"$root"/*) ;; *) echo "Path escapes the agent folder" >&2; exit 1 ;; esac
     fi
     find -P "$p" -type f -printf '%p\\t%s\\t%T@\\n' || status=1
   else printf 'MISSING\\t%s\\n' "$p"; fi
@@ -403,7 +403,7 @@ export function resolveWatchPath(mode: ComputerMode, botId: string, path: string
   const folder = watchFolder(mode, botId);
   const resolved = posix.resolve(folder, path);
   if (mode === "team" && resolved !== folder && !resolved.startsWith(`${folder}/`)) {
-    throw new RoutineWatchError("The watched path must stay inside the bot's folder.");
+    throw new RoutineWatchError("The watched path must stay inside the agent's folder.");
   }
   return resolved;
 }
@@ -423,7 +423,7 @@ async function readComputer(
     where: { id: routine.botId },
     include: { computer: true },
   });
-  if (!bot?.computer) throw new RoutineWatchError("This bot has no computer to check.");
+  if (!bot?.computer) throw new RoutineWatchError("This agent has no computer to check.");
   const mode = parseComputerMode(bot.computer.scope);
   if (watch.kind === "command") {
     // The guard reads bash, so it protects the Linux desktop and never a native shell.
@@ -453,7 +453,7 @@ async function readComputer(
     ) {
       throw new RoutineWatchRetry();
     }
-    throw new RoutineWatchError(`Could not start the bot's computer: ${errorText(error)}`);
+    throw new RoutineWatchError(`Could not start the agent's computer: ${errorText(error)}`);
   }
   scheduleComputerSleep(deps.jobs, bot.computer.id);
   // The check's own time budget starts once the computer is up.

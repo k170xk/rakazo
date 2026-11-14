@@ -225,7 +225,7 @@ export async function prepareOwnBotSettings(
   if (!limits.mayChooseModels)
     return {
       error:
-        "Your administrator chooses the model and thinking level for every bot in the admin panel, so they cannot be changed here.",
+        "Your administrator chooses the model and thinking level for every agent in the admin panel, so they cannot be changed here.",
     };
   // A model without catalog levels skips the shared check, so the level must be a real one first.
   if (level && !ThinkingLevelSchema.safeParse(level).success)

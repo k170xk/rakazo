@@ -36,7 +36,7 @@ export const VOICE_PROVIDERS_HUB = {
   h1: "Best voice providers for AI agents in 2026",
   intro: [
     "Typing isn't always the fastest way to work with an AI agent. Sometimes you want to say what you need on the way out the door, hear the answer while you cook, or have the agent call you when something can't wait. That takes two things: a voice that sounds right, and transcription that hears you correctly.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and you can also hold the mic to speak, have replies read aloud, or call a bot. A bot can call you too. The voice provider you connect does the speaking and, for most providers, the listening. This page compares every option Rakazo supports, from hosted voices to a server you run yourself.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and you can also hold the mic to speak, have replies read aloud, or call an agent. An agent can call you too. The voice provider you connect does the speaking and, for most providers, the listening. This page compares every option Rakazo supports, from hosted voices to a server you run yourself.",
   ],
   scene: {
     bot: "Chief of Staff",
@@ -60,7 +60,7 @@ export const VOICE_PROVIDERS_HUB = {
       text: "[OpenAI](/voice-providers/openai/) is quick to set up, with built-in voices and solid transcription. OpenAI is shutting down the speech model Rakazo uses on January 6, 2027, so treat it as a convenient start.",
     },
     {
-      heading: "You mostly call your bots",
+      heading: "You mostly call your agents",
       text: "[Cartesia](/voice-providers/cartesia/) voices start fast and sound natural on calls. It only speaks, so your browser, the desktop app or your phone does the listening.",
     },
     {
@@ -72,7 +72,7 @@ export const VOICE_PROVIDERS_HUB = {
     {
       question: "Can I talk to my AI agent by voice?",
       answer:
-        "Yes. Connect a provider in **Settings → Voice**, then hold the mic to speak, have replies read aloud, or call a bot. On a [self-hosted Rakazo](/self-hosted-ai-agent/), the admin turns on calls and hold-to-talk with `PHONE_CALLS_ENABLED=true`.",
+        "Yes. Connect a provider in **Settings → Voice**, then hold the mic to speak, have replies read aloud, or call an agent. On a [self-hosted Rakazo](/self-hosted-ai-agent/), the admin turns on calls and hold-to-talk with `PHONE_CALLS_ENABLED=true`.",
     },
     {
       question: "Which voice providers can transcribe?",
@@ -85,14 +85,14 @@ export const VOICE_PROVIDERS_HUB = {
         "Yes. Point Rakazo at a [self-hosted speech server](/voice-providers/self-hosted/), or use the [built-in macOS voices](/voice-providers/macos/) when the server runs on a Mac.",
     },
     {
-      question: "Can each bot have its own voice?",
+      question: "Can each agent have its own voice?",
       answer:
-        "Yes. In a bot's settings, turn on **Read replies aloud** and pick a **Voice** next to it to override your default for that bot.",
+        "Yes. In an agent's settings, turn on **Read replies aloud** and pick a **Voice** next to it to override your default for that agent.",
     },
     {
-      question: "Can my bot call me?",
+      question: "Can my agent call me?",
       answer:
-        "Yes, in a one-to-one chat once you've connected a voice provider and calls are on. Ask \"call me at 5 to go over the day\", or a bot may call when you've missed the same reminder several times.",
+        "Yes, in a one-to-one chat once you've connected a voice provider and calls are on. Ask \"call me at 5 to go over the day\", or an agent may call when you've missed the same reminder several times.",
     },
   ],
 };

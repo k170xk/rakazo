@@ -864,7 +864,7 @@ describe("saved website logins", () => {
     };
   }
 
-  it("hides every saved password when the bot has more than 100 credentials", async () => {
+  it("hides every saved password when the agent has more than 100 credentials", async () => {
     const context = { operationId: "test", traceId: "test", signal: new AbortController().signal };
     const rows: Record<string, unknown>[] = [];
     // Other credentials are never decrypted for this, so their ciphertext doesn't matter.
@@ -944,7 +944,7 @@ describe("saved website logins", () => {
     }
   });
 
-  it("decrypts nothing for a bot without saved logins", async () => {
+  it("decrypts nothing for an agent without saved logins", async () => {
     const { prisma } = await loginFixture("fake-user@example.test", { type: "bearer" });
     const load = vi.spyOn(secretStore, "load");
     try {
@@ -1222,7 +1222,7 @@ describe("a one-time code request", () => {
     });
   });
 
-  it("tells the bot why an HTTP page is refused, so it can tell the user", () => {
+  it("tells the agent why an HTTP page is refused, so it can tell the user", () => {
     for (const origin of ["http://login.example.test", "http://192.168.1.20"]) {
       expect(
         resolveRequestSecretDestination({ oneTimeCode: oneTimeCodeArgument({ origin }) }),

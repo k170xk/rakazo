@@ -101,7 +101,7 @@ const REMOVE_CONTAINED_DIRECTORIES = [
   "shift",
   'case "$parent" in',
   "  .browser-profiles) pattern='^chromium-bot-[0-9a-f]{32}$' ;;",
-  "  bots|conversations) pattern='^[A-Za-z0-9_-]+$' ;;",
+  "  agents|conversations) pattern='^[A-Za-z0-9_-]+$' ;;",
   '  *) echo "folder escapes the team home" >&2; exit 1 ;;',
   "esac",
   'if [ -L "$parent" ]; then echo "folder escapes the team home" >&2; exit 1; fi',
@@ -275,7 +275,7 @@ async function removeDeletedBotFolders(
         names.slice(start, start + DELETED_BOT_FOLDER_BATCH),
         context,
       ).catch((error) => {
-        getLogger().error("team bot folder cleanup", error);
+        getLogger().error("team agent folder cleanup", error);
       });
     }
   }
@@ -283,7 +283,7 @@ async function removeDeletedBotFolders(
 
 // A shell glob also lists the symlinks some provider file listings leave out.
 const LIST_TEAM_BOT_ENTRIES = [
-  "for dir in bots .browser-profiles conversations; do",
+  "for dir in agents .browser-profiles conversations; do",
   '  if [ ! -d "$dir" ] || [ -L "$dir" ]; then continue; fi',
   '  for entry in "$dir"/*; do',
   '    if [ -e "$entry" ] || [ -L "$entry" ]; then printf \'%s\\n\' "$entry"; fi',

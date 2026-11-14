@@ -27,10 +27,15 @@ import type {
   PointerEvent as ReactPointerEvent,
   WheelEvent,
 } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { uploadImage, useAsset, useCanUpload } from "../sdk/index.js";
 import { cn } from "./cn.js";
 import { toast } from "./overlay.js";
+import {
+  computeBoardArrows,
+  measureArrowLabel,
+  roundedOrthogonalPath,
+} from "./whiteboard-geometry.js";
 
 export type BoardColor =
   | "yellow"
@@ -68,6 +73,8 @@ export type BoardItem = {
   h: number;
   color?: BoardColor;
   text?: string;
+  /** section: the section container this block belongs to, so moving or tidying keeps them together. */
+  section?: string;
   /** pen: the stroke's points, relative to x, y. */
   points?: Array<[number, number]>;
   /** arrow: where it starts and ends. */
@@ -93,7 +100,7 @@ const FILL: Record<BoardColor, string> = {
   grey: "#E5E7EB",
   ink: "#1F2937",
 };
-const INK: Record<BoardColor, string> = {
+const INK_LIGHT: Record<BoardColor, string> = {
   yellow: "#CA8A04",
   green: "#4D9A2A",
   blue: "#2563EB",
@@ -101,8 +108,13 @@ const INK: Record<BoardColor, string> = {
   orange: "#EA580C",
   purple: "#7C3AED",
   grey: "#6B7280",
-  ink: "hsl(var(--foreground))",
+  ink: "#1E293B",
 };
+const INK_DARK: Record<BoardColor, string> = {
+  ...INK_LIGHT,
+  ink: "#E2E8F0",
+};
+const ACCENT = "#76BF43";
 const COLORS = Object.keys(FILL) as BoardColor[];
 const BOXED = new Set<BoardKind>([
   "sticky",
@@ -129,6 +141,7 @@ const WORDS = new Set<BoardKind>([
   "queue",
   "section",
   "arrow",
+  "image",
 ]);
 const CLICK_SIZE: Partial<Record<BoardKind, { w: number; h: number }>> = {
   sticky: { w: 180, h: 180 },
@@ -218,19 +231,109 @@ function arrowEnds(item: BoardItem, byId: Map<string, BoardItem>): [Point, Point
   return start && finish ? [start, finish] : null;
 }
 
-function BoardImage({ item }: { item: BoardItem }) {
-  const url = useAsset(item.asset);
-  return url ? (
-    <image
-      href={url}
-      x={item.x}
-      y={item.y}
-      width={item.w}
-      height={item.h}
-      preserveAspectRatio="xMidYMid slice"
-    />
-  ) : (
-    <rect x={item.x} y={item.y} width={item.w} height={item.h} fill="hsl(var(--muted))" />
+type ResizeCorner = "nw" | "ne" | "sw" | "se";
+
+function useDarkTheme(): boolean {
+  const [dark, setDark] = useState(
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+  );
+  useEffect(() => {
+    if (typeof document === "undefined" || typeof MutationObserver === "undefined") return;
+    const root = document.documentElement;
+    const sync = () => setDark(root.classList.contains("dark"));
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+  return dark;
+}
+
+function BoardImage({
+  item,
+  resolveAsset,
+  cardFill,
+  borderStroke,
+}: {
+  item: BoardItem;
+  resolveAsset?: (assetId: string) => Promise<string | null>;
+  cardFill: string;
+  borderStroke: string;
+}) {
+  const sdkUrl = useAsset(resolveAsset ? null : item.asset);
+  const [resolved, setResolved] = useState<string | null>(null);
+  useEffect(() => {
+    if (!resolveAsset || !item.asset) {
+      setResolved(null);
+      return;
+    }
+    if (item.asset.startsWith("data:") || item.asset.startsWith("https://")) {
+      setResolved(item.asset);
+      return;
+    }
+    let cancelled = false;
+    resolveAsset(item.asset).then(
+      (value) => {
+        if (!cancelled) setResolved(value);
+      },
+      () => {
+        if (!cancelled) setResolved(null);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [item.asset, resolveAsset]);
+  const url = resolveAsset ? resolved : sdkUrl;
+  const hasCaption = Boolean((item.text ?? "").trim());
+  const imgH = hasCaption ? Math.max(40, item.h - 32) : item.h;
+  const clipId = `clip-img-${item.id.replace(/[^A-Za-z0-9_-]/g, "")}`;
+  return (
+    <>
+      <defs>
+        <clipPath id={clipId}>
+          <rect
+            x={item.x + 2}
+            y={item.y + 2}
+            width={Math.max(1, item.w - 4)}
+            height={Math.max(1, imgH - 4)}
+            rx={10}
+          />
+        </clipPath>
+      </defs>
+      <rect
+        x={item.x}
+        y={item.y}
+        width={item.w}
+        height={item.h}
+        rx={12}
+        fill={cardFill}
+        stroke={borderStroke}
+        strokeOpacity={0.35}
+        strokeWidth={1.5}
+      />
+      {url ? (
+        <image
+          href={url}
+          x={item.x + 4}
+          y={item.y + 4}
+          width={Math.max(1, item.w - 8)}
+          height={Math.max(1, imgH - 8)}
+          clipPath={`url(#${clipId})`}
+          preserveAspectRatio="xMidYMid meet"
+        />
+      ) : (
+        <rect
+          x={item.x + 6}
+          y={item.y + 6}
+          width={Math.max(1, item.w - 12)}
+          height={Math.max(1, imgH - 12)}
+          rx={8}
+          fill={borderStroke}
+          fillOpacity={0.1}
+        />
+      )}
+    </>
   );
 }
 
@@ -245,6 +348,8 @@ export function Whiteboard({
   value,
   onChange,
   onSelectionChange,
+  onUploadImage,
+  resolveAsset,
   readOnly,
   height = 560,
   className,
@@ -253,12 +358,22 @@ export function Whiteboard({
   onChange?: (value: BoardValue) => void;
   /** Ids selected now, including an empty list, so a chat can tell the assistant which blocks. */
   onSelectionChange?: (ids: string[]) => void;
+  /** Optional host upload handler (used when mounted outside an App Studio frame). */
+  onUploadImage?: (file: File) => Promise<string>;
+  /** Optional host asset resolver returning a displayable data/https URL for an asset id. */
+  resolveAsset?: (assetId: string) => Promise<string | null>;
   readOnly?: boolean;
   height?: number | string;
   className?: string;
 }) {
+  const dark = useDarkTheme();
+  const INK = dark ? INK_DARK : INK_LIGHT;
+  const cardFill = dark ? "#1E293B" : "#FFFFFF";
+  const borderColor = dark ? "#334155" : "#CBD5E1";
+  const markerPrefix = useId().replace(/[^A-Za-z0-9_-]/g, "");
+  const sdkCanUpload = useCanUpload();
   const editable = !readOnly && Boolean(onChange);
-  const canUpload = useCanUpload() && editable;
+  const canUpload = (Boolean(onUploadImage) || sdkCanUpload) && editable;
   const box = useRef<HTMLDivElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<BoardItem[]>(() => readBoard(value).items);
@@ -274,7 +389,8 @@ export function Whiteboard({
   const sent = useRef(JSON.stringify(readBoard(value).items));
   const gesture = useRef<
     | { kind: "move"; start: Point; origin: Map<string, BoardItem> }
-    | { kind: "resize"; id: string; start: Point; origin: BoardItem }
+    | { kind: "resize"; id: string; corner: ResizeCorner; start: Point; origin: BoardItem }
+    | { kind: "arrow-end"; id: string; end: "from" | "to"; origin: BoardItem }
     | { kind: "pan"; start: Point; origin: View }
     | { kind: "marquee"; start: Point }
     | { kind: "create"; start: Point }
@@ -326,11 +442,38 @@ export function Whiteboard({
     };
   };
   const itemAt = (clientX: number, clientY: number, skip?: string): BoardItem | undefined => {
+    let fallbackSection: BoardItem | undefined;
     for (const element of document.elementsFromPoint(clientX, clientY)) {
       const id = element.closest<SVGElement | HTMLElement>("[data-board-item]")?.dataset.boardItem;
-      if (id && id !== skip && byId.get(id)?.kind !== "arrow") return byId.get(id);
+      if (!id || id === skip) continue;
+      const found = byId.get(id);
+      if (!found || found.kind === "arrow") continue;
+      if (found.kind === "section") {
+        fallbackSection ??= found;
+        continue;
+      }
+      return found;
     }
-    return undefined;
+    return fallbackSection;
+  };
+  const findEnclosingSection = (
+    boxRect: { x: number; y: number; w: number; h: number },
+    selfId?: string,
+  ): string | undefined => {
+    const cx = boxRect.x + boxRect.w / 2;
+    const cy = boxRect.y + boxRect.h / 2;
+    const candidates = items
+      .filter(
+        (sec) =>
+          sec.kind === "section" &&
+          sec.id !== selfId &&
+          cx >= sec.x &&
+          cx <= sec.x + sec.w &&
+          cy >= sec.y + 40 &&
+          cy <= sec.y + sec.h,
+      )
+      .sort((a, b) => a.w * a.h - b.w * b.h);
+    return candidates[0]?.id;
   };
   const zoomAt = (zoom: number, clientX: number, clientY: number, from: View = view) => {
     const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
@@ -341,26 +484,36 @@ export function Whiteboard({
     const wy = sy / from.zoom + from.y;
     setView({ zoom: next, x: wx - sx / next, y: wy - sy / next });
   };
-  const showAll = () => {
-    const bounds = boardBounds(items);
+  const showAll = (list: BoardItem[] = items) => {
+    const bounds = boardBounds(list);
     const rect = box.current?.getBoundingClientRect();
-    if (!bounds || !rect) return setView({ x: -40, y: -40, zoom: 1 });
+    if (!bounds || !rect || rect.width < 10) return setView({ x: -40, y: -40, zoom: 1 });
+    const topBar = editable ? 72 : 24;
+    const availH = Math.max(120, rect.height - topBar - 56);
+    const availW = Math.max(160, rect.width - 96);
     const zoom = Math.min(
       MAX_ZOOM,
       Math.max(
         MIN_ZOOM,
-        Math.min((rect.width - 80) / bounds.w, (rect.height - 80) / bounds.h, 1.5),
+        Math.min(availW / Math.max(bounds.w, 120), availH / Math.max(bounds.h, 120), 1.15),
       ),
     );
     setView({
       zoom,
       x: bounds.x + bounds.w / 2 - rect.width / 2 / zoom,
-      y: bounds.y + bounds.h / 2 - rect.height / 2 / zoom,
+      y: bounds.y + bounds.h / 2 - (topBar + availH / 2) / zoom,
     });
   };
+  const fittedOnce = useRef(items.length > 0);
   useEffect(() => {
-    if (items.length) showAll();
+    if (items.length) showAll(items);
   }, []);
+  useEffect(() => {
+    if (!fittedOnce.current && items.length > 0) {
+      fittedOnce.current = true;
+      showAll(items);
+    }
+  }, [items]);
   useEffect(() => {
     onSelectionChange?.(selected);
   }, [selected, onSelectionChange]);
@@ -393,12 +546,31 @@ export function Whiteboard({
       };
       return;
     }
+    const arrowHandle = (event.target as Element).closest<HTMLElement | SVGElement>(
+      "[data-board-arrow-end]",
+    );
+    if (arrowHandle && tool === "select") {
+      const id = arrowHandle.dataset.boardArrowId as string;
+      const end = (arrowHandle.dataset.boardArrowEnd as "from" | "to") ?? "to";
+      const origin = byId.get(id);
+      if (origin) {
+        gesture.current = { kind: "arrow-end", id, end, origin };
+        return;
+      }
+    }
     const handle = (event.target as Element).closest<HTMLElement | SVGElement>(
       "[data-board-resize]",
     );
     if (handle && tool === "select") {
       const id = handle.dataset.boardResize as string;
-      gesture.current = { kind: "resize", id, start: at, origin: byId.get(id) as BoardItem };
+      const corner = (handle.dataset.boardCorner as ResizeCorner | undefined) ?? "se";
+      gesture.current = {
+        kind: "resize",
+        id,
+        corner,
+        start: at,
+        origin: byId.get(id) as BoardItem,
+      };
       return;
     }
     if (tool === "select") {
@@ -413,11 +585,33 @@ export function Whiteboard({
             ? selected
             : [id];
         setSelected(chosen);
+        const movingIds = new Set(chosen);
+        for (const key of chosen) {
+          const picked = byId.get(key);
+          if (picked?.kind === "section") {
+            for (const child of items) {
+              if (child.kind === "arrow" || child.kind === "section") continue;
+              const cx = child.x + child.w / 2;
+              const cy = child.y + child.h / 2;
+              if (
+                child.section === picked.id ||
+                (cx >= picked.x &&
+                  cx <= picked.x + picked.w &&
+                  cy >= picked.y &&
+                  cy <= picked.y + picked.h)
+              ) {
+                movingIds.add(child.id);
+              }
+            }
+          }
+        }
         gesture.current = {
           kind: "move",
           start: at,
           origin: new Map(
-            chosen.flatMap((key) => (byId.get(key) ? [[key, byId.get(key) as BoardItem]] : [])),
+            [...movingIds].flatMap((key) =>
+              byId.get(key) ? [[key, byId.get(key) as BoardItem]] : [],
+            ),
           ),
         };
       } else {
@@ -499,17 +693,27 @@ export function Whiteboard({
           } as BoardItem;
         }),
       );
-    } else if (now.kind === "resize") {
-      const w = Math.max(40, now.origin.w + at.x - now.start.x);
-      const h = Math.max(30, now.origin.h + at.y - now.start.y);
-      const keep = now.origin.kind === "image" && !event.shiftKey;
+    } else if (now.kind === "arrow-end") {
+      const target = itemAt(event.clientX, event.clientY, now.id);
+      const nextEnd: BoardEnd = target ? { item: target.id } : at;
       setItems((list) =>
-        list.map((item) =>
-          item.id === now.id
-            ? { ...item, w, h: keep ? (w * now.origin.h) / now.origin.w : h }
-            : item,
-        ),
+        list.map((item) => (item.id === now.id ? { ...item, [now.end]: nextEnd } : item)),
       );
+    } else if (now.kind === "resize") {
+      const dx = at.x - now.start.x;
+      const dy = at.y - now.start.y;
+      const minW = now.origin.kind === "section" ? 160 : 48;
+      const minH = now.origin.kind === "section" ? 120 : 34;
+      const west = now.corner === "nw" || now.corner === "sw";
+      const north = now.corner === "nw" || now.corner === "ne";
+      const w = west ? Math.max(minW, now.origin.w - dx) : Math.max(minW, now.origin.w + dx);
+      let h = north ? Math.max(minH, now.origin.h - dy) : Math.max(minH, now.origin.h + dy);
+      if (now.origin.kind === "image" && !event.shiftKey && now.origin.w > 0) {
+        h = Math.max(minH, (w * now.origin.h) / now.origin.w);
+      }
+      const x = west ? now.origin.x + (now.origin.w - w) : now.origin.x;
+      const y = north ? now.origin.y + (now.origin.h - h) : now.origin.y;
+      setItems((list) => list.map((item) => (item.id === now.id ? { ...item, x, y, w, h } : item)));
     } else if (now.kind === "marquee") {
       setMarquee({ a: now.start, b: at });
     } else if (now.kind === "create") {
@@ -542,7 +746,7 @@ export function Whiteboard({
     }
     gesture.current = null;
     if (!now) return;
-    if (now.kind === "move" || now.kind === "resize") {
+    if (now.kind === "move" || now.kind === "resize" || now.kind === "arrow-end") {
       const before = now.kind === "move" ? [...now.origin.values()] : [now.origin];
       const changed = before.some((origin) => {
         const after = items.find((item) => item.id === origin.id);
@@ -551,14 +755,28 @@ export function Whiteboard({
           (after.x !== origin.x ||
             after.y !== origin.y ||
             after.w !== origin.w ||
-            after.h !== origin.h)
+            after.h !== origin.h ||
+            JSON.stringify(after.from) !== JSON.stringify(origin.from) ||
+            JSON.stringify(after.to) !== JSON.stringify(origin.to))
         );
       });
       if (changed) {
         const previous = items.map(
           (item) => before.find((origin) => origin.id === item.id) ?? item,
         );
-        commit(items, previous);
+        const updated =
+          now.kind === "move"
+            ? items.map((item) => {
+                if (!now.origin.has(item.id) || item.kind === "section" || item.kind === "arrow") {
+                  return item;
+                }
+                // Update section membership when a standalone block is moved into or out of a section.
+                if ([...now.origin.values()].some((o) => o.kind === "section")) return item;
+                const secId = findEnclosingSection(item, item.id);
+                return secId ? { ...item, section: secId } : { ...item, section: undefined };
+              })
+            : items;
+        commit(updated, previous);
       }
     } else if (now.kind === "marquee" && marquee) {
       const left = Math.min(marquee.a.x, marquee.b.x);
@@ -616,9 +834,15 @@ export function Whiteboard({
       }
       setDraft(null);
       if (made) {
+        if (made.kind !== "section" && made.kind !== "arrow" && made.kind !== "pen") {
+          const secId = findEnclosingSection(made, made.id);
+          if (secId) made = { ...made, section: secId };
+        }
         commit([...items, made]);
         setSelected([made.id]);
-        if (made.kind === "sticky" || made.kind === "text") setEditing(made.id);
+        if (WORDS.has(made.kind) && made.kind !== "arrow" && made.kind !== "image") {
+          setEditing(made.id);
+        }
         if (made.kind !== "pen") setTool("select");
       }
     }
@@ -691,7 +915,7 @@ export function Whiteboard({
         bitmap.close();
         return out;
       });
-      const asset = await uploadImage(file);
+      const asset = onUploadImage ? await onUploadImage(file) : await uploadImage(file);
       const rect = box.current?.getBoundingClientRect();
       const w = Math.min(360, size.w);
       const h = (w * size.h) / size.w;
@@ -814,22 +1038,50 @@ export function Whiteboard({
     { tool: "pen", label: "Pen", icon: <Pencil />, key: "P" },
   ];
 
-  const shown = [...(draft ? [...items, draft] : items)].sort((a, b) =>
-    a.kind === b.kind ? 0 : a.kind === "section" ? -1 : b.kind === "section" ? 1 : 0,
+  const shown = useMemo(
+    () =>
+      [...(draft ? [...items, draft] : items)].sort((a, b) =>
+        a.kind === b.kind ? 0 : a.kind === "section" ? -1 : b.kind === "section" ? 1 : 0,
+      ),
+    [items, draft],
   );
+  const routedArrows = useMemo(() => computeBoardArrows(shown), [shown]);
   const single = selected.length === 1 ? byId.get(selected[0]!) : undefined;
 
   const words = (item: BoardItem, align: "center" | "start") => {
     const isEditing = editing === item.id;
-    const size = item.kind === "text" ? 20 : item.kind === "sticky" ? 17 : 15;
+    const label = item.kind === "arrow";
+    const isSection = item.kind === "section";
+    const isImage = item.kind === "image";
+    if (isImage && !isEditing && !(item.text ?? "").trim()) return null;
+    const size =
+      label || isImage
+        ? 12
+        : item.kind === "text"
+          ? 22
+          : isSection
+            ? 14
+            : item.kind === "sticky"
+              ? 16
+              : 14;
     const textColor =
-      item.kind === "text"
+      item.kind === "text" || isSection || isImage
         ? INK[item.color ?? "ink"]
-        : item.color === "ink" && item.kind === "sticky"
-          ? "#fff"
-          : "#1F2937";
+        : item.color === "ink"
+          ? dark
+            ? "#F8FAFC"
+            : "#111827"
+          : "#111827";
+    const boxY = isSection ? item.y + 6 : isImage ? item.y + Math.max(8, item.h - 30) : item.y;
+    const boxH = isSection ? 42 : isImage ? 28 : Math.max(item.h, 1);
     return (
-      <foreignObject x={item.x} y={item.y} width={Math.max(item.w, 1)} height={Math.max(item.h, 1)}>
+      <foreignObject
+        x={item.x}
+        y={boxY}
+        width={Math.max(item.w, 1)}
+        height={boxH}
+        style={{ pointerEvents: isEditing || isSection ? "auto" : "none" }}
+      >
         {isEditing ? (
           <textarea
             // biome-ignore lint/a11y/noAutofocus: editing starts where the person double-clicked
@@ -848,25 +1100,43 @@ export function Whiteboard({
               }
             }}
             onPointerDown={(event) => event.stopPropagation()}
-            className="h-full w-full resize-none bg-transparent p-3 outline-none"
+            className="h-full w-full resize-none bg-transparent p-2.5 outline-none"
             style={{
               fontSize: size,
               color: textColor,
               textAlign: align === "center" ? "center" : "left",
               lineHeight: 1.3,
+              background: label || isImage ? cardFill : undefined,
+              borderRadius: label ? 999 : undefined,
             }}
           />
         ) : (
           <div
             className={cn(
-              "flex h-full w-full overflow-hidden p-3 break-words whitespace-pre-wrap select-none",
-              align === "center" ? "items-center justify-center text-center" : "items-start",
+              "flex h-full w-full overflow-hidden break-words whitespace-pre-wrap select-none",
+              label
+                ? "items-center justify-center px-2.5 py-0.5 text-center"
+                : isImage
+                  ? "items-center justify-center px-3 text-center"
+                  : isSection
+                    ? "items-center px-4"
+                    : item.kind === "diamond"
+                      ? "items-center justify-center px-7 py-4 text-center"
+                      : "p-3.5",
+              !label && !isSection && !isImage && align === "center"
+                ? "items-center justify-center text-center"
+                : "",
+              !label && !isSection && !isImage && align === "start" ? "items-start" : "",
             )}
             style={{
               fontSize: size,
               color: textColor,
-              lineHeight: 1.3,
-              fontWeight: item.kind === "text" ? 600 : 500,
+              lineHeight: 1.32,
+              fontWeight: item.kind === "text" || isSection ? 700 : 500,
+              letterSpacing: isSection ? "0.02em" : undefined,
+              background: label ? cardFill : undefined,
+              border: label ? `1px solid ${borderColor}` : undefined,
+              borderRadius: label ? 999 : undefined,
             }}
           >
             {item.text ||
@@ -933,7 +1203,7 @@ export function Whiteboard({
           {COLORS.map((name) => (
             <marker
               key={name}
-              id={`board-head-${name}`}
+              id={`${markerPrefix}-head-${name}`}
               viewBox="0 0 10 10"
               refX="9"
               refY="5"
@@ -944,259 +1214,392 @@ export function Whiteboard({
               <path d="M0,0 L10,5 L0,10 Z" fill={INK[name]} />
             </marker>
           ))}
+          <marker
+            id={`${markerPrefix}-head-selected`}
+            viewBox="0 0 10 10"
+            refX="9"
+            refY="5"
+            markerWidth="7"
+            markerHeight="7"
+            orient="auto-start-reverse"
+          >
+            <path d="M0,0 L10,5 L0,10 Z" fill={ACCENT} />
+          </marker>
         </defs>
         <g transform={`scale(${view.zoom}) translate(${-view.x} ${-view.y})`}>
-          {shown.map((item) => {
-            const isSelected = selected.includes(item.id);
-            const ink = INK[item.color ?? "ink"];
-            if (item.kind === "arrow") {
-              const ends = arrowEnds(item, byId);
-              if (!ends) return null;
-              const [a, b] = ends;
-              const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-              return (
-                <g
-                  key={item.id}
-                  data-board-item={item.id === draft?.id ? undefined : item.id}
-                  className={item.id === draft?.id ? "pointer-events-none" : ""}
-                >
-                  <line
-                    x1={a.x}
-                    y1={a.y}
-                    x2={b.x}
-                    y2={b.y}
-                    stroke="transparent"
-                    strokeWidth={16 / view.zoom}
-                  />
-                  <line
-                    x1={a.x}
-                    y1={a.y}
-                    x2={b.x}
-                    y2={b.y}
-                    stroke={isSelected ? "hsl(var(--primary))" : ink}
-                    strokeWidth={2.5}
-                    markerEnd={`url(#board-head-${item.color ?? "ink"})`}
-                  />
-                  {(item.text || editing === item.id) &&
-                    words({ ...item, x: mid.x - 80, y: mid.y - 20, w: 160, h: 40 }, "center")}
-                </g>
-              );
-            }
-            if (item.kind === "pen") {
-              const d = (item.points ?? [])
-                .map(([x, y], index) => `${index ? "L" : "M"}${item.x + x},${item.y + y}`)
-                .join(" ");
+          {/* Pass 1: sections and shapes */}
+          {shown
+            .filter((item) => item.kind !== "arrow")
+            .map((item) => {
+              const isSelected = selected.includes(item.id);
+              const ink = INK[item.color ?? "ink"];
+              if (item.kind === "pen") {
+                const d = (item.points ?? [])
+                  .map(([x, y], index) => `${index ? "L" : "M"}${item.x + x},${item.y + y}`)
+                  .join(" ");
+                return (
+                  <g key={item.id} data-board-item={item.id === draft?.id ? undefined : item.id}>
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke="transparent"
+                      strokeWidth={14 / view.zoom}
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={ink}
+                      strokeWidth={3}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {isSelected && (
+                      <rect
+                        x={item.x - 4}
+                        y={item.y - 4}
+                        width={item.w + 8}
+                        height={item.h + 8}
+                        fill="none"
+                        stroke={ACCENT}
+                        strokeDasharray="4 3"
+                        strokeWidth={1.5 / view.zoom}
+                      />
+                    )}
+                  </g>
+                );
+              }
+              const shapeFill = (fallback: BoardColor) =>
+                item.color === "ink" ? cardFill : FILL[item.color ?? fallback];
               return (
                 <g key={item.id} data-board-item={item.id === draft?.id ? undefined : item.id}>
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke="transparent"
-                    strokeWidth={14 / view.zoom}
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d={d}
-                    fill="none"
-                    stroke={ink}
-                    strokeWidth={3}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  {isSelected && (
-                    <rect
-                      x={item.x - 4}
-                      y={item.y - 4}
-                      width={item.w + 8}
-                      height={item.h + 8}
-                      fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeDasharray="4 3"
-                      strokeWidth={1.5 / view.zoom}
+                  {item.kind === "diamond" && (
+                    <polygon
+                      points={`${item.x + item.w / 2},${item.y} ${item.x + item.w},${item.y + item.h / 2} ${item.x + item.w / 2},${item.y + item.h} ${item.x},${item.y + item.h / 2}`}
+                      fill={shapeFill("orange")}
+                      fillOpacity={item.color === "ink" ? 0.96 : 0.78}
+                      stroke={ink}
+                      strokeWidth={2.2}
                     />
                   )}
-                </g>
-              );
-            }
-            return (
-              <g key={item.id} data-board-item={item.id === draft?.id ? undefined : item.id}>
-                {item.kind === "diamond" && (
-                  <polygon
-                    points={`${item.x + item.w / 2},${item.y} ${item.x + item.w},${item.y + item.h / 2} ${item.x + item.w / 2},${item.y + item.h} ${item.x},${item.y + item.h / 2}`}
-                    fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "orange"]}
-                    fillOpacity={0.7}
-                    stroke={ink}
-                    strokeWidth={2.5}
-                  />
-                )}
-                {item.kind === "cylinder" && (
-                  <>
+                  {item.kind === "cylinder" && (
+                    <>
+                      <path
+                        d={`M${item.x},${item.y + 16} L${item.x},${item.y + item.h - 16} A${item.w / 2},16 0 0 0 ${item.x + item.w},${item.y + item.h - 16} L${item.x + item.w},${item.y + 16}`}
+                        fill={shapeFill("blue")}
+                        fillOpacity={item.color === "ink" ? 0.96 : 0.78}
+                        stroke={ink}
+                        strokeWidth={2.2}
+                      />
+                      <ellipse
+                        cx={item.x + item.w / 2}
+                        cy={item.y + 16}
+                        rx={item.w / 2}
+                        ry={16}
+                        fill={shapeFill("blue")}
+                        stroke={ink}
+                        strokeWidth={2.2}
+                      />
+                    </>
+                  )}
+                  {item.kind === "document" && (
+                    <>
+                      <path
+                        d={`M${item.x},${item.y} H${item.x + item.w - 22} L${item.x + item.w},${item.y + 22} V${item.y + item.h} H${item.x} Z`}
+                        fill={shapeFill("grey")}
+                        fillOpacity={item.color === "ink" ? 0.96 : 0.78}
+                        stroke={ink}
+                        strokeWidth={2.2}
+                      />
+                      <path
+                        d={`M${item.x + item.w - 22},${item.y} V${item.y + 22} H${item.x + item.w}`}
+                        fill="none"
+                        stroke={ink}
+                        strokeWidth={1.8}
+                      />
+                    </>
+                  )}
+                  {item.kind === "cloud" && (
                     <path
-                      d={`M${item.x},${item.y + 16} L${item.x},${item.y + item.h - 16} A${item.w / 2},16 0 0 0 ${item.x + item.w},${item.y + item.h - 16} L${item.x + item.w},${item.y + 16}`}
-                      fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "blue"]}
-                      fillOpacity={0.7}
+                      d={cloudPath(item)}
+                      fill={shapeFill("green")}
+                      fillOpacity={item.color === "ink" ? 0.96 : 0.78}
                       stroke={ink}
-                      strokeWidth={2.5}
+                      strokeWidth={2.2}
                     />
-                    <ellipse
-                      cx={item.x + item.w / 2}
-                      cy={item.y + 16}
-                      rx={item.w / 2}
-                      ry={16}
-                      fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "blue"]}
-                      stroke={ink}
-                      strokeWidth={2.5}
+                  )}
+                  {item.kind === "queue" && (
+                    <>
+                      <rect
+                        x={item.x}
+                        y={item.y}
+                        width={item.w}
+                        height={item.h}
+                        rx={10}
+                        fill={shapeFill("purple")}
+                        fillOpacity={item.color === "ink" ? 0.96 : 0.65}
+                        stroke={ink}
+                        strokeWidth={2.2}
+                      />
+                      {[0.32, 0.52, 0.72].map((at) => (
+                        <line
+                          key={at}
+                          x1={item.x + 14}
+                          x2={item.x + item.w - 14}
+                          y1={item.y + item.h * at}
+                          y2={item.y + item.h * at}
+                          stroke={ink}
+                          strokeWidth={1.5}
+                          strokeOpacity={0.45}
+                        />
+                      ))}
+                    </>
+                  )}
+                  {item.kind === "section" && (
+                    <>
+                      <rect
+                        x={item.x}
+                        y={item.y}
+                        width={item.w}
+                        height={item.h}
+                        rx={18}
+                        fill={FILL[item.color ?? "grey"]}
+                        fillOpacity={0.22}
+                        stroke="none"
+                        pointerEvents="none"
+                      />
+                      {/* Only the header bar and border stroke capture pointer events so marquee & arrows work inside sections */}
+                      <rect
+                        x={item.x}
+                        y={item.y}
+                        width={item.w}
+                        height={Math.min(50, item.h)}
+                        rx={18}
+                        fill="transparent"
+                        className="cursor-move"
+                      />
+                      <rect
+                        x={item.x}
+                        y={item.y}
+                        width={item.w}
+                        height={item.h}
+                        rx={18}
+                        fill="none"
+                        stroke={ink}
+                        strokeWidth={1.75}
+                        strokeOpacity={0.65}
+                        pointerEvents="stroke"
+                        className="cursor-move"
+                      />
+                      <line
+                        x1={item.x + 16}
+                        x2={item.x + item.w - 16}
+                        y1={item.y + 48}
+                        y2={item.y + 48}
+                        stroke={ink}
+                        strokeOpacity={0.22}
+                        strokeWidth={1}
+                        pointerEvents="none"
+                      />
+                    </>
+                  )}
+                  {item.kind === "sticky" && (
+                    <rect
+                      x={item.x}
+                      y={item.y}
+                      width={item.w}
+                      height={item.h}
+                      rx={8}
+                      fill={FILL[item.color ?? "yellow"]}
+                      style={{ filter: "drop-shadow(0 3px 5px rgb(0 0 0 / 0.14))" }}
                     />
-                  </>
-                )}
-                {item.kind === "document" && (
-                  <>
-                    <path
-                      d={`M${item.x},${item.y} H${item.x + item.w - 22} L${item.x + item.w},${item.y + 22} V${item.y + item.h} H${item.x} Z`}
-                      fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "grey"]}
-                      fillOpacity={0.7}
-                      stroke={ink}
-                      strokeWidth={2.5}
-                    />
-                    <path
-                      d={`M${item.x + item.w - 22},${item.y} V${item.y + 22} H${item.x + item.w}`}
-                      fill="none"
-                      stroke={ink}
-                      strokeWidth={2}
-                    />
-                  </>
-                )}
-                {item.kind === "cloud" && (
-                  <path
-                    d={cloudPath(item)}
-                    fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "green"]}
-                    fillOpacity={0.7}
-                    stroke={ink}
-                    strokeWidth={2.5}
-                  />
-                )}
-                {item.kind === "queue" && (
-                  <>
+                  )}
+                  {item.kind === "rect" && (
                     <rect
                       x={item.x}
                       y={item.y}
                       width={item.w}
                       height={item.h}
                       rx={10}
-                      fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "purple"]}
-                      fillOpacity={0.55}
+                      fill={shapeFill("grey")}
+                      fillOpacity={item.color === "ink" ? 0.96 : 0.68}
                       stroke={ink}
-                      strokeWidth={2.5}
+                      strokeWidth={2.2}
                     />
-                    {[0.32, 0.52, 0.72].map((at) => (
-                      <line
-                        key={at}
-                        x1={item.x + 14}
-                        x2={item.x + item.w - 14}
-                        y1={item.y + item.h * at}
-                        y2={item.y + item.h * at}
-                        stroke={ink}
-                        strokeWidth={1.5}
-                        strokeOpacity={0.55}
-                      />
-                    ))}
-                  </>
-                )}
-                {item.kind === "section" && (
-                  <rect
-                    x={item.x}
-                    y={item.y}
-                    width={item.w}
-                    height={item.h}
-                    rx={16}
-                    fill={FILL[item.color ?? "grey"]}
-                    fillOpacity={0.35}
-                    stroke={ink}
-                    strokeWidth={1.5}
-                    strokeDasharray="7 5"
-                  />
-                )}
-                {item.kind === "sticky" && (
-                  <rect
-                    x={item.x}
-                    y={item.y}
-                    width={item.w}
-                    height={item.h}
-                    rx={6}
-                    fill={FILL[item.color ?? "yellow"]}
-                    style={{ filter: "drop-shadow(0 3px 5px rgb(0 0 0 / 0.14))" }}
-                  />
-                )}
-                {item.kind === "rect" && (
-                  <rect
-                    x={item.x}
-                    y={item.y}
-                    width={item.w}
-                    height={item.h}
-                    rx={10}
-                    fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "grey"]}
-                    fillOpacity={0.55}
-                    stroke={ink}
-                    strokeWidth={2.5}
-                  />
-                )}
-                {item.kind === "ellipse" && (
-                  <ellipse
-                    cx={item.x + item.w / 2}
-                    cy={item.y + item.h / 2}
-                    rx={item.w / 2}
-                    ry={item.h / 2}
-                    fill={item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "grey"]}
-                    fillOpacity={0.55}
-                    stroke={ink}
-                    strokeWidth={2.5}
-                  />
-                )}
-                {item.kind === "text" && (
-                  <rect x={item.x} y={item.y} width={item.w} height={item.h} fill="transparent" />
-                )}
-                {item.kind === "image" && <BoardImage item={item} />}
-                {WORDS.has(item.kind) &&
-                  words(item, item.kind === "text" || item.kind === "section" ? "start" : "center")}
-                {isSelected && (
-                  <rect
-                    x={item.x - 3}
-                    y={item.y - 3}
-                    width={item.w + 6}
-                    height={item.h + 6}
-                    rx={8}
+                  )}
+                  {item.kind === "ellipse" && (
+                    <ellipse
+                      cx={item.x + item.w / 2}
+                      cy={item.y + item.h / 2}
+                      rx={item.w / 2}
+                      ry={item.h / 2}
+                      fill={shapeFill("grey")}
+                      fillOpacity={item.color === "ink" ? 0.96 : 0.68}
+                      stroke={ink}
+                      strokeWidth={2.2}
+                    />
+                  )}
+                  {item.kind === "text" && (
+                    <rect x={item.x} y={item.y} width={item.w} height={item.h} fill="transparent" />
+                  )}
+                  {item.kind === "image" && (
+                    <BoardImage
+                      item={item}
+                      resolveAsset={resolveAsset}
+                      cardFill={cardFill}
+                      borderStroke={ink}
+                    />
+                  )}
+                  {WORDS.has(item.kind) &&
+                    words(
+                      item,
+                      item.kind === "text" || item.kind === "section" ? "start" : "center",
+                    )}
+                  {isSelected && (
+                    <rect
+                      x={item.x - 3}
+                      y={item.y - 3}
+                      width={item.w + 6}
+                      height={item.h + 6}
+                      rx={8}
+                      fill="none"
+                      stroke={ACCENT}
+                      strokeWidth={2 / view.zoom}
+                      pointerEvents="none"
+                    />
+                  )}
+                </g>
+              );
+            })}
+
+          {/* Pass 2: connector lines drawn above shapes */}
+          {shown
+            .filter((item) => item.kind === "arrow")
+            .map((item) => {
+              const routed = routedArrows.get(item.id);
+              if (!routed) return null;
+              const d = roundedOrthogonalPath(routed.points);
+              if (!d) return null;
+              const isSelected = selected.includes(item.id);
+              const ink = INK[item.color ?? "ink"];
+              return (
+                <g
+                  key={item.id}
+                  data-board-item={item.id === draft?.id ? undefined : item.id}
+                  className={item.id === draft?.id ? "pointer-events-none" : "cursor-pointer"}
+                >
+                  <path d={d} fill="none" stroke="transparent" strokeWidth={16 / view.zoom} />
+                  <path
+                    d={d}
                     fill="none"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2 / view.zoom}
+                    stroke={isSelected ? ACCENT : ink}
+                    strokeWidth={2.4}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    markerEnd={`url(#${markerPrefix}-head-${isSelected ? "selected" : (item.color ?? "ink")})`}
                   />
-                )}
-              </g>
-            );
-          })}
-          {single && editable && BOXED.has(single.kind) && (
-            <rect
-              data-board-resize={single.id}
-              x={single.x + single.w - 6 / view.zoom}
-              y={single.y + single.h - 6 / view.zoom}
-              width={12 / view.zoom}
-              height={12 / view.zoom}
-              rx={3 / view.zoom}
-              fill="hsl(var(--card))"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2 / view.zoom}
-              className="cursor-nwse-resize"
-            />
-          )}
+                </g>
+              );
+            })}
+
+          {/* Pass 3: non-overlapping arrow label pills drawn above all connector lines */}
+          {shown
+            .filter((item) => item.kind === "arrow")
+            .map((item) => {
+              const routed = routedArrows.get(item.id);
+              if (!routed || (!item.text && editing !== item.id)) return null;
+              const fallbackMid =
+                routed.points.length >= 2
+                  ? {
+                      x: (routed.points[0]!.x + routed.points[routed.points.length - 1]!.x) / 2,
+                      y: (routed.points[0]!.y + routed.points[routed.points.length - 1]!.y) / 2,
+                    }
+                  : { x: 0, y: 0 };
+              const editSize = measureArrowLabel(item.text || "Label") ?? { w: 112, h: 26 };
+              const boxRect = routed.label ?? {
+                x: Math.round(fallbackMid.x - editSize.w / 2),
+                y: Math.round(fallbackMid.y - editSize.h / 2),
+                w: editSize.w,
+                h: editSize.h,
+              };
+              return (
+                <g key={`${item.id}-label`} data-board-item={item.id} className="cursor-pointer">
+                  {words(
+                    { ...item, x: boxRect.x, y: boxRect.y, w: boxRect.w, h: boxRect.h },
+                    "center",
+                  )}
+                </g>
+              );
+            })}
+          {single &&
+            editable &&
+            BOXED.has(single.kind) &&
+            (
+              [
+                ["nw", single.x, single.y, "cursor-nwse-resize"],
+                ["ne", single.x + single.w, single.y, "cursor-nesw-resize"],
+                ["sw", single.x, single.y + single.h, "cursor-nesw-resize"],
+                ["se", single.x + single.w, single.y + single.h, "cursor-nwse-resize"],
+              ] as const
+            ).map(([corner, cx, cy, cursor]) => (
+              <rect
+                key={corner}
+                data-board-resize={single.id}
+                data-board-corner={corner}
+                x={cx - 6 / view.zoom}
+                y={cy - 6 / view.zoom}
+                width={12 / view.zoom}
+                height={12 / view.zoom}
+                rx={3 / view.zoom}
+                fill={cardFill}
+                stroke={ACCENT}
+                strokeWidth={2 / view.zoom}
+                className={cursor}
+              />
+            ))}
+          {single &&
+            editable &&
+            single.kind === "arrow" &&
+            (() => {
+              const pts = routedArrows.get(single.id)?.points;
+              if (!pts || pts.length < 2) return null;
+              const startPt = pts[0]!;
+              const endPt = pts[pts.length - 1]!;
+              return (
+                <>
+                  {(
+                    [
+                      ["from", startPt],
+                      ["to", endPt],
+                    ] as const
+                  ).map(([which, pt]) => (
+                    <circle
+                      key={which}
+                      data-board-arrow-end={which}
+                      data-board-arrow-id={single.id}
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={6 / view.zoom}
+                      fill={cardFill}
+                      stroke={ACCENT}
+                      strokeWidth={2 / view.zoom}
+                      className="cursor-grab"
+                    />
+                  ))}
+                </>
+              );
+            })()}
           {marquee && (
             <rect
               x={Math.min(marquee.a.x, marquee.b.x)}
               y={Math.min(marquee.a.y, marquee.b.y)}
               width={Math.abs(marquee.a.x - marquee.b.x)}
               height={Math.abs(marquee.a.y - marquee.b.y)}
-              fill="hsl(var(--primary) / 0.08)"
-              stroke="hsl(var(--primary))"
+              fill="rgba(118, 191, 67, 0.1)"
+              stroke={ACCENT}
               strokeDasharray="5 4"
-              strokeWidth={1 / view.zoom}
+              strokeWidth={1.2 / view.zoom}
+              pointerEvents="none"
             />
           )}
         </g>
@@ -1285,7 +1688,7 @@ export function Whiteboard({
         >
           <Plus />
         </BoardButton>
-        <BoardButton label="Show everything" onClick={showAll}>
+        <BoardButton label="Show everything" onClick={() => showAll()}>
           <Maximize />
         </BoardButton>
       </div>
@@ -1324,8 +1727,11 @@ export function BoardThumbnail({
   value: BoardValue | string | null | undefined;
   className?: string;
 }) {
+  const dark = useDarkTheme();
+  const INK = dark ? INK_DARK : INK_LIGHT;
+  const cardFill = dark ? "#1E293B" : "#FFFFFF";
   const items = readBoard(value).items;
-  const byId = new Map(items.map((item) => [item.id, item]));
+  const routedMap = useMemo(() => computeBoardArrows(items), [items]);
   const bounds = boardBounds(items) ?? { x: 0, y: 0, w: 320, h: 180 };
   const pad = 28;
   return (
@@ -1337,17 +1743,15 @@ export function BoardThumbnail({
     >
       {items.map((item) => {
         const ink = INK[item.color ?? "ink"];
-        const fill = item.color === "ink" ? "hsl(var(--card))" : FILL[item.color ?? "grey"];
+        const fill = item.color === "ink" ? cardFill : FILL[item.color ?? "grey"];
         if (item.kind === "arrow") {
-          const ends = arrowEnds(item, byId);
-          if (!ends) return null;
+          const pts = routedMap.get(item.id)?.points;
+          if (!pts) return null;
           return (
-            <line
+            <path
               key={item.id}
-              x1={ends[0].x}
-              y1={ends[0].y}
-              x2={ends[1].x}
-              y2={ends[1].y}
+              d={roundedOrthogonalPath(pts, 8)}
+              fill="none"
               stroke={ink}
               strokeWidth={2}
             />

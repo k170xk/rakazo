@@ -176,10 +176,10 @@ export function Gallery({
         {assets.map((item, index) => (
           <figure
             key={item.id}
-            className="overflow-hidden rounded-xl border border-border/70 bg-card"
+            className="group overflow-hidden rounded-xl border border-border/70 bg-card transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lift"
           >
-            <button type="button" className="block w-full" onClick={() => setOpen(index)}>
-              <AssetImage asset={item.id} className="aspect-[4/3] w-full" />
+            <button type="button" className="block w-full overflow-hidden" onClick={() => setOpen(index)}>
+              <AssetImage asset={item.id} className="aspect-[4/3] w-full transition-transform duration-500 group-hover:scale-[1.04]" />
             </button>
             {item.caption && (
               <figcaption className="px-3 py-2 text-xs text-muted-foreground">
@@ -408,9 +408,9 @@ export function PhotoInput({
               type="button"
               aria-label="Mark up photo"
               onClick={() => setMarking(id)}
-              className="absolute top-1 left-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+              className="absolute top-1 left-1 flex size-8 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
             >
-              <Pencil className="size-3" />
+              <Pencil className="size-3.5" />
             </button>
           )}
           {canUpload && (
@@ -418,9 +418,9 @@ export function PhotoInput({
               type="button"
               aria-label="Remove photo"
               onClick={() => remove(id)}
-              className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+              className="absolute top-1 right-1 flex size-8 items-center justify-center rounded-full bg-black/60 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
             >
-              <X className="size-3.5" />
+              <X className="size-4" />
             </button>
           )}
         </motion.div>

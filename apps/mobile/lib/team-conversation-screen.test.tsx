@@ -182,7 +182,7 @@ function rows() {
   return [...container.querySelectorAll("[data-row]")].map((row) => row.textContent);
 }
 
-it("shows the bot's reply mode and rules until the room overrides them, then saves", async () => {
+it("shows the agent's reply mode and rules until the room overrides them, then saves", async () => {
   await act(async () => root.render(<TeamConversationSettings />));
   expect(rows()).toContain("Replies to: Mentions only");
   const rules = container.querySelector<HTMLInputElement>(
@@ -229,7 +229,7 @@ it("shows the bot's reply mode and rules until the room overrides them, then sav
   expect(back).toHaveBeenCalled();
 });
 
-it("offers the inherited choice by the bot's name", async () => {
+it("offers the inherited choice by the agent's name", async () => {
   await act(async () => root.render(<TeamConversationSettings />));
   expect(container.textContent).toContain("Replies to: Same as Chief");
 });

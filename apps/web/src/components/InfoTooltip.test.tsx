@@ -16,7 +16,7 @@ vi.mock("@lingui/react/macro", () => ({
 let container: HTMLDivElement;
 let root: Root;
 let trigger: HTMLButtonElement;
-const explanation = "Get notified when this Bot finishes or needs input";
+const explanation = "Get notified when this Agent finishes or needs input";
 const tooltip = () => document.querySelector('[data-slot="tooltip-content"]');
 const description = () => document.getElementById(trigger.getAttribute("aria-describedby") ?? "");
 

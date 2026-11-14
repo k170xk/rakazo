@@ -383,13 +383,13 @@ export function buildComposerMentionOptions(input: {
   }
 
   for (const bot of input.bots) {
-    const name = displayName(bot.name, "Bot");
+    const name = displayName(bot.name, "Agent");
     if (!matches(name)) continue;
     options.push({
       kind: "bot",
       id: bot.id,
       name,
-      subtitle: "Bot",
+      subtitle: "Agent",
       color: bot.color,
       avatarSet: bot.avatarSet,
     });

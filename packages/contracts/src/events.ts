@@ -530,6 +530,10 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     pageId: Id,
     version: z.number().int().positive(),
     title: z.string().max(PAGE_TITLE_MAX_LENGTH),
+    /** True on the card that first creates an app; edits render as a compact update card. */
+    created: z.boolean().optional(),
+    /** Short plain-English summary of what changed on an app update. */
+    summary: z.string().max(400).optional(),
   }),
   z.object({
     kind: z.literal("handoff"),
@@ -560,9 +564,15 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     intent: BotMessageIntent.optional(),
   }),
   z.object({
-    /** An Outlook draft its person edits and sends from the card; the bot never sends it. */
+    /** An Outlook draft its person edits and creates in Outlook from the card; the bot never writes to Outlook. */
     kind: z.literal("email_draft"),
     draftId: Id,
+    version: z.number().int().positive().optional(),
+  }),
+  z.object({
+    /** Proposed Outlook filing its person reviews; only their press of File moves mail. */
+    kind: z.literal("email_filing"),
+    batchId: Id,
   }),
   z.object({
     /**

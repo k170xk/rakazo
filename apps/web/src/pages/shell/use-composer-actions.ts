@@ -48,7 +48,7 @@ type UploadTarget = { botId: string; groupId?: undefined } | { groupId: string; 
 type EarlyUpload = { target: string; artifactId: Promise<string | null> };
 
 function uploadTargetKey(target: UploadTarget): string {
-  return target.groupId ? `group:${target.groupId}` : `bot:${target.botId}`;
+  return target.groupId ? `group:${target.groupId}` : `agent:${target.botId}`;
 }
 
 /**

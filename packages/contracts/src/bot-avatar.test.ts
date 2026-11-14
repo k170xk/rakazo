@@ -12,7 +12,7 @@ import {
   UpdateBotInput,
 } from "./index.js";
 
-describe("bot avatar values", () => {
+describe("agent avatar values", () => {
   it("parses hex, encoded shapes, and data images", () => {
     expect(parseBotAvatarValue("#8B5CF6")).toEqual({ kind: "color", color: "#8B5CF6" });
     expect(parseBotAvatarValue("#8B5CF6::shape_3")).toEqual({

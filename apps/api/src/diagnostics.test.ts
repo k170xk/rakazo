@@ -105,7 +105,7 @@ describe("diagnostics report", () => {
     expect(report).toContain("- MCP_STDIO_ENABLED: on");
     expect(report).toContain("- MCP_STDIO_ALLOWED_COMMANDS: 2");
     expect(report).toContain("- Pending: 20261002000000_second");
-    expect(report).toContain(`#### Bot ${opaque("bot_private_1")}`);
+    expect(report).toContain(`#### Agent ${opaque("bot_private_1")}`);
     expect(report).toContain(`| ${opaque("server_private_1")} | stdio | on | error | 7 |`);
     expect(report).toContain(
       "| ok | … failed: spawn … ENOENT while calling … for … with … from … and … |",
@@ -129,7 +129,7 @@ describe("diagnostics report", () => {
       }),
     );
     expect(report).toContain(
-      "space differs from bot; user differs from bot; user differs from server; server not available in space",
+      "space differs from agent; user differs from agent; user differs from server; server not available in space",
     );
   });
 
@@ -153,7 +153,7 @@ describe("diagnostics report", () => {
     expect(unreadable).toContain("not readable by the app's database login");
     const down = renderDiagnostics(input({ database: { reachable: false } }));
     expect(down).toContain("- Connection: failed");
-    expect(down).not.toContain("### Bots");
+    expect(down).not.toContain("### Agents");
   });
 });
 

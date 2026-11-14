@@ -207,7 +207,7 @@ describe("computer browser provider", () => {
 });
 
 describe("page browser session isolation", () => {
-  it("keeps page state when the same bot reacquires after a lease fence renewal", async () => {
+  it("keeps page state when the same agent reacquires after a lease fence renewal", async () => {
     const browser = new FakeBrowserProvider({ pages });
     const computer: ComputerRef = {
       id: "team-computer",
@@ -227,7 +227,7 @@ describe("page browser session isolation", () => {
     expect(snap.elements.find((el) => el.name.includes("Secret"))?.value).toBe("from-bot-a");
   });
 
-  it("keeps Team bots on the same computer in separate sessions", async () => {
+  it("keeps Team agents on the same computer in separate sessions", async () => {
     const browser = new FakeBrowserProvider({ pages });
     // Production Team computers share computer.botId (home key) across bots.
     const shared: ComputerRef = {
@@ -335,10 +335,10 @@ describe("page browser safety", () => {
     { ok: false, completed: 1, uncertain: true, error: "lost", fallback: "computer_act" as const },
   ])("keeps the files a call saved, also when a later step failed: %j", async (outcome) => {
     const downloads = [
-      { name: "statement.pdf", path: "bots/b1/Downloads/statement.pdf", size: 4 },
+      { name: "statement.pdf", path: "agents/b1/Downloads/statement.pdf", size: 4 },
       {
         name: "slow.pdf",
-        path: "bots/b1/Downloads/slow.pdf",
+        path: "agents/b1/Downloads/slow.pdf",
         state: "downloading" as const,
         size: 1,
       },
@@ -365,7 +365,7 @@ describe("page browser safety", () => {
   });
 
   it("forwards the download folder with a snapshot and keeps the PDF it saved, and a new tab's note", async () => {
-    const downloads = [{ name: "4b1d.pdf", path: "bots/b1/Downloads/4b1d.pdf", size: 4 }];
+    const downloads = [{ name: "4b1d.pdf", path: "agents/b1/Downloads/4b1d.pdf", size: 4 }];
     const note =
       'A new tab opened, and page tools now read it: "4b1d" at blob:https://bank.example/4b1d.';
     const liveDriver = vi.fn(async (_computer: ComputerRef, _request: PageBrowserCommand) => ({

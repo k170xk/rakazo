@@ -237,7 +237,7 @@ describe("inbound webhook HTTP route", () => {
     expect(deps.sendUserMessage).not.toHaveBeenCalled();
   });
 
-  it("rejects unknown bots with the same unauthorized response", async () => {
+  it("rejects unknown agents with the same unauthorized response", async () => {
     const deps = createDeps({ bot: null });
     const app = mount(deps);
     const res = await app.request("/api/v1/bots/missing/webhook", {
@@ -252,7 +252,7 @@ describe("inbound webhook HTTP route", () => {
     expect(await res.json()).toEqual({ error: "Unauthorized" });
   });
 
-  it("rejects bots without a configured webhook secret", async () => {
+  it("rejects agents without a configured webhook secret", async () => {
     const deps = createDeps({
       bot: {
         id: "bot-1",
@@ -276,7 +276,7 @@ describe("inbound webhook HTTP route", () => {
   });
 
   it.each([{ kind: "model" }, { userId: "user-2" }, { spaceId: "ws-2" }])(
-    "rejects a secret that is not this bot's webhook secret (%j)",
+    "rejects a secret that is not this agent's webhook secret (%j)",
     async (mismatch) => {
       const deps = createDeps({
         secret: {
@@ -362,7 +362,7 @@ describe("inbound webhook HTTP route", () => {
     );
   });
 
-  it("keeps the bot model when matching routines chose different models", async () => {
+  it("keeps the agent model when matching routines chose different models", async () => {
     const deps = createDeps({
       routines: [
         {
@@ -506,7 +506,7 @@ describe("inbound webhook HTTP route", () => {
     }
   });
 
-  it("rejects an oversized body for an unknown bot without target lookup", async () => {
+  it("rejects an oversized body for an unknown agent without target lookup", async () => {
     const deps = createDeps({ bot: null });
     const app = mount(deps);
     const res = await app.request("/api/v1/bots/missing/webhook", {
@@ -778,7 +778,7 @@ describe("GitHub event HTTP route", () => {
     );
   });
 
-  it("rejects an oversized GitHub body for an unknown bot without target lookup", async () => {
+  it("rejects an oversized GitHub body for an unknown agent without target lookup", async () => {
     const deps = createDeps({ bot: null });
     const app = mount(deps);
     const raw = "x".repeat(WEBHOOK_MAX_BODY_BYTES + 1);
@@ -841,7 +841,7 @@ describe("webhook secret decryption", () => {
     };
   }
 
-  it("decrypts a bot's secret once across unauthenticated requests on both routes", async () => {
+  it("decrypts an agent's secret once across unauthenticated requests on both routes", async () => {
     const load = vi.fn(() => SECRET);
     const deps = createDeps({
       load,
@@ -885,7 +885,7 @@ describe("webhook secret decryption", () => {
     expect(load).toHaveBeenCalledTimes(1);
   });
 
-  it("forgets a secret once its bot is gone", async () => {
+  it("forgets a secret once its agent is gone", async () => {
     const load = vi.fn(() => SECRET);
     const deps = createDeps({ load });
     const app = mount(deps);
@@ -910,7 +910,7 @@ describe("webhook secret decryption", () => {
     const deps = createDeps({ load });
     const app = mount(deps);
     const bot = await deps.prisma.bot.findUnique({ where: { id: "bot-1" } });
-    if (!bot) throw new Error("missing bot");
+    if (!bot) throw new Error("missing agent");
     const secrets = new Map([
       [
         "secret-1",
@@ -1253,7 +1253,7 @@ describe("webhook secret cache", () => {
     expect(load).toHaveBeenCalledTimes(2);
   });
 
-  it("evicts the least recently delivered bot past 1,000 cached secrets", async () => {
+  it("evicts the least recently delivered agent past 1,000 cached secrets", async () => {
     const { deps, bots, secrets, load } = cacheDeps(() => SECRET);
     for (let i = 0; i <= 1_000; i++) {
       bots.set(`bot-${i}`, `secret-${i}`);

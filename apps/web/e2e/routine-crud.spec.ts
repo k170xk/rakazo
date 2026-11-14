@@ -207,7 +207,7 @@ test("a successful routine create is not reported as failed when refresh fails",
   expect(routines[0]?.name).toBe("Persisted routine");
 });
 
-test("switching bots while a routine save is pending does not reopen stale state", {
+test("switching agents while a routine save is pending does not reopen stale state", {
   tag: "@nightly",
 }, async ({ page }) => {
   const stamp = Date.now();

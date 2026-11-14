@@ -89,7 +89,7 @@ postgres("call isolation and cooldown (PostgreSQL)", () => {
           await tx.$executeRaw`SET LOCAL enable_seqscan = off`;
           return tx.$queryRaw<Array<{ "QUERY PLAN": string }>>`
           EXPLAIN SELECT "threadId", blocks FROM messages
-          WHERE role = 'bot' AND "clientNonce" LIKE 'call:%' AND "clientNonce" LIKE '%:request'
+          WHERE role = 'agent' AND "clientNonce" LIKE 'call:%' AND "clientNonce" LIKE '%:request'
             AND blocks #> ARRAY['0', 'status'] = '"ringing"'::jsonb
           ORDER BY "createdAt" ASC LIMIT 100`;
         }),

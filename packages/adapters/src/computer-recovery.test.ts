@@ -815,7 +815,7 @@ describe("computer recovery preserves live work", () => {
     expect(row).toMatchObject({ state: "running", providerRef: first.providerRef });
   });
 
-  it("stops Recover instead of rebuilding when it cannot look up deleted bots' folders", async () => {
+  it("stops Recover instead of rebuilding when it cannot look up deleted agents' folders", async () => {
     const { deps, row, first } = await fixture();
     row.scope = "team";
     const blip = new Error("database unavailable");

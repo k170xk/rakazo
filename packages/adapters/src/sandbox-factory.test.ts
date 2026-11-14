@@ -57,7 +57,7 @@ describe("createSandboxProvider", () => {
     vi.stubEnv("NODE_ENV", "production");
     try {
       await expect(createSandboxProvider("desktop", {})).rejects.toThrow(
-        "SANDBOX_PROVIDER=desktop runs bot commands directly on this host",
+        "SANDBOX_PROVIDER=desktop runs agent commands directly on this host",
       );
     } finally {
       vi.unstubAllEnvs();

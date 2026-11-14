@@ -14,7 +14,7 @@ export const apiConnectors: IntegrationPlatform = {
   h1: "Turn any OpenAPI or GraphQL API into tools for your AI agents",
   intro: [
     "Many apps have an API but no MCP server and no ready-made integration. An API connector closes that gap: point it at the API's [OpenAPI](https://www.openapis.org) description or GraphQL endpoint, and each operation becomes a tool an AI agent can call. [integrations.sh](https://integrations.sh) is an open source catalog that helps you find those descriptions.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, bots use tools in your apps, and each bot also has its own computer. You can use it on Rakazo Cloud or host it yourself. API connectors let your bots use apps that aren't in the [integrations catalog](/integrations/), with only an API key.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, agents use tools in your apps, and each agent also has its own computer. You can use it on Rakazo Cloud or host it yourself. API connectors let your agents use apps that aren't in the [integrations catalog](/integrations/), with only an API key.",
   ],
   scene: {
     bot: "Account Manager",
@@ -38,14 +38,14 @@ export const apiConnectors: IntegrationPlatform = {
       image: true,
     },
     {
-      heading: "What bots can do with API connectors in Rakazo",
+      heading: "What agents can do with API connectors in Rakazo",
       bullets: [
         "Use a REST API from its OpenAPI description. Paste the document's URL, in JSON or YAML, and Rakazo turns every operation with an `operationId` into a tool, up to 100 per API.",
         "Use a GraphQL API from its endpoint. Rakazo introspects the schema and turns queries and mutations into tools, up to 100 per API.",
         "Authenticate with a bearer token or an API key header. The key is encrypted, never sent to the model, and removed from what the API sends back.",
         "Find an API by domain. When the operator points `INTEGRATIONS_CATALOG_URL` at an integrations.sh-compatible catalog, **Search by domain** adds a service's OpenAPI description or MCP server with the address and sign-in method filled in.",
         "Read without asking. A `GET` operation or a GraphQL query counts as reading, so in **Ask** mode it usually runs without a card. Writes ask first, under your [approval settings](/docs/approvals/).",
-        "Share it. Every bot in the [spaces](/docs/spaces/) you choose can use the connector. Past 20 tools, a bot searches for the operations it needs instead of loading them all.",
+        "Share it. Every agent in the [spaces](/docs/spaces/) you choose can use the connector. Past 20 tools, an agent searches for the operations it needs instead of loading them all.",
       ],
     },
     {
@@ -74,7 +74,7 @@ export const apiConnectors: IntegrationPlatform = {
         "Find the API's OpenAPI document or GraphQL endpoint in its developer docs or on [integrations.sh](https://integrations.sh).",
         "Open **Integrations** from **Connect apps** at the bottom of the sidebar, choose **+**, then **OpenAPI** or **GraphQL**.",
         "Paste the URL, choose **No auth**, **Bearer token** or **API key header**, enter the key, and choose **Verify and add**.",
-        "Ask a bot to use the API, and approve any call that changes something.",
+        "Ask an agent to use the API, and approve any call that changes something.",
         "Optionally, an admin sets `INTEGRATIONS_CATALOG_URL` on the API to `https://integrations.sh` or a compatible mirror to turn on **Search by domain**.",
       ],
     },
@@ -88,7 +88,7 @@ export const apiConnectors: IntegrationPlatform = {
     {
       question: "Can an AI agent use any REST API?",
       answer:
-        "Any that has an OpenAPI description: Rakazo turns each operation into a tool. For an API without one, ask the bot to save your key as a [reusable credential](/docs/bot-secrets/), and it can call the API without ever seeing the key.",
+        "Any that has an OpenAPI description: Rakazo turns each operation into a tool. For an API without one, ask the agent to save your key as a [reusable credential](/docs/bot-secrets/), and it can call the API without ever seeing the key.",
     },
     {
       question: "What is integrations.sh?",
@@ -103,7 +103,7 @@ export const apiConnectors: IntegrationPlatform = {
     {
       question: "Does the model see my API key?",
       answer:
-        "No. Rakazo stores the key encrypted, adds it to each request itself, and removes it from responses before the bot sees them.",
+        "No. Rakazo stores the key encrypted, adds it to each request itself, and removes it from responses before the agent sees them.",
     },
   ],
   sources: [

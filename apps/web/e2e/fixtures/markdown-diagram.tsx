@@ -24,7 +24,7 @@ const sequence = [
   "sequenceDiagram",
   "  accTitle: Approval round trip",
   "  participant U as User",
-  "  participant B as Bot",
+  "  participant B as Agent",
   "  U->>B: Book the flight",
   "  B-->>U: Needs approval",
   "  U->>B: Approve",

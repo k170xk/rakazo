@@ -226,7 +226,7 @@ async function mirrorChannelRun(
     },
   });
   // Peer bots belong to other members, usually in other Spaces.
-  await runAsSystem("fan a group post out to peer bots in other Spaces", () =>
+  await runAsSystem("fan a group post out to peer agents in other Spaces", () =>
     fanOutToPeers(deps, { identity, channel, channelBlock, fromLabel, hop, peers, messages }),
   );
 }

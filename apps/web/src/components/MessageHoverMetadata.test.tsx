@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { MessageHoverMetadata } from "./MessageHoverMetadata";
 
 describe("MessageHoverMetadata", () => {
-  it("places bot actions flush to the right of the bubble", () => {
+  it("places agent actions flush to the right of the bubble", () => {
     const html = renderToStaticMarkup(
       <MessageHoverMetadata side="end">
         <div data-testid="message-actions" />

@@ -8,7 +8,7 @@ export function otherSpaceOfBot(
   actor: Actor,
   botId: string,
 ): Promise<string | undefined> {
-  return runAsSystem("find which of the caller's Spaces holds their bot", async () => {
+  return runAsSystem("find which of the caller's Spaces holds their agent", async () => {
     const bot = await prisma.bot.findFirst({
       where: {
         id: botId,

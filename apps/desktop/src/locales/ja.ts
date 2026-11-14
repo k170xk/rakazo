@@ -58,13 +58,13 @@ export const JA_MESSAGES: Record<string, string> = {
     "アップデートを完了できませんでした。しばらくしてからもう一度お試しください。",
   "Could not reach the update server.": "アップデートサーバに接続できませんでした。",
   "Allow local computer access?": "ローカルコンピュータへのアクセスを許可しますか？",
-  "Allow bots to use this computer?": "ボットにこのコンピュータの使用を許可しますか？",
+  "Allow agents to use this computer?": "エージェントにこのコンピュータの使用を許可しますか？",
   Cancel: "キャンセル",
   Allow: "許可",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
-    "{host}のボットは、あなたのアカウントの権限でコマンドを実行し、ファイルを読み書きし、アプリを起動できます。アクセスは設定で取り消せます。",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
-    "このローカルインスタンスのボットは、あなたのアカウントの権限でコマンドを実行し、ファイルを読み書きし、アプリを起動できます。アクセスはアプリのメニューから取り消せます。",
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+    "{host}のエージェントは、あなたのアカウントの権限でコマンドを実行し、ファイルを読み書きし、アプリを起動できます。アクセスは設定で取り消せます。",
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+    "このローカルインスタンスのエージェントは、あなたのアカウントの権限でコマンドを実行し、ファイルを読み書きし、アプリを起動できます。アクセスはアプリのメニューから取り消せます。",
   "Local computer access requires an app-managed local instance.":
     "ローカルコンピュータへのアクセスには、アプリが管理するローカルインスタンスが必要です。",
   "Local server is unavailable": "ローカルサーバを利用できません",
@@ -188,12 +188,12 @@ export const JA_MESSAGES: Record<string, string> = {
   Go: "移動",
   Back: "戻る",
   Forward: "進む",
-  "Next Bot": "次のボット",
-  "Previous Bot": "前のボット",
+  "Next Agent": "次のエージェント",
+  "Previous Agent": "前のエージェント",
   "Command Menu…": "コマンドメニュー…",
   "Toggle Sidebar": "サイドバーを切り替え",
   "Find…": "検索…",
-  "Search Bots…": "ボットを検索…",
+  "Search Agents…": "エージェントを検索…",
   "The window closed before the app loaded.": "アプリの読み込み前にウインドウが閉じられました。",
   "New Group Chat": "新規グループチャット",
   "Connect Apps…": "アプリを接続…",

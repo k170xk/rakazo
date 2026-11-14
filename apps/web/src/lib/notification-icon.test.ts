@@ -61,7 +61,7 @@ describe("notificationIcon", () => {
     expect(loads).toHaveLength(0);
   });
 
-  it("forgets bots that are no longer listed", () => {
+  it("forgets agents that are no longer listed", () => {
     const bot = { id: "photo", color: "data:image/png;base64,cGhvdG8=" };
     prepareNotificationIcons([bot]);
     prepareNotificationIcons([]);

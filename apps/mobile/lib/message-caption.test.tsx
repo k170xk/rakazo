@@ -95,7 +95,7 @@ describe("attachment captions", () => {
     });
   }
 
-  it("formats bot Markdown through ChatMarkdown", () => {
+  it("formats agent Markdown through ChatMarkdown", () => {
     render("bot");
 
     // A bare address shows as host and path, joined to its site icon and isolated.

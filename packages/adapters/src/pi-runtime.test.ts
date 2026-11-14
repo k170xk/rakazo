@@ -12,7 +12,7 @@ describe("describeToolActivity", () => {
     expect(describeToolActivity("write_file", { path: "out.csv", content: "…" })).toBe(
       "Writing out.csv",
     );
-    expect(describeToolActivity("list_fleet", {})).toBe("Checking your bots");
+    expect(describeToolActivity("list_fleet", {})).toBe("Checking your agents");
     expect(describeToolActivity("render_plot", { spec: {} })).toBe("Rendering a chart");
     expect(describeToolActivity("save_page", { help: true })).toBe(
       "Reading the page kit reference",

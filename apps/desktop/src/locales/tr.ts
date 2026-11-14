@@ -57,12 +57,12 @@ export const TR_MESSAGES: Record<string, string> = {
     "Güncelleme tamamlanamadı. Daha sonra yeniden deneyin.",
   "Could not reach the update server.": "Güncelleme sunucusuna ulaşılamadı.",
   "Allow local computer access?": "Yerel bilgisayara erişime izin verilsin mi?",
-  "Allow bots to use this computer?": "Botların bu bilgisayarı kullanmasına izin verilsin mi?",
+  "Allow agents to use this computer?": "Botların bu bilgisayarı kullanmasına izin verilsin mi?",
   Cancel: "Vazgeç",
   Allow: "İzin Ver",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
     "{host} üzerindeki botlar hesabınızın izinleriyle komut çalıştırabilir, dosyaları okuyup değiştirebilir ve uygulama açabilir. Erişimi Ayarlar’dan iptal edebilirsiniz.",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
     "Bu yerel örnekteki botlar hesabınızın izinleriyle komut çalıştırabilir, dosyaları okuyup değiştirebilir ve uygulama açabilir. Erişimi uygulama menüsünden iptal edebilirsiniz.",
   "Local computer access requires an app-managed local instance.":
     "Yerel bilgisayar erişimi, uygulamanın yönettiği bir yerel örnek gerektirir.",
@@ -180,12 +180,12 @@ export const TR_MESSAGES: Record<string, string> = {
   Go: "Git",
   Back: "Geri",
   Forward: "İleri",
-  "Next Bot": "Sonraki Bot",
-  "Previous Bot": "Önceki Bot",
+  "Next Agent": "Sonraki Agent",
+  "Previous Agent": "Önceki Agent",
   "Command Menu…": "Komut Menüsü…",
   "Toggle Sidebar": "Kenar Çubuğunu Aç/Kapat",
   "Find…": "Bul…",
-  "Search Bots…": "Bot Ara…",
+  "Search Agents…": "Agent Ara…",
   "The window closed before the app loaded.": "Pencere, uygulama yüklenmeden kapandı.",
   "New Group Chat": "Yeni Grup Sohbeti",
   "Connect Apps…": "Uygulamaları Bağla…",

@@ -105,7 +105,7 @@ describe("provider-neutral computer workspace", () => {
     expect(files).toEqual(["packages/core/keep.txt"]);
   });
 
-  it("prepares shared and bot folders for a Team Computer", async () => {
+  it("prepares shared and agent folders for a Team Computer", async () => {
     const provider = new FakeSandboxProvider();
     const computer = await provider.provision(
       { botId: "team-workspace", homePath: "/ignored" },
@@ -122,17 +122,17 @@ describe("provider-neutral computer workspace", () => {
     );
   });
 
-  it("leaves deleted bots' folders and browser profiles out of a Team Computer checkpoint", async () => {
+  it("leaves deleted agents' folders and browser profiles out of a Team Computer checkpoint", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "rakazo-workspace-store-"));
     roots.push(root);
     const home = new LocalAgentHomeStore(root);
     const provider = new FakeSandboxProvider();
     const computer = await provider.provision({ botId: "team", homePath: "/ignored" }, context);
     for (const file of [
-      "bots/gone/notes.txt",
+      "agents/gone/notes.txt",
       `.browser-profiles/${teamBrowserProfileName("gone")}/Cookies`,
-      "bots/gone-too/notes.txt",
-      "bots/kept/notes.txt",
+      "agents/gone-too/notes.txt",
+      "agents/kept/notes.txt",
       `.browser-profiles/${teamBrowserProfileName("kept")}/Cookies`,
       "shared/bots/gone/plan.txt",
     ]) {
@@ -166,7 +166,7 @@ describe("provider-neutral computer workspace", () => {
     expect(saved.sort()).toEqual(
       [
         `.browser-profiles/${teamBrowserProfileName("kept")}/Cookies`,
-        "bots/kept/notes.txt",
+        "agents/kept/notes.txt",
         "shared/bots/gone/plan.txt",
       ].sort(),
     );
@@ -490,7 +490,7 @@ describe("checkpointAndStopComputer", () => {
   });
 });
 
-describe("Team bot folder cleanup", () => {
+describe("Team agent folder cleanup", () => {
   const computer: ComputerRef = {
     id: "sandbox-1",
     botId: "team-workspace",
@@ -503,12 +503,12 @@ describe("Team bot folder cleanup", () => {
     return { findMany, prisma: { botDeletion: { findMany } } as unknown as PrismaClient };
   }
 
-  it("removes only folders of bots deleted from this space when a Team Computer wakes", async () => {
+  it("removes only folders of agents deleted from this space when a Team Computer wakes", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-"));
     roots.push(workspace);
-    await seedFile(workspace, "bots/deleted-bot/private.txt", "gone");
-    await seedFile(workspace, "bots/deleted-bot-2/notes.txt", "keep");
-    await seedFile(workspace, "bots/live-bot/notes.txt", "keep");
+    await seedFile(workspace, "agents/deleted-bot/private.txt", "gone");
+    await seedFile(workspace, "agents/deleted-bot-2/notes.txt", "keep");
+    await seedFile(workspace, "agents/live-bot/notes.txt", "keep");
     await seedFile(workspace, "shared/plan.txt", "keep");
     const { findMany, prisma } = deletedBots("deleted-bot", "never-had-a-folder");
 
@@ -525,15 +525,15 @@ describe("Team bot folder cleanup", () => {
     });
     await expect(access(path.join(workspace, "bots", "deleted-bot"))).rejects.toThrow();
     for (const kept of [
-      "bots/deleted-bot-2/notes.txt",
-      "bots/live-bot/notes.txt",
+      "agents/deleted-bot-2/notes.txt",
+      "agents/live-bot/notes.txt",
       "shared/plan.txt",
     ]) {
       await expect(readFile(path.join(workspace, kept), "utf8")).resolves.toBe("keep");
     }
   });
 
-  it("removes deleted bots' browser profiles when a Team Computer wakes", async () => {
+  it("removes deleted agents' browser profiles when a Team Computer wakes", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-profile-"));
     roots.push(workspace);
     const deletedProfile = `.browser-profiles/${teamBrowserProfileName("deleted-bot")}`;
@@ -612,7 +612,7 @@ describe("Team bot folder cleanup", () => {
     });
   });
 
-  it("unlinks a deleted bot's symlink that the provider's file listing does not show", async () => {
+  it("unlinks a deleted agent's symlink that the provider's file listing does not show", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-link-"));
     roots.push(workspace);
     await seedFile(workspace, "shared/plan.txt", "keep");
@@ -634,11 +634,11 @@ describe("Team bot folder cleanup", () => {
     await expect(readFile(path.join(workspace, "shared/plan.txt"), "utf8")).resolves.toBe("keep");
   });
 
-  it("keeps removing deleted bots' folders after one entry is refused", async () => {
+  it("keeps removing deleted agents' folders after one entry is refused", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-refused-"));
     roots.push(workspace);
     await seedFile(workspace, "bots/deleted-a", "not a folder");
-    await seedFile(workspace, "bots/deleted-b/private.txt", "gone");
+    await seedFile(workspace, "agents/deleted-b/private.txt", "gone");
     const { prisma } = deletedBots("deleted-a", "deleted-b");
 
     await removeDeletedBotWorkspaces(
@@ -654,10 +654,10 @@ describe("Team bot folder cleanup", () => {
     await expect(access(path.join(workspace, "bots", "deleted-b"))).rejects.toThrow();
   });
 
-  it("removes a deleted bot's folder that holds Go's read-only module cache", async () => {
+  it("removes a deleted agent's folder that holds Go's read-only module cache", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-readonly-"));
     roots.push(workspace);
-    const module = path.join(workspace, "bots/deleted-bot/go/pkg/mod/example.com/m@v1.0.0");
+    const module = path.join(workspace, "agents/deleted-bot/go/pkg/mod/example.com/m@v1.0.0");
     await mkdir(path.join(workspace, "outside"), { mode: 0o555 });
     await seedFile(module, "go.mod", "module example.com/m\n");
     await symlink(path.join(workspace, "outside"), path.join(module, "outside"));
@@ -676,7 +676,7 @@ describe("Team bot folder cleanup", () => {
     expect((await stat(path.join(workspace, "outside"))).mode & 0o777).toBe(0o555);
   });
 
-  it("leaves the mode of a file the deleted bot's folder links to", async () => {
+  it("leaves the mode of a file the deleted agent's folder links to", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-hardlink-"));
     roots.push(workspace);
     await seedFile(workspace, "shared/keep.txt", "keep");
@@ -684,7 +684,7 @@ describe("Team bot folder cleanup", () => {
     await mkdir(path.join(workspace, "bots/deleted-bot"), { recursive: true });
     await link(
       path.join(workspace, "shared/keep.txt"),
-      path.join(workspace, "bots/deleted-bot/keep.txt"),
+      path.join(workspace, "agents/deleted-bot/keep.txt"),
     );
 
     await removeComputerWorkspaceDirectories(
@@ -699,7 +699,7 @@ describe("Team bot folder cleanup", () => {
     expect((await stat(path.join(workspace, "shared/keep.txt"))).mode & 0o777).toBe(0o444);
   });
 
-  it("does not look up deletions when the Team Computer has no bot folders", async () => {
+  it("does not look up deletions when the Team Computer has no agent folders", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-empty-"));
     roots.push(workspace);
     await mkdir(path.join(workspace, "bots"));
@@ -719,8 +719,8 @@ describe("Team bot folder cleanup", () => {
   it("reaches the oldest leftover however long the deletion history is", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "rakazo-team-wake-history-"));
     roots.push(workspace);
-    await seedFile(workspace, "bots/oldest-bot/private.txt", "gone");
-    await seedFile(workspace, "bots/live-bot/notes.txt", "keep");
+    await seedFile(workspace, "agents/oldest-bot/private.txt", "gone");
+    await seedFile(workspace, "agents/live-bot/notes.txt", "keep");
     const history = Array.from({ length: 5_000 }, (_, index) => `deleted-${index}`);
     const { prisma } = deletedBots(...history, "oldest-bot");
     const sandbox = localWorkspaceSandbox(workspace);
@@ -736,7 +736,7 @@ describe("Team bot folder cleanup", () => {
       expect.anything(),
     );
     await expect(access(path.join(workspace, "bots", "oldest-bot"))).rejects.toThrow();
-    await expect(readFile(path.join(workspace, "bots/live-bot/notes.txt"), "utf8")).resolves.toBe(
+    await expect(readFile(path.join(workspace, "agents/live-bot/notes.txt"), "utf8")).resolves.toBe(
       "keep",
     );
   });

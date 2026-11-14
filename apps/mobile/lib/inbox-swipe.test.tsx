@@ -180,7 +180,7 @@ describe("inbox row actions", () => {
     },
   );
 
-  it("targets bots and groups by their own id", () => {
+  it("targets agents and groups by their own id", () => {
     expect(chatTarget("bot", "b1")).toEqual({ botId: "b1" });
     expect(chatTarget("group", "g1")).toEqual({ groupId: "g1" });
   });
@@ -256,7 +256,7 @@ describe("iOS swipe row", () => {
     row: Partial<InboxSwipeRowProps> & { key?: string } = {},
     preview: InboxSwipeRowProps["preview"] = { title: "Ada", message: "Hi", avatar: <i /> },
   ) {
-    const key = row.key ?? "bot:1";
+    const key = row.key ?? "agent:1";
     const onAction = vi.fn<(action: InboxRowAction) => void>();
     const onOrganize = vi.fn<InboxSwipeRowProps["onOrganize"]>();
     const onEditSection = vi.fn<InboxSwipeRowProps["onEditSection"]>();
@@ -327,7 +327,7 @@ describe("iOS swipe row", () => {
   it("opens the system context menu with a preview on the same list row as the swipe actions", () => {
     const { find, root } = render();
     const menu = find('[data-ui="SwipeActions"] > [data-ui="ContextMenu"]');
-    expect(menu?.querySelector('[data-ui="ContextMenu.Trigger"]')?.textContent).toBe("bot:1");
+    expect(menu?.querySelector('[data-ui="ContextMenu.Trigger"]')?.textContent).toBe("agent:1");
     expect(menu?.querySelector('[data-ui="ContextMenu.Preview"]')).not.toBeNull();
     act(() => root.unmount());
   });
@@ -341,7 +341,7 @@ describe("iOS swipe row", () => {
     act(() => root.unmount());
   });
 
-  it("offers read state, pin, notifications, move, then archive and delete last for a bot", () => {
+  it("offers read state, pin, notifications, move, then archive and delete last for an agent", () => {
     const { items, find, root } = render({
       unread: true,
       pinned: false,

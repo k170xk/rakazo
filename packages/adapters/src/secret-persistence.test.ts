@@ -546,7 +546,7 @@ describe("MCP OAuth prepared persistence", () => {
 
 describe("prepared run-secret writes", () => {
   it.each([false, true])(
-    "prepares slow secret input outside the transaction (bot credential: %s)",
+    "prepares slow secret input outside the transaction (agent credential: %s)",
     async (credentialAsk) => {
       const fake = infisicalFake();
       const store = new ComposedSecretStore(

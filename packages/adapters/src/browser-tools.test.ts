@@ -227,7 +227,7 @@ describe("browser tools", () => {
         {
           kind: "upload",
           ref: "e1",
-          paths: ["bots/b1/a.txt"],
+          paths: ["agents/b1/a.txt"],
           ...(uploadRoots ? { roots: uploadRoots } : {}),
         },
         {
@@ -739,7 +739,7 @@ describe("browser tools", () => {
     });
   });
 
-  it("settles an upload path outside the bot's folder before anything runs", async () => {
+  it("settles an upload path outside the agent's folder before anything runs", async () => {
     const browser = new FakeBrowserProvider();
     const act = vi.spyOn(browser, "act");
     const result = await browserActFromTool(
@@ -749,7 +749,7 @@ describe("browser tools", () => {
       { actions: [{ kind: "upload", ref: "e1", paths: ["../other-bot/notes.txt"] }] },
       {
         resolveUploadPath: () => {
-          throw new Error("Path escapes the bot workspace");
+          throw new Error("Path escapes the agent workspace");
         },
       },
     );
@@ -757,7 +757,7 @@ describe("browser tools", () => {
       ok: false,
       completed: 0,
       uncertain: false,
-      error: "Path escapes the bot workspace",
+      error: "Path escapes the agent workspace",
     });
     expect(act).not.toHaveBeenCalled();
   });
@@ -1219,7 +1219,7 @@ describe("browser tools on dropdowns and stale refs", () => {
     expect((redactBrowserResult(snapshot, [secret]) as typeof snapshot).tree).not.toContain("xv");
   });
 
-  it("settles a stale ref with a fresh page instead of sending the bot to the desktop", async () => {
+  it("settles a stale ref with a fresh page instead of sending the agent to the desktop", async () => {
     const { browser } = await fake();
     const acted = await browserActFromTool(browser, computer, context, {
       actions: [{ kind: "click", ref: "e999" }],

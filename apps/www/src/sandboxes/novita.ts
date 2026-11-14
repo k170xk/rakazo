@@ -6,14 +6,14 @@ export const novita: Sandbox = {
   name: "Novita",
   runsOn: "Hosted Linux sandbox",
   keeps: "Files, browser logins and running programs",
-  bestFor: "Bots that pick up where they left off",
-  title: "Novita Agent Sandbox for AI agents: give each bot a computer that pauses",
+  bestFor: "Agents that pick up where they left off",
+  title: "Novita Agent Sandbox for AI agents: give each agent a computer that pauses",
   description:
-    "Run your AI agents' computers on Novita's Agent Sandbox with Rakazo. Idle computers pause with their memory, so a bot comes back to the same open browser and programs.",
+    "Run your AI agents' computers on Novita's Agent Sandbox with Rakazo. Idle computers pause with their memory, so an agent comes back to the same open browser and programs.",
   h1: "Run your AI agents' computers on Novita",
   intro: [
     "Novita's Agent Sandbox gives AI agents their own Linux machines in the cloud, started and stopped through an API. Novita AI also sells model APIs and GPUs, and its sandbox works with the E2B SDK.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and each bot gets its own computer with a desktop, a browser, a terminal and files. You can watch its screen and take over at any time. When you self-host Rakazo, Novita can be where those computers live. Its main strength is the pause: an idle computer is frozen with its memory intact, so a bot comes back to the same open tabs and running programs.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and each agent gets its own computer with a desktop, a browser, a terminal and files. You can watch its screen and take over at any time. When you self-host Rakazo, Novita can be where those computers live. Its main strength is the pause: an idle computer is frozen with its memory intact, so an agent comes back to the same open tabs and running programs.",
   ],
   scene: {
     bot: "Talent Scout",
@@ -40,22 +40,22 @@ export const novita: Sandbox = {
       image: true,
     },
     {
-      heading: "What a bot can do on a Novita computer",
+      heading: "What an agent can do on a Novita computer",
       paragraphs: [
-        "Rakazo turns each Novita sandbox into a full bot computer. A bot works there the same way it does on any other Linux provider, and you see it in the computer panel next to the chat.",
+        "Rakazo turns each Novita sandbox into a full agent computer. An agent works there the same way it does on any other Linux provider, and you see it in the computer panel next to the chat.",
       ],
       bullets: [
-        "Use a Linux desktop and browser, with each bot on its own screen when several bots share one computer.",
-        "Run shell commands, which you or the bot can cancel, and read and write files.",
-        "You can open a terminal on the computer yourself, watch the screen live, and take over when a bot asks for help with a login or a captcha.",
+        "Use a Linux desktop and browser, with each agent on its own screen when several agents share one computer.",
+        "Run shell commands, which you or the agent can cancel, and read and write files.",
+        "You can open a terminal on the computer yourself, watch the screen live, and take over when an agent asks for help with a login or a captcha.",
         "When the computer sits idle or is stopped, Rakazo pauses it instead of deleting it. Files, browser profiles and the memory of running programs are kept, and the next use resumes the same computer.",
       ],
     },
     {
       heading: "When to choose Novita",
       paragraphs: [
-        "Choose Novita when bots run long, multi-step work in a browser and you want them to come back to exactly where they were, not to a fresh desktop rebuilt from saved files. It also fits if you already use Novita for models or GPUs and want one fewer account.",
-        "[E2B](/sandboxes/e2b/) pauses idle computers in a similar way and is what Rakazo's own live computer tests run on. [Boat](/sandboxes/boat/) is what Rakazo Cloud uses, with a separate Chrome profile for each bot, but it keeps the disk, not running programs. [Railway](/sandboxes/railway/) rebuilds a computer from saved files after every stop. If you don't want a cloud account at all, [Docker](/sandboxes/docker/) runs computers on your own server. The [sandbox comparison](/sandboxes/) puts them side by side.",
+        "Choose Novita when agents run long, multi-step work in a browser and you want them to come back to exactly where they were, not to a fresh desktop rebuilt from saved files. It also fits if you already use Novita for models or GPUs and want one fewer account.",
+        "[E2B](/sandboxes/e2b/) pauses idle computers in a similar way and is what Rakazo's own live computer tests run on. [Boat](/sandboxes/boat/) is what Rakazo Cloud uses, with a separate Chrome profile for each agent, but it keeps the disk, not running programs. [Railway](/sandboxes/railway/) rebuilds a computer from saved files after every stop. If you don't want a cloud account at all, [Docker](/sandboxes/docker/) runs computers on your own server. The [sandbox comparison](/sandboxes/) puts them side by side.",
       ],
     },
     {
@@ -77,7 +77,7 @@ export const novita: Sandbox = {
         "Create an API key in your Novita account.",
         "Build the computer template in that same account: `NOVITA_API_KEY=<your-key> pnpm sandbox:novita-template`. It creates a template called `rakazo-computer` with 2 vCPU and 4 GB of memory, based on Novita's desktop image.",
         "Set `SANDBOX_PROVIDER=novita` and `NOVITA_API_KEY` on both the API and the worker, then restart them. Or, as an admin, open Settings → Computer and choose Novita under New computers run on.",
-        "Open a bot's computer to check that it starts and shows a desktop.",
+        "Open an agent's computer to check that it starts and shows a desktop.",
       ],
     },
     {
@@ -114,7 +114,7 @@ export const novita: Sandbox = {
     {
       question: "Can I use Novita on Rakazo Cloud?",
       answer:
-        "No. Rakazo Cloud runs its bot computers on [Boat](/sandboxes/boat/). Novita is an option when you [self-host Rakazo](/self-hosted-ai-agent/).",
+        "No. Rakazo Cloud runs its agent computers on [Boat](/sandboxes/boat/). Novita is an option when you [self-host Rakazo](/self-hosted-ai-agent/).",
     },
   ],
   sources: [

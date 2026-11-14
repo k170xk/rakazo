@@ -18,7 +18,7 @@ describe("takeoverReleaser", () => {
     vi.mocked(releaseComputerControl).mockClear();
   });
 
-  it("hands the screen back to the bot of a direct chat", async () => {
+  it("hands the screen back to the agent of a direct chat", async () => {
     const target = { kind: "bot", botId: "bot-1" } as ThreadTarget;
     await takeoverReleaser(deps, actor, target)("run-1");
     expect(releaseComputerControl).toHaveBeenCalledWith(deps, actor, "bot-1", "done", "run-1");

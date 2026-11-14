@@ -39,7 +39,7 @@ export function appChangeOf(name: string, args: Record<string, unknown>): AppCha
       ? args.pageId
       : name === "save_whiteboard"
         ? (args.whiteboardId ?? args.pageId)
-        : args.appId;
+        : (args.appId ?? args.whiteboardId ?? args.pageId);
   if (!given(id)) return null;
   const pageId = String(id);
   if (name === "save_page") {
@@ -55,7 +55,7 @@ export function appChangeOf(name: string, args: Record<string, unknown>): AppCha
   if (name === "save_whiteboard") {
     return {
       pageId,
-      code: given(args.items) || given(args.ops) || given(args.title),
+      code: given(args.items) || given(args.ops) || given(args.title) || given(args.layout),
       wipes: [],
       unprivate: [],
       unshare: [],

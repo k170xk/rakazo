@@ -66,7 +66,7 @@ describe("browser notifications", () => {
     i18n.activate("en");
   });
 
-  it("only accepts a new bot message for the hidden or unfocused subscribed thread", () => {
+  it("only accepts a new agent message for the hidden or unfocused subscribed thread", () => {
     expect(shouldNotifyBrowser(event(), context())).toBe(true);
     expect(shouldNotifyBrowser(event({ type: "run.started" }), context())).toBe(false);
     expect(shouldNotifyBrowser(event({ type: "run.failed" }), context())).toBe(true);
@@ -93,7 +93,7 @@ describe("browser notifications", () => {
     );
   });
 
-  it("puts the bot message in the native notification", () => {
+  it("puts the agent message in the native notification", () => {
     expect(browserNotificationMessage(event(), "Chief")).toEqual({
       title: "Chief",
       body: "The pool is balanced.",
@@ -167,7 +167,7 @@ describe("browser notifications", () => {
 });
 
 it("uses a readable fallback for opaque notification names", () => {
-  expect(browserNotificationMessage(event(), "__TestTok1__").title).toBe("Bot");
+  expect(browserNotificationMessage(event(), "__TestTok1__").title).toBe("Agent");
 });
 
 describe("browser notifications prompt", () => {

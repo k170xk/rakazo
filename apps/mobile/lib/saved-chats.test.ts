@@ -134,7 +134,7 @@ const navigation = {
     bots: [
       {
         ...bot,
-        instructions: "Private bot instructions",
+        instructions: "Private agent instructions",
         teamChatRules: "Private rules",
         threadStatus: "running",
       },
@@ -178,8 +178,8 @@ it("round trips only what the inbox shows", () => {
   expect(readSavedInbox(scope)?.groups).toEqual([group]);
   const [contents] = [...state.files.values()];
   expect(contents).not.toContain("Private");
-  writeSavedThread(scope, "bot:bot-a", thread(SAVED_CHAT_MESSAGES + 1));
-  const saved = readSavedThread(scope, "bot:bot-a")!;
+  writeSavedThread(scope, "agent:bot-a", thread(SAVED_CHAT_MESSAGES + 1));
+  const saved = readSavedThread(scope, "agent:bot-a")!;
   expect(saved.messages).toHaveLength(SAVED_CHAT_MESSAGES);
   expect(saved.run).toBeNull();
   expect(saved).not.toHaveProperty("cursor");
@@ -212,8 +212,8 @@ it("omits hidden credential settings and protected answers from saved secret req
     },
     { kind: "ask", text: "Question", answer: "Visible answer", status: "answered" },
   ];
-  writeSavedThread(scope, "bot:bot-a", snapshot);
-  const saved = readSavedThread(scope, "bot:bot-a")!;
+  writeSavedThread(scope, "agent:bot-a", snapshot);
+  const saved = readSavedThread(scope, "agent:bot-a")!;
   expect(saved.messages[0]!.blocks).toEqual([
     {
       kind: "ask",
@@ -236,36 +236,36 @@ it("deletes the old cache format, including other scopes, before restoring saved
   state.verified = verified;
   expect(await loadSavedInbox()).toBeNull();
   expect(state.files.size).toBe(0);
-  writeSavedThread(scope, "bot:bot-a", thread(1));
+  writeSavedThread(scope, "agent:bot-a", thread(1));
   expect([...state.files.keys()][0]).toContain("saved-chats-v2");
 });
 
 it("never reads what an earlier session of the same account left behind", async () => {
   // A wipe failed; signing in again rotates the namespace, so the old files are unreachable.
   state.verified = verified;
-  writeSavedThread((await savedChatsScope())!, "bot:bot-a", thread(2));
+  writeSavedThread((await savedChatsScope())!, "agent:bot-a", thread(2));
   writeSavedInbox((await savedChatsScope())!, navigation, me);
   state.namespace = "ns-2";
-  expect(readSavedThread((await savedChatsScope())!, "bot:bot-a")).toBeNull();
+  expect(readSavedThread((await savedChatsScope())!, "agent:bot-a")).toBeNull();
   expect(await loadSavedInbox()).toBeNull();
 });
 
 it("rejects oversized files on both write and read", () => {
   const huge = thread(1);
   huge.messages[0]!.blocks = [{ kind: "text", text: "x".repeat(SAVED_CHAT_MAX_BYTES) }];
-  writeSavedThread(scope, "bot:bot-a", huge);
+  writeSavedThread(scope, "agent:bot-a", huge);
   expect(state.files.size).toBe(0);
-  writeSavedThread(scope, "bot:bot-a", thread(1));
+  writeSavedThread(scope, "agent:bot-a", thread(1));
   const path = [...state.files.keys()][0]!;
   state.files.set(path, "x".repeat(SAVED_CHAT_MAX_BYTES + 1));
-  expect(readSavedThread(scope, "bot:bot-a")).toBeNull();
+  expect(readSavedThread(scope, "agent:bot-a")).toBeNull();
 });
 
 it("caps total bytes across Spaces before admitting another transcript", () => {
   for (let index = 0; index < 40; index++) {
     const snapshot = thread(1, `bot-${index}`);
     snapshot.messages[0]!.blocks = [{ kind: "text", text: "x".repeat(700_000) }];
-    writeSavedThread({ ...scope, spaceId: `space-${index}` }, `bot:bot-${index}`, snapshot);
+    writeSavedThread({ ...scope, spaceId: `space-${index}` }, `agent:bot-${index}`, snapshot);
   }
   const bytes = [...state.files.values()].reduce(
     (sum, text) => sum + new TextEncoder().encode(text).length,
@@ -273,12 +273,12 @@ it("caps total bytes across Spaces before admitting another transcript", () => {
   );
   expect(bytes).toBeLessThanOrEqual(SAVED_CHATS_MAX_BYTES);
   expect(state.files.size).toBeLessThan(SAVED_CHATS);
-  expect(readSavedThread(scope, "bot:bot-0")).toBeNull();
+  expect(readSavedThread(scope, "agent:bot-0")).toBeNull();
 });
 
 it("clears everything", () => {
   writeSavedInbox(scope, navigation, me);
-  writeSavedThread(scope, "bot:bot-a", thread(1));
+  writeSavedThread(scope, "agent:bot-a", thread(1));
   clearSavedChats();
   expect(state.files.size).toBe(0);
   expect(readSavedInbox(scope)).toBeNull();
@@ -289,7 +289,7 @@ it("guards legacy names restored while offline", () => {
   legacy.current.bots[0]!.name = "__TestTok1__";
   legacy.current.groups[0]!.name = "c123456789012345678901234";
   writeSavedInbox(scope, legacy, me);
-  expect(readSavedInbox(scope)?.bots[0]?.name).toBe("Bot");
+  expect(readSavedInbox(scope)?.bots[0]?.name).toBe("Agent");
   expect(readSavedInbox(scope)?.groups[0]?.name).toBe("Group");
 });
 
@@ -305,8 +305,8 @@ it("uses translated labels for legacy offline message metadata", () => {
         text: "Keep __TestTok1__ literal",
       },
     ];
-    writeSavedThread(scope, "bot:bot-a", snapshot);
-    expect(readSavedThread(scope, "bot:bot-a")?.messages[0]?.blocks[0]).toMatchObject({
+    writeSavedThread(scope, "agent:bot-a", snapshot);
+    expect(readSavedThread(scope, "agent:bot-a")?.messages[0]?.blocks[0]).toMatchObject({
       fromBotName: "Бот",
       text: "Keep __TestTok1__ literal",
     });
@@ -346,7 +346,7 @@ it("stores source names and relocalizes inbox and thread fallbacks after an offl
       identityLabels(),
     ) as MobileSnapshot;
     // Live updates spread the snapshot and message metadata before the next cache save.
-    writeSavedThread(scope, "bot:bot-a", {
+    writeSavedThread(scope, "agent:bot-a", {
       ...shown,
       messages: shown.messages.map((message) => ({
         ...message,
@@ -357,7 +357,7 @@ it("stores source names and relocalizes inbox and thread fallbacks after an offl
     expect([...state.files.values()].join("\n")).not.toContain("Группа");
     resetI18nForTests("de");
     expect(readSavedInbox(scope)?.groups[0]?.name).toBe("Gruppe");
-    expect(readSavedThread(scope, "bot:bot-a")?.groupName).toBe("Gruppe");
+    expect(readSavedThread(scope, "agent:bot-a")?.groupName).toBe("Gruppe");
     // A genuine name equal to a translated noun stays literal.
     legacy.current.groups[0]!.name = "Группа";
     writeSavedInbox(scope, legacy, me);

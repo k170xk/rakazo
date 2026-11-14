@@ -77,7 +77,7 @@ describe("page tools hide the run's secrets, also where a snapshot quotes them",
   });
 });
 
-describe("page tools save a page's file downloads in the calling bot's own folder", () => {
+describe("page tools save a page's file downloads in the calling agent's own folder", () => {
   // A saved name never has a backslash: the helper turns one into an underscore.
   const nameSecret = 'zq"xv-mk';
 
@@ -485,7 +485,7 @@ describe("browser_act fill_code", () => {
     return { ctx, rows, fill };
   }
 
-  it("types the code once, never shows it to the bot, and has none left to type again", async () => {
+  it("types the code once, never shows it to the agent, and has none left to type again", async () => {
     const { ctx, rows, fill } = await runWithCode();
     const first = await fill();
     expect(first).toContain('"ok":true');

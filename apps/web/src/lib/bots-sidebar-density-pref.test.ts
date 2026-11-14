@@ -19,7 +19,7 @@ afterEach(() => {
   vi.resetModules();
 });
 
-describe("bot sidebar density preference", () => {
+describe("agent sidebar density preference", () => {
   it("defaults to Comfortable and accepts only Compact as the compact value", () => {
     expect(BOTS_SIDEBAR_DENSITY_STORAGE_KEY).toBe("rakazo.botsSidebarDensity");
     expect(normalizeBotsSidebarDensity(null)).toBe("comfortable");

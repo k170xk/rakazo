@@ -95,21 +95,21 @@ describe("toolRequiresApproval", () => {
     }
   });
 
-  it("always asks before bot management writes that cost money or rewrite a bot", () => {
+  it("always asks before agent management writes that cost money or rewrite an agent", () => {
     for (const name of ["set_child_instructions", "set_child_bot_model"]) {
       expect(toolRequiresApproval(name, false)).toBe(true);
       expect(toolRequiresExplicitApproval(name)).toBe(true);
     }
   });
 
-  it("treats grouping and scheduling other bots as ordinary approvals that Never ask skips", () => {
+  it("treats grouping and scheduling other agents as ordinary approvals that Never ask skips", () => {
     for (const name of ["create_group", "update_group", "create_child_routine"]) {
       expect(toolRequiresApproval(name, false)).toBe(true);
       expect(toolRequiresExplicitApproval(name)).toBe(false);
     }
   });
 
-  it("never asks before reading the bots it manages or organizing the sidebar", () => {
+  it("never asks before reading the agents it manages or organizing the sidebar", () => {
     for (const name of ["list_fleet", "organize_bot", "update_bot"]) {
       expect(toolRequiresApproval(name, false)).toBe(false);
       expect(toolRequiresExplicitApproval(name)).toBe(false);
@@ -1058,7 +1058,7 @@ describe("toolResultTaintsRun", () => {
     }
   });
 
-  it("does not taint on the bot's own writes and saved state", () => {
+  it("does not taint on the agent's own writes and saved state", () => {
     for (const tool of ["ask_user", "remember", "recall_memory", "skill_read", "write_file"]) {
       expect(toolResultTaintsRun(tool)).toBe(false);
     }

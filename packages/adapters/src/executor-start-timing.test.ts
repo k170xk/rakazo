@@ -114,7 +114,7 @@ describe("execution start timing", () => {
     },
   );
 
-  it("waits without a retry timer while another run of the bot holds the computer", async () => {
+  it("waits without a retry timer while another run of the agent holds the computer", async () => {
     leases.acquire.mockRejectedValue(new ComputerBusyError());
     const { prisma, enqueue, start } = fixture({ heldBy: "lease-of-run-0" });
     await start();

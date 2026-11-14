@@ -23,7 +23,7 @@ const bots = [
   { id: "b_2", name: "Analyst" },
 ];
 
-describe("bot message text", () => {
+describe("agent message text", () => {
   it("trims and keeps a short message intact", () => {
     expect(clampBotMessage("  chart the q3 numbers  ")).toBe("chart the q3 numbers");
   });
@@ -36,7 +36,7 @@ describe("bot message text", () => {
 });
 
 describe("Unicode boundaries", () => {
-  it("keeps surrogate pairs intact within the bot message limit", () => {
+  it("keeps surrogate pairs intact within the agent message limit", () => {
     const emoji = "\u{1f600}";
     expect(clampBotMessage("a".repeat(7998) + emoji)).toBe("a".repeat(7998) + emoji);
     expect(clampBotMessage("a".repeat(7998) + emoji + "x")).toBe("a".repeat(7998) + "\u2026");
@@ -62,7 +62,7 @@ describe("Unicode boundaries", () => {
   });
 });
 
-describe("bot message silence", () => {
+describe("agent message silence", () => {
   it("surfaces an FYI when it replies to a delegated request", () => {
     expect(botMessageAllowsSilence("fyi", true)).toBe(false);
     expect(botMessageAllowsSilence("fyi")).toBe(true);
@@ -204,7 +204,7 @@ describe("directory", () => {
     const oversized = "D".repeat(BOT_DESCRIPTION_MAX_LENGTH + 200);
     const many = Array.from({ length: 40 }, (_, index) => ({
       id: `b_${index}`,
-      name: `Bot${index}`,
+      name: `Agent${index}`,
       description: "x".repeat(BOT_DESCRIPTION_MAX_LENGTH),
     }));
     const single = renderBotDirectory([{ id: "b_1", name: "Solo", description: oversized }]) ?? "";
@@ -237,7 +237,7 @@ describe("directory", () => {
     expect(escapedChars).toBeLessThan(expanding.length * 5 * 2);
   });
 
-  it("says nothing when a bot has no teammates", () => {
+  it("says nothing when an agent has no teammates", () => {
     expect(renderBotDirectory([])).toBeUndefined();
   });
 });
@@ -254,7 +254,7 @@ describe("group members roster", () => {
     ]);
   });
 
-  it("lists descriptions so group bots can pick a specialist", () => {
+  it("lists descriptions so group agents can pick a specialist", () => {
     const context = renderGroupMembersContext(
       "Launch desk",
       [
@@ -274,7 +274,7 @@ describe("group members roster", () => {
     expect(context).toContain("Investigates source-backed questions");
     expect(context).toContain("Analyst (id: b_2)");
     expect(context).toContain("handoff_to_bot");
-    expect(context).toContain("One bot owns each stage.");
+    expect(context).toContain("One agent owns each stage.");
     expect(context).toContain("You are Researcher (id: b_1)");
     expect(context).toContain("Do not hand it back merely to report");
     expect(context).toContain("pick the right specialist");
@@ -349,7 +349,7 @@ describe("group members roster", () => {
     const oversized = "D".repeat(BOT_DESCRIPTION_MAX_LENGTH + 200);
     const many = Array.from({ length: 40 }, (_, index) => ({
       id: `b_${index}`,
-      name: `Bot${index}`,
+      name: `Agent${index}`,
       description: "x".repeat(BOT_DESCRIPTION_MAX_LENGTH),
     }));
     const single = renderGroupMembersContext(

@@ -30,7 +30,7 @@ describe("hasMentionToken", () => {
 });
 
 describe("resolveGroupTargetBotIds", () => {
-  it("returns mentioned bots from text", () => {
+  it("returns mentioned agents from text", () => {
     expect(
       resolveGroupTargetBotIds({
         text: "@BotA gather sources. @BotB summarize.",
@@ -102,7 +102,7 @@ describe("resolveGroupTargetBotIds", () => {
     },
   );
 
-  it("keeps an explicit prefix bot alongside a longer text mention", () => {
+  it("keeps an explicit prefix agent alongside a longer text mention", () => {
     expect(
       resolveGroupTargetBotIds({
         text: "@Design Review please review",
@@ -208,7 +208,7 @@ describe("resolveGroupTargetBotIds", () => {
     ).toEqual(["research", "edit", "anna"]);
   });
 
-  it("ignores explicit mentions for bots that are not group members", () => {
+  it("ignores explicit mentions for agents that are not group members", () => {
     expect(
       resolveGroupTargetBotIds({
         text: "hello",
@@ -290,7 +290,7 @@ describe("inferHandoffTargetBotId", () => {
 });
 
 describe("memberName", () => {
-  it("finds a member's roster name by bot id", () => {
+  it("finds a member's roster name by agent id", () => {
     const members = [{ botId: "b1", name: "Chief" }];
     expect(memberName(members, "b1")).toBe("Chief");
     expect(memberName(members, "b2")).toBeUndefined();

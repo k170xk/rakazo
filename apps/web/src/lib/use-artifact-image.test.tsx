@@ -70,7 +70,7 @@ it("shares pending and completed downloads until the last consumer leaves", asyn
   expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith("blob:photo");
 });
 
-it("separates bot and group scopes and skips disabled consumers", async () => {
+it("separates agent and group scopes and skips disabled consumers", async () => {
   await act(async () =>
     root.render(
       <>

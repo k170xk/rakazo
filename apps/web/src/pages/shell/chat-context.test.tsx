@@ -136,7 +136,7 @@ it("keeps internal peer receipt replies out of the transcript", () => {
           ],
           replyPreview: { role: "bot", botId: "bot", text: "peer-exchange-alpha" },
         }}
-        author="Bot"
+        author="Agent"
       />,
     ),
   );
@@ -290,14 +290,14 @@ it("defers transcript thumbnails until near the viewport while the composer load
 });
 it("shows no quote on a message sent from an open page, even with its card not loaded", () => {
   const card = { role: "bot" as const, botId: "bot", text: "Q3 plan", page: true as const };
-  act(() => root.render(<ReplyLine message={{ ...message, replyPreview: card }} author="Bot" />));
+  act(() => root.render(<ReplyLine message={{ ...message, replyPreview: card }} author="Agent" />));
   expect(container.textContent).toBe("");
   // A reply picked on the card in the chat keeps its quote.
   act(() =>
     root.render(
       <ReplyLine
         message={{ ...message, replyPreview: card, replyQuote: "Q3 plan" }}
-        author="Bot"
+        author="Agent"
       />,
     ),
   );

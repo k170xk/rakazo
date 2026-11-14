@@ -173,7 +173,7 @@ export function SpaceMemorySection() {
       const created = await rpc.memory.create({ name: draft.name, content: draft.content });
       await writeSaved(queryClient, listKey, (current) => [created, ...(current ?? [])]);
       setDraft(null);
-      toast.success(t`Your bots will use this note from their next reply`);
+      toast.success(t`Your agents will use this note from their next reply`);
     } catch (err) {
       setError(errorText(err, t`Could not save the note`));
     } finally {
@@ -197,7 +197,7 @@ export function SpaceMemorySection() {
         </SettingsSectionHeading>
         <p className="mt-1 text-[13px] text-muted-foreground">
           <Trans>
-            Teach your bots about you. Every bot you talk to in this space reads these notes before
+            Teach your agents about you. Every agent you talk to in this space reads these notes before
             it replies. Only you see them; each colleague has their own.
           </Trans>
         </p>
@@ -224,7 +224,7 @@ export function SpaceMemorySection() {
             />
             <p className={`text-[12px] ${tooLong ? "text-destructive" : "text-muted-foreground"}`}>
               {tooLong
-                ? t`This note is too long for your bots to read in full. Keep the parts that matter most, or split it into several notes.`
+                ? t`This note is too long for your agents to read in full. Keep the parts that matter most, or split it into several notes.`
                 : t`${Math.ceil(noteBytes(draft.content) / 1024)} KB of ${MEMORY_NOTE_MAX_BYTES / 1024} KB. Short, specific notes work best.`}
             </p>
             <div className="flex gap-2">
@@ -321,7 +321,7 @@ function memoryLabel(path: string): string {
   return path.startsWith(prefix) ? path.slice(prefix.length).replace(/\.md$/, "") : path;
 }
 
-const ARCHIVED_PREFIX = "Archived bots/";
+const ARCHIVED_PREFIX = "Archived agents/";
 
 function MemoryDocumentList({
   input,
@@ -548,7 +548,7 @@ function MemoryDocumentList({
         {error ? <div className="pb-2 text-[13px] text-destructive">{error}</div> : null}
         {kb > 0 ? (
           <p className="pb-2 text-[13px] text-muted-foreground" data-testid="memory-budget-note">
-            {t`About ${kb} KB of memory no longer reaches the bot.`}
+            {t`About ${kb} KB of memory no longer reaches the agent.`}
           </p>
         ) : null}
         {conflicted ? (
@@ -576,7 +576,7 @@ function MemoryDocumentList({
               <ChevronRight
                 className={`size-4 transition-transform ${archivedOpen ? "rotate-90" : ""}`}
               />
-              {t`From archived bots (${archived.length})`}
+              {t`From archived agents (${archived.length})`}
             </Button>
             {archivedOpen ? <div className="ps-4">{archived.map(renderDoc)}</div> : null}
           </div>

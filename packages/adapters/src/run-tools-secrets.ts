@@ -388,7 +388,7 @@ export const secretTools: ToolHandlers = {
     }
     await notifyRun(deps, run, {
       kind: "help",
-      ...secretAskNotification(displayName(bot.name, "Bot"), askText, ctx.secrets),
+      ...secretAskNotification(displayName(bot.name, "Agent"), askText, ctx.secrets),
       botId: bot.id,
       threadId: thread.id,
     });

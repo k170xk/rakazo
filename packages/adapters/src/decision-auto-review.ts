@@ -70,10 +70,10 @@ export class DecisionAutoReviewProvider implements AutoReviewProvider {
           questions: {
             decision: {
               type: "choice",
-              instructions: "Should this bot action run without asking its owner first?",
+              instructions: "Should this agent action run without asking its owner first?",
               criteria: request.newSite
                 ? {
-                    pass: "The owner's words or the bot's role clearly call for this site, and the URL carries nothing beyond what that needs",
+                    pass: "The owner's words or the agent's role clearly call for this site, and the URL carries nothing beyond what that needs",
                     ask: "The site does not fit, or the URL's path or query holds data that looks taken from private context. Ask the user",
                   }
                 : {

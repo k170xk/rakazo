@@ -30,7 +30,7 @@ export class MessagingInstallations implements MessagingInstallationStore {
           select: { id: true, spaceId: true },
         })
       : await this.defaultBot(actor);
-    if (!bot) throw new IsolationError("Bot not found");
+    if (!bot) throw new IsolationError("Agent not found");
     const state = randomBytes(32).toString("base64url");
     await runAsSystem("start messaging workspace installation", async () => {
       await this.prisma.messagingInstallSession.deleteMany({
@@ -51,7 +51,7 @@ export class MessagingInstallations implements MessagingInstallationStore {
   }
 
   private defaultBot(actor: Actor) {
-    return runAsSystem("resolve default messaging bot", () =>
+    return runAsSystem("resolve default messaging agent", () =>
       this.prisma.bot.findFirst({
         where: { spaceId: actor.spaceId, userId: actor.userId, archivedAt: null },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
@@ -225,7 +225,7 @@ export class MessagingInstallations implements MessagingInstallationStore {
   }
 
   async removeForBot(bot: { id: string; spaceId: string; userId: string }): Promise<void> {
-    await runAsSystem("disconnect deleted bot messaging installations", async () => {
+    await runAsSystem("disconnect deleted agent messaging installations", async () => {
       const installations = await this.prisma.messagingInstallation.findMany({
         where: { botId: bot.id, spaceId: bot.spaceId, userId: bot.userId },
       });

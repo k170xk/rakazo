@@ -104,7 +104,7 @@ describe("desktop command execution", () => {
   it("only hosts commands in the desktop app or a local development process", () => {
     const node = { ...process.versions, electron: undefined };
     const electron = { ...process.versions, electron: "38.0.0" };
-    const refused = "SANDBOX_PROVIDER=desktop runs bot commands directly on this host";
+    const refused = "SANDBOX_PROVIDER=desktop runs agent commands directly on this host";
     expect(() => assertHostCommandsAllowed({ NODE_ENV: "production" }, node)).toThrow(refused);
     expect(() => assertHostCommandsAllowed({}, node)).toThrow(refused);
     expect(() => assertHostCommandsAllowed({ NODE_ENV: "production" }, electron)).not.toThrow();

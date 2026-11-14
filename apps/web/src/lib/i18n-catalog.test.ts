@@ -71,7 +71,7 @@ describe("lingui catalogs", () => {
       "Your Anthropic",
       "Your model provider",
       "The model provider returned an error.",
-      "Connect a model in Settings before running bots.",
+      "Connect a model in Settings before running agents.",
       "Connect your own API key in Models or choose OCSC Intelligence credits in Billing.",
       "{provider} is rate limiting requests. Try again shortly.",
       "{summary} Resets {date}.",
@@ -120,7 +120,7 @@ describe("lingui catalogs", () => {
     }
   });
 
-  it("translates bot settings labels and retains placeholders in every locale", () => {
+  it("translates agent settings labels and retains placeholders in every locale", () => {
     for (const locale of UI_LOCALES) {
       const catalog = readFileSync(
         fileURLToPath(new URL(`../locales/${locale}/messages.po`, import.meta.url)),

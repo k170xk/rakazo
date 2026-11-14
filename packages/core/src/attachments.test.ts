@@ -250,7 +250,7 @@ describe("attachment helpers", () => {
     );
   });
 
-  it("selects pending attachments only for their originating bot", () => {
+  it("selects pending attachments only for their originating agent", () => {
     const attachments = [
       { id: "one", botId: "bot-one" },
       { id: "two", botId: "bot-two" },
@@ -261,7 +261,7 @@ describe("attachment helpers", () => {
 });
 
 describe("peer message history", () => {
-  it("keeps attribution so a later turn knows a bot spoke, not the user", () => {
+  it("keeps attribution so a later turn knows an agent spoke, not the user", () => {
     expect(
       blocksToAgentHistoryText([
         { kind: "bot_message_received", fromBotId: "b_1", fromBotName: "Researcher", text: "hi" },

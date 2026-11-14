@@ -74,12 +74,12 @@ export const SELF_HOST_FAQS: readonly FaqItem[] = [
   {
     question: "Where does my data live?",
     answer:
-      "Postgres, bot files, browser profiles, and the audit log stay on the deployment you run. Content you send to a model provider is processed by that provider under its terms. You choose the provider and the keys.",
+      "Postgres, agent files, browser profiles, and the audit log stay on the deployment you run. Content you send to a model provider is processed by that provider under its terms. You choose the provider and the keys.",
   },
   {
     question: "How do model choice and cost work?",
     answer:
-      "You connect your own model keys, or a local or OpenAI-compatible model server, and you can pick a different model per bot. The open source software has no seat fee. You pay the model and computer providers you use. Local Docker computers are the default and do not need a hosted sandbox account.",
+      "You connect your own model keys, or a local or OpenAI-compatible model server, and you can pick a different model per agent. The open source software has no seat fee. You pay the model and computer providers you use. Local Docker computers are the default and do not need a hosted sandbox account.",
   },
   {
     question: "Is hosted Rakazo available?",
@@ -94,12 +94,12 @@ export const SELF_HOST_FAQS: readonly FaqItem[] = [
 ];
 
 export const OPENCLAW_SETUP_PARAGRAPHS = [
-  "Rakazo's self-host path is the published Docker installer, or the desktop app starting that stack on this computer. You create an account and connect a model. From there it is just chat, on the web, desktop, and mobile apps. A new bot interviews you about the work, and you manage the bot from that chat. Routines are readable Markdown.",
+  "Rakazo's self-host path is the published Docker installer, or the desktop app starting that stack on this computer. You create an account and connect a model. From there it is just chat, on the web, desktop, and mobile apps. A new agent interviews you about the work, and you manage the agent from that chat. Routines are readable Markdown.",
   "OpenClaw's getting-started guide installs the CLI, then runs a wizard. Quick start is the short path when a Claude Code or Codex login, or an API key, is already on the machine. Custom setup walks through the full flow, and `openclaw onboard --classic` is the step-by-step wizard. Quick start leaves the Gateway in that terminal until you stop it, so you can chat before installing a service. `openclaw gateway install` is the later step that keeps it in the background: a LaunchAgent on macOS, a systemd user unit on Linux, or a Scheduled Task on Windows. You check `openclaw gateway status` (the guide says port 18789) and open `openclaw dashboard`. Messaging from a phone, such as Telegram, is a separate Channels step.",
 ] as const;
 
 export const OPENCLAW_DAY_TO_DAY_PARAGRAPHS = [
-  "Day to day, you manage Rakazo from the same chat. Schedules, memory, and approval boundaries stay with that bot, on the web, desktop, and mobile apps. Optional connectors can attach Slack, WhatsApp, Telegram, iMessage via Sendblue, and Feishu/Lark. They are not required to use the product.",
+  "Day to day, you manage Rakazo from the same chat. Schedules, memory, and approval boundaries stay with that agent, on the web, desktop, and mobile apps. Optional connectors can attach Slack, WhatsApp, Telegram, iMessage via Sendblue, and Feishu/Lark. They are not required to use the product.",
   "OpenClaw's docs send later changes through `openclaw configure` and a JSON config file, `~/.openclaw/openclaw.json` unless you override the path. `openclaw doctor` and `openclaw triage` diagnose the install. The Gateway is the process you keep running, in a terminal or as the installed background service, and chat apps are the main way you message the assistant, alongside the Control UI.",
 ] as const;
 
@@ -107,7 +107,7 @@ export const OPENCLAW_FAQS: readonly FaqItem[] = [
   {
     question: "Is Rakazo simpler to set up than OpenClaw?",
     answer:
-      "The documented paths are different. Rakazo's self-host guide is a Docker installer, or the desktop app starting that stack, then an account and a model. After that Rakazo is just chat, and you manage the bot from that chat. OpenClaw's getting-started guide is an installer and a wizard (Quick start or Custom setup). You can chat while the Gateway runs in that terminal. `openclaw gateway install` keeps it running in the background, then `openclaw gateway status` and `openclaw dashboard`. Connecting a chat app is another step. OpenClaw can be short when a model login is already detected. The ongoing surface is still the Gateway and the config file.",
+      "The documented paths are different. Rakazo's self-host guide is a Docker installer, or the desktop app starting that stack, then an account and a model. After that Rakazo is just chat, and you manage the agent from that chat. OpenClaw's getting-started guide is an installer and a wizard (Quick start or Custom setup). You can chat while the Gateway runs in that terminal. `openclaw gateway install` keeps it running in the background, then `openclaw gateway status` and `openclaw dashboard`. Connecting a chat app is another step. OpenClaw can be short when a model login is already detected. The ongoing surface is still the Gateway and the config file.",
   },
   {
     question: "Can I chat with OpenClaw before installing a background service?",
@@ -122,7 +122,7 @@ export const OPENCLAW_FAQS: readonly FaqItem[] = [
   {
     question: "Is Rakazo just chat, like Grok Bot?",
     answer:
-      "After the install, yes. You set up the bot and manage it from that chat on the web, desktop, and mobile apps. OpenClaw is also a conversation, and its docs add a Gateway you keep running and a config file for later changes. The two are not interchangeable. Rakazo does not import an OpenClaw setup.",
+      "After the install, yes. You set up the agent and manage it from that chat on the web, desktop, and mobile apps. OpenClaw is also a conversation, and its docs add a Gateway you keep running and a config file for later changes. The two are not interchangeable. Rakazo does not import an OpenClaw setup.",
   },
   {
     question: "Is Rakazo a drop-in replacement for OpenClaw?",
@@ -137,12 +137,12 @@ export const OPENCLAW_FAQS: readonly FaqItem[] = [
   {
     question: "Do both keep data on my machine?",
     answer:
-      "Yes for the software you run. OpenClaw's documentation says state, memory, and credentials live on your hardware, and that there is no hosted service in the middle. A Rakazo deployment stores its database and bot data on your host. In both cases, prompts go to the model provider you configure, and to any chat service you connect.",
+      "Yes for the software you run. OpenClaw's documentation says state, memory, and credentials live on your hardware, and that there is no hosted service in the middle. A Rakazo deployment stores its database and agent data on your host. In both cases, prompts go to the model provider you configure, and to any chat service you connect.",
   },
   {
     question: "Can I choose my own model with either one?",
     answer:
-      "Yes. Rakazo supports OpenAI, Anthropic, Google, OpenRouter, Vercel AI Gateway, an OpenAI-compatible endpoint, and a local model server, with a choice per bot. OpenClaw documents Anthropic, OpenAI, Google, and other providers, including self-hosted OpenAI-compatible and Anthropic-compatible endpoints, plus failover.",
+      "Yes. Rakazo supports OpenAI, Anthropic, Google, OpenRouter, Vercel AI Gateway, an OpenAI-compatible endpoint, and a local model server, with a choice per agent. OpenClaw documents Anthropic, OpenAI, Google, and other providers, including self-hosted OpenAI-compatible and Anthropic-compatible endpoints, plus failover.",
   },
   {
     question: "Does either project charge for the software?",
@@ -155,21 +155,21 @@ export const COMPARISON_ROWS: readonly ComparisonRow[] = [
   {
     aspect: "Setup",
     rakazo:
-      "Docker installer or the desktop app's local stack, then an account and a model. After that Rakazo is just chat: a new bot interviews you, and you manage it from the chat.",
+      "Docker installer or the desktop app's local stack, then an account and a model. After that Rakazo is just chat: a new agent interviews you, and you manage it from the chat.",
     openclaw:
       "CLI install, then Quick start or Custom setup. The Gateway can stay in that terminal for a first chat. `openclaw gateway install` is the background service (LaunchAgent, systemd user unit, or Windows Scheduled Task). Then `openclaw gateway status` and `openclaw dashboard`. A phone channel is a separate step.",
   },
   {
     aspect: "Day-to-day management",
     rakazo:
-      "You manage the bot from the same chat on the web, desktop, and mobile apps. Routines are readable Markdown and can run on a schedule. A bot can pause for approval at a boundary you set.",
+      "You manage the agent from the same chat on the web, desktop, and mobile apps. Routines are readable Markdown and can run on a schedule. An agent can pause for approval at a boundary you set.",
     openclaw:
       "Later changes go through `openclaw configure` and `~/.openclaw/openclaw.json`. `openclaw doctor` and `openclaw triage` diagnose the install. The Gateway stays running in a terminal or as the installed background service.",
   },
   {
     aspect: "What it is",
     rakazo:
-      "An open source platform for persistent AI teammates. Bots keep conversations, memory, routines, and history, and can use a browser, shell, and desktop.",
+      "An open source platform for persistent AI teammates. Agents keep conversations, memory, routines, and history, and can use a browser, shell, and desktop.",
     openclaw:
       "A self-hosted gateway that connects chat apps to an AI assistant on your machine. The project describes one Gateway for the channels you already use.",
   },
@@ -195,7 +195,7 @@ export const COMPARISON_ROWS: readonly ComparisonRow[] = [
   {
     aspect: "Models",
     rakazo:
-      "Bring your own keys for OpenAI, Anthropic, Google, OpenRouter, or Vercel AI Gateway. OpenAI-compatible endpoints and a local model server (Ollama, LM Studio, llama.cpp, or MLX) are supported. Each bot can use a different model.",
+      "Bring your own keys for OpenAI, Anthropic, Google, OpenRouter, or Vercel AI Gateway. OpenAI-compatible endpoints and a local model server (Ollama, LM Studio, llama.cpp, or MLX) are supported. Each agent can use a different model.",
     openclaw:
       "Many providers, including Anthropic, OpenAI, and Google, plus OAuth for some subscriptions such as OpenAI Codex. Self-hosted endpoints include vLLM, SGLang, Ollama, llama.cpp, LM Studio, and other OpenAI-compatible or Anthropic-compatible servers, with failover.",
   },
@@ -221,7 +221,7 @@ export const COMPARISON_ROWS: readonly ComparisonRow[] = [
   },
   {
     aspect: "More than one agent",
-    rakazo: "Bots can delegate to peer bots or short-lived subagents.",
+    rakazo: "Agents can delegate to peer agents or short-lived subagents.",
     openclaw: "Multi-agent routing with isolated sessions per agent, workspace, or sender.",
   },
   {
@@ -262,7 +262,7 @@ export const SELF_HOST_MARKDOWN = `# Self-hosted AI agent
 
 > Open source AI agent you run on a machine you control. Your keys, your model, your data.
 
-Rakazo is an open source AI agent for persistent teammates. Each bot can use a browser and a shell, keep routines as Markdown, and pause for approval when work crosses a boundary you set. Self-hosting means that stack runs on infrastructure you operate.
+Rakazo is an open source AI agent for persistent teammates. Each agent can use a browser and a shell, keep routines as Markdown, and pause for approval when work crosses a boundary you set. Self-hosting means that stack runs on infrastructure you operate.
 
 The software is [Apache-2.0](${GITHUB_URL}/blob/main/LICENSE). Hosted Rakazo Cloud is in beta. This page is the essential setup. The [full self-hosting guide](${DOCS_URL}) on GitHub covers backups, upgrades, secrets, restricted networks, and production Compose.
 
@@ -270,11 +270,11 @@ The software is [Apache-2.0](${GITHUB_URL}/blob/main/LICENSE). Hosted Rakazo Clo
 
 ### Data ownership
 
-Postgres, bot files, browser profiles, and the audit log stay on the deployment you run. Content you send to a model provider is processed by that provider under its terms. You choose the provider and the keys.
+Postgres, agent files, browser profiles, and the audit log stay on the deployment you run. Content you send to a model provider is processed by that provider under its terms. You choose the provider and the keys.
 
 ### Model choice
 
-Connect OpenAI, Anthropic, Google, OpenRouter, or Vercel AI Gateway. You can also use an OpenAI-compatible endpoint or a local model server such as Ollama, LM Studio, llama.cpp, or MLX. Each bot can use a different model.
+Connect OpenAI, Anthropic, Google, OpenRouter, or Vercel AI Gateway. You can also use an OpenAI-compatible endpoint or a local model server such as Ollama, LM Studio, llama.cpp, or MLX. Each agent can use a different model.
 
 ### Cost control
 
@@ -295,7 +295,7 @@ The [full guide](${DOCS_URL}) lists every setting for each one.
 
 ## Requirements
 
-Published images need Docker Engine 26 or newer (API 1.45 or newer, for bot home volume subpaths), the Compose plugin, curl, and OpenSSL. No Node.js install.
+Published images need Docker Engine 26 or newer (API 1.45 or newer, for agent home volume subpaths), the Compose plugin, curl, and OpenSSL. No Node.js install.
 
 A source checkout needs Node.js 22.22.2 or newer on the 22.x line, Node.js 24.x, or Node.js 26 or newer, plus pnpm 9 and Docker. Node.js 23.x and 25.x are not supported.
 
@@ -313,7 +313,7 @@ For an agent-assisted install, use the [setup prompt](${SETUP_PROMPT_URL}).
 
 ## Run it on a server
 
-Use the same installer on a VPS when bots should stay running. Images Compose binds the web app to loopback \`127.0.0.1:5173\`. Terminate TLS on the host and proxy there. Do not publish port 3100. The web server proxies \`/api\`.
+Use the same installer on a VPS when agents should stay running. Images Compose binds the web app to loopback \`127.0.0.1:5173\`. Terminate TLS on the host and proxy there. Do not publish port 3100. The web server proxies \`/api\`.
 
 \`\`\`bash
 ${PUBLISHED_IMAGES_SERVER}
@@ -388,7 +388,7 @@ Updated ${OPENCLAW_UPDATED}.
 
 > A fair comparison of Rakazo and OpenClaw, two open source ways to run an AI agent you control.
 
-The main difference is simplicity. Like Grok Bot, Rakazo is just chat: you set up the bot and manage it from that chat. OpenClaw is also open source and self-hosted. Its [getting-started guide](${OPENCLAW_GETTING_STARTED_URL}) is a longer path: a CLI installer, an onboarding wizard, a Gateway you run in the terminal or install as a background service, and a config file.
+The main difference is simplicity. Like Grok Bot, Rakazo is just chat: you set up the agent and manage it from that chat. OpenClaw is also open source and self-hosted. Its [getting-started guide](${OPENCLAW_GETTING_STARTED_URL}) is a longer path: a CLI installer, an onboarding wizard, a Gateway you run in the terminal or install as a background service, and a config file.
 
 They are not the same product, and Rakazo does not import an OpenClaw setup. This comparison follows [OpenClaw's documentation](${OPENCLAW_DOCS_URL}) and this repository. Details change. Those docs are the full source for OpenClaw.
 
@@ -406,9 +406,9 @@ ${comparisonMarkdown()}
 
 ## Key differences
 
-Rakazo is a web, desktop, and mobile app for persistent teammates: a bot has a job, a computer, and routines saved as Markdown. OpenClaw is a Gateway you message from chat apps, with a browser Control UI and mobile nodes.
+Rakazo is a web, desktop, and mobile app for persistent teammates: an agent has a job, a computer, and routines saved as Markdown. OpenClaw is a Gateway you message from chat apps, with a browser Control UI and mobile nodes.
 
-Rakazo runs bot work on a computer. Local Docker is the default. OpenClaw can sandbox tool execution, and its docs say sandboxing is off by default. The Gateway process stays on the host.
+Rakazo runs agent work on a computer. Local Docker is the default. OpenClaw can sandbox tool execution, and its docs say sandboxing is off by default. The Gateway process stays on the host.
 
 Both let you bring a model provider, including a server you run. Neither charges a seat fee for the software. OpenClaw's docs say it has no paid tier and no hosted service. Rakazo is free to self-host. Hosted Rakazo Cloud is in beta.
 

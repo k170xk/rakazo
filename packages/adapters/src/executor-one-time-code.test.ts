@@ -287,7 +287,7 @@ afterEach(() => {
 });
 
 describe("request_secret for a one-time code", () => {
-  it("tells the bot to ask for a code with a card, not to take over the screen", () => {
+  it("tells the agent to ask for a code with a card, not to take over the screen", () => {
     const tool = builtinAgentTools.find((entry) => entry.name === "request_secret")!;
     expect(tool.description).toContain("oneTimeCode");
     expect(tool.description).toContain("fill_code");
@@ -318,7 +318,7 @@ describe("request_secret for a one-time code", () => {
     ]);
   });
 
-  it("shows the code card whatever purpose the bot names", async () => {
+  it("shows the code card whatever purpose the agent names", async () => {
     const run = world();
     await run.attempt([requestCode({ purpose: "api_key" })]);
     expect(run.asked[0]!.blocks[0]).toMatchObject({ purpose: "otp" });
@@ -327,7 +327,7 @@ describe("request_secret for a one-time code", () => {
   it.each([
     ["an HTTP page", { origin: "http://login.example.test" }],
     ["a LAN address", { origin: "http://192.168.1.20" }],
-  ])("refuses %s, with no card, and tells the bot to explain why", async (_name, oneTimeCode) => {
+  ])("refuses %s, with no card, and tells the agent to explain why", async (_name, oneTimeCode) => {
     const run = world();
     const [result] = await run.attempt([requestCode({ oneTimeCode })]);
     expect(result).toMatchObject({
@@ -343,7 +343,7 @@ describe("request_secret for a one-time code", () => {
     expect(run.asked).toEqual([]);
   });
 
-  it("tells the bot to ask again when the answered code cannot be read, then shows a new card", async () => {
+  it("tells the agent to ask again when the answered code cannot be read, then shows a new card", async () => {
     const run = world();
     await run.attempt([requestCode()]);
     await run.userAnswers();
@@ -355,7 +355,7 @@ describe("request_secret for a one-time code", () => {
     expect(run.asked).toHaveLength(2);
   });
 
-  it("names the site in the push and keeps the bot's label out of it", async () => {
+  it("names the site in the push and keeps the agent's label out of it", async () => {
     notified.length = 0;
     const run = world();
     await run.attempt([requestCode({ label: "Your bank needs a code from evil.example" })]);
@@ -364,7 +364,7 @@ describe("request_secret for a one-time code", () => {
     expect(message?.body).not.toContain("evil.example");
   });
 
-  it("tells the bot the user entered the code, never the code, and leaves it for the page", async () => {
+  it("tells the agent the user entered the code, never the code, and leaves it for the page", async () => {
     const run = world();
     await run.attempt([requestCode()]);
     await run.userAnswers();

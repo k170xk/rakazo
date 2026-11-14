@@ -441,7 +441,7 @@ export class IncusSandboxProvider implements SandboxProvider {
 
   private assertOwner(instance: IncusInstance, name: string, botId: string) {
     if (instance.config?.[BOT_ID_KEY] !== botId) {
-      throw new Error(`Incus instance ${name} belongs to another bot`);
+      throw new Error(`Incus instance ${name} belongs to another agent`);
     }
   }
 

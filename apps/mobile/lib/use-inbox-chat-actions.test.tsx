@@ -114,7 +114,7 @@ async function handlers(
   };
 }
 
-it("reports a saved bot mute even when its inbox row has no thread id", async () => {
+it("reports a saved agent mute even when its inbox row has no thread id", async () => {
   const actions = await handlers(async () => undefined);
   await actions.updateChat("bot", { id: "b1", spaceId: "space-a" }, { notifyOnFinish: false });
   expect(afterChatNotifyChange).toHaveBeenCalledExactlyOnceWith("", null, "space-a", {
@@ -124,7 +124,7 @@ it("reports a saved bot mute even when its inbox row has no thread id", async ()
   });
 });
 
-it("does not report a bot mute when the server save fails", async () => {
+it("does not report an agent mute when the server save fails", async () => {
   const actions = await handlers(async () => {
     throw new Error("offline");
   });
@@ -143,12 +143,12 @@ it("sends overlapping read changes for one chat in order and keeps the newest on
   // The second change waits for the first instead of racing it.
   await vi.waitFor(() => expect(rpc).toHaveBeenCalledTimes(1));
   expect(sent(vi.mocked(rpc).mock.calls[0]!)).toEqual(["threads/markUnread", { botId: "b1" }]);
-  await vi.waitFor(() => expect(h.state.overrides.get("bot:b1")).toBe(false));
+  await vi.waitFor(() => expect(h.state.overrides.get("agent:b1")).toBe(false));
   pending.shift()!();
   await vi.waitFor(() => expect(rpc).toHaveBeenCalledTimes(2));
   expect(sent(vi.mocked(rpc).mock.calls[1]!)).toEqual(["threads/markRead", { botId: "b1" }]);
   // The first request finishing must not clear the newer choice.
-  expect(h.state.overrides.get("bot:b1")).toBe(false);
+  expect(h.state.overrides.get("agent:b1")).toBe(false);
   pending.shift()!();
   await first;
   expect(h.state.bots[0]!.unread).toBe(false);
@@ -224,7 +224,7 @@ it("marks unread optimistically, keeps it through the request, then refreshes", 
   const pending = h.runRowAction("bot", { id: "b1" }, "unread");
   await vi.waitFor(() => expect(rpc).toHaveBeenCalledTimes(1));
   expect(sent(vi.mocked(rpc).mock.calls[0]!)).toEqual(["threads/markUnread", { botId: "b1" }]);
-  await vi.waitFor(() => expect(h.state.overrides.get("bot:b1")).toBe(true));
+  await vi.waitFor(() => expect(h.state.overrides.get("agent:b1")).toBe(true));
   // A poll landing now still shows the stale server value underneath the override.
   expect(applyUnreadOverrides("bot", h.state.bots, h.state.overrides)[0]!.unread).toBe(true);
   finish();
@@ -291,7 +291,7 @@ it("hides an archived chat at the tap and keeps it hidden from a reload until it
   ] as MobileBot[];
   const polledBots = [...h.state.bots];
   const pending = h.runRowAction("bot", { id: "b1" }, "archive");
-  await vi.waitFor(() => expect(h.state.archiving).toEqual(new Set(["bot:b1"])));
+  await vi.waitFor(() => expect(h.state.archiving).toEqual(new Set(["agent:b1"])));
   // A poll that still lists the chat doesn't bring the row back while the archive runs.
   expect(withoutArchiving("bot", h.state.bots, h.state.archiving).map((bot) => bot.id)).toEqual([
     "b0",
@@ -303,7 +303,7 @@ it("hides an archived chat at the tap and keeps it hidden from a reload until it
   expect(h.state.bots.map((bot) => bot.id)).toEqual(["b0", "b2"]);
   // A poll replaces the stored list while the post-archive reload is still pending.
   h.state.bots = polledBots;
-  expect(h.state.archiving).toEqual(new Set(["bot:b1"]));
+  expect(h.state.archiving).toEqual(new Set(["agent:b1"]));
   expect(withoutArchiving("bot", h.state.bots, h.state.archiving).map((bot) => bot.id)).toEqual([
     "b0",
     "b2",
@@ -344,7 +344,7 @@ it("puts a chat back in its place when the archive fails", async () => {
     "b2",
   ]);
   expect(notifyArchivedChatsChanged).not.toHaveBeenCalled();
-  expect(session.alert).toHaveBeenCalledWith("Could not archive bot", "Try again.");
+  expect(session.alert).toHaveBeenCalledWith("Could not archive agent", "Try again.");
   expect(h.loadBots).toHaveBeenCalledTimes(1);
 });
 
@@ -384,14 +384,14 @@ it("updates a chat from another space in that space without switching", async ()
   expect(h.loadBots).toHaveBeenCalledTimes(1);
 });
 
-it("names the archive failure for bots", async () => {
+it("names the archive failure for agents", async () => {
   const h = await handlers(async () => {
     throw new Error("nope");
   });
   await h.runRowAction("bot", { id: "x" }, "archive");
   await h.runRowAction("group", { id: "x" }, "pin");
   expect(session.alert.mock.calls.map(([title]) => title)).toEqual([
-    "Could not archive bot",
+    "Could not archive agent",
     "Could not update chat",
   ]);
   expect(notifyArchivedChatsChanged).not.toHaveBeenCalled();

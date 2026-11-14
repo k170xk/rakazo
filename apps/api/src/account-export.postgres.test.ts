@@ -476,7 +476,7 @@ describePostgres("account export (PostgreSQL)", () => {
         return list.flatMap((record) => {
           switch (record.type) {
             case "bot":
-              return [`bot ${record.name} ${record.instructions}`];
+              return [`agent ${record.name} ${record.instructions}`];
             case "thread":
               // Every imported bot gets its thread; the fixture's bots were inserted without one.
               return record.historyCompactionSummary

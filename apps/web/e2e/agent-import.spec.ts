@@ -98,7 +98,7 @@ async function openImport(page: Page) {
   return panel;
 }
 
-test("imports an OpenClaw folder and another assistant's document as new bots", async ({
+test("imports an OpenClaw folder and another assistant's document as new agents", async ({
   page,
   context,
 }, testInfo) => {
@@ -172,7 +172,7 @@ test("imports an OpenClaw folder and another assistant's document as new bots", 
   await captureScreenshot(page, testInfo, "agent-import-compatibility");
   // Choices made before the opt-in survive it, in both directions.
   const nameBox = homePreview.getByRole("textbox", { name: "Name" });
-  await nameBox.fill("Home bot");
+  await nameBox.fill("Home agent");
   await skills.getByRole("checkbox", { name: "inbox-triage" }).click();
   await expect(skills.getByRole("checkbox", { name: "inbox-triage" })).toBeChecked();
   await homePreview
@@ -222,12 +222,12 @@ test("imports an OpenClaw folder and another assistant's document as new bots", 
   await expect(modelBox).toBeChecked();
   await expect(homePreview).not.toContainText("placeholder-");
   await captureScreenshot(page, testInfo, "agent-import-preview-settings");
-  await expect(nameBox).toHaveValue("Home bot");
+  await expect(nameBox).toHaveValue("Home agent");
   await expect(skills.getByRole("checkbox", { name: "inbox-triage" })).toBeChecked();
   await optIn.click();
   await expect(optIn).not.toBeChecked();
   await expect(keys.getByRole("heading", { name: "API keys" })).toHaveCount(0);
-  await expect(nameBox).toHaveValue("Home bot");
+  await expect(nameBox).toHaveValue("Home agent");
   await expect(skills.getByRole("checkbox", { name: "inbox-triage" })).toBeChecked();
   await expect(skills.getByRole("checkbox", { name: "cleanup" })).not.toBeChecked();
   await panel.getByRole("button", { name: "Back", exact: true }).click();

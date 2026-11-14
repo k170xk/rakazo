@@ -8,16 +8,16 @@ import {
 
 describe("inline mention completion", () => {
   it.each([
-    ["@bo", 3, "@Bot ", 5],
-    ["ask @bo", 7, "ask @Bot ", 9],
-    ["ask @bo and do this", 7, "ask @Bot and do this", 9],
-    ["ask @bo, please", 6, "ask @Bot, please", 8],
-    [" \task\n @bo  later\n", 10, " \task\n @Bot  later\n", 12],
-    ["@Bot ask @bo later", 12, "@Bot ask @Bot later", 14],
+    ["@bo", 3, "@Agent ", 5],
+    ["ask @bo", 7, "ask @Agent ", 9],
+    ["ask @bo and do this", 7, "ask @Agent and do this", 9],
+    ["ask @bo, please", 6, "ask @Agent, please", 8],
+    [" \task\n @bo  later\n", 10, " \task\n @Agent  later\n", 12],
+    ["@Agent ask @bo later", 12, "@Agent ask @Agent later", 14],
   ] as const)("replaces the active query in %j", (text, caret, expected, nextCaret) => {
     const query = composerMentionQuery(text, caret);
     expect(query).not.toBeNull();
-    expect(completeComposerMention(text, query!, { name: "Bot" })).toEqual({
+    expect(completeComposerMention(text, query!, { name: "Agent" })).toEqual({
       text: expected,
       caret: nextCaret,
     });
@@ -35,7 +35,7 @@ describe("inline mention completion", () => {
   });
 
   it("removes repeated tokens without touching suffixes or whitespace", () => {
-    expect(removeComposerMention("ask @Bot  and @Bot\n@Botany", { name: "Bot" })).toBe(
+    expect(removeComposerMention("ask @Agent  and @Agent\n@Botany", { name: "Agent" })).toBe(
       "ask   and \n@Botany",
     );
   });
@@ -72,7 +72,7 @@ describe("inline mention completion", () => {
     const text = "@Bob and ask @Bob Smith ";
     expect(removeComposerMention(text, short, [short, long])).toBe(" and ask @Bob Smith ");
   });
-  it("strips a separate group occurrence without stripping a longer bot name on send", () => {
+  it("strips a separate group occurrence without stripping a longer agent name on send", () => {
     const short = { kind: "group", id: "group-bob", name: "Bob" } as const;
     const long = { kind: "bot", id: "bot-bob", name: "Bob Smith" } as const;
     expect(

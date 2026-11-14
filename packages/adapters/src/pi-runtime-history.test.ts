@@ -143,7 +143,7 @@ describe("Pi history replay", () => {
     expect(JSON.stringify(await replay({ history }))).toBe(first);
   });
 
-  it("labels other members as user turns and keeps this bot's own replies unlabelled", async () => {
+  it("labels other members as user turns and keeps this agent's own replies unlabelled", async () => {
     const messages = await replay({
       promptSpeaker: "User",
       prompt: "@Boris who named the project?",
@@ -169,7 +169,7 @@ describe("Pi history replay", () => {
     expect(captured.prompt).toBe("Plain prompt.");
   });
 
-  it("keeps a note inside another bot's labelled turn", async () => {
+  it("keeps a note inside another agent's labelled turn", async () => {
     const messages = await replay({
       history: [
         {
@@ -185,7 +185,7 @@ describe("Pi history replay", () => {
     ]);
   });
 
-  it("keeps pictures on the human's turn and out of bot turns", async () => {
+  it("keeps pictures on the human's turn and out of agent turns", async () => {
     const image = { name: "a.png", mimeType: "image/png" as const, data: new Uint8Array([1, 2]) };
     const messages = await replay({
       history: [
@@ -208,7 +208,7 @@ describe("Pi history replay", () => {
     expect(messages[2]!.content).toEqual([{ type: "text", text: "Nice picture." }]);
   });
 
-  it("starts on a bot message and ends on one without inventing turns of its own", async () => {
+  it("starts on an agent message and ends on one without inventing turns of its own", async () => {
     const messages = await replay({
       history: [
         { id: "m1", role: "assistant", content: "Welcome, I am Boris." },

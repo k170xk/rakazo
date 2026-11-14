@@ -32,7 +32,7 @@ export const INTEGRATION_PLATFORMS_HUB = {
   h1: "Integration platforms for AI agents in 2026",
   intro: [
     "An AI agent is only as useful as the apps it can work in. To triage an inbox, update a CRM or file an issue, it needs tools for those apps and a safe way to sign in to them. There are a few ways to get there: a hosted platform that manages the logins for thousands of apps, an MCP server the app publishes itself, or a connector built straight from an API's description.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and it uses your apps on your behalf, asking before it changes anything you've told it to check with you. Rakazo supports all four ways of giving bots tools, and you can mix them. This page compares them. For the individual apps bots can use, see the [integrations catalog](/integrations/).",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and it uses your apps on your behalf, asking before it changes anything you've told it to check with you. Rakazo supports all four ways of giving agents tools, and you can mix them. This page compares them. For the individual apps agents can use, see the [integrations catalog](/integrations/).",
   ],
   scene: {
     bot: "Chief of Staff",
@@ -49,7 +49,7 @@ export const INTEGRATION_PLATFORMS_HUB = {
   choose: [
     {
       heading: "You want a big app catalog with sign-in handled",
-      text: "[Composio](/integration-platforms/composio/) is the quickest way to give self-hosted bots a large app catalog: one API key, and Composio handles each app's sign-in. Bots search its actions and run them in batches, and approvals judge each action on its own.",
+      text: "[Composio](/integration-platforms/composio/) is the quickest way to give self-hosted agents a large app catalog: one API key, and Composio handles each app's sign-in. Agents search its actions and run them in batches, and approvals judge each action on its own.",
     },
     {
       heading: "You already use Pipedream",
@@ -73,7 +73,7 @@ export const INTEGRATION_PLATFORMS_HUB = {
     {
       question: "Do I need Composio or Pipedream to use Rakazo?",
       answer:
-        "No. Both are optional. Without them, bots can still use [MCP servers](/integration-platforms/mcp/), [API connectors](/integration-platforms/api-connectors/) and plugins you add. On a self-hosted server, the built-in app catalog appears once one of them is set up.",
+        "No. Both are optional. Without them, agents can still use [MCP servers](/integration-platforms/mcp/), [API connectors](/integration-platforms/api-connectors/) and plugins you add. On a self-hosted server, the built-in app catalog appears once one of them is set up.",
     },
     {
       question: "Can I use more than one?",
@@ -131,7 +131,7 @@ export function integrationPlatformsHubMarkdown(): string {
     "",
     "## Compared",
     "",
-    "| Option | Gives bots | App logins | Best for |",
+    "| Option | Gives agents | App logins | Best for |",
     "| --- | --- | --- | --- |",
     ...INTEGRATION_PLATFORMS.map(
       (platform) =>

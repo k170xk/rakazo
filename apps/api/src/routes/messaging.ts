@@ -70,7 +70,7 @@ export function messagingRoutes(ctx: RouterContext) {
         start: authed.messaging.link.start.handler(async ({ context, input }) => {
           await requireCompanyFeature(deps, context.actor, "messaging");
           // Any of the user's bots, so a workspace's DMs link from whichever space is open.
-          const bot = await runAsSystem("find a bot to link a chat app", () =>
+          const bot = await runAsSystem("find an agent to link a chat app", () =>
             deps.prisma.bot.findFirst({
               where: {
                 id: input.botId,
@@ -93,7 +93,7 @@ export function messagingRoutes(ctx: RouterContext) {
           );
           if (linked) {
             throw new ORPCError("BAD_REQUEST", {
-              message: "That bot is already linked to a chat app; unlink it first.",
+              message: "That agent is already linked to a chat app; unlink it first.",
             });
           }
           const issued = await issueMessagingLinkCode(deps.prisma, {
@@ -120,7 +120,7 @@ export function messagingRoutes(ctx: RouterContext) {
           // the link elsewhere would silently drop them.
           if (identity.installationId && identity.spaceId !== context.actor.spaceId) {
             throw new ORPCError("BAD_REQUEST", {
-              message: "Pick a bot in the space this Slack workspace is connected to.",
+              message: "Pick an agent in the space this Slack workspace is connected to.",
             });
           }
           const bot = await deps.prisma.bot.findFirst({
@@ -147,7 +147,7 @@ export function messagingRoutes(ctx: RouterContext) {
             // botId is unique: the target bot is already linked elsewhere.
             if (isUniqueViolation(error)) {
               throw new ORPCError("BAD_REQUEST", {
-                message: "That bot is already linked to a chat app.",
+                message: "That agent is already linked to a chat app.",
               });
             }
             throw error;

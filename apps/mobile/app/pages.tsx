@@ -48,7 +48,7 @@ export default function PagesScreen() {
         <Text style={[styles.message, { color: tokens.mutedForeground }]}>
           {groupId
             ? t("Pages this group builds for you appear here.")
-            : t("Pages this bot builds for you appear here.")}
+            : t("Pages this agent builds for you appear here.")}
         </Text>
       </View>
     );

@@ -225,7 +225,7 @@ describe("choosing backups while a file is being read", () => {
     expect(container!.querySelector('[data-testid="agent-import-choose"]')).not.toBeNull();
   });
 
-  it.each(["Back", "Cancel new bot"])("discards a pending backup on %s", async (label) => {
+  it.each(["Back", "Cancel new agent"])("discards a pending backup on %s", async (label) => {
     const first = deferred();
     const input = await render();
     await select(input, backup(first.promise));
@@ -388,7 +388,7 @@ describe("an item whose text looks like it contains a key", () => {
   });
 });
 
-describe("creating a bot", () => {
+describe("creating an agent", () => {
   function button(label: string) {
     return [...container!.querySelectorAll("button")].find(
       (item) => item.textContent === label || item.getAttribute("aria-label") === label,

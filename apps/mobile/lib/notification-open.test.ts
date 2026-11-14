@@ -12,7 +12,7 @@ import {
 const DEFAULT_ACTION = "expo.modules.notifications.actions.DEFAULT";
 
 describe("thread route identity", () => {
-  it("reuses a chat screen for the same bot or group", () => {
+  it("reuses a chat screen for the same agent or group", () => {
     expect(threadRouteId("thread", { botId: "bot-1", name: "Ada" })).toBe(
       threadRouteId("thread", { botId: "bot-1", threadId: "thread-1", spaceId: "space-1" }),
     );
@@ -21,13 +21,13 @@ describe("thread route identity", () => {
     );
   });
 
-  it("keeps different bots and group chats distinct", () => {
+  it("keeps different agents and group chats distinct", () => {
     const bot = threadRouteId("thread", { botId: "bot-1" });
     expect(bot).not.toBe(threadRouteId("thread", { botId: "bot-2" }));
     expect(bot).not.toBe(threadRouteId("group-thread", { botId: "bot-1", groupId: "group-1" }));
   });
 
-  it("does not assign an identity without a bot or group", () => {
+  it("does not assign an identity without an agent or group", () => {
     expect(threadRouteId("thread", {})).toBeUndefined();
     expect(threadRouteId("thread", { botId: "" })).toBeUndefined();
     expect(threadRouteId("thread", { botId: ["bot-1", "bot-2"] })).toBeUndefined();
@@ -35,7 +35,7 @@ describe("thread route identity", () => {
 });
 
 describe("notification tap routing", () => {
-  it("opens the bot thread from an Expo push payload", () => {
+  it("opens the agent thread from an Expo push payload", () => {
     expect(
       notificationOpenTarget({
         kind: "completion",
@@ -114,7 +114,7 @@ describe("notification tap routing", () => {
     });
   });
 
-  it("ignores taps that do not name a bot or group", () => {
+  it("ignores taps that do not name an agent or group", () => {
     expect(notificationOpenTarget(null)).toBeNull();
     expect(notificationOpenTarget({ kind: "completion" })).toBeNull();
     expect(notificationOpenTargetFromLink("https://example.com/thread?botId=bot-1")).toBeNull();

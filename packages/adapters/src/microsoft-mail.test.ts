@@ -57,6 +57,7 @@ describe("Outlook permissions and tools", () => {
   it("allows only mailbox listings and reads", () => {
     for (const path of [
       "/me/mailFolders?$top=100",
+      "/me/mailFolders/inbox?$select=id",
       "/me/mailFolders/inbox/childFolders",
       "/me/mailFolders/inbox/messages?$top=20",
       "/me/messages?$search=%22budget%22",
@@ -80,6 +81,7 @@ describe("Outlook permissions and tools", () => {
       "/me/messages/AAMk/permanentDelete",
       "/me/mailFolders/inbox/messages/delta",
       "/me/mailFolders/inbox/move",
+      "/me/mailFolders/delta",
       "/me/mailFolders/inbox/messageRules",
       "/me/messages/AAMk/attachments/createUploadSession",
       "/me/messages/AAMk/attachments/microsoft.graph.createUploadSession",

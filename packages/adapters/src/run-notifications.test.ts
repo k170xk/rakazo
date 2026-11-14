@@ -60,7 +60,7 @@ describe("notifyRun chat alerts", () => {
     expect(send).toHaveBeenCalledOnce();
   });
 
-  it("names the group a bot's alert came from", async () => {
+  it("names the group an agent's alert came from", async () => {
     const { value, publish } = deps({ notifyOnFinish: false, groupId: "group-1" });
     await notifyRun(value, run, message);
     expect(publish).toHaveBeenCalledWith("user-1", expect.objectContaining({ groupId: "group-1" }));

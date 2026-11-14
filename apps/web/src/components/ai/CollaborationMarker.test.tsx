@@ -25,7 +25,7 @@ describe("collaboration transcript markers", () => {
     expect(html).not.toContain("peer-replies-toggle");
   });
 
-  it("animates the active bot glyph from its run status", () => {
+  it("animates the active agent glyph from its run status", () => {
     const html = renderToString(
       <ActiveBotGlyph
         bots={[{ botId: "research", color: "#14B8A6", status: "running" }]}

@@ -433,7 +433,7 @@ describe("mutating tool effect idempotency keys", () => {
     );
   });
 
-  it("appends a remembered fact to the bot's existing memory", async () => {
+  it("appends a remembered fact to the agent's existing memory", async () => {
     const f = fixture("run-append");
     f.memoryDocuments.push({
       id: "doc-1",
@@ -485,7 +485,7 @@ describe("mutating tool effect idempotency keys", () => {
     },
   );
 
-  it("does not save a fact the bot's memory already holds", async () => {
+  it("does not save a fact the agent's memory already holds", async () => {
     const f = fixture("run-known");
     f.memoryDocuments.push({
       id: "doc-1",
@@ -547,7 +547,7 @@ describe("mutating tool effect idempotency keys", () => {
     first.setCalls([
       {
         name: "remember",
-        args: { path: "MEMORY.md", content: "first bot note" },
+        args: { path: "MEMORY.md", content: "first agent note" },
         executionId: "call_0",
       },
     ]);
@@ -559,7 +559,7 @@ describe("mutating tool effect idempotency keys", () => {
     second.setCalls([
       {
         name: "remember",
-        args: { path: "MEMORY.md", content: "second bot note" },
+        args: { path: "MEMORY.md", content: "second agent note" },
         executionId: "call_0",
       },
     ]);
@@ -569,11 +569,11 @@ describe("mutating tool effect idempotency keys", () => {
     expect(second.effects.map((effect) => effect.idempotencyKey)).toEqual([
       toolEffectIdempotencyKey("run-1", "remember", {
         path: "MEMORY.md",
-        content: "first bot note",
+        content: "first agent note",
       }),
       toolEffectIdempotencyKey("run-2", "remember", {
         path: "MEMORY.md",
-        content: "second bot note",
+        content: "second agent note",
       }),
     ]);
     expect(second.results[0]).toEqual({ ok: true });
@@ -829,7 +829,7 @@ describe("add_mcp_server", () => {
     await f.run();
 
     expect(f.results[0]).toEqual({
-      error: "Bots can't add local (stdio) MCP servers. Ask an admin to add it in Settings.",
+      error: "Agents can't add local (stdio) MCP servers. Ask an admin to add it in Settings.",
     });
   });
 });

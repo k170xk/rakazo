@@ -64,7 +64,7 @@ describe("mobile i18n", () => {
     resetI18nForTests("zh-CN");
     expect(t("Account")).toBe("账户");
     expect(t("Sign in to Rakazo")).toBe("登录 Rakazo");
-    expect(t("New bot")).toBe("新建 Bot");
+    expect(t("New agent")).toBe("新建 智能体");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3 次运行，12 个 token",
     );
@@ -73,7 +73,7 @@ describe("mobile i18n", () => {
     resetI18nForTests("ru");
     expect(t("Account")).toBe("Аккаунт");
     expect(t("Sign in to Rakazo")).toBe("Войти в Rakazo");
-    expect(t("New bot")).toBe("Новый бот");
+    expect(t("New agent")).toBe("Новый агент");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "Запусков: 3, токенов: 12",
     );
@@ -82,7 +82,7 @@ describe("mobile i18n", () => {
     resetI18nForTests("nl");
     expect(t("Account")).toBe("Account");
     expect(t("Sign in to Rakazo")).toBe("Aanmelden bij Rakazo");
-    expect(t("New bot")).toBe("Nieuwe bot");
+    expect(t("New agent")).toBe("Nieuwe agent");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3 uitvoeringen, 12 tokens",
     );
@@ -91,7 +91,7 @@ describe("mobile i18n", () => {
     resetI18nForTests("ja");
     expect(t("Account")).toBe("アカウント");
     expect(t("Sign in to Rakazo")).toBe("Rakazoにログイン");
-    expect(t("New bot")).toBe("新しいボット");
+    expect(t("New agent")).toBe("新しいエージェント");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3回の実行、12トークン",
     );
@@ -100,7 +100,7 @@ describe("mobile i18n", () => {
     resetI18nForTests("de");
     expect(t("Account")).toBe("Konto");
     expect(t("Sign in to Rakazo")).toBe("Bei Rakazo anmelden");
-    expect(t("New bot")).toBe("Neuer Bot");
+    expect(t("New agent")).toBe("Neuer Agent");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3 Ausführungen, 12 Token",
     );
@@ -109,7 +109,7 @@ describe("mobile i18n", () => {
     resetI18nForTests("es");
     expect(t("Account")).toBe("Cuenta");
     expect(t("Sign in to Rakazo")).toBe("Inicia sesión en Rakazo");
-    expect(t("New bot")).toBe("Nuevo bot");
+    expect(t("New agent")).toBe("Nuevo agente");
     expect(t("{runs} runs, {tokens} tokens", { runs: 3, tokens: 12 })).toBe(
       "3 ejecuciones, 12 tokens",
     );
@@ -227,7 +227,7 @@ describe("mobile i18n", () => {
       "Your Anthropic",
       "Your model provider",
       "The model provider returned an error.",
-      "Connect a model in Settings before running bots.",
+      "Connect a model in Settings before running agents.",
       "Connect your own API key in Models or choose Rakazo credits in Billing.",
       "{provider} is rate limiting requests. Try again shortly.",
       "{summary} Resets {date}.",

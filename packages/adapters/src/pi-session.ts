@@ -47,7 +47,7 @@ export async function removePiBotSessions(
   botId: string,
 ): Promise<void> {
   if (!dataDir) return;
-  if (!userId) throw new Error("userId is required to remove Pi bot sessions");
+  if (!userId) throw new Error("userId is required to remove Pi agent sessions");
   await rm(piSessionBotRoot(piSessionsRoot(dataDir), userId, botId), {
     recursive: true,
     force: true,

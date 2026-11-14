@@ -532,7 +532,7 @@ describe("E2B computer backend", () => {
     );
   });
 
-  it("opens a terminal in the workspace root or the Team bot folder", async () => {
+  it("opens a terminal in the workspace root or the Team agent folder", async () => {
     const respond = desktopCommandResponder();
     const command = vi.fn(
       async (value: string) => respond(value) ?? { stdout: "", stderr: "", exitCode: 0 },
@@ -753,7 +753,7 @@ describe("E2B computer backend", () => {
     expect(sdk.pause).toHaveBeenCalledWith("e2b-test-box", { apiKey: "test-key" });
   });
 
-  it("gives Team bots distinct E2B screens and shared files", async () => {
+  it("gives Team agents distinct E2B screens and shared files", async () => {
     const files = new Map<string, Uint8Array>();
     const respond = desktopCommandResponder();
     const command = vi.fn(

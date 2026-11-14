@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TASK_CATALOG_GUIDANCE, taskCatalogFromTool } from "./task-catalog.js";
 
 describe("task catalog", () => {
-  it("returns the bot's real work records and exposed tool roster", async () => {
+  it("returns the agent's real work records and exposed tool roster", async () => {
     const prisma = {
       scratchpadItem: {
         findMany: vi.fn(async () => [

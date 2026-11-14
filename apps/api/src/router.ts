@@ -48,6 +48,7 @@ import { connectionsRoutes } from "./routes/connections.js";
 import { contentRoutes } from "./routes/content.js";
 import { createRouterContext } from "./routes/context.js";
 import { emailDraftsRoutes } from "./routes/email-drafts.js";
+import { emailFilingRoutes } from "./routes/email-filing.js";
 import { evolveHistoryRoutes } from "./routes/evolve-history.js";
 import { evolveLearningRoutes } from "./routes/evolve-learning.js";
 import { evolveReferencesRoutes } from "./routes/evolve-references.js";
@@ -182,6 +183,7 @@ export function createRouter(deps: RouterDeps) {
     ...computerProviderRoutes(ctx),
     ...memoryRoutes(ctx),
     ...emailDraftsRoutes(ctx),
+    ...emailFilingRoutes(ctx),
     ...todosRoutes(ctx),
     ...routinesRoutes(ctx),
     ...boardsRoutes(ctx),

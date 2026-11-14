@@ -35,7 +35,7 @@ export function botWelcomePrompt(input: {
       ? `If you are not yet sure what you are for, the first card greets them by first name and asks what they want you for, with ${options}.`
       : undefined,
     canUpdate
-      ? 'As answers come in, use update_bot to record what is now clear: a one-line description of what you do, your instructions on how you do it, and a short name if yours is still a placeholder like "New Bot". Leave anything vague unset, and otherwise keep your name and look.'
+      ? 'As answers come in, use update_bot to record what is now clear: a one-line description of what you do, your instructions on how you do it, and a short name if yours is still a placeholder like "New Agent". Leave anything vague unset, and otherwise keep your name and look.'
       : undefined,
     "Once you have what you need, say in one line what you will do and get started. If the job needs a routine, set it up with what they chose.",
   ]

@@ -7,16 +7,16 @@ import {
   teamBotWorkspaceDirectory,
 } from "./computer-support.js";
 
-describe("Team Computer bot folders", () => {
-  it("uses the bot folder for relative paths and cwd", () => {
+describe("Team Computer agent folders", () => {
+  it("uses the agent folder for relative paths and cwd", () => {
     expect(teamBotWorkspaceDirectory("bot-1")).toBe("bots/bot-1");
     expect(resolveBotWorkspacePath("team", "bot-1", "notes/result.txt")).toBe(
-      "bots/bot-1/notes/result.txt",
+      "agents/bot-1/notes/result.txt",
     );
     expect(resolveBotWorkspacePath("team", "bot-1", "")).toBe("bots/bot-1");
     expect(resolveBotWorkspacePath("team", "bot-1", ".")).toBe("bots/bot-1");
     expect(resolveBotWorkspacePath("team", "bot-1", "./attachments/x.docx")).toBe(
-      "bots/bot-1/attachments/x.docx",
+      "agents/bot-1/attachments/x.docx",
     );
     expect(() => resolveBotWorkspacePath("team", "bot-1", "./../x")).toThrow(
       "Path escapes the computer workspace",
@@ -37,8 +37,8 @@ describe("Team Computer bot folders", () => {
 
   it("keeps shared, bot-root, and absolute paths at the Team root", () => {
     expect(resolveBotWorkspacePath("team", "bot-1", "shared/brief.md")).toBe("shared/brief.md");
-    expect(resolveBotWorkspacePath("team", "bot-1", "bots/bot-2/result.md")).toBe(
-      "bots/bot-2/result.md",
+    expect(resolveBotWorkspacePath("team", "bot-1", "agents/bot-2/result.md")).toBe(
+      "agents/bot-2/result.md",
     );
     expect(resolveBotWorkspacePath("team", "bot-1", "/root-note.md")).toBe("root-note.md");
     expect(resolveBotWorkspacePath("team", "bot-1", "/shared/brief.md")).toBe("shared/brief.md");
@@ -90,8 +90,8 @@ describe("Team Computer bot folders", () => {
     );
   });
 
-  it("presents the current bot folder as its home without hiding Team paths", () => {
-    expect(displayBotWorkspacePath("team", "bot-1", "notes", "bots/bot-1/notes/result.txt")).toBe(
+  it("presents the current agent folder as its home without hiding Team paths", () => {
+    expect(displayBotWorkspacePath("team", "bot-1", "notes", "agents/bot-1/notes/result.txt")).toBe(
       "notes/result.txt",
     );
     expect(displayBotWorkspacePath("team", "bot-1", "shared", "shared/brief.md")).toBe(
@@ -100,8 +100,8 @@ describe("Team Computer bot folders", () => {
     expect(displayBotWorkspacePath("team", "bot-1", "bots", "bots/bot-1")).toBe("bots/bot-1");
     expect(displayBotWorkspacePath("team", "bot-1", "/", "bots/bot-1")).toBe("bots/bot-1");
     expect(
-      displayBotWorkspacePath("team", "bot-1", "bots/bot-1", "bots/bot-1/notes/result.txt"),
-    ).toBe("bots/bot-1/notes/result.txt");
+      displayBotWorkspacePath("team", "bot-1", "bots/bot-1", "agents/bot-1/notes/result.txt"),
+    ).toBe("agents/bot-1/notes/result.txt");
   });
 
   it("leaves Private Computer paths unchanged", () => {
@@ -116,10 +116,10 @@ describe("Team Computer bot folders", () => {
 });
 
 describe("resolveBotUploadPath", () => {
-  it("keeps team uploads in the controlling bot home or shared", () => {
-    expect(resolveBotUploadPath("team", "bot-1", "notes.txt")).toBe("bots/bot-1/notes.txt");
+  it("keeps team uploads in the controlling agent home or shared", () => {
+    expect(resolveBotUploadPath("team", "bot-1", "notes.txt")).toBe("agents/bot-1/notes.txt");
     expect(resolveBotUploadPath("team", "bot-1", "shared/brief.md")).toBe("shared/brief.md");
-    expect(() => resolveBotUploadPath("team", "bot-1", "bots/bot-2/secret.txt")).toThrow(
+    expect(() => resolveBotUploadPath("team", "bot-1", "agents/bot-2/secret.txt")).toThrow(
       /escapes the bot workspace/,
     );
   });

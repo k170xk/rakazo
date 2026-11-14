@@ -94,7 +94,7 @@ vi.mock("react-native-keyboard-controller", () => ({
 vi.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
-vi.mock("../components/bot-avatar", () => ({ BotAvatar: () => <span>bot avatar</span> }));
+vi.mock("../components/bot-avatar", () => ({ BotAvatar: () => <span>agent avatar</span> }));
 vi.mock("../components/group-avatar", () => ({ GroupAvatar: () => <span>group avatar</span> }));
 vi.mock("../components/native-symbol", () => ({ NativeSymbol: () => null }));
 vi.mock("../components/native-action-button", () => ({
@@ -219,7 +219,7 @@ async function type(text: string) {
   });
 }
 it("renders inbox chats before typing and closes with the close button", async () => {
-  expect(row("Scout, Bot").textContent).toContain("Latest reply");
+  expect(row("Scout, Agent").textContent).toContain("Latest reply");
   expect(row("Team, Group").textContent).toContain("Team reply");
   expect(state.search).not.toHaveBeenCalled();
   await act(async () =>
@@ -227,8 +227,8 @@ it("renders inbox chats before typing and closes with the close button", async (
   );
   expect(state.back).toHaveBeenCalledOnce();
 });
-it("leaves out an archived bot that is only in the roster while its chat opens", () => {
-  expect(row("Old helper, Bot")).toBeNull();
+it("leaves out an archived agent that is only in the roster while its chat opens", () => {
+  expect(row("Old helper, Agent")).toBeNull();
 });
 it("debounces typing, renders server hits and preserves the message jump destination", async () => {
   state.search.mockResolvedValue([message, message]);
@@ -255,7 +255,7 @@ it("keeps local name matching and does not duplicate conversation hits", async (
   state.search.mockResolvedValue([{ ...message, kind: "conversation", title: "Scout" }]);
   await type("Scout");
   await act(async () => vi.advanceTimersByTime(200));
-  expect(container.querySelectorAll('button[aria-label^="Scout, Bot, "]')).toHaveLength(1);
+  expect(container.querySelectorAll('button[aria-label^="Scout, Agent, "]')).toHaveLength(1);
   expect(row("Team, Group")).toBeNull();
 });
 it("opens a group after switching spaces and keeps the sheet on switch failure", async () => {
@@ -286,7 +286,7 @@ it("ignores stale server responses and restores chats when cleared", async () =>
   await act(async () => resolve([message]));
   expect(row("Found note, Message")).toBeNull();
   await type("");
-  expect(row("Scout, Bot")).not.toBeNull();
+  expect(row("Scout, Agent")).not.toBeNull();
 });
 it("says the search failed instead of no results, ignoring superseded and cleared requests", async () => {
   const pending: {
@@ -322,7 +322,7 @@ it("says the search failed instead of no results, ignoring superseded and cleare
   await search("Scout");
   expect(container.textContent).not.toContain("Search is unavailable right now");
   await act(async () => pending[2]!.reject(new Error("Search is unavailable right now")));
-  expect(row("Scout, Bot")).not.toBeNull();
+  expect(row("Scout, Agent")).not.toBeNull();
   expect(container.querySelector('[role="alert"]')?.textContent).toBe(
     "Search is unavailable right now",
   );
@@ -338,12 +338,12 @@ it("says the search failed instead of no results, ignoring superseded and cleare
   await search("fifth");
   await type("");
   await act(async () => pending[5]!.reject(new Error("Search is unavailable right now")));
-  expect(row("Scout, Bot")).not.toBeNull();
+  expect(row("Scout, Agent")).not.toBeNull();
   expect(container.textContent).not.toContain("Search is unavailable right now");
   expect(state.search).toHaveBeenCalledTimes(6);
 });
 it.each([
-  ["conversation", "Bot"],
+  ["conversation", "Agent"],
   ["message", "Message"],
   ["file", "File"],
   ["link", "Link"],
@@ -368,8 +368,8 @@ it("retries focus after the sheet attaches and keeps the native search keyboard 
   });
 });
 
-it("opens an inbox bot with the home thread destination", async () => {
-  await act(async () => row("Scout, Bot").click());
+it("opens an inbox agent with the home thread destination", async () => {
+  await act(async () => row("Scout, Agent").click());
   expect(state.selectSpace).toHaveBeenCalledWith("space-a");
   expect(state.replace).toHaveBeenCalledWith({
     pathname: "/thread",
@@ -382,7 +382,7 @@ it("clears the Android field and restores inbox chats", async () => {
   await type("no match");
   await act(async () => row("Clear").click());
   expect(container.querySelector("input")!.value).toBe("");
-  expect(row("Scout, Bot")).not.toBeNull();
+  expect(row("Scout, Agent")).not.toBeNull();
 });
 
 it.each(["space switch", "keyboard dismiss"] as const)(
@@ -405,7 +405,7 @@ it.each(["space switch", "keyboard dismiss"] as const)(
     const focus = vi.spyOn(container.querySelector("input")!, "focus");
     await act(async () => row("Team, Group").click());
     // A second tap must not start another attempt while the first is pending.
-    await act(async () => row("Scout, Bot").click());
+    await act(async () => row("Scout, Agent").click());
     expect(state.selectSpace).toHaveBeenCalledOnce();
     await act(async () =>
       container.querySelector<HTMLButtonElement>('[data-testid="search-sheet-close"]')!.click(),

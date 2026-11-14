@@ -249,7 +249,7 @@ test("Slack setup has one Connect action that opens workspace authorization", as
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByTestId("settings-nav-messaging").click();
   const settings = page.getByTestId("messaging-settings");
-  await expect(settings.getByText("Chat with your bot from Slack.")).toBeVisible();
+  await expect(settings.getByText("Chat with your agent from Slack.")).toBeVisible();
   const connect = settings.getByRole("button", { name: "Connect", exact: true });
   await expect(connect).toBeEnabled();
   await expect(

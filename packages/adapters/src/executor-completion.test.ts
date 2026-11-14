@@ -37,7 +37,7 @@ import { finalBlocksAfterMidTurnProgress } from "./user-progress.js";
 
 describe("completionMessageSegments", () => {
   it("keeps visible tool activity without appending a generic completion claim", () => {
-    const steps = [{ kind: "steps" as const, steps: [{ label: "Message bot", count: 1 }] }];
+    const steps = [{ kind: "steps" as const, steps: [{ label: "Message agent", count: 1 }] }];
     expect(completionMessageSegments(steps)).toEqual(steps);
   });
 
@@ -106,7 +106,7 @@ describe("completionMessageSegments", () => {
 describe("completionNotificationBody", () => {
   it("omits a body when only tool or step activity remains", () => {
     const steps = completionMessageSegments([
-      { kind: "steps" as const, steps: [{ label: "Message bot", count: 1 }] },
+      { kind: "steps" as const, steps: [{ label: "Message agent", count: 1 }] },
     ]);
     expect(completionNotificationBody("", steps)).toBe("");
   });
@@ -142,17 +142,17 @@ describe("completionNotificationPreview", () => {
 describe("secretAskNotification", () => {
   it("uses the generic answer title and a short, redacted label", () => {
     const notification = secretAskNotification(
-      "Bot",
+      "Agent",
       `Sign in for fake-token-123 ${"word ".repeat(100)}`,
       ["fake-token-123"],
     );
-    expect(notification.title).toBe("Bot needs an answer");
+    expect(notification.title).toBe("Agent needs an answer");
     expect(notification.body).toHaveLength(180);
     expect(notification.body.startsWith("Sign in for [redacted] word")).toBe(true);
   });
 
   it("redacts a Markdown-split protected value before the notification cut", () => {
-    const body = secretAskNotification("Bot", `${"x".repeat(167)} fake-**token**-123`, [
+    const body = secretAskNotification("Agent", `${"x".repeat(167)} fake-**token**-123`, [
       "fake-token-123",
     ]).body;
     expect(body).toBe(`${"x".repeat(167)} [redacted]`);
@@ -160,13 +160,13 @@ describe("secretAskNotification", () => {
   });
 
   it("keeps the body within 180 characters when redaction expands a value", () => {
-    const body = secretAskNotification("Bot", `${"x".repeat(170)} ab**c1**23`, ["abc123"]).body;
+    const body = secretAskNotification("Agent", `${"x".repeat(170)} ab**c1**23`, ["abc123"]).body;
     expect(body).toHaveLength(180);
     expect(body).not.toContain("abc");
   });
 
   it("does not let Markdown split a protected value past redaction", () => {
-    expect(secretAskNotification("Bot", "Code fake-**token**-123", ["fake-token-123"]).body).toBe(
+    expect(secretAskNotification("Agent", "Code fake-**token**-123", ["fake-token-123"]).body).toBe(
       "Code [redacted]",
     );
   });
@@ -549,7 +549,7 @@ describe("runReplyGuidance", () => {
     expect(prompt.endsWith("Never send mail without asking.")).toBe(true);
   });
 
-  it("does not repeat text that older bots saved as both fields", () => {
+  it("does not repeat text that older agents saved as both fields", () => {
     const bot = {
       name: "Ada",
       description: "Reads and sorts mail.",

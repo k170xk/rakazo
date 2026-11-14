@@ -264,14 +264,14 @@ it("saves only edits and refreshes comments for the open ticket", async () => {
     const calls = api.tickets.comments.mock.calls.length;
     await act(async () => live.event("ticket-2"));
     expect(api.tickets.comments).toHaveBeenCalledTimes(calls);
-    api.tickets.comments.mockResolvedValue([{ id: "comment-2", body: "Bot progress" }]);
+    api.tickets.comments.mockResolvedValue([{ id: "comment-2", body: "Agent progress" }]);
     api.tickets.list.mockResolvedValue({
       tickets: [ticket("Ship", "ticket-1", "doing", "RAK-1", "bot-2", "Details")],
     });
     await act(async () => live.event("ticket-1"));
     await settle();
     expect(page.container.querySelector('[data-testid="ticket-comments"]')?.textContent).toContain(
-      "Bot progress",
+      "Agent progress",
     );
     const input = page.container.querySelector("input")!;
     await act(async () => {

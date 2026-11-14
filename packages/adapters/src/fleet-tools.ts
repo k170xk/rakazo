@@ -86,7 +86,7 @@ export type FleetPrepared =
 type Member = { id: string; name: string };
 type Refusal = { ok: false; error: string };
 
-const GROUP_SIZE_ERROR = `A group needs ${GROUP_MEMBER_MIN} to ${GROUP_MEMBER_MAX} bots.`;
+const GROUP_SIZE_ERROR = `A group needs ${GROUP_MEMBER_MIN} to ${GROUP_MEMBER_MAX} agents.`;
 
 /**
  * Resolve everything the model could vary before the effect is recorded. The canonical request
@@ -148,7 +148,7 @@ async function prepareCreateGroup(
   if (ids.length && names.length) return refuse("Pass bot_ids or bot_names, not both.");
   const requested = ids.length ? ids : names;
   if (new Set(requested).size !== requested.length) {
-    return refuse("Each bot can be in the group only once.");
+    return refuse("Each agent can be in the group only once.");
   }
   if (requested.length < GROUP_MEMBER_MIN || requested.length > GROUP_MEMBER_MAX) {
     return refuse(GROUP_SIZE_ERROR);
@@ -192,7 +192,7 @@ async function prepareUpdateGroup(
   if (!Array.isArray(requestedAdds)) return requestedAdds;
   const removed = current.filter((member) => removeIds.includes(member.id));
   const notMember = removeIds.find((id) => !currentIds.has(id));
-  if (notMember) return refuse(`Bot "${notMember}" is not in group "${singleLine(group.name)}".`);
+  if (notMember) return refuse(`Agent "${notMember}" is not in group "${singleLine(group.name)}".`);
   if (run.groupId === group.id && removeIds.includes(run.botId)) {
     return refuse("You cannot remove yourself from the group you are running in.");
   }
@@ -291,7 +291,7 @@ async function prepareChildModel(
     validated.model === previous.model &&
     (thinkingLevel ?? null) === previous.thinkingLevel
   ) {
-    return refuse("That bot already uses this model.");
+    return refuse("That agent already uses this model.");
   }
   const lines = [
     `From: ${modelLabel(previous.provider, previous.model)}`,
@@ -353,7 +353,7 @@ async function prepareChildRoutine(
 
   const child = await resolveBot(deps.prisma, run, args);
   if ("error" in child) return child;
-  if (!child.thread) return refuse("That bot has no thread.");
+  if (!child.thread) return refuse("That agent has no thread.");
 
   const when = formatTime(resolved.nextRunAt, timezone);
   return {
@@ -448,7 +448,7 @@ const FLEET_GROUP_LIMIT = 100;
 const FLEET_SECTION_LIMIT = 100;
 const FLEET_ROSTER_MAX_LENGTH = 60_000;
 const GROUP_PAGE_SIZE = 200;
-const NOT_FOUND = "That bot or group is no longer available. Call list_fleet and try again.";
+const NOT_FOUND = "That agent or group is no longer available. Call list_fleet and try again.";
 
 type FleetBot = {
   id: string;
@@ -621,7 +621,7 @@ export async function organizeBot(
 ): Promise<{ ok: true } | { error: string }> {
   const bot = text(args.bot_id) ?? text(args.bot_name);
   const group = text(args.group_id) ?? text(args.group_name);
-  if (bot && group) return { error: "Pass a bot or a group, not both." };
+  if (bot && group) return { error: "Pass an agent or a group, not both." };
   if (!bot && !group) return { error: "Pass bot_id, bot_name, group_id or group_name." };
   for (const flag of ["pinned", "clear_section"] as const) {
     const value = args[flag];
@@ -789,7 +789,7 @@ export async function updateFleetGroup(
 }
 
 const CHILD_CHANGED = "child changed; read it again with list_fleet";
-const ALREADY_WROTE_INSTRUCTIONS = "You already changed this bot's instructions in this run.";
+const ALREADY_WROTE_INSTRUCTIONS = "You already changed this agent's instructions in this run.";
 
 /** `update_bot` with `bot_id`: the profile fields of another bot in the space. */
 export async function updateChildBot(
@@ -801,7 +801,7 @@ export async function updateChildBot(
     return { error: "artifact_id and use_attached_image work only on yourself." };
   }
   if (argumentGiven(args.instructions)) {
-    return { error: "Change another bot's instructions with set_child_instructions." };
+    return { error: "Change another agent's instructions with set_child_instructions." };
   }
   const profile = {
     dailyCheckIns: argumentGiven(args.dailyCheckIns) ? args.dailyCheckIns : undefined,
@@ -892,7 +892,7 @@ export async function setChildInstructions(
       emitBotUpdated: true,
       data: { instructions },
       expectedInstructions: current.instructions,
-      reason: `Updated by ${singleLine(caller?.name ?? "a bot")}`,
+      reason: `Updated by ${singleLine(caller?.name ?? "an agent")}`,
     });
   } catch (error) {
     if (error instanceof InstructionConflictError) return { error: CHILD_CHANGED };
@@ -940,7 +940,7 @@ export async function setChildBotModel(
     (previous?.model ?? null) !== child.modelId ||
     (previous?.thinkingLevel ?? null) !== (child.thinkingLevel ?? null)
   ) {
-    return { error: "That bot's model changed since you approved; ask again." };
+    return { error: "That agent's model changed since you approved; ask again." };
   }
   const validated = await validateBotModelChange(
     { prisma: deps.prisma, ...deps.modelChange },
@@ -975,7 +975,7 @@ export async function setChildBotModel(
     });
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && error.code === "P2025")
-      return { error: "That bot's model changed since you approved; ask again." };
+      return { error: "That agent's model changed since you approved; ask again." };
     throw error;
   }
   return {
@@ -1124,16 +1124,16 @@ async function resolveBots(
   const members: Member[] = [];
   for (const id of ids) {
     const row = rows.find((candidate) => candidate.id === id);
-    if (!row) return refuse(`No bot with id "${id}". Call list_fleet for ids.`);
+    if (!row) return refuse(`No agent with id "${id}". Call list_fleet for ids.`);
     members.push({ id: row.id, name: row.name });
   }
   for (const name of names) {
     const matching = rows.filter((candidate) => candidate.name === name);
     if (matching.length === 0) {
-      return refuse(`No bot named "${name}". Call list_fleet and pass bot_id.`);
+      return refuse(`No agent named "${name}". Call list_fleet and pass bot_id.`);
     }
     if (matching.length > 1) {
-      return refuse(`More than one bot is named "${name}". Pass bot_id instead.`);
+      return refuse(`More than one agent is named "${name}". Pass bot_id instead.`);
     }
     members.push({ id: matching[0]!.id, name: matching[0]!.name });
   }
@@ -1153,13 +1153,13 @@ async function resolveBot(prisma: PrismaClient, run: FleetRun, args: Record<stri
     take: 2,
   });
   if (bots.length > 1) {
-    return refuse(`More than one bot is named "${name}". Pass bot_id instead.`);
+    return refuse(`More than one agent is named "${name}". Pass bot_id instead.`);
   }
   if (bots[0]) return bots[0];
   return refuse(
     id
-      ? `No bot with id "${id}". Call list_fleet for ids.`
-      : `No bot named "${name}". Call list_fleet and pass bot_id.`,
+      ? `No agent with id "${id}". Call list_fleet for ids.`
+      : `No agent named "${name}". Call list_fleet and pass bot_id.`,
   );
 }
 

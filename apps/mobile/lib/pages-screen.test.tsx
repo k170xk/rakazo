@@ -212,7 +212,7 @@ it("shows what the server has after a rename, pin or delete whose answer was los
 
   await act(async () => host.menus.get("Launch")!.press("delete"));
   await act(async () => host.alert!.find((each) => each.text === "Delete")!.onPress?.());
-  expect(rows(container)).toEqual(["Pages this bot builds for you appear here."]);
+  expect(rows(container)).toEqual(["Pages this agent builds for you appear here."]);
   host.loseAnswer = false;
   await act(async () => root.unmount());
 });

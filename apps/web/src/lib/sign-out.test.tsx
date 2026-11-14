@@ -35,8 +35,8 @@ beforeEach(() => {
   requestSignOut.mockResolvedValue({ data: { success: true }, error: null });
   localStorage.setItem(SIGNED_IN_USER_KEY, "user-1");
   selectSpace("space-1");
-  writeComposerDraft("bot:bot-1", "unsent thought");
-  localStorage.setItem(composerDraftBindingsKey("bot:bot-1"), "{}");
+  writeComposerDraft("agent:bot-1", "unsent thought");
+  localStorage.setItem(composerDraftBindingsKey("agent:bot-1"), "{}");
   localStorage.setItem(COMPOSER_ENTER_TO_SEND_STORAGE_KEY, "false");
 });
 
@@ -79,8 +79,8 @@ describe("signOut", () => {
 
   it("leaves no saved draft for whoever uses this browser next", async () => {
     await signOut("/sign-in");
-    expect(readComposerDraft("bot:bot-1")).toBe("");
-    expect(localStorage.getItem(composerDraftBindingsKey("bot:bot-1"))).toBeNull();
+    expect(readComposerDraft("agent:bot-1")).toBe("");
+    expect(localStorage.getItem(composerDraftBindingsKey("agent:bot-1"))).toBeNull();
     expect(hasUnsentComposerDraft()).toBe(false);
     expect(localStorage.getItem(COMPOSER_ENTER_TO_SEND_STORAGE_KEY)).toBe("false");
   });
@@ -94,8 +94,8 @@ describe("signOut", () => {
     expect(location.reload).toHaveBeenCalledOnce();
     expect(location.assign).not.toHaveBeenCalled();
     expect(localStorage.getItem(SIGNED_IN_USER_KEY)).toBe("user-1");
-    expect(readComposerDraft("bot:bot-1")).toBe("unsent thought");
-    expect(localStorage.getItem(composerDraftBindingsKey("bot:bot-1"))).toBe("{}");
+    expect(readComposerDraft("agent:bot-1")).toBe("unsent thought");
+    expect(localStorage.getItem(composerDraftBindingsKey("agent:bot-1"))).toBe("{}");
   });
 
   it("says the sign-out failed when the reloaded page is still signed in", async () => {
@@ -121,8 +121,8 @@ describe("signOut", () => {
       sessionStorage.setItem(LOG_OUT_FAILED_KEY, "1");
       syncLogOutFailure(signedIn);
       expect(sessionStorage.getItem(LOG_OUT_FAILED_KEY)).toBeNull();
-      expect(readComposerDraft("bot:bot-1")).toBe(signedIn ? "unsent thought" : "");
-      expect(localStorage.getItem(composerDraftBindingsKey("bot:bot-1"))).toBe(
+      expect(readComposerDraft("agent:bot-1")).toBe(signedIn ? "unsent thought" : "");
+      expect(localStorage.getItem(composerDraftBindingsKey("agent:bot-1"))).toBe(
         signedIn ? "{}" : null,
       );
       expect(hasUnsentComposerDraft()).toBe(signedIn);

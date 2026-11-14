@@ -50,7 +50,7 @@ vi.mock("../lib/native", () => ({
 
 const member = (index: number) => ({
   botId: `bot-${index}`,
-  name: `Bot ${index}`,
+  name: `Agent ${index}`,
   color: `#3B82F6::shape_${index % 8}`,
 });
 
@@ -128,7 +128,7 @@ describe("GroupSeats", () => {
     expect(seats[0]!.querySelector("svg-path")!.getAttribute("data-stroke")).toBe("tertiary");
   });
 
-  it("gives a drawn face the same eye ink as the bot's own avatar", () => {
+  it("gives a drawn face the same eye ink as the agent's own avatar", () => {
     act(() =>
       root.render(
         <GroupSeats

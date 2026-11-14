@@ -802,7 +802,7 @@ function assertEvolveReferencesSend(
   input: { text?: string; artifactIds?: string[]; evolveReferences?: EvolveReferences },
 ) {
   if (target.kind !== "bot") {
-    throw new ORPCError("BAD_REQUEST", { message: "References can be added in a bot's chat." });
+    throw new ORPCError("BAD_REQUEST", { message: "References can be added in an agent's chat." });
   }
   if (input.text?.trim() || input.artifactIds?.length) {
     throw new ORPCError("BAD_REQUEST", {
@@ -858,7 +858,7 @@ export async function sendThreadMessage(
   const continued = references ? undefined : rawInput.evolveConversation;
   if (continued && target.kind !== "bot") {
     throw new ORPCError("BAD_REQUEST", {
-      message: "Evolve conversations continue in a bot's chat.",
+      message: "Evolve conversations continue in an agent's chat.",
     });
   }
   const input = references

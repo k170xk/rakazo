@@ -65,7 +65,7 @@ export async function personEmail(ctx: RunContext): Promise<string | null> {
 }
 
 const DEDICATED_ONLY =
-  "Plugins are built on a bot with its own computer. Create a bot called Plugin Builder with a dedicated (Private) computer and build the plugin there.";
+  "Plugins are built on an agent with its own computer. Create an agent called Plugin Builder with a dedicated (Private) computer and build the plugin there.";
 
 async function withEvolve(
   ctx: RunContext,
@@ -152,7 +152,7 @@ export const evolvePluginTools: ToolHandlers = {
   async evolve_knowledge_search(ctx, call) {
     const assistantId = ctx.bot.evolveAssistantId;
     if (!assistantId)
-      return call.finish({ error: "This bot was not started from an Evolve assistant." });
+      return call.finish({ error: "This agent was not started from an Evolve assistant." });
     const input = KnowledgeSearchSchema.safeParse(call.args);
     if (!input.success) return call.finish({ error: issues(input.error) });
     // A chat opened from an archived conversation searches that conversation's files by default.

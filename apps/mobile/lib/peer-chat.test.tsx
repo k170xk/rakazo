@@ -157,7 +157,7 @@ it("leaves the position alone once the reader scrolls", async () => {
   expect(scrollToEnd).not.toHaveBeenCalled();
 });
 
-it("names both bots in the header and closes the read-only chat", async () => {
+it("names both agents in the header and closes the read-only chat", async () => {
   const screen = await open();
   expect(screen.textContent).toContain("Chief⇄Researcher");
   expect(screen.querySelector("header")?.dataset.titleAlign).toBe("center");

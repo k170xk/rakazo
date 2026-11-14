@@ -120,7 +120,7 @@ describe("archived thread read authorization", () => {
     ["threads/followUp", { botId: "bot-1", text: "Cannot run" }],
     ["threads/markRead", { botId: "bot-1" }],
     ["computer/boot", { botId: "bot-1" }],
-  ])("%s still rejects an archived bot", async (proc, input) => {
+  ])("%s still rejects an archived agent", async (proc, input) => {
     const { call, findBot } = fixture();
     expect((await call(proc as string, input)).status).toBe(500);
     expect(findBot).toHaveBeenCalledWith(

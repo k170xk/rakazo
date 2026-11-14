@@ -788,7 +788,7 @@ describe("computer provisioning", () => {
     }
   });
 
-  it("activates a boot even if another Team bot takes a lease mid-provision", async () => {
+  it("activates a boot even if another Team agent takes a lease mid-provision", async () => {
     const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-team-lease-mid-boot-"));
     const row = {
       id: "computer-1",
@@ -2128,7 +2128,7 @@ describe("Team Computer wake", () => {
     await expect(boot(harness)).resolves.toEqual(harness.ref);
   });
 
-  it("removes folders of bots deleted while the Team Computer was stopped", async () => {
+  it("removes folders of agents deleted while the Team Computer was stopped", async () => {
     const harness = wakeHarness("stopped");
 
     await expect(boot(harness)).resolves.toEqual(harness.ref);
@@ -2147,7 +2147,7 @@ describe("Team Computer wake", () => {
     );
   });
 
-  it("does not look for deleted bots' folders when reconnecting to a running Team Computer", async () => {
+  it("does not look for deleted agents' folders when reconnecting to a running Team Computer", async () => {
     const harness = wakeHarness("running");
 
     await expect(boot(harness)).resolves.toEqual(harness.ref);
@@ -2159,7 +2159,7 @@ describe("Team Computer wake", () => {
     ["started the stopped computer", { started: true }],
     ["replaced the computer", { id: "sandbox-2", providerRef: "sandbox-2", fresh: true }],
   ])(
-    "removes deleted bots' folders when a reconnect %s",
+    "removes deleted agents' folders when a reconnect %s",
     async (_case, provisioned: Partial<ComputerRef>) => {
       const harness = wakeHarness(
         "running",
@@ -2233,7 +2233,7 @@ describe("computer execution leases", () => {
     expect(prisma.create).not.toHaveBeenCalled();
   });
 
-  it("fences one Team bot's screen and expires only the matching lease", async () => {
+  it("fences one Team agent's screen and expires only the matching lease", async () => {
     const prisma = leasePrisma({ scope: "team" });
     const lease = await acquireComputerExecutionLease(prisma.client, {
       workerId: "worker-1",
@@ -2367,7 +2367,7 @@ describe("computer execution leases", () => {
     },
   );
 
-  it("increments the screen fence when the same Team bot starts another run", async () => {
+  it("increments the screen fence when the same Team agent starts another run", async () => {
     const prisma = leasePrisma({ scope: "team" });
     const sandbox = new FakeSandboxProvider();
     const computer = await sandbox.provision({ botId: "bot-1", homePath: "/tmp" }, context);
@@ -2503,7 +2503,7 @@ describe("computer execution leases", () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it("lets two Team bots hold leases at the same time", async () => {
+  it("lets two Team agents hold leases at the same time", async () => {
     const prisma = leasePrisma({ scope: "team" });
 
     await expect(
@@ -2527,7 +2527,7 @@ describe("computer execution leases", () => {
     expect(prisma.create).toHaveBeenCalledTimes(2);
   });
 
-  it("rejects a second run for the same Team bot while its lease is held", async () => {
+  it("rejects a second run for the same Team agent while its lease is held", async () => {
     const prisma = leasePrisma({ scope: "team", uniqueConflict: true });
 
     await expect(
@@ -2875,7 +2875,7 @@ describe("computer replacement", () => {
     }
   });
 
-  it("rejects replacement while another team bot holds the computer", async () => {
+  it("rejects replacement while another team agent holds the computer", async () => {
     const prisma = {
       computer: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
@@ -3114,7 +3114,7 @@ describe("computer replacement", () => {
     );
   });
 
-  it("refuses a booting computer another bot is still holding", async () => {
+  it("refuses a booting computer another agent is still holding", async () => {
     const updateMany = vi.fn().mockResolvedValue({ count: 1 });
     const prisma = {
       computer: {
@@ -3237,7 +3237,7 @@ describe("computer replacement", () => {
     expect(updateMany).not.toHaveBeenCalled();
   });
 
-  it("rejects replacement while the target bot has an active run", async () => {
+  it("rejects replacement while the target agent has an active run", async () => {
     const prisma = {
       computer: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
@@ -3272,7 +3272,7 @@ describe("computer replacement", () => {
     ).rejects.toBeInstanceOf(ComputerBusyError);
   });
 
-  it("rejects replacement while any bot holds user control", async () => {
+  it("rejects replacement while any agent holds user control", async () => {
     const prisma = {
       computer: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
@@ -3305,7 +3305,7 @@ describe("computer replacement", () => {
     ).rejects.toBeInstanceOf(ComputerBusyError);
   });
 
-  it("rejects replacement while the same bot holds user control", async () => {
+  it("rejects replacement while the same agent holds user control", async () => {
     const prisma = {
       computer: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({

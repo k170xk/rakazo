@@ -436,7 +436,7 @@ export async function ocscBeforeRun(
   if (ctx.computer.folder) {
     return {
       error:
-        "Videos are not made on someone else's computer from a shared chat. Ask the person to use one of their own bots, which can make videos.",
+        "Videos are not made on someone else's computer from a shared chat. Ask the person to use one of their own agents, which can make videos.",
     };
   }
   if (args[0] !== "render") return undefined;

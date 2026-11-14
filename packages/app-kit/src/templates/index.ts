@@ -17,9 +17,9 @@ export type AppTemplate = {
 };
 
 const projectTracker = String.raw`import { useMemo } from "react";
-import { AppShell, AreaChart, Badge, Card, CardBody, CardHeader, DonutChart, EmptyState, Grid, KpiCard, Kanban, PageHeader, Progress, TableView, Timeline, byMonth, countBy, formatNumber, sumBy, toast } from "@ocsc/ui";
+import { ActionList, AppShell, AreaChart, Aurora, Card, CardBody, CardHeader, DonutChart, EmptyState, Gantt, Grid, KpiCard, Kanban, PageHeader, PresenceStack, PrintButton, Progress, SampleBanner, TableView, Theme, byMonth, countBy, formatNumber, sumBy, toast } from "@ocsc/ui";
 import { useTable } from "@ocsc/app";
-import { Briefcase, CalendarClock, Euro, Gauge as GaugeIcon, Plus } from "lucide-react";
+import { Briefcase, CalendarClock, Euro, GanttChart, Gauge as GaugeIcon, KanbanSquare, LayoutDashboard, Table2 } from "lucide-react";
 
 const STAGES = ["Pipeline", "Design", "Tender", "Construction", "Complete", "On hold"];
 const DAY = 86400000;
@@ -36,15 +36,18 @@ export default function App() {
   const empty = !projects.loading && projects.rows.length === 0;
 
   const overview = () => (
-    <>
-      <PageHeader eyebrow="Portfolio" title="Projects at a glance" description="Fees, stages and deadlines across every live job." />
+    <div className="flex flex-col gap-5">
+      <SampleBanner tables={[projects]} />
+      <Aurora className="rounded-2xl border border-border/70 bg-card p-5">
+        <PageHeader className="mb-0" eyebrow="Portfolio" title="Projects at a glance" description="Fees, stages and deadlines across every live job." />
+      </Aurora>
       {empty ? (
         <EmptyState icon={<Briefcase />} title="No projects yet" description="Add your first project, or ask OCSC Intelligence to load them from a spreadsheet." />
       ) : (
         <div className="flex flex-col gap-4">
           <Grid cols={4}>
             <KpiCard label="Live projects" value={live.length} icon={<Briefcase />} />
-            <KpiCard label="Fees" value={sumBy(live, "fee")} format="currency" icon={<Euro />} />
+            <KpiCard label="Fees" value={sumBy(live, "fee")} format="currency" icon={<Euro />} trend={monthly.map((m) => Number(m.fee ?? 0))} />
             <KpiCard label="Due in 30 days" value={dueSoon.length} tone={dueSoon.length ? "warning" : "success"} icon={<CalendarClock />} />
             <KpiCard label="Average progress" value={progress * 100} format="percent" icon={<GaugeIcon />} />
           </Grid>
@@ -64,84 +67,115 @@ export default function App() {
           </div>
           <Card>
             <CardHeader title="Due soonest" />
-            <CardBody className="flex flex-col gap-3">
-              {[...live]
-                .sort((a, b) => String(a.due ?? "9").localeCompare(String(b.due ?? "9")))
-                .slice(0, 6)
-                .map((row) => (
-                  <div key={row._id} className="flex items-center gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{String(row.name ?? "Untitled")}</p>
-                      <p className="text-xs text-muted-foreground">{String(row.client ?? "")}</p>
-                    </div>
-                    <Progress value={Number(row.progress ?? 0) * 100} className="w-28" />
-                    <Badge tone="neutral">{row.due ? new Date(String(row.due)).toLocaleDateString("en-IE", { day: "numeric", month: "short" }) : "No date"}</Badge>
-                  </div>
-                ))}
+            <CardBody>
+              <ActionList
+                items={[...live]
+                  .sort((a, b) => String(a.due ?? "9").localeCompare(String(b.due ?? "9")))
+                  .slice(0, 6)
+                  .map((row) => ({
+                    id: row._id,
+                    title: String(row.name ?? "Untitled"),
+                    subtitle: String(row.client ?? ""),
+                    badge: String(row.stage ?? "Live"),
+                    meta: row.due ? new Date(String(row.due)).toLocaleDateString("en-IE", { day: "numeric", month: "short" }) : "No date",
+                  }))}
+              />
             </CardBody>
           </Card>
         </div>
       )}
-    </>
+    </div>
   );
 
   return (
-    <AppShell
-      title="Project tracker"
-      subtitle="Every live job in one place"
-      pages={[
-        { id: "overview", label: "Overview", render: overview },
-        {
-          id: "board",
-          label: "Board",
-          render: () => (
-            <Kanban
-              rows={projects.rows}
-              groupBy="stage"
-              columns={STAGES.map((value) => ({ value }))}
-              onMove={projects.canEdit ? (row, stage) => void projects.update(row._id, { stage }).catch(() => toast.error("Not moved")) : undefined}
-              renderCard={(row) => (
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm font-semibold">{String(row.name ?? "Untitled")}</p>
-                  <p className="text-xs text-muted-foreground">{String(row.client ?? "")}</p>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold tabular">{row.fee ? formatNumber(Number(row.fee), "currency") : ""}</span>
-                    <span className="text-muted-foreground">{String(row.lead ?? "")}</span>
-                  </div>
-                  <Progress value={Number(row.progress ?? 0) * 100} />
-                </div>
-              )}
+    <>
+      <Theme preset="evolve" density="comfortable" />
+      <AppShell
+        title="Project tracker"
+        subtitle="Every live job in one place"
+        commands
+        actions={
+          <>
+            <PresenceStack />
+            <PrintButton
+              size="sm"
+              document={() => ({
+                title: "Project Portfolio Summary",
+                kind: "PROJECT REPORT",
+                blocks: [
+                  { type: "stats", items: [{ label: "Live projects", value: String(live.length) }, { label: "Fees", value: formatNumber(sumBy(live, "fee"), "currency") }] },
+                  { type: "table", columns: ["Project", "Client", "Stage", { label: "Fee", align: "right" }], rows: live.map((r) => [String(r.name ?? ""), String(r.client ?? ""), String(r.stage ?? ""), formatNumber(Number(r.fee ?? 0), "currency")]) },
+                ],
+              })}
             />
-          ),
-        },
-        {
-          id: "plan",
-          label: "Plan",
-          render: () => (
-            <Card>
-              <CardHeader title="Programme" description="Start to due date for each project" />
-              <CardBody>
-                <Timeline rows={projects.rows} startKey="start" endKey="due" titleKey="name" toneKey="stage" />
-              </CardBody>
-            </Card>
-          ),
-        },
-        {
-          id: "projects",
-          label: "Projects",
-          count: projects.rows.length,
-          render: () => <TableView table={projects} filterBy="stage" columns={["name", "client", "stage", "lead", "fee", "due", "progress"]} newLabel="New project" />,
-        },
-      ]}
-    />
+          </>
+        }
+        pages={[
+          { id: "overview", label: "Overview", icon: <LayoutDashboard />, render: overview },
+          {
+            id: "board",
+            label: "Board",
+            icon: <KanbanSquare />,
+            render: () => (
+              <Kanban
+                rows={projects.rows}
+                groupBy="stage"
+                columns={STAGES.map((value) => ({ value }))}
+                onMove={projects.canEdit ? (row, stage) => void projects.update(row._id, { stage }).catch(() => toast.error("Not moved")) : undefined}
+                renderCard={(row) => (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-semibold">{String(row.name ?? "Untitled")}</p>
+                    <p className="text-xs text-muted-foreground">{String(row.client ?? "")}</p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold tabular">{row.fee ? formatNumber(Number(row.fee), "currency") : ""}</span>
+                      <span className="text-muted-foreground">{String(row.lead ?? "")}</span>
+                    </div>
+                    <Progress value={Number(row.progress ?? 0) * 100} />
+                  </div>
+                )}
+              />
+            ),
+          },
+          {
+            id: "plan",
+            label: "Programme",
+            icon: <GanttChart />,
+            render: () => (
+              <Card>
+                <CardHeader title="Programme" description="Drag bars or ends to adjust start and due dates." />
+                <CardBody>
+                  <Gantt
+                    rows={projects.rows}
+                    startKey="start"
+                    endKey="due"
+                    titleKey="name"
+                    groupKey="stage"
+                    progressKey="progress"
+                    toneKey="stage"
+                    onChange={projects.canEdit ? (row, dates) => void projects.update(row._id, dates) : undefined}
+                  />
+                </CardBody>
+              </Card>
+            ),
+          },
+          {
+            id: "projects",
+            label: "Projects",
+            icon: <Table2 />,
+            count: projects.rows.length,
+            render: () => <TableView table={projects} filterBy="stage" columns={["name", "client", "stage", "lead", "fee", "due", "progress"]} newLabel="New project" />,
+          },
+        ]}
+      />
+    </>
   );
 }
 `;
 
 const clientPipeline = String.raw`import { useState } from "react";
-import { AppShell, BarChart, Card, CardBody, CardHeader, EmptyState, FunnelChart, Grid, KpiCard, Kanban, PageHeader, PeriodFilter, TableView, formatNumber, inPeriod, periodChange, sumBy, toast, type Period } from "@ocsc/ui";
+import { AppShell, BarChart, CalendarMonth, Card, CardBody, CardHeader, EmptyState, FunnelChart, Grid, KpiCard, Kanban, PageHeader, PeriodFilter, PresenceStack, PrintButton, SampleBanner, TableView, Theme, formatNumber, inPeriod, periodChange, sumBy, toast, type Period } from "@ocsc/ui";
 import { useTable } from "@ocsc/app";
-import { Handshake, Percent, Target, Trophy } from "lucide-react";
+import { CalendarDays, Handshake, KanbanSquare, LayoutDashboard, Percent, Table2, Target, Trophy } from "lucide-react";
 
 const STAGES = [
   { value: "Lead", tone: "neutral" as const },
@@ -171,79 +205,94 @@ export default function App() {
   const empty = !deals.loading && deals.rows.length === 0;
 
   return (
-    <AppShell
-      title="Client pipeline"
-      subtitle="Opportunities from first contact to won"
-      pages={[
-        {
-          id: "overview",
-          label: "Overview",
-          render: () => (
-            <>
-              <PageHeader eyebrow="Business development" title="Pipeline" description="What is open, what it is worth and how often we win." actions={<PeriodFilter value={period} onChange={setPeriod} />} />
-              {empty ? (
-                <EmptyState icon={<Handshake />} title="No opportunities yet" description="Add the first one on the Deals tab." />
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <Grid cols={4}>
-                    <KpiCard label="Open pipeline" value={sumBy(open, "value")} format="currency" icon={<Handshake />} hint={open.length + " open"} />
-                    <KpiCard label="Weighted" value={weighted} format="currency" icon={<Target />} hint="Value × probability" />
-                    <KpiCard label="Won" value={wonValue.value} format="currency" delta={wonValue.delta} deltaLabel="vs previous" icon={<Trophy />} />
-                    <KpiCard label="Win rate" value={closed.length ? (won.length / closed.length) * 100 : 0} format="percent" icon={<Percent />} hint={closed.length + " decided"} />
-                  </Grid>
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <Card>
-                      <CardHeader title="Conversion" description="Deals that reached each stage" />
-                      <CardBody><FunnelChart data={funnel} /></CardBody>
-                    </Card>
-                    <Card>
-                      <CardHeader title="Open value by owner" />
-                      <CardBody><BarChart data={sumBy(open, "value", "owner")} x="label" series={[{ key: "value", label: "Value" }]} format="currency" horizontal /></CardBody>
-                    </Card>
+    <>
+      <Theme preset="evolve" density="comfortable" />
+      <AppShell
+        title="Client pipeline"
+        subtitle="Opportunities from first contact to won"
+        commands
+        actions={<><PresenceStack /><PrintButton size="sm" document={() => ({ title: "Client Pipeline", kind: "PIPELINE REPORT", blocks: [{ type: "stats", items: [{ label: "Open pipeline", value: formatNumber(sumBy(open, "value"), "currency") }, { label: "Weighted", value: formatNumber(weighted, "currency") }] }, { type: "table", columns: ["Opportunity", "Client", "Stage", { label: "Value", align: "right" }], rows: open.map((r) => [String(r.name ?? ""), String(r.client ?? ""), String(r.stage ?? ""), formatNumber(Number(r.value ?? 0), "currency")]) }] })} /></>}
+        pages={[
+          {
+            id: "overview",
+            label: "Overview",
+            icon: <LayoutDashboard />,
+            render: () => (
+              <div className="flex flex-col gap-5">
+                <SampleBanner tables={[deals]} />
+                <PageHeader className="mb-0" eyebrow="Business development" title="Pipeline" description="What is open, what it is worth and how often we win." actions={<PeriodFilter value={period} onChange={setPeriod} />} />
+                {empty ? (
+                  <EmptyState icon={<Handshake />} title="No opportunities yet" description="Add the first one on the Deals tab." />
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <Grid cols={4}>
+                      <KpiCard label="Open pipeline" value={sumBy(open, "value")} format="currency" icon={<Handshake />} hint={open.length + " open"} />
+                      <KpiCard label="Weighted" value={weighted} format="currency" icon={<Target />} hint="Value × probability" />
+                      <KpiCard label="Won" value={wonValue.value} format="currency" delta={wonValue.delta} deltaLabel="vs previous" icon={<Trophy />} />
+                      <KpiCard label="Win rate" value={closed.length ? (won.length / closed.length) * 100 : 0} format="percent" icon={<Percent />} hint={closed.length + " decided"} />
+                    </Grid>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <Card>
+                        <CardHeader title="Conversion" description="Deals that reached each stage" />
+                        <CardBody><FunnelChart data={funnel} /></CardBody>
+                      </Card>
+                      <Card>
+                        <CardHeader title="Open value by owner" />
+                        <CardBody><BarChart data={sumBy(open, "value", "owner")} x="label" series={[{ key: "value", label: "Value" }]} format="currency" horizontal /></CardBody>
+                      </Card>
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          ),
-        },
-        {
-          id: "board",
-          label: "Board",
-          render: () => (
-            <Kanban
-              rows={deals.rows}
-              groupBy="stage"
-              columns={STAGES}
-              onMove={deals.canEdit ? (row, stage) => void deals.update(row._id, { stage }).catch(() => toast.error("Not moved")) : undefined}
-              renderCard={(row) => (
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-sm font-semibold">{String(row.name ?? "Untitled")}</p>
-                  <p className="text-xs text-muted-foreground">{String(row.client ?? "")}</p>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold tabular">{formatNumber(Number(row.value ?? 0), "currency")}</span>
-                    <span className="text-muted-foreground">{formatNumber(Number(row.probability ?? 0) * 100, "percent")}</span>
+                )}
+              </div>
+            ),
+          },
+          {
+            id: "board",
+            label: "Board",
+            icon: <KanbanSquare />,
+            render: () => (
+              <Kanban
+                rows={deals.rows}
+                groupBy="stage"
+                columns={STAGES}
+                onMove={deals.canEdit ? (row, stage) => void deals.update(row._id, { stage }).catch(() => toast.error("Not moved")) : undefined}
+                renderCard={(row) => (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-sm font-semibold">{String(row.name ?? "Untitled")}</p>
+                    <p className="text-xs text-muted-foreground">{String(row.client ?? "")}</p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold tabular">{formatNumber(Number(row.value ?? 0), "currency")}</span>
+                      <span className="text-muted-foreground">{formatNumber(Number(row.probability ?? 0) * 100, "percent")}</span>
+                    </div>
                   </div>
-                </div>
-              )}
-            />
-          ),
-        },
-        {
-          id: "deals",
-          label: "Deals",
-          count: open.length,
-          render: () => <TableView table={deals} filterBy="stage" columns={["name", "client", "stage", "value", "probability", "owner", "close_date"]} newLabel="New deal" />,
-        },
-      ]}
-    />
+                )}
+              />
+            ),
+          },
+          {
+            id: "calendar",
+            label: "Close dates",
+            icon: <CalendarDays />,
+            render: () => <CalendarMonth rows={deals.rows} dateKey="close_date" titleKey="name" toneKey="stage" />,
+          },
+          {
+            id: "deals",
+            label: "Deals",
+            icon: <Table2 />,
+            count: open.length,
+            render: () => <TableView table={deals} filterBy="stage" columns={["name", "client", "stage", "value", "probability", "owner", "close_date"]} newLabel="New deal" />,
+          },
+        ]}
+      />
+    </>
   );
 }
 `;
 
 const siteInspection = String.raw`import { useMemo, useState } from "react";
-import { AppShell, Badge, CalendarHeatmap, Card, CardBody, CardHeader, Checklist, Dialog, EmptyState, Field, Gauge, Grid, Input, KpiCard, PageHeader, PeriodFilter, PhotoInput, Select, Steps, TableView, Textarea, checklistSummary, inPeriod, readJson, toast, type ChecklistItem, type ChecklistValue, type Period } from "@ocsc/ui";
+import { AppShell, Badge, CalendarHeatmap, Card, CardBody, CardHeader, Checklist, Dialog, EmptyState, Field, GalleryView, Gauge, Grid, Input, KpiCard, PageHeader, PeriodFilter, PhotoInput, PresenceStack, PrintButton, SampleBanner, Select, Steps, TableView, Textarea, Theme, checklistSummary, inPeriod, readJson, toast, type ChecklistItem, type ChecklistValue, type Period } from "@ocsc/ui";
 import { useApp, useTable } from "@ocsc/app";
-import { AlertTriangle, ClipboardCheck, ClipboardPlus, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Camera, ClipboardCheck, ClipboardPlus, LayoutDashboard, ShieldCheck, Table2 } from "lucide-react";
 
 const CHECKS: ChecklistItem[] = [
   { id: "ppe", label: "PPE worn by everyone on site", section: "Safety" },
@@ -302,17 +351,21 @@ export default function App() {
 
   return (
     <>
+      <Theme preset="forest" density="comfortable" />
       <AppShell
         title="Site inspections"
         subtitle="Safety and quality on every visit"
-        actions={start}
+        commands
+        actions={<><PresenceStack /><PrintButton size="sm" document={() => ({ title: "Site Inspections Summary", kind: "SITE INSPECTION REPORT", blocks: [{ type: "stats", items: [{ label: "Inspections", value: String(rows.length) }, { label: "Passed", value: String(passed) }, { label: "Major findings", value: String(major) }] }, { type: "table", columns: ["Site", "Date", "Inspector", "Result"], rows: rows.map((r) => [String(r.site ?? ""), String(r.date ?? ""), String(r.inspector ?? ""), String(r.result ?? "")]) }] })} />{start}</>}
         pages={[
           {
             id: "overview",
             label: "Overview",
+            icon: <LayoutDashboard />,
             render: () => (
-              <>
-                <PageHeader eyebrow="Inspections" title="How sites are doing" actions={<PeriodFilter value={period} onChange={setPeriod} />} />
+              <div className="flex flex-col gap-5">
+                <SampleBanner tables={[inspections]} />
+                <PageHeader className="mb-0" eyebrow="Inspections" title="How sites are doing" actions={<PeriodFilter value={period} onChange={setPeriod} />} />
                 {!inspections.loading && inspections.rows.length === 0 ? (
                   <EmptyState icon={<ClipboardCheck />} title="No inspections yet" description="Start the first one: pick the site, work through the checks and add photos." action={start} />
                 ) : (
@@ -334,12 +387,19 @@ export default function App() {
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             ),
+          },
+          {
+            id: "gallery",
+            label: "Site photos",
+            icon: <Camera />,
+            render: () => <GalleryView rows={inspections.rows} imageKey="photos" titleKey="site" subtitleKey="date" badgeKey="result" />,
           },
           {
             id: "inspections",
             label: "Inspections",
+            icon: <Table2 />,
             count: inspections.rows.length,
             render: () => (
               <TableView
@@ -398,9 +458,9 @@ export default function App() {
 `;
 
 const timesheet = String.raw`import { useMemo, useState } from "react";
-import { AppShell, BarList, Button, CalendarHeatmap, Card, CardBody, CardHeader, Checkbox, EmptyState, Field, Grid, Heatmap, Input, KpiCard, PageHeader, TableView, sumBy, toast } from "@ocsc/ui";
+import { AppShell, BarList, Button, CalendarHeatmap, CalendarMonth, Card, CardBody, CardHeader, Checkbox, EmptyState, Field, Grid, Heatmap, Input, KpiCard, PageHeader, PresenceStack, PrintButton, SampleBanner, TableView, Theme, sumBy, toast } from "@ocsc/ui";
 import { useApp, useTable } from "@ocsc/app";
-import { Clock, Plus, Receipt, Users } from "lucide-react";
+import { CalendarDays, Clock, Plus, Receipt, Table2, Users } from "lucide-react";
 
 const DAY = 86400000;
 
@@ -445,16 +505,22 @@ export default function App() {
   };
 
   return (
-    <AppShell
-      title="Timesheets"
-      subtitle="Hours by person and project"
-      pages={[
-        {
-          id: "mine",
-          label: "My week",
-          render: () => (
-            <div className="flex flex-col gap-4">
-              <PageHeader eyebrow={viewer.name ?? "You"} title="This week" description="Log time as you go; only you can change your entries." />
+    <>
+      <Theme preset="soft" density="comfortable" />
+      <AppShell
+        title="Timesheets"
+        subtitle="Hours by person and project"
+        commands
+        actions={<><PresenceStack /><PrintButton size="sm" document={() => ({ title: "Timesheet Summary", kind: "TIMESHEET REPORT", blocks: [{ type: "stats", items: [{ label: "Team hours this week", value: String(sumBy(teamWeek, "hours")) }, { label: "Billable hours", value: String(sumBy(billable, "hours")) }] }, { type: "table", columns: ["Date", "Person", "Project", { label: "Hours", align: "right" }], rows: teamWeek.map((r) => [String(r.date ?? ""), String(r.person ?? ""), String(r.project ?? ""), String(r.hours ?? 0)]) }] })} /></>}
+        pages={[
+          {
+            id: "mine",
+            label: "My week",
+            icon: <Clock />,
+            render: () => (
+              <div className="flex flex-col gap-4">
+                <SampleBanner tables={[entries]} />
+                <PageHeader className="mb-0" eyebrow={viewer.name ?? "You"} title="This week" description="Log time as you go; only you can change your entries." />
               <Grid cols={3}>
                 <KpiCard label="My hours this week" value={sumBy(thisWeek, "hours")} icon={<Clock />} hint="Target 37.5" />
                 <KpiCard label="Billable" value={sumBy(thisWeek.filter((row) => row.billable === true), "hours")} icon={<Receipt />} />
@@ -482,10 +548,11 @@ export default function App() {
             </div>
           ),
         },
-        {
-          id: "team",
-          label: "Team",
-          render: () =>
+          {
+            id: "team",
+            label: "Team",
+            icon: <Users />,
+            render: () =>
             entries.rows.length === 0 ? (
               <EmptyState icon={<Users />} title="No time logged yet" />
             ) : (
@@ -508,24 +575,33 @@ export default function App() {
               </div>
             ),
         },
-        {
-          id: "entries",
-          label: "Entries",
-          count: entries.rows.length,
-          render: () => <TableView table={entries} filterBy="project" columns={["date", "person", "project", "task", "hours", "billable"]} newLabel="Log time" />,
-        },
-      ]}
-    />
+          {
+            id: "calendar",
+            label: "Calendar",
+            icon: <CalendarDays />,
+            render: () => <CalendarMonth rows={entries.rows} dateKey="date" titleKey="project" />,
+          },
+          {
+            id: "entries",
+            label: "Entries",
+            icon: <Table2 />,
+            count: entries.rows.length,
+            render: () => <TableView table={entries} filterBy="project" columns={["date", "person", "project", "task", "hours", "billable"]} newLabel="Log time" />,
+          },
+        ]}
+      />
+    </>
   );
 }
 `;
 
-const assetRegister = String.raw`import { AppShell, BarList, Badge, Card, CardBody, CardHeader, DonutChart, EmptyState, Grid, ImageCard, KpiCard, PageHeader, TableView, countBy, formatNumber, sumBy } from "@ocsc/ui";
+const assetRegister = String.raw`import { AppShell, BarList, Badge, Card, CardBody, CardHeader, DonutChart, EmptyState, Grid, ImageCard, Kanban, KpiCard, PageHeader, PresenceStack, PrintButton, SampleBanner, TableView, Theme, countBy, formatNumber, sumBy, toast } from "@ocsc/ui";
 import { useTable } from "@ocsc/app";
-import { Boxes, Euro, Wrench, CalendarClock } from "lucide-react";
+import { Boxes, CalendarClock, Euro, KanbanSquare, LayoutDashboard, Table2, Wrench } from "lucide-react";
 import { imageIdsOf } from "./photos";
 
 const DAY = 86400000;
+const STATUSES = ["In use", "Spare", "Repair", "Retired"];
 
 export default function App() {
   const assets = useTable("assets");
@@ -539,61 +615,90 @@ export default function App() {
   const repair = active.filter((row) => row.status === "Repair");
 
   return (
-    <AppShell
-      title="Asset register"
-      subtitle="Equipment, where it is and when it is due"
-      pages={[
-        {
-          id: "overview",
-          label: "Overview",
-          render: () =>
-            !assets.loading && assets.rows.length === 0 ? (
-              <EmptyState icon={<Boxes />} title="No assets yet" description="Add equipment on the Register tab, with a photo of each tag." />
-            ) : (
-              <div className="flex flex-col gap-4">
-                <PageHeader eyebrow="Equipment" title="Register" description="Value, condition and service dates." />
-                <Grid cols={4}>
-                  <KpiCard label="Assets in use" value={active.length} icon={<Boxes />} />
-                  <KpiCard label="Value" value={sumBy(active, "cost")} format="currency" icon={<Euro />} />
-                  <KpiCard label="Service due in 30 days" value={due.length} tone={due.length ? "warning" : "success"} icon={<CalendarClock />} />
-                  <KpiCard label="In repair" value={repair.length} tone={repair.length ? "danger" : "neutral"} icon={<Wrench />} />
-                </Grid>
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <Card><CardHeader title="By category" /><CardBody><DonutChart data={countBy(active, "category")} centerLabel="Assets" /></CardBody></Card>
-                  <Card><CardHeader title="By location" /><CardBody><BarList data={countBy(active, "location")} /></CardBody></Card>
+    <>
+      <Theme preset="crisp" density="comfortable" />
+      <AppShell
+        title="Asset register"
+        subtitle="Equipment, where it is and when it is due"
+        commands
+        actions={<><PresenceStack /><PrintButton size="sm" document={() => ({ title: "Asset Register", kind: "ASSET REGISTER", blocks: [{ type: "stats", items: [{ label: "Assets in use", value: String(active.length) }, { label: "Value", value: formatNumber(sumBy(active, "cost"), "currency") }] }, { type: "table", columns: ["Tag", "Asset", "Location", "Status", "Next service"], rows: active.map((r) => [String(r.tag ?? ""), String(r.name ?? ""), String(r.location ?? ""), String(r.status ?? ""), String(r.next_service ?? "")]) }] })} /></>}
+        pages={[
+          {
+            id: "overview",
+            label: "Overview",
+            icon: <LayoutDashboard />,
+            render: () =>
+              !assets.loading && assets.rows.length === 0 ? (
+                <EmptyState icon={<Boxes />} title="No assets yet" description="Add equipment on the Register tab, with a photo of each tag." />
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <SampleBanner tables={[assets]} />
+                  <PageHeader className="mb-0" eyebrow="Equipment" title="Register" description="Value, condition and service dates." />
+                  <Grid cols={4}>
+                    <KpiCard label="Assets in use" value={active.length} icon={<Boxes />} />
+                    <KpiCard label="Value" value={sumBy(active, "cost")} format="currency" icon={<Euro />} />
+                    <KpiCard label="Service due in 30 days" value={due.length} tone={due.length ? "warning" : "success"} icon={<CalendarClock />} />
+                    <KpiCard label="In repair" value={repair.length} tone={repair.length ? "danger" : "neutral"} icon={<Wrench />} />
+                  </Grid>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Card><CardHeader title="By category" /><CardBody><DonutChart data={countBy(active, "category")} centerLabel="Assets" /></CardBody></Card>
+                    <Card><CardHeader title="By location" /><CardBody><BarList data={countBy(active, "location")} /></CardBody></Card>
+                  </div>
                 </div>
-              </div>
+              ),
+          },
+          {
+            id: "board",
+            label: "Status board",
+            icon: <KanbanSquare />,
+            render: () => (
+              <Kanban
+                rows={assets.rows}
+                groupBy="status"
+                columns={STATUSES.map((value) => ({ value }))}
+                onMove={assets.canEdit ? (row, status) => void assets.update(row._id, { status }).catch(() => toast.error("Not moved")) : undefined}
+                renderCard={(row) => (
+                  <div className="flex flex-col gap-1.5">
+                    <p className="text-sm font-semibold">{String(row.name ?? row.tag ?? "Asset")}</p>
+                    <p className="text-xs text-muted-foreground">{[row.tag, row.location, row.assigned].filter(Boolean).join(" · ")}</p>
+                    {row.cost ? <span className="text-xs font-semibold tabular">{formatNumber(Number(row.cost), "currency")}</span> : null}
+                  </div>
+                )}
+              />
             ),
-        },
-        {
-          id: "service",
-          label: "Service due",
-          count: due.length,
-          render: () =>
-            due.length === 0 ? (
-              <EmptyState icon={<CalendarClock />} title="Nothing due in the next 30 days" />
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {due.map((row) => (
-                  <ImageCard
-                    key={row._id}
-                    asset={imageIdsOf(row.photo)[0] ?? null}
-                    title={String(row.name ?? row.tag ?? "Asset")}
-                    description={[row.tag, row.location, row.assigned].filter(Boolean).join(" · ")}
-                    footer={<Badge tone={Date.parse(String(row.next_service)) < Date.now() ? "danger" : "warning"} dot>Service {new Date(String(row.next_service)).toLocaleDateString("en-IE", { day: "numeric", month: "short" })}</Badge>}
-                  />
-                ))}
-              </div>
-            ),
-        },
-        {
-          id: "register",
-          label: "Register",
-          count: assets.rows.length,
-          render: () => <TableView table={assets} filterBy="status" columns={["tag", "name", "category", "location", "assigned", "status", "next_service", "photo"]} newLabel="New asset" />,
-        },
-      ]}
-    />
+          },
+          {
+            id: "service",
+            label: "Service due",
+            icon: <CalendarClock />,
+            count: due.length,
+            render: () =>
+              due.length === 0 ? (
+                <EmptyState icon={<CalendarClock />} title="Nothing due in the next 30 days" />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {due.map((row) => (
+                    <ImageCard
+                      key={row._id}
+                      asset={imageIdsOf(row.photo)[0] ?? null}
+                      title={String(row.name ?? row.tag ?? "Asset")}
+                      description={[row.tag, row.location, row.assigned].filter(Boolean).join(" · ")}
+                      footer={<Badge tone={Date.parse(String(row.next_service)) < Date.now() ? "danger" : "warning"} dot>Service {new Date(String(row.next_service)).toLocaleDateString("en-IE", { day: "numeric", month: "short" })}</Badge>}
+                    />
+                  ))}
+                </div>
+              ),
+          },
+          {
+            id: "register",
+            label: "Register",
+            icon: <Table2 />,
+            count: assets.rows.length,
+            render: () => <TableView table={assets} filterBy="status" columns={["tag", "name", "category", "location", "assigned", "status", "next_service", "photo"]} newLabel="New asset" />,
+          },
+        ]}
+      />
+    </>
   );
 }
 `;
@@ -609,6 +714,7 @@ const text = (key: string, label: string, required = false) => ({
   type: "text" as const,
   ...(required ? { required } : {}),
 });
+const sampleColumn = { key: "is_sample", label: "Sample", type: "boolean" as const, hidden: true };
 
 export const APP_TEMPLATES: AppTemplate[] = [
   {
@@ -646,6 +752,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
           { key: "due", label: "Due", type: "date" },
           { key: "progress", label: "Progress", type: "percent" },
           { key: "notes", label: "Notes", type: "longtext" },
+          sampleColumn,
         ],
       },
     ],
@@ -696,6 +803,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
             ],
           },
           { key: "notes", label: "Notes", type: "longtext" },
+          sampleColumn,
         ],
       },
     ],
@@ -742,6 +850,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
           { key: "checks", label: "Checks", type: "longtext", hidden: true },
           { key: "photos", label: "Photos", type: "image" },
           { key: "notes", label: "Notes", type: "longtext" },
+          sampleColumn,
         ],
       },
     ],
@@ -766,6 +875,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
           text("task", "Task"),
           { key: "hours", label: "Hours", type: "number", required: true },
           { key: "billable", label: "Billable", type: "boolean" },
+          sampleColumn,
         ],
       },
     ],
@@ -817,6 +927,7 @@ export const APP_TEMPLATES: AppTemplate[] = [
           { key: "cost", label: "Cost", type: "currency", currency: "EUR" },
           { key: "next_service", label: "Next service", type: "date" },
           { key: "photo", label: "Photo", type: "image" },
+          sampleColumn,
         ],
       },
     ],

@@ -283,7 +283,7 @@ it("shows the profile and the Advanced tab's controls", async () => {
     memoryScope: "Memory scope",
     voice: "Voice",
     readAloud: "Read replies aloud",
-    fleetManagement: "Manage other bots",
+    fleetManagement: "Manage other agents",
   };
   const controls = [...advanced.querySelectorAll("h3, span, label, div")].flatMap((node) =>
     Object.entries(labels)
@@ -362,7 +362,7 @@ describe("BotSettings thinking options", () => {
     expect(onSave.mock.lastCall?.[0]).not.toHaveProperty("thinkingLevel");
   });
 
-  it("shows the connection's thinking levels for a bot on a second enabled model", async () => {
+  it("shows the connection's thinking levels for an agent on a second enabled model", async () => {
     i18n.load("en", {});
     i18n.activate("en");
     vi.mocked(rpc.models.credentials).mockResolvedValueOnce([
@@ -403,7 +403,7 @@ describe("BotSettings thinking options", () => {
   });
 });
 
-describe("BotSettings bot management saves", () => {
+describe("BotSettings agent management saves", () => {
   it("cannot restore a stale enabled value when another session disables it", async () => {
     await render("Billing", { fleetManagement: true });
     await render("Billing", { fleetManagement: false });
@@ -435,7 +435,7 @@ describe("BotSettings bot management saves", () => {
     expect(container.textContent).toContain("Could not reach the server");
   });
 
-  it.each([false, true])("saves only the bot management toggle from %s", async (enabled) => {
+  it.each([false, true])("saves only the agent management toggle from %s", async (enabled) => {
     await render("Billing", { fleetManagement: enabled });
     const toggle = container.querySelector<HTMLButtonElement>('button[id$="-fleet-management"]');
     if (!toggle) throw new Error("Missing switch");
@@ -456,7 +456,7 @@ describe("BotSettings description saves", () => {
     expect(onSave.mock.calls[0]?.[0]).not.toHaveProperty("instructions");
   });
 
-  it("does not resend instructions when the bot prop stays on the old description", async () => {
+  it("does not resend instructions when the agent prop stays on the old description", async () => {
     await render();
     await setDescription("Invoices");
     await clickSave();
@@ -525,7 +525,7 @@ describe("instruction settings refresh", () => {
       expectedInstructions: "External update",
     });
   });
-  it("keeps a dirty draft when run completion refreshes the bot", async () => {
+  it("keeps a dirty draft when run completion refreshes the agent", async () => {
     const initial = bot();
     await act(async () => {
       root.render(<InstructionSettings bot={initial} />);
@@ -783,7 +783,7 @@ describe("BotSettings cached data", () => {
     expect(rpc.voice.voices).toHaveBeenCalledTimes(1);
   });
 
-  it("follows a newer bot in fields not edited and keeps the ones that were", async () => {
+  it("follows a newer agent in fields not edited and keeps the ones that were", async () => {
     await render("Billing", { computerMode: "team" });
     await setDescription("Invoices");
     await render("Remote edit", {

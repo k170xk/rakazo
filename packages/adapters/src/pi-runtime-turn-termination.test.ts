@@ -135,13 +135,13 @@ function reply(target: Model<"openai-completions">, text: string) {
 const tools: AgentRunRequest["tools"] = [
   {
     name: "update_bot",
-    description: "Update this bot's settings",
+    description: "Update this agent's settings",
     inputSchema: { type: "object", properties: { model: { type: "string" } } },
     readOnly: false,
   },
   {
     name: "list_files",
-    description: "List files in this bot's home",
+    description: "List files in this agent's home",
     inputSchema: { type: "object", properties: { path: { type: "string" } } },
     readOnly: true,
   },

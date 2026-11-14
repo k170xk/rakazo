@@ -4,6 +4,7 @@ export {
   Badge,
   Button,
   type ButtonProps,
+  Callout,
   Card,
   CardBody,
   CardHeader,
@@ -15,6 +16,7 @@ export {
   Input,
   Progress,
   Ring,
+  SampleBanner,
   SearchInput,
   Select,
   Skeleton,
@@ -158,7 +160,23 @@ export {
   themeCss,
 } from "./theme.js";
 export { ago, Comments, PresenceStack, RowActivity, RowHistory } from "./together.js";
-export { ActivityFeed, CalendarMonth, Kanban, type KanbanDrop, Timeline } from "./views.js";
+export {
+  AudioPlayer,
+  ImageViewer,
+  SketchPad,
+  SplitPane,
+  VideoPlayer,
+} from "./studio-media.js";
+export {
+  ActionList,
+  type ActionListItem,
+  ActivityFeed,
+  CalendarMonth,
+  type CalendarViewMode,
+  Kanban,
+  type KanbanDrop,
+  Timeline,
+} from "./views.js";
 export {
   type BoardColor,
   type BoardEnd,

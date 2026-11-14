@@ -277,7 +277,9 @@ export function mountSharedPages(
   app.get(`${SHARED_PAGE_PATH_PREFIX}:token/app/assets/:assetId`, async (c) => {
     const admitted = await admit(c);
     if (admitted instanceof Response) return admitted;
-    if (admitted.found.page.kind !== "app") return c.json({ error: "Not found" }, 404, headers);
+    if (admitted.found.page.kind !== "app" && admitted.found.page.kind !== "whiteboard") {
+      return c.json({ error: "Not found" }, 404, headers);
+    }
     const asset = await readSharedAppAsset(
       prisma,
       admitted.found.pageId,

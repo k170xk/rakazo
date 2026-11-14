@@ -454,7 +454,7 @@ describe("update_bot parameters", () => {
     expect(() => parseConnectorToolArgs(schema, { notifyOnFinish: "false" })).toThrow();
   });
 
-  it("still accepts avatar fields from the calling bot", () => {
+  it("still accepts avatar fields from the calling agent", () => {
     const tool = builtinAgentTools.find((entry) => entry.name === "update_bot");
     expect(tool).toBeTruthy();
     const schema = JSON.parse(JSON.stringify(parametersFor(tool!))) as Record<string, unknown>;
@@ -472,7 +472,7 @@ describe("update_bot parameters", () => {
   });
 });
 
-describe("bot management tool parameters", () => {
+describe("agent management tool parameters", () => {
   const wireFor = (name: string) => {
     const tool = builtinAgentTools.find((entry) => entry.name === name);
     if (!tool) throw new Error(`missing ${name}`);

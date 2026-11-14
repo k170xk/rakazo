@@ -109,7 +109,7 @@ describePostgres("caller and tenant scoping (PostgreSQL)", () => {
       hostedProvider: TEXT_ONLY.modelProvider,
     });
 
-    it("reads only the caller's own bot in the caller's space", async () => {
+    it("reads only the caller's own agent in the caller's space", async () => {
       const own = await bot(shared, userA, TEXT_ONLY);
       const neighbors = await bot(shared, userB, TEXT_ONLY);
       const elsewhere = await bot(other, userA, TEXT_ONLY);
@@ -179,7 +179,7 @@ describePostgres("caller and tenant scoping (PostgreSQL)", () => {
     });
   });
 
-  it("starts only the target bot's webhook routines in its own space", async () => {
+  it("starts only the target agent's webhook routines in its own space", async () => {
     const target = await bot(shared, userA);
     const webhookSecret = await system.secret.create({
       data: { userId: userA, spaceId: shared, kind: WEBHOOK_SECRET_KIND, ciphertext: "sealed" },
@@ -208,7 +208,7 @@ describePostgres("caller and tenant scoping (PostgreSQL)", () => {
 
     const sendUserMessage = vi.fn(async () => ({ messageId: "message", runId: null, seq: 1 }));
     const app = new Hono();
-    app.use("/api/v1/bots/*", (_c, next) => runAsSystem("bot webhook", next));
+    app.use("/api/v1/bots/*", (_c, next) => runAsSystem("agent webhook", next));
     mountWebhookHttpRoutes(app, {
       prisma: runtime.prisma,
       secrets: { load: async () => WEBHOOK_TOKEN } as unknown as SecretStore,

@@ -203,10 +203,20 @@ import {
 } from "./domain.js";
 import {
   EmailDraftAttachmentSchema,
+  EmailDraftCreateSchema,
   EmailDraftEditSchema,
   EmailDraftSchema,
   EmailSignatureSchema,
 } from "./email-draft.js";
+import {
+  EmailFilingBatchSchema,
+  EmailFilingFolderSchema,
+  EmailFilingItemsInput,
+  EmailFilingProfileSchema,
+  EmailFilingProjectSchema,
+  EmailFilingRetargetSchema,
+  EmailFilingSettingsSchema,
+} from "./email-filing.js";
 import {
   ComputerCommandSchema,
   EvolveChangeEditsSchema,
@@ -245,6 +255,7 @@ import { ModelRoleSchema, ModelRoleUpdateSchema, ModelRoleViewSchema } from "./m
 import {
   PAGE_LIST_MAX_LIMIT,
   PageDetailSchema,
+  PageKindSchema,
   PageStateKeySchema,
   PageStateValuesSchema,
   PageSummarySchema,
@@ -252,7 +263,6 @@ import {
   PageVisibilitySchema,
 } from "./pages.js";
 import { PaymentWalletStatusSchema } from "./payments.js";
-import { BOARD_MAX_ITEMS, BoardItemSchema } from "./whiteboard.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
 import {
@@ -271,6 +281,7 @@ import {
   StaffLimitsStateSchema,
   StaffPersonLimitsSchema,
 } from "./staff-limits.js";
+import { BOARD_MAX_ITEMS, BoardItemSchema } from "./whiteboard.js";
 
 const botId = z.object({ botId: Id });
 const groupId = z.object({ groupId: Id });
@@ -1300,12 +1311,14 @@ export const appContract = {
   },
   /**
    * Outlook drafts an assistant made in its person's own chat. Only that person reads or edits
-   * them, and only their own Send sends one; a bot has no route to sending.
+   * them, and only their own press of Create draft writes one to their Outlook Drafts folder.
    */
   emailDrafts: {
     get: oc.input(z.object({ id: Id })).output(EmailDraftSchema),
     update: oc.input(EmailDraftEditSchema).output(EmailDraftSchema),
-    /** Sends exactly the version the person last saw; a draft sends at most once. */
+    /** Creates the draft in the person's Outlook Drafts folder using Mail.ReadWrite. */
+    createDraft: oc.input(EmailDraftCreateSchema).output(EmailDraftSchema),
+    /** Kept for older clients; creates the draft in Outlook rather than sending. */
     send: oc
       .input(z.object({ id: Id, version: z.number().int().positive() }))
       .output(EmailDraftSchema),
@@ -1315,6 +1328,30 @@ export const appContract = {
     signature: {
       get: oc.input(z.object({})).output(EmailSignatureSchema),
       set: oc.input(EmailSignatureSchema).output(EmailSignatureSchema),
+    },
+  },
+  /**
+   * Outlook filing an assistant proposed for its person. Only that person sees a card, and only
+   * their own press of File, Skip or Undo moves mail or creates a folder in their mailbox.
+   */
+  emailFiling: {
+    get: oc.input(z.object({ id: Id })).output(EmailFilingBatchSchema),
+    /** The person's own mail folders, for choosing a different one. */
+    folders: oc.input(z.object({})).output(z.object({ folders: z.array(EmailFilingFolderSchema) })),
+    /** Evolve projects by job number or title, read as the person, for a new project folder. */
+    searchProjects: oc
+      .input(z.object({ search: z.string().trim().min(1).max(80) }))
+      .output(z.object({ projects: z.array(EmailFilingProjectSchema) })),
+    retarget: oc.input(EmailFilingRetargetSchema).output(EmailFilingBatchSchema),
+    file: oc.input(EmailFilingItemsInput).output(EmailFilingBatchSchema),
+    skip: oc.input(EmailFilingItemsInput).output(EmailFilingBatchSchema),
+    undo: oc.input(EmailFilingItemsInput).output(EmailFilingBatchSchema),
+    settings: {
+      get: oc.input(z.object({})).output(EmailFilingProfileSchema),
+      set: oc.input(EmailFilingSettingsSchema.partial()).output(EmailFilingProfileSchema),
+      removeRule: oc
+        .input(z.object({ ruleId: z.string().min(1).max(40) }))
+        .output(EmailFilingProfileSchema),
     },
   },
   todos: {
@@ -1791,6 +1828,8 @@ export const appContract = {
         z.strictObject({
           botId: Id.optional(),
           groupId: Id.optional(),
+          /** Only this kind. The Apps dialog asks for apps, which are the person's, not one agent's. */
+          kind: PageKindSchema.optional(),
           cursor: z.string().max(500).optional(),
           limit: z.number().int().min(1).max(PAGE_LIST_MAX_LIMIT).optional(),
           /** Titles containing this text, for the command palette. */
@@ -1800,6 +1839,24 @@ export const appContract = {
       .output(
         z.strictObject({ items: z.array(PageSummarySchema), nextCursor: z.string().nullable() }),
       ),
+    /**
+     * Apps in this space that a colleague published: shared with the company, or published to
+     * Evolve. The person's own apps come from list. `path` is the share link when one exists.
+     */
+    published: oc.output(
+      z.strictObject({
+        items: z.array(
+          z.strictObject({
+            id: Id,
+            title: z.string().max(200),
+            owner: z.string(),
+            icon: Id.nullable(),
+            path: z.string().nullable(),
+            publishedToEvolve: z.boolean(),
+          }),
+        ),
+      }),
+    ),
     /** `link` also reads the page's share link, which only the share controls need. */
     get: oc
       .input(
@@ -1842,6 +1899,10 @@ export const appContract = {
     saveState: oc
       .input(z.strictObject({ pageId: Id, key: PageStateKeySchema, value: z.unknown() }))
       .output(z.object({ ok: z.literal(true) })),
+    /** An empty whiteboard the person starts from the Whiteboards list. */
+    createBoard: oc
+      .input(z.strictObject({ title: PageTitleSchema.optional() }))
+      .output(PageSummarySchema),
     /** The person's edits to a whiteboard, kept only when the board is still the version they changed. */
     saveBoard: oc
       .input(

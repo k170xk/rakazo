@@ -54,7 +54,7 @@ vi.mock("../app/index", () => ({
   }) =>
     createElement(
       "button",
-      { type: "button", onClick: () => onShareSelect({ id: "example", name: "Bot" }) },
+      { type: "button", onClick: () => onShareSelect({ id: "example", name: "Agent" }) },
       "Chat",
     ),
 }));
@@ -110,7 +110,7 @@ describe("share route", () => {
       type: "RESET",
       payload: {
         index: 1,
-        routes: [{ name: "index" }, { name: "thread", params: { botId: "example", name: "Bot" } }],
+        routes: [{ name: "index" }, { name: "thread", params: { botId: "example", name: "Agent" } }],
       },
     });
   });

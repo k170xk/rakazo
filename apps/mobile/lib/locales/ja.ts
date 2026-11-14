@@ -66,17 +66,17 @@ export const JA_MESSAGES: Record<string, string> = {
   "Could not load this page.": "このページを読み込めませんでした。",
   Pages: "ページ",
   "Could not load pages.": "ページを読み込めませんでした。",
-  "Pages this bot builds for you appear here.": "このボットが作成したページがここに表示されます。",
+  "Pages this agent builds for you appear here.": "このエージェントが作成したページがここに表示されます。",
   Shared: "共有",
-  "How other bots see it": "他のボットからの見え方",
+  "How other agents see it": "他のエージェントからの見え方",
   "Share to": "共有先",
   "{count} files": "{count}個のファイル",
   "could not read": "読み取れませんでした",
   "Not sent. Tap for options": "未送信。タップしてオプションを表示",
   "Image input is not configured for this model.": "このモデルでは画像入力が設定されていません。",
   "Send as file": "ファイルとして送信",
-  "The bot can use the file but won't see the picture.":
-    "ボットはファイルを利用できますが、画像の内容は見えません。",
+  "The agent can use the file but won't see the picture.":
+    "エージェントはファイルを利用できますが、画像の内容は見えません。",
   "This model cannot read images. Choose a model that supports images.":
     "このモデルは画像を読み取れません。画像に対応したモデルを選択してください。",
   "Could not connect to the computer screen": "コンピューター画面に接続できませんでした",
@@ -137,12 +137,12 @@ export const JA_MESSAGES: Record<string, string> = {
   "To:": "宛先:",
   Next: "次へ",
   "Ex: Project Falcon": "例: Project Falcon",
-  "Search bots": "ボットを検索",
+  "Search agents": "エージェントを検索",
   "About {label}": "{label}について",
-  "Manage other bots": "他のボットを管理",
-  "Allow cross-space bot communication": "スペースをまたいだボット間の通信を許可",
-  "Organize the sidebar and edit bots. Instruction, model, routine and group edits need approval.":
-    "サイドバーの整理とボットの編集ができます。指示、モデル、ルーティン、グループの編集には承認が必要です。",
+  "Manage other agents": "他のエージェントを管理",
+  "Allow cross-space agent communication": "スペースをまたいだエージェント間の通信を許可",
+  "Organize the sidebar and edit agents. Instruction, model, routine and group edits need approval.":
+    "サイドバーの整理とエージェントの編集ができます。指示、モデル、ルーティン、グループの編集には承認が必要です。",
   Headers: "ヘッダー",
   "Add header": "ヘッダーを追加",
   "Remove header": "ヘッダーを削除",
@@ -179,8 +179,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Your OpenAI": "お使いのOpenAI",
   "Your Anthropic": "お使いのAnthropic",
   "Your model provider": "お使いのモデルプロバイダー",
-  "Connect a model in Settings before running bots.":
-    "ボットを実行する前に、設定でモデルを接続してください。",
+  "Connect a model in Settings before running agents.":
+    "エージェントを実行する前に、設定でモデルを接続してください。",
   "Connect your own API key in Models or choose Rakazo credits in Billing.":
     "モデルで自分のAPIキーを接続するか、請求でRakazoクレジットを選択してください。",
   "The model provider returned an error.": "モデルプロバイダーがエラーを返しました。",
@@ -247,7 +247,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Group settings": "グループ設定",
   Connectors: "コネクタ",
   Models: "モデル",
-  "New bot": "新しいボット",
+  "New agent": "新しいエージェント",
   "New group chat": "新しいグループチャット",
   "New private space": "新しいプライベートスペース",
   Routine: "ルーティン",
@@ -280,9 +280,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "Use default server": "デフォルトのサーバーを使用",
   Activity: "アクティビティ",
   "Collapse {name}": "{name}を折りたたむ",
-  "Could not create bot": "ボットを作成できませんでした",
+  "Could not create agent": "エージェントを作成できませんでした",
   "Could not delete space": "スペースを削除できませんでした",
-  "Could not load bots": "ボットを読み込めませんでした",
+  "Could not load agents": "エージェントを読み込めませんでした",
   "Could not open this PDF.": "このPDFを開けませんでした。",
   "Could not save the default space": "デフォルトのスペースを保存できませんでした",
   "Could not switch spaces": "スペースを切り替えられませんでした",
@@ -296,7 +296,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Long press to pin or move to a section": "長押しでピン留め、またはセクションに移動",
   "Long press to pin, move, or silence notifications":
     "長押しでピン留め、移動、または通知をミュート",
-  "No matching bots": "一致するボットはありません",
+  "No matching agents": "一致するエージェントはありません",
   "No messages yet": "まだメッセージはありません",
   "No results": "結果はありません",
   Personal: "個人",
@@ -307,10 +307,10 @@ export const JA_MESSAGES: Record<string, string> = {
   "Space actions for {name}": "{name}のスペース操作",
   Customize: "カスタマイズ",
   "Customize {setting}": "{setting}をカスタマイズ",
-  "Tap + to create a bot": "+をタップしてボットを作成",
+  "Tap + to create an agent": "+をタップしてエージェントを作成",
   "This removes the space for everyone.": "このスペースを全員に対して削除します。",
-  "Delete {name} and its bot?": "{name} とそのボットを削除しますか？",
-  "Delete {name} and its {count} bots?": "{name} と {count} 個のボットを削除しますか？",
+  "Delete {name} and its agent?": "{name} とそのエージェントを削除しますか？",
+  "Delete {name} and its {count} agents?": "{name} と {count} 個のエージェントを削除しますか？",
   "notifications silenced": "通知ミュート中",
   unread: "未読",
   "@{name}": "@{name}",
@@ -330,7 +330,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Attach: "添付",
   "Attach file": "ファイルを添付",
   Attachment: "添付ファイル",
-  "Bot actions": "ボットの操作",
+  "Agent actions": "エージェントの操作",
   Camera: "カメラ",
   "Cancel reply": "返信をキャンセル",
   Cancelled: "キャンセル済み",
@@ -343,7 +343,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Complete: "完了",
   Completed: "完了済み",
   Copy: "コピー",
-  "Could not archive bot": "ボットをアーカイブできませんでした",
+  "Could not archive agent": "エージェントをアーカイブできませんでした",
   "Could not clear conversation": "会話をクリアできませんでした",
   "Could not load earlier messages": "以前のメッセージを読み込めませんでした",
   "Could not open file": "ファイルを開けませんでした",
@@ -407,7 +407,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Play: "再生",
   Pause: "一時停止",
   "Select text": "テキストを選択",
-  "All bots": "すべてのボット",
+  "All agents": "すべてのエージェント",
   Artifact: "アーティファクト",
   Artifacts: "アーティファクト",
   "Could not delete this artifact": "このアーティファクトを削除できませんでした",
@@ -427,15 +427,15 @@ export const JA_MESSAGES: Record<string, string> = {
     "このアーティファクトの全{count}個のバージョンを削除します。この操作は元に戻せません。",
   Versions: "バージョン",
   Stop: "停止",
-  "This removes every message and stops current work. The bot, computer, memory, and routines are kept.":
-    "すべてのメッセージを削除し、現在の作業を停止します。ボット、コンピューター、メモリ、ルーティンは保持されます。",
+  "This removes every message and stops current work. The agent, computer, memory, and routines are kept.":
+    "すべてのメッセージを削除し、現在の作業を停止します。エージェント、コンピューター、メモリ、ルーティンは保持されます。",
   "Type your answer": "回答を入力",
   Username: "ユーザー名",
-  "Waiting for this bot’s response.": "このボットの応答を待っています。",
+  "Waiting for this agent’s response.": "このエージェントの応答を待っています。",
   "Work stopped, but the thread could not refresh: {detail}":
     "作業は停止しましたが、スレッドを更新できませんでした: {detail}",
   archived: "アーカイブ済み",
-  bot: "ボット",
+  agent: "エージェント",
   cancelled: "キャンセル済み",
   deleted: "削除済み",
   expired: "期限切れ",
@@ -453,11 +453,11 @@ export const JA_MESSAGES: Record<string, string> = {
   Advanced: "詳細設定",
   Color: "色",
   "Color {number}": "色{number}",
-  "Could not load bot": "ボットを読み込めませんでした",
+  "Could not load agent": "エージェントを読み込めませんでした",
   "Could not load model settings": "モデル設定を読み込めませんでした",
-  "Could not save bot": "ボットを保存できませんでした",
+  "Could not save agent": "エージェントを保存できませんでした",
   "Default (medium)": "デフォルト（中）",
-  "Describe what this bot does": "このボットの役割を説明",
+  "Describe what this agent does": "このエージェントの役割を説明",
   Description: "説明",
   "Extra high": "非常に高い",
   High: "高",
@@ -467,7 +467,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Minimal: "最小",
   Model: "モデル",
   Name: "名前",
-  "Name this bot": "ボットに名前を付ける",
+  "Name this agent": "エージェントに名前を付ける",
   "Read replies aloud": "返信を読み上げる",
   Save: "保存",
   "Saving…": "保存中…",
@@ -475,12 +475,12 @@ export const JA_MESSAGES: Record<string, string> = {
   "Can't read images": "画像を読み取れません",
   Thinking: "思考",
   Title: "タイトル",
-  "What this bot is for": "このボットの用途",
+  "What this agent is for": "このエージェントの用途",
   "Could not delete group": "グループを削除できませんでした",
   "Could not load group": "グループを読み込めませんでした",
   "Could not save group": "グループを保存できませんでした",
   "Delete group": "グループを削除",
-  "Bots and their own chats stay.": "ボットとそれぞれのチャットは残ります。",
+  "Agents and their own chats stay.": "エージェントとそれぞれのチャットは残ります。",
   "Group name": "グループ名",
   "Group not found": "グループが見つかりません",
   Members: "メンバー",
@@ -509,7 +509,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Routines: "ルーティン",
   "Could not load routines": "ルーティンを読み込めませんでした",
   "{count} on": "{count}件オン",
-  "Ask this Bot in chat to set up a routine.":
+  "Ask this Agent in chat to set up a routine.":
     "チャットでこのBotにルーティンの設定を頼んでください。",
   "{name}, On": "{name}、オン",
   "{name}, Off": "{name}、オフ",
@@ -520,7 +520,7 @@ export const JA_MESSAGES: Record<string, string> = {
     "ルーティンとその実行履歴が完全に削除されます。",
   "Could not delete routine": "ルーティンを削除できませんでした",
   "Could not update routine": "ルーティンを更新できませんでした",
-  Bot: "ボット",
+  Bot: "エージェント",
   "Close computer": "コンピューターを閉じる",
   "Computer keyboard": "コンピューターのキーボード",
   Control: "Control",
@@ -701,15 +701,15 @@ export const JA_MESSAGES: Record<string, string> = {
   "This device": "このデバイス",
   "Agent messages": "エージェントのメッセージ",
   Appearance: "外観",
-  "Bot style": "ボットのスタイル",
-  "Couldn't update bot style": "ボットのスタイルを更新できませんでした",
+  "Agent style": "エージェントのスタイル",
+  "Couldn't update agent style": "エージェントのスタイルを更新できませんでした",
   Archived: "アーカイブ済み",
   Cancel: "キャンセル",
   Close: "閉じる",
   "Could not change language": "言語を変更できませんでした",
   "Could not delete account": "アカウントを削除できませんでした",
   "Could not load chats": "チャットを読み込めませんでした",
-  "Could not restore bot": "ボットを復元できませんでした",
+  "Could not restore agent": "エージェントを復元できませんでした",
   "Could not sign out": "ログアウトできませんでした",
   "Could not update notifications": "通知を更新できませんでした",
   "Current password": "現在のパスワード",
@@ -726,8 +726,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Needs attention": "要対応",
   Unread: "未読",
   "Notification settings": "通知設定",
-  "Get notified when this Bot finishes or needs input":
-    "このボットが完了したときや入力が必要なときに通知を受け取る",
+  "Get notified when this Agent finishes or needs input":
+    "このエージェントが完了したときや入力が必要なときに通知を受け取る",
   Notifications: "通知",
   "Questions, approvals, takeover": "質問、承認、操作の引き継ぎ",
   "Replies and completed work": "返信と完了した作業",
@@ -737,8 +737,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Stream replies": "返信をストリーミング",
   "Load web images automatically": "Web画像を自動で読み込む",
   System: "システム",
-  "This permanently deletes your account, bots, conversations, memories, files, and saved connections. This cannot be undone.":
-    "アカウント、ボット、会話、メモリ、ファイル、保存済みの接続が完全に削除されます。この操作は元に戻せません。",
+  "This permanently deletes your account, agents, conversations, memories, files, and saved connections. This cannot be undone.":
+    "アカウント、エージェント、会話、メモリ、ファイル、保存済みの接続が完全に削除されます。この操作は元に戻せません。",
   "Try again.": "もう一度お試しください。",
   Usage: "使用量",
   "Your account": "あなたのアカウント",
@@ -774,8 +774,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Section actions for {name}": "{name}のセクション操作",
   "Could not delete section": "セクションを削除できませんでした",
   "Delete section": "セクションを削除",
-  "Its bots and groups are kept and leave the section.":
-    "セクション内のボットとグループは残り、セクションから外れます。",
+  "Its agents and groups are kept and leave the section.":
+    "セクション内のエージェントとグループは残り、セクションから外れます。",
   "Resume notifications": "通知を再開",
   "Save section name": "セクション名を保存",
   "Section name": "セクション名",
@@ -856,7 +856,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "{channel} {id}": "{channel} {id}",
   "{channel} {id}, {date}": "{channel} {id}, {date}",
   "Saved {name} locally": "{name}をローカルに保存しました",
-  "Could not delete bot": "ボットを削除できませんでした",
+  "Could not delete agent": "エージェントを削除できませんでした",
   "Delete memories too": "メモリも削除",
   "Its conversation, files, and routines will be permanently deleted. What should happen to its memories?":
     "会話、ファイル、ルーティンは完全に削除されます。メモリはどうしますか？",
@@ -909,8 +909,8 @@ export const JA_MESSAGES: Record<string, string> = {
     "ログインを待機中です。コードの有効期限は約{minutes}分です。",
   "Waiting for sign-in — the link expires in about {minutes} minutes.":
     "ログインを待機中です。リンクの有効期限は約{minutes}分です。",
-  "Allow microphone access to call a bot.":
-    "ボットと通話するにはマイクへのアクセスを許可してください。",
+  "Allow microphone access to call an agent.":
+    "エージェントと通話するにはマイクへのアクセスを許可してください。",
   "Allow speech recognition in Settings, or connect ElevenLabs, OpenAI, or Fish Audio.":
     "設定で音声認識を許可するか、ElevenLabs、OpenAI、Fish Audioのいずれかを接続してください。",
   Call: "通話",
@@ -954,12 +954,12 @@ export const JA_MESSAGES: Record<string, string> = {
   "You can turn this off in Account → AI data sharing.":
     "これは「アカウント → AIデータ共有」でオフにできます。",
   Allow: "許可",
-  "Messages, chat history, bot instructions, memories, attachments, screenshots and connected-app content are sent to run your bots, including routines.":
-    "メッセージ、チャット履歴、ボットの指示、メモリ、添付ファイル、スクリーンショット、接続アプリのコンテンツが、ルーティンを含むボットの実行のために送信されます。",
+  "Messages, chat history, agent instructions, memories, attachments, screenshots and connected-app content are sent to run your agents, including routines.":
+    "メッセージ、チャット履歴、エージェントの指示、メモリ、添付ファイル、スクリーンショット、接続アプリのコンテンツが、ルーティンを含むエージェントの実行のために送信されます。",
   "Your recordings are sent for transcription, and text you play is sent to generate speech.":
     "録音は文字起こしのために送信され、再生するテキストは音声生成のために送信されます。",
-  "Conversation summaries, memories, searches and bot and Space IDs are sent to store and recall context.":
-    "会話の要約、メモリ、検索、ボットとスペースのIDが、コンテキストの保存と呼び出しのために送信されます。",
+  "Conversation summaries, memories, searches and agent and Space IDs are sent to store and recall context.":
+    "会話の要約、メモリ、検索、エージェントとスペースのIDが、コンテキストの保存と呼び出しのために送信されます。",
   "AI data sharing": "AIデータ共有",
   "Allow {name} on mobile": "モバイルで{name}を許可",
   "Could not load permissions.": "権限を読み込めませんでした。",
@@ -981,7 +981,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Members ({count})": "メンバー（{count}）",
   "Show all": "すべて表示",
   "Show selected": "選択中を表示",
-  "Filter bots": "ボットを絞り込む",
+  "Filter agents": "エージェントを絞り込む",
   "Pick {min}–{max}": "{min}–{max}個を選択",
   "No members yet": "メンバーはまだいません",
   Applied: "適用済み",
@@ -992,7 +992,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Instructions: "指示",
   "Instructions updated": "指示を更新しました",
   "Settings updated": "設定を更新しました",
-  "Let this bot update its own instructions": "このボットに自身の指示の更新を許可",
+  "Let this agent update its own instructions": "このエージェントに自身の指示の更新を許可",
   Restored: "復元しました",
   Undo: "元に戻す",
   "Update instructions?": "指示を更新しますか？",
@@ -1014,30 +1014,30 @@ export const JA_MESSAGES: Record<string, string> = {
   "Credential saved": "認証情報を保存済み",
   Authentication: "認証方式",
   "No auth": "認証なし",
-  "The bot couldn't reply because its provider's daily limit was reached.":
-    "プロバイダーの1日の上限に達したため、ボットは返信できませんでした。",
-  "The bot couldn't reply because its provider's weekly limit was reached.":
-    "プロバイダーの週間上限に達したため、ボットは返信できませんでした。",
-  "The bot couldn't reply because its provider's monthly limit was reached.":
-    "プロバイダーの月間上限に達したため、ボットは返信できませんでした。",
-  "The bot couldn't reply because its provider's usage limit was reached.":
-    "プロバイダーの使用量上限に達したため、ボットは返信できませんでした。",
-  "The provider received too many requests to answer this bot.":
-    "プロバイダーへのリクエストが多すぎるため、このボットは応答できませんでした。",
-  "The provider refused the key this bot used for its reply.":
-    "このボットが返信に使用したキーはプロバイダーに拒否されました。",
-  "The provider couldn't serve the model selected for this bot.":
-    "プロバイダーはこのボットに選択されたモデルを提供できませんでした。",
-  "The bot couldn't finish its reply. Technical details includes the reported error.":
-    "ボットは返信を完了できませんでした。報告されたエラーは技術的な詳細で確認できます。",
-  "This bot's reply stopped at its key's daily limit. Your own key has its own limits.":
-    "このボットの返信は、キーの1日の上限に達したため停止しました。ご自身のキーには別の上限があります。",
-  "This bot's reply stopped at its key's weekly limit. Your own key has its own limits.":
-    "このボットの返信は、キーの週間上限に達したため停止しました。ご自身のキーには別の上限があります。",
-  "This bot's reply stopped at its key's monthly limit. Your own key has its own limits.":
-    "このボットの返信は、キーの月間上限に達したため停止しました。ご自身のキーには別の上限があります。",
-  "This bot's reply stopped at its key's usage limit. Your own key has its own limits.":
-    "このボットの返信は、キーの使用量上限に達したため停止しました。ご自身のキーには別の上限があります。",
+  "The agent couldn't reply because its provider's daily limit was reached.":
+    "プロバイダーの1日の上限に達したため、エージェントは返信できませんでした。",
+  "The agent couldn't reply because its provider's weekly limit was reached.":
+    "プロバイダーの週間上限に達したため、エージェントは返信できませんでした。",
+  "The agent couldn't reply because its provider's monthly limit was reached.":
+    "プロバイダーの月間上限に達したため、エージェントは返信できませんでした。",
+  "The agent couldn't reply because its provider's usage limit was reached.":
+    "プロバイダーの使用量上限に達したため、エージェントは返信できませんでした。",
+  "The provider received too many requests to answer this agent.":
+    "プロバイダーへのリクエストが多すぎるため、このエージェントは応答できませんでした。",
+  "The provider refused the key this agent used for its reply.":
+    "このエージェントが返信に使用したキーはプロバイダーに拒否されました。",
+  "The provider couldn't serve the model selected for this agent.":
+    "プロバイダーはこのエージェントに選択されたモデルを提供できませんでした。",
+  "The agent couldn't finish its reply. Technical details includes the reported error.":
+    "エージェントは返信を完了できませんでした。報告されたエラーは技術的な詳細で確認できます。",
+  "This agent's reply stopped at its key's daily limit. Your own key has its own limits.":
+    "このエージェントの返信は、キーの1日の上限に達したため停止しました。ご自身のキーには別の上限があります。",
+  "This agent's reply stopped at its key's weekly limit. Your own key has its own limits.":
+    "このエージェントの返信は、キーの週間上限に達したため停止しました。ご自身のキーには別の上限があります。",
+  "This agent's reply stopped at its key's monthly limit. Your own key has its own limits.":
+    "このエージェントの返信は、キーの月間上限に達したため停止しました。ご自身のキーには別の上限があります。",
+  "This agent's reply stopped at its key's usage limit. Your own key has its own limits.":
+    "このエージェントの返信は、キーの使用量上限に達したため停止しました。ご自身のキーには別の上限があります。",
   "Sign in with passkey": "パスキーでログイン",
   Passkeys: "パスキー",
   Passkey: "パスキー",
@@ -1102,8 +1102,8 @@ export const JA_MESSAGES: Record<string, string> = {
   Ends: "終了日",
   Renews: "更新日",
   "Could not open billing": "請求を開けませんでした",
-  "Put your bots to work": "ボットに仕事を任せましょう",
-  "Bots with their own computer": "専用のコンピューターを持つボット",
+  "Put your agents to work": "エージェントに仕事を任せましょう",
+  "Agents with their own computer": "専用のコンピューターを持つエージェント",
   "Routines that run while you're away": "不在中に実行されるルーティン",
   "Web, desktop and mobile apps": "Web、デスクトップ、モバイルアプリ",
   "Start free trial": "無料トライアルを開始",
@@ -1180,8 +1180,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Bring your own key. ElevenLabs, OpenAI, and Cartesia all plug into the same speak buttons.":
     "ご自身のキーを使用できます。ElevenLabs、OpenAI、Cartesiaはすべて同じ読み上げボタンで使えます。",
   "No connection record found for {name}.": "{name}の接続記録が見つかりません。",
-  "Recording a live demonstration needs desktop or web with the full computer view. You can still ask this bot to run saved skills from chat.":
-    "ライブデモの録画には、フルコンピュータービューのあるデスクトップ版またはWeb版が必要です。チャットから保存済みのスキルを実行するようボットに依頼することはできます。",
+  "Recording a live demonstration needs desktop or web with the full computer view. You can still ask this agent to run saved skills from chat.":
+    "ライブデモの録画には、フルコンピュータービューのあるデスクトップ版またはWeb版が必要です。チャットから保存済みのスキルを実行するようエージェントに依頼することはできます。",
   Submitted: "送信済み",
   "Teach a task": "タスクを教える",
   "Your phone's built-in voice — free, no account needed":
@@ -1219,7 +1219,7 @@ export const JA_MESSAGES: Record<string, string> = {
   hours: "時間",
   "{sender} rollup hours": "{sender}のまとめ間隔（時間）",
   "Add workspace": "ワークスペースを追加",
-  "Chat with your bot from Slack.": "Slackからボットとチャットできます。",
+  "Chat with your agent from Slack.": "Slackからエージェントとチャットできます。",
   "Link DMs": "DMを連携",
   "One-time": "1回のみ",
   "Every hour": "毎時",
@@ -1296,11 +1296,11 @@ export const JA_MESSAGES: Record<string, string> = {
   "Could not preview plugin": "プラグインをプレビューできませんでした",
   "Could not remove plugin": "プラグインを削除できませんでした",
   "Could not sign in": "サインインできませんでした",
-  "In this bot": "このボットで使用中",
+  "In this agent": "このエージェントで使用中",
   "Plugin GitHub URL": "プラグインの GitHub URL",
   Skills: "スキル",
   "Some plugins could not be loaded.": "一部のプラグインを読み込めませんでした。",
-  "Use in this bot": "このボットで使う",
+  "Use in this agent": "このエージェントで使う",
   "View all": "すべて表示",
   "View source": "ソースを表示",
   "{count} connectors": "{count} 件のコネクタ",
@@ -1361,21 +1361,21 @@ export const JA_MESSAGES: Record<string, string> = {
   "Won't do": "対応しない",
   "Could not move the ticket": "チケットを移動できませんでした",
   "No tickets yet.": "チケットはまだありません。",
-  "Bot models": "ボットのモデル",
-  "1 bot has its own model:": "1個のボットが独自のモデルを使用しています:",
-  "{count} bots have their own model:": "{count}個のボットが独自のモデルを使用しています:",
+  "Agent models": "エージェントのモデル",
+  "1 agent has its own model:": "1個のエージェントが独自のモデルを使用しています:",
+  "{count} agents have their own model:": "{count}個のエージェントが独自のモデルを使用しています:",
   "Use space default": "スペースのデフォルトを使用",
   "Switching…": "切り替え中…",
-  "Switch 1 bot to the space default?": "1個のボットをスペースのデフォルトに切り替えますか？",
-  "Switch {count} bots to the space default?":
-    "{count}個のボットをスペースのデフォルトに切り替えますか？",
-  "Their own model is cleared. You can pick one again in each bot.":
-    "個別のモデル設定は解除されます。各ボットで再度選択できます。",
+  "Switch 1 agent to the space default?": "1個のエージェントをスペースのデフォルトに切り替えますか？",
+  "Switch {count} agents to the space default?":
+    "{count}個のエージェントをスペースのデフォルトに切り替えますか？",
+  "Their own model is cleared. You can pick one again in each agent.":
+    "個別のモデル設定は解除されます。各エージェントで再度選択できます。",
   Switch: "切り替え",
-  "1 bot now uses the space default.":
-    "1個のボットがスペースのデフォルトを使用するようになりました。",
-  "{count} bots now use the space default.":
-    "{count}個のボットがスペースのデフォルトを使用するようになりました。",
+  "1 agent now uses the space default.":
+    "1個のエージェントがスペースのデフォルトを使用するようになりました。",
+  "{count} agents now use the space default.":
+    "{count}個のエージェントがスペースのデフォルトを使用するようになりました。",
   "Could not switch {failedNames}. Try again.":
     "{failedNames}を切り替えられませんでした。もう一度お試しください。",
   "Create organization": "組織を作成",

@@ -18,7 +18,7 @@ const request = {
   connectorKind: "gmail",
   args: { to: "a@b.test" },
   userTask: "Draft a reply",
-  botDescription: "Mail bot",
+  botDescription: "Mail agent",
   matchingRules: [],
 };
 

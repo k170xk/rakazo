@@ -567,7 +567,7 @@ describe.skipIf(!enabled)("typed replies to waiting cards (PostgreSQL)", () => {
     },
   );
 
-  it("retires a question while steering live work for the same bot", async () => {
+  it("retires a question while steering live work for the same agent", async () => {
     const fixture = await waitingCard();
     await createThreadMessage(system, {
       threadId,

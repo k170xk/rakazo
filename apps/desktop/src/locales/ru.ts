@@ -58,13 +58,13 @@ export const RU_MESSAGES: Record<string, string> = {
     "Не удалось завершить обновление. Повторите попытку позже.",
   "Could not reach the update server.": "Не удалось связаться с сервером обновлений.",
   "Allow local computer access?": "Разрешить доступ к локальному компьютеру?",
-  "Allow bots to use this computer?": "Разрешить ботам использовать этот компьютер?",
+  "Allow agents to use this computer?": "Разрешить агентам использовать этот компьютер?",
   Cancel: "Отменить",
   Allow: "Разрешить",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
-    "Боты на {host} смогут выполнять команды, читать и изменять файлы и открывать приложения с правами вашей учётной записи. Отозвать доступ можно в настройках.",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
-    "Боты на этом локальном экземпляре смогут выполнять команды, читать и изменять файлы и открывать приложения с правами вашей учётной записи. Отозвать доступ можно в меню приложения.",
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+    "Агенты на {host} смогут выполнять команды, читать и изменять файлы и открывать приложения с правами вашей учётной записи. Отозвать доступ можно в настройках.",
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+    "Агенты на этом локальном экземпляре смогут выполнять команды, читать и изменять файлы и открывать приложения с правами вашей учётной записи. Отозвать доступ можно в меню приложения.",
   "Local computer access requires an app-managed local instance.":
     "Для доступа к локальному компьютеру нужен локальный экземпляр, которым управляет приложение.",
   "Local server is unavailable": "Локальный сервер недоступен",
@@ -187,12 +187,12 @@ export const RU_MESSAGES: Record<string, string> = {
   Go: "Переход",
   Back: "Назад",
   Forward: "Вперёд",
-  "Next Bot": "Следующий бот",
-  "Previous Bot": "Предыдущий бот",
+  "Next Agent": "Следующий агент",
+  "Previous Agent": "Предыдущий агент",
   "Command Menu…": "Меню команд…",
   "Toggle Sidebar": "Показать или скрыть боковую панель",
   "Find…": "Найти…",
-  "Search Bots…": "Поиск ботов…",
+  "Search Agents…": "Поиск агентов…",
   "The window closed before the app loaded.": "Окно закрылось до загрузки приложения.",
   "New Group Chat": "Новый групповой чат",
   "Connect Apps…": "Подключить приложения…",

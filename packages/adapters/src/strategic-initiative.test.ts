@@ -188,7 +188,7 @@ describe("reconcileStrategicInitiatives", () => {
     );
   });
 
-  it("waits a week after a failed check-in before trying that bot again", async () => {
+  it("waits a week after a failed check-in before trying that agent again", async () => {
     const now = new Date("2026-11-02T12:00:00.000Z");
     const { prisma } = strategicPrisma({ bots: [] });
     await reconcileStrategicInitiatives({ prisma, jobs: publisher().jobs, now, pageSize: 10 });
@@ -211,7 +211,7 @@ describe("reconcileStrategicInitiatives", () => {
     );
   });
 
-  it("skips bots without a thread", async () => {
+  it("skips agents without a thread", async () => {
     const now = new Date("2026-11-02T12:00:00.000Z");
     const stale = new Date("2026-11-01T00:00:00.000Z");
     const { prisma } = strategicPrisma({
@@ -345,7 +345,7 @@ const candidate = {
   ],
 };
 
-it("filters disabled bots in the database", async () => {
+it("filters disabled agents in the database", async () => {
   const { prisma } = strategicPrisma({ bots: [{ ...candidate, dailyCheckIns: false }] });
   const { jobs, enqueue } = publisher();
   expect(await reconcileStrategicInitiatives({ prisma, jobs, now: new Date(), pageSize: 10 })).toBe(
@@ -419,7 +419,7 @@ it.each([
   ).toBe(false);
 });
 
-it("walks past a page of ineligible owners instead of starving later bots", async () => {
+it("walks past a page of ineligible owners instead of starving later agents", async () => {
   const { prisma } = strategicPrisma({ bots: [] });
   vi.mocked(prisma.bot.findMany)
     .mockResolvedValueOnce([{ ...candidate, id: "bot-a" }] as never)
@@ -436,7 +436,7 @@ it("walks past a page of ineligible owners instead of starving later bots", asyn
   expect(enqueue).toHaveBeenCalledTimes(1);
 });
 
-it("queues every eligible bot across pages in one sweep", async () => {
+it("queues every eligible agent across pages in one sweep", async () => {
   const { prisma } = strategicPrisma({ bots: [] });
   vi.mocked(prisma.bot.findMany)
     .mockResolvedValueOnce([{ ...candidate, id: "bot-a" }] as never)
@@ -448,7 +448,7 @@ it("queues every eligible bot across pages in one sweep", async () => {
   expect(enqueue).toHaveBeenCalledTimes(2);
 });
 
-it.each(["owner", "billing"])("throttles bots skipped for %s for an hour", async (reason) => {
+it.each(["owner", "billing"])("throttles agents skipped for %s for an hour", async (reason) => {
   let now = new Date("2026-11-02T12:00:00Z");
   const { prisma } = strategicPrisma({ bots: [candidate], member: reason !== "owner" });
   const { jobs, enqueue } = publisher();

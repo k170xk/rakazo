@@ -39,7 +39,7 @@ describe("serializeToolResult", () => {
     "passes every page of a settings read whole with the %s strategy",
     (strategy) => {
       const settingsPage = (instructions: string, offset: number, next: number | null) => ({
-        name: "Bot",
+        name: "Agent",
         description: "",
         instructions,
         instructionsLength: 19_000,

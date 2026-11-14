@@ -6,7 +6,7 @@ import type { RunContext } from "./run-context.js";
 import type { ToolRequest } from "./run-tool-request.js";
 import { prepareToolRequest } from "./run-tool-request.js";
 
-const CHECKED = "The button label and total are read from the page. The bot has not checked them.";
+const CHECKED = "The button label and total are read from the page. The agent has not checked them.";
 const found = {
   steps: [],
   site: "shop.example.test",

@@ -23,7 +23,7 @@ describe("refreshMainPaInstructions", () => {
     });
   });
 
-  it("leaves a current Main PA and ordinary bots alone", async () => {
+  it("leaves a current Main PA and ordinary agents alone", async () => {
     await expect(
       refreshMainPaInstructions({
         id: "bot-1",
@@ -37,7 +37,7 @@ describe("refreshMainPaInstructions", () => {
         id: "bot-2",
         name: "Nova",
         spawnKey: null,
-        instructions: "Research bot",
+        instructions: "Research agent",
       }),
     ).resolves.toBe(false);
     expect(update).not.toHaveBeenCalled();

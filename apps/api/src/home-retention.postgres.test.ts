@@ -344,7 +344,7 @@ describePostgres("saved home retention (PostgreSQL)", () => {
     expect(await objects()).toHaveLength(1);
   });
 
-  it("keeps the files of an organization still running bots on credits", async () => {
+  it("keeps the files of an organization still running agents on credits", async () => {
     await system.billingAccount.create({
       data: {
         organizationId: id,

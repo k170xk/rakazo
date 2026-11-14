@@ -711,10 +711,10 @@ export function ProductDemo({ bots: initialBots, strings }: { bots: DemoBot[]; s
     const color = BOT_COLORS[bots.length % BOT_COLORS.length] ?? "#3EC5A8";
     const bot: LiveBot = {
       id: `bot-${Date.now()}`,
-      name: text("New bot"),
+      name: text("New agent"),
       color,
       time: text("Now"),
-      preview: text("Say what you want this bot doing"),
+      preview: text("Say what you want this agent doing"),
       title: "",
       description: "",
       onboarding: true,
@@ -843,12 +843,12 @@ export function ProductDemo({ bots: initialBots, strings }: { bots: DemoBot[]; s
               <span />
               <span />
             </div>
-            <span className="product-demo__drawer-title">{text("Bots")}</span>
+            <span className="product-demo__drawer-title">{text("Agents")}</span>
             <div className="product-demo__chrome-actions">
               <button
                 type="button"
                 className="product-demo__new"
-                aria-label={text("New bot")}
+                aria-label={text("New agent")}
                 onClick={startNewBot}
               >
                 +
@@ -856,7 +856,7 @@ export function ProductDemo({ bots: initialBots, strings }: { bots: DemoBot[]; s
               <button
                 type="button"
                 className="product-demo__sidebar-close"
-                aria-label={text("Hide bots")}
+                aria-label={text("Hide agents")}
                 onClick={closeMenu}
               >
                 ✕
@@ -904,7 +904,7 @@ export function ProductDemo({ bots: initialBots, strings }: { bots: DemoBot[]; s
           <button
             type="button"
             className="product-demo__scrim"
-            aria-label={text("Hide bots")}
+            aria-label={text("Hide agents")}
             onClick={closeMenu}
           />
         ) : null}
@@ -916,7 +916,7 @@ export function ProductDemo({ bots: initialBots, strings }: { bots: DemoBot[]; s
                 type="button"
                 ref={menuButtonRef}
                 className="product-demo__menu-btn"
-                aria-label={text("Show bots")}
+                aria-label={text("Show agents")}
                 aria-expanded={menuOpen}
                 aria-controls="product-demo-bots"
                 onClick={() => setMenuOpen(true)}
@@ -1029,7 +1029,7 @@ export function ProductDemo({ bots: initialBots, strings }: { bots: DemoBot[]; s
                 <div className="product-demo__panel-actions">
                   <button
                     type="button"
-                    aria-label={text("Bot settings")}
+                    aria-label={text("Agent settings")}
                     onClick={openSettings}
                   >
                     <svg

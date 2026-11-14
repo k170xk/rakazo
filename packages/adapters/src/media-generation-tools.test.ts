@@ -51,7 +51,7 @@ function setup() {
   return { options, externalEffect, provider, attach, publish, row };
 }
 
-describe("bot media tools", () => {
+describe("agent media tools", () => {
   it("uses existing approval and per-bot disable controls, hidden by default", () => {
     expect(toolRequiresApproval("generate_image", false)).toBe(true);
     const base = {

@@ -1,4 +1,4 @@
-import { buildApp } from "@rakazo/app-kit/build";
+import { auditAppCraft, buildApp } from "@rakazo/app-kit/build";
 import { APP_KIT_GUIDE } from "@rakazo/app-kit/guide";
 import { APP_KIT_GUIDE_EXTRAS } from "@rakazo/app-kit/guide-extras";
 import { importWorkbook, MAX_WORKBOOK_BYTES, scaffoldApp } from "@rakazo/app-kit/import";
@@ -11,6 +11,7 @@ import {
   AppVersionConflictError,
   addAppAsset,
   appendAppVersion,
+  appendEventInTransaction,
   appFilesFrom,
   createAppPage,
   defineAppTable,
@@ -25,12 +26,13 @@ import {
   removeAppRow,
   undoAppChange,
   updateAppRow,
+  withTransactionRetry,
 } from "@rakazo/db";
 import { findSimilarApps, similarAppNote } from "./app-duplicates.js";
 import { drawAppIconLater } from "./app-icon.js";
 import { canLookAtApps, lookAtApp, lookProblems } from "./app-look.js";
 import type { RunContext } from "./run-context.js";
-import { isUniqueViolation, publishMessage } from "./run-messages.js";
+import { isUniqueViolation, publishMessage, redactBlocks, runLeaseFor } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { personEmail } from "./run-tools-evolve-plugins.js";
 import { runFilePath, runFiles } from "./run-tools-files.js";
@@ -47,9 +49,9 @@ const MAX_TABLES_PER_SAVE = 30;
 const FILE_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,60}\.(tsx|ts|css|json)$/;
 const READ_SAMPLE_ROWS = 5;
 const QUERY_LIMIT = 500;
-const MAX_PICTURE_BYTES = 6 * 1024 * 1024;
-const INFOGRAPHIC_PATH =
-  /^\/storage\/v1\/object\/public\/slide-assets\/infographics\/[A-Za-z0-9-]+\.png$/;
+const MAX_PICTURE_BYTES = 20 * 1024 * 1024;
+const EVOLVE_PICTURE_PATH =
+  /^\/storage\/v1\/object\/public\/(?:slide-assets\/infographics\/[A-Za-z0-9-]+\.png|(?:project-images|datasheets-project-images)\/[A-Za-z0-9/_.-]+\.(?:png|jpe?g|webp))$/i;
 const MAX_BRIEF = 2000;
 const BRIEF_NEEDED =
   "A new app needs a brief: two to four plain sentences for staff saying what it is for, who uses it and how. Evolve's reviewers and the library show it.";
@@ -60,6 +62,11 @@ const PICTURE_MIMES: Record<string, string> = {
   webp: "image/webp",
   gif: "image/gif",
   svg: "image/svg+xml",
+  mp4: "video/mp4",
+  webm: "video/webm",
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  m4a: "audio/mp4",
 };
 
 type App = {
@@ -76,10 +83,12 @@ type App = {
 class NotAnApp extends Error {}
 
 async function findApp(ctx: RunContext, appId: string): Promise<App | null> {
-  const { deps, run, bot, thread } = ctx;
+  const { deps, run, thread } = ctx;
+  // An app is the person's, not the agent's. Any of their agents can keep working on it,
+  // including after the one that built it is gone. A group's app stays with that group.
   const reachable = thread.groupId
-    ? [{ botId: bot.id }, { groupId: thread.groupId }]
-    : [{ botId: bot.id }];
+    ? [{ groupId: null }, { groupId: thread.groupId }]
+    : [{ groupId: null }];
   const page = await deps.prisma.page.findFirst({
     where: { id: appId, spaceId: run.spaceId, userId: run.userId, OR: reachable },
     select: {
@@ -108,7 +117,7 @@ async function findApp(ctx: RunContext, appId: string): Promise<App | null> {
   };
 }
 
-const notFound = { error: "No app with that appId belongs to this bot or chat." };
+const notFound = { error: "No app with that appId belongs to this person or chat." };
 const notAnApp = {
   error:
     "That id is an older page, not an App Studio app. Build it again as an app with save_app (a new appId); the page stays as it is.",
@@ -346,16 +355,125 @@ async function similarApps(ctx: RunContext, title: string, brief: string) {
   };
 }
 
+const runAppCards = new WeakMap<object, Map<string, { id: string; created: boolean }>>();
+
+async function existingRunCard(
+  ctx: RunContext,
+  pageId: string,
+): Promise<{ id: string; created: boolean } | null> {
+  const cached = runAppCards.get(ctx.state)?.get(pageId);
+  if (cached) return cached;
+  const prisma = ctx.deps.prisma as unknown as {
+    message?: {
+      findMany?: (args: unknown) => Promise<Array<{ id: string; blocks: unknown }>>;
+    };
+  };
+  if (typeof prisma.message?.findMany !== "function" || !ctx.run.id || !ctx.run.threadId)
+    return null;
+  const recent = await prisma.message.findMany({
+    where: { threadId: ctx.run.threadId, runId: ctx.run.id, role: "bot" },
+    orderBy: { seq: "desc" },
+    take: 12,
+    select: { id: true, blocks: true },
+  });
+  for (const row of recent) {
+    const blocks = Array.isArray(row.blocks) ? (row.blocks as Array<Record<string, unknown>>) : [];
+    if (blocks.length === 1 && blocks[0]?.kind === "page" && blocks[0]?.pageId === pageId) {
+      return {
+        id: row.id,
+        created: blocks[0]?.created === true || blocks[0]?.version === 1,
+      };
+    }
+  }
+  return null;
+}
+
+function summarizeAppUpdate(args: Record<string, unknown>, tablesCount: number): string {
+  if (typeof args.summary === "string" && args.summary.trim()) {
+    return args.summary.replace(/\s+/g, " ").trim().slice(0, 380);
+  }
+  const parts: string[] = [];
+  if (Array.isArray(args.edits) && args.edits.length > 0) {
+    const touched = [
+      ...new Set(
+        args.edits.map((item) =>
+          item && typeof item === "object" && typeof (item as { file?: unknown }).file === "string"
+            ? String((item as { file: string }).file)
+            : "App.tsx",
+        ),
+      ),
+    ];
+    parts.push(
+      `Updated ${touched.slice(0, 3).join(", ")} (${args.edits.length} ${args.edits.length === 1 ? "edit" : "edits"})`,
+    );
+  } else if (args.files && typeof args.files === "object" && !Array.isArray(args.files)) {
+    const names = Object.keys(args.files as Record<string, unknown>);
+    if (names.length) parts.push(`Updated ${names.slice(0, 3).join(", ")}`);
+  }
+  if (tablesCount > 0) {
+    parts.push(`refreshed ${tablesCount} ${tablesCount === 1 ? "table" : "tables"}`);
+  }
+  return parts.join(" · ").slice(0, 380);
+}
+
 async function postCard(
   ctx: RunContext,
   saved: { pageId: string; version: number; title: string },
   created: boolean,
+  summary?: string,
 ) {
-  const block: MessageBlock = { kind: "page", ...saved };
   const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
   try {
-    if (created || ctx.run.trigger !== "routine")
-      await publishMessage(ctx.deps, ctx.run, "bot", [block]);
+    if (created || ctx.run.trigger !== "routine") {
+      const existing = await existingRunCard(ctx, saved.pageId);
+      const isInitialCard = created || existing?.created === true;
+      const blocks = redactBlocks(
+        [
+          {
+            kind: "page",
+            ...saved,
+            created: isInitialCard,
+            ...(!isInitialCard && summary ? { summary } : {}),
+          },
+        ],
+        ctx.secrets,
+      );
+      if (existing && typeof ctx.deps.prisma.$transaction === "function") {
+        const lease = runLeaseFor(ctx.deps, ctx.run.id);
+        const seq = await withTransactionRetry(() =>
+          ctx.deps.prisma.$transaction(async (tx) => {
+            await tx.message.update({ where: { id: existing.id }, data: { blocks } });
+            const updated = await appendEventInTransaction(tx, {
+              spaceId: ctx.run.spaceId,
+              threadId: ctx.run.threadId,
+              botId: ctx.run.botId,
+              type: "thread.message.updated",
+              runId: ctx.run.id,
+              lease,
+              payload: { messageId: existing.id, role: "bot", blocks },
+            });
+            return updated.seq;
+          }),
+        );
+        await ctx.deps.events?.notify(ctx.run.threadId, seq).catch(() => {});
+        let seen = runAppCards.get(ctx.state);
+        if (!seen) {
+          seen = new Map();
+          runAppCards.set(ctx.state, seen);
+        }
+        seen.set(saved.pageId, { id: existing.id, created: isInitialCard });
+      } else {
+        const posted = await publishMessage(ctx.deps, ctx.run, "bot", blocks);
+        if (posted?.id) {
+          let seen = runAppCards.get(ctx.state);
+          if (!seen) {
+            seen = new Map();
+            runAppCards.set(ctx.state, seen);
+          }
+          seen.set(saved.pageId, { id: posted.id, created: isInitialCard });
+        }
+      }
+    }
   } catch (error) {
     return `The app was saved, but its card could not be posted in the chat (${
       error instanceof Error ? error.message : "unknown error"
@@ -730,10 +848,23 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     }
     throw error;
   }
-  const icon = !app || iconSubject ? drawIcon(ctx, saved, iconSubject) : null;
-  const cardError = codeChanged ? await postCard(ctx, saved, !app) : null;
+  const icon =
+    !app || iconSubject
+      ? drawIcon(ctx, saved, !app && template && !iconSubject ? template.icon : iconSubject)
+      : null;
+  const updateSummary = app ? summarizeAppUpdate(args, tableResults.length) : undefined;
+  const cardError = codeChanged ? await postCard(ctx, saved, !app, updateSummary) : null;
   const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
   const check = codeChanged && args.check !== false ? await runCheck(ctx, saved, files) : null;
+  const totalRows = tableResults.reduce((sum, item) => sum + Number(item.rows ?? 0), 0);
+  const craftNotes =
+    codeChanged && args.check !== false
+      ? auditAppCraft(files, {
+          isNew: !app,
+          fromTemplate: Boolean(template),
+          ...(tables.length ? { totalRows } : {}),
+        })
+      : [];
   return {
     appId: saved.pageId,
     version: saved.version,
@@ -756,6 +887,13 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     ...(size ? { size } : {}),
     ...(icon ? { icon } : {}),
     ...(check ?? {}),
+    ...(craftNotes.length
+      ? {
+          craftNotes,
+          craftNext:
+            "Address these craftNotes with save_app edits (and seed realistic is_sample starter rows if the app is empty) before replying, then inspect the main tabs + phone with app_look.",
+        }
+      : {}),
     ...(cardError
       ? { error: cardError }
       : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
@@ -882,6 +1020,7 @@ async function appLook(ctx: RunContext, call: ToolCall) {
   }
   if (!look) return { error: "This server cannot open apps to look at them." };
   const problems = lookProblems(look.report);
+  const craftNotes = auditAppCraft(app.files);
   const summary = {
     appId: app.id,
     version: app.currentVersion,
@@ -894,7 +1033,8 @@ async function appLook(ctx: RunContext, call: ToolCall) {
       ...(cut ? { note: "cut off; the page continues below" } : {}),
     })),
     ...(problems.length ? { problems } : {}),
-    next: "Judge it as the person would: hierarchy, spacing, empty or cramped areas, unclear labels, charts that say nothing, anything that looks unfinished. Fix with save_app edits, then look again.",
+    ...(craftNotes.length ? { craftNotes } : {}),
+    next: "Judge every screen like a demanding design director: 1) Does Overview lead with strong visual hierarchy, populated KPI deltas/trends and @ocsc/ui charts rather than empty zeroes or raw div bars? 2) Is there an interactive workflow view (Kanban, Gantt, CalendarMonth, Checklist, MapView, GalleryView) alongside the register, plus ⌘K commands? 3) Are cards balanced, surfaces dark-mode safe, and mobile controls comfortable? Fix anything flat, cramped or unfinished with save_app edits, then look again.",
   };
   if (!ctx.computer.acceptsImages || !look.images.length) {
     return {
@@ -1105,80 +1245,96 @@ async function appData(ctx: RunContext, call: ToolCall) {
   }
 }
 
-async function appAsset(ctx: RunContext, call: ToolCall) {
-  const { deps } = ctx;
-  const { args } = call;
-  const appId = String(args.appId ?? "");
-  let app: App | null;
-  try {
-    app = appId ? await findApp(ctx, appId) : null;
-  } catch (error) {
-    if (error instanceof NotAnApp) return notAnApp;
-    throw error;
-  }
-  if (!app) return notFound;
-  const given = [args.path, args.artifactId, args.url].filter(argumentGiven);
+export async function loadPagePictureBytes(
+  ctx: RunContext,
+  call: ToolCall,
+  input: { path?: unknown; artifactId?: unknown; url?: unknown; name?: unknown },
+): Promise<{ bytes: Uint8Array; mime: string; name: string; source: string } | { error: string }> {
+  const given = [input.path, input.artifactId, input.url].filter(argumentGiven);
   if (given.length !== 1) return { error: "Send exactly one of path, artifactId or url." };
 
-  let bytes: Uint8Array;
-  let mime: string;
-  let name = typeof args.name === "string" && args.name.trim() ? args.name.trim() : "";
-  let source: string;
-  if (argumentGiven(args.path) || argumentGiven(args.artifactId)) {
-    const file = await readRunFile(ctx, call, args, MAX_PICTURE_BYTES);
+  const name = typeof input.name === "string" && input.name.trim() ? input.name.trim() : "";
+  if (argumentGiven(input.path) || argumentGiven(input.artifactId)) {
+    const file = await readRunFile(ctx, call, input, MAX_PICTURE_BYTES);
     if ("error" in file) return file;
-    bytes = file.bytes;
-    mime = file.mime ?? PICTURE_MIMES[file.name.split(".").pop()?.toLowerCase() ?? ""] ?? "";
-    name ||= file.name;
-    source = argumentGiven(args.path) ? "file" : "attachment";
-  } else {
-    // Only pictures Evolve rendered (its infographics) are fetched; no other host is reached.
-    const evolve = deps.evolvePlugins?.url;
-    let url: URL;
-    try {
-      url = new URL(String(args.url));
-    } catch {
-      return { error: "url is not a web address." };
-    }
-    if (
-      !evolve ||
-      url.protocol !== "https:" ||
-      url.host !== new URL(evolve).host ||
-      !INFOGRAPHIC_PATH.test(url.pathname)
-    ) {
-      return {
-        error:
-          "Only pictures from OCSC Vision Intelligence (evolve_infographics) can be added by url.",
-      };
-    }
-    const response = await fetch(url, {
-      redirect: "error",
-      signal: AbortSignal.timeout(30_000),
-    }).catch(() => null);
-    if (!response?.ok) return { error: "That picture could not be downloaded." };
-    if (Number(response.headers.get("content-length") ?? 0) > MAX_PICTURE_BYTES) {
-      await response.body?.cancel();
-      return { error: "That picture is larger than 6 MB." };
-    }
-    mime = (response.headers.get("content-type") ?? "").split(";")[0]!.trim();
-    const buffer = new Uint8Array(await response.arrayBuffer());
-    if (buffer.byteLength > MAX_PICTURE_BYTES)
-      return { error: "That picture is larger than 6 MB." };
-    bytes = buffer;
-    name ||= "Infographic";
-    source = "infographic";
-  }
-  try {
-    const asset = await addAppAsset(deps.prisma, app.id, {
-      name: name.slice(0, 200),
+    const mime = file.mime ?? PICTURE_MIMES[file.name.split(".").pop()?.toLowerCase() ?? ""] ?? "";
+    return {
+      bytes: file.bytes,
       mime,
-      bytes,
-      source,
-    });
+      name: (name || file.name).slice(0, 200),
+      source: argumentGiven(input.path) ? "file" : "attachment",
+    };
+  }
+
+  // Only pictures Evolve stores publicly (its infographics and project datasheet photos) are fetched.
+  const evolve = ctx.deps.evolvePlugins?.url;
+  let url: URL;
+  try {
+    url = new URL(String(input.url));
+  } catch {
+    return { error: "url is not a web address." };
+  }
+  if (
+    !evolve ||
+    url.protocol !== "https:" ||
+    url.host !== new URL(evolve).host ||
+    !EVOLVE_PICTURE_PATH.test(url.pathname)
+  ) {
+    return {
+      error:
+        "Only pictures from OCSC Vision Intelligence (evolve_infographics) or Evolve project datasheets (search_project_datasheets) can be added by url.",
+    };
+  }
+  const response = await fetch(url, {
+    redirect: "error",
+    signal: AbortSignal.timeout(30_000),
+  }).catch(() => null);
+  if (!response?.ok) return { error: "That picture could not be downloaded." };
+  if (Number(response.headers.get("content-length") ?? 0) > MAX_PICTURE_BYTES) {
+    await response.body?.cancel();
+    return { error: "That picture is larger than 6 MB." };
+  }
+  const rawMime = (response.headers.get("content-type") ?? "").split(";")[0]!.trim();
+  const ext = url.pathname.split(".").pop()?.toLowerCase() ?? "";
+  const mime = rawMime || PICTURE_MIMES[ext] || "image/png";
+  const buffer = new Uint8Array(await response.arrayBuffer());
+  if (buffer.byteLength > MAX_PICTURE_BYTES) return { error: "That picture is larger than 6 MB." };
+  const isInfographic = url.pathname.includes("/infographics/");
+  return {
+    bytes: buffer,
+    mime,
+    name: (name || (isInfographic ? "Infographic" : "Project photo")).slice(0, 200),
+    source: isInfographic ? "infographic" : "project_photo",
+  };
+}
+
+async function appAsset(ctx: RunContext, call: ToolCall) {
+  const { deps, run, thread } = ctx;
+  const { args } = call;
+  const targetId = String(args.appId ?? args.whiteboardId ?? args.pageId ?? "");
+  if (!targetId) return notFound;
+  const reachable = thread.groupId
+    ? [{ groupId: null }, { groupId: thread.groupId }]
+    : [{ groupId: null }];
+  const page = await deps.prisma.page.findFirst({
+    where: { id: targetId, spaceId: run.spaceId, userId: run.userId, OR: reachable },
+    select: { id: true, kind: true },
+  });
+  if (!page) return notFound;
+  if (page.kind !== "app" && page.kind !== "whiteboard") return notAnApp;
+
+  const loaded = await loadPagePictureBytes(ctx, call, args);
+  if ("error" in loaded) return loaded;
+
+  try {
+    const asset = await addAppAsset(deps.prisma, page.id, loaded);
     return {
       assetId: asset.id,
       name: asset.name,
-      use: `Show it with <AssetImage asset="${asset.id}" /> or useAsset("${asset.id}").`,
+      use:
+        page.kind === "whiteboard"
+          ? `Place it on the whiteboard with {kind: "image", asset: "${asset.id}", w: 360, h: 202}.`
+          : `Show it with <AssetImage asset="${asset.id}" /> or useAsset("${asset.id}").`,
     };
   } catch (error) {
     if (isAppDataError(error)) return { error: error instanceof Error ? error.message : "Refused" };

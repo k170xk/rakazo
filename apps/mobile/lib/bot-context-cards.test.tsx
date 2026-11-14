@@ -42,7 +42,7 @@ async function render(botId = "bot-a") {
   await act(async () => root.render(createElement(BotContextCards, { botId })));
 }
 
-describe("bot context cards", () => {
+describe("agent context cards", () => {
   it.each([
     ["scratchpad/list", "Memory", "notes.md", "Open work"],
     ["memory/list", "Open work", "Review draft", "Memory"],
@@ -79,7 +79,7 @@ describe("bot context cards", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("ignores results from the previous bot", async () => {
+  it("ignores results from the previous agent", async () => {
     let resolveWork!: (items: typeof work) => void;
     rpc.mockImplementation((method: string, { botId }: { botId: string }) => {
       if (botId === "bot-a" && method === "scratchpad/list") {

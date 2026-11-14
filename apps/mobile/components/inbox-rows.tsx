@@ -358,7 +358,7 @@ export const BotRow = memo(function BotRow({
   );
   return onAction ? (
     <InboxSwipeRow
-      rowKey={`bot:${bot.id}`}
+      rowKey={`agent:${bot.id}`}
       unread={bot.unread}
       pinned={bot.pinned}
       notifyOnFinish={bot.notifyOnFinish}

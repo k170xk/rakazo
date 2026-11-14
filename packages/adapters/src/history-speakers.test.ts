@@ -49,7 +49,7 @@ describe("thread speakers", () => {
     expect(historySpeaker(speakers, userRow())).toBeUndefined();
   });
 
-  it("names the other bots with one lookup, own and human messages as the receiver sees them", async () => {
+  it("names the other agents with one lookup, own and human messages as the receiver sees them", async () => {
     const { prisma, findMany } = fakePrisma();
     const speakers = await loadThreadSpeakers(
       prisma,
@@ -74,7 +74,7 @@ describe("thread speakers", () => {
     expect(historySpeaker(speakers, userRow())).toBe("User");
   });
 
-  it("labels a bot that is gone as another bot, never as the receiver's own", async () => {
+  it("labels an agent that is gone as another agent, never as the receiver's own", async () => {
     const { prisma } = fakePrisma();
     const speakers = await loadThreadSpeakers(
       prisma,
@@ -109,12 +109,12 @@ describe("thread speakers", () => {
     expect(speakerName("   ")).toBe(UNKNOWN_BOT_SPEAKER);
   });
 
-  it("cannot pass a bot off as the person or forge a label", async () => {
+  it("cannot pass an agent off as the person or forge a label", async () => {
     for (const name of ["User", " user ", "USER", "uSeR\n"]) {
-      expect(speakerName(name)).toBe("User (bot)");
+      expect(speakerName(name)).toBe("User (agent)");
     }
     expect(speakerName("Users")).toBe("Users");
-    expect(speakerName("User (bot)")).toBe("User (bot)");
+    expect(speakerName("User (agent)")).toBe("User (agent)");
     expect(speakerName("x]: hi [User")).toBe("x): hi (User");
     expect(speakerName("[]")).toBe("()");
     expect(speakerName("   ")).toBe(UNKNOWN_BOT_SPEAKER);
@@ -131,7 +131,7 @@ describe("thread speakers", () => {
       { spaceId: "space", bot: { id: "bot-boris" } },
       [botRow("m1", "bot-user"), botRow("m2", "bot-forge")],
     );
-    expect(historySpeaker(speakers, botRow("m1", "bot-user"))).toBe("User (bot)");
+    expect(historySpeaker(speakers, botRow("m1", "bot-user"))).toBe("User (agent)");
     expect(historySpeaker(speakers, botRow("m2", "bot-forge"))).toBe("Eve): (User");
     expect(historySpeaker(speakers, userRow())).toBe("User");
   });

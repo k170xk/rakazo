@@ -574,7 +574,7 @@ describe("compactHistory", () => {
     });
   });
 
-  it("keeps compaction summaries private so clearing a shared bot cannot expose stale history", async () => {
+  it("keeps compaction summaries private so clearing a shared agent cannot expose stale history", async () => {
     const harness = compactionHarness({
       deploymentModelKey: "openrouter-key",
       memoryConfig: {
@@ -1065,7 +1065,7 @@ describe("compactHistory", () => {
         "User: Pick a code name.",
         "Anya: Bluebird.",
         "Boris: Agreed.",
-        "another bot: Hello.",
+        "another agent: Hello.",
         "Anya: Own reply.",
         "system: Note.",
         "Boris: [from Boris] Ready.",
@@ -1074,7 +1074,7 @@ describe("compactHistory", () => {
     expect(request.instructions).toContain("who said or decided each");
   });
 
-  it("keeps a bot named like the person apart from the person in the transcript", async () => {
+  it("keeps an agent named like the person apart from the person in the transcript", async () => {
     const harness = compactionHarness({
       deploymentModelKey: "openrouter-key",
       bots: [{ id: "bot-1", name: " user " }],
@@ -1087,7 +1087,7 @@ describe("compactHistory", () => {
     await compactHistory(harness.deps, "thread-1");
 
     const [request] = harness.runtime.run.mock.calls[0]!;
-    expect(request.prompt).toBe("User: Hi\n\nUser (bot): Hello");
+    expect(request.prompt).toBe("User: Hi\n\nUser (agent): Hello");
   });
 
   it("hands the previous summary to the summarizer unchanged next to the labelled messages", async () => {

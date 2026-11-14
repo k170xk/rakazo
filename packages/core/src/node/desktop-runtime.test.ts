@@ -177,7 +177,7 @@ describe("shared Linux desktop lifecycle", () => {
     ).toThrow("invalid screen gateway bind host");
   });
 
-  it("runs a bot's commands on its own assigned display", () => {
+  it("runs an agent's commands on its own assigned display", () => {
     const f = fixture();
     f.ensure("becky");
     f.ensure("beto");
@@ -204,7 +204,7 @@ describe("shared Linux desktop lifecycle", () => {
     expect(run("beto", ["sh", "-c", "exit 7"]).status).toBe(7);
   });
 
-  it("allocates live slots past 1000 bots, keeps assignments across callers, and rejects stale leases", () => {
+  it("allocates live slots past 1000 agents, keeps assignments across callers, and rejects stale leases", () => {
     const f = fixture();
     expect(f.ensure("a").stdout).toContain("RAKAZO_DESKTOP=0:view-a");
     expect(f.ensure("b").stdout).toContain("RAKAZO_DESKTOP=1:view-b");
@@ -299,7 +299,7 @@ describe("shared Linux desktop lifecycle", () => {
     expect(readFileSync(path.join(f.root, slot), "utf8")).toContain("new:2");
   });
 
-  it("keeps a completed run's display for that bot's next run and rejects its stale fence", () => {
+  it("keeps a completed run's display for that agent's next run and rejects its stale fence", () => {
     const f = fixture();
     expect(f.ensure("a", "run:1").stdout).toContain("RAKAZO_DESKTOP=0:view-a");
     expect(f.run(desktopControlCommand("a", "run:1", env, false)).status).toBe(0);
@@ -425,15 +425,15 @@ describe("shared Linux desktop lifecycle", () => {
     "generates valid shell for every lifecycle operation ($displayStart)",
     (environment) => {
       for (const command of [
-        ensureScreenCommand(0, "bot's id", "token", environment),
-        ensureScreenCommand(1, "bot's id", "token", environment),
-        managedDesktopCommand("bot's id", "run:1", environment, "token"),
-        releaseDesktopCommand("bot's id", "run:1", environment),
-        desktopControlCommand("bot's id", "run:1", environment, true, "token"),
-        desktopTerminalCommand("bot's id", "run:1", environment, "token", "terminal", "bots/a'b"),
+        ensureScreenCommand(0, "agent's id", "token", environment),
+        ensureScreenCommand(1, "agent's id", "token", environment),
+        managedDesktopCommand("agent's id", "run:1", environment, "token"),
+        releaseDesktopCommand("agent's id", "run:1", environment),
+        desktopControlCommand("agent's id", "run:1", environment, true, "token"),
+        desktopTerminalCommand("agent's id", "run:1", environment, "token", "terminal", "agents/a'b"),
         terminalCommand("token", "terminal", "/work", environment, screenPorts(1, environment)),
         interactiveScreenCommand(false, "token", screenPorts(1, environment)),
-        stopExtraScreenCommand(1, "bot's id", environment),
+        stopExtraScreenCommand(1, "agent's id", environment),
       ]) {
         const result = spawnSync("bash", ["-n", "-c", command], { encoding: "utf8" });
         expect(result.stderr).toBe("");

@@ -85,7 +85,7 @@ function renderComposer(
     onRemoveAttachment: () => {},
     onSend,
     onStop: async () => {},
-    draftKey: "bot:bot-1",
+    draftKey: "agent:bot-1",
     enterToSend: true,
     mentionTargets: [bob],
     agentSkills: [summarize],
@@ -130,7 +130,7 @@ it.each([
   ],
   ['404: {"message":"Model example-model does not exist"}', "Choose a model", "models"],
   ['401: {"message":"Invalid API key"}', "Replace key", "connections"],
-  ["Connect a model in Settings before running bots.", "Connect a model", "connections"],
+  ["Connect a model in Settings before running agents.", "Connect a model", "connections"],
   ["Request timed out.", null, null],
   ['429: {"message":"Too many requests"}', null, null],
 ] as const)("offers the one action that fixes %s", (runError, label, opens) => {
@@ -253,7 +253,7 @@ describe("Composer", () => {
   });
 
   it.each(["Enter", "Tab", "pointer"])(
-    "completes an inline bot at the caret with %s",
+    "completes an inline agent at the caret with %s",
     async (method) => {
       const onSend = vi.fn().mockResolvedValue(true);
       const textarea = renderComposer(onSend);
@@ -384,7 +384,7 @@ describe("Composer", () => {
     expect(container?.querySelector('[data-testid="mention-picker"]')).toBeNull();
   });
 
-  it("replaces a selected bot without retaining its previous routing target", async () => {
+  it("replaces a selected agent without retaining its previous routing target", async () => {
     const bobby: ComposerMention = { kind: "bot", id: "bot-3", name: "Bobby" };
     const onSend = vi.fn().mockResolvedValue(true);
     const textarea = renderComposer(onSend, { mentionTargets: [bob, bobby] });
@@ -475,7 +475,7 @@ describe("Composer", () => {
     expect(onSend).toHaveBeenCalledWith("@Bo", [], expect.any(String));
   });
 
-  it("retires the replaced group identity when a bot has the same name", async () => {
+  it("retires the replaced group identity when an agent has the same name", async () => {
     const group: ComposerMention = { kind: "group", id: "group-bob", name: "Bob" };
     const onSend = vi.fn().mockResolvedValue(true);
     const textarea = renderComposer(onSend, { mentionTargets: [group, bob] });
@@ -928,7 +928,7 @@ describe("Composer", () => {
 
   it("restores an unsent draft when the composer remounts", () => {
     const onSend = vi.fn().mockResolvedValue(true);
-    const draftKey = "bot:draft-restore-test";
+    const draftKey = "agent:draft-restore-test";
     const first = renderComposer(onSend, { draftKey });
     type(first, "unsent thought");
     expect(window.localStorage.getItem(`rakazo.composerDraft.${draftKey}`)).toBe("unsent thought");
@@ -941,7 +941,7 @@ describe("Composer", () => {
   it("keeps Enter as newline and Ctrl+Enter as send when enter-to-send is off", async () => {
     const onSend = vi.fn().mockResolvedValue(true);
     const textarea = renderComposer(onSend, {
-      draftKey: "bot:enter-toggle-test",
+      draftKey: "agent:enter-toggle-test",
       enterToSend: false,
     });
     expect(container?.querySelector('[data-testid="composer-enter-to-send-toggle"]')).toBeNull();
@@ -969,7 +969,7 @@ it.each([true, false])(
           finishSend = resolve;
         }),
     );
-    const draftKey = "bot:pending-draft";
+    const draftKey = "agent:pending-draft";
     const textarea = renderComposer(onSend, { draftKey });
     type(textarea, "pending text");
     pressEnter(textarea);
@@ -1006,7 +1006,7 @@ it.each([true, false])(
   "settles a submission after returning to its thread (accepted: %s)",
   async (accepted) => {
     let finishSend = (_accepted: boolean) => {};
-    const draftKey = "bot:return-before-settle";
+    const draftKey = "agent:return-before-settle";
     const first = renderComposer(
       () =>
         new Promise<boolean>((resolve) => {
@@ -1030,7 +1030,7 @@ it.each([true, false])(
 
 it("preserves edits made after returning, even when the text matches the submission", async () => {
   let finishSend = (_accepted: boolean) => {};
-  const draftKey = "bot:identical-newer-edit";
+  const draftKey = "agent:identical-newer-edit";
   const first = renderComposer(
     () =>
       new Promise<boolean>((resolve) => {
@@ -1095,7 +1095,7 @@ it("ignores dictation after switching draft keys on the same instance", async ()
     const textarea = renderComposer(vi.fn(), { phoneCallsEnabled: true });
     const mic = container?.querySelector<HTMLButtonElement>('button[aria-label="Hold to talk"]');
     act(() => mic?.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 0 })));
-    rerenderComposer({ draftKey: "bot:other-bot" });
+    rerenderComposer({ draftKey: "agent:other-bot" });
     type(textarea, "newer draft");
     act(() => onFinal("late dictation"));
     expect(textarea.value).toBe("newer draft");
@@ -1210,7 +1210,7 @@ it("shows an image confirmation as a warning with file and model actions", () =>
     expect.arrayContaining(["Send as file", "Change model"]),
   );
   const note = Array.from(error.querySelectorAll("p")).find(
-    (element) => element.textContent === "The bot can use the file but won't see the picture.",
+    (element) => element.textContent === "The agent can use the file but won't see the picture.",
   );
   expect(note).toBeDefined();
   const sendAsFile = buttons.find((button) => button.textContent === "Send as file")!;
@@ -1222,7 +1222,7 @@ it("shows an image confirmation as a warning with file and model actions", () =>
   rerenderComposer({ sendError: "Could not send the message.", imageConfirmation: false });
   expect(error.className).toContain("text-destructive");
   expect(error.className).not.toContain("text-warning");
-  expect(error.textContent).not.toContain("The bot can use the file but won't see the picture.");
+  expect(error.textContent).not.toContain("The agent can use the file but won't see the picture.");
   expect(
     Array.from(error.querySelectorAll("button")).some(
       (button) => button.textContent === "Change model",

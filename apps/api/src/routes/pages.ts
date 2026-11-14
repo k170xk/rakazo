@@ -2,9 +2,11 @@ import { ORPCError } from "@orpc/server";
 import {
   BoardChangedError,
   BoardSaveError,
+  createWhiteboard,
   getPage,
   getPageState,
   listPages,
+  listPublishedApps,
   PageFrozenError,
   PageListCursorError,
   PageShareConflictError,
@@ -37,6 +39,9 @@ export function pagesRoutes(ctx: RouterContext) {
           throw error;
         }
       }),
+      published: authed.pages.published.handler(({ context }) =>
+        listPublishedApps(pageDeps(), context.actor),
+      ),
       get: authed.pages.get.handler(({ context, input }) =>
         getPage(pageDeps(), context.actor, input),
       ),
@@ -80,6 +85,9 @@ export function pagesRoutes(ctx: RouterContext) {
           throw error;
         }
       }),
+      createBoard: authed.pages.createBoard.handler(({ context, input }) =>
+        createWhiteboard(deps.prisma, context.actor, input.title),
+      ),
       saveBoard: authed.pages.saveBoard.handler(async ({ context, input }) => {
         try {
           return await saveWhiteboard(deps.prisma, context.actor, input);

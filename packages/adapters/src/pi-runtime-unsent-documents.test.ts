@@ -161,7 +161,7 @@ it("reminds a reply that forgot to attach the document it made, once", async () 
   expect(events.at(-1)?.type).toBe("done");
 });
 
-it("does not remind twice when the bot still sends nothing", async () => {
+it("does not remind twice when the agent still sends nothing", async () => {
   const { input, names } = documentRun();
   providerState.stream
     .mockImplementationOnce(() => call("ocsc", { program: "word", args: ["edit"] }))
@@ -183,7 +183,7 @@ it("leaves a reply alone when the document was already attached", async () => {
   expect(providerState.stream).toHaveBeenCalledTimes(3);
 });
 
-it("does not remind a bot that has no attach_file tool", async () => {
+it("does not remind an agent that has no attach_file tool", async () => {
   const { input } = documentRun([tool("ocsc")]);
   providerState.stream
     .mockImplementationOnce(() => call("ocsc", { program: "word", args: ["edit"] }))

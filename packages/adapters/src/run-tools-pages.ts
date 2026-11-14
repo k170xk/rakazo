@@ -106,7 +106,7 @@ async function savePage(ctx: RunContext, call: ToolCall) {
         },
       })
     : null;
-  if (pageId && !page) return { error: "No page with that pageId belongs to this bot or chat." };
+  if (pageId && !page) return { error: "No page with that pageId belongs to this agent or chat." };
   if (page?.kind === "app") {
     return { error: "That id is an app, not a page; change it with save_app." };
   }

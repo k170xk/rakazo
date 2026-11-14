@@ -190,7 +190,7 @@ describe("host-aware sandbox", () => {
     await sandbox.destroy(computer, ctx);
   });
 
-  it("maps the Linux bot home cwd onto the desktop home", async () => {
+  it("maps the Linux agent home cwd onto the desktop home", async () => {
     const desktop = new DesktopSandboxProvider();
     const computer = await desktop.provision({ botId: "alias", homePath: "/tmp/alias" }, ctx);
     let code = 1;
@@ -205,11 +205,11 @@ describe("host-aware sandbox", () => {
     await desktop.destroy(computer, ctx);
   });
 
-  it("never runs bot commands on a production backend host", async () => {
+  it("never runs agent commands on a production backend host", async () => {
     vi.stubEnv("NODE_ENV", "production");
     try {
       await expect(createRunSandbox("desktop", {})).rejects.toThrow(
-        "SANDBOX_PROVIDER=desktop runs bot commands directly on this host",
+        "SANDBOX_PROVIDER=desktop runs agent commands directly on this host",
       );
       // The desktop app's backend reaches this computer only through the authenticated bridge.
       const bridged = new HostAwareSandbox(

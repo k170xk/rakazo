@@ -74,7 +74,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     features: [
       "Open source, Apache-2.0",
       "Your server or your own computer",
-      "Bot computers in Docker or a sandbox",
+      "Agent computers in Docker or a sandbox",
       "Any model you connect",
     ],
     action: { label: "Self-hosting guide", href: SELF_HOST_GUIDE_PATH },

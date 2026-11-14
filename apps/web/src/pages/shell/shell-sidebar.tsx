@@ -9,15 +9,25 @@ import {
   InputGroupInput,
   Sidebar,
 } from "@rakazo/ui-web";
-import { ListTodo, Search, SlidersHorizontal, Sparkles, Star, UsersRound } from "lucide-react";
+import {
+  AppWindow,
+  ListTodo,
+  Presentation,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  Star,
+  UsersRound,
+} from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { AppsDialog } from "../../components/apps/AppsDialog";
 import { IconTooltip } from "../../components/IconTooltip";
-import { SidebarMeters } from "../../components/SidebarMeters";
 import { InviteDialog } from "../../components/InviteDialog";
 import { PasskeyOffer } from "../../components/PasskeyOffer";
 import { SidebarFooter } from "../../components/SidebarFooter";
+import { SidebarMeters } from "../../components/SidebarMeters";
 import { useBilling } from "../../components/SubscriptionGate";
 import { useTodoBadge } from "../../components/todos/todo-count";
 import { formatBillingDate } from "../../lib/billing";
@@ -85,6 +95,7 @@ export function ShellSidebar({
   openSkills,
   openTour,
   openTodos,
+  openWhiteboards,
   openSpaceChat,
 }: {
   isMobile: boolean;
@@ -118,6 +129,7 @@ export function ShellSidebar({
   openSkills: () => void;
   openTour: () => void;
   openTodos: () => void;
+  openWhiteboards: () => void;
   openSpaceChat: (spaceId: string, path: string) => void;
 }) {
   const { t } = useLingui();
@@ -302,11 +314,20 @@ export function ShellSidebar({
           <PasskeyOffer />
         </div>
         <div className={mini ? "pt-2" : "pt-3"}>
-          <TodoListButton
+          <SidebarPills
             mini={mini}
-            onOpen={() => {
+            bots={bots}
+            onOpenTodos={() => {
               setMobileOpen(false);
               openTodos();
+            }}
+            onOpenWhiteboards={() => {
+              setMobileOpen(false);
+              openWhiteboards();
+            }}
+            onNavigate={(path) => {
+              setMobileOpen(false);
+              navigate(path);
             }}
           />
           <SidebarMeters mini={mini} onOpenStorage={() => setMobileOpen(false)} />
@@ -543,22 +564,46 @@ function ShellSidebarFooter({
   );
 }
 
-/** Opens the person's own to-do board; the badge counts what is still open. */
-function TodoListButton({ mini, onOpen }: { mini: boolean; onOpen: () => void }) {
+/** To do and Apps, as two pills. Apps opens the person's apps and published company apps. */
+function SidebarPills({
+  mini,
+  bots,
+  onOpenTodos,
+  onOpenWhiteboards,
+  onNavigate,
+}: {
+  mini: boolean;
+  bots: Bot[];
+  onOpenTodos: () => void;
+  onOpenWhiteboards: () => void;
+  onNavigate: (path: string) => void;
+}) {
   const { t } = useLingui();
   const { open, arrivals } = useTodoBadge();
   const celebrating = useCelebration(arrivals);
+  const [appsOpen, setAppsOpen] = useState(false);
+  const todoBadge =
+    open > 0 ? (
+      <span
+        key={arrivals}
+        className={`inline-block rounded-full bg-primary/15 px-1.5 text-xs font-medium text-primary ${
+          celebrating ? "rk-todo-pop bg-primary text-primary-foreground" : ""
+        }`}
+      >
+        {open}
+      </span>
+    ) : null;
   if (mini) {
     return (
-      <div className="flex justify-center px-1">
-        <IconTooltip label={t`To do list`}>
+      <div className="flex flex-col items-center gap-1 px-1">
+        <IconTooltip label={t`To do`}>
           <Button
             variant="ghost"
             size="icon"
-            aria-label={t`To do list`}
+            aria-label={t`To do`}
             data-testid="open-todo-list"
             className="relative"
-            onClick={onOpen}
+            onClick={onOpenTodos}
           >
             <ListTodo />
             {open > 0 ? (
@@ -572,44 +617,85 @@ function TodoListButton({ mini, onOpen }: { mini: boolean; onOpen: () => void })
             {celebrating ? <TodoStars key={arrivals} className="top-1.5 right-1.5" /> : null}
           </Button>
         </IconTooltip>
+        <IconTooltip label={t`Apps`}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t`Apps`}
+            data-testid="open-apps"
+            onClick={() => setAppsOpen(true)}
+          >
+            <AppWindow />
+          </Button>
+        </IconTooltip>
+        <IconTooltip label={t`Board`}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t`Board`}
+            data-testid="open-whiteboards"
+            onClick={onOpenWhiteboards}
+          >
+            <Presentation />
+          </Button>
+        </IconTooltip>
+        <AppsDialog open={appsOpen} onOpenChange={setAppsOpen} bots={bots} onOpen={onNavigate} />
       </div>
     );
   }
   return (
-    <button
-      type="button"
-      data-testid="open-todo-list"
-      onClick={onOpen}
-      className="mx-2.5 flex w-[calc(100%-1.25rem)] items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm text-foreground hover:bg-accent"
-    >
-      <ListTodo size={16} className="text-muted-foreground" aria-hidden="true" />
-      <span className="flex-1">
-        <Trans>To do list</Trans>
-      </span>
-      <span className="relative">
-        {open > 0 ? (
-          <span
-            key={arrivals}
-            className={`inline-block rounded-full bg-primary/15 px-1.5 text-xs font-medium text-primary ${
-              celebrating ? "rk-todo-pop bg-primary text-primary-foreground" : ""
-            }`}
-          >
-            {open}
+    <>
+      <div className="mx-2.5 flex gap-1.5">
+        <button
+          type="button"
+          data-testid="open-todo-list"
+          onClick={onOpenTodos}
+          className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+        >
+          <ListTodo size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="truncate">
+            <Trans>To do</Trans>
           </span>
-        ) : null}
-        {celebrating ? (
-          <>
-            <TodoStars key={arrivals} className="top-1/2 left-1/2" />
-            <span
-              aria-hidden="true"
-              className="rk-todo-plus pointer-events-none absolute -top-3 right-0 text-xs font-semibold text-primary"
-            >
-              +1
-            </span>
-          </>
-        ) : null}
-      </span>
-    </button>
+          <span className="relative shrink-0">
+            {todoBadge}
+            {celebrating ? (
+              <>
+                <TodoStars key={arrivals} className="top-1/2 left-1/2" />
+                <span
+                  aria-hidden="true"
+                  className="rk-todo-plus pointer-events-none absolute -top-3 right-0 text-xs font-semibold text-primary"
+                >
+                  +1
+                </span>
+              </>
+            ) : null}
+          </span>
+        </button>
+        <button
+          type="button"
+          data-testid="open-apps"
+          onClick={() => setAppsOpen(true)}
+          className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+        >
+          <AppWindow size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="truncate">
+            <Trans>Apps</Trans>
+          </span>
+        </button>
+        <button
+          type="button"
+          data-testid="open-whiteboards"
+          onClick={onOpenWhiteboards}
+          className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1.5 text-xs text-foreground hover:bg-accent"
+        >
+          <Presentation size={14} className="shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="truncate">
+            <Trans>Board</Trans>
+          </span>
+        </button>
+      </div>
+      <AppsDialog open={appsOpen} onOpenChange={setAppsOpen} bots={bots} onOpen={onNavigate} />
+    </>
   );
 }
 

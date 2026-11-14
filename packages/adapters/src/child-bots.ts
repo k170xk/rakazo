@@ -49,7 +49,7 @@ export function confirmSpawnedBotName(confirmName: string, botName: string) {
   if (confirmName !== botName) {
     return {
       ok: false as const,
-      error: "confirm_name must exactly match the bot's name. Refusing to archive.",
+      error: "confirm_name must exactly match the agent's name. Refusing to archive.",
     };
   }
   return { ok: true as const };
@@ -127,7 +127,7 @@ export async function spawnBot(
       include: { thread: true },
     });
     if (!existing) throw error;
-    if (!existing.thread) throw new Error(`Spawned bot ${existing.id} is missing its thread`);
+    if (!existing.thread) throw new Error(`Spawned agent ${existing.id} is missing its thread`);
     duplicate = true;
     created = {
       id: existing.id,
@@ -149,7 +149,7 @@ export async function spawnBot(
     });
     await deps.jobs
       .enqueue(runContinueJob(run.id))
-      .catch((error) => getLogger().error("spawned bot enqueue", error));
+      .catch((error) => getLogger().error("spawned agent enqueue", error));
   } else if (input.welcome) {
     const run = await ensureWelcomeRun(deps.prisma, {
       spaceId: input.spawnedBy.spaceId,
@@ -159,13 +159,13 @@ export async function spawnBot(
       spawnKey: input.spawnKey,
       createdBy: input.spawnedBy.name,
     }).catch((error) => {
-      getLogger().error("spawned bot welcome", error);
+      getLogger().error("spawned agent welcome", error);
       return null;
     });
     if (run) {
       await deps.jobs
         .enqueue(runContinueJob(run.id))
-        .catch((error) => getLogger().error("spawned bot welcome enqueue", error));
+        .catch((error) => getLogger().error("spawned agent welcome enqueue", error));
     }
   }
 
@@ -361,14 +361,14 @@ export async function archiveSpawnedBot(
   });
 
   if (input.botId && matches.length === 0) {
-    return { error: "That bot is not in this space. Refusing to archive." };
+    return { error: "That agent is not in this space. Refusing to archive." };
   }
   if (!input.botId && matches.length === 0) {
-    return { error: `This space has no bot named "${confirmName}". Refusing to archive.` };
+    return { error: `This space has no agent named "${confirmName}". Refusing to archive.` };
   }
   if (!input.botId && matches.length > 1) {
     return {
-      error: `More than one bot is named "${confirmName}". Pass bot_id as well as confirm_name.`,
+      error: `More than one agent is named "${confirmName}". Pass bot_id as well as confirm_name.`,
     };
   }
 
@@ -376,7 +376,7 @@ export async function archiveSpawnedBot(
   const confirmed = confirmSpawnedBotName(confirmName, target.name);
   if (!confirmed.ok) return confirmed;
   if (target.id === input.spawnedByBotId) {
-    return { error: "A bot cannot archive itself with archive_bot." };
+    return { error: "An agent cannot archive itself with archive_bot." };
   }
 
   await archiveBot(deps, target, context);
@@ -533,10 +533,16 @@ export async function destroyBot(
       await tx.artifact.deleteMany({
         where: { botId: bot.id, groupId: null, spaceId: bot.spaceId },
       });
-      // Like its files, the bot's own pages and their links go with it; group pages stay.
+      // Pages and whiteboards belong to the agent. Apps belong to the person: detaching
+      // them leaves the app, its data and its link, so another agent can keep working on it.
       const botPages = { botId: bot.id, groupId: null, spaceId: bot.spaceId };
-      const pageShareSecrets = await deletePageShareSecrets(tx, botPages);
-      await tx.page.deleteMany({ where: botPages });
+      await tx.page.updateMany({
+        where: { ...botPages, kind: "app" },
+        data: { botId: null },
+      });
+      const disposablePages = { ...botPages, kind: { not: "app" } };
+      const pageShareSecrets = await deletePageShareSecrets(tx, disposablePages);
+      await tx.page.deleteMany({ where: disposablePages });
       const groupCleanup = await detachBotFromGroups(tx, bot.id);
       await tx.computerExecutionLease.deleteMany({ where: { botId: bot.id } });
       await tx.computer.updateMany({
@@ -628,7 +634,7 @@ export async function destroyBot(
   }
   await removeTeamBrowserProfile(deps, bot.id, sharedComputer, context);
   await removeTeamBotWorkspace(deps, bot, deletion.threadId, context).catch((error) => {
-    getLogger().error("team bot folder cleanup", error);
+    getLogger().error("team agent folder cleanup", error);
   });
   if (deps.dataDir && deletion.threadId) {
     await removeConversationToolWork(deps.dataDir, deletion.threadId).catch((error) => {
@@ -747,8 +753,8 @@ async function removeStoredArtifacts(
 }
 
 function archivedMemoryDirectory(name: string, botId: string) {
-  const safeName = name.replace(/[\\/]/g, "-").trim() || "Bot";
-  return `Archived bots/${safeName} (${botId})`;
+  const safeName = name.replace(/[\\/]/g, "-").trim() || "Agent";
+  return `Archived agents/${safeName} (${botId})`;
 }
 
 function releasedComputerLease() {
@@ -1028,7 +1034,7 @@ async function removeBotFolders(
     for (const [parent, name] of folders) {
       await removeAgentHomeFolders(deps.home, computer.homeKey, parent, [name], deps.dataDir).catch(
         (error) => {
-          getLogger().error("team bot folder cleanup", error);
+          getLogger().error("team agent folder cleanup", error);
         },
       );
     }
@@ -1041,6 +1047,6 @@ async function removeBotFolders(
       await removeComputerWorkspaceDirectories(deps.sandbox, ref, parent, [name], cleanupContext);
     }
   }).catch((error) => {
-    getLogger().error("team bot folder cleanup", error);
+    getLogger().error("team agent folder cleanup", error);
   });
 }

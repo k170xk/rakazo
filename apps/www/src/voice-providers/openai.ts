@@ -7,13 +7,13 @@ export const openai: VoiceProvider = {
   does: "Speaks and transcribes",
   runs: "Hosted",
   bestFor: "Reusing an OpenAI key you already have",
-  title: "OpenAI text to speech for AI agents: voice for Rakazo bots",
+  title: "OpenAI text to speech for AI agents: voice for Rakazo agents",
   description:
     "How Rakazo uses OpenAI text to speech and transcription so you can talk to your AI agents, hear replies and call them. Models, the 2027 shutdown, limits and setup.",
   h1: "OpenAI text to speech for AI agents: voice with the key you have",
   intro: [
     "[OpenAI](https://openai.com) is best known for ChatGPT and its language models, and its API also turns text into speech and speech into text. If you already pay for OpenAI, the same kind of API key can give your agents a voice.",
-    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each bot in chat, and you can also talk to it by voice: hold the mic to speak, have replies read aloud, or call a bot in real time. Connect OpenAI and it does the speaking and the transcription. Rakazo runs the bot, decides what it says, and keeps the transcript in the chat.",
+    "[Rakazo](/) is an open source app for AI teammates that do real work. You talk to each agent in chat, and you can also talk to it by voice: hold the mic to speak, have replies read aloud, or call an agent in real time. Connect OpenAI and it does the speaking and the transcription. Rakazo runs the agent, decides what it says, and keeps the transcript in the chat.",
   ],
   scene: {
     bot: "Inbox Manager",
@@ -44,11 +44,11 @@ export const openai: VoiceProvider = {
       ],
       bullets: [
         "Talk instead of typing. Hold the mic in the composer, speak, and let go to send. When Rakazo transcribes on the server, as it does in a phone browser or the desktop app, it uses `gpt-4o-mini-transcribe`.",
-        "Hear replies. Choose **Speak this reply** on any message, or turn on **Read replies aloud** in a bot's settings. Replies are spoken with `gpt-4o-mini-tts`.",
-        "Call a bot. Choose **Call** at the top of a chat to talk in real time. You can cut in while the bot is speaking, and the transcript stays in the chat.",
-        "Get called. Ask \"call me when the drafts are ready\" and the bot rings you. A bot may also call if you've missed the same reminder several times.",
-        "Give each bot its own voice. Pick from OpenAI's 13 voices per bot, so different bots are easy to tell apart.",
-        "Send voice notes from chat apps. A voice note sent to a bot through Telegram, for example, is transcribed before the bot reads it. See [messaging apps](/docs/messaging-apps/).",
+        "Hear replies. Choose **Speak this reply** on any message, or turn on **Read replies aloud** in an agent's settings. Replies are spoken with `gpt-4o-mini-tts`.",
+        "Call an agent. Choose **Call** at the top of a chat to talk in real time. You can cut in while the agent is speaking, and the transcript stays in the chat.",
+        "Get called. Ask \"call me when the drafts are ready\" and the agent rings you. An agent may also call if you've missed the same reminder several times.",
+        "Give each agent its own voice. Pick from OpenAI's 13 voices per agent, so different agents are easy to tell apart.",
+        "Send voice notes from chat apps. A voice note sent to an agent through Telegram, for example, is transcribed before the agent reads it. See [messaging apps](/docs/messaging-apps/).",
       ],
     },
     {
@@ -64,8 +64,8 @@ export const openai: VoiceProvider = {
         "Rakazo speaks with `gpt-4o-mini-tts`, which OpenAI shuts down on January 6, 2027, and transcribes with `gpt-4o-mini-transcribe`, which follows on February 26, 2027. Until Rakazo moves to newer models, OpenAI voice stops working on those dates.",
         "The models are fixed. You can't choose `tts-1`, a newer model or a different transcription model from Rakazo.",
         "Rakazo offers OpenAI's 13 built-in voices. It doesn't send tone instructions, and custom voices made in your OpenAI account aren't supported.",
-        "Each sentence is generated as a finished clip and played in order, rather than streamed, so there is a short pause before the bot starts talking.",
-        "OpenAI's usage policies ask you to tell listeners the voice is AI-generated. Keep that in mind if a bot's voice reaches people outside your team.",
+        "Each sentence is generated as a finished clip and played in order, rather than streamed, so there is a short pause before the agent starts talking.",
+        "OpenAI's usage policies ask you to tell listeners the voice is AI-generated. Keep that in mind if an agent's voice reaches people outside your team.",
         "Calls and hold-to-talk are a server setting. On a self-hosted server they stay off until the admin turns them on.",
       ],
     },
@@ -78,7 +78,7 @@ export const openai: VoiceProvider = {
         "Create an API key in the [OpenAI platform](https://platform.openai.com) for a project with audio access.",
         "In Rakazo, open **Settings → Voice**, choose **OpenAI** as the **Provider**, paste the **API key** and choose **Connect**.",
         "Pick a **Voice**, such as Marin or Cedar, and use **Hear a sample** to check it.",
-        "Optionally, open a bot's settings, expand **Advanced**, turn on **Read replies aloud** and give it its own **Voice**.",
+        "Optionally, open an agent's settings, expand **Advanced**, turn on **Read replies aloud** and give it its own **Voice**.",
         "If you run your own server and want calls and hold-to-talk, set `PHONE_CALLS_ENABLED=true` on the API and worker.",
       ],
     },
@@ -95,7 +95,7 @@ export const openai: VoiceProvider = {
     {
       question: "Can I use OpenAI text to speech for an AI agent?",
       answer:
-        "Yes. In Rakazo, connect OpenAI in **Settings → Voice** and your bots can read replies aloud, take calls and transcribe what you say. Note that OpenAI shuts down its current speech models on January 6, 2027.",
+        "Yes. In Rakazo, connect OpenAI in **Settings → Voice** and your agents can read replies aloud, take calls and transcribe what you say. Note that OpenAI shuts down its current speech models on January 6, 2027.",
     },
     {
       question: "Is gpt-4o-mini-tts being deprecated?",
@@ -103,9 +103,9 @@ export const openai: VoiceProvider = {
         "Yes. OpenAI says `tts-1`, `tts-1-hd` and `gpt-4o-mini-tts` shut down on January 6, 2027, and points to `gpt-realtime-2.1-mini` through the Realtime API. Rakazo uses `gpt-4o-mini-tts` today, so OpenAI voice in Rakazo depends on moving to the new model before then.",
     },
     {
-      question: "Which OpenAI voices can a Rakazo bot use?",
+      question: "Which OpenAI voices can a Rakazo agent use?",
       answer:
-        "The 13 built-in voices: Alloy, Ash, Ballad, Cedar, Coral, Echo, Fable, Marin, Nova, Onyx, Sage, Shimmer and Verse. You can set a default and a different voice per bot.",
+        "The 13 built-in voices: Alloy, Ash, Ballad, Cedar, Coral, Echo, Fable, Marin, Nova, Onyx, Sage, Shimmer and Verse. You can set a default and a different voice per agent.",
     },
     {
       question: "OpenAI vs ElevenLabs for voice agents?",

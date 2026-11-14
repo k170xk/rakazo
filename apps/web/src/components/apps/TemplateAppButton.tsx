@@ -56,7 +56,7 @@ export function TemplateAppButton({ botId, groupId }: { botId?: string; groupId?
           <DialogHeader>
             <DialogTitle className="pe-8 text-[16px]">{t`Start from a starter app`}</DialogTitle>
             <DialogDescription>
-              {t`Each comes with its screens and empty tables. Add your rows, or ask the bot to fit it to your work.`}
+              {t`Each comes with its screens and empty tables. Add your rows, or ask the agent to fit it to your work.`}
             </DialogDescription>
           </DialogHeader>
           {templates.isPending ? (

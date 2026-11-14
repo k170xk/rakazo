@@ -41,6 +41,7 @@ import {
   ComputerAccessSchema,
   canonicalPiProviderId,
   companyFeaturesFrom,
+  emailFilingPolicyFrom,
   FileCleanupResultSchema,
   ModelAccessSchema,
   ThinkingLevelSchema,
@@ -82,7 +83,8 @@ const FEATURE_OFF: Record<CompanyFeatureId, string> = {
   staffSkills:
     "Writing skills, browsing skill packs and adding them from GitHub is turned off for your company.",
   chatFileSearch: "Searching chat files is turned off for your company.",
-  outlookSend: "Sending Outlook email is not turned on for you.",
+  outlookSend: "Outlook email drafts are not turned on for you.",
+  outlookFiling: "Outlook email filing is not turned on for you.",
 };
 
 /** Switches that only limit members; admins keep these so they can configure and test. */
@@ -197,6 +199,7 @@ export async function companyAdminState(
       ? { provider: environment.provider, modelId: environment.model }
       : null,
     features: companyFeaturesFrom(row?.companyFeatures),
+    emailFiling: emailFilingPolicyFrom(companyToolsWithDefaults(row?.companyTools).emailFiling),
     tools: toolsState(deps, companyToolsWithDefaults(row?.companyTools)),
     computers: await computersState(deps, companyToolsWithDefaults(row?.companyTools), row),
     admins: deps.env.adminEmails ?? [],
@@ -568,6 +571,15 @@ export async function setCompanyTools(
   const tools = { ...companyToolsWithDefaults(row?.companyTools), ...input };
   tools.disabledSkills = [...new Set(tools.disabledSkills)];
   tools.disabledTools = [...new Set(tools.disabledTools)];
+  if (input.emailFiling) {
+    tools.emailFiling = {
+      ...emailFilingPolicyFrom(input.emailFiling),
+      defaultParentFolder:
+        input.emailFiling.defaultParentFolder.replace(/[\p{Cc}\\/:*?"<>|]+/gu, " ").trim() ||
+        "Projects",
+      autonomy: "off",
+    };
+  }
   const groupIds = new Set<string>();
   tools.accessGroups = (tools.accessGroups ?? [])
     .filter((group) => !groupIds.has(group.id) && Boolean(groupIds.add(group.id)))

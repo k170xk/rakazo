@@ -54,7 +54,7 @@ describe("tool-only narration", () => {
     expect(isToolOnlyNarration([stepsBlock, stepsNoDuration], true)).toBe(true);
   });
 
-  it("is false once the bot has written something, or when tool cards are hidden", () => {
+  it("is false once the agent has written something, or when tool cards are hidden", () => {
     expect(isToolOnlyNarration([stepsBlock, textBlock], true)).toBe(false);
     expect(isToolOnlyNarration([narration, liveActivity, stepsBlock], true)).toBe(false);
     expect(isToolOnlyNarration([liveActivity, stepsBlock], false)).toBe(false);

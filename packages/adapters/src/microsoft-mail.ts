@@ -115,6 +115,7 @@ export interface MailGraph {
 const SEGMENT = "[^/?#]+";
 const READ_ROUTES = [
   `/me/mailFolders`,
+  `/me/mailFolders/${SEGMENT}`,
   `/me/mailFolders/${SEGMENT}/childFolders`,
   `/me/mailFolders/${SEGMENT}/messages`,
   `/me/messages`,
@@ -252,7 +253,7 @@ export function count(value: unknown, fallback: number, max: number): number {
   return Math.min(Math.floor(number), max);
 }
 
-function odataString(value: string): string {
+export function odataString(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
 }
 

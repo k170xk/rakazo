@@ -38,6 +38,11 @@ const OcscTourDialog = lazyOverlay(() =>
 const TodoBoardDialog = lazyOverlay(() =>
   import("../../components/todos/todo-board").then((module) => module.TodoBoardDialog),
 );
+const WhiteboardStudio = lazyOverlay(() =>
+  import("../../components/whiteboards/whiteboard-studio").then(
+    (module) => module.WhiteboardStudio,
+  ),
+);
 const McpServersOverlay = lazyOverlay(() =>
   import("../McpServersOverlay").then((module) => module.McpServersOverlay),
 );
@@ -98,6 +103,9 @@ export function AppOverlays({
         />
       ) : null}
       {overlay?.kind === "todos" ? <TodoBoardDialog onClose={() => setOverlay(null)} /> : null}
+      {overlay?.kind === "whiteboards" ? (
+        <WhiteboardStudio onClose={() => setOverlay(null)} />
+      ) : null}
       {overlay?.kind === "skills" ? (
         <SkillsDialog canManageSkills={canManageSkills} onClose={() => setOverlay(null)} />
       ) : null}
@@ -191,6 +199,7 @@ export function SettingsOverlays({
           messagingEnabled={messagingEnabled}
           personalVaultEnabled={bootstrapMe?.features?.personalVault === true}
           outlookSendEnabled={bootstrapMe?.features?.outlookSend === true}
+          outlookFilingEnabled={bootstrapMe?.features?.outlookFiling === true}
           paymentWalletProvider={bootstrapMe?.paymentWalletProvider ?? null}
           timezone={bootstrapMe?.timezone ?? null}
           onTimezoneChange={async (timezone) => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { enqueueTeachComputerInput } from "./teach-computer-input-chain";
 
 describe("enqueueTeachComputerInput", () => {
-  it("runs one bot's input in order and still continues after a rejection", async () => {
+  it("runs one agent's input in order and still continues after a rejection", async () => {
     const botId = "chain-order";
     const order: string[] = [];
     let release!: () => void;

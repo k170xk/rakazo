@@ -50,7 +50,7 @@ function render(call: Partial<CallState> | null) {
   session = call
     ? ({
         botId: "bot-1",
-        botName: "Test bot",
+        botName: "Test agent",
         phase: "listening",
         exchanges: [],
         ...call,

@@ -277,7 +277,7 @@ describe("saved logins in a later run", () => {
     expect(loginLoads).toBe(1);
   });
 
-  it("decrypts no login for a bot without one", async () => {
+  it("decrypts no login for an agent without one", async () => {
     const { toolResults, loginLoads } = await runAfterFill(
       [{ name: "shell", args: { command: "read-filled-fields" } }],
       { savedLogin: false },

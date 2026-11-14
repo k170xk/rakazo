@@ -722,10 +722,21 @@ export function useAsset(id: string | null | undefined): string | null {
     let cancelled = false;
     let promise = assetUrls.get(id);
     if (!promise) {
-      // A data URL: the frame's policy shows embedded pictures and nothing fetched.
-      promise = send<{ mime: string; base64: string }>({ op: "asset", id }).then(
-        (asset) => `data:${asset.mime};base64,${asset.base64}`,
-      );
+      // Embedded pictures use data URLs; video and audio use blob URLs (allowed by media-src blob:) so seeking is instant.
+      promise = send<{ mime: string; base64: string }>({ op: "asset", id }).then((asset) => {
+        if (
+          (asset.mime.startsWith("video/") || asset.mime.startsWith("audio/")) &&
+          typeof URL !== "undefined" &&
+          typeof URL.createObjectURL === "function" &&
+          typeof atob === "function"
+        ) {
+          const binary = atob(asset.base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          return URL.createObjectURL(new Blob([bytes], { type: asset.mime }));
+        }
+        return `data:${asset.mime};base64,${asset.base64}`;
+      });
       assetUrls.set(id, promise);
       promise.catch(() => assetUrls.delete(id));
     }

@@ -60,7 +60,7 @@ describe("routine model pin", () => {
     });
   });
 
-  it("pins nothing when the routine follows the bot", () => {
+  it("pins nothing when the routine follows the agent", () => {
     expect(routineRunModelPin({ modelProvider: null, modelId: null, thinkingLevel: null })).toEqual(
       {},
     );
@@ -87,7 +87,7 @@ describe("routine model pin", () => {
     expect(runModelChoice({ modelPinned: true, ...routine }, bot)).toEqual(routine);
   });
 
-  it("falls back to the bot for a routine run without a pinned model", () => {
+  it("falls back to the agent for a routine run without a pinned model", () => {
     expect(
       runModelChoice(
         { modelPinned: false, modelProvider: null, modelId: null, thinkingLevel: null },
@@ -96,7 +96,7 @@ describe("routine model pin", () => {
     ).toEqual(bot);
   });
 
-  it("follows the bot when a routine run only recorded the model an attempt used", () => {
+  it("follows the agent when a routine run only recorded the model an attempt used", () => {
     expect(runModelChoice({ modelPinned: false, ...routine }, bot)).toEqual(bot);
   });
 
@@ -1229,7 +1229,7 @@ describe("loadStoredModelSecret", () => {
   });
 });
 
-describe("bot model change validation", () => {
+describe("agent model change validation", () => {
   const scope = { userId: "user-1", spaceId: "space-1" };
   const oauthSecret = JSON.stringify({
     type: "oauth",
@@ -1368,7 +1368,7 @@ describe("bot model change validation", () => {
 });
 
 describe("live-only catalog validation", () => {
-  it("uses the selected user's credential and shared cache for bot, routine, backup and run pins", async () => {
+  it("uses the selected user's credential and shared cache for agent, routine, backup and run pins", async () => {
     const model = "gpt-future-live-chat";
     const selected = credential("openai", null);
     const savedBots = vi.fn(async () => [{ modelProvider: "openai", modelId: model }]);

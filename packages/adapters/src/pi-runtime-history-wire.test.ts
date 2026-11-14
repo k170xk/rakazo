@@ -169,7 +169,7 @@ describe("history on the wire", () => {
     ]);
   });
 
-  it("starts with a user turn when the history starts with this bot's own message", async () => {
+  it("starts with a user turn when the history starts with this agent's own message", async () => {
     const body = await wireBody(compatible, completionsReply, {
       history: [
         { id: "m1", role: "assistant", content: "Welcome, I am Boris." },
@@ -207,7 +207,7 @@ describe("history on the wire", () => {
     expect(JSON.stringify(body.messages)).not.toContain("Assistant:");
   });
 
-  it("ends on the prompt as a user turn when the history ends on bot messages", async () => {
+  it("ends on the prompt as a user turn when the history ends on agent messages", async () => {
     // History that ends on a bot message is followed by the prompt as the final user turn.
     const body = await wireBody(anthropic, anthropicReply, {
       history: [

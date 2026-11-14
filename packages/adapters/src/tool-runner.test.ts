@@ -51,7 +51,7 @@ describe("tool runner workspace", () => {
     });
   });
 
-  it("gives a Tools-only owner their own bot folder in their home", () => {
+  it("gives a Tools-only owner their own agent folder in their home", () => {
     expect(
       toolRunnerWorkspace({
         dataDir: data,
@@ -96,7 +96,7 @@ describe("tool runner workspace", () => {
     ).toBeUndefined();
   });
 
-  it("makes the bot folder for someone whose computer never started", async () => {
+  it("makes the agent folder for someone whose computer never started", async () => {
     const workspace = toolRunnerWorkspace({
       dataDir: data,
       homePath: path.join(data, "homes/team-new"),

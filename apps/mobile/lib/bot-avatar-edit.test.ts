@@ -8,7 +8,7 @@ import {
   withAvatarShape,
 } from "./bot-avatar-edit";
 
-describe("bot avatar editing", () => {
+describe("agent avatar editing", () => {
   it("keeps the shape when the color changes", () => {
     expect(withAvatarColor("#3EC5A8::shape_3", "#F5A03C")).toBe("#F5A03C::shape_3");
     expect(withAvatarColor("#3EC5A8", "#F5A03C")).toBe("#F5A03C");

@@ -155,7 +155,7 @@ describe("the owner's list", () => {
   });
 });
 
-describe("what the bot sees", () => {
+describe("what the agent sees", () => {
   it("lists a contact in full and a card only by its summary", async () => {
     const db = await vaultWithCard();
     const listed = await listBotSecrets(db.prisma, secretStore, scope);

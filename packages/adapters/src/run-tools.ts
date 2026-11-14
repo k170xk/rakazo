@@ -15,6 +15,7 @@ import {
 import { appTools } from "./run-tools-apps.js";
 import { computerTools, pageBrowserTool } from "./run-tools-computer.js";
 import { emailTools } from "./run-tools-email.js";
+import { emailFilingTools } from "./run-tools-email-filing.js";
 import { evolvePluginTools } from "./run-tools-evolve-plugins.js";
 import { feedbackTools } from "./run-tools-feedback.js";
 import { fileTools } from "./run-tools-files.js";
@@ -23,7 +24,6 @@ import { cloudAgentTool, connectorTool, integrationTools } from "./run-tools-int
 import { memoryTools } from "./run-tools-memory.js";
 import { messagingTools } from "./run-tools-messaging.js";
 import { pageTools } from "./run-tools-pages.js";
-import { whiteboardTools } from "./run-tools-whiteboard.js";
 import { preferenceTools } from "./run-tools-preferences.js";
 import { purchaseTools } from "./run-tools-purchases.js";
 import { secretTools } from "./run-tools-secrets.js";
@@ -37,6 +37,7 @@ import {
   userComputerObserve,
   userComputerShell,
 } from "./run-tools-user-computer.js";
+import { whiteboardTools } from "./run-tools-whiteboard.js";
 import { strategicInitiativeToolAllowed } from "./strategic-initiative.js";
 import { argumentGiven } from "./update-bot-patch.js";
 
@@ -51,6 +52,7 @@ const TOOL_HANDLERS = new Map<string, ToolHandler>([
   ...Object.entries(taskTools),
   ...Object.entries(todoTools),
   ...Object.entries(emailTools),
+  ...Object.entries(emailFilingTools),
   ...Object.entries(messagingTools),
   ...Object.entries(secretTools),
   ...Object.entries(fleetTools),
@@ -105,7 +107,7 @@ async function dispatchTool(
     };
   }
   if (ctx.tools.disabled.has(name)) {
-    return { error: "This tool is disabled for this bot." };
+    return { error: "This tool is disabled for this agent." };
   }
   if (PAGE_BROWSER_TOOL_NAMES.has(name) && !ctx.computer.pageBrowserAllowed) {
     return { error: "Page browser is unavailable on this computer." };

@@ -103,7 +103,7 @@ describe("ticket contracts", () => {
     expect(() => GetTicketInput.parse({ id: "ticket-1", ref: "RAK-1" })).toThrow();
   });
 
-  it("requires an owner bot when creating a ticket", () => {
+  it("requires an owner agent when creating a ticket", () => {
     expect(() => CreateTicketInput.parse({ title: "Ship" })).toThrow();
   });
 

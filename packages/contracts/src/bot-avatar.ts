@@ -54,4 +54,4 @@ export const BotAvatarValueSchema = z
   .string()
   .min(1)
   .max(BOT_AVATAR_VALUE_MAX_LENGTH)
-  .refine(isBotAvatarValue, { message: "Invalid bot avatar" });
+  .refine(isBotAvatarValue, { message: "Invalid agent avatar" });

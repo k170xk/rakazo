@@ -497,7 +497,7 @@ describe("prepareVoice", () => {
     } as unknown as VoiceDeps;
   }
 
-  it("reads a long bot reply as the bot model's summary", async () => {
+  it("reads a long agent reply as the agent model's summary", async () => {
     const summarize = vi.fn().mockResolvedValue("Deploy done. Next, the release notes.");
     const result = await prepareVoice(depsWith(summarize), actor, { text: long, botId: "bot-1" });
     expect(summarize).toHaveBeenCalledWith(actor, "bot-1", long, undefined);

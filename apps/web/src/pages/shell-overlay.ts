@@ -34,6 +34,7 @@ export type ShellOverlay =
   | { kind: "mcp"; serverId?: string }
   | { kind: "tour" }
   | { kind: "todos" }
+  | { kind: "whiteboards" }
   | null;
 
 const OVERLAY_KEYS = [
@@ -45,6 +46,7 @@ const OVERLAY_KEYS = [
   "messaging",
   "tour",
   "todos",
+  "whiteboards",
 ] as const;
 
 function isSettingsSection(value: string): value is SettingsSection {
@@ -64,6 +66,7 @@ export function readShellOverlay(params: URLSearchParams): ShellOverlay {
   if (params.has("skills")) return { kind: "skills" };
   if (params.has("tour")) return { kind: "tour" };
   if (params.has("todos")) return { kind: "todos" };
+  if (params.has("whiteboards")) return { kind: "whiteboards" };
   if (params.has("mcp")) {
     const serverId = params.get("mcp");
     return serverId ? { kind: "mcp", serverId } : { kind: "mcp" };

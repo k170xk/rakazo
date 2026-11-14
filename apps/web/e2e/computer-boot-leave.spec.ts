@@ -106,7 +106,7 @@ test("opening a computer refreshes a stale booting snapshot", async ({ page }, t
   await expect(
     page.getByTestId("computer-chrome").getByRole("button", { name: "Take control", exact: true }),
   ).toBeVisible();
-  await expect(page.locator('iframe[title="Bot screen"]')).toHaveAttribute("src", screenUrl);
+  await expect(page.locator('iframe[title="Agent screen"]')).toHaveAttribute("src", screenUrl);
   expect(boots).toHaveLength(0);
   await captureScreenshot(page, testInfo, "computer-open-refreshed-boot");
   await page.unrouteAll({ behavior: "wait" });
@@ -171,7 +171,7 @@ test("Retry screen clears a failed takeover on a running computer", async ({ pag
   await expect(preview.locator("iframe")).toHaveAttribute("src", screenUrl);
   await preview.hover();
   await preview.getByTestId("computer-preview-open").click();
-  const screen = page.locator('iframe[title="Bot screen"]');
+  const screen = page.locator('iframe[title="Agent screen"]');
   await expect(screen).toHaveAttribute("src", screenUrl);
   await page
     .getByTestId("computer-chrome")

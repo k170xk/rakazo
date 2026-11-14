@@ -219,7 +219,7 @@ describe("current-turn thread files", () => {
     ["application/pdf", ".pdf"],
     ["application/zip", ".zip"],
   ])(
-    "copies %s attachments into the bot workspace and describes their paths",
+    "copies %s attachments into the agent workspace and describes their paths",
     async (mimeType, extension) => {
       const findMany = vi.fn().mockResolvedValue([
         {
@@ -346,7 +346,7 @@ describe("current-turn thread files", () => {
     expect(get).toHaveBeenCalledWith("stored-image-1", expect.objectContaining({ botId: "bot-1" }));
     expect(writeFile).toHaveBeenCalledWith(
       expect.objectContaining({ id: "computer-1" }),
-      { path: "bots/bot-1/attachments/image-1.png", content: new Uint8Array([1, 2, 3, 4]) },
+      { path: "agents/bot-1/attachments/image-1.png", content: new Uint8Array([1, 2, 3, 4]) },
       expect.objectContaining({ botId: "bot-1" }),
     );
     expect(files).toEqual([
@@ -402,7 +402,7 @@ describe("recent thread files", () => {
       );
       expect(readFile).toHaveBeenCalledWith(
         expect.anything(),
-        computerMode === "team" ? "bots/bot/attachments/notes.txt" : "attachments/notes.txt",
+        computerMode === "team" ? "agents/bot/attachments/notes.txt" : "attachments/notes.txt",
         expect.anything(),
       );
       expect(get).not.toHaveBeenCalled();
@@ -553,7 +553,7 @@ describe("recent thread files", () => {
     expect(writeFile).toHaveBeenCalledOnce();
     expect(writeFile).toHaveBeenCalledWith(
       expect.objectContaining({ id: "computer-1" }),
-      { path: "bots/bot-1/attachments/image-1.png", content: new Uint8Array([1, 2, 3]) },
+      { path: "agents/bot-1/attachments/image-1.png", content: new Uint8Array([1, 2, 3]) },
       context,
     );
     expect(recentThreadFilesInstruction(files)).toBe(

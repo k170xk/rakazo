@@ -22,10 +22,10 @@ import {
 } from "./index.js";
 
 describe("contracts", () => {
-  it("leaves bot management to the database default and preserves explicit choices", () => {
-    expect(CreateBotInput.parse({ name: "New bot" }).fleetManagement).toBeUndefined();
+  it("leaves agent management to the database default and preserves explicit choices", () => {
+    expect(CreateBotInput.parse({ name: "New agent" }).fleetManagement).toBeUndefined();
     for (const fleetManagement of [false, true]) {
-      expect(CreateBotInput.parse({ name: "New bot", fleetManagement }).fleetManagement).toBe(
+      expect(CreateBotInput.parse({ name: "New agent", fleetManagement }).fleetManagement).toBe(
         fleetManagement,
       );
     }
@@ -269,13 +269,13 @@ describe("contracts", () => {
     ).toBe(false);
   });
 
-  it("parses bot create input", () => {
+  it("parses agent create input", () => {
     const parsed = CreateBotInput.parse({ name: "Chief" });
     expect(parsed.notifyOnFinish).toBe(true);
     expect(parsed.avatarFamily).toBeUndefined();
   });
 
-  it("accepts an organic avatar family from 0 to 9 when creating a bot", () => {
+  it("accepts an organic avatar family from 0 to 9 when creating an agent", () => {
     expect(CreateBotInput.parse({ name: "Chief", avatarFamily: 0 }).avatarFamily).toBe(0);
     expect(CreateBotInput.parse({ name: "Chief", avatarFamily: 9 }).avatarFamily).toBe(9);
     for (const avatarFamily of [-1, 10, 2.5, "3"]) {
@@ -298,7 +298,7 @@ describe("contracts", () => {
     }
   });
 
-  it("accepts fleetManagement on bot updates and rejects non-boolean values", () => {
+  it("accepts fleetManagement on agent updates and rejects non-boolean values", () => {
     expect(UpdateBotInput.parse({ botId: "bot-1", fleetManagement: true }).fleetManagement).toBe(
       true,
     );
@@ -312,7 +312,7 @@ describe("contracts", () => {
     expect(UpdateBotInput.parse({ botId: "bot-1", title: "Lead" })).toEqual({ botId: "bot-1" });
   });
 
-  it("normalizes bot names and rejects whitespace-only values at the contract boundary", () => {
+  it("normalizes agent names and rejects whitespace-only values at the contract boundary", () => {
     expect(CreateBotInput.parse({ name: "  Chief  " }).name).toBe("Chief");
     expect(UpdateBotInput.parse({ botId: "bot-1", name: "  Atlas  " }).name).toBe("Atlas");
     expect(
@@ -322,7 +322,7 @@ describe("contracts", () => {
     expect(UpdateBotInput.safeParse({ botId: "bot-1", name: "   " }).success).toBe(false);
   });
 
-  it("rejects partial model override clears on bot update", () => {
+  it("rejects partial model override clears on agent update", () => {
     expect(UpdateBotInput.safeParse({ botId: "bot-1", modelId: null }).success).toBe(false);
     expect(UpdateBotInput.safeParse({ botId: "bot-1", modelProvider: null }).success).toBe(false);
     expect(
@@ -350,7 +350,7 @@ describe("contracts", () => {
     ).toBe(false);
   });
 
-  it.each([0, 1, 2, 10, 11])("enforces group member bounds for %i bots", (count) => {
+  it.each([0, 1, 2, 10, 11])("enforces group member bounds for %i agents", (count) => {
     const botIds = Array.from({ length: count }, (_, index) => `bot-${index}`);
     const accepted = count >= 1 && count <= 10;
     expect(CreateGroupInput.safeParse({ name: "Draft team", botIds }).success).toBe(accepted);
@@ -379,7 +379,7 @@ describe("contracts", () => {
     ).toBe(false);
   });
 
-  it("requires a distinct, non-empty bot order", () => {
+  it("requires a distinct, non-empty agent order", () => {
     expect(ReorderBotsInput.safeParse({ botIds: ["bot-2", "bot-1"] }).success).toBe(true);
     expect(ReorderBotsInput.safeParse({ botIds: [] }).success).toBe(false);
     expect(ReorderBotsInput.safeParse({ botIds: ["bot-1", "bot-1"] }).success).toBe(false);

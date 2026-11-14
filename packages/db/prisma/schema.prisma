@@ -25,6 +25,9 @@ model User {
   aiDataConsents              AiDataConsent[]
   todoItems                   TodoItem[]
   emailDrafts                 EmailDraft[]
+  emailFilingBatches          EmailFilingBatch[]
+  emailFilingProfiles         EmailFilingProfile[]
+  emailFilingFolders          EmailFilingFolder[]
   /// The person's own Outlook signature as sanitized HTML, added under every email they send from here.
   emailSignature              String?                         @db.Text
   pages                       Page[]
@@ -461,6 +464,9 @@ model Space {
   scratchpadItems             ScratchpadItem[]
   todoItems                   TodoItem[]
   emailDrafts                 EmailDraft[]
+  emailFilingBatches          EmailFilingBatch[]
+  emailFilingProfiles         EmailFilingProfile[]
+  emailFilingFolders          EmailFilingFolder[]
   taughtSkills                TaughtSkill[]
   agentSkills                 AgentSkill[]
   agentImports                AgentImport[]
@@ -817,6 +823,7 @@ model Bot {
   scratchpadItems         ScratchpadItem[]
   todoItems               TodoItem[]
   emailDrafts             EmailDraft[]
+  emailFilingBatches      EmailFilingBatch[]
   taughtSkills            TaughtSkill[]
   memoryDocuments         MemoryDocument[]
   agentHome               AgentHome?
@@ -988,6 +995,7 @@ model Thread {
   runs                           Run[]
   routines                       Routine[]
   emailDrafts                    EmailDraft[]
+  emailFilingBatches             EmailFilingBatch[]
 
   @@index([spaceId])
   @@index([spaceId, userId])
@@ -1479,6 +1487,73 @@ model EmailDraft {
   @@index([threadId])
   @@index([botId])
   @@map("email_drafts")
+}
+
+/// Outlook filing an assistant proposed for its person: each email, the folder it would go in
+/// and how confident the assistant is, encrypted in `content`. Nothing moves until that person
+/// presses File on the card.
+model EmailFilingBatch {
+  id        String   @id @default(cuid())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  threadId  String
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  botId     String?
+  bot       Bot?     @relation(fields: [botId], references: [id], onDelete: SetNull)
+  runId     String?
+  content   Json
+  /// open while any email still waits for a decision, then done.
+  status    String   @default("open")
+  /// Raised on every change, so two presses of File cannot both move the same email.
+  version   Int      @default(1)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([spaceId, userId, status])
+  @@index([threadId])
+  @@index([botId])
+  @@index([expiresAt])
+  @@map("email_filing_batches")
+}
+
+/// A person's own filing settings and the rules learned from their corrections, encrypted in
+/// `content`.
+model EmailFilingProfile {
+  id        String   @id @default(cuid())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   Json
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([spaceId, userId])
+  @@index([userId])
+  @@map("email_filing_profiles")
+}
+
+/// The Outlook folder holding each Evolve job for a person. The unique key stops two filings
+/// creating the same project folder twice.
+model EmailFilingFolder {
+  id        String   @id @default(cuid())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// The job number as filing compares it, e.g. 1234.01.
+  jobKey    String
+  folderId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([spaceId, userId, jobKey])
+  @@index([userId])
+  @@map("email_filing_folders")
 }
 
 /// A person's own to-do list, shared by all of their assistants and private to them. The

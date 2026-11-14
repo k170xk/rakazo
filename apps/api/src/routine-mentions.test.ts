@@ -72,7 +72,7 @@ function harness() {
 }
 
 describe("routine mention batch endpoint", () => {
-  it("reads owned bots and their routines in two queries", async () => {
+  it("reads owned agents and their routines in two queries", async () => {
     const h = harness();
     const ids = Array.from({ length: 100 }, (_, index) => `bot-${index}`);
     const response = await h.request(ids);
@@ -91,7 +91,7 @@ describe("routine mention batch endpoint", () => {
     });
   });
 
-  it("omits unowned bots and keeps owned bots without routines", async () => {
+  it("omits unowned agents and keeps owned agents without routines", async () => {
     const h = harness();
     const response = await h.request(["bot-1", "excluded", "empty"]);
     expect((await response.json()).json).toEqual([

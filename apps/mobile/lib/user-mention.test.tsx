@@ -122,7 +122,7 @@ describe("sent message mentions", () => {
     expect(container.textContent).toBe("hey Ada can you look");
   });
 
-  it("opens the bot's chat when the mention is tapped", () => {
+  it("opens the agent's chat when the mention is tapped", () => {
     render("@Ben Stone, thanks");
     act(() => container.querySelector<HTMLElement>('span[role="link"]')!.click());
     expect(onOpenBot).toHaveBeenCalledWith("bot-ben", "Ben Stone");
@@ -152,7 +152,7 @@ describe("sent message mentions", () => {
     expect(container.textContent).toBe("https://example.test/@Ada?x=1");
   });
 
-  it("reads @everyone as the group, never as a bot named everyone", () => {
+  it("reads @everyone as the group, never as an agent named everyone", () => {
     render("@everyone hi", "user", [
       ...members,
       { botId: "bot-all", name: "Everyone", color: "#000000" },
@@ -167,7 +167,7 @@ describe("sent message mentions", () => {
     expect(container.textContent).toBe("@Ada hi");
   });
 
-  it("leaves text without a known name and bot replies as they were", () => {
+  it("leaves text without a known name and agent replies as they were", () => {
     render("email ada@example.test or @Zed");
     expect(container.querySelector("[data-avatar]")).toBeNull();
     expect(container.textContent).toBe("email ada@example.test or @Zed");

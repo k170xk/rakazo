@@ -69,7 +69,7 @@ describe("configured model selection", () => {
     expected: ReturnType<typeof selectConfiguredModel>;
   }>([
     {
-      name: "uses the bot's model with its own credential",
+      name: "uses the agent's model with its own credential",
       input: { override: bot, overrideCredential },
       expected: {
         provider: "bot-provider",
@@ -89,7 +89,7 @@ describe("configured model selection", () => {
       },
     },
     {
-      name: "keeps bot thinking with the main model",
+      name: "keeps agent thinking with the main model",
       input: { override: { modelProvider: null, modelId: null, thinkingLevel: "high" } },
       expected: {
         provider: "space-provider",
@@ -99,7 +99,7 @@ describe("configured model selection", () => {
       },
     },
     {
-      name: "does not select an incomplete or sentinel bot override",
+      name: "does not select an incomplete or sentinel agent override",
       input: { override: { ...bot, modelId: "null" }, overrideCredential },
       expected: {
         provider: "space-provider",
@@ -167,7 +167,7 @@ describe("configured model selection", () => {
       },
     },
     {
-      name: "bot thinking beats the main model's level",
+      name: "agent thinking beats the main model's level",
       input: {
         override: { modelProvider: null, modelId: null, thinkingLevel: "high" },
         main: { ...main, thinkingLevel: "low" },

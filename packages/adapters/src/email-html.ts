@@ -129,17 +129,111 @@ export function emailTextToHtml(text: string): string {
 }
 
 /**
- * The HTML Outlook sends: the body, then the signature, then (for a reply) the quoted earlier
- * messages Outlook put in the reply draft.
+ * Extracts an Outlook HTML signature block from a sent message's HTML when Outlook tagged one
+ * (`id="Signature"`, `id="ms-outlook-mobile-signature"`, or Word's `_MailAutoSig` bookmark),
+ * substituting any matching inline `cid:` images with `data:image/...;base64,...` URLs first.
+ */
+export function extractOutlookSignatureHtml(
+  messageHtml: string,
+  inlineCidDataUrls: Record<string, string> = {},
+): string | null {
+  if (!messageHtml.trim()) return null;
+  // Ignore quoted history below Outlook's reply separator so we never pick up someone else's signature.
+  const beforeQuote =
+    messageHtml.split(/<div[^>]+id=["']?(?:divRplyFwdMsg|appendonsend)["']?[^>]*>/i)[0] ??
+    messageHtml;
+
+  let raw: string | null = null;
+
+  // 1. Outlook Web / New Outlook / Mac / Mobile signature containers: <div id="Signature">...</div>
+  const containerMatch =
+    /<div[^>]+id=["']?(?:Signature|ms-outlook-mobile-signature|outlook_signature)["']?[^>]*>([\s\S]*)$/i.exec(
+      beforeQuote,
+    );
+  if (containerMatch?.[1]) {
+    raw = stripUnmatchedClosingDivs(containerMatch[1]);
+  }
+
+  // 2. Classic Outlook Desktop (Word HTML): <a name="_MailAutoSig">...</a> or mso-bookmark:_MailAutoSig
+  if (!raw) {
+    const bookmarkMatch =
+      /(?:<a[^>]+name=["']?_MailAutoSig["']?[^>]*>|mso-bookmark:\s*_MailAutoSig[^>]*>)([\s\S]*)$/i.exec(
+        beforeQuote,
+      );
+    if (bookmarkMatch?.[1]) {
+      raw = stripUnmatchedClosingDivs(bookmarkMatch[1]);
+    }
+  }
+
+  if (!raw) return null;
+
+  const withImages = raw.replace(
+    /\bsrc=(["'])cid:([^"']+)\1/gi,
+    (full, quote: string, cid: string) => {
+      const key = cid.trim().toLowerCase();
+      const withoutDomain = key.split("@")[0] ?? key;
+      const dataUrl = inlineCidDataUrls[key] ?? inlineCidDataUrls[withoutDomain];
+      return dataUrl ? `src=${quote}${dataUrl}${quote}` : full;
+    },
+  );
+
+  const cleaned = sanitizeEmailSignature(withImages);
+  const plainText = cleaned
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
+  if (!plainText && !/<img\b/i.test(cleaned)) return null;
+  return cleaned;
+}
+
+function stripUnmatchedClosingDivs(fragment: string): string {
+  const withoutBodyClose = fragment.replace(/<\/body>[\s\S]*$/i, "");
+  let depth = 0;
+  let end = withoutBodyClose.length;
+  const tagPattern = /<\/?div\b[^>]*>/gi;
+  for (
+    let match = tagPattern.exec(withoutBodyClose);
+    match;
+    match = tagPattern.exec(withoutBodyClose)
+  ) {
+    if (match[0].startsWith("</")) {
+      if (depth === 0) {
+        end = match.index;
+        break;
+      }
+      depth -= 1;
+    } else if (!match[0].endsWith("/>")) {
+      depth += 1;
+    }
+  }
+  return withoutBodyClose.slice(0, end).trim();
+}
+
+function styleBodyForOutlook(cleanBodyHtml: string): string {
+  return cleanBodyHtml
+    .replace(/<p>/g, '<p style="margin:0 0 12px 0;line-height:1.45;">')
+    .replace(/<ul>/g, '<ul style="margin:0 0 12px 22px;padding:0;line-height:1.45;">')
+    .replace(/<ol>/g, '<ol style="margin:0 0 12px 22px;padding:0;line-height:1.45;">')
+    .replace(/<li>/g, '<li style="margin:0 0 4px 0;">')
+    .replace(
+      /<blockquote>/g,
+      '<blockquote style="margin:0 0 12px 0;padding-left:12px;border-left:2px solid #d0d7de;color:#57606a;">',
+    );
+}
+
+/**
+ * The HTML Outlook stores in Drafts: professionally spaced Aptos/Calibri body paragraphs,
+ * then the person's signature block, then (for a reply) Outlook's quoted earlier thread.
  */
 export function composeEmailHtml(input: {
   bodyHtml: string;
   signatureHtml: string | null;
   quotedHtml?: string;
 }): string {
-  const ours = `<div style="font-family: Aptos, Calibri, Arial, sans-serif; font-size: 11pt;">${sanitizeEmailBody(
-    input.bodyHtml,
-  )}${input.signatureHtml ? `<br>${sanitizeEmailSignature(input.signatureHtml)}` : ""}</div>`;
+  const cleanBody = styleBodyForOutlook(sanitizeEmailBody(input.bodyHtml));
+  const cleanSig = input.signatureHtml ? sanitizeEmailSignature(input.signatureHtml) : "";
+  const sigBlock = cleanSig ? `<div id="Signature" style="margin-top:12px;">${cleanSig}</div>` : "";
+  const ours = `<div style="font-family: Aptos, Calibri, Arial, sans-serif; font-size: 11pt; color: #1f2328; line-height: 1.45;">${cleanBody}${sigBlock}</div>`;
   const quoted = input.quotedHtml ?? "";
   if (!quoted) return ours;
   const bodyTag = /<body[^>]*>/i.exec(quoted);

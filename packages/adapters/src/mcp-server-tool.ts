@@ -134,7 +134,7 @@ export async function addMcpServerFromTool(
   // A local server runs on the deployment's own hosts, so only an admin adds one.
   if (args.transport === "stdio") {
     return {
-      error: "Bots can't add local (stdio) MCP servers. Ask an admin to add it in Settings.",
+      error: "Agents can't add local (stdio) MCP servers. Ask an admin to add it in Settings.",
     };
   }
   const parsed = parseMcpServerToolArgs(args);
@@ -253,6 +253,6 @@ export async function addMcpServerFromTool(
     server_id: serverRow.id,
     next_step: parsed.assignToSelf
       ? `An approval card is in the chat. End your turn with one short sentence asking the user to ${oauthLikely ? "authorize" : "approve"} it there; the card already shows the server's details. You will be told when they connect it.`
-      : "The server was registered without assigning it to this bot.",
+      : "The server was registered without assigning it to this agent.",
   };
 }

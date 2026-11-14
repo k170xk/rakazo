@@ -17,7 +17,7 @@ import {
 } from "./composer-mentions.js";
 
 describe("buildComposerMentionOptions", () => {
-  it("lists bots groups routines connectors and everyone", () => {
+  it("lists agents groups routines connectors and everyone", () => {
     const options = buildComposerMentionOptions({
       query: "",
       includeEveryone: true,
@@ -39,13 +39,13 @@ describe("buildComposerMentionOptions", () => {
       "connector",
       "connector",
     ]);
-    expect(options.find((option) => option.kind === "bot")?.subtitle).toBe("Bot");
+    expect(options.find((option) => option.kind === "bot")?.subtitle).toBe("Agent");
     expect(options.find((option) => option.name === "Gmail")?.subtitle).toBe("Connected");
     expect(options.find((option) => option.name === "Stripe")?.subtitle).toBe("Needs auth");
     expect(options.find((option) => option.kind === "routine")?.subtitle).toMatch(/Weekdays/i);
   });
 
-  it("disambiguates same-name routines with bot name", () => {
+  it("disambiguates same-name routines with agent name", () => {
     const options = buildComposerMentionOptions({
       query: "daily",
       bots: [],
@@ -81,7 +81,7 @@ describe("buildComposerMentionOptions", () => {
   it("filters by query before applying limit so later kinds stay reachable", () => {
     const bots = Array.from({ length: 40 }, (_, index) => ({
       id: `b${index}`,
-      name: `Bot${index}`,
+      name: `Agent${index}`,
     }));
     const options = buildComposerMentionOptions({
       query: "gmail",
@@ -100,7 +100,7 @@ describe("buildComposerMentionOptions", () => {
   it("returns the full catalog when limit is omitted", () => {
     const bots = Array.from({ length: 80 }, (_, index) => ({
       id: `b${index}`,
-      name: `Bot${index}`,
+      name: `Agent${index}`,
     }));
     const options = buildComposerMentionOptions({
       query: "",
@@ -257,7 +257,7 @@ it("searches the readable fallback when a mention name is opaque", () => {
       routines: [],
       connectors: [],
     }),
-  ).toEqual([{ kind: "bot", id: "bot-1", name: "Bot", subtitle: "Bot", color: undefined }]);
+  ).toEqual([{ kind: "bot", id: "bot-1", name: "Agent", subtitle: "Agent", color: undefined }]);
 });
 
 describe("mentionConnectorsFrom", () => {
@@ -288,7 +288,7 @@ describe("filterComposerMentionTargets", () => {
   const everyone = { kind: "everyone", name: "everyone" } as const;
   const targets = [
     everyone,
-    { kind: "bot", name: "Research Bot" },
+    { kind: "bot", name: "Research Agent" },
     { kind: "bot", name: "Chef" },
     { kind: "bot", name: "Robot Arm" },
     { kind: "bot", name: "Zoë Rivera" },
@@ -300,14 +300,14 @@ describe("filterComposerMentionTargets", () => {
   });
 
   it("ranks a word that starts a name word above one inside it, ties in given order", () => {
-    expect(names("bo")).toEqual(["Research Bot", "Robot Arm"]);
+    expect(names("bo")).toEqual(["Research Agent", "Robot Arm"]);
     expect(names("ro")).toEqual(["Robot Arm"]);
   });
 
   it("requires every word and ignores accents and case", () => {
-    expect(names("research bo")).toEqual(["Research Bot"]);
+    expect(names("research bo")).toEqual(["Research Agent"]);
     expect(names("zoe")).toEqual(["Zoë Rivera"]);
-    expect(names("chef bot")).toEqual([]);
+    expect(names("chef agent")).toEqual([]);
   });
 
   it("answers to all and everyone for the everyone row only", () => {

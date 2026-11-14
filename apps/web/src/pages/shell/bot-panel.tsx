@@ -99,19 +99,19 @@ export function ComputerModePicker({
             }}
             className="aria-pressed:border-foreground/40 aria-pressed:text-foreground"
           >
-            {mode === "team" ? <Trans>Shared with my bots</Trans> : <Trans>This bot only</Trans>}
+            {mode === "team" ? <Trans>Shared with my agents</Trans> : <Trans>This agent only</Trans>}
           </Toggle>
         ))}
       </div>
       <p className="text-[13px] text-muted-foreground" data-testid="computer-mode-hint">
         {value === "team" ? (
           <Trans>
-            All your bots work on one computer. Each has its own folder there, they can see each
-            other's folders and swap files through a shared folder. Colleagues' bots never use it.
+            All your agents work on one computer. Each has its own folder there, they can see each
+            other's folders and swap files through a shared folder. Colleagues' agents never use it.
           </Trans>
         ) : (
           <Trans>
-            This bot gets a computer of its own. Your other bots can't see or change its files, apps
+            This agent gets a computer of its own. Your other agents can't see or change its files, apps
             or browser.
           </Trans>
         )}
@@ -738,14 +738,14 @@ export function BotSettings({
               <p className="text-[13px] text-muted-foreground" data-testid="company-model-note">
                 {me?.isAdmin ? (
                   <Trans>
-                    Every bot uses the company model and thinking level. Change them in the{" "}
+                    Every agent uses the company model and thinking level. Change them in the{" "}
                     <Link to="/admin#models" className="underline underline-offset-2">
                       admin panel
                     </Link>
                     .
                   </Trans>
                 ) : (
-                  <Trans>Your administrator sets the model and thinking level for every bot.</Trans>
+                  <Trans>Your administrator sets the model and thinking level for every agent.</Trans>
                 )}
               </p>
             )}
@@ -836,7 +836,7 @@ export function BotSettings({
               </div>
               <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
                 <label htmlFor={`${ids}-cross-space`} className={rowLabelClass}>
-                  <Trans>Allow cross-space bot communication</Trans>
+                  <Trans>Allow cross-space agent communication</Trans>
                 </label>
                 <Switch
                   id={`${ids}-cross-space`}
@@ -850,7 +850,7 @@ export function BotSettings({
               </div>
               <div className="flex min-h-11 items-center justify-between gap-3 text-sm">
                 <label htmlFor={`${ids}-fleet-management`} className={rowLabelClass}>
-                  <Trans>Manage other bots</Trans>
+                  <Trans>Manage other agents</Trans>
                 </label>
                 <Switch
                   id={`${ids}-fleet-management`}
@@ -864,15 +864,15 @@ export function BotSettings({
               </div>
             </SettingsGroup>
             <InstructionSettings key={bot.id} bot={bot} />
-            <SettingsGroup label={t`How other bots see it`} plain>
+            <SettingsGroup label={t`How other agents see it`} plain>
               <Textarea
                 id={`${ids}-description`}
-                aria-label={t`How other bots see it`}
+                aria-label={t`How other agents see it`}
                 value={description}
                 maxLength={BOT_DESCRIPTION_MAX_LENGTH}
                 onChange={(e) => setDescription(e.target.value)}
                 onBlur={() => void enqueueSave()}
-                placeholder={t`What this bot is for`}
+                placeholder={t`What this agent is for`}
                 rows={2}
                 className="min-h-16 max-h-96 resize-none field-sizing-content"
               />

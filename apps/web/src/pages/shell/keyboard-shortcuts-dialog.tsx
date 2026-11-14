@@ -37,7 +37,7 @@ export function KeyboardShortcutsDialog({
     { label: t`New`, keys: [[mod, "N"]] },
     host.desktop && { label: t`New group chat`, keys: [[mod, shift, "N"]] },
     host.desktop && { label: t`Find in chat`, keys: [[mod, "F"]] },
-    host.desktop && { label: t`Search bots`, keys: [[mod, shift, "F"]] },
+    host.desktop && { label: t`Search agents`, keys: [[mod, shift, "F"]] },
     { label: t`Toggle sidebar`, keys: [[mod, "B"]] },
     { label: t`Focus message`, keys: [[mod, "I"]] },
     dictation && {
@@ -46,9 +46,9 @@ export function KeyboardShortcutsDialog({
     },
     { label: t`Chat details`, keys: [[mod, shift, ","]] },
     { label: t`Connectors`, keys: [[mod, shift, "M"]] },
-    host.desktop && { label: t`Go to bot`, keys: [[mod, "1–9"]] },
+    host.desktop && { label: t`Go to agent`, keys: [[mod, "1–9"]] },
     {
-      label: t`Next or previous bot`,
+      label: t`Next or previous agent`,
       keys: host.desktop
         ? [
             [ctrl, "Tab"],

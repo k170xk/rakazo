@@ -663,10 +663,10 @@ describe("ObjectAgentHomeStore", () => {
 
   it("rejects another home's object, or an older revision, moved into place", async () => {
     const { store, storage, rows, otherHost } = await setup(["bot-1", "bot-2"]);
-    await store.commit("bot-1", await staged({ "a.txt": "bot one" }), context);
+    await store.commit("bot-1", await staged({ "a.txt": "agent one" }), context);
     const older = [...storage.objects.values()][0]!.bytes;
-    await store.commit("bot-1", await staged({ "a.txt": "bot one, later" }), context);
-    await store.commit("bot-2", await staged({ "a.txt": "bot two" }), context);
+    await store.commit("bot-1", await staged({ "a.txt": "agent one, later" }), context);
+    await store.commit("bot-2", await staged({ "a.txt": "agent two" }), context);
     const keyOf = (index: number) =>
       `homes/${rows[index]!.homeStorageId}/${rows[index]!.homeStorageRevision}`;
 
@@ -715,8 +715,8 @@ describe("ObjectAgentHomeStore", () => {
     await store.commit(
       "team-1",
       await staged({
-        "bots/gone/notes.txt": "deleted bot",
-        "bots/kept/notes.txt": "other bot",
+        "agents/gone/notes.txt": "deleted agent",
+        "agents/kept/notes.txt": "other agent",
         ".browser-profiles/chromium-bot-gone/Cookies": "session",
         "shared/plan.txt": "shared",
       }),
@@ -729,14 +729,14 @@ describe("ObjectAgentHomeStore", () => {
     await expect(store.removeFolders("team-1", "bots", ["gone"])).resolves.toBe(false);
 
     expect(await exported(await otherHost(), "team-1")).toEqual({
-      "bots/kept/notes.txt": "other bot",
+      "agents/kept/notes.txt": "other agent",
       "shared/plan.txt": "shared",
     });
   });
 
   it("leaves the folders to a retry when the stored copy cannot be saved", async () => {
     const { store, storage, otherHost } = await setup(["team-1"]);
-    await store.commit("team-1", await staged({ "bots/gone/notes.txt": "deleted bot" }), context);
+    await store.commit("team-1", await staged({ "agents/gone/notes.txt": "deleted agent" }), context);
     const put = storage.put.bind(storage);
     storage.put = async () => {
       throw new Error("bucket unavailable");
@@ -755,7 +755,7 @@ describe("ObjectAgentHomeStore", () => {
     "keeps folder removal's live cache after a lost reply (committed: %s)",
     async (committed) => {
       const { root, store, storage, records, otherHost } = await setup(["team-1"]);
-      await store.commit("team-1", await staged({ "bots/gone/work.txt": "old" }), context);
+      await store.commit("team-1", await staged({ "agents/gone/work.txt": "old" }), context);
       const advance = records.advance.bind(records);
       const load = records.load.bind(records);
       let unavailable = false;
@@ -788,7 +788,7 @@ describe("ObjectAgentHomeStore", () => {
     const { store, storage } = await setup(["team-1"]);
     await mkdir(path.join(store.pathFor("team-1"), "bots/gone"), { recursive: true });
     await mkdir(path.join(store.pathFor("team-1"), "bots/kept"), { recursive: true });
-    await writeFile(path.join(store.pathFor("team-1"), "bots/kept/work.txt"), "other bot");
+    await writeFile(path.join(store.pathFor("team-1"), "agents/kept/work.txt"), "other agent");
     storage.put = async () => {
       throw new Error("bucket unavailable");
     };

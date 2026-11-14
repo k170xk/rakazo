@@ -43,7 +43,7 @@ export function SidebarHeader({
 }) {
   const { t } = useLingui();
   const hasWindowChrome = Boolean(desktopBridge());
-  const toggleLabel = mini ? t`Show bots` : t`Minimize bots`;
+  const toggleLabel = mini ? t`Show agents` : t`Minimize agents`;
   return (
     <div
       className={`app-drag flex items-center ${mini ? `flex-col gap-2 px-0 pb-2 ${hasWindowChrome ? "pt-4" : "pt-2"}` : "justify-between px-[18px] pb-3 pt-4"}`}

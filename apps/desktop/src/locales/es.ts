@@ -63,13 +63,13 @@ export const ES_MESSAGES: Record<string, string> = {
 
   // Computer access
   "Allow local computer access?": "¿Permitir el acceso a la computadora local?",
-  "Allow bots to use this computer?": "¿Permitir que los bots usen esta computadora?",
+  "Allow agents to use this computer?": "¿Permitir que los agentes usen esta computadora?",
   Cancel: "Cancelar",
   Allow: "Permitir",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
-    "Los bots de {host} pueden ejecutar comandos, leer y cambiar archivos y abrir apps con los permisos de tu cuenta. Puedes revocar el acceso en Configuración.",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
-    "Los bots de esta instancia local pueden ejecutar comandos, leer y cambiar archivos y abrir apps con los permisos de tu cuenta. Puedes revocar el acceso desde el menú de la app.",
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+    "Los agentes de {host} pueden ejecutar comandos, leer y cambiar archivos y abrir apps con los permisos de tu cuenta. Puedes revocar el acceso en Configuración.",
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+    "Los agentes de esta instancia local pueden ejecutar comandos, leer y cambiar archivos y abrir apps con los permisos de tu cuenta. Puedes revocar el acceso desde el menú de la app.",
   "Local computer access requires an app-managed local instance.":
     "El acceso a la computadora local requiere una instancia local administrada por la app.",
   "Local server is unavailable": "El servidor local no está disponible",
@@ -200,12 +200,12 @@ export const ES_MESSAGES: Record<string, string> = {
   Go: "Ir",
   Back: "Atrás",
   Forward: "Adelante",
-  "Next Bot": "Bot siguiente",
-  "Previous Bot": "Bot anterior",
+  "Next Agent": "Agente siguiente",
+  "Previous Agent": "Agente anterior",
   "Command Menu…": "Menú de comandos…",
   "Toggle Sidebar": "Mostrar u ocultar la barra lateral",
   "Find…": "Buscar…",
-  "Search Bots…": "Buscar bots…",
+  "Search Agents…": "Buscar agentes…",
   "The window closed before the app loaded.": "La ventana se cerró antes de que cargara la app.",
   "New Group Chat": "Nuevo chat grupal",
   "Connect Apps…": "Conectar apps…",

@@ -134,7 +134,7 @@ test("an unknown page offers a way home", async ({ page }, testInfo) => {
   await expect(page).toHaveURL(/\/sign-up$/);
 });
 
-test("logout protects bot deep links and sign-in restores the session", async ({
+test("logout protects agent deep links and sign-in restores the session", async ({
   page,
 }, testInfo) => {
   const stamp = Date.now();

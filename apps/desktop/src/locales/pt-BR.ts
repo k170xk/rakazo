@@ -57,13 +57,13 @@ export const PT_BR_MESSAGES: Record<string, string> = {
     "Não foi possível concluir a atualização. Tente novamente mais tarde.",
   "Could not reach the update server.": "Não foi possível acessar o servidor de atualizações.",
   "Allow local computer access?": "Permitir acesso ao computador local?",
-  "Allow bots to use this computer?": "Permitir que os bots usem este computador?",
+  "Allow agents to use this computer?": "Permitir que os agentes usem este computador?",
   Cancel: "Cancelar",
   Allow: "Permitir",
-  "Bots on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
-    "Os bots em {host} podem executar comandos, ler e alterar arquivos e abrir apps com as permissões da sua conta. Você pode revogar o acesso em Configurações.",
-  "Bots on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
-    "Os bots desta instância local podem executar comandos, ler e alterar arquivos e abrir apps com as permissões da sua conta. Você pode revogar o acesso pelo menu do app.",
+  "Agents on {host} can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access in Settings.":
+    "Os agentes em {host} podem executar comandos, ler e alterar arquivos e abrir apps com as permissões da sua conta. Você pode revogar o acesso em Configurações.",
+  "Agents on this local instance can run commands, read and change files, and launch apps with your account’s permissions. You can revoke access from the app menu.":
+    "Os agentes desta instância local podem executar comandos, ler e alterar arquivos e abrir apps com as permissões da sua conta. Você pode revogar o acesso pelo menu do app.",
   "Local computer access requires an app-managed local instance.":
     "O acesso ao computador local requer uma instância local gerenciada pelo app.",
   "Local server is unavailable": "O servidor local não está disponível",
@@ -185,12 +185,12 @@ export const PT_BR_MESSAGES: Record<string, string> = {
   Go: "Ir",
   Back: "Voltar",
   Forward: "Avançar",
-  "Next Bot": "Próximo Bot",
-  "Previous Bot": "Bot Anterior",
+  "Next Agent": "Próximo Agente",
+  "Previous Agent": "Agente Anterior",
   "Command Menu…": "Menu de Comandos…",
   "Toggle Sidebar": "Mostrar/Ocultar Barra Lateral",
   "Find…": "Localizar…",
-  "Search Bots…": "Buscar bots…",
+  "Search Agents…": "Buscar agentes…",
   "The window closed before the app loaded.": "A janela foi fechada antes de o app carregar.",
   "New Group Chat": "Novo chat em grupo",
   "Connect Apps…": "Conectar apps…",

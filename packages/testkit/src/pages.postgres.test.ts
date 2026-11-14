@@ -667,6 +667,19 @@ describePages("pages", () => {
     };
     const own = await saved("Own");
     const shared = await saved("Shared");
+    const owner = await rpc<{ spaceId: string }>(app, cookie, "me");
+    const keptApp = await db().page.create({
+      data: {
+        spaceId: owner.spaceId,
+        userId,
+        botId: bot.id,
+        title: "Kept app",
+        kind: "app",
+        versions: {
+          create: { version: 1, title: "Kept app", source: "{}", code: "<p>Kept</p>" },
+        },
+      },
+    });
     const group = await rpc<{ id: string }>(app, cookie, "groups/create", {
       name: "Kept",
       botIds: [bot.id, partner.id, third.id],
@@ -681,6 +694,11 @@ describePages("pages", () => {
     await rpc(app, cookie, "bots/remove", { botId: bot.id, deleteMemories: true });
     expect((await read(own.shareUrl)).status).toBe(404);
     expect(await db().page.count({ where: { id: own.pageId } })).toBe(0);
+    expect(await db().page.findUnique({ where: { id: keptApp.id } })).toMatchObject({
+      kind: "app",
+      botId: null,
+      title: "Kept app",
+    });
     expect(await db().page.count({ where: { id: shared.pageId, groupId: group.id } })).toBe(1);
     expect((await read(shared.shareUrl)).status).toBe(200);
     expect(await db().secret.count({ where: { kind: "page_share", userId } })).toBe(1);

@@ -243,7 +243,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const titleBot = currentBot ?? inboxBot;
   // Without a name yet (a notification can leave it out), the title shows a placeholder.
   const titleName = currentBot?.name ?? name ?? inboxBot?.name;
-  const displayName = safeDisplayName(titleName, inGroup ? t("Group") : t("Bot"));
+  const displayName = safeDisplayName(titleName, inGroup ? t("Group") : t("Agent"));
   const composerPrompt = displayName ? t("Message {name}", { name: displayName }) : t("Message…");
   const notificationThreadId = snap?.threadId ?? requestedThreadId ?? currentBot?.threadId;
   activeThreadId.current = notificationThreadId;
@@ -603,7 +603,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             replyAuthor={
               replyTarget?.role === "user"
                 ? (channelMessageSender(replyTarget.blocks) ?? t("You"))
-                : (memberName(snap?.members, replyTarget?.botId) ?? displayName ?? t("Bot"))
+                : (memberName(snap?.members, replyTarget?.botId) ?? displayName ?? t("Agent"))
             }
             replyQuote={replyQuote}
             threadTarget={artifactTarget}

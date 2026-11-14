@@ -9,9 +9,9 @@ import {
   signup,
 } from "./helpers";
 
-test("bot creation, editing, and deletion persist", async ({ page }, testInfo) => {
+test("agent creation, editing, and deletion persist", async ({ page }, testInfo) => {
   const stamp = Date.now();
-  await signup(page, `bot-crud-${stamp}@rakazo.test`, "password12", "Bot CRUD");
+  await signup(page, `bot-crud-${stamp}@rakazo.test`, "password12", "Agent CRUD");
   await completeOnboarding(page);
   await page.goto("/app");
   await page.waitForURL(/\/app\/[^/]+$/);
@@ -31,7 +31,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   });
   await openNewBot(page);
   const dialog = page.getByTestId("create-bot-dialog");
-  await dialog.getByPlaceholder("Name your Bot").fill("New Bot");
+  await dialog.getByPlaceholder("Name your Agent").fill("New Agent");
   await dialog.getByRole("button", { name: "Create", exact: true }).click();
   await createAborted;
   await expect(page.getByPlaceholder("Message Chief")).toBeVisible();
@@ -53,7 +53,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
     await route.abort("failed");
   });
   await createBotFromPicker(page);
-  await expect(page.getByPlaceholder("Message New Bot")).toBeVisible();
+  await expect(page.getByPlaceholder("Message New Agent")).toBeVisible();
   await expect.poll(() => failedPostCreateRefresh).toBe(true);
   await page.unroute("**/rpc/spaces/list");
   await expect(botList.getByRole("button", { name: /^New Bot/ })).toBeVisible();
@@ -73,7 +73,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
     await input.press("Enter");
   }
   const descriptionInput = page.getByRole("textbox", {
-    name: "How other bots see it",
+    name: "How other agents see it",
     exact: true,
   });
   await editName("Researcher");
@@ -102,7 +102,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await expect(studio.getByRole("button", { name: "Color #FFAF38" })).toHaveClass(/ring-2/);
   await studio.getByRole("button", { name: "Done", exact: true }).click();
   const modelSelect = settings.getByRole("combobox", { name: "Model", exact: true });
-  const teamComputer = settings.getByRole("button", { name: "Shared with my bots" });
+  const teamComputer = settings.getByRole("button", { name: "Shared with my agents" });
   const openWork = settings.getByTestId("bot-scratchpad");
   const notificationsHeading = settings.getByRole("heading", {
     name: "Notifications",
@@ -153,7 +153,7 @@ test("bot creation, editing, and deletion persist", async ({ page }, testInfo) =
   await captureScreenshot(page, testInfo, "27c-disabled-builtin-tools");
   await expect(teamComputer).toBeVisible();
   await expect(settings.getByRole("switch", { name: "Read replies aloud" })).toBeVisible();
-  await expect(settings.getByRole("switch", { name: "Manage other bots" })).toBeVisible();
+  await expect(settings.getByRole("switch", { name: "Manage other agents" })).toBeVisible();
   await expect(modelSelect).toBeVisible();
   await expect(modelSelect).toContainText("Space default");
   await captureScreenshot(page, testInfo, "27a-bot-settings-model");

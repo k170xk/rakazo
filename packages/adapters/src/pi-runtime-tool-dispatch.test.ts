@@ -502,7 +502,7 @@ const destinationTool: ConnectorTool = {
 
 const writeFileTool: ConnectorTool = {
   name: "write_file",
-  description: "Write a UTF-8 file into this bot's home.",
+  description: "Write a UTF-8 file into this agent's home.",
   inputSchema: {
     type: "object",
     properties: {
@@ -520,7 +520,7 @@ const shellTool = {
 
 const updateBotTool: ConnectorTool = {
   name: "update_bot",
-  description: "Update this bot's settings",
+  description: "Update this agent's settings",
   inputSchema: {
     type: "object",
     properties: { notifyOnFinish: { type: "boolean" } },
@@ -529,13 +529,13 @@ const updateBotTool: ConnectorTool = {
 
 const listFilesTool: ConnectorTool = {
   name: "list_files",
-  description: "List files in this bot's home",
+  description: "List files in this agent's home",
   inputSchema: { type: "object", properties: { path: { type: "string" } } },
 };
 
 const scheduleCreateTool: ConnectorTool = {
   name: "schedule_create",
-  description: "Create a reminder or recurring job for this bot.",
+  description: "Create a reminder or recurring job for this agent.",
   inputSchema: {
     type: "object",
     properties: {
@@ -548,7 +548,7 @@ const scheduleCreateTool: ConnectorTool = {
 
 const scheduleListTool: ConnectorTool = {
   name: "schedule_list",
-  description: "List this bot's active and inactive schedules (routines).",
+  description: "List this agent's active and inactive schedules (routines).",
   inputSchema: { type: "object", properties: {} },
 };
 
@@ -653,7 +653,7 @@ describe("Pi connector tool dispatch", () => {
     ]);
   });
 
-  it("asks the run's person for an answer through message_user when the bot has it", async () => {
+  it("asks the run's person for an answer through message_user when the agent has it", async () => {
     fakeAgentState.mode = "empty";
     let claimCount = 0;
     const claimSteering = vi.fn(async () => {
@@ -1043,7 +1043,7 @@ describe("Pi connector tool dispatch", () => {
         botId: "b",
         threadId: "t",
         runId: "r",
-        prompt: "create a bot named Scout",
+        prompt: "create an agent named Scout",
         instructions: "",
         history: [],
         tools: [spawnBotTool],
@@ -1542,7 +1542,7 @@ describe("Pi connector tool dispatch", () => {
           history: [],
           tools: [destinationTool],
           model: { provider: "test", id: "dispatch-test-model" },
-          emptyResponseText: "The delegated bot completed its turn without a written summary.",
+          emptyResponseText: "The delegated agent completed its turn without a written summary.",
           executeTool: vi.fn(async () => ({ ok: true })),
         },
         {
@@ -1562,7 +1562,7 @@ describe("Pi connector tool dispatch", () => {
     );
     expect(events).not.toContainEqual({
       type: "text",
-      text: "The delegated bot completed its turn without a written summary.",
+      text: "The delegated agent completed its turn without a written summary.",
     });
     expect(events).not.toContainEqual({
       type: "text",
@@ -1591,7 +1591,7 @@ describe("Pi connector tool dispatch", () => {
         history: [],
         tools: [destinationTool],
         model: { provider: "test", id: "dispatch-test-model" },
-        emptyResponseText: "The delegated bot completed its turn without a written summary.",
+        emptyResponseText: "The delegated agent completed its turn without a written summary.",
         executeTool: vi.fn(async () => ({ ok: true })),
       },
       {
@@ -1615,7 +1615,7 @@ describe("Pi connector tool dispatch", () => {
     });
     expect(events).not.toContainEqual({
       type: "text",
-      text: "The delegated bot completed its turn without a written summary.",
+      text: "The delegated agent completed its turn without a written summary.",
     });
   });
 
@@ -1785,7 +1785,7 @@ describe("Pi connector tool dispatch", () => {
         botId: "b",
         threadId: "t",
         runId: "bot-wake-silent",
-        prompt: "[bot] FYI only",
+        prompt: "[agent] FYI only",
         instructions: "Stay silent when there is nothing to do.",
         history: [],
         tools: [],
@@ -1859,7 +1859,7 @@ describe("Pi connector tool dispatch", () => {
         botId: "b",
         threadId: "t",
         runId: "peer-result-empty",
-        prompt: "[bot] result",
+        prompt: "[agent] result",
         instructions: "Summarize the result.",
         history: [],
         tools: [],
@@ -1898,7 +1898,7 @@ describe("Pi connector tool dispatch", () => {
         botId: "b",
         threadId: "t",
         runId: "peer-result-blank",
-        prompt: "[bot] result",
+        prompt: "[agent] result",
         instructions: "Summarize the result.",
         history: [],
         tools: [],
@@ -2060,7 +2060,7 @@ describe("Pi connector tool dispatch", () => {
         version: 1,
         provider: "test",
         model: "dispatch-test-model",
-        systemPrompt: "You are a test bot.",
+        systemPrompt: "You are a test agent.",
         pendingToolCallId: "call-1",
         executionMode: "sequential",
         messages: [
@@ -2120,7 +2120,7 @@ describe("Pi connector tool dispatch", () => {
       version: 1,
       provider: "test",
       model: "dispatch-test-model",
-      systemPrompt: "You are a test bot.",
+      systemPrompt: "You are a test agent.",
       pendingToolCallId: "call-1",
       executionMode: "sequential",
       messages: [

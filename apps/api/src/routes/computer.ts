@@ -196,7 +196,7 @@ export function computerRoutes(ctx: RouterContext) {
             data: { state: bot.computer.state },
           });
           throw new ORPCError("CONFLICT", {
-            message: "Other Team bots are still using this computer",
+            message: "Other Team agents are still using this computer",
           });
         }
         await expireComputerExecutionLeases(deps.prisma, {
@@ -410,7 +410,7 @@ export function computerRoutes(ctx: RouterContext) {
             takeoverRequested: waitingForTakeover,
           })
         ) {
-          throw new ORPCError("CONFLICT", { message: "Stop the bot first" });
+          throw new ORPCError("CONFLICT", { message: "Stop the agent first" });
         }
         // Keep an inactive lease as a fencing tombstone. The next run reclaims it
         // with a higher fence, even if this user's screen remains connected.

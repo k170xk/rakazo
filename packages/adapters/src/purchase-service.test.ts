@@ -122,7 +122,7 @@ describe("request_purchase", () => {
     expect(env.wallet.created).toHaveLength(0);
   });
 
-  it("tells the bot to have the user connect the wallet when it is disconnected", async () => {
+  it("tells the agent to have the user connect the wallet when it is disconnected", async () => {
     env.wallet.createPurchase = async () => {
       throw new PaymentWalletDisconnected();
     };
@@ -268,7 +268,7 @@ describe("resolvePurchaseCardFill", () => {
     expect(env.purchases[0]!.cardCiphertext ?? null).toBeNull();
   });
 
-  it("keeps hiding a typed card in the bot's later runs, sealed at rest", async () => {
+  it("keeps hiding a typed card in the agent's later runs, sealed at rest", async () => {
     const env = setup();
     await env.call("request_purchase", request);
     const run = { spaceId: fixture.spaceId, userId: fixture.userId, botId: fixture.botId };

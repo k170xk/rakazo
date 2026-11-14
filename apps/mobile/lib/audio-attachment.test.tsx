@@ -140,7 +140,7 @@ it("sits on the inset fill, not the bubble's own fill, so it shows without an ou
 
 it.each([
   ["the user's bubble", "token-user-foreground", "token-user-foreground", "token-user-foreground"],
-  ["a bot message", undefined, "token-foreground", "token-muted-foreground"],
+  ["an agent message", undefined, "token-foreground", "token-muted-foreground"],
 ] as const)("colours the name, time and controls for %s", async (_, labelColor, name, time) => {
   // The light user bubble is near-black, so the card's dark text disappeared on it.
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -172,7 +172,7 @@ it.each([
 
 it.each([
   ["the user's bubble", "token-user-foreground", "token-user-foreground"],
-  ["a bot message", undefined, "token-destructive"],
+  ["an agent message", undefined, "token-destructive"],
 ] as const)("shows a playback error readably on %s", async (_, labelColor, color) => {
   // The light red is 3.4:1 on the near-black inset of the user's bubble.
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
