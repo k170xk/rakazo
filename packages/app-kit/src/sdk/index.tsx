@@ -890,10 +890,15 @@ export const ai = {
 
 const MAX_TILES = 400;
 const tiles = new Map<string, Promise<string | null>>();
+const tileUrls = new Map<string, string>();
 
 export const maps = {
   /** True when the host can draw map backgrounds and look up places for this app. */
   available: () => store.init.features.includes("maps") && !store.local,
+  /** A map square already fetched, at once, so a zoom can draw it without waiting or fading. */
+  cachedTile(style: MapStyle, z: number, x: number, y: number): string | null {
+    return tileUrls.get(`${style}/${z}/${x}/${y}`) ?? null;
+  },
   /** One map square as a picture URL, or null when it can't be had; kept while the app is open. */
   tile(style: MapStyle, z: number, x: number, y: number): Promise<string | null> {
     if (!maps.available()) return Promise.resolve(null);
@@ -908,14 +913,22 @@ export const maps = {
       { op: "map.tile", style, z, x, y },
       15_000,
     ).then(
-      (tile) => `data:${tile.mime};base64,${tile.base64}`,
+      (tile) => {
+        const url = `data:${tile.mime};base64,${tile.base64}`;
+        if (tiles.has(key)) tileUrls.set(key, url);
+        return url;
+      },
       () => {
         tiles.delete(key);
         return null;
       },
     );
     tiles.set(key, promise);
-    if (tiles.size > MAX_TILES) tiles.delete(tiles.keys().next().value!);
+    if (tiles.size > MAX_TILES) {
+      const oldest = tiles.keys().next().value!;
+      tiles.delete(oldest);
+      tileUrls.delete(oldest);
+    }
     return promise;
   },
   /** Places matching an address, Eircode, postcode or name, best first (up to five). */

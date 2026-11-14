@@ -11,12 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import type {
-  KeyboardEvent,
-  ReactNode,
-  PointerEvent as ReactPointerEvent,
-  WheelEvent,
-} from "react";
+import type { KeyboardEvent, ReactNode, PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { AppLocation, MapPlace, MapStyle } from "../protocol.js";
 import { MAP_STYLES } from "../protocol.js";
@@ -181,32 +176,33 @@ export function clusterMarkers(markers: MapMarker[], zoom: number, cell = CLUSTE
   return [...cells.values()];
 }
 
+type TileBox = { left: number; top: number; width: number; height: number };
+
+/** One map square; keyed by style/z/x/y, so a tile seen before draws at once without a fade. */
 function Tile({
   style,
   z,
   x,
   y,
-  left,
-  top,
+  box,
 }: {
   style: MapStyle;
   z: number;
   x: number;
   y: number;
-  left: number;
-  top: number;
+  box: TileBox;
 }) {
-  const [src, setSrc] = useState<string | null>(null);
-  const [shown, setShown] = useState(false);
+  const [cached] = useState(() => maps.cachedTile(style, z, x, y));
+  const [src, setSrc] = useState(cached);
+  const [shown, setShown] = useState(cached !== null);
   useEffect(() => {
+    if (cached) return;
     let live = true;
-    setSrc(null);
-    setShown(false);
     void maps.tile(style, z, x, y).then((url) => live && setSrc(url));
     return () => {
       live = false;
     };
-  }, [style, z, x, y]);
+  }, [cached, style, z, x, y]);
   if (!src) return null;
   return (
     <img
@@ -215,12 +211,50 @@ function Tile({
       draggable={false}
       onLoad={() => setShown(true)}
       className={cn(
-        "absolute max-w-none transition-opacity duration-300 select-none",
+        "absolute max-w-none select-none",
+        !cached && "transition-opacity duration-200",
         shown ? "opacity-100" : "opacity-0",
       )}
-      style={{ left, top, width: TILE, height: TILE }}
+      style={box}
     />
   );
+}
+
+/** The tiles of zoom level `z` covering the view, drawn at `zoom` (fractional zooms scale them). */
+function tileGrid(
+  z: number,
+  zoom: number,
+  origin: { x: number; y: number },
+  width: number,
+  height: number,
+) {
+  const span = TILE * 2 ** (zoom - z);
+  const count = 2 ** z;
+  const cells: Array<{ tx: number; ty: number; x: number; box: TileBox }> = [];
+  const edge = (index: number, offset: number) => Math.round(index * span - offset);
+  for (
+    let ty = Math.max(Math.floor(origin.y / span), 0);
+    ty <= Math.min(Math.floor((origin.y + height) / span), count - 1);
+    ty++
+  ) {
+    for (let tx = Math.floor(origin.x / span); tx <= Math.floor((origin.x + width) / span); tx++) {
+      // Neighbouring tiles share rounded edges, so scaled tiles never leave hairline gaps.
+      const left = edge(tx, origin.x);
+      const top = edge(ty, origin.y);
+      cells.push({
+        tx,
+        ty,
+        x: ((tx % count) + count) % count,
+        box: {
+          left,
+          top,
+          width: edge(tx + 1, origin.x) - left,
+          height: edge(ty + 1, origin.y) - top,
+        },
+      });
+    }
+  }
+  return cells;
 }
 
 function useSize<T extends HTMLElement>() {
@@ -345,50 +379,116 @@ export function MapView({
     setView((now) => ({ center, zoom: startZoom ?? Math.max(now?.zoom ?? 13, 13) }));
   }, [center, startZoom]);
 
-  const current = view ?? { center: center ?? [53.35, -6.26], zoom: startZoom ?? 6 };
-  const zoom = Math.min(Math.max(current.zoom, MIN_ZOOM), maxZoom);
+  const fallback = { center: center ?? ([53.35, -6.26] as LatLon), zoom: startZoom ?? 6 };
+  const current = view ?? fallback;
+  const clampZoom = (value: number) => Math.min(Math.max(value, MIN_ZOOM), maxZoom);
+  // Zoom is continuous: pinches and trackpads move through it smoothly, and tiles of the nearest
+  // whole level are scaled to fit until the next level's arrive.
+  const zoom = clampZoom(current.zoom);
+  const tileZoom = clampZoom(Math.round(zoom));
   const middle = project(current.center, zoom);
   const origin = { x: middle.x - size.width / 2, y: middle.y - height / 2 };
 
-  const setZoom = (next: number, around?: { x: number; y: number }) => {
-    const target = Math.min(Math.max(Math.round(next), MIN_ZOOM), maxZoom);
-    if (target === zoom) return;
-    const anchor = around ?? { x: size.width / 2, y: height / 2 };
-    const world = { x: origin.x + anchor.x, y: origin.y + anchor.y };
-    const factor = 2 ** (target - zoom);
-    const centre = {
-      x: world.x * factor - anchor.x + size.width / 2,
-      y: world.y * factor - anchor.y + height / 2,
+  /** The view with `point` drawn at `screen` (pixels in the map) at zoom `z`. */
+  const viewWith = (point: LatLon, screen: { x: number; y: number }, z: number) => {
+    const at = project(point, z);
+    return {
+      center: unproject(at.x - screen.x + size.width / 2, at.y - screen.y + height / 2, z),
+      zoom: z,
     };
-    setView({ center: unproject(centre.x, centre.y, target), zoom: target });
   };
+  /** What sits under `screen` in `now`. */
+  const pointUnder = (now: { center: LatLon; zoom: number }, screen: { x: number; y: number }) => {
+    const z = clampZoom(now.zoom);
+    const at = project(now.center, z);
+    return unproject(at.x - size.width / 2 + screen.x, at.y - height / 2 + screen.y, z);
+  };
+  const middleOfMap = () => ({ x: size.width / 2, y: height / 2 });
+  // Updates read the latest view, so several events between two renders all count.
+  const zoomAround = (next: (z: number) => number, screen = middleOfMap()) =>
+    setView((now) => {
+      const base = now ?? fallback;
+      return viewWith(pointUnder(base, screen), screen, clampZoom(next(clampZoom(base.zoom))));
+    });
   const panBy = (dx: number, dy: number) =>
-    setView({ center: unproject(middle.x - dx, middle.y - dy, zoom), zoom });
+    setView((now) => {
+      const base = now ?? fallback;
+      const z = clampZoom(base.zoom);
+      const at = project(base.center, z);
+      return { center: unproject(at.x - dx, at.y - dy, z), zoom: z };
+    });
 
-  // Dragging and pinching: pointers are tracked so two fingers zoom and one pans.
+  // Buttons, keys and groups glide to the next whole level instead of jumping.
+  const glide = useRef(0);
+  const stopGlide = () => cancelAnimationFrame(glide.current);
+  const setZoom = (target: number, screen = middleOfMap()) => {
+    stopGlide();
+    const to = clampZoom(target);
+    const from = zoom;
+    if (Math.abs(to - from) < 0.001) return;
+    const point = pointUnder(current, screen);
+    const started = performance.now();
+    const step = (time: number) => {
+      const t = Math.min((time - started) / 240, 1);
+      const eased = 1 - (1 - t) ** 3;
+      setView(viewWith(point, screen, from + (to - from) * eased));
+      if (t < 1) glide.current = requestAnimationFrame(step);
+    };
+    glide.current = requestAnimationFrame(step);
+  };
+  useEffect(() => stopGlide, []);
+  const zoomIn = (screen?: { x: number; y: number }, levels = 1) =>
+    setZoom(Math.floor(zoom + 0.001) + levels, screen);
+  const zoomOut = () => setZoom(Math.ceil(zoom - 0.001) - 1);
+
+  // Dragging and pinching: one finger pans; two zoom around the point between them and pan with it.
   const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const drag = useRef<{ x: number; y: number; moved: boolean; pinch: number | null } | null>(null);
+  const drag = useRef<{
+    x: number;
+    y: number;
+    moved: boolean;
+    pinch: { distance: number; zoom: number; point: LatLon } | null;
+  } | null>(null);
+  const local = (element: Element, x: number, y: number) => {
+    const box = element.getBoundingClientRect();
+    return { x: x - box.left, y: y - box.top };
+  };
+  const pinchState = () => {
+    const [a, b] = [...pointers.current.values()];
+    if (!a || !b) return null;
+    return {
+      distance: Math.max(Math.hypot(a.x - b.x, a.y - b.y), 1),
+      x: (a.x + b.x) / 2,
+      y: (a.y + b.y) / 2,
+    };
+  };
+  const startPinch = (element: Element) => {
+    const two = pinchState();
+    if (!two || !drag.current) return;
+    drag.current.pinch = {
+      distance: two.distance,
+      zoom,
+      point: pointUnder(current, local(element, two.x, two.y)),
+    };
+    drag.current.moved = true;
+  };
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if ((event.target as Element).closest("[data-map-control]")) return;
+    stopGlide();
     event.currentTarget.setPointerCapture(event.pointerId);
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    drag.current = { x: event.clientX, y: event.clientY, moved: false, pinch: pinchDistance() };
-  };
-  const pinchDistance = () => {
-    const [a, b] = [...pointers.current.values()];
-    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : null;
+    if (!drag.current)
+      drag.current = { x: event.clientX, y: event.clientY, moved: false, pinch: null };
+    if (pointers.current.size === 2) startPinch(event.currentTarget);
   };
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!drag.current || !pointers.current.has(event.pointerId)) return;
     pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    const distance = pinchDistance();
-    if (distance && drag.current.pinch) {
-      const ratio = distance / drag.current.pinch;
-      if (ratio > 1.6 || ratio < 0.6) {
-        setZoom(zoom + (ratio > 1 ? 1 : -1));
-        drag.current.pinch = distance;
-      }
-      drag.current.moved = true;
+    const pinch = drag.current.pinch;
+    const two = pinch ? pinchState() : null;
+    if (pinch && two) {
+      const z = clampZoom(pinch.zoom + Math.log2(two.distance / pinch.distance));
+      setView(viewWith(pinch.point, local(event.currentTarget, two.x, two.y), z));
       return;
     }
     const dx = event.clientX - drag.current.x;
@@ -401,6 +501,12 @@ export function MapView({
     pointers.current.delete(event.pointerId);
     const state = drag.current;
     if (pointers.current.size === 0) drag.current = null;
+    else if (drag.current) {
+      // Lifting one finger of a pinch carries on as a pan from where the other finger is.
+      const [rest] = [...pointers.current.values()];
+      drag.current = { ...drag.current, x: rest!.x, y: rest!.y, pinch: null };
+      if (pointers.current.size >= 2) startPinch(event.currentTarget);
+    }
     if (
       state &&
       !state.moved &&
@@ -417,16 +523,43 @@ export function MapView({
       else onMapClick?.(point);
     }
   };
-  const wheelAt = useRef(0);
-  const onWheel = (event: WheelEvent<HTMLDivElement>) => {
-    if (Date.now() - wheelAt.current < 220 || Math.abs(event.deltaY) < 4) return;
-    wheelAt.current = Date.now();
-    const box = event.currentTarget.getBoundingClientRect();
-    setZoom(zoom + (event.deltaY < 0 ? 1 : -1), {
-      x: event.clientX - box.left,
-      y: event.clientY - box.top,
-    });
+  // The wheel listener is attached natively, non-passive, so the page neither scrolls nor
+  // browser-zooms (trackpad pinches arrive as ctrl+wheel) while the map zooms.
+  const onWheel = useRef<(event: globalThis.WheelEvent) => void>(() => {});
+  onWheel.current = (event) => {
+    event.preventDefault();
+    stopGlide();
+    const lines = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? height : 1;
+    // Trackpad pinches send small exact steps; a mouse notch is about a third of a level.
+    const delta = Math.max(
+      -1,
+      Math.min(1, -event.deltaY * lines * (event.ctrlKey ? 0.012 : 0.0035)),
+    );
+    if (!delta) return;
+    zoomAround(
+      (z) => z + delta,
+      local(event.currentTarget as Element, event.clientX, event.clientY),
+    );
   };
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const listener = (event: globalThis.WheelEvent) => onWheel.current(event);
+    element.addEventListener("wheel", listener, { passive: false });
+    return () => element.removeEventListener("wheel", listener);
+  }, [ref]);
+  // Safari sends its own pinch gestures on a Mac trackpad; the wheel handles the zoom.
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const block = (event: Event) => event.preventDefault();
+    element.addEventListener("gesturestart", block);
+    element.addEventListener("gesturechange", block);
+    return () => {
+      element.removeEventListener("gesturestart", block);
+      element.removeEventListener("gesturechange", block);
+    };
+  }, [ref]);
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const step = 80;
     const moves: Record<string, [number, number]> = {
@@ -438,8 +571,8 @@ export function MapView({
     if (moves[event.key]) {
       event.preventDefault();
       panBy(...moves[event.key]!);
-    } else if (event.key === "+" || event.key === "=") setZoom(zoom + 1);
-    else if (event.key === "-") setZoom(zoom - 1);
+    } else if (event.key === "+" || event.key === "=") zoomIn();
+    else if (event.key === "-") zoomOut();
     else if (event.key === "Escape") {
       if (draw) onDrawCancel?.();
       else choose(null);
@@ -474,33 +607,50 @@ export function MapView({
 
   const tiles: ReactNode[] = [];
   if (size.width && maps.available()) {
-    const count = 2 ** zoom;
-    const first = { x: Math.floor(origin.x / TILE), y: Math.floor(origin.y / TILE) };
-    const last = {
-      x: Math.floor((origin.x + size.width) / TILE),
-      y: Math.floor((origin.y + height) / TILE),
-    };
-    for (let ty = Math.max(first.y, 0); ty <= Math.min(last.y, count - 1); ty++) {
-      for (let tx = first.x; tx <= last.x; tx++) {
-        const wrapped = ((tx % count) + count) % count;
-        tiles.push(
-          <Tile
-            key={`${style}/${zoom}/${tx}/${ty}`}
-            style={style}
-            z={zoom}
-            x={wrapped}
-            y={ty}
-            left={tx * TILE - origin.x}
-            top={ty * TILE - origin.y}
-          />,
-        );
+    // Squares already fetched at the neighbouring levels sit underneath, scaled, so the map
+    // never blanks while the current level's squares load.
+    for (const z of [tileZoom - 1, tileZoom + 1]) {
+      if (z < MIN_ZOOM || z > maxZoom) continue;
+      for (const cell of tileGrid(z, zoom, origin, size.width, height)) {
+        const src = maps.cachedTile(style, z, cell.x, cell.ty);
+        if (src)
+          tiles.push(
+            <img
+              key={`${style}/${z}/${cell.tx}/${cell.ty}`}
+              src={src}
+              alt=""
+              draggable={false}
+              className="absolute max-w-none select-none"
+              style={cell.box}
+            />,
+          );
       }
+    }
+    for (const cell of tileGrid(tileZoom, zoom, origin, size.width, height)) {
+      tiles.push(
+        <Tile
+          key={`${style}/${tileZoom}/${cell.tx}/${cell.ty}`}
+          style={style}
+          z={tileZoom}
+          x={cell.x}
+          y={cell.ty}
+          box={cell.box}
+        />,
+      );
     }
   }
 
   const grouped = cluster ?? keyed.length > 30;
+  // Groups are formed at the whole level below and moved with the zoom, so they don't
+  // regroup on every step of a pinch.
+  const groupZoom = Math.floor(zoom);
+  const groupScale = 2 ** (zoom - groupZoom);
   const clusters = grouped
-    ? clusterMarkers(keyed, zoom)
+    ? clusterMarkers(keyed, groupZoom).map((group) => ({
+        ...group,
+        x: group.x * groupScale,
+        y: group.y * groupScale,
+      }))
     : keyed.map((marker) => {
         const point = project([marker.lat, marker.lon], zoom);
         return { x: point.x, y: point.y, markers: [marker] };
@@ -527,7 +677,6 @@ export function MapView({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      onWheel={onWheel}
       onKeyDown={onKeyDown}
       className={cn(
         "relative touch-none overflow-hidden rounded-2xl border border-border/70 bg-muted/40 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -641,7 +790,7 @@ export function MapView({
               data-map-pin=""
               data-map-control=""
               aria-label={`${group.markers.length} places; zoom in`}
-              onClick={() => setZoom(zoom + 2, { x: left, y: top })}
+              onClick={() => zoomIn({ x: left, y: top }, 2)}
               className="absolute grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-primary text-[13px] font-bold text-primary-foreground shadow-lg ring-4 ring-primary/25 transition-transform hover:scale-110"
               style={{ left, top }}
             >
@@ -724,10 +873,10 @@ export function MapView({
       </AnimatePresence>
       <div data-map-control="" className="absolute top-3 right-3 flex flex-col gap-1.5">
         <div className="flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card/90 shadow-sm backdrop-blur">
-          <MapButton label="Zoom in" onClick={() => setZoom(zoom + 1)} disabled={zoom >= maxZoom}>
+          <MapButton label="Zoom in" onClick={() => zoomIn()} disabled={zoom >= maxZoom}>
             <Plus />
           </MapButton>
-          <MapButton label="Zoom out" onClick={() => setZoom(zoom - 1)} disabled={zoom <= MIN_ZOOM}>
+          <MapButton label="Zoom out" onClick={zoomOut} disabled={zoom <= MIN_ZOOM}>
             <Minus />
           </MapButton>
         </div>
