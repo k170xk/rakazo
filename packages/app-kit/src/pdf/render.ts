@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+export { jsPDF };
 import type { CellHookData } from "jspdf-autotable";
 import { autoTable } from "jspdf-autotable";
 import type { PdfBlock, PdfDocument, PdfPicture, PdfTone } from "./model.js";

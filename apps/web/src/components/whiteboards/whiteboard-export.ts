@@ -109,7 +109,7 @@ export async function exportWhiteboardPdf({
   code: string;
   resolveAsset?: (assetId: string) => Promise<string | null>;
 }): Promise<ArrayBuffer> {
-  const { jsPDF } = await import("jspdf");
+  const { jsPDF } = await import("@rakazo/app-kit/pdf/render");
   const items = readBoard(code).items;
   const bounds = boardBoundsWithArrows(items);
   const routedMap = computeBoardArrows(items);
