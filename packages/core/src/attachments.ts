@@ -178,6 +178,10 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
       if (block.kind === "email_draft") {
         return `[Outlook email draft card ${block.draftId}: only the person can send it]`;
       }
+      // Progress lives in Evolve and only the person's clicks change it, so a later turn re-checks it.
+      if (block.kind === "learning_clinic") {
+        return `[Learning Centre clinic card: ${block.title} (clinic_id ${block.clinicId}); only the person can enrol, watch or take its quizzes on it]`;
+      }
       if (block.kind === "evolve_references") return evolveReferencesPromptText(block);
       if (block.kind === "evolve_conversation") return evolveConversationPromptText(block);
       // The id lets a later turn, or another chat, update this page instead of making a new one.

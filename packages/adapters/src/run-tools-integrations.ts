@@ -2,9 +2,12 @@ import { normalizedHttpUrl } from "@rakazo/core/egress";
 import { executeCloudAgentTool } from "./cloud-agent-service.js";
 import { collectLogIds } from "./composio-connector.js";
 import { connectApp } from "./connect-app.js";
+import { evolveReply } from "./evolve-change-card.js";
+import { EVOLVE_TOOL_PREFIX } from "./evolve-company-tools.js";
 import { addMcpServerFromTool } from "./mcp-server-tool.js";
 import type { RunContext } from "./run-context.js";
 import { runScopedToolExecutionId } from "./run-effects.js";
+import { publishMessage } from "./run-messages.js";
 import { flushProgress, publishMidTurnNarration, showNarrationStatus } from "./run-progress.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { recordComputerAction } from "./run-tools-computer.js";
@@ -67,9 +70,29 @@ export async function connectorTool(ctx: RunContext, call: ToolCall) {
         }
       }
     }
+    if (!failedFile && name === `${EVOLVE_TOOL_PREFIX}open_learning_clinic`) {
+      const block = learningClinicBlock(result);
+      if (block) await publishMessage(deps, run, "bot", [block]);
+    }
     return call.finish(failedFile ? { error: failedFile } : result);
   }
   return call.finish({ error: `unknown tool ${name}` });
+}
+
+/** The clinic card Evolve asked for; the card itself loads the clinic as whoever views it. */
+export function learningClinicBlock(result: unknown) {
+  const data = evolveReply(result);
+  const card = data?.card as { clinic_id?: unknown; module_id?: unknown } | undefined;
+  const clinic = data?.clinic as { name?: unknown } | undefined;
+  const clinicId = Number(card?.clinic_id);
+  if (data?.ok !== true || !Number.isInteger(clinicId) || clinicId <= 0) return null;
+  const moduleId = Number(card?.module_id);
+  return {
+    kind: "learning_clinic" as const,
+    clinicId,
+    ...(Number.isInteger(moduleId) && moduleId > 0 ? { moduleId } : {}),
+    title: typeof clinic?.name === "string" && clinic.name ? clinic.name.slice(0, 200) : "Clinic",
+  };
 }
 
 /** A relative path of plain segments, so a connector can only write inside the run's folder. */

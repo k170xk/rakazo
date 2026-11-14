@@ -4,6 +4,7 @@ import type {
   MessageBlock,
   ProjectCommentChange,
   ProjectDeadlineChange,
+  SiteVisitChange,
   WorkPackageChange,
 } from "@rakazo/contracts";
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
@@ -36,6 +37,7 @@ export type FleetCardSummary = {
   workPackage?: WorkPackageChange;
   projectComment?: ProjectCommentChange;
   designTeam?: DesignTeamChange;
+  siteVisit?: SiteVisitChange;
 };
 
 const WORK_PACKAGE_ALLOW_LABEL = {
@@ -101,6 +103,25 @@ export function buildApprovalAskBlock(
       status: "pending",
       actions: [
         { id: "allow", label: WORK_PACKAGE_ALLOW_LABEL[workPackage.action] },
+        { id: "deny", label: "Cancel" },
+      ],
+    };
+  }
+  if (options?.summary?.siteVisit) {
+    const { siteVisit } = options.summary;
+    return {
+      kind: "ask",
+      approvalEffectId: effectId,
+      text: truncate(redactSecrets(options.summary.title, secrets), MAX_APPROVAL_SUMMARY_LENGTH),
+      detail: truncate(
+        redactSecrets(options.summary.lines.join("\n"), secrets),
+        MAX_APPROVAL_DETAIL_LENGTH,
+      ),
+      detailFormat: "text",
+      siteVisitChange: redactLeaves(siteVisit, secrets) as SiteVisitChange,
+      status: "pending",
+      actions: [
+        { id: "allow", label: siteVisit.action === "check_out" ? "Check out" : "Check back in" },
         { id: "deny", label: "Cancel" },
       ],
     };

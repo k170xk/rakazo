@@ -518,6 +518,8 @@ describe("planActionGate", () => {
       "delete_project_comment",
       "join_project_team",
       "leave_project_team",
+      "check_out_to_site",
+      "check_back_in_from_site",
     ]) {
       expect(toolNeedsApprovalEveryTime(`mcp__evolve__${tool}`)).toBe(true);
       expect(toolRequiresExplicitApproval(`mcp__evolve__${tool}`)).toBe(true);

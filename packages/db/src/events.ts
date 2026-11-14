@@ -984,7 +984,8 @@ async function commitAnswerRunInput(
       (pendingAsk.deadlineChange ||
         pendingAsk.workPackageChange ||
         pendingAsk.projectCommentChange ||
-        pendingAsk.designTeamChange) &&
+        pendingAsk.designTeamChange ||
+        pendingAsk.siteVisitChange) &&
       run.userId !== input.answeredByUserId
     )
       return null;

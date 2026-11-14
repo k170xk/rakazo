@@ -211,6 +211,31 @@ export const DesignTeamChangeSchema = z.object({
 });
 export type DesignTeamChange = z.infer<typeof DesignTeamChangeSchema>;
 
+/** The run owner going out to a site, or checking back in from one, as Evolve's Staff Check-in page records it. */
+export const SiteVisitChangeSchema = z.object({
+  action: z.enum(["check_out", "check_in"]),
+  person: z.string(),
+  siteLocation: z.string().nullable(),
+  jobNumber: z.string().nullable(),
+  projectName: z.string().nullable(),
+  buddy: z.string().nullable(),
+  /** A check-out's expected return as a UK/Irish clock time (HH:MM) and in words. */
+  expectedReturnTime: z.string().nullable().optional(),
+  expectedReturnLabel: z.string().nullable().optional(),
+  /** When a check-in's visit began. */
+  leftLabel: z.string().nullable().optional(),
+  /** A check-in's return, as a UK/Irish day (YYYY-MM-DD) and time (HH:MM), and in words. */
+  returnedDay: z.string().optional(),
+  returnedTime: z.string().optional(),
+  returnedLabel: z.string().optional(),
+  everythingOk: z.boolean().optional(),
+  notes: z.string().nullable().optional(),
+  /** The visit a check-out closes first because the person is still out on it. */
+  closes: z.object({ siteLocation: z.string().nullable(), leftLabel: z.string() }).optional(),
+  warnings: z.array(z.string()).optional(),
+});
+export type SiteVisitChange = z.infer<typeof SiteVisitChangeSchema>;
+
 const EditDay = z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]);
 const EditText = (max: number) => z.string().max(max);
 
@@ -240,6 +265,13 @@ export const EvolveChangeEditsSchema = z
     notes: EditText(5000),
     text: EditText(2000).min(1),
     role: EditText(120).min(1),
+    site_location: EditText(300).min(1),
+    /** "none" checks out to no particular job. */
+    job_number: EditText(60).min(1),
+    buddy: EditText(254).min(1),
+    expected_return: z.string().regex(/^\d{2}:\d{2}$/),
+    returned_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
+    everything_ok: z.boolean(),
   })
   .partial()
   .refine((edits) => Object.keys(edits).length > 0, "Change at least one field");
@@ -298,6 +330,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     workPackageChange: WorkPackageChangeSchema.optional(),
     projectCommentChange: ProjectCommentChangeSchema.optional(),
     designTeamChange: DesignTeamChangeSchema.optional(),
+    siteVisitChange: SiteVisitChangeSchema.optional(),
     detail: z.string().optional(),
     detailFormat: z.enum(["text", "code"]).optional(),
     input: z.enum(["text", "secret"]).optional(),
@@ -525,6 +558,16 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     /** An Outlook draft its person edits and sends from the card; the bot never sends it. */
     kind: z.literal("email_draft"),
     draftId: Id,
+  }),
+  z.object({
+    /**
+     * An Evolve Learning Centre clinic the person enrols in, watches and takes the quizzes of on the
+     * card; the card loads it live from Evolve as whoever views it, and only their clicks save anything.
+     */
+    kind: z.literal("learning_clinic"),
+    clinicId: z.number().int().positive(),
+    moduleId: z.number().int().positive().optional(),
+    title: z.string(),
   }),
   z.object({
     /** Delivered into the receiving bot's own chat as the prompt that woke it. */

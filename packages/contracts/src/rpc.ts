@@ -219,6 +219,14 @@ import {
   EvolveHistoryAssistantSchema,
 } from "./evolve-history.js";
 import {
+  EvolveToolCatalogueSchema,
+  LearningClinicInput,
+  LearningClinicSchema,
+  LearningModuleInput,
+  LearningQuizInput,
+  LearningQuizResultSchema,
+} from "./evolve-learning.js";
+import {
   EvolvePersonOptionSchema,
   EvolveProjectPageSchema,
   EvolveReferenceExemplarSchema,
@@ -798,6 +806,23 @@ export const appContract = {
       .output(EvolveProjectPageSchema),
     people: oc.output(z.object({ people: z.array(EvolvePersonOptionSchema) })),
     exemplars: oc.output(z.object({ exemplars: z.array(EvolveReferenceExemplarSchema) })),
+  },
+  /**
+   * Evolve Learning Centre clinic cards. Each call is signed as the person clicking, so it loads and
+   * saves only their own enrolment and quiz attempts; Evolve marks the quizzes.
+   */
+  evolveLearning: {
+    card: oc.input(LearningClinicInput).output(LearningClinicSchema),
+    enrol: oc.input(LearningClinicInput).output(LearningClinicSchema),
+    /** Completes a module that has no quiz once its video was watched. */
+    markWatched: oc.input(LearningModuleInput).output(LearningClinicSchema),
+    submitQuiz: oc
+      .input(LearningQuizInput)
+      .output(z.object({ result: LearningQuizResultSchema, clinic: LearningClinicSchema })),
+  },
+  /** Every Evolve tool the company offers, with what it does and whether this person can use it. */
+  evolveTools: {
+    catalogue: oc.output(EvolveToolCatalogueSchema),
   },
   /** Render Studio: granular gpt-image-2 edits run on Evolve, as in Evolve's chat. */
   evolveImages: {

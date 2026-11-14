@@ -261,6 +261,29 @@ msgstr "{0} KB of {1} KB. Short, specific notes work best."
 msgid "{0} MB"
 msgstr "{0} MB"
 
+#. placeholder {0}: module.minutes
+#: src/components/LearningClinicCard.tsx
+msgid "{0} min"
+msgstr "{0} min"
+
+#. placeholder {0}: result.correct
+#. placeholder {1}: result.total
+#: src/components/LearningClinicCard.tsx
+msgid "{0} of {1} correct. This module is complete."
+msgstr "{0} of {1} correct. This module is complete."
+
+#. placeholder {0}: result.correct
+#. placeholder {1}: result.total
+#: src/components/LearningClinicCard.tsx
+msgid "{0} of {1} correct. You need {passPercent}% to pass; you can take it again as often as you like."
+msgstr "{0} of {1} correct. You need {passPercent}% to pass; you can take it again as often as you like."
+
+#. placeholder {0}: clinic.modulesPassed
+#. placeholder {1}: clinic.modulesTotal
+#: src/components/LearningClinicCard.tsx
+msgid "{0} of {1} modules passed"
+msgstr "{0} of {1} modules passed"
+
 #. placeholder {0}: formatSize(person.storageUsedBytes)
 #. placeholder {1}: limitLabel(person.effectiveStorageLimitMb)
 #: src/pages/AdminComputerAccess.tsx
@@ -272,6 +295,11 @@ msgstr "{0} of {1} used"
 #: src/components/StorageDialog.tsx
 msgid "{0} on bot computers · {1} attached in chats."
 msgstr "{0} on bot computers · {1} attached in chats."
+
+#. placeholder {0}: questions.length
+#: src/components/LearningClinicCard.tsx
+msgid "{0} questions · pass mark {passPercent}%"
+msgstr "{0} questions · pass mark {passPercent}%"
 
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
@@ -293,6 +321,11 @@ msgstr "{0} shares their voice connection, but it has been removed. Connect one 
 msgid "{0} TB"
 msgstr "{0} TB"
 
+#. placeholder {0}: tools.length
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "{0} tools"
+msgstr "{0} tools"
+
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} was removed by your company's file cleanup. Ask the bot to make it again."
@@ -301,6 +334,15 @@ msgstr "{0} was removed by your company's file cleanup. Ask the bot to make it a
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
+
+#. placeholder {0}: questions.length
+#: src/components/LearningClinicCard.tsx
+msgid "{answered} of {0} answered"
+msgstr "{answered} of {0} answered"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "{blocked} need access"
+msgstr "{blocked} need access"
 
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
@@ -607,6 +649,10 @@ msgstr "{title}, saved as {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# tool} other {# tools}}"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "{total} tools for company data in Evolve — projects, people, Learning Centre clinics, site visits and more. Agents only see and change what your Evolve access allows. The {changing} that change Evolve show you a card to check, edit and approve first, every time; nothing is saved until you click."
+msgstr "{total} tools for company data in Evolve — projects, people, Learning Centre clinics, site visits and more. Agents only see and change what your Evolve access allows. The {changing} that change Evolve show you a card to check, edit and approve first, every time; nothing is saved until you click."
+
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
@@ -711,6 +757,10 @@ msgstr "A separate work space. It opens straight away, with its own bots and app
 #: src/pages/Onboarding.tsx
 msgid "A sign-in tab opened at <0>{0}</0>. Enter this code there — this window keeps waiting:"
 msgstr "A sign-in tab opened at <0>{0}</0>. Enter this code there — this window keeps waiting:"
+
+#: src/components/AskCard.tsx
+msgid "a site"
+msgstr "a site"
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "a spreadsheet import"
@@ -858,6 +908,10 @@ msgstr "Add a command to run"
 msgid "Add a file or folder to watch"
 msgstr "Add a file or folder to watch"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add a hard deadline for the planning submission on C1078 next Friday"
+msgstr "Add a hard deadline for the planning submission on C1078 next Friday"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Add a model in Settings to use this."
 msgstr "Add a model in Settings to use this."
@@ -886,6 +940,10 @@ msgstr "Add a run time for this one-shot."
 msgid "Add a server name."
 msgstr "Add a server name."
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add a Site comment to C1078: foundations poured today"
+msgstr "Add a Site comment to C1078: foundations poured today"
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Add a stdio command."
 msgstr "Add a stdio command."
@@ -906,6 +964,10 @@ msgstr "Add an email address"
 #: src/pages/McpServersOverlay.tsx
 msgid "Add an HTTPS server URL."
 msgstr "Add an HTTPS server URL."
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add and update a project's deadlines, as on Project Tracker."
+msgstr "Add and update a project's deadlines, as on Project Tracker."
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Add another"
@@ -967,6 +1029,10 @@ msgstr "Add item"
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
 msgstr "Add MCP server"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add me to C1078's Design Team as Civil Engineer"
+msgstr "Add me to C1078's Design Team as Civil Engineer"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
@@ -1049,6 +1115,10 @@ msgstr "Add workspace"
 msgid "Add your own MCP server"
 msgstr "Add your own MCP server"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add, reword and delete your own project comments, with their category."
+msgstr "Add, reword and delete your own project comments, with their category."
+
 #: src/components/GroupPeople.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
@@ -1091,6 +1161,10 @@ msgstr "Address"
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Address line 2"
 msgstr "Address line 2"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Adds"
+msgstr "Adds"
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Adds infographics, tables, figures and real OCSC project photos"
@@ -1280,6 +1354,10 @@ msgstr "Always open {site}"
 #: src/pages/AdminStaffLimits.tsx
 msgid "Always uses the company model"
 msgstr "Always uses the company model"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "An admin has switched Evolve tools off for the company."
+msgstr "An admin has switched Evolve tools off for the company."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "An agent is an AI teammate with its own name, job and instructions. Talk to it like a colleague: give it a task, attach files, and it plans the work, does it and tells you when it's finished."
@@ -1506,6 +1584,14 @@ msgid "Approved: adding you to the team"
 msgstr "Approved: adding you to the team"
 
 #: src/components/AskCard.tsx
+msgid "Approved: checking you back in"
+msgstr "Approved: checking you back in"
+
+#: src/components/AskCard.tsx
+msgid "Approved: checking you out"
+msgstr "Approved: checking you out"
+
+#: src/components/AskCard.tsx
 msgid "Approved: deleting it from Evolve"
 msgstr "Approved: deleting it from Evolve"
 
@@ -1728,6 +1814,11 @@ msgstr "Avatar Studio"
 msgid "Back"
 msgstr "Back"
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Back at"
+msgstr "Back at"
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Back or forward"
 msgstr "Back or forward"
@@ -1743,6 +1834,10 @@ msgstr "Back to chat"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "Back to sign in"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Back to video"
+msgstr "Back to video"
 
 #: src/pages/SharedChats.tsx
 msgid "Back to your chats"
@@ -1899,6 +1994,10 @@ msgstr "Brain label"
 msgid "Branded deliverables, done properly"
 msgstr "Branded deliverables, done properly"
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Branded deliverables: Word, decks, spreadsheets, PDFs, video and apps. Separate from the Evolve tools above, which read and change company data. Call one by name, for example /ocsc-word."
+msgstr "Branded deliverables: Word, decks, spreadsheets, PDFs, video and apps. Separate from the Evolve tools above, which read and change company data. Call one by name, for example /ocsc-word."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Branded PDFs, plus markups, redlines and measurements on drawings in Evolve PDF Studio."
 msgstr "Branded PDFs, plus markups, redlines and measurements on drawings in Evolve PDF Studio."
@@ -1931,6 +2030,15 @@ msgstr "Brush"
 msgid "Brush radius: {brushRadius}px"
 msgstr "Brush radius: {brushRadius}px"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "buddy"
+msgstr "buddy"
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Buddy contact"
+msgstr "Buddy contact"
+
 #: src/pages/AdminStaffLimits.tsx
 msgid "Budget in US dollars"
 msgstr "Budget in US dollars"
@@ -1956,8 +2064,8 @@ msgid "Builds OCSC-styled workbooks with real formulas, totals and number format
 msgstr "Builds OCSC-styled workbooks with real formulas, totals and number formats"
 
 #: src/components/integrations/ocsc-tools-section.tsx
-msgid "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
-msgstr "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
+#~ msgid "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
+#~ msgstr "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2247,6 +2355,14 @@ msgstr "Chats show a card for each tool a bot runs."
 msgid "Check again"
 msgstr "Check again"
 
+#: src/components/AskCard.tsx
+msgid "Check back in"
+msgstr "Check back in"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Check back in from a site"
+msgstr "Check back in from a site"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Check every"
 msgstr "Check every"
@@ -2264,9 +2380,29 @@ msgstr "Check for updates"
 msgid "Check in."
 msgstr "Check in."
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Check me out to the Naas site for C1078 with Mary as buddy until 4pm"
+msgstr "Check me out to the Naas site for C1078 with Mary as buddy until 4pm"
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Check now"
 msgstr "Check now"
+
+#: src/components/AskCard.tsx
+msgid "Check out"
+msgstr "Check out"
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Check out to a site"
+msgstr "Check out to a site"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Check out to a site with a buddy and return time, and check back in."
+msgstr "Check out to a site with a buddy and return time, and check back in."
+
+#: src/components/AskCard.tsx
+msgid "Check out to site"
+msgstr "Check out to site"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
@@ -2311,6 +2447,10 @@ msgstr "Checking…"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Choose a bot shape, color, or upload an image"
 msgstr "Choose a bot shape, color, or upload an image"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Choose a buddy"
+msgstr "Choose a buddy"
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
@@ -2543,6 +2683,12 @@ msgstr "Close voice settings"
 msgid "Closed"
 msgstr "Closed"
 
+#. placeholder {0}: change.closes.siteLocation ?? t`a site`
+#. placeholder {1}: change.closes.leftLabel
+#: src/components/AskCard.tsx
+msgid "Closes your visit to {0} (since {1}) first, as Evolve does"
+msgstr "Closes your visit to {0} (since {1}) first, as Evolve does"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Cloud"
 msgstr "Cloud"
@@ -2625,6 +2771,7 @@ msgid "Comfortable"
 msgstr "Comfortable"
 
 #: src/components/integrations/integrations-coming-soon.tsx
+#: src/components/LearningClinicCard.tsx
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -2764,6 +2911,7 @@ msgstr "Complete Required Roles First"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/LearningClinicCard.tsx
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "Completed"
@@ -3469,6 +3617,10 @@ msgstr "Could not load the choices from Evolve"
 msgid "Could not load this chat."
 msgstr "Could not load this chat."
 
+#: src/components/LearningClinicCard.tsx
+msgid "Could not load this clinic from Evolve"
+msgstr "Could not load this clinic from Evolve"
+
 #: src/components/ArtifactFileCard.tsx
 #: src/pages/Artifacts.tsx
 msgid "Could not load this file."
@@ -3783,6 +3935,10 @@ msgstr "Could not start teaching"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Could not stop computer"
 msgstr "Could not stop computer"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Could not submit the quiz"
+msgstr "Could not submit the quiz"
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -4348,6 +4504,10 @@ msgstr "Deleted"
 msgid "Deleted soon"
 msgstr "Deleted soon"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Deletes"
+msgstr "Deletes"
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Deletes records"
 msgstr "Deletes records"
@@ -4651,6 +4811,11 @@ msgstr "Drawn for this app in the OCSC style. Describe one object to draw someth
 msgid "Due"
 msgstr "Due"
 
+#. placeholder {0}: clinic.dueDate
+#: src/components/LearningClinicCard.tsx
+msgid "Due {0}"
+msgstr "Due {0}"
+
 #: src/pages/BotContextMenu.tsx
 msgid "Duplicate"
 msgstr "Duplicate"
@@ -4736,6 +4901,10 @@ msgstr "Edit Profile"
 msgid "Edit References"
 msgstr "Edit References"
 
+#: src/components/AskCard.tsx
+msgid "Edit site visit"
+msgstr "Edit site visit"
+
 #: src/components/apps/AppVisualEdit.tsx
 msgid "Edit this element"
 msgstr "Edit this element"
@@ -4785,6 +4954,10 @@ msgstr "EDITING v{0} · NEXT → v{nextVersion}"
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Editing v{0} → next will be v{nextVersion}"
 msgstr "Editing v{0} → next will be v{nextVersion}"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Edits"
+msgstr "Edits"
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Edits records"
@@ -4871,6 +5044,11 @@ msgstr "Enjoying OCSC Intelligence?"
 #: src/pages/shell/message-cards.tsx
 msgid "Enlarge {name}"
 msgstr "Enlarge {name}"
+
+#. placeholder {0}: clinic.passPercent
+#: src/components/LearningClinicCard.tsx
+msgid "Enrols you on the Learning Centre, as its Enroll button does. Each module is a video, and most have a quiz you pass with {0}%."
+msgstr "Enrols you on the Learning Centre, as its Enroll button does. Each module is a video, and most have a quiz you pass with {0}%."
 
 #: src/lib/user-error.ts
 msgid "Enter a password"
@@ -5067,6 +5245,11 @@ msgstr "Everyone without their own limit"
 msgid "Everyone's files"
 msgstr "Everyone's files"
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Everything OK?"
+msgstr "Everything OK?"
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Evolve admins only"
 msgstr "Evolve admins only"
@@ -5083,6 +5266,10 @@ msgstr "Evolve assistant models"
 msgid "Evolve checks the change again; nothing is saved until you approve the card."
 msgstr "Evolve checks the change again; nothing is saved until you approve the card."
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Evolve could not list its tools just now. Try again in a moment."
+msgstr "Evolve could not list its tools just now. Try again in a moment."
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "Evolve did not accept that change"
 msgstr "Evolve did not accept that change"
@@ -5090,6 +5277,10 @@ msgstr "Evolve did not accept that change"
 #: src/components/apps/AppPublishSection.tsx
 msgid "Evolve didn't accept it."
 msgstr "Evolve didn't accept it."
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Evolve is not linked on this server yet."
+msgstr "Evolve is not linked on this server yet."
 
 #: src/components/GroupPeople.tsx
 msgid "Evolve people"
@@ -5108,6 +5299,7 @@ msgstr "Evolve plugins"
 msgid "Evolve search is unavailable. Type a full work email instead."
 msgstr "Evolve search is unavailable. Type a full work email instead."
 
+#: src/components/integrations/evolve-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
 msgid "Evolve tools"
 msgstr "Evolve tools"
@@ -5115,6 +5307,10 @@ msgstr "Evolve tools"
 #: src/pages/AdminCompanyTools.tsx
 msgid "Evolve tools for everyone"
 msgstr "Evolve tools for everyone"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Evolve's Learning Centre did not accept that"
+msgstr "Evolve's Learning Centre did not accept that"
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Evolve's peer reviewers and developers get it with the brief: the app's functions, data, connectors, how it was built and any security or data-protection points."
@@ -5165,6 +5361,11 @@ msgstr "Expand {0}"
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
 msgstr "Expand table"
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Expected back"
+msgstr "Expected back"
 
 #: src/components/CloudAgentCard.tsx
 msgid "expired"
@@ -5322,15 +5523,35 @@ msgstr "Find a person"
 msgid "Find an app"
 msgstr "Find an app"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find clinics, then start one, watch its videos and pass its quizzes on a card."
+msgstr "Find clinics, then start one, watch its videos and pass its quizzes on a card."
+
 #: src/pages/shell/chat-find-bar.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Find in chat"
 msgstr "Find in chat"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find jobs and read a project's datasheet, team, deadlines and comments."
+msgstr "Find jobs and read a project's datasheet, team, deadlines and comments."
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find me a clinic on CDM and start it"
+msgstr "Find me a clinic on CDM and start it"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Find models"
 msgstr "Find models"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find our standard drainage design statement template"
+msgstr "Find our standard drainage design statement template"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find, add, update and delete work packages on the Project Tracker."
+msgstr "Find, add, update and delete work packages on the Project Tracker."
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -5460,6 +5681,10 @@ msgstr "Full computer"
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Full name"
 msgstr "Full name"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Full screen"
+msgstr "Full screen"
 
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
@@ -5779,6 +6004,10 @@ msgstr "How to check"
 msgid "How will you use OCSC Intelligence?"
 msgstr "How will you use OCSC Intelligence?"
 
+#: src/components/LearningClinicCard.tsx
+msgid "I have watched this"
+msgstr "I have watched this"
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "I’m done"
@@ -5819,6 +6048,10 @@ msgstr "Images and Evolve data"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Images from websites show in chats without a tap."
 msgstr "Images from websites show in chats without a tap."
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Images, infographics, charts, stock media, voiceovers and web search."
+msgstr "Images, infographics, charts, stock media, voiceovers and web search."
 
 #: src/components/AccountDataSettings.tsx
 msgid "Import"
@@ -6043,6 +6276,15 @@ msgid "Its words come from data, so only its look can be changed here."
 msgstr "Its words come from data, so only its look can be changed here."
 
 #: src/components/EvolveChangeEditor.tsx
+msgid "job"
+msgstr "job"
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Job / project"
+msgstr "Job / project"
+
+#: src/components/EvolveChangeEditor.tsx
 msgid "Job number, project or client"
 msgstr "Job number, project or client"
 
@@ -6053,6 +6295,10 @@ msgstr "Join a Design Team"
 #: src/components/AskCard.tsx
 msgid "Join Design Team"
 msgstr "Join Design Team"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Join or leave a project's Design Team in one of its roles."
+msgstr "Join or leave a project's Design Team in one of its roles."
 
 #: src/components/AskCard.tsx
 msgid "Join team"
@@ -6196,6 +6442,11 @@ msgstr "Last cleanup {0}: {1} removed, {2} freed."
 msgid "Last created"
 msgstr "Last created"
 
+#. placeholder {0}: module.lastScore
+#: src/components/LearningClinicCard.tsx
+msgid "Last score {0}%"
+msgstr "Last score {0}%"
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last used"
 msgstr "Last used"
@@ -6203,6 +6454,10 @@ msgstr "Last used"
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
 msgstr "Later"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Learning Centre clinic"
+msgstr "Learning Centre clinic"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Leave"
@@ -6223,6 +6478,10 @@ msgstr "Leave Design Team"
 #: src/components/AskCard.tsx
 msgid "Leave team"
 msgstr "Leave team"
+
+#: src/components/AskCard.tsx
+msgid "Left"
+msgstr "Left"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Length, format, bullet points or prose"
@@ -6353,6 +6612,10 @@ msgstr "Loading connectors…"
 msgid "Loading email draft"
 msgstr "Loading email draft"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Loading Evolve tools…"
+msgstr "Loading Evolve tools…"
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Loading exemplar responses..."
 msgstr "Loading exemplar responses..."
@@ -6368,6 +6631,10 @@ msgstr "Loading folders…"
 #: src/components/EvolveChangeEditor.tsx
 msgid "Loading from Evolve…"
 msgstr "Loading from Evolve…"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Loading from the Learning Centre…"
+msgstr "Loading from the Learning Centre…"
 
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "Loading memory settings…"
@@ -6494,10 +6761,15 @@ msgstr "Make a 10-slide bid presentation for a school extension"
 msgid "Make a 30-second LinkedIn clip about our latest bridge project"
 msgstr "Make a 30-second LinkedIn clip about our latest bridge project"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Make an infographic of our project stages"
+msgstr "Make an infographic of our project stages"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Makes and reads PDFs."
 msgstr "Makes and reads PDFs."
 
+#: src/components/integrations/evolve-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
 msgid "Makes files"
 msgstr "Makes files"
@@ -6716,6 +6988,11 @@ msgstr "Mentions OpenClaw features"
 msgid "Mentions: {mentions}"
 msgstr "Mentions: {mentions}"
 
+#. placeholder {0}: clinic.mentor
+#: src/components/LearningClinicCard.tsx
+msgid "Mentor: {0}"
+msgstr "Mentor: {0}"
+
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
@@ -6885,6 +7162,14 @@ msgstr "Models list OK. {modelCount, plural, one {# model} other {# models}} ava
 #: src/pages/AdminStaffLimits.tsx
 msgid "Models they may pick"
 msgstr "Models they may pick"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Module video"
+msgstr "Module video"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Modules"
+msgstr "Modules"
 
 #: src/lib/cron.ts
 msgid "Monday"
@@ -7057,6 +7342,16 @@ msgstr "Needs an OAuth client ID"
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"
 msgstr "Needs attention"
+
+#. placeholder {0}: tool.page.label
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Needs Evolve's {0} page; ask an Evolve admin for access"
+msgstr "Needs Evolve's {0} page; ask an Evolve admin for access"
+
+#. placeholder {0}: tool.page.label
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Needs Evolve's {0} page; you have access"
+msgstr "Needs Evolve's {0} page; you have access"
 
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
@@ -7238,6 +7533,10 @@ msgstr "Next cleanup {0}."
 msgid "Next match"
 msgstr "Next match"
 
+#: src/components/LearningClinicCard.tsx
+msgid "Next module"
+msgstr "Next module"
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Next or previous bot"
 msgstr "Next or previous bot"
@@ -7345,6 +7644,10 @@ msgstr "No drawings selected"
 msgid "No Evolve assistants are available. Check that Evolve is linked."
 msgstr "No Evolve assistants are available. Check that Evolve is linked."
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "No Evolve tool matches."
+msgstr "No Evolve tool matches."
+
 #: src/pages/shell/references-dialog.tsx
 msgid "No exemplar responses match your search."
 msgstr "No exemplar responses match your search."
@@ -7364,6 +7667,11 @@ msgstr "No folders here."
 #: src/components/render-studio/StageCanvas.tsx
 msgid "No image"
 msgstr "No image"
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "No job"
+msgstr "No job"
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -7553,9 +7861,17 @@ msgstr "Not checked yet"
 msgid "Not checked yet."
 msgstr "Not checked yet."
 
+#: src/components/AskCard.tsx
+msgid "Not chosen"
+msgstr "Not chosen"
+
 #: src/components/GroupPeople.tsx
 msgid "Not found in Evolve; joins if they sign in with this email"
 msgstr "Not found in Evolve; joins if they sign in with this email"
+
+#: src/components/AskCard.tsx
+msgid "Not given"
+msgstr "Not given"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Not imported"
@@ -7575,6 +7891,10 @@ msgstr "Not in the plugin catalog"
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "Not now"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Not passed yet"
+msgstr "Not passed yet"
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Not set up"
@@ -7618,6 +7938,10 @@ msgstr "Note:"
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
 msgstr "Notes"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Notes (PDF)"
+msgstr "Notes (PDF)"
 
 #: src/components/todos/todo-board.tsx
 msgid "Nothing archived."
@@ -7940,6 +8264,14 @@ msgstr "Open navigation"
 msgid "Open OCSC Intelligence"
 msgstr "Open OCSC Intelligence"
 
+#: src/components/LearningClinicCard.tsx
+msgid "Open the video"
+msgstr "Open the video"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Open to everyone at OCSC"
+msgstr "Open to everyone at OCSC"
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "Open work"
@@ -7961,6 +8293,7 @@ msgstr "OpenClaw or Hermes"
 msgid "Opens your browser's print dialog. Choose Save as PDF as the destination."
 msgstr "Opens your browser's print dialog. Choose Save as PDF as the destination."
 
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/SignupSurvey.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -8101,6 +8434,10 @@ msgstr "Page not found"
 #: src/pages/AdminSharedApps.tsx
 msgid "Pages and apps people have shared by link or published to Evolve. Freeze one to take it offline for everyone else at once; its owner keeps their copy and can't share it again until you unfreeze it."
 msgstr "Pages and apps people have shared by link or published to Evolve. Freeze one to take it offline for everyone else at once; its owner keeps their copy and can't share it again until you unfreeze it."
+
+#: src/components/LearningClinicCard.tsx
+msgid "Passed"
+msgstr "Passed"
 
 #: src/components/PasskeySettings.tsx
 msgid "Passkey"
@@ -8496,6 +8833,10 @@ msgstr "Projects"
 msgid "Projects with no Design Team"
 msgstr "Projects with no Design Team"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Projects, deadlines, comments, Learning Centre clinics, site check-in and more — as your own Evolve access allows, with a card to approve every change."
+msgstr "Projects, deadlines, comments, Learning Centre clinics, site check-in and more — as your own Evolve access allows, with a card to approve every change."
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "Protected input"
@@ -8569,6 +8910,7 @@ msgstr "Reactions"
 msgid "Read it"
 msgstr "Read it"
 
+#: src/components/integrations/evolve-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Read only"
@@ -9009,6 +9351,10 @@ msgstr "Requester and assignee can change their own"
 msgid "Requests"
 msgstr "Requests"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Required when there was an issue"
+msgstr "Required when there was an issue"
+
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
 msgstr "Research & writing"
@@ -9106,6 +9452,10 @@ msgstr "Restored version {0}"
 msgid "Restoring your workspace"
 msgstr "Restoring your workspace"
 
+#: src/components/LearningClinicCard.tsx
+msgid "Retake quiz"
+msgstr "Retake quiz"
+
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -9132,6 +9482,14 @@ msgstr "Retry now"
 #: src/pages/shell/use-computer.tsx
 msgid "Retry screen"
 msgstr "Retry screen"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Return date"
+msgstr "Return date"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Return time"
+msgstr "Return time"
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -9515,6 +9873,10 @@ msgstr "Search Evolve people"
 msgid "Search Evolve people to add"
 msgstr "Search Evolve people to add"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Search Evolve tools"
+msgstr "Search Evolve tools"
+
 #: src/pages/Artifacts.tsx
 msgid "Search files…"
 msgstr "Search files…"
@@ -9545,6 +9907,14 @@ msgstr "Search sites"
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
 msgstr "Search skills"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Search staff by name, skill, sector or experience."
+msgstr "Search staff by name, skill, sector or experience."
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Search the Document Library's titles and the text inside its documents."
+msgstr "Search the Document Library's titles and the text inside its documents."
 
 #: src/components/VaultSettings.tsx
 msgid "Search Vault"
@@ -9897,6 +10267,10 @@ msgstr "Show more"
 msgid "Show more ({0} left)"
 msgstr "Show more ({0} left)"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Show my overdue work packages and mark the drainage one 50% done"
+msgstr "Show my overdue work packages and mark the drainage one 50% done"
+
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "Show password"
@@ -10002,6 +10376,18 @@ msgstr "Signed-in colleagues can add, edit and remove rows."
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Site"
 msgstr "Site"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Site address or name"
+msgstr "Site address or name"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Site location"
+msgstr "Site location"
+
+#: src/components/AskCard.tsx
+msgid "Site not given"
+msgstr "Site not given"
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Sites & OneDrive"
@@ -10239,6 +10625,10 @@ msgstr "Start {trialDays}-day free trial"
 msgid "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
 msgstr "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
 
+#: src/components/LearningClinicCard.tsx
+msgid "Start clinic"
+msgstr "Start clinic"
+
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Start from"
 msgstr "Start from"
@@ -10404,6 +10794,10 @@ msgstr "Subject"
 msgid "Submit"
 msgstr "Submit"
 
+#: src/components/LearningClinicCard.tsx
+msgid "Submit answers"
+msgstr "Submit answers"
+
 #: src/components/ModelCredits.tsx
 #: src/pages/Paywall.tsx
 msgid "Subscribe"
@@ -10493,6 +10887,14 @@ msgstr "Table"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "Take control"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Take the quiz"
+msgstr "Take the quiz"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Take the quiz again"
+msgstr "Take the quiz again"
 
 #: src/components/InstallAppBanner.tsx
 msgid "Tap Share, then Add to Home Screen."
@@ -10787,6 +11189,11 @@ msgstr "The video could not be loaded."
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "Their own model is cleared. You can pick one again in each bot."
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "There was an issue"
+msgstr "There was an issue"
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
 msgstr "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
@@ -10976,6 +11383,10 @@ msgstr "This model cannot read images. Choose a model that supports images."
 #: src/lib/run-error.ts
 msgid "This model's context window is too small. Choose another model."
 msgstr "This model's context window is too small. Choose another model."
+
+#: src/components/LearningClinicCard.tsx
+msgid "This module has no quiz: watch the video to the end to complete it."
+msgstr "This module has no quiz: watch the video to the end to complete it."
 
 #: src/pages/Artifacts.tsx
 msgid "This month"
@@ -11213,6 +11624,7 @@ msgstr "Trusted sites"
 msgid "Try"
 msgstr "Try"
 
+#: src/components/LearningClinicCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
@@ -11224,6 +11636,7 @@ msgstr "Try"
 msgid "Try again"
 msgstr "Try again"
 
+#: src/components/integrations/evolve-tools-section.tsx
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Try asking"
 msgstr "Try asking"
@@ -11825,6 +12238,10 @@ msgstr "What each one is called"
 msgid "What each person's chats, bots and routines have cost in model usage. Updates every minute."
 msgstr "What each person's chats, bots and routines have cost in model usage. Updates every minute."
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "What happened"
+msgstr "What happened"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "What it can do"
 msgstr "What it can do"
@@ -11864,6 +12281,10 @@ msgstr "What to return"
 #: src/pages/RoutineEditor.tsx
 msgid "What to watch"
 msgstr "What to watch"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "What's the status of C1078 and who is on the team?"
+msgstr "What's the status of C1078 and who is on the team?"
 
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
@@ -11940,6 +12361,10 @@ msgstr "Who can use it"
 #: src/pages/AdminComputerAccess.tsx
 msgid "Who gets a computer"
 msgstr "Who gets a computer"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Who has bridge inspection experience in the Dublin office?"
+msgstr "Who has bridge inspection experience in the Dublin office?"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Who you work with and what matters to them"
@@ -12077,6 +12502,11 @@ msgstr "year"
 msgid "Yearly"
 msgstr "Yearly"
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Yes, all OK"
+msgstr "Yes, all OK"
+
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Yesterday"
@@ -12091,6 +12521,10 @@ msgstr "Yesterday"
 #: src/pages/shell/shell-sidebar.tsx
 msgid "You"
 msgstr "You"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "You approve every time"
+msgstr "You approve every time"
 
 #: src/pages/McpOAuthCallback.tsx
 msgid "You can close this tab if it does not redirect automatically."
@@ -12112,6 +12546,10 @@ msgstr "You declined"
 #: src/components/InviteDialog.tsx
 msgid "You get a free month when they start their trial with a new card."
 msgstr "You get a free month when they start their trial with a new card."
+
+#: src/components/LearningClinicCard.tsx
+msgid "You have completed this clinic."
+msgstr "You have completed this clinic."
 
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"

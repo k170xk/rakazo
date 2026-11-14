@@ -6,6 +6,7 @@ import type {
   EvolveChangeOptions,
   ProjectCommentChange,
   ProjectDeadlineChange,
+  SiteVisitChange,
 } from "@rakazo/contracts";
 import { toolNeedsApprovalEveryTime } from "@rakazo/core";
 import type { FleetCardSummary } from "./approval-ask.js";
@@ -71,6 +72,8 @@ const EDITABLE: Record<string, readonly (keyof EvolveChangeEdits)[]> = {
   add_project_comment: ["text", "category"],
   update_project_comment: ["text", "category"],
   join_project_team: ["role"],
+  check_out_to_site: ["site_location", "project_id", "job_number", "buddy", "expected_return"],
+  check_back_in_from_site: ["returned_at", "everything_ok", "notes"],
 };
 
 /** The Evolve tool an approval effect calls, such as add_work_package. */
@@ -96,6 +99,11 @@ export function editedEvolveChangeArgs(
   // A chosen project replaces however the model named it.
   if (edits.project_id !== undefined) {
     delete next.job_number;
+    delete next.project_name;
+  }
+  // "none" is a site visit for no particular job.
+  if (edits.job_number !== undefined) {
+    delete next.project_id;
     delete next.project_name;
   }
   return { args: next };
@@ -394,6 +402,101 @@ function commentCardSummary(comment: CommentPreview): FleetCardSummary {
   };
 }
 
+type SiteVisitPreview = {
+  action?: string;
+  person?: unknown;
+  visit?: {
+    site_location?: unknown;
+    job_number?: unknown;
+    project_name?: unknown;
+    buddy?: unknown;
+    expected_return_time?: unknown;
+    expected_return_label?: unknown;
+    left_label?: unknown;
+  };
+  back?: {
+    day?: unknown;
+    time?: unknown;
+    returned_label?: unknown;
+    everything_ok?: unknown;
+    notes?: unknown;
+  };
+  closes?: { site_location?: unknown; left_label?: unknown };
+  warnings?: unknown[];
+};
+
+/** The card for checking out to a site or back in, with the Staff Check-in page's own questions. */
+function siteVisitCardSummary(preview: SiteVisitPreview): FleetCardSummary {
+  const text = (value: unknown) => (typeof value === "string" && value ? value : null);
+  const visit = preview.visit ?? {};
+  const buddy = visit.buddy as { name?: unknown } | string | null | undefined;
+  const buddyName = typeof buddy === "string" ? buddy : text(buddy?.name);
+  const base = {
+    person: String(preview.person ?? ""),
+    siteLocation: text(visit.site_location),
+    jobNumber: text(visit.job_number),
+    projectName: text(visit.project_name),
+    buddy: buddyName,
+    ...(preview.warnings?.length ? { warnings: preview.warnings.map(String) } : {}),
+  };
+  const job = base.jobNumber
+    ? `Job: ${base.jobNumber}${base.projectName ? ` ${base.projectName}` : ""}`
+    : "Job: none";
+  if (preview.back) {
+    const back = preview.back;
+    const change: SiteVisitChange = {
+      ...base,
+      action: "check_in",
+      leftLabel: text(visit.left_label),
+      returnedDay: String(back.day ?? ""),
+      returnedTime: String(back.time ?? ""),
+      returnedLabel: String(back.returned_label ?? ""),
+      everythingOk: back.everything_ok === true,
+      notes: text(back.notes),
+    };
+    return {
+      title: `Check back in from ${change.siteLocation ?? "site"}?`,
+      lines: [
+        `Site: ${change.siteLocation ?? "not given"}`,
+        job,
+        ...(change.leftLabel ? [`Left: ${change.leftLabel}`] : []),
+        `Back: ${change.returnedLabel}`,
+        `Everything OK: ${change.everythingOk ? "yes" : "no, there was an issue"}`,
+        ...(change.notes ? [`Notes: ${change.notes}`] : []),
+        ...(change.warnings ?? []).map((warning) => `Check: ${warning}`),
+      ],
+      onceOnly: true,
+      siteVisit: change,
+    };
+  }
+  const change: SiteVisitChange = {
+    ...base,
+    action: "check_out",
+    expectedReturnTime: text(visit.expected_return_time),
+    expectedReturnLabel: text(visit.expected_return_label),
+    ...(preview.closes
+      ? {
+          closes: {
+            siteLocation: text(preview.closes.site_location),
+            leftLabel: String(preview.closes.left_label ?? ""),
+          },
+        }
+      : {}),
+  };
+  return {
+    title: `Check out to ${change.siteLocation ?? "site"}?`,
+    lines: [
+      `Site: ${change.siteLocation ?? "not given"}`,
+      job,
+      `Buddy: ${change.buddy ?? "not given"}`,
+      `Expected back: ${change.expectedReturnLabel ?? "not given"}`,
+      ...(change.warnings ?? []).map((warning) => `Check: ${warning}`),
+    ],
+    onceOnly: true,
+    siteVisit: change,
+  };
+}
+
 /** The card for a project comment or Design Team preview; null for any other preview. */
 export function commentOrTeamChangeSummary(raw: unknown): FleetCardSummary | null {
   if (!raw || typeof raw !== "object") return null;
@@ -432,8 +535,12 @@ export function evolveChangePreview(
   args: Record<string, unknown>,
 ): { summary: FleetCardSummary; args: Record<string, unknown> } | { error: string } {
   const reply = evolveReply(data);
-  const commentOrTeam =
-    reply && reply.ok !== false ? commentOrTeamChangeSummary(reply.preview) : null;
+  const raw = reply && reply.ok !== false ? reply.preview : null;
+  const siteVisit =
+    raw && typeof raw === "object" && "visit" in raw
+      ? siteVisitCardSummary(raw as SiteVisitPreview)
+      : null;
+  const commentOrTeam = siteVisit ?? (raw ? commentOrTeamChangeSummary(raw) : null);
   if (reply && commentOrTeam) {
     const before = (reply.preview as { before?: unknown }).before;
     return { summary: commentOrTeam, args: before ? { ...args, _expected: before } : args };

@@ -19,6 +19,7 @@ import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
 import { CloudAgentCard } from "../../components/CloudAgentCard";
 import { EmailDraftCard } from "../../components/EmailDraftCard";
+import { LearningClinicCard } from "../../components/LearningClinicCard";
 import { PageBlockCard } from "../../components/pages/PageBlockCard";
 import { SubagentCard } from "../../components/SubagentCard";
 import {
@@ -496,6 +497,13 @@ export const MessageView = memo(function MessageView({
               </div>
             );
           }
+          if (block.kind === "learning_clinic") {
+            return (
+              <div key={i} className="flex justify-start">
+                <LearningClinicCard block={block} />
+              </div>
+            );
+          }
           if (block.kind === "email_draft") {
             return (
               <div key={i} className="flex justify-start">
@@ -661,7 +669,8 @@ export const MessageView = memo(function MessageView({
                   (block.deadlineChange ||
                     block.workPackageChange ||
                     block.projectCommentChange ||
-                    block.designTeamChange)
+                    block.designTeamChange ||
+                    block.siteVisitChange)
                     ? {
                         onReviseChange: async (edits: EvolveChangeEdits) => {
                           await rpc.threads.reviseEvolveChange({

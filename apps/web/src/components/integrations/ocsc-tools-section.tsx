@@ -106,9 +106,9 @@ export function OcscToolsSection({ available }: { available: ReadonlySet<string>
         </h3>
         <p className="mt-1 text-[13px] text-muted-foreground">
           <Trans>
-            Built by OCSC for everyone in the company. Your agents use them on their own whenever
-            you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by
-            name, for example /ocsc-word.
+            Branded deliverables: Word, decks, spreadsheets, PDFs, video and apps. Separate from the
+            Evolve tools above, which read and change company data. Call one by name, for example
+            /ocsc-word.
           </Trans>
         </p>
       </div>

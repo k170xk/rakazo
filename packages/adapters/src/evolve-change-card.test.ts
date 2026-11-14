@@ -438,4 +438,117 @@ describe("project comment and Design Team cards", () => {
     );
     expect(result).toEqual({ error: expect.stringContaining("needs_choice") });
   });
+
+  it("shows a site check-out with the Staff Check-in questions and carries the visit it closes", async () => {
+    const out = evolveAnswering({
+      ok: true,
+      preview: {
+        action: "add",
+        visit: {
+          site_location: "Naas Road depot",
+          job_number: "C1078",
+          project_name: "Cork Library",
+          buddy: { name: "Mary Byrne", email: "mary@ocsc.ie" },
+          expected_return: "2026-11-14T16:30:00.000Z",
+          expected_return_time: "16:30",
+          expected_return_label: "Sat 14 Nov, 16:30",
+        },
+        person: "Keith Knox",
+        closes: { site_location: "Athy", left_label: "Sat 14 Nov, 08:00" },
+        before: { open_visit_id: "41" },
+        warnings: ["Mary Byrne is emailed now."],
+      },
+    });
+    const card = await previewEvolveChange(
+      out.connector,
+      call({ site_location: "Naas Road depot", job_number: "C1078", _caller_email: "x@y.z" }),
+      context,
+    );
+    if ("error" in card) throw new Error(card.error);
+    expect(card.summary.title).toBe("Check out to Naas Road depot?");
+    expect(card.summary.lines).toEqual([
+      "Site: Naas Road depot",
+      "Job: C1078 Cork Library",
+      "Buddy: Mary Byrne",
+      "Expected back: Sat 14 Nov, 16:30",
+      "Check: Mary Byrne is emailed now.",
+    ]);
+    expect(card.summary.siteVisit).toMatchObject({
+      action: "check_out",
+      buddy: "Mary Byrne",
+      expectedReturnTime: "16:30",
+      closes: { siteLocation: "Athy" },
+    });
+    expect(card.args).toEqual({
+      site_location: "Naas Road depot",
+      job_number: "C1078",
+      _expected: { open_visit_id: "41" },
+    });
+    const block = buildApprovalAskBlock("effect", "mcp__evolve__check_out_to_site", card.args, [], {
+      summary: card.summary,
+    });
+    expect(block).toMatchObject({
+      siteVisitChange: { siteLocation: "Naas Road depot" },
+      actions: [{ id: "allow", label: "Check out" }, { id: "deny" }],
+    });
+    expect(
+      editedEvolveChangeArgs(
+        "mcp__evolve__check_out_to_site",
+        { project_id: 7, buddy: "m" },
+        {
+          job_number: "none",
+          expected_return: "17:00",
+        },
+      ),
+    ).toEqual({ args: { job_number: "none", buddy: "m", expected_return: "17:00" } });
+  });
+
+  it("shows a check-in with how it went and lets only its own answers change", async () => {
+    const back = evolveAnswering({
+      ok: true,
+      preview: {
+        action: "update",
+        visit: {
+          visit_id: "42",
+          site_location: "Naas Road depot",
+          job_number: null,
+          project_name: null,
+          buddy: "Mary Byrne",
+          left_label: "Sat 14 Nov, 09:00",
+        },
+        person: "Keith Knox",
+        back: {
+          returned_at: "2026-11-14T15:00:00.000Z",
+          returned_label: "Sat 14 Nov, 15:00",
+          day: "2026-11-14",
+          time: "15:00",
+          everything_ok: false,
+          notes: "Slipped on the ramp",
+        },
+        before: { visit_id: "42" },
+      },
+    });
+    const card = await previewEvolveChange(back.connector, call({ everything_ok: false }), context);
+    if ("error" in card) throw new Error(card.error);
+    expect(card.summary.lines).toEqual([
+      "Site: Naas Road depot",
+      "Job: none",
+      "Left: Sat 14 Nov, 09:00",
+      "Back: Sat 14 Nov, 15:00",
+      "Everything OK: no, there was an issue",
+      "Notes: Slipped on the ramp",
+    ]);
+    expect(card.summary.siteVisit).toMatchObject({
+      action: "check_in",
+      returnedDay: "2026-11-14",
+      returnedTime: "15:00",
+      everythingOk: false,
+    });
+    expect(card.args).toEqual({ everything_ok: false, _expected: { visit_id: "42" } });
+    expect(
+      editedEvolveChangeArgs("mcp__evolve__check_back_in_from_site", card.args, {
+        site_location: "Elsewhere",
+      }),
+    ).toEqual({ error: "This card cannot change site location." });
+  });
 });

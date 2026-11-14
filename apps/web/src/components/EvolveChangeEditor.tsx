@@ -29,6 +29,7 @@ type DeadlineChange = NonNullable<AskBlock["deadlineChange"]>;
 type WorkPackageChange = NonNullable<AskBlock["workPackageChange"]>;
 type ProjectCommentChange = NonNullable<AskBlock["projectCommentChange"]>;
 type DesignTeamChange = NonNullable<AskBlock["designTeamChange"]>;
+type SiteVisitChange = NonNullable<AskBlock["siteVisitChange"]>;
 type Choice = { value: string; label: string; detail?: string | null };
 
 const SEARCH_DELAY_MS = 250;
@@ -733,6 +734,189 @@ export function TeamRoleEditor({
           loadOptions={loadOptions}
           onPick={(choice) => {
             setRole(choice.value);
+            revision.clearError();
+          }}
+        />
+      </Row>
+    </EditorFrame>
+  );
+}
+
+/**
+ * A site visit card's answers, the same questions as Evolve's Staff Check-in page: where, which job
+ * and buddy, and when back for a check-out; when back, whether it went OK and notes for a check-in.
+ */
+export function SiteVisitEditor({
+  change,
+  loadOptions,
+  onRevise,
+  onClose,
+}: {
+  change: SiteVisitChange;
+  loadOptions: LoadChangeOptions;
+  onRevise: (edits: EvolveChangeEdits) => Promise<void>;
+  onClose: () => void;
+}) {
+  const { t } = useLingui();
+  const ids = { site: useId(), back: useId(), day: useId(), time: useId(), notes: useId() };
+  const revision = useRevision(onRevise, onClose);
+  const [site, setSite] = useState(change.siteLocation ?? "");
+  const [job, setJob] = useState<{ edit: EvolveChangeEdits; label: string } | null>(null);
+  const [buddy, setBuddy] = useState<{ email: string; name: string } | null>(null);
+  const [back, setBack] = useState(change.expectedReturnTime ?? "");
+  const [day, setDay] = useState(change.returnedDay ?? "");
+  const [time, setTime] = useState(change.returnedTime ?? "");
+  const [ok, setOk] = useState(change.everythingOk ?? true);
+  const [notes, setNotes] = useState(change.notes ?? "");
+  const currentJob = change.jobNumber
+    ? [change.jobNumber, change.projectName].filter(Boolean).join(" · ")
+    : t`No job`;
+
+  if (change.action === "check_in") {
+    return (
+      <EditorFrame
+        error={revision.error}
+        saving={revision.saving}
+        onClose={onClose}
+        onSave={() => {
+          const edits: EvolveChangeEdits = {};
+          if (day && time && (day !== change.returnedDay || time !== change.returnedTime)) {
+            edits.returned_at = `${day}T${time}`;
+          }
+          if (ok !== change.everythingOk) edits.everything_ok = ok;
+          if (notes !== (change.notes ?? "")) edits.notes = notes;
+          void revision.send(edits);
+        }}
+      >
+        <Row label={<Trans>Back at</Trans>} htmlFor={ids.day}>
+          <div className="flex gap-2">
+            <Input
+              id={ids.day}
+              type="date"
+              aria-label={t`Return date`}
+              value={day}
+              onChange={(event) => setDay(event.target.value)}
+            />
+            <Input
+              id={ids.time}
+              type="time"
+              aria-label={t`Return time`}
+              value={time}
+              onChange={(event) => setTime(event.target.value)}
+            />
+          </div>
+        </Row>
+        <Row label={<Trans>Everything OK?</Trans>}>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t`Everything OK?`}>
+            <Button
+              type="button"
+              role="radio"
+              aria-checked={ok}
+              variant={ok ? "default" : "outline"}
+              onClick={() => {
+                setOk(true);
+                revision.clearError();
+              }}
+            >
+              <Trans>Yes, all OK</Trans>
+            </Button>
+            <Button
+              type="button"
+              role="radio"
+              aria-checked={!ok}
+              variant={!ok ? "destructive" : "outline"}
+              onClick={() => {
+                setOk(false);
+                revision.clearError();
+              }}
+            >
+              <Trans>There was an issue</Trans>
+            </Button>
+          </div>
+        </Row>
+        <Row label={ok ? <Trans>Notes</Trans> : <Trans>What happened</Trans>} htmlFor={ids.notes}>
+          <Textarea
+            id={ids.notes}
+            rows={3}
+            maxLength={5000}
+            required={!ok}
+            placeholder={ok ? t`Optional` : t`Required when there was an issue`}
+            value={notes}
+            onChange={(event) => {
+              setNotes(event.target.value);
+              revision.clearError();
+            }}
+          />
+        </Row>
+      </EditorFrame>
+    );
+  }
+
+  return (
+    <EditorFrame
+      error={revision.error}
+      saving={revision.saving}
+      onClose={onClose}
+      onSave={() => {
+        const edits: EvolveChangeEdits = { ...job?.edit };
+        if (site.trim() && site.trim() !== change.siteLocation) edits.site_location = site.trim();
+        if (buddy) edits.buddy = buddy.email;
+        if (back && back !== change.expectedReturnTime) edits.expected_return = back;
+        void revision.send(edits);
+      }}
+    >
+      <Row label={<Trans>Site location</Trans>} htmlFor={ids.site}>
+        <Input
+          id={ids.site}
+          required
+          maxLength={300}
+          placeholder={t`Site address or name`}
+          value={site}
+          onChange={(event) => {
+            setSite(event.target.value);
+            revision.clearError();
+          }}
+        />
+      </Row>
+      <Row label={<Trans>Job / project</Trans>}>
+        <EvolvePicker
+          kind="projects"
+          label={t`job`}
+          current={job?.label ?? currentJob}
+          loadOptions={loadOptions}
+          extra={{ value: "none", label: t`No job` }}
+          onPick={(choice) => {
+            setJob({
+              edit:
+                choice.value === "none"
+                  ? { job_number: "none" }
+                  : { project_id: Number(choice.value) },
+              label: choice.label,
+            });
+            revision.clearError();
+          }}
+        />
+      </Row>
+      <Row label={<Trans>Buddy contact</Trans>}>
+        <EvolvePicker
+          kind="people"
+          label={t`buddy`}
+          current={buddy?.name ?? change.buddy ?? t`Choose a buddy`}
+          loadOptions={loadOptions}
+          onPick={(choice) => {
+            setBuddy({ email: choice.value, name: choice.label });
+            revision.clearError();
+          }}
+        />
+      </Row>
+      <Row label={<Trans>Expected back</Trans>} htmlFor={ids.back}>
+        <Input
+          id={ids.back}
+          type="time"
+          required
+          value={back}
+          onChange={(event) => {
+            setBack(event.target.value);
             revision.clearError();
           }}
         />

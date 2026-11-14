@@ -39,7 +39,11 @@ describe("app content security policy", () => {
 
   it("talks only to its own origin, which hosts the API, RPC, monitoring tunnel and screen proxy", () => {
     expect(policy.get("connect-src")).toEqual(["'self'"]);
-    expect(policy.get("frame-src")).toEqual(["'self'", "blob:"]);
+    expect(policy.get("frame-src")).toEqual([
+      "'self'",
+      "blob:",
+      "https://www.youtube-nocookie.com",
+    ]);
   });
 
   it("reports violations to the same-origin API endpoint with both mechanisms", () => {
@@ -164,6 +168,23 @@ describe("operator-added origins", () => {
         expect(extended.get(name)).toEqual(sources);
     }
     expect(appContentSecurityPolicy()).toBe(APP_CONTENT_SECURITY_POLICY);
+  });
+
+  it("adds video hosts to media-src and frame-src after the app's own sources", () => {
+    const extended = directives(
+      appContentSecurityPolicy({
+        mediaSrc: ["https://project.supabase.co"],
+        frameSrc: ["https://player.vimeo.com"],
+      }),
+    );
+    expect(extended.get("media-src")).toEqual(["'self'", "blob:", "https://project.supabase.co"]);
+    expect(extended.get("frame-src")).toEqual([
+      "'self'",
+      "blob:",
+      "https://www.youtube-nocookie.com",
+      "https://player.vimeo.com",
+    ]);
+    expect(extended.get("script-src")).toEqual(["'self'"]);
   });
 
   it("serves the extended policy on app paths and leaves the others alone", () => {

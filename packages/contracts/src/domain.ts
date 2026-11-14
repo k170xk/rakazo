@@ -2576,6 +2576,12 @@ export const CompanyToolEntrySchema = z.object({
   access: EvolveToolAccessSchema.optional(),
   /** What it changes in Evolve, for tools that change anything. */
   changes: z.string().optional(),
+  /** Evolve nav_features key this tool needs, for the staff catalogue. */
+  page: z.string().optional(),
+  /** Catalogue group, such as Learning Centre or Site visits. */
+  group: z.string().optional(),
+  /** True when every use needs an approval card. */
+  approval: z.boolean().optional(),
 });
 
 export const EVOLVE_CHANGE_TOOLS = [
@@ -2589,6 +2595,8 @@ export const EVOLVE_CHANGE_TOOLS = [
   "delete_project_comment",
   "join_project_team",
   "leave_project_team",
+  "check_out_to_site",
+  "check_back_in_from_site",
 ] as const;
 export type EvolveChangeTool = (typeof EVOLVE_CHANGE_TOOLS)[number];
 
@@ -2620,6 +2628,8 @@ export const EvolveSafeguardsSchema = z.object({
     delete_project_comment: EvolveChangeLimitSchema,
     join_project_team: EvolveChangeLimitSchema,
     leave_project_team: EvolveChangeLimitSchema,
+    check_out_to_site: EvolveChangeLimitSchema,
+    check_back_in_from_site: EvolveChangeLimitSchema,
   }),
 });
 export type EvolveSafeguards = z.infer<typeof EvolveSafeguardsSchema>;

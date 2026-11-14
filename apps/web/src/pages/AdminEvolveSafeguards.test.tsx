@@ -26,6 +26,8 @@ const limits = {
   delete_project_comment: { hour: 10, day: 30, projects: 5 },
   join_project_team: { hour: 5, day: 10, projects: 5 },
   leave_project_team: { hour: 5, day: 10, projects: 5 },
+  check_out_to_site: { hour: 6, day: 20, projects: 20 },
+  check_back_in_from_site: { hour: 6, day: 20, projects: 20 },
 };
 const defaults: EvolveSafeguards = {
   deadlinesTeamOnly: true,

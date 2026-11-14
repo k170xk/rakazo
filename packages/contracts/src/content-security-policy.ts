@@ -34,11 +34,13 @@ const APP_DIRECTIVES: Record<string, string[]> = {
   // Markdown images, link favicons and attachment previews (object URLs).
   "img-src": ["'self'", "data:", "blob:", "https:"],
   "font-src": ["'self'", "data:"],
-  // Voice replies and video attachments play from object URLs.
+  // Voice replies and video attachments play from object URLs. Learning Centre file videos need
+  // RAKAZO_CSP_MEDIA_SRC for Evolve's storage host.
   "media-src": ["'self'", "blob:"],
   "connect-src": ["'self'"],
-  // The /novnc screen proxy, the HTML viewer shell and PDF object URLs.
-  "frame-src": ["'self'", "blob:"],
+  // The /novnc screen proxy, the HTML viewer shell, PDF object URLs, and YouTube privacy-mode
+  // embeds for Learning Centre clinic modules.
+  "frame-src": ["'self'", "blob:", "https://www.youtube-nocookie.com"],
   "object-src": ["'none'"],
   "base-uri": ["'self'"],
   "form-action": ["'self'"],
@@ -58,6 +60,10 @@ function serialize(directives: Record<string, string[]>) {
 export interface ContentSecurityPolicyExtensions {
   scriptSrc?: readonly string[];
   connectSrc?: readonly string[];
+  /** Hosts videos play from, such as a storage bucket that serves training videos. */
+  mediaSrc?: readonly string[];
+  /** Hosts pages may embed, such as a video player. */
+  frameSrc?: readonly string[];
   /** Allows the Crisp chat widget the paywall loads when `CRISP_WEBSITE_ID` is set. */
   crisp?: boolean;
 }
@@ -118,6 +124,8 @@ export function appContentSecurityPolicy(extensions: ContentSecurityPolicyExtens
     ...APP_DIRECTIVES,
     "script-src": ["'self'", ...(extensions.scriptSrc ?? [])],
     "connect-src": ["'self'", ...(extensions.connectSrc ?? [])],
+    "media-src": [...APP_DIRECTIVES["media-src"]!, ...(extensions.mediaSrc ?? [])],
+    "frame-src": [...APP_DIRECTIVES["frame-src"]!, ...(extensions.frameSrc ?? [])],
   };
   if (extensions.crisp) {
     for (const [name, sources] of Object.entries(CRISP_DIRECTIVES)) {

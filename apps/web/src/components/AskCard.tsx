@@ -21,10 +21,13 @@ import {
   CircleHelp,
   CircleX,
   ClipboardList,
+  Clock,
   FilePenLine,
   Flag,
+  House,
   LogOut,
   Mail,
+  MapPin,
   MessageSquareText,
   Pencil,
   ShieldCheck,
@@ -46,6 +49,7 @@ import type { LoadChangeOptions } from "./EvolveChangeEditor";
 import {
   CommentEditor,
   DeadlineEditor,
+  SiteVisitEditor,
   TeamRoleEditor,
   WorkPackageEditor,
 } from "./EvolveChangeEditor";
@@ -121,6 +125,8 @@ export function AskCard(props: AskCardProps) {
     return <CommentAskCard {...props} change={props.block.projectCommentChange} />;
   if (props.block.designTeamChange && isApprovalAskBlock(props.block))
     return <DesignTeamAskCard {...props} change={props.block.designTeamChange} />;
+  if (props.block.siteVisitChange && isApprovalAskBlock(props.block))
+    return <SiteVisitAskCard {...props} change={props.block.siteVisitChange} />;
   return <PromptAskCard {...props} />;
 }
 
@@ -130,6 +136,7 @@ type WorkPackageChange = NonNullable<AskBlock["workPackageChange"]>;
 type WorkPackageValues = NonNullable<WorkPackageChange["after"]>;
 type ProjectCommentChange = NonNullable<AskBlock["projectCommentChange"]>;
 type DesignTeamChange = NonNullable<AskBlock["designTeamChange"]>;
+type SiteVisitChange = NonNullable<AskBlock["siteVisitChange"]>;
 type ChangeRow = { key: string; label: string; value: string };
 
 function dueDay(value: string | null): string {
@@ -513,11 +520,14 @@ function EvolveChangeCard({
   destructive,
   movedFrom,
   editor,
+  subject,
 }: Pick<AskCardProps, "block" | "canAnswer" | "onAnswer"> & {
   testId: string;
   icon: LucideIcon;
   heading: ReactNode;
   project: DeadlineChange["project"];
+  /** Shown in the project's place for a change that is not about one project, such as a site visit. */
+  subject?: { icon: LucideIcon; title: string; detail?: string | null };
   /** The preview; given a function, it hears how to open the editor while the card can be edited. */
   children: ReactNode | ((edit: (() => void) | undefined) => ReactNode);
   warnings?: string[];
@@ -577,13 +587,19 @@ function EvolveChangeCard({
       <div className={cn("px-4 pt-3.5 pb-4", !live && "opacity-90")}>
         <div className="flex items-start gap-3">
           <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-            <Building2 aria-hidden className="size-[18px]" />
+            {subject ? (
+              <subject.icon aria-hidden className="size-[18px]" />
+            ) : (
+              <Building2 aria-hidden className="size-[18px]" />
+            )}
           </span>
           <div className="min-w-0 pt-px">
             <div className="text-[14.5px] font-semibold leading-snug text-foreground break-words">
-              {projectLabel(project) || t`Unnamed project`}
+              {subject ? subject.title : projectLabel(project) || t`Unnamed project`}
             </div>
-            {project.client ? (
+            {subject?.detail ? (
+              <div className="truncate text-[12.5px] text-muted-foreground">{subject.detail}</div>
+            ) : !subject && project.client ? (
               <div className="truncate text-[12.5px] text-muted-foreground">{project.client}</div>
             ) : null}
             {movedFrom ? (
@@ -1148,6 +1164,111 @@ function DesignTeamAskCard({ change, ...props }: AskCardProps & { change: Design
                 <Chip key={role}>{role}</Chip>
               ))}
             </div>
+          ) : null}
+        </div>
+      )}
+    </EvolveChangeCard>
+  );
+}
+
+/**
+ * Going out to a site or checking back in, with the Staff Check-in page's own questions; nothing is
+ * saved and no buddy is emailed until the person approves it.
+ */
+function SiteVisitAskCard({ change, ...props }: AskCardProps & { change: SiteVisitChange }) {
+  const { t } = useLingui();
+  const out = change.action === "check_out";
+  const job = change.jobNumber
+    ? [change.jobNumber, change.projectName].filter(Boolean).join(" · ")
+    : t`No job`;
+  const rows: { icon: LucideIcon; label: string; value: string; tone?: "danger" | "success" }[] =
+    out
+      ? [
+          { icon: Building2, label: t`Job / project`, value: job },
+          { icon: UserRound, label: t`Buddy contact`, value: change.buddy ?? t`Not chosen` },
+          {
+            icon: Clock,
+            label: t`Expected back`,
+            value: change.expectedReturnLabel ?? t`Not given`,
+          },
+        ]
+      : [
+          { icon: Building2, label: t`Job / project`, value: job },
+          ...(change.leftLabel ? [{ icon: LogOut, label: t`Left`, value: change.leftLabel }] : []),
+          { icon: Clock, label: t`Back at`, value: change.returnedLabel ?? "" },
+          {
+            icon: change.everythingOk ? CircleCheck : TriangleAlert,
+            label: t`Everything OK?`,
+            value: change.everythingOk ? t`Yes, all OK` : t`There was an issue`,
+            tone: change.everythingOk ? "success" : "danger",
+          },
+        ];
+  return (
+    <EvolveChangeCard
+      {...props}
+      testId="site-visit-approval-card"
+      icon={out ? MapPin : House}
+      heading={out ? <Trans>Check out to site</Trans> : <Trans>Check back in</Trans>}
+      project={{ jobNumber: null, name: null, client: null }}
+      subject={{
+        icon: MapPin,
+        title: change.siteLocation ?? t`Site not given`,
+        detail: change.person,
+      }}
+      warnings={change.warnings}
+      allowLabel={out ? t`Check out` : t`Check back in`}
+      approvedText={out ? t`Approved: checking you out` : t`Approved: checking you back in`}
+      editor={
+        props.onReviseChange && props.loadChangeOptions
+          ? (close) => (
+              <SiteVisitEditor
+                change={change}
+                loadOptions={props.loadChangeOptions!}
+                onRevise={props.onReviseChange!}
+                onClose={close}
+              />
+            )
+          : undefined
+      }
+    >
+      {(edit) => (
+        <div className="mt-4 space-y-3">
+          <EditableArea onEdit={edit} label={t`Edit site visit`} className="rounded-xl">
+            <dl className="divide-y divide-border/70 rounded-xl border border-border/70">
+              {rows.map((row) => (
+                <div key={row.label} className="flex items-center gap-2.5 px-3 py-2">
+                  <row.icon
+                    aria-hidden
+                    className={cn(
+                      "size-4 shrink-0",
+                      row.tone === "danger"
+                        ? "text-destructive"
+                        : row.tone === "success"
+                          ? "text-success"
+                          : "text-muted-foreground",
+                    )}
+                  />
+                  <dt className="w-28 shrink-0 text-[12.5px] text-muted-foreground">{row.label}</dt>
+                  <dd className="min-w-0 break-words text-[13.5px] font-medium text-foreground">
+                    {row.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </EditableArea>
+          {!out && change.notes ? (
+            <div className="rounded-xl bg-muted/50 px-3 py-2 text-[13.5px] whitespace-pre-wrap text-foreground">
+              {change.notes}
+            </div>
+          ) : null}
+          {out && change.closes ? (
+            <p className="flex items-start gap-1.5 text-[12.5px] text-muted-foreground">
+              <House aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+              <Trans>
+                Closes your visit to {change.closes.siteLocation ?? t`a site`} (since{" "}
+                {change.closes.leftLabel}) first, as Evolve does
+              </Trans>
+            </p>
           ) : null}
         </div>
       )}

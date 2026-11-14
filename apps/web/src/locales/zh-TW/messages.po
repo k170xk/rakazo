@@ -262,6 +262,29 @@ msgstr ""
 msgid "{0} MB"
 msgstr "{0} MB"
 
+#. placeholder {0}: module.minutes
+#: src/components/LearningClinicCard.tsx
+msgid "{0} min"
+msgstr ""
+
+#. placeholder {0}: result.correct
+#. placeholder {1}: result.total
+#: src/components/LearningClinicCard.tsx
+msgid "{0} of {1} correct. This module is complete."
+msgstr ""
+
+#. placeholder {0}: result.correct
+#. placeholder {1}: result.total
+#: src/components/LearningClinicCard.tsx
+msgid "{0} of {1} correct. You need {passPercent}% to pass; you can take it again as often as you like."
+msgstr ""
+
+#. placeholder {0}: clinic.modulesPassed
+#. placeholder {1}: clinic.modulesTotal
+#: src/components/LearningClinicCard.tsx
+msgid "{0} of {1} modules passed"
+msgstr ""
+
 #. placeholder {0}: formatSize(person.storageUsedBytes)
 #. placeholder {1}: limitLabel(person.effectiveStorageLimitMb)
 #: src/pages/AdminComputerAccess.tsx
@@ -272,6 +295,11 @@ msgstr ""
 #. placeholder {1}: formatSize(data.chatBytes)
 #: src/components/StorageDialog.tsx
 msgid "{0} on bot computers · {1} attached in chats."
+msgstr ""
+
+#. placeholder {0}: questions.length
+#: src/components/LearningClinicCard.tsx
+msgid "{0} questions · pass mark {passPercent}%"
 msgstr ""
 
 #. placeholder {0}: sender.name
@@ -294,6 +322,11 @@ msgstr ""
 msgid "{0} TB"
 msgstr "{0} TB"
 
+#. placeholder {0}: tools.length
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "{0} tools"
+msgstr ""
+
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} was removed by your company's file cleanup. Ask the bot to make it again."
@@ -302,6 +335,15 @@ msgstr ""
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
+
+#. placeholder {0}: questions.length
+#: src/components/LearningClinicCard.tsx
+msgid "{answered} of {0} answered"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "{blocked} need access"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
@@ -608,6 +650,10 @@ msgstr "{title}，儲存為 {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# 個工具} other {# 個工具}}"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "{total} tools for company data in Evolve — projects, people, Learning Centre clinics, site visits and more. Agents only see and change what your Evolve access allows. The {changing} that change Evolve show you a card to check, edit and approve first, every time; nothing is saved until you click."
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU、{memoryGb} GB、每月 {hours} 小時電腦時數"
@@ -712,6 +758,10 @@ msgstr ""
 #: src/pages/Onboarding.tsx
 msgid "A sign-in tab opened at <0>{0}</0>. Enter this code there — this window keeps waiting:"
 msgstr "已開啟 <0>{0}</0> 的登入分頁。請在該分頁輸入以下代碼，此視窗會繼續等待："
+
+#: src/components/AskCard.tsx
+msgid "a site"
+msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "a spreadsheet import"
@@ -854,6 +904,10 @@ msgstr "新增要執行的命令"
 msgid "Add a file or folder to watch"
 msgstr "新增要監視的檔案或資料夾"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add a hard deadline for the planning submission on C1078 next Friday"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Add a model in Settings to use this."
 msgstr "請在設定中新增模型後再使用。"
@@ -882,6 +936,10 @@ msgstr "為此一次性任務新增執行時間。"
 msgid "Add a server name."
 msgstr "請填寫伺服器名稱。"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add a Site comment to C1078: foundations poured today"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Add a stdio command."
 msgstr "請填寫 stdio 命令。"
@@ -902,6 +960,10 @@ msgstr ""
 #: src/pages/McpServersOverlay.tsx
 msgid "Add an HTTPS server URL."
 msgstr "請填寫 HTTPS 伺服器 URL。"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add and update a project's deadlines, as on Project Tracker."
+msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Add another"
@@ -963,6 +1025,10 @@ msgstr "新增項目"
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
 msgstr "新增 MCP 伺服器"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add me to C1078's Design Team as Civil Engineer"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
@@ -1045,6 +1111,10 @@ msgstr "新增工作區"
 msgid "Add your own MCP server"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Add, reword and delete your own project comments, with their category."
+msgstr ""
+
 #: src/components/GroupPeople.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
@@ -1086,6 +1156,10 @@ msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Address line 2"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Adds"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -1275,6 +1349,10 @@ msgstr "一律開啟 {site}"
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Always uses the company model"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "An admin has switched Evolve tools off for the company."
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -1502,6 +1580,14 @@ msgid "Approved: adding you to the team"
 msgstr ""
 
 #: src/components/AskCard.tsx
+msgid "Approved: checking you back in"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Approved: checking you out"
+msgstr ""
+
+#: src/components/AskCard.tsx
 msgid "Approved: deleting it from Evolve"
 msgstr ""
 
@@ -1724,6 +1810,11 @@ msgstr "頭像工作室"
 msgid "Back"
 msgstr "返回"
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Back at"
+msgstr ""
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Back or forward"
 msgstr "上一頁或下一頁"
@@ -1739,6 +1830,10 @@ msgstr "返回聊天"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "返回登入"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Back to video"
+msgstr ""
 
 #: src/pages/SharedChats.tsx
 msgid "Back to your chats"
@@ -1895,6 +1990,10 @@ msgstr "大腦標籤"
 msgid "Branded deliverables, done properly"
 msgstr ""
 
+#: src/components/integrations/ocsc-tools-section.tsx
+msgid "Branded deliverables: Word, decks, spreadsheets, PDFs, video and apps. Separate from the Evolve tools above, which read and change company data. Call one by name, for example /ocsc-word."
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Branded PDFs, plus markups, redlines and measurements on drawings in Evolve PDF Studio."
 msgstr ""
@@ -1927,6 +2026,15 @@ msgstr ""
 msgid "Brush radius: {brushRadius}px"
 msgstr ""
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "buddy"
+msgstr ""
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Buddy contact"
+msgstr ""
+
 #: src/pages/AdminStaffLimits.tsx
 msgid "Budget in US dollars"
 msgstr ""
@@ -1952,8 +2060,8 @@ msgid "Builds OCSC-styled workbooks with real formulas, totals and number format
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
-msgid "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
-msgstr ""
+#~ msgid "Built by OCSC for everyone in the company. Your agents use them on their own whenever you ask for a document, deck, spreadsheet, PDF, video or app. You can also call one by name, for example /ocsc-word."
+#~ msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2243,6 +2351,14 @@ msgstr ""
 msgid "Check again"
 msgstr "再次檢查"
 
+#: src/components/AskCard.tsx
+msgid "Check back in"
+msgstr ""
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Check back in from a site"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Check every"
 msgstr "檢查間隔"
@@ -2260,8 +2376,28 @@ msgstr "檢查更新"
 msgid "Check in."
 msgstr "報到。"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Check me out to the Naas site for C1078 with Mary as buddy until 4pm"
+msgstr ""
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Check now"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Check out"
+msgstr ""
+
+#: src/pages/AdminEvolveSafeguards.tsx
+msgid "Check out to a site"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Check out to a site with a buddy and return time, and check back in."
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Check out to site"
 msgstr ""
 
 #: src/lib/model-connection-preflight.ts
@@ -2307,6 +2443,10 @@ msgstr "正在檢查…"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Choose a bot shape, color, or upload an image"
 msgstr "選擇機器人形狀和顏色，或上傳圖片"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Choose a buddy"
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
@@ -2539,6 +2679,12 @@ msgstr "關閉語音設定"
 msgid "Closed"
 msgstr ""
 
+#. placeholder {0}: change.closes.siteLocation ?? t`a site`
+#. placeholder {1}: change.closes.leftLabel
+#: src/components/AskCard.tsx
+msgid "Closes your visit to {0} (since {1}) first, as Evolve does"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Cloud"
 msgstr "雲端"
@@ -2621,6 +2767,7 @@ msgid "Comfortable"
 msgstr "寬鬆"
 
 #: src/components/integrations/integrations-coming-soon.tsx
+#: src/components/LearningClinicCard.tsx
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -2760,6 +2907,7 @@ msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/LearningClinicCard.tsx
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "已完成"
@@ -3465,6 +3613,10 @@ msgstr ""
 msgid "Could not load this chat."
 msgstr "無法載入此對話。"
 
+#: src/components/LearningClinicCard.tsx
+msgid "Could not load this clinic from Evolve"
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 #: src/pages/Artifacts.tsx
 msgid "Could not load this file."
@@ -3779,6 +3931,10 @@ msgstr "無法開始教學"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Could not stop computer"
 msgstr "無法停止電腦"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Could not submit the quiz"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -4340,6 +4496,10 @@ msgstr ""
 msgid "Deleted soon"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Deletes"
+msgstr ""
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Deletes records"
 msgstr ""
@@ -4643,6 +4803,11 @@ msgstr ""
 msgid "Due"
 msgstr ""
 
+#. placeholder {0}: clinic.dueDate
+#: src/components/LearningClinicCard.tsx
+msgid "Due {0}"
+msgstr ""
+
 #: src/pages/BotContextMenu.tsx
 msgid "Duplicate"
 msgstr "複製"
@@ -4728,6 +4893,10 @@ msgstr "編輯資料"
 msgid "Edit References"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Edit site visit"
+msgstr ""
+
 #: src/components/apps/AppVisualEdit.tsx
 msgid "Edit this element"
 msgstr ""
@@ -4776,6 +4945,10 @@ msgstr ""
 #. placeholder {0}: activeRender.version
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Editing v{0} → next will be v{nextVersion}"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Edits"
 msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
@@ -4858,6 +5031,11 @@ msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Enlarge {name}"
+msgstr ""
+
+#. placeholder {0}: clinic.passPercent
+#: src/components/LearningClinicCard.tsx
+msgid "Enrols you on the Learning Centre, as its Enroll button does. Each module is a video, and most have a quiz you pass with {0}%."
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -5055,6 +5233,11 @@ msgstr ""
 msgid "Everyone's files"
 msgstr ""
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Everything OK?"
+msgstr ""
+
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Evolve admins only"
 msgstr ""
@@ -5071,12 +5254,20 @@ msgstr ""
 msgid "Evolve checks the change again; nothing is saved until you approve the card."
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Evolve could not list its tools just now. Try again in a moment."
+msgstr ""
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "Evolve did not accept that change"
 msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Evolve didn't accept it."
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Evolve is not linked on this server yet."
 msgstr ""
 
 #: src/components/GroupPeople.tsx
@@ -5096,12 +5287,17 @@ msgstr ""
 msgid "Evolve search is unavailable. Type a full work email instead."
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
 msgid "Evolve tools"
 msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Evolve tools for everyone"
+msgstr ""
+
+#: src/components/LearningClinicCard.tsx
+msgid "Evolve's Learning Centre did not accept that"
 msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
@@ -5153,6 +5349,11 @@ msgstr "展開 {0}"
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
 msgstr "展開表格"
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Expected back"
+msgstr ""
 
 #: src/components/CloudAgentCard.tsx
 msgid "expired"
@@ -5310,15 +5511,35 @@ msgstr ""
 msgid "Find an app"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find clinics, then start one, watch its videos and pass its quizzes on a card."
+msgstr ""
+
 #: src/pages/shell/chat-find-bar.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Find in chat"
 msgstr "在聊天中尋找"
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find jobs and read a project's datasheet, team, deadlines and comments."
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find me a clinic on CDM and start it"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
 msgid "Find models"
 msgstr "查詢模型"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find our standard drainage design statement template"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Find, add, update and delete work packages on the Project Tracker."
+msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -5447,6 +5668,10 @@ msgstr ""
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Full name"
+msgstr ""
+
+#: src/components/LearningClinicCard.tsx
+msgid "Full screen"
 msgstr ""
 
 #: src/pages/WindowChrome.tsx
@@ -5762,6 +5987,10 @@ msgstr "如何檢查"
 msgid "How will you use OCSC Intelligence?"
 msgstr ""
 
+#: src/components/LearningClinicCard.tsx
+msgid "I have watched this"
+msgstr ""
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "我做完了"
@@ -5801,6 +6030,10 @@ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Images from websites show in chats without a tap."
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Images, infographics, charts, stock media, voiceovers and web search."
 msgstr ""
 
 #: src/components/AccountDataSettings.tsx
@@ -6026,6 +6259,15 @@ msgid "Its words come from data, so only its look can be changed here."
 msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
+msgid "job"
+msgstr ""
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Job / project"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
 msgid "Job number, project or client"
 msgstr ""
 
@@ -6035,6 +6277,10 @@ msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Join Design Team"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Join or leave a project's Design Team in one of its roles."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -6179,6 +6425,11 @@ msgstr ""
 msgid "Last created"
 msgstr ""
 
+#. placeholder {0}: module.lastScore
+#: src/components/LearningClinicCard.tsx
+msgid "Last score {0}%"
+msgstr ""
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last used"
 msgstr ""
@@ -6186,6 +6437,10 @@ msgstr ""
 #: src/components/DesktopUpdates.tsx
 msgid "Later"
 msgstr "稍後"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Learning Centre clinic"
+msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Leave"
@@ -6205,6 +6460,10 @@ msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Leave team"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Left"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -6336,6 +6595,10 @@ msgstr ""
 msgid "Loading email draft"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Loading Evolve tools…"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Loading exemplar responses..."
 msgstr ""
@@ -6350,6 +6613,10 @@ msgstr "Loading folders…"
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Loading from Evolve…"
+msgstr ""
+
+#: src/components/LearningClinicCard.tsx
+msgid "Loading from the Learning Centre…"
 msgstr ""
 
 #: src/pages/MemorySettingsOverlay.tsx
@@ -6477,10 +6744,15 @@ msgstr ""
 msgid "Make a 30-second LinkedIn clip about our latest bridge project"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Make an infographic of our project stages"
+msgstr ""
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Makes and reads PDFs."
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
 msgid "Makes files"
 msgstr ""
@@ -6699,6 +6971,11 @@ msgstr "提及 OpenClaw 功能"
 msgid "Mentions: {mentions}"
 msgstr "提及：{mentions}"
 
+#. placeholder {0}: clinic.mentor
+#: src/components/LearningClinicCard.tsx
+msgid "Mentor: {0}"
+msgstr ""
+
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
@@ -6867,6 +7144,14 @@ msgstr "模型清單正常。{modelCount, plural, one {# 個模型} other {# 個
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Models they may pick"
+msgstr ""
+
+#: src/components/LearningClinicCard.tsx
+msgid "Module video"
+msgstr ""
+
+#: src/components/LearningClinicCard.tsx
+msgid "Modules"
 msgstr ""
 
 #: src/lib/cron.ts
@@ -7040,6 +7325,16 @@ msgstr "需要 OAuth 用戶端 ID"
 #: src/pages/ActivityList.tsx
 msgid "Needs attention"
 msgstr "需要處理"
+
+#. placeholder {0}: tool.page.label
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Needs Evolve's {0} page; ask an Evolve admin for access"
+msgstr ""
+
+#. placeholder {0}: tool.page.label
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Needs Evolve's {0} page; you have access"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Needs input"
@@ -7221,6 +7516,10 @@ msgstr ""
 msgid "Next match"
 msgstr "下一個相符項目"
 
+#: src/components/LearningClinicCard.tsx
+msgid "Next module"
+msgstr ""
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Next or previous bot"
 msgstr "下一個或上一個機器人"
@@ -7328,6 +7627,10 @@ msgstr ""
 msgid "No Evolve assistants are available. Check that Evolve is linked."
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "No Evolve tool matches."
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "No exemplar responses match your search."
 msgstr ""
@@ -7346,6 +7649,11 @@ msgstr "No folders here."
 
 #: src/components/render-studio/StageCanvas.tsx
 msgid "No image"
+msgstr ""
+
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "No job"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -7536,8 +7844,16 @@ msgstr "尚未檢查"
 msgid "Not checked yet."
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Not chosen"
+msgstr ""
+
 #: src/components/GroupPeople.tsx
 msgid "Not found in Evolve; joins if they sign in with this email"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Not given"
 msgstr ""
 
 #: src/pages/shell/agent-import.tsx
@@ -7558,6 +7874,10 @@ msgstr "不在外掛程式目錄中"
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "暫不"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Not passed yet"
+msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Not set up"
@@ -7600,6 +7920,10 @@ msgstr ""
 #: src/components/EvolveChangeEditor.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
+msgstr ""
+
+#: src/components/LearningClinicCard.tsx
+msgid "Notes (PDF)"
 msgstr ""
 
 #: src/components/todos/todo-board.tsx
@@ -7923,6 +8247,14 @@ msgstr "開啟導覽"
 msgid "Open OCSC Intelligence"
 msgstr ""
 
+#: src/components/LearningClinicCard.tsx
+msgid "Open the video"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Open to everyone at OCSC"
+msgstr ""
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
 msgstr "待辦"
@@ -7944,6 +8276,7 @@ msgstr "OpenClaw 或 Hermes"
 msgid "Opens your browser's print dialog. Choose Save as PDF as the destination."
 msgstr "開啟瀏覽器的列印對話框。目的地請選擇「另存為 PDF」。"
 
+#: src/components/EvolveChangeEditor.tsx
 #: src/components/SignupSurvey.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
@@ -8083,6 +8416,10 @@ msgstr "找不到頁面"
 
 #: src/pages/AdminSharedApps.tsx
 msgid "Pages and apps people have shared by link or published to Evolve. Freeze one to take it offline for everyone else at once; its owner keeps their copy and can't share it again until you unfreeze it."
+msgstr ""
+
+#: src/components/LearningClinicCard.tsx
+msgid "Passed"
 msgstr ""
 
 #: src/components/PasskeySettings.tsx
@@ -8479,6 +8816,10 @@ msgstr ""
 msgid "Projects with no Design Team"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Projects, deadlines, comments, Learning Centre clinics, site check-in and more — as your own Evolve access allows, with a card to approve every change."
+msgstr ""
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "受保護的輸入"
@@ -8552,6 +8893,7 @@ msgstr "表情回應"
 msgid "Read it"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Read only"
@@ -8992,6 +9334,10 @@ msgstr ""
 msgid "Requests"
 msgstr "請求"
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "Required when there was an issue"
+msgstr ""
+
 #: src/pages/shell/message-cards.tsx
 msgid "Research & writing"
 msgstr "調研和寫作"
@@ -9089,6 +9435,10 @@ msgstr ""
 msgid "Restoring your workspace"
 msgstr "正在還原工作空間"
 
+#: src/components/LearningClinicCard.tsx
+msgid "Retake quiz"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -9115,6 +9465,14 @@ msgstr "立即重試"
 #: src/pages/shell/use-computer.tsx
 msgid "Retry screen"
 msgstr "重新連線螢幕"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Return date"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Return time"
+msgstr ""
 
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
@@ -9498,6 +9856,10 @@ msgstr ""
 msgid "Search Evolve people to add"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Search Evolve tools"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Search files…"
 msgstr ""
@@ -9527,6 +9889,14 @@ msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Search staff by name, skill, sector or experience."
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Search the Document Library's titles and the text inside its documents."
 msgstr ""
 
 #: src/components/VaultSettings.tsx
@@ -9880,6 +10250,10 @@ msgstr "顯示更多"
 msgid "Show more ({0} left)"
 msgstr ""
 
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Show my overdue work packages and mark the drainage one 50% done"
+msgstr ""
+
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "顯示密碼"
@@ -9985,6 +10359,18 @@ msgstr ""
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Site"
 msgstr "網站"
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Site address or name"
+msgstr ""
+
+#: src/components/EvolveChangeEditor.tsx
+msgid "Site location"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Site not given"
+msgstr ""
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Sites & OneDrive"
@@ -10222,6 +10608,10 @@ msgstr "開始 {trialDays} 天免費試用"
 msgid "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
 msgstr ""
 
+#: src/components/LearningClinicCard.tsx
+msgid "Start clinic"
+msgstr ""
+
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Start from"
 msgstr ""
@@ -10387,6 +10777,10 @@ msgstr ""
 msgid "Submit"
 msgstr "提交"
 
+#: src/components/LearningClinicCard.tsx
+msgid "Submit answers"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 #: src/pages/Paywall.tsx
 msgid "Subscribe"
@@ -10476,6 +10870,14 @@ msgstr "表格"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "接管控制權"
+
+#: src/components/LearningClinicCard.tsx
+msgid "Take the quiz"
+msgstr ""
+
+#: src/components/LearningClinicCard.tsx
+msgid "Take the quiz again"
+msgstr ""
 
 #: src/components/InstallAppBanner.tsx
 msgid "Tap Share, then Add to Home Screen."
@@ -10767,6 +11169,11 @@ msgstr ""
 msgid "Their own model is cleared. You can pick one again in each bot."
 msgstr "已清除機器人的個別模型設定。你可以隨時為各機器人重新選擇模型。"
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "There was an issue"
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
 msgstr ""
@@ -10956,6 +11363,10 @@ msgstr "此模型無法讀取圖片。請選擇支援圖片的模型。"
 #: src/lib/run-error.ts
 msgid "This model's context window is too small. Choose another model."
 msgstr "此模型的上下文視窗太小。請選擇其他模型。"
+
+#: src/components/LearningClinicCard.tsx
+msgid "This module has no quiz: watch the video to the end to complete it."
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "This month"
@@ -11193,6 +11604,7 @@ msgstr "受信任的網站"
 msgid "Try"
 msgstr ""
 
+#: src/components/LearningClinicCard.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
@@ -11204,6 +11616,7 @@ msgstr ""
 msgid "Try again"
 msgstr "重試"
 
+#: src/components/integrations/evolve-tools-section.tsx
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Try asking"
 msgstr ""
@@ -11805,6 +12218,10 @@ msgstr ""
 msgid "What each person's chats, bots and routines have cost in model usage. Updates every minute."
 msgstr ""
 
+#: src/components/EvolveChangeEditor.tsx
+msgid "What happened"
+msgstr ""
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "What it can do"
 msgstr ""
@@ -11844,6 +12261,10 @@ msgstr "回傳內容"
 #: src/pages/RoutineEditor.tsx
 msgid "What to watch"
 msgstr "監視內容"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "What's the status of C1078 and who is on the team?"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "When a webhook fires"
@@ -11914,6 +12335,10 @@ msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Who gets a computer"
+msgstr ""
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "Who has bridge inspection experience in the Dublin office?"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -12052,6 +12477,11 @@ msgstr "年"
 msgid "Yearly"
 msgstr "按年"
 
+#: src/components/AskCard.tsx
+#: src/components/EvolveChangeEditor.tsx
+msgid "Yes, all OK"
+msgstr ""
+
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Yesterday"
@@ -12066,6 +12496,10 @@ msgstr "昨天"
 #: src/pages/shell/shell-sidebar.tsx
 msgid "You"
 msgstr "你"
+
+#: src/components/integrations/evolve-tools-section.tsx
+msgid "You approve every time"
+msgstr ""
 
 #: src/pages/McpOAuthCallback.tsx
 msgid "You can close this tab if it does not redirect automatically."
@@ -12087,6 +12521,10 @@ msgstr "你已拒絕"
 #: src/components/InviteDialog.tsx
 msgid "You get a free month when they start their trial with a new card."
 msgstr "對方用新卡開始試用後，你將獲得一個月免費。"
+
+#: src/components/LearningClinicCard.tsx
+msgid "You have completed this clinic."
+msgstr ""
 
 #: src/pages/shell/computer-overlay.tsx
 msgid "You have control"

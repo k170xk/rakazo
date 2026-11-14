@@ -42,6 +42,9 @@ type EvolveTool = {
   inputSchema: Record<string, unknown>;
   access?: EvolveToolAccess;
   changes?: string;
+  page?: string;
+  group?: string;
+  approval?: boolean;
 };
 type RpcReply = { result?: unknown; error?: { message?: unknown } };
 
@@ -82,12 +85,17 @@ function readTools(result: unknown): EvolveTool[] {
 /** What Evolve says the tool does to its records, for the admin page; never sent to the model. */
 function toolAccess(
   meta: Record<string, unknown> | undefined,
-): Pick<EvolveTool, "access" | "changes"> {
+): Pick<EvolveTool, "access" | "changes" | "page" | "group" | "approval"> {
   const access = EvolveToolAccessSchema.safeParse(meta?.["ocsc/access"]);
   const changes = meta?.["ocsc/changes"];
+  const page = meta?.["ocsc/page"];
+  const group = meta?.["ocsc/group"];
   return {
     ...(access.success ? { access: access.data } : {}),
     ...(typeof changes === "string" && changes ? { changes: changes.slice(0, 300) } : {}),
+    ...(typeof page === "string" && /^[a-z0-9_.-]{1,80}$/i.test(page) ? { page } : {}),
+    ...(typeof group === "string" && group ? { group: group.slice(0, 60) } : {}),
+    ...(typeof meta?.["ocsc/approval"] === "boolean" ? { approval: meta["ocsc/approval"] } : {}),
   };
 }
 
@@ -244,6 +252,9 @@ export class EvolveCompanyTools implements ConnectorProvider {
       enabled: this.enabled(tool.name),
       ...(tool.access ? { access: tool.access } : {}),
       ...(tool.changes ? { changes: tool.changes } : {}),
+      ...(tool.page ? { page: tool.page } : {}),
+      ...(tool.group ? { group: tool.group } : {}),
+      ...(tool.approval !== undefined ? { approval: tool.approval } : {}),
     }));
     const checkedAt = this.checkedAt === null ? null : new Date(this.checkedAt).toISOString();
     if (!this.connection) return { status: "not-configured", tools, checkedAt, error: null };

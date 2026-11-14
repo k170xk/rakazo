@@ -187,6 +187,8 @@ function replyBlockText(block: MessageBlock): string {
       return block.title;
     case "email_draft":
       return "Email draft";
+    case "learning_clinic":
+      return block.title;
     case "evolve_references":
       return [
         ...block.projects.map((project) => project.name),

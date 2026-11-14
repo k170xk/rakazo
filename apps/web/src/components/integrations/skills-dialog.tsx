@@ -20,6 +20,7 @@ import { useState } from "react";
 import { PHONE_SHEET } from "../../lib/phone-sheet";
 import { useSpaceQueries } from "../../lib/query";
 import { AgentSkills } from "../../pages/KnowledgeSection";
+import { EvolveToolsSection } from "./evolve-tools-section";
 import { OcscToolsSection } from "./ocsc-tools-section";
 import type { PluginSelection } from "./plugin-marketplace";
 import {
@@ -160,6 +161,7 @@ export function SkillsDialog({
       );
     return (
       <div className="space-y-8">
+        <EvolveToolsSection />
         <OcscToolsSection available={skillNames} />
         {canManageSkills ? (
           <section data-testid="your-skills">

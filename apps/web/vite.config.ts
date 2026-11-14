@@ -513,6 +513,14 @@ export default defineConfig(({ command, mode }) => {
       "RAKAZO_CSP_CONNECT_SRC",
       process.env.RAKAZO_CSP_CONNECT_SRC ?? rootEnv.RAKAZO_CSP_CONNECT_SRC,
     ),
+    mediaSrc: parseContentSecuritySources(
+      "RAKAZO_CSP_MEDIA_SRC",
+      process.env.RAKAZO_CSP_MEDIA_SRC ?? rootEnv.RAKAZO_CSP_MEDIA_SRC,
+    ),
+    frameSrc: parseContentSecuritySources(
+      "RAKAZO_CSP_FRAME_SRC",
+      process.env.RAKAZO_CSP_FRAME_SRC ?? rootEnv.RAKAZO_CSP_FRAME_SRC,
+    ),
     crisp: parseCrispWebsiteId(process.env.CRISP_WEBSITE_ID ?? rootEnv.CRISP_WEBSITE_ID) !== null,
   });
   return {

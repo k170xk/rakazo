@@ -35,7 +35,8 @@ function pendingChangeAsk(blocks: unknown): { blocks: MessageBlock[]; ask: AskBl
     !ask.deadlineChange &&
     !ask.workPackageChange &&
     !ask.projectCommentChange &&
-    !ask.designTeamChange
+    !ask.designTeamChange &&
+    !ask.siteVisitChange
   )
     return null;
   return { blocks: parsed.data, ask };

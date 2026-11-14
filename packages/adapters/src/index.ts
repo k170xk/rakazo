@@ -97,6 +97,7 @@ export {
 } from "./evolve-change-card.js";
 export * from "./evolve-company-tools.js";
 export * from "./evolve-history.js";
+export * from "./evolve-learning.js";
 export * from "./evolve-person-context.js";
 export * from "./evolve-plugins.js";
 export * from "./evolve-references.js";
