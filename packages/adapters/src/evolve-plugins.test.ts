@@ -25,16 +25,10 @@ describe("Evolve plugins connection", () => {
   it("stays off unless the URL is https and the secret is long", () => {
     expect(createEvolvePluginsConnection({})).toBeNull();
     expect(
-      createEvolvePluginsConnection({
-        EVOLVE_PLUGINS_URL: "http://evolve.test/fn",
-        EVOLVE_PLUGINS_SECRET: SECRET,
-      }),
+      createEvolvePluginsConnection({ EVOLVE_PLUGINS_URL: "http://evolve.test/fn", EVOLVE_PLUGINS_SECRET: SECRET }),
     ).toBeNull();
     expect(
-      createEvolvePluginsConnection({
-        EVOLVE_PLUGINS_URL: "https://evolve.test/fn",
-        EVOLVE_PLUGINS_SECRET: "short",
-      }),
+      createEvolvePluginsConnection({ EVOLVE_PLUGINS_URL: "https://evolve.test/fn", EVOLVE_PLUGINS_SECRET: "short" }),
     ).toBeNull();
     expect(
       createEvolvePluginsConnection({
@@ -53,13 +47,8 @@ describe("Evolve plugins connection", () => {
   it("signs a short HS256 token for the person's email", () => {
     const token = signEvolvePluginsToken(SECRET, " Keith@OCSC.co.uk ", 1_000);
     const [header, claims, signature] = token.split(".");
-    expect(createHmac("sha256", SECRET).update(`${header}.${claims}`).digest("base64url")).toBe(
-      signature,
-    );
-    expect(JSON.parse(Buffer.from(header!, "base64url").toString())).toEqual({
-      alg: "HS256",
-      typ: "JWT",
-    });
+    expect(createHmac("sha256", SECRET).update(`${header}.${claims}`).digest("base64url")).toBe(signature);
+    expect(JSON.parse(Buffer.from(header!, "base64url").toString())).toEqual({ alg: "HS256", typ: "JWT" });
     expect(JSON.parse(Buffer.from(claims!, "base64url").toString())).toEqual({
       aud: "evolve-plugins",
       iss: "ocsc-intelligence",
@@ -102,18 +91,12 @@ describe("plugin branch import", () => {
     vi.fn(async (url: string | URL | Request) => {
       const path = String(url);
       const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
-      if (path.includes("/branches/"))
-        return json({ commit: { commit: { tree: { sha: "root" } } } });
+      if (path.includes("/branches/")) return json({ commit: { commit: { tree: { sha: "root" } } } });
       if (path.includes("/git/trees/")) {
-        return json({
-          tree: tree.map((entry) => ({ type: "blob", sha: entry.path, size: 10, ...entry })),
-        });
+        return json({ tree: tree.map((entry) => ({ type: "blob", sha: entry.path, size: 10, ...entry })) });
       }
       const sha = decodeURIComponent(path.split("/git/blobs/")[1]!);
-      return json({
-        content: Buffer.from(`content of ${sha}`).toString("base64"),
-        encoding: "base64",
-      });
+      return json({ content: Buffer.from(`content of ${sha}`).toString("base64"), encoding: "base64" });
     }) as unknown as typeof fetch;
 
   it("copies only the plugin's own text files", async () => {
@@ -133,13 +116,11 @@ describe("plugin branch import", () => {
   });
 
   it("refuses bad branch names and folders without a manifest", async () => {
+    await expect(fetchPluginBranch(repo, "../main", "helper", { fetch: github([]) })).rejects.toThrow(
+      EvolvePluginsError,
+    );
     await expect(
-      fetchPluginBranch(repo, "../main", "helper", { fetch: github([]) }),
-    ).rejects.toThrow(EvolvePluginsError);
-    await expect(
-      fetchPluginBranch(repo, "cursor/helper", "helper", {
-        fetch: github([{ path: "helper/src/App.tsx" }]),
-      }),
+      fetchPluginBranch(repo, "cursor/helper", "helper", { fetch: github([{ path: "helper/src/App.tsx" }]) }),
     ).rejects.toThrow(/evolve-plugin.json/);
   });
 });
@@ -160,27 +141,17 @@ describe("plugin tool selection", () => {
       .filter((name) => name.startsWith("evolve_plugin_"));
 
   it("offers the plugin tools only in the person's own direct chat with the switch on", () => {
-    expect(select()).toEqual([
-      "evolve_plugin_status",
-      "evolve_plugin_scopes",
-      "evolve_plugin_submit",
-    ]);
+    expect(select()).toEqual(["evolve_plugin_status", "evolve_plugin_scopes", "evolve_plugin_submit"]);
     expect(select({ pluginBranchImportEnabled: true })).toContain("evolve_plugin_import_branch");
     expect(select({ evolvePluginsEnabled: false })).toEqual([]);
     expect(select({ messagingChannelRun: true })).toEqual([]);
     expect(select({ trigger: "routine", followUpFromUser: false })).toEqual([]);
-    expect(select({ computersEnabled: false })).toEqual([
-      "evolve_plugin_status",
-      "evolve_plugin_scopes",
-    ]);
+    expect(select({ computersEnabled: false })).toEqual(["evolve_plugin_status", "evolve_plugin_scopes"]);
   });
 });
 
 describe("Cursor agents company switch", () => {
-  const cursor = createCloudAgentConnection({
-    CLOUD_AGENT_PROVIDER: "cursor",
-    CURSOR_API_KEY: "key",
-  });
+  const cursor = createCloudAgentConnection({ CLOUD_AGENT_PROVIDER: "cursor", CURSOR_API_KEY: "key" });
 
   it("runs Cursor agents in every space only while the switch is on", () => {
     expect(cursor).not.toBeNull();

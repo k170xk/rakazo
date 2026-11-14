@@ -278,9 +278,7 @@ export function threadsRoutes(ctx: RouterContext) {
         }
       }),
       send: authed.threads.send.handler(({ context, input }) =>
-        context.actor.guestGroupIds
-          ? sendAsGuest(context.actor, input)
-          : send(context.actor, input),
+        context.actor.guestGroupIds ? sendAsGuest(context.actor, input) : send(context.actor, input),
       ),
       continueEvolveConversation: authed.threads.continueEvolveConversation.handler(
         async ({ context, input }) => {

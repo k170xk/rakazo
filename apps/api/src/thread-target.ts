@@ -49,7 +49,6 @@ import {
   createThreadMessageInTransaction,
   eligibleWaitingTextAnswer,
   expireComputerExecutionLeases,
-  groupPeopleForThread,
   IsolationError,
   lockOwnedGroup,
   primaryActiveRun,
@@ -606,12 +605,10 @@ export async function threadSnapshot(
     { timeout: 15_000, maxWait: 5_000 },
   );
   const primaryActiveRun = pickPrimaryActiveRun(core.activeRuns);
-  const people = await groupPeopleForThread(deps.prisma, target.groupId);
   return {
     groupId: target.groupId,
     groupName: target.groupName,
     members: target.members,
-    people,
     threadId: target.threadId,
     cursor: core.last?.seq ?? -1,
     messages: messagesWithLiveEvents(core.messagePage.messages, core.liveEvents, core.activeRuns),
@@ -1187,8 +1184,6 @@ export async function sendThreadMessage(
           updatedAt: true,
         },
       });
-      // The owner's runs carry the owner's context, so a colleague never steers or answers them.
-      if (input.authorUserId) activeRuns = [];
       // A plain message while members wait on the user answers the latest question only.
       const asking = namesNobody ? latestWaitingRun(activeRuns) : undefined;
       if (asking) {
@@ -1326,7 +1321,7 @@ export async function sendThreadMessage(
         const createdRuns = runs.filter(
           (run) => !activeByBotId.has(run.botId) && !answeredByBotId.has(run.botId),
         );
-        if (createdRuns.length && !input.authorUserId) {
+        if (createdRuns.length) {
           await cancelSupersededQueuedRuns(tx, {
             threadId: target.threadId,
             botIds: createdRuns.map((run) => run.botId),

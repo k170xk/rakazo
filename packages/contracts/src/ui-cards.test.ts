@@ -5,13 +5,7 @@ import { UiCard, uiCardText } from "./ui-cards.js";
 describe("UiCard", () => {
   it("accepts each card type the show_card tool offers", () => {
     const cards = [
-      {
-        type: "record",
-        title: "HEL18",
-        status: "Live",
-        tone: "positive",
-        fields: [{ label: "Client", value: "DLR" }],
-      },
+      { type: "record", title: "HEL18", status: "Live", tone: "positive", fields: [{ label: "Client", value: "DLR" }] },
       { type: "metrics", title: "Fees", metrics: [{ label: "Won", value: "£42k", change: "+8%" }] },
       { type: "checklist", title: "Submission", items: [{ text: "Method statement", done: true }] },
       { type: "notice", title: "Deadline", body: "Friday at noon", tone: "caution" },

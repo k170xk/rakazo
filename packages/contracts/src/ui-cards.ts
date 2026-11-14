@@ -1,4 +1,4 @@
-import * as z from "zod";
+import { z } from "zod";
 
 /** Fixed tone vocabulary for bot-filled cards, so a bot never picks raw colours. */
 export const UiCardTone = z.enum(["neutral", "positive", "caution", "negative"]);
@@ -59,10 +59,7 @@ const TableCard = z
     title: Text(120),
     caption: z.string().max(240).optional(),
     columns: z.array(Text(60)).min(1).max(8),
-    rows: z
-      .array(z.array(z.string().max(300)).max(8))
-      .min(1)
-      .max(100),
+    rows: z.array(z.array(z.string().max(300)).max(8)).min(1).max(100),
   })
   .refine(
     (card) => card.rows.every((row) => row.length === card.columns.length),
@@ -85,47 +82,51 @@ export const UiCard = z.discriminatedUnion("type", [
   QuoteCard,
 ]);
 export type UiCard = z.infer<typeof UiCard>;
-export const UI_CARD_TYPES = [
-  "record",
-  "metrics",
-  "checklist",
-  "notice",
-  "table",
-  "quote",
-] as const;
+export const UI_CARD_TYPES = ["record", "metrics", "checklist", "notice", "table", "quote"] as const;
 
-/** A card as plain text, for chat history, quotes and previews. */
+/** Plain text of a card, for copy and for later turns that cannot see the card. */
 export function uiCardText(card: UiCard): string {
   switch (card.type) {
     case "record":
-      return [
+      return join(
         card.title,
+        card.subtitle,
         card.status,
         ...card.fields.map((field) => `${field.label}: ${field.value}`),
-      ]
-        .filter(Boolean)
-        .join("; ");
+      );
     case "metrics":
-      return [
+      return join(
         card.title,
+        card.caption,
         ...card.metrics.map((metric) =>
-          [`${metric.label}: ${metric.value}`, metric.change].filter(Boolean).join(" "),
+          metric.change
+            ? `${metric.label}: ${metric.value} (${metric.change})`
+            : `${metric.label}: ${metric.value}`,
         ),
-      ].join("; ");
+      );
     case "checklist":
-      return [
+      return join(
         card.title,
-        ...card.items.map((item) => `${item.done ? "[x]" : "[ ]"} ${item.text}`),
-      ].join("; ");
+        card.caption,
+        ...card.items.map((item) => {
+          const line = `${item.done ? "[x]" : "[ ]"} ${item.text}`;
+          return item.note ? `${line} (${item.note})` : line;
+        }),
+      );
     case "notice":
-      return [card.title, card.body, ...(card.points ?? [])].join("; ");
+      return join(card.title, card.body, ...(card.points ?? []));
     case "table":
-      return [
+      return join(
         card.title,
+        card.caption,
         card.columns.join(" | "),
-        ...card.rows.slice(0, 20).map((row) => row.join(" | ")),
-      ].join("; ");
+        ...card.rows.map((row) => row.join(" | ")),
+      );
     case "quote":
-      return `"${card.quote}" — ${card.attribution}`;
+      return join(card.quote, card.attribution, card.context);
   }
+}
+
+function join(...values: Array<string | undefined>): string {
+  return values.filter((value) => value).join("; ");
 }

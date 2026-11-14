@@ -26,19 +26,7 @@
     }
   ],
   "data.cv_skills": [
-    {
-      "id": "s1",
-      "skill": "Bridge design",
-      "category": "Structures",
-      "skill_level": "Advanced",
-      "is_software": false
-    },
-    {
-      "id": "s2",
-      "skill": "AutoCAD Civil 3D",
-      "category": "Software",
-      "skill_level": "Intermediate",
-      "is_software": true
-    }
+    { "id": "s1", "skill": "Bridge design", "category": "Structures", "skill_level": "Advanced", "is_software": false },
+    { "id": "s2", "skill": "AutoCAD Civil 3D", "category": "Software", "skill_level": "Intermediate", "is_software": true }
   ]
 }

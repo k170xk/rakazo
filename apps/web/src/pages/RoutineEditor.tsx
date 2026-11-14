@@ -43,12 +43,14 @@ import {
   Eye,
   GitBranch,
   Globe,
+  Mail,
   MessageSquare,
   Pause,
   Plus,
   SlidersHorizontal,
   X,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useId, useState } from "react";
 import { cronLabels } from "../lib/cron";
 import {
@@ -77,6 +79,9 @@ export function routineNeedsOneShotArm(
 ) {
   return isOneShotRoutineCrons(crons) && !routine.nextRunAt && !routine.lastRunAt;
 }
+
+/** Message, change, Git and webhook triggers stay listed until they are offered again. */
+const EXTRA_ROUTINE_TRIGGERS_OPEN = false;
 
 const SCHEDULE_PRESETS: CronFreq[] = [
   "Every hour",
@@ -332,6 +337,28 @@ function RoutineListRow({
   );
 }
 
+/** A trigger that stays in the menu. While paused it is greyed out and explains that it returns later. */
+function PausedTriggerItem({
+  paused,
+  disabled = false,
+  onClick,
+  children,
+}: {
+  paused: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  children: ReactNode;
+}) {
+  const { t } = useLingui();
+  return (
+    <span className="block" title={paused ? t`Coming soon` : undefined}>
+      <DropdownMenuItem disabled={paused || disabled} onClick={paused ? undefined : onClick}>
+        {children}
+      </DropdownMenuItem>
+    </span>
+  );
+}
+
 export function RoutineEditor({
   draft,
   onChange,
@@ -414,8 +441,7 @@ export function RoutineEditor({
     []
   ).filter((level) => level !== "off");
   const defaultThinkingLevel = selectedCredential?.thinkingLevel ?? "medium";
-  const slackAvailable = messageProviders.includes("slack");
-  const slackDisabledReasonId = `${fieldId}-slack-disabled-reason`;
+  const teamsOffered = EXTRA_ROUTINE_TRIGGERS_OPEN && messageProviders.includes("teams");
   const hasTriggers =
     draft.schedules.length > 0 ||
     draft.webhookEnabled ||
@@ -721,23 +747,22 @@ export function RoutineEditor({
               </DropdownMenuSubContent>
             </DropdownMenuSub>
 
-            <span className="block" title={slackAvailable ? undefined : t`Slack not enabled`}>
-              <DropdownMenuItem
-                disabled={draft.messageProvider === "slack" || !slackAvailable}
-                aria-describedby={slackAvailable ? undefined : slackDisabledReasonId}
-                onClick={() => addMessageProvider("slack")}
-              >
-                <MessageSquare />
-                <Trans>Slack message</Trans>
-              </DropdownMenuItem>
-              {!slackAvailable ? (
-                <span id={slackDisabledReasonId} className="sr-only">
-                  <Trans>Slack not enabled</Trans>
-                </span>
-              ) : null}
-            </span>
+            <PausedTriggerItem
+              paused={!teamsOffered}
+              disabled={draft.messageProvider === "teams"}
+              onClick={() => addMessageProvider("teams")}
+            >
+              <MessageSquare />
+              <Trans>Teams message</Trans>
+            </PausedTriggerItem>
 
-            <DropdownMenuItem
+            <PausedTriggerItem paused>
+              <Mail />
+              <Trans>Outlook email message</Trans>
+            </PausedTriggerItem>
+
+            <PausedTriggerItem
+              paused={!EXTRA_ROUTINE_TRIGGERS_OPEN}
               disabled={Boolean(draft.watch) || draft.schedules.length > 0}
               onClick={() =>
                 onChange({ ...draft, watch: emptyWatchDraft(computerWatches ? "files" : "tool") })
@@ -745,17 +770,25 @@ export function RoutineEditor({
             >
               <Eye />
               <Trans>When something changes</Trans>
-            </DropdownMenuItem>
+            </PausedTriggerItem>
 
-            <DropdownMenuItem disabled={draft.githubEnabled} onClick={() => void addGithub()}>
+            <PausedTriggerItem
+              paused={!EXTRA_ROUTINE_TRIGGERS_OPEN}
+              disabled={draft.githubEnabled}
+              onClick={() => void addGithub()}
+            >
               <GitBranch />
               <Trans>Git event</Trans>
-            </DropdownMenuItem>
+            </PausedTriggerItem>
 
-            <DropdownMenuItem disabled={draft.webhookEnabled} onClick={() => void addWebhook()}>
+            <PausedTriggerItem
+              paused={!EXTRA_ROUTINE_TRIGGERS_OPEN}
+              disabled={draft.webhookEnabled}
+              onClick={() => void addWebhook()}
+            >
               <Globe />
               <Trans>Webhook</Trans>
-            </DropdownMenuItem>
+            </PausedTriggerItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

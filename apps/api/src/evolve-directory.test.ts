@@ -55,17 +55,8 @@ describe("searchEvolveDirectory", () => {
       available: true,
       people: [
         expect.objectContaining({ email: "keith@ocsc.co.uk", status: "member", canOpen: true }),
-        expect.objectContaining({
-          email: "ann@ocsc.co.uk",
-          status: "invited",
-          jobTitle: "Engineer",
-        }),
-        expect.objectContaining({
-          email: "tom@ocsc.co.uk",
-          status: null,
-          photo: null,
-          canOpen: false,
-        }),
+        expect.objectContaining({ email: "ann@ocsc.co.uk", status: "invited", jobTitle: "Engineer" }),
+        expect.objectContaining({ email: "tom@ocsc.co.uk", status: null, photo: null, canOpen: false }),
       ],
     });
   });

@@ -68,9 +68,7 @@ function readSample(scope: string, params: Record<string, unknown>): DataResult 
     );
   for (const [column, value] of Object.entries((params.filters as Record<string, unknown>) ?? {})) {
     if (!columns.includes(column)) throw new Error(`"${column}" cannot be filtered on.`);
-    rows = rows.filter((row) =>
-      value === null ? row[column] == null : String(row[column]) === String(value),
-    );
+    rows = rows.filter((row) => (value === null ? row[column] == null : String(row[column]) === String(value)));
   }
   const orderBy = typeof params.orderBy === "string" ? params.orderBy : null;
   if (orderBy) {
@@ -79,18 +77,11 @@ function readSample(scope: string, params: Record<string, unknown>): DataResult 
   }
   const limit = Math.min(Math.max(Number(params.limit) || 50, 1), 200);
   const offset = Math.max(Number(params.offset) || 0, 0);
-  return {
-    rows: rows.slice(offset, offset + limit),
-    columns,
-    hasMore: rows.length > offset + limit,
-    limit,
-    offset,
-  };
+  return { rows: rows.slice(offset, offset + limit), columns, hasMore: rows.length > offset + limit, limit, offset };
 }
 
 const themeListeners = new Set<(theme: { mode: ThemeMode }) => void>();
-let mode: ThemeMode =
-  new URLSearchParams(location.search).get("theme") === "dark" ? "dark" : "light";
+let mode: ThemeMode = new URLSearchParams(location.search).get("theme") === "dark" ? "dark" : "light";
 
 function applyMode(next: ThemeMode) {
   mode = next;
@@ -198,9 +189,7 @@ export function createMockBridge() {
       if (!manifest.scopes.includes(scope)) {
         throw new Error(`"${scope}" is not in evolve-plugin.json, so Evolve would refuse it.`);
       }
-      const handler = scope.startsWith("data.")
-        ? (p: Record<string, unknown>) => readSample(scope, p)
-        : handlers[scope];
+      const handler = scope.startsWith("data.") ? (p: Record<string, unknown>) => readSample(scope, p) : handlers[scope];
       if (!handler) throw new Error(`Evolve has no scope called "${scope}".`);
       await new Promise((resolve) => setTimeout(resolve, 150));
       return structuredClone(handler(params));

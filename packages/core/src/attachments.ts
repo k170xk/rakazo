@@ -8,7 +8,6 @@ import {
   evolveReferencesPromptText,
   isAllowedAttachmentMimeType,
   isAttachmentImageMimeType,
-  uiCardText,
 } from "@rakazo/contracts";
 
 export class AttachmentValidationError extends Error {
@@ -172,7 +171,6 @@ export function blocksToAgentHistoryText(blocks: MessageBlock[]): string {
     .map((block) => {
       if (block.kind === "text") return block.text;
       if (block.kind === "chart") return `[chart: ${block.name}]`;
-      if (block.kind === "ui_card") return `[${block.card.type} card: ${uiCardText(block.card)}]`;
       if (block.kind === "image") return `[image: ${block.name}]`;
       // Only the person can create it in Outlook and send it, so a later turn must not claim it went out.
       if (block.kind === "email_draft") {

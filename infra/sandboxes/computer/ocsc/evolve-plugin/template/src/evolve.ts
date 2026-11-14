@@ -103,10 +103,7 @@ function call<S extends keyof ScopeResults>(
   scope: S,
   params?: Record<string, unknown>,
 ): Promise<ScopeResults[S]>;
-function call<Row = Record<string, unknown>>(
-  scope: DataScope,
-  params?: DataQuery,
-): Promise<DataResult<Row>>;
+function call<Row = Record<string, unknown>>(scope: DataScope, params?: DataQuery): Promise<DataResult<Row>>;
 async function call(scope: string, params?: Record<string, unknown> | DataQuery): Promise<unknown> {
   return (await connect()).call(scope, params as Record<string, unknown>);
 }

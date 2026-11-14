@@ -86,9 +86,7 @@ const bytes = (files) =>
 function calledScopes(files) {
   const found = new Set();
   for (const text of Object.values(files)) {
-    for (const match of text.matchAll(
-      /evolve\.call(?:<[^>()]*>)?\(\s*['"`]([a-z]+\.[a-z][a-z0-9_]*)['"`]/g,
-    ))
+    for (const match of text.matchAll(/evolve\.call(?:<[^>()]*>)?\(\s*['"`]([a-z]+\.[a-z][a-z0-9_]*)['"`]/g))
       found.add(match[1]);
   }
   return [...found].sort();

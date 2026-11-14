@@ -344,7 +344,6 @@ test("change-trigger screenshot walkthrough", { tag: "@nightly" }, async ({ page
   const stamp = Date.now();
   await signup(page, `routine-walkthrough-${stamp}@rakazo.test`, "password12", "Routine Watch");
   await completeOnboarding(page);
-  const botId = activeBotId(page);
 
   await openBotPanelTab(page, "Routines");
   await expect(page.getByRole("button", { name: "Create Routine" })).toBeVisible();
@@ -367,71 +366,10 @@ test("change-trigger screenshot walkthrough", { tag: "@nightly" }, async ({ page
   await page.getByRole("button", { name: "Remove schedule", exact: true }).click();
   await page.getByRole("button", { name: "Add trigger" }).click();
   await expect(watchOption).toBeVisible();
-  await expect(watchOption).toBeEnabled();
-  await captureScreenshot(page, testInfo, "routine-watch-03-add-trigger-menu-enabled");
-  await watchOption.click();
-
-  const card = page.getByTestId("routine-watch-card");
-  const kind = card.getByRole("combobox", { name: "What to watch" });
-  await expect(kind).toHaveValue("files");
-  await expect(card.getByRole("spinbutton", { name: "Check every" })).toHaveValue("15");
-  await expect(card.getByRole("textbox", { name: "Files or folders, one per line" })).toBeEmpty();
-  await captureScreenshot(page, testInfo, "routine-watch-04-empty-card");
-  // Native select popups are not captured by page screenshots; show each selected kind below.
-  await expect(kind).toHaveJSProperty("tagName", "SELECT");
-  await card
-    .getByRole("textbox", { name: "Files or folders, one per line" })
-    .fill("inbox/\nreports/latest.csv");
-  await captureScreenshot(page, testInfo, "routine-watch-06-files");
-
-  await kind.selectOption("command");
-  await card
-    .getByRole("textbox", { name: "Command", exact: true })
-    .fill("curl -s https://example.com/status.json");
-  await card.getByRole("textbox", { name: "Fields that mark a change" }).fill("status, updatedAt");
-  await captureScreenshot(page, testInfo, "routine-watch-07-command");
-
-  await kind.selectOption("tool");
-  await card.getByRole("textbox", { name: "Tool name", exact: true }).fill("brain_changed");
-  await card.getByRole("textbox", { name: "Tool arguments (JSON)" }).fill('{"path":"reports/"}');
-  await card.getByRole("textbox", { name: "Fields that mark a change" }).fill("id, modifiedTime");
-  await captureScreenshot(page, testInfo, "routine-watch-08-tool");
-
-  await card.getByRole("textbox", { name: "Tool name", exact: true }).fill("");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByRole("alert")).toHaveText("Pick a tool to check");
-  expect(await rpc<Routine[]>(page, "routines/list", { botId })).toEqual([]);
-  await page.getByRole("alert").scrollIntoViewIfNeeded();
-  await captureScreenshot(page, testInfo, "routine-watch-09-validation");
-
-  await kind.selectOption("files");
-  const interval = card.getByRole("spinbutton", { name: "Check every" });
-  await expect(interval).toHaveAttribute("min", "5");
-  await interval.fill("");
-  await interval.pressSequentially("10");
-  await expect(interval).toHaveValue("10");
-  // A watch replaces schedules, so the schedule menu is unavailable while one exists.
-  await page.getByRole("button", { name: "Add trigger" }).click();
-  await expect(page.getByRole("menuitem", { name: "On a schedule" })).toBeDisabled();
-  await page.keyboard.press("Escape");
-  await captureScreenshot(page, testInfo, "routine-watch-trigger");
-
-  expect(await saveAndReturn(page, "routines/create")).toMatchObject({
-    crons: [],
-    watch: {
-      kind: "files",
-      paths: ["inbox/", "reports/latest.csv"],
-      everyMinutes: 10,
-      loud: false,
-    },
-  });
-  await expect(page.getByRole("button", { name: /Inbox watch/ })).toContainText(
-    "When something changes",
-  );
-  const routines = await rpc<Routine[]>(page, "routines/list", { botId });
-  expect(routines.find((routine) => routine.name === "Inbox watch")?.watch).toMatchObject({
-    kind: "files",
-    paths: ["inbox/", "reports/latest.csv"],
-  });
-  await captureScreenshot(page, testInfo, "routine-watch-10-saved-list");
+  await expect(watchOption).toBeDisabled();
+  for (const name of ["Teams message", "Outlook email message", "Git event", "Webhook"]) {
+    await expect(page.getByRole("menuitem", { name })).toBeDisabled();
+  }
+  await expect(page.getByRole("menuitem", { name: "On a schedule" })).toBeEnabled();
+  await captureScreenshot(page, testInfo, "routine-watch-03-add-trigger-menu-paused");
 });

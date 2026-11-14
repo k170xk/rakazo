@@ -354,16 +354,17 @@ export function remoteMarkdownImage(url: string): { href: string; host: string }
 /** Whether remote markdown images load without a tap. Apps provide the reader's device setting. */
 export const RemoteImagesContext = createContext(false);
 
+/** Opens an image full screen. Absent, the image stays inline. */
+export const ImagePreviewContext = createContext<((image: {
+  src: string;
+  name: string;
+}) => void) | null>(null);
+
 /**
  * Hosts whose images always load over HTTPS without a tap, such as the organisation's own file
  * store. Each host is matched exactly, so a subdomain must be listed on its own.
  */
 export const TrustedImageHostsContext = createContext<readonly string[]>([]);
-
-/** Opens a chat image full screen. Apps that provide it make markdown images clickable. */
-export const ImagePreviewContext = createContext<
-  ((image: { src: string; name: string }) => void) | null
->(null);
 
 export function imageHostTrusted(href: string, trustedHosts: readonly string[]): boolean {
   let url: URL;

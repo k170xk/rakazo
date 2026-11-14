@@ -2,7 +2,6 @@ import { AlertCircle, Home, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { EvolveContext, Person } from "./evolve";
 import { evolve } from "./evolve";
-import type { NavItem } from "./ui";
 import {
   AppShell,
   Card,
@@ -11,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  type NavItem,
   PageHeader,
   Spinner,
   TopNav,
@@ -64,9 +64,7 @@ export default function App() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Start here</CardTitle>
-              <CardDescription>
-                Replace this page with the plugin. Data comes only from evolve.call.
-              </CardDescription>
+              <CardDescription>Replace this page with the plugin. Data comes only from evolve.call.</CardDescription>
             </CardHeader>
           </Card>
         </>
