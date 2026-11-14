@@ -104,94 +104,97 @@ export function PageView({
           compact ? "min-[900px]:bg-transparent" : ""
         }`}
       >
-        {/* On a tablet the page is a sheet over the chat, covering all but the chat's edges. */}
-        <div
-          className={`absolute inset-0 overflow-hidden print:static print:overflow-visible print:bg-transparent ${
-            compact
-              ? "min-[900px]:inset-x-[70px] min-[900px]:bottom-[33px] min-[900px]:rounded-[28px] min-[900px]:bg-background"
-              : ""
-          }`}
-        >
-          <DialogClose
-            ref={closeButton}
-            aria-label={t`Close app`}
-            className={`absolute z-10 grid place-items-center print:hidden ${compact ? "top-[6px] left-[6px] size-11" : "top-[6px] left-[11px] size-9"} rounded-full border border-foreground/[0.06] text-foreground/90 outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring`}
-          >
-            <X className={compact ? "size-6" : "size-[18px]"} strokeWidth={compact ? 2.2 : 1.7} />
-          </DialogClose>
+        {/* Absolute children ignore the dialog's safe-area padding, so they sit in this box. */}
+        <div className="relative size-full print:static print:size-auto">
+          {/* On a tablet the page is a sheet over the chat, covering all but the chat's edges. */}
           <div
-            className={`pointer-events-none absolute inset-x-0 z-10 flex justify-center print:hidden ${compact ? "top-[6px] px-[106px]" : "top-[2px] px-[140px]"}`}
+            className={`absolute inset-0 overflow-hidden print:static print:overflow-visible print:bg-transparent ${
+              compact
+                ? "min-[900px]:inset-x-[70px] min-[900px]:bottom-[33px] min-[900px]:rounded-[28px] min-[900px]:bg-background"
+                : ""
+            }`}
           >
-            <div className="flex min-w-0 flex-col items-center gap-1">
-              {title ? (
-                <TitlePill title={title} onRename={onRename} />
-              ) : (
-                <DialogTitle className="sr-only">{t`App`}</DialogTitle>
-              )}
-              {renameError ? (
-                <p role="alert" className="text-[12px] leading-4 text-destructive">
-                  {renameError}
-                </p>
-              ) : null}
+            <DialogClose
+              ref={closeButton}
+              aria-label={t`Close app`}
+              className={`absolute z-10 grid place-items-center print:hidden ${compact ? "top-[6px] left-[6px] size-11" : "top-[6px] left-[11px] size-9"} rounded-full border border-foreground/[0.06] text-foreground/90 outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring`}
+            >
+              <X className={compact ? "size-6" : "size-[18px]"} strokeWidth={compact ? 2.2 : 1.7} />
+            </DialogClose>
+            <div
+              className={`pointer-events-none absolute inset-x-0 z-10 flex justify-center print:hidden ${compact ? "top-[6px] px-[106px]" : "top-[2px] px-[140px]"}`}
+            >
+              <div className="flex min-w-0 flex-col items-center gap-1">
+                {title ? (
+                  <TitlePill title={title} onRename={onRename} />
+                ) : (
+                  <DialogTitle className="sr-only">{t`App`}</DialogTitle>
+                )}
+                {renameError ? (
+                  <p role="alert" className="text-[12px] leading-4 text-destructive">
+                    {renameError}
+                  </p>
+                ) : null}
+              </div>
             </div>
-          </div>
-          {/* Touch controls sit 6px in from the sheet's 28px corners: 22px round plus 6 is 28. */}
-          <div
-            className={`absolute z-10 flex items-center gap-1.5 print:hidden ${compact ? "top-[6px] right-[6px]" : "top-[6.5px] right-3"}`}
-          >
-            {drawn && !stalled && notice === null ? (
-              <DownloadPdfButton
-                className={control}
-                iconClassName={compact ? "size-5" : "size-[18px]"}
-                labelClassName="sr-only"
-              />
-            ) : null}
-            {share}
-          </div>
-          {/* After the controls, so Tab reaches Close, Download PDF and Share before the page's stops. */}
-          <section
-            aria-label={title || undefined}
-            className={`absolute inset-x-0 bottom-0 print:static ${compact ? "top-[50px]" : "top-[34px]"}`}
-          >
-            {notice ?? (
-              <>
-                {document !== null && !stalled ? (
-                  <div
-                    key={attempt}
-                    className={`h-full transition-opacity duration-200 motion-reduce:transition-none ${drawn ? "opacity-100" : "opacity-0"}`}
-                  >
-                    <PageFrame
-                      document={document}
-                      title={title}
-                      interactive
-                      onReply={onReply}
-                      onHeight={onDrawn}
-                      state={state}
+            {/* Touch controls sit 6px in from the sheet's 28px corners: 22px round plus 6 is 28. */}
+            <div
+              className={`absolute z-10 flex items-center gap-1.5 print:hidden ${compact ? "top-[6px] right-[6px]" : "top-[6.5px] right-3"}`}
+            >
+              {drawn && !stalled && notice === null ? (
+                <DownloadPdfButton
+                  className={control}
+                  iconClassName={compact ? "size-5" : "size-[18px]"}
+                  labelClassName="sr-only"
+                />
+              ) : null}
+              {share}
+            </div>
+            {/* After the controls, so Tab reaches Close, Download PDF and Share before the page's stops. */}
+            <section
+              aria-label={title || undefined}
+              className={`absolute inset-x-0 bottom-0 print:static ${compact ? "top-[50px]" : "top-[34px]"}`}
+            >
+              {notice ?? (
+                <>
+                  {document !== null && !stalled ? (
+                    <div
+                      key={attempt}
+                      className={`h-full transition-opacity duration-200 motion-reduce:transition-none ${drawn ? "opacity-100" : "opacity-0"}`}
+                    >
+                      <PageFrame
+                        document={document}
+                        title={title}
+                        interactive
+                        onReply={onReply}
+                        onHeight={onDrawn}
+                        state={state}
+                      />
+                    </div>
+                  ) : null}
+                  {stalled ? (
+                    <PageNotice
+                      title={t`This app couldn't load`}
+                      detail={t`Check your connection and try again.`}
+                      onRetry={() => {
+                        setStalled(false);
+                        setAttempt((count) => count + 1);
+                      }}
+                      onClose={() => onOpenChange(false)}
                     />
-                  </div>
-                ) : null}
-                {stalled ? (
-                  <PageNotice
-                    title={t`This app couldn't load`}
-                    detail={t`Check your connection and try again.`}
-                    onRetry={() => {
-                      setStalled(false);
-                      setAttempt((count) => count + 1);
-                    }}
-                    onClose={() => onOpenChange(false)}
-                  />
-                ) : !drawn ? (
-                  <PageLoading />
-                ) : null}
-              </>
-            )}
-          </section>
-        </div>
-        {composer ? (
-          <div className="absolute inset-x-0 bottom-[12.5px] flex justify-center px-3 print:hidden">
-            <div className="w-full max-w-[551px]">{composer}</div>
+                  ) : !drawn ? (
+                    <PageLoading />
+                  ) : null}
+                </>
+              )}
+            </section>
           </div>
-        ) : null}
+          {composer ? (
+            <div className="absolute inset-x-0 bottom-[12.5px] flex justify-center px-3 print:hidden">
+              <div className="w-full max-w-[551px]">{composer}</div>
+            </div>
+          ) : null}
+        </div>
       </DialogContent>
     </Dialog>
   );

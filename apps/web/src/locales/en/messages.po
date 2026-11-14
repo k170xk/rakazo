@@ -6827,6 +6827,7 @@ msgstr "Monthly credits"
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "Monthly credits expire at renewal. Top-ups do not expire."
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-hover-actions.tsx
 msgid "More"
@@ -9695,6 +9696,7 @@ msgstr "Shape"
 msgid "Shape {0}"
 msgstr "Shape {0}"
 
+#: src/components/apps/AppStudio.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
 msgid "Share"

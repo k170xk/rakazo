@@ -6810,6 +6810,7 @@ msgstr "每月額度"
 msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "每月額度在續訂時到期。單次加值額度不會過期。"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-hover-actions.tsx
 msgid "More"
@@ -9678,6 +9679,7 @@ msgstr "形狀"
 msgid "Shape {0}"
 msgstr "形狀 {0}"
 
+#: src/components/apps/AppStudio.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
 msgid "Share"

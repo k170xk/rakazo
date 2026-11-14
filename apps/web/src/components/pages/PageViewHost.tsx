@@ -173,6 +173,7 @@ function OpenPage({
         page={data}
         ownerName={data?.owner.name ?? null}
         share={share}
+        onShare={share ? () => setShareOpen(true) : undefined}
         composer={<div ref={setDockNode} />}
         chat={<div ref={setChatNode} className="flex min-h-0 flex-1 flex-col" />}
         running={running}
