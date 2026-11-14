@@ -26,10 +26,10 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
 };
 
 const BUTTON_SIZES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-[13px] gap-1.5 rounded-md",
+  sm: "h-8 pointer-coarse:h-10 px-3 text-[13px] gap-1.5 rounded-md",
   md: "h-10 px-4 text-sm gap-2 rounded-lg",
   lg: "h-12 px-6 text-[15px] gap-2 rounded-xl",
-  icon: "h-9 w-9 rounded-lg",
+  icon: "h-9 w-9 pointer-coarse:h-10 pointer-coarse:w-10 rounded-lg",
 };
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -149,7 +149,7 @@ export function Badge({
 }
 
 const FIELD =
-  "w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground shadow-[0_1px_1px_hsl(220_30%_10%/0.03)] transition-[border,box-shadow] outline-none placeholder:text-muted-foreground/70 focus:border-primary/60 focus:ring-4 focus:ring-primary/15 disabled:opacity-60";
+  "w-full rounded-lg border border-input bg-card px-3 text-sm pointer-coarse:text-base text-foreground shadow-[0_1px_1px_hsl(220_30%_10%/0.03)] transition-[border,box-shadow] outline-none placeholder:text-muted-foreground/70 focus:border-primary/60 focus:ring-4 focus:ring-primary/15 disabled:opacity-60";
 
 export function Field({
   label,
@@ -244,7 +244,7 @@ export function SearchInput({
         <button
           type="button"
           onClick={() => onChange("")}
-          className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
+          className="absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
           aria-label="Clear search"
         >
           <X className="size-3.5" />
@@ -474,6 +474,8 @@ export function Avatar({
     />
   ) : (
     <span
+      role="img"
+      aria-label={name}
       title={name}
       style={{ width: size, height: size, fontSize: size * 0.38 }}
       className={cn(
@@ -481,7 +483,7 @@ export function Avatar({
         tint,
       )}
     >
-      {initials || "?"}
+      <span aria-hidden="true">{initials || "?"}</span>
     </span>
   );
 }

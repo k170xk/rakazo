@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { type AppFiles, buildApp } from "@rakazo/app-kit/build";
+import type { AppFiles } from "@rakazo/app-kit/build";
+import { buildApp } from "@rakazo/app-kit/build";
 import { listAppAssets, readAppAsset, readAppTables } from "@rakazo/db";
 import type { ExecutorDeps } from "./executor-deps.js";
-import { TOOL_WORK, type ToolRunnerWorkspace } from "./tool-runner.js";
+import type { ToolRunnerWorkspace } from "./tool-runner.js";
+import { TOOL_WORK } from "./tool-runner.js";
 
 /**
  * App Studio's eyes: an app opened headless on a tool runner, with its real rows and pictures
@@ -25,7 +27,9 @@ export type AppLookReport = {
   errors: Array<{ page: string; message: string }>;
   crashed: { page: string; message: string } | null;
   blank: string[];
-  overflow: Array<{ page: string; width: number }>;
+  overflow: Array<{ page: string; width: number; culprits?: string[] }>;
+  /** Hard to use on a phone: inputs iOS zooms into, controls under a fingertip, unreadable text. */
+  phone?: Array<{ page: string; kind: "zoom" | "tap" | "tiny"; items: string[] }>;
   blocked: string[];
   shots: Array<{
     file: string;
@@ -178,8 +182,25 @@ export function lookProblems(report: AppLookReport): string[] {
   for (const page of report.blank) problems.push(`The ${page} page shows nothing.`);
   for (const wide of report.overflow)
     problems.push(
-      `On a phone the ${wide.page} page is ${wide.width}px wide and scrolls sideways; let it wrap or stack.`,
+      `On a phone the ${wide.page} page is ${wide.width}px wide and scrolls sideways${
+        wide.culprits?.length ? ` (${wide.culprits.join("; ")})` : ""
+      }; let it wrap or stack.`,
     );
+  for (const found of report.phone ?? []) {
+    const items = found.items.join("; ");
+    if (found.kind === "zoom")
+      problems.push(
+        `On iPhone, tapping these fields on ${found.page} zooms the page because their text is under 16px: ${items}. Use the kit's Input, Textarea, Select or SearchInput, or give them text-base.`,
+      );
+    else if (found.kind === "tap")
+      problems.push(
+        `On a phone these controls on ${found.page} are smaller than a fingertip (under 32px): ${items}. Use the kit's Button (size "icon" for icons) or give them at least size-10.`,
+      );
+    else
+      problems.push(
+        `On a phone this text on ${found.page} is too small to read (under 11px): ${items}. Use text-xs (12px) or larger.`,
+      );
+  }
   if (report.blocked.length)
     problems.push(
       `The app tried the network (${report.blocked[0]}); apps have none, so read data through @ocsc/app.`,

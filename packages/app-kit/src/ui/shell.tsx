@@ -76,7 +76,7 @@ function MobileNav({
           data-app-label={typeof item.label === "string" ? item.label : undefined}
           onClick={() => onNavigate(item.id)}
           className={cn(
-            "shrink-0 rounded-full px-3 py-1.5 text-[13px] font-semibold",
+            "inline-flex h-10 shrink-0 items-center rounded-full px-3.5 text-sm font-semibold",
             item.id === current ? "bg-foreground text-background" : "text-muted-foreground",
           )}
         >

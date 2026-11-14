@@ -55,7 +55,8 @@ export function Dialog({
       {open && (
         <>
           <Backdrop onClose={onClose} />
-          <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* On a phone a dialog rises from the bottom like an iOS sheet, full width. */}
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
             <motion.div
               role="dialog"
               aria-modal="true"
@@ -64,7 +65,7 @@ export function Dialog({
               exit={{ opacity: 0, scale: 0.97, y: 6 }}
               transition={{ type: "spring", stiffness: 420, damping: 34 }}
               className={cn(
-                "pointer-events-auto flex max-h-[min(90vh,860px)] w-full flex-col overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-lift",
+                "pointer-events-auto flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-border bg-popover text-popover-foreground shadow-lift sm:max-h-[min(90vh,860px)] sm:rounded-2xl",
                 width,
               )}
             >

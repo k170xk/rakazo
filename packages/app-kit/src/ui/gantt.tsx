@@ -454,6 +454,7 @@ export function Gantt<T extends AnyRow>({
                     type="button"
                     title={label}
                     aria-label={label}
+                    data-dense=""
                     onPointerDown={(event) => grab(event, bar, "move")}
                     onClick={() => Date.now() - justMoved.current > 300 && onOpen?.(bar.row)}
                     className={cn(
@@ -493,6 +494,7 @@ export function Gantt<T extends AnyRow>({
                     type="button"
                     title={label}
                     aria-label={label}
+                    data-dense=""
                     onPointerDown={(event) => grab(event, bar, "move")}
                     onClick={() => Date.now() - justMoved.current > 300 && onOpen?.(bar.row)}
                     className={cn(

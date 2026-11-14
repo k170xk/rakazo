@@ -151,7 +151,25 @@ cn(...classes) merges classes, later wins.
   then the work list. A tab per job to be done (Board, Calendar, Table, Settings), not per table.
 - Make it feel alive: Stagger the cards, counts that change, empty states with an action, toasts on save,
   detail drawers on click, keyboard-friendly forms. Group, filter and sort for the person's real questions.
-- Mobile works: Grid stacks, AppShell tabs scroll; avoid fixed widths.
+
+## Phones (most people open apps in the OCSC iPhone and Android app, often on site)
+Design the phone screen as carefully as the desktop one; the kit handles the basics only if you use it.
+- Width: build for 360-390px first, then add sm:/md:/lg: columns. Grid, Split and AppShell stack on their
+  own; never set fixed widths (w-[600px], min-w-[...]) on page content. Wide tables use TableView or sit in
+  overflow-x-auto; long words and numbers get min-w-0 and truncate or break-words.
+- Fingers: every control at least 40px tall (kit Button md, or size "icon"; never a bare icon in a
+  span). Keep 8px between neighbouring controls. Put the main action where a thumb reaches: in the page's
+  actions or a full-width Button at the end of a form.
+- Reading: body text 14px or more, nothing under 12px (text-xs). Key figures first; keep a phone card to
+  one idea. Text inputs use the kit fields, which are 16px on touch screens so iPhone does not zoom in
+  on tap; a raw <input> needs text-base.
+- Touch only: there is no hover on a phone, so never hide actions or details behind hover. Long lists
+  get a SearchInput and FilterChips. Dialogs open as bottom sheets and Drawers fill the phone; keep forms in one column
+  with the right input types (type="tel", "email", "number", "date"; inputMode="decimal" for amounts).
+- The app sits inside the OCSC app below its header, so never add your own status-bar or notch padding
+  and never use 100vh layouts or position: fixed bars; let the page scroll.
+- After each save the phone check reports sideways scrolling (naming the element), fields iOS would
+  zoom into, controls under 32px and text under 11px. Fix every one, then app_look with phone: true.
 
 ## Example
 \`\`\`tsx

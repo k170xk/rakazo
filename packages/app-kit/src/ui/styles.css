@@ -151,6 +151,24 @@
   * {
     border-color: hsl(var(--border));
   }
+  html {
+    /* iOS enlarges text on its own when the phone turns sideways. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Taps act at once instead of waiting to see whether a double tap zooms. */
+  a,
+  button,
+  input,
+  label,
+  select,
+  summary,
+  textarea,
+  [role="button"],
+  [role="tab"] {
+    touch-action: manipulation;
+  }
   html,
   body {
     margin: 0;

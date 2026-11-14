@@ -173,6 +173,22 @@ describe("lookAtApp", () => {
       "The app tried the network (https://example.com/api); apps have none, so read data through @ocsc/app.",
     ]);
   });
+
+  it("names what breaks a page on a phone", () => {
+    const problems = lookProblems({
+      ...CLEAN,
+      overflow: [{ page: "Jobs", width: 660, culprits: ['div "Fixed panel" 640px wide'] }],
+      phone: [
+        { page: "Jobs", kind: "zoom", items: ['input "Raw field"'] },
+        { page: "Jobs", kind: "tap", items: ['button "Remove" 24x24'] },
+        { page: "Jobs", kind: "tiny", items: ['"Fine print" 9px'] },
+      ],
+    });
+    expect(problems[0]).toContain('(div "Fixed panel" 640px wide)');
+    expect(problems[1]).toMatch(/zooms the page.*input "Raw field".*text-base/);
+    expect(problems[2]).toMatch(/smaller than a fingertip.*button "Remove" 24x24/);
+    expect(problems[3]).toMatch(/too small to read.*"Fine print" 9px/);
+  });
 });
 
 describe("save_app run check", () => {

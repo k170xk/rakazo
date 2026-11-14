@@ -564,13 +564,15 @@ export function Timeline<T extends AnyRow>({
                   <button
                     type="button"
                     onClick={() => onOpen?.(row)}
-                    className="w-[220px] shrink-0 truncate px-4 text-left text-[13px] font-semibold hover:text-primary"
+                    className="h-full w-[220px] shrink-0 truncate px-4 text-left text-[13px] font-semibold hover:text-primary"
                   >
                     {String(row[titleKey] ?? "")}
                   </button>
                   <div className="relative h-full flex-1">
                     <motion.button
                       type="button"
+                      data-dense=""
+                      aria-label={String(row[titleKey] ?? "")}
                       onClick={() => onOpen?.(row)}
                       initial={{ scaleX: 0, opacity: 0 }}
                       animate={{ scaleX: 1, opacity: 1 }}

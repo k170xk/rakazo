@@ -317,7 +317,7 @@ export function DataTable<T extends Record<string, unknown>>({
                         type="button"
                         onClick={() => toggleSort(column.key)}
                         className={cn(
-                          "inline-flex items-center gap-1 hover:text-foreground",
+                          "inline-flex min-h-8 items-center gap-1 hover:text-foreground",
                           active && "text-foreground",
                         )}
                       >
