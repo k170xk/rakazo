@@ -15432,3 +15432,6 @@ msgstr "Zoom in"
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
 msgstr "Zoom out"
+
+msgid "Slack not enabled"
+msgstr "Slack not enabled"
