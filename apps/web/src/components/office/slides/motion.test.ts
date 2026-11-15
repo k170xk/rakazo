@@ -19,6 +19,7 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   changeKeyframes,
+  composeSlideMotion,
   effectKeyframes,
   hiddenTargets,
   motionSummary,
@@ -174,6 +175,41 @@ describe("hiddenTargets", () => {
     expect(motionSummary(slide)).toBeNull();
     setSlideTransition(slide, { effect: "fade" });
     expect(motionSummary(slide)).toBe("transition");
+  });
+});
+
+describe("composeSlideMotion", () => {
+  it("keeps the fit scale in the same transform as the motion", () => {
+    const frames = changeKeyframes({
+      kind: "push",
+      durationMs: 500,
+      toward: { x: -1, y: 0 },
+      orientation: "horizontal",
+      inward: false,
+      thruBlack: false,
+    });
+    expect(composeSlideMotion(0.25, frames.incoming)?.[0]).toMatchObject({
+      transform: "scale(0.25) translate(100%, 0%)",
+    });
+    expect(composeSlideMotion(0.25, [{ opacity: 0 }, { opacity: 1 }])?.[0]).toEqual({
+      opacity: 0,
+    });
+  });
+
+  it("keeps a zoom centred while the slide stays scaled from its corner", () => {
+    const frames = changeKeyframes({
+      kind: "zoom",
+      durationMs: 500,
+      toward: { x: -1, y: 0 },
+      orientation: "horizontal",
+      inward: false,
+      thruBlack: false,
+    });
+    expect(
+      composeSlideMotion(0.5, frames.incoming, { width: 1280, height: 720 })?.[0],
+    ).toMatchObject({
+      transform: "scale(0.5) translate(384px, 216px) scale(0.4)",
+    });
   });
 });
 

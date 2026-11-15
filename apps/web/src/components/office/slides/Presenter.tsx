@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import { getSlides, isSlideHidden } from "@office-kit/pptx";
+import { useVisualViewportFrame } from "@rakazo/ui-web";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -29,6 +30,7 @@ export function Presenter({
   onClose: () => void;
 }) {
   const { t } = useLingui();
+  const frame = useVisualViewportFrame(true);
   const root = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const show = useRef<SlideShow | null>(null);
@@ -40,6 +42,7 @@ export function Presenter({
   }));
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const advanceAfter = useRef(0);
 
   useEffect(() => {
     const node = stage.current;
@@ -54,6 +57,7 @@ export function Presenter({
       setState,
     );
     show.current = player;
+    advanceAfter.current = performance.now() + 400;
     player.begin();
     return () => {
       player.destroy();
@@ -64,13 +68,18 @@ export function Presenter({
   useEffect(() => {
     const node = root.current;
     let entered = false;
-    node?.focus();
-    node
-      ?.requestFullscreen?.()
-      .then(() => {
-        entered = true;
-      })
-      .catch(() => {});
+    node?.focus({ preventScroll: true });
+    // The phone app already covers the screen. Its web view's native fullscreen
+    // freezes the page as a still, so the transitions never play there.
+    const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+    if (!coarse) {
+      node
+        ?.requestFullscreen?.()
+        .then(() => {
+          entered = true;
+        })
+        .catch(() => {});
+    }
     const onFullscreen = () => {
       if (entered && !document.fullscreenElement) closeRef.current();
     };
@@ -78,6 +87,9 @@ export function Presenter({
     return () => {
       document.removeEventListener("fullscreenchange", onFullscreen);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      // Leaving the slideshow must not leave the page scrolled, or the studio bar sits
+      // part-way down the phone screen.
+      document.scrollingElement?.scrollTo(0, 0);
     };
   }, []);
 
@@ -111,8 +123,11 @@ export function Presenter({
       aria-modal="true"
       aria-label={t`Slideshow`}
       data-testid="slides-presenter"
-      className="group fixed inset-0 z-[100] grid place-items-center bg-black outline-none"
+      className="group fixed inset-0 z-[100] grid place-items-center bg-black outline-none touch-manipulation"
+      style={frame ?? undefined}
       onClick={() => {
+        // The tap that opened Present lands on this layer on a phone and would skip the entrance.
+        if (performance.now() < advanceAfter.current) return;
         if (!show.current?.next()) onClose();
       }}
     >

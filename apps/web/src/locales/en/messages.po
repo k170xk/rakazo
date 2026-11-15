@@ -102,6 +102,11 @@ msgstr "{0, plural, one {# free month earned} other {# free months earned}}"
 msgid "{0, plural, one {# free month} other {# free months}}"
 msgstr "{0, plural, one {# free month} other {# free months}}"
 
+#. placeholder {0}: ids.length
+#: src/components/office/PdfStudio.tsx
+msgid "{0, plural, one {# markup} other {# markups}}"
+msgstr "{0, plural, one {# markup} other {# markups}}"
+
 #. placeholder {0}: block.messageCount
 #: src/pages/shell/evolve-history.tsx
 msgid "{0, plural, one {# message} other {# messages}}"
@@ -111,6 +116,11 @@ msgstr "{0, plural, one {# message} other {# messages}}"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{0, plural, one {# more} other {# more}}"
 msgstr "{0, plural, one {# more} other {# more}}"
+
+#. placeholder {0}: diff.pages.length
+#: src/components/office/pdf/history.tsx
+msgid "{0, plural, one {# page changed} other {# pages changed}}"
+msgstr "{0, plural, one {# page changed} other {# pages changed}}"
 
 #. placeholder {0}: diff.added
 #: src/components/office/word/history.tsx
@@ -380,6 +390,18 @@ msgstr "{0} tools"
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} was removed by your company's file cleanup. Ask the agent to make it again."
 msgstr "{0} was removed by your company's file cleanup. Ask the agent to make it again."
+
+#: src/pages/RoutineEditor.tsx
+msgid "{activeRoutines} of {maxActiveRoutines} on your account · {remaining} remaining"
+msgstr "{activeRoutines} of {maxActiveRoutines} on your account · {remaining} remaining"
+
+#: src/pages/RoutineEditor.tsx
+msgid "{activeRoutines} of {maxActiveRoutines} on your account · none remaining"
+msgstr "{activeRoutines} of {maxActiveRoutines} on your account · none remaining"
+
+#: src/components/office/pdf/history.tsx
+msgid "{added, plural, one {# markup added} other {# markups added}}"
+msgstr "{added, plural, one {# markup added} other {# markups added}}"
 
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
@@ -668,6 +690,14 @@ msgstr "{ref} ({count} cells)"
 msgid "{remaining} left"
 msgstr "{remaining} left"
 
+#: src/components/RoutineLimitDialog.tsx
+msgid "{remaining} of {max} remaining."
+msgstr "{remaining} of {max} remaining."
+
+#: src/components/office/pdf/history.tsx
+msgid "{removed, plural, one {# markup removed} other {# markups removed}}"
+msgstr "{removed, plural, one {# markup removed} other {# markups removed}}"
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# seat} other {# seats}}"
@@ -734,6 +764,7 @@ msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 
 #: src/pages/SharedChats.tsx
+#: src/pages/shell/computer-view.tsx
 msgid "{working} is working…"
 msgstr "{working} is working…"
 
@@ -812,6 +843,7 @@ msgstr "A connector links an agent to a system you already use, so it can read a
 msgid "A deadline with the same name and date as one already on the project is not added again."
 msgstr "A deadline with the same name and date as one already on the project is not added again."
 
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -821,6 +853,11 @@ msgstr "A newer version arrived first, so it has been loaded. Restore again if y
 #: src/components/office/WordStudio.tsx
 msgid "A newer version of this document was saved, so it has been loaded. Make your last change again."
 msgstr "A newer version of this document was saved, so it has been loaded. Make your last change again."
+
+#. placeholder {0}: displayName(copy.name)
+#: src/components/office/PdfStudio.tsx
+msgid "A newer version of this PDF arrived while you worked, so your markups were saved as a copy: {0}."
+msgstr "A newer version of this PDF arrived while you worked, so your markups were saved as a copy: {0}."
 
 #: src/components/office/SlidesStudio.tsx
 msgid "A newer version of this presentation was saved, so it has been loaded. Make your last change again."
@@ -942,6 +979,10 @@ msgstr "Accept all"
 #: src/components/office/word/WordRibbon.tsx
 msgid "Accept all changes"
 msgstr "Accept all changes"
+
+#: src/components/office/word/ReviewPanel.tsx
+msgid "Accept or reject the suggested changes."
+msgstr "Accept or reject the suggested changes."
 
 #: src/components/office/word/WordRibbon.tsx
 msgid "Accept this change"
@@ -1144,6 +1185,10 @@ msgstr "Add columns or a table"
 #: src/components/AskCard.tsx
 msgid "Add comment"
 msgstr "Add comment"
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Add comments, callouts or an approval stamp"
+msgstr "Add comments, callouts or an approval stamp"
 
 #: src/components/ModelCredits.tsx
 msgid "Add credits"
@@ -2058,6 +2103,7 @@ msgid "assignee"
 msgstr "assignee"
 
 #: src/components/office/history/VersionHistory.tsx
+#: src/components/office/PdfStudio.tsx
 msgid "Assistant"
 msgstr "Assistant"
 
@@ -2374,6 +2420,10 @@ msgstr "Brief: what it's for, who uses it and how"
 #: src/components/office/slides/SlidesRibbon.tsx
 msgid "Bring forward"
 msgstr "Bring forward"
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "Bring in a file from your computer."
+msgstr "Bring in a file from your computer."
 
 #: src/components/office/slides/SlidesRibbon.tsx
 msgid "Bring to front"
@@ -2768,6 +2818,10 @@ msgstr "Chats"
 msgid "Chats show a card for each tool an agent runs."
 msgstr "Chats show a card for each tool an agent runs."
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Check a drawing and cloud the issues"
+msgstr "Check a drawing and cloud the issues"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/pages/HostComputerPrompt.tsx
 #: src/pages/Onboarding.tsx
@@ -2927,6 +2981,14 @@ msgstr "Choose projects, people, or responses to provide context for your AI con
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
 msgstr "Choose what assistants may do with each document in Evolve's Document Library. Read only lets them search and quote it. Template lets them fill in a copy of a Word file. Hidden keeps it out of every answer. Changes apply straight away and are saved in Evolve."
+
+#: src/components/pages/SharePopover.tsx
+msgid "Choose who can open this, or download a copy."
+msgstr "Choose who can open this, or download a copy."
+
+#: src/components/pages/SharePopover.tsx
+msgid "Choose who can open this."
+msgstr "Choose who can open this."
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Chooses"
@@ -3111,6 +3173,10 @@ msgstr "Close navigation"
 msgid "Close panel"
 msgstr "Close panel"
 
+#: src/components/office/PdfStudio.tsx
+msgid "Close PDF"
+msgstr "Close PDF"
+
 #: src/components/office/SlidesStudio.tsx
 msgid "Close presentation"
 msgstr "Close presentation"
@@ -3130,6 +3196,12 @@ msgstr "Close spreadsheet"
 #: src/components/markdown-copy.tsx
 msgid "Close table"
 msgstr "Close table"
+
+#: src/components/apps/AppStudio.tsx
+#: src/components/studio/StudioFrame.tsx
+#: src/components/todos/todo-board.tsx
+msgid "Close this and go back."
+msgstr "Close this and go back."
 
 #: src/components/todos/todo-board.tsx
 msgid "Close to do list"
@@ -3944,6 +4016,7 @@ msgstr "Could not create your agent"
 msgid "Could not delete agent"
 msgstr "Could not delete agent"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete app"
 msgstr "Could not delete app"
@@ -3988,6 +4061,7 @@ msgstr "Could not delete that chat."
 msgid "Could not delete that list."
 msgstr "Could not delete that list."
 
+#: src/components/office/use-delete-document.ts
 #: src/pages/Artifacts.tsx
 msgid "Could not delete this file."
 msgstr "Could not delete this file."
@@ -4620,6 +4694,10 @@ msgstr "Couldn't create the whiteboard."
 msgid "Couldn't download the document."
 msgstr "Couldn't download the document."
 
+#: src/components/office/PdfStudio.tsx
+msgid "Couldn't download the PDF."
+msgstr "Couldn't download the PDF."
+
 #: src/components/office/SlidesStudio.tsx
 msgid "Couldn't download the presentation."
 msgstr "Couldn't download the presentation."
@@ -4686,6 +4764,10 @@ msgstr "Couldn't load your wallet"
 msgid "Couldn't make a new document."
 msgstr "Couldn't make a new document."
 
+#: src/components/office/PdfStudio.tsx
+msgid "Couldn't make a new PDF."
+msgstr "Couldn't make a new PDF."
+
 #: src/components/office/SlidesStudio.tsx
 msgid "Couldn't make a new presentation."
 msgstr "Couldn't make a new presentation."
@@ -4694,6 +4776,7 @@ msgstr "Couldn't make a new presentation."
 msgid "Couldn't make a new spreadsheet."
 msgstr "Couldn't make a new spreadsheet."
 
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -5085,7 +5168,6 @@ msgstr "Default Word template saved"
 #: src/components/PasskeySettings.tsx
 #: src/components/StorageDialog.tsx
 #: src/components/todos/todo-board.tsx
-#: src/components/whiteboards/whiteboard-studio.tsx
 #: src/pages/AdminAccess.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
@@ -5108,18 +5190,28 @@ msgstr "Delete"
 msgid "Delete \"{0}\"?"
 msgstr "Delete \"{0}\"?"
 
+#. placeholder {0}: app.title
 #. placeholder {0}: artifact.name
-#. placeholder {0}: bot.name
-#. placeholder {0}: group.name
+#. placeholder {0}: board.title
+#: src/components/apps/AppStudio.tsx
+#: src/components/office/PdfStudio.tsx
+#: src/components/office/SheetStudio.tsx
+#: src/components/office/SlidesStudio.tsx
+#: src/components/office/WordStudio.tsx
+#: src/components/todos/todo-board.tsx
+#: src/components/whiteboards/whiteboard-studio.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/evolve-history.tsx
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
+#. placeholder {0}: String(name)
+#. placeholder {0}: String(title)
 #. placeholder {0}: bot.name
-#. placeholder {0}: deleting.name
-#. placeholder {0}: item.name
+#: src/components/apps/AppStudio.tsx
+#: src/components/office/use-delete-document.ts
+#: src/components/todos/todo-board.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/shell/dialogs.tsx
@@ -5262,6 +5354,10 @@ msgstr "Deployment default ({0})"
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Describe a dashboard or tool and the agent builds it as an Evolve plugin"
 msgstr "Describe a dashboard or tool and the agent builds it as an Evolve plugin"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Describe a new app in the chat."
+msgstr "Describe a new app in the chat."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Describe an app and build it here, with the app open beside the chat."
@@ -5506,6 +5602,10 @@ msgstr "Download"
 msgid "Download .docx"
 msgstr "Download .docx"
 
+#: src/components/office/PdfStudio.tsx
+msgid "Download .pdf"
+msgstr "Download .pdf"
+
 #: src/components/office/SlidesStudio.tsx
 msgid "Download .pptx"
 msgstr "Download .pptx"
@@ -5521,6 +5621,22 @@ msgstr "Download (.zip)"
 #: src/components/ArtifactFileCard.tsx
 msgid "Download {name}"
 msgstr "Download {name}"
+
+#: src/components/office/WordStudio.tsx
+msgid "Download a copy of this document."
+msgstr "Download a copy of this document."
+
+#: src/components/office/PdfStudio.tsx
+msgid "Download a copy of this PDF."
+msgstr "Download a copy of this PDF."
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Download a copy of this presentation."
+msgstr "Download a copy of this presentation."
+
+#: src/components/office/SheetStudio.tsx
+msgid "Download a copy of this spreadsheet."
+msgstr "Download a copy of this spreadsheet."
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "Download as Excel"
@@ -5638,6 +5754,10 @@ msgstr "Each project, bridge or site keeps its own entries, seen only by the peo
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
 msgstr "Each round is saved as a new version (-v2, -v3), so earlier versions are never lost"
+
+#: src/components/apps/AppStudio.tsx
+msgid "Earlier versions of this app."
+msgstr "Earlier versions of this app."
 
 #: src/components/apps/AppsDialog.tsx
 #: src/components/apps/AppViewer.tsx
@@ -6122,6 +6242,10 @@ msgstr "Evolve checks the change again; nothing is saved until you approve the c
 msgid "Evolve could not list its tools just now. Try again in a moment."
 msgstr "Evolve could not list its tools just now. Try again in a moment."
 
+#: src/components/office/PdfStudio.tsx
+msgid "Evolve couldn't be reached, so nothing was saved. Check your connection and save again."
+msgstr "Evolve couldn't be reached, so nothing was saved. Check your connection and save again."
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "Evolve did not accept that change"
 msgstr "Evolve did not accept that change"
@@ -6139,6 +6263,19 @@ msgstr "Evolve Excel"
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Evolve is not linked on this server yet."
 msgstr "Evolve is not linked on this server yet."
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PdfStudio.tsx
+msgid "Evolve PDF"
+msgstr "Evolve PDF"
+
+#: src/components/office/PdfStudio.tsx
+msgid "Evolve PDF Studio"
+msgstr "Evolve PDF Studio"
+
+#: src/components/office/PdfStudio.tsx
+msgid "Evolve PDF Studio isn't installed on this server yet. Download the PDF, or ask the assistant to mark it up."
+msgstr "Evolve PDF Studio isn't installed on this server yet. Download the PDF, or ask the assistant to mark it up."
 
 #: src/components/GroupPeople.tsx
 msgid "Evolve people"
@@ -6231,6 +6368,10 @@ msgstr "Exemplar response, as sent to the AI"
 #: src/pages/shell/references-dialog.tsx
 msgid "exemplar responses"
 msgstr "exemplar responses"
+
+#: src/pages/shell/shell-sidebar.tsx
+msgid "Exl"
+msgstr "Exl"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Expand"
@@ -6820,9 +6961,17 @@ msgstr "Give them OCSC Intelligence in Evolve's menu access so they can open the
 msgid "Go home"
 msgstr "Go home"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Go to a page or select a markup and ask in the chat. The assistant receives the page and your selection as context."
+msgstr "Go to a page or select a markup and ask in the chat. The assistant receives the page and your selection as context."
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Go to agent"
 msgstr "Go to agent"
+
+#: src/components/RoutineLimitDialog.tsx
+msgid "Got it"
+msgstr "Got it"
 
 #: src/components/EmailFilingCard.tsx
 msgid "Graduate applications from careers@ go in Inbox › HR"
@@ -6996,6 +7145,15 @@ msgstr "Hide in slideshow"
 msgid "Hide password"
 msgstr "Hide password"
 
+#: src/components/apps/AppStudio.tsx
+#: src/components/studio/StudioFrame.tsx
+msgid "Hide the chat and keep working on the canvas."
+msgstr "Hide the chat and keep working on the canvas."
+
+#: src/components/todos/todo-board.tsx
+msgid "Hide the chat and keep working on the list."
+msgstr "Hide the chat and keep working on the list."
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Hide transcript"
 msgstr "Hide transcript"
@@ -7032,6 +7190,7 @@ msgstr "Highlight colours"
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/apps/AppStudio.tsx
 #: src/components/office/history/VersionHistory.tsx
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/slides/SlidesRibbon.tsx
@@ -7739,6 +7898,10 @@ msgstr "Let the assistant edit your presentation"
 msgid "Let the assistant edit your spreadsheet"
 msgstr "Let the assistant edit your spreadsheet"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Let the assistant mark up your PDF"
+msgstr "Let the assistant mark up your PDF"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Let's begin"
 msgstr "Let's begin"
@@ -7831,6 +7994,10 @@ msgstr "Load more"
 #: src/pages/RoutineRunHistory.tsx
 msgid "Load older runs"
 msgstr "Load older runs"
+
+#: src/components/office/PdfStudio.tsx
+msgid "Load version {newer}"
+msgstr "Load version {newer}"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Load web images automatically"
@@ -8199,6 +8366,10 @@ msgstr "MCP servers"
 #: src/pages/AdminCompanyPage.tsx
 msgid "MCP servers from the directory and company connectors such as InfraGrid 3D are turned on under Connectors."
 msgstr "MCP servers from the directory and company connectors such as InfraGrid 3D are turned on under Connectors."
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Measure areas and lengths, or take off quantities"
+msgstr "Measure areas and lengths, or take off quantities"
 
 #: src/components/AskCard.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -8793,6 +8964,10 @@ msgstr "New app from Excel"
 msgid "New blank document"
 msgstr "New blank document"
 
+#: src/components/office/PdfStudio.tsx
+msgid "New blank PDF"
+msgstr "New blank PDF"
+
 #: src/components/VaultSettings.tsx
 msgid "New card"
 msgstr "New card"
@@ -8879,6 +9054,10 @@ msgstr "New open-work item"
 #: src/pages/Auth.tsx
 msgid "New password"
 msgstr "New password"
+
+#: src/components/office/PdfStudio.tsx
+msgid "New PDF"
+msgstr "New PDF"
 
 #: src/components/office/SlidesStudio.tsx
 msgid "New presentation"
@@ -9065,6 +9244,10 @@ msgstr "No category"
 msgid "No cell changes"
 msgstr "No cell changes"
 
+#: src/components/office/pdf/history.tsx
+msgid "No changes to pages or markups"
+msgstr "No changes to pages or markups"
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "No cleanup has run yet."
 msgstr "No cleanup has run yet."
@@ -9239,6 +9422,10 @@ msgstr "No other documents yet"
 msgid "No other files in this chat"
 msgstr "No other files in this chat"
 
+#: src/components/office/PdfStudio.tsx
+msgid "No other PDFs yet"
+msgstr "No other PDFs yet"
+
 #: src/components/office/SlidesStudio.tsx
 msgid "No other presentations yet"
 msgstr "No other presentations yet"
@@ -9250,6 +9437,10 @@ msgstr "No other spreadsheets yet"
 #: src/components/office/slides/SlidesRibbon.tsx
 msgid "No outline"
 msgstr "No outline"
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "No PDFs yet"
+msgstr "No PDFs yet"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "No people match your search."
@@ -9367,6 +9558,10 @@ msgstr "None"
 msgid "None left"
 msgstr "None left"
 
+#: src/components/RoutineLimitDialog.tsx
+msgid "None remaining."
+msgstr "None remaining."
+
 #: src/pages/AdminStaffLimits.tsx
 msgid "None ticked: every model is allowed."
 msgstr "None ticked: every model is allowed."
@@ -9433,6 +9628,7 @@ msgstr "Not now"
 msgid "Not passed yet"
 msgstr "Not passed yet"
 
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -9784,6 +9980,10 @@ msgstr "Only the top-left cell can keep its value. Clear the other cells first, 
 msgid "Only Word, PowerPoint and Excel files open here."
 msgstr "Only Word, PowerPoint and Excel files open here."
 
+#: src/components/office/OfficeStudioHost.tsx
+msgid "Only Word, PowerPoint, Excel and PDF files open here."
+msgstr "Only Word, PowerPoint, Excel and PDF files open here."
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "Only you"
@@ -9825,6 +10025,34 @@ msgstr "Open <0>{0}</0> and enter this code:"
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Open a card or name it in chat when you want a change. The assistant updates the list for you."
 msgstr "Open a card or name it in chat when you want a change. The assistant updates the list for you."
+
+#: src/components/apps/AppStudio.tsx
+msgid "Open another app."
+msgstr "Open another app."
+
+#: src/components/office/WordStudio.tsx
+msgid "Open another document."
+msgstr "Open another document."
+
+#: src/components/todos/todo-board.tsx
+msgid "Open another list."
+msgstr "Open another list."
+
+#: src/components/office/PdfStudio.tsx
+msgid "Open another PDF."
+msgstr "Open another PDF."
+
+#: src/components/office/SlidesStudio.tsx
+msgid "Open another presentation."
+msgstr "Open another presentation."
+
+#: src/components/office/SheetStudio.tsx
+msgid "Open another spreadsheet."
+msgstr "Open another spreadsheet."
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Open another whiteboard."
+msgstr "Open another whiteboard."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Open any agent and ask for what you need, or create a new agent from the + button for a job you do often."
@@ -9901,6 +10129,12 @@ msgstr "Open one full screen, or edit an app you built."
 #: src/components/ArtifactFileCard.tsx
 msgid "Open or edit {name}"
 msgstr "Open or edit {name}"
+
+#: src/components/apps/AppStudio.tsx
+#: src/components/studio/StudioFrame.tsx
+#: src/components/todos/todo-board.tsx
+msgid "Open the chat beside this, to ask for a change."
+msgstr "Open the chat beside this, to ask for a change."
 
 #: src/components/LearningClinicCard.tsx
 msgid "Open the video"
@@ -10080,15 +10314,29 @@ msgid "Page"
 msgstr "Page"
 
 #. placeholder {0}: p.pageNumber
+#. placeholder {0}: page.page
+#. placeholder {0}: state.currentPage
+#: src/components/office/pdf/history.tsx
+#: src/components/office/PdfStudio.tsx
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Page {0}"
 msgstr "Page {0}"
+
+#. placeholder {0}: page.page
+#: src/components/office/pdf/history.tsx
+msgid "Page {0} added"
+msgstr "Page {0} added"
 
 #. placeholder {0}: page.pageNumber
 #. placeholder {1}: source.name
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Page {0} of {1} is too large to attach"
 msgstr "Page {0} of {1} is too large to attach"
+
+#. placeholder {0}: page.page
+#: src/components/office/pdf/history.tsx
+msgid "Page {0} removed"
+msgstr "Page {0} removed"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "Page {curPage}"
@@ -10216,12 +10464,18 @@ msgid "Paused"
 msgstr "Paused"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/components/office/PdfStudio.tsx
+#: src/components/office/registry.ts
 msgid "PDF"
 msgstr "PDF"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "PDF and PDF Studio"
 msgstr "PDF and PDF Studio"
+
+#: src/components/office/PdfStudio.tsx
+msgid "PDFs"
+msgstr "PDFs"
 
 #: src/components/AskCard.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -10728,6 +10982,10 @@ msgstr "Ready at {0}%"
 #: src/pages/AdminCompanyTools.tsx
 msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
 msgstr "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Rearrange the shapes into a cleaner layout."
+msgstr "Rearrange the shapes into a cleaner layout."
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Reason"
@@ -11257,6 +11515,7 @@ msgstr "Resize agents sidebar"
 msgid "Resize chat"
 msgstr "Resize chat"
 
+#: src/components/apps/AppStudio.tsx
 #: src/pages/ResizableSidePanel.tsx
 msgid "Resize panel"
 msgstr "Resize panel"
@@ -11369,6 +11628,10 @@ msgstr "Return to call with {0}"
 msgid "Return to OCSC Intelligence"
 msgstr "Return to OCSC Intelligence"
 
+#: src/components/todos/todo-board.tsx
+msgid "Return to the board."
+msgstr "Return to the board."
+
 #: src/components/office/word/ReviewPanel.tsx
 #: src/components/office/word/WordRibbon.tsx
 #: src/components/office/WordStudio.tsx
@@ -11431,12 +11694,21 @@ msgstr "Rounded rectangle"
 msgid "Routine"
 msgstr "Routine"
 
+#: src/components/RoutineLimitDialog.tsx
+#: src/pages/RoutineEditor.tsx
+msgid "Routine limit reached"
+msgstr "Routine limit reached"
+
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
 msgstr "Routines"
+
+#: src/components/RoutineLimitDialog.tsx
+msgid "Routines are switched off"
+msgstr "Routines are switched off"
 
 #: src/pages/AdminRoutineActivity.tsx
 msgid "Routines created each day and by whom, including ones since deleted. Updates every minute."
@@ -11449,6 +11721,10 @@ msgstr "Routines created per day"
 #: src/pages/AdminStaffLimits.tsx
 msgid "Routines on"
 msgstr "Routines on"
+
+#: src/pages/RoutineEditor.tsx
+msgid "Routines switched off by your company"
+msgstr "Routines switched off by your company"
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Routines switched on"
@@ -11626,8 +11902,13 @@ msgstr "Save the workspace and install current software."
 msgid "Save to Vault"
 msgstr "Save to Vault"
 
+#: src/components/office/PdfStudio.tsx
+msgid "Save your markups first, then restore."
+msgstr "Save your markups first, then restore."
+
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/EmailSignatureSettings.tsx
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -11637,6 +11918,11 @@ msgstr "Save to Vault"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Saved"
 msgstr "Saved"
+
+#. placeholder {0}: displayName(copy.name)
+#: src/components/office/PdfStudio.tsx
+msgid "Saved as {0}."
+msgstr "Saved as {0}."
 
 #. placeholder {0}: result.version
 #: src/components/apps/AppCodePanel.tsx
@@ -11675,6 +11961,7 @@ msgstr "Saving your workspace"
 msgid "Saving..."
 msgstr "Saving..."
 
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -11862,6 +12149,10 @@ msgstr "Security & Ops"
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Security code"
 msgstr "Security code"
+
+#: src/components/office/history/VersionHistory.tsx
+msgid "See earlier versions and what changed."
+msgstr "See earlier versions and what changed."
 
 #: src/components/apps/AppStudio.tsx
 msgid "See what changed"
@@ -12151,6 +12442,7 @@ msgid "Shapes"
 msgstr "Shapes"
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -12290,6 +12582,10 @@ msgstr "Show everything (admins)"
 #: src/components/office/slides/SlideRail.tsx
 msgid "Show in slideshow"
 msgstr "Show in slideshow"
+
+#: src/components/todos/todo-board.tsx
+msgid "Show items you have archived."
+msgstr "Show items you have archived."
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -12512,6 +12808,9 @@ msgstr "Skipped; left where it is."
 #: src/pages/RoutineEditor.tsx
 msgid "Slack message"
 msgstr "Slack message"
+
+msgid "Slack not enabled"
+msgstr "Slack not enabled"
 
 #. placeholder {0}: change.at + 1
 #: src/components/office/slides/history.tsx
@@ -12782,12 +13081,40 @@ msgid "Start {trialDays}-day free trial"
 msgstr "Start {trialDays}-day free trial"
 
 #: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Start a blank document, or upload a Word file."
+msgstr "Start a blank document, or upload a Word file."
+
+#: src/components/office/OfficeStudioHost.tsx
 msgid "Start a blank one, upload a {extension} file from your computer, or ask the assistant to make one."
 msgstr "Start a blank one, upload a {extension} file from your computer, or ask the assistant to make one."
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PdfStudio.tsx
+msgid "Start a blank PDF, or upload one."
+msgstr "Start a blank PDF, or upload one."
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/SlidesStudio.tsx
+msgid "Start a blank presentation, or upload a PowerPoint."
+msgstr "Start a blank presentation, or upload a PowerPoint."
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/SheetStudio.tsx
+msgid "Start a blank spreadsheet, or upload an Excel file."
+msgstr "Start a blank spreadsheet, or upload an Excel file."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
 msgstr "Start a group chat with colleagues from Evolve and the agents you choose. Everyone works in the same thread, and agents join in when they're needed."
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Start a new whiteboard."
+msgstr "Start a new whiteboard."
+
+#: src/components/todos/todo-board.tsx
+msgid "Start another to-do list."
+msgstr "Start another to-do list."
 
 #: src/components/LearningClinicCard.tsx
 msgid "Start clinic"
@@ -13068,6 +13395,10 @@ msgstr "Switch to yearly?"
 msgid "Switched on now"
 msgstr "Switched on now"
 
+#: src/pages/RoutineEditor.tsx
+msgid "Switched-on routines across every agent on your account, against the company limit."
+msgstr "Switched-on routines across every agent on your account, against the company limit."
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Switches for a whole kind of connector"
 msgstr "Switches for a whole kind of connector"
@@ -13281,6 +13612,10 @@ msgstr "That selection is too large to format at once. Select fewer cells."
 msgid "That version couldn't be restored."
 msgstr "That version couldn't be restored."
 
+#: src/components/office/PdfStudio.tsx
+msgid "That version of the PDF doesn't exist."
+msgstr "That version of the PDF doesn't exist."
+
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "That wasn't saved."
 msgstr "That wasn't saved."
@@ -13329,6 +13664,15 @@ msgstr "The app's code is still loading."
 msgid "the assistant"
 msgstr "the assistant"
 
+#: src/components/office/PdfStudio.tsx
+msgid "The assistant is marking up a copy…"
+msgstr "The assistant is marking up a copy…"
+
+#: src/components/apps/AppStudio.tsx
+#: src/components/studio/StudioFrame.tsx
+msgid "The assistant is working. Open the chat to follow along."
+msgstr "The assistant is working. Open the chat to follow along."
+
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."
 msgstr "The browser keeps dropping the microphone. Start dictation again to retry."
@@ -13373,6 +13717,10 @@ msgstr "The group was created, but these people could not be added: {list}"
 msgid "The icon couldn't be drawn."
 msgstr "The icon couldn't be drawn."
 
+#: src/components/apps/AppStudio.tsx
+msgid "The information this app reads and writes."
+msgstr "The information this app reads and writes."
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "The key is checked with the provider, then stored encrypted on the server."
 msgstr "The key is checked with the provider, then stored encrypted on the server."
@@ -13392,9 +13740,18 @@ msgstr "The model provider returned an error."
 msgid "The model returned an unusable response. Try again."
 msgstr "The model returned an unusable response. Try again."
 
+#: src/components/apps/AppStudio.tsx
+#: src/components/studio/StudioFrame.tsx
+msgid "The other tools for this studio."
+msgstr "The other tools for this studio."
+
 #: src/pages/SharedPage.tsx
 msgid "The owner may have turned off its link or deleted it."
 msgstr "The owner may have turned off its link or deleted it."
+
+#: src/components/office/pdf/history.tsx
+msgid "The pages and markups are the same as in the version before."
+msgstr "The pages and markups are the same as in the version before."
 
 #: src/lib/model-connection-preflight.ts
 msgid "The provider is rate-limiting requests."
@@ -13438,6 +13795,10 @@ msgstr "The shared link stops working"
 msgid "The slides' text and notes are the same as in the version before; only design or layout changed."
 msgstr "The slides' text and notes are the same as in the version before; only design or layout changed."
 
+#: src/components/apps/AppStudio.tsx
+msgid "The source of this app."
+msgstr "The source of this app."
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "the Studio"
 msgstr "the Studio"
@@ -13449,6 +13810,10 @@ msgstr "the template"
 #: src/components/office/word/history.tsx
 msgid "The text is the same as in the version before; only formatting or layout changed."
 msgstr "The text is the same as in the version before; only formatting or layout changed."
+
+#: src/components/office/pdf/history.tsx
+msgid "The text on this page changed."
+msgstr "The text on this page changed."
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
@@ -13475,10 +13840,18 @@ msgstr "There are no more tracked changes."
 msgid "There was an issue"
 msgstr "There was an issue"
 
+#: src/components/office/PdfStudio.tsx
+msgid "There was nothing to save."
+msgstr "There was nothing to save."
+
 #: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/WordStudio.tsx
 msgid "There's no room for a new document. Free up storage and try again."
 msgstr "There's no room for a new document. Free up storage and try again."
+
+#: src/components/office/PdfStudio.tsx
+msgid "There's no room for a new PDF. Free up storage and try again."
+msgstr "There's no room for a new PDF. Free up storage and try again."
 
 #: src/components/office/SlidesStudio.tsx
 msgid "There's no room for a new presentation. Free up storage and try again."
@@ -13491,6 +13864,10 @@ msgstr "There's no room for a new spreadsheet. Free up storage and try again."
 #: src/components/office/use-document-upload.tsx
 msgid "There's no room for this file. Free up storage and try again."
 msgstr "There's no room for this file. Free up storage and try again."
+
+#: src/components/office/PdfStudio.tsx
+msgid "There's no room to save this PDF. Free up storage and try again."
+msgstr "There's no room to save this PDF. Free up storage and try again."
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
@@ -13711,6 +14088,10 @@ msgstr "This email draft is not available"
 msgid "This file ({fileSize}) is over the upload limit."
 msgstr "This file ({fileSize}) is over the upload limit."
 
+#: src/components/office/PdfStudio.tsx
+msgid "This file can't be saved here."
+msgstr "This file can't be saved here."
+
 #: src/components/office/use-document-upload.tsx
 msgid "This file couldn't be read. Check it is a {extension} file without macros."
 msgstr "This file couldn't be read. Check it is a {extension} file without macros."
@@ -13764,6 +14145,22 @@ msgstr "This month"
 #: src/pages/KnowledgeSection.tsx
 msgid "This note is too long for your agents to read in full. Keep the parts that matter most, or split it into several notes."
 msgstr "This note is too long for your agents to read in full. Keep the parts that matter most, or split it into several notes."
+
+#: src/components/office/PdfStudio.tsx
+msgid "This PDF couldn't be opened here. Try again, download it, or ask the assistant to mark it up."
+msgstr "This PDF couldn't be opened here. Try again, download it, or ask the assistant to mark it up."
+
+#: src/components/office/PdfStudio.tsx
+msgid "This PDF is over the upload limit, so it wasn't saved."
+msgstr "This PDF is over the upload limit, so it wasn't saved."
+
+#: src/components/office/PdfStudio.tsx
+msgid "This PDF isn't loaded yet."
+msgstr "This PDF isn't loaded yet."
+
+#: src/components/office/PdfStudio.tsx
+msgid "This PDF wasn't saved. Try again."
+msgstr "This PDF wasn't saved. Try again."
 
 #: src/pages/OrganizationSettingsPanel.tsx
 msgid "This permanently deletes every agent, chat, message and file in it, cancels its plan and removes everyone else's access. This cannot be undone."
@@ -14059,6 +14456,7 @@ msgstr "Try"
 
 #: src/components/LearningClinicCard.tsx
 #: src/components/office/DocumentLoadPanel.tsx
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/pages/PageNotice.tsx
@@ -14243,6 +14641,11 @@ msgid "Untitled document"
 msgstr "Untitled document"
 
 #: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PdfStudio.tsx
+msgid "Untitled PDF"
+msgstr "Untitled PDF"
+
+#: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/SlidesStudio.tsx
 msgid "Untitled presentation"
 msgstr "Untitled presentation"
@@ -14316,6 +14719,7 @@ msgstr "Update the document, or rewrite and change paragraphs"
 msgid "Updated from Excel"
 msgstr "Updated from Excel"
 
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/WordStudio.tsx
 msgid "Updated to version {flash}"
 msgstr "Updated to version {flash}"
@@ -14366,6 +14770,11 @@ msgstr "Upload"
 #: src/components/office/WordStudio.tsx
 msgid "Upload a .docx file"
 msgstr "Upload a .docx file"
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PdfStudio.tsx
+msgid "Upload a .pdf file"
+msgstr "Upload a .pdf file"
 
 #: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/SlidesStudio.tsx
@@ -14585,6 +14994,7 @@ msgid "Version {0}"
 msgstr "Version {0}"
 
 #. placeholder {0}: row.version
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -14606,6 +15016,10 @@ msgstr "Version {0} is waiting for Evolve's developers."
 #: src/components/apps/AppPublishSection.tsx
 msgid "Version {0} was sent to {1} colleagues for peer review. After three approvals Evolve's developers do the final review and security check."
 msgstr "Version {0} was sent to {1} colleagues for peer review. After three approvals Evolve's developers do the final review and security check."
+
+#: src/components/office/PdfStudio.tsx
+msgid "Version {newer} arrived. Save your markups as a copy, or load it and leave them."
+msgstr "Version {newer} arrived. Save your markups as a copy, or load it and leave them."
 
 #: src/components/office/history/VersionHistory.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -14946,6 +15360,10 @@ msgstr "Who can use {name}"
 msgid "Who can use it"
 msgstr "Who can use it"
 
+#: src/components/apps/AppStudio.tsx
+msgid "Who can use this app, and how it is set up."
+msgstr "Who can use this app, and how it is set up."
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "Who gets a computer"
 msgstr "Who gets a computer"
@@ -15056,6 +15474,10 @@ msgstr "Working on your app…"
 msgid "Working on your document…"
 msgstr "Working on your document…"
 
+#: src/components/office/PdfStudio.tsx
+msgid "Working on your PDF…"
+msgstr "Working on your PDF…"
+
 #: src/components/office/SlidesStudio.tsx
 msgid "Working on your presentation…"
 msgstr "Working on your presentation…"
@@ -15141,6 +15563,7 @@ msgstr "Yesterday"
 
 #: src/components/AskCard.tsx
 #: src/components/office/history/VersionHistory.tsx
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/WordStudio.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/components/studio/StudioActivity.tsx
@@ -15151,6 +15574,10 @@ msgstr "Yesterday"
 #: src/pages/shell/shell-sidebar.tsx
 msgid "You"
 msgstr "You"
+
+#: src/components/RoutineLimitDialog.tsx
+msgid "You already have {active} routines switched on, the most your administrator allows ({max}). Switch one off or delete it first."
+msgstr "You already have {active} routines switched on, the most your administrator allows ({max}). Switch one off or delete it first."
 
 #: src/components/AppScopeAskCard.tsx
 msgid "You answered: {chosen}"
@@ -15168,6 +15595,10 @@ msgstr "You can close this tab if it does not redirect automatically."
 #: src/pages/McpOAuthCallback.tsx
 msgid "You can close this window."
 msgstr "You can close this window."
+
+#: src/components/studio/StudioFrame.tsx
+msgid "You can edit again when this finishes."
+msgstr "You can edit again when this finishes."
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "You can select up to {maxPages} pages at a time"
@@ -15190,6 +15621,7 @@ msgid "You have completed this clinic."
 msgstr "You have completed this clinic."
 
 #: src/pages/shell/computer-overlay.tsx
+#: src/pages/shell/computer-view.tsx
 msgid "You have control"
 msgstr "You have control"
 
@@ -15204,6 +15636,10 @@ msgstr "You're all set"
 #: src/pages/Shell.tsx
 msgid "Your administrator chooses the models for the company."
 msgstr "Your administrator chooses the models for the company."
+
+#: src/components/RoutineLimitDialog.tsx
+msgid "Your administrator has not allowed you to switch on routines. Ask them if you need one."
+msgstr "Your administrator has not allowed you to switch on routines. Ask them if you need one."
 
 #: src/pages/Onboarding.tsx
 msgid "Your administrator is setting up OCSC Intelligence for the company. This page opens your assistant as soon as it is ready."
@@ -15251,6 +15687,10 @@ msgstr "Your apps"
 #: src/components/todos/todo-board.tsx
 msgid "Your assistant added this item."
 msgstr "Your assistant added this item."
+
+#: src/components/RoutineLimitDialog.tsx
+msgid "Your assistant could not create that routine. You already have {active} switched on, the most your administrator allows ({max}). Switch one off or delete it first, then ask again."
+msgstr "Your assistant could not create that routine. You already have {active} switched on, the most your administrator allows ({max}). Switch one off or delete it first, then ask again."
 
 #: src/components/EmailFilingSettings.tsx
 msgid "Your assistants can look through your Inbox, in chat or in a routine, and suggest a folder for each email. Nothing moves until you press File on the card, and Undo puts an email back."
@@ -15303,6 +15743,10 @@ msgstr "Your email address"
 #: src/components/EmailFilingCard.tsx
 msgid "Your folders"
 msgstr "Your folders"
+
+#: src/components/office/PdfStudio.tsx
+msgid "Your latest markups couldn't be saved. Leave this PDF anyway?"
+msgstr "Your latest markups couldn't be saved. Leave this PDF anyway?"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Your lists, including the personal one your email routines already update."
@@ -15433,9 +15877,6 @@ msgstr "Zoom in"
 msgid "Zoom out"
 msgstr "Zoom out"
 
-msgid "Slack not enabled"
-msgstr "Slack not enabled"
-
 #: src/lib/run-error.ts
 msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
 msgstr "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
@@ -15487,3 +15928,163 @@ msgstr "Reply failures"
 #: src/pages/AdminReplyFailures.tsx
 msgid "Too much to read"
 msgstr "Too much to read"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "{running} running"
+msgstr "{running} running"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "{running} running, {waiting} waiting"
+msgstr "{running} running, {waiting} waiting"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "about {daysLeft} days"
+msgstr "about {daysLeft} days"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Answering"
+msgstr "Answering"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "App server"
+msgstr "App server"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "App: documents and tools"
+msgstr "App: documents and tools"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "App: large documents"
+msgstr "App: large documents"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "App: video"
+msgstr "App: video"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Change in period"
+msgstr "Change in period"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Chat replies"
+msgstr "Chat replies"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computer host (Incus)"
+msgstr "Computer host (Incus)"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computers off"
+msgstr "Computers off"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computers on"
+msgstr "Computers on"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computers on and replies in progress"
+msgstr "Computers on and replies in progress"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Couldn't load server readings"
+msgstr "Couldn't load server readings"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "CPU busy"
+msgstr "CPU busy"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Disk used"
+msgstr "Disk used"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Full in"
+msgstr "Full in"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Large documents"
+msgstr "Large documents"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Last 24 hours"
+msgstr "Last 24 hours"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Load (1 min)"
+msgstr "Load (1 min)"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "No readings yet. The first arrives within a minute of the worker starting."
+msgstr "No readings yet. The first arrives within a minute of the worker starting."
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Not answering"
+msgstr "Not answering"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Read every minute. Last reading {sampledAt}. Charts show the peak."
+msgstr "Read every minute. Last reading {sampledAt}. Charts show the peak."
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server"
+msgstr "Routine server"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server load"
+msgstr "Routine server load"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server runner"
+msgstr "Routine server runner"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server tool commands"
+msgstr "Routine server tool commands"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server: tools and overflow"
+msgstr "Routine server: tools and overflow"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines running"
+msgstr "Routines running"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines running now"
+msgstr "Routines running now"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Running on app server"
+msgstr "Running on app server"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Running on routine server"
+msgstr "Running on routine server"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Servers"
+msgstr "Servers"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Tool commands"
+msgstr "Tool commands"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Tool runners"
+msgstr "Tool runners"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Tools and overflow"
+msgstr "Tools and overflow"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Used"
+msgstr "Used"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Waiting"
+msgstr "Waiting"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Waiting to start"
+msgstr "Waiting to start"

@@ -22,7 +22,6 @@ import {
   LayoutGrid,
   Pencil,
   Plus,
-  Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { pageMutationOptions } from "../../lib/page-actions";
@@ -32,9 +31,9 @@ import { AppIcon } from "../apps/AppIcon";
 import { SharePopover } from "../pages/SharePopover";
 import { WhiteboardCanvas } from "../pages/WhiteboardCanvas";
 import { FeatureStudioWelcome } from "../studio/FeatureStudioWelcome";
-import { control, pill, StudioFrame, useStudioDock } from "../studio/StudioFrame";
+import { control, pill, StudioFrame, StudioHint, useStudioDock } from "../studio/StudioFrame";
+import { StudioSwitcherDelete } from "../studio/StudioSwitcherDelete";
 import { boardBoundsWithArrows, exportWhiteboardPdf } from "./whiteboard-export";
-
 
 const COARSE = "(pointer: coarse)";
 
@@ -187,7 +186,9 @@ export function WhiteboardStudio({
     if (!window.confirm(t`Delete this whiteboard?`)) return;
     try {
       await queries.pages.remove.call({ pageId });
-      if (selected === pageId) setSelected(null);
+      if (selected === pageId) {
+        setSelected(boards.find((board) => board.id !== pageId)?.id ?? null);
+      }
       await queryClient.invalidateQueries({ queryKey: queries.pages.list.key() });
     } catch {
       toast.error(t`Couldn't change the whiteboard.`);
@@ -312,149 +313,154 @@ export function WhiteboardStudio({
 
   return (
     <>
-    <FeatureStudioWelcome kind="board" running={running} />
-    <StudioFrame
-      testId="whiteboard-studio"
-      title={page.data?.title ?? t`Whiteboards`}
-      paneLabel={page.data?.title}
-      product={t`Evolve Board`}
-      onClose={onClose}
-      printable
-      dock={dock}
-      paneRef={boardPane}
-      workingLabel={t`Working on your whiteboard…`}
-      start={
-        <>
-          <button
-            type="button"
-            data-testid="whiteboard-new"
-            data-haptic="tap"
-            aria-label={t`New whiteboard`}
-            title={t`New whiteboard`}
-            onClick={() => void create(t`Whiteboard`)}
-            className={`${control} size-8 sm:size-[35px]`}
-          >
-            <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
-          </button>
-          {renaming ? (
-            <Input
-              autoFocus
-              value={titleDraft}
-              aria-label={t`Rename`}
-              className="h-8 max-w-xs"
-              onChange={(event) => setTitleDraft(event.target.value)}
-              onBlur={() => void rename(titleDraft)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void rename(titleDraft);
-                if (event.key === "Escape") setRenaming(false);
-              }}
-            />
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                data-testid="whiteboard-switcher"
-                render={
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="min-w-0 max-w-[38vw] gap-1.5 font-medium sm:max-w-[280px]"
-                  />
-                }
-              >
-                {selected ? <BoardMark pageId={selected} icon={page.data?.icon} /> : null}
-                <span className="truncate">
-                  {page.data?.title ??
-                    boards.find((b) => b.id === selected)?.title ??
-                    t`Whiteboard`}
-                </span>
-                <ChevronDown className="size-3.5 shrink-0 opacity-65" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-72">
-                {boards.map((board) => (
-                  <DropdownMenuItem
-                    key={board.id}
-                    onClick={() => setSelected(board.id)}
-                    className="flex items-center gap-2"
-                  >
-                    <BoardMark pageId={board.id} icon={board.icon} />
-                    <span className="min-w-0 flex-1 truncate">{board.title}</span>
-                    {board.id === selected ? (
-                      <Check className="size-4 shrink-0 text-primary" />
-                    ) : null}
-                  </DropdownMenuItem>
-                ))}
-                {boards.length > 0 ? <DropdownMenuSeparator /> : null}
-                <DropdownMenuItem onClick={() => void create(t`Whiteboard`)}>
-                  <Plus className="size-4" />
-                  <Trans>New whiteboard</Trans>
-                </DropdownMenuItem>
-                {selected ? (
-                  <>
+      <FeatureStudioWelcome kind="board" running={running} />
+      <StudioFrame
+        testId="whiteboard-studio"
+        title={page.data?.title ?? t`Whiteboards`}
+        paneLabel={page.data?.title}
+        product={t`Evolve Board`}
+        onClose={onClose}
+        printable
+        dock={dock}
+        paneRef={boardPane}
+        workingLabel={t`Working on your whiteboard…`}
+        start={
+          <>
+            <StudioHint label={t`Start a new whiteboard.`}>
+            <button
+              type="button"
+              data-testid="whiteboard-new"
+              data-haptic="tap"
+              aria-label={t`New whiteboard`}
+              onClick={() => void create(t`Whiteboard`)}
+              className={`${control} size-8 sm:size-[35px]`}
+            >
+              <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
+            </button>
+            </StudioHint>
+            {renaming ? (
+              <Input
+                autoFocus
+                value={titleDraft}
+                aria-label={t`Rename`}
+                className="h-8 max-w-xs"
+                onChange={(event) => setTitleDraft(event.target.value)}
+                onBlur={() => void rename(titleDraft)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void rename(titleDraft);
+                  if (event.key === "Escape") setRenaming(false);
+                }}
+              />
+            ) : (
+              <DropdownMenu>
+                <StudioHint label={t`Open another whiteboard.`}>
+                <DropdownMenuTrigger
+                  data-testid="whiteboard-switcher"
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="min-w-0 max-w-[38vw] gap-1.5 font-medium sm:max-w-[280px]"
+                    />
+                  }
+                >
+                  {selected ? <BoardMark pageId={selected} icon={page.data?.icon} /> : null}
+                  <span className="truncate">
+                    {page.data?.title ??
+                      boards.find((b) => b.id === selected)?.title ??
+                      t`Whiteboard`}
+                  </span>
+                  <ChevronDown className="size-3.5 shrink-0 opacity-65" />
+                </DropdownMenuTrigger>
+                </StudioHint>
+                <DropdownMenuContent align="start" className="w-72">
+                  {boards.map((board) => (
                     <DropdownMenuItem
-                      onClick={() => {
-                        setTitleDraft(page.data?.title ?? "");
-                        setRenaming(true);
-                      }}
+                      key={board.id}
+                      onClick={() => setSelected(board.id)}
+                      className="flex items-center gap-2"
                     >
-                      <Pencil className="size-4" />
-                      <Trans>Rename</Trans>
+                      <BoardMark pageId={board.id} icon={board.icon} />
+                      <span className="min-w-0 flex-1 truncate">{board.title}</span>
+                      {board.id === selected ? (
+                        <Check className="size-4 shrink-0 text-primary" />
+                      ) : null}
+                      <StudioSwitcherDelete
+                        label={t`Delete ${board.title}`}
+                        onDelete={() => void remove(board.id)}
+                      />
                     </DropdownMenuItem>
-                    <DropdownMenuItem variant="destructive" onClick={() => void remove(selected)}>
-                      <Trash2 className="size-4" />
-                      <Trans>Delete</Trans>
-                    </DropdownMenuItem>
-                  </>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </>
-      }
-      actions={
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            disabled={!page.data}
-            aria-label={t`Tidy layout`}
-            className={`${pill} disabled:opacity-40`}
-          >
-            <LayoutGrid className="size-4" strokeWidth={1.8} />
-            <span className="max-sm:sr-only">
-              <Trans>Tidy layout</Trans>
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => void tidy("right")}>
-              <ArrowRight className="size-4" />
-              <Trans>Flow left to right</Trans>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void tidy("down")}>
-              <ArrowDown className="size-4" />
-              <Trans>Flow top to bottom</Trans>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void tidy("lanes")}>
-              <Columns3 className="size-4" />
-              <Trans>Columns by section</Trans>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void tidy("grid")}>
-              <LayoutGrid className="size-4" />
-              <Trans>Balanced grid</Trans>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      }
-      share={shareControl}
-    >
-      {page.data && session ? (
-        <WhiteboardCanvas
-          key={page.data.id}
-          pageId={page.data.id}
-          title={page.data.title}
-          code={page.data.code}
-          version={page.data.version}
-          session={session}
-        />
-      ) : null}
-    </StudioFrame>
+                  ))}
+                  {boards.length > 0 ? <DropdownMenuSeparator /> : null}
+                  <DropdownMenuItem onClick={() => void create(t`Whiteboard`)}>
+                    <Plus className="size-4" />
+                    <Trans>New whiteboard</Trans>
+                  </DropdownMenuItem>
+                  {selected ? (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setTitleDraft(page.data?.title ?? "");
+                          setRenaming(true);
+                        }}
+                      >
+                        <Pencil className="size-4" />
+                        <Trans>Rename</Trans>
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </>
+        }
+        actions={
+          <DropdownMenu>
+            <StudioHint label={t`Rearrange the shapes into a cleaner layout.`}>
+            <DropdownMenuTrigger
+              disabled={!page.data}
+              aria-label={t`Tidy layout`}
+              className={`${pill} disabled:opacity-40`}
+            >
+              <LayoutGrid className="size-4" strokeWidth={1.8} />
+              <span className="max-sm:sr-only">
+                <Trans>Tidy layout</Trans>
+              </span>
+            </DropdownMenuTrigger>
+            </StudioHint>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => void tidy("right")}>
+                <ArrowRight className="size-4" />
+                <Trans>Flow left to right</Trans>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void tidy("down")}>
+                <ArrowDown className="size-4" />
+                <Trans>Flow top to bottom</Trans>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void tidy("lanes")}>
+                <Columns3 className="size-4" />
+                <Trans>Columns by section</Trans>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void tidy("grid")}>
+                <LayoutGrid className="size-4" />
+                <Trans>Balanced grid</Trans>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+        share={shareControl}
+      >
+        {page.data && session ? (
+          <WhiteboardCanvas
+            key={page.data.id}
+            pageId={page.data.id}
+            title={page.data.title}
+            code={page.data.code}
+            version={page.data.version}
+            session={session}
+          />
+        ) : null}
+      </StudioFrame>
     </>
   );
 }

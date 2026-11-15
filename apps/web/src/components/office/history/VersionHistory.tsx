@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, History, X } from "lucide-react";
 import { useState } from "react";
 import { useSpaceQueries } from "../../../lib/query";
 import { formatRelativeTime } from "../../../lib/relative-time";
-import { pill } from "../../studio/StudioFrame";
+import { pill, StudioHint } from "../../studio/StudioFrame";
 import { fetchDownload } from "../word/upload";
 import type { VersionRow } from "../word/versions";
 import type { HistoryFormat } from "./format";
@@ -40,20 +40,22 @@ export function HistoryButton({
 }) {
   const { t } = useLingui();
   return (
-    <button
-      type="button"
-      data-testid="office-history"
-      disabled={disabled}
-      aria-pressed={open}
-      aria-label={t`Version history`}
-      onClick={() => onOpenChange(!open)}
-      className={`${pill} disabled:opacity-40 aria-pressed:bg-foreground/[0.06] ${className ?? ""}`}
-    >
-      <History className="size-4" strokeWidth={1.8} />
-      <span className="max-sm:sr-only">
-        <Trans>History</Trans>
-      </span>
-    </button>
+    <StudioHint label={t`See earlier versions and what changed.`}>
+      <button
+        type="button"
+        data-testid="office-history"
+        disabled={disabled}
+        aria-pressed={open}
+        aria-label={t`Version history`}
+        onClick={() => onOpenChange(!open)}
+        className={`${pill} disabled:opacity-40 aria-pressed:bg-foreground/[0.06] ${className ?? ""}`}
+      >
+        <History className="size-4" strokeWidth={1.8} />
+        <span className="max-sm:sr-only">
+          <Trans>History</Trans>
+        </span>
+      </button>
+    </StudioHint>
   );
 }
 

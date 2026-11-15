@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Textarea,
+  toast,
 } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -36,8 +37,12 @@ import { useNavigate } from "react-router-dom";
 import { ownerAppSource } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
+import { useAppPanelResize } from "./app-panel-width";
+import { columnResizeHandleClass } from "../studio/column-resize";
 import { StudioChatPane } from "../studio/StudioChatPane";
-import { control, StudioProductMark } from "../studio/StudioFrame";
+import { StudioSwitcherDelete } from "../studio/StudioSwitcherDelete";
+import { usePublishedStudioChatWidth } from "../studio/studio-chat-width";
+import { control, StudioHint, StudioProductMark } from "../studio/StudioFrame";
 import { StudioFloatingDock, studioDockStyle } from "../studio/studio-dock";
 import { FeatureStudioWelcome } from "../studio/FeatureStudioWelcome";
 import { AppCodePanel } from "./AppCodePanel";
@@ -91,8 +96,8 @@ export function AppStudio({
   /** Latest messages and actions, shown while the chat panel is closed. */
   activity?: readonly StudioCard[];
   onReply?: (text: unknown) => void;
-  /** Switches the studio to another app this person owns. */
-  onSelectApp?: (pageId: string) => void;
+  /** Switches the studio to another app this person owns. Null leaves none open. */
+  onSelectApp?: (pageId: string | null) => void;
   /** Sends a new-app request into the chat beside the studio. */
   onBuild?: (idea: string) => void;
   returnFocus?: () => boolean;
@@ -238,17 +243,55 @@ export function AppStudio({
     setEditing(null);
   }
 
-  const tabs: { id: Panel; label: string; icon: ReactNode }[] = [
-    { id: "data", label: t`Data`, icon: <Database className="size-4" strokeWidth={1.8} /> },
-    { id: "code", label: t`Code`, icon: <Code2 className="size-4" strokeWidth={1.8} /> },
-    { id: "history", label: t`History`, icon: <History className="size-4" strokeWidth={1.8} /> },
+  async function removeApp(appId: string, title: string) {
+    if (!window.confirm(t`Delete ${String(title)}?`)) return;
+    try {
+      await queries.pages.remove.call({ pageId: appId });
+      queryClient.setQueriesData<{ items?: { id: string }[] }>(
+        { queryKey: queries.pages.list.key() },
+        (current) =>
+          current?.items
+            ? { ...current, items: current.items.filter((item) => item.id !== appId) }
+            : current,
+      );
+      if (page?.id === appId) {
+        onSelectApp?.(ownApps.find((app) => app.id !== appId)?.id ?? null);
+      }
+      await queryClient.invalidateQueries({ queryKey: queries.pages.list.key() });
+    } catch {
+      toast.error(t`Could not delete app`);
+    }
+  }
+
+  const tabs: { id: Panel; label: string; hint: string; icon: ReactNode }[] = [
+    {
+      id: "data",
+      label: t`Data`,
+      hint: t`The information this app reads and writes.`,
+      icon: <Database className="size-4" strokeWidth={1.8} />,
+    },
+    {
+      id: "code",
+      label: t`Code`,
+      hint: t`The source of this app.`,
+      icon: <Code2 className="size-4" strokeWidth={1.8} />,
+    },
+    {
+      id: "history",
+      label: t`History`,
+      hint: t`Earlier versions of this app.`,
+      icon: <History className="size-4" strokeWidth={1.8} />,
+    },
     {
       id: "settings",
       label: t`Settings`,
+      hint: t`Who can use this app, and how it is set up.`,
       icon: <Settings2 className="size-4" strokeWidth={1.8} />,
     },
   ];
+  const chatWidth = usePublishedStudioChatWidth();
   const docked = chatOpen && Boolean(chat) && page !== undefined;
+  const panelResize = useAppPanelResize(docked && panel ? chatWidth : 0);
 
   return (
     <>
@@ -262,15 +305,23 @@ export function AppStudio({
         data-testid="app-studio"
         className="overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)]"
       >
-        {/* Absolute children ignore the dialog's safe-area padding, so they sit in this box. */}
-        <div className="relative size-full">
-          <header className="absolute inset-x-0 top-0 z-10 flex h-10 items-center gap-1 overflow-hidden border-b border-border bg-muted px-1.5 sm:h-12 sm:gap-2 sm:px-2.5">
+        <div
+          className="relative flex size-full min-h-0 flex-col"
+          style={page && panel ? panelResize.style : undefined}
+        >
+          <header className="relative z-10 flex h-10 shrink-0 items-center gap-1 overflow-hidden border-b border-border bg-muted px-1.5 sm:h-12 sm:gap-2 sm:px-2.5">
             {chat ? (
+              <StudioHint
+                label={
+                  chatOpen
+                    ? t`Hide the chat and keep working on the canvas.`
+                    : t`Open the chat beside this, to ask for a change.`
+                }
+              >
               <button
                 type="button"
                 aria-pressed={chatOpen}
                 data-haptic="select"
-                title={t`Show the chat beside the app`}
                 aria-label={t`Chat`}
                 onClick={() => {
                   setChatOpen((on) => !on);
@@ -283,13 +334,14 @@ export function AppStudio({
                   <span className="absolute end-1 top-1 size-1.5 rounded-full bg-primary sm:size-2" />
                 ) : null}
               </button>
+              </StudioHint>
             ) : null}
+            <StudioHint label={t`Describe a new app in the chat.`}>
             <button
               type="button"
               data-testid="app-new"
               data-haptic="tap"
               aria-label={t`New app`}
-              title={t`New app`}
               onClick={() => {
                 setAsking(true);
                 setChatOpen(true);
@@ -298,9 +350,11 @@ export function AppStudio({
             >
               <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </button>
+            </StudioHint>
             <DialogTitle className="sr-only">{page?.title ?? t`Apps`}</DialogTitle>
             <StudioProductMark name={t`Evolve App Studio`} />
             <DropdownMenu>
+              <StudioHint label={t`Open another app.`}>
               <DropdownMenuTrigger
                 data-testid="app-switcher"
                 render={
@@ -317,6 +371,7 @@ export function AppStudio({
                 <span className="truncate">{page?.title ?? t`Apps`}</span>
                 <ChevronDown className="size-3.5 shrink-0 opacity-65" />
               </DropdownMenuTrigger>
+              </StudioHint>
               <DropdownMenuContent align="start" className="w-72">
                 {ownApps.map((app) => (
                   <DropdownMenuItem
@@ -334,6 +389,10 @@ export function AppStudio({
                     {app.id === page?.id ? (
                       <Check className="size-4 shrink-0 text-primary" />
                     ) : null}
+                    <StudioSwitcherDelete
+                      label={t`Delete ${app.title}`}
+                      onDelete={() => void removeApp(app.id, app.title)}
+                    />
                   </DropdownMenuItem>
                 ))}
                 {companyApps.length ? (
@@ -368,6 +427,7 @@ export function AppStudio({
             </DropdownMenu>
             <div className="min-w-0 flex-1" />
             {running ? (
+              <StudioHint label={t`The assistant is working. Open the chat to follow along.`}>
               <button
                 type="button"
                 onClick={() => setChatOpen(true)}
@@ -377,17 +437,20 @@ export function AppStudio({
                 <Loader2 className="size-3.5 animate-spin" strokeWidth={2} aria-hidden="true" />
                 <span className="max-sm:sr-only">{t`Working on your app…`}</span>
               </button>
+              </StudioHint>
             ) : null}
             {page ? (
               <>
                 {onShare ? (
                   <DropdownMenu>
+                    <StudioHint label={t`The other tools for this studio.`}>
                     <DropdownMenuTrigger
                       aria-label={t`More`}
                       className={`${control} size-8 sm:size-[35px] data-popup-open:bg-foreground/[0.06] sm:hidden`}
                     >
                       <Ellipsis className="size-4 sm:size-[18px]" strokeWidth={1.7} />
                     </DropdownMenuTrigger>
+                    </StudioHint>
                     <DropdownMenuContent align="end" className="min-w-[180px]">
                       {tabs.map((tab) => (
                         <DropdownMenuItem
@@ -414,8 +477,8 @@ export function AppStudio({
                   className={`flex shrink-0 items-center gap-0.5 rounded-full border border-foreground/[0.06] p-[3px] ${onShare ? "max-sm:hidden" : ""}`}
                 >
                   {tabs.map((tab) => (
+                    <StudioHint key={tab.id} label={tab.hint}>
                     <button
-                      key={tab.id}
                       type="button"
                       aria-pressed={panel === tab.id}
                       data-haptic="select"
@@ -428,16 +491,17 @@ export function AppStudio({
                       {tab.icon}
                       <span className="max-sm:sr-only">{tab.label}</span>
                     </button>
+                    </StudioHint>
                   ))}
                 </nav>
               </>
             ) : null}
             {page ? (
+              <StudioHint label={t`Point at something in the app to change it`}>
               <button
                 type="button"
                 aria-pressed={picking}
                 data-haptic="select"
-                title={t`Point at something in the app to change it`}
                 aria-label={t`Select an element`}
                 onClick={() => {
                   setPicking((on) => !on);
@@ -449,6 +513,7 @@ export function AppStudio({
               >
                 <MousePointerClick className="size-4 sm:size-[18px]" strokeWidth={1.7} />
               </button>
+              </StudioHint>
             ) : null}
             {onShare ? (
               // On phones the More menu opens Share; its popover still anchors to this hidden spot.
@@ -458,6 +523,7 @@ export function AppStudio({
             ) : (
               share
             )}
+            <StudioHint label={t`Close this and go back.`}>
             <DialogClose
               ref={closeButton}
               aria-label={t`Close app`}
@@ -465,13 +531,14 @@ export function AppStudio({
             >
               <X className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </DialogClose>
+            </StudioHint>
           </header>
           <div
-            className="absolute inset-x-0 top-10 bottom-0 flex sm:top-12"
+            className="relative flex min-h-0 flex-1"
             style={studioDockStyle(!composer || docked, running)}
           >
             {docked ? (
-              <StudioChatPane>
+              <StudioChatPane reserved={page && panel ? panelResize.width : 0}>
                 {chat}
                 <div className="shrink-0 px-2 pb-2">{composer}</div>
               </StudioChatPane>
@@ -602,8 +669,15 @@ export function AppStudio({
             {page && panel ? (
               <aside
                 aria-label={tabs.find((tab) => tab.id === panel)?.label}
-                className="absolute inset-0 z-20 flex min-h-0 flex-col border-foreground/[0.06] bg-card sm:static sm:w-[min(46vw,560px)] sm:border-l"
+                data-resizing={panelResize.resizing || undefined}
+                className="absolute inset-0 z-20 flex min-h-0 flex-col border-foreground/[0.06] bg-card sm:relative sm:inset-auto sm:w-(--app-panel-width) sm:shrink-0 sm:border-l"
               >
+                <hr
+                  {...panelResize.handleProps}
+                  data-testid="app-panel-edge"
+                  aria-label={t`Resize panel`}
+                  className={`${columnResizeHandleClass} -start-1`}
+                />
                 <div className="flex h-11 shrink-0 items-center justify-between border-b border-foreground/[0.06] px-3 sm:hidden">
                   <span className="text-[14px] font-medium">
                     {tabs.find((tab) => tab.id === panel)?.label}
@@ -643,7 +717,7 @@ export function AppStudio({
           </div>
           {composer && !docked ? (
             <StudioFloatingDock
-              className={panel ? "inset-x-0 sm:right-[min(46vw,560px)]" : "inset-x-0"}
+              className={page && panel ? "inset-x-0 sm:right-(--app-panel-width)" : "inset-x-0"}
               activity={activity}
               running={running}
               onOpenChat={() => setChatOpen(true)}

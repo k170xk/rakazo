@@ -38,14 +38,23 @@ import { formatRelativeTime } from "../../lib/relative-time";
 import { selectedSpaceId } from "../../lib/rpc";
 import { useBoundSpaceId } from "../../lib/space-rpc";
 import { errorCode } from "../../lib/user-error";
-import { control, pill, StudioFrame, StudioMoreMenu, useStudioDock } from "../studio/StudioFrame";
+import {
+  control,
+  pill,
+  StudioFrame,
+  StudioHint,
+  StudioMoreMenu,
+  useStudioDock,
+} from "../studio/StudioFrame";
+import { StudioSwitcherDelete } from "../studio/StudioSwitcherDelete";
 import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-send";
-import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
 import { documentDockPage } from "./context";
-import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
 import { useDocumentBotId } from "./document-bot";
+import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { HistoryButton, VersionHistoryPanel } from "./history/VersionHistory";
+import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
+import { useDeleteOfficeDocument } from "./use-delete-document";
 import { useDocumentLoad } from "./use-document-load";
 import { useDocumentUpload } from "./use-document-upload";
 import { LiveDraftPill, useLiveDraft } from "./use-live-draft";
@@ -75,6 +84,7 @@ export type WordStudioProps = {
   rootArtifactId: string;
   onClose: () => void;
   onOpenDocument: (rootArtifactId: string) => void;
+  onEmpty?: () => void;
 };
 
 /** The open file as loaded: its newest version's bytes and the history around it. */
@@ -106,7 +116,12 @@ function displayName(name: string): string {
  * Word documents full screen beside the chat. The person edits the newest version; their edits
  * save as new versions a moment after they stop, and the assistant's arrive as new versions too.
  */
-export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: WordStudioProps) {
+export default function WordStudio({
+  rootArtifactId,
+  onClose,
+  onOpenDocument,
+  onEmpty,
+}: WordStudioProps) {
   const { t, i18n } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -135,13 +150,10 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
   const heldImage = useRef<File | null>(null);
   const opened = useRef<DocxIssue[] | null>(null);
   const owner = useRef<Promise<{ botId: string | null; groupId: string | null }> | null>(null);
-  const {
-    loadState,
-    loadBytes,
-    stillCurrent,
-    markReady,
-    markOpenFailed,
-  } = useDocumentLoad("docx", () => queries.documents.get.call({ rootArtifactId }));
+  const { loadState, loadBytes, stillCurrent, markReady, markOpenFailed } = useDocumentLoad(
+    "docx",
+    () => queries.documents.get.call({ rootArtifactId }),
+  );
   const timers = useRef({ note: 0, review: 0, flash: 0 });
 
   const chipWords = useMemo<WordChipWords>(
@@ -389,6 +401,14 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
     ]);
   }
 
+  const deleteDocument = useDeleteOfficeDocument({
+    currentId: rootArtifactId,
+    documents,
+    settle,
+    onOpenDocument,
+    onEmpty,
+  });
+
   async function close() {
     setBusy(true);
     await settle();
@@ -584,11 +604,11 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
       start={
         <>
           <DropdownMenu>
+            <StudioHint label={t`Start a blank document, or upload a Word file.`}>
             <DropdownMenuTrigger
               data-testid="word-new"
               disabled={busy || uploader.busy}
               aria-label={t`New document`}
-              title={t`New document`}
               className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
             >
               {busy || uploader.busy ? (
@@ -597,6 +617,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
                 <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
               )}
             </DropdownMenuTrigger>
+            </StudioHint>
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuGroup>
                 <DropdownMenuLabel>
@@ -617,6 +638,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
           </DropdownMenu>
           {uploader.input}
           <DropdownMenu>
+            <StudioHint label={t`Open another document.`}>
             <DropdownMenuTrigger
               data-testid="word-switcher"
               render={
@@ -631,6 +653,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               <span className="truncate">{title}</span>
               <ChevronDown className="size-3.5 shrink-0 opacity-65" />
             </DropdownMenuTrigger>
+            </StudioHint>
             <DropdownMenuContent align="start" className="w-80">
               {documents.length === 0 ? (
                 <DropdownMenuItem disabled>
@@ -651,6 +674,12 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
                   {item.rootArtifactId === rootArtifactId ? (
                     <Check className="size-4 shrink-0 text-primary" />
                   ) : null}
+                  <StudioSwitcherDelete
+                    label={t`Delete ${displayName(item.name)}`}
+                    onDelete={() =>
+                      void deleteDocument(item.rootArtifactId, displayName(item.name))
+                    }
+                  />
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -719,6 +748,13 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               <Trans>Download .docx</Trans>
             </DropdownMenuItem>
           </StudioMoreMenu>
+          <StudioHint
+            label={
+              trackChanges
+                ? t`Your edits are marked as tracked changes, so they can be accepted or rejected`
+                : t`Your edits change the document directly`
+            }
+          >
           <button
             type="button"
             role="switch"
@@ -726,11 +762,6 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
             data-testid="word-track-changes"
             disabled={!doc || readOnlyView}
             onClick={toggleTrackChanges}
-            title={
-              trackChanges
-                ? t`Your edits are marked as tracked changes, so they can be accepted or rejected`
-                : t`Your edits change the document directly`
-            }
             className={`${pill} max-sm:hidden disabled:opacity-40 ${trackChanges ? "bg-primary/15 text-primary hover:bg-primary/20" : ""}`}
           >
             <FilePenLine className="size-4" strokeWidth={1.8} aria-hidden="true" />
@@ -738,6 +769,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               <Trans>Track changes</Trans>
             </span>
           </button>
+          </StudioHint>
           <ReviewPanel
             items={review}
             disabled={locked || readOnlyView}
@@ -757,6 +789,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
       }
       share={
         <DropdownMenu>
+          <StudioHint label={t`Download a copy of this document.`}>
           <DropdownMenuTrigger
             disabled={!doc}
             data-testid="word-share"
@@ -768,6 +801,7 @@ export default function WordStudio({ rootArtifactId, onClose, onOpenDocument }: 
               <Trans>Share</Trans>
             </span>
           </DropdownMenuTrigger>
+          </StudioHint>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => void download()}>
               <Download className="size-4" />

@@ -407,6 +407,35 @@ export function holdsAfterEnd(effect: Effect): boolean {
   return effect.style === "grow" || effect.style === "spin" || effect.style === "transparency";
 }
 
+/**
+ * The fit scale has to live in the same transform as the motion. The slideshow draws a slide at
+ * its natural size and scales that box; on the iPhone web view, animating a parent of that box
+ * leaves the text where it is. Folding the scale into each motion keyframe moves the text with
+ * the rest of the slide.
+ */
+export function composeSlideMotion(
+  scale: number,
+  frames: Keyframe[] | null,
+  slide?: { width: number; height: number },
+): Keyframe[] | null {
+  if (!frames || !(scale > 0)) return frames;
+  const fit = `scale(${scale})`;
+  return frames.map((frame) => {
+    const motion = frame.transform;
+    if (typeof motion !== "string" || motion.length === 0 || motion === "none") return frame;
+    // The frame scales from its top-left corner. A zoom has to stay centred, so shift it
+    // by the amount the corner scale would pull it off the middle.
+    const zoom = /^scale\(([\d.]+)\)$/.exec(motion);
+    if (zoom && slide) {
+      const z = Number(zoom[1]);
+      const tx = ((1 - z) * slide.width) / 2;
+      const ty = ((1 - z) * slide.height) / 2;
+      return { ...frame, transform: `${fit} translate(${tx}px, ${ty}px) scale(${z})` };
+    }
+    return { ...frame, transform: `${fit} ${motion}` };
+  });
+}
+
 /** Keyframes for the slide arriving (`incoming`) and the one leaving, or null for no movement. */
 export function changeKeyframes(change: SlideChange): {
   incoming: Keyframe[] | null;

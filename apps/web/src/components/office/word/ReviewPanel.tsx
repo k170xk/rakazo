@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@rakazo/ui-web";
 import { Check, ListChecks, X } from "lucide-react";
-import { pill } from "../../studio/StudioFrame";
+import { pill, StudioHint } from "../../studio/StudioFrame";
 import type { ReviewItem } from "./review";
 import { allReviewIds } from "./review";
 
@@ -32,6 +32,7 @@ export function ReviewPanel({
   const count = items.length;
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
+      <StudioHint label={t`Accept or reject the suggested changes.`}>
       <PopoverTrigger
         data-testid="word-review"
         disabled={count === 0}
@@ -48,6 +49,7 @@ export function ReviewPanel({
           </span>
         ) : null}
       </PopoverTrigger>
+      </StudioHint>
       <PopoverContent
         align="end"
         className="w-[min(24rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] p-0"

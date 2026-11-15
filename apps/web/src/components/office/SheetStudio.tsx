@@ -29,14 +29,22 @@ import { formatRelativeTime } from "../../lib/relative-time";
 import { selectedSpaceId } from "../../lib/rpc";
 import { useBoundSpaceId } from "../../lib/space-rpc";
 import { errorCode } from "../../lib/user-error";
-import { control, pill, StudioFrame, StudioMoreMenu, useStudioDock } from "../studio/StudioFrame";
+import {
+  control,
+  pill,
+  StudioFrame,
+  StudioHint,
+  StudioMoreMenu,
+  useStudioDock,
+} from "../studio/StudioFrame";
+import { StudioSwitcherDelete } from "../studio/StudioSwitcherDelete";
 import { setStudioBeforeSend } from "../studio/studio-send";
-import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
 import { documentDockPage } from "./context";
-import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
 import { useDocumentBotId } from "./document-bot";
+import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { HistoryButton, VersionHistoryPanel } from "./history/VersionHistory";
+import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
 import { cellRef } from "./sheet/address";
 import type { SheetChipWords } from "./sheet/context";
 import { sheetContext } from "./sheet/context";
@@ -53,6 +61,7 @@ import {
   sheetTabs,
   worksheetOf,
 } from "./sheet/workbook";
+import { useDeleteOfficeDocument } from "./use-delete-document";
 import { useDocumentLoad } from "./use-document-load";
 import { useDocumentUpload } from "./use-document-upload";
 import { LiveDraftPill, useLiveDraft } from "./use-live-draft";
@@ -67,6 +76,7 @@ export type SheetStudioProps = {
   rootArtifactId: string;
   onClose: () => void;
   onOpenDocument: (rootArtifactId: string) => void;
+  onEmpty?: () => void;
 };
 
 /** The open workbook as loaded, and the history around it. */
@@ -96,7 +106,12 @@ function displayName(name: string): string {
  * Excel workbooks full screen beside the chat. The person edits the newest version; their edits
  * save as new versions a moment after they stop, and the assistant's arrive as new versions too.
  */
-export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }: SheetStudioProps) {
+export default function SheetStudio({
+  rootArtifactId,
+  onClose,
+  onOpenDocument,
+  onEmpty,
+}: SheetStudioProps) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -124,13 +139,10 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
   const view = useRef<SheetView | null>(null);
   const owner = useRef<Promise<{ botId: string | null; groupId: string | null }> | null>(null);
   const timers = useRef({ note: 0, flash: 0 });
-  const {
-    loadState,
-    loadBytes,
-    stillCurrent,
-    markReady,
-    markOpenFailed,
-  } = useDocumentLoad("xlsx", () => queries.documents.get.call({ rootArtifactId }));
+  const { loadState, loadBytes, stillCurrent, markReady, markOpenFailed } = useDocumentLoad(
+    "xlsx",
+    () => queries.documents.get.call({ rootArtifactId }),
+  );
 
   const chipWords = useMemo<SheetChipWords>(
     () => ({ cells: (ref, count) => t`${ref} (${count} cells)` }),
@@ -371,6 +383,14 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
     ]);
   }
 
+  const deleteDocument = useDeleteOfficeDocument({
+    currentId: rootArtifactId,
+    documents,
+    settle,
+    onOpenDocument,
+    onEmpty,
+  });
+
   async function close() {
     setBusy(true);
     await settle();
@@ -550,11 +570,11 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
       start={
         <>
           <DropdownMenu>
+            <StudioHint label={t`Start a blank spreadsheet, or upload an Excel file.`}>
             <DropdownMenuTrigger
               data-testid="sheet-new"
               disabled={busy || uploader.busy}
               aria-label={t`New spreadsheet`}
-              title={t`New spreadsheet`}
               className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
             >
               {busy || uploader.busy ? (
@@ -563,6 +583,7 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
                 <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
               )}
             </DropdownMenuTrigger>
+            </StudioHint>
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuItem onClick={() => void create()}>
                 <Plus className="size-4" />
@@ -577,6 +598,7 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
           </DropdownMenu>
           {uploader.input}
           <DropdownMenu>
+            <StudioHint label={t`Open another spreadsheet.`}>
             <DropdownMenuTrigger
               data-testid="sheet-switcher"
               render={
@@ -591,6 +613,7 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
               <span className="truncate">{title}</span>
               <ChevronDown className="size-3.5 shrink-0 opacity-65" />
             </DropdownMenuTrigger>
+            </StudioHint>
             <DropdownMenuContent align="start" className="w-80">
               {documents.length === 0 ? (
                 <DropdownMenuItem disabled>
@@ -614,6 +637,12 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
                   {item.rootArtifactId === rootArtifactId ? (
                     <Check className="size-4 shrink-0 text-primary" />
                   ) : null}
+                  <StudioSwitcherDelete
+                    label={t`Delete ${displayName(item.name)}`}
+                    onDelete={() =>
+                      void deleteDocument(item.rootArtifactId, displayName(item.name))
+                    }
+                  />
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -657,6 +686,7 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
       }
       share={
         <DropdownMenu>
+          <StudioHint label={t`Download a copy of this spreadsheet.`}>
           <DropdownMenuTrigger
             disabled={!doc && !loadFailed}
             data-testid="sheet-share"
@@ -668,6 +698,7 @@ export default function SheetStudio({ rootArtifactId, onClose, onOpenDocument }:
               <Trans>Share</Trans>
             </span>
           </DropdownMenuTrigger>
+          </StudioHint>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => void download()}>
               <Download className="size-4" />

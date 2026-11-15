@@ -7,6 +7,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@rakazo/ui-web";
 import { Ellipsis, Loader2, MessageSquare, X } from "lucide-react";
 import type { ReactNode, Ref } from "react";
@@ -15,6 +18,31 @@ import { usePageSession } from "../../lib/pages";
 import type { StudioCard } from "../../lib/studio-activity";
 import { StudioChatPane } from "./StudioChatPane";
 import { StudioFloatingDock, studioDockStyle } from "./studio-dock";
+
+/**
+ * Explanation that appears under a studio control once the pointer has rested there.
+ * A sweep across the bar does not open it, and a click closes it so a menu can take its place.
+ */
+export function StudioHint({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        delay={600}
+        closeOnClick
+        render={<span className="inline-flex max-w-full min-w-0" />}
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        sideOffset={8}
+        className="z-[80] max-w-60 text-balance text-center leading-snug"
+      >
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 /** Round header icon button; size it at the call site (`size-8 sm:size-[35px]`). */
 export const control =
@@ -56,13 +84,15 @@ export function StudioMoreMenu({
   const { t } = useLingui();
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={label ?? t`More`}
-        data-testid="studio-more"
-        className={`${control} size-8 data-popup-open:bg-foreground/[0.06] sm:hidden`}
-      >
-        <Ellipsis className="size-4" strokeWidth={1.7} />
-      </DropdownMenuTrigger>
+      <StudioHint label={t`The other tools for this studio.`}>
+        <DropdownMenuTrigger
+          aria-label={label ?? t`More`}
+          data-testid="studio-more"
+          className={`${control} size-8 data-popup-open:bg-foreground/[0.06] sm:hidden`}
+        >
+          <Ellipsis className="size-4" strokeWidth={1.7} />
+        </DropdownMenuTrigger>
+      </StudioHint>
       <DropdownMenuContent align="end" className="min-w-[180px]">
         {children}
       </DropdownMenuContent>
@@ -225,28 +255,36 @@ export function StudioFrame({
         data-page-print={printable ? "" : undefined}
         className="overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)]"
       >
-        {/* Absolute children ignore the dialog's safe-area padding, so they sit in this box. */}
-        <div className="relative size-full">
-          <header className="absolute inset-x-0 top-0 z-10 flex h-10 items-center gap-1 overflow-hidden border-b border-border bg-muted px-1.5 sm:h-12 sm:gap-2 sm:px-2.5 print:hidden">
-            <button
-              type="button"
-              aria-pressed={chatOpen}
-              data-haptic="select"
-              title={t`Show the chat beside the app`}
-              aria-label={t`Chat`}
-              onClick={() => setChatOpen((open) => !open)}
-              className={`${control} relative size-8 sm:size-[35px]`}
+        {/* The bar is a row of this column, so it stays on the canvas instead of floating over it. */}
+        <div className="relative flex size-full min-h-0 flex-col">
+          <header className="relative z-10 flex h-10 shrink-0 items-center gap-1 overflow-hidden border-b border-border bg-muted px-1.5 sm:h-12 sm:gap-2 sm:px-2.5 print:hidden">
+            <StudioHint
+              label={
+                chatOpen
+                  ? t`Hide the chat and keep working on the canvas.`
+                  : t`Open the chat beside this, to ask for a change.`
+              }
             >
-              <MessageSquare className="size-4 sm:size-[18px]" strokeWidth={1.7} />
-              {running && !chatOpen ? (
-                <span className="absolute end-1 top-1 size-1.5 rounded-full bg-primary sm:size-2" />
-              ) : null}
-            </button>
+              <button
+                type="button"
+                aria-pressed={chatOpen}
+                data-haptic="select"
+                aria-label={t`Chat`}
+                onClick={() => setChatOpen((open) => !open)}
+                className={`${control} relative size-8 sm:size-[35px]`}
+              >
+                <MessageSquare className="size-4 sm:size-[18px]" strokeWidth={1.7} />
+                {running && !chatOpen ? (
+                  <span className="absolute end-1 top-1 size-1.5 rounded-full bg-primary sm:size-2" />
+                ) : null}
+              </button>
+            </StudioHint>
             <DialogTitle className="sr-only">{title}</DialogTitle>
             {start}
             {product ? <StudioProductMark name={product} /> : null}
             <div className="min-w-0 flex-1" />
             {running && workingLabel ? (
+              <StudioHint label={t`The assistant is working. Open the chat to follow along.`}>
               <button
                 type="button"
                 onClick={() => setChatOpen(true)}
@@ -260,21 +298,21 @@ export function StudioFrame({
                 />
                 <span className="max-sm:sr-only">{workingLabel}</span>
               </button>
+              </StudioHint>
             ) : null}
             {actions}
             {share}
-            <DialogClose
-              ref={closeButton}
-              aria-label={closeLabel ?? t`Close app`}
-              className={`${control} size-8 sm:size-[35px]`}
-            >
-              <X className="size-4 sm:size-[18px]" strokeWidth={1.7} />
-            </DialogClose>
+            <StudioHint label={t`Close this and go back.`}>
+              <DialogClose
+                ref={closeButton}
+                aria-label={closeLabel ?? t`Close app`}
+                className={`${control} size-8 sm:size-[35px]`}
+              >
+                <X className="size-4 sm:size-[18px]" strokeWidth={1.7} />
+              </DialogClose>
+            </StudioHint>
           </header>
-          <div
-            className="absolute inset-x-0 top-10 bottom-0 flex sm:top-12"
-            style={studioDockStyle(chatOpen, running)}
-          >
+          <div className="relative flex min-h-0 flex-1" style={studioDockStyle(chatOpen, running)}>
             {chatOpen ? (
               <StudioChatPane>
                 <div ref={chatRef} className="flex min-h-0 flex-1 flex-col" />
@@ -284,9 +322,28 @@ export function StudioFrame({
             <section
               ref={paneRef}
               aria-label={paneLabel ?? title}
-              className="relative min-w-0 flex-1 bg-background"
+              className="flex min-h-0 min-w-0 flex-1 flex-col bg-background"
             >
-              {children}
+              {running && workingLabel ? (
+                <div
+                  role="status"
+                  data-testid="studio-editing-paused"
+                  className="flex shrink-0 items-center justify-center gap-2 border-b border-border bg-primary/10 px-3 py-1.5 text-center text-[12.5px] leading-snug text-foreground"
+                >
+                  <Loader2
+                    className="size-3.5 shrink-0 animate-spin text-primary"
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {workingLabel}{" "}
+                    <span className="text-muted-foreground">
+                      {t`You can edit again when this finishes.`}
+                    </span>
+                  </span>
+                </div>
+              ) : null}
+              <div className="relative min-h-0 flex-1">{children}</div>
             </section>
           </div>
           {chatOpen ? null : (

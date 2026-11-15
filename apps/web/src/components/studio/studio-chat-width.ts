@@ -1,6 +1,10 @@
-import type { CSSProperties, HTMLAttributes, PointerEvent } from "react";
-import { useEffect, useRef, useState } from "react";
 import { BOTS_SIDEBAR_DEFAULT_WIDTH, BOTS_SIDEBAR_MIN_WIDTH } from "../../lib/bots-sidebar-pref";
+import {
+  clampColumnWidth,
+  maximumColumnWidth,
+  useColumnResize,
+  usePublishedColumnWidth,
+} from "./column-resize";
 
 /** Studio chats open at the agents sidebar's default width. */
 export const STUDIO_CHAT_DEFAULT_WIDTH = BOTS_SIDEBAR_DEFAULT_WIDTH;
@@ -10,17 +14,25 @@ export const STUDIO_CHAT_MAX_WIDTH = 720;
 const MIN_CANVAS_WIDTH = 360;
 const STORAGE_KEY = "rakazo:studio-chat-width";
 
-export function maximumStudioChatWidth(viewportWidth: number): number {
-  return Math.max(
-    STUDIO_CHAT_MIN_WIDTH,
-    Math.min(STUDIO_CHAT_MAX_WIDTH, viewportWidth - MIN_CANVAS_WIDTH),
-  );
+function chatLimits(reserved = 0) {
+  return {
+    minWidth: STUDIO_CHAT_MIN_WIDTH,
+    maxWidth: STUDIO_CHAT_MAX_WIDTH,
+    minRemainder: MIN_CANVAS_WIDTH,
+    reserved,
+  };
 }
 
-export function clampStudioChatWidth(width: number, viewportWidth = Number.POSITIVE_INFINITY) {
-  return Math.round(
-    Math.max(STUDIO_CHAT_MIN_WIDTH, Math.min(maximumStudioChatWidth(viewportWidth), width)),
-  );
+export function maximumStudioChatWidth(viewportWidth: number, reserved = 0): number {
+  return maximumColumnWidth(viewportWidth, chatLimits(reserved));
+}
+
+export function clampStudioChatWidth(
+  width: number,
+  viewportWidth = Number.POSITIVE_INFINITY,
+  reserved = 0,
+) {
+  return clampColumnWidth(width, viewportWidth, chatLimits(reserved));
 }
 
 function storage(): Storage | null {
@@ -51,110 +63,21 @@ export function writeStudioChatWidth(width: number): void {
   }
 }
 
-function direction() {
-  return document.documentElement.dir === "rtl" ? -1 : 1;
+/** One width for the App Studio, whiteboard, and to-do chats, remembered on this browser. */
+/** The chat's current width, including while its edge is being dragged. */
+export function usePublishedStudioChatWidth() {
+  return usePublishedColumnWidth(STORAGE_KEY, STUDIO_CHAT_DEFAULT_WIDTH);
 }
 
-/** One width for the App Studio, whiteboard, and to-do chats, remembered on this browser. */
-export function useStudioChatResize() {
-  const [preferredWidth, setPreferredWidth] = useState(readStudioChatWidth);
-  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
-  const [dragWidth, setDragWidth] = useState<number | null>(null);
-  const drag = useRef<{
-    pointerId: number;
-    startX: number;
-    width: number;
-    direction: number;
-  } | null>(null);
-  const width = clampStudioChatWidth(dragWidth ?? preferredWidth, viewportWidth);
-
-  useEffect(() => {
-    function resize() {
-      setViewportWidth(window.innerWidth);
-    }
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, []);
-
-  function commit(next: number) {
-    const clamped = clampStudioChatWidth(next, window.innerWidth);
-    setPreferredWidth(clamped);
-    writeStudioChatWidth(clamped);
-  }
-
-  function release(event: PointerEvent<HTMLElement>) {
-    drag.current = null;
-    setDragWidth(null);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }
-
-  function widthAt(clientX: number) {
-    const current = drag.current;
-    if (!current) return width;
-    return clampStudioChatWidth(
-      current.width + (clientX - current.startX) * current.direction,
-      window.innerWidth,
-    );
-  }
-
-  const handleProps: HTMLAttributes<HTMLElement> = {
-    role: "separator",
-    tabIndex: 0,
-    "aria-orientation": "vertical",
-    "aria-valuemin": STUDIO_CHAT_MIN_WIDTH,
-    "aria-valuemax": maximumStudioChatWidth(viewportWidth),
-    "aria-valuenow": width,
-    onPointerDown(event) {
-      if (event.button !== 0 || drag.current) return;
-      event.preventDefault();
-      event.currentTarget.setPointerCapture(event.pointerId);
-      drag.current = {
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        width,
-        direction: direction(),
-      };
-      setDragWidth(width);
-    },
-    onPointerMove(event) {
-      if (drag.current?.pointerId !== event.pointerId) return;
-      setDragWidth(widthAt(event.clientX));
-    },
-    onPointerUp(event) {
-      if (drag.current?.pointerId !== event.pointerId) return;
-      commit(widthAt(event.clientX));
-      release(event);
-    },
-    onPointerCancel(event) {
-      if (drag.current?.pointerId !== event.pointerId) return;
-      release(event);
-    },
-    onLostPointerCapture() {
-      if (!drag.current) return;
-      drag.current = null;
-      setDragWidth(null);
-    },
-    onKeyDown(event) {
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-        event.preventDefault();
-        const step = (event.key === "ArrowRight" ? 32 : -32) * direction();
-        commit(width + step);
-      } else if (event.key === "Home") {
-        event.preventDefault();
-        commit(STUDIO_CHAT_MIN_WIDTH);
-      } else if (event.key === "End") {
-        event.preventDefault();
-        commit(maximumStudioChatWidth(window.innerWidth));
-      }
-    },
-  };
-
-  return {
-    width,
-    resizing: dragWidth !== null,
-    handleProps,
-    style: { "--studio-chat-width": `${width}px` } as CSSProperties,
-  };
+export function useStudioChatResize(reserved = 0) {
+  return useColumnResize({
+    storageKey: STORAGE_KEY,
+    cssVariable: "--studio-chat-width",
+    defaultWidth: STUDIO_CHAT_DEFAULT_WIDTH,
+    minWidth: STUDIO_CHAT_MIN_WIDTH,
+    maxWidth: STUDIO_CHAT_MAX_WIDTH,
+    minRemainder: MIN_CANVAS_WIDTH,
+    edge: "end",
+    reserved,
+  });
 }

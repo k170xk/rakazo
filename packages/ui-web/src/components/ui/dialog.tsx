@@ -6,6 +6,7 @@ import { Button } from "@rakazo/ui-web/components/ui/button";
 import { cn } from "@rakazo/ui-web/lib/utils";
 import { XIcon } from "lucide-react";
 import type * as React from "react";
+import { useVisualViewportFrame } from "../../lib/visual-viewport";
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -42,6 +43,7 @@ function DialogContent({
   showCloseButton = true,
   overlay = true,
   overlayClassName,
+  style,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
@@ -50,6 +52,10 @@ function DialogContent({
   /** Extra classes for the dimmer (e.g. a higher z-index over a full-screen studio). */
   overlayClassName?: string;
 }) {
+  const fullscreen = overlay === false;
+  // Full-screen studios stay on the visible screen. Otherwise the phone leaves them
+  // part-way down after a slideshow, the keyboard, or a focused control.
+  const frame = useVisualViewportFrame(fullscreen);
   return (
     <DialogPortal>
       {overlay ? <DialogOverlay className={overlayClassName} /> : null}
@@ -58,9 +64,10 @@ function DialogContent({
         className={cn(
           overlay
             ? "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-dialog p-6 text-sm text-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
-            : "fixed top-0 left-0 z-50 block h-dvh w-screen max-w-none translate-none animate-none gap-0 rounded-none bg-background p-0 text-sm text-foreground ring-0 duration-0 outline-none",
+            : "fixed top-0 left-0 z-50 block h-dvh w-screen max-w-none translate-none animate-none gap-0 overflow-hidden overscroll-none rounded-none bg-background p-0 text-sm text-foreground ring-0 duration-0 outline-none",
           className,
         )}
+        style={{ ...style, ...frame }}
         {...props}
       >
         {children}
@@ -146,4 +153,5 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  useVisualViewportFrame,
 };

@@ -16,6 +16,7 @@ import {
   shapeBox,
 } from "./deck";
 import { slideSvg } from "./render";
+import { scaledSlideStyle, slideCssPixels } from "./slide-scale";
 
 export type ShapePick = { id: number; nested: boolean };
 
@@ -71,6 +72,7 @@ export function SlideCanvas({
   const [editing, setEditing] = useState<{ id: number; text: string } | null>(null);
 
   const svg = useMemo(() => slideSvg(deck, slide), [deck, slide, rev]);
+  const natural = slideCssPixels(deck);
 
   useLayoutEffect(() => {
     const el = outer.current;
@@ -209,18 +211,19 @@ export function SlideCanvas({
       >
         {/* biome-ignore lint/a11y/useKeyWithClickEvents: shapes are also reachable from the text editor and the slide rail. */}
         {/* biome-ignore lint/a11y/noStaticElementInteractions: the slide picture is drawn from the file. */}
-        <div
-          className={`size-full overflow-hidden [&>svg]:block [&>svg]:size-full ${
-            readOnly ? "" : "cursor-default"
-          }`}
-          onClick={onSlideClick}
-          onDoubleClick={(event) => {
-            const next = pickAt(event.target);
-            if (next) startEditing(next.id);
-          }}
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: the SVG is drawn locally from the deck, with no scripts.
-          dangerouslySetInnerHTML={{ __html: svg }}
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className={`[&>svg]:block [&>svg]:size-full ${readOnly ? "" : "cursor-default"}`}
+            style={scaledSlideStyle(natural, fit.w)}
+            onClick={onSlideClick}
+            onDoubleClick={(event) => {
+              const next = pickAt(event.target);
+              if (next) startEditing(next.id);
+            }}
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: the SVG is drawn locally from the deck, with no scripts.
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        </div>
         {shown && !editing ? (
           <div
             className={`absolute border-2 border-primary ${

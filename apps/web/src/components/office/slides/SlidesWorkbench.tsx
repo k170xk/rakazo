@@ -24,7 +24,7 @@ import { slideRevision, touchSlide } from "./render";
 import type { ShapePick } from "./SlideCanvas";
 import { SlideCanvas } from "./SlideCanvas";
 import type { SlideOp } from "./SlideRail";
-import { SlideRail, useSlideImage } from "./SlideRail";
+import { SlidePicture, SlideRail, useSlideSvg } from "./SlideRail";
 import type { SlideEditResult } from "./SlidesRibbon";
 import { SlidesRibbon } from "./SlidesRibbon";
 import { createDeckUndo } from "./undo";
@@ -248,14 +248,15 @@ export function SlidesWorkbench({
 
 function PreviewSlide({ deck, slide, index }: { deck: Deck; slide: SlideData; index: number }) {
   const { t } = useLingui();
-  const url = useSlideImage(deck, slide, 0);
+  const svg = useSlideSvg(deck, slide, 0);
   const number = index + 1;
   return (
     <li
-      className="w-full overflow-hidden rounded-md bg-white ring-1 ring-border"
+      className="relative w-full overflow-hidden rounded-md bg-white ring-1 ring-border"
       style={{ aspectRatio: `${deck.width} / ${deck.height}` }}
+      aria-label={t`Slide ${number}`}
     >
-      {url ? <img src={url} alt={t`Slide ${number}`} className="block size-full" /> : null}
+      {svg ? <SlidePicture deck={deck} svg={svg} /> : null}
     </li>
   );
 }

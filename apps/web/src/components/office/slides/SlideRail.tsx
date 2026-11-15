@@ -19,37 +19,57 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Deck } from "./deck";
 import { motionSummary } from "./motion";
 import { slideSvg } from "./render";
+import { scaledSlideStyle, slideCssPixels } from "./slide-scale";
 
 export type SlideOp = "add" | "duplicate" | "up" | "down" | "hide" | "delete";
 
-/** A slide drawn to an image link, made after the rail paints so a long deck opens quickly. */
-export function useSlideImage(deck: Deck, slide: SlideData, rev: number): string | null {
-  const [url, setUrl] = useState<string | null>(null);
+/** The slide's picture, drawn after the rail paints so a long deck opens quickly. */
+export function useSlideSvg(deck: Deck, slide: SlideData, rev: number): string | null {
+  const [svg, setSvg] = useState<string | null>(null);
   useEffect(() => {
-    let made: string | null = null;
     const timer = window.setTimeout(() => {
       try {
-        const svg = slideSvg(deck, slide);
-        made = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
-        setUrl(made);
+        setSvg(slideSvg(deck, slide));
       } catch {
-        setUrl(null);
+        setSvg(null);
       }
     }, 0);
-    return () => {
-      window.clearTimeout(timer);
-      if (made) {
-        const old = made;
-        // Kept briefly so the old picture stays until the new one has loaded.
-        window.setTimeout(() => URL.revokeObjectURL(old), 1000);
-      }
-    };
+    return () => window.clearTimeout(timer);
   }, [deck, slide, rev]);
-  return url;
+  return svg;
+}
+
+/**
+ * The slide picture fitted to its box. Drawn inline, then scaled, so the text
+ * shrinks with the shapes on the phone as well as on the desktop.
+ */
+export function SlidePicture({ deck, svg }: { deck: Deck; svg: string }) {
+  const frame = useRef<HTMLDivElement>(null);
+  const natural = slideCssPixels(deck);
+  const [fitWidth, setFitWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = frame.current;
+    if (!el) return;
+    const measure = () => setFitWidth(el.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div ref={frame} className="absolute inset-0 overflow-hidden">
+      <div
+        className="[&>svg]:block [&>svg]:size-full"
+        style={scaledSlideStyle(natural, fitWidth)}
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: the SVG is drawn locally from the deck, with no scripts.
+        dangerouslySetInnerHTML={{ __html: svg }}
+      />
+    </div>
+  );
 }
 
 function Thumb({
@@ -78,7 +98,7 @@ function Thumb({
   onDropAt: (from: number, to: number) => void;
 }) {
   const { t } = useLingui();
-  const url = useSlideImage(deck, slide, rev);
+  const svg = useSlideSvg(deck, slide, rev);
   const hidden = isSlideHidden(slide);
   const motion = useMemo(() => motionSummary(slide), [slide, rev]);
   const number = index + 1;
@@ -120,13 +140,10 @@ function Thumb({
         }`}
         style={{ aspectRatio: `${deck.width} / ${deck.height}` }}
       >
-        {url ? (
-          <img
-            src={url}
-            alt=""
-            draggable={false}
-            className={`block size-full ${hidden ? "opacity-40" : ""}`}
-          />
+        {svg ? (
+          <span className={hidden ? "opacity-40" : undefined}>
+            <SlidePicture deck={deck} svg={svg} />
+          </span>
         ) : null}
         {hidden ? (
           <span className="absolute right-1 bottom-1 rounded bg-background/90 p-0.5">

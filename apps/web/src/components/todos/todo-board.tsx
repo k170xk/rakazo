@@ -52,7 +52,8 @@ import { usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
 import { StudioChatPane } from "../studio/StudioChatPane";
-import { control, StudioProductMark } from "../studio/StudioFrame";
+import { StudioSwitcherDelete } from "../studio/StudioSwitcherDelete";
+import { control, StudioHint, StudioProductMark } from "../studio/StudioFrame";
 import { StudioFloatingDock, studioDockStyle } from "../studio/studio-dock";
 import { FeatureStudioWelcome } from "../studio/FeatureStudioWelcome";
 import { TODO_REFRESH_MS as REFRESH_MS, TODO_NEW_MS } from "./todo-count";
@@ -281,10 +282,11 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
     }
   }
 
-  async function removeList(listId: string) {
+  async function removeList(listId: string, title: string) {
+    if (!window.confirm(t`Delete ${String(title)}?`)) return;
     try {
       await queries.todos.removeList.call({ listId });
-      setSelected(PERSONAL_TODO_LIST);
+      if (selected === listId) setSelected(PERSONAL_TODO_LIST);
       await refresh();
     } catch {
       toast.error(t`Could not delete that list.`);
@@ -356,12 +358,18 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
         data-testid="todo-board"
         className="overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)]"
       >
-        <div className="relative size-full">
-          <header className="absolute inset-x-0 top-0 z-10 flex h-10 items-center gap-1 overflow-hidden border-b border-border bg-muted px-1.5 sm:h-12 sm:gap-2 sm:px-2.5">
+        <div className="relative flex size-full min-h-0 flex-col">
+          <header className="relative z-10 flex h-10 shrink-0 items-center gap-1 overflow-hidden border-b border-border bg-muted px-1.5 sm:h-12 sm:gap-2 sm:px-2.5">
+            <StudioHint
+              label={
+                chatOpen
+                  ? t`Hide the chat and keep working on the list.`
+                  : t`Open the chat beside this, to ask for a change.`
+              }
+            >
             <button
               type="button"
               aria-pressed={chatOpen}
-              title={t`Show the chat beside the list`}
               aria-label={t`Chat`}
               onClick={() => setChatOpen((open) => !open)}
               className={`${control} relative size-8 sm:size-[35px]`}
@@ -371,16 +379,18 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                 <span className="absolute end-1 top-1 size-1.5 rounded-full bg-primary sm:size-2" />
               ) : null}
             </button>
+            </StudioHint>
+            <StudioHint label={t`Start another to-do list.`}>
             <button
               type="button"
               data-testid="todo-new"
               aria-label={t`New to-do list`}
-              title={t`New to-do list`}
               onClick={() => void createList()}
               className={`${control} size-8 sm:size-[35px]`}
             >
               <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </button>
+            </StudioHint>
             <DialogTitle className="sr-only">{selectedTitle}</DialogTitle>
             <StudioProductMark name={t`Evolve To-do List`} />
             <DialogDescription className="sr-only">
@@ -404,6 +414,7 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
               />
             ) : (
               <DropdownMenu>
+                <StudioHint label={t`Open another list.`}>
                 <DropdownMenuTrigger
                   data-testid="todo-switcher"
                   render={
@@ -418,6 +429,7 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                   <span className="truncate">{selectedTitle}</span>
                   <ChevronDown className="size-3.5 shrink-0 opacity-65" />
                 </DropdownMenuTrigger>
+                </StudioHint>
                 <DropdownMenuContent align="start" className="w-72">
                   <DropdownMenuItem
                     onClick={() => setSelected(PERSONAL_TODO_LIST)}
@@ -442,6 +454,10 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                       {entry.id === selected ? (
                         <Check className="size-4 shrink-0 text-primary" />
                       ) : null}
+                      <StudioSwitcherDelete
+                        label={t`Delete ${entry.title}`}
+                        onDelete={() => void removeList(entry.id, entry.title)}
+                      />
                     </DropdownMenuItem>
                   ))}
                   <DropdownMenuSeparator />
@@ -460,19 +476,19 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                         <Pencil className="size-4" />
                         <Trans>Rename</Trans>
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => void removeList(selected)}
-                      >
-                        <Trash2 className="size-4" />
-                        <Trans>Delete</Trans>
-                      </DropdownMenuItem>
                     </>
                   ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
             <div className="flex-1" />
+            <StudioHint
+              label={
+                showArchived
+                  ? t`Return to the board.`
+                  : t`Show items you have archived.`
+              }
+            >
             <button
               type="button"
               aria-pressed={showArchived}
@@ -484,6 +500,8 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
                 {showArchived ? <Trans>Back to board</Trans> : <Trans>Archived</Trans>}
               </span>
             </button>
+            </StudioHint>
+            <StudioHint label={t`Close this and go back.`}>
             <DialogClose
               ref={closeButton}
               aria-label={t`Close to do list`}
@@ -491,9 +509,10 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
             >
               <X className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </DialogClose>
+            </StudioHint>
           </header>
           <div
-            className="absolute inset-x-0 top-10 bottom-0 flex sm:top-12"
+            className="relative flex min-h-0 flex-1"
             style={studioDockStyle(chatOpen, running)}
           >
             {chatOpen ? (

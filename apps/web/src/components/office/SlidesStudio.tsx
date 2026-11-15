@@ -28,14 +28,22 @@ import { formatRelativeTime } from "../../lib/relative-time";
 import { selectedSpaceId } from "../../lib/rpc";
 import { useBoundSpaceId } from "../../lib/space-rpc";
 import { errorCode } from "../../lib/user-error";
-import { control, pill, StudioFrame, StudioMoreMenu, useStudioDock } from "../studio/StudioFrame";
+import {
+  control,
+  pill,
+  StudioFrame,
+  StudioHint,
+  StudioMoreMenu,
+  useStudioDock,
+} from "../studio/StudioFrame";
+import { StudioSwitcherDelete } from "../studio/StudioSwitcherDelete";
 import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-send";
-import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
 import { documentDockPage } from "./context";
-import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
 import { useDocumentBotId } from "./document-bot";
+import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { HistoryButton, VersionHistoryPanel } from "./history/VersionHistory";
+import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
 import type { SlideChipWords } from "./slides/context";
 import { slidesContext } from "./slides/context";
 import type { Deck } from "./slides/deck";
@@ -43,6 +51,7 @@ import { changedSlides, openDeck, saveVerified } from "./slides/deck";
 import { deckHistory } from "./slides/history";
 import type { SlidesView } from "./slides/SlidesWorkbench";
 import { SlidesPreview, SlidesWorkbench } from "./slides/SlidesWorkbench";
+import { useDeleteOfficeDocument } from "./use-delete-document";
 import { useDocumentLoad } from "./use-document-load";
 import { useDocumentUpload } from "./use-document-upload";
 import { LiveDraftPill, useLiveDraft } from "./use-live-draft";
@@ -57,6 +66,7 @@ export type SlidesStudioProps = {
   rootArtifactId: string;
   onClose: () => void;
   onOpenDocument: (rootArtifactId: string) => void;
+  onEmpty?: () => void;
 };
 
 /** The open presentation as loaded, and the history around it. */
@@ -88,6 +98,7 @@ export default function SlidesStudio({
   rootArtifactId,
   onClose,
   onOpenDocument,
+  onEmpty,
 }: SlidesStudioProps) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
@@ -114,13 +125,10 @@ export default function SlidesStudio({
   const heldImage = useRef<File | null>(null);
   const owner = useRef<Promise<{ botId: string | null; groupId: string | null }> | null>(null);
   const timers = useRef({ note: 0, flash: 0 });
-  const {
-    loadState,
-    loadBytes,
-    stillCurrent,
-    markReady,
-    markOpenFailed,
-  } = useDocumentLoad("pptx", () => queries.documents.get.call({ rootArtifactId }));
+  const { loadState, loadBytes, stillCurrent, markReady, markOpenFailed } = useDocumentLoad(
+    "pptx",
+    () => queries.documents.get.call({ rootArtifactId }),
+  );
 
   const chipWords = useMemo<SlideChipWords>(
     () => ({
@@ -352,6 +360,14 @@ export default function SlidesStudio({
     ]);
   }
 
+  const deleteDocument = useDeleteOfficeDocument({
+    currentId: rootArtifactId,
+    documents,
+    settle,
+    onOpenDocument,
+    onEmpty,
+  });
+
   async function close() {
     setBusy(true);
     await settle();
@@ -519,11 +535,11 @@ export default function SlidesStudio({
       start={
         <>
           <DropdownMenu>
+            <StudioHint label={t`Start a blank presentation, or upload a PowerPoint.`}>
             <DropdownMenuTrigger
               data-testid="slides-new"
               disabled={busy || uploader.busy}
               aria-label={t`New presentation`}
-              title={t`New presentation`}
               className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
             >
               {busy || uploader.busy ? (
@@ -532,6 +548,7 @@ export default function SlidesStudio({
                 <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
               )}
             </DropdownMenuTrigger>
+            </StudioHint>
             <DropdownMenuContent align="start" className="w-56">
               <DropdownMenuItem onClick={() => void create()}>
                 <Plus className="size-4" />
@@ -546,6 +563,7 @@ export default function SlidesStudio({
           </DropdownMenu>
           {uploader.input}
           <DropdownMenu>
+            <StudioHint label={t`Open another presentation.`}>
             <DropdownMenuTrigger
               data-testid="slides-switcher"
               render={
@@ -560,6 +578,7 @@ export default function SlidesStudio({
               <span className="truncate">{title}</span>
               <ChevronDown className="size-3.5 shrink-0 opacity-65" />
             </DropdownMenuTrigger>
+            </StudioHint>
             <DropdownMenuContent align="start" className="w-80">
               {documents.length === 0 ? (
                 <DropdownMenuItem disabled>
@@ -580,6 +599,12 @@ export default function SlidesStudio({
                   {item.rootArtifactId === rootArtifactId ? (
                     <Check className="size-4 shrink-0 text-primary" />
                   ) : null}
+                  <StudioSwitcherDelete
+                    label={t`Delete ${displayName(item.name)}`}
+                    onDelete={() =>
+                      void deleteDocument(item.rootArtifactId, displayName(item.name))
+                    }
+                  />
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -623,6 +648,7 @@ export default function SlidesStudio({
       }
       share={
         <DropdownMenu>
+          <StudioHint label={t`Download a copy of this presentation.`}>
           <DropdownMenuTrigger
             disabled={!doc && !loadFailed}
             data-testid="slides-share"
@@ -634,6 +660,7 @@ export default function SlidesStudio({
               <Trans>Share</Trans>
             </span>
           </DropdownMenuTrigger>
+          </StudioHint>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => void download()}>
               <Download className="size-4" />

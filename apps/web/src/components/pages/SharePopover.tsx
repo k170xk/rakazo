@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCopyText } from "../../lib/copy-text";
+import { StudioHint } from "../studio/StudioFrame";
 
 const TILE = "grid size-8 shrink-0 place-items-center rounded-[8px] bg-foreground/[0.04]";
 const LINK_PILL =
@@ -126,6 +127,13 @@ export function SharePopover({
   ];
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
+      <StudioHint
+        label={
+          downloads
+            ? t`Choose who can open this, or download a copy.`
+            : t`Choose who can open this.`
+        }
+      >
       <PopoverTrigger
         aria-label={
           visibility === "public"
@@ -159,6 +167,7 @@ export function SharePopover({
           </>
         )}
       </PopoverTrigger>
+      </StudioHint>
       <PopoverContent
         align="end"
         sideOffset={7.5}

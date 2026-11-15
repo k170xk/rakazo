@@ -3,9 +3,16 @@ import type { ReactNode } from "react";
 import { useStudioChatResize } from "./studio-chat-width";
 
 /** The chat column shared by the studios, opened at the main chat's width and dragged wider or narrower. */
-export function StudioChatPane({ children }: { children: ReactNode }) {
+export function StudioChatPane({
+  children,
+  reserved = 0,
+}: {
+  children: ReactNode;
+  /** Width already used by a column on the other side, so the two cannot cover the canvas. */
+  reserved?: number;
+}) {
   const { t } = useLingui();
-  const { resizing, handleProps, style } = useStudioChatResize();
+  const { resizing, handleProps, style } = useStudioChatResize(reserved);
   return (
     <div
       style={style}
