@@ -6,7 +6,12 @@ import { HardDrive, Maximize2, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { ComputersUnavailableHint } from "../../components/ComputersUnavailableHint";
 import { screenIframeSandbox } from "../../lib/computer-screen";
-import { computerLabel, computerPlaceholder, DesktopKindEmptyState } from "./computer-view";
+import {
+  ComputerOperatorPill,
+  computerLabel,
+  computerPlaceholder,
+  DesktopKindEmptyState,
+} from "./computer-view";
 
 type ComputerPanelProps = {
   bot: Bot;
@@ -43,6 +48,11 @@ export function ComputerPanel({
   return (
     <>
       <ComputerPreview {...props} />
+      {props.computerOpen ? null : (
+        <div className="mt-2 flex">
+          <ComputerOperatorPill computer={props.computer} botId={props.bot.id} />
+        </div>
+      )}
       {warn && (
         <div
           data-testid="computer-disk-warning"

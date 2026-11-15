@@ -155,3 +155,15 @@ it("shows no disk warning while the disk has room", async () => {
   });
   expect(container.querySelector('[data-testid="computer-disk-warning"]')).toBeNull();
 });
+
+it("names the agent using a shared computer, or says when you have control", async () => {
+  const pill = () => container.querySelector('[data-testid="computer-operator"]')?.textContent;
+  await render({ ...computer("running"), busyBotName: "Researcher" });
+  expect(pill()).toBe("Researcher is working…");
+  await render({ ...computer("running"), controlHolder: "user", controlBotId: "bot-1" });
+  expect(pill()).toBe("You have control");
+  await render(computer("running"));
+  expect(pill()).toBeUndefined();
+  await render({ ...computer("suspended"), busyBotName: "Researcher" });
+  expect(pill()).toBeUndefined();
+});

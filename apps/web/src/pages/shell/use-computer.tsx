@@ -105,6 +105,19 @@ export function useComputerState({
     );
   });
   const screenFrameReported = useRef(false);
+  // The last link replaced because it was refused: saving a shared computer's files, or taking or
+  // releasing control, retires a link, and only a second refusal of a fresh one is an error.
+  const replacedRefusedLink = useRef<string | null>(null);
+  const replaceRefusedLink = (refused: string | null) => {
+    const botId = computerBotIdRef.current;
+    if (!botId || !refused || replacedRefusedLink.current === refused) return false;
+    replacedRefusedLink.current = refused;
+    void refreshComputerScreen(botId).then((next) => {
+      // The same link back means it was not stale; let the new frame's own check report it.
+      if (next && next === refused) setScreenFrameKey((key) => key + 1);
+    });
+    return true;
+  };
   // A screen that drops after connecting loads again by itself now and then, through the proxy's
   // full check, by remounting its frame.
   // Each bot's screen has its own allowance.
@@ -131,7 +144,7 @@ export function useComputerState({
     if (!isProxiedScreenUrl(url)) return;
     let cancelled = false;
     const fallback = t`Could not connect to the computer screen`;
-    void probeScreen(url, fallback).then((error) => {
+    void probeScreen(url, fallback, fetch, () => replaceRefusedLink(screenUrl)).then((error) => {
       if (!cancelled && error && !screenFrameReported.current) setScreenLoadError(error);
     });
     const timer = setTimeout(() => {
@@ -202,9 +215,10 @@ export function useComputerState({
             if (outcome === "timeout") {
               screenRefocus.current.forget();
               setScreenLoadError(fallback);
+            } else if (!(outcome === "refused" && replaceRefusedLink(screenUrl))) {
+              // A refusal of a fresh link shows once the new frame's own check runs.
+              setScreenFrameKey((key) => key + 1);
             }
-            // A refusal shows once the new frame's own check runs.
-            else setScreenFrameKey((key) => key + 1);
           });
         }, SCREEN_RECONNECT_DELAY_MS);
         return;
@@ -420,6 +434,7 @@ export function useComputerControls({
   const { t } = useLingui();
   const {
     computer,
+    computerRef,
     commitComputer,
     computerCacheRef,
     cacheComputerFor,
@@ -625,7 +640,24 @@ export function useComputerControls({
     };
     const timer = window.setInterval(ping, 60_000);
     ping();
-    return () => window.clearInterval(timer);
+    // Another agent on a shared computer sends no events here, so who is at work is read again.
+    const operator = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void rpc.computer
+        .status({ botId: heartbeatBotId })
+        .then((status) => {
+          const current = computerRef.current;
+          if (current?.botId !== heartbeatBotId || current.busyBotName === status.busyBotName) {
+            return;
+          }
+          commitComputer({ ...current, busyBotName: status.busyBotName });
+        })
+        .catch(() => undefined);
+    }, 15_000);
+    return () => {
+      window.clearInterval(timer);
+      window.clearInterval(operator);
+    };
   }, [panel, computerOpen, computerBot?.id, active?.id, computer?.state]);
 
   /** Open the computer view. Only an explicit Take control asks for the lease. */

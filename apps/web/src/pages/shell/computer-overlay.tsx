@@ -17,7 +17,7 @@ import { TeachRecordingChrome, TeachStopButton } from "../../components/teach/Te
 import { screenIframeSandbox } from "../../lib/computer-screen";
 import { computerTakeoverBlocked } from "../../lib/thread-events";
 import { ComputerReleaseActions } from "./computer-release-actions";
-import { computerLabel, DesktopKindEmptyState } from "./computer-view";
+import { ComputerOperatorPill, computerLabel, DesktopKindEmptyState } from "./computer-view";
 
 type ComputerOverlayProps = {
   bot: Bot;
@@ -118,6 +118,9 @@ export function ComputerOverlay({
                   <Trans>You have control</Trans>
                 </span>
               )
+            ) : null}
+            {!recordingSkill ? (
+              <ComputerOperatorPill computer={computer} botId={bot.id} showControl={false} />
             ) : null}
           </div>
           <div className="flex items-center gap-3">

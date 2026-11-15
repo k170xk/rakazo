@@ -92,11 +92,13 @@ describe("screen capability lifecycle authorization", () => {
     computer.screenGeneration++;
     expect((await request()).status).toBe(403);
   });
-  it("serves a booting computer and rejects one that is suspending or has no sandbox", async () => {
+  it("serves a booting or saving computer and rejects a suspended one or one with no sandbox", async () => {
     const { request, computer } = fixture();
     computer.state = "booting";
     expect((await request()).status).toBe(200);
     computer.state = "suspending";
+    expect((await request()).status).toBe(200);
+    computer.state = "suspended";
     expect((await request()).status).toBe(403);
     computer.state = "running";
     computer.providerRef = "";

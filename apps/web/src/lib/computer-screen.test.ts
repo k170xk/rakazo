@@ -323,6 +323,17 @@ describe("probeScreen", () => {
     ).resolves.toBe("The screen did not respond.");
   });
 
+  it("stays quiet about a refused link that is being replaced, and only that one", async () => {
+    const refused = async () => response(403, "Invalid or expired screen capability");
+    await expect(probeScreen(url, "fallback", refused, () => true)).resolves.toBeNull();
+    await expect(probeScreen(url, "fallback", refused, () => false)).resolves.toBe(
+      "The screen link expired.",
+    );
+    const onRefused = vi.fn(() => true);
+    await probeScreen(url, "fallback", async () => response(502), onRefused);
+    expect(onRefused).not.toHaveBeenCalled();
+  });
+
   it("reads an access check that couldn't reach the API as a connection problem", async () => {
     await expect(
       probeScreen(url, "fallback", async () => response(503, "Screen unavailable")),

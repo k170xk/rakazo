@@ -54,7 +54,8 @@ export function mountScreenTarget(app: Hono, prisma: PrismaClient, secret: strin
       !computer ||
       computer.screenGeneration !== scope.computerGeneration ||
       !computer.providerRef ||
-      !["running", "booting"].includes(computer.state) ||
+      // A shared computer is briefly suspending while it saves its home after a run.
+      !["running", "booting", "suspending"].includes(computer.state) ||
       (target.interactive &&
         (!hasActiveComputerControl(computer) ||
           !scope.controlLeaseId ||

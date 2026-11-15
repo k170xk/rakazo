@@ -1,6 +1,11 @@
 import { ComputerStatusSchema } from "@rakazo/contracts";
-import { describe, expect, it } from "vitest";
-import { executionBlocksUserTakeover, toComputerStatus } from "./computer-status.js";
+import type { PrismaClient } from "@rakazo/db";
+import { describe, expect, it, vi } from "vitest";
+import {
+  executionBlocksUserTakeover,
+  resolveBusyBotName,
+  toComputerStatus,
+} from "./computer-status.js";
 
 describe("toComputerStatus", () => {
   it("shows a quarantined computer as an error without making its screen available", () => {
@@ -187,5 +192,53 @@ describe("executionBlocksUserTakeover", () => {
         now,
       }),
     ).toBe(false);
+  });
+});
+
+describe("resolveBusyBotName", () => {
+  const later = new Date(Date.now() + 60_000);
+  const earlier = new Date(Date.now() - 60_000);
+  const prismaWith = (
+    leases: { botId: string; runId: string }[],
+    running: string[],
+    finished: string[] = [],
+  ) =>
+    ({
+      computerExecutionLease: {
+        findMany: vi.fn(async () =>
+          leases.map((lease) => ({
+            ...lease,
+            expiresAt: finished.includes(lease.runId) ? earlier : later,
+            computer: { controlRunId: null },
+          })),
+        ),
+      },
+      run: {
+        findMany: vi.fn(async () => [
+          ...running.map((id) => ({ id, status: "running" })),
+          ...finished.map((id) => ({ id, status: "succeeded" })),
+        ]),
+      },
+      bot: { findUnique: vi.fn(async () => ({ name: "Researcher" })) },
+    }) as unknown as PrismaClient;
+  const input = { computerId: "computer-1", botId: "bot-1", botName: "Writer" };
+
+  it("names another agent at work on a shared computer", async () => {
+    const prisma = prismaWith([{ botId: "bot-2", runId: "run-2" }], ["run-2"]);
+    await expect(resolveBusyBotName(prisma, input)).resolves.toBe("Researcher");
+  });
+  it("names this agent first when it is working too", async () => {
+    const prisma = prismaWith(
+      [
+        { botId: "bot-2", runId: "run-2" },
+        { botId: "bot-1", runId: "run-1" },
+      ],
+      ["run-1", "run-2"],
+    );
+    await expect(resolveBusyBotName(prisma, input)).resolves.toBe("Writer");
+  });
+  it("names nobody once the runs have finished", async () => {
+    const prisma = prismaWith([{ botId: "bot-2", runId: "run-2" }], [], ["run-2"]);
+    await expect(resolveBusyBotName(prisma, input)).resolves.toBeNull();
   });
 });

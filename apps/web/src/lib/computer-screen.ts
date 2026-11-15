@@ -180,6 +180,8 @@ export async function probeScreen(
   url: string,
   fallback: string,
   fetchImpl: typeof fetch = fetch,
+  /** A refused link may only be stale: returning true means a fresh one is on its way. */
+  onRefused?: () => boolean,
 ): Promise<string | null> {
   try {
     const response = await fetchImpl(url, {
@@ -190,7 +192,7 @@ export async function probeScreen(
     if (response.ok) return null;
     // The proxy couldn't reach the API to check the screen: that's a connection problem.
     if (response.type === "opaqueredirect" || response.status === 503) return fallback;
-    if (response.status === 403) return t`The screen link expired.`;
+    if (response.status === 403) return onRefused?.() ? null : t`The screen link expired.`;
     const body = await response.text().catch(() => "");
     if (response.status === 502 && body.trim() === "Screen unavailable (upstream_timeout)") {
       return t`The screen did not respond.`;

@@ -827,7 +827,7 @@ export function computerRoutes(ctx: RouterContext) {
         }
         if (
           !bot.computer?.providerRef ||
-          (bot.computer.state !== "running" && bot.computer.state !== "booting")
+          !["running", "booting", "suspending"].includes(bot.computer.state)
         ) {
           return { url: null };
         }

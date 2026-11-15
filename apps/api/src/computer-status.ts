@@ -35,23 +35,40 @@ export async function resolveBusyBotName(
   },
 ): Promise<string | null> {
   if (!input.computerId) return null;
-  const lease = await prisma.computerExecutionLease.findUnique({
-    where: { computerId_botId: { computerId: input.computerId, botId: input.botId } },
-    select: { expiresAt: true, runId: true, computer: { select: { controlRunId: true } } },
+  const leases = await prisma.computerExecutionLease.findMany({
+    where: {
+      computerId: input.computerId,
+      OR: [{ botId: input.botId }, { expiresAt: { gt: new Date() } }],
+    },
+    orderBy: { updatedAt: "desc" },
+    take: 8,
+    select: {
+      botId: true,
+      expiresAt: true,
+      runId: true,
+      computer: { select: { controlRunId: true } },
+    },
   });
-  if (!lease) return null;
-  const run = await prisma.run.findUnique({
-    where: { id: lease.runId },
-    select: { status: true },
+  if (leases.length === 0) return null;
+  const runs = await prisma.run.findMany({
+    where: { id: { in: leases.map((lease) => lease.runId) } },
+    select: { id: true, status: true },
   });
-  return executionBlocksUserTakeover({
-    hasLease: true,
-    leaseExpiresAt: lease.expiresAt,
-    runStatus: run?.status,
-    takeoverRequested: lease.computer.controlRunId === lease.runId,
-  })
-    ? input.botName
-    : null;
+  const status = new Map(runs.map((run) => [run.id, run.status]));
+  const working = leases.filter((lease) =>
+    executionBlocksUserTakeover({
+      hasLease: true,
+      leaseExpiresAt: lease.expiresAt,
+      runStatus: status.get(lease.runId),
+      takeoverRequested: lease.computer.controlRunId === lease.runId,
+    }),
+  );
+  if (working.some((lease) => lease.botId === input.botId)) return input.botName;
+  // On a computer several agents share, name the one at work there now.
+  const other = working[0];
+  if (!other) return null;
+  const bot = await prisma.bot.findUnique({ where: { id: other.botId }, select: { name: true } });
+  return bot?.name ?? null;
 }
 
 export function toComputerStatus(
