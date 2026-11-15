@@ -20,8 +20,32 @@ export const RUNNER_PROGRAMS: ReadonlySet<string> = new Set([
 ]);
 /** Server folder beside the homes holding colleague conversation folders; no computer mounts it. */
 export const TOOL_WORK = "tool-work";
-/** A colleague conversation folder stops taking new work past this size. */
-export const CONVERSATION_FOLDER_MAX_BYTES = 1024 ** 3;
+/** A colleague conversation folder stops taking new work past this size: a 500 MB upload and two copies. */
+export const CONVERSATION_FOLDER_MAX_BYTES = 3 * 1024 ** 3;
+
+/** Inputs this size or larger run with the large-document memory from the start. */
+export const LARGE_INPUT_BYTES = 40 * 1024 ** 2;
+const INPUT_FLAGS: ReadonlySet<string> = new Set(["--in", "--old", "--new"]);
+
+/** The size of the biggest file an OCSC command reads, from its `--in`, `--old` and `--new`. */
+export async function largestInputBytes(workspace: ToolRunnerWorkspace, args: readonly string[]) {
+  const folder = path.resolve(workspace.root, workspace.cwd);
+  let largest = 0;
+  for (const [index, arg] of args.entries()) {
+    const equals = arg.indexOf("=");
+    const value = INPUT_FLAGS.has(arg)
+      ? args[index + 1]
+      : equals > 0 && INPUT_FLAGS.has(arg.slice(0, equals))
+        ? arg.slice(equals + 1)
+        : undefined;
+    if (!value) continue;
+    const full = path.resolve(folder, value);
+    if (!full.startsWith(`${folder}${path.sep}`)) continue;
+    const info = await lstat(full).catch(() => null);
+    if (info?.isFile()) largest = Math.max(largest, info.size);
+  }
+  return largest;
+}
 
 /**
  * The one folder a run's OCSC commands and file tools reach without a computer.
@@ -178,7 +202,7 @@ export async function conversationFolderRefusal(workspace: ToolRunnerWorkspace) 
   if (!workspace.conversation) return undefined;
   const { size } = await measureTree(workspace.conversation);
   if (size <= CONVERSATION_FOLDER_MAX_BYTES) return undefined;
-  return "This conversation's files have reached 1 GB. Start a new chat with the agent to keep making documents.";
+  return "This conversation's files have reached 3 GB. Start a new chat with the agent to keep making documents.";
 }
 
 export interface ToolRunOutput {
@@ -235,6 +259,8 @@ type SlotStats = {
 
 export interface ToolRunnerStatus extends SlotStats {
   video?: SlotStats;
+  /** Absent from runners older than the large-document lane. */
+  large?: SlotStats;
   /** Absent from runners older than overflow; such a runner is never treated as quiet. */
   host?: { load1: number; cpus: number; memAvailableBytes: number | null };
 }
@@ -243,12 +269,16 @@ export interface ToolRunnerStatus extends SlotStats {
 export const OVERFLOW_MAX_LOAD_PER_CPU = 0.5;
 export const OVERFLOW_MIN_AVAILABLE_BYTES = 8 * 1024 ** 3;
 const OVERFLOW_STATUS_TIMEOUT_MS = 1500;
+/** An overflow runner that did not answer is left alone this long. */
+const OVERFLOW_DOWN_MS = 30_000;
 
 /** Runners ping every 30 seconds, so this much silence means the connection is gone. */
 export const TOOL_RUN_SILENCE_MAX_MS = 2 * 60_000;
 /** Longest a command waits for a slot before the chat is told the runners are busy. */
 export const TOOL_RUN_QUEUE_MAX_MS = 15 * 60_000;
 const VIDEO_QUEUE_MAX_MS = 60 * 60_000;
+/** Each server runs one large document at a time, and one can take half an hour. */
+const LARGE_QUEUE_MAX_MS = 60 * 60_000;
 /** Copying a folder to or from a runner on another server. */
 const TOOL_RUN_SYNC_MAX_MS = 10 * 60_000;
 
@@ -265,15 +295,27 @@ function hasFreeSlot(stats: SlotStats | undefined, unreported = 0) {
   return (stats.ownerRunning ?? 0) < stats.perOwner;
 }
 
+type Lane = "normal" | "large";
+
+function laneFor(program: string, large: boolean | undefined): Lane {
+  return large && program !== "video" ? "large" : "normal";
+}
+
 /** `unreported` counts commands this process sent that the runner may not list yet. */
-function freeFor(status: ToolRunnerStatus, program: string, unreported = 0) {
+function freeFor(status: ToolRunnerStatus, program: string, unreported = 0, lane: Lane = "normal") {
+  if (lane === "large") return hasFreeSlot(status.large, unreported);
   return hasFreeSlot(status, unreported) && (program !== "video" || hasFreeSlot(status.video));
 }
 
-export function overflowRunnerQuiet(status: ToolRunnerStatus, program: string, unreported = 0) {
+export function overflowRunnerQuiet(
+  status: ToolRunnerStatus,
+  program: string,
+  unreported = 0,
+  lane: Lane = "normal",
+) {
   const host = status.host;
   return (
-    freeFor(status, program, unreported) &&
+    freeFor(status, program, unreported, lane) &&
     host !== undefined &&
     host.cpus > 0 &&
     host.load1 / host.cpus < OVERFLOW_MAX_LOAD_PER_CPU &&
@@ -303,40 +345,47 @@ export class ToolRunnerClient {
    * Commands sent here that the runner may not count yet, so a burst that arrives at once
    * does not all read the same free slots. Each choice and its reservation share one tick.
    */
-  private unreported = 0;
+  private readonly unreported: Record<Lane, number> = { normal: 0, large: 0 };
+  /** When this runner, as an overflow runner, may be asked again after it failed to answer. */
+  private downUntil = 0;
 
-  private reserve() {
-    this.unreported += 1;
+  private reserve(lane: Lane) {
+    this.unreported[lane] += 1;
     let held = true;
     return () => {
       if (!held) return;
       held = false;
-      this.unreported -= 1;
+      this.unreported[lane] -= 1;
     };
   }
 
   private async pick(
     program: string,
     owner: string,
+    lane: Lane,
   ): Promise<{ runner: ToolRunnerClient; reported: () => void }> {
     const overflow = this.options.overflow ?? [];
     if (overflow.length === 0) return { runner: this, reported: () => undefined };
     const here = await this.status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS), owner).catch(
       () => undefined,
     );
-    // A runner here that cannot report still takes the command, as it would without overflow.
-    if (!here || freeFor(here, program, this.unreported)) {
-      return { runner: this, reported: this.reserve() };
+    if (here && freeFor(here, program, this.unreported[lane], lane)) {
+      return { runner: this, reported: this.reserve(lane) };
     }
+    // Busy here, or not answering: a quiet runner elsewhere takes it, otherwise it waits here.
     for (const runner of overflow) {
+      if (runner.downUntil > Date.now()) continue;
       const there = await runner
         .status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS), owner)
-        .catch(() => undefined);
-      if (there && overflowRunnerQuiet(there, program, runner.unreported)) {
-        return { runner, reported: runner.reserve() };
+        .catch(() => {
+          runner.downUntil = Date.now() + OVERFLOW_DOWN_MS;
+          return undefined;
+        });
+      if (there && overflowRunnerQuiet(there, program, runner.unreported[lane], lane)) {
+        return { runner, reported: runner.reserve(lane) };
       }
     }
-    return { runner: this, reported: this.reserve() };
+    return { runner: this, reported: this.reserve(lane) };
   }
 
   private endpoint(route: string, query?: Record<string, string>) {
@@ -489,12 +538,17 @@ export class ToolRunnerClient {
     author?: string;
     timeoutMs: number;
     signal: AbortSignal;
+    /** The file is too big for an ordinary runner's memory. */
+    large?: boolean;
     onQueued?: (ahead: number) => void;
     /** A queued command got its runner. */
     onStarted?: () => void;
+    /** The command ran out of memory and starts again with the large-document memory. */
+    onRetry?: () => void;
     onOutput?: (snapshot: { stdout: string; stderr: string }) => void;
   }): Promise<ToolRunOutput> {
-    const { runner, reported } = await this.pick(input.program, input.owner);
+    const lane = laneFor(input.program, input.large);
+    const { runner, reported } = await this.pick(input.program, input.owner, lane);
     try {
       return await runner.runHere(input, reported);
     } finally {
@@ -521,9 +575,14 @@ export class ToolRunnerClient {
         this.options.limits?.silenceMs ?? TOOL_RUN_SILENCE_MAX_MS,
       );
     };
-    const queueMaxMs =
+    let large = laneFor(input.program, input.large) === "large";
+    const queueMaxMs = () =>
       this.options.limits?.queueMs ??
-      (input.program === "video" ? VIDEO_QUEUE_MAX_MS : TOOL_RUN_QUEUE_MAX_MS);
+      (input.program === "video"
+        ? VIDEO_QUEUE_MAX_MS
+        : large
+          ? LARGE_QUEUE_MAX_MS
+          : TOOL_RUN_QUEUE_MAX_MS);
     try {
       heard();
       const result = await this.stream(
@@ -537,15 +596,22 @@ export class ToolRunnerClient {
         reported,
         {
           queued: () => {
+            const waitMs = queueMaxMs();
             queueWait ??= setTimeout(
               () =>
                 fail(
-                  `every document runner stayed busy for ${Math.max(1, Math.round(queueMaxMs / 60_000))} minutes; tell the person and suggest trying again in a few minutes`,
+                  `every document runner stayed busy for ${Math.max(1, Math.round(waitMs / 60_000))} minutes; tell the person and suggest trying again in a few minutes`,
                 ),
-              queueMaxMs,
+              waitMs,
             );
           },
-          started: () => clearTimeout(queueWait),
+          started: () => {
+            clearTimeout(queueWait);
+            queueWait = undefined;
+          },
+          retrying: () => {
+            large = true;
+          },
         },
       );
       clearTimeout(silence);
@@ -568,7 +634,7 @@ export class ToolRunnerClient {
     signal: AbortSignal,
     heard: () => void,
     reported: () => void,
-    queue: { queued: () => void; started: () => void },
+    queue: { queued: () => void; started: () => void; retrying: () => void },
   ): Promise<ToolRunOutput> {
     const res = await fetch(this.endpoint("/tool-runs/run"), {
       method: "POST",
@@ -582,8 +648,14 @@ export class ToolRunnerClient {
         ...(input.author ? { author: input.author } : {}),
         timeoutMs: input.timeoutMs,
         ...(synced ? { synced: true } : {}),
+        ...(input.large ? { large: true } : {}),
       }),
       signal,
+    }).catch((error: unknown) => {
+      if (signal.aborted) throw error;
+      throw new Error("could not reach the document runner; try the command again in a minute", {
+        cause: error,
+      });
     });
     if (!res.ok || !res.body) {
       throw new Error(`tool runner refused the command: ${res.status} ${await res.text()}`.trim());
@@ -613,6 +685,12 @@ export class ToolRunnerClient {
       } else if (event.type === "started") {
         queue.started();
         input.onStarted?.();
+      } else if (event.type === "retrying") {
+        // The first try's partial output would only confuse the second.
+        result.stdout = "";
+        result.stderr = "";
+        queue.retrying();
+        input.onRetry?.();
       }
       if (event.type === "stdout" || event.type === "stderr") {
         input.onOutput?.({ stdout: result.stdout, stderr: result.stderr });

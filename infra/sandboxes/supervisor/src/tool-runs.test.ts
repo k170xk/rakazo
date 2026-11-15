@@ -12,11 +12,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  autoToolRunSlots,
   deleteToolCacheFiles,
   FairSlots,
   listToolCacheFiles,
+  memoryRoomFor,
   openToolCacheFile,
   prepareToolRunMount,
+  printedOutOfMemory,
   slotsPerPerson,
   sweepToolCache,
   toolRunContainerOptions,
@@ -306,5 +309,79 @@ describe("tool run container", () => {
     expect(options.HostConfig.ReadonlyRootfs).toBe(true);
     expect(options.HostConfig.Tmpfs).toHaveProperty("/opt/ocsc-video/.work");
     expect(options.Env).toContain("OCSC_VIDEO_INLINE=1");
+  });
+
+  it("gives a large document more memory, cores and scratch room, and lifts the tools' size limit", () => {
+    const options = toolRunContainerOptions({
+      name: "rakazo-tool-run-l",
+      image: "rakazo/computer:local",
+      user: "1000:1000",
+      request: toolRunRequestSchema.parse({ ...valid, program: "pptx", large: true }),
+      storage: { homePath: "/srv/data/homes/team-a" },
+    });
+    expect(options.HostConfig).toMatchObject({
+      Memory: 12 * 1024 ** 3,
+      MemorySwap: 12 * 1024 ** 3,
+      NanoCpus: 4e9,
+      CpuShares: 512,
+      ReadonlyRootfs: true,
+    });
+    expect(options.HostConfig.Tmpfs["/tmp"]).toContain("size=4g");
+    expect(options.Env).toContain("OCSC_LARGE_INPUT=1");
+    expect(options.Env).toContain("NODE_OPTIONS=--max-old-space-size=9216");
+  });
+
+  it("keeps ordinary commands and videos out of the large-document settings", () => {
+    for (const request of [valid, { ...valid, program: "video", args: ["render"], large: true }]) {
+      const options = toolRunContainerOptions({
+        name: "rakazo-tool-run-o",
+        image: "rakazo/computer:local",
+        user: "1000:1000",
+        request: toolRunRequestSchema.parse(request),
+        storage: { homePath: "/srv/data/homes/team-a" },
+      });
+      expect(options.HostConfig.Tmpfs["/tmp"]).toContain("size=2g");
+      expect(options.Env).not.toContain("OCSC_LARGE_INPUT=1");
+      expect(options.Env.some((entry) => entry.startsWith("NODE_OPTIONS="))).toBe(false);
+    }
+  });
+
+  it("is the first thing the kernel stops when the server runs out of memory", () => {
+    const options = toolRunContainerOptions({
+      name: "rakazo-tool-run-k",
+      image: "rakazo/computer:local",
+      user: "1000:1000",
+      request: toolRunRequestSchema.parse(valid),
+      storage: { homePath: "/srv/data/homes/team-a" },
+    });
+    expect(options.HostConfig.OomScoreAdj).toBe(1000);
+    expect(options.HostConfig.Ulimits).toEqual([{ Name: "core", Soft: 0, Hard: 0 }]);
+  });
+});
+
+describe("runner capacity", () => {
+  const gib = 1024 ** 3;
+
+  it("sizes an automatic runner to the server's cores and memory", () => {
+    expect(autoToolRunSlots(8, 31 * gib, 2 * gib)).toBe(8);
+    expect(autoToolRunSlots(16, 31 * gib, 2 * gib)).toBe(11);
+    expect(autoToolRunSlots(32, 64 * gib, 4 * gib)).toBe(14);
+    expect(autoToolRunSlots(2, 8 * gib, 4 * gib)).toBe(2);
+  });
+
+  it("starts a command only while the server keeps memory spare", () => {
+    expect(memoryRoomFor(2 * gib, 20 * gib)).toBe(true);
+    expect(memoryRoomFor(12 * gib, 13 * gib)).toBe(false);
+    expect(memoryRoomFor(12 * gib, 14 * gib)).toBe(true);
+    expect(memoryRoomFor(12 * gib, null)).toBe(true);
+  });
+
+  it("recognises a program that ran out of memory by what it printed", () => {
+    expect(
+      printedOutOfMemory(
+        "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory",
+      ),
+    ).toBe(true);
+    expect(printedOutOfMemory("Deck.pptx does not exist.")).toBe(false);
   });
 });

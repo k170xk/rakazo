@@ -75,7 +75,13 @@ import {
 import { DESKTOP_HELD_FOR_TAKEOVER_MESSAGE } from "./takeover-resume.js";
 import { getActiveTeachingSession } from "./teaching-session.js";
 import type { ToolRunnerClient, WorkspaceFiles } from "./tool-runner.js";
-import { conversationFolderRefusal, RUNNER_PROGRAMS, TOOL_RUNNER_COMPUTER } from "./tool-runner.js";
+import {
+  conversationFolderRefusal,
+  LARGE_INPUT_BYTES,
+  largestInputBytes,
+  RUNNER_PROGRAMS,
+  TOOL_RUNNER_COMPUTER,
+} from "./tool-runner.js";
 import { vaultCardUseOf } from "./vault-card-use.js";
 
 const CREDENTIALS_WITHHELD_NOTICE =
@@ -360,8 +366,13 @@ function showWorkingLine(ctx: RunContext, text: string) {
 }
 
 function runnerQueueLine(ahead: number) {
+  if (ahead <= 0) return "Waiting for a document runner…";
   return `Waiting for a document runner (${ahead} ${ahead === 1 ? "command" : "commands"} ahead)…`;
 }
+
+const RUNNER_RETRY_LINE = "That file needed more memory; moving it to a larger document runner…";
+/** A large document gets half an hour, as its runner allows. */
+const LARGE_RUN_TIMEOUT_MS = 30 * 60_000;
 
 /**
  * Runs one OCSC document command on a tool runner, which sees only this run's folder,
@@ -398,14 +409,27 @@ async function runOcscOnRunner(
   await publish("", "running", null);
   let lastPublishedAt = 0;
   try {
+    const large =
+      program !== "video" &&
+      (await largestInputBytes(runner.workspace, args).catch(() => 0)) >= LARGE_INPUT_BYTES;
     const result = await client.run({
       workspace: runner.workspace,
       program,
       args,
       owner: ctx.run.userId,
       author,
-      timeoutMs: program === "video" ? VIDEO_RUN_TIMEOUT_MS : sandboxCommandTimeoutMs(),
+      timeoutMs:
+        program === "video"
+          ? VIDEO_RUN_TIMEOUT_MS
+          : large
+            ? Math.max(LARGE_RUN_TIMEOUT_MS, sandboxCommandTimeoutMs())
+            : sandboxCommandTimeoutMs(),
       signal: ctx.context.signal,
+      ...(large ? { large: true } : {}),
+      onRetry: () => {
+        void publish(`${RUNNER_RETRY_LINE}\n`, "running", null);
+        showWorkingLine(ctx, RUNNER_RETRY_LINE);
+      },
       onQueued: (ahead) => {
         void publish(`${runnerQueueLine(ahead)}\n`, "running", null);
         showWorkingLine(ctx, runnerQueueLine(ahead));

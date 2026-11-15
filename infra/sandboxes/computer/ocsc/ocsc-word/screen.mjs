@@ -32,7 +32,9 @@ import { PAGE_MARK, SECTION_MARK } from "./docx-pages.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const WORKSPACE = process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
 const SCREEN_DIR = join(WORKSPACE, ".openbot", "screen");
-const MAX_INPUT_BYTES = 40 * 1024 * 1024;
+// The large-document runner, with several times the memory, sets OCSC_LARGE_INPUT.
+const MAX_INPUT_MB = process.env.OCSC_LARGE_INPUT === "1" ? 600 : 40;
+const MAX_INPUT_BYTES = MAX_INPUT_MB * 1024 * 1024;
 const MAX_SHEET_ROWS = 1000;
 const MAX_SHEET_COLS = 40;
 const MAX_PRINT_ROWS = 5000;
@@ -71,7 +73,7 @@ export function workspaceFile(p) {
   if (!existsSync(full)) throw new ScreenError(`${rel} does not exist.`);
   const size = statSync(full).size;
   if (size > MAX_INPUT_BYTES)
-    throw new ScreenError(`${rel} is larger than 40 MB, too large to preview.`);
+    throw new ScreenError(`${rel} is larger than ${MAX_INPUT_MB} MB, too large to preview.`);
   return { full, rel: rel.split("\\").join("/") };
 }
 

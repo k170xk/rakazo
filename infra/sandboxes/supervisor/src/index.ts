@@ -113,12 +113,16 @@ import {
 import {
   deleteToolCacheFiles,
   FairSlots,
+  LARGE_TOOL_RUN_TIMEOUT_MS,
   listToolCacheFiles,
+  memoryRoomFor,
   openToolCacheFile,
   prepareToolRunMount,
+  printedOutOfMemory,
   slotsPerPerson,
   sweepToolCache,
   TOOL_CACHE,
+  TOOL_RUN_COPY_MAX_BYTES,
   TOOL_RUN_LABEL,
   TOOL_RUN_NETWORK_ID,
   toolCacheDays,
@@ -127,6 +131,8 @@ import {
   toolRunFileListSchema,
   toolRunFileSchema,
   toolRunHostLoad,
+  toolRunLargeSlots,
+  toolRunLimits,
   toolRunLocalMount,
   toolRunRequestSchema,
   toolRunSlots,
@@ -187,7 +193,9 @@ export function supervisorRequestBodyLimit(
   pathname: string,
   maxBytes = maxUploadSizeBytes,
 ): number {
-  if (method === "PUT" && pathname === "/tool-runs/files") return maxBytes;
+  if (method === "PUT" && pathname === "/tool-runs/files") {
+    return Math.max(maxBytes, TOOL_RUN_COPY_MAX_BYTES);
+  }
   return method === "POST" && /^\/computers\/[^/]+\/files\/?$/.test(pathname)
     ? supervisorFileContentLimit(maxBytes) + 64 * 1024
     : MAX_SUPERVISOR_REQUEST_BYTES;
@@ -568,6 +576,18 @@ app.post("/computers/:id/exec", async (c) => {
 
 const toolRunSlotsShared = new FairSlots(toolRunSlots(), slotsPerPerson(toolRunSlots()));
 const toolRunVideoSlotsShared = new FairSlots(toolRunVideoSlots());
+const toolRunLargeSlotsShared = new FairSlots(toolRunLargeSlots());
+
+/** Holds a command back, as queued, until the server has the memory it may use. */
+async function waitForToolRunMemory(limitBytes: number, signal: AbortSignal, onWait: () => void) {
+  let waiting = false;
+  while (!memoryRoomFor(limitBytes, (await toolRunHostLoad()).memAvailableBytes)) {
+    if (signal.aborted) throw new Error("tool run cancelled");
+    if (!waiting) onWait();
+    waiting = true;
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+}
 const TOOL_RUN_OUTPUT_MAX_BYTES = 4 * 1024 * 1024;
 // Runs this process started are the only ones it waits on, so any found before the first are leftovers.
 let toolRunLeftoversCleared: Promise<void> | undefined;
@@ -615,6 +635,7 @@ app.get("/tool-runs/status", async (c) => {
   return c.json({
     ...toolRunSlotsShared.stats(owner),
     video: toolRunVideoSlotsShared.stats(owner),
+    large: toolRunLargeSlotsShared.stats(owner),
     host: await toolRunHostLoad(),
   });
 });
@@ -647,7 +668,7 @@ app.put("/tool-runs/files", async (c) => {
       body: c.req.raw.body as unknown as AsyncIterable<Uint8Array>,
       mtimeMs,
       owner,
-      maxBytes: maxUploadSizeBytes,
+      maxBytes: Math.max(maxUploadSizeBytes, TOOL_RUN_COPY_MAX_BYTES),
     });
     return c.json({ size });
   } catch (error) {
@@ -701,10 +722,11 @@ app.post("/tool-runs/run", async (c) => {
       let closed = false;
       let sentBytes = 0;
       const send = (event: {
-        type: "stdout" | "stderr" | "exit" | "queued" | "started" | "ping";
+        type: "stdout" | "stderr" | "exit" | "queued" | "started" | "ping" | "retrying";
         data?: string;
         code?: number;
         ahead?: number;
+        reason?: string;
       }) => {
         if (closed) return;
         if (event.data) {
@@ -743,62 +765,113 @@ app.post("/tool-runs/run", async (c) => {
             computerNetworkOwnerFor(dataDir, runtimeInfo),
           );
         }
+        const video = request.program === "video";
         let queued = false;
         const onQueued = (ahead: number) => {
           queued = true;
           send({ type: "queued", ahead });
         };
-        if (request.program === "video") {
+        if (video) {
           releaseVideo = await toolRunVideoSlotsShared.acquire(request.owner, abort, onQueued);
         }
-        release = await toolRunSlotsShared.acquire(request.owner, abort, onQueued);
-        if (queued) send({ type: "started" });
-        container = await docker.createContainer(
-          toolRunContainerOptions({
-            name: `rakazo-tool-run-${randomUUID().slice(0, 12)}`,
-            image: COMPUTER_IMAGE,
-            user,
-            request,
-            storage,
-            networkMode,
-            dns: computerDns,
-          }),
-        );
-        const demuxer = createDockerStreamDemuxer();
-        const output = (await container.attach({
-          stream: true,
-          stdout: true,
-          stderr: true,
-        })) as NodeJS.ReadableStream;
-        const drained = new Promise<void>((resolve) => {
-          output.on("data", (chunk: Buffer) => {
-            for (const event of demuxer.push(chunk)) send({ type: event.stream, data: event.data });
-          });
-          output.on("end", resolve);
-          output.on("close", resolve);
-          output.on("error", () => resolve());
-        });
-        await container.start();
-        const running = container;
-        let timedOut = false;
-        const stop = () => void running.kill().catch(() => undefined);
-        const timer = setTimeout(() => {
-          timedOut = true;
-          stop();
-        }, timeoutMs);
-        abort.addEventListener("abort", stop, { once: true });
-        let code: number;
-        try {
-          const waited = (await running.wait()) as { StatusCode?: number };
-          code = waited.StatusCode ?? 1;
-        } finally {
-          clearTimeout(timer);
-          abort.removeEventListener("abort", stop);
+        const attempt = async (large: boolean) => {
+          const lane = large ? toolRunLargeSlotsShared : toolRunSlotsShared;
+          release = await lane.acquire(request.owner, abort, onQueued);
+          try {
+            const memory = toolRunLimits(request.program, large).Memory;
+            await waitForToolRunMemory(memory, abort, () => onQueued(0));
+            if (queued) send({ type: "started" });
+            queued = false;
+            container = await docker.createContainer(
+              toolRunContainerOptions({
+                name: `rakazo-tool-run-${randomUUID().slice(0, 12)}`,
+                image: COMPUTER_IMAGE,
+                user,
+                request: { ...request, large },
+                storage,
+                networkMode,
+                dns: computerDns,
+              }),
+            );
+            const demuxer = createDockerStreamDemuxer();
+            let stderrTail = "";
+            const forward = (event: { stream: "stdout" | "stderr"; data: string }) => {
+              if (event.stream === "stderr") stderrTail = (stderrTail + event.data).slice(-4096);
+              send({ type: event.stream, data: event.data });
+            };
+            const output = (await container.attach({
+              stream: true,
+              stdout: true,
+              stderr: true,
+            })) as NodeJS.ReadableStream;
+            const drained = new Promise<void>((resolve) => {
+              output.on("data", (chunk: Buffer) => {
+                for (const event of demuxer.push(chunk)) forward(event);
+              });
+              output.on("end", resolve);
+              output.on("close", resolve);
+              output.on("error", () => resolve());
+            });
+            await container.start();
+            const running = container;
+            const limitMs = large ? Math.max(timeoutMs, LARGE_TOOL_RUN_TIMEOUT_MS) : timeoutMs;
+            let timedOut = false;
+            const stop = () => void running.kill().catch(() => undefined);
+            const timer = setTimeout(() => {
+              timedOut = true;
+              stop();
+            }, limitMs);
+            abort.addEventListener("abort", stop, { once: true });
+            let code: number;
+            try {
+              const waited = (await running.wait()) as { StatusCode?: number };
+              code = waited.StatusCode ?? 1;
+            } finally {
+              clearTimeout(timer);
+              abort.removeEventListener("abort", stop);
+            }
+            await Promise.race([drained, new Promise((resolve) => setTimeout(resolve, 2000))]);
+            for (const event of demuxer.finish()) forward(event);
+            const outOfMemory =
+              !timedOut &&
+              !abort.aborted &&
+              code !== 0 &&
+              (printedOutOfMemory(stderrTail) ||
+                (await running
+                  .inspect()
+                  .then((info) => info.State?.OOMKilled === true)
+                  .catch(() => code === 137)));
+            return { code, timedOut, limitMs, memory, outOfMemory };
+          } finally {
+            await container?.remove({ force: true }).catch(() => undefined);
+            container = undefined;
+            release?.();
+            release = undefined;
+          }
+        };
+        const startLarge = request.large === true && !video;
+        let result = await attempt(startLarge);
+        let large = startLarge;
+        if (result.outOfMemory && !large && !video) {
+          // The ordinary memory was too small for this file: run it again, once, with more.
+          send({ type: "retrying", reason: "memory" });
+          sentBytes = 0;
+          large = true;
+          result = await attempt(true);
         }
-        await Promise.race([drained, new Promise((resolve) => setTimeout(resolve, 2000))]);
-        for (const event of demuxer.finish()) send({ type: event.stream, data: event.data });
-        if (timedOut) send({ type: "stderr", data: `command timed out after ${timeoutMs} ms\n` });
-        send({ type: "exit", code: timedOut ? 124 : code });
+        if (result.outOfMemory) {
+          const gb = Math.round(result.memory / 1024 ** 3);
+          send({
+            type: "stderr",
+            data: large
+              ? `the file needed more than the ${gb} GB the large-document runner allows; split it into smaller files or compress its pictures, then try again\n`
+              : `the command ran out of its ${gb} GB of memory\n`,
+          });
+        }
+        if (result.timedOut) {
+          send({ type: "stderr", data: `command timed out after ${result.limitMs} ms\n` });
+        }
+        send({ type: "exit", code: result.timedOut ? 124 : result.code });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         if (!abort.aborted) getLogger().warn("tool run failed", { error: message });

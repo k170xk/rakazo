@@ -255,6 +255,7 @@ describe("sandbox supervisor HTTP boundary", () => {
         content: "A".repeat(Math.ceil(limit / 3) * 4 + 1),
       }).success,
     ).toBe(false);
+    expect(supervisorRequestBodyLimit("PUT", "/tool-runs/files", limit)).toBe(3 * 1024 ** 3);
     expect(supervisorRequestBodyLimit("POST", "/computers/id/actions", limit)).toBe(
       MAX_SUPERVISOR_REQUEST_BYTES,
     );

@@ -40,7 +40,8 @@ services:
     depends_on: !reset {}
     restart: unless-stopped
     environment:
-      RAKAZO_TOOL_RUNNER_SLOTS: ${RAKAZO_OVERFLOW_RUNNER_SLOTS:-8}
+      # auto: one command per core while the memory lasts, so a bigger server takes more.
+      RAKAZO_TOOL_RUNNER_SLOTS: ${RAKAZO_OVERFLOW_RUNNER_SLOTS:-auto}
       RAKAZO_TOOL_RUNNER_VIDEO_SLOTS: ${RAKAZO_OVERFLOW_RUNNER_VIDEO_SLOTS:-1}
     ports:
       - "${RAKAZO_RUNNER_BIND:?Set RAKAZO_RUNNER_BIND to this server's private address}:7091:7091"

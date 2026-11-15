@@ -11,6 +11,7 @@ import {
   conversationFolderRefusal,
   ensureToolRunnerFolder,
   folderFiles,
+  largestInputBytes,
   listFolderFiles,
   overflowRunnerQuiet,
   TOOL_RUNNER_COMPUTER,
@@ -316,6 +317,7 @@ describe("overflow runners", () => {
   type Fake = {
     url: string;
     calls: string[];
+    bodies: Record<string, unknown>[];
     status: ToolRunnerStatus | "down";
     runDelayMs?: number;
     close(): Promise<void>;
@@ -324,9 +326,10 @@ describe("overflow runners", () => {
   const fakes: Fake[] = [];
 
   async function fakeRunner(status: ToolRunnerStatus | "down", events: object[] = []) {
-    const fake = { calls: [] as string[], status } as Fake;
+    const fake = { calls: [] as string[], bodies: [], status } as unknown as Fake;
     const server = createServer(async (req, res) => {
-      for await (const _ of req);
+      let body = "";
+      for await (const chunk of req) body += chunk;
       const route = new URL(req.url ?? "", "http://runner").pathname;
       fake.calls.push(route);
       if (route === "/tool-runs/status") {
@@ -335,6 +338,7 @@ describe("overflow runners", () => {
       }
       if (route === "/tool-runs/files/list") return void res.end(JSON.stringify({ files: [] }));
       if (route === "/tool-runs/run") {
+        fake.bodies.push(JSON.parse(body));
         if (fake.runDelayMs) await new Promise((resolve) => setTimeout(resolve, fake.runDelayMs));
         res.end(
           [...events, { type: "exit", code: 0 }]
@@ -373,6 +377,7 @@ describe("overflow runners", () => {
     overflow: Fake[],
     onStarted?: () => void,
     client = clientFor(primary, overflow),
+    extra: Partial<Parameters<ToolRunnerClient["run"]>[0]> = {},
   ) {
     const workspace = toolRunnerWorkspace({
       dataDir: data,
@@ -390,6 +395,7 @@ describe("overflow runners", () => {
       timeoutMs: 1000,
       signal: new AbortController().signal,
       onStarted,
+      ...extra,
     });
   }
 
@@ -471,12 +477,62 @@ describe("overflow runners", () => {
     }
   });
 
-  it("keeps the main runner when it cannot report its status", async () => {
+  it("uses a quiet overflow runner when the main one cannot report, and waits there otherwise", async () => {
     const primary = await fakeRunner("down");
     const spare = await fakeRunner({ ...free, host: quietHost });
     await runOn(primary, [spare]);
-    expect(ran(primary)).toBe(true);
-    expect(spare.calls).toEqual([]);
+    expect([ran(primary), ran(spare)]).toEqual([false, true]);
+    const lonePrimary = await fakeRunner("down");
+    const busySpare = await fakeRunner({ ...full, host: quietHost });
+    await runOn(lonePrimary, [busySpare]);
+    expect([ran(lonePrimary), ran(busySpare)]).toEqual([true, false]);
+  });
+
+  it("leaves an overflow runner that did not answer alone for a while", async () => {
+    const primary = await fakeRunner(full);
+    const spare = await fakeRunner("down");
+    const client = clientFor(primary, [spare]);
+    await runOn(primary, [spare], undefined, client);
+    await runOn(primary, [spare], undefined, client);
+    expect(spare.calls).toEqual(["/tool-runs/status"]);
+  });
+
+  it("sends a large file to a free large-document slot, here first, then elsewhere", async () => {
+    const largeFree = { slots: 1, running: 0, queued: 0 };
+    const largeBusy = { slots: 1, running: 1, queued: 0 };
+    const primary = await fakeRunner({ ...full, large: largeFree });
+    const spare = await fakeRunner({ ...free, host: quietHost, large: largeFree });
+    await runOn(primary, [spare], undefined, undefined, { large: true });
+    expect([ran(primary), ran(spare)]).toEqual([true, false]);
+    expect(primary.bodies[0]?.large).toBe(true);
+    const busyPrimary = await fakeRunner({ ...free, large: largeBusy });
+    const otherSpare = await fakeRunner({ ...free, host: quietHost, large: largeFree });
+    await runOn(busyPrimary, [otherSpare], undefined, undefined, { large: true });
+    expect([ran(busyPrimary), ran(otherSpare)]).toEqual([false, true]);
+  });
+
+  it("keeps a large file here when no runner elsewhere has the large-document lane", async () => {
+    const primary = await fakeRunner({ ...free, large: { slots: 1, running: 1, queued: 0 } });
+    const oldSpare = await fakeRunner({ ...free, host: quietHost });
+    await runOn(primary, [oldSpare], undefined, undefined, { large: true });
+    expect([ran(primary), ran(oldSpare)]).toEqual([true, false]);
+  });
+
+  it("starts the output again when the runner retries with more memory", async () => {
+    const primary = await fakeRunner(free, [
+      { type: "stdout", data: "half" },
+      { type: "retrying", reason: "memory" },
+      { type: "stdout", data: "whole" },
+    ]);
+    let retried = 0;
+    const result = await runOn(primary, [], undefined, undefined, {
+      onRetry: () => {
+        retried += 1;
+      },
+    });
+    expect(result.stdout).toBe("whole");
+    expect(retried).toBe(1);
+    expect(primary.bodies[0]?.large).toBeUndefined();
   });
 
   it("tells the caller when a queued command gets its runner", async () => {
@@ -556,10 +612,41 @@ describe("a runner that stalls", () => {
     ).rejects.toThrow(/stopped before the command finished/);
   });
 
+  it("says plainly when the runner cannot be reached", async () => {
+    const server = createServer();
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await expect(runOn(url)).rejects.toThrow(/could not reach the document runner/);
+  });
+
   it("leaves a person's own stop as a plain abort", async () => {
     const stop = new AbortController();
     const url = await stalledRunner([{ type: "queued", ahead: 1 }]);
     setTimeout(() => stop.abort(), 50);
     await expect(runOn(url, stop.signal)).rejects.not.toThrow(/stayed busy|lost contact/);
+  });
+});
+
+describe("largestInputBytes", () => {
+  it("measures the files a command reads, and nothing outside its folder", async () => {
+    const workspace = toolRunnerWorkspace({
+      dataDir: data,
+      homePath: null,
+      mode: "team",
+      botId: "b1",
+      folder: "conversations/sizes",
+    })!;
+    await ensureToolRunnerFolder(workspace);
+    await mkdir(path.join(workspace.root, "uploads"), { recursive: true });
+    await writeFile(path.join(workspace.root, "uploads", "Big.pptx"), Buffer.alloc(3000));
+    await writeFile(path.join(workspace.root, "Old.docx"), Buffer.alloc(500));
+    await writeFile(path.join(data, "outside.pptx"), Buffer.alloc(9000));
+    expect(await largestInputBytes(workspace, ["read", "--in", "uploads/Big.pptx"])).toBe(3000);
+    expect(await largestInputBytes(workspace, ["compare", "--old=Old.docx", "--new", "gone"])).toBe(
+      500,
+    );
+    expect(await largestInputBytes(workspace, ["read", "--in", "../../outside.pptx"])).toBe(0);
+    expect(await largestInputBytes(workspace, ["edit", "--out", "uploads/Big.pptx"])).toBe(0);
   });
 });

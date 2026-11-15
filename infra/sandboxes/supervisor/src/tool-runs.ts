@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
 import { chown, lstat, mkdir, open, readdir, readFile, rename, rm, unlink } from "node:fs/promises";
-import { availableParallelism, loadavg } from "node:os";
+import { availableParallelism, loadavg, totalmem } from "node:os";
 import path from "node:path";
 import type Docker from "dockerode";
 import { z } from "zod";
@@ -42,6 +42,8 @@ export const toolRunRequestSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   /** Run on this server's copy in tool-cache, which the caller keeps in step from its own disk. */
   synced: z.boolean().optional(),
+  /** A file too big for an ordinary runner: run it with the large-document memory from the start. */
+  large: z.boolean().optional(),
 });
 export type ToolRunRequest = z.infer<typeof toolRunRequestSchema>;
 
@@ -103,8 +105,27 @@ export async function toolRunHostLoad(
   };
 }
 
+/** A copied file may be as big as a whole conversation folder, since outputs outgrow uploads. */
+export const TOOL_RUN_COPY_MAX_BYTES = 3 * 1024 ** 3;
+
+/** Memory the server keeps for everything else when it decides whether a command may start. */
+export const TOOL_RUN_MEMORY_RESERVE_BYTES = 2 * 1024 ** 3;
+/** Memory an automatically sized runner leaves for the server's own services. */
+const AUTO_SLOTS_SERVER_SHARE_BYTES = 8 * 1024 ** 3;
+/** A large document may take this long, however short the caller asked for. */
+export const LARGE_TOOL_RUN_TIMEOUT_MS = 30 * 60_000;
+
+/** `auto` sizes the runner to this server: one command per core, while the memory lasts. */
 export function toolRunSlots() {
+  if (envOrDefault("RAKAZO_TOOL_RUNNER_SLOTS", "2").trim().toLowerCase() === "auto") {
+    return autoToolRunSlots(availableParallelism(), totalmem(), toolRunLimits().Memory);
+  }
   return positiveInteger("RAKAZO_TOOL_RUNNER_SLOTS", "2");
+}
+
+export function autoToolRunSlots(cpus: number, memoryBytes: number, perCommandBytes: number) {
+  const byMemory = Math.floor((memoryBytes - AUTO_SLOTS_SERVER_SHARE_BYTES) / perCommandBytes);
+  return Math.max(2, Math.min(cpus, byMemory));
 }
 
 /** Videos hold a browser and an encoder for minutes, so fewer of them run at once. */
@@ -112,24 +133,49 @@ export function toolRunVideoSlots() {
   return positiveInteger("RAKAZO_TOOL_RUNNER_VIDEO_SLOTS", "2");
 }
 
-export function toolRunLimits(program: ToolRunRequest["program"] = "word") {
+/** Very large decks, workbooks and PDFs, which need several times an ordinary command's memory. */
+export function toolRunLargeSlots() {
+  return positiveInteger("RAKAZO_TOOL_RUNNER_LARGE_SLOTS", "1");
+}
+
+export function toolRunLimits(program: ToolRunRequest["program"] = "word", large = false) {
   const video = program === "video";
-  const memoryName = video ? "RAKAZO_TOOL_RUNNER_VIDEO_MEMORY" : "RAKAZO_TOOL_RUNNER_MEMORY";
-  const cpusName = video ? "RAKAZO_TOOL_RUNNER_VIDEO_CPUS" : "RAKAZO_TOOL_RUNNER_CPUS";
-  const memory = parseMemoryBytes(memoryName, envOrDefault(memoryName, video ? "6g" : "4g"));
+  const lane = video ? "VIDEO_" : large ? "LARGE_" : "";
+  const memoryName = `RAKAZO_TOOL_RUNNER_${lane}MEMORY`;
+  const cpusName = `RAKAZO_TOOL_RUNNER_${lane}CPUS`;
+  const memory = parseMemoryBytes(
+    memoryName,
+    envOrDefault(memoryName, video ? "6g" : large ? "12g" : "4g"),
+  );
   return {
     Memory: memory,
     MemorySwap: memory,
     // A video draws one Chrome frame per core, so it gets twice the cores of a document.
-    NanoCpus: parseNanoCpus(cpusName, envOrDefault(cpusName, video ? "4" : "2")),
+    NanoCpus: parseNanoCpus(cpusName, envOrDefault(cpusName, video || large ? "4" : "2")),
     // Half the default weight: when the CPUs are busy, the app and its database answer first and a
     // burst of documents takes a little longer instead.
     CpuShares: 512,
+    // If the server itself runs out of memory, the kernel stops a document command, never the
+    // database or the app.
+    OomScoreAdj: 1000,
     PidsLimit: parsePidsLimit(
       "RAKAZO_TOOL_RUNNER_PIDS_LIMIT",
       envOrDefault("RAKAZO_TOOL_RUNNER_PIDS_LIMIT", "512"),
     ),
   };
+}
+
+/** What a program prints when it runs out of memory without the kernel stopping it. */
+const OUT_OF_MEMORY_OUTPUT =
+  /JavaScript heap out of memory|Reached heap limit|Cannot allocate memory|std::bad_alloc|MemoryError/;
+
+export function printedOutOfMemory(stderr: string) {
+  return OUT_OF_MEMORY_OUTPUT.test(stderr);
+}
+
+/** Whether the server has room for a command that may use `limitBytes`; unknown counts as room. */
+export function memoryRoomFor(limitBytes: number, availableBytes: number | null) {
+  return availableBytes === null || availableBytes >= limitBytes + TOOL_RUN_MEMORY_RESERVE_BYTES;
 }
 
 /**
@@ -481,6 +527,8 @@ export interface ToolRunContainerInput {
 
 export function toolRunContainerOptions(input: ToolRunContainerInput) {
   const workDir = path.posix.join("/work", input.request.cwd);
+  const large = input.request.large === true && input.request.program !== "video";
+  const limits = toolRunLimits(input.request.program, large);
   const { homeVolume } = input.storage;
   return {
     Image: input.image,
@@ -501,6 +549,14 @@ export function toolRunContainerOptions(input: ToolRunContainerInput) {
       "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
       "OCSC_VIDEO_INLINE=1",
       ...(input.request.author ? [`OCSC_AUTHOR=${input.request.author}`] : []),
+      // The document tools accept files past their ordinary size limit only with this memory, and
+      // Node would otherwise stop at a fraction of it.
+      ...(large
+        ? [
+            "OCSC_LARGE_INPUT=1",
+            `NODE_OPTIONS=--max-old-space-size=${Math.floor((limits.Memory * 0.75) / 1024 ** 2)}`,
+          ]
+        : []),
     ],
     WorkingDir: workDir,
     Labels: { [TOOL_RUN_LABEL]: "true" },
@@ -523,7 +579,7 @@ export function toolRunContainerOptions(input: ToolRunContainerInput) {
         : { Binds: [`${input.storage.homePath}:/work`] }),
       ReadonlyRootfs: true,
       Tmpfs: {
-        "/tmp": "rw,nosuid,nodev,size=2g,mode=1777",
+        "/tmp": `rw,nosuid,nodev,size=${large ? "4g" : "2g"},mode=1777`,
         // Custom video scenes are bundled beside the engine, which is otherwise read-only.
         ...(input.request.program === "video"
           ? {
@@ -535,7 +591,9 @@ export function toolRunContainerOptions(input: ToolRunContainerInput) {
       ShmSize: 512 * 1024 * 1024,
       CapDrop: ["ALL"],
       SecurityOpt: ["no-new-privileges:true"],
-      ...toolRunLimits(input.request.program),
+      ...limits,
+      // A crashed tool would otherwise leave a memory dump the size of its memory in the folder.
+      Ulimits: [{ Name: "core", Soft: 0, Hard: 0 }],
       NetworkMode: input.networkMode ?? "bridge",
       ...(input.dns ? { Dns: input.dns } : {}),
       AutoRemove: false,

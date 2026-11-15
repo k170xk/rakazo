@@ -79,7 +79,8 @@ Deploy each new worker image to the runner as well as the main stack, so both ru
 The compose file also starts `runner`, a document runner on the routine server's private address
 (`RAKAZO_RUNNER_BIND`, published on port 7091). It works on copies of the folders sent with each
 command and keeps nothing of the stack's `DATA_DIR`. Set its size with `RAKAZO_OVERFLOW_RUNNER_SLOTS`
-(default 8) and `RAKAZO_OVERFLOW_RUNNER_VIDEO_SLOTS` (default 1).
+(default `auto`: one command per core while the server's memory, less 8 GB for itself, lasts) and
+`RAKAZO_OVERFLOW_RUNNER_VIDEO_SLOTS` (default 1).
 
 List such runners on the main stack, comma-separated:
 
@@ -93,6 +94,35 @@ otherwise it waits its turn on the stack, as without overflow. Each command runs
 one runner. Routines on the routine server use their own runner the same way. Only the stack may
 open the published port (`runner-guard.sh`), and documents there get the same restricted network as
 on the stack (`restrict-computer-egress.sh`).
+
+## Large documents
+
+Every runner also has a large-document lane: `RAKAZO_TOOL_RUNNER_LARGE_SLOTS` (default 1),
+`RAKAZO_TOOL_RUNNER_LARGE_MEMORY` (default `12g`) and `RAKAZO_TOOL_RUNNER_LARGE_CPUS` (default 4),
+with up to 30 minutes per command. A command whose `--in`, `--old` or `--new` file is 40 MB or more
+goes straight to it, and only there do the tools accept files up to 600 MB. An ordinary command
+that runs out of memory is run again once in the lane; if it runs out there too, the person is
+told to split the file or compress its pictures. A large command takes a free large slot on the
+stack first, then on a quiet overflow runner, and otherwise waits for one (up to an hour).
+
+Any runner starts a command only while its server has the command's memory plus 2 GB free, and
+tool containers are the kernel's first choice if the server ever runs out, so the database and
+app keep running.
+
+## Adding capacity
+
+| To add | Do this |
+| --- | --- |
+| Document slots on the stack | Set `RAKAZO_TOOL_RUNNER_SLOTS` (a number, or `auto`) in `.env`, then recreate `supervisor` while its status shows nothing running. |
+| Large-document capacity | Raise `RAKAZO_TOOL_RUNNER_LARGE_SLOTS` or `RAKAZO_TOOL_RUNNER_LARGE_MEMORY` in `.env`; routine servers receive it with the next push. |
+| A bigger routine server | Upgrade it; `auto` slots follow the new cores and memory at the runner's next start. |
+| Another routine server | `add-routine-server.sh ... --overflow` below: one more routine worker, document runner and large lane. |
+
+Each routine worker opens up to `DB_POOL_MAX` (20) database connections. The stack uses about 63
+of Postgres's 100, so raise `max_connections` before adding a second routine server.
+
+People's own computers run on the stack. Spreading them over more servers needs an Incus cluster
+with a network that spans the servers, which this setup does not include.
 
 ## Keeping routine servers up to date
 

@@ -188,11 +188,15 @@ function defaultOut(src) {
   return siblings.length ? `${stem}-${ext}.pdf` : `${stem}.pdf`;
 }
 
+// The large-document runner, with several times the memory, sets OCSC_LARGE_INPUT.
+const MAX_INPUT_MB = process.env.OCSC_LARGE_INPUT === "1" ? 600 : 40;
+const MAX_INPUT_BYTES = MAX_INPUT_MB * 1024 * 1024;
+
 async function cmdConvert(o) {
   const src = inWorkspace(o.in, "--in");
   if (!existsSync(src.full)) throw new UsageError(`${src.rel} does not exist.`);
-  if (statSync(src.full).size > 40 * 1024 * 1024)
-    throw new UsageError(`${src.rel} is larger than 40 MB.`);
+  if (statSync(src.full).size > MAX_INPUT_BYTES)
+    throw new UsageError(`${src.rel} is larger than ${MAX_INPUT_MB} MB.`);
   const out = inWorkspace(o.out || defaultOut(src), "--out");
   if (!/\.pdf$/i.test(out.full)) throw new UsageError("--out must end in .pdf");
   const kind = kindOf(src.rel);
