@@ -23,6 +23,7 @@ import { localDateTime } from "./current-time.js";
 import { validateRoutineWatch } from "./routine-watch.js";
 import {
   activeRoutineCapRefusal,
+  ROUTINE_ACTIVE_CAP_CODE,
   personStaffLimits,
   routineScheduleRefusal,
 } from "./staff-limits.js";
@@ -491,7 +492,7 @@ export async function createScheduleFromTool(
     };
   }
   const capRefusal = await activeRoutineCapRefusal(deps.prisma, input.userId);
-  if (capRefusal) return { error: capRefusal };
+  if (capRefusal) return { error: capRefusal, code: ROUTINE_ACTIVE_CAP_CODE };
   const limits = await personStaffLimits(deps.prisma, input.userId);
 
   if (input.timezone !== undefined) {
@@ -836,7 +837,7 @@ export async function updateScheduleFromTool(
       const capRefusal = await activeRoutineCapRefusal(deps.prisma, input.userId, {
         excludeRoutineId: existing.id,
       });
-      if (capRefusal) return { error: capRefusal };
+      if (capRefusal) return { error: capRefusal, code: ROUTINE_ACTIVE_CAP_CODE };
     }
   }
   const timingChanged =

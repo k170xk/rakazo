@@ -382,7 +382,7 @@ describe("schedule tool staff limits", () => {
       ...input,
       schedule: { cron: "0 9 * * *" },
     });
-    expect(result).toEqual({ error: "Too many routines." });
+    expect(result).toEqual({ error: "Too many routines.", code: "ROUTINE_ACTIVE_CAP" });
     expect(create).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,12 @@ import { localTimezone } from "../../lib/local-timezone";
 import { parseModelOptionKey } from "../../lib/model-catalog";
 import type { Panel } from "../../lib/right-panel-state";
 import type { createSpaceRpc } from "../../lib/rpc";
+import {
+  isActiveRoutineCapMessage,
+  notifyRoutineMetersChanged,
+  openRoutineLimitDialog,
+  parseRoutineCapCounts,
+} from "../../lib/routine-limit-prompt";
 import { sharedInflight } from "../../lib/shared-inflight";
 import { errorText } from "../../lib/user-error";
 import type { RoutineDraftState, RoutineEditor } from "../RoutineEditor";
@@ -230,7 +236,18 @@ export function useRoutineEditor({
             if (routineSaveRequest.current !== saveRequest || activeBotId.current !== targetBotId) {
               return;
             }
-            setRoutineError(errorText(error, t`Could not save routine`));
+            const message = errorText(error, t`Could not save routine`);
+            setRoutineError(message);
+            if (isActiveRoutineCapMessage(message)) {
+              const counts = parseRoutineCapCounts(message) ?? {
+                activeRoutines: 0,
+                maxActiveRoutines: 0,
+              };
+              openRoutineLimitDialog({
+                ...counts,
+                source: editingRoutine ? "enable" : "create",
+              });
+            }
             return;
           } finally {
             routineSavePending.current = false;
@@ -239,6 +256,7 @@ export function useRoutineEditor({
           if (routineSaveRequest.current !== saveRequest || activeBotId.current !== targetBotId) {
             return;
           }
+          notifyRoutineMetersChanged();
           await refreshThread(targetBotId).catch(() => undefined);
         },
         onTestRun: async () => {

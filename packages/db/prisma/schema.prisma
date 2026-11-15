@@ -2357,6 +2357,16 @@ model RoutineCreation {
   @@map("routine_creations")
 }
 
+/// One reading a minute of server, runner and Incus load, for the admin dashboards.
+model InfraSample {
+  id        BigInt   @id @default(autoincrement())
+  sampledAt DateTime @default(now())
+  data      Json
+
+  @@index([sampledAt])
+  @@map("infra_samples")
+}
+
 model NotificationPreference {
   id       String  @id @default(cuid())
   spaceId  String

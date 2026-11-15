@@ -2824,6 +2824,10 @@ export const MyMetersSchema = z.object({
   usagePercent: z.number().int().min(0).max(100).nullable(),
   /** A chat file will be deleted within a week. */
   chatExpiring: z.boolean(),
+  /** Active routines this person has switched on (every agent). */
+  activeRoutines: z.number().int().nonnegative(),
+  /** How many they may keep switched on (company default or their override). */
+  maxActiveRoutines: z.number().int().nonnegative(),
 });
 export type MyMeters = z.infer<typeof MyMetersSchema>;
 

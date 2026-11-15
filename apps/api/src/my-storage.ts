@@ -209,17 +209,22 @@ export async function myStorageState(deps: Deps, actor: Actor): Promise<MyStorag
 
 /** Storage and allowance for the sidebar. This does not download any saved computer. */
 export async function myMeters(deps: Deps, actor: Actor): Promise<MyMeters> {
-  const [usage, limits, spent, chatExpiring] = await Promise.all([
+  const [usage, limits, spent, chatExpiring, activeRoutines] = await Promise.all([
     personUsage(deps.prisma, actor.userId),
     personStaffLimits(deps.prisma, actor.userId),
     spentThisMonthUsd(deps.prisma, actor.userId),
     chatFileExpiring(deps.prisma, actor.userId),
+    runAsSystem("count a person's active routines for meters", () =>
+      deps.prisma.routine.count({ where: { userId: actor.userId, active: true } }),
+    ),
   ]);
   return {
     usedBytes: usage.usedBytes,
     limitBytes: usage.limitBytes,
     usagePercent: monthlyAllowancePercent(spent, limits.monthlyBudgetUsd),
     chatExpiring,
+    activeRoutines,
+    maxActiveRoutines: limits.maxActiveRoutines,
   };
 }
 

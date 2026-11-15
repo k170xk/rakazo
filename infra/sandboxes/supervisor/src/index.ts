@@ -636,7 +636,7 @@ app.get("/tool-runs/status", async (c) => {
     ...toolRunSlotsShared.stats(owner),
     video: toolRunVideoSlotsShared.stats(owner),
     large: toolRunLargeSlotsShared.stats(owner),
-    host: await toolRunHostLoad(),
+    host: await toolRunHostLoad(undefined, undefined, dataDir),
   });
 });
 

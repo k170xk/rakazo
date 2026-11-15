@@ -95,6 +95,12 @@ import type { AppearancePreference } from "../lib/ui-appearance";
 import { getUiAppearancePreference, setUiAppearance } from "../lib/ui-appearance";
 import { useDesktopBadge } from "../lib/use-desktop-badge";
 import { errorText } from "../lib/user-error";
+import { RoutineLimitDialog } from "../components/RoutineLimitDialog";
+import {
+  isActiveRoutineCapMessage,
+  onRoutineMetersChanged,
+  openRoutineLimitDialog,
+} from "../lib/routine-limit-prompt";
 import { HostComputerPrompt } from "./HostComputerPrompt";
 import { RoutineList } from "./RoutineEditor";
 import { useSettingsNavItems } from "./settings-nav";
@@ -270,6 +276,20 @@ function SpaceShell() {
     ...queries.messaging.status.queryOptions(),
     enabled: Boolean(session.data?.user),
   }).data;
+  const routineMeters = useQuery({
+    ...queries.computer.myMeters.queryOptions(),
+    enabled: Boolean(session.data?.user),
+    // Keep the routines-panel quota in step with create/enable elsewhere.
+    staleTime: 15_000,
+    refetchOnMount: "always",
+  });
+  useEffect(
+    () =>
+      onRoutineMetersChanged(() => {
+        void queryClient.invalidateQueries({ queryKey: queries.computer.myMeters.queryKey() });
+      }),
+    [queryClient, queries.computer.myMeters],
+  );
   const messagingSurfaceEnabled = messagingStatus?.enabled ?? false;
   const messagingProviders = messagingStatus?.providers ?? NO_PROVIDERS;
   const memoryConfigQuery = useQuery(queries.memory.providerConfig.queryOptions());
@@ -305,8 +325,6 @@ function SpaceShell() {
   const { mobileSidebarOpen, setMobileSidebarOpen, swipeHandlers } = useMobileSidebar();
   const isMobileSidebar = useIsMobile();
   const pages = usePagesForChat();
-  const dockState = useSyncExternalStore(pages.session.dock.subscribe, pages.session.dock.get);
-  const transcriptDocked = Boolean(dockState.chat);
   const miniSidebar = botsSidebarCollapsed && !isMobileSidebar;
   const [botMenu, setBotMenu] = useState<{ kind: "bot" | "group"; id: string } | null>(null);
   const closeBotMenu = useCallback(() => setBotMenu(null), []);
@@ -667,6 +685,31 @@ function SpaceShell() {
       activity: studioActivity(activeSnapshot?.messages ?? [], botWorking),
     });
   }, [pages.session, botWorking, activeSnapshot?.messages]);
+  // When an assistant's schedule_create hits the person cap, surface the same dialog as the UI.
+  const seenRoutineCapMessages = useRef(new Set<string>());
+  useEffect(() => {
+    const meters = routineMeters.data;
+    if (!meters || !activeSnapshot?.messages?.length) return;
+    for (const message of activeSnapshot.messages) {
+      if (message.role !== "bot") continue;
+      if (seenRoutineCapMessages.current.has(message.id)) continue;
+      const text = message.blocks
+        .map((block) =>
+          block.kind === "text" || block.kind === "progress" || block.kind === "meta"
+            ? block.text
+            : "",
+        )
+        .join("\n");
+      if (!isActiveRoutineCapMessage(text)) continue;
+      seenRoutineCapMessages.current.add(message.id);
+      openRoutineLimitDialog({
+        activeRoutines: meters.activeRoutines,
+        maxActiveRoutines: meters.maxActiveRoutines,
+        source: "ai",
+      });
+      break;
+    }
+  }, [activeSnapshot?.messages, routineMeters.data]);
   const transcriptArtifactTarget = useMemo<ArtifactTarget>(
     () => (inGroup ? { groupId: groupId ?? "" } : { botId: active?.id ?? "" }),
     [active?.id, groupId, inGroup],
@@ -1294,7 +1337,7 @@ function SpaceShell() {
                 artifactTarget={transcriptArtifactTarget}
                 markedUnreadMessageId={read.markedUnreadMessageId}
                 transcript={transcript}
-                showToolActivity={showToolActivity || transcriptDocked}
+                showToolActivity={showToolActivity}
                 olderCursor={activeSnapshot?.olderCursor ?? null}
                 unreadAfterSeq={read.unreadAfterSeq}
                 loadingOlder={loadingOlder}
@@ -1507,9 +1550,20 @@ function SpaceShell() {
                 ? (snapshot.run.routineId ?? undefined)
                 : undefined
             }
+            activeRoutines={routineMeters.data?.activeRoutines}
+            maxActiveRoutines={routineMeters.data?.maxActiveRoutines}
             onCreate={() => startRoutine()}
             onEdit={startRoutine}
             onStop={() => void stopRun()}
+            onLimitReached={() => {
+              const meters = routineMeters.data;
+              if (!meters) return;
+              openRoutineLimitDialog({
+                activeRoutines: meters.activeRoutines,
+                maxActiveRoutines: meters.maxActiveRoutines,
+                source: "create",
+              });
+            }}
           />
         }
         routineEditorProps={routineEditorProps}
@@ -1527,6 +1581,7 @@ function SpaceShell() {
         onOpenChange={dialogs.setCreateWorkSpaceOpen}
         openSpaceChat={openSpaceChat}
       />
+      <RoutineLimitDialog />
       <Suspense fallback={null}>
         <ShellDialogs
           dialogs={dialogs}

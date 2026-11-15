@@ -1,7 +1,18 @@
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
-import { chown, lstat, mkdir, open, readdir, readFile, rename, rm, unlink } from "node:fs/promises";
+import {
+  chown,
+  lstat,
+  mkdir,
+  open,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  statfs,
+  unlink,
+} from "node:fs/promises";
 import { availableParallelism, loadavg, totalmem } from "node:os";
 import path from "node:path";
 import type Docker from "dockerode";
@@ -90,18 +101,62 @@ function positiveInteger(name: string, fallback: string) {
   return value;
 }
 
+/** CPU time totals from the first line of /proc/stat, or null when it cannot be read. */
+export function cpuTimes(stat: string) {
+  const fields = /^cpu\s+(.+)$/m.exec(stat)?.[1]?.trim().split(/\s+/).map(Number);
+  if (!fields || fields.length < 4 || fields.some((field) => !Number.isFinite(field))) return null;
+  // idle and iowait
+  const idle = (fields[3] ?? 0) + (fields[4] ?? 0);
+  return { total: fields.reduce((sum, field) => sum + field, 0), idle };
+}
+
+/** Status is read for every command, so CPU use is measured over windows of at least this long. */
+const CPU_WINDOW_MS = 5_000;
+let cpuWindow: { at: number; total: number; idle: number } | null = null;
+let cpuBusyPercent: number | null = null;
+
+export function cpuBusyOver(
+  times: { total: number; idle: number } | null,
+  now = Date.now(),
+): number | null {
+  if (!times) return cpuBusyPercent;
+  if (!cpuWindow) {
+    cpuWindow = { at: now, ...times };
+    return cpuBusyPercent;
+  }
+  if (now - cpuWindow.at < CPU_WINDOW_MS) return cpuBusyPercent;
+  const total = times.total - cpuWindow.total;
+  const idle = times.idle - cpuWindow.idle;
+  if (total > 0) cpuBusyPercent = Math.min(100, Math.max(0, (100 * (total - idle)) / total));
+  cpuWindow = { at: now, ...times };
+  return cpuBusyPercent;
+}
+
 /**
  * How busy this server is, so an app with several runners only overflows onto a quiet one.
- * A container sees the host's load average and /proc/meminfo.
+ * A container sees the host's load average, /proc/meminfo and /proc/stat.
  */
 export async function toolRunHostLoad(
   readMeminfo: () => Promise<string> = () => readFile("/proc/meminfo", "utf8"),
+  readStat: () => Promise<string> = () => readFile("/proc/stat", "utf8"),
+  diskPath?: string,
 ) {
-  const available = /^MemAvailable:\s+(\d+)\s+kB$/m.exec(await readMeminfo().catch(() => ""));
+  const meminfo = await readMeminfo().catch(() => "");
+  const available = /^MemAvailable:\s+(\d+)\s+kB$/m.exec(meminfo);
+  const total = /^MemTotal:\s+(\d+)\s+kB$/m.exec(meminfo);
+  const [load1 = 0, load5 = 0, load15 = 0] = loadavg();
+  const disk = diskPath ? await statfs(diskPath).catch(() => null) : null;
   return {
-    load1: loadavg()[0] ?? 0,
+    load1,
+    load5,
+    load15,
     cpus: availableParallelism(),
+    cpuBusyPercent: cpuBusyOver(cpuTimes(await readStat().catch(() => ""))),
     memAvailableBytes: available ? Number(available[1]) * 1024 : null,
+    memTotalBytes: total ? Number(total[1]) * 1024 : totalmem(),
+    disk: disk
+      ? { totalBytes: disk.blocks * disk.bsize, freeBytes: disk.bavail * disk.bsize }
+      : null,
   };
 }
 
@@ -192,6 +247,8 @@ export function slotsPerPerson(slots: number) {
  */
 export class FairSlots {
   private running = 0;
+  /** Commands started since the runner began, so a sampler can tell how many ran in between. */
+  private started = 0;
   private readonly runningBy = new Map<string, number>();
   private readonly waiting = new Map<string, Array<() => void>>();
 
@@ -207,6 +264,7 @@ export class FairSlots {
       slots: this.slots,
       running: this.running,
       queued,
+      started: this.started,
       perOwner: this.perOwner,
       ...(owner === undefined ? {} : { ownerRunning: this.runningBy.get(owner) ?? 0 }),
     };
@@ -274,6 +332,7 @@ export class FairSlots {
       this.waiting.delete(owner);
       if (list.length > 0) this.waiting.set(owner, list);
       this.running += 1;
+      this.started += 1;
       this.runningBy.set(owner, (this.runningBy.get(owner) ?? 0) + 1);
       grant();
     }

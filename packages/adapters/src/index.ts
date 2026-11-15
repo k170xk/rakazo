@@ -86,8 +86,8 @@ export * from "./docker-sandbox.js";
 export * from "./e2b-sandbox.js";
 export * from "./elevenlabs-voice.js";
 export * from "./email-drafts.js";
-export * from "./email-filing.js";
 export * from "./email-emulator.js";
+export * from "./email-filing.js";
 export * from "./email-html.js";
 export * from "./evolve-assistants.js";
 export {
@@ -122,6 +122,7 @@ export * from "./host-aware-sandbox.js";
 export * from "./http-decisions.js";
 export * from "./incus-sandbox.js";
 export * from "./infisical-secret-store.js";
+export * from "./infra-sampler.js";
 export * from "./installed-connectors.js";
 export * from "./installed-messaging-surface.js";
 export * from "./integration-provider-settings.js";

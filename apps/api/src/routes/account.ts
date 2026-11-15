@@ -64,6 +64,7 @@ import {
 } from "../company-document-library.js";
 import { getEvolveSafeguards, setEvolveSafeguards } from "../company-evolve-safeguards.js";
 import { listSharedApps, setSharedAppFrozen } from "../company-shared-apps.js";
+import { infrastructure } from "../infrastructure-admin.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import { replyFailures } from "../reply-failures-admin.js";
 import type { RouterDeps } from "../router.js";
@@ -236,6 +237,9 @@ export function accountRoutes(ctx: RouterContext) {
       ),
       replyFailures: authed.companyAdmin.replyFailures.handler(({ context, input }) =>
         replyFailures(deps, context.actor.userId, input.period),
+      ),
+      infrastructure: authed.companyAdmin.infrastructure.handler(({ context, input }) =>
+        infrastructure(deps, context.actor.userId, input.period),
       ),
       documentLibrary: {
         list: authed.companyAdmin.documentLibrary.list.handler(({ context }) =>

@@ -27,6 +27,7 @@ export * from "./evolve-learning.js";
 export * from "./evolve-references.js";
 export * from "./history.js";
 export * from "./ids.js";
+export * from "./infrastructure.js";
 export * from "./integration-settings.js";
 export * from "./local-settings.js";
 export * from "./markdown-text.js";

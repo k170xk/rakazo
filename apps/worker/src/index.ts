@@ -59,6 +59,7 @@ import {
   expiringFilesNotice,
   GraphileJobPublisher,
   homeStorageSweeper,
+  INFRA_SAMPLE_INTERVAL_MS,
   InMemoryJobQueue,
   InstalledConnectorProvider,
   installedMessaging,
@@ -84,6 +85,7 @@ import {
   reconcileCloudAgents,
   reconcileComputerUpdates,
   reconcilePurchases,
+  recordInfraSample,
   resolveDeploymentModel,
   resolvePiSessionRoot,
   resolveSandboxProvider,
@@ -298,6 +300,57 @@ async function main() {
       });
   };
   if (!routinesOnly) setInterval(cleanFiles, FILE_CLEANUP_CHECK_MS).unref();
+  if (!routinesOnly) {
+    const providerOptions = sandboxProviderOptionsFromEnv(process.env);
+    const overflow = (process.env.RAKAZO_TOOL_RUNNER_OVERFLOW_URLS ?? "")
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    let runnerToken: string | undefined;
+    try {
+      runnerToken = process.env.RAKAZO_TOOL_RUNNER_TOKEN || resolveSupervisorToken(process.env);
+    } catch {
+      runnerToken = undefined;
+    }
+    let sampling = false;
+    const sampleInfra = () => {
+      if (sampling) return;
+      sampling = true;
+      void recordInfraSample({
+        prisma,
+        runners: {
+          app:
+            process.env.RAKAZO_TOOL_RUNNER_URL ||
+            process.env.SANDBOX_SUPERVISOR_URL ||
+            "http://127.0.0.1:7091",
+          routines: overflow[0],
+          token: runnerToken,
+        },
+        ...(providerOptions.incusUrl &&
+        providerOptions.incusClientCert &&
+        providerOptions.incusClientKey
+          ? {
+              incus: {
+                url: providerOptions.incusUrl,
+                clientCert: providerOptions.incusClientCert,
+                clientKey: providerOptions.incusClientKey,
+                serverCert: providerOptions.incusServerCert,
+                project: providerOptions.incusProject,
+              },
+            }
+          : {}),
+      })
+        .catch((error) =>
+          logger.warn("infrastructure sample", {
+            reason: error instanceof Error ? error.message : String(error),
+          }),
+        )
+        .finally(() => {
+          sampling = false;
+        });
+    };
+    setInterval(sampleInfra, INFRA_SAMPLE_INTERVAL_MS).unref();
+  }
   const shutdown = new AbortController();
   const inMemoryJobs = process.env.WAKEUP_DRIVER === "memory" ? new InMemoryJobQueue() : undefined;
   const runs = new RunStarter(realtime, {

@@ -13,6 +13,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   autoToolRunSlots,
+  cpuBusyOver,
+  cpuTimes,
   deleteToolCacheFiles,
   FairSlots,
   listToolCacheFiles,
@@ -71,6 +73,17 @@ describe("runner host load", () => {
     expect(load.cpus).toBeGreaterThan(0);
     expect((await toolRunHostLoad(async () => "")).memAvailableBytes).toBeNull();
   });
+  it("measures CPU use between readings at least five seconds apart", () => {
+    expect(cpuTimes("cpu  10 0 10 70 10 0 0 0 0 0\ncpu0 1 2 3 4")).toEqual({
+      total: 100,
+      idle: 80,
+    });
+    expect(cpuTimes("")).toBeNull();
+    expect(cpuBusyOver({ total: 100, idle: 80 }, 0)).toBeNull();
+    expect(cpuBusyOver({ total: 150, idle: 90 }, 1_000)).toBeNull();
+    expect(cpuBusyOver({ total: 200, idle: 105 }, 6_000)).toBe(75);
+    expect(cpuBusyOver(null, 7_000)).toBe(75);
+  });
 });
 
 describe("runner slots", () => {
@@ -88,11 +101,11 @@ describe("runner slots", () => {
         release();
       }),
     );
-    expect(slots.stats()).toEqual({ slots: 1, running: 1, queued: 3, perOwner: 1 });
+    expect(slots.stats()).toEqual({ slots: 1, running: 1, queued: 3, started: 1, perOwner: 1 });
     first();
     await Promise.all(waits);
     expect(order).toEqual(["alice1", "bob1", "alice2"]);
-    expect(slots.stats()).toEqual({ slots: 1, running: 0, queued: 0, perOwner: 1 });
+    expect(slots.stats()).toEqual({ slots: 1, running: 0, queued: 0, started: 4, perOwner: 1 });
   });
 
   it("keeps runners free for others while one person runs a batch", async () => {

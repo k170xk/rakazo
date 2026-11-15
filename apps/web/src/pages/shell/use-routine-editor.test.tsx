@@ -7,8 +7,29 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { useRoutineEditor } from "./use-routine-editor";
 
+const { translate } = vi.hoisted(() => {
+  const translate = (
+    descriptor: { message?: string } | TemplateStringsArray,
+    ...values: unknown[]
+  ) => {
+    if (Array.isArray(descriptor)) {
+      return (descriptor as TemplateStringsArray).reduce(
+        (text, part, index) => `${text}${index > 0 ? values[index - 1] : ""}${part}`,
+        "",
+      );
+    }
+    return typeof descriptor === "object" && descriptor && "message" in descriptor
+      ? String(descriptor.message ?? "")
+      : String(descriptor);
+  };
+  return { translate };
+});
 vi.mock("@lingui/react/macro", () => ({
-  useLingui: () => ({ i18n: { locale: "en" }, t: (parts: TemplateStringsArray) => parts.join("") }),
+  useLingui: () => ({ i18n: { locale: "en" }, t: translate, _: translate }),
+}));
+// The lingui vite plugin rewrites useLingui to `const { _: _t } = useLingui()`.
+vi.mock("@lingui/react", () => ({
+  useLingui: () => ({ i18n: { locale: "en" }, t: translate, _: translate }),
 }));
 
 const routine: Routine = {

@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { errorText } from "../lib/user-error";
+import { InfrastructurePanel } from "./AdminInfrastructure";
 
 /** Routines created over time, per person, with how many are on and how often they ran. */
 export function RoutineActivitySection() {
@@ -85,6 +86,7 @@ export function RoutineActivitySection() {
             ))}
           </dl>
           <CreatedChart days={data.days} format={(day) => date.format(new Date(day))} />
+          <InfrastructurePanel focus="routines" />
           {data.people.length === 0 ? (
             <p className="rounded-xl border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
               <Trans>No routines in this period.</Trans>

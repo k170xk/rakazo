@@ -11,6 +11,7 @@ import { useState } from "react";
 import { ComputerProviderSettings } from "../components/ComputerProviderSettings";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
+import { InfrastructurePanel } from "./AdminInfrastructure";
 
 const STORAGE_LIMITS_GB = [1, 2, 5, 10, 20, 50];
 const RETENTION_DAYS = [7, 14, 30, 60, 90, 180];
@@ -160,6 +161,8 @@ export function CompanyComputerAccessSection({
         <Stat label={t`Renders waiting`} value={String(capacity.videoQueued)} />
       </dl>
 
+      <InfrastructurePanel focus="computers" />
+
       <div className="space-y-2">
         <h3 className="px-1 text-sm font-medium">
           <Trans>Computer provider</Trans>
@@ -260,10 +263,10 @@ export function CompanyStorageSection({
         <Trans>
           Files agents make stay on each person's own computer and are never visible to anyone else.
           Anything nobody changes for the period below is deleted at the next cleanup unless its
-          owner pins it in the agent's Files tab. Files agents attach in chats count towards the same
-          limit. People are told a week before files are deleted and when they are nearly full, and
-          can download or delete them from Manage storage. Once someone reaches their limit, their
-          agents stop making new documents and videos until they delete something.
+          owner pins it in the agent's Files tab. Files agents attach in chats count towards the
+          same limit. People are told a week before files are deleted and when they are nearly full,
+          and can download or delete them from Manage storage. Once someone reaches their limit,
+          their agents stop making new documents and videos until they delete something.
         </Trans>
       </SectionHeading>
 
@@ -288,6 +291,8 @@ export function CompanyStorageSection({
           </Trans>
         </p>
       ) : null}
+
+      <InfrastructurePanel focus="storage" />
 
       <div className="space-y-2">
         <h3 className="px-1 text-sm font-medium">

@@ -245,24 +245,70 @@ export function RoutineList({
   onCreate,
   onEdit,
   onStop,
+  activeRoutines,
+  maxActiveRoutines,
+  onLimitReached,
 }: {
   routines: Routine[];
   runningRoutineId?: string;
   onCreate: () => void;
   onEdit: (routine: Routine) => void;
   onStop: () => void;
+  /** Person-wide switched-on count (every agent). */
+  activeRoutines?: number;
+  maxActiveRoutines?: number;
+  onLimitReached?: () => void;
 }) {
   const { t } = useLingui();
+  const capped =
+    typeof activeRoutines === "number" &&
+    typeof maxActiveRoutines === "number" &&
+    activeRoutines >= maxActiveRoutines;
+  const remaining =
+    typeof activeRoutines === "number" && typeof maxActiveRoutines === "number"
+      ? Math.max(0, maxActiveRoutines - activeRoutines)
+      : null;
   return (
     <div>
-      <div className="mb-2 flex justify-end">
+      <div className="mb-2 flex items-center gap-2">
+        {typeof activeRoutines === "number" && typeof maxActiveRoutines === "number" ? (
+          <p
+            className="min-w-0 flex-1 text-[12.5px] text-muted-foreground"
+            data-testid="routine-quota"
+            title={t`Switched-on routines across every agent on your account, against the company limit.`}
+          >
+            {maxActiveRoutines === 0 ? (
+              <Trans>Routines switched off by your company</Trans>
+            ) : remaining === 0 ? (
+              <Trans>
+                {activeRoutines} of {maxActiveRoutines} on your account · none remaining
+              </Trans>
+            ) : (
+              <Trans>
+                {activeRoutines} of {maxActiveRoutines} on your account · {remaining} remaining
+              </Trans>
+            )}
+          </p>
+        ) : (
+          <span className="min-w-0 flex-1" />
+        )}
         <Button
           variant="secondary"
           size="icon-sm"
           data-testid="routine-create-button"
           aria-label={t`Create Routine`}
-          title={t`Create Routine`}
-          onClick={onCreate}
+          title={
+            capped
+              ? t`Routine limit reached`
+              : t`Create Routine`
+          }
+          onClick={() => {
+            if (capped) {
+              onLimitReached?.();
+              return;
+            }
+            onCreate();
+          }}
         >
           <Plus strokeWidth={1.9} />
         </Button>

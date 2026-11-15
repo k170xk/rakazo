@@ -139,6 +139,18 @@ export async function routinesWithinDailyLimit<T extends { id: string }>(
   }
 }
 
+/** Stable code for tool and API clients that show the routine-cap dialog. */
+export const ROUTINE_ACTIVE_CAP_CODE = "ROUTINE_ACTIVE_CAP";
+
+/** True when a refusal or reply is about the person's active-routine limit. */
+export function isActiveRoutineCapMessage(text: string): boolean {
+  return (
+    /routines switched on, the most your administrator allows/i.test(text) ||
+    /has not allowed you to switch on routines/i.test(text) ||
+    text.includes(ROUTINE_ACTIVE_CAP_CODE)
+  );
+}
+
 /** Why this person may not switch on another routine, or null. */
 export async function activeRoutineCapRefusal(
   prisma: Pick<PrismaClient, "routine" | "user">,
