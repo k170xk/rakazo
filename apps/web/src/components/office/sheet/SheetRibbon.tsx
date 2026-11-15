@@ -748,7 +748,7 @@ export function SheetRibbon({
 
   return (
     <Ribbon
-      label={t`Spreadsheet tools`}
+      label={t`Evolve Excel`}
       value={tab}
       onValueChange={setTab}
       testId="sheet-ribbon"

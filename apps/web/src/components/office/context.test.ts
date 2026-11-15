@@ -78,6 +78,7 @@ describe("wordContext", () => {
     expect(selected).toMatchObject({
       what: "image",
       label: "Image: Site plan",
+      content: "Name: Picture 1\nAlt text: Site plan",
       imageAttached: true,
     });
   });

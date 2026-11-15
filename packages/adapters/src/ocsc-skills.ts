@@ -14,7 +14,7 @@ const SEND_NOTE = `Every successful command prints JSON with "ok": true and the 
 const THEIR_FILES_NOTE = `When the person attaches a file, check whether it is in the agent's folder (list_files, or the path the message gives) and work on it there. Keep their original: always save your changes under a new name.`;
 
 const STUDIO_NOTE = (program: string, extension: string) =>
-  `When a studio note names a document (documentId, artifactId), the person has it open in a studio and may have changed it by hand. Edit that newest version: fetch_file attachments/<artifactId>${extension} if it is not on your computer, run ocsc-${program} edit --in that path with --out a new path, then attach_file the result under the document's same name so it becomes the next version in their studio. Never rebuild it from scratch with ocsc-${program} new, which loses their edits. If ocsc refuses because a newer version exists, fetch that version and edit it instead.`;
+  `When a studio note names a document (documentId, artifactId), the person has it open in a studio and may have changed it by hand between turns. Always edit the artifactId on THAT message (it is the version on their screen for this ask): fetch_file attachments/<artifactId>${extension} if it is not on your computer, run ocsc-${program} edit --in that path with --out a new path, then attach_file the result under the document's same name so it becomes the next version in their studio. Never reuse an older attachment from earlier in the chat, and never rebuild from scratch with ocsc-${program} new, which loses their edits. If ocsc refuses because a newer version exists, fetch that version and edit it instead.`;
 
 const PROJECT_PHOTOS_NOTE = `PROJECT PHOTOS: for each project, call mcp__evolve__search_project_datasheets with its name, job number or client (or, when the person wants you to choose, the topic, sector or client of the document, then pick the two to four closest matches). A result's "images" lists its photos, the cover first. Use only https URLs ending in .jpg, .jpeg or .png and skip the others. Every fact you write about a project (client, sector, value, dates, scope, summary) comes from its datasheet; never invent or embellish one. If a project is not found or has no photos, say so and carry on with an infographic.`;
 
@@ -92,6 +92,7 @@ When the person asks for changes to a document you made or one they sent, always
  {"op":"replace_section","heading":"3. Conclusions","blocks":[...]},
  {"op":"delete_section","heading":"4. Appendix"},
  {"op":"replace_paragraphs","from":"first words to replace","to":"words in the last paragraph to replace","blocks":[...]},
+ {"op":"replace_image","picture":"Picture 1002","image":"<url or path>"},
  {"op":"append","blocks":[...]},
  {"op":"fill_fields","fields":{"client_name":"..."}},
  {"op":"set_office","office":"Cork"},
@@ -101,6 +102,7 @@ When the person asks for changes to a document you made or one they sent, always
 Save each round of changes as a new version (-v2, -v3) so earlier versions stay available, unless the person asks you to overwrite.
 A new document starts at revision P01, and edits keep that revision; the Table of Contents is rewritten after every edit. Do not ask about revisions. Only when the person asks for a new revision (for example "issue it as P02", "new revision", "rev it up"), add "revision":true beside "edits" for the next code, or "revision":"C01" for a specific one, and "author":"<name>" when someone else made it: Document Control gets a row with the code and today's date, and the cover, job row and footers follow.
 Edit blocks are the same as a new document's, so an edit can add anything a new document has: new sections (a heading block plus its content, with add_to_section on the section before it or append at the end), infographic blocks (call evolve_infographics for just the new pictures), project photos, tables, lists, and {"type":"pagebreak"} to start a new page. To put an infographic beside existing words, replace_section with the section's words rewritten into an infographic block.
+To change an existing picture in place, use replace_image: "picture" is its 1-based number or its Word name from ocsc-word read's "pictures" list (and from a studio selection such as "Picture 1002"), and "image" is an https URL or workspace PNG/JPEG. Never refuse a selected-image change by saying Word cannot replace embedded images — it can.
 
 SHOWING THE CHANGES
 Edits are saved as Word tracked changes under the name of the person you are working for, so the person sees every insertion and deletion when they open the file and can accept or reject each one. In your reply, list what changed using the "summary" of each edit. ocsc-word read lists a document's tracked changes as "tracked_changes"; use it when the person asks what was changed.
@@ -123,7 +125,7 @@ Never use the same style twice in a row; without "style" the content decides. Th
 Infographic blocks also work in edits (add_to_section, insert_after_heading, replace_section, append), so you can add them to an existing document.
 
 PICTURES AND CHARTS
-Image blocks take an https URL or a workspace PNG/JPEG ("path"). Only PNG and JPEG work.
+Image blocks take an https URL or a workspace PNG/JPEG ("path"). Only PNG and JPEG work. To swap an existing picture without rewriting the surrounding paragraphs, use {"op":"replace_image","picture":"<name or number>","image":"<url or path>"}.
 ${PROJECT_PHOTOS_NOTE} Show a project as an infographic block with its cover photo as "image" (the "side", "stats" or "cards" style with the project's facts, or "full" for the photo alone) and a caption "Figure N: <Project name>, <Client>", or as an image block for a second photo.
 
 SENDING THE DOCUMENT

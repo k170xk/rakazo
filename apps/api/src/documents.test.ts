@@ -24,7 +24,7 @@ vi.mock("@rakazo/db", async (importOriginal) => {
 });
 
 import type { DocumentDeps } from "./documents.js";
-import { mountDocumentVersionsRoute, officeFormatOf } from "./documents.js";
+import { listDocuments, mountDocumentVersionsRoute, officeFormatOf } from "./documents.js";
 
 const DOCX = DOCUMENT_MIME_TYPES.docx;
 const actor = { spaceId: "space-1", userId: "user-1" } as Actor;
@@ -45,6 +45,26 @@ const pptx = office(
   "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
 );
 const xlsx = office("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml");
+
+describe("listDocuments", () => {
+  it("filters by the family's newest mime, not an older version of another type", async () => {
+    const queryRaw = vi.fn(async () => []);
+    await listDocuments(
+      { $queryRaw: queryRaw } as never,
+      actor,
+      { format: "pptx", limit: 30 },
+    );
+    const sql = queryRaw.mock.calls[0]?.[0] as { strings: string[] };
+    const text = sql.strings.join("?");
+    expect(text).toContain("DISTINCT ON");
+    // Newest-per-family first (all Office mimes), then filter the requested format.
+    expect(text).toMatch(/\) latest\s+WHERE "mimeType" IN/i);
+    const officeMimes = Object.values(DOCUMENT_MIME_TYPES);
+    for (const mime of officeMimes) {
+      expect(JSON.stringify(queryRaw.mock.calls[0]?.[0])).toContain(mime);
+    }
+  });
+});
 
 describe("officeFormatOf", () => {
   it("reads the format from the zip's content types", () => {

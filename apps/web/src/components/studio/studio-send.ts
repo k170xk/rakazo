@@ -66,55 +66,70 @@ type SendTarget = { botId?: string | null; groupId?: string | null };
 type TranscriptMessage = { blocks: readonly { kind: string; artifactId?: unknown }[] };
 
 /**
- * The ids to add to the message: the newest version, unless a version of the file is already in
- * this conversation (then the run may fetch the newest one itself) or the file is another chat's.
+ * The ids to add to the message: always the newest version when the open studio belongs to this
+ * chat. Re-attaching after every send keeps fetch_file on the version the person can see, even
+ * when an older family member is already in the transcript.
  */
 export function studioAttachmentIds(
   attachment: StudioAttachment | null,
   target: SendTarget,
-  messages: readonly TranscriptMessage[],
+  _messages: readonly TranscriptMessage[] = [],
 ): string[] {
   if (!attachment) return [];
   const sameChat = target.groupId
     ? attachment.groupId === target.groupId
     : Boolean(target.botId) && attachment.groupId === null && attachment.botId === target.botId;
   if (!sameChat) return [];
-  const family = new Set([attachment.artifactId, ...attachment.familyArtifactIds]);
-  const inConversation = messages.some((message) =>
-    message.blocks.some(
-      (block) =>
-        (block.kind === "file" || block.kind === "image") &&
-        typeof block.artifactId === "string" &&
-        family.has(block.artifactId),
-    ),
-  );
-  return inConversation ? [] : [attachment.artifactId];
+  return [attachment.artifactId];
 }
 
-/** How long the composer waits for the studio to save before sending without the file. */
-export const STUDIO_BEFORE_SEND_TIMEOUT_MS = 8000;
+/**
+ * How long the composer waits for the studio to save before sending without the file.
+ * Large PowerPoint / Word / Excel files on mobile often need well past 25s to serialize + upload.
+ */
+export const STUDIO_BEFORE_SEND_TIMEOUT_MS = 60_000;
+
+/** Extra wait after the soft timeout so a large save that finishes late still attaches. */
+export const STUDIO_BEFORE_SEND_LATE_MS = 30_000;
 
 /**
  * For the composer, before it builds the message: waits for the open studio to save, then
- * returns the file ids to attach. A studio that fails or takes too long never blocks sending.
+ * returns the file ids to attach. A soft timeout still waits for the hook if it finishes in the
+ * same turn (so a slow mobile save is not dropped for a stale note); only a hard failure skips.
  */
 export async function runStudioBeforeSend(
   session: object | null,
   target: SendTarget,
   messages: readonly TranscriptMessage[],
   timeoutMs = STUDIO_BEFORE_SEND_TIMEOUT_MS,
+  lateMs = STUDIO_BEFORE_SEND_LATE_MS,
 ): Promise<string[]> {
   const hook = session ? hooks.get(session) : undefined;
   if (!hook) return [];
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
   try {
+    const pending = hook();
     const attachment = await Promise.race([
-      hook(),
+      pending,
       new Promise<null>((resolve) => {
-        timer = setTimeout(() => resolve(null), timeoutMs);
+        timer = setTimeout(() => {
+          timedOut = true;
+          resolve(null);
+        }, timeoutMs);
       }),
     ]);
-    return studioAttachmentIds(attachment, target, messages);
+    if (attachment) return studioAttachmentIds(attachment, target, messages);
+    // Soft timeout: still take the result if the save finishes moments later, so the note and
+    // attachment stay on the version the person can see.
+    if (timedOut) {
+      const late = await Promise.race([
+        pending.catch(() => null),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), lateMs)),
+      ]);
+      if (late) return studioAttachmentIds(late, target, messages);
+    }
+    return [];
   } catch {
     return [];
   } finally {

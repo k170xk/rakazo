@@ -560,6 +560,64 @@ class Doc {
     );
   }
 
+  /**
+   * Every DrawingML picture in the body, in order, with its 1-based index and Word name
+   * (for example "Picture 1002").
+   */
+  listPictures() {
+    const out = [];
+    let index = 0;
+    for (const match of this.xml.matchAll(/<w:drawing\b[\s\S]*?<\/w:drawing>/g)) {
+      const drawing = match[0];
+      if (!/<a:blip\b/i.test(drawing)) continue;
+      index += 1;
+      const name =
+        /<wp:docPr\b[^>]*\bname="([^"]*)"/i.exec(drawing)?.[1] ||
+        /<pic:cNvPr\b[^>]*\bname="([^"]*)"/i.exec(drawing)?.[1] ||
+        `Picture ${index}`;
+      out.push({ picture: index, name });
+    }
+    return out;
+  }
+
+  /**
+   * Swaps the bytes behind an existing picture. `which` is a 1-based index from listPictures,
+   * or the picture's Word name (for example "Picture 1002"). Keeps the frame width and
+   * adjusts height to the new image's aspect ratio.
+   */
+  replacePicture(which, img) {
+    const pics = [...this.xml.matchAll(/<w:drawing\b[\s\S]*?<\/w:drawing>/g)].filter((m) =>
+      /<a:blip\b/i.test(m[0]),
+    );
+    const byNumber = typeof which === "number" || /^\d+$/.test(String(which ?? ""));
+    const pick = byNumber
+      ? pics[Number(which) - 1]
+      : pics.find((m) => {
+          const name =
+            /<wp:docPr\b[^>]*\bname="([^"]*)"/i.exec(m[0])?.[1] ||
+            /<pic:cNvPr\b[^>]*\bname="([^"]*)"/i.exec(m[0])?.[1] ||
+            "";
+          return name === String(which);
+        });
+    if (!pick) return null;
+    const old = pick[0];
+    const name =
+      /<wp:docPr\b[^>]*\bname="([^"]*)"/i.exec(old)?.[1] ||
+      /<pic:cNvPr\b[^>]*\bname="([^"]*)"/i.exec(old)?.[1] ||
+      String(which);
+    let next = old.replace(/(<a:blip\b[^>]*?\s)r:embed="[^"]*"/i, `$1r:embed="${img.rid}"`);
+    if (next === old) next = old.replace(/r:embed="[^"]*"/i, `r:embed="${img.rid}"`);
+    const cx = Number(/<wp:extent\b[^>]*\bcx="(\d+)"/i.exec(old)?.[1] || 0);
+    if (cx && img.w && img.h) {
+      const cy = Math.round((cx * img.h) / img.w);
+      next = next
+        .replace(/(<wp:extent\b[^>]*\bcx=")\d+("[^>]*\bcy=")\d+/i, `$1${cx}$2${cy}`)
+        .replace(/(<a:ext\b[^>]*\bcx=")\d+("[^>]*\bcy=")\d+/gi, `$1${cx}$2${cy}`);
+    }
+    this.xml = this.xml.replace(old, next);
+    return { name, picture: pics.indexOf(pick) + 1 };
+  }
+
   infographicBlock(block, n) {
     const source = block.image ?? block.visual;
     const label = `Block ${n} (infographic)`;
@@ -2176,6 +2234,7 @@ async function cmdRead(o) {
   const { src, doc } = await openIn(o.in);
   const { title, subtitle } = await doc.banner();
   const outline = outlineOf(doc);
+  const pictures = doc.listPictures();
   const changes = listChanges(doc.xml);
   return {
     ok: true,
@@ -2183,6 +2242,7 @@ async function cmdRead(o) {
     title,
     subtitle,
     outline,
+    ...(pictures.length ? { pictures } : {}),
     ...(changes.length
       ? {
           tracked_changes: changes,
@@ -2380,9 +2440,30 @@ async function cmdEdit(o) {
         });
         break;
       }
+      case "replace_image": {
+        const source = op.image ?? op.path;
+        if (typeof source !== "string" || !source.trim())
+          throw new UsageError(
+            `Edit ${n}: replace_image needs "image" (an https URL or a workspace PNG/JPEG).`,
+          );
+        const which = op.picture ?? op.name ?? 1;
+        const img = doc.addImage(String(source).trim());
+        const replaced = doc.replacePicture(which, img);
+        if (!replaced)
+          throw new UsageError(
+            `Edit ${n}: no picture ${JSON.stringify(which)}. Run ocsc-word read and use a picture number or name from "pictures".`,
+          );
+        report.push({
+          op: op.op,
+          picture: replaced.picture,
+          name: replaced.name,
+          summary: `Replaced "${clip(replaced.name)}"`,
+        });
+        break;
+      }
       default:
         throw new UsageError(
-          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, fill_fields, append, insert_after_heading, add_to_section, replace_section, delete_section or replace_paragraphs.`,
+          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, fill_fields, append, insert_after_heading, add_to_section, replace_section, delete_section, replace_paragraphs or replace_image.`,
         );
     }
   }

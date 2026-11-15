@@ -53,7 +53,13 @@ export function StudioWelcome({
     () => session?.dock.get().running === true,
     () => false,
   );
-  const welcome = useStudioWelcome({ userId, format, documentId, ready, running });
+  const welcome = useStudioWelcome({
+    userId,
+    kind: format,
+    instanceId: documentId,
+    ready,
+    running,
+  });
   const started = useRef(false);
   const startButton = useRef<HTMLButtonElement>(null);
 
@@ -72,32 +78,35 @@ export function StudioWelcome({
         finalFocus={() =>
           started.current ? (composerField(session?.dock.get().node) ?? true) : true
         }
-        className="max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-md"
+        overlayClassName="z-[60]"
+        className="z-[60] flex max-h-[min(40rem,calc(100dvh-2rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
       >
-        <div className="rounded-t-xl bg-muted/60 px-6 pt-4">
-          <img
-            src={ILLUSTRATIONS[format]}
-            alt=""
-            width={1024}
-            height={768}
-            className="mx-auto h-auto max-h-48 w-full object-contain max-sm:max-h-36"
-          />
-        </div>
-        <div className="flex flex-col gap-4 p-6">
-          <div className="flex flex-col gap-2">
-            <DialogTitle>
-              <WelcomeTitle format={format} />
-            </DialogTitle>
-            <DialogDescription>
-              <Trans>
-                You don't have to edit by hand. Ask in the chat and the assistant updates the
-                document for you.
-              </Trans>
-            </DialogDescription>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+          <div className="rounded-t-xl bg-muted/60 px-6 pt-4">
+            <img
+              src={ILLUSTRATIONS[format]}
+              alt=""
+              width={1024}
+              height={768}
+              className="mx-auto h-auto max-h-48 w-full object-contain max-sm:max-h-36"
+            />
           </div>
-          <WelcomeTips format={format} />
+          <div className="flex flex-col gap-4 p-6">
+            <div className="flex flex-col gap-2">
+              <DialogTitle>
+                <WelcomeTitle format={format} />
+              </DialogTitle>
+              <DialogDescription>
+                <Trans>
+                  You don't have to edit by hand. Ask in the chat and the assistant updates the
+                  document for you.
+                </Trans>
+              </DialogDescription>
+            </div>
+            <WelcomeTips format={format} />
+          </div>
         </div>
-        <DialogFooter className="m-0 rounded-b-xl">
+        <DialogFooter className="m-0 shrink-0 rounded-b-xl">
           <Button
             variant="outline"
             data-testid="studio-welcome-off"

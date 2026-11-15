@@ -446,8 +446,10 @@ export function useComposerActions({
             )
           : [];
       // A picture selected in the studio goes along, unless the person dropped the selection.
+      // Independent of studioIds: the held image is captured during before-send, so a timeout
+      // that skipped the file id must not also drop the selected picture.
       const selectedPicture =
-        studioIds.length && !pageSession.dock.selectionDropped()
+        hasStudioBeforeSend(pageSession) && !pageSession.dock.selectionDropped()
           ? await studioSelectionImage(pageSession)
           : null;
       // The open page rides only on text this chat sends, never on a group or routine-only send.

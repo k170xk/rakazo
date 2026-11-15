@@ -41,15 +41,18 @@ function DialogContent({
   children,
   showCloseButton = true,
   overlay = true,
+  overlayClassName,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
   /** Full-screen studios cover the page, so they open in place with no dimmer or motion. */
   overlay?: boolean;
+  /** Extra classes for the dimmer (e.g. a higher z-index over a full-screen studio). */
+  overlayClassName?: string;
 }) {
   return (
     <DialogPortal>
-      {overlay ? <DialogOverlay /> : null}
+      {overlay ? <DialogOverlay className={overlayClassName} /> : null}
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(

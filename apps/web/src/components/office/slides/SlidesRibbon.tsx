@@ -550,7 +550,7 @@ export function SlidesRibbon({
 
   return (
     <Ribbon
-      label={t`Presentation tools`}
+      label={t`Evolve PowerPoint`}
       value={tab}
       onValueChange={setTab}
       testId="slides-ribbon"

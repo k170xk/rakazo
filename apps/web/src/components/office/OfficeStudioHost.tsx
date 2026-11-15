@@ -38,13 +38,16 @@ export type OfficeStudioHostProps = {
 export default function OfficeStudioHost({ id, format, onClose, onOpen }: OfficeStudioHostProps) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
+  // Resolve format from the file when the link omitted it, and correct a stale `?kind=` so a family
+  // that changed type (e.g. older pptx, newest docx) opens in the right studio instead of failing.
   const detail = useQuery({
     ...queries.documents.get.queryOptions({ input: { rootArtifactId: id ?? "" } }),
-    enabled: id !== null && format === null,
+    enabled: id !== null,
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   });
-  const shownFormat = format ?? detail.data?.format ?? (id === null ? "docx" : null);
+  const fileFormat = detail.data?.format ?? null;
+  const shownFormat = fileFormat ?? format ?? (id === null ? "docx" : null);
   const newest = useQuery({
     ...queries.documents.list.queryOptions({
       input: { format: shownFormat ?? "docx", limit: DOCUMENT_LIST_MAX_LIMIT },
@@ -57,6 +60,10 @@ export default function OfficeStudioHost({ id, format, onClose, onOpen }: Office
   useEffect(() => {
     if (newestId && shownFormat) openRef.current(newestId, shownFormat);
   }, [newestId, shownFormat]);
+  useEffect(() => {
+    if (!id || !fileFormat || format === fileFormat) return;
+    openRef.current(id, fileFormat);
+  }, [id, format, fileFormat]);
 
   if (id !== null && format === null && detail.isError) {
     const code = errorCode(detail.error);
@@ -75,6 +82,10 @@ export default function OfficeStudioHost({ id, format, onClose, onOpen }: Office
     );
   }
   if (!shownFormat) return <LoadingFrame onClose={onClose} />;
+  // Hold the wrong studio until the URL kind catches up with the file's newest format.
+  if (id !== null && format !== null && fileFormat !== null && format !== fileFormat) {
+    return <LoadingFrame onClose={onClose} />;
+  }
   const studio = OFFICE_STUDIOS[shownFormat];
   const Studio = studio.Studio;
   if (!Studio) {
@@ -273,10 +284,18 @@ function EmptyStudio({
       </Button>
     );
 
+  const product =
+    format === "docx"
+      ? t`Evolve Word`
+      : format === "pptx"
+        ? t`Evolve PowerPoint`
+        : t`Evolve Excel`;
+
   return (
     <StudioFrame
       testId="office-studio-empty"
       title={label}
+      product={product}
       onClose={onClose}
       closeLabel={t`Close document`}
       dock={dock}

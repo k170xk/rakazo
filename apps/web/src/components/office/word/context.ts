@@ -76,13 +76,19 @@ export function wordContext(
   }
   if (selection.kind === "image") {
     const name = clip(selection.alt || selection.name, 60);
+    const pictureName = clip(selection.name, 60);
     const dims = size(selection.width, selection.height);
     return {
       focus,
       selected: {
         what: "image",
         label: name ? words.image(name) : words.imageUnnamed,
-        content: selection.alt ? `Alt text: ${clip(selection.alt, 300)}` : undefined,
+        content: [
+          pictureName ? `Name: ${pictureName}` : "",
+          selection.alt ? `Alt text: ${clip(selection.alt, 300)}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n") || undefined,
         position: [`page ${page}`, dims].filter(Boolean).join(", "),
         imageAttached: true,
       },

@@ -405,7 +405,8 @@ services:
     # Node runs directly, not through pnpm: pnpm does not pass SIGTERM on, so a stop would kill the
     # process before its graceful shutdown finishes in-flight requests and jobs.
     working_dir: /app/apps/api
-    command: ["node", "--enable-source-maps", "dist/index.js"]
+    # The machine has 32 GB. The default heap stops new replies at about 4 GB while most of that sits free.
+    command: ["node", "--max-old-space-size=8192", "--enable-source-maps", "dist/index.js"]
     environment:
       <<: *app-environment
       # Sign-in, sessions, billing and inbound webhooks: API only.
@@ -483,7 +484,8 @@ services:
       dockerfile: infra/compose/Dockerfile
     # Directly, not through pnpm, so a stop reaches it (see the api command).
     working_dir: /app/apps/worker
-    command: ["node", "--enable-source-maps", "dist/index.js"]
+    # The machine has 32 GB. The default heap stops new replies at about 4 GB while most of that sits free.
+    command: ["node", "--max-old-space-size=8192", "--enable-source-maps", "dist/index.js"]
     # A stop lets the running jobs finish rather than killing them mid-way, which would leave each
     # locked for hours. Above JOB_DRAIN_TIMEOUT_MS in packages/adapters/src/wakeup.ts.
     stop_grace_period: 50m

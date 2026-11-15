@@ -44,6 +44,8 @@ vi.mock("@lingui/react/macro", () => ({
 }));
 vi.mock("../studio/StudioFrame", () => ({
   StudioFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  StudioMoreMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  StudioProductMark: () => null,
   useStudioDock: () => ({ session: null, running: state.running }),
   control: "",
   pill: "",
@@ -57,6 +59,37 @@ vi.mock("../../lib/pages", () => ({ useMedia: () => false }));
 vi.mock("../../lib/rpc", () => ({ selectedSpaceId: () => "s1" }));
 vi.mock("../../lib/space-rpc", () => ({ useBoundSpaceId: () => "s1" }));
 vi.mock("./document-bot", () => ({ useDocumentBotId: () => ({}) }));
+vi.mock("./DocumentLoadPanel", () => ({
+  DocumentLoadPanel: () => <div data-testid="office-load-progress" />,
+  DocumentLoadOverlay: () => null,
+}));
+vi.mock("./use-document-load", () => ({
+  useDocumentLoad: (_format: string, get: () => Promise<unknown>) => {
+    let turn = 0;
+    return {
+      loadState: { status: "idle" as const },
+      loadBytes: async () => {
+        turn += 1;
+        const detail = (await get()) as {
+          format: string;
+          rootArtifactId: string;
+          name: string;
+          latest: { artifactId: string; version: number; downloadToken: string };
+          versions: unknown[];
+        };
+        return {
+          detail,
+          bytes: new TextEncoder().encode(detail.latest.downloadToken).buffer,
+          turn,
+        };
+      },
+      stillCurrent: () => true,
+      markReady: () => {},
+      markOpenFailed: () => {},
+      cancel: () => {},
+    };
+  },
+}));
 vi.mock("../../lib/query", () => {
   const format = { current: "docx" as string };
   const extension: Record<string, string> = { docx: "docx", xlsx: "xlsx", pptx: "pptx" };
@@ -103,6 +136,13 @@ vi.mock("./use-live-draft", () => ({
 vi.mock("./word/upload", () => ({
   downloadTokenUrl: (token: string) => token,
   fetchDownload: async (token: string) => new TextEncoder().encode(token).buffer,
+  fetchLatestDocumentBytes: async (get: () => Promise<{ latest: { downloadToken: string } }>) => {
+    const detail = await get();
+    return {
+      detail,
+      bytes: new TextEncoder().encode(detail.latest.downloadToken).buffer,
+    };
+  },
   uploadDocumentVersion: async () => ({ kind: "saved" }),
 }));
 vi.mock("./word/validation", () => ({

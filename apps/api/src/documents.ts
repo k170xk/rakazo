@@ -253,16 +253,23 @@ type SummaryRow = {
   source: string | null;
 };
 
-/** The newest version of each of the caller's Office files in this space, latest change first. */
+/** Every Office mime the studios understand; used before an optional format filter. */
+const OFFICE_MIME_TYPES = DocumentFormatSchema.options.map(
+  (format) => DOCUMENT_MIME_TYPES[format],
+);
+
+/**
+ * The newest version of each of the caller's Office files in this space, latest change first.
+ * Format is taken from that newest version only — an older PowerPoint in a family that is now a
+ * Word document must not appear in the PowerPoint switcher (and vice versa), or opening it fails.
+ */
 export async function listDocuments(
   prisma: Pick<PrismaClient, "$queryRaw">,
   actor: Pick<Actor, "spaceId" | "userId">,
   input: { format?: DocumentFormat; limit?: number },
 ): Promise<DocumentSummary[]> {
-  const mimeTypes = input.format
-    ? [DOCUMENT_MIME_TYPES[input.format]]
-    : DocumentFormatSchema.options.map((format) => DOCUMENT_MIME_TYPES[format]);
   const take = Math.min(Math.max(input.limit ?? 20, 1), DOCUMENT_LIST_MAX_LIMIT);
+  const formatMimes = input.format ? [DOCUMENT_MIME_TYPES[input.format]] : OFFICE_MIME_TYPES;
   const rows = await prisma.$queryRaw<SummaryRow[]>(Prisma.sql`
     SELECT * FROM (
       SELECT DISTINCT ON (COALESCE("rootArtifactId", id))
@@ -270,9 +277,10 @@ export async function listDocuments(
         "createdAt", source
       FROM "artifacts"
       WHERE "spaceId" = ${actor.spaceId} AND "userId" = ${actor.userId}
-        AND "mimeType" IN (${Prisma.join(mimeTypes)})
+        AND "mimeType" IN (${Prisma.join(OFFICE_MIME_TYPES)})
       ORDER BY COALESCE("rootArtifactId", id), version DESC
     ) latest
+    WHERE "mimeType" IN (${Prisma.join(formatMimes)})
     ORDER BY "createdAt" DESC, id DESC
     LIMIT ${take}
   `);

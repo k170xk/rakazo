@@ -177,8 +177,10 @@ export function createSaveQueue(options: SaveQueueOptions): SaveQueue {
     }
     if (mine !== epoch || disposed) return;
     if (!bytes) {
-      savedEdits = Math.max(savedEdits, at);
-      emit(dirty() ? "waiting" : "idle");
+      // Editor not ready yet — keep dirty so a later flush (e.g. before chat send) retries
+      // instead of pretending the person's edits are already on the server.
+      emit("failed", "Editor not ready");
+      schedule(retryMs);
       return;
     }
     const problem = options.check ? await options.check(bytes) : null;

@@ -268,6 +268,8 @@ it("opens a Word file in its studio from the card, keeping the chat's other para
   );
   const open = container.querySelector<HTMLButtonElement>('[data-testid="artifact-open-studio"]');
   expect(open?.textContent).toContain("Open");
+  expect(open?.parentElement?.className).toContain("grid-cols-1");
+  expect(open?.parentElement?.className).not.toContain("sm:flex");
   await act(async () => open?.click());
   expect(search).toBe("?m=msg_1&doc=art-2&kind=docx");
 });

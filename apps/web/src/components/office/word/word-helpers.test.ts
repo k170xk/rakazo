@@ -71,14 +71,11 @@ describe("studioAttachmentIds", () => {
   };
   const fileBlock = (artifactId: string) => ({ blocks: [{ kind: "file", artifactId }] });
 
-  it("attaches the newest version when the file is not in the conversation yet", () => {
+  it("attaches the newest version even when an older family member is already in the chat", () => {
     expect(studioAttachmentIds(attachment, { botId: "bot1" }, [fileBlock("other")])).toEqual([
       "a3",
     ]);
-  });
-
-  it("does not attach again when any version is already in the conversation", () => {
-    expect(studioAttachmentIds(attachment, { botId: "bot1" }, [fileBlock("a1")])).toEqual([]);
+    expect(studioAttachmentIds(attachment, { botId: "bot1" }, [fileBlock("a1")])).toEqual(["a3"]);
   });
 
   it("never attaches another chat's file", () => {

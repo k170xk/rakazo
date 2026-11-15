@@ -86,7 +86,7 @@ function documentStudioLine(input: {
   const named = input.title ? ` with "${input.title}" open` : "";
   const version = input.version ? `latest version ${input.version}, ` : "";
   const lines = [
-    `The person is in the ${studio}${named} (documentId ${input.documentId}, ${version}artifactId ${input.artifactId}). This is the document they are looking at. When they ask for a change, edit this document with ocsc ${program} edit --in ${path}; call fetch_file with ${path} first if it is not on your computer. fetch_file always reaches this file, even when another agent made it, so never ask them to attach or export it. Attach the result with attach_file under the same name${input.title ? `, "${input.title}"` : ""}, so it becomes the next version. Do not create a new document unless they ask.`,
+    `The person is in the ${studio}${named} (documentId ${input.documentId}, ${version}artifactId ${input.artifactId}). This is the document they are looking at right now, including any edits they made by hand since the last reply. When they ask for a change, edit THIS version with ocsc ${program} edit --in ${path}; call fetch_file with ${path} first if it is not on your computer. Always use this message's artifactId — never reuse an older attachment from earlier in the chat. fetch_file always reaches this file, even when another agent made it, so never ask them to attach or export it. Attach the result with attach_file under the same name${input.title ? `, "${input.title}"` : ""}, so it becomes the next version. Do not create a new document unless they ask.`,
   ];
   const where = oneLine(input.focus?.where);
   if (where) lines.push(`They are looking at ${where}.`);
@@ -100,6 +100,17 @@ function documentStudioLine(input: {
     lines.push(`Selected: the ${what}${at ? ` (${at})` : ""}${content ? `:\n${content}` : "."}`);
     if (selected.imageAttached)
       lines.push(`A picture of the selected ${what} is attached to this message.`);
+    if (what === "image") {
+      if (input.kind === "word") {
+        lines.push(
+          `To replace that picture in place, edit with {"op":"replace_image","picture":"<its Word name from the selection, for example Picture 1002>","image":"<https URL or path>"}. Do not refuse: ocsc-word can replace an existing embedded image.`,
+        );
+      } else if (input.kind === "slides") {
+        lines.push(
+          `To replace that picture in place, edit with {"op":"replace_image","slide":<slide number>,"picture":<picture number>,"image":"<https URL or path>"}.`,
+        );
+      }
+    }
     lines.push(
       `Their message is about the selected ${what}. Change only that part, in the newest version (${input.version ? `version ${input.version}, ` : ""}artifactId ${input.artifactId}), and leave the rest of the document as it is unless they ask for more.`,
     );

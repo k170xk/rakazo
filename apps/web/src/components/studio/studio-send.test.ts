@@ -23,7 +23,7 @@ describe("runStudioBeforeSend", () => {
     expect(await runStudioBeforeSend(session, { botId: "bot-1" }, [])).toEqual([]);
   });
 
-  it("never blocks sending when the studio fails or does not answer", async () => {
+  it("never blocks sending when the studio fails or never finishes", async () => {
     const failing = {};
     setStudioBeforeSend(failing, async () => {
       throw new Error("offline");
@@ -31,8 +31,29 @@ describe("runStudioBeforeSend", () => {
     expect(await runStudioBeforeSend(failing, { botId: "bot-1" }, [])).toEqual([]);
     const hanging = {};
     setStudioBeforeSend(hanging, () => new Promise(() => {}));
-    expect(await runStudioBeforeSend(hanging, { botId: "bot-1" }, [], 10)).toEqual([]);
+    expect(await runStudioBeforeSend(hanging, { botId: "bot-1" }, [], 10, 10)).toEqual([]);
     expect(await runStudioBeforeSend(null, { botId: "bot-1" }, [])).toEqual([]);
+  });
+
+  it("still attaches when the save finishes just after the soft timeout", async () => {
+    const session = {};
+    setStudioBeforeSend(
+      session,
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                artifactId: "v9",
+                familyArtifactIds: ["v9"],
+                botId: "bot-1",
+                groupId: null,
+              }),
+            30,
+          );
+        }),
+    );
+    expect(await runStudioBeforeSend(session, { botId: "bot-1" }, [], 10, 50)).toEqual(["v9"]);
   });
 });
 

@@ -31,8 +31,10 @@ import { useSpaceQueries } from "../../lib/query";
 import { AppIcon } from "../apps/AppIcon";
 import { SharePopover } from "../pages/SharePopover";
 import { WhiteboardCanvas } from "../pages/WhiteboardCanvas";
+import { FeatureStudioWelcome } from "../studio/FeatureStudioWelcome";
 import { control, pill, StudioFrame, useStudioDock } from "../studio/StudioFrame";
 import { boardBoundsWithArrows, exportWhiteboardPdf } from "./whiteboard-export";
+
 
 const COARSE = "(pointer: coarse)";
 
@@ -309,10 +311,13 @@ export function WhiteboardStudio({
     ) : null;
 
   return (
+    <>
+    <FeatureStudioWelcome kind="board" running={running} />
     <StudioFrame
       testId="whiteboard-studio"
       title={page.data?.title ?? t`Whiteboards`}
       paneLabel={page.data?.title}
+      product={t`Evolve Board`}
       onClose={onClose}
       printable
       dock={dock}
@@ -450,5 +455,6 @@ export function WhiteboardStudio({
         />
       ) : null}
     </StudioFrame>
+    </>
   );
 }

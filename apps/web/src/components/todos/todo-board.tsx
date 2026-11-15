@@ -52,9 +52,11 @@ import { usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
 import { StudioChatPane } from "../studio/StudioChatPane";
-import { control } from "../studio/StudioFrame";
+import { control, StudioProductMark } from "../studio/StudioFrame";
 import { StudioFloatingDock, studioDockStyle } from "../studio/studio-dock";
+import { FeatureStudioWelcome } from "../studio/FeatureStudioWelcome";
 import { TODO_REFRESH_MS as REFRESH_MS, TODO_NEW_MS } from "./todo-count";
+
 
 const DRAG_TYPE = "application/x-rakazo-todo";
 const NO_ACTIVITY: StudioCard[] = [];
@@ -328,6 +330,8 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
   const composer = <div ref={setDockNode} />;
 
   return (
+    <>
+    <FeatureStudioWelcome kind="todo" running={running} />
     <Dialog
       open
       disablePointerDismissal
@@ -378,6 +382,7 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
               <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </button>
             <DialogTitle className="sr-only">{selectedTitle}</DialogTitle>
+            <StudioProductMark name={t`Evolve To-do List`} />
             <DialogDescription className="sr-only">
               <Trans>
                 Only you can see this list. Your assistants can add to it from your emails and chats
@@ -702,6 +707,7 @@ export function TodoBoardDialog({ onClose }: { onClose: () => void }) {
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 

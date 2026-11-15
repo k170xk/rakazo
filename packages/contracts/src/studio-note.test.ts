@@ -53,6 +53,9 @@ describe("openStudioNote", () => {
     );
     expect(note).toContain("ocsc word edit --in attachments/art-3.docx");
     expect(note).toContain("fetch_file with attachments/art-3.docx");
+    expect(note).toContain("including any edits they made by hand since the last reply");
+    expect(note).toContain("Always use this message's artifactId");
+    expect(note).toContain("never reuse an older attachment from earlier in the chat");
     expect(note).toContain('under the same name, "HEL18 Flood Risk Assessment"');
     expect(note).toContain("Do not create a new document unless they ask.");
     expect(note).toContain('Selected in the document: "The site lies within Flood Zone 1."');
@@ -126,6 +129,27 @@ describe("openStudioNote", () => {
       label: "Page 3 · Table: BIM essentials",
     });
     expect(stripStudioNote(`fix it\n\n${note}`)).toBe("fix it");
+  });
+
+  it("tells the assistant how to replace a selected Word picture in place", () => {
+    const note = openStudioNote({
+      kind: "word",
+      title: "BIM Practical Guide",
+      documentId: "root-1",
+      artifactId: "art-5",
+      version: 5,
+      focus: { where: "page 3 of 12", short: "Page 3" },
+      selected: {
+        what: "image",
+        label: "Image: Picture 1002",
+        content: "Name: Picture 1002",
+        position: "page 3",
+        imageAttached: true,
+      },
+    });
+    expect(note).toContain('{"op":"replace_image"');
+    expect(note).toContain("ocsc-word can replace an existing embedded image");
+    expect(note).toContain("A picture of the selected image is attached");
   });
 
   it("caps long selected content and says it was truncated", () => {

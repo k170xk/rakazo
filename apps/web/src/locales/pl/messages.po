@@ -247,6 +247,11 @@ msgstr ""
 msgid "{0} did not accept this token. Check it and try again."
 msgstr ""
 
+#. placeholder {0}: formatLoadBytes(state.received)
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "{0} downloaded"
+msgstr ""
+
 #. placeholder {0}: saved.unfiled
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "{0} earlier entries are only visible to you. Move them to:"
@@ -364,8 +369,10 @@ msgstr ""
 msgid "{0} TB"
 msgstr "{0} TB"
 
+#. placeholder {0}: open?.label ?? ""
 #. placeholder {0}: tools.length
 #: src/components/integrations/evolve-tools-section.tsx
+#: src/components/office/ribbon/CompactRibbon.tsx
 msgid "{0} tools"
 msgstr ""
 
@@ -547,6 +554,12 @@ msgstr "Opcje {name}"
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
 msgstr "{name}: zatrzymano"
+
+#. placeholder {0}: formatLoadBytes(state.received)
+#. placeholder {1}: formatLoadBytes(state.total!)
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "{percent}% · {0} of {1}"
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -971,7 +984,7 @@ msgstr "Menu konta {name}"
 msgid "Acronyms, product names and how to spell them"
 msgstr ""
 
-#: src/components/studio/StudioActivityCarousel.tsx
+#: src/components/studio/StudioActivity.tsx
 msgid "Action"
 msgstr ""
 
@@ -1553,6 +1566,10 @@ msgstr "Wszystkie statusy"
 msgid "All time"
 msgstr "Cały okres"
 
+#: src/components/office/ribbon/CompactRibbon.tsx
+msgid "All tools"
+msgstr "Wszystkie narzędzia"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "All your agents work on one computer. Each has its own folder there, they can see each other's folders and swap files through a shared folder. Colleagues' agents never use it."
 msgstr ""
@@ -1914,6 +1931,10 @@ msgstr "Zatwierdzanie…"
 msgid "Apps"
 msgstr "Aplikacje"
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Apps Studio turns a plain-English idea into a real app you can run, edit and share. The chat beside it is the builder."
+msgstr ""
+
 #: src/components/pages/PagesList.tsx
 msgid "Apps this agent builds for you appear here. Ask for a dashboard, tracker or plan to make one."
 msgstr ""
@@ -1940,6 +1961,7 @@ msgstr "zarchiwizowane"
 
 #: src/components/todos/todo-board.tsx
 #: src/pages/shell/evolve-history.tsx
+#: src/pages/shell/shell-dialogs.tsx
 msgid "Archived"
 msgstr ""
 
@@ -1981,8 +2003,20 @@ msgstr ""
 msgid "Ask for a change"
 msgstr ""
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Ask for an infographic, diagram or labelled sketch when a picture explains it better than text"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Ask for any OCSC deliverable in plain English"
+msgstr ""
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Ask in chat to add, move or rewrite items — assistants can also file tasks from other work"
+msgstr ""
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Ask in the studio chat whenever you want the assistant to do the updating."
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -2063,6 +2097,12 @@ msgstr ""
 #: src/pages/shell/chat-shared.ts
 msgid "Attachment"
 msgstr "Załącznik"
+
+#. placeholder {0}: state.attempt
+#. placeholder {1}: state.attempts
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "Attempt {0} of {1}"
+msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Audit this GA drawing against the brief and mark up anything missing"
@@ -2266,6 +2306,10 @@ msgstr "Zablokowane"
 msgid "Board"
 msgstr "Tablica"
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Board is a freeform space for maps, sketches and plans. Drop ideas visually, bring in project photos, and ask the assistant to grow or tidy the board with you."
+msgstr ""
+
 #: src/components/apps/AppsDialog.tsx
 msgid "Boards & to-dos"
 msgstr ""
@@ -2365,6 +2409,10 @@ msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Build me a fee tracker dashboard for my projects"
+msgstr ""
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Build working apps by describing them"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -2471,6 +2519,7 @@ msgstr "Nie odczytuje obrazów"
 
 #: src/components/apps/AppDataPanel.tsx
 #: src/components/apps/AppHistoryPanel.tsx
+#: src/components/apps/AppStudio.tsx
 #: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerMaintenanceActions.tsx
@@ -2994,6 +3043,7 @@ msgstr ""
 #: src/components/ImageLightbox.tsx
 #: src/components/InstallAppBanner.tsx
 #: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/ribbon/CompactRibbon.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -3003,6 +3053,7 @@ msgstr ""
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 #: src/pages/shell/chat-find-bar.tsx
+#: src/pages/shell/evolve-history.tsx
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "Zamknij"
@@ -3178,6 +3229,10 @@ msgstr ""
 msgid "Column type"
 msgstr ""
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Columns are stages: To do → In progress → Waiting → Done. Drag cards when status changes"
+msgstr ""
+
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Columns by section"
 msgstr ""
@@ -3267,6 +3322,10 @@ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Company admin sections"
+msgstr ""
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Company apps"
 msgstr ""
 
 #. placeholder {0}: levels[defaultAccess]
@@ -5199,6 +5258,10 @@ msgstr ""
 msgid "Describe an app and build it here, with the app open beside the chat."
 msgstr ""
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Describe the app in chat — screens, data and behaviour — instead of starting from blank code"
+msgstr ""
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Describe the change"
 msgstr ""
@@ -5367,6 +5430,10 @@ msgstr "Docker jest skonfigurowany, ale komputery nie odpowiadają. Sprawdź, cz
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets agents work with your local files and tools."
 msgstr ""
 
+#: src/components/office/WordStudio.tsx
+msgid "document"
+msgstr ""
+
 #: src/components/office/OfficeStudioHost.tsx
 msgid "Document"
 msgstr "Dokument"
@@ -5379,10 +5446,6 @@ msgstr "Dokument się zmienił. Otwórz go ponownie, aby edytować najnowszą we
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Document library"
 msgstr "Document library"
-
-#: src/components/office/word/WordRibbon.tsx
-msgid "Document tools"
-msgstr "Narzędzia dokumentu"
 
 #: src/components/office/WordStudio.tsx
 msgid "Document: {title}"
@@ -5397,6 +5460,7 @@ msgid "Don’t have an account?"
 msgstr "Nie masz konta?"
 
 #: src/components/office/StudioWelcome.tsx
+#: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Don't show again"
 msgstr "Nie pokazuj ponownie"
 
@@ -5509,6 +5573,10 @@ msgstr "Rysowanie nowej ikony OCSC za pomocą GPT Image. Potrwa to około minuty
 #: src/components/apps/AppSettingsPanel.tsx
 msgid "Drawn for this app in the OCSC style. Describe one object to draw something else."
 msgstr "Narysowana dla tej aplikacji w stylu OCSC. Opisz jeden przedmiot, aby narysować coś innego."
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Drop notes and shapes freely — the board is for exploring, not filling a template"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
@@ -5783,22 +5851,6 @@ msgstr "Koniec pokazu slajdów. Kliknij, aby wyjść."
 msgid "End slideshow"
 msgstr "Zakończ pokaz slajdów"
 
-#: src/components/office/slides/SlideRail.tsx
-msgid "Has animations"
-msgstr "Zawiera animacje"
-
-#: src/components/office/slides/SlideRail.tsx
-msgid "Has a slide transition"
-msgstr "Zawiera przejście slajdu"
-
-
-#: src/components/office/ribbon/CompactRibbon.tsx
-msgid "All tools"
-msgstr "Wszystkie narzędzia"
-
-#: src/components/office/word/WordRibbon.tsx
-msgid "Tap a size to insert a table"
-msgstr "Dotknij rozmiaru, aby wstawić tabelę"
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
 msgstr "Identyfikator użytkownika końcowego"
@@ -6033,12 +6085,20 @@ msgstr ""
 msgid "Evolve admins only"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Evolve App Studio"
+msgstr ""
+
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Evolve assistant"
 msgstr ""
 
 #: src/pages/AdminAssistantModels.tsx
 msgid "Evolve assistant models"
+msgstr ""
+
+#: src/components/whiteboards/whiteboard-studio.tsx
+msgid "Evolve Board"
 msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
@@ -6055,6 +6115,12 @@ msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Evolve didn't accept it."
+msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/SheetStudio.tsx
+msgid "Evolve Excel"
 msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
@@ -6074,12 +6140,22 @@ msgstr ""
 msgid "Evolve plugins"
 msgstr ""
 
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/SlidesStudio.tsx
+msgid "Evolve PowerPoint"
+msgstr ""
+
 #: src/components/EmailFilingCard.tsx
 msgid "Evolve projects"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
 msgid "Evolve search is unavailable. Type a full work email instead."
+msgstr ""
+
+#: src/components/todos/todo-board.tsx
+msgid "Evolve To-do List"
 msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
@@ -6089,6 +6165,12 @@ msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Evolve tools for everyone"
+msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/word/WordRibbon.tsx
+#: src/components/office/WordStudio.tsx
+msgid "Evolve Word"
 msgstr ""
 
 #: src/components/LearningClinicCard.tsx
@@ -6644,6 +6726,7 @@ msgid "Get notified when your work finishes, an agent needs your input, or a rou
 msgstr ""
 
 #: src/components/office/StudioWelcome.tsx
+#: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Get started"
 msgstr "Zaczynamy"
 
@@ -6760,6 +6843,10 @@ msgstr "Linie siatki"
 msgid "Group"
 msgstr "Grupa"
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Group related ideas, then ask the assistant to rearrange, expand or tidy a selection"
+msgstr ""
+
 #: src/pages/GroupPanel.tsx
 msgid "Group settings"
 msgstr "Ustawienia grupy"
@@ -6806,9 +6893,17 @@ msgstr ""
 msgid "Has a folder"
 msgstr ""
 
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has a slide transition"
+msgstr "Zawiera przejście slajdu"
+
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Has AI instructions"
 msgstr "Has AI instructions"
+
+#: src/components/office/slides/SlideRail.tsx
+msgid "Has animations"
+msgstr "Zawiera animacje"
 
 #: src/components/EmailFilingCard.tsx
 msgid "Has attachments"
@@ -6925,8 +7020,11 @@ msgstr "Kolory wyróżnienia"
 #: src/components/apps/AppStudio.tsx
 #: src/components/office/history/VersionHistory.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
+#: src/components/office/SheetStudio.tsx
 #: src/components/office/slides/SlidesRibbon.tsx
+#: src/components/office/SlidesStudio.tsx
 #: src/components/office/word/WordRibbon.tsx
+#: src/components/office/WordStudio.tsx
 msgid "History"
 msgstr ""
 
@@ -6989,6 +7087,10 @@ msgstr "Jak często"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "How other agents see it"
+msgstr ""
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "How to build well:"
 msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
@@ -7420,9 +7522,17 @@ msgstr "Zachowaj wspomnienia"
 msgid "Keep separate data for each one"
 msgstr ""
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Keep titles short and actionable; add due dates and priority only when they help you decide"
+msgstr ""
+
 #: src/pages/McpServersOverlay.tsx
 msgid "Keep tool results whole"
 msgstr "Zachowuj pełne wyniki narzędzi"
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Keep work moving across a living list"
+msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Keeping files"
@@ -7662,6 +7772,10 @@ msgstr "Skopiowano link"
 msgid "Link DMs"
 msgstr "Połącz wiadomości prywatne"
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Link in project photos, site images or reference pictures so the board stays visual"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
 msgstr "Połącz SSO"
@@ -7714,12 +7828,21 @@ msgstr ""
 msgid "Loaded {pageCount} pages from {0} PDF(s)"
 msgstr ""
 
+#: src/components/office/DocumentLoadPanel.tsx
 #: src/components/office/OfficeStudioHost.tsx
-#: src/components/office/SheetStudio.tsx
-#: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
+#: src/pages/shell/evolve-history.tsx
 msgid "Loading"
 msgstr "Wczytywanie"
+
+#. placeholder {0}: formatLoadBytes(state.received)
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "Loading {0}"
+msgstr ""
+
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "Loading {percent}%"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Loading activity…"
@@ -7802,6 +7925,7 @@ msgstr "Wczytywanie dostawców głosu…"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
+#: src/components/office/DocumentLoadPanel.tsx
 #: src/components/PageLoading.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
@@ -8373,6 +8497,7 @@ msgid "Monthly credits expire at renewal. Top-ups do not expire."
 msgstr "Miesięczne środki wygasają przy odnowieniu. Doładowania nie wygasają."
 
 #: src/components/apps/AppStudio.tsx
+#: src/components/studio/StudioFrame.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-hover-actions.tsx
 msgid "More"
@@ -8612,6 +8737,7 @@ msgstr "Nigdy nie pytaj"
 msgid "Never suggest"
 msgstr ""
 
+#: src/components/studio/StudioActivity.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
@@ -9353,6 +9479,7 @@ msgid "Notes:"
 msgstr "Notatki:"
 
 #: src/components/todos/todo-board.tsx
+#: src/pages/shell/evolve-history.tsx
 msgid "Nothing archived."
 msgstr ""
 
@@ -9396,7 +9523,7 @@ msgstr ""
 msgid "Notifications"
 msgstr "Powiadomienia"
 
-#: src/components/studio/StudioActivityCarousel.tsx
+#: src/components/studio/StudioActivity.tsx
 msgid "Now"
 msgstr ""
 
@@ -9677,6 +9804,10 @@ msgstr "Otwórz {title}"
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "Otwórz <0>{0}</0> i wpisz ten kod:"
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Open a card or name it in chat when you want a change. The assistant updates the list for you."
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Open any agent and ask for what you need, or create a new agent from the + button for a job you do often."
 msgstr ""
@@ -9697,6 +9828,10 @@ msgstr "Otwórz czat z {0}"
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Open computer settings"
 msgstr "Otwórz ustawienia komputera"
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Open Data, Code and History when you need the structure, versions or settings behind the UI"
+msgstr ""
 
 #: src/components/markdown-link-prompt.tsx
 msgid "Open external link?"
@@ -9781,6 +9916,10 @@ msgstr "Adres serwera zgodnego z OpenAI"
 #: src/pages/shell/agent-import.tsx
 msgid "OpenClaw or Hermes"
 msgstr "OpenClaw lub Hermes"
+
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "Opening…"
+msgstr ""
 
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Opens your browser's print dialog. Choose Save as PDF as the destination."
@@ -10151,6 +10290,10 @@ msgstr "Osobowość"
 msgid "Personal"
 msgstr "Osobiste"
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Personal apps"
+msgstr ""
+
 #: src/components/apps/AppDataPanel.tsx
 msgid "Personal: each colleague sees only their own rows. Click to share all rows."
 msgstr ""
@@ -10300,6 +10443,10 @@ msgstr ""
 msgid "PowerPoint Studio"
 msgstr ""
 
+#: src/pages/shell/shell-sidebar.tsx
+msgid "Ppt"
+msgstr "Ppt"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
 msgstr "Preferencje"
@@ -10308,9 +10455,9 @@ msgstr "Preferencje"
 msgid "Present"
 msgstr "Prezentuj"
 
-#: src/components/office/slides/SlidesRibbon.tsx
-msgid "Presentation tools"
-msgstr "Narzędzia prezentacji"
+#: src/components/office/SlidesStudio.tsx
+msgid "presentation"
+msgstr ""
 
 #: src/components/office/SlidesStudio.tsx
 msgid "Presentations"
@@ -10361,6 +10508,10 @@ msgstr "Poprzednia strona"
 #: src/pages/SettingsOverlay.tsx
 msgid "Previous settings sections"
 msgstr "Poprzednie sekcje ustawień"
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Principles that work well:"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
@@ -10593,7 +10744,7 @@ msgstr ""
 msgid "Recent AI changes in Evolve"
 msgstr ""
 
-#: src/components/studio/StudioActivityCarousel.tsx
+#: src/components/studio/StudioActivity.tsx
 msgid "Recent messages and actions"
 msgstr "Ostatnie wiadomości i działania"
 
@@ -11000,7 +11151,7 @@ msgstr ""
 msgid "Replies to"
 msgstr "Odpowiada na"
 
-#: src/components/studio/StudioActivityCarousel.tsx
+#: src/components/studio/StudioActivity.tsx
 #: src/pages/shell/message-hover-actions.tsx
 #: src/pages/shell/quote-selection-button.tsx
 msgid "Reply"
@@ -11202,6 +11353,7 @@ msgstr ""
 
 #: src/components/office/word/ReviewPanel.tsx
 #: src/components/office/word/WordRibbon.tsx
+#: src/components/office/WordStudio.tsx
 msgid "Review"
 msgstr "Recenzja"
 
@@ -11721,6 +11873,10 @@ msgstr ""
 msgid "Select an element"
 msgstr ""
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Select an element with Pick, then ask in the chat. The assistant receives that selection as context."
+msgstr ""
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Select at least one page"
 msgstr ""
@@ -11731,6 +11887,10 @@ msgstr "Zaznacz komórki i poproś o zmianę. Asystent otrzyma Twój wybór jako
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Select Drawing(s)"
+msgstr ""
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Select notes or shapes on the board, then ask for a change. The assistant works from what you pointed at."
 msgstr ""
 
 #: src/components/EmailFilingCard.tsx
@@ -11993,6 +12153,10 @@ msgstr ""
 msgid "Share my connection with everyone"
 msgstr ""
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Share the board or export it when a sketch needs to leave the studio"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Share your dashboards, tools and functions so colleagues can use them too"
 msgstr ""
@@ -12018,6 +12182,10 @@ msgstr ""
 #: src/pages/SharedPage.tsx
 msgid "Shared apps are only for people at your company."
 msgstr "Udostępnione aplikacje są tylko dla osób z Twojej firmy."
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Shared with everyone in your organisation — they appear under Company in the switcher. Publish from Settings when an app should become a tenant tool, not just a personal experiment."
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Shared with my agents"
@@ -12525,13 +12693,13 @@ msgstr ""
 msgid "Spoken replies, dictation and calls. Staff never set voice up themselves: everyone uses the connection shared here."
 msgstr ""
 
+#: src/components/office/SheetStudio.tsx
+msgid "spreadsheet"
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Spreadsheet"
 msgstr ""
-
-#: src/components/office/sheet/SheetRibbon.tsx
-msgid "Spreadsheet tools"
-msgstr "Narzędzia arkusza"
 
 #: src/components/office/SheetStudio.tsx
 msgid "Spreadsheets"
@@ -12655,6 +12823,10 @@ msgstr "Utworzono z szablonu"
 msgid "Starting"
 msgstr "Uruchamianie"
 
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "Starting download…"
+msgstr ""
+
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
@@ -12698,6 +12870,10 @@ msgstr ""
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Steps"
 msgstr "Kroki"
+
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "Still loading on a slow connection…"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/composer.tsx
@@ -12918,6 +13094,10 @@ msgstr ""
 msgid "Take the quiz again"
 msgstr ""
 
+#: src/components/office/word/WordRibbon.tsx
+msgid "Tap a size to insert a table"
+msgstr "Dotknij rozmiaru, aby wstawić tabelę"
+
 #: src/components/InstallAppBanner.tsx
 msgid "Tap Share, then Add to Home Screen."
 msgstr "Tap Share, then Add to Home Screen."
@@ -13092,6 +13272,10 @@ msgstr ""
 msgid "That workbook is over 10 MB."
 msgstr ""
 
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "The {fileLabel} didn't finish downloading. Check your connection and try again."
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
 msgid "The agent can use the file but won't see the picture."
 msgstr ""
@@ -13147,6 +13331,10 @@ msgstr "The connection did not finish. Close this window and try again."
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "Upłynął czas połączenia."
+
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "The download stalled on a slow connection. Check your network and try again."
+msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "The first version: every line is new."
@@ -13316,6 +13504,10 @@ msgstr "Otrzymają {weeks} tyg. za darmo."
 msgid "They sign in to view"
 msgstr ""
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Think out loud on a shared board"
+msgstr ""
+
 #: src/components/call/CallCard.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -13333,6 +13525,10 @@ msgstr ""
 #: src/pages/ModelRoleSettings.tsx
 msgid "Thinking: {0}"
 msgstr "Rozumowanie: {0}"
+
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "This {fileLabel} couldn't be opened. Check your connection and try again."
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "This agent"
@@ -13469,10 +13665,6 @@ msgstr ""
 #: src/components/office/WordStudio.tsx
 msgid "This document can't be edited here, so it is shown read-only. Download it to edit it, or ask the assistant for changes."
 msgstr "Tego dokumentu nie można tu edytować, więc jest wyświetlany tylko do odczytu. Pobierz go, aby edytować, lub poproś asystenta o zmiany."
-
-#: src/components/office/WordStudio.tsx
-msgid "This document couldn't be opened."
-msgstr "Nie udało się otworzyć tego dokumentu."
 
 #: src/components/office/OfficeStudioHost.tsx
 msgid "This document couldn't be opened. Check your connection and try again."
@@ -13688,6 +13880,10 @@ msgstr "Do zrobienia"
 msgid "To do list"
 msgstr ""
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "To-do is your personal kanban: move work through stages, and let assistants add or update items from chats, emails and routines when you ask."
+msgstr ""
+
 #: src/components/todos/todo-board.tsx
 msgid "To-do list"
 msgstr ""
@@ -13826,6 +14022,12 @@ msgstr "Okres próbny kończy się {day}"
 msgid "Trials get fewer hours to prevent abuse."
 msgstr "Okres próbny ma mniej godzin, aby zapobiegać nadużyciom."
 
+#. placeholder {0}: state.attempt
+#. placeholder {1}: state.attempts
+#: src/components/office/DocumentLoadPanel.tsx
+msgid "Tried {0} of {1} times"
+msgstr ""
+
 #: src/components/TrustedLinkSitesSettings.tsx
 msgid "Trusted sites"
 msgstr "Zaufane witryny"
@@ -13835,9 +14037,9 @@ msgid "Try"
 msgstr ""
 
 #: src/components/LearningClinicCard.tsx
+#: src/components/office/DocumentLoadPanel.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
-#: src/components/office/WordStudio.tsx
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
@@ -14241,6 +14443,10 @@ msgstr "Use OCSC Intelligence as an app"
 
 #: src/components/ModelCredits.tsx
 msgid "Use OCSC Intelligence credits"
+msgstr ""
+
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Use Pick to point at one element, then ask for a change or edit it visually"
 msgstr ""
 
 #: src/components/teach/TeachRecordingChrome.tsx
@@ -14836,7 +15042,7 @@ msgstr "Trwa praca nad arkuszem…"
 msgid "Working on your whiteboard…"
 msgstr "Pracuję nad Whiteboard…"
 
-#: src/components/studio/StudioActivityCarousel.tsx
+#: src/components/studio/StudioActivity.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
@@ -14911,7 +15117,7 @@ msgstr "Wczoraj"
 #: src/components/office/history/VersionHistory.tsx
 #: src/components/office/WordStudio.tsx
 #: src/components/pages/SharePopover.tsx
-#: src/components/studio/StudioActivityCarousel.tsx
+#: src/components/studio/StudioActivity.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/SharedChats.tsx
 #: src/pages/Shell.tsx
@@ -15167,6 +15373,10 @@ msgstr "U Twojego dostawcy głosu skończyły się środki."
 msgid "Your voice provider key was rejected."
 msgstr "Klucz dostawcy głosu został odrzucony."
 
+#: src/components/studio/FeatureStudioWelcome.tsx
+msgid "Yours to build and keep. Only you see them until you share a link, or publish one for the company."
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "ZIP archive"
 msgstr ""
@@ -15196,7 +15406,3 @@ msgstr ""
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
 msgstr ""
-
-#: src/pages/RoutineEditor.tsx
-msgid "Slack not enabled"
-msgstr "Slack nie jest włączony"

@@ -1,15 +1,17 @@
 import type { DocumentFormat } from "@rakazo/contracts";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/** How many opens of each document type show the welcome before it stops on its own. */
+/** How many opens of each studio type show the welcome before it stops on its own. */
 export const STUDIO_WELCOME_LIMIT = 10;
+
+export type StudioWelcomeKind = DocumentFormat | "todo" | "apps" | "board";
 
 type WelcomeStorage = Pick<Storage, "getItem" | "setItem">;
 
 const OFF = "off";
 
-export const studioWelcomeKey = (userId: string, format: DocumentFormat) =>
-  `rakazo:studio-welcome:v1:${userId}:${format}`;
+export const studioWelcomeKey = (userId: string, kind: StudioWelcomeKind) =>
+  `rakazo:studio-welcome:v1:${userId}:${kind}`;
 
 function defaultStorage(): WelcomeStorage | null {
   try {
@@ -22,11 +24,11 @@ function defaultStorage(): WelcomeStorage | null {
 /** Opens that have shown the welcome so far, or null once the person turned it off. */
 export function readWelcomeOpens(
   userId: string,
-  format: DocumentFormat,
+  kind: StudioWelcomeKind,
   storage: WelcomeStorage | null = defaultStorage(),
 ): number | null {
   try {
-    const saved = storage?.getItem(studioWelcomeKey(userId, format)) ?? null;
+    const saved = storage?.getItem(studioWelcomeKey(userId, kind)) ?? null;
     if (saved === OFF) return null;
     const opens = Number(saved);
     return Number.isInteger(opens) && opens > 0 ? opens : 0;
@@ -38,13 +40,13 @@ export function readWelcomeOpens(
 /** Shows the welcome for this open when it is still due, and counts the open. */
 export function claimWelcomeOpen(
   userId: string,
-  format: DocumentFormat,
+  kind: StudioWelcomeKind,
   storage: WelcomeStorage | null = defaultStorage(),
 ): boolean {
-  const opens = readWelcomeOpens(userId, format, storage);
+  const opens = readWelcomeOpens(userId, kind, storage);
   if (opens === null || opens >= STUDIO_WELCOME_LIMIT) return false;
   try {
-    storage?.setItem(studioWelcomeKey(userId, format), String(opens + 1));
+    storage?.setItem(studioWelcomeKey(userId, kind), String(opens + 1));
   } catch {
     // Storage blocked: the welcome shows again next time, which is harmless.
   }
@@ -53,11 +55,11 @@ export function claimWelcomeOpen(
 
 export function turnOffWelcome(
   userId: string,
-  format: DocumentFormat,
+  kind: StudioWelcomeKind,
   storage: WelcomeStorage | null = defaultStorage(),
 ): void {
   try {
-    storage?.setItem(studioWelcomeKey(userId, format), OFF);
+    storage?.setItem(studioWelcomeKey(userId, kind), OFF);
   } catch {
     // Storage blocked: nothing to remember it in.
   }
@@ -70,20 +72,20 @@ export type StudioWelcomeState = {
 };
 
 /**
- * Decides once per opened document whether to show the welcome. An open while the assistant is
- * working on the document is skipped and not counted, and a run that starts hides the welcome.
+ * Decides once per opened studio instance whether to show the welcome. An open while the
+ * assistant is working is skipped and not counted, and a run that starts hides the welcome.
  */
 export function useStudioWelcome({
   userId,
-  format,
-  documentId,
+  kind,
+  instanceId,
   ready,
   running,
   storage,
 }: {
   userId: string | undefined;
-  format: DocumentFormat;
-  documentId: string;
+  kind: StudioWelcomeKind;
+  instanceId: string;
   /** The studio has mounted, so the welcome stacks over it. */
   ready: boolean;
   running: boolean;
@@ -91,13 +93,13 @@ export function useStudioWelcome({
 }): StudioWelcomeState {
   const [open, setOpen] = useState(false);
   const decided = useRef<string | null>(null);
-  const openKey = `${format}:${documentId}`;
+  const openKey = `${kind}:${instanceId}`;
 
   useEffect(() => {
     if (!userId || !ready || decided.current === openKey) return;
     decided.current = openKey;
-    setOpen(!running && claimWelcomeOpen(userId, format, storage ?? defaultStorage()));
-  }, [userId, ready, running, openKey, format, storage]);
+    setOpen(!running && claimWelcomeOpen(userId, kind, storage ?? defaultStorage()));
+  }, [userId, ready, running, openKey, kind, storage]);
 
   useEffect(() => {
     if (running) setOpen(false);
@@ -105,9 +107,9 @@ export function useStudioWelcome({
 
   const close = useCallback(() => setOpen(false), []);
   const dontShowAgain = useCallback(() => {
-    if (userId) turnOffWelcome(userId, format, storage ?? defaultStorage());
+    if (userId) turnOffWelcome(userId, kind, storage ?? defaultStorage());
     setOpen(false);
-  }, [userId, format, storage]);
+  }, [userId, kind, storage]);
 
   return { open, close, dontShowAgain };
 }

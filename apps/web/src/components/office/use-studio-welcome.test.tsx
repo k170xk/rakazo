@@ -86,8 +86,8 @@ it("waits for the person and the studio, then counts one open per document", asy
   const storage = memoryStorage();
   const base: Props = {
     userId: undefined,
-    format: "docx",
-    documentId: "doc-1",
+    kind: "docx",
+    instanceId: "doc-1",
     ready: false,
     running: false,
     storage,
@@ -102,7 +102,7 @@ it("waits for the person and the studio, then counts one open per document", asy
   expect(readWelcomeOpens("u1", "docx", storage)).toBe(1);
   await act(async () => state.close());
   expect(state.open).toBe(false);
-  await render({ ...base, userId: "u1", ready: true, documentId: "doc-2" });
+  await render({ ...base, userId: "u1", ready: true, instanceId: "doc-2" });
   expect(state.open).toBe(true);
   expect(readWelcomeOpens("u1", "docx", storage)).toBe(2);
 });
@@ -111,8 +111,8 @@ it("skips an open while the assistant is working, and hides when a run starts", 
   const storage = memoryStorage();
   const base: Props = {
     userId: "u1",
-    format: "pptx",
-    documentId: "deck-1",
+    kind: "pptx",
+    instanceId: "deck-1",
     ready: true,
     running: true,
     storage,
@@ -121,9 +121,9 @@ it("skips an open while the assistant is working, and hides when a run starts", 
   expect(state.open).toBe(false);
   expect(readWelcomeOpens("u1", "pptx", storage)).toBe(0);
 
-  await render({ ...base, documentId: "deck-2", running: false });
+  await render({ ...base, instanceId: "deck-2", running: false });
   expect(state.open).toBe(true);
-  await render({ ...base, documentId: "deck-2", running: true });
+  await render({ ...base, instanceId: "deck-2", running: true });
   expect(state.open).toBe(false);
 });
 
@@ -131,8 +131,8 @@ it("Don't show again turns it off for that format only", async () => {
   const storage = memoryStorage();
   await render({
     userId: "u1",
-    format: "xlsx",
-    documentId: "sheet-1",
+    kind: "xlsx",
+    instanceId: "sheet-1",
     ready: true,
     running: false,
     storage,

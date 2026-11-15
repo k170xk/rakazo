@@ -30,7 +30,10 @@ import { useBoundSpaceId } from "../../lib/space-rpc";
 import { errorCode } from "../../lib/user-error";
 import { control, pill, StudioFrame, StudioMoreMenu, useStudioDock } from "../studio/StudioFrame";
 import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-send";
+import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
 import { documentDockPage } from "./context";
+import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
+import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
 import { useDocumentBotId } from "./document-bot";
 import { HistoryButton, VersionHistoryPanel } from "./history/VersionHistory";
 import type { SlideChipWords } from "./slides/context";
@@ -40,6 +43,7 @@ import { changedSlides, openDeck, saveVerified } from "./slides/deck";
 import { deckHistory } from "./slides/history";
 import type { SlidesView } from "./slides/SlidesWorkbench";
 import { SlidesPreview, SlidesWorkbench } from "./slides/SlidesWorkbench";
+import { useDocumentLoad } from "./use-document-load";
 import { useDocumentUpload } from "./use-document-upload";
 import { LiveDraftPill, useLiveDraft } from "./use-live-draft";
 import { EditorBoundary } from "./word/EditorBoundary";
@@ -94,7 +98,6 @@ export default function SlidesStudio({
   const { session, running } = dock;
 
   const [doc, setDoc] = useState<OpenDeck | null>(null);
-  const [loadError, setLoadError] = useState(false);
   const [editBroken, setEditBroken] = useState(false);
   const [broken, setBroken] = useState(false);
   const [saveState, setSaveState] = useState<SaveQueueState | null>(null);
@@ -107,9 +110,17 @@ export default function SlidesStudio({
   const latest = useRef<Latest | null>(null);
   const deckRef = useRef<Deck | null>(null);
   const view = useRef<SlidesView | null>(null);
+  /** Survives composer focus clearing the slide selection on mobile. */
+  const heldImage = useRef<File | null>(null);
   const owner = useRef<Promise<{ botId: string | null; groupId: string | null }> | null>(null);
-  const loadSeq = useRef(0);
   const timers = useRef({ note: 0, flash: 0 });
+  const {
+    loadState,
+    loadBytes,
+    stillCurrent,
+    markReady,
+    markOpenFailed,
+  } = useDocumentLoad("pptx", () => queries.documents.get.call({ rootArtifactId }));
 
   const chipWords = useMemo<SlideChipWords>(
     () => ({
@@ -146,20 +157,19 @@ export default function SlidesStudio({
 
   const load = useCallback(
     async (reason: "open" | "newer" | "reload") => {
-      const seq = ++loadSeq.current;
+      const loaded = await loadBytes();
+      if (!loaded) return;
+      const { detail, bytes, turn } = loaded;
+      const shown = latest.current?.version ?? 0;
+      latest.current = {
+        artifactId: detail.latest.artifactId,
+        version: detail.latest.version,
+        name: detail.name,
+        versions: detail.versions,
+      };
       try {
-        const detail = await queries.documents.get.call({ rootArtifactId });
-        if (detail.format !== "pptx") throw new Error("not a presentation");
-        const shown = latest.current?.version ?? 0;
-        latest.current = {
-          artifactId: detail.latest.artifactId,
-          version: detail.latest.version,
-          name: detail.name,
-          versions: detail.versions,
-        };
-        const bytes = await fetchDownload(downloadTokenUrl(detail.latest.downloadToken));
         const deck = await openDeck(new Uint8Array(bytes));
-        if (seq !== loadSeq.current) return;
+        if (!stillCurrent(turn)) return;
         const before = deckRef.current;
         deckRef.current = deck;
         queue.current?.rebase(detail.latest.version);
@@ -170,11 +180,11 @@ export default function SlidesStudio({
           version: detail.latest.version,
           deck,
           versions: detail.versions,
-          loaded: seq,
+          loaded: turn,
         });
-        setLoadError(false);
         setBroken(false);
         setEditBroken(false);
+        markReady(turn);
         publishNote();
         if (reason !== "open" && detail.latest.version > shown) {
           window.clearTimeout(timers.current.flash);
@@ -182,10 +192,10 @@ export default function SlidesStudio({
           timers.current.flash = window.setTimeout(() => setFlash(null), FLASH_MS);
         }
       } catch {
-        if (seq === loadSeq.current) setLoadError(true);
+        markOpenFailed(turn);
       }
     },
-    [queries, rootArtifactId, publishNote],
+    [loadBytes, stillCurrent, markReady, markOpenFailed, publishNote],
   );
 
   const conflictText = t`A newer version of this presentation was saved, so it has been loaded. Make your last change again.`;
@@ -299,26 +309,28 @@ export default function SlidesStudio({
   useEffect(() => {
     if (!session) return;
     return setStudioBeforeSend(session, async () => {
-      await queue.current?.flush();
-      const now = latest.current;
-      if (!now) return null;
-      publishNote();
+      heldImage.current = (await view.current?.picture?.().catch(() => null)) ?? null;
+      const saves = queue.current;
+      if (!saves) return null;
       owner.current ??= queries.artifacts.meta
         .call({ artifactId: rootArtifactId })
         .then((meta) => ({ botId: meta.botId, groupId: meta.groupId }));
-      const { botId, groupId } = await owner.current;
-      return {
-        artifactId: now.artifactId,
-        familyArtifactIds: now.versions.map((row) => row.artifactId),
-        botId,
-        groupId,
-      };
+      return prepareDocumentStudioSend({
+        flush: () => saves.flush(),
+        getLatest: () => latest.current,
+        publishNote,
+        owner: () => owner.current!,
+        resolveConflict: () => load("reload"),
+      });
     });
-  }, [session, queries, rootArtifactId, publishNote]);
+  }, [session, queries, rootArtifactId, publishNote, load]);
 
   useEffect(() => {
     if (!session) return;
-    return setStudioSelectionImage(session, async () => view.current?.picture?.() ?? null);
+    return setStudioSelectionImage(session, async () => {
+      if (heldImage.current) return heldImage.current;
+      return (await view.current?.picture?.()) ?? null;
+    });
   }, [session]);
 
   useEffect(() => {
@@ -491,7 +503,7 @@ export default function SlidesStudio({
   }, [status, saveState?.detail, t]);
 
   const uploader = useDocumentUpload("pptx", onOpenDocument, settle);
-  const failed = (loadError && !doc) || broken;
+  const loadFailed = loadState.status === "error" && !doc;
   const flashVersion = flash?.version;
 
   return (
@@ -499,6 +511,7 @@ export default function SlidesStudio({
       testId="slides-studio"
       title={title}
       paneLabel={title}
+      product={t`Evolve PowerPoint`}
       onClose={() => void close()}
       closeLabel={t`Close presentation`}
       dock={dock}
@@ -595,7 +608,7 @@ export default function SlidesStudio({
               <History className="size-4" strokeWidth={1.8} />
               <Trans>History</Trans>
             </DropdownMenuItem>
-            <DropdownMenuItem disabled={!doc && !loadError} onClick={() => void download()}>
+            <DropdownMenuItem disabled={!doc && !loadFailed} onClick={() => void download()}>
               <Download className="size-4" />
               <Trans>Download .pptx</Trans>
             </DropdownMenuItem>
@@ -611,7 +624,7 @@ export default function SlidesStudio({
       share={
         <DropdownMenu>
           <DropdownMenuTrigger
-            disabled={!doc && !loadError}
+            disabled={!doc && !loadFailed}
             data-testid="slides-share"
             aria-label={t`Share`}
             className={`${pill} disabled:opacity-40 max-sm:hidden`}
@@ -630,7 +643,7 @@ export default function SlidesStudio({
         </DropdownMenu>
       }
     >
-      {failed ? (
+      {broken && !loadFailed ? (
         <div className="grid size-full place-items-center p-6">
           <div className="flex max-w-sm flex-col items-center gap-3 text-center">
             <p className="text-[14px] text-muted-foreground">
@@ -658,9 +671,30 @@ export default function SlidesStudio({
           </div>
         </div>
       ) : !doc ? (
-        <div className="grid size-full place-items-center">
-          <Loader2 className="size-5 animate-spin text-muted-foreground" aria-label={t`Loading`} />
-        </div>
+        <DocumentLoadPanel
+          state={
+            loadState.status === "idle"
+              ? {
+                  status: "loading",
+                  phase: "fetching",
+                  received: 0,
+                  total: null,
+                  attempt: 1,
+                  attempts: DOCUMENT_LOAD_ATTEMPTS,
+                }
+              : loadState
+          }
+          fileLabel={t`presentation`}
+          onRetry={() => void load("open")}
+          secondary={
+            latest.current ? (
+              <Button size="sm" onClick={() => void download()} data-testid="slides-error-download">
+                <Download className="size-4" />
+                <Trans>Download .pptx</Trans>
+              </Button>
+            ) : null
+          }
+        />
       ) : (
         <div
           className={`relative size-full ring-inset transition-shadow duration-700 ${
@@ -683,6 +717,7 @@ export default function SlidesStudio({
               </EditorBoundary>
             )}
           </EditorBoundary>
+          <DocumentLoadOverlay state={loadState} />
           {draft ? (
             <LiveDraftPill className="top-12" />
           ) : running ? (

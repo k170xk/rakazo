@@ -37,9 +37,11 @@ import { ownerAppSource } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
 import type { StudioCard } from "../../lib/studio-activity";
 import { StudioChatPane } from "../studio/StudioChatPane";
-import { control } from "../studio/StudioFrame";
+import { control, StudioProductMark } from "../studio/StudioFrame";
 import { StudioFloatingDock, studioDockStyle } from "../studio/studio-dock";
+import { FeatureStudioWelcome } from "../studio/FeatureStudioWelcome";
 import { AppCodePanel } from "./AppCodePanel";
+
 import { AppDataPanel } from "./AppDataPanel";
 import type { AppPatch, AppPick } from "./AppFrame";
 import { AppFrame } from "./AppFrame";
@@ -225,6 +227,11 @@ export function AppStudio({
     onBuild?.(next);
   }
 
+  function cancelAsk() {
+    setAsking(false);
+    setIdea("");
+  }
+
   function stopEditing(saved: boolean) {
     if (!saved && patch) setRedraws((count) => count + 1);
     setPatch(null);
@@ -244,6 +251,8 @@ export function AppStudio({
   const docked = chatOpen && Boolean(chat) && page !== undefined;
 
   return (
+    <>
+    {open ? <FeatureStudioWelcome kind="apps" running={running} /> : null}
     <Dialog open={open} disablePointerDismissal onOpenChange={(next) => onOpenChange(next)}>
       <DialogContent
         overlay={false}
@@ -290,6 +299,7 @@ export function AppStudio({
               <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
             </button>
             <DialogTitle className="sr-only">{page?.title ?? t`Apps`}</DialogTitle>
+            <StudioProductMark name={t`Evolve App Studio`} />
             <DropdownMenu>
               <DropdownMenuTrigger
                 data-testid="app-switcher"
@@ -565,11 +575,27 @@ export function AppStudio({
                     ) : null}
                   </>
                 ) : (
-                  <AppStudioBlank asking={asking} idea={idea} onIdea={setIdea} onBuild={build} />
+                  <AppStudioBlank
+                    asking={asking}
+                    idea={idea}
+                    onIdea={setIdea}
+                    onBuild={build}
+                    onCancel={cancelAsk}
+                  />
                 ))}
               {asking && page ? (
-                <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 px-6">
-                  <BuildPrompt idea={idea} onIdea={setIdea} onBuild={build} />
+                <div
+                  className="absolute inset-0 z-30 flex items-center justify-center bg-background/80 px-6"
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget) cancelAsk();
+                  }}
+                >
+                  <BuildPrompt
+                    idea={idea}
+                    onIdea={setIdea}
+                    onBuild={build}
+                    onCancel={cancelAsk}
+                  />
                 </div>
               ) : null}
             </section>
@@ -628,6 +654,7 @@ export function AppStudio({
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
 
@@ -636,11 +663,13 @@ function AppStudioBlank({
   idea,
   onIdea,
   onBuild,
+  onCancel,
 }: {
   asking: boolean;
   idea: string;
   onIdea: (idea: string) => void;
   onBuild: (event: { preventDefault: () => void }) => void;
+  onCancel: () => void;
 }) {
   return (
     <div className="flex h-full items-center justify-center px-6 pb-24">
@@ -660,7 +689,7 @@ function AppStudioBlank({
         </p>
         {asking ? (
           <div className="mt-4 w-full">
-            <BuildPrompt idea={idea} onIdea={onIdea} onBuild={onBuild} />
+            <BuildPrompt idea={idea} onIdea={onIdea} onBuild={onBuild} onCancel={onCancel} />
           </div>
         ) : (
           <p className="mt-3 text-sm leading-5 text-foreground/75">
@@ -676,18 +705,36 @@ function BuildPrompt({
   idea,
   onIdea,
   onBuild,
+  onCancel,
 }: {
   idea: string;
   onIdea: (idea: string) => void;
   onBuild: (event: { preventDefault: () => void }) => void;
+  onCancel: () => void;
 }) {
   const { t } = useLingui();
   return (
     <form
       onSubmit={onBuild}
-      className="flex w-full max-w-lg flex-col gap-3 rounded-2xl border border-border bg-card p-4 text-start shadow-lg"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          onCancel();
+        }
+      }}
+      className="relative flex w-full max-w-lg flex-col gap-3 rounded-2xl border border-border bg-card p-4 text-start shadow-lg"
     >
-      <label htmlFor="app-idea" className="text-sm font-medium text-foreground">
+      <button
+        type="button"
+        aria-label={t`Cancel`}
+        title={t`Cancel`}
+        onClick={onCancel}
+        className="absolute end-3 top-3 grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+      >
+        <X className="size-4" strokeWidth={1.8} />
+      </button>
+      <label htmlFor="app-idea" className="pe-8 text-sm font-medium text-foreground">
         <Trans>What do you want to build?</Trans>
       </label>
       <Textarea
@@ -699,15 +746,26 @@ function BuildPrompt({
         placeholder={t`A site diary for the visits I make`}
         onChange={(event) => onIdea(event.target.value)}
         onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            onCancel();
+            return;
+          }
           if (event.key !== "Enter" || event.shiftKey || (!event.metaKey && !event.ctrlKey)) return;
           event.preventDefault();
           event.currentTarget.form?.requestSubmit();
         }}
         className="min-h-28 resize-y bg-background"
       />
-      <Button type="submit" disabled={!idea.trim()} className="self-end">
-        <Trans>Build it</Trans>
-      </Button>
+      <div className="flex items-center justify-end gap-2">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          <Trans>Cancel</Trans>
+        </Button>
+        <Button type="submit" disabled={!idea.trim()}>
+          <Trans>Build it</Trans>
+        </Button>
+      </div>
     </form>
   );
 }

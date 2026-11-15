@@ -24,6 +24,24 @@ export const pill =
   "flex h-8 items-center gap-1 rounded-full border border-foreground/[0.06] px-2 text-[12px] leading-4 text-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-foreground/[0.06] sm:h-[35px] sm:gap-1.5 sm:px-[15px] sm:text-[14px] sm:leading-5";
 
 /**
+ * Centred product name in a studio header (Evolve Word, Evolve PowerPoint, …). Hidden on phones
+ * where the switcher and tools already fill the bar.
+ */
+export function StudioProductMark({ name }: { name: string }) {
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 hidden items-center justify-center sm:flex"
+      aria-hidden="true"
+      data-testid="studio-product-mark"
+    >
+      <span className="max-w-[40%] truncate text-center text-[12px] font-medium tracking-wide text-muted-foreground sm:text-[13px]">
+        {name}
+      </span>
+    </div>
+  );
+}
+
+/**
  * Phone-only More control for secondary studio tools. Pair with `max-sm:hidden` (or
  * `hidden sm:flex`) on the desktop tools it replaces so the header stays within ~375px.
  */
@@ -144,6 +162,11 @@ export type StudioFrameProps = {
   paneRef?: Ref<HTMLElement>;
   /** Raises the floating composer above a bar along the canvas's bottom edge. */
   dockLift?: string;
+  /**
+   * Centred product name in the header (e.g. "Evolve Word"). Shown from `sm` up so phones keep
+   * room for the document switcher and tools.
+   */
+  product?: string;
   /** The studio's canvas, filling the space beside the chat. */
   children?: ReactNode;
 };
@@ -167,6 +190,7 @@ export function StudioFrame({
   paneLabel,
   paneRef,
   dockLift,
+  product,
   children,
 }: StudioFrameProps) {
   const { t } = useLingui();
@@ -220,6 +244,7 @@ export function StudioFrame({
             </button>
             <DialogTitle className="sr-only">{title}</DialogTitle>
             {start}
+            {product ? <StudioProductMark name={product} /> : null}
             <div className="min-w-0 flex-1" />
             {running && workingLabel ? (
               <button

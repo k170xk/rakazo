@@ -658,7 +658,7 @@ export function WordRibbon({
 
   return (
     <Ribbon
-      label={t`Document tools`}
+      label={t`Evolve Word`}
       value={tab}
       onValueChange={setTab}
       testId="word-ribbon"

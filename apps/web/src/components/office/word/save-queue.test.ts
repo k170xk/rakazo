@@ -129,6 +129,28 @@ describe("createSaveQueue", () => {
     expect(queue.state().dirty).toBe(false);
   });
 
+  it("keeps dirty when serialize has nothing yet, so a later flush can retry", async () => {
+    const clock = manualTimers();
+    const uploads: unknown[] = [];
+    const soft = createSaveQueue({
+      baseVersion: 3,
+      delayMs: 2000,
+      retryMs: 5000,
+      serialize: async () => null,
+      upload: async (input) => {
+        uploads.push(input);
+        return { kind: "saved", artifactId: "a4", version: 4 };
+      },
+      newNonce: () => "nonce-1",
+      timers: clock.timers,
+    });
+    soft.edit();
+    await soft.flush();
+    expect(uploads).toHaveLength(0);
+    expect(soft.state()).toMatchObject({ status: "failed", dirty: true });
+    expect(clock.pending()).toEqual([5000]);
+  });
+
   it("stops on a conflict until the newest version is loaded", async () => {
     const { queue, clock, uploads, onConflict } = setup([
       { kind: "conflict", latestVersion: 9, artifactId: "a9" },

@@ -680,20 +680,22 @@ function SidebarPills({
       </div>
     );
   }
-  // Very small 3-column tiles on phones; slightly larger on desktop.
+  // The sidebar is about as wide as a phone, so the tiles stay the phone layout: icon beside the name.
   const tileClass =
-    "relative flex min-h-8 min-w-0 flex-col items-center justify-center gap-px rounded-md border border-border bg-background px-0.5 py-0.5 text-foreground hover:bg-accent md:min-h-9 md:gap-0.5 md:rounded-lg md:py-1";
+    "relative flex min-h-9 min-w-0 flex-row items-center justify-start gap-1.5 rounded-md border border-border bg-background px-1.5 py-1.5 text-foreground hover:bg-accent";
   const tileDisabledClass =
-    "relative flex min-h-8 min-w-0 cursor-default flex-col items-center justify-center gap-px rounded-md border border-border bg-background px-0.5 py-0.5 text-muted-foreground grayscale opacity-50 md:min-h-9 md:gap-0.5 md:rounded-lg md:py-1";
-  const iconClass = "size-5 object-contain md:size-6";
-  const labelClass = "max-w-full truncate text-[8px] leading-none md:text-[9px]";
+    "relative flex min-h-9 min-w-0 cursor-default flex-row items-center justify-start gap-1.5 rounded-md border border-border bg-background px-1.5 py-1.5 text-muted-foreground grayscale opacity-50";
+  const iconClass = "size-5 shrink-0 object-contain";
+  const labelClass = "min-w-0 flex-1 truncate text-left text-[13px] font-medium leading-tight";
+  const tileLabel = (studio: { format: DocumentFormat; name: string }) =>
+    studio.format === "pptx" ? <Trans>Ppt</Trans> : studio.name;
   return (
     // biome-ignore lint/a11y/useSemanticElements: groups sidebar links, not form fields.
     <div role="group" aria-label={t`Studios`}>
-      <div className="mx-2.5 mb-0.5 px-0.5 text-[9px] font-medium tracking-wide text-muted-foreground md:mb-1 md:text-[10px]">
+      <div className="mx-2.5 mb-0.5 px-0.5 text-[9px] font-medium tracking-wide text-muted-foreground">
         <Trans>Studios</Trans>
       </div>
-      <div className="mx-2.5 grid grid-cols-3 gap-0.5 md:gap-1">
+      <div className="mx-2.5 grid grid-cols-3 gap-1">
         <button
           type="button"
           data-testid="open-todo-list"
@@ -728,12 +730,7 @@ function SidebarPills({
             </span>
           ) : null}
         </button>
-        <button
-          type="button"
-          data-testid="open-apps"
-          onClick={onOpenApps}
-          className={tileClass}
-        >
+        <button type="button" data-testid="open-apps" onClick={onOpenApps} className={tileClass}>
           <img src="/icons/studios/apps.png" alt="" className={iconClass} />
           <span className={labelClass}>
             <Trans>Apps</Trans>
@@ -757,12 +754,13 @@ function SidebarPills({
             <button
               key={studio.format}
               type="button"
+              aria-label={studio.name}
               data-testid={`open-${studio.format}`}
               onClick={() => onOpenDocuments(studio.format)}
               className={tileClass}
             >
               <img src={studio.src} alt="" className={iconClass} />
-              <span className={labelClass}>{studio.name}</span>
+              <span className={labelClass}>{tileLabel(studio)}</span>
               <CornerCount count={studio.count} />
             </button>
           ) : (
@@ -775,7 +773,7 @@ function SidebarPills({
               className={tileDisabledClass}
             >
               <img src={studio.src} alt="" className={iconClass} />
-              <span className={labelClass}>{studio.name}</span>
+              <span className={labelClass}>{tileLabel(studio)}</span>
             </button>
           ),
         )}

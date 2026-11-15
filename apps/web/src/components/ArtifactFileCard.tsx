@@ -122,14 +122,14 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   return (
     <>
       <div className="w-[min(420px,100%)] min-w-0">
-        <BuiCard className="flex w-full min-w-0 flex-col gap-2.5 border border-border p-3 text-left text-foreground dark:border-transparent sm:flex-row sm:items-center sm:gap-2 sm:overflow-hidden sm:py-2.5 sm:ps-3 sm:pe-2.5">
+        <BuiCard className="flex w-full min-w-0 flex-col gap-2.5 border border-border p-3 text-left text-foreground dark:border-transparent">
           {previewable ? (
             <button
               ref={previewButton}
               type="button"
               aria-label={t`Preview ${props.name}`}
               onClick={() => setPreviewOpen(true)}
-              className="flex min-w-0 flex-1 items-center gap-3 rounded-[14px] text-left hover:bg-accent sm:-my-1 sm:-ms-1 sm:p-1"
+              className="flex min-w-0 items-center gap-3 rounded-[14px] text-left hover:bg-accent"
             >
               {details}
             </button>
@@ -142,9 +142,9 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
               {details}
             </OpenStudioHitArea>
           ) : (
-            <span className="flex min-w-0 flex-1 items-center gap-3">{details}</span>
+            <span className="flex min-w-0 items-center gap-3">{details}</span>
           )}
-          <span className="grid w-full grid-cols-1 gap-2 sm:ms-auto sm:flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-1.5">
+          <span className="grid w-full grid-cols-1 gap-2">
             {studioFormat ? (
               <OpenInStudioPill
                 name={props.name}
@@ -204,7 +204,7 @@ function OpenStudioHitArea({
       type="button"
       aria-label={t`Open or edit ${name}`}
       onClick={open}
-      className="flex min-w-0 flex-1 items-center gap-3 rounded-[14px] text-left hover:bg-accent sm:-my-1 sm:-ms-1 sm:p-1"
+      className="flex min-w-0 items-center gap-3 rounded-[14px] text-left hover:bg-accent"
     >
       {children}
     </button>
@@ -229,7 +229,7 @@ function OpenInStudioPill({
       aria-label={t`Open or edit ${name}`}
       data-testid="artifact-open-studio"
       onClick={open}
-      className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border px-3 text-[13px] font-medium text-foreground hover:bg-accent sm:h-8 sm:flex-none sm:rounded-lg sm:px-2.5"
+      className="inline-flex h-10 w-full min-w-0 items-center justify-center gap-1.5 rounded-xl border border-border px-3 text-[13px] font-medium text-foreground hover:bg-accent"
     >
       <SquarePen aria-hidden className="size-3.5 shrink-0" strokeWidth={2} />
       <span className="truncate">{t`Open/Edit`}</span>
@@ -237,7 +237,16 @@ function OpenInStudioPill({
   );
 }
 
-function DownloadPill({ name, onDownload }: { name: string; onDownload: () => Promise<void> }) {
+function DownloadPill({
+  name,
+  onDownload,
+  compact = false,
+}: {
+  name: string;
+  onDownload: () => Promise<void>;
+  /** Sits beside a title. The file card stretches it under the name instead. */
+  compact?: boolean;
+}) {
   const { t } = useLingui();
   const [busy, setBusy] = useState(false);
   return (
@@ -251,7 +260,11 @@ function DownloadPill({ name, onDownload }: { name: string; onDownload: () => Pr
         setBusy(true);
         void onDownload().finally(() => setBusy(false));
       }}
-      className="inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl bg-foreground px-3 text-[13px] font-medium text-background hover:bg-foreground/85 disabled:opacity-60 sm:h-8 sm:flex-none sm:rounded-lg sm:px-2.5"
+      className={
+        compact
+          ? "inline-flex h-8 w-auto shrink-0 items-center justify-center gap-1.5 rounded-lg bg-foreground px-2.5 text-[13px] font-medium text-background hover:bg-foreground/85 disabled:opacity-60"
+          : "inline-flex h-10 w-full min-w-0 items-center justify-center gap-1.5 rounded-xl bg-foreground px-3 text-[13px] font-medium text-background hover:bg-foreground/85 disabled:opacity-60"
+      }
     >
       <Download aria-hidden className="size-3.5 shrink-0" strokeWidth={2} />
       <span className="truncate">{busy ? t`Downloading…` : t`Download`}</span>
@@ -406,7 +419,7 @@ function InlineVideo({
             {state.status === "error" ? t`The video could not be loaded.` : formatSize(size)}
           </span>
         </span>
-        <DownloadPill name={name} onDownload={onDownload} />
+        <DownloadPill name={name} onDownload={onDownload} compact />
       </div>
     </div>
   );
