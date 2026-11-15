@@ -133,68 +133,102 @@ export function toolRunLimits(program: ToolRunRequest["program"] = "word") {
 }
 
 /**
+ * The most runners one person holds at once: half of them, at least four, so someone else's
+ * command finds a free runner even while one person runs a batch.
+ */
+export function slotsPerPerson(slots: number) {
+  return Math.min(slots, Math.max(4, Math.ceil(slots / 2)));
+}
+
+/**
  * A fixed number of runners shared fairly: waiting people take turns, one command each,
- * in the order they first queued.
+ * in the order they first queued, and nobody holds more than `perOwner` at once.
  */
 export class FairSlots {
   private running = 0;
+  private readonly runningBy = new Map<string, number>();
   private readonly waiting = new Map<string, Array<() => void>>();
 
-  constructor(readonly slots: number) {}
+  constructor(
+    readonly slots: number,
+    readonly perOwner = slots,
+  ) {}
 
-  stats() {
+  stats(owner?: string) {
     let queued = 0;
     for (const list of this.waiting.values()) queued += list.length;
-    return { slots: this.slots, running: this.running, queued };
+    return {
+      slots: this.slots,
+      running: this.running,
+      queued,
+      perOwner: this.perOwner,
+      ...(owner === undefined ? {} : { ownerRunning: this.runningBy.get(owner) ?? 0 }),
+    };
   }
 
   /** Resolves with a release once a runner is free; `onQueued` hears how many wait ahead. */
   acquire(owner: string, signal?: AbortSignal, onQueued?: (ahead: number) => void) {
     if (signal?.aborted) return Promise.reject(new Error("cancelled"));
-    if (this.running < this.slots && this.waiting.size === 0) {
-      this.running += 1;
-      return Promise.resolve(this.releaser());
-    }
+    let release: (() => void) | undefined;
+    let settle: ((release: () => void) => void) | undefined;
+    const grant = () => {
+      signal?.removeEventListener("abort", cancel);
+      release = this.releaser(owner);
+      settle?.(release);
+    };
+    const cancel = () => {
+      const list = this.waiting.get(owner);
+      const index = list?.indexOf(grant) ?? -1;
+      if (list && index >= 0) {
+        list.splice(index, 1);
+        if (list.length === 0) this.waiting.delete(owner);
+      }
+      rejectWait?.(new Error("cancelled"));
+    };
+    let rejectWait: ((error: Error) => void) | undefined;
+    const list = this.waiting.get(owner) ?? [];
+    list.push(grant);
+    this.waiting.set(owner, list);
+    signal?.addEventListener("abort", cancel, { once: true });
+    this.next();
+    if (release) return Promise.resolve(release);
     onQueued?.(this.stats().queued);
     return new Promise<() => void>((resolve, reject) => {
-      const grant = () => {
-        signal?.removeEventListener("abort", cancel);
-        resolve(this.releaser());
-      };
-      const cancel = () => {
-        const list = this.waiting.get(owner);
-        const index = list?.indexOf(grant) ?? -1;
-        if (list && index >= 0) {
-          list.splice(index, 1);
-          if (list.length === 0) this.waiting.delete(owner);
-        }
-        reject(new Error("cancelled"));
-      };
-      const list = this.waiting.get(owner) ?? [];
-      list.push(grant);
-      this.waiting.set(owner, list);
-      signal?.addEventListener("abort", cancel, { once: true });
+      settle = resolve;
+      rejectWait = reject;
     });
   }
 
-  private releaser() {
+  private releaser(owner: string) {
     let released = false;
     return () => {
       if (released) return;
       released = true;
       this.running -= 1;
+      const held = (this.runningBy.get(owner) ?? 1) - 1;
+      if (held > 0) this.runningBy.set(owner, held);
+      else this.runningBy.delete(owner);
       this.next();
     };
   }
 
   private next() {
-    while (this.running < this.slots && this.waiting.size > 0) {
-      const [owner, list] = this.waiting.entries().next().value as [string, Array<() => void>];
+    while (this.running < this.slots) {
+      let chosen: [string, Array<() => void>] | undefined;
+      for (const entry of this.waiting) {
+        if ((this.runningBy.get(entry[0]) ?? 0) < this.perOwner) {
+          chosen = entry;
+          break;
+        }
+      }
+      if (!chosen) return;
+      const [owner, list] = chosen;
       const grant = list.shift()!;
       // Re-adding moves this person behind everyone else still waiting.
       this.waiting.delete(owner);
       if (list.length > 0) this.waiting.set(owner, list);
       this.running += 1;
+      this.runningBy.set(owner, (this.runningBy.get(owner) ?? 0) + 1);
       grant();
     }
   }

@@ -224,7 +224,14 @@ export async function listFolderFiles(root: string, under: string, maxEntries = 
 const sameFile = (a: FolderFile | undefined, b: FolderFile) =>
   a !== undefined && a.size === b.size && a.mtimeMs === b.mtimeMs;
 
-type SlotStats = { slots: number; running: number; queued: number };
+type SlotStats = {
+  slots: number;
+  running: number;
+  queued: number;
+  /** The most one person holds at once, and how many the asking person holds. */
+  perOwner?: number;
+  ownerRunning?: number;
+};
 
 export interface ToolRunnerStatus extends SlotStats {
   video?: SlotStats;
@@ -237,17 +244,36 @@ export const OVERFLOW_MAX_LOAD_PER_CPU = 0.5;
 export const OVERFLOW_MIN_AVAILABLE_BYTES = 8 * 1024 ** 3;
 const OVERFLOW_STATUS_TIMEOUT_MS = 1500;
 
-const hasFreeSlot = (stats: SlotStats | undefined) =>
-  stats !== undefined && stats.running < stats.slots && stats.queued === 0;
+/** Runners ping every 30 seconds, so this much silence means the connection is gone. */
+export const TOOL_RUN_SILENCE_MAX_MS = 2 * 60_000;
+/** Longest a command waits for a slot before the chat is told the runners are busy. */
+export const TOOL_RUN_QUEUE_MAX_MS = 15 * 60_000;
+const VIDEO_QUEUE_MAX_MS = 60 * 60_000;
+/** Copying a folder to or from a runner on another server. */
+const TOOL_RUN_SYNC_MAX_MS = 10 * 60_000;
 
-function freeFor(status: ToolRunnerStatus, program: string) {
-  return hasFreeSlot(status) && (program !== "video" || hasFreeSlot(status.video));
+/** How long a sent command may go unreported by its runner before it stops counting as taken. */
+const UNREPORTED_HOLD_MS = 1500;
+
+/**
+ * Whether the asking person's command would start at once. A runner that caps each person
+ * keeps only capped people waiting while a runner is free, so their queue does not count.
+ */
+function hasFreeSlot(stats: SlotStats | undefined, unreported = 0) {
+  if (stats === undefined || stats.running + unreported >= stats.slots) return false;
+  if (stats.perOwner === undefined) return stats.queued === 0;
+  return (stats.ownerRunning ?? 0) < stats.perOwner;
 }
 
-export function overflowRunnerQuiet(status: ToolRunnerStatus, program: string) {
+/** `unreported` counts commands this process sent that the runner may not list yet. */
+function freeFor(status: ToolRunnerStatus, program: string, unreported = 0) {
+  return hasFreeSlot(status, unreported) && (program !== "video" || hasFreeSlot(status.video));
+}
+
+export function overflowRunnerQuiet(status: ToolRunnerStatus, program: string, unreported = 0) {
   const host = status.host;
   return (
-    freeFor(status, program) &&
+    freeFor(status, program, unreported) &&
     host !== undefined &&
     host.cpus > 0 &&
     host.load1 / host.cpus < OVERFLOW_MAX_LOAD_PER_CPU &&
@@ -269,24 +295,48 @@ export class ToolRunnerClient {
        * is quiet; a command otherwise waits here. Each command runs start to finish on one runner.
        */
       overflow?: readonly ToolRunnerClient[];
+      limits?: { silenceMs?: number; queueMs?: number };
     } = {},
   ) {}
 
-  private async pick(program: string): Promise<ToolRunnerClient> {
+  /**
+   * Commands sent here that the runner may not count yet, so a burst that arrives at once
+   * does not all read the same free slots. Each choice and its reservation share one tick.
+   */
+  private unreported = 0;
+
+  private reserve() {
+    this.unreported += 1;
+    let held = true;
+    return () => {
+      if (!held) return;
+      held = false;
+      this.unreported -= 1;
+    };
+  }
+
+  private async pick(
+    program: string,
+    owner: string,
+  ): Promise<{ runner: ToolRunnerClient; reported: () => void }> {
     const overflow = this.options.overflow ?? [];
-    if (overflow.length === 0) return this;
-    const here = await this.status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS)).catch(
+    if (overflow.length === 0) return { runner: this, reported: () => undefined };
+    const here = await this.status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS), owner).catch(
       () => undefined,
     );
     // A runner here that cannot report still takes the command, as it would without overflow.
-    if (!here || freeFor(here, program)) return this;
+    if (!here || freeFor(here, program, this.unreported)) {
+      return { runner: this, reported: this.reserve() };
+    }
     for (const runner of overflow) {
       const there = await runner
-        .status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS))
+        .status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS), owner)
         .catch(() => undefined);
-      if (there && overflowRunnerQuiet(there, program)) return runner;
+      if (there && overflowRunnerQuiet(there, program, runner.unreported)) {
+        return { runner, reported: runner.reserve() };
+      }
     }
-    return this;
+    return { runner: this, reported: this.reserve() };
   }
 
   private endpoint(route: string, query?: Record<string, string>) {
@@ -309,8 +359,8 @@ export class ToolRunnerClient {
     return (await res.json()) as T;
   }
 
-  async status(signal?: AbortSignal) {
-    const res = await fetch(this.endpoint("/tool-runs/status"), {
+  async status(signal?: AbortSignal, owner?: string) {
+    const res = await fetch(this.endpoint("/tool-runs/status", owner ? { owner } : undefined), {
       headers: { authorization: `Bearer ${this.token}` },
       signal: signal ?? AbortSignal.timeout(5000),
     });
@@ -444,12 +494,82 @@ export class ToolRunnerClient {
     onStarted?: () => void;
     onOutput?: (snapshot: { stdout: string; stderr: string }) => void;
   }): Promise<ToolRunOutput> {
-    return (await this.pick(input.program)).runHere(input);
+    const { runner, reported } = await this.pick(input.program, input.owner);
+    try {
+      return await runner.runHere(input, reported);
+    } finally {
+      reported();
+    }
   }
 
-  private async runHere(input: Parameters<ToolRunnerClient["run"]>[0]): Promise<ToolRunOutput> {
+  private async runHere(
+    input: Parameters<ToolRunnerClient["run"]>[0],
+    reported: () => void,
+  ): Promise<ToolRunOutput> {
     const synced = this.options.synced === true;
-    const sent = synced ? await this.sendFolder(input.workspace, input.signal) : undefined;
+    const syncSignal = () =>
+      AbortSignal.any([input.signal, AbortSignal.timeout(TOOL_RUN_SYNC_MAX_MS)]);
+    const sent = synced ? await this.sendFolder(input.workspace, syncSignal()) : undefined;
+    const stop = new AbortController();
+    const fail = (message: string) => stop.abort(new ToolRunnerGaveUp(message));
+    let silence: NodeJS.Timeout | undefined;
+    let queueWait: NodeJS.Timeout | undefined;
+    const heard = () => {
+      clearTimeout(silence);
+      silence = setTimeout(
+        () => fail("lost contact with the document runner; try the command again"),
+        this.options.limits?.silenceMs ?? TOOL_RUN_SILENCE_MAX_MS,
+      );
+    };
+    const queueMaxMs =
+      this.options.limits?.queueMs ??
+      (input.program === "video" ? VIDEO_QUEUE_MAX_MS : TOOL_RUN_QUEUE_MAX_MS);
+    try {
+      heard();
+      const result = await this.stream(
+        input,
+        synced,
+        AbortSignal.any([input.signal, stop.signal]),
+        () => {
+          heard();
+          reported();
+        },
+        reported,
+        {
+          queued: () => {
+            queueWait ??= setTimeout(
+              () =>
+                fail(
+                  `every document runner stayed busy for ${Math.max(1, Math.round(queueMaxMs / 60_000))} minutes; tell the person and suggest trying again in a few minutes`,
+                ),
+              queueMaxMs,
+            );
+          },
+          started: () => clearTimeout(queueWait),
+        },
+      );
+      clearTimeout(silence);
+      if (sent) await this.fetchResults(input.workspace, sent, syncSignal());
+      return result;
+    } catch (error) {
+      if (stop.signal.reason instanceof ToolRunnerGaveUp && !input.signal.aborted) {
+        throw stop.signal.reason;
+      }
+      throw error;
+    } finally {
+      clearTimeout(silence);
+      clearTimeout(queueWait);
+    }
+  }
+
+  private async stream(
+    input: Parameters<ToolRunnerClient["run"]>[0],
+    synced: boolean,
+    signal: AbortSignal,
+    heard: () => void,
+    reported: () => void,
+    queue: { queued: () => void; started: () => void },
+  ): Promise<ToolRunOutput> {
     const res = await fetch(this.endpoint("/tool-runs/run"), {
       method: "POST",
       headers: this.headers({ "content-type": "application/json" }),
@@ -463,12 +583,15 @@ export class ToolRunnerClient {
         timeoutMs: input.timeoutMs,
         ...(synced ? { synced: true } : {}),
       }),
-      signal: input.signal,
+      signal,
     });
     if (!res.ok || !res.body) {
       throw new Error(`tool runner refused the command: ${res.status} ${await res.text()}`.trim());
     }
+    // The runner lists an accepted command within moments, even one that prints nothing.
+    setTimeout(reported, UNREPORTED_HOLD_MS).unref();
     const result: ToolRunOutput = { stdout: "", stderr: "", code: 1 };
+    let exited = false;
     const decoder = new TextDecoder();
     let pending = "";
     const handle = (line: string) => {
@@ -481,14 +604,22 @@ export class ToolRunnerClient {
       };
       if (event.type === "stdout") result.stdout += event.data ?? "";
       else if (event.type === "stderr") result.stderr += event.data ?? "";
-      else if (event.type === "exit") result.code = event.code ?? 1;
-      else if (event.type === "queued") input.onQueued?.(event.ahead ?? 0);
-      else if (event.type === "started") input.onStarted?.();
+      else if (event.type === "exit") {
+        result.code = event.code ?? 1;
+        exited = true;
+      } else if (event.type === "queued") {
+        queue.queued();
+        input.onQueued?.(event.ahead ?? 0);
+      } else if (event.type === "started") {
+        queue.started();
+        input.onStarted?.();
+      }
       if (event.type === "stdout" || event.type === "stderr") {
         input.onOutput?.({ stdout: result.stdout, stderr: result.stderr });
       }
     };
     for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
+      heard();
       pending += decoder.decode(chunk, { stream: true });
       let newline = pending.indexOf("\n");
       while (newline >= 0) {
@@ -498,10 +629,14 @@ export class ToolRunnerClient {
       }
     }
     handle(pending + decoder.decode());
-    if (sent) await this.fetchResults(input.workspace, sent, input.signal);
+    if (!exited) {
+      throw new Error("the document runner stopped before the command finished; try it again");
+    }
     return result;
   }
 }
+
+class ToolRunnerGaveUp extends Error {}
 
 /** The runner client for a Docker install, unless RAKAZO_TOOL_RUNNER=off. */
 export function toolRunnerFromEnv(

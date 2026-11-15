@@ -17,6 +17,7 @@ import {
   listToolCacheFiles,
   openToolCacheFile,
   prepareToolRunMount,
+  slotsPerPerson,
   sweepToolCache,
   toolRunContainerOptions,
   toolRunFileSchema,
@@ -84,11 +85,43 @@ describe("runner slots", () => {
         release();
       }),
     );
-    expect(slots.stats()).toEqual({ slots: 1, running: 1, queued: 3 });
+    expect(slots.stats()).toEqual({ slots: 1, running: 1, queued: 3, perOwner: 1 });
     first();
     await Promise.all(waits);
     expect(order).toEqual(["alice1", "bob1", "alice2"]);
-    expect(slots.stats()).toEqual({ slots: 1, running: 0, queued: 0 });
+    expect(slots.stats()).toEqual({ slots: 1, running: 0, queued: 0, perOwner: 1 });
+  });
+
+  it("keeps runners free for others while one person runs a batch", async () => {
+    const slots = new FairSlots(4, 2);
+    const flood = Array.from({ length: 6 }, () => slots.acquire("flooder"));
+    await Promise.all(flood.slice(0, 2));
+    expect(slots.stats("flooder")).toMatchObject({ running: 2, queued: 4, ownerRunning: 2 });
+    const queuedFor: number[] = [];
+    const other = await slots.acquire("someone", undefined, (ahead) => queuedFor.push(ahead));
+    expect(queuedFor).toEqual([]);
+    expect(slots.stats("someone")).toMatchObject({ running: 3, ownerRunning: 1 });
+    other();
+    (await flood[0]!)();
+    await flood[2];
+    expect(slots.stats("flooder")).toMatchObject({ running: 2, queued: 3, ownerRunning: 2 });
+  });
+
+  it("gives a capped person's turn to whoever is next", async () => {
+    const slots = new FairSlots(2, 1);
+    const alice = await slots.acquire("alice");
+    const aliceAgain = slots.acquire("alice");
+    const bob = await slots.acquire("bob");
+    const carol = slots.acquire("carol");
+    bob();
+    (await carol)();
+    alice();
+    (await aliceAgain)();
+    expect(slots.stats()).toMatchObject({ running: 0, queued: 0 });
+  });
+
+  it("caps each person at half the runners, at least four", () => {
+    expect([1, 2, 4, 8, 12, 16].map(slotsPerPerson)).toEqual([1, 2, 4, 4, 6, 8]);
   });
 
   it("drops a cancelled wait", async () => {

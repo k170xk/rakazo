@@ -14,6 +14,7 @@ import {
   listFolderFiles,
   overflowRunnerQuiet,
   TOOL_RUNNER_COMPUTER,
+  ToolRunnerClient,
   toolRunnerFromEnv,
   toolRunnerWorkspace,
 } from "./tool-runner.js";
@@ -316,6 +317,7 @@ describe("overflow runners", () => {
     url: string;
     calls: string[];
     status: ToolRunnerStatus | "down";
+    runDelayMs?: number;
     close(): Promise<void>;
   };
   const quietHost = { load1: 0.4, cpus: 8, memAvailableBytes: 28 * 1024 ** 3 };
@@ -333,6 +335,7 @@ describe("overflow runners", () => {
       }
       if (route === "/tool-runs/files/list") return void res.end(JSON.stringify({ files: [] }));
       if (route === "/tool-runs/run") {
+        if (fake.runDelayMs) await new Promise((resolve) => setTimeout(resolve, fake.runDelayMs));
         res.end(
           [...events, { type: "exit", code: 0 }]
             .map((event) => `${JSON.stringify(event)}\n`)
@@ -354,16 +357,8 @@ describe("overflow runners", () => {
   const full = { slots: 2, running: 2, queued: 3 };
   const free = { slots: 2, running: 1, queued: 0 };
 
-  async function runOn(primary: Fake, overflow: Fake[], onStarted?: () => void) {
-    const workspace = toolRunnerWorkspace({
-      dataDir: data,
-      homePath: null,
-      mode: "team",
-      botId: "b1",
-      folder: "conversations/t1",
-    })!;
-    await ensureToolRunnerFolder(workspace);
-    const client = toolRunnerFromEnv(
+  const clientFor = (primary: Fake, overflow: Fake[]) =>
+    toolRunnerFromEnv(
       {
         RAKAZO_TOOL_RUNNER_URL: primary.url,
         RAKAZO_TOOL_RUNNER_TOKEN: "t",
@@ -372,6 +367,21 @@ describe("overflow runners", () => {
       "incus",
       { url: primary.url, token: undefined },
     )!;
+
+  async function runOn(
+    primary: Fake,
+    overflow: Fake[],
+    onStarted?: () => void,
+    client = clientFor(primary, overflow),
+  ) {
+    const workspace = toolRunnerWorkspace({
+      dataDir: data,
+      homePath: null,
+      mode: "team",
+      botId: "b1",
+      folder: "conversations/t1",
+    })!;
+    await ensureToolRunnerFolder(workspace);
     return client.run({
       workspace,
       program: "word",
@@ -384,6 +394,37 @@ describe("overflow runners", () => {
   }
 
   const ran = (fake: Fake) => fake.calls.includes("/tool-runs/run");
+
+  it("spreads a burst that arrives at once instead of sending it all to the same free slots", async () => {
+    const primary = await fakeRunner({ slots: 2, running: 0, queued: 0 });
+    const spare = await fakeRunner({ slots: 2, running: 0, queued: 0, host: quietHost });
+    primary.runDelayMs = 200;
+    spare.runDelayMs = 200;
+    const client = clientFor(primary, [spare]);
+    await Promise.all(Array.from({ length: 5 }, () => runOn(primary, [spare], undefined, client)));
+    const runs = (fake: Fake) => fake.calls.filter((call) => call === "/tool-runs/run").length;
+    expect(runs(primary)).toBe(3);
+    expect(runs(spare)).toBe(2);
+  });
+
+  it("sends a person at their cap to a quiet overflow runner, and others stay here", async () => {
+    const capped = { slots: 16, running: 12, queued: 5, perOwner: 8, ownerRunning: 8 };
+    const primary = await fakeRunner(capped);
+    const spare = await fakeRunner({
+      slots: 8,
+      running: 0,
+      queued: 0,
+      perOwner: 4,
+      ownerRunning: 0,
+      host: quietHost,
+    });
+    await runOn(primary, [spare]);
+    expect([ran(primary), ran(spare)]).toEqual([false, true]);
+    const otherPrimary = await fakeRunner({ ...capped, ownerRunning: 0 });
+    const otherSpare = await fakeRunner({ slots: 8, running: 0, queued: 0, host: quietHost });
+    await runOn(otherPrimary, [otherSpare]);
+    expect([ran(otherPrimary), ran(otherSpare)]).toEqual([true, false]);
+  });
 
   it("never asks for status when no overflow runner is set", async () => {
     const primary = await fakeRunner(full);
@@ -451,5 +492,74 @@ describe("overflow runners", () => {
     const status = { ...free, host: quietHost, video: { slots: 1, running: 1, queued: 0 } };
     expect(overflowRunnerQuiet(status, "word")).toBe(true);
     expect(overflowRunnerQuiet(status, "video")).toBe(false);
+  });
+});
+
+describe("a runner that stalls", () => {
+  const servers: Server[] = [];
+
+  /** A runner that writes these events and then leaves the response open, or ends it. */
+  async function stalledRunner(events: object[], end = false, pingMs = 0) {
+    const server = createServer(async (req, res) => {
+      for await (const _ of req);
+      res.write(events.map((event) => `${JSON.stringify(event)}\n`).join(""));
+      if (end) res.end();
+      if (pingMs > 0) {
+        const ping = setInterval(() => res.write(`${JSON.stringify({ type: "ping" })}\n`), pingMs);
+        res.on("close", () => clearInterval(ping));
+      }
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    servers.push(server);
+    return `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  }
+
+  afterEach(async () => {
+    for (const server of servers.splice(0)) {
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  async function runOn(url: string, signal = new AbortController().signal) {
+    const workspace = toolRunnerWorkspace({
+      dataDir: data,
+      homePath: null,
+      mode: "team",
+      botId: "b1",
+      folder: "conversations/t1",
+    })!;
+    await ensureToolRunnerFolder(workspace);
+    const client = new ToolRunnerClient(url, "t", { limits: { silenceMs: 300, queueMs: 400 } });
+    return client.run({
+      workspace,
+      program: "word",
+      args: [],
+      owner: "u1",
+      timeoutMs: 1000,
+      signal,
+    });
+  }
+
+  it("gives up on a runner that goes silent", async () => {
+    await expect(runOn(await stalledRunner([]))).rejects.toThrow(/lost contact/);
+  });
+
+  it("gives up on a queue that does not move, even while the runner pings", async () => {
+    const url = await stalledRunner([{ type: "queued", ahead: 4 }], false, 100);
+    await expect(runOn(url)).rejects.toThrow(/stayed busy/);
+  });
+
+  it("reports a runner that stops before the command exits", async () => {
+    await expect(
+      runOn(await stalledRunner([{ type: "stdout", data: "half" }], true)),
+    ).rejects.toThrow(/stopped before the command finished/);
+  });
+
+  it("leaves a person's own stop as a plain abort", async () => {
+    const stop = new AbortController();
+    const url = await stalledRunner([{ type: "queued", ahead: 1 }]);
+    setTimeout(() => stop.abort(), 50);
+    await expect(runOn(url, stop.signal)).rejects.not.toThrow(/stayed busy|lost contact/);
   });
 });

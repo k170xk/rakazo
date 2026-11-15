@@ -116,6 +116,7 @@ import {
   listToolCacheFiles,
   openToolCacheFile,
   prepareToolRunMount,
+  slotsPerPerson,
   sweepToolCache,
   TOOL_CACHE,
   TOOL_RUN_LABEL,
@@ -565,7 +566,7 @@ app.post("/computers/:id/exec", async (c) => {
   });
 });
 
-const toolRunSlotsShared = new FairSlots(toolRunSlots());
+const toolRunSlotsShared = new FairSlots(toolRunSlots(), slotsPerPerson(toolRunSlots()));
 const toolRunVideoSlotsShared = new FairSlots(toolRunVideoSlots());
 const TOOL_RUN_OUTPUT_MAX_BYTES = 4 * 1024 * 1024;
 // Runs this process started are the only ones it waits on, so any found before the first are leftovers.
@@ -609,13 +610,14 @@ const toolCacheSweep = setInterval(
 );
 toolCacheSweep.unref();
 
-app.get("/tool-runs/status", async (c) =>
-  c.json({
-    ...toolRunSlotsShared.stats(),
-    video: toolRunVideoSlotsShared.stats(),
+app.get("/tool-runs/status", async (c) => {
+  const owner = c.req.query("owner") || undefined;
+  return c.json({
+    ...toolRunSlotsShared.stats(owner),
+    video: toolRunVideoSlotsShared.stats(owner),
     host: await toolRunHostLoad(),
-  }),
-);
+  });
+});
 
 app.post("/tool-runs/files/list", async (c) => {
   const parsed = toolRunFileListSchema.safeParse(await c.req.json().catch(() => null));
