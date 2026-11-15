@@ -4,6 +4,12 @@ import { DOCUMENT_LIST_MAX_LIMIT, PAGE_LIST_MAX_LIMIT } from "@rakazo/contracts"
 import { accountDisplay } from "@rakazo/core";
 import {
   Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
@@ -11,10 +17,19 @@ import {
   Sidebar,
 } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal, Sparkles, Star, UsersRound } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  LayoutGrid,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  Star,
+  UsersRound,
+} from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
 import {
@@ -44,7 +59,8 @@ import { openStorageDialog } from "../../lib/storage-prompt";
 import { ActivityList } from "../ActivityList";
 import { DeleteOrganizationDialog } from "../OrganizationSettingsPanel";
 import { SpaceSearchResults } from "../SpaceSearch";
-import type { SettingsSection } from "../shell-overlay";
+import type { SettingsSection, ShellOverlay } from "../shell-overlay";
+import { readShellOverlay } from "../shell-overlay";
 import { SidebarHeader } from "./sidebar-header";
 import type { SidebarSearch } from "./use-sidebar-search";
 
@@ -335,7 +351,6 @@ export function ShellSidebar({
               openDocuments(format);
             }}
           />
-          <SidebarMeters mini={mini} onOpenStorage={() => setMobileOpen(false)} />
         </div>
         <div className={mini ? "flex justify-center px-1 pt-1" : "px-2.5 pt-1"}>
           {mini ? (
@@ -385,6 +400,9 @@ export function ShellSidebar({
           openSpaceChat={openSpaceChat}
           setCreateWorkSpaceOpen={setCreateWorkSpaceOpen}
         />
+        <div className={mini ? "-mt-1 pb-2" : "-mt-2 pb-2"}>
+          <SidebarMeters mini={mini} onOpenStorage={() => setMobileOpen(false)} />
+        </div>
       </Sidebar>
     </>
   );
@@ -569,7 +587,19 @@ function ShellSidebarFooter({
   );
 }
 
-/** Studio: to-do lists, apps, boards, and the studios that join them later. */
+type StudioKey = "todos" | "apps" | "whiteboards" | DocumentFormat;
+
+type Studio = {
+  key: StudioKey;
+  src: string;
+  name: string;
+  ready: boolean;
+  count: string | null;
+  testId: string;
+  onOpen: () => void;
+};
+
+/** Studio: to-do lists, apps, boards, and the studios that join them later, in one menu so the list can grow. */
 function SidebarPills({
   mini,
   onOpenTodos,
@@ -590,196 +620,164 @@ function SidebarPills({
   const boardCount = useOwnPageCount("whiteboard");
   const soon = t`Coming soon`;
   const documentCounts = useOwnDocumentCounts();
-  const offices = OFFICE_FORMATS.map((format) => ({
-    format,
-    src: OFFICE_STUDIOS[format].icon,
-    name: OFFICE_STUDIOS[format].label(),
-    ready: officeStudioReady(format),
-    count: documentCounts[format],
-  }));
+  const [searchParams] = useSearchParams();
+  const active = activeStudio(readShellOverlay(searchParams));
+  const studios: Studio[] = [
+    {
+      key: "todos",
+      src: "/icons/studios/todo.png",
+      name: t`To do`,
+      ready: true,
+      count: open > 0 ? String(open) : null,
+      testId: "open-todo-list",
+      onOpen: onOpenTodos,
+    },
+    {
+      key: "apps",
+      src: "/icons/studios/apps.png",
+      name: t`Apps`,
+      ready: true,
+      count: appCount,
+      testId: "open-apps",
+      onOpen: onOpenApps,
+    },
+    {
+      key: "whiteboards",
+      src: "/icons/studios/board.png",
+      name: t`Board`,
+      ready: true,
+      count: boardCount,
+      testId: "open-whiteboards",
+      onOpen: onOpenWhiteboards,
+    },
+    ...OFFICE_FORMATS.map((format) => ({
+      key: format,
+      src: OFFICE_STUDIOS[format].icon,
+      name: OFFICE_STUDIOS[format].label(),
+      ready: officeStudioReady(format),
+      count: documentCounts[format],
+      testId: `open-${format}`,
+      onOpen: () => onOpenDocuments(format),
+    })),
+  ];
+  const current = studios.find((studio) => studio.key === active) ?? null;
+  const total = totalCount(studios.map((studio) => (studio.ready ? studio.count : null)));
+  const studiosLabel = t`Studios`;
+  const triggerLabel = current ? `${studiosLabel}, ${current.name}` : studiosLabel;
+  const badgeClass =
+    "grid min-w-4 shrink-0 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground";
+  const items = studios.map((studio) => {
+    const isActive = studio.key === active;
+    return (
+      <DropdownMenuItem
+        key={studio.key}
+        data-testid={studio.ready ? studio.testId : undefined}
+        aria-current={isActive ? "true" : undefined}
+        disabled={!studio.ready}
+        onClick={studio.onOpen}
+        className={`min-h-8 gap-2 ${isActive ? "bg-primary/10 font-medium" : ""} ${
+          studio.ready ? "" : "grayscale"
+        }`}
+      >
+        <img src={studio.src} alt="" className="size-5 shrink-0 object-contain" />
+        <span className="min-w-0 flex-1 truncate text-[13px]">{studio.name}</span>
+        {studio.ready ? (
+          studio.count ? (
+            <span className={badgeClass}>{studio.count}</span>
+          ) : null
+        ) : (
+          <span className="shrink-0 text-[11px] text-muted-foreground">{soon}</span>
+        )}
+        {isActive ? <Check aria-hidden="true" className="size-3.5 text-primary" /> : null}
+      </DropdownMenuItem>
+    );
+  });
+  const triggerIcon = (className: string) =>
+    current ? (
+      <img src={current.src} alt="" className={`${className} shrink-0 object-contain`} />
+    ) : (
+      <LayoutGrid aria-hidden="true" className="size-4 shrink-0 text-primary" />
+    );
   if (mini) {
     return (
-      // biome-ignore lint/a11y/useSemanticElements: groups sidebar links, not form fields.
-      <div role="group" aria-label={t`Studios`} className="flex flex-col items-center gap-1 px-1">
-        <IconTooltip label={t`To do`}>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t`To do`}
-            data-testid="open-todo-list"
-            className="relative"
-            onClick={onOpenTodos}
-          >
-            <img src="/icons/studios/todo.png" alt="" className="size-7 object-contain" />
-            {open > 0 ? (
-              <span
-                key={arrivals}
-                className={`absolute top-1 right-1 size-2 rounded-full bg-primary ${
-                  celebrating ? "rk-todo-pop" : ""
-                }`}
-              />
-            ) : null}
-            {celebrating ? <TodoStars key={arrivals} className="top-1.5 right-1.5" /> : null}
-          </Button>
-        </IconTooltip>
-        <IconTooltip label={t`Apps`}>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t`Apps`}
-            data-testid="open-apps"
-            className="relative"
-            onClick={onOpenApps}
-          >
-            <img src="/icons/studios/apps.png" alt="" className="size-7 object-contain" />
-            <CornerCount count={appCount} />
-          </Button>
-        </IconTooltip>
-        <IconTooltip label={t`Board`}>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t`Board`}
-            data-testid="open-whiteboards"
-            className="relative"
-            onClick={onOpenWhiteboards}
-          >
-            <img src="/icons/studios/board.png" alt="" className="size-7 object-contain" />
-            <CornerCount count={boardCount} />
-          </Button>
-        </IconTooltip>
-        {offices.map((studio) =>
-          studio.ready ? (
-            <IconTooltip key={studio.format} label={studio.name}>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={studio.name}
-                data-testid={`open-${studio.format}`}
-                className="relative"
-                onClick={() => onOpenDocuments(studio.format)}
-              >
-                <img src={studio.src} alt="" className="size-7 object-contain" />
-                <CornerCount count={studio.count} />
-              </Button>
-            </IconTooltip>
-          ) : (
-            <IconTooltip key={studio.format} label={`${studio.name}. ${soon}`}>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`${studio.name}. ${soon}`}
-                disabled
-                className="grayscale opacity-45"
-              >
-                <img src={studio.src} alt="" className="size-7 object-contain" />
-              </Button>
-            </IconTooltip>
-          ),
-        )}
+      <div className="flex justify-center px-1">
+        <DropdownMenu>
+          <IconTooltip label={triggerLabel}>
+            <DropdownMenuTrigger
+              data-testid="studios-menu"
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={triggerLabel}
+                  className="relative data-popup-open:bg-accent"
+                />
+              }
+            >
+              {triggerIcon("size-7")}
+              <CornerCount count={total} />
+              {celebrating ? <TodoStars key={arrivals} className="top-1.5 right-1.5" /> : null}
+            </DropdownMenuTrigger>
+          </IconTooltip>
+          <DropdownMenuContent side="inline-end" align="end" sideOffset={8} className="w-56">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>{studiosLabel}</DropdownMenuLabel>
+              {items}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     );
   }
-  // The sidebar is about as wide as a phone, so the tiles stay the phone layout: icon beside the name.
-  const tileClass =
-    "relative flex min-h-9 min-w-0 flex-row items-center justify-start gap-1.5 rounded-md border border-border bg-background px-1.5 py-1.5 text-foreground hover:bg-accent";
-  const tileDisabledClass =
-    "relative flex min-h-9 min-w-0 cursor-default flex-row items-center justify-start gap-1.5 rounded-md border border-border bg-background px-1.5 py-1.5 text-muted-foreground grayscale opacity-50";
-  const iconClass = "size-5 shrink-0 object-contain";
-  const labelClass = "min-w-0 flex-1 truncate text-left text-[13px] font-medium leading-tight";
-  const tileLabel = (studio: { format: DocumentFormat; name: string }) =>
-    studio.format === "pptx" ? <Trans>Ppt</Trans> : studio.name;
   return (
-    // biome-ignore lint/a11y/useSemanticElements: groups sidebar links, not form fields.
-    <div role="group" aria-label={t`Studios`}>
-      <div className="mx-2.5 mb-0.5 px-0.5 text-[9px] font-medium tracking-wide text-muted-foreground">
-        <Trans>Studios</Trans>
-      </div>
-      <div className="mx-2.5 grid grid-cols-3 gap-1">
-        <button
-          type="button"
-          data-testid="open-todo-list"
-          onClick={onOpenTodos}
-          className={tileClass}
+    <div className="mx-2.5">
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          data-testid="studios-menu"
+          className="relative flex h-9 w-full min-w-0 items-center gap-2 rounded-md border border-border bg-background px-2 text-foreground outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-accent"
         >
-          <img src="/icons/studios/todo.png" alt="" className={iconClass} />
-          <span className={labelClass}>
-            <Trans>To do</Trans>
+          {triggerIcon("size-5")}
+          <span className="flex min-w-0 flex-1 items-baseline gap-1.5 text-left text-[13px] leading-tight">
+            <span className="shrink-0 font-medium">{studiosLabel}</span>
+            {current ? (
+              <span className="min-w-0 truncate text-muted-foreground">{current.name}</span>
+            ) : null}
           </span>
-          {open > 0 ? (
-            <span className="pointer-events-none absolute -top-1.5 -right-1 z-10">
-              <span
-                key={arrivals}
-                className={`grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground ${
-                  celebrating ? "rk-todo-pop" : ""
-                }`}
-              >
-                {open}
-              </span>
-              {celebrating ? (
-                <>
-                  <TodoStars key={arrivals} className="top-1/2 left-1/2" />
-                  <span
-                    aria-hidden="true"
-                    className="rk-todo-plus pointer-events-none absolute -top-3 right-0 text-xs font-semibold text-primary"
-                  >
-                    +1
-                  </span>
-                </>
-              ) : null}
+          {total ? (
+            <span key={arrivals} className={`${badgeClass} ${celebrating ? "rk-todo-pop" : ""}`}>
+              {total}
             </span>
           ) : null}
-        </button>
-        <button type="button" data-testid="open-apps" onClick={onOpenApps} className={tileClass}>
-          <img src="/icons/studios/apps.png" alt="" className={iconClass} />
-          <span className={labelClass}>
-            <Trans>Apps</Trans>
-          </span>
-          <CornerCount count={appCount} />
-        </button>
-        <button
-          type="button"
-          data-testid="open-whiteboards"
-          onClick={onOpenWhiteboards}
-          className={tileClass}
-        >
-          <img src="/icons/studios/board.png" alt="" className={iconClass} />
-          <span className={labelClass}>
-            <Trans>Board</Trans>
-          </span>
-          <CornerCount count={boardCount} />
-        </button>
-        {offices.map((studio) =>
-          studio.ready ? (
-            <button
-              key={studio.format}
-              type="button"
-              aria-label={studio.name}
-              data-testid={`open-${studio.format}`}
-              onClick={() => onOpenDocuments(studio.format)}
-              className={tileClass}
-            >
-              <img src={studio.src} alt="" className={iconClass} />
-              <span className={labelClass}>{tileLabel(studio)}</span>
-              <CornerCount count={studio.count} />
-            </button>
-          ) : (
-            <button
-              key={studio.format}
-              type="button"
-              disabled
-              aria-label={`${studio.name}. ${soon}`}
-              title={soon}
-              className={tileDisabledClass}
-            >
-              <img src={studio.src} alt="" className={iconClass} />
-              <span className={labelClass}>{tileLabel(studio)}</span>
-            </button>
-          ),
-        )}
-      </div>
+          {celebrating ? <TodoStars key={arrivals} className="top-1/2 right-8" /> : null}
+          <ChevronsUpDown aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="max-h-[min(var(--available-height),24rem)]">
+          <DropdownMenuGroup>{items}</DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
+}
+
+/** Which studio the URL has open, if any. */
+function activeStudio(overlay: ShellOverlay): StudioKey | null {
+  if (!overlay) return null;
+  if (overlay.kind === "todos" || overlay.kind === "apps" || overlay.kind === "whiteboards") {
+    return overlay.kind;
+  }
+  return overlay.kind === "doc" ? overlay.format : null;
+}
+
+/** The studios' counts added up; a capped count keeps its plus. */
+function totalCount(counts: (string | null)[]): string | null {
+  let sum = 0;
+  let capped = false;
+  for (const count of counts) {
+    if (!count) continue;
+    sum += Number.parseInt(count, 10);
+    if (count.endsWith("+")) capped = true;
+  }
+  return sum === 0 ? null : `${sum}${capped ? "+" : ""}`;
 }
 
 /** How many apps or boards this person has. The list caps at one page; a fuller list shows that cap with a plus. */
@@ -794,7 +792,7 @@ function useOwnPageCount(kind: PageKind): string | null {
   return list.data?.nextCursor ? `${loaded}+` : String(loaded);
 }
 
-/** How many Word, PowerPoint and Excel files this person has, from one capped list of each. */
+/** How many Word, PowerPoint, Excel and PDF files this person has, from one capped list of each. */
 function useOwnDocumentCounts(): Record<DocumentFormat, string | null> {
   const queries = useSpaceQueries();
   const read = (format: DocumentFormat) => ({
@@ -808,10 +806,16 @@ function useOwnDocumentCounts(): Record<DocumentFormat, string | null> {
     docx: useQuery(read("docx")).data?.items.length ?? 0,
     pptx: useQuery(read("pptx")).data?.items.length ?? 0,
     xlsx: useQuery(read("xlsx")).data?.items.length ?? 0,
+    pdf: useQuery(read("pdf")).data?.items.length ?? 0,
   };
   const shown = (count: number) =>
     count === 0 ? null : count >= DOCUMENT_LIST_MAX_LIMIT ? `${count}+` : String(count);
-  return { docx: shown(counts.docx), pptx: shown(counts.pptx), xlsx: shown(counts.xlsx) };
+  return {
+    docx: shown(counts.docx),
+    pptx: shown(counts.pptx),
+    xlsx: shown(counts.xlsx),
+    pdf: shown(counts.pdf),
+  };
 }
 
 /** The same corner count the To do pill uses, sitting on the pill rather than in its label. */

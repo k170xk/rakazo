@@ -62,13 +62,21 @@ export function SidebarHeader({
       ) : (
         <div className="flex min-w-0 items-center gap-3">
           {hasWindowChrome ? <WindowChrome /> : null}
-          <img
-            src="/brand/evolve-wordmark.png"
-            alt="Evolve"
-            data-testid="sidebar-logo"
-            className="h-5 w-auto select-none"
-            draggable={false}
-          />
+          <div className="grid w-max grid-cols-1 gap-[3px]">
+            <img
+              src="/brand/evolve-wordmark.png"
+              alt="Evolve"
+              data-testid="sidebar-logo"
+              className="col-start-1 row-start-1 h-5 w-auto select-none"
+              draggable={false}
+            />
+            <span
+              data-testid="sidebar-product"
+              className="col-start-1 row-start-2 w-0 min-w-full text-center text-[7px] font-semibold leading-none tracking-[0.02em] text-[#76BF43]"
+            >
+              OCSC Intelligence
+            </span>
+          </div>
         </div>
       )}
       <div className={`relative flex items-center ${mini ? "flex-col gap-0.5" : "gap-1"}`}>
