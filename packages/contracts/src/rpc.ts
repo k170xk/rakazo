@@ -260,6 +260,7 @@ import {
   hasEvolveReferences,
 } from "./evolve-references.js";
 import { Id, IsoDate, ThinkingLevelSchema } from "./ids.js";
+import { INFRA_PERIODS, InfrastructureSchema } from "./infrastructure.js";
 import {
   IntegrationProviderConfigSchema,
   IntegrationSetupStateSchema,
@@ -527,6 +528,10 @@ export const appContract = {
     replyFailures: oc
       .input(z.object({ period: z.enum(REPLY_FAILURE_PERIODS).default("30d") }))
       .output(ReplyFailuresSchema),
+    /** Servers, runners and Incus: the newest reading and each series' peaks over the period. */
+    infrastructure: oc
+      .input(z.object({ period: z.enum(INFRA_PERIODS).default("24h") }))
+      .output(InfrastructureSchema),
     /**
      * What AI may do with each Evolve Document Library item, read and changed in Evolve as the
      * admin, who must also be an Evolve admin or Document Library manager.
