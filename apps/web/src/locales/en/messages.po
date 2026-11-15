@@ -15439,3 +15439,51 @@ msgstr "Slack not enabled"
 #: src/lib/run-error.ts
 msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
 msgstr "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "{share} of {finished} replies"
+msgstr "{share} of {finished} replies"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Couldn't load reply failures"
+msgstr "Couldn't load reply failures"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Failed replies"
+msgstr "Failed replies"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Failed replies per day"
+msgstr "Failed replies per day"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Last failed"
+msgstr "Last failed"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "No failed replies in this period."
+msgstr "No failed replies in this period."
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Other"
+msgstr "Other"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Other failures"
+msgstr "Other failures"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Output limit"
+msgstr "Output limit"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Replies that did not finish, by day and agent. Too much to read means the message, images or tool results did not fit the model; output limit means the model ran out of room to answer. Updates every minute."
+msgstr "Replies that did not finish, by day and agent. Too much to read means the message, images or tool results did not fit the model; output limit means the model ran out of room to answer. Updates every minute."
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Reply failures"
+msgstr "Reply failures"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Too much to read"
+msgstr "Too much to read"

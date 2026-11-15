@@ -278,6 +278,7 @@ import {
 } from "./pages.js";
 import { PaymentWalletStatusSchema } from "./payments.js";
 import { MessageReactionSchema } from "./reactions.js";
+import { REPLY_FAILURE_PERIODS, ReplyFailuresSchema } from "./reply-failures.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
 import {
   ROUTINE_HISTORY_PAGE_SIZE,
@@ -522,6 +523,10 @@ export const appContract = {
     routineActivity: oc
       .input(z.object({ period: z.enum(ROUTINE_ACTIVITY_PERIODS).default("30d") }))
       .output(RoutineActivitySchema),
+    /** Failed replies per day and per agent: too much context, output limit, or other. */
+    replyFailures: oc
+      .input(z.object({ period: z.enum(REPLY_FAILURE_PERIODS).default("30d") }))
+      .output(ReplyFailuresSchema),
     /**
      * What AI may do with each Evolve Document Library item, read and changed in Evolve as the
      * admin, who must also be an Evolve admin or Document Library manager.

@@ -41,6 +41,7 @@ import {
   Share2,
   ShieldCheck,
   ToggleRight,
+  TriangleAlert,
   Users,
   Wrench,
 } from "lucide-react";
@@ -61,6 +62,7 @@ import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComp
 import { DocumentLibrarySection } from "./AdminDocumentLibrary";
 import { EmailFilingPolicySection } from "./AdminEmailFiling";
 import { EvolveSafeguardsSection } from "./AdminEvolveSafeguards";
+import { ReplyFailuresSection } from "./AdminReplyFailures";
 import { RoutineActivitySection } from "./AdminRoutineActivity";
 import { SharedAppsSection } from "./AdminSharedApps";
 import { StaffLimitsSection } from "./AdminStaffLimits";
@@ -84,6 +86,7 @@ const ADMIN_SECTIONS = [
   "people",
   "limits",
   "routines",
+  "replies",
   "spending",
 ] as const;
 type AdminSection = (typeof ADMIN_SECTIONS)[number];
@@ -153,6 +156,7 @@ function CompanyAdminPanels() {
     { id: "people", label: t`People`, icon: Users },
     { id: "limits", label: t`Staff limits`, icon: Gauge },
     { id: "routines", label: t`Routines`, icon: Repeat },
+    { id: "replies", label: t`Reply failures`, icon: TriangleAlert },
     { id: "spending", label: t`Spending`, icon: Receipt },
   ];
 
@@ -217,6 +221,8 @@ function CompanyAdminPanels() {
         return <StaffLimitsSection />;
       case "routines":
         return <RoutineActivitySection />;
+      case "replies":
+        return <ReplyFailuresSection />;
       case "spending":
         return <StaffSpendingSection />;
     }

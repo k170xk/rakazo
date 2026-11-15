@@ -65,6 +65,7 @@ import {
 import { getEvolveSafeguards, setEvolveSafeguards } from "../company-evolve-safeguards.js";
 import { listSharedApps, setSharedAppFrozen } from "../company-shared-apps.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
+import { replyFailures } from "../reply-failures-admin.js";
 import type { RouterDeps } from "../router.js";
 import { withSerializableRetry } from "../serializable-retry.js";
 import {
@@ -232,6 +233,9 @@ export function accountRoutes(ctx: RouterContext) {
       },
       routineActivity: authed.companyAdmin.routineActivity.handler(({ context, input }) =>
         routineActivity(deps, context.actor.userId, input.period),
+      ),
+      replyFailures: authed.companyAdmin.replyFailures.handler(({ context, input }) =>
+        replyFailures(deps, context.actor.userId, input.period),
       ),
       documentLibrary: {
         list: authed.companyAdmin.documentLibrary.list.handler(({ context }) =>

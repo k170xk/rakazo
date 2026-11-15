@@ -15414,3 +15414,51 @@ msgstr "Slack not enabled"
 #: src/lib/run-error.ts
 msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
 msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "{share} of {finished} replies"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Couldn't load reply failures"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Failed replies"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Failed replies per day"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Last failed"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "No failed replies in this period."
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Other"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Other failures"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Output limit"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Replies that did not finish, by day and agent. Too much to read means the message, images or tool results did not fit the model; output limit means the model ran out of room to answer. Updates every minute."
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Reply failures"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Too much to read"
+msgstr ""
