@@ -8,6 +8,8 @@ import {
   CSP_REPORTING_ENDPOINTS,
   contentSecurityPolicyFor,
   HTML_VIEWER_PATH,
+  PDF_STUDIO_CONTENT_SECURITY_POLICY,
+  PDF_STUDIO_PREFIX,
   parseContentSecuritySources,
   parseCrispWebsiteId,
 } from "./content-security-policy.js";
@@ -71,6 +73,20 @@ describe("app content security policy", () => {
 
   it("lets only the app frame the HTML viewer shell, whose own meta CSP governs it", () => {
     expect(contentSecurityPolicyFor(HTML_VIEWER_PATH)).toBe("frame-ancestors 'self'");
+  });
+
+  it("gives Evolve PDF Studio its own same-origin policy that only the app may frame", () => {
+    const pdf = contentSecurityPolicyFor(`${PDF_STUDIO_PREFIX}index.html`);
+    expect(pdf).toBe(PDF_STUDIO_CONTENT_SECURITY_POLICY);
+    expect(contentSecurityPolicyFor(`${PDF_STUDIO_PREFIX}assets/app.js`)).toBe(pdf);
+    const policy = directives(PDF_STUDIO_CONTENT_SECURITY_POLICY);
+    expect(policy.get("frame-ancestors")).toEqual(["'self'"]);
+    expect(policy.get("script-src")).toEqual(["'self'", "'wasm-unsafe-eval'"]);
+    expect(policy.get("connect-src")).toEqual(["'self'", "data:", "blob:"]);
+    expect(policy.get("object-src")).toEqual(["'none'"]);
+    expect(policy.get("report-uri")).toEqual([CSP_REPORT_PATH]);
+    expect(PDF_STUDIO_CONTENT_SECURITY_POLICY).not.toContain("'unsafe-eval'");
+    expect(contentSecurityPolicyFor("/pdf-studio-other")).toBe(APP_CONTENT_SECURITY_POLICY);
   });
 
   it("applies an injected screen policy only to embedded screen paths", () => {

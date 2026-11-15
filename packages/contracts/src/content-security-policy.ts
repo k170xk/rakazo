@@ -140,6 +140,28 @@ export const APP_CONTENT_SECURITY_POLICY = appContentSecurityPolicy();
 // The shell's meta CSP cannot restrict framing; only the app may embed it.
 const HTML_VIEWER_CONTENT_SECURITY_POLICY = serialize({ "frame-ancestors": ["'self'"] });
 
+/** Evolve PDF Studio's hosted bundle, framed by the PDF studio. */
+export const PDF_STUDIO_PREFIX = "/pdf-studio/";
+
+// The bundle's own hosted policy: its PDF engines compile WebAssembly and run blob: workers. It reads
+// and saves files only through the studio around it, so it fetches nothing beyond its own files.
+export const PDF_STUDIO_CONTENT_SECURITY_POLICY = serialize({
+  "default-src": ["'self'"],
+  "script-src": ["'self'", "'wasm-unsafe-eval'"],
+  "worker-src": ["'self'", "blob:"],
+  "style-src": ["'self'", "'unsafe-inline'"],
+  "img-src": ["'self'", "data:", "blob:"],
+  "font-src": ["'self'", "data:"],
+  "media-src": ["'self'", "data:", "blob:"],
+  "connect-src": ["'self'", "data:", "blob:"],
+  "object-src": ["'none'"],
+  "base-uri": ["'self'"],
+  "form-action": ["'none'"],
+  "frame-ancestors": ["'self'"],
+  "report-uri": [CSP_REPORT_PATH],
+  "report-to": [CSP_REPORT_GROUP],
+});
+
 // Proxied responses keep their own headers; the screen proxy sets its own sandbox policy.
 const PASSTHROUGH_PREFIXES = ["/api", "/rpc", "/novnc"];
 
@@ -154,6 +176,7 @@ export function contentSecurityPolicyFor(
   )
     return null;
   if (pathname === HTML_VIEWER_PATH) return HTML_VIEWER_CONTENT_SECURITY_POLICY;
+  if (pathname.startsWith(PDF_STUDIO_PREFIX)) return PDF_STUDIO_CONTENT_SECURITY_POLICY;
   // The nested runtime has an opaque ancestor, which cannot match 'self'. Its sandbox
   // policy still prevents access to the app even when visited directly.
   if (screenPolicy && pathname === COMPUTER_SCREEN_RUNTIME_PATH) return screenPolicy.runtime;

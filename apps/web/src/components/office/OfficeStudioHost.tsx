@@ -17,7 +17,7 @@ import type { ReactNode } from "react";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
 import { errorCode } from "../../lib/user-error";
-import { control, pill, StudioFrame, useStudioDock } from "../studio/StudioFrame";
+import { control, pill, StudioFrame, StudioHint, useStudioDock } from "../studio/StudioFrame";
 import { useDocumentBotId } from "./document-bot";
 import { OFFICE_STUDIOS } from "./registry";
 import { StudioWelcome } from "./StudioWelcome";
@@ -30,8 +30,8 @@ export type OfficeStudioHostProps = {
   /** From the link; read from the file when absent. */
   format: DocumentFormat | null;
   onClose: () => void;
-  /** Opens another document, replacing the open one in the URL. */
-  onOpen: (id: string, format: DocumentFormat) => void;
+  /** Opens another document, replacing the open one in the URL. Null is the empty studio. */
+  onOpen: (id: string | null, format: DocumentFormat) => void;
 };
 
 /** Routes `?doc=` to the studio for the file's format, its newest file, or an empty studio. */
@@ -73,7 +73,7 @@ export default function OfficeStudioHost({ id, format, onClose, onOpen }: Office
         onClose={onClose}
         message={
           code === "UNSUPPORTED_MEDIA_TYPE"
-            ? t`Only Word, PowerPoint and Excel files open here.`
+            ? t`Only Word, PowerPoint, Excel and PDF files open here.`
             : code === "NOT_FOUND" || code === "FORBIDDEN"
               ? t`This document isn't available. It may have been deleted, or it belongs to someone else.`
               : t`This document couldn't be opened. Check your connection and try again.`
@@ -113,6 +113,7 @@ export default function OfficeStudioHost({ id, format, onClose, onOpen }: Office
         rootArtifactId={id}
         onClose={onClose}
         onOpenDocument={(next) => onOpen(next, shownFormat)}
+        onEmpty={() => onOpen(null, shownFormat)}
       />
       <StudioWelcome format={shownFormat} documentId={id} />
     </Suspense>
@@ -196,7 +197,9 @@ function EmptyStudio({
             ? t`Untitled document`
             : format === "pptx"
               ? t`Untitled presentation`
-              : t`Untitled spreadsheet`,
+              : format === "pdf"
+                ? t`Untitled PDF`
+                : t`Untitled spreadsheet`,
         ...(office ? { office } : {}),
         ...documentBot,
       });
@@ -237,29 +240,39 @@ function EmptyStudio({
       trigger
     );
 
+  const newHint =
+    format === "docx"
+      ? t`Start a blank document, or upload a Word file.`
+      : format === "pptx"
+        ? t`Start a blank presentation, or upload a PowerPoint.`
+        : format === "pdf"
+          ? t`Start a blank PDF, or upload one.`
+          : t`Start a blank spreadsheet, or upload an Excel file.`;
   const headerNew =
     format === "docx" ? (
+      <StudioHint label={newHint}>
       <DropdownMenuTrigger
         data-testid="office-new"
         disabled={busy}
         aria-label={t`New blank document`}
-        title={t`New blank document`}
         className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
       >
         <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
       </DropdownMenuTrigger>
+      </StudioHint>
     ) : (
+      <StudioHint label={newHint}>
       <button
         type="button"
         data-testid="office-new"
         disabled={busy}
         aria-label={t`New blank document`}
-        title={t`New blank document`}
         onClick={() => void create()}
         className={`${control} size-8 sm:size-[35px] disabled:opacity-40`}
       >
         <Plus className="size-4 sm:size-[18px]" strokeWidth={1.7} />
       </button>
+      </StudioHint>
     );
 
   const bodyNew =
@@ -289,7 +302,9 @@ function EmptyStudio({
       ? t`Evolve Word`
       : format === "pptx"
         ? t`Evolve PowerPoint`
-        : t`Evolve Excel`;
+        : format === "pdf"
+          ? t`Evolve PDF`
+          : t`Evolve Excel`;
 
   return (
     <StudioFrame
@@ -309,6 +324,7 @@ function EmptyStudio({
         </>
       }
       actions={
+        <StudioHint label={t`Bring in a file from your computer.`}>
         <button
           type="button"
           disabled={busy}
@@ -320,6 +336,7 @@ function EmptyStudio({
             <Trans>Upload</Trans>
           </span>
         </button>
+        </StudioHint>
       }
     >
       {uploader.input}
@@ -331,6 +348,8 @@ function EmptyStudio({
               <Trans>No Word documents yet</Trans>
             ) : format === "pptx" ? (
               <Trans>No presentations yet</Trans>
+            ) : format === "pdf" ? (
+              <Trans>No PDFs yet</Trans>
             ) : (
               <Trans>No spreadsheets yet</Trans>
             )}
@@ -356,6 +375,8 @@ function EmptyStudio({
                     <Trans>Upload a .docx file</Trans>
                   ) : format === "pptx" ? (
                     <Trans>Upload a .pptx file</Trans>
+                  ) : format === "pdf" ? (
+                    <Trans>Upload a .pdf file</Trans>
                   ) : (
                     <Trans>Upload a .xlsx file</Trans>
                   )}

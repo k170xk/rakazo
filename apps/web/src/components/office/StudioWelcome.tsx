@@ -21,6 +21,7 @@ const ILLUSTRATIONS: Record<DocumentFormat, string> = {
   docx: "/studios/word-welcome.png",
   pptx: "/studios/slides-welcome.png",
   xlsx: "/studios/sheet-welcome.png",
+  pdf: "/studios/pdf-welcome.png",
 };
 
 /** The open chat's composer field, docked in the studio or floating over it. */
@@ -133,6 +134,7 @@ export function StudioWelcome({
 function WelcomeTitle({ format }: { format: DocumentFormat }) {
   if (format === "pptx") return <Trans>Let the assistant edit your presentation</Trans>;
   if (format === "xlsx") return <Trans>Let the assistant edit your spreadsheet</Trans>;
+  if (format === "pdf") return <Trans>Let the assistant mark up your PDF</Trans>;
   return <Trans>Let the assistant edit your document</Trans>;
 }
 
@@ -151,7 +153,13 @@ function WelcomeTips({ format }: { format: DocumentFormat }) {
             t`Add columns or a table`,
             t`Build a chart or a summary, or clean up the data`,
           ]
-        : [
+        : format === "pdf"
+          ? [
+              t`Check a drawing and cloud the issues`,
+              t`Add comments, callouts or an approval stamp`,
+              t`Measure areas and lengths, or take off quantities`,
+            ]
+          : [
             t`Update the document, or rewrite and change paragraphs`,
             t`Add infographics, project photos or tables`,
             t`Tidy the formatting`,
@@ -161,7 +169,9 @@ function WelcomeTips({ format }: { format: DocumentFormat }) {
       ? t`Select a text box, image or shape and ask for a change. The assistant receives your selection as context.`
       : format === "xlsx"
         ? t`Select cells and ask for a change. The assistant receives your selection as context.`
-        : t`Highlight a paragraph, table or image and ask for a change. The assistant receives your selection as context.`;
+        : format === "pdf"
+          ? t`Go to a page or select a markup and ask in the chat. The assistant receives the page and your selection as context.`
+          : t`Highlight a paragraph, table or image and ask for a change. The assistant receives your selection as context.`;
 
   return (
     <div className="flex flex-col gap-3 text-[14px]">

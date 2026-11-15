@@ -125,7 +125,7 @@ export async function studioDocumentForTurn(
   return note ? studioNotedDocument(prisma, owner, note) : undefined;
 }
 
-const OFFICE_EXTENSION = /\.(docx|pptx|xlsx)$/i;
+const OFFICE_EXTENSION = /\.(docx|pptx|xlsx|pdf)$/i;
 
 /** True when `name` is the studio document's name, with or without its file extension. */
 export function namesStudioDocument(document: Pick<StudioDocument, "name">, name: string): boolean {

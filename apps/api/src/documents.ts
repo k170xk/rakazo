@@ -70,26 +70,43 @@ export class DocumentError extends Error {
   }
 }
 
-const RUNNER_PROGRAM: Readonly<Record<DocumentFormat, string>> = {
+/** The formats stored as Office zip packages; a PDF is not one. */
+type OfficeZipFormat = Exclude<DocumentFormat, "pdf">;
+const OFFICE_ZIP_FORMATS: readonly OfficeZipFormat[] = ["docx", "pptx", "xlsx"];
+
+const RUNNER_PROGRAM: Readonly<Record<OfficeZipFormat, string>> = {
   docx: "word",
   pptx: "pptx",
   xlsx: "xlsx",
 };
 
 /** The part `[Content_Types].xml` names for each format's main document; macro files differ. */
-const MAIN_PART: Readonly<Record<DocumentFormat, string>> = {
+const MAIN_PART: Readonly<Record<OfficeZipFormat, string>> = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml",
   pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml",
 };
+/** PDF readers accept the `%PDF-` header anywhere in the first 1024 bytes. */
+const PDF_HEADER_WINDOW = 1024;
+const PDF_HEADER = [0x25, 0x50, 0x44, 0x46, 0x2d];
 const CONTENT_TYPES = "[Content_Types].xml";
 const CONTENT_TYPES_MAX_BYTES = 1024 * 1024;
 const CREATE_TIMEOUT_MS = 2 * 60_000;
 const STORAGE_FULL_MESSAGE =
   "There is no room to save this. Open Manage storage from your account menu, or ask an admin.";
 
-/** Which Office format these bytes are, read from the zip's content types; null when neither. */
+function isPdf(bytes: Uint8Array): boolean {
+  if (bytes[0] === 0x50 && bytes[1] === 0x4b) return false;
+  const end = Math.min(bytes.length, PDF_HEADER_WINDOW) - PDF_HEADER.length;
+  for (let at = 0; at <= end; at += 1) {
+    if (PDF_HEADER.every((byte, i) => bytes[at + i] === byte)) return true;
+  }
+  return false;
+}
+
+/** Which document format these bytes are: a PDF by its header, Office by the zip's content types. */
 export function officeFormatOf(bytes: Uint8Array): DocumentFormat | null {
+  if (isPdf(bytes)) return "pdf";
   let xml: string;
   try {
     const entry = unzipSync(bytes, {
@@ -100,7 +117,7 @@ export function officeFormatOf(bytes: Uint8Array): DocumentFormat | null {
   } catch {
     return null;
   }
-  return DocumentFormatSchema.options.find((format) => xml.includes(MAIN_PART[format])) ?? null;
+  return OFFICE_ZIP_FORMATS.find((format) => xml.includes(MAIN_PART[format])) ?? null;
 }
 
 const familyVersionSelect = {
@@ -145,7 +162,7 @@ export async function documentFamily(
     throw new DocumentError(
       "UNSUPPORTED_MEDIA_TYPE",
       415,
-      "Only Word, PowerPoint and Excel files open here.",
+      "Only Word, PowerPoint, Excel and PDF files open here.",
     );
   }
   return { rootArtifactId, format, latest, versions };
@@ -254,9 +271,7 @@ type SummaryRow = {
 };
 
 /** Every Office mime the studios understand; used before an optional format filter. */
-const OFFICE_MIME_TYPES = DocumentFormatSchema.options.map(
-  (format) => DOCUMENT_MIME_TYPES[format],
-);
+const OFFICE_MIME_TYPES = DocumentFormatSchema.options.map((format) => DOCUMENT_MIME_TYPES[format]);
 
 /**
  * The newest version of each of the caller's Office files in this space, latest change first.
@@ -489,7 +504,51 @@ async function documentBot(
   return bot;
 }
 
-function blankSpec(format: DocumentFormat, title: string, office: string | undefined) {
+/**
+ * One blank A4 page with the title in its metadata. PDF needs no template, so a new PDF never waits
+ * on the document runners.
+ */
+export function blankPdf(title: string): Uint8Array {
+  const escaped = title.replace(/[^\x20-\x7e]/g, "?").replace(/[\\()]/g, "\\$&");
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << >> >>",
+    `<< /Title (${escaped}) /Producer (Evolve PDF Studio) >>`,
+  ];
+  let body = "%PDF-1.7\n";
+  const offsets: number[] = [];
+  objects.forEach((object, index) => {
+    offsets.push(body.length);
+    body += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xref = body.length;
+  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const offset of offsets) body += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R /Info 4 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return new TextEncoder().encode(body);
+}
+
+/** A blank PDF as version 1 of a new family, in the agent `createDocument` would pick. */
+async function createBlankPdf(
+  deps: DocumentDeps,
+  actor: Pick<Actor, "spaceId" | "userId">,
+  input: { title: string; botId?: string },
+): Promise<DocumentCreated> {
+  const bot = await documentBot(deps.prisma, actor, input.botId);
+  if (await documentStorageRefusal(deps, actor.userId, bot.computer)) {
+    throw new DocumentError("STORAGE_FULL", 507, STORAGE_FULL_MESSAGE);
+  }
+  return addNewFamily(deps, actor, {
+    botId: bot.id,
+    format: "pdf",
+    title: input.title,
+    bytes: blankPdf(input.title),
+    context: createAdapterContext(actor, bot.id, `document-create:${bot.id}`),
+  });
+}
+
+function blankSpec(format: OfficeZipFormat, title: string, office: string | undefined) {
   if (format === "docx") return { title, ...(office ? { office } : {}), blocks: [] };
   if (format === "pptx") return { title, slides: [{ layout: "cover", title }] };
   return { title, sheets: [{ name: "Sheet1" }] };
@@ -520,6 +579,7 @@ export async function createDocument(
   input: { format: DocumentFormat; title: string; botId?: string; office?: string },
   signal: AbortSignal,
 ): Promise<DocumentCreated> {
+  if (input.format === "pdf") return createBlankPdf(deps, actor, input);
   if (!deps.toolRunner || !deps.dataDir) {
     throw new DocumentError(
       "PRECONDITION_FAILED",

@@ -6,9 +6,10 @@ const FORMAT: Record<StudioNoteChip["kind"], DocumentFormat> = {
   word: "docx",
   slides: "pptx",
   sheet: "xlsx",
+  pdf: "pdf",
 };
 
-/** The Word, PowerPoint or Excel tile icon for a studio chip. */
+/** The Word, PowerPoint, Excel or PDF tile icon for a studio chip. */
 export function studioChipIcon(kind: StudioNoteChip["kind"]): string {
   return OFFICE_STUDIOS[FORMAT[kind]].icon;
 }

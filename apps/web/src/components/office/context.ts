@@ -59,12 +59,12 @@ export function documentDockPage(context: DocumentContext) {
   };
   const selected = context.selected ?? null;
   return {
-    title: context.name.replace(/\.(docx|pptx|xlsx)$/i, ""),
+    title: context.name.replace(/\.(docx|pptx|xlsx|pdf)$/i, ""),
     note: openStudioNote({ ...base, selected }),
     bareNote: openStudioNote({ ...base, selected: null }),
     chip: {
       kind: context.kind,
-      title: context.name.replace(/\.(docx|pptx|xlsx)$/i, ""),
+      title: context.name.replace(/\.(docx|pptx|xlsx|pdf)$/i, ""),
       label: documentChipLabel(context.focus, selected),
       bareLabel: documentChipLabel(context.focus, null),
       hasSelection: selected !== null,

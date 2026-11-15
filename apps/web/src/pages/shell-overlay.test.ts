@@ -108,7 +108,8 @@ describe("withShellOverlay", () => {
 describe("readShellOverlay documents", () => {
   it("reads the id, ignoring an unknown type", () => {
     expect(read("?doc=art_1")).toEqual({ kind: "doc", id: "art_1", format: null });
-    expect(read("?doc=art_1&kind=pdf")).toEqual({ kind: "doc", id: "art_1", format: null });
+    expect(read("?doc=art_1&kind=odt")).toEqual({ kind: "doc", id: "art_1", format: null });
+    expect(read("?doc=art_1&kind=pdf")).toEqual({ kind: "doc", id: "art_1", format: "pdf" });
     expect(read("?doc&kind=docx")).toEqual({ kind: "doc", id: null, format: "docx" });
   });
 });

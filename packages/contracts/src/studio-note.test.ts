@@ -84,6 +84,45 @@ describe("openStudioNote", () => {
     expect(sheet).not.toContain("Selected in the document");
   });
 
+  it("points the assistant at the PDF markup skill and the open PDF's next version", () => {
+    const note = openStudioNote({
+      kind: "pdf",
+      title: "Level 2 plan.pdf",
+      documentId: "root-4",
+      artifactId: "art-9",
+      version: 3,
+      focus: { where: "page 2 of 6", short: "Page 2" },
+      selected: { what: "markup", label: "1 markup", content: '{"type":"cloud"}' },
+    });
+    expect(note).toContain("Evolve PDF Studio");
+    expect(note).toContain("ocsc-pdf read --in attachments/art-9.pdf");
+    expect(note).toContain("/ocsc-pdf-markup");
+    expect(note).toContain('--out "outputs/Level 2 plan.pdf"');
+    expect(note).toContain('under the same name, "Level 2 plan.pdf"');
+    expect(note).toContain("They are looking at page 2 of 6.");
+    expect(note).toContain('Selected: the markup:\n{"type":"cloud"}');
+    expect(note).toContain("app points: PDF points (1/72 inch) from the top-left corner");
+    expect(note).toContain("ocsc-pdf-studio call context");
+    expect(note).toContain("A markup's id stays the same in the saved file");
+    expect(note).not.toContain("A picture of the selected");
+    expect(note).not.toContain("python-docx");
+    expect(studioNoteChip(note)?.label).toBe("Page 2 · 1 markup");
+    expect(stripStudioNote(`cloud the door\n\n${note}`)).toBe("cloud the door");
+  });
+
+  it("says when a picture of the PDF selection is attached, and adds no units without a view", () => {
+    const pictured = openStudioNote({
+      kind: "pdf",
+      title: "Plan.pdf",
+      documentId: "root-5",
+      artifactId: "art-5",
+      selected: { what: "markups", label: "2 markups", content: "{}", imageAttached: true },
+    });
+    expect(pictured).toContain("A picture of the selected markups and the drawing around it is attached");
+    const bare = openStudioNote({ kind: "pdf", title: "Plan.pdf", documentId: "root-5", artifactId: "art-5" });
+    expect(bare).not.toContain("app points");
+  });
+
   it("keeps a selection from closing the hidden block early", () => {
     const note = openStudioNote({
       kind: "sheet",
@@ -162,7 +201,8 @@ describe("openStudioNote", () => {
       selected: { what: "cell range", label: "Sheet1!A1:A2 (2 cells)", content: "x".repeat(9000) },
     });
     expect(note).toContain("… (truncated)");
-    expect(note.length).toBeLessThan(8000);
+    expect(note).not.toContain("x".repeat(9000));
+    expect(note.length).toBeLessThan(9000);
     expect(studioNoteChip(note)?.label).toBe("Sheet1!A1:A2 (2 cells)");
   });
 

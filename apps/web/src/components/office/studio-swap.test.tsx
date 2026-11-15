@@ -45,6 +45,7 @@ vi.mock("@lingui/react/macro", () => ({
 vi.mock("../studio/StudioFrame", () => ({
   StudioFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   StudioMoreMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  StudioHint: ({ children }: { children: ReactNode }) => <>{children}</>,
   StudioProductMark: () => null,
   useStudioDock: () => ({ session: null, running: state.running }),
   control: "",

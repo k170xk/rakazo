@@ -24,7 +24,12 @@ vi.mock("@rakazo/db", async (importOriginal) => {
 });
 
 import type { DocumentDeps } from "./documents.js";
-import { listDocuments, mountDocumentVersionsRoute, officeFormatOf } from "./documents.js";
+import {
+  blankPdf,
+  listDocuments,
+  mountDocumentVersionsRoute,
+  officeFormatOf,
+} from "./documents.js";
 
 const DOCX = DOCUMENT_MIME_TYPES.docx;
 const actor = { spaceId: "space-1", userId: "user-1" } as Actor;
@@ -49,11 +54,7 @@ const xlsx = office("application/vnd.openxmlformats-officedocument.spreadsheetml
 describe("listDocuments", () => {
   it("filters by the family's newest mime, not an older version of another type", async () => {
     const queryRaw = vi.fn(async () => []);
-    await listDocuments(
-      { $queryRaw: queryRaw } as never,
-      actor,
-      { format: "pptx", limit: 30 },
-    );
+    await listDocuments({ $queryRaw: queryRaw } as never, actor, { format: "pptx", limit: 30 });
     const sql = queryRaw.mock.calls[0]?.[0] as { strings: string[] };
     const text = sql.strings.join("?");
     expect(text).toContain("DISTINCT ON");
@@ -79,6 +80,43 @@ describe("officeFormatOf", () => {
     );
     expect(officeFormatOf(zipSync({ "a.txt": strToU8("hello") }))).toBe(null);
     expect(officeFormatOf(strToU8("not a zip"))).toBe(null);
+  });
+
+  it("reads PDFs, including ones with a little junk before the header", () => {
+    expect(officeFormatOf(strToU8("%PDF-1.7\n%…"))).toBe("pdf");
+    expect(officeFormatOf(strToU8(`${" ".repeat(200)}%PDF-1.4\n`))).toBe("pdf");
+    expect(officeFormatOf(strToU8(`${" ".repeat(2000)}%PDF-1.4\n`))).toBe(null);
+    expect(officeFormatOf(blankPdf("Plan"))).toBe("pdf");
+  });
+
+  it("never takes a zip that mentions %PDF- for a PDF", () => {
+    expect(officeFormatOf(zipSync({ "a.txt": strToU8("%PDF-1.7") }))).toBe(null);
+    expect(officeFormatOf(docx)).toBe("docx");
+  });
+});
+
+describe("blankPdf", () => {
+  const text = (title: string) => new TextDecoder("latin1").decode(blankPdf(title));
+
+  it("writes one A4 page whose cross-reference table points at each object", () => {
+    const pdf = text("Site plan");
+    expect(pdf.startsWith("%PDF-")).toBe(true);
+    expect(pdf).toContain("/MediaBox [0 0 595.28 841.89]");
+    expect(pdf.trimEnd().endsWith("%%EOF")).toBe(true);
+    const startxref = Number(/startxref\s+(\d+)/.exec(pdf)?.[1]);
+    expect(pdf.slice(startxref).startsWith("xref")).toBe(true);
+    const offsets = [...pdf.slice(startxref).matchAll(/^(\d{10}) 00000 n\s*$/gm)].map((m) =>
+      Number(m[1]),
+    );
+    expect(offsets.length).toBeGreaterThanOrEqual(3);
+    offsets.forEach((offset, index) => {
+      expect(pdf.slice(offset).startsWith(`${index + 1} 0 obj`)).toBe(true);
+    });
+  });
+
+  it("escapes the title into the document info", () => {
+    const pdf = text("Plan (rev A) \\ final");
+    expect(pdf).toContain("/Title (Plan \\(rev A\\) \\\\ final)");
   });
 });
 
@@ -358,7 +396,7 @@ describe("POST /api/v1/documents/:rootId/versions", () => {
       401,
     );
     expect((await post("format=docx")).status).toBe(400);
-    expect((await post("format=pdf&baseVersion=1")).status).toBe(400);
+    expect((await post("format=odt&baseVersion=1")).status).toBe(400);
     expect(
       (
         await post("format=docx&baseVersion=1", docx, {
@@ -385,6 +423,14 @@ describe("POST /api/v1/documents/:rootId/versions", () => {
         await post("format=pptx&baseVersion=1", pptx, {
           authorization: "yes",
           "content-type": DOCUMENT_MIME_TYPES.pptx,
+        })
+      ).status,
+    ).toBe(415);
+    expect(
+      (
+        await post("format=docx&baseVersion=1", blankPdf("Plan"), {
+          authorization: "yes",
+          "content-type": DOCX,
         })
       ).status,
     ).toBe(415);

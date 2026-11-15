@@ -9,11 +9,13 @@ export type OfficeStudioProps = {
   rootArtifactId: string;
   onClose: () => void;
   onOpenDocument: (rootArtifactId: string) => void;
+  /** The last file of this kind was deleted, so the studio has nothing left to open. */
+  onEmpty?: () => void;
 };
 
 export type OfficeStudioEntry = {
   format: DocumentFormat;
-  /** The tile's name: Word, PowerPoint or Excel. */
+  /** The tile's name: Word, PowerPoint, Excel or PDF. */
   label: () => string;
   extension: `.${DocumentFormat}`;
   mimeType: string;
@@ -61,9 +63,16 @@ export const OFFICE_STUDIOS: Readonly<Record<DocumentFormat, OfficeStudioEntry>>
     "/icons/studios/excel.png",
     lazy(() => import("./SheetStudio")),
   ),
+  pdf: entry(
+    "pdf",
+    () => translate`PDF`,
+    "/icons/studios/pdf.png",
+    lazy(() => import("./PdfStudio")),
+  ),
 };
 
-export const OFFICE_FORMATS: readonly DocumentFormat[] = ["docx", "pptx", "xlsx"];
+/** In the sidebar's order. */
+export const OFFICE_FORMATS: readonly DocumentFormat[] = ["docx", "pptx", "pdf", "xlsx"];
 
 export function officeStudioReady(format: DocumentFormat): boolean {
   return OFFICE_STUDIOS[format].Studio !== null;

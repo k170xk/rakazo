@@ -2,14 +2,15 @@ import * as z from "zod";
 import { ARTIFACT_NAME_MAX_LENGTH } from "./attachments.js";
 import { Id } from "./ids.js";
 
-/** The Office files a studio opens: Word, PowerPoint and Excel. */
-export const DocumentFormatSchema = z.enum(["docx", "pptx", "xlsx"]);
+/** The files a studio opens: Word, PowerPoint, Excel and PDF. */
+export const DocumentFormatSchema = z.enum(["docx", "pptx", "xlsx", "pdf"]);
 export type DocumentFormat = z.infer<typeof DocumentFormatSchema>;
 
 export const DOCUMENT_MIME_TYPES: Readonly<Record<DocumentFormat, string>> = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  pdf: "application/pdf",
 };
 
 export function documentFormatForMimeType(mimeType: string): DocumentFormat | null {

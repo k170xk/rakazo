@@ -3,12 +3,15 @@ import { whiteboardSelectionNote } from "./whiteboard.js";
 const OPEN = "‹studio›";
 const CLOSE = "‹/studio›";
 
-/** The Office studios, with the name the person sees and the `ocsc` program that edits each. */
+/** The document studios, with the name the person sees and the `ocsc` program that edits each. */
 const DOCUMENT_STUDIOS = {
   word: { studio: "Word studio", program: "word", extension: ".docx" },
   slides: { studio: "Presentation studio", program: "pptx", extension: ".pptx" },
   sheet: { studio: "Excel studio", program: "xlsx", extension: ".xlsx" },
+  pdf: { studio: "Evolve PDF Studio", program: "pdf", extension: ".pdf" },
 } as const;
+
+const DOCUMENT_EXTENSION = /\.(docx|pptx|xlsx|pdf)$/i;
 
 export type DocumentStudioKind = keyof typeof DOCUMENT_STUDIOS;
 
@@ -85,6 +88,7 @@ function documentStudioLine(input: {
   const path = `attachments/${input.artifactId}${extension}`;
   const named = input.title ? ` with "${input.title}" open` : "";
   const version = input.version ? `latest version ${input.version}, ` : "";
+  if (input.kind === "pdf") return pdfStudioLine(input, { studio, path, named, version });
   const lines = [
     `The person is in the ${studio}${named} (documentId ${input.documentId}, ${version}artifactId ${input.artifactId}). This is the document they are looking at right now, including any edits they made by hand since the last reply. When they ask for a change, edit THIS version with ocsc ${program} edit --in ${path}; call fetch_file with ${path} first if it is not on your computer. Always use this message's artifactId — never reuse an older attachment from earlier in the chat. fetch_file always reaches this file, even when another agent made it, so never ask them to attach or export it. Attach the result with attach_file under the same name${input.title ? `, "${input.title}"` : ""}, so it becomes the next version. Do not create a new document unless they ask.`,
   ];
@@ -118,12 +122,55 @@ function documentStudioLine(input: {
     const selection = oneLine(input.selection).slice(0, SELECTION_NOTE_MAX);
     if (selection) lines.push(`Selected in the document: ${JSON.stringify(selection)}`);
   }
+  lines.push(
+    `Formatting changes are supported. Do not say colour, font, spacing, margins, freeze, filter or a chart is unsupported. Word: {"op":"format_text","find":"<exact words>","color":"green","font":"Calibri","spacing":"1.5"} and {"op":"page_setup","margin":2.5,"paper":"A4","orientation":"landscape"}. PowerPoint: format_text with "slide", {"op":"format_shape","slide":<n>,"shape":<n>,"fill":"green"}, {"op":"place_shape","slide":<n>,"shape":<n>,"x":2,"y":3,"w":10,"h":4} in centimetres, and {"op":"slide_background","slide":<n>,"fill":"navy"}. Excel: {"op":"format_cells","sheet":"<sheet>","range":"<cells>","fill":"green","color":"white","font":"Calibri"}, {"op":"freeze","sheet":"<sheet>","rows":1}, {"op":"filter","sheet":"<sheet>","range":"A1:D20"}, {"op":"conditional_format","sheet":"<sheet>","range":"C2:C20","rule":"greater","value":1000,"fill":"green"} and {"op":"chart","sheet":"<sheet>","type":"column","range":"A1:B6","title":"..."}. "color" is the words and "fill" is the background. Green means OCSC green #76BF43. Existing Excel charts, pivot tables and macros are kept; a new pivot table or a new macro cannot be written.`,
+  );
+  lines.push(chipLine(input, selected));
+  return lines.join("\n");
+}
+
+function chipLine(
+  input: { kind: DocumentStudioKind; title: string; focus?: DocumentStudioFocus },
+  selected: DocumentStudioSelected | null | undefined,
+): string {
   const chip: StudioNoteChip = {
     kind: input.kind,
-    title: input.title.replace(/\.(docx|pptx|xlsx)$/i, ""),
+    title: input.title.replace(DOCUMENT_EXTENSION, ""),
     label: documentChipLabel(input.focus, selected),
   };
-  lines.push(`${CHIP_PREFIX}${JSON.stringify(chip)}`);
+  return `${CHIP_PREFIX}${JSON.stringify(chip)}`;
+}
+
+/** A PDF is marked up on the assistant's computer in the same app, then attached as the next version. */
+function pdfStudioLine(
+  input: Parameters<typeof documentStudioLine>[0],
+  parts: { studio: string; path: string; named: string; version: string },
+): string {
+  const { studio, path, named, version } = parts;
+  const name = input.title.replace(DOCUMENT_EXTENSION, "") || "document";
+  const lines = [
+    `The person is in ${studio}${named} (documentId ${input.documentId}, ${version}artifactId ${input.artifactId}). This is the PDF they are looking at right now, including any markups they saved by hand. To read it, run ocsc-pdf read --in ${path}. When they ask for markups, comments, redlines, checks, measurements or any other change, follow the skill /ocsc-pdf-markup on your computer: call fetch_file with ${path} first if it is not there, open it with ocsc-pdf-studio open ${path} --out "outputs/${name}.pdf", make the changes, run ocsc-pdf-studio save, then attach the saved file with attach_file under the same name${input.title ? `, "${input.title}"` : ""}, so it becomes the next version in their studio. Always use this message's artifactId — never reuse an older attachment from earlier in the chat. fetch_file always reaches this file, even when another agent made it, so never ask them to attach or export it. Do not create a new document unless they ask.`,
+  ];
+  const where = oneLine(input.focus?.where);
+  if (where) lines.push(`They are looking at ${where}.`);
+  const detail = block(input.focus?.detail, FOCUS_DETAIL_MAX);
+  if (detail) lines.push(`On screen there:\n${detail}`);
+  const selected = input.selected;
+  const what = oneLine(selected?.what);
+  if (selected && what) {
+    const content = block(selected.content, SELECTED_CONTENT_MAX);
+    lines.push(`Selected: the ${what}${content ? `:\n${content}` : "."}`);
+    if (selected.imageAttached)
+      lines.push(`A picture of the selected ${what} and the drawing around it is attached to this message.`);
+    lines.push(
+      `Their message is about the selected ${what}. Change only that, and leave the rest of the PDF as it is unless they ask for more. A markup's id stays the same in the saved file, so use it with get_annotation, update_annotation, delete_annotation and comment_thread after you open the PDF.`,
+    );
+  }
+  if (where || selected)
+    lines.push(
+      "Positions here are app points: PDF points (1/72 inch) from the top-left corner of the page at 100% zoom, y downward, the same units as every ocsc-pdf-studio tool. ocsc-pdf-studio call context gives the same view from your computer.",
+    );
+  lines.push(chipLine(input, selected));
   return lines.join("\n");
 }
 
