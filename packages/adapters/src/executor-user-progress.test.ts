@@ -890,6 +890,32 @@ describe("text written before a question", () => {
     ]);
   });
 
+  it("keeps the question's labelled detail as a table on the card", async () => {
+    const { pauseRunForInput } = await runTurn("", false, undefined, [], "fyi", {
+      runtimeEvents: [
+        { type: "tool", name: "ask_user", args: {}, executionId: "ask-1" },
+        {
+          type: "ask",
+          text: "Are these levels right?",
+          detail: "Ground floor: FFL +0.000\nFirst floor: FFL +3.600",
+          detailFormat: "text",
+          actions: [{ id: "choice-1", label: "Yes, use these" }],
+        },
+      ],
+    });
+    expect(pauseRunForInput).toHaveBeenCalledWith(
+      expect.objectContaining({
+        blocks: [
+          expect.objectContaining({
+            kind: "ask",
+            detail: "Ground floor: FFL +0.000\nFirst floor: FFL +3.600",
+            detailFormat: "text",
+          }),
+        ],
+      }),
+    );
+  });
+
   it("redacts the text like the reply", async () => {
     const { messages } = await runTurn("", false, undefined, ["fake-secret-value"], "fyi", {
       runtimeEvents: ask("The fake-secret-value is set."),

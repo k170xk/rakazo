@@ -649,11 +649,12 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "ask_user",
     description:
-      "Ask the user one short question with two to four tappable options, then wait for their answer. The card also lets them type their own answer, so never add an 'Other' option. For a new app, use ask_app_scope instead of this.",
+      "Ask the user one short question with two to four tappable options, then wait for their answer. The card also lets them type their own answer, so never add an 'Other' option. Optional detail: 'Label: value' lines shown as a table. For a new app, use ask_app_scope instead of this.",
     inputSchema: {
       type: "object",
       properties: {
         question: { type: "string", maxLength: 240 },
+        detail: { type: "string", maxLength: 1500 },
         options: {
           type: "array",
           items: { type: "string", minLength: 1, maxLength: 80 },

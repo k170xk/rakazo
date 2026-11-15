@@ -35,6 +35,7 @@ import {
 import { fileURLToPath } from "node:url";
 import JSZip from "jszip";
 import { infographicXml, wordStyle } from "./docx-infographic.mjs";
+import { applyWordPageSetup, formatWordDocument, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_DIR = process.env.OCSC_WORD_TEMPLATES || join(HERE, "templates");
@@ -2440,6 +2441,41 @@ async function cmdEdit(o) {
         });
         break;
       }
+      case "page_setup": {
+        try {
+          doc.xml = applyWordPageSetup(doc.xml, op);
+        } catch (error) {
+          throw new UsageError(`Edit ${n}: ${error.message}`);
+        }
+        const bits = [
+          op.margin ?? op.margins ? `margins ${op.margin ?? op.margins}cm` : null,
+          op.paper ?? op.size,
+          op.orientation ?? op.orient,
+        ].filter(Boolean);
+        report.push({ op: op.op, summary: `Page setup: ${bits.join(", ") || "updated"}` });
+        break;
+      }
+      case "format_text": {
+        if (!op.find)
+          throw new UsageError(`Edit ${n}: format_text needs "find", the exact words to style.`);
+        const style = styleFrom(op);
+        if (!hasStyle(style))
+          throw new UsageError(
+            `Edit ${n}: format_text needs a colour, highlight, font, bold, italic, underline, size, spacing, align or fill.`,
+          );
+        const formatted = formatWordDocument(doc.xml, String(op.find), style, op.all !== false);
+        if (!formatted.count)
+          throw new UsageError(
+            `Edit ${n}: text not found: ${JSON.stringify(op.find)}. Run "ocsc-word read" to see the exact wording.`,
+          );
+        doc.xml = formatted.xml;
+        report.push({
+          op: op.op,
+          changed: formatted.count,
+          summary: `Styled "${clip(op.find)}" as ${stylePhrase(style)} (${formatted.count}×)`,
+        });
+        break;
+      }
       case "replace_image": {
         const source = op.image ?? op.path;
         if (typeof source !== "string" || !source.trim())
@@ -2463,7 +2499,7 @@ async function cmdEdit(o) {
       }
       default:
         throw new UsageError(
-          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, fill_fields, append, insert_after_heading, add_to_section, replace_section, delete_section, replace_paragraphs or replace_image.`,
+          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, format_text, page_setup, fill_fields, append, insert_after_heading, add_to_section, replace_section, delete_section, replace_paragraphs or replace_image.`,
         );
     }
   }

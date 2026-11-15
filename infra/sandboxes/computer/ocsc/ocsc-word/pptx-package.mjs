@@ -8,6 +8,16 @@
  */
 import { basename, dirname, posix } from "node:path";
 import JSZip from "jszip";
+import {
+  fillPptxSlide,
+  formatPptxShape,
+  formatPptxXml,
+  hasStyle,
+  placePptxShape,
+  removePptxShape,
+  styleFrom,
+  stylePhrase,
+} from "./format-edits.mjs";
 
 export const NS_R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 export const REL = {
@@ -893,6 +903,85 @@ export async function applyEdits(
         );
         break;
       }
+      case "format_text": {
+        const find = String(edit.find ?? "");
+        if (!find) throw new Error(`${label}: "find" is required.`);
+        const style = styleFrom(edit);
+        if (!hasStyle(style))
+          throw new Error(`${label}: format_text needs a colour, bold, italic, underline, size or align.`);
+        const targets = edit.slide === undefined ? list : [slideAt(edit.slide)];
+        let total = 0;
+        for (const slide of targets) {
+          const xml = (await deck.text(slide.part)) ?? "";
+          const result = formatPptxXml(xml, find, style, edit.all !== false);
+          if (result.count === 0) continue;
+          deck.write(slide.part, result.xml);
+          total += result.count;
+          note(slide.part, `Styled "${short(find)}" as ${stylePhrase(style)}.`);
+        }
+        if (total === 0)
+          throw new Error(
+            `${label}: "${short(find)}" was not found${edit.slide ? ` on slide ${edit.slide}` : ""}. Copy the exact words from ocsc-pptx read.`,
+          );
+        summary.push(`Styled "${short(find)}" as ${stylePhrase(style)} (${total} place${total === 1 ? "" : "s"}).`);
+        break;
+      }
+      case "format_shape": {
+        const slide = slideAt(edit.slide);
+        const style = styleFrom(edit);
+        if (!style.fill && !style.color && style.bold == null && !style.size)
+          throw new Error(`${label}: format_shape needs a fill, colour, bold or size.`);
+        const xml = (await deck.text(slide.part)) ?? "";
+        const result = formatPptxShape(xml, edit.shape, style);
+        if (!result.found)
+          throw new Error(
+            `${label}: slide ${edit.slide} has no shape ${edit.shape}. Use a shape number from ocsc-pptx read.`,
+          );
+        deck.write(slide.part, result.xml);
+        note(slide.part, `Styled shape ${edit.shape} as ${stylePhrase(style)}.`);
+        summary.push(`Styled shape ${edit.shape} on slide ${list.indexOf(slide) + 1} as ${stylePhrase(style)}.`);
+        break;
+      }
+      case "place_shape": {
+        const slide = slideAt(edit.slide);
+        const box = {
+          x: edit.x,
+          y: edit.y,
+          w: edit.w ?? edit.width,
+          h: edit.h ?? edit.height,
+        };
+        if (box.x == null && box.y == null && box.w == null && box.h == null)
+          throw new Error(`${label}: place_shape needs x, y, w or h in centimetres.`);
+        const xml = (await deck.text(slide.part)) ?? "";
+        const result = placePptxShape(xml, edit.shape, box);
+        if (!result.found)
+          throw new Error(`${label}: slide ${edit.slide} has no shape ${edit.shape}. Use a shape number from ocsc-pptx read.`);
+        deck.write(slide.part, result.xml);
+        note(slide.part, `Moved shape ${edit.shape}.`);
+        summary.push(`Moved shape ${edit.shape} on slide ${list.indexOf(slide) + 1}.`);
+        break;
+      }
+      case "remove_shape": {
+        const slide = slideAt(edit.slide);
+        const xml = (await deck.text(slide.part)) ?? "";
+        const result = removePptxShape(xml, edit.shape);
+        if (!result.found)
+          throw new Error(`${label}: slide ${edit.slide} has no shape ${edit.shape}. Use a shape number from ocsc-pptx read.`);
+        deck.write(slide.part, result.xml);
+        note(slide.part, `Removed shape ${edit.shape}.`);
+        summary.push(`Removed shape ${edit.shape} on slide ${list.indexOf(slide) + 1}.`);
+        break;
+      }
+      case "slide_background": {
+        const slide = slideAt(edit.slide);
+        const colour = edit.fill ?? edit.color ?? edit.colour;
+        if (!colour) throw new Error(`${label}: slide_background needs a fill colour.`);
+        const xml = (await deck.text(slide.part)) ?? "";
+        deck.write(slide.part, fillPptxSlide(xml, colour));
+        note(slide.part, `Set the slide background to ${colour}.`);
+        summary.push(`Set the background of slide ${list.indexOf(slide) + 1} to ${colour}.`);
+        break;
+      }
       case "set_text":
       case "title": {
         const slide = slideAt(edit.slide);
@@ -995,7 +1084,7 @@ export async function applyEdits(
       }
       default:
         throw new Error(
-          `${label}: op must be replace_text, set_text, title, notes, replace_image, insert, replace, duplicate, remove or move.`,
+          `${label}: op must be replace_text, format_text, format_shape, place_shape, remove_shape, slide_background, set_text, title, notes, replace_image, insert, replace, duplicate, remove or move.`,
         );
     }
   }

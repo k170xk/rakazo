@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fakeAgentState = vi.hoisted(() => ({
   options: ["Berlin", "Seoul", "Toronto"],
+  detail: undefined as string | undefined,
   tools: [] as Array<{
     name: string;
     execute: (toolCallId: string, params: Record<string, unknown>) => Promise<unknown>;
@@ -27,6 +28,7 @@ vi.mock("@earendil-works/pi-agent-core", () => ({
       await askUser.execute("call-choice-1", {
         question: "Which city should I use?",
         options: fakeAgentState.options,
+        ...(fakeAgentState.detail === undefined ? {} : { detail: fakeAgentState.detail }),
       });
     }
 
@@ -94,6 +96,7 @@ describe("Pi choice asks", () => {
   beforeEach(() => {
     fakeAgentState.tools = [];
     fakeAgentState.options = ["Berlin", "Seoul", "Toronto"];
+    fakeAgentState.detail = undefined;
   });
 
   it("emits a tappable ask and stops without a finished-work fallback", async () => {
@@ -114,6 +117,35 @@ describe("Pi choice asks", () => {
     expect(
       events.some((event) => event.type === "text" && event.text.includes("I finished the work.")),
     ).toBe(false);
+  });
+
+  it("shows the facts behind the question as labelled lines on the card", async () => {
+    fakeAgentState.detail = "  Ground floor: FFL +0.000, 3.600 to next\nFirst floor: FFL +3.600\n";
+    const runtime = new PiAgentRuntime();
+    const events: AgentRuntimeEvent[] = [];
+
+    for await (const event of runtime.run(runRequest, runContext)) events.push(event);
+
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        type: "ask",
+        text: "Which city should I use?",
+        detail: "Ground floor: FFL +0.000, 3.600 to next\nFirst floor: FFL +3.600",
+        detailFormat: "text",
+      }),
+    );
+  });
+
+  it("leaves the card without detail when the detail is blank", async () => {
+    fakeAgentState.detail = "   ";
+    const runtime = new PiAgentRuntime();
+    const events: AgentRuntimeEvent[] = [];
+
+    for await (const event of runtime.run(runRequest, runContext)) events.push(event);
+
+    const ask = events.find((event) => event.type === "ask");
+    expect(ask).toBeDefined();
+    expect(ask && "detail" in ask).toBe(false);
   });
 
   it("rejects an empty choice set before emitting an ask", async () => {

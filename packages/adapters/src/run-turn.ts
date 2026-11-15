@@ -413,6 +413,7 @@ async function pauseForAnswer(ctx: RunContext, event: RuntimeEvent<"ask">) {
         kind: "ask",
         text: safeText,
         detail: safeDetail,
+        ...(safeDetail && event.detailFormat ? { detailFormat: event.detailFormat } : {}),
         status: "pending",
         ...(event.appScope ? { appScope: true as const } : {}),
         actions: safeActions,

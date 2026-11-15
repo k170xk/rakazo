@@ -4,6 +4,7 @@
  * browser so a person watches every markup, with its tools callable from here.
  *
  *   ocsc-pdf-studio open <file.pdf> [--out <file.pdf>] [--discard]
+ *   ocsc-pdf-studio new <file.pdf> [--size A0..A4|<w>x<h> mm] [--portrait] [--pages <n>] [--discard]
  *   ocsc-pdf-studio tools [<tool>]
  *   ocsc-pdf-studio call <tool> ['{"json":"arguments"}' | @args.json]
  *   ocsc-pdf-studio save
@@ -479,6 +480,54 @@ function parseArgs(text) {
   }
 }
 
+const SHEETS_MM = { A0: [1189, 841], A1: [841, 594], A2: [594, 420], A3: [420, 297], A4: [297, 210] };
+
+/** A PDF of `pages` blank pages, `w` x `h` points each. */
+function blankPdf(w, h, pages = 1) {
+  const objs = ["<< /Type /Catalog /Pages 2 0 R >>"];
+  const kids = Array.from({ length: pages }, (_, i) => `${3 + i} 0 R`).join(" ");
+  objs.push(`<< /Type /Pages /Kids [${kids}] /Count ${pages} >>`);
+  for (let i = 0; i < pages; i++)
+    objs.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Resources << >> >>`);
+  let out = "%PDF-1.7\n";
+  const offsets = objs.map((body, i) => {
+    const at = out.length;
+    out += `${i + 1} 0 obj\n${body}\nendobj\n`;
+    return at;
+  });
+  const xref = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n`;
+  for (const at of offsets) out += `${String(at).padStart(10, "0")} 00000 n \n`;
+  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(out, "latin1");
+}
+
+/** Parses --size (A0..A4 or <width>x<height> in mm) and orientation into page points. */
+function sheetPoints(size = "A1", portrait = false) {
+  const named = SHEETS_MM[String(size).toUpperCase()];
+  const m = /^(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)$/i.exec(String(size));
+  if (!named && !m) throw new StudioError(`--size must be A0, A1, A2, A3, A4 or <width>x<height> in mm, not ${size}.`);
+  let [a, b] = named || [Number(m[1]), Number(m[2])];
+  if (named && portrait) [a, b] = [b, a];
+  const pt = (mm) => Math.round((mm * 72000) / 25.4) / 1000;
+  return { widthMm: a, heightMm: b, width: pt(a), height: pt(b) };
+}
+
+async function cmdNew(args) {
+  const size = option(args, "--size") || "A1";
+  const pages = Number(option(args, "--pages") || 1);
+  const portrait = flag(args, "--portrait");
+  if (!Number.isInteger(pages) || pages < 1 || pages > 200)
+    throw new StudioError("--pages must be a whole number from 1 to 200.");
+  const { full, rel } = workspacePath(args[0]);
+  if (existsSync(full)) throw new StudioError(`${args[0]} already exists: pick a new name, or open it.`);
+  const sheet = sheetPoints(size, portrait);
+  mkdirSync(dirname(full), { recursive: true });
+  writeFileSync(full, blankPdf(sheet.width, sheet.height, pages));
+  const opened = await cmdOpen([rel, "--out", rel, ...args.slice(1)]);
+  return { ...opened, created: rel, sheet: { size, ...sheet, pages }, note: "Saving writes back to this same file. Set up the border, title block and scale with pdf_sheet_setup." };
+}
+
 async function cmdCall(args) {
   const { frame } = await session();
   const name = toolName(args[0]);
@@ -545,6 +594,7 @@ async function cmdScreenshot(args) {
 
 const COMMANDS = {
   open: cmdOpen,
+  new: cmdNew,
   tools: cmdTools,
   call: cmdCall,
   save: cmdSave,

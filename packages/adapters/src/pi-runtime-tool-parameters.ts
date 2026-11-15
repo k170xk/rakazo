@@ -67,6 +67,7 @@ function builtinParameters(tool: ConnectorTool) {
   if (tool.name === "ask_user") {
     return Type.Object({
       question: Type.String({ maxLength: 240 }),
+      detail: Type.Optional(Type.String({ maxLength: 1500 })),
       options: Type.Array(Type.String({ minLength: 1, maxLength: 80 }), {
         minItems: 2,
         maxItems: 4,

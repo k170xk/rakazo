@@ -15,7 +15,9 @@
  * A cell is text, a number, true/false, null, { "formula": "..." } (no leading =) or { "date": "2026-10-22" }.
  *
  * edits.json: { "edits": [ { "op": "set", "sheet": "Summary", "cell": "B3", "value": 950 }, ... ] }
- *   ops: set, set_range, append_rows, insert_rows, delete_rows, add_sheet, delete_sheet, rename_sheet, set_column
+ *   ops: set, set_range, append_rows, insert_rows, delete_rows, insert_columns, delete_columns,
+ *        add_sheet, delete_sheet, rename_sheet, set_column, set_row, format_cells, merge, unmerge,
+ *        freeze, filter, sort, conditional_format, chart, sheet_color
  *
  * Every command prints one JSON object. `new` and `edit` include `link`, a markdown link the Bot
  * pastes into its reply so the person gets a download card.
@@ -24,12 +26,16 @@ import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
+import { finishWorkbook } from "./excel-workbook.mjs";
+import { applyExcelFormat, cellRange, colourOrThrow, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
 import { cellText, evaluateFormulas, showOnScreen } from "./screen.mjs";
 
 const WORKSPACE =
   process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
 const BRAND_GREEN = "FF77C043";
-const MAX_INPUT_BYTES = 40 * 1024 * 1024;
+// The large-document runner, with several times the memory, sets OCSC_LARGE_INPUT.
+const MAX_INPUT_MB = process.env.OCSC_LARGE_INPUT === "1" ? 600 : 40;
+const MAX_INPUT_BYTES = MAX_INPUT_MB * 1024 * 1024;
 
 class UsageError extends Error {}
 
@@ -89,11 +95,12 @@ async function openBook(p) {
   if (!/\.xls[xm]$/i.test(src.full))
     throw new UsageError("--in must be an .xlsx file.");
   if (statSync(src.full).size > MAX_INPUT_BYTES)
-    throw new UsageError(`${src.rel} is larger than 40 MB.`);
+    throw new UsageError(`${src.rel} is larger than ${MAX_INPUT_MB} MB.`);
   const book = new ExcelJS.Workbook();
   let lost = [];
+  let bytes;
   try {
-    const bytes = readFileSync(src.full);
+    bytes = readFileSync(src.full);
     await book.xlsx.load(bytes);
     lost = await unkeptParts(bytes);
   } catch (error) {
@@ -101,7 +108,7 @@ async function openBook(p) {
       `${src.rel} could not be opened as an Excel workbook: ${error.message}`,
     );
   }
-  return { src, book, lost };
+  return { src, book, lost, bytes };
 }
 
 /** Parts of a workbook that ExcelJS drops when it saves an edited copy. */
@@ -513,8 +520,28 @@ async function cmdRead(o) {
   };
 }
 
+function columnLetter(n) {
+  let s = "";
+  let x = n;
+  while (x > 0) {
+    const m = (x - 1) % 26;
+    s = String.fromCharCode(65 + m) + s;
+    x = Math.floor((x - 1) / 26);
+  }
+  return s;
+}
+
+function sortValue(value) {
+  if (value == null) return "";
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "object" && value.formula) return value.result ?? "";
+  if (typeof value === "object" && Array.isArray(value.richText))
+    return value.richText.map((part) => part.text).join("");
+  return value;
+}
+
 async function cmdEdit(o) {
-  const { src, book, lost } = await openBook(o.in);
+  const { src, book, lost, bytes } = await openBook(o.in);
   const spec = readSpec(o.spec);
   const edits = Array.isArray(spec) ? spec : Array.isArray(spec.edits) ? spec.edits : null;
   if (!edits?.length)
@@ -522,6 +549,7 @@ async function cmdEdit(o) {
       'The spec needs "edits": [ { "op": "set", "sheet": "...", "cell": "B4", "value": 1 } ].',
     );
   const report = [];
+  const charts = [];
   edits.forEach((e, index) => {
     const where = `Edit ${index + 1} (${e?.op})`;
     switch (e?.op) {
@@ -641,10 +669,53 @@ async function cmdEdit(o) {
         sheet.name = name;
         break;
       }
+      case "format_cells": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const style = styleFrom(e);
+        if (!hasStyle(style))
+          throw new UsageError(
+            `${where}: format_cells needs a colour, fill, bold, italic, underline, size, align or border.`,
+          );
+        const area = cellRange(e.range || e.cell);
+        if (!area)
+          throw new UsageError(
+            `${where}: range must be a cell like "B4" or a block like "A1:D1".`,
+          );
+        let n = 0;
+        for (let row = area.r1; row <= area.r2; row += 1) {
+          for (let col = Math.min(area.c1, area.c2); col <= Math.max(area.c1, area.c2); col += 1) {
+            applyExcelFormat(sheet.getRow(row).getCell(col), style);
+            n += 1;
+          }
+        }
+        report.push(
+          `${sheet.name}!${e.range || e.cell}: ${n} cell(s) styled as ${stylePhrase(style)}`,
+        );
+        break;
+      }
+      case "merge": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const area = String(e.range || "");
+        if (!cellRange(area) || !area.includes(":"))
+          throw new UsageError(`${where}: range must be a block like "A1:C1".`);
+        sheet.mergeCells(area.replace(/\$/g, ""));
+        report.push(`${sheet.name}!${area} merged`);
+        break;
+      }
+      case "unmerge": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const area = String(e.range || "");
+        if (!cellRange(area))
+          throw new UsageError(`${where}: range must be a cell or block like "A1:C1".`);
+        sheet.unMergeCells(area.replace(/\$/g, ""));
+        report.push(`${sheet.name}!${area} unmerged`);
+        break;
+      }
       case "set_column": {
         const sheet = sheetOf(book, e.sheet, where);
         const column = sheet.getColumn(columnIndex(e.column, where));
         if (e.width) column.width = Number(e.width);
+        if (e.hidden != null) column.hidden = Boolean(e.hidden);
         if (e.format) {
           column.eachCell({ includeEmpty: false }, (cell, row) => {
             if (row > 1 || typeof cell.value === "number")
@@ -658,19 +729,176 @@ async function cmdEdit(o) {
         report.push(`${sheet.name} column ${column.letter} updated`);
         break;
       }
+      case "set_row": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const rowNo = Number(e.row);
+        if (!Number.isInteger(rowNo) || rowNo < 1)
+          throw new UsageError(`${where}: row must be a row number.`);
+        const row = sheet.getRow(rowNo);
+        if (e.height) row.height = Number(e.height);
+        if (e.hidden != null) row.hidden = Boolean(e.hidden);
+        report.push(`${sheet.name} row ${rowNo} updated`);
+        break;
+      }
+      case "insert_columns":
+      case "delete_columns": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const at = columnIndex(e.at ?? e.column, where);
+        const count = Number.isInteger(e.count) && e.count > 0 ? e.count : 1;
+        if (e.op === "insert_columns") sheet.spliceColumns(at, 0, ...Array.from({ length: count }, () => []));
+        else sheet.spliceColumns(at, count);
+        report.push(
+          `${sheet.name}: ${count} column(s) ${e.op === "insert_columns" ? "inserted at" : "removed from"} ${columnLetter(at)}`,
+        );
+        break;
+      }
+      case "freeze": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const rows = Number(e.rows ?? e.row ?? 0);
+        const columns = Number(e.columns ?? e.cols ?? 0);
+        if (rows < 0 || columns < 0)
+          throw new UsageError(`${where}: freeze rows and columns must be zero or more.`);
+        const top = `${columnLetter(columns + 1)}${rows + 1}`;
+        sheet.views = [
+          rows || columns
+            ? { state: "frozen", xSplit: columns, ySplit: rows, topLeftCell: top, activeCell: top }
+            : { state: "normal" },
+        ];
+        report.push(
+          rows || columns
+            ? `${sheet.name}: froze ${rows} row(s) and ${columns} column(s)`
+            : `${sheet.name}: unfroze the panes`,
+        );
+        break;
+      }
+      case "filter": {
+        const sheet = sheetOf(book, e.sheet, where);
+        if (e.clear) {
+          sheet.autoFilter = null;
+          report.push(`${sheet.name}: filter removed`);
+          break;
+        }
+        if (!cellRange(e.range) || !String(e.range).includes(":"))
+          throw new UsageError(`${where}: range must be a block like "A1:D20".`);
+        sheet.autoFilter = String(e.range).replace(/\$/g, "");
+        report.push(`${sheet.name}: filter on ${e.range}`);
+        break;
+      }
+      case "sort": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const area = cellRange(e.range);
+        if (!area) throw new UsageError(`${where}: range must be a block like "A1:D20".`);
+        const key = columnIndex(e.column ?? e.by, where);
+        const header = e.header !== false;
+        const start = header ? area.r1 + 1 : area.r1;
+        const order = String(e.order || "asc").toLowerCase() === "desc" ? -1 : 1;
+        const snaps = [];
+        for (let row = start; row <= area.r2; row += 1) {
+          const cells = [];
+          for (let col = Math.min(area.c1, area.c2); col <= Math.max(area.c1, area.c2); col += 1) {
+            const cell = sheet.getRow(row).getCell(col);
+            cells.push({
+              value: cell.value,
+              style: JSON.parse(JSON.stringify(cell.style ?? {})),
+              numFmt: cell.numFmt,
+            });
+          }
+          snaps.push(cells);
+        }
+        const keyAt = key - Math.min(area.c1, area.c2);
+        snaps.sort((a, b) => {
+          const left = sortValue(a[keyAt]?.value);
+          const right = sortValue(b[keyAt]?.value);
+          if (left === right) return 0;
+          return (left > right ? 1 : -1) * order;
+        });
+        snaps.forEach((cells, r) => {
+          cells.forEach((snap, c) => {
+            const cell = sheet.getRow(start + r).getCell(Math.min(area.c1, area.c2) + c);
+            cell.value = snap.value;
+            cell.style = snap.style;
+            if (snap.numFmt) cell.numFmt = snap.numFmt;
+          });
+        });
+        report.push(`${sheet.name}!${e.range} sorted by ${columnLetter(key)}`);
+        break;
+      }
+      case "conditional_format": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const area = String(e.range || "");
+        if (!cellRange(area)) throw new UsageError(`${where}: range must be a block like "C2:C20".`);
+        const kind = String(e.rule || e.type || "greater").toLowerCase().replace(/\s+/g, "_");
+        const fill = `FF${colourOrThrow(e.fill || "green", "Fill")}`;
+        const font = e.color ? { color: { argb: `FF${colourOrThrow(e.color, "Colour")}` } } : undefined;
+        const paint = {
+          fill: { type: "pattern", pattern: "solid", bgColor: { argb: fill } },
+          ...(font ? { font } : {}),
+        };
+        let rule;
+        if (kind === "color_scale" || kind === "colours" || kind === "colors") {
+          rule = {
+            type: "colorScale",
+            cfvo: [{ type: "min" }, { type: "percentile", value: 50 }, { type: "max" }],
+            color: [{ argb: "FFF8696B" }, { argb: "FFFFEB84" }, { argb: "FF63BE7B" }],
+          };
+        } else if (kind === "data_bar" || kind === "databar") {
+          rule = { type: "dataBar", cfvo: [{ type: "min" }, { type: "max" }], color: { argb: fill } };
+        } else if (kind === "contains") {
+          const text = String(e.value ?? "").replace(/"/g, '""');
+          rule = {
+            type: "containsText",
+            operator: "containsText",
+            text: String(e.value ?? ""),
+            formulae: [`NOT(ISERROR(SEARCH("${text}",A1)))`],
+            style: paint,
+          };
+        } else {
+          const operators = { greater: "greaterThan", less: "lessThan", equal: "equal", between: "between" };
+          const operator = operators[kind];
+          if (!operator)
+            throw new UsageError(
+              `${where}: rule must be greater, less, equal, between, contains, color_scale or data_bar.`,
+            );
+          const formulae = [String(e.value ?? "")];
+          if (kind === "between") formulae.push(String(e.value2 ?? e.to ?? ""));
+          rule = { type: "cellIs", operator, formulae, style: paint };
+        }
+        sheet.addConditionalFormatting({ ref: area.replace(/\$/g, ""), rules: [rule] });
+        report.push(`${sheet.name}!${area}: ${kind} conditional format`);
+        break;
+      }
+      case "chart": {
+        const sheet = sheetOf(book, e.sheet, where);
+        const type = String(e.type || e.chart || "column").toLowerCase();
+        if (!cellRange(e.range))
+          throw new UsageError(`${where}: range must be a block like "A1:B6", categories in the first column.`);
+        charts.push({ sheet: sheet.name, type, range: String(e.range), title: e.title, at: e.at });
+        report.push(`${sheet.name}: ${type} chart of ${e.range}`);
+        break;
+      }
+      case "sheet_color":
+      case "sheet_colour": {
+        const sheet = sheetOf(book, e.sheet, where);
+        sheet.properties.tabColor = { argb: `FF${colourOrThrow(e.color ?? e.colour ?? e.fill, "Colour")}` };
+        report.push(`${sheet.name} tab recoloured`);
+        break;
+      }
       default:
         throw new UsageError(
-          `${where}: op must be set, set_range, append_rows, insert_rows, delete_rows, add_sheet, delete_sheet, rename_sheet or set_column.`,
+          `${where}: op must be set, set_range, format_cells, merge, unmerge, append_rows, insert_rows, delete_rows, insert_columns, delete_columns, add_sheet, delete_sheet, rename_sheet, set_column, set_row, freeze, filter, sort, conditional_format, chart or sheet_color.`,
         );
     }
   });
   const out = o.out ? outFile(o.out) : src;
   const formulas = await save(book, out);
+  const finished = await finishWorkbook(bytes, out.full, charts);
+  const stillLost = lost.filter((item) => !finished.kept.some((kept) => item.includes(kept)));
   return {
     ok: true,
     edits: report,
     ...describe(formulas),
-    ...(lost.length ? { warning: lostWarning(lost) } : {}),
+    ...(finished.kept.length ? { kept: `Kept ${finished.kept.join(", ")} from the original workbook.` } : {}),
+    ...(stillLost.length ? { warning: lostWarning(stillLost) } : {}),
     ...downloadLink(out.rel),
   };
 }
@@ -682,7 +910,14 @@ read lists non-empty cells by row and column letter; a long sheet is read in par
 edits.json: {"edits":[{"op":"set","sheet":"Summary","cell":"B3","value":950}]}
 ops: set {sheet,cell,value,format?}, set_range {sheet,start,values:[[...]]}, append_rows {sheet,rows:[[...]]},
 insert_rows {sheet,at,rows:[[...]]}, delete_rows {sheet,from,count?}, add_sheet {name,columns?,rows?},
-delete_sheet {sheet}, rename_sheet {sheet,name}, set_column {sheet,column,width?,format?}
+delete_sheet {sheet}, rename_sheet {sheet,name}, set_column {sheet,column,width?,format?},
+format_cells {sheet,range|cell,color?,fill?,bold?,italic?,underline?,strike?,size?,font?,align?,wrap?,border?},
+merge {sheet,range}, unmerge {sheet,range}, set_row {sheet,row,height?,hidden?},
+freeze {sheet,rows,columns}, filter {sheet,range} or {clear:true}, sort {sheet,range,column,order?},
+conditional_format {sheet,range,rule,value?,fill?,color?}, chart {sheet,type,range,title?,at?}, sheet_color {sheet,color}
+Chart types are column, bar, line and pie. The first column of the range is the categories and the first row the series names.
+Colours are a hex such as #76BF43 or a name: black, white, red, green (OCSC green), blue, navy, yellow, orange, grey, purple, pink, teal, brand. "colour" is accepted as "color".
+An edit keeps charts, pivot tables, slicers and macros that were already in the file. A new pivot table or a new macro cannot be written.
 A value is text, a number, true/false, null, {"formula":"SUM(B2:B9)"} or {"date":"2026-10-22"}.`;
 
 async function main() {
