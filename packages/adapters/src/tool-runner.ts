@@ -224,14 +224,70 @@ export async function listFolderFiles(root: string, under: string, maxEntries = 
 const sameFile = (a: FolderFile | undefined, b: FolderFile) =>
   a !== undefined && a.size === b.size && a.mtimeMs === b.mtimeMs;
 
+type SlotStats = { slots: number; running: number; queued: number };
+
+export interface ToolRunnerStatus extends SlotStats {
+  video?: SlotStats;
+  /** Absent from runners older than overflow; such a runner is never treated as quiet. */
+  host?: { load1: number; cpus: number; memAvailableBytes: number | null };
+}
+
+/** An overflow runner takes work only while its server is this quiet. */
+export const OVERFLOW_MAX_LOAD_PER_CPU = 0.5;
+export const OVERFLOW_MIN_AVAILABLE_BYTES = 8 * 1024 ** 3;
+const OVERFLOW_STATUS_TIMEOUT_MS = 1500;
+
+const hasFreeSlot = (stats: SlotStats | undefined) =>
+  stats !== undefined && stats.running < stats.slots && stats.queued === 0;
+
+function freeFor(status: ToolRunnerStatus, program: string) {
+  return hasFreeSlot(status) && (program !== "video" || hasFreeSlot(status.video));
+}
+
+export function overflowRunnerQuiet(status: ToolRunnerStatus, program: string) {
+  const host = status.host;
+  return (
+    freeFor(status, program) &&
+    host !== undefined &&
+    host.cpus > 0 &&
+    host.load1 / host.cpus < OVERFLOW_MAX_LOAD_PER_CPU &&
+    host.memAvailableBytes !== null &&
+    host.memAvailableBytes >= OVERFLOW_MIN_AVAILABLE_BYTES
+  );
+}
+
 /** Calls the tool runners: the supervisor's /tool-runs endpoint on this server or another. */
 export class ToolRunnerClient {
   constructor(
     private readonly url: string,
     private readonly token: string,
-    /** Runners on another server work on a copy: send changed files first, fetch results after. */
-    private readonly options: { synced?: boolean } = {},
+    private readonly options: {
+      /** Runners on another server work on a copy: send changed files first, fetch results after. */
+      synced?: boolean;
+      /**
+       * Runners on other servers used only while every slot here is taken and their own server
+       * is quiet; a command otherwise waits here. Each command runs start to finish on one runner.
+       */
+      overflow?: readonly ToolRunnerClient[];
+    } = {},
   ) {}
+
+  private async pick(program: string): Promise<ToolRunnerClient> {
+    const overflow = this.options.overflow ?? [];
+    if (overflow.length === 0) return this;
+    const here = await this.status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS)).catch(
+      () => undefined,
+    );
+    // A runner here that cannot report still takes the command, as it would without overflow.
+    if (!here || freeFor(here, program)) return this;
+    for (const runner of overflow) {
+      const there = await runner
+        .status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS))
+        .catch(() => undefined);
+      if (there && overflowRunnerQuiet(there, program)) return runner;
+    }
+    return this;
+  }
 
   private endpoint(route: string, query?: Record<string, string>) {
     const search = query ? `?${new URLSearchParams(query)}` : "";
@@ -259,7 +315,7 @@ export class ToolRunnerClient {
       signal: signal ?? AbortSignal.timeout(5000),
     });
     if (!res.ok) throw new Error(`tool runner status failed: ${res.status}`);
-    return (await res.json()) as { slots: number; running: number; queued: number };
+    return (await res.json()) as ToolRunnerStatus;
   }
 
   private async remoteFiles(workspace: ToolRunnerWorkspace, signal: AbortSignal) {
@@ -384,8 +440,14 @@ export class ToolRunnerClient {
     timeoutMs: number;
     signal: AbortSignal;
     onQueued?: (ahead: number) => void;
+    /** A queued command got its runner. */
+    onStarted?: () => void;
     onOutput?: (snapshot: { stdout: string; stderr: string }) => void;
   }): Promise<ToolRunOutput> {
+    return (await this.pick(input.program)).runHere(input);
+  }
+
+  private async runHere(input: Parameters<ToolRunnerClient["run"]>[0]): Promise<ToolRunOutput> {
     const synced = this.options.synced === true;
     const sent = synced ? await this.sendFolder(input.workspace, input.signal) : undefined;
     const res = await fetch(this.endpoint("/tool-runs/run"), {
@@ -421,6 +483,7 @@ export class ToolRunnerClient {
       else if (event.type === "stderr") result.stderr += event.data ?? "";
       else if (event.type === "exit") result.code = event.code ?? 1;
       else if (event.type === "queued") input.onQueued?.(event.ahead ?? 0);
+      else if (event.type === "started") input.onStarted?.();
       if (event.type === "stdout" || event.type === "stderr") {
         input.onOutput?.({ stdout: result.stdout, stderr: result.stderr });
       }
@@ -451,6 +514,14 @@ export function toolRunnerFromEnv(
   const url = remote || (sandboxProvider === "docker" ? supervisor.url : "");
   const token = env.RAKAZO_TOOL_RUNNER_TOKEN || supervisor.token;
   if (!url || !token) return undefined;
+  const overflow = (env.RAKAZO_TOOL_RUNNER_OVERFLOW_URLS ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry && entry !== url)
+    .map((entry) => new ToolRunnerClient(entry, token, { synced: true }));
   // The stack's own supervisor shares DATA_DIR, so only a runner elsewhere is sent the folder.
-  return new ToolRunnerClient(url, token, { synced: Boolean(remote) && remote !== supervisor.url });
+  return new ToolRunnerClient(url, token, {
+    synced: Boolean(remote) && remote !== supervisor.url,
+    ...(overflow.length > 0 ? { overflow } : {}),
+  });
 }

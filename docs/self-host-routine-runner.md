@@ -73,3 +73,47 @@ stack still runs routines too, so the runner can be added and checked without do
 remove the setting and recreate them; stopping the runner alone leaves routine runs queued.
 
 Deploy each new worker image to the runner as well as the main stack, so both run the same release.
+
+## Overflow document runners
+
+The compose file also starts `runner`, a document runner on the routine server's private address
+(`RAKAZO_RUNNER_BIND`, published on port 7091). It works on copies of the folders sent with each
+command and keeps nothing of the stack's `DATA_DIR`. Set its size with `RAKAZO_OVERFLOW_RUNNER_SLOTS`
+(default 8) and `RAKAZO_OVERFLOW_RUNNER_VIDEO_SLOTS` (default 1).
+
+List such runners on the main stack, comma-separated:
+
+```sh
+RAKAZO_TOOL_RUNNER_OVERFLOW_URLS=http://10.77.0.3:7091
+```
+
+A command goes to an overflow runner only while every slot of the stack's own runner is taken and
+that runner's server is quiet (load under half its cores and at least 8 GB of memory free);
+otherwise it waits its turn on the stack, as without overflow. Each command runs start to finish on
+one runner. Routines on the routine server use their own runner the same way. Only the stack may
+open the published port (`runner-guard.sh`), and documents there get the same restricted network as
+on the stack (`restrict-computer-egress.sh`).
+
+## Keeping routine servers up to date
+
+`routine-push.sh`, installed on the stack as `/usr/local/sbin/rakazo-routine-push` and run every two
+minutes by `rakazo-routine-push.timer`, sends each server in `/etc/rakazo/routine-servers` only what
+changed: the worker, runner and computer images, the filtered `.env` and the two compose files.
+Each server runs `routine-receive.sh` as the forced command of the stack's push key, so that key
+can do nothing else. `routine-guard.sh` lets only listed servers reach the NFS share and the
+database and runner relay.
+
+## Adding a routine server
+
+From a machine with root SSH to both servers, with a free private address:
+
+```sh
+infra/compose/add-routine-server.sh --stack <stack IP> --stack-key <key> \
+  --server <new server IP> --server-key <key> --private 10.77.0.4 [--overflow]
+```
+
+It sets up WireGuard, the NFS export and mount, the push key, both firewalls and the push target,
+then starts the first push in the background (about 16 GB of images). Once it has run, the new
+worker takes routines from the same queue. `--overflow` also lists its runner for chat documents
+and recreates the stack's `api` and `worker`, so run it when no replies are in progress. Every step
+is safe to repeat.

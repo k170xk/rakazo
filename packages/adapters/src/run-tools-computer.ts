@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
 import type { ComputerCommand } from "@rakazo/contracts";
 import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
-import { redactSecrets, sandboxCommandTimeoutMs } from "@rakazo/core";
+import { isBackgroundRunTrigger, redactSecrets, sandboxCommandTimeoutMs } from "@rakazo/core";
 import { RunHistoryWriteError } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { redactShellStreams } from "./agent-environment.js";
@@ -59,6 +59,7 @@ import {
   withDefaultWordTemplate,
   wordRebuildRefusal,
 } from "./ocsc-tool.js";
+import { describeToolActivity } from "./pi-runtime-tools.js";
 import { purchaseApprovalOf } from "./purchase-gate.js";
 import { resolvePurchaseCardFill, resolvePurchasePayTokenFill } from "./purchase-service.js";
 import type { RunContext, RunToolRunner } from "./run-context.js";
@@ -334,6 +335,35 @@ async function keepDocumentDraft(
 }
 
 /**
+ * The chat's working line ("Working…"), which shows even with Activity switched off. Nobody
+ * watches a routine or background run, and the bot's own note keeps the line until it writes.
+ */
+function showWorkingLine(ctx: RunContext, text: string) {
+  const { deps, run, runId, bot, thread } = ctx;
+  if (
+    run.trigger === "routine" ||
+    isBackgroundRunTrigger(run.trigger) ||
+    ctx.state.reply.narrationStatusShowing
+  ) {
+    return;
+  }
+  void deps.events
+    .append({
+      spaceId: run.spaceId,
+      threadId: thread.id,
+      botId: bot.id,
+      type: "thread.progress",
+      runId,
+      payload: { text: redactSecrets(text, ctx.secrets), activity: true },
+    })
+    .catch(() => undefined);
+}
+
+function runnerQueueLine(ahead: number) {
+  return `Waiting for a document runner (${ahead} ${ahead === 1 ? "command" : "commands"} ahead)…`;
+}
+
+/**
  * Runs one OCSC document command on a tool runner, which sees only this run's folder,
  * showing it in Activity like a command on the computer.
  */
@@ -376,12 +406,11 @@ async function runOcscOnRunner(
       author,
       timeoutMs: program === "video" ? VIDEO_RUN_TIMEOUT_MS : sandboxCommandTimeoutMs(),
       signal: ctx.context.signal,
-      onQueued: (ahead) =>
-        void publish(
-          `Waiting for a document runner (${ahead} ${ahead === 1 ? "command" : "commands"} ahead)…\n`,
-          "running",
-          null,
-        ),
+      onQueued: (ahead) => {
+        void publish(`${runnerQueueLine(ahead)}\n`, "running", null);
+        showWorkingLine(ctx, runnerQueueLine(ahead));
+      },
+      onStarted: () => showWorkingLine(ctx, describeToolActivity("ocsc", { program, args })),
       onOutput: (snapshot) => {
         if (Date.now() - lastPublishedAt < 400) return;
         lastPublishedAt = Date.now();

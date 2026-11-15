@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
-import { chown, lstat, mkdir, open, readdir, rename, rm, unlink } from "node:fs/promises";
+import { chown, lstat, mkdir, open, readdir, readFile, rename, rm, unlink } from "node:fs/promises";
+import { availableParallelism, loadavg } from "node:os";
 import path from "node:path";
 import type Docker from "dockerode";
 import { z } from "zod";
@@ -85,6 +86,21 @@ function positiveInteger(name: string, fallback: string) {
     throw new Error(`${name} must be a positive integer`);
   }
   return value;
+}
+
+/**
+ * How busy this server is, so an app with several runners only overflows onto a quiet one.
+ * A container sees the host's load average and /proc/meminfo.
+ */
+export async function toolRunHostLoad(
+  readMeminfo: () => Promise<string> = () => readFile("/proc/meminfo", "utf8"),
+) {
+  const available = /^MemAvailable:\s+(\d+)\s+kB$/m.exec(await readMeminfo().catch(() => ""));
+  return {
+    load1: loadavg()[0] ?? 0,
+    cpus: availableParallelism(),
+    memAvailableBytes: available ? Number(available[1]) * 1024 : null,
+  };
 }
 
 export function toolRunSlots() {

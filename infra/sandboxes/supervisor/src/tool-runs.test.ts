@@ -20,6 +20,7 @@ import {
   sweepToolCache,
   toolRunContainerOptions,
   toolRunFileSchema,
+  toolRunHostLoad,
   toolRunLocalMount,
   toolRunRequestSchema,
   writeToolCacheFile,
@@ -56,6 +57,15 @@ describe("tool run requests", () => {
     expect(toolRunRequestSchema.safeParse({ ...valid, cwd: "../x" }).success).toBe(false);
     expect(toolRunRequestSchema.safeParse({ ...valid, program: "video" }).success).toBe(true);
     expect(toolRunRequestSchema.safeParse({ ...valid, program: "show" }).success).toBe(false);
+  });
+});
+
+describe("runner host load", () => {
+  it("reports available memory from meminfo, or null when it cannot be read", async () => {
+    const load = await toolRunHostLoad(async () => "MemTotal: 100 kB\nMemAvailable:   2048 kB\n");
+    expect(load.memAvailableBytes).toBe(2048 * 1024);
+    expect(load.cpus).toBeGreaterThan(0);
+    expect((await toolRunHostLoad(async () => "")).memAvailableBytes).toBeNull();
   });
 });
 

@@ -13,13 +13,37 @@ services:
     build: !reset null
     depends_on: !reset {}
     restart: unless-stopped
+    # This server has 32 GB and only overflow document runners beside it. The default heap
+    # stops new routines at about 4 GB, so an 08:00 wave would queue behind it.
+    command: ["node", "--max-old-space-size=16384", "--enable-source-maps", "dist/index.js"]
     environment:
       DATABASE_URL: postgres://rakazo_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD in .env}@${RAKAZO_STACK_HOST:?Set RAKAZO_STACK_HOST to the stack's private address}:${RAKAZO_STACK_DB_PORT:-5432}/${POSTGRES_DB:-rakazo}
       RAKAZO_RUN_POOL: routines
-      # Routines never reach a computer; documents go to the stack's tool runners.
+      # Routines never reach a computer; documents go to the stack's tool runners, and to this
+      # server's own runner only while those are all busy and this server is quiet.
       SANDBOX_PROVIDER: none
       SANDBOX_SUPERVISOR_URL: http://${RAKAZO_STACK_HOST}:${RAKAZO_STACK_RUNNER_PORT:-7091}
       RAKAZO_TOOL_RUNNER_URL: http://${RAKAZO_STACK_HOST}:${RAKAZO_STACK_RUNNER_PORT:-7091}
+      RAKAZO_TOOL_RUNNER_OVERFLOW_URLS: http://runner:7091
     volumes:
       # The stack's DATA_DIR, mounted on this server (for example over NFS on the private network).
       - ${RAKAZO_STACK_DATA_DIR:?Set RAKAZO_STACK_DATA_DIR to the stack's data directory mount}:/data
+
+  # Overflow document runner. It works on copies sent with each command, keeps nothing of the
+  # stack's data directory, and listens on this server's private address only.
+  runner:
+    extends:
+      file: docker-compose.yml
+      service: supervisor
+    image: ${RAKAZO_ROUTINE_RUNNER_SUPERVISOR_IMAGE:-rakazo-supervisor:latest}
+    build: !reset null
+    depends_on: !reset {}
+    restart: unless-stopped
+    environment:
+      RAKAZO_TOOL_RUNNER_SLOTS: ${RAKAZO_OVERFLOW_RUNNER_SLOTS:-8}
+      RAKAZO_TOOL_RUNNER_VIDEO_SLOTS: ${RAKAZO_OVERFLOW_RUNNER_VIDEO_SLOTS:-1}
+    ports:
+      - "${RAKAZO_RUNNER_BIND:?Set RAKAZO_RUNNER_BIND to this server's private address}:7091:7091"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../../runner-data:/data

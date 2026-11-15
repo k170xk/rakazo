@@ -6,11 +6,13 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { documentHomePath } from "./file-retention.js";
+import type { ToolRunnerStatus } from "./tool-runner.js";
 import {
   conversationFolderRefusal,
   ensureToolRunnerFolder,
   folderFiles,
   listFolderFiles,
+  overflowRunnerQuiet,
   TOOL_RUNNER_COMPUTER,
   toolRunnerFromEnv,
   toolRunnerWorkspace,
@@ -306,5 +308,148 @@ describe("tool runner configuration", () => {
     expect(
       synced({ RAKAZO_TOOL_RUNNER_URL: "https://runners.example", RAKAZO_TOOL_RUNNER_TOKEN: "t" }),
     ).toBe(true);
+  });
+});
+
+describe("overflow runners", () => {
+  type Fake = {
+    url: string;
+    calls: string[];
+    status: ToolRunnerStatus | "down";
+    close(): Promise<void>;
+  };
+  const quietHost = { load1: 0.4, cpus: 8, memAvailableBytes: 28 * 1024 ** 3 };
+  const fakes: Fake[] = [];
+
+  async function fakeRunner(status: ToolRunnerStatus | "down", events: object[] = []) {
+    const fake = { calls: [] as string[], status } as Fake;
+    const server = createServer(async (req, res) => {
+      for await (const _ of req);
+      const route = new URL(req.url ?? "", "http://runner").pathname;
+      fake.calls.push(route);
+      if (route === "/tool-runs/status") {
+        if (fake.status === "down") return void res.writeHead(503).end();
+        return void res.end(JSON.stringify(fake.status));
+      }
+      if (route === "/tool-runs/files/list") return void res.end(JSON.stringify({ files: [] }));
+      if (route === "/tool-runs/run") {
+        res.end(
+          [...events, { type: "exit", code: 0 }]
+            .map((event) => `${JSON.stringify(event)}\n`)
+            .join(""),
+        );
+      }
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    fake.url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    fake.close = () => new Promise<void>((resolve) => server.close(() => resolve()));
+    fakes.push(fake);
+    return fake;
+  }
+
+  afterEach(async () => {
+    await Promise.all(fakes.splice(0).map((fake) => fake.close()));
+  });
+
+  const full = { slots: 2, running: 2, queued: 3 };
+  const free = { slots: 2, running: 1, queued: 0 };
+
+  async function runOn(primary: Fake, overflow: Fake[], onStarted?: () => void) {
+    const workspace = toolRunnerWorkspace({
+      dataDir: data,
+      homePath: null,
+      mode: "team",
+      botId: "b1",
+      folder: "conversations/t1",
+    })!;
+    await ensureToolRunnerFolder(workspace);
+    const client = toolRunnerFromEnv(
+      {
+        RAKAZO_TOOL_RUNNER_URL: primary.url,
+        RAKAZO_TOOL_RUNNER_TOKEN: "t",
+        RAKAZO_TOOL_RUNNER_OVERFLOW_URLS: overflow.map((fake) => fake.url).join(", "),
+      },
+      "incus",
+      { url: primary.url, token: undefined },
+    )!;
+    return client.run({
+      workspace,
+      program: "word",
+      args: [],
+      owner: "u1",
+      timeoutMs: 1000,
+      signal: new AbortController().signal,
+      onStarted,
+    });
+  }
+
+  const ran = (fake: Fake) => fake.calls.includes("/tool-runs/run");
+
+  it("never asks for status when no overflow runner is set", async () => {
+    const primary = await fakeRunner(full);
+    await runOn(primary, []);
+    expect(primary.calls).toEqual(["/tool-runs/run"]);
+  });
+
+  it("stays on the main runner while it has a free slot", async () => {
+    const primary = await fakeRunner(free);
+    const spare = await fakeRunner({ ...free, host: quietHost });
+    await runOn(primary, [spare]);
+    expect(ran(primary)).toBe(true);
+    expect(spare.calls).toEqual([]);
+  });
+
+  it("overflows to a quiet runner when the main one is full, sending it the folder", async () => {
+    const primary = await fakeRunner(full);
+    const spare = await fakeRunner({ ...free, host: quietHost });
+    await runOn(primary, [spare]);
+    expect(ran(primary)).toBe(false);
+    expect(spare.calls).toEqual([
+      "/tool-runs/status",
+      "/tool-runs/files/list",
+      "/tool-runs/run",
+      "/tool-runs/files/list",
+    ]);
+  });
+
+  it("waits on the main runner when the overflow server is busy, full, old or down", async () => {
+    const busyHost = { ...quietHost, load1: 6 };
+    const lowMemory = { ...quietHost, memAvailableBytes: 2 * 1024 ** 3 };
+    for (const status of [
+      { ...free, host: busyHost },
+      { ...free, host: lowMemory },
+      { ...full, host: quietHost },
+      free,
+      "down",
+    ] as const) {
+      const primary = await fakeRunner(full);
+      const spare = await fakeRunner(status);
+      await runOn(primary, [spare]);
+      expect(ran(primary)).toBe(true);
+      expect(ran(spare)).toBe(false);
+    }
+  });
+
+  it("keeps the main runner when it cannot report its status", async () => {
+    const primary = await fakeRunner("down");
+    const spare = await fakeRunner({ ...free, host: quietHost });
+    await runOn(primary, [spare]);
+    expect(ran(primary)).toBe(true);
+    expect(spare.calls).toEqual([]);
+  });
+
+  it("tells the caller when a queued command gets its runner", async () => {
+    const primary = await fakeRunner(free, [{ type: "queued", ahead: 2 }, { type: "started" }]);
+    let started = 0;
+    await runOn(primary, [], () => {
+      started += 1;
+    });
+    expect(started).toBe(1);
+  });
+
+  it("needs a free video slot too before overflowing a video", () => {
+    const status = { ...free, host: quietHost, video: { slots: 1, running: 1, queued: 0 } };
+    expect(overflowRunnerQuiet(status, "word")).toBe(true);
+    expect(overflowRunnerQuiet(status, "video")).toBe(false);
   });
 });

@@ -125,6 +125,7 @@ import {
   toolRunFileDeleteSchema,
   toolRunFileListSchema,
   toolRunFileSchema,
+  toolRunHostLoad,
   toolRunLocalMount,
   toolRunRequestSchema,
   toolRunSlots,
@@ -608,8 +609,12 @@ const toolCacheSweep = setInterval(
 );
 toolCacheSweep.unref();
 
-app.get("/tool-runs/status", (c) =>
-  c.json({ ...toolRunSlotsShared.stats(), video: toolRunVideoSlotsShared.stats() }),
+app.get("/tool-runs/status", async (c) =>
+  c.json({
+    ...toolRunSlotsShared.stats(),
+    video: toolRunVideoSlotsShared.stats(),
+    host: await toolRunHostLoad(),
+  }),
 );
 
 app.post("/tool-runs/files/list", async (c) => {
@@ -694,7 +699,7 @@ app.post("/tool-runs/run", async (c) => {
       let closed = false;
       let sentBytes = 0;
       const send = (event: {
-        type: "stdout" | "stderr" | "exit" | "queued" | "ping";
+        type: "stdout" | "stderr" | "exit" | "queued" | "started" | "ping";
         data?: string;
         code?: number;
         ahead?: number;
@@ -736,14 +741,16 @@ app.post("/tool-runs/run", async (c) => {
             computerNetworkOwnerFor(dataDir, runtimeInfo),
           );
         }
+        let queued = false;
+        const onQueued = (ahead: number) => {
+          queued = true;
+          send({ type: "queued", ahead });
+        };
         if (request.program === "video") {
-          releaseVideo = await toolRunVideoSlotsShared.acquire(request.owner, abort, (ahead) =>
-            send({ type: "queued", ahead }),
-          );
+          releaseVideo = await toolRunVideoSlotsShared.acquire(request.owner, abort, onQueued);
         }
-        release = await toolRunSlotsShared.acquire(request.owner, abort, (ahead) =>
-          send({ type: "queued", ahead }),
-        );
+        release = await toolRunSlotsShared.acquire(request.owner, abort, onQueued);
+        if (queued) send({ type: "started" });
         container = await docker.createContainer(
           toolRunContainerOptions({
             name: `rakazo-tool-run-${randomUUID().slice(0, 12)}`,
