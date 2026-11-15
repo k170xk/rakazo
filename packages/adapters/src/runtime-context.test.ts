@@ -3,7 +3,7 @@ import type { AgentRunRequest } from "@rakazo/adapter-kit";
 import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
 import { getLogger } from "@rakazo/logging";
 import { describe, expect, it, vi } from "vitest";
-import { ContextBudgetError, ContextCacheTracker } from "./context-selection.js";
+import { ContextCacheTracker, IMAGE_LEFT_OUT_NOTE } from "./context-selection.js";
 import { createRuntimeContextPolicy } from "./runtime-context.js";
 
 const model = {
@@ -772,7 +772,7 @@ describe("runtime context policy", () => {
     expect(prepared.messages[0]).toBe(system);
     expect(prepared.messages[1]?.content).toBe(summary);
   });
-  it("allows bounded images inside the real model window and rejects a genuinely tiny window", () => {
+  it("allows bounded images inside the real model window and leaves one out of a tiny window", () => {
     const { request, context } = fixture(1);
     context.messages[1] = {
       role: "user",
@@ -785,9 +785,12 @@ describe("runtime context policy", () => {
     const roomy = { ...model, contextWindow: 160000 };
     const policy = createRuntimeContextPolicy({ ...request, contextStrategy: "retrieval" });
     expect(policy.prepareContext(context, roomy).messages.at(-1)).toEqual(context.messages.at(-1));
-    expect(() => policy.prepareContext(context, { ...model, contextWindow: 16000 })).toThrow(
-      ContextBudgetError,
-    );
+    expect(
+      policy.prepareContext(context, { ...model, contextWindow: 16000 }).messages.at(-1)?.content,
+    ).toEqual([
+      { type: "text", text: request.prompt },
+      { type: "text", text: IMAGE_LEFT_OUT_NOTE },
+    ]);
   });
   it("invalidates advisory warmth on resolved credential or provider account header rotation", () => {
     const tracker = new ContextCacheTracker(() => 1000);

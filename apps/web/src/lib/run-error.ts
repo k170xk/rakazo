@@ -129,6 +129,13 @@ export const translateRunError: RunErrorTranslator = (message, values) => {
           "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message.",
         values,
       });
+    case "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file.":
+      return i18n._({
+        id: "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file.",
+        message:
+          "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file.",
+        values,
+      });
     case "{provider} key hit its limit.":
       return i18n._({
         id: "{provider} key hit its limit.",

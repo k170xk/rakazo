@@ -552,6 +552,12 @@ export function createRuntimeContextPolicy(
       recentExchanges:
         retainShortHistory || standaloneHistoryFallback ? messages.length : 8 + laterUserMessages,
     });
+    if (selected.omittedImages > 0) {
+      getLogger().warn("Images left out to fit the model context", {
+        omittedImages: selected.omittedImages,
+        modelId: model.id,
+      });
+    }
     const shortenedStructuredResults = selected.messages.filter((message) => {
       if (message.role !== "toolResult") return false;
       try {

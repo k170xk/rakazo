@@ -271,7 +271,7 @@ describe("real Pi against an offline model HTTP endpoint", () => {
     {
       name: "live request",
       overrides: { prompt: "Required user request ".repeat(2000), tools: [] },
-      error: "Required context exceeds the model context budget",
+      error: Core.CURRENT_TURN_TOO_LARGE_ERROR,
     },
     {
       name: "required instructions",

@@ -1,10 +1,15 @@
-import { MODEL_CONTEXT_TOO_SMALL_ERROR, VERBATIM_TOOL_RESULT_TOO_LARGE_ERROR } from "@rakazo/core";
+import {
+  CURRENT_TURN_TOO_LARGE_ERROR,
+  MODEL_CONTEXT_TOO_SMALL_ERROR,
+  VERBATIM_TOOL_RESULT_TOO_LARGE_ERROR,
+} from "@rakazo/core";
 import { describe, expect, it } from "vitest";
 import {
   ContextBudgetError,
   ContextCacheTracker,
   estimateContextTokens,
   estimateTextTokens,
+  IMAGE_LEFT_OUT_NOTE,
   providerContextPrefix,
   selectContext,
   shortenToolResultText,
@@ -18,6 +23,80 @@ const budget = {
 };
 const user = (content: string) => ({ role: "user", content, timestamp: 1 });
 describe("bounded context selection", () => {
+  const picture = (name: string) => ({ type: "image", data: name, mimeType: "image/png" });
+  const tokensOf = (image: object) => ("data" in image && image.data === "small" ? 50 : 400);
+  it("leaves out images instead of failing, keeping the first ones the person attached", () => {
+    const message = {
+      role: "user",
+      content: [
+        { type: "text", text: "Compare these" },
+        ...["a", "b", "c", "d", "e", "f"].map(picture),
+      ],
+    };
+    const selected = selectContext([message], {
+      budget: { ...budget, imageTokens: tokensOf },
+      strategy: "retrieval",
+    });
+    const left = selected.omittedImages;
+    expect(left).toBeGreaterThan(0);
+    expect(left).toBeLessThan(6);
+    expect(selected.estimatedInputTokens).toBeLessThanOrEqual(
+      budget.contextWindow - budget.outputReserve,
+    );
+    expect(selected.messages[0]!.content).toEqual([
+      { type: "text", text: "Compare these" },
+      ...["a", "b", "c", "d", "e", "f"].slice(0, 6 - left).map(picture),
+      ...Array.from({ length: left }, () => ({ type: "text", text: IMAGE_LEFT_OUT_NOTE })),
+    ]);
+  });
+  it("leaves out an earlier kept message's images before the newest one's", () => {
+    const messages = [
+      { role: "user", content: [picture("a"), picture("b")] },
+      { role: "assistant", content: [{ type: "text", text: "Seen" }] },
+      { role: "user", content: [picture("c"), picture("d"), picture("e")] },
+    ];
+    const selected = selectContext(messages, {
+      budget: { ...budget, imageTokens: tokensOf },
+      strategy: "retrieval",
+      protectedIndexes: [0],
+    });
+    expect(selected.omittedImages).toBeGreaterThan(0);
+    expect(selected.messages.at(-1)!.content).toEqual([picture("c"), picture("d"), picture("e")]);
+    expect(selected.messages[0]!.content).toContainEqual({
+      type: "text",
+      text: IMAGE_LEFT_OUT_NOTE,
+    });
+  });
+  it("never leaves out a tool screenshot the agent is acting on", () => {
+    const call = {
+      role: "assistant",
+      content: [{ type: "toolCall", id: "call", name: "look", arguments: {} }],
+    };
+    const result = {
+      role: "toolResult",
+      toolCallId: "call",
+      toolName: "look",
+      content: ["c", "d", "e", "f", "g"].map(picture),
+    };
+    expect(() =>
+      selectContext([user("objective"), call, result], {
+        budget: { ...budget, imageTokens: tokensOf },
+        strategy: "retrieval",
+      }),
+    ).toThrow(ContextBudgetError);
+  });
+  it("still fails plainly when the kept text alone cannot fit", () => {
+    const message = {
+      role: "user",
+      content: [{ type: "text", text: "long ".repeat(2000) }, picture("a")],
+    };
+    expect(() =>
+      selectContext([message], {
+        budget: { ...budget, imageTokens: tokensOf },
+        strategy: "retrieval",
+      }),
+    ).toThrow(CURRENT_TURN_TOO_LARGE_ERROR);
+  });
   it("tells a model too small for the instructions and tools apart from a long conversation", () => {
     const tools = [{ name: "search", description: "Search ".repeat(1200), parameters: {} }];
     expect(() =>
@@ -25,7 +104,7 @@ describe("bounded context selection", () => {
     ).toThrow(MODEL_CONTEXT_TOO_SMALL_ERROR);
     expect(() =>
       selectContext([user("long ".repeat(2000))], { budget, strategy: "current" }),
-    ).toThrow("Required context exceeds the model context budget");
+    ).toThrow(CURRENT_TURN_TOO_LARGE_ERROR);
   });
   it("accounts for instructions, tools, images and output reserve", () => {
     expect(estimateContextTokens([{ type: "image", data: "base64" }], 1000)).toBeGreaterThan(1000);
@@ -48,9 +127,9 @@ describe("bounded context selection", () => {
       role: "user",
       content: [{ type: "image", data: "a".repeat(10000), mimeType: "image/png" }],
     };
-    expect(() => selectContext([image], { budget, strategy: "retrieval" })).toThrow(
-      ContextBudgetError,
-    );
+    const unknown = selectContext([image], { budget, strategy: "retrieval" });
+    expect(unknown.omittedImages).toBe(1);
+    expect(unknown.messages[0]!.content).toEqual([{ type: "text", text: IMAGE_LEFT_OUT_NOTE }]);
     expect(
       selectContext([image], { budget: { ...budget, imageTokens: 100 }, strategy: "retrieval" })
         .messages,
@@ -137,7 +216,7 @@ describe("bounded context selection", () => {
         protectedIndexes: [0, 2],
         verbatimMcpServers: { ids: [], slugs: ["mail"] },
       }),
-    ).toThrow("Required context exceeds the model context budget");
+    ).toThrow(CURRENT_TURN_TOO_LARGE_ERROR);
   });
   it("keeps and shortens the unread tool step after steering", () => {
     const oldCall = {

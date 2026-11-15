@@ -22,6 +22,10 @@ export const MODEL_OUTPUT_CUT_ERROR = "The model hit its output limit before fin
 export const MODEL_CONTEXT_TOO_SMALL_ERROR =
   "This model's context window is too small. Choose another model.";
 
+/** What one reply cannot set aside (the new message, the current tool step) is too large alone. */
+export const CURRENT_TURN_TOO_LARGE_ERROR =
+  "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file.";
+
 /** An MCP server asked to keep tool results whole, and one result still does not fit. */
 export const VERBATIM_TOOL_RESULT_TOO_LARGE_ERROR =
   "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model.";
@@ -278,6 +282,9 @@ export function normalizeRunError(
       recovery: "model",
       kind: "output",
     };
+  }
+  if (trimmed === CURRENT_TURN_TOO_LARGE_ERROR) {
+    return { summary: translate(trimmed), details, kind: "context" };
   }
   if (
     trimmed === MODEL_CONTEXT_TOO_SMALL_ERROR ||

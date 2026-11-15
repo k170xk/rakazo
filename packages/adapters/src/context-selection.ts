@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { AgentContextStrategy, CacheCapabilities } from "@rakazo/adapter-kit";
 import {
+  CURRENT_TURN_TOO_LARGE_ERROR,
   MODEL_CONTEXT_TOO_SMALL_ERROR,
   shortenedTextLength,
   textBoundary,
@@ -51,10 +52,7 @@ export class ContextBudgetError extends Error {
     message?: string,
   ) {
     super(
-      message ??
-        (modelTooSmall
-          ? MODEL_CONTEXT_TOO_SMALL_ERROR
-          : "Required context exceeds the model context budget"),
+      message ?? (modelTooSmall ? MODEL_CONTEXT_TOO_SMALL_ERROR : CURRENT_TURN_TOO_LARGE_ERROR),
     );
     this.name = "ContextBudgetError";
   }
@@ -506,6 +504,69 @@ interface Group {
   indexes: number[];
   tokens: number;
 }
+
+export const IMAGE_LEFT_OUT_NOTE =
+  "[Image left out: there were more images than the model can read at once. Tell the person which ones you could not see, and ask them to send those again in a separate message if they matter.]";
+
+function imageTokensOf(image: object, imageTokens: ContextBudget["imageTokens"]) {
+  const estimate =
+    imageTokens === undefined
+      ? undefined
+      : typeof imageTokens === "number"
+        ? imageTokens
+        : imageTokens(image);
+  return estimate !== undefined && Number.isFinite(estimate) && estimate > 0
+    ? estimate
+    : Buffer.byteLength(JSON.stringify(image), "utf8");
+}
+
+/**
+ * Replaces images people sent in messages that cannot be set aside until `overflow` tokens are
+ * freed: older messages first, and in the newest message its last images first, so the first
+ * images a person attached are the ones the model sees. Tool screenshots are never left out: an
+ * agent that lost the screen it is acting on would act blind. Undefined when no image can go.
+ */
+function leaveOutImages<T extends ContextMessage>(
+  messages: readonly T[],
+  kept: ReadonlySet<number>,
+  overflow: number,
+  imageTokens: ContextBudget["imageTokens"],
+): { messages: T[]; omitted: number } | undefined {
+  const newest = Math.max(...kept);
+  const candidates: { index: number; part: number; tokens: number }[] = [];
+  for (const index of [...kept].sort((a, b) => a - b)) {
+    const message = messages[index]!;
+    if (message.role !== "user" || !Array.isArray(message.content)) continue;
+    const parts: { index: number; part: number; tokens: number }[] = [];
+    for (const [part, item] of message.content.entries()) {
+      if (item && typeof item === "object" && item.type === "image")
+        parts.push({ index, part, tokens: imageTokensOf(item, imageTokens) });
+    }
+    candidates.push(...(index === newest ? parts.reverse() : parts));
+  }
+  const noteTokens = estimateTextTokens(IMAGE_LEFT_OUT_NOTE) + 8;
+  const chosen = new Set<string>();
+  let freed = 0;
+  for (const candidate of candidates) {
+    if (freed >= overflow) break;
+    chosen.add(`${candidate.index}:${candidate.part}`);
+    freed += candidate.tokens - noteTokens;
+  }
+  if (chosen.size === 0) return undefined;
+  return {
+    omitted: chosen.size,
+    messages: messages.map((message, index) =>
+      Array.isArray(message.content) && [...chosen].some((key) => key.startsWith(`${index}:`))
+        ? ({
+            ...message,
+            content: message.content.map((item: unknown, part: number) =>
+              chosen.has(`${index}:${part}`) ? { type: "text", text: IMAGE_LEFT_OUT_NOTE } : item,
+            ),
+          } as T)
+        : message,
+    ),
+  };
+}
 /** A tool request and all results form an indivisible group. User exchanges may contain several groups. */
 function messageGroups(
   messages: readonly ContextMessage[],
@@ -579,6 +640,8 @@ export function selectContext<T extends ContextMessage>(
   estimatedInputTokens: number;
   droppedMessages: number;
   truncatedToolResults: number;
+  /** Images replaced by a note because the messages that must stay could not fit with them. */
+  omittedImages: number;
   availableMessageTokens: number;
   estimation: "text-estimate";
 } {
@@ -628,6 +691,17 @@ export function selectContext<T extends ContextMessage>(
     }
   }
   if (used > available) {
+    const withoutImages = () => {
+      const left = leaveOutImages(
+        messages,
+        protectedGroupIndexes,
+        used - available,
+        options.budget.imageTokens,
+      );
+      if (!left) return undefined;
+      const retry = selectContext(left.messages, options);
+      return { ...retry, omittedImages: retry.omittedImages + left.omitted };
+    };
     if (options.truncateToolResults !== false) {
       let shortenedCount = 0;
       let keptVerbatimWhole = false;
@@ -681,6 +755,8 @@ export function selectContext<T extends ContextMessage>(
           truncatedToolResults: Math.max(retry.truncatedToolResults, shortenedCount),
         };
       }
+      const fitted = withoutImages();
+      if (fitted) return fitted;
       if (keptVerbatimWhole) {
         // Throws the generic error when shortening the kept results would not make it fit either.
         selectContext(messages, { ...options, verbatimMcpServers: undefined });
@@ -691,6 +767,9 @@ export function selectContext<T extends ContextMessage>(
           VERBATIM_TOOL_RESULT_TOO_LARGE_ERROR,
         );
       }
+    } else {
+      const fitted = withoutImages();
+      if (fitted) return fitted;
     }
     throw new ContextBudgetError(
       used + fixed,
@@ -721,6 +800,7 @@ export function selectContext<T extends ContextMessage>(
     estimatedInputTokens: fixed + used,
     droppedMessages: messages.length - selectedIndexes.size,
     truncatedToolResults: 0,
+    omittedImages: 0,
     availableMessageTokens: available,
     estimation: "text-estimate" as const,
   };

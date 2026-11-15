@@ -15435,3 +15435,7 @@ msgstr "Zoom out"
 
 msgid "Slack not enabled"
 msgstr "Slack not enabled"
+
+#: src/lib/run-error.ts
+msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
+msgstr "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
