@@ -283,6 +283,106 @@ export async function addCharts(bytes, charts) {
   return zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
 }
 
+/**
+ * ExcelJS writes a shared formula's range as the box around every cell that uses it. A cell inside
+ * that box which was overwritten, or never had the formula, makes the range a lie, and Excel then
+ * refuses the file ("found a problem with some content") and can fail while repairing it. Each cell
+ * gets its own formula instead. Masters are read before any cell is rewritten, so a clone can still
+ * slide its formula from the master.
+ */
+export function expandSharedFormulas(book) {
+  for (const sheet of book.worksheets) {
+    const pending = [];
+    sheet.eachRow({ includeEmpty: false }, (row) => {
+      row.eachCell({ includeEmpty: false }, (cell) => {
+        const model = cell.value;
+        if (!model || typeof model !== "object") return;
+        if (!model.sharedFormula && model.shareType !== "shared") return;
+        const formula = cell.formula;
+        if (typeof formula !== "string" || !formula) return;
+        pending.push({ address: cell.address, formula, result: cell.result });
+      });
+    });
+    for (const item of pending) {
+      const value = { formula: item.formula };
+      if (item.result !== undefined && item.result !== null) value.result = item.result;
+      sheet.getCell(item.address).value = value;
+    }
+  }
+}
+
+const DPI_LIMIT = 2147483647;
+const PRINTER_SETTINGS = "application/vnd.openxmlformats-officedocument.spreadsheetml.printerSettings";
+
+function stripPageSetup(xml) {
+  const fitToPage = /<pageSetUpPr\b[^>]*\bfitToPage="1"/.test(xml);
+  return xml.replace(/<pageSetup\b([^>]*)\/>/g, (tag, attrs) => {
+    let next = attrs.replace(/\s(?:horizontalDpi|verticalDpi)="(\d+)"/g, (all, value) =>
+      Number(value) > DPI_LIMIT ? "" : all,
+    );
+    if (!fitToPage) next = next.replace(/\sfitTo(?:Width|Height)="[^"]*"/g, "");
+    return `<pageSetup${next}/>`;
+  });
+}
+
+/** Print areas and print titles must be absolute; ExcelJS saves `$A1` and Excel rejects the name. */
+function absolutizePrintRefs(xml) {
+  return xml.replace(
+    /<definedName\b([^>]*\bname="_xlnm\.Print_(?:Area|Titles)"[^>]*)>([^<]*)<\/definedName>/g,
+    (all, attrs, body) => {
+      const fixed = body.replace(
+        /(\$?)([A-Za-z]{1,3})(\$?)(\d+)/g,
+        (_, _colDollar, col, _rowDollar, row) => `$${col}$${row}`,
+      );
+      return fixed === body ? all : `<definedName${attrs}>${fixed}</definedName>`;
+    },
+  );
+}
+
+function ensureBinContentType(types, names) {
+  if (!names.some((name) => /printerSettings\/[^/]+\.bin$/i.test(name))) return types;
+  if (/<Default\b[^>]*Extension="bin"/i.test(types)) return types;
+  return types.replace("</Types>", `<Default Extension="bin" ContentType="${PRINTER_SETTINGS}"/></Types>`);
+}
+
+/**
+ * ExcelJS writes page setup Excel will not accept (a DPI of 4294967295, and fit-to-page sizes on a
+ * sheet that is not set to fit), and a restored printer-settings part with no content type. Either
+ * one makes Excel offer to recover the workbook.
+ */
+export async function sanitizeWorkbookXml(bytes) {
+  const zip = await JSZip.loadAsync(bytes);
+  let changed = false;
+  for (const name of Object.keys(zip.files)) {
+    if (!/^xl\/worksheets\/sheet\d+\.xml$/.test(name)) continue;
+    const xml = await zip.file(name).async("string");
+    const next = stripPageSetup(xml);
+    if (next !== xml) {
+      zip.file(name, next);
+      changed = true;
+    }
+  }
+  const bookName = "xl/workbook.xml";
+  if (zip.file(bookName)) {
+    const xml = await zip.file(bookName).async("string");
+    const next = absolutizePrintRefs(xml);
+    if (next !== xml) {
+      zip.file(bookName, next);
+      changed = true;
+    }
+  }
+  const typesName = "[Content_Types].xml";
+  if (zip.file(typesName)) {
+    const xml = await zip.file(typesName).async("string");
+    const next = ensureBinContentType(xml, Object.keys(zip.files));
+    if (next !== xml) {
+      zip.file(typesName, next);
+      changed = true;
+    }
+  }
+  return changed ? zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }) : bytes;
+}
+
 /** Writes the saved workbook back with its charts, pivots and macros, plus any new charts. */
 export async function finishWorkbook(originalBytes, savedPath, charts) {
   let bytes = readFileSync(savedPath);
@@ -293,6 +393,7 @@ export async function finishWorkbook(originalBytes, savedPath, charts) {
     kept = restored.kept;
   }
   if (charts?.length) bytes = await addCharts(bytes, charts);
+  bytes = await sanitizeWorkbookXml(bytes);
   writeFileSync(savedPath, bytes);
   return { kept };
 }

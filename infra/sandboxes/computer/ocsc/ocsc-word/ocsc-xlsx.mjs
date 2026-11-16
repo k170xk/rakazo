@@ -22,11 +22,11 @@
  * Every command prints one JSON object. `new` and `edit` include `link`, a markdown link the Bot
  * pastes into its reply so the person gets a download card.
  */
-import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
-import { finishWorkbook } from "./excel-workbook.mjs";
+import { expandSharedFormulas, finishWorkbook, sanitizeWorkbookXml } from "./excel-workbook.mjs";
 import { applyExcelFormat, cellRange, colourOrThrow, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
 import { cellText, evaluateFormulas, showOnScreen } from "./screen.mjs";
 
@@ -347,6 +347,8 @@ function shiftRows(sheet, { at, inserted = 0, removed = 0 }) {
  * is left for Excel, which recalculates every formula when the file opens.
  */
 async function save(book, out) {
+  // Before formulas are worked out: a shared formula has to be expanded while its master is intact.
+  expandSharedFormulas(book);
   const formulas = evaluateFormulas(book);
   book.calcProperties = {
     ...(book.calcProperties || {}),
@@ -355,6 +357,7 @@ async function save(book, out) {
   book.creator ||= "OCSC";
   book.modified = new Date();
   await book.xlsx.writeFile(out.full);
+  writeFileSync(out.full, await sanitizeWorkbookXml(readFileSync(out.full)));
   return formulas;
 }
 
