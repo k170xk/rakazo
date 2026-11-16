@@ -235,6 +235,7 @@ describe("Outlook filing tools", () => {
       ok: true,
       memories: [{ instruction: "Graduate applications from careers@ go in Inbox › HR" }],
     });
-    expect(content?.memories).toHaveLength(1);
+    // Assigned inside the mocked prisma calls, which TypeScript's narrowing cannot see.
+    expect((content as { memories?: unknown[] } | null)?.memories).toHaveLength(1);
   });
 });

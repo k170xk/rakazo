@@ -25,7 +25,7 @@ function memoryStorage(initial: Record<string, string> = {}) {
 
 describe("composer drafts", () => {
   it("scopes stored drafts per thread", () => {
-    expect(composerDraftStorageKey("agent:1")).toBe("rakazo.composerDraft.bot:1");
+    expect(composerDraftStorageKey("agent:1")).toBe("rakazo.composerDraft.agent:1");
     expect(composerDraftStorageKey("group:2")).toBe("rakazo.composerDraft.group:2");
   });
 

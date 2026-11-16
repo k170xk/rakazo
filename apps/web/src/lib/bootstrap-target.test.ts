@@ -13,7 +13,7 @@ describe("initial bootstrap target", () => {
     expect(initialBootstrapTarget("/app/x/clients", false)).toEqual({ botId: undefined });
     expect(initialBootstrapTarget("/app", false)).toEqual({ botId: undefined });
     expect(initialBootstrapTarget("/app/research%20bot", false)).toEqual({
-      botId: "research agent",
+      botId: "research bot",
     });
     expect(initialBootstrapTarget("/app/g/group-1", false)).toEqual({ botId: undefined });
   });

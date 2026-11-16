@@ -1633,7 +1633,7 @@ msgstr ""
 
 #: src/lib/dictation.ts
 msgid "Allow OCSC Intelligence to use Speech Recognition and the microphone in System Settings."
-msgstr ""
+msgstr "Permite que OCSC Intelligence use el reconocimiento de voz y el micrófono en Ajustes del Sistema."
 
 #: src/components/AskCard.tsx
 msgid "Allow once"

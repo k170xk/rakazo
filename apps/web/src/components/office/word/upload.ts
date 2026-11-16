@@ -109,7 +109,7 @@ export async function fetchDownload(
   if (total !== null && bytes.byteLength !== total) {
     throw new Error(`Download truncated (${bytes.byteLength} of ${total} bytes)`);
   }
-  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 }
 
 function concatChunks(chunks: Uint8Array[], total: number): Uint8Array {

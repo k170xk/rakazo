@@ -106,7 +106,7 @@ async function teamChatRun(input: {
     task: {
       findUniqueOrThrow: vi.fn(async () => ({
         id: run.taskId,
-        prompt: "Use @Private recipe and @Rakazo and @Interrogate",
+        prompt: "Use @Private recipe and @OCSC Intelligence and @Interrogate",
       })),
     },
     connection: { findMany: vi.fn(async () => []) },
@@ -326,7 +326,7 @@ describe("private skills in shared-channel prompts", () => {
     const result = await teamChatRun({ senders: [{ senderId: "member" }], sharedChannel: true });
     expect(result.context).not.toContain("PRIVATE_SKILL");
     expect(result.context).not.toContain("PRIVATE_TAUGHT");
-    expect(result.context).toContain("Use skill: Rakazo");
+    expect(result.context).toContain("Use skill: OCSC Intelligence");
     expect(result.context).toContain("Use skill: Interrogate");
   });
 

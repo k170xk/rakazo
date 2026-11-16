@@ -280,10 +280,12 @@ describe("page kit", () => {
   it("accepts {key,label} columns and object rows the way models often write them", () => {
     const markup = html(
       <Table
-        columns={[
-          { key: "c0", label: "Project" },
-          { key: "c1", label: "Stage" },
-        ]}
+        columns={
+          [
+            { key: "c0", label: "Project" },
+            { key: "c1", label: "Stage" },
+          ] as never
+        }
         rows={[
           { id: "0", c0: "W407", c1: "Stage 5" },
           { id: "1", c0: "I277", c1: "Stage 4" },

@@ -53,7 +53,7 @@ const xlsx = office("application/vnd.openxmlformats-officedocument.spreadsheetml
 
 describe("listDocuments", () => {
   it("filters by the family's newest mime, not an older version of another type", async () => {
-    const queryRaw = vi.fn(async () => []);
+    const queryRaw = vi.fn(async (_sql: unknown) => []);
     await listDocuments({ $queryRaw: queryRaw } as never, actor, { format: "pptx", limit: 30 });
     const sql = queryRaw.mock.calls[0]?.[0] as { strings: string[] };
     const text = sql.strings.join("?");

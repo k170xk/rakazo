@@ -238,6 +238,7 @@ function OpenPage({
         activity={activity}
         onReply={session.offerReply}
         onSelectApp={(id) => {
+          if (!id) return close();
           setSearchParams((current) => {
             const next = new URLSearchParams(current);
             next.set(PAGE_PARAM, id);
