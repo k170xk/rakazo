@@ -13,6 +13,7 @@ import { MousePointerClick, Sparkles } from "lucide-react";
 import { useRef, useSyncExternalStore } from "react";
 import { usePageSession } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
+import { pdfEditingSoon } from "./pdf/editing-soon";
 import { useStudioWelcome } from "./use-studio-welcome";
 
 const idleSubscribe = () => () => {};
@@ -41,7 +42,9 @@ export function StudioWelcome({
   documentId: string;
 }) {
   const queries = useSpaceQueries();
-  const userId = useQuery(queries.me.queryOptions()).data?.userId;
+  const me = useQuery(queries.me.queryOptions()).data;
+  const userId = me?.userId;
+  const editingSoon = format === "pdf" && pdfEditingSoon(me);
   const session = usePageSession();
   const subscribe = session?.dock.subscribe ?? idleSubscribe;
   const ready = useSyncExternalStore(
@@ -95,16 +98,28 @@ export function StudioWelcome({
           <div className="flex flex-col gap-4 p-6">
             <div className="flex flex-col gap-2">
               <DialogTitle>
-                <WelcomeTitle format={format} />
+                {editingSoon ? (
+                  <Trans>Editing PDFs is coming soon with OCSC Intelligence.</Trans>
+                ) : (
+                  <WelcomeTitle format={format} />
+                )}
               </DialogTitle>
-              <DialogDescription>
-                <Trans>
-                  You don't have to edit by hand. Ask in the chat and the assistant updates the
-                  document for you.
-                </Trans>
-              </DialogDescription>
+              {editingSoon ? null : (
+                <DialogDescription>
+                  <Trans>
+                    You don't have to edit by hand. Ask in the chat and the assistant updates the
+                    document for you.
+                  </Trans>
+                </DialogDescription>
+              )}
             </div>
-            <WelcomeTips format={format} />
+            {editingSoon ? (
+              <DialogDescription>
+                <Trans>You can still open and download PDFs.</Trans>
+              </DialogDescription>
+            ) : (
+              <WelcomeTips format={format} />
+            )}
           </div>
         </div>
         <DialogFooter className="m-0 shrink-0 rounded-b-xl">

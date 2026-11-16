@@ -19,6 +19,7 @@ import { useSpaceQueries } from "../../lib/query";
 import { errorCode } from "../../lib/user-error";
 import { control, pill, StudioFrame, StudioHint, useStudioDock } from "../studio/StudioFrame";
 import { useDocumentBotId } from "./document-bot";
+import { pdfEditingSoon } from "./pdf/editing-soon";
 import { OFFICE_STUDIOS } from "./registry";
 import { StudioWelcome } from "./StudioWelcome";
 import { useDocumentUpload } from "./use-document-upload";
@@ -175,6 +176,7 @@ function EmptyStudio({
 }) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
+  const editingSoon = format === "pdf" && pdfEditingSoon(useQuery(queries.me.queryOptions()).data);
   const queryClient = useQueryClient();
   const documentBot = useDocumentBotId();
   const dock = useStudioDock();
@@ -355,10 +357,14 @@ function EmptyStudio({
             )}
           </h2>
           <p className="text-[14px] text-muted-foreground">
-            <Trans>
-              Start a blank one, upload a {extension} file from your computer, or ask the assistant
-              to make one.
-            </Trans>
+            {editingSoon ? (
+              <Trans>Editing PDFs is coming soon with OCSC Intelligence.</Trans>
+            ) : (
+              <Trans>
+                Start a blank one, upload a {extension} file from your computer, or ask the
+                assistant to make one.
+              </Trans>
+            )}
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             {busy ? (

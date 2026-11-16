@@ -70,9 +70,9 @@ export function limitedComputerInstruction(
         ? " Other people can read this chat, so you work in this conversation's own folder: files from the owner's private chats are not here and their computer is not used. If they need one of their own files here, ask them to upload it to this chat."
         : "";
   if (computerOff) {
-    return `This person has no computer, but the company document runners make OCSC files: use the ocsc tool for ${ocscFileKinds()}, write_file for their spec files and attach_file to share the results. A shell, a browser and a screen are not available, so never offer them; if a task needs them, say an administrator can give this person computer access.${shared}`;
+    return `This person has no computer, but the company document runners make OCSC files: use the ocsc tool for ${ocscFileKinds()}, write_file for their spec files and attach_file to share the results. A shell, a browser and a screen are not available, so never offer them. PDF markup and design in PDF Studio are not available: if they ask to mark up, edit or design on a PDF, say exactly "Editing PDFs is coming soon with OCSC Intelligence." You can still read and download PDFs. Do not say the markup commands are missing.${shared}`;
   }
-  return `This computer runs the OCSC commands only: use the ocsc tool for ${ocscFileKinds()}, write_file for their spec files and attach_file to share the results. There is no shell, browser or screen here, so never offer to browse or run other commands; if a task needs them, say an administrator can give this person full computer access.${shared}`;
+  return `This computer runs the OCSC commands only: use the ocsc tool for ${ocscFileKinds()}, write_file for their spec files and attach_file to share the results. There is no shell, browser or screen here, so never offer to browse or run other commands. PDF markup and design in PDF Studio are not available: if they ask to mark up, edit or design on a PDF, say exactly "Editing PDFs is coming soon with OCSC Intelligence." You can still read and download PDFs. Do not say the markup commands are missing, and do not ask for full computer access so a PDF can be edited.${shared}`;
 }
 
 /** For a full computer whose documents and file tools use the runners' document home instead. */

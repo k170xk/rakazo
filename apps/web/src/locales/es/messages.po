@@ -13,6 +13,13 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgid "Editing PDFs is coming soon with OCSC Intelligence."
+msgstr "La edición de PDF llegará pronto con OCSC Intelligence."
+
+msgid "You can still open and download PDFs."
+msgstr "Aún puede abrir y descargar PDF."
+
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
 msgstr ""

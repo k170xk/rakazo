@@ -14,6 +14,13 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: @lingui/cli\n"
 
+msgid "Editing PDFs is coming soon with OCSC Intelligence."
+msgstr "使用 OCSC Intelligence 編輯 PDF 即將推出。"
+
+msgid "You can still open and download PDFs."
+msgstr "您仍可開啟和下載 PDF。"
+
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
 msgstr ""

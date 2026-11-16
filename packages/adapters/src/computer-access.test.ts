@@ -82,6 +82,12 @@ describe("computer access levels", () => {
     expect(limitedComputerInstruction("tools", undefined)).not.toContain("shared");
   });
 
+  it("tells Tools-only runs that PDF editing is coming soon", () => {
+    const told = limitedComputerInstruction("tools", undefined);
+    expect(told).toContain("Editing PDFs is coming soon with OCSC Intelligence.");
+    expect(told).not.toContain("give this person full computer access");
+  });
+
   it("tells Tools-only / computers-off runs to use the ocsc tool on the document runners", () => {
     expect(limitedComputerInstruction("tools", undefined, true)).toContain("document runners");
     expect(limitedComputerInstruction("tools", undefined, true)).toContain("ocsc tool");

@@ -42,6 +42,7 @@ import {
 import { StudioSwitcherDelete } from "../studio/StudioSwitcherDelete";
 import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-send";
 import { documentDockPage } from "./context";
+import { pdfEditingSoon } from "./pdf/editing-soon";
 import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
 import { useDocumentBotId } from "./document-bot";
 import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
@@ -140,6 +141,7 @@ export default function PdfStudio({
   const { t } = useLingui();
   const [phone] = useState(() => isPhoneScreen());
   const queries = useSpaceQueries();
+  const editingSoon = pdfEditingSoon(useQuery(queries.me.queryOptions()).data);
   const queryClient = useQueryClient();
   const documentBot = useDocumentBotId();
   const spaceId = useBoundSpaceId() ?? selectedSpaceId();
@@ -1010,11 +1012,13 @@ export default function PdfStudio({
           secondary={latest.current ? downloadButton : null}
         />
       ) : (
-        <div
-          className={`relative size-full ring-inset transition-shadow duration-700 ${
-            flash !== null ? "ring-2 ring-primary" : ""
-          }`}
-        >
+        <div className="flex size-full flex-col">
+          {editingSoon ? <PdfEditingSoon /> : null}
+          <div
+            className={`relative min-h-0 flex-1 ring-inset transition-shadow duration-700 ${
+              flash !== null ? "ring-2 ring-primary" : ""
+            }`}
+          >
           <iframe
             key={doc.loaded}
             ref={frame}
@@ -1062,9 +1066,21 @@ export default function PdfStudio({
               onClose={() => setHistoryOpen(false)}
             />
           ) : null}
+          </div>
         </div>
       )}
     </StudioFrame>
+  );
+}
+
+function PdfEditingSoon() {
+  return (
+    <p
+      data-testid="pdf-editing-soon"
+      className="shrink-0 border-b border-border bg-muted/70 px-4 py-2 text-center text-[13px] text-foreground"
+    >
+      <Trans>Editing PDFs is coming soon with OCSC Intelligence.</Trans>
+    </p>
   );
 }
 

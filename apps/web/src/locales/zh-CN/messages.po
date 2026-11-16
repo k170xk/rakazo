@@ -13,6 +13,13 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+msgid "Editing PDFs is coming soon with OCSC Intelligence."
+msgstr "使用 OCSC Intelligence 编辑 PDF 即将推出。"
+
+msgid "You can still open and download PDFs."
+msgstr "您仍可以打开和下载 PDF。"
+
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
 msgstr ""
