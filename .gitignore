@@ -55,3 +55,4 @@ apps/web/public/computer-screen/sdk/
 # Evolve PDF Studio web bundle, built by build-app.sh (the computer's copy and the PDF studio's)
 infra/sandboxes/computer/ocsc/pdf-studio/app/
 apps/web/public/pdf-studio/
+apps/web/public/python/

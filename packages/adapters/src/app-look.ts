@@ -1,8 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { AppFiles } from "@rakazo/app-kit/build";
 import { buildApp } from "@rakazo/app-kit/build";
+import { pythonPackages } from "@rakazo/app-kit/python/envelope";
+import { PYTHON_RUNTIME, pythonFilesFor } from "@rakazo/app-kit/python/runtime";
 import { listAppAssets, readAppAsset, readAppTables } from "@rakazo/db";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { ToolRunnerWorkspace } from "./tool-runner.js";
@@ -18,6 +22,17 @@ import { TOOL_WORK } from "./tool-runner.js";
 export const APP_LOOK_PROGRAM = "app-shot";
 const LOOK_TIMEOUT_MS = 90_000;
 const CHECK_TIMEOUT_MS = 60_000;
+/** Starting Python and its packages takes a headless browser up to about a minute. */
+const PYTHON_EXTRA_MS = 75_000;
+/**
+ * The web build's installed Python runtimes (`pnpm python:runtime`), which ship in the same image
+ * as the API: beside the bundled API or beside this source file, unless RAKAZO_PYTHON_RUNTIME_DIR
+ * names the one folder to use.
+ */
+const PYTHON_RUNTIME_DIRS = [
+  new URL("../../web/public/python", import.meta.url),
+  new URL("../../../apps/web/public/python", import.meta.url),
+];
 /** Pictures beyond this many bytes stay out of the copy; the app shows them as missing. */
 const MAX_INLINE_ASSET_BYTES = 12 * 1024 * 1024;
 const MAX_SHOT_BYTES = 3 * 1024 * 1024;
@@ -44,6 +59,8 @@ export type AppLookReport = {
 export type AppLook = {
   report: AppLookReport;
   images: Array<{ page: string; viewport: string; data: string; mimeType: "image/jpeg" }>;
+  /** Whether the app's Python calculations ran, when it has any. */
+  python?: "ran" | "unavailable";
 };
 
 export type AppLookOptions = {
@@ -73,12 +90,61 @@ async function fixtureAssets(deps: Pick<ExecutorDeps, "prisma">, pageId: string)
   return assets;
 }
 
-function args(options: AppLookOptions) {
+function args(options: AppLookOptions, python: boolean) {
   const out = ["app.html", "out"];
   if (options.check) out.push("--check");
   if (options.phone) out.push("--phone");
   if (options.pages?.length) out.push("--pages", options.pages.join(","));
+  if (python) out.push("--python", "python");
   return out;
+}
+
+/** The runtime files an app's calculations load, or null when it has no Python. */
+export function pythonFilesOf(files: AppFiles): string[] | null {
+  const sources = Object.entries(files);
+  const usesPython = sources.some(
+    ([name, text]) => name.endsWith(".py") || text.includes('"@ocsc/python"'),
+  );
+  if (!usesPython) return null;
+  return pythonFilesFor(pythonPackages(sources.map(([, text]) => text).join("\n")));
+}
+
+/** The installed folder holding every one of `names` for the current pin, if this server has one. */
+export async function findPythonRuntime(
+  names: string[],
+  dirs: Array<string | URL> = process.env.RAKAZO_PYTHON_RUNTIME_DIR
+    ? [process.env.RAKAZO_PYTHON_RUNTIME_DIR]
+    : PYTHON_RUNTIME_DIRS,
+): Promise<string | null> {
+  for (const dir of dirs) {
+    const folder = path.join(
+      typeof dir === "string" ? dir : fileURLToPath(dir),
+      PYTHON_RUNTIME.version,
+    );
+    const sizes = await Promise.all(
+      names.map((name) =>
+        stat(path.join(folder, name)).then(
+          (info) => info.size,
+          () => -1,
+        ),
+      ),
+    );
+    if (sizes.every((size, index) => size === PYTHON_RUNTIME.files[names[index]!]?.bytes))
+      return folder;
+  }
+  return null;
+}
+
+/**
+ * Copies the runtime files into the look's folder (a clone where the disk supports it). Never a hard
+ * link: the runner's folder is writable, and the originals are what the web server serves.
+ */
+async function stagePython(from: string, root: string, names: string[]) {
+  const to = path.join(root, "python", PYTHON_RUNTIME.version);
+  await mkdir(to, { recursive: true, mode: 0o755 });
+  for (const name of names) {
+    await copyFile(path.join(from, name), path.join(to, name), constants.COPYFILE_FICLONE);
+  }
 }
 
 /**
@@ -98,9 +164,11 @@ export async function lookAtApp(
   options: AppLookOptions = {},
 ): Promise<AppLook | null> {
   if (!deps.toolRunner || !deps.dataDir) return null;
-  const [tables, assets] = await Promise.all([
+  const pythonNames = pythonFilesOf(input.files);
+  const [tables, assets, pythonDir] = await Promise.all([
     readAppTables(deps.prisma, input.pageId),
     fixtureAssets(deps, input.pageId),
+    pythonNames ? findPythonRuntime(pythonNames) : null,
   ]);
   const built = await buildApp(input.files, {
     title: input.title,
@@ -117,7 +185,7 @@ export async function lookAtApp(
       ),
       state: {},
       revision: 0,
-      features: ["assets"],
+      features: pythonDir ? ["assets", "python"] : ["assets"],
       assets,
     },
   });
@@ -134,12 +202,14 @@ export async function lookAtApp(
   await mkdir(root, { recursive: true, mode: 0o755 });
   try {
     await writeFile(path.join(root, "app.html"), built.html);
+    if (pythonDir && pythonNames) await stagePython(pythonDir, root, pythonNames);
     const result = await deps.toolRunner.run({
       workspace,
       program: APP_LOOK_PROGRAM,
-      args: args(options),
+      args: args(options, Boolean(pythonDir)),
       owner: input.owner,
-      timeoutMs: options.check ? CHECK_TIMEOUT_MS : LOOK_TIMEOUT_MS,
+      timeoutMs:
+        (options.check ? CHECK_TIMEOUT_MS : LOOK_TIMEOUT_MS) + (pythonDir ? PYTHON_EXTRA_MS : 0),
       signal: input.signal,
     });
     const reportFile = path.join(root, "out", "report.json");
@@ -164,7 +234,11 @@ export async function lookAtApp(
         mimeType: "image/jpeg",
       });
     }
-    return { report, images };
+    return {
+      report,
+      images,
+      ...(pythonNames ? { python: pythonDir ? ("ran" as const) : ("unavailable" as const) } : {}),
+    };
   } finally {
     await rm(root, { recursive: true, force: true }).catch(() => undefined);
   }

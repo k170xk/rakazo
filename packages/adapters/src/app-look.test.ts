@@ -1,6 +1,7 @@
-import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, truncate, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { PYTHON_FIXTURE_URL, PYTHON_RUNTIME } from "@rakazo/app-kit/python/runtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./run-messages.js", async (importActual) => ({
@@ -20,7 +21,7 @@ vi.mock("@rakazo/db", async (importActual) => ({
   ...db,
 }));
 
-const { lookAtApp, lookProblems } = await import("./app-look.js");
+const { findPythonRuntime, lookAtApp, lookProblems, pythonFilesOf } = await import("./app-look.js");
 const { appTools } = await import("./run-tools-apps.js");
 
 const APP = `import { AppShell } from "@ocsc/ui";
@@ -227,6 +228,156 @@ describe("save_app run check", () => {
     )) as Result;
     expect(result.appId).toBe("app-1");
     expect(result.runCheck).toBe("not run (no browser)");
+  });
+});
+
+describe("apps with Python", () => {
+  const PY = "import numpy as np\nfrom scipy import optimize\n\ndef calc(inputs):\n    return {}\n";
+  const PY_APP = `import { usePython } from "@ocsc/python";
+import pipePy from "./pipe.py";
+export default function App() {
+  const pipe = usePython(pipePy, { flow: 1 });
+  return <p>{pipe.status}</p>;
+}
+`;
+  const files = { "App.tsx": PY_APP, "pipe.py": PY };
+  const core = [
+    "pyodide.mjs",
+    "pyodide.asm.mjs",
+    "pyodide.asm.wasm",
+    "python_stdlib.zip",
+    "pyodide-lock.json",
+  ];
+  const scipyWheels = PYTHON_RUNTIME.packages.scipy;
+
+  /** An installed runtime folder whose files have the pinned sizes (sparse, so nothing is written). */
+  async function installed(names: string[]) {
+    const dir = path.join(dataDir, "installed");
+    await mkdir(path.join(dir, PYTHON_RUNTIME.version), { recursive: true });
+    for (const name of names) {
+      const file = path.join(dir, PYTHON_RUNTIME.version, name);
+      await writeFile(file, "");
+      await truncate(file, PYTHON_RUNTIME.files[name]!.bytes);
+    }
+    return dir;
+  }
+
+  /** A runner that also lists what the look's folder holds under python/. */
+  function pythonRunner(staged: string[]) {
+    const inner = runner(CLEAN);
+    return {
+      run: vi.fn(async (input: Run) => {
+        const folder = path.join(input.workspace.root, "python", PYTHON_RUNTIME.version);
+        staged.push(...(await readdir(folder).catch(() => [])));
+        return inner.run(input);
+      }),
+    };
+  }
+
+  const look = (toolRunner: unknown, options = {}) =>
+    lookAtApp(
+      (context(toolRunner) as { deps: never }).deps,
+      {
+        pageId: "app-1",
+        title: "Pipe",
+        files,
+        owner: "user-1",
+        viewerName: null,
+        signal: new AbortController().signal,
+      },
+      options,
+    );
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("asks app-shot for runtime files at the address the app fetches, under the viewer's policy", async () => {
+    const shot = await readFile(
+      new URL(
+        "../../../infra/sandboxes/computer/ocsc/ocsc-app-shot/ocsc-app-shot.mjs",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    expect(shot).toContain(`const PYTHON_URL = "${PYTHON_FIXTURE_URL}";`);
+    expect(shot).toContain(
+      "script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src blob:;",
+    );
+    expect(shot).toContain("data-python-busy");
+  });
+
+  it("knows which runtime files an app's calculations load", () => {
+    expect(pythonFilesOf({ "App.tsx": APP })).toBeNull();
+    expect(pythonFilesOf(files)).toEqual([...core, ...scipyWheels]);
+    expect(pythonFilesOf({ "App.tsx": 'import { runPython } from "@ocsc/python";' })).toEqual(core);
+  });
+
+  it("only counts an install that holds every file at its pinned size", async () => {
+    const dir = await installed([...core, scipyWheels[0]!]);
+    expect(await findPythonRuntime([...core, ...scipyWheels], [dir])).toBeNull();
+    expect(await findPythonRuntime(core, [path.join(dataDir, "nowhere"), dir])).toBe(
+      path.join(dir, PYTHON_RUNTIME.version),
+    );
+    await truncate(path.join(dir, PYTHON_RUNTIME.version, "pyodide.mjs"), 1);
+    expect(await findPythonRuntime(core, [dir])).toBeNull();
+  });
+
+  it("copies just the files the app needs into the look and lets its calculations run there", async () => {
+    vi.stubEnv("RAKAZO_PYTHON_RUNTIME_DIR", await installed(Object.keys(PYTHON_RUNTIME.files)));
+    const staged: string[] = [];
+    const tool = pythonRunner(staged);
+    const result = await look(tool, { check: true });
+    expect(result?.python).toBe("ran");
+    expect(staged.sort()).toEqual([...core, ...scipyWheels].sort());
+    expect(runs[0]!.args).toEqual(["app.html", "out", "--check", "--python", "python"]);
+    expect(html).toMatch(/"features":\["assets","python"\]/);
+    const timeout = (tool.run.mock.calls[0]![0] as unknown as { timeoutMs: number }).timeoutMs;
+    expect(timeout).toBeGreaterThan(60_000);
+    expect(await readdir(path.join(dataDir, "tool-work", "documents"))).toEqual([]);
+  });
+
+  it("shows the calculations as unavailable, and says why, where no runtime is installed", async () => {
+    vi.stubEnv("RAKAZO_PYTHON_RUNTIME_DIR", path.join(dataDir, "nowhere"));
+    const staged: string[] = [];
+    const result = await look(pythonRunner(staged));
+    expect(result?.python).toBe("unavailable");
+    expect(staged).toEqual([]);
+    expect(runs[0]!.args).not.toContain("--python");
+    expect(html).toMatch(/"features":\["assets"\]/);
+
+    const ctx = context(runner(CLEAN), false);
+    const page = (ctx as { deps: { prisma: { page: { findFirst: ReturnType<typeof vi.fn> } } } })
+      .deps.prisma.page.findFirst;
+    page.mockResolvedValueOnce({
+      id: "app-1",
+      title: "Pipe",
+      kind: "app",
+      currentVersion: 1,
+      dataAccess: "owner",
+      versions: [{ source: JSON.stringify(files) }],
+    });
+    const answer = (await appTools.app_look!(ctx, call({ appId: "app-1" }))) as Result;
+    expect(String(answer.python)).toMatch(/no Python runtime installed/);
+  });
+
+  it("lets the assistant save .py files, refusing any that would not give the same answer twice", async () => {
+    vi.stubEnv("RAKAZO_PYTHON_RUNTIME_DIR", path.join(dataDir, "nowhere"));
+    const saved = (await appTools.save_app!(
+      context(runner(CLEAN)),
+      call({ title: "Pipe", brief: "Checks pipe losses.", files }),
+    )) as Result;
+    expect(saved.appId).toBe("app-1");
+    const refused = (await appTools.save_app!(
+      context(runner(CLEAN)),
+      call({
+        title: "Pipe",
+        brief: "Checks pipe losses.",
+        files: { ...files, "pipe.py": "import time\nstarted = time.time()\n" },
+      }),
+    )) as Result;
+    expect(refused.appId).toBeUndefined();
+    expect(JSON.stringify(refused)).toContain("pipe.py line 2 reads the clock");
   });
 });
 

@@ -1,8 +1,10 @@
 import { HTML_VIEWER_PATH } from "@rakazo/contracts/content-security-policy";
 import { useEffect, useRef, useState } from "react";
 
+// WebAssembly and blob: workers let apps run calculations off the main thread; with no connect-src
+// the workers inherit no network either.
 export const PREVIEW_CSP =
-  "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src data: blob:; font-src data:; form-action 'none'; base-uri 'none'";
+  "default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data:; media-src data: blob:; font-src data:; form-action 'none'; base-uri 'none'";
 
 const PREVIEW_GUARD = `<script>
 document.addEventListener("click", (event) => {

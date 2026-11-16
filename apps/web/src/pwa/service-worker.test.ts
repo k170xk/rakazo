@@ -93,6 +93,7 @@ describe("service worker", () => {
     expect(await sw.fetch("https://cdn.example.com/assets/app.js")).toBeUndefined();
     expect(network).not.toHaveBeenCalled();
     expect(bypassesServiceWorker("/apiary")).toBe(false);
+    expect(bypassesServiceWorker("/python/314.0.8/pyodide.asm.wasm")).toBe(true);
   });
 
   it("precaches the shell and serves it for navigations while offline", async () => {

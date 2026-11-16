@@ -1,12 +1,14 @@
 #!/usr/bin/env node
-// ocsc-app-shot <app.html> <out-dir> [--pages id,id] [--phone] [--check]
+// ocsc-app-shot <app.html> <out-dir> [--pages id,id] [--phone] [--check] [--python <dir>]
 //
 // Opens an App Studio app (a built document with its data inlined) in headless Chromium with every
 // network request refused, clicks through its pages and writes report.json: crashes, console
 // errors, blank screens, pages wider than a phone and controls or text that are hard to use on
 // one. Without --check it also saves JPEG
 // screenshots of the pages asked for (the first page by default), on a desktop and with --phone
-// on a phone, so the bot that built the app can see it.
+// on a phone, so the bot that built the app can see it. With --python the app's Python runtime
+// files are answered from <dir>/<version>/<file> (the app checks each against its pin), and each
+// page is photographed once its calculations have answered.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -21,7 +23,17 @@ const SETTLE_MS = 900;
 const CRASH_TEXT = "This app hit a problem";
 /** The policy the app runs under in Rakazo's viewer, so it is checked as it will run and reaches nothing. */
 const APP_POLICY =
-  "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src data: blob:; font-src data:; form-action 'none'; base-uri 'none'";
+  "default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data:; media-src data: blob:; font-src data:; form-action 'none'; base-uri 'none'";
+/** Mirrors PYTHON_FIXTURE_URL in @rakazo/app-kit's protocol.ts; routed below, never sent. */
+const PYTHON_URL = "https://python.invalid/";
+const PYTHON_FILE =
+  /^https:\/\/python\.invalid\/(\d{1,4}\.\d{1,4}\.\d{1,4})\/([A-Za-z0-9_][A-Za-z0-9_.+-]{0,199})$/;
+const PYTHON_TYPES = {
+  ".mjs": "text/javascript",
+  ".json": "application/json",
+  ".wasm": "application/wasm",
+};
+const PYTHON_WAIT_MS = 60_000;
 const RTC = [
   "RTCPeerConnection",
   "webkitRTCPeerConnection",
@@ -49,13 +61,17 @@ const option = (name) => {
   return at === -1 ? undefined : args[at + 1];
 };
 const positional = args.filter(
-  (arg, index) => !arg.startsWith("--") && !(index > 0 && args[index - 1] === "--pages"),
+  (arg, index) =>
+    !arg.startsWith("--") && !(index > 0 && ["--pages", "--python"].includes(args[index - 1])),
 );
 if (positional.length < 2)
-  fail("usage: ocsc-app-shot <app.html> <out-dir> [--pages id,id] [--phone] [--check]");
+  fail(
+    "usage: ocsc-app-shot <app.html> <out-dir> [--pages id,id] [--phone] [--check] [--python <dir>]",
+  );
 const htmlPath = inside(positional[0]);
 const outDir = inside(positional[1]);
 const check = flag("--check");
+const pythonDir = option("--python") ? inside(option("--python")) : null;
 const wanted = (option("--pages") ?? "")
   .split(",")
   .map((id) => id.trim())
@@ -63,7 +79,9 @@ const wanted = (option("--pages") ?? "")
   .slice(0, MAX_PAGES);
 
 const source = await readFile(htmlPath, "utf8");
-const policy = `<meta http-equiv="Content-Security-Policy" content="${APP_POLICY}">`;
+const policy = `<meta http-equiv="Content-Security-Policy" content="${APP_POLICY}${
+  pythonDir ? `; connect-src ${PYTHON_URL}` : ""
+}">`;
 const doctype = /^\s*<!doctype html>/i.exec(source);
 const html = doctype ? doctype[0] + policy + source.slice(doctype[0].length) : policy + source;
 await mkdir(outDir, { recursive: true });
@@ -109,6 +127,17 @@ async function open(browser, viewport) {
     const url = route.request().url();
     if (url.startsWith("data:") || url.startsWith("blob:") || url === "about:blank")
       return route.continue();
+    const python = pythonDir && PYTHON_FILE.exec(url);
+    if (python) {
+      const file = path.join(pythonDir, python[1], python[2]);
+      return route
+        .fulfill({
+          path: file,
+          contentType: PYTHON_TYPES[path.extname(file)] ?? "application/octet-stream",
+          headers: { "access-control-allow-origin": "*" },
+        })
+        .catch(() => route.fulfill({ status: 404, body: "" }));
+    }
     note(report.blocked, url.slice(0, 160));
     return route.abort("blockedbyclient");
   });
@@ -133,7 +162,28 @@ async function open(browser, viewport) {
   await page.setContent(html, { waitUntil: "load", timeout: 30_000 });
   await page.evaluate(() => document.fonts?.ready).catch(() => {});
   await page.waitForTimeout(SETTLE_MS + 300);
+  await answered(page, where);
   return { context, page, at: (label) => (where = label) };
+}
+
+/** Waits for the page's Python calculations, which mark <html data-python-busy> while they run. */
+async function answered(page, label) {
+  if (!pythonDir) return;
+  const done = await page
+    .waitForFunction(() => !document.documentElement.hasAttribute("data-python-busy"), undefined, {
+      timeout: PYTHON_WAIT_MS,
+      polling: 250,
+    })
+    .then(
+      () => true,
+      () => false,
+    );
+  if (!done)
+    note(report.errors, {
+      page: label,
+      message: `A Python calculation was still running after ${PYTHON_WAIT_MS / 1000} s.`,
+    });
+  else await page.waitForTimeout(300);
 }
 
 async function inspect(page, label, viewport) {
@@ -277,6 +327,7 @@ async function go(page, id) {
   await target.click({ timeout: 5000 }).catch(() => {});
   await page.mouse.move(0, 0).catch(() => {});
   await page.waitForTimeout(SETTLE_MS);
+  await answered(page, id);
   return true;
 }
 

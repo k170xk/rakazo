@@ -1,8 +1,18 @@
 export const SKIP_WAITING = "rakazo:skip-waiting";
 export const CACHE_PREFIX = "rakazo-shell-";
 
-// Live data, auth callbacks and the screen proxy always go straight to the server.
-const BYPASS_PREFIXES = ["/api", "/rpc", "/novnc", "/.well-known", "/health"];
+// Live data, auth callbacks and the screen proxy always go straight to the server. The PDF studio's
+// framed bundle is a separate app: its page must never be swapped for the app shell or a reload.
+// The Python runtime is tens of megabytes that apps fetch only when they calculate.
+const BYPASS_PREFIXES = [
+  "/api",
+  "/rpc",
+  "/novnc",
+  "/.well-known",
+  "/health",
+  "/pdf-studio",
+  "/python",
+];
 const ACTIVATION_TIMEOUT_MS = 3_000;
 const BUILD_ID = /^\d{14}$/;
 

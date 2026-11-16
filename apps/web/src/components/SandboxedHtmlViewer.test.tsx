@@ -89,11 +89,17 @@ it("keeps the nested preview opaque and blocks remote images, media and fonts", 
   expect(PREVIEW_CSP).not.toMatch(/font-src[^;]*https:/);
   expect(PREVIEW_CSP).toMatch(/media-src data: blob:;/);
   expect(PREVIEW_CSP).not.toMatch(/https?:/);
+  // Calculations compile WebAssembly in blob: workers, which inherit the policy and so stay offline.
+  expect(PREVIEW_CSP).toContain("script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:;");
+  expect(PREVIEW_CSP).toContain("worker-src blob:;");
+  expect(PREVIEW_CSP).not.toContain("connect-src");
   // The srcdoc also inherits the shell's own policy, so embedded pictures and media need it there.
   const shellPolicy =
     shell.match(/http-equiv="Content-Security-Policy" content="([^"]*)"/)?.[1] ?? "";
   expect(shellPolicy).toContain("img-src data:;");
   expect(shellPolicy).toContain("media-src data: blob:;");
+  expect(shellPolicy).toContain("worker-src blob:;");
+  expect(shellPolicy).not.toContain("connect-src");
   expect(shellPolicy).not.toMatch(/https?:/);
   expect(shell).not.toContain("allow-same-origin");
 });

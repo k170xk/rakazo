@@ -29,6 +29,7 @@ import type { PreviewServer, ViteDevServer } from "vite";
 import { defineConfig, loadEnv } from "vite";
 import { wuyingScreenAssets } from "../../packages/adapters/src/wuying-screen-assets.ts";
 import { wuyingScreenPolicy } from "../../packages/adapters/src/wuying-screen-policy.ts";
+import { PYTHON_RUNTIME_PATH, PYTHON_RUNTIMES } from "../../packages/app-kit/src/python/runtime.ts";
 import { resolveScreenProxySecret } from "../../packages/core/src/secrets-guard.ts";
 import { createServiceLogger } from "../../packages/logging/src/env.ts";
 import { apiProxy } from "./src/api-proxy.js";
@@ -44,6 +45,7 @@ import {
   shouldInjectNovncStorageShim,
 } from "./src/novnc-html.js";
 import { rakazoPwa } from "./src/pwa/plugin.js";
+import { pythonRuntimeMiddleware } from "./src/python-runtime.js";
 import type { ScreenTargetFailure } from "./src/screen-proxy.js";
 import {
   checkScreenAuthorization,
@@ -606,6 +608,19 @@ export default defineConfig(({ command, mode }) => {
         },
         configurePreviewServer(server) {
           server.middlewares.use(sharedPageHeaders);
+        },
+      },
+      {
+        name: "rakazo-python-runtime",
+        configurePreviewServer({ config, middlewares }) {
+          const outDir = path.resolve(config.root, config.build.outDir);
+          middlewares.use(
+            pythonRuntimeMiddleware(
+              path.join(outDir, PYTHON_RUNTIME_PATH.slice(1)),
+              PYTHON_RUNTIME_PATH,
+              PYTHON_RUNTIMES,
+            ),
+          );
         },
       },
       {
