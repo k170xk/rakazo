@@ -142,13 +142,17 @@ export async function skillReadFromTool(
 ): Promise<Record<string, unknown>> {
   const skill = await findOwnedSkill(prisma, owner, input);
   if (!skill) return { error: "Skill not found." };
-  const row = skill.id.startsWith("builtin:")
+  const builtin = skill.id.startsWith("builtin:");
+  const row = builtin
     ? null
     : await prisma.agentSkill.findFirst({
         where: { id: skill.id, ...availableInSpace(owner) },
         select: { files: true },
       });
-  const files = skillFiles(row?.files);
+  const files = builtin
+    ? (enabledBuiltinAgentSkills().find((entry) => `builtin:${entry.name}` === skill.id)?.files ??
+      {})
+    : skillFiles(row?.files);
   const paths = Object.keys(files).sort();
   const wanted = input.file?.trim().replace(/^\.\//, "");
   if (wanted) {

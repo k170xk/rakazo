@@ -5,7 +5,7 @@
  *
  *   ocsc-pdf-studio open <file.pdf> [--out <file.pdf>] [--discard]
  *   ocsc-pdf-studio new <file.pdf> [--size A0..A4|<w>x<h> mm] [--portrait] [--pages <n>] [--discard]
- *   ocsc-pdf-studio tools [<tool>]
+ *   ocsc-pdf-studio tools [<tool> | <words>]
  *   ocsc-pdf-studio call <tool> ['{"json":"arguments"}' | @args.json]
  *   ocsc-pdf-studio save
  *   ocsc-pdf-studio status
@@ -40,7 +40,26 @@ const STATE_DIR = join(WORKSPACE, ".openbot", "pdf-studio");
 const SERVER_FILE = join(STATE_DIR, "server.json");
 const MAX_PDF_BYTES = 300 * 1024 * 1024;
 const OPEN_TIMEOUT_MS = 90_000;
-const MAX_PRINTED_CHARS = 20_000;
+// The chat shows a shell result up to 12,000 characters, with stdout JSON-escaped inside it; past
+// that it is shortened. Printed answers stay under this, measured escaped.
+const MAX_PRINTED_CHARS = 11_000;
+// The part of a long answer printed beside its result_file.
+const SUMMARY_CHARS = 7_000;
+// Fields a summary keeps whole first: what to do next and what blocked or failed.
+const SUMMARY_FIRST = [
+  "ok",
+  "error",
+  "blocked",
+  "status",
+  "message",
+  "next",
+  "questions",
+  "incomplete",
+  "summary",
+  "drawn",
+  "warnings",
+  "notDesigned",
+];
 
 class StudioError extends Error {}
 
@@ -452,19 +471,63 @@ async function cmdOpen(args) {
   };
 }
 
+const firstSentence = (d) => `${d.name}: ${String(d.description).split(/(?<=\.)\s/)[0]}`;
+
+/** One tool's definition; when even compact it is too long to print, the whole of it goes to a file. */
+function toolDefinition(one) {
+  if (fits({ ok: true, tool: one })) return { ok: true, tool: one };
+  mkdirSync(STATE_DIR, { recursive: true });
+  const file = join(STATE_DIR, `tool-${one.name}.json`);
+  writeFileSync(file, JSON.stringify(one, null, 2));
+  const schema = one.inputSchema || {};
+  return {
+    ok: true,
+    tool: {
+      name: one.name,
+      description: one.description,
+      arguments: Object.fromEntries(
+        Object.entries(schema.properties || {}).map(([key, prop]) => [
+          key,
+          [prop?.type, prop?.enum ? `one of ${prop.enum.join(", ")}` : ""].filter(Boolean).join(", ") ||
+            "see definition_file",
+        ]),
+      ),
+      required: schema.required || [],
+    },
+    definition_file: relative(WORKSPACE, file).split(sep).join("/"),
+    note: `The argument details are in definition_file, e.g. jq '.inputSchema.properties.<name>' ${relative(WORKSPACE, file).split(sep).join("/")}`,
+  };
+}
+
 async function cmdTools(args) {
   const { frame } = await session();
   const definitions = await frame.evaluate(() => window.__OPDS_APP__.definitions());
-  if (args[0]) {
-    const wanted = toolName(args[0]);
-    const one = definitions.find((d) => d.name === wanted);
-    if (!one) throw new StudioError(`No tool ${wanted}. See: ocsc-pdf-studio tools`);
-    return { ok: true, tool: one };
+  const words = args.join(" ").trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 1) {
+    const one = definitions.find((d) => d.name === toolName(words[0]));
+    if (one) return toolDefinition(one);
+  }
+  if (words.length) {
+    const found = definitions.filter((d) => {
+      const text = `${d.name.replace(/_/g, " ")} ${d.description}`.toLowerCase();
+      return words.every((w) => text.includes(w));
+    });
+    if (!found.length)
+      throw new StudioError(`No tool matches "${words.join(" ")}". See: ocsc-pdf-studio tools`);
+    const shown = found.slice(0, 25);
+    return {
+      ok: true,
+      query: words.join(" "),
+      tools: shown.map(firstSentence),
+      ...(found.length > shown.length ? { more: `${found.length - shown.length} more: add a word.` } : {}),
+      next: "ocsc-pdf-studio tools <name> shows a tool's arguments.",
+    };
   }
   return {
     ok: true,
-    tools: definitions.map((d) => `${d.name}: ${String(d.description).split(/(?<=\.)\s/)[0]}`),
-    more: "ocsc-pdf-studio tools <name> shows a tool's arguments.",
+    count: definitions.length,
+    tools: definitions.map((d) => d.name.replace(/^pdf_/, "")),
+    next: "ocsc-pdf-studio tools <name> shows a tool's description and arguments; ocsc-pdf-studio tools <words> finds tools by what they do (e.g. tools layer, tools drainage).",
   };
 }
 
@@ -528,23 +591,74 @@ async function cmdNew(args) {
   return { ...opened, created: rel, sheet: { size, ...sheet, pages }, note: "Saving writes back to this same file. Set up the border, title block and scale with pdf_sheet_setup." };
 }
 
+/** The text main() prints: indented when that fits the chat, else compact. */
+function printable(value) {
+  const pretty = JSON.stringify(value, null, 2);
+  return JSON.stringify(pretty).length <= MAX_PRINTED_CHARS ? pretty : JSON.stringify(value);
+}
+
+const fits = (value) => JSON.stringify(printable(value)).length <= MAX_PRINTED_CHARS;
+const size = (value) => JSON.stringify(value)?.length ?? 0;
+
+/** A long list or object in a summary: how big it is, its first items and how to read the rest. */
+function sketch(value, path, file) {
+  const read = `jq '${path}' ${file}`;
+  if (Array.isArray(value)) {
+    const brief = (item) => {
+      if (size(item) <= 400) return item;
+      if (!item || typeof item !== "object") return `${String(item).slice(0, 300)}…`;
+      return Object.fromEntries(
+        Object.entries(item)
+          .filter(([, v]) => v === null || typeof v !== "object")
+          .map(([k, v]) => [k, typeof v === "string" && v.length > 120 ? `${v.slice(0, 120)}…` : v]),
+      );
+    };
+    return { items: value.length, first: value.slice(0, 2).map(brief), read };
+  }
+  if (value && typeof value === "object") return { keys: Object.keys(value), read };
+  return `${String(value).slice(0, 300)}… (${read})`;
+}
+
+/**
+ * What to print of an answer too long for the chat: every small field whole (what to ask or do
+ * next first), and each large one sketched, within `budget` characters.
+ */
+function summarise(result, file, budget = SUMMARY_CHARS) {
+  if (!result || typeof result !== "object" || Array.isArray(result))
+    return sketch(result, ".result", file);
+  const entries = Object.entries(result);
+  const rank = ([key]) => (SUMMARY_FIRST.includes(key) ? SUMMARY_FIRST.indexOf(key) : SUMMARY_FIRST.length);
+  const chosen = new Map();
+  let used = 0;
+  for (const [key, value] of [...entries].sort((a, b) => rank(a) - rank(b) || size(a[1]) - size(b[1]))) {
+    const whole = size(value);
+    const kept = used + whole <= budget ? value : sketch(value, `.result[${JSON.stringify(key)}]`, file);
+    chosen.set(key, kept);
+    used += kept === value ? whole : size(kept);
+  }
+  return Object.fromEntries(entries.map(([key]) => [key, chosen.get(key)]));
+}
+
 async function cmdCall(args) {
   const { frame } = await session();
   const name = toolName(args[0]);
   const result = keepImages(await run(frame, name, parseArgs(args[1])), name);
-  const json = JSON.stringify(result, null, 2);
-  if (json.length <= MAX_PRINTED_CHARS) return { ok: true, tool: name, result };
+  if (fits({ ok: true, tool: name, result })) return { ok: true, tool: name, result };
   mkdirSync(STATE_DIR, { recursive: true });
   const file = join(STATE_DIR, `${name}-${Date.now()}.json`);
+  const json = JSON.stringify({ ok: true, tool: name, result }, null, 2);
   writeFileSync(file, json);
-  return {
+  const rel = relative(WORKSPACE, file).split(sep).join("/");
+  const answer = (budget) => ({
     ok: true,
     tool: name,
-    result_file: relative(WORKSPACE, file).split(sep).join("/"),
+    result_file: rel,
     chars: json.length,
-    note: "The whole answer is in result_file. Search it (grep, jq) or read it in parts.",
-    preview: json.slice(0, 1500),
-  };
+    note: "Too long to print whole: summary keeps every small field and counts each long list with its first items. The whole answer is in result_file: read a part with the jq command each list gives, or grep it.",
+    summary: summarise(result, rel, budget),
+  });
+  for (const budget of [SUMMARY_CHARS, 4_000, 2_000]) if (fits(answer(budget))) return answer(budget);
+  return answer(0);
 }
 
 async function cmdSave() {
@@ -610,7 +724,7 @@ async function main() {
     if (!handler)
       throw new StudioError(`Usage: ocsc-pdf-studio ${Object.keys(COMMANDS).join("|")} ...`);
     const result = await handler(args);
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    process.stdout.write(`${printable(result)}\n`);
     process.exit(0);
   } catch (error) {
     process.stdout.write(

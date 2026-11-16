@@ -44,7 +44,12 @@ export const RAKAZO_DOCS_URLS = RAKAZO_DOCS.map(([, url]) => url);
  * Only generic how-tos; no account-specific content.
  * Descriptions show in the / picker (truncated at 72) and inject every turn in the skills catalog.
  */
-const SKILLS: Array<{ name: string; description: string; body: string }> = [
+const SKILLS: Array<{
+  name: string;
+  description: string;
+  body: string;
+  files?: Record<string, string>;
+}> = [
   {
     name: "Interrogate",
     description: "Adversarial review of a diff/PR/plan. Review only; never applies fixes.",
@@ -70,14 +75,17 @@ ${RAKAZO_DOCS.map(([topics, url]) => `- ${topics}: ${url}`).join("\n")}`,
   ...OCSC_SKILLS,
 ];
 
+/** files: reference files beside SKILL.md, read one at a time through skill_read, never with the skill. */
 export const BUILTIN_AGENT_SKILLS: Array<{
   name: string;
   description: string;
   content: string;
-}> = SKILLS.map(({ name, description, body }) => ({
+  files?: Record<string, string>;
+}> = SKILLS.map(({ name, description, body, files }) => ({
   name,
   description,
   content: buildSkillMd({ name, description, body }),
+  ...(files ? { files } : {}),
 }));
 
 /** The built-in skills an admin has left on for every account. */

@@ -339,6 +339,35 @@ describe("skill tools", () => {
     });
   });
 
+  it("reads a builtin skill's reference files one at a time", async () => {
+    const read = await skillReadFromTool(prisma as never, owner, { name: "ocsc-pdf-markup" });
+    expect(read.files).toEqual([
+      "civil.md",
+      "design-intake.md",
+      "drafting.md",
+      "electrical.md",
+      "mechanical.md",
+      "review.md",
+      "structural.md",
+    ]);
+    const core = String(read.content);
+    for (const file of read.files as string[]) expect(core).toContain(file);
+    expect(core).not.toContain("drainage_approval");
+
+    const civil = await skillReadFromTool(prisma as never, owner, {
+      name: "ocsc-pdf-markup",
+      file: "civil.md",
+    });
+    expect(civil).toMatchObject({ name: "ocsc-pdf-markup", file: "civil.md" });
+    expect(String(civil.content)).toContain("drainage_approval");
+    expect(
+      await skillReadFromTool(prisma as never, owner, { name: "ocsc-pdf-markup", file: "../x" }),
+    ).toMatchObject({ error: 'No file "../x" in this skill.' });
+
+    const word = await skillReadFromTool(prisma as never, owner, { name: "ocsc-word" });
+    expect(word).not.toHaveProperty("files");
+  });
+
   it("rejects oversized skill content", async () => {
     const body = "x".repeat(100_001);
     const created = await skillCreateFromTool(prisma as never, owner, {

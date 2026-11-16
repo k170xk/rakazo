@@ -269,7 +269,8 @@ describe("Evolve company tools", () => {
 
   it("only names Evolve tools that Evolve has", () => {
     for (const skill of BUILTIN_AGENT_SKILLS) {
-      for (const [, name] of skill.content.matchAll(/mcp__evolve__([A-Za-z0-9_-]+)/g))
+      const texts = [skill.content, ...Object.values(skill.files ?? {})];
+      for (const [, name] of texts.join("\n").matchAll(/mcp__evolve__([A-Za-z0-9_-]+)/g))
         expect(KNOWN_EVOLVE_TOOLS, `${skill.name} names ${name}`).toContain(name);
     }
     expect(OCSC_SKILLS.length).toBeGreaterThan(0);
