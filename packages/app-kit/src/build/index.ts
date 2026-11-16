@@ -5,6 +5,7 @@ import path from "node:path";
 import { build, type Message, type Plugin, transform } from "esbuild";
 import { compile } from "tailwindcss";
 import type { AppInit } from "../protocol.js";
+import { pythonProblem } from "../python/envelope.js";
 import { VISUAL_EDIT_CLASSES } from "../visual-edit.js";
 import { URBANIST_FACE } from "./urbanist-face.js";
 
@@ -30,11 +31,21 @@ export const ALLOWED_IMPORTS = [
   "recharts",
   "@ocsc/ui",
   "@ocsc/app",
+  "@ocsc/calc",
+  "@ocsc/python",
+  "@ocsc/eng",
+  "@ocsc/math",
+  "@ocsc/plot",
 ] as const;
 
 const KIT_ALIASES: Record<string, string> = {
   "@ocsc/ui": path.join(SRC, "ui/index.ts"),
   "@ocsc/app": path.join(SRC, "sdk/index.tsx"),
+  "@ocsc/calc": path.join(SRC, "calc/kit.tsx"),
+  "@ocsc/python": path.join(SRC, "python/index.ts"),
+  "@ocsc/eng": path.join(SRC, "eng/index.ts"),
+  "@ocsc/math": path.join(SRC, "math/index.tsx"),
+  "@ocsc/plot": path.join(SRC, "plot/index.ts"),
   "@ocsc/jsx/jsx-dev-runtime": path.join(SRC, "build/jsx-dev-runtime.ts"),
 };
 
@@ -44,7 +55,7 @@ export const MAX_SOURCE_BYTES = 1_500_000;
 /** Evolve takes plugin bundles up to 2 MB; the app document allows a little more for the fixture. */
 export const MAX_BUNDLE_BYTES = 2_000_000;
 
-const FILE_PATH = /^(?:[A-Za-z0-9_-]+\/){0,4}[A-Za-z0-9_.-]+\.(?:tsx|ts|jsx|js|json|css|md)$/;
+const FILE_PATH = /^(?:[A-Za-z0-9_-]+\/){0,4}[A-Za-z0-9_.-]+\.(?:tsx|ts|jsx|js|json|css|md|py)$/;
 
 export type AppFiles = Record<string, string>;
 
@@ -82,7 +93,7 @@ export function checkFiles(files: AppFiles): string | null {
   let total = 0;
   for (const name of names) {
     if (!FILE_PATH.test(name) || name.includes("..")) {
-      return `${name}: file names are letters, digits, - _ . and up to four folders, ending .tsx .ts .jsx .js .json .css or .md.`;
+      return `${name}: file names are letters, digits, - _ . and up to four folders, ending .tsx .ts .jsx .js .json .css .md or .py.`;
     }
     const text = files[name];
     if (typeof text !== "string") return `${name}: file contents must be text.`;
@@ -93,6 +104,10 @@ export function checkFiles(files: AppFiles): string | null {
   if (total > MAX_SOURCE_BYTES) return "The app's files are too large together.";
   const asking = names.find((name) => !name.endsWith(".md") && CREDENTIAL_FIELD.test(files[name]!));
   if (asking) return `${asking}: ${CREDENTIAL_FIELD_MESSAGE}`;
+  for (const name of names) {
+    const problem = name.endsWith(".py") ? pythonProblem(files[name]!, name) : null;
+    if (problem) return problem;
+  }
   return null;
 }
 
@@ -150,6 +165,7 @@ function appPlugin(files: AppFiles): Plugin {
         if (contents === undefined) return { errors: [{ text: `Missing file ${args.path}.` }] };
         const ext = path.posix.extname(args.path).slice(1);
         if (ext === "css" || ext === "md") return { contents: "", loader: "js" };
+        if (ext === "py") return { contents, loader: "text" };
         return { contents, loader: ext as "tsx" | "ts" | "jsx" | "js" | "json", resolveDir: SRC };
       });
     },
@@ -171,6 +187,7 @@ const PART_NAMES: Array<[RegExp, string]> = [
   [/^(?:react|react-dom|scheduler)$/, "react"],
   [/^(?:motion|motion-dom|motion-utils|framer-motion)$/, "motion"],
   [/^(?:recharts|victory-vendor|d3-.+|es-toolkit|decimal\.js-light|@reduxjs\/toolkit|redux|redux-thunk|reselect|react-redux|immer|use-sync-external-store|eventemitter3|tiny-invariant|clsx|internmap)$/, "recharts"],
+  [/^katex$/, "@ocsc/math"],
 ];
 
 /** Groups bundled bytes by what the app pulled in: react, motion, recharts, lucide, the kit, the app. */
@@ -181,7 +198,11 @@ export function bundleWeight(inputs: BundledInputs): Array<{ part: string; kb: n
     const pkg = /node_modules\/(?:\.pnpm\/[^/]+\/node_modules\/)?((?:@[^/]+\/)?[^/]+)/.exec(name)?.[1];
     if (name.startsWith("app:")) part = "app code";
     else if (pkg) part = PART_NAMES.find(([pattern]) => pattern.test(pkg))?.[1] ?? pkg;
-    else part = name.includes(`${path.sep}sdk${path.sep}`) || name.includes("/sdk/") ? "@ocsc/app" : "@ocsc/ui";
+    else if (name.includes("/sdk/") || name.includes(`${path.sep}sdk${path.sep}`)) part = "@ocsc/app";
+    else if (name.includes("/calc/") || name.includes(`${path.sep}calc${path.sep}`)) part = "@ocsc/calc";
+    else if (name.includes("/python/") || name.includes(`${path.sep}python${path.sep}`)) part = "@ocsc/python";
+    else if (/[/\\](?:eng|math|plot)[/\\]/.test(name)) part = `@ocsc/${/[/\\](eng|math|plot)[/\\]/.exec(name)![1]}`;
+    else part = "@ocsc/ui";
     totals.set(part, (totals.get(part) ?? 0) + info.bytesInOutput);
   }
   return [...totals]
@@ -395,14 +416,16 @@ export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}):
       `Hardcoded hex colours (${hexHits.join(", ")}) bypass light/dark themes; use <Theme />, hsl(var(--primary)), bg-primary/12, text-primary or CHART_COLORS.`,
     );
   }
-  if (!KIT_VISUAL.test(code)) {
+  // A calculator's pages, visuals and rows come from its workbook; the register-app checks don't fit it.
+  const calculator = /from\s+["']@ocsc\/(?:calc|math|eng)["']/.test(code);
+  if (!calculator && !KIT_VISUAL.test(code) && !/from\s+["']@ocsc\/plot["']/.test(code)) {
     notes.push(
       "No @ocsc/ui chart or visual indicator is used. Add kit visuals (AreaChart, BarChart, DonutChart, BarList, FunnelChart, Gauge, Ring, Heatmap, CalendarHeatmap or KpiCard trend) instead of plain counts or hand-rolled div bars.",
     );
   }
   if (/<AppShell\b/.test(code)) {
     const pageDefs = code.match(/\{\s*id\s*:\s*["'`][A-Za-z0-9_-]+["'`]\s*,\s*label\s*:/g) ?? [];
-    if (pageDefs.length < 3 || !KIT_WORKFLOW.test(code)) {
+    if (!calculator && (pageDefs.length < 3 || !KIT_WORKFLOW.test(code))) {
       notes.push(
         "Give the app at least 3 tabs including an interactive workflow view (Kanban, Gantt, CalendarMonth, Timeline, Checklist, MapView, GalleryView, Whiteboard, TreeView or SortableList) alongside Overview and TableView — never just Overview plus table tabs.",
       );
@@ -428,7 +451,13 @@ export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}):
       'Set <Theme preset="evolve"|"crisp"|"soft"|"forest"|"contrast" /> near the top of App so surfaces, corners and density fit the domain.',
     );
   }
-  if (options.isNew && !options.fromTemplate && options.totalRows === 0 && !/\buseEvolve\b|\bevolve\.read\b/.test(code)) {
+  if (
+    !calculator &&
+    options.isNew &&
+    !options.fromTemplate &&
+    options.totalRows === 0 &&
+    !/\buseEvolve\b|\bevolve\.read\b/.test(code)
+  ) {
     notes.push(
       "Tables were saved with 0 rows, so charts, boards and app_look screenshots render empty. Unless the user asked for an empty slate, seed 8–12 realistic starter rows with hidden boolean column is_sample: true and show <SampleBanner tables={[...]} /> for one-click clearing.",
     );

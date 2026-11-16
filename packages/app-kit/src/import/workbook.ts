@@ -532,7 +532,8 @@ export function zipUnpackedSize(bytes: Uint8Array): number | null {
   return total;
 }
 
-export function importWorkbook(bytes: Uint8Array): WorkbookImport {
+/** Refuses a file too large to read, or a zip that would unpack to more than the server allows. */
+export function checkWorkbookSize(bytes: Uint8Array) {
   if (bytes.byteLength > MAX_WORKBOOK_BYTES) throw new Error("That workbook is larger than 20 MB.");
   // xlsx and ods are zips; a small one can unpack to gigabytes and exhaust the server's memory.
   if (
@@ -549,6 +550,10 @@ export function importWorkbook(bytes: Uint8Array): WorkbookImport {
       throw new Error("That workbook unpacks to more than 200 MB, so it can't be imported.");
     }
   }
+}
+
+export function importWorkbook(bytes: Uint8Array): WorkbookImport {
+  checkWorkbookSize(bytes);
   let workbook: XLSX.WorkBook;
   try {
     workbook = XLSX.read(bytes, {

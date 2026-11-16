@@ -25,6 +25,7 @@ import {
   APP_PICK,
   APP_RESPONSE,
   MAX_UPLOAD_BYTES,
+  PYTHON_FIXTURE_URL,
   requestMessage,
 } from "../protocol.js";
 import type {
@@ -753,6 +754,19 @@ export function useAsset(id: string | null | undefined): string | null {
   return url;
 }
 
+/** The bytes of a file the app keeps, for data files such as a workbook's calculation. */
+export async function readAsset(id: string): Promise<Uint8Array> {
+  const fixture = window.__OCSC_APP_FIXTURE__ as { assets?: Record<string, string> } | undefined;
+  const known = fixture?.assets?.[id];
+  const base64 = known
+    ? known.slice(known.indexOf(",") + 1)
+    : (await send<{ mime: string; base64: string }>({ op: "asset", id }, 60_000)).base64;
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
 const LONGEST_EDGE = 1600;
 
 async function shrinkImage(file: Blob, longest: number): Promise<Blob> {
@@ -947,6 +961,20 @@ export const maps = {
     const text = query.trim().slice(0, 200);
     if (!text || !maps.available()) return [];
     return send<MapPlace[]>({ op: "map.find", query: text }, 15_000);
+  },
+};
+
+/**
+ * The host's copy of the pinned Python runtime; @ocsc/python checks every file before use. A copy
+ * opened with inlined data has it only when its opener says so (app_look answers PYTHON_FIXTURE_URL).
+ */
+export const pythonRuntime = {
+  available: () => store.init.features.includes("python"),
+  async file(version: string, name: string): Promise<Uint8Array> {
+    if (!store.local) return send<Uint8Array>({ op: "python.file", version, name }, 120_000);
+    const response = await fetch(`${PYTHON_FIXTURE_URL}${version}/${name}`);
+    if (!response.ok) throw new Error("Python calculations aren't available here.");
+    return new Uint8Array(await response.arrayBuffer());
   },
 };
 

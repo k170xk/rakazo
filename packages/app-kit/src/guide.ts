@@ -76,7 +76,213 @@ formula columns are computed, never stored. Rows carry _id and _updatedAt. Up to
 
 ## Imports allowed
 react, motion/react (or framer-motion — both resolve to Motion), lucide-react (icons), recharts (only if the kit charts can't do it),
-@ocsc/ui (the component kit), @ocsc/app (data and host). Nothing else resolves.
+@ocsc/ui (the component kit), @ocsc/app (data and host), @ocsc/calc (workbook calculators), @ocsc/python
+(deterministic Python calculations), @ocsc/eng (units, numerics, sections, beams), @ocsc/math (LaTeX and
+calculation sheets), @ocsc/plot (engineering charts and drawings), and the app's own .py files as text. Nothing else resolves.
+
+## @ocsc/python (deterministic Python for engineering calculations)
+Use it for numerics TypeScript does badly: stiffness/matrix analysis (frames, grillages, FEA-lite), hydraulics
+(Colebrook, pipe networks), optimisation and root finding, statistics, curve fitting, signals and sympy
+derivations. Keep simple arithmetic in TypeScript and workbook maths in @ocsc/calc.
+- Write the calculation as a file such as beam.py defining calc(inputs) that returns a dict, and import it
+  as text: import beamPy from "./beam.py". One file per calculation; it cannot import the app's other .py files.
+- usePython(beamPy, inputs) → {status: "running"|"ready"|"error"|"unavailable", result, error, loading}; it
+  reruns when inputs change by value and keeps the last result meanwhile. result = {outputs, stdout, stderr,
+  versions, key, hash}. loading is 0-1 while the runtime downloads the first time (tens of MB, then cached):
+  show <Progress value={loading * 100} />. runPython(code, inputs) → Promise<result> for a button.
+- Packages: numpy, scipy, pandas, sympy at pinned versions (found from the imports) plus the standard library.
+- Determinism is enforced: the same code and inputs give the same outputs and hash on every machine running
+  the pinned runtime. Seeds reset before each run (random and numpy's global generator to 0); seed your own
+  generators (np.random.default_rng(42)). Saves are refused when a .py reads the clock (time.time,
+  datetime.now), uses unseeded randomness, or imports js, pyodide, urllib, http, socket, subprocess,
+  threading or asyncio. Pass dates in as inputs.
+- Inputs arrive as JSON: a whole number like 3 is an int, so use float(x) or np.asarray(x, dtype=float).
+  Return numbers, text, booleans, lists, dicts, numpy arrays and scalars (lists and numbers), pandas DataFrame
+  ({columns, index, data}) or Series ({name, index, data}), and sympy expressions ({text, tex, value?}).
+  Floats come back exactly (shortest round-trip), NaN and ±inf as NaN and ±Infinity; round only for display.
+- error.message names the line ("calc.py line 12: ZeroDivisionError: division by zero"); print() goes to stdout.
+  On a phone that runs short of memory the error says so in plain words; show error.message as it is.
+  Only the packages a .py file imports download, so import scipy or pandas only where the maths needs them.
+- Present results with @ocsc/math (CalcSheet, CalcStep, Check, and Tex for a sympy result's tex) and plot
+  them with @ocsc/plot or the @ocsc/ui charts. Print result.versions.runtime and result.hash.slice(0, 12) on
+  the calc sheet so a checker can reproduce it. LAPACK results (solve, eig, lstsq) agree with desktop CPython
+  only to about 1e-14, so compare checks against limits, never with ===.
+- app_look runs the calculations and photographs each page once they answer; where its result says Python is
+  not installed, and in Evolve plugins, status is "unavailable": keep that state a quiet placeholder.
+\`\`\`py
+import numpy as np
+from scipy import linalg
+
+
+def calc(inputs):
+    spans = int(inputs["spans"])
+    length = float(inputs["length"])  # m
+    load = float(inputs["load"])  # kN/m
+    ei = float(inputs["ei"])  # kNm2
+    k = ei / length * np.array([[4.0, 2.0], [2.0, 4.0]])
+    fixed = load * length**2 / 12 * np.array([1.0, -1.0])
+    K = np.zeros((spans + 1, spans + 1))
+    F = np.zeros(spans + 1)
+    for i in range(spans):
+        K[i : i + 2, i : i + 2] += k
+        F[i : i + 2] -= fixed
+    rotations = linalg.solve(K, F)
+    moments = [0.0] + [float(-(k @ rotations[i : i + 2] + fixed)[1]) for i in range(spans)]
+    moments[-1] = 0.0
+    return {"support_moments": moments, "peak": max(moments), "rotations": rotations}
+\`\`\`
+\`\`\`tsx
+import { useState } from "react";
+import { usePython } from "@ocsc/python";
+import { Callout, Card, CardBody, CardHeader, Field, Input, KpiCard, Progress } from "@ocsc/ui";
+import beamPy from "./beam.py";
+
+export default function BeamCheck() {
+  const [load, setLoad] = useState(25);
+  const beam = usePython<{ support_moments: number[]; peak: number }>(beamPy, { spans: 3, length: 6, load, ei: 42000 });
+  return (
+    <Card>
+      <CardHeader title="Continuous beam" />
+      <CardBody className="flex flex-col gap-4">
+        <Field label="Load (kN/m)">{(id) => <Input id={id} type="number" inputMode="decimal" value={load} onChange={(event) => setLoad(Number(event.target.value))} />}</Field>
+        {beam.loading !== null && <Progress value={beam.loading * 100} />}
+        {beam.error && <Callout tone="danger">{beam.error.message}</Callout>}
+        {beam.result && <KpiCard label="Support moment (kNm)" value={beam.result.outputs.peak} />}
+      </CardBody>
+    </Card>
+  );
+}
+\`\`\`
+
+## Engineering calculations (@ocsc/eng, @ocsc/math, @ocsc/plot)
+Engineers check and sign these apps, so:
+- Every number shown carries its unit, every design step names its source (code clause, table, text) in \`reference\`, and every limit is a \`Check\` showing utilisation.
+- Compute once in plain functions or useMemo and pass the numbers in; CalcStep, Check and the plots display them and never recompute. Same inputs, same output: no random or date-dependent results.
+- Round only for display (\`style={{ sf: 4 }}\` is the default, or \`{ dp: 2 }\`). Utilisation rounds up, so a failing check never shows 1.00.
+- Convert with \`convert()\`; never type a conversion factor.
+- Workbook logic belongs in @ocsc/calc and heavy numerics (matrices, FE, optimisation, SciPy) in @ocsc/python; present both with @ocsc/math and @ocsc/plot.
+
+@ocsc/eng (pure functions):
+- \`convert(12, "kN/m2", "kPa")\`, \`compatible(a, b)\`, \`q(5, "kN").div(q(2, "m2")).to("kPa")\` (dimensions are checked; a mismatch throws). SI with prefixes (kN, MPa, mm4, kWh, kVA, tCO2e), °C/°F, imperial (ft, lbf, ksi, psf, BTU, hp), m3/h, W/m2K, kgCO2e/m2.
+- \`fmt(x, { sf | dp })\`, \`round\`/\`roundUp\`/\`roundDown\` (Excel ROUND), \`engNotation\`, \`siPrefix(4.7e-6, "F")\` → "4.7 µF", \`check(value, limit, "max" | "min")\` → \`{ utilisation, pass, shown }\`.
+- \`interpolate(xs, ys, x, "error" | "clamp" | "extrapolate")\`, \`interpolate2d(xs, ys, table, x, y)\`, \`linspace\`, \`bisect\`/\`brent(f, a, b)\`, \`simpson(f, a, b, n)\`, \`trapz\`, \`solve(A, b)\`, \`luDecompose\`/\`luSolve\`, \`det\`.
+- \`sectionProps({ type: "rect" | "circle" | "chs" | "rhs" | "i" | "t", ... })\` → \`{ A, yc, Ix, Iy, Zt, Zb, Zp, rx, ry }\` in mm; \`barRow\`, \`barArea\`.
+- \`analyseBeam({ length, supports: [{ x, type: "pin" | "roller" | "fixed" }], loads: [{ type: "point", x, P } | { type: "udl", w, from?, to? } | { type: "linear", w1, w2, from, to } | { type: "moment", x, M }], EI? })\` in m, kN, kN/m, kNm and kNm² (loads down positive) → \`{ x, shear, moment (sagging +), deflection (mm, up +), reactions, max }\`, for continuous, propped and fixed beams; throws when the beam is unstable.
+
+@ocsc/math (KaTeX with its fonts bundled):
+- \`<Tex math="\\sigma = \\frac{M}{Z}" />\` inline, \`block\` for display. LaTeX goes as is in JSX attributes; in JS strings double each backslash ("\\\\frac").
+- \`<CalcSheet title job by checked date revision actions>\` holds \`<CalcSection title reference>\`, \`<CalcStep label symbol formula values result unit style reference note>\` (formula = substituted numbers = result; \`values\` keyed by the formula's symbols, e.g. \`{ "f_{ck}": 30 }\`), \`<Check label symbol limitSymbol value limit mode unit reference>\` and \`<CalcNote>\`. \`<CheckSummary checks>\` lists utilisations with the governing one in bold.
+- Write the rows once as \`CalcRow\` data: \`<CalcRows rows={rows} />\` shows them and \`calcPdfBlocks(rows)\` prints them through PrintButton. \`texText(latex)\` gives plain text.
+- With @ocsc/calc too, \`import { CalcSheet as CalcPad } from "@ocsc/math"\` (both export CalcSheet).
+
+@ocsc/plot (SVG in theme colours; prints light; each has an SVG download):
+- \`<Plot series={[{ name, data: [[x, y]], type: "line" | "scatter" | "area" | "bar" | "step", axis: "right", color: 1-6 or a tone, dash, marker }]} x={{ label, unit, scale: "log", min, max }} y={...} y2={...} annotations={[{ type: "hline", y, label, tone: "danger" }, { type: "band", y: [a, b] }, { type: "point", x, y, label }]} equal />\`
+- \`<ContourPlot grid={{ x, y, z }} levels zLabel />\`, \`<PolarPlot series={[{ name, data: [[deg, r]] }]} />\`, \`<InteractionDiagram curve={[[M, N]]} points={[{ M, N, label }]} />\`.
+- \`<BeamResults beam result />\` (loads, shear, moment and deflection aligned), \`<BeamDiagram>\`, \`<ForceDiagram>\`, \`<SectionDrawing shape bars link />\`, and \`<Drawing bounds={[x0, y0, x1, y1]} units="mm">\` at true scale with DrawingLine, DrawingPoly, DrawingCircle, DrawingText and \`<Dim from to offset label />\`.
+- \`await plotImage(element)\` → PNG for a PDF \`{ type: "image", src }\` block (every chart inside the element, stacked).
+- Size: @ocsc/math adds about 500 KB, eng and plot about 15 KB each; import @ocsc/math only where formulas show.
+
+## Engineering example
+\`\`\`tsx
+import { useMemo, useRef, useState } from "react";
+import { analyseBeam, barArea, barRow, convert, type BeamInput } from "@ocsc/eng";
+import { CalcRows, CalcSheet, CheckSummary, calcPdfBlocks, type CalcRow } from "@ocsc/math";
+import { BeamResults, SectionDrawing, plotImage } from "@ocsc/plot";
+import { AppShell, Card, CardBody, CardHeader, Field, Grid, Input, PrintButton, Theme } from "@ocsc/ui";
+import { Calculator } from "lucide-react";
+
+export default function App() {
+  const [span, setSpan] = useState(6);
+  const [w, setW] = useState(25);
+  const diagrams = useRef<HTMLDivElement>(null);
+  const b = 300, h = 550, fck = 30, fyk = 500;
+  const bars = barRow({ n: 3, dia: 20, b, h, cover: 30, link: 10 });
+  const As = barArea(3, 20);
+  const d = h - bars[0]!.y;
+  const beam: BeamInput = useMemo(() => ({
+    length: span,
+    supports: [{ x: 0, type: "pin" }, { x: span, type: "roller" }],
+    loads: [{ type: "udl", w }],
+    EI: convert(33, "GPa", "kN/m2") * convert((b * h ** 3) / 12, "mm4", "m4"),
+  }), [span, w]);
+  const result = useMemo(() => analyseBeam(beam), [beam]);
+  const MEd = result.max.sagging.value;
+  const K = (MEd * 1e6) / (b * d ** 2 * fck);
+  const z = Math.min(0.95 * d, (d / 2) * (1 + Math.sqrt(1 - 3.53 * K)));
+  const MRd = (0.87 * fyk * As * z) / 1e6;
+  const delta = Math.abs(result.max.deflection?.value ?? 0);
+  const limit = (span * 1000) / 250;
+  const rows: CalcRow[] = [
+    { kind: "section", title: "Actions", reference: "EN 1990" },
+    { kind: "step", label: "Design moment", symbol: "M_{Ed}", formula: "\\\\frac{w L^2}{8}", values: { w, L: span }, result: MEd, unit: "kNm" },
+    { kind: "section", title: "Bending", reference: "EN 1992-1-1 6.1" },
+    { kind: "step", symbol: "K", formula: "\\\\frac{M_{Ed}}{b d^2 f_{ck}}", values: { "M_{Ed}": MEd * 1e6, b, d, "f_{ck}": fck }, result: K, style: { dp: 3 } },
+    { kind: "step", symbol: "z", formula: "\\\\frac{d}{2}\\\\left(1 + \\\\sqrt{1 - 3.53 K}\\\\right)", values: { d, K }, result: z, unit: "mm", style: { dp: 0 }, note: "z ≤ 0.95d" },
+    { kind: "step", symbol: "M_{Rd}", formula: "0.87 f_{yk} A_s z", values: { "f_{yk}": fyk, A_s: As, z }, result: MRd, unit: "kNm", reference: "3.1.7" },
+    { kind: "check", label: "Bending", symbol: "M_{Ed}", limitSymbol: "M_{Rd}", value: MEd, limit: MRd, unit: "kNm" },
+    { kind: "check", label: "Deflection", symbol: "\\\\delta", limitSymbol: "L/250", value: delta, limit, unit: "mm", reference: "7.4" },
+  ];
+  return (
+    <>
+      <Theme preset="crisp" />
+      <AppShell
+        title="RC beam"
+        actions={
+          <PrintButton
+            size="sm"
+            document={async () => ({
+              title: "Beam B1",
+              kind: "CALCULATION",
+              blocks: [...calcPdfBlocks(rows), { type: "image", src: await plotImage(diagrams.current), caption: "Actions and effects" }],
+            })}
+          />
+        }
+        pages={[{
+          id: "calc",
+          label: "Calculation",
+          icon: <Calculator />,
+          render: () => (
+            <div className="flex flex-col gap-4">
+              <Grid cols={2}>
+                <Field label="Span (m)">{(id) => <Input id={id} type="number" inputMode="decimal" value={span} onChange={(e) => setSpan(Math.max(1, Number(e.target.value) || 1))} />}</Field>
+                <Field label="Load w (kN/m)">{(id) => <Input id={id} type="number" inputMode="decimal" value={w} onChange={(e) => setW(Number(e.target.value) || 0)} />}</Field>
+              </Grid>
+              <CheckSummary checks={[{ label: "Bending", value: MEd, limit: MRd }, { label: "Deflection", value: delta, limit }]} />
+              <CalcSheet title="Beam B1" job="J-1001" by="AB">
+                <CalcRows rows={rows} />
+              </CalcSheet>
+              <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+                <Card><CardHeader title="Actions and effects" /><CardBody><div ref={diagrams}><BeamResults beam={beam} result={result} /></div></CardBody></Card>
+                <Card><CardHeader title="Section" /><CardBody><SectionDrawing shape={{ type: "rect", b, h }} bars={bars} link={{ cover: 30, dia: 10 }} /></CardBody></Card>
+              </div>
+            </div>
+          ),
+        }]}
+      />
+    </>
+  );
+}
+\`\`\`
+
+## @ocsc/calc (apps made from a calculating workbook)
+The import compiles the workbook into a model kept with the app (const MODEL in App.tsx) and checks every
+formula against the results Excel saved. Keep MODEL and leave the maths to the model: never retype a
+workbook formula in code, read results from cells instead.
+- useCalc(MODEL) → {status, inputs, value("Sheet!B3"), text("Sheet!B3") (as Excel shows it),
+  display("Sheet!B3") (text, General figures to 4 significant figures, for results), set(address, value),
+  initial(address) (the workbook's value), range("Sheet!B3:B20"), options(input), reset(), changed}.
+  inputs: [{address, sheetName, label, unit, kind, options, min, max, help}]. Each person's inputs are remembered
+  in the personal table calc_inputs (keep it); reset() puts back the workbook's values.
+- <CalcForm calc={calc} sheet="Name" title? actions?/> is a sheet as an app page: verdict banner, key-result
+  cards, sections from its headings with typed fields (lists, switches, numbers with units and ranges),
+  tables, the workbook's charts redrawn live in their sections, and a Print to PDF of the calculation.
+  Clause references beside a row (cl 6.2.2, Equn (9.1N)) show as a badge, not in its label. Give pages only
+  to the sheets people work in; reference, lookup and chart-data sheets stay in CalcDetails.
+  <CalcDetails calc={calc}/> is every sheet, searchable, as the app reads it or exactly as the workbook lays it out (<CalcSheet calc={calc} sheet="Name"/>).
+- Pieces for a custom page: useCalcLayout(calc, sheet) → {sections, key, statuses, checks, charts}; <CalcSummary
+  calc layout/>, <CalcResult calc field/>, <CalcField calc field/>, <CalcStatus calc address/>, <CalcChart calc chart/>,
+  <CalcPrintButton calc sheet/>; <CalcInputs calc sheet?/> is a plain form. KpiCard value={calc.display("Out!D9")}.
+  Name a field with calcLabel(calc, field), not field.label: labels a formula writes ("Span 2") follow its result.
 
 ## @ocsc/app
 - useTable(name) → {rows, schema, loading, canEdit, canEditRow(row), insert(row), update(id, patch), remove(id), exportFile("xlsx"|"csv"), canExport}

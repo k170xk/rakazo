@@ -11,6 +11,8 @@ import type { WorkspaceSummary } from "./workspace.js";
 export const APP_REQUEST = "ocsc-app:request";
 export const APP_RESPONSE = "ocsc-app:response";
 export const APP_EVENT = "ocsc-app:event";
+/** Where an app opened with inlined data (app_look) asks for runtime files: <url><version>/<file>. */
+export const PYTHON_FIXTURE_URL = "https://python.invalid/";
 
 export type AppViewer = {
   name: string | null;
@@ -31,7 +33,7 @@ export type AppInit = {
   state: Record<string, unknown>;
   revision: number;
   /**
-   * Features the host offers: ai, export, assets, uploads, maps, and with a server behind it
+   * Features the host offers: ai, export, assets, uploads, maps, python, and with a server behind it
    * live (presence), query (large tables), comments, history, evolve and services.
    */
   features: string[];
@@ -117,6 +119,8 @@ export type AppRequest =
   | { op: "map.tile"; style: string; z: number; x: number; y: number }
   /** Places matching an address or name, best first: [{label, lat, lon}]. */
   | { op: "map.find"; query: string }
+  /** One file of the pinned Python runtime, as bytes (a Uint8Array); the app checks its hash. */
+  | { op: "python.file"; version: string; name: string }
   /** Answers AppLive: changes since a revision and who is here (the host asks it on a timer). */
   | { op: "live"; since: number; focus?: AppFocus | null }
   /** What this viewer has open, for others' presence; the host sends it with its next check. */
@@ -229,6 +233,7 @@ export const APP_OPS = new Set<AppRequest["op"]>([
   "open",
   "map.tile",
   "map.find",
+  "python.file",
   "live",
   "presence.set",
   "rows.query",
