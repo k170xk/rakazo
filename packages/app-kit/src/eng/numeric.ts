@@ -2,16 +2,24 @@
 
 export type OutOfRange = "error" | "clamp" | "extrapolate";
 
-function bracket(xs: readonly number[], x: number, outside: OutOfRange, what: string): [number, number] {
+function bracket(
+  xs: readonly number[],
+  x: number,
+  outside: OutOfRange,
+  what: string,
+): [number, number] {
   const n = xs.length;
   if (n < 2) throw new Error(`${what} needs at least two points.`);
   for (let i = 1; i < n; i++) {
     if (!(xs[i]! > xs[i - 1]!)) throw new Error(`${what}: x values must increase.`);
   }
   if (x < xs[0]! || x > xs[n - 1]!) {
-    if (outside === "error") throw new RangeError(`${what}: ${x} is outside ${xs[0]}–${xs[n - 1]}.`);
+    if (outside === "error")
+      throw new RangeError(`${what}: ${x} is outside ${xs[0]}–${xs[n - 1]}.`);
     if (outside === "clamp") return x < xs[0]! ? [0, 0] : [n - 2, 1];
-    return x < xs[0]! ? [0, (x - xs[0]!) / (xs[1]! - xs[0]!)] : [n - 2, (x - xs[n - 2]!) / (xs[n - 1]! - xs[n - 2]!)];
+    return x < xs[0]!
+      ? [0, (x - xs[0]!) / (xs[1]! - xs[0]!)]
+      : [n - 2, (x - xs[n - 2]!) / (xs[n - 1]! - xs[n - 2]!)];
   }
   let lo = 0;
   let hi = n - 1;
@@ -27,7 +35,12 @@ function bracket(xs: readonly number[], x: number, outside: OutOfRange, what: st
  * Linear interpolation in a table, as codes of practice intend between tabulated values.
  * Outside the table it throws unless `outside` is "clamp" (end values) or "extrapolate".
  */
-export function interpolate(xs: readonly number[], ys: readonly number[], x: number, outside: OutOfRange = "error"): number {
+export function interpolate(
+  xs: readonly number[],
+  ys: readonly number[],
+  x: number,
+  outside: OutOfRange = "error",
+): number {
   if (xs.length !== ys.length) throw new Error("interpolate: xs and ys differ in length.");
   const [i, t] = bracket(xs, x, outside, "interpolate");
   if (t === 0) return ys[i]!;
@@ -63,12 +76,19 @@ export function linspace(a: number, b: number, n: number): number[] {
 export type RootOptions = { tol?: number; maxIter?: number };
 
 function signsDiffer(fa: number, fb: number, a: number, b: number) {
-  if (Number.isNaN(fa) || Number.isNaN(fb)) throw new Error("The function is not a number at the bracket ends.");
-  if (fa * fb > 0) throw new RangeError(`No sign change between ${a} and ${b}; the root is not bracketed.`);
+  if (Number.isNaN(fa) || Number.isNaN(fb))
+    throw new Error("The function is not a number at the bracket ends.");
+  if (fa * fb > 0)
+    throw new RangeError(`No sign change between ${a} and ${b}; the root is not bracketed.`);
 }
 
 /** Bisection: slow but certain once the root is bracketed. Stops when the bracket is narrower than tol. */
-export function bisect(f: (x: number) => number, a: number, b: number, { tol = 1e-12, maxIter = 200 }: RootOptions = {}): number {
+export function bisect(
+  f: (x: number) => number,
+  a: number,
+  b: number,
+  { tol = 1e-12, maxIter = 200 }: RootOptions = {},
+): number {
   let fa = f(a);
   const fb = f(b);
   if (fa === 0) return a;
@@ -90,7 +110,12 @@ export function bisect(f: (x: number) => number, a: number, b: number, { tol = 1
 }
 
 /** Brent's method (inverse quadratic interpolation with bisection fallback), as in Numerical Recipes. */
-export function brent(f: (x: number) => number, a: number, b: number, { tol = 1e-12, maxIter = 200 }: RootOptions = {}): number {
+export function brent(
+  f: (x: number) => number,
+  a: number,
+  b: number,
+  { tol = 1e-12, maxIter = 200 }: RootOptions = {},
+): number {
   let fa = f(a);
   let fb = f(b);
   if (fa === 0) return a;
@@ -185,7 +210,8 @@ export function luDecompose(matrix: readonly (readonly number[])[]): LU {
   for (let k = 0; k < n; k++) {
     let pivot = k;
     for (let i = k + 1; i < n; i++) if (Math.abs(lu[i]![k]!) > Math.abs(lu[pivot]![k]!)) pivot = i;
-    if (Math.abs(lu[pivot]![k]!) <= scale * 1e-13) throw new Error("The matrix is singular (a mechanism, or a missing support).");
+    if (Math.abs(lu[pivot]![k]!) <= scale * 1e-13)
+      throw new Error("The matrix is singular (a mechanism, or a missing support).");
     if (pivot !== k) {
       [lu[k], lu[pivot]] = [lu[pivot]!, lu[k]!];
       [perm[k], perm[pivot]] = [perm[pivot]!, perm[k]!];
@@ -223,7 +249,8 @@ export function luSolve({ lu, perm }: LU, b: readonly number[]): number[] {
 }
 
 /** Solves the dense system A x = b by LU with partial pivoting. */
-export const solve = (a: readonly (readonly number[])[], b: readonly number[]) => luSolve(luDecompose(a), b);
+export const solve = (a: readonly (readonly number[])[], b: readonly number[]) =>
+  luSolve(luDecompose(a), b);
 
 /** Determinant by LU (0 for a singular matrix). */
 export function det(a: readonly (readonly number[])[]): number {

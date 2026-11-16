@@ -59,7 +59,19 @@ const PREFIXABLE: Record<string, Unit> = {
 };
 
 const PREFIX: Record<string, number> = {
-  p: 1e-12, n: 1e-9, µ: 1e-6, μ: 1e-6, u: 1e-6, m: 1e-3, c: 1e-2, d: 1e-1, h: 1e2, k: 1e3, M: 1e6, G: 1e9, T: 1e12,
+  p: 1e-12,
+  n: 1e-9,
+  µ: 1e-6,
+  μ: 1e-6,
+  u: 1e-6,
+  m: 1e-3,
+  c: 1e-2,
+  d: 1e-1,
+  h: 1e2,
+  k: 1e3,
+  M: 1e6,
+  G: 1e9,
+  T: 1e12,
 };
 
 const LBF = 4.4482216152605;
@@ -114,8 +126,10 @@ const NAMED: Record<string, Unit> = {
   rpm: { factor: 1 / 60, dim: dim(0, 0, -1) },
 };
 
-const sameDim = (a: Dimension, b: Dimension) => a.every((power, i) => Math.abs(power - (b[i] ?? 0)) < 1e-12);
-const combine = (a: Dimension, b: Dimension, sign: number) => a.map((power, i) => power + sign * (b[i] ?? 0));
+const sameDim = (a: Dimension, b: Dimension) =>
+  a.every((power, i) => Math.abs(power - (b[i] ?? 0)) < 1e-12);
+const combine = (a: Dimension, b: Dimension, sign: number) =>
+  a.map((power, i) => power + sign * (b[i] ?? 0));
 
 function atom(symbol: string): Unit | null {
   const named = NAMED[symbol];
@@ -125,7 +139,8 @@ function atom(symbol: string): Unit | null {
   for (const [prefix, factor] of Object.entries(PREFIX)) {
     if (!symbol.startsWith(prefix)) continue;
     const base = PREFIXABLE[symbol.slice(prefix.length)];
-    if (base && symbol.length > prefix.length) return { factor: factor * base.factor, dim: base.dim };
+    if (base && symbol.length > prefix.length)
+      return { factor: factor * base.factor, dim: base.dim };
   }
   if (symbol.startsWith("da") && PREFIXABLE[symbol.slice(2)]) {
     const base = PREFIXABLE[symbol.slice(2)]!;
@@ -134,7 +149,19 @@ function atom(symbol: string): Unit | null {
   return null;
 }
 
-const SUPER: Record<string, string> = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
+const SUPER: Record<string, string> = {
+  "⁰": "0",
+  "¹": "1",
+  "²": "2",
+  "³": "3",
+  "⁴": "4",
+  "⁵": "5",
+  "⁶": "6",
+  "⁷": "7",
+  "⁸": "8",
+  "⁹": "9",
+  "⁻": "-",
+};
 
 /** One factor such as "mm^4", "m²", "s-1" or "kgCO2e": the symbol and its power. */
 function factorOf(text: string): Unit {
@@ -145,19 +172,28 @@ function factorOf(text: string): Unit {
     const base = atom(match[1]!);
     const power = Number(match[2]);
     if (base) {
-      if (base.offset) throw new Error(`${match[1]} cannot be raised to a power; use K for temperature differences.`);
+      if (base.offset)
+        throw new Error(
+          `${match[1]} cannot be raised to a power; use K for temperature differences.`,
+        );
       return { factor: base.factor ** power, dim: base.dim.map((p) => p * power) };
     }
   }
   // Written together, as in W/m2K: each symbol with its power.
   const pieces = normal.match(/[^\d-]+-?\d*/g);
   if (pieces && pieces.length > 1 && pieces.join("") === normal) {
-    return pieces.map(factorOf).reduce((a, b) => ({ factor: a.factor * b.factor, dim: combine(a.dim, b.dim, 1) }));
+    return pieces
+      .map(factorOf)
+      .reduce((a, b) => ({ factor: a.factor * b.factor, dim: combine(a.dim, b.dim, 1) }));
   }
   throw new Error(`Unknown unit "${text}".`);
 }
 
-type Token = { kind: "unit"; unit: Unit } | { kind: "op"; op: "*" | "/" } | { kind: "open" } | { kind: "close"; power: number };
+type Token =
+  | { kind: "unit"; unit: Unit }
+  | { kind: "op"; op: "*" | "/" }
+  | { kind: "open" }
+  | { kind: "close"; power: number };
 
 function tokenize(text: string): Token[] {
   const tokens: Token[] = [];
@@ -165,7 +201,14 @@ function tokenize(text: string): Token[] {
   let i = 0;
   while (i < source.length) {
     const char = source[i]!;
-    if (char === " " || char === "*" || char === "·" || char === "⋅" || char === "×" || char === ".") {
+    if (
+      char === " " ||
+      char === "*" ||
+      char === "·" ||
+      char === "⋅" ||
+      char === "×" ||
+      char === "."
+    ) {
       tokens.push({ kind: "op", op: "*" });
       i += 1;
     } else if (char === "/") {
@@ -180,7 +223,8 @@ function tokenize(text: string): Token[] {
       tokens.push({ kind: "close", power: value });
       i += power ? power[0].length : 1;
     } else {
-      const word = /^[^\s*·⋅×/()]+?(?=[\s*·⋅×/()]|\.(?!\d)|$)/.exec(source.slice(i))?.[0] ?? source.slice(i);
+      const word =
+        /^[^\s*·⋅×/()]+?(?=[\s*·⋅×/()]|\.(?!\d)|$)/.exec(source.slice(i))?.[0] ?? source.slice(i);
       tokens.push({ kind: "unit", unit: factorOf(word) });
       i += word.length;
     }
@@ -212,14 +256,18 @@ function parseTokens(tokens: Token[], start: number): { unit: Unit; next: number
       const inner = parseTokens(tokens, i + 1);
       const close = tokens[inner.next];
       if (close?.kind !== "close") throw new Error("Unbalanced brackets in unit.");
-      apply({ factor: inner.unit.factor ** close.power, dim: inner.unit.dim.map((p) => p * close.power) });
+      apply({
+        factor: inner.unit.factor ** close.power,
+        dim: inner.unit.dim.map((p) => p * close.power),
+      });
       i = inner.next + 1;
     } else {
       apply(token.unit);
       i += 1;
     }
   }
-  if (offset !== undefined && count > 1) throw new Error("°C and °F only convert on their own; use K inside compound units.");
+  if (offset !== undefined && count > 1)
+    throw new Error("°C and °F only convert on their own; use K inside compound units.");
   return { unit: { factor, dim: powers, ...(offset !== undefined ? { offset } : {}) }, next: i };
 }
 
@@ -239,7 +287,9 @@ export function unit(text: string): Unit {
 /** The unit's dimension as text, e.g. "kg·m·s⁻²" for kN. */
 export function dimensionOf(text: string): string {
   const powers = unit(text).dim;
-  const parts = BASES.flatMap((base, i) => (powers[i] ? [powers[i] === 1 ? base : `${base}^${powers[i]}`] : []));
+  const parts = BASES.flatMap((base, i) =>
+    powers[i] ? [powers[i] === 1 ? base : `${base}^${powers[i]}`] : [],
+  );
   return parts.join("·") || "1";
 }
 
@@ -275,12 +325,17 @@ export class Quantity {
   /** The value in a unit of the same dimension. */
   to(target: string): number {
     const b = unit(target);
-    if (!sameDim(this.dim, b.dim)) throw new Error(`A quantity of ${this.dimension} cannot be shown in ${target}.`);
+    if (!sameDim(this.dim, b.dim))
+      throw new Error(`A quantity of ${this.dimension} cannot be shown in ${target}.`);
     return clean((this.si - (b.offset ?? 0)) / b.factor);
   }
 
   get dimension(): string {
-    return BASES.flatMap((base, i) => (this.dim[i] ? [this.dim[i] === 1 ? base : `${base}^${this.dim[i]}`] : [])).join("·") || "1";
+    return (
+      BASES.flatMap((base, i) =>
+        this.dim[i] ? [this.dim[i] === 1 ? base : `${base}^${this.dim[i]}`] : [],
+      ).join("·") || "1"
+    );
   }
 
   is(target: string): boolean {
@@ -288,7 +343,8 @@ export class Quantity {
   }
 
   private same(other: Quantity, verb: string) {
-    if (!sameDim(this.dim, other.dim)) throw new Error(`Cannot ${verb} ${other.dimension} and ${this.dimension}.`);
+    if (!sameDim(this.dim, other.dim))
+      throw new Error(`Cannot ${verb} ${other.dimension} and ${this.dimension}.`);
   }
 
   add(other: Quantity) {
@@ -314,7 +370,10 @@ export class Quantity {
   }
 
   pow(power: number) {
-    return new Quantity(this.si ** power, this.dim.map((p) => p * power));
+    return new Quantity(
+      this.si ** power,
+      this.dim.map((p) => p * power),
+    );
   }
 
   sqrt() {

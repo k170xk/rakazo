@@ -9,7 +9,9 @@ export function niceStep(span: number, count = 5): number {
   if (!(raw > 0) || !Number.isFinite(raw)) return 1;
   const magnitude = 10 ** exponentOf(raw);
   const normal = raw / magnitude;
-  return tidy((normal > 5 ? 10 : normal > 2.5 ? 5 : normal > 2 ? 2.5 : normal > 1 ? 2 : 1) * magnitude);
+  return tidy(
+    (normal > 5 ? 10 : normal > 2.5 ? 5 : normal > 2 ? 2.5 : normal > 1 ? 2 : 1) * magnitude,
+  );
 }
 
 /** Round tick values inside min..max, about `count` of them. */
@@ -67,7 +69,8 @@ export function logTicks(min: number, max: number): { major: number[]; minor: nu
 /** One label format for a whole axis: the same decimals on every tick, powers of ten when huge or tiny. */
 export function tickFormat(ticks: readonly number[]): (value: number) => string {
   const largest = Math.max(0, ...ticks.map(Math.abs));
-  if (largest >= 1e6 || (largest > 0 && largest < 1e-3)) return (value) => fmt(value, { sf: 3, sciAbove: 5, sciBelow: -3 });
+  if (largest >= 1e6 || (largest > 0 && largest < 1e-3))
+    return (value) => fmt(value, { sf: 3, sciAbove: 5, sciBelow: -3 });
   const decimals = Math.min(
     6,
     Math.max(0, ...ticks.map((t) => (tidy(t).toString().split(".")[1] ?? "").length)),
@@ -101,7 +104,8 @@ export function logScale(domain: [number, number], range: [number, number]): Sca
   const [d0, d1] = domain.map((d) => Math.log10(d)) as [number, number];
   const [r0, r1] = range;
   const span = d1 - d0 || 1;
-  const scale = ((value: number) => (value > 0 ? r0 + ((Math.log10(value) - d0) / span) * (r1 - r0) : Number.NaN)) as Scale;
+  const scale = ((value: number) =>
+    value > 0 ? r0 + ((Math.log10(value) - d0) / span) * (r1 - r0) : Number.NaN) as Scale;
   scale.type = "log";
   scale.domain = domain;
   scale.range = range;

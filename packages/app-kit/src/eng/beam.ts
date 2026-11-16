@@ -50,14 +50,17 @@ export type BeamResult = {
 type Span = { from: number; to: number; w1: number; w2: number };
 
 const spanOf = (load: Load, length: number): Span | null => {
-  if (load.type === "udl") return { from: load.from ?? 0, to: load.to ?? length, w1: load.w, w2: load.w };
+  if (load.type === "udl")
+    return { from: load.from ?? 0, to: load.to ?? length, w1: load.w, w2: load.w };
   if (load.type === "linear") return { from: load.from, to: load.to, w1: load.w1, w2: load.w2 };
   return null;
 };
 
 /** Intensity of a distributed load at s (kN/m). */
 const intensity = (span: Span, s: number) =>
-  span.to === span.from ? span.w1 : span.w1 + ((span.w2 - span.w1) * (s - span.from)) / (span.to - span.from);
+  span.to === span.from
+    ? span.w1
+    : span.w1 + ((span.w2 - span.w1) * (s - span.from)) / (span.to - span.from);
 
 function solveFe(input: BeamInput, nodes: number[], spans: Span[]) {
   const n = nodes.length;
@@ -76,7 +79,8 @@ function solveFe(input: BeamInput, nodes: number[], spans: Span[]) {
       [6 * l, 2 * l * l, -6 * l, 4 * l * l],
     ];
     const dofs = [2 * e, 2 * e + 1, 2 * e + 2, 2 * e + 3];
-    for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) K[dofs[a]!]![dofs[b]!]! += k * local[a]![b]!;
+    for (let a = 0; a < 4; a++)
+      for (let b = 0; b < 4; b++) K[dofs[a]!]![dofs[b]!]! += k * local[a]![b]!;
     const mid = (nodes[e]! + nodes[e + 1]!) / 2;
     for (const span of spans) {
       if (mid <= span.from || mid >= span.to) continue;
@@ -105,21 +109,36 @@ function solveFe(input: BeamInput, nodes: number[], spans: Span[]) {
   } catch {
     throw new Error("The beam is unstable: add or fix supports.");
   }
-  const solved = luSolve(lu, free.map((i) => F[i]!));
+  const solved = luSolve(
+    lu,
+    free.map((i) => F[i]!),
+  );
   const u = new Array<number>(size).fill(0);
   free.forEach((dof, k) => {
     u[dof] = solved[k]!;
   });
-  const reactionAt = (dof: number) => K[dof]!.reduce((sum, kij, j) => sum + kij * u[j]!, 0) - F[dof]!;
+  const reactionAt = (dof: number) =>
+    K[dof]!.reduce((sum, kij, j) => sum + kij * u[j]!, 0) - F[dof]!;
   const reactions: Reaction[] = input.supports.map((support) => {
     const i = index.get(support.x)!;
-    return { x: support.x, type: support.type, V: reactionAt(2 * i), M: support.type === "fixed" ? reactionAt(2 * i + 1) : 0 };
+    return {
+      x: support.x,
+      type: support.type,
+      V: reactionAt(2 * i),
+      M: support.type === "fixed" ? reactionAt(2 * i + 1) : 0,
+    };
   });
   return { u, reactions };
 }
 
 /** Shear and moment at x from statics, counting what acts exactly at x only when `inclusive`. */
-function sectionForces(x: number, inclusive: boolean, loads: Load[], spans: Span[], reactions: Reaction[]) {
+function sectionForces(
+  x: number,
+  inclusive: boolean,
+  loads: Load[],
+  spans: Span[],
+  reactions: Reaction[],
+) {
   let V = 0;
   let M = 0;
   const left = (at: number) => (inclusive ? at <= x : at < x);
@@ -170,15 +189,24 @@ export function analyseBeam(input: BeamInput): BeamResult {
   });
   const keys = new Set<number>([0, length]);
   for (const support of supports) keys.add(inside(support.x, "A support"));
-  for (const load of loads) if (load.type === "point" || load.type === "moment") keys.add(inside(load.x, "A load"));
+  for (const load of loads)
+    if (load.type === "point" || load.type === "moment") keys.add(inside(load.x, "A load"));
   for (const span of spans) {
     keys.add(span.from);
     keys.add(span.to);
   }
   const keyNodes = [...keys].sort((a, b) => a - b);
   const { reactions } = solveFe(input, keyNodes, spans);
-  const scale = loads.reduce((sum, load) => sum + Math.abs("P" in load ? load.P : "M" in load ? load.M : 0), 0) +
-    spans.reduce((sum, span) => sum + (Math.abs(span.w1) + Math.abs(span.w2)) * (span.to - span.from), 0) + 1;
+  const scale =
+    loads.reduce(
+      (sum, load) => sum + Math.abs("P" in load ? load.P : "M" in load ? load.M : 0),
+      0,
+    ) +
+    spans.reduce(
+      (sum, span) => sum + (Math.abs(span.w1) + Math.abs(span.w2)) * (span.to - span.from),
+      0,
+    ) +
+    1;
   const tidy = (value: number) => (Math.abs(value) < scale * length * 1e-11 ? 0 : value);
   for (const r of reactions) {
     r.V = tidy(r.V);
@@ -222,7 +250,8 @@ export function analyseBeam(input: BeamInput): BeamResult {
     const before = sectionForces(at, false, loads, spans, reactions);
     const after = sectionForces(at, true, loads, spans, reactions);
     const v = fe ? fe.u[2 * i]! * 1000 : 0;
-    const jump = Math.abs(before.V - after.V) > scale * 1e-12 || Math.abs(before.M - after.M) > scale * 1e-12;
+    const jump =
+      Math.abs(before.V - after.V) > scale * 1e-12 || Math.abs(before.M - after.M) > scale * 1e-12;
     for (const forces of jump ? [before, after] : [after]) {
       x.push(at);
       shear.push(tidy(forces.V));

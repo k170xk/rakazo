@@ -82,10 +82,62 @@ const SYMBOLS: Record<string, [unicode: string, latin: string]> = {
   $: ["$", "$"],
 };
 
-const SPACES: Record<string, string> = { ",": " ", ";": " ", ":": " ", "!": "", " ": " ", quad: "  ", qquad: "  " };
-const VERBATIM = new Set(["text", "mathrm", "textrm", "mathit", "mathbf", "boldsymbol", "mathsf", "operatorname", "textbf", "textit", "mathbb", "mathcal", "bar", "hat", "overline", "vec", "tilde", "dot"]);
-const SUPER: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻", "+": "⁺", n: "ⁿ" };
-const SUB: Record<string, string> = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
+const SPACES: Record<string, string> = {
+  ",": " ",
+  ";": " ",
+  ":": " ",
+  "!": "",
+  " ": " ",
+  quad: "  ",
+  qquad: "  ",
+};
+const VERBATIM = new Set([
+  "text",
+  "mathrm",
+  "textrm",
+  "mathit",
+  "mathbf",
+  "boldsymbol",
+  "mathsf",
+  "operatorname",
+  "textbf",
+  "textit",
+  "mathbb",
+  "mathcal",
+  "bar",
+  "hat",
+  "overline",
+  "vec",
+  "tilde",
+  "dot",
+]);
+const SUPER: Record<string, string> = {
+  "0": "⁰",
+  "1": "¹",
+  "2": "²",
+  "3": "³",
+  "4": "⁴",
+  "5": "⁵",
+  "6": "⁶",
+  "7": "⁷",
+  "8": "⁸",
+  "9": "⁹",
+  "-": "⁻",
+  "+": "⁺",
+  n: "ⁿ",
+};
+const SUB: Record<string, string> = {
+  "0": "₀",
+  "1": "₁",
+  "2": "₂",
+  "3": "₃",
+  "4": "₄",
+  "5": "₅",
+  "6": "₆",
+  "7": "₇",
+  "8": "₈",
+  "9": "₉",
+};
 
 export type TexTextOptions = {
   /** Only Latin-1 characters (what the PDF reports print): Greek letters spelled out, ≤ as <=. */
@@ -148,7 +200,14 @@ export function texText(latex: string, options: TexTextOptions = {}): string {
       argument();
       return "";
     }
-    if (name === "left" || name === "right" || name === "bigl" || name === "bigr" || name === "big" || name === "Big") {
+    if (
+      name === "left" ||
+      name === "right" ||
+      name === "bigl" ||
+      name === "bigr" ||
+      name === "big" ||
+      name === "Big"
+    ) {
       skipSpace();
       if (latex[i] === "\\") return command();
       const delimiter = latex[i] ?? "";

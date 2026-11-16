@@ -1,9 +1,41 @@
-export type { BeamInput, BeamResult, Extreme, Load, Reaction, Support, SupportType } from "./beam.js";
+export type {
+  BeamInput,
+  BeamResult,
+  Extreme,
+  Load,
+  Reaction,
+  Support,
+  SupportType,
+} from "./beam.js";
 export { analyseBeam } from "./beam.js";
 export type { CheckMode, CheckResult, NumberStyle } from "./format.js";
-export { check, engNotation, exponentOf, fmt, numberParts, round, roundDown, roundUp, scientific, siPrefix, sigFig } from "./format.js";
+export {
+  check,
+  engNotation,
+  exponentOf,
+  fmt,
+  numberParts,
+  round,
+  roundDown,
+  roundUp,
+  scientific,
+  sigFig,
+  siPrefix,
+} from "./format.js";
 export type { LU, Matrix, OutOfRange, RootOptions } from "./numeric.js";
-export { bisect, brent, det, interpolate, interpolate2d, linspace, luDecompose, luSolve, simpson, solve, trapz } from "./numeric.js";
+export {
+  bisect,
+  brent,
+  det,
+  interpolate,
+  interpolate2d,
+  linspace,
+  luDecompose,
+  luSolve,
+  simpson,
+  solve,
+  trapz,
+} from "./numeric.js";
 export type { Bar, SectionProps, Shape } from "./sections.js";
 export { barArea, barRow, sectionDepth, sectionProps, sectionWidth } from "./sections.js";
 export type { Dimension, Unit } from "./units.js";

@@ -4,7 +4,7 @@
  * It resets every source of run-to-run variation it can reach (seeds, numpy error state, the decimal
  * context, warning registries) and keeps to Python 3.9 so the same file checks results under CPython.
  */
-export const PYTHON_RUNNER = String.raw`
+export const PYTHON_RUNNER = `
 import contextlib, dataclasses, datetime, decimal, fractions, hashlib, io, json, math, platform, random, sys, traceback, warnings
 from importlib import metadata as _ocsc_metadata
 

@@ -51,7 +51,17 @@ export type DrawingProps = {
  * A drawing to scale: one unit of x is the same length as one unit of y. Children draw in world
  * coordinates (DrawingLine, DrawingPoly, DrawingCircle, DrawingText, Dim, SectionDrawing parts).
  */
-export function Drawing({ bounds, units = "mm", height = 360, padding = 40, style = { dp: 0 }, title, exportName, className, children }: DrawingProps) {
+export function Drawing({
+  bounds,
+  units = "mm",
+  height = 360,
+  padding = 40,
+  style = { dp: 0 },
+  title,
+  exportName,
+  className,
+  children,
+}: DrawingProps) {
   const hatch = useSvgId("d");
   const [x0, y0, x1, y1] = bounds;
   const w = Math.max(1e-9, x1 - x0);
@@ -62,13 +72,44 @@ export function Drawing({ bounds, units = "mm", height = 360, padding = 40, styl
         const k = Math.max(1e-9, Math.min((width - 2 * padding) / w, (height - 2 * padding) / h));
         const drawnH = Math.round(h * k + 2 * padding);
         const offsetX = (width - w * k) / 2;
-        const ctx: DrawingContextValue = { sx: (x) => offsetX + (x - x0) * k, sy: (y) => padding + (y1 - y) * k, k, units, hatch, style };
+        const ctx: DrawingContextValue = {
+          sx: (x) => offsetX + (x - x0) * k,
+          sy: (y) => padding + (y1 - y) * k,
+          k,
+          units,
+          hatch,
+          style,
+        };
         return (
-          <svg ref={svgRef} data-plot="" viewBox={`0 0 ${width} ${drawnH}`} width="100%" height={drawnH} role="img" aria-label={title} className="block" style={{ fontVariantNumeric: "tabular-nums" }}>
+          <svg
+            ref={svgRef}
+            data-plot=""
+            viewBox={`0 0 ${width} ${drawnH}`}
+            width="100%"
+            height={drawnH}
+            role="img"
+            aria-label={title}
+            className="block"
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
             {title && <title>{title}</title>}
             <defs>
-              <pattern id={hatch} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <line x1="0" y1="0" x2="0" y2="6" stroke={TEXT} strokeWidth="0.8" strokeOpacity="0.7" />
+              <pattern
+                id={hatch}
+                width="6"
+                height="6"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(45)"
+              >
+                <line
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="6"
+                  stroke={TEXT}
+                  strokeWidth="0.8"
+                  strokeOpacity="0.7"
+                />
               </pattern>
             </defs>
             <g fontSize={FONT}>
@@ -81,14 +122,39 @@ export function Drawing({ bounds, units = "mm", height = 360, padding = 40, styl
   );
 }
 
-export function DrawingLine({ from, to, color, width = 1.5, dash }: { from: Point; to: Point; color?: PlotColor; width?: number; dash?: boolean | string }) {
+export function DrawingLine({
+  from,
+  to,
+  color,
+  width = 1.5,
+  dash,
+}: {
+  from: Point;
+  to: Point;
+  color?: PlotColor;
+  width?: number;
+  dash?: boolean | string;
+}) {
   const { sx, sy } = useDrawing();
-  return <line x1={px(sx(from[0]))} y1={px(sy(from[1]))} x2={px(sx(to[0]))} y2={px(sy(to[1]))} stroke={color ? colorOf(color) : INK} strokeWidth={width} strokeDasharray={dash === true ? "6 4" : dash || undefined} />;
+  return (
+    <line
+      x1={px(sx(from[0]))}
+      y1={px(sy(from[1]))}
+      x2={px(sx(to[0]))}
+      y2={px(sy(to[1]))}
+      stroke={color ? colorOf(color) : INK}
+      strokeWidth={width}
+      strokeDasharray={dash === true ? "6 4" : dash || undefined}
+    />
+  );
 }
 
 export type Fill = "none" | "hatch" | "concrete" | "steel" | "timber" | "soil" | "card" | PlotColor;
 
-function fillOf(fill: Fill | undefined, hatch: string): { fill: string; opacity: number; hatch: boolean } {
+function fillOf(
+  fill: Fill | undefined,
+  hatch: string,
+): { fill: string; opacity: number; hatch: boolean } {
   switch (fill) {
     case undefined:
     case "none":
@@ -111,20 +177,52 @@ function fillOf(fill: Fill | undefined, hatch: string): { fill: string; opacity:
 }
 
 /** A closed outline; several rings with evenodd make holes (hollow sections, openings). */
-export function DrawingPoly({ rings, fill, color, width = 1.5 }: { rings: ReadonlyArray<readonly Point[]>; fill?: Fill; color?: PlotColor; width?: number }) {
+export function DrawingPoly({
+  rings,
+  fill,
+  color,
+  width = 1.5,
+}: {
+  rings: ReadonlyArray<readonly Point[]>;
+  fill?: Fill;
+  color?: PlotColor;
+  width?: number;
+}) {
   const { sx, sy, hatch } = useDrawing();
-  const d = rings.map((ring) => `${ring.map(([x, y], i) => `${i ? "L" : "M"}${px(sx(x))},${px(sy(y))}`).join("")}Z`).join("");
+  const d = rings
+    .map(
+      (ring) => `${ring.map(([x, y], i) => `${i ? "L" : "M"}${px(sx(x))},${px(sy(y))}`).join("")}Z`,
+    )
+    .join("");
   const paint = fillOf(fill, hatch);
   return (
     <g>
       <path d={d} fill={paint.fill} fillOpacity={paint.opacity} fillRule="evenodd" />
       {paint.hatch && <path d={d} fill={`url(#${hatch})`} fillRule="evenodd" />}
-      <path d={d} fill="none" stroke={color ? colorOf(color) : INK} strokeWidth={width} strokeLinejoin="round" />
+      <path
+        d={d}
+        fill="none"
+        stroke={color ? colorOf(color) : INK}
+        strokeWidth={width}
+        strokeLinejoin="round"
+      />
     </g>
   );
 }
 
-export function DrawingCircle({ c, r, fill, color, width = 1.5 }: { c: Point; r: number; fill?: Fill; color?: PlotColor; width?: number }) {
+export function DrawingCircle({
+  c,
+  r,
+  fill,
+  color,
+  width = 1.5,
+}: {
+  c: Point;
+  r: number;
+  fill?: Fill;
+  color?: PlotColor;
+  width?: number;
+}) {
   const { sx, sy, k, hatch } = useDrawing();
   const paint = fillOf(fill, hatch);
   const cx = px(sx(c[0]));
@@ -133,15 +231,43 @@ export function DrawingCircle({ c, r, fill, color, width = 1.5 }: { c: Point; r:
     <g>
       <circle cx={cx} cy={cy} r={px(r * k)} fill={paint.fill} fillOpacity={paint.opacity} />
       {paint.hatch && <circle cx={cx} cy={cy} r={px(r * k)} fill={`url(#${hatch})`} />}
-      {width > 0 && <circle cx={cx} cy={cy} r={px(r * k)} fill="none" stroke={color ? colorOf(color) : INK} strokeWidth={width} />}
+      {width > 0 && (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={px(r * k)}
+          fill="none"
+          stroke={color ? colorOf(color) : INK}
+          strokeWidth={width}
+        />
+      )}
     </g>
   );
 }
 
-export function DrawingText({ at, children, anchor = "middle", color, dx = 0, dy = 0 }: { at: Point; children: ReactNode; anchor?: "start" | "middle" | "end"; color?: PlotColor; dx?: number; dy?: number }) {
+export function DrawingText({
+  at,
+  children,
+  anchor = "middle",
+  color,
+  dx = 0,
+  dy = 0,
+}: {
+  at: Point;
+  children: ReactNode;
+  anchor?: "start" | "middle" | "end";
+  color?: PlotColor;
+  dx?: number;
+  dy?: number;
+}) {
   const { sx, sy } = useDrawing();
   return (
-    <Halo x={sx(at[0]) + dx} y={sy(at[1]) + dy + 4} anchor={anchor} color={color ? colorOf(color) : INK}>
+    <Halo
+      x={sx(at[0]) + dx}
+      y={sy(at[1]) + dy + 4}
+      anchor={anchor}
+      color={color ? colorOf(color) : INK}
+    >
       {children}
     </Halo>
   );
@@ -151,7 +277,17 @@ export function DrawingText({ at, children, anchor = "middle", color, dx = 0, dy
  * A dimension line between two points with extension lines and arrowheads. offset is in screen
  * pixels, positive to the left of from → to (above a left-to-right line); label defaults to the length.
  */
-export function Dim({ from, to, offset = 18, label }: { from: Point; to: Point; offset?: number; label?: ReactNode }) {
+export function Dim({
+  from,
+  to,
+  offset = 18,
+  label,
+}: {
+  from: Point;
+  to: Point;
+  offset?: number;
+  label?: ReactNode;
+}) {
   const { sx, sy, units, style } = useDrawing();
   const a = [sx(from[0]), sy(from[1])] as const;
   const b = [sx(to[0]), sy(to[1])] as const;
@@ -175,15 +311,47 @@ export function Dim({ from, to, offset = 18, label }: { from: Point; to: Point; 
   const rad = (angle * Math.PI) / 180;
   const above = -Math.sin(rad) * nx + Math.cos(rad) * ny < 0;
   const mid = [(p[0] + q[0]) / 2 + nx * 3, (p[1] + q[1]) / 2 + ny * 3] as const;
-  const text = label ?? `${fmt(Math.hypot(to[0] - from[0], to[1] - from[1]), style)}${units ? ` ${units}` : ""}`;
+  const text =
+    label ??
+    `${fmt(Math.hypot(to[0] - from[0], to[1] - from[1]), style)}${units ? ` ${units}` : ""}`;
   return (
     <g>
-      <line x1={px(a[0] + nx * 3)} y1={px(a[1] + ny * 3)} x2={px(p[0] + nx * 4)} y2={px(p[1] + ny * 4)} stroke={TEXT} strokeWidth={0.8} />
-      <line x1={px(b[0] + nx * 3)} y1={px(b[1] + ny * 3)} x2={px(q[0] + nx * 4)} y2={px(q[1] + ny * 4)} stroke={TEXT} strokeWidth={0.8} />
-      <line x1={px(p[0])} y1={px(p[1])} x2={px(q[0])} y2={px(q[1])} stroke={TEXT} strokeWidth={0.9} />
+      <line
+        x1={px(a[0] + nx * 3)}
+        y1={px(a[1] + ny * 3)}
+        x2={px(p[0] + nx * 4)}
+        y2={px(p[1] + ny * 4)}
+        stroke={TEXT}
+        strokeWidth={0.8}
+      />
+      <line
+        x1={px(b[0] + nx * 3)}
+        y1={px(b[1] + ny * 3)}
+        x2={px(q[0] + nx * 4)}
+        y2={px(q[1] + ny * 4)}
+        stroke={TEXT}
+        strokeWidth={0.8}
+      />
+      <line
+        x1={px(p[0])}
+        y1={px(p[1])}
+        x2={px(q[0])}
+        y2={px(q[1])}
+        stroke={TEXT}
+        strokeWidth={0.9}
+      />
       <path d={head(p, 1)} fill={TEXT} />
       <path d={head(q, -1)} fill={TEXT} />
-      <text transform={`translate(${px(mid[0])} ${px(mid[1])}) rotate(${px(angle)})`} y={above ? -1 : 9} textAnchor="middle" fill={INK} stroke="hsl(var(--card))" strokeWidth={3} paintOrder="stroke" fontWeight={600}>
+      <text
+        transform={`translate(${px(mid[0])} ${px(mid[1])}) rotate(${px(angle)})`}
+        y={above ? -1 : 9}
+        textAnchor="middle"
+        fill={INK}
+        stroke="hsl(var(--card))"
+        strokeWidth={3}
+        paintOrder="stroke"
+        fontWeight={600}
+      >
         {text}
       </text>
     </g>
@@ -195,27 +363,70 @@ export function sectionRings(shape: Shape): Point[][] {
   switch (shape.type) {
     case "rect": {
       const b = shape.b / 2;
-      return [[[-b, 0], [b, 0], [b, shape.h], [-b, shape.h]]];
+      return [
+        [
+          [-b, 0],
+          [b, 0],
+          [b, shape.h],
+          [-b, shape.h],
+        ],
+      ];
     }
     case "rhs": {
       const b = shape.b / 2;
       const t = shape.t;
       return [
-        [[-b, 0], [b, 0], [b, shape.h], [-b, shape.h]],
-        [[-b + t, t], [b - t, t], [b - t, shape.h - t], [-b + t, shape.h - t]],
+        [
+          [-b, 0],
+          [b, 0],
+          [b, shape.h],
+          [-b, shape.h],
+        ],
+        [
+          [-b + t, t],
+          [b - t, t],
+          [b - t, shape.h - t],
+          [-b + t, shape.h - t],
+        ],
       ];
     }
     case "i": {
       const { h, tf } = shape;
       const b = shape.b / 2;
       const w = shape.tw / 2;
-      return [[[-b, 0], [b, 0], [b, tf], [w, tf], [w, h - tf], [b, h - tf], [b, h], [-b, h], [-b, h - tf], [-w, h - tf], [-w, tf], [-b, tf]]];
+      return [
+        [
+          [-b, 0],
+          [b, 0],
+          [b, tf],
+          [w, tf],
+          [w, h - tf],
+          [b, h - tf],
+          [b, h],
+          [-b, h],
+          [-b, h - tf],
+          [-w, h - tf],
+          [-w, tf],
+          [-b, tf],
+        ],
+      ];
     }
     case "t": {
       const { h, tf } = shape;
       const b = shape.b / 2;
       const w = shape.tw / 2;
-      return [[[-w, 0], [w, 0], [w, h - tf], [b, h - tf], [b, h], [-b, h], [-b, h - tf], [-w, h - tf]]];
+      return [
+        [
+          [-w, 0],
+          [w, 0],
+          [w, h - tf],
+          [b, h - tf],
+          [b, h],
+          [-b, h],
+          [-b, h - tf],
+          [-w, h - tf],
+        ],
+      ];
     }
     default:
       return [];
@@ -240,13 +451,38 @@ export type SectionDrawingProps = {
 };
 
 /** A cross-section drawn to scale with dimensions, links and bars; the same Shape @ocsc/eng gives properties for. */
-export function SectionDrawing({ shape, bars = [], link, material, dims = true, height = 320, title, exportName, className, children }: SectionDrawingProps) {
+export function SectionDrawing({
+  shape,
+  bars = [],
+  link,
+  material,
+  dims = true,
+  height = 320,
+  title,
+  exportName,
+  className,
+  children,
+}: SectionDrawingProps) {
   const b = sectionWidth(shape);
   const h = sectionDepth(shape);
-  const fill = material ?? (bars.length ? "concrete" : shape.type === "rect" || shape.type === "t" || shape.type === "circle" ? "concrete" : "steel");
+  const fill =
+    material ??
+    (bars.length
+      ? "concrete"
+      : shape.type === "rect" || shape.type === "t" || shape.type === "circle"
+        ? "concrete"
+        : "steel");
   const round = shape.type === "circle" || shape.type === "chs";
   return (
-    <Drawing bounds={[-b / 2, 0, b / 2, h]} units="mm" height={height} padding={44} title={title ?? `Section ${b} × ${h} mm`} exportName={exportName} className={className}>
+    <Drawing
+      bounds={[-b / 2, 0, b / 2, h]}
+      units="mm"
+      height={height}
+      padding={44}
+      title={title ?? `Section ${b} × ${h} mm`}
+      exportName={exportName}
+      className={className}
+    >
       {round ? (
         <>
           <DrawingCircle c={[0, h / 2]} r={h / 2} fill={fill} />
@@ -263,7 +499,9 @@ export function SectionDrawing({ shape, bars = [], link, material, dims = true, 
         <>
           <Dim from={[-b / 2, 0]} to={[b / 2, 0]} offset={-22} />
           <Dim from={[-b / 2, h]} to={[-b / 2, 0]} offset={-22} />
-          {shape.type === "chs" || shape.type === "rhs" ? <DrawingText at={[0, h / 2]}>{`t = ${shape.t} mm`}</DrawingText> : null}
+          {shape.type === "chs" || shape.type === "rhs" ? (
+            <DrawingText at={[0, h / 2]}>{`t = ${shape.t} mm`}</DrawingText>
+          ) : null}
         </>
       )}
       {children}
@@ -275,11 +513,33 @@ function LinkOutline({ shape, link }: { shape: Shape; link: { cover: number; dia
   const { sx, sy, k } = useDrawing();
   const inset = link.cover + link.dia / 2;
   if (shape.type === "circle") {
-    return <circle cx={px(sx(0))} cy={px(sy(shape.d / 2))} r={px((shape.d / 2 - inset) * k)} fill="none" stroke={INK} strokeWidth={Math.max(1, link.dia * k)} strokeOpacity={0.8} />;
+    return (
+      <circle
+        cx={px(sx(0))}
+        cy={px(sy(shape.d / 2))}
+        r={px((shape.d / 2 - inset) * k)}
+        fill="none"
+        stroke={INK}
+        strokeWidth={Math.max(1, link.dia * k)}
+        strokeOpacity={0.8}
+      />
+    );
   }
   if (shape.type !== "rect" && shape.type !== "t") return null;
   const half = (shape.type === "rect" ? shape.b : shape.tw) / 2 - inset;
   const top = shape.h - inset;
   const r = Math.max(2, 2 * link.dia * k);
-  return <rect x={px(sx(-half))} y={px(sy(top))} width={px(2 * half * k)} height={px((top - inset) * k)} rx={r} fill="none" stroke={INK} strokeWidth={Math.max(1, link.dia * k)} strokeOpacity={0.8} />;
+  return (
+    <rect
+      x={px(sx(-half))}
+      y={px(sy(top))}
+      width={px(2 * half * k)}
+      height={px((top - inset) * k)}
+      rx={r}
+      fill="none"
+      stroke={INK}
+      strokeWidth={Math.max(1, link.dia * k)}
+      strokeOpacity={0.8}
+    />
+  );
 }

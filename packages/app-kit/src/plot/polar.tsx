@@ -33,15 +33,36 @@ export type PolarPlotProps = {
 };
 
 /** A polar plot: wind roses, directional loads, radiation and lighting patterns, Mohr-style sweeps. */
-export function PolarPlot({ series, rMax, rLabel, zero = "north", clockwise, step = 30, height = 340, legend = true, title, exportName, className }: PolarPlotProps) {
+export function PolarPlot({
+  series,
+  rMax,
+  rLabel,
+  zero = "north",
+  clockwise,
+  step = 30,
+  height = 340,
+  legend = true,
+  title,
+  exportName,
+  className,
+}: PolarPlotProps) {
   const cw = clockwise ?? zero === "north";
   const top = Math.max(...series.flatMap((s) => s.data.map((p) => p[1])), 0);
   const rings = niceTicks(0, rMax ?? top, 4).filter((r) => r > 0);
   const outer = rMax ?? (rings[rings.length - 1]! < top ? top : (rings[rings.length - 1] ?? 1));
   const format = tickFormat(rings);
-  const legendItems: LegendItem[] = series.map((s, i) => ({ name: s.name, color: colorOf(s.color, i), kind: s.type === "area" ? "area" : s.type === "scatter" ? "marker" : "line" }));
+  const legendItems: LegendItem[] = series.map((s, i) => ({
+    name: s.name,
+    color: colorOf(s.color, i),
+    kind: s.type === "area" ? "area" : s.type === "scatter" ? "marker" : "line",
+  }));
   return (
-    <PlotBox height={height} exportName={exportName} className={className} legend={legend ? <LegendRow items={legendItems} /> : null}>
+    <PlotBox
+      height={height}
+      exportName={exportName}
+      className={className}
+      legend={legend ? <LegendRow items={legendItems} /> : null}
+    >
       {(width, svgRef) => {
         const cx = width / 2;
         const cy = height / 2;
@@ -53,11 +74,27 @@ export function PolarPlot({ series, rMax, rLabel, zero = "north", clockwise, ste
         };
         const spokes = Array.from({ length: Math.round(360 / step) }, (_, i) => i * step);
         return (
-          <svg ref={svgRef} data-plot="" viewBox={`0 0 ${width} ${height}`} width="100%" height={height} role="img" aria-label={title ?? "Polar plot"} className="block" style={{ fontVariantNumeric: "tabular-nums" }}>
+          <svg
+            ref={svgRef}
+            data-plot=""
+            viewBox={`0 0 ${width} ${height}`}
+            width="100%"
+            height={height}
+            role="img"
+            aria-label={title ?? "Polar plot"}
+            className="block"
+            style={{ fontVariantNumeric: "tabular-nums" }}
+          >
             <g fontSize={FONT} fill={TEXT}>
               {rings.map((r) => (
                 <g key={`r${r}`}>
-                  <circle cx={px(cx)} cy={px(cy)} r={px((r / outer) * radius)} fill="none" stroke={RULE} />
+                  <circle
+                    cx={px(cx)}
+                    cy={px(cy)}
+                    r={px((r / outer) * radius)}
+                    fill="none"
+                    stroke={RULE}
+                  />
                   <text x={px(cx + 3)} y={px(cy - (r / outer) * radius - 3)}>
                     {format(r)}
                   </text>
@@ -69,7 +106,11 @@ export function PolarPlot({ series, rMax, rLabel, zero = "north", clockwise, ste
                 return (
                   <g key={`s${deg}`}>
                     <line x1={px(cx)} y1={px(cy)} x2={px(x)} y2={px(y)} stroke={RULE} />
-                    <text x={px(lx)} y={px(ly + 3.5)} textAnchor="middle">{`${fmt(deg, { dp: 0 })}°`}</text>
+                    <text
+                      x={px(lx)}
+                      y={px(ly + 3.5)}
+                      textAnchor="middle"
+                    >{`${fmt(deg, { dp: 0 })}°`}</text>
                   </g>
                 );
               })}
@@ -85,8 +126,21 @@ export function PolarPlot({ series, rMax, rLabel, zero = "north", clockwise, ste
               const d = `${pts.map(([x, y], k) => `${k ? "L" : "M"}${px(x)},${px(y)}`).join("")}${s.closed || s.type === "area" ? "Z" : ""}`;
               return (
                 <g key={`${s.name}${i}`}>
-                  {s.type !== "scatter" && <path d={d} fill={s.type === "area" ? color : "none"} fillOpacity={0.18} stroke={color} strokeWidth={2} strokeDasharray={s.dash ? "6 4" : undefined} strokeLinejoin="round" />}
-                  {s.type === "scatter" && pts.map(([x, y], k) => <circle key={k} cx={px(x)} cy={px(y)} r={3.5} fill={color} />)}
+                  {s.type !== "scatter" && (
+                    <path
+                      d={d}
+                      fill={s.type === "area" ? color : "none"}
+                      fillOpacity={0.18}
+                      stroke={color}
+                      strokeWidth={2}
+                      strokeDasharray={s.dash ? "6 4" : undefined}
+                      strokeLinejoin="round"
+                    />
+                  )}
+                  {s.type === "scatter" &&
+                    pts.map(([x, y], k) => (
+                      <circle key={k} cx={px(x)} cy={px(y)} r={3.5} fill={color} />
+                    ))}
                 </g>
               );
             })}

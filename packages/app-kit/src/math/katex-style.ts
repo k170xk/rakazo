@@ -1,4 +1,3 @@
-import katexCss from "katex/dist/katex.min.css" with { type: "text" };
 import ams from "katex/dist/fonts/KaTeX_AMS-Regular.woff2" with { type: "bytes" };
 import mainBold from "katex/dist/fonts/KaTeX_Main-Bold.woff2" with { type: "bytes" };
 import mainItalic from "katex/dist/fonts/KaTeX_Main-Italic.woff2" with { type: "bytes" };
@@ -9,8 +8,14 @@ import size1 from "katex/dist/fonts/KaTeX_Size1-Regular.woff2" with { type: "byt
 import size2 from "katex/dist/fonts/KaTeX_Size2-Regular.woff2" with { type: "bytes" };
 import size3 from "katex/dist/fonts/KaTeX_Size3-Regular.woff2" with { type: "bytes" };
 import size4 from "katex/dist/fonts/KaTeX_Size4-Regular.woff2" with { type: "bytes" };
+import katexCss from "katex/dist/katex.min.css" with { type: "text" };
 
-export type FontFile = { family: string; weight: number; style: "normal" | "italic"; bytes: unknown };
+export type FontFile = {
+  family: string;
+  weight: number;
+  style: "normal" | "italic";
+  bytes: unknown;
+};
 
 /**
  * The faces calculation sheets use (roman, italic, bold, symbols, big delimiters). Script,
@@ -31,7 +36,8 @@ const FONTS: FontFile[] = [
 
 function base64(bytes: Uint8Array): string {
   let binary = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return btoa(binary);
 }
 

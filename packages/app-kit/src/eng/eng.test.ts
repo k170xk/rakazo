@@ -94,7 +94,7 @@ describe("units", () => {
     const stress = moment.div(q(1e6, "mm3"));
     expect(stress.to("MPa")).toBe(54);
     const power = q(400, "V").mul(q(32, "A")).mul(Math.sqrt(3));
-    close(power.to("kW"), 22.170250336881625);
+    close(power.to("kW"), (400 * 32 * Math.sqrt(3)) / 1000);
     expect(() => q(1, "kN").add(q(1, "m"))).toThrow(/Cannot add/);
   });
 });
@@ -105,7 +105,18 @@ describe("numerical methods", () => {
     expect(() => interpolate([0, 10], [1, 2], 11)).toThrow(RangeError);
     expect(interpolate([0, 10], [1, 2], 11, "clamp")).toBe(2);
     expect(interpolate([0, 10], [1, 2], 20, "extrapolate")).toBe(3);
-    expect(interpolate2d([0, 1], [0, 1], [[0, 1], [2, 3]], 0.5, 0.5)).toBe(1.5);
+    expect(
+      interpolate2d(
+        [0, 1],
+        [0, 1],
+        [
+          [0, 1],
+          [2, 3],
+        ],
+        0.5,
+        0.5,
+      ),
+    ).toBe(1.5);
   });
 
   it("finds roots", () => {
@@ -122,10 +133,33 @@ describe("numerical methods", () => {
   });
 
   it("solves dense systems with partial pivoting", () => {
-    const x = solve([[0, 2, 1], [1, -2, -3], [-1, 1, 2]], [-8, 0, 3]);
-    [-4, -5, 2].forEach((value, i) => close(x[i]!, value, 1e-12));
-    close(det([[2, -3, 1], [2, 0, -1], [1, 4, 5]]), 49, 1e-12);
-    expect(() => solve([[1, 2], [2, 4]], [1, 2])).toThrow(/singular/);
+    const x = solve(
+      [
+        [0, 2, 1],
+        [1, -2, -3],
+        [-1, 1, 2],
+      ],
+      [-8, 0, 3],
+    );
+    for (const [i, value] of [-4, -5, 2].entries()) close(x[i]!, value, 1e-12);
+    close(
+      det([
+        [2, -3, 1],
+        [2, 0, -1],
+        [1, 4, 5],
+      ]),
+      49,
+      1e-12,
+    );
+    expect(() =>
+      solve(
+        [
+          [1, 2],
+          [2, 4],
+        ],
+        [1, 2],
+      ),
+    ).toThrow(/singular/);
   });
 });
 
@@ -154,7 +188,15 @@ describe("beam analysis", () => {
   it("simply supported beam with a UDL: wL²/8 and 5wL⁴/384EI", () => {
     const w = 10;
     const L = 6;
-    const r = analyseBeam({ length: L, supports: [{ x: 0, type: "pin" }, { x: L, type: "roller" }], loads: [{ type: "udl", w }], EI });
+    const r = analyseBeam({
+      length: L,
+      supports: [
+        { x: 0, type: "pin" },
+        { x: L, type: "roller" },
+      ],
+      loads: [{ type: "udl", w }],
+      EI,
+    });
     close(r.reactions[0]!.V, (w * L) / 2);
     close(r.max.sagging.value, (w * L * L) / 8);
     close(r.max.sagging.x, 3);
@@ -164,7 +206,15 @@ describe("beam analysis", () => {
   });
 
   it("central point load: PL/4 and PL³/48EI, with a shear jump under the load", () => {
-    const r = analyseBeam({ length: 8, supports: [{ x: 0, type: "pin" }, { x: 8, type: "roller" }], loads: [{ type: "point", x: 4, P: 50 }], EI });
+    const r = analyseBeam({
+      length: 8,
+      supports: [
+        { x: 0, type: "pin" },
+        { x: 8, type: "roller" },
+      ],
+      loads: [{ type: "point", x: 4, P: 50 }],
+      EI,
+    });
     close(r.max.sagging.value, 100);
     close(r.max.deflection!.value, -((50 * 8 ** 3) / (48 * EI)) * 1000);
     const at = r.x.flatMap((x, i) => (x === 4 ? [r.shear[i]] : []));
@@ -172,7 +222,12 @@ describe("beam analysis", () => {
   });
 
   it("cantilever with a tip load: PL hogging and PL³/3EI", () => {
-    const r = analyseBeam({ length: 3, supports: [{ x: 0, type: "fixed" }], loads: [{ type: "point", x: 3, P: 20 }], EI });
+    const r = analyseBeam({
+      length: 3,
+      supports: [{ x: 0, type: "fixed" }],
+      loads: [{ type: "point", x: 3, P: 20 }],
+      EI,
+    });
     close(r.reactions[0]!.V, 20);
     close(r.reactions[0]!.M, 60);
     close(r.max.hogging.value, -60);
@@ -180,7 +235,15 @@ describe("beam analysis", () => {
   });
 
   it("propped cantilever with a UDL: 3wL/8 at the prop, wL²/8 at the fixed end, 9wL²/128 sagging", () => {
-    const r = analyseBeam({ length: 5, supports: [{ x: 0, type: "fixed" }, { x: 5, type: "roller" }], loads: [{ type: "udl", w: 8 }], EI });
+    const r = analyseBeam({
+      length: 5,
+      supports: [
+        { x: 0, type: "fixed" },
+        { x: 5, type: "roller" },
+      ],
+      loads: [{ type: "udl", w: 8 }],
+      EI,
+    });
     close(r.reactions[1]!.V, (3 * 8 * 5) / 8);
     close(r.max.hogging.value, -(8 * 25) / 8);
     close(r.max.sagging.value, (9 * 8 * 25) / 128);
@@ -190,7 +253,11 @@ describe("beam analysis", () => {
   it("two equal continuous spans with a UDL: 1.25wL at the middle support, wL²/8 over it", () => {
     const r = analyseBeam({
       length: 12,
-      supports: [{ x: 0, type: "pin" }, { x: 6, type: "roller" }, { x: 12, type: "roller" }],
+      supports: [
+        { x: 0, type: "pin" },
+        { x: 6, type: "roller" },
+        { x: 12, type: "roller" },
+      ],
       loads: [{ type: "udl", w: 10 }],
       EI,
     });
@@ -200,20 +267,41 @@ describe("beam analysis", () => {
   });
 
   it("fixed-fixed beam with a UDL: wL²/12 ends, wL²/24 midspan, wL⁴/384EI", () => {
-    const r = analyseBeam({ length: 6, supports: [{ x: 0, type: "fixed" }, { x: 6, type: "fixed" }], loads: [{ type: "udl", w: 12 }], EI });
+    const r = analyseBeam({
+      length: 6,
+      supports: [
+        { x: 0, type: "fixed" },
+        { x: 6, type: "fixed" },
+      ],
+      loads: [{ type: "udl", w: 12 }],
+      EI,
+    });
     close(r.max.hogging.value, -(12 * 36) / 12);
     close(r.max.sagging.value, (12 * 36) / 24);
     close(r.max.deflection!.value, -((12 * 6 ** 4) / (384 * EI)) * 1000);
   });
 
   it("triangular load on a simple span: wL²/(9√3) at L/√3", () => {
-    const r = analyseBeam({ length: 6, supports: [{ x: 0, type: "pin" }, { x: 6, type: "roller" }], loads: [{ type: "linear", w1: 0, w2: 9, from: 0, to: 6 }] });
+    const r = analyseBeam({
+      length: 6,
+      supports: [
+        { x: 0, type: "pin" },
+        { x: 6, type: "roller" },
+      ],
+      loads: [{ type: "linear", w1: 0, w2: 9, from: 0, to: 6 }],
+    });
     close(r.max.sagging.value, (9 * 36) / (9 * Math.sqrt(3)), 1e-9);
     close(r.max.sagging.x, 6 / Math.sqrt(3), 1e-9);
     expect(r.deflection).toBeNull();
   });
 
   it("refuses mechanisms", () => {
-    expect(() => analyseBeam({ length: 4, supports: [{ x: 0, type: "pin" }], loads: [{ type: "point", x: 2, P: 1 }] })).toThrow(/unstable/);
+    expect(() =>
+      analyseBeam({
+        length: 4,
+        supports: [{ x: 0, type: "pin" }],
+        loads: [{ type: "point", x: 2, P: 1 }],
+      }),
+    ).toThrow(/unstable/);
   });
 });

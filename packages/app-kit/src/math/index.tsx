@@ -1,8 +1,8 @@
 import katex from "katex";
 import type { ReactNode } from "react";
 import type { CheckMode, NumberStyle } from "../eng/format.js";
-import type { PdfBlock } from "../pdf/model.js";
 import { check } from "../eng/format.js";
+import type { PdfBlock } from "../pdf/model.js";
 import { PRINT_LIGHT } from "../plot/print.js";
 import { Badge, Progress } from "../ui/basic.js";
 import { cn } from "../ui/cn.js";
@@ -51,17 +51,23 @@ export function Tex({ math, children, block, className }: TexProps) {
   const Tag = block ? "div" : "span";
   return (
     <Tag
-      className={cn(block ? "max-w-full overflow-x-auto overflow-y-hidden py-1 print:overflow-visible" : "", className)}
+      className={cn(
+        block ? "max-w-full overflow-x-auto overflow-y-hidden py-1 print:overflow-visible" : "",
+        className,
+      )}
       // biome-ignore lint/security/noDangerouslySetInnerHtml: KaTeX output with trust off (no links, classes or styles from the source)
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }
 
-const ROW = "grid gap-x-5 gap-y-1 py-3 sm:grid-cols-[6.5rem_minmax(0,1fr)_minmax(8rem,auto)] print:break-inside-avoid";
+const ROW =
+  "grid gap-x-5 gap-y-1 py-3 sm:grid-cols-[6.5rem_minmax(0,1fr)_minmax(8rem,auto)] print:break-inside-avoid";
 
 function RefCell({ children }: { children?: ReactNode }) {
-  return <div className="text-xs font-medium text-muted-foreground tabular sm:pt-1">{children}</div>;
+  return (
+    <div className="text-xs font-medium text-muted-foreground tabular sm:pt-1">{children}</div>
+  );
 }
 
 export type CalcSheetProps = {
@@ -81,7 +87,17 @@ export type CalcSheetProps = {
  * A calculation sheet: Ref | Calculation | Output columns, as consultancy calc pads lay them out,
  * with the job header. Holds CalcSection, CalcStep, Check and CalcNote rows; prints dark on white.
  */
-export function CalcSheet({ title, job, by, checked, date, revision, actions, children, className }: CalcSheetProps) {
+export function CalcSheet({
+  title,
+  job,
+  by,
+  checked,
+  date,
+  revision,
+  actions,
+  children,
+  className,
+}: CalcSheetProps) {
   const meta = [
     ["Job", job],
     ["By", by],
@@ -90,7 +106,14 @@ export function CalcSheet({ title, job, by, checked, date, revision, actions, ch
     ["Rev", revision],
   ].filter(([, value]) => value !== undefined && value !== null && value !== "");
   return (
-    <section className={cn("rounded-2xl border border-border bg-card text-card-foreground shadow-card", PRINT_LIGHT, "print:break-inside-auto print:rounded-none print:border-0", className)}>
+    <section
+      className={cn(
+        "rounded-2xl border border-border bg-card text-card-foreground shadow-card",
+        PRINT_LIGHT,
+        "print:break-inside-auto print:rounded-none print:border-0",
+        className,
+      )}
+    >
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
         <div className="min-w-0">
           <h2 className="text-lg font-bold">{title}</h2>
@@ -118,7 +141,15 @@ export function CalcSheet({ title, job, by, checked, date, revision, actions, ch
 }
 
 /** A numbered heading inside a CalcSheet. */
-export function CalcSection({ title, reference, children }: { title: ReactNode; reference?: ReactNode; children?: ReactNode }) {
+export function CalcSection({
+  title,
+  reference,
+  children,
+}: {
+  title: ReactNode;
+  reference?: ReactNode;
+  children?: ReactNode;
+}) {
   return (
     <div className="print:break-inside-avoid">
       <div className={cn(ROW, "pt-5 pb-1")}>
@@ -163,8 +194,18 @@ export type CalcStepProps = {
 };
 
 /** The LaTeX for a step: symbol = formula = substitution = result unit, on aligned lines when long. */
-export function stepTex({ symbol, formula, values, substitution, result, unit, style, valueStyle }: CalcStepProps): string {
-  const substituted = substitution ?? (formula && values ? subst(formula, values, valueStyle ?? style) : undefined);
+export function stepTex({
+  symbol,
+  formula,
+  values,
+  substitution,
+  result,
+  unit,
+  style,
+  valueStyle,
+}: CalcStepProps): string {
+  const substituted =
+    substitution ?? (formula && values ? subst(formula, values, valueStyle ?? style) : undefined);
   const final = texQty(result, unit, style);
   const lines = [formula, substituted, final].filter((line): line is string => Boolean(line));
   if (lines.join("").length <= 64) return `${symbol} = ${lines.join(" = ")}`;
@@ -179,7 +220,11 @@ export function CalcStep(props: CalcStepProps) {
       <RefCell>{reference}</RefCell>
       <div className="min-w-0">
         {label && <p className="text-sm font-semibold">{label}</p>}
-        <Tex block math={stepTex(props)} className="text-left [&_.katex-display]:my-1 [&_.katex-display]:text-left [&_.katex-display>.katex]:text-left" />
+        <Tex
+          block
+          math={stepTex(props)}
+          className="text-left [&_.katex-display]:my-1 [&_.katex-display]:text-left [&_.katex-display>.katex]:text-left"
+        />
         {note && <p className="text-xs text-muted-foreground">{note}</p>}
       </div>
       <div className="text-sm font-bold sm:pt-1 sm:text-right">
@@ -204,10 +249,19 @@ export type CheckProps = {
 };
 
 /** The comparison as LaTeX, its sign showing the verdict: M_{Ed} = 120 kNm \le M_{Rd} = 150 kNm. */
-export function checkTex({ symbol, limitSymbol, value, limit, mode = "max", unit, style }: CheckProps): string {
+export function checkTex({
+  symbol,
+  limitSymbol,
+  value,
+  limit,
+  mode = "max",
+  unit,
+  style,
+}: CheckProps): string {
   const { pass } = check(value, limit, mode);
   const relation = mode === "max" ? (pass ? "\\le" : ">") : pass ? "\\ge" : "<";
-  const side = (sym: string | undefined, x: number) => (sym ? `${sym} = ${texQty(x, unit, style)}` : texQty(x, unit, style));
+  const side = (sym: string | undefined, x: number) =>
+    sym ? `${sym} = ${texQty(x, unit, style)}` : texQty(x, unit, style);
   return `${side(symbol, value)} ${relation} ${side(limitSymbol, limit)}`;
 }
 
@@ -220,13 +274,15 @@ export function Check(props: CheckProps) {
       <RefCell>{reference}</RefCell>
       <div className="min-w-0">
         {label && <p className="text-sm font-semibold">{label}</p>}
-        <Tex block math={checkTex(props)} className="[&_.katex-display]:my-1 [&_.katex-display]:text-left [&_.katex-display>.katex]:text-left" />
+        <Tex
+          block
+          math={checkTex(props)}
+          className="[&_.katex-display]:my-1 [&_.katex-display]:text-left [&_.katex-display>.katex]:text-left"
+        />
       </div>
       <div className="flex items-start sm:justify-end sm:pt-1">
         <Badge tone={result.pass ? "success" : "danger"} className="tabular">
-          <span aria-label={`Utilisation ${result.shown}, ${result.pass ? "pass" : "fail"}`}>
-            {result.pass ? "Pass" : "Fail"} {result.shown}
-          </span>
+          <span role="status">{`${result.pass ? "Pass" : "Fail"} ${result.shown}`}</span>
         </Badge>
       </div>
     </div>
@@ -237,8 +293,14 @@ export function Check(props: CheckProps) {
 export type CalcRow =
   | { kind: "section"; title: string; reference?: string }
   | { kind: "note"; text: string; reference?: string }
-  | ({ kind: "step"; label?: string; reference?: string; note?: string } & Omit<CalcStepProps, "label" | "reference" | "note">)
-  | ({ kind: "check"; label?: string; reference?: string } & Omit<CheckProps, "label" | "reference">);
+  | ({ kind: "step"; label?: string; reference?: string; note?: string } & Omit<
+      CalcStepProps,
+      "label" | "reference" | "note"
+    >)
+  | ({ kind: "check"; label?: string; reference?: string } & Omit<
+      CheckProps,
+      "label" | "reference"
+    >);
 
 /** CalcSheet rows from data (keep the same rows for the PDF). */
 export function CalcRows({ rows }: { rows: CalcRow[] }) {
@@ -246,8 +308,14 @@ export function CalcRows({ rows }: { rows: CalcRow[] }) {
     <>
       {rows.map((row, i) => {
         const key = `${row.kind}-${i}`;
-        if (row.kind === "section") return <CalcSection key={key} title={row.title} reference={row.reference} />;
-        if (row.kind === "note") return <CalcNote key={key} reference={row.reference}>{row.text}</CalcNote>;
+        if (row.kind === "section")
+          return <CalcSection key={key} title={row.title} reference={row.reference} />;
+        if (row.kind === "note")
+          return (
+            <CalcNote key={key} reference={row.reference}>
+              {row.text}
+            </CalcNote>
+          );
         if (row.kind === "step") return <CalcStep key={key} {...row} />;
         return <Check key={key} {...row} />;
       })}
@@ -276,14 +344,27 @@ export function calcPdfBlocks(rows: CalcRow[]): PdfBlock[] {
   for (const row of rows) {
     if (row.kind === "section") {
       flush();
-      blocks.push({ type: "subheading", text: row.reference ? `${row.title} (${row.reference})` : row.title });
+      blocks.push({
+        type: "subheading",
+        text: row.reference ? `${row.title} (${row.reference})` : row.title,
+      });
     } else if (row.kind === "note") {
       table.push([row.reference ?? "", row.text, ""]);
     } else if (row.kind === "step") {
-      const substituted = row.substitution ?? (row.formula && row.values ? subst(row.formula, row.values, row.valueStyle ?? row.style) : undefined);
-      const line = [row.symbol, row.formula, substituted, texQty(row.result, row.unit, row.style)].filter(Boolean).join(" = ");
+      const substituted =
+        row.substitution ??
+        (row.formula && row.values
+          ? subst(row.formula, row.values, row.valueStyle ?? row.style)
+          : undefined);
+      const line = [row.symbol, row.formula, substituted, texQty(row.result, row.unit, row.style)]
+        .filter(Boolean)
+        .join(" = ");
       const calc = [row.label, text(line), row.note].filter(Boolean).join("\n");
-      table.push([row.reference ?? "", calc, text(`${row.symbol} = ${texQty(row.result, row.unit, row.style)}`)]);
+      table.push([
+        row.reference ?? "",
+        calc,
+        text(`${row.symbol} = ${texQty(row.result, row.unit, row.style)}`),
+      ]);
     } else {
       const result = check(row.value, row.limit, row.mode);
       const calc = [row.label, text(checkTex(row))].filter(Boolean).join("\n");
@@ -294,21 +375,40 @@ export function calcPdfBlocks(rows: CalcRow[]): PdfBlock[] {
   return blocks;
 }
 
-export type CheckItem = { label: string; value: number; limit: number; mode?: CheckMode; reference?: string };
+export type CheckItem = {
+  label: string;
+  value: number;
+  limit: number;
+  mode?: CheckMode;
+  reference?: string;
+};
 
 /** Every check with its utilisation; the governing one first in weight. */
 export function CheckSummary({ checks, className }: { checks: CheckItem[]; className?: string }) {
   const results = checks.map((item) => ({ item, ...check(item.value, item.limit, item.mode) }));
-  const governing = results.reduce<number>((best, r, i) => (r.utilisation > (results[best]?.utilisation ?? -1) ? i : best), 0);
+  const governing = results.reduce<number>(
+    (best, r, i) => (r.utilisation > (results[best]?.utilisation ?? -1) ? i : best),
+    0,
+  );
   return (
     <div className={cn("flex flex-col gap-2 print:break-inside-avoid", className)}>
       {results.map((r, i) => (
-        <div key={`${r.item.label}-${i}`} className="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem] items-center gap-3 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(6rem,12rem)_4.5rem]">
+        <div
+          key={`${r.item.label}-${i}`}
+          className="grid grid-cols-[minmax(0,1fr)_5rem_4.5rem] items-center gap-3 text-sm sm:grid-cols-[minmax(0,1fr)_minmax(6rem,12rem)_4.5rem]"
+        >
           <span className={cn("min-w-0 truncate", i === governing ? "font-bold" : "")}>
             {r.item.label}
-            {r.item.reference && <span className="ml-2 text-xs font-normal text-muted-foreground">{r.item.reference}</span>}
+            {r.item.reference && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {r.item.reference}
+              </span>
+            )}
           </span>
-          <Progress value={Math.min(100, r.utilisation * 100)} tone={!r.pass ? "danger" : r.utilisation > 0.9 ? "warning" : "success"} />
+          <Progress
+            value={Math.min(100, r.utilisation * 100)}
+            tone={!r.pass ? "danger" : r.utilisation > 0.9 ? "warning" : "success"}
+          />
           <Badge tone={r.pass ? "success" : "danger"} className="justify-self-end tabular">
             {r.shown}
           </Badge>

@@ -137,6 +137,84 @@ function readBody(req, limit) {
   });
 }
 
+// ---------- decisions: the app's /api/decisions, forwarded to the Rakazo api ----------
+// The page posts { point, input, questions } with no credential; this host adds the computer's
+// token (RAKAZO_PDF_DECISIONS_URL + RAKAZO_PDF_DECISIONS_TOKEN) so the page never sees it. Each CLI
+// call refreshes the credential file, because a running server keeps the environment it started with.
+const DECISIONS_FILE = join(STATE_DIR, "decisions.json");
+const DECISIONS_TIMEOUT_MS = 2_500;
+const DECISIONS_MAX_BYTES = 1_600_000;
+
+function decisionsCredential() {
+  try {
+    const saved = JSON.parse(readFileSync(DECISIONS_FILE, "utf8"));
+    if (saved?.url && saved?.token) return saved;
+  } catch {}
+  const url = process.env.RAKAZO_PDF_DECISIONS_URL?.trim();
+  const token = process.env.RAKAZO_PDF_DECISIONS_TOKEN?.trim();
+  return url && token ? { url, token } : null;
+}
+
+function saveDecisionsCredential() {
+  const url = process.env.RAKAZO_PDF_DECISIONS_URL?.trim();
+  const token = process.env.RAKAZO_PDF_DECISIONS_TOKEN?.trim();
+  if (!url || !token) return;
+  try {
+    mkdirSync(STATE_DIR, { recursive: true });
+    const temp = `${DECISIONS_FILE}.${process.pid}.tmp`;
+    writeFileSync(temp, JSON.stringify({ url, token }), { mode: 0o600 });
+    renameSync(temp, DECISIONS_FILE);
+  } catch {}
+}
+
+async function forwardDecisions(req, res, json, port) {
+  const own = [`http://127.0.0.1:${port}`, `http://localhost:${port}`];
+  if (req.headers.origin && !own.includes(req.headers.origin)) {
+    return json(res, 403, { ok: false, reason: "unauthorized" });
+  }
+  if (!String(req.headers["content-type"] || "").startsWith("application/json")) {
+    return json(res, 400, { ok: false, reason: "invalid" });
+  }
+  const credential = decisionsCredential();
+  let target = null;
+  try {
+    target = credential && new URL(credential.url);
+  } catch {}
+  if (!target || (target.protocol !== "https:" && target.protocol !== "http:")) {
+    req.resume();
+    return json(res, 503, { ok: false, reason: "unavailable" });
+  }
+  let body;
+  try {
+    body = await readBody(req, DECISIONS_MAX_BYTES);
+  } catch {
+    return json(res, 413, { ok: false, reason: "invalid" });
+  }
+  let upstream;
+  try {
+    upstream = await fetch(target, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${credential.token}` },
+      body,
+      signal: AbortSignal.timeout(DECISIONS_TIMEOUT_MS),
+    });
+  } catch (error) {
+    const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+    return json(res, timedOut ? 504 : 503, {
+      ok: false,
+      reason: timedOut ? "timeout" : "unavailable",
+    });
+  }
+  let answer;
+  try {
+    answer = await upstream.json();
+  } catch {
+    return json(res, 502, { ok: false, reason: "upstream" });
+  }
+  if (!answer || typeof answer !== "object") return json(res, 502, { ok: false, reason: "upstream" });
+  return json(res, upstream.status, answer);
+}
+
 function serve() {
   if (!existsSync(join(APP_DIR, "index.html"))) {
     throw new StudioError("Evolve PDF Studio is not installed on this computer (no app bundle).");
@@ -170,6 +248,9 @@ function serve() {
           "cache-control": rel === "index.html" ? "no-store" : "max-age=3600",
         });
         return createReadStream(full).pipe(res);
+      }
+      if (url.pathname === "/api/decisions" && req.method === "POST") {
+        return await forwardDecisions(req, res, json, port);
       }
       if (req.headers["x-pdf-studio"] !== token) return json(res, 403, { error: "forbidden" });
 
@@ -719,6 +800,7 @@ const COMMANDS = {
 async function main() {
   const [command, ...args] = process.argv.slice(2);
   if (command === "serve") return serve();
+  saveDecisionsCredential();
   try {
     const handler = COMMANDS[command];
     if (!handler)

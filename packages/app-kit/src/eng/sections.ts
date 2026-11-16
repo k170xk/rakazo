@@ -110,11 +110,24 @@ export function sectionProps(shape: Shape): SectionProps {
     const rects = parts(shape);
     A = rects.reduce((sum, r) => sum + r.b * r.h, 0);
     yc = rects.reduce((sum, r) => sum + r.b * r.h * (r.y + r.h / 2), 0) / A;
-    Ix = rects.reduce((sum, r) => sum + (r.b * r.h ** 3) / 12 + r.b * r.h * (r.y + r.h / 2 - yc) ** 2, 0);
+    Ix = rects.reduce(
+      (sum, r) => sum + (r.b * r.h ** 3) / 12 + r.b * r.h * (r.y + r.h / 2 - yc) ** 2,
+      0,
+    );
     Iy = rects.reduce((sum, r) => sum + (r.h * r.b ** 3) / 12, 0);
     Zp = plasticOf(rects, A);
   }
-  return { A, yc, Ix, Iy, Zt: Ix / (depth - yc), Zb: Ix / yc, Zp, rx: Math.sqrt(Ix / A), ry: Math.sqrt(Iy / A) };
+  return {
+    A,
+    yc,
+    Ix,
+    Iy,
+    Zt: Ix / (depth - yc),
+    Zb: Ix / yc,
+    Zp,
+    rx: Math.sqrt(Ix / A),
+    ry: Math.sqrt(Iy / A),
+  };
 }
 
 export type Bar = { x: number; y: number; d: number };
@@ -123,15 +136,37 @@ export type Bar = { x: number; y: number; d: number };
  * n bars of diameter dia in one layer across a section b wide, with `cover` to the link and a
  * link of diameter `link`; y is the bar centre from the bottom (or, with top, from the top) fibre.
  */
-export function barRow(
-  { n, dia, b, h, cover, link = 0, top = false, layer = 0, gap }: { n: number; dia: number; b: number; h: number; cover: number; link?: number; top?: boolean; layer?: number; gap?: number },
-): Bar[] {
+export function barRow({
+  n,
+  dia,
+  b,
+  h,
+  cover,
+  link = 0,
+  top = false,
+  layer = 0,
+  gap,
+}: {
+  n: number;
+  dia: number;
+  b: number;
+  h: number;
+  cover: number;
+  link?: number;
+  top?: boolean;
+  layer?: number;
+  gap?: number;
+}): Bar[] {
   const edge = cover + link + dia / 2;
   const fromFace = edge + layer * (dia + (gap ?? Math.max(dia, 25)));
   const y = top ? h - fromFace : fromFace;
   const x0 = -b / 2 + edge;
   const span = b - 2 * edge;
-  return Array.from({ length: n }, (_, i) => ({ x: n === 1 ? 0 : x0 + (span * i) / (n - 1), y, d: dia }));
+  return Array.from({ length: n }, (_, i) => ({
+    x: n === 1 ? 0 : x0 + (span * i) / (n - 1),
+    y,
+    d: dia,
+  }));
 }
 
 /** Area of n bars of one diameter, mm². */

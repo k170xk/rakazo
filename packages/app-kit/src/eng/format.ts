@@ -32,8 +32,21 @@ export type NumberStyle = {
   sciAbove?: number;
 };
 
-const SUPERSCRIPT: Record<string, string> = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
-export const superscript = (text: string) => [...text].map((char) => SUPERSCRIPT[char] ?? char).join("");
+const SUPERSCRIPT: Record<string, string> = {
+  "-": "⁻",
+  "0": "⁰",
+  "1": "¹",
+  "2": "²",
+  "3": "³",
+  "4": "⁴",
+  "5": "⁵",
+  "6": "⁶",
+  "7": "⁷",
+  "8": "⁸",
+  "9": "⁹",
+};
+export const superscript = (text: string) =>
+  [...text].map((char) => SUPERSCRIPT[char] ?? char).join("");
 
 function groupDigits(text: string, separator: string) {
   if (!separator) return text;
@@ -56,14 +69,19 @@ export function scientific(x: number, sf = 4): { mantissa: string; exponent: num
 const trimZeros = (text: string) => (text.includes(".") ? text.replace(/\.?0+$/, "") : text);
 
 /** Splits a value into the plain decimal text and an optional power of ten, by one set of rules. */
-export function numberParts(x: number, style: NumberStyle = {}): { text: string; exponent?: number } {
+export function numberParts(
+  x: number,
+  style: NumberStyle = {},
+): { text: string; exponent?: number } {
   if (Number.isNaN(x)) return { text: "–" };
   if (!Number.isFinite(x)) return { text: x > 0 ? "∞" : "-∞" };
   const { dp, group = "" } = style;
   const sf = style.sf ?? 4;
   if (dp !== undefined) {
     const value = round(x, dp);
-    return { text: groupDigits((Object.is(value, -0) ? 0 : value).toFixed(Math.max(0, dp)), group) };
+    return {
+      text: groupDigits((Object.is(value, -0) ? 0 : value).toFixed(Math.max(0, dp)), group),
+    };
   }
   if (x === 0) return { text: "0" };
   const rounded = sigFig(x, sf);
@@ -93,7 +111,15 @@ export function engNotation(x: number, sf = 4): string {
 }
 
 const PREFIXES: Array<[number, string]> = [
-  [12, "T"], [9, "G"], [6, "M"], [3, "k"], [0, ""], [-3, "m"], [-6, "µ"], [-9, "n"], [-12, "p"],
+  [12, "T"],
+  [9, "G"],
+  [6, "M"],
+  [3, "k"],
+  [0, ""],
+  [-3, "m"],
+  [-6, "µ"],
+  [-9, "n"],
+  [-12, "p"],
 ];
 
 /** A value in base units with an SI prefix: siPrefix(12500, "W") is "12.5 kW". */
@@ -121,7 +147,11 @@ export type CheckResult = {
 export function check(value: number, limit: number, mode: CheckMode = "max"): CheckResult {
   const pass = mode === "max" ? value <= limit : value >= limit;
   const ratio = mode === "max" ? value / limit : limit / value;
-  const utilisation = Number.isFinite(ratio) ? Math.abs(ratio) : pass ? 0 : Number.POSITIVE_INFINITY;
+  const utilisation = Number.isFinite(ratio)
+    ? Math.abs(ratio)
+    : pass
+      ? 0
+      : Number.POSITIVE_INFINITY;
   let shown = Number.isFinite(utilisation) ? roundUp(utilisation, 2).toFixed(2) : "∞";
   if (!pass && shown === "1.00") shown = "1.01";
   return { utilisation, pass, shown };

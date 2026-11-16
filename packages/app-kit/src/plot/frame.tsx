@@ -9,7 +9,16 @@ import { cn } from "../ui/cn.js";
 import { useWidth } from "../ui/plot.js";
 import { PRINT_LIGHT } from "./print.js";
 import type { Scale, ScaleType } from "./scale.js";
-import { linearScale, logDomain, logScale, logTicks, niceDomain, niceTicks, px, tickFormat } from "./scale.js";
+import {
+  linearScale,
+  logDomain,
+  logScale,
+  logTicks,
+  niceDomain,
+  niceTicks,
+  px,
+  tickFormat,
+} from "./scale.js";
 
 export type Axis = {
   label?: string;
@@ -58,7 +67,8 @@ const TONE_VAR: Record<string, string> = {
 
 export function colorOf(color: PlotColor | undefined, index = 0): string {
   if (color === undefined) return `hsl(var(--chart-${(index % 6) + 1}))`;
-  if (typeof color === "number") return `hsl(var(--chart-${((Math.max(1, Math.round(color)) - 1) % 6) + 1}))`;
+  if (typeof color === "number")
+    return `hsl(var(--chart-${((Math.max(1, Math.round(color)) - 1) % 6) + 1}))`;
   const token = TONE_VAR[color];
   return token ? `hsl(var(${token}))` : color;
 }
@@ -69,14 +79,26 @@ export const RULE = "hsl(var(--border))";
 export const FONT = 11;
 
 /** Works out an axis's scale type, domain, ticks and label format from its options and data. */
-export function resolveAxis(axis: Axis = {}, values: number[], length: number, along: "x" | "y"): ResolvedAxis {
+export function resolveAxis(
+  axis: Axis = {},
+  values: number[],
+  length: number,
+  along: "x" | "y",
+): ResolvedAxis {
   const type: ScaleType = axis.scale ?? "linear";
   const title = [axis.label, axis.unit ? `(${axis.unit})` : ""].filter(Boolean).join(" ");
   const base = { type, title, reverse: Boolean(axis.reverse), grid: axis.grid ?? true };
   if (axis.categories) {
     const n = axis.categories.length;
     const major = axis.categories.map((_, i) => i);
-    return { ...base, type: "linear", domain: [-0.5, Math.max(0.5, n - 0.5)], major, minor: [], format: (v) => axis.categories?.[Math.round(v)] ?? "" };
+    return {
+      ...base,
+      type: "linear",
+      domain: [-0.5, Math.max(0.5, n - 0.5)],
+      major,
+      minor: [],
+      format: (v) => axis.categories?.[Math.round(v)] ?? "",
+    };
   }
   const finite = values.filter((v) => Number.isFinite(v) && (type === "linear" || v > 0));
   let low = Math.min(...finite);
@@ -97,14 +119,21 @@ export function resolveAxis(axis: Axis = {}, values: number[], length: number, a
   }
   let major: number[];
   let minor: number[] = [];
-  if (axis.ticks) major = axis.ticks.filter((t) => t >= Math.min(...domain) && t <= Math.max(...domain));
+  if (axis.ticks)
+    major = axis.ticks.filter((t) => t >= Math.min(...domain) && t <= Math.max(...domain));
   else if (type === "log") ({ major, minor } = logTicks(domain[0], domain[1]));
   else {
     major = niceTicks(domain[0], domain[1], count);
     const step = major.length > 1 ? major[1]! - major[0]! : 0;
-    if (step) minor = niceTicks(domain[0], domain[1], Math.round((domain[1] - domain[0]) / (step / 5))).filter((t) => !major.includes(t));
+    if (step)
+      minor = niceTicks(
+        domain[0],
+        domain[1],
+        Math.round((domain[1] - domain[0]) / (step / 5)),
+      ).filter((t) => !major.includes(t));
   }
-  const format = axis.format ?? (axis.style ? (v: number) => fmt(v, axis.style) : tickFormat(major));
+  const format =
+    axis.format ?? (axis.style ? (v: number) => fmt(v, axis.style) : tickFormat(major));
   return { ...base, domain, major, minor, format };
 }
 
@@ -114,7 +143,8 @@ export const makeScale = (axis: ResolvedAxis, range: [number, number]): Scale =>
 };
 
 /** Characters × average digit width at 11px: enough room for tick labels without measuring text. */
-const labelWidth = (axis: ResolvedAxis) => Math.max(...axis.major.map((t) => axis.format(t).length), 1) * 6.4;
+const labelWidth = (axis: ResolvedAxis) =>
+  Math.max(...axis.major.map((t) => axis.format(t).length), 1) * 6.4;
 
 export type FrameContext = {
   x: Scale;
@@ -130,7 +160,12 @@ export type FrameContext = {
   id: string;
 };
 
-export type LegendItem = { name: string; color: string; kind?: "line" | "area" | "marker"; dash?: string };
+export type LegendItem = {
+  name: string;
+  color: string;
+  kind?: "line" | "area" | "marker";
+  dash?: string;
+};
 
 export function LegendRow({ items }: { items: LegendItem[] }) {
   if (items.length < 2) return null;
@@ -140,11 +175,28 @@ export function LegendRow({ items }: { items: LegendItem[] }) {
         <span key={item.name} className="inline-flex items-center gap-1.5">
           <svg width="18" height="10" aria-hidden="true">
             {item.kind === "area" ? (
-              <rect x="1" y="1" width="16" height="8" rx="2" fill={item.color} fillOpacity={0.35} stroke={item.color} />
+              <rect
+                x="1"
+                y="1"
+                width="16"
+                height="8"
+                rx="2"
+                fill={item.color}
+                fillOpacity={0.35}
+                stroke={item.color}
+              />
             ) : item.kind === "marker" ? (
               <circle cx="9" cy="5" r="3.5" fill={item.color} />
             ) : (
-              <line x1="1" x2="17" y1="5" y2="5" stroke={item.color} strokeWidth={2} strokeDasharray={item.dash} />
+              <line
+                x1="1"
+                x2="17"
+                y1="5"
+                y2="5"
+                stroke={item.color}
+                strokeWidth={2}
+                strokeDasharray={item.dash}
+              />
             )}
           </svg>
           {item.name}
@@ -154,9 +206,24 @@ export function LegendRow({ items }: { items: LegendItem[] }) {
   );
 }
 
-const INLINE = ["fill", "stroke", "stroke-width", "stroke-dasharray", "fill-opacity", "stroke-opacity", "opacity", "font-size", "font-family", "font-weight", "paint-order", "stop-color"];
+const INLINE = [
+  "fill",
+  "stroke",
+  "stroke-width",
+  "stroke-dasharray",
+  "fill-opacity",
+  "stroke-opacity",
+  "opacity",
+  "font-size",
+  "font-family",
+  "font-weight",
+  "paint-order",
+  "stop-color",
+];
 
-const LIGHT_TOKENS = [...PRINT_LIGHT.matchAll(/print:\[(--[\w-]+):([^\]]+)\]/g)].map((m) => [m[1]!, m[2]!.replaceAll("_", " ")] as const);
+const LIGHT_TOKENS = [...PRINT_LIGHT.matchAll(/print:\[(--[\w-]+):([^\]]+)\]/g)].map(
+  (m) => [m[1]!, m[2]!.replaceAll("_", " ")] as const,
+);
 
 /**
  * The SVG as a standalone file: theme colours resolved to values, always in the light palette,
@@ -194,8 +261,14 @@ export function svgFile(svg: SVGSVGElement): string {
  * A plot or drawing as a PNG data URL on white, for PDF reports: `{ type: "image", src }` blocks.
  * Pass the element holding the charts (a ref on a wrapping div; several stack top to bottom) or an SVG.
  */
-export async function plotImage(target: Element | null, { scale = 2 }: { scale?: number } = {}): Promise<string> {
-  const svgs = target instanceof SVGSVGElement ? [target] : [...(target?.querySelectorAll<SVGSVGElement>("svg[data-plot]") ?? [])];
+export async function plotImage(
+  target: Element | null,
+  { scale = 2 }: { scale?: number } = {},
+): Promise<string> {
+  const svgs =
+    target instanceof SVGSVGElement
+      ? [target]
+      : [...(target?.querySelectorAll<SVGSVGElement>("svg[data-plot]") ?? [])];
   if (svgs.length === 0) throw new Error("There is no chart or drawing to capture.");
   const parts = await Promise.all(
     svgs.map(async (svg) => {
@@ -203,7 +276,11 @@ export async function plotImage(target: Element | null, { scale = 2 }: { scale?:
       const image = new Image();
       image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgFile(svg))}`;
       await image.decode();
-      return { image, width: box?.width || svg.clientWidth || 640, height: box?.height || svg.clientHeight || 320 };
+      return {
+        image,
+        width: box?.width || svg.clientWidth || 640,
+        height: box?.height || svg.clientHeight || 320,
+      };
     }),
   );
   const canvas = document.createElement("canvas");
@@ -215,13 +292,25 @@ export async function plotImage(target: Element | null, { scale = 2 }: { scale?:
   context.fillRect(0, 0, canvas.width, canvas.height);
   let y = 0;
   for (const part of parts) {
-    context.drawImage(part.image, 0, Math.round(y * scale), Math.round(part.width * scale), Math.round(part.height * scale));
+    context.drawImage(
+      part.image,
+      0,
+      Math.round(y * scale),
+      Math.round(part.width * scale),
+      Math.round(part.height * scale),
+    );
     y += part.height;
   }
   return canvas.toDataURL("image/png");
 }
 
-export function ExportButton({ target, name }: { target: () => SVGSVGElement | null; name: string }) {
+export function ExportButton({
+  target,
+  name,
+}: {
+  target: () => SVGSVGElement | null;
+  name: string;
+}) {
   return (
     <button
       type="button"
@@ -230,7 +319,8 @@ export function ExportButton({ target, name }: { target: () => SVGSVGElement | n
       className="absolute top-1 right-1 grid size-8 place-items-center rounded-lg text-muted-foreground opacity-70 transition hover:bg-muted hover:opacity-100 focus-visible:opacity-100 print:hidden"
       onClick={() => {
         const svg = target();
-        if (svg) void download(`${name.replace(/[^\w.-]+/g, "-")}.svg`, svgFile(svg), "image/svg+xml");
+        if (svg)
+          void download(`${name.replace(/[^\w.-]+/g, "-")}.svg`, svgFile(svg), "image/svg+xml");
       }}
     >
       <Download className="size-4" />
@@ -259,10 +349,23 @@ export type FrameProps = {
 };
 
 /** Axes, grid and tick labels around a plot area; the chart draws inside through children(ctx). */
-export function Frame({ x, y, y2, width, height, gutter = 0, title, children, overlay, onPointer, svgRef }: FrameProps) {
+export function Frame({
+  x,
+  y,
+  y2,
+  width,
+  height,
+  gutter = 0,
+  title,
+  children,
+  overlay,
+  onPointer,
+  svgRef,
+}: FrameProps) {
   const id = useSvgId("p");
   const left = Math.round(10 + labelWidth(y) + (y.title ? 18 : 0));
-  const right = width - Math.round(12 + gutter + (y2 ? labelWidth(y2) + 10 + (y2.title ? 18 : 0) : 0));
+  const right =
+    width - Math.round(12 + gutter + (y2 ? labelWidth(y2) + 10 + (y2.title ? 18 : 0) : 0));
   const top = 10;
   const bottom = height - (24 + (x.title ? 18 : 0));
   const ctx: FrameContext = {
@@ -284,15 +387,39 @@ export function Frame({ x, y, y2, width, height, gutter = 0, title, children, ov
     const scale = box.width ? width / box.width : 1;
     onPointer(ctx, { x: (event.clientX - box.left) * scale, y: (event.clientY - box.top) * scale });
   };
-  const gridLines = (axis: ResolvedAxis, scale: Scale, along: "x" | "y", values: number[], minor: boolean) =>
+  const gridLines = (
+    axis: ResolvedAxis,
+    scale: Scale,
+    along: "x" | "y",
+    values: number[],
+    minor: boolean,
+  ) =>
     axis.grid &&
     values.map((value) => {
       const at = px(scale(value));
       if (!Number.isFinite(at)) return null;
       return along === "x" ? (
-        <line key={`${along}${minor ? "m" : ""}${value}`} x1={at} x2={at} y1={top} y2={bottom} stroke={RULE} strokeOpacity={minor ? 0.45 : 1} strokeDasharray={minor ? "2 3" : undefined} />
+        <line
+          key={`${along}${minor ? "m" : ""}${value}`}
+          x1={at}
+          x2={at}
+          y1={top}
+          y2={bottom}
+          stroke={RULE}
+          strokeOpacity={minor ? 0.45 : 1}
+          strokeDasharray={minor ? "2 3" : undefined}
+        />
       ) : (
-        <line key={`${along}${minor ? "m" : ""}${value}`} x1={left} x2={right} y1={at} y2={at} stroke={RULE} strokeOpacity={minor ? 0.45 : 1} strokeDasharray={minor ? "2 3" : undefined} />
+        <line
+          key={`${along}${minor ? "m" : ""}${value}`}
+          x1={left}
+          x2={right}
+          y1={at}
+          y2={at}
+          stroke={RULE}
+          strokeOpacity={minor ? 0.45 : 1}
+          strokeDasharray={minor ? "2 3" : undefined}
+        />
       );
     });
   return (
@@ -312,7 +439,12 @@ export function Frame({ x, y, y2, width, height, gutter = 0, title, children, ov
       {title && <title>{title}</title>}
       <defs>
         <clipPath id={ctx.clip}>
-          <rect x={left} y={top} width={Math.max(0, right - left)} height={Math.max(0, bottom - top)} />
+          <rect
+            x={left}
+            y={top}
+            width={Math.max(0, right - left)}
+            height={Math.max(0, bottom - top)}
+          />
         </clipPath>
       </defs>
       <g>
@@ -321,7 +453,14 @@ export function Frame({ x, y, y2, width, height, gutter = 0, title, children, ov
         {gridLines(x, ctx.x, "x", x.major, false)}
         {gridLines(y, ctx.y, "y", y.major, false)}
       </g>
-      <rect x={left} y={top} width={Math.max(0, right - left)} height={Math.max(0, bottom - top)} fill="none" stroke={RULE} />
+      <rect
+        x={left}
+        y={top}
+        width={Math.max(0, right - left)}
+        height={Math.max(0, bottom - top)}
+        fill="none"
+        stroke={RULE}
+      />
       <g fontSize={FONT} fill={TEXT}>
         {x.major.map((value) => {
           const at = px(ctx.x(value));
@@ -350,17 +489,33 @@ export function Frame({ x, y, y2, width, height, gutter = 0, title, children, ov
             ) : null;
           })}
         {x.title && (
-          <text x={px((left + right) / 2)} y={height - 4} textAnchor="middle" fill={INK} fontWeight={600}>
+          <text
+            x={px((left + right) / 2)}
+            y={height - 4}
+            textAnchor="middle"
+            fill={INK}
+            fontWeight={600}
+          >
             {x.title}
           </text>
         )}
         {y.title && (
-          <text transform={`translate(12 ${px((top + bottom) / 2)}) rotate(-90)`} textAnchor="middle" fill={INK} fontWeight={600}>
+          <text
+            transform={`translate(12 ${px((top + bottom) / 2)}) rotate(-90)`}
+            textAnchor="middle"
+            fill={INK}
+            fontWeight={600}
+          >
             {y.title}
           </text>
         )}
         {y2?.title && (
-          <text transform={`translate(${width - 6 - gutter} ${px((top + bottom) / 2)}) rotate(90)`} textAnchor="middle" fill={INK} fontWeight={600}>
+          <text
+            transform={`translate(${width - 6 - gutter} ${px((top + bottom) / 2)}) rotate(90)`}
+            textAnchor="middle"
+            fill={INK}
+            fontWeight={600}
+          >
             {y2.title}
           </text>
         )}
@@ -389,7 +544,11 @@ export function PlotBox({
   const svg = useRef<SVGSVGElement | null>(null);
   const width = measured || 640;
   return (
-    <div ref={ref} className={cn("relative w-full min-w-0", PRINT_LIGHT, className)} style={{ minHeight: height }}>
+    <div
+      ref={ref}
+      className={cn("relative w-full min-w-0", PRINT_LIGHT, className)}
+      style={{ minHeight: height }}
+    >
       {children(width, (element) => {
         svg.current = element;
       })}

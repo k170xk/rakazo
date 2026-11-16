@@ -214,6 +214,7 @@ import { createMessagingReceipts } from "./messaging-receipts.js";
 import { mountMessagingWebhookRoutes } from "./messaging-webhook.js";
 import { monitoringRoutes } from "./monitoring.js";
 import { mountStorageDownloadRoute } from "./my-storage.js";
+import { mountPdfDecisionsRoute } from "./pdf-decisions.js";
 import { pluginSubmissionRoutes } from "./plugin-submissions.js";
 import { sendReferralEmails } from "./referral-email.js";
 import { mountApiRequestBodyLimits, rpcBodyLimit } from "./request-body-limit.js";
@@ -1205,6 +1206,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   );
   mountStorageDownloadRoute(app, { prisma, auth, artifacts, home, dataDir: env.dataDir, sandbox });
   mountAuditExportRoute(app, { prisma, sessionActor });
+  mountPdfDecisionsRoute(app, {
+    sessionActor,
+    companyOf: async (spaceId) =>
+      (
+        await runAsSystem("pdf decisions budget", () =>
+          prisma.space.findUnique({ where: { id: spaceId }, select: { organizationId: true } }),
+        )
+      )?.organizationId ?? null,
+  });
   mountVoiceHttpRoutes(app, { prisma, secrets, env, evolvePlugins }, async (c) => {
     const actor = await sessionActor(c.req.raw);
     if (actor) enrichLogContext({ "user.id": actor.userId, "space.id": actor.spaceId });
