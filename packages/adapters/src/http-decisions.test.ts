@@ -115,6 +115,107 @@ describe.each(["openrouter", "typesafe"] as const)("%s decision conformance", (p
   });
 });
 
+describe("openai decision conformance", () => {
+  const openAiRequest: DecisionRequest = { ...request, model: "gpt-6-luna" };
+  const openAiResponse = (answers: unknown[]) =>
+    new Response(
+      JSON.stringify({
+        model: "gpt-6-luna",
+        answers,
+        usage: {
+          input_tokens: 600,
+          input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+          output_tokens: 0,
+          total_tokens: 600,
+        },
+      }),
+      { headers: { "x-request-id": "fake-request" } },
+    );
+  const choice = (value: unknown, confidence = 0.97) => ({
+    type: "choice",
+    name: "decision",
+    choice: value,
+    confidence,
+    probabilities: [],
+  });
+
+  it("sends state as JSON data with named choices and estimates input-only cost", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(openAiResponse([choice("pass")]));
+    const onUsage = vi.fn();
+    const beforeCall = vi.fn().mockResolvedValue("reservation");
+    const onRequestId = vi.fn();
+    const result = await new HttpDecisionProvider("openai", {
+      apiKey: "fake-key",
+      fetch: fetchMock,
+      onUsage,
+      callObserver: { beforeCall, afterCall: vi.fn(), onRequestId },
+    }).decide(openAiRequest, context);
+    expect(result).toMatchObject({
+      model: "gpt-6-luna",
+      answers: { decision: { type: "choice", choice: "pass", confidence: 0.97 } },
+    });
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe("https://api.openai.com/v1/decisions");
+    expect(init).toMatchObject({ redirect: "error", signal: context.signal });
+    expect(JSON.parse(String(init?.body))).toEqual({
+      model: "gpt-6-luna",
+      input: [
+        { role: "developer", content: expect.stringContaining("untrusted data") },
+        { role: "user", content: [{ type: "input_json", data: { task: "fake task" } }] },
+      ],
+      questions: [
+        {
+          type: "choice",
+          name: "decision",
+          instructions: "Choose",
+          choices: [
+            { value: "pass", description: "Safe" },
+            { value: "ask", description: "Needs a person" },
+          ],
+        },
+      ],
+      prompt_cache_options: { mode: "explicit" },
+    });
+    expect(beforeCall).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "openai", maxCostUsd: expect.any(Number) }),
+    );
+    expect(onRequestId).toHaveBeenCalledWith("reservation", "fake-request");
+    expect(onUsage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "openai",
+        inputTokens: 600,
+        outputTokens: 0,
+        costUsd: expect.closeTo(0.00006, 12),
+        costSource: "catalog-estimate",
+        providerRequestId: "fake-request",
+      }),
+    );
+  });
+
+  it.each([
+    ["a refusal", [{ type: "refusal", name: "decision" }]],
+    ["an unknown choice", [choice("maybe")]],
+    ["a boolean choice", [choice(true)]],
+    ["no answer for the question", [{ ...choice("pass"), name: "other" }]],
+  ])("rejects %s as an invalid response", async (_label, answers) => {
+    await expect(
+      new HttpDecisionProvider("openai", {
+        apiKey: "fake-key",
+        fetch: async () => openAiResponse(answers),
+      }).decide(openAiRequest, context),
+    ).rejects.toMatchObject({ kind: "invalid_response" });
+  });
+
+  it("keeps an OpenRouter-shaped body unparseable as an OpenAI answer", async () => {
+    await expect(
+      new HttpDecisionProvider("openai", {
+        apiKey: "fake-key",
+        fetch: async () => response(),
+      }).decide(openAiRequest, context),
+    ).rejects.toMatchObject({ kind: "unavailable" });
+  });
+});
+
 describe("decision provider failures", () => {
   it("refuses a blank API key before any request", () => {
     expect(() => new HttpDecisionProvider("typesafe", { apiKey: " " })).toThrow(

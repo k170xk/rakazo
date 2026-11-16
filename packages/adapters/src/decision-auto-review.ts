@@ -5,6 +5,7 @@ import type {
   AutoReviewProvider,
   AutoReviewRequest,
   AutoReviewResult,
+  DecisionAnswer,
   DecisionProvider,
 } from "@rakazo/adapter-kit";
 import { DecisionProviderError } from "@rakazo/adapter-kit";
@@ -31,6 +32,7 @@ export class DecisionAutoReviewProvider implements AutoReviewProvider {
       model: string;
       minConfidence?: number;
       timeoutMs?: number;
+      onAnswer?: (answer: DecisionAnswer | undefined) => void;
     },
   ) {}
   describe(): AdapterDescriptor<AutoReviewCapabilities> {
@@ -92,6 +94,7 @@ export class DecisionAutoReviewProvider implements AutoReviewProvider {
         },
       );
       const answer = result.answers.decision;
+      this.options.onAnswer?.(answer);
       const model = `${this.options.providerId}/${result.model}`;
       if (answer?.choice === "ask") return { decision: "ask", model };
       if (answer?.choice !== "pass")

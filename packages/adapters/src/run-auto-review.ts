@@ -2,6 +2,13 @@ import type { AgentRuntimeEvent, AutoReviewProvider } from "@rakazo/adapter-kit"
 import { recordUsage } from "@rakazo/db";
 import type { AutoReviewChecker } from "./auto-review.js";
 import { autoReviewTimeoutMs, resolveAutoReviewProviderKind } from "./auto-review.js";
+import {
+  autoReviewDecisionsMode,
+  DECISION_ASSIST_MIN_CONFIDENCE,
+  DECISION_ASSIST_TIMEOUT_MS,
+  DecisionAssistedAutoReview,
+  decisionAssistFor,
+} from "./auto-review-decisions.js";
 import { createAutoReviewProvider } from "./auto-review-factory.js";
 import { DecisionAutoReviewProvider } from "./decision-auto-review.js";
 import { decisionModel } from "./decision-models.js";
@@ -69,7 +76,7 @@ export async function autoReviewCheckerProvider(
       operationId: `auto-review:${runId}`,
       operationKind: "setup",
     });
-  return decisionModel(checker.provider, checker.model)
+  const reviewer = decisionModel(checker.provider, checker.model)
     ? new DecisionAutoReviewProvider({
         provider: new HttpDecisionProvider("openrouter", {
           apiKey: judgeKey.apiKey ?? "",
@@ -110,4 +117,35 @@ export async function autoReviewCheckerProvider(
           timeoutMs: autoReviewTimeoutMs(),
         },
       });
+  const mode = autoReviewDecisionsMode();
+  const assist = mode === "off" ? undefined : decisionAssistFor(checker.provider, judgeKey);
+  if (mode === "off" || !assist || reviewer instanceof DecisionAutoReviewProvider) return reviewer;
+  const assistUsage = (event: Extract<AgentRuntimeEvent, { type: "usage" }>) =>
+    recordUsage(deps.prisma, event, {
+      spaceId,
+      userId,
+      botId,
+      parentRunId: runId,
+      runId,
+      operationId: `auto-review-assist:${runId}`,
+      operationKind: "setup",
+    });
+  return new DecisionAssistedAutoReview({
+    mode,
+    checker: reviewer,
+    checkerModel: `${checker.provider}/${checker.model}`,
+    assist: (onAnswer) =>
+      new DecisionAutoReviewProvider({
+        provider: new HttpDecisionProvider(assist.provider, {
+          apiKey: judgeKey.apiKey ?? "",
+          callObserver: judgeKey.callObserver,
+          onUsage: assistUsage,
+        }),
+        providerId: assist.provider,
+        model: assist.id,
+        minConfidence: DECISION_ASSIST_MIN_CONFIDENCE,
+        timeoutMs: DECISION_ASSIST_TIMEOUT_MS,
+        onAnswer,
+      }),
+  });
 }
