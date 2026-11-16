@@ -1,9 +1,18 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { EvolvePluginsConnection } from "@rakazo/adapters";
 import { callEvolvePlugins, drawAppIconLater, EvolvePluginsError } from "@rakazo/adapters";
 import type { BuildProblem } from "@rakazo/app-kit/build";
 import { buildApp, pluginBundle } from "@rakazo/app-kit/build";
-import { exportTable, importWorkbook, scaffoldApp } from "@rakazo/app-kit/import";
+import type { WorkbookImport } from "@rakazo/app-kit/import";
+import {
+  calculationName,
+  calculatorApp,
+  exportTable,
+  importCalculator,
+  importWorkbook,
+  SAVED_INPUTS_SCHEMA,
+  scaffoldApp,
+} from "@rakazo/app-kit/import";
 import { MAX_UPLOAD_BASE64 } from "@rakazo/app-kit/protocol";
 import type { TableSchema } from "@rakazo/app-kit/schema";
 import { checkSchema, isPersonalTable } from "@rakazo/app-kit/schema";
@@ -17,9 +26,11 @@ import {
   AppVersionConflictError,
   addAppAsset,
   addAppUpload,
+  addMissingAppTables,
   appendAppVersion,
   appFilesFrom,
   appRevision,
+  calcModelId,
   createAppPage,
   defineAppTable,
   dropAppTable,
@@ -34,6 +45,7 @@ import {
   recordAuditEvent,
   removeAppRow,
   runAsSystem,
+  saveCalcModel,
   undoAppChange,
   updateAppRow,
 } from "@rakazo/db";
@@ -644,7 +656,16 @@ export async function createTemplateApp(
   return { pageId: created.pageId };
 }
 
-/** A new app from a workbook the person uploaded: the importer's tables and its scaffold. */
+const readError = (error: unknown) =>
+  new WorkbookImportError(
+    error instanceof Error ? error.message : "That workbook could not be read.",
+  );
+
+/**
+ * A new app from a workbook the person uploaded. A workbook that calculates becomes a calculator
+ * running its own formulas, checked against the results Excel saved; tables of records become
+ * the importer's tables and their scaffold.
+ */
 export async function importWorkbookApp(
   prisma: PrismaClient,
   actor: Actor,
@@ -652,27 +673,41 @@ export async function importWorkbookApp(
   drawIcon?: (app: { pageId: string; title: string }) => void,
 ) {
   const { bot, group } = await ownHome(prisma, actor, input);
-  let imported: ReturnType<typeof importWorkbook>;
+  const bytes = new Uint8Array(Buffer.from(input.base64, "base64"));
+  let imported: WorkbookImport | null = null;
+  let tableError: unknown = null;
   try {
-    imported = importWorkbook(new Uint8Array(Buffer.from(input.base64, "base64")));
+    imported = importWorkbook(bytes);
   } catch (error) {
-    throw new WorkbookImportError(
-      error instanceof Error ? error.message : "That workbook could not be read.",
-    );
+    tableError = error;
   }
-  const title =
+  const calculator = await importCalculator(bytes, input.fileName, imported).catch(
+    (error: unknown) => {
+      if (!imported) throw readError(tableError ?? error);
+      return null;
+    },
+  );
+  if (!calculator && !imported) throw readError(tableError);
+  const title = (
     input.title?.trim() ||
     input.fileName
       .replace(/\.[^.]+$/, "")
       .replace(/[_-]+/g, " ")
       .trim() ||
-    "Imported app";
-  const files = scaffoldApp(
-    title,
-    imported.tables.map((table) => table.schema),
-    input.fileName,
-  );
-  const built = await buildApp(files, { title });
+    "Imported app"
+  ).slice(0, 200);
+  const modelId = randomUUID();
+  const app = calculator
+    ? calculatorApp(title, calculator.model, modelId, input.fileName)
+    : {
+        files: scaffoldApp(
+          title,
+          imported!.tables.map((table) => table.schema),
+          input.fileName,
+        ),
+        tables: imported!.tables,
+      };
+  const built = await buildApp(app.files, { title });
   if (!built.ok)
     throw new WorkbookImportError(
       `The app could not be built: ${built.errors[0]?.message ?? "unknown problem"}`,
@@ -682,20 +717,34 @@ export async function importWorkbookApp(
     userId: actor.userId,
     botId: bot?.id ?? null,
     groupId: group?.id ?? null,
-    title: title.slice(0, 200),
-    files,
+    title,
+    files: app.files,
     code: built.html,
-    tables: imported.tables,
+    tables: app.tables,
+    // Colleagues using a calculator keep their own inputs, which needs them to add their own row.
+    ...(calculator ? { dataAccess: "contribute" as const } : {}),
     via: "import",
   });
-  drawIcon?.({ pageId: created.pageId, title: title.slice(0, 200) });
-  return { pageId: created.pageId, report: imported.report };
+  if (calculator) {
+    await saveCalcModel(prisma, created.pageId, {
+      id: modelId,
+      name: calculationName(input.fileName),
+      gzip: calculator.gzip,
+    });
+  }
+  drawIcon?.({ pageId: created.pageId, title });
+  return {
+    pageId: created.pageId,
+    report: calculator ? calculator.report : imported!.report,
+    verified: calculator ? calculator.verification.passed : null,
+  };
 }
 
 /**
- * Reads a newer copy of a workbook into an existing app: sheets matching a table update rows by
- * the table's key (or append when it has none), keep the app's own columns and add new ones; new
- * sheets become new tables. The app's code and the rows it alone holds are untouched.
+ * Reads a newer copy of a workbook into an existing app. A calculator takes the newer workbook's
+ * calculation in place of its own. Otherwise sheets matching a table update rows by the table's
+ * key (or append when it has none), keep the app's own columns and add new ones; new sheets become
+ * new tables. The app's code and the rows it alone holds are untouched.
  */
 export async function reimportWorkbookApp(
   prisma: PrismaClient,
@@ -703,19 +752,39 @@ export async function reimportWorkbookApp(
   input: { pageId: string; fileName: string; base64: string },
 ) {
   await requireApp(prisma, actor, input.pageId);
+  const bytes = new Uint8Array(Buffer.from(input.base64, "base64"));
+  const modelId = await calcModelId(prisma, input.pageId);
+  if (modelId) {
+    let calculator: Awaited<ReturnType<typeof importCalculator>>;
+    try {
+      calculator = await importCalculator(bytes, input.fileName);
+    } catch (error) {
+      throw readError(error);
+    }
+    if (!calculator) throw new WorkbookImportError("That workbook could not be read.");
+    await saveCalcModel(prisma, input.pageId, {
+      id: modelId,
+      name: calculationName(input.fileName),
+      gzip: calculator.gzip,
+    });
+    await addMissingAppTables(prisma, input.pageId, [SAVED_INPUTS_SCHEMA], actor.userId);
+    return {
+      report: calculator.report,
+      verified: calculator.verification.passed as boolean | null,
+      revision: await appRevision(prisma, input.pageId),
+    };
+  }
   let imported: ReturnType<typeof importWorkbook>;
   try {
-    imported = importWorkbook(new Uint8Array(Buffer.from(input.base64, "base64")));
+    imported = importWorkbook(bytes);
   } catch (error) {
-    throw new WorkbookImportError(
-      error instanceof Error ? error.message : "That workbook could not be read.",
-    );
+    throw readError(error);
   }
   const report = [
     ...imported.report,
     ...(await mergeImportedTables(prisma, input.pageId, imported.tables, actor.userId)),
   ];
-  return { report, revision: await appRevision(prisma, input.pageId) };
+  return { report, verified: null, revision: await appRevision(prisma, input.pageId) };
 }
 
 /** Shared-link reads, for a reader the link, password or sign-in already admitted. */

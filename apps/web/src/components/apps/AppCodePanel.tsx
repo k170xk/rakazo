@@ -8,7 +8,7 @@ import { errorCode } from "../../lib/user-error";
 
 const CodeEditor = lazy(() => import("./CodeEditor"));
 
-const FILE_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,60}\.(tsx|ts|css|json)$/;
+const FILE_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,60}\.(tsx|ts|css|json|py)$/;
 
 /** The app's source files, editable by hand; saving builds them and keeps a new version. */
 export function AppCodePanel({ pageId, version }: { pageId: string; version: number }) {

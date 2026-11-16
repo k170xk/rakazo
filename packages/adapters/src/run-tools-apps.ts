@@ -1,18 +1,29 @@
+import { randomUUID } from "node:crypto";
 import { auditAppCraft, buildApp } from "@rakazo/app-kit/build";
 import { APP_KIT_GUIDE } from "@rakazo/app-kit/guide";
 import { APP_KIT_GUIDE_EXTRAS } from "@rakazo/app-kit/guide-extras";
-import { importWorkbook, MAX_WORKBOOK_BYTES, scaffoldApp } from "@rakazo/app-kit/import";
+import type { CalculatorImport } from "@rakazo/app-kit/import";
+import {
+  calculationName,
+  calculatorApp,
+  importCalculator,
+  importWorkbook,
+  MAX_WORKBOOK_BYTES,
+  SAVED_INPUTS_SCHEMA,
+  scaffoldApp,
+} from "@rakazo/app-kit/import";
 import { APP_TEMPLATES, findTemplate } from "@rakazo/app-kit/templates";
-import type { MessageBlock } from "@rakazo/contracts";
 import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
 import { containsEncodedSecret, containsSecret, redactSecrets } from "@rakazo/core";
 import {
   AppHistoryError,
   AppVersionConflictError,
   addAppAsset,
+  addMissingAppTables,
   appendAppVersion,
   appendEventInTransaction,
   appFilesFrom,
+  calcModelId,
   createAppPage,
   defineAppTable,
   dropAppTable,
@@ -24,6 +35,7 @@ import {
   readAppRowFacts,
   readAppTables,
   removeAppRow,
+  saveCalcModel,
   undoAppChange,
   updateAppRow,
   withTransactionRetry,
@@ -46,7 +58,7 @@ import { argumentGiven } from "./update-bot-patch.js";
 
 const MAX_EDITS = 80;
 const MAX_TABLES_PER_SAVE = 30;
-const FILE_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,60}\.(tsx|ts|css|json)$/;
+const FILE_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,60}\.(tsx|ts|css|json|py)$/;
 const READ_SAMPLE_ROWS = 5;
 const QUERY_LIMIT = 500;
 const MAX_PICTURE_BYTES = 20 * 1024 * 1024;
@@ -129,7 +141,8 @@ function parseFiles(value: unknown): Record<string, string> | string {
   }
   const out: Record<string, string> = {};
   for (const [name, source] of Object.entries(value)) {
-    if (!FILE_NAME.test(name)) return `${name}: use a name like App.tsx, Board.tsx or theme.css.`;
+    if (!FILE_NAME.test(name))
+      return `${name}: use a name like App.tsx, Board.tsx, theme.css or beam.py.`;
     if (typeof source !== "string") return `${name}: source must be a string.`;
     out[name] = source;
   }
@@ -519,28 +532,68 @@ async function readRunFile(
   return { error: "Send path or artifactId." };
 }
 
+const SECRET_IN_WORKBOOK = {
+  error: "The workbook contains a secret value; nothing was saved.",
+  unchanged: true,
+};
+
+const readFailure = (error: unknown) => ({
+  error: error instanceof Error ? error.message : "That workbook could not be read.",
+});
+
 /**
- * A spreadsheet made into an app, deterministically: every sheet becomes a table with typed
- * columns, and the app gets an overview, a screen per table, a board and a calendar where the
- * columns allow. Given an appId, the workbook updates that app's rows by key instead.
+ * A spreadsheet made into an app, deterministically. A workbook that calculates becomes a
+ * calculator running its own formulas (checked against the results Excel saved); tables of
+ * records become typed tables with an overview, a screen per table, a board and a calendar where
+ * the columns allow. Given an appId, the workbook updates that app's calculation, or its rows by
+ * key.
  */
 async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, title?: string) {
-  const { deps, run, bot, thread } = ctx;
+  const { deps, run } = ctx;
   const workbook = call.args.workbook as { path?: unknown; artifactId?: unknown } | null;
   if (!workbook || typeof workbook !== "object") {
     return { error: "workbook is {path} or {artifactId} of an .xlsx, .xls or .csv file." };
   }
   const file = await readRunFile(ctx, call, workbook, MAX_WORKBOOK_BYTES);
   if ("error" in file) return file;
-  let imported: ReturnType<typeof importWorkbook>;
+  const modelId = app ? await calcModelId(deps.prisma, app.id) : null;
+  if (app && modelId) {
+    let calculator: CalculatorImport | null;
+    try {
+      calculator = await importCalculator(file.bytes, file.name);
+    } catch (error) {
+      return readFailure(error);
+    }
+    if (!calculator) return { error: "That workbook could not be read." };
+    if (containsSecret([JSON.stringify(calculator.model)], ctx.secrets)) return SECRET_IN_WORKBOOK;
+    await saveCalcModel(deps.prisma, app.id, {
+      id: modelId,
+      name: calculationName(file.name),
+      gzip: calculator.gzip,
+    });
+    await addMissingAppTables(deps.prisma, app.id, [SAVED_INPUTS_SCHEMA], run.userId, ctx.runId);
+    return { appId: app.id, report: calculator.report, verified: calculator.verification.passed };
+  }
+  let imported: ReturnType<typeof importWorkbook> | null = null;
+  let tableError: unknown = null;
   try {
     imported = importWorkbook(file.bytes);
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "That workbook could not be read." };
+    tableError = error;
   }
+  if (!app) {
+    const calculator = await importCalculator(file.bytes, file.name, imported).catch(
+      (error: unknown) => {
+        tableError ??= error;
+        return null;
+      },
+    );
+    if (calculator) return newCalculatorApp(ctx, file.name, calculator, title);
+  }
+  if (!imported) return readFailure(tableError);
   if (!imported.tables.length) return { error: "No sheet in that workbook has a table of data." };
   if (containsSecret([JSON.stringify(imported.tables.map((table) => table.rows))], ctx.secrets)) {
-    return { error: "The workbook contains a secret value; nothing was saved.", unchanged: true };
+    return SECRET_IN_WORKBOOK;
   }
   if (app) {
     const report = await mergeImportedTables(
@@ -552,14 +605,8 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
     );
     return { appId: app.id, report: [...imported.report, ...report] };
   }
-  const name =
-    title ??
-    (file.name
-      .replace(/\.[^.]+$/, "")
-      .replace(/[_-]+/g, " ")
-      .trim()
-      .slice(0, PAGE_TITLE_MAX_LENGTH) ||
-      "Imported app");
+  const { bot, thread } = ctx;
+  const name = title ?? workbookTitle(file.name);
   const files = scaffoldApp(
     name,
     imported.tables.map((table) => table.schema),
@@ -600,6 +647,69 @@ async function importIntoApp(ctx: RunContext, call: ToolCall, app: App | null, t
       columns: table.schema.columns.map((column) => `${column.key}:${column.type}`),
     })),
     next: "The app is built from the sheet's structure. Read it with {appId} and improve its screens for how this person works.",
+    ...(icon ? { icon } : {}),
+    ...(cardError
+      ? { error: cardError }
+      : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
+  };
+}
+
+const workbookTitle = (fileName: string) =>
+  fileName
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .slice(0, PAGE_TITLE_MAX_LENGTH) || "Imported app";
+
+/** A calculator app from a workbook that calculates, made as the import button makes it. */
+async function newCalculatorApp(
+  ctx: RunContext,
+  fileName: string,
+  calculator: CalculatorImport,
+  title?: string,
+) {
+  const { deps, run, bot, thread } = ctx;
+  if (containsSecret([JSON.stringify(calculator.model)], ctx.secrets)) return SECRET_IN_WORKBOOK;
+  const name = title ?? workbookTitle(fileName);
+  const modelId = randomUUID();
+  const { files, tables } = calculatorApp(name, calculator.model, modelId, fileName);
+  const built = await buildApp(files, { title: name });
+  if (!built.ok)
+    return { error: "The app could not be built.", problems: built.errors.slice(0, 5) };
+  const saved = await createAppPage(deps.prisma, {
+    spaceId: run.spaceId,
+    userId: run.userId,
+    botId: bot.id,
+    groupId: thread.groupId,
+    title: name,
+    brief:
+      `A calculator made from the workbook ${fileName}, calculating with its own formulas.`.slice(
+        0,
+        MAX_BRIEF,
+      ),
+    files,
+    code: built.html,
+    tables,
+    dataAccess: "contribute",
+    via: "import",
+    runId: ctx.runId,
+  });
+  await saveCalcModel(deps.prisma, saved.pageId, {
+    id: modelId,
+    name: calculationName(fileName),
+    gzip: calculator.gzip,
+  });
+  const icon = drawIcon(ctx, saved, "");
+  const cardError = await postCard(ctx, saved, true);
+  const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
+  return {
+    appId: saved.pageId,
+    version: saved.version,
+    title: saved.title,
+    report: calculator.report,
+    verified: calculator.verification.passed,
+    inputs: calculator.model.inputs.length,
+    next: "The app calculates with the workbook's own formulas through @ocsc/calc. Improve its pages with CalcForm, CalcResult and CalcField; never retype a formula in code.",
     ...(icon ? { icon } : {}),
     ...(cardError
       ? { error: cardError }
@@ -1034,6 +1144,12 @@ async function appLook(ctx: RunContext, call: ToolCall) {
     })),
     ...(problems.length ? { problems } : {}),
     ...(craftNotes.length ? { craftNotes } : {}),
+    ...(look.python === "unavailable"
+      ? {
+          python:
+            "This server has no Python runtime installed, so the screenshots show the calculations as unavailable; check the maths by reading the .py files.",
+        }
+      : {}),
     next: "Judge every screen like a demanding design director: 1) Does Overview lead with strong visual hierarchy, populated KPI deltas/trends and @ocsc/ui charts rather than empty zeroes or raw div bars? 2) Is there an interactive workflow view (Kanban, Gantt, CalendarMonth, Checklist, MapView, GalleryView) alongside the register, plus ⌘K commands? 3) Are cards balanced, surfaces dark-mode safe, and mobile controls comfortable? Fix anything flat, cramped or unfinished with save_app edits, then look again.",
   };
   if (!ctx.computer.acceptsImages || !look.images.length) {

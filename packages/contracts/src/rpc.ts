@@ -2089,7 +2089,14 @@ export const appContract = {
           base64: z.string().max(14_000_000),
         }),
       )
-      .output(z.object({ report: z.array(z.string()), revision: z.number().int() })),
+      .output(
+        z.object({
+          report: z.array(z.string()),
+          /** A calculator's formulas all matched Excel's saved results; null for tables. */
+          verified: z.boolean().nullable(),
+          revision: z.number().int(),
+        }),
+      ),
     /** Whether this app can go to Evolve, and the plugin it was last published as. */
     evolvePublication: oc.input(z.strictObject({ pageId: Id })).output(
       z.object({
@@ -2159,7 +2166,9 @@ export const appContract = {
           groupId: Id.optional(),
         }),
       )
-      .output(z.object({ pageId: Id, report: z.array(z.string()) })),
+      .output(
+        z.object({ pageId: Id, report: z.array(z.string()), verified: z.boolean().nullable() }),
+      ),
     /** A new app from one of the App Studio's starters, with its tables and no rows. */
     createFromTemplate: oc
       .input(

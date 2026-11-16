@@ -1875,6 +1875,10 @@ msgstr "App icon"
 msgid "App link"
 msgstr "App link"
 
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "App made from Excel"
+msgstr "App made from Excel"
+
 #: src/components/apps/AppStudio.tsx
 #: src/components/tour/ocsc-tour.tsx
 msgid "App Studio"
@@ -2515,6 +2519,10 @@ msgstr "By the assistant"
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "By the assistant, for {by}"
 msgstr "By the assistant, for {by}"
+
+#: src/components/apps/ImportWorkbookButton.tsx
+msgid "Calculator made from Excel"
+msgstr "Calculator made from Excel"
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Calendars & planning"

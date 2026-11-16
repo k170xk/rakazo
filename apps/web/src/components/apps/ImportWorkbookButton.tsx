@@ -2,16 +2,18 @@ import { useLingui } from "@lingui/react/macro";
 import { Button, Spinner } from "@rakazo/ui-web";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FileSpreadsheet } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useOpenPage } from "../../lib/pages";
 import { useSpaceQueries } from "../../lib/query";
+import { ImportReport } from "./ImportReport";
 
 /** Up to the server's 10 MB workbook allowance once encoded. */
 const MAX_BYTES = 10 * 1024 * 1024;
 
 /**
- * Turns a spreadsheet into an app in one step: every sheet becomes a table, and the app gets an
- * overview, a screen per table, a board and a calendar where the columns allow. It opens when made.
+ * Turns a spreadsheet into an app in one step. A workbook that calculates becomes a calculator
+ * running its own formulas; tables of records become app tables with an overview, a screen per
+ * table, a board and a calendar where the columns allow. It opens when made.
  */
 export function ImportWorkbookButton({ botId, groupId }: { botId?: string; groupId?: string }) {
   const { t } = useLingui();
@@ -19,6 +21,7 @@ export function ImportWorkbookButton({ botId, groupId }: { botId?: string; group
   const queryClient = useQueryClient();
   const openPage = useOpenPage();
   const input = useRef<HTMLInputElement>(null);
+  const [report, setReport] = useState<{ lines: string[]; verified: boolean | null } | null>(null);
   const create = useMutation({
     mutationFn: async (file: File) => {
       if (file.size > MAX_BYTES) throw new Error(t`That workbook is over 10 MB.`);
@@ -36,11 +39,12 @@ export function ImportWorkbookButton({ botId, groupId }: { botId?: string; group
     },
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: queries.pages.key() });
+      setReport({ lines: result.report, verified: result.verified });
       openPage(result.pageId);
     },
   });
   return (
-    <div className="flex flex-col items-start gap-1">
+    <div className="flex flex-col items-start gap-1.5">
       <Button
         size="sm"
         variant="outline"
@@ -67,6 +71,14 @@ export function ImportWorkbookButton({ botId, groupId }: { botId?: string; group
             ? create.error.message
             : t`That workbook couldn't be read.`}
         </p>
+      ) : null}
+      {report && !create.isPending ? (
+        <ImportReport
+          title={report.verified === null ? t`App made from Excel` : t`Calculator made from Excel`}
+          lines={report.lines}
+          verified={report.verified}
+          onDismiss={() => setReport(null)}
+        />
       ) : null}
     </div>
   );

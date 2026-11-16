@@ -7,6 +7,7 @@ import { Download, FileSpreadsheet, Lock, Plus, Search, Trash2, Users } from "lu
 import { useMemo, useRef, useState } from "react";
 import { saveFile } from "../../lib/app-host";
 import { useSpaceQueries } from "../../lib/query";
+import { ImportReport } from "./ImportReport";
 
 type Row = Record<string, unknown> & { _id?: string };
 const PAGE_SIZE = 100;
@@ -28,7 +29,7 @@ export function AppDataPanel({ pageId }: { pageId: string }) {
   const [search, setSearch] = useState("");
   const [shown, setShown] = useState(PAGE_SIZE);
   const [error, setError] = useState<string | null>(null);
-  const [report, setReport] = useState<string[] | null>(null);
+  const [report, setReport] = useState<{ lines: string[]; verified: boolean | null } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: queries.apps.key() });
@@ -84,7 +85,7 @@ export function AppDataPanel({ pageId }: { pageId: string }) {
       });
     },
     onSuccess: (result) => {
-      setReport(result.report);
+      setReport({ lines: result.report, verified: result.verified });
       void refresh();
     },
     onError: fail,
@@ -118,6 +119,19 @@ export function AppDataPanel({ pageId }: { pageId: string }) {
           label={t`Add from Excel`}
         />
         <HiddenFileInput input={fileInput} onFile={(file) => reimport.mutate(file)} />
+        {error ? (
+          <p role="alert" className="text-[12px] text-destructive">
+            {error}
+          </p>
+        ) : null}
+        {report ? (
+          <ImportReport
+            title={t`Updated from Excel`}
+            lines={report.lines}
+            verified={report.verified}
+            onDismiss={() => setReport(null)}
+          />
+        ) : null}
       </div>
     );
   }
@@ -216,23 +230,12 @@ export function AppDataPanel({ pageId }: { pageId: string }) {
           </p>
         ) : null}
         {report ? (
-          <div className="rounded-lg bg-primary/10 px-2.5 py-2 text-[12px] text-foreground">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{t`Updated from Excel`}</span>
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => setReport(null)}
-              >
-                {t`Dismiss`}
-              </button>
-            </div>
-            <ul className="mt-1 list-disc pl-4 text-muted-foreground">
-              {report.slice(0, 12).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </div>
+          <ImportReport
+            title={t`Updated from Excel`}
+            lines={report.lines}
+            verified={report.verified}
+            onDismiss={() => setReport(null)}
+          />
         ) : null}
       </div>
       <div className="min-w-0 flex-1 overflow-x-auto">

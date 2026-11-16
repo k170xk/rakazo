@@ -195,7 +195,7 @@ export function AppSettingsPanel({
         ) : null}
         <ul className="flex flex-col gap-1">
           {(assets.data ?? [])
-            .filter((asset) => asset.source !== "icon")
+            .filter((asset) => asset.source !== "icon" && asset.source !== "calc")
             .map((asset) => (
               <li
                 key={asset.id}

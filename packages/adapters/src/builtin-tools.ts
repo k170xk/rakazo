@@ -898,7 +898,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         files: {
           type: "object",
           description:
-            'File name to TypeScript/TSX source, e.g. {"App.tsx": "..."}; App.tsx default-exports the app. Files you leave out stay.',
+            'File name to TypeScript/TSX source (or a deterministic Python calculation, beam.py, used through @ocsc/python), e.g. {"App.tsx": "..."}; App.tsx default-exports the app. Files you leave out stay.',
         },
         edits: {
           type: "array",
@@ -929,7 +929,7 @@ export const builtinAgentTools: ConnectorTool[] = [
         workbook: {
           type: "object",
           description:
-            "A spreadsheet ({artifactId} of a chat attachment, or {path} in the workspace) made into a new app deterministically: a table per sheet, typed columns, overview, table screens, board and calendar. With appId it updates that app's rows by key instead.",
+            "A spreadsheet ({artifactId} of a chat attachment, or {path} in the workspace) made into a new app deterministically. A workbook that calculates becomes a calculator running its own formulas, checked against Excel's saved results (never retype them); tables of records become a table per sheet, typed columns, overview, table screens, board and calendar. With appId it updates that app's calculation, or its rows by key.",
           properties: { artifactId: { type: "string" }, path: { type: "string" } },
         },
         tables: {

@@ -21,6 +21,7 @@ import {
   requestRef,
   UPLOAD_MIMES,
 } from "@rakazo/app-kit/protocol";
+import { isPythonFileRequest, PYTHON_RUNTIME_PATH } from "@rakazo/app-kit/python/runtime";
 import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import type { AppSource } from "../../lib/app-host";
@@ -303,6 +304,7 @@ export function AppFrame({
               "export",
               "assets",
               "pdf",
+              "python",
               ...("geolocation" in navigator ? ["location"] : []),
               ...(data.viewer.canEdit ? ["uploads"] : []),
               ...(source.ask ? ["ai"] : []),
@@ -406,6 +408,23 @@ export function AppFrame({
           if (!response.ok) throw new Error("That part of the map isn't available.");
           const blob = await response.blob();
           return { mime: blob.type || "image/png", base64: await blobBase64(blob) };
+        }
+        case "python.file": {
+          if (!isPythonFileRequest(request.version, request.name)) {
+            throw new Error("That is not part of the Python runtime.");
+          }
+          const response = await fetch(
+            `${PYTHON_RUNTIME_PATH}/${request.version}/${request.name}`,
+            {
+              credentials: "omit",
+              referrerPolicy: "no-referrer",
+            },
+          );
+          // A missing file falls through to the app shell, which is HTML.
+          if (!response.ok || response.headers.get("content-type")?.startsWith("text/html")) {
+            throw new Error("Python calculations aren't installed on this server.");
+          }
+          return new Uint8Array(await response.arrayBuffer());
         }
         case "presence.set": {
           focus.current = sawEvolve.current ? null : readFocus(request.focus);

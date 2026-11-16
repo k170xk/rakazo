@@ -617,6 +617,72 @@ export async function addAppAsset(
   });
 }
 
+/**
+ * Keeps the gzipped calculation model of an app made from a workbook. A newer model replaces the
+ * bytes under the same id, because the app's code loads it by that id.
+ */
+export async function saveCalcModel(
+  prisma: PrismaClient,
+  pageId: string,
+  input: { id: string; name: string; gzip: Uint8Array },
+): Promise<string> {
+  if (input.gzip.byteLength > MAX_ASSET_BYTES)
+    throw new AppDataError("That workbook's calculation is larger than 20 MB.");
+  const existing = await prisma.appAsset.findFirst({
+    where: { pageId, source: "calc" },
+    select: { id: true },
+  });
+  const data = {
+    name: input.name.slice(0, 200),
+    mime: "application/gzip",
+    size: input.gzip.byteLength,
+    bytes: Buffer.from(input.gzip),
+  };
+  if (existing) {
+    await prisma.appAsset.update({ where: { id: existing.id }, data });
+    return existing.id;
+  }
+  const created = await prisma.appAsset.create({
+    data: { id: input.id, pageId, source: "calc", ...data },
+    select: { id: true },
+  });
+  return created.id;
+}
+
+/** The id of the calculation model an app made from a workbook keeps, if it has one. */
+export async function calcModelId(db: Db, pageId: string): Promise<string | null> {
+  const asset = await db.appAsset.findFirst({
+    where: { pageId, source: "calc" },
+    select: { id: true },
+  });
+  return asset?.id ?? null;
+}
+
+/**
+ * Adds the tables an app needs and does not have yet, empty; tables it already has keep their
+ * schema and rows (an app made before a table was part of its kind gains it on its next import).
+ */
+export async function addMissingAppTables(
+  prisma: PrismaClient,
+  pageId: string,
+  schemas: TableSchema[],
+  userId: string | null,
+  runId?: string | null,
+): Promise<void> {
+  const existing = await readAppTables(prisma, pageId);
+  for (const schema of schemas) {
+    if (existing[schema.name]) continue;
+    await defineAppTable(prisma, pageId, {
+      schema,
+      rows: [],
+      mode: "replace",
+      userId,
+      via: "import",
+      runId,
+    });
+  }
+}
+
 /** Keeps a PNG as the app's icon, replacing any icon it had; returns the new asset's id. */
 export async function setAppIcon(
   prisma: PrismaClient,
