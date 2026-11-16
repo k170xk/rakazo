@@ -319,10 +319,9 @@ async function main() {
       void recordInfraSample({
         prisma,
         runners: {
-          app:
-            process.env.RAKAZO_TOOL_RUNNER_URL ||
-            process.env.SANDBOX_SUPERVISOR_URL ||
-            "http://127.0.0.1:7091",
+          // The app card is this machine. Document slots are read from their own server once one is set.
+          app: process.env.SANDBOX_SUPERVISOR_URL || "http://127.0.0.1:7091",
+          ...(process.env.RAKAZO_TOOL_RUNNER_URL ? { tools: process.env.RAKAZO_TOOL_RUNNER_URL } : {}),
           routines: overflow[0],
           token: runnerToken,
         },

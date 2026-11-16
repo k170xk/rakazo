@@ -221,6 +221,41 @@ describe("openStudioNote", () => {
     expect(studioNoteChip(openStudioNote({ kind: "app", title: "A", id: "p1" }))).toBeNull();
   });
 
+  it("follows the Word studio Track changes switch", () => {
+    const on = openStudioNote({
+      kind: "word",
+      title: "Report.docx",
+      documentId: "root-1",
+      artifactId: "art-4",
+      version: 4,
+      trackChanges: true,
+    });
+    expect(on).toContain("Track changes is on in the Word studio");
+    expect(on).toContain("do not add --clean");
+    expect(on).not.toContain("Add --clean to this edit");
+
+    const off = openStudioNote({
+      kind: "word",
+      title: "Report.docx",
+      documentId: "root-1",
+      artifactId: "art-4",
+      version: 4,
+      trackChanges: false,
+    });
+    expect(off).toContain("Track changes is off in the Word studio");
+    expect(off).toContain("Add --clean to this edit");
+    expect(off).toContain("no red tracked-change marks");
+
+    const slides = openStudioNote({
+      kind: "slides",
+      title: "Deck.pptx",
+      documentId: "root-2",
+      artifactId: "art-2",
+      trackChanges: false,
+    });
+    expect(slides).not.toContain("Track changes");
+  });
+
   it("keeps a whiteboard selection inside the hidden block", () => {
     const note = openStudioNote({
       kind: "whiteboard",

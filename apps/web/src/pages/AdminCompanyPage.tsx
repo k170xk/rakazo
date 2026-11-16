@@ -259,7 +259,9 @@ function CompanyAdminPanels() {
         })}
       </nav>
       <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
-        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-8">
+        <div
+          className={`mx-auto px-4 py-6 sm:px-8 ${section === "computer" ? "max-w-7xl" : "max-w-3xl"}`}
+        >
           {state.isPending ? (
             <div className="grid place-items-center py-10">
               <Spinner className="size-5 text-muted-foreground" aria-label={t`Loading…`} />

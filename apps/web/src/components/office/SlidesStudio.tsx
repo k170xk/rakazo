@@ -124,7 +124,10 @@ export default function SlidesStudio({
   /** Survives composer focus clearing the slide selection on mobile. */
   const heldImage = useRef<File | null>(null);
   const owner = useRef<Promise<{ botId: string | null; groupId: string | null }> | null>(null);
-  const timers = useRef({ note: 0, flash: 0 });
+  const timers = useRef({ note: 0, flash: 0, retry: 0 });
+  const newerTries = useRef(0);
+  const aimedVersion = useRef<number | undefined>(undefined);
+  const [newerTick, setNewerTick] = useState(0);
   const { loadState, loadBytes, stillCurrent, markReady, markOpenFailed } = useDocumentLoad(
     "pptx",
     () => queries.documents.get.call({ rootArtifactId }),
@@ -169,15 +172,15 @@ export default function SlidesStudio({
       if (!loaded) return;
       const { detail, bytes, turn } = loaded;
       const shown = latest.current?.version ?? 0;
-      latest.current = {
-        artifactId: detail.latest.artifactId,
-        version: detail.latest.version,
-        name: detail.name,
-        versions: detail.versions,
-      };
       try {
         const deck = await openDeck(new Uint8Array(bytes));
         if (!stillCurrent(turn)) return;
+        latest.current = {
+          artifactId: detail.latest.artifactId,
+          version: detail.latest.version,
+          name: detail.name,
+          versions: detail.versions,
+        };
         const before = deckRef.current;
         deckRef.current = deck;
         queue.current?.rebase(detail.latest.version);
@@ -201,6 +204,14 @@ export default function SlidesStudio({
         }
       } catch {
         markOpenFailed(turn);
+        // A failed open leaves the version pointer where it was, so this tries again. Three
+        // failures stop, and the open deck stays on screen with a way to retry.
+        window.clearTimeout(timers.current.retry);
+        if (reason !== "open" && stillCurrent(turn) && newerTries.current < 3) {
+          timers.current.retry = window.setTimeout(() => {
+            if (stillCurrent(turn)) setNewerTick((n) => n + 1);
+          }, 1200);
+        }
       }
     },
     [loadBytes, stillCurrent, markReady, markOpenFailed, publishNote],
@@ -272,6 +283,7 @@ export default function SlidesStudio({
   useEffect(() => {
     if (!rootArtifactId) return;
     latest.current = null;
+    newerTries.current = 0;
     deckRef.current = null;
     view.current = null;
     owner.current = null;
@@ -284,6 +296,7 @@ export default function SlidesStudio({
     () => () => {
       window.clearTimeout(timers.current.note);
       window.clearTimeout(timers.current.flash);
+      window.clearTimeout(timers.current.retry);
     },
     [],
   );
@@ -299,15 +312,28 @@ export default function SlidesStudio({
   });
   const newest = revision.data?.version;
   useEffect(() => {
+    if (newest !== aimedVersion.current) {
+      aimedVersion.current = newest;
+      newerTries.current = 0;
+    }
     const shown = latest.current?.version;
     const saves = queue.current;
-    if (newest === undefined || shown === undefined || newest <= shown || !saves) return;
+    if (newest === undefined || shown === undefined || newest <= shown || !saves) {
+      if (shown !== undefined && newest !== undefined && newest <= shown) newerTries.current = 0;
+      return;
+    }
     const now = saves.state();
+    // A save in progress used to drop the assistant's version, because this check did not run
+    // again when the save finished. Waiting here lets the next status change pick it up.
     if (now.status === "saving") return;
-    // Unsaved edits go first; the server then answers with a conflict and the newest version loads.
-    if (now.dirty) void saves.flush();
-    else void load("newer");
-  }, [newest, load]);
+    if (now.dirty) {
+      void saves.flush();
+      return;
+    }
+    if (newerTries.current >= 3) return;
+    newerTries.current += 1;
+    void load("newer");
+  }, [newest, load, saveState?.status, newerTick]);
 
   useEffect(() => {
     if (running && queue.current?.state().dirty) void queue.current.flush();
@@ -734,6 +760,7 @@ export default function SlidesStudio({
             ) : (
               <EditorBoundary onError={() => setEditBroken(true)} fallback={null}>
                 <SlidesWorkbench
+                  key={draft?.updatedAt ?? doc.loaded}
                   deck={draft?.value ?? doc.deck}
                   readOnly={locked || draft !== null}
                   initialIndex={view.current?.index ?? 0}
@@ -745,6 +772,29 @@ export default function SlidesStudio({
             )}
           </EditorBoundary>
           <DocumentLoadOverlay state={loadState} />
+          {loadState.status === "error" && (newest ?? 0) > doc.version ? (
+            <div className="absolute inset-x-0 top-24 z-10 flex justify-center px-4">
+              <div className="flex max-w-sm flex-col items-center gap-2 rounded-xl bg-background/95 px-4 py-3 text-center shadow-sm ring-1 ring-border">
+                <p className="text-[13px] text-muted-foreground">
+                  <Trans>
+                    This presentation couldn't be opened here. Download it to open it in a
+                    presentation app, or ask the assistant for changes.
+                  </Trans>
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    newerTries.current = 0;
+                    void load("newer");
+                  }}
+                >
+                  <RefreshCw className="size-4" />
+                  <Trans>Try again</Trans>
+                </Button>
+              </div>
+            </div>
+          ) : null}
           {draft ? (
             <LiveDraftPill className="top-12" />
           ) : running ? (

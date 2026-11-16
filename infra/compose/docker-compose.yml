@@ -297,6 +297,7 @@ x-app-environment: &app-environment
 
 services:
   postgres:
+    restart: unless-stopped
     image: ${POSTGRES_IMAGE:-postgres:18}
     # A Postgres 16 POSTGRES_IMAGE would ignore these mounts and open an empty database.
     entrypoint:
@@ -331,6 +332,7 @@ services:
       retries: 20
 
   supervisor:
+    restart: unless-stopped
     build:
       context: ../..
       dockerfile: infra/sandboxes/supervisor/Dockerfile
@@ -409,6 +411,7 @@ services:
         condition: service_healthy
 
   api:
+    restart: unless-stopped
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -489,6 +492,7 @@ services:
         condition: service_completed_successfully
 
   worker:
+    restart: unless-stopped
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile
@@ -522,6 +526,7 @@ services:
         condition: service_healthy
 
   web:
+    restart: unless-stopped
     build:
       context: ../..
       dockerfile: infra/compose/Dockerfile

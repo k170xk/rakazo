@@ -8,7 +8,7 @@ import type {
 } from "@rakazo/contracts";
 import { Button, NativeSelect, NativeSelectOption, Spinner } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { errorText } from "../lib/user-error";
 
@@ -106,8 +106,24 @@ function ComputersView({ data }: { data: Infrastructure }) {
   const routines = sample?.runners.routines;
   return (
     <>
-      <div className="grid gap-2 sm:grid-cols-3">
-        <ServerCard title={t`App server`} server={sample?.app} />
+      <div className="@container">
+        <div className="grid gap-3 @3xl:grid-cols-2 @5xl:grid-cols-4">
+        <ServerCard
+          title={t`App server`}
+          role={t`Site and database`}
+          server={sample?.app}
+        />
+        {sample?.tools ? (
+          <ServerCard
+            title={t`Tool runners`}
+            role={t`Documents, spreadsheets, PDFs and video`}
+            server={sample.tools}
+          >
+            <LaneRow label={t`Documents`} lane={app?.tools} />
+            <LaneRow label={t`Large documents`} lane={app?.large} />
+            <LaneRow label={t`Video`} lane={app?.video} />
+          </ServerCard>
+        ) : null}
         <div className="rounded-xl border border-border px-3 py-2 text-[13px]">
           <div className="flex items-center justify-between">
             <span className="font-medium">
@@ -115,7 +131,14 @@ function ComputersView({ data }: { data: Infrastructure }) {
             </span>
             <UpDot up={sample?.incus.up ?? false} />
           </div>
+          <p className="text-[12px] text-muted-foreground">
+            <Trans>People's computers</Trans>
+          </p>
           <dl className="mt-1 space-y-0.5 text-muted-foreground">
+            <Row
+              label={t`Servers`}
+              value={String(sample?.incus.members ?? (sample?.incus.up ? 1 : "—"))}
+            />
             <Row label={t`Computers on`} value={String(sample?.incus.running ?? "—")} />
             <Row label={t`Computers off`} value={String(sample?.incus.stopped ?? "—")} />
             <Row
@@ -126,18 +149,33 @@ function ComputersView({ data }: { data: Infrastructure }) {
                   0) > 0.85
               }
             />
+            <Row
+              label={t`Disk`}
+              value={`${size(sample?.incus.diskUsedBytes)} / ${size(sample?.incus.diskTotalBytes)}`}
+              warn={
+                (share(sample?.incus.diskUsedBytes ?? null, sample?.incus.diskTotalBytes ?? null) ??
+                  0) > 0.8
+              }
+            />
           </dl>
         </div>
-        <ServerCard title={t`Routine server`} server={sample?.routines} />
+        <ServerCard
+          title={t`Routine server`}
+          role={t`Routines and extra document runners`}
+          server={sample?.routines}
+        >
+          <LaneRow label={t`Overflow`} lane={routines?.tools} />
+        </ServerCard>
+        </div>
       </div>
       <div className="rounded-xl border border-border px-3 py-2 text-[13px]">
         <div className="font-medium">
           <Trans>Tool runners</Trans>
         </div>
         <dl className="mt-1 grid gap-x-6 gap-y-0.5 text-muted-foreground sm:grid-cols-2">
-          <LaneRow label={t`App: documents and tools`} lane={app?.tools} />
-          <LaneRow label={t`App: large documents`} lane={app?.large} />
-          <LaneRow label={t`App: video`} lane={app?.video} />
+          <LaneRow label={t`Tool runners`} lane={app?.tools} />
+          <LaneRow label={t`Large documents`} lane={app?.large} />
+          <LaneRow label={t`Video`} lane={app?.video} />
           <LaneRow label={t`Routine server: tools and overflow`} lane={routines?.tools} />
         </dl>
       </div>
@@ -154,7 +192,7 @@ function ComputersView({ data }: { data: Infrastructure }) {
         data={data}
         title={t`Tool commands`}
         lines={[
-          { key: "appToolsRunning", label: t`Running on app server`, className: "stroke-primary" },
+          { key: "appToolsRunning", label: t`Running on tool runners`, className: "stroke-primary" },
           { key: "appToolsQueued", label: t`Waiting`, className: "stroke-destructive" },
           {
             key: "routinesToolsRunning",
@@ -231,7 +269,11 @@ function RoutinesView({ data }: { data: Infrastructure }) {
   return (
     <>
       <div className="grid gap-2 sm:grid-cols-2">
-        <ServerCard title={t`Routine server`} server={sample?.routines} />
+        <ServerCard
+          title={t`Routine server`}
+          role={t`Routines and extra document runners`}
+          server={sample?.routines}
+        />
         <div className="rounded-xl border border-border px-3 py-2 text-[13px]">
           <div className="font-medium">
             <Trans>Routine server runner</Trans>
@@ -299,16 +341,28 @@ function LaneRow({ label, lane }: { label: string; lane: InfraLane | undefined }
   );
 }
 
-function ServerCard({ title, server }: { title: string; server: InfraServer | undefined }) {
+function ServerCard({
+  title,
+  role,
+  server,
+  children,
+}: {
+  title: string;
+  role: string;
+  server: InfraServer | undefined;
+  children?: ReactNode;
+}) {
   const { t } = useLingui();
   const cpu = server?.cpuPercent;
   const memory = share(server?.memUsedBytes ?? null, server?.memTotalBytes ?? null);
+  const disk = share(server?.diskUsedBytes ?? null, server?.diskTotalBytes ?? null);
   return (
     <div className="rounded-xl border border-border px-3 py-2 text-[13px]">
       <div className="flex items-center justify-between">
         <span className="font-medium">{title}</span>
         <UpDot up={server?.up ?? false} />
       </div>
+      <p className="text-[12px] text-muted-foreground">{role}</p>
       <dl className="mt-1 space-y-0.5 text-muted-foreground">
         <Row
           label={t`CPU busy`}
@@ -328,6 +382,12 @@ function ServerCard({ title, server }: { title: string; server: InfraServer | un
           value={`${size(server?.memUsedBytes)} / ${size(server?.memTotalBytes)}`}
           warn={(memory ?? 0) > 0.85}
         />
+        <Row
+          label={t`Disk`}
+          value={`${size(server?.diskUsedBytes)} / ${size(server?.diskTotalBytes)}`}
+          warn={(disk ?? 0) > 0.8}
+        />
+        {children}
       </dl>
     </div>
   );

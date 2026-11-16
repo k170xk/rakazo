@@ -426,7 +426,9 @@ export const fileTools: ToolHandlers = {
     const studio = studioAttachTarget(ctx.computer.studioDocument, {
       name,
       mimeType,
+      path: filePath,
       studioEdited: ctx.state.documents.studioEdited,
+      studioOutputs: ctx.state.documents.studioOutputs,
     });
     try {
       const attached = await attachWorkspaceFileToThread(

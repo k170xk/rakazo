@@ -1,5 +1,13 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Badge, Button, Dialog, DialogContent, DialogTitle } from "@rakazo/ui-web";
+import {
+  Badge,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@rakazo/ui-web";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
@@ -15,6 +23,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
+import { TrainingVideoList } from "./training-videos";
 
 /** Bump when the tour's content changes enough that everyone should see it again on first run. */
 const TOUR_VERSION = "v4";
@@ -504,7 +513,7 @@ function DialogTitleOrHeading({ inDialog, children }: { inDialog: boolean; child
   );
 }
 
-/** The tour opened from the sidebar. */
+/** The tour opened from the sidebar, with the training videos beside it. */
 export function OcscTourDialog({
   availability,
   onClose,
@@ -512,6 +521,8 @@ export function OcscTourDialog({
   availability: TourAvailability;
   onClose: () => void;
 }) {
+  const { t } = useLingui();
+  const [view, setView] = useState<"tour" | "videos">("tour");
   return (
     <Dialog
       open
@@ -523,7 +534,47 @@ export function OcscTourDialog({
         showCloseButton={false}
         className="flex h-[720px] max-h-[calc(100%-2rem)] w-[1100px] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl bg-card p-0 sm:max-w-[1100px]"
       >
-        <OcscTour mode="revisit" availability={availability} onFinish={onClose} onClose={onClose} />
+        <div className="flex items-center px-6 pt-5 md:px-8">
+          <ToggleGroup
+            aria-label={t`What to show`}
+            value={[view]}
+            onValueChange={([next]) => {
+              if (next === "tour" || next === "videos") setView(next);
+            }}
+            spacing={1}
+            className="rounded-lg bg-muted p-0.5 [&>*]:aria-pressed:bg-background [&>*]:aria-pressed:shadow-sm"
+          >
+            <ToggleGroupItem value="tour">
+              <Trans>Get to know</Trans>
+            </ToggleGroupItem>
+            <ToggleGroupItem value="videos">
+              <Trans>Training videos</Trans>
+            </ToggleGroupItem>
+          </ToggleGroup>
+          {view === "videos" ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t`Close`}
+              onClick={onClose}
+              className="ml-auto"
+            >
+              <X />
+            </Button>
+          ) : null}
+        </div>
+        {view === "tour" ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <OcscTour
+              mode="revisit"
+              availability={availability}
+              onFinish={onClose}
+              onClose={onClose}
+            />
+          </div>
+        ) : (
+          <TrainingVideoList />
+        )}
       </DialogContent>
     </Dialog>
   );

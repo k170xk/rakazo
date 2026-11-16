@@ -30,7 +30,7 @@ export function createBotRemoval(deps: RouterDeps, repos: ReturnType<typeof crea
         botId: bot.id,
         signal: new AbortController().signal,
       },
-      options,
+      { ...options, deferCleanup: true },
     );
   };
   return removeBot;

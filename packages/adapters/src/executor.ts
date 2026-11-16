@@ -1440,10 +1440,13 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const computerAccess: ComputerAccess =
           personAccess === "none" && runnerWorkspace ? "tools" : personAccess;
         let runToolRunner: RunToolRunner | undefined;
+        // Filled once the open studio document is known, before any tool runs.
+        const studioRunnerBlocks: MessageBlock[] = [];
         if (runnerWorkspace) {
           const files = folderFiles(runnerWorkspace.base);
           const copied = new WeakSet<MessageBlock[]>();
           let recentCopied = false;
+          let studioCopied = false;
           let copying = Promise.resolve();
           const runnerComputer = async () => TOOL_RUNNER_COMPUTER;
           runToolRunner = {
@@ -1473,6 +1476,25 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                       folder: runFolder,
                     });
                     copied.add(blocks);
+                  }
+                  // The open studio file lives here, not on the computer, so ocsc can edit it
+                  // without a separate fetch. A copy failure leaves fetch_file as the fallback.
+                  if (!studioCopied && studioRunnerBlocks.length > 0) {
+                    studioCopied = true;
+                    try {
+                      await materializeCurrentTurnFiles(fileDeps, studioRunnerBlocks, {
+                        context,
+                        computer: runnerComputer,
+                        computerMode,
+                        folder: runFolder,
+                      });
+                    } catch (error) {
+                      studioCopied = false;
+                      if (context.signal.aborted) throw error;
+                      getLogger().warn("studio document was not copied to the document runner", {
+                        reason: error instanceof Error ? error.message : String(error),
+                      });
+                    }
                   }
                 });
               return copying;
@@ -1554,6 +1576,13 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           }
           for (const file of studioDocumentFiles(studioDocument)) {
             if (!conversationFiles.has(file.path)) conversationFiles.set(file.path, file);
+            studioRunnerBlocks.push({
+              kind: "file",
+              artifactId: file.artifactId,
+              mimeType: file.mimeType,
+              name: file.name,
+              size: file.size,
+            });
           }
         }
         let conversationFileSearch = false;

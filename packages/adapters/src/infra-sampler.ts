@@ -13,7 +13,7 @@ const ROUTINE_TRIGGERS = ["routine", "webhook"];
 
 export interface InfraSamplerOptions {
   prisma: PrismaClient;
-  runners: { app?: string; routines?: string; token?: string };
+  runners: { app?: string; tools?: string; routines?: string; token?: string };
   incus?: Pick<IncusSandboxOptions, "url" | "clientCert" | "clientKey" | "serverCert" | "project">;
   fetch?: typeof fetch;
 }
@@ -116,9 +116,62 @@ async function incusGet(options: NonNullable<InfraSamplerOptions["incus"]>, path
   return body.metadata;
 }
 
+type HostResources = {
+  cpu?: { total?: number };
+  memory?: { used?: number; total?: number };
+};
+
+/** Online member names from `/1.0/cluster/members`. Null when this Incus is not a cluster. */
+export function clusterMemberNames(metadata: unknown): string[] | null {
+  if (!Array.isArray(metadata) || metadata.length === 0) return null;
+  const names: string[] = [];
+  for (const entry of metadata) {
+    if (typeof entry === "string") {
+      const name = entry.split("/").filter(Boolean).pop();
+      if (name) names.push(name);
+      continue;
+    }
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as { server_name?: unknown; status?: unknown };
+    if (typeof record.server_name !== "string" || !record.server_name) continue;
+    if (typeof record.status === "string" && record.status !== "Online") continue;
+    names.push(record.server_name);
+  }
+  return names.length > 0 ? names : null;
+}
+
+/** Adds one cluster member into the computer-host reading. A missing figure stays missing. */
+export function accumulateMember(
+  total: InfraSample["incus"],
+  member: {
+    cpus: number | null;
+    memUsedBytes: number | null;
+    memTotalBytes: number | null;
+    diskUsedBytes: number | null;
+    diskTotalBytes: number | null;
+  },
+) {
+  total.up = true;
+  total.members = (total.members ?? 0) + 1;
+  if (member.cpus !== null) total.cpus = (total.cpus ?? 0) + member.cpus;
+  if (member.memUsedBytes !== null) {
+    total.memUsedBytes = (total.memUsedBytes ?? 0) + member.memUsedBytes;
+  }
+  if (member.memTotalBytes !== null) {
+    total.memTotalBytes = (total.memTotalBytes ?? 0) + member.memTotalBytes;
+  }
+  if (member.diskUsedBytes !== null) {
+    total.diskUsedBytes = (total.diskUsedBytes ?? 0) + member.diskUsedBytes;
+  }
+  if (member.diskTotalBytes !== null) {
+    total.diskTotalBytes = (total.diskTotalBytes ?? 0) + member.diskTotalBytes;
+  }
+}
+
 async function incusReading(options: InfraSamplerOptions["incus"]): Promise<InfraSample["incus"]> {
   const down = {
     up: false,
+    members: 0,
     cpus: null,
     memUsedBytes: null,
     memTotalBytes: null,
@@ -130,41 +183,59 @@ async function incusReading(options: InfraSamplerOptions["incus"]): Promise<Infr
   if (!options?.url) return down;
   try {
     const project = encodeURIComponent(options.project || "default");
-    const [resources, instances, pools] = await Promise.all([
-      incusGet(options, "/1.0/resources") as Promise<{
-        cpu?: { total?: number };
-        memory?: { used?: number; total?: number };
-      }>,
+    const [members, instances, pools] = await Promise.all([
+      incusGet(options, "/1.0/cluster/members?recursion=1").catch(() => null),
       incusGet(options, `/1.0/instances?recursion=1&project=${project}`) as Promise<
         Array<{ status?: string }>
       >,
       incusGet(options, "/1.0/storage-pools") as Promise<string[]>,
     ]);
-    let diskUsed: number | null = null;
-    let diskTotal: number | null = null;
-    for (const pool of pools ?? []) {
-      const name = pool.split("/").pop();
-      if (!name) continue;
-      const space = (
-        (await incusGet(options, `/1.0/storage-pools/${encodeURIComponent(name)}/resources`)) as {
-          space?: { used?: number; total?: number };
+    const names = clusterMemberNames(members);
+    const targets = names ?? [null];
+    const poolNames = (pools ?? [])
+      .map((pool) => (typeof pool === "string" ? pool.split("/").pop() : ""))
+      .filter((name): name is string => Boolean(name));
+    const parts = await Promise.all(
+      targets.map(async (target) => {
+        const query = target ? `?target=${encodeURIComponent(target)}` : "";
+        try {
+          const resources = (await incusGet(options, `/1.0/resources${query}`)) as HostResources;
+          let diskUsed: number | null = null;
+          let diskTotal: number | null = null;
+          for (const name of poolNames) {
+            const space = (
+              (await incusGet(
+                options,
+                `/1.0/storage-pools/${encodeURIComponent(name)}/resources${query}`,
+              )) as { space?: { used?: number; total?: number } }
+            )?.space;
+            if (number(space?.total) === null) continue;
+            diskUsed = (diskUsed ?? 0) + count(space?.used);
+            diskTotal = (diskTotal ?? 0) + count(space?.total);
+          }
+          return {
+            cpus: number(resources?.cpu?.total),
+            memUsedBytes: number(resources?.memory?.used),
+            memTotalBytes: number(resources?.memory?.total),
+            diskUsedBytes: diskUsed,
+            diskTotalBytes: diskTotal,
+          };
+        } catch {
+          return null;
         }
-      )?.space;
-      if (number(space?.total) === null) continue;
-      diskUsed = (diskUsed ?? 0) + count(space?.used);
-      diskTotal = (diskTotal ?? 0) + count(space?.total);
+      }),
+    );
+    // A missing member would make the cluster look smaller than it is.
+    if (parts.some((part) => part === null)) return down;
+    const total: InfraSample["incus"] = { ...down, running: null, stopped: null };
+    for (const part of parts) {
+      if (part) accumulateMember(total, part);
     }
+    if (!total.up) return down;
     const list = Array.isArray(instances) ? instances : [];
-    return {
-      up: true,
-      cpus: number(resources?.cpu?.total),
-      memUsedBytes: number(resources?.memory?.used),
-      memTotalBytes: number(resources?.memory?.total),
-      diskUsedBytes: diskUsed,
-      diskTotalBytes: diskTotal,
-      running: list.filter((instance) => instance.status === "Running").length,
-      stopped: list.filter((instance) => instance.status !== "Running").length,
-    };
+    total.running = list.filter((instance) => instance.status === "Running").length;
+    total.stopped = list.filter((instance) => instance.status !== "Running").length;
+    return total;
   } catch {
     return down;
   }
@@ -200,18 +271,21 @@ export async function takeInfraSample(
 ): Promise<InfraSample> {
   const fetcher = options.fetch ?? fetch;
   const { token } = options.runners;
-  const [app, routines, incus, fleet] = await Promise.all([
+  const [app, tools, routines, incus, fleet] = await Promise.all([
     runnerStatus(fetcher, options.runners.app, token),
+    runnerStatus(fetcher, options.runners.tools, token),
     runnerStatus(fetcher, options.runners.routines, token),
     incusReading(options.incus),
     fleetReading(options.prisma, now),
   ]);
+  const slots = tools ?? app;
   return {
     app: serverFromStatus(app),
+    ...(tools ? { tools: serverFromStatus(tools) } : {}),
     routines: serverFromStatus(routines),
     incus,
     runners: {
-      app: app ? { tools: lane(app), large: lane(app.large), video: lane(app.video) } : null,
+      app: slots ? { tools: lane(slots), large: lane(slots.large), video: lane(slots.video) } : null,
       routines: routines ? { tools: lane(routines), large: lane(routines.large) } : null,
     },
     fleet,

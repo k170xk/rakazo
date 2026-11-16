@@ -198,10 +198,24 @@ describe("documentDockPage", () => {
     expect(page.title).toBe("Brief");
     expect(page.note).toContain("Selected: the table");
     expect(page.bareNote).not.toContain("Selected:");
+    expect(page.note).not.toContain("Track changes is");
     expect(page.chip).toMatchObject({
       label: "Page 3 · Table: BIM essentials",
       bareLabel: "Page 3",
       hasSelection: true,
     });
+  });
+
+  it("tells the assistant to skip red marks when Track changes is off", () => {
+    const page = documentDockPage({
+      kind: "word",
+      name: "Brief.docx",
+      rootArtifactId: "r1",
+      artifactId: "a3",
+      version: 3,
+      trackChanges: false,
+    });
+    expect(page.note).toContain("Add --clean to this edit");
+    expect(page.bareNote).toContain("Add --clean to this edit");
   });
 });

@@ -1,6 +1,7 @@
 import { openStudioNote, studioNoteDocument } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
+import { commitOpenStudioDraft } from "./document-drafts.js";
 import {
   studioAttachTarget,
   studioDocumentFiles,
@@ -138,7 +139,9 @@ describe("studioNoteDocument", () => {
 
   it("tells the assistant the file is reachable, so it never asks for an export", () => {
     const text = noteFor("root", "v2")[0]!.text;
+    expect(text).toContain("already at attachments/v2.pptx");
     expect(text).toContain("call fetch_file with attachments/v2.pptx");
+    expect(text).toContain("do not tell the person you cannot access the file");
     expect(text).toContain("never ask them to attach or export it");
   });
 });
@@ -286,6 +289,21 @@ describe("studioAttachTarget", () => {
 
   it("leaves other files in the chat's own scope", () => {
     expect(studioAttachTarget(document, { name: "Another deck", mimeType: PPTX })).toBeUndefined();
+    expect(
+      studioAttachTarget(document, {
+        name: "Another deck",
+        mimeType: PPTX,
+        studioEdited: true,
+      }),
+    ).toBeUndefined();
+    expect(
+      studioAttachTarget(document, {
+        name: "Another deck",
+        mimeType: PPTX,
+        path: "outputs/deck.pptx",
+        studioOutputs: ["outputs/deck.pptx"],
+      }),
+    ).toEqual({ botId: "general-bot", groupId: undefined, name: "BIM: The Basics" });
     expect(studioAttachTarget(document, { mimeType: PPTX })).toBeUndefined();
     expect(
       studioAttachTarget(document, { name: "BIM: The Basics", mimeType: "application/pdf" }),
@@ -349,5 +367,75 @@ describe("studioAttachTarget", () => {
       version: 1,
       botId: "tender-bot",
     });
+  });
+});
+
+describe("commitOpenStudioDraft", () => {
+  const context = {
+    ...owner,
+    botId: "general-bot",
+    operationId: "op",
+    traceId: "op",
+    signal: new AbortController().signal,
+  };
+
+  it("saves an edit the chat never attached as the next version of the open document", async () => {
+    const rows = deck();
+    const prisma = artifactTable(rows);
+    Object.assign(prisma, {
+      documentDraft: { findFirst: async () => ({ storageKey: "draft", baseVersion: 2, size: 4 }) },
+    });
+    const block = await commitOpenStudioDraft(
+      {
+        prisma,
+        artifacts: {
+          put: async () => ({ id: "stored-draft" }),
+          remove: async () => {},
+          get: async () => new Uint8Array([1, 2, 3, 4]),
+        } as never,
+      },
+      {
+        context,
+        rootArtifactId: "root",
+        name: "BIM: The Basics",
+        botId: "general-bot",
+        runId: "r1",
+      },
+    );
+    expect(block).toMatchObject({ kind: "file", name: "BIM: The Basics" });
+    expect(rows.at(-1)).toMatchObject({
+      name: "BIM: The Basics",
+      version: 3,
+      rootArtifactId: "root",
+      source: "assistant",
+    });
+  });
+
+  it("leaves the document alone once a newer version is already attached", async () => {
+    const rows = deck();
+    const prisma = artifactTable(rows);
+    Object.assign(prisma, {
+      documentDraft: { findFirst: async () => ({ storageKey: "draft", baseVersion: 1, size: 4 }) },
+    });
+    const before = rows.length;
+    const block = await commitOpenStudioDraft(
+      {
+        prisma,
+        artifacts: {
+          get: async () => new Uint8Array([1]),
+          put: async () => ({ id: "x" }),
+          remove: async () => {},
+        } as never,
+      },
+      {
+        context,
+        rootArtifactId: "root",
+        name: "BIM: The Basics",
+        botId: "general-bot",
+        runId: "r1",
+      },
+    );
+    expect(block).toBeUndefined();
+    expect(rows).toHaveLength(before);
   });
 });

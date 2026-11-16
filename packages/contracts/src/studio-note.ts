@@ -74,6 +74,17 @@ export function documentChipLabel(
   return `${short} · ${label}`;
 }
 
+/** What the open Word studio told the assistant about red tracked-change marks. */
+function wordTrackChangesLine(trackChanges: boolean | undefined): string | undefined {
+  if (trackChanges === false) {
+    return "Track changes is off in the Word studio. Add --clean to this edit so the changes are written straight into the document, with no red tracked-change marks. Do not ask.";
+  }
+  if (trackChanges === true) {
+    return "Track changes is on in the Word studio. Keep this edit as tracked changes, shown in red, and do not add --clean. Do not ask.";
+  }
+  return undefined;
+}
+
 function documentStudioLine(input: {
   kind: DocumentStudioKind;
   title: string;
@@ -83,6 +94,8 @@ function documentStudioLine(input: {
   selection?: string;
   focus?: DocumentStudioFocus;
   selected?: DocumentStudioSelected | null;
+  /** Word studio only. Absent means the studio did not say, so the skill decides. */
+  trackChanges?: boolean;
 }): string {
   const { studio, program, extension } = DOCUMENT_STUDIOS[input.kind];
   const path = `attachments/${input.artifactId}${extension}`;
@@ -90,7 +103,7 @@ function documentStudioLine(input: {
   const version = input.version ? `latest version ${input.version}, ` : "";
   if (input.kind === "pdf") return pdfStudioLine(input, { studio, path, named, version });
   const lines = [
-    `The person is in the ${studio}${named} (documentId ${input.documentId}, ${version}artifactId ${input.artifactId}). This is the document they are looking at right now, including any edits they made by hand since the last reply. When they ask for a change, edit THIS version with ocsc ${program} edit --in ${path}; call fetch_file with ${path} first if it is not on your computer. Always use this message's artifactId — never reuse an older attachment from earlier in the chat. fetch_file always reaches this file, even when another agent made it, so never ask them to attach or export it. Attach the result with attach_file under the same name${input.title ? `, "${input.title}"` : ""}, so it becomes the next version. Do not create a new document unless they ask.`,
+    `The person is in the ${studio}${named} (documentId ${input.documentId}, ${version}artifactId ${input.artifactId}). This is the document they are looking at right now, including any edits they made by hand since the last reply. The file is already at ${path} for ocsc. When they ask for a change, edit THIS version with ocsc ${program} edit --in ${path}. Do not look for it on the computer desktop, and do not tell the person you cannot access the file. call fetch_file with ${path} first only if a command says that path does not exist. Always use this message's artifactId — never reuse an older attachment from earlier in the chat. fetch_file always reaches this file, even when another agent made it, so never ask them to attach or export it. Attach the result with attach_file under the same name${input.title ? `, "${input.title}"` : ""}, so it becomes the next version of the open file. Do not create a new document unless they ask.`,
   ];
   const where = oneLine(input.focus?.where);
   if (where) lines.push(`They are looking at ${where}.`);
@@ -125,6 +138,10 @@ function documentStudioLine(input: {
   lines.push(
     `Formatting changes are supported. Do not say colour, font, spacing, margins, freeze, filter or a chart is unsupported. Word: {"op":"format_text","find":"<exact words>","color":"green","font":"Calibri","spacing":"1.5"} and {"op":"page_setup","margin":2.5,"paper":"A4","orientation":"landscape"}. PowerPoint: format_text with "slide", {"op":"format_shape","slide":<n>,"shape":<n>,"fill":"green"}, {"op":"place_shape","slide":<n>,"shape":<n>,"x":2,"y":3,"w":10,"h":4} in centimetres, and {"op":"slide_background","slide":<n>,"fill":"navy"}. Excel: {"op":"format_cells","sheet":"<sheet>","range":"<cells>","fill":"green","color":"white","font":"Calibri"}, {"op":"freeze","sheet":"<sheet>","rows":1}, {"op":"filter","sheet":"<sheet>","range":"A1:D20"}, {"op":"conditional_format","sheet":"<sheet>","range":"C2:C20","rule":"greater","value":1000,"fill":"green"} and {"op":"chart","sheet":"<sheet>","type":"column","range":"A1:B6","title":"..."}. "color" is the words and "fill" is the background. Green means OCSC green #76BF43. Existing Excel charts, pivot tables and macros are kept; a new pivot table or a new macro cannot be written.`,
   );
+  if (input.kind === "word") {
+    const marks = wordTrackChangesLine(input.trackChanges);
+    if (marks) lines.push(marks);
+  }
   lines.push(chipLine(input, selected));
   return lines.join("\n");
 }
@@ -161,7 +178,9 @@ function pdfStudioLine(
     const content = block(selected.content, SELECTED_CONTENT_MAX);
     lines.push(`Selected: the ${what}${content ? `:\n${content}` : "."}`);
     if (selected.imageAttached)
-      lines.push(`A picture of the selected ${what} and the drawing around it is attached to this message.`);
+      lines.push(
+        `A picture of the selected ${what} and the drawing around it is attached to this message.`,
+      );
     lines.push(
       `Their message is about the selected ${what}. Change only that, and leave the rest of the PDF as it is unless they ask for more. A markup's id stays the same in the saved file, so use it with get_annotation, update_annotation, delete_annotation and comment_thread after you open the PDF.`,
     );
@@ -201,6 +220,8 @@ export function openStudioNote(
         focus?: DocumentStudioFocus;
         /** The selection with its content; replaces `selection` when given. */
         selected?: DocumentStudioSelected | null;
+        /** Word studio: whether the Track changes switch is on. */
+        trackChanges?: boolean;
       },
 ): string {
   const title = oneLine(input.title);
@@ -214,6 +235,7 @@ export function openStudioNote(
       selection: input.selection,
       focus: input.focus,
       selected: input.selected,
+      trackChanges: input.trackChanges,
     });
     return `${OPEN}\n${line}\n${CLOSE}`;
   }

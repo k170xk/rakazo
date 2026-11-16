@@ -474,6 +474,9 @@ export async function destroyBot(
     /** Fail before deleting anything when the provider cannot confirm the sandbox is gone,
      * so the computer row keeps its handle for a retry. */
     strictTeardown?: boolean;
+    /** Return as soon as the agent row is gone. Computer folders and stored files are
+     * removed afterwards; a folder this misses is cleared the next time that computer boots. */
+    deferCleanup?: boolean;
   },
 ) {
   await deps.messagingInstallations?.removeForBot(bot);
@@ -605,47 +608,54 @@ export async function destroyBot(
     }),
   );
   if (!deletion) return;
-  await Promise.allSettled(
-    deletion.cancelledGroupRuns.map((run) => deps.jobs.cancel(runJobKey(run.id))),
-  );
-  const stoppedGroupBots = [
-    ...new Map(
-      deletion.cancelledGroupRuns.map((run) => [
-        run.botId,
-        { id: run.botId, computer: run.computer },
-      ]),
-    ).values(),
-  ];
-  await Promise.all(
-    stoppedGroupBots.map(async (stoppedBot) => {
-      if (!stoppedBot.computer?.providerRef) return;
-      await deps.sandbox
-        .releaseScreen?.(toComputerRef(stoppedBot.computer), {
-          ...context,
-          operationId: `destroy-group-run:${stoppedBot.id}`,
-          botId: stoppedBot.id,
-        })
-        .catch(() => undefined);
-    }),
-  );
-  if (dedicated) {
-    await recordComputerRunEnd(deps.prisma, { id: dedicated.id }, "deleted");
-    await removeAgentHome(deps.home, dedicated.homeKey, deps.dataDir).catch(() => undefined);
-  }
-  await removeTeamBrowserProfile(deps, bot.id, sharedComputer, context);
-  await removeTeamBotWorkspace(deps, bot, deletion.threadId, context).catch((error) => {
-    getLogger().error("team agent folder cleanup", error);
-  });
-  if (deps.dataDir && deletion.threadId) {
-    await removeConversationToolWork(deps.dataDir, deletion.threadId).catch((error) => {
-      getLogger().error("conversation tool folder cleanup", error);
+  const cleanup = async () => {
+    await Promise.allSettled(
+      deletion.cancelledGroupRuns.map((run) => deps.jobs.cancel(runJobKey(run.id))),
+    );
+    const stoppedGroupBots = [
+      ...new Map(
+        deletion.cancelledGroupRuns.map((run) => [
+          run.botId,
+          { id: run.botId, computer: run.computer },
+        ]),
+      ).values(),
+    ];
+    await Promise.all(
+      stoppedGroupBots.map(async (stoppedBot) => {
+        if (!stoppedBot.computer?.providerRef) return;
+        await deps.sandbox
+          .releaseScreen?.(toComputerRef(stoppedBot.computer), {
+            ...context,
+            operationId: `destroy-group-run:${stoppedBot.id}`,
+            botId: stoppedBot.id,
+          })
+          .catch(() => undefined);
+      }),
+    );
+    if (dedicated) {
+      await recordComputerRunEnd(deps.prisma, { id: dedicated.id }, "deleted");
+      await removeAgentHome(deps.home, dedicated.homeKey, deps.dataDir).catch(() => undefined);
+    }
+    await removeTeamBrowserProfile(deps, bot.id, sharedComputer, context);
+    await removeTeamBotWorkspace(deps, bot, deletion.threadId, context).catch((error) => {
+      getLogger().error("team agent folder cleanup", error);
     });
+    if (deps.dataDir && deletion.threadId) {
+      await removeConversationToolWork(deps.dataDir, deletion.threadId).catch((error) => {
+        getLogger().error("conversation tool folder cleanup", error);
+      });
+    }
+    const artifactStore = deps.artifacts;
+    if (artifactStore) {
+      await removeStoredArtifacts(artifactStore, deletion.artifactKeys, context);
+    }
+    if (deps.secretStore) await forgetPageShareSecrets(deps.secretStore, deletion.pageShareSecrets);
+  };
+  if (options.deferCleanup) {
+    void cleanup().catch((error) => getLogger().error("bot cleanup", error));
+    return;
   }
-  const artifactStore = deps.artifacts;
-  if (artifactStore) {
-    await removeStoredArtifacts(artifactStore, deletion.artifactKeys, context);
-  }
-  if (deps.secretStore) await forgetPageShareSecrets(deps.secretStore, deletion.pageShareSecrets);
+  await cleanup();
 }
 
 async function detachBotFromGroups(tx: Prisma.TransactionClient, botId: string) {

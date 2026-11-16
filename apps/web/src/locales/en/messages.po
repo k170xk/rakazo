@@ -16103,3 +16103,64 @@ msgstr "Waiting"
 #: src/pages/AdminInfrastructure.tsx
 msgid "Waiting to start"
 msgstr "Waiting to start"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Site, database and document runners"
+msgstr "Site, database and document runners"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "People's computers"
+msgstr "People's computers"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines and extra document runners"
+msgstr "Routines and extra document runners"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Disk"
+msgstr "Disk"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Site and database"
+msgstr "Site and database"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Running on tool runners"
+msgstr "Running on tool runners"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Documents, spreadsheets, PDFs and video"
+msgstr "Documents, spreadsheets, PDFs and video"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Overflow"
+msgstr "Overflow"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know"
+msgstr "Get to know"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Training videos"
+msgstr "Training videos"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "What to show"
+msgstr "What to show"
+
+#: src/components/tour/training-videos.tsx
+msgid "Short training videos. Open any of them again whenever you need a reminder."
+msgstr "Short training videos. Open any of them again whenever you need a reminder."
+
+#: src/components/tour/training-videos.tsx
+msgid "Training videos will appear here."
+msgstr "Training videos will appear here."
+
+msgid "Edits are marked in red, so you can see what changed"
+msgstr "Edits are marked in red, so you can see what changed"
+
+msgid "Edits update the document directly, without red marks"
+msgstr "Edits update the document directly, without red marks"
+
+msgid "Keep the text and remove the red marks"
+msgstr "Keep the text and remove the red marks"

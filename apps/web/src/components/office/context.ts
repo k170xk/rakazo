@@ -42,6 +42,8 @@ export type DocumentContext = {
   version: number;
   focus?: DocumentStudioFocus;
   selected?: DocumentStudioSelected | null;
+  /** Word studio: whether the Track changes switch is on. */
+  trackChanges?: boolean;
 };
 
 /**
@@ -56,6 +58,7 @@ export function documentDockPage(context: DocumentContext) {
     artifactId: context.artifactId,
     version: context.version,
     focus: context.focus,
+    trackChanges: context.trackChanges,
   };
   const selected = context.selected ?? null;
   return {

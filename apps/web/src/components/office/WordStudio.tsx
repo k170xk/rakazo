@@ -13,6 +13,9 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   toast,
 } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -65,7 +68,7 @@ import { wordHistory } from "./word/history";
 import { lastOffice, orderedOffices, rememberOffice } from "./word/offices";
 import { ReviewPanel } from "./word/ReviewPanel";
 import type { ReviewItem } from "./word/review";
-import { reviewItems } from "./word/review";
+import { allReviewIds, reviewItems } from "./word/review";
 import type { SaveQueue, SaveQueueState } from "./word/save-queue";
 import { createSaveQueue } from "./word/save-queue";
 import { readTrackChanges, rememberTrackChanges } from "./word/track-changes";
@@ -146,6 +149,8 @@ export default function WordStudio({
   const queue = useRef<SaveQueue | null>(null);
   const latest = useRef<Latest | null>(null);
   const selection = useRef("");
+  /** The Track changes switch, read when the studio note is published. */
+  const trackChangesOn = useRef(readTrackChanges(rootArtifactId));
   /** Survives composer focus clearing the ProseMirror selection on mobile. */
   const heldImage = useRef<File | null>(null);
   const opened = useRef<DocxIssue[] | null>(null);
@@ -188,6 +193,7 @@ export default function WordStudio({
         version: now.version,
         focus,
         selected,
+        trackChanges: trackChangesOn.current,
       }),
     });
   }, [session, rootArtifactId, chipWords]);
@@ -338,11 +344,12 @@ export default function WordStudio({
     const saves = queue.current;
     if (newest === undefined || shown === undefined || newest <= shown || !saves) return;
     const now = saves.state();
+    // Re-checked when the save finishes, so a version that arrived mid-save is not dropped.
     if (now.status === "saving") return;
     // Unsaved edits go first; the server then answers with a conflict and the newest version loads.
     if (now.dirty) void saves.flush();
     else void load("newer");
-  }, [newest, load]);
+  }, [newest, load, saveState?.status]);
 
   useEffect(() => {
     if (running && queue.current?.state().dirty) void queue.current.flush();
@@ -536,11 +543,17 @@ export default function WordStudio({
   }, [publishNote]);
 
   const [trackChanges, setTrackChanges] = useState(() => readTrackChanges(rootArtifactId));
-  useEffect(() => setTrackChanges(readTrackChanges(rootArtifactId)), [rootArtifactId]);
+  useEffect(() => {
+    const next = readTrackChanges(rootArtifactId);
+    trackChangesOn.current = next;
+    setTrackChanges(next);
+  }, [rootArtifactId]);
   function toggleTrackChanges() {
     const next = !trackChanges;
+    trackChangesOn.current = next;
     setTrackChanges(next);
     rememberTrackChanges(rootArtifactId, next);
+    publishNote();
   }
 
   const onEdit = useCallback(() => queue.current?.edit(), []);
@@ -731,6 +744,18 @@ export default function WordStudio({
               <FilePenLine className="size-4" strokeWidth={1.8} />
               <Trans>Track changes</Trans>
             </DropdownMenuCheckboxItem>
+            <DropdownMenuItem
+              disabled={review.length === 0 || locked || readOnlyView}
+              onClick={() => resolve(allReviewIds(review), true)}
+            >
+              <Check className="size-4" strokeWidth={1.8} />
+              <span className="flex min-w-0 flex-col">
+                <Trans>Accept all</Trans>
+                <span className="text-[12px] text-muted-foreground">
+                  <Trans>Keep the text and remove the red marks</Trans>
+                </span>
+              </span>
+            </DropdownMenuItem>
             <DropdownMenuItem disabled={review.length === 0} onClick={() => setReviewOpen(true)}>
               <ListChecks className="size-4" strokeWidth={1.8} />
               <Trans>Review</Trans>
@@ -748,28 +773,68 @@ export default function WordStudio({
               <Trans>Download .docx</Trans>
             </DropdownMenuItem>
           </StudioMoreMenu>
-          <StudioHint
-            label={
-              trackChanges
-                ? t`Your edits are marked as tracked changes, so they can be accepted or rejected`
-                : t`Your edits change the document directly`
-            }
-          >
-          <button
-            type="button"
-            role="switch"
-            aria-checked={trackChanges}
-            data-testid="word-track-changes"
-            disabled={!doc || readOnlyView}
-            onClick={toggleTrackChanges}
-            className={`${pill} max-sm:hidden disabled:opacity-40 ${trackChanges ? "bg-primary/15 text-primary hover:bg-primary/20" : ""}`}
-          >
-            <FilePenLine className="size-4" strokeWidth={1.8} aria-hidden="true" />
-            <span className="max-sm:sr-only">
-              <Trans>Track changes</Trans>
-            </span>
-          </button>
-          </StudioHint>
+          <Popover>
+            <StudioHint
+              label={
+                trackChanges
+                  ? t`Edits are marked in red, so you can see what changed`
+                  : t`Edits update the document directly, without red marks`
+              }
+            >
+              <PopoverTrigger
+                data-testid="word-track-changes"
+                disabled={!doc || readOnlyView}
+                aria-label={t`Track changes`}
+                className={`${pill} max-sm:hidden disabled:opacity-40 ${trackChanges ? "bg-primary/15 text-primary hover:bg-primary/20" : ""}`}
+              >
+                <FilePenLine className="size-4" strokeWidth={1.8} aria-hidden="true" />
+                <span>
+                  <Trans>Track changes</Trans>
+                </span>
+                <ChevronDown className="size-3.5 shrink-0 opacity-65" aria-hidden="true" />
+              </PopoverTrigger>
+            </StudioHint>
+            <PopoverContent align="end" className="w-72 p-1">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={trackChanges}
+                disabled={!doc || readOnlyView}
+                onClick={toggleTrackChanges}
+                className="flex w-full items-start gap-2 rounded-md px-2 py-2 text-start hover:bg-foreground/[0.06] disabled:opacity-40"
+              >
+                <FilePenLine className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} />
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-medium">
+                    <Trans>Track changes</Trans>
+                  </span>
+                  <span className="block text-[12px] text-muted-foreground">
+                    {trackChanges ? (
+                      <Trans>Edits are marked in red, so you can see what changed</Trans>
+                    ) : (
+                      <Trans>Edits update the document directly, without red marks</Trans>
+                    )}
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                disabled={review.length === 0 || locked || readOnlyView}
+                onClick={() => resolve(allReviewIds(review), true)}
+                className="flex w-full items-start gap-2 rounded-md px-2 py-2 text-start hover:bg-foreground/[0.06] disabled:opacity-40"
+              >
+                <Check className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} />
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-medium">
+                    <Trans>Accept all</Trans>
+                  </span>
+                  <span className="block text-[12px] text-muted-foreground">
+                    <Trans>Keep the text and remove the red marks</Trans>
+                  </span>
+                </span>
+              </button>
+            </PopoverContent>
+          </Popover>
           <ReviewPanel
             items={review}
             disabled={locked || readOnlyView}

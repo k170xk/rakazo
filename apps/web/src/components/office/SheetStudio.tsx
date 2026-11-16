@@ -138,7 +138,10 @@ export default function SheetStudio({
   const checks = useRef(new Map<string, SavedExpectation>());
   const view = useRef<SheetView | null>(null);
   const owner = useRef<Promise<{ botId: string | null; groupId: string | null }> | null>(null);
-  const timers = useRef({ note: 0, flash: 0 });
+  const timers = useRef({ note: 0, flash: 0, retry: 0 });
+  const newerTries = useRef(0);
+  const aimedVersion = useRef<number | undefined>(undefined);
+  const [newerTick, setNewerTick] = useState(0);
   const { loadState, loadBytes, stillCurrent, markReady, markOpenFailed } = useDocumentLoad(
     "xlsx",
     () => queries.documents.get.call({ rootArtifactId }),
@@ -195,15 +198,15 @@ export default function SheetStudio({
       if (!loaded) return;
       const { detail, bytes, turn } = loaded;
       const shown = latest.current?.version ?? 0;
-      latest.current = {
-        artifactId: detail.latest.artifactId,
-        version: detail.latest.version,
-        name: detail.name,
-        versions: detail.versions,
-      };
       try {
         const wb = await openWorkbook(new Uint8Array(bytes));
         if (!stillCurrent(turn)) return;
+        latest.current = {
+          artifactId: detail.latest.artifactId,
+          version: detail.latest.version,
+          name: detail.name,
+          versions: detail.versions,
+        };
         const before = workbook.current;
         workbook.current = wb;
         checks.current.clear();
@@ -232,6 +235,12 @@ export default function SheetStudio({
         }
       } catch {
         markOpenFailed(turn);
+        window.clearTimeout(timers.current.retry);
+        if (reason !== "open" && stillCurrent(turn) && newerTries.current < 3) {
+          timers.current.retry = window.setTimeout(() => {
+            if (stillCurrent(turn)) setNewerTick((n) => n + 1);
+          }, 1200);
+        }
       }
     },
     [loadBytes, stillCurrent, markReady, markOpenFailed, publishNote],
@@ -303,6 +312,7 @@ export default function SheetStudio({
   useEffect(() => {
     if (!rootArtifactId) return;
     latest.current = null;
+    newerTries.current = 0;
     workbook.current = null;
     view.current = null;
     owner.current = null;
@@ -316,6 +326,7 @@ export default function SheetStudio({
     () => () => {
       window.clearTimeout(timers.current.note);
       window.clearTimeout(timers.current.flash);
+      window.clearTimeout(timers.current.retry);
     },
     [],
   );
@@ -331,15 +342,27 @@ export default function SheetStudio({
   });
   const newest = revision.data?.version;
   useEffect(() => {
+    if (newest !== aimedVersion.current) {
+      aimedVersion.current = newest;
+      newerTries.current = 0;
+    }
     const shown = latest.current?.version;
     const saves = queue.current;
-    if (newest === undefined || shown === undefined || newest <= shown || !saves) return;
+    if (newest === undefined || shown === undefined || newest <= shown || !saves) {
+      if (shown !== undefined && newest !== undefined && newest <= shown) newerTries.current = 0;
+      return;
+    }
     const now = saves.state();
+    // Re-checked when the save finishes, so a version that arrived mid-save is not dropped.
     if (now.status === "saving") return;
-    // Unsaved edits go first; the server then answers with a conflict and the newest version loads.
-    if (now.dirty) void saves.flush();
-    else void load("newer");
-  }, [newest, load]);
+    if (now.dirty) {
+      void saves.flush();
+      return;
+    }
+    if (newerTries.current >= 3) return;
+    newerTries.current += 1;
+    void load("newer");
+  }, [newest, load, saveState?.status, newerTick]);
 
   useEffect(() => {
     if (running && queue.current?.state().dirty) void queue.current.flush();
@@ -768,6 +791,7 @@ export default function SheetStudio({
         >
           <EditorBoundary key={doc.rootArtifactId} onError={() => setBroken(true)} fallback={null}>
             <SheetWorkbench
+              key={draft?.updatedAt ?? doc.loaded}
               wb={draft?.value ?? doc.wb}
               readOnly={locked || draft !== null}
               initialView={view.current}
@@ -777,6 +801,29 @@ export default function SheetStudio({
             />
           </EditorBoundary>
           <DocumentLoadOverlay state={loadState} />
+          {loadState.status === "error" && (newest ?? 0) > doc.version ? (
+            <div className="absolute inset-x-0 top-24 z-10 flex justify-center px-4">
+              <div className="flex max-w-sm flex-col items-center gap-2 rounded-xl bg-background/95 px-4 py-3 text-center shadow-sm ring-1 ring-border">
+                <p className="text-[13px] text-muted-foreground">
+                  <Trans>
+                    This spreadsheet couldn't be opened here. Download it to open it in a
+                    spreadsheet app, or ask the assistant for changes.
+                  </Trans>
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    newerTries.current = 0;
+                    void load("newer");
+                  }}
+                >
+                  <RefreshCw className="size-4" />
+                  <Trans>Try again</Trans>
+                </Button>
+              </div>
+            </div>
+          ) : null}
           {draft ? (
             <LiveDraftPill className="top-12" />
           ) : running ? (

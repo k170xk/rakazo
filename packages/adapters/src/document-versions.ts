@@ -91,15 +91,31 @@ export async function studioNotedDocument(
 /**
  * Where an attached file is kept so it becomes the studio document's next version: under the
  * document's own name, agent and group. Undefined when the file is a different document: another
- * name, another file type, or no name and no edit of the studio document in this run.
+ * type, or another name when this run did not edit the open document.
  */
 export function studioAttachTarget(
   document: StudioDocument | undefined,
-  file: { name?: string; mimeType: string; studioEdited?: boolean },
+  file: {
+    name?: string;
+    mimeType: string;
+    /** The path being attached, so an edit of the open document joins it whatever name it was given. */
+    path?: string;
+    studioEdited?: boolean;
+    /** Paths this run wrote from the open document. */
+    studioOutputs?: readonly string[];
+  },
 ): { botId: string; groupId: string | undefined; name: string } | undefined {
   if (!document?.botId || file.mimeType !== document.mimeType) return undefined;
   const named = file.name?.trim();
-  if (named ? !namesStudioDocument(document, named) : !file.studioEdited) return undefined;
+  const path = file.path?.replace(/^\.\//, "");
+  const fromOpenDocument =
+    path !== undefined &&
+    (file.studioOutputs ?? []).some((output) => output.replace(/^\.\//, "") === path);
+  // The file this run wrote from the open document joins that document. A different file, even
+  // one made in the same run, keeps the name it was given and stays in the chat.
+  if (!fromOpenDocument && !(named && namesStudioDocument(document, named)) && named)
+    return undefined;
+  if (!fromOpenDocument && !named && !file.studioEdited) return undefined;
   return { botId: document.botId, groupId: document.groupId ?? undefined, name: document.name };
 }
 
@@ -123,6 +139,16 @@ export async function studioDocumentForTurn(
   const text = (blocks ?? []).flatMap((block) => (block.kind === "text" ? [block.text] : []));
   const note = studioNoteDocument(text.join("\n"));
   return note ? studioNotedDocument(prisma, owner, note) : undefined;
+}
+
+const STUDIO_PROGRAMS = { ".docx": "word", ".pptx": "pptx", ".xlsx": "xlsx" } as const;
+
+/** The ocsc program that edits a studio document of this type, for Word, PowerPoint and Excel. */
+export function studioDocumentProgram(
+  mimeType: string,
+): (typeof STUDIO_PROGRAMS)[keyof typeof STUDIO_PROGRAMS] | undefined {
+  const extension = attachmentExtensionForMimeType(mimeType);
+  return STUDIO_PROGRAMS[extension as keyof typeof STUDIO_PROGRAMS];
 }
 
 const OFFICE_EXTENSION = /\.(docx|pptx|xlsx|pdf)$/i;

@@ -27,9 +27,13 @@ export type InfraLane = z.infer<typeof InfraLaneSchema>;
 /** One reading of every server, runner and Incus, taken by the app worker each minute. */
 export const InfraSampleSchema = z.object({
   app: InfraServerSchema,
+  /** The document runners, when they are on their own server. Absent while they share the app server. */
+  tools: InfraServerSchema.optional(),
   routines: InfraServerSchema,
   incus: z.object({
     up: z.boolean(),
+    /** Online cluster members included in this reading. Absent on readings taken before clustering. */
+    members: z.number().int().optional(),
     cpus: z.number().int().nullable(),
     memUsedBytes: bytes,
     memTotalBytes: bytes,

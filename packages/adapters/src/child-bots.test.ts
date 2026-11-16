@@ -452,6 +452,70 @@ describe("destroyBot", () => {
     expect(order).toEqual(["commit", "store delete"]);
   });
 
+  it("returns once the agent is gone when file cleanup is deferred", async () => {
+    let releaseCleanup: () => void = () => undefined;
+    const removeArtifact = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseCleanup = resolve;
+        }),
+    );
+    const transaction = vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({
+        $queryRaw: vi.fn().mockResolvedValue([{ id: "bot-1" }]),
+        chatGroup: {
+          findMany: vi.fn().mockResolvedValue([]),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        },
+        artifact: {
+          findMany: vi.fn().mockResolvedValue([{ storageKey: "stored-artifact" }]),
+          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+        page: {
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        },
+        secret: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn() },
+        computerExecutionLease: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        computer: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        $executeRaw: vi.fn().mockResolvedValue(0),
+        botDeletion: { create: vi.fn().mockResolvedValue({}) },
+        thread: { findUnique: vi.fn().mockResolvedValue(null) },
+        conversationDeletion: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        keptFile: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        heavyToolJob: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+        bot: { delete: vi.fn().mockResolvedValue({}) },
+      }),
+    );
+    const prisma = {
+      computer: { findUnique: vi.fn().mockResolvedValue(null) },
+      run: {
+        findMany: vi.fn().mockResolvedValue([]),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
+      routine: { findMany: vi.fn().mockResolvedValue([]) },
+      $transaction: transaction,
+    } as unknown as PrismaClient;
+
+    await destroyBot(
+      {
+        prisma,
+        sandbox: {} as SandboxProvider,
+        home: {} as AgentHomeStore,
+        jobs: { cancel: vi.fn() } as unknown as JobPublisher,
+        artifacts: { remove: removeArtifact } as unknown as ArtifactStore,
+      },
+      { id: "bot-1", spaceId: "workspace-1", userId: "user-1", name: "Gone", archivedAt: null },
+      context,
+      { deleteMemories: true, deferCleanup: true },
+    );
+
+    await vi.waitFor(() =>
+      expect(removeArtifact).toHaveBeenCalledWith("stored-artifact", expect.any(Object)),
+    );
+    releaseCleanup();
+  });
+
   it("moves agent memories into shared memory before the cascading delete", async () => {
     const createDeletion = vi.fn().mockResolvedValue({});
     const deleteBot = vi.fn().mockResolvedValue({});

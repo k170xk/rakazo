@@ -196,6 +196,35 @@ function database() {
 }
 
 describe("secret persistence cleanup", () => {
+  it("deletes a bot by its bot secrets and leaves account secrets unread", async () => {
+    const fake = infisicalFake();
+    const store = new InfisicalSecretStore(fake.options);
+    await store.start();
+    const db = database();
+    const secretFind = vi.spyOn(
+      db.prisma.secret as unknown as { findMany: (args: Args) => Promise<unknown> },
+      "findMany",
+    );
+    const vaultFind = vi.spyOn(
+      db.prisma.vaultCredential as unknown as { findMany: (args: Args) => Promise<unknown> },
+      "findMany",
+    );
+    const prisma = withSecretPersistence(db.prisma, store);
+    const ref = await store.put("bot credential", context, { recordId: "bot-secret" });
+    db.tables.get("bot")!.push({ id: "bot" });
+    db.tables.get("botSecret")!.push({ id: "bot-secret", botId: "bot", ciphertext: ref.ref });
+    try {
+      await prisma.bot.deleteMany({ where: { id: "bot" } });
+      expect(secretFind).not.toHaveBeenCalled();
+      expect(vaultFind).not.toHaveBeenCalled();
+      expect(db.tables.get("bot")).toEqual([]);
+      expect(db.tables.get("botSecret")).toEqual([]);
+      expect(fake.values.size).toBe(0);
+    } finally {
+      await store.close();
+    }
+  });
+
   it("deletes a replaced ref only after commit and removes refs on row deletion", async () => {
     const fake = infisicalFake();
     const store = new InfisicalSecretStore(fake.options);

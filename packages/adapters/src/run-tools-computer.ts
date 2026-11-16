@@ -42,7 +42,8 @@ import {
   desktopProtectionGuardMessage,
   protectedComputerLifecycleRefusal,
 } from "./desktop-command-guard.js";
-import { saveDocumentDraft } from "./document-drafts.js";
+import { commitOpenStudioDraft, saveDocumentDraft } from "./document-drafts.js";
+import { studioDocumentProgram } from "./document-versions.js";
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import {
   documentAuthor,
@@ -52,9 +53,11 @@ import {
   ocscAfterRun,
   ocscBeforeRun,
   ocscCommand,
+  ocscInPath,
   ocscProgramArgs,
   ocscProgramRefusal,
   ocscShellRefusal,
+  printedJson,
   staleDocumentBase,
   withDefaultWordTemplate,
   wordRebuildRefusal,
@@ -66,6 +69,7 @@ import type { RunContext, RunToolRunner } from "./run-context.js";
 import { addRunSecrets } from "./run-context.js";
 import { builtinOffered } from "./run-instructions.js";
 import { computerScreenToolResult } from "./run-lifecycle.js";
+import { publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import {
   isRunningShellCommand,
@@ -318,6 +322,7 @@ async function keepDocumentDraft(
   result: unknown,
   files: WorkspaceFiles,
   computer: () => Promise<ComputerRef>,
+  studioArtifactId?: string,
 ) {
   await saveDocumentDraft(
     { prisma: ctx.deps.prisma, artifacts: ctx.deps.artifacts },
@@ -336,8 +341,73 @@ async function keepDocumentDraft(
           ctx.context,
           { maxBytes },
         ),
+      artifactId: studioArtifactId,
+      maxBytes: ctx.deps.maxUploadSizeBytes,
     },
   );
+}
+
+/**
+ * The open studio document this command is editing: the version it names, or a file this run
+ * already wrote from that document. Undefined for a different file, including one made while the
+ * studio is closed.
+ */
+function openStudioEdit(
+  ctx: RunContext,
+  program: string,
+  args: readonly string[],
+): { artifactId: string } | undefined {
+  const studio = ctx.computer.studioDocument;
+  if (!studio?.versions.length || studioDocumentProgram(studio.mimeType) !== program)
+    return undefined;
+  const editedId = editedAttachmentId(program, args);
+  if (editedId && studio.versions.some((version) => version.id === editedId)) {
+    return { artifactId: editedId };
+  }
+  const input = ocscInPath(args);
+  const newest = studio.versions[0];
+  if (input && newest && ctx.state.documents.studioOutputs?.includes(input)) {
+    return { artifactId: newest.id };
+  }
+  return undefined;
+}
+
+/**
+ * When this run edited the open studio document and the chat never attached a newer version,
+ * save that edit as the next version and show it in the chat. A closed studio never reaches
+ * this: nothing was marked as an edit of an open document. Never throws.
+ */
+export async function publishOpenStudioDraft(ctx: RunContext): Promise<void> {
+  if (!ctx.state.documents.studioEdited || !ctx.deps.artifacts) return;
+  const studio = ctx.computer.studioDocument;
+  if (!studio?.botId) return;
+  const block = await commitOpenStudioDraft(
+    { prisma: ctx.deps.prisma, artifacts: ctx.deps.artifacts },
+    {
+      context: ctx.context,
+      rootArtifactId: studio.rootId,
+      name: studio.name,
+      botId: studio.botId,
+      groupId: studio.groupId ?? undefined,
+      runId: ctx.runId,
+      maxBytes: ctx.deps.maxUploadSizeBytes,
+    },
+  );
+  if (!block) return;
+  await publishMessage(ctx.deps, ctx.run, "bot", [block]).catch((error: unknown) => {
+    getLogger().warn("open studio version not shown in the chat", { error: String(error) });
+  });
+  ctx.state.documents.attached = true;
+}
+
+/** Remembers a file this run wrote from the open studio document, so the next command can edit it. */
+function rememberStudioOutput(ctx: RunContext, result: unknown) {
+  const printed = printedJson(result);
+  const path = typeof printed?.path === "string" ? printed.path.replace(/^\.\//, "") : undefined;
+  if (!path || printed?.ok !== true) return;
+  const outputs = ctx.state.documents.studioOutputs ?? [];
+  if (!outputs.includes(path)) outputs.push(path);
+  ctx.state.documents.studioOutputs = outputs;
 }
 
 /**
@@ -701,10 +771,8 @@ export const computerTools: ToolHandlers = {
     if (rebuild) return call.finish({ error: rebuild });
     const stale = await staleDocumentBase(ctx.deps.prisma, ctx.context, program, given);
     if (stale) return call.finish({ error: stale });
-    const editedId = editedAttachmentId(program, given);
-    if (editedId && ctx.computer.studioDocument?.versions.some((v) => v.id === editedId)) {
-      ctx.state.documents.studioEdited = true;
-    }
+    const studioEdit = openStudioEdit(ctx, program, given);
+    if (studioEdit) ctx.state.documents.studioEdited = true;
     const args = await withDefaultWordTemplate(ctx, program, ocscProgramArgs(given));
     const author = await documentAuthor(ctx);
     const runner = ctx.computer.documents ?? ctx.computer.runner;
@@ -721,10 +789,19 @@ export const computerTools: ToolHandlers = {
         author,
       );
       noteDocumentWrite(ctx, program, args, result);
-      await keepDocumentDraft(ctx, program, args, result, runner.files, async () => {
-        await runner.prepare();
-        return TOOL_RUNNER_COMPUTER;
-      });
+      if (studioEdit) rememberStudioOutput(ctx, result);
+      await keepDocumentDraft(
+        ctx,
+        program,
+        args,
+        result,
+        runner.files,
+        async () => {
+          await runner.prepare();
+          return TOOL_RUNNER_COMPUTER;
+        },
+        studioEdit?.artifactId,
+      );
       return result;
     }
     if (ctx.computer.computerOff) {
@@ -748,8 +825,15 @@ export const computerTools: ToolHandlers = {
     });
     await ocscAfterRun(ctx, program, args, result);
     noteDocumentWrite(ctx, program, args, result);
-    await keepDocumentDraft(ctx, program, args, result, ctx.deps.sandbox, () =>
-      ctx.computer.get("tool", call.name),
+    if (studioEdit) rememberStudioOutput(ctx, result);
+    await keepDocumentDraft(
+      ctx,
+      program,
+      args,
+      result,
+      ctx.deps.sandbox,
+      () => ctx.computer.get("tool", call.name),
+      studioEdit?.artifactId,
     );
     return result;
   },

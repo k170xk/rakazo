@@ -207,7 +207,14 @@ export interface RunState {
    * Paths this attempt's ocsc commands made or changed, whether it attached any file, and
    * whether an ocsc edit started from the open studio document.
    */
-  documents: { made: string[]; attached: boolean; studioEdited?: boolean };
+  documents: {
+    made: string[];
+    attached: boolean;
+    /** This run edited the document open in the studio. */
+    studioEdited?: boolean;
+    /** Paths written by that edit, so a later command that reads one of them is the same document. */
+    studioOutputs?: string[];
+  };
 }
 
 export interface RunComputerContext {

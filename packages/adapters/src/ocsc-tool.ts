@@ -269,7 +269,7 @@ export function wordRebuildRefusal(
   const existing = overwriting
     ? "This would replace an existing Word document."
     : `This conversation already has a Word document: ${listed}.`;
-  return `${existing} To change a document, never make it again: run ocsc word read --in <its path>, then ocsc word edit --in <its path> --spec <edits>.json --out <new version>.docx, so the changes show as tracked changes. Only when the person explicitly asked for a brand-new, separate document (not changes to an existing one), run the same new command again with ${NEW_DOCUMENT_FLAG}.`;
+  return `${existing} To change a document, never make it again: run ocsc word read --in <its path>, then ocsc word edit --in <its path> --spec <edits>.json --out <new version>.docx. Follow the Word skill for whether those edits are tracked changes or a direct update. Only when the person explicitly asked for a brand-new, separate document (not changes to an existing one), run the same new command again with ${NEW_DOCUMENT_FLAG}.`;
 }
 
 /** The ocsc steps that change the document given with --in; the rest only read it. */
@@ -279,12 +279,18 @@ const EDITS_IN: Readonly<Record<string, readonly string[]>> = {
   xlsx: ["edit"],
 };
 
+/** The `--in` path of an ocsc command, without a leading `./`. */
+export function ocscInPath(args: readonly string[]): string | undefined {
+  const at = args.indexOf("--in");
+  const given = at >= 0 ? args[at + 1] : undefined;
+  return given?.replace(/^\.\//, "");
+}
+
 /** The attachment an ocsc edit starts from, `--in attachments/<artifactId>.<ext>`. */
 export function editedAttachmentId(program: string, args: readonly string[]): string | undefined {
   if (!EDITS_IN[program]?.includes(args[0] ?? "")) return undefined;
-  const at = args.indexOf("--in");
-  const given = at >= 0 ? args[at + 1] : undefined;
-  return given ? artifactIdFromAttachmentPath(given.replace(/^\.\//, "")) : undefined;
+  const given = ocscInPath(args);
+  return given ? artifactIdFromAttachmentPath(given) : undefined;
 }
 
 /**

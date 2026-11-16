@@ -1,6 +1,11 @@
 import type { PrismaClient } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
-import { serverFromStatus, takeInfraSample } from "./infra-sampler.js";
+import {
+  accumulateMember,
+  clusterMemberNames,
+  serverFromStatus,
+  takeInfraSample,
+} from "./infra-sampler.js";
 
 const GB = 1024 ** 3;
 
@@ -40,6 +45,52 @@ describe("infrastructure sampler", () => {
       memTotalBytes: 32 * GB,
       diskUsedBytes: 250 * GB,
       diskTotalBytes: 400 * GB,
+    });
+  });
+
+  it("counts every online cluster member and adds their capacity together", () => {
+    expect(
+      clusterMemberNames([
+        { server_name: "computers1", status: "Online" },
+        { server_name: "computers2", status: "Online" },
+        { server_name: "computers3", status: "Offline" },
+      ]),
+    ).toEqual(["computers1", "computers2"]);
+    expect(clusterMemberNames(["/1.0/cluster/members/computers1"])).toEqual(["computers1"]);
+    expect(clusterMemberNames(null)).toBeNull();
+
+    const total = {
+      up: false,
+      cpus: null,
+      memUsedBytes: null,
+      memTotalBytes: null,
+      diskUsedBytes: null,
+      diskTotalBytes: null,
+      running: null,
+      stopped: null,
+    };
+    accumulateMember(total, {
+      cpus: 8,
+      memUsedBytes: 4 * GB,
+      memTotalBytes: 32 * GB,
+      diskUsedBytes: 60 * GB,
+      diskTotalBytes: 300 * GB,
+    });
+    accumulateMember(total, {
+      cpus: 8,
+      memUsedBytes: 2 * GB,
+      memTotalBytes: 32 * GB,
+      diskUsedBytes: GB,
+      diskTotalBytes: 300 * GB,
+    });
+    expect(total).toMatchObject({
+      up: true,
+      members: 2,
+      cpus: 16,
+      memUsedBytes: 6 * GB,
+      memTotalBytes: 64 * GB,
+      diskUsedBytes: 61 * GB,
+      diskTotalBytes: 600 * GB,
     });
   });
 

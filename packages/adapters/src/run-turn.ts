@@ -73,6 +73,7 @@ import {
 } from "./run-replies.js";
 import { scheduleRoutineRetry } from "./run-routines.js";
 import { applyTool } from "./run-tools.js";
+import { publishOpenStudioDraft } from "./run-tools-computer.js";
 import { withRuntimeCleanup } from "./runtime-stream.js";
 import {
   isNoResponseReply,
@@ -742,6 +743,7 @@ export async function completeRun(ctx: RunContext) {
   ctx.computer.lazy.throwIfFailed();
   if (ctx.state.approval.pausePending || !ctx.state.lease.valid) return;
   ctx.tools.approvedReplays.assertDrained();
+  await publishOpenStudioDraft(ctx);
   reply.pendingProgress += reply.redactor.finish();
   await flushProgress(ctx);
 
@@ -997,6 +999,7 @@ export async function failRun(
   if (!ctx.state.terminalCheckpointComplete) {
     await ctx.computer.checkpoint.flush().catch(() => undefined);
   }
+  await publishOpenStudioDraft(ctx);
   const message = redactSecrets(userRunError(error), ctx.secrets);
   // Reply text the user watched stream in since the last saved message stays in the
   // thread, above the error, instead of vanishing with the live row.

@@ -160,7 +160,9 @@ export function withSecretPersistence(prisma: PrismaClient, store: SecretStore):
       });
       filter = { spaceId: { in: spaces.map((row) => row.id) } };
     }
-    if (model !== "Agent") {
+    // A bot's own credentials are BotSecret rows. Account secrets and vault items
+    // belong to a person or a space, and those tables have no bot id.
+    if (model !== "Bot") {
       state.old.push(...(await lockedRows(state, "Secret", filter)));
       state.old.push(...(await lockedRows(state, "VaultCredential", filter)));
     }
