@@ -734,6 +734,82 @@ export function keptAppLook(
   return lost.length ? `This save removes ${lost.join(", ")}. ${KEEP_APP_LOOK}` : blank;
 }
 
+const PAGE_ID_FIRST = /\{\s*id\s*:\s*["'`]([A-Za-z0-9_-]+)["'`]\s*,\s*label\s*:/g;
+const PAGE_LABEL_FIRST = /\{\s*label\s*:\s*["'`][^"'`]*["'`]\s*,\s*id\s*:\s*["'`]([A-Za-z0-9_-]+)["'`]/g;
+
+/** The page ids an app's files declare as AppShell pages ({ id: "board", label: "Board", ... }). */
+export function appPageIds(files: AppFiles): string[] {
+  const code = Object.values(files).join("\n");
+  const ids = [...code.matchAll(PAGE_ID_FIRST), ...code.matchAll(PAGE_LABEL_FIRST)].map(
+    (match) => match[1]!,
+  );
+  return [...new Set(ids)];
+}
+
+function codeSize(files: AppFiles) {
+  return Object.entries(files)
+    .filter(([name]) => /\.(tsx|ts|jsx|js|py)$/.test(name))
+    .reduce((total, [, text]) => total + text.length, 0);
+}
+
+/** Below this much code an app is small enough that a rewrite may rightly halve it. */
+const STRIP_FLOOR = 4000;
+
+/**
+ * Why a save would strip an app: pages it drops, or most of its code gone. Null when it keeps
+ * them, or when the person asked for the removal (`removes`, in their words).
+ */
+export function strippedApp(previous: AppFiles, next: AppFiles, removes?: string): string | null {
+  if (removes?.trim()) return null;
+  const before = appPageIds(previous);
+  const after = appPageIds(next);
+  const lost = after.length ? before.filter((id) => !after.includes(id)) : [];
+  const was = codeSize(previous);
+  const now = codeSize(next);
+  const shrunk = was >= STRIP_FLOOR && now < was * 0.6;
+  if (!lost.length && !shrunk) return null;
+  const what = [
+    lost.length ? `drops the ${lost.join(", ")} ${lost.length === 1 ? "page" : "pages"}` : null,
+    shrunk ? `cuts the code from ${was} to ${now} characters` : null,
+  ]
+    .filter(Boolean)
+    .join(" and ");
+  return `This save ${what}, so nothing was saved. An app keeps every page and feature while it is changed or fixed: put them back and make the change in place with edits. A renamed page keeps its id. Only if the person asked to remove them, save again with removes: "<what they asked to remove, in their words>".`;
+}
+
+export type CodeMatch = { file: string; line: number; text: string };
+
+/**
+ * Lines in an app's files holding the most of the query's words (case-insensitive), each with the
+ * two lines either side, numbered, so an edit can quote the exact text it changes.
+ */
+export function searchAppFiles(files: AppFiles, query: string, limit = 12): CodeMatch[] {
+  const words = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((word) => word.length > 1);
+  if (!words.length) return [];
+  const hits: Array<CodeMatch & { score: number }> = [];
+  for (const [file, text] of Object.entries(files)) {
+    const lines = text.split("\n");
+    lines.forEach((line, index) => {
+      const lower = line.toLowerCase();
+      const score = words.filter((word) => lower.includes(word)).length;
+      if (!score) return;
+      const from = Math.max(0, index - 2);
+      const around = lines
+        .slice(from, index + 3)
+        .map((value, offset) => `${from + offset + 1}| ${value.slice(0, 240)}`)
+        .join("\n");
+      hits.push({ file, line: index + 1, text: around, score });
+    });
+  }
+  return hits
+    .sort((a, b) => b.score - a.score || a.file.localeCompare(b.file) || a.line - b.line)
+    .slice(0, limit)
+    .map(({ score: _score, ...match }) => match);
+}
+
 export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}): string[] {
   const code = Object.entries(files)
     .filter(([name]) => /\.(tsx|ts|jsx|js)$/.test(name))
@@ -774,6 +850,12 @@ export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}):
   if (bareTokens.length) {
     notes.push(
       `${bareTokens.join(", ")} holds bare HSL numbers, not a colour, so that background or text paints nothing (white buttons on white). Wrap it: hsl(var(--primary)) is the brand green, hsl(var(--primary) / 0.12) a tint; --accent is a pale hover grey, not the brand colour.`,
+    );
+  }
+  const handStyled = (code.match(/<button\b[^>]*\sstyle=\{/g) ?? []).length;
+  if (handStyled) {
+    notes.push(
+      `${handStyled} hand-styled <button style={...}> skip the theme and dark mode. Use Button from @ocsc/ui (variant primary, secondary, outline or ghost; size sm) and keep style={} for layout only.`,
     );
   }
   // A calculator's pages, visuals and rows come from its workbook; the register-app checks don't fit it.

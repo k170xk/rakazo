@@ -25,6 +25,15 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   link: "text-primary underline-offset-4 hover:underline px-0",
 };
 
+/** Names apps borrow from other kits, drawn as the nearest OCSC variant instead of unstyled. */
+const VARIANT_ALIASES: Record<string, ButtonVariant> = {
+  default: "primary",
+  destructive: "danger",
+  subtle: "secondary",
+  tertiary: "ghost",
+  text: "link",
+};
+
 const BUTTON_SIZES: Record<ButtonSize, string> = {
   sm: "h-8 pointer-coarse:h-10 px-3 text-[13px] gap-1.5 rounded-md",
   md: "h-10 px-4 text-sm gap-2 rounded-lg",
@@ -56,8 +65,9 @@ export function Button({
       disabled={disabled || loading}
       className={cn(
         "inline-flex shrink-0 select-none items-center justify-center font-semibold whitespace-nowrap transition-[background,filter,color,box-shadow] duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4",
-        BUTTON_VARIANTS[variant],
-        BUTTON_SIZES[size],
+        BUTTON_VARIANTS[variant] ??
+          BUTTON_VARIANTS[VARIANT_ALIASES[variant as string] ?? "primary"],
+        BUTTON_SIZES[size] ?? BUTTON_SIZES.md,
         className,
       )}
       {...(props as object)}

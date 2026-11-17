@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./build": "./src/build/index.ts",
+    "./typecheck": "./src/build/typecheck.ts",
     "./import": "./src/import/index.ts",
     "./pdf": "./src/pdf/model.ts",
     "./pdf/render": "./src/pdf/render.ts",
@@ -38,6 +39,7 @@
     "react-dom": "19.2.3",
     "recharts": "3.10.1",
     "tailwindcss": "4.3.4",
+    "typescript6": "npm:typescript@6.0.3",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {

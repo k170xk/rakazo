@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { describeCrash } from "../sdk/index.js";
-import { Callout, SampleBanner, Tabs } from "./basic.js";
+import { Button, Callout, SampleBanner, Tabs } from "./basic.js";
 import { CalendarHeatmap } from "./insights.js";
 import { AreaChart, BarChart, DonutChart, LineChart } from "./charts.js";
 import { Markdown } from "./content.js";
@@ -194,6 +194,11 @@ describe("SampleBanner, Callout and hidden columns", () => {
     expect(html).not.toContain("homeOverview");
     expect(html).not.toContain("sparkle-unknown");
     expect(html).toContain("<svg");
+  });
+
+  it("draws buttons given another kit's variant names", () => {
+    const loose = { variant: "default" } as unknown as { variant: "primary" };
+    expect(renderToStaticMarkup(<Button {...loose}>Go</Button>)).toContain("bg-primary");
   });
 
   it("names the components a crash happened in", () => {

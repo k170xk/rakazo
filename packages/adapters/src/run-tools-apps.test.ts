@@ -449,6 +449,74 @@ export default function App() {
     );
   });
 
+  it("finds code by words and refuses a save that drops a page unless the person asked", async () => {
+    const PAGES = `import { AppShell, Theme } from "@ocsc/ui";
+export default function App() {
+  return (
+    <Theme preset="evolve">
+      <AppShell title="Jobs" pages={[
+        { id: "overview", label: "Overview", render: () => <p>Hi</p> },
+        { id: "board", label: "Board", render: () => <p>Kanban status lanes</p> },
+      ]} />
+    </Theme>
+  );
+}
+`;
+    const found = (await appTools.save_app!(
+      context({ files: { "App.tsx": PAGES } }).ctx,
+      call({ appId: "app-1", search: "kanban status" }),
+    )) as Result;
+    expect(found.matches).toEqual([
+      expect.objectContaining({ file: "App.tsx", line: 7, text: expect.stringContaining("7| ") }),
+    ]);
+    const drop = [
+      {
+        find: `\n        { id: "board", label: "Board", render: () => <p>Kanban status lanes</p> },`,
+        replace: "",
+      },
+    ];
+    const refused = (await appTools.save_app!(
+      context({ files: { "App.tsx": PAGES } }).ctx,
+      call({ appId: "app-1", edits: drop }),
+    )) as Result;
+    expect(refused.error).toMatch(/drops the board page/);
+    expect(db.appendAppVersion).not.toHaveBeenCalled();
+    await appTools.save_app!(
+      context({ files: { "App.tsx": PAGES } }).ctx,
+      call({ appId: "app-1", edits: drop, removes: "take the board off" }),
+    );
+    expect(db.appendAppVersion).toHaveBeenCalled();
+  });
+
+  it("refuses a save that adds kit misuse, but not one that keeps misuse already there", async () => {
+    const KPI = (prop: string) => `import { AppShell, KpiCard, Theme } from "@ocsc/ui";
+export default function App() {
+  return (
+    <Theme preset="evolve">
+      <AppShell title="Jobs" pages={[{ id: "overview", label: "Overview", render: () => <KpiCard ${prop}="Open" value={3} /> }]} />
+    </Theme>
+  );
+}
+`;
+    const added = (await appTools.save_app!(
+      context({ files: { "App.tsx": KPI("label") } }).ctx,
+      call({
+        appId: "app-1",
+        edits: [{ find: 'KpiCard label="Open"', replace: 'KpiCard title="Open"' }],
+      }),
+    )) as Result;
+    expect(added.error).toMatch(/uses the kit wrongly/);
+    expect(String((added.problems as string[])[0])).toMatch(/App\.tsx:5.*KpiCard.*title.*label/);
+    expect(db.appendAppVersion).not.toHaveBeenCalled();
+    const kept = (await appTools.save_app!(
+      context({ files: { "App.tsx": KPI("title") } }).ctx,
+      call({ appId: "app-1", edits: [{ find: "value={3}", replace: "value={4}" }] }),
+    )) as Result;
+    expect(kept.error).toBeUndefined();
+    expect(String((kept.typeNotes as string[])[0])).toMatch(/KpiCard/);
+    expect(db.appendAppVersion).toHaveBeenCalled();
+  });
+
   it("refuses an edit whose find text is missing or ambiguous", async () => {
     const missing = (await appTools.save_app!(
       context({}).ctx,
@@ -517,7 +585,9 @@ export default function App() {
   it("refuses a code change until a shell from an earlier version is put back", async () => {
     const { ctx } = context({ files: { "App.tsx": PLAIN } });
     const versions = (
-      ctx as unknown as { deps: { prisma: { pageVersion: { findFirst: ReturnType<typeof vi.fn> } } } }
+      ctx as unknown as {
+        deps: { prisma: { pageVersion: { findFirst: ReturnType<typeof vi.fn> } } };
+      }
     ).deps.prisma.pageVersion;
     versions.findFirst.mockResolvedValue({ id: "v1" });
     const refused = (await appTools.save_app!(

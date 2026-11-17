@@ -890,6 +890,16 @@ export const builtinAgentTools: ConnectorTool[] = [
           description:
             "A new app is first checked against the Evolve library and apps in review; when similarApps come back, tell the person who built each and pass true only once they still want their own.",
         },
+        removes: {
+          type: "string",
+          description:
+            "Only when the person asked to remove pages or features: what they asked to remove, in their words. A save that drops a page or most of the code is refused without it; never use it to get a crashing app past the check.",
+        },
+        search: {
+          type: "string",
+          description:
+            'With appId and nothing else: words to find in the app\'s files (e.g. "Kanban status"); returns each match as file:line with the lines around it, so you can make a precise edit without rereading every file.',
+        },
         icon: {
           type: "string",
           description:

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { APP_KIT_GUIDE } from "../guide.js";
 import {
+  appPageIds,
   auditAppCraft,
   buildApp,
   checkFiles,
@@ -9,7 +10,9 @@ import {
   inlineScript,
   keptAppLook,
   pluginBundle,
+  searchAppFiles,
   shellShowsScreens,
+  strippedApp,
 } from "./index.js";
 
 const APP = `
@@ -167,6 +170,31 @@ describe("helpers", () => {
     expect(bare.find((note) => note.includes("bare HSL"))).toContain("var(--accent)");
     const wrapped = auditAppCraft(app(`{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }`));
     expect(wrapped.some((note) => note.includes("bare HSL"))).toBe(false);
+  });
+
+  it("spots a save that strips pages or most of the code", () => {
+    const page = (id: string) => `{ id: "${id}", label: "${id}", render: () => <p>${"x".repeat(1500)}</p> },`;
+    const full = { "App.tsx": `pages={[${page("overview")}${page("board")}${page("register")}]}` };
+    expect(appPageIds(full)).toEqual(["overview", "board", "register"]);
+    expect(strippedApp(full, full)).toBeNull();
+    const oneLess = { "App.tsx": `pages={[${page("overview")}${page("register")}]}` };
+    expect(strippedApp(full, oneLess)).toMatch(/drops the board page/);
+    const stub = { "App.tsx": `pages={[{ id: "overview", label: "Overview", render: () => <p>Hi</p> }, { id: "board", label: "B", render: () => null }, { id: "register", label: "R", render: () => null }]}` };
+    expect(strippedApp(full, stub)).toMatch(/cuts the code/);
+    expect(strippedApp(full, oneLess, "remove the board")).toBeNull();
+  });
+
+  it("finds code by words with numbered lines around each match", () => {
+    const files = { "App.tsx": "a\nb\nconst lanes = kanbanLanes;\nc\nd\ne", "util.ts": "export const kanban = 1;" };
+    const matches = searchAppFiles(files, "kanban lanes");
+    expect(matches[0]).toEqual({ file: "App.tsx", line: 3, text: "1| a\n2| b\n3| const lanes = kanbanLanes;\n4| c\n5| d" });
+    expect(matches[1]?.file).toBe("util.ts");
+    expect(searchAppFiles(files, " ")).toEqual([]);
+  });
+
+  it("points hand-styled buttons at the kit Button", () => {
+    const notes = auditAppCraft({ "App.tsx": `export default () => <button style={{ padding: 8 }}>Go</button>;` });
+    expect(notes.some((note) => note.includes("hand-styled <button"))).toBe(true);
   });
 
   it("keeps a new app and a later save inside the OCSC shell", () => {

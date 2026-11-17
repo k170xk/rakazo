@@ -216,7 +216,10 @@ export function describeToolActivity(toolName: string, args: unknown): string {
   }
   if (toolName === "save_app") {
     if (record.help === true) return "Reading the App Studio guide";
-    return record.files || record.edits ? "Building the app" : "Opening the app";
+    if (record.files || record.edits) return "Building the app";
+    return typeof record.search === "string" && record.search
+      ? `Finding ${detail(record.search)} in the app`
+      : "Opening the app";
   }
   if (toolName === "app_data") {
     return record.action === "query" || !record.action

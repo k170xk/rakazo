@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 import {
   appLookMarks,
+  appPageIds,
   auditAppCraft,
   buildApp,
   FIX_APP_BEFORE_READY,
   keptAppLook,
+  searchAppFiles,
+  strippedApp,
 } from "@rakazo/app-kit/build";
 import { APP_KIT_GUIDE } from "@rakazo/app-kit/guide";
 import { APP_KIT_GUIDE_EXTRAS } from "@rakazo/app-kit/guide-extras";
@@ -19,6 +22,7 @@ import {
   scaffoldApp,
 } from "@rakazo/app-kit/import";
 import { APP_TEMPLATES, findTemplate } from "@rakazo/app-kit/templates";
+import { newTypeErrors, type TypeProblem, typecheckApp } from "@rakazo/app-kit/typecheck";
 import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
 import { containsEncodedSecret, containsSecret, redactSecrets } from "@rakazo/core";
 import {
@@ -783,6 +787,18 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   }
 
   const briefGiven = argumentGiven(args.brief);
+  if (app && typeof args.search === "string" && args.search.trim() && !hasFiles && !hasEdits) {
+    const matches = searchAppFiles(app.files, args.search);
+    return {
+      appId: app.id,
+      version: app.currentVersion,
+      files: Object.keys(app.files),
+      matches,
+      ...(matches.length
+        ? {}
+        : { next: "Nothing matched; try other words or read the app with only appId." }),
+    };
+  }
   if (
     app &&
     iconSubject &&
@@ -870,6 +886,9 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         : false;
     const look = keptAppLook(app ? app.files : null, files, { hadShell });
     if (look) return { error: look, unchanged: true, next: FIX_APP_BEFORE_READY };
+    const removes = typeof args.removes === "string" ? args.removes : undefined;
+    const stripped = app ? strippedApp(app.files, files, removes) : null;
+    if (stripped) return { error: stripped, unchanged: true, pages: appPageIds(app!.files) };
   }
   const tables: TableInput[] | string = hasTables
     ? parseTables(args.tables)
@@ -880,6 +899,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   let code: string | null = null;
   let warnings: unknown[] = [];
   let size: ReturnType<typeof appSize> = null;
+  let typeNotes: string[] = [];
   if (codeChanged) {
     const built = await buildApp(files, { title: title ?? app?.title ?? "App" });
     if (!built.ok) {
@@ -893,6 +913,16 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     code = built.html;
     warnings = built.warnings;
     size = appSize(built);
+    const typed = await kitMisuse(files, app?.files ?? null);
+    if (typed.added.length) {
+      return {
+        error: "The app uses the kit wrongly; nothing was saved.",
+        problems: typed.added.map(typeProblemText),
+        unchanged: true,
+        next: "Correct each prop or import named above to the ones it lists, keeping every page and feature, then save again.",
+      };
+    }
+    if (typed.existing.length) typeNotes = typed.existing.slice(0, 6).map(typeProblemText);
   }
   // An app can be shared by link, so it never stores a value this run keeps secret.
   if (
@@ -1029,6 +1059,13 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         }
       : {}),
     ...(warnings.length ? { warnings } : {}),
+    ...(typeNotes.length
+      ? {
+          typeNotes,
+          typeNext:
+            "These kit misuses were already in the app; fix the ones in code you are changing.",
+        }
+      : {}),
     ...(size ? { size } : {}),
     ...(icon ? { icon } : {}),
     ...(check ?? {}),
@@ -1054,6 +1091,25 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
   };
 }
+
+/** Every kit misuse the check finds, so the previous files' problems are matched in full. */
+const ALL_TYPE_ERRORS = 200;
+
+/** Type errors against the kit this save adds, and those the app already had. */
+async function kitMisuse(files: Record<string, string>, previous: Record<string, string> | null) {
+  const after = await typecheckApp(files, { maxErrors: ALL_TYPE_ERRORS });
+  if (!after.errors.length) return { added: [], existing: [] };
+  const before = previous
+    ? await typecheckApp(previous, { maxErrors: ALL_TYPE_ERRORS })
+    : { errors: [] };
+  const { added, existing } = newTypeErrors(before.errors, after.errors);
+  return { added: added.slice(0, 12), existing };
+}
+
+const typeProblemText = (problem: TypeProblem) =>
+  problem.message.startsWith(problem.file)
+    ? problem.message
+    : `${problem.file}:${problem.line} ${problem.message}`;
 
 /** Crashing saves in one run before the app goes back to the last version that opened cleanly. */
 export const MAX_BROKEN_SAVES = 3;

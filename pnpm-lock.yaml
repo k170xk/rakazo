@@ -972,6 +972,9 @@ importers:
       tailwindcss:
         specifier: 4.3.4
         version: 4.3.4
+      typescript6:
+        specifier: npm:typescript@6.0.3
+        version: typescript@6.0.3
       xlsx:
         specifier: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
         version: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
