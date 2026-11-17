@@ -729,13 +729,17 @@ export function SampleBanner({
   className?: string;
 }) {
   const [clearing, setClearing] = useState(false);
-  const targets = tables.flatMap((table) =>
+  // Apps sometimes pass table names instead of useTable results; only real tables have rows.
+  const loaded = (Array.isArray(tables) ? tables : []).filter(
+    (table): table is SampleTableLike => Array.isArray(table?.rows),
+  );
+  const targets = loaded.flatMap((table) =>
     table.rows
       .filter((row) => row[sampleKey] === true)
       .map((row) => ({ table, id: row._id })),
   );
   if (targets.length === 0) return null;
-  const canClear = tables.some((table) => table.canEdit);
+  const canClear = loaded.some((table) => table.canEdit);
   const clear = async () => {
     setClearing(true);
     try {

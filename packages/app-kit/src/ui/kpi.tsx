@@ -95,6 +95,10 @@ export function Sparkline({
   fill?: boolean;
 }) {
   const id = useId().replace(/:/g, "");
+  // Apps pass trends from their own code, sometimes as a word or an object; draw only numbers.
+  data = Array.isArray(data)
+    ? data.filter((value): value is number => typeof value === "number" && Number.isFinite(value))
+    : [];
   if (data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);

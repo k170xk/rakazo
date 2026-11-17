@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Callout, SampleBanner } from "./basic.js";
 import { AreaChart, BarChart, DonutChart, LineChart } from "./charts.js";
 import { Markdown } from "./content.js";
+import { KpiCard, Sparkline } from "./kpi.js";
 import { isoDate, matchesWords } from "./pickers.js";
 import { RecordDetail, RecordForm } from "./records.js";
 import { AudioPlayer, ImageViewer, SketchPad, SplitPane, VideoPlayer } from "./studio-media.js";
@@ -138,6 +139,18 @@ describe("SampleBanner, Callout and hidden columns", () => {
     );
     expect(shown).toContain("Exploring with 1 sample record");
     expect(shown).toContain("Clear sample data");
+  });
+
+  it("renders nothing instead of crashing when given table names", () => {
+    const names = ["counter_activity"] as unknown as Parameters<typeof SampleBanner>[0]["tables"];
+    expect(renderToStaticMarkup(<SampleBanner tables={names} />)).toBe("");
+  });
+
+  it("KpiCard draws only numeric trends and never crashes on a word or object", () => {
+    const word = "up" as unknown as number[];
+    expect(renderToStaticMarkup(<KpiCard label="Jobs" value={4} trend={word} />)).toContain("Jobs");
+    expect(renderToStaticMarkup(<Sparkline data={{ a: 1 } as unknown as number[]} />)).toBe("");
+    expect(renderToStaticMarkup(<Sparkline data={[1, Number.NaN, 3, 2]} />)).toContain("<path");
   });
 
   it("renders theme-safe Callout and hides hidden: true columns in forms and detail", () => {
