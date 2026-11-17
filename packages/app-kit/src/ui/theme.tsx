@@ -1,4 +1,5 @@
-import { type ReactNode, useLayoutEffect } from "react";
+import type { ReactNode } from "react";
+import { useLayoutEffect } from "react";
 
 /**
  * Brand-safe looks for a whole app: every preset keeps OCSC green and changes only the neutrals,

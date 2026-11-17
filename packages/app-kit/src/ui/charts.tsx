@@ -45,6 +45,25 @@ const seriesOf = (series: Array<Series | string>) =>
     };
   });
 
+/** Names apps reach for instead of `x` and `series`; without them the chart would crash. */
+type ChartAliases = { xKey?: string; yKey?: string | string[] };
+
+/**
+ * `x`/`series` from the props, falling back to `xKey`/`yKey` and then to every numeric field, so a
+ * chart given the wrong names still draws instead of taking the whole page down.
+ */
+function chartProps<P extends BaseProps>(props: P): P {
+  const { xKey, yKey, ...rest } = props as P & ChartAliases;
+  const data = Array.isArray(rest.data) ? rest.data : [];
+  const x = rest.x ?? xKey ?? "";
+  const series = Array.isArray(rest.series)
+    ? rest.series
+    : yKey
+      ? [yKey].flat()
+      : Object.keys(data[0] ?? {}).filter((key) => key !== x && typeof data[0]![key] === "number");
+  return { ...rest, data, x, series } as unknown as P;
+}
+
 const LEGEND_HEIGHT = 26;
 const BAR_RADIUS = 6;
 const MAX_BAR = 44;
@@ -472,18 +491,19 @@ function HorizontalBars({
 }
 
 export function AreaChart(props: BaseProps & { stacked?: boolean }) {
-  return <Cartesian kind="area" {...props} />;
+  return <Cartesian kind="area" {...chartProps(props)} />;
 }
 
 export function BarChart({
   horizontal,
   ...props
 }: BaseProps & { stacked?: boolean; horizontal?: boolean }) {
-  return horizontal ? <HorizontalBars {...props} /> : <Cartesian kind="bar" {...props} />;
+  const fixed = chartProps(props);
+  return horizontal ? <HorizontalBars {...fixed} /> : <Cartesian kind="bar" {...fixed} />;
 }
 
 export function LineChart(props: BaseProps) {
-  return <Cartesian kind="line" {...props} />;
+  return <Cartesian kind="line" {...chartProps(props)} />;
 }
 
 /** A donut with the total in the middle and a legend beside it; hovering a slice shows its figure. */

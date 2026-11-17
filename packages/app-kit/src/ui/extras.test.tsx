@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Callout, SampleBanner } from "./basic.js";
-import { AreaChart, DonutChart } from "./charts.js";
+import { AreaChart, BarChart, DonutChart, LineChart } from "./charts.js";
 import { Markdown } from "./content.js";
 import { isoDate, matchesWords } from "./pickers.js";
 import { RecordDetail, RecordForm } from "./records.js";
@@ -98,6 +98,18 @@ describe("kit charts", () => {
       <AreaChart data={[{ m: "Jan", v: 1 }]} x="m" series={["v"]} />,
     );
     expect(area).toContain("height:280px");
+    const aliased = renderToStaticMarkup(
+      // @ts-expect-error xKey/yKey are names apps guess instead of x/series
+      <AreaChart data={[{ step: "Count", value: 3 }]} xKey="step" yKey="value" />,
+    );
+    expect(aliased).toContain("height:280px");
+    const inferred = renderToStaticMarkup(
+      // @ts-expect-error series left out entirely
+      <LineChart data={[{ month: "Jan", fee: 5 }]} x="month" />,
+    );
+    expect(inferred).toContain("height:280px");
+    // @ts-expect-error no data at all
+    expect(renderToStaticMarkup(<BarChart x="month" />)).toContain("height:280px");
     const donut = renderToStaticMarkup(
       <DonutChart
         data={[
