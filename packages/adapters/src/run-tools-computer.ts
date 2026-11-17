@@ -43,6 +43,8 @@ import {
   protectedComputerLifecycleRefusal,
 } from "./desktop-command-guard.js";
 import { commitOpenStudioDraft, saveDocumentDraft } from "./document-drafts.js";
+import type { DocumentDraftOutcome } from "./document-write-check.js";
+import { annotateDocumentWriteResult } from "./document-write-check.js";
 import { studioDocumentProgram } from "./document-versions.js";
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import {
@@ -323,8 +325,8 @@ async function keepDocumentDraft(
   files: WorkspaceFiles,
   computer: () => Promise<ComputerRef>,
   studioArtifactId?: string,
-) {
-  await saveDocumentDraft(
+): Promise<DocumentDraftOutcome> {
+  return saveDocumentDraft(
     { prisma: ctx.deps.prisma, artifacts: ctx.deps.artifacts },
     {
       context: ctx.context,
@@ -451,6 +453,7 @@ const LARGE_RUN_TIMEOUT_MS = 30 * 60_000;
 /** A runner renders the whole video inside the one command, up to ten minutes of footage. */
 const VIDEO_RUN_TIMEOUT_MS = 45 * 60_000;
 
+/** Runs ocsc on the document runner and returns the tool payload (caller finishes / annotates). */
 async function runOcscOnRunner(
   ctx: RunContext,
   call: ToolCall,
@@ -459,9 +462,9 @@ async function runOcscOnRunner(
   program: string,
   args: readonly string[],
   author: string | undefined,
-) {
+): Promise<Record<string, unknown>> {
   const refusal = await conversationFolderRefusal(runner.workspace);
-  if (refusal) return call.finish({ error: refusal });
+  if (refusal) return { error: refusal };
   await runner.prepare();
   const commandEvent = {
     executionId: call.executionId,
@@ -514,11 +517,11 @@ async function runOcscOnRunner(
     });
     const safe = redactShellStreams(result, ctx.secrets, { withholdPartial: false });
     await publish(`${safe.stdout}${safe.stderr}`, "done", result.code);
-    return call.finish({ stdout: safe.stdout, stderr: safe.stderr, code: result.code });
+    return { stdout: safe.stdout, stderr: safe.stderr, code: result.code };
   } catch (error) {
     const message = error instanceof Error ? error.message : "the document runner failed";
     await publish(message, "done", 1);
-    return call.finish({ error: redactSecrets(message, ctx.secrets) });
+    return { error: redactSecrets(message, ctx.secrets) };
   }
 }
 
@@ -535,6 +538,8 @@ async function runComputerCommand(
     botSecrets: boolean;
     /** Load the credentials for redaction but do not hand them to the command. */
     withholdCredentials?: boolean;
+    /** Shapes the finished tool result (ocsc document writes add fix-and-retry next). */
+    shapeResult?: (result: Record<string, unknown>) => Record<string, unknown>;
   },
 ) {
   const { deps, run, runId, context } = ctx;
@@ -656,7 +661,7 @@ async function runComputerCommand(
       });
       void completion.catch(() => undefined);
       publishRunning(commandOutput(observed.result, true), true);
-      const returned = await call.finish({
+      const stillRunning: Record<string, unknown> = {
         stdout: observed.result.stdout,
         stderr: observed.result.stderr,
         code: null,
@@ -664,7 +669,8 @@ async function runComputerCommand(
         notice: withheldNotice
           ? `${SHELL_STILL_RUNNING_NOTICE} ${withheldNotice}`
           : SHELL_STILL_RUNNING_NOTICE,
-      });
+      };
+      const returned = await call.finish(input.shapeResult?.(stillRunning) ?? stillRunning);
       if (isRunningShellCommand(returned)) observer?.onShellStillRunning?.(completion);
       return returned;
     }
@@ -676,7 +682,10 @@ async function runComputerCommand(
       exitCode: redacted.code,
       output: commandOutput(redacted, false).slice(-COMPUTER_COMMAND_OUTPUT_MAX_CHARS),
     });
-    return call.finish(withheldNotice ? { ...redacted, notice: withheldNotice } : redacted);
+    const finished: Record<string, unknown> = withheldNotice
+      ? { ...redacted, notice: withheldNotice }
+      : { ...redacted };
+    return call.finish(input.shapeResult?.(finished) ?? finished);
   } catch (error) {
     await appendComputerCommand(ctx, {
       ...commandEvent,
@@ -779,7 +788,7 @@ export const computerTools: ToolHandlers = {
     if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {
       const held = await ocscBeforeRun(ctx, program, args);
       if (held) return call.finish(held);
-      const result = await runOcscOnRunner(
+      const raw = await runOcscOnRunner(
         ctx,
         call,
         runner,
@@ -788,13 +797,15 @@ export const computerTools: ToolHandlers = {
         args,
         author,
       );
-      noteDocumentWrite(ctx, program, args, result);
-      if (studioEdit) rememberStudioOutput(ctx, result);
-      await keepDocumentDraft(
+      const early = annotateDocumentWriteResult(program, args, raw);
+      if (early.documentCheck === "problems") return call.finish(early);
+      noteDocumentWrite(ctx, program, args, raw);
+      if (studioEdit) rememberStudioOutput(ctx, raw);
+      const draftOutcome = await keepDocumentDraft(
         ctx,
         program,
         args,
-        result,
+        raw,
         runner.files,
         async () => {
           await runner.prepare();
@@ -802,7 +813,11 @@ export const computerTools: ToolHandlers = {
         },
         studioEdit?.artifactId,
       );
-      return result;
+      return call.finish(
+        annotateDocumentWriteResult(program, args, raw, {
+          draftOutcome: studioEdit ? draftOutcome : undefined,
+        }),
+      );
     }
     if (ctx.computer.computerOff) {
       return call.finish({
@@ -822,19 +837,28 @@ export const computerTools: ToolHandlers = {
         ? undefined
         : resolveBotWorkspaceCwd(ctx.computer.mode, ctx.bot.id, undefined),
       botSecrets: false,
+      shapeResult: (payload) => annotateDocumentWriteResult(program, args, payload),
     });
     await ocscAfterRun(ctx, program, args, result);
-    noteDocumentWrite(ctx, program, args, result);
-    if (studioEdit) rememberStudioOutput(ctx, result);
-    await keepDocumentDraft(
-      ctx,
-      program,
-      args,
-      result,
-      ctx.deps.sandbox,
-      () => ctx.computer.get("tool", call.name),
-      studioEdit?.artifactId,
-    );
+    const writeFailed =
+      typeof result === "object" &&
+      result !== null &&
+      (result as { documentCheck?: string }).documentCheck === "problems";
+    if (!writeFailed) {
+      noteDocumentWrite(ctx, program, args, result);
+      if (studioEdit) rememberStudioOutput(ctx, result);
+      const draftOutcome = await keepDocumentDraft(
+        ctx,
+        program,
+        args,
+        result,
+        ctx.deps.sandbox,
+        () => ctx.computer.get("tool", call.name),
+        studioEdit?.artifactId,
+      );
+      // Draft failures after finish cannot reshape the tool result; the open-studio path uses runners.
+      void draftOutcome;
+    }
     return result;
   },
   async open_path(ctx, call) {

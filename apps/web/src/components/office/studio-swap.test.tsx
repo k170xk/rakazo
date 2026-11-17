@@ -59,7 +59,10 @@ vi.mock("../../lib/auth", () => ({ authClient: { useSession: () => ({ data: null
 vi.mock("../../lib/pages", () => ({ useMedia: () => false }));
 vi.mock("../../lib/rpc", () => ({ selectedSpaceId: () => "s1" }));
 vi.mock("../../lib/space-rpc", () => ({ useBoundSpaceId: () => "s1" }));
-vi.mock("./document-bot", () => ({ useDocumentBotId: () => ({}) }));
+vi.mock("./document-bot", () => ({
+  useDocumentBotId: () => ({}),
+  usePublishStudioToChat: () => {},
+}));
 vi.mock("./DocumentLoadPanel", () => ({
   DocumentLoadPanel: () => <div data-testid="office-load-progress" />,
   DocumentLoadOverlay: () => null,
@@ -240,11 +243,12 @@ it.each(studios)(
   async (format, Studio, draftValue) => {
     (query as unknown as { setFormat: (format: string) => void }).setFormat(format);
     await render(Studio);
-    expect(seen).toMatchObject({ mounts: 1, content: "v1", readOnly: false });
+    expect(seen).toMatchObject({ content: "v1", readOnly: false });
+    expect(container.querySelectorAll('[data-testid="editor"]')).toHaveLength(1);
 
     state.running = true;
     await render(Studio);
-    expect(seen).toMatchObject({ mounts: 1, content: "v1", readOnly: true });
+    expect(seen).toMatchObject({ content: "v1", readOnly: true });
 
     state.draft = {
       updatedAt: "2026-11-14T12:00:01.000Z",
@@ -252,7 +256,8 @@ it.each(studios)(
       value: draftValue("draft"),
     };
     await render(Studio);
-    expect(seen).toMatchObject({ mounts: 1, content: "draft", readOnly: true });
+    // Word updates bytes in place; Excel/PowerPoint remount when the draft key changes.
+    expect(seen).toMatchObject({ content: "draft", readOnly: true });
     expect(container.querySelectorAll('[data-testid="editor"]')).toHaveLength(1);
     expect(container.querySelector('[data-testid="preview"]')).toBeNull();
     expect(container.querySelector('[data-testid="office-live-draft"]')).not.toBeNull();
@@ -263,7 +268,7 @@ it.each(studios)(
     await render(Studio);
     state.draft = null;
     await render(Studio);
-    expect(seen).toMatchObject({ mounts: 1, content: "v2", readOnly: false });
+    expect(seen).toMatchObject({ content: "v2", readOnly: false });
     expect(container.querySelectorAll('[data-testid="editor"]')).toHaveLength(1);
   },
 );

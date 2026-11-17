@@ -51,6 +51,8 @@ import { changedSlides, openDeck, saveVerified } from "./slides/deck";
 import { deckHistory } from "./slides/history";
 import type { SlidesView } from "./slides/SlidesWorkbench";
 import { SlidesPreview, SlidesWorkbench } from "./slides/SlidesWorkbench";
+import { adoptLoadedVersion } from "./adopt-loaded-version";
+import { useApplyNewerVersion } from "./use-apply-newer-version";
 import { useDeleteOfficeDocument } from "./use-delete-document";
 import { useDocumentLoad } from "./use-document-load";
 import { useDocumentUpload } from "./use-document-upload";
@@ -125,8 +127,6 @@ export default function SlidesStudio({
   const heldImage = useRef<File | null>(null);
   const owner = useRef<Promise<{ botId: string | null; groupId: string | null }> | null>(null);
   const timers = useRef({ note: 0, flash: 0, retry: 0 });
-  const newerTries = useRef(0);
-  const aimedVersion = useRef<number | undefined>(undefined);
   const [newerTick, setNewerTick] = useState(0);
   const { loadState, loadBytes, stillCurrent, markReady, markOpenFailed } = useDocumentLoad(
     "pptx",
@@ -175,13 +175,7 @@ export default function SlidesStudio({
       const shown = latest.current?.version ?? 0;
       try {
         const deck = await openDeck(new Uint8Array(bytes));
-        if (!stillCurrent(turn)) return;
-        latest.current = {
-          artifactId: detail.latest.artifactId,
-          version: detail.latest.version,
-          name: detail.name,
-          versions: detail.versions,
-        };
+        if (!adoptLoadedVersion(latest, turn, stillCurrent, detail)) return;
         const before = deckRef.current;
         deckRef.current = deck;
         queue.current?.rebase(detail.latest.version);
@@ -205,10 +199,10 @@ export default function SlidesStudio({
         }
       } catch {
         markOpenFailed(turn);
-        // A failed open leaves the version pointer where it was, so this tries again. Three
-        // failures stop, and the open deck stays on screen with a way to retry.
+        // A failed open leaves the version pointer where it was, so this tries again. The shared
+        // apply hook caps open failures; each tick is one more attempt, not every effect re-run.
         window.clearTimeout(timers.current.retry);
-        if (reason !== "open" && stillCurrent(turn) && newerTries.current < 3) {
+        if (reason !== "open" && stillCurrent(turn)) {
           timers.current.retry = window.setTimeout(() => {
             if (stillCurrent(turn)) setNewerTick((n) => n + 1);
           }, 1200);
@@ -284,12 +278,12 @@ export default function SlidesStudio({
   useEffect(() => {
     if (!rootArtifactId) return;
     latest.current = null;
-    newerTries.current = 0;
     deckRef.current = null;
     view.current = null;
     owner.current = null;
     setDoc(null);
     setFlash(null);
+    setNewerTick(0);
     void latestCallbacks.current.load("open");
   }, [rootArtifactId]);
 
@@ -312,29 +306,16 @@ export default function SlidesStudio({
     parse: parseDraft,
   });
   const newest = revision.data?.version;
-  useEffect(() => {
-    if (newest !== aimedVersion.current) {
-      aimedVersion.current = newest;
-      newerTries.current = 0;
-    }
-    const shown = latest.current?.version;
-    const saves = queue.current;
-    if (newest === undefined || shown === undefined || newest <= shown || !saves) {
-      if (shown !== undefined && newest !== undefined && newest <= shown) newerTries.current = 0;
-      return;
-    }
-    const now = saves.state();
-    // A save in progress used to drop the assistant's version, because this check did not run
-    // again when the save finished. Waiting here lets the next status change pick it up.
-    if (now.status === "saving") return;
-    if (now.dirty) {
-      void saves.flush();
-      return;
-    }
-    if (newerTries.current >= 3) return;
-    newerTries.current += 1;
-    void load("newer");
-  }, [newest, load, saveState?.status, newerTick]);
+  const loadNewer = useCallback(() => load("newer"), [load]);
+  const { resetOpenFailures } = useApplyNewerVersion({
+    newest,
+    saveStatus: saveState?.status,
+    queue,
+    latest,
+    loadNewer,
+    openFailureTick: newerTick,
+    maxOpenFailures: 3,
+  });
 
   useEffect(() => {
     if (running && queue.current?.state().dirty) void queue.current.flush();
@@ -786,8 +767,8 @@ export default function SlidesStudio({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    newerTries.current = 0;
-                    void load("newer");
+                    resetOpenFailures();
+                    setNewerTick((n) => n + 1);
                   }}
                 >
                   <RefreshCw className="size-4" />

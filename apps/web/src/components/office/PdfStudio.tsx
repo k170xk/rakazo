@@ -663,6 +663,7 @@ export default function PdfStudio({
   }
 
   // The assistant's versions arrive here. Unsaved markups are never thrown away for them.
+  // PDF has no live draft preview (the framed app owns the bytes); only the saved version swaps in.
   const { revision } = useLiveDraft({
     rootArtifactId,
     enabled: doc !== null,
@@ -671,15 +672,25 @@ export default function PdfStudio({
     parse: async (data) => data,
   });
   const newest = revision.data?.version;
+  const applyingNewer = useRef(false);
   useEffect(() => {
     const shown = latest.current?.version;
     if (newest === undefined || shown === undefined || newest <= shown) return;
+    if (applyingNewer.current) return;
     let live = true;
-    void readAppState(frame.current).then((state) => {
-      if (!live) return;
-      if (state?.modified) setNewer(newest);
-      else void load("newer");
-    });
+    applyingNewer.current = true;
+    void readAppState(frame.current)
+      .then((state) => {
+        if (!live) return;
+        if (state?.modified) {
+          setNewer(newest);
+          return;
+        }
+        return load("newer");
+      })
+      .finally(() => {
+        if (live) applyingNewer.current = false;
+      });
     return () => {
       live = false;
     };

@@ -167,6 +167,8 @@ export async function skillReadFromTool(
     description: skill.description,
     source: skill.source,
     readOnly: skill.readOnly,
+    follow:
+      "Follow this skill for the task. Where it disagrees with house style about how to do the task, including voice, pronouns, openings and word choice, follow this skill. The user's request, approval rules and security boundaries still win.",
     content: skill.content,
     ...(paths.length ? { files: paths } : {}),
     ...(unavailable ? { unavailable } : {}),

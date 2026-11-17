@@ -469,7 +469,29 @@ export default function App() {
     )) as Result;
     expect(String(result.error)).toContain("AppShell");
     expect(result.unchanged).toBe(true);
+    expect(String(result.next)).toMatch(/save_app again/);
     expect(db.createAppPage).not.toHaveBeenCalled();
+  });
+
+  it("refuses a blank AppShell and tells the builder to iterate", async () => {
+    const blank = `import { AppShell, Theme } from "@ocsc/ui";
+export default function App() {
+  return (
+    <Theme preset="evolve">
+      <AppShell title="Jobs" pages={[{ id: "overview", label: "Overview" }]} />
+    </Theme>
+  );
+}
+`;
+    const result = (await appTools.save_app!(
+      context().ctx,
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": blank } }),
+    )) as Result;
+    expect(String(result.error)).toContain("blank");
+    expect(String(result.next)).toMatch(/Do not present a blank/);
+    expect(result.unchanged).toBe(true);
+    expect(db.createAppPage).not.toHaveBeenCalled();
+    expect(publishMessage).not.toHaveBeenCalled();
   });
 
   it("refuses a save that takes the shell off an app that has it", async () => {

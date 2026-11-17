@@ -10,6 +10,7 @@ import {
   newerConversationVersion,
   studioAttachTarget,
 } from "./document-versions.js";
+import { annotateOfficeAttachFailure } from "./document-write-check.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";
 import type { RunContext } from "./run-context.js";
 import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
@@ -402,9 +403,9 @@ export const fileTools: ToolHandlers = {
     const { deps, run, bot, thread, context } = ctx;
     const { args, executionId } = call;
     const filePath = String(args.path ?? "");
-    const failAttach = async (error: string) => {
+    const failAttach = async (error: string, mimeType?: string) => {
       await recordComputerAction(ctx, call, "attach_file", filePath, { error });
-      return call.finish({ error, path: filePath });
+      return call.finish(annotateOfficeAttachFailure(filePath, error, mimeType));
     };
     if (!deps.artifacts) return failAttach("artifact storage unavailable");
     const storedPath = runFilePath(ctx, filePath);
@@ -418,6 +419,7 @@ export const fileTools: ToolHandlers = {
         error instanceof Error && /exceeds \d+ bytes/.test(error.message)
           ? `file is larger than the ${attachmentSizeLabel(maxBytes)} attachment limit; make a smaller copy (for example fewer or compressed images, or a PDF) and attach that`
           : "file not found",
+        inferAttachmentMimeType(filePath) ?? undefined,
       );
     }
     const mimeType = inferAttachmentMimeType(filePath);
@@ -455,7 +457,7 @@ export const fileTools: ToolHandlers = {
       await recordComputerAction(ctx, call, "attach_file", filePath);
       return call.finish({ ok: true, artifactId: attached.artifactId, path: filePath });
     } catch (error) {
-      return failAttach(error instanceof Error ? error.message : "could not attach file");
+      return failAttach(error instanceof Error ? error.message : "could not attach file", mimeType);
     }
   },
 };

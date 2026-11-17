@@ -56,7 +56,9 @@ import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
 import { useDocumentBotId, usePublishStudioToChat } from "./document-bot";
 import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { HistoryButton, VersionHistoryPanel } from "./history/VersionHistory";
+import { adoptLoadedVersion } from "./adopt-loaded-version";
 import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
+import { useApplyNewerVersion } from "./use-apply-newer-version";
 import { useDeleteOfficeDocument } from "./use-delete-document";
 import { useDocumentLoad } from "./use-document-load";
 import { useDocumentUpload } from "./use-document-upload";
@@ -205,14 +207,10 @@ export default function WordStudio({
       if (!loaded) return;
       const { detail, bytes, turn } = loaded;
       const shown = latest.current?.version ?? 0;
-      latest.current = {
-        artifactId: detail.latest.artifactId,
-        version: detail.latest.version,
-        name: detail.name,
-        versions: detail.versions,
-      };
       try {
-        if (!stillCurrent(turn)) return;
+        // Adopt only while this turn is current — same rule as Excel/PowerPoint — so flicking
+        // chat↔studio cannot leave the version pointer ahead of the editor.
+        if (!adoptLoadedVersion(latest, turn, stillCurrent, detail)) return;
         queue.current?.rebase(detail.latest.version);
         opened.current = null;
         void checkDocx(new Uint8Array(bytes)).then((issues) => {
@@ -340,17 +338,14 @@ export default function WordStudio({
     parse: keepBytes,
   });
   const newest = revision.data?.version;
-  useEffect(() => {
-    const shown = latest.current?.version;
-    const saves = queue.current;
-    if (newest === undefined || shown === undefined || newest <= shown || !saves) return;
-    const now = saves.state();
-    // Re-checked when the save finishes, so a version that arrived mid-save is not dropped.
-    if (now.status === "saving") return;
-    // Unsaved edits go first; the server then answers with a conflict and the newest version loads.
-    if (now.dirty) void saves.flush();
-    else void load("newer");
-  }, [newest, load, saveState?.status]);
+  const loadNewer = useCallback(() => load("newer"), [load]);
+  useApplyNewerVersion({
+    newest,
+    saveStatus: saveState?.status,
+    queue,
+    latest,
+    loadNewer,
+  });
 
   useEffect(() => {
     if (running && queue.current?.state().dirty) void queue.current.flush();

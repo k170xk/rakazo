@@ -126,9 +126,10 @@ export function formatSkillsCatalogInstruction(entries: SkillCatalogEntry[]): st
   if (entries.length === 0) return undefined;
   const lines = entries.slice(0, 50).map(skillCatalogLine).join("\n");
   return [
-    "Available Claude Agent Skills (SKILL.md recipes shared across assistants; generic how-tos, not account-specific routines). The Pi runtime already understands this format; we persist and inject them:",
+    "Available skills (SKILL.md). Each line is the name and when to use it. The body is not here; it loads when you call skill_read:",
     lines,
-    "When a skill matches the user's request, call skill_read for that name and follow it immediately. Prefer matching skills over improvising multi-step recipes.",
+    "When a skill matches the user's request, that is a blocking requirement: call skill_read for that name before any other response about the task. Then follow the skill. Where it disagrees with house style or your standing instructions about how to do the task, including voice, pronouns, openings and word choice, follow the skill. The user's request, approval rules and security boundaries still win. Prefer a matching skill over improvising.",
+    "A later message does not keep the skill body. If this chat already used a skill for the work you are continuing, call skill_read for it again before you change that work.",
     "Users can force a skill with /Name in the composer. Routines may mention a skill as @Name — that loads the skill at fire time.",
     "Create a skill with skill_create when a multi-step task is worth repeating (or when asked). After creating one, mention /Name so the user can open it.",
     "Only skill_update / skill_delete user-created skills (not builtin or plugin).",

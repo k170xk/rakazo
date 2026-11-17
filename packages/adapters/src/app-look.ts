@@ -281,3 +281,8 @@ export function lookProblems(report: AppLookReport): string[] {
     );
   return problems;
 }
+
+/** Blank or crashed screens — posting a chat card would hand the person a broken first look. */
+export function brokenAppLook(problems: string[]): boolean {
+  return problems.some((problem) => /shows nothing\.| page crashed:/i.test(problem));
+}

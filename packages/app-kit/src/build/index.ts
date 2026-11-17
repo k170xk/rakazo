@@ -405,9 +405,155 @@ const KEEP_APP_LOOK =
   "Keep AppShell, the @ocsc/ui import and <Theme /> and change the screens inside the shell. Do not replace the app with a hand-written layout. Nothing was saved.";
 
 const BLANK_SHELL =
-  "AppShell is on the page but its window is blank. Put each screen in pages={[{ id, label, render: () => (...) }]}, or between <AppShell> and </AppShell>. tabs, activeTab and onTabChange are not props. A self-closing <AppShell /> with the screens after it leaves them below a full-height empty shell. Nothing was saved.";
+  "AppShell is on the page but its window is blank. Put each screen in pages={[{ id, label, render: () => (...) }]}, or between <AppShell> and </AppShell>. tabs, activeTab, onTabChange, activePage and onPageChange are not props. A self-closing <AppShell /> with the screens after it leaves them below a full-height empty shell. pages without render: () => ... also hides the window. Nothing was saved.";
+
+/** Told to the builder after a refused or blank/broken save so it iterates like Lovable, not declaring done. */
+export const FIX_APP_BEFORE_READY =
+  "Fix this with save_app edits and call save_app again before telling the person the app is ready. Do not present a blank or broken version as done.";
+
+/**
+ * A `/.../` after an operator is a regular expression, so quotes inside it are not strings.
+ * `match(/'([^']*)'/)` is the case that otherwise hides a later `<AppShell`.
+ */
+function skipRegex(code: string, index: number): number {
+  if (code[index] !== "/" || code.startsWith("//", index) || code.startsWith("/*", index)) return index;
+  let previous = index - 1;
+  while (previous >= 0 && /\s/.test(code[previous]!)) previous--;
+  const before = code[previous] ?? "";
+  const keyword = /(?:^|[^$\w])(?:return|case|throw|typeof|void|delete|in|of)$/.test(code.slice(0, index));
+  if (previous >= 0 && !keyword && !/[=(\[{,;:!&|?~^]/.test(before)) return index;
+  let cursor = index + 1;
+  let klass = false;
+  while (cursor < code.length) {
+    const ch = code[cursor]!;
+    if (ch === "\\") {
+      cursor += 2;
+      continue;
+    }
+    if (ch === "[") klass = true;
+    else if (ch === "]") klass = false;
+    else if (ch === "/" && !klass) {
+      cursor += 1;
+      while (cursor < code.length && /[a-z]/i.test(code[cursor]!)) cursor += 1;
+      return cursor;
+    } else if (ch === "\n") return index;
+    cursor += 1;
+  }
+  return index;
+}
+
+/** A comment starts here. `://` stays text, so a web address is not a comment. */
+function skipComment(code: string, index: number): number {
+  if (code.startsWith("/*", index)) {
+    const end = code.indexOf("*/", index + 2);
+    return end < 0 ? code.length : end + 2;
+  }
+  if (code.startsWith("//", index) && code[index - 1] !== ":") {
+    const end = code.indexOf("\n", index + 2);
+    return end < 0 ? code.length : end + 1;
+  }
+  return index;
+}
 
 type Quote = '"' | "'" | "`" | null;
+
+/** Strip `//`, `/* *\/` and `{/* *\/}` so comment-only shell children are treated as empty. */
+function stripShellNoise(code: string): string {
+  let out = "";
+  let i = 0;
+  let quote: Quote = null;
+  while (i < code.length) {
+    if (quote) {
+      out += code[i];
+      if (code[i] === "\\" && i + 1 < code.length) {
+        out += code[i + 1];
+        i += 2;
+        continue;
+      }
+      if (code[i] === quote) quote = null;
+      i++;
+      continue;
+    }
+    const ch = code[i]!;
+    if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+      out += ch;
+      i++;
+      continue;
+    }
+    if (code.startsWith("{/*", i)) {
+      const end = code.indexOf("*/}", i + 3);
+      i = end < 0 ? code.length : end + 3;
+      continue;
+    }
+    const comment = skipComment(code, i);
+    if (comment !== i) {
+      i = comment;
+      continue;
+    }
+    out += ch;
+    i++;
+  }
+  return out;
+}
+
+/** The `{…}` value of `pages=` on an opening tag, or null when missing/unbalanced. */
+function pagesExpression(open: string): string | null {
+  const match = /\bpages\s*=\s*\{/.exec(open);
+  if (!match) return null;
+  const start = match.index + match[0].length - 1;
+  let depth = 0;
+  let quote: Quote = null;
+  for (let i = start; i < open.length; i++) {
+    const ch = open[i]!;
+    if (quote) {
+      if (ch === "\\") {
+        i++;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+      continue;
+    }
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return open.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+/** True when a binding or function named `name` in this file builds pages with `render:`. */
+function namedPagesHaveRender(name: string, fileCode: string): boolean {
+  const decl = new RegExp(`(?:const|let|var)\\s+${name}\\b[\\s\\S]{0,6000}?\\brender\\s*:`);
+  if (decl.test(fileCode)) return true;
+  const fn = new RegExp(
+    `(?:function\\s+${name}\\b|(?:const|let|var)\\s+${name}\\s*=\\s*(?:async\\s*)?(?:\\([^)]*\\)|[A-Za-z_$][\\w$]*)\\s*=>)[\\s\\S]{0,6000}?\\brender\\s*:`,
+  );
+  return fn.test(fileCode);
+}
+
+/** True when a pages expression (or the variable/function it names) supplies `render:` for screens. */
+function pagesSupplyRender(expr: string, fileCode: string): boolean {
+  if (/\brender\s*:/.test(expr)) return true;
+  const ident = /^\{\s*([A-Za-z_$][\w$]*)\s*\}$/.exec(expr);
+  if (ident) return namedPagesHaveRender(ident[1]!, fileCode);
+  // pages={makePages()} / pages={makePages(rows)} — follow the callee when it builds render:.
+  const call = /^\{\s*([A-Za-z_$][\w$]*)\s*\(/.exec(expr);
+  if (call) return namedPagesHaveRender(call[1]!, fileCode);
+  return false;
+}
+
+/** Whether this opening tag actually puts screens in the shell window. */
+function shellIsFilled(open: string, children: string, fileCode: string): boolean {
+  const pages = pagesExpression(open);
+  if (pages && pagesSupplyRender(pages, fileCode)) return true;
+  return stripShellNoise(children).trim().length > 0;
+}
 
 /** Opening `<AppShell` tags, and whether each one actually has screens to show. */
 function readAppShells(code: string): Array<{ filled: boolean }> {
@@ -430,23 +576,32 @@ function readAppShells(code: string): Array<{ filled: boolean }> {
       i++;
       continue;
     }
+    const comment = skipComment(code, i);
+    if (comment !== i) {
+      i = comment;
+      continue;
+    }
+    const pattern = skipRegex(code, i);
+    if (pattern !== i) {
+      i = pattern;
+      continue;
+    }
     if (code.startsWith("<AppShell", i) && !/[\w$]/.test(code[i - 1] ?? "")) {
       const openEnd = endOfOpeningTag(code, i);
       if (openEnd < 0) {
         shells.push({ filled: false });
         break;
       }
-      const open = code.slice(i, openEnd);
-      const hasPages = /\bpages\s*=/.test(open);
-      const selfClosing = code[openEnd - 1] === "/";
+      const open = code.slice(i, openEnd + 1);
+      const selfClosing = /\/\s*>$/.test(open);
       if (selfClosing) {
-        shells.push({ filled: hasPages && /\brender\b/.test(code) });
+        shells.push({ filled: shellIsFilled(open, "", code) });
         i = openEnd + 1;
         continue;
       }
       const closeAt = endOfAppShell(code, openEnd + 1);
       const children = closeAt < 0 ? "" : code.slice(openEnd + 1, closeAt);
-      shells.push({ filled: (hasPages && /\brender\b/.test(code)) || children.trim().length > 0 });
+      shells.push({ filled: shellIsFilled(open, children, code) });
       i = closeAt < 0 ? code.length : closeAt + "</AppShell>".length;
       continue;
     }
@@ -470,6 +625,16 @@ function endOfOpeningTag(code: string, start: number): number {
     }
     if (ch === '"' || ch === "'" || ch === "`") {
       quote = ch;
+      continue;
+    }
+    const comment = skipComment(code, i);
+    if (comment !== i) {
+      i = comment - 1;
+      continue;
+    }
+    const pattern = skipRegex(code, i);
+    if (pattern !== i) {
+      i = pattern - 1;
       continue;
     }
     if (ch === "{") brace++;
@@ -497,6 +662,16 @@ function endOfAppShell(code: string, from: number): number {
       quote = ch;
       continue;
     }
+    const comment = skipComment(code, i);
+    if (comment !== i) {
+      i = comment - 1;
+      continue;
+    }
+    const pattern = skipRegex(code, i);
+    if (pattern !== i) {
+      i = pattern - 1;
+      continue;
+    }
     if (code.startsWith("<AppShell", i) && !/[\w$]/.test(code[i - 1] ?? "")) {
       depth++;
       i += "<AppShell".length - 1;
@@ -515,14 +690,13 @@ function endOfAppShell(code: string, from: number): number {
 
 /** A shell tag with neither pages nor children draws a blank full-height window. */
 export function shellShowsScreens(files: AppFiles): string | null {
-  const code = Object.entries(files)
-    .filter(([name]) => /\.(tsx|ts|jsx|js)$/.test(name))
-    .map(([, text]) => text)
-    .join("\n");
-  if (!/<AppShell\b/.test(code)) return null;
-  const shells = readAppShells(code);
-  if (shells.length === 0 || shells.some((shell) => !shell.filled)) return BLANK_SHELL;
-  return null;
+  const blanks: string[] = [];
+  for (const [name, text] of Object.entries(files)) {
+    if (!/\.(tsx|ts|jsx|js)$/.test(name) || !/<AppShell\b/.test(text)) continue;
+    const shells = readAppShells(text);
+    if (shells.some((shell) => !shell.filled)) blanks.push(name);
+  }
+  return blanks.length ? `${blanks.join(", ")}: ${BLANK_SHELL}` : null;
 }
 
 /**

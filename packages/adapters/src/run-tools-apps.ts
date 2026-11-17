@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { appLookMarks, auditAppCraft, buildApp, keptAppLook } from "@rakazo/app-kit/build";
+import {
+  appLookMarks,
+  auditAppCraft,
+  buildApp,
+  FIX_APP_BEFORE_READY,
+  keptAppLook,
+} from "@rakazo/app-kit/build";
 import { APP_KIT_GUIDE } from "@rakazo/app-kit/guide";
 import { APP_KIT_GUIDE_EXTRAS } from "@rakazo/app-kit/guide-extras";
 import type { CalculatorImport } from "@rakazo/app-kit/import";
@@ -42,7 +48,7 @@ import {
 } from "@rakazo/db";
 import { findSimilarApps, similarAppNote } from "./app-duplicates.js";
 import { drawAppIconLater } from "./app-icon.js";
-import { canLookAtApps, lookAtApp, lookProblems } from "./app-look.js";
+import { brokenAppLook, canLookAtApps, lookAtApp, lookProblems } from "./app-look.js";
 import type { RunContext } from "./run-context.js";
 import { isUniqueViolation, publishMessage, redactBlocks, runLeaseFor } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
@@ -862,7 +868,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
           )
         : false;
     const look = keptAppLook(app ? app.files : null, files, { hadShell });
-    if (look) return { error: look, unchanged: true };
+    if (look) return { error: look, unchanged: true, next: FIX_APP_BEFORE_READY };
   }
   const tables: TableInput[] | string = hasTables
     ? parseTables(args.tables)
@@ -880,6 +886,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
         error: "The app has problems; nothing was saved.",
         problems: built.errors.slice(0, 20),
         unchanged: true,
+        next: FIX_APP_BEFORE_READY,
       };
     }
     code = built.html;
@@ -980,9 +987,19 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
       ? drawIcon(ctx, saved, !app && template && !iconSubject ? template.icon : iconSubject)
       : null;
   const updateSummary = app ? summarizeAppUpdate(args, tableResults.length) : undefined;
-  const cardError = codeChanged ? await postCard(ctx, saved, !app, updateSummary) : null;
   const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
+  // Look before posting the chat card so a blank/crashed first version is not handed to the person.
   const check = codeChanged && args.check !== false ? await runCheck(ctx, saved, files) : null;
+  const checkProblems = Array.isArray(check?.problems)
+    ? (check.problems as string[])
+    : ([] as string[]);
+  const checkCrashed =
+    typeof check?.runCheck === "string" && String(check.runCheck).startsWith("not run");
+  // Blank/crash look, or the checker itself dying — never hand the person a card as if ready.
+  const broken =
+    checkCrashed || (checkProblems.length > 0 && brokenAppLook(checkProblems));
+  const cardError =
+    codeChanged && !broken ? await postCard(ctx, saved, !app, updateSummary) : null;
   const totalRows = tableResults.reduce((sum, item) => sum + Number(item.rows ?? 0), 0);
   const craftNotes =
     codeChanged && args.check !== false
@@ -1014,6 +1031,13 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     ...(size ? { size } : {}),
     ...(icon ? { icon } : {}),
     ...(check ?? {}),
+    ...(broken
+      ? {
+          card: checkCrashed
+            ? "skipped — run check could not open the app; fix and save_app again before the person opens it"
+            : "skipped — blank or crashed screens; fix and save_app again before the person opens it",
+        }
+      : {}),
     ...(craftNotes.length
       ? {
           craftNotes,
@@ -1021,9 +1045,11 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
             "Address these craftNotes with save_app edits (and seed realistic is_sample starter rows if the app is empty) before replying, then inspect the main tabs + phone with app_look.",
         }
       : {}),
-    ...(cardError
-      ? { error: cardError }
-      : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
+    ...(broken
+      ? { next: FIX_APP_BEFORE_READY }
+      : cardError
+        ? { error: cardError }
+        : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
   };
 }
 
@@ -1086,7 +1112,9 @@ async function runCheck(
       ? {
           runCheck: "problems",
           problems,
-          next: "The app was saved, but these appear when it runs. Fix them with edits and save again.",
+          next: brokenAppLook(problems)
+            ? FIX_APP_BEFORE_READY
+            : "The app was saved, but these appear when it runs. Fix them with save_app edits and save again before telling the person it is ready.",
         }
       : {
           runCheck: `ran cleanly on ${look.report.pages.length || 1} page(s), desktop and phone`,
@@ -1094,8 +1122,14 @@ async function runCheck(
         };
   } catch (error) {
     if (ctx.context.signal.aborted) throw error;
+    const detail =
+      error instanceof Error ? error.message.slice(0, 200) : "unknown error";
     return {
-      runCheck: `not run (${error instanceof Error ? error.message.slice(0, 200) : "unknown error"})`,
+      runCheck: `not run (${detail})`,
+      problems: [
+        `The app could not be opened to check it (${detail}). Fix anything that might crash or blank the window, then save_app again.`,
+      ],
+      next: FIX_APP_BEFORE_READY,
     };
   }
 }

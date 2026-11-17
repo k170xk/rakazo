@@ -414,7 +414,8 @@ describe("skill prompt helpers", () => {
     ]);
     expect(line).toContain("- Daily standup: Prepare standup notes");
     expect(line).toContain("skill_read");
-    expect(line).toContain("Prefer matching skills");
+    expect(line).toContain("blocking requirement");
+    expect(line).toContain("follow the skill");
   });
 });
 

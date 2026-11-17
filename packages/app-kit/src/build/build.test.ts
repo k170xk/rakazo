@@ -5,9 +5,11 @@ import {
   buildApp,
   checkFiles,
   classCandidates,
+  FIX_APP_BEFORE_READY,
   inlineScript,
   keptAppLook,
   pluginBundle,
+  shellShowsScreens,
 } from "./index.js";
 
 const APP = `
@@ -196,5 +198,84 @@ describe("helpers", () => {
         }`,
     };
     expect(keptAppLook(null, paged)).toBeNull();
+  });
+
+  it("reads screens inside a shell even when a comment mentions an empty one", () => {
+    const studio = `import { AppShell, Theme } from "@ocsc/ui";
+      import { IfcView } from "@ocsc/ifc";
+      export default function App() {
+        return <Theme preset="evolve">
+          <AppShell title="IFC Studio">
+            {/* A self-closing <AppShell /> leaves the window blank. */}
+            <IfcView />
+          </AppShell>
+        </Theme>;
+      }`;
+    expect(shellShowsScreens({ "App.tsx": studio })).toBeNull();
+    expect(
+      shellShowsScreens({
+        "App.tsx": `import { AppShell } from "@ocsc/ui";
+          // <AppShell />
+          export default function App() { return <AppShell title="IFC"><p>Model</p></AppShell>; }`,
+      }),
+    ).toBeNull();
+    const empty = shellShowsScreens({
+      "Viewer.tsx": `export function Viewer() { return <AppShell title="IFC"><p>Model</p></AppShell>; }`,
+      "Shell.tsx": `export function Frame() { return <AppShell title="IFC" />; }`,
+    });
+    expect(empty).toContain("Shell.tsx");
+    expect(empty).not.toContain("Viewer.tsx");
+    const hiddenByRegex = `const q = /'((?:[^']|'')*)'/g;
+      export function App() { return <AppShell title="IFC Model Viewer"/><main>Elements</main>; }`;
+    expect(shellShowsScreens({ "App.tsx": hiddenByRegex })).toContain("App.tsx");
+  });
+
+  it("refuses pages without render even when the word render appears elsewhere", () => {
+    expect(FIX_APP_BEFORE_READY).toContain("save_app again");
+    const labelsOnly = `import { AppShell, Theme } from "@ocsc/ui";
+      // Remember: each page needs render: () => ...
+      export default function App() {
+        return <Theme preset="evolve">
+          <AppShell title="ITM" pages={[{ id: "overview", label: "Overview" }, { id: "board", label: "Board" }]} />
+        </Theme>;
+      }`;
+    expect(shellShowsScreens({ "App.tsx": labelsOnly })).toContain("blank");
+    const wrongProps = `import { AppShell, Theme } from "@ocsc/ui";
+      export default function App() {
+        const [page, setPage] = useState("overview");
+        return <Theme preset="evolve">
+          <AppShell title="ITM" activePage={page} onPageChange={setPage} tabs={["Overview"]} />
+          <main>Hidden under the shell</main>
+        </Theme>;
+      }`;
+    expect(shellShowsScreens({ "App.tsx": wrongProps })).toContain("blank");
+    const commentOnly = `import { AppShell, Theme } from "@ocsc/ui";
+      export default function App() {
+        return <Theme preset="evolve">
+          <AppShell title="ITM">{/* screens go here */}</AppShell>
+        </Theme>;
+      }`;
+    expect(shellShowsScreens({ "App.tsx": commentOnly })).toContain("blank");
+    const fromVar = `import { AppShell, Theme } from "@ocsc/ui";
+      const PAGES = [{ id: "overview", label: "Overview", render: () => <p>Hi</p> }];
+      export default function App() {
+        return <Theme preset="evolve"><AppShell title="ITM" pages={PAGES} /></Theme>;
+      }`;
+    expect(shellShowsScreens({ "App.tsx": fromVar })).toBeNull();
+    const varWithoutRender = `import { AppShell, Theme } from "@ocsc/ui";
+      function renderBoard() { return <p>Board</p>; }
+      const PAGES = [{ id: "overview", label: "Overview" }];
+      export default function App() {
+        return <Theme preset="evolve"><AppShell title="ITM" pages={PAGES} /></Theme>;
+      }`;
+    expect(shellShowsScreens({ "App.tsx": varWithoutRender })).toContain("blank");
+    const fromFn = `import { AppShell, Theme } from "@ocsc/ui";
+      function makePages() {
+        return [{ id: "overview", label: "Overview", render: () => <p>Hi</p> }];
+      }
+      export default function App() {
+        return <Theme preset="evolve"><AppShell title="ITM" pages={makePages()} /></Theme>;
+      }`;
+    expect(shellShowsScreens({ "App.tsx": fromFn })).toBeNull();
   });
 });

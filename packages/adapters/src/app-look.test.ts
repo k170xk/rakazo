@@ -4,9 +4,10 @@ import path from "node:path";
 import { PYTHON_FIXTURE_URL, PYTHON_RUNTIME } from "@rakazo/app-kit/python/runtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const publishMessage = vi.hoisted(() => vi.fn());
 vi.mock("./run-messages.js", async (importActual) => ({
   ...(await importActual<typeof import("./run-messages.js")>()),
-  publishMessage: vi.fn(),
+  publishMessage: (...args: unknown[]) => publishMessage(...args),
 }));
 
 const db = vi.hoisted(() => ({
@@ -21,7 +22,9 @@ vi.mock("@rakazo/db", async (importActual) => ({
   ...db,
 }));
 
-const { findPythonRuntime, lookAtApp, lookProblems, pythonFilesOf } = await import("./app-look.js");
+const { brokenAppLook, findPythonRuntime, lookAtApp, lookProblems, pythonFilesOf } = await import(
+  "./app-look.js"
+);
 const { appTools } = await import("./run-tools-apps.js");
 
 const APP = `import { AppShell, Theme } from "@ocsc/ui";
@@ -102,6 +105,7 @@ beforeEach(async () => {
   dataDir = await mkdtemp(path.join(tmpdir(), "app-look-"));
   runs = [];
   html = "";
+  publishMessage.mockReset();
   for (const fn of Object.values(db)) fn.mockReset();
   db.createAppPage.mockResolvedValue({ pageId: "app-1", version: 1, title: "Jobs" });
   db.appendAppVersion.mockResolvedValue({ version: 4, title: "Jobs" });
@@ -158,25 +162,28 @@ describe("lookAtApp", () => {
   });
 
   it("explains every kind of problem in a sentence", () => {
-    expect(
-      lookProblems({
-        ...CLEAN,
-        crashed: { page: "Board", message: "x is null" },
-        errors: [
-          { page: "Board", message: "TypeError: x is null" },
-          { page: "Jobs", message: "Warning: keys" },
-        ],
-        blank: ["Settings"],
-        overflow: [{ page: "Jobs", width: 720 }],
-        blocked: ["https://example.com/api"],
-      }),
-    ).toEqual([
+    const problems = lookProblems({
+      ...CLEAN,
+      crashed: { page: "Board", message: "x is null" },
+      errors: [
+        { page: "Board", message: "TypeError: x is null" },
+        { page: "Jobs", message: "Warning: keys" },
+      ],
+      blank: ["Settings"],
+      overflow: [{ page: "Jobs", width: 720 }],
+      blocked: ["https://example.com/api"],
+    });
+    expect(problems).toEqual([
       "The Board page crashed: x is null",
       "Error on Jobs: Warning: keys",
       "The Settings page shows nothing.",
       "On a phone the Jobs page is 720px wide and scrolls sideways; let it wrap or stack.",
       "The app tried the network (https://example.com/api); apps have none, so read data through @ocsc/app.",
     ]);
+    expect(brokenAppLook(problems)).toBe(true);
+    expect(brokenAppLook(["On a phone the Jobs page is 720px wide and scrolls sideways"])).toBe(
+      false,
+    );
   });
 
   it("names what breaks a page on a phone", () => {
@@ -204,6 +211,8 @@ describe("save_app run check", () => {
     )) as Result;
     expect(result.runCheck).toBe("ran cleanly on 1 page(s), desktop and phone");
     expect(result.pages).toEqual([{ id: "overview", label: "Overview" }]);
+    expect(publishMessage).toHaveBeenCalled();
+    expect(result.card).toBeUndefined();
   });
 
   it("returns what broke while keeping the save", async () => {
@@ -213,6 +222,20 @@ describe("save_app run check", () => {
     )) as Result;
     expect(result).toMatchObject({ appId: "app-1", version: 4, runCheck: "problems" });
     expect(result.problems).toEqual(["The Overview page crashed: boom"]);
+    expect(String(result.next)).toMatch(/save_app again/);
+    expect(String(result.card)).toMatch(/skipped/);
+    expect(publishMessage).not.toHaveBeenCalled();
+  });
+
+  it("skips the chat card when runCheck finds a blank window", async () => {
+    const result = (await appTools.save_app!(
+      context(runner({ ...CLEAN, blank: ["overview"] })),
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": APP } }),
+    )) as Result;
+    expect(result).toMatchObject({ appId: "app-1", version: 1, runCheck: "problems" });
+    expect(result.problems).toEqual(["The overview page shows nothing."]);
+    expect(String(result.next)).toMatch(/Do not present a blank/);
+    expect(publishMessage).not.toHaveBeenCalled();
   });
 
   it("skips the check when asked, and when only tables change", async () => {
@@ -224,7 +247,7 @@ describe("save_app run check", () => {
     expect(tool.run).not.toHaveBeenCalled();
   });
 
-  it("still saves when the runner fails", async () => {
+  it("still saves when the runner fails, but skips the card and forces iterate", async () => {
     const failing = { run: vi.fn(async () => ({ stdout: "", stderr: "no browser\n", code: 2 })) };
     const result = (await appTools.save_app!(
       context(failing),
@@ -232,6 +255,10 @@ describe("save_app run check", () => {
     )) as Result;
     expect(result.appId).toBe("app-1");
     expect(result.runCheck).toBe("not run (no browser)");
+    expect((result.problems as string[] | undefined)?.[0]).toMatch(/could not be opened to check/);
+    expect(String(result.next)).toMatch(/save_app again/);
+    expect(String(result.card)).toMatch(/skipped/);
+    expect(publishMessage).not.toHaveBeenCalled();
   });
 });
 

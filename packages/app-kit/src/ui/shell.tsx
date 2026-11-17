@@ -186,7 +186,7 @@ export function AppShell({
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.28, ease }}
         >
-          {page ? page.render() : children}
+          {typeof page?.render === "function" ? page.render() : children}
         </motion.div>
       </AnimatePresence>
     </main>

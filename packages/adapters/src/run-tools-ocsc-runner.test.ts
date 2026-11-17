@@ -29,7 +29,11 @@ function harness(options: {
   computerOff?: boolean;
   wordDocuments?: { name: string; path: string }[];
 }) {
-  const run = vi.fn(async () => ({ stdout: '{"ok":true}', stderr: "", code: 0 }));
+  const run = vi.fn(async () => ({
+    stdout: JSON.stringify({ ok: true, path: "outputs/doc.docx" }),
+    stderr: "",
+    code: 0,
+  }));
   const prepare = vi.fn(async () => {});
   const computerGet = vi.fn(async () => {
     throw new Error("the owner's computer must not start");
@@ -123,6 +127,26 @@ describe("documents a run has not sent yet", () => {
     );
     expect(h.state.documents.made).toEqual([]);
   });
+
+  it("tells the agent to fix and retry when an Excel write fails", async () => {
+    const h = harness({ documents: true });
+    h.run.mockResolvedValueOnce(
+      printed({ ok: false, error: "Excel refuses the file and may offer to repair it." }),
+    );
+    const result = await computerTools.ocsc!(
+      h.ctx,
+      h.call({
+        program: "xlsx",
+        args: ["edit", "--in", "outputs/a.xlsx", "--spec", "e.json"],
+      }) as never,
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      documentCheck: "problems",
+      next: expect.stringContaining("before telling the person the document is ready"),
+    });
+    expect(h.state.documents.made).toEqual([]);
+  });
 });
 
 describe("Word documents on a tool runner", () => {
@@ -187,7 +211,11 @@ describe("ocsc on a tool runner", () => {
       h.ctx,
       h.call({ program: "word", args: ["new", "--spec", "work/a.json"] }) as never,
     );
-    expect(result).toEqual({ stdout: '{"ok":true}', stderr: "", code: 0 });
+    expect(result).toEqual({
+      stdout: JSON.stringify({ ok: true, path: "outputs/doc.docx" }),
+      stderr: "",
+      code: 0,
+    });
     expect(h.prepare).toHaveBeenCalled();
     expect(h.run).toHaveBeenCalledWith(
       expect.objectContaining({ workspace, program: "word", owner: "owner" }),
