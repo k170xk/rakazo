@@ -186,7 +186,7 @@ export type CalcStepProps = {
   unit?: string;
   /** Rounding of the shown result (default 4 significant figures). */
   style?: NumberStyle;
-  /** Rounding of substituted values (default the same as the result). */
+  /** Rounding of substituted values (default 4 significant figures). */
   valueStyle?: NumberStyle;
   /** Code clause or source, e.g. "EN 1992-1-1 cl. 6.2.2". */
   reference?: ReactNode;
@@ -205,7 +205,7 @@ export function stepTex({
   valueStyle,
 }: CalcStepProps): string {
   const substituted =
-    substitution ?? (formula && values ? subst(formula, values, valueStyle ?? style) : undefined);
+    substitution ?? (formula && values ? subst(formula, values, valueStyle) : undefined);
   const final = texQty(result, unit, style);
   const lines = [formula, substituted, final].filter((line): line is string => Boolean(line));
   if (lines.join("").length <= 64) return `${symbol} = ${lines.join(" = ")}`;
@@ -353,9 +353,7 @@ export function calcPdfBlocks(rows: CalcRow[]): PdfBlock[] {
     } else if (row.kind === "step") {
       const substituted =
         row.substitution ??
-        (row.formula && row.values
-          ? subst(row.formula, row.values, row.valueStyle ?? row.style)
-          : undefined);
+        (row.formula && row.values ? subst(row.formula, row.values, row.valueStyle) : undefined);
       const line = [row.symbol, row.formula, substituted, texQty(row.result, row.unit, row.style)]
         .filter(Boolean)
         .join(" = ");

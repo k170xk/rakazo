@@ -95,7 +95,7 @@ export function PolarPlot({
                     fill="none"
                     stroke={RULE}
                   />
-                  <text x={px(cx + 3)} y={px(cy - (r / outer) * radius - 3)}>
+                  <text x={px(at(step / 2, r)[0] + 2)} y={px(at(step / 2, r)[1] - 2)}>
                     {format(r)}
                   </text>
                 </g>
@@ -110,7 +110,7 @@ export function PolarPlot({
                       x={px(lx)}
                       y={px(ly + 3.5)}
                       textAnchor="middle"
-                    >{`${fmt(deg, { dp: 0 })}°`}</text>
+                    >{`${fmt(deg, { sf: 4 })}°`}</text>
                   </g>
                 );
               })}

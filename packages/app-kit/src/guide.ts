@@ -179,7 +179,7 @@ Engineers check and sign these apps, so:
 - Write the rows once as \`CalcRow\` data: \`<CalcRows rows={rows} />\` shows them and \`calcPdfBlocks(rows)\` prints them through PrintButton. \`texText(latex)\` gives plain text.
 - With @ocsc/calc too, \`import { CalcSheet as CalcPad } from "@ocsc/math"\` (both export CalcSheet).
 
-@ocsc/plot (SVG in theme colours; prints light; each has an SVG download):
+@ocsc/plot (SVG in theme colours; prints light; \`exportName\` adds an SVG download):
 - \`<Plot series={[{ name, data: [[x, y]], type: "line" | "scatter" | "area" | "bar" | "step", axis: "right", color: 1-6 or a tone, dash, marker }]} x={{ label, unit, scale: "log", min, max }} y={...} y2={...} annotations={[{ type: "hline", y, label, tone: "danger" }, { type: "band", y: [a, b] }, { type: "point", x, y, label }]} equal />\`
 - \`<ContourPlot grid={{ x, y, z }} levels zLabel />\`, \`<PolarPlot series={[{ name, data: [[deg, r]] }]} />\`, \`<InteractionDiagram curve={[[M, N]]} points={[{ M, N, label }]} />\`.
 - \`<BeamResults beam result />\` (loads, shear, moment and deflection aligned), \`<BeamDiagram>\`, \`<ForceDiagram>\`, \`<SectionDrawing shape bars link />\`, and \`<Drawing bounds={[x0, y0, x1, y1]} units="mm">\` at true scale with DrawingLine, DrawingPoly, DrawingCircle, DrawingText and \`<Dim from to offset label />\`.
@@ -271,6 +271,7 @@ export default function App() {
       <Theme preset="crisp" />
       <AppShell
         title="RC beam"
+        commands={[{ id: "span-8", label: "Try an 8 m span", group: "Inputs", run: () => setSpan(8) }]}
         actions={
           <PrintButton
             size="sm"

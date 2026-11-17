@@ -37,6 +37,7 @@ import {
   Monitor,
   Receipt,
   Repeat,
+  ScrollText,
   Server,
   Share2,
   ShieldCheck,
@@ -72,6 +73,7 @@ import { WindowChrome } from "./WindowChrome";
 const ADMIN_SECTIONS = [
   "models",
   "features",
+  "skills",
   "integrations",
   "mcp",
   "chat",
@@ -142,6 +144,7 @@ function CompanyAdminPanels() {
   const nav: { id: AdminSection; label: string; icon: LucideIcon }[] = [
     { id: "models", label: t`Model`, icon: Cpu },
     { id: "features", label: t`Features`, icon: ToggleRight },
+    { id: "skills", label: t`Staff skills`, icon: ScrollText },
     { id: "integrations", label: t`Connectors`, icon: LayoutGrid },
     { id: "mcp", label: t`MCP servers`, icon: Server },
     { id: "chat", label: t`Chat`, icon: MessageSquare },
@@ -188,6 +191,8 @@ function CompanyAdminPanels() {
             ) : null}
           </div>
         );
+      case "skills":
+        return <CompanyStaffSkillsSection state={data} onSaved={saved} />;
       case "integrations":
         return <CompanyAppsSection state={data} onSaved={saved} />;
       case "mcp":
@@ -537,6 +542,34 @@ function CompanyModelSection({
 
 type FeatureGroup = "models" | "computers" | "apps" | "people";
 
+function CompanyStaffSkillsSection({
+  state,
+  onSaved,
+}: {
+  state: CompanyAdminState;
+  onSaved: (next: CompanyAdminState) => Promise<void>;
+}) {
+  const { t } = useLingui();
+  return (
+    <Section
+      title={t`Staff skills`}
+      description={t`Staff can write their own skills and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch. Connectors stay on the list you enable.`}
+    >
+      <CompanySwitchList
+        rows={[
+          {
+            id: "staffSkills",
+            label: t`Staff skills`,
+            description: t`Turn this on, then choose who can write their own skills.`,
+          },
+        ]}
+        state={state}
+        onSaved={onSaved}
+      />
+    </Section>
+  );
+}
+
 function CompanyFeaturesSection({
   state,
   onSaved,
@@ -593,12 +626,6 @@ function CompanyFeaturesSection({
       group: "people",
       label: t`Export, import and delete accounts`,
       description: t`People see a Data section in their settings to export or import their account, import agents from other apps and delete their account.`,
-    },
-    {
-      id: "staffSkills",
-      group: "people",
-      label: t`Staff skills`,
-      description: t`Staff can write their own skills and add them from GitHub. Off: only admins see those, and you add the skills. Each OCSC tool and built-in skill still has its own switch. Connectors stay on the list you enable.`,
     },
     {
       id: "personalVault",

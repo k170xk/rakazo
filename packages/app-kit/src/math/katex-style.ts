@@ -55,7 +55,8 @@ export function katexStylesheet(css: unknown = katexCss, fonts: FontFile[] = FON
       (font) =>
         `@font-face{font-family:${font.family};font-style:${font.style};font-weight:${font.weight};font-display:block;src:url(data:font/woff2;base64,${base64(font.bytes as Uint8Array)}) format("woff2")}`,
     );
-  return `${faces.join("")}${rules}${PRINT}`;
+  // In the kit's components layer so Tailwind utilities (left-aligned display maths) still win.
+  return `${faces.join("")}@layer components{${rules}${PRINT}}`;
 }
 
 let injected = false;

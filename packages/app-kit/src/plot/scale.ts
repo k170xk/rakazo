@@ -69,8 +69,14 @@ export function logTicks(min: number, max: number): { major: number[]; minor: nu
 /** One label format for a whole axis: the same decimals on every tick, powers of ten when huge or tiny. */
 export function tickFormat(ticks: readonly number[]): (value: number) => string {
   const largest = Math.max(0, ...ticks.map(Math.abs));
-  if (largest >= 1e6 || (largest > 0 && largest < 1e-3))
-    return (value) => fmt(value, { sf: 3, sciAbove: 5, sciBelow: -3 });
+  const smallest = Math.min(...ticks.filter((t) => t !== 0).map(Math.abs));
+  if (largest >= 1e6 || (largest > 0 && smallest < 1e-3)) {
+    const exponents = ticks
+      .filter((t) => t !== 0)
+      .map((t) => Math.floor(Math.log10(Math.abs(t)) + 1e-9));
+    const all = { sciAbove: Math.min(...exponents) - 1, sciBelow: Math.max(...exponents) + 1 };
+    return (value) => fmt(value, { sf: 3, ...all });
+  }
   const decimals = Math.min(
     6,
     Math.max(0, ...ticks.map((t) => (tidy(t).toString().split(".")[1] ?? "").length)),

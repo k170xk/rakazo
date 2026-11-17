@@ -3,11 +3,14 @@ import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
+import type { CalcRow } from "./index.js";
 import {
+  CalcRows,
   CalcSheet,
   CalcStep,
   Check,
   CheckSummary,
+  calcPdfBlocks,
   checkTex,
   renderTex,
   stepTex,
@@ -15,6 +18,7 @@ import {
   Tex,
   texNum,
   texQty,
+  texText,
   texUnit,
 } from "./index.js";
 import { katexStylesheet } from "./katex-style.js";
@@ -144,5 +148,85 @@ describe("stylesheet", () => {
     expect(out).not.toContain("fonts/");
     expect(out).toContain("url(data:font/woff2;base64,d09GMg==)");
     expect(out).toContain(".katex{font:normal 1.21em KaTeX_Main}");
+    expect(out).toMatch(/^@font-face[\s\S]*@layer components\{\.katex/);
+  });
+});
+
+describe("plain text and PDF", () => {
+  it("writes LaTeX as readable text, Latin-1 only when asked", () => {
+    expect(texText("M_{Ed} = \\frac{w L^2}{8}")).toBe("M_Ed = (w L²)/8");
+    expect(texText("\\gamma_c \\le \\sqrt{f_{ck}} \\times 10^{-6}")).toBe("γ_c ≤ √(f_ck) × 10⁻⁶");
+    expect(texText("\\gamma_c \\le \\sqrt{f_{ck}} \\times 10^{-6}", { latin: true })).toBe(
+      "gamma_c <= sqrt(f_ck) × 10^(-6)",
+    );
+    expect(texText("A_1 = \\left(1 + x\\right) \\mathrm{mm^{2}}", { latin: true })).toBe(
+      "A_1 = (1 + x) mm²",
+    );
+    expect(texText("\\begin{aligned} a &= b \\\\ &= c \\end{aligned}")).toBe("a = b\n= c");
+  });
+
+  it("rounds substituted values on their own, not with the result", () => {
+    const tex = stepTex({
+      symbol: "K",
+      formula: "\\frac{M}{b d^2}",
+      values: { M: 112.5e6, b: 300, d: 500 },
+      result: 0.05,
+      style: { dp: 3 },
+    });
+    expect(tex).toContain("300 \\times 500^2");
+    expect(tex).toContain("0.050");
+  });
+
+  it("prints the same rows the sheet shows", () => {
+    const rows: CalcRow[] = [
+      { kind: "section", title: "Bending", reference: "EN 1992-1-1 6.1" },
+      { kind: "note", text: "Simply supported." },
+      {
+        kind: "step",
+        label: "Design moment",
+        symbol: "M_{Ed}",
+        formula: "\\frac{w L^2}{8}",
+        values: { w: 12.5, L: 6 },
+        result: 56.25,
+        unit: "kNm",
+        reference: "EN 1990",
+      },
+      {
+        kind: "check",
+        label: "Bending",
+        symbol: "M_{Ed}",
+        limitSymbol: "M_{Rd}",
+        value: 56.25,
+        limit: 50,
+        unit: "kNm",
+      },
+    ];
+    expect(calcPdfBlocks(rows)).toEqual([
+      { type: "subheading", text: "Bending (EN 1992-1-1 6.1)" },
+      {
+        type: "table",
+        columns: [
+          { label: "Ref", width: 26 },
+          "Calculation",
+          { label: "Output", align: "right", width: 44 },
+        ],
+        rows: [
+          ["", "Simply supported.", ""],
+          [
+            "EN 1990",
+            "Design moment\nM_Ed = (w L²)/8 = (12.5 × 6²)/8 = 56.25 kNm",
+            "M_Ed = 56.25 kNm",
+          ],
+          ["", "Bending\nM_Ed = 56.25 kNm > M_Rd = 50 kNm", "Fail 1.13"],
+        ],
+      },
+    ]);
+    const el = render(
+      <CalcSheet title="B1">
+        <CalcRows rows={rows} />
+      </CalcSheet>,
+    );
+    expect(el.textContent).toContain("Simply supported.");
+    expect(el.textContent).toContain("Fail 1.13");
   });
 });

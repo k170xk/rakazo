@@ -149,7 +149,17 @@ export function DrawingLine({
   );
 }
 
-export type Fill = "none" | "hatch" | "concrete" | "steel" | "timber" | "soil" | "card" | PlotColor;
+/** "solid" is opaque ink (rebar, bolts); colours are translucent washes. */
+export type Fill =
+  | "none"
+  | "hatch"
+  | "concrete"
+  | "steel"
+  | "timber"
+  | "soil"
+  | "card"
+  | "solid"
+  | PlotColor;
 
 function fillOf(
   fill: Fill | undefined,
@@ -161,6 +171,8 @@ function fillOf(
       return { fill: "none", opacity: 1, hatch: false };
     case "hatch":
       return { fill: `url(#${hatch})`, opacity: 1, hatch: false };
+    case "solid":
+      return { fill: INK, opacity: 1, hatch: false };
     case "card":
       return { fill: "hsl(var(--card))", opacity: 1, hatch: false };
     case "concrete":
@@ -493,7 +505,7 @@ export function SectionDrawing({
       )}
       {link && <LinkOutline shape={shape} link={link} />}
       {bars.map((bar, i) => (
-        <DrawingCircle key={i} c={[bar.x, bar.y]} r={bar.d / 2} fill="foreground" width={0} />
+        <DrawingCircle key={i} c={[bar.x, bar.y]} r={bar.d / 2} fill="solid" width={0} />
       ))}
       {dims && (
         <>

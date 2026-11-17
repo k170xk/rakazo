@@ -399,7 +399,7 @@ export function ForceDiagram({
     <PlotBox height={height} exportName={exportName} className={className}>
       {(width, svgRef) => {
         const sx = span(width, L);
-        const top = 24;
+        const top = label ? 36 : 24;
         const bottom = height - 18;
         const range = max - min || 1;
         const sign = invert ? -1 : 1;
