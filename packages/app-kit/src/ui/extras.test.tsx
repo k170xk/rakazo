@@ -8,6 +8,7 @@ import { Markdown } from "./content.js";
 import { KpiCard, Sparkline } from "./kpi.js";
 import { isoDate, matchesWords } from "./pickers.js";
 import { RecordDetail, RecordForm, TableView } from "./records.js";
+import { AppShell } from "./shell.js";
 import { AudioPlayer, ImageViewer, SketchPad, SplitPane, VideoPlayer } from "./studio-media.js";
 import { Theme, themeCss } from "./theme.js";
 import { ActionList, CalendarMonth, Kanban } from "./views.js";
@@ -178,6 +179,21 @@ describe("SampleBanner, Callout and hidden columns", () => {
     );
     expect(board).toContain("Duct clash");
     expect(board).toContain("Done");
+  });
+
+  it("draws page icons given by name instead of printing the name", () => {
+    const html = renderToStaticMarkup(
+      <AppShell
+        title="Study"
+        pages={[
+          { id: "overview", label: "Overview", icon: "home", render: () => <p>Hi</p> },
+          { id: "cards", label: "Cards", icon: "sparkle-unknown", render: () => <p>Cards</p> },
+        ]}
+      />,
+    );
+    expect(html).not.toContain("homeOverview");
+    expect(html).not.toContain("sparkle-unknown");
+    expect(html).toContain("<svg");
   });
 
   it("names the components a crash happened in", () => {

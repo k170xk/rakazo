@@ -159,6 +159,16 @@ describe("helpers", () => {
     expect(notes.some((note) => note.includes("0 rows"))).toBe(true);
   });
 
+  it("flags theme tokens used as colours without hsl()", () => {
+    const app = (style: string) => ({
+      "App.tsx": `export default function App() { return <button style={${style}}>Go</button>; }`,
+    });
+    const bare = auditAppCraft(app(`{ background: "var(--accent, #fff)", color: "var(--primary-foreground)" }`));
+    expect(bare.find((note) => note.includes("bare HSL"))).toContain("var(--accent)");
+    const wrapped = auditAppCraft(app(`{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }`));
+    expect(wrapped.some((note) => note.includes("bare HSL"))).toBe(false);
+  });
+
   it("keeps a new app and a later save inside the OCSC shell", () => {
     const shell = {
       "App.tsx": `import { AppShell, Theme } from "@ocsc/ui";

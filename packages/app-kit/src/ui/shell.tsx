@@ -1,4 +1,26 @@
-import { Search } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  Box,
+  Building2,
+  Calculator,
+  Calendar,
+  ClipboardCheck,
+  FileText,
+  Folder,
+  Home,
+  Image,
+  Layers,
+  LayoutDashboard,
+  List,
+  Map as MapIcon,
+  Pencil,
+  Search,
+  Settings,
+  Table2,
+  Users,
+  Wrench,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { ErrorInfo, ReactNode } from "react";
 import { Component, useId, useState } from "react";
@@ -6,6 +28,52 @@ import { describeCrash, reportCrash, useApp, useAsset } from "../sdk/index.js";
 import { cn, ease, stagger } from "./cn.js";
 import type { Command } from "./command.js";
 import { CommandPalette } from "./command.js";
+
+const NAMED_ICONS: Record<string, typeof Home> = {
+  home: Home,
+  overview: LayoutDashboard,
+  dashboard: LayoutDashboard,
+  layers: Layers,
+  list: List,
+  register: List,
+  edit: Pencil,
+  pencil: Pencil,
+  settings: Settings,
+  chart: BarChart3,
+  charts: BarChart3,
+  analytics: BarChart3,
+  calendar: Calendar,
+  file: FileText,
+  files: FileText,
+  document: FileText,
+  users: Users,
+  people: Users,
+  team: Users,
+  map: MapIcon,
+  book: BookOpen,
+  table: Table2,
+  box: Box,
+  model: Box,
+  cube: Box,
+  folder: Folder,
+  checklist: ClipboardCheck,
+  check: ClipboardCheck,
+  calculator: Calculator,
+  calc: Calculator,
+  image: Image,
+  photos: Image,
+  tools: Wrench,
+  building: Building2,
+  search: Search,
+};
+
+/** An icon given by name ("home", "book-open") draws the matching glyph, never the word itself. */
+function navIcon(icon: ReactNode): ReactNode {
+  if (typeof icon !== "string") return icon;
+  const name = icon.toLowerCase().split(/[-_\s]/)[0] ?? "";
+  const Glyph = NAMED_ICONS[name];
+  return Glyph ? <Glyph aria-hidden /> : null;
+}
 
 export type AppPage = {
   id: string;
@@ -207,7 +275,10 @@ export function AppShell({
   const nav = Array.isArray(givenNav) ? givenNav : undefined;
   const [own, setOwn] = useState(pages?.[0]?.id ?? "");
   const [searching, setSearching] = useState(false);
-  const items: NavItem[] = pages ?? nav ?? [];
+  const items: NavItem[] = (pages ?? nav ?? []).map((item) => ({
+    ...item,
+    icon: navIcon(item.icon),
+  }));
   const current = active ?? own;
   const navigate = (id: string) => {
     setOwn(id);
@@ -258,7 +329,7 @@ export function AppShell({
             !wide && "max-w-[1320px]",
           )}
         >
-          <Mark icon={icon} />
+          <Mark icon={navIcon(icon) ?? undefined} />
           <div className="min-w-0">
             <h1 className="truncate text-[15px] leading-tight font-bold tracking-tight">{title}</h1>
             {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}

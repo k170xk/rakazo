@@ -375,6 +375,9 @@ const LIGHT_ONLY_CLASS =
 const OFF_BRAND_CLASS =
   /\b(?:bg|text|border|ring)-(?:blue|indigo|purple|violet|fuchsia)-\d{2,3}\b/g;
 const HEX_COLOR = /#[0-9a-fA-F]{6}\b/g;
+/** Theme tokens hold "95 49% 51%", so they only make a colour inside hsl(). */
+const BARE_TOKEN =
+  /(?<!hsla?\(\s*)var\(--(?:primary|secondary|accent|background|foreground|card|popover|muted|border|input|ring|destructive|success|warning|danger|info|surface)(?:-foreground)?\b/g;
 const KIT_VISUAL =
   /\b(?:AreaChart|BarChart|LineChart|DonutChart|BarList|FunnelChart|ScatterChart|CalendarHeatmap|Heatmap|Gauge|Ring|Sparkline)\b/;
 const KIT_WORKFLOW =
@@ -763,6 +766,14 @@ export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}):
   if (hexHits.length) {
     notes.push(
       `Hardcoded hex colours (${hexHits.join(", ")}) bypass light/dark themes; use <Theme />, hsl(var(--primary)), bg-primary/12, text-primary or CHART_COLORS.`,
+    );
+  }
+  const bareTokens = [...new Set(`${code}\n${styles}`.match(BARE_TOKEN) ?? [])]
+    .slice(0, 3)
+    .map((token) => `${token})`);
+  if (bareTokens.length) {
+    notes.push(
+      `${bareTokens.join(", ")} holds bare HSL numbers, not a colour, so that background or text paints nothing (white buttons on white). Wrap it: hsl(var(--primary)) is the brand green, hsl(var(--primary) / 0.12) a tint; --accent is a pale hover grey, not the brand colour.`,
     );
   }
   // A calculator's pages, visuals and rows come from its workbook; the register-app checks don't fit it.
