@@ -22,7 +22,8 @@ import {
   scaffoldApp,
 } from "@rakazo/app-kit/import";
 import { APP_TEMPLATES, findTemplate } from "@rakazo/app-kit/templates";
-import { newTypeErrors, type TypeProblem, typecheckApp } from "@rakazo/app-kit/typecheck";
+import type { TypeProblem } from "@rakazo/app-kit/typecheck";
+import { newTypeErrors, typecheckApp } from "@rakazo/app-kit/typecheck";
 import { PAGE_TITLE_MAX_LENGTH, PageTitleSchema } from "@rakazo/contracts";
 import { containsEncodedSecret, containsSecret, redactSecrets } from "@rakazo/core";
 import {
@@ -57,6 +58,7 @@ import { brokenAppLook, canLookAtApps, lookAtApp, lookProblems } from "./app-loo
 import type { RunContext } from "./run-context.js";
 import { isUniqueViolation, publishMessage, redactBlocks, runLeaseFor } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
+import { showWorkingLine } from "./run-tools-computer.js";
 import { personEmail } from "./run-tools-evolve-plugins.js";
 import { runFilePath, runFiles } from "./run-tools-files.js";
 import { argumentGiven } from "./update-bot-patch.js";
@@ -913,6 +915,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     code = built.html;
     warnings = built.warnings;
     size = appSize(built);
+    working(ctx, "Checking the code against the OCSC kit");
     const typed = await kitMisuse(files, app?.files ?? null);
     if (typed.added.length) {
       return {
@@ -1020,6 +1023,8 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   const updateSummary = app ? summarizeAppUpdate(args, tableResults.length) : undefined;
   const linkText = saved.title.replace(/[\\[\]]/g, "\\$&");
   // Look before posting the chat card so a blank/crashed first version is not handed to the person.
+  if (codeChanged && args.check !== false)
+    working(ctx, "Opening the app to try every page on desktop and phone");
   const check = codeChanged && args.check !== false ? await runCheck(ctx, saved, files) : null;
   const checkProblems = Array.isArray(check?.problems)
     ? (check.problems as string[])
@@ -1092,6 +1097,15 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   };
 }
 
+/** Shows what a long save is doing on the chat's working line; never fails the save. */
+function working(ctx: RunContext, text: string) {
+  try {
+    showWorkingLine(ctx, text);
+  } catch {
+    // A run without a live thread (tests, imports) has no working line to update.
+  }
+}
+
 /** Every kit misuse the check finds, so the previous files' problems are matched in full. */
 const ALL_TYPE_ERRORS = 200;
 
@@ -1151,6 +1165,7 @@ async function afterBrokenSave(
     select: { source: true, code: true },
   });
   if (!stored) return { shown };
+  working(ctx, `Putting back version ${good}, the last one that worked`);
   let restored: { version: number };
   try {
     restored = await appendAppVersion(prisma, {

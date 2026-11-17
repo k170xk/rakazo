@@ -416,7 +416,7 @@ function rememberStudioOutput(ctx: RunContext, result: unknown) {
  * The chat's working line ("Working…"), which shows even with Activity switched off. Nobody
  * watches a routine or background run, and the bot's own note keeps the line until it writes.
  */
-function showWorkingLine(ctx: RunContext, text: string) {
+export function showWorkingLine(ctx: RunContext, text: string) {
   const { deps, run, runId, bot, thread } = ctx;
   if (
     run.trigger === "routine" ||
