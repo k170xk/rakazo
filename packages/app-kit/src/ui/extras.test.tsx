@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { Callout, SampleBanner } from "./basic.js";
+import { describeCrash } from "../sdk/index.js";
+import { Callout, SampleBanner, Tabs } from "./basic.js";
+import { CalendarHeatmap } from "./insights.js";
 import { AreaChart, BarChart, DonutChart, LineChart } from "./charts.js";
 import { Markdown } from "./content.js";
 import { KpiCard, Sparkline } from "./kpi.js";
@@ -144,6 +146,27 @@ describe("SampleBanner, Callout and hidden columns", () => {
   it("renders nothing instead of crashing when given table names", () => {
     const names = ["counter_activity"] as unknown as Parameters<typeof SampleBanner>[0]["tables"];
     expect(renderToStaticMarkup(<SampleBanner tables={names} />)).toBe("");
+  });
+
+  it("reads the shapes apps guess for Tabs and CalendarHeatmap", () => {
+    const tabs = [{ id: "list", label: "List" }, { id: "board", label: "Board" }];
+    const html = renderToStaticMarkup(
+      // @ts-expect-error tabs/id is the AppShell pages shape apps reuse
+      <Tabs value="board" onChange={() => {}} tabs={tabs} />,
+    );
+    expect(html).toContain("Board");
+    expect(html).toContain('aria-selected="true"');
+    const heat = renderToStaticMarkup(
+      // @ts-expect-error data/date/value is the chart shape apps reuse
+      <CalendarHeatmap data={[{ date: "2026-11-02", value: 3 }]} />,
+    );
+    expect(heat).toContain("flex flex-col gap-2");
+  });
+
+  it("names the components a crash happened in", () => {
+    const stack = "\n    at Gi (x)\n    at Tabs (x)\n    at PageBody (x)\n    at PageBoundary (x)\n    at Overview (x)";
+    expect(describeCrash(new Error("boom"), stack)).toBe("boom in Tabs < Overview");
+    expect(describeCrash(new Error("boom"), null)).toBe("boom");
   });
 
   it("KpiCard draws only numeric trends and never crashes on a word or object", () => {

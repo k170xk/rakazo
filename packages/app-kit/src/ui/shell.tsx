@@ -1,8 +1,8 @@
 import { Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import type { ReactNode } from "react";
-import { useId, useState } from "react";
-import { useApp, useAsset } from "../sdk/index.js";
+import type { ErrorInfo, ReactNode } from "react";
+import { Component, useId, useState } from "react";
+import { describeCrash, reportCrash, useApp, useAsset } from "../sdk/index.js";
 import { cn, ease, stagger } from "./cn.js";
 import type { Command } from "./command.js";
 import { CommandPalette } from "./command.js";
@@ -136,6 +136,56 @@ function Mark({ icon }: { icon?: ReactNode }) {
   );
 }
 
+/** Apps often write commands as { label, action } or { label, onSelect }; the palette runs those too. */
+function commandOf(given: Command, index: number): Command {
+  const loose = given as Command & { action?: unknown; onSelect?: unknown; onClick?: unknown };
+  const run = [loose.run, loose.action, loose.onSelect, loose.onClick].find(
+    (item): item is () => void => typeof item === "function",
+  );
+  return {
+    ...given,
+    id: given.id ?? `command:${index}:${String(given.label ?? "")}`,
+    label: String(given.label ?? ""),
+    run: run ?? (() => undefined),
+  };
+}
+
+function PageBody({ render }: { render: () => ReactNode }) {
+  return <>{render()}</>;
+}
+
+/**
+ * Keeps a crash inside the page it happened on, so the bar and the other pages still work, and
+ * reports it the way the app check reads crashes.
+ */
+class PageBoundary extends Component<
+  { label?: ReactNode; children: ReactNode },
+  { error: Error | null; where: string }
+> {
+  override state = { error: null as Error | null, where: "" };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  override componentDidCatch(error: Error, info: ErrorInfo) {
+    const label = typeof this.props.label === "string" ? this.props.label : "this";
+    const where = describeCrash(error, info.componentStack);
+    this.setState({ where });
+    reportCrash(`The ${label} page crashed: ${where}`);
+  }
+  override render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6" role="alert">
+        <p className="text-base font-semibold">This page hit a problem</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {this.state.where || this.state.error.message}
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground">The other pages still work.</p>
+      </div>
+    );
+  }
+}
+
 /**
  * The frame every app sits in: a frosted top bar with the app's name, tabs that slide, and the
  * page area, which fades between pages.
@@ -145,14 +195,16 @@ export function AppShell({
   subtitle,
   icon,
   actions,
-  pages,
-  nav,
+  pages: givenPages,
+  nav: givenNav,
   active,
   onNavigate,
   wide,
   commands,
   children,
 }: ShellProps) {
+  const pages = Array.isArray(givenPages) ? givenPages.filter(Boolean) : undefined;
+  const nav = Array.isArray(givenNav) ? givenNav : undefined;
   const [own, setOwn] = useState(pages?.[0]?.id ?? "");
   const [searching, setSearching] = useState(false);
   const items: NavItem[] = pages ?? nav ?? [];
@@ -173,7 +225,7 @@ export function AppShell({
           icon: item.icon,
           run: () => navigate(item.id),
         })),
-        ...(Array.isArray(commands) ? commands : []),
+        ...(Array.isArray(commands) ? commands.filter(Boolean).map(commandOf) : []),
       ]
     : null;
   const content = (
@@ -186,7 +238,9 @@ export function AppShell({
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.28, ease }}
         >
-          {typeof page?.render === "function" ? page.render() : children}
+          <PageBoundary key={page?.id ?? "main"} label={page?.label}>
+            {typeof page?.render === "function" ? <PageBody render={page.render} /> : children}
+          </PageBoundary>
         </motion.div>
       </AnimatePresence>
     </main>

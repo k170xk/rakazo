@@ -347,15 +347,7 @@ const isoDay = (time: number) => new Date(time).toISOString().slice(0, 10);
  * A year of days as squares, darker where more happened (site visits, timesheet hours, issues
  * raised): rows counted per day, or `valueKey` summed.
  */
-export function CalendarHeatmap({
-  rows,
-  dateKey,
-  valueKey,
-  weeks = 52,
-  format,
-  label = "on",
-  onSelect,
-}: {
+export function CalendarHeatmap(props: {
   rows: AnyRow[];
   dateKey: string;
   valueKey?: string;
@@ -364,6 +356,13 @@ export function CalendarHeatmap({
   label?: string;
   onSelect?: (day: string, rows: AnyRow[]) => void;
 }) {
+  const { weeks = 52, format, label = "on", onSelect } = props;
+  // Apps often pass data={[{ date, value }]} like the charts; read that shape too.
+  const given = props as { data?: unknown };
+  const fromData = !Array.isArray(props.rows) && Array.isArray(given.data);
+  const rows = (Array.isArray(props.rows) ? props.rows : fromData ? given.data : []) as AnyRow[];
+  const dateKey = props.dateKey ?? "date";
+  const valueKey = props.valueKey ?? (fromData ? "value" : undefined);
   const { days, top, byDay } = useMemo(() => {
     const byDay = new Map<string, AnyRow[]>();
     for (const row of rows) {

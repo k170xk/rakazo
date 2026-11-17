@@ -298,6 +298,8 @@ export async function buildApp(files: AppFiles, options: BuildOptions = {}): Pro
       platform: "browser",
       target: ["es2022", "safari16"],
       minify: true,
+      // Crash reports name the component (Tabs, Gantt) so the builder can fix the right props.
+      keepNames: true,
       jsx: "automatic",
       jsxDev: preview,
       jsxImportSource: preview ? "@ocsc/jsx" : "react",
@@ -409,7 +411,7 @@ const BLANK_SHELL =
 
 /** Told to the builder after a refused or blank/broken save so it iterates like Lovable, not declaring done. */
 export const FIX_APP_BEFORE_READY =
-  "Fix this with save_app edits and call save_app again before telling the person the app is ready. Do not present a blank or broken version as done.";
+  "Fix this with save_app edits and call save_app again before telling the person the app is ready. Do not present a blank or broken version as done. A crash names the component it happened in (\"in Tabs < Overview\"): correct that component's props against the guide and keep every page and feature; never strip the app down to find the fault.";
 
 /**
  * A `/.../` after an operator is a regular expression, so quotes inside it are not strings.

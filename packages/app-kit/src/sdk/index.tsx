@@ -1595,25 +1595,57 @@ function installPicker() {
   }
 }
 
-class Boundary extends Component<{ children: ReactNode }, { error: Error | null }> {
-  override state = { error: null as Error | null };
+const FRAME_NAMES = new Set([
+  "Boundary",
+  "PageBoundary",
+  "PageBody",
+  "WorkspaceFrame",
+  "MotionConfig",
+  "AnimatePresence",
+  "PresenceChild",
+  "PopChild",
+  "App",
+]);
+
+/**
+ * The error with the components it was inside, innermost first, so the builder knows which props to
+ * fix ("Cannot read properties of undefined (reading 'map') in Tabs < Defects").
+ */
+export function describeCrash(error: Error, componentStack?: string | null): string {
+  const names: string[] = [];
+  for (const match of (componentStack ?? "").matchAll(/at ([A-Z][A-Za-z0-9_$]*)/g)) {
+    const name = match[1]!;
+    if (FRAME_NAMES.has(name) || /^(Motion|PopChild|Presence)/.test(name)) continue;
+    if (name.length < 3 || names.includes(name)) continue;
+    names.push(name);
+    if (names.length === 3) break;
+  }
+  return names.length ? `${error.message} in ${names.join(" < ")}` : error.message;
+}
+
+/** Logs a caught crash where the app check reads it and tells the host. */
+export function reportCrash(message: string) {
+  console.error(`[app error] ${message}`);
+  if (hosted())
+    window.parent.postMessage({ type: "ocsc-app:error", message: message.slice(0, 500) }, "*");
+}
+
+class Boundary extends Component<{ children: ReactNode }, { error: Error | null; where: string }> {
+  override state = { error: null as Error | null, where: "" };
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
-  override componentDidCatch(error: Error) {
-    console.error(`[app error] ${error.message}`);
-    if (hosted())
-      window.parent.postMessage(
-        { type: "ocsc-app:error", message: error.message.slice(0, 500) },
-        "*",
-      );
+  override componentDidCatch(error: Error, info: { componentStack?: string | null }) {
+    const where = describeCrash(error, info.componentStack);
+    this.setState({ where });
+    reportCrash(where);
   }
   override render() {
     if (!this.state.error) return this.props.children;
     return (
       <div style={{ padding: 32, fontFamily: "inherit" }}>
         <p style={{ fontWeight: 600, fontSize: 16, margin: 0 }}>This app hit a problem</p>
-        <p style={{ opacity: 0.7, fontSize: 14 }}>{this.state.error.message}</p>
+        <p style={{ opacity: 0.7, fontSize: 14 }}>{this.state.where || this.state.error.message}</p>
       </div>
     );
   }

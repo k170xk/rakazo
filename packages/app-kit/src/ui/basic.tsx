@@ -338,18 +338,20 @@ export function Checkbox({
 }
 
 /** Segmented tabs with a sliding indicator. */
-export function Tabs<T extends string>({
-  value,
-  onChange,
-  items,
-  className,
-}: {
+export function Tabs<T extends string>(props: {
   value: T;
   onChange: (value: T) => void;
   items: Array<{ value: T; label: ReactNode; icon?: ReactNode; count?: number }>;
   className?: string;
 }) {
+  const { value, onChange, items, className } = props;
   const id = useId();
+  // Apps often write tabs={[{ id, label }]}, the shape AppShell pages use; read that too.
+  const given = props as { tabs?: unknown };
+  const list = (Array.isArray(items) ? items : Array.isArray(given.tabs) ? given.tabs : []) as Array<
+    (typeof items)[number] & { id?: T }
+  >;
+  const shown = list.map((item) => ({ ...item, value: (item.value ?? item.id) as T }));
   return (
     <div
       className={cn(
@@ -358,7 +360,7 @@ export function Tabs<T extends string>({
       )}
       role="tablist"
     >
-      {items.map((item) => {
+      {shown.map((item) => {
         const active = item.value === value;
         return (
           <button
@@ -366,7 +368,7 @@ export function Tabs<T extends string>({
             type="button"
             role="tab"
             aria-selected={active}
-            onClick={() => onChange(item.value)}
+            onClick={() => onChange?.(item.value)}
             className={cn(
               "relative inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold whitespace-nowrap transition-colors [&_svg]:size-4",
               active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
