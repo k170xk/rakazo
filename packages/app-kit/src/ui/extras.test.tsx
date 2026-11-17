@@ -6,7 +6,7 @@ import { Markdown } from "./content.js";
 import { isoDate, matchesWords } from "./pickers.js";
 import { RecordDetail, RecordForm } from "./records.js";
 import { AudioPlayer, ImageViewer, SketchPad, SplitPane, VideoPlayer } from "./studio-media.js";
-import { themeCss } from "./theme.js";
+import { Theme, themeCss } from "./theme.js";
 import { ActionList, CalendarMonth } from "./views.js";
 
 describe("Markdown", () => {
@@ -55,6 +55,21 @@ describe("matchesWords", () => {
 describe("isoDate", () => {
   it("uses the local calendar day", () => {
     expect(isoDate(new Date(2026, 0, 5, 23, 30))).toBe("2026-01-05");
+  });
+});
+
+describe("Theme", () => {
+  it("renders nothing on its own", () => {
+    expect(renderToStaticMarkup(<Theme preset="soft" />)).toBe("");
+  });
+
+  it("shows an app wrapped in it instead of a blank window", () => {
+    const html = renderToStaticMarkup(
+      <Theme preset="evolve" density="comfortable">
+        <main>Counter 0</main>
+      </Theme>,
+    );
+    expect(html).toBe("<main>Counter 0</main>");
   });
 });
 

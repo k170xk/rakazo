@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { type ReactNode, useLayoutEffect } from "react";
 
 /**
  * Brand-safe looks for a whole app: every preset keeps OCSC green and changes only the neutrals,
@@ -134,9 +134,10 @@ export function themeCss({
 
 /**
  * Sets the app's look once, near the top of App.tsx: <Theme preset="soft" radius="lg" />.
- * Renders nothing; the whole app, including dialogs and toasts, follows it.
+ * The whole app, including dialogs and toasts, follows it. Anything written between <Theme> and
+ * </Theme> is rendered as is, so wrapping the app in it does not leave a blank window.
  */
-export function Theme(options: ThemeOptions) {
+export function Theme({ children, ...options }: ThemeOptions & { children?: ReactNode }) {
   const css = themeCss(options);
   useLayoutEffect(() => {
     if (!css) return;
@@ -146,5 +147,5 @@ export function Theme(options: ThemeOptions) {
     document.head.append(element);
     return () => element.remove();
   }, [css]);
-  return null;
+  return <>{children}</>;
 }
