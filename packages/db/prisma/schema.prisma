@@ -2019,6 +2019,9 @@ model Page {
   sharePasswordSecret   Secret?              @relation("PageSharePassword", fields: [sharePasswordSecretId], references: [id], onDelete: SetNull)
   pinnedAt              DateTime?
   currentVersion        Int                  @default(1)
+  /// An app's newest version that opened cleanly; people are shown it while the assistant's newer
+  /// saves still crash. Null means the current version is the one to show.
+  goodVersion           Int?
   /// "page" is one JSX file on the page kit; "app" is a set of files built with the app kit,
   /// whose version source holds the files as JSON and whose code is the built document.
   /// "whiteboard" stores the board JSON in both source and code.

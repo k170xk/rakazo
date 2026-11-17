@@ -13,6 +13,7 @@ vi.mock("./run-messages.js", async (importActual) => ({
 const db = vi.hoisted(() => ({
   createAppPage: vi.fn(),
   appendAppVersion: vi.fn(),
+  markAppVersionGood: vi.fn(),
   readAppTables: vi.fn(),
   listAppAssets: vi.fn(),
   readAppAsset: vi.fn(),
@@ -81,7 +82,9 @@ function context(toolRunner: unknown, acceptsImages = true) {
             versions: [{ source: JSON.stringify({ "App.tsx": APP }) }],
           })),
           update: vi.fn(),
+          findUnique: vi.fn(async () => ({ goodVersion: 3, currentVersion: 4 })),
         },
+        pageVersion: { count: vi.fn(async () => 1), findUnique: vi.fn() },
       },
       toolRunner,
       dataDir,
@@ -224,6 +227,49 @@ describe("save_app run check", () => {
     expect(result.problems).toEqual(["The Overview page crashed: boom"]);
     expect(String(result.next)).toMatch(/save_app again/);
     expect(String(result.card)).toMatch(/skipped/);
+    expect(publishMessage).not.toHaveBeenCalled();
+  });
+
+  it("shows people the last good version until a save passes", async () => {
+    await appTools.save_app!(
+      context(runner(CLEAN)),
+      call({ appId: "app-1", edits: [{ find: "Hi", replace: "Hello" }] }),
+    );
+    expect(db.markAppVersionGood).toHaveBeenCalledWith(expect.anything(), "app-1", 4);
+    db.markAppVersionGood.mockClear();
+    const result = (await appTools.save_app!(
+      context(runner({ ...CLEAN, crashed: { page: "Overview", message: "boom" } })),
+      call({ appId: "app-1", edits: [{ find: "Hi", replace: "Hello" }] }),
+    )) as Result;
+    expect(db.markAppVersionGood).not.toHaveBeenCalled();
+    expect(String(result.shown)).toMatch(/still see version 3/);
+    expect(result.restored).toBeUndefined();
+  });
+
+  it("puts the last good version back after three crashing saves in one run", async () => {
+    const ctx = context(runner({ ...CLEAN, crashed: { page: "Overview", message: "boom" } }));
+    const prisma = (
+      ctx as { deps: { prisma: Record<string, Record<string, ReturnType<typeof vi.fn>>> } }
+    ).deps.prisma;
+    prisma.pageVersion!.count!.mockResolvedValueOnce(3).mockResolvedValueOnce(0);
+    prisma.pageVersion!.findUnique!.mockResolvedValueOnce({
+      source: JSON.stringify({ "App.tsx": APP }),
+      code: "<html>good</html>",
+    });
+    db.appendAppVersion
+      .mockResolvedValueOnce({ version: 4, title: "Jobs" })
+      .mockResolvedValueOnce({ version: 5, title: "Jobs" });
+    const result = (await appTools.save_app!(
+      ctx,
+      call({ appId: "app-1", edits: [{ find: "Hi", replace: "Hello" }] }),
+    )) as Result;
+    expect(db.appendAppVersion).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ via: "restore", restoredFrom: 3, code: "<html>good</html>" }),
+    );
+    expect(result.restored).toEqual({ version: 5, from: 3 });
+    expect(String(result.next)).toMatch(/put back to the last version that worked/);
+    expect(String(result.next)).toMatch(/keeping every existing page/);
     expect(publishMessage).not.toHaveBeenCalled();
   });
 

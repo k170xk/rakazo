@@ -46,6 +46,7 @@ import {
   removeAppRow,
   runAsSystem,
   saveCalcModel,
+  shownVersion,
   undoAppChange,
   updateAppRow,
 } from "@rakazo/db";
@@ -68,7 +69,15 @@ import { readStateRows } from "./pages.js";
 async function requireApp(prisma: PrismaClient, actor: Actor, pageId: string) {
   const row = await prisma.page.findFirst({
     where: { id: pageId, spaceId: actor.spaceId, userId: actor.userId, kind: "app" },
-    select: { id: true, title: true, currentVersion: true, dataAccess: true, iconAssetId: true },
+    select: {
+      id: true,
+      title: true,
+      kind: true,
+      currentVersion: true,
+      goodVersion: true,
+      dataAccess: true,
+      iconAssetId: true,
+    },
   });
   if (!row) throw new IsolationError();
   return row;
@@ -1063,7 +1072,7 @@ export async function writeAppDossier(prisma: PrismaClient, actor: Actor, pageId
       createdAt: true,
       user: { select: { name: true, email: true } },
       bot: { select: { name: true } },
-      versions: { where: { version: app.currentVersion }, select: { source: true } },
+      versions: { where: { version: shownVersion(app) }, select: { source: true } },
       _count: { select: { versions: true, appAssets: true } },
     },
   });
@@ -1071,7 +1080,7 @@ export async function writeAppDossier(prisma: PrismaClient, actor: Actor, pageId
   const dossier = await writeDossier({
     title: app.title,
     brief: page.brief,
-    version: app.currentVersion,
+    version: shownVersion(app),
     versions: page._count.versions,
     createdAt: page.createdAt,
     creator: { name: page.user.name, email: page.user.email },
@@ -1087,9 +1096,9 @@ export async function writeAppDossier(prisma: PrismaClient, actor: Actor, pageId
   });
   await prisma.page.update({
     where: { id: app.id },
-    data: { dossier, dossierVersion: app.currentVersion },
+    data: { dossier, dossierVersion: shownVersion(app) },
   });
-  return { dossier, dossierVersion: app.currentVersion };
+  return { dossier, dossierVersion: shownVersion(app) };
 }
 
 export async function publishAppToEvolve(
@@ -1109,7 +1118,7 @@ export async function publishAppToEvolve(
       brief: true,
       dossier: true,
       dossierVersion: true,
-      versions: { where: { version: app.currentVersion }, select: { source: true } },
+      versions: { where: { version: shownVersion(app) }, select: { source: true } },
     },
   });
   const taken = await runAsSystem("Evolve plugin slug check", () =>
@@ -1135,7 +1144,7 @@ export async function publishAppToEvolve(
   if (Buffer.byteLength(JSON.stringify(bundle)) > MAX_PLUGIN_BUNDLE_BYTES)
     throw new AppPublishError("The app is larger than Evolve allows for a plugin (2 MB).");
   const dossier =
-    page.dossier && page.dossierVersion === app.currentVersion
+    page.dossier && page.dossierVersion === shownVersion(app)
       ? page.dossier
       : (await writeAppDossier(prisma, actor, app.id)).dossier;
   const release = page.evolvePluginRelease + 1;

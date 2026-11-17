@@ -37,6 +37,7 @@ import {
   isAppDataError,
   listAppAssets,
   listAppChanges,
+  markAppVersionGood,
   mergeImportedTables,
   readAppRowFacts,
   readAppTables,
@@ -996,10 +997,10 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   const checkCrashed =
     typeof check?.runCheck === "string" && String(check.runCheck).startsWith("not run");
   // Blank/crash look, or the checker itself dying — never hand the person a card as if ready.
-  const broken =
-    checkCrashed || (checkProblems.length > 0 && brokenAppLook(checkProblems));
-  const cardError =
-    codeChanged && !broken ? await postCard(ctx, saved, !app, updateSummary) : null;
+  const broken = checkCrashed || (checkProblems.length > 0 && brokenAppLook(checkProblems));
+  const cardError = codeChanged && !broken ? await postCard(ctx, saved, !app, updateSummary) : null;
+  if (codeChanged && !broken) await markAppVersionGood(deps.prisma, saved.pageId, saved.version);
+  const fallback = codeChanged && broken ? await afterBrokenSave(ctx, saved.pageId) : null;
   const totalRows = tableResults.reduce((sum, item) => sum + Number(item.rows ?? 0), 0);
   const craftNotes =
     codeChanged && args.check !== false
@@ -1045,11 +1046,78 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
             "Address these craftNotes with save_app edits (and seed realistic is_sample starter rows if the app is empty) before replying, then inspect the main tabs + phone with app_look.",
         }
       : {}),
+    ...(fallback ?? {}),
     ...(broken
-      ? { next: FIX_APP_BEFORE_READY }
+      ? { next: fallback?.next ?? FIX_APP_BEFORE_READY }
       : cardError
         ? { error: cardError }
         : { mention: `Mention it in your reply as [${linkText}](page:${saved.pageId})` }),
+  };
+}
+
+/** Crashing saves in one run before the app goes back to the last version that opened cleanly. */
+export const MAX_BROKEN_SAVES = 3;
+
+/**
+ * After a save that crashed: says which version people still see and, once this run has saved
+ * MAX_BROKEN_SAVES crashing versions since then, puts that version back as the current one.
+ */
+async function afterBrokenSave(
+  ctx: RunContext,
+  pageId: string,
+): Promise<{ shown: string; restored?: { version: number; from: number }; next?: string } | null> {
+  const { prisma } = ctx.deps;
+  const page = await prisma.page.findUnique({
+    where: { id: pageId },
+    select: { goodVersion: true, currentVersion: true },
+  });
+  if (!page) return null;
+  const good =
+    page.goodVersion !== null && page.goodVersion < page.currentVersion ? page.goodVersion : null;
+  const shown = good
+    ? `People still see version ${good}, the last one that opened cleanly; this save shows once it passes.`
+    : "Nobody has been handed this app yet; it shows once a save passes the check.";
+  const tries = await prisma.pageVersion.count({
+    where: { pageId, runId: ctx.runId, via: "assistant", version: { gt: good ?? 0 } },
+  });
+  if (tries < MAX_BROKEN_SAVES) return { shown };
+  if (!good) {
+    return {
+      shown,
+      next: `${MAX_BROKEN_SAVES} saves in a row still crash. Stop saving and tell the person in plain words what the app is meant to do, what still crashes and what you tried. Never remove pages or features to make the check pass.`,
+    };
+  }
+  const restoresBefore = await prisma.pageVersion.count({
+    where: { pageId, runId: ctx.runId, via: "restore" },
+  });
+  const stored = await prisma.pageVersion.findUnique({
+    where: { pageId_version: { pageId, version: good } },
+    select: { source: true, code: true },
+  });
+  if (!stored) return { shown };
+  let restored: { version: number };
+  try {
+    restored = await appendAppVersion(prisma, {
+      pageId,
+      baseVersion: page.currentVersion,
+      files: appFilesFrom(stored.source),
+      code: stored.code,
+      authorId: ctx.run.userId,
+      via: "restore",
+      restoredFrom: good,
+      runId: ctx.runId,
+    });
+  } catch (error) {
+    if (error instanceof AppVersionConflictError || isUniqueViolation(error)) return { shown };
+    throw error;
+  }
+  return {
+    shown: `The app is back on version ${good}'s files as version ${restored.version}, with every page and feature it had.`,
+    restored: { version: restored.version, from: good },
+    next:
+      restoresBefore > 0
+        ? "The change still crashes after a second try. Stop changing the app and tell the person in plain words what you were adding, what still crashes and that the app is on its last working version."
+        : `${MAX_BROKEN_SAVES} saves in a row crashed, so the app was put back to the last version that worked. Open it again with save_app and only the appId, then make the change in small steps, saving after each one and keeping every existing page and feature.`,
   };
 }
 
@@ -1122,8 +1190,7 @@ async function runCheck(
         };
   } catch (error) {
     if (ctx.context.signal.aborted) throw error;
-    const detail =
-      error instanceof Error ? error.message.slice(0, 200) : "unknown error";
+    const detail = error instanceof Error ? error.message.slice(0, 200) : "unknown error";
     return {
       runCheck: `not run (${detail})`,
       problems: [

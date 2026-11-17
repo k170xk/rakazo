@@ -9,6 +9,7 @@ vi.mock("./run-messages.js", async (importActual) => ({
 const db = vi.hoisted(() => ({
   createAppPage: vi.fn(),
   appendAppVersion: vi.fn(),
+  markAppVersionGood: vi.fn(),
   defineAppTable: vi.fn(),
   readAppTables: vi.fn(),
   listAppAssets: vi.fn(),

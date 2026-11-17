@@ -598,7 +598,9 @@ export async function addAppAsset(
   input: { name: string; mime: string; bytes: Uint8Array; source: string },
 ): Promise<{ id: string; name: string; mime: string; size: number }> {
   if (!ASSET_MIMES.has(input.mime))
-    throw new AppDataError("Apps keep PNG, JPEG, WebP, GIF or SVG pictures, MP4, WebM, MP3 or WAV media, or an IFC model.");
+    throw new AppDataError(
+      "Apps keep PNG, JPEG, WebP, GIF or SVG pictures, MP4, WebM, MP3 or WAV media, or an IFC model.",
+    );
   if (input.bytes.byteLength > MAX_ASSET_BYTES)
     throw new AppDataError("That asset is larger than 20 MB.");
   const used = await prisma.appAsset.aggregate({ where: { pageId }, _sum: { size: true } });
@@ -874,10 +876,19 @@ export async function appendAppVersion(
 ): Promise<{ version: number; title: string }> {
   return prisma.$transaction(async (tx) => {
     const version = input.baseVersion + 1;
+    const before = await tx.page.findUnique({
+      where: { id: input.pageId },
+      select: { goodVersion: true },
+    });
+    // An assistant save is shown only once its check passes (markAppVersionGood); until then
+    // people keep the version they already had.
+    const goodVersion =
+      input.via === "assistant" ? (before?.goodVersion ?? input.baseVersion) : version;
     const moved = await tx.page.updateMany({
       where: { id: input.pageId, currentVersion: input.baseVersion, kind: "app" },
       data: {
         currentVersion: version,
+        goodVersion,
         updatedAt: new Date(),
         ...(input.title ? { title: input.title } : {}),
       },
@@ -902,6 +913,27 @@ export async function appendAppVersion(
     });
     return { version, title };
   });
+}
+
+/** Records that this version opened cleanly, so people are shown it; an older one never wins. */
+export async function markAppVersionGood(prisma: PrismaClient, pageId: string, version: number) {
+  await prisma.page.updateMany({
+    where: {
+      id: pageId,
+      kind: "app",
+      OR: [{ goodVersion: null }, { goodVersion: { lt: version } }],
+    },
+    data: { goodVersion: version },
+  });
+}
+
+/** The version people open: an app's last good one, otherwise the current version. */
+export function shownVersion(page: {
+  kind: string;
+  currentVersion: number;
+  goodVersion: number | null;
+}) {
+  return page.kind === "app" && page.goodVersion ? page.goodVersion : page.currentVersion;
 }
 
 export function isAppDataError(error: unknown): error is AppDataError {

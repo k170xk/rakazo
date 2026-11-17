@@ -22,7 +22,7 @@ import {
   shownPageKind,
 } from "@rakazo/contracts";
 import type { PageShareSecret, PrismaClient } from "@rakazo/db";
-import { IsolationError, Prisma, recordAuditEvent, runAsSystem } from "@rakazo/db";
+import { IsolationError, Prisma, recordAuditEvent, runAsSystem, shownVersion } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 
 const PAGE_SHARE_SECRET_KIND = "page_share";
@@ -124,6 +124,7 @@ async function requirePage(prisma: PrismaClient, actor: Actor, pageId: string) {
       shareSecretId: true,
       sharePasswordSecretId: true,
       frozenAt: true,
+      goodVersion: true,
     },
   });
   if (!row) throw new IsolationError();
@@ -406,7 +407,7 @@ export async function getPage(
   input: { pageId: string; version?: number; link?: boolean },
 ): Promise<PageDetail> {
   const row = await requirePage(deps.prisma, actor, input.pageId);
-  const version = input.version ?? row.currentVersion;
+  const version = input.version ?? shownVersion(row);
   const [stored, owner] = await Promise.all([
     deps.prisma.pageVersion.findUnique({
       where: { pageId_version: { pageId: row.id, version } },
@@ -762,6 +763,7 @@ export async function readSharedPage(
         kind: true,
         dataAccess: true,
         currentVersion: true,
+        goodVersion: true,
         updatedAt: true,
         id: true,
         shareSecretId: true,
@@ -775,9 +777,10 @@ export async function readSharedPage(
   // an admin has frozen the page.
   const visibility = page ? shownVisibility(page.visibility) : "private";
   if (!page || visibility === "private" || !page.shareSecretId || page.frozenAt) return null;
+  const shown = shownVersion(page);
   const version = await runAsSystem("page share link", () =>
     prisma.pageVersion.findUnique({
-      where: { pageId_version: { pageId: page.id, version: page.currentVersion } },
+      where: { pageId_version: { pageId: page.id, version: shown } },
       select: { code: true },
     }),
   );
@@ -787,7 +790,7 @@ export async function readSharedPage(
       title: page.title,
       kind: shownPageKind(page.kind),
       code: version.code,
-      version: page.currentVersion,
+      version: shown,
       updatedAt: page.updatedAt.toISOString(),
     },
     pageId: page.id,
