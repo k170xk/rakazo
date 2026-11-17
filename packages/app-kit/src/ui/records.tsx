@@ -173,7 +173,37 @@ const LARGE_PAGE = 25;
  * (with its comments and history), adding, deleting (with a check first) and export, plus the
  * faces of who else is looking. Pass what useTable returns; large tables page from the server.
  */
-export function TableView({
+/**
+ * Apps often give TableView rows and columns like a plain table instead of a useTable result; show
+ * those read-only rather than crashing on the missing schema.
+ */
+export function TableView(props: Parameters<typeof TableOfTable>[0]) {
+  const loose = props as Parameters<typeof TableOfTable>[0] & { rows?: unknown; data?: unknown };
+  if (loose.table && typeof loose.table === "object" && loose.table.schema)
+    return <TableOfTable {...props} />;
+  const rows = (
+    Array.isArray(loose.rows)
+      ? loose.rows
+      : Array.isArray(loose.data)
+        ? loose.data
+        : Array.isArray(loose.table?.rows)
+          ? loose.table.rows
+          : []
+  ) as Row[];
+  const columns = Array.isArray(props.columns)
+    ? props.columns
+        .filter(Boolean)
+        .map((column) =>
+          typeof column === "string" ? ({ key: column, label: column } as TableColumn<Row>) : column,
+        )
+    : Object.keys(rows[0] ?? {})
+        .filter((key) => !key.startsWith("_") && key !== "is_sample")
+        .slice(0, 8)
+        .map((key) => ({ key, label: key }) as TableColumn<Row>);
+  return <DataTable rows={rows} columns={columns} toolbar={props.toolbar} />;
+}
+
+function TableOfTable({
   table,
   columns,
   filterBy,

@@ -7,10 +7,10 @@ import { AreaChart, BarChart, DonutChart, LineChart } from "./charts.js";
 import { Markdown } from "./content.js";
 import { KpiCard, Sparkline } from "./kpi.js";
 import { isoDate, matchesWords } from "./pickers.js";
-import { RecordDetail, RecordForm } from "./records.js";
+import { RecordDetail, RecordForm, TableView } from "./records.js";
 import { AudioPlayer, ImageViewer, SketchPad, SplitPane, VideoPlayer } from "./studio-media.js";
 import { Theme, themeCss } from "./theme.js";
-import { ActionList, CalendarMonth } from "./views.js";
+import { ActionList, CalendarMonth, Kanban } from "./views.js";
 
 describe("Markdown", () => {
   it("renders headings, emphasis, lists, tables and code", () => {
@@ -161,6 +161,23 @@ describe("SampleBanner, Callout and hidden columns", () => {
       <CalendarHeatmap data={[{ date: "2026-11-02", value: 3 }]} />,
     );
     expect(heat).toContain("flex flex-col gap-2");
+  });
+
+  it("shows TableView rows given like a plain table and Kanban columns given as names", () => {
+    const loose = { rows: [{ time: "09:05", action: "Increase" }] } as unknown as Parameters<
+      typeof TableView
+    >[0];
+    expect(renderToStaticMarkup(<TableView {...loose} />)).toContain("Increase");
+    const board = renderToStaticMarkup(
+      <Kanban
+        rows={[{ _id: "1", status: "Open", title: "Duct clash" }]}
+        groupBy="status"
+        columns={["Open", "Done"] as unknown as Array<{ value: string }>}
+        renderCard={(row) => <span>{String(row.title)}</span>}
+      />,
+    );
+    expect(board).toContain("Duct clash");
+    expect(board).toContain("Done");
   });
 
   it("names the components a crash happened in", () => {

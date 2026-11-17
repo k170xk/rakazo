@@ -54,6 +54,13 @@ export function Kanban<T extends AnyRow>({
   onAdd?: (value: string) => void;
   className?: string;
 }) {
+  // Apps pass columns as plain names (["Open", "Done"]) and rows before they load; read both.
+  rows = Array.isArray(rows) ? rows : [];
+  columns = Array.isArray(columns)
+    ? columns
+        .filter((lane) => lane !== null && lane !== undefined)
+        .map((lane) => (typeof lane === "object" ? lane : { value: String(lane) }))
+    : undefined;
   const board = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{
     id: string;
@@ -245,7 +252,7 @@ export function Kanban<T extends AnyRow>({
       {lanes.map((lane, laneAt) => {
         const items = laneRows(lane.value);
         const tone = lane.tone ?? toneFor(lane.value, "accent");
-        const here = drag?.lane === lane.value;
+        const here = drag !== null && drag.lane === lane.value;
         const placeholder = (
           <div
             key="__drop"
