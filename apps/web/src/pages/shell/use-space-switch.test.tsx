@@ -118,6 +118,20 @@ describe("pending space switches", () => {
     expect(state.select).toHaveBeenCalledWith("new-space");
   });
 
+  it("keeps an open document when opening another chat in the same space", () => {
+    window.history.replaceState({ idx: 0 }, "", "/app/old?doc=art_1&kind=docx&m=msg_1");
+    act(() => open("old-space", "/app/new"));
+    expect(navigate).toHaveBeenCalledWith("/app/new?doc=art_1&kind=docx");
+  });
+
+  it("does not carry an open document into another space", async () => {
+    window.history.replaceState({ idx: 0 }, "", "/app/old?doc=art_1&kind=docx");
+    act(() => open("new-space", "/app/new"));
+    await ready();
+    expect(commits[0]!()).toBe(true);
+    expect(navigate).toHaveBeenCalledWith("/app/new");
+  });
+
   it("does not carry an overlay that was already open before switching", async () => {
     window.history.replaceState({ idx: 0 }, "", "/app/old?skills");
     act(() => open("new-space", "/app/new"));

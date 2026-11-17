@@ -37,6 +37,20 @@ describe("instruction history", () => {
     expect(bot.instructions).toBe("Draft only");
   });
 
+  it("lets the person change their Main PA prompt", async () => {
+    const { bot, tx } = fixture();
+    Object.assign(bot, {
+      evolveAssistantId: "00000000-0000-4000-8000-000000000001",
+      spawnKey: "onboarding:first",
+    });
+    await writeBotInstructions(tx as never, {
+      botId: bot.id,
+      instructions: "Write the way Wian speaks.",
+      reason: "Manual edit",
+    });
+    expect(bot.instructions).toBe("Write the way Wian speaks.");
+  });
+
   it("keeps the last 20 prior versions, restores without losing history, and rejects stale undo", async () => {
     const { bot, tx } = fixture();
     for (let index = 0; index < 25; index++)

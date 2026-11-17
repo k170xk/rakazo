@@ -382,6 +382,51 @@ export type CraftAuditOptions = {
  * Non-blocking design and kit-usage notes returned by save_app and app_look so the builder catches
  * bare layouts, missing visualizations, raw hex/slate styles that break dark mode, and empty v1s.
  */
+/** Whether the source still wears the OCSC shell, kit and theme. */
+export function appLookMarks(files: AppFiles): { shell: boolean; kit: boolean; theme: boolean } {
+  const code = Object.entries(files)
+    .filter(([name]) => /\.(tsx|ts|jsx|js)$/.test(name))
+    .map(([, text]) => text)
+    .join("\n");
+  return {
+    shell: /<AppShell\b/.test(code),
+    kit: /from\s+["']@ocsc\/ui["']/.test(code),
+    theme: /<Theme\b/.test(code),
+  };
+}
+
+const KEEP_APP_LOOK =
+  "Keep AppShell, the @ocsc/ui import and <Theme /> and change the screens inside the shell. Do not replace the app with a hand-written layout. Nothing was saved.";
+
+/**
+ * A new app has to open in the OCSC shell. An app that already does cannot be saved without it,
+ * including one whose current files lost the shell after an earlier version had it (`hadShell`).
+ * An app that has never used the shell can still be edited.
+ */
+export function keptAppLook(
+  previous: AppFiles | null,
+  next: AppFiles,
+  options: { hadShell?: boolean } = {},
+): string | null {
+  const after = appLookMarks(next);
+  if (!previous) {
+    if (after.shell && after.kit && after.theme) return null;
+    return `A new app is saved only with AppShell and components from @ocsc/ui, and <Theme preset="evolve" /> (or crisp, soft, forest or contrast) near the top. ${KEEP_APP_LOOK}`;
+  }
+  const before = appLookMarks(previous);
+  if (before.shell || options.hadShell) {
+    const lost: string[] = [];
+    if (!after.shell) lost.push("AppShell");
+    if ((before.kit || options.hadShell) && !after.kit) lost.push("the @ocsc/ui import");
+    if ((before.theme || options.hadShell) && !after.theme) lost.push("<Theme />");
+    return lost.length ? `This save removes ${lost.join(", ")}. ${KEEP_APP_LOOK}` : null;
+  }
+  const lost: string[] = [];
+  if (before.kit && !after.kit) lost.push("the @ocsc/ui import");
+  if (before.theme && !after.theme) lost.push("<Theme />");
+  return lost.length ? `This save removes ${lost.join(", ")}. ${KEEP_APP_LOOK}` : null;
+}
+
 export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}): string[] {
   const code = Object.entries(files)
     .filter(([name]) => /\.(tsx|ts|jsx|js)$/.test(name))

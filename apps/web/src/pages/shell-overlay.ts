@@ -125,3 +125,47 @@ export function shellOverlaySearch(params: URLSearchParams): string {
   if (params.has("plans")) next.set("plans", "");
   return searchString(next);
 }
+
+/** Routes under `/app` that are not a chat, so a chat move must not treat them as one. */
+const SHELL_CHAT_RESERVED = new Set(["artifacts", "board", "x"]);
+
+/** A shell chat: `/app`, `/app/:botId` or `/app/g/:groupId`. The board, files and plugin pages are not. */
+export function isShellChatPath(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts[0] !== "app") return false;
+  if (parts.length === 1) return true;
+  if (parts.length === 2) return parts[1] !== "g" && !SHELL_CHAT_RESERVED.has(parts[1]!);
+  return parts.length === 3 && parts[1] === "g" && parts[2]!.length > 0;
+}
+
+/** Only the open document studio. A chat change keeps this and nothing else. */
+export function documentOverlaySearch(params: URLSearchParams): string {
+  const overlay = readShellOverlay(params);
+  if (overlay?.kind !== "doc") return "";
+  return searchString(withShellOverlay(new URLSearchParams(), overlay));
+}
+
+/**
+ * A same-space chat move keeps the open Word, PowerPoint, Excel or PDF studio.
+ * The path is returned unchanged when it is not a chat, already names a document, or opens a
+ * page: closing the studio, opening another file, and opening a page stay as they are.
+ * Settings, message highlights and routine editors are not carried across.
+ */
+export function withDocumentOverlay(path: string, current: URLSearchParams | string): string {
+  const hashAt = path.indexOf("#");
+  const hash = hashAt === -1 ? "" : path.slice(hashAt);
+  const bare = hashAt === -1 ? path : path.slice(0, hashAt);
+  const queryAt = bare.indexOf("?");
+  const pathname = queryAt === -1 ? bare : bare.slice(0, queryAt);
+  if (!isShellChatPath(pathname)) return path;
+  const next = new URLSearchParams(queryAt === -1 ? "" : bare.slice(queryAt + 1));
+  // A page owns the chat dock, and a path that already names a document chose that file.
+  if (next.has("doc") || next.has("page") || next.has("view")) return path;
+  const carried = documentOverlaySearch(
+    typeof current === "string" ? new URLSearchParams(current) : current,
+  );
+  if (!carried) return path;
+  const doc = new URLSearchParams(carried.slice(1));
+  for (const [key, value] of doc) next.set(key, value);
+  return `${pathname}${searchString(next)}${hash}`;
+}

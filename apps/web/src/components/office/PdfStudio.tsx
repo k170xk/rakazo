@@ -44,7 +44,7 @@ import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-s
 import { documentDockPage } from "./context";
 import { pdfEditingSoon } from "./pdf/editing-soon";
 import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
-import { useDocumentBotId } from "./document-bot";
+import { useDocumentBotId, usePublishStudioToChat } from "./document-bot";
 import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { HistoryButton, VersionHistoryPanel } from "./history/VersionHistory";
 import {
@@ -151,6 +151,7 @@ export default function PdfStudio({
   const [doc, setDoc] = useState<OpenPdf | null>(null);
   const [installed, setInstalled] = useState<boolean | null>(null);
   const [broken, setBroken] = useState(false);
+  const [openFault, setOpenFault] = useState<string | null>(null);
   const [opened, setOpened] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -168,6 +169,9 @@ export default function PdfStudio({
   const saveWaiters = useRef<((saved: boolean) => void)[]>([]);
   const owner = useRef<Promise<{ botId: string | null; groupId: string | null }> | null>(null);
   const timers = useRef({ start: 0, flash: 0 });
+  // The framed app has answered hello, so a slow parse or first paint is still in progress.
+  const appAlive = useRef(false);
+  const openedRef = useRef(false);
   const { loadState, loadBytes, markReady, markOpenFailed } = useDocumentLoad("pdf", () =>
     queries.documents.get.call({ rootArtifactId }),
   );
@@ -207,6 +211,7 @@ export default function PdfStudio({
       }),
     });
   }, [session, rootArtifactId, t]);
+  usePublishStudioToChat(publishNote);
 
   const load = useCallback(
     async (reason: "open" | "newer" | "reload") => {
@@ -225,6 +230,9 @@ export default function PdfStudio({
       appState.current = null;
       selectedNote.current = null;
       setOpened(false);
+      openedRef.current = false;
+      appAlive.current = false;
+      setOpenFault(null);
       setNewer(null);
       setBroken(false);
       setDoc({
@@ -447,7 +455,10 @@ export default function PdfStudio({
 
   const host = useRef<PdfHostHandlers>({});
   host.current = {
-    hallo: async () => ({ soorten: ["opslaan_als"] }),
+    hallo: async () => {
+      appAlive.current = true;
+      return { soorten: ["opslaan_als"] };
+    },
     open: (request) => openForApp(request.bestand, request.versie),
     opslaan: (request) => saveFromApp(request.bestand, request.bytes),
     opslaan_als: (request) => saveAsFromApp(request.naam, request.bytes),
@@ -472,6 +483,10 @@ export default function PdfStudio({
       })),
     geopend: async () => {
       window.clearTimeout(timers.current.start);
+      appAlive.current = true;
+      openedRef.current = true;
+      setOpenFault(null);
+      setBroken(false);
       markReady(turnRef.current);
       setOpened(true);
       sendAppTheme(frame.current, readTheme());
@@ -481,6 +496,14 @@ export default function PdfStudio({
     melding: async (request) => {
       const text = typeof request.tekst === "string" ? request.tekst.trim() : "";
       if (!text) return true;
+      // The app reports an unreadable file before it ever says the document is open.
+      // A slow drawing never takes this path: the frame stays up until geopend.
+      if ((request.toon === "fout" || request.toon === undefined) && !openedRef.current) {
+        setOpenFault(text);
+        setBroken(true);
+        markOpenFailed(turnRef.current);
+        return true;
+      }
       if (request.toon === "succes") toast.success(text);
       else if (request.toon === "info") toast(text);
       else if (request.toon === "waarschuwing") toast.warning(text);
@@ -508,17 +531,23 @@ export default function PdfStudio({
     sendAppTheme(frame.current, theme);
   }, [theme]);
 
-  // Until the app opens the file, a slow or missing start offers a retry instead of a blank frame.
+  // A missing app (no hello) can be retried. Once the app has started, a long open of a
+  // marked-up drawing stays in the frame: unmounting it was the "couldn't be opened here" panel.
   const loadedTurn = doc?.loaded;
+  const markOpenFailedRef = useRef(markOpenFailed);
+  markOpenFailedRef.current = markOpenFailed;
   useEffect(() => {
     if (loadedTurn === undefined) return;
+    appAlive.current = false;
+    openedRef.current = false;
     window.clearTimeout(timers.current.start);
     timers.current.start = window.setTimeout(() => {
-      markOpenFailed(loadedTurn);
+      if (appAlive.current || openedRef.current) return;
+      markOpenFailedRef.current(loadedTurn);
       setBroken(true);
     }, START_TIMEOUT_MS);
     return () => window.clearTimeout(timers.current.start);
-  }, [loadedTurn, markOpenFailed]);
+  }, [loadedTurn]);
 
   /** Saves unsaved markups through the app's own Save; true when nothing is left unsaved. */
   const saveNow = useCallback(async (): Promise<boolean> => {
@@ -982,7 +1011,10 @@ export default function PdfStudio({
         />
       ) : broken && !loadFailed ? (
         <MessagePanel
-          message={t`This PDF couldn't be opened here. Try again, download it, or ask the assistant to mark it up.`}
+          message={
+            openFault ??
+            t`This PDF couldn't be opened here. Try again, download it, or ask the assistant to mark it up.`
+          }
           actions={
             <>
               <Button variant="outline" size="sm" onClick={() => void load("reload")}>

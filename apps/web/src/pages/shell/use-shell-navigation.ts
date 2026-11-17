@@ -8,6 +8,7 @@ import {
   readShellOverlay,
   searchString,
   shellOverlaySearch,
+  withDocumentOverlay,
   withShellOverlay,
 } from "../shell-overlay";
 
@@ -55,6 +56,12 @@ export function useShellNavigation() {
       ),
     [guardedNavigate],
   );
+  /** A chat the person opened. The document studio stays; every other query is left behind. */
+  const navigateKeepingDocument = useCallback(
+    (path: string, options?: NavigateOptions) =>
+      navigate(withDocumentOverlay(path, searchParamsRef.current), options),
+    [navigate],
+  );
   const overlay = readShellOverlay(searchParams);
   // Overlays replace the URL rather than adding history, so opening and closing never race a navigation.
   function setOverlay(next: ShellOverlay) {
@@ -73,6 +80,7 @@ export function useShellNavigation() {
     setSearchParams,
     searchParamsRef,
     redirectKeepingOverlay,
+    navigateKeepingDocument,
     overlay,
     setOverlay,
   };

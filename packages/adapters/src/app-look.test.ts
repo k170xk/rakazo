@@ -24,9 +24,13 @@ vi.mock("@rakazo/db", async (importActual) => ({
 const { findPythonRuntime, lookAtApp, lookProblems, pythonFilesOf } = await import("./app-look.js");
 const { appTools } = await import("./run-tools-apps.js");
 
-const APP = `import { AppShell } from "@ocsc/ui";
+const APP = `import { AppShell, Theme } from "@ocsc/ui";
 export default function App() {
-  return <AppShell title="Jobs" pages={[{ id: "overview", label: "Overview", render: () => <p>Hi</p> }]} />;
+  return (
+    <Theme preset="evolve">
+      <AppShell title="Jobs" pages={[{ id: "overview", label: "Overview", render: () => <p>Hi</p> }]} />
+    </Theme>
+  );
 }
 `;
 const CLEAN = {
@@ -233,11 +237,16 @@ describe("save_app run check", () => {
 
 describe("apps with Python", () => {
   const PY = "import numpy as np\nfrom scipy import optimize\n\ndef calc(inputs):\n    return {}\n";
-  const PY_APP = `import { usePython } from "@ocsc/python";
+  const PY_APP = `import { AppShell, Theme } from "@ocsc/ui";
+import { usePython } from "@ocsc/python";
 import pipePy from "./pipe.py";
 export default function App() {
   const pipe = usePython(pipePy, { flow: 1 });
-  return <p>{pipe.status}</p>;
+  return (
+    <Theme preset="evolve">
+      <AppShell title="Pipe">{pipe.status}</AppShell>
+    </Theme>
+  );
 }
 `;
   const files = { "App.tsx": PY_APP, "pipe.py": PY };

@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 
 /**
  * The agent of the chat beside the studio. New and uploaded documents join it, so the chat's
@@ -10,4 +10,17 @@ export const DocumentBotContext = createContext<string | undefined>(undefined);
 export function useDocumentBotId(): { botId?: string } {
   const botId = useContext(DocumentBotContext);
   return botId ? { botId } : {};
+}
+
+/**
+ * The open document stays on screen across a chat switch, so tell the chat now beside it.
+ * A studio that has not finished opening yet publishes nothing.
+ */
+export function usePublishStudioToChat(publish: () => void): void {
+  const publishRef = useRef(publish);
+  publishRef.current = publish;
+  const botId = useContext(DocumentBotContext);
+  useEffect(() => {
+    publishRef.current();
+  }, [botId]);
 }

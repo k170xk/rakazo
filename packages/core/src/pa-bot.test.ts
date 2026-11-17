@@ -3,6 +3,7 @@ import {
   EVOLVE_GENERAL_INTELLIGENCE_NAME,
   emailSpecialistInstructions,
   isMainPaBot,
+  instructionsAreCompanyManaged,
   LEGACY_FIRST_BOT_NAMES,
   marketingSpecialistInstructions,
   ONBOARDING_FIRST_BOT_SPAWN_KEY,
@@ -20,6 +21,20 @@ describe("pa-bot", () => {
     expect(isMainPaBot({ spawnKey: ONBOARDING_FIRST_BOT_SPAWN_KEY })).toBe(true);
     expect(isMainPaBot({ spawnKey: null })).toBe(false);
     expect(isMainPaBot({ spawnKey: "tool-call-1" })).toBe(false);
+  });
+
+  it("lets the person edit their Main PA prompt and keeps a company assistant locked", () => {
+    const assistant = "00000000-0000-4000-8000-000000000001";
+    expect(
+      instructionsAreCompanyManaged({
+        evolveAssistantId: assistant,
+        spawnKey: ONBOARDING_FIRST_BOT_SPAWN_KEY,
+      }),
+    ).toBe(false);
+    expect(instructionsAreCompanyManaged({ evolveAssistantId: assistant, spawnKey: null })).toBe(
+      true,
+    );
+    expect(instructionsAreCompanyManaged({ evolveAssistantId: null, spawnKey: null })).toBe(false);
   });
 
   it("builds a first-name PA description", () => {

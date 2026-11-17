@@ -42,6 +42,7 @@ import {
   threadRunError,
 } from "../../lib/thread-events";
 import { errorText } from "../../lib/user-error";
+import { withDocumentOverlay } from "../shell-overlay";
 import type { PendingAttachment } from "./chat-shared";
 import type { useShellNavigation } from "./use-shell-navigation";
 
@@ -486,7 +487,7 @@ export function useComposerActions({
           );
           setAttachmentNotice(null);
           if (reroutedToGroup && groupTarget) {
-            navigate(`/app/g/${groupTarget}`);
+            navigate(withDocumentOverlay(`/app/g/${groupTarget}`, window.location.search));
             return true;
           }
           if (groupTarget && activeGroupId.current === groupTarget) {
@@ -571,7 +572,7 @@ export function useComposerActions({
         // Refresh sidebar status even when a bot→group reroute navigates away below.
         void refreshBots().catch(() => undefined);
         if (reroutedToGroup && groupTarget) {
-          navigate(`/app/g/${groupTarget}`);
+          navigate(withDocumentOverlay(`/app/g/${groupTarget}`, window.location.search));
           return true;
         }
         if (groupTarget && activeGroupId.current === groupTarget) setAttachmentNotice(null);

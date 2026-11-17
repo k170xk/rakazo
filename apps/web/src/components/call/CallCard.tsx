@@ -11,6 +11,7 @@ import {
   toggleTranscript,
   useCallSession,
 } from "../../lib/call-session";
+import { withDocumentOverlay } from "../../pages/shell-overlay";
 import { CallWindow } from "./CallWindow";
 
 const BARS = [9, 15, 21, 15, 9];
@@ -108,7 +109,9 @@ export function CallCard({ onSettings }: { onSettings: () => void }) {
           type="button"
           aria-label={t`Open chat with ${call.botName}`}
           onClick={() => {
-            if (!onBotScreen) navigate(`/app/${call.botId}`);
+            if (!onBotScreen) {
+              navigate(withDocumentOverlay(`/app/${call.botId}`, window.location.search));
+            }
           }}
           className="relative grid size-32 place-items-center md:size-24"
         >

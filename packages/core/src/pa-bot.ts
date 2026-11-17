@@ -15,6 +15,17 @@ export function isMainPaBot(bot: { spawnKey?: string | null }): boolean {
   return bot.spawnKey === ONBOARDING_FIRST_BOT_SPAWN_KEY;
 }
 
+/**
+ * An Evolve company assistant keeps the prompt OCSC manages. The Main PA is linked to an
+ * assistant only so it can read that assistant's knowledge; its own prompt belongs to the person.
+ */
+export function instructionsAreCompanyManaged(bot: {
+  evolveAssistantId?: string | null;
+  spawnKey?: string | null;
+}): boolean {
+  return Boolean(bot.evolveAssistantId) && !isMainPaBot(bot);
+}
+
 const PA_AGENT_SETUP_MARKER = "Onboarding interview";
 
 /** A Main PA whose instructions carry the organisation's agent setup (not a team PA). */

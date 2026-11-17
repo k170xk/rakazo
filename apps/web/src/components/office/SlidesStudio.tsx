@@ -40,7 +40,7 @@ import { StudioSwitcherDelete } from "../studio/StudioSwitcherDelete";
 import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-send";
 import { documentDockPage } from "./context";
 import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
-import { useDocumentBotId } from "./document-bot";
+import { useDocumentBotId, usePublishStudioToChat } from "./document-bot";
 import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { HistoryButton, VersionHistoryPanel } from "./history/VersionHistory";
 import { prepareDocumentStudioSend } from "./prepare-document-studio-send";
@@ -165,6 +165,7 @@ export default function SlidesStudio({
       }),
     });
   }, [session, rootArtifactId, chipWords]);
+  usePublishStudioToChat(publishNote);
 
   const load = useCallback(
     async (reason: "open" | "newer" | "reload") => {

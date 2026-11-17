@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  documentOverlaySearch,
   readShellOverlay,
   searchString,
   shellOverlaySearch,
+  withDocumentOverlay,
   withShellOverlay,
 } from "./shell-overlay";
 
@@ -120,5 +122,53 @@ describe("shellOverlaySearch", () => {
       "?settings=voice",
     );
     expect(shellOverlaySearch(new URLSearchParams("?routine=r_1"))).toBe("");
+  });
+});
+
+describe("withDocumentOverlay", () => {
+  const current = new URLSearchParams("?m=msg_1&routine=r_1&doc=art_1&kind=docx");
+
+  it("keeps the open document when moving to another chat", () => {
+    expect(documentOverlaySearch(current)).toBe("?doc=art_1&kind=docx");
+    expect(withDocumentOverlay("/app/bot_2", current)).toBe("/app/bot_2?doc=art_1&kind=docx");
+    expect(withDocumentOverlay("/app/bot_2", "?m=msg_1&doc=art_1&kind=docx")).toBe(
+      "/app/bot_2?doc=art_1&kind=docx",
+    );
+    expect(withDocumentOverlay("/app/g/group_2", current)).toBe(
+      "/app/g/group_2?doc=art_1&kind=docx",
+    );
+    expect(withDocumentOverlay("/app", current)).toBe("/app?doc=art_1&kind=docx");
+  });
+
+  it("keeps an empty studio and a message the destination already asked for", () => {
+    const empty = new URLSearchParams("?doc&kind=pptx");
+    expect(withDocumentOverlay("/app/bot_2", empty)).toBe("/app/bot_2?doc&kind=pptx");
+    expect(withDocumentOverlay("/app/bot_2?m=msg_2", current)).toBe(
+      "/app/bot_2?m=msg_2&doc=art_1&kind=docx",
+    );
+  });
+
+  it("leaves a chosen document, a page, and every non-chat route alone", () => {
+    expect(withDocumentOverlay("/app/bot_2?doc=art_9&kind=pdf", current)).toBe(
+      "/app/bot_2?doc=art_9&kind=pdf",
+    );
+    expect(withDocumentOverlay("/app/bot_2?page=page_1", current)).toBe("/app/bot_2?page=page_1");
+    expect(withDocumentOverlay("/app/bot_2?page=page_1&view=1", current)).toBe(
+      "/app/bot_2?page=page_1&view=1",
+    );
+    expect(withDocumentOverlay("/app/board", current)).toBe("/app/board");
+    expect(withDocumentOverlay("/app/artifacts", current)).toBe("/app/artifacts");
+    expect(withDocumentOverlay("/app/artifacts/art_1", current)).toBe("/app/artifacts/art_1");
+    expect(withDocumentOverlay("/app/x/link_1", current)).toBe("/app/x/link_1");
+    expect(withDocumentOverlay("/admin#models", current)).toBe("/admin#models");
+  });
+
+  it("adds nothing when no document studio is open", () => {
+    expect(withDocumentOverlay("/app/bot_2", new URLSearchParams("?settings=voice&m=msg_1"))).toBe(
+      "/app/bot_2",
+    );
+    expect(withDocumentOverlay("/app/bot_2?routine=r_1", new URLSearchParams(""))).toBe(
+      "/app/bot_2?routine=r_1",
+    );
   });
 });

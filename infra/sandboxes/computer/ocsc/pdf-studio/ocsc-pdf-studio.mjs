@@ -40,6 +40,9 @@ const STATE_DIR = join(WORKSPACE, ".openbot", "pdf-studio");
 const SERVER_FILE = join(STATE_DIR, "server.json");
 const MAX_PDF_BYTES = 300 * 1024 * 1024;
 const OPEN_TIMEOUT_MS = 90_000;
+// A scheme design or a large save keeps running in the page. The default 30s call limit, and a
+// 60s save wait, dropped the file while the studio was still working.
+const TOOL_TIMEOUT_MS = 30 * 60_000;
 // The chat shows a shell result up to 12,000 characters, with stdout JSON-escaped inside it; past
 // that it is shortened. Printed answers stay under this, measured escaped.
 const MAX_PRINTED_CHARS = 11_000;
@@ -356,7 +359,10 @@ function debugPort() {
 }
 
 async function playwright() {
-  return import(process.env.OCSC_PLAYWRIGHT_MODULE || "playwright-core");
+  const loaded = await import(process.env.OCSC_PLAYWRIGHT_MODULE || "playwright-core");
+  // playwright-core is CommonJS. A dynamic import then exposes chromium on the
+  // module itself, or only on default, depending on the Node version.
+  return loaded.chromium ? loaded : loaded.default;
 }
 
 async function connect(openUrl) {
@@ -415,6 +421,7 @@ async function session() {
   const page = studioPages(browser, origin)[0];
   if (!page)
     throw new StudioError("Evolve PDF Studio is not open. Run: ocsc-pdf-studio open <file.pdf>");
+  page.setDefaultTimeout(TOOL_TIMEOUT_MS);
   return { origin, page, frame: await waitForApp(page) };
 }
 
@@ -530,6 +537,7 @@ async function cmdOpen(args) {
     }
   }
   if (!page) page = await browser.contexts()[0].newPage();
+  page.setDefaultTimeout(TOOL_TIMEOUT_MS);
   if (page.url() !== url) await page.goto(url);
   await page.bringToFront().catch(() => {});
   const frame = await waitForApp(page);
@@ -750,7 +758,7 @@ async function cmdSave() {
   if (await button.isDisabled())
     throw new StudioError("Nothing to save: no PDF is open, or it is open read-only.");
   await button.click();
-  const until = Date.now() + 60_000;
+  const until = Date.now() + TOOL_TIMEOUT_MS;
   while (Date.now() < until) {
     const host = await page.evaluate(() => ({
       saves: window.evolvePdfHost.saves,

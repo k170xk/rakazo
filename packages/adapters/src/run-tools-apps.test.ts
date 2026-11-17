@@ -23,9 +23,19 @@ vi.mock("@rakazo/db", async (importActual) => ({
 
 const { appTools } = await import("./run-tools-apps.js");
 
-const APP = `import { Card, CardBody, CardHeader } from "@ocsc/ui";
+const APP = `import { AppShell, Card, CardBody, CardHeader, Theme } from "@ocsc/ui";
 export default function App() {
-  return <Card><CardHeader title="Jobs" /><CardBody>Hi</CardBody></Card>;
+  return (
+    <Theme preset="evolve">
+      <AppShell title="Jobs">
+        <Card><CardHeader title="Jobs" /><CardBody>Hi</CardBody></Card>
+      </AppShell>
+    </Theme>
+  );
+}
+`;
+const PLAIN = `export default function App() {
+  return <div>Hi</div>;
 }
 `;
 
@@ -57,6 +67,7 @@ function context(
       deps: {
         prisma: {
           page: { findFirst, update: vi.fn() },
+          pageVersion: { findFirst: vi.fn(async () => null) },
           appWorkspace: {
             findMany: vi.fn(async () => [
               { id: "ws-athlone", name: "Athlone", archivedAt: null },
@@ -377,7 +388,10 @@ describe("save_app", () => {
       call({
         title: "Jobs",
         brief: "Tracks jobs.",
-        files: { "App.tsx": "export default function App( {" },
+        files: {
+          "App.tsx":
+            'import { AppShell, Theme } from "@ocsc/ui";\nexport default function App( {\n  return <Theme preset="evolve"><AppShell title="Jobs"></AppShell></Theme>;\n}',
+        },
       }),
     )) as Result;
     expect(result.unchanged).toBe(true);
@@ -391,7 +405,14 @@ describe("save_app", () => {
       call({
         title: "Jobs",
         brief: "Tracks jobs.",
-        files: { "App.tsx": `import fs from "node:fs";\nexport default () => String(fs);` },
+        files: {
+          "App.tsx": `import { AppShell, Theme } from "@ocsc/ui";
+import fs from "node:fs";
+export default function App() {
+  return <Theme preset="evolve"><AppShell title="Jobs">{String(fs)}</AppShell></Theme>;
+}
+`,
+        },
       }),
     )) as Result;
     expect(result.unchanged).toBe(true);
@@ -439,6 +460,55 @@ describe("save_app", () => {
     )) as Result;
     expect(twice.error).toMatch(/more than once/);
     expect(db.appendAppVersion).not.toHaveBeenCalled();
+  });
+
+  it("refuses a new app that is not in the OCSC shell", async () => {
+    const result = (await appTools.save_app!(
+      context().ctx,
+      call({ title: "Jobs", brief: "Tracks jobs.", files: { "App.tsx": PLAIN } }),
+    )) as Result;
+    expect(String(result.error)).toContain("AppShell");
+    expect(result.unchanged).toBe(true);
+    expect(db.createAppPage).not.toHaveBeenCalled();
+  });
+
+  it("refuses a save that takes the shell off an app that has it", async () => {
+    const result = (await appTools.save_app!(
+      context({ files: { "App.tsx": APP } }).ctx,
+      call({ appId: "app-1", files: { "App.tsx": PLAIN } }),
+    )) as Result;
+    expect(String(result.error)).toContain("AppShell");
+    expect(result.unchanged).toBe(true);
+    expect(db.appendAppVersion).not.toHaveBeenCalled();
+  });
+
+  it("still edits an app that never used the shell", async () => {
+    const result = (await appTools.save_app!(
+      context({ files: { "App.tsx": PLAIN } }).ctx,
+      call({ appId: "app-1", edits: [{ find: ">Hi<", replace: ">Hello<" }] }),
+    )) as Result;
+    expect(result).toMatchObject({ appId: "app-1", version: 2 });
+    expect(db.appendAppVersion).toHaveBeenCalled();
+  });
+
+  it("refuses a code change until a shell from an earlier version is put back", async () => {
+    const { ctx } = context({ files: { "App.tsx": PLAIN } });
+    const versions = (
+      ctx as unknown as { deps: { prisma: { pageVersion: { findFirst: ReturnType<typeof vi.fn> } } } }
+    ).deps.prisma.pageVersion;
+    versions.findFirst.mockResolvedValue({ id: "v1" });
+    const refused = (await appTools.save_app!(
+      ctx,
+      call({ appId: "app-1", edits: [{ find: ">Hi<", replace: ">Hello<" }] }),
+    )) as Result;
+    expect(String(refused.error)).toContain("AppShell");
+    expect(db.appendAppVersion).not.toHaveBeenCalled();
+
+    const restored = (await appTools.save_app!(
+      ctx,
+      call({ appId: "app-1", files: { "App.tsx": APP } }),
+    )) as Result;
+    expect(restored).toMatchObject({ appId: "app-1", version: 2 });
   });
 
   it("taints the run when it reads an app, whose rows colleagues may have written", async () => {

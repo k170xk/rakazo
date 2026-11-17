@@ -17,6 +17,7 @@ import {
 import {
   BACKGROUND_RUN_TRIGGERS,
   displayName,
+  instructionsAreCompanyManaged,
   isBackgroundRunTrigger,
   phoneCallSettings,
   ringingCall,
@@ -122,7 +123,7 @@ function mapBot(
   if (!bot.thread) {
     throw new IsolationError("Bot is missing its thread");
   }
-  const companyAssistant = Boolean(bot.evolveAssistantId);
+  const companyAssistant = instructionsAreCompanyManaged(bot);
   return {
     id: bot.id,
     spaceId: bot.spaceId,

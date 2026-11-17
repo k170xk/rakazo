@@ -12,10 +12,11 @@ import {
 import { Button, SectionHeading, Spinner } from "@rakazo/ui-web";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useSpaceQueries } from "../lib/query";
 import { translateRunError } from "../lib/run-error";
 import { statusLabel, statusTone } from "./ActivityList";
+import { withDocumentOverlay } from "./shell-overlay";
 
 export function RoutineRunHistory({ routineId }: { routineId: string }) {
   const { t } = useLingui();
@@ -75,6 +76,7 @@ export function RoutineRunHistory({ routineId }: { routineId: string }) {
 
 function RunRow({ run }: { run: RoutineRun }) {
   const { i18n, t } = useLingui();
+  const [searchParams] = useSearchParams();
   const locale = i18n.locale || "en";
   const at = routineRunAt(run);
   const late = routineRunLateness(run);
@@ -114,7 +116,10 @@ function RunRow({ run }: { run: RoutineRun }) {
   return (
     <li data-testid="routine-run-row" className="text-[13px]">
       {chatTo ? (
-        <Link to={chatTo} className={`${lineClass} hover:bg-accent`}>
+        <Link
+          to={withDocumentOverlay(chatTo, searchParams)}
+          className={`${lineClass} hover:bg-accent`}
+        >
           {line}
         </Link>
       ) : (

@@ -43,6 +43,26 @@ describe("refreshMainPaInstructions", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
+  it("leaves an empty prompt and a prompt the person has rewritten", async () => {
+    await expect(
+      refreshMainPaInstructions({
+        id: "bot-1",
+        name: "Rok",
+        spawnKey: "onboarding:first",
+        instructions: "",
+      }),
+    ).resolves.toBe(false);
+    await expect(
+      refreshMainPaInstructions({
+        id: "bot-1",
+        name: "Rok",
+        spawnKey: "onboarding:first",
+        instructions: `${"Write the way I speak. ".repeat(120)}No onboarding cards.`,
+      }),
+    ).resolves.toBe(false);
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("replaces the organisation interview on a team assistant", async () => {
     await expect(
       refreshMainPaInstructions(

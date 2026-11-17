@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { APP_KIT_GUIDE } from "../guide.js";
-import { auditAppCraft, buildApp, checkFiles, classCandidates, inlineScript, pluginBundle } from "./index.js";
+import {
+  auditAppCraft,
+  buildApp,
+  checkFiles,
+  classCandidates,
+  inlineScript,
+  keptAppLook,
+  pluginBundle,
+} from "./index.js";
 
 const APP = `
 import { AppShell, KpiCard, DataTable } from "@ocsc/ui";
@@ -147,5 +155,27 @@ describe("helpers", () => {
     expect(notes.some((note) => note.includes("commands on AppShell"))).toBe(true);
     expect(notes.some((note) => note.includes("<Theme"))).toBe(true);
     expect(notes.some((note) => note.includes("0 rows"))).toBe(true);
+  });
+
+  it("keeps a new app and a later save inside the OCSC shell", () => {
+    const shell = {
+      "App.tsx": `import { AppShell, Theme } from "@ocsc/ui";
+        export default function App() {
+          return <Theme preset="evolve"><AppShell title="Jobs">Hi</AppShell></Theme>;
+        }`,
+    };
+    const plain = { "App.tsx": "export default function App() { return <div>Hi</div>; }" };
+    expect(keptAppLook(null, plain)).toContain("AppShell");
+    expect(keptAppLook(null, shell)).toBeNull();
+    expect(keptAppLook(shell, plain)).toContain("Nothing was saved");
+    expect(keptAppLook(shell, shell)).toBeNull();
+    expect(keptAppLook(plain, plain)).toBeNull();
+    expect(keptAppLook(plain, plain, { hadShell: true })).toContain("AppShell");
+    expect(keptAppLook(plain, shell, { hadShell: true })).toBeNull();
+    const shellOnly = {
+      "App.tsx": `import { AppShell } from "@ocsc/ui";
+        export default function App() { return <AppShell title="Jobs">Hi</AppShell>; }`,
+    };
+    expect(keptAppLook(shellOnly, shellOnly)).toBeNull();
   });
 });

@@ -5,6 +5,7 @@ import { emptyActivityFilters } from "../../lib/activity-list-filters";
 import { readActivityMode, writeActivityMode } from "../../lib/activity-mode";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
+import { withDocumentOverlay } from "../shell-overlay";
 import type { useShellNavigation } from "./use-shell-navigation";
 
 /** The sidebar's search box: it filters the roster, searches the space, or filters runs in Activity. */
@@ -78,10 +79,9 @@ export function useSidebarSearch({
     const params = new URLSearchParams();
     if (hit.messageId) params.set("m", hit.messageId);
     if (hit.routineId) params.set("routine", hit.routineId);
-    navigate({
-      pathname: hit.groupId ? `/app/g/${hit.groupId}` : `/app/${hit.botId}`,
-      search: params.toString() ? `?${params.toString()}` : undefined,
-    });
+    const path = hit.groupId ? `/app/g/${hit.groupId}` : `/app/${hit.botId}`;
+    const search = params.toString() ? `?${params.toString()}` : "";
+    navigate(withDocumentOverlay(`${path}${search}`, window.location.search));
   }
 
   return {

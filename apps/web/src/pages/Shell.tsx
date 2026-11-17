@@ -185,6 +185,7 @@ function SpaceShell() {
     setSearchParams,
     searchParamsRef,
     redirectKeepingOverlay,
+    navigateKeepingDocument,
     overlay,
     setOverlay,
   } = useShellNavigation();
@@ -364,9 +365,9 @@ function SpaceShell() {
   const selectBot = useCallback(
     (id: string) => {
       setMobileSidebarOpen(false);
-      navigate(`/app/${id}`);
+      navigateKeepingDocument(`/app/${id}`);
     },
-    [navigate, setMobileSidebarOpen],
+    [navigateKeepingDocument, setMobileSidebarOpen],
   );
   const activeGroup = groups.find((group) => group.id === groupId);
   const activeBotId = useRef<string | undefined>(inGroup ? undefined : active?.id);
@@ -530,7 +531,7 @@ function SpaceShell() {
       activeGroupId,
       openChat: (alert) => {
         setMobileSidebarOpen(false);
-        navigate(alert.groupId ? `/app/g/${alert.groupId}` : `/app/${alert.botId}`);
+        navigateKeepingDocument(alert.groupId ? `/app/g/${alert.groupId}` : `/app/${alert.botId}`);
       },
     },
   );
@@ -863,7 +864,7 @@ function SpaceShell() {
         ? rightPanelStorageKey(userId, bootstrapMe.spaceId, kind, id)
         : null;
     rightPanel.openPanelInChat(destKey, kind === "bot" ? "settings" : "group-settings", () =>
-      navigate(kind === "bot" ? `/app/${id}` : `/app/g/${id}`),
+      navigateKeepingDocument(kind === "bot" ? `/app/${id}` : `/app/g/${id}`),
     );
   }
 
@@ -896,7 +897,10 @@ function SpaceShell() {
     setSendError: composer.setSendError,
   });
 
-  const openBot = useCallback((id: string) => navigate(`/app/${id}`), [navigate]);
+  const openBot = useCallback(
+    (id: string) => navigateKeepingDocument(`/app/${id}`),
+    [navigateKeepingDocument],
+  );
   // An import's setup checklist re-checks on each thread refresh, so refresh once setup closes.
   const importSetupOpen = useRef(false);
   useEffect(() => {
@@ -1128,7 +1132,7 @@ function SpaceShell() {
 
   function openCreatedBot(bot: Bot) {
     roster.addCreatedBot(bot);
-    navigate(`/app/${bot.id}`);
+    navigateKeepingDocument(`/app/${bot.id}`);
     setPanel(null);
   }
 
@@ -1158,7 +1162,7 @@ function SpaceShell() {
         read={read}
         dialogs={dialogs}
         openChatSettings={openChatSettings}
-        navigate={navigate}
+        navigate={navigateKeepingDocument}
       />
     ) : null;
   const shell = (
@@ -1197,7 +1201,7 @@ function SpaceShell() {
         collapsedSidebarSections={collapsedSidebarSections}
         toggleSidebarSection={toggleSidebarSection}
         setPanel={setPanel}
-        navigate={navigate}
+        navigate={navigateKeepingDocument}
         setNewSpaceOpen={dialogs.setNewSpaceOpen}
         setCreateBotOpen={dialogs.setCreateBotOpen}
         setCreateWorkSpaceOpen={dialogs.setCreateWorkSpaceOpen}
@@ -1477,7 +1481,7 @@ function SpaceShell() {
       <IncomingCall
         bots={bootstrapMe?.phoneCallsEnabled ? bots : []}
         transcribe={voiceStatus ? Boolean(voiceStatus.transcribe) : undefined}
-        onAnswered={(botId) => navigate(`/app/${botId}`)}
+        onAnswered={(botId) => navigateKeepingDocument(`/app/${botId}`)}
       />
 
       <ShellSidePanel
@@ -1490,7 +1494,7 @@ function SpaceShell() {
         groups={groups}
         setBots={setBots}
         setGroups={setGroups}
-        navigate={navigate}
+        navigate={navigateKeepingDocument}
         refreshBots={refreshBots}
         refreshThread={refreshThread}
         refreshGroupThread={refreshGroupThread}
@@ -1591,7 +1595,7 @@ function SpaceShell() {
           activeId={active?.id}
           activeGroupId={activeGroup?.id}
           alive={alive}
-          navigate={navigate}
+          navigate={navigateKeepingDocument}
           setPanel={setPanel}
           refreshBots={refreshBots}
           removeSpace={removeSpace}
@@ -1624,7 +1628,7 @@ function SpaceShell() {
             await refreshBots(true).catch(() => undefined);
             dialogs.setArchiveOpen(false);
             setMobileSidebarOpen(false);
-            navigate(`/app/${opened.botId}`);
+            navigateKeepingDocument(`/app/${opened.botId}`);
           }}
         />
         <AppOverlays

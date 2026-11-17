@@ -7,7 +7,12 @@ import { queryClient, spaceSeedKey } from "../../lib/query";
 import { selectedSpaceId, selectSpace } from "../../lib/rpc";
 import { remountShellForSpace, spaceSwitchDecision } from "../../lib/space-switch";
 import { speaker } from "../../lib/tts";
-import { readShellOverlay, searchString, withShellOverlay } from "../shell-overlay";
+import {
+  readShellOverlay,
+  searchString,
+  withDocumentOverlay,
+  withShellOverlay,
+} from "../shell-overlay";
 import type { useShellNavigation } from "./use-shell-navigation";
 
 /**
@@ -52,7 +57,8 @@ export function useOpenSpaceChat({
       const previousEffective = selectedSpaceId() ?? bootstrapSpaceId;
       // Persist the active space (including primary) so voice/RPC headers match the chat.
       if (previousEffective === spaceId) {
-        if (selectSpace(spaceId)) navigate(path);
+        // Another space drops the studio: its files belong there. This space keeps the open one.
+        if (selectSpace(spaceId)) navigate(withDocumentOverlay(path, window.location.search));
         return;
       }
       const reload = () => {

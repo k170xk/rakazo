@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { auditAppCraft, buildApp } from "@rakazo/app-kit/build";
+import { appLookMarks, auditAppCraft, buildApp, keptAppLook } from "@rakazo/app-kit/build";
 import { APP_KIT_GUIDE } from "@rakazo/app-kit/guide";
 import { APP_KIT_GUIDE_EXTRAS } from "@rakazo/app-kit/guide-extras";
 import type { CalculatorImport } from "@rakazo/app-kit/import";
@@ -846,6 +846,22 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
   for (const name of deletes) {
     if (name === "App.tsx") return { error: "App.tsx can't be deleted.", unchanged: true };
     delete files[name];
+  }
+  // A table-only save leaves the screens alone. A code save cannot take the shell off, and an
+  // app whose earlier version had it cannot be edited until the shell is back.
+  const codeTouched = !app || hasFiles || hasEdits || deletes.length > 0;
+  if (codeTouched) {
+    const hadShell =
+      app && !appLookMarks(app.files).shell
+        ? Boolean(
+            await deps.prisma.pageVersion.findFirst({
+              where: { pageId: app.id, source: { contains: "<AppShell" } },
+              select: { id: true },
+            }),
+          )
+        : false;
+    const look = keptAppLook(app ? app.files : null, files, { hadShell });
+    if (look) return { error: look, unchanged: true };
   }
   const tables: TableInput[] | string = hasTables
     ? parseTables(args.tables)

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { BOT_INSTRUCTIONS_MAX_LENGTH, InstructionVersionSchema } from "@rakazo/contracts";
+import { instructionsAreCompanyManaged } from "@rakazo/core";
 import type { Prisma } from "./client.js";
 
 export class InstructionConflictError extends Error {
@@ -23,7 +24,7 @@ export async function writeBotInstructions(
 ) {
   await tx.$queryRaw`SELECT id FROM bots WHERE id = ${input.botId} FOR UPDATE`;
   const bot = await tx.bot.findUniqueOrThrow({ where: { id: input.botId } });
-  if (bot.evolveAssistantId) {
+  if (instructionsAreCompanyManaged(bot)) {
     throw new InstructionConflictError(
       "This OCSC company assistant's instructions are managed by OCSC and cannot be changed.",
     );
