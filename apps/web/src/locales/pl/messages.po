@@ -2087,6 +2087,18 @@ msgstr ""
 msgid "Ask the agent to fix it"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Ask the agent to fix them"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "People hit errors {hitCount} times using this app."
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "Someone hit an error using this app."
+msgstr ""
+
 #: src/components/office/StudioWelcome.tsx
 msgid "Ask the assistant to:"
 msgstr "Poproś asystenta, aby:"
