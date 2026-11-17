@@ -10,6 +10,7 @@
     "./pdf/render": "./src/pdf/render.ts",
     "./protocol": "./src/protocol.ts",
     "./python/runtime": "./src/python/runtime.ts",
+    "./ifc/runtime": "./src/ifc/runtime.ts",
     "./python/envelope": "./src/python/envelope.ts",
     "./query": "./src/query.ts",
     "./schema": "./src/schema.ts",

@@ -29,6 +29,7 @@ import type { PreviewServer, ViteDevServer } from "vite";
 import { defineConfig, loadEnv } from "vite";
 import { wuyingScreenAssets } from "../../packages/adapters/src/wuying-screen-assets.ts";
 import { wuyingScreenPolicy } from "../../packages/adapters/src/wuying-screen-policy.ts";
+import { IFC_RUNTIME_PATH, IFC_RUNTIMES } from "../../packages/app-kit/src/ifc/runtime.ts";
 import { PYTHON_RUNTIME_PATH, PYTHON_RUNTIMES } from "../../packages/app-kit/src/python/runtime.ts";
 import { resolveScreenProxySecret } from "../../packages/core/src/secrets-guard.ts";
 import { createServiceLogger } from "../../packages/logging/src/env.ts";
@@ -619,6 +620,13 @@ export default defineConfig(({ command, mode }) => {
               path.join(outDir, PYTHON_RUNTIME_PATH.slice(1)),
               PYTHON_RUNTIME_PATH,
               PYTHON_RUNTIMES,
+            ),
+          );
+          middlewares.use(
+            pythonRuntimeMiddleware(
+              path.join(outDir, IFC_RUNTIME_PATH.slice(1)),
+              IFC_RUNTIME_PATH,
+              IFC_RUNTIMES,
             ),
           );
         },

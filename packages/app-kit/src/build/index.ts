@@ -36,6 +36,9 @@ export const ALLOWED_IMPORTS = [
   "@ocsc/eng",
   "@ocsc/math",
   "@ocsc/plot",
+  "@ocsc/dxf",
+  "@ocsc/sheets",
+  "@ocsc/ifc",
 ] as const;
 
 const KIT_ALIASES: Record<string, string> = {
@@ -46,6 +49,9 @@ const KIT_ALIASES: Record<string, string> = {
   "@ocsc/eng": path.join(SRC, "eng/index.ts"),
   "@ocsc/math": path.join(SRC, "math/index.tsx"),
   "@ocsc/plot": path.join(SRC, "plot/index.ts"),
+  "@ocsc/dxf": path.join(SRC, "dxf/index.ts"),
+  "@ocsc/sheets": path.join(SRC, "sheets/index.ts"),
+  "@ocsc/ifc": path.join(SRC, "ifc/index.tsx"),
   "@ocsc/jsx/jsx-dev-runtime": path.join(SRC, "build/jsx-dev-runtime.ts"),
 };
 
@@ -398,6 +404,127 @@ export function appLookMarks(files: AppFiles): { shell: boolean; kit: boolean; t
 const KEEP_APP_LOOK =
   "Keep AppShell, the @ocsc/ui import and <Theme /> and change the screens inside the shell. Do not replace the app with a hand-written layout. Nothing was saved.";
 
+const BLANK_SHELL =
+  "AppShell is on the page but its window is blank. Put each screen in pages={[{ id, label, render: () => (...) }]}, or between <AppShell> and </AppShell>. tabs, activeTab and onTabChange are not props. A self-closing <AppShell /> with the screens after it leaves them below a full-height empty shell. Nothing was saved.";
+
+type Quote = '"' | "'" | "`" | null;
+
+/** Opening `<AppShell` tags, and whether each one actually has screens to show. */
+function readAppShells(code: string): Array<{ filled: boolean }> {
+  const shells: Array<{ filled: boolean }> = [];
+  let i = 0;
+  let quote: Quote = null;
+  while (i < code.length) {
+    if (quote) {
+      if (code[i] === "\\") {
+        i += 2;
+        continue;
+      }
+      if (code[i] === quote) quote = null;
+      i++;
+      continue;
+    }
+    const ch = code[i];
+    if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+      i++;
+      continue;
+    }
+    if (code.startsWith("<AppShell", i) && !/[\w$]/.test(code[i - 1] ?? "")) {
+      const openEnd = endOfOpeningTag(code, i);
+      if (openEnd < 0) {
+        shells.push({ filled: false });
+        break;
+      }
+      const open = code.slice(i, openEnd);
+      const hasPages = /\bpages\s*=/.test(open);
+      const selfClosing = code[openEnd - 1] === "/";
+      if (selfClosing) {
+        shells.push({ filled: hasPages && /\brender\b/.test(code) });
+        i = openEnd + 1;
+        continue;
+      }
+      const closeAt = endOfAppShell(code, openEnd + 1);
+      const children = closeAt < 0 ? "" : code.slice(openEnd + 1, closeAt);
+      shells.push({ filled: (hasPages && /\brender\b/.test(code)) || children.trim().length > 0 });
+      i = closeAt < 0 ? code.length : closeAt + "</AppShell>".length;
+      continue;
+    }
+    i++;
+  }
+  return shells;
+}
+
+function endOfOpeningTag(code: string, start: number): number {
+  let quote: Quote = null;
+  let brace = 0;
+  for (let i = start; i < code.length; i++) {
+    const ch = code[i]!;
+    if (quote) {
+      if (ch === "\\") {
+        i++;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+      continue;
+    }
+    if (ch === "{") brace++;
+    else if (ch === "}") brace = Math.max(0, brace - 1);
+    else if (ch === ">" && brace === 0) return i;
+  }
+  return -1;
+}
+
+/** Index where `</AppShell` of this shell starts, with nested shells counted. */
+function endOfAppShell(code: string, from: number): number {
+  let quote: Quote = null;
+  let depth = 1;
+  for (let i = from; i < code.length; i++) {
+    const ch = code[i]!;
+    if (quote) {
+      if (ch === "\\") {
+        i++;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+      continue;
+    }
+    if (code.startsWith("<AppShell", i) && !/[\w$]/.test(code[i - 1] ?? "")) {
+      depth++;
+      i += "<AppShell".length - 1;
+      continue;
+    }
+    if (code.startsWith("</AppShell", i)) {
+      depth--;
+      if (depth === 0) return i;
+      const end = code.indexOf(">", i);
+      if (end < 0) return -1;
+      i = end;
+    }
+  }
+  return -1;
+}
+
+/** A shell tag with neither pages nor children draws a blank full-height window. */
+export function shellShowsScreens(files: AppFiles): string | null {
+  const code = Object.entries(files)
+    .filter(([name]) => /\.(tsx|ts|jsx|js)$/.test(name))
+    .map(([, text]) => text)
+    .join("\n");
+  if (!/<AppShell\b/.test(code)) return null;
+  const shells = readAppShells(code);
+  if (shells.length === 0 || shells.some((shell) => !shell.filled)) return BLANK_SHELL;
+  return null;
+}
+
 /**
  * A new app has to open in the OCSC shell. An app that already does cannot be saved without it,
  * including one whose current files lost the shell after an earlier version had it (`hadShell`).
@@ -409,8 +536,9 @@ export function keptAppLook(
   options: { hadShell?: boolean } = {},
 ): string | null {
   const after = appLookMarks(next);
+  const blank = after.shell ? shellShowsScreens(next) : null;
   if (!previous) {
-    if (after.shell && after.kit && after.theme) return null;
+    if (after.shell && after.kit && after.theme) return blank;
     return `A new app is saved only with AppShell and components from @ocsc/ui, and <Theme preset="evolve" /> (or crisp, soft, forest or contrast) near the top. ${KEEP_APP_LOOK}`;
   }
   const before = appLookMarks(previous);
@@ -419,12 +547,12 @@ export function keptAppLook(
     if (!after.shell) lost.push("AppShell");
     if ((before.kit || options.hadShell) && !after.kit) lost.push("the @ocsc/ui import");
     if ((before.theme || options.hadShell) && !after.theme) lost.push("<Theme />");
-    return lost.length ? `This save removes ${lost.join(", ")}. ${KEEP_APP_LOOK}` : null;
+    return lost.length ? `This save removes ${lost.join(", ")}. ${KEEP_APP_LOOK}` : blank;
   }
   const lost: string[] = [];
   if (before.kit && !after.kit) lost.push("the @ocsc/ui import");
   if (before.theme && !after.theme) lost.push("<Theme />");
-  return lost.length ? `This save removes ${lost.join(", ")}. ${KEEP_APP_LOOK}` : null;
+  return lost.length ? `This save removes ${lost.join(", ")}. ${KEEP_APP_LOOK}` : blank;
 }
 
 export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}): string[] {

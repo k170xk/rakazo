@@ -7,6 +7,7 @@ type Pin = { version: string; files: Record<string, { bytes: number }> };
 const CONTENT_TYPES: Record<string, string> = {
   ".mjs": "text/javascript",
   ".json": "application/json",
+  ".js": "text/javascript",
   ".wasm": "application/wasm",
   ".zip": "application/zip",
 };

@@ -36,6 +36,7 @@ export {
 } from "./collections.js";
 export { type Command, CommandPalette, useHotkey } from "./command.js";
 export { Accordion, Carousel, Markdown, SortableList, Typewriter } from "./content.js";
+export { SwipeDeck, swipeDecision, type SwipeDirection } from "./swipe.js";
 export {
   byMonth,
   countBy,

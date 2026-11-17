@@ -390,7 +390,7 @@ describe("save_app", () => {
         brief: "Tracks jobs.",
         files: {
           "App.tsx":
-            'import { AppShell, Theme } from "@ocsc/ui";\nexport default function App( {\n  return <Theme preset="evolve"><AppShell title="Jobs"></AppShell></Theme>;\n}',
+            'import { AppShell, Theme } from "@ocsc/ui";\nexport default function App( {\n  return <Theme preset="evolve"><AppShell title="Jobs">Hi</AppShell></Theme>;\n}',
         },
       }),
     )) as Result;

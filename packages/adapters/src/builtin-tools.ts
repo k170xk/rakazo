@@ -868,7 +868,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "save_app",
     description:
-      'Build or change a flagship OCSC app in the App Studio (multi-screen React, live tables, @ocsc/ui charts, boards, ⌘K and PDF). Use it for every app, tool, tracker, register, dashboard or form, and whenever the person gives a spreadsheet; save_page is only for updating older pages. In a chat, call ask_app_scope and wait before the first save of a new app; that save is refused until they choose an individual user app or a tenant app. Call with {"help": true} before planning or building so your plan uses the full @ocsc/ui and @ocsc/app kit. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save (when starting without real records, seed 8–12 realistic starter rows with hidden boolean column is_sample: true and show <SampleBanner tables={[...]} />). To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save runs the app and audits design craft: resolve both runCheck problems and craftNotes before replying. A new app without AppShell, an @ocsc/ui import and Theme is refused. A save that removes them from an app that has them (or had them in an earlier version) is refused and nothing is saved.',
+      'Build or change a flagship OCSC app in the App Studio (multi-screen React, live tables, @ocsc/ui charts, boards, ⌘K and PDF). Use it for every app, tool, tracker, register, dashboard or form, and whenever the person gives a spreadsheet; save_page is only for updating older pages. In a chat, call ask_app_scope and wait before the first save of a new app; that save is refused until they choose an individual user app or a tenant app. Call with {"help": true} before planning or building so your plan uses the full @ocsc/ui and @ocsc/app kit. A save builds the files; problems come back with file:line and nothing is saved. Pass tables to create or reload tables in the same save (when starting without real records, seed 8–12 realistic starter rows with hidden boolean column is_sample: true and show <SampleBanner tables={[...]} />). To change an app pass appId with edits [{file, find, replace}] or files; pass only appId to read its files, tables and pictures. Each code save runs the app and audits design craft: resolve both runCheck problems and craftNotes before replying. A new app without AppShell, an @ocsc/ui import and Theme is refused. A save that removes them from an app that has them (or had them in an earlier version) is refused and nothing is saved. A shell with no pages and no children is refused too: put the screens in pages render functions or inside AppShell. tabs, activeTab and onTabChange are not props. Drawings use @ocsc/dxf (downloadDxf, parseDxf). CSV and Excel use @ocsc/sheets (downloadCsv, downloadWorkbook, readSheets); pandas in @ocsc/python returns a DataFrame that frameRows turns into rows. A pile of cards to swipe left or right is SwipeDeck from @ocsc/ui.',
     inputSchema: {
       type: "object",
       properties: {
@@ -1000,7 +1000,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "app_asset",
     description:
-      "Add a picture, video or audio clip to an app or whiteboard: a workspace file (path), an attachment in this chat (artifactId), or an https url from evolve_infographics or Evolve project datasheets (mcp__evolve__search_project_datasheets). PNG, JPEG, WebP, GIF, SVG, MP4, WebM, MP3 or WAV up to 20 MB.",
+      "Add a picture, video or audio clip to an app or whiteboard: a workspace file (path), an attachment in this chat (artifactId), or an https url from evolve_infographics or Evolve project datasheets (mcp__evolve__search_project_datasheets). PNG, JPEG, WebP, GIF, SVG, MP4, WebM, MP3 or WAV, or an .ifc model, up to 20 MB.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1830,7 +1830,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "skill_read",
     description:
-      "Load a Claude Agent Skill (SKILL.md recipe) by exact name. Call this when a catalog skill matches the user's request, then follow it immediately. When the result lists files, read one by calling again with its path in file.",
+      "Load a skill by exact name. When a catalog skill matches the request, call this before any other response about the task, then follow the result. Where the skill disagrees with house style about how to do the task, follow the skill. When the result lists files, read one by calling again with its path in file.",
     inputSchema: {
       type: "object",
       properties: {

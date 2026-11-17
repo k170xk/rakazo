@@ -3,7 +3,7 @@ export const CACHE_PREFIX = "rakazo-shell-";
 
 // Live data, auth callbacks and the screen proxy always go straight to the server. The PDF studio's
 // framed bundle is a separate app: its page must never be swapped for the app shell or a reload.
-// The Python runtime is tens of megabytes that apps fetch only when they calculate.
+// The Python runtime and the IFC engine are large files that apps fetch only when they need them.
 const BYPASS_PREFIXES = [
   "/api",
   "/rpc",
@@ -12,6 +12,7 @@ const BYPASS_PREFIXES = [
   "/health",
   "/pdf-studio",
   "/python",
+  "/ifc",
 ];
 const ACTIVATION_TIMEOUT_MS = 3_000;
 const BUILD_ID = /^\d{14}$/;

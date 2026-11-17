@@ -94,6 +94,7 @@ describe("service worker", () => {
     expect(network).not.toHaveBeenCalled();
     expect(bypassesServiceWorker("/apiary")).toBe(false);
     expect(bypassesServiceWorker("/python/314.0.8/pyodide.asm.wasm")).toBe(true);
+    expect(bypassesServiceWorker("/ifc/0.0.71/web-ifc.wasm")).toBe(true);
   });
 
   it("precaches the shell and serves it for navigations while offline", async () => {

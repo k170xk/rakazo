@@ -109,7 +109,7 @@ export type AppRequest =
   | { op: "upload"; name: string; mime: string; base64: string }
   | { op: "ai.ask"; prompt: string; json?: boolean }
   | { op: "export"; table: string; format: "xlsx" | "csv" }
-  | { op: "download"; filename: string; mime: string; text: string }
+  | { op: "download"; filename: string; mime: string; text: string; base64?: boolean }
   /** A report printed to PDF on OCSC's template; answers once the file is saved. */
   | { op: "pdf"; document: unknown; filename?: string }
   /** The device's position, read by the host; allowed shortly after a tap, then while open. */
@@ -121,6 +121,8 @@ export type AppRequest =
   | { op: "map.find"; query: string }
   /** One file of the pinned Python runtime, as bytes (a Uint8Array); the app checks its hash. */
   | { op: "python.file"; version: string; name: string }
+  /** One file of the pinned IFC engine, as bytes (a Uint8Array); the app checks its hash. */
+  | { op: "ifc.file"; version: string; name: string }
   /** Answers AppLive: changes since a revision and who is here (the host asks it on a timer). */
   | { op: "live"; since: number; focus?: AppFocus | null }
   /** What this viewer has open, for others' presence; the host sends it with its next check. */
@@ -234,6 +236,7 @@ export const APP_OPS = new Set<AppRequest["op"]>([
   "map.tile",
   "map.find",
   "python.file",
+  "ifc.file",
   "live",
   "presence.set",
   "rows.query",

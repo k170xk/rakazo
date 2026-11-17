@@ -21,6 +21,7 @@ import {
   requestRef,
   UPLOAD_MIMES,
 } from "@rakazo/app-kit/protocol";
+import { allowEngineRequest, IFC_RUNTIME_PATH, isIfcFileRequest } from "@rakazo/app-kit/ifc/runtime";
 import { isPythonFileRequest, PYTHON_RUNTIME_PATH } from "@rakazo/app-kit/python/runtime";
 import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
@@ -32,6 +33,8 @@ import { SandboxedHtmlViewer } from "../SandboxedHtmlViewer";
 
 /** How often an open app asks whether its data changed elsewhere. */
 const POLL_MS = 3000;
+const ifcBudget = { windowStart: 0, count: 0 };
+const ifcInflight = new Map<string, Promise<Uint8Array>>();
 /** How often a copy that takes deltas checks, which also keeps the viewer's presence fresh. */
 const LIVE_POLL_MS = 2000;
 /** Files an app may hand the person, each with the endings it may be saved under; nothing that would run when opened. */
@@ -41,6 +44,12 @@ const DOWNLOAD_TYPES = new Map<string, readonly string[]>([
   ["text/markdown", ["md", "markdown"]],
   ["application/json", ["json"]],
   ["text/calendar", ["ics"]],
+  ["application/dxf", ["dxf"]],
+  ["image/vnd.dxf", ["dxf"]],
+]);
+/** Binary files the app builds itself (a spreadsheet). `text` is base64. */
+const BINARY_DOWNLOADS = new Map<string, readonly string[]>([
+  ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ["xlsx"]],
 ]);
 const MAX_DOWNLOAD = 5_000_000;
 
@@ -305,6 +314,7 @@ export function AppFrame({
               "assets",
               "pdf",
               "python",
+              "ifc",
               ...("geolocation" in navigator ? ["location"] : []),
               ...(data.viewer.canEdit ? ["uploads"] : []),
               ...(source.ask ? ["ai"] : []),
@@ -359,11 +369,12 @@ export function AppFrame({
         case "download": {
           const mime = String(request.mime).split(";")[0]?.trim().toLowerCase() ?? "";
           const text = String(request.text);
-          const endings = DOWNLOAD_TYPES.get(mime);
-          if (!endings || text.length > MAX_DOWNLOAD) {
+          const binary = request.base64 === true;
+          const endings = (binary ? BINARY_DOWNLOADS : DOWNLOAD_TYPES).get(mime);
+          if (!endings || text.length > MAX_DOWNLOAD || (binary && !/^[A-Za-z0-9+/=\s]+$/.test(text))) {
             throw new Error("That file can't be downloaded from an app.");
           }
-          saveFile(downloadName(String(request.filename), endings), mime, text, false);
+          saveFile(downloadName(String(request.filename), endings), mime, text, binary);
           return null;
         }
         case "pdf": {
@@ -425,6 +436,32 @@ export function AppFrame({
             throw new Error("Python calculations aren't installed on this server.");
           }
           return new Uint8Array(await response.arrayBuffer());
+        }
+        case "ifc.file": {
+          if (!isIfcFileRequest(request.version, request.name)) {
+            throw new Error("That is not part of the IFC engine.");
+          }
+          const key = `${request.version}/${request.name}`;
+          const pending = ifcInflight.get(key);
+          if (pending) return pending;
+          if (!allowEngineRequest(ifcBudget, Date.now())) {
+            throw new Error("IFC viewing isn't available here.");
+          }
+          const job = fetch(`${IFC_RUNTIME_PATH}/${request.version}/${request.name}`, {
+            credentials: "omit",
+            referrerPolicy: "no-referrer",
+          }).then(async (response) => {
+            if (!response.ok || response.headers.get("content-type")?.startsWith("text/html")) {
+              throw new Error("IFC viewing isn't installed on this server.");
+            }
+            return new Uint8Array(await response.arrayBuffer());
+          });
+          ifcInflight.set(key, job);
+          try {
+            return await job;
+          } finally {
+            ifcInflight.delete(key);
+          }
         }
         case "presence.set": {
           focus.current = sawEvolve.current ? null : readFocus(request.focus);

@@ -79,6 +79,7 @@ const PICTURE_MIMES: Record<string, string> = {
   mp3: "audio/mpeg",
   wav: "audio/wav",
   m4a: "audio/mp4",
+  ifc: "model/ifc",
 };
 
 type App = {
@@ -1466,7 +1467,9 @@ async function appAsset(ctx: RunContext, call: ToolCall) {
       use:
         page.kind === "whiteboard"
           ? `Place it on the whiteboard with {kind: "image", asset: "${asset.id}", w: 360, h: 202}.`
-          : `Show it with <AssetImage asset="${asset.id}" /> or useAsset("${asset.id}").`,
+          : asset.mime === "model/ifc"
+            ? `Show it with <IfcView asset="${asset.id}" /> from @ocsc/ifc.`
+            : `Show it with <AssetImage asset="${asset.id}" /> or useAsset("${asset.id}").`,
     };
   } catch (error) {
     if (isAppDataError(error)) return { error: error instanceof Error ? error.message : "Refused" };

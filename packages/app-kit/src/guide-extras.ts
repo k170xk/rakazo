@@ -18,7 +18,9 @@ Pickers (inside Field pass the id: {(id) => <DatePicker id={id} …/>}): DatePic
   multiple?, onCreate?} — searchable, accent-insensitive; use it instead of Select past ~8 options (people,
   projects, clients). Slider {value, onChange, min?, max?, step?, label?, format?}. Popover {trigger,
   children or (close) => …, align?} for any floating panel; Tooltip {content} for icon buttons.
-Content: Accordion {items: [{id, title, content, icon?, hint?}], multiple?, defaultOpen?} (FAQs, sections),
+Content: SwipeDeck {items, render(item, index), onSwipe?(direction "left"|"right", item, index), leftLabel?
+  "Pass", rightLabel? "Keep", empty?} — one card at a time for reviews and sorting. Drag, the two buttons,
+  or the arrow keys send the card left or right and the next one shows. Accordion {items: [{id, title, content, icon?, hint?}], multiple?, defaultOpen?} (FAQs, sections),
   Carousel {children, autoPlay?, slideClassName?} (photos, highlights), SortableList {items, onReorder,
   getKey, render} (drag to set priorities or running order; save the new order), Markdown {children: text}
   renders ai.ask answers and notes safely (headings, lists, tables, links), Typewriter {text, markdown?}

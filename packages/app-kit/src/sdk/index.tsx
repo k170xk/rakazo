@@ -2,6 +2,7 @@ import { MotionConfig } from "motion/react";
 import type { ComponentType, ReactNode } from "react";
 import { Component, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
+import { remember } from "../ifc/load.js";
 import { LOC_CLASS_PREFIX, locFromClass } from "../loc.js";
 import type { PdfDocument } from "../pdf/model.js";
 import type {
@@ -978,6 +979,29 @@ export const pythonRuntime = {
   },
 };
 
+const ifcFiles = new Map<string, Promise<Uint8Array>>();
+const ifcModels = new Map<string, Promise<Uint8Array>>();
+
+/** The host's copy of the pinned IFC engine. Each file and each model is read once per open page. */
+export const ifcRuntime = {
+  available: () => store.init.features.includes("ifc"),
+  file(version: string, name: string): Promise<Uint8Array> {
+    if (store.local) return Promise.reject(new Error("IFC viewing isn't available here."));
+    return remember(ifcFiles, `${version}/${name}`, () =>
+      send<Uint8Array>({ op: "ifc.file", version, name }, 120_000),
+    );
+  },
+  asset(id: string): Promise<Uint8Array> {
+    return remember(ifcModels, id, async () => {
+      const file = await send<{ mime: string; base64: string }>({ op: "asset", id }, 60_000);
+      const binary = atob(file.base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+      return bytes;
+    });
+  },
+};
+
 const has = (feature: string) => !store.local && store.init.features.includes(feature);
 
 /** Waits a moment before asking, so typing a search sends one request, not one per key. */
@@ -1343,6 +1367,26 @@ export async function download(filename: string, text: string, mime = "text/plai
     return;
   }
   await send({ op: "download", filename: filename.slice(0, 120), mime, text });
+}
+
+/** Saves bytes as a file (an .xlsx workbook). Call it from a click. */
+export async function downloadBytes(filename: string, mime: string, bytes: Uint8Array) {
+  let raw = "";
+  for (let at = 0; at < bytes.length; at += 0x8000) {
+    raw += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
+  }
+  const base64 = btoa(raw);
+  if (store.local) {
+    const link = document.createElement("a");
+    const copy = new Uint8Array(bytes.byteLength);
+    copy.set(bytes);
+    link.href = URL.createObjectURL(new Blob([copy], { type: mime }));
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+    return;
+  }
+  await send({ op: "download", filename: filename.slice(0, 120), mime, text: base64, base64: true });
 }
 
 /** Whether reports can be printed to PDF here (inside OCSC Intelligence). */

@@ -13,6 +13,7 @@
     "gallery": "pnpm --filter @rakazo/web dev --open /e2e/fixtures/gallery.html",
     "build": "turbo build",
     "python:runtime": "tsx packages/app-kit/src/python/cli.ts install",
+    "ifc:runtime": "tsx packages/app-kit/src/ifc/cli.ts install",
     "check": "turbo check",
     "lint": "biome check .",
     "format": "biome check --write .",

@@ -177,5 +177,24 @@ describe("helpers", () => {
         export default function App() { return <AppShell title="Jobs">Hi</AppShell>; }`,
     };
     expect(keptAppLook(shellOnly, shellOnly)).toBeNull();
+    const blank = {
+      "App.tsx": `import { Theme, AppShell, Button } from "@ocsc/ui";
+        export default function App() {
+          const [tab, setTab] = useState("Overview");
+          return <Theme preset="evolve"><>
+            <AppShell title="ITM" tabs={["Overview"]} activeTab={tab} onTabChange={setTab} />
+            <main>{tab}</main>
+          </></Theme>;
+        }`,
+    };
+    expect(keptAppLook(null, blank)).toContain("blank");
+    expect(keptAppLook(shell, blank)).toContain("Nothing was saved");
+    const paged = {
+      "App.tsx": `import { AppShell, Theme } from "@ocsc/ui";
+        export default function App() {
+          return <Theme preset="evolve"><AppShell title="ITM" pages={[{ id: "overview", label: "Overview", render: () => <p>Hi</p> }]} /></Theme>;
+        }`,
+    };
+    expect(keptAppLook(null, paged)).toBeNull();
   });
 });

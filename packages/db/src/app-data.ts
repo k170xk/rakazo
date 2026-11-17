@@ -589,6 +589,7 @@ export const ASSET_MIMES = new Set([
   "audio/mpeg",
   "audio/wav",
   "audio/mp4",
+  "model/ifc",
 ]);
 
 export async function addAppAsset(
@@ -597,7 +598,7 @@ export async function addAppAsset(
   input: { name: string; mime: string; bytes: Uint8Array; source: string },
 ): Promise<{ id: string; name: string; mime: string; size: number }> {
   if (!ASSET_MIMES.has(input.mime))
-    throw new AppDataError("Apps keep PNG, JPEG, WebP, GIF or SVG pictures, or MP4, WebM, MP3 or WAV media.");
+    throw new AppDataError("Apps keep PNG, JPEG, WebP, GIF or SVG pictures, MP4, WebM, MP3 or WAV media, or an IFC model.");
   if (input.bytes.byteLength > MAX_ASSET_BYTES)
     throw new AppDataError("That asset is larger than 20 MB.");
   const used = await prisma.appAsset.aggregate({ where: { pageId }, _sum: { size: true } });

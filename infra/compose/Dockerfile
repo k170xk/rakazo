@@ -39,6 +39,7 @@ COPY --chmod=755 . .
 RUN pnpm --filter @rakazo/db generate
 RUN pnpm --filter @rakazo/api --filter @rakazo/worker build
 RUN pnpm python:runtime
+RUN pnpm ifc:runtime || echo "IFC engine was not downloaded. The viewer stays unavailable and the rest of the image is unchanged."
 RUN RAKAZO_ALLOW_DEV_SECRETS=1 pnpm --filter @rakazo/web build
 RUN install -d -m 750 -o node -g node /data /app/apps/web/node_modules/.vite-temp /app/apps/web/asset-archive
 ARG GIT_SHA
