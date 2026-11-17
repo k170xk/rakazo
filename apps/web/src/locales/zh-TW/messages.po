@@ -16151,3 +16151,7 @@ msgstr "Edits update the document directly, without red marks"
 
 msgid "Keep the text and remove the red marks"
 msgstr "Keep the text and remove the red marks"
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Turn this on, then choose who can write their own skills."
+msgstr ""
