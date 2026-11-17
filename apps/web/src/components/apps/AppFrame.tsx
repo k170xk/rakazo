@@ -14,6 +14,7 @@ import {
   APP_GESTURE_OPS,
   APP_MAPS_PATH,
   APP_PICK,
+  APP_PROBLEM_OP,
   APP_RESPONSE,
   APP_WRITE_OPS,
   MAX_UPLOAD_BASE64,
@@ -132,6 +133,8 @@ export function AppFrame({
   const sharedLocation = useRef(false);
   const usedGesture = useRef<string | null>(null);
   const ready = useRef(false);
+  /** Errors already sent for the builder, so a crash that repeats is reported once per visit. */
+  const reported = useRef(new Set<string>());
   const latest = useRef({
     source,
     onPick,
@@ -143,6 +146,7 @@ export function AppFrame({
     theme,
     picking,
     maps,
+    patch,
   });
   latest.current = {
     source,
@@ -155,6 +159,7 @@ export function AppFrame({
     theme,
     picking,
     maps,
+    patch,
   };
 
   const reload = useCallback(async () => {
@@ -510,7 +515,15 @@ export function AppFrame({
         return;
       }
       if (type === "ocsc-app:error") {
-        latest.current.onProblem?.(String((data as { message?: unknown }).message));
+        const message = String((data as { message?: unknown }).message);
+        latest.current.onProblem?.(message);
+        const { source, app, patch } = latest.current;
+        if (source.call && !patch && !reported.current.has(message) && reported.current.size < 10) {
+          reported.current.add(message);
+          source
+            .call({ op: APP_PROBLEM_OP, version: app.version, message })
+            .catch(() => undefined);
+        }
         return;
       }
       const request = readAppRequest(data);

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Row, TableSchema } from "@rakazo/app-kit/schema";
 import {
   checkSchema,
@@ -925,6 +926,78 @@ export async function markAppVersionGood(prisma: PrismaClient, pageId: string, v
     },
     data: { goodVersion: version },
   });
+}
+
+/** Distinct problems kept per app; the least recently seen go first. */
+const MAX_APP_PROBLEMS = 50;
+export const APP_PROBLEM_MAX_LENGTH = 500;
+
+/**
+ * Counts an error the app threw for someone using it. Repeats of the same message on the same
+ * version count up; returns false when the message or version is not one to keep.
+ */
+export async function recordAppProblem(
+  prisma: PrismaClient,
+  input: { pageId: string; version: number; message: string; userId: string | null },
+): Promise<boolean> {
+  const message = input.message
+    .replace(/\p{Cc}+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, APP_PROBLEM_MAX_LENGTH);
+  if (!message || !Number.isInteger(input.version) || input.version < 1) return false;
+  const page = await prisma.page.findUnique({
+    where: { id: input.pageId },
+    select: { kind: true, currentVersion: true },
+  });
+  if (page?.kind !== "app" || input.version > page.currentVersion) return false;
+  const key = createHash("sha256").update(`${input.version}\n${message}`).digest("hex");
+  const now = new Date();
+  const kept = await prisma.appProblem.upsert({
+    where: { pageId_key: { pageId: input.pageId, key } },
+    create: {
+      pageId: input.pageId,
+      version: input.version,
+      message,
+      key,
+      lastUserId: input.userId,
+    },
+    update: { count: { increment: 1 }, lastSeen: now, lastUserId: input.userId },
+    select: { count: true },
+  });
+  if (kept.count === 1) {
+    const stale = await prisma.appProblem.findMany({
+      where: { pageId: input.pageId },
+      orderBy: { lastSeen: "desc" },
+      skip: MAX_APP_PROBLEMS,
+      select: { id: true },
+    });
+    if (stale.length)
+      await prisma.appProblem.deleteMany({ where: { id: { in: stale.map((row) => row.id) } } });
+  }
+  return true;
+}
+
+/** Errors people hit in the app recently, newest first, for the builder to reproduce and fix. */
+export async function recentAppProblems(
+  prisma: PrismaClient,
+  pageId: string,
+  options: { days?: number; take?: number } = {},
+) {
+  const since = new Date(Date.now() - (options.days ?? 14) * 86_400_000);
+  const rows = await prisma.appProblem.findMany({
+    where: { pageId, lastSeen: { gte: since } },
+    orderBy: [{ version: "desc" }, { lastSeen: "desc" }],
+    take: options.take ?? 10,
+    select: { version: true, message: true, count: true, firstSeen: true, lastSeen: true },
+  });
+  return rows.map((row) => ({
+    version: row.version,
+    message: row.message,
+    count: row.count,
+    firstSeen: row.firstSeen.toISOString(),
+    lastSeen: row.lastSeen.toISOString(),
+  }));
 }
 
 /** The version people open: an app's last good one, otherwise the current version. */

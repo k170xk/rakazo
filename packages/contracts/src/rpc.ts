@@ -1973,6 +1973,20 @@ export const appContract = {
     revision: oc
       .input(z.strictObject({ pageId: Id }))
       .output(z.object({ revision: z.number().int(), version: z.number().int() })),
+    /** Errors the app threw for people using it in the last fortnight, newest version first. */
+    problems: oc.input(z.strictObject({ pageId: Id })).output(
+      z.object({
+        problems: z.array(
+          z.object({
+            version: z.number().int(),
+            message: z.string(),
+            count: z.number().int(),
+            firstSeen: z.string(),
+            lastSeen: z.string(),
+          }),
+        ),
+      }),
+    ),
     /** Draws the app's OCSC icon again with gpt-image-2, optionally of a chosen object. */
     redrawIcon: oc
       .input(z.strictObject({ pageId: Id, subject: z.string().trim().max(300).optional() }))

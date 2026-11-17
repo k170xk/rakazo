@@ -274,6 +274,12 @@ export const APP_CALL_OPS = new Set<AppRequest["op"]>([
   "workspaces.member",
 ]);
 
+/**
+ * The host's report of an error the app threw, sent through the call route. Not in APP_CALL_OPS,
+ * so the app itself can never send it; the host forwards what the frame posted as ocsc-app:error.
+ */
+export const APP_PROBLEM_OP = "problems.report";
+
 /** Ops that change who is in a workspace or which one is open; the host lets them follow a click. */
 export const APP_WORKSPACE_WRITE_OPS = new Set<AppRequest["op"]>([
   "workspaces.open",

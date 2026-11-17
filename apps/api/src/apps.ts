@@ -42,6 +42,7 @@ import {
   readAppAsset,
   readAppRowFacts,
   readAppTables,
+  recentAppProblems,
   recordAuditEvent,
   removeAppRow,
   runAsSystem,
@@ -242,6 +243,11 @@ export async function redrawAppIcon(
     { prisma, connection },
     { pageId: app.id, userId: actor.userId, title: app.title, subject: input.subject ?? null },
   );
+}
+
+export async function getAppProblems(prisma: PrismaClient, actor: Actor, pageId: string) {
+  const app = await requireApp(prisma, actor, pageId);
+  return { problems: await recentAppProblems(prisma, app.id) };
 }
 
 export async function getAppRevision(prisma: PrismaClient, actor: Actor, pageId: string) {

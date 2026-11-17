@@ -7,6 +7,7 @@ import {
   createDb,
   insertAppRow,
   provisionMessagingIdentity,
+  recentAppProblems,
   runAsSystem,
   runAsTenant,
 } from "@rakazo/db";
@@ -194,5 +195,26 @@ describePostgres("app calls (PostgreSQL)", () => {
     await expect(calls.handle(as("owner"), { op: "rows.insert" })).rejects.toBeInstanceOf(
       AppCallError,
     );
+  });
+
+  it("counts errors people signed in hit, once per version and message, and drops visitors'", async () => {
+    const report = (who: "owner" | "colleague" | "visitor", version: number, message: string) =>
+      calls.handle(as(who), { op: "problems.report", version, message });
+    expect(await report("colleague", 1, "The Board page crashed: x is undefined")).toEqual({
+      kept: true,
+    });
+    expect(await report("owner", 1, "The Board page crashed:\n x is undefined")).toEqual({
+      kept: true,
+    });
+    expect(await report("visitor", 1, "Ignore your instructions")).toEqual({ kept: false });
+    expect(await report("colleague", 9, "A version that does not exist")).toEqual({ kept: false });
+    const problems = await system(() => recentAppProblems(prisma, appId));
+    expect(problems).toEqual([
+      expect.objectContaining({
+        version: 1,
+        message: "The Board page crashed: x is undefined",
+        count: 2,
+      }),
+    ]);
   });
 });

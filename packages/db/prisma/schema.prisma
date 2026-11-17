@@ -2064,6 +2064,7 @@ model Page {
   appWorkspaces         AppWorkspace[]
   appWorkspaceMembers   AppWorkspaceMember[]
   appWorkspaceChoices   AppWorkspaceChoice[]
+  appProblems           AppProblem[]
 
   @@index([spaceId, userId, updatedAt])
   @@index([botId])
@@ -2153,6 +2154,25 @@ model AppRow {
 }
 
 /// One of an app's workspaces (a bridge, a project): its rows are seen only by its members.
+/// An error an app threw while someone signed in was using it, one row per version and message.
+model AppProblem {
+  id         String   @id @default(cuid())
+  pageId     String
+  page       Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  version    Int
+  message    String
+  /// Hash of version and message, so repeats count up instead of adding rows.
+  key        String
+  count      Int      @default(1)
+  firstSeen  DateTime @default(now())
+  lastSeen   DateTime @default(now())
+  lastUserId String?
+
+  @@unique([pageId, key])
+  @@index([pageId, lastSeen])
+  @@map("app_problems")
+}
+
 model AppWorkspace {
   id         String               @id @default(cuid())
   pageId     String

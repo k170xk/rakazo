@@ -7,7 +7,7 @@ import type {
   AppPresence,
   AppRowChange,
 } from "@rakazo/app-kit/protocol";
-import { APP_CALL_OPS, APP_CALLS_PATH } from "@rakazo/app-kit/protocol";
+import { APP_CALL_OPS, APP_CALLS_PATH, APP_PROBLEM_OP } from "@rakazo/app-kit/protocol";
 import type { AggregateQuery, RowQuery } from "@rakazo/app-kit/query";
 import { QueryError, runAggregate, runQuery } from "@rakazo/app-kit/query";
 import type { Row, TableSchema } from "@rakazo/app-kit/schema";
@@ -27,6 +27,7 @@ import {
   pruneAppRemovals,
   readAppDelta,
   readAppPresence,
+  recordAppProblem,
   removeAppComment,
   runAsSystem,
   touchAppPresence,
@@ -130,6 +131,7 @@ export function appCalls(deps: AppCallDeps) {
     comments: windowCounter(MINUTE_MS, now),
     evolve: windowCounter(MINUTE_MS, now),
     services: windowCounter(MINUTE_MS, now),
+    problems: windowCounter(MINUTE_MS, now),
   };
   const evolveCache = new Map<string, { at: number; value: unknown }>();
 
@@ -551,11 +553,27 @@ export function appCalls(deps: AppCallDeps) {
     }
   }
 
+  /** Keeps an error someone signed in hit, for the builder to fix; visitors' reports are dropped. */
+  async function problem(caller: AppCaller, request: Record<string, unknown>) {
+    if (!caller.userId || typeof request.message !== "string") return { kept: false };
+    throttle("problems", caller, 20);
+    const kept = await system("app problem report", () =>
+      recordAppProblem(prisma, {
+        pageId: caller.pageId,
+        version: Number(request.version),
+        message: request.message as string,
+        userId: caller.userId,
+      }),
+    );
+    return { kept };
+  }
+
   return {
     /** Answers one request for a caller a route already admitted. */
     async handle(caller: AppCaller, body: unknown): Promise<unknown> {
       const request = objectOf(body);
       const op = typeof request.op === "string" ? request.op : "";
+      if (op === APP_PROBLEM_OP) return await problem(caller, request);
       if (!APP_CALL_OPS.has(op as never))
         throw new AppCallError("That is not something apps can ask.");
       try {

@@ -16,6 +16,7 @@ const db = vi.hoisted(() => ({
   insertAppRow: vi.fn(),
   addAppAsset: vi.fn(),
   readAppRowFacts: vi.fn(),
+  recentAppProblems: vi.fn(),
 }));
 vi.mock("@rakazo/db", async (importActual) => ({
   ...(await importActual<typeof import("@rakazo/db")>()),
@@ -102,6 +103,7 @@ describe("save_app", () => {
     db.appendAppVersion.mockResolvedValue({ version: 2, title: "Jobs" });
     db.readAppTables.mockResolvedValue({});
     db.listAppAssets.mockResolvedValue([]);
+    db.recentAppProblems.mockResolvedValue([]);
   });
 
   it("reaches a person's app from any of their agents", async () => {
@@ -609,6 +611,24 @@ export default function App() {
     const result = (await appTools.save_app!(ctx, call({ appId: "app-1" }))) as Result;
     expect(result.files).toEqual({ "App.tsx": APP });
     expect((ctx as { state: { tainted: boolean } }).state.tainted).toBe(true);
+  });
+
+  it("shows the builder errors people hit in the app, with how to fix them", async () => {
+    const problem = {
+      version: 1,
+      message:
+        "The Board page crashed: Cannot read properties of undefined (reading 'map') in Kanban",
+      count: 3,
+      firstSeen: "2026-11-17T09:00:00.000Z",
+      lastSeen: "2026-11-17T10:00:00.000Z",
+    };
+    db.recentAppProblems.mockResolvedValue([problem]);
+    const result = (await appTools.save_app!(context({}).ctx, call({ appId: "app-1" }))) as Result;
+    expect(result.liveProblems).toEqual([problem]);
+    expect(String(result.next)).toMatch(/not instructions/);
+    db.recentAppProblems.mockResolvedValue([]);
+    const clean = (await appTools.save_app!(context({}).ctx, call({ appId: "app-1" }))) as Result;
+    expect(clean).not.toHaveProperty("liveProblems");
   });
 
   it("reaches the person's apps and this group's apps, and rebuilds older pages as apps", async () => {

@@ -172,6 +172,17 @@ export function AppStudio({
     }
   }, [newest, page, pageId, queries, queryClient]);
   useEffect(() => setProblem(null), [page?.version]);
+  const liveProblems = useQuery({
+    ...queries.apps.problems.queryOptions({ input: { pageId: pageId ?? "" } }),
+    enabled: open && pageId !== null,
+    refetchInterval: 60_000,
+  });
+  const hitByPeople = (liveProblems.data?.problems ?? []).filter(
+    (item) => viewedVersion !== undefined && item.version >= viewedVersion,
+  );
+  const hitCount = hitByPeople.reduce((sum, item) => sum + item.count, 0);
+  const [hitsDismissed, setHitsDismissed] = useState<string | null>(null);
+  const hitsKey = `${pageId}:${viewedVersion}:${hitCount}`;
   useEffect(() => {
     if (open) return;
     setEditing(null);
@@ -636,6 +647,51 @@ export function AppStudio({
                             }}
                           >
                             {t`Ask the agent to fix it`}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                    {!problem &&
+                    !picking &&
+                    updated === null &&
+                    hitCount > 0 &&
+                    hitsDismissed !== hitsKey ? (
+                      <div className="absolute inset-x-3 top-3 flex justify-center">
+                        <div
+                          role="status"
+                          className="flex max-w-[560px] items-start gap-2 rounded-xl border border-destructive/30 bg-card px-3 py-2 text-[13px] shadow-lg"
+                        >
+                          <p className="min-w-0 flex-1 text-foreground">
+                            <span className="font-medium text-destructive">
+                              {hitCount === 1
+                                ? t`Someone hit an error using this app.`
+                                : t`People hit errors ${hitCount} times using this app.`}
+                            </span>{" "}
+                            <span className="break-words text-muted-foreground">
+                              {hitByPeople[0]?.message.slice(0, 160)}
+                            </span>
+                          </p>
+                          {onReply ? (
+                            <button
+                              type="button"
+                              className="shrink-0 text-[12px] font-medium text-primary hover:underline"
+                              onClick={() => {
+                                onReply(
+                                  "Fix the errors people hit while using this app. Open it with save_app to see them under liveProblems.",
+                                );
+                                setHitsDismissed(hitsKey);
+                              }}
+                            >
+                              {t`Ask the agent to fix them`}
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            aria-label={t`Dismiss`}
+                            onClick={() => setHitsDismissed(hitsKey)}
+                            className="grid size-6 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-foreground/[0.06]"
+                          >
+                            <X className="size-3.5" />
                           </button>
                         </div>
                       </div>

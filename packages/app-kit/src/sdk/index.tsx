@@ -1662,6 +1662,15 @@ export function mount(App: ComponentType) {
         "*",
       );
   });
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event.reason;
+    const text = reason instanceof Error ? reason.message : String(reason);
+    if (hosted() && text !== "No host")
+      window.parent.postMessage(
+        { type: "ocsc-app:error", message: `Unhandled promise rejection: ${text}`.slice(0, 500) },
+        "*",
+      );
+  });
   const element =
     document.getElementById("root") ?? document.body.appendChild(document.createElement("div"));
   createRoot(element).render(

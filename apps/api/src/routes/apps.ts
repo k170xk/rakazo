@@ -12,6 +12,7 @@ import {
   getAppAssets,
   getAppData,
   getAppFiles,
+  getAppProblems,
   getAppRevision,
   getAppWorkspaces,
   getEvolvePublication,
@@ -108,6 +109,9 @@ export function appsRoutes(ctx: RouterContext) {
       ),
       revision: authed.apps.revision.handler(({ context, input }) =>
         getAppRevision(db, context.actor, input.pageId),
+      ),
+      problems: authed.apps.problems.handler(({ context, input }) =>
+        getAppProblems(db, context.actor, input.pageId),
       ),
       redrawIcon: authed.apps.redrawIcon.handler(async ({ context, input }) => {
         const icon = await redrawAppIcon(db, context.actor, deps.evolvePlugins ?? null, input);
