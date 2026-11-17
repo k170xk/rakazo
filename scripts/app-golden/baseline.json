@@ -1,0 +1,11 @@
+{
+  "BIM Coordination Hub": { "typeErrors": 6, "consoleErrors": 2, "phone": 0, "overflow": 0 },
+  "Project Programme Tracker": { "typeErrors": 7, "consoleErrors": 0, "phone": 3, "overflow": 0 },
+  "Beam and Section Designer": { "typeErrors": 0, "consoleErrors": 0, "phone": 0, "overflow": 0 },
+  "Site Inspection Studio": { "typeErrors": 6, "consoleErrors": 2, "phone": 1, "overflow": 0 },
+  "Template: Project tracker": { "typeErrors": 0, "consoleErrors": 0, "phone": 2, "overflow": 0 },
+  "Template: Client pipeline": { "typeErrors": 0, "consoleErrors": 0, "phone": 0, "overflow": 0 },
+  "Template: Site inspections": { "typeErrors": 0, "consoleErrors": 0, "phone": 0, "overflow": 0 },
+  "Template: Timesheets": { "typeErrors": 0, "consoleErrors": 0, "phone": 0, "overflow": 0 },
+  "Template: Asset register": { "typeErrors": 0, "consoleErrors": 0, "phone": 0, "overflow": 0 }
+}

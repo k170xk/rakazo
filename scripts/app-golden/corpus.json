@@ -1,0 +1,413 @@
+[
+  {
+    "title": "BIM Coordination Hub",
+    "files": {
+      "App.tsx": "import React, { useMemo, useState } from \"react\";\nimport { AppShell, Theme, KpiCard, DonutChart, BarList, AreaChart, Kanban, TableView, SampleBanner, SpotlightCard, PrintButton, Badge, Card, CardHeader, CardBody, Grid, Button, toast } from \"@ocsc/ui\";\nimport { useTable } from \"@ocsc/app\";\nimport { IfcView } from \"@ocsc/ifc\";\nimport { Boxes, LayoutDashboard, Columns3, Table2, Download } from \"lucide-react\";\nimport { ExportPanel } from \"./ExportPanel\";\n\nexport default function App() {\n  const clashes = useTable(\"clashes\");\n  const rows = clashes.rows as any[];\n  const byStatus = useMemo(() => [\"Open\",\"In review\",\"Resolved\",\"Closed\"].map((s) => ({ label: s, value: rows.filter((r) => r.status === s).length })), [rows]);\n  const byDiscipline = useMemo(() => [\"Structure\",\"MEP\",\"Architecture\",\"Civil\"].map((d) => ({ label: d, value: rows.filter((r) => r.discipline === d).length })), [rows]);\n  const trend = rows.slice(0, 8).map((r, i) => ({ week: \"W\" + (i + 1), clashes: Number(r.count) }));\n  const pages = [\n    { id: \"overview\", label: \"Overview\", icon: <LayoutDashboard />, render: () => (\n      <div className=\"space-y-6\">\n        <SampleBanner tables={[clashes]} />\n        <Grid cols={4}>\n          <KpiCard label=\"Open clashes\" value={byStatus[0].value} delta={-12} trend={[9,8,8,7,6,5]} />\n          <KpiCard label=\"In review\" value={byStatus[1].value} trend=\"up\" />\n          <KpiCard label=\"Resolved\" value={byStatus[2].value} format=\"number\" />\n          <KpiCard label=\"Total\" value={rows.length} />\n        </Grid>\n        <Grid cols={2}>\n          <Card><CardHeader title=\"By status\" /><CardBody><DonutChart data={byStatus} /></CardBody></Card>\n          <Card><CardHeader title=\"By discipline\" /><CardBody><BarList data={byDiscipline} /></CardBody></Card>\n        </Grid>\n        <Card><CardHeader title=\"Clash trend\" /><CardBody><AreaChart data={trend} xKey=\"week\" yKey=\"clashes\" /></CardBody></Card>\n        <SpotlightCard title=\"Needs attention\" description={rows.filter((r) => r.priority === \"High\").length + \" high-priority clashes\"} />\n      </div>) },\n    { id: \"model\", label: \"Model\", icon: <Boxes />, render: () => (\n      <Card><CardHeader title=\"Federated model\" /><CardBody><IfcView /></CardBody></Card>) },\n    { id: \"board\", label: \"Board\", icon: <Columns3 />, count: rows.length, render: () => (\n      <Kanban rows={rows} groupBy=\"status\" columns={[\"Open\",\"In review\",\"Resolved\",\"Closed\"].map((v) => ({ value: v }))}\n        renderCard={(r: any) => <div className=\"space-y-1\"><div className=\"font-medium\">{r.title}</div><Badge>{r.discipline}</Badge></div>}\n        onMove={(r: any, value) => clashes.update(r._id, { status: value })} />) },\n    { id: \"register\", label: \"Register\", icon: <Table2 />, render: () => (\n      <div className=\"space-y-4\"><div className=\"flex justify-end\"><PrintButton title=\"Clash register\" /></div><TableView table={clashes} /></div>) },\n    { id: \"exports\", label: \"Exports\", icon: <Download />, render: () => <ExportPanel rows={rows} /> },\n  ];\n  return (\n    <Theme preset=\"crisp\" density=\"comfortable\">\n      <AppShell title=\"BIM Coordination Hub\" pages={pages} commands={[{ label: \"Export DXF\", action: () => toast(\"Use the Exports tab\") }]} />\n    </Theme>\n  );\n}\n",
+      "ExportPanel.tsx": "import React, { useState } from \"react\";\nimport { Card, CardHeader, CardBody, Button, Callout } from \"@ocsc/ui\";\nimport { downloadDxf, parseDxf } from \"@ocsc/dxf\";\nimport { downloadCsv, downloadWorkbook } from \"@ocsc/sheets\";\nimport { Drawing, DrawingLine, DrawingCircle, DrawingText, Dim } from \"@ocsc/plot\";\n\nexport function ExportPanel({ rows }: { rows: any[] }) {\n  const [parsed, setParsed] = useState<string | null>(null);\n  const grid = [0, 6000, 12000, 18000];\n  return (\n    <div className=\"space-y-4\">\n      <Card><CardHeader title=\"Grid drawing\" /><CardBody>\n        <Drawing bounds={[-1000, -1000, 19000, 7000]} units=\"mm\">\n          {grid.map((x) => <DrawingLine key={x} from={[x, 0]} to={[x, 6000]} />)}\n          {grid.map((x, i) => <DrawingCircle key={\"c\" + x} center={[x, 6500]} r={300} />)}\n          {grid.map((x, i) => <DrawingText key={\"t\" + x} at={[x, 6500]} text={String.fromCharCode(65 + i)} />)}\n          <Dim from={[0, 0]} to={[6000, 0]} offset={-600} label=\"6000\" />\n        </Drawing>\n      </CardBody></Card>\n      <div className=\"flex flex-wrap gap-2\">\n        <Button onClick={() => downloadDxf(\"grid.dxf\", { units: \"mm\", layers: [{ name: \"GRID\", color: 8 }], entities: grid.map((x) => ({ type: \"line\", layer: \"GRID\", from: { x, y: 0 }, to: { x, y: 6000 } })) })}>Download DXF</Button>\n        <Button variant=\"outline\" onClick={() => downloadCsv(\"clashes.csv\", [[\"Title\",\"Status\"], ...rows.map((r) => [r.title, r.status])])}>CSV</Button>\n        <Button variant=\"outline\" onClick={() => downloadWorkbook(\"clashes.xlsx\", [{ name: \"Clashes\", rows: [[\"Title\",\"Status\"], ...rows.map((r) => [r.title, r.status])] }])}>Excel</Button>\n      </div>\n      <input type=\"file\" accept=\".dxf\" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const d = parseDxf(String(rd.result)); setParsed(d.entities.length + \" entities\"); }; rd.readAsText(f); }} />\n      {parsed && <Callout tone=\"info\">{parsed}</Callout>}\n    </div>\n  );\n}\n"
+    },
+    "tables": {
+      "clashes": {
+        "schema": {
+          "name": "clashes",
+          "label": "Clashes",
+          "columns": [
+            { "key": "title", "label": "Title", "type": "text" },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "enum",
+              "options": [
+                { "value": "Open" },
+                { "value": "In review" },
+                { "value": "Resolved" },
+                { "value": "Closed" }
+              ]
+            },
+            { "key": "discipline", "label": "Discipline", "type": "text" },
+            { "key": "priority", "label": "Priority", "type": "text" },
+            { "key": "count", "label": "Count", "type": "number" },
+            { "key": "is_sample", "label": "Sample", "type": "boolean", "hidden": true }
+          ]
+        },
+        "rows": [
+          {
+            "_id": "r1",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L1",
+            "status": "Open",
+            "discipline": "Structure",
+            "priority": "High",
+            "count": 20,
+            "is_sample": true
+          },
+          {
+            "_id": "r2",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L2",
+            "status": "In review",
+            "discipline": "MEP",
+            "priority": "Medium",
+            "count": 19,
+            "is_sample": true
+          },
+          {
+            "_id": "r3",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L3",
+            "status": "Resolved",
+            "discipline": "Architecture",
+            "priority": "Medium",
+            "count": 18,
+            "is_sample": true
+          },
+          {
+            "_id": "r4",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L4",
+            "status": "Closed",
+            "discipline": "Civil",
+            "priority": "High",
+            "count": 17,
+            "is_sample": true
+          },
+          {
+            "_id": "r5",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L5",
+            "status": "Open",
+            "discipline": "Structure",
+            "priority": "Medium",
+            "count": 16,
+            "is_sample": true
+          },
+          {
+            "_id": "r6",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L6",
+            "status": "In review",
+            "discipline": "MEP",
+            "priority": "Medium",
+            "count": 15,
+            "is_sample": true
+          },
+          {
+            "_id": "r7",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L7",
+            "status": "Resolved",
+            "discipline": "Architecture",
+            "priority": "High",
+            "count": 14,
+            "is_sample": true
+          },
+          {
+            "_id": "r8",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L8",
+            "status": "Closed",
+            "discipline": "Civil",
+            "priority": "Medium",
+            "count": 13,
+            "is_sample": true
+          },
+          {
+            "_id": "r9",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L9",
+            "status": "Open",
+            "discipline": "Structure",
+            "priority": "Medium",
+            "count": 12,
+            "is_sample": true
+          },
+          {
+            "_id": "r10",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L10",
+            "status": "In review",
+            "discipline": "MEP",
+            "priority": "High",
+            "count": 11,
+            "is_sample": true
+          },
+          {
+            "_id": "r11",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L11",
+            "status": "Resolved",
+            "discipline": "Architecture",
+            "priority": "Medium",
+            "count": 10,
+            "is_sample": true
+          },
+          {
+            "_id": "r12",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Duct vs beam L12",
+            "status": "Closed",
+            "discipline": "Civil",
+            "priority": "Medium",
+            "count": 9,
+            "is_sample": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "title": "Project Programme Tracker",
+    "files": {
+      "App.tsx": "import React, { useState } from \"react\";\nimport { AppShell, Theme, Aurora, KpiCard, PeriodFilter, AreaChart, LineChart, BarChart, FunnelChart, Gauge, Heatmap, CalendarHeatmap, Gantt, CalendarMonth, Timeline, ActivityFeed, Steps, Checklist, TableView, SampleBanner, Card, CardHeader, CardBody, Grid, Tabs, SegmentedControl, Rating, Progress, Badge } from \"@ocsc/ui\";\nimport { useTable, useAppState } from \"@ocsc/app\";\n\nexport default function App() {\n  const jobs = useTable(\"jobs\");\n  const rows = jobs.rows as any[];\n  const [period, setPeriod] = useState<any>(\"quarter\");\n  const [check, setCheck] = useState<any>({});\n  const [mode, setMode] = useAppState(\"mode\", \"week\");\n  const fees = rows.map((r) => ({ month: r.start.slice(0, 7), fee: r.fee, cost: r.fee * 0.7 }));\n  return (\n    <Theme preset=\"evolve\">\n      <AppShell title=\"Programme Tracker\" commands pages={[\n        { id: \"overview\", label: \"Overview\", render: () => (\n          <div className=\"space-y-6\">\n            <SampleBanner tables={[\"jobs\"]} />\n            <PeriodFilter value={period} onChange={setPeriod} />\n            <Grid cols={4}>\n              <KpiCard label=\"Live jobs\" value={rows.length} trend={rows.map((r) => r.progress)} />\n              <KpiCard label=\"Fees\" value={rows.reduce((a, r) => a + r.fee, 0)} format=\"currency\" currency=\"EUR\" trend={{ up: true }} />\n              <KpiCard label=\"Avg progress\" value={0.42} format=\"percent\" />\n              <KpiCard label=\"At risk\" value={2} tone=\"danger\" />\n            </Grid>\n            <Grid cols={2}>\n              <Card><CardHeader title=\"Fees\" /><CardBody><LineChart data={fees} x=\"month\" series={[\"fee\", \"cost\"]} /></CardBody></Card>\n              <Card><CardHeader title=\"By stage\" /><CardBody><BarChart data={rows} xKey=\"stage\" yKey=\"fee\" /></CardBody></Card>\n              <Card><CardHeader title=\"Pipeline\" /><CardBody><FunnelChart data={[{ label: \"Lead\", value: 40 }, { label: \"Bid\", value: 20 }, { label: \"Won\", value: 8 }]} /></CardBody></Card>\n              <Card><CardHeader title=\"Utilisation\" /><CardBody><Gauge value={78} max={100} label=\"Team\" /></CardBody></Card>\n            </Grid>\n            <Card><CardHeader title=\"Hours\" /><CardBody><Heatmap rows={rows} x=\"stage\" y=\"lead\" valueKey=\"fee\" /></CardBody></Card>\n            <CalendarHeatmap data={rows.map((r) => ({ date: r.start, value: r.fee }))} />\n            <AreaChart data={fees} />\n          </div>) },\n        { id: \"gantt\", label: \"Programme\", render: () => <Gantt rows={rows} startKey=\"start\" endKey=\"end\" titleKey=\"name\" progressKey=\"progress\" groupKey=\"stage\" /> },\n        { id: \"calendar\", label: \"Calendar\", render: () => (\n          <div className=\"space-y-4\"><CalendarMonth rows={rows} dateKey=\"start\" titleKey=\"name\" /><Timeline rows={rows} startKey=\"start\" endKey=\"end\" titleKey=\"name\" /></div>) },\n        { id: \"activity\", label: \"Activity\", render: () => (\n          <div className=\"space-y-4\">\n            <ActivityFeed items={rows.map((r) => ({ id: r._id, title: r.name, description: r.stage, date: r.start }))} />\n            <Checklist items={[{ id: \"a\", label: \"Fee proposal issued\", section: \"Bid\" }, { id: \"b\", label: \"Appointment signed\" }]} value={check} onChange={setCheck} />\n            <Steps steps={[{ id: \"s1\", title: \"Details\", render: () => <div>Details</div> }, { id: \"s2\", title: \"Review\", render: () => <div>Review</div> }]} onFinish={() => {}} />\n            <SegmentedControl value={mode} onChange={setMode} options={[{ value: \"week\", label: \"Week\" }, { value: \"month\", label: \"Month\" }]} />\n            <Rating value={4} />\n            <Progress value={60} />\n          </div>) },\n        { id: \"jobs\", label: \"Jobs\", render: () => <TableView table={jobs} columns={[\"name\", \"stage\", \"fee\", \"progress\"]} /> },\n      ]}>\n      </AppShell>\n    </Theme>\n  );\n}\n"
+    },
+    "tables": {
+      "jobs": {
+        "schema": {
+          "name": "jobs",
+          "label": "Jobs",
+          "columns": [
+            { "key": "name", "label": "Job", "type": "text" },
+            { "key": "stage", "label": "Stage", "type": "text" },
+            { "key": "lead", "label": "Lead", "type": "person" },
+            { "key": "start", "label": "Start", "type": "date" },
+            { "key": "end", "label": "End", "type": "date" },
+            { "key": "fee", "label": "Fee", "type": "currency", "currency": "EUR" },
+            { "key": "progress", "label": "Progress", "type": "percent" },
+            { "key": "is_sample", "label": "Sample", "type": "boolean", "hidden": true }
+          ]
+        },
+        "rows": [
+          {
+            "_id": "r1",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2410",
+            "stage": "Concept",
+            "lead": "Aoife",
+            "start": "2026-01-05",
+            "end": "2026-02-20",
+            "fee": 20000,
+            "progress": 0,
+            "is_sample": true
+          },
+          {
+            "_id": "r2",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2411",
+            "stage": "Design",
+            "lead": "Brian",
+            "start": "2026-02-05",
+            "end": "2026-03-20",
+            "fee": 23500,
+            "progress": 0.1,
+            "is_sample": true
+          },
+          {
+            "_id": "r3",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2412",
+            "stage": "Tender",
+            "lead": "Ciara",
+            "start": "2026-03-05",
+            "end": "2026-04-20",
+            "fee": 27000,
+            "progress": 0.2,
+            "is_sample": true
+          },
+          {
+            "_id": "r4",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2413",
+            "stage": "Construction",
+            "lead": "Aoife",
+            "start": "2026-04-05",
+            "end": "2026-05-20",
+            "fee": 30500,
+            "progress": 0.3,
+            "is_sample": true
+          },
+          {
+            "_id": "r5",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2414",
+            "stage": "Concept",
+            "lead": "Brian",
+            "start": "2026-05-05",
+            "end": "2026-06-20",
+            "fee": 34000,
+            "progress": 0.4,
+            "is_sample": true
+          },
+          {
+            "_id": "r6",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2415",
+            "stage": "Design",
+            "lead": "Ciara",
+            "start": "2026-06-05",
+            "end": "2026-07-20",
+            "fee": 37500,
+            "progress": 0.5,
+            "is_sample": true
+          },
+          {
+            "_id": "r7",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2416",
+            "stage": "Tender",
+            "lead": "Aoife",
+            "start": "2026-07-05",
+            "end": "2026-08-20",
+            "fee": 41000,
+            "progress": 0.6,
+            "is_sample": true
+          },
+          {
+            "_id": "r8",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2417",
+            "stage": "Construction",
+            "lead": "Brian",
+            "start": "2026-08-05",
+            "end": "2026-09-20",
+            "fee": 44500,
+            "progress": 0.7,
+            "is_sample": true
+          },
+          {
+            "_id": "r9",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2418",
+            "stage": "Concept",
+            "lead": "Ciara",
+            "start": "2026-09-05",
+            "end": "2026-10-20",
+            "fee": 48000,
+            "progress": 0.8,
+            "is_sample": true
+          },
+          {
+            "_id": "r10",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "name": "Job 2419",
+            "stage": "Design",
+            "lead": "Aoife",
+            "start": "2026-10-05",
+            "end": "2026-11-20",
+            "fee": 51500,
+            "progress": 0.9,
+            "is_sample": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "title": "Beam and Section Designer",
+    "files": {
+      "App.tsx": "import React, { useMemo, useRef, useState } from \"react\";\nimport { analyseBeam, barArea, barRow, convert, sectionProps, type BeamInput } from \"@ocsc/eng\";\nimport { CalcRows, CalcSheet, CheckSummary, Tex, type CalcRow } from \"@ocsc/math\";\nimport { BeamResults, SectionDrawing, Plot, InteractionDiagram } from \"@ocsc/plot\";\nimport { AppShell, Card, CardBody, CardHeader, Field, Grid, Input, KpiCard, PrintButton, Theme, Callout } from \"@ocsc/ui\";\nimport { Calculator, Ruler, LineChart } from \"lucide-react\";\n\nexport default function App() {\n  const [span, setSpan] = useState(6);\n  const [w, setW] = useState(25);\n  const b = 300, h = 550;\n  const bars = barRow({ n: 3, dia: 20, b, h, cover: 30, link: 10 });\n  const As = barArea(3, 20);\n  const props = sectionProps({ type: \"rect\", b, h });\n  const beam: BeamInput = useMemo(() => ({ length: span, supports: [{ x: 0, type: \"pin\" }, { x: span, type: \"roller\" }], loads: [{ type: \"udl\", w }], EI: convert(33, \"GPa\", \"kN/m2\") * convert((b * h ** 3) / 12, \"mm4\", \"m4\") }), [span, w]);\n  const result = useMemo(() => analyseBeam(beam), [beam]);\n  const rows: CalcRow[] = [\n    { kind: \"step\", label: \"Design moment\", symbol: \"M_{Ed}\", formula: \"w L^2 / 8\", values: { w, L: span }, result: (w * span * span) / 8, unit: \"kNm\", reference: \"Statics\" },\n    { kind: \"check\", label: \"Bending\", symbol: \"M_{Ed}\", limitSymbol: \"M_{Rd}\", value: (w * span * span) / 8, limit: 250, unit: \"kNm\", reference: \"EN 1992-1-1 6.1\" },\n  ] as any;\n  return (\n    <Theme preset=\"evolve\" />,\n    <AppShell title=\"Beam Designer\" pages={[\n      { id: \"inputs\", label: \"Inputs\", icon: <Ruler />, render: () => (\n        <Grid cols={2}>\n          <Card><CardHeader title=\"Loads\" /><CardBody className=\"space-y-3\">\n            <Field label=\"Span (m)\">{(id) => <Input id={id} type=\"number\" value={span} onChange={(e) => setSpan(Number(e.target.value))} />}</Field>\n            <Field label=\"UDL (kN/m)\">{(id) => <Input id={id} type=\"number\" value={w} onChange={(e) => setW(Number(e.target.value))} />}</Field>\n            <KpiCard label=\"As provided\" value={As} />\n            <KpiCard label=\"Ix (mm4)\" value={props.Ix} />\n          </CardBody></Card>\n          <Card><CardHeader title=\"Section\" /><CardBody><SectionDrawing shape={{ type: \"rect\", b, h }} bars={bars} link={{ dia: 10, cover: 30 }} /></CardBody></Card>\n        </Grid>) },\n      { id: \"results\", label: \"Results\", icon: <LineChart />, render: () => (\n        <div className=\"space-y-4\">\n          <BeamResults beam={beam} result={result} />\n          <Plot series={[{ name: \"Moment\", data: result.x.map((x: number, i: number) => [x, result.moment[i]]) }]} x={{ label: \"x\", unit: \"m\" }} y={{ label: \"M\", unit: \"kNm\" }} />\n          <InteractionDiagram curve={[[0, 3000], [200, 2000], [300, 800], [0, -500]]} points={[{ M: 120, N: 900, label: \"Case 1\" }]} />\n        </div>) },\n      { id: \"calc\", label: \"Calc sheet\", icon: <Calculator />, render: () => (\n        <CalcSheet title=\"Beam B1\" job=\"2410\" by=\"AI\" checked=\"KD\" date=\"2026-11-17\" revision=\"P01\">\n          <Tex math=\"M = \\frac{w L^2}{8}\" block />\n          <CalcRows rows={rows} />\n          <CheckSummary checks={[{ label: \"Bending\", utilisation: 0.72 }] as any} />\n        </CalcSheet>) },\n    ]} />\n  );\n}\n"
+    },
+    "tables": {}
+  },
+  {
+    "title": "Site Inspection Studio",
+    "files": {
+      "App.tsx": "import React, { useState } from \"react\";\nimport { AppShell, Theme, KpiCard, Gauge, GalleryView, TableView, RecordForm, Kanban, Whiteboard, MapView, SignaturePad, Accordion, Markdown, TreeView, OrgChart, SortableList, BentoGrid, BentoCard, Callout, EmptyState, Badge, Card, CardBody, CardHeader, Grid, Tabs, DatePicker, TagInput, Select, Switch } from \"@ocsc/ui\";\nimport { useTable } from \"@ocsc/app\";\nimport { IfcView } from \"@ocsc/ifc\";\n\nexport default function App() {\n  const defects = useTable(\"defects\");\n  const rows = defects.rows as any[];\n  const [board, setBoard] = useState<any>(null);\n  const [tab, setTab] = useState(\"list\");\n  const [tags, setTags] = useState<string[]>([\"roof\"]);\n  const [items, setItems] = useState([{ id: \"1\", label: \"Roof\" }, { id: \"2\", label: \"Walls\" }]);\n  return (\n    <Theme preset=\"forest\">\n      <AppShell title=\"Site Inspection Studio\" pages={[\n        { id: \"overview\", label: \"Overview\", render: () => (\n          <BentoGrid>\n            <BentoCard title=\"Pass rate\"><Gauge value={82} max={100} /></BentoCard>\n            <BentoCard title=\"Open defects\"><KpiCard label=\"Open\" value={rows.filter((r) => r.status !== \"Closed\").length} trend={[3, 5, \"x\", 4] as any} /></BentoCard>\n            <BentoCard title=\"Notes\"><Markdown>{\"**Walkdown** complete for level 2.\"}</Markdown></BentoCard>\n          </BentoGrid>) },\n        { id: \"defects\", label: \"Defects\", count: rows.length, render: () => (\n          <div className=\"space-y-4\">\n            <Tabs value={tab} onChange={setTab} tabs={[{ id: \"list\", label: \"List\" }, { id: \"board\", label: \"Board\" }, { id: \"gallery\", label: \"Gallery\" }]} />\n            {tab === \"list\" && <TableView table={defects} />}\n            {tab === \"board\" && <Kanban rows={rows} groupBy=\"status\" renderCard={(r: any) => <div>{r.title}</div>} />}\n            {tab === \"gallery\" && <GalleryView rows={rows} imageKey=\"photos\" titleKey=\"title\" />}\n          </div>) },\n        { id: \"model\", label: \"Model\", render: () => <IfcView asset=\"missing-asset-id\" /> },\n        { id: \"markup\", label: \"Markup\", render: () => (\n          <div className=\"space-y-4\">\n            <Whiteboard value={board} onChange={setBoard} height={360} />\n            <SignaturePad onChange={() => {}} />\n          </div>) },\n        { id: \"map\", label: \"Map\", render: () => <MapView markers={rows.map((r, i) => ({ id: r._id, lat: 53.34 + i * 0.001, lon: -6.26, label: r.title }))} /> },\n        { id: \"setup\", label: \"Setup\", render: () => (\n          <div className=\"space-y-4\">\n            <Accordion items={[{ id: \"a\", title: \"Checklist\", content: \"Roof, walls, services\" }]} />\n            <TreeView items={[{ id: \"1\", label: \"Block A\", children: [{ id: \"2\", label: \"Level 1\" }] }] as any} />\n            <OrgChart people={[{ id: \"1\", name: \"Aoife\", role: \"Lead\" }, { id: \"2\", name: \"Brian\", role: \"Inspector\", manager: \"1\" }] as any} />\n            <SortableList items={items} onChange={setItems} render={(it: any) => it.label} />\n            <TagInput value={tags} onChange={setTags} />\n            <DatePicker value=\"2026-11-17\" onChange={() => {}} />\n            <Select value=\"a\" onChange={() => {}} options={[{ value: \"a\", label: \"A\" }]} />\n            <Switch checked onChange={() => {}} />\n            <RecordForm table={defects} onDone={() => {}} />\n            <EmptyState title=\"Nothing archived\" />\n          </div>) },\n      ]} />\n    </Theme>\n  );\n}\n"
+    },
+    "tables": {
+      "defects": {
+        "schema": {
+          "name": "defects",
+          "label": "Defects",
+          "columns": [
+            { "key": "title", "label": "Title", "type": "text" },
+            {
+              "key": "status",
+              "label": "Status",
+              "type": "enum",
+              "options": [
+                { "value": "Open", "tone": "danger" },
+                { "value": "Fixing", "tone": "warning" },
+                { "value": "Closed", "tone": "success" }
+              ]
+            },
+            { "key": "photos", "label": "Photos", "type": "image" },
+            { "key": "due", "label": "Due", "type": "date" }
+          ]
+        },
+        "rows": [
+          {
+            "_id": "r1",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 1",
+            "status": "Open",
+            "photos": "",
+            "due": "2026-12-01"
+          },
+          {
+            "_id": "r2",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 2",
+            "status": "Fixing",
+            "photos": "",
+            "due": "2026-12-02"
+          },
+          {
+            "_id": "r3",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 3",
+            "status": "Closed",
+            "photos": "",
+            "due": "2026-12-03"
+          },
+          {
+            "_id": "r4",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 4",
+            "status": "Open",
+            "photos": "",
+            "due": "2026-12-04"
+          },
+          {
+            "_id": "r5",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 5",
+            "status": "Fixing",
+            "photos": "",
+            "due": "2026-12-05"
+          },
+          {
+            "_id": "r6",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 6",
+            "status": "Closed",
+            "photos": "",
+            "due": "2026-12-06"
+          },
+          {
+            "_id": "r7",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 7",
+            "status": "Open",
+            "photos": "",
+            "due": "2026-12-07"
+          },
+          {
+            "_id": "r8",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 8",
+            "status": "Fixing",
+            "photos": "",
+            "due": "2026-12-08"
+          },
+          {
+            "_id": "r9",
+            "_updatedAt": "2026-11-17T10:00:00Z",
+            "title": "Defect 9",
+            "status": "Closed",
+            "photos": "",
+            "due": "2026-12-09"
+          }
+        ]
+      }
+    }
+  }
+]
