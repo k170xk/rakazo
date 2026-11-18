@@ -10,10 +10,12 @@ const DAY = 86_400_000;
 const ago = (days: number) => new Date(Date.now() - days * DAY).toISOString();
 const person = (address: string, name?: string) => ({ emailAddress: { address, name } });
 
+const FOLDER_NAMES: Record<string, string> = { "project-c1050": "C1050 - T6 Seven Mills" };
+
 function mailbox(
   inbox: MailMessage[],
   sent: MailMessage[],
-  options: { refuseExpand?: boolean } = {},
+  options: { refuseExpand?: boolean; noFolders?: boolean; elsewhere?: MailMessage[] } = {},
 ) {
   const paths: string[] = [];
   const graph: MailGraph = {
@@ -21,10 +23,25 @@ function mailbox(
     async json<T>(path: string) {
       paths.push(path);
       assertMailRead(path);
+      const lookup = /^\/me\/mailFolders\/([^/?]+)\?\$select=(id|displayName)$/.exec(path);
+      if (lookup) {
+        if (options.noFolders) throw new Error("HTTP 403");
+        const id = decodeURIComponent(lookup[1]!);
+        return (lookup[2] === "id" ? { id: `${id}-id` } : { displayName: FOLDER_NAMES[id] }) as T;
+      }
+      if (path.includes("/deleteditems/childFolders")) return { value: [{ id: "binned" }] } as T;
       if (options.refuseExpand && path.includes("$expand")) throw new Error("HTTP 400");
       const skip = Number(/\$skip=(\d+)/.exec(path)?.[1] ?? 0);
       const top = Number(/\$top=(\d+)/.exec(path)?.[1] ?? 100);
-      const source = path.includes("/sentitems/") ? sent : inbox;
+      const source = path.includes("/sentitems/")
+        ? sent
+        : path.startsWith("/me/messages?")
+          ? [
+              ...inbox.map((message) => ({ parentFolderId: "inbox-id", ...message })),
+              ...sent.map((message) => ({ ...message, parentFolderId: "sentitems-id" })),
+              ...(options.elsewhere ?? []),
+            ]
+          : inbox;
       const page = source.slice(skip, skip + top);
       return {
         value: path.includes("$expand")
@@ -50,8 +67,10 @@ type Triage = {
   counts: Record<string, number>;
   conversations: Record<string, Array<Record<string, unknown>>>;
   notes: string[];
-  compared: { inbox: number; sent: number };
+  compared: { received: number; sent: number; folders?: number };
 };
+
+const listings = (paths: string[]) => paths.filter((path) => path.includes("/messages?"));
 
 describe("Outlook triage", () => {
   const inbox: MailMessage[] = [
@@ -122,12 +141,13 @@ describe("Outlook triage", () => {
     },
   ];
 
-  it("compares Inbox with Sent Items in one call and gives each conversation a status", async () => {
+  it("compares received mail with Sent Items in one call and gives each conversation a status", async () => {
     const { graph, paths } = mailbox(inbox, sent);
     const [event] = await run(graph, "outlook_find_followups", {});
     const data = (event as { data: Triage }).data;
     expect(data.counts).toEqual({ needs_reply: 1, awaiting_reply: 1, fyi: 2, replied: 1 });
-    expect(data.compared).toEqual({ inbox: 4, sent: 3 });
+    expect(data.compared).toEqual({ received: 4, sent: 3, folders: 1 });
+    expect(data.conversations.needs_reply![0]).not.toHaveProperty("folder");
     expect(data.conversations.needs_reply![0]).toMatchObject({
       conversation_id: "A",
       latest_message_id: "a2",
@@ -151,8 +171,9 @@ describe("Outlook triage", () => {
       "E",
     ]);
     expect(data.notes[0]).toMatch(/email alone/);
-    expect(paths).toHaveLength(2);
-    expect(paths.find((path) => path.includes("/inbox/"))).toContain(
+    expect(data.notes[1]).toMatch(/every folder and sub-folder/);
+    expect(listings(paths)).toHaveLength(2);
+    expect(paths.find((path) => path.startsWith("/me/messages?"))).toContain(
       encodeURIComponent("receivedDateTime desc"),
     );
     expect(paths.find((path) => path.includes("/sentitems/"))).toContain(
@@ -170,11 +191,11 @@ describe("Outlook triage", () => {
     expect(Object.keys(data.conversations)).toEqual(["needs_reply"]);
     expect(data.conversations.needs_reply![0]).toMatchObject({ has_attachments: true });
     expect(data.notes.join(" ")).toMatch(/Attachment names were unavailable/);
-    expect(paths.filter((path) => !path.includes("$expand"))).toHaveLength(2);
+    expect(listings(paths).filter((path) => !path.includes("$expand"))).toHaveLength(2);
   });
 
-  it("pages through a busy folder up to the limit and says when it stopped early", async () => {
-    const many = Array.from({ length: 250 }, (_, index) => ({
+  it("pages through a busy mailbox up to the limit and says when it stopped early", async () => {
+    const many = Array.from({ length: 450 }, (_, index) => ({
       ...inbox[1]!,
       id: `m${index}`,
       conversationId: `M${index}`,
@@ -182,9 +203,49 @@ describe("Outlook triage", () => {
     const { graph, paths } = mailbox(many, []);
     const [event] = await run(graph, "outlook_find_followups", { max_messages: 200 });
     const data = (event as { data: Triage }).data;
-    expect(data.compared.inbox).toBe(200);
-    expect(paths.filter((path) => path.includes("/inbox/"))).toHaveLength(2);
-    expect(data.notes.join(" ")).toMatch(/Only the newest 200/);
+    expect(data.compared.received).toBe(400);
+    expect(paths.filter((path) => path.startsWith("/me/messages?"))).toHaveLength(4);
+    expect(data.notes.join(" ")).toMatch(/Only the newest 400 received/);
+  });
+
+  it("includes mail Outlook rules filed into other folders, naming the folder", async () => {
+    const filed = (id: string, parentFolderId: string, subject: string): MailMessage => ({
+      id,
+      conversationId: id.toUpperCase(),
+      subject,
+      from: person("kevin@contractor.example", "Kevin"),
+      toRecipients: [person(ME)],
+      receivedDateTime: ago(1),
+      parentFolderId,
+    });
+    const { graph } = mailbox(inbox, sent, {
+      elsewhere: [
+        filed("f1", "project-c1050", "Ventilation flow rates"),
+        filed("j1", "junkemail-id", "Prize"),
+        filed("x1", "deleteditems-id", "Old"),
+        filed("x2", "binned", "In a deleted folder"),
+        filed("d1", "drafts-id", "Unsent"),
+      ],
+    });
+    const [event] = await run(graph, "outlook_find_followups", { status: ["needs_reply"] });
+    const data = (event as { data: Triage }).data;
+    const subjects = data.conversations.needs_reply!.map((entry) => entry.subject);
+    expect(subjects).toEqual(expect.arrayContaining(["RE: Drawings", "Ventilation flow rates"]));
+    expect(subjects).toHaveLength(2);
+    expect(
+      data.conversations.needs_reply!.find((entry) => entry.subject === "Ventilation flow rates"),
+    ).toMatchObject({ folder: "C1050 - T6 Seven Mills" });
+    expect(data.compared).toMatchObject({ received: 5, folders: 2 });
+  });
+
+  it("falls back to the Inbox and says so when folders cannot be looked up", async () => {
+    const { graph, paths } = mailbox(inbox, sent, { noFolders: true });
+    const [event] = await run(graph, "outlook_find_followups", {});
+    const data = (event as { data: Triage }).data;
+    expect(data.compared).toEqual({ received: 4, sent: 3 });
+    expect(paths.some((path) => path.startsWith("/me/mailFolders/inbox/messages?"))).toBe(true);
+    expect(paths.some((path) => path.startsWith("/me/messages?"))).toBe(false);
+    expect(data.notes.join(" ")).toMatch(/Only the Inbox was read/);
   });
 });
 

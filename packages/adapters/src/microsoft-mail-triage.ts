@@ -24,8 +24,23 @@ const SHOWN: Record<Status, number> = {
   replied: 30,
 };
 
+/** Mail not waiting on the person: their own, unsent, binned, junk or Outlook's housekeeping. */
+const SKIPPED_FOLDERS = [
+  "sentitems",
+  "drafts",
+  "outbox",
+  "deleteditems",
+  "junkemail",
+  "conversationhistory",
+  "syncissues",
+  "conflicts",
+  "localfailures",
+  "serverfailures",
+];
+const FOLDER_NAMES_LOOKED_UP = 40;
+
 const FIELDS =
-  "id,subject,from,toRecipients,ccRecipients,receivedDateTime,sentDateTime,hasAttachments,isRead,importance,flag,inferenceClassification,conversationId,bodyPreview";
+  "id,subject,from,toRecipients,ccRecipients,receivedDateTime,sentDateTime,hasAttachments,isRead,importance,flag,inferenceClassification,conversationId,parentFolderId,bodyPreview";
 const EXPAND_ATTACHMENTS = encodeURIComponent("attachments($select=name,isInline)");
 const AUTOMATED =
   /(^|[._-])(no-?reply|do-?not-?reply|notifications?|mailer-daemon|postmaster|alerts?|bounce)([._-]|@)/i;
@@ -33,7 +48,7 @@ const AUTOMATED =
 export function triageTool(): Omit<ConnectorTool, "route"> {
   return {
     name: "outlook_find_followups",
-    description: `In one call, compare the person's Inbox with their Sent Items over recent days and group the mail into conversations, each with a status: needs_reply (they wrote last, to the person), awaiting_reply (the person wrote last at least waiting_days ago with no answer), fyi (copied only, automated or in Outlook's Other tab) or replied. Each shows the people, dates, days waiting, unread count, Outlook flags and due dates, attachment names and the latest preview, with the latest message_id to read in full (outlook_read_messages reads up to 10 at once). Use this first for follow-ups, outstanding actions or what needs attention; it suits routines. The status comes from email alone: something handled by phone, Teams or in person can still show as needing a reply, so present it as likely rather than certain. ${READ_ONLY} ${PRIVATE} ${UNTRUSTED}`,
+    description: `In one call, compare the mail the person received in every folder (Inbox and all other folders and sub-folders, including those Outlook rules file mail into; not Junk, Deleted Items, Drafts or Outbox) with their Sent Items over recent days and group the mail into conversations, each with a status: needs_reply (they wrote last, to the person), awaiting_reply (the person wrote last at least waiting_days ago with no answer), fyi (copied only, automated or in Outlook's Other tab) or replied. Each shows the folder when it is not the Inbox, the people, dates, days waiting, unread count, Outlook flags and due dates, attachment names and the latest preview, with the latest message_id to read in full (outlook_read_messages reads up to 10 at once). Use this first for follow-ups, outstanding actions or what needs attention; it suits routines. The status comes from email alone: something handled by phone, Teams or in person can still show as needing a reply, so present it as likely rather than certain. ${READ_ONLY} ${PRIVATE} ${UNTRUSTED}`,
     inputSchema: {
       type: "object",
       properties: {
@@ -53,7 +68,7 @@ export function triageTool(): Omit<ConnectorTool, "route"> {
         },
         max_messages: {
           type: "number",
-          description: `Most emails read from each of Inbox and Sent Items; ${FOLDER_MAX_DEFAULT} by default, up to ${FOLDER_MAX}`,
+          description: `Most emails read from each of received mail and Sent Items; ${FOLDER_MAX_DEFAULT} by default, up to ${FOLDER_MAX}`,
         },
       },
     },
@@ -85,15 +100,53 @@ interface Collected {
   attachmentNames: boolean;
 }
 
+interface Folders {
+  inbox?: string;
+  skipped: Set<string>;
+}
+
+/**
+ * The ids of the Inbox and of the folders whose mail is skipped, or null when Sent Items cannot
+ * be found, since without it the person's own mail would read as received.
+ */
+async function mailboxFolders(graph: MailGraph): Promise<Folders | null> {
+  const ids = await mapLimited(["inbox", ...SKIPPED_FOLDERS], MAILBOX_CONCURRENCY, (name) =>
+    graph.json<{ id?: string }>(`/me/mailFolders/${name}?$select=id`).then(
+      (folder) => folder.id,
+      () => undefined,
+    ),
+  );
+  if (!ids[1]) return null;
+  // Deleting a folder moves it, with its mail, under Deleted Items.
+  const binned = ids[4]
+    ? await graph
+        .json<{ value?: Array<{ id?: string }> }>(
+          `/me/mailFolders/deleteditems/childFolders?$top=100&$select=id`,
+        )
+        .then(
+          (listed) => listed.value ?? [],
+          () => [],
+        )
+    : [];
+  return {
+    inbox: ids[0],
+    skipped: new Set(
+      [...ids.slice(1), ...binned.map((folder) => folder.id)].filter((id): id is string =>
+        Boolean(id),
+      ),
+    ),
+  };
+}
+
 async function collect(
   graph: MailGraph,
-  folder: "inbox" | "sentitems",
+  messagesPath: string,
+  field: "receivedDateTime" | "sentDateTime",
   since: string,
   max: number,
 ): Promise<Collected> {
-  const field = folder === "inbox" ? "receivedDateTime" : "sentDateTime";
   const query = (skip: number, expand: boolean) =>
-    `/me/mailFolders/${folder}/messages?$top=${Math.min(PAGE, max - skip)}${skip ? `&$skip=${skip}` : ""}&$filter=${encodeURIComponent(`${field} ge ${since}`)}&$orderby=${encodeURIComponent(`${field} desc`)}&$select=${FIELDS}${expand ? `&$expand=${EXPAND_ATTACHMENTS}` : ""}`;
+    `${messagesPath}?$top=${Math.min(PAGE, max - skip)}${skip ? `&$skip=${skip}` : ""}&$filter=${encodeURIComponent(`${field} ge ${since}`)}&$orderby=${encodeURIComponent(`${field} desc`)}&$select=${FIELDS}${expand ? `&$expand=${EXPAND_ATTACHMENTS}` : ""}`;
   let expand = true;
   const messages: MailMessage[] = [];
   for (let skip = 0; skip < max; skip += PAGE) {
@@ -151,8 +204,11 @@ function describeThread(
   mailbox: string | undefined,
   waitingDays: number,
   now: number,
+  folders: Folders | null,
 ): { status: Status; data: ThreadSummary } {
   const lastIn = latest(thread.received, "receivedDateTime");
+  const filedIn =
+    folders && lastIn?.parentFolderId !== folders.inbox ? lastIn?.parentFolderId : undefined;
   const lastOut = latest(thread.sent, "sentDateTime");
   const inAt = lastIn?.receivedDateTime ?? "";
   const outAt = lastOut?.sentDateTime ?? "";
@@ -195,6 +251,7 @@ function describeThread(
       conversation_id: thread.key,
       subject: newest?.subject || "(no subject)",
       status,
+      ...(filedIn ? { folder_id: filedIn } : {}),
       with: [...people].slice(0, PEOPLE_SHOWN),
       ...(lastIn ? { last_received: inAt } : {}),
       ...(lastOut ? { last_sent: outAt } : {}),
@@ -226,7 +283,7 @@ function describeThread(
   };
 }
 
-/** Inbox against Sent Items over a period, as conversations with a likely status each. */
+/** Received mail from every folder against Sent Items over a period, as conversations with a likely status each. */
 export async function triageMailbox(graph: MailGraph, args: Record<string, unknown>) {
   const now = Date.now();
   const since =
@@ -240,10 +297,28 @@ export async function triageMailbox(graph: MailGraph, args: Record<string, unkno
       : [],
   );
   const mailbox = graph.mailbox?.toLowerCase();
-  const [inbox, sent] = await Promise.all([
-    collect(graph, "inbox", since, max),
-    collect(graph, "sentitems", since, max),
+  const [folders, sent] = await Promise.all([
+    mailboxFolders(graph),
+    collect(graph, "/me/mailFolders/sentitems/messages", "sentDateTime", since, max),
   ]);
+  // Every folder's mail includes Sent Items and the skipped folders, so more is read to keep
+  // about as much received mail.
+  const receivedLimit = folders ? Math.min(max * 2, FOLDER_MAX * 2) : max;
+  const collected = await collect(
+    graph,
+    folders ? "/me/messages" : "/me/mailFolders/inbox/messages",
+    "receivedDateTime",
+    since,
+    receivedLimit,
+  );
+  const inbox = {
+    ...collected,
+    messages: folders
+      ? collected.messages.filter(
+          (message) => !message.parentFolderId || !folders.skipped.has(message.parentFolderId),
+        )
+      : collected.messages,
+  };
   const threads = new Map<string, Thread>();
   const thread = (message: MailMessage) => {
     const key = message.conversationId ?? message.id;
@@ -262,7 +337,7 @@ export async function triageMailbox(graph: MailGraph, args: Record<string, unkno
 
   const grouped = new Map<Status, ThreadSummary[]>(STATUSES.map((status) => [status, []]));
   for (const entry of threads.values()) {
-    const described = describeThread(entry, mailbox, waitingDays, now);
+    const described = describeThread(entry, mailbox, waitingDays, now, folders);
     grouped.get(described.status)!.push(described.data);
   }
   const byNewest = (a: { last_received?: string }, b: { last_received?: string }) =>
@@ -285,11 +360,42 @@ export async function triageMailbox(graph: MailGraph, args: Record<string, unkno
     conversations[status] = list.slice(0, SHOWN[status]);
     if (list.length > SHOWN[status]) omitted[status] = list.length - SHOWN[status];
   }
+  const shown = Object.values(conversations).flat() as ThreadSummary[];
+  const filed = [
+    ...new Set(shown.map((entry) => entry.folder_id).filter((id) => typeof id === "string")),
+  ].slice(0, FOLDER_NAMES_LOOKED_UP) as string[];
+  const folderNames = new Map(
+    await mapLimited(filed, MAILBOX_CONCURRENCY, (id) =>
+      graph
+        .json<{ displayName?: string }>(
+          `/me/mailFolders/${encodeURIComponent(id)}?$select=displayName`,
+        )
+        .then(
+          (folder) => [id, folder.displayName] as const,
+          () => [id, undefined] as const,
+        ),
+    ),
+  );
+  for (const entry of shown) {
+    const name = folderNames.get(entry.folder_id as string);
+    if (name) {
+      entry.folder = name;
+      delete entry.folder_id;
+    }
+  }
   const notes = [
     "Status is from email alone; work done by phone, Teams or in person is not visible.",
-    ...(inbox.truncated || sent.truncated
+    folders
+      ? "Received mail from every folder and sub-folder was read, except Junk, Deleted Items, Drafts and Outbox; folder names a conversation filed outside the Inbox."
+      : "Only the Inbox was read, because the mailbox's folders could not be looked up; mail filed into other folders is missing.",
+    ...(collected.truncated
       ? [
-          `Only the newest ${max} emails of a folder were compared; use a shorter period or a larger max_messages.`,
+          `Only the newest ${receivedLimit} received emails were read; use a shorter period or a larger max_messages.`,
+        ]
+      : []),
+    ...(sent.truncated
+      ? [
+          `Only the newest ${max} sent emails were compared; use a shorter period or a larger max_messages.`,
         ]
       : []),
     ...(Object.keys(omitted).length > 0
@@ -302,7 +408,15 @@ export async function triageMailbox(graph: MailGraph, args: Record<string, unkno
   return {
     since,
     waiting_days: waitingDays,
-    compared: { inbox: inbox.messages.length, sent: sent.messages.length },
+    compared: {
+      received: inbox.messages.length,
+      sent: sent.messages.length,
+      ...(folders
+        ? {
+            folders: new Set(inbox.messages.map((message) => message.parentFolderId)).size,
+          }
+        : {}),
+    },
     counts,
     conversations,
     ...(Object.keys(omitted).length > 0 ? { omitted } : {}),
