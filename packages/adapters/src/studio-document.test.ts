@@ -194,6 +194,17 @@ describe("studioDocumentForTurn", () => {
     expect(
       await studioDocumentForTurn(prisma, owner, noteFor("root", "other-doc")),
     ).toBeUndefined();
+    expect(await studioDocumentForTurn(prisma, owner, noteFor("other-doc", "v2"))).toBeUndefined();
+    expect(
+      await studioDocumentForTurn(prisma, owner, noteFor("someone-else", "v2")),
+    ).toBeUndefined();
+  });
+
+  it("reaches the document when the studio was opened from a later version's file card", async () => {
+    const prisma = artifactTable(deck());
+    const document = await studioDocumentForTurn(prisma, owner, noteFor("v2", "v2"));
+    expect(document).toMatchObject({ rootId: "root", name: "BIM: The Basics" });
+    expect(studioDocumentFiles(document).map((file) => file.path)).toEqual(["attachments/v2.pptx"]);
   });
 
   it("finds nothing without a studio note", async () => {

@@ -58,6 +58,8 @@ export type StudioDocument = {
 /**
  * The document a studio note names, when the person sending the note owns it. Only that family is
  * resolved, whichever agent or group made it; a note naming someone else's file finds nothing.
+ * The note's documentId may be any version of the family: a studio opened from a chat's file card
+ * is named by that version's id rather than the family's first.
  */
 export async function studioNotedDocument(
   prisma: Pick<PrismaClient, "artifact">,
@@ -65,7 +67,14 @@ export async function studioNotedDocument(
   note: { documentId: string; artifactId: string },
 ): Promise<StudioDocument | undefined> {
   const family = await newestFamilyVersion(prisma, owner, note.artifactId);
-  if (!family || family.rootId !== note.documentId) return undefined;
+  if (!family) return undefined;
+  if (family.rootId !== note.documentId) {
+    const named = await prisma.artifact.findFirst({
+      where: { id: note.documentId, spaceId: owner.spaceId, userId: owner.userId },
+      select: { id: true, rootArtifactId: true },
+    });
+    if (!named || (named.rootArtifactId ?? named.id) !== family.rootId) return undefined;
+  }
   const { given, newest } = family;
   const rows = await prisma.artifact.findMany({
     where: { id: { in: [newest.id, given.id] }, spaceId: owner.spaceId, userId: owner.userId },
