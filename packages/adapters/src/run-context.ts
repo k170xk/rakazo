@@ -220,6 +220,8 @@ export interface RunState {
     lineage?: Map<string, DocumentLineage>;
     /** Documents (family root ids) this run found by name, which it may then read and edit. */
     found?: Set<string>;
+    /** The newest version of each document family (by root id) this run fetched or saved. */
+    read?: Map<string, number>;
   };
 }
 

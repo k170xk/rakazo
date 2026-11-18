@@ -5,6 +5,7 @@ import { searchChatFiles } from "./chat-file-search.js";
 import { resolveRunFilePath } from "./computer-support.js";
 import { desktopGuardApplies, desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
+import { noteDocumentRead, staleSaveRefusal } from "./document-base.js";
 import {
   attachmentPathFor,
   newerConversationVersion,
@@ -114,6 +115,19 @@ async function foundVersionId(ctx: RunContext, filePath: string) {
   return family && found.has(family.rootId) && attachmentPathFor(family.given) === filePath
     ? artifactId
     : undefined;
+}
+
+/** The version just attached counts as read, so this run's next save builds on it. */
+async function noteAttachedVersion(ctx: RunContext, artifactId: string) {
+  try {
+    const row = await ctx.deps.prisma.artifact.findFirst({
+      where: { id: artifactId, spaceId: ctx.context.spaceId, userId: ctx.context.userId },
+      select: { version: true, rootArtifactId: true },
+    });
+    if (row) noteDocumentRead(ctx.state.documents, row.rootArtifactId ?? artifactId, row.version);
+  } catch (error) {
+    getLogger().warn("attached version not noted", { error: String(error) });
+  }
 }
 
 async function fileExists(
@@ -328,13 +342,16 @@ export const fileTools: ToolHandlers = {
     const { files, computer } = runFiles(ctx, call);
     const ref = await computer();
     const stored = runFilePath(ctx, filePath);
+    const row = await deps.prisma.artifact.findFirst({
+      where: { id: artifactId, spaceId: context.spaceId, userId: context.userId },
+      select: { storageKey: true, size: true, version: true, rootArtifactId: true },
+    });
+    if (row && ctx.state?.documents) {
+      noteDocumentRead(ctx.state.documents, row.rootArtifactId ?? artifactId, row.version);
+    }
     if (await fileExists(files, ref, stored, context)) {
       return call.finish({ ok: true, path: filePath, alreadyThere: true });
     }
-    const row = await deps.prisma.artifact.findFirst({
-      where: { id: artifactId, spaceId: context.spaceId, userId: context.userId },
-      select: { storageKey: true, size: true },
-    });
     if (!row) return call.finish({ error: "That file is no longer available." });
     const maxBytes = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
     if (row.size > maxBytes) {
@@ -477,6 +494,15 @@ export const fileTools: ToolHandlers = {
       rootId: target.rootId,
     });
     if (rebased.error) return failAttach(rebased.error, mimeType ?? undefined);
+    const stale = rebased.note
+      ? undefined
+      : await staleSaveRefusal(ctx, filePath, {
+          botId: target.botId,
+          groupId: target.groupId,
+          name: target.name?.trim() || filePath.split("/").at(-1) || filePath,
+          rootId: target.rootId,
+        });
+    if (stale) return failAttach(stale, mimeType ?? undefined);
     let bytes: Uint8Array;
     try {
       const { files, computer } = runFiles(ctx, call);
@@ -513,6 +539,7 @@ export const fileTools: ToolHandlers = {
       await publishMessage(deps, run, "bot", [attached.block]);
       ctx.state.documents.attached = true;
       await lineageAttached(ctx, filePath, attached.artifactId);
+      await noteAttachedVersion(ctx, attached.artifactId);
       await recordComputerAction(ctx, call, "attach_file", filePath);
       return call.finish({
         ok: true,
