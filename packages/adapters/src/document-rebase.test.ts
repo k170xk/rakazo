@@ -5,6 +5,7 @@ import { replaySteps, withInPath } from "./document-rebase.js";
 import { studioDocumentFiles, studioDocumentForTurn } from "./document-versions.js";
 import type * as OcscToolModule from "./ocsc-tool.js";
 import type * as RunMessagesModule from "./run-messages.js";
+import { selectBuiltinToolsForRun } from "./run-tool-selection.js";
 import { computerTools, publishOpenStudioDraft } from "./run-tools-computer.js";
 import { fileTools } from "./run-tools-files.js";
 
@@ -71,8 +72,15 @@ function matches(candidate: Row, where: Where): boolean {
       if (!(value as Where[]).some((or) => matches(candidate, or))) return false;
       continue;
     }
+    if (key === "AND") {
+      if (!(value as Where[]).every((and) => matches(candidate, and))) return false;
+      continue;
+    }
     const actual = candidate[key as keyof Row];
-    if (value && typeof value === "object" && "in" in value) {
+    if (value && typeof value === "object" && "contains" in value) {
+      const { contains } = value as { contains: string };
+      if (!String(actual).toLowerCase().includes(contains.toLowerCase())) return false;
+    } else if (value && typeof value === "object" && "in" in value) {
       if (!(value as { in: unknown[] }).in.includes(actual)) return false;
     } else if (value && typeof value === "object" && "equals" in value) {
       const { equals } = value as { equals: string };
@@ -92,7 +100,11 @@ function database(rows: Row[]) {
       async ({ where }: { where: Where }) =>
         newestFirst(rows.filter((r) => matches(r, where)))[0] ?? null,
     ),
-    findMany: vi.fn(async ({ where }: { where: Where }) => rows.filter((r) => matches(r, where))),
+    findMany: vi.fn(async ({ where }: { where: Where }) =>
+      rows
+        .filter((r) => matches(r, where))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+    ),
     count: vi.fn(
       async ({ where }: { where: Where }) => rows.filter((r) => matches(r, where)).length,
     ),
@@ -165,6 +177,7 @@ async function harness(options: {
   rows: Row[];
   note?: { documentId: string; artifactId: string };
   chatFiles?: string[];
+  groupId?: string;
 }) {
   const rows = options.rows;
   const prisma = database(rows);
@@ -172,7 +185,10 @@ async function harness(options: {
   // Each saved version's text is its id, so a file shows which version an edit started from.
   const contents = (key: string) => key.replace(/^key-/, "");
   const run = vi.fn(async ({ args }: { args: string[] }) => {
-    const input = stored.get(flag(args, "--in"));
+    const input = stored.get(args.includes("--in") ? flag(args, "--in") : (args[1] ?? ""));
+    if (input !== undefined && args[0] === "read") {
+      return { stdout: JSON.stringify({ ok: true, text: input }), stderr: "", code: 0 };
+    }
     if (input === undefined) {
       return {
         stdout: JSON.stringify({ ok: false, error: "path does not exist" }),
@@ -218,7 +234,7 @@ async function harness(options: {
     run: { ...owner, id: "r1", trigger: "user" },
     runId: "r1",
     bot: { id: "tender-bot", userId: owner.userId },
-    thread: { id: "t2", spaceId: owner.spaceId, groupId: null },
+    thread: { id: "t2", spaceId: owner.spaceId, groupId: options.groupId ?? null },
     context: { ...owner, operationId: "op", traceId: "op", signal: new AbortController().signal },
     secrets: [] as string[],
     computer: {
@@ -248,11 +264,24 @@ async function harness(options: {
         args: ["edit", "--in", input, "--spec", spec, "--out", "outputs/deck.pptx"],
       }),
     ) as Promise<Record<string, unknown>>;
-  const attach = (path = "outputs/deck.pptx") =>
-    fileTools.attach_file!(ctx as never, call("attach_file", { path, name: NAME })) as Promise<
+  const attach = (path = "outputs/deck.pptx", name: string | undefined = NAME) =>
+    fileTools.attach_file!(ctx as never, call("attach_file", { path, name })) as Promise<
       Record<string, unknown>
     >;
-  return { ctx, rows, stored, run, edit, attach };
+  const ocsc = (program: string, args: string[]) =>
+    computerTools.ocsc!(ctx as never, call("ocsc", { program, args })) as Promise<
+      Record<string, unknown>
+    >;
+  const find = (query: string, type?: string) =>
+    fileTools.find_my_documents!(
+      ctx as never,
+      call("find_my_documents", { query, type }),
+    ) as Promise<{
+      documents: { documentId: string; name: string; path: string; version: number }[];
+      next: string;
+      error?: string;
+    }>;
+  return { ctx, rows, stored, run, edit, attach, ocsc, find };
 }
 
 /** The deck: version 1 and 2 from a chat, then whatever the test adds. */
@@ -413,6 +442,146 @@ describe("the open studio edit kept at the end of a run", () => {
     expect(h.rows.at(-1)).toMatchObject({ version: 4, rootArtifactId: "v1", runId: "r1" });
     expect(published).toHaveLength(1);
     expect(h.ctx.state.documents.attached).toBe(true);
+  });
+});
+
+describe("reading a document", () => {
+  it("reads the person's newest studio save, not the copy the chat saw", async () => {
+    const h = await harness({ rows: deck(studioSave("v3", 3)), chatFiles: ["v2"] });
+    const result = await h.ocsc("pptx", ["read", "--in", "attachments/v2.pptx"]);
+    expect(h.run).toHaveBeenCalledWith(
+      expect.objectContaining({ args: ["read", "--in", "attachments/v3.pptx"] }),
+    );
+    expect(result.rebased).toContain("shows version 3");
+    expect(h.ctx.state.documents).not.toHaveProperty("studioEdited", true);
+    expect((h.ctx.state.documents as { lineage?: Map<string, unknown> }).lineage).toBeUndefined();
+  });
+
+  it("follows a path given without --in", async () => {
+    const h = await harness({ rows: deck(studioSave("v3", 3)), chatFiles: ["v2"] });
+    await h.ocsc("pptx", ["read", "attachments/v2.pptx"]);
+    expect(h.run).toHaveBeenCalledWith(
+      expect.objectContaining({ args: ["read", "attachments/v3.pptx"] }),
+    );
+  });
+
+  it("keeps both versions a comparison names", async () => {
+    const h = await harness({ rows: deck(studioSave("v3", 3)), chatFiles: ["v2"] });
+    await h.ocsc("pptx", ["diff", "attachments/v2.pptx", "attachments/v3.pptx"]);
+    expect(h.run).toHaveBeenCalledWith(
+      expect.objectContaining({ args: ["diff", "attachments/v2.pptx", "attachments/v3.pptx"] }),
+    );
+  });
+});
+
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+/** Last night's three files, made by another agent in other chats, plus someone else's deck. */
+function stressFiles() {
+  return [
+    row("w1", { name: "STRESS_20261117_Word.docx", mimeType: DOCX, botId: "general-bot" }),
+    row("s1", { name: "STRESS_20261117_Sheet.xlsx", mimeType: XLSX, botId: "general-bot" }),
+    row("d1", { name: "STRESS_20261117_Deck", botId: "general-bot" }),
+    row("d2", { name: "STRESS_20261117_Deck", rootArtifactId: "d1", version: 2 }),
+    row("d3", {
+      name: "STRESS_20261117_Deck",
+      rootArtifactId: "d1",
+      version: 3,
+      source: "studio",
+      runId: null,
+    }),
+    row("theirs", { name: "STRESS_20261117_Deck", userId: "user-2" }),
+  ];
+}
+
+describe("finding the person's documents from a new chat", () => {
+  it("finds the deck by name at its newest version and edits it there", async () => {
+    const h = await harness({ rows: stressFiles() });
+    const found = await h.find("stress deck");
+    expect(found.documents).toEqual([
+      expect.objectContaining({ documentId: "d1", version: 3, path: "attachments/d3.pptx" }),
+    ]);
+    expect(found.next).toContain("attach the result");
+    await h.ocsc("pptx", ["read", "--in", "attachments/d3.pptx"]);
+    await h.edit("attachments/d3.pptx");
+    expect(h.stored.get("outputs/deck.pptx")).toBe("d3+photo.json");
+    const attached = await h.attach("outputs/deck.pptx", "STRESS_20261117_Deck.pptx");
+    expect(attached).toMatchObject({ ok: true });
+    expect(h.rows.at(-1)).toMatchObject({
+      rootArtifactId: "d1",
+      version: 4,
+      botId: "general-bot",
+      name: "STRESS_20261117_Deck",
+    });
+  });
+
+  it("lists every match, so the agent asks which one is meant", async () => {
+    const h = await harness({ rows: stressFiles() });
+    const found = await h.find("STRESS_20261117");
+    expect(found.documents.map((d) => d.name).sort()).toEqual([
+      "STRESS_20261117_Deck",
+      "STRESS_20261117_Sheet.xlsx",
+      "STRESS_20261117_Word.docx",
+    ]);
+    expect(found.next).toContain("ask them which");
+    expect((await h.find("STRESS_20261117", "excel")).documents).toHaveLength(1);
+  });
+
+  it("never finds someone else's document or edits one it did not find", async () => {
+    const h = await harness({ rows: stressFiles() });
+    expect((await h.find("nothing like this")).documents).toEqual([]);
+    const theirs = await h.edit("attachments/theirs.pptx");
+    expect(JSON.stringify(theirs)).toMatch(/does not exist/);
+    const unfound = await h.edit("attachments/d3.pptx");
+    expect(JSON.stringify(unfound)).toMatch(/does not exist/);
+    expect([...h.stored.keys()].filter((path) => path.startsWith("attachments/"))).toEqual([]);
+  });
+
+  it("keeps a shared chat to its own group's documents", async () => {
+    const rows = [...stressFiles(), row("g1", { name: "STRESS group deck", groupId: "group-1" })];
+    const h = await harness({ rows, groupId: "group-1" });
+    expect((await h.find("stress deck")).documents.map((d) => d.documentId)).toEqual(["g1"]);
+  });
+});
+
+describe("attaching an edit of a document from another chat", () => {
+  it("lands as that document's next version even without a name", async () => {
+    const h = await harness({ rows: deck(), chatFiles: ["v2"] });
+    await h.edit("attachments/v2.pptx");
+    await h.attach("outputs/deck.pptx", undefined);
+    expect(h.rows.at(-1)).toMatchObject({ rootArtifactId: "v1", version: 3, botId: "general-bot" });
+  });
+
+  it("starts a separate document when given another name", async () => {
+    const h = await harness({ rows: deck(), chatFiles: ["v2"] });
+    await h.edit("attachments/v2.pptx");
+    await h.attach("outputs/deck.pptx", "Client copy");
+    expect(h.rows.at(-1)).toMatchObject({
+      rootArtifactId: null,
+      version: 1,
+      botId: "tender-bot",
+      name: "Client copy",
+    });
+  });
+});
+
+describe("who can find documents by name", () => {
+  const names = (extra: Partial<Parameters<typeof selectBuiltinToolsForRun>[0]>) =>
+    selectBuiltinToolsForRun({
+      graphicalToolsAllowed: false,
+      groupId: null,
+      trigger: "user",
+      semanticMemoryEnabled: false,
+      messagingChannelRun: false,
+      myDocuments: true,
+      ...extra,
+    }).map((tool) => tool.name);
+
+  it("is the person's own turn only", () => {
+    expect(names({})).toContain("find_my_documents");
+    expect(names({ messagingChannelRun: true })).not.toContain("find_my_documents");
+    expect(names({ myDocuments: false })).not.toContain("find_my_documents");
   });
 });
 

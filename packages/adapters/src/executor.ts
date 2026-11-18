@@ -324,6 +324,7 @@ async function verbatimMcpServersForRun(
 
 /** Owner-only reach a run in a group with colleagues gives up: accounts, money, devices, other bots. */
 const COLLEAGUE_BLOCKED_TOOLS: ReadonlySet<string> = new Set([
+  "find_my_documents",
   "connect_app",
   "add_mcp_server",
   "request_secret",
@@ -1803,6 +1804,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             computerAccess,
             documentsApart: documentsApart && Boolean(runToolRunner),
             conversationFiles: conversationFiles.size > 0,
+            myDocuments: Boolean(artifacts) && !nonOwnerChatRun && !runFolder,
             conversationFileSearch,
             connectedAppsEnabled: ownerFeatures.connectedApps,
             mcpServersEnabled: ownerFeatures.mcpServers,

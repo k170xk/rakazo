@@ -470,6 +470,19 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "find_my_documents",
+    description:
+      "Find the person's own Word, PowerPoint, Excel or PDF document by name across all their chats and studios, when they mean one that is not in this conversation and no studio note names it (\"update the STRESS deck\"). Gives each match's newest version and its attachments/ path, which ocsc reads and edits directly. If more than one matches and their words do not clearly pick one, ask which before touching any. Never make a new document instead of finding theirs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Words from the document's name." },
+        type: { type: "string", enum: ["word", "powerpoint", "excel", "pdf"] },
+      },
+      required: ["query"],
+    },
+  },
+  {
     name: "note_file",
     description:
       "Save one short line on what a listed conversation file contains (its subject and key facts), shown beside the file in later turns so you know it without reading it again. Replaces your earlier note on that file.",

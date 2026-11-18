@@ -62,6 +62,7 @@ import {
 import type { FamilyVersion } from "./document-versions.js";
 import {
   attachmentPathFor,
+  namesStudioDocument,
   newestFamilyVersion,
   studioDocumentProgram,
 } from "./document-versions.js";
@@ -76,6 +77,7 @@ import {
   ocscAfterRun,
   ocscBeforeRun,
   ocscCommand,
+  ocscEditStep,
   ocscInPath,
   ocscProgramArgs,
   ocscProgramRefusal,
@@ -437,6 +439,7 @@ async function documentReachable(
   given: FamilyVersion,
 ): Promise<boolean> {
   if (ctx.computer.studioDocument?.rootId === rootId) return true;
+  if (ctx.state.documents.found?.has(rootId)) return true;
   for (const lineage of ctx.state.documents.lineage?.values() ?? []) {
     if (lineage.rootId === rootId) return true;
   }
@@ -616,13 +619,13 @@ export async function rebaseBeforeAttach(
   ctx: RunContext,
   call: Pick<ToolCall, "name" | "executionId">,
   filePath: string,
-  target: { botId: string; groupId: string | undefined; name: string; studio: boolean },
+  target: { botId: string; groupId: string | undefined; name: string; rootId?: string },
 ): Promise<{ note?: string; error?: string }> {
   const lineage = ctx.state.documents.lineage?.get(normalizeDocumentPath(filePath));
   if (!lineage?.steps.length) return {};
   try {
-    const rootId = target.studio
-      ? ctx.computer.studioDocument?.rootId
+    const rootId = target.rootId
+      ? target.rootId
       : ((
           await resolveNextArtifactVersion(ctx.deps.prisma, {
             spaceId: ctx.run.spaceId,
@@ -640,6 +643,43 @@ export async function rebaseBeforeAttach(
   const rebased = await rebaseOntoNewest(ctx, call, filePath, lineage);
   if (rebased.kind === "failed") return { error: rebased.error };
   return rebased.kind === "rebased" ? { note: rebased.note } : {};
+}
+
+/**
+ * Where an edited copy of a saved document is kept so it becomes that document's next version:
+ * its own agent, group and name, whichever chat or agent made it. Undefined for a file this run
+ * did not edit from a saved document, or one given another name or type (a separate document).
+ */
+export async function lineageAttachTarget(
+  ctx: RunContext,
+  filePath: string,
+  name: string | undefined,
+  mimeType: string | undefined,
+): Promise<
+  { botId: string; groupId: string | undefined; name: string; rootId: string } | undefined
+> {
+  const lineage = ctx.state.documents.lineage?.get(normalizeDocumentPath(filePath));
+  if (!lineage || mimeType !== lineage.mimeType) return undefined;
+  const given = name?.trim();
+  if (given && !namesStudioDocument(lineage, given)) return undefined;
+  try {
+    const family = await newestFamilyVersion(ctx.deps.prisma, ctx.context, lineage.rootId);
+    if (!family) return undefined;
+    const scope = await ctx.deps.prisma.artifact.findFirst({
+      where: { id: family.newest.id, spaceId: ctx.context.spaceId, userId: ctx.context.userId },
+      select: { botId: true, groupId: true },
+    });
+    if (!scope?.botId) return undefined;
+    return {
+      botId: scope.botId,
+      groupId: scope.groupId ?? undefined,
+      name: family.newest.name,
+      rootId: lineage.rootId,
+    };
+  } catch (error) {
+    getLogger().warn("document family not resolved for attach", { error: String(error) });
+    return undefined;
+  }
 }
 
 /** The newest file this run wrote from the open studio document, with how it was made. */
@@ -1105,7 +1145,9 @@ export const computerTools: ToolHandlers = {
     const rebuild = wordRebuildRefusal(program, given, ctx.computer.wordDocuments ?? []);
     if (rebuild) return call.finish({ error: rebuild });
     let edit = given;
-    let lineage = continuedLineage(ctx.state.documents.lineage, given);
+    let lineage = ocscEditStep(program, given)
+      ? continuedLineage(ctx.state.documents.lineage, given)
+      : undefined;
     let rebasedNote: string | undefined;
     const base = lineage
       ? { kind: "none" as const }

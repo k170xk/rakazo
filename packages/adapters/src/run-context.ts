@@ -217,6 +217,8 @@ export interface RunState {
     studioOutputs?: string[];
     /** Files this run's edits wrote from a saved version, by path, newest last. */
     lineage?: Map<string, DocumentLineage>;
+    /** Documents (family root ids) this run found by name, which it may then read and edit. */
+    found?: Set<string>;
   };
 }
 

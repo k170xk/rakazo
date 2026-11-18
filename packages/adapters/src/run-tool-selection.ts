@@ -186,6 +186,8 @@ export function selectBuiltinToolsForRun(options: {
   documentsApart?: boolean;
   /** The run lists the person's conversation files, which fetch_file and note_file work on. */
   conversationFiles?: boolean;
+  /** The person's own documents can be found by name and edited with ocsc in this run. */
+  myDocuments?: boolean;
   /** At least one of those files is indexed, so search_conversation_files can find passages. */
   conversationFileSearch?: boolean;
   connectedAppsEnabled?: boolean;
@@ -235,6 +237,8 @@ export function selectBuiltinToolsForRun(options: {
       !disabled.has(tool.name) &&
       computerToolAllowed(tool.name, computerAccess) &&
       (tool.name !== "copy_file" || Boolean(options.documentsApart)) &&
+      (tool.name !== "find_my_documents" ||
+        (Boolean(options.myDocuments) && ownerStartedRun && !options.messagingChannelRun)) &&
       (!CONVERSATION_FILE_TOOLS.has(tool.name) || Boolean(options.conversationFiles)) &&
       (tool.name !== "search_conversation_files" ||
         (Boolean(options.conversationFiles) && Boolean(options.conversationFileSearch))) &&

@@ -4,6 +4,7 @@ import type { PrismaClient } from "@rakazo/db";
 import type { FamilyVersion } from "./document-versions.js";
 import { attachmentPathFor, newestFamilyVersion } from "./document-versions.js";
 import { editedAttachmentId, ocscInPath, printedJson } from "./ocsc-tool.js";
+import { artifactIdFromAttachmentPath } from "./thread-artifacts.js";
 import type { WorkspaceFiles } from "./tool-runner.js";
 
 type Owner = { spaceId: string; userId: string };
@@ -104,6 +105,33 @@ export function rebasedEditNote(
   return `Version ${given.version} is not the newest: version ${newest.version} exists (${savedBy(newest)}), so this edit ran on version ${newest.version} at ${filePath} and keeps those changes. Carry on from this result and attach it as "${newest.name}". Do not ask the person to reopen anything.`;
 }
 
+export function rebasedReadNote(
+  given: Pick<FamilyVersion, "version">,
+  newest: Pick<FamilyVersion, "version" | "source">,
+  filePath: string,
+): string {
+  return `Version ${given.version} is not the newest: version ${newest.version} exists (${savedBy(newest)}), so this shows version ${newest.version} at ${filePath}. Use ${filePath} from now on. Do not ask the person to reopen anything.`;
+}
+
+/**
+ * The one saved document an ocsc command takes as input, by its place in the arguments. None when
+ * it names two (a comparison keeps exactly the versions it was given).
+ */
+export function ocscAttachmentInput(
+  program: string,
+  args: readonly string[],
+): { artifactId: string; index: number; edits: boolean } | undefined {
+  const found: { artifactId: string; index: number }[] = [];
+  args.forEach((arg, index) => {
+    if (index === 0) return;
+    const artifactId = artifactIdFromAttachmentPath(normalizeDocumentPath(arg));
+    if (artifactId) found.push({ artifactId, index });
+  });
+  const [only] = found;
+  if (!only || found.length > 1) return undefined;
+  return { ...only, edits: editedAttachmentId(program, args) === only.artifactId };
+}
+
 export function rebasedAttachNote(
   newest: Pick<FamilyVersion, "version" | "source">,
   steps: number,
@@ -117,15 +145,16 @@ export type EditBase =
   | {
       kind: "base";
       args: string[];
-      lineage: DocumentLineage;
+      /** Only for a command that changes the document. */
+      lineage?: DocumentLineage;
       /** Set when the command now starts from a newer version than the one it named. */
       note?: string;
     };
 
 /**
- * Which saved version an ocsc edit of `attachments/<id>` starts from: the newest version of that
- * document, placed in the folder so the command finds it. `reachable` says whether this run may
- * use the document at all; when it may not, nothing changes.
+ * Which saved version an ocsc command on `attachments/<id>` uses: the newest version of that
+ * document, placed in the folder so the command finds it, whether it reads or edits. `reachable`
+ * says whether this run may use the document at all; when it may not, nothing changes.
  */
 export async function resolveEditBase(
   deps: { prisma: Pick<PrismaClient, "artifact">; artifacts?: Pick<ArtifactStore, "get"> },
@@ -138,9 +167,9 @@ export async function resolveEditBase(
     maxBytes?: number;
   },
 ): Promise<EditBase> {
-  const artifactId = editedAttachmentId(input.program, input.args);
-  if (!artifactId || !deps.artifacts) return { kind: "none" };
-  const family = await newestFamilyVersion(deps.prisma, input.owner, artifactId);
+  const attachment = ocscAttachmentInput(input.program, input.args);
+  if (!attachment || !deps.artifacts) return { kind: "none" };
+  const family = await newestFamilyVersion(deps.prisma, input.owner, attachment.artifactId);
   if (!family) return { kind: "none" };
   const { given, newest, rootId } = family;
   if (!(await input.reachable({ rootId, given }))) return { kind: "none" };
@@ -158,22 +187,34 @@ export async function resolveEditBase(
     if (target === given) return { kind: "none" };
     return {
       kind: "refuse",
-      error: `Version ${newest.version} of "${newest.name}" is the newest, but it could not be put in place (${error instanceof Error ? error.message : "unknown error"}). Call fetch_file with ${attachmentPathFor(newest)}, then run this command again with --in ${attachmentPathFor(newest)}.`,
+      error: `Version ${newest.version} of "${newest.name}" is the newest, but it could not be put in place (${error instanceof Error ? error.message : "unknown error"}). Call fetch_file with ${attachmentPathFor(newest)}, then run this command again with ${attachmentPathFor(newest)}.`,
     };
   }
-  const args = target === given ? [...input.args] : withInPath(input.args, filePath);
+  const args = [...input.args];
+  args[attachment.index] = filePath;
+  const moved = target !== given;
   return {
     kind: "base",
     args,
-    lineage: {
-      rootId,
-      baseId: target.id,
-      baseVersion: target.version,
-      name: newest.name,
-      mimeType: newest.mimeType,
-      steps: [],
-    },
-    ...(target === given ? {} : { note: rebasedEditNote(given, newest, filePath) }),
+    ...(attachment.edits
+      ? {
+          lineage: {
+            rootId,
+            baseId: target.id,
+            baseVersion: target.version,
+            name: newest.name,
+            mimeType: newest.mimeType,
+            steps: [],
+          },
+        }
+      : {}),
+    ...(moved
+      ? {
+          note: attachment.edits
+            ? rebasedEditNote(given, newest, filePath)
+            : rebasedReadNote(given, newest, filePath),
+        }
+      : {}),
   };
 }
 

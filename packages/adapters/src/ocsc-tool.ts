@@ -279,6 +279,11 @@ const EDITS_IN: Readonly<Record<string, readonly string[]>> = {
   xlsx: ["edit"],
 };
 
+/** True for an ocsc step that changes the document given with --in. */
+export function ocscEditStep(program: string, args: readonly string[]): boolean {
+  return Boolean(EDITS_IN[program]?.includes(args[0] ?? ""));
+}
+
 /** The `--in` path of an ocsc command, without a leading `./`. */
 export function ocscInPath(args: readonly string[]): string | undefined {
   const at = args.indexOf("--in");

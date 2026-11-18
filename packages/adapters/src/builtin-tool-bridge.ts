@@ -28,6 +28,7 @@ export const CORE_BUILTIN_TOOL_NAMES: ReadonlySet<string> = new Set([
   "attach_file",
   "copy_file",
   "fetch_file",
+  "find_my_documents",
   "note_file",
   "list_conversation_files",
   "search_conversation_files",

@@ -8,14 +8,21 @@ import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
 import {
   attachmentPathFor,
   newerConversationVersion,
+  newestFamilyVersion,
   studioAttachTarget,
 } from "./document-versions.js";
 import { annotateOfficeAttachFailure } from "./document-write-check.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";
+import { DOCUMENT_KINDS, findMyDocuments, foundDocumentsNext } from "./my-documents.js";
 import type { RunContext } from "./run-context.js";
 import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
-import { lineageAttached, rebaseBeforeAttach, recordComputerAction } from "./run-tools-computer.js";
+import {
+  lineageAttached,
+  lineageAttachTarget,
+  rebaseBeforeAttach,
+  recordComputerAction,
+} from "./run-tools-computer.js";
 import {
   artifactIdFromAttachmentPath,
   attachWorkspaceFileToThread,
@@ -96,6 +103,17 @@ async function newerVersionId(ctx: RunContext, filePath: string) {
     [...files.values()].map((file) => file.artifactId),
   );
   return found && attachmentPathFor(found) === filePath ? found.id : undefined;
+}
+
+/** A version of a document this run found by name, by its attachment path. */
+async function foundVersionId(ctx: RunContext, filePath: string) {
+  const artifactId = artifactIdFromAttachmentPath(filePath);
+  const found = ctx.state?.documents?.found;
+  if (!artifactId || !found?.size || ctx.computer.folder) return undefined;
+  const family = await newestFamilyVersion(ctx.deps.prisma, ctx.context, artifactId);
+  return family && found.has(family.rootId) && attachmentPathFor(family.given) === filePath
+    ? artifactId
+    : undefined;
 }
 
 async function fileExists(
@@ -298,7 +316,8 @@ export const fileTools: ToolHandlers = {
     const filePath = String(call.args.path ?? "").trim();
     const artifactId =
       ctx.computer.conversationFiles?.get(filePath)?.artifactId ??
-      (await newerVersionId(ctx, filePath));
+      (await newerVersionId(ctx, filePath)) ??
+      (await foundVersionId(ctx, filePath));
     if (!artifactId) {
       return call.finish({
         error:
@@ -333,6 +352,24 @@ export const fileTools: ToolHandlers = {
     }
     await recordComputerAction(ctx, call, "write_file", filePath, { bytes: content.byteLength });
     return call.finish({ ok: true, path: filePath, bytes: content.byteLength });
+  },
+  async find_my_documents(ctx, call) {
+    if (ctx.computer.folder) {
+      return call.finish({ error: "Documents are only found on the person's own turns." });
+    }
+    const query = String(call.args.query ?? "")
+      .trim()
+      .slice(0, 200);
+    const kind = DOCUMENT_KINDS.find((value) => value === call.args.type);
+    const documents = await findMyDocuments(ctx.deps.prisma, ctx.context, {
+      query,
+      kind,
+      groupId: ctx.thread.groupId ?? null,
+    });
+    const found = ctx.state.documents.found ?? new Set<string>();
+    for (const document of documents) found.add(document.documentId);
+    ctx.state.documents.found = found;
+    return call.finish({ documents, next: foundDocumentsNext(documents, query) });
   },
   async note_file(ctx, call) {
     const { deps, thread } = ctx;
@@ -421,11 +458,23 @@ export const fileTools: ToolHandlers = {
           studioOutputs: ctx.state.documents.studioOutputs,
         })
       : undefined;
+    // An edit of a document from another chat or agent joins that document, not a copy here.
+    const family = studio
+      ? undefined
+      : await lineageAttachTarget(ctx, filePath, name, mimeType ?? undefined);
+    const target = studio
+      ? { ...studio, rootId: ctx.computer.studioDocument?.rootId }
+      : (family ?? {
+          botId: bot.id,
+          groupId: thread.groupId ?? undefined,
+          name: name?.trim() || undefined,
+          rootId: undefined,
+        });
     const rebased = await rebaseBeforeAttach(ctx, call, filePath, {
-      botId: studio?.botId ?? bot.id,
-      groupId: studio ? studio.groupId : (thread.groupId ?? undefined),
-      name: (studio?.name ?? name)?.trim() || filePath.split("/").at(-1) || filePath,
-      studio: Boolean(studio),
+      botId: target.botId,
+      groupId: target.groupId,
+      name: target.name?.trim() || filePath.split("/").at(-1) || filePath,
+      rootId: target.rootId,
     });
     if (rebased.error) return failAttach(rebased.error, mimeType ?? undefined);
     let bytes: Uint8Array;
@@ -451,13 +500,13 @@ export const fileTools: ToolHandlers = {
         {
           spaceId: run.spaceId,
           userId: run.userId,
-          botId: studio?.botId ?? bot.id,
-          groupId: studio ? studio.groupId : (thread.groupId ?? undefined),
+          botId: target.botId,
+          groupId: target.groupId,
           runId: run.id,
           filePath,
           bytes,
           operationId: executionId,
-          name: studio?.name ?? name,
+          name: target.name,
           description: typeof args.description === "string" ? args.description : undefined,
         },
       );
