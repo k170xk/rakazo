@@ -323,6 +323,34 @@ describe("conversation file listing", () => {
     expect(JSON.stringify(query)).not.toContain("channel_message");
   });
 
+  it("includes documents the bot attached, listing each one as its newest version", async () => {
+    const rows: Record<string, { rootArtifactId: string | null }> = {
+      upload: { rootArtifactId: null },
+      v2: { rootArtifactId: "v1" },
+      v1: { rootArtifactId: null },
+    };
+    const prisma = {
+      $queryRaw: vi.fn(async () => ["upload", "v2", "v1"].map((artifactId) => ({ artifactId }))),
+      artifact: {
+        findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+          where.id.in.map((id) => ({
+            id,
+            name: "Utilities Schedule",
+            mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            size: 1,
+            rootArtifactId: rows[id]!.rootArtifactId,
+          })),
+        ),
+      },
+    };
+    const files = await listConversationFiles({ prisma } as never, { threadId: "t1", context });
+    expect(files.map((file) => file.artifactId)).toEqual(["upload", "v2"]);
+    expect(files[1]).toMatchObject({ path: "attachments/v2.xlsx" });
+    expect(JSON.stringify((prisma.$queryRaw.mock.calls[0] as unknown[])[0])).toContain(
+      "'user', 'bot'",
+    );
+  });
+
   it("keeps a channel run to its channel's messages", async () => {
     const prisma = database(["a1"]);
     await listConversationFiles({ prisma } as never, { threadId: "t1", channelId: "c7", context });

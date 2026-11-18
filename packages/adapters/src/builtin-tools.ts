@@ -462,7 +462,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "fetch_file",
     description:
-      "Put a file the person attached earlier in this conversation back at its listed attachments/ path, so read_file, the ocsc tool or a script can open it. Use the exact path from the conversation's file list; a file already there is left as it is.",
+      "Put a file the person or you attached earlier in this conversation back at its listed attachments/ path, so read_file, the ocsc tool or a script can open it. Use the exact path from the conversation's file list; a file already there is left as it is.",
     inputSchema: {
       type: "object",
       properties: { path: { type: "string" } },
@@ -495,7 +495,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "list_conversation_files",
     description:
-      "List every file the person attached in this conversation, newest first, 20 a page, with paths and your notes. Use it to find a file not shown in your instructions, or to go through all of them page by page. query keeps files whose name or note contains every word.",
+      "List every file the person or you attached in this conversation, newest first, 20 a page, with paths and your notes. Use it to find a file not shown in your instructions, or to go through all of them page by page. query keeps files whose name or note contains every word.",
     inputSchema: {
       type: "object",
       properties: {

@@ -334,9 +334,11 @@ function recentAttachmentBlocks(
 }
 
 /**
- * Every file the person attached in this conversation, newest first, without reading them. It
- * searches the whole conversation rather than the loaded history, so older files stay reachable;
- * a channel run sees only its channel's messages, as its history does.
+ * Every file the person or the bot attached in this conversation, newest first, without reading
+ * them. It searches the whole conversation rather than the loaded history, so older files stay
+ * reachable; a channel run sees only its channel's messages, as its history does. A document the
+ * bot saved several times is listed once, as its newest attached version, so later turns edit
+ * that one.
  */
 export async function listConversationFiles(
   deps: Pick<Parameters<typeof materializeCurrentTurnFiles>[0], "prisma" | "maxUploadSizeBytes">,
@@ -353,7 +355,7 @@ export async function listConversationFiles(
       CASE WHEN jsonb_typeof(m.blocks) = 'array' THEN m.blocks ELSE '[]'::jsonb END
     ) AS b
     WHERE m."threadId" = ${input.threadId}
-      AND m.role = 'user'
+      AND m.role IN ('user', 'bot')
       AND b->>'kind' IN ('file', 'image')
       AND b->>'artifactId' IS NOT NULL
       ${channelFilter}
@@ -367,13 +369,18 @@ export async function listConversationFiles(
       spaceId: input.context.spaceId,
       userId: input.context.userId,
     },
-    select: { id: true, name: true, mimeType: true, size: true },
+    select: { id: true, name: true, mimeType: true, size: true, rootArtifactId: true },
   });
   const byId = new Map(rows.map((row) => [row.id, row]));
   const limit = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
+  const families = new Set<string>();
   return attached.flatMap(({ artifactId }) => {
     const row = byId.get(artifactId);
-    return row && row.size <= limit ? [{ ...threadFileMetadata(row), artifactId: row.id }] : [];
+    if (!row || row.size > limit) return [];
+    const family = row.rootArtifactId ?? row.id;
+    if (families.has(family)) return [];
+    families.add(family);
+    return [{ ...threadFileMetadata(row), artifactId: row.id }];
   });
 }
 
@@ -520,7 +527,7 @@ export function earlierThreadFilesInstruction(
   if (!lines.length) return "";
   const hidden = total - lines.length;
   return [
-    "Files the person attached earlier in this conversation, newest first. One may not be on your computer yet: call fetch_file with its path before reading it.",
+    "Files attached earlier in this conversation, by the person or by you, newest first; a document you saved more than once is listed as its newest version. One may not be on your computer yet: call fetch_file with its path before reading or editing it, and never ask the person to attach a file listed here again.",
     ...lines,
     ...(hidden > 0 && options.canList
       ? [
