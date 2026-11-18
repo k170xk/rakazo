@@ -164,6 +164,8 @@ export async function documentAuthor(ctx: RunContext): Promise<string | undefine
 }
 
 const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const PPTX_MIME = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 export function isWordDocument(name: string, mimeType: string | null | undefined): boolean {
   return mimeType === DOCX_MIME || name.toLowerCase().endsWith(".docx");
@@ -249,27 +251,57 @@ export function ocscProgramArgs(args: readonly string[]): string[] {
   return args.filter((arg) => arg !== NEW_DOCUMENT_FLAG);
 }
 
+export type OfficeDocument = { name: string; path: string; program: RebuildProgram };
+type RebuildProgram = "word" | "pptx" | "xlsx";
+
+const REBUILD: Record<RebuildProgram, { kind: string; extension: string; skill: string }> = {
+  word: {
+    kind: "Word document",
+    extension: "docx",
+    skill: " Follow the Word skill for whether those edits are tracked changes or a direct update.",
+  },
+  pptx: { kind: "PowerPoint deck", extension: "pptx", skill: "" },
+  xlsx: { kind: "Excel workbook", extension: "xlsx", skill: "" },
+};
+
+/** The ocsc program that edits a Word, PowerPoint or Excel file, by its name or type. */
+export function officeProgram(
+  name: string,
+  mimeType: string | null | undefined,
+): RebuildProgram | undefined {
+  if (isWordDocument(name, mimeType)) return "word";
+  const lower = name.toLowerCase();
+  if (mimeType === PPTX_MIME || lower.endsWith(".pptx")) return "pptx";
+  if (mimeType === XLSX_MIME || lower.endsWith(".xlsx")) return "xlsx";
+  return undefined;
+}
+
 /**
- * Why `ocsc word new` must not run: in a conversation that already has a Word document, or over
- * an existing file, making a new one would rebuild the person's document instead of editing it.
- * The bot passes NEW_DOCUMENT_FLAG only when the person asked for a brand-new document.
+ * Why `ocsc <word|pptx|xlsx> new` must not run: in a conversation that already has a document of
+ * that type (the person's, the bot's own or the one open in a studio), or over an existing file,
+ * making a new one would rebuild the document instead of editing it, losing every change made
+ * since. The bot passes NEW_DOCUMENT_FLAG only when the person asked for a brand-new document.
  */
-export function wordRebuildRefusal(
+export function documentRebuildRefusal(
   program: string,
   args: readonly string[],
-  wordDocuments: readonly { name: string; path: string }[],
+  documents: readonly OfficeDocument[],
 ): string | undefined {
-  if (program !== "word" || args[0] !== "new" || args.includes(NEW_DOCUMENT_FLAG)) return undefined;
+  if (!(program in REBUILD) || args[0] !== "new" || args.includes(NEW_DOCUMENT_FLAG)) {
+    return undefined;
+  }
+  const { kind, extension, skill } = REBUILD[program as RebuildProgram];
+  const same = documents.filter((doc) => doc.program === program);
   const overwriting = args.includes("--overwrite");
-  if (!overwriting && wordDocuments.length === 0) return undefined;
-  const listed = wordDocuments
+  if (!overwriting && same.length === 0) return undefined;
+  const listed = same
     .slice(0, 5)
     .map((doc) => `"${doc.name}" (${doc.path})`)
     .join(", ");
   const existing = overwriting
-    ? "This would replace an existing Word document."
-    : `This conversation already has a Word document: ${listed}.`;
-  return `${existing} To change a document, never make it again: run ocsc word read --in <its path>, then ocsc word edit --in <its path> --spec <edits>.json --out <new version>.docx. Follow the Word skill for whether those edits are tracked changes or a direct update. Only when the person explicitly asked for a brand-new, separate document (not changes to an existing one), run the same new command again with ${NEW_DOCUMENT_FLAG}.`;
+    ? `This would replace an existing ${kind}.`
+    : `This conversation already has a ${kind}: ${listed}.`;
+  return `${existing} To change it, never make it again: run ocsc ${program} read --in <its path>, then ocsc ${program} edit --in <its path> --spec <edits>.json --out <new version>.${extension}.${skill} Only when the person explicitly asked for a brand-new, separate ${kind} (not changes to an existing one), run the same new command again with ${NEW_DOCUMENT_FLAG}.`;
 }
 
 /** The ocsc steps that change the document given with --in; the rest only read it. */

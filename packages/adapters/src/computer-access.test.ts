@@ -10,12 +10,13 @@ import {
 } from "./computer-access.js";
 import { conversationFolder, resolveRunFilePath } from "./computer-support.js";
 import {
+  documentRebuildRefusal,
   isWordDocument,
   NEW_DOCUMENT_FLAG,
   ocscCommand,
   ocscProgramArgs,
+  officeProgram,
   videoQueuePlace,
-  wordRebuildRefusal,
 } from "./ocsc-tool.js";
 import { limitedComputerInstruction } from "./run-instructions.js";
 import {
@@ -227,56 +228,72 @@ describe("ocsc command line", () => {
   });
 });
 
-describe("editing rather than rebuilding Word documents", () => {
-  const report = [{ name: "Report.docx", path: "attachments/a1.docx" }];
+describe("editing rather than rebuilding documents", () => {
+  const report = [{ name: "Report.docx", path: "attachments/a1.docx", program: "word" as const }];
+  const deck = { name: "Bid deck", path: "attachments/d2.pptx", program: "pptx" as const };
+  const sheet = {
+    name: "Utilities Schedule",
+    path: "attachments/s3.xlsx",
+    program: "xlsx" as const,
+  };
 
   it("refuses a new document in a conversation that already has one", () => {
-    const refusal = wordRebuildRefusal(
+    const refusal = documentRebuildRefusal(
       "word",
       ["new", "--spec", "s.json", "--out", "x.docx"],
       report,
     );
     expect(refusal).toContain('"Report.docx" (attachments/a1.docx)');
     expect(refusal).toContain("ocsc word edit --in");
+    expect(refusal).toContain("tracked changes");
     expect(refusal).toContain(NEW_DOCUMENT_FLAG);
+  });
+
+  it("refuses a new deck or workbook where one of that type is already in the conversation", () => {
+    const all = [...report, deck, sheet];
+    const slides = documentRebuildRefusal("pptx", ["new", "--spec", "s.json"], all);
+    expect(slides).toContain('PowerPoint deck: "Bid deck" (attachments/d2.pptx)');
+    expect(slides).toContain("ocsc pptx edit --in");
+    expect(slides).not.toContain("Report.docx");
+    const workbook = documentRebuildRefusal("xlsx", ["new", "--spec", "s.json"], all);
+    expect(workbook).toContain('Excel workbook: "Utilities Schedule" (attachments/s3.xlsx)');
+    expect(workbook).toContain("--out <new version>.xlsx");
   });
 
   it("refuses to overwrite an existing document even in a new conversation", () => {
     expect(
-      wordRebuildRefusal("word", ["new", "--spec", "s.json", "--out", "x.docx", "--overwrite"], []),
+      documentRebuildRefusal(
+        "word",
+        ["new", "--spec", "s.json", "--out", "x.docx", "--overwrite"],
+        [],
+      ),
     ).toContain("replace an existing Word document");
   });
 
-  it("allows a first document, a brand-new one asked for, and every edit", () => {
-    expect(wordRebuildRefusal("word", ["new", "--spec", "s.json", "--out", "x.docx"], [])).toBe(
+  it("allows a first document of a type, a brand-new one asked for, every edit and PDFs", () => {
+    expect(documentRebuildRefusal("word", ["new", "--spec", "s.json"], [deck, sheet])).toBe(
       undefined,
     );
+    expect(documentRebuildRefusal("pptx", ["new", "--spec", "s.json"], report)).toBeUndefined();
     expect(
-      wordRebuildRefusal("word", ["new", "--spec", "s.json", NEW_DOCUMENT_FLAG], report),
+      documentRebuildRefusal("xlsx", ["new", "--spec", "s.json", NEW_DOCUMENT_FLAG], [sheet]),
     ).toBeUndefined();
-    expect(wordRebuildRefusal("word", ["edit", "--in", "attachments/a1.docx"], report)).toBe(
-      undefined,
-    );
-    expect(wordRebuildRefusal("pptx", ["new", "--spec", "s.json"], report)).toBeUndefined();
-  });
-
-  it("never passes the flag to the program", () => {
-    expect(ocscProgramArgs(["new", NEW_DOCUMENT_FLAG, "--spec", "s.json"])).toEqual([
-      "new",
-      "--spec",
-      "s.json",
-    ]);
-  });
-
-  it("recognises Word documents by type or name", () => {
     expect(
-      isWordDocument(
-        "upload",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      documentRebuildRefusal("word", ["edit", "--in", "attachments/a1.docx"], report),
+    ).toBeUndefined();
+    expect(documentRebuildRefusal("pdf", ["new"], report)).toBeUndefined();
+  });
+
+  it("knows each office file by its type or name", () => {
+    expect(
+      officeProgram(
+        "Schedule",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       ),
-    ).toBe(true);
-    expect(isWordDocument("Spec.DOCX", "application/octet-stream")).toBe(true);
-    expect(isWordDocument("deck.pptx", null)).toBe(false);
+    ).toBe("xlsx");
+    expect(officeProgram("deck.PPTX", null)).toBe("pptx");
+    expect(officeProgram("Report.docx", undefined)).toBe("word");
+    expect(officeProgram("plan.pdf", "application/pdf")).toBeUndefined();
   });
 });
 

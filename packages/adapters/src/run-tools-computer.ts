@@ -71,6 +71,7 @@ import { annotateDocumentWriteResult } from "./document-write-check.js";
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import {
   documentAuthor,
+  documentRebuildRefusal,
   editedAttachmentId,
   noteDocumentWrite,
   OCSC_PROGRAMS,
@@ -85,7 +86,6 @@ import {
   printedJson,
   staleDocumentBase,
   withDefaultWordTemplate,
-  wordRebuildRefusal,
 } from "./ocsc-tool.js";
 import { describeToolActivity } from "./pi-runtime-tools.js";
 import { purchaseApprovalOf } from "./purchase-gate.js";
@@ -1146,7 +1146,7 @@ export const computerTools: ToolHandlers = {
     }
     const switchedOff = ocscProgramRefusal(program);
     if (switchedOff) return call.finish({ error: switchedOff });
-    const rebuild = wordRebuildRefusal(program, given, ctx.computer.wordDocuments ?? []);
+    const rebuild = documentRebuildRefusal(program, given, ctx.computer.officeDocuments ?? []);
     if (rebuild) return call.finish({ error: rebuild });
     let edit = given;
     let lineage = ocscEditStep(program, given)

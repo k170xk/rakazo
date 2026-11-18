@@ -27,7 +27,7 @@ function harness(options: {
   runner?: boolean;
   documents?: boolean;
   computerOff?: boolean;
-  wordDocuments?: { name: string; path: string }[];
+  officeDocuments?: { name: string; path: string; program: "word" | "pptx" | "xlsx" }[];
 }) {
   const run = vi.fn(async () => ({
     stdout: JSON.stringify({ ok: true, path: "outputs/doc.docx" }),
@@ -68,7 +68,7 @@ function harness(options: {
       runner: options.runner ? { workspace, files, prepare } : undefined,
       documents: options.documents ? { workspace, files, prepare } : undefined,
       computerOff: options.computerOff,
-      wordDocuments: options.wordDocuments,
+      officeDocuments: options.officeDocuments,
     },
     state: { documents: { made: [] as string[], attached: false } },
   };
@@ -167,7 +167,7 @@ describe("Word documents on a tool runner", () => {
   it("edits a document already in the conversation instead of making it again", async () => {
     const h = harness({
       documents: true,
-      wordDocuments: [{ name: "Report.docx", path: "attachments/a1.docx" }],
+      officeDocuments: [{ name: "Report.docx", path: "attachments/a1.docx", program: "word" }],
     });
     const refused = await computerTools.ocsc!(
       h.ctx,
@@ -189,7 +189,7 @@ describe("Word documents on a tool runner", () => {
   it("makes a brand-new document when the person asked for one, without passing the flag on", async () => {
     const h = harness({
       documents: true,
-      wordDocuments: [{ name: "Report.docx", path: "attachments/a1.docx" }],
+      officeDocuments: [{ name: "Report.docx", path: "attachments/a1.docx", program: "word" }],
     });
     await computerTools.ocsc!(
       h.ctx,

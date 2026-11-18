@@ -34,6 +34,7 @@ import type { DocumentLineage } from "./document-rebase.js";
 import type { StudioDocument } from "./document-versions.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { FleetRun } from "./fleet-tools.js";
+import type { OfficeDocument } from "./ocsc-tool.js";
 import { namedAgentTools } from "./pi-runtime-tools.js";
 import type { lazyRunComputer } from "./run-computer.js";
 import type { createRunWorkspaceCheckpoint } from "./run-lifecycle.js";
@@ -254,8 +255,8 @@ export interface RunComputerContext {
   documents?: RunToolRunner;
   /** The owner's documents live in a document home apart from a computer that keeps its own home. */
   documentsApart?: boolean;
-  /** Word documents attached to this turn or earlier in the conversation, which edits must change. */
-  wordDocuments?: readonly { name: string; path: string }[];
+  /** Word, PowerPoint and Excel files in this conversation (the person's, the bot's own and the studio's), which edits must change. */
+  officeDocuments?: readonly OfficeDocument[];
   /** The person's files in this conversation, newest first, by attachment path; fetch_file, note_file and list_conversation_files accept only these. */
   conversationFiles?: ReadonlyMap<string, EarlierThreadFile>;
   /** The document the person has open in a studio, named by their message; its versions are in conversationFiles. */

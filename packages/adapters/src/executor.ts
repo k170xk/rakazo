@@ -170,7 +170,7 @@ import {
 } from "./model-selection.js";
 import { modelAcceptsImageInput } from "./model-vision.js";
 import { usesNativeShell } from "./native-shell.js";
-import { isWordDocument } from "./ocsc-tool.js";
+import { officeProgram } from "./ocsc-tool.js";
 import { paymentWalletConnected } from "./payment-wallets.js";
 import { isRetiredModelCredentialError } from "./pi-oauth.js";
 import { restoreComputerModels } from "./pi-runtime-computer-mode.js";
@@ -2067,9 +2067,16 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 : runToolRunner,
             documents: runToolRunner,
             documentsApart: !runnerSharesHome,
-            wordDocuments: [...currentTurnFiles, ...recentThreadFiles]
-              .filter((file) => isWordDocument(file.name, file.mimeType))
-              .map(({ name, path }) => ({ name, path })),
+            officeDocuments: [
+              ...new Map(
+                [...currentTurnFiles, ...recentThreadFiles, ...conversationFiles.values()].map(
+                  (file) => [file.path, file],
+                ),
+              ).values(),
+            ].flatMap(({ name, path, mimeType }) => {
+              const program = officeProgram(name, mimeType);
+              return program ? [{ name, path, program }] : [];
+            }),
             conversationFiles,
             studioDocument,
           },
