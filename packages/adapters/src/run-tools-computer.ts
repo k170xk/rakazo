@@ -113,6 +113,10 @@ import {
   TOOL_RUNNER_COMPUTER,
 } from "./tool-runner.js";
 import { vaultCardUseOf } from "./vault-card-use.js";
+import { matchWordEditOnRunner } from "./word-edit-match.js";
+
+const matchedTextNote = (count: number) =>
+  `${count === 1 ? "One quoted phrase was" : `${count} quoted phrases were`} matched to the document's own characters (apostrophes, quotes, dashes, spacing or Word's clause numbers) before editing.`;
 
 const CREDENTIALS_WITHHELD_NOTICE =
   "Saved command credentials were not given to this command because this run has read outside content. To use one, name its variable in the command itself (for example $GITHUB_TOKEN) so the command is checked first.";
@@ -1173,15 +1177,25 @@ export const computerTools: ToolHandlers = {
     if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {
       const held = await ocscBeforeRun(ctx, program, args);
       if (held) return call.finish(held);
-      const raw = await runOcscOnRunner(
+      const matched =
+        program === "word"
+          ? await runner
+              .prepare()
+              .then(() => matchWordEditOnRunner(runner.files, runner.workspace, args, ctx.context))
+              .catch(() => null)
+          : null;
+      const ran = await runOcscOnRunner(
         ctx,
         call,
         runner,
         ctx.deps.toolRunner,
         program,
-        args,
+        matched?.args ?? args,
         author,
       );
+      const raw = matched?.matched.length
+        ? { ...ran, matchedText: matchedTextNote(matched.matched.length) }
+        : ran;
       const early = annotateDocumentWriteResult(program, args, raw);
       if (early.documentCheck === "problems") return call.finish(noted(early));
       noteDocumentWrite(ctx, program, args, raw);
