@@ -285,18 +285,42 @@ describe("note_file", () => {
 });
 
 describe("conversation file listing", () => {
+  type Stored = {
+    id: string;
+    name: string;
+    mimeType: string;
+    size: number;
+    rootArtifactId: string | null;
+    version: number;
+  };
+  type Where = {
+    id?: { in: string[] };
+    OR?: Array<{ id?: { in: string[] }; rootArtifactId?: { in: string[] } }>;
+  };
+  /** The person's artifacts, read the two ways listConversationFiles asks for them. */
+  function store(rows: Stored[]) {
+    return vi.fn(async ({ where }: { where: Where }) => {
+      if (where.id) return rows.filter((row) => where.id!.in.includes(row.id));
+      const roots = where.OR?.flatMap((clause) => clause.id?.in ?? clause.rootArtifactId?.in ?? []);
+      return rows
+        .filter((row) => roots?.includes(row.rootArtifactId ?? row.id))
+        .sort((a, b) => b.version - a.version);
+    });
+  }
   function database(found: string[]) {
     const prisma = {
       $queryRaw: vi.fn(async () => found.map((artifactId) => ({ artifactId }))),
       artifact: {
-        findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
-          where.id.in
+        findMany: store(
+          found
             .filter((id) => id !== "theirs")
             .map((id) => ({
               id,
               name: `${id}.pdf`,
               mimeType: "application/pdf",
               size: id === "huge" ? 10_000 : 1,
+              rootArtifactId: null,
+              version: 1,
             })),
         ),
       },
@@ -324,28 +348,29 @@ describe("conversation file listing", () => {
   });
 
   it("includes documents the bot attached, listing each one as its newest version", async () => {
-    const rows: Record<string, { rootArtifactId: string | null }> = {
-      upload: { rootArtifactId: null },
-      v2: { rootArtifactId: "v1" },
-      v1: { rootArtifactId: null },
-    };
+    const sheet = (id: string, version: number, rootArtifactId: string | null) => ({
+      id,
+      name: "Utilities Schedule",
+      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      size: 1,
+      rootArtifactId,
+      version,
+    });
     const prisma = {
       $queryRaw: vi.fn(async () => ["upload", "v2", "v1"].map((artifactId) => ({ artifactId }))),
       artifact: {
-        findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
-          where.id.in.map((id) => ({
-            id,
-            name: "Utilities Schedule",
-            mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            size: 1,
-            rootArtifactId: rows[id]!.rootArtifactId,
-          })),
-        ),
+        findMany: store([
+          sheet("upload", 1, null),
+          sheet("v1", 1, null),
+          sheet("v2", 2, "v1"),
+          // Saved in the studio after the chat, so on no message.
+          sheet("v3", 3, "v1"),
+        ]),
       },
     };
     const files = await listConversationFiles({ prisma } as never, { threadId: "t1", context });
-    expect(files.map((file) => file.artifactId)).toEqual(["upload", "v2"]);
-    expect(files[1]).toMatchObject({ path: "attachments/v2.xlsx" });
+    expect(files.map((file) => file.artifactId)).toEqual(["upload", "v3"]);
+    expect(files[1]).toMatchObject({ path: "attachments/v3.xlsx" });
     expect(JSON.stringify((prisma.$queryRaw.mock.calls[0] as unknown[])[0])).toContain(
       "'user', 'bot'",
     );

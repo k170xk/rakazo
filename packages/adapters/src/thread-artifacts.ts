@@ -336,9 +336,9 @@ function recentAttachmentBlocks(
 /**
  * Every file the person or the bot attached in this conversation, newest first, without reading
  * them. It searches the whole conversation rather than the loaded history, so older files stay
- * reachable; a channel run sees only its channel's messages, as its history does. A document the
- * bot saved several times is listed once, as its newest attached version, so later turns edit
- * that one.
+ * reachable; a channel run sees only its channel's messages, as its history does. A document with
+ * several versions is listed once, as its newest version wherever it was saved, so later turns
+ * read and edit that one.
  */
 export async function listConversationFiles(
   deps: Pick<Parameters<typeof materializeCurrentTurnFiles>[0], "prisma" | "maxUploadSizeBytes">,
@@ -372,15 +372,32 @@ export async function listConversationFiles(
     select: { id: true, name: true, mimeType: true, size: true, rootArtifactId: true },
   });
   const byId = new Map(rows.map((row) => [row.id, row]));
+  const roots = [...new Set(rows.map((row) => row.rootArtifactId ?? row.id))];
+  // A version saved later, in a studio say, is on no message but is the file the person means.
+  const versions = await deps.prisma.artifact.findMany({
+    where: {
+      spaceId: input.context.spaceId,
+      userId: input.context.userId,
+      OR: [{ id: { in: roots } }, { rootArtifactId: { in: roots } }],
+    },
+    orderBy: [{ version: "desc" }, { createdAt: "desc" }],
+    select: { id: true, name: true, mimeType: true, size: true, rootArtifactId: true },
+  });
+  const newest = new Map<string, (typeof versions)[number]>();
+  for (const version of versions) {
+    const family = version.rootArtifactId ?? version.id;
+    if (!newest.has(family)) newest.set(family, version);
+  }
   const limit = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
   const families = new Set<string>();
   return attached.flatMap(({ artifactId }) => {
-    const row = byId.get(artifactId);
-    if (!row || row.size > limit) return [];
-    const family = row.rootArtifactId ?? row.id;
+    const given = byId.get(artifactId);
+    if (!given) return [];
+    const family = given.rootArtifactId ?? given.id;
     if (families.has(family)) return [];
     families.add(family);
-    return [{ ...threadFileMetadata(row), artifactId: row.id }];
+    const row = newest.get(family) ?? given;
+    return row.size <= limit ? [{ ...threadFileMetadata(row), artifactId: row.id }] : [];
   });
 }
 
