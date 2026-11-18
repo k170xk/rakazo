@@ -54,6 +54,7 @@ import { AppHistoryPanel } from "./AppHistoryPanel";
 import { AppIcon } from "./AppIcon";
 import { AppSettingsPanel } from "./AppSettingsPanel";
 import { AppVisualEdit } from "./AppVisualEdit";
+import { useAutoFix } from "./auto-fix";
 
 type Panel = "data" | "code" | "history" | "settings";
 
@@ -77,6 +78,7 @@ export function AppStudio({
   onReply,
   onSelectApp,
   onBuild,
+  onAutoFix,
   returnFocus,
   compact = false,
   notice = null,
@@ -100,6 +102,8 @@ export function AppStudio({
   onSelectApp?: (pageId: string | null) => void;
   /** Sends a new-app request into the chat beside the studio. */
   onBuild?: (idea: string) => void;
+  /** Sends a request about the open app straight to the bot; used to hand it a crash to fix. */
+  onAutoFix?: (text: string) => void;
   returnFocus?: () => boolean;
   compact?: boolean;
   notice?: ReactNode;
@@ -172,6 +176,14 @@ export function AppStudio({
     }
   }, [newest, page, pageId, queries, queryClient]);
   useEffect(() => setProblem(null), [page?.version]);
+  const autoFix = useAutoFix({
+    pageId,
+    version: page?.version,
+    latest: page !== undefined && page.version === page.currentVersion,
+    problem,
+    busy: running || picking || editing !== null,
+    send: onAutoFix,
+  });
   const liveProblems = useQuery({
     ...queries.apps.problems.queryOptions({ input: { pageId: pageId ?? "" } }),
     enabled: open && pageId !== null,
@@ -637,17 +649,46 @@ export function AppStudio({
                           <p className="min-w-0 flex-1 text-foreground">
                             <span className="font-medium text-destructive">{t`The app hit an error.`}</span>{" "}
                             <span className="break-words text-muted-foreground">{problem}</span>
+                            {autoFix.status === "waiting" ? (
+                              <span className="mt-1 block text-[12px] text-muted-foreground">
+                                {running
+                                  ? t`The agent will look at it when it finishes this reply.`
+                                  : t`Sending it to the agent to fix…`}
+                              </span>
+                            ) : autoFix.status === "sent" ? (
+                              <span className="mt-1 block text-[12px] text-muted-foreground">
+                                {t`Sent to the agent to fix.`}
+                              </span>
+                            ) : autoFix.status === "paused" ? (
+                              <span className="mt-1 block text-[12px] text-muted-foreground">
+                                {t`Automatic fixes are paused after two tries. Ask the agent when you're ready.`}
+                              </span>
+                            ) : null}
                           </p>
-                          <button
-                            type="button"
-                            className="shrink-0 text-[12px] font-medium text-primary hover:underline"
-                            onClick={() => {
-                              onReply?.(`Fix this error in the app: ${problem.slice(0, 220)}`);
-                              setProblem(null);
-                            }}
-                          >
-                            {t`Ask the agent to fix it`}
-                          </button>
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            {autoFix.status !== "sent" && autoFix.status !== "waiting" ? (
+                              <button
+                                type="button"
+                                className="text-[12px] font-medium text-primary hover:underline"
+                                onClick={() => {
+                                  onReply?.(`Fix this error in the app: ${problem.slice(0, 220)}`);
+                                  setProblem(null);
+                                }}
+                              >
+                                {t`Ask the agent to fix it`}
+                              </button>
+                            ) : null}
+                            {autoFix.available ? (
+                              <button
+                                type="button"
+                                aria-pressed={autoFix.enabled}
+                                className="text-[11px] text-muted-foreground hover:text-foreground hover:underline"
+                                onClick={() => autoFix.setEnabled(!autoFix.enabled)}
+                              >
+                                {autoFix.enabled ? t`Turn off auto-fix` : t`Turn on auto-fix`}
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     ) : null}

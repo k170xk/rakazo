@@ -99,6 +99,22 @@ describe("page replies", () => {
     expect(session.send("tweak", [card])).toEqual({ text: "tweak", replyToMessageId: "m1" });
   });
 
+  it("sends a request about the open app with its note, and only while one is open", () => {
+    const session = createPageSession();
+    const note = openStudioNote({ kind: "app", title: "Site diary", id: "p1" });
+    const sent: string[] = [];
+    session.subscribeSubmit((text) => {
+      sent.push(session.send(text, []).text);
+    });
+    session.dock.set({ page: { note: openStudioNote({ kind: "app", blank: true }) } });
+    session.submit("Fix the crash", { aboutOpenPage: true });
+    expect(sent).toEqual([]);
+    session.dock.set({ page: { id: "p1", title: "Site diary", note } });
+    session.submit("Fix the crash", { aboutOpenPage: true });
+    expect(sent[0]).toContain("appId p1");
+    expect(sent[0]).toContain("Fix the crash");
+  });
+
   it("tells the model which studio is open, including a blank app canvas", () => {
     const session = createPageSession();
     const note = openStudioNote({ kind: "app", title: "Site diary", id: "p1" });

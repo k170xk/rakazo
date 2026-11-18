@@ -134,6 +134,7 @@ export function AppsStudio({ onClose }: { onClose: () => void }) {
       onReply={session?.offerReply}
       onSelectApp={setSelected}
       onBuild={(idea) => session?.submit(`Build me an app: ${idea}`)}
+      onAutoFix={session ? (text) => session.submit(text, { aboutOpenPage: true }) : undefined}
       compact={compact}
     />
   );

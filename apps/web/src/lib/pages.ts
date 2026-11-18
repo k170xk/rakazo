@@ -229,11 +229,15 @@ export function createPageSession() {
         replyListeners.delete(listener);
       };
     },
-    /** Sends a new-app request as its own message, not as a change to the app that is open. */
-    submit(text: string) {
+    /**
+     * Sends a message from the studio straight away: by default a new-app request as its own
+     * message, or with `aboutOpenPage` a request about the page that is open, which carries its note.
+     */
+    submit(text: string, options: { aboutOpenPage?: boolean } = {}) {
       const clean = text.trim();
       if (!clean || submitListeners.size === 0) return;
-      plainSend = true;
+      if (options.aboutOpenPage && !dock.page?.id) return;
+      plainSend = !options.aboutOpenPage;
       for (const listener of submitListeners) listener(clean);
     },
     subscribeSubmit(listener: (text: string) => void) {
