@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { APP_KIT_GUIDE } from "../guide.js";
 import {
   appPageIds,
+  appShellTabs,
   auditAppCraft,
   buildApp,
   checkFiles,
@@ -160,6 +161,53 @@ describe("helpers", () => {
     expect(notes.some((note) => note.includes("commands on AppShell"))).toBe(true);
     expect(notes.some((note) => note.includes("<Theme"))).toBe(true);
     expect(notes.some((note) => note.includes("0 rows"))).toBe(true);
+  });
+
+  it("asks for grouped tabs, short labels and no side panel", () => {
+    const page = (id: string, label: string) =>
+      `{ id: "${id}", label: "${label}", render: () => <Kanban rows={[]} groupBy="s" renderCard={() => null} /> }`;
+    const crowded = `
+      import { AppShell, Kanban, Theme } from "@ocsc/ui";
+      export default function App() {
+        return <Theme><div className="fixed inset-y-0 left-0 w-64 border-r" /><AppShell title="Jobs" commands pages={[${[
+          page("a", "Overview"),
+          page("b", "Embankment register"),
+          page("c", "Map"),
+          page("d", "Photos"),
+          page("e", "Inspections"),
+          page("f", "Reports"),
+        ].join(",")}]} /></Theme>;
+      }
+    `;
+    const notes = auditAppCraft({ "App.tsx": crowded });
+    expect(notes.some((note) => note.includes("6 top-level tabs"))).toBe(true);
+    expect(notes.some((note) => note.includes('"Embankment register"'))).toBe(true);
+    expect(notes.some((note) => note.includes("fixed side panel"))).toBe(true);
+
+    const grouped = crowded
+      .replace('label: "Embankment register"', 'label: "Register", group: "Records"')
+      .replace('label: "Photos"', 'label: "Photos", group: "Records"')
+      .replace('<div className="fixed inset-y-0 left-0 w-64 border-r" />', "");
+    const tidy = auditAppCraft({ "App.tsx": grouped });
+    expect(tidy.some((note) => note.includes("top-level tabs"))).toBe(false);
+    expect(tidy.some((note) => note.includes("Shorten these tab labels"))).toBe(false);
+    expect(tidy.some((note) => note.includes("fixed side panel"))).toBe(false);
+  });
+
+  it("reads only AppShell's own tabs, not steps, commands or checklist items", () => {
+    const code = `
+      const steps = [{ id: "photos", label: "Photos and notes", render: () => <p>Don't skip</p> }];
+      const pages = [
+        { id: "overview", label: "Overview", icon: "home", render: () => <p>Don't panic, it's fine</p> },
+        { id: "register", label: "Register", group: "Records", render: () => <Kanban columns={[{ value: "a" }]} /> },
+      ];
+      export default () => <AppShell title="x" commands={[{ id: "new", label: "Create a brand new record" }]} pages={pages} />;
+    `;
+    expect(appShellTabs(code)).toEqual([
+      { label: "Overview" },
+      { label: "Register", group: "Records" },
+    ]);
+    expect(appShellTabs(`<AppShell title="x">Hi</AppShell>`)).toBeNull();
   });
 
   it("flags theme tokens used as colours without hsl()", () => {

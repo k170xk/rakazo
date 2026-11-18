@@ -810,6 +810,83 @@ export function searchAppFiles(files: AppFiles, query: string, limit = 12): Code
     .map(({ score: _score, ...match }) => match);
 }
 
+/** Index just past the quoted text starting at `at`, or -1 when it never closes. */
+function endOfQuoted(code: string, at: number): number {
+  const quote = code[at];
+  for (let i = at + 1; i < code.length; i += 1) {
+    if (code[i] === "\\") i += 1;
+    else if (code[i] === quote) return i + 1;
+    else if (quote !== "`" && code[i] === "\n") return -1;
+  }
+  return -1;
+}
+
+/**
+ * The objects directly inside the array whose `[` is at `open`, as source text. A quote starts a
+ * string only where JavaScript expects a value, so an apostrophe in JSX text ("Don't") is read as
+ * text. Null when the array does not close.
+ */
+function arrayObjects(code: string, open: number): string[] | null {
+  const objects: string[] = [];
+  let depth = 0;
+  let objectStart = -1;
+  for (let i = open; i < code.length; i += 1) {
+    const char = code[i]!;
+    if (char === '"' || char === "'" || char === "`") {
+      const before = code.slice(Math.max(0, i - 40), i).trimEnd().at(-1) ?? "";
+      if ("=(,:[{?!&|+;}>".includes(before) || before === "") {
+        const end = endOfQuoted(code, i);
+        if (end < 0) return null;
+        i = end - 1;
+        continue;
+      }
+    }
+    if (char === "[" || char === "{" || char === "(") {
+      depth += 1;
+      if (char === "{" && depth === 2) objectStart = i;
+    } else if (char === "]" || char === "}" || char === ")") {
+      if (char === "}" && depth === 2 && objectStart >= 0) {
+        objects.push(code.slice(objectStart, i + 1));
+        objectStart = -1;
+      }
+      depth -= 1;
+      if (depth === 0) return objects;
+    }
+  }
+  return null;
+}
+
+/**
+ * The tabs an app gives AppShell in pages={[...]} or pages={name} (a const array), with each one's
+ * label and group. Null when they cannot be read with confidence, so no check guesses.
+ */
+export function appShellTabs(code: string): Array<{ label: string; group?: string }> | null {
+  const given = /<AppShell\b[^>]*?\bpages\s*=\s*\{\s*/.exec(code);
+  if (!given) return null;
+  let open = given.index + given[0].length;
+  if (code[open] !== "[") {
+    const name = /^[A-Za-z_$][\w$]*/.exec(code.slice(open))?.[0];
+    if (!name) return null;
+    const declared = new RegExp(
+      `\\b(?:const|let|var)\\s+${name}\\b[^=\\n]*=\\s*(?:useMemo\\(\\s*\\(\\)\\s*=>\\s*)?\\[`,
+    ).exec(code);
+    if (!declared) return null;
+    open = declared.index + declared[0].length - 1;
+  }
+  const objects = arrayObjects(code, open);
+  if (!objects?.length) return null;
+  const text = (source: string, key: string) =>
+    new RegExp(`\\b${key}\\s*:\\s*(["'\`])((?:(?!\\1)[^\\n\\\\])*)\\1`).exec(source)?.[2];
+  const tabs: Array<{ label: string; group?: string }> = [];
+  for (const object of objects) {
+    const label = text(object, "label");
+    if (label === undefined) return null;
+    const group = text(object, "group")?.trim();
+    tabs.push(group ? { label, group } : { label });
+  }
+  return tabs;
+}
+
 export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}): string[] {
   const code = Object.entries(files)
     .filter(([name]) => /\.(tsx|ts|jsx|js)$/.test(name))
@@ -877,11 +954,38 @@ export function auditAppCraft(files: AppFiles, options: CraftAuditOptions = {}):
         "Pass commands on AppShell (commands or custom Command[] actions) so staff get instant ⌘K search and quick actions.",
       );
     }
+    const tabs = appShellTabs(code) ?? [];
+    const topLevel = new Set(tabs.map((tab, index) => tab.group?.toLowerCase() ?? `#${index}`)).size;
+    if (topLevel >= 6) {
+      notes.push(
+        `AppShell has ${topLevel} top-level tabs. Keep 3-5 in the bar: give related pages the same group ({ id, label, icon, group: "Records", render }) so they open from one dropdown, or fold minor ones into another page.`,
+      );
+    }
+    const longLabels = tabs.map((tab) => tab.label).filter((label) => label.length >= 15);
+    if (longLabels.length) {
+      notes.push(
+        `Shorten these tab labels to one or two words (under 14 characters) so the bar fits on an iPad and the phone tabs stay readable: ${longLabels.slice(0, 4).map((label) => `"${label}"`).join(", ")}.`,
+      );
+    }
     if (/\b(?:TableView|DataTable)\b/.test(code) && !/\b(?:PrintButton|printPdf)\b/.test(code)) {
       notes.push(
         "Add <PrintButton size=\"sm\" document={() => ...} /> in AppShell actions (or page actions) so staff can export a branded OCSC PDF report of the register or summary.",
       );
     }
+  }
+  if (
+    code
+      .split("\n")
+      .some(
+        (line) =>
+          /\bfixed\b/.test(line) &&
+          /\b(?:inset-y-0|h-screen|h-dvh)\b/.test(line) &&
+          /\b(?:left|right)-0\b/.test(line),
+      )
+  ) {
+    notes.push(
+      "Remove the fixed side panel: the app sits inside Evolve, which already has a left drawer, so never add a sidebar, drawer or rail for navigation. Pages belong in AppShell tabs along the top (group related ones with group).",
+    );
   }
   if (/font-size\s*:\s*16px\s*!important/i.test(code) || /font-size\s*:\s*16px\s*!important/i.test(styles)) {
     notes.push(

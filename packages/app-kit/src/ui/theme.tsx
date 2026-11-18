@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import { useLayoutEffect } from "react";
 
 /**
- * Brand-safe looks for a whole app: every preset keeps OCSC green and changes only the neutrals,
- * corner rounding, density and the shade of green. Light and dark values are both set, so the
+ * Brand-safe looks for a whole app: every preset keeps OCSC green and Evolve's page background
+ * (white, #141414 in dark mode) and changes only panels, lines, corner rounding, density and the
+ * shade of green. Light and dark values are both set, so the
  * person's light/dark choice keeps working.
  */
 
@@ -12,21 +13,19 @@ type Vars = Record<string, string>;
 export const THEME_PRESETS = {
   /** The standard OCSC look. */
   evolve: { light: {}, dark: {} },
-  /** Pure white surfaces, firmer lines and tighter corners: registers, finance, admin tools. */
+  /** Firmer lines and tighter corners: registers, finance, admin tools. */
   crisp: {
     light: {
-      "--surface": "0 0% 100%",
       "--border": "220 13% 87%",
       "--input": "220 13% 84%",
       "--muted": "220 14% 96%",
     },
-    dark: { "--surface": "0 0% 4%", "--card": "0 0% 8%", "--border": "0 0% 22%" },
+    dark: { "--border": "0 0% 22%" },
     radius: "0.5rem",
   },
-  /** Warm stone neutrals and rounder corners: people, wellbeing, onboarding. */
+  /** Warm stone panels and rounder corners: people, wellbeing, onboarding. */
   soft: {
     light: {
-      "--surface": "40 23% 97%",
       "--muted": "40 18% 94%",
       "--secondary": "40 18% 94%",
       "--accent": "40 18% 92%",
@@ -35,7 +34,6 @@ export const THEME_PRESETS = {
       "--muted-foreground": "30 8% 42%",
     },
     dark: {
-      "--surface": "30 8% 6%",
       "--card": "30 6% 10%",
       "--popover": "30 6% 11%",
       "--muted": "30 5% 15%",
@@ -43,10 +41,9 @@ export const THEME_PRESETS = {
     },
     radius: "1.1rem",
   },
-  /** Neutrals tinted towards OCSC green: sustainability, site and landscape work. */
+  /** Panels and lines tinted towards OCSC green: sustainability, site and landscape work. */
   forest: {
     light: {
-      "--surface": "100 22% 97%",
       "--muted": "100 16% 94%",
       "--secondary": "100 16% 94%",
       "--accent": "100 16% 92%",
@@ -55,7 +52,6 @@ export const THEME_PRESETS = {
       "--muted-foreground": "120 8% 38%",
     },
     dark: {
-      "--surface": "120 12% 5%",
       "--card": "120 9% 9%",
       "--popover": "120 9% 10%",
       "--muted": "120 7% 14%",

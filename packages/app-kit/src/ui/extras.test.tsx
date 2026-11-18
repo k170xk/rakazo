@@ -85,8 +85,14 @@ describe("themeCss", () => {
   it("sets light and dark values so the person's mode keeps working", () => {
     const css = themeCss({ preset: "forest", radius: "lg", density: "compact" });
     expect(css).toContain("html{--radius:1rem;font-size:15px}");
-    expect(css).toContain("html:not(.dark){--surface:100 22% 97%");
-    expect(css).toContain("html.dark{--surface:120 12% 5%");
+    expect(css).toContain("html:not(.dark){--muted:100 16% 94%");
+    expect(css).toContain("html.dark{--card:120 9% 9%");
+  });
+
+  it("never tints the page background, which stays Evolve's own in every preset", () => {
+    for (const preset of ["evolve", "crisp", "soft", "forest", "contrast"] as const) {
+      expect(themeCss({ preset })).not.toContain("--surface");
+    }
   });
 
   it("offers only greens for the primary colour", () => {
@@ -194,6 +200,41 @@ describe("SampleBanner, Callout and hidden columns", () => {
     expect(html).not.toContain("homeOverview");
     expect(html).not.toContain("sparkle-unknown");
     expect(html).toContain("<svg");
+  });
+
+  it("opens grouped pages from one dropdown along the top and never adds a side drawer", () => {
+    const page = (id: string, label: string, icon: string, group?: string) => ({
+      id,
+      label,
+      icon,
+      group,
+      render: () => <p>{label}</p>,
+    });
+    const html = renderToStaticMarkup(
+      <AppShell
+        title="Embankments"
+        pages={[
+          page("overview", "Overview", "overview"),
+          page("map", "Map", "map"),
+          page("register", "Register", "list", "Records"),
+          page("photos", "Photos", "photos", "Records"),
+        ]}
+      />,
+    );
+    expect(html).toContain('data-app-page="overview"');
+    expect(html).toContain('data-app-page="map"');
+    expect(html).toContain('aria-haspopup="menu"');
+    expect(html).toContain("Records");
+    expect(html).not.toContain('data-app-page="register"');
+    expect(html).toContain("whitespace-nowrap");
+    expect(html).not.toMatch(/<aside|fixed inset-y-0/);
+  });
+
+  it("marks a button's words so the app bar can show just its icon on phones", () => {
+    expect(renderToStaticMarkup(<Button icon={<svg />}>Print to PDF</Button>)).toContain(
+      '<span class="kit-button-label">Print to PDF</span>',
+    );
+    expect(renderToStaticMarkup(<Button>Save</Button>)).not.toContain("kit-button-label");
   });
 
   it("draws buttons given another kit's variant names", () => {

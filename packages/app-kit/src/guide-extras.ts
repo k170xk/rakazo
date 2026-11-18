@@ -4,12 +4,22 @@
  */
 export const APP_KIT_GUIDE_EXTRAS = `## More of @ocsc/ui
 Look: <Theme preset? green? radius? density?/> once at the top of App (renders nothing; light and dark both
-  follow). preset "evolve" (default) | "crisp" (white, firm lines: registers, finance) | "soft" (warm stone,
-  rounder: people, onboarding) | "forest" (green-tinted neutrals: sustainability, sites) | "contrast" (site
-  tablets, bright rooms). green "ocsc"|"emerald"|"lime"|"teal"|"moss" (greens only), radius
+  follow). The page background is always Evolve's own (white, #141414 in dark mode); never paint the page
+  or AppShell another colour (no bg-* or gradients on the root). preset "evolve" (default) | "crisp" (firm
+  lines: registers, finance) | "soft" (warm stone panels, rounder: people, onboarding) | "forest" (green-tinted
+  panels and lines: sustainability, sites) | "contrast" (site tablets, bright rooms). green
+  "ocsc"|"emerald"|"lime"|"teal"|"moss" (greens only), radius
   "none"|"sm"|"md"|"lg"|"xl", density "compact" (dense tables)|"comfortable"|"spacious".
 Shell: pages are always tabs along the top of AppShell. Never build a menu, rail or navigation column down
-  the left (or right) side, whatever the number of pages; group pages or use ⌘K instead. commands adds ⌘K search over the pages — pass [{id, label, group?, hint?, icon?,
+  the left (or right) side, whatever the number of pages; group pages or use ⌘K instead. The app sits inside
+  Evolve, which has its own left drawer, so never add a drawer, hamburger menu, sidebar or bottom tab bar
+  for navigation. The bar adapts on its own: desktop (1024px+) keeps the tabs in one row beside the title;
+  iPad (640-1023px) puts them in a row under the title; phones show each tab as its icon, with the open one
+  also named. Tabs that do not fit move under a More dropdown, and the open page always stays in view.
+  Plan the bar: 3-5 top-level tabs, labels of one or two words (under 14 characters), an icon on every page
+  (phones show only icons). With 6 or more pages, give related ones the same group ({id, label, icon, group:
+  "Records", render}); they open from one dropdown in the bar named after the group. Keep AppShell actions to
+  search plus one or two buttons with an icon each (phones show only their icons). commands adds ⌘K search over the pages — pass [{id, label, group?, hint?, icon?,
   keywords?, shortcut?, run}] to add records and actions ("New project", each client). CommandPalette
   {commands, open?, onOpenChange?} and useHotkey("n", fn) work on their own too.
 Pickers (inside Field pass the id: {(id) => <DatePicker id={id} …/>}): DatePicker {value "YYYY-MM-DD"|"",

@@ -25,7 +25,8 @@
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
   --ring: 95 49% 51%;
-  --surface: 220 20% 98%;
+  /* The page behind the app is Evolve's own background, white here and #141414 in dark mode. */
+  --surface: 0 0% 100%;
   --radius: 0.75rem;
   --chart-1: 95 49% 51%;
   --chart-2: 158 58% 36%;
@@ -58,7 +59,7 @@
   --border: 0 0% 20%;
   --input: 0 0% 22%;
   --ring: 102 48% 50%;
-  --surface: 0 0% 6%;
+  --surface: 0 0% 8%;
   --chart-2: 158 54% 48%;
   --chart-3: 38 92% 58%;
   --chart-4: 178 52% 48%;

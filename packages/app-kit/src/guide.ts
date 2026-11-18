@@ -355,8 +355,8 @@ workbook formula in code, read results from cells instead.
 - download(filename, text, mime) and openLink(url): call from a click.
 
 ## @ocsc/ui (Tailwind classes work everywhere; use semantic tokens, never raw hex or light-only slate/white)
-Layout: AppShell {title, subtitle?, icon?, actions?, commands?, active?, onNavigate?, pages: [{id, label, icon?, count?, render}], wide?} —
-  frosted top bar, animated spring tabs, optional ⌘K command palette; pass active={tab} onNavigate={setTab} when KpiCards or buttons jump between tabs (never querySelector tabs). PageHeader {eyebrow?, title,
+Layout: AppShell {title, subtitle?, icon?, actions?, commands?, active?, onNavigate?, pages: [{id, label, icon?, count?, group?, render}], wide?} —
+  frosted top bar, animated spring tabs that fit phone, iPad and desktop on their own (overflow goes under More; pages sharing a group open from one dropdown), optional ⌘K command palette; pass active={tab} onNavigate={setTab} when KpiCards or buttons jump between tabs (never querySelector tabs). PageHeader {eyebrow?, title,
   description?, actions?}, Section {title?, description?, actions?}, Grid {cols 1-6}, Split {main, aside},
   Stagger/StaggerItem (children fade up in sequence), Hero {eyebrow?, title, description?, asset?, actions?}.
 Numbers: KpiCard {label, value, format?: "number"|"currency"|"percent"|"compact" or (n) => string, currency?,
@@ -412,6 +412,8 @@ cn(...classes) merges classes, later wins.
 
 ## Design Craft (OCSC Evolve)
 - Urbanist, brand green primary, light and dark both work automatically when you stick to semantic tokens.
+- The page background is Evolve's (white; #141414 in dark mode). Leave AppShell and the page root unpainted;
+  colour goes on cards, badges and charts, never as a tint or gradient across the whole page.
 - Tokens ONLY: bg-surface, bg-background, bg-card, bg-muted, text-foreground, text-muted-foreground, border-border,
   text-primary, bg-primary/10, chart-1..6, shadow-soft/shadow-card/shadow-lift/shadow-glow, rounded-xl/2xl.
   NEVER use bg-white, bg-slate-*, text-slate-*, bg-gray-*, blue/purple classes, black primary buttons, or raw #hex strings.
@@ -421,6 +423,8 @@ cn(...classes) merges classes, later wins.
 
 ## Phones (most people open apps in the OCSC iPhone and Android app, often on site)
 Design the phone screen as carefully as the desktop one; the kit handles the basics only if you use it.
+- Three sizes: phone (under 640px), iPad (640-1023px, sm: and md:) and desktop (1024px+, lg:). The AppShell
+  bar handles its own tabs at each size; never add a drawer, sidebar, hamburger or bottom tab bar.
 - Width: build for 360-390px first, then add sm:/md:/lg: columns. Grid, Split and AppShell stack on their
   own; never set fixed widths (w-[600px], min-w-[...]) on page content. Wide tables use TableView or sit in
   overflow-x-auto; long words and numbers get min-w-0 and truncate or break-words.

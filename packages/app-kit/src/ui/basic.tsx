@@ -73,7 +73,11 @@ export function Button({
       {...(props as object)}
     >
       {loading ? <LoaderCircle className="animate-spin" /> : icon}
-      {children}
+      {icon && (typeof children === "string" || typeof children === "number") ? (
+        <span className="kit-button-label">{children}</span>
+      ) : (
+        children
+      )}
     </motion.button>
   );
 }
