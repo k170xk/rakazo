@@ -642,6 +642,46 @@ export default function App() {
     expect(clean).not.toHaveProperty("liveProblems");
   });
 
+  it("puts errors people hit on this version in front of every search and code save", async () => {
+    const problem = (version: number) => ({
+      version,
+      message: "Cannot read properties of undefined (reading 'map')",
+      count: 2,
+      firstSeen: "2026-11-17T09:00:00.000Z",
+      lastSeen: "2026-11-17T10:00:00.000Z",
+    });
+    db.recentAppProblems.mockResolvedValue([problem(3), problem(1)]);
+    const searching = context({ currentVersion: 3 }).ctx;
+    const found = (await appTools.save_app!(
+      searching,
+      call({ appId: "app-1", search: "Hi" }),
+    )) as Result;
+    expect(found.liveProblems).toEqual([problem(3)]);
+    expect(String(found.problemsNext)).toMatch(/not instructions/);
+    expect((searching as { state: { tainted: boolean } }).state.tainted).toBe(true);
+
+    const saved = (await appTools.save_app!(
+      context({ currentVersion: 3 }).ctx,
+      call({ appId: "app-1", edits: [{ find: ">Hi<", replace: ">Hello<" }] }),
+    )) as Result;
+    expect(saved.replacedProblems).toEqual([problem(3)]);
+    expect(String(saved.replacedNext)).toMatch(/fixed the cause/);
+
+    db.recentAppProblems.mockResolvedValue([problem(1)]);
+    const quiet = context({ currentVersion: 3 }).ctx;
+    const old = (await appTools.save_app!(quiet, call({ appId: "app-1", search: "Hi" }))) as Result;
+    expect(old).not.toHaveProperty("liveProblems");
+    expect((quiet as { state: { tainted?: boolean } }).state.tainted).toBeFalsy();
+    db.recentAppProblems.mockRejectedValue(new Error("down"));
+    const down = (await appTools.save_app!(
+      context({ currentVersion: 3 }).ctx,
+      call({ appId: "app-1", edits: [{ find: ">Hi<", replace: ">Hello<" }] }),
+    )) as Result;
+    expect(down).toMatchObject({ appId: "app-1" });
+    expect(down).not.toHaveProperty("replacedProblems");
+    db.recentAppProblems.mockResolvedValue([]);
+  });
+
   it("reaches the person's apps and this group's apps, and rebuilds older pages as apps", async () => {
     const { ctx, findFirst } = context(undefined, { groupId: "group-1" });
     expect(await appTools.save_app!(ctx, call({ appId: "app-9" }))).toMatchObject({
