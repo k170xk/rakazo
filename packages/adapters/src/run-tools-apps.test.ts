@@ -533,6 +533,17 @@ export default function App() {
     expect(db.appendAppVersion).not.toHaveBeenCalled();
   });
 
+  it("saves again on the newer version when another save got in first", async () => {
+    const { AppVersionConflictError } = await import("@rakazo/db");
+    db.appendAppVersion.mockRejectedValueOnce(new AppVersionConflictError());
+    const saved = (await appTools.save_app!(
+      context({}).ctx,
+      call({ appId: "app-1", edits: [{ find: "Hi", replace: "Hello" }] }),
+    )) as Result;
+    expect(saved.error).toBeUndefined();
+    expect(db.appendAppVersion).toHaveBeenCalledTimes(2);
+  });
+
   it("refuses a new app that is not in the OCSC shell", async () => {
     const result = (await appTools.save_app!(
       context().ctx,

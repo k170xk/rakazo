@@ -1,9 +1,14 @@
 import { randomUUID } from "node:crypto";
 import type { ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
 import type { ComputerCommand } from "@rakazo/contracts";
-import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
-import { isBackgroundRunTrigger, redactSecrets, sandboxCommandTimeoutMs } from "@rakazo/core";
-import { RunHistoryWriteError } from "@rakazo/db";
+import { ATTACHMENT_MAX_BYTES, COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
+import {
+  attachmentExtensionForMimeType,
+  isBackgroundRunTrigger,
+  redactSecrets,
+  sandboxCommandTimeoutMs,
+} from "@rakazo/core";
+import { RunHistoryWriteError, resolveNextArtifactVersion } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { redactShellStreams } from "./agent-environment.js";
 import {
@@ -43,9 +48,25 @@ import {
   protectedComputerLifecycleRefusal,
 } from "./desktop-command-guard.js";
 import { commitOpenStudioDraft, saveDocumentDraft } from "./document-drafts.js";
+import type { DocumentFolder, DocumentLineage, EditBase } from "./document-rebase.js";
+import {
+  continuedLineage,
+  folderHasFile,
+  normalizeDocumentPath,
+  ocscOutPath,
+  placeVersion,
+  rebasedAttachNote,
+  replaySteps,
+  resolveEditBase,
+} from "./document-rebase.js";
+import type { FamilyVersion } from "./document-versions.js";
+import {
+  attachmentPathFor,
+  newestFamilyVersion,
+  studioDocumentProgram,
+} from "./document-versions.js";
 import type { DocumentDraftOutcome } from "./document-write-check.js";
 import { annotateDocumentWriteResult } from "./document-write-check.js";
-import { studioDocumentProgram } from "./document-versions.js";
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import {
   documentAuthor,
@@ -80,6 +101,7 @@ import {
 } from "./shell-command-stream.js";
 import { DESKTOP_HELD_FOR_TAKEOVER_MESSAGE } from "./takeover-resume.js";
 import { getActiveTeachingSession } from "./teaching-session.js";
+import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
 import type { ToolRunnerClient, WorkspaceFiles } from "./tool-runner.js";
 import {
   conversationFolderRefusal,
@@ -358,6 +380,7 @@ function openStudioEdit(
   ctx: RunContext,
   program: string,
   args: readonly string[],
+  lineage?: DocumentLineage,
 ): { artifactId: string } | undefined {
   const studio = ctx.computer.studioDocument;
   if (!studio?.versions.length || studioDocumentProgram(studio.mimeType) !== program)
@@ -371,7 +394,261 @@ function openStudioEdit(
   if (input && newest && ctx.state.documents.studioOutputs?.includes(input)) {
     return { artifactId: newest.id };
   }
+  if (lineage?.rootId === studio.rootId) return { artifactId: lineage.baseId };
   return undefined;
+}
+
+/** Where ocsc reads and writes for this program, the same place the ocsc tool runs it. */
+function ocscPlace(ctx: RunContext, toolName: string, program: string) {
+  const runner = ctx.computer.documents ?? ctx.computer.runner;
+  const onRunner = Boolean(runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program));
+  const stored = (filePath: string) =>
+    resolveRunFilePath(
+      { mode: ctx.computer.mode, botId: ctx.bot.id, folder: ctx.computer.folder },
+      filePath,
+    );
+  const folder: DocumentFolder =
+    onRunner && runner
+      ? {
+          files: runner.files,
+          ref: async () => {
+            await runner.prepare();
+            return TOOL_RUNNER_COMPUTER;
+          },
+          stored,
+          context: ctx.context,
+        }
+      : {
+          files: ctx.deps.sandbox,
+          ref: () => ctx.computer.get("tool", toolName),
+          stored,
+          context: ctx.context,
+        };
+  // The computer path refuses these before running, so nothing may start a computer for them.
+  const usable = onRunner || (!ctx.computer.computerOff && !ctx.computer.folder);
+  return { folder, runner: onRunner ? runner : undefined, usable };
+}
+
+/** Whether this run may edit the document: open in the studio, in the chat, or already edited. */
+async function documentReachable(
+  ctx: RunContext,
+  folder: DocumentFolder,
+  rootId: string,
+  given: FamilyVersion,
+): Promise<boolean> {
+  if (ctx.computer.studioDocument?.rootId === rootId) return true;
+  for (const lineage of ctx.state.documents.lineage?.values() ?? []) {
+    if (lineage.rootId === rootId) return true;
+  }
+  const ids = [...(ctx.computer.conversationFiles?.values() ?? [])].map((file) => file.artifactId);
+  if (ids.length) {
+    const inChat = await ctx.deps.prisma.artifact.count({
+      where: {
+        id: { in: ids },
+        spaceId: ctx.context.spaceId,
+        userId: ctx.context.userId,
+        OR: [{ id: rootId }, { rootArtifactId: rootId }],
+      },
+    });
+    if (inChat > 0) return true;
+  }
+  return folderHasFile(folder, attachmentPathFor(given));
+}
+
+/**
+ * Which saved version an ocsc edit starts from. An edit naming an older version runs on the
+ * newest one, put in place here, so a studio save or another chat's version is never lost and
+ * the agent never has to fetch it first.
+ */
+async function documentEditBase(
+  ctx: RunContext,
+  toolName: string,
+  program: string,
+  args: readonly string[],
+): Promise<EditBase> {
+  if (!ctx.deps.artifacts || ctx.computer.folder) return { kind: "none" };
+  const place = ocscPlace(ctx, toolName, program);
+  if (!place.usable) return { kind: "none" };
+  try {
+    return await resolveEditBase(
+      { prisma: ctx.deps.prisma, artifacts: ctx.deps.artifacts },
+      {
+        owner: ctx.context,
+        program,
+        args,
+        folder: place.folder,
+        reachable: ({ rootId, given }) => documentReachable(ctx, place.folder, rootId, given),
+        maxBytes: ctx.deps.maxUploadSizeBytes,
+      },
+    );
+  } catch (error) {
+    getLogger().warn("document edit base not resolved", { error: String(error) });
+    return { kind: "none" };
+  }
+}
+
+/** Records the file an edit wrote, with the saved version it came from and the steps since. */
+function rememberLineage(
+  ctx: RunContext,
+  lineage: DocumentLineage | undefined,
+  program: string,
+  args: readonly string[],
+  result: unknown,
+) {
+  if (!lineage) return;
+  const out = ocscOutPath(args, result);
+  if (!out || out.startsWith("attachments/")) return;
+  const lineages = ctx.state.documents.lineage ?? new Map<string, DocumentLineage>();
+  lineages.delete(out);
+  lineages.set(out, { ...lineage, steps: [...lineage.steps, { program, args: [...args] }] });
+  ctx.state.documents.lineage = lineages;
+}
+
+/** After `filePath` was attached as `artifactId`, later edits from it start at that version. */
+export async function lineageAttached(ctx: RunContext, filePath: string, artifactId: string) {
+  const key = normalizeDocumentPath(filePath);
+  const lineage = ctx.state.documents.lineage?.get(key);
+  if (!lineage) return;
+  try {
+    const row = await ctx.deps.prisma.artifact.findFirst({
+      where: { id: artifactId, spaceId: ctx.context.spaceId, userId: ctx.context.userId },
+      select: { version: true, rootArtifactId: true },
+    });
+    if (!row || (row.rootArtifactId ?? artifactId) !== lineage.rootId) return;
+    ctx.state.documents.lineage?.set(key, {
+      ...lineage,
+      baseId: artifactId,
+      baseVersion: row.version,
+      steps: [],
+    });
+  } catch (error) {
+    getLogger().warn("document lineage not updated", { error: String(error) });
+  }
+}
+
+type Rebased =
+  | { kind: "unchanged" }
+  | { kind: "rebased"; note: string; newest: FamilyVersion }
+  | { kind: "failed"; error: string };
+
+/**
+ * When a newer version of the document was saved by someone else after this run's edit started
+ * (the studio, another chat, another agent), makes the same edits again on that version so
+ * attaching keeps both. Never throws.
+ */
+async function rebaseOntoNewest(
+  ctx: RunContext,
+  call: Pick<ToolCall, "name" | "executionId">,
+  filePath: string,
+  lineage: DocumentLineage,
+): Promise<Rebased> {
+  const artifacts = ctx.deps.artifacts;
+  const first = lineage.steps[0];
+  if (!artifacts || !first) return { kind: "unchanged" };
+  try {
+    const family = await newestFamilyVersion(ctx.deps.prisma, ctx.context, lineage.rootId);
+    const newest = family?.newest;
+    if (!newest || newest.version <= lineage.baseVersion) return { kind: "unchanged" };
+    const made = await ctx.deps.prisma.artifact.findFirst({
+      where: { id: newest.id, spaceId: ctx.context.spaceId, userId: ctx.context.userId },
+      select: { runId: true },
+    });
+    if (made?.runId === ctx.runId) return { kind: "unchanged" };
+    const place = ocscPlace(ctx, call.name, first.program);
+    const newestPath = await placeVersion(
+      { prisma: ctx.deps.prisma, artifacts },
+      place.folder,
+      ctx.context,
+      newest,
+      ctx.deps.maxUploadSizeBytes,
+    );
+    const steps = replaySteps(lineage, newestPath);
+    const client = ctx.deps.toolRunner;
+    if (!place.runner || !client) {
+      return {
+        kind: "failed",
+        error: `Version ${newest.version} of "${newest.name}" was saved while you worked, and attaching ${filePath} would lose it. It is at ${newestPath}: run your edits again with --in ${newestPath} --out ${filePath}, then attach ${filePath}.`,
+      };
+    }
+    const author = await documentAuthor(ctx);
+    for (const step of steps) {
+      const raw = await runOcscOnRunner(
+        ctx,
+        call,
+        place.runner,
+        client,
+        step.program,
+        step.args,
+        author,
+      );
+      const checked = annotateDocumentWriteResult(step.program, step.args, raw);
+      const printed = printedJson(raw);
+      if (checked.documentCheck === "problems" || printed?.ok !== true) {
+        const reason =
+          (typeof printed?.error === "string" && printed.error) ||
+          (typeof raw.error === "string" && raw.error) ||
+          String(raw.stderr ?? "").slice(-400) ||
+          "the command failed";
+        return {
+          kind: "failed",
+          error: `Version ${newest.version} of "${newest.name}" was saved while you worked, so your edits were made again on it, but one no longer fits: ${reason}. It is at ${newestPath}: read it, adjust that edit, run your edits with --in ${newestPath} --out ${filePath}, then attach ${filePath}.`,
+        };
+      }
+    }
+    ctx.state.documents.lineage?.set(normalizeDocumentPath(filePath), {
+      ...lineage,
+      baseId: newest.id,
+      baseVersion: newest.version,
+      steps,
+    });
+    return { kind: "rebased", note: rebasedAttachNote(newest, steps.length), newest };
+  } catch (error) {
+    getLogger().warn("document edit not rebased", { error: String(error) });
+    return { kind: "unchanged" };
+  }
+}
+
+/**
+ * Before attaching `filePath` into the document family it came from: when a newer version was
+ * saved meanwhile, the run's edits are made again on it. Other files attach as they are.
+ */
+export async function rebaseBeforeAttach(
+  ctx: RunContext,
+  call: Pick<ToolCall, "name" | "executionId">,
+  filePath: string,
+  target: { botId: string; groupId: string | undefined; name: string; studio: boolean },
+): Promise<{ note?: string; error?: string }> {
+  const lineage = ctx.state.documents.lineage?.get(normalizeDocumentPath(filePath));
+  if (!lineage?.steps.length) return {};
+  try {
+    const rootId = target.studio
+      ? ctx.computer.studioDocument?.rootId
+      : ((
+          await resolveNextArtifactVersion(ctx.deps.prisma, {
+            spaceId: ctx.run.spaceId,
+            userId: ctx.run.userId,
+            botId: target.botId,
+            groupId: target.groupId,
+            name: target.name,
+          })
+        ).rootArtifactId ?? undefined);
+    if (rootId !== lineage.rootId) return {};
+  } catch (error) {
+    getLogger().warn("attach family not resolved", { error: String(error) });
+    return {};
+  }
+  const rebased = await rebaseOntoNewest(ctx, call, filePath, lineage);
+  if (rebased.kind === "failed") return { error: rebased.error };
+  return rebased.kind === "rebased" ? { note: rebased.note } : {};
+}
+
+/** The newest file this run wrote from the open studio document, with how it was made. */
+function studioLineage(ctx: RunContext, rootId: string) {
+  let found: { path: string; lineage: DocumentLineage } | undefined;
+  for (const [path, lineage] of ctx.state.documents.lineage ?? []) {
+    if (lineage.rootId === rootId && lineage.steps.length) found = { path, lineage };
+  }
+  return found;
 }
 
 /**
@@ -383,6 +660,15 @@ export async function publishOpenStudioDraft(ctx: RunContext): Promise<void> {
   if (!ctx.state.documents.studioEdited || !ctx.deps.artifacts) return;
   const studio = ctx.computer.studioDocument;
   if (!studio?.botId) return;
+  const latest = studioLineage(ctx, studio.rootId);
+  if (latest) {
+    const call = { name: "ocsc", executionId: `${ctx.runId}:studio-rebase` };
+    const rebased = await rebaseOntoNewest(ctx, call, latest.path, latest.lineage);
+    if (rebased.kind === "rebased") {
+      await attachRebasedStudioEdit(ctx, latest.path, latest.lineage.steps[0]?.program ?? "");
+      return;
+    }
+  }
   const block = await commitOpenStudioDraft(
     { prisma: ctx.deps.prisma, artifacts: ctx.deps.artifacts },
     {
@@ -400,6 +686,46 @@ export async function publishOpenStudioDraft(ctx: RunContext): Promise<void> {
     getLogger().warn("open studio version not shown in the chat", { error: String(error) });
   });
   ctx.state.documents.attached = true;
+}
+
+/** Saves the open document's edit, made again on its newest version, as the next version. */
+async function attachRebasedStudioEdit(ctx: RunContext, filePath: string, program: string) {
+  const studio = ctx.computer.studioDocument;
+  const artifacts = ctx.deps.artifacts;
+  if (!studio?.botId || !artifacts) return;
+  try {
+    const { folder } = ocscPlace(ctx, "ocsc", program);
+    const bytes = await folder.files.readFile(
+      await folder.ref(),
+      folder.stored(filePath),
+      ctx.context,
+      { maxBytes: ctx.deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES },
+    );
+    const extension = attachmentExtensionForMimeType(studio.mimeType);
+    const attached = await attachWorkspaceFileToThread(
+      { prisma: ctx.deps.prisma, artifacts, maxUploadSizeBytes: ctx.deps.maxUploadSizeBytes },
+      {
+        spaceId: ctx.run.spaceId,
+        userId: ctx.run.userId,
+        botId: studio.botId,
+        groupId: studio.groupId ?? undefined,
+        runId: ctx.runId,
+        filePath: studio.name.toLowerCase().endsWith(extension.toLowerCase())
+          ? studio.name
+          : `${studio.name}${extension}`,
+        bytes,
+        operationId: `${ctx.runId}:studio-rebase`,
+        name: studio.name,
+      },
+    );
+    await lineageAttached(ctx, filePath, attached.artifactId);
+    await publishMessage(ctx.deps, ctx.run, "bot", [attached.block]).catch((error: unknown) => {
+      getLogger().warn("open studio version not shown in the chat", { error: String(error) });
+    });
+    ctx.state.documents.attached = true;
+  } catch (error) {
+    getLogger().warn("rebased studio edit not kept", { error: String(error) });
+  }
 }
 
 /** Remembers a file this run wrote from the open studio document, so the next command can edit it. */
@@ -456,7 +782,7 @@ const VIDEO_RUN_TIMEOUT_MS = 45 * 60_000;
 /** Runs ocsc on the document runner and returns the tool payload (caller finishes / annotates). */
 async function runOcscOnRunner(
   ctx: RunContext,
-  call: ToolCall,
+  call: Pick<ToolCall, "executionId">,
   runner: RunToolRunner,
   client: ToolRunnerClient,
   program: string,
@@ -778,11 +1104,28 @@ export const computerTools: ToolHandlers = {
     if (switchedOff) return call.finish({ error: switchedOff });
     const rebuild = wordRebuildRefusal(program, given, ctx.computer.wordDocuments ?? []);
     if (rebuild) return call.finish({ error: rebuild });
-    const stale = await staleDocumentBase(ctx.deps.prisma, ctx.context, program, given);
-    if (stale) return call.finish({ error: stale });
-    const studioEdit = openStudioEdit(ctx, program, given);
+    let edit = given;
+    let lineage = continuedLineage(ctx.state.documents.lineage, given);
+    let rebasedNote: string | undefined;
+    const base = lineage
+      ? { kind: "none" as const }
+      : await documentEditBase(ctx, call.name, program, given);
+    if (base.kind === "refuse") return call.finish({ error: base.error });
+    if (base.kind === "base") {
+      edit = base.args;
+      lineage = base.lineage;
+      rebasedNote = base.note;
+    } else {
+      const stale = await staleDocumentBase(ctx.deps.prisma, ctx.context, program, given);
+      if (stale) return call.finish({ error: stale });
+    }
+    const studioEdit = openStudioEdit(ctx, program, edit, lineage);
     if (studioEdit) ctx.state.documents.studioEdited = true;
-    const args = await withDefaultWordTemplate(ctx, program, ocscProgramArgs(given));
+    const args = await withDefaultWordTemplate(ctx, program, ocscProgramArgs(edit));
+    const noted = <T>(result: T): T =>
+      rebasedNote && typeof result === "object" && result !== null
+        ? ({ ...result, rebased: rebasedNote } as T)
+        : result;
     const author = await documentAuthor(ctx);
     const runner = ctx.computer.documents ?? ctx.computer.runner;
     if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {
@@ -798,8 +1141,9 @@ export const computerTools: ToolHandlers = {
         author,
       );
       const early = annotateDocumentWriteResult(program, args, raw);
-      if (early.documentCheck === "problems") return call.finish(early);
+      if (early.documentCheck === "problems") return call.finish(noted(early));
       noteDocumentWrite(ctx, program, args, raw);
+      rememberLineage(ctx, lineage, program, args, raw);
       if (studioEdit) rememberStudioOutput(ctx, raw);
       const draftOutcome = await keepDocumentDraft(
         ctx,
@@ -814,9 +1158,11 @@ export const computerTools: ToolHandlers = {
         studioEdit?.artifactId,
       );
       return call.finish(
-        annotateDocumentWriteResult(program, args, raw, {
-          draftOutcome: studioEdit ? draftOutcome : undefined,
-        }),
+        noted(
+          annotateDocumentWriteResult(program, args, raw, {
+            draftOutcome: studioEdit ? draftOutcome : undefined,
+          }),
+        ),
       );
     }
     if (ctx.computer.computerOff) {
@@ -837,7 +1183,7 @@ export const computerTools: ToolHandlers = {
         ? undefined
         : resolveBotWorkspaceCwd(ctx.computer.mode, ctx.bot.id, undefined),
       botSecrets: false,
-      shapeResult: (payload) => annotateDocumentWriteResult(program, args, payload),
+      shapeResult: (payload) => noted(annotateDocumentWriteResult(program, args, payload)),
     });
     await ocscAfterRun(ctx, program, args, result);
     const writeFailed =
@@ -846,6 +1192,7 @@ export const computerTools: ToolHandlers = {
       (result as { documentCheck?: string }).documentCheck === "problems";
     if (!writeFailed) {
       noteDocumentWrite(ctx, program, args, result);
+      rememberLineage(ctx, lineage, program, args, result);
       if (studioEdit) rememberStudioOutput(ctx, result);
       const draftOutcome = await keepDocumentDraft(
         ctx,

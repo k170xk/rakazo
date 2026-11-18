@@ -15,7 +15,7 @@ import { generateMediaFromTool } from "./media-generation-tools.js";
 import type { RunContext } from "./run-context.js";
 import { persistMessageInTransaction, publishMessage } from "./run-messages.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
-import { recordComputerAction } from "./run-tools-computer.js";
+import { lineageAttached, rebaseBeforeAttach, recordComputerAction } from "./run-tools-computer.js";
 import {
   artifactIdFromAttachmentPath,
   attachWorkspaceFileToThread,
@@ -410,6 +410,24 @@ export const fileTools: ToolHandlers = {
     if (!deps.artifacts) return failAttach("artifact storage unavailable");
     const storedPath = runFilePath(ctx, filePath);
     const maxBytes = deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES;
+    const name = typeof args.name === "string" ? args.name : undefined;
+    const mimeType = inferAttachmentMimeType(filePath);
+    const studio = mimeType
+      ? studioAttachTarget(ctx.computer.studioDocument, {
+          name,
+          mimeType,
+          path: filePath,
+          studioEdited: ctx.state.documents.studioEdited,
+          studioOutputs: ctx.state.documents.studioOutputs,
+        })
+      : undefined;
+    const rebased = await rebaseBeforeAttach(ctx, call, filePath, {
+      botId: studio?.botId ?? bot.id,
+      groupId: studio ? studio.groupId : (thread.groupId ?? undefined),
+      name: (studio?.name ?? name)?.trim() || filePath.split("/").at(-1) || filePath,
+      studio: Boolean(studio),
+    });
+    if (rebased.error) return failAttach(rebased.error, mimeType ?? undefined);
     let bytes: Uint8Array;
     try {
       const { files, computer } = runFiles(ctx, call);
@@ -422,16 +440,7 @@ export const fileTools: ToolHandlers = {
         inferAttachmentMimeType(filePath) ?? undefined,
       );
     }
-    const mimeType = inferAttachmentMimeType(filePath);
     if (!mimeType) return failAttach("unsupported attachment type");
-    const name = typeof args.name === "string" ? args.name : undefined;
-    const studio = studioAttachTarget(ctx.computer.studioDocument, {
-      name,
-      mimeType,
-      path: filePath,
-      studioEdited: ctx.state.documents.studioEdited,
-      studioOutputs: ctx.state.documents.studioOutputs,
-    });
     try {
       const attached = await attachWorkspaceFileToThread(
         {
@@ -454,8 +463,14 @@ export const fileTools: ToolHandlers = {
       );
       await publishMessage(deps, run, "bot", [attached.block]);
       ctx.state.documents.attached = true;
+      await lineageAttached(ctx, filePath, attached.artifactId);
       await recordComputerAction(ctx, call, "attach_file", filePath);
-      return call.finish({ ok: true, artifactId: attached.artifactId, path: filePath });
+      return call.finish({
+        ok: true,
+        artifactId: attached.artifactId,
+        path: filePath,
+        ...(rebased.note ? { rebased: rebased.note } : {}),
+      });
     } catch (error) {
       return failAttach(error instanceof Error ? error.message : "could not attach file", mimeType);
     }

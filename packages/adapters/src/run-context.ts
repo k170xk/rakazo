@@ -30,6 +30,7 @@ import { partitionTools } from "./builtin-tool-bridge.js";
 import type { ComputerExecutionLease } from "./computer-lifecycle.js";
 import type { UnchangedVisualStreak } from "./computer-tools.js";
 import type { selectRunConnections } from "./connection-context.js";
+import type { DocumentLineage } from "./document-rebase.js";
 import type { StudioDocument } from "./document-versions.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { FleetRun } from "./fleet-tools.js";
@@ -214,6 +215,8 @@ export interface RunState {
     studioEdited?: boolean;
     /** Paths written by that edit, so a later command that reads one of them is the same document. */
     studioOutputs?: string[];
+    /** Files this run's edits wrote from a saved version, by path, newest last. */
+    lineage?: Map<string, DocumentLineage>;
   };
 }
 

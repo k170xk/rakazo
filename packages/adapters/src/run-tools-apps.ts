@@ -732,6 +732,8 @@ async function newCalculatorApp(
   };
 }
 
+const APP_CHANGED_WHILE_SAVING = "The app changed while saving; read it again and retry.";
+
 async function saveApp(ctx: RunContext, call: ToolCall) {
   const { deps, run, bot, thread } = ctx;
   const { args } = call;
@@ -1009,7 +1011,7 @@ async function saveApp(ctx: RunContext, call: ToolCall) {
     }
   } catch (error) {
     if (error instanceof AppVersionConflictError || isUniqueViolation(error)) {
-      return { error: "The app changed while saving; read it again and retry.", unchanged: true };
+      return { error: APP_CHANGED_WHILE_SAVING, unchanged: true };
     }
     if (isAppDataError(error)) {
       return {
@@ -1661,7 +1663,10 @@ async function appAsset(ctx: RunContext, call: ToolCall) {
 
 export const appTools: ToolHandlers = {
   async save_app(ctx, call) {
-    return call.finish(await saveApp(ctx, call));
+    const first = await saveApp(ctx, call);
+    // Edits apply to the version current when saving, so one that lost a race goes again on the newer one.
+    const changed = (first as { error?: unknown }).error === APP_CHANGED_WHILE_SAVING;
+    return call.finish(changed ? await saveApp(ctx, call) : first);
   },
   async app_data(ctx, call) {
     return call.finish(await appData(ctx, call));
