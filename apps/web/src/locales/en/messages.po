@@ -16204,3 +16204,23 @@ msgstr "Turn off auto-fix"
 #: src/components/apps/AppStudio.tsx
 msgid "Turn on auto-fix"
 msgstr "Turn on auto-fix"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "Version {0} was saved while you edited. Your unsaved changes were kept on top of it."
+msgstr "Version {0} was saved while you edited. Your unsaved changes were kept on top of it."
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "A newer version was saved while you edited. Your changes are kept; save again to add them to it."
+msgstr "A newer version was saved while you edited. Your changes are kept; save again to add them to it."
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "A newer version changed the same files you edited: {0}. Your other changes are kept."
+msgstr "A newer version changed the same files you edited: {0}. Your other changes are kept."
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "Use newer version"
+msgstr "Use newer version"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "Keep mine"
+msgstr "Keep mine"
