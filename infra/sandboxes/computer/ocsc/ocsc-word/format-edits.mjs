@@ -4,6 +4,8 @@
  * applied to the existing text so the rest of the file stays as it is.
  */
 
+import { mapParagraphs } from "./word-paragraphs.mjs";
+
 const NAMED = {
   black: "000000",
   white: "FFFFFF",
@@ -494,7 +496,7 @@ export function applyWordPageSetup(xml, setup) {
 /** Applies a Word formatting edit across the document body. */
 export function formatWordDocument(xml, find, style, all = true) {
   let count = 0;
-  let next = xml.replace(/<w:p(?=[\s>])[^>]*(?<!\/)>[\s\S]*?<\/w:p>/g, (paragraph) => {
+  let next = mapParagraphs(xml, (paragraph) => {
     if (!all && count) return paragraph;
     const result = formatWordParagraph(paragraph, find, style, all);
     count += result.count;

@@ -36,6 +36,7 @@ import { fileURLToPath } from "node:url";
 import JSZip from "jszip";
 import { infographicXml, wordStyle } from "./docx-infographic.mjs";
 import { applyWordPageSetup, formatWordDocument, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
+import { mapParagraphs, xmlTagsBalanced } from "./word-paragraphs.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_DIR = process.env.OCSC_WORD_TEMPLATES || join(HERE, "templates");
@@ -376,6 +377,9 @@ class Doc {
     doc.bulletNum = null;
     doc.meta = {};
     doc.placeholders = { title: "OCSC Report", subtitle: "Report Subtitle" };
+    doc.openedSound = new Map([["word/document.xml", xmlTagsBalanced(doc.xml)]]);
+    for (const [name, part] of await doc.headerFooterFiles())
+      doc.openedSound.set(name, xmlTagsBalanced(part));
     return doc;
   }
 
@@ -851,7 +855,7 @@ class Doc {
 
   replaceText(find, replacement, all = true, rev = null) {
     let count = 0;
-    this.xml = this.xml.replace(PARA_RE, (p) => {
+    this.xml = mapParagraphs(this.xml, (p) => {
       if (!all && count) return p;
       const t = textOf(p);
       if (!t.includes(find)) return p;
@@ -879,7 +883,7 @@ class Doc {
     const pair =
       /^\s*\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}\s*[:\-–|]\s*\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}\s*$/;
     const fillBlanks = (xml) =>
-      xml.replace(PARA_RE, (p) => {
+      mapParagraphs(xml, (p) => {
         const text = textOf(p);
         // The cover's "For" sits on its own line above {{client_name}}.
         if (blank("client_name") && text.trim() === "For")
@@ -906,8 +910,8 @@ class Doc {
         );
       });
     const fill = (xml) =>
-      fillBlanks(xml)
-        .replace(
+      mapParagraphs(
+        fillBlanks(xml).replace(
           /(<w:t(?:\s[^>]*)?>)([^<]*)(<\/w:t>)/g,
           (m, open, t, close) => {
             const text = unesc(t);
@@ -919,8 +923,8 @@ class Doc {
               ? m
               : `${open.includes("xml:space") ? open : open.replace("<w:t", '<w:t xml:space="preserve"')}${esc(next)}${close}`;
           },
-        )
-        .replace(PARA_RE, (p) => {
+        ),
+        (p) => {
           const text = textOf(p);
           if (![...text.matchAll(FIELD_RE)].some((m) => known(m[1]))) return p;
           return rewriteParagraphText(
@@ -929,7 +933,8 @@ class Doc {
               known(k) ? (filled.add(k), String(fields[k])) : ph,
             ),
           );
-        });
+        },
+      );
     this.xml = fill(this.xml);
     for (const [name, xml] of parts) parts.set(name, fill(xml));
     return [...filled];
@@ -1159,7 +1164,7 @@ class Doc {
         e.tag === "tbl" && e.from > toc.index && (!end || e.from < end.from),
     );
     for (const t of tables.reverse()) {
-      const xml = t.xml.replace(PARA_RE, (p) => {
+      const xml = mapParagraphs(t.xml, (p) => {
         if (p.includes("<w:jc ")) return p;
         const q = p.replace("<w:pPr/>", "<w:pPr></w:pPr>");
         return q.includes("<w:pPr>")
@@ -1496,6 +1501,13 @@ class Doc {
         `<dcterms:modified$1>${new Date().toISOString().replace(/\.\d+Z$/, "Z")}</dcterms:modified>`,
       );
       this.zip.file("docProps/core.xml", c);
+    }
+    // Word refuses unbalanced XML as "unreadable content"; a part that opened sound must stay so.
+    for (const [name, part] of [["word/document.xml", this.xml], ...(await this.headerFooterFiles())]) {
+      if (this.openedSound?.get(name) !== false && !xmlTagsBalanced(part))
+        throw new UsageError(
+          `This edit would leave ${name} with tags that do not nest, which Word reports as unreadable content, so nothing was saved. Make the edit again without changing wording in or beside text boxes and shapes, or replace those whole paragraphs with replace_paragraphs.`,
+        );
     }
     mkdirSync(dirname(outFull), { recursive: true });
     writeFileSync(
