@@ -31,6 +31,7 @@ import {
   purchaseApprovalOf,
   purchaseCardSummary,
 } from "./purchase-gate.js";
+import { ROUTINE_CARD_TOOLS, routineCardSummary } from "./routine-approval-card.js";
 import type { RunContext } from "./run-context.js";
 import {
   isRunTainted,
@@ -383,6 +384,25 @@ export async function prepareToolRequest(
       request.catalogRemapped && Array.isArray(request.effectRequest)
         ? request.effectRequest.map((part, index) => (index === 2 ? args : part))
         : args;
+  }
+  if (ROUTINE_CARD_TOOLS.has(name) && nextApprovedTool !== name) {
+    // Scoped as the tool will be, so the card names the routine the call would change; a card
+    // that cannot be built leaves the generic one.
+    try {
+      request.fleetSummary = await routineCardSummary(
+        deps.prisma,
+        {
+          spaceId: run.spaceId,
+          botId: bot.id,
+          userId: run.userId,
+          ...(ctx.thread.groupId ? { threadId: ctx.thread.id } : {}),
+        },
+        name,
+        args,
+      );
+    } catch {
+      request.fleetSummary = undefined;
+    }
   }
   if (name === "respond_agent_connection") {
     if (nextApprovedTool !== name) {

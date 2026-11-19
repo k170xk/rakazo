@@ -60,6 +60,7 @@ import { CATALOG_LOAD, CATALOG_SEARCH } from "./lazy-tool-catalog.js";
 import { findConnectedModelCredential } from "./model-selection.js";
 import { paidRequestEffect } from "./paid-request.js";
 import { PURCHASE_CHECKED_TOOLS, purchaseApprovalOf } from "./purchase-gate.js";
+import { ROUTINE_CARD_TOOLS } from "./routine-approval-card.js";
 import { autoReviewCheckerProvider } from "./run-auto-review.js";
 import type { RunContext, RunTrust } from "./run-context.js";
 import {
@@ -913,7 +914,10 @@ async function showApprovalCard(ctx: RunContext, call: ToolCall, card: ApprovalC
   await notifyRun(deps, run, {
     kind: "help",
     title: `${displayName(bot.name, "Agent")} needs approval`,
-    body: `Review before ${name}`,
+    body:
+      card.summary && ROUTINE_CARD_TOOLS.has(name)
+        ? redactSecrets(card.summary.title, ctx.secrets)
+        : `Review before ${name}`,
     botId: bot.id,
     threadId: thread.id,
   });

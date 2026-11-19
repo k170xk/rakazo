@@ -33,6 +33,8 @@ export type FleetCardSummary = {
   title: string;
   lines: string[];
   onceOnly?: boolean;
+  /** Lead with the reviewer's reason for asking, as the generic card does. */
+  withReason?: boolean;
   deadline?: ProjectDeadlineChange;
   workPackage?: WorkPackageChange;
   projectComment?: ProjectCommentChange;
@@ -156,14 +158,15 @@ export function buildApprovalAskBlock(
   }
   if (options?.summary) {
     // Built from what was resolved before the effect was recorded, not from what the model typed.
+    const reason = options.summary.withReason ? options.reviewReason?.trim() : undefined;
+    const lines = reason
+      ? [reason.replace(/\u2014|\u2013/g, "-"), "", ...options.summary.lines]
+      : options.summary.lines;
     return {
       kind: "ask",
       approvalEffectId: effectId,
       text: truncate(redactSecrets(options.summary.title, secrets), MAX_APPROVAL_SUMMARY_LENGTH),
-      detail: truncate(
-        redactSecrets(options.summary.lines.join("\n"), secrets),
-        approvalDetailLength(toolName),
-      ),
+      detail: truncate(redactSecrets(lines.join("\n"), secrets), approvalDetailLength(toolName)),
       detailFormat: toolName === "set_child_instructions" ? "code" : "text",
       status: "pending",
       actions:
