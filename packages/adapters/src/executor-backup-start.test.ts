@@ -65,9 +65,12 @@ const plaintexts: Record<string, string> = {
 async function runTurn({
   primaryConnected,
   backupConnected = true,
+  ownRoles = true,
 }: {
   primaryConnected: boolean;
   backupConnected?: boolean;
+  /** False leaves the member on the company model and company key. */
+  ownRoles?: boolean;
 }) {
   const run: Record<string, unknown> = {
     id: "run-1",
@@ -211,15 +214,18 @@ async function runTurn({
       userActionAutoReviewPreference: { findUnique: vi.fn(async () => null) },
       artifact: { findMany: vi.fn(async () => []) },
     },
-    [
-      { userId: USER_ID, role: "main", position: 0, thinkingLevel: null, ...PRIMARY },
-      { userId: USER_ID, role: "main", position: 1, thinkingLevel: null, ...BACKUP },
-    ],
+    ownRoles
+      ? [
+          { userId: USER_ID, role: "main", position: 0, thinkingLevel: null, ...PRIMARY },
+          { userId: USER_ID, role: "main", position: 1, thinkingLevel: null, ...BACKUP },
+        ]
+      : [],
   );
   const finalizeRun = vi.fn(async () => ({ continuationRunId: null }));
   const executor = createRunExecutor({
     prisma,
     billingEnabled: false,
+    ...(ownRoles ? {} : { deploymentModelKey: "company-key", deploymentModelConfigured: true }),
     secretStore: {
       load: vi.fn(async (_ciphertext: string, secretId: string) => plaintexts[secretId]),
       put: vi.fn(async () => ({ ciphertext: "sealed-marker" })),
@@ -248,6 +254,7 @@ async function runTurn({
 describe("a main model that cannot start runs on the member's backup", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("starts on the backup when the main model has no connection", async () => {
@@ -301,5 +308,36 @@ describe("a main model that cannot start runs on the member's backup", () => {
     expect(finalizeRun).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "failed", error: OAUTH_RECONNECT_REQUIRED_ERROR }),
     );
+  });
+
+  it("offers the company's backup, on the company key, to someone with none of their own", async () => {
+    vi.stubEnv("PI_DEFAULT_PROVIDER", "openrouter");
+    vi.stubEnv("PI_DEFAULT_MODEL", "openai/gpt-6-luna");
+    vi.stubEnv("RAKAZO_MAIN_BACKUP_MODELS", "openrouter/openai/gpt-6-astra");
+
+    const { request } = await runTurn({ primaryConnected: false, ownRoles: false });
+
+    expect(request?.model).toMatchObject({
+      provider: "openrouter",
+      id: "openai/gpt-6-luna",
+      apiKey: "company-key",
+    });
+    expect(request?.fallbackModels).toEqual([{ provider: "openrouter", id: "openai/gpt-6-astra" }]);
+    await expect(
+      request?.resolveFallbackModel?.("openrouter", "openai/gpt-6-astra"),
+    ).resolves.toMatchObject({
+      provider: "openrouter",
+      id: "openai/gpt-6-astra",
+      apiKey: "company-key",
+    });
+  });
+
+  it("keeps a member's own backups ahead of the company's", async () => {
+    vi.stubEnv("RAKAZO_MAIN_BACKUP_MODELS", "openrouter/openai/gpt-6-astra");
+
+    const { request } = await runTurn({ primaryConnected: false });
+
+    expect(request?.model).toMatchObject({ provider: BACKUP.provider, id: BACKUP.modelId });
+    expect(request?.fallbackModels).toEqual([]);
   });
 });

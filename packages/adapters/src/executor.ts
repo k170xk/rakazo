@@ -158,6 +158,7 @@ import { OUTLOOK_PROVIDER } from "./microsoft-mail.js";
 import { sendsOutlookMail } from "./microsoft-mail-send.js";
 import { HostedModelCreditsRequiredError } from "./model-credit-observer.js";
 import {
+  deploymentBackupModels,
   effectiveModelRole,
   resolveMemberMainModel,
   selectConfiguredModel,
@@ -1209,6 +1210,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           !(await spaceHasModelAccess(deps.prisma, run.spaceId));
         const scripted = deps.runtime.describe().capabilities.scripted;
         let backupChoices: Promise<ModelRoleChoice[]> | undefined;
+        // Someone on the company key with no backups of their own falls back on the company's.
+        const companyBackups = new Set<ModelRoleChoice>(
+          modelPinned || selected.credential ? [] : deploymentBackupModels(),
+        );
         const loadBackups = () =>
           (backupChoices ??= scripted
             ? Promise.resolve([])
@@ -1216,12 +1221,22 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 settings,
                 deployment: runDeployment,
               }).then(
-                (role) => role.backups,
+                (role) => (role.backups.length ? role.backups : [...companyBackups]),
                 (error: unknown) => {
                   getLogger().warn("Backup models could not be loaded", { runId, error });
-                  return [];
+                  return [...companyBackups];
                 },
               ));
+        const resolveCompanyBackup = (choice: ModelRoleChoice) =>
+          resolveModelKey(
+            deps,
+            run.userId,
+            run.spaceId,
+            null,
+            choice.provider,
+            choice.modelId,
+            (values) => runSecrets.push(...values),
+          );
         // Backups that could not start here are not offered again once the model runs.
         const backupsUnavailable = new Set<ModelRoleChoice>();
         // A main model with no connection, or whose provider refused its sign-in, runs on the
@@ -1230,15 +1245,17 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           if (modelPinned || companyChoosesModel) return undefined;
           for (const choice of await loadBackups()) {
             try {
-              const backup = await resolveConnectedModelKey(
-                deps,
-                run,
-                choice.provider,
-                choice.modelId,
-                (values) => runSecrets.push(...values),
-                true,
-                choice.credentialId,
-              );
+              const backup = companyBackups.has(choice)
+                ? { credential: null, resolved: await resolveCompanyBackup(choice) }
+                : await resolveConnectedModelKey(
+                    deps,
+                    run,
+                    choice.provider,
+                    choice.modelId,
+                    (values) => runSecrets.push(...values),
+                    true,
+                    choice.credentialId,
+                  );
               getLogger().warn("model.primary_unavailable.backup_used", {
                 runId,
                 "model.provider": choice.provider,
@@ -2424,20 +2441,30 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                       const key = fallbackKey(provider, modelId, connectionId);
                       if (!fallbackModelKeys.has(key))
                         throw new Error("Backup model is not selected");
+                      const choice = fallbackModels.find(
+                        (candidate) =>
+                          fallbackKey(
+                            candidate.provider,
+                            candidate.modelId,
+                            candidate.credentialId,
+                          ) === key,
+                      );
+                      if (choice && companyBackups.has(choice)) {
+                        return {
+                          provider,
+                          id: modelId,
+                          ...resolvedModelRunFields(await resolveCompanyBackup(choice)),
+                          thinkingLevel: (choice.thinkingLevel ??
+                            null) as AgentRunRequest["model"]["thinkingLevel"],
+                        };
+                      }
                       return resolveConnectedModel(
                         { userId: run.userId, spaceId: run.spaceId },
                         provider,
                         modelId,
                         (values) => runSecrets.push(...values),
                         true,
-                        fallbackModels.find(
-                          (candidate) =>
-                            fallbackKey(
-                              candidate.provider,
-                              candidate.modelId,
-                              candidate.credentialId,
-                            ) === key,
-                        )?.thinkingLevel ?? null,
+                        choice?.thinkingLevel ?? null,
                         connectionId,
                       );
                     }

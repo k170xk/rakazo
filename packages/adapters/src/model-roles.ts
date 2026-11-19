@@ -41,6 +41,24 @@ export function deploymentModelRole(
   return { primary: provider && modelId ? { provider, modelId } : null, backups: [] };
 }
 
+/**
+ * Models that take over, on the company key, when the company's main model fails,
+ * listed as RAKAZO_MAIN_BACKUP_MODELS="openai/gpt-6-astra,provider/model".
+ */
+export function deploymentBackupModels(env: NodeJS.ProcessEnv = process.env): ModelRoleChoice[] {
+  const seen = new Set<string>();
+  const backups: ModelRoleChoice[] = [];
+  for (const entry of (env.RAKAZO_MAIN_BACKUP_MODELS ?? "").split(",")) {
+    const slash = entry.indexOf("/");
+    const provider = entry.slice(0, slash).trim();
+    const modelId = usableModelId(entry.slice(slash + 1).trim());
+    if (slash < 1 || !provider || !modelId || seen.has(`${provider}/${modelId}`)) continue;
+    seen.add(`${provider}/${modelId}`);
+    backups.push({ provider, modelId });
+  }
+  return backups;
+}
+
 export type EffectiveModelRole = ModelRoleSettings & {
   /** Whose model leads: the member's own, the deployment's, or nobody's. */
   primarySource: "member" | "deployment" | null;

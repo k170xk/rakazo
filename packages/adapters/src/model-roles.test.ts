@@ -2,6 +2,7 @@ import type { PrismaClient } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
 import type { DeploymentModelDefaults, MemberMainModel } from "./model-roles.js";
 import {
+  deploymentBackupModels,
   deploymentModelRole,
   effectiveModelRole,
   resolveMemberMainModel,
@@ -344,5 +345,26 @@ describe("model roles", () => {
 
     expect(resolved).toMatchObject({ provider: "openai-compatible", modelId: "model-b" });
     expect(resolved?.credential?.id).toBe("b");
+  });
+});
+
+describe("deploymentBackupModels", () => {
+  it("reads provider/model pairs in order, keeping slashes in model ids", () => {
+    expect(
+      deploymentBackupModels({
+        RAKAZO_MAIN_BACKUP_MODELS:
+          " openai/gpt-6-astra , openrouter/openai/gpt-6-sol,openai/gpt-6-astra",
+      }),
+    ).toEqual([
+      { provider: "openai", modelId: "gpt-6-astra" },
+      { provider: "openrouter", modelId: "openai/gpt-6-sol" },
+    ]);
+  });
+
+  it("ignores entries without both a provider and a model", () => {
+    expect(
+      deploymentBackupModels({ RAKAZO_MAIN_BACKUP_MODELS: "gpt-6-astra,/x,openai/,," }),
+    ).toEqual([]);
+    expect(deploymentBackupModels({})).toEqual([]);
   });
 });
