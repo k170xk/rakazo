@@ -316,3 +316,113 @@ describe("file tools on a tool runner", () => {
     expect(h.computerGet).not.toHaveBeenCalled();
   });
 });
+
+describe("a spec passed with the ocsc call", () => {
+  const written = (h: ReturnType<typeof harness>) =>
+    h.files.writeFile.mock.calls.map((args) => {
+      const file = (args as unknown[])[1] as { path: string; content: Uint8Array };
+      return { path: file.path, text: new TextDecoder().decode(file.content) };
+    });
+
+  it("is saved where --spec names before the edit runs, in one call", async () => {
+    const h = harness({ documents: true });
+    h.run.mockImplementationOnce(async () => {
+      expect(written(h)).toHaveLength(1);
+      return { stdout: JSON.stringify({ ok: true }), stderr: "", code: 0 };
+    });
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({
+        program: "pptx",
+        args: [
+          "edit",
+          "--in",
+          "outputs/d.pptx",
+          "--spec",
+          "work/e.json",
+          "--out",
+          "outputs/d2.pptx",
+        ],
+        spec: '{"operations":[{"op":"title","slide":1,"text":"Hi"}]}',
+      }) as never,
+    );
+    expect(written(h)).toEqual([
+      {
+        path: expect.stringMatching(/work\/e\.json$/),
+        text: '{"operations":[{"op":"title","slide":1,"text":"Hi"}]}',
+      },
+    ]);
+    expect(h.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        args: [
+          "edit",
+          "--in",
+          "outputs/d.pptx",
+          "--spec",
+          "work/e.json",
+          "--out",
+          "outputs/d2.pptx",
+        ],
+      }),
+    );
+  });
+
+  it("gets a --spec path when the call names none, the same one when it is resumed", async () => {
+    const h = harness({ documents: true });
+    const send = () =>
+      computerTools.ocsc!(
+        h.ctx,
+        h.call({
+          program: "xlsx",
+          args: ["edit", "--in", "outputs/c.xlsx"],
+          spec: { edits: [{ cell: "A1", value: 1 }] },
+        }) as never,
+      );
+    await send();
+    await send();
+    const [first, second] = written(h);
+    expect(first?.path).toMatch(/work\/spec-[0-9a-f]{12}\.json$/);
+    expect(second?.path).toBe(first?.path);
+    expect(JSON.parse(first?.text ?? "")).toEqual({ edits: [{ cell: "A1", value: 1 }] });
+    const ran = (h.run.mock.calls[0] as unknown[])[0] as { args: string[] };
+    expect(ran.args.slice(0, 4)).toEqual(["edit", "--in", "outputs/c.xlsx", "--spec"]);
+    expect(first?.path.endsWith(ran.args[4] ?? "-")).toBe(true);
+  });
+
+  it("refuses JSON that does not parse, and a step that takes no spec, without writing", async () => {
+    const h = harness({ documents: true });
+    const bad = await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "word", args: ["edit", "--in", "a.docx"], spec: "{oops" }) as never,
+    );
+    expect(bad).toEqual({ error: expect.stringContaining("valid JSON") });
+    const read = await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "word", args: ["read", "--in", "a.docx"], spec: "{}" }) as never,
+    );
+    expect(read).toEqual({ error: expect.stringContaining("takes no spec") });
+    expect(h.files.writeFile).not.toHaveBeenCalled();
+    expect(h.run).not.toHaveBeenCalled();
+  });
+
+  it("is not written when the command is refused, and nothing is written without one", async () => {
+    const h = harness({
+      documents: true,
+      officeDocuments: [{ name: "Report.docx", path: "attachments/a1.docx", program: "word" }],
+    });
+    const refused = await computerTools.ocsc!(
+      h.ctx,
+      h.call({ program: "word", args: ["new", "--out", "x.docx"], spec: "{}" }) as never,
+    );
+    expect(refused).toEqual({ error: expect.stringContaining("ocsc word edit --in") });
+    await computerTools.ocsc!(
+      h.ctx,
+      h.call({
+        program: "word",
+        args: ["edit", "--in", "attachments/a1.docx", "--spec", "e.json"],
+      }) as never,
+    );
+    expect(h.files.writeFile).not.toHaveBeenCalled();
+    expect(h.run).toHaveBeenCalledTimes(1);
+  });
+});

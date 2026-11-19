@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
 import type { ComputerCommand } from "@rakazo/contracts";
 import { ATTACHMENT_MAX_BYTES, COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
@@ -73,6 +73,7 @@ import {
   documentAuthor,
   documentRebuildRefusal,
   editedAttachmentId,
+  inlineOcscSpec,
   noteDocumentWrite,
   OCSC_PROGRAMS,
   ocscAfterRun,
@@ -402,6 +403,34 @@ function openStudioEdit(
   }
   if (lineage?.rootId === studio.rootId) return { artifactId: lineage.baseId };
   return undefined;
+}
+
+/** The same name for a call resumed after an approval, so it rewrites one spec file. */
+function inlineSpecName(executionId: string) {
+  return `spec-${createHash("sha256").update(executionId).digest("hex").slice(0, 12)}`;
+}
+
+/** Saves a spec passed with the ocsc call where the command reads it; returns why it could not. */
+async function saveInlineSpec(
+  ctx: RunContext,
+  toolName: string,
+  program: string,
+  spec: { path?: string; content?: string },
+): Promise<string | undefined> {
+  if (!spec.path || spec.content === undefined) return undefined;
+  const { folder } = ocscPlace(ctx, toolName, program);
+  ctx.computer.checkpoint.markDirty();
+  try {
+    await folder.files.writeFile(
+      await folder.ref(),
+      { path: folder.stored(spec.path), content: new TextEncoder().encode(spec.content) },
+      folder.context,
+    );
+    return undefined;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "it could not be written";
+    return `Could not save the spec to ${spec.path}: ${reason}`;
+  }
 }
 
 /** Where ocsc reads and writes for this program, the same place the ocsc tool runs it. */
@@ -1140,10 +1169,13 @@ export const computerTools: ToolHandlers = {
   },
   async ocsc(ctx, call) {
     const program = String(call.args.program ?? "");
-    const given = Array.isArray(call.args.args) ? call.args.args.map(String) : [];
+    const words = Array.isArray(call.args.args) ? call.args.args.map(String) : [];
     if (!OCSC_PROGRAMS.has(program)) {
       return call.finish({ error: `program must be one of ${[...OCSC_PROGRAMS].join(", ")}.` });
     }
+    const spec = inlineOcscSpec(program, words, call.args.spec, inlineSpecName(call.executionId));
+    if ("error" in spec) return call.finish({ error: spec.error });
+    const given = spec.args;
     const switchedOff = ocscProgramRefusal(program);
     if (switchedOff) return call.finish({ error: switchedOff });
     const rebuild = documentRebuildRefusal(program, given, ctx.computer.officeDocuments ?? []);
@@ -1177,6 +1209,8 @@ export const computerTools: ToolHandlers = {
     if (runner && ctx.deps.toolRunner && RUNNER_PROGRAMS.has(program)) {
       const held = await ocscBeforeRun(ctx, program, args);
       if (held) return call.finish(held);
+      const unsaved = await saveInlineSpec(ctx, call.name, program, spec);
+      if (unsaved) return call.finish({ error: unsaved });
       const matched =
         program === "word"
           ? await runner
@@ -1233,6 +1267,8 @@ export const computerTools: ToolHandlers = {
     }
     const held = await ocscBeforeRun(ctx, program, args);
     if (held) return call.finish(held);
+    const unsaved = await saveInlineSpec(ctx, call.name, program, spec);
+    if (unsaved) return call.finish({ error: unsaved });
     const result = await runComputerCommand(ctx, call, {
       command: ocscCommand(program, args, ctx.computer.folder, author),
       cwd: ctx.computer.folder

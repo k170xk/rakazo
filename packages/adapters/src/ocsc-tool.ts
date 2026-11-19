@@ -251,6 +251,44 @@ export function ocscProgramArgs(args: readonly string[]): string[] {
   return args.filter((arg) => arg !== NEW_DOCUMENT_FLAG);
 }
 
+/** The ocsc steps that read a --spec file. */
+const SPEC_STEPS: Readonly<Record<string, readonly string[]>> = {
+  word: ["new", "edit"],
+  pptx: ["new", "edit"],
+  xlsx: ["new", "edit"],
+  video: ["read", "still", "render"],
+};
+
+/**
+ * A spec passed with the ocsc call itself, saved where its --spec path names (one is added when
+ * missing) so a document is made or edited in one step instead of write_file then ocsc.
+ */
+export function inlineOcscSpec(
+  program: string,
+  args: readonly string[],
+  spec: unknown,
+  name: string,
+): { args: string[]; path?: string; content?: string } | { error: string } {
+  if (spec === undefined || spec === null || spec === "") return { args: [...args] };
+  if (!SPEC_STEPS[program]?.includes(args[0] ?? "")) {
+    return { error: `ocsc ${program} ${args[0] ?? ""} takes no spec; leave spec out.` };
+  }
+  const text = typeof spec === "string" ? spec : JSON.stringify(spec, null, 2);
+  try {
+    JSON.parse(text);
+  } catch {
+    return { error: "spec must be valid JSON: the same content the --spec file would hold." };
+  }
+  const at = args.indexOf("--spec");
+  if (at >= 0) {
+    const given = args[at + 1];
+    if (!given || given.startsWith("--")) return { error: "--spec needs a path after it." };
+    return { args: [...args], path: given, content: text };
+  }
+  const added = `work/${name}.json`;
+  return { args: [...args, "--spec", added], path: added, content: text };
+}
+
 export type OfficeDocument = { name: string; path: string; program: RebuildProgram };
 type RebuildProgram = "word" | "pptx" | "xlsx";
 
