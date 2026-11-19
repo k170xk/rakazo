@@ -85,6 +85,7 @@ describe("autoReviewDecisionsMode", () => {
     ["true", "off"],
     ["ON", "on"],
     [" shadow ", "shadow"],
+    ["Guarded", "guarded"],
   ])("reads %j as %s", (value, mode) => {
     expect(autoReviewDecisionsMode({ RAKAZO_AUTO_REVIEW_DECISIONS: value })).toBe(mode);
   });
@@ -235,5 +236,89 @@ describe("on mode", () => {
       assist: assistAnswering(Promise.reject(new Error("timeout"))),
     });
     await expect(reviewer.review(request, context)).rejects.toBe(failure);
+  });
+});
+
+describe("guarded mode", () => {
+  const known = { ...request, args: { url: "https://example.com/given" } };
+
+  it("lets a confident early pass stand on a known site while the checker finishes and is logged", async () => {
+    const checking = deferred<AutoReviewResult>();
+    const { review, provider } = checkerReturning(checking.promise);
+    const reviewer = new DecisionAssistedAutoReview({
+      mode: "guarded",
+      checker: provider,
+      checkerModel: "openai/gpt-6-astra",
+      assist: assistAnswering(Promise.resolve(assistPass), sure),
+    });
+    await expect(reviewer.review(known, context)).resolves.toBe(assistPass);
+    expect(review.mock.calls[0]![1]).toBe(context);
+    expect(sink.events).toHaveLength(0);
+    checking.resolve(checkerPass);
+    await flush();
+    expect(sink.events).toHaveLength(1);
+    expect(sink.events[0]).toMatchObject({
+      mode: "guarded",
+      checker_decision: "pass",
+      assist_used: true,
+    });
+  });
+
+  it("warns when the checker would have asked after an early pass", async () => {
+    const checking = deferred<AutoReviewResult>();
+    const { provider } = checkerReturning(checking.promise);
+    const reviewer = new DecisionAssistedAutoReview({
+      mode: "guarded",
+      checker: provider,
+      checkerModel: "openai/gpt-6-astra",
+      assist: assistAnswering(Promise.resolve(assistPass), sure),
+    });
+    await expect(reviewer.review(known, context)).resolves.toBe(assistPass);
+    checking.resolve(checkerAsk);
+    await flush();
+    expect(sink.events).toContainEqual(
+      expect.objectContaining({
+        message: "auto review decision assist overruled",
+        tool: "web_fetch",
+        checker_decision: "ask",
+      }),
+    );
+    expect(JSON.stringify(sink.events)).not.toMatch(/example\.com|fake owner words/);
+  });
+
+  it("always waits for the checker on a site the run was not given", async () => {
+    const checking = deferred<AutoReviewResult>();
+    const { provider } = checkerReturning(checking.promise);
+    const reviewer = new DecisionAssistedAutoReview({
+      mode: "guarded",
+      checker: provider,
+      checkerModel: "openai/gpt-6-astra",
+      assist: assistAnswering(Promise.resolve(assistPass), sure),
+    });
+    const reviewing = reviewer.review({ ...request, newSite: true }, context);
+    await flush();
+    checking.resolve(checkerAsk);
+    await expect(reviewing).resolves.toBe(checkerAsk);
+    await flush();
+    expect(sink.events[0]).toMatchObject({ new_site: true, assist_used: false });
+  });
+
+  it.each([
+    ["an ask", { decision: "ask", model: "openai/gpt-6-luna" }, sure],
+    ["a pass below the confidence floor", assistPass, { ...sure, confidence: 0.89 }],
+    ["an error", { decision: "error", model: "openai/gpt-6-luna" }, undefined],
+  ] as const)("returns the checker's verdict after %s", async (_label, assistResult, answer) => {
+    const checking = deferred<AutoReviewResult>();
+    const { provider } = checkerReturning(checking.promise);
+    const reviewer = new DecisionAssistedAutoReview({
+      mode: "guarded",
+      checker: provider,
+      checkerModel: "openai/gpt-6-astra",
+      assist: assistAnswering(Promise.resolve(assistResult as AutoReviewResult), answer),
+    });
+    const reviewing = reviewer.review(known, context);
+    await flush();
+    checking.resolve(checkerAsk);
+    await expect(reviewing).resolves.toBe(checkerAsk);
   });
 });

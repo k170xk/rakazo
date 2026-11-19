@@ -10,20 +10,22 @@ import type {
 import { getLogger } from "@rakazo/logging";
 import { decisionAssistModel } from "./decision-models.js";
 
-export type AutoReviewDecisionsMode = "off" | "shadow" | "on";
+export type AutoReviewDecisionsMode = "off" | "shadow" | "on" | "guarded";
 
 export const DECISION_ASSIST_MIN_CONFIDENCE = 0.9;
 export const DECISION_ASSIST_TIMEOUT_MS = 2_500;
 
 /**
  * `RAKAZO_AUTO_REVIEW_DECISIONS=shadow` asks a decision model beside the chat checker and only
- * logs both verdicts; `on` also lets its confident pass stand when it answers first. Off otherwise.
+ * logs both verdicts; `on` also lets its confident pass stand when it answers first. `guarded` does
+ * that only for a site the run was given, never a new one, and lets the checker finish so its
+ * verdict is logged beside every early pass. Off otherwise.
  */
 export function autoReviewDecisionsMode(
   env: NodeJS.ProcessEnv = process.env,
 ): AutoReviewDecisionsMode {
   const value = env.RAKAZO_AUTO_REVIEW_DECISIONS?.trim().toLowerCase();
-  return value === "shadow" || value === "on" ? value : "off";
+  return value === "shadow" || value === "on" || value === "guarded" ? value : "off";
 }
 
 /** The decision model for a chat checker, only for a plain key on that provider's own endpoint. */
@@ -52,7 +54,7 @@ type Settled<T> = { value?: T; threw?: true; ms: number };
 export class DecisionAssistedAutoReview implements AutoReviewProvider {
   constructor(
     private readonly options: {
-      mode: "shadow" | "on";
+      mode: "shadow" | "on" | "guarded";
       checker: AutoReviewProvider;
       checkerModel: string;
       assist: (onAnswer: (answer: DecisionAnswer | undefined) => void) => AutoReviewProvider;
@@ -97,7 +99,13 @@ export class DecisionAssistedAutoReview implements AutoReviewProvider {
     let used = false;
     const log = () =>
       void Promise.all([checked, assisted])
-        .then(([check, assist]) =>
+        .then(([check, assist]) => {
+          if (used && mode === "guarded" && check.value?.decision !== "pass") {
+            getLogger().warn("auto review decision assist overruled", {
+              tool: request.toolName,
+              checker_decision: check.value?.decision ?? "threw",
+            });
+          }
           getLogger().info("auto review decision assist", {
             mode,
             tool: request.toolName,
@@ -111,11 +119,11 @@ export class DecisionAssistedAutoReview implements AutoReviewProvider {
             assist_confidence: answer?.confidence ?? null,
             assist_ms: Math.round(assist.ms),
             assist_used: used,
-          }),
-        )
+          });
+        })
         .catch(() => undefined);
 
-    if (mode === "on") {
+    if (mode === "on" || (mode === "guarded" && request.newSite !== true)) {
       const first = await Promise.race([
         checked.then(() => "checker" as const),
         assisted.then(() => "assist" as const),
@@ -126,7 +134,7 @@ export class DecisionAssistedAutoReview implements AutoReviewProvider {
         (answer?.confidence ?? 0) >= DECISION_ASSIST_MIN_CONFIDENCE
       ) {
         used = true;
-        stop.abort();
+        if (mode === "on") stop.abort();
         log();
         return assist.value;
       }
