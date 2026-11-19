@@ -98,6 +98,8 @@ x-app-environment: &app-environment
   PI_DEFAULT_PROVIDER:
   PI_DEFAULT_MODEL:
   PI_DEFAULT_CREDENTIALS:
+  # provider/model pairs that take over on the company key when its main model fails.
+  RAKAZO_MAIN_BACKUP_MODELS:
   PI_SESSION_RECORDING:
   RAKAZO_LIVE_MODEL_CATALOG:
   OPENROUTER_API_KEY:
