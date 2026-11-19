@@ -27,6 +27,41 @@ function boxEnd(xml, from) {
 const marks = (xml) => xml.match(BOX_MARK)?.join("") ?? "";
 
 /**
+ * The first `<w:tag>…</w:tag>` in `xml`, through its own close: tracked changes nest the same
+ * element inside it (`<w:rPr>…<w:rPrChange><w:rPr>…</w:rPr></w:rPrChange></w:rPr>`), and stopping
+ * at the first close would cut it short. Like `/<w:tag>[\s\S]*?<\/w:tag>/`, only an opening
+ * without attributes counts, so XML without nesting gives the same match. "" when there is none.
+ */
+export function firstElement(xml, tag) {
+  const start = xml.indexOf(`<w:${tag}>`);
+  if (start < 0) return "";
+  const open = new RegExp(`<w:${tag}(?=[\\s>])[^>]*>`, "g");
+  const close = `</w:${tag}>`;
+  let depth = 0;
+  let i = start;
+  for (;;) {
+    open.lastIndex = i;
+    const o = open.exec(xml);
+    const c = xml.indexOf(close, i);
+    if (c < 0) return "";
+    if (o && o.index < c) {
+      if (!o[0].endsWith("/>")) depth += 1;
+      i = o.index + o[0].length;
+    } else {
+      depth -= 1;
+      i = c + close.length;
+      if (depth === 0) return xml.slice(start, i);
+    }
+  }
+}
+
+/** The properties of the first run in `xml` that opens with them, as `firstElement` reads them. */
+export function firstRunProps(xml) {
+  const run = /<w:r(?:\s[^>]*)?>\s*(?=<w:rPr>)/.exec(xml);
+  return run ? firstElement(xml.slice(run.index + run[0].length), "rPr") : "";
+}
+
+/**
  * Whether every element in `xml` closes in the order it opened. Comments, processing
  * instructions, CDATA and declarations are skipped; `>` inside quoted attribute values is allowed.
  */

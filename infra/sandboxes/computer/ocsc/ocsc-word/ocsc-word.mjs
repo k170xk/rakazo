@@ -36,7 +36,7 @@ import { fileURLToPath } from "node:url";
 import JSZip from "jszip";
 import { infographicXml, wordStyle } from "./docx-infographic.mjs";
 import { applyWordPageSetup, formatWordDocument, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
-import { mapParagraphs, xmlTagsBalanced } from "./word-paragraphs.mjs";
+import { firstElement, firstRunProps, mapParagraphs, xmlTagsBalanced } from "./word-paragraphs.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_DIR = process.env.OCSC_WORD_TEMPLATES || join(HERE, "templates");
@@ -984,9 +984,8 @@ class Doc {
 
   /** Writes an office's name, address, phone and contacts in the back cover; false when there is none. */
   setOffice(office) {
-    const pPr = (p) => /<w:pPr>[\s\S]*?<\/w:pPr>/.exec(p ?? "")?.[0] ?? "";
-    const rPr = (p) =>
-      /<w:r(?:\s[^>]*)?>\s*(<w:rPr>[\s\S]*?<\/w:rPr>)/.exec(p ?? "")?.[1] ?? "";
+    const pPr = (p) => firstElement(p ?? "", "pPr");
+    const rPr = (p) => firstRunProps(p ?? "");
     const line = (from, text) =>
       `<w:p>${pPr(from)}<w:r>${rPr(from)}<w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p>`;
     let found = false;
@@ -1450,7 +1449,7 @@ class Doc {
     const xml =
       para(first?.style ?? `TOC${lo}`, fieldStart + (first?.runs ?? "")) +
       rest.map((e) => para(e.style, e.runs)).join("") +
-      `<w:p>${/<w:pPr>[\s\S]*?<\/w:pPr>/.exec(lastPara.p)?.[0] ?? ""}<w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>`;
+      `<w:p>${firstElement(lastPara.p, "pPr")}<w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>`;
     this.xml = this.xml.slice(0, start) + xml + this.xml.slice(lastPara.end);
 
     const settings = this.zip.file("word/settings.xml");
@@ -1769,8 +1768,8 @@ class Revisions {
     );
     if (!missed && (all ? done === hits : done === 1)) return precise;
     // Split across runs: strike the paragraph's text and insert the new wording after it.
-    const rpr =
-      /<w:r(?=[\s>])[^>]*>(<w:rPr>[\s\S]*?<\/w:rPr>)/.exec(p)?.[1] ?? "";
+    const run = /<w:r(?=[\s>])[^>]*>(?=<w:rPr>)/.exec(p);
+    const rpr = run ? firstElement(p.slice(run.index + run[0].length), "rPr") : "";
     const struck = mapRuns(
       p,
       (r) =>
@@ -1968,7 +1967,7 @@ function rewriteParagraphText(p, text) {
     if (!/<w:t[\s>]/.test(r)) return r;
     if (!first) return "";
     first = false;
-    const rpr = /<w:rPr>[\s\S]*?<\/w:rPr>/.exec(r)?.[0] ?? "";
+    const rpr = firstElement(r, "rPr");
     return `<w:r>${rpr}<w:t xml:space="preserve">${esc(text)}</w:t></w:r>`;
   });
 }
@@ -1993,12 +1992,14 @@ function childrenOf(xml, tag) {
 function cellText(tc, text) {
   const tcPr = /<w:tcPr>[\s\S]*?<\/w:tcPr>/.exec(tc)?.[0] ?? "";
   const p = /<w:p[\s>][\s\S]*?<\/w:p>/.exec(tc)?.[0] ?? "";
-  const pPr = /<w:pPr>[\s\S]*?<\/w:pPr>/.exec(p)?.[0] ?? "";
+  const pPr = firstElement(p, "pPr");
   const firstRun = /<w:r(?:\s[^>]*)?>([\s\S]*?)<\/w:r>/.exec(p)?.[1];
-  const rPr =
-    firstRun !== undefined
-      ? (/<w:rPr\/>|<w:rPr>[\s\S]*?<\/w:rPr>/.exec(firstRun)?.[0] ?? "")
-      : (/<w:rPr>[\s\S]*?<\/w:rPr>/.exec(pPr)?.[0] ?? "");
+  const ownProps = (xml) => {
+    const at = xml.search(/<w:rPr\/>|<w:rPr>/);
+    if (at < 0) return "";
+    return xml.startsWith("<w:rPr/>", at) ? "<w:rPr/>" : firstElement(xml.slice(at), "rPr");
+  };
+  const rPr = firstRun !== undefined ? ownProps(firstRun) : firstElement(pPr, "rPr");
   const run = text
     ? `<w:r>${rPr}<w:t xml:space="preserve">${esc(text)}</w:t></w:r>`
     : "";

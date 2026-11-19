@@ -4,7 +4,7 @@
  * applied to the existing text so the rest of the file stays as it is.
  */
 
-import { mapParagraphs } from "./word-paragraphs.mjs";
+import { firstElement, mapParagraphs } from "./word-paragraphs.mjs";
 
 const NAMED = {
   black: "000000",
@@ -204,7 +204,11 @@ function dropWord(inner, tag) {
 }
 
 export function applyWordRunStyle(rPr, style) {
-  let inner = rPr ? rPr.replace(/^<w:rPr>/, "").replace(/<\/w:rPr>$/, "") : "";
+  const whole = rPr ? rPr.replace(/^<w:rPr>/, "").replace(/<\/w:rPr>$/, "") : "";
+  // A tracked formatting change records the earlier formatting last; only the current one is styled.
+  const change = whole.indexOf("<w:rPrChange");
+  const earlier = change < 0 ? "" : whole.slice(change);
+  let inner = change < 0 ? whole : whole.slice(0, change);
   if (style.bold === true) inner = upsertWord(inner, "b", "<w:b/>");
   if (style.bold === false) inner = dropWord(dropWord(inner, "b"), "bCs");
   if (style.italic === true) inner = upsertWord(inner, "i", "<w:i/>");
@@ -235,7 +239,7 @@ export function applyWordRunStyle(rPr, style) {
     inner = upsertWord(inner, "vertAlign", `<w:vertAlign w:val="${value}"/>`);
   }
   if (style.script === false) inner = dropWord(inner, "vertAlign");
-  return inner ? `<w:rPr>${inner}</w:rPr>` : "";
+  return inner || earlier ? `<w:rPr>${inner}${earlier}</w:rPr>` : "";
 }
 
 function fontName(value) {
@@ -374,7 +378,7 @@ export function formatWordParagraph(paragraph, find, style, all = true) {
     whole: m[0],
     text: wordText(m[0]),
     plain: plainWordRun(m[0]),
-    rPr: /<w:rPr>[\s\S]*?<\/w:rPr>/.exec(m[0])?.[0] ?? "",
+    rPr: firstElement(m[0], "rPr"),
   }));
   const full = runs.map((run) => run.text).join("");
   if (!full.includes(find)) return { paragraph, count: 0 };
