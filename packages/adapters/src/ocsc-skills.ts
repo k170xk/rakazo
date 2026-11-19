@@ -29,9 +29,11 @@ const SETUP_QUESTIONS_NOTE = `Ask with ask_user, one question at a time, waiting
 const PDF_EXPORT_NOTE = (file: string) =>
   `When the person wants a PDF of a ${file} (one you made or theirs), convert it with the ocsc tool, program pdf, args: convert --in <the ${file} path> --out outputs/<Name>.pdf, then send the PDF with attach_file. Never make the PDF another way.`;
 
+const INLINE_SPEC_NOTE = `Give each new or edit spec in the ocsc call itself: put the JSON in the ocsc tool's spec field, beside program and args with --spec <path>. It is saved at that path before the command runs, so no separate write_file is needed and the document is made or changed in one step.`;
+
 const WORD_INSTRUCTIONS = `Use this whenever the person wants a Word document, report, letter, memo, method statement, specification or any .docx, or wants one changed.
 
-Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-word command below runs as the ocsc tool with program word and the rest of the command as args, one item per word. Always use ocsc-word. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding.
+Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-word command below runs as the ocsc tool with program word and the rest of the command as args, one item per word. Always use ocsc-word. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding. ${INLINE_SPEC_NOTE}
 
 TEMPLATES
 Run: ocsc-word templates
@@ -74,7 +76,7 @@ For a report, proposal, method statement or other document of more than a page, 
 Letters and memos skip these questions and have no pictures unless the person asks.
 
 CREATE
-1. Write a spec with write_file to work/<short-name>.json:
+1. Write the spec for work/<short-name>.json:
 {"title":"Flood Risk Assessment","office":"Dublin","fields":{"project_number":"HEL18","project_name":"HEL 18 Design and Build","client_name":"Dublin City Council","author":"<their name>"},"blocks":[
  {"type":"heading","level":1,"text":"Introduction"},
  {"type":"paragraph","text":"Plain text. **bold** and *italic* are allowed."},
@@ -166,7 +168,7 @@ ${SCREEN_NOTE}`;
 
 const SLIDES_INSTRUCTIONS = `Use this whenever the person asks for slides, a deck, a presentation or a PowerPoint, or wants a PowerPoint changed.
 
-Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-pptx command below runs as the ocsc tool with program pptx and the rest of the command as args, one item per word. Always use ocsc-pptx. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline.
+Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-pptx command below runs as the ocsc tool with program pptx and the rest of the command as args, one item per word. Always use ocsc-pptx. Never build a .pptx another way (no python-pptx, LibreOffice or the pptxgenjs package). Always send the finished PowerPoint unless the person said they only want an outline. ${INLINE_SPEC_NOTE}
 
 BEFORE YOU START A NEW DECK
 ${SETUP_QUESTIONS_NOTE}
@@ -269,10 +271,10 @@ Use file names like outputs/HEL18-Design-Review.pptx, with no spaces or slashes 
 
 const EXCEL_INSTRUCTIONS = `Use this whenever the person wants a spreadsheet, workbook, cost plan, schedule, register, tracker or any .xlsx, or wants one changed.
 
-Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-xlsx command below runs as the ocsc tool with program xlsx and the rest of the command as args, one item per word. Always use ocsc-xlsx. Never build a workbook another way (no openpyxl, pandas or LibreOffice), because only ocsc-xlsx keeps the OCSC styling and works out the formulas.
+Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-xlsx command below runs as the ocsc tool with program xlsx and the rest of the command as args, one item per word. Always use ocsc-xlsx. Never build a workbook another way (no openpyxl, pandas or LibreOffice), because only ocsc-xlsx keeps the OCSC styling and works out the formulas. ${INLINE_SPEC_NOTE}
 
 CREATE
-1. Write a spec with write_file to work/<short-name>.json:
+1. Write the spec for work/<short-name>.json:
 {"sheets":[{"name":"Costs",
  "columns":[{"header":"Item","width":30},{"header":"Qty"},{"header":"Rate","format":"£#,##0.00"},{"header":"Cost","format":"£#,##0.00","total":true}],
  "rows":[["Steel beams",12,450,{"formula":"B2*C2"}],["Concrete (m3)",40,98.5,{"formula":"B3*C3"}]],
