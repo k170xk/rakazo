@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { damagedDocx, soundDocx } from "./docx.test-support.js";
+import { DAMAGED_WORD_INPUT, DAMAGED_WORD_OUTPUT } from "./docx-integrity.js";
 import type * as OcscToolModule from "./ocsc-tool.js";
 import type * as RunMessagesModule from "./run-messages.js";
 import { computerTools } from "./run-tools-computer.js";
@@ -201,6 +203,58 @@ describe("Word documents on a tool runner", () => {
     expect(h.run).toHaveBeenCalledWith(
       expect.objectContaining({ args: ["new", "--spec", "s.json", "--out", "y.docx"] }),
     );
+  });
+});
+
+describe("a Word command that saves a damaged file", () => {
+  const edit = (h: ReturnType<typeof harness>) =>
+    computerTools.ocsc!(
+      h.ctx,
+      h.call({
+        program: "word",
+        args: [
+          "edit",
+          "--in",
+          "attachments/a1.docx",
+          "--spec",
+          "e.json",
+          "--out",
+          "outputs/doc.docx",
+        ],
+      }) as never,
+    );
+  const filesAre = (h: ReturnType<typeof harness>, input: Uint8Array, output: Uint8Array) =>
+    h.files.readFile.mockImplementation((async (...args: unknown[]) =>
+      String(args[1]).includes("outputs/") ? output : input) as never);
+
+  it("is refused with nothing kept, and the agent is told to edit the same file again", async () => {
+    const h = harness({ documents: true });
+    filesAre(h, soundDocx(), damagedDocx());
+    const result = await edit(h);
+    expect(result).toMatchObject({
+      ok: false,
+      documentCheck: "problems",
+      problems: [DAMAGED_WORD_OUTPUT],
+    });
+    expect(h.state.documents.made).toEqual([]);
+  });
+
+  it("says so when the file it started from was already damaged", async () => {
+    const h = harness({ documents: true });
+    filesAre(h, damagedDocx(), damagedDocx());
+    const result = await edit(h);
+    expect(result).toMatchObject({ documentCheck: "problems", problems: [DAMAGED_WORD_INPUT] });
+    expect(h.state.documents.made).toEqual([]);
+  });
+
+  it("passes as before when the saved file reads correctly or cannot be read", async () => {
+    const h = harness({ documents: true });
+    filesAre(h, soundDocx(), soundDocx());
+    expect(await edit(h)).not.toHaveProperty("documentCheck");
+    expect(h.state.documents.made).toEqual(["outputs/doc.docx"]);
+
+    h.files.readFile.mockRejectedValue(new Error("file not found"));
+    expect(await edit(h)).not.toHaveProperty("documentCheck");
   });
 });
 

@@ -67,7 +67,8 @@ import {
   studioDocumentProgram,
 } from "./document-versions.js";
 import type { DocumentDraftOutcome } from "./document-write-check.js";
-import { annotateDocumentWriteResult } from "./document-write-check.js";
+import { annotateDocumentWriteResult, isDocumentWrite } from "./document-write-check.js";
+import { brokenWordParts, DAMAGED_WORD_INPUT, DAMAGED_WORD_OUTPUT } from "./docx-integrity.js";
 import { nativeShellCommandArgv, usesNativeShell } from "./native-shell.js";
 import {
   documentAuthor,
@@ -376,6 +377,48 @@ async function keepDocumentDraft(
       maxBytes: ctx.deps.maxUploadSizeBytes,
     },
   );
+}
+
+const WORD_CHECK_MAX_BYTES = 200 * 1024 * 1024;
+
+/**
+ * Why a Word command's saved file would open as unreadable content, or undefined when it reads
+ * correctly or cannot be checked.
+ */
+async function damagedWordOutput(
+  ctx: RunContext,
+  program: string,
+  args: readonly string[],
+  result: unknown,
+  files: WorkspaceFiles,
+  computer: () => Promise<ComputerRef>,
+): Promise<string | undefined> {
+  if (program !== "word" || !isDocumentWrite(program, args)) return undefined;
+  const printed = printedJson(result);
+  const output = typeof printed?.path === "string" ? printed.path.replace(/^\.\//, "") : "";
+  if (printed?.ok !== true || !/\.docx$/i.test(output)) return undefined;
+  const broken = async (filePath: string) =>
+    brokenWordParts(
+      await files.readFile(
+        await computer(),
+        resolveRunFilePath(
+          { mode: ctx.computer.mode, botId: ctx.bot.id, folder: ctx.computer.folder },
+          filePath,
+        ),
+        ctx.context,
+        { maxBytes: WORD_CHECK_MAX_BYTES },
+      ),
+    ).length > 0;
+  try {
+    if (!(await broken(output))) return undefined;
+  } catch {
+    return undefined;
+  }
+  const input = ocscInPath(args);
+  const inputBroken =
+    input && /\.docx$/i.test(input) ? await broken(input).catch(() => false) : false;
+  getLogger().warn("ocsc word output damaged", { step: args[0], input_damaged: inputBroken });
+  return inputBroken ? DAMAGED_WORD_INPUT : DAMAGED_WORD_OUTPUT;
 }
 
 /**
@@ -1232,6 +1275,21 @@ export const computerTools: ToolHandlers = {
         : ran;
       const early = annotateDocumentWriteResult(program, args, raw);
       if (early.documentCheck === "problems") return call.finish(noted(early));
+      const runnerComputer = async () => {
+        await runner.prepare();
+        return TOOL_RUNNER_COMPUTER;
+      };
+      const damaged = await damagedWordOutput(
+        ctx,
+        program,
+        args,
+        raw,
+        runner.files,
+        runnerComputer,
+      );
+      if (damaged) {
+        return call.finish(noted(annotateDocumentWriteResult(program, args, raw, { damaged })));
+      }
       noteDocumentWrite(ctx, program, args, raw);
       rememberLineage(ctx, lineage, program, args, raw);
       if (studioEdit) rememberStudioOutput(ctx, raw);

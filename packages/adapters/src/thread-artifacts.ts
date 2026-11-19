@@ -24,6 +24,7 @@ import type { Artifact, PrismaClient } from "@rakazo/db";
 import { Prisma, withResolvedArtifactVersion } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { resolveRunFilePath } from "./computer-support.js";
+import { brokenWordParts, DAMAGED_WORD_ATTACHMENT } from "./docx-integrity.js";
 
 export type MaterializedThreadFile = {
   name: string;
@@ -79,6 +80,10 @@ export async function attachWorkspaceFileToThread(
     throw new Error(
       `file exceeds the ${attachmentSizeLabel(deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES)} attachment limit`,
     );
+  }
+  if (/\.docx$/i.test(fileName) && brokenWordParts(input.bytes).length > 0) {
+    getLogger().warn("damaged word attachment refused");
+    throw new Error(DAMAGED_WORD_ATTACHMENT);
   }
 
   const context = {

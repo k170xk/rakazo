@@ -40,7 +40,7 @@ export function annotateDocumentWriteResult(
   program: string,
   args: readonly string[],
   result: Record<string, unknown>,
-  extras?: { draftOutcome?: DocumentDraftOutcome },
+  extras?: { draftOutcome?: DocumentDraftOutcome; damaged?: string },
 ): Record<string, unknown> {
   if (!isDocumentWrite(program, args)) return result;
   if (result.running === true) return result;
@@ -73,6 +73,9 @@ export function annotateDocumentWriteResult(
   const warning = typeof printed?.warning === "string" ? printed.warning : undefined;
   if (warning && CLEAR_FAILURE.test(warning)) {
     problems.push(warning);
+  }
+  if (extras?.damaged) {
+    problems.push(extras.damaged);
   }
   if (extras?.draftOutcome === "failed") {
     problems.push(

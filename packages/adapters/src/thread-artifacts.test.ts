@@ -8,6 +8,8 @@ import type { MessageBlock } from "@rakazo/contracts";
 import { ATTACHMENT_MAX_COUNT } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { describe, expect, it, vi } from "vitest";
+import { damagedDocx } from "./docx.test-support.js";
+import { DAMAGED_WORD_ATTACHMENT } from "./docx-integrity.js";
 import {
   attachWorkspaceFileToThread,
   currentTurnFilesInstruction,
@@ -37,6 +39,24 @@ describe("current-turn thread files", () => {
         },
       ),
     ).rejects.toThrow("attachment limit");
+    expect(put).not.toHaveBeenCalled();
+  });
+  it("refuses a damaged Word file before storage", async () => {
+    const put = vi.fn();
+    await expect(
+      attachWorkspaceFileToThread(
+        { prisma: {} as PrismaClient, artifacts: { put } as unknown as ArtifactStore },
+        {
+          spaceId: "space",
+          userId: "owner",
+          botId: "bot",
+          runId: "run",
+          filePath: "outputs/Plan.docx",
+          bytes: damagedDocx(),
+          operationId: "op",
+        },
+      ),
+    ).rejects.toThrow(DAMAGED_WORD_ATTACHMENT);
     expect(put).not.toHaveBeenCalled();
   });
   it("does not start the computer for a turn without attachments", async () => {
