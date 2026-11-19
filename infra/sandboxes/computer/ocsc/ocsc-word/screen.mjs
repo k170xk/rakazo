@@ -324,7 +324,7 @@ function renderDocx(bytes, changes = true, numbering = []) {
     for(var i=0;i<raw.length;i++)buf[i]=raw.charCodeAt(i);
     docx.renderAsync(new Blob([buf]),host,null,{inWrapper:true,renderChanges:${changes},renderHeaders:true,renderFooters:true,renderFootnotes:true,renderEndnotes:true,useBase64URL:true,experimental:true,ignoreLastRenderedPageBreak:true})
       .then(done,function(e){host.innerHTML="";var p=document.createElement("div");p.className="ob-error";p.textContent="This document could not be drawn: "+(e&&e.message||e);host.appendChild(p);done();});
-  }catch(e){host.textContent="This document could not be drawn: "+e.message;done();}
+  }catch(e){host.innerHTML="";var p=document.createElement("div");p.className="ob-error";p.textContent="This document could not be drawn: "+e.message;host.appendChild(p);done();}
 })();
 </script>`;
   return {

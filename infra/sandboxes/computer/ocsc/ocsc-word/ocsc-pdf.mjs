@@ -116,7 +116,7 @@ async function browser() {
 
 async function printHtml(
   html,
-  { css = "", landscape = false, scripts = true, ready = true, fit = false },
+  { css = "", landscape = false, scripts = true, ready = true, fit = false, drawn = false },
   outFull,
 ) {
   const b = await browser();
@@ -141,6 +141,16 @@ async function printHtml(
         null,
         { timeout: 60_000 },
       );
+    }
+    if (drawn) {
+      const failure = await page.evaluate(
+        () => document.querySelector(".ob-error")?.textContent?.trim() || "",
+      );
+      if (failure) {
+        throw new UsageError(
+          `${failure} No PDF was made. The file may be damaged: convert an earlier version or the original instead.`,
+        );
+      }
     }
     await page.emulateMedia({ media: "print" });
     let scale = 1;
@@ -227,7 +237,7 @@ async function cmdConvert(o) {
       changes: o["show-changes"] === true,
       print: true,
     });
-    bytes = await printHtml(html, PRINT[kind] || {}, out.full);
+    bytes = await printHtml(html, { ...PRINT[kind], drawn: true }, out.full);
   }
   return { ok: true, from: src.rel, bytes, ...downloadLink(out.rel) };
 }
