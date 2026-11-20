@@ -45,6 +45,9 @@ const RESTORE_SCROLL_MS = 1200;
 
 const INDENT_PX = 14;
 
+/** On <body> while a task bar is held; planner-theme.css hides Jantt's hover card meanwhile. */
+const DRAGGING_CLASS = "planner-dragging-task";
+
 const KEPT_VIEW_KEYS = [
   "scale",
   "dayWidth",
@@ -302,26 +305,46 @@ export function PlannerWorkbench({
     commit({ ...plan, tasks });
   };
 
+  // Jantt rebuilds every bar on each pointer move, and opens its hover card each time the pointer
+  // "enters" a rebuilt bar; the card is appended to <body>, so the flag lives there.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || readOnly) return;
+    const stop = () => document.body.classList.remove(DRAGGING_CLASS);
+    const onDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      const bar = (event.target as Element | null)?.closest?.(".jantt-task-bar, .jantt-milestone");
+      if (!bar || !root.contains(bar)) return;
+      document.body.classList.add(DRAGGING_CLASS);
+    };
+    root.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("pointerup", stop, true);
+    window.addEventListener("pointercancel", stop, true);
+    return () => {
+      stop();
+      root.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("pointerup", stop, true);
+      window.removeEventListener("pointercancel", stop, true);
+    };
+  }, [readOnly]);
+
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    let frame = 0;
+    const watch = { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] };
+    // Runs in the observer's microtask, before the browser paints Jantt's new rows, so a drag never
+    // shows a frame without avatars, outline styles or bar text colour. Our own writes are not observed.
+    const observer = new MutationObserver(() => apply());
     const apply = () => {
-      frame = 0;
+      observer.disconnect();
       syncOutlineClasses(root, plan, highlightTaskIds);
       decorateAssignees(root, plan, people, !readOnly, assigneeLabels);
       fitTimelineHeader(root);
+      // Style changes cover a bar recoloured in place (category change) without a re-mount.
+      observer.observe(root, watch);
     };
     apply();
-    const observer = new MutationObserver(() => {
-      if (!frame) frame = requestAnimationFrame(apply);
-    });
-    // Style changes cover a bar recoloured in place (category change) without a re-mount.
-    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] });
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-    };
+    return () => observer.disconnect();
   }, [plan, highlightTaskIds, people, readOnly, assigneeLabels]);
 
   const assigningTask = assigning ? plan.tasks?.find((task) => task.id === assigning.taskId) : undefined;

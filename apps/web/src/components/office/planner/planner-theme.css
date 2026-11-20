@@ -718,6 +718,15 @@ body .jantt-hover-card {
   stroke: var(--primary);
 }
 
+body.planner-dragging-task .jantt-hover-card {
+  display: none;
+}
+
+body.planner-dragging-task,
+body.planner-dragging-task * {
+  user-select: none;
+}
+
 /* MS Project summary / stage rows: blue band + bracket bar + outline indent. */
 .planner-workbench .jantt-label-row {
   padding-left: calc(12px + var(--outline-indent, 0px));
