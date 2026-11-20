@@ -44,6 +44,7 @@ import { setStudioBeforeSend, setStudioSelectionImage } from "../studio/studio-s
 import { documentDockPage } from "./context";
 import { pdfEditingSoon } from "./pdf/editing-soon";
 import { DocumentLoadOverlay, DocumentLoadPanel } from "./DocumentLoadPanel";
+import { SaveStatusPill } from "./SaveStatusPill";
 import { useDocumentBotId, usePublishStudioToChat } from "./document-bot";
 import { DOCUMENT_LOAD_ATTEMPTS } from "./document-load";
 import { HistoryButton, VersionHistoryPanel } from "./history/VersionHistory";
@@ -64,6 +65,7 @@ import {
   PdfHostError,
   pdfStudioInstalled,
   pdfStudioSrc,
+  hideAppSaveProgress,
   pressAppSave,
   readAppState,
   sendAppTheme,
@@ -554,14 +556,16 @@ export default function PdfStudio({
     const state = await readAppState(frame.current);
     if (!state?.modified) return true;
     const saved = new Promise<boolean>((resolve) => saveWaiters.current.push(resolve));
+    const showProgress = hideAppSaveProgress(frame.current);
     if (!pressAppSave(frame.current)) {
+      showProgress();
       settleWaiters(false);
       return false;
     }
     return Promise.race([
       saved,
       new Promise<boolean>((resolve) => window.setTimeout(() => resolve(false), SAVE_WAIT_MS)),
-    ]);
+    ]).finally(showProgress);
   }, []);
 
   // Markups save themselves once the person pauses: each save is a version in the history, so any
@@ -843,14 +847,6 @@ export default function PdfStudio({
 
   const rows = useMemo(() => (doc ? versionRows(doc.versions, doc.version) : []), [doc]);
   const title = doc ? displayName(doc.name) : t`PDFs`;
-  const statusText =
-    saveState === "saving"
-      ? t`Saving…`
-      : saveState === "saved"
-        ? t`Saved`
-        : saveState === "failed"
-          ? t`Not saved`
-          : null;
   const loadFailed = loadState.status === "error" && !doc;
   const uploader = useDocumentUpload("pdf", onOpenDocument, async () => {
     await saveNow();
@@ -964,15 +960,7 @@ export default function PdfStudio({
       }
       actions={
         <>
-          {statusText ? (
-            <span
-              className="shrink-0 text-[12px] text-muted-foreground max-sm:hidden"
-              data-testid="pdf-save-status"
-              aria-live="polite"
-            >
-              {statusText}
-            </span>
-          ) : null}
+          <SaveStatusPill status={saveState} testId="pdf-save-status" />
           <StudioMoreMenu>
             <DropdownMenuItem disabled={!doc} onClick={() => void openHistory(true)}>
               <History className="size-4" strokeWidth={1.8} />

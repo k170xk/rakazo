@@ -233,3 +233,49 @@ export function pressAppSave(frame: HTMLIFrameElement | null): boolean {
   button.click();
   return true;
 }
+
+const QUIET_SAVE_CLASS = "evolve-quiet-save";
+const QUIET_SAVE_STYLE_ID = "evolve-quiet-save-style";
+/** After this long a save shows the app's own progress box again, so a slow save never looks frozen. */
+export const QUIET_SAVE_MS = 2000;
+
+/**
+ * Makes the app's "Saving PDF…" box invisible while an autosave runs; the returned function shows
+ * it again. The box stays in place, transparent, because it is what stops a markup being drawn
+ * mid-save: the app marks the document saved when the save ends, so that markup would be lost.
+ */
+export function hideAppSaveProgress(frame: HTMLIFrameElement | null): () => void {
+  const page = (frame?.contentWindow as unknown as FramedApp | null)?.document;
+  if (!page?.documentElement) return () => {};
+  if (!page.getElementById(QUIET_SAVE_STYLE_ID)) {
+    const style = page.createElement("style");
+    style.id = QUIET_SAVE_STYLE_ID;
+    style.textContent =
+      `html.${QUIET_SAVE_CLASS} .loading-overlay{background:transparent!important;cursor:progress}` +
+      `html.${QUIET_SAVE_CLASS} .loading-overlay>*{visibility:hidden!important}`;
+    page.head.append(style);
+  }
+  const root = page.documentElement;
+  root.classList.add(QUIET_SAVE_CLASS);
+  const timer = window.setTimeout(() => root.classList.remove(QUIET_SAVE_CLASS), QUIET_SAVE_MS);
+  return () => {
+    window.clearTimeout(timer);
+    // The app closes its box a moment after Evolve hears the save finished; showing it again
+    // before then would flash it.
+    const overlay = page.querySelector(".loading-overlay");
+    if (!overlay?.classList.contains("visible")) {
+      root.classList.remove(QUIET_SAVE_CLASS);
+      return;
+    }
+    const done = () => {
+      observer.disconnect();
+      window.clearTimeout(cap);
+      root.classList.remove(QUIET_SAVE_CLASS);
+    };
+    const observer = new MutationObserver(() => {
+      if (!overlay.classList.contains("visible")) done();
+    });
+    observer.observe(overlay, { attributes: true, attributeFilter: ["class"] });
+    const cap = window.setTimeout(done, QUIET_SAVE_MS);
+  };
+}
