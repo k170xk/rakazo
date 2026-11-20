@@ -1355,6 +1355,10 @@ msgstr "Add me to C1078's Design Team as Civil Engineer"
 msgid "Add notes for this slide"
 msgstr "Add notes for this slide"
 
+#: src/components/AskCard.tsx
+msgid "Add one person, or several. The projects and mentions that follow are used on every CV."
+msgstr "Add one person, or several. The projects and mentions that follow are used on every CV."
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
 msgstr "Add open work"
@@ -1419,6 +1423,10 @@ msgstr "Add to chat"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "Add to routine"
+
+#: src/components/AskCard.tsx
+msgid "Add to this set"
+msgstr "Add to this set"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
@@ -2381,6 +2389,7 @@ msgstr "Avatar Studio"
 msgid "Average"
 msgstr "Average"
 
+#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -3963,6 +3972,7 @@ msgstr "Context limit"
 msgid "Context Window Usage"
 msgstr "Context Window Usage"
 
+#: src/components/AskCard.tsx
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/SecretAskCard.tsx
@@ -3982,6 +3992,10 @@ msgstr "Continue in Background"
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
 msgstr "Continue to checkout"
+
+#: src/components/AskCard.tsx
+msgid "Continue to projects"
+msgstr "Continue to projects"
 
 #. placeholder {0}: reset.sso.name
 #: src/pages/Auth.tsx
@@ -4870,6 +4884,10 @@ msgstr "Could not update the skill"
 msgid "Could not update the tool"
 msgstr "Could not update the tool"
 
+#: src/components/AskCard.tsx
+msgid "Could not update this CV"
+msgstr "Could not update this CV"
+
 #: src/pages/AdminCompanyVoice.tsx
 msgid "Could not update voice"
 msgstr "Could not update voice"
@@ -5168,6 +5186,14 @@ msgstr "Create space"
 msgid "Create team"
 msgstr "Create team"
 
+#: src/components/AskCard.tsx
+msgid "Create Word CV"
+msgstr "Create Word CV"
+
+#: src/components/AskCard.tsx
+msgid "Create Word CVs"
+msgstr "Create Word CVs"
+
 #: src/components/CreateOrganizationDialog.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -5201,6 +5227,7 @@ msgstr "Creates a finished OCSC document from a short brief, on the company temp
 msgid "Creating draft…"
 msgstr "Creating draft…"
 
+#: src/components/AskCard.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/dialogs.tsx
@@ -5322,6 +5349,14 @@ msgstr "Customize agent avatar"
 #: src/pages/shell/evolve-references.tsx
 msgid "CV"
 msgstr "CV"
+
+#: src/components/AskCard.tsx
+msgid "CV created"
+msgstr "CV created"
+
+#: src/components/AskCard.tsx
+msgid "CVs created"
+msgstr "CVs created"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Daily check-ins on unfinished work"
@@ -7071,6 +7106,10 @@ msgstr "For changes people only get after reloading the app, such as a new studi
 msgid "For clients and partners; a password is made for you"
 msgstr "For clients and partners; a password is made for you"
 
+#: src/components/AskCard.tsx
+msgid "For example: BIM Manager, flood modelling"
+msgstr "For example: BIM Manager, flood modelling"
+
 #: src/components/AppScopeAskCard.tsx
 msgid "For example: one shared list the whole office sees"
 msgstr "For example: one shared list the whole office sees"
@@ -8270,6 +8309,10 @@ msgid "Leave Design Team"
 msgstr "Leave Design Team"
 
 #: src/components/AskCard.tsx
+msgid "Leave photos out"
+msgstr "Leave photos out"
+
+#: src/components/AskCard.tsx
 msgid "Leave team"
 msgstr "Leave team"
 
@@ -8537,6 +8580,10 @@ msgstr "Loading projects..."
 #: src/components/office/WordStudio.tsx
 msgid "Loading the newest version…"
 msgstr "Loading the newest version…"
+
+#: src/components/AskCard.tsx
+msgid "Loading the project list…"
+msgstr "Loading the project list…"
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading video…"
@@ -9747,6 +9794,10 @@ msgstr "No documents match."
 msgid "No drawings selected"
 msgstr "No drawings selected"
 
+#: src/components/AskCard.tsx
+msgid "No employee selected"
+msgstr "No employee selected"
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "No Evolve assistants are available. Check that Evolve is linked."
 msgstr "No Evolve assistants are available. Check that Evolve is linked."
@@ -10766,6 +10817,10 @@ msgstr "Other failures"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "Other model…"
+
+#: src/components/AskCard.tsx
+msgid "Other projects"
+msgstr "Other projects"
 
 #: src/components/AskCard.tsx
 msgid "Other roles on this team"
@@ -11844,6 +11899,7 @@ msgid "Remember this choice"
 msgstr "Remember this choice"
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AskCard.tsx
 #: src/components/EmailSignatureSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
@@ -12312,6 +12368,10 @@ msgstr "role"
 msgid "Role"
 msgstr "Role"
 
+#: src/components/AskCard.tsx
+msgid "Role bio"
+msgstr "Role bio"
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Role is required for this person reference"
 msgstr "Role is required for this person reference"
@@ -12656,6 +12716,7 @@ msgstr "Saving your workspace"
 msgid "Saving..."
 msgstr "Saving..."
 
+#: src/components/AskCard.tsx
 #: src/components/office/PlannerStudio.tsx
 #: src/components/office/SaveStatusPill.tsx
 #: src/components/office/SheetStudio.tsx
@@ -12756,6 +12817,10 @@ msgstr "Search connectors"
 msgid "Search connectors and the directory"
 msgstr "Search connectors and the directory"
 
+#: src/components/AskCard.tsx
+msgid "Search employees"
+msgstr "Search employees"
+
 #: src/components/GroupPeople.tsx
 #: src/components/office/planner/EvolveAssigneePicker.tsx
 msgid "Search Evolve people"
@@ -12795,6 +12860,14 @@ msgstr "Search integrations.sh"
 #: src/pages/shell/chat-model-picker.tsx
 msgid "Search models"
 msgstr "Search models"
+
+#: src/components/AskCard.tsx
+msgid "Search other projects"
+msgstr "Search other projects"
+
+#: src/components/AskCard.tsx
+msgid "Search projects"
+msgstr "Search projects"
 
 #: src/components/office/planner/EvolveJobLink.tsx
 msgid "Search projects or job numbers"
@@ -12919,6 +12992,10 @@ msgstr "Select Drawing(s)"
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Select notes or shapes on the board, then ask for a change. The assistant works from what you pointed at."
 msgstr "Select notes or shapes on the board, then ask for a change. The assistant works from what you pointed at."
+
+#: src/components/AskCard.tsx
+msgid "Select projects"
+msgstr "Select projects"
 
 #: src/components/EmailFilingCard.tsx
 msgid "Select ready"
@@ -13751,6 +13828,10 @@ msgstr "Speaker notes"
 msgid "Speaking"
 msgstr "Speaking"
 
+#: src/components/AskCard.tsx
+msgid "Special mentions"
+msgstr "Special mentions"
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Speech model"
 msgstr "Speech model"
@@ -14231,6 +14312,10 @@ msgstr "Tap Share, then Add to Home Screen."
 msgid "Target"
 msgstr "Target"
 
+#: src/components/AskCard.tsx
+msgid "Target role"
+msgstr "Target role"
+
 #: src/components/office/planner/QuickAssignPopover.tsx
 msgid "Task owner"
 msgstr "Task owner"
@@ -14562,6 +14647,10 @@ msgstr "The provider is rate-limiting requests."
 msgid "The review couldn't be written just now. Try again."
 msgstr "The review couldn't be written just now. Try again."
 
+#: src/components/AskCard.tsx
+msgid "The same projects go on every CV in this set."
+msgstr "The same projects go on every CV in this set."
+
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
 msgstr "The screen connection closed."
@@ -14678,6 +14767,10 @@ msgstr "There's no room for this file. Free up storage and try again."
 msgid "There's no room to save this PDF. Free up storage and try again."
 msgstr "There's no room to save this PDF. Free up storage and try again."
 
+#: src/components/AskCard.tsx
+msgid "These are the main projects. Each one prints with its photo and a full paragraph, and any special mentions are written into that paragraph. Search matches the title, client, job number and description."
+msgstr "These are the main projects. Each one prints with its photo and a full paragraph, and any special mentions are written into that paragraph. Search matches the title, client, job number and description."
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
 msgstr "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
@@ -14694,10 +14787,18 @@ msgstr "These files or choices no longer match. Choose the files again."
 msgid "These libraries are already switched on. Describe the job to an agent and it can use any of them on day one."
 msgstr "These libraries are already switched on. Describe the job to an agent and it can use any of them on day one."
 
+#: src/components/AskCard.tsx
+msgid "These phrases are written into the paragraph under each main project. Leave this blank if there are none. Other projects, chosen next, do not get a paragraph."
+msgstr "These phrases are written into the paragraph under each main project. Leave this blank if there are none. Other projects, chosen next, do not get a paragraph."
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
 msgid "These saved settings can't be read. Remove it and add it again."
 msgstr "These saved settings can't be read. Remove it and add it again."
+
+#: src/components/AskCard.tsx
+msgid "These start as this person's other jobs, the same ones the CV generator fills in. Each one prints down the right-hand side: photo, title, year and value only. They do not get the paragraph or the special mentions. Untick any that should not be included."
+msgstr "These start as this person's other jobs, the same ones the CV generator fills in. Each one prints down the right-hand side: photo, title, year and value only. They do not get the paragraph or the special mentions. Untick any that should not be included."
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "These stop every connector of one kind, even ones that are on in the list. Most companies leave them on."
@@ -16301,6 +16402,10 @@ msgstr "Who gets a computer"
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Who has bridge inspection experience in the Dublin office?"
 msgstr "Who has bridge inspection experience in the Dublin office?"
+
+#: src/components/AskCard.tsx
+msgid "Who needs a CV"
+msgstr "Who needs a CV"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Who you work with and what matters to them"

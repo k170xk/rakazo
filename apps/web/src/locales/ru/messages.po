@@ -1350,6 +1350,10 @@ msgstr ""
 msgid "Add notes for this slide"
 msgstr "Добавьте заметки к этому слайду"
 
+#: src/components/AskCard.tsx
+msgid "Add one person, or several. The projects and mentions that follow are used on every CV."
+msgstr ""
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
 msgstr "Добавить задачу"
@@ -1414,6 +1418,10 @@ msgstr ""
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "Добавить в задачу"
+
+#: src/components/AskCard.tsx
+msgid "Add to this set"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Add trigger"
@@ -2376,6 +2384,7 @@ msgstr "Студия аватаров"
 msgid "Average"
 msgstr "Среднее"
 
+#: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
@@ -3958,6 +3967,7 @@ msgstr ""
 msgid "Context Window Usage"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/SecretAskCard.tsx
@@ -3976,6 +3986,10 @@ msgstr "Продолжить в фоне"
 
 #: src/components/ModelCredits.tsx
 msgid "Continue to checkout"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Continue to projects"
 msgstr ""
 
 #. placeholder {0}: reset.sso.name
@@ -4865,6 +4879,10 @@ msgstr ""
 msgid "Could not update the tool"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Could not update this CV"
+msgstr ""
+
 #: src/pages/AdminCompanyVoice.tsx
 msgid "Could not update voice"
 msgstr ""
@@ -5163,6 +5181,14 @@ msgstr "Создайте пространство"
 msgid "Create team"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Create Word CV"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Create Word CVs"
+msgstr ""
+
 #: src/components/CreateOrganizationDialog.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -5196,6 +5222,7 @@ msgstr ""
 msgid "Creating draft…"
 msgstr ""
 
+#: src/components/AskCard.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/dialogs.tsx
@@ -5312,6 +5339,14 @@ msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "CV"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "CV created"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "CVs created"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -7058,6 +7093,10 @@ msgstr ""
 msgid "For clients and partners; a password is made for you"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "For example: BIM Manager, flood modelling"
+msgstr ""
+
 #: src/components/AppScopeAskCard.tsx
 msgid "For example: one shared list the whole office sees"
 msgstr ""
@@ -8252,6 +8291,10 @@ msgid "Leave Design Team"
 msgstr ""
 
 #: src/components/AskCard.tsx
+msgid "Leave photos out"
+msgstr ""
+
+#: src/components/AskCard.tsx
 msgid "Leave team"
 msgstr ""
 
@@ -8519,6 +8562,10 @@ msgstr ""
 #: src/components/office/WordStudio.tsx
 msgid "Loading the newest version…"
 msgstr "Загрузка последней версии…"
+
+#: src/components/AskCard.tsx
+msgid "Loading the project list…"
+msgstr ""
 
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading video…"
@@ -9729,6 +9776,10 @@ msgstr "No documents match."
 msgid "No drawings selected"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "No employee selected"
+msgstr ""
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "No Evolve assistants are available. Check that Evolve is linked."
 msgstr ""
@@ -10748,6 +10799,10 @@ msgstr ""
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "Другая модель…"
+
+#: src/components/AskCard.tsx
+msgid "Other projects"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Other roles on this team"
@@ -11826,6 +11881,7 @@ msgid "Remember this choice"
 msgstr ""
 
 #: src/components/ApprovalRulesSettings.tsx
+#: src/components/AskCard.tsx
 #: src/components/EmailSignatureSettings.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/TrustedLinkSitesSettings.tsx
@@ -12294,6 +12350,10 @@ msgstr ""
 msgid "Role"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Role bio"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Role is required for this person reference"
 msgstr ""
@@ -12638,6 +12698,7 @@ msgstr "Сохранение вашего рабочего пространст�
 msgid "Saving..."
 msgstr "Сохранение..."
 
+#: src/components/AskCard.tsx
 #: src/components/office/PlannerStudio.tsx
 #: src/components/office/SaveStatusPill.tsx
 #: src/components/office/SheetStudio.tsx
@@ -12738,6 +12799,10 @@ msgstr ""
 msgid "Search connectors and the directory"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Search employees"
+msgstr ""
+
 #: src/components/GroupPeople.tsx
 #: src/components/office/planner/EvolveAssigneePicker.tsx
 msgid "Search Evolve people"
@@ -12777,6 +12842,14 @@ msgstr "Поиск integrations.sh"
 #: src/pages/shell/chat-model-picker.tsx
 msgid "Search models"
 msgstr "Поиск моделей"
+
+#: src/components/AskCard.tsx
+msgid "Search other projects"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Search projects"
+msgstr ""
 
 #: src/components/office/planner/EvolveJobLink.tsx
 msgid "Search projects or job numbers"
@@ -12900,6 +12973,10 @@ msgstr ""
 
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Select notes or shapes on the board, then ask for a change. The assistant works from what you pointed at."
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Select projects"
 msgstr ""
 
 #: src/components/EmailFilingCard.tsx
@@ -13733,6 +13810,10 @@ msgstr "Заметки докладчика"
 msgid "Speaking"
 msgstr "говорит"
 
+#: src/components/AskCard.tsx
+msgid "Special mentions"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Speech model"
 msgstr "Речевая модель"
@@ -14213,6 +14294,10 @@ msgstr "Tap Share, then Add to Home Screen."
 msgid "Target"
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "Target role"
+msgstr ""
+
 #: src/components/office/planner/QuickAssignPopover.tsx
 msgid "Task owner"
 msgstr ""
@@ -14541,6 +14626,10 @@ msgstr "Поставщик ограничивает частоту запрос�
 msgid "The review couldn't be written just now. Try again."
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "The same projects go on every CV in this set."
+msgstr ""
+
 #: src/lib/computer-screen.ts
 msgid "The screen connection closed."
 msgstr "Соединение с экраном закрыто."
@@ -14657,6 +14746,10 @@ msgstr "Нет места для этого файла. Освободите м�
 msgid "There's no room to save this PDF. Free up storage and try again."
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "These are the main projects. Each one prints with its photo and a full paragraph, and any special mentions are written into that paragraph. Search matches the title, client, job number and description."
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "These changes will be made to the current version {current}. It stays in the history, so you can restore it again. The app's data is not changed."
 msgstr ""
@@ -14673,9 +14766,17 @@ msgstr "Эти файлы или выбор больше не совпадают
 msgid "These libraries are already switched on. Describe the job to an agent and it can use any of them on day one."
 msgstr ""
 
+#: src/components/AskCard.tsx
+msgid "These phrases are written into the paragraph under each main project. Leave this blank if there are none. Other projects, chosen next, do not get a paragraph."
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
 msgid "These saved settings can't be read. Remove it and add it again."
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "These start as this person's other jobs, the same ones the CV generator fills in. Each one prints down the right-hand side: photo, title, year and value only. They do not get the paragraph or the special mentions. Untick any that should not be included."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -16274,6 +16375,10 @@ msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Who has bridge inspection experience in the Dublin office?"
+msgstr ""
+
+#: src/components/AskCard.tsx
+msgid "Who needs a CV"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
