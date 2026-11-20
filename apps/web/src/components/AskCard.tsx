@@ -23,6 +23,7 @@ import {
   ClipboardList,
   Clock,
   FilePenLine,
+  FileText,
   Flag,
   House,
   LogOut,
@@ -40,7 +41,7 @@ import {
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RpcClient } from "../lib/rpc";
 import { rpc as selectedSpaceRpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
@@ -129,6 +130,8 @@ export function AskCard(props: AskCardProps) {
     return <DesignTeamAskCard {...props} change={props.block.designTeamChange} />;
   if (props.block.siteVisitChange && isApprovalAskBlock(props.block))
     return <SiteVisitAskCard {...props} change={props.block.siteVisitChange} />;
+  if (props.block.staffCvChange && isApprovalAskBlock(props.block))
+    return <StaffCvAskCard {...props} change={props.block.staffCvChange} />;
   return <PromptAskCard {...props} />;
 }
 
@@ -523,6 +526,7 @@ function EvolveChangeCard({
   movedFrom,
   editor,
   subject,
+  hideAllow,
 }: Pick<AskCardProps, "block" | "canAnswer" | "onAnswer"> & {
   testId: string;
   icon: LucideIcon;
@@ -540,6 +544,8 @@ function EvolveChangeCard({
   movedFrom?: DeadlineChange["project"];
   /** The card's fields to edit before approving; closing returns to the preview. */
   editor?: (close: () => void) => ReactNode;
+  /** Early CV steps continue by revising the card, so the approve button waits for the last step. */
+  hideAllow?: boolean;
 }) {
   const { t } = useLingui();
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -645,33 +651,35 @@ function EvolveChangeCard({
             </div>
           ) : (
             <>
-              {block.actions?.map((action) => {
-                const allow = action.id === "allow";
-                const AllowIcon = destructive ? Trash2 : Check;
-                return (
-                  <Button
-                    key={action.id}
-                    variant={!allow ? "ghost" : destructive ? "destructive" : "default"}
-                    className="gap-1.5"
-                    disabled={pendingAction !== null}
-                    onClick={() => void answerWith(action.id)}
-                  >
-                    {pendingAction === action.id ? (
-                      <>
-                        <Spinner />
-                        <Trans>Sending…</Trans>
-                      </>
-                    ) : allow ? (
-                      <>
-                        <AllowIcon aria-hidden className="size-4" />
-                        {allowLabel}
-                      </>
-                    ) : (
-                      t`Cancel`
-                    )}
-                  </Button>
-                );
-              })}
+              {block.actions
+                ?.filter((action) => !(hideAllow && action.id === "allow"))
+                .map((action) => {
+                  const allow = action.id === "allow";
+                  const AllowIcon = destructive ? Trash2 : Check;
+                  return (
+                    <Button
+                      key={action.id}
+                      variant={!allow ? "ghost" : destructive ? "destructive" : "default"}
+                      className="gap-1.5"
+                      disabled={pendingAction !== null}
+                      onClick={() => void answerWith(action.id)}
+                    >
+                      {pendingAction === action.id ? (
+                        <>
+                          <Spinner />
+                          <Trans>Sending…</Trans>
+                        </>
+                      ) : allow ? (
+                        <>
+                          <AllowIcon aria-hidden className="size-4" />
+                          {allowLabel}
+                        </>
+                      ) : (
+                        t`Cancel`
+                      )}
+                    </Button>
+                  );
+                })}
               {editable ? (
                 <Button
                   variant="outline"
@@ -1655,6 +1663,593 @@ function PromptAskCard({ block, canAnswer, onAnswer, rpc = selectedSpaceRpc }: A
         {error ? <p className="mt-3 text-[13px] text-destructive">{error}</p> : null}
       </div>
     </BuiCard>
+  );
+}
+
+type StaffCvChange = NonNullable<AskBlock["staffCvChange"]>;
+
+const CV_STEP_LABEL = {
+  person: "1 of 4 · Employee and role",
+  projects: "2 of 4 · Projects",
+  mentions: "3 of 4 · Special mentions",
+  other: "4 of 4 · Other projects",
+} as const;
+
+/** The CV Generator's steps: employee and role, projects, special mentions, then other projects. */
+function StaffCvAskCard({ change, ...props }: AskCardProps & { change: StaffCvChange }) {
+  const { t } = useLingui();
+  const several = change.roster.length > 1;
+  const names = change.roster.map((person) => person.name).join(", ");
+  const heading =
+    change.step === "person"
+      ? t`Who needs a CV`
+      : change.step === "projects"
+        ? t`Select projects`
+        : change.step === "mentions"
+          ? t`Special mentions`
+          : t`Other projects`;
+  return (
+    <EvolveChangeCard
+      {...props}
+      testId="staff-cv-ask-card"
+      icon={FileText}
+      heading={heading}
+      project={{ jobNumber: null, name: null, client: null }}
+      subject={{
+        icon: several ? UsersRound : UserRound,
+        title: names || change.person?.name || t`No employee selected`,
+        detail: CV_STEP_LABEL[change.step],
+      }}
+      allowLabel={several ? t`Create Word CVs` : t`Create Word CV`}
+      approvedText={several ? t`CVs created` : t`CV created`}
+      hideAllow
+    >
+      {change.step === "person" ? (
+        <StaffCvPersonStep change={change} {...props} />
+      ) : change.step === "projects" ? (
+        <StaffCvProjectStep change={change} {...props} />
+      ) : change.step === "mentions" ? (
+        <StaffCvMentionStep change={change} {...props} />
+      ) : (
+        <StaffCvOtherStep change={change} several={several} {...props} />
+      )}
+    </EvolveChangeCard>
+  );
+}
+
+function useCvRevise(onRevise: AskCardProps["onReviseChange"]) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function revise(edits: EvolveChangeEdits) {
+    if (!onRevise || pending) return false;
+    setPending(true);
+    setError(null);
+    try {
+      await onRevise(edits);
+      return true;
+    } catch (err) {
+      setError(errorText(err, t`Could not update this CV`));
+      return false;
+    } finally {
+      setPending(false);
+    }
+  }
+  return { pending, error, revise };
+}
+
+function StaffCvPersonStep({ change, ...props }: AskCardProps & { change: StaffCvChange }) {
+  const { pending, error, revise } = useCvRevise(props.onReviseChange);
+  const [query, setQuery] = useState("");
+  const [found, setFound] = useState<
+    Array<{ profileId: number; name: string; role: string | null }>
+  >([]);
+  const [bioId, setBioId] = useState(change.selectedBioId ?? "");
+  const [role, setRole] = useState(change.targetRole);
+  useEffect(() => {
+    setRole(change.targetRole);
+    setBioId(change.selectedBioId ?? "");
+  }, [change.person?.id, change.targetRole, change.selectedBioId]);
+  const loadOptions = useRef(props.loadChangeOptions);
+  loadOptions.current = props.loadChangeOptions;
+  useEffect(() => {
+    const load = loadOptions.current;
+    if (!load) return;
+    const handle = setTimeout(() => {
+      void load("cv_staff", query.trim()).then(
+        (options) =>
+          setFound(
+            (options.people ?? []).flatMap((person) =>
+              person.profileId
+                ? [{ profileId: person.profileId, name: person.name, role: person.role ?? null }]
+                : [],
+            ),
+          ),
+        () => setFound([]),
+      );
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [query]);
+  const choose = (profileId: number) => void revise({ profile_id: profileId, cv_step: "person" });
+  const people = (extra?: { id: number; role: string; bioId: string }) => {
+    const rows = change.roster.map((person) => ({
+      profile_id: person.id,
+      target_role: person.role,
+      ...(person.bioId ? { bio_id: person.bioId } : {}),
+    }));
+    if (!extra) return rows;
+    const next = {
+      profile_id: extra.id,
+      target_role: extra.role,
+      ...(extra.bioId ? { bio_id: extra.bioId } : {}),
+    };
+    const index = rows.findIndex((person) => person.profile_id === extra.id);
+    if (index >= 0) rows[index] = next;
+    else if (rows.length < 6) rows.push(next);
+    return rows;
+  };
+  const draftReady = Boolean(change.person?.id) && role.trim().length > 0;
+  const draft = draftReady ? { id: change.person!.id!, role: role.trim(), bioId } : undefined;
+  return (
+    <div className="mt-3 space-y-3 text-[13px]">
+      <p className="text-muted-foreground">
+        <Trans>
+          Add one person, or several. The projects and mentions that follow are used on every CV.
+        </Trans>
+      </p>
+      {change.roster.length > 0 ? (
+        <div className="space-y-1">
+          {change.roster.map((person) => (
+            <div key={person.id} className="flex items-center justify-between gap-2">
+              <span>
+                {person.name}
+                <span className="text-muted-foreground"> · {person.role}</span>
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={pending}
+                onClick={() =>
+                  void revise({
+                    cv_people: people().filter((row) => row.profile_id !== person.id),
+                    cv_step: "person",
+                  })
+                }
+              >
+                <Trash2 />
+                <Trans>Remove</Trans>
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <Input
+        value={query}
+        placeholder={t`Search employees`}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      <CvChoices
+        rows={(found.length > 0 ? found : change.matches).map((person) => ({
+          id: String("profileId" in person ? person.profileId : person.id),
+          label: person.name,
+          detail: person.role,
+          selected: change.person?.id === ("profileId" in person ? person.profileId : person.id),
+          onPick: () => choose("profileId" in person ? person.profileId : person.id),
+        }))}
+      />
+      {change.bios.length > 0 ? (
+        <div className="space-y-1.5">
+          <div className="text-muted-foreground">
+            <Trans>Role bio</Trans>
+          </div>
+          {change.bios.map((bio) => (
+            <label key={bio.id} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="cv-bio"
+                checked={bioId === bio.id}
+                onChange={() => {
+                  setBioId(bio.id);
+                  setRole(bio.title);
+                }}
+              />
+              {bio.title}
+            </label>
+          ))}
+        </div>
+      ) : null}
+      <div>
+        <div className="text-muted-foreground">
+          <Trans>Target role</Trans>
+        </div>
+        <Input value={role} onChange={(event) => setRole(event.target.value)} className="mt-1" />
+      </div>
+      {error ? <p className="text-destructive">{error}</p> : null}
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          disabled={pending || !draft || change.roster.length >= 6}
+          onClick={() =>
+            draft
+              ? void revise({
+                  profile_id: draft.id,
+                  ...(draft.bioId ? { bio_id: draft.bioId } : {}),
+                  target_role: draft.role,
+                  cv_people: people(draft),
+                  cv_step: "person",
+                })
+              : undefined
+          }
+        >
+          <Trans>Add to this set</Trans>
+        </Button>
+        <Button
+          disabled={pending || (!draft && change.roster.length === 0)}
+          onClick={() =>
+            void revise({
+              ...(draft
+                ? {
+                    profile_id: draft.id,
+                    ...(draft.bioId ? { bio_id: draft.bioId } : {}),
+                    target_role: draft.role,
+                  }
+                : {}),
+              cv_people: people(draft),
+              cv_step: "projects",
+            })
+          }
+        >
+          {pending ? <Trans>Saving…</Trans> : <Trans>Continue to projects</Trans>}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function useProjectCatalogue(load: AskCardProps["loadChangeOptions"]) {
+  const [rows, setRows] = useState<StaffCvChange["projects"] | null>(null);
+  const loadOptions = useRef(load);
+  loadOptions.current = load;
+  useEffect(() => {
+    const current = loadOptions.current;
+    if (!current) return;
+    let cancel = false;
+    void current("project_labels", "").then(
+      (options) => {
+        if (cancel) return;
+        setRows(
+          (options.projects ?? []).map((project) => ({
+            id: String(project.projectId),
+            jobNumber: project.jobNumber,
+            name: project.name ?? "Project",
+            client: project.client,
+            year: project.year ?? null,
+            value: project.value ?? null,
+            summary: project.summary ?? "",
+            imageUrl: project.imageUrl ?? null,
+          })),
+        );
+      },
+      () => {
+        if (!cancel) setRows([]);
+      },
+    );
+    return () => {
+      cancel = true;
+    };
+  }, []);
+  return rows;
+}
+
+function matchingProjects(catalogue: StaffCvChange["projects"] | null, query: string) {
+  const term = query.trim().toLowerCase();
+  if (!catalogue || term.length < 2) return [];
+  const words = term.split(/\s+/).filter((word) => word.length > 1);
+  if (words.length === 0) return [];
+  return catalogue
+    .filter((project) => {
+      const haystack =
+        `${project.jobNumber ?? ""} ${project.name} ${project.client ?? ""} ${project.summary ?? ""}`.toLowerCase();
+      return words.every((word) => haystack.includes(word));
+    })
+    .slice(0, 25);
+}
+
+function StaffCvProjectStep({ change, ...props }: AskCardProps & { change: StaffCvChange }) {
+  const { pending, error, revise } = useCvRevise(props.onReviseChange);
+  const [query, setQuery] = useState("");
+  const catalogue = useProjectCatalogue(props.loadChangeOptions);
+  const found = matchingProjects(catalogue, query);
+  const [picked, setPicked] = useState<Map<number, string>>(
+    () =>
+      new Map(
+        change.projects.flatMap((project) => {
+          const id = Number(project.id);
+          return Number.isInteger(id) && id > 0
+            ? [[id, [project.jobNumber, project.name].filter(Boolean).join(" · ")]]
+            : [];
+        }),
+      ),
+  );
+  const toggle = (id: number, label: string) =>
+    setPicked((current) => {
+      const next = new Map(current);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < 8) next.set(id, label);
+      return next;
+    });
+  const term = query.trim().toLowerCase();
+  const words = term.split(/\s+/).filter((word) => word.length > 1);
+  const asRow = (project: StaffCvChange["projects"][number]) => ({
+    id: Number(project.id),
+    label: [project.jobNumber, project.name].filter(Boolean).join(" · "),
+    detail: [project.client, project.year, project.value].filter(Boolean).join(" · ") || null,
+    image: project.imageUrl,
+  });
+  const rows = [
+    ...change.suggestions
+      .filter((project) => {
+        if (words.length === 0) return true;
+        const haystack =
+          `${project.jobNumber ?? ""} ${project.name} ${project.client ?? ""} ${project.summary ?? ""}`.toLowerCase();
+        return words.every((word) => haystack.includes(word));
+      })
+      .map(asRow),
+    ...found.map(asRow),
+  ].filter(
+    (row, index, all) => row.id > 0 && all.findIndex((item) => item.id === row.id) === index,
+  );
+  return (
+    <div className="mt-3 space-y-3 text-[13px]">
+      <p className="text-muted-foreground">
+        <Trans>
+          These are the main projects. Each one prints with its photo and a full paragraph, and any
+          special mentions are written into that paragraph. Search matches the title, client, job
+          number and description.
+        </Trans>
+        {change.roster.length > 1 ? (
+          <>
+            {" "}
+            <Trans>The same projects go on every CV in this set.</Trans>
+          </>
+        ) : null}
+      </p>
+      <Input
+        value={query}
+        placeholder={t`Search projects`}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      {term.length >= 2 && catalogue === null ? (
+        <p className="text-muted-foreground">
+          <Trans>Loading the project list…</Trans>
+        </p>
+      ) : null}
+      <CvChoices
+        rows={rows.map((row) => ({
+          id: String(row.id),
+          label: row.label,
+          detail: row.detail,
+          image: row.image,
+          showImage: true,
+          selected: picked.has(row.id),
+          onPick: () => toggle(row.id, row.label),
+        }))}
+      />
+      {error ? <p className="text-destructive">{error}</p> : null}
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          disabled={pending}
+          onClick={() => void revise({ cv_step: "person" })}
+        >
+          <Trans>Back</Trans>
+        </Button>
+        <Button
+          disabled={pending || picked.size === 0}
+          onClick={() => void revise({ project_ids: [...picked.keys()], cv_step: "mentions" })}
+        >
+          {pending ? <Trans>Saving…</Trans> : <Trans>Continue</Trans>}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function StaffCvMentionStep({ change, ...props }: AskCardProps & { change: StaffCvChange }) {
+  const { pending, error, revise } = useCvRevise(props.onReviseChange);
+  const [mentions, setMentions] = useState(change.specialMentions);
+  return (
+    <div className="mt-3 space-y-3 text-[13px]">
+      <p className="text-muted-foreground">
+        <Trans>
+          These phrases are written into the paragraph under each main project. Leave this blank if
+          there are none. Other projects, chosen next, do not get a paragraph.
+        </Trans>
+      </p>
+      <ul className="space-y-1">
+        {change.projects.map((project) => (
+          <li key={project.id} className="flex items-center gap-2">
+            <ProjectThumb url={project.imageUrl} />
+            <span className="min-w-0 truncate">
+              {[project.jobNumber, project.name].filter(Boolean).join(" · ")}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <Textarea
+        value={mentions}
+        onChange={(event) => setMentions(event.target.value)}
+        placeholder={t`For example: BIM Manager, flood modelling`}
+        className="min-h-24"
+      />
+      {error ? <p className="text-destructive">{error}</p> : null}
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          disabled={pending}
+          onClick={() => void revise({ cv_step: "projects" })}
+        >
+          <Trans>Back</Trans>
+        </Button>
+        <Button
+          disabled={pending}
+          onClick={() => void revise({ special_mentions: mentions.trim(), cv_step: "other" })}
+        >
+          {pending ? <Trans>Saving…</Trans> : <Trans>Continue</Trans>}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function StaffCvOtherStep({
+  change,
+  several,
+  ...props
+}: AskCardProps & { change: StaffCvChange; several: boolean }) {
+  const { pending, error, revise } = useCvRevise(props.onReviseChange);
+  const [query, setQuery] = useState("");
+  const [hideImages, setHideImages] = useState(change.hideImages);
+  const [picked, setPicked] = useState<Set<string>>(
+    () => new Set(change.otherProjects.map((project) => project.id)),
+  );
+  const catalogue = useProjectCatalogue(props.loadChangeOptions);
+  const found = matchingProjects(catalogue, query);
+  const mainIds = new Set(change.projects.map((project) => project.id));
+  const mainJobs = new Set(
+    change.projects.map((project) => project.jobNumber?.trim().toLowerCase()).filter(Boolean),
+  );
+  const isMain = (project: StaffCvChange["projects"][number]) =>
+    mainIds.has(project.id) || mainJobs.has(project.jobNumber?.trim().toLowerCase() ?? "");
+  const rows = [...change.suggestions, ...change.otherProjects, ...found].filter(
+    (project, index, all) =>
+      project.id && !isMain(project) && all.findIndex((item) => item.id === project.id) === index,
+  );
+  const toggle = (id: string) =>
+    setPicked((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else if (next.size < 6) next.add(id);
+      return next;
+    });
+  const create = async () => {
+    const saved = await revise({
+      other_project_ids: [...picked]
+        .filter((id) => !mainIds.has(id))
+        .map(Number)
+        .filter((id) => id > 0)
+        .slice(0, 6),
+      hide_images: hideImages,
+      cv_step: "other",
+    });
+    if (saved) await props.onAnswer("allow");
+  };
+  return (
+    <div className="mt-3 space-y-3 text-[13px]">
+      <p className="text-muted-foreground">
+        <Trans>
+          These start as this person's other jobs, the same ones the CV generator fills in. Each one
+          prints down the right-hand side: photo, title, year and value only. They do not get the
+          paragraph or the special mentions. Untick any that should not be included.
+        </Trans>
+      </p>
+      <Input
+        value={query}
+        placeholder={t`Search other projects`}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      {query.trim().length >= 2 && catalogue === null ? (
+        <p className="text-muted-foreground">
+          <Trans>Loading the project list…</Trans>
+        </p>
+      ) : null}
+      <CvChoices
+        rows={rows.map((project) => ({
+          id: project.id,
+          label: [project.jobNumber, project.name].filter(Boolean).join(" · "),
+          detail: [project.year, project.value].filter(Boolean).join(" · ") || null,
+          image: project.imageUrl,
+          showImage: true,
+          selected: picked.has(project.id),
+          onPick: () => toggle(project.id),
+        }))}
+      />
+      <label className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={hideImages}
+          onChange={(event) => setHideImages(event.target.checked)}
+        />
+        <Trans>Leave photos out</Trans>
+      </label>
+      {error ? <p className="text-destructive">{error}</p> : null}
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          disabled={pending}
+          onClick={() => void revise({ cv_step: "mentions" })}
+        >
+          <Trans>Back</Trans>
+        </Button>
+        <Button disabled={pending || !props.canAnswer} onClick={() => void create()}>
+          {pending ? (
+            <Trans>Creating…</Trans>
+          ) : several ? (
+            <Trans>Create Word CVs</Trans>
+          ) : (
+            <Trans>Create Word CV</Trans>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ProjectThumb({ url }: { url?: string | null }) {
+  return url ? (
+    <img src={url} alt="" className="h-10 w-16 shrink-0 rounded-sm object-cover" />
+  ) : (
+    <span className="h-10 w-16 shrink-0 rounded-sm bg-muted" />
+  );
+}
+
+function CvChoices({
+  rows,
+}: {
+  rows: Array<{
+    id: string;
+    label: string;
+    detail?: string | null;
+    image?: string | null;
+    showImage?: boolean;
+    selected: boolean;
+    onPick: () => void;
+  }>;
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <ul className="max-h-80 space-y-1 overflow-y-auto">
+      {rows.map((row) => (
+        <li key={row.id}>
+          <button
+            type="button"
+            className={cn(
+              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted",
+              row.selected && "bg-primary/10",
+            )}
+            onClick={row.onPick}
+          >
+            <span className="w-4 shrink-0">{row.selected ? "✓" : ""}</span>
+            {row.showImage ? <ProjectThumb url={row.image} /> : null}
+            <span className="min-w-0">
+              <span className="block truncate font-medium">{row.label}</span>
+              {row.detail ? (
+                <span className="block truncate text-muted-foreground">{row.detail}</span>
+              ) : null}
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 

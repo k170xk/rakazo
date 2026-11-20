@@ -33,6 +33,7 @@ const KNOWN_EVOLVE_TOOLS = [
   "check_back_in_from_site",
   "find_work_packages",
   "search_people_profiles",
+  "create_staff_cv",
   "generate_image",
   "edit_image",
   "create_infographics",

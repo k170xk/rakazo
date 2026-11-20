@@ -97,6 +97,7 @@ const TITLES: Record<string, string> = {
   join_project_team: "Join a Design Team",
   leave_project_team: "Leave a Design Team",
   search_people_profiles: "Search people",
+  create_staff_cv: "Create a staff CV",
   search_document_library: "Search the Document Library",
   find_learning_clinics: "Find clinics",
   open_learning_clinic: "Open a clinic card",

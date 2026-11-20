@@ -5,6 +5,7 @@ import type {
   ProjectCommentChange,
   ProjectDeadlineChange,
   SiteVisitChange,
+  StaffCvChange,
   WorkPackageChange,
 } from "@rakazo/contracts";
 import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
@@ -40,6 +41,7 @@ export type FleetCardSummary = {
   projectComment?: ProjectCommentChange;
   designTeam?: DesignTeamChange;
   siteVisit?: SiteVisitChange;
+  staffCv?: StaffCvChange;
 };
 
 const WORK_PACKAGE_ALLOW_LABEL = {
@@ -124,6 +126,33 @@ export function buildApprovalAskBlock(
       status: "pending",
       actions: [
         { id: "allow", label: siteVisit.action === "check_out" ? "Check out" : "Check back in" },
+        { id: "deny", label: "Cancel" },
+      ],
+    };
+  }
+  if (options?.summary?.staffCv) {
+    const { staffCv } = options.summary;
+    return {
+      kind: "ask",
+      approvalEffectId: effectId,
+      text: truncate(redactSecrets(options.summary.title, secrets), MAX_APPROVAL_SUMMARY_LENGTH),
+      detail: truncate(
+        redactSecrets(options.summary.lines.join("\n"), secrets),
+        MAX_APPROVAL_DETAIL_LENGTH,
+      ),
+      detailFormat: "text",
+      staffCvChange: redactLeaves(staffCv, secrets) as StaffCvChange,
+      status: "pending",
+      actions: [
+        {
+          id: "allow",
+          label:
+            staffCv.step !== "other"
+              ? "Continue"
+              : staffCv.roster.length > 1
+                ? "Create Word CVs"
+                : "Create Word CV",
+        },
         { id: "deny", label: "Cancel" },
       ],
     };

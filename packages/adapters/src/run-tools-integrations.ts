@@ -12,6 +12,7 @@ import { flushProgress, publishMidTurnNarration, showNarrationStatus } from "./r
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";
 import { recordComputerAction } from "./run-tools-computer.js";
 import { runFilePath, runFiles } from "./run-tools-files.js";
+import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
 import { webFetchFromTool, webSearchFromTool } from "./web-tools.js";
 
 export async function cloudAgentTool(ctx: RunContext, call: ToolCall) {
@@ -74,9 +75,70 @@ export async function connectorTool(ctx: RunContext, call: ToolCall) {
       const block = learningClinicBlock(result);
       if (block) await publishMessage(deps, run, "bot", [block]);
     }
+    if (!failedFile && name === `${EVOLVE_TOOL_PREFIX}create_staff_cv`) {
+      const attached = await attachCreatedStaffCv(ctx, call, result);
+      if (typeof attached === "string") return call.finish({ error: attached });
+      if (attached) result = attached;
+    }
     return call.finish(failedFile ? { error: failedFile } : result);
   }
   return call.finish({ error: `unknown tool ${name}` });
+}
+
+/** Puts a finished staff CV in the chat. A string is why it could not be collected. */
+async function attachCreatedStaffCv(
+  ctx: RunContext,
+  call: ToolCall,
+  result: unknown,
+): Promise<unknown | string | null> {
+  const data = evolveReply(result);
+  const listed = Array.isArray(data?.files) ? data.files : [];
+  const files = (listed.length > 0 ? listed : [{ fileUrl: data?.fileUrl, fileName: data?.fileName }])
+    .flatMap((file) => {
+      const row = file as { fileUrl?: unknown; fileName?: unknown };
+      return typeof row.fileUrl === "string" && row.fileUrl
+        ? [{ fileUrl: row.fileUrl, fileName: typeof row.fileName === "string" ? row.fileName : "" }]
+        : [];
+    });
+  if (data?.ok !== true || files.length === 0) return null;
+  const artifacts = ctx.deps.artifacts;
+  if (!artifacts) return "The CV was made but could not be added to the chat.";
+  try {
+    for (const [index, file] of files.entries()) {
+      let url: URL;
+      try {
+        url = new URL(file.fileUrl);
+      } catch {
+        return "The CV was made but its link could not be read.";
+      }
+      if (url.protocol !== "https:" || !url.pathname.includes("/storage/v1/object/")) {
+        return "The CV was made but its link was not a file link.";
+      }
+      const response = await fetch(url, { signal: ctx.context.signal });
+      if (!response.ok) return "The CV was made but could not be collected.";
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      const fileName = file.fileName.replace(/[^\w .'-]+/g, "").trim() || "Staff CV.docx";
+      const attached = await attachWorkspaceFileToThread(
+        { ...ctx.deps, artifacts },
+        {
+          spaceId: ctx.run.spaceId,
+          userId: ctx.run.userId,
+          botId: ctx.bot.id,
+          ...(ctx.thread.groupId ? { groupId: ctx.thread.groupId } : {}),
+          runId: ctx.run.id,
+          filePath: `outputs/${fileName}`,
+          bytes,
+          operationId: files.length === 1 ? call.effectKey : `${call.effectKey}:${index}`,
+          name: fileName.replace(/\.docx$/i, ""),
+          description: "Staff CV",
+        },
+      );
+      await publishMessage(ctx.deps, ctx.run, "bot", [attached.block]);
+    }
+  } catch (error) {
+    return error instanceof Error ? error.message : "The CV could not be added to the chat.";
+  }
+  return data;
 }
 
 /** The clinic card Evolve asked for; the card itself loads the clinic as whoever views it. */

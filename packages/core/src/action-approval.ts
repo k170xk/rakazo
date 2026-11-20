@@ -80,6 +80,7 @@ const EVERY_TIME_APPROVAL_TOOLS = new Set([
   "mcp__evolve__leave_project_team",
   "mcp__evolve__check_out_to_site",
   "mcp__evolve__check_back_in_from_site",
+  "mcp__evolve__create_staff_cv",
 ]);
 
 export function toolNeedsApprovalEveryTime(toolName: string): boolean {

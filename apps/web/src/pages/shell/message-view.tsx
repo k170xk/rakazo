@@ -680,7 +680,8 @@ export const MessageView = memo(function MessageView({
                     block.workPackageChange ||
                     block.projectCommentChange ||
                     block.designTeamChange ||
-                    block.siteVisitChange)
+                    block.siteVisitChange ||
+                    block.staffCvChange)
                     ? {
                         onReviseChange: async (edits: EvolveChangeEdits) => {
                           await rpc.threads.reviseEvolveChange({

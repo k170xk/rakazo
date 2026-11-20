@@ -236,6 +236,64 @@ export const SiteVisitChangeSchema = z.object({
 });
 export type SiteVisitChange = z.infer<typeof SiteVisitChangeSchema>;
 
+const StaffCvProjectSchema = z.object({
+  id: z.string(),
+  jobNumber: z.string().nullable(),
+  name: z.string(),
+  client: z.string().nullable(),
+  year: z.string().nullable(),
+  value: z.string().nullable().optional(),
+  summary: z.string().optional(),
+  imageUrl: z.string().max(2000).nullable().optional(),
+});
+
+/** A staff CV the person builds, one CV Generator step at a time, before the Word document is made. */
+export const StaffCvChangeSchema = z.object({
+  step: z.enum(["person", "projects", "mentions", "other"]),
+  person: z
+    .object({
+      id: z.number().int().positive().optional(),
+      name: z.string(),
+      email: z.string().nullable(),
+      role: z.string().nullable(),
+    })
+    .nullable(),
+  matches: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        name: z.string(),
+        email: z.string().nullable(),
+        role: z.string().nullable(),
+      }),
+    )
+    .max(8),
+  bios: z.array(z.object({ id: z.string(), title: z.string() })).max(20),
+  selectedBioId: z.string().nullable(),
+  targetRole: z.string(),
+  specialMentions: z.string(),
+  hideImages: z.boolean(),
+  tailored: z.boolean(),
+  projects: z.array(StaffCvProjectSchema).max(8),
+  /** The person's own jobs, offered on the project card and again as other projects. */
+  suggestions: z.array(StaffCvProjectSchema).max(25),
+  otherProjects: z.array(StaffCvProjectSchema).max(6),
+  /** Everyone this set of cards is making a CV for. One person is a single CV. */
+  roster: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        name: z.string(),
+        email: z.string().nullable(),
+        role: z.string(),
+        bioId: z.string().optional(),
+      }),
+    )
+    .max(6)
+    .default([]),
+});
+export type StaffCvChange = z.infer<typeof StaffCvChangeSchema>;
+
 const EditDay = z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]);
 const EditText = (max: number) => z.string().max(max);
 
@@ -272,6 +330,26 @@ export const EvolveChangeEditsSchema = z
     expected_return: z.string().regex(/^\d{2}:\d{2}$/),
     returned_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
     everything_ok: z.boolean(),
+    target_role: EditText(200).min(1),
+    special_mentions: EditText(2000),
+    hide_images: z.boolean(),
+    cv_step: z.enum(["person", "projects", "mentions", "other"]),
+    profile_id: z.number().int().positive(),
+    bio_id: EditText(40).min(1),
+    project_ids: z.array(z.number().int().positive()).max(8),
+    other_project_ids: z.array(z.number().int().positive()).max(6),
+    cv_people: z
+      .array(
+        z.object({
+          profile_id: z.number().int().positive(),
+          bio_id: EditText(40).optional(),
+          target_role: EditText(200).min(1),
+        }),
+      )
+      .max(6),
+    project_summaries: z
+      .array(z.object({ id: z.string().max(40), summary: EditText(4000).min(1) }))
+      .max(8),
   })
   .partial()
   .refine((edits) => Object.keys(edits).length > 0, "Change at least one field");
@@ -279,7 +357,9 @@ export type EvolveChangeEdits = z.infer<typeof EvolveChangeEditsSchema>;
 
 export const EvolveChangeOptionKindSchema = z.enum([
   "projects",
+  "project_labels",
   "people",
+  "cv_staff",
   "categories",
   "comment_categories",
   "team_roles",
@@ -295,10 +375,23 @@ export const EvolveChangeOptionsSchema = z.object({
         jobNumber: z.string().nullable(),
         name: z.string().nullable(),
         client: z.string().nullable(),
+        year: z.string().nullable().optional(),
+        value: z.string().nullable().optional(),
+        summary: z.string().nullable().optional(),
+        imageUrl: z.string().nullable().optional(),
       }),
     )
     .optional(),
-  people: z.array(z.object({ name: z.string(), email: z.string() })).optional(),
+  people: z
+    .array(
+      z.object({
+        name: z.string(),
+        email: z.string(),
+        profileId: z.number().int().positive().optional(),
+        role: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
   categories: z.array(z.string()).optional(),
 });
 export type EvolveChangeOptions = z.infer<typeof EvolveChangeOptionsSchema>;
@@ -331,6 +424,7 @@ export const MessageBlock = z.discriminatedUnion("kind", [
     projectCommentChange: ProjectCommentChangeSchema.optional(),
     designTeamChange: DesignTeamChangeSchema.optional(),
     siteVisitChange: SiteVisitChangeSchema.optional(),
+    staffCvChange: StaffCvChangeSchema.optional(),
     detail: z.string().optional(),
     detailFormat: z.enum(["text", "code"]).optional(),
     /**

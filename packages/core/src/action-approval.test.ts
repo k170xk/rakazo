@@ -520,6 +520,7 @@ describe("planActionGate", () => {
       "leave_project_team",
       "check_out_to_site",
       "check_back_in_from_site",
+      "create_staff_cv",
     ]) {
       expect(toolNeedsApprovalEveryTime(`mcp__evolve__${tool}`)).toBe(true);
       expect(toolRequiresExplicitApproval(`mcp__evolve__${tool}`)).toBe(true);

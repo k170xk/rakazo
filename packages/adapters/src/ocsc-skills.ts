@@ -33,6 +33,8 @@ const INLINE_SPEC_NOTE = `Give each new or edit spec in the ocsc call itself: pu
 
 const WORD_INSTRUCTIONS = `Use this whenever the person wants a Word document, report, letter, memo, method statement, specification or any .docx, or wants one changed.
 
+A person's OCSC CV for a tender, bid or client — their profile, jobs and project experience — is mcp__evolve__create_staff_cv, not a document you write here. Call that tool immediately and do not draft the CV, pick the people or the jobs, or ask them to choose in chat. The first card takes one person or several; the later cards apply the same projects, special mentions and other projects to every CV.
+
 Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-word command below runs as the ocsc tool with program word and the rest of the command as args, one item per word. Always use ocsc-word. Never build a .docx another way (no python-docx, pandoc, LibreOffice or the docx npm package), because only ocsc-word keeps the OCSC branding. ${INLINE_SPEC_NOTE}
 
 TEMPLATES

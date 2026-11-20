@@ -551,4 +551,50 @@ describe("project comment and Design Team cards", () => {
       }),
     ).toEqual({ error: "This card cannot change site location." });
   });
+
+  it("previews a staff CV on one card and keeps the person's wording", async () => {
+    const reply = {
+      ok: true,
+      preview: {
+        person: { name: "Jane Doyle", email: "jane@ocsc.ie", role: "Engineer" },
+        target_role: "Project Engineer",
+        special_mentions: "flood modelling",
+        hide_images: false,
+        tailored: true,
+        projects: [
+          {
+            id: "12",
+            job_number: "C1078",
+            name: "Cork Library",
+            client: "Cork County Council",
+            year: "2024",
+            summary: "Jane led the flood modelling.",
+          },
+        ],
+        other_projects: [{ job_number: "U070", name: "Naas Road", client: "TII", year: "2023", value: "2 Million" }],
+      },
+      args: { profile_id: 4, project_ids: [12], project_summaries: [{ id: 12, summary: "Jane led the flood modelling." }] },
+    };
+    const { connector } = evolveAnswering(reply);
+    const card = await previewEvolveChange(connector, call({ person: "Jane" }), context);
+    if ("error" in card) throw new Error(card.error);
+    expect(card.summary.title).toBe("Create Jane Doyle's CV?");
+    expect(card.summary.staffCv?.projects[0]?.summary).toBe("Jane led the flood modelling.");
+    expect(card.args).toMatchObject({ profile_id: 4, project_ids: [12] });
+    const block = buildApprovalAskBlock("effect", "mcp__evolve__create_staff_cv", card.args, [], {
+      summary: card.summary,
+    });
+    expect(block).toMatchObject({
+      kind: "ask",
+      staffCvChange: { person: { name: "Jane Doyle" } },
+      actions: [{ id: "allow", label: "Create Word CV" }, { id: "deny" }],
+    });
+    expect(
+      editedEvolveChangeArgs("mcp__evolve__create_staff_cv", card.args, {
+        project_summaries: [{ id: "12", summary: "Jane checked the flood model." }],
+      }),
+    ).toMatchObject({
+      args: { project_summaries: [{ id: "12", summary: "Jane checked the flood model." }] },
+    });
+  });
 });

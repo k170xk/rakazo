@@ -10,6 +10,8 @@ import type {
 } from "@rakazo/contracts";
 import { toolNeedsApprovalEveryTime } from "@rakazo/core";
 import type { FleetCardSummary } from "./approval-ask.js";
+import type { StaffCvPreview } from "./evolve-cv-card.js";
+import { staffCvCardSummary } from "./evolve-cv-card.js";
 import type { EvolvePluginsConnection } from "./evolve-plugins.js";
 import { callEvolveComputerMcp } from "./evolve-plugins.js";
 import type { WorkPackagePreview } from "./evolve-work-package-card.js";
@@ -74,6 +76,18 @@ const EDITABLE: Record<string, readonly (keyof EvolveChangeEdits)[]> = {
   join_project_team: ["role"],
   check_out_to_site: ["site_location", "project_id", "job_number", "buddy", "expected_return"],
   check_back_in_from_site: ["returned_at", "everything_ok", "notes"],
+  create_staff_cv: [
+    "cv_step",
+    "profile_id",
+    "bio_id",
+    "target_role",
+    "special_mentions",
+    "hide_images",
+    "project_ids",
+    "other_project_ids",
+    "project_summaries",
+    "cv_people",
+  ],
 };
 
 /** The Evolve tool an approval effect calls, such as add_work_package. */
@@ -163,11 +177,20 @@ export async function listEvolveChangeOptions(
       categories: (Array.isArray(data.categories) ? data.categories : []).map(String).slice(0, 200),
     };
   }
-  if (kind === "people") {
+  if (kind === "people" || kind === "cv_staff") {
     return {
       people: (Array.isArray(data.people) ? data.people : [])
-        .map((row) => ({ name: String(row?.name ?? ""), email: String(row?.email ?? "") }))
-        .filter((row) => row.name && row.email)
+        .map((row) => {
+          const profileId = Number(row?.profile_id);
+          const role = typeof row?.role === "string" ? row.role : null;
+          return {
+            name: String(row?.name ?? ""),
+            email: String(row?.email ?? ""),
+            ...(Number.isInteger(profileId) && profileId > 0 ? { profileId } : {}),
+            ...(role ? { role } : {}),
+          };
+        })
+        .filter((row) => row.name && (kind === "cv_staff" ? row.profileId : row.email))
         .slice(0, 50),
     };
   }
@@ -178,9 +201,13 @@ export async function listEvolveChangeOptions(
         jobNumber: text(row?.job_number),
         name: text(row?.name),
         client: text(row?.client),
+        year: text(row?.year) || null,
+        value: text(row?.value) || null,
+        summary: text(row?.summary) || null,
+        imageUrl: text(row?.image_url) || null,
       }))
       .filter((row) => Number.isInteger(row.projectId) && row.projectId > 0)
-      .slice(0, 50),
+      .slice(0, kind === "project_labels" ? 3000 : 50),
   };
 }
 
@@ -536,6 +563,13 @@ export function evolveChangePreview(
 ): { summary: FleetCardSummary; args: Record<string, unknown> } | { error: string } {
   const reply = evolveReply(data);
   const raw = reply && reply.ok !== false ? reply.preview : null;
+  const staffCv = raw ? staffCvCardSummary(raw as StaffCvPreview) : null;
+  if (reply && staffCv) {
+    const carried = reply.args;
+    const argsFromPreview =
+      carried && typeof carried === "object" ? (carried as Record<string, unknown>) : {};
+    return { summary: staffCv, args: { ...args, ...argsFromPreview } };
+  }
   const siteVisit =
     raw && typeof raw === "object" && "visit" in raw
       ? siteVisitCardSummary(raw as SiteVisitPreview)
