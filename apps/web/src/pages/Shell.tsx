@@ -55,6 +55,10 @@ import { ComputerUpdateProgress } from "../components/ComputerUpdateProgress";
 import { CreateOrganizationDialog } from "../components/CreateOrganizationDialog";
 import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
+import {
+  CompanyAnnouncements,
+  PENDING_ANNOUNCEMENTS_KEY,
+} from "../components/announcements/CompanyAnnouncements";
 import { EnableNotificationsDialog } from "../components/EnableNotificationsDialog";
 import { PageLoading } from "../components/PageLoading";
 import { PageViewHost } from "../components/pages/PageViewHost";
@@ -533,6 +537,8 @@ function SpaceShell() {
         setMobileSidebarOpen(false);
         navigateKeepingDocument(alert.groupId ? `/app/g/${alert.groupId}` : `/app/${alert.botId}`);
       },
+      onAnnouncement: () =>
+        void queryClient.invalidateQueries({ queryKey: PENDING_ANNOUNCEMENTS_KEY }),
     },
   );
   const { speakingMessageId, speakMessage } = useReadAloud({
@@ -1477,6 +1483,7 @@ function SpaceShell() {
       </main>
 
       <PageViewHost />
+      <CompanyAnnouncements />
       <CallCard onSettings={() => openSettings("voice")} />
       <IncomingCall
         bots={bootstrapMe?.phoneCallsEnabled ? bots : []}

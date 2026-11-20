@@ -23,6 +23,7 @@ model AiDataConsent {
 
 model User {
   aiDataConsents              AiDataConsent[]
+  announcementDismissals      AnnouncementDismissal[]
   todoItems                   TodoItem[]
   todoLists                   TodoList[]
   documentDrafts              DocumentDraft[]
@@ -2704,6 +2705,38 @@ model CompanyVaultCredential {
   updatedAt  DateTime @updatedAt
 
   @@map("company_vault_credentials")
+}
+
+/// A company update an admin sent from Company admin; shown to everyone as a dialog until dismissed.
+/// Read and written as the system, since no member owns it.
+model CompanyAnnouncement {
+  id          String                  @id @default(cuid())
+  title       String
+  body        String                  @default("")
+  /// A screenshot as a data URL, shrunk in the browser before upload.
+  image       String?
+  offerReload Boolean                 @default(true)
+  authorId    String?
+  authorName  String?
+  createdAt   DateTime                @default(now())
+  withdrawnAt DateTime?
+  dismissals  AnnouncementDismissal[]
+
+  @@index([createdAt])
+  @@map("company_announcements")
+}
+
+/// Who has dismissed which announcement, so it is shown to each person once.
+model AnnouncementDismissal {
+  announcementId String
+  userId         String
+  dismissedAt    DateTime            @default(now())
+  announcement   CompanyAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([announcementId, userId])
+  @@index([userId])
+  @@map("announcement_dismissals")
 }
 
 model ExternalConversation {

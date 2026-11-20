@@ -40,6 +40,13 @@ import { getLogger } from "@rakazo/logging";
 import { createAccessGrant, listAccessGrants, revokeAccessGrant } from "../access-grants.js";
 import { isAdmin, requireAdmin } from "../admins.js";
 import { aiConsentStatus, allowAiConsent } from "../ai-consent.js";
+import {
+  dismissAnnouncement,
+  listAnnouncements,
+  pendingAnnouncements,
+  sendAnnouncement,
+  withdrawAnnouncement,
+} from "../announcements.js";
 import type { BillingService } from "../billing.js";
 import {
   checkCompanyTools,
@@ -230,6 +237,17 @@ export function accountRoutes(ctx: RouterContext) {
         ),
         setPerson: authed.companyAdmin.staffLimits.setPerson.handler(({ context, input }) =>
           setStaffPersonLimits(deps, context.actor.userId, input),
+        ),
+      },
+      announcements: {
+        list: authed.companyAdmin.announcements.list.handler(({ context }) =>
+          listAnnouncements(deps, context.actor.userId),
+        ),
+        send: authed.companyAdmin.announcements.send.handler(({ context, input }) =>
+          sendAnnouncement(deps, context.actor.userId, input),
+        ),
+        withdraw: authed.companyAdmin.announcements.withdraw.handler(({ context, input }) =>
+          withdrawAnnouncement(deps, context.actor.userId, input.id),
         ),
       },
       routineActivity: authed.companyAdmin.routineActivity.handler(({ context, input }) =>
@@ -455,6 +473,14 @@ export function accountRoutes(ctx: RouterContext) {
         return loadAutoReviewSettings(deps, context.actor, input.scope);
       }),
     },
+    announcements: {
+      pending: authed.announcements.pending.handler(async ({ context }) => ({
+        announcements: await pendingAnnouncements(deps, context.actor.userId),
+      })),
+      dismiss: authed.announcements.dismiss.handler(({ context, input }) =>
+        dismissAnnouncement(deps, context.actor.userId, input.id),
+      ),
+    },
     notifications: {
       subscribe: authed.notifications.subscribe.handler(async function* ({ context }) {
         if (!deps.events.followChatAlerts) throw new ORPCError("NOT_FOUND");
@@ -464,14 +490,21 @@ export function accountRoutes(ctx: RouterContext) {
           ? AbortSignal.any([context.signal, controller.signal])
           : controller.signal;
         const alerts = deps.events.followChatAlerts(userId, spaceId, signal);
-        let pending: Promise<IteratorResult<ChatAlert>> | undefined;
+        const announcementFeed = deps.events.followAnnouncements?.(signal);
+        let announcements = announcementFeed;
+        let pendingAlert: Promise<{ alert: IteratorResult<ChatAlert> }> | undefined;
+        let pendingAnnouncement: Promise<{ announcement: IteratorResult<string> }> | undefined;
         let authorizedAt = Date.now();
         try {
           while (!context.signal?.aborted) {
-            pending ??= alerts.next();
+            pendingAlert ??= alerts.next().then((alert) => ({ alert }));
+            if (announcements) {
+              pendingAnnouncement ??= announcements.next().then((announcement) => ({ announcement }));
+            }
             let timer: ReturnType<typeof setTimeout> | undefined;
             const next = await Promise.race([
-              pending,
+              pendingAlert,
+              ...(pendingAnnouncement ? [pendingAnnouncement] : []),
               new Promise<"heartbeat">((resolve) => {
                 timer = setTimeout(() => resolve("heartbeat"), HEARTBEAT_MS);
               }),
@@ -484,14 +517,24 @@ export function accountRoutes(ctx: RouterContext) {
               yield { type: "heartbeat" as const };
               continue;
             }
-            pending = undefined;
-            if (next.done) return;
-            if (next.value.spaceId !== spaceId) continue;
-            yield { type: "alert" as const, alert: next.value };
+            if ("announcement" in next) {
+              pendingAnnouncement = undefined;
+              if (next.announcement.done) {
+                // A closed announcement feed leaves chat alerts running.
+                announcements = undefined;
+                continue;
+              }
+              yield { type: "announcement" as const, announcementId: next.announcement.value };
+              continue;
+            }
+            pendingAlert = undefined;
+            if (next.alert.done) return;
+            if (next.alert.value.spaceId !== spaceId) continue;
+            yield { type: "alert" as const, alert: next.alert.value };
           }
         } finally {
           controller.abort();
-          await alerts.return(undefined);
+          await Promise.all([alerts.return(undefined), announcementFeed?.return(undefined)]);
         }
       }),
       subscribeCalls: authed.notifications.subscribeCalls.handler(async function* ({ context }) {

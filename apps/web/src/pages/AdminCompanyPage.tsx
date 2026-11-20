@@ -32,6 +32,7 @@ import {
   HardDrive,
   KeyRound,
   LayoutGrid,
+  Megaphone,
   MessageSquare,
   Mic,
   Monitor,
@@ -55,6 +56,7 @@ import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 import { AccessGroupsSection, AudienceControl } from "./AdminAccess";
+import { AnnouncementsSection } from "./AdminAnnouncements";
 import { AppsList } from "./AdminApps";
 import { CompanyAssistantModelsSection } from "./AdminAssistantModels";
 import { CompanyToolsSection } from "./AdminCompanyTools";
@@ -72,6 +74,7 @@ import { WindowChrome } from "./WindowChrome";
 
 const ADMIN_SECTIONS = [
   "models",
+  "announcements",
   "features",
   "skills",
   "integrations",
@@ -143,6 +146,7 @@ function CompanyAdminPanels() {
 
   const nav: { id: AdminSection; label: string; icon: LucideIcon }[] = [
     { id: "models", label: t`Model`, icon: Cpu },
+    { id: "announcements", label: t`Announcements`, icon: Megaphone },
     { id: "features", label: t`Features`, icon: ToggleRight },
     { id: "skills", label: t`Staff skills`, icon: ScrollText },
     { id: "integrations", label: t`Connectors`, icon: LayoutGrid },
@@ -182,6 +186,8 @@ function CompanyAdminPanels() {
             <CompanyAssistantModelsSection state={data} onSaved={saved} />
           </div>
         );
+      case "announcements":
+        return <AnnouncementsSection />;
       case "features":
         return (
           <div className="space-y-10">

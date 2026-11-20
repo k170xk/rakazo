@@ -21,6 +21,7 @@ export * from "./documents.js";
 export * from "./domain.js";
 export * from "./email-draft.js";
 export * from "./email-filing.js";
+export * from "./announcements.js";
 export * from "./events.js";
 export * from "./evolve-history.js";
 export * from "./evolve-learning.js";

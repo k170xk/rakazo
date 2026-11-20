@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RpcClient } from "../../lib/rpc";
 import { useBrowserNotifications } from "./use-browser-notifications";
 
-type Frame = { type: "alert" | "heartbeat"; alert?: ChatAlert };
+type Frame = { type: "alert" | "announcement" | "heartbeat"; alert?: ChatAlert; announcementId?: string };
 
 class FakeNotification {
   static permission: NotificationPermission = "granted";
@@ -30,6 +30,7 @@ let signals: AbortSignal[];
 let focused: boolean;
 let visible: boolean;
 let openChat: ReturnType<typeof vi.fn<(alert: ChatAlert) => void>>;
+let onAnnouncement: ReturnType<typeof vi.fn<() => void>>;
 let root: Root;
 
 function stream(): AsyncIterable<Frame> {
@@ -83,6 +84,7 @@ function Harness({ botId, groupId }: { botId?: string; groupId?: string }) {
       activeBotId: { current: botId },
       activeGroupId: { current: groupId },
       openChat,
+      onAnnouncement,
     },
   );
   return null;
@@ -127,6 +129,7 @@ beforeEach(() => {
   focused = true;
   visible = true;
   openChat = vi.fn<(alert: ChatAlert) => void>();
+  onAnnouncement = vi.fn<() => void>();
   vi.spyOn(document, "visibilityState", "get").mockImplementation(() =>
     visible ? "visible" : "hidden",
   );
@@ -216,6 +219,14 @@ describe("useBrowserNotifications chat alerts", () => {
     expect(streams).toHaveLength(2);
     await send({});
     expect(shown()).toHaveLength(1);
+  });
+
+  it("passes company announcements on without showing a browser notification", async () => {
+    await open({ botId: "bot-a" });
+    streams.at(-1)!.push({ type: "announcement", announcementId: "announcement-1" });
+    await flush();
+    expect(onAnnouncement).toHaveBeenCalledTimes(1);
+    expect(shown()).toEqual([]);
   });
 
   it("closes the stream when the shell unmounts", async () => {

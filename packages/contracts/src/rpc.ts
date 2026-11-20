@@ -12,6 +12,11 @@ import {
 } from "./agent-import.js";
 import { AgentImportSetupStateInput, AgentImportSetupStateSchema } from "./agent-import-setup.js";
 import { AiConsentQuerySchema, AiConsentStatusSchema } from "./ai-consent.js";
+import {
+  AdminAnnouncementSchema,
+  AnnouncementInputSchema,
+  AnnouncementSchema,
+} from "./announcements.js";
 import { AnalyticsScreenInput } from "./analytics.js";
 import {
   AppAssetSchema,
@@ -507,6 +512,14 @@ export const appContract = {
       remove: oc
         .input(z.object({ name: StoredBotSecretName }))
         .output(z.object({ ok: z.literal(true) })),
+    },
+    /** Updates shown to everyone as a dialog, newest first, including withdrawn ones. */
+    announcements: {
+      list: oc.output(z.array(AdminAnnouncementSchema)),
+      /** Saves it and shows it at once to everyone with the app open. */
+      send: oc.input(AnnouncementInputSchema).output(AdminAnnouncementSchema),
+      /** Stops showing it to people who have not dismissed it yet. */
+      withdraw: oc.input(z.object({ id: z.string().min(1) })).output(z.object({ ok: z.literal(true) })),
     },
     /** Model spending per person across every space. */
     spending: oc
@@ -2207,13 +2220,23 @@ export const appContract = {
      */
     accountToken: oc.output(z.object({ token: z.string() })),
   },
+  /** Company updates from admins that the signed-in person has not dismissed yet. */
+  announcements: {
+    pending: oc.output(z.object({ announcements: z.array(AnnouncementSchema) })),
+    dismiss: oc.input(z.object({ id: z.string().min(1) })).output(z.object({ ok: z.literal(true) })),
+  },
   notifications: {
-    /** Run alerts for the signed-in user's chats in this space, live while connected. */
+    /**
+     * Run alerts for the signed-in user's chats in this space, plus a frame when an admin sends or
+     * withdraws a company announcement, live while connected. Announcements share this stream
+     * because browsers allow only six connections per host over HTTP/1.1.
+     */
     subscribe: oc.output(
       eventIterator(
         z.object({
-          type: z.enum(["alert", "heartbeat"]),
+          type: z.enum(["alert", "announcement", "heartbeat"]),
           alert: ChatAlertSchema.optional(),
+          announcementId: z.string().optional(),
         }),
       ),
     ),

@@ -21,6 +21,8 @@ type ChatAlertOptions = {
   activeBotId: RefObject<string | undefined>;
   activeGroupId: RefObject<string | undefined>;
   openChat: (alert: ChatAlert) => void;
+  /** An admin sent or withdrew a company announcement; it rides this stream to save a connection. */
+  onAnnouncement?: () => void;
 };
 
 /**
@@ -30,11 +32,13 @@ type ChatAlertOptions = {
 export function useBrowserNotifications(
   bots: Bot[],
   botsRef: RefObject<Bot[]>,
-  { rpc, activeBotId, activeGroupId, openChat }: ChatAlertOptions,
+  { rpc, activeBotId, activeGroupId, openChat, onAnnouncement }: ChatAlertOptions,
 ) {
   useEffect(() => prepareNotificationIcons(bots), [bots]);
   const openChatRef = useRef(openChat);
   openChatRef.current = openChat;
+  const onAnnouncementRef = useRef(onAnnouncement);
+  onAnnouncementRef.current = onAnnouncement;
   useEffect(() => {
     let active = true;
     let controller: AbortController | undefined;
@@ -84,6 +88,7 @@ export function useBrowserNotifications(
           for await (const frame of stream) {
             if (!active) return;
             if (frame.alert) show(frame.alert);
+            if (frame.type === "announcement") onAnnouncementRef.current?.();
           }
         } catch (cause) {
           failure = cause;
