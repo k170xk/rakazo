@@ -13,13 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-msgid "Editing PDFs is coming soon with OCSC Intelligence."
-msgstr "PDFの編集は、OCSC Intelligenceでまもなくご利用いただけます。"
-
-msgid "You can still open and download PDFs."
-msgstr "PDFの表示とダウンロードは引き続きできます。"
-
-
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid " · Shift-drag or middle-mouse to pan · V lasso · M rect · B brush · Enter/Done commits · Esc cancels"
 msgstr ""
@@ -110,6 +103,7 @@ msgid "{0, plural, one {# free month} other {# free months}}"
 msgstr ""
 
 #. placeholder {0}: ids.length
+#. placeholder {0}: selection.count
 #: src/components/office/PdfStudio.tsx
 msgid "{0, plural, one {# markup} other {# markups}}"
 msgstr ""
@@ -180,6 +174,26 @@ msgstr ""
 msgid "{0, plural, one {# still has their own model connection} other {# still have their own model connections}}"
 msgstr ""
 
+#. placeholder {0}: diff.added.length
+#: src/components/office/planner/history-diff.ts
+msgid "{0, plural, one {# task added} other {# tasks added}}"
+msgstr ""
+
+#. placeholder {0}: flash.tasks.size
+#: src/components/office/PlannerStudio.tsx
+msgid "{0, plural, one {# task changed} other {# tasks changed}}"
+msgstr ""
+
+#. placeholder {0}: diff.removed.length
+#: src/components/office/planner/history-diff.ts
+msgid "{0, plural, one {# task removed} other {# tasks removed}}"
+msgstr ""
+
+#. placeholder {0}: diff.changed.length
+#: src/components/office/planner/history-diff.ts
+msgid "{0, plural, one {# task updated} other {# tasks updated}}"
+msgstr ""
+
 #. placeholder {0}: server.health.toolCount
 #: src/pages/McpServersOverlay.tsx
 msgid "{0, plural, one {# tool} other {# tools}}"
@@ -208,6 +222,11 @@ msgstr ""
 #. placeholder {0}: shapes.length
 #: src/components/render-studio/StageCanvas.tsx
 msgid "{0, plural, one {Mask active · # region · Render will target selection} other {Mask active · # regions · Render will target selection}}"
+msgstr ""
+
+#. placeholder {0}: item.dismissedCount
+#: src/pages/AdminAnnouncements.tsx
+msgid "{0, plural, one {Seen by # person} other {Seen by # people}}"
 msgstr ""
 
 #. placeholder {0}: pinned.length
@@ -242,6 +261,17 @@ msgstr "{0}（{1}を超えています）"
 #: src/lib/cron.ts
 msgid "{0} {unitLabel}"
 msgstr "{0}{unitLabel}"
+
+#. placeholder {0}: category.from
+#. placeholder {1}: category.label
+#: src/components/office/planner/history.tsx
+msgid "{0} → {1}"
+msgstr ""
+
+#. placeholder {0}: category.label
+#: src/components/office/planner/history.tsx
+msgid "{0} added"
+msgstr ""
 
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
@@ -331,6 +361,12 @@ msgstr "{0} MB"
 msgid "{0} min"
 msgstr ""
 
+#. placeholder {0}: position.index + 1
+#. placeholder {1}: position.count
+#: src/components/announcements/AnnouncementDialog.tsx
+msgid "{0} of {1}"
+msgstr ""
+
 #. placeholder {0}: result.correct
 #. placeholder {1}: result.total
 #: src/components/LearningClinicCard.tsx
@@ -364,6 +400,16 @@ msgstr ""
 #. placeholder {0}: questions.length
 #: src/components/LearningClinicCard.tsx
 msgid "{0} questions · pass mark {passPercent}%"
+msgstr ""
+
+#. placeholder {0}: category.label
+#: src/components/office/planner/history.tsx
+msgid "{0} recoloured"
+msgstr ""
+
+#. placeholder {0}: category.label
+#: src/components/office/planner/history.tsx
+msgid "{0} removed"
 msgstr ""
 
 #. placeholder {0}: sender.name
@@ -441,6 +487,10 @@ msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "{by} in the Studio"
+msgstr ""
+
+#: src/components/office/planner/history-diff.ts
+msgid "{categories, plural, one {# category changed} other {# categories changed}}"
 msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
@@ -705,12 +755,24 @@ msgstr ""
 msgid "{removed, plural, one {# markup removed} other {# markups removed}}"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "{running} running"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "{running} running, {waiting} waiting"
+msgstr ""
+
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {#席} other {#席}}"
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "{selectedCount} / {maxPages} pages selected"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "{share} of {finished} replies"
 msgstr ""
 
 #: src/components/office/sheet/history.tsx
@@ -784,6 +846,10 @@ msgstr "@{0}"
 msgid "/ month"
 msgstr "/ 月"
 
+#: src/components/office/planner/NewCategoryControl.tsx
+msgid "+ New category…"
+msgstr ""
+
 #. placeholder {0}: ex.tags.length - 3
 #: src/pages/shell/references-dialog.tsx
 msgid "+{0} more"
@@ -851,11 +917,17 @@ msgid "A deadline with the same name and date as one already on the project is n
 msgstr ""
 
 #: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
 msgid "A newer version arrived first, so it has been loaded. Restore again if you still want the older one."
 msgstr "新しいバージョンが先に届いたため、そちらを読み込みました。古いバージョンが必要な場合は、もう一度復元してください。"
+
+#. placeholder {0}: conflicts.join(", ")
+#: src/components/apps/AppCodePanel.tsx
+msgid "A newer version changed the same files you edited: {0}. Your other changes are kept."
+msgstr ""
 
 #: src/components/office/WordStudio.tsx
 msgid "A newer version of this document was saved, so it has been loaded. Make your last change again."
@@ -866,6 +938,10 @@ msgstr "この文書の新しいバージョンが保存されたため、読み
 msgid "A newer version of this PDF arrived while you worked, so your markups were saved as a copy: {0}."
 msgstr ""
 
+#: src/components/office/PlannerStudio.tsx
+msgid "A newer version of this plan was saved, so it has been loaded. Make your last change again."
+msgstr ""
+
 #: src/components/office/SlidesStudio.tsx
 msgid "A newer version of this presentation was saved, so it has been loaded. Make your last change again."
 msgstr "このプレゼンテーションの新しいバージョンが保存されたため、読み込みました。最後の変更をもう一度行ってください。"
@@ -873,6 +949,10 @@ msgstr "このプレゼンテーションの新しいバージョンが保存さ
 #: src/components/office/SheetStudio.tsx
 msgid "A newer version of this spreadsheet was saved, so it has been loaded. Make your last change again."
 msgstr "このスプレッドシートの新しいバージョンが保存されたため、読み込みました。最後の変更をもう一度行ってください。"
+
+#: src/components/apps/AppCodePanel.tsx
+msgid "A newer version was saved while you edited. Your changes are kept; save again to add them to it."
+msgstr ""
 
 #: src/components/apps/AppStudio.tsx
 msgid "A place to build the work you do"
@@ -944,6 +1024,10 @@ msgstr ""
 msgid "A workbook needs at least one sheet."
 msgstr "ブックには少なくとも 1 つのシートが必要です。"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "about {daysLeft} days"
+msgstr ""
+
 #: src/pages/KnowledgeSection.tsx
 msgid "About {kb} KB of memory no longer reaches the agent."
 msgstr ""
@@ -975,6 +1059,7 @@ msgid "Accept"
 msgstr "承諾"
 
 #: src/components/office/word/ReviewPanel.tsx
+#: src/components/office/WordStudio.tsx
 msgid "Accept all"
 msgstr "すべて承諾"
 
@@ -1172,6 +1257,10 @@ msgstr "インフォグラフィック、図、プロジェクト写真を追加
 msgid "Add an instruction filing should follow"
 msgstr ""
 
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Add an owner"
+msgstr ""
+
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Add and update a project's deadlines, as on Project Tracker."
 msgstr ""
@@ -1179,6 +1268,10 @@ msgstr ""
 #: src/pages/PluginsOverlay.tsx
 msgid "Add another"
 msgstr "別のものを追加"
+
+#: src/components/office/planner/NewCategoryControl.tsx
+msgid "Add category"
+msgstr ""
 
 #: src/components/office/StudioWelcome.tsx
 msgid "Add columns or a table"
@@ -1310,6 +1403,10 @@ msgstr "サーバーURLを追加"
 msgid "Add skills"
 msgstr ""
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Add tasks, links and milestones on the Gantt"
+msgstr ""
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Add to chat"
 msgstr ""
@@ -1345,6 +1442,7 @@ msgstr ""
 #: src/components/GroupPeople.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
+#: src/components/office/planner/history.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Added"
 msgstr "追加済み"
@@ -1432,6 +1530,7 @@ msgid "agent"
 msgstr ""
 
 #: src/lib/identity-display.ts
+#: src/pages/AdminReplyFailures.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1742,6 +1841,11 @@ msgstr ""
 msgid "ann@example.com or @example.com"
 msgstr ""
 
+#: src/pages/AdminAnnouncements.tsx
+#: src/pages/AdminCompanyPage.tsx
+msgid "Announcements"
+msgstr ""
+
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
 msgstr "別のエージェント"
@@ -1770,6 +1874,10 @@ msgstr "回答済み"
 #: src/components/AskCard.tsx
 msgid "Answered: {answer}"
 msgstr "回答済み: {answer}"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Answering"
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Anthropic API"
@@ -1881,6 +1989,10 @@ msgstr ""
 msgid "App made from Excel"
 msgstr "Excel から作成したアプリ"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "App server"
+msgstr ""
+
 #: src/components/apps/AppStudio.tsx
 #: src/components/tour/ocsc-tour.tsx
 msgid "App Studio"
@@ -1894,6 +2006,18 @@ msgstr ""
 #: src/components/pages/PageCard.tsx
 msgid "App updated"
 msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+#~ msgid "App: documents and tools"
+#~ msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+#~ msgid "App: large documents"
+#~ msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+#~ msgid "App: video"
+#~ msgstr ""
 
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -2091,14 +2215,6 @@ msgstr ""
 msgid "Ask the agent to fix them"
 msgstr ""
 
-#: src/components/apps/AppStudio.tsx
-msgid "People hit errors {hitCount} times using this app."
-msgstr ""
-
-#: src/components/apps/AppStudio.tsx
-msgid "Someone hit an error using this app."
-msgstr ""
-
 #: src/components/office/StudioWelcome.tsx
 msgid "Ask the assistant to:"
 msgstr "アシスタントに頼めること:"
@@ -2114,6 +2230,11 @@ msgstr "スリープ中"
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Assigned to"
+msgstr ""
+
+#. placeholder {0}: change.to
+#: src/components/office/planner/history-diff.ts
+msgid "assigned to {0}"
 msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
@@ -2223,6 +2344,10 @@ msgstr "自動送信者"
 msgid "Automatic"
 msgstr "自動"
 
+#: src/components/apps/AppStudio.tsx
+msgid "Automatic fixes are paused after two tries. Ask the agent when you're ready."
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "AutoSum"
 msgstr "オート SUM"
@@ -2311,6 +2436,10 @@ msgstr ""
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "ベースURL"
+
+#: src/components/office/planner/history-diff.ts
+msgid "baseline"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Basic auth"
@@ -2476,6 +2605,10 @@ msgstr ""
 msgid "Build a chart or a summary, or clean up the data"
 msgstr "グラフやサマリーを作成する、データを整理する"
 
+#: src/components/office/StudioWelcome.tsx
+msgid "Build a programme from a tender or spreadsheet"
+msgstr ""
+
 #: src/components/apps/AppStudio.tsx
 msgid "Build it"
 msgstr ""
@@ -2606,6 +2739,8 @@ msgstr "画像を読み取れません"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
+#: src/components/office/planner/EvolveJobLink.tsx
+#: src/components/office/planner/NewCategoryControl.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
@@ -2679,6 +2814,10 @@ msgstr "カード表示"
 msgid "Cards"
 msgstr ""
 
+#: src/components/office/planner/history.tsx
+msgid "Categories"
+msgstr ""
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "category"
 msgstr ""
@@ -2687,6 +2826,20 @@ msgstr ""
 #: src/components/EvolveChangeEditor.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
+msgstr ""
+
+#. placeholder {0}: change.from
+#. placeholder {1}: change.to
+#: src/components/office/planner/history-diff.ts
+msgid "category {0} → {1}"
+msgstr ""
+
+#: src/components/office/planner/NewCategoryControl.tsx
+msgid "Category colour"
+msgstr ""
+
+#: src/components/office/planner/NewCategoryControl.tsx
+msgid "Category name, e.g. Mechanical & Electrical"
 msgstr ""
 
 #: src/components/EmailDraftCard.tsx
@@ -2756,6 +2909,10 @@ msgstr ""
 msgid "Change in Company admin"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Change in period"
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
 msgid "Change model"
 msgstr "モデルを変更"
@@ -2819,6 +2976,10 @@ msgstr ""
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Chat details"
 msgstr "チャットの詳細"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Chat replies"
+msgstr ""
 
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
@@ -3087,6 +3248,10 @@ msgstr "書式のクリア"
 msgid "Clear formatting"
 msgstr "書式のクリア"
 
+#: src/components/office/planner/EvolveJobLink.tsx
+msgid "Clear link"
+msgstr ""
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Clear mask"
 msgstr ""
@@ -3134,6 +3299,7 @@ msgstr ""
 #: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/ribbon/CompactRibbon.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
+#: src/components/tour/ocsc-tour.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3197,6 +3363,10 @@ msgstr "パネルを閉じる"
 
 #: src/components/office/PdfStudio.tsx
 msgid "Close PDF"
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Close plan"
 msgstr ""
 
 #: src/components/office/SlidesStudio.tsx
@@ -3517,6 +3687,10 @@ msgstr "コンピューター"
 msgid "Computer failed to boot"
 msgstr "コンピューターの起動に失敗しました"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computer host (Incus)"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Computer hours left"
 msgstr "コンピューターの残り時間"
@@ -3571,6 +3745,18 @@ msgstr "コンピューターは無効です。SANDBOX_PROVIDER=docker と SANDB
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Computers are switched off in Features, so nobody has one. Documents and videos still work for everyone."
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computers off"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computers on"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computers on and replies in progress"
 msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
@@ -3864,6 +4050,10 @@ msgstr ""
 
 #: src/components/apps/AppVisualEdit.tsx
 msgid "Corners"
+msgstr ""
+
+#: src/components/office/planner/history-diff.ts
+msgid "cost"
 msgstr ""
 
 #: src/pages/AdminStaffSpending.tsx
@@ -4712,6 +4902,10 @@ msgstr "コピーできませんでした。リンクを選択してコピーし
 msgid "Couldn't create the whiteboard."
 msgstr ""
 
+#: src/components/announcements/CompanyAnnouncements.tsx
+msgid "Couldn't dismiss this update"
+msgstr ""
+
 #: src/components/office/WordStudio.tsx
 msgid "Couldn't download the document."
 msgstr "文書をダウンロードできませんでした。"
@@ -4727,6 +4921,14 @@ msgstr "プレゼンテーションをダウンロードできませんでした
 #: src/components/office/SheetStudio.tsx
 msgid "Couldn't download the spreadsheet."
 msgstr "スプレッドシートをダウンロードできませんでした。"
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Couldn't download this plan."
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Couldn't load announcements"
+msgstr ""
 
 #: src/components/apps/AppsDialog.tsx
 #: src/components/pages/PagesList.tsx
@@ -4745,8 +4947,20 @@ msgstr ""
 msgid "Couldn't load messaging settings"
 msgstr "メッセージ設定を読み込めませんでした"
 
+#: src/components/office/planner/EvolveJobLink.tsx
+msgid "Couldn't load projects."
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Couldn't load reply failures"
+msgstr ""
+
 #: src/pages/AdminRoutineActivity.tsx
 msgid "Couldn't load routine activity"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Couldn't load server readings"
 msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
@@ -4790,6 +5004,10 @@ msgstr "新しいドキュメントを作成できませんでした。"
 msgid "Couldn't make a new PDF."
 msgstr ""
 
+#: src/components/office/PlannerStudio.tsx
+msgid "Couldn't make a new plan."
+msgstr ""
+
 #: src/components/office/SlidesStudio.tsx
 msgid "Couldn't make a new presentation."
 msgstr "新しいプレゼンテーションを作成できませんでした。"
@@ -4798,7 +5016,16 @@ msgstr "新しいプレゼンテーションを作成できませんでした。
 msgid "Couldn't make a new spreadsheet."
 msgstr "新しいスプレッドシートを作成できませんでした。"
 
+#: src/components/office/PlannerStudio.tsx
+msgid "Couldn't read that CSV file."
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Couldn't read that Microsoft Project file. Upload .mpp or Project XML (.xml)."
+msgstr ""
+
 #: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -4811,6 +5038,10 @@ msgstr "Couldn't save the whiteboard."
 
 #: src/components/apps/AppCodePanel.tsx
 msgid "Couldn't save."
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Couldn't send the announcement"
 msgstr ""
 
 #: src/components/office/slides/SlidesWorkbench.tsx
@@ -4846,6 +5077,14 @@ msgstr "ファイルをアップロードできませんでした: {0}（エラ�
 msgid "Couldn't upload the file. Check your connection and try again."
 msgstr "ファイルをアップロードできませんでした。接続を確認してもう一度お試しください。"
 
+#: src/pages/AdminAnnouncements.tsx
+msgid "Couldn't use that image"
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Couldn't withdraw the announcement"
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Count numbers"
 msgstr "数値の個数"
@@ -4864,6 +5103,10 @@ msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Covers schedules, change checks, webhooks and messages. A run past the limit waits until the day's window clears."
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "CPU busy"
 msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
@@ -5213,6 +5456,7 @@ msgstr "「{0}」を削除しますか？"
 #. placeholder {0}: board.title
 #: src/components/apps/AppStudio.tsx
 #: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -5364,6 +5608,10 @@ msgstr "拒否済み"
 msgid "Deny"
 msgstr "拒否"
 
+#: src/components/office/planner/history-diff.ts
+msgid "dependencies"
+msgstr ""
+
 #. placeholder {0}: settings.defaultProvider
 #: src/components/ComputerProviderSettings.tsx
 msgid "Deployment default ({0})"
@@ -5422,6 +5670,11 @@ msgstr ""
 msgid "Desktop update"
 msgstr "デスクトップの更新"
 
+#: src/components/office/planner/history-diff.ts
+msgid "details"
+msgstr ""
+
+#: src/components/apps/ImportReport.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Details"
@@ -5515,8 +5768,17 @@ msgstr "{disconnectName}を切断しました。"
 msgid "Disconnecting…"
 msgstr "切断中…"
 
-#: src/components/apps/AppDataPanel.tsx
+#: src/pages/AdminInfrastructure.tsx
+msgid "Disk"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Disk used"
+msgstr ""
+
+#: src/components/announcements/AnnouncementDialog.tsx
 #: src/components/apps/AppStudio.tsx
+#: src/components/apps/ImportReport.tsx
 #: src/components/AskCard.tsx
 #: src/components/ComputerUpdateProgress.tsx
 #: src/components/PasskeyOffer.tsx
@@ -5575,8 +5837,13 @@ msgid "Document: {title}"
 msgstr "文書: {title}"
 
 #: src/components/office/WordStudio.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Documents"
 msgstr "文書"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Documents, spreadsheets, PDFs and video"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -5619,6 +5886,10 @@ msgstr "ダウンロード"
 #: src/components/office/WordStudio.tsx
 msgid "Download .docx"
 msgstr ".docx をダウンロード"
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Download .jantt"
+msgstr ""
 
 #: src/components/office/PdfStudio.tsx
 msgid "Download .pdf"
@@ -5664,6 +5935,10 @@ msgstr ""
 #: src/components/UiCardView.tsx
 msgid "Download CSV"
 msgstr "CSV をダウンロード"
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Download or import a schedule."
+msgstr ""
 
 #: src/components/pages/DownloadPdfButton.tsx
 #: src/components/pages/SharePopover.tsx
@@ -5747,6 +6022,10 @@ msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Duration (days)"
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "e.g. Project Programmes studio is here"
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
@@ -5879,6 +6158,12 @@ msgstr ""
 msgid "Editing original → first render will be v1"
 msgstr ""
 
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PdfStudio.tsx
+#: src/components/office/StudioWelcome.tsx
+msgid "Editing PDFs is coming soon with OCSC Intelligence."
+msgstr "PDFの編集は、OCSC Intelligenceでまもなくご利用いただけます。"
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Editing RENDER"
 msgstr ""
@@ -5901,9 +6186,17 @@ msgstr ""
 msgid "Edits"
 msgstr ""
 
+#: src/components/office/WordStudio.tsx
+msgid "Edits are marked in red, so you can see what changed"
+msgstr "Edits are marked in red, so you can see what changed"
+
 #: src/pages/AdminCompanyTools.tsx
 msgid "Edits records"
 msgstr ""
+
+#: src/components/office/WordStudio.tsx
+msgid "Edits update the document directly, without red marks"
+msgstr "Edits update the document directly, without red marks"
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Edits Word files you send it, keeping your original untouched"
@@ -6278,6 +6571,10 @@ msgstr ""
 msgid "Evolve is not linked on this server yet."
 msgstr ""
 
+#: src/components/office/planner/history-diff.ts
+msgid "Evolve job changed"
+msgstr ""
+
 #: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/PdfStudio.tsx
 msgid "Evolve PDF"
@@ -6292,6 +6589,7 @@ msgid "Evolve PDF Studio isn't installed on this server yet. Download the PDF, o
 msgstr ""
 
 #: src/components/GroupPeople.tsx
+#: src/components/office/planner/EvolveAssigneePicker.tsx
 msgid "Evolve people"
 msgstr ""
 
@@ -6308,6 +6606,16 @@ msgstr ""
 #: src/components/office/slides/SlidesRibbon.tsx
 #: src/components/office/SlidesStudio.tsx
 msgid "Evolve PowerPoint"
+msgstr ""
+
+#: src/components/office/planner/EvolveAssigneePicker.tsx
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Evolve profile"
+msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PlannerStudio.tsx
+msgid "Evolve Project"
 msgstr ""
 
 #: src/components/EmailFilingCard.tsx
@@ -6384,8 +6692,8 @@ msgid "exemplar responses"
 msgstr ""
 
 #: src/pages/shell/shell-sidebar.tsx
-msgid "Exl"
-msgstr ""
+#~ msgid "Exl"
+#~ msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Expand"
@@ -6426,9 +6734,25 @@ msgstr ""
 msgid "Export"
 msgstr "エクスポート"
 
+#: src/components/office/PlannerStudio.tsx
+msgid "Export CSV"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Export data"
 msgstr "データをエクスポート"
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Export MS Project XML"
+msgstr ""
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Export MS Project XML or CSV when you need it"
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Export programme PDF"
+msgstr ""
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Export this week's list from the CRM and drop it in the shared folder"
@@ -6461,6 +6785,14 @@ msgstr "失敗"
 #: src/pages/ActivityList.tsx
 msgid "Failed"
 msgstr "失敗"
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Failed replies"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Failed replies per day"
+msgstr ""
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Failed to add drawings"
@@ -6718,6 +7050,10 @@ msgstr "フォントの色"
 msgid "Font size"
 msgstr "フォント サイズ"
 
+#: src/pages/AdminAnnouncements.tsx
+msgid "For changes people only get after reloading the app, such as a new studio."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "For clients and partners; a password is made for you"
 msgstr ""
@@ -6808,6 +7144,11 @@ msgstr "開始日"
 msgid "From {0}"
 msgstr "{0}から"
 
+#. placeholder {0}: announcement.authorName
+#: src/components/announcements/AnnouncementDialog.tsx
+msgid "From {0} · {when}"
+msgstr ""
+
 #. placeholder {0}: archived.length
 #: src/pages/KnowledgeSection.tsx
 msgid "From archived agents ({0})"
@@ -6849,6 +7190,10 @@ msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Full computer"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Full in"
 msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
@@ -6897,6 +7242,10 @@ msgstr ""
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Get started"
 msgstr "始める"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Get to know"
+msgstr "Get to know"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Get to know agent teamwork"
@@ -7205,6 +7554,7 @@ msgstr "蛍光ペンの色"
 #: src/components/apps/AppStudio.tsx
 #: src/components/office/history/VersionHistory.tsx
 #: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/slides/SlidesRibbon.tsx
@@ -7358,9 +7708,22 @@ msgstr ""
 msgid "Import an agent"
 msgstr "エージェントをインポート"
 
+#: src/components/office/PlannerStudio.tsx
+msgid "Import CSV"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Import data"
 msgstr "データをインポート"
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Import MS Project XML"
+msgstr ""
+
+#. placeholder {0}: merged.tasks?.length ?? 0
+#: src/components/office/PlannerStudio.tsx
+msgid "Imported {0} tasks into this plan."
+msgstr ""
 
 #: src/components/StorageDialog.tsx
 msgid "In a chat"
@@ -7704,9 +8067,17 @@ msgstr ""
 msgid "Keep memories"
 msgstr "メモリを保持"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Keep mine"
+msgstr ""
+
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Keep separate data for each one"
 msgstr ""
+
+#: src/components/office/WordStudio.tsx
+msgid "Keep the text and remove the red marks"
+msgstr "Keep the text and remove the red marks"
 
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Keep titles short and actionable; add due dates and priority only when they help you decide"
@@ -7764,6 +8135,10 @@ msgstr "ラベル"
 msgid "Language"
 msgstr "言語"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Large documents"
+msgstr ""
+
 #: src/components/StorageDialog.tsx
 msgid "Largest"
 msgstr ""
@@ -7772,16 +8147,25 @@ msgstr ""
 msgid "Lasso"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Last 24 hours"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+#: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last 30 days"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+#: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last 7 days"
 msgstr ""
 
+#: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Last 90 days"
@@ -7824,6 +8208,10 @@ msgstr ""
 
 #: src/pages/AdminRoutineActivity.tsx
 msgid "Last created"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Last failed"
 msgstr ""
 
 #. placeholder {0}: module.lastScore
@@ -7896,6 +8284,10 @@ msgid "Let it suggest specialists, then create more from the + button"
 msgstr ""
 
 #: src/components/office/StudioWelcome.tsx
+msgid "Let the assistant build your programme"
+msgstr ""
+
+#: src/components/office/StudioWelcome.tsx
 msgid "Let the assistant edit your document"
 msgstr "アシスタントにドキュメントを編集してもらいましょう"
 
@@ -7962,6 +8354,15 @@ msgstr "リンクをコピーしました"
 msgid "Link DMs"
 msgstr "DMを連携"
 
+#: src/components/office/planner/EvolveJobLink.tsx
+#: src/components/office/PlannerStudio.tsx
+msgid "Link Evolve job"
+msgstr ""
+
+#: src/components/office/planner/EvolveJobLink.tsx
+msgid "Link Evolve project"
+msgstr ""
+
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Link in project photos, site images or reference pictures so the board stays visual"
 msgstr ""
@@ -7969,6 +8370,11 @@ msgstr ""
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
 msgstr "SSOを連携"
+
+#. placeholder {0}: link.jobNumber
+#: src/components/office/planner/EvolveJobLink.tsx
+msgid "Linked to Evolve job {0}. Click to change or clear."
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/office/word/WordRibbon.tsx
@@ -7989,6 +8395,10 @@ msgstr "聞いています…"
 
 #: src/components/pages/PagesList.tsx
 msgid "Live data"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Load (1 min)"
 msgstr ""
 
 #: src/pages/shell/transcript.tsx
@@ -8103,6 +8513,7 @@ msgstr "プレビューを読み込み中…"
 msgid "Loading projects..."
 msgstr ""
 
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -8124,6 +8535,8 @@ msgstr "音声プロバイダーを読み込み中…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminDocumentLibrary.tsx
+#: src/pages/AdminInfrastructure.tsx
+#: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -8426,6 +8839,7 @@ msgid "Members use it with the voice you picked, and their use is billed to this
 msgstr ""
 
 #: src/components/EmailFilingCard.tsx
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
@@ -8475,6 +8889,7 @@ msgstr "セルを結合して中央揃え"
 msgid "Merge cells"
 msgstr "セルの結合"
 
+#: src/pages/AdminAnnouncements.tsx
 #: src/pages/SharedChats.tsx
 #: src/pages/shell/chat-shared.ts
 #: src/pages/shell/composer.tsx
@@ -8981,6 +9396,10 @@ msgstr ""
 msgid "New card"
 msgstr ""
 
+#: src/components/office/planner/NewCategoryControl.tsx
+msgid "New category name"
+msgstr ""
+
 #: src/components/office/word/WordRibbon.tsx
 msgid "New comment"
 msgstr "新しいコメント"
@@ -9066,6 +9485,10 @@ msgstr "新しいパスワード"
 
 #: src/components/office/PdfStudio.tsx
 msgid "New PDF"
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "New plan"
 msgstr ""
 
 #: src/components/office/SlidesStudio.tsx
@@ -9160,6 +9583,7 @@ msgstr ""
 msgid "Newer version below"
 msgstr ""
 
+#: src/components/announcements/AnnouncementDialog.tsx
 #: src/components/tour/ocsc-tour.tsx
 #: src/pages/shell/references-dialog.tsx
 msgid "Next"
@@ -9253,6 +9677,10 @@ msgstr ""
 msgid "No cell changes"
 msgstr "セルの変更なし"
 
+#: src/components/office/planner/history-diff.ts
+msgid "No changes"
+msgstr ""
+
 #: src/components/office/pdf/history.tsx
 msgid "No changes to pages or markups"
 msgstr ""
@@ -9305,6 +9733,10 @@ msgstr ""
 msgid "No Evolve assistants are available. Check that Evolve is linked."
 msgstr ""
 
+#: src/components/office/planner/EvolveAssigneePicker.tsx
+msgid "No Evolve profile matches. The name is kept as typed."
+msgstr ""
+
 #: src/components/EmailFilingCard.tsx
 msgid "No Evolve project matches."
 msgstr ""
@@ -9315,6 +9747,10 @@ msgstr ""
 
 #: src/pages/shell/references-dialog.tsx
 msgid "No exemplar responses match your search."
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "No failed replies in this period."
 msgstr ""
 
 #: src/pages/Artifacts.tsx
@@ -9435,6 +9871,10 @@ msgstr ""
 msgid "No other PDFs yet"
 msgstr ""
 
+#: src/components/office/PlannerStudio.tsx
+msgid "No other plans yet"
+msgstr ""
+
 #: src/components/office/SlidesStudio.tsx
 msgid "No other presentations yet"
 msgstr "他のプレゼンテーションはまだありません"
@@ -9463,8 +9903,20 @@ msgstr ""
 msgid "No presentations yet"
 msgstr "プレゼンテーションはまだありません"
 
+#: src/components/office/OfficeStudioHost.tsx
+msgid "No project plans yet"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "No projects match your filters. Try adjusting your criteria."
+msgstr ""
+
+#: src/components/office/planner/EvolveJobLink.tsx
+msgid "No projects matched."
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "No readings yet. The first arrives within a minute of the worker starting."
 msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
@@ -9594,6 +10046,10 @@ msgstr "有効なスキルではありません"
 msgid "Not added: {0}"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Not answering"
+msgstr ""
+
 #: src/components/McpServerHealthLine.tsx
 msgid "Not checked yet"
 msgstr "未確認"
@@ -9618,6 +10074,14 @@ msgstr ""
 msgid "Not imported"
 msgstr "インポートされていません"
 
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Not in Evolve"
+msgstr ""
+
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Not in Evolve, e.g. a contractor or client"
+msgstr ""
+
 #: src/pages/shell/import-status.ts
 msgid "Not in OCSC Intelligence's catalog"
 msgstr ""
@@ -9625,6 +10089,10 @@ msgstr ""
 #: src/pages/PluginsOverlay.tsx
 msgid "Not in the plugin catalog"
 msgstr "プラグインカタログにありません"
+
+#: src/components/office/planner/EvolveAssigneePicker.tsx
+msgid "Not linked to Evolve"
+msgstr ""
 
 #: src/components/EnableNotificationsDialog.tsx
 #: src/components/GitHubStarPrompt.tsx
@@ -9637,13 +10105,15 @@ msgstr "今はしない"
 msgid "Not passed yet"
 msgstr ""
 
-#: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
+#: src/components/office/SaveStatusPill.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
 msgid "Not saved"
 msgstr "未保存"
 
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -9685,6 +10155,10 @@ msgstr ""
 
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Note:"
+msgstr ""
+
+#: src/components/office/planner/history-diff.ts
+msgid "notes"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -9740,6 +10214,10 @@ msgstr "記憶はまだありません"
 
 #: src/components/EmailFilingCard.tsx
 msgid "Nothing remembered yet."
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Nothing sent yet."
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -9986,11 +10464,15 @@ msgid "Only the top-left cell can keep its value. Clear the other cells first, t
 msgstr "値を保持できるのは左上のセルだけです。先に他のセルをクリアしてから結合してください。"
 
 #: src/components/office/OfficeStudioHost.tsx
-msgid "Only Word, PowerPoint and Excel files open here."
-msgstr "ここで開けるのは Word、PowerPoint、Excel ファイルだけです。"
+#~ msgid "Only Word, PowerPoint and Excel files open here."
+#~ msgstr "ここで開けるのは Word、PowerPoint、Excel ファイルだけです。"
 
 #: src/components/office/OfficeStudioHost.tsx
-msgid "Only Word, PowerPoint, Excel and PDF files open here."
+#~ msgid "Only Word, PowerPoint, Excel and PDF files open here."
+#~ msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
+msgid "Only Word, PowerPoint, Excel, PDF and Project plan files open here."
 msgstr ""
 
 #: src/components/pages/SharePopover.tsx
@@ -10049,6 +10531,10 @@ msgstr ""
 
 #: src/components/office/PdfStudio.tsx
 msgid "Open another PDF."
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Open another plan."
 msgstr ""
 
 #: src/components/office/SlidesStudio.tsx
@@ -10202,6 +10688,10 @@ msgstr "ヘッダー値（任意）"
 msgid "Optional. Evolve colleagues chat with this group's agents, without your memory, notes, saved logins or connectors."
 msgstr ""
 
+#: src/components/office/planner/EvolveJobLink.tsx
+msgid "Optionally link this plan to an Evolve project datasheet."
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Or paste an API key"
@@ -10246,6 +10736,14 @@ msgstr "元のメッセージを表示できません"
 msgid "Original source image"
 msgstr ""
 
+#: src/pages/AdminReplyFailures.tsx
+msgid "Other"
+msgstr ""
+
+#: src/pages/AdminReplyFailures.tsx
+msgid "Other failures"
+msgstr ""
+
 #: src/components/FoundModelPicker.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
@@ -10284,6 +10782,10 @@ msgstr ""
 msgid "Output"
 msgstr "出力"
 
+#: src/pages/AdminReplyFailures.tsx
+msgid "Output limit"
+msgstr ""
+
 #. placeholder {0}: captureSize.w
 #. placeholder {1}: captureSize.h
 #: src/components/render-studio/RenderStudioDialog.tsx
@@ -10302,6 +10804,10 @@ msgstr "外枠"
 msgid "Oval"
 msgstr "楕円"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Overflow"
+msgstr ""
+
 #. placeholder {0}: group.ownerName
 #: src/pages/SharedChats.tsx
 msgid "Owned by {0}"
@@ -10313,6 +10819,37 @@ msgstr ""
 #: src/pages/Board.tsx
 msgid "Owner"
 msgstr "オーナー"
+
+#. placeholder {0}: change.from
+#. placeholder {1}: change.to
+#: src/components/office/planner/history-diff.ts
+msgid "owner {0} → {1}"
+msgstr ""
+
+#. placeholder {0}: change.from
+#: src/components/office/planner/history-diff.ts
+msgid "owner {0} removed"
+msgstr ""
+
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Owner name"
+msgstr ""
+
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Owner of {taskLabel}"
+msgstr ""
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Owner: {name}"
+msgstr ""
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Owner: {name} · {jobTitle}"
+msgstr ""
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Owner: {name} (not in Evolve)"
+msgstr ""
 
 #: src/components/apps/AppVisualEdit.tsx
 msgid "Padding"
@@ -10441,6 +10978,10 @@ msgstr "支払い期限超過"
 msgid "Paste a replacement key"
 msgstr "新しいキーを貼り付け"
 
+#: src/pages/AdminAnnouncements.tsx
+msgid "Paste a screenshot, drop one here, or click to choose a file"
+msgstr ""
+
 #: src/components/EmailDraftCard.tsx
 msgid "Paste signature"
 msgstr ""
@@ -10498,6 +11039,7 @@ msgid "people"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
+#: src/components/office/planner/QuickAssignPopover.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -10518,12 +11060,20 @@ msgstr ""
 msgid "People & time"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "People hit errors {hitCount} times using this app."
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "People keep their own logins, cards, API keys and contacts, and their assistants can use them. Off for everyone until you turn this on. The company vault on this page is separate and stays available."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "People see a Data section in their settings to export or import their account, import agents from other apps and delete their account."
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "People's computers"
 msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
@@ -10538,6 +11088,8 @@ msgstr ""
 msgid "Percentage"
 msgstr "パーセンテージ"
 
+#: src/pages/AdminInfrastructure.tsx
+#: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
 msgid "Period"
@@ -10617,6 +11169,10 @@ msgstr "一覧からモデルを選択するか、このエンドポイントで
 msgid "Pick a tool to check"
 msgstr "確認するツールを選択"
 
+#: src/components/office/planner/EvolveAssigneePicker.tsx
+msgid "Pick someone from the list to link their Evolve CV."
+msgstr ""
+
 #: src/components/office/slides/SlidesRibbon.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/word/WordRibbon.tsx
@@ -10649,6 +11205,10 @@ msgstr "ピン留め済み"
 #: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Pinned, kept"
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "plan"
 msgstr ""
 
 #: src/components/ModelCredits.tsx
@@ -10725,8 +11285,8 @@ msgid "PowerPoint Studio"
 msgstr ""
 
 #: src/pages/shell/shell-sidebar.tsx
-msgid "Ppt"
-msgstr "Ppt"
+#~ msgid "Ppt"
+#~ msgstr "Ppt"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
@@ -10753,6 +11313,7 @@ msgid "Press keys…"
 msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
+#: src/pages/AdminAnnouncements.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Preview"
 msgstr ""
@@ -10801,6 +11362,12 @@ msgstr ""
 msgid "Priority"
 msgstr "優先度"
 
+#. placeholder {0}: change.from || "–"
+#. placeholder {1}: change.to || "–"
+#: src/components/office/planner/history-diff.ts
+msgid "priority {0} → {1}"
+msgstr ""
+
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
 msgstr ""
@@ -10817,6 +11384,12 @@ msgstr ""
 msgid "Program: {name}"
 msgstr "プログラム: {name}"
 
+#. placeholder {0}: percent(change.from)
+#. placeholder {1}: percent(change.to)
+#: src/components/office/planner/history-diff.ts
+msgid "progress {0} → {1}"
+msgstr ""
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "project"
 msgstr ""
@@ -10829,6 +11402,14 @@ msgstr ""
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Project delivery"
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Project plans"
+msgstr ""
+
+#: src/components/office/registry.ts
+msgid "Project Programmes"
 msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
@@ -10943,6 +11524,10 @@ msgstr "リアクション"
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Reactions"
 msgstr "リアクション"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Read every minute. Last reading {sampledAt}. Charts show the peak."
+msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Read it"
@@ -11216,6 +11801,10 @@ msgstr "操作を戻す"
 msgid "Reload"
 msgstr "再読み込み"
 
+#: src/components/announcements/AnnouncementDialog.tsx
+msgid "Reload to update"
+msgstr ""
+
 #: src/components/EmailFilingCard.tsx
 msgid "Remember"
 msgstr ""
@@ -11320,9 +11909,17 @@ msgstr "リンクの削除"
 msgid "Remove message trigger"
 msgstr "メッセージトリガーを削除"
 
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Remove owner"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Remove schedule"
 msgstr "スケジュールを削除"
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Remove screenshot"
+msgstr ""
 
 #. placeholder {0}: selectedSkill.name
 #: src/pages/shell/composer.tsx
@@ -11336,6 +11933,10 @@ msgstr ""
 #: src/pages/RoutineEditor.tsx
 msgid "Remove webhook"
 msgstr "Webhookを削除"
+
+#: src/components/office/planner/history.tsx
+msgid "Removed"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Removed, but list refresh failed"
@@ -11369,6 +11970,11 @@ msgstr "セクション名を変更"
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Rename sheet"
 msgstr "シート名の変更"
+
+#. placeholder {0}: change.from
+#: src/components/office/planner/history-diff.ts
+msgid "renamed from “{0}”"
+msgstr ""
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Render"
@@ -11432,6 +12038,10 @@ msgstr ""
 msgid "Replies appear as they are written instead of all at once."
 msgstr ""
 
+#: src/pages/AdminReplyFailures.tsx
+msgid "Replies that did not finish, by day and agent. Too much to read means the message, images or tool results did not fit the model; output limit means the model ran out of room to answer. Updates every minute."
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Replies to"
 msgstr "返信対象"
@@ -11445,6 +12055,11 @@ msgstr "返信"
 #: src/pages/shell/composer.tsx
 msgid "Reply cancelled"
 msgstr "返信をキャンセルしました"
+
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminReplyFailures.tsx
+msgid "Reply failures"
+msgstr ""
 
 #. placeholder {0}: replyNameRef.current
 #: src/pages/shell/composer.tsx
@@ -11585,6 +12200,11 @@ msgstr ""
 msgid "Restored version {0}"
 msgstr ""
 
+#. placeholder {0}: row.version
+#: src/components/office/PlannerStudio.tsx
+msgid "Restored version {0} as a new version."
+msgstr ""
+
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"
 msgstr "ワークスペースを復元中"
@@ -11599,6 +12219,8 @@ msgstr ""
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminDocumentLibrary.tsx
+#: src/pages/AdminInfrastructure.tsx
+#: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/AdminStaffSpending.tsx
@@ -11708,12 +12330,36 @@ msgstr "ルーティン"
 msgid "Routine limit reached"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server load"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server runner"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server tool commands"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine server: tools and overflow"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
 msgstr "ルーティン"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines and extra document runners"
+msgstr ""
 
 #: src/components/RoutineLimitDialog.tsx
 msgid "Routines are switched off"
@@ -11729,6 +12375,14 @@ msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Routines on"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines running"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines running now"
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -11787,9 +12441,22 @@ msgstr "実行中"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Running"
 msgstr "実行中"
+
+#: src/pages/AdminInfrastructure.tsx
+#~ msgid "Running on app server"
+#~ msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Running on routine server"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Running on tool runners"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Running…"
@@ -11917,7 +12584,8 @@ msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/EmailSignatureSettings.tsx
-#: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
+#: src/components/office/SaveStatusPill.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -11970,7 +12638,8 @@ msgstr "ワークスペースを保存中"
 msgid "Saving..."
 msgstr "保存中..."
 
-#: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
+#: src/components/office/SaveStatusPill.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -12012,6 +12681,14 @@ msgstr "スコープ（任意）"
 #: src/pages/shell/use-computer.tsx
 msgid "Screen not connected"
 msgstr "画面が接続されていません"
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Screenshot"
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Screenshot to send"
+msgstr ""
 
 #: src/components/FoundModelPicker.tsx
 #: src/components/VaultSettings.tsx
@@ -12062,7 +12739,12 @@ msgid "Search connectors and the directory"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
+#: src/components/office/planner/EvolveAssigneePicker.tsx
 msgid "Search Evolve people"
+msgstr ""
+
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Search Evolve people or type a name"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
@@ -12095,6 +12777,10 @@ msgstr "integrations.shを検索"
 #: src/pages/shell/chat-model-picker.tsx
 msgid "Search models"
 msgstr "モデルを検索"
+
+#: src/components/office/planner/EvolveJobLink.tsx
+msgid "Search projects or job numbers"
+msgstr ""
 
 #: src/components/apps/AppDataPanel.tsx
 msgid "Search rows"
@@ -12137,6 +12823,7 @@ msgstr ""
 msgid "Searching Evolve…"
 msgstr ""
 
+#: src/components/office/planner/EvolveJobLink.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/SpaceSearch.tsx
 msgid "Searching…"
@@ -12172,6 +12859,10 @@ msgstr ""
 #: src/components/EmailFilingCard.tsx
 #: src/components/StorageDialog.tsx
 msgid "Select {0}"
+msgstr ""
+
+#: src/components/office/StudioWelcome.tsx
+msgid "Select a task on the Gantt and ask for a change. The assistant receives your selection as context."
 msgstr ""
 
 #: src/components/office/StudioWelcome.tsx
@@ -12305,6 +12996,10 @@ msgstr ""
 msgid "Send to back"
 msgstr "最背面へ移動"
 
+#: src/pages/AdminAnnouncements.tsx
+msgid "Send to everyone"
+msgstr ""
+
 #: src/pages/AdminCompanyPage.tsx
 msgid "Send with Enter"
 msgstr "Enterで送信"
@@ -12313,11 +13008,16 @@ msgstr "Enterで送信"
 msgid "Sender or @domain"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Sending it to the agent to fix…"
+msgstr ""
+
 #: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/pages/AdminAnnouncements.tsx
 msgid "Sending…"
 msgstr "送信中…"
 
@@ -12329,6 +13029,7 @@ msgstr ""
 #: src/components/EmailDraftCard.tsx
 #: src/components/EmailFilingCard.tsx
 #: src/components/SecretAskCard.tsx
+#: src/pages/AdminAnnouncements.tsx
 msgid "Sent"
 msgstr ""
 
@@ -12344,9 +13045,17 @@ msgstr ""
 msgid "Sent Items"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Sent to the agent to fix."
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Sent with your message so the assistant knows what you're looking at"
 msgstr "表示中の内容がアシスタントに伝わるよう、メッセージと一緒に送信されます"
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Sent. Everyone with the app open sees it now."
+msgstr ""
 
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Separate data per project"
@@ -12371,6 +13080,10 @@ msgstr "サーバー名"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Server URL"
 msgstr "サーバーURL"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Servers"
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Service connectors"
@@ -12452,6 +13165,7 @@ msgstr "図形"
 
 #: src/components/apps/AppStudio.tsx
 #: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -12567,6 +13281,10 @@ msgstr "シート"
 msgid "Short date"
 msgstr "短い日付形式"
 
+#: src/components/tour/training-videos.tsx
+msgid "Short training videos. Open any of them again whenever you need a reminder."
+msgstr "Short training videos. Open any of them again whenever you need a reminder."
+
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/StorageDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -12575,6 +13293,10 @@ msgstr "短い日付形式"
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Show"
 msgstr "表示"
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Show \"Reload to update\""
+msgstr ""
 
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show agents"
@@ -12631,12 +13353,12 @@ msgstr "選択中を表示"
 
 #: src/components/apps/AppStudio.tsx
 #: src/components/studio/StudioFrame.tsx
-msgid "Show the chat beside the app"
-msgstr ""
+#~ msgid "Show the chat beside the app"
+#~ msgstr ""
 
 #: src/components/todos/todo-board.tsx
-msgid "Show the chat beside the list"
-msgstr ""
+#~ msgid "Show the chat beside the list"
+#~ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Show tool activity"
@@ -12748,6 +13470,10 @@ msgstr ""
 msgid "Site address or name"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Site and database"
+msgstr ""
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "Site location"
 msgstr ""
@@ -12759,6 +13485,10 @@ msgstr ""
 #: src/components/AskCard.tsx
 msgid "Site not given"
 msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+#~ msgid "Site, database and document runners"
+#~ msgstr ""
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Sites & OneDrive"
@@ -12818,8 +13548,8 @@ msgstr ""
 msgid "Slack message"
 msgstr "Slackメッセージ"
 
-msgid "Slack not enabled"
-msgstr "Slack not enabled"
+#~ msgid "Slack not enabled"
+#~ msgstr "Slack not enabled"
 
 #. placeholder {0}: change.at + 1
 #: src/components/office/slides/history.tsx
@@ -12908,13 +13638,17 @@ msgstr "一部の設定はインポートされません"
 msgid "someone by link"
 msgstr ""
 
+#: src/components/apps/AppStudio.tsx
+msgid "Someone hit an error using this app."
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "someone in Evolve"
 msgstr ""
 
 #: src/components/apps/AppCodePanel.tsx
-msgid "Someone saved a newer version. Reload the code to see it."
-msgstr ""
+#~ msgid "Someone saved a newer version. Reload the code to see it."
+#~ msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Someone who may choose can change their assistants' and routines' models. Anyone else runs on the company model."
@@ -13104,6 +13838,11 @@ msgid "Start a blank PDF, or upload one."
 msgstr ""
 
 #: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PlannerStudio.tsx
+msgid "Start a blank plan, or upload a .jantt, Microsoft Project XML, or CSV."
+msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/SlidesStudio.tsx
 msgid "Start a blank presentation, or upload a PowerPoint."
 msgstr ""
@@ -13204,6 +13943,12 @@ msgstr ""
 msgid "Status"
 msgstr "ステータス"
 
+#. placeholder {0}: change.from || "–"
+#. placeholder {1}: change.to || "–"
+#: src/components/office/planner/history-diff.ts
+msgid "status {0} → {1}"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Status comment"
@@ -13284,6 +14029,10 @@ msgstr ""
 #: src/components/StorageDialog.tsx
 #: src/pages/shell/files-tab.tsx
 msgid "Storage used"
+msgstr ""
+
+#: src/components/office/planner/EvolveJobLink.tsx
+msgid "Store the job number on this plan so the assistant can pull that project's context while planning. Datasheets are not updated from the Gantt."
 msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
@@ -13464,6 +14213,14 @@ msgstr "Tap Share, then Add to Home Screen."
 msgid "Target"
 msgstr ""
 
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Task owner"
+msgstr ""
+
+#: src/components/office/planner/history-diff.ts
+msgid "Tasks reordered"
+msgstr ""
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "タスクを教える"
@@ -13490,6 +14247,10 @@ msgstr "Teamsメッセージ"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Tell an agent to forget something and it will"
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Tell everyone about new features and changes. It pops up straight away for everyone with the app open, and for everyone else when they next open it, until they dismiss it."
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -13538,6 +14299,7 @@ msgid "Testing…"
 msgstr "テスト中…"
 
 #: src/components/apps/AppVisualEdit.tsx
+#: src/components/office/PdfStudio.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/office/slides/SlidesRibbon.tsx
 #: src/components/office/word/WordRibbon.tsx
@@ -13594,6 +14356,10 @@ msgstr ""
 msgid "That formula couldn't be read. Check it and try again."
 msgstr "その数式を読み取れませんでした。確認してもう一度お試しください。"
 
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "That link would make the programme loop back on itself."
+msgstr ""
+
 #: src/pages/IntegrationCallback.tsx
 msgid "That Microsoft account is not yours. Close this window and sign in with your own work account."
 msgstr ""
@@ -13644,6 +14410,10 @@ msgstr ""
 
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "The agent starts with this assistant's Evolve prompt and searches its knowledge files. You can edit its instructions later."
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "The agent will look at it when it finishes this reply."
 msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
@@ -13759,6 +14529,10 @@ msgstr "所有者がリンクをオフにしたか、ページを削除した可
 msgid "The pages and markups are the same as in the version before."
 msgstr ""
 
+#: src/components/office/planner/history.tsx
+msgid "The programme is the same as the version before."
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "The provider is rate-limiting requests."
 msgstr "プロバイダーがリクエストを制限しています。"
@@ -13809,6 +14583,10 @@ msgstr ""
 msgid "the Studio"
 msgstr ""
 
+#: src/components/office/planner/history.tsx
+msgid "The task order changed."
+msgstr ""
+
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "the template"
 msgstr ""
@@ -13857,6 +14635,10 @@ msgstr "新しいドキュメントを保存する空きがありません。ス
 
 #: src/components/office/PdfStudio.tsx
 msgid "There's no room for a new PDF. Free up storage and try again."
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "There's no room for a new plan. Free up storage and try again."
 msgstr ""
 
 #: src/components/office/SlidesStudio.tsx
@@ -14180,6 +14962,10 @@ msgstr "アカウントとデータが完全に削除されます。"
 msgid "This permanently removes every message and stops current work. The chat remains available."
 msgstr "すべてのメッセージが完全に削除され、実行中の作業は停止します。チャット自体は引き続き利用できます。"
 
+#: src/components/office/PlannerStudio.tsx
+msgid "This plan couldn't be opened here. Download it, or ask the assistant for changes."
+msgstr ""
+
 #: src/components/office/SlidesStudio.tsx
 msgid "This presentation couldn't be opened here. Download it to open it in a presentation app, or ask the assistant for changes."
 msgstr "このプレゼンテーションはここでは開けませんでした。プレゼンテーションアプリで開くにはダウンロードするか、アシスタントに変更を依頼してください。"
@@ -14280,9 +15066,14 @@ msgstr ""
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/word/WordRibbon.tsx
 #: src/components/todos/todo-board.tsx
+#: src/pages/AdminAnnouncements.tsx
 #: src/pages/Board.tsx
 msgid "Title"
 msgstr "タイトル"
+
+#: src/components/office/planner/history-diff.ts
+msgid "Title changed"
+msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 #: src/pages/ActivityList.tsx
@@ -14342,6 +15133,10 @@ msgstr ""
 msgid "Too many tries. Wait 15 minutes and try again."
 msgstr ""
 
+#: src/pages/AdminReplyFailures.tsx
+msgid "Too much to read"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Tool arguments (JSON)"
 msgstr "ツールの引数（JSON）"
@@ -14354,15 +15149,27 @@ msgstr "ツールの引数はJSONオブジェクトである必要がありま�
 msgid "Tool arguments must be JSON"
 msgstr "ツールの引数はJSONである必要があります"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Tool commands"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Tool name"
 msgstr "ツール名"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Tool runners"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Tools"
 msgstr "ツール"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Tools and overflow"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/SidebarFooter.tsx
@@ -14401,6 +15208,14 @@ msgstr ""
 #: src/components/office/word/WordRibbon.tsx
 msgid "Tracking"
 msgstr "変更履歴"
+
+#: src/components/tour/ocsc-tour.tsx
+msgid "Training videos"
+msgstr "Training videos"
+
+#: src/components/tour/training-videos.tsx
+msgid "Training videos will appear here."
+msgstr "Training videos will appear here."
 
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
@@ -14463,6 +15278,7 @@ msgstr ""
 #: src/components/LearningClinicCard.tsx
 #: src/components/office/DocumentLoadPanel.tsx
 #: src/components/office/PdfStudio.tsx
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/pages/PageNotice.tsx
@@ -14489,12 +15305,24 @@ msgstr "もう一度テストしてください。"
 msgid "Tuesday"
 msgstr "火曜日"
 
+#: src/components/apps/AppStudio.tsx
+msgid "Turn off auto-fix"
+msgstr ""
+
+#: src/components/apps/AppStudio.tsx
+msgid "Turn on auto-fix"
+msgstr ""
+
 #: src/components/EnableNotificationsDialog.tsx
 msgid "Turn on notifications"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Turn these quantities into a cost plan with a total per trade"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+msgid "Turn this on, then choose who can write their own skills."
 msgstr ""
 
 #: src/components/EnableNotificationsDialog.tsx
@@ -14524,9 +15352,17 @@ msgstr "B2 のようなセル、または B2:D9 のような範囲を入力し�
 msgid "Type a clear, specific instruction in the box below."
 msgstr ""
 
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Type a name"
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Type a name for the sheet."
 msgstr "シートの名前を入力してください。"
+
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Type a name to add someone."
+msgstr ""
 
 #: src/components/AppScopeAskCard.tsx
 #: src/components/AskCard.tsx
@@ -14652,6 +15488,11 @@ msgid "Untitled PDF"
 msgstr ""
 
 #: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PlannerStudio.tsx
+msgid "Untitled plan"
+msgstr ""
+
+#: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/SlidesStudio.tsx
 msgid "Untitled presentation"
 msgstr "無題のプレゼンテーション"
@@ -14721,8 +15562,17 @@ msgstr "スライドを更新する、スライドを書き直す"
 msgid "Update the document, or rewrite and change paragraphs"
 msgstr "ドキュメントを更新する、段落を書き直す・変更する"
 
+#: src/components/office/planner/history.tsx
+msgid "Updated"
+msgstr ""
+
 #: src/components/apps/AppDataPanel.tsx
 msgid "Updated from Excel"
+msgstr ""
+
+#. placeholder {0}: flash.version
+#: src/components/office/PlannerStudio.tsx
+msgid "Updated to version {0}"
 msgstr ""
 
 #: src/components/office/PdfStudio.tsx
@@ -14753,6 +15603,7 @@ msgid "Updating Team Computer"
 msgstr "チームのコンピューターを更新中"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
 #: src/components/office/SlidesStudio.tsx
 #: src/components/office/WordStudio.tsx
@@ -14804,6 +15655,11 @@ msgstr ""
 msgid "Upload files, documents and images"
 msgstr ""
 
+#: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/PlannerStudio.tsx
+msgid "Upload plan or MS Project XML"
+msgstr ""
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Uploading drawings here turns pages into images the AI can visually inspect. The regular file upload is for text extraction only and does not provide visual understanding of drawings."
 msgstr ""
@@ -14817,6 +15673,10 @@ msgstr "緊急"
 #: src/pages/settings-nav.ts
 msgid "Usage"
 msgstr "使用量"
+
+#: src/components/office/planner/QuickAssignPopover.tsx
+msgid "Use “{name}”"
+msgstr ""
 
 #. Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'
 #. placeholder {0}: deviceTimezone.replaceAll("_", " ")
@@ -14873,6 +15733,10 @@ msgstr ""
 msgid "Use my subscription or API key"
 msgstr "自分のサブスクリプションまたはAPIキーを使用"
 
+#: src/components/apps/AppCodePanel.tsx
+msgid "Use newer version"
+msgstr ""
+
 #: src/components/InstallAppBanner.tsx
 msgid "Use OCSC Intelligence as an app"
 msgstr "Use OCSC Intelligence as an app"
@@ -14904,6 +15768,10 @@ msgstr "英数字、_、-のみで512文字以内で入力してください。"
 #: src/pages/Auth.tsx
 msgid "Use your OCSC Microsoft account through Evolve. Your first sign-in sets up your account."
 msgstr "Evolve 経由で OCSC の Microsoft アカウントを使用します。初回のサインインでアカウントが設定されます。"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Used"
+msgstr ""
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
@@ -15017,6 +15885,11 @@ msgstr ""
 msgid "Version {0} is waiting for Evolve's developers."
 msgstr ""
 
+#. placeholder {0}: newest.version
+#: src/components/apps/AppCodePanel.tsx
+msgid "Version {0} was saved while you edited. Your unsaved changes were kept on top of it."
+msgstr ""
+
 #. placeholder {0}: result.version
 #. placeholder {1}: result.peerReviewers ?? 3
 #: src/components/apps/AppPublishSection.tsx
@@ -15044,6 +15917,7 @@ msgid "VERSION v{0} (from v{1})"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Video"
 msgstr ""
 
@@ -15090,6 +15964,10 @@ msgstr ""
 msgid "Wait a moment and test again."
 msgstr "しばらく待ってから再度テストしてください。"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Waiting"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
 msgstr "設定待ち"
@@ -15100,6 +15978,10 @@ msgstr "順番待ち…"
 
 #: src/components/todos/todo-board.tsx
 msgid "Waiting on others"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Waiting to start"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
@@ -15196,6 +16078,10 @@ msgstr ""
 msgid "What can this team use?"
 msgstr ""
 
+#: src/pages/AdminAnnouncements.tsx
+msgid "What changed and how to use it."
+msgstr ""
+
 #: src/components/SignupSurvey.tsx
 msgid "What do you most want OCSC Intelligence to help with?"
 msgstr ""
@@ -15260,13 +16146,30 @@ msgstr ""
 msgid "What this agent is for"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/lib/run-error.ts
+msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
+msgstr ""
+
+#: src/lib/run-error.ts
+#~ msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
+#~ msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "What to return"
 msgstr "返す内容"
 
+#: src/components/tour/ocsc-tour.tsx
+msgid "What to show"
+msgstr "What to show"
+
 #: src/pages/RoutineEditor.tsx
 msgid "What to watch"
 msgstr "監視する対象"
+
+#: src/components/announcements/AnnouncementDialog.tsx
+msgid "What's new"
+msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "What's the status of C1078 and who is on the team?"
@@ -15385,6 +16288,18 @@ msgstr ""
 msgid "Window"
 msgstr "ウィンドウ"
 
+#: src/pages/AdminAnnouncements.tsx
+msgid "Withdraw"
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Withdrawn"
+msgstr ""
+
+#: src/pages/AdminAnnouncements.tsx
+msgid "Withdrawn. People who haven't seen it won't be shown it."
+msgstr ""
+
 #: src/lib/ticket-status.ts
 msgid "Won't do"
 msgstr "対応しない"
@@ -15477,6 +16392,10 @@ msgstr "文書を作業中です…"
 
 #: src/components/office/PdfStudio.tsx
 msgid "Working on your PDF…"
+msgstr ""
+
+#: src/components/office/PlannerStudio.tsx
+msgid "Working on your plan…"
 msgstr ""
 
 #: src/components/office/SlidesStudio.tsx
@@ -15605,6 +16524,10 @@ msgstr "終わったら、また編集できます。"
 msgid "You can select up to {maxPages} pages at a time"
 msgstr ""
 
+#: src/components/office/StudioWelcome.tsx
+msgid "You can still open and download PDFs."
+msgstr "PDFの表示とダウンロードは引き続きできます。"
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "You declined"
 msgstr "辞退しました"
@@ -15730,12 +16653,12 @@ msgid "Your defaults"
 msgstr "デフォルト設定"
 
 #: src/components/office/WordStudio.tsx
-msgid "Your edits are marked as tracked changes, so they can be accepted or rejected"
-msgstr "編集内容は変更履歴として記録され、承諾または却下できます"
+#~ msgid "Your edits are marked as tracked changes, so they can be accepted or rejected"
+#~ msgstr "編集内容は変更履歴として記録され、承諾または却下できます"
 
 #: src/components/office/WordStudio.tsx
-msgid "Your edits change the document directly"
-msgstr "編集内容は文書を直接変更します"
+#~ msgid "Your edits change the document directly"
+#~ msgstr "編集内容は文書を直接変更します"
 
 #: src/pages/Auth.tsx
 msgid "Your email address"
@@ -15820,6 +16743,10 @@ msgstr ""
 msgid "Your subscription or API key"
 msgstr "自分のサブスクリプションまたはAPIキー"
 
+#: src/pages/AdminAnnouncements.tsx
+msgid "Your title"
+msgstr ""
+
 #: src/components/integrations/CompanyMcpApp.tsx
 msgid "Your token is stored encrypted and only your assistants use it."
 msgstr ""
@@ -15876,281 +16803,4 @@ msgstr ""
 #: src/components/office/word/WordRibbon.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
-msgstr ""
-
-#: src/lib/run-error.ts
-msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "{share} of {finished} replies"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Couldn't load reply failures"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Failed replies"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Failed replies per day"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Last failed"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "No failed replies in this period."
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Other"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Other failures"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Output limit"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Replies that did not finish, by day and agent. Too much to read means the message, images or tool results did not fit the model; output limit means the model ran out of room to answer. Updates every minute."
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Reply failures"
-msgstr ""
-
-#: src/pages/AdminReplyFailures.tsx
-msgid "Too much to read"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "{running} running"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "{running} running, {waiting} waiting"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "about {daysLeft} days"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Answering"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "App server"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "App: documents and tools"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "App: large documents"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "App: video"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Change in period"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Chat replies"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Computer host (Incus)"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Computers off"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Computers on"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Computers on and replies in progress"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Couldn't load server readings"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "CPU busy"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Disk used"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Full in"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Large documents"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Last 24 hours"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Load (1 min)"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "No readings yet. The first arrives within a minute of the worker starting."
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Not answering"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Read every minute. Last reading {sampledAt}. Charts show the peak."
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routine server"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routine server load"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routine server runner"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routine server tool commands"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routine server: tools and overflow"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routines running"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routines running now"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Running on app server"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Running on routine server"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Servers"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Tool commands"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Tool runners"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Tools and overflow"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Used"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Waiting"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Waiting to start"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Site, database and document runners"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "People's computers"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routines and extra document runners"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Disk"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Site and database"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Running on tool runners"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Documents, spreadsheets, PDFs and video"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Overflow"
-msgstr ""
-
-#: src/components/tour/ocsc-tour.tsx
-msgid "Get to know"
-msgstr "Get to know"
-
-#: src/components/tour/ocsc-tour.tsx
-msgid "Training videos"
-msgstr "Training videos"
-
-#: src/components/tour/ocsc-tour.tsx
-msgid "What to show"
-msgstr "What to show"
-
-#: src/components/tour/training-videos.tsx
-msgid "Short training videos. Open any of them again whenever you need a reminder."
-msgstr "Short training videos. Open any of them again whenever you need a reminder."
-
-#: src/components/tour/training-videos.tsx
-msgid "Training videos will appear here."
-msgstr "Training videos will appear here."
-
-msgid "Edits are marked in red, so you can see what changed"
-msgstr "Edits are marked in red, so you can see what changed"
-
-msgid "Edits update the document directly, without red marks"
-msgstr "Edits update the document directly, without red marks"
-
-msgid "Keep the text and remove the red marks"
-msgstr "Keep the text and remove the red marks"
-
-#: src/pages/AdminCompanyPage.tsx
-msgid "Turn this on, then choose who can write their own skills."
 msgstr ""
