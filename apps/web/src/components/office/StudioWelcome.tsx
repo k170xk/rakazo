@@ -23,6 +23,7 @@ const ILLUSTRATIONS: Record<DocumentFormat, string> = {
   pptx: "/studios/slides-welcome.png",
   xlsx: "/studios/sheet-welcome.png",
   pdf: "/studios/pdf-welcome.png",
+  jantt: "/icons/studios/project.png",
 };
 
 /** The open chat's composer field, docked in the studio or floating over it. */
@@ -150,6 +151,7 @@ function WelcomeTitle({ format }: { format: DocumentFormat }) {
   if (format === "pptx") return <Trans>Let the assistant edit your presentation</Trans>;
   if (format === "xlsx") return <Trans>Let the assistant edit your spreadsheet</Trans>;
   if (format === "pdf") return <Trans>Let the assistant mark up your PDF</Trans>;
+  if (format === "jantt") return <Trans>Let the assistant build your programme</Trans>;
   return <Trans>Let the assistant edit your document</Trans>;
 }
 
@@ -174,11 +176,17 @@ function WelcomeTips({ format }: { format: DocumentFormat }) {
               t`Add comments, callouts or an approval stamp`,
               t`Measure areas and lengths, or take off quantities`,
             ]
-          : [
-            t`Update the document, or rewrite and change paragraphs`,
-            t`Add infographics, project photos or tables`,
-            t`Tidy the formatting`,
-          ];
+          : format === "jantt"
+            ? [
+                t`Build a programme from a tender or spreadsheet`,
+                t`Add tasks, links and milestones on the Gantt`,
+                t`Export MS Project XML or CSV when you need it`,
+              ]
+            : [
+                t`Update the document, or rewrite and change paragraphs`,
+                t`Add infographics, project photos or tables`,
+                t`Tidy the formatting`,
+              ];
   const selection =
     format === "pptx"
       ? t`Select a text box, image or shape and ask for a change. The assistant receives your selection as context.`
@@ -186,7 +194,9 @@ function WelcomeTips({ format }: { format: DocumentFormat }) {
         ? t`Select cells and ask for a change. The assistant receives your selection as context.`
         : format === "pdf"
           ? t`Go to a page or select a markup and ask in the chat. The assistant receives the page and your selection as context.`
-          : t`Highlight a paragraph, table or image and ask for a change. The assistant receives your selection as context.`;
+          : format === "jantt"
+            ? t`Select a task on the Gantt and ask for a change. The assistant receives your selection as context.`
+            : t`Highlight a paragraph, table or image and ask for a change. The assistant receives your selection as context.`;
 
   return (
     <div className="flex flex-col gap-3 text-[14px]">

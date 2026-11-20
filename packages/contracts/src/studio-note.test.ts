@@ -84,6 +84,30 @@ describe("openStudioNote", () => {
     expect(sheet).not.toContain("Selected in the document");
   });
 
+  it("points the assistant at ocsc plan for the open project programme", () => {
+    const note = openStudioNote({
+      kind: "plan",
+      title: "Site programme.jantt",
+      documentId: "root-plan",
+      artifactId: "art-plan-2",
+      version: 2,
+      focus: { where: "task Foundations", short: "Foundations" },
+      selected: { what: "task", label: "Foundations", content: "id t1 · 2026-03-01 → 2026-03-20" },
+    });
+    expect(note).toContain("Project Planner studio");
+    expect(note).toContain("ocsc plan edit --in attachments/art-plan-2.jantt");
+    expect(note).toContain("ocsc plan inspect --in attachments/art-plan-2.jantt");
+    expect(note).toContain("import-mpp");
+    expect(note).toContain("import-xml");
+    expect(note).toContain("import-csv");
+    expect(note).toContain("set_tasks");
+    expect(note).toContain("They are looking at task Foundations.");
+    expect(note).toContain("Selected: the task:\nid t1 · 2026-03-01 → 2026-03-20");
+    expect(note).toContain("Change only that task");
+    expect(studioNoteChip(note)?.label).toBe("Foundations");
+    expect(stripStudioNote(`add a milestone\n\n${note}`)).toBe("add a milestone");
+  });
+
   it("points the assistant at the PDF markup skill and the open PDF's next version", () => {
     const note = openStudioNote({
       kind: "pdf",

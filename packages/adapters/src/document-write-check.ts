@@ -13,6 +13,7 @@ export const DOCUMENT_WRITE_STEPS: Readonly<Record<string, readonly string[]>> =
   pptx: ["new", "edit"],
   xlsx: ["new", "edit"],
   pdf: ["convert"],
+  plan: ["new", "edit", "import-xml", "import-csv", "import-mpp"],
 };
 
 /** Clear failure text from OCSC / Excel repair / open errors — soft "kept chart" warnings do not match. */
@@ -104,7 +105,8 @@ export function annotateOfficeAttachFailure(
     mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
     mimeType === "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
     mimeType === "application/pdf" ||
-    /\.(docx|xlsx|pptx|pdf)$/i.test(path);
+    mimeType === "application/vnd.jantt+json" ||
+    /\.(docx|xlsx|pptx|pdf|jantt)$/i.test(path);
   if (!office) return { error, path };
   return {
     ok: false,

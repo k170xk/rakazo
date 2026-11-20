@@ -9,6 +9,7 @@ import { useSpaceQueries } from "../../lib/query";
 import { selectedSpaceId } from "../../lib/rpc";
 import { useBoundSpaceId } from "../../lib/space-rpc";
 import { useDocumentBotId } from "./document-bot";
+import { preparePlanUpload } from "./planner/upload-plan";
 import { OFFICE_STUDIOS } from "./registry";
 import { fileMatchesFormat, uploadNewDocument } from "./upload-document";
 
@@ -31,8 +32,18 @@ export function useDocumentUpload(
   const [busy, setBusy] = useState(false);
   const extension = OFFICE_STUDIOS[format].extension;
 
-  async function upload(file: File) {
-    if (!fileMatchesFormat(file, format)) {
+  async function upload(picked: File) {
+    let file = picked;
+    let name = picked.name;
+    if (format === "jantt") {
+      const prepared = await preparePlanUpload(picked, { spaceId });
+      if (prepared.kind === "refused") {
+        toast.error(prepared.message);
+        return;
+      }
+      file = prepared.file;
+      name = prepared.name;
+    } else if (!fileMatchesFormat(picked, format)) {
       toast.error(t`Choose a ${extension} file.`);
       return;
     }
@@ -42,7 +53,7 @@ export function useDocumentUpload(
       const result = await uploadNewDocument({
         format,
         file,
-        name: file.name,
+        name,
         spaceId,
         ...documentBot,
       });

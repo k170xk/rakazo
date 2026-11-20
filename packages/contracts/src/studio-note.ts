@@ -9,9 +9,10 @@ const DOCUMENT_STUDIOS = {
   slides: { studio: "Presentation studio", program: "pptx", extension: ".pptx" },
   sheet: { studio: "Excel studio", program: "xlsx", extension: ".xlsx" },
   pdf: { studio: "Evolve PDF Studio", program: "pdf", extension: ".pdf" },
+  plan: { studio: "Project Planner studio", program: "plan", extension: ".jantt" },
 } as const;
 
-const DOCUMENT_EXTENSION = /\.(docx|pptx|xlsx|pdf)$/i;
+const DOCUMENT_EXTENSION = /\.(docx|pptx|xlsx|pdf|jantt)$/i;
 
 export type DocumentStudioKind = keyof typeof DOCUMENT_STUDIOS;
 
@@ -102,6 +103,7 @@ function documentStudioLine(input: {
   const named = input.title ? ` with "${input.title}" open` : "";
   const version = input.version ? `latest version ${input.version}, ` : "";
   if (input.kind === "pdf") return pdfStudioLine(input, { studio, path, named, version });
+  if (input.kind === "plan") return planStudioLine(input, { studio, path, named, version });
   const lines = [
     `The person is in the ${studio}${named} (documentId ${input.documentId}, ${version}artifactId ${input.artifactId}). This is the document they are looking at right now, including any edits they made by hand since the last reply. The file is already at ${path} for ocsc. When they ask for a change, edit THIS version with ocsc ${program} edit --in ${path}. Do not look for it on the computer desktop, and do not tell the person you cannot access the file. call fetch_file with ${path} first only if a command says that path does not exist. Always use this message's artifactId — never reuse an older attachment from earlier in the chat. fetch_file always reaches this file, even when another agent made it, so never ask them to attach or export it. Attach the result with attach_file under the same name${input.title ? `, "${input.title}"` : ""}, so it becomes the next version of the open file. Do not create a new document unless they ask.`,
   ];
@@ -156,6 +158,32 @@ function chipLine(
     label: documentChipLabel(input.focus, selected),
   };
   return `${CHIP_PREFIX}${JSON.stringify(chip)}`;
+}
+
+/** A project plan is a Jantt JSON programme; edit it with ocsc plan, then attach the next version. */
+function planStudioLine(
+  input: Parameters<typeof documentStudioLine>[0],
+  parts: { studio: string; path: string; named: string; version: string },
+): string {
+  const { studio, path, named, version } = parts;
+  const lines = [
+    `The person is in the ${studio}${named} (documentId ${input.documentId}, ${version}artifactId ${input.artifactId}). This is the project plan they are looking at right now, including any edits they made by hand on the Gantt. The file is already at ${path} for ocsc. When they ask for a change (add or move tasks, link dependencies, build a programme from a tender or spreadsheet), edit THIS version with ocsc plan edit --in ${path}. Inspect first with ocsc plan inspect --in ${path} when you need the task list. Do not look for it on the computer desktop. call fetch_file with ${path} first only if a command says that path does not exist. Always use this message's artifactId. Attach the result with attach_file under the same name${input.title ? `, "${input.title}"` : ""}, so it becomes the next version. Do not create a new plan unless they ask. Import Microsoft Project with ocsc plan import-mpp (.mpp) or import-xml (.xml), and CSV with ocsc plan import-csv. To fill an empty open plan, prefer edit with set_tasks (or several add_task ops) using category "default", then attach_file under the same name.`,
+  ];
+  const where = oneLine(input.focus?.where);
+  if (where) lines.push(`They are looking at ${where}.`);
+  const detail = block(input.focus?.detail, FOCUS_DETAIL_MAX);
+  if (detail) lines.push(`On screen there:\n${detail}`);
+  const selected = input.selected;
+  const what = oneLine(selected?.what);
+  if (selected && what) {
+    const content = block(selected.content, SELECTED_CONTENT_MAX);
+    lines.push(`Selected: the ${what}${content ? `:\n${content}` : "."}`);
+    lines.push(
+      `Their message is about the selected ${what}. Change only that task (or its links), and leave the rest of the plan as it is unless they ask for more.`,
+    );
+  }
+  lines.push(chipLine(input, selected));
+  return lines.join("\n");
 }
 
 /** A PDF is marked up on the assistant's computer in the same app, then attached as the next version. */

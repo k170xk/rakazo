@@ -3,6 +3,7 @@ import type { DocumentFormat } from "@rakazo/contracts";
 import { DOCUMENT_MIME_TYPES } from "@rakazo/contracts";
 import type { ComponentType, LazyExoticComponent } from "react";
 import { lazy } from "react";
+import { PLAN_UPLOAD_ACCEPT } from "./planner/upload-plan";
 
 /** What every document studio takes: the file family to open, and how to leave or switch. */
 export type OfficeStudioProps = {
@@ -38,7 +39,7 @@ function entry(
     label,
     extension: `.${format}`,
     mimeType,
-    accept: `.${format},${mimeType}`,
+    accept: format === "jantt" ? PLAN_UPLOAD_ACCEPT : `.${format},${mimeType}`,
     icon,
     Studio,
   };
@@ -63,16 +64,17 @@ export const OFFICE_STUDIOS: Readonly<Record<DocumentFormat, OfficeStudioEntry>>
     "/icons/studios/excel.png",
     lazy(() => import("./SheetStudio")),
   ),
-  pdf: entry(
-    "pdf",
-    () => translate`PDF`,
-    "/icons/studios/pdf.png",
-    lazy(() => import("./PdfStudio")),
+  pdf: entry("pdf", () => translate`PDF`, "/icons/studios/pdf.png", lazy(() => import("./PdfStudio"))),
+  jantt: entry(
+    "jantt",
+    () => translate`Project Programmes`,
+    "/icons/studios/project.png",
+    lazy(() => import("./PlannerStudio")),
   ),
 };
 
 /** In the sidebar's order. */
-export const OFFICE_FORMATS: readonly DocumentFormat[] = ["docx", "pptx", "pdf", "xlsx"];
+export const OFFICE_FORMATS: readonly DocumentFormat[] = ["docx", "pptx", "pdf", "xlsx", "jantt"];
 
 export function officeStudioReady(format: DocumentFormat): boolean {
   return OFFICE_STUDIOS[format].Studio !== null;

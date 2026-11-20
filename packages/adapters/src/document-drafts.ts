@@ -13,7 +13,7 @@ import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
  */
 export const DOCUMENT_DRAFT_MAX_BYTES = 100 * 1024 * 1024;
 
-const DRAFT_PROGRAMS = new Set(["word", "pptx", "xlsx"]);
+const DRAFT_PROGRAMS = new Set(["word", "pptx", "xlsx", "plan"]);
 
 export type DocumentDraftDeps = {
   prisma: Pick<PrismaClient, "artifact" | "documentDraft">;

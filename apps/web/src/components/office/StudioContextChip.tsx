@@ -7,6 +7,7 @@ const FORMAT: Record<StudioNoteChip["kind"], DocumentFormat> = {
   slides: "pptx",
   sheet: "xlsx",
   pdf: "pdf",
+  plan: "jantt",
 };
 
 /** The Word, PowerPoint, Excel or PDF tile icon for a studio chip. */

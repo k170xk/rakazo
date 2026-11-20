@@ -74,7 +74,7 @@ export default function OfficeStudioHost({ id, format, onClose, onOpen }: Office
         onClose={onClose}
         message={
           code === "UNSUPPORTED_MEDIA_TYPE"
-            ? t`Only Word, PowerPoint, Excel and PDF files open here.`
+            ? t`Only Word, PowerPoint, Excel, PDF and Project plan files open here.`
             : code === "NOT_FOUND" || code === "FORBIDDEN"
               ? t`This document isn't available. It may have been deleted, or it belongs to someone else.`
               : t`This document couldn't be opened. Check your connection and try again.`
@@ -201,7 +201,9 @@ function EmptyStudio({
               ? t`Untitled presentation`
               : format === "pdf"
                 ? t`Untitled PDF`
-                : t`Untitled spreadsheet`,
+                : format === "jantt"
+                  ? t`Untitled plan`
+                  : t`Untitled spreadsheet`,
         ...(office ? { office } : {}),
         ...documentBot,
       });
@@ -249,7 +251,9 @@ function EmptyStudio({
         ? t`Start a blank presentation, or upload a PowerPoint.`
         : format === "pdf"
           ? t`Start a blank PDF, or upload one.`
-          : t`Start a blank spreadsheet, or upload an Excel file.`;
+          : format === "jantt"
+            ? t`Start a blank plan, or upload a .jantt, Microsoft Project XML, or CSV.`
+            : t`Start a blank spreadsheet, or upload an Excel file.`;
   const headerNew =
     format === "docx" ? (
       <StudioHint label={newHint}>
@@ -306,7 +310,9 @@ function EmptyStudio({
         ? t`Evolve PowerPoint`
         : format === "pdf"
           ? t`Evolve PDF`
-          : t`Evolve Excel`;
+          : format === "jantt"
+            ? t`Evolve Project`
+            : t`Evolve Excel`;
 
   return (
     <StudioFrame
@@ -352,6 +358,8 @@ function EmptyStudio({
               <Trans>No presentations yet</Trans>
             ) : format === "pdf" ? (
               <Trans>No PDFs yet</Trans>
+            ) : format === "jantt" ? (
+              <Trans>No project plans yet</Trans>
             ) : (
               <Trans>No spreadsheets yet</Trans>
             )}
@@ -383,6 +391,8 @@ function EmptyStudio({
                     <Trans>Upload a .pptx file</Trans>
                   ) : format === "pdf" ? (
                     <Trans>Upload a .pdf file</Trans>
+                  ) : format === "jantt" ? (
+                    <Trans>Upload plan or MS Project XML</Trans>
                   ) : (
                     <Trans>Upload a .xlsx file</Trans>
                   )}

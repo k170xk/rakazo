@@ -42,6 +42,7 @@ export const ATTACHMENT_FILE_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "text/html",
   "application/json",
+  "application/vnd.jantt+json",
   "application/zip",
 ] as const;
 

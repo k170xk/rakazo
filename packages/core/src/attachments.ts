@@ -243,6 +243,7 @@ const EXTENSION_MIME_TYPES: Record<string, AttachmentMimeType> = {
   ".html": "text/html",
   ".htm": "text/html",
   ".json": "application/json",
+  ".jantt": "application/vnd.jantt+json",
   ".zip": "application/zip",
 };
 
@@ -267,6 +268,7 @@ const MIME_TYPE_EXTENSIONS: Record<AttachmentMimeType, string> = {
   "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
   "text/html": ".html",
   "application/json": ".json",
+  "application/vnd.jantt+json": ".jantt",
   "application/zip": ".zip",
 };
 

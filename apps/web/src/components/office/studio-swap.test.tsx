@@ -42,6 +42,20 @@ vi.mock("@lingui/react/macro", () => ({
   }),
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
+// The Lingui build plugin compiles macros into @lingui/react calls, so mock that too.
+vi.mock("@lingui/react", () => {
+  type Descriptor = { id?: string; message?: string; values?: Record<string, unknown> };
+  const format = (d: Descriptor | string) =>
+    typeof d === "string"
+      ? d
+      : (d.message ?? d.id ?? "").replace(/\{(\w+)\}/g, (_, key: string) => String(d.values?.[key] ?? ""));
+  const i18n = { locale: "en", _: format, t: format };
+  return {
+    useLingui: () => ({ i18n, _: format }),
+    Trans: (props: Descriptor) => format(props),
+    I18nProvider: ({ children }: { children: ReactNode }) => children,
+  };
+});
 vi.mock("../studio/StudioFrame", () => ({
   StudioFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   StudioMoreMenu: ({ children }: { children: ReactNode }) => <div>{children}</div>,
@@ -96,7 +110,14 @@ vi.mock("./use-document-load", () => ({
 }));
 vi.mock("../../lib/query", () => {
   const format = { current: "docx" as string };
-  const extension: Record<string, string> = { docx: "docx", xlsx: "xlsx", pptx: "pptx" };
+  const extension: Record<string, string> = {
+    docx: "docx",
+    xlsx: "xlsx",
+    pptx: "pptx",
+    jantt: "jantt",
+  };
+  const planJson = (title: string) =>
+    JSON.stringify({ meta: { title }, tasks: [] as unknown[] });
   return {
     setFormat: (next: string) => {
       format.current = next;
@@ -107,11 +128,12 @@ vi.mock("../../lib/query", () => {
           call: async ({ rootArtifactId }: { rootArtifactId: string }) => ({
             rootArtifactId,
             format: format.current,
-            name: `Plan.${extension[format.current]}`,
+            name: `Plan.${extension[format.current] ?? format.current}`,
             latest: {
               artifactId: `a${state.version}`,
               version: state.version,
-              downloadToken: `v${state.version}`,
+              downloadToken:
+                format.current === "jantt" ? planJson(`v${state.version}`) : `v${state.version}`,
             },
             versions: Array.from({ length: state.version }, (_, i) => ({
               artifactId: `a${i + 1}`,
@@ -125,8 +147,14 @@ vi.mock("../../lib/query", () => {
           queryOptions: () => ({ queryKey: ["list"], queryFn: async () => ({ items: [] }) }),
           key: () => ["list"],
         },
+        create: { call: async () => ({ rootArtifactId: "new-1" }) },
       },
       artifacts: { meta: { call: async () => ({ botId: null, groupId: null }) } },
+      evolveReferences: {
+        people: {
+          queryOptions: () => ({ queryKey: ["evolve-people"], queryFn: async () => ({ people: [] }) }),
+        },
+      },
     }),
   };
 });
@@ -183,8 +211,31 @@ vi.mock("./slides/deck", async (original) => ({
   openDeck: async (bytes: Uint8Array) => ({ name: decode(bytes) }),
   changedSlides: () => new Set(),
 }));
+vi.mock("./planner/PlannerWorkbench", () => ({
+  PlannerWorkbench: (props: { plan: { meta?: { title?: string } }; readOnly: boolean }) => {
+    useStub(props.plan.meta?.title ?? "", props.readOnly);
+    return <div data-testid="editor" />;
+  },
+}));
+vi.mock("./planner/EvolveJobLink", () => ({
+  EvolveJobLinkButton: () => null,
+  EvolveJobLinkDialog: () => null,
+}));
+vi.mock("@jantt/interop", () => ({
+  exportMsProjectXml: () => "",
+  exportSpreadsheetCsv: () => "",
+  importMsProjectXml: () => ({ tasks: [] }),
+  importSpreadsheetCsv: () => ({ tasks: [] }),
+}));
+vi.mock("./use-delete-document", () => ({
+  useDeleteOfficeDocument: () => ({ deleting: false, confirm: null, request: () => {}, run: () => {} }),
+}));
+vi.mock("./use-document-upload", () => ({
+  useDocumentUpload: () => ({ uploading: false, pick: () => {}, input: null }),
+}));
 
 import * as query from "../../lib/query";
+import PlannerStudio from "./PlannerStudio";
 import SheetStudio from "./SheetStudio";
 import SlidesStudio from "./SlidesStudio";
 import WordStudio from "./WordStudio";
@@ -236,6 +287,7 @@ const studios: [DocumentFormat, ComponentType<StudioProps>, (text: string) => un
   ["docx", WordStudio, (text) => new TextEncoder().encode(text).buffer],
   ["xlsx", SheetStudio, (text) => ({ name: text })],
   ["pptx", SlidesStudio, (text) => ({ name: text })],
+  ["jantt", PlannerStudio, (text) => ({ meta: { title: text }, tasks: [] })],
 ];
 
 it.each(studios)(

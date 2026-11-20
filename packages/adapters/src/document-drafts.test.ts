@@ -75,6 +75,21 @@ describe("saveDocumentDraft", () => {
     expect(remove).toHaveBeenCalledWith("blob-old", context);
   });
 
+  it("keeps a programme edit as a live draft, like Word", async () => {
+    const { deps, upsert } = setup(family);
+    const outcome = await saveDocumentDraft(deps, {
+      context,
+      program: "plan",
+      args: ["edit", "--in", "attachments/v2.jantt", "--spec", "e.json", "--out", "work/p.jantt"],
+      result: { stdout: JSON.stringify({ ok: true, path: "work/p.jantt" }), code: 0 },
+      read: async () => bytes,
+    });
+    expect(outcome).toBe("saved");
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ update: expect.objectContaining({ baseVersion: 2 }) }),
+    );
+  });
+
   it("skips new files, reads, failed commands and stale bases", async () => {
     const cases: Array<{ program: string; args: string[]; result: unknown }> = [
       { program: "word", args: ["new", "--spec", "s.json", "--out", "a.docx"], result: ok },

@@ -333,6 +333,73 @@ ${SCREEN_NOTE}
 STYLE
 Sheet names under 31 characters. File names like outputs/HEL18-Cost-Plan.xlsx, with no spaces. UK and Irish English.`;
 
+const PLAN_INSTRUCTIONS = `Use this whenever the person wants a project programme, Gantt chart, construction programme, MS Project plan, or any .jantt plan, or wants one changed. Also use it when they upload a tender, Excel programme or MS Project XML and ask you to turn it into a schedule.
+
+Use the ocsc tool (document runners; no full computer needed): every ocsc-plan command below runs as the ocsc tool with program plan and the rest of the command as args, one item per word. Always use ocsc-plan. Never invent a schedule another way. ${INLINE_SPEC_NOTE}
+
+CREATE
+1. Write a spec for work/<short-name>.json, for example:
+{"title":"HEL18 Construction Programme",
+ "tasks":[
+  {"id":"design","label":"Detailed design","category":"default","start":"2026-03-02","end":"2026-04-24"},
+  {"id":"procure","label":"Procurement","category":"default","start":"2026-04-27","end":"2026-05-22","dependsOn":"design"},
+  {"id":"site","label":"Site works","category":"default","start":"2026-05-25","end":"2026-09-18","dependsOn":"procure"}
+ ]}
+Dates are YYYY-MM-DD. dependsOn is a task id, an array of ids, or { "id":"design", "type":"FS", "lag":0 }.
+2. Run: ocsc-plan new --spec work/<short-name>.json --out outputs/<Descriptive-Name>.jantt
+
+INSPECT
+ocsc-plan inspect --in <path>.jantt lists the title, Evolve job link, categories (key, label, colour, task count), people, owners and every task with its fields (id, label, category, dates, dependsOn, assignee, progress, status, priority, notes, wbs, costs, baseline, outlineLevel, summary, custom fields). A long programme comes back in pages: when the result has "nextFrom", add --from <nextFrom> for the next page, or --find <words> to look up tasks by label, owner, category or WBS.
+
+EDIT
+You can do everything the person can do by hand in the studio: tasks, dates, dependencies, owners, categories, progress, status, priority, notes, costs, WBS, outline, custom fields, order and baselines.
+1. Inspect first when you need the current task ids or category keys.
+2. Write work/<short-name>-edits.json:
+{"edits":[
+ {"op":"add_category","label":"Mechanical & Electrical","color":"#3B82F6"},
+ {"op":"add_task","id":"commission","label":"Commissioning","category":"Mechanical & Electrical","start":"2026-09-21","end":"2026-10-09","dependsOn":"site","after":"site"},
+ {"op":"reschedule_task","id":"site","end":"2026-09-25"},
+ {"op":"link_tasks","from":"procure","to":"site","type":"FS","lag":0},
+ {"op":"update_task","ids":["design","procure"],"progress":0.5,"status":"in-progress","priority":"high","notes":"Awaiting client sign-off"},
+ {"op":"assign","ids":["design"],"name":"Jane Murphy","evolveProfileId":"123","jobTitle":"Senior Engineer"},
+ {"op":"assign","id":"site","name":"Acme Contractors"},
+ {"op":"delete_task","id":"old"}
+]}
+Tasks (one task with id, or several with ids):
+- add_task: id, label, category, start, end, plus any task field below; place it with before or after (a task id) or index, else it goes at the end.
+- update_task / reschedule_task: any task field; null clears a field (for example "notes": null).
+- move_task: id with before, after or index. delete_task: id or ids (their links are removed too).
+- link_tasks / unlink_tasks: from (the predecessor) and to; type FS, SS, FF or SF; lag in days.
+- set_tasks: replaces the whole task list. Use it when the open plan is empty or they ask to build a timeline from scratch.
+Task fields: label, category, start, end (YYYY-MM-DD), dependsOn, milestone, progress (0 to 1), status (not-started, in-progress, submitted, completed, blocked), priority (low, medium, high, urgent), urgent, assignee, notes, description, wbs, phase, estimatedCost, actualCost, locked, baseline {start,end}, outlineLevel (1 is top level), summary (true for a summary row), fields (custom fields).
+Owners (assign): to give a task to OCSC staff, call mcp__evolve__search_people_profiles with their name first, then assign with name set to that result's exact full_name, evolveProfileId set to its id and jobTitle set to its job_title, so the studio links their Evolve profile and photo. Do not guess a profile; if the search finds nobody or several possible people, ask which one. Someone outside OCSC (a contractor, client or consultant) is assigned by name alone. name null removes the owner.
+Categories: add_category (label, color as #RRGGBB, optional; the next unused colour otherwise), update_category (key or current label, then a new label and/or color), delete_category (key, reassignTo: the category its tasks move to, General by default). A task's category may be a key or a label; naming a new one creates it. Keep "default" (General) when they gave no categories.
+Programme: set_baseline (saves the current dates as the baseline for all tasks, or ids; clear:true removes it), set_meta (title, description, author, version, today), set_evolve (jobNumber and name; clear:true removes the link).
+3. Run: ocsc-plan edit --in <path>.jantt --spec work/<short-name>-edits.json --out outputs/<Name>-v2.jantt
+The result's "summary" says what changed; tell the person in those terms. Save each round as a new version unless they ask you to overwrite. If a run returns "ok": false, fix the spec and retry — do not invent a new plan file unless they asked for a separate one. In a studio, every attach_file is a new version in the document's History, so the person can compare and restore any earlier version.
+
+FROM A TENDER OR SPREADSHEET
+When they attach a tender PDF/Word, an Excel programme or a CSV of activities: read that file first, extract the activities, durations and dependencies, then either:
+- build a new plan with ocsc-plan new, or
+- import CSV with ocsc-plan import-csv --in <file>.csv --out outputs/<Name>.jantt, or
+- import Microsoft Project XML with ocsc-plan import-xml --in <file>.xml --out outputs/<Name>.jantt, or
+- import binary Microsoft Project with ocsc-plan import-mpp --in <file>.mpp --out outputs/<Name>.jantt
+When an Evolve job is linked on the open plan (studio note or meta.evolve), use that job number with Evolve project search tools for context; do not invent job data.
+
+EXPORT
+ocsc-plan export-csv --in <path>.jantt --out outputs/<Name>.csv
+ocsc-plan export-xml --in <path>.jantt --out outputs/<Name>.xml
+
+STUDIOS
+${STUDIO_NOTE("plan", ".jantt")}
+
+SENDING, FAILURES AND THE SCREEN
+${SEND_NOTE} Also give the path. If the JSON says "ok": false, read the error, fix the spec and run it again; stop after three attempts and say what went wrong.
+${SCREEN_NOTE}
+
+STYLE
+File names like outputs/HEL18-Construction-Programme.jantt, with no spaces. UK and Irish English. Prefer clear WBS-style labels.`;
+
 const PDF_INSTRUCTIONS = `Use this whenever the person wants a PDF, or wants to read a PDF on your computer.
 
 Use write_file and the ocsc tool (document runners; no full computer needed): every ocsc-pdf command below runs as the ocsc tool with program pdf and the rest of the command as args, one item per word. Always use ocsc-pdf.
@@ -662,6 +729,11 @@ export const OCSC_SKILLS: OcscSkill[] = [
     name: "ocsc-excel",
     description: "Any spreadsheet, cost plan or tracker (.xlsx): OCSC-styled, ocsc-xlsx",
     body: EXCEL_INSTRUCTIONS,
+  },
+  {
+    name: "ocsc-plan",
+    description: "Any project programme, Gantt or MS Project plan (.jantt): ocsc-plan",
+    body: PLAN_INSTRUCTIONS,
   },
   {
     name: "ocsc-pdf",

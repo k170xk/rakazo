@@ -807,6 +807,7 @@ function useOwnDocumentCounts(): Record<DocumentFormat, string | null> {
     pptx: useQuery(read("pptx")).data?.items.length ?? 0,
     xlsx: useQuery(read("xlsx")).data?.items.length ?? 0,
     pdf: useQuery(read("pdf")).data?.items.length ?? 0,
+    jantt: useQuery(read("jantt")).data?.items.length ?? 0,
   };
   const shown = (count: number) =>
     count === 0 ? null : count >= DOCUMENT_LIST_MAX_LIMIT ? `${count}+` : String(count);
@@ -815,6 +816,7 @@ function useOwnDocumentCounts(): Record<DocumentFormat, string | null> {
     pptx: shown(counts.pptx),
     xlsx: shown(counts.xlsx),
     pdf: shown(counts.pdf),
+    jantt: shown(counts.jantt),
   };
 }
 

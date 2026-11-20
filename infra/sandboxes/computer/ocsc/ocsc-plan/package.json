@@ -1,0 +1,12 @@
+{
+  "name": "ocsc-plan",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@jantt/core": "1.1.0",
+    "@jantt/interop": "1.1.0"
+  },
+  "optionalDependencies": {
+    "@byteink/mppjs": "0.1.11"
+  }
+}

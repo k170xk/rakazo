@@ -6,6 +6,7 @@ set -eu
 tool="$(basename "$0")"
 case "$tool" in
   ocsc-word|ocsc-pptx|ocsc-xlsx|ocsc-pdf|ocsc-show) script="/opt/ocsc-word/$tool.mjs" ;;
+  ocsc-plan) script="/opt/ocsc-plan/ocsc-plan.mjs" ;;
   ocsc-video) script="/opt/ocsc-video/ocsc-video.mjs" ;;
   ocsc-plugin) script="/opt/evolve-plugin/ocsc-plugin.mjs" ;;
   ocsc-pdf-studio) script="/opt/pdf-studio/ocsc-pdf-studio.mjs" ;;

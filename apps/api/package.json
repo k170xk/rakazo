@@ -37,6 +37,9 @@
     "hono": "4.13.16",
     "mermaid": "11.17.2"
   },
+  "optionalDependencies": {
+    "@byteink/mppjs": "0.1.11"
+  },
   "devDependencies": {
     "typescript": "7.0.2",
     "vitest": "4.1.12"

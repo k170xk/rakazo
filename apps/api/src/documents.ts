@@ -70,8 +70,8 @@ export class DocumentError extends Error {
   }
 }
 
-/** The formats stored as Office zip packages; a PDF is not one. */
-type OfficeZipFormat = Exclude<DocumentFormat, "pdf">;
+/** The formats stored as Office zip packages; PDF and Jantt plans are not. */
+type OfficeZipFormat = Exclude<DocumentFormat, "pdf" | "jantt">;
 const OFFICE_ZIP_FORMATS: readonly OfficeZipFormat[] = ["docx", "pptx", "xlsx"];
 
 const RUNNER_PROGRAM: Readonly<Record<OfficeZipFormat, string>> = {
@@ -104,9 +104,28 @@ function isPdf(bytes: Uint8Array): boolean {
   return false;
 }
 
-/** Which document format these bytes are: a PDF by its header, Office by the zip's content types. */
+/** True when these bytes are a Jantt plan JSON (has a tasks array). */
+function isJanttPlan(bytes: Uint8Array): boolean {
+  try {
+    const text = new TextDecoder().decode(bytes);
+    const trimmed = text.trimStart();
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return false;
+    const parsed: unknown = JSON.parse(text);
+    return (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      !Array.isArray(parsed) &&
+      Array.isArray((parsed as { tasks?: unknown }).tasks)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Which document format these bytes are: a PDF by its header, Jantt by JSON, Office by zip content types. */
 export function officeFormatOf(bytes: Uint8Array): DocumentFormat | null {
   if (isPdf(bytes)) return "pdf";
+  if (isJanttPlan(bytes)) return "jantt";
   let xml: string;
   try {
     const entry = unzipSync(bytes, {
@@ -162,7 +181,7 @@ export async function documentFamily(
     throw new DocumentError(
       "UNSUPPORTED_MEDIA_TYPE",
       415,
-      "Only Word, PowerPoint, Excel and PDF files open here.",
+      "Only Word, PowerPoint, Excel, PDF and Project plan files open here.",
     );
   }
   return { rootArtifactId, format, latest, versions };
@@ -271,7 +290,9 @@ type SummaryRow = {
 };
 
 /** Every Office mime the studios understand; used before an optional format filter. */
-const OFFICE_MIME_TYPES = DocumentFormatSchema.options.map((format) => DOCUMENT_MIME_TYPES[format]);
+const OFFICE_MIME_TYPES = DocumentFormatSchema.options.map(
+  (format) => DOCUMENT_MIME_TYPES[format],
+);
 
 /**
  * The newest version of each of the caller's Office files in this space, latest change first.
@@ -505,6 +526,44 @@ async function documentBot(
 }
 
 /**
+ * A minimal Jantt plan JSON. Plans need no OCSC template, so a new plan never waits on the
+ * document runners.
+ */
+export function blankJantt(title: string): Uint8Array {
+  const plan = {
+    $schema: "https://ahmadhassan-bted.github.io/Jantt/schema/v1.json",
+    meta: {
+      title: title.trim() || "Untitled plan",
+      createdAt: new Date().toISOString().slice(0, 10),
+    },
+    categories: {
+      default: { label: "General", color: "#76BF43" },
+    },
+    tasks: [] as unknown[],
+  };
+  return new TextEncoder().encode(`${JSON.stringify(plan, null, 2)}\n`);
+}
+
+/** A blank project plan as version 1 of a new family. */
+async function createBlankJantt(
+  deps: DocumentDeps,
+  actor: Pick<Actor, "spaceId" | "userId">,
+  input: { title: string; botId?: string },
+): Promise<DocumentCreated> {
+  const bot = await documentBot(deps.prisma, actor, input.botId);
+  if (await documentStorageRefusal(deps, actor.userId, bot.computer)) {
+    throw new DocumentError("STORAGE_FULL", 507, STORAGE_FULL_MESSAGE);
+  }
+  return addNewFamily(deps, actor, {
+    botId: bot.id,
+    format: "jantt",
+    title: input.title,
+    bytes: blankJantt(input.title),
+    context: createAdapterContext(actor, bot.id, `document-create:${bot.id}`),
+  });
+}
+
+/**
  * One blank A4 page with the title in its metadata. PDF needs no template, so a new PDF never waits
  * on the document runners.
  */
@@ -580,6 +639,7 @@ export async function createDocument(
   signal: AbortSignal,
 ): Promise<DocumentCreated> {
   if (input.format === "pdf") return createBlankPdf(deps, actor, input);
+  if (input.format === "jantt") return createBlankJantt(deps, actor, input);
   if (!deps.toolRunner || !deps.dataDir) {
     throw new DocumentError(
       "PRECONDITION_FAILED",

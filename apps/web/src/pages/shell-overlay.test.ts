@@ -112,7 +112,9 @@ describe("readShellOverlay documents", () => {
     expect(read("?doc=art_1")).toEqual({ kind: "doc", id: "art_1", format: null });
     expect(read("?doc=art_1&kind=odt")).toEqual({ kind: "doc", id: "art_1", format: null });
     expect(read("?doc=art_1&kind=pdf")).toEqual({ kind: "doc", id: "art_1", format: "pdf" });
+    expect(read("?doc=art_1&kind=jantt")).toEqual({ kind: "doc", id: "art_1", format: "jantt" });
     expect(read("?doc&kind=docx")).toEqual({ kind: "doc", id: null, format: "docx" });
+    expect(read("?doc&kind=jantt")).toEqual({ kind: "doc", id: null, format: "jantt" });
   });
 });
 

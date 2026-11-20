@@ -12,7 +12,14 @@ import type { RunContext } from "./run-context.js";
 import { artifactIdFromAttachmentPath } from "./thread-artifacts.js";
 
 /** The OCSC commands the ocsc tool runs; none of them needs a shell, the screen or the browser. */
-export const OCSC_PROGRAMS: ReadonlySet<string> = new Set(["word", "pptx", "xlsx", "pdf", "video"]);
+export const OCSC_PROGRAMS: ReadonlySet<string> = new Set([
+  "word",
+  "pptx",
+  "xlsx",
+  "pdf",
+  "plan",
+  "video",
+]);
 
 /** The built-in skill for each program; an admin switching the skill off switches the program off. */
 const PROGRAM_SKILLS: Readonly<Record<string, string>> = {
@@ -20,6 +27,7 @@ const PROGRAM_SKILLS: Readonly<Record<string, string>> = {
   pptx: "ocsc-slides",
   xlsx: "ocsc-excel",
   pdf: "ocsc-pdf",
+  plan: "ocsc-plan",
   video: "ocsc-video",
 };
 
@@ -36,6 +44,7 @@ const PROGRAM_FILES: Readonly<Record<string, string>> = {
   pptx: "PowerPoint",
   xlsx: "Excel",
   pdf: "PDF",
+  plan: "Project plan",
   video: "video",
 };
 
@@ -256,6 +265,7 @@ const SPEC_STEPS: Readonly<Record<string, readonly string[]>> = {
   word: ["new", "edit"],
   pptx: ["new", "edit"],
   xlsx: ["new", "edit"],
+  plan: ["new", "edit"],
   video: ["read", "still", "render"],
 };
 
@@ -290,7 +300,7 @@ export function inlineOcscSpec(
 }
 
 export type OfficeDocument = { name: string; path: string; program: RebuildProgram };
-type RebuildProgram = "word" | "pptx" | "xlsx";
+type RebuildProgram = "word" | "pptx" | "xlsx" | "plan";
 
 const REBUILD: Record<RebuildProgram, { kind: string; extension: string; skill: string }> = {
   word: {
@@ -300,9 +310,12 @@ const REBUILD: Record<RebuildProgram, { kind: string; extension: string; skill: 
   },
   pptx: { kind: "PowerPoint deck", extension: "pptx", skill: "" },
   xlsx: { kind: "Excel workbook", extension: "xlsx", skill: "" },
+  plan: { kind: "project programme", extension: "jantt", skill: "" },
 };
 
-/** The ocsc program that edits a Word, PowerPoint or Excel file, by its name or type. */
+const JANTT_MIME = "application/vnd.jantt+json";
+
+/** The ocsc program that edits a Word, PowerPoint, Excel or programme file, by its name or type. */
 export function officeProgram(
   name: string,
   mimeType: string | null | undefined,
@@ -311,6 +324,7 @@ export function officeProgram(
   const lower = name.toLowerCase();
   if (mimeType === PPTX_MIME || lower.endsWith(".pptx")) return "pptx";
   if (mimeType === XLSX_MIME || lower.endsWith(".xlsx")) return "xlsx";
+  if (mimeType === JANTT_MIME || lower.endsWith(".jantt")) return "plan";
   return undefined;
 }
 
@@ -347,6 +361,7 @@ const EDITS_IN: Readonly<Record<string, readonly string[]>> = {
   word: ["edit", "accept"],
   pptx: ["edit"],
   xlsx: ["edit"],
+  plan: ["edit"],
 };
 
 /** True for an ocsc step that changes the document given with --in. */
@@ -527,6 +542,7 @@ const DOCUMENT_WRITES: Readonly<Record<string, readonly string[]>> = {
   word: ["new", "edit", "accept"],
   pptx: ["new", "edit"],
   xlsx: ["new", "edit"],
+  plan: ["new", "edit", "import-csv", "import-xml", "import-mpp"],
   pdf: ["convert"],
 };
 

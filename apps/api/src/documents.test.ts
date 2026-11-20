@@ -25,6 +25,7 @@ vi.mock("@rakazo/db", async (importOriginal) => {
 
 import type { DocumentDeps } from "./documents.js";
 import {
+  blankJantt,
   blankPdf,
   listDocuments,
   mountDocumentVersionsRoute,
@@ -89,9 +90,26 @@ describe("officeFormatOf", () => {
     expect(officeFormatOf(blankPdf("Plan"))).toBe("pdf");
   });
 
+  it("reads blank Jantt plans as jantt", () => {
+    expect(officeFormatOf(blankJantt("Site programme"))).toBe("jantt");
+    expect(officeFormatOf(strToU8('{"tasks":[]}\n'))).toBe("jantt");
+    expect(officeFormatOf(strToU8('{"meta":{}}\n'))).toBe(null);
+  });
+
   it("never takes a zip that mentions %PDF- for a PDF", () => {
     expect(officeFormatOf(zipSync({ "a.txt": strToU8("%PDF-1.7") }))).toBe(null);
     expect(officeFormatOf(docx)).toBe("docx");
+  });
+});
+
+describe("blankJantt", () => {
+  it("writes a minimal plan JSON with the title and an empty tasks array", () => {
+    const plan = JSON.parse(new TextDecoder().decode(blankJantt("Site programme"))) as {
+      meta?: { title?: string };
+      tasks?: unknown[];
+    };
+    expect(plan.meta?.title).toBe("Site programme");
+    expect(plan.tasks).toEqual([]);
   });
 });
 

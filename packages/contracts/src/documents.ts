@@ -2,8 +2,8 @@ import * as z from "zod";
 import { ARTIFACT_NAME_MAX_LENGTH } from "./attachments.js";
 import { Id } from "./ids.js";
 
-/** The files a studio opens: Word, PowerPoint, Excel and PDF. */
-export const DocumentFormatSchema = z.enum(["docx", "pptx", "xlsx", "pdf"]);
+/** The files a studio opens: Word, PowerPoint, Excel, PDF and Project plans. */
+export const DocumentFormatSchema = z.enum(["docx", "pptx", "xlsx", "pdf", "jantt"]);
 export type DocumentFormat = z.infer<typeof DocumentFormatSchema>;
 
 export const DOCUMENT_MIME_TYPES: Readonly<Record<DocumentFormat, string>> = {
@@ -11,6 +11,7 @@ export const DOCUMENT_MIME_TYPES: Readonly<Record<DocumentFormat, string>> = {
   pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   pdf: "application/pdf",
+  jantt: "application/vnd.jantt+json",
 };
 
 export function documentFormatForMimeType(mimeType: string): DocumentFormat | null {

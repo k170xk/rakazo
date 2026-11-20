@@ -150,9 +150,14 @@ export async function studioDocumentForTurn(
   return note ? studioNotedDocument(prisma, owner, note) : undefined;
 }
 
-const STUDIO_PROGRAMS = { ".docx": "word", ".pptx": "pptx", ".xlsx": "xlsx" } as const;
+const STUDIO_PROGRAMS = {
+  ".docx": "word",
+  ".pptx": "pptx",
+  ".xlsx": "xlsx",
+  ".jantt": "plan",
+} as const;
 
-/** The ocsc program that edits a studio document of this type, for Word, PowerPoint and Excel. */
+/** The ocsc program that edits a studio document of this type. */
 export function studioDocumentProgram(
   mimeType: string,
 ): (typeof STUDIO_PROGRAMS)[keyof typeof STUDIO_PROGRAMS] | undefined {
@@ -160,7 +165,7 @@ export function studioDocumentProgram(
   return STUDIO_PROGRAMS[extension as keyof typeof STUDIO_PROGRAMS];
 }
 
-const OFFICE_EXTENSION = /\.(docx|pptx|xlsx|pdf)$/i;
+const OFFICE_EXTENSION = /\.(docx|pptx|xlsx|pdf|jantt)$/i;
 
 /** True when `name` is the studio document's name, with or without its file extension. */
 export function namesStudioDocument(document: Pick<StudioDocument, "name">, name: string): boolean {

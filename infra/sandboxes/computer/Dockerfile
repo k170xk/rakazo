@@ -19,6 +19,8 @@ RUN cc -O3 -fPIC -shared -Wall -Wextra -Werror -o librakazo-xcapture.so xcapture
 FROM node:24.18.1-bookworm-slim AS ocsc-builder
 COPY ocsc/ocsc-word /opt/ocsc-word
 RUN cd /opt/ocsc-word && npm ci --omit=dev --no-audit --no-fund
+COPY ocsc/ocsc-plan /opt/ocsc-plan
+RUN cd /opt/ocsc-plan && npm ci --omit=dev --no-audit --no-fund
 COPY ocsc/ocsc-video /opt/ocsc-video
 RUN cd /opt/ocsc-video && npm ci --omit=dev --no-audit --no-fund \
   && npm run build \
@@ -196,6 +198,7 @@ RUN ln -s /usr/bin/python3 /usr/local/bin/python \
 COPY --from=ocsc-builder /usr/local/bin/node /usr/local/bin/node
 COPY --from=ocsc-builder /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
 COPY --from=ocsc-builder /opt/ocsc-word /opt/ocsc-word
+COPY --from=ocsc-builder /opt/ocsc-plan /opt/ocsc-plan
 # Custom video scenes are bundled into .work and cached in node_modules/.cache at run time.
 COPY --from=ocsc-builder --chown=1000:1000 /opt/ocsc-video /opt/ocsc-video
 COPY --from=ocsc-builder /opt/evolve-plugin /opt/evolve-plugin
@@ -208,7 +211,7 @@ COPY ocsc/pdf-studio /opt/pdf-studio
 RUN sed -i 's/\r$//' /usr/local/lib/rakazo/ocsc-tool \
   && ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
   && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
-  && for tool in word pptx xlsx pdf show video plugin pdf-studio app-shot; do \
+  && for tool in word pptx xlsx pdf plan show video plugin pdf-studio app-shot; do \
        ln -s /usr/local/lib/rakazo/ocsc-tool "/usr/local/bin/ocsc-${tool}"; \
      done \
   && mkdir -p /usr/local/share/fonts/ocsc \

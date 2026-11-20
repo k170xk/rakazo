@@ -192,6 +192,7 @@ import { keepAdminsOnFullComputers } from "./company-admin.js";
 import { crossSiteGuard } from "./cross-site-guard.js";
 import { cspReportRoutes } from "./csp-report.js";
 import { mountDocumentVersionsRoute } from "./documents.js";
+import { mountMppConvertRoute } from "./mpp-convert-route.js";
 import { configuredEmailProvider } from "./email.js";
 import type { AppEnv } from "./env.js";
 import { loadEnv } from "./env.js";
@@ -1204,6 +1205,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     },
     sessionActor,
   );
+  mountMppConvertRoute(app, sessionActor);
   mountStorageDownloadRoute(app, { prisma, auth, artifacts, home, dataDir: env.dataDir, sandbox });
   mountAuditExportRoute(app, { prisma, sessionActor });
   mountPdfDecisionsRoute(app, {
