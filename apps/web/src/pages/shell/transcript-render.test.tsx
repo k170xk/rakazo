@@ -60,7 +60,17 @@ function message(id: string, text: string): ThreadMessage {
   };
 }
 
-function Host({ messages }: { messages: ThreadMessage[] }) {
+function Host({
+  messages,
+  olderCursor = null,
+  loadingOlder = false,
+  onLoadOlder,
+}: {
+  messages: ThreadMessage[];
+  olderCursor?: number | null;
+  loadingOlder?: boolean;
+  onLoadOlder?: () => void | Promise<void>;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const artifactTarget = useMemo(() => ({ botId: "bot" }), []);
   const none = useMemo(() => new Set<string>(), []);
@@ -85,14 +95,14 @@ function Host({ messages }: { messages: ThreadMessage[] }) {
         mergedInto: new Map(),
       }}
       showToolActivity={false}
-      olderCursor={null}
+      olderCursor={olderCursor}
       unreadAfterSeq={null}
-      loadingOlder={false}
+      loadingOlder={loadingOlder}
       answerableAskIds={none}
       dismissableAskIds={none}
       running={false}
       workingBots={[]}
-      onLoadOlder={reply}
+      onLoadOlder={onLoadOlder ?? reply}
       onOpenBot={reply}
       onAnswer={answer}
       onReply={reply}
@@ -161,4 +171,47 @@ it("redraws a page card's reply only when a newer card supersedes it", () => {
 
   act(() => root.render(<Host messages={[...earlier, card("card-2", 2)]} />));
   expect(messageRenders.get("reply")).toBe(2);
+});
+
+it("auto-loads earlier messages when scrolling up near the top and avoids retry loops on failure", async () => {
+  const onLoadOlder = vi
+    .fn<() => Promise<void>>()
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValueOnce(undefined);
+  act(() =>
+    root.render(
+      <Host messages={[message("m1", "Hello")]} olderCursor={41} onLoadOlder={onLoadOlder} />,
+    ),
+  );
+  const scroller = container.querySelector<HTMLDivElement>('[data-testid="transcript"]')!;
+  Object.defineProperty(scroller, "scrollHeight", { configurable: true, value: 2_000 });
+  Object.defineProperty(scroller, "clientHeight", { configurable: true, value: 600 });
+
+  // Establish scroll position below the threshold, then scroll up into the top zone.
+  scroller.scrollTop = 500;
+  act(() => scroller.dispatchEvent(new Event("scroll")));
+  expect(onLoadOlder).not.toHaveBeenCalled();
+
+  scroller.scrollTop = 100;
+  await act(async () => {
+    scroller.dispatchEvent(new Event("scroll"));
+    await Promise.resolve();
+  });
+  expect(onLoadOlder).toHaveBeenCalledTimes(1);
+
+  // Another scroll event at the same failed cursor does not spam retries.
+  scroller.scrollTop = 40;
+  await act(async () => {
+    scroller.dispatchEvent(new Event("scroll"));
+    await Promise.resolve();
+  });
+  expect(onLoadOlder).toHaveBeenCalledTimes(1);
+
+  // Clicking the fallback button manually clears the block and retries.
+  const button = scroller.querySelector<HTMLButtonElement>('[aria-label="Load earlier messages"]')!;
+  await act(async () => {
+    button.click();
+    await Promise.resolve();
+  });
+  expect(onLoadOlder).toHaveBeenCalledTimes(2);
 });

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  TRANSCRIPT_AUTOLOAD_TOP_PX,
   transcriptCanSnapAfterFrame,
   transcriptIsNearEnd,
   transcriptMovedDown,
+  transcriptShouldAutoloadOlder,
 } from "./transcript-scroll.js";
 
 describe("transcriptIsNearEnd", () => {
@@ -36,5 +38,37 @@ describe("transcriptMovedDown", () => {
     expect(transcriptMovedDown(null, 920)).toBe(false);
     expect(transcriptMovedDown(950, 920)).toBe(false);
     expect(transcriptMovedDown(920, 950)).toBe(true);
+  });
+});
+
+describe("transcriptShouldAutoloadOlder", () => {
+  it("triggers when scrolling upward into the top threshold of an overflowing transcript", () => {
+    expect(
+      transcriptShouldAutoloadOlder(
+        { scrollHeight: 2_000, scrollTop: TRANSCRIPT_AUTOLOAD_TOP_PX, clientHeight: 600 },
+        TRANSCRIPT_AUTOLOAD_TOP_PX + 20,
+      ),
+    ).toBe(true);
+    expect(
+      transcriptShouldAutoloadOlder({ scrollHeight: 2_000, scrollTop: 0, clientHeight: 600 }, 40),
+    ).toBe(true);
+  });
+
+  it("does not trigger when below the threshold, moving downward, uninitialized, or not overflowing", () => {
+    expect(
+      transcriptShouldAutoloadOlder(
+        { scrollHeight: 2_000, scrollTop: TRANSCRIPT_AUTOLOAD_TOP_PX + 1, clientHeight: 600 },
+        TRANSCRIPT_AUTOLOAD_TOP_PX + 40,
+      ),
+    ).toBe(false);
+    expect(
+      transcriptShouldAutoloadOlder({ scrollHeight: 2_000, scrollTop: 80, clientHeight: 600 }, 40),
+    ).toBe(false);
+    expect(
+      transcriptShouldAutoloadOlder({ scrollHeight: 2_000, scrollTop: 0, clientHeight: 600 }, null),
+    ).toBe(false);
+    expect(
+      transcriptShouldAutoloadOlder({ scrollHeight: 500, scrollTop: 0, clientHeight: 600 }, 20),
+    ).toBe(false);
   });
 });

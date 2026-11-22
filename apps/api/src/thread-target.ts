@@ -88,7 +88,7 @@ export type ThreadTarget =
       memberBotIds: string[];
     };
 
-const THREAD_MESSAGE_PAGE_SIZE = 100;
+const THREAD_MESSAGE_PAGE_SIZE = 40;
 const RUNS_NEEDING_CONTINUE = new Set(["queued", "waiting_takeover"]);
 
 const STEERABLE_RUN_STATUSES = new Set<string>(QUEUE_HOLDING_RUN_STATUSES);

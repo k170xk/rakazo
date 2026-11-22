@@ -43,7 +43,11 @@ import { lastSelectedText, quoteDraftForSelection } from "../../lib/quote-select
 import type { createSpaceRpc } from "../../lib/rpc";
 import { messageHasVisibleBlocks } from "../../lib/tool-activity-view";
 import { TRANSCRIPT_CONTENT_PADDING } from "../../lib/transcript-layout";
-import { transcriptIsNearEnd, transcriptMovedDown } from "../../lib/transcript-scroll";
+import {
+  transcriptIsNearEnd,
+  transcriptMovedDown,
+  transcriptShouldAutoloadOlder,
+} from "../../lib/transcript-scroll";
 import { TimeSeparator, UnreadDivider } from "./chat-context";
 import { FALLBACK_BOT_COLOR } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
@@ -374,6 +378,7 @@ export const Transcript = memo(function Transcript({
     autoScrolling.current = false;
     setAtEnd(true);
     element.scrollTo({ top: element.scrollHeight, behavior: "auto" });
+    lastScrollTop.current = element.scrollTop;
   }, [scrollRef]);
 
   const jumpToLatest = useCallback(() => {
@@ -461,22 +466,37 @@ export const Transcript = memo(function Transcript({
     }
   }, [atEnd]);
 
-  const loadOlder = useCallback(() => {
-    const wasFollowing = following.current;
-    // Prepend must not race the messages-driven snap-to-end follow path.
-    following.current = false;
-    autoScrolling.current = false;
-    const pending = onLoadOlder();
-    if (!pending) return;
-    return Promise.resolve(pending).catch((error) => {
-      const element = scrollRef.current;
-      if (wasFollowing && element && transcriptIsNearEnd(element)) {
-        following.current = true;
-        setAtEnd(true);
-      }
-      throw error;
-    });
-  }, [onLoadOlder, scrollRef]);
+  const autoLoadBlockedCursor = useRef<number | null>(null);
+  useEffect(() => {
+    if (autoLoadBlockedCursor.current !== olderCursor) {
+      autoLoadBlockedCursor.current = null;
+    }
+  }, [olderCursor]);
+
+  const loadOlder = useCallback(
+    (source: "manual" | "scroll" = "manual") => {
+      const cursorAtStart = olderCursor;
+      if (source === "manual") autoLoadBlockedCursor.current = null;
+      const wasFollowing = following.current;
+      // Prepend must not race the messages-driven snap-to-end follow path.
+      following.current = false;
+      autoScrolling.current = false;
+      const pending = onLoadOlder();
+      if (!pending) return;
+      return Promise.resolve(pending).catch((error) => {
+        if (source === "scroll" && cursorAtStart != null) {
+          autoLoadBlockedCursor.current = cursorAtStart;
+        }
+        const element = scrollRef.current;
+        if (wasFollowing && element && transcriptIsNearEnd(element)) {
+          following.current = true;
+          setAtEnd(true);
+        }
+        if (source === "manual") throw error;
+      });
+    },
+    [olderCursor, onLoadOlder, scrollRef],
+  );
 
   useEffect(
     () => () => {
@@ -510,8 +530,9 @@ export const Transcript = memo(function Transcript({
           }
         }}
         onScroll={(event) => {
+          const previousScrollTop = lastScrollTop.current;
           const scrolledDown = transcriptMovedDown(
-            lastScrollTop.current,
+            previousScrollTop,
             event.currentTarget.scrollTop,
           );
           lastScrollTop.current = event.currentTarget.scrollTop;
@@ -529,6 +550,15 @@ export const Transcript = memo(function Transcript({
           } else if (!autoScrolling.current) {
             following.current = false;
           }
+          if (
+            olderCursor != null &&
+            !loadingOlder &&
+            !autoScrolling.current &&
+            autoLoadBlockedCursor.current !== olderCursor &&
+            transcriptShouldAutoloadOlder(event.currentTarget, previousScrollTop)
+          ) {
+            void loadOlder("scroll");
+          }
         }}
         className={`rk-scroll isolate flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto scroll-pt-16 scroll-pb-7 pt-20 pb-12 md:pt-[84px] md:pb-13 ${TRANSCRIPT_CONTENT_PADDING}`}
         style={
@@ -545,7 +575,7 @@ export const Transcript = memo(function Transcript({
             variant="ghost"
             size="sm"
             disabled={loadingOlder}
-            onClick={() => void loadOlder()}
+            onClick={() => void loadOlder("manual")}
             aria-label={t`Load earlier messages`}
             className="self-center text-muted-foreground"
           >
