@@ -44,6 +44,7 @@ vi.mock("@rakazo/ui-web", () => {
     BotAvatar: () => <span />,
     Spinner: (props: ComponentProps<"svg">) => <svg role="status" {...props} />,
     Button: (props: ComponentProps<"button">) => <button {...props} />,
+    buttonVariants: () => "",
     NativeSelect: (props: ComponentProps<"select">) => <select {...props} />,
     NativeSelectOption: (props: ComponentProps<"option">) => <option {...props} />,
     parseBotAvatar: () => ({ color: undefined }),
@@ -240,6 +241,54 @@ it("reopens with cached artifacts and refreshes them in the background", async (
     await act(async () => {
       await vi.waitFor(() => expect(page.container.textContent).toContain("Fresh report"));
     });
+  } finally {
+    await page.cleanup();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("links Word, Excel, PowerPoint, PDF and Project plan artifacts directly to their studio", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  api.listSpace.mockReset().mockResolvedValue({
+    items: [
+      {
+        ...artifact("01 Design Brief.docx", "art-docx"),
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      },
+      {
+        ...artifact("Cost Plan.xlsx", "art-xlsx"),
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      },
+      {
+        ...artifact("Bid Deck.pptx", "art-pptx"),
+        mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      },
+      {
+        ...artifact("Drawing Audit.pdf", "art-pdf"),
+        mimeType: "application/pdf",
+      },
+      {
+        ...artifact("House Programme.jantt", "art-jantt"),
+        mimeType: "application/vnd.ocsc.jantt+json",
+      },
+      artifact("Notes.md", "art-md"),
+    ],
+    nextCursor: null,
+  });
+  const page = await renderArtifacts();
+  try {
+    const hrefFor = (name: string) => {
+      const link = [...page.container.querySelectorAll("a")].find((el) =>
+        el.textContent?.includes(name),
+      );
+      return link?.getAttribute("href");
+    };
+    expect(hrefFor("01 Design Brief.docx")).toBe("/app?doc=art-docx&kind=docx");
+    expect(hrefFor("Cost Plan.xlsx")).toBe("/app?doc=art-xlsx&kind=xlsx");
+    expect(hrefFor("Bid Deck.pptx")).toBe("/app?doc=art-pptx&kind=pptx");
+    expect(hrefFor("Drawing Audit.pdf")).toBe("/app?doc=art-pdf&kind=pdf");
+    expect(hrefFor("House Programme.jantt")).toBe("/app?doc=art-jantt&kind=jantt");
+    expect(hrefFor("Notes.md")).toBe("/app/artifacts/art-md");
   } finally {
     await page.cleanup();
     vi.unstubAllGlobals();

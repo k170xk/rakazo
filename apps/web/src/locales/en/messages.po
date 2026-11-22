@@ -11687,6 +11687,10 @@ msgstr "Open in new tab"
 msgid "Open in Outlook"
 msgstr "Open in Outlook"
 
+#: src/pages/Artifacts.tsx
+msgid "Open in Studio"
+msgstr "Open in Studio"
+
 #: src/components/EmailDraftCard.tsx
 msgid "Open in the browser"
 msgstr "Open in the browser"

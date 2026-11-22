@@ -11670,6 +11670,10 @@ msgstr ""
 msgid "Open in Outlook"
 msgstr ""
 
+#: src/pages/Artifacts.tsx
+msgid "Open in Studio"
+msgstr ""
+
 #: src/components/EmailDraftCard.tsx
 msgid "Open in the browser"
 msgstr ""

@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   BotAvatar,
   Button,
+  buttonVariants,
   NativeSelect,
   NativeSelectOption,
   parseBotAvatar,
@@ -35,12 +36,14 @@ import {
   Maximize2,
   Minimize2,
   Search,
+  SquarePen,
   Trash2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { VideoPreview } from "../components/ArtifactFileCard";
 import { IconTooltip } from "../components/IconTooltip";
+import { officeFormatOfFile, officeStudioReady } from "../components/office/registry";
 import { PdfViewer } from "../components/PdfViewer";
 import { SandboxedHtmlViewer } from "../components/SandboxedHtmlViewer";
 import {
@@ -55,6 +58,7 @@ import { formatRelativeTime } from "../lib/relative-time";
 import { rpc } from "../lib/rpc";
 import { useObjectUrl } from "../lib/use-object-url";
 import { errorText } from "../lib/user-error";
+import { searchString, withShellOverlay } from "./shell-overlay";
 import { WindowChrome } from "./WindowChrome";
 
 type ViewMode = "grid" | "list";
@@ -65,6 +69,20 @@ const LIST_PAGE_SIZE = 60;
 type ArtifactSummary = Artifact & { versionCount: number };
 
 const NO_BOTS: Bot[] = [];
+
+/** Studio route for Word, PowerPoint, Excel, PDF and Project plan files; null falls back to artifact preview. */
+function artifactStudioUrl(
+  artifact: Pick<Artifact, "id" | "name" | "mimeType">,
+  bot: Bot | undefined,
+): string | null {
+  const format = officeFormatOfFile(artifact.name, artifact.mimeType);
+  if (!format || !officeStudioReady(format)) return null;
+  const base = bot ? `/app/${bot.id}` : "/app";
+  const query = searchString(
+    withShellOverlay(new URLSearchParams(), { kind: "doc", id: artifact.id, format }),
+  );
+  return `${base}${query}`;
+}
 
 function readViewMode(): ViewMode {
   try {
@@ -342,6 +360,7 @@ export function ArtifactsPage() {
             <PreviewPane
               key={artifactId}
               artifactId={artifactId}
+              botsById={botsById}
               maximized={maximized}
               onToggleMaximize={() => setMaximized((value) => !value)}
             />
@@ -661,10 +680,11 @@ function ArtifactCard({
   onRequestDelete: (artifact: ArtifactSummary) => void;
 }) {
   const { t } = useLingui();
+  const to = artifactStudioUrl(artifact, bot) ?? `/app/artifacts/${artifact.id}`;
   return (
     <div className="group relative">
       <Link
-        to={`/app/artifacts/${artifact.id}`}
+        to={to}
         className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-foreground hover:bg-accent/40"
       >
         <div className="flex items-start justify-between">
@@ -739,9 +759,10 @@ function ArtifactRow({
   onRequestDelete: (artifact: ArtifactSummary) => void;
 }) {
   const { t } = useLingui();
+  const to = artifactStudioUrl(artifact, bot) ?? `/app/artifacts/${artifact.id}`;
   return (
     <div className={`group relative ${active ? "bg-accent/60" : "hover:bg-accent/40"}`}>
-      <Link to={`/app/artifacts/${artifact.id}`} className="flex flex-col gap-1 px-4 py-3 pe-10">
+      <Link to={to} className="flex flex-col gap-1 px-4 py-3 pe-10">
         <div className="flex items-center gap-2">
           <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[7px] bg-accent text-accent-foreground">
             <ArtifactMimeIcon mimeType={artifact.mimeType} small />
@@ -823,10 +844,12 @@ function ArtifactMimeIcon({ mimeType, small }: { mimeType: string; small?: boole
 
 function PreviewPane({
   artifactId,
+  botsById,
   maximized,
   onToggleMaximize,
 }: {
   artifactId: string;
+  botsById: Map<string, Bot>;
   maximized: boolean;
   onToggleMaximize: () => void;
 }) {
@@ -907,6 +930,18 @@ function PreviewPane({
         ) : null}
         {state.status === "ready" ? (
           <>
+            {(() => {
+              const studioUrl = artifactStudioUrl(
+                state.artifact,
+                state.artifact.botId ? botsById.get(state.artifact.botId) : undefined,
+              );
+              return studioUrl ? (
+                <Link to={studioUrl} className={buttonVariants({ variant: "default", size: "sm" })}>
+                  <SquarePen className="me-1.5" size={15} strokeWidth={1.9} />
+                  <Trans>Open in Studio</Trans>
+                </Link>
+              ) : null;
+            })()}
             <Button
               variant="outline"
               size="sm"
