@@ -167,6 +167,103 @@ export function memoryRoutes(ctx: RouterContext) {
         );
         return { ok: true as const };
       }),
+      move: authed.memory.move.handler(async ({ context, input }) => {
+        const doc = await deps.prisma.memoryDocument.findFirst({
+          where: {
+            id: input.documentId,
+            spaceId: context.actor.spaceId,
+            userId: context.actor.userId,
+          },
+        });
+        if (!doc) throw new IsolationError();
+        if (input.targetScope === "bot") {
+          if (!input.targetBotId) {
+            throw new ORPCError("BAD_REQUEST", { message: "Choose an agent to move this memory to." });
+          }
+          await repos.getBot(context.actor, input.targetBotId);
+        }
+        const targetBotId = input.targetScope === "bot" ? input.targetBotId : undefined;
+        if (doc.scope === input.targetScope && (doc.botId ?? undefined) === targetBotId) {
+          return {
+            id: doc.id,
+            scope: doc.scope as "bot" | "user",
+            botId: doc.botId,
+            path: doc.path,
+            content: doc.content,
+            revision: doc.revision,
+            updatedAt: doc.updatedAt.toISOString(),
+          };
+        }
+        const existingDest = await deps.prisma.memoryDocument.findFirst({
+          where: {
+            spaceId: context.actor.spaceId,
+            userId: context.actor.userId,
+            scope: input.targetScope,
+            botId: targetBotId ?? null,
+            path: doc.path,
+          },
+        });
+        const mergedContent = existingDest?.content.trim()
+          ? doc.content.trim()
+            ? `${existingDest.content.trimEnd()}\n\n${doc.content.trimStart()}`
+            : existingDest.content
+          : doc.content;
+        const memCtx = {
+          operationId: "mem",
+          traceId: "mem",
+          spaceId: context.actor.spaceId,
+          userId: context.actor.userId,
+          signal: new AbortController().signal,
+        };
+        const committed = await deps.memory
+          .commit(
+            {
+              scope: input.targetScope,
+              botId: targetBotId,
+              path: doc.path,
+              content: mergedContent,
+              expectedRevision: existingDest ? existingDest.revision : 0,
+            },
+            memCtx,
+          )
+          .catch((error: unknown) => {
+            if (error instanceof Error && error.message === MEMORY_REVISION_CONFLICT_ERROR) {
+              throw new ORPCError("CONFLICT", { message: error.message });
+            }
+            throw error;
+          });
+        if (isDeletableMemoryDocument(doc.path)) {
+          await deps.memory.remove(
+            {
+              id: doc.id,
+              scope: doc.scope as "bot" | "user",
+              botId: doc.botId ?? undefined,
+              path: doc.path,
+            },
+            memCtx,
+          );
+        } else {
+          await deps.memory.commit(
+            {
+              scope: doc.scope as "bot" | "user",
+              botId: doc.botId ?? undefined,
+              path: doc.path,
+              content: "",
+              expectedRevision: doc.revision,
+            },
+            memCtx,
+          );
+        }
+        return {
+          id: committed.id,
+          scope: input.targetScope,
+          botId: targetBotId ?? null,
+          path: committed.path,
+          content: committed.content,
+          revision: committed.revision,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
       exportMarkdown: authed.memory.exportMarkdown.handler(async ({ context, input }) => {
         const docs = await deps.prisma.memoryDocument.findMany({
           where: {
@@ -234,9 +331,13 @@ export function memoryRoutes(ctx: RouterContext) {
         if (input.status !== undefined && !isScratchpadStatus(input.status)) {
           throw new ORPCError("BAD_REQUEST", { message: "Invalid scratchpad status." });
         }
+        if (input.botId !== undefined && input.botId !== existing.botId) {
+          await repos.getBot(context.actor, input.botId);
+        }
         const row = await deps.prisma.scratchpadItem.update({
           where: { id: existing.id },
           data: {
+            ...(input.botId !== undefined ? { botId: input.botId } : {}),
             ...(input.title !== undefined ? { title: input.title.trim() } : {}),
             ...(input.status !== undefined ? { status: input.status } : {}),
             ...(input.notes !== undefined ? { notes: input.notes.trim() } : {}),

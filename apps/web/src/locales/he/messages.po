@@ -3015,6 +3015,7 @@ msgstr "לא ניתן לקרוא תמונות"
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-chats-accordion.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3492,6 +3493,7 @@ msgstr ""
 #: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/SecretAskCard.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Clear"
 msgstr "ניקוי"
@@ -4115,6 +4117,10 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Confirm clear"
+msgstr ""
+
 #: src/pages/AdminDefaultAgents.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -4494,6 +4500,10 @@ msgstr "לא ניתן לבדוק את פרטי הגישה השמורים."
 msgid "Could not check teaching status. Refresh the view to continue."
 msgstr "לא ניתן לבדוק את סטטוס הלימוד. יש לרענן את התצוגה כדי להמשיך."
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not clear"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not clear conversation"
 msgstr "לא ניתן לנקות את השיחה"
@@ -4853,6 +4863,11 @@ msgstr ""
 #: src/lib/sign-out.ts
 msgid "Could not log out. Try again."
 msgstr "לא ניתן להתנתק. יש לנסות שוב."
+
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/ScratchpadSection.tsx
+msgid "Could not move"
+msgstr ""
 
 #: src/components/todos/todo-board.tsx
 msgid "Could not move that item."
@@ -6632,6 +6647,7 @@ msgstr ""
 #: src/pages/AdminCompanySkills.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/ScratchpadSection.tsx
 msgid "Edit"
 msgstr "עריכה"
 
@@ -6682,6 +6698,14 @@ msgstr ""
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
 msgstr "עריכת שם"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Edit open-work notes"
+msgstr ""
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Edit open-work title"
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
@@ -9366,6 +9390,10 @@ msgstr ""
 msgid "Logins, API keys and variables every member's assistants can use, for shared company accounts. Members see each item's name, never its value; one of their own with the same name is used instead. Anyone with a full computer can run commands with these variables, so add only what you would trust them with. Cards and contacts stay in each person's own vault."
 msgstr ""
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Long-term facts and notes this agent remembers across chats."
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Looks like it contains a key"
 msgstr "נראה שמכיל מפתח"
@@ -9467,6 +9495,10 @@ msgstr "ניהול שרתי MCP"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Manage other agents"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Manage shared memory across all agents"
 msgstr ""
 
 #: src/components/SidebarFooter.tsx
@@ -10029,6 +10061,8 @@ msgid "Motion & layout"
 msgstr ""
 
 #: src/components/apps/AppWorkspacesSection.tsx
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/ScratchpadSection.tsx
 msgid "Move"
 msgstr ""
 
@@ -10042,6 +10076,10 @@ msgstr ""
 msgid "Move down"
 msgstr "הזזה למטה"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Move memory to"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Move them to your shared memory."
 msgstr "אפשר להעביר אותם לזיכרון המשותף."
@@ -10051,6 +10089,14 @@ msgstr "אפשר להעביר אותם לזיכרון המשותף."
 msgid "Move to"
 msgstr "העברה אל"
 
+#: src/pages/ScratchpadSection.tsx
+msgid "Move to agent"
+msgstr ""
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Move to another agent"
+msgstr ""
+
 #: src/components/office/slides/SlideRail.tsx
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move up"
@@ -10059,6 +10105,18 @@ msgstr "הזזה למעלה"
 #. placeholder {0}: projectLabel(movedFrom) || t`Unnamed project`
 #: src/components/AskCard.tsx
 msgid "Moved from <0>{0}</0>"
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Moved to {destLabel}"
+msgstr ""
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Moved to {targetName}"
+msgstr ""
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Moved, but list refresh failed"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -10362,6 +10420,10 @@ msgstr ""
 #: src/pages/ScratchpadSection.tsx
 msgid "New open-work item"
 msgstr "פריט עבודה פתוחה חדש"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "New open-work notes"
+msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -10785,6 +10847,10 @@ msgstr "לא נמצאו מודלים ברשימה."
 msgid "No monthly allowance is set, so chats and routines can keep spending."
 msgstr "No monthly allowance is set, so chats and routines can keep spending."
 
+#: src/pages/ScratchpadSection.tsx
+msgid "No open work right now"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "לא נמצאו קבצי OpenClaw, Hermes או מסמך סוכן."
@@ -11137,6 +11203,10 @@ msgstr ""
 #: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
+msgstr ""
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Notes (optional)"
 msgstr ""
 
 #: src/components/LearningClinicCard.tsx
@@ -11586,6 +11656,10 @@ msgstr ""
 #: src/components/InstallAppBanner.tsx
 msgid "Open it in its own window, then install it to get its own icon and window."
 msgstr "Open it in its own window, then install it to get its own icon and window."
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Open items this agent tracks across chats. Edit, move, or remove anytime."
+msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 #: src/components/todos/todo-board.tsx
@@ -13660,6 +13734,7 @@ msgstr "שבת"
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Save"
@@ -14435,6 +14510,10 @@ msgstr ""
 
 #: src/pages/SharedPage.tsx
 msgid "Shared apps are only for people at your company."
+msgstr ""
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Shared memory (all agents)"
 msgstr ""
 
 #: src/components/studio/FeatureStudioWelcome.tsx

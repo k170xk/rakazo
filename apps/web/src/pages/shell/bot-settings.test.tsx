@@ -15,6 +15,7 @@ vi.mock("../../lib/rpc", () => {
       credentials: vi.fn(async () => []),
       list: vi.fn(async () => []),
     },
+    scratchpad: { list: vi.fn(async () => []) },
     me: vi.fn(async () => ({})),
   };
   return {

@@ -9,7 +9,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
 
 const rpcMock = vi.hoisted(() => ({
-  scratchpad: { list: vi.fn(), create: vi.fn(), remove: vi.fn() },
+  scratchpad: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
 }));
 vi.mock("../lib/rpc", () => ({
   rpc: rpcMock,
@@ -32,6 +32,7 @@ afterEach(() => {
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   rpcMock.scratchpad.list.mockReset().mockResolvedValue([]);
   rpcMock.scratchpad.create.mockReset();
+  rpcMock.scratchpad.update.mockReset();
   rpcMock.scratchpad.remove.mockReset();
 });
 
@@ -214,6 +215,120 @@ it("keeps an added item when an older background read lands after it", async () 
     expect(host.textContent).toContain("Added task");
   } finally {
     await act(async () => root.unmount());
+    vi.unstubAllGlobals();
+  }
+});
+
+it("shows an empty state when alwaysVisible is set and edits or moves an item", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () =>
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <ScratchpadSection
+            botId="bot-a"
+            bots={[
+              { id: "bot-a", name: "Pip" },
+              { id: "bot-b", name: "Nova" },
+            ]}
+            alwaysVisible
+          />
+        </QueryClientProvider>,
+      ),
+    );
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(host.querySelector('[data-testid="bot-scratchpad"]')).not.toBeNull();
+    expect(host.textContent).toContain("No open work right now");
+
+    const initial: ScratchpadItem = {
+      id: "work-1",
+      botId: "bot-a",
+      title: "Draft presentation",
+      notes: "Slide deck for Q2",
+      status: "open",
+      createdAt: "",
+      updatedAt: "",
+    };
+    const edited: ScratchpadItem = {
+      ...initial,
+      title: "Finalize presentation",
+      notes: "Updated outline",
+    };
+    rpcMock.scratchpad.list
+      .mockResolvedValueOnce([initial])
+      .mockResolvedValueOnce([edited])
+      .mockResolvedValueOnce([]);
+    rpcMock.scratchpad.update
+      .mockResolvedValueOnce(edited)
+      .mockResolvedValueOnce({ ...edited, botId: "bot-b" });
+
+    queryClient.clear();
+    await act(async () =>
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <ScratchpadSection
+            key="populated"
+            botId="bot-a"
+            bots={[
+              { id: "bot-a", name: "Pip" },
+              { id: "bot-b", name: "Nova" },
+            ]}
+            alwaysVisible
+          />
+        </QueryClientProvider>,
+      ),
+    );
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(host.textContent).toContain("Draft presentation");
+
+    // Edit title and notes inline.
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Edit"]')!.click());
+    const titleInput = host.querySelector<HTMLInputElement>('[aria-label="Edit open-work title"]')!;
+    const notesInput = host.querySelector<HTMLTextAreaElement>(
+      '[aria-label="Edit open-work notes"]',
+    )!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+        titleInput,
+        edited.title,
+      );
+      titleInput.dispatchEvent(new Event("input", { bubbles: true }));
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set?.call(
+        notesInput,
+        edited.notes,
+      );
+      notesInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => titleInput.form!.requestSubmit());
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(rpcMock.scratchpad.update).toHaveBeenCalledWith({
+      itemId: "work-1",
+      title: "Finalize presentation",
+      notes: "Updated outline",
+    });
+    expect(host.textContent).toContain("Finalize presentation");
+    expect(host.textContent).toContain("Updated outline");
+
+    // Move item to another agent.
+    await act(async () =>
+      host.querySelector<HTMLButtonElement>('[aria-label="Move to another agent"]')!.click(),
+    );
+    const moveButton = [...host.querySelectorAll("button")].find(
+      (button) => button.textContent === "Move",
+    )!;
+    await act(async () => moveButton.click());
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(rpcMock.scratchpad.update).toHaveBeenCalledWith({
+      itemId: "work-1",
+      botId: "bot-b",
+    });
+    expect(host.textContent).not.toContain("Finalize presentation");
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
     vi.unstubAllGlobals();
   }
 });

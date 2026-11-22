@@ -10024,6 +10024,130 @@ describe("memory documents", () => {
     await expect(foreign.client.memory.remove({ documentId: "doc-2" })).rejects.toBeTruthy();
     expect(foreign.memory.remove).not.toHaveBeenCalled();
   });
+
+  it("moves a bot memory document to another owned agent and merges or clears safely", async () => {
+    const sourceDoc = {
+      id: "doc-1",
+      path: "MEMORY.md",
+      scope: "bot",
+      botId: "bot-1",
+      content: "Prefers concise summaries.",
+      revision: 2,
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+    };
+    const destDoc = {
+      id: "doc-2",
+      path: "MEMORY.md",
+      scope: "bot",
+      botId: "bot-2",
+      content: "Existing memory.",
+      revision: 3,
+      updatedAt: new Date("2026-01-01T00:00:00Z"),
+    };
+    const memoryDocument = {
+      findFirst: vi.fn().mockResolvedValueOnce(sourceDoc).mockResolvedValueOnce(destDoc),
+    };
+    const botFindFirst = vi.fn(async () => ({
+      id: "bot-2",
+      spaceId: "space-1",
+      userId: "user-1",
+      archivedAt: null,
+    }));
+    const memory = {
+      remove: vi.fn(async () => ({ removed: true })),
+      commit: vi.fn(async (request: { path: string; content: string }) => ({
+        id: "doc-2",
+        path: request.path,
+        content: request.content,
+        revision: 4,
+      })),
+    };
+    const deps = {
+      prisma: { memoryDocument, bot: { findFirst: botFindFirst } },
+      memory,
+      env: { webOrigin: "https://example.test" },
+    } as unknown as RouterDeps;
+    const client = createRouterClient(createRouter(deps), { context: { actor } as never });
+
+    await expect(
+      client.memory.move({ documentId: "doc-1", targetScope: "bot", targetBotId: "bot-2" }),
+    ).resolves.toMatchObject({
+      scope: "bot",
+      botId: "bot-2",
+      path: "MEMORY.md",
+      content: "Existing memory.\n\nPrefers concise summaries.",
+    });
+    expect(memory.commit).toHaveBeenNthCalledWith(
+      1,
+      {
+        scope: "bot",
+        botId: "bot-2",
+        path: "MEMORY.md",
+        content: "Existing memory.\n\nPrefers concise summaries.",
+        expectedRevision: 3,
+      },
+      expect.objectContaining({ spaceId: "space-1", userId: "user-1" }),
+    );
+    expect(memory.commit).toHaveBeenNthCalledWith(
+      2,
+      {
+        scope: "bot",
+        botId: "bot-1",
+        path: "MEMORY.md",
+        content: "",
+        expectedRevision: 2,
+      },
+      expect.objectContaining({ spaceId: "space-1", userId: "user-1" }),
+    );
+  });
+
+  it("moves a scratchpad item to another owned agent and blocks unowned targets", async () => {
+    const existing = {
+      id: "sp-1",
+      spaceId: "space-1",
+      userId: "user-1",
+      botId: "bot-1",
+      title: "Presentation outline",
+      status: "open",
+      notes: "Review slides",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      updatedAt: new Date("2026-01-02T00:00:00Z"),
+    };
+    const scratchpadItem = {
+      findFirst: vi.fn(async () => existing),
+      update: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+        ...existing,
+        ...data,
+      })),
+    };
+    const bot = {
+      findFirst: vi
+        .fn()
+        .mockResolvedValueOnce({ id: "bot-2", spaceId: "space-1", userId: "user-1", archivedAt: null })
+        .mockResolvedValueOnce(null),
+    };
+    const deps = {
+      prisma: { scratchpadItem, bot },
+      env: { webOrigin: "https://example.test" },
+    } as unknown as RouterDeps;
+    const client = createRouterClient(createRouter(deps), { context: { actor } as never });
+
+    await expect(
+      client.scratchpad.update({ itemId: "sp-1", botId: "bot-2", title: "Updated outline" }),
+    ).resolves.toMatchObject({
+      id: "sp-1",
+      botId: "bot-2",
+      title: "Updated outline",
+    });
+    expect(scratchpadItem.update).toHaveBeenCalledWith({
+      where: { id: "sp-1" },
+      data: { botId: "bot-2", title: "Updated outline" },
+    });
+
+    await expect(
+      client.scratchpad.update({ itemId: "sp-1", botId: "bot-foreign" }),
+    ).rejects.toBeTruthy();
+  });
 });
 
 describe("routine watch creation boundaries", () => {

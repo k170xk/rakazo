@@ -8,10 +8,20 @@ import {
   MEMORY_NOTES_FOLDER,
 } from "@rakazo/contracts";
 import { fetchFresh, writeSaved } from "@rakazo/core/query";
-import { Badge, Button, Input, SectionHeading, Skeleton, Textarea, toast } from "@rakazo/ui-web";
+import {
+  Badge,
+  Button,
+  Input,
+  NativeSelect,
+  NativeSelectOption,
+  SectionHeading,
+  Skeleton,
+  Textarea,
+  toast,
+} from "@rakazo/ui-web";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@rakazo/ui-web/components/ui/tooltip";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Download, Plus, Upload } from "lucide-react";
+import { ArrowRightLeft, ChevronRight, Download, Plus, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   AvailabilityControl,
@@ -36,17 +46,32 @@ function rowClass(open: boolean): string {
   return `h-auto w-full justify-start whitespace-normal px-2.5 py-2.5 text-start ${open ? "bg-muted" : ""}`;
 }
 
+export type MemoryMoveTargetBot = { id: string; name: string };
+
 /**
  * Bot memory. Skills belong to the person in a space, not to one bot, so they live in
  * the Skills dialog; memory shared across bots lives in the Memory settings overlay.
  */
-export function KnowledgeSection({ botId }: { botId: string }) {
+export function KnowledgeSection({
+  botId,
+  bots,
+  alwaysVisible = false,
+  onOpenSharedMemory,
+}: {
+  botId: string;
+  bots?: readonly MemoryMoveTargetBot[];
+  alwaysVisible?: boolean;
+  onOpenSharedMemory?: () => void;
+}) {
   return (
     <MemoryDocumentList
       key={botId}
       input={{ botId, scope: "bot" }}
       testId="bot-knowledge-memory"
       compact
+      alwaysVisible={alwaysVisible}
+      bots={bots}
+      onOpenSharedMemory={onOpenSharedMemory}
     />
   );
 }
@@ -327,13 +352,19 @@ function MemoryDocumentList({
   input,
   testId,
   compact = false,
+  alwaysVisible = false,
   groupArchived = false,
+  bots,
+  onOpenSharedMemory,
 }: {
   input: { botId?: string; scope: "bot" | "user" };
   testId: string;
   compact?: boolean;
+  alwaysVisible?: boolean;
   /** Folds memory kept from archived bots under one closed heading. */
   groupArchived?: boolean;
+  bots?: readonly MemoryMoveTargetBot[];
+  onOpenSharedMemory?: () => void;
 }) {
   const rpc = useSpaceRpc();
   const { t } = useLingui();
@@ -370,7 +401,32 @@ function MemoryDocumentList({
   const [actionError, setError] = useState<string | null>(null);
   const error = actionError ?? (listQuery.isError ? t`Could not load` : null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingClear, setConfirmingClear] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [moveTarget, setMoveTarget] = useState("");
   const [archivedOpen, setArchivedOpen] = useState(false);
+  const moveTargets: Array<{ value: string; label: string; scope: "bot" | "user"; botId?: string }> =
+    bots
+      ? [
+          ...bots
+            .filter((candidate) => candidate.id !== input.botId)
+            .map((candidate) => ({
+              value: `bot:${candidate.id}`,
+              label: candidate.name,
+              scope: "bot" as const,
+              botId: candidate.id,
+            })),
+          ...(input.scope === "bot"
+            ? [
+                {
+                  value: "user",
+                  label: t`Shared memory (all agents)`,
+                  scope: "user" as const,
+                },
+              ]
+            : []),
+        ]
+      : [];
   const archived = groupArchived ? docs.filter((doc) => doc.path.startsWith(ARCHIVED_PREFIX)) : [];
   const current = groupArchived
     ? docs.filter((doc) => !doc.path.startsWith(ARCHIVED_PREFIX))
@@ -388,12 +444,90 @@ function MemoryDocumentList({
     setDraft(doc.content);
     setError(null);
     setConfirmingDelete(false);
+    setConfirmingClear(false);
+    setMoving(false);
+    setMoveTarget(moveTargets[0]?.value ?? "");
   }
 
   function closeDoc() {
     setOpenId(null);
     setConflicted(false);
     setConfirmingDelete(false);
+    setConfirmingClear(false);
+    setMoving(false);
+  }
+
+  async function clearMemory(doc: MemoryDocument) {
+    if (busy || conflicted) return;
+    if (!confirmingClear) {
+      setConfirmingClear(true);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const updated = await rpc.memory.update({
+        documentId: doc.id,
+        content: "",
+        expectedRevision: loadedRevision,
+      });
+      await setDocs((current) =>
+        current.map((entry) => (entry.id === updated.id ? updated : entry)),
+      );
+      closeDoc();
+    } catch (err) {
+      if (err instanceof ORPCError && err.code === "CONFLICT") {
+        setConflicted(true);
+        try {
+          await fetchFresh(queryClient, list);
+        } catch {
+          // Keep conflict state even if refresh fails.
+        }
+      } else {
+        setError(t`Could not clear`);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function moveDoc(doc: MemoryDocument) {
+    const dest = moveTargets.find((entry) => entry.value === moveTarget);
+    if (!dest || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await rpc.memory.move({
+        documentId: doc.id,
+        targetScope: dest.scope,
+        ...(dest.botId ? { targetBotId: dest.botId } : {}),
+      });
+      if (isDeletableMemoryDocument(doc.path)) {
+        await setDocs((current) => current.filter((entry) => entry.id !== doc.id));
+      } else {
+        await fetchFresh(queryClient, list);
+      }
+      if (dest.scope === "bot" && dest.botId) {
+        void queryClient.invalidateQueries({
+          queryKey: queries.memory.list.queryKey({ input: { botId: dest.botId, scope: "bot" } }),
+        });
+      } else {
+        void queryClient.invalidateQueries({
+          queryKey: queries.memory.list.queryKey({ input: { scope: "user" } }),
+        });
+      }
+      const destLabel = dest.label;
+      toast.success(t`Moved to ${destLabel}`);
+      closeDoc();
+    } catch (err) {
+      if (err instanceof ORPCError && err.code === "CONFLICT") {
+        setConflicted(true);
+      } else {
+        setError(t`Could not move`);
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function remove(doc: MemoryDocument) {
@@ -504,7 +638,7 @@ function MemoryDocumentList({
               className={fieldClass}
               dir="auto"
             />
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <Button
                 variant="secondary"
                 size="sm"
@@ -517,6 +651,21 @@ function MemoryDocumentList({
               <Button variant="ghost" type="button" disabled={busy} onClick={closeDoc} size="sm">
                 <Trans>Cancel</Trans>
               </Button>
+              {moveTargets.length > 0 && doc.content.trim().length > 0 ? (
+                <Button
+                  variant="ghost"
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setMoving((value) => !value);
+                    if (!moveTarget && moveTargets[0]) setMoveTarget(moveTargets[0].value);
+                  }}
+                  size="sm"
+                >
+                  <ArrowRightLeft className="size-3.5" />
+                  <Trans>Move</Trans>
+                </Button>
+              ) : null}
               {isDeletableMemoryDocument(doc.path) ? (
                 <Button
                   variant="ghost"
@@ -528,21 +677,64 @@ function MemoryDocumentList({
                 >
                   {confirmingDelete ? <Trans>Confirm delete</Trans> : <Trans>Delete</Trans>}
                 </Button>
+              ) : doc.content.trim().length > 0 ? (
+                <Button
+                  variant="ghost"
+                  type="button"
+                  disabled={busy || conflicted}
+                  onClick={() => void clearMemory(doc)}
+                  size="sm"
+                  className="ml-auto text-destructive"
+                >
+                  {confirmingClear ? <Trans>Confirm clear</Trans> : <Trans>Clear</Trans>}
+                </Button>
               ) : null}
             </div>
+            {moving && moveTargets.length > 0 ? (
+              <div className="mt-2 flex items-center gap-2">
+                <NativeSelect
+                  aria-label={t`Move memory to`}
+                  value={moveTarget}
+                  disabled={busy}
+                  onChange={(event) => setMoveTarget(event.target.value)}
+                  className="min-w-0 flex-1"
+                >
+                  {moveTargets.map((target) => (
+                    <NativeSelectOption key={target.value} value={target.value}>
+                      {target.label}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  disabled={busy || !moveTarget}
+                  onClick={() => void moveDoc(doc)}
+                >
+                  <Trans>Move</Trans>
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
     );
   }
 
-  if (compact && !memoryVisible && !error) return null;
+  if (compact && !alwaysVisible && !memoryVisible && !error) return null;
+  const visibleDocs = alwaysVisible ? current : compact && !showAll ? current.slice(0, 5) : current;
   return (
     <section className={compact ? "mt-6" : undefined}>
       {compact ? (
-        <SectionHeading variant="label" className="mb-2">
+        <SectionHeading variant="label" className="mb-1">
           <Trans>Memory</Trans>
         </SectionHeading>
+      ) : null}
+      {alwaysVisible ? (
+        <p className="mb-2 text-[12.5px] text-muted-foreground">
+          <Trans>Long-term facts and notes this agent remembers across chats.</Trans>
+        </p>
       ) : null}
       <div data-testid={testId} className={compact ? "rounded-xl bg-muted/50 p-4" : undefined}>
         {error ? <div className="pb-2 text-[13px] text-destructive">{error}</div> : null}
@@ -557,12 +749,12 @@ function MemoryDocumentList({
           </div>
         ) : null}
         {loading ? <Skeleton className="h-10 w-full" /> : null}
-        {!compact && !loading && docs.length === 0 && !error ? (
+        {(!compact || alwaysVisible) && !loading && docs.length === 0 && !error ? (
           <div className="py-1 text-[13px] text-muted-foreground">
             <Trans>Nothing remembered yet</Trans>
           </div>
         ) : null}
-        <div>{(compact && !showAll ? current.slice(0, 5) : current).map(renderDoc)}</div>
+        <div>{(compact && !showAll ? visibleDocs.slice(0, 5) : visibleDocs).map(renderDoc)}</div>
         {archived.length > 0 ? (
           <div className="mt-2" data-testid="memory-archived-group">
             <Button
@@ -592,6 +784,19 @@ function MemoryDocumentList({
           </Button>
         ) : null}
       </div>
+      {onOpenSharedMemory ? (
+        <div className="mt-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            type="button"
+            className="-ms-2 text-xs text-muted-foreground hover:text-foreground"
+            onClick={onOpenSharedMemory}
+          >
+            <Trans>Manage shared memory across all agents</Trans>
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 }

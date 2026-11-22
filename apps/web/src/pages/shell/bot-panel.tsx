@@ -120,11 +120,12 @@ export function ComputerModePicker({
   );
 }
 
-export type BotPanelTab = "computer" | "routines" | "pages" | "files" | "settings";
+export type BotPanelTab = "computer" | "routines" | "memory" | "pages" | "files" | "settings";
 
-/** A bot's profile above its Computer, Routines, Pages, Files and Advanced tabs. */
+/** A bot's profile above its Computer, Routines, Memory, Pages, Files and Advanced tabs. */
 export function BotSettings({
   bot,
+  bots,
   tab = "settings",
   onTabChange,
   computer,
@@ -135,14 +136,17 @@ export function BotSettings({
   onClear,
   focusModel = 0,
   onOpenConnections,
+  onOpenSharedMemory,
 }: {
   bot: Bot;
+  bots?: readonly Pick<Bot, "id" | "name">[];
   tab?: BotPanelTab;
   onTabChange?: (tab: BotPanelTab) => void;
   computer?: ReactNode;
   routines?: ReactNode;
   focusModel?: number;
   onOpenConnections?: () => void;
+  onOpenSharedMemory?: () => void;
   /** Unused: the skill sections read and save the shared cached skill list. */
   onSkillsChange?: (skills: AgentSkillCatalogEntry[]) => void;
   memoryProviderConfigured: boolean;
@@ -235,6 +239,11 @@ export function BotSettings({
   const credentialsQuery = useQuery({ ...queries.models.credentials.queryOptions(), ...refresh });
   const catalogQuery = useQuery({ ...queries.models.list.queryOptions(), ...refresh });
   const meQuery = useQuery({ ...queries.me.queryOptions(), ...refresh });
+  const scratchpadQuery = useQuery({
+    ...queries.scratchpad.list.queryOptions({ input: { botId: bot.id } }),
+    ...refresh,
+  });
+  const openWorkCount = (scratchpadQuery.data ?? []).filter((item) => item.status !== "done").length;
   const credentials = credentialsQuery.data ?? NO_CREDENTIALS;
   const catalog = catalogQuery.data ?? NO_CATALOG;
   const me = meQuery.data ?? null;
@@ -592,7 +601,7 @@ export function BotSettings({
         />
       </div>
       <Tabs value={tab} onValueChange={(next) => onTabChange?.(next as BotPanelTab)}>
-        <TabsList className="w-full">
+        <TabsList className="w-full flex-wrap group-data-horizontal/tabs:h-auto">
           {computersOn ? (
             <TabsTrigger value="computer">
               <Trans>Computer</Trans>
@@ -603,6 +612,17 @@ export function BotSettings({
               <Trans>Routines</Trans>
             </TabsTrigger>
           ) : null}
+          <TabsTrigger value="memory">
+            <Trans>Memory</Trans>
+            {openWorkCount > 0 ? (
+              <span
+                data-testid="memory-open-count"
+                className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/15 px-1 text-[10px] font-semibold leading-none text-primary"
+              >
+                {openWorkCount}
+              </span>
+            ) : null}
+          </TabsTrigger>
           <TabsTrigger value="pages">
             <Trans>Apps</Trans>
           </TabsTrigger>
@@ -633,13 +653,30 @@ export function BotSettings({
         <TabsContent value="routines" className="pt-4">
           {routines}
         </TabsContent>
+        {/* Stays mounted so scratchpad and memory drafts survive a tab switch. */}
+        <TabsContent value="memory" keepMounted className="pt-4" data-testid="bot-memory-tab">
+          <ErrorBoundary fallback={<SectionLoadFailed />}>
+            <Suspense fallback={null}>
+              <ScratchpadSection botId={bot.id} bots={bots} alwaysVisible />
+            </Suspense>
+          </ErrorBoundary>
+          <ErrorBoundary fallback={<SectionLoadFailed />}>
+            <Suspense fallback={null}>
+              <KnowledgeSection
+                botId={bot.id}
+                bots={bots}
+                alwaysVisible
+                onOpenSharedMemory={onOpenSharedMemory}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        </TabsContent>
         <TabsContent value="pages" className="pt-4">
           {tab === "pages" ? <PagesList botId={bot.id} /> : null}
         </TabsContent>
         <TabsContent value="files" className="pt-4">
           {tab === "files" ? <FilesTab botId={bot.id} /> : null}
         </TabsContent>
-        {/* Stays mounted so scratchpad and knowledge drafts survive a tab switch. */}
         <TabsContent value="settings" keepMounted data-testid="bot-settings-advanced">
           <section className="mt-6">
             <SectionHeading variant="label" className="mb-2">
@@ -666,16 +703,6 @@ export function BotSettings({
               />
             </div>
           </section>
-          <ErrorBoundary fallback={<SectionLoadFailed />}>
-            <Suspense fallback={null}>
-              <ScratchpadSection botId={bot.id} />
-            </Suspense>
-          </ErrorBoundary>
-          <ErrorBoundary fallback={<SectionLoadFailed />}>
-            <Suspense fallback={null}>
-              <KnowledgeSection botId={bot.id} />
-            </Suspense>
-          </ErrorBoundary>
           <div className="space-y-6 pt-6">
             {modelChoiceAllowed ? (
               <div ref={modelRef}>

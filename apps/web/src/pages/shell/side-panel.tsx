@@ -87,6 +87,7 @@ export function ShellSidePanel({
   const botTab =
     panel === "computer" ||
     panel === "routines" ||
+    panel === "memory" ||
     panel === "pages" ||
     panel === "files" ||
     panel === "settings"
@@ -202,6 +203,7 @@ export function ShellSidePanel({
             <BotSettings
               key={active.id}
               bot={active}
+              bots={bots}
               tab={botTab}
               onTabChange={(tab: BotPanelTab) => {
                 setPanel(tab);
@@ -211,6 +213,7 @@ export function ShellSidePanel({
               routines={routinesPanel}
               focusModel={modelFocusRequest}
               onOpenConnections={() => openSettings("models")}
+              onOpenSharedMemory={() => openSettings("memory")}
               memoryProviderConfigured={memoryProviderConfigured}
               onSkillsChange={setAgentSkills}
               onSave={async ({ computerMode, ...patch }) => {

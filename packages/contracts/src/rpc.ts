@@ -1321,6 +1321,15 @@ export const appContract = {
       )
       .output(MemoryDocumentSchema),
     remove: oc.input(z.object({ documentId: Id })).output(z.object({ ok: z.literal(true) })),
+    move: oc
+      .input(
+        z.object({
+          documentId: Id,
+          targetScope: z.enum(["bot", "user"]),
+          targetBotId: Id.optional(),
+        }),
+      )
+      .output(MemoryDocumentSchema),
     exportMarkdown: oc.input(z.object({ botId: Id.optional() })).output(z.string()),
     providerConfig: oc.output(SpaceMemoryConfigSchema.nullable()),
     connectProvider: oc
@@ -1425,6 +1434,7 @@ export const appContract = {
       .input(
         z.object({
           itemId: Id,
+          botId: Id.optional(),
           title: z.string().min(1).max(200).optional(),
           status: ScratchpadItemStatusSchema.optional(),
           notes: z.string().max(4_000).optional(),

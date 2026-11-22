@@ -18,6 +18,7 @@ vi.mock("../../lib/rpc", () => {
       credentials: vi.fn().mockResolvedValue([]),
       list: vi.fn().mockResolvedValue([]),
     },
+    scratchpad: { list: vi.fn().mockResolvedValue([]) },
     me: vi.fn().mockResolvedValue(null),
   };
   return {
@@ -265,7 +266,7 @@ it("shows the profile and the Advanced tab's controls", async () => {
     [...container.querySelectorAll('[role="tab"]')].map(
       (tab) => tab.textContent || tab.getAttribute("aria-label"),
     ),
-  ).toEqual(["Computer", "Routines", "Apps", "Artifacts", "Settings"]);
+  ).toEqual(["Computer", "Routines", "Memory", "Apps", "Artifacts", "Settings"]);
   expect(
     [...container.querySelectorAll("button")].some((button) => button.textContent === "Save"),
   ).toBe(false);

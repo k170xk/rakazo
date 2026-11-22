@@ -3020,6 +3020,7 @@ msgstr "Can't read images"
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-chats-accordion.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3497,6 +3498,7 @@ msgstr "Cleanup started {0}."
 #: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/SecretAskCard.tsx
+#: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Clear"
 msgstr "Clear"
@@ -4120,6 +4122,10 @@ msgstr "Configure a plugin catalog on the server to add connectors."
 msgid "Confirm"
 msgstr "Confirm"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Confirm clear"
+msgstr "Confirm clear"
+
 #: src/pages/AdminDefaultAgents.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -4499,6 +4505,10 @@ msgstr "Could not check stored credentials."
 msgid "Could not check teaching status. Refresh the view to continue."
 msgstr "Could not check teaching status. Refresh the view to continue."
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Could not clear"
+msgstr "Could not clear"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not clear conversation"
 msgstr "Could not clear conversation"
@@ -4858,6 +4868,11 @@ msgstr "Could not load your to do list."
 #: src/lib/sign-out.ts
 msgid "Could not log out. Try again."
 msgstr "Could not log out. Try again."
+
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/ScratchpadSection.tsx
+msgid "Could not move"
+msgstr "Could not move"
 
 #: src/components/todos/todo-board.tsx
 msgid "Could not move that item."
@@ -6641,6 +6656,7 @@ msgstr "Earned Value & Schedule Performance (EVM)"
 #: src/pages/AdminCompanySkills.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/McpServersOverlay.tsx
+#: src/pages/ScratchpadSection.tsx
 msgid "Edit"
 msgstr "Edit"
 
@@ -6691,6 +6707,14 @@ msgstr "Edit JSON"
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
 msgstr "Edit name"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Edit open-work notes"
+msgstr "Edit open-work notes"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Edit open-work title"
+msgstr "Edit open-work title"
 
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
@@ -9384,6 +9408,10 @@ msgstr "Logins"
 msgid "Logins, API keys and variables every member's assistants can use, for shared company accounts. Members see each item's name, never its value; one of their own with the same name is used instead. Anyone with a full computer can run commands with these variables, so add only what you would trust them with. Cards and contacts stay in each person's own vault."
 msgstr "Logins, API keys and variables every member's assistants can use, for shared company accounts. Members see each item's name, never its value; one of their own with the same name is used instead. Anyone with a full computer can run commands with these variables, so add only what you would trust them with. Cards and contacts stay in each person's own vault."
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Long-term facts and notes this agent remembers across chats."
+msgstr "Long-term facts and notes this agent remembers across chats."
+
 #: src/pages/shell/agent-import.tsx
 msgid "Looks like it contains a key"
 msgstr "Looks like it contains a key"
@@ -9486,6 +9514,10 @@ msgstr "Manage MCP servers"
 #: src/pages/shell/bot-panel.tsx
 msgid "Manage other agents"
 msgstr "Manage other agents"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Manage shared memory across all agents"
+msgstr "Manage shared memory across all agents"
 
 #: src/components/SidebarFooter.tsx
 #: src/components/StorageDialog.tsx
@@ -10047,6 +10079,8 @@ msgid "Motion & layout"
 msgstr "Motion & layout"
 
 #: src/components/apps/AppWorkspacesSection.tsx
+#: src/pages/KnowledgeSection.tsx
+#: src/pages/ScratchpadSection.tsx
 msgid "Move"
 msgstr "Move"
 
@@ -10060,6 +10094,10 @@ msgstr "Move {0} to status"
 msgid "Move down"
 msgstr "Move down"
 
+#: src/pages/KnowledgeSection.tsx
+msgid "Move memory to"
+msgstr "Move memory to"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Move them to your shared memory."
 msgstr "Move them to your shared memory."
@@ -10068,6 +10106,14 @@ msgstr "Move them to your shared memory."
 #: src/pages/BotContextMenu.tsx
 msgid "Move to"
 msgstr "Move to"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Move to agent"
+msgstr "Move to agent"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Move to another agent"
+msgstr "Move to another agent"
 
 #: src/components/office/slides/SlideRail.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -10078,6 +10124,18 @@ msgstr "Move up"
 #: src/components/AskCard.tsx
 msgid "Moved from <0>{0}</0>"
 msgstr "Moved from <0>{0}</0>"
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Moved to {destLabel}"
+msgstr "Moved to {destLabel}"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Moved to {targetName}"
+msgstr "Moved to {targetName}"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Moved, but list refresh failed"
+msgstr "Moved, but list refresh failed"
 
 #: src/components/AskCard.tsx
 msgid "Must start"
@@ -10380,6 +10438,10 @@ msgstr "New note"
 #: src/pages/ScratchpadSection.tsx
 msgid "New open-work item"
 msgstr "New open-work item"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "New open-work notes"
+msgstr "New open-work notes"
 
 #: src/components/pages/SharePopover.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -10803,6 +10865,10 @@ msgstr "No models listed."
 msgid "No monthly allowance is set, so chats and routines can keep spending."
 msgstr "No monthly allowance is set, so chats and routines can keep spending."
 
+#: src/pages/ScratchpadSection.tsx
+msgid "No open work right now"
+msgstr "No open work right now"
+
 #: src/pages/shell/agent-import.tsx
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "No OpenClaw, Hermes or agent document found."
@@ -11156,6 +11222,10 @@ msgstr "notes"
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
 msgstr "Notes"
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Notes (optional)"
+msgstr "Notes (optional)"
 
 #: src/components/LearningClinicCard.tsx
 msgid "Notes (PDF)"
@@ -11604,6 +11674,10 @@ msgstr "Open in the browser"
 #: src/components/InstallAppBanner.tsx
 msgid "Open it in its own window, then install it to get its own icon and window."
 msgstr "Open it in its own window, then install it to get its own icon and window."
+
+#: src/pages/ScratchpadSection.tsx
+msgid "Open items this agent tracks across chats. Edit, move, or remove anytime."
+msgstr "Open items this agent tracks across chats. Edit, move, or remove anytime."
 
 #: src/components/pages/SharePopover.tsx
 #: src/components/todos/todo-board.tsx
@@ -13678,6 +13752,7 @@ msgstr "Saturday"
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Save"
@@ -14454,6 +14529,10 @@ msgstr "Shared apps"
 #: src/pages/SharedPage.tsx
 msgid "Shared apps are only for people at your company."
 msgstr "Shared apps are only for people at your company."
+
+#: src/pages/KnowledgeSection.tsx
+msgid "Shared memory (all agents)"
+msgstr "Shared memory (all agents)"
 
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Shared with everyone in your organisation — they appear under Company in the switcher. Publish from Settings when an app should become a tenant tool, not just a personal experiment."
