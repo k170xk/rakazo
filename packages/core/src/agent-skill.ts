@@ -6,7 +6,7 @@
 
 const FRONTMATTER_FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 
-export type SkillSource = "user" | "builtin" | "plugin";
+export type SkillSource = "user" | "builtin" | "plugin" | "company";
 
 export type ParsedSkillMd = {
   name: string;
@@ -58,7 +58,7 @@ const ROUTINE_SKILL_MENTION = new RegExp(
 );
 
 export function isSkillReadOnly(source: SkillSource): boolean {
-  return source === "builtin" || source === "plugin";
+  return source === "builtin" || source === "plugin" || source === "company";
 }
 
 /** Requires YAML frontmatter with `name` and `description`; extra keys are kept in `frontmatter`. */

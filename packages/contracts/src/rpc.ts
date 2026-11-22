@@ -83,6 +83,13 @@ import {
   AccountItemSchema,
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
+  AdminDefaultAgentCreateInputSchema,
+  AdminDefaultAgentSchema,
+  AdminDefaultAgentsStateSchema,
+  AdminDefaultAgentUpdateInputSchema,
+  AdminVectorStoreFileSchema,
+  AdminVectorStoreSchema,
+  AdminVectorStoreUploadInputSchema,
   AgentSecretInputSchema,
   AgentSecretSchema,
   AgentSkillCatalogEntrySchema,
@@ -110,6 +117,9 @@ import {
   CompanyAppSchema,
   CompanyFeaturesSchema,
   CompanyModelInputSchema,
+  CompanySkillCreateInputSchema,
+  CompanySkillSchema,
+  CompanySkillUpdateInputSchema,
   CompanyToolsSchema,
   ComputerAccessSchema,
   ComputerModeSchema,
@@ -582,6 +592,43 @@ export const appContract = {
       setFrozen: oc
         .input(z.object({ pageId: z.string().min(1).max(64), frozen: z.boolean() }))
         .output(SharedAppAdminSchema),
+    },
+    /** Company-managed skills attachable to default agents (required or available) or all staff. */
+    skills: {
+      list: oc.output(z.array(CompanySkillSchema)),
+      create: oc.input(CompanySkillCreateInputSchema).output(CompanySkillSchema),
+      update: oc.input(CompanySkillUpdateInputSchema).output(CompanySkillSchema),
+      remove: oc
+        .input(z.object({ id: z.string().trim().min(1).max(80) }))
+        .output(z.object({ ok: z.literal(true) })),
+    },
+    /** Full management of default agents synced with Evolve assistants + Rakazo runtime settings. */
+    defaultAgents: {
+      list: oc.output(AdminDefaultAgentsStateSchema),
+      create: oc.input(AdminDefaultAgentCreateInputSchema).output(AdminDefaultAgentSchema),
+      update: oc.input(AdminDefaultAgentUpdateInputSchema).output(AdminDefaultAgentSchema),
+      remove: oc
+        .input(z.object({ id: z.string().uuid() }))
+        .output(z.object({ ok: z.literal(true) })),
+    },
+    /** OpenAI vector stores & files managed via Evolve for default agent knowledge bases. */
+    vectorStores: {
+      list: oc.output(z.array(AdminVectorStoreSchema)),
+      create: oc
+        .input(z.object({ name: z.string().trim().min(1).max(160) }))
+        .output(AdminVectorStoreSchema),
+      files: oc
+        .input(z.object({ vectorStoreId: z.string().regex(/^vs_[A-Za-z0-9_-]{4,120}$/) }))
+        .output(z.array(AdminVectorStoreFileSchema)),
+      uploadFile: oc.input(AdminVectorStoreUploadInputSchema).output(AdminVectorStoreFileSchema),
+      removeFile: oc
+        .input(
+          z.object({
+            vectorStoreId: z.string().regex(/^vs_[A-Za-z0-9_-]{4,120}$/),
+            fileId: z.string().regex(/^file-[A-Za-z0-9_-]{4,120}$/),
+          }),
+        )
+        .output(z.object({ ok: z.literal(true) })),
     },
   },
   /** Admins only, on deployments that sell model credits. */

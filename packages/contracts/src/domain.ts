@@ -496,6 +496,8 @@ export const EvolveAssistantSchema = z.object({
   /** The References dialog offers People / Responses for this assistant, as in Evolve. */
   enablePeople: z.boolean().optional(),
   enableResponses: z.boolean().optional(),
+  /** Number of required company/built-in skills attached to this default agent. */
+  requiredSkillCount: z.number().int().nonnegative().optional(),
 });
 export type EvolveAssistant = z.infer<typeof EvolveAssistantSchema>;
 
@@ -829,7 +831,7 @@ export const TaughtSkillSchema = z.object({
 });
 export type TaughtSkill = z.infer<typeof TaughtSkillSchema>;
 
-export const AgentSkillSourceSchema = z.enum(["user", "builtin", "plugin"]);
+export const AgentSkillSourceSchema = z.enum(["user", "builtin", "plugin", "company"]);
 export type AgentSkillSource = z.infer<typeof AgentSkillSourceSchema>;
 
 /** Where an account-owned item is available: every space, or these (starting with the one it was added in). */
@@ -2531,6 +2533,78 @@ export const CompanyAssistantModelSchema = z.object({
 });
 export type CompanyAssistantModel = z.infer<typeof CompanyAssistantModelSchema>;
 
+/** A reusable company-defined SKILL.md managed in Company Admin and attachable to default agents. */
+export const CompanySkillSchema = z.object({
+  id: z.string().trim().min(1).max(80),
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().min(1).max(2000),
+  content: z.string().min(1).max(100_000),
+  /** When true, every staff member's agents can also use this skill on demand. */
+  availableToAll: z.boolean().default(false),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type CompanySkill = z.infer<typeof CompanySkillSchema>;
+
+export const CompanySkillCreateInputSchema = z
+  .object({
+    content: z.string().min(1).max(100_000).optional(),
+    name: z.string().trim().min(1).max(80).optional(),
+    description: z.string().trim().min(1).max(2000).optional(),
+    body: z.string().max(100_000).optional(),
+    availableToAll: z.boolean().optional(),
+  })
+  .superRefine((input, ctx) => {
+    if (input.content?.trim()) return;
+    if (!input.name?.trim() || !input.description?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Provide content (SKILL.md) or name + description (+ optional body)",
+        path: ["content"],
+      });
+    }
+  });
+export type CompanySkillCreateInput = z.infer<typeof CompanySkillCreateInputSchema>;
+
+export const CompanySkillUpdateInputSchema = z.object({
+  id: z.string().trim().min(1).max(80),
+  content: z.string().min(1).max(100_000).optional(),
+  name: z.string().trim().min(1).max(80).optional(),
+  description: z.string().trim().min(1).max(2000).optional(),
+  body: z.string().max(100_000).optional(),
+  availableToAll: z.boolean().optional(),
+});
+export type CompanySkillUpdateInput = z.infer<typeof CompanySkillUpdateInputSchema>;
+
+/** Skill attached to a default agent: "company:<id>" or "builtin:<name>". */
+export const AssistantSkillAttachmentSchema = z.object({
+  skillKey: z.string().trim().min(1).max(120),
+  /** "required" is injected in full on every turn; "available" is listed for skill_read / /Name. */
+  mode: z.enum(["required", "available"]),
+});
+export type AssistantSkillAttachment = z.infer<typeof AssistantSkillAttachmentSchema>;
+
+/** Per-default-agent runtime settings stored in Rakazo, keyed by Evolve assistant UUID. */
+export const CompanyAssistantConfigSchema = z.object({
+  /** Live company rules always enforced on every reply (both existing and new agents). */
+  standingInstructions: z.string().max(40_000).optional(),
+  /** Company or built-in skills attached as required ("must use") or available. */
+  skills: z.array(AssistantSkillAttachmentSchema).max(50).optional(),
+  /** Sampling temperature (0–2); skipped on reasoning models. Null = model default. */
+  temperature: z.number().min(0).max(2).nullable().optional(),
+  /** Max output tokens cap; null = model default. */
+  maxTokens: z.number().int().min(256).max(200_000).nullable().optional(),
+  /** Built-in tool names disabled specifically for agents started from this default agent. */
+  disabledBuiltinTools: z.array(z.string().trim().min(1).max(80)).max(200).optional(),
+  /** Evolve MCP tool names disabled specifically for agents started from this default agent. */
+  disabledEvolveTools: z.array(z.string().trim().min(1).max(120)).max(500).optional(),
+  /** Built-in skill names disabled specifically for agents started from this default agent. */
+  disabledSkills: z.array(z.string().trim().min(1).max(80)).max(200).optional(),
+  /** Hidden from the New Agent "Start from" picker without deleting the Evolve assistant. */
+  hidden: z.boolean().optional(),
+});
+export type CompanyAssistantConfig = z.infer<typeof CompanyAssistantConfigSchema>;
+
 export const CompanyToolsSchema = z.object({
   disabledSkills: z.array(z.string().trim().min(1).max(80)).max(200),
   /** Evolve tool names as Evolve lists them, e.g. "generate_voiceover". */
@@ -2551,6 +2625,10 @@ export const CompanyToolsSchema = z.object({
   chatFileRetentionDays: z.number().int().min(1).max(3650).nullable(),
   /** Keyed by Evolve assistant id; assistants not listed run on the company model. */
   assistantModels: z.record(z.string().uuid(), CompanyAssistantModelSchema).optional(),
+  /** Company-managed SKILL.md definitions attachable to default agents or all staff. */
+  companySkills: z.array(CompanySkillSchema).max(100).optional(),
+  /** Per-default-agent runtime settings (standing rules, skills, tuning, tool overrides). */
+  assistantConfigs: z.record(z.string().uuid(), CompanyAssistantConfigSchema).optional(),
   /** Keyed by app slug or pluginStaffKey; once saved, apps not listed are hidden from staff. */
   staffApps: z.record(z.string().trim().min(1).max(2100), StaffAppStateSchema).optional(),
   /** Groups of staff that feature and app audiences name. */
@@ -2847,6 +2925,10 @@ export const CompanyAdminStateSchema = z.object({
   thinkingLevel: ThinkingLevelSchema.nullable(),
   /** Models for bots started from an Evolve assistant, keyed by assistant id. */
   assistantModels: z.record(z.string(), CompanyAssistantModelSchema),
+  /** Company-defined skills managed in Company Admin. */
+  companySkills: z.array(CompanySkillSchema),
+  /** Per-default-agent runtime settings, keyed by Evolve assistant id. */
+  assistantConfigs: z.record(z.string(), CompanyAssistantConfigSchema),
   /** Null until an admin first saves which apps and plugins staff see. */
   staffApps: z.record(z.string(), StaffAppStateSchema).nullable(),
   /** integrations.sh domains turned on for the company. Missing domains are hidden. */
@@ -2897,6 +2979,164 @@ export const LibraryDocumentSchema = z.object({
   canBeTemplate: z.boolean(),
 });
 export type LibraryDocument = z.infer<typeof LibraryDocumentSchema>;
+
+export const AdminEvolveGroupSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+});
+export type AdminEvolveGroup = z.infer<typeof AdminEvolveGroupSchema>;
+
+export const AdminEvolvePersonSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+  email: z.string(),
+  isAdmin: z.boolean(),
+  isLineManager: z.boolean(),
+});
+export type AdminEvolvePerson = z.infer<typeof AdminEvolvePersonSchema>;
+
+export const AdminVectorStoreSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  fileCount: z.number().int().nonnegative(),
+  inProgressCount: z.number().int().nonnegative().default(0),
+  failedCount: z.number().int().nonnegative().default(0),
+  status: z.string(),
+  usageBytes: z.number().nonnegative().default(0),
+  createdAt: z.string().nullable(),
+});
+export type AdminVectorStore = z.infer<typeof AdminVectorStoreSchema>;
+
+export const AdminVectorStoreFileSchema = z.object({
+  id: z.string().min(1),
+  filename: z.string(),
+  bytes: z.number().nonnegative(),
+  status: z.string(),
+  createdAt: z.string().nullable(),
+});
+export type AdminVectorStoreFile = z.infer<typeof AdminVectorStoreFileSchema>;
+
+export const AdminVectorStoreUploadInputSchema = z.object({
+  vectorStoreId: z.string().regex(/^vs_[A-Za-z0-9_-]{4,120}$/),
+  filename: z.string().trim().min(1).max(255),
+  /** Base64 file bytes, max 20 MB decoded (~27 MB base64). */
+  contentBase64: z.string().min(1).max(28_000_000),
+  mimeType: z.string().trim().max(200).optional(),
+});
+export type AdminVectorStoreUploadInput = z.infer<typeof AdminVectorStoreUploadInputSchema>;
+
+/** Full default agent view combining Evolve assistant row + Rakazo model/config settings. */
+export const AdminDefaultAgentSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string(),
+  /** Evolve-side model name (used in Evolve chat). */
+  evolveModel: z.string(),
+  /** Starter prompt copied into new bots when staff start from this default agent. */
+  instructions: z.string(),
+  /** Evolve system_instructions column (also included in Evolve chat). */
+  systemInstructions: z.string(),
+  fileSearchEnabled: z.boolean(),
+  vectorStoreIds: z.array(z.string()),
+  enablePeople: z.boolean(),
+  enableResponses: z.boolean(),
+  allowedGroupIds: z.array(z.string().uuid()),
+  allowedUsers: z.array(z.number().int().positive()),
+  isLineManagerOnly: z.boolean(),
+  createdAt: z.string().nullable(),
+  updatedAt: z.string().nullable(),
+  /** Rakazo model override on the company key, or null to follow the company model. */
+  rakazoModel: CompanyAssistantModelSchema.nullable(),
+  /** Rakazo runtime configuration (live standing rules, skills, tuning, tool overrides). */
+  config: CompanyAssistantConfigSchema,
+});
+export type AdminDefaultAgent = z.infer<typeof AdminDefaultAgentSchema>;
+
+const AdminDefaultAgentFieldsSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(2000).default(""),
+  evolveModel: z.string().trim().min(1).max(120).optional(),
+  instructions: z.string().max(60_000).default(""),
+  systemInstructions: z.string().max(60_000).optional(),
+  fileSearchEnabled: z.boolean().default(true),
+  vectorStoreIds: z
+    .array(z.string().regex(/^vs_[A-Za-z0-9_-]{4,120}$/))
+    .max(20)
+    .default([]),
+  enablePeople: z.boolean().default(false),
+  enableResponses: z.boolean().default(false),
+  allowedGroupIds: z.array(z.string().uuid()).max(200).default([]),
+  allowedUsers: z.array(z.number().int().positive()).max(500).default([]),
+  isLineManagerOnly: z.boolean().default(false),
+  rakazoModel: CompanyAssistantModelSchema.nullable().optional(),
+  config: CompanyAssistantConfigSchema.optional(),
+});
+
+export const AdminDefaultAgentCreateInputSchema = AdminDefaultAgentFieldsSchema;
+export type AdminDefaultAgentCreateInput = z.infer<typeof AdminDefaultAgentCreateInputSchema>;
+
+export const AdminDefaultAgentUpdateInputSchema = AdminDefaultAgentFieldsSchema.partial().extend({
+  id: z.string().uuid(),
+});
+export type AdminDefaultAgentUpdateInput = z.infer<typeof AdminDefaultAgentUpdateInputSchema>;
+
+export const AdminDefaultAgentsStateSchema = z.object({
+  agents: z.array(AdminDefaultAgentSchema),
+  groups: z.array(AdminEvolveGroupSchema),
+  people: z.array(AdminEvolvePersonSchema),
+  companySkills: z.array(CompanySkillSchema),
+  /** Built-in / OCSC skills available to attach as required or available. */
+  builtinSkills: z.array(z.object({ name: z.string(), description: z.string() })),
+  /** Built-in tool names that can be turned off per default agent. */
+  builtinTools: z.array(z.object({ name: z.string(), description: z.string() })),
+});
+export type AdminDefaultAgentsState = z.infer<typeof AdminDefaultAgentsStateSchema>;
+
+/** Wire payloads returned by Evolve's evolve-assistants admin.* actions. */
+export const EvolveAdminAssistantSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().default(""),
+  model: z.string().default("gpt-5"),
+  instructions: z.string().default(""),
+  systemInstructions: z.string().default(""),
+  fileSearchEnabled: z.boolean().default(true),
+  vectorStoreIds: z.array(z.string()).default([]),
+  enablePeople: z.boolean().default(false),
+  enableResponses: z.boolean().default(false),
+  allowedGroupIds: z.array(z.string().uuid()).default([]),
+  allowedUsers: z.array(z.number().int().positive()).default([]),
+  isLineManagerOnly: z.boolean().default(false),
+  createdAt: z.string().nullable().default(null),
+  updatedAt: z.string().nullable().default(null),
+});
+export type EvolveAdminAssistant = z.infer<typeof EvolveAdminAssistantSchema>;
+
+export const EvolveAdminListReplySchema = z.object({
+  assistants: z.array(EvolveAdminAssistantSchema),
+  groups: z.array(AdminEvolveGroupSchema).default([]),
+  people: z.array(AdminEvolvePersonSchema).default([]),
+});
+
+export const EvolveAdminAssistantReplySchema = z.object({
+  assistant: EvolveAdminAssistantSchema,
+});
+
+export const EvolveVectorStoresListReplySchema = z.object({
+  vectorStores: z.array(AdminVectorStoreSchema),
+});
+
+export const EvolveVectorStoreReplySchema = z.object({
+  vectorStore: AdminVectorStoreSchema,
+});
+
+export const EvolveVectorStoreFilesReplySchema = z.object({
+  files: z.array(AdminVectorStoreFileSchema),
+});
+
+export const EvolveVectorStoreFileReplySchema = z.object({
+  file: AdminVectorStoreFileSchema,
+});
 
 /** A page or app anyone besides its owner can open: shared by link, published to Evolve, or frozen. */
 export const SharedAppAdminSchema = z.object({

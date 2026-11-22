@@ -177,6 +177,7 @@ export async function companyAdminState(
   const providerName =
     saved && listPiCatalog().find((entry) => entry.provider === saved.provider)?.providerName;
   const environment = resolveEnvironmentDeploymentModel();
+  const resolvedTools = companyToolsWithDefaults(row?.companyTools);
   return {
     model: saved
       ? {
@@ -187,21 +188,23 @@ export async function companyAdminState(
         }
       : null,
     thinkingLevel: ThinkingLevelSchema.safeParse(row?.companyThinkingLevel).data ?? null,
-    assistantModels: companyToolsWithDefaults(row?.companyTools).assistantModels ?? {},
-    staffApps: companyToolsWithDefaults(row?.companyTools).staffApps ?? null,
-    catalogItems: companyToolsWithDefaults(row?.companyTools).catalogItems ?? {},
+    assistantModels: resolvedTools.assistantModels ?? {},
+    companySkills: resolvedTools.companySkills ?? [],
+    assistantConfigs: resolvedTools.assistantConfigs ?? {},
+    staffApps: resolvedTools.staffApps ?? null,
+    catalogItems: resolvedTools.catalogItems ?? {},
     access: {
-      groups: companyToolsWithDefaults(row?.companyTools).accessGroups ?? [],
-      featureAudiences: companyToolsWithDefaults(row?.companyTools).featureAudiences ?? {},
-      appAudiences: companyToolsWithDefaults(row?.companyTools).appAudiences ?? {},
+      groups: resolvedTools.accessGroups ?? [],
+      featureAudiences: resolvedTools.featureAudiences ?? {},
+      appAudiences: resolvedTools.appAudiences ?? {},
     },
     environmentModel: environment.configured
       ? { provider: environment.provider, modelId: environment.model }
       : null,
     features: companyFeaturesFrom(row?.companyFeatures),
-    emailFiling: emailFilingPolicyFrom(companyToolsWithDefaults(row?.companyTools).emailFiling),
-    tools: toolsState(deps, companyToolsWithDefaults(row?.companyTools)),
-    computers: await computersState(deps, companyToolsWithDefaults(row?.companyTools), row),
+    emailFiling: emailFilingPolicyFrom(resolvedTools.emailFiling),
+    tools: toolsState(deps, resolvedTools),
+    computers: await computersState(deps, resolvedTools, row),
     admins: deps.env.adminEmails ?? [],
     voice: await voiceState(deps, actor),
     staff: { accounts, withOwnModels: owners.length },

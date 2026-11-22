@@ -5,6 +5,7 @@ import {
   applyPersonLimits,
   archiveBot,
   checkpointAndStopComputer,
+  companyAssistantConfig,
   companyVaultRows,
   defaultVaultItemTitle,
   forgetBotSecret,
@@ -352,7 +353,15 @@ export function botsRoutes(ctx: RouterContext) {
           const assistants = await listEvolveAssistants(deps.evolvePlugins, email, {
             signal: context.signal,
           });
-          return assistants.map(({ instructions: _prompt, ...assistant }) => assistant);
+          return assistants
+            .filter((assistant) => !companyAssistantConfig(assistant.id)?.hidden)
+            .map(({ instructions: _prompt, ...assistant }) => {
+              const cfg = companyAssistantConfig(assistant.id);
+              const requiredSkillCount = (cfg?.skills ?? []).filter(
+                (entry) => entry.mode === "required",
+              ).length;
+              return requiredSkillCount > 0 ? { ...assistant, requiredSkillCount } : assistant;
+            });
         } catch (error) {
           // No Evolve profile, or Evolve unreachable: the dialog simply offers none.
           getLogger().warn("evolve assistants list", { error: String(error) });

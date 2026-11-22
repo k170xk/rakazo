@@ -268,6 +268,10 @@ export const taskTools: ToolHandlers = {
         skillId: args.skillId ? String(args.skillId) : undefined,
         file: args.file ? String(args.file) : undefined,
       },
+      {
+        assistantId: ctx.bot.evolveAssistantId,
+        nonOwnerChatRun: ctx.source.messagingChannelRun,
+      },
     );
   },
   async skill_create(ctx, call) {

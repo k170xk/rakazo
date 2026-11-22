@@ -597,13 +597,19 @@ function MemoryDocumentList({
 }
 
 function SkillSourceBadge({ source }: { source: AgentSkillCatalogEntry["source"] }) {
-  if (source !== "builtin" && source !== "plugin") return null;
+  if (source !== "builtin" && source !== "plugin" && source !== "company") return null;
   return (
     <Badge
       variant="secondary"
       className="rounded-full px-1.5 py-0 text-[11px] font-normal text-muted-foreground"
     >
-      {source === "builtin" ? <Trans>Built-in</Trans> : <Trans>Plugin</Trans>}
+      {source === "builtin" ? (
+        <Trans>Built-in</Trans>
+      ) : source === "company" ? (
+        <Trans>Company</Trans>
+      ) : (
+        <Trans>Plugin</Trans>
+      )}
     </Badge>
   );
 }

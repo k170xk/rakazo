@@ -505,6 +505,8 @@ export interface AgentRunModel {
   maxImagesPerPrompt?: number;
   /** Maximum completion tokens sent to the model endpoint. */
   maxTokens?: number;
+  /** Sampling temperature (0–2); skipped automatically on reasoning models that reject it. */
+  temperature?: number;
   /** Generic connection context window, overriding catalog limits when configured. */
   contextWindow?: number;
   /** Preferred thinking effort for reasoning models; clamped to the model’s supported set. */

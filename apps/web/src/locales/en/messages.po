@@ -262,6 +262,25 @@ msgstr "{0} (over {1})"
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
 
+#. placeholder {0}: appLanes.tools.running
+#. placeholder {1}: appLanes.tools.slots
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} active"
+msgstr "{0} / {1} active"
+
+#. placeholder {0}: fleetStats.online
+#. placeholder {1}: fleetStats.total
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} online"
+msgstr "{0} / {1} online"
+
+#. placeholder {0}: size(fleetStats.memUsed)
+#. placeholder {1}: size(fleetStats.memTotal)
+#. placeholder {2}: sample?.fleet.chatRuns ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} RAM · {2} replies"
+msgstr "{0} / {1} RAM · {2} replies"
+
 #. placeholder {0}: category.from
 #. placeholder {1}: category.label
 #: src/components/office/planner/history.tsx
@@ -284,6 +303,11 @@ msgstr "{0} assigned to {1} overlapping tasks"
 msgid "{0} audit findings to review"
 msgstr "{0} audit findings to review"
 
+#. placeholder {0}: totalAgents - (usage?.required ?? 0)
+#: src/pages/AdminCompanySkills.tsx
+msgid "{0} available"
+msgstr "{0} available"
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -305,6 +329,11 @@ msgstr "{0} days"
 msgid "{0} days remaining"
 msgstr "{0} days remaining"
 
+#. placeholder {0}: assistant.requiredSkillCount
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "{0} default skill(s)"
+msgstr "{0} default skill(s)"
+
 #. placeholder {0}: app.name
 #: src/components/integrations/CompanyMcpApp.tsx
 msgid "{0} did not accept this token. Check it and try again."
@@ -319,6 +348,11 @@ msgstr "{0} downloaded"
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "{0} earlier entries are only visible to you. Move them to:"
 msgstr "{0} earlier entries are only visible to you. Move them to:"
+
+#. placeholder {0}: file.name
+#: src/pages/AdminDefaultAgents.tsx
+msgid "{0} exceeds the 20 MB limit."
+msgstr "{0} exceeds the 20 MB limit."
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
@@ -367,6 +401,18 @@ msgstr "{0} KB"
 msgid "{0} KB of {1} KB. Short, specific notes work best."
 msgstr "{0} KB of {1} KB. Short, specific notes work best."
 
+#. placeholder {0}: agent.vectorStoreIds.length
+#: src/pages/AdminDefaultAgents.tsx
+msgid "{0} knowledge store(s)"
+msgstr "{0} knowledge store(s)"
+
+#. placeholder {0}: appLanes.large.slots
+#. placeholder {1}: appLanes.video.slots
+#. placeholder {2}: appLanes.tools.queued
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} large · {1} video · {2} waiting"
+msgstr "{0} large · {1} video · {2} waiting"
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} MB"
@@ -407,6 +453,22 @@ msgstr "{0} of {1} modules passed"
 msgid "{0} of {1} used"
 msgstr "{0} of {1} used"
 
+#. placeholder {0}: sample?.incus.stopped ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} off · {incusOnlineCount} Incus host(s)"
+msgstr "{0} off · {incusOnlineCount} Incus host(s)"
+
+#. placeholder {0}: sample?.incus.running ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} on"
+msgstr "{0} on"
+
+#. placeholder {0}: node.running
+#. placeholder {1}: node.stopped ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} on · {1} off"
+msgstr "{0} on · {1} off"
+
 #. placeholder {0}: formatSize(data.computerBytes)
 #. placeholder {1}: formatSize(data.chatBytes)
 #: src/components/StorageDialog.tsx
@@ -434,6 +496,11 @@ msgstr "{0} recoloured"
 msgid "{0} removed"
 msgstr "{0} removed"
 
+#. placeholder {0}: usage.required
+#: src/pages/AdminCompanySkills.tsx
+msgid "{0} required"
+msgstr "{0} required"
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
@@ -443,6 +510,12 @@ msgstr "{0} rollup hours"
 #: src/components/StorageDialog.tsx
 msgid "{0} selected · {chosenSize}"
 msgstr "{0} selected · {chosenSize}"
+
+#. placeholder {0}: sample.incus.nodes.length
+#. placeholder {0}: sample.toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} servers"
+msgstr "{0} servers"
 
 #. placeholder {0}: sharedBy.name
 #: src/pages/AdminCompanyVoice.tsx
@@ -460,6 +533,16 @@ msgstr "{0} TB"
 #: src/components/office/ribbon/CompactRibbon.tsx
 msgid "{0} tools"
 msgstr "{0} tools"
+
+#. placeholder {0}: fleetStats.cpus
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} vCPUs"
+msgstr "{0} vCPUs"
+
+#. placeholder {0}: fleetStats.cpus
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} vCPUs total"
+msgstr "{0} vCPUs total"
 
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
@@ -486,6 +569,10 @@ msgstr "{amount} / {period}"
 #: src/components/LearningClinicCard.tsx
 msgid "{answered} of {0} answered"
 msgstr "{answered} of {0} answered"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "{availableSkills} available skill(s)"
+msgstr "{availableSkills} available skill(s)"
 
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "{blocked} need access"
@@ -600,6 +687,11 @@ msgstr "{hiddenSelectedCount, plural, one {# selected model is hidden by your se
 #: src/lib/relative-time.ts
 msgid "{hours}h ago"
 msgstr "{hours}h ago"
+
+#. placeholder {0}: incusNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{incusOnlineCount} / {0} online"
+msgstr "{incusOnlineCount} / {0} online"
 
 #: src/components/markdown-copy.tsx
 msgid "{label}, empty"
@@ -777,6 +869,10 @@ msgstr "{remaining} of {max} remaining."
 msgid "{removed, plural, one {# markup removed} other {# markups removed}}"
 msgstr "{removed, plural, one {# markup removed} other {# markups removed}}"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "{requiredSkills} required skill(s)"
+msgstr "{requiredSkills} required skill(s)"
+
 #: src/pages/AdminInfrastructure.tsx
 msgid "{running} running"
 msgstr "{running} running"
@@ -845,6 +941,16 @@ msgstr "{title}, saved as {savedAs}"
 #: src/pages/PluginsOverlay.tsx
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# tool} other {# tools}}"
+
+#. placeholder {0}: toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{toolOnlineCount} / {0} active"
+msgstr "{toolOnlineCount} / {0} active"
+
+#. placeholder {0}: toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{toolOnlineCount} of {0} servers · Docs, PDFs & video"
+msgstr "{toolOnlineCount} of {0} servers · Docs, PDFs & video"
 
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "{total} tools for company data in Evolve — projects, people, Learning Centre clinics, site visits and more. Agents only see and change what your Evolve access allows. The {changing} that change Evolve show you a card to check, edit and approve first, every time; nothing is saved until you click."
@@ -1110,6 +1216,10 @@ msgstr "Accept this change"
 msgid "Accepted: PDF. Select a file to preview and choose pages."
 msgstr "Accepted: PDF. Select a file to preview and choose pages."
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Access"
+msgstr "Access"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Access key ID"
 msgstr "Access key ID"
@@ -1173,6 +1283,10 @@ msgstr "Actions for space"
 msgid "Active"
 msgstr "Active"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Active Incus containers, chat replies, routines, and queued runs"
+msgstr "Active Incus containers, chat replies, routines, and queued runs"
+
 #: src/components/office/planner/PlannerHealthView.tsx
 msgid "Active items"
 msgstr "Active items"
@@ -1195,6 +1309,7 @@ msgstr "Actual size"
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/todos/todo-board.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -1304,6 +1419,10 @@ msgstr "Add and update a project's deadlines, as on Project Tracker."
 msgid "Add another"
 msgstr "Add another"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Add built-in skill"
+msgstr "Add built-in skill"
+
 #: src/components/office/planner/NewCategoryControl.tsx
 msgid "Add category"
 msgstr "Add category"
@@ -1319,6 +1438,10 @@ msgstr "Add comment"
 #: src/components/office/StudioWelcome.tsx
 msgid "Add comments, callouts or an approval stamp"
 msgstr "Add comments, callouts or an approval stamp"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Add company skill"
+msgstr "Add company skill"
 
 #: src/components/ModelCredits.tsx
 msgid "Add credits"
@@ -1494,6 +1617,7 @@ msgstr "Add, reword and delete your own project comments, with their category."
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/office/planner/history.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Added"
 msgstr "Added"
@@ -1666,6 +1790,10 @@ msgstr "Agents people start from one of these assistants run on the model chosen
 msgid "Agents remember what matters across chats: your preferences, your projects and the decisions you've made. They also know who you are from your Evolve CV, so their work fits your role from the very first message."
 msgstr "Agents remember what matters across chats: your preferences, your projects and the decisions you've made. They also know who you are from your Evolve CV, so their work fits your role from the very first message."
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Agents started from this default agent run on the chosen model using the company API key. Leave blank to inherit the company default."
+msgstr "Agents started from this default agent run on the chosen model using the company API key. Leave blank to inherit the company default."
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Agents that work like teammates"
 msgstr "Agents that work like teammates"
@@ -1768,6 +1896,10 @@ msgstr "All markup"
 msgid "All spaces"
 msgstr "All spaces"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "All staff"
+msgstr "All staff"
+
 #: src/pages/ActivityList.tsx
 msgid "All statuses"
 msgstr "All statuses"
@@ -1788,6 +1920,10 @@ msgstr "All your agents work on one computer. Each has its own folder there, the
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "Allow"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Allow all active line managers in Evolve."
+msgstr "Allow all active line managers in Evolve."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Allow cross-space agent communication"
@@ -1848,6 +1984,10 @@ msgstr "Always allow this tool"
 #: src/components/AskCard.tsx
 msgid "Always allowed"
 msgstr "Always allowed"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Always enforced on every reply for both existing and new agents started from this default agent. Changes take effect immediately; staff cannot overwrite these."
+msgstr "Always enforced on every reply for both existing and new agents started from this default agent. Changes take effect immediately; staff cannot overwrite these."
 
 #: src/components/markdown-link-prompt.tsx
 msgid "Always open {site}"
@@ -2036,6 +2176,11 @@ msgstr "App · Shared · {when}"
 #: src/components/pages/PageCard.tsx
 msgid "App · Updated below"
 msgstr "App · Updated below"
+
+#. placeholder {0}: sample.app.name
+#: src/pages/AdminInfrastructure.tsx
+msgid "App ({0})"
+msgstr "App ({0})"
 
 #: src/components/pages/PublicPageShell.tsx
 msgid "App actions"
@@ -2345,6 +2490,14 @@ msgstr "at {0}"
 msgid "at {timeSelect}"
 msgstr "at {timeSelect}"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Attach"
+msgstr "Attach"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Attach existing vector store"
+msgstr "Attach existing vector store"
+
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
 msgstr "Attach file"
@@ -2352,6 +2505,10 @@ msgstr "Attach file"
 #: src/components/EmailDraftCard.tsx
 msgid "Attach from chat"
 msgstr "Attach from chat"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Attached default skills"
+msgstr "Attached default skills"
 
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/chat-shared.ts
@@ -2430,6 +2587,10 @@ msgstr "Automatic fixes are paused after two tries. Ask the agent when you're re
 msgid "AutoSum"
 msgstr "AutoSum"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Available (on demand)"
+msgstr "Available (on demand)"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
 msgstr "Available after the routine is saved"
@@ -2441,6 +2602,10 @@ msgstr "Available credits"
 #: src/components/integrations/space-availability.tsx
 msgid "Available in"
 msgstr "Available in"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Available to all staff agents"
+msgstr "Available to all staff agents"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Available to shell commands as {commandVariable}"
@@ -2531,6 +2696,10 @@ msgstr "Basic auth"
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Basic auth ({username})"
 msgstr "Basic auth ({username})"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Basics & prompts"
+msgstr "Basics & prompts"
 
 #: src/components/EmailDraftCard.tsx
 msgid "Bcc"
@@ -2724,6 +2893,7 @@ msgstr "Builds a deck from a brief, with the company fonts, colours, logo and fo
 msgid "Builds OCSC-styled workbooks with real formulas, totals and number formats"
 msgstr "Builds OCSC-styled workbooks with real formulas, totals and number formats"
 
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
@@ -2736,6 +2906,10 @@ msgstr "Built-in OCSC report"
 #: src/pages/AdminCompanyTools.tsx
 msgid "Built-in skills"
 msgstr "Built-in skills"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Built-in tools"
+msgstr "Built-in tools"
 
 #: src/components/EmailDraftCard.tsx
 msgid "Bulleted list"
@@ -2834,6 +3008,8 @@ msgstr "Can't read images"
 #: src/components/todos/todo-board.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -3222,6 +3398,10 @@ msgstr "Choose a project"
 msgid "Choose a provider"
 msgstr "Choose a provider"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Choose a vector store…"
+msgstr "Choose a vector store…"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Choose an agent shape, color, or upload an image"
 msgstr "Choose an agent shape, color, or upload an image"
@@ -3378,6 +3558,10 @@ msgstr "Click something in the app to change it"
 msgid "Client"
 msgstr "Client"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Client report structure"
+msgstr "Client report structure"
+
 #: src/pages/shell/evolve-references.tsx
 msgid "Client:"
 msgstr "Client:"
@@ -3528,6 +3712,10 @@ msgstr "Closes your visit to {0} (since {1}) first, as Evolve does"
 msgid "Cloud"
 msgstr "Cloud"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Cloud computers"
+msgstr "Cloud computers"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Clouds, callouts, arrows and notes placed exactly where the issue is"
 msgstr "Clouds, callouts, arrows and notes placed exactly where the issue is"
@@ -3666,6 +3854,8 @@ msgid "Compact"
 msgstr "Compact"
 
 #: src/components/apps/AppStudio.tsx
+#: src/pages/AdminDefaultAgents.tsx
+#: src/pages/KnowledgeSection.tsx
 msgid "Company"
 msgstr "Company"
 
@@ -3696,6 +3886,10 @@ msgstr "Company admin sections"
 msgid "Company apps"
 msgstr "Company apps"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Company default"
+msgstr "Company default"
+
 #. placeholder {0}: levels[defaultAccess]
 #: src/pages/AdminComputerAccess.tsx
 msgid "Company default ({0})"
@@ -3714,6 +3908,11 @@ msgstr "Company limits saved"
 msgid "Company model"
 msgstr "Company model"
 
+#. placeholder {0}: company.modelId
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Company model ({0})"
+msgstr "Company model ({0})"
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "Company model ({companyLabel})"
 msgstr "Company model ({companyLabel})"
@@ -3729,6 +3928,26 @@ msgstr "Company setting (company model)"
 #: src/pages/AdminStaffLimits.tsx
 msgid "Company setting (may choose)"
 msgstr "Company setting (may choose)"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Company skill created"
+msgstr "Company skill created"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Company skill removed"
+msgstr "Company skill removed"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Company skill updated"
+msgstr "Company skill updated"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Company skills"
+msgstr "Company skills"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Company standing instructions (live)"
+msgstr "Company standing instructions (live)"
 
 #: src/pages/AdminAssistantModels.tsx
 msgid "Company thinking"
@@ -3788,6 +4007,10 @@ msgstr "Computer"
 #: src/pages/shell/use-computer.tsx
 msgid "Computer failed to boot"
 msgstr "Computer failed to boot"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computer hosts (Incus)"
+msgstr "Computer hosts (Incus)"
 
 #: src/components/ModelCredits.tsx
 msgid "Computer hours left"
@@ -3862,6 +4085,10 @@ msgstr "Computers on and replies in progress"
 msgid "Computers running"
 msgstr "Computers running"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Concurrent documents, large files, video renders, and queue depth"
+msgstr "Concurrent documents, large files, video renders, and queue depth"
+
 #: src/components/EmailFilingCard.tsx
 msgid "Confidence"
 msgstr "Confidence"
@@ -3874,10 +4101,12 @@ msgstr "Confidence for Ready"
 msgid "Configure a plugin catalog on the server to add connectors."
 msgstr "Configure a plugin catalog on the server to add connectors."
 
+#: src/pages/AdminCompanySkills.tsx
 #: src/pages/shell/evolve-history.tsx
 msgid "Confirm"
 msgstr "Confirm"
 
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
 msgstr "Confirm delete"
@@ -4334,6 +4563,10 @@ msgstr "Could not create that list."
 msgid "Could not create this draft in Outlook"
 msgstr "Could not create this draft in Outlook"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not create vector store"
+msgstr "Could not create vector store"
+
 #: src/pages/Onboarding.tsx
 msgid "Could not create your agent"
 msgstr "Could not create your agent"
@@ -4346,6 +4579,10 @@ msgstr "Could not delete agent"
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete app"
 msgstr "Could not delete app"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not delete default agent"
+msgstr "Could not delete default agent"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete file"
@@ -4495,6 +4732,14 @@ msgstr "Could not load connectors"
 #: src/components/VaultSettings.tsx
 msgid "Could not load credentials."
 msgstr "Could not load credentials."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not load default agents. Check that Evolve is linked and you are an Evolve admin."
+msgstr "Could not load default agents. Check that Evolve is linked and you are an Evolve admin."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not load files in this store"
+msgstr "Could not load files in this store"
 
 #: src/pages/Artifacts.tsx
 msgid "Could not load files."
@@ -4656,9 +4901,17 @@ msgstr "Could not reject plugin"
 msgid "Could not remove"
 msgstr "Could not remove"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Could not remove company skill"
+msgstr "Could not remove company skill"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not remove connector"
 msgstr "Could not remove connector"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not remove file"
+msgstr "Could not remove file"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not remove plugin"
@@ -4751,9 +5004,17 @@ msgstr "Could not save"
 msgid "Could not save Auto Review"
 msgstr "Could not save Auto Review"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Could not save company skill"
+msgstr "Could not save company skill"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Could not save computer settings"
 msgstr "Could not save computer settings"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not save default agent"
+msgstr "Could not save default agent"
 
 #: src/pages/GroupPanel.tsx
 msgid "Could not save group"
@@ -4995,6 +5256,10 @@ msgstr "Could not update who can use this"
 msgid "Could not update who can use this app"
 msgstr "Could not update who can use this app"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not upload file"
+msgstr "Could not upload file"
+
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
@@ -5142,14 +5407,6 @@ msgstr "Couldn't read that CSV file."
 msgid "Couldn't read that Microsoft Project file. Upload .mpp or Project XML (.xml)."
 msgstr "Couldn't read that Microsoft Project file. Upload .mpp or Project XML (.xml)."
 
-#: src/components/office/PlannerStudio.tsx
-#~ msgid "Couldn't read that Microsoft Project XML file."
-#~ msgstr "Couldn't read that Microsoft Project XML file."
-
-#: src/components/office/PlannerStudio.tsx
-#~ msgid "Couldn't read that Microsoft Project XML file. Export from Project as XML Format (.xml)."
-#~ msgstr "Couldn't read that Microsoft Project XML file. Export from Project as XML Format (.xml)."
-
 #: src/components/office/PdfStudio.tsx
 #: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
@@ -5236,6 +5493,7 @@ msgid "CPU busy"
 msgstr "CPU busy"
 
 #: src/components/CreateOrganizationDialog.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-dialog.tsx
@@ -5261,6 +5519,10 @@ msgstr "Create an agent to open this app."
 msgid "Create as many as you need: a bid writer, a drainage checker, a reviewer"
 msgstr "Create as many as you need: a bid writer, a drainage checker, a reviewer"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Create default agent"
+msgstr "Create default agent"
+
 #: src/components/EmailDraftCard.tsx
 msgid "Create draft"
 msgstr "Create draft"
@@ -5281,9 +5543,17 @@ msgstr "Create missing project folders"
 msgid "Create my first chat"
 msgstr "Create my first chat"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Create new vector store"
+msgstr "Create new vector store"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Create Routine"
 msgstr "Create Routine"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Create skill"
+msgstr "Create skill"
 
 #: src/components/AskCard.tsx
 msgid "Create space"
@@ -5584,6 +5854,23 @@ msgstr "Default"
 msgid "Default ({0})"
 msgstr "Default ({0})"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Default agent created"
+msgstr "Default agent created"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Default agent deleted"
+msgstr "Default agent deleted"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Default agent saved"
+msgstr "Default agent saved"
+
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Default agents"
+msgstr "Default agents"
+
 #: src/pages/shell/agent-import.tsx
 msgid "Default from Hermes"
 msgstr "Default from Hermes"
@@ -5605,6 +5892,10 @@ msgstr "Default Word template"
 msgid "Default Word template saved"
 msgstr "Default Word template saved"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Define company-wide writing styles, checklists, and workflows here, then attach them to default agents as required (\"must use\") or available skills."
+msgstr "Define company-wide writing styles, checklists, and workflows here, then attach them to default agents as required (\"must use\") or available skills."
+
 #: src/components/office/planner/PlannerHealthView.tsx
 msgid "delayed"
 msgstr "delayed"
@@ -5615,6 +5906,8 @@ msgstr "delayed"
 #: src/components/StorageDialog.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/AdminAccess.tsx
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -5830,6 +6123,10 @@ msgstr "Describe the change"
 msgid "Describe the change — e.g. remove the car in the foreground, change the wall colour to sage green, add soft afternoon light"
 msgstr "Describe the change — e.g. remove the car in the foreground, change the wall colour to sage green, add soft afternoon light"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Describe the default role, goals, and helpful starting guidance..."
+msgstr "Describe the default role, goals, and helpful starting guidance..."
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Describe the edit you want"
 msgstr "Describe the edit you want"
@@ -5858,6 +6155,10 @@ msgstr "Desktop ID"
 #: src/components/DesktopUpdates.tsx
 msgid "Desktop update"
 msgstr "Desktop update"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Detach vector store"
+msgstr "Detach vector store"
 
 #: src/components/office/planner/history-diff.ts
 msgid "details"
@@ -6025,6 +6326,10 @@ msgstr "Document changed. Reopen to edit the latest version."
 msgid "Document library"
 msgstr "Document library"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Document runners"
+msgstr "Document runners"
+
 #: src/components/office/WordStudio.tsx
 msgid "Document: {title}"
 msgstr "Document: {title}"
@@ -6033,6 +6338,10 @@ msgstr "Document: {title}"
 #: src/pages/AdminInfrastructure.tsx
 msgid "Documents"
 msgstr "Documents"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Documents running"
+msgstr "Documents running"
 
 #: src/pages/AdminInfrastructure.tsx
 msgid "Documents, spreadsheets, PDFs and video"
@@ -6221,6 +6530,18 @@ msgstr "Duration"
 msgid "Duration (days)"
 msgstr "Duration (days)"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "e.g. Drainage Design Standards"
+msgstr "e.g. Drainage Design Standards"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "e.g. OCSC Civil Intelligence"
+msgstr "e.g. OCSC Civil Intelligence"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "e.g. OCSC writing style"
+msgstr "e.g. OCSC writing style"
+
 #: src/pages/AdminAnnouncements.tsx
 msgid "e.g. Project Programmes studio is here"
 msgstr "e.g. Project Programmes studio is here"
@@ -6265,6 +6586,7 @@ msgstr "Earned Value & Schedule Performance (EVM)"
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanySkills.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/McpServersOverlay.tsx
 msgid "Edit"
@@ -6278,9 +6600,17 @@ msgstr "Edit {title}"
 msgid "Edit any slide later; each changed slide gets a review comment saying what changed"
 msgstr "Edit any slide later; each changed slide gets a review comment saying what changed"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Edit as raw SKILL.md"
+msgstr "Edit as raw SKILL.md"
+
 #: src/components/AskCard.tsx
 msgid "Edit comment"
 msgstr "Edit comment"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Edit company skill"
+msgstr "Edit company skill"
 
 #: src/components/AskCard.tsx
 msgid "Edit deadline"
@@ -6495,6 +6825,10 @@ msgstr "Empty note"
 #: src/pages/shell/bot-panel.tsx
 msgid "Enable {0}"
 msgstr "Enable {0}"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Enable knowledge file search"
+msgstr "Enable knowledge file search"
 
 #: src/components/office/slides/Presenter.tsx
 msgid "End of slideshow. Click to exit."
@@ -6754,6 +7088,10 @@ msgstr "Evolve assistant models"
 msgid "Evolve Board"
 msgstr "Evolve Board"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Evolve Chat model"
+msgstr "Evolve Chat model"
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "Evolve checks the change again; nothing is saved until you approve the card."
 msgstr "Evolve checks the change again; nothing is saved until you approve the card."
@@ -6839,18 +7177,27 @@ msgstr "Evolve projects"
 msgid "Evolve search is unavailable. Type a full work email instead."
 msgstr "Evolve search is unavailable. Type a full work email instead."
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Evolve system prompt (shared with Evolve Chat)"
+msgstr "Evolve system prompt (shared with Evolve Chat)"
+
 #: src/components/todos/todo-board.tsx
 msgid "Evolve To-do List"
 msgstr "Evolve To-do List"
 
 #: src/components/integrations/evolve-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Evolve tools"
 msgstr "Evolve tools"
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Evolve tools for everyone"
 msgstr "Evolve tools for everyone"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Evolve visibility groups"
+msgstr "Evolve visibility groups"
 
 #: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/word/WordRibbon.tsx
@@ -6903,10 +7250,6 @@ msgstr "Exemplar response, as sent to the AI"
 #: src/pages/shell/references-dialog.tsx
 msgid "exemplar responses"
 msgstr "exemplar responses"
-
-#: src/pages/shell/shell-sidebar.tsx
-#~ msgid "Exl"
-#~ msgstr "Exl"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Expand"
@@ -7071,6 +7414,14 @@ msgstr "File name, like Chart.tsx"
 msgid "File Outlook email"
 msgstr "File Outlook email"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "File removed"
+msgstr "File removed"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "File uploaded to vector store"
+msgstr "File uploaded to vector store"
+
 #. placeholder {0}: item.filedPath
 #: src/components/EmailFilingCard.tsx
 msgid "Filed in {0}"
@@ -7120,13 +7471,25 @@ msgstr "Filter agents"
 msgid "Filter by date"
 msgstr "Filter by date"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Filter default agents…"
+msgstr "Filter default agents…"
+
 #: src/pages/AdminStaffLimits.tsx
 msgid "Filter models"
 msgstr "Filter models"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Filter people…"
+msgstr "Filter people…"
+
 #: src/components/office/planner/PlannerToolbar.tsx
 msgid "Filter tasks"
 msgstr "Filter tasks"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Filter tools…"
+msgstr "Filter tools…"
 
 #: src/components/office/planner/PlannerToolbar.tsx
 #: src/pages/Artifacts.tsx
@@ -7226,6 +7589,14 @@ msgstr "Fit to window"
 #: src/components/office/word/WordRibbon.tsx
 msgid "Fit width"
 msgstr "Fit width"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Fleet compute"
+msgstr "Fleet compute"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Fleet servers"
+msgstr "Fleet servers"
 
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Flow left to right"
@@ -7716,6 +8087,7 @@ msgstr "Hi, this is how I'll sound when I read replies out loud."
 
 #: src/components/office/slides/SlideRail.tsx
 #: src/components/vault/LoginFieldsInput.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Hidden"
 msgstr "Hidden"
 
@@ -7826,6 +8198,10 @@ msgstr "hour"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "hours"
 msgstr "hours"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "House tone, structure, spelling and formatting rules for all client writing."
+msgstr "House tone, structure, spelling and formatting rules for all client writing."
 
 #: src/components/SignupSurvey.tsx
 msgid "How big is your team?"
@@ -7973,10 +8349,6 @@ msgstr "Import MS Project XML"
 msgid "Imported {0} tasks into this plan."
 msgstr "Imported {0} tasks into this plan."
 
-#: src/components/office/PlannerStudio.tsx
-#~ msgid "Imported into this plan."
-#~ msgstr "Imported into this plan."
-
 #: src/components/StorageDialog.tsx
 msgid "In a chat"
 msgstr "In a chat"
@@ -8062,6 +8434,18 @@ msgstr "Increase font size"
 msgid "Increase indent"
 msgstr "Increase indent"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Incus cluster"
+msgstr "Incus cluster"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Incus computer cluster nodes"
+msgstr "Incus computer cluster nodes"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Individual KVM servers hosting staff cloud computers across the OVN cluster."
+msgstr "Individual KVM servers hosting staff cloud computers across the OVN cluster."
+
 #: src/components/AppScopeAskCard.tsx
 msgid "Individual user app"
 msgstr "Individual user app"
@@ -8139,6 +8523,7 @@ msgstr "Instruction history"
 #: src/components/AskCard.tsx
 #: src/components/EmailFilingCard.tsx
 #: src/components/InstructionSettings.tsx
+#: src/pages/AdminCompanySkills.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
 msgstr "Instructions"
@@ -8414,6 +8799,10 @@ msgstr "Keyboard shortcuts"
 msgid "Keys"
 msgstr "Keys"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Knowledge"
+msgstr "Knowledge"
+
 #: src/pages/AdminAssistantModels.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Knowledge files"
@@ -8429,8 +8818,16 @@ msgid "Language"
 msgstr "Language"
 
 #: src/pages/AdminInfrastructure.tsx
+msgid "Large docs"
+msgstr "Large docs"
+
+#: src/pages/AdminInfrastructure.tsx
 msgid "Large documents"
 msgstr "Large documents"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Large overflow"
+msgstr "Large overflow"
 
 #: src/components/StorageDialog.tsx
 msgid "Largest"
@@ -8444,17 +8841,17 @@ msgstr "Lasso"
 msgid "Last 24 hours"
 msgstr "Last 24 hours"
 
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
-#: src/pages/AdminInfrastructure.tsx
 msgid "Last 30 days"
 msgstr "Last 30 days"
 
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
-#: src/pages/AdminInfrastructure.tsx
 msgid "Last 7 days"
 msgstr "Last 7 days"
 
@@ -8604,6 +9001,18 @@ msgstr "Let the assistant mark up your PDF"
 msgid "Let's begin"
 msgstr "Let's begin"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Lets agents started from this default agent search all attached OpenAI vector stores."
+msgstr "Lets agents started from this default agent search all attached OpenAI vector stores."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Lets staff attach approved tender exemplar responses from Evolve."
+msgstr "Lets staff attach approved tender exemplar responses from Evolve."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Lets staff attach staff profiles and CVs from Evolve in chat."
+msgstr "Lets staff attach staff profiles and CVs from Evolve in chat."
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -8626,6 +9035,10 @@ msgstr "Limits saved for {0}"
 #: src/components/office/slides/SlidesRibbon.tsx
 msgid "Line"
 msgstr "Line"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Line managers"
+msgstr "Line managers"
 
 #: src/components/office/word/WordRibbon.tsx
 msgid "Line spacing"
@@ -8698,6 +9111,10 @@ msgstr "Listening…"
 msgid "Live data"
 msgstr "Live data"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Live rules"
+msgstr "Live rules"
+
 #: src/pages/AdminInfrastructure.tsx
 msgid "Load (1 min)"
 msgstr "Load (1 min)"
@@ -8761,6 +9178,10 @@ msgstr "Loading assistants…"
 msgid "Loading connectors…"
 msgstr "Loading connectors…"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Loading default agents…"
+msgstr "Loading default agents…"
+
 #: src/components/EmailDraftCard.tsx
 msgid "Loading email draft"
 msgstr "Loading email draft"
@@ -8778,6 +9199,7 @@ msgid "Loading exemplar responses..."
 msgstr "Loading exemplar responses..."
 
 #: src/components/EmailDraftCard.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Loading files…"
 msgstr "Loading files…"
 
@@ -8825,6 +9247,10 @@ msgstr "Loading the newest version…"
 msgid "Loading the project list…"
 msgstr "Loading the project list…"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Loading vector stores…"
+msgstr "Loading vector stores…"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading video…"
 msgstr "Loading video…"
@@ -8840,6 +9266,7 @@ msgstr "Loading voice providers…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminDocumentLibrary.tsx
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
@@ -8852,7 +9279,6 @@ msgstr "Loading voice providers…"
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/drawings-dialog.tsx
 #: src/pages/shell/transcript.tsx
-#: src/pages/AdminInfrastructure.tsx
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -8924,6 +9350,10 @@ msgstr "Low"
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Low (fastest)"
 msgstr "Low (fastest)"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Lower is more deterministic. Automatically ignored by reasoning models."
+msgstr "Lower is more deterministic. Automatically ignored by reasoning models."
 
 #: src/pages/AdminEmailFiling.tsx
 msgid "Lowest confidence for Ready"
@@ -8997,6 +9427,10 @@ msgstr "Manage other agents"
 msgid "Manage storage"
 msgstr "Manage storage"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Manage the default agents staff can start from. Synced with Evolve assistants, with company standing instructions, required skills, vector stores, model tuning, and access controls."
+msgstr "Manage the default agents staff can start from. Synced with Evolve assistants, with company standing instructions, required skills, vector stores, model tuning, and access controls."
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "Manual"
@@ -9057,6 +9491,10 @@ msgstr "masked"
 msgid "Maths"
 msgstr "Maths"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "max"
+msgstr "max"
+
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -9067,6 +9505,14 @@ msgstr "Max"
 #: src/lib/model-catalog.ts
 msgid "Max"
 msgstr "Max"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Max output tokens"
+msgstr "Max output tokens"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Max output tokens must be an integer between 256 and 200000"
+msgstr "Max output tokens must be an integer between 256 and 200000"
 
 #: src/pages/Artifacts.tsx
 msgid "Maximize"
@@ -9158,12 +9604,12 @@ msgid "Members use it with the voice you picked, and their use is billed to this
 msgstr "Members use it with the voice you picked, and their use is billed to this connection's account."
 
 #: src/components/EmailFilingCard.tsx
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/AdminInfrastructure.tsx
 msgid "Memory"
 msgstr "Memory"
 
@@ -9178,6 +9624,10 @@ msgstr "Memory for {title}"
 #: src/pages/shell/bot-panel.tsx
 msgid "Memory scope"
 msgstr "Memory scope"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Memory used"
+msgstr "Memory used"
 
 #: src/pages/shell/composer.tsx
 msgid "Mentions"
@@ -9345,6 +9795,14 @@ msgstr "Model"
 msgid "Model \"{modelId}\" was not listed."
 msgstr "Model \"{modelId}\" was not listed."
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Model & generation settings"
+msgstr "Model & generation settings"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Model & tools"
+msgstr "Model & tools"
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "Model calls"
 msgstr "Model calls"
@@ -9358,6 +9816,7 @@ msgid "Model connections"
 msgstr "Model connections"
 
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Model default"
 msgstr "Model default"
 
@@ -9371,10 +9830,18 @@ msgstr "Model for {0}"
 msgid "Model id"
 msgstr "Model id"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Model ID stored in Evolve for Evolve Chat."
+msgstr "Model ID stored in Evolve for Evolve Chat."
+
 #: src/components/FoundModelPicker.tsx
 #: src/pages/model-settings/role-model-picker.tsx
 msgid "Model options"
 msgstr "Model options"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Model override"
+msgstr "Model override"
 
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -9581,6 +10048,7 @@ msgstr "My vault"
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Auth.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -9599,6 +10067,10 @@ msgstr "Name"
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Name (A to Z)"
 msgstr "Name (A to Z)"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Name is required"
+msgstr "Name is required"
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -9749,6 +10221,11 @@ msgstr "New category name"
 msgid "New comment"
 msgstr "New comment"
 
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminDefaultAgents.tsx
+msgid "New company skill"
+msgstr "New company skill"
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "New computers run on"
 msgstr "New computers run on"
@@ -9756,6 +10233,10 @@ msgstr "New computers run on"
 #: src/components/VaultSettings.tsx
 msgid "New contact"
 msgstr "New contact"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "New default agent"
+msgstr "New default agent"
 
 #: src/components/office/WordStudio.tsx
 msgid "New document"
@@ -10050,6 +10531,14 @@ msgstr "No cleanup has run yet."
 msgid "No code changed."
 msgstr "No code changed."
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "No company skills yet. Add one for writing style, quality checks, or domain rules, then attach it to your default agents."
+msgstr "No company skills yet. Add one for writing style, quality checks, or domain rules, then attach it to your default agents."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No company skills yet. Click \"New company skill\" above to create one."
+msgstr "No company skills yet. Click \"New company skill\" above to create one."
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "No computer"
 msgstr "No computer"
@@ -10073,6 +10562,18 @@ msgstr "No date"
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "No deadline or work package has been changed through the AI yet."
 msgstr "No deadline or work package has been changed through the AI yet."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No default agents match that filter."
+msgstr "No default agents match that filter."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No default agents yet. Create your first default agent above."
+msgstr "No default agents yet. Create your first default agent above."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No default skills attached yet. Pick a company or built-in skill below, or create a new company skill."
+msgstr "No default skills attached yet. Pick a company or built-in skill below, or create a new company skill."
 
 #: src/pages/shell/bot-panel.tsx
 msgid "No desktop on your account"
@@ -10106,6 +10607,10 @@ msgstr "No Evolve project matches."
 msgid "No Evolve tool matches."
 msgstr "No Evolve tool matches."
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No Evolve tools match this filter."
+msgstr "No Evolve tools match this filter."
+
 #: src/pages/shell/references-dialog.tsx
 msgid "No exemplar responses match your search."
 msgstr "No exemplar responses match your search."
@@ -10117,6 +10622,10 @@ msgstr "No failed replies in this period."
 #: src/pages/Artifacts.tsx
 msgid "No files found."
 msgstr "No files found."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No files in this vector store yet. Upload files above."
+msgstr "No files in this vector store yet. Upload files above."
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "No files yet"
@@ -10244,6 +10753,10 @@ msgstr "No other presentations yet"
 msgid "No other spreadsheets yet"
 msgstr "No other spreadsheets yet"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No other vector stores available"
+msgstr "No other vector stores available"
+
 #: src/components/office/slides/SlidesRibbon.tsx
 msgid "No outline"
 msgstr "No outline"
@@ -10315,6 +10828,10 @@ msgstr "No rows"
 msgid "No rows match."
 msgstr "No rows match."
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "No runner data"
+msgstr "No runner data"
+
 #: src/pages/ActivityList.tsx
 msgid "No runs match these filters."
 msgstr "No runs match these filters."
@@ -10322,10 +10839,6 @@ msgstr "No runs match these filters."
 #: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr "No runs yet"
-
-#: src/components/office/planner/history.tsx
-#~ msgid "No schedule changes"
-#~ msgstr "No schedule changes"
 
 #: src/components/office/planner/PlannerHealthView.tsx
 msgid "No schedule integrity issues detected"
@@ -10380,6 +10893,14 @@ msgstr "No tickets yet"
 msgid "No trigger"
 msgstr "No trigger"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No vector stores attached. Attach one or more existing stores or create a new store to upload knowledge files."
+msgstr "No vector stores attached. Attach one or more existing stores or create a new store to upload knowledge files."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No visibility groups configured in Evolve."
+msgstr "No visibility groups configured in Evolve."
+
 #: src/components/office/OfficeStudioHost.tsx
 msgid "No Word documents yet"
 msgstr "No Word documents yet"
@@ -10391,6 +10912,10 @@ msgstr "No work items yet."
 #: src/pages/SharedChats.tsx
 msgid "Nobody has added you to a group chat yet."
 msgstr "Nobody has added you to a group chat yet."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Non-negotiable company rules, tone, compliance checks, or output structure..."
+msgstr "Non-negotiable company rules, tone, compliance checks, or output structure..."
 
 #: src/components/office/planner/PlannerTasksView.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -10713,6 +11238,10 @@ msgstr "OCSC Tools that produce branded deliverables"
 msgid "OCSC Vision Intelligence creates infographics and pictures, drawing on Evolve's project datasheets and people profiles."
 msgstr "OCSC Vision Intelligence creates infographics and pictures, drawing on Evolve's project datasheets and people profiles."
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "OCSC writing style"
+msgstr "OCSC writing style"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "OCSC-branded animations and social clips, with voiceover and stock footage."
 msgstr "OCSC-branded animations and social clips, with voiceover and stock footage."
@@ -10730,6 +11259,10 @@ msgstr "Off hides voice, dictation and calls for every member, admins included."
 msgid "Off: only admins connect models or change an agent's model; everyone runs on the company model."
 msgstr "Off: only admins connect models or change an agent's model; everyone runs on the company model."
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Off: only default agents you attach this skill to can use it. On: every staff agent can also invoke it on demand."
+msgstr "Off: only default agents you attach this skill to can use it. On: every staff agent can also invoke it on demand."
+
 #: src/components/EmailFilingSettings.tsx
 msgid "Off: only email you receive is suggested."
 msgstr "Off: only email you receive is suggested."
@@ -10737,6 +11270,14 @@ msgstr "Off: only email you receive is suggested."
 #: src/pages/AdminCompanyPage.tsx
 msgid "Off: staff see Connectors as Coming soon and cannot add anything. Admins always can, to test."
 msgstr "Off: staff see Connectors as Coming soon and cannot add anything. Admins always can, to test."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Offer People & CV references"
+msgstr "Offer People & CV references"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Offer Tender exemplar references"
+msgstr "Offer Tender exemplar references"
 
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Offline"
@@ -10853,14 +11394,6 @@ msgstr "Only the ticked models are allowed."
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Only the top-left cell can keep its value. Clear the other cells first, then merge."
 msgstr "Only the top-left cell can keep its value. Clear the other cells first, then merge."
-
-#: src/components/office/OfficeStudioHost.tsx
-#~ msgid "Only Word, PowerPoint and Excel files open here."
-#~ msgstr "Only Word, PowerPoint and Excel files open here."
-
-#: src/components/office/OfficeStudioHost.tsx
-#~ msgid "Only Word, PowerPoint, Excel and PDF files open here."
-#~ msgstr "Only Word, PowerPoint, Excel and PDF files open here."
 
 #: src/components/office/OfficeStudioHost.tsx
 msgid "Only Word, PowerPoint, Excel, PDF and Project plan files open here."
@@ -11030,6 +11563,10 @@ msgstr "Open the chat beside this, to ask for a change."
 msgid "Open the video"
 msgstr "Open the video"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Open to everyone"
+msgstr "Open to everyone"
+
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Open to everyone at OCSC"
 msgstr "Open to everyone at OCSC"
@@ -11078,6 +11615,14 @@ msgstr "Optional"
 #: src/pages/McpServersOverlay.tsx
 msgid "Optional header value"
 msgstr "Optional header value"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Optional per-reply token cap (256–200,000)."
+msgstr "Optional per-reply token cap (256–200,000)."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Optional system instructions stored on Evolve's assistants.system_instructions column"
+msgstr "Optional system instructions stored on Evolve's assistants.system_instructions column"
 
 #: src/pages/GroupPanel.tsx
 msgid "Optional. Evolve colleagues chat with this group's agents, without your memory, notes, saved logins or connectors."
@@ -11445,6 +11990,10 @@ msgstr "PDF and PDF Studio"
 msgid "PDFs"
 msgstr "PDFs"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Peak CPU utilisation across server pools"
+msgstr "Peak CPU utilisation across server pools"
+
 #. placeholder {0}: conflict.peakDate
 #: src/components/office/planner/PlannerHealthView.tsx
 msgid "Peak overlap on {0}"
@@ -11507,14 +12056,18 @@ msgstr "Per day"
 msgid "Per hour"
 msgstr "Per hour"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Per-agent tool & skill restrictions"
+msgstr "Per-agent tool & skill restrictions"
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Percentage"
 msgstr "Percentage"
 
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
-#: src/pages/AdminInfrastructure.tsx
 msgid "Period"
 msgstr "Period"
 
@@ -11687,6 +12240,10 @@ msgstr "Plugins"
 msgid "Point at something in the app to change it"
 msgstr "Point at something in the app to change it"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Pool"
+msgstr "Pool"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "Post \"No changes\" in chat"
@@ -11708,10 +12265,6 @@ msgstr "PowerPoint decks on the OCSC template, ready to present."
 #: src/components/tour/ocsc-tour.tsx
 msgid "PowerPoint Studio"
 msgstr "PowerPoint Studio"
-
-#: src/pages/shell/shell-sidebar.tsx
-#~ msgid "Ppt"
-#~ msgstr "Ppt"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
@@ -11775,6 +12328,10 @@ msgstr "Previous page"
 #: src/pages/SettingsOverlay.tsx
 msgid "Previous settings sections"
 msgstr "Previous settings sections"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Primary"
+msgstr "Primary"
 
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Principles that work well:"
@@ -11992,6 +12549,10 @@ msgstr "Quote"
 msgid "rakazo-shared and IDs starting with bot- are reserved for OCSC Intelligence."
 msgstr "rakazo-shared and IDs starting with bot- are reserved for OCSC Intelligence."
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "RAM consumption across each server pool"
+msgstr "RAM consumption across each server pool"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
 msgstr "React"
@@ -11999,6 +12560,10 @@ msgstr "React"
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Reactions"
 msgstr "Reactions"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Read every minute. Last reading {sampledAt}. Hover any chart to inspect exact values."
+msgstr "Read every minute. Last reading {sampledAt}. Hover any chart to inspect exact values."
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Read it"
@@ -12305,6 +12870,7 @@ msgstr "Remember this choice"
 #: src/components/vault/LoginFieldsInput.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -12358,6 +12924,10 @@ msgstr "Remove change trigger"
 #: src/pages/shell/references-dialog.tsx
 msgid "Remove exemplar"
 msgstr "Remove exemplar"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Remove file"
+msgstr "Remove file"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -12545,6 +13115,10 @@ msgstr "Replying to {0}"
 msgid "Replying to {0}: “{1}”"
 msgstr "Replying to {0}: “{1}”"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Report structure"
+msgstr "Report structure"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Reports and letters, edited in the studio."
 msgstr "Reports and letters, edited in the studio."
@@ -12564,6 +13138,14 @@ msgstr "Requester and assignee can change their own"
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Requests"
 msgstr "Requests"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Required (must use)"
+msgstr "Required (must use)"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Required skills are injected in full on every turn so the agent must always follow them. Available skills appear in the agent's skill catalog to read on demand."
+msgstr "Required skills are injected in full on every turn so the agent must always follow them. Available skills appear in the agent's skill catalog to read on demand."
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Required when there was an issue"
@@ -12690,6 +13272,10 @@ msgstr "Restored version {0} as a new version."
 msgid "Restoring your workspace"
 msgstr "Restoring your workspace"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Restricted"
+msgstr "Restricted"
+
 #: src/components/LearningClinicCard.tsx
 msgid "Retake quiz"
 msgstr "Retake quiz"
@@ -12700,6 +13286,7 @@ msgstr "Retake quiz"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminDocumentLibrary.tsx
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
@@ -12709,7 +13296,6 @@ msgstr "Retake quiz"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/SpaceSettingOverrides.tsx
-#: src/pages/AdminInfrastructure.tsx
 msgid "Retry"
 msgstr "Retry"
 
@@ -12749,6 +13335,10 @@ msgstr "Return to the board."
 #: src/components/office/WordStudio.tsx
 msgid "Review"
 msgstr "Review"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Review checklist"
+msgstr "Review checklist"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -12816,6 +13406,10 @@ msgid "Routine limit reached"
 msgstr "Routine limit reached"
 
 #: src/pages/AdminInfrastructure.tsx
+msgid "Routine overflow"
+msgstr "Routine overflow"
+
+#: src/pages/AdminInfrastructure.tsx
 msgid "Routine server"
 msgstr "Routine server"
 
@@ -12832,12 +13426,25 @@ msgid "Routine server tool commands"
 msgstr "Routine server tool commands"
 
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/AdminInfrastructure.tsx
 msgid "Routines"
 msgstr "Routines"
+
+#. placeholder {0}: sample.routines.name
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines ({0})"
+msgstr "Routines ({0})"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines and overflow document runners"
+msgstr "Routines and overflow document runners"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines and overflow runners"
+msgstr "Routines and overflow runners"
 
 #: src/components/RoutineLimitDialog.tsx
 msgid "Routines are switched off"
@@ -12923,8 +13530,8 @@ msgstr "running"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
-#: src/pages/RoutineEditor.tsx
 #: src/pages/AdminInfrastructure.tsx
+#: src/pages/RoutineEditor.tsx
 msgid "Running"
 msgstr "Running"
 
@@ -12998,6 +13605,10 @@ msgstr "Save"
 msgid "Save & build"
 msgstr "Save & build"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Save a company model first under Model to set a per-agent override."
+msgstr "Save a company model first under Model to set a per-agent override."
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "Save a company model first; assistant models run on its key."
 msgstr "Save a company model first; assistant models run on its key."
@@ -13016,6 +13627,7 @@ msgstr "Save brief"
 
 #: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Save changes"
 msgstr "Save changes"
 
@@ -13048,6 +13660,10 @@ msgstr "Save safeguards"
 #: src/components/EmailSignatureSettings.tsx
 msgid "Save signature"
 msgstr "Save signature"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Save skill"
+msgstr "Save skill"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -13818,6 +14434,14 @@ msgstr "Sheets"
 msgid "Short date"
 msgstr "Short date"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Short description"
+msgstr "Short description"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Short description of what this skill enforces"
+msgstr "Short description of what this skill enforces"
+
 #: src/components/tour/training-videos.tsx
 msgid "Short training videos. Open any of them again whenever you need a reminder."
 msgstr "Short training videos. Open any of them again whenever you need a reminder."
@@ -13850,6 +14474,10 @@ msgstr "Show baselines"
 #: src/pages/PluginsOverlay.tsx
 msgid "Show everything (admins)"
 msgstr "Show everything (admins)"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Show in New Agent picker"
+msgstr "Show in New Agent picker"
 
 #: src/components/office/slides/SlideRail.tsx
 msgid "Show in slideshow"
@@ -13896,15 +14524,6 @@ msgstr "Show password"
 msgid "Show selected"
 msgstr "Show selected"
 
-#: src/components/apps/AppStudio.tsx
-#: src/components/studio/StudioFrame.tsx
-#~ msgid "Show the chat beside the app"
-#~ msgstr "Show the chat beside the app"
-
-#: src/components/todos/todo-board.tsx
-#~ msgid "Show the chat beside the list"
-#~ msgstr "Show the chat beside the list"
-
 #: src/pages/AdminCompanyPage.tsx
 msgid "Show tool activity"
 msgstr "Show tool activity"
@@ -13929,6 +14548,10 @@ msgstr "Showing every app and plugin, including ones hidden from staff."
 #: src/pages/PluginsOverlay.tsx
 msgid "Showing what staff see."
 msgstr "Showing what staff see."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Shown in the New Agent picker"
+msgstr "Shown in the New Agent picker"
 
 #: src/components/office/slides/history.tsx
 msgid "Shown in the slide show again"
@@ -14053,8 +14676,21 @@ msgstr "Skill {0}"
 msgid "Skill {position}"
 msgstr "Skill {position}"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Skill enforcement mode"
+msgstr "Skill enforcement mode"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Skill name"
+msgstr "Skill name"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "SKILL.md content"
+msgstr "SKILL.md content"
+
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Skills"
@@ -14093,9 +14729,6 @@ msgstr "Skipped; left where it is."
 #: src/pages/RoutineEditor.tsx
 msgid "Slack message"
 msgstr "Slack message"
-
-#~ msgid "Slack not enabled"
-#~ msgstr "Slack not enabled"
 
 #. placeholder {0}: change.at + 1
 #: src/components/office/slides/history.tsx
@@ -14192,10 +14825,6 @@ msgstr "Someone hit an error using this app."
 msgid "someone in Evolve"
 msgstr "someone in Evolve"
 
-#: src/components/apps/AppCodePanel.tsx
-#~ msgid "Someone saved a newer version. Reload the code to see it."
-#~ msgstr "Someone saved a newer version. Reload the code to see it."
-
 #: src/pages/AdminStaffLimits.tsx
 msgid "Someone who may choose can change their assistants' and routines' models. Anyone else runs on the company model."
 msgstr "Someone who may choose can change their assistants' and routines' models. Anyone else runs on the company model."
@@ -14288,6 +14917,10 @@ msgstr "Speaking"
 msgid "Special mentions"
 msgstr "Special mentions"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Specific people"
+msgstr "Specific people"
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Speech model"
 msgstr "Speech model"
@@ -14365,6 +14998,10 @@ msgstr "Staff spending"
 msgid "Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review."
 msgstr "Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review."
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Standard section order and executive summary format for OCSC reports."
+msgstr "Standard section order and executive summary format for OCSC reports."
+
 #: src/components/GitHubStarPrompt.tsx
 msgid "Star on GitHub"
 msgstr "Star on GitHub"
@@ -14391,10 +15028,6 @@ msgstr "Start a blank one, upload a {extension} file from your computer, or ask 
 #: src/components/office/PdfStudio.tsx
 msgid "Start a blank PDF, or upload one."
 msgstr "Start a blank PDF, or upload one."
-
-#: src/components/office/OfficeStudioHost.tsx
-#~ msgid "Start a blank plan, or upload a .jantt file."
-#~ msgstr "Start a blank plan, or upload a .jantt file."
 
 #: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/PlannerStudio.tsx
@@ -14474,6 +15107,14 @@ msgstr "Started {count}m late"
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Started from a template"
 msgstr "Started from a template"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Starter prompt (copied on creation)"
+msgstr "Starter prompt (copied on creation)"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Starters:"
+msgstr "Starters:"
 
 #: src/pages/ActivityList.tsx
 msgid "Starting"
@@ -14586,6 +15227,10 @@ msgstr "Storage"
 msgid "Storage and cleanup"
 msgstr "Storage and cleanup"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Storage growth across server pools"
+msgstr "Storage growth across server pools"
+
 #. placeholder {0}: person.name
 #: src/pages/AdminComputerAccess.tsx
 msgid "Storage limit for {0}"
@@ -14594,6 +15239,10 @@ msgstr "Storage limit for {0}"
 #: src/pages/AdminComputerAccess.tsx
 msgid "Storage per person"
 msgstr "Storage per person"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Storage pool"
+msgstr "Storage pool"
 
 #: src/components/SidebarMeters.tsx
 #: src/components/StorageDialog.tsx
@@ -14617,6 +15266,10 @@ msgstr "Stream replies"
 #: src/components/office/word/WordRibbon.tsx
 msgid "Strikethrough"
 msgstr "Strikethrough"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Structured engineering quality check before signing off deliverables."
+msgstr "Structured engineering quality check before signing off deliverables."
 
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Studios"
@@ -14735,6 +15388,14 @@ msgstr "Switches for a whole kind of connector"
 msgid "Switching…"
 msgstr "Switching…"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Synced with Evolve Access Control. Leave all grants empty to make this default agent open to everyone. Admins always have access."
+msgstr "Synced with Evolve Access Control. Leave all grants empty to make this default agent open to everyone. Admins always have access."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Synced with Evolve. Copied into a new agent's instructions when a staff member starts one from here; they can personalise their own copy afterwards."
+msgstr "Synced with Evolve. Copied into a new agent's instructions when a staff member starts one from here; they can personalise their own copy afterwards."
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -14831,6 +15492,10 @@ msgstr "Teams"
 msgid "Teams message"
 msgstr "Teams message"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Technical review checklist"
+msgstr "Technical review checklist"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Tell an agent to forget something and it will"
 msgstr "Tell an agent to forget something and it will"
@@ -14838,6 +15503,14 @@ msgstr "Tell an agent to forget something and it will"
 #: src/pages/AdminAnnouncements.tsx
 msgid "Tell everyone about new features and changes. It pops up straight away for everyone with the app open, and for everyone else when they next open it, until they dismiss it."
 msgstr "Tell everyone about new features and changes. It pops up straight away for everyone with the app open, and for everyone else when they next open it, until they dismiss it."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Temperature (0–2)"
+msgstr "Temperature (0–2)"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Temperature must be between 0 and 2"
+msgstr "Temperature must be between 0 and 2"
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/pages/AdminDocumentLibrary.tsx
@@ -15310,6 +15983,10 @@ msgstr "Think out loud on a shared board"
 #: src/pages/shell/bot-panel.tsx
 msgid "Thinking"
 msgstr "Thinking"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Thinking effort"
+msgstr "Thinking effort"
 
 #. placeholder {0}: assistant.name
 #: src/pages/AdminAssistantModels.tsx
@@ -15787,6 +16464,10 @@ msgid "Tool name"
 msgstr "Tool name"
 
 #: src/pages/AdminInfrastructure.tsx
+msgid "Tool runner compute nodes"
+msgstr "Tool runner compute nodes"
+
+#: src/pages/AdminInfrastructure.tsx
 msgid "Tool runners"
 msgstr "Tool runners"
 
@@ -15936,6 +16617,14 @@ msgstr "Tuesday"
 #: src/components/apps/AppStudio.tsx
 msgid "Turn off auto-fix"
 msgstr "Turn off auto-fix"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Turn off specific built-in tools, Evolve tools, or built-in skills for agents started from this default agent."
+msgstr "Turn off specific built-in tools, Evolve tools, or built-in skills for agents started from this default agent."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Turn off to hide this default agent from staff in Rakazo without deleting it in Evolve."
+msgstr "Turn off to hide this default agent from staff in Rakazo without deleting it in Evolve."
 
 #: src/components/apps/AppStudio.tsx
 msgid "Turn on auto-fix"
@@ -16267,10 +16956,6 @@ msgid "Upload a .docx file"
 msgstr "Upload a .docx file"
 
 #: src/components/office/OfficeStudioHost.tsx
-#~ msgid "Upload a .jantt file"
-#~ msgstr "Upload a .jantt file"
-
-#: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/PdfStudio.tsx
 msgid "Upload a .pdf file"
 msgstr "Upload a .pdf file"
@@ -16292,6 +16977,10 @@ msgstr "Upload a file"
 #: src/pages/KnowledgeSection.tsx
 msgid "Upload a Word document (.docx), PDF, or text file (.txt or .md)."
 msgstr "Upload a Word document (.docx), PDF, or text file (.txt or .md)."
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Upload file"
+msgstr "Upload file"
 
 #: src/pages/shell/composer.tsx
 msgid "Upload files, documents and images"
@@ -16365,6 +17054,10 @@ msgstr "Use defaults"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Use defaults for {label}"
 msgstr "Use defaults for {label}"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Use full YAML frontmatter if you are pasting an existing SKILL.md."
+msgstr "Use full YAML frontmatter if you are pasting an existing SKILL.md."
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Use in this agent"
@@ -16492,6 +17185,14 @@ msgstr "Variables"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Vault"
 msgstr "Vault"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "vCPUs"
+msgstr "vCPUs"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Vector store created and attached"
+msgstr "Vector store created and attached"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Verify and add"
@@ -16621,6 +17322,10 @@ msgstr "Wait a moment and test again."
 #: src/pages/AdminInfrastructure.tsx
 msgid "Waiting"
 msgstr "Waiting"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Waiting for samples in this period…"
+msgstr "Waiting for samples in this period…"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Waiting for setup"
@@ -16809,10 +17514,6 @@ msgstr "What this agent is for"
 msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
 msgstr "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
 
-#: src/lib/run-error.ts
-#~ msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
-#~ msgstr "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
-
 #: src/components/teach/SkillDraftCard.tsx
 msgid "What to return"
 msgstr "What to return"
@@ -16841,6 +17542,10 @@ msgstr "When a webhook fires"
 msgid "When an email is about an Evolve project with no folder yet, the card proposes one named from Evolve's job number and title. It is made only when the person presses File, and never twice."
 msgstr "When an email is about an Evolve project with no folder yet, the card proposes one named from Evolve's job number and title. It is made only when the person presses File, and never twice."
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "When attached to a default agent as Required, every rule written here is enforced on every response."
+msgstr "When attached to a default agent as Required, every rule written here is enforced on every response."
+
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"
 msgstr "When it finishes or needs input"
@@ -16862,6 +17567,10 @@ msgstr "When to run"
 #: src/components/vault/VaultItemEditor.tsx
 msgid "When to use"
 msgstr "When to use"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "When to use / summary"
+msgstr "When to use / summary"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "When you answer me:\n"
@@ -16931,6 +17640,10 @@ msgstr "Who can use it"
 msgid "Who can use this app, and how it is set up."
 msgstr "Who can use this app, and how it is set up."
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Who can use this default agent"
+msgstr "Who can use this default agent"
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "Who gets a computer"
 msgstr "Who gets a computer"
@@ -16999,6 +17712,10 @@ msgstr "Word, PDF, PowerPoint and text files attached to a chat are indexed with
 #: src/pages/AdminComputerAccess.tsx
 msgid "Word, PowerPoint, Excel, PDF and video files always run on the company tool runners, for everyone. Full adds the person's own computer for browsing, a shell and routines. Tools only and No computer: documents, videos and Evolve tools. Every person's files stay their own."
 msgstr "Word, PowerPoint, Excel, PDF and video files always run on the company tool runners, for everyone. Full adds the person's own computer for browsing, a shell and routines. Tools only and No computer: documents, videos and Evolve tools. Every person's files stay their own."
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Word, PowerPoint, Excel, PDF, and video commands spread across the least-busy dedicated runner before using routine overflow."
+msgstr "Word, PowerPoint, Excel, PDF, and video commands spread across the least-busy dedicated runner before using routine overflow."
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Words and terms"
@@ -17126,6 +17843,11 @@ msgstr "Write it now"
 msgid "Write its instructions yourself"
 msgstr "Write its instructions yourself"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Write the rules, tone guidelines, templates, or step-by-step workflow..."
+msgstr "Write the rules, tone guidelines, templates, or step-by-step workflow..."
+
+#: src/pages/AdminCompanySkills.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Writing style"
 msgstr "Writing style"
@@ -17331,14 +18053,6 @@ msgstr "Your data"
 msgid "Your defaults"
 msgstr "Your defaults"
 
-#: src/components/office/WordStudio.tsx
-#~ msgid "Your edits are marked as tracked changes, so they can be accepted or rejected"
-#~ msgstr "Your edits are marked as tracked changes, so they can be accepted or rejected"
-
-#: src/components/office/WordStudio.tsx
-#~ msgid "Your edits change the document directly"
-#~ msgstr "Your edits change the document directly"
-
 #: src/pages/Auth.tsx
 msgid "Your email address"
 msgstr "Your email address"
@@ -17485,207 +18199,3 @@ msgstr "Zoom in"
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
 msgstr "Zoom out"
-
-
-#. placeholder {0}: appLanes.tools.running
-#. placeholder {1}: appLanes.tools.slots
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} / {1} active"
-msgstr "{0} / {1} active"
-
-#. placeholder {0}: fleetStats.online
-#. placeholder {1}: fleetStats.total
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} / {1} online"
-msgstr "{0} / {1} online"
-
-#. placeholder {0}: size(fleetStats.memUsed)
-#. placeholder {1}: size(fleetStats.memTotal)
-#. placeholder {2}: sample?.fleet.chatRuns ?? 0
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} / {1} RAM · {2} replies"
-msgstr "{0} / {1} RAM · {2} replies"
-
-#. placeholder {0}: appLanes.large.slots
-#. placeholder {1}: appLanes.video.slots
-#. placeholder {2}: appLanes.tools.queued
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} large · {1} video · {2} waiting"
-msgstr "{0} large · {1} video · {2} waiting"
-
-#. placeholder {0}: sample?.incus.stopped ?? 0
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} off · {incusOnlineCount} Incus host(s)"
-msgstr "{0} off · {incusOnlineCount} Incus host(s)"
-
-#. placeholder {0}: sample?.incus.running ?? 0
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} on"
-msgstr "{0} on"
-
-#. placeholder {0}: node.running
-#. placeholder {1}: node.stopped ?? 0
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} on · {1} off"
-msgstr "{0} on · {1} off"
-
-#. placeholder {0}: sample.incus.nodes.length
-#. placeholder {0}: sample.toolNodes.length
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} servers"
-msgstr "{0} servers"
-
-#. placeholder {0}: fleetStats.cpus
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} vCPUs"
-msgstr "{0} vCPUs"
-
-#. placeholder {0}: fleetStats.cpus
-#: src/pages/AdminInfrastructure.tsx
-msgid "{0} vCPUs total"
-msgstr "{0} vCPUs total"
-
-#. placeholder {0}: incusNodes.length
-#: src/pages/AdminInfrastructure.tsx
-msgid "{incusOnlineCount} / {0} online"
-msgstr "{incusOnlineCount} / {0} online"
-
-#. placeholder {0}: toolNodes.length
-#: src/pages/AdminInfrastructure.tsx
-msgid "{toolOnlineCount} / {0} active"
-msgstr "{toolOnlineCount} / {0} active"
-
-#. placeholder {0}: toolNodes.length
-#: src/pages/AdminInfrastructure.tsx
-msgid "{toolOnlineCount} of {0} servers · Docs, PDFs & video"
-msgstr "{toolOnlineCount} of {0} servers · Docs, PDFs & video"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Active Incus containers, chat replies, routines, and queued runs"
-msgstr "Active Incus containers, chat replies, routines, and queued runs"
-
-#. placeholder {0}: sample.app.name
-#: src/pages/AdminInfrastructure.tsx
-msgid "App ({0})"
-msgstr "App ({0})"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Cloud computers"
-msgstr "Cloud computers"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Computer hosts (Incus)"
-msgstr "Computer hosts (Incus)"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Concurrent documents, large files, video renders, and queue depth"
-msgstr "Concurrent documents, large files, video renders, and queue depth"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Document runners"
-msgstr "Document runners"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Documents running"
-msgstr "Documents running"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Fleet compute"
-msgstr "Fleet compute"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Fleet servers"
-msgstr "Fleet servers"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Incus cluster"
-msgstr "Incus cluster"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Incus computer cluster nodes"
-msgstr "Incus computer cluster nodes"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Individual KVM servers hosting staff cloud computers across the OVN cluster."
-msgstr "Individual KVM servers hosting staff cloud computers across the OVN cluster."
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Large docs"
-msgstr "Large docs"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Large overflow"
-msgstr "Large overflow"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "max"
-msgstr "max"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Memory used"
-msgstr "Memory used"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "No runner data"
-msgstr "No runner data"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Peak CPU utilisation across server pools"
-msgstr "Peak CPU utilisation across server pools"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Pool"
-msgstr "Pool"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Primary"
-msgstr "Primary"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "RAM consumption across each server pool"
-msgstr "RAM consumption across each server pool"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Read every minute. Last reading {sampledAt}. Hover any chart to inspect exact values."
-msgstr "Read every minute. Last reading {sampledAt}. Hover any chart to inspect exact values."
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routine overflow"
-msgstr "Routine overflow"
-
-#. placeholder {0}: sample.routines.name
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routines ({0})"
-msgstr "Routines ({0})"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routines and overflow document runners"
-msgstr "Routines and overflow document runners"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routines and overflow runners"
-msgstr "Routines and overflow runners"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Storage growth across server pools"
-msgstr "Storage growth across server pools"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Storage pool"
-msgstr "Storage pool"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Tool runner compute nodes"
-msgstr "Tool runner compute nodes"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "vCPUs"
-msgstr "vCPUs"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Waiting for samples in this period…"
-msgstr "Waiting for samples in this period…"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Word, PowerPoint, Excel, PDF, and video commands spread across the least-busy dedicated runner before using routine overflow."
-msgstr "Word, PowerPoint, Excel, PDF, and video commands spread across the least-busy dedicated runner before using routine overflow."

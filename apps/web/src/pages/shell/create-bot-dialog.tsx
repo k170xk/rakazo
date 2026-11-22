@@ -219,10 +219,19 @@ export function CreateBotDialog({
                         )}
                       </span>
                     </span>
-                    {assistant?.knowledge ? (
-                      <Badge variant="secondary" className="shrink-0">
-                        <Trans>Knowledge files</Trans>
-                      </Badge>
+                    {assistant?.knowledge || assistant?.requiredSkillCount ? (
+                      <span className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                        {assistant.requiredSkillCount ? (
+                          <Badge variant="secondary" className="shrink-0">
+                            <Trans>{assistant.requiredSkillCount} default skill(s)</Trans>
+                          </Badge>
+                        ) : null}
+                        {assistant.knowledge ? (
+                          <Badge variant="secondary" className="shrink-0">
+                            <Trans>Knowledge files</Trans>
+                          </Badge>
+                        ) : null}
+                      </span>
                     ) : null}
                   </button>
                 );

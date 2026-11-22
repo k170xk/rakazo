@@ -9,6 +9,7 @@ import {
 import type { PrismaClient } from "@rakazo/db";
 import { availableInSpace } from "@rakazo/db";
 import { enabledBuiltinAgentSkills } from "./builtin-skills.js";
+import { companyAssistantConfig, companySkills } from "./company-policy.js";
 import { evolveToolsNote } from "./evolve-company-tools.js";
 
 export const SKILL_TOOL_NAMES = new Set([
@@ -37,7 +38,9 @@ type AgentSkillRow = {
 };
 
 function asSource(value: string): SkillSource {
-  if (value === "builtin" || value === "plugin" || value === "user") return value;
+  if (value === "builtin" || value === "plugin" || value === "company" || value === "user") {
+    return value;
+  }
   return "user";
 }
 
@@ -53,15 +56,156 @@ function toRecord(row: AgentSkillRow): SkillRecord & { id: string } {
   };
 }
 
-export function builtinAgentSkillRecords(): Array<SkillRecord & { id: string }> {
-  return enabledBuiltinAgentSkills().map((skill) => ({
-    id: `builtin:${skill.name}`,
-    name: skill.name,
-    description: skill.description,
-    content: skill.content,
-    source: "builtin" as const,
-    readOnly: true,
-  }));
+export function builtinAgentSkillRecords(
+  assistantId?: string | null,
+): Array<SkillRecord & { id: string }> {
+  const config = companyAssistantConfig(assistantId);
+  const attachedBuiltins = new Set(
+    (config?.skills ?? [])
+      .filter((entry) => entry.skillKey.startsWith("builtin:"))
+      .map((entry) => entry.skillKey.slice("builtin:".length).toLowerCase()),
+  );
+  const agentDisabled = new Set((config?.disabledSkills ?? []).map((name) => name.toLowerCase()));
+  return enabledBuiltinAgentSkills()
+    .filter((skill) => {
+      const lower = skill.name.toLowerCase();
+      return !agentDisabled.has(lower) || attachedBuiltins.has(lower);
+    })
+    .map((skill) => ({
+      id: `builtin:${skill.name}`,
+      name: skill.name,
+      description: skill.description,
+      content: skill.content,
+      source: "builtin" as const,
+      readOnly: true,
+    }));
+}
+
+/**
+ * Company-defined skills visible to a run: every skill marked `availableToAll`, plus any
+ * company skill attached (required or available) to the bot's default agent.
+ */
+export function companyAgentSkillRecords(
+  assistantId?: string | null,
+): Array<SkillRecord & { id: string }> {
+  const all = companySkills();
+  if (all.length === 0) return [];
+  const config = companyAssistantConfig(assistantId);
+  const attachedIds = new Set(
+    (config?.skills ?? [])
+      .filter((entry) => entry.skillKey.startsWith("company:"))
+      .map((entry) => entry.skillKey.slice("company:".length)),
+  );
+  return all
+    .filter((skill) => skill.availableToAll || attachedIds.has(skill.id))
+    .map((skill) => ({
+      id: `company:${skill.id}`,
+      name: skill.name,
+      description: skill.description,
+      content: skill.content,
+      source: "company" as const,
+      readOnly: true,
+    }));
+}
+
+/** All built-in and company skills available to a run without loading personal owner skills. */
+export function sharedAgentSkillRecords(
+  assistantId?: string | null,
+): Array<SkillRecord & { id: string }> {
+  return mergeBuiltinSkills(
+    builtinAgentSkillRecords(assistantId),
+    companyAgentSkillRecords(assistantId),
+  );
+}
+
+/**
+ * Applies a default agent's skill policy (attached company skills + per-agent disabled built-in
+ * skills) to a preloaded skill list without hitting the database a second time.
+ */
+export function applyAssistantSkillPolicy(
+  loaded: readonly (SkillRecord & { id: string })[],
+  assistantId?: string | null,
+): Array<SkillRecord & { id: string }> {
+  const userAndPlugin = loaded.filter(
+    (skill) => skill.source !== "builtin" && skill.source !== "company",
+  );
+  const company = companyAgentSkillRecords(assistantId);
+  const nonBuiltin = mergeBuiltinSkills(userAndPlugin, company);
+  return mergeBuiltinSkills(builtinAgentSkillRecords(assistantId), nonBuiltin);
+}
+
+/**
+ * Resolves every skill attached as `mode: "required"` on the given default agent, in order.
+ * Required skills are injected in full into the system prompt so the agent must always obey them.
+ */
+export function resolveAssistantRequiredSkills(
+  assistantId: string | null | undefined,
+): Array<SkillRecord & { id: string }> {
+  const config = companyAssistantConfig(assistantId);
+  const required = (config?.skills ?? []).filter((entry) => entry.mode === "required");
+  if (required.length === 0) return [];
+  const byCompanyId = new Map(companySkills().map((skill) => [skill.id, skill] as const));
+  const byBuiltinName = new Map(
+    enabledBuiltinAgentSkills().map((skill) => [skill.name.toLowerCase(), skill] as const),
+  );
+  const resolved: Array<SkillRecord & { id: string }> = [];
+  const seen = new Set<string>();
+  for (const entry of required) {
+    if (seen.has(entry.skillKey)) continue;
+    seen.add(entry.skillKey);
+    if (entry.skillKey.startsWith("company:")) {
+      const id = entry.skillKey.slice("company:".length);
+      const skill = byCompanyId.get(id);
+      if (skill) {
+        resolved.push({
+          id: `company:${skill.id}`,
+          name: skill.name,
+          description: skill.description,
+          content: skill.content,
+          source: "company",
+          readOnly: true,
+        });
+      }
+    } else if (entry.skillKey.startsWith("builtin:")) {
+      const name = entry.skillKey.slice("builtin:".length).toLowerCase();
+      const skill = byBuiltinName.get(name);
+      if (skill) {
+        resolved.push({
+          id: `builtin:${skill.name}`,
+          name: skill.name,
+          description: skill.description,
+          content: skill.content,
+          source: "builtin",
+          readOnly: true,
+        });
+      }
+    }
+  }
+  return resolved;
+}
+
+/** Renders mandatory default-agent skills as a high-priority system instruction block. */
+export function formatRequiredSkillsInstruction(
+  skills: readonly (SkillRecord & { id: string })[],
+): string | undefined {
+  if (skills.length === 0) return undefined;
+  const blocks = skills.map((skill) => {
+    const parsed = parseSkillMd(skill.content);
+    const body = "error" in parsed ? skill.content.trim() : parsed.body.trim();
+    const unavailable = evolveToolsNote(skill.content);
+    return [
+      `### Required skill: ${skill.name}`,
+      skill.description ? `Purpose: ${skill.description}` : undefined,
+      body || skill.content.trim(),
+      unavailable ? `Note: ${unavailable}` : undefined,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  });
+  return [
+    "Mandatory company skills for this agent — you MUST follow every rule in these skills on every response. Where a required skill disagrees with general house style about tone, formatting, structure, openings, pronouns or word choice, follow the required skill. Approval rules, privacy and security boundaries still win.",
+    ...blocks,
+  ].join("\n\n");
 }
 
 function rejectOversizedContent(content: string): string | undefined {
@@ -102,6 +246,7 @@ const SHARED_SKILL_ERROR =
 export async function listAgentSkillRecords(
   prisma: PrismaClient,
   owner: SkillOwner,
+  options?: { assistantId?: string | null },
 ): Promise<Array<SkillRecord & { id: string }>> {
   const rows = await prisma.agentSkill.findMany({
     where: availableInSpace(owner),
@@ -109,15 +254,20 @@ export async function listAgentSkillRecords(
     omit: { files: true },
     orderBy: [{ name: "asc" }, { id: "asc" }],
   });
-  return mergeBuiltinSkills(builtinAgentSkillRecords(), rows.map(toRecord));
+  const company = companyAgentSkillRecords(options?.assistantId);
+  const nonBuiltin = mergeBuiltinSkills(rows.map(toRecord), company);
+  return mergeBuiltinSkills(builtinAgentSkillRecords(options?.assistantId), nonBuiltin);
 }
 
 async function findOwnedSkill(
   prisma: PrismaClient,
   owner: SkillOwner,
   input: { skillId?: string; name?: string },
+  options?: { assistantId?: string | null; nonOwnerChatRun?: boolean },
 ): Promise<(SkillRecord & { id: string }) | null> {
-  const skills = await listAgentSkillRecords(prisma, owner);
+  const skills = options?.nonOwnerChatRun
+    ? sharedAgentSkillRecords(options?.assistantId)
+    : await listAgentSkillRecords(prisma, owner, options);
   if (input.skillId) {
     return skills.find((skill) => skill.id === input.skillId) ?? null;
   }
@@ -139,20 +289,25 @@ export async function skillReadFromTool(
   prisma: PrismaClient,
   owner: SkillOwner,
   input: { name?: string; skillId?: string; file?: string },
+  options?: { assistantId?: string | null; nonOwnerChatRun?: boolean },
 ): Promise<Record<string, unknown>> {
-  const skill = await findOwnedSkill(prisma, owner, input);
+  const skill = await findOwnedSkill(prisma, owner, input, options);
   if (!skill) return { error: "Skill not found." };
   const builtin = skill.id.startsWith("builtin:");
-  const row = builtin
-    ? null
-    : await prisma.agentSkill.findFirst({
-        where: { id: skill.id, ...availableInSpace(owner) },
-        select: { files: true },
-      });
+  const company = skill.id.startsWith("company:");
+  const row =
+    builtin || company
+      ? null
+      : await prisma.agentSkill.findFirst({
+          where: { id: skill.id, ...availableInSpace(owner) },
+          select: { files: true },
+        });
   const files = builtin
     ? (enabledBuiltinAgentSkills().find((entry) => `builtin:${entry.name}` === skill.id)?.files ??
       {})
-    : skillFiles(row?.files);
+    : company
+      ? {}
+      : skillFiles(row?.files);
   const paths = Object.keys(files).sort();
   const wanted = input.file?.trim().replace(/^\.\//, "");
   if (wanted) {

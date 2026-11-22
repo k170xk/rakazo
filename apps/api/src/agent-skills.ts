@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import { enabledBuiltinAgentSkills } from "@rakazo/adapters";
+import { companySkills, enabledBuiltinAgentSkills } from "@rakazo/adapters";
 import type { Actor, AgentSkill, AgentSkillSource } from "@rakazo/contracts";
 import type { SkillSource } from "@rakazo/core";
 import {
@@ -32,7 +32,9 @@ type AgentSkillRow = {
 };
 
 function asSource(value: string): AgentSkillSource {
-  if (value === "builtin" || value === "plugin" || value === "user") return value;
+  if (value === "builtin" || value === "plugin" || value === "company" || value === "user") {
+    return value;
+  }
   return "user";
 }
 
@@ -62,6 +64,21 @@ function builtinCatalog(): AgentSkill[] {
     createdAt: new Date(0).toISOString(),
     updatedAt: new Date(0).toISOString(),
   }));
+}
+
+function companyCatalog(): AgentSkill[] {
+  return companySkills()
+    .filter((skill) => skill.availableToAll)
+    .map((skill) => ({
+      id: `company:${skill.id}`,
+      name: skill.name,
+      description: skill.description,
+      content: skill.content,
+      source: "company" as const,
+      readOnly: true,
+      createdAt: skill.createdAt,
+      updatedAt: skill.updatedAt,
+    }));
 }
 
 export function resolveSkillContent(input: {
@@ -147,7 +164,8 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         include: { availableIn: AVAILABILITY_SELECT },
         orderBy: [{ name: "asc" }, { id: "asc" }],
       });
-      return mergeBuiltinSkills(builtinCatalog(), rows.map(mapAgentSkill)).map(
+      const nonBuiltin = mergeBuiltinSkills(rows.map(mapAgentSkill), companyCatalog());
+      return mergeBuiltinSkills(builtinCatalog(), nonBuiltin).map(
         ({ content: _content, ...entry }) => entry,
       );
     },
@@ -159,7 +177,8 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         include: { availableIn: AVAILABILITY_SELECT },
         orderBy: [{ name: "asc" }, { id: "asc" }],
       });
-      return mergeBuiltinSkills(builtinCatalog(), rows.map(mapAgentSkill));
+      const nonBuiltin = mergeBuiltinSkills(rows.map(mapAgentSkill), companyCatalog());
+      return mergeBuiltinSkills(builtinCatalog(), nonBuiltin);
     },
 
     async get(actor: Actor, input: { skillId?: string; name?: string }): Promise<AgentSkill> {
@@ -168,10 +187,17 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         if (!builtin) throw new IsolationError();
         return builtin;
       }
+      if (input.skillId?.startsWith("company:")) {
+        const company = companyCatalog().find((skill) => skill.id === input.skillId);
+        if (!company) throw new IsolationError();
+        return company;
+      }
       if (input.skillId) {
         return mapAgentSkill(await owned(actor, input.skillId));
       }
       const name = input.name?.trim() ?? "";
+      const company = findSkillByName(companyCatalog(), name);
+      if (company) return company;
       const rows = await prisma.agentSkill.findMany({
         where: availableInSpace(actor),
         include: { availableIn: AVAILABILITY_SELECT },
@@ -189,7 +215,10 @@ export function createAgentSkillsService(prisma: PrismaClient) {
       input: { content?: string; name?: string; description?: string; body?: string },
     ): Promise<AgentSkill> {
       const resolved = resolveSkillContent(input);
-      if (builtinCatalog().some((s) => s.name.toLowerCase() === resolved.name.toLowerCase())) {
+      if (
+        builtinCatalog().some((s) => s.name.toLowerCase() === resolved.name.toLowerCase()) ||
+        companySkills().some((s) => s.name.toLowerCase() === resolved.name.toLowerCase())
+      ) {
         throw new ORPCError("CONFLICT", { message: "A skill with that name already exists." });
       }
       try {

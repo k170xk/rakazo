@@ -1,8 +1,10 @@
 import type { SecretStore } from "@rakazo/adapter-kit";
 import type {
+  CompanyAssistantConfig,
   CompanyAssistantModel,
   CompanyFeatureId,
   CompanyFeatures,
+  CompanySkill,
   CompanyTools,
   StaffLimits,
   ThinkingLevel,
@@ -143,6 +145,19 @@ export function companyAssistantModel(
   if (!assistantId || !loadedModel) return null;
   const chosen = companyTools().assistantModels?.[assistantId];
   return chosen && chosen.provider === loadedModel.provider ? chosen : null;
+}
+
+/** Company-defined SKILL.md definitions managed in Company Admin. */
+export function companySkills(): readonly CompanySkill[] {
+  return companyTools().companySkills ?? [];
+}
+
+/** Per-default-agent runtime settings (standing rules, skills, tuning, tool overrides). */
+export function companyAssistantConfig(
+  assistantId: string | null | undefined,
+): CompanyAssistantConfig | null {
+  if (!assistantId) return null;
+  return companyTools().assistantConfigs?.[assistantId] ?? null;
 }
 
 /** Test seam: what a process would have read from deployment settings. */

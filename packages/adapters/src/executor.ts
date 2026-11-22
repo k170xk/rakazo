@@ -82,6 +82,7 @@ import {
 } from "./chat-file-search.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import {
+  companyAssistantConfig,
   companyAssistantModel,
   companyFeatures,
   companyFeaturesFor,
@@ -262,7 +263,13 @@ import {
 } from "./run-turn-images.js";
 import { loadAgentScratchpadContext } from "./scratchpad-context.js";
 import { inferScript } from "./scripted-runtime.js";
-import { builtinAgentSkillRecords, listAgentSkillRecords } from "./skill-tools.js";
+import {
+  applyAssistantSkillPolicy,
+  formatRequiredSkillsInstruction,
+  listAgentSkillRecords,
+  resolveAssistantRequiredSkills,
+  sharedAgentSkillRecords,
+} from "./skill-tools.js";
 import { modelAllowed, monthlyBudgetRefusal, personStaffLimits } from "./staff-limits.js";
 import {
   filterStrategicInitiativeTools,
@@ -832,9 +839,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           : !companyFeatures().memberModels;
         // modelPinned distinguishes the captured choice from an attempt's recorded model.
         const modelPinned = run.modelPinned && !companyChoosesModel;
-        // A bot started from an Evolve assistant takes the model an admin chose for that
-        // assistant in place of the company model, still on the company key.
+        // A bot started from an Evolve assistant takes the model and runtime settings an admin
+        // chose for that default agent, still on the company key.
         const assistantModel = companyAssistantModel(bot.evolveAssistantId);
+        const assistantConfig = companyAssistantConfig(bot.evolveAssistantId);
         const modelSettings =
           assistantModel && settings
             ? {
@@ -1696,6 +1704,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           id: runModelId,
           ...(credential ? { connectionId: credential.id } : {}),
           ...resolvedModelRunFields(resolved),
+          ...(assistantConfig?.maxTokens != null ? { maxTokens: assistantConfig.maxTokens } : {}),
+          ...(assistantConfig?.temperature != null
+            ? { temperature: assistantConfig.temperature }
+            : {}),
           thinkingLevel: thinkingLevel ?? resolved.thinkingLevel ?? null,
         };
         // Saved identities win on resume, including when the setting was cleared meanwhile.
@@ -1745,7 +1757,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const graphicalToolsAllowed = graphical && acceptsImages && !heldForTakeover;
         const pageBrowserAllowed =
           graphical && browser.describe().capabilities.page && !heldForTakeover;
-        const disabledBuiltinTools = disabledBuiltinToolSet(bot.disabledBuiltinTools);
+        const effectiveBotDisabledBuiltinTools = [
+          ...(bot.disabledBuiltinTools ?? []),
+          ...(assistantConfig?.disabledBuiltinTools ?? []),
+        ];
+        const disabledBuiltinTools = disabledBuiltinToolSet(effectiveBotDisabledBuiltinTools);
         const userComputerOwnerId = userComputerOwner({
           trigger: run.trigger,
           sourceRole: sourceMessage?.role,
@@ -1810,8 +1826,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             voiceCall,
             // Every member already got a message that names nobody, so a handoff only repeats it.
             disabledBuiltinTools: groupReplyOptional
-              ? [...(bot.disabledBuiltinTools ?? []), "handoff_to_bot"]
-              : bot.disabledBuiltinTools,
+              ? [...effectiveBotDisabledBuiltinTools, "handoff_to_bot"]
+              : effectiveBotDisabledBuiltinTools,
             fleetManagement: bot.fleetManagement,
             followUpFromUser: sourceMessage?.role === "user",
             userComputer: userComputer === "connected",
@@ -1870,12 +1886,17 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         ]
           .filter(Boolean)
           .join("\n\n");
+        const agentDisabledEvolveTools = new Set(assistantConfig?.disabledEvolveTools ?? []);
         const exposedConnectorTools = nonOwnerChatRun
           ? []
           : discovered.filter(
               (tool) =>
                 !builtinAgentTools.some((builtin) => builtin.name === tool.name) &&
-                !sendsOutlookMail(tool.name),
+                !sendsOutlookMail(tool.name) &&
+                !(
+                  tool.name.startsWith("mcp__evolve__") &&
+                  agentDisabledEvolveTools.has(tool.name.slice("mcp__evolve__".length))
+                ),
             );
         const strategicConnectorTools = filterStrategicInitiativeTools(exposedConnectorTools, {
           trigger: run.trigger,
@@ -2121,7 +2142,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             ? `Connected plugins: ${connectedPlugins.map((row) => `${row.displayName} (${row.connectorId}:${row.provider})`).join(", ")}. Prefer those plugin tools over the computer browser or web search when reading app data (repos, releases, mail, calendar, and similar).`
             : "No plugins are connected yet.";
         const runSavedSkills = nonOwnerChatRun ? [] : savedSkills;
-        const runAgentSkills = nonOwnerChatRun ? builtinAgentSkillRecords() : agentSkills;
+        const runAgentSkills = nonOwnerChatRun
+          ? sharedAgentSkillRecords(bot.evolveAssistantId)
+          : applyAssistantSkillPolicy(agentSkills, bot.evolveAssistantId);
+        const requiredSkillsInstruction = formatRequiredSkillsInstruction(
+          resolveAssistantRequiredSkills(bot.evolveAssistantId),
+        );
+        const assistantStandingInstructions =
+          assistantConfig?.standingInstructions?.trim() || undefined;
         const taughtSkillIndex = runSavedSkills.slice(0, 20);
         const taughtSkillsLine =
           taughtSkillIndex.length > 0
@@ -2375,6 +2403,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               contextStrategy: deps.contextStrategy,
               instructions: userTurnInstructions({
                 botInstructions: runIdentityInstruction(bot, run.trigger),
+                assistantStandingInstructions,
+                requiredSkillsInstruction,
                 personContext,
                 groupContext: groupReplyOptional
                   ? [groupContext, GROUP_UNADDRESSED_REPLY_GUIDANCE].filter(Boolean).join("\n")

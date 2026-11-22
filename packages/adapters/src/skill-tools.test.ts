@@ -1,8 +1,15 @@
+import { DEFAULT_COMPANY_TOOLS } from "@rakazo/contracts";
 import { buildSkillMd, formatSkillsCatalogInstruction, parseSkillMd } from "@rakazo/core";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BUILTIN_AGENT_SKILLS } from "./builtin-skills.js";
+import { setCompanyPolicy } from "./company-policy.js";
+import { userTurnInstructions } from "./run-instructions.js";
 import {
+  applyAssistantSkillPolicy,
+  formatRequiredSkillsInstruction,
   listAgentSkillRecords,
+  resolveAssistantRequiredSkills,
+  sharedAgentSkillRecords,
   skillCreateFromTool,
   skillDeleteFromTool,
   skillReadFromTool,
@@ -399,5 +406,125 @@ describe("skill tools", () => {
         newName: longName,
       }),
     ).toEqual({ error: "Skill name must be at most 80 characters." });
+  });
+
+  describe("company skills and default agent required skills", () => {
+    const ASSISTANT_A = "11111111-1111-4111-8111-111111111111";
+    const ASSISTANT_B = "22222222-2222-4222-8222-222222222222";
+
+    afterEach(() => {
+      setCompanyPolicy({ tools: null });
+    });
+
+    it("injects required skills in full, scopes attached skills to their default agent, and keeps company skills readable on non-owner turns", async () => {
+      const styleSkill = {
+        id: "style-1",
+        name: "OCSC Writing Style",
+        description: "Mandatory UK/IE spelling and concise lead-first style",
+        content: buildSkillMd({
+          name: "OCSC Writing Style",
+          description: "Mandatory UK/IE spelling and concise lead-first style",
+          body: "Always lead with the answer. Use British/Irish spelling.",
+        }),
+        availableToAll: false,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      };
+      const allStaffSkill = {
+        id: "global-1",
+        name: "Company Signoff",
+        description: "Standard signoff checklist",
+        content: buildSkillMd({
+          name: "Company Signoff",
+          description: "Standard signoff checklist",
+          body: "Confirm reviewer and revision date.",
+        }),
+        availableToAll: true,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      };
+
+      setCompanyPolicy({
+        tools: {
+          ...DEFAULT_COMPANY_TOOLS,
+          companySkills: [styleSkill, allStaffSkill],
+          assistantConfigs: {
+            [ASSISTANT_A]: {
+              standingInstructions: "Always cite BS/IS Eurocode clause numbers.",
+              skills: [
+                { skillKey: "company:style-1", mode: "required" },
+                { skillKey: "builtin:Interrogate", mode: "required" },
+              ],
+              disabledSkills: ["ocsc-word"],
+            },
+          },
+        },
+      });
+
+      // Required skills resolve both company and built-in attachments in order.
+      const requiredA = resolveAssistantRequiredSkills(ASSISTANT_A);
+      expect(requiredA.map((s) => s.id)).toEqual(["company:style-1", "builtin:Interrogate"]);
+      expect(resolveAssistantRequiredSkills(ASSISTANT_B)).toEqual([]);
+
+      const requiredText = formatRequiredSkillsInstruction(requiredA);
+      expect(requiredText).toContain("Mandatory company skills for this agent");
+      expect(requiredText).toContain("### Required skill: OCSC Writing Style");
+      expect(requiredText).toContain("Always lead with the answer.");
+      expect(requiredText).toContain("### Required skill: Interrogate");
+
+      // System instructions include live standing instructions + mandatory skills right after house style.
+      const prompt = userTurnInstructions({
+        botInstructions: "You are Civil Intelligence.",
+        assistantStandingInstructions: "Always cite BS/IS Eurocode clause numbers.",
+        requiredSkillsInstruction: requiredText,
+        groupContext: undefined,
+        messagingContext: undefined,
+        redactedMemoryContext: undefined,
+        redactedScratchpadContext: undefined,
+        hasHistoricalContext: false,
+        computerInstruction: "",
+        pageBrowserAllowed: false,
+        workspaceInstruction: "",
+        agentEnvironmentInstruction: undefined,
+        botDirectory: undefined,
+        pluginLine: undefined,
+        agentSkillsLine: undefined,
+        taughtSkillsLine: undefined,
+        replyGuidance: "",
+      })
+        .filter(Boolean)
+        .join("\n\n");
+      expect(prompt).toContain("Company standing instructions for this default agent");
+      expect(prompt).toContain("Always cite BS/IS Eurocode clause numbers.");
+      expect(prompt).toContain("Mandatory company skills for this agent");
+
+      // Scoped visibility: ASSISTANT_A sees style-1 + allStaffSkill and drops disabled ocsc-word;
+      // ASSISTANT_B sees allStaffSkill + ocsc-word, NOT style-1.
+      const baseLoaded = await listAgentSkillRecords(prisma as never, owner);
+      const skillsA = applyAssistantSkillPolicy(baseLoaded, ASSISTANT_A);
+      const skillsB = applyAssistantSkillPolicy(baseLoaded, ASSISTANT_B);
+      expect(skillsA.some((s) => s.id === "company:style-1")).toBe(true);
+      expect(skillsA.some((s) => s.id === "company:global-1")).toBe(true);
+      expect(skillsA.some((s) => s.name === "ocsc-word")).toBe(false);
+      expect(skillsB.some((s) => s.id === "company:style-1")).toBe(false);
+      expect(skillsB.some((s) => s.id === "company:global-1")).toBe(true);
+      expect(skillsB.some((s) => s.name === "ocsc-word")).toBe(true);
+
+      // Non-owner / shared turns still get company skills attached to the default agent.
+      const sharedA = sharedAgentSkillRecords(ASSISTANT_A);
+      expect(sharedA.some((s) => s.id === "company:style-1")).toBe(true);
+      const readOnShared = await skillReadFromTool(
+        prisma as never,
+        owner,
+        { name: "OCSC Writing Style" },
+        { assistantId: ASSISTANT_A, nonOwnerChatRun: true },
+      );
+      expect(readOnShared).toMatchObject({
+        name: "OCSC Writing Style",
+        source: "company",
+        readOnly: true,
+      });
+      expect(String(readOnShared.content)).toContain("Always lead with the answer.");
+    });
   });
 });

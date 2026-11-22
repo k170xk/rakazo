@@ -262,6 +262,25 @@ msgstr "{0}（超过 {1}）"
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
 
+#. placeholder {0}: appLanes.tools.running
+#. placeholder {1}: appLanes.tools.slots
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} active"
+msgstr ""
+
+#. placeholder {0}: fleetStats.online
+#. placeholder {1}: fleetStats.total
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} online"
+msgstr ""
+
+#. placeholder {0}: size(fleetStats.memUsed)
+#. placeholder {1}: size(fleetStats.memTotal)
+#. placeholder {2}: sample?.fleet.chatRuns ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} RAM · {2} replies"
+msgstr ""
+
 #. placeholder {0}: category.from
 #. placeholder {1}: category.label
 #: src/components/office/planner/history.tsx
@@ -271,6 +290,22 @@ msgstr ""
 #. placeholder {0}: category.label
 #: src/components/office/planner/history.tsx
 msgid "{0} added"
+msgstr ""
+
+#. placeholder {0}: conflict.resourceId
+#. placeholder {1}: conflict.peakTasks
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "{0} assigned to {1} overlapping tasks"
+msgstr ""
+
+#. placeholder {0}: audit.issues.length
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "{0} audit findings to review"
+msgstr ""
+
+#. placeholder {0}: totalAgents - (usage?.required ?? 0)
+#: src/pages/AdminCompanySkills.tsx
+msgid "{0} available"
 msgstr ""
 
 #. placeholder {0}: block.name
@@ -289,6 +324,16 @@ msgstr ""
 msgid "{0} days"
 msgstr ""
 
+#. placeholder {0}: evm.daysRemaining
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "{0} days remaining"
+msgstr ""
+
+#. placeholder {0}: assistant.requiredSkillCount
+#: src/pages/shell/create-bot-dialog.tsx
+msgid "{0} default skill(s)"
+msgstr ""
+
 #. placeholder {0}: app.name
 #: src/components/integrations/CompanyMcpApp.tsx
 msgid "{0} did not accept this token. Check it and try again."
@@ -302,6 +347,11 @@ msgstr ""
 #. placeholder {0}: saved.unfiled
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "{0} earlier entries are only visible to you. Move them to:"
+msgstr ""
+
+#. placeholder {0}: file.name
+#: src/pages/AdminDefaultAgents.tsx
+msgid "{0} exceeds the 20 MB limit."
 msgstr ""
 
 #. placeholder {0}: parts.amount
@@ -351,6 +401,18 @@ msgstr "{0} KB"
 msgid "{0} KB of {1} KB. Short, specific notes work best."
 msgstr ""
 
+#. placeholder {0}: agent.vectorStoreIds.length
+#: src/pages/AdminDefaultAgents.tsx
+msgid "{0} knowledge store(s)"
+msgstr ""
+
+#. placeholder {0}: appLanes.large.slots
+#. placeholder {1}: appLanes.video.slots
+#. placeholder {2}: appLanes.tools.queued
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} large · {1} video · {2} waiting"
+msgstr ""
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} MB"
@@ -391,10 +453,32 @@ msgstr ""
 msgid "{0} of {1} used"
 msgstr ""
 
+#. placeholder {0}: sample?.incus.stopped ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} off · {incusOnlineCount} Incus host(s)"
+msgstr ""
+
+#. placeholder {0}: sample?.incus.running ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} on"
+msgstr ""
+
+#. placeholder {0}: node.running
+#. placeholder {1}: node.stopped ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} on · {1} off"
+msgstr ""
+
 #. placeholder {0}: formatSize(data.computerBytes)
 #. placeholder {1}: formatSize(data.chatBytes)
 #: src/components/StorageDialog.tsx
 msgid "{0} on agent computers · {1} attached in chats."
+msgstr ""
+
+#. placeholder {0}: baseline.totalOnScheduleTasks
+#. placeholder {1}: baseline.totalAheadTasks
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "{0} on schedule · {1} ahead"
 msgstr ""
 
 #. placeholder {0}: questions.length
@@ -412,6 +496,11 @@ msgstr ""
 msgid "{0} removed"
 msgstr ""
 
+#. placeholder {0}: usage.required
+#: src/pages/AdminCompanySkills.tsx
+msgid "{0} required"
+msgstr ""
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
@@ -420,6 +509,12 @@ msgstr "{0} 的合并间隔（小时）"
 #. placeholder {0}: chosen.length
 #: src/components/StorageDialog.tsx
 msgid "{0} selected · {chosenSize}"
+msgstr ""
+
+#. placeholder {0}: sample.incus.nodes.length
+#. placeholder {0}: sample.toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} servers"
 msgstr ""
 
 #. placeholder {0}: sharedBy.name
@@ -437,6 +532,16 @@ msgstr "{0} TB"
 #: src/components/integrations/evolve-tools-section.tsx
 #: src/components/office/ribbon/CompactRibbon.tsx
 msgid "{0} tools"
+msgstr ""
+
+#. placeholder {0}: fleetStats.cpus
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} vCPUs"
+msgstr ""
+
+#. placeholder {0}: fleetStats.cpus
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} vCPUs total"
 msgstr ""
 
 #. placeholder {0}: props.name
@@ -463,6 +568,10 @@ msgstr "{amount} / {period}"
 #. placeholder {0}: questions.length
 #: src/components/LearningClinicCard.tsx
 msgid "{answered} of {0} answered"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "{availableSkills} available skill(s)"
 msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
@@ -578,6 +687,11 @@ msgstr ""
 #: src/lib/relative-time.ts
 msgid "{hours}h ago"
 msgstr "{hours} 小时前"
+
+#. placeholder {0}: incusNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{incusOnlineCount} / {0} online"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 msgid "{label}, empty"
@@ -755,6 +869,10 @@ msgstr ""
 msgid "{removed, plural, one {# markup removed} other {# markups removed}}"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "{requiredSkills} required skill(s)"
+msgstr ""
+
 #: src/pages/AdminInfrastructure.tsx
 msgid "{running} running"
 msgstr ""
@@ -824,6 +942,16 @@ msgstr "{title}，保存为 {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# 个工具} other {# 个工具}}"
 
+#. placeholder {0}: toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{toolOnlineCount} / {0} active"
+msgstr ""
+
+#. placeholder {0}: toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{toolOnlineCount} of {0} servers · Docs, PDFs & video"
+msgstr ""
+
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "{total} tools for company data in Evolve — projects, people, Learning Centre clinics, site visits and more. Agents only see and change what your Evolve access allows. The {changing} that change Evolve show you a card to check, edit and approve first, every time; nothing is saved until you click."
 msgstr ""
@@ -885,6 +1013,10 @@ msgstr "1 个工作区"
 
 #: src/components/apps/CodeDiff.tsx
 msgid "1 unchanged line"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "90° Turn"
 msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
@@ -1079,6 +1211,10 @@ msgstr "接受此修订"
 msgid "Accepted: PDF. Select a file to preview and choose pages."
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Access"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Access key ID"
 msgstr ""
@@ -1142,6 +1278,14 @@ msgstr "工作区操作"
 msgid "Active"
 msgstr "启用"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Active Incus containers, chat replies, routines, and queued runs"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Active items"
+msgstr ""
+
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"
 msgstr "动态"
@@ -1160,6 +1304,7 @@ msgstr ""
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/todos/todo-board.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -1269,6 +1414,10 @@ msgstr ""
 msgid "Add another"
 msgstr "再添加一个"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Add built-in skill"
+msgstr ""
+
 #: src/components/office/planner/NewCategoryControl.tsx
 msgid "Add category"
 msgstr ""
@@ -1285,6 +1434,10 @@ msgstr ""
 msgid "Add comments, callouts or an approval stamp"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Add company skill"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Add credits"
 msgstr "添加额度"
@@ -1292,6 +1445,10 @@ msgstr "添加额度"
 #: src/pages/PluginsOverlay.tsx
 msgid "Add custom"
 msgstr "添加自定义"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Add dated tasks to forecast finish"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Add deadline"
@@ -1407,6 +1564,10 @@ msgstr "添加服务器 URL"
 msgid "Add skills"
 msgstr "添加技能"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Add task"
+msgstr ""
+
 #: src/components/office/StudioWelcome.tsx
 msgid "Add tasks, links and milestones on the Gantt"
 msgstr ""
@@ -1451,9 +1612,15 @@ msgstr ""
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/SharePointFolders.tsx
 #: src/components/office/planner/history.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Added"
 msgstr "已添加"
+
+#. placeholder {0}: created.task.label
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Added \"{0}\""
+msgstr ""
 
 #. placeholder {0}: person.role
 #: src/pages/shell/evolve-references.tsx
@@ -1618,6 +1785,10 @@ msgstr ""
 msgid "Agents remember what matters across chats: your preferences, your projects and the decisions you've made. They also know who you are from your Evolve CV, so their work fits your role from the very first message."
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Agents started from this default agent run on the chosen model using the company API key. Leave blank to inherit the company default."
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Agents that work like teammates"
 msgstr ""
@@ -1704,6 +1875,10 @@ msgstr ""
 msgid "All borders"
 msgstr "所有框线"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "All DCMA schedule integrity checks passed."
+msgstr ""
+
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "All documents"
 msgstr "All documents"
@@ -1715,6 +1890,10 @@ msgstr "所有标记"
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
 msgstr "所有工作区"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "All staff"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "All statuses"
@@ -1736,6 +1915,10 @@ msgstr ""
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "允许"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Allow all active line managers in Evolve."
+msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Allow cross-space agent communication"
@@ -1796,6 +1979,10 @@ msgstr "始终允许此工具"
 #: src/components/AskCard.tsx
 msgid "Always allowed"
 msgstr "始终允许"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Always enforced on every reply for both existing and new agents started from this default agent. Changes take effect immediately; staff cannot overwrite these."
+msgstr ""
 
 #: src/components/markdown-link-prompt.tsx
 msgid "Always open {site}"
@@ -1903,6 +2090,10 @@ msgstr ""
 msgid "Any model, with your own key"
 msgstr "任意模型，使用你自己的密钥"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Anyone"
+msgstr ""
+
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Anyone at OCSC with the app can start one and lead it."
 msgstr ""
@@ -1981,6 +2172,11 @@ msgstr ""
 msgid "App · Updated below"
 msgstr ""
 
+#. placeholder {0}: sample.app.name
+#: src/pages/AdminInfrastructure.tsx
+msgid "App ({0})"
+msgstr ""
+
 #: src/components/pages/PublicPageShell.tsx
 msgid "App actions"
 msgstr ""
@@ -2015,18 +2211,6 @@ msgstr ""
 msgid "App updated"
 msgstr ""
 
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "App: documents and tools"
-#~ msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "App: large documents"
-#~ msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "App: video"
-#~ msgstr ""
-
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
@@ -2040,6 +2224,10 @@ msgstr ""
 #: src/components/office/word/WordRibbon.tsx
 msgid "Apply"
 msgstr "应用"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Apply JSON"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Approval"
@@ -2235,6 +2423,16 @@ msgstr ""
 msgid "Asleep"
 msgstr "休眠中"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Assign"
+msgstr ""
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Assign owner"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Assigned to"
@@ -2247,6 +2445,10 @@ msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "assignee"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Assignees with concurrent tasks"
 msgstr ""
 
 #: src/components/office/history/VersionHistory.tsx
@@ -2283,12 +2485,24 @@ msgstr "{0}"
 msgid "at {timeSelect}"
 msgstr "{timeSelect}"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Attach"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Attach existing vector store"
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
 msgstr "附加文件"
 
 #: src/components/EmailDraftCard.tsx
 msgid "Attach from chat"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Attached default skills"
 msgstr ""
 
 #: src/pages/shell/chat-context.tsx
@@ -2300,6 +2514,10 @@ msgstr "附件"
 #. placeholder {1}: state.attempts
 #: src/components/office/DocumentLoadPanel.tsx
 msgid "Attempt {0} of {1}"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Attention needed"
 msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
@@ -2343,6 +2561,10 @@ msgstr "授权此服务器后，Agent 才能使用其工具。将打开弹窗。
 msgid "Auto"
 msgstr "自动"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Auto-cascade links"
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Automated senders"
 msgstr "自动发送者"
@@ -2360,6 +2582,10 @@ msgstr ""
 msgid "AutoSum"
 msgstr "自动求和"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Available (on demand)"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Available after the routine is saved"
 msgstr "保存例行任务后可用"
@@ -2371,6 +2597,10 @@ msgstr "可用额度"
 #: src/components/integrations/space-availability.tsx
 msgid "Available in"
 msgstr "可用于"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Available to all staff agents"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Available to shell commands as {commandVariable}"
@@ -2450,6 +2680,10 @@ msgstr "Base URL"
 msgid "baseline"
 msgstr ""
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Baseline variance"
+msgstr ""
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Basic auth"
 msgstr "基本认证"
@@ -2457,6 +2691,10 @@ msgstr "基本认证"
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Basic auth ({username})"
 msgstr "基本认证（{username}）"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Basics & prompts"
+msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 msgid "Bcc"
@@ -2503,6 +2741,10 @@ msgstr "账单周期"
 msgid "Block"
 msgstr "阻止"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/lib/ticket-status.ts
 msgid "Blocked"
 msgstr "已阻塞"
@@ -2646,6 +2888,7 @@ msgstr ""
 msgid "Builds OCSC-styled workbooks with real formulas, totals and number formats"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Built-in"
@@ -2657,6 +2900,10 @@ msgstr "Built-in OCSC report"
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Built-in skills"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Built-in tools"
 msgstr ""
 
 #: src/components/EmailDraftCard.tsx
@@ -2756,6 +3003,8 @@ msgstr "无法读取图像"
 #: src/components/todos/todo-board.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -2807,6 +3056,10 @@ msgstr "已取消"
 msgid "Cancelled"
 msgstr "已取消"
 
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Capture programme assumptions, site constraints, or meeting notes right inside this plan."
+msgstr ""
+
 #: src/components/vault/kinds.tsx
 msgid "Card"
 msgstr ""
@@ -2833,6 +3086,8 @@ msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
 msgstr ""
@@ -3138,6 +3393,10 @@ msgstr ""
 msgid "Choose a provider"
 msgstr "选择提供方"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Choose a vector store…"
+msgstr ""
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Choose an agent shape, color, or upload an image"
 msgstr ""
@@ -3221,6 +3480,7 @@ msgid "Cleanup started {0}."
 msgstr ""
 
 #: src/components/EmailFilingCard.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/SecretAskCard.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3265,6 +3525,10 @@ msgstr ""
 msgid "Clear mask"
 msgstr ""
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Clear search"
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Clear Search"
 msgstr ""
@@ -3289,6 +3553,10 @@ msgstr ""
 msgid "Client"
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Client report structure"
+msgstr ""
+
 #: src/pages/shell/evolve-references.tsx
 msgid "Client:"
 msgstr ""
@@ -3306,6 +3574,7 @@ msgstr ""
 #: src/components/ImageLightbox.tsx
 #: src/components/InstallAppBanner.tsx
 #: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/planner/PlannerJsonDialog.tsx
 #: src/components/office/ribbon/CompactRibbon.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/tour/ocsc-tour.tsx
@@ -3437,6 +3706,10 @@ msgstr ""
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Cloud"
 msgstr "云端"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Cloud computers"
+msgstr ""
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Clouds, callouts, arrows and notes placed exactly where the issue is"
@@ -3576,6 +3849,8 @@ msgid "Compact"
 msgstr "紧凑"
 
 #: src/components/apps/AppStudio.tsx
+#: src/pages/AdminDefaultAgents.tsx
+#: src/pages/KnowledgeSection.tsx
 msgid "Company"
 msgstr ""
 
@@ -3606,6 +3881,10 @@ msgstr ""
 msgid "Company apps"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Company default"
+msgstr ""
+
 #. placeholder {0}: levels[defaultAccess]
 #: src/pages/AdminComputerAccess.tsx
 msgid "Company default ({0})"
@@ -3624,6 +3903,11 @@ msgstr ""
 msgid "Company model"
 msgstr ""
 
+#. placeholder {0}: company.modelId
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Company model ({0})"
+msgstr ""
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "Company model ({companyLabel})"
 msgstr ""
@@ -3638,6 +3922,26 @@ msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Company setting (may choose)"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Company skill created"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Company skill removed"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Company skill updated"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Company skills"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Company standing instructions (live)"
 msgstr ""
 
 #: src/pages/AdminAssistantModels.tsx
@@ -3681,6 +3985,9 @@ msgstr ""
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/components/LearningClinicCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "已完成"
@@ -3697,7 +4004,7 @@ msgid "Computer failed to boot"
 msgstr "电脑启动失败"
 
 #: src/pages/AdminInfrastructure.tsx
-msgid "Computer host (Incus)"
+msgid "Computer hosts (Incus)"
 msgstr ""
 
 #: src/components/ModelCredits.tsx
@@ -3733,6 +4040,7 @@ msgstr "电脑操作模型"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminComputerAccess.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Computers"
 msgstr "电脑"
 
@@ -3772,6 +4080,10 @@ msgstr ""
 msgid "Computers running"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Concurrent documents, large files, video renders, and queue depth"
+msgstr ""
+
 #: src/components/EmailFilingCard.tsx
 msgid "Confidence"
 msgstr ""
@@ -3784,10 +4096,12 @@ msgstr ""
 msgid "Configure a plugin catalog on the server to add connectors."
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
 #: src/pages/shell/evolve-history.tsx
 msgid "Confirm"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
 msgstr "确认删除"
@@ -4009,6 +4323,7 @@ msgstr "对话"
 #: src/components/ImageLightbox.tsx
 #: src/components/InviteDialog.tsx
 #: src/components/markdown-copy.tsx
+#: src/components/office/planner/PlannerJsonDialog.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/components/UiCardView.tsx
@@ -4019,6 +4334,7 @@ msgstr "对话"
 msgid "Copied"
 msgstr "已复制"
 
+#: src/components/office/planner/PlannerJsonDialog.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/components/UiCardView.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -4073,6 +4389,10 @@ msgstr ""
 #: src/pages/AdminStaffSpending.tsx
 msgid "Cost"
 msgstr "费用"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Cost index"
+msgstr ""
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Cost plans, trackers and schedules, styled for OCSC and ready to share."
@@ -4209,6 +4529,10 @@ msgstr "无法连接电脑屏幕"
 msgid "Could not continue"
 msgstr "无法继续"
 
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Could not copy JSON"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Could not create agent"
@@ -4234,6 +4558,10 @@ msgstr ""
 msgid "Could not create this draft in Outlook"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not create vector store"
+msgstr ""
+
 #: src/pages/Onboarding.tsx
 msgid "Could not create your agent"
 msgstr ""
@@ -4245,6 +4573,10 @@ msgstr ""
 #: src/components/apps/AppStudio.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete app"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not delete default agent"
 msgstr ""
 
 #: src/pages/shell/dialogs.tsx
@@ -4395,6 +4727,14 @@ msgstr ""
 #: src/components/VaultSettings.tsx
 msgid "Could not load credentials."
 msgstr "无法加载凭据。"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not load default agents. Check that Evolve is linked and you are an Evolve admin."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not load files in this store"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Could not load files."
@@ -4556,9 +4896,17 @@ msgstr "无法拒绝插件"
 msgid "Could not remove"
 msgstr "无法移除"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Could not remove company skill"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not remove connector"
 msgstr "无法移除连接器"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not remove file"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not remove plugin"
@@ -4651,8 +4999,16 @@ msgstr "无法保存"
 msgid "Could not save Auto Review"
 msgstr "无法保存自动审核"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Could not save company skill"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Could not save computer settings"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not save default agent"
 msgstr ""
 
 #: src/pages/GroupPanel.tsx
@@ -4895,6 +5251,10 @@ msgstr ""
 msgid "Could not update who can use this app"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Could not upload file"
+msgstr ""
+
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "无法确认电脑是否就绪（{failureMessage}）。请修复连接后再检查一次。"
@@ -5128,6 +5488,7 @@ msgid "CPU busy"
 msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Board.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-dialog.tsx
@@ -5153,8 +5514,16 @@ msgstr ""
 msgid "Create as many as you need: a bid writer, a drainage checker, a reviewer"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Create default agent"
+msgstr ""
+
 #: src/components/EmailDraftCard.tsx
 msgid "Create draft"
+msgstr ""
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Create first note"
 msgstr ""
 
 #: src/pages/GroupPanel.tsx
@@ -5169,9 +5538,17 @@ msgstr ""
 msgid "Create my first chat"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Create new vector store"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Create Routine"
 msgstr "新建例行任务"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Create skill"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Create space"
@@ -5253,6 +5630,24 @@ msgstr "额度金额"
 msgid "Credits ($)"
 msgstr ""
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Critical"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Critical path"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Critical path only"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "critical tasks"
+msgstr ""
+
 #: src/lib/cron.ts
 msgid "Cron"
 msgstr "Cron"
@@ -5301,6 +5696,10 @@ msgstr "当前密码"
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Cursor cloud agents"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Curved"
 msgstr ""
 
 #: src/components/office/sheet/SheetRibbon.tsx
@@ -5374,10 +5773,18 @@ msgstr ""
 msgid "Date and time"
 msgstr "日期和时间"
 
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Dates"
+msgstr ""
+
 #: src/lib/billing.ts
 #: src/lib/cron.ts
 msgid "day"
 msgstr "天"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Day"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Day-to-day work"
@@ -5438,6 +5845,23 @@ msgstr "默认"
 msgid "Default ({0})"
 msgstr "默认（{0}）"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Default agent created"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Default agent deleted"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Default agent saved"
+msgstr ""
+
+#: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Default agents"
+msgstr ""
+
 #: src/pages/shell/agent-import.tsx
 msgid "Default from Hermes"
 msgstr "Hermes 默认内容"
@@ -5459,12 +5883,22 @@ msgstr "Default Word template"
 msgid "Default Word template saved"
 msgstr "Default Word template saved"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Define company-wide writing styles, checklists, and workflows here, then attach them to default agents as required (\"must use\") or available skills."
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "delayed"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/StorageDialog.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/AdminAccess.tsx
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -5543,6 +5977,10 @@ msgstr "删除群组"
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"
 msgstr "同时删除记忆"
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Delete note"
+msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Delete own project comments"
@@ -5676,6 +6114,10 @@ msgstr ""
 msgid "Describe the change — e.g. remove the car in the foreground, change the wall colour to sage green, add soft afternoon light"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Describe the default role, goals, and helpful starting guidance..."
+msgstr ""
+
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Describe the edit you want"
 msgstr ""
@@ -5704,6 +6146,10 @@ msgstr ""
 #: src/components/DesktopUpdates.tsx
 msgid "Desktop update"
 msgstr "桌面更新"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Detach vector store"
+msgstr ""
 
 #: src/components/office/planner/history-diff.ts
 msgid "details"
@@ -5742,6 +6188,10 @@ msgstr ""
 #: src/pages/Auth.tsx
 msgid "Did you mean <0>{emailSuggestion}</0>?"
 msgstr "你是不是想输入 <0>{emailSuggestion}</0>？"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Direct"
+msgstr ""
 
 #: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5867,6 +6317,10 @@ msgstr "文档已更改。请重新打开以编辑最新版本。"
 msgid "Document library"
 msgstr "Document library"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Document runners"
+msgstr ""
+
 #: src/components/office/WordStudio.tsx
 msgid "Document: {title}"
 msgstr "文档：{title}"
@@ -5875,6 +6329,10 @@ msgstr "文档：{title}"
 #: src/pages/AdminInfrastructure.tsx
 msgid "Documents"
 msgstr "文档"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Documents running"
+msgstr ""
 
 #: src/pages/AdminInfrastructure.tsx
 msgid "Documents, spreadsheets, PDFs and video"
@@ -6027,6 +6485,10 @@ msgstr ""
 msgid "Drawn for this app in the OCSC style. Describe one object to draw something else."
 msgstr ""
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Drop a task here"
+msgstr ""
+
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Drop notes and shapes freely — the board is for exploring, not filling a template"
 msgstr ""
@@ -6057,6 +6519,18 @@ msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Duration (days)"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "e.g. Drainage Design Standards"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "e.g. OCSC Civil Intelligence"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "e.g. OCSC writing style"
 msgstr ""
 
 #: src/pages/AdminAnnouncements.tsx
@@ -6091,6 +6565,10 @@ msgstr ""
 msgid "Earlier versions of this app."
 msgstr ""
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Earned Value & Schedule Performance (EVM)"
+msgstr ""
+
 #: src/components/apps/AppsDialog.tsx
 #: src/components/apps/AppViewer.tsx
 #: src/components/AskCard.tsx
@@ -6099,6 +6577,7 @@ msgstr ""
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminCompanySkills.tsx
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/McpServersOverlay.tsx
 msgid "Edit"
@@ -6112,8 +6591,16 @@ msgstr ""
 msgid "Edit any slide later; each changed slide gets a review comment saying what changed"
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Edit as raw SKILL.md"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Edit comment"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Edit company skill"
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -6134,6 +6621,10 @@ msgstr ""
 
 #: src/components/todos/todo-board.tsx
 msgid "Edit item"
+msgstr ""
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Edit JSON"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -6313,10 +6804,18 @@ msgid "Emails:\n"
 ""
 msgstr ""
 
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Empty note"
+msgstr ""
+
 #. placeholder {0}: humanizeTool(toolName)
 #: src/pages/shell/bot-panel.tsx
 msgid "Enable {0}"
 msgstr "启用 {0}"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Enable knowledge file search"
+msgstr ""
 
 #: src/components/office/slides/Presenter.tsx
 msgid "End of slideshow. Click to exit."
@@ -6576,6 +7075,10 @@ msgstr ""
 msgid "Evolve Board"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Evolve Chat model"
+msgstr ""
+
 #: src/components/EvolveChangeEditor.tsx
 msgid "Evolve checks the change again; nothing is saved until you approve the card."
 msgstr ""
@@ -6661,17 +7164,26 @@ msgstr ""
 msgid "Evolve search is unavailable. Type a full work email instead."
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Evolve system prompt (shared with Evolve Chat)"
+msgstr ""
+
 #: src/components/todos/todo-board.tsx
 msgid "Evolve To-do List"
 msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
 #: src/pages/AdminCompanyTools.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Evolve tools"
 msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
 msgid "Evolve tools for everyone"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Evolve visibility groups"
 msgstr ""
 
 #: src/components/office/OfficeStudioHost.tsx
@@ -6725,10 +7237,6 @@ msgstr ""
 #: src/pages/shell/references-dialog.tsx
 msgid "exemplar responses"
 msgstr ""
-
-#: src/pages/shell/shell-sidebar.tsx
-#~ msgid "Exl"
-#~ msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Expand"
@@ -6893,6 +7401,14 @@ msgstr ""
 msgid "File Outlook email"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "File removed"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "File uploaded to vector store"
+msgstr ""
+
 #. placeholder {0}: item.filedPath
 #: src/components/EmailFilingCard.tsx
 msgid "Filed in {0}"
@@ -6942,10 +7458,27 @@ msgstr ""
 msgid "Filter by date"
 msgstr "按日期筛选"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Filter default agents…"
+msgstr ""
+
 #: src/pages/AdminStaffLimits.tsx
 msgid "Filter models"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Filter people…"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Filter tasks"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Filter tools…"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Filters"
@@ -7044,6 +7577,14 @@ msgstr "适应窗口大小"
 msgid "Fit width"
 msgstr "适应宽度"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Fleet compute"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Fleet servers"
+msgstr ""
+
 #: src/components/whiteboards/whiteboard-studio.tsx
 msgid "Flow left to right"
 msgstr ""
@@ -7103,6 +7644,11 @@ msgstr ""
 
 #: src/components/AppScopeAskCard.tsx
 msgid "For the company"
+msgstr ""
+
+#. placeholder {0}: critical.projectEarlyFinish
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Forecast finish: {0}"
 msgstr ""
 
 #: src/components/EmailFilingSettings.tsx
@@ -7252,6 +7798,10 @@ msgstr "全屏"
 msgid "Functions"
 msgstr "函数"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Gantt"
+msgstr ""
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Gateway ID"
@@ -7265,6 +7815,7 @@ msgstr ""
 msgid "Gateway URL"
 msgstr ""
 
+#: src/components/office/planner/PlannerHealthView.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "General"
 msgstr "常规"
@@ -7509,6 +8060,10 @@ msgstr "标题 2"
 msgid "Heading 3"
 msgstr "标题 3"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Health & PM"
+msgstr ""
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Hear a sample"
 msgstr "试听"
@@ -7519,6 +8074,7 @@ msgstr "你好，这是我朗读回复时的声音。"
 
 #: src/components/office/slides/SlideRail.tsx
 #: src/components/vault/LoginFieldsInput.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Hidden"
 msgstr "隐藏"
 
@@ -7561,6 +8117,9 @@ msgid "Hide transcript"
 msgstr "隐藏文字记录"
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -7626,6 +8185,10 @@ msgstr "小时"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "hours"
 msgstr "小时"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "House tone, structure, spelling and formatting rules for all client writing."
+msgstr ""
 
 #: src/components/SignupSurvey.tsx
 msgid "How big is your team?"
@@ -7738,6 +8301,10 @@ msgstr ""
 msgid "Images, infographics, charts, stock media, voiceovers and web search."
 msgstr ""
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Impeded items"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Import"
 msgstr ""
@@ -7769,14 +8336,27 @@ msgid "In a chat"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerHealthView.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-status.ts
 msgid "In progress"
 msgstr "进行中"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "In Progress"
+msgstr ""
+
 #: src/lib/ticket-status.ts
 msgid "In review"
 msgstr "审核中"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "In Review"
+msgstr ""
 
 #: src/components/InstallAppBanner.tsx
 msgid "In Safari's File menu, choose Add to Dock."
@@ -7836,6 +8416,18 @@ msgstr "增大字号"
 msgid "Increase indent"
 msgstr "增加缩进量"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Incus cluster"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Incus computer cluster nodes"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Individual KVM servers hosting staff cloud computers across the OVN cluster."
+msgstr ""
+
 #: src/components/AppScopeAskCard.tsx
 msgid "Individual user app"
 msgstr ""
@@ -7878,6 +8470,10 @@ msgstr "在上方插入行"
 msgid "Insert table"
 msgstr "插入表格"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Inspect programme JSON"
+msgstr ""
+
 #: src/components/InstallAppBanner.tsx
 msgid "Install"
 msgstr "Install"
@@ -7909,6 +8505,7 @@ msgstr "指令历史"
 #: src/components/AskCard.tsx
 #: src/components/EmailFilingCard.tsx
 #: src/components/InstructionSettings.tsx
+#: src/pages/AdminCompanySkills.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Instructions"
 msgstr "指令"
@@ -7954,6 +8551,14 @@ msgstr "间隔单位"
 #: src/lib/user-error.ts
 msgid "Invalid code"
 msgstr "验证码无效"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Invalid JSON syntax"
+msgstr ""
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Invalid programme JSON"
+msgstr ""
 
 #. placeholder {0}: option.email
 #: src/components/GroupPeople.tsx
@@ -8069,6 +8674,12 @@ msgstr ""
 msgid "Joins when they open OCSC Intelligence from Evolve"
 msgstr ""
 
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Jump to {0} on Gantt"
+msgstr ""
+
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
 msgstr "跳到最新"
@@ -8076,6 +8687,12 @@ msgstr "跳到最新"
 #: src/pages/shell/chat-context.tsx
 msgid "Jump to replied message: {excerpt}"
 msgstr "跳转到回复的消息：{excerpt}"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Jump to task on Gantt"
+msgstr ""
 
 #: src/components/AppScopeAskCard.tsx
 msgid "Just for me"
@@ -8093,6 +8710,10 @@ msgstr ""
 #: src/components/office/word/WordRibbon.tsx
 msgid "Justify"
 msgstr "两端对齐"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Kanban"
+msgstr ""
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Kanban, checklists, guided steps, sortable lists and a command menu."
@@ -8160,6 +8781,10 @@ msgstr "键盘快捷键"
 msgid "Keys"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Knowledge"
+msgstr ""
+
 #: src/pages/AdminAssistantModels.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Knowledge files"
@@ -8175,7 +8800,15 @@ msgid "Language"
 msgstr "语言"
 
 #: src/pages/AdminInfrastructure.tsx
+msgid "Large docs"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
 msgid "Large documents"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Large overflow"
 msgstr ""
 
 #: src/components/StorageDialog.tsx
@@ -8350,6 +8983,18 @@ msgstr ""
 msgid "Let's begin"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Lets agents started from this default agent search all attached OpenAI vector stores."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Lets staff attach approved tender exemplar responses from Evolve."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Lets staff attach staff profiles and CVs from Evolve in chat."
+msgstr ""
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -8373,6 +9018,10 @@ msgstr ""
 msgid "Line"
 msgstr "直线"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Line managers"
+msgstr ""
+
 #: src/components/office/word/WordRibbon.tsx
 msgid "Line spacing"
 msgstr "行距"
@@ -8385,6 +9034,10 @@ msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 msgid "Link address"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Link arrows"
 msgstr ""
 
 #: src/components/ImageLightbox.tsx
@@ -8438,6 +9091,10 @@ msgstr "正在聆听…"
 
 #: src/components/pages/PagesList.tsx
 msgid "Live data"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Live rules"
 msgstr ""
 
 #: src/pages/AdminInfrastructure.tsx
@@ -8503,6 +9160,10 @@ msgstr ""
 msgid "Loading connectors…"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Loading default agents…"
+msgstr ""
+
 #: src/components/EmailDraftCard.tsx
 msgid "Loading email draft"
 msgstr ""
@@ -8520,6 +9181,7 @@ msgid "Loading exemplar responses..."
 msgstr ""
 
 #: src/components/EmailDraftCard.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Loading files…"
 msgstr ""
 
@@ -8567,6 +9229,10 @@ msgstr "正在加载最新版本…"
 msgid "Loading the project list…"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Loading vector stores…"
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Loading video…"
 msgstr ""
@@ -8606,6 +9272,14 @@ msgstr ""
 msgid "Local computer access requires the latest desktop app."
 msgstr "访问本机电脑需要最新版桌面应用。"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Locate"
+msgstr ""
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Lock view"
+msgstr ""
+
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
@@ -8640,6 +9314,9 @@ msgid "Lost the connection. Reconnecting…"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -8654,6 +9331,10 @@ msgstr "低"
 
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Low (fastest)"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Lower is more deterministic. Automatically ignored by reasoning models."
 msgstr ""
 
 #: src/pages/AdminEmailFiling.tsx
@@ -8728,6 +9409,10 @@ msgstr ""
 msgid "Manage storage"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Manage the default agents staff can start from. Synced with Evolve assistants, with company standing instructions, required skills, vector stores, model tuning, and access controls."
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Manual"
 msgstr "手动"
@@ -8788,6 +9473,10 @@ msgstr ""
 msgid "Maths"
 msgstr "数学"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "max"
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -8798,6 +9487,14 @@ msgstr "最大"
 #: src/lib/model-catalog.ts
 msgid "Max"
 msgstr "最高"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Max output tokens"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Max output tokens must be an integer between 256 and 200000"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Maximize"
@@ -8841,6 +9538,9 @@ msgid "Measure areas and lengths, or take off quantities"
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -8906,6 +9606,10 @@ msgstr "{title} 的记忆"
 #: src/pages/shell/bot-panel.tsx
 msgid "Memory scope"
 msgstr "记忆范围"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Memory used"
+msgstr ""
 
 #: src/pages/shell/composer.tsx
 msgid "Mentions"
@@ -9000,6 +9704,15 @@ msgstr "麦克风失败"
 msgid "Middle align"
 msgstr "垂直居中"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Milestone"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Milestones only"
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Min"
 msgstr "最小值"
@@ -9039,6 +9752,13 @@ msgstr "分钟"
 msgid "Missed call"
 msgstr "未接来电"
 
+#. placeholder {0}: audit.missingLogicCount
+#. placeholder {1}: audit.highFloatCount
+#. placeholder {2}: audit.negativeFloatCount
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Missing logic: {0} · High float: {1} · Negative float: {2}"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Mode"
 msgstr "模式"
@@ -9057,6 +9777,14 @@ msgstr "模型"
 msgid "Model \"{modelId}\" was not listed."
 msgstr "模型“{modelId}”未列出。"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Model & generation settings"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Model & tools"
+msgstr ""
+
 #: src/pages/AdminStaffSpending.tsx
 msgid "Model calls"
 msgstr ""
@@ -9070,6 +9798,7 @@ msgid "Model connections"
 msgstr "模型连接"
 
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Model default"
 msgstr ""
 
@@ -9083,10 +9812,18 @@ msgstr ""
 msgid "Model id"
 msgstr "模型 ID"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Model ID stored in Evolve for Evolve Chat."
+msgstr ""
+
 #: src/components/FoundModelPicker.tsx
 #: src/pages/model-settings/role-model-picker.tsx
 msgid "Model options"
 msgstr "模型选项"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Model override"
+msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -9130,6 +9867,10 @@ msgstr "周一"
 #: src/lib/billing.ts
 msgid "month"
 msgstr "月"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Month"
+msgstr ""
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Month calendar, Gantt chart, timeline, daily heatmap and period comparisons."
@@ -9226,6 +9967,11 @@ msgstr ""
 msgid "Move"
 msgstr ""
 
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Move {0} to status"
+msgstr ""
+
 #: src/components/office/slides/SlideRail.tsx
 #: src/pages/ModelRoleSettings.tsx
 msgid "Move down"
@@ -9284,6 +10030,7 @@ msgstr ""
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Auth.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/McpServersOverlay.tsx
@@ -9301,6 +10048,10 @@ msgstr "名称"
 
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Name (A to Z)"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Name is required"
 msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
@@ -9397,6 +10148,7 @@ msgstr "从不询问"
 msgid "Never suggest"
 msgstr ""
 
+#: src/components/office/planner/PlannerNotesView.tsx
 #: src/components/studio/StudioActivity.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/shell/chat-context.tsx
@@ -9451,12 +10203,21 @@ msgstr ""
 msgid "New comment"
 msgstr "新建批注"
 
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminDefaultAgents.tsx
+msgid "New company skill"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "New computers run on"
 msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "New contact"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "New default agent"
 msgstr ""
 
 #: src/components/office/WordStudio.tsx
@@ -9558,6 +10319,10 @@ msgstr ""
 msgid "New project folders go in"
 msgstr ""
 
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "New project note"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "New reports and letters in OCSC style. Ask for changes as often as you like: each edit comes back as tracked changes you can accept or reject, and earlier versions are kept."
 msgstr ""
@@ -9591,6 +10356,10 @@ msgstr "新建电子表格"
 #: src/components/office/SheetStudio.tsx
 msgid "New spreadsheets can't be made here yet."
 msgstr "此处暂时无法新建电子表格。"
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "New task"
+msgstr ""
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
@@ -9699,6 +10468,10 @@ msgstr "没有匹配的应用。"
 msgid "No apps yet."
 msgstr ""
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "No assignee double-bookings"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "No auth"
 msgstr "无认证"
@@ -9740,6 +10513,14 @@ msgstr ""
 msgid "No code changed."
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "No company skills yet. Add one for writing style, quality checks, or domain rules, then attach it to your default agents."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No company skills yet. Click \"New company skill\" above to create one."
+msgstr ""
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "No computer"
 msgstr ""
@@ -9762,6 +10543,18 @@ msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "No deadline or work package has been changed through the AI yet."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No default agents match that filter."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No default agents yet. Create your first default agent above."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No default skills attached yet. Pick a company or built-in skill below, or create a new company skill."
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -9796,6 +10589,10 @@ msgstr ""
 msgid "No Evolve tool matches."
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No Evolve tools match this filter."
+msgstr ""
+
 #: src/pages/shell/references-dialog.tsx
 msgid "No exemplar responses match your search."
 msgstr ""
@@ -9806,6 +10603,10 @@ msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "No files found."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No files in this vector store yet. Upload files above."
 msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
@@ -9934,6 +10735,10 @@ msgstr "暂无其他演示文稿"
 msgid "No other spreadsheets yet"
 msgstr "暂无其他电子表格"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No other vector stores available"
+msgstr ""
+
 #: src/components/office/slides/SlidesRibbon.tsx
 msgid "No outline"
 msgstr "无轮廓"
@@ -10005,6 +10810,10 @@ msgstr "无行"
 msgid "No rows match."
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "No runner data"
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "No runs match these filters."
 msgstr "没有符合筛选的运行记录。"
@@ -10012,6 +10821,10 @@ msgstr "没有符合筛选的运行记录。"
 #: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr "还没有运行记录"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "No schedule integrity issues detected"
+msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 msgid "No signature saved. Paste your Outlook signature here or under Settings → Email signature."
@@ -10037,6 +10850,14 @@ msgstr "还没有电子表格"
 msgid "No submissions"
 msgstr "暂无提交"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "No tasks"
+msgstr ""
+
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "No tasks match the current search or filters."
+msgstr ""
+
 #: src/components/office/slides/history.tsx
 #: src/components/office/word/history.tsx
 msgid "No text changes"
@@ -10054,14 +10875,31 @@ msgstr "还没有工单"
 msgid "No trigger"
 msgstr "无触发器"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No vector stores attached. Attach one or more existing stores or create a new store to upload knowledge files."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "No visibility groups configured in Evolve."
+msgstr ""
+
 #: src/components/office/OfficeStudioHost.tsx
 msgid "No Word documents yet"
 msgstr "还没有 Word 文档"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "No work items yet."
+msgstr ""
 
 #: src/pages/SharedChats.tsx
 msgid "Nobody has added you to a group chat yet."
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Non-negotiable company rules, tone, compliance checks, or output structure..."
+msgstr ""
+
+#: src/components/office/planner/PlannerTasksView.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "None"
 msgstr ""
@@ -10204,6 +11042,10 @@ msgstr ""
 msgid "Note name, for example Writing style"
 msgstr ""
 
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Note title"
+msgstr ""
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Note:"
 msgstr ""
@@ -10214,6 +11056,7 @@ msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
 msgstr ""
@@ -10377,6 +11220,10 @@ msgstr ""
 msgid "OCSC Vision Intelligence creates infographics and pictures, drawing on Evolve's project datasheets and people profiles."
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "OCSC writing style"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "OCSC-branded animations and social clips, with voiceover and stock footage."
 msgstr ""
@@ -10394,12 +11241,24 @@ msgstr ""
 msgid "Off: only admins connect models or change an agent's model; everyone runs on the company model."
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Off: only default agents you attach this skill to can use it. On: every staff agent can also invoke it on demand."
+msgstr ""
+
 #: src/components/EmailFilingSettings.tsx
 msgid "Off: only email you receive is suggested."
 msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Off: staff see Connectors as Coming soon and cannot add anything. Admins always can, to test."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Offer People & CV references"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Offer Tender exemplar references"
 msgstr ""
 
 #: src/components/ComputerDeviceSettings.tsx
@@ -10431,6 +11290,10 @@ msgstr "按计划"
 
 #: src/components/StorageDialog.tsx
 msgid "On computer"
+msgstr ""
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "On critical path"
 msgstr ""
 
 #: src/lib/cron.ts
@@ -10513,14 +11376,6 @@ msgstr ""
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Only the top-left cell can keep its value. Clear the other cells first, then merge."
 msgstr "只有左上角的单元格能保留其值。请先清除其他单元格，再进行合并。"
-
-#: src/components/office/OfficeStudioHost.tsx
-#~ msgid "Only Word, PowerPoint and Excel files open here."
-#~ msgstr "这里只能打开 Word、PowerPoint 和 Excel 文件。"
-
-#: src/components/office/OfficeStudioHost.tsx
-#~ msgid "Only Word, PowerPoint, Excel and PDF files open here."
-#~ msgstr ""
 
 #: src/components/office/OfficeStudioHost.tsx
 msgid "Only Word, PowerPoint, Excel, PDF and Project plan files open here."
@@ -10668,6 +11523,10 @@ msgstr "打开导航"
 msgid "Open OCSC Intelligence"
 msgstr ""
 
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Open on Gantt"
+msgstr ""
+
 #: src/components/apps/AppsDialog.tsx
 msgid "Open one full screen, or edit an app you built."
 msgstr ""
@@ -10684,6 +11543,10 @@ msgstr ""
 
 #: src/components/LearningClinicCard.tsx
 msgid "Open the video"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Open to everyone"
 msgstr ""
 
 #: src/components/integrations/evolve-tools-section.tsx
@@ -10734,6 +11597,14 @@ msgstr "可选"
 #: src/pages/McpServersOverlay.tsx
 msgid "Optional header value"
 msgstr "可选请求头值"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Optional per-reply token cap (256–200,000)."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Optional system instructions stored on Evolve's assistants.system_instructions column"
+msgstr ""
 
 #: src/pages/GroupPanel.tsx
 msgid "Optional. Evolve colleagues chat with this group's agents, without your memory, notes, saved logins or connectors."
@@ -10859,8 +11730,20 @@ msgstr "外侧框线"
 msgid "Oval"
 msgstr "椭圆"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Overall progress"
+msgstr ""
+
 #: src/pages/AdminInfrastructure.tsx
 msgid "Overflow"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "overlaps"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Overview"
 msgstr ""
 
 #. placeholder {0}: group.ownerName
@@ -10869,6 +11752,8 @@ msgid "Owned by {0}"
 msgstr ""
 
 #: src/components/GroupPeople.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
@@ -10892,6 +11777,11 @@ msgstr ""
 
 #: src/components/office/planner/QuickAssignPopover.tsx
 msgid "Owner of {taskLabel}"
+msgstr ""
+
+#. placeholder {0}: task.assignee
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Owner: {0}"
 msgstr ""
 
 #: src/components/office/planner/PlannerWorkbench.tsx
@@ -11082,6 +11972,15 @@ msgstr ""
 msgid "PDFs"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Peak CPU utilisation across server pools"
+msgstr ""
+
+#. placeholder {0}: conflict.peakDate
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Peak overlap on {0}"
+msgstr ""
+
 #: src/components/AskCard.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -11137,6 +12036,10 @@ msgstr ""
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Per hour"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Per-agent tool & skill restrictions"
 msgstr ""
 
 #: src/components/office/sheet/SheetRibbon.tsx
@@ -11242,6 +12145,7 @@ msgstr "图片：{name}"
 msgid "Pictures"
 msgstr ""
 
+#: src/components/office/planner/PlannerNotesView.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
 #: src/pages/BotContextMenu.tsx
@@ -11252,6 +12156,7 @@ msgstr "置顶"
 msgid "Pin, keep it"
 msgstr ""
 
+#: src/components/office/planner/PlannerNotesView.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/Shell.tsx
 msgid "Pinned"
@@ -11317,6 +12222,10 @@ msgstr "插件"
 msgid "Point at something in the app to change it"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Pool"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "在聊天中发布“无变化”"
@@ -11338,10 +12247,6 @@ msgstr ""
 #: src/components/tour/ocsc-tour.tsx
 msgid "PowerPoint Studio"
 msgstr ""
-
-#: src/pages/shell/shell-sidebar.tsx
-#~ msgid "Ppt"
-#~ msgstr "Ppt"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Preferences"
@@ -11406,12 +12311,19 @@ msgstr "上一页"
 msgid "Previous settings sections"
 msgstr "上一组设置项"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Primary"
+msgstr ""
+
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Principles that work well:"
 msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Priority"
@@ -11421,6 +12333,11 @@ msgstr "优先级"
 #. placeholder {1}: change.to || "–"
 #: src/components/office/planner/history-diff.ts
 msgid "priority {0} → {1}"
+msgstr ""
+
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Priority for {0}"
 msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
@@ -11439,10 +12356,44 @@ msgstr "效率"
 msgid "Program: {name}"
 msgstr "程序：{name}"
 
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Programme JSON"
+msgstr ""
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Programme JSON copied"
+msgstr ""
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Programme order"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Programme settings"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Programme views"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Programme window elapsed"
+msgstr ""
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Progress"
+msgstr ""
+
 #. placeholder {0}: percent(change.from)
 #. placeholder {1}: percent(change.to)
 #: src/components/office/planner/history-diff.ts
 msgid "progress {0} → {1}"
+msgstr ""
+
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Progress for {0}"
 msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
@@ -11457,6 +12408,10 @@ msgstr ""
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Project delivery"
+msgstr ""
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Project notes"
 msgstr ""
 
 #: src/components/office/PlannerStudio.tsx
@@ -11556,6 +12511,10 @@ msgstr ""
 msgid "Quality:"
 msgstr ""
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Quarter"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Question"
 msgstr ""
@@ -11572,6 +12531,10 @@ msgstr "引用"
 msgid "rakazo-shared and IDs starting with bot- are reserved for OCSC Intelligence."
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "RAM consumption across each server pool"
+msgstr ""
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
 msgstr "回应"
@@ -11581,7 +12544,7 @@ msgid "Reactions"
 msgstr "表情回应"
 
 #: src/pages/AdminInfrastructure.tsx
-msgid "Read every minute. Last reading {sampledAt}. Charts show the peak."
+msgid "Read every minute. Last reading {sampledAt}. Hover any chart to inspect exact values."
 msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
@@ -11781,6 +12744,7 @@ msgstr ""
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Refresh"
 msgstr "刷新"
 
@@ -11888,6 +12852,7 @@ msgstr ""
 #: src/components/vault/LoginFieldsInput.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -11940,6 +12905,10 @@ msgstr "移除变化触发器"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "Remove exemplar"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Remove file"
 msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
@@ -12128,6 +13097,10 @@ msgstr "正在回复 {0}"
 msgid "Replying to {0}: “{1}”"
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Report structure"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Reports and letters, edited in the studio."
 msgstr ""
@@ -12147,6 +13120,14 @@ msgstr ""
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Requests"
 msgstr "请求"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Required (must use)"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Required skills are injected in full on every turn so the agent must always follow them. Available skills appear in the agent's skill catalog to read on demand."
+msgstr ""
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Required when there was an issue"
@@ -12175,6 +13156,10 @@ msgstr "重置电脑"
 msgid "Reset computer?"
 msgstr "重置电脑？"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Reset filters"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Reset password"
 msgstr "重置密码"
@@ -12199,6 +13184,10 @@ msgstr "调整聊天大小"
 #: src/pages/ResizableSidePanel.tsx
 msgid "Resize panel"
 msgstr "调整面板大小"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Resource conflicts"
+msgstr ""
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Response"
@@ -12265,6 +13254,10 @@ msgstr ""
 msgid "Restoring your workspace"
 msgstr "正在恢复工作区"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Restricted"
+msgstr ""
+
 #: src/components/LearningClinicCard.tsx
 msgid "Retake quiz"
 msgstr ""
@@ -12324,6 +13317,10 @@ msgstr ""
 #: src/components/office/WordStudio.tsx
 msgid "Review"
 msgstr "审阅"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Review checklist"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -12391,6 +13388,10 @@ msgid "Routine limit reached"
 msgstr ""
 
 #: src/pages/AdminInfrastructure.tsx
+msgid "Routine overflow"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
 msgid "Routine server"
 msgstr ""
 
@@ -12406,19 +13407,25 @@ msgstr ""
 msgid "Routine server tool commands"
 msgstr ""
 
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routine server: tools and overflow"
-msgstr ""
-
 #: src/pages/AdminCompanyPage.tsx
+#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
 msgstr "例行任务"
 
+#. placeholder {0}: sample.routines.name
 #: src/pages/AdminInfrastructure.tsx
-msgid "Routines and extra document runners"
+msgid "Routines ({0})"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines and overflow document runners"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines and overflow runners"
 msgstr ""
 
 #: src/components/RoutineLimitDialog.tsx
@@ -12466,6 +13473,10 @@ msgstr "你不在时也会运行的例行任务"
 msgid "Row"
 msgstr "行"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Row density"
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Rows"
 msgstr "行"
@@ -12505,18 +13516,6 @@ msgstr "运行中"
 #: src/pages/RoutineEditor.tsx
 msgid "Running"
 msgstr "运行中"
-
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "Running on app server"
-#~ msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Running on routine server"
-msgstr ""
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Running on tool runners"
-msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Running…"
@@ -12588,6 +13587,10 @@ msgstr "保存"
 msgid "Save & build"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Save a company model first under Model to set a per-agent override."
+msgstr ""
+
 #: src/pages/AdminAssistantModels.tsx
 msgid "Save a company model first; assistant models run on its key."
 msgstr ""
@@ -12596,17 +13599,26 @@ msgstr ""
 msgid "Save as draft"
 msgstr ""
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Save baseline snapshot"
+msgstr ""
+
 #: src/components/apps/AppPublishSection.tsx
 msgid "Save brief"
 msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EmailDraftCard.tsx
+#: src/pages/AdminDefaultAgents.tsx
 msgid "Save changes"
 msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Save company limits"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Save current dates as baseline"
 msgstr ""
 
 #: src/pages/AdminEmailFiling.tsx
@@ -12617,6 +13629,7 @@ msgstr ""
 msgid "Save for everyone"
 msgstr ""
 
+#: src/components/office/planner/PlannerNotesView.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Save note"
 msgstr ""
@@ -12628,6 +13641,10 @@ msgstr ""
 #: src/components/EmailDraftCard.tsx
 #: src/components/EmailSignatureSettings.tsx
 msgid "Save signature"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Save skill"
 msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
@@ -12664,6 +13681,10 @@ msgstr ""
 #. placeholder {0}: result.version
 #: src/components/apps/AppCodePanel.tsx
 msgid "Saved as version {0}."
+msgstr ""
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Saved baseline snapshot ({label})"
 msgstr ""
 
 #: src/components/EmailDraftCard.tsx
@@ -12723,9 +13744,29 @@ msgstr "正在保存…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "回答是或否，或一句话说明。"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule audit & EVM"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Schedule delayed"
 msgstr "计划执行延迟"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule health"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule index"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule integrity audit"
+msgstr ""
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule looks clean — no dangling logic or resource overlaps."
+msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Scheduled and recurring tasks."
@@ -12751,6 +13792,10 @@ msgstr ""
 msgid "Screenshot to send"
 msgstr ""
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Scroll timeline to today"
+msgstr ""
+
 #: src/components/FoundModelPicker.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -12767,6 +13812,10 @@ msgstr "搜索"
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "Search {label}"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Search {totalTasks} tasks…"
 msgstr ""
 
 #: src/pages/shell/references-dialog.tsx
@@ -12871,6 +13920,10 @@ msgstr ""
 msgid "Search staff by name, skill, sector or experience."
 msgstr ""
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Search tasks"
+msgstr ""
+
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Search the Document Library's titles and the text inside its documents."
 msgstr ""
@@ -12973,6 +14026,10 @@ msgstr ""
 
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Select notes or shapes on the board, then ask for a change. The assistant works from what you pointed at."
+msgstr ""
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Select or create a note to view it here."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -13184,6 +14241,7 @@ msgstr ""
 
 #: src/components/apps/AppStudio.tsx
 #: src/components/call/CallCard.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -13358,6 +14416,14 @@ msgstr "工作表"
 msgid "Short date"
 msgstr "短日期"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Short description"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Short description of what this skill enforces"
+msgstr ""
+
 #: src/components/tour/training-videos.tsx
 msgid "Short training videos. Open any of them again whenever you need a reminder."
 msgstr "Short training videos. Open any of them again whenever you need a reminder."
@@ -13383,9 +14449,17 @@ msgstr ""
 msgid "Show all"
 msgstr "显示全部"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Show baselines"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Show everything (admins)"
 msgstr "显示全部（管理员）"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Show in New Agent picker"
+msgstr ""
 
 #: src/components/office/slides/SlideRail.tsx
 msgid "Show in slideshow"
@@ -13420,6 +14494,10 @@ msgstr ""
 msgid "Show my overdue work packages and mark the drainage one 50% done"
 msgstr ""
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Show on Gantt timeline"
+msgstr ""
+
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "显示密码"
@@ -13427,15 +14505,6 @@ msgstr "显示密码"
 #: src/pages/GroupPanel.tsx
 msgid "Show selected"
 msgstr "显示已选"
-
-#: src/components/apps/AppStudio.tsx
-#: src/components/studio/StudioFrame.tsx
-#~ msgid "Show the chat beside the app"
-#~ msgstr ""
-
-#: src/components/todos/todo-board.tsx
-#~ msgid "Show the chat beside the list"
-#~ msgstr ""
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Show tool activity"
@@ -13449,6 +14518,11 @@ msgstr "显示文字记录"
 msgid "Show what staff see"
 msgstr "显示员工看到的内容"
 
+#. placeholder {0}: visibleTasks.length
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Showing {0} work items (summary stages stay on the Gantt timeline)"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Showing every app and plugin, including ones hidden from staff."
 msgstr "正在显示所有应用和插件，包括对员工隐藏的。"
@@ -13456,6 +14530,10 @@ msgstr "正在显示所有应用和插件，包括对员工隐藏的。"
 #: src/pages/PluginsOverlay.tsx
 msgid "Showing what staff see."
 msgstr "正在显示员工看到的内容。"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Shown in the New Agent picker"
+msgstr ""
 
 #: src/components/office/slides/history.tsx
 msgid "Shown in the slide show again"
@@ -13563,10 +14641,6 @@ msgstr ""
 msgid "Site not given"
 msgstr ""
 
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "Site, database and document runners"
-#~ msgstr ""
-
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Sites & OneDrive"
 msgstr ""
@@ -13584,8 +14658,21 @@ msgstr "技能 {0}"
 msgid "Skill {position}"
 msgstr "技能 {position}"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Skill enforcement mode"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Skill name"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "SKILL.md content"
+msgstr ""
+
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/pages/AdminDefaultAgents.tsx
 #: src/pages/Shell.tsx
 #: src/pages/shell/agent-import.tsx
 msgid "Skills"
@@ -13624,9 +14711,6 @@ msgstr ""
 #: src/pages/RoutineEditor.tsx
 msgid "Slack message"
 msgstr "Slack 消息"
-
-#~ msgid "Slack not enabled"
-#~ msgstr "Slack not enabled"
 
 #. placeholder {0}: change.at + 1
 #: src/components/office/slides/history.tsx
@@ -13723,10 +14807,6 @@ msgstr ""
 msgid "someone in Evolve"
 msgstr ""
 
-#: src/components/apps/AppCodePanel.tsx
-#~ msgid "Someone saved a newer version. Reload the code to see it."
-#~ msgstr ""
-
 #: src/pages/AdminStaffLimits.tsx
 msgid "Someone who may choose can change their assistants' and routines' models. Anyone else runs on the company model."
 msgstr ""
@@ -13744,6 +14824,7 @@ msgstr "刚刚添加了同名项目。请重试。"
 msgid "Something you chose cannot work here. Untick it and try again."
 msgstr "所选的某项在此无法使用。取消勾选后重试。"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Sort"
 msgstr "排序"
@@ -13751,6 +14832,10 @@ msgstr "排序"
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Sort A to Z"
 msgstr "升序排序"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Sort board"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 #: src/components/UiCardView.tsx
@@ -13812,6 +14897,10 @@ msgstr "正在说话"
 
 #: src/components/AskCard.tsx
 msgid "Special mentions"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Specific people"
 msgstr ""
 
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -13891,6 +14980,10 @@ msgstr ""
 msgid "Staff with the Plugin builder privilege in Evolve build mini-apps here and send them to Evolve for review."
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Standard section order and executive summary format for OCSC reports."
+msgstr ""
+
 #: src/components/GitHubStarPrompt.tsx
 msgid "Star on GitHub"
 msgstr ""
@@ -13949,6 +15042,10 @@ msgstr ""
 msgid "Start clinic"
 msgstr ""
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Start date"
+msgstr ""
+
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Start from"
 msgstr ""
@@ -13993,6 +15090,14 @@ msgstr "延迟 {count} 分钟开始"
 msgid "Started from a template"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Starter prompt (copied on creation)"
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Starters:"
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "Starting"
 msgstr "正在开始"
@@ -14018,6 +15123,8 @@ msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
@@ -14033,6 +15140,11 @@ msgstr ""
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Status comment"
+msgstr ""
+
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Status for {0}"
 msgstr ""
 
 #: src/components/EnableNotificationsDialog.tsx
@@ -14097,6 +15209,10 @@ msgstr "Storage"
 msgid "Storage and cleanup"
 msgstr ""
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "Storage growth across server pools"
+msgstr ""
+
 #. placeholder {0}: person.name
 #: src/pages/AdminComputerAccess.tsx
 msgid "Storage limit for {0}"
@@ -14104,6 +15220,10 @@ msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Storage per person"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Storage pool"
 msgstr ""
 
 #: src/components/SidebarMeters.tsx
@@ -14128,6 +15248,10 @@ msgstr "流式回复"
 #: src/components/office/word/WordRibbon.tsx
 msgid "Strikethrough"
 msgstr "删除线"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Structured engineering quality check before signing off deliverables."
+msgstr ""
 
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Studios"
@@ -14246,6 +15370,14 @@ msgstr ""
 msgid "Switching…"
 msgstr "正在切换…"
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Synced with Evolve Access Control. Leave all grants empty to make this default agent open to everyone. Admins always have access."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Synced with Evolve. Copied into a new agent's instructions when a staff member starts one from here; they can personalise their own copy afterwards."
+msgstr ""
+
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Shell.tsx
@@ -14298,8 +15430,20 @@ msgstr ""
 msgid "Target role"
 msgstr ""
 
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Task"
+msgstr ""
+
 #: src/components/office/planner/QuickAssignPopover.tsx
 msgid "Task owner"
+msgstr ""
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "tasks"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Tasks"
 msgstr ""
 
 #: src/components/office/planner/history-diff.ts
@@ -14330,12 +15474,24 @@ msgstr ""
 msgid "Teams message"
 msgstr "Teams 消息"
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Technical review checklist"
+msgstr ""
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "Tell an agent to forget something and it will"
 msgstr ""
 
 #: src/pages/AdminAnnouncements.tsx
 msgid "Tell everyone about new features and changes. It pops up straight away for everyone with the app open, and for everyone else when they next open it, until they dismiss it."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Temperature (0–2)"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Temperature must be between 0 and 2"
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -14692,6 +15848,10 @@ msgstr ""
 msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
 msgstr ""
 
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "The underlying Jantt schedule data. Any changes are validated before saving to History."
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "The unused difference is credited to your next invoice."
 msgstr "未使用的差额将抵扣到你的下一张账单。"
@@ -14802,6 +15962,10 @@ msgstr ""
 #: src/pages/shell/bot-panel.tsx
 msgid "Thinking"
 msgstr "思考"
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Thinking effort"
+msgstr ""
 
 #. placeholder {0}: assistant.name
 #: src/pages/AdminAssistantModels.tsx
@@ -15152,6 +16316,14 @@ msgstr "整理格式"
 msgid "Time of day"
 msgstr "时间"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Timeline scale"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Timeline zoom"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Timezone"
 msgstr "时区"
@@ -15192,6 +16364,12 @@ msgstr "到 {0}"
 msgid "To do"
 msgstr "待办"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "To Do"
+msgstr ""
+
 #: src/components/todos/todo-board.tsx
 msgid "To do list"
 msgstr ""
@@ -15212,10 +16390,15 @@ msgstr ""
 msgid "To:"
 msgstr "至:"
 
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "Today"
 msgstr "今天"
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Today is outside this programme's date range."
+msgstr ""
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Toggle sidebar"
@@ -15258,6 +16441,10 @@ msgstr ""
 #: src/pages/RoutineEditor.tsx
 msgid "Tool name"
 msgstr "工具名称"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Tool runner compute nodes"
+msgstr ""
 
 #: src/pages/AdminInfrastructure.tsx
 msgid "Tool runners"
@@ -15410,6 +16597,14 @@ msgstr "周二"
 msgid "Turn off auto-fix"
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Turn off specific built-in tools, Evolve tools, or built-in skills for agents started from this default agent."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Turn off to hide this default agent from staff in Rakazo without deleting it in Evolve."
+msgstr ""
+
 #: src/components/apps/AppStudio.tsx
 msgid "Turn on auto-fix"
 msgstr ""
@@ -15488,10 +16683,16 @@ msgstr "输入你的回答"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/Shell.tsx
 msgid "Unassigned"
 msgstr "未分配"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Unassigned only"
+msgstr ""
 
 #: src/components/EmailDraftCard.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
@@ -15582,6 +16783,10 @@ msgstr "不支持的文件类型：{0}"
 #: src/components/office/WordStudio.tsx
 msgid "Untitled document"
 msgstr "未命名文档"
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Untitled note"
+msgstr ""
 
 #: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/PdfStudio.tsx
@@ -15752,6 +16957,10 @@ msgstr ""
 msgid "Upload a Word document (.docx), PDF, or text file (.txt or .md)."
 msgstr ""
 
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Upload file"
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Upload files, documents and images"
 msgstr ""
@@ -15766,6 +16975,9 @@ msgid "Uploading drawings here turns pages into images the AI can visually inspe
 msgstr ""
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "紧急"
@@ -15821,6 +17033,10 @@ msgstr "使用默认设置"
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Use defaults for {label}"
 msgstr "{label}使用默认设置"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Use full YAML frontmatter if you are pasting an existing SKILL.md."
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Use in this agent"
@@ -15949,6 +17165,14 @@ msgstr ""
 msgid "Vault"
 msgstr "保管库"
 
+#: src/pages/AdminInfrastructure.tsx
+msgid "vCPUs"
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Vector store created and attached"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Verify and add"
 msgstr "校验并添加"
@@ -16023,6 +17247,7 @@ msgid "Video"
 msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Video renders"
 msgstr ""
 
@@ -16036,6 +17261,14 @@ msgstr ""
 #: src/pages/PluginsOverlay.tsx
 msgid "View all"
 msgstr "查看全部"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "View full audit"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "View programme JSON"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "View source"
@@ -16067,6 +17300,10 @@ msgstr "请稍候并重新测试。"
 
 #: src/pages/AdminInfrastructure.tsx
 msgid "Waiting"
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Waiting for samples in this period…"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -16136,6 +17373,10 @@ msgstr "周三"
 #: src/lib/billing.ts
 msgid "week"
 msgstr "周"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Week"
+msgstr ""
 
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
@@ -16252,10 +17493,6 @@ msgstr ""
 msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
 msgstr ""
 
-#: src/lib/run-error.ts
-#~ msgid "What this reply needs at once is too large for the model, even with older parts of the chat set aside. Split the request into smaller steps, or send long text as a file."
-#~ msgstr ""
-
 #: src/components/teach/SkillDraftCard.tsx
 msgid "What to return"
 msgstr "返回什么"
@@ -16284,6 +17521,10 @@ msgstr "当 Webhook 触发时"
 msgid "When an email is about an Evolve project with no folder yet, the card proposes one named from Evolve's job number and title. It is made only when the person presses File, and never twice."
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "When attached to a default agent as Required, every rule written here is enforced on every response."
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "When it finishes or needs input"
 msgstr "完成任务或需要输入时"
@@ -16305,6 +17546,10 @@ msgstr "何时运行"
 #: src/components/vault/VaultItemEditor.tsx
 msgid "When to use"
 msgstr "何时使用"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "When to use / summary"
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "When you answer me:\n"
@@ -16367,6 +17612,10 @@ msgstr ""
 
 #: src/components/apps/AppStudio.tsx
 msgid "Who can use this app, and how it is set up."
+msgstr ""
+
+#: src/pages/AdminDefaultAgents.tsx
+msgid "Who can use this default agent"
 msgstr ""
 
 #: src/pages/AdminComputerAccess.tsx
@@ -16436,6 +17685,10 @@ msgstr "附加到聊天中的 Word、PDF、PowerPoint 和文本文件会在后�
 
 #: src/pages/AdminComputerAccess.tsx
 msgid "Word, PowerPoint, Excel, PDF and video files always run on the company tool runners, for everyone. Full adds the person's own computer for browsing, a shell and routines. Tools only and No computer: documents, videos and Evolve tools. Every person's files stay their own."
+msgstr ""
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Word, PowerPoint, Excel, PDF, and video commands spread across the least-busy dedicated runner before using routine overflow."
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -16536,12 +17789,20 @@ msgstr ""
 msgid "Workspace"
 msgstr "工作区"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Workstream breakdown"
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Wrap text"
 msgstr "自动换行"
 
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Write a flood risk assessment for HEL18, then tighten the conclusions"
+msgstr ""
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Write assumptions, client constraints, inspection hold points, or meeting notes…"
 msgstr ""
 
 #: src/components/apps/AppPublishSection.tsx
@@ -16556,6 +17817,11 @@ msgstr ""
 msgid "Write its instructions yourself"
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Write the rules, tone guidelines, templates, or step-by-step workflow..."
+msgstr ""
+
+#: src/pages/AdminCompanySkills.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Writing style"
 msgstr ""
@@ -16571,6 +17837,10 @@ msgstr ""
 #: src/lib/billing.ts
 msgid "year"
 msgstr "年"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Year"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Yearly"
@@ -16757,14 +18027,6 @@ msgstr ""
 msgid "Your defaults"
 msgstr "你的默认设置"
 
-#: src/components/office/WordStudio.tsx
-#~ msgid "Your edits are marked as tracked changes, so they can be accepted or rejected"
-#~ msgstr "你的编辑会标记为修订，可以接受或拒绝"
-
-#: src/components/office/WordStudio.tsx
-#~ msgid "Your edits change the document directly"
-#~ msgstr "你的编辑会直接更改文档"
-
 #: src/pages/Auth.tsx
 msgid "Your email address"
 msgstr "你的邮箱"
@@ -16895,6 +18157,7 @@ msgid "Zoom"
 msgstr "缩放"
 
 #: src/components/ImageLightbox.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/office/slides/SlidesRibbon.tsx
 #: src/components/office/word/WordRibbon.tsx
@@ -16903,6 +18166,7 @@ msgid "Zoom in"
 msgstr ""
 
 #: src/components/ImageLightbox.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/office/slides/SlidesRibbon.tsx
 #: src/components/office/word/WordRibbon.tsx

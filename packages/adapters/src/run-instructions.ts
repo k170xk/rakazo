@@ -348,6 +348,10 @@ function toolUsageLine(parts: {
 // Ordering matters: stable blocks first, volatile ones last, so the prefix stays cacheable.
 export function userTurnInstructions(parts: {
   botInstructions: string;
+  /** Live company standing rules for this default agent (always enforced on every reply). */
+  assistantStandingInstructions?: string;
+  /** Full text of mandatory ("required") company/built-in skills attached to this default agent. */
+  requiredSkillsInstruction?: string;
   /** Who the owner is, from their Evolve CV (see evolvePersonContext). */
   personContext?: string;
   groupContext: string | undefined;
@@ -380,6 +384,10 @@ export function userTurnInstructions(parts: {
     PRODUCT_IDENTITY,
     parts.botInstructions,
     OCSC_HOUSE_STYLE,
+    parts.assistantStandingInstructions?.trim()
+      ? `Company standing instructions for this default agent — always follow these on every response:\n${parts.assistantStandingInstructions.trim()}`
+      : undefined,
+    parts.requiredSkillsInstruction,
     parts.personContext,
     parts.historyRetrievalEnabled &&
     builtinOffered(parts.disabledBuiltinTools, "search_history") &&

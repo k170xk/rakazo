@@ -47,6 +47,21 @@ import {
   sendAnnouncement,
   withdrawAnnouncement,
 } from "../announcements.js";
+import {
+  createCompanySkill,
+  createDefaultAgent,
+  createVectorStore,
+  listCompanySkills,
+  listDefaultAgents,
+  listVectorStoreFiles,
+  listVectorStores,
+  removeCompanySkill,
+  removeDefaultAgent,
+  removeVectorStoreFile,
+  updateCompanySkill,
+  updateDefaultAgent,
+  uploadVectorStoreFile,
+} from "../company-default-agents.js";
 import type { BillingService } from "../billing.js";
 import {
   checkCompanyTools,
@@ -284,6 +299,51 @@ export function accountRoutes(ctx: RouterContext) {
         ),
         setFrozen: authed.companyAdmin.sharedApps.setFrozen.handler(({ context, input }) =>
           setSharedAppFrozen(deps, context.actor, input),
+        ),
+      },
+      skills: {
+        list: authed.companyAdmin.skills.list.handler(({ context }) =>
+          listCompanySkills(deps, context.actor),
+        ),
+        create: authed.companyAdmin.skills.create.handler(({ context, input }) =>
+          createCompanySkill(deps, context.actor, input),
+        ),
+        update: authed.companyAdmin.skills.update.handler(({ context, input }) =>
+          updateCompanySkill(deps, context.actor, input),
+        ),
+        remove: authed.companyAdmin.skills.remove.handler(({ context, input }) =>
+          removeCompanySkill(deps, context.actor, input.id),
+        ),
+      },
+      defaultAgents: {
+        list: authed.companyAdmin.defaultAgents.list.handler(({ context }) =>
+          listDefaultAgents(deps, context.actor),
+        ),
+        create: authed.companyAdmin.defaultAgents.create.handler(({ context, input }) =>
+          createDefaultAgent(deps, context.actor, input),
+        ),
+        update: authed.companyAdmin.defaultAgents.update.handler(({ context, input }) =>
+          updateDefaultAgent(deps, context.actor, input),
+        ),
+        remove: authed.companyAdmin.defaultAgents.remove.handler(({ context, input }) =>
+          removeDefaultAgent(deps, context.actor, input.id),
+        ),
+      },
+      vectorStores: {
+        list: authed.companyAdmin.vectorStores.list.handler(({ context }) =>
+          listVectorStores(deps, context.actor),
+        ),
+        create: authed.companyAdmin.vectorStores.create.handler(({ context, input }) =>
+          createVectorStore(deps, context.actor, input.name),
+        ),
+        files: authed.companyAdmin.vectorStores.files.handler(({ context, input }) =>
+          listVectorStoreFiles(deps, context.actor, input.vectorStoreId),
+        ),
+        uploadFile: authed.companyAdmin.vectorStores.uploadFile.handler(({ context, input }) =>
+          uploadVectorStoreFile(deps, context.actor, input),
+        ),
+        removeFile: authed.companyAdmin.vectorStores.removeFile.handler(({ context, input }) =>
+          removeVectorStoreFile(deps, context.actor, input),
         ),
       },
     },

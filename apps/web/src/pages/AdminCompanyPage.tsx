@@ -25,6 +25,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
+  Bot,
   ChevronLeft,
   Cpu,
   FileText,
@@ -59,9 +60,11 @@ import { AccessGroupsSection, AudienceControl } from "./AdminAccess";
 import { AnnouncementsSection } from "./AdminAnnouncements";
 import { AppsList } from "./AdminApps";
 import { CompanyAssistantModelsSection } from "./AdminAssistantModels";
+import { CompanySkillsLibrarySection } from "./AdminCompanySkills";
 import { CompanyToolsSection } from "./AdminCompanyTools";
 import { CompanyVaultSection, CompanyVoiceSection } from "./AdminCompanyVoice";
 import { CompanyComputerAccessSection, CompanyStorageSection } from "./AdminComputerAccess";
+import { AdminDefaultAgentsSection } from "./AdminDefaultAgents";
 import { DocumentLibrarySection } from "./AdminDocumentLibrary";
 import { EmailFilingPolicySection } from "./AdminEmailFiling";
 import { EvolveSafeguardsSection } from "./AdminEvolveSafeguards";
@@ -74,6 +77,7 @@ import { WindowChrome } from "./WindowChrome";
 
 const ADMIN_SECTIONS = [
   "models",
+  "agents",
   "announcements",
   "features",
   "skills",
@@ -146,6 +150,7 @@ function CompanyAdminPanels() {
 
   const nav: { id: AdminSection; label: string; icon: LucideIcon }[] = [
     { id: "models", label: t`Model`, icon: Cpu },
+    { id: "agents", label: t`Default agents`, icon: Bot },
     { id: "announcements", label: t`Announcements`, icon: Megaphone },
     { id: "features", label: t`Features`, icon: ToggleRight },
     { id: "skills", label: t`Staff skills`, icon: ScrollText },
@@ -186,6 +191,8 @@ function CompanyAdminPanels() {
             <CompanyAssistantModelsSection state={data} onSaved={saved} />
           </div>
         );
+      case "agents":
+        return <AdminDefaultAgentsSection state={data} />;
       case "announcements":
         return <AnnouncementsSection />;
       case "features":
@@ -198,7 +205,12 @@ function CompanyAdminPanels() {
           </div>
         );
       case "skills":
-        return <CompanyStaffSkillsSection state={data} onSaved={saved} />;
+        return (
+          <div className="space-y-10">
+            <CompanyStaffSkillsSection state={data} onSaved={saved} />
+            <CompanySkillsLibrarySection state={data} />
+          </div>
+        );
       case "integrations":
         return <CompanyAppsSection state={data} onSaved={saved} />;
       case "mcp":
