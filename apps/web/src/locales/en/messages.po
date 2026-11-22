@@ -2071,18 +2071,6 @@ msgstr "App title"
 msgid "App updated"
 msgstr "App updated"
 
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "App: documents and tools"
-#~ msgstr "App: documents and tools"
-
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "App: large documents"
-#~ msgstr "App: large documents"
-
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "App: video"
-#~ msgstr "App: video"
-
 #: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
@@ -3801,10 +3789,6 @@ msgstr "Computer"
 msgid "Computer failed to boot"
 msgstr "Computer failed to boot"
 
-#: src/pages/AdminInfrastructure.tsx
-msgid "Computer host (Incus)"
-msgstr "Computer host (Incus)"
-
 #: src/components/ModelCredits.tsx
 msgid "Computer hours left"
 msgstr "Computer hours left"
@@ -3838,6 +3822,7 @@ msgstr "Computer-use model"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminComputerAccess.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Computers"
 msgstr "Computers"
 
@@ -8459,17 +8444,17 @@ msgstr "Lasso"
 msgid "Last 24 hours"
 msgstr "Last 24 hours"
 
-#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Last 30 days"
 msgstr "Last 30 days"
 
-#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Last 7 days"
 msgstr "Last 7 days"
 
@@ -8855,7 +8840,6 @@ msgstr "Loading voice providers…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminDocumentLibrary.tsx
-#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
@@ -8868,6 +8852,7 @@ msgstr "Loading voice providers…"
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/drawings-dialog.tsx
 #: src/pages/shell/transcript.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -9173,12 +9158,12 @@ msgid "Members use it with the voice you picked, and their use is billed to this
 msgstr "Members use it with the voice you picked, and their use is billed to this connection's account."
 
 #: src/components/EmailFilingCard.tsx
-#: src/pages/AdminInfrastructure.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Memory"
 msgstr "Memory"
 
@@ -11526,10 +11511,10 @@ msgstr "Per hour"
 msgid "Percentage"
 msgstr "Percentage"
 
-#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffSpending.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Period"
 msgstr "Period"
 
@@ -12015,10 +12000,6 @@ msgstr "React"
 msgid "Reactions"
 msgstr "Reactions"
 
-#: src/pages/AdminInfrastructure.tsx
-msgid "Read every minute. Last reading {sampledAt}. Charts show the peak."
-msgstr "Read every minute. Last reading {sampledAt}. Charts show the peak."
-
 #: src/components/apps/AppPublishSection.tsx
 msgid "Read it"
 msgstr "Read it"
@@ -12216,6 +12197,7 @@ msgstr "References successfully added as AI context!"
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Refresh"
 msgstr "Refresh"
 
@@ -12718,7 +12700,6 @@ msgstr "Retake quiz"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminDocumentLibrary.tsx
-#: src/pages/AdminInfrastructure.tsx
 #: src/pages/AdminReplyFailures.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/AdminStaffLimits.tsx
@@ -12728,6 +12709,7 @@ msgstr "Retake quiz"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/SpaceSettingOverrides.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Retry"
 msgstr "Retry"
 
@@ -12849,20 +12831,13 @@ msgstr "Routine server runner"
 msgid "Routine server tool commands"
 msgstr "Routine server tool commands"
 
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routine server: tools and overflow"
-msgstr "Routine server: tools and overflow"
-
 #: src/pages/AdminCompanyPage.tsx
 #: src/pages/AdminRoutineActivity.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Routines"
 msgstr "Routines"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Routines and extra document runners"
-msgstr "Routines and extra document runners"
 
 #: src/components/RoutineLimitDialog.tsx
 msgid "Routines are switched off"
@@ -12948,22 +12923,10 @@ msgstr "running"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
-#: src/pages/AdminInfrastructure.tsx
 #: src/pages/RoutineEditor.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Running"
 msgstr "Running"
-
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "Running on app server"
-#~ msgstr "Running on app server"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Running on routine server"
-msgstr "Running on routine server"
-
-#: src/pages/AdminInfrastructure.tsx
-msgid "Running on tool runners"
-msgstr "Running on tool runners"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Running…"
@@ -14072,10 +14035,6 @@ msgstr "Site map, photo map, gallery, side-by-side photos, mark-up and signature
 #: src/components/AskCard.tsx
 msgid "Site not given"
 msgstr "Site not given"
-
-#: src/pages/AdminInfrastructure.tsx
-#~ msgid "Site, database and document runners"
-#~ msgstr "Site, database and document runners"
 
 #: src/components/integrations/SharePointFolders.tsx
 msgid "Sites & OneDrive"
@@ -16608,6 +16567,7 @@ msgid "Video"
 msgstr "Video"
 
 #: src/pages/AdminComputerAccess.tsx
+#: src/pages/AdminInfrastructure.tsx
 msgid "Video renders"
 msgstr "Video renders"
 
@@ -17525,3 +17485,207 @@ msgstr "Zoom in"
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Zoom out"
 msgstr "Zoom out"
+
+
+#. placeholder {0}: appLanes.tools.running
+#. placeholder {1}: appLanes.tools.slots
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} active"
+msgstr "{0} / {1} active"
+
+#. placeholder {0}: fleetStats.online
+#. placeholder {1}: fleetStats.total
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} online"
+msgstr "{0} / {1} online"
+
+#. placeholder {0}: size(fleetStats.memUsed)
+#. placeholder {1}: size(fleetStats.memTotal)
+#. placeholder {2}: sample?.fleet.chatRuns ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} / {1} RAM · {2} replies"
+msgstr "{0} / {1} RAM · {2} replies"
+
+#. placeholder {0}: appLanes.large.slots
+#. placeholder {1}: appLanes.video.slots
+#. placeholder {2}: appLanes.tools.queued
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} large · {1} video · {2} waiting"
+msgstr "{0} large · {1} video · {2} waiting"
+
+#. placeholder {0}: sample?.incus.stopped ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} off · {incusOnlineCount} Incus host(s)"
+msgstr "{0} off · {incusOnlineCount} Incus host(s)"
+
+#. placeholder {0}: sample?.incus.running ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} on"
+msgstr "{0} on"
+
+#. placeholder {0}: node.running
+#. placeholder {1}: node.stopped ?? 0
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} on · {1} off"
+msgstr "{0} on · {1} off"
+
+#. placeholder {0}: sample.incus.nodes.length
+#. placeholder {0}: sample.toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} servers"
+msgstr "{0} servers"
+
+#. placeholder {0}: fleetStats.cpus
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} vCPUs"
+msgstr "{0} vCPUs"
+
+#. placeholder {0}: fleetStats.cpus
+#: src/pages/AdminInfrastructure.tsx
+msgid "{0} vCPUs total"
+msgstr "{0} vCPUs total"
+
+#. placeholder {0}: incusNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{incusOnlineCount} / {0} online"
+msgstr "{incusOnlineCount} / {0} online"
+
+#. placeholder {0}: toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{toolOnlineCount} / {0} active"
+msgstr "{toolOnlineCount} / {0} active"
+
+#. placeholder {0}: toolNodes.length
+#: src/pages/AdminInfrastructure.tsx
+msgid "{toolOnlineCount} of {0} servers · Docs, PDFs & video"
+msgstr "{toolOnlineCount} of {0} servers · Docs, PDFs & video"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Active Incus containers, chat replies, routines, and queued runs"
+msgstr "Active Incus containers, chat replies, routines, and queued runs"
+
+#. placeholder {0}: sample.app.name
+#: src/pages/AdminInfrastructure.tsx
+msgid "App ({0})"
+msgstr "App ({0})"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Cloud computers"
+msgstr "Cloud computers"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Computer hosts (Incus)"
+msgstr "Computer hosts (Incus)"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Concurrent documents, large files, video renders, and queue depth"
+msgstr "Concurrent documents, large files, video renders, and queue depth"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Document runners"
+msgstr "Document runners"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Documents running"
+msgstr "Documents running"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Fleet compute"
+msgstr "Fleet compute"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Fleet servers"
+msgstr "Fleet servers"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Incus cluster"
+msgstr "Incus cluster"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Incus computer cluster nodes"
+msgstr "Incus computer cluster nodes"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Individual KVM servers hosting staff cloud computers across the OVN cluster."
+msgstr "Individual KVM servers hosting staff cloud computers across the OVN cluster."
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Large docs"
+msgstr "Large docs"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Large overflow"
+msgstr "Large overflow"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "max"
+msgstr "max"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Memory used"
+msgstr "Memory used"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "No runner data"
+msgstr "No runner data"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Peak CPU utilisation across server pools"
+msgstr "Peak CPU utilisation across server pools"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Pool"
+msgstr "Pool"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Primary"
+msgstr "Primary"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "RAM consumption across each server pool"
+msgstr "RAM consumption across each server pool"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Read every minute. Last reading {sampledAt}. Hover any chart to inspect exact values."
+msgstr "Read every minute. Last reading {sampledAt}. Hover any chart to inspect exact values."
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routine overflow"
+msgstr "Routine overflow"
+
+#. placeholder {0}: sample.routines.name
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines ({0})"
+msgstr "Routines ({0})"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines and overflow document runners"
+msgstr "Routines and overflow document runners"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Routines and overflow runners"
+msgstr "Routines and overflow runners"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Storage growth across server pools"
+msgstr "Storage growth across server pools"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Storage pool"
+msgstr "Storage pool"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Tool runner compute nodes"
+msgstr "Tool runner compute nodes"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "vCPUs"
+msgstr "vCPUs"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Waiting for samples in this period…"
+msgstr "Waiting for samples in this period…"
+
+#: src/pages/AdminInfrastructure.tsx
+msgid "Word, PowerPoint, Excel, PDF, and video commands spread across the least-busy dedicated runner before using routine overflow."
+msgstr "Word, PowerPoint, Excel, PDF, and video commands spread across the least-busy dedicated runner before using routine overflow."

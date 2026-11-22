@@ -334,6 +334,11 @@ export class ToolRunnerClient {
       /** Runners on another server work on a copy: send changed files first, fetch results after. */
       synced?: boolean;
       /**
+       * Additional dedicated tool runners in the same pool. Work is spread across the least-busy
+       * responding peer before spilling to overflow runners.
+       */
+      peers?: readonly ToolRunnerClient[];
+      /**
        * Runners on other servers used only while every slot here is taken and their own server
        * is quiet; a command otherwise waits here. Each command runs start to finish on one runner.
        */
@@ -347,7 +352,7 @@ export class ToolRunnerClient {
    * does not all read the same free slots. Each choice and its reservation share one tick.
    */
   private readonly unreported: Record<Lane, number> = { normal: 0, large: 0 };
-  /** When this runner, as an overflow runner, may be asked again after it failed to answer. */
+  /** When this runner, as an overflow or peer runner, may be asked again after it failed to answer. */
   private downUntil = 0;
 
   private reserve(lane: Lane) {
@@ -365,8 +370,95 @@ export class ToolRunnerClient {
     owner: string,
     lane: Lane,
   ): Promise<{ runner: ToolRunnerClient; reported: () => void }> {
+    const peers = this.options.peers ?? [];
     const overflow = this.options.overflow ?? [];
-    if (overflow.length === 0) return { runner: this, reported: () => undefined };
+    if (peers.length === 0 && overflow.length === 0) {
+      return { runner: this, reported: () => undefined };
+    }
+
+    if (peers.length > 0) {
+      const now = Date.now();
+      const pool: ToolRunnerClient[] = [this, ...peers];
+      const readings = await Promise.all(
+        pool.map(async (runner, index) => {
+          if (runner.downUntil > now) return { runner, index, status: undefined };
+          const status = await runner
+            .status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS), owner)
+            .catch(() => {
+              runner.downUntil = Date.now() + OVERFLOW_DOWN_MS;
+              return undefined;
+            });
+          return { runner, index, status };
+        }),
+      );
+
+      // Prefer the dedicated peer with the lowest utilisation in the requested lane.
+      const laneStats = (status: ToolRunnerStatus) =>
+        lane === "large" ? status.large : program === "video" ? status.video : status;
+      const freePeers = readings.filter(
+        (entry): entry is { runner: ToolRunnerClient; index: number; status: ToolRunnerStatus } =>
+          entry.status !== undefined &&
+          freeFor(entry.status, program, entry.runner.unreported[lane], lane),
+      );
+      if (freePeers.length > 0) {
+        freePeers.sort((a, b) => {
+          const statsA = laneStats(a.status);
+          const statsB = laneStats(b.status);
+          const ratioA =
+            statsA && statsA.slots > 0
+              ? (statsA.running + a.runner.unreported[lane]) / statsA.slots
+              : 1;
+          const ratioB =
+            statsB && statsB.slots > 0
+              ? (statsB.running + b.runner.unreported[lane]) / statsB.slots
+              : 1;
+          if (Math.abs(ratioA - ratioB) > 0.001) return ratioA - ratioB;
+          const loadA =
+            a.status.host && a.status.host.cpus > 0
+              ? a.status.host.load1 / a.status.host.cpus
+              : Number.POSITIVE_INFINITY;
+          const loadB =
+            b.status.host && b.status.host.cpus > 0
+              ? b.status.host.load1 / b.status.host.cpus
+              : Number.POSITIVE_INFINITY;
+          if (Math.abs(loadA - loadB) > 0.05) return loadA - loadB;
+          return a.index - b.index;
+        });
+        const chosen = freePeers[0]!.runner;
+        return { runner: chosen, reported: chosen.reserve(lane) };
+      }
+
+      // Every dedicated peer is busy or unavailable: try quiet overflow runners next.
+      for (const runner of overflow) {
+        if (runner.downUntil > Date.now()) continue;
+        const there = await runner
+          .status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS), owner)
+          .catch(() => {
+            runner.downUntil = Date.now() + OVERFLOW_DOWN_MS;
+            return undefined;
+          });
+        if (there && overflowRunnerQuiet(there, program, runner.unreported[lane], lane)) {
+          return { runner, reported: runner.reserve(lane) };
+        }
+      }
+
+      // Otherwise wait on the responding dedicated peer with the shortest queue.
+      const onlinePeers = readings.filter(
+        (entry): entry is { runner: ToolRunnerClient; index: number; status: ToolRunnerStatus } =>
+          entry.status !== undefined,
+      );
+      if (onlinePeers.length > 0) {
+        onlinePeers.sort((a, b) => {
+          const qa = (laneStats(a.status)?.queued ?? 0) + a.runner.unreported[lane];
+          const qb = (laneStats(b.status)?.queued ?? 0) + b.runner.unreported[lane];
+          return qa - qb || a.index - b.index;
+        });
+        const chosen = onlinePeers[0]!.runner;
+        return { runner: chosen, reported: chosen.reserve(lane) };
+      }
+      return { runner: this, reported: this.reserve(lane) };
+    }
+
     const here = await this.status(AbortSignal.timeout(OVERFLOW_STATUS_TIMEOUT_MS), owner).catch(
       () => undefined,
     );
@@ -717,6 +809,19 @@ export class ToolRunnerClient {
 
 class ToolRunnerGaveUp extends Error {}
 
+/** Parse comma-separated dedicated tool runner URLs, deduplicated in order. */
+export function parseToolRunnerUrls(raw: string | undefined): string[] {
+  const seen = new Set<string>();
+  const urls: string[] = [];
+  for (const entry of (raw ?? "").split(",")) {
+    const trimmed = entry.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    urls.push(trimmed);
+  }
+  return urls;
+}
+
 /** The runner client for a Docker install, unless RAKAZO_TOOL_RUNNER=off. */
 export function toolRunnerFromEnv(
   env: NodeJS.ProcessEnv,
@@ -724,18 +829,22 @@ export function toolRunnerFromEnv(
   supervisor: { url: string; token: string | undefined },
 ): ToolRunnerClient | undefined {
   if (env.RAKAZO_TOOL_RUNNER === "off") return undefined;
-  const remote = env.RAKAZO_TOOL_RUNNER_URL;
+  const dedicated = parseToolRunnerUrls(env.RAKAZO_TOOL_RUNNER_URL);
+  const remote = dedicated[0];
   const url = remote || (sandboxProvider === "docker" ? supervisor.url : "");
   const token = env.RAKAZO_TOOL_RUNNER_TOKEN || supervisor.token;
   if (!url || !token) return undefined;
-  const overflow = (env.RAKAZO_TOOL_RUNNER_OVERFLOW_URLS ?? "")
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter((entry) => entry && entry !== url)
+  const dedicatedSet = new Set([url, ...dedicated]);
+  const peers = dedicated
+    .slice(1)
+    .map((entry) => new ToolRunnerClient(entry, token, { synced: entry !== supervisor.url }));
+  const overflow = parseToolRunnerUrls(env.RAKAZO_TOOL_RUNNER_OVERFLOW_URLS)
+    .filter((entry) => !dedicatedSet.has(entry))
     .map((entry) => new ToolRunnerClient(entry, token, { synced: true }));
   // The stack's own supervisor shares DATA_DIR, so only a runner elsewhere is sent the folder.
   return new ToolRunnerClient(url, token, {
     synced: Boolean(remote) && remote !== supervisor.url,
+    ...(peers.length > 0 ? { peers } : {}),
     ...(overflow.length > 0 ? { overflow } : {}),
   });
 }

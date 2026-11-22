@@ -5,6 +5,10 @@ const bytes = z.number().nonnegative().nullable();
 /** One server as its tool runner sees it; null fields could not be read. */
 export const InfraServerSchema = z.object({
   up: z.boolean(),
+  /** Friendly compute name (e.g. computer.ocsc.me, tools2). Absent on older samples. */
+  name: z.string().optional(),
+  /** Data centre label (e.g. Manchester, UK (DC18)). Absent on older samples. */
+  datacenter: z.string().optional(),
   cpuPercent: z.number().nullable(),
   load1: z.number().nullable(),
   cpus: z.number().int().nullable(),
@@ -24,16 +28,50 @@ export const InfraLaneSchema = z.object({
 });
 export type InfraLane = z.infer<typeof InfraLaneSchema>;
 
+/** One dedicated tool runner server in the pool, with its own host metrics and command lanes. */
+export const InfraToolRunnerNodeSchema = InfraServerSchema.extend({
+  id: z.string(),
+  name: z.string(),
+  primary: z.boolean().optional(),
+  lanes: z
+    .object({
+      tools: InfraLaneSchema,
+      large: InfraLaneSchema,
+      video: InfraLaneSchema,
+    })
+    .nullable(),
+});
+export type InfraToolRunnerNode = z.infer<typeof InfraToolRunnerNodeSchema>;
+
+/** One member server of the Incus computer cluster. */
+export const InfraIncusMemberSchema = z.object({
+  name: z.string(),
+  datacenter: z.string().optional(),
+  up: z.boolean(),
+  cpus: z.number().int().nullable(),
+  memUsedBytes: bytes,
+  memTotalBytes: bytes,
+  diskUsedBytes: bytes,
+  diskTotalBytes: bytes,
+  running: z.number().int().nullable(),
+  stopped: z.number().int().nullable(),
+});
+export type InfraIncusMember = z.infer<typeof InfraIncusMemberSchema>;
+
 /** One reading of every server, runner and Incus, taken by the app worker each minute. */
 export const InfraSampleSchema = z.object({
   app: InfraServerSchema,
-  /** The document runners, when they are on their own server. Absent while they share the app server. */
+  /** The document runners (aggregate when multiple), when they are on their own server(s). */
   tools: InfraServerSchema.optional(),
+  /** Individual dedicated tool runner servers in the pool. Absent on older samples. */
+  toolNodes: z.array(InfraToolRunnerNodeSchema).optional(),
   routines: InfraServerSchema,
   incus: z.object({
     up: z.boolean(),
     /** Online cluster members included in this reading. Absent on readings taken before clustering. */
     members: z.number().int().optional(),
+    /** Per-member readings for the Incus cluster. Absent on older samples. */
+    nodes: z.array(InfraIncusMemberSchema).optional(),
     cpus: z.number().int().nullable(),
     memUsedBytes: bytes,
     memTotalBytes: bytes,
@@ -43,7 +81,7 @@ export const InfraSampleSchema = z.object({
     stopped: z.number().int().nullable(),
   }),
   runners: z.object({
-    /** The app server's runner: tools, large documents and video. */
+    /** The primary/pooled document runners: tools, large documents and video. */
     app: z
       .object({ tools: InfraLaneSchema, large: InfraLaneSchema, video: InfraLaneSchema })
       .nullable(),
@@ -67,6 +105,9 @@ export const INFRA_SERIES = [
   "appCpu",
   "appMemUsed",
   "appDiskUsed",
+  "toolsCpu",
+  "toolsMemUsed",
+  "toolsDiskUsed",
   "routinesCpu",
   "routinesMemUsed",
   "routinesDiskUsed",
@@ -76,6 +117,7 @@ export const INFRA_SERIES = [
   "appToolsRunning",
   "appToolsQueued",
   "appLargeRunning",
+  "appVideoRunning",
   "routinesToolsRunning",
   "routinesToolsQueued",
   "chatRuns",

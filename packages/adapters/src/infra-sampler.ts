@@ -1,4 +1,10 @@
-import type { InfraLane, InfraSample, InfraServer } from "@rakazo/contracts";
+import type {
+  InfraIncusMember,
+  InfraLane,
+  InfraSample,
+  InfraServer,
+  InfraToolRunnerNode,
+} from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { runAsSystem } from "@rakazo/db";
 import { Agent, request as httpRequest } from "undici";
@@ -11,10 +17,74 @@ export const INFRA_SAMPLE_INTERVAL_MS = 60_000;
 const READ_TIMEOUT_MS = 5_000;
 const ROUTINE_TRIGGERS = ["routine", "webhook"];
 
+export interface InfraServerLabel {
+  name?: string;
+  datacenter?: string;
+}
+
+export type InfraServerLabels = Record<string, InfraServerLabel>;
+
+/**
+ * Parses `RAKAZO_INFRA_SERVERS`, semicolon-separated `key=Name|Datacenter` entries.
+ * Keys can be `app`, `routines`, a runner host/IP (e.g. `10.77.0.5`), or an Incus member name.
+ */
+export function parseInfraServerLabels(raw: string | undefined): InfraServerLabels {
+  const labels: InfraServerLabels = {};
+  for (const part of (raw ?? "").split(";")) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim().toLowerCase();
+    const rest = trimmed.slice(eq + 1).trim();
+    if (!key || !rest) continue;
+    const pipe = rest.indexOf("|");
+    if (pipe >= 0) {
+      const name = rest.slice(0, pipe).trim();
+      const datacenter = rest.slice(pipe + 1).trim();
+      labels[key] = {
+        ...(name ? { name } : {}),
+        ...(datacenter ? { datacenter } : {}),
+      };
+    } else {
+      labels[key] = { name: rest };
+    }
+  }
+  return labels;
+}
+
+function hostKeyFromUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function resolveLabel(
+  labels: InfraServerLabels | undefined,
+  ...keys: (string | null | undefined)[]
+): InfraServerLabel | undefined {
+  if (!labels) return undefined;
+  for (const key of keys) {
+    if (!key) continue;
+    const found = labels[key.toLowerCase()];
+    if (found) return found;
+  }
+  return undefined;
+}
+
 export interface InfraSamplerOptions {
   prisma: PrismaClient;
-  runners: { app?: string; tools?: string; routines?: string; token?: string };
+  runners: {
+    app?: string;
+    tools?: string | string[];
+    routines?: string;
+    token?: string;
+  };
   incus?: Pick<IncusSandboxOptions, "url" | "clientCert" | "clientKey" | "serverCert" | "project">;
+  labels?: InfraServerLabels;
   fetch?: typeof fetch;
 }
 
@@ -168,7 +238,106 @@ export function accumulateMember(
   }
 }
 
-async function incusReading(options: InfraSamplerOptions["incus"]): Promise<InfraSample["incus"]> {
+function withLabel(server: InfraServer, label: InfraServerLabel | undefined): InfraServer {
+  if (!label) return server;
+  return {
+    ...server,
+    ...(label.name ? { name: label.name } : {}),
+    ...(label.datacenter ? { datacenter: label.datacenter } : {}),
+  };
+}
+
+function sumLanes(lanes: InfraLane[]): InfraLane {
+  let slots = 0;
+  let running = 0;
+  let queued = 0;
+  let started: number | null = null;
+  for (const item of lanes) {
+    slots += item.slots;
+    running += item.running;
+    queued += item.queued;
+    if (item.started !== null) started = (started ?? 0) + item.started;
+  }
+  return { slots, running, queued, started };
+}
+
+function aggregateToolServers(nodes: InfraToolRunnerNode[]): InfraServer {
+  const online = nodes.filter((node) => node.up);
+  if (online.length === 0) return DOWN;
+  let cpuSum = 0;
+  let cpuCount = 0;
+  let loadSum = 0;
+  let loadCount = 0;
+  let cpus: number | null = null;
+  let memUsed: number | null = null;
+  let memTotal: number | null = null;
+  let diskUsed: number | null = null;
+  let diskTotal: number | null = null;
+  for (const node of online) {
+    if (node.cpuPercent !== null) {
+      cpuSum += node.cpuPercent;
+      cpuCount += 1;
+    }
+    if (node.load1 !== null) {
+      loadSum += node.load1;
+      loadCount += 1;
+    }
+    if (node.cpus !== null) cpus = (cpus ?? 0) + node.cpus;
+    if (node.memUsedBytes !== null) memUsed = (memUsed ?? 0) + node.memUsedBytes;
+    if (node.memTotalBytes !== null) memTotal = (memTotal ?? 0) + node.memTotalBytes;
+    if (node.diskUsedBytes !== null) diskUsed = (diskUsed ?? 0) + node.diskUsedBytes;
+    if (node.diskTotalBytes !== null) diskTotal = (diskTotal ?? 0) + node.diskTotalBytes;
+  }
+  const datacenters = [...new Set(nodes.map((node) => node.datacenter).filter(Boolean))] as string[];
+  return {
+    up: true,
+    ...(nodes.length === 1 && nodes[0]?.name ? { name: nodes[0].name } : {}),
+    ...(datacenters.length > 0 ? { datacenter: datacenters.join(" · ") } : {}),
+    cpuPercent: cpuCount > 0 ? cpuSum / cpuCount : null,
+    load1: loadCount > 0 ? loadSum : null,
+    cpus,
+    memUsedBytes: memUsed,
+    memTotalBytes: memTotal,
+    diskUsedBytes: diskUsed,
+    diskTotalBytes: diskTotal,
+  };
+}
+
+type ClusterMemberMeta = {
+  name: string;
+  online: boolean;
+  description?: string;
+};
+
+function clusterMemberMeta(metadata: unknown): ClusterMemberMeta[] | null {
+  if (!Array.isArray(metadata) || metadata.length === 0) return null;
+  const members: ClusterMemberMeta[] = [];
+  for (const entry of metadata) {
+    if (typeof entry === "string") {
+      const name = entry.split("/").filter(Boolean).pop();
+      if (name) members.push({ name, online: true });
+      continue;
+    }
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as { server_name?: unknown; status?: unknown; description?: unknown };
+    if (typeof record.server_name !== "string" || !record.server_name) continue;
+    const description =
+      typeof record.description === "string" && record.description.trim()
+        ? record.description.trim()
+        : undefined;
+    members.push({
+      name: record.server_name,
+      online: typeof record.status !== "string" || record.status === "Online",
+      ...(description ? { description } : {}),
+    });
+  }
+  return members.length > 0 ? members : null;
+}
+
+async function incusReading(
+  options: InfraSamplerOptions["incus"],
+  labels?: InfraServerLabels,
+): Promise<InfraSample["incus"]> {
   const down = {
     up: false,
     members: 0,
@@ -183,21 +352,53 @@ async function incusReading(options: InfraSamplerOptions["incus"]): Promise<Infr
   if (!options?.url) return down;
   try {
     const project = encodeURIComponent(options.project || "default");
-    const [members, instances, pools] = await Promise.all([
+    const [membersRaw, instances, pools] = await Promise.all([
       incusGet(options, "/1.0/cluster/members?recursion=1").catch(() => null),
       incusGet(options, `/1.0/instances?recursion=1&project=${project}`) as Promise<
-        Array<{ status?: string }>
+        Array<{ status?: string; location?: string }>
       >,
       incusGet(options, "/1.0/storage-pools") as Promise<string[]>,
     ]);
-    const names = clusterMemberNames(members);
-    const targets = names ?? [null];
+    const list = Array.isArray(instances) ? instances : [];
+    const meta = clusterMemberMeta(membersRaw);
     const poolNames = (pools ?? [])
       .map((pool) => (typeof pool === "string" ? pool.split("/").pop() : ""))
       .filter((name): name is string => Boolean(name));
+
+    const targets: Array<{ name: string | null; online: boolean; description?: string }> = meta
+      ? meta
+      : [{ name: null, online: true }];
+
     const parts = await Promise.all(
       targets.map(async (target) => {
-        const query = target ? `?target=${encodeURIComponent(target)}` : "";
+        const label = resolveLabel(labels, target.name, "incus");
+        const memberName = label?.name || target.name || "incus";
+        const datacenter = label?.datacenter || target.description;
+        const memberInstances = target.name
+          ? list.filter((instance) => instance.location === target.name)
+          : list;
+        const running = memberInstances.filter((instance) => instance.status === "Running").length;
+        const stopped = memberInstances.filter((instance) => instance.status !== "Running").length;
+
+        if (!target.online) {
+          return {
+            ok: false as const,
+            node: {
+              name: memberName,
+              ...(datacenter ? { datacenter } : {}),
+              up: false,
+              cpus: null,
+              memUsedBytes: null,
+              memTotalBytes: null,
+              diskUsedBytes: null,
+              diskTotalBytes: null,
+              running,
+              stopped,
+            } satisfies InfraIncusMember,
+          };
+        }
+
+        const query = target.name ? `?target=${encodeURIComponent(target.name)}` : "";
         try {
           const resources = (await incusGet(options, `/1.0/resources${query}`)) as HostResources;
           let diskUsed: number | null = null;
@@ -213,28 +414,55 @@ async function incusReading(options: InfraSamplerOptions["incus"]): Promise<Infr
             diskUsed = (diskUsed ?? 0) + count(space?.used);
             diskTotal = (diskTotal ?? 0) + count(space?.total);
           }
-          return {
+          const metrics = {
             cpus: number(resources?.cpu?.total),
             memUsedBytes: number(resources?.memory?.used),
             memTotalBytes: number(resources?.memory?.total),
             diskUsedBytes: diskUsed,
             diskTotalBytes: diskTotal,
           };
+          return {
+            ok: true as const,
+            metrics,
+            node: {
+              name: memberName,
+              ...(datacenter ? { datacenter } : {}),
+              up: true,
+              ...metrics,
+              running,
+              stopped,
+            } satisfies InfraIncusMember,
+          };
         } catch {
-          return null;
+          return {
+            ok: false as const,
+            node: {
+              name: memberName,
+              ...(datacenter ? { datacenter } : {}),
+              up: false,
+              cpus: null,
+              memUsedBytes: null,
+              memTotalBytes: null,
+              diskUsedBytes: null,
+              diskTotalBytes: null,
+              running,
+              stopped,
+            } satisfies InfraIncusMember,
+          };
         }
       }),
     );
-    // A missing member would make the cluster look smaller than it is.
-    if (parts.some((part) => part === null)) return down;
+
     const total: InfraSample["incus"] = { ...down, running: null, stopped: null };
     for (const part of parts) {
-      if (part) accumulateMember(total, part);
+      if (part.ok) accumulateMember(total, part.metrics);
     }
     if (!total.up) return down;
-    const list = Array.isArray(instances) ? instances : [];
     total.running = list.filter((instance) => instance.status === "Running").length;
     total.stopped = list.filter((instance) => instance.status !== "Running").length;
+    if (meta) {
+      total.nodes = parts.map((part) => part.node);
+    }
     return total;
   } catch {
     return down;
@@ -271,21 +499,66 @@ export async function takeInfraSample(
 ): Promise<InfraSample> {
   const fetcher = options.fetch ?? fetch;
   const { token } = options.runners;
-  const [app, tools, routines, incus, fleet] = await Promise.all([
+  const toolUrls = Array.isArray(options.runners.tools)
+    ? options.runners.tools.filter(Boolean)
+    : options.runners.tools
+      ? [options.runners.tools]
+      : [];
+
+  const [app, toolStatuses, routines, incus, fleet] = await Promise.all([
     runnerStatus(fetcher, options.runners.app, token),
-    runnerStatus(fetcher, options.runners.tools, token),
+    Promise.all(toolUrls.map((url) => runnerStatus(fetcher, url, token))),
     runnerStatus(fetcher, options.runners.routines, token),
-    incusReading(options.incus),
+    incusReading(options.incus, options.labels),
     fleetReading(options.prisma, now),
   ]);
-  const slots = tools ?? app;
+
+  const appLabel = resolveLabel(options.labels, "app", hostKeyFromUrl(options.runners.app));
+  const routinesLabel = resolveLabel(
+    options.labels,
+    hostKeyFromUrl(options.runners.routines),
+    "routines",
+  );
+
+  const toolNodes: InfraToolRunnerNode[] = toolUrls.map((url, index) => {
+    const status = toolStatuses[index] ?? null;
+    const host = hostKeyFromUrl(url) ?? `tools-${index + 1}`;
+    const label = resolveLabel(options.labels, host, url, index === 0 ? "tools" : undefined);
+    const base = serverFromStatus(status);
+    return {
+      ...base,
+      id: host,
+      name: label?.name || host,
+      ...(label?.datacenter ? { datacenter: label.datacenter } : {}),
+      primary: index === 0,
+      lanes: status
+        ? { tools: lane(status), large: lane(status.large), video: lane(status.video) }
+        : null,
+    };
+  });
+
+  const onlineToolLanes = toolNodes
+    .map((node) => node.lanes)
+    .filter((entry): entry is NonNullable<InfraToolRunnerNode["lanes"]> => entry !== null);
+
+  const aggregatedAppLanes =
+    onlineToolLanes.length > 0
+      ? {
+          tools: sumLanes(onlineToolLanes.map((entry) => entry.tools)),
+          large: sumLanes(onlineToolLanes.map((entry) => entry.large)),
+          video: sumLanes(onlineToolLanes.map((entry) => entry.video)),
+        }
+      : app
+        ? { tools: lane(app), large: lane(app.large), video: lane(app.video) }
+        : null;
+
   return {
-    app: serverFromStatus(app),
-    ...(tools ? { tools: serverFromStatus(tools) } : {}),
-    routines: serverFromStatus(routines),
+    app: withLabel(serverFromStatus(app), appLabel),
+    ...(toolNodes.length > 0 ? { tools: aggregateToolServers(toolNodes), toolNodes } : {}),
+    routines: withLabel(serverFromStatus(routines), routinesLabel),
     incus,
     runners: {
-      app: slots ? { tools: lane(slots), large: lane(slots.large), video: lane(slots.video) } : null,
+      app: aggregatedAppLanes,
       routines: routines ? { tools: lane(routines), large: lane(routines.large) } : null,
     },
     fleet,

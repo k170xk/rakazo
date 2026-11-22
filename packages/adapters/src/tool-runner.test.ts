@@ -544,6 +544,36 @@ describe("overflow runners", () => {
     expect(started).toBe(1);
   });
 
+  it("spreads commands across dedicated peer runners before spilling to overflow", async () => {
+    const peer1 = await fakeRunner({ slots: 8, running: 4, queued: 0, host: quietHost });
+    const peer2 = await fakeRunner({ slots: 8, running: 1, queued: 0, host: quietHost });
+    const peer3 = await fakeRunner({ slots: 8, running: 3, queued: 0, host: quietHost });
+    const overflow = await fakeRunner({ slots: 8, running: 0, queued: 0, host: quietHost });
+    const client = toolRunnerFromEnv(
+      {
+        RAKAZO_TOOL_RUNNER_URL: [peer1.url, peer2.url, peer3.url].join(","),
+        RAKAZO_TOOL_RUNNER_TOKEN: "t",
+        RAKAZO_TOOL_RUNNER_OVERFLOW_URLS: overflow.url,
+      },
+      "incus",
+      { url: "http://supervisor:7091", token: undefined },
+    )!;
+    await runOn(peer1, [overflow], undefined, client);
+    expect([ran(peer1), ran(peer2), ran(peer3), ran(overflow)]).toEqual([
+      false,
+      true,
+      false,
+      false,
+    ]);
+
+    // When every dedicated peer is full, spill to the quiet routine overflow runner.
+    peer1.status = { slots: 8, running: 8, queued: 1, host: quietHost };
+    peer2.status = { slots: 8, running: 8, queued: 1, host: quietHost };
+    peer3.status = { slots: 8, running: 8, queued: 1, host: quietHost };
+    await runOn(peer1, [overflow], undefined, client);
+    expect(ran(overflow)).toBe(true);
+  });
+
   it("needs a free video slot too before overflowing a video", () => {
     const status = { ...free, host: quietHost, video: { slots: 1, running: 1, queued: 0 } };
     expect(overflowRunnerQuiet(status, "word")).toBe(true);

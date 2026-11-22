@@ -191,6 +191,8 @@ x-app-environment: &app-environment
   # Comma-separated runners on other servers, used only while every runner above is busy and
   # their own server is quiet (docs/self-host-routine-runner.md).
   RAKAZO_TOOL_RUNNER_OVERFLOW_URLS:
+  # Optional semicolon-separated key=Name|Datacenter labels for the admin infrastructure dashboard.
+  RAKAZO_INFRA_SERVERS:
   RAKAZO_COMPANY_WORKSPACE:
   SANDBOX_HOST_URL:
   SANDBOX_HOST_TOKEN:

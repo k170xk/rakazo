@@ -1,3 +1,4 @@
+import { INFRA_SERIES } from "@rakazo/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { infrastructure } from "./infrastructure-admin.js";
 import type { RouterDeps } from "./router.js";
@@ -66,7 +67,7 @@ describe("infrastructure dashboard", () => {
     expect(result.points).toHaveLength(1);
     expect(result.points[0]?.at).toBe("2026-11-15T11:55:00.000Z");
     expect(result.points[0]?.values).toMatchObject({ appCpu: 40, chatRuns: 2, incusRunning: null });
-    expect(Object.keys(result.points[0]?.values ?? {})).toHaveLength(17);
+    expect(Object.keys(result.points[0]?.values ?? {})).toHaveLength(INFRA_SERIES.length);
   });
 
   it("shows no latest reading when a stored one does not match the current shape", async () => {
