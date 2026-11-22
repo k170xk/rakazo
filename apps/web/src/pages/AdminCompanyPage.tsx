@@ -39,7 +39,6 @@ import {
   Monitor,
   Receipt,
   Repeat,
-  ScrollText,
   Server,
   Share2,
   ShieldCheck,
@@ -80,7 +79,6 @@ const ADMIN_SECTIONS = [
   "agents",
   "announcements",
   "features",
-  "skills",
   "integrations",
   "mcp",
   "chat",
@@ -102,6 +100,7 @@ type AdminSection = (typeof ADMIN_SECTIONS)[number];
 
 function adminSectionFrom(hash: string): AdminSection {
   const id = hash.replace(/^#/, "");
+  if (id === "skills") return "tools";
   return (ADMIN_SECTIONS as readonly string[]).includes(id) ? (id as AdminSection) : "models";
 }
 
@@ -153,11 +152,10 @@ function CompanyAdminPanels() {
     { id: "agents", label: t`Default agents`, icon: Bot },
     { id: "announcements", label: t`Announcements`, icon: Megaphone },
     { id: "features", label: t`Features`, icon: ToggleRight },
-    { id: "skills", label: t`Staff skills`, icon: ScrollText },
+    { id: "tools", label: t`Tools and skills`, icon: Wrench },
     { id: "integrations", label: t`Connectors`, icon: LayoutGrid },
     { id: "mcp", label: t`MCP servers`, icon: Server },
     { id: "chat", label: t`Chat`, icon: MessageSquare },
-    { id: "tools", label: t`Tools and skills`, icon: Wrench },
     { id: "voice", label: t`Voice`, icon: Mic },
     { id: "vault", label: t`Company vault`, icon: KeyRound },
     { id: "library", label: t`Document library`, icon: FileText },
@@ -204,13 +202,6 @@ function CompanyAdminPanels() {
             ) : null}
           </div>
         );
-      case "skills":
-        return (
-          <div className="space-y-10">
-            <CompanyStaffSkillsSection state={data} onSaved={saved} />
-            <CompanySkillsLibrarySection state={data} />
-          </div>
-        );
       case "integrations":
         return <CompanyAppsSection state={data} onSaved={saved} />;
       case "mcp":
@@ -218,7 +209,13 @@ function CompanyAdminPanels() {
       case "chat":
         return <CompanyChatSection state={data} onSaved={saved} />;
       case "tools":
-        return <CompanyToolsSection state={data} onSaved={saved} />;
+        return (
+          <div className="space-y-10">
+            <CompanyToolsSection state={data} onSaved={saved} />
+            <CompanySkillsLibrarySection state={data} />
+            <CompanyStaffSkillsSection state={data} onSaved={saved} />
+          </div>
+        );
       case "voice":
         return <CompanyVoiceSection state={data} onSaved={saved} />;
       case "vault":

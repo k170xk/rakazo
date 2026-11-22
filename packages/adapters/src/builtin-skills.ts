@@ -93,3 +93,10 @@ export function enabledBuiltinAgentSkills(): typeof BUILTIN_AGENT_SKILLS {
   const off = new Set(companyTools().disabledSkills.map((name) => name.toLowerCase()));
   return BUILTIN_AGENT_SKILLS.filter((skill) => !off.has(skill.name.toLowerCase()));
 }
+
+/** Enabled built-in skills shown to staff in their Skills catalog (excludes admin-hidden skills). */
+export function visibleBuiltinAgentSkills(): typeof BUILTIN_AGENT_SKILLS {
+  const hidden = new Set((companyTools().hiddenSkills ?? []).map((name) => name.toLowerCase()));
+  if (hidden.size === 0) return enabledBuiltinAgentSkills();
+  return enabledBuiltinAgentSkills().filter((skill) => !hidden.has(skill.name.toLowerCase()));
+}

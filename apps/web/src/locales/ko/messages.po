@@ -5250,6 +5250,11 @@ msgstr "이름을 업데이트하지 못했습니다"
 msgid "Could not update reaction"
 msgstr "반응을 업데이트할 수 없습니다"
 
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminCompanyTools.tsx
+msgid "Could not update skill visibility"
+msgstr ""
+
 #: src/pages/AdminComputerAccess.tsx
 msgid "Could not update storage"
 msgstr ""
@@ -8163,9 +8168,16 @@ msgstr "숨김"
 msgid "Hidden from AI"
 msgstr "Hidden from AI"
 
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminCompanyTools.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Hidden from staff"
 msgstr "직원에게 숨김"
+
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminCompanyTools.tsx
+msgid "Hidden from staff's Skills list (agents still use it). Click to show."
+msgstr ""
 
 #: src/components/office/slides/history.tsx
 msgid "Hidden in the slide show"
@@ -8175,6 +8187,10 @@ msgstr "슬라이드 쇼에서 숨김"
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Hide"
 msgstr "숨기기"
+
+#: src/pages/AdminCompanySkills.tsx
+msgid "Hide from staff Skills list"
+msgstr ""
 
 #: src/components/office/slides/SlideRail.tsx
 msgid "Hide in slideshow"
@@ -11401,6 +11417,10 @@ msgstr ""
 msgid "Off: staff see Connectors as Coming soon and cannot add anything. Admins always can, to test."
 msgstr ""
 
+#: src/pages/AdminCompanySkills.tsx
+msgid "Off: staff see this skill in their Skills list. On: agents can still use it, but it stays hidden from staff's Skills list."
+msgstr ""
+
 #: src/pages/AdminDefaultAgents.tsx
 msgid "Offer People & CV references"
 msgstr ""
@@ -12744,7 +12764,7 @@ msgid "Ready at {0}%"
 msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
-msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no longer see it. Their own skills, skill packs and GitHub are a separate switch."
+msgid "Ready-made ways of working that come with OCSC Intelligence. Switch one off to disable it completely, or use the eye button to hide it from staff's Skills list while keeping it enabled for agents."
 msgstr ""
 
 #: src/components/whiteboards/whiteboard-studio.tsx
@@ -14696,6 +14716,11 @@ msgstr "직원에게 숨긴 항목을 포함해 모든 앱과 플러그인을 �
 msgid "Showing what staff see."
 msgstr "직원 화면을 표시하고 있습니다."
 
+#: src/pages/AdminCompanySkills.tsx
+#: src/pages/AdminCompanyTools.tsx
+msgid "Shown in staff's Skills list. Click to hide while keeping it enabled."
+msgstr ""
+
 #: src/pages/AdminDefaultAgents.tsx
 msgid "Shown in the New Agent picker"
 msgstr ""
@@ -16010,7 +16035,7 @@ msgid "The text on this page changed."
 msgstr ""
 
 #: src/pages/AdminCompanyTools.tsx
-msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
+msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Use the eye button to hide a tool from staff's Skills list while keeping it enabled for agents."
 msgstr ""
 
 #: src/components/office/planner/PlannerJsonDialog.tsx

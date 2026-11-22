@@ -19,7 +19,7 @@ import {
   toast,
 } from "@rakazo/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSpaceQueries } from "../lib/query";
 import { rpc } from "../lib/rpc";
@@ -49,6 +49,7 @@ export function CompanySkillEditorDialog({
   const [body, setBody] = useState(parsed?.body ?? "");
   const [rawContent, setRawContent] = useState(skill?.content ?? "");
   const [availableToAll, setAvailableToAll] = useState(skill?.availableToAll ?? false);
+  const [hiddenFromStaff, setHiddenFromStaff] = useState(skill?.hiddenFromStaff ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,8 +97,14 @@ export function CompanySkillEditorDialog({
     setBusy(true);
     try {
       const payload = rawMode
-        ? { content: rawContent, availableToAll }
-        : { name: name.trim(), description: description.trim(), body, availableToAll };
+        ? { content: rawContent, availableToAll, hiddenFromStaff }
+        : {
+            name: name.trim(),
+            description: description.trim(),
+            body,
+            availableToAll,
+            hiddenFromStaff,
+          };
       const saved = skill
         ? await rpc.companyAdmin.skills.update({ id: skill.id, ...payload })
         : await rpc.companyAdmin.skills.create(payload);
@@ -262,6 +269,23 @@ export function CompanySkillEditorDialog({
             <Switch checked={availableToAll} onCheckedChange={setAvailableToAll} />
           </div>
 
+          {availableToAll ? (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5">
+              <div>
+                <div className="text-sm font-medium">
+                  <Trans>Hide from staff Skills list</Trans>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  <Trans>
+                    Off: staff see this skill in their Skills list. On: agents can still use it, but
+                    it stays hidden from staff's Skills list.
+                  </Trans>
+                </div>
+              </div>
+              <Switch checked={hiddenFromStaff} onCheckedChange={setHiddenFromStaff} />
+            </div>
+          ) : null}
+
           {error ? (
             <p role="alert" className="text-sm text-destructive">
               {error}
@@ -283,7 +307,7 @@ export function CompanySkillEditorDialog({
   );
 }
 
-/** Company-managed SKILL.md library shown under Company Admin → Staff skills. */
+/** Company-managed SKILL.md library shown under Company Admin → Tools and skills. */
 export function CompanySkillsLibrarySection({ state }: { state: CompanyAdminState }) {
   const { t } = useLingui();
   const queries = useSpaceQueries();
@@ -296,6 +320,7 @@ export function CompanySkillsLibrarySection({ state }: { state: CompanyAdminStat
   const [editing, setEditing] = useState<CompanySkill | null>(null);
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingVisibilityId, setTogglingVisibilityId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const usageBySkillId = useMemo(() => {
@@ -320,6 +345,21 @@ export function CompanySkillsLibrarySection({ state }: { state: CompanyAdminStat
       queryClient.invalidateQueries({ queryKey: queries.companyAdmin.get.queryKey() }),
       queryClient.invalidateQueries({ queryKey: queries.agentSkills.list.queryKey() }),
     ]);
+  }
+
+  async function toggleHidden(skill: CompanySkill) {
+    setTogglingVisibilityId(skill.id);
+    try {
+      await rpc.companyAdmin.skills.update({
+        id: skill.id,
+        hiddenFromStaff: !skill.hiddenFromStaff,
+      });
+      await refreshAll();
+    } catch (err) {
+      toast.error(errorText(err, t`Could not update skill visibility`));
+    } finally {
+      setTogglingVisibilityId(null);
+    }
   }
 
   async function removeSkill(id: string) {
@@ -383,6 +423,11 @@ export function CompanySkillsLibrarySection({ state }: { state: CompanyAdminStat
                         <Trans>All staff</Trans>
                       </Badge>
                     ) : null}
+                    {skill.availableToAll && skill.hiddenFromStaff ? (
+                      <Badge variant="outline" className="text-[11px] font-normal">
+                        <Trans>Hidden from staff</Trans>
+                      </Badge>
+                    ) : null}
                     {usage?.required ? (
                       <Badge variant="default">
                         <Trans>{usage.required} required</Trans>
@@ -399,6 +444,36 @@ export function CompanySkillsLibrarySection({ state }: { state: CompanyAdminStat
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
+                  {skill.availableToAll ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      data-testid={`toggle-company-skill-visibility-${skill.id}`}
+                      aria-label={
+                        skill.hiddenFromStaff
+                          ? t`Hidden from staff's Skills list (agents still use it). Click to show.`
+                          : t`Shown in staff's Skills list. Click to hide while keeping it enabled.`
+                      }
+                      aria-pressed={Boolean(skill.hiddenFromStaff)}
+                      title={
+                        skill.hiddenFromStaff
+                          ? t`Hidden from staff's Skills list (agents still use it). Click to show.`
+                          : t`Shown in staff's Skills list. Click to hide while keeping it enabled.`
+                      }
+                      disabled={togglingVisibilityId === skill.id}
+                      className={
+                        skill.hiddenFromStaff ? "text-foreground" : "text-muted-foreground"
+                      }
+                      onClick={() => void toggleHidden(skill)}
+                    >
+                      {skill.hiddenFromStaff ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </Button>
+                  ) : null}
                   <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(skill)}>
                     <Pencil className="mr-1 size-3.5" />
                     <Trans>Edit</Trans>

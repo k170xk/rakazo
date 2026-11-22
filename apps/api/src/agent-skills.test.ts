@@ -1,7 +1,9 @@
+import { setCompanyPolicy } from "@rakazo/adapters";
 import type { Actor } from "@rakazo/contracts";
+import { DEFAULT_COMPANY_TOOLS } from "@rakazo/contracts";
 import { buildSkillMd, parseSkillMd } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAgentSkillsService, resolveSkillContent } from "./agent-skills.js";
 
 const actor: Actor = {
@@ -151,5 +153,76 @@ Write the notes.
     expect(parsed.description).toBe("Prepare weekly release notes");
     expect(parsed.body).toBe("Write the weekly notes.");
     expect(parsed.frontmatter.notes).toBe("First step\nSecond step\n\n");
+  });
+});
+
+describe("hidden skills in staff catalog vs runtime", () => {
+  afterEach(() => {
+    setCompanyPolicy({ tools: DEFAULT_COMPANY_TOOLS });
+  });
+
+  it("omits hidden built-in and company skills from list/get while preserving listWithContent", async () => {
+    const companySkillContent = buildSkillMd({
+      name: "House Style",
+      description: "Internal house style rules",
+      body: "Always use SI units.",
+    });
+    const visibleCompanyContent = buildSkillMd({
+      name: "Visible Style",
+      description: "Public company rules",
+      body: "Be concise.",
+    });
+    setCompanyPolicy({
+      tools: {
+        ...DEFAULT_COMPANY_TOOLS,
+        hiddenSkills: ["Interrogate"],
+        companySkills: [
+          {
+            id: "cs-hidden",
+            name: "House Style",
+            description: "Internal house style rules",
+            content: companySkillContent,
+            availableToAll: true,
+            hiddenFromStaff: true,
+            createdAt: new Date(0).toISOString(),
+            updatedAt: new Date(0).toISOString(),
+          },
+          {
+            id: "cs-visible",
+            name: "Visible Style",
+            description: "Public company rules",
+            content: visibleCompanyContent,
+            availableToAll: true,
+            createdAt: new Date(0).toISOString(),
+            updatedAt: new Date(0).toISOString(),
+          },
+        ],
+      },
+    });
+
+    const { service } = setup([]);
+    const listed = await service.list(actor);
+    const listedNames = listed.map((s) => s.name);
+    expect(listedNames).not.toContain("Interrogate");
+    expect(listedNames).not.toContain("House Style");
+    expect(listedNames).toContain("Visible Style");
+
+    await expect(service.get(actor, { skillId: "builtin:Interrogate" })).rejects.toThrow();
+    await expect(service.get(actor, { name: "Interrogate" })).rejects.toThrow();
+    await expect(service.get(actor, { skillId: "company:cs-hidden" })).rejects.toThrow();
+    await expect(service.get(actor, { name: "House Style" })).rejects.toThrow();
+    await expect(service.get(actor, { skillId: "company:cs-visible" })).resolves.toMatchObject({
+      name: "Visible Style",
+    });
+
+    const runtime = await service.listWithContent(actor);
+    const runtimeNames = runtime.map((s) => s.name);
+    expect(runtimeNames).toContain("Interrogate");
+    expect(runtimeNames).toContain("House Style");
+    expect(runtimeNames).toContain("Visible Style");
+
+    await expect(
+      service.create(actor, { name: "Interrogate", description: "Shadow attempt", body: "Nope" }),
+    ).rejects.toThrow("already exists");
   });
 });

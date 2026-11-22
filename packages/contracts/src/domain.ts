@@ -2561,6 +2561,8 @@ export const CompanySkillSchema = z.object({
   content: z.string().min(1).max(100_000),
   /** When true, every staff member's agents can also use this skill on demand. */
   availableToAll: z.boolean().default(false),
+  /** When true, hide from the staff Skills catalog even while available to all agents. */
+  hiddenFromStaff: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -2573,6 +2575,7 @@ export const CompanySkillCreateInputSchema = z
     description: z.string().trim().min(1).max(2000).optional(),
     body: z.string().max(100_000).optional(),
     availableToAll: z.boolean().optional(),
+    hiddenFromStaff: z.boolean().optional(),
   })
   .superRefine((input, ctx) => {
     if (input.content?.trim()) return;
@@ -2593,6 +2596,7 @@ export const CompanySkillUpdateInputSchema = z.object({
   description: z.string().trim().min(1).max(2000).optional(),
   body: z.string().max(100_000).optional(),
   availableToAll: z.boolean().optional(),
+  hiddenFromStaff: z.boolean().optional(),
 });
 export type CompanySkillUpdateInput = z.infer<typeof CompanySkillUpdateInputSchema>;
 
@@ -2627,6 +2631,8 @@ export type CompanyAssistantConfig = z.infer<typeof CompanyAssistantConfigSchema
 
 export const CompanyToolsSchema = z.object({
   disabledSkills: z.array(z.string().trim().min(1).max(80)).max(200),
+  /** Built-in skill / OCSC tool names hidden from the staff Skills catalog even while enabled. */
+  hiddenSkills: z.array(z.string().trim().min(1).max(80)).max(200).optional(),
   /** Evolve tool names as Evolve lists them, e.g. "generate_voiceover". */
   disabledTools: z.array(z.string().trim().min(1).max(120)).max(500),
   /** The computer access of everyone without a level of their own. */
@@ -2701,6 +2707,8 @@ export const CompanyToolEntrySchema = z.object({
   name: z.string(),
   description: z.string(),
   enabled: z.boolean(),
+  /** Built-in skills & OCSC Tools only: true when hidden from the staff Skills list while enabled. */
+  hidden: z.boolean().optional(),
   /** Evolve tools only; absent for skills. */
   access: EvolveToolAccessSchema.optional(),
   /** What it changes in Evolve, for tools that change anything. */

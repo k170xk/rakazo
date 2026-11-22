@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { CompanyAdminState, CompanyTools, EvolveToolAccess } from "@rakazo/contracts";
 import { Badge, Button, Switch, toast } from "@rakazo/ui-web";
-import { RefreshCw } from "lucide-react";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { isOcscTool, ocscToolTitle } from "../lib/ocsc-tools";
 import { rpc } from "../lib/rpc";
@@ -40,11 +40,23 @@ export function CompanyToolsSection({
       .filter((entry) => (entry.name === name ? !enabled : !entry.enabled))
       .map((entry) => entry.name);
 
+  const hiddenList = (entries: Entry[], name: string, hidden: boolean) =>
+    entries
+      .filter((entry) => (entry.name === name ? hidden : Boolean(entry.hidden)))
+      .map((entry) => entry.name);
+
   const setSkill = (name: string, enabled: boolean) =>
     run(
       `skill:${name}`,
       () => rpc.companyAdmin.setTools({ disabledSkills: offList(skills, name, enabled) }),
       t`Could not update the skill`,
+    );
+
+  const setSkillHidden = (name: string, hidden: boolean) =>
+    run(
+      `skill-hidden:${name}`,
+      () => rpc.companyAdmin.setTools({ hiddenSkills: hiddenList(skills, name, hidden) }),
+      t`Could not update skill visibility`,
     );
 
   const setTool = (name: string, enabled: boolean) => {
@@ -87,7 +99,8 @@ export function CompanyToolsSection({
         <p className="text-[13px] text-muted-foreground">
           <Trans>
             The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video
-            and apps. Staff see them under OCSC Tools, with what each can do.
+            and apps. Use the eye button to hide a tool from staff's Skills list while keeping it
+            enabled for agents.
           </Trans>
         </p>
         <ToggleList
@@ -95,6 +108,7 @@ export function CompanyToolsSection({
           idPrefix="company-skill"
           disabled={busy !== null}
           onChange={(name, on) => void setSkill(name, on)}
+          onToggleHidden={(name, hidden) => void setSkillHidden(name, hidden)}
         />
       </div>
 
@@ -167,8 +181,9 @@ export function CompanyToolsSection({
         </h3>
         <p className="text-[13px] text-muted-foreground">
           <Trans>
-            Ready-made ways of working that come with OCSC Intelligence. Switch one off and staff no
-            longer see it. Their own skills, skill packs and GitHub are a separate switch.
+            Ready-made ways of working that come with OCSC Intelligence. Switch one off to disable
+            it completely, or use the eye button to hide it from staff's Skills list while keeping
+            it enabled for agents.
           </Trans>
         </p>
         <ToggleList
@@ -176,6 +191,7 @@ export function CompanyToolsSection({
           idPrefix="company-skill"
           disabled={busy !== null}
           onChange={(name, on) => void setSkill(name, on)}
+          onToggleHidden={(name, hidden) => void setSkillHidden(name, hidden)}
         />
       </div>
     </section>
@@ -187,25 +203,37 @@ function ToggleList({
   idPrefix,
   disabled,
   onChange,
+  onToggleHidden,
 }: {
   entries: Entry[];
   idPrefix: string;
   disabled: boolean;
   onChange: (name: string, enabled: boolean) => void;
+  onToggleHidden?: (name: string, hidden: boolean) => void;
 }) {
+  const { t } = useLingui();
   return (
     <ul className="divide-y divide-border rounded-xl border border-border">
       {entries.map((entry) => {
         const id = `${idPrefix}-${entry.name.replace(/[^A-Za-z0-9_-]/g, "-")}`;
+        const hidden = Boolean(entry.hidden);
+        const visibilityLabel = hidden
+          ? t`Hidden from staff's Skills list (agents still use it). Click to show.`
+          : t`Shown in staff's Skills list. Click to hide while keeping it enabled.`;
         return (
-          <li key={entry.name} className="flex items-center gap-4 px-4 py-3">
+          <li key={entry.name} className="flex items-center gap-3 px-4 py-3">
             <label htmlFor={id} className="min-w-0 flex-1 cursor-pointer">
-              <span className="block text-sm font-medium">
-                {ocscToolTitle(entry.name) ?? entry.name}
+              <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                <span>{ocscToolTitle(entry.name) ?? entry.name}</span>
                 {ocscToolTitle(entry.name) ? (
-                  <span className="ms-2 font-mono text-[12px] font-normal text-muted-foreground">
+                  <span className="font-mono text-[12px] font-normal text-muted-foreground">
                     {entry.name}
                   </span>
+                ) : null}
+                {onToggleHidden && entry.enabled && hidden ? (
+                  <Badge variant="outline" className="text-[11px] font-normal">
+                    <Trans>Hidden from staff</Trans>
+                  </Badge>
                 ) : null}
               </span>
               <span className="line-clamp-2 block text-[13px] text-muted-foreground">
@@ -218,6 +246,22 @@ function ToggleList({
                 </span>
               ) : null}
             </label>
+            {onToggleHidden ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                data-testid={`toggle-skill-visibility-${entry.name}`}
+                aria-label={visibilityLabel}
+                aria-pressed={hidden}
+                title={visibilityLabel}
+                disabled={disabled || !entry.enabled}
+                className={hidden ? "text-foreground" : "text-muted-foreground"}
+                onClick={() => onToggleHidden(entry.name, !hidden)}
+              >
+                {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </Button>
+            ) : null}
             <Switch
               id={id}
               checked={entry.enabled}

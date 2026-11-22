@@ -205,6 +205,7 @@ export async function createCompanySkill(
     description: resolved.description,
     content: resolved.content,
     availableToAll: input.availableToAll === true,
+    ...(input.hiddenFromStaff === true ? { hiddenFromStaff: true } : {}),
     createdAt: now,
     updatedAt: now,
   };
@@ -253,14 +254,18 @@ export async function updateCompanySkill(
     throw new ORPCError("CONFLICT", { message: "A skill with that name already exists." });
   }
 
+  const nextHiddenFromStaff =
+    input.hiddenFromStaff !== undefined ? input.hiddenFromStaff : current.hiddenFromStaff;
   const updated: CompanySkill = {
     ...current,
     name: resolved.name,
     description: resolved.description,
     content: resolved.content,
     availableToAll: input.availableToAll ?? current.availableToAll,
+    ...(nextHiddenFromStaff ? { hiddenFromStaff: true } : { hiddenFromStaff: undefined }),
     updatedAt: new Date().toISOString(),
   };
+  if (!updated.hiddenFromStaff) delete updated.hiddenFromStaff;
   const nextSkills = [...existing];
   nextSkills[index] = updated;
   await saveCompanyTools(deps, { ...tools, companySkills: nextSkills });

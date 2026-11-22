@@ -2,7 +2,11 @@ import type { AdapterContext, ConnectorEvent } from "@rakazo/adapter-kit";
 import { DEFAULT_COMPANY_FEATURES, DEFAULT_COMPANY_TOOLS } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { BUILTIN_AGENT_SKILLS, enabledBuiltinAgentSkills } from "./builtin-skills.js";
+import {
+  BUILTIN_AGENT_SKILLS,
+  enabledBuiltinAgentSkills,
+  visibleBuiltinAgentSkills,
+} from "./builtin-skills.js";
 import { setCompanyPolicy } from "./company-policy.js";
 import { createConnectorStack } from "./composio-connector.js";
 import {
@@ -233,6 +237,21 @@ describe("Evolve company tools", () => {
     setCompanyPolicy({ features: { ...DEFAULT_COMPANY_FEATURES, evolveTools: false } });
     const { connector } = createConnectorStack(undefined, [tools]);
     expect(await connector.discoverTools(context)).toEqual([]);
+  });
+
+  it("hides skills from visibleBuiltinAgentSkills while keeping them enabled for agents", () => {
+    setCompanyPolicy({
+      tools: {
+        ...DEFAULT_COMPANY_TOOLS,
+        disabledSkills: [],
+        hiddenSkills: ["Interrogate", "OCSC-Video"],
+      },
+    });
+    expect(enabledBuiltinAgentSkills().map((skill) => skill.name)).toEqual(
+      expect.arrayContaining(["Interrogate", "ocsc-video"]),
+    );
+    expect(visibleBuiltinAgentSkills().map((skill) => skill.name)).not.toContain("Interrogate");
+    expect(visibleBuiltinAgentSkills().map((skill) => skill.name)).not.toContain("ocsc-video");
   });
 
   it("wins the mcp__evolve__ names over a member's own server of the same name", async () => {

@@ -404,6 +404,7 @@ export async function keepAdminsOnFullComputers(
 
 function toolsState(deps: CompanyAdminDeps, policy: CompanyTools): CompanyToolsState {
   const offSkills = new Set(policy.disabledSkills.map((name) => name.toLowerCase()));
+  const hiddenSkills = new Set((policy.hiddenSkills ?? []).map((name) => name.toLowerCase()));
   const evolve = deps.evolveTools?.health() ?? {
     status: "not-configured" as const,
     tools: [],
@@ -415,6 +416,7 @@ function toolsState(deps: CompanyAdminDeps, policy: CompanyTools): CompanyToolsS
       name: skill.name,
       description: skill.description,
       enabled: !offSkills.has(skill.name.toLowerCase()),
+      hidden: hiddenSkills.has(skill.name.toLowerCase()),
     })),
     evolve: {
       ...evolve,
@@ -573,6 +575,9 @@ export async function setCompanyTools(
   const row = await readSettings(deps);
   const tools = { ...companyToolsWithDefaults(row?.companyTools), ...input };
   tools.disabledSkills = [...new Set(tools.disabledSkills)];
+  if (tools.hiddenSkills) {
+    tools.hiddenSkills = [...new Set(tools.hiddenSkills)];
+  }
   tools.disabledTools = [...new Set(tools.disabledTools)];
   if (input.emailFiling) {
     tools.emailFiling = {
