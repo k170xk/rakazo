@@ -78,28 +78,40 @@ body .jantt-hover-card {
 }
 
 /*
- * Match the Word/PowerPoint ribbon strip: muted band, hairline border, one horizontal scroll row.
- * StudioFrame already shows the plan title — hide Jantt's duplicate.
+ * Hide Jantt's crowded single-row toolbar: PlannerToolbar provides Evolve-branded
+ * views, Today, scale switcher, Add task, Search, Filters, Settings, and JSON.
  */
 .planner-workbench .jantt-toolbar {
-  position: relative;
-  z-index: 20;
-  display: flex;
-  flex: 0 0 auto;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 2.5rem;
-  padding: 0.35rem 0.5rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-x: contain;
+  display: none !important;
+}
+
+.planner-scroll-strip {
   scrollbar-width: none;
-  border-bottom: 1px solid var(--border);
-  background: var(--muted);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   -webkit-overflow-scrolling: touch;
+}
+
+.planner-scroll-strip::-webkit-scrollbar {
+  display: none;
+}
+
+/* Lossless Gantt filtering: dim non-matching tasks without mutating Jantt's underlying schedule. */
+.planner-workbench .jantt-label-row.is-filter-muted {
+  opacity: 0.24 !important;
+}
+
+.planner-workbench .jantt-task-bar.is-filter-muted,
+.planner-workbench .jantt-milestone.is-filter-muted {
+  opacity: 0.16 !important;
+  filter: grayscale(0.7);
+}
+
+.planner-workbench .jantt-label-row.is-filter-match {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.planner-workbench .jantt-task-bar.is-filter-match,
+.planner-workbench .jantt-milestone.is-filter-match {
+  opacity: 1 !important;
 }
 
 .planner-workbench .jantt-toolbar::-webkit-scrollbar {

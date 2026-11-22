@@ -273,6 +273,17 @@ msgstr "{0} → {1}"
 msgid "{0} added"
 msgstr "{0} added"
 
+#. placeholder {0}: conflict.resourceId
+#. placeholder {1}: conflict.peakTasks
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "{0} assigned to {1} overlapping tasks"
+msgstr "{0} assigned to {1} overlapping tasks"
+
+#. placeholder {0}: audit.issues.length
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "{0} audit findings to review"
+msgstr "{0} audit findings to review"
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -288,6 +299,11 @@ msgstr "{0} connection token"
 #: src/pages/AdminComputerAccess.tsx
 msgid "{0} days"
 msgstr "{0} days"
+
+#. placeholder {0}: evm.daysRemaining
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "{0} days remaining"
+msgstr "{0} days remaining"
 
 #. placeholder {0}: app.name
 #: src/components/integrations/CompanyMcpApp.tsx
@@ -396,6 +412,12 @@ msgstr "{0} of {1} used"
 #: src/components/StorageDialog.tsx
 msgid "{0} on agent computers · {1} attached in chats."
 msgstr "{0} on agent computers · {1} attached in chats."
+
+#. placeholder {0}: baseline.totalOnScheduleTasks
+#. placeholder {1}: baseline.totalAheadTasks
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "{0} on schedule · {1} ahead"
+msgstr "{0} on schedule · {1} ahead"
 
 #. placeholder {0}: questions.length
 #: src/components/LearningClinicCard.tsx
@@ -887,6 +909,10 @@ msgstr "1 space"
 msgid "1 unchanged line"
 msgstr "1 unchanged line"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "90° Turn"
+msgstr "90° Turn"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "A bid writer drafts the response as an OCSC Word document"
 msgstr "A bid writer drafts the response as an OCSC Word document"
@@ -1147,6 +1173,10 @@ msgstr "Actions for space"
 msgid "Active"
 msgstr "Active"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Active items"
+msgstr "Active items"
+
 #: src/pages/shell/sidebar-header.tsx
 msgid "Activity"
 msgstr "Activity"
@@ -1298,6 +1328,10 @@ msgstr "Add credits"
 msgid "Add custom"
 msgstr "Add custom"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Add dated tasks to forecast finish"
+msgstr "Add dated tasks to forecast finish"
+
 #: src/components/AskCard.tsx
 msgid "Add deadline"
 msgstr "Add deadline"
@@ -1412,6 +1446,10 @@ msgstr "Add server URL"
 msgid "Add skills"
 msgstr "Add skills"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Add task"
+msgstr "Add task"
+
 #: src/components/office/StudioWelcome.tsx
 msgid "Add tasks, links and milestones on the Gantt"
 msgstr "Add tasks, links and milestones on the Gantt"
@@ -1459,6 +1497,11 @@ msgstr "Add, reword and delete your own project comments, with their category."
 #: src/pages/PluginsOverlay.tsx
 msgid "Added"
 msgstr "Added"
+
+#. placeholder {0}: created.task.label
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Added \"{0}\""
+msgstr "Added \"{0}\""
 
 #. placeholder {0}: person.role
 #: src/pages/shell/evolve-references.tsx
@@ -1709,6 +1752,10 @@ msgstr "All agents"
 msgid "All borders"
 msgstr "All borders"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "All DCMA schedule integrity checks passed."
+msgstr "All DCMA schedule integrity checks passed."
+
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "All documents"
 msgstr "All documents"
@@ -1908,6 +1955,10 @@ msgstr "Any active staff member"
 msgid "Any model, with your own key"
 msgstr "Any model, with your own key"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Anyone"
+msgstr "Anyone"
+
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Anyone at OCSC with the app can start one and lead it."
 msgstr "Anyone at OCSC with the app can start one and lead it."
@@ -2045,6 +2096,10 @@ msgstr "Appearance: {label}"
 #: src/components/office/word/WordRibbon.tsx
 msgid "Apply"
 msgstr "Apply"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Apply JSON"
+msgstr "Apply JSON"
 
 #: src/components/AskCard.tsx
 msgid "Approval"
@@ -2240,6 +2295,16 @@ msgstr "Ask your administrator if you need one."
 msgid "Asleep"
 msgstr "Asleep"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Assign"
+msgstr "Assign"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Assign owner"
+msgstr "Assign owner"
+
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 msgid "Assigned to"
@@ -2253,6 +2318,10 @@ msgstr "assigned to {0}"
 #: src/components/EvolveChangeEditor.tsx
 msgid "assignee"
 msgstr "assignee"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Assignees with concurrent tasks"
+msgstr "Assignees with concurrent tasks"
 
 #: src/components/office/history/VersionHistory.tsx
 #: src/components/office/PdfStudio.tsx
@@ -2307,6 +2376,10 @@ msgstr "Attachment"
 msgid "Attempt {0} of {1}"
 msgstr "Attempt {0} of {1}"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Attention needed"
+msgstr "Attention needed"
+
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Audit this GA drawing against the brief and mark up anything missing"
 msgstr "Audit this GA drawing against the brief and mark up anything missing"
@@ -2347,6 +2420,10 @@ msgstr "Authorize this server so agents can use its tools. A popup opens."
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Auto"
 msgstr "Auto"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Auto-cascade links"
+msgstr "Auto-cascade links"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Automated senders"
@@ -2455,6 +2532,10 @@ msgstr "Base URL"
 msgid "baseline"
 msgstr "baseline"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Baseline variance"
+msgstr "Baseline variance"
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Basic auth"
 msgstr "Basic auth"
@@ -2508,6 +2589,10 @@ msgstr "Billing period"
 msgid "Block"
 msgstr "Block"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/lib/ticket-status.ts
 msgid "Blocked"
 msgstr "Blocked"
@@ -2812,6 +2897,10 @@ msgstr "cancelled"
 msgid "Cancelled"
 msgstr "Cancelled"
 
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Capture programme assumptions, site constraints, or meeting notes right inside this plan."
+msgstr "Capture programme assumptions, site constraints, or meeting notes right inside this plan."
+
 #: src/components/vault/kinds.tsx
 msgid "Card"
 msgstr "Card"
@@ -2838,6 +2927,8 @@ msgstr "category"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/pages/shell/evolve-references.tsx
 msgid "Category"
 msgstr "Category"
@@ -3226,6 +3317,7 @@ msgid "Cleanup started {0}."
 msgstr "Cleanup started {0}."
 
 #: src/components/EmailFilingCard.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/SecretAskCard.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3270,6 +3362,10 @@ msgstr "Clear link"
 msgid "Clear mask"
 msgstr "Clear mask"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Clear search"
+msgstr "Clear search"
+
 #: src/pages/shell/references-dialog.tsx
 msgid "Clear Search"
 msgstr "Clear Search"
@@ -3311,6 +3407,7 @@ msgstr "Clients and projects"
 #: src/components/ImageLightbox.tsx
 #: src/components/InstallAppBanner.tsx
 #: src/components/office/OfficeStudioHost.tsx
+#: src/components/office/planner/PlannerJsonDialog.tsx
 #: src/components/office/ribbon/CompactRibbon.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/components/tour/ocsc-tour.tsx
@@ -3686,6 +3783,9 @@ msgstr "Complete Required Roles First"
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
 #: src/components/LearningClinicCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/SubagentCard.tsx
 msgid "Completed"
 msgstr "Completed"
@@ -4014,6 +4114,7 @@ msgstr "Conversations"
 #: src/components/ImageLightbox.tsx
 #: src/components/InviteDialog.tsx
 #: src/components/markdown-copy.tsx
+#: src/components/office/planner/PlannerJsonDialog.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/components/UiCardView.tsx
@@ -4024,6 +4125,7 @@ msgstr "Conversations"
 msgid "Copied"
 msgstr "Copied"
 
+#: src/components/office/planner/PlannerJsonDialog.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/components/UiCardView.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -4078,6 +4180,10 @@ msgstr "cost"
 #: src/pages/AdminStaffSpending.tsx
 msgid "Cost"
 msgstr "Cost"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Cost index"
+msgstr "Cost index"
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Cost plans, trackers and schedules, styled for OCSC and ready to share."
@@ -4213,6 +4319,10 @@ msgstr "Could not connect to the computer screen"
 #: src/pages/shell/use-computer.tsx
 msgid "Could not continue"
 msgstr "Could not continue"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Could not copy JSON"
+msgstr "Could not copy JSON"
 
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/create-bot-dialog.tsx
@@ -5047,6 +5157,14 @@ msgstr "Couldn't read that CSV file."
 msgid "Couldn't read that Microsoft Project file. Upload .mpp or Project XML (.xml)."
 msgstr "Couldn't read that Microsoft Project file. Upload .mpp or Project XML (.xml)."
 
+#: src/components/office/PlannerStudio.tsx
+#~ msgid "Couldn't read that Microsoft Project XML file."
+#~ msgstr "Couldn't read that Microsoft Project XML file."
+
+#: src/components/office/PlannerStudio.tsx
+#~ msgid "Couldn't read that Microsoft Project XML file. Export from Project as XML Format (.xml)."
+#~ msgstr "Couldn't read that Microsoft Project XML file. Export from Project as XML Format (.xml)."
+
 #: src/components/office/PdfStudio.tsx
 #: src/components/office/PlannerStudio.tsx
 #: src/components/office/SheetStudio.tsx
@@ -5162,6 +5280,10 @@ msgstr "Create as many as you need: a bid writer, a drainage checker, a reviewer
 msgid "Create draft"
 msgstr "Create draft"
 
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Create first note"
+msgstr "Create first note"
+
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
 msgstr "Create group"
@@ -5258,6 +5380,24 @@ msgstr "Credit amount"
 msgid "Credits ($)"
 msgstr "Credits ($)"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Critical"
+msgstr "Critical"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Critical path"
+msgstr "Critical path"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Critical path only"
+msgstr "Critical path only"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "critical tasks"
+msgstr "critical tasks"
+
 #: src/lib/cron.ts
 msgid "Cron"
 msgstr "Cron"
@@ -5311,6 +5451,10 @@ msgstr "Current password"
 #: src/pages/AdminCompanyPage.tsx
 msgid "Cursor cloud agents"
 msgstr "Cursor cloud agents"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Curved"
+msgstr "Curved"
 
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Custom"
@@ -5383,10 +5527,18 @@ msgstr "Data changes"
 msgid "Date and time"
 msgstr "Date and time"
 
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Dates"
+msgstr "Dates"
+
 #: src/lib/billing.ts
 #: src/lib/cron.ts
 msgid "day"
 msgstr "day"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Day"
+msgstr "Day"
 
 #: src/pages/shell/message-cards.tsx
 msgid "Day-to-day work"
@@ -5467,6 +5619,10 @@ msgstr "Default Word template"
 #: src/pages/AdminDocumentLibrary.tsx
 msgid "Default Word template saved"
 msgstr "Default Word template saved"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "delayed"
+msgstr "delayed"
 
 #: src/components/AccountAccess.tsx
 #: src/components/pages/PagesList.tsx
@@ -5552,6 +5708,10 @@ msgstr "Delete group"
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"
 msgstr "Delete memories too"
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Delete note"
+msgstr "Delete note"
 
 #: src/pages/AdminEvolveSafeguards.tsx
 msgid "Delete own project comments"
@@ -5751,6 +5911,10 @@ msgstr "Dictation failed."
 #: src/pages/Auth.tsx
 msgid "Did you mean <0>{emailSuggestion}</0>?"
 msgstr "Did you mean <0>{emailSuggestion}</0>?"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Direct"
+msgstr "Direct"
 
 #: src/pages/AdminApps.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -6036,6 +6200,10 @@ msgstr "Drawing a new OCSC icon with GPT Image. This takes about a minute."
 msgid "Drawn for this app in the OCSC style. Describe one object to draw something else."
 msgstr "Drawn for this app in the OCSC style. Describe one object to draw something else."
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Drop a task here"
+msgstr "Drop a task here"
+
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Drop notes and shapes freely — the board is for exploring, not filling a template"
 msgstr "Drop notes and shapes freely — the board is for exploring, not filling a template"
@@ -6100,6 +6268,10 @@ msgstr "Each round is saved as a new version (-v2, -v3), so earlier versions are
 msgid "Earlier versions of this app."
 msgstr "Earlier versions of this app."
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Earned Value & Schedule Performance (EVM)"
+msgstr "Earned Value & Schedule Performance (EVM)"
+
 #: src/components/apps/AppsDialog.tsx
 #: src/components/apps/AppViewer.tsx
 #: src/components/AskCard.tsx
@@ -6144,6 +6316,10 @@ msgstr "Edit it as many times as you like: ask for changes in plain words"
 #: src/components/todos/todo-board.tsx
 msgid "Edit item"
 msgstr "Edit item"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Edit JSON"
+msgstr "Edit JSON"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Edit name"
@@ -6325,6 +6501,10 @@ msgstr "Emails:\n"
 "- Sign-off: \"Kind regards,\"\n"
 "- Signature:\n"
 ""
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Empty note"
+msgstr "Empty note"
 
 #. placeholder {0}: humanizeTool(toolName)
 #: src/pages/shell/bot-panel.tsx
@@ -6959,6 +7139,11 @@ msgstr "Filter by date"
 msgid "Filter models"
 msgstr "Filter models"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Filter tasks"
+msgstr "Filter tasks"
+
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Filters"
@@ -7118,6 +7303,11 @@ msgstr "For example: one shared list the whole office sees"
 msgid "For the company"
 msgstr "For the company"
 
+#. placeholder {0}: critical.projectEarlyFinish
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Forecast finish: {0}"
+msgstr "Forecast finish: {0}"
+
 #: src/components/EmailFilingSettings.tsx
 msgid "Forget"
 msgstr "Forget"
@@ -7265,6 +7455,10 @@ msgstr "Fullscreen"
 msgid "Functions"
 msgstr "Functions"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Gantt"
+msgstr "Gantt"
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/Onboarding.tsx
 msgid "Gateway ID"
@@ -7278,6 +7472,7 @@ msgstr "Gateway token"
 msgid "Gateway URL"
 msgstr "Gateway URL"
 
+#: src/components/office/planner/PlannerHealthView.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "General"
 msgstr "General"
@@ -7522,6 +7717,10 @@ msgstr "Heading 2"
 msgid "Heading 3"
 msgstr "Heading 3"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Health & PM"
+msgstr "Health & PM"
+
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Hear a sample"
 msgstr "Hear a sample"
@@ -7574,6 +7773,9 @@ msgid "Hide transcript"
 msgstr "Hide transcript"
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -7756,6 +7958,10 @@ msgstr "Images from websites show in chats without a tap."
 msgid "Images, infographics, charts, stock media, voiceovers and web search."
 msgstr "Images, infographics, charts, stock media, voiceovers and web search."
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Impeded items"
+msgstr "Impeded items"
+
 #: src/components/AccountDataSettings.tsx
 msgid "Import"
 msgstr "Import"
@@ -7782,19 +7988,36 @@ msgstr "Import MS Project XML"
 msgid "Imported {0} tasks into this plan."
 msgstr "Imported {0} tasks into this plan."
 
+#: src/components/office/PlannerStudio.tsx
+#~ msgid "Imported into this plan."
+#~ msgstr "Imported into this plan."
+
 #: src/components/StorageDialog.tsx
 msgid "In a chat"
 msgstr "In a chat"
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerHealthView.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-status.ts
 msgid "In progress"
 msgstr "In progress"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "In Progress"
+msgstr "In Progress"
+
 #: src/lib/ticket-status.ts
 msgid "In review"
 msgstr "In review"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "In Review"
+msgstr "In Review"
 
 #: src/components/InstallAppBanner.tsx
 msgid "In Safari's File menu, choose Add to Dock."
@@ -7896,6 +8119,10 @@ msgstr "Insert row above"
 msgid "Insert table"
 msgstr "Insert table"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Inspect programme JSON"
+msgstr "Inspect programme JSON"
+
 #: src/components/InstallAppBanner.tsx
 msgid "Install"
 msgstr "Install"
@@ -7972,6 +8199,14 @@ msgstr "Interval unit"
 #: src/lib/user-error.ts
 msgid "Invalid code"
 msgstr "Invalid code"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Invalid JSON syntax"
+msgstr "Invalid JSON syntax"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Invalid programme JSON"
+msgstr "Invalid programme JSON"
 
 #. placeholder {0}: option.email
 #: src/components/GroupPeople.tsx
@@ -8087,6 +8322,12 @@ msgstr "Join team"
 msgid "Joins when they open OCSC Intelligence from Evolve"
 msgstr "Joins when they open OCSC Intelligence from Evolve"
 
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Jump to {0} on Gantt"
+msgstr "Jump to {0} on Gantt"
+
 #: src/pages/shell/transcript.tsx
 msgid "Jump to latest"
 msgstr "Jump to latest"
@@ -8094,6 +8335,12 @@ msgstr "Jump to latest"
 #: src/pages/shell/chat-context.tsx
 msgid "Jump to replied message: {excerpt}"
 msgstr "Jump to replied message: {excerpt}"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Jump to task on Gantt"
+msgstr "Jump to task on Gantt"
 
 #: src/components/AppScopeAskCard.tsx
 msgid "Just for me"
@@ -8111,6 +8358,10 @@ msgstr "Just this email"
 #: src/components/office/word/WordRibbon.tsx
 msgid "Justify"
 msgstr "Justify"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Kanban"
+msgstr "Kanban"
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Kanban, checklists, guided steps, sortable lists and a command menu."
@@ -8405,6 +8656,10 @@ msgstr "Link"
 msgid "Link address"
 msgstr "Link address"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Link arrows"
+msgstr "Link arrows"
+
 #: src/components/ImageLightbox.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
@@ -8624,6 +8879,14 @@ msgstr "Local access lets agents run commands without asking. Avoid it on shared
 msgid "Local computer access requires the latest desktop app."
 msgstr "Local computer access requires the latest desktop app."
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Locate"
+msgstr "Locate"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Lock view"
+msgstr "Lock view"
+
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
@@ -8658,6 +8921,9 @@ msgid "Lost the connection. Reconnecting…"
 msgstr "Lost the connection. Reconnecting…"
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -8859,6 +9125,9 @@ msgid "Measure areas and lengths, or take off quantities"
 msgstr "Measure areas and lengths, or take off quantities"
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/Onboarding.tsx
@@ -9018,6 +9287,15 @@ msgstr "Microphone failed"
 msgid "Middle align"
 msgstr "Middle align"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Milestone"
+msgstr "Milestone"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Milestones only"
+msgstr "Milestones only"
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Min"
 msgstr "Min"
@@ -9056,6 +9334,13 @@ msgstr "minutes"
 #: src/components/call/VoiceChatCard.tsx
 msgid "Missed call"
 msgstr "Missed call"
+
+#. placeholder {0}: audit.missingLogicCount
+#. placeholder {1}: audit.highFloatCount
+#. placeholder {2}: audit.negativeFloatCount
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Missing logic: {0} · High float: {1} · Negative float: {2}"
+msgstr "Missing logic: {0} · High float: {1} · Negative float: {2}"
 
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Mode"
@@ -9148,6 +9433,10 @@ msgstr "Monday"
 #: src/lib/billing.ts
 msgid "month"
 msgstr "month"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Month"
+msgstr "Month"
 
 #: src/components/apps/AppsDialog.tsx
 msgid "Month calendar, Gantt chart, timeline, daily heatmap and period comparisons."
@@ -9243,6 +9532,11 @@ msgstr "Motion & layout"
 #: src/components/apps/AppWorkspacesSection.tsx
 msgid "Move"
 msgstr "Move"
+
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Move {0} to status"
+msgstr "Move {0} to status"
 
 #: src/components/office/slides/SlideRail.tsx
 #: src/pages/ModelRoleSettings.tsx
@@ -9415,6 +9709,7 @@ msgstr "Never ask"
 msgid "Never suggest"
 msgstr "Never suggest"
 
+#: src/components/office/planner/PlannerNotesView.tsx
 #: src/components/studio/StudioActivity.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/shell/chat-context.tsx
@@ -9576,6 +9871,10 @@ msgstr "New project deadline"
 msgid "New project folders go in"
 msgstr "New project folders go in"
 
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "New project note"
+msgstr "New project note"
+
 #: src/components/tour/ocsc-tour.tsx
 msgid "New reports and letters in OCSC style. Ask for changes as often as you like: each edit comes back as tracked changes you can accept or reject, and earlier versions are kept."
 msgstr "New reports and letters in OCSC style. Ask for changes as often as you like: each edit comes back as tracked changes you can accept or reject, and earlier versions are kept."
@@ -9609,6 +9908,10 @@ msgstr "New spreadsheet"
 #: src/components/office/SheetStudio.tsx
 msgid "New spreadsheets can't be made here yet."
 msgstr "New spreadsheets can't be made here yet."
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "New task"
+msgstr "New task"
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/bot-picker.tsx
@@ -9716,6 +10019,10 @@ msgstr "No apps match your search."
 #: src/pages/AdminApps.tsx
 msgid "No apps yet."
 msgstr "No apps yet."
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "No assignee double-bookings"
+msgstr "No assignee double-bookings"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No auth"
@@ -10031,6 +10338,14 @@ msgstr "No runs match these filters."
 msgid "No runs yet"
 msgstr "No runs yet"
 
+#: src/components/office/planner/history.tsx
+#~ msgid "No schedule changes"
+#~ msgstr "No schedule changes"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "No schedule integrity issues detected"
+msgstr "No schedule integrity issues detected"
+
 #: src/components/EmailDraftCard.tsx
 msgid "No signature saved. Paste your Outlook signature here or under Settings → Email signature."
 msgstr "No signature saved. Paste your Outlook signature here or under Settings → Email signature."
@@ -10055,6 +10370,14 @@ msgstr "No spreadsheets yet"
 msgid "No submissions"
 msgstr "No submissions"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "No tasks"
+msgstr "No tasks"
+
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "No tasks match the current search or filters."
+msgstr "No tasks match the current search or filters."
+
 #: src/components/office/slides/history.tsx
 #: src/components/office/word/history.tsx
 msgid "No text changes"
@@ -10076,10 +10399,15 @@ msgstr "No trigger"
 msgid "No Word documents yet"
 msgstr "No Word documents yet"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "No work items yet."
+msgstr "No work items yet."
+
 #: src/pages/SharedChats.tsx
 msgid "Nobody has added you to a group chat yet."
 msgstr "Nobody has added you to a group chat yet."
 
+#: src/components/office/planner/PlannerTasksView.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "None"
 msgstr "None"
@@ -10222,6 +10550,10 @@ msgstr "Note name"
 msgid "Note name, for example Writing style"
 msgstr "Note name, for example Writing style"
 
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Note title"
+msgstr "Note title"
+
 #: src/pages/shell/drawings-dialog.tsx
 msgid "Note:"
 msgstr "Note:"
@@ -10232,6 +10564,7 @@ msgstr "notes"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 msgid "Notes"
 msgstr "Notes"
@@ -10450,6 +10783,10 @@ msgstr "On a schedule"
 #: src/components/StorageDialog.tsx
 msgid "On computer"
 msgstr "On computer"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "On critical path"
+msgstr "On critical path"
 
 #: src/lib/cron.ts
 msgid "on day {day} at {time}"
@@ -10686,6 +11023,10 @@ msgstr "Open navigation"
 msgid "Open OCSC Intelligence"
 msgstr "Open OCSC Intelligence"
 
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Open on Gantt"
+msgstr "Open on Gantt"
+
 #: src/components/apps/AppsDialog.tsx
 msgid "Open one full screen, or edit an app you built."
 msgstr "Open one full screen, or edit an app you built."
@@ -10877,9 +11218,21 @@ msgstr "Outside borders"
 msgid "Oval"
 msgstr "Oval"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Overall progress"
+msgstr "Overall progress"
+
 #: src/pages/AdminInfrastructure.tsx
 msgid "Overflow"
 msgstr "Overflow"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "overlaps"
+msgstr "overlaps"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Overview"
+msgstr "Overview"
 
 #. placeholder {0}: group.ownerName
 #: src/pages/SharedChats.tsx
@@ -10887,6 +11240,8 @@ msgid "Owned by {0}"
 msgstr "Owned by {0}"
 
 #: src/components/GroupPeople.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/pages/SharePopover.tsx
 #: src/lib/identity-display.ts
 #: src/pages/Board.tsx
@@ -10911,6 +11266,11 @@ msgstr "Owner name"
 #: src/components/office/planner/QuickAssignPopover.tsx
 msgid "Owner of {taskLabel}"
 msgstr "Owner of {taskLabel}"
+
+#. placeholder {0}: task.assignee
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Owner: {0}"
+msgstr "Owner: {0}"
 
 #: src/components/office/planner/PlannerWorkbench.tsx
 msgid "Owner: {name}"
@@ -11100,6 +11460,11 @@ msgstr "PDF and PDF Studio"
 msgid "PDFs"
 msgstr "PDFs"
 
+#. placeholder {0}: conflict.peakDate
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Peak overlap on {0}"
+msgstr "Peak overlap on {0}"
+
 #: src/components/AskCard.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -11260,6 +11625,7 @@ msgstr "Picture: {name}"
 msgid "Pictures"
 msgstr "Pictures"
 
+#: src/components/office/planner/PlannerNotesView.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/StorageDialog.tsx
 #: src/pages/BotContextMenu.tsx
@@ -11270,6 +11636,7 @@ msgstr "Pin"
 msgid "Pin, keep it"
 msgstr "Pin, keep it"
 
+#: src/components/office/planner/PlannerNotesView.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/Shell.tsx
 msgid "Pinned"
@@ -11430,6 +11797,9 @@ msgstr "Principles that work well:"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/Board.tsx
 msgid "Priority"
@@ -11440,6 +11810,11 @@ msgstr "Priority"
 #: src/components/office/planner/history-diff.ts
 msgid "priority {0} → {1}"
 msgstr "priority {0} → {1}"
+
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Priority for {0}"
+msgstr "Priority for {0}"
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Processing references and sending to AI..."
@@ -11457,11 +11832,45 @@ msgstr "Productivity"
 msgid "Program: {name}"
 msgstr "Program: {name}"
 
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Programme JSON"
+msgstr "Programme JSON"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "Programme JSON copied"
+msgstr "Programme JSON copied"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Programme order"
+msgstr "Programme order"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Programme settings"
+msgstr "Programme settings"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Programme views"
+msgstr "Programme views"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Programme window elapsed"
+msgstr "Programme window elapsed"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Progress"
+msgstr "Progress"
+
 #. placeholder {0}: percent(change.from)
 #. placeholder {1}: percent(change.to)
 #: src/components/office/planner/history-diff.ts
 msgid "progress {0} → {1}"
 msgstr "progress {0} → {1}"
+
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Progress for {0}"
+msgstr "Progress for {0}"
 
 #: src/components/EvolveChangeEditor.tsx
 msgid "project"
@@ -11476,6 +11885,10 @@ msgstr "Project"
 #: src/components/apps/AppsDialog.tsx
 msgid "Project delivery"
 msgstr "Project delivery"
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Project notes"
+msgstr "Project notes"
 
 #: src/components/office/PlannerStudio.tsx
 msgid "Project plans"
@@ -11573,6 +11986,10 @@ msgstr "Quality"
 #: src/pages/shell/references-dialog.tsx
 msgid "Quality:"
 msgstr "Quality:"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Quarter"
+msgstr "Quarter"
 
 #: src/components/AskCard.tsx
 msgid "Question"
@@ -12193,6 +12610,10 @@ msgstr "Reset computer"
 msgid "Reset computer?"
 msgstr "Reset computer?"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Reset filters"
+msgstr "Reset filters"
+
 #: src/pages/Auth.tsx
 msgid "Reset password"
 msgstr "Reset password"
@@ -12217,6 +12638,10 @@ msgstr "Resize chat"
 #: src/pages/ResizableSidePanel.tsx
 msgid "Resize panel"
 msgstr "Resize panel"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Resource conflicts"
+msgstr "Resource conflicts"
 
 #: src/pages/shell/evolve-references.tsx
 msgid "Response"
@@ -12484,6 +12909,10 @@ msgstr "Routines that run while you're away"
 msgid "Row"
 msgstr "Row"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Row density"
+msgstr "Row density"
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Rows"
 msgstr "Rows"
@@ -12614,6 +13043,10 @@ msgstr "Save a company model first; assistant models run on its key."
 msgid "Save as draft"
 msgstr "Save as draft"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Save baseline snapshot"
+msgstr "Save baseline snapshot"
+
 #: src/components/apps/AppPublishSection.tsx
 msgid "Save brief"
 msgstr "Save brief"
@@ -12627,6 +13060,10 @@ msgstr "Save changes"
 msgid "Save company limits"
 msgstr "Save company limits"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Save current dates as baseline"
+msgstr "Save current dates as baseline"
+
 #: src/pages/AdminEmailFiling.tsx
 msgid "Save email filing"
 msgstr "Save email filing"
@@ -12635,6 +13072,7 @@ msgstr "Save email filing"
 msgid "Save for everyone"
 msgstr "Save for everyone"
 
+#: src/components/office/planner/PlannerNotesView.tsx
 #: src/pages/KnowledgeSection.tsx
 msgid "Save note"
 msgstr "Save note"
@@ -12683,6 +13121,10 @@ msgstr "Saved as {0}."
 #: src/components/apps/AppCodePanel.tsx
 msgid "Saved as version {0}."
 msgstr "Saved as version {0}."
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Saved baseline snapshot ({label})"
+msgstr "Saved baseline snapshot ({label})"
 
 #: src/components/EmailDraftCard.tsx
 msgid "Saved in Outlook Drafts"
@@ -12741,9 +13183,29 @@ msgstr "Saving…"
 msgid "Say yes or no, or answer in a sentence."
 msgstr "Say yes or no, or answer in a sentence."
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule audit & EVM"
+msgstr "Schedule audit & EVM"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Schedule delayed"
 msgstr "Schedule delayed"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule health"
+msgstr "Schedule health"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule index"
+msgstr "Schedule index"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule integrity audit"
+msgstr "Schedule integrity audit"
+
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Schedule looks clean — no dangling logic or resource overlaps."
+msgstr "Schedule looks clean — no dangling logic or resource overlaps."
 
 #: src/pages/AdminCompanyPage.tsx
 msgid "Scheduled and recurring tasks."
@@ -12769,6 +13231,10 @@ msgstr "Screenshot"
 msgid "Screenshot to send"
 msgstr "Screenshot to send"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Scroll timeline to today"
+msgstr "Scroll timeline to today"
+
 #: src/components/FoundModelPicker.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -12786,6 +13252,10 @@ msgstr "Search"
 #: src/components/EvolveChangeEditor.tsx
 msgid "Search {label}"
 msgstr "Search {label}"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Search {totalTasks} tasks…"
+msgstr "Search {totalTasks} tasks…"
 
 #: src/pages/shell/references-dialog.tsx
 msgid "Search & Filter"
@@ -12888,6 +13358,10 @@ msgstr "Search sites"
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Search staff by name, skill, sector or experience."
 msgstr "Search staff by name, skill, sector or experience."
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Search tasks"
+msgstr "Search tasks"
 
 #: src/components/integrations/evolve-tools-section.tsx
 msgid "Search the Document Library's titles and the text inside its documents."
@@ -12992,6 +13466,10 @@ msgstr "Select Drawing(s)"
 #: src/components/studio/FeatureStudioWelcome.tsx
 msgid "Select notes or shapes on the board, then ask for a change. The assistant works from what you pointed at."
 msgstr "Select notes or shapes on the board, then ask for a change. The assistant works from what you pointed at."
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Select or create a note to view it here."
+msgstr "Select or create a note to view it here."
 
 #: src/components/AskCard.tsx
 msgid "Select projects"
@@ -13202,6 +13680,7 @@ msgstr "Sets the drawing scale, then measures lengths, areas and perimeters"
 
 #: src/components/apps/AppStudio.tsx
 #: src/components/call/CallCard.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/SidebarFooter.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -13401,6 +13880,10 @@ msgstr "Show agents"
 msgid "Show all"
 msgstr "Show all"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Show baselines"
+msgstr "Show baselines"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Show everything (admins)"
 msgstr "Show everything (admins)"
@@ -13438,6 +13921,10 @@ msgstr "Show more ({0} left)"
 msgid "Show my overdue work packages and mark the drainage one 50% done"
 msgstr "Show my overdue work packages and mark the drainage one 50% done"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Show on Gantt timeline"
+msgstr "Show on Gantt timeline"
+
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "Show password"
@@ -13466,6 +13953,11 @@ msgstr "Show transcript"
 #: src/pages/PluginsOverlay.tsx
 msgid "Show what staff see"
 msgstr "Show what staff see"
+
+#. placeholder {0}: visibleTasks.length
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Showing {0} work items (summary stages stay on the Gantt timeline)"
+msgstr "Showing {0} work items (summary stages stay on the Gantt timeline)"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Showing every app and plugin, including ones hidden from staff."
@@ -13762,6 +14254,7 @@ msgstr "Something with the same name was just added. Try again."
 msgid "Something you chose cannot work here. Untick it and try again."
 msgstr "Something you chose cannot work here. Untick it and try again."
 
+#: src/components/office/planner/PlannerKanbanView.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Sort"
 msgstr "Sort"
@@ -13769,6 +14262,10 @@ msgstr "Sort"
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Sort A to Z"
 msgstr "Sort A to Z"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Sort board"
+msgstr "Sort board"
 
 #: src/components/markdown-copy.tsx
 #: src/components/UiCardView.tsx
@@ -13937,6 +14434,10 @@ msgid "Start a blank PDF, or upload one."
 msgstr "Start a blank PDF, or upload one."
 
 #: src/components/office/OfficeStudioHost.tsx
+#~ msgid "Start a blank plan, or upload a .jantt file."
+#~ msgstr "Start a blank plan, or upload a .jantt file."
+
+#: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/PlannerStudio.tsx
 msgid "Start a blank plan, or upload a .jantt, Microsoft Project XML, or CSV."
 msgstr "Start a blank plan, or upload a .jantt, Microsoft Project XML, or CSV."
@@ -13966,6 +14467,10 @@ msgstr "Start another to-do list."
 #: src/components/LearningClinicCard.tsx
 msgid "Start clinic"
 msgstr "Start clinic"
+
+#: src/components/office/planner/PlannerKanbanView.tsx
+msgid "Start date"
+msgstr "Start date"
 
 #: src/pages/shell/create-bot-dialog.tsx
 msgid "Start from"
@@ -14036,6 +14541,8 @@ msgstr "State or region"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/todos/todo-board.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
@@ -14052,6 +14559,11 @@ msgstr "status {0} → {1}"
 #: src/components/EvolveChangeEditor.tsx
 msgid "Status comment"
 msgstr "Status comment"
+
+#. placeholder {0}: task.label
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Status for {0}"
+msgstr "Status for {0}"
 
 #: src/components/EnableNotificationsDialog.tsx
 msgid "Stay up to date"
@@ -14316,9 +14828,21 @@ msgstr "Target"
 msgid "Target role"
 msgstr "Target role"
 
+#: src/components/office/planner/PlannerTasksView.tsx
+msgid "Task"
+msgstr "Task"
+
 #: src/components/office/planner/QuickAssignPopover.tsx
 msgid "Task owner"
 msgstr "Task owner"
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "tasks"
+msgstr "tasks"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Tasks"
+msgstr "Tasks"
 
 #: src/components/office/planner/history-diff.ts
 msgid "Tasks reordered"
@@ -14712,6 +15236,10 @@ msgstr "The text on this page changed."
 #: src/pages/AdminCompanyTools.tsx
 msgid "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
 msgstr "The tools OCSC built for the whole company: Word, slides, Excel, PDF, PDF Studio, video and apps. Staff see them under OCSC Tools, with what each can do."
+
+#: src/components/office/planner/PlannerJsonDialog.tsx
+msgid "The underlying Jantt schedule data. Any changes are validated before saving to History."
+msgstr "The underlying Jantt schedule data. Any changes are validated before saving to History."
 
 #: src/components/ModelCredits.tsx
 msgid "The unused difference is credited to your next invoice."
@@ -15173,6 +15701,14 @@ msgstr "Tidy the formatting"
 msgid "Time of day"
 msgstr "Time of day"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Timeline scale"
+msgstr "Timeline scale"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Timeline zoom"
+msgstr "Timeline zoom"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Timezone"
 msgstr "Timezone"
@@ -15213,6 +15749,12 @@ msgstr "To {0}"
 msgid "To do"
 msgstr "To do"
 
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "To Do"
+msgstr "To Do"
+
 #: src/components/todos/todo-board.tsx
 msgid "To do list"
 msgstr "To do list"
@@ -15233,10 +15775,15 @@ msgstr "To-do List Studio"
 msgid "To:"
 msgstr "To:"
 
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "Today"
 msgstr "Today"
+
+#: src/components/office/planner/PlannerWorkbench.tsx
+msgid "Today is outside this programme's date range."
+msgstr "Today is outside this programme's date range."
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Toggle sidebar"
@@ -15509,10 +16056,16 @@ msgstr "Type your answer"
 
 #: src/components/AskCard.tsx
 #: src/components/EvolveChangeEditor.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/Shell.tsx
 msgid "Unassigned"
 msgstr "Unassigned"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Unassigned only"
+msgstr "Unassigned only"
 
 #: src/components/EmailDraftCard.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
@@ -15603,6 +16156,10 @@ msgstr "Unsupported file type: {0}"
 #: src/components/office/WordStudio.tsx
 msgid "Untitled document"
 msgstr "Untitled document"
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Untitled note"
+msgstr "Untitled note"
 
 #: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/PdfStudio.tsx
@@ -15751,6 +16308,10 @@ msgid "Upload a .docx file"
 msgstr "Upload a .docx file"
 
 #: src/components/office/OfficeStudioHost.tsx
+#~ msgid "Upload a .jantt file"
+#~ msgstr "Upload a .jantt file"
+
+#: src/components/office/OfficeStudioHost.tsx
 #: src/components/office/PdfStudio.tsx
 msgid "Upload a .pdf file"
 msgstr "Upload a .pdf file"
@@ -15787,6 +16348,9 @@ msgid "Uploading drawings here turns pages into images the AI can visually inspe
 msgstr "Uploading drawings here turns pages into images the AI can visually inspect. The regular file upload is for text extraction only and does not provide visual understanding of drawings."
 
 #: src/components/AskCard.tsx
+#: src/components/office/planner/PlannerKanbanView.tsx
+#: src/components/office/planner/PlannerTasksView.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "Urgent"
@@ -16058,6 +16622,14 @@ msgstr "View"
 msgid "View all"
 msgstr "View all"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "View full audit"
+msgstr "View full audit"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "View programme JSON"
+msgstr "View programme JSON"
+
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "View source"
 msgstr "View source"
@@ -16157,6 +16729,10 @@ msgstr "Wednesday"
 #: src/lib/billing.ts
 msgid "week"
 msgstr "week"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Week"
+msgstr "Week"
 
 #: src/lib/cron.ts
 #: src/pages/RoutineEditor.tsx
@@ -16562,6 +17138,10 @@ msgstr "Workshops & studies"
 msgid "Workspace"
 msgstr "Workspace"
 
+#: src/components/office/planner/PlannerHealthView.tsx
+msgid "Workstream breakdown"
+msgstr "Workstream breakdown"
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Wrap text"
 msgstr "Wrap text"
@@ -16569,6 +17149,10 @@ msgstr "Wrap text"
 #: src/components/integrations/ocsc-tools-section.tsx
 msgid "Write a flood risk assessment for HEL18, then tighten the conclusions"
 msgstr "Write a flood risk assessment for HEL18, then tighten the conclusions"
+
+#: src/components/office/planner/PlannerNotesView.tsx
+msgid "Write assumptions, client constraints, inspection hold points, or meeting notes…"
+msgstr "Write assumptions, client constraints, inspection hold points, or meeting notes…"
 
 #: src/components/apps/AppPublishSection.tsx
 msgid "Write it again"
@@ -16597,6 +17181,10 @@ msgstr "Written when you send it for review."
 #: src/lib/billing.ts
 msgid "year"
 msgstr "year"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Year"
+msgstr "Year"
 
 #: src/components/ModelCredits.tsx
 msgid "Yearly"
@@ -16921,6 +17509,7 @@ msgid "Zoom"
 msgstr "Zoom"
 
 #: src/components/ImageLightbox.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/office/slides/SlidesRibbon.tsx
 #: src/components/office/word/WordRibbon.tsx
@@ -16929,6 +17518,7 @@ msgid "Zoom in"
 msgstr "Zoom in"
 
 #: src/components/ImageLightbox.tsx
+#: src/components/office/planner/PlannerToolbar.tsx
 #: src/components/office/sheet/SheetRibbon.tsx
 #: src/components/office/slides/SlidesRibbon.tsx
 #: src/components/office/word/WordRibbon.tsx

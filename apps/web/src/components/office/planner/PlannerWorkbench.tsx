@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { Jantt } from "@jantt/react";
 import { toast } from "@rakazo/ui-web";
-import type { Task, ViewportOptions } from "@jantt/core";
+import {
+  auditScheduleIntegrity,
+  calculateCriticalPath,
+  type Task,
+  type ViewportOptions,
+} from "@jantt/core";
 import "@jantt/core/theme.css";
 import "./planner-theme.css";
 import { useMedia } from "../../../lib/pages";
@@ -17,6 +22,22 @@ import { withCategories, type PlanCategory } from "./categories";
 import { NewCategoryControl } from "./NewCategoryControl";
 import { ASSIGN_ATTR, decorateAssignees, type AssigneeLabels } from "./assignee-slots";
 import { QuickAssignPopover } from "./QuickAssignPopover";
+import {
+  activePlanNotes,
+  createNewTask,
+  EMPTY_FILTERS,
+  filterPlanTasks,
+  hasActiveFilters,
+  saveBaselineSnapshot,
+  type PlanFilters,
+  type PlanViewMode,
+} from "./filters";
+import { PlannerToolbar } from "./PlannerToolbar";
+import { PlannerKanbanView } from "./PlannerKanbanView";
+import { PlannerTasksView } from "./PlannerTasksView";
+import { PlannerHealthView } from "./PlannerHealthView";
+import { PlannerNotesView } from "./PlannerNotesView";
+import { PlannerJsonDialog } from "./PlannerJsonDialog";
 
 export type PlannerWorkbenchProps = {
   plan: PlanDocument;
@@ -55,6 +76,7 @@ const KEPT_VIEW_KEYS = [
   "rowHeightMode",
   "showCriticalPath",
   "showBaselines",
+  "autoCascade",
   "linkRouting",
   "labelWidth",
 ] as const satisfies readonly (keyof ViewportOptions)[];
@@ -84,8 +106,13 @@ function keptView(current: ViewportOptions, next: ViewportOptions): ViewportOpti
   return changed ? kept : current;
 }
 
-/** Mark summary / outline rows after Jantt paints (it has no built-in summary style). */
-function syncOutlineClasses(root: HTMLElement, plan: PlanDocument, highlights: ReadonlySet<string>) {
+/** Mark summary / outline rows and optional filter dimming after Jantt paints. */
+function syncOutlineClasses(
+  root: HTMLElement,
+  plan: PlanDocument,
+  highlights: ReadonlySet<string>,
+  filterMatchedIds: ReadonlySet<string> | null,
+) {
   const byId = new Map((plan.tasks ?? []).map((task) => [task.id, task]));
   for (const row of root.querySelectorAll<HTMLElement>(".jantt-label-row[data-row-id]")) {
     const id = row.getAttribute("data-row-id");
@@ -96,19 +123,25 @@ function syncOutlineClasses(root: HTMLElement, plan: PlanDocument, highlights: R
     row.classList.toggle("is-summary", summary);
     row.classList.toggle("is-ai-changed", highlights.has(id));
     row.classList.toggle("is-outline-child", depth > 0);
+    row.classList.toggle("is-filter-muted", filterMatchedIds !== null && !filterMatchedIds.has(id));
+    row.classList.toggle("is-filter-match", filterMatchedIds !== null && filterMatchedIds.has(id));
     // Only write when it differs: the observer watches style changes, so a same-value write would loop.
     const indent = `${depth * INDENT_PX}px`;
     if (row.style.getPropertyValue("--outline-indent") !== indent) {
       row.style.setProperty("--outline-indent", indent);
     }
   }
-  for (const bar of root.querySelectorAll<HTMLElement>(".jantt-task-bar[data-task-id], .jantt-milestone[data-task-id]")) {
+  for (const bar of root.querySelectorAll<HTMLElement>(
+    ".jantt-task-bar[data-task-id], .jantt-milestone[data-task-id]",
+  )) {
     const id = bar.getAttribute("data-task-id");
     if (!id) continue;
     const task = byId.get(id);
     bar.classList.toggle("is-summary", task ? isSummaryTask(task) : false);
     bar.classList.toggle("is-ai-changed", highlights.has(id));
     bar.classList.toggle("is-light-bar", prefersDarkText(bar.style.background || bar.style.backgroundColor));
+    bar.classList.toggle("is-filter-muted", filterMatchedIds !== null && !filterMatchedIds.has(id));
+    bar.classList.toggle("is-filter-match", filterMatchedIds !== null && filterMatchedIds.has(id));
   }
   for (const gridRow of root.querySelectorAll<HTMLElement>(".jantt-grid-row")) {
     // Grid rows are positional; match by index against label rows when possible.
@@ -122,8 +155,8 @@ function syncOutlineClasses(root: HTMLElement, plan: PlanDocument, highlights: R
 }
 
 /**
- * The Gantt chart for Project Planner Studio. Theme CSS maps Jantt variables onto Evolve tokens
- * and keeps the toolbar on one scrollable row on laptop and phone widths.
+ * Project Programme workbench: Evolve-branded view/action chrome over Jantt's Gantt engine,
+ * plus Kanban, Tasks, Health & PM audit, Project Notes, and validated JSON views.
  */
 export function PlannerWorkbench({
   plan,
@@ -138,7 +171,11 @@ export function PlannerWorkbench({
 }: PlannerWorkbenchProps) {
   const { t } = useLingui();
   const compact = useMedia("(max-width: 768px), (pointer: coarse)");
-  const rootRef = useRef<HTMLDivElement>(null);
+  const ganttRef = useRef<HTMLDivElement>(null);
+  const [viewMode, setViewMode] = useState<PlanViewMode>("gantt");
+  const [filters, setFilters] = useState<PlanFilters>(EMPTY_FILTERS);
+  const [jsonOpen, setJsonOpen] = useState(false);
+
   // Jantt re-applies the viewport prop on every data update, so keep the person's own scale,
   // zoom and toggles here or each edit would snap the chart back to the defaults.
   const [view, setView] = useState<ViewportOptions>(() => initialView ?? {});
@@ -147,6 +184,11 @@ export function PlannerWorkbench({
   useEffect(() => {
     onViewChangeRef.current?.(view);
   }, [view]);
+
+  const patchViewport = useCallback((patch: Partial<ViewportOptions>) => {
+    setView((current) => ({ ...current, ...patch }));
+  }, []);
+
   const chartWindow = useMemo(() => programmeWindow(plan.tasks ?? []), [plan.tasks]);
   const viewport = useMemo<ViewportOptions>(
     () => ({
@@ -159,6 +201,7 @@ export function PlannerWorkbench({
       // Wide enough for typical construction task names without ellipsis; people can still drag it.
       ...(compact ? {} : { labelWidth: 420 }),
       showCriticalPath: true,
+      autoCascade: true,
       linkRouting: "orthogonal",
       ...view,
       ...chartWindow,
@@ -166,10 +209,30 @@ export function PlannerWorkbench({
     [compact, view, chartWindow],
   );
 
+  const tasks = plan.tasks ?? [];
+  const critical = useMemo(() => calculateCriticalPath(tasks), [tasks]);
+  const healthGrade = useMemo(
+    () => (tasks.length > 0 ? auditScheduleIntegrity(tasks, critical).grade : null),
+    [tasks, critical],
+  );
+  const notesCount = useMemo(() => activePlanNotes(plan).length, [plan]);
+  const filtersActive = hasActiveFilters(filters);
+  const filteredTasks = useMemo(
+    () => filterPlanTasks(plan, filters, critical.criticalTaskIds),
+    [plan, filters, critical.criticalTaskIds],
+  );
+  const filterMatchedIds = useMemo(
+    () => (filtersActive ? new Set(filteredTasks.map((task) => task.id)) : null),
+    [filtersActive, filteredTasks],
+  );
+
   const chartData = useMemo(() => withDirectoryPeople(plan, people), [plan, people]);
   const newCategories = useRef(new Map<string, PlanCategory>());
-  const commit = (next: PlanDocument) =>
-    onCommit(withAssignedPeople(withCategories(next, newCategories.current), people));
+  const commit = useCallback(
+    (next: PlanDocument) =>
+      onCommit(withAssignedPeople(withCategories(next, newCategories.current), people)),
+    [onCommit, people],
+  );
 
   const planRef = useRef(plan);
   planRef.current = plan;
@@ -182,7 +245,7 @@ export function PlannerWorkbench({
   // Jantt only links when the wire is dropped exactly on the other bar; also accept anywhere on
   // that task's row or its name in the task list, which is where people tend to let go.
   useEffect(() => {
-    const root = rootRef.current;
+    const root = ganttRef.current;
     if (!root || readOnly) return;
     let fromId: string | null = null;
     const onDown = (event: PointerEvent) => {
@@ -217,7 +280,7 @@ export function PlannerWorkbench({
   }, [readOnly]);
 
   useEffect(() => {
-    const root = rootRef.current;
+    const root = ganttRef.current;
     if (!root || !scroll) return;
     const saved = scroll.current;
     const until = Date.now() + RESTORE_SCROLL_MS;
@@ -264,13 +327,13 @@ export function PlannerWorkbench({
     [t],
   );
   const planAssignees = useMemo(
-    () => [...new Set((plan.tasks ?? []).map((task) => task.assignee?.trim() ?? "").filter(Boolean))],
-    [plan.tasks],
+    () => [...new Set(tasks.map((task) => task.assignee?.trim() ?? "").filter(Boolean))],
+    [tasks],
   );
 
   // The avatar and plus button sit inside Jantt's task row, whose own click opens the drawer.
   useEffect(() => {
-    const root = rootRef.current;
+    const root = ganttRef.current;
     if (!root || readOnly) return;
     const open = (event: Event) => {
       const target = (event.target as Element | null)?.closest?.<HTMLElement>(`[${ASSIGN_ATTR}]`);
@@ -297,18 +360,18 @@ export function PlannerWorkbench({
 
   const assignTask = (taskId: string, name: string | null) => {
     setAssigning(null);
-    const tasks = (plan.tasks ?? []).map((task) => {
+    const nextTasks = tasks.map((task) => {
       if (task.id !== taskId) return task;
       const { assignee: _old, ...rest } = task;
       return name ? { ...rest, assignee: name } : rest;
     });
-    commit({ ...plan, tasks });
+    commit({ ...plan, tasks: nextTasks });
   };
 
   // Jantt rebuilds every bar on each pointer move, and opens its hover card each time the pointer
   // "enters" a rebuilt bar; the card is appended to <body>, so the flag lives there.
   useEffect(() => {
-    const root = rootRef.current;
+    const root = ganttRef.current;
     if (!root || readOnly) return;
     const stop = () => document.body.classList.remove(DRAGGING_CLASS);
     const onDown = (event: PointerEvent) => {
@@ -329,7 +392,7 @@ export function PlannerWorkbench({
   }, [readOnly]);
 
   useEffect(() => {
-    const root = rootRef.current;
+    const root = ganttRef.current;
     if (!root) return;
     const watch = { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] };
     // Runs in the observer's microtask, before the browser paints Jantt's new rows, so a drag never
@@ -337,7 +400,7 @@ export function PlannerWorkbench({
     const observer = new MutationObserver(() => apply());
     const apply = () => {
       observer.disconnect();
-      syncOutlineClasses(root, plan, highlightTaskIds);
+      syncOutlineClasses(root, plan, highlightTaskIds, filterMatchedIds);
       decorateAssignees(root, plan, people, !readOnly, assigneeLabels);
       fitTimelineHeader(root);
       // Style changes cover a bar recoloured in place (category change) without a re-mount.
@@ -345,16 +408,110 @@ export function PlannerWorkbench({
     };
     apply();
     return () => observer.disconnect();
-  }, [plan, highlightTaskIds, people, readOnly, assigneeLabels]);
+  }, [plan, highlightTaskIds, filterMatchedIds, people, readOnly, assigneeLabels]);
 
-  const assigningTask = assigning ? plan.tasks?.find((task) => task.id === assigning.taskId) : undefined;
+  const handleJumpToday = useCallback(() => {
+    const root = ganttRef.current;
+    if (!root) return;
+    const body = root.querySelector<HTMLElement>(".jantt-body-wrap");
+    const todayLine = root.querySelector<HTMLElement>(".jantt-today-line");
+    if (!body || !todayLine) {
+      toast.info(t`Today is outside this programme's date range.`);
+      return;
+    }
+    const lineRect = todayLine.getBoundingClientRect();
+    const bodyRect = body.getBoundingClientRect();
+    const targetLeft = body.scrollLeft + (lineRect.left - bodyRect.left) - body.clientWidth / 3;
+    body.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+  }, [t]);
+
+  const handleAddTask = useCallback(() => {
+    if (readOnly) return;
+    if (viewMode === "gantt") {
+      const root = ganttRef.current;
+      const trigger =
+        root?.querySelector<HTMLElement>(".jantt-add-task-btn") ??
+        root?.querySelector<HTMLElement>(".jantt-add-task-row");
+      if (trigger) {
+        trigger.click();
+        return;
+      }
+    }
+    const created = createNewTask(planRef.current, { label: t`New task` });
+    commitRef.current(created.plan);
+    onSelectTask?.(created.task.id);
+    toast.success(t`Added "${created.task.label}"`);
+  }, [readOnly, viewMode, t, onSelectTask]);
+
+  const handleSaveBaseline = useCallback(() => {
+    if (readOnly) return;
+    const label = `Baseline ${new Date().toISOString().slice(0, 10)}`;
+    const nextPlan = saveBaselineSnapshot(planRef.current, label);
+    commitRef.current(nextPlan);
+    setView((current) => ({ ...current, showBaselines: true }));
+    toast.success(t`Saved baseline snapshot (${label})`);
+  }, [readOnly, t]);
+
+  const handleJumpToTask = useCallback(
+    (taskId: string) => {
+      setViewMode("gantt");
+      onSelectTask?.(taskId);
+      requestAnimationFrame(() => {
+        const root = ganttRef.current;
+        if (!root) return;
+        const row = root.querySelector<HTMLElement>(`.jantt-label-row[data-row-id="${CSS.escape(taskId)}"]`);
+        row?.scrollIntoView({ block: "center", behavior: "smooth" });
+        const bar = root.querySelector<HTMLElement>(
+          `.jantt-task-bar[data-task-id="${CSS.escape(taskId)}"], .jantt-milestone[data-task-id="${CSS.escape(taskId)}"]`,
+        );
+        const body = root.querySelector<HTMLElement>(".jantt-body-wrap");
+        if (bar && body) {
+          const barRect = bar.getBoundingClientRect();
+          const bodyRect = body.getBoundingClientRect();
+          const targetLeft = body.scrollLeft + (barRect.left - bodyRect.left) - body.clientWidth / 3;
+          body.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+        }
+      });
+    },
+    [onSelectTask],
+  );
+
+  const openAssignForTask = useCallback(
+    (taskId: string, anchor: DOMRect) => {
+      if (readOnly) return;
+      setAssigning((current) => (current?.taskId === taskId ? null : { taskId, anchor }));
+    },
+    [readOnly],
+  );
+
+  const assigningTask = assigning ? tasks.find((task) => task.id === assigning.taskId) : undefined;
 
   return (
     <div
-      ref={rootRef}
       className="planner-workbench size-full min-h-0"
       data-testid="planner-workbench"
     >
+      <PlannerToolbar
+        plan={plan}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        viewport={viewport}
+        onViewportPatch={patchViewport}
+        filters={filters}
+        onFiltersChange={setFilters}
+        totalTasks={tasks.length}
+        matchingTasks={filteredTasks.length}
+        criticalCount={critical.criticalTaskIds.size}
+        healthGrade={healthGrade}
+        notesCount={notesCount}
+        assignees={planAssignees}
+        readOnly={readOnly}
+        onAddTask={handleAddTask}
+        onJumpToday={handleJumpToday}
+        onSaveBaseline={handleSaveBaseline}
+        onOpenJson={() => setJsonOpen(true)}
+      />
+
       {!readOnly && people.length ? <EvolveAssigneePicker people={people} /> : null}
       {assigning && assigningTask && !readOnly ? (
         <QuickAssignPopover
@@ -373,21 +530,76 @@ export function PlannerWorkbench({
           onCreate={(key, category) => newCategories.current.set(key, category)}
         />
       )}
-      <Jantt
-        data={chartData}
+
+      {/* Keep Jantt mounted so scroll, link wiring, and tab switching stay instant and lossless. */}
+      <div
+        ref={ganttRef}
+        className={viewMode === "gantt" ? "flex min-h-0 flex-1 flex-col" : "hidden"}
+      >
+        <Jantt
+          data={chartData}
+          readOnly={readOnly}
+          themeClassName="planner-jantt-theme"
+          className="size-full"
+          viewport={viewport}
+          onViewportChange={(next) => setView((current) => keptView(current, next))}
+          isMobile={compact}
+          disableDragOnTouch={compact}
+          onCommit={(next) => commit(next as PlanDocument)}
+          onError={(error: Error) =>
+            toast.error(/circular/i.test(error.message) ? loopMessage : error.message)
+          }
+          onTaskClick={(task: Task) => onSelectTask?.(task.id)}
+          onTaskDelete={() => onSelectTask?.(null)}
+        />
+      </div>
+
+      {viewMode === "kanban" ? (
+        <PlannerKanbanView
+          plan={plan}
+          tasks={filteredTasks}
+          criticalTaskIds={critical.criticalTaskIds}
+          people={people}
+          readOnly={readOnly}
+          onCommit={commit}
+          onOpenAssign={openAssignForTask}
+          onJumpToTask={handleJumpToTask}
+        />
+      ) : null}
+
+      {viewMode === "tasks" ? (
+        <PlannerTasksView
+          plan={plan}
+          tasks={filteredTasks}
+          criticalTaskIds={critical.criticalTaskIds}
+          people={people}
+          readOnly={readOnly}
+          onCommit={commit}
+          onOpenAssign={openAssignForTask}
+          onJumpToTask={handleJumpToTask}
+        />
+      ) : null}
+
+      {viewMode === "health" ? (
+        <PlannerHealthView
+          plan={plan}
+          critical={critical}
+          readOnly={readOnly}
+          onSaveBaseline={handleSaveBaseline}
+          onJumpToTask={handleJumpToTask}
+        />
+      ) : null}
+
+      {viewMode === "notes" ? (
+        <PlannerNotesView plan={plan} readOnly={readOnly} onCommit={commit} />
+      ) : null}
+
+      <PlannerJsonDialog
+        open={jsonOpen}
+        plan={plan}
         readOnly={readOnly}
-        themeClassName="planner-jantt-theme"
-        className="size-full"
-        viewport={viewport}
-        onViewportChange={(next) => setView((current) => keptView(current, next))}
-        isMobile={compact}
-        disableDragOnTouch={compact}
-        onCommit={(next) => commit(next as PlanDocument)}
-        onError={(error: Error) =>
-          toast.error(/circular/i.test(error.message) ? loopMessage : error.message)
-        }
-        onTaskClick={(task: Task) => onSelectTask?.(task.id)}
-        onTaskDelete={() => onSelectTask?.(null)}
+        onClose={() => setJsonOpen(false)}
+        onApply={commit}
       />
     </div>
   );
