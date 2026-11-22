@@ -45,6 +45,10 @@ vi.mock("@rakazo/ui-web", () => {
       size: _s,
       ...props
     }: ComponentProps<"button"> & Record<string, unknown>) => <button type="button" {...props} />,
+    parseBotAvatar: (rawColor: string) => ({
+      color: rawColor || "#F97316",
+      isImage: rawColor.startsWith("data:image/"),
+    }),
     Spinner: () => <span data-testid="spinner" />,
     toast: { error: vi.fn() },
   };
@@ -160,6 +164,7 @@ it("renders Main chat without a delete button, lets users switch, and deletes bl
           queries={queries}
           botId="bot-1"
           botName="Document Reviewer"
+          botColor="#10B981"
           spaceId="space-1"
           isActiveBot
           activeThreadId="thread-topic"
@@ -185,6 +190,11 @@ it("renders Main chat without a delete button, lets users switch, and deletes bl
   expect(mainRow.textContent).not.toContain("Main");
   expect(mainRow.querySelector('button[aria-label^="Delete"]')).not.toBeNull();
   expect(mainRow.querySelector('button[aria-label^="Rename"]')).not.toBeNull();
+  // Chat icon inherits the agent's avatar color, and timestamp hides on touch devices so it never overlaps action buttons
+  const chatIcon = mainRow.querySelector("svg.lucide-message-square") as SVGElement | null;
+  expect(chatIcon?.style.color).toBeTruthy();
+  const metaEl = mainRow.querySelector("[data-bot-chat-meta]");
+  expect(metaEl?.className).toContain("[@media(hover:none)]:hidden");
 
   // Clicking any chat selects it by its thread ID
   const mainSelectBtn = mainRow.querySelector("button")!;
@@ -235,6 +245,7 @@ it("supports inline renaming a chat and saving via form submit", async () => {
           queries={queries}
           botId="bot-1"
           botName="Document Reviewer"
+          botColor="#10B981"
           spaceId="space-1"
           isActiveBot
           activeThreadId="thread-topic"

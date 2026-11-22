@@ -1,7 +1,7 @@
 import { i18n } from "@lingui/core";
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { BotChatSummary } from "@rakazo/contracts";
-import { isRunWorking } from "@rakazo/core";
+import { isRunWorking, resolvePersonaColorDef } from "@rakazo/core";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,12 +12,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   Button,
+  parseBotAvatar,
   Spinner,
   toast,
 } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { Check, MessageSquare, Pencil, Trash2, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { SpaceQueries } from "../../lib/query";
 import { queryClient } from "../../lib/query";
 import type { createSpaceRpc } from "../../lib/rpc";
@@ -28,6 +29,7 @@ export function BotChatsAccordion({
   queries,
   botId,
   botName,
+  botColor,
   spaceId,
   compact = false,
   isActiveBot,
@@ -40,6 +42,7 @@ export function BotChatsAccordion({
   queries: SpaceQueries;
   botId: string;
   botName: string;
+  botColor?: string;
   spaceId: string;
   compact?: boolean;
   isActiveBot: boolean;
@@ -53,6 +56,11 @@ export function BotChatsAccordion({
   onChatsMutated: (botId: string) => void;
 }) {
   const { t } = useLingui();
+  const chatIconColor = useMemo(() => {
+    const parsed = parseBotAvatar(botColor ?? "", botId);
+    if (parsed.isImage) return undefined;
+    return resolvePersonaColorDef(botId || parsed.color || "agent", parsed.color).hex;
+  }, [botColor, botId]);
   const { data, isLoading } = useQuery({
     ...queries.threads.listChats.queryOptions({ input: { botId } }),
     staleTime: 10_000,
@@ -260,11 +268,16 @@ export function BotChatsAccordion({
                   ) : (
                     <MessageSquare
                       size={12}
-                      strokeWidth={1.8}
+                      strokeWidth={2}
                       aria-hidden="true"
-                      className={`shrink-0 ${
-                        isSelected ? "text-foreground/80" : "text-muted-foreground/70"
-                      }`}
+                      style={chatIconColor ? { color: chatIconColor } : undefined}
+                      className={
+                        chatIconColor
+                          ? "shrink-0"
+                          : `shrink-0 ${
+                              isSelected ? "text-foreground/80" : "text-muted-foreground/70"
+                            }`
+                      }
                     />
                   )}
                   <span
@@ -277,16 +290,22 @@ export function BotChatsAccordion({
                   >
                     {displayTitle}
                   </span>
-                </button>
-
-                <div className="pointer-events-none absolute end-1.5 flex items-center gap-1">
                   {chat.unread ? (
                     <span
                       aria-label={t`Unread`}
-                      className="size-1.5 rounded-full bg-unread group-hover/chat:hidden"
+                      className="hidden size-1.5 shrink-0 rounded-full bg-unread [@media(hover:none)]:inline-block"
                     />
                   ) : null}
-                  <span className="text-[10.5px] text-faint-foreground tabular-nums group-hover/chat:hidden group-focus-within/chat:hidden">
+                </button>
+
+                <div
+                  data-bot-chat-meta=""
+                  className="pointer-events-none absolute end-1.5 flex items-center gap-1 group-hover/chat:hidden group-focus-within/chat:hidden [@media(hover:none)]:hidden"
+                >
+                  {chat.unread ? (
+                    <span aria-label={t`Unread`} className="size-1.5 rounded-full bg-unread" />
+                  ) : null}
+                  <span className="text-[10.5px] text-faint-foreground tabular-nums">
                     {formatShortChatTime(chat.updatedAt)}
                   </span>
                 </div>

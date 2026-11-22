@@ -721,6 +721,7 @@ export function SidebarRoster({
                         queries={queries}
                         botId={item.chat.id}
                         botName={item.chat.name}
+                        botColor={item.chat.color}
                         spaceId={item.chat.spaceId}
                         compact={compact}
                         isActiveBot={!inGroup && active?.id === item.chat.id}
