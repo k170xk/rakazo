@@ -38,7 +38,9 @@ import {
   RenameBotSectionDialog,
 } from "./dialogs";
 
-type ChatTarget = { kind: "bot"; chat: Bot } | { kind: "group"; chat: Group };
+type ChatTarget =
+  | { kind: "bot"; chat: Bot; threadId?: string; threadTitle?: string | null }
+  | { kind: "group"; chat: Group };
 type SectionTarget = { section: BotSection; spaceId: string };
 
 /** Which of the shell's dialogs and menus are open, and on what. */
@@ -432,7 +434,10 @@ export function ShellDialogs({
           onConfirm={async () => {
             await rpc.threads.clear(
               clearTarget.kind === "bot"
-                ? { botId: clearTarget.chat.id }
+                ? {
+                    botId: clearTarget.chat.id,
+                    ...(clearTarget.threadId ? { threadId: clearTarget.threadId } : {}),
+                  }
                 : { groupId: clearTarget.chat.id },
             );
             if (

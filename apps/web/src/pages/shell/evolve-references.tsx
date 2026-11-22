@@ -535,12 +535,14 @@ type SpaceRpc = ReturnType<typeof createSpaceRpc>;
 export function EvolveReferencesAction({
   rpc,
   botId,
+  threadId,
   messages,
   disabled,
   onSent,
 }: {
   rpc: SpaceRpc;
   botId: string;
+  threadId?: string;
   messages: readonly ThreadMessage[];
   disabled?: boolean;
   onSent: () => Promise<unknown>;
@@ -573,7 +575,12 @@ export function EvolveReferencesAction({
       loaders={loaders}
       disabled={disabled}
       onSend={async (evolveReferences) => {
-        await rpc.threads.send({ botId, evolveReferences, clientNonce: newClientId() });
+        await rpc.threads.send({
+          botId,
+          ...(threadId ? { threadId } : {}),
+          evolveReferences,
+          clientNonce: newClientId(),
+        });
         await onSent();
       }}
     />

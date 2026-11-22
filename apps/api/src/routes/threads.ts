@@ -31,6 +31,7 @@ import {
   touchGroupUpdatedAt,
 } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
+import { createBotChat, deleteBotChat, listBotChats, renameBotChat } from "../bot-chats.js";
 import type { RouterDeps } from "../router.js";
 import { createRoutineTestRun, routineTestRunNonce, routineTestTarget } from "../routines.js";
 import { withSerializableRetry } from "../serializable-retry.js";
@@ -116,7 +117,11 @@ export function threadsRoutes(ctx: RouterContext) {
         )?.botId ?? target.memberBotIds[0]!);
   const send = async (
     actor: Actor,
-    input: Parameters<typeof sendThreadMessage>[3] & { botId?: string; groupId?: string },
+    input: Parameters<typeof sendThreadMessage>[3] & {
+      botId?: string;
+      groupId?: string;
+      threadId?: string;
+    },
     startRoutines?: Parameters<typeof sendThreadMessage>[5],
   ) => {
     const setup = await modelSetup(deps, actor);
@@ -300,6 +305,7 @@ export function threadsRoutes(ctx: RouterContext) {
           );
           const sent = await send(context.actor, {
             botId: input.botId,
+            ...(input.threadId ? { threadId: input.threadId } : {}),
             clientNonce: input.clientNonce,
             evolveConversation,
           });
@@ -436,7 +442,7 @@ export function threadsRoutes(ctx: RouterContext) {
         // Durable memories remain in their Space-private containers. Clear only removes
         // conversation-derived summaries from the previous generation; including the new
         // generation also covers a compaction job that began just after the clear committed.
-        if (configuredMemory && target.kind === "bot") {
+        if (configuredMemory && target.kind === "bot" && target.isPrimaryThread !== false) {
           // Best effort: the conversation rows are already deleted, so failing the clear here
           // would help nothing — a failed purge only leaves stale summaries recallable.
           try {
@@ -842,6 +848,27 @@ export function threadsRoutes(ctx: RouterContext) {
         } else {
           await setThreadUnreadState(deps.prisma, context.actor, target, true);
         }
+        return { ok: true as const };
+      }),
+      listChats: authed.threads.listChats.handler(async ({ context, input }) => {
+        return { chats: await listBotChats(deps.prisma, context.actor, input.botId) };
+      }),
+      createChat: authed.threads.createChat.handler(async ({ context, input }) => {
+        return { chat: await createBotChat(deps.prisma, context.actor, input.botId, input.title) };
+      }),
+      renameChat: authed.threads.renameChat.handler(async ({ context, input }) => {
+        return {
+          chat: await renameBotChat(
+            deps.prisma,
+            context.actor,
+            input.botId,
+            input.threadId,
+            input.title,
+          ),
+        };
+      }),
+      deleteChat: authed.threads.deleteChat.handler(async ({ context, input }) => {
+        await deleteBotChat(deps, context.actor, input.botId, input.threadId);
         return { ok: true as const };
       }),
     },

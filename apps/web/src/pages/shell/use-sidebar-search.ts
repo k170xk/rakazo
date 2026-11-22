@@ -79,7 +79,11 @@ export function useSidebarSearch({
     const params = new URLSearchParams();
     if (hit.messageId) params.set("m", hit.messageId);
     if (hit.routineId) params.set("routine", hit.routineId);
-    const path = hit.groupId ? `/app/g/${hit.groupId}` : `/app/${hit.botId}`;
+    const path = hit.groupId
+      ? `/app/g/${hit.groupId}`
+      : hit.threadId
+        ? `/app/${hit.botId}/c/${hit.threadId}`
+        : `/app/${hit.botId}`;
     const search = params.toString() ? `?${params.toString()}` : "";
     navigate(withDocumentOverlay(`${path}${search}`, window.location.search));
   }

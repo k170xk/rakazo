@@ -20,17 +20,22 @@ import type { Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 import { Suspense } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
+import type { SpaceQueries } from "../../lib/query";
 import {
   compactRosterStatusLabel,
   rosterHasUndismissedRunError,
   rosterWorkStatusLabel,
 } from "../../lib/roster-status";
+import type { createSpaceRpc } from "../../lib/rpc";
 import { shortModelName } from "../../lib/short-model-name";
+import { BotChatsAccordion } from "./bot-chats-accordion";
 import type { RosterDropAction, RosterDropTarget } from "./roster-drop";
 import type { sidebarGroupsForSpaces } from "./space-sidebar";
 import { useRedrawAtMidnight } from "./use-redraw-at-midnight";
 
 export function SidebarRoster({
+  rpc,
+  queries,
   sidebarGroups,
   collapsedSidebarSections,
   bootstrapMe,
@@ -48,7 +53,14 @@ export function SidebarRoster({
   toggleSidebarSection,
   inGroup,
   active,
+  activeThreadId,
   activeGroup,
+  expandedBotIds,
+  toggleBotChats,
+  creatingChatBotId,
+  onCreateBotChat,
+  onBotChatDeleted,
+  onBotChatsMutated,
   botsSidebarDensity,
   dismissedRunErrorIds,
   displayedRunError,
@@ -61,6 +73,8 @@ export function SidebarRoster({
   botMenuContent,
   mini = false,
 }: {
+  rpc: ReturnType<typeof createSpaceRpc>;
+  queries: SpaceQueries;
   sidebarGroups: ReturnType<
     typeof sidebarGroupsForSpaces<Space["bots"][number], Space["groups"][number]>
   >;
@@ -80,7 +94,14 @@ export function SidebarRoster({
   toggleSidebarSection: (key: string) => void;
   inGroup: boolean;
   active: Pick<Bot, "id"> | undefined;
+  activeThreadId?: string;
   activeGroup: Pick<Group, "id"> | undefined;
+  expandedBotIds: ReadonlySet<string>;
+  toggleBotChats: (botId: string) => void;
+  creatingChatBotId: string | null;
+  onCreateBotChat: (botId: string) => void;
+  onBotChatDeleted: (botId: string, threadId: string) => void;
+  onBotChatsMutated: (botId: string) => void;
   botsSidebarDensity: BotsSidebarDensity;
   dismissedRunErrorIds: ReadonlySet<string>;
   displayedRunError: string | null;
@@ -266,6 +287,12 @@ export function SidebarRoster({
                 const selected =
                   (item.kind === "bot" && !inGroup && active?.id === item.chat.id) ||
                   (item.kind === "group" && inGroup && activeGroup?.id === item.chat.id);
+                const canExpandChats =
+                  !mini && item.kind === "bot" && item.chat.spaceId === bootstrapMe?.spaceId;
+                const extraChatCount = item.kind === "bot" ? (item.chat.extraChatCount ?? 0) : 0;
+                const chatsExpanded = canExpandChats && expandedBotIds.has(item.chat.id);
+                const selectedInSubChat =
+                  selected && item.kind === "bot" && Boolean(activeThreadId);
                 const compact = botsSidebarDensity === "compact";
                 const workStatusLabel =
                   item.kind === "bot" ? rosterWorkStatusLabel(item.chat.status) : null;
@@ -399,16 +426,26 @@ export function SidebarRoster({
                       mini
                         ? "mx-auto size-12 justify-center rounded-xl"
                         : compact
-                          ? `w-full min-h-11 gap-2 rounded-xl px-2.5 ${modelName ? "py-1" : "py-1.5"}`
+                          ? `w-full min-h-11 gap-2 rounded-xl ps-2.5 ${
+                              canExpandChats ? (extraChatCount > 0 ? "pe-11" : "pe-8") : "pe-2.5"
+                            } ${modelName ? "py-1" : "py-1.5"}`
                           : modelName
-                            ? "w-full gap-3 rounded-xl px-2.5 py-1.5"
-                            : "w-full gap-3 rounded-xl px-2.5 py-[10px]"
+                            ? `w-full gap-3 rounded-xl ps-2.5 ${
+                                canExpandChats ? (extraChatCount > 0 ? "pe-11" : "pe-8") : "pe-2.5"
+                              } py-1.5`
+                            : `w-full gap-3 rounded-xl ps-2.5 ${
+                                canExpandChats ? (extraChatCount > 0 ? "pe-11" : "pe-8") : "pe-2.5"
+                              } py-[10px]`
                     } text-start ${
                       item.kind === "bot" ? "cursor-grab active:cursor-grabbing" : ""
                     } ${
-                      selected || rosterDropKey === rowDropKey
+                      rosterDropKey === rowDropKey
                         ? "bg-sidebar-accent"
-                        : "group-hover/row:bg-accent"
+                        : selectedInSubChat
+                          ? "bg-sidebar-accent/55"
+                          : selected
+                            ? "bg-sidebar-accent"
+                            : "group-hover/row:bg-accent"
                     }`}
                   >
                     {mini ? (
@@ -565,41 +602,111 @@ export function SidebarRoster({
                 return (
                   <div
                     key={`${item.kind}:${item.chat.id}`}
-                    className="group/row relative"
+                    className="flex flex-col"
                     style={{
                       opacity: item.kind === "bot" && draggedBotId === item.chat.id ? 0.55 : 1,
                     }}
                   >
-                    <ContextMenu
-                      disabled={item.chat.spaceId !== bootstrapMe?.spaceId}
-                      open={botMenu?.kind === item.kind && botMenu.id === item.chat.id}
-                      // A sibling row's menu may already own the state; only clear our own.
-                      onOpenChange={(open) =>
-                        setBotMenu((current) =>
-                          open
-                            ? { kind: item.kind, id: item.chat.id }
-                            : current?.kind === item.kind && current.id === item.chat.id
-                              ? null
-                              : current,
-                        )
-                      }
-                    >
-                      {mini ? (
+                    <div className="group/row relative">
+                      <ContextMenu
+                        disabled={item.chat.spaceId !== bootstrapMe?.spaceId}
+                        open={botMenu?.kind === item.kind && botMenu.id === item.chat.id}
+                        // A sibling row's menu may already own the state; only clear our own.
+                        onOpenChange={(open) =>
+                          setBotMenu((current) =>
+                            open
+                              ? { kind: item.kind, id: item.chat.id }
+                              : current?.kind === item.kind && current.id === item.chat.id
+                                ? null
+                                : current,
+                          )
+                        }
+                      >
+                        {mini ? (
+                          <IconTooltip
+                            side="inline-end"
+                            label={[item.chat.name, modelName, compactStatusLabel]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          >
+                            {chatTrigger}
+                          </IconTooltip>
+                        ) : (
+                          chatTrigger
+                        )}
+                        {botMenu?.kind === item.kind && botMenu.id === item.chat.id ? (
+                          <Suspense fallback={null}>{botMenuContent}</Suspense>
+                        ) : null}
+                      </ContextMenu>
+                      {canExpandChats && item.kind === "bot" ? (
                         <IconTooltip
-                          side="inline-end"
-                          label={[item.chat.name, modelName, compactStatusLabel]
-                            .filter(Boolean)
-                            .join(" · ")}
+                          label={
+                            chatsExpanded
+                              ? t`Hide chats for ${item.chat.name}`
+                              : t`Show chats for ${item.chat.name}`
+                          }
                         >
-                          {chatTrigger}
+                          <button
+                            type="button"
+                            data-testid={`bot-chats-toggle-${item.chat.id}`}
+                            aria-expanded={chatsExpanded}
+                            aria-label={
+                              chatsExpanded
+                                ? t`Hide chats for ${item.chat.name}`
+                                : t`Show chats for ${item.chat.name}`
+                            }
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleBotChats(item.chat.id);
+                            }}
+                            className={`absolute end-1.5 top-1/2 -translate-y-1/2 inline-flex items-center justify-center gap-0.5 rounded-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring ${
+                              extraChatCount > 0
+                                ? "h-6 bg-sidebar-border/45 px-1.5 text-[11px] font-medium tabular-nums text-muted-foreground hover:bg-sidebar-border/80 hover:text-foreground"
+                                : `size-6 text-muted-foreground hover:bg-sidebar-border/60 hover:text-foreground ${
+                                    chatsExpanded
+                                      ? "opacity-100"
+                                      : selected
+                                        ? "opacity-75 hover:opacity-100"
+                                        : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-70"
+                                  }`
+                            }`}
+                          >
+                            {extraChatCount > 0 ? <span>{extraChatCount + 1}</span> : null}
+                            <ChevronDown
+                              size={13}
+                              strokeWidth={2}
+                              aria-hidden="true"
+                              className={`transition-transform duration-150 ${
+                                chatsExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
                         </IconTooltip>
-                      ) : (
-                        chatTrigger
-                      )}
-                      {botMenu?.kind === item.kind && botMenu.id === item.chat.id ? (
-                        <Suspense fallback={null}>{botMenuContent}</Suspense>
                       ) : null}
-                    </ContextMenu>
+                    </div>
+                    {chatsExpanded && item.kind === "bot" ? (
+                      <BotChatsAccordion
+                        rpc={rpc}
+                        queries={queries}
+                        botId={item.chat.id}
+                        botName={item.chat.name}
+                        spaceId={item.chat.spaceId}
+                        isActiveBot={!inGroup && active?.id === item.chat.id}
+                        activeThreadId={
+                          !inGroup && active?.id === item.chat.id ? activeThreadId : undefined
+                        }
+                        creatingChat={creatingChatBotId === item.chat.id}
+                        onSelectChat={(chatSpaceId, targetBotId, threadId) => {
+                          openSpaceChat(
+                            chatSpaceId,
+                            threadId ? `/app/${targetBotId}/c/${threadId}` : `/app/${targetBotId}`,
+                          );
+                        }}
+                        onCreateChat={onCreateBotChat}
+                        onChatDeleted={onBotChatDeleted}
+                        onChatsMutated={onBotChatsMutated}
+                      />
+                    ) : null}
                   </div>
                 );
               })}

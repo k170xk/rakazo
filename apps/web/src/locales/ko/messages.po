@@ -3015,6 +3015,7 @@ msgstr "이미지를 읽을 수 없음"
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/drawings-dialog.tsx
@@ -3029,6 +3030,10 @@ msgstr ""
 #: src/pages/GroupPanel.tsx
 msgid "Cancel new group"
 msgstr "새 그룹 만들기 취소"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Cancel rename"
+msgstr ""
 
 #: src/pages/shell/chat-context.tsx
 msgid "Cancel reply"
@@ -3248,6 +3253,10 @@ msgstr ""
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
 msgstr "채팅 설정"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Chat title"
+msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Chat with your agent from Slack."
@@ -4542,6 +4551,10 @@ msgstr ""
 msgid "Could not create group"
 msgstr "그룹을 만들지 못했습니다."
 
+#: src/pages/Shell.tsx
+msgid "Could not create new chat"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not create section"
 msgstr "섹션을 만들지 못했습니다."
@@ -4573,6 +4586,10 @@ msgstr ""
 #: src/components/apps/AppStudio.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete app"
+msgstr ""
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Could not delete chat"
 msgstr ""
 
 #: src/pages/AdminDefaultAgents.tsx
@@ -4930,6 +4947,10 @@ msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "Could not remove the credential"
+msgstr ""
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Could not rename chat"
 msgstr ""
 
 #: src/pages/model-settings/providers-section.tsx
@@ -5595,6 +5616,11 @@ msgstr ""
 msgid "Creates a finished OCSC document from a short brief, on the company template"
 msgstr ""
 
+#: src/pages/shell/bot-chats-accordion.tsx
+#: src/pages/shell/chat-header.tsx
+msgid "Creating chat"
+msgstr ""
+
 #: src/components/EmailDraftCard.tsx
 msgid "Creating draft…"
 msgstr ""
@@ -5949,6 +5975,10 @@ msgstr "{0} 삭제"
 msgid "Delete {0}?"
 msgstr "{0}을 삭제할까요?"
 
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Delete {displayTitle}"
+msgstr ""
+
 #: src/components/SidebarFooter.tsx
 msgid "Delete {name}"
 msgstr ""
@@ -5961,6 +5991,14 @@ msgstr "{rowCount}개 행 삭제"
 #: src/components/AccountMenu.tsx
 msgid "Delete account"
 msgstr "계정 삭제"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Delete chat"
+msgstr ""
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Delete chat?"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Delete comment"
@@ -6062,9 +6100,14 @@ msgstr ""
 msgid "Deletes records"
 msgstr ""
 
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Deleting"
+msgstr ""
+
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
 msgstr "삭제 중…"
@@ -8095,6 +8138,11 @@ msgstr "슬라이드 쇼에서 숨김"
 msgid "Hide"
 msgstr "숨기기"
 
+#. placeholder {0}: item.chat.name
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Hide chats for {0}"
+msgstr ""
+
 #: src/components/office/slides/SlideRail.tsx
 msgid "Hide in slideshow"
 msgstr "슬라이드 쇼에서 숨기기"
@@ -9156,6 +9204,14 @@ msgstr "활동을 불러오는 중…"
 msgid "Loading assistants…"
 msgstr ""
 
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Loading chats"
+msgstr ""
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Loading chats…"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading connectors…"
 msgstr ""
@@ -9343,6 +9399,14 @@ msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Made from a spreadsheet"
+msgstr ""
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Main"
+msgstr ""
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Main chat"
 msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
@@ -10197,6 +10261,17 @@ msgstr ""
 
 #: src/components/office/planner/NewCategoryControl.tsx
 msgid "New category name"
+msgstr ""
+
+#: src/pages/BotContextMenu.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
+#: src/pages/shell/chat-header.tsx
+msgid "New chat"
+msgstr ""
+
+#. placeholder {0}: active.name
+#: src/pages/Shell.tsx
+msgid "New chat with {0}"
 msgstr ""
 
 #: src/components/office/word/WordRibbon.tsx
@@ -12982,6 +13057,10 @@ msgstr "삭제 중…"
 msgid "Rename"
 msgstr "이름 변경"
 
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Rename {displayTitle}"
+msgstr ""
+
 #: src/components/SidebarFooter.tsx
 msgid "Rename {name}"
 msgstr ""
@@ -13611,6 +13690,10 @@ msgstr ""
 #: src/components/EmailDraftCard.tsx
 #: src/pages/AdminDefaultAgents.tsx
 msgid "Save changes"
+msgstr ""
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Save chat name"
 msgstr ""
 
 #: src/pages/AdminStaffLimits.tsx
@@ -14451,6 +14534,11 @@ msgstr ""
 
 #: src/components/office/planner/PlannerToolbar.tsx
 msgid "Show baselines"
+msgstr ""
+
+#. placeholder {0}: item.chat.name
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Show chats for {0}"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -16104,6 +16192,11 @@ msgstr "이 연결의 요청 한도가 너무 낮습니다. 다른 모델을 선
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "이 대화는 모델이 처리하기에 너무 깁니다. 다시 시도해도 해결되지 않습니다. 새 채팅을 시작하거나 메시지를 줄이세요."
 
+#. placeholder {0}: active.name
+#: src/pages/Shell.tsx
+msgid "This conversation starts with a fresh chat history while keeping {0}'s instructions, tools, knowledge, and routines."
+msgstr ""
+
 #: src/components/AppScopeAskCard.tsx
 msgid "This decides who the data belongs to. Nothing is built until you choose."
 msgstr ""
@@ -16298,6 +16391,11 @@ msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "This week"
+msgstr ""
+
+#. placeholder {0}: deleteTarget.title || t`New chat`
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "This will permanently remove “{0}” and its messages. {botName} and its other conversations will not be affected."
 msgstr ""
 
 #: src/lib/cron.ts
@@ -16767,6 +16865,7 @@ msgid "Unreachable"
 msgstr ""
 
 #: src/pages/ActivityList.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
 msgid "Unread"
 msgstr "읽지 않음"
 
@@ -17733,6 +17832,7 @@ msgid "Work that runs itself"
 msgstr ""
 
 #: src/pages/ActivityList.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
 msgid "Working"
 msgstr "작업 중"
 

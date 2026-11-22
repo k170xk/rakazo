@@ -186,3 +186,37 @@ it("opens the invite with both rewards and copies the link", async () => {
   expect(writeText).toHaveBeenCalledWith("https://example.test/sign-up?ref=abc");
   expect(dialog.textContent).toContain("Copied");
 });
+
+it("shows the New chat button and active secondary chat title in agent chats", () => {
+  const onNewChat = vi.fn();
+  const bot = { id: "bot-1", name: "Helper", color: BOT_COLORS[0] } as Bot;
+  billing.status = { referral: null };
+  act(() =>
+    root.render(
+      <ChatHeader
+        inGroup={false}
+        active={bot}
+        activeGroup={undefined}
+        activeSnapshot={{ threadTitle: "Tender Q&A" } as never}
+        activeThreadId="thread-2"
+        phoneCallsEnabled={false}
+        voiceReady={false}
+        inCall={false}
+        panelOpen={false}
+        computerPanelOpen={false}
+        onOpenNavigation={() => undefined}
+        onTogglePanel={() => undefined}
+        onToggleComputerPanel={() => undefined}
+        onCall={() => undefined}
+        onNewChat={onNewChat}
+      />,
+    ),
+  );
+  expect(container.querySelector('[data-testid="bot-header-chat-title"]')?.textContent).toBe(
+    "Tender Q&A",
+  );
+  const newChatBtn = container.querySelector<HTMLButtonElement>('[data-testid="new-chat-button"]');
+  expect(newChatBtn).not.toBeNull();
+  act(() => newChatBtn!.click());
+  expect(onNewChat).toHaveBeenCalledWith(bot);
+});

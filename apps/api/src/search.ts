@@ -56,30 +56,63 @@ async function findArtifactMessages(
   actor: Actor,
   artifacts: Array<{ id: string; targetId: string }>,
   target: "bot" | "group",
-): Promise<Map<string, { id: string; seq: number }>> {
+): Promise<
+  Map<
+    string,
+    { id: string; seq: number; threadId: string; threadTitle: string | null; isExtraChat: boolean }
+  >
+> {
   if (artifacts.length === 0) return new Map();
-  const targetColumn = target === "bot" ? Prisma.sql`t."botId"` : Prisma.sql`t."groupId"`;
+  const targetMatch =
+    target === "bot"
+      ? Prisma.sql`COALESCE(t."botId", t."chatBotId") = candidate."targetId"`
+      : Prisma.sql`t."groupId" = candidate."targetId"`;
   const candidates = Prisma.join(
     artifacts.map(({ id, targetId }) => Prisma.sql`(${id}, ${targetId})`),
   );
-  const rows = await prisma.$queryRaw<Array<{ artifactId: string; id: string; seq: number }>>(
+  const rows = await prisma.$queryRaw<
+    Array<{
+      artifactId: string;
+      id: string;
+      seq: number;
+      threadId: string;
+      threadTitle: string | null;
+      isExtraChat: boolean;
+    }>
+  >(
     Prisma.sql`
-      SELECT candidate."artifactId", message.id, message.seq
+      SELECT
+        candidate."artifactId",
+        message.id,
+        message.seq,
+        message."threadId",
+        message."threadTitle",
+        message."isExtraChat"
       FROM (VALUES ${candidates}) AS candidate("artifactId", "targetId")
       CROSS JOIN LATERAL (
-        SELECT m.id, m.seq
+        SELECT
+          m.id,
+          m.seq,
+          m."threadId",
+          t.title AS "threadTitle",
+          (t."chatBotId" IS NOT NULL) AS "isExtraChat"
         FROM messages m
         INNER JOIN threads t ON t.id = m."threadId"
         WHERE t."spaceId" = ${actor.spaceId}
           AND t."userId" = ${actor.userId}
-          AND ${targetColumn} = candidate."targetId"
+          AND ${targetMatch}
           AND m.blocks::text ILIKE ('%' || candidate."artifactId" || '%')
         ORDER BY m."createdAt" DESC
         LIMIT 1
       ) message
     `,
   );
-  return new Map(rows.map(({ artifactId, id, seq }) => [artifactId, { id, seq }]));
+  return new Map(
+    rows.map(({ artifactId, id, seq, threadId, threadTitle, isExtraChat }) => [
+      artifactId,
+      { id, seq, threadId, threadTitle, isExtraChat },
+    ]),
+  );
 }
 
 export async function querySpaceSearch(
@@ -212,6 +245,12 @@ export async function querySpaceSearch(
         kind: "file",
         botId: artifact.botId,
         botName: artifact.bot.name,
+        ...(message.isExtraChat
+          ? {
+              threadId: message.threadId,
+              ...(message.threadTitle ? { threadTitle: message.threadTitle } : {}),
+            }
+          : {}),
         title: artifact.name,
         snippet: `${artifact.mimeType}, ${artifact.size} bytes`,
         artifactId: artifact.id,
@@ -302,16 +341,26 @@ export async function querySpaceSearch(
         Array<{
           id: string;
           threadId: string;
+          threadTitle: string | null;
+          isExtraChat: boolean;
           seq: number;
           blocks: Prisma.JsonValue;
           botId: string;
           botName: string;
         }>
       >`
-      SELECT m.id, m."threadId", m.seq, m.blocks, b.id AS "botId", b.name AS "botName"
+      SELECT
+        m.id,
+        m."threadId",
+        t.title AS "threadTitle",
+        (t."chatBotId" IS NOT NULL) AS "isExtraChat",
+        m.seq,
+        m.blocks,
+        b.id AS "botId",
+        b.name AS "botName"
       FROM messages m
       INNER JOIN threads t ON t.id = m."threadId"
-      INNER JOIN bots b ON b.id = t."botId"
+      INNER JOIN bots b ON b.id = COALESCE(t."botId", t."chatBotId")
       WHERE t."spaceId" = ${actor.spaceId}
         AND t."userId" = ${actor.userId}
         AND b."archivedAt" IS NULL
@@ -324,6 +373,9 @@ export async function querySpaceSearch(
       pushMessageHits(row.blocks as MessageBlock[], {
         botId: row.botId,
         botName: row.botName,
+        ...(row.isExtraChat
+          ? { threadId: row.threadId, ...(row.threadTitle ? { threadTitle: row.threadTitle } : {}) }
+          : {}),
         messageId: row.id,
         seq: row.seq,
         query,
@@ -380,6 +432,8 @@ function pushMessageHits(
   ctx: {
     botId?: string;
     botName?: string;
+    threadId?: string;
+    threadTitle?: string;
     groupId?: string;
     groupName?: string;
     messageId: string;
@@ -391,8 +445,17 @@ function pushMessageHits(
   // Discriminate on groupId (not name): empty group names must still target the group.
   const destination = ctx.groupId
     ? { groupId: ctx.groupId, groupName: ctx.groupName ?? "" }
-    : { botId: ctx.botId!, botName: ctx.botName! };
-  const title = ctx.groupId ? (ctx.groupName ?? "") : (ctx.botName ?? "");
+    : {
+        botId: ctx.botId!,
+        botName: ctx.botName!,
+        ...(ctx.threadId ? { threadId: ctx.threadId } : {}),
+        ...(ctx.threadTitle ? { threadTitle: ctx.threadTitle } : {}),
+      };
+  const title = ctx.groupId
+    ? (ctx.groupName ?? "")
+    : ctx.threadTitle
+      ? `${ctx.botName ?? ""} · ${ctx.threadTitle}`
+      : (ctx.botName ?? "");
   let messageHit = false;
   for (const block of blocks) {
     if (block.kind !== "text") continue;

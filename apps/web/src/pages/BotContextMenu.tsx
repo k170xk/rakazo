@@ -19,6 +19,7 @@ import {
   FolderPlus,
   Pencil,
   Pin,
+  SquarePen,
   Trash2,
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ type ChatMenuTarget = Pick<Bot, "name" | "pinned" | "sectionId" | "unread">;
 /** A roster row's context menu content; `onClose` serves the lazy-load error fallback. */
 export function BotContextMenu({
   bot,
+  onNewChat,
   onTogglePinned,
   sections,
   onMoveToSection,
@@ -41,6 +43,7 @@ export function BotContextMenu({
 }: {
   bot: ChatMenuTarget;
   onClose: () => void;
+  onNewChat?: () => void;
   onTogglePinned: () => void;
   sections: BotSection[];
   onMoveToSection: (sectionId: string | null) => void;
@@ -60,6 +63,15 @@ export function BotContextMenu({
       aria-label={t`Actions for ${bot.name}`}
       className="max-h-[min(420px,calc(100vh-16px))] w-[264px] overflow-y-auto"
     >
+      {onNewChat ? (
+        <>
+          <ContextMenuItem onClick={onNewChat}>
+            <SquarePen />
+            {t`New chat`}
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+        </>
+      ) : null}
       <ContextMenuItem onClick={onTogglePinned}>
         <Pin />
         {bot.pinned ? t`Unpin` : t`Pin`}

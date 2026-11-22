@@ -136,6 +136,9 @@ describe("withDocumentOverlay", () => {
     expect(withDocumentOverlay("/app/bot_2", "?m=msg_1&doc=art_1&kind=docx")).toBe(
       "/app/bot_2?doc=art_1&kind=docx",
     );
+    expect(withDocumentOverlay("/app/bot_2/c/thread_9", current)).toBe(
+      "/app/bot_2/c/thread_9?doc=art_1&kind=docx",
+    );
     expect(withDocumentOverlay("/app/g/group_2", current)).toBe(
       "/app/g/group_2?doc=art_1&kind=docx",
     );

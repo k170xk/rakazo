@@ -15,9 +15,12 @@ export function ChatContextMenu({
   rpc,
   bot,
   group,
+  activeBotId,
+  activeThreadId,
   sections,
   spaceId,
   onClose,
+  onNewChat,
   refreshBots,
   read,
   dialogs,
@@ -27,9 +30,12 @@ export function ChatContextMenu({
   rpc: ReturnType<typeof createSpaceRpc>;
   bot: Bot | undefined;
   group: Group | undefined;
+  activeBotId?: string;
+  activeThreadId?: string;
   sections: BotSection[];
   spaceId: string | undefined;
   onClose: () => void;
+  onNewChat?: (botId: string) => void;
   refreshBots: (includeArchived?: boolean) => Promise<void>;
   read: Pick<ChatRead, "markBotRead" | "markBotUnread" | "toggleGroupUnread">;
   dialogs: ShellDialogsState;
@@ -38,13 +44,26 @@ export function ChatContextMenu({
 }) {
   const chat = bot ?? group;
   if (!chat) return null;
+  const currentThreadId = bot && activeBotId === bot.id ? activeThreadId : undefined;
   const target = bot
-    ? { kind: "bot" as const, chat: bot }
+    ? {
+        kind: "bot" as const,
+        chat: bot,
+        ...(currentThreadId ? { threadId: currentThreadId } : {}),
+      }
     : { kind: "group" as const, chat: group! };
   return (
     <BotContextMenu
       bot={chat}
       onClose={onClose}
+      onNewChat={
+        bot && onNewChat
+          ? () => {
+              onClose();
+              onNewChat(bot.id);
+            }
+          : undefined
+      }
       sections={sections}
       onTogglePinned={() => {
         onClose();

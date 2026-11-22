@@ -65,6 +65,7 @@ export function useComposerActions({
   rpc,
   pageSession,
   activeId,
+  activeThreadIdRef,
   inGroup,
   groupId,
   activeBotId,
@@ -74,6 +75,7 @@ export function useComposerActions({
   activeSnapshot,
   navigate,
   refreshBots,
+  onBotChatsChanged,
   refreshThreadRef,
   refreshGroupThreadRef,
   updateSnapshot,
@@ -87,6 +89,7 @@ export function useComposerActions({
   /** The chat's open page, whose card a message sent from it replies to. */
   pageSession: PageSession;
   activeId: string | undefined;
+  activeThreadIdRef?: RefObject<string | undefined>;
   inGroup: boolean;
   groupId: string | undefined;
   activeBotId: RefObject<string | undefined>;
@@ -96,6 +99,7 @@ export function useComposerActions({
   activeSnapshot: ThreadSnapshot | null;
   navigate: ReturnType<typeof useShellNavigation>["navigate"];
   refreshBots: () => Promise<void>;
+  onBotChatsChanged?: (botId: string) => void;
   refreshThreadRef: ThreadRefresh;
   refreshGroupThreadRef: ThreadRefresh;
   updateSnapshot: (update: (prev: ThreadSnapshot | null) => ThreadSnapshot | null) => void;
@@ -231,11 +235,12 @@ export function useComposerActions({
       remember?: false,
     ) => {
       const botId = activeBotId.current;
+      const threadId = activeThreadIdRef?.current;
       const groupId = activeGroupId.current;
       if (!botId && !groupId) return;
       clearReadBoundary();
       await rpc.threads.answer({
-        ...(groupId ? { groupId } : { botId: botId! }),
+        ...(groupId ? { groupId } : { botId: botId!, ...(threadId ? { threadId } : {}) }),
         runId: message.runId ?? "",
         messageId: message.id,
         answer: text,
@@ -257,11 +262,12 @@ export function useComposerActions({
   const reactToMessage = useCallback(
     async (message: ThreadMessage, reaction: MessageReaction) => {
       const botId = activeBotId.current;
+      const threadId = activeThreadIdRef?.current;
       const groupId = activeGroupId.current;
       if (!botId && !groupId) return;
       try {
         const result = await rpc.threads.react({
-          ...(groupId ? { groupId } : { botId: botId! }),
+          ...(groupId ? { groupId } : { botId: botId!, ...(threadId ? { threadId } : {}) }),
           messageId: message.id,
           reaction,
           clientNonce: newClientId(),
@@ -468,11 +474,14 @@ export function useComposerActions({
       };
       // Keep the draft cleared once the submission is confirmed accepted.
       let accepted = false;
+      const threadTarget = !groupTarget ? activeThreadIdRef?.current : undefined;
       try {
         if (!plan.shouldSend) {
           if (plan.shouldRunRoutines) {
             await rpc.threads.sendWithRoutines({
-              ...(groupTarget ? { groupId: groupTarget } : { botId: botTarget! }),
+              ...(groupTarget
+                ? { groupId: groupTarget }
+                : { botId: botTarget!, ...(threadTarget ? { threadId: threadTarget } : {}) }),
               clientNonce,
               routineIds: plan.routineIds,
             });
@@ -528,7 +537,9 @@ export function useComposerActions({
           }
         }
         const payload = {
-          ...(groupTarget ? { groupId: groupTarget } : { botId: botTarget! }),
+          ...(groupTarget
+            ? { groupId: groupTarget }
+            : { botId: botTarget!, ...(threadTarget ? { threadId: threadTarget } : {}) }),
           clientNonce,
           imageHandling: imageHandling ?? "confirm",
           text: trimmed || undefined,
@@ -546,6 +557,7 @@ export function useComposerActions({
           ? (await rpc.threads.sendWithRoutines({ ...payload, routineIds: plan.routineIds })).send
           : await rpc.threads.send(payload);
         accepted = true;
+        if (botTarget) onBotChatsChanged?.(botTarget);
         if (sent && botTarget && activeBotId.current === botTarget) {
           updateSnapshot((current) =>
             applyThreadSendReceipt(
@@ -648,9 +660,13 @@ export function useComposerActions({
         return;
       }
       if (!botTarget) return;
+      const threadTarget = activeThreadIdRef?.current;
       setSendError(null);
       try {
-        await rpc.threads.stop({ botId: botTarget });
+        await rpc.threads.stop({
+          botId: botTarget,
+          ...(threadTarget ? { threadId: threadTarget } : {}),
+        });
       } catch (error) {
         if (activeBotId.current === botTarget) {
           setSendError(errorText(error, t`Failed to stop`));

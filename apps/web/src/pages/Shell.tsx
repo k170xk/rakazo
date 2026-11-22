@@ -25,7 +25,7 @@ import {
 } from "@rakazo/core";
 import { fetchFresh, writeSaved } from "@rakazo/core/query";
 import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { Button, toast } from "@rakazo/ui-web";
+import { BotAvatar, Button, toast } from "@rakazo/ui-web";
 import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -151,7 +151,12 @@ import { useOpenSpaceChat } from "./shell/use-space-switch";
 import { useThreadState } from "./shell/use-thread-state";
 import { useThreadSync } from "./shell/use-thread-sync";
 import type { SettingsSection } from "./shell-overlay";
-import { isCompanySettingsSection, searchString, withShellOverlay } from "./shell-overlay";
+import {
+  isCompanySettingsSection,
+  searchString,
+  withDocumentOverlay,
+  withShellOverlay,
+} from "./shell-overlay";
 
 const NO_AGENT_SKILLS: AgentSkillCatalogEntry[] = [];
 const NO_PROVIDERS: string[] = [];
@@ -164,7 +169,7 @@ export function ShellPage() {
 
 function SpaceShell() {
   const { t } = useLingui();
-  const { botId, groupId } = useParams();
+  const { botId, groupId, threadId: routeThreadId } = useParams();
   const [shellSpaceId] = useState(selectedSpaceId);
   const [rpc] = useState(() => createSpaceRpc(shellSpaceId));
   const session = authClient.useSession();
@@ -374,10 +379,35 @@ function SpaceShell() {
     [navigateKeepingDocument, setMobileSidebarOpen],
   );
   const activeGroup = groups.find((group) => group.id === groupId);
+  const activeThreadId = !inGroup && active && botId === active.id ? routeThreadId : undefined;
   const activeBotId = useRef<string | undefined>(inGroup ? undefined : active?.id);
   activeBotId.current = inGroup ? undefined : active?.id;
+  const activeThreadIdRef = useRef<string | undefined>(activeThreadId);
+  activeThreadIdRef.current = activeThreadId;
   const activeGroupId = useRef<string | undefined>(groupId);
   activeGroupId.current = groupId;
+  const [expandedBotIds, setExpandedBotIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [creatingChatBotId, setCreatingChatBotId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!active || !activeThreadId) return;
+    setExpandedBotIds((prev) => (prev.has(active.id) ? prev : new Set(prev).add(active.id)));
+  }, [active?.id, activeThreadId]);
+  const toggleBotChats = useCallback((id: string) => {
+    setExpandedBotIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const invalidateBotChats = useCallback(
+    (id: string) => {
+      void queryClient.invalidateQueries({
+        queryKey: queries.threads.listChats.queryKey({ input: { botId: id } }),
+      });
+    },
+    [queries],
+  );
   const computerState = useComputerState({ rpc, panel, activeId: active?.id, activeBotId });
   const { computer, computerOpen, setComputerOpen, booting, commitComputer } = computerState;
   const [cleaningUpDisk, setCleaningUpDisk] = useState(false);
@@ -405,7 +435,7 @@ function SpaceShell() {
   const findInputRef = useRef<HTMLInputElement>(null);
   const chatColumnRef = useRef<HTMLDivElement>(null);
   // Matches belong to the chat they were found in.
-  useEffect(() => setFindOpen(false), [botId, groupId]);
+  useEffect(() => setFindOpen(false), [botId, groupId, routeThreadId]);
   useShellShortcuts({
     run: (shortcut) => {
       switch (shortcut.type) {
@@ -547,7 +577,33 @@ function SpaceShell() {
     callBotId: call?.botId,
     activeBotId,
   });
-  const read = useChatRead({ rpc, active, groupId, activeGroup, setBots, setGroups });
+  const handleBotReadChanged = useCallback(
+    (id: string) => {
+      invalidateBotChats(id);
+      if (botsRef.current.some((bot) => bot.id === id && bot.unread)) {
+        void refreshBots().catch(() => undefined);
+      }
+    },
+    [botsRef, invalidateBotChats, refreshBots],
+  );
+  const read = useChatRead({
+    rpc,
+    active,
+    activeThreadId,
+    groupId,
+    activeGroup,
+    setBots,
+    setGroups,
+    onBotChatsChanged: handleBotReadChanged,
+  });
+  const handleInvalidThread = useCallback(
+    (targetBotId: string) => {
+      navigate(withDocumentOverlay(`/app/${targetBotId}`, window.location.search), {
+        replace: true,
+      });
+    },
+    [navigate],
+  );
   const {
     refreshThread,
     refreshGroupThread,
@@ -564,18 +620,70 @@ function SpaceShell() {
     computerState,
     seed,
     active,
+    activeThreadId,
     inGroup,
     groupId,
     activeGroup,
     activeBotId,
+    activeThreadIdRef,
     activeGroupId,
     botsRef,
     searchParamsRef,
     refreshBots,
+    onInvalidThread: handleInvalidThread,
     notifyBrowserForEvent,
     markBotReadIfVisible: read.markBotReadIfVisible,
     markGroupReadOnReply: read.markGroupReadOnReply,
   });
+  const createBotChat = useCallback(
+    async (targetBotId: string) => {
+      if (creatingChatBotId) return;
+      setCreatingChatBotId(targetBotId);
+      try {
+        const { chat } = await rpc.threads.createChat({ botId: targetBotId });
+        setExpandedBotIds((prev) =>
+          prev.has(targetBotId) ? prev : new Set(prev).add(targetBotId),
+        );
+        invalidateBotChats(targetBotId);
+        void refreshBots().catch(() => undefined);
+        setMobileSidebarOpen(false);
+        navigateKeepingDocument(`/app/${targetBotId}/c/${chat.id}`);
+        requestAnimationFrame(() => focusComposer());
+      } catch (error) {
+        toast.error(errorText(error, t`Could not create new chat`));
+      } finally {
+        setCreatingChatBotId((current) => (current === targetBotId ? null : current));
+      }
+    },
+    [
+      creatingChatBotId,
+      invalidateBotChats,
+      navigateKeepingDocument,
+      refreshBots,
+      rpc,
+      setMobileSidebarOpen,
+      t,
+    ],
+  );
+  const handleBotChatDeleted = useCallback(
+    (targetBotId: string, deletedThreadId: string) => {
+      invalidateBotChats(targetBotId);
+      void refreshBots().catch(() => undefined);
+      if (activeBotId.current === targetBotId && activeThreadIdRef.current === deletedThreadId) {
+        navigateKeepingDocument(`/app/${targetBotId}`);
+      }
+    },
+    [invalidateBotChats, navigateKeepingDocument, refreshBots],
+  );
+  const handleBotChatsMutated = useCallback(
+    (targetBotId: string) => {
+      invalidateBotChats(targetBotId);
+      if (activeBotId.current === targetBotId) {
+        void refreshThreadRef.current(targetBotId).catch(() => undefined);
+      }
+    },
+    [invalidateBotChats, refreshThreadRef],
+  );
   const {
     editorProps: routineEditorProps,
     deleteDialogProps: deleteRoutineDialogProps,
@@ -669,7 +777,11 @@ function SpaceShell() {
     ? snapshot?.groupId === groupId
       ? snapshot
       : null
-    : snapshot?.botId === active?.id
+    : snapshot &&
+        snapshot.botId === active?.id &&
+        (activeThreadId
+          ? snapshot.threadId === activeThreadId
+          : snapshot.isPrimaryThread !== false)
       ? snapshot
       : null;
   const currentRuns = activeThreadRuns(activeSnapshot);
@@ -718,8 +830,11 @@ function SpaceShell() {
     }
   }, [activeSnapshot?.messages, routineMeters.data]);
   const transcriptArtifactTarget = useMemo<ArtifactTarget>(
-    () => (inGroup ? { groupId: groupId ?? "" } : { botId: active?.id ?? "" }),
-    [active?.id, groupId, inGroup],
+    () =>
+      inGroup
+        ? { groupId: groupId ?? "" }
+        : { botId: active?.id ?? "", ...(activeThreadId ? { threadId: activeThreadId } : {}) },
+    [active?.id, activeThreadId, groupId, inGroup],
   );
   const transcriptMembers = activeSnapshot?.members ?? activeGroup?.members;
   const resolveTranscriptBot = useCallback(
@@ -800,9 +915,11 @@ function SpaceShell() {
     commitComputer,
     transcript,
     active,
+    activeThreadId,
     inGroup,
     groupId,
     activeBotId,
+    activeThreadIdRef,
     activeGroupId,
     searchParams,
     setSearchParams,
@@ -845,6 +962,7 @@ function SpaceShell() {
     rpc,
     pageSession: pages.session,
     activeId: active?.id,
+    activeThreadIdRef,
     inGroup,
     groupId,
     activeBotId,
@@ -854,6 +972,7 @@ function SpaceShell() {
     activeSnapshot,
     navigate,
     refreshBots,
+    onBotChatsChanged: invalidateBotChats,
     refreshThreadRef,
     refreshGroupThreadRef,
     updateSnapshot: thread.updateSnapshot,
@@ -935,7 +1054,8 @@ function SpaceShell() {
   const markMessageUnread = useCallback(
     (message: ThreadMessage) => {
       if (groupId) read.markGroupUnreadFrom(groupId, message.id);
-      else if (active?.id) void read.markBotUnread(active.id, message.id).catch(() => undefined);
+      else if (active?.id)
+        void read.markBotUnread(active.id, message.id, activeThreadIdRef.current).catch(() => undefined);
     },
     [active?.id, groupId, read.markBotUnread, read.markGroupUnreadFrom],
   );
@@ -1161,9 +1281,12 @@ function SpaceShell() {
         rpc={rpc}
         bot={contextBot}
         group={contextGroup}
+        activeBotId={active?.id}
+        activeThreadId={activeThreadId}
         sections={botSections}
         spaceId={bootstrapMe?.spaceId}
         onClose={closeBotMenu}
+        onNewChat={(id) => void createBotChat(id)}
         refreshBots={refreshBots}
         read={read}
         dialogs={dialogs}
@@ -1213,6 +1336,8 @@ function SpaceShell() {
         setCreateWorkSpaceOpen={dialogs.setCreateWorkSpaceOpen}
         roster={
           <SidebarRoster
+            rpc={rpc}
+            queries={queries}
             mini={miniSidebar}
             sidebarGroups={sidebarGroups}
             collapsedSidebarSections={collapsedSidebarSections}
@@ -1231,7 +1356,14 @@ function SpaceShell() {
             toggleSidebarSection={toggleSidebarSection}
             inGroup={inGroup}
             active={active}
+            activeThreadId={activeThreadId}
             activeGroup={activeGroup}
+            expandedBotIds={expandedBotIds}
+            toggleBotChats={toggleBotChats}
+            creatingChatBotId={creatingChatBotId}
+            onCreateBotChat={(id) => void createBotChat(id)}
+            onBotChatDeleted={handleBotChatDeleted}
+            onBotChatsMutated={handleBotChatsMutated}
             botsSidebarDensity={botsSidebarDensity}
             dismissedRunErrorIds={composer.dismissedRunErrorIds}
             displayedRunError={composer.displayedRunError}
@@ -1311,6 +1443,7 @@ function SpaceShell() {
           <ChatHeader
             inGroup={inGroup}
             active={active}
+            activeThreadId={activeThreadId}
             activeGroup={activeGroup}
             activeSnapshot={activeSnapshot}
             phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
@@ -1318,9 +1451,11 @@ function SpaceShell() {
             inCall={Boolean(active) && call?.botId === active?.id}
             panelOpen={chatPanelOpen}
             computerPanelOpen={panel === "computer"}
+            creatingChat={Boolean(active && creatingChatBotId === active.id)}
             onOpenNavigation={() => setMobileSidebarOpen(true)}
             onTogglePanel={toggleChatPanel}
             onToggleComputerPanel={toggleComputerPanel}
+            onNewChat={(bot) => void createBotChat(bot.id)}
             onCall={(bot) => {
               if (call?.botId === bot.id) {
                 setCallMinimized(false);
@@ -1381,6 +1516,31 @@ function SpaceShell() {
                 onSpeak={speakMessage}
                 onOpenComputer={computerControls.onOpenComputer}
                 onOpenImportSetup={openImportSetup}
+                emptyState={
+                  !inGroup && active && activeThreadId && activeSnapshot ? (
+                    <div
+                      data-testid="empty-extra-chat"
+                      className="mx-auto flex max-w-sm flex-col items-center text-center"
+                    >
+                      <BotAvatar
+                        avatarSet={active.avatarSet}
+                        color={active.color}
+                        identity={active.id}
+                        size={48}
+                        status={active.status}
+                      />
+                      <h2 className="mt-3 text-[15px] font-medium text-foreground">
+                        {activeSnapshot.threadTitle?.trim() || t`New chat with ${active.name}`}
+                      </h2>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+                        <Trans>
+                          This conversation starts with a fresh chat history while keeping{" "}
+                          {active.name}&apos;s instructions, tools, knowledge, and routines.
+                        </Trans>
+                      </p>
+                    </div>
+                  ) : undefined
+                }
                 rpc={rpc}
               />
             </DockedTranscript>
@@ -1395,8 +1555,20 @@ function SpaceShell() {
               </div>
             ) : null}
             <Composer
-              key={inGroup ? `group:${groupId}` : `agent:${active?.id}`}
-              draftKey={inGroup ? `group:${groupId}` : `agent:${active?.id}`}
+              key={
+                inGroup
+                  ? `group:${groupId}`
+                  : activeThreadId
+                    ? `agent:${active?.id}:chat:${activeThreadId}`
+                    : `agent:${active?.id}`
+              }
+              draftKey={
+                inGroup
+                  ? `group:${groupId}`
+                  : activeThreadId
+                    ? `agent:${active?.id}:chat:${activeThreadId}`
+                    : `agent:${active?.id}`
+              }
               enterToSend={enterToSend}
               extraActions={
                 <>
@@ -1404,6 +1576,7 @@ function SpaceShell() {
                     <EvolveReferencesAction
                       rpc={rpc}
                       botId={active.id}
+                      threadId={activeThreadId}
                       messages={activeSnapshot?.messages ?? []}
                       disabled={Boolean(recordingSkill) || sending}
                       onSent={() => refreshThreadRef.current(active.id)}

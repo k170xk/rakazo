@@ -3020,6 +3020,7 @@ msgstr "Can't read images"
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/drawings-dialog.tsx
@@ -3034,6 +3035,10 @@ msgstr "Cancel new agent"
 #: src/pages/GroupPanel.tsx
 msgid "Cancel new group"
 msgstr "Cancel new group"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Cancel rename"
+msgstr "Cancel rename"
 
 #: src/pages/shell/chat-context.tsx
 msgid "Cancel reply"
@@ -3253,6 +3258,10 @@ msgstr "Chat replies"
 #: src/pages/shell/composer-mentions.tsx
 msgid "Chat Settings"
 msgstr "Chat Settings"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Chat title"
+msgstr "Chat title"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Chat with your agent from Slack."
@@ -4547,6 +4556,10 @@ msgstr "Could not create agent"
 msgid "Could not create group"
 msgstr "Could not create group"
 
+#: src/pages/Shell.tsx
+msgid "Could not create new chat"
+msgstr "Could not create new chat"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not create section"
 msgstr "Could not create section"
@@ -4579,6 +4592,10 @@ msgstr "Could not delete agent"
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete app"
 msgstr "Could not delete app"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Could not delete chat"
+msgstr "Could not delete chat"
 
 #: src/pages/AdminDefaultAgents.tsx
 msgid "Could not delete default agent"
@@ -4936,6 +4953,10 @@ msgstr "Could not remove the company model"
 #: src/components/VaultSettings.tsx
 msgid "Could not remove the credential"
 msgstr "Could not remove the credential"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Could not rename chat"
+msgstr "Could not rename chat"
 
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -5600,6 +5621,11 @@ msgstr "Created once, when you first file into a new project."
 msgid "Creates a finished OCSC document from a short brief, on the company template"
 msgstr "Creates a finished OCSC document from a short brief, on the company template"
 
+#: src/pages/shell/bot-chats-accordion.tsx
+#: src/pages/shell/chat-header.tsx
+msgid "Creating chat"
+msgstr "Creating chat"
+
 #: src/components/EmailDraftCard.tsx
 msgid "Creating draft…"
 msgstr "Creating draft…"
@@ -5958,6 +5984,10 @@ msgstr "Delete {0}"
 msgid "Delete {0}?"
 msgstr "Delete {0}?"
 
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Delete {displayTitle}"
+msgstr "Delete {displayTitle}"
+
 #: src/components/SidebarFooter.tsx
 msgid "Delete {name}"
 msgstr "Delete {name}"
@@ -5970,6 +6000,14 @@ msgstr "Delete {rowCount} rows"
 #: src/components/AccountMenu.tsx
 msgid "Delete account"
 msgstr "Delete account"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Delete chat"
+msgstr "Delete chat"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Delete chat?"
+msgstr "Delete chat?"
 
 #: src/components/AskCard.tsx
 msgid "Delete comment"
@@ -6071,9 +6109,14 @@ msgstr "Deletes"
 msgid "Deletes records"
 msgstr "Deletes records"
 
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Deleting"
+msgstr "Deleting"
+
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
 msgstr "Deleting…"
@@ -8108,6 +8151,11 @@ msgstr "Hidden in the slide show"
 msgid "Hide"
 msgstr "Hide"
 
+#. placeholder {0}: item.chat.name
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Hide chats for {0}"
+msgstr "Hide chats for {0}"
+
 #: src/components/office/slides/SlideRail.tsx
 msgid "Hide in slideshow"
 msgstr "Hide in slideshow"
@@ -9174,6 +9222,14 @@ msgstr "Loading activity…"
 msgid "Loading assistants…"
 msgstr "Loading assistants…"
 
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Loading chats"
+msgstr "Loading chats"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Loading chats…"
+msgstr "Loading chats…"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Loading connectors…"
 msgstr "Loading connectors…"
@@ -9362,6 +9418,14 @@ msgstr "Lowest confidence for Ready"
 #: src/components/apps/AppHistoryPanel.tsx
 msgid "Made from a spreadsheet"
 msgstr "Made from a spreadsheet"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Main"
+msgstr "Main"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Main chat"
+msgstr "Main chat"
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
@@ -10216,6 +10280,17 @@ msgstr "New card"
 #: src/components/office/planner/NewCategoryControl.tsx
 msgid "New category name"
 msgstr "New category name"
+
+#: src/pages/BotContextMenu.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
+#: src/pages/shell/chat-header.tsx
+msgid "New chat"
+msgstr "New chat"
+
+#. placeholder {0}: active.name
+#: src/pages/Shell.tsx
+msgid "New chat with {0}"
+msgstr "New chat with {0}"
 
 #: src/components/office/word/WordRibbon.tsx
 msgid "New comment"
@@ -13000,6 +13075,10 @@ msgstr "Removing…"
 msgid "Rename"
 msgstr "Rename"
 
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Rename {displayTitle}"
+msgstr "Rename {displayTitle}"
+
 #: src/components/SidebarFooter.tsx
 msgid "Rename {name}"
 msgstr "Rename {name}"
@@ -13630,6 +13709,10 @@ msgstr "Save brief"
 #: src/pages/AdminDefaultAgents.tsx
 msgid "Save changes"
 msgstr "Save changes"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Save chat name"
+msgstr "Save chat name"
 
 #: src/pages/AdminStaffLimits.tsx
 msgid "Save company limits"
@@ -14470,6 +14553,11 @@ msgstr "Show all"
 #: src/components/office/planner/PlannerToolbar.tsx
 msgid "Show baselines"
 msgstr "Show baselines"
+
+#. placeholder {0}: item.chat.name
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Show chats for {0}"
+msgstr "Show chats for {0}"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Show everything (admins)"
@@ -16125,6 +16213,11 @@ msgstr "This connection's request limit is too small. Choose another model."
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 
+#. placeholder {0}: active.name
+#: src/pages/Shell.tsx
+msgid "This conversation starts with a fresh chat history while keeping {0}'s instructions, tools, knowledge, and routines."
+msgstr "This conversation starts with a fresh chat history while keeping {0}'s instructions, tools, knowledge, and routines."
+
 #: src/components/AppScopeAskCard.tsx
 msgid "This decides who the data belongs to. Nothing is built until you choose."
 msgstr "This decides who the data belongs to. Nothing is built until you choose."
@@ -16320,6 +16413,11 @@ msgstr "This version can't be picked from. Ask the agent instead."
 #: src/pages/Artifacts.tsx
 msgid "This week"
 msgstr "This week"
+
+#. placeholder {0}: deleteTarget.title || t`New chat`
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "This will permanently remove “{0}” and its messages. {botName} and its other conversations will not be affected."
+msgstr "This will permanently remove “{0}” and its messages. {botName} and its other conversations will not be affected."
 
 #: src/lib/cron.ts
 msgid "Thursday"
@@ -16788,6 +16886,7 @@ msgid "Unreachable"
 msgstr "Unreachable"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
 msgid "Unread"
 msgstr "Unread"
 
@@ -17759,6 +17858,7 @@ msgid "Work that runs itself"
 msgstr "Work that runs itself"
 
 #: src/pages/ActivityList.tsx
+#: src/pages/shell/bot-chats-accordion.tsx
 msgid "Working"
 msgstr "Working"
 

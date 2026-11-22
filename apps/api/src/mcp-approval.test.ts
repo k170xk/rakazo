@@ -102,9 +102,13 @@ describe("resolveMcpApprovalCards", () => {
         id: "group-thread",
         spaceId: "space",
         userId: "user",
-        OR: [{ botId: "bot" }, { group: { members: { some: { botId: "bot" } } } }],
+        OR: [
+          { botId: "bot" },
+          { chatBotId: "bot" },
+          { group: { members: { some: { botId: "bot" } } } },
+        ],
       },
-      select: { id: true, botId: true },
+      select: { id: true, botId: true, chatBotId: true },
     });
     expect(tx.message.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { threadId: "group-thread" } }),
@@ -136,7 +140,7 @@ describe("resolveMcpApprovalCards", () => {
         userId: "user",
         groupId: { not: null },
       },
-      select: { id: true, botId: true },
+      select: { id: true, botId: true, chatBotId: true },
     });
     expect(deps.prisma.bot.findFirst).toHaveBeenCalled();
     expect(tx.message.update).toHaveBeenCalledWith({
@@ -224,9 +228,13 @@ describe("resolveMcpApprovalCards", () => {
       where: {
         spaceId: "space",
         userId: "user",
-        OR: [{ botId: "bot" }, { groupId: { not: null }, messages: { some: { botId: "bot" } } }],
+        OR: [
+          { botId: "bot" },
+          { chatBotId: "bot" },
+          { groupId: { not: null }, messages: { some: { botId: "bot" } } },
+        ],
       },
-      select: { id: true, botId: true },
+      select: { id: true, botId: true, chatBotId: true },
     });
     expect(tx.message.update).toHaveBeenCalledWith({
       where: { id: "card-message" },
@@ -283,7 +291,7 @@ describe("resolveMcpApprovalCards", () => {
         botId: true,
         blocks: true,
         threadId: true,
-        thread: { select: { botId: true } },
+        thread: { select: { botId: true, chatBotId: true } },
       },
     });
     expect(tx.message.update).toHaveBeenCalledTimes(1);

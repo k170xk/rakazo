@@ -23,7 +23,7 @@ import {
 import type { GroupAvatarMember } from "@rakazo/ui-web";
 import { BotAvatar, Button, cn, Spinner } from "@rakazo/ui-web";
 import { ArrowDown } from "lucide-react";
-import type { CSSProperties, RefObject } from "react";
+import type { CSSProperties, ReactNode, RefObject } from "react";
 import {
   Fragment,
   memo,
@@ -112,6 +112,7 @@ export const Transcript = memo(function Transcript({
   onSpeak,
   onOpenComputer,
   onOpenImportSetup,
+  emptyState,
   rpc,
 }: {
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -166,6 +167,7 @@ export const Transcript = memo(function Transcript({
   onSpeak: (message: ThreadMessage) => void;
   onOpenComputer: (botId?: string) => void;
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  emptyState?: ReactNode;
   rpc: ReturnType<typeof createSpaceRpc>;
 }) {
   const { t } = useLingui();
@@ -550,6 +552,9 @@ export const Transcript = memo(function Transcript({
             {loadingOlder ? <Spinner aria-label={t`Loading…`} /> : null}
             {t`Load earlier messages`}
           </Button>
+        ) : null}
+        {emptyState && shownMessages.length === 0 && !running && olderCursor == null ? (
+          <div className="my-auto flex flex-col items-center justify-center py-8">{emptyState}</div>
         ) : null}
         {groupVoiceChats(reactionView.visibleMessages).map((item) => {
           if (item.kind === "voiceChat") {

@@ -1,8 +1,8 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
 import { isMainPaBot } from "@rakazo/core";
-import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
-import { Gift, Menu, Monitor, Phone, Star } from "lucide-react";
+import { BotAvatar, Button, GroupAvatar, Spinner } from "@rakazo/ui-web";
+import { Gift, Menu, MessageSquare, Monitor, Phone, SquarePen, Star } from "lucide-react";
 import { useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
@@ -12,6 +12,7 @@ import { useBilling } from "../../components/SubscriptionGate";
 export function ChatHeader({
   inGroup,
   active,
+  activeThreadId,
   activeGroup,
   activeSnapshot,
   phoneCallsEnabled,
@@ -19,13 +20,16 @@ export function ChatHeader({
   inCall,
   panelOpen,
   computerPanelOpen,
+  creatingChat = false,
   onOpenNavigation,
   onTogglePanel,
   onToggleComputerPanel,
+  onNewChat,
   onCall,
 }: {
   inGroup: boolean;
   active: Bot | undefined;
+  activeThreadId?: string;
   activeGroup: Group | undefined;
   activeSnapshot: ThreadSnapshot | null;
   phoneCallsEnabled: boolean;
@@ -35,10 +39,12 @@ export function ChatHeader({
   panelOpen: boolean;
   /** True while the Computer tab of the side panel is showing. */
   computerPanelOpen: boolean;
+  creatingChat?: boolean;
   onOpenNavigation: () => void;
   onTogglePanel: () => void;
   /** Opens the Computer tab, or closes the side panel when that tab is already showing. */
   onToggleComputerPanel: () => void;
+  onNewChat?: (bot: Bot) => void;
   onCall: (bot: Bot) => void;
 }) {
   const { t } = useLingui();
@@ -93,7 +99,16 @@ export function ChatHeader({
               </span>
             ) : null}
           </span>
-          {!inGroup && active?.description?.trim() ? (
+          {!inGroup && activeThreadId ? (
+            <span
+              className="flex items-center gap-1 truncate text-[11px] font-normal text-muted-foreground"
+              dir="auto"
+              data-testid="bot-header-chat-title"
+            >
+              <MessageSquare size={10} className="shrink-0" aria-hidden="true" />
+              <span className="truncate">{activeSnapshot?.threadTitle?.trim() || t`New chat`}</span>
+            </span>
+          ) : !inGroup && active?.description?.trim() ? (
             <span
               className="block truncate text-[11px] font-normal text-muted-foreground"
               dir="auto"
@@ -105,6 +120,25 @@ export function ChatHeader({
         </span>
       </Button>
       <div className="flex items-center justify-self-end gap-2">
+        {!inGroup && active && onNewChat ? (
+          <IconTooltip label={t`New chat`}>
+            <Button
+              variant="floating"
+              size="icon-lg"
+              disabled={creatingChat}
+              data-testid="new-chat-button"
+              aria-label={t`New chat`}
+              onClick={() => onNewChat(active)}
+              className="app-no-drag"
+            >
+              {creatingChat ? (
+                <Spinner className="size-[16px]" aria-label={t`Creating chat`} />
+              ) : (
+                <SquarePen strokeWidth={1.6} className="size-[17px]" />
+              )}
+            </Button>
+          </IconTooltip>
+        ) : null}
         {!inGroup && active ? (
           <IconTooltip label={t`Computer`}>
             <Button

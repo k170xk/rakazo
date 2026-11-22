@@ -10,7 +10,7 @@ import type { Panel } from "../../lib/right-panel-state";
 import type { createSpaceRpc } from "../../lib/rpc";
 import type { ThreadState } from "./use-thread-state";
 
-type JumpTarget = { botId?: string; groupId?: string; messageId: string };
+type JumpTarget = { botId?: string; threadId?: string; groupId?: string; messageId: string };
 
 /**
  * Opening a chat at a message: search hits and deep links (`?m=`, `?routine=`), reply quotes,
@@ -23,9 +23,11 @@ export function useMessageJump({
   commitComputer,
   transcript,
   active,
+  activeThreadId,
   inGroup,
   groupId,
   activeBotId,
+  activeThreadIdRef,
   activeGroupId,
   searchParams,
   setSearchParams,
@@ -40,9 +42,11 @@ export function useMessageJump({
   commitComputer: (next: ComputerStatus | null) => void;
   transcript: ReturnType<typeof foldPeerReplies>;
   active: Bot | undefined;
+  activeThreadId?: string;
   inGroup: boolean;
   groupId: string | undefined;
   activeBotId: RefObject<string | undefined>;
+  activeThreadIdRef: RefObject<string | undefined>;
   activeGroupId: RefObject<string | undefined>;
   searchParams: URLSearchParams;
   setSearchParams: SetURLSearchParams;
@@ -72,7 +76,11 @@ export function useMessageJump({
   const initiallyScrolledThread = useRef<string | null>(null);
 
   async function jumpToMessage(target: JumpTarget) {
-    const threadTarget = searchHitThreadTarget(target);
+    const baseTarget = searchHitThreadTarget(target);
+    const threadTarget =
+      "botId" in baseTarget && target.threadId
+        ? { ...baseTarget, threadId: target.threadId }
+        : baseTarget;
     const epoch = historyEpoch.current;
     jumpGeneration.current += 1;
     const jumpId = jumpGeneration.current;
@@ -86,6 +94,7 @@ export function useMessageJump({
     if (epoch !== historyEpoch.current || jumpId !== jumpGeneration.current) return;
     if (target.groupId && activeGroupId.current !== target.groupId) return;
     if (target.botId && activeBotId.current !== target.botId) return;
+    if (target.botId && activeThreadIdRef.current !== target.threadId) return;
     // A reply folded under its peer marker counts: the transcript expands the marker to show it.
     const pageTranscript = foldPeerReplies(page.messages, { includePeerReceipts: true });
     // A relay's dropped marker (e.g. a search hit) lands on its "Messaged X" receipt.
@@ -178,13 +187,26 @@ export function useMessageJump({
       setSearchParams(next, { replace: true });
     }
     if (messageId) {
-      void jumpToMessage({ botId: active.id, messageId }).finally(() => {
+      void jumpToMessage({
+        botId: active.id,
+        ...(activeThreadId ? { threadId: activeThreadId } : {}),
+        messageId,
+      }).finally(() => {
         const next = new URLSearchParams(searchParams);
         next.delete("m");
         setSearchParams(next, { replace: true });
       });
     }
-  }, [active?.id, groupId, inGroup, routines, routinesBotId, searchParams, setSearchParams]);
+  }, [
+    active?.id,
+    activeThreadId,
+    groupId,
+    inGroup,
+    routines,
+    routinesBotId,
+    searchParams,
+    setSearchParams,
+  ]);
 
   const transcriptRef = useRef(transcript);
   useLayoutEffect(() => {
@@ -229,7 +251,12 @@ export function useMessageJump({
       return;
     }
     const botId = activeBotId.current;
-    if (botId) void jumpToMessageRef.current({ botId, messageId }).catch(() => undefined);
+    const threadId = activeThreadIdRef.current;
+    if (botId) {
+      void jumpToMessageRef
+        .current({ botId, ...(threadId ? { threadId } : {}), messageId })
+        .catch(() => undefined);
+    }
   }, []);
 
   return { scrollRequest, clearScrollRequest, jumpToReplyMessage };

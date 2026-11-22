@@ -98,6 +98,7 @@ function mapBot(
     createdAt: Date;
     updatedAt: Date;
     thread: { id: string; unread: boolean } | null;
+    chats?: Array<{ id: string; unread: boolean }>;
     computer: { scope: string } | null;
     voiceId?: string | null;
     autoSpeak?: boolean;
@@ -141,10 +142,11 @@ function mapBot(
     pinned: bot.pinned,
     sectionId: bot.sectionId,
     archivedAt: bot.archivedAt?.toISOString() ?? null,
-    unread: bot.thread.unread,
+    unread: bot.thread.unread || Boolean(bot.chats?.some((chat) => chat.unread)),
     parentBotId: bot.parentBotId,
     memoryScope: bot.memoryScope as "isolated" | "shared" | null,
     threadId: bot.thread.id,
+    extraChatCount: bot.chats ? bot.chats.length : 0,
     preview,
     status,
     runErrorId,
@@ -220,6 +222,12 @@ export function createRepos(
             unread: true,
           },
         },
+        chats: {
+          select: {
+            id: true,
+            unread: true,
+          },
+        },
         runs: activeRunSelection,
       },
       orderBy: [{ pinned: "desc" }, { position: "asc" }, { createdAt: "asc" }],
@@ -239,7 +247,8 @@ export function createRepos(
         notifyOnFinish: bot.notifyOnFinish,
         pinned: bot.pinned,
         sectionId: bot.sectionId,
-        unread: bot.thread.unread,
+        unread: bot.thread.unread || bot.chats.some((chat) => chat.unread),
+        extraChatCount: bot.chats.length,
         parentBotId: bot.parentBotId,
         modelId: bot.modelId,
         preview: previewFromBlocks(bot.thread.messages[0]?.blocks),
@@ -396,6 +405,7 @@ export function createRepos(
             },
             include: {
               thread: true,
+              chats: { select: { id: true, unread: true } },
               runs: activeRunSelection,
               computer: { select: { scope: true } },
             },

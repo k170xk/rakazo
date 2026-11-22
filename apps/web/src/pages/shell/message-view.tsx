@@ -60,8 +60,12 @@ import {
 import { MessageHoverActions } from "./message-hover-actions";
 
 /** The chat a card belongs to, as the thread routes name it. */
-function chatTarget(target: ArtifactTarget): { botId: string } | { groupId: string } {
-  return "botId" in target ? { botId: target.botId } : { groupId: target.groupId };
+function chatTarget(
+  target: ArtifactTarget,
+): { botId: string; threadId?: string } | { groupId: string } {
+  return "botId" in target
+    ? { botId: target.botId, ...(target.threadId ? { threadId: target.threadId } : {}) }
+    : { groupId: target.groupId };
 }
 
 export const MessageView = memo(function MessageView({

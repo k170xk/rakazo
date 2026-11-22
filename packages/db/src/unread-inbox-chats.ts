@@ -20,7 +20,7 @@ export function countUnreadInboxChats(
       WHERE t.unread AND t."userId" = ${userId}
         AND t."externalConversationId" IS NULL
         AND (
-          EXISTS (SELECT 1 FROM bots b WHERE b.id = t."botId"
+          EXISTS (SELECT 1 FROM bots b WHERE (b.id = t."botId" OR b.id = t."chatBotId")
             AND b."spaceId" = t."spaceId" AND b."userId" = ${userId} AND b."archivedAt" IS NULL)
           OR EXISTS (SELECT 1 FROM chat_groups g WHERE g.id = t."groupId"
             AND g."spaceId" = t."spaceId" AND g."userId" = ${userId} AND g."archivedAt" IS NULL

@@ -34,6 +34,7 @@ export function isOwnersPrivateChat(input: {
   thread: {
     userId: string;
     botId: string | null;
+    chatBotId?: string | null;
     groupId: string | null;
     externalConversationId: string | null;
   };
@@ -48,7 +49,7 @@ export function isOwnersPrivateChat(input: {
     ownerTurn &&
     bot.userId === run.userId &&
     thread.userId === run.userId &&
-    thread.botId === bot.id &&
+    (thread.botId ?? thread.chatBotId ?? null) === bot.id &&
     !thread.groupId &&
     !thread.externalConversationId
   );
@@ -121,6 +122,7 @@ export function connectedContext(
 const PRIVACY_THREAD_FIELDS = {
   userId: true,
   botId: true,
+  chatBotId: true,
   groupId: true,
   externalConversationId: true,
 } as const;

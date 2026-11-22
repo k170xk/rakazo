@@ -806,6 +806,7 @@ model Bot {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   thread                  Thread?
+  chats                   Thread[]                 @relation("BotChats")
   computerId              String?
   computer                Computer?                @relation(fields: [computerId], references: [id], onDelete: SetNull)
   computerSwitching       Boolean                  @default(false)
@@ -977,12 +978,18 @@ model Thread {
   space                          Space                 @relation(fields: [spaceId], references: [id], onDelete: Cascade)
   botId                          String?               @unique
   bot                            Bot?                  @relation(fields: [botId], references: [id], onDelete: Cascade)
+  /// Additional conversations under a bot; share the bot's rules, routines, tools, skills and memory.
+  chatBotId                      String?
+  chatBot                        Bot?                  @relation("BotChats", fields: [chatBotId], references: [id], onDelete: Cascade)
+  /// Optional conversation title (user-edited or auto-derived from the first user message).
+  title                          String?
   groupId                        String?               @unique
   group                          ChatGroup?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
   externalConversationId         String?               @unique
   externalConversation           ExternalConversation? @relation(fields: [externalConversationId], references: [id], onDelete: Cascade)
   userId                         String
   createdAt                      DateTime              @default(now())
+  updatedAt                      DateTime              @default(now()) @updatedAt
   nextEventSeq                   Int                   @default(0)
   nextMessageSeq                 Int                   @default(0)
   historyCompactedUpToSeq        Int?
@@ -1004,6 +1011,8 @@ model Thread {
 
   @@index([spaceId])
   @@index([spaceId, userId])
+  @@index([chatBotId, updatedAt])
+  @@index([spaceId, chatBotId])
   @@map("threads")
 }
 

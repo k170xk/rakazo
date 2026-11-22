@@ -18,6 +18,18 @@ describe("private mail stays in the owner's own chat", () => {
 
   it("is private only in the person's one-to-one chat with their own agent", () => {
     expect(isOwnersPrivateChat(own)).toBe(true);
+    expect(
+      isOwnersPrivateChat({
+        ...own,
+        thread: { ...own.thread, botId: null, chatBotId: "bot-1" },
+      }),
+    ).toBe(true);
+    expect(
+      isOwnersPrivateChat({
+        ...own,
+        thread: { ...own.thread, botId: null, chatBotId: "other-bot" },
+      }),
+    ).toBe(false);
     expect(isOwnersPrivateChat({ ...own, run: { ...own.run, trigger: "routine" } })).toBe(true);
     expect(isOwnersPrivateChat({ ...own, thread: { ...own.thread, groupId: "g" } })).toBe(false);
     expect(

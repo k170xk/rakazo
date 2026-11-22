@@ -129,13 +129,20 @@ export function shellOverlaySearch(params: URLSearchParams): string {
 /** Routes under `/app` that are not a chat, so a chat move must not treat them as one. */
 const SHELL_CHAT_RESERVED = new Set(["artifacts", "board", "x"]);
 
-/** A shell chat: `/app`, `/app/:botId` or `/app/g/:groupId`. The board, files and plugin pages are not. */
+/** A shell chat: `/app`, `/app/:botId`, `/app/:botId/c/:threadId`, or `/app/g/:groupId`. The board, files and plugin pages are not. */
 export function isShellChatPath(pathname: string): boolean {
   const parts = pathname.split("/").filter(Boolean);
   if (parts[0] !== "app") return false;
   if (parts.length === 1) return true;
   if (parts.length === 2) return parts[1] !== "g" && !SHELL_CHAT_RESERVED.has(parts[1]!);
-  return parts.length === 3 && parts[1] === "g" && parts[2]!.length > 0;
+  if (parts.length === 3) return parts[1] === "g" && parts[2]!.length > 0;
+  return (
+    parts.length === 4 &&
+    parts[1] !== "g" &&
+    !SHELL_CHAT_RESERVED.has(parts[1]!) &&
+    parts[2] === "c" &&
+    parts[3]!.length > 0
+  );
 }
 
 /** Only the open document studio. A chat change keeps this and nothing else. */

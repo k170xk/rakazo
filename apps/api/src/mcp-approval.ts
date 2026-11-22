@@ -55,9 +55,13 @@ async function threadsForDecision(
       id: input.threadId,
       spaceId: actor.spaceId,
       userId: actor.userId,
-      OR: [{ botId: input.botId }, { group: { members: { some: { botId: input.botId } } } }],
+      OR: [
+        { botId: input.botId },
+        { chatBotId: input.botId },
+        { group: { members: { some: { botId: input.botId } } } },
+      ],
     },
-    select: { id: true, botId: true },
+    select: { id: true, botId: true, chatBotId: true },
   });
   if (member.length > 0) return member;
   // A bot removed from a group leaves its card behind. The bot still has to
@@ -75,11 +79,11 @@ async function threadsForDecision(
       userId: actor.userId,
       groupId: { not: null },
     },
-    select: { id: true, botId: true },
+    select: { id: true, botId: true, chatBotId: true },
   });
 }
 
-type ApprovalThread = { id: string; botId: string | null };
+type ApprovalThread = { id: string; botId: string | null; chatBotId?: string | null };
 
 async function threadsForBot(
   db: Prisma.TransactionClient | PrismaClient,
@@ -90,9 +94,13 @@ async function threadsForBot(
     where: {
       spaceId: actor.spaceId,
       userId: actor.userId,
-      OR: [{ botId }, { groupId: { not: null }, messages: { some: { botId } } }],
+      OR: [
+        { botId },
+        { chatBotId: botId },
+        { groupId: { not: null }, messages: { some: { botId } } },
+      ],
     },
-    select: { id: true, botId: true },
+    select: { id: true, botId: true, chatBotId: true },
   });
 }
 
@@ -133,7 +141,7 @@ async function rewriteCards(
       );
       await tx.message.update({ where: { id: message.id }, data: { blocks: next } });
       flipped += 1;
-      const eventBotId = message.botId ?? thread.botId ?? input.botId;
+      const eventBotId = message.botId ?? thread.botId ?? thread.chatBotId ?? input.botId;
       if (!eventBotId) continue;
       const event = await appendEventInTransaction(tx, {
         spaceId: actor.spaceId,
@@ -224,7 +232,7 @@ async function closeServerCards(
       botId: true,
       blocks: true,
       threadId: true,
-      thread: { select: { botId: true } },
+      thread: { select: { botId: true, chatBotId: true } },
     },
   });
   const seqs: ThreadSeq[] = [];
@@ -239,7 +247,7 @@ async function closeServerCards(
         : block,
     );
     await client.message.update({ where: { id: message.id }, data: { blocks: next } });
-    const eventBotId = message.botId ?? message.thread?.botId;
+    const eventBotId = message.botId ?? message.thread?.botId ?? message.thread?.chatBotId;
     if (!eventBotId) continue;
     const event = await appendEventInTransaction(client, {
       spaceId: actor.spaceId,

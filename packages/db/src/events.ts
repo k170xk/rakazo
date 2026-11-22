@@ -404,9 +404,11 @@ export async function clearThread(
       where: {
         id: input.threadId,
         spaceId: input.spaceId,
-        ...(input.groupId ? { groupId: input.groupId } : { botId: input.botId }),
+        ...(input.groupId
+          ? { groupId: input.groupId }
+          : { OR: [{ botId: input.botId }, { chatBotId: input.botId }] }),
       },
-      data: { unread: false },
+      data: { unread: false, updatedAt: new Date() },
       select: { nextMessageSeq: true, historyCompactionGeneration: true, userId: true },
     });
     const activeRuns = await tx.run.findMany({

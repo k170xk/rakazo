@@ -63,6 +63,7 @@ import {
   resolveGroupSendAttachments,
   resolveSendAttachments,
 } from "./artifacts.js";
+import { deriveChatTitleFromText } from "./bot-chats.js";
 import { resolveBusyBotName, toComputerStatus } from "./computer-status.js";
 import { withSerializableRetry } from "./serializable-retry.js";
 import type { ImageAdmissionRun } from "./thread-image-admission.js";
@@ -74,6 +75,8 @@ export type ThreadTarget =
       kind: "bot";
       botId: string;
       threadId: string;
+      threadTitle?: string | null;
+      isPrimaryThread?: boolean;
       bot: Awaited<ReturnType<ReturnType<typeof createRepos>["getBot"]>>;
     }
   | {
@@ -386,7 +389,7 @@ export function sendTargetBotIds(
 export async function resolveThreadTarget(
   prisma: PrismaClient,
   actor: Actor,
-  input: { botId?: string; groupId?: string },
+  input: { botId?: string; groupId?: string; threadId?: string },
   options: { includeArchived?: boolean } = {},
 ): Promise<ThreadTarget> {
   const repos = createRepos(prisma);
@@ -394,10 +397,32 @@ export async function resolveThreadTarget(
   if (input.botId) {
     const bot = await repos.getBot(actor, input.botId, options);
     if (!bot.thread) throw new IsolationError();
+    if (!input.threadId || input.threadId === bot.thread.id) {
+      return {
+        kind: "bot",
+        botId: bot.id,
+        threadId: bot.thread.id,
+        threadTitle: bot.thread.title ?? null,
+        isPrimaryThread: true,
+        bot,
+      };
+    }
+    const chat = await prisma.thread.findFirst({
+      where: {
+        id: input.threadId,
+        chatBotId: bot.id,
+        spaceId: actor.spaceId,
+        userId: actor.userId,
+      },
+      select: { id: true, title: true },
+    });
+    if (!chat) throw new IsolationError();
     return {
       kind: "bot",
       botId: bot.id,
-      threadId: bot.thread.id,
+      threadId: chat.id,
+      threadTitle: chat.title ?? null,
+      isPrimaryThread: false,
       bot,
     };
   }
@@ -530,6 +555,8 @@ export async function threadSnapshot(
     return {
       botId: target.botId,
       threadId: target.threadId,
+      threadTitle: target.threadTitle ?? null,
+      isPrimaryThread: target.isPrimaryThread ?? true,
       cursor: core.last?.seq ?? -1,
       messages: messagesWithLiveEvents(core.messagePage.messages, core.liveEvents, core.activeRuns),
       olderCursor: core.messagePage.olderCursor,
@@ -987,6 +1014,15 @@ export async function sendThreadMessage(
           replyQuote,
           clientNonce: input.clientNonce,
         });
+        if (target.isPrimaryThread === false && !target.threadTitle) {
+          const derivedTitle = deriveChatTitleFromText(input.text);
+          if (derivedTitle) {
+            await tx.thread.updateMany({
+              where: { id: target.threadId, title: null },
+              data: { title: derivedTitle },
+            });
+          }
+        }
         // A bare "stop" from the owner while work is active is the Stop button, not a reply.
         const stopping = activeRuns.length > 0 && !routineRuns.length && isStopMessage(input);
         if (input.noModel && !stopping) {

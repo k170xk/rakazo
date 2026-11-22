@@ -104,6 +104,7 @@ import {
   AvatarStyleSchema,
   BillingClientSchema,
   BillingStatusSchema,
+  BotChatSummarySchema,
   BotMcpServerSchema,
   BotSchema,
   BotSectionName,
@@ -321,6 +322,8 @@ const threadTarget = z
   .object({
     botId: Id.optional(),
     groupId: Id.optional(),
+    /** Optional specific conversation under `botId`; omit to target the agent's main conversation. */
+    threadId: Id.optional(),
   })
   .superRefine((input, ctx) => {
     const hasBot = Boolean(input.botId);
@@ -330,6 +333,13 @@ const threadTarget = z
         code: "custom",
         message: "Provide exactly one of botId or groupId",
         path: ["botId"],
+      });
+    }
+    if (input.threadId && hasGroup) {
+      ctx.addIssue({
+        code: "custom",
+        message: "threadId is only supported with botId",
+        path: ["threadId"],
       });
     }
   });
@@ -1038,6 +1048,7 @@ export const appContract = {
     continueEvolveConversation: oc
       .input(
         botId.safeExtend({
+          threadId: Id.optional(),
           conversationId: z.string().uuid(),
           clientNonce: z.string().min(1).max(200),
         }),
@@ -1171,6 +1182,35 @@ export const appContract = {
     /** With `messageId`, the chat reads as unread from that message: the next open puts New above it. */
     markUnread: oc
       .input(threadTarget.and(z.object({ messageId: Id.optional() })))
+      .output(z.object({ ok: z.literal(true) })),
+    /** Lists the main conversation and any additional conversations belonging to an agent. */
+    listChats: oc
+      .input(botId)
+      .output(z.object({ chats: z.array(BotChatSummarySchema) })),
+    /** Creates a new blank conversation under an agent (inherits all agent rules & routines). */
+    createChat: oc
+      .input(
+        botId.safeExtend({
+          title: z.string().trim().max(120).optional(),
+        }),
+      )
+      .output(z.object({ chat: BotChatSummarySchema })),
+    /** Renames a conversation belonging to an agent (empty title resets to default). */
+    renameChat: oc
+      .input(
+        botId.safeExtend({
+          threadId: Id,
+          title: z.string().trim().max(120),
+        }),
+      )
+      .output(z.object({ chat: BotChatSummarySchema })),
+    /** Deletes an additional conversation under an agent (the main conversation cannot be deleted). */
+    deleteChat: oc
+      .input(
+        botId.safeExtend({
+          threadId: Id,
+        }),
+      )
       .output(z.object({ ok: z.literal(true) })),
   },
   computer: {

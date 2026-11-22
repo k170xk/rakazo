@@ -13,17 +13,21 @@ import type { createSpaceRpc } from "../../lib/rpc";
 export function useChatRead({
   rpc,
   active,
+  activeThreadId,
   groupId,
   activeGroup,
   setBots,
   setGroups,
+  onBotChatsChanged,
 }: {
   rpc: ReturnType<typeof createSpaceRpc>;
   active: Bot | undefined;
+  activeThreadId?: string;
   groupId: string | undefined;
   activeGroup: Group | undefined;
   setBots: Dispatch<SetStateAction<Bot[]>>;
   setGroups: Dispatch<SetStateAction<Group[]>>;
+  onBotChatsChanged?: (botId: string) => void;
 }) {
   const manuallyUnread = useRef(new Set<string>());
   const [markedUnread, setMarkedUnread] = useState<{ visit: number; messageId: string } | null>(
@@ -36,7 +40,13 @@ export function useChatRead({
   const [readBoundary, setReadBoundary] = useState<ReadBoundary | null>(null);
   // A chat's markRead calls run one at a time so the request that opened it answers first.
   const [readInOrder] = useState(createChatQueues);
-  const openChat = groupId ? `group:${groupId}` : active ? `agent:${active.id}` : null;
+  const botChatKey = (id: string, threadId?: string) =>
+    threadId ? `agent:${id}:chat:${threadId}` : `agent:${id}`;
+  const openChat = groupId
+    ? `group:${groupId}`
+    : active
+      ? botChatKey(active.id, activeThreadId)
+      : null;
   if (readVisit.current.chat !== openChat) {
     readVisit.current = { chat: openChat, visit: readVisit.current.visit + 1 };
   }
@@ -62,49 +72,68 @@ export function useChatRead({
   // has left. Only an explicit read clears a Mark as Unread hold, and it does so up front, so an
   // automatic read answering after the user marked the chat unread can't undo the hold.
   const markBotRead = useCallback(
-    async (id: string, stillWanted?: () => boolean) => {
+    async (id: string, stillWanted?: () => boolean, threadId?: string) => {
+      const key = botChatKey(id, threadId);
       if (!stillWanted) {
-        manuallyUnread.current.delete(id);
-        if (readVisit.current.chat === `agent:${id}`) setMarkedUnread(null);
+        manuallyUnread.current.delete(key);
+        if (!threadId) manuallyUnread.current.delete(id);
+        if (readVisit.current.chat === key) setMarkedUnread(null);
       }
-      const answer = await readInOrder(`agent:${id}`, () =>
-        !stillWanted || stillWanted() ? rpc.threads.markRead({ botId: id }) : Promise.resolve(null),
+      const answer = await readInOrder(key, () =>
+        !stillWanted || stillWanted()
+          ? rpc.threads.markRead({ botId: id, ...(threadId ? { threadId } : {}) })
+          : Promise.resolve(null),
       );
       if (!answer) return undefined;
-      if (!manuallyUnread.current.has(id)) updateBotUnread(id, false);
+      if (!manuallyUnread.current.has(key) && !manuallyUnread.current.has(id)) {
+        if (!threadId) updateBotUnread(id, false);
+        onBotChatsChanged?.(id);
+      }
       return answer.unreadAfterSeq;
     },
-    [readInOrder, updateBotUnread],
+    [onBotChatsChanged, readInOrder, updateBotUnread],
   );
   const markBotUnread = useCallback(
-    async (id: string, messageId?: string) => {
-      manuallyUnread.current.add(id);
+    async (id: string, messageId?: string, threadId?: string) => {
+      const key = botChatKey(id, threadId);
+      manuallyUnread.current.add(key);
+      if (!threadId) manuallyUnread.current.add(id);
       const visit = readVisit.current.visit;
       try {
         // Through the chat's read queue, so a read already sent lands first and this one wins.
-        await readInOrder(`agent:${id}`, () =>
-          rpc.threads.markUnread({ botId: id, ...(messageId ? { messageId } : {}) }),
+        await readInOrder(key, () =>
+          rpc.threads.markUnread({
+            botId: id,
+            ...(threadId ? { threadId } : {}),
+            ...(messageId ? { messageId } : {}),
+          }),
         );
       } catch (err) {
-        manuallyUnread.current.delete(id);
+        manuallyUnread.current.delete(key);
+        if (!threadId) manuallyUnread.current.delete(id);
         throw err;
       }
       if (messageId && readVisit.current.visit === visit) setMarkedUnread({ visit, messageId });
       updateBotUnread(id, true);
+      onBotChatsChanged?.(id);
     },
-    [readInOrder, updateBotUnread],
+    [onBotChatsChanged, readInOrder, updateBotUnread],
   );
   // A bot the user marked unread by hand stays unread until they open it again,
   // otherwise the auto-read below would undo the action on the next window focus.
   const markBotReadIfVisible = useCallback(
-    (id: string) => {
-      if (manuallyUnread.current.has(id)) return;
+    (id: string, threadId?: string) => {
+      const key = botChatKey(id, threadId);
+      if (manuallyUnread.current.has(key) || (!threadId && manuallyUnread.current.has(id))) return;
       if (document.visibilityState === "visible" && document.hasFocus()) {
         const visit = readVisit.current.visit;
         void markBotRead(
           id,
           () =>
-            !manuallyUnread.current.has(id) && autoReadStillWanted(readVisit.current.visit, visit),
+            !manuallyUnread.current.has(key) &&
+            (Boolean(threadId) || !manuallyUnread.current.has(id)) &&
+            autoReadStillWanted(readVisit.current.visit, visit),
+          threadId,
         )
           .then((seq) => {
             if (seq !== undefined) captureReadBoundary(visit, seq);
@@ -162,10 +191,12 @@ export function useChatRead({
 
   useEffect(() => {
     if (!active) return;
-    // Opening a bot clears the manual unread flag so it can auto-read again.
-    manuallyUnread.current.delete(active.id);
+    // Opening a chat clears its manual unread flag so it can auto-read again.
+    const key = botChatKey(active.id, activeThreadId);
+    manuallyUnread.current.delete(key);
+    if (!activeThreadId) manuallyUnread.current.delete(active.id);
     const markVisibleBotRead = () => {
-      markBotReadIfVisible(active.id);
+      markBotReadIfVisible(active.id, activeThreadId);
     };
     markVisibleBotRead();
     window.addEventListener("focus", markVisibleBotRead);
@@ -174,7 +205,7 @@ export function useChatRead({
       window.removeEventListener("focus", markVisibleBotRead);
       document.removeEventListener("visibilitychange", markVisibleBotRead);
     };
-  }, [active?.id, markBotReadIfVisible]);
+  }, [active?.id, activeThreadId, markBotReadIfVisible]);
 
   useEffect(() => {
     if (!groupId || !activeGroup) return;
@@ -233,7 +264,12 @@ export function useChatRead({
 
   const markedUnreadMessageId =
     markedUnread?.visit === readVisit.current.visit &&
-    manuallyUnread.current.has(groupId ?? active?.id ?? "")
+    (groupId
+      ? manuallyUnread.current.has(groupId)
+      : active
+        ? manuallyUnread.current.has(botChatKey(active.id, activeThreadId)) ||
+          (!activeThreadId && manuallyUnread.current.has(active.id))
+        : false)
       ? markedUnread.messageId
       : undefined;
   const unreadAfterSeq = readBoundary?.visit === readVisit.current.visit ? readBoundary.seq : null;

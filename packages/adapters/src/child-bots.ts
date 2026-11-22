@@ -580,9 +580,24 @@ export async function destroyBot(
         where: { botId: bot.id },
         select: { id: true },
       });
-      if (thread) {
+      const extraThreads =
+        typeof tx.thread.findMany === "function"
+          ? await tx.thread.findMany({
+              where: { chatBotId: bot.id },
+              select: { id: true },
+            })
+          : [];
+      const allThreadIds = [
+        ...(thread ? [thread.id] : []),
+        ...extraThreads.map((entry) => entry.id),
+      ];
+      if (allThreadIds.length > 0) {
         await tx.conversationDeletion.createMany({
-          data: [{ spaceId: bot.spaceId, userId: bot.userId, threadId: thread.id }],
+          data: allThreadIds.map((threadId) => ({
+            spaceId: bot.spaceId,
+            userId: bot.userId,
+            threadId,
+          })),
           skipDuplicates: true,
         });
       }
@@ -598,6 +613,7 @@ export async function destroyBot(
       if (dedicated) await tx.computer.delete({ where: { id: dedicated.id } });
       return {
         threadId: thread?.id ?? null,
+        extraThreadIds: extraThreads.map((entry) => entry.id),
         artifactKeys: [
           ...botArtifacts.map((artifact) => artifact.storageKey),
           ...groupCleanup.artifactKeys,
@@ -640,6 +656,16 @@ export async function destroyBot(
     await removeTeamBotWorkspace(deps, bot, deletion.threadId, context).catch((error) => {
       getLogger().error("team agent folder cleanup", error);
     });
+    for (const extraThreadId of deletion.extraThreadIds) {
+      await removeTeamBotWorkspace(deps, bot, extraThreadId, context).catch((error) => {
+        getLogger().error("team agent extra chat folder cleanup", error);
+      });
+      if (deps.dataDir) {
+        await removeConversationToolWork(deps.dataDir, extraThreadId).catch((error) => {
+          getLogger().error("extra chat tool-work folder cleanup", error);
+        });
+      }
+    }
     if (deps.dataDir && deletion.threadId) {
       await removeConversationToolWork(deps.dataDir, deletion.threadId).catch((error) => {
         getLogger().error("conversation tool folder cleanup", error);

@@ -73,14 +73,17 @@ export function useThreadSync({
   computerState,
   seed,
   active,
+  activeThreadId,
   inGroup,
   groupId,
   activeGroup,
   activeBotId,
+  activeThreadIdRef,
   activeGroupId,
   botsRef,
   searchParamsRef,
   refreshBots,
+  onInvalidThread,
   notifyBrowserForEvent,
   markBotReadIfVisible,
   markGroupReadOnReply,
@@ -91,16 +94,19 @@ export function useThreadSync({
   computerState: ComputerState;
   seed: AppBootstrap | undefined;
   active: Bot | undefined;
+  activeThreadId?: string;
   inGroup: boolean;
   groupId: string | undefined;
   activeGroup: Group | undefined;
   activeBotId: RefObject<string | undefined>;
+  activeThreadIdRef?: RefObject<string | undefined>;
   activeGroupId: RefObject<string | undefined>;
   botsRef: RefObject<Bot[]>;
   searchParamsRef: RefObject<URLSearchParams>;
   refreshBots: (includeArchived?: boolean) => Promise<void>;
+  onInvalidThread?: (botId: string) => void;
   notifyBrowserForEvent: ReturnType<typeof useBrowserNotifications>["notifyBrowserForEvent"];
-  markBotReadIfVisible: (botId: string) => void;
+  markBotReadIfVisible: (botId: string, threadId?: string) => void;
   markGroupReadOnReply: (groupId: string) => void;
 }) {
   const {
@@ -139,7 +145,7 @@ export function useThreadSync({
    * Each chat's last snapshot, so reopening it paints at once. The live load and
    * subscription still run and replace it, so it is only ever a first frame.
    */
-  function cachedThreadKey(target: { botId: string } | { groupId: string }) {
+  function cachedThreadKey(target: { botId: string; threadId?: string } | { groupId: string }) {
     return queries.threads.get.queryKey({ input: target });
   }
 
@@ -185,7 +191,9 @@ export function useThreadSync({
     return snap;
   }
 
-  async function refreshThread(id: string, signal?: AbortSignal) {
+  async function refreshThread(id: string, signal?: AbortSignal, threadIdOverride?: string) {
+    const targetThreadId =
+      threadIdOverride !== undefined ? threadIdOverride : activeThreadIdRef?.current;
     const scrollElement = messageScroll.current;
     const stickToEnd = !scrollElement || transcriptIsNearEnd(scrollElement);
     markOnce("rk:renderer:thread-request-start");
@@ -193,17 +201,38 @@ export function useThreadSync({
     const request = ++threadRefreshEpoch.current;
     // Apply threads.get as soon as it returns so stop/takeover status is not held behind
     // routines/skills/screen fetches (progress can advance the cursor meanwhile).
-    const snap = await rpc.threads.get({ botId: id }, signal ? { signal } : undefined);
+    const snap = await rpc.threads
+      .get(
+        { botId: id, ...(targetThreadId ? { threadId: targetThreadId } : {}) },
+        signal ? { signal } : undefined,
+      )
+      .catch((error: unknown) => {
+        if (
+          targetThreadId &&
+          activeBotId.current === id &&
+          activeThreadIdRef?.current === targetThreadId &&
+          !signal?.aborted &&
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          (error.code === "NOT_FOUND" || error.code === "FORBIDDEN")
+        ) {
+          onInvalidThread?.(id);
+        }
+        throw error;
+      });
     markOnce("rk:renderer:thread-response");
     if (
       activeBotId.current !== id ||
+      activeThreadIdRef?.current !== targetThreadId ||
       epoch !== historyEpoch.current ||
       request !== threadRefreshEpoch.current
     ) {
       return snap;
     }
+    const sameThread = snapshotRef.current?.threadId === snap.threadId;
     const reconciled = reconcileRefreshedThread(
-      snapshotRef.current,
+      sameThread ? snapshotRef.current : null,
       snap,
       computerRef.current,
       expandedHistoryThread.current === snap.threadId,
@@ -231,6 +260,7 @@ export function useThreadSync({
     ]).then(([routines, skills]) => {
       if (
         activeBotId.current !== id ||
+        activeThreadIdRef?.current !== targetThreadId ||
         epoch !== historyEpoch.current ||
         request !== threadRefreshEpoch.current
       ) {
@@ -262,10 +292,12 @@ export function useThreadSync({
 
   async function loadOlderMessages() {
     const targetBotId = inGroup ? undefined : active?.id;
+    const targetThreadId = inGroup ? undefined : activeThreadIdRef?.current;
     const targetGroupId = inGroup ? groupId : undefined;
     const snapshotMatchesTarget = targetGroupId
       ? snapshot?.groupId === targetGroupId
-      : snapshot?.botId === targetBotId;
+      : snapshot?.botId === targetBotId &&
+        (!targetThreadId || snapshot?.threadId === targetThreadId);
     if (
       (!targetBotId && !targetGroupId) ||
       !snapshotMatchesTarget ||
@@ -281,12 +313,15 @@ export function useThreadSync({
     setLoadingOlder(true);
     try {
       const page = await rpc.threads.messages({
-        ...(targetGroupId ? { groupId: targetGroupId } : { botId: targetBotId! }),
+        ...(targetGroupId
+          ? { groupId: targetGroupId }
+          : { botId: targetBotId!, ...(targetThreadId ? { threadId: targetThreadId } : {}) }),
         before,
       });
       if (
         epoch !== historyEpoch.current ||
         activeBotId.current !== targetBotId ||
+        activeThreadIdRef?.current !== targetThreadId ||
         activeGroupId.current !== targetGroupId
       )
         return;
@@ -303,6 +338,10 @@ export function useThreadSync({
 
   useEffect(() => {
     if (!active) return;
+    const targetThreadId = activeThreadId;
+    const threadTarget = targetThreadId
+      ? { botId: active.id, threadId: targetThreadId }
+      : { botId: active.id };
     const pendingJump = searchParamsRef.current.get("m");
     if (!pendingJump) {
       pinnedAroundRef.current = null;
@@ -310,21 +349,48 @@ export function useThreadSync({
     showCachedComputer(active.id);
     expandedHistoryThread.current = null;
     historyEpoch.current += 1;
-    const threadKey = cachedThreadKey({ botId: active.id });
+    const threadKey = cachedThreadKey(threadTarget);
     const cachedThread = pendingJump
       ? undefined
       : (queryClient.getQueryData(threadKey) ??
-        (seed?.thread?.botId === active.id ? seed.thread : undefined));
+        (!targetThreadId && seed?.thread?.botId === active.id ? seed.thread : undefined));
+    const snapshotMatchesCurrent =
+      snapshotRef.current?.botId === active.id &&
+      (targetThreadId
+        ? snapshotRef.current?.threadId === targetThreadId
+        : snapshotRef.current?.isPrimaryThread !== false);
     if (
       cachedThread &&
-      snapshotRef.current?.botId !== active.id &&
-      (active.threadStatus === undefined ||
+      !snapshotMatchesCurrent &&
+      (targetThreadId ||
+        active.threadStatus === undefined ||
         activeThreadRuns(cachedThread).some((run) => isRunWorking(run.status)) ===
           isRunWorking(active.threadStatus))
-    )
+    ) {
       commitSnapshot(cachedThread);
-    const sidebarRefresh = createRefreshCoalescer(() => refreshBots());
-    const snapshotRefresh = createRefreshCoalescer(() => refreshThread(active.id));
+    } else if (
+      !cachedThread &&
+      !snapshotMatchesCurrent &&
+      snapshotRef.current?.botId === active.id
+    ) {
+      // Switching between chats of the same agent: clear the previous chat's messages immediately
+      // so messages from the other conversation never flash while the selected chat loads.
+      commitSnapshot(null);
+    }
+    const invalidateBotChats = () => {
+      const listChats = queries.threads?.listChats;
+      if (!listChats) return Promise.resolve();
+      return queryClient.invalidateQueries({
+        queryKey: listChats.queryKey({ input: { botId: active.id } }),
+      });
+    };
+    const sidebarRefresh = createRefreshCoalescer(async () => {
+      await refreshBots();
+      await invalidateBotChats();
+    });
+    const snapshotRefresh = createRefreshCoalescer(() =>
+      refreshThread(active.id, undefined, targetThreadId),
+    );
     const abort = new AbortController();
     const avatarSource = newLogoAvatarActivitySource();
     void runThreadSubscription({
@@ -333,19 +399,19 @@ export function useThreadSync({
         const primed = bootstrappedThread.current;
         bootstrappedThread.current = null;
         // Pending search jumps load the around-page separately; avoid replacing it with latest.
-        return primed?.botId === active.id
+        return !targetThreadId && primed?.botId === active.id
           ? primed
           : pendingJump
-            ? rpc.threads.get({ botId: active.id }, { signal: threadSnapshotSignal(abort.signal) })
-            : refreshThread(active.id, threadSnapshotSignal(abort.signal));
+            ? rpc.threads.get(threadTarget, { signal: threadSnapshotSignal(abort.signal) })
+            : refreshThread(active.id, threadSnapshotSignal(abort.signal), targetThreadId);
       },
       loadHead: () =>
-        rpc.threads.head({ botId: active.id }, { signal: threadSnapshotSignal(abort.signal) }),
-      refresh: () => refreshThread(active.id, threadSnapshotSignal(abort.signal)),
+        rpc.threads.head(threadTarget, { signal: threadSnapshotSignal(abort.signal) }),
+      refresh: () => refreshThread(active.id, threadSnapshotSignal(abort.signal), targetThreadId),
       currentSnapshot: () => snapshotRef.current,
       subscribe: (cursor, signal) =>
         openLogoAvatarActivityFeed(avatarSource, snapshotRef.current, cursor, signal, () =>
-          rpc.threads.subscribe({ botId: active.id, cursor }, { signal }),
+          rpc.threads.subscribe({ ...threadTarget, cursor }, { signal }),
         ),
       beforeEvent: (event) => {
         webLogoAvatarActivity.apply(avatarSource, event);
@@ -396,10 +462,14 @@ export function useThreadSync({
         if (event.type === "thread.message.created") {
           const blocks = (event.payload.blocks as Array<{ kind?: string }>) ?? [];
           relistPagesForBlocks(queries, queryClient, blocks);
+          void invalidateBotChats().catch(() => undefined);
+          if (targetThreadId && !snapshotRef.current?.threadTitle) {
+            void snapshotRefresh.invalidate().catch(() => undefined);
+          }
           if (blocks.some((block) => block.kind === "child_bot")) {
             void sidebarRefresh.invalidate().catch(() => undefined);
           }
-          if (event.payload.role === "bot") markBotReadIfVisible(active.id);
+          if (event.payload.role === "bot") markBotReadIfVisible(active.id, targetThreadId);
         }
         if (
           isRunTerminalEvent(event) ||
@@ -420,9 +490,15 @@ export function useThreadSync({
       abort.abort();
       webLogoAvatarActivity.resetSource(avatarSource);
       const left = snapshotRef.current;
-      if (left?.botId === active.id && !left.groupId) queryClient.setQueryData(threadKey, left);
+      if (
+        left?.botId === active.id &&
+        !left.groupId &&
+        (targetThreadId ? left.threadId === targetThreadId : left.isPrimaryThread !== false)
+      ) {
+        queryClient.setQueryData(threadKey, left);
+      }
     };
-  }, [active?.id, markBotReadIfVisible, notifyBrowserForEvent]);
+  }, [active?.id, activeThreadId, markBotReadIfVisible, notifyBrowserForEvent]);
 
   useEffect(() => {
     if (!groupId || !activeGroup) return;

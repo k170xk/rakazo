@@ -9,6 +9,8 @@ export const SearchHitSchema = z
     kind: SearchHitKindSchema,
     botId: Id.optional(),
     botName: z.string().optional(),
+    threadId: Id.optional(),
+    threadTitle: z.string().optional(),
     groupId: Id.optional(),
     groupName: z.string().optional(),
     title: z.string(),

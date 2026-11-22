@@ -2,7 +2,9 @@ import { artifactDownloadFileName } from "@rakazo/core";
 import { rpc, rpcForSpace } from "./rpc";
 
 /** `spaceId` is set when the group lives in another person's Space that you were added to. */
-export type ArtifactTarget = { botId: string } | { groupId: string; spaceId?: string };
+export type ArtifactTarget =
+  | { botId: string; threadId?: string }
+  | { groupId: string; spaceId?: string };
 
 /** The client that reads a target's artifacts, in the Space it belongs to. */
 export function artifactClient(target: ArtifactTarget) {

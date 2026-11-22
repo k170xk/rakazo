@@ -102,6 +102,21 @@ export const InstructionVersionSchema = z.object({
   createdAt: z.string(),
 });
 
+export const BotChatSummarySchema = z.object({
+  id: Id,
+  botId: Id,
+  title: z.string(),
+  isPrimary: z.boolean(),
+  preview: z.string(),
+  unread: z.boolean(),
+  status: z.string(),
+  runErrorId: Id.nullable().default(null),
+  messageCount: z.number().int().nonnegative(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type BotChatSummary = z.infer<typeof BotChatSummarySchema>;
+
 export const BotSchema = z.object({
   id: Id,
   spaceId: Id,
@@ -144,6 +159,8 @@ export const BotSchema = z.object({
   spawnKey: z.string().nullable(),
   /** Started from an OCSC company assistant: its instructions are company-owned, never sent. */
   companyAssistant: z.boolean().optional(),
+  /** Number of additional conversations created under this agent (excluding the main conversation). */
+  extraChatCount: z.number().int().nonnegative().optional(),
   /** The bot is ringing the user right now. */
   incomingCall: z
     .object({
@@ -341,6 +358,7 @@ export const SpaceBotSchema = BotSchema.pick({
   threadStatus: true,
   runErrorId: true,
   spawnKey: true,
+  extraChatCount: true,
   updatedAt: true,
 }).extend({ modelId: BotSchema.shape.modelId.optional() });
 export type SpaceBot = z.infer<typeof SpaceBotSchema>;
@@ -1611,6 +1629,8 @@ export type ThreadMessagePage = z.infer<typeof ThreadMessagePageSchema>;
 
 export const ThreadSnapshotSchema = z.object({
   threadId: Id,
+  threadTitle: z.string().nullable().optional(),
+  isPrimaryThread: z.boolean().optional(),
   cursor: z.number().int().min(-1),
   messages: z.array(ThreadMessageSchema),
   olderCursor: z.number().int().nonnegative().nullable(),
