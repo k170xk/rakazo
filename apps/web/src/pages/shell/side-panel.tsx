@@ -87,7 +87,6 @@ export function ShellSidePanel({
   const botTab =
     panel === "computer" ||
     panel === "routines" ||
-    panel === "memory" ||
     panel === "pages" ||
     panel === "files" ||
     panel === "settings"

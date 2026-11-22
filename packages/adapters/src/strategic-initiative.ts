@@ -19,7 +19,13 @@ const STALE_SCRATCHPAD_ITEM_MS = 12 * 60 * 60 * 1000;
 const MAX_ITEMS_IN_PROMPT = 5;
 const MAX_STALE_ITEMS_SCANNED = 50;
 const MAX_NOTES_CHARS = 220;
-const STRATEGIC_INITIATIVE_SAFE_TOOL_NAMES = new Set(["ask_user", "message_user"]);
+const STRATEGIC_INITIATIVE_SAFE_TOOL_NAMES = new Set([
+  "ask_user",
+  "message_user",
+  "scratchpad_complete",
+  "scratchpad_update",
+  "scratchpad_remove",
+]);
 
 type StrategicBot = {
   id: string;
@@ -28,6 +34,7 @@ type StrategicBot = {
   name: string;
   thread: { id: string } | null;
   scratchpadItems: Array<{
+    id?: string;
     title: string;
     notes: string;
     updatedAt: Date;
@@ -129,7 +136,7 @@ export async function reconcileStrategicInitiatives(deps: {
             status: "open",
             updatedAt: { lte: new Date(deps.now.getTime() - STALE_SCRATCHPAD_ITEM_MS) },
           },
-          select: { title: true, notes: true, updatedAt: true },
+          select: { id: true, title: true, notes: true, updatedAt: true },
           orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
           take: MAX_STALE_ITEMS_SCANNED,
         },
@@ -215,7 +222,9 @@ function initiativePrompt(bot: StrategicBot): string {
           const note = item.notes.trim()
             ? ` — ${truncatePlainText(item.notes.trim().replace(/\s+/g, " "), MAX_NOTES_CHARS)}`
             : "";
-          return `${index + 1}. ${escapePromptData(truncatePlainText(item.title, 300))}${escapePromptData(note)}`;
+          const idTag = item.id ? ` (id: ${escapePromptData(item.id)})` : "";
+          const updatedTag = `, updated ${item.updatedAt.toISOString().slice(0, 10)}`;
+          return `${index + 1}. ${escapePromptData(truncatePlainText(item.title, 300))}${escapePromptData(note)}${idTag}${updatedTag}`;
         })
         .join("\n")
     : "(none)";
@@ -228,6 +237,7 @@ function initiativePrompt(bot: StrategicBot): string {
     items,
     "</scratchpad_items>",
     "",
+    "If an item looks resolved, superseded, or stale with no genuine reason to interrupt the user, close it with scratchpad_complete or scratchpad_remove (or park it with scratchpad_update) and reply NO_RESPONSE.",
     "If no high-signal action is needed right now, the entire final reply must be exactly NO_RESPONSE.",
     "If action is needed, do only one concise proactive action: ask one blocking question or post one short update with a concrete next step.",
     "Do not repeat reminders that add no new information.",

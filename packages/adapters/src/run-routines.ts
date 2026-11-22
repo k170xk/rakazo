@@ -199,6 +199,62 @@ async function deferPastDailyLimit(
   return true;
 }
 
+/**
+ * Resolves the target thread for a routine run.
+ * - Preserves an explicit routine thread when it belongs to the bot (either as the primary
+ *   `botId` thread or an extra `chatBotId` conversation) or to an active group the bot is in.
+ * - Falls back to the bot's primary thread if the routine's original chat was deleted.
+ * - Self-heals if the bot somehow has no primary thread by promoting its newest remaining
+ *   conversation or creating a fresh blank chat so scheduled routines never silently drop.
+ */
+export async function resolveRoutineThread(
+  prisma: ExecutorDeps["prisma"],
+  bot: { id: string; spaceId: string; userId: string; thread: { id: string } | null },
+  routine: { spaceId: string; threadId: string | null },
+): Promise<{ id: string }> {
+  let defaultThread = bot.thread;
+  if (!defaultThread) {
+    const fallbackChat = await prisma.thread.findFirst({
+      where: { spaceId: bot.spaceId, userId: bot.userId, chatBotId: bot.id },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    });
+    if (fallbackChat) {
+      defaultThread = await prisma.thread.update({
+        where: { id: fallbackChat.id },
+        data: { botId: bot.id, chatBotId: null },
+      });
+    } else {
+      defaultThread = await prisma.thread.create({
+        data: {
+          spaceId: bot.spaceId,
+          userId: bot.userId,
+          botId: bot.id,
+        },
+      });
+    }
+  }
+  const targetThread = routine.threadId
+    ? await prisma.thread.findFirst({
+        where: {
+          id: routine.threadId,
+          spaceId: routine.spaceId,
+          OR: [
+            { botId: bot.id },
+            { chatBotId: bot.id },
+            {
+              group: {
+                archivedAt: null,
+                members: { some: { botId: bot.id } },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      })
+    : null;
+  return targetThread ?? defaultThread;
+}
+
 export async function wakeRoutine(deps: ExecutorDeps, routineId: string, scheduledFor: string) {
   const scheduledAt = new Date(scheduledFor);
   if (!Number.isFinite(scheduledAt.getTime())) return;
@@ -219,26 +275,8 @@ export async function wakeRoutine(deps: ExecutorDeps, routineId: string, schedul
     });
     return;
   }
-  if (!bot?.thread) return;
-  const targetThread = routine.threadId
-    ? await deps.prisma.thread.findFirst({
-        where: {
-          id: routine.threadId,
-          spaceId: routine.spaceId,
-          OR: [
-            { botId: bot.id },
-            {
-              group: {
-                archivedAt: null,
-                members: { some: { botId: bot.id } },
-              },
-            },
-          ],
-        },
-        select: { id: true },
-      })
-    : null;
-  const thread = targetThread ?? bot.thread;
+  if (!bot) return;
+  const thread = await resolveRoutineThread(deps.prisma, bot, routine);
   // Checked before a change trigger looks, so a change seen while held back is still news later.
   if (await deferPastDailyLimit(deps, routine, thread.id, scheduledAt)) return;
   // A change trigger checks first, without a model; only news becomes a run.

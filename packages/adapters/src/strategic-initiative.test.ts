@@ -301,10 +301,13 @@ describe("strategic initiative tool guard", () => {
     ).toBe(false);
   });
 
-  it("keeps only safe user-facing tools for strategic initiative runs", () => {
+  it("keeps only safe user-facing and scratchpad cleanup tools for strategic initiative runs", () => {
     const tools = [
       { name: "ask_user" },
       { name: "message_user" },
+      { name: "scratchpad_complete" },
+      { name: "scratchpad_update" },
+      { name: "scratchpad_remove" },
       { name: "computer_shell" },
       { name: "gmail_send" },
     ];
@@ -313,7 +316,13 @@ describe("strategic initiative tool guard", () => {
         trigger: "routine",
         clientNonce: "strategic-initiative:bot-1:123",
       }).map((tool) => tool.name),
-    ).toEqual(["ask_user", "message_user"]);
+    ).toEqual([
+      "ask_user",
+      "message_user",
+      "scratchpad_complete",
+      "scratchpad_update",
+      "scratchpad_remove",
+    ]);
   });
 
   it("does not filter regular runs", () => {

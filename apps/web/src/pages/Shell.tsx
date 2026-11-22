@@ -262,7 +262,6 @@ function SpaceShell() {
   if (
     panel === "routines" ||
     panel === "computer" ||
-    panel === "memory" ||
     panel === "pages" ||
     panel === "files" ||
     panel === "settings"
@@ -362,7 +361,6 @@ function SpaceShell() {
     ? panel === "group-settings"
     : panel === "computer" ||
       panel === "routines" ||
-      panel === "memory" ||
       panel === "pages" ||
       panel === "files" ||
       panel === "settings" ||

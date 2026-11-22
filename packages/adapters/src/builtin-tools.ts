@@ -1484,7 +1484,8 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "scratchpad_complete",
-    description: "Mark a scratchpad item done.",
+    description:
+      "Mark a scratchpad item done. Call immediately when the work is finished, superseded, or the user says it is done, sorted, or handled.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1495,7 +1496,8 @@ export const builtinAgentTools: ConnectorTool[] = [
   },
   {
     name: "scratchpad_remove",
-    description: "Permanently remove a scratchpad item.",
+    description:
+      "Permanently remove a scratchpad item. Call when an open item is no longer relevant, was a mistake, or the user says to drop it, forget it, or move on.",
     inputSchema: {
       type: "object",
       properties: {
