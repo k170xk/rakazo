@@ -18307,8 +18307,8 @@ msgid "Your own logins, cards, API keys and contacts. Only your assistants use t
 msgstr "Your own logins, cards, API keys and contacts. Only your assistants use them, and only you can see them here."
 
 #: src/components/integrations/skills-dialog.tsx
-msgid "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below; the built-in ones come with OCSC Intelligence."
-msgstr "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below; the built-in ones come with OCSC Intelligence."
+msgid "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below."
+msgstr "Your own ways of working, written down so your agents follow them every time: a checklist, a house style, how you like a report laid out. Create one with New skill below."
 
 #: src/components/tour/ocsc-tour.tsx
 msgid "Your personal assistant is ready. It coordinates across your chats, will interview you briefly, and can recommend specialist agents such as an Email agent."

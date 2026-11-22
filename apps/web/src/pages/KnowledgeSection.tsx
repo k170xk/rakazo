@@ -32,7 +32,6 @@ import {
 import { SettingsSectionHeading } from "../components/SettingsSectionHeading";
 import { downloadArtifactBytes } from "../lib/artifact-open";
 import { MEMORY_IMPORT_ACCEPT, readMemoryFile } from "../lib/memory-import";
-import { isOcscTool } from "../lib/ocsc-tools";
 import { useSpaceQueries } from "../lib/query";
 import { useSpaceRpc } from "../lib/space-rpc";
 import { errorText } from "../lib/user-error";
@@ -827,7 +826,7 @@ description: What this skill does and when the agent should use it.
 Steps the agent should follow.
 `;
 
-/** Your own skills in this space, plus the built-in ones; OCSC Tools and plugin skills are listed apart. */
+/** Your own skills in this space; built-in, company, OCSC Tools and plugin skills are managed separately. */
 export function AgentSkills() {
   const rpc = useSpaceRpc();
   const { t } = useLingui();
@@ -837,7 +836,7 @@ export function AgentSkills() {
   const list = queries.agentSkills.list.queryOptions();
   const listQuery = useQuery({ ...list, refetchOnMount: "always" });
   const skills = (listQuery.data ?? NO_SKILLS).filter(
-    (skill) => skill.source !== "plugin" && !(skill.source === "builtin" && isOcscTool(skill.name)),
+    (skill) => (skill.source ?? "user") === "user",
   );
   const loading = listQuery.isPending;
   const [open, setOpen] = useState<AgentSkill | null>(null);

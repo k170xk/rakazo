@@ -162,7 +162,7 @@ export function SkillsDialog({
                 <Trans>
                   Your own ways of working, written down so your agents follow them every time: a
                   checklist, a house style, how you like a report laid out. Create one with New
-                  skill below; the built-in ones come with OCSC Intelligence.
+                  skill below.
                 </Trans>
               </p>
             </div>

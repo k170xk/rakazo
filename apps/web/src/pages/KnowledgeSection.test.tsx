@@ -133,7 +133,7 @@ it("disables skill rows while a completed save is refreshing the catalog", async
   }
 });
 
-it("badges built-in skills and leaves plugin skills to their plugin", async () => {
+it("shows only the user's own skills and hides built-in, company and plugin skills", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const catalog: AgentSkillCatalogEntry[] = [
     {
@@ -141,6 +141,13 @@ it("badges built-in skills and leaves plugin skills to their plugin", async () =
       name: "Interrogate",
       description: "Review a change",
       source: "builtin",
+      readOnly: true,
+    },
+    {
+      id: "company:house-style",
+      name: "House style",
+      description: "Company rules",
+      source: "company",
       readOnly: true,
     },
     {
@@ -178,16 +185,14 @@ it("badges built-in skills and leaves plugin skills to their plugin", async () =
   };
   try {
     await show(root, <AgentSkills />);
-    expect(button("Interrogate").textContent).toContain("Built-in");
-    // Plugin skills are listed by their plugin in the Skills dialog, not one by one here.
+    expect(container.textContent).not.toContain("Interrogate");
+    expect(container.textContent).not.toContain("House style");
     expect(container.textContent).not.toContain("Triage mail");
     expect(button("greeting").textContent).not.toContain("Built-in");
     expect(button("greeting").textContent).not.toContain("Plugin");
-    await act(async () => button("Interrogate").click());
-    expect(container.querySelector("textarea")?.readOnly).toBe(true);
-    expect(container.textContent).toContain("Built-in");
-    expect(button("Close")).toBeTruthy();
-    expect(container.textContent).not.toContain("Delete");
+    await act(async () => button("greeting").click());
+    expect(container.querySelector("textarea")?.readOnly).toBe(false);
+    expect(button("Delete")).toBeTruthy();
   } finally {
     await act(async () => root.unmount());
     container.remove();
