@@ -9428,14 +9428,6 @@ msgstr "Lowest confidence for Ready"
 msgid "Made from a spreadsheet"
 msgstr "Made from a spreadsheet"
 
-#: src/pages/shell/bot-chats-accordion.tsx
-msgid "Main"
-msgstr "Main"
-
-#: src/pages/shell/bot-chats-accordion.tsx
-msgid "Main chat"
-msgstr "Main chat"
-
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Main model"

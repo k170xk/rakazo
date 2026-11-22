@@ -9410,14 +9410,6 @@ msgstr ""
 msgid "Made from a spreadsheet"
 msgstr ""
 
-#: src/pages/shell/bot-chats-accordion.tsx
-msgid "Main"
-msgstr ""
-
-#: src/pages/shell/bot-chats-accordion.tsx
-msgid "Main chat"
-msgstr ""
-
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Modèle principal"

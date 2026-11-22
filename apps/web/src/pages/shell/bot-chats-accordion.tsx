@@ -45,7 +45,11 @@ export function BotChatsAccordion({
   isActiveBot: boolean;
   activeThreadId: string | undefined;
   onSelectChat: (spaceId: string, botId: string, threadId?: string) => void;
-  onChatDeleted: (botId: string, threadId: string) => void;
+  onChatDeleted: (
+    botId: string,
+    threadId: string,
+    info: { wasDefault: boolean; nextThreadId?: string },
+  ) => void;
   onChatsMutated: (botId: string) => void;
 }) {
   const { t } = useLingui();
@@ -114,14 +118,17 @@ export function BotChatsAccordion({
     if (deletingId) return;
     setDeletingId(chat.id);
     try {
-      await rpc.threads.deleteChat({ botId, threadId: chat.id });
+      const result = await rpc.threads.deleteChat({ botId, threadId: chat.id });
       queryClient.setQueryData(
         queries.threads.listChats.queryKey({ input: { botId } }),
         (prev: { chats: BotChatSummary[] } | undefined) =>
           prev ? { chats: prev.chats.filter((item) => item.id !== chat.id) } : prev,
       );
       setDeleteTarget(null);
-      onChatDeleted(botId, chat.id);
+      onChatDeleted(botId, chat.id, {
+        wasDefault: chat.isPrimary,
+        nextThreadId: result.nextThreadId,
+      });
     } catch (error) {
       toast.error(errorText(error, t`Could not delete chat`));
     } finally {
@@ -153,10 +160,10 @@ export function BotChatsAccordion({
           const isFirst = index === 0;
           const isLast = index === chats.length - 1;
           const isSelected =
-            isActiveBot && (chat.isPrimary ? !activeThreadId : activeThreadId === chat.id);
+            isActiveBot && (activeThreadId ? activeThreadId === chat.id : chat.isPrimary);
           const working = isRunWorking(chat.status);
           const isEditing = editingId === chat.id;
-          const displayTitle = chat.title || (chat.isPrimary ? t`Main chat` : t`New chat`);
+          const displayTitle = chat.title || t`New chat`;
 
           const branchGuides = (
             <>
@@ -194,7 +201,7 @@ export function BotChatsAccordion({
                     value={draftTitle}
                     maxLength={120}
                     disabled={savingId === chat.id}
-                    placeholder={chat.isPrimary ? t`Main chat` : t`Chat title`}
+                    placeholder={t`Chat title`}
                     aria-label={t`Chat title`}
                     onChange={(event) => setDraftTitle(event.target.value)}
                     onKeyDown={(event) => {
@@ -242,9 +249,7 @@ export function BotChatsAccordion({
                 <button
                   type="button"
                   aria-current={isSelected ? "page" : undefined}
-                  onClick={() =>
-                    onSelectChat(spaceId, botId, chat.isPrimary ? undefined : chat.id)
-                  }
+                  onClick={() => onSelectChat(spaceId, botId, chat.id)}
                   className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 pe-14 text-start"
                 >
                   {working ? (
@@ -272,11 +277,6 @@ export function BotChatsAccordion({
                   >
                     {displayTitle}
                   </span>
-                  {chat.isPrimary ? (
-                    <span className="shrink-0 rounded bg-sidebar-border/70 px-1 py-px text-[9.5px] font-medium text-muted-foreground">
-                      {t`Main`}
-                    </span>
-                  ) : null}
                 </button>
 
                 <div className="pointer-events-none absolute end-1.5 flex items-center gap-1">
@@ -305,30 +305,28 @@ export function BotChatsAccordion({
                   >
                     <Pencil size={12} aria-hidden="true" />
                   </Button>
-                  {!chat.isPrimary ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      disabled={deletingId === chat.id}
-                      aria-label={t`Delete ${displayTitle}`}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        if (chat.messageCount === 0) {
-                          void performDelete(chat);
-                        } else {
-                          setDeleteTarget(chat);
-                        }
-                      }}
-                      className="size-6 rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
-                    >
-                      {deletingId === chat.id ? (
-                        <Spinner className="size-3" aria-label={t`Deleting`} />
-                      ) : (
-                        <Trash2 size={12} aria-hidden="true" />
-                      )}
-                    </Button>
-                  ) : null}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={deletingId === chat.id}
+                    aria-label={t`Delete ${displayTitle}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (chat.messageCount === 0) {
+                        void performDelete(chat);
+                      } else {
+                        setDeleteTarget(chat);
+                      }
+                    }}
+                    className="size-6 rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                  >
+                    {deletingId === chat.id ? (
+                      <Spinner className="size-3" aria-label={t`Deleting`} />
+                    ) : (
+                      <Trash2 size={12} aria-hidden="true" />
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>

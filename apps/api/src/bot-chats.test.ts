@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import type { Actor } from "@rakazo/contracts";
 import type { PrismaClient } from "@rakazo/db";
 import { IsolationError } from "@rakazo/db";
@@ -113,7 +112,7 @@ describe("bot-chats CRUD and safety", () => {
     await expect(createBotChat(prisma, actor, "bot-other")).rejects.toBeInstanceOf(IsolationError);
   });
 
-  it("lists the primary conversation first, then extra conversations newest-active first", async () => {
+  it("lists all conversations newest-active first and derives a fallback title for untitled chats", async () => {
     const olderExtra = {
       id: "thread-extra-old",
       botId: null,
@@ -134,32 +133,41 @@ describe("bot-chats CRUD and safety", () => {
       createdAt: new Date("2026-10-06T09:00:00.000Z"),
       updatedAt: new Date("2026-10-07T09:00:00.000Z"),
     };
+    const messageFindMany = vi
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          id: "m-new",
+          threadId: "thread-extra-new",
+          seq: 1,
+          role: "bot",
+          botId: "bot-1",
+          runId: null,
+          blocks: [{ kind: "text", text: "Here is the summary." }],
+          createdAt: new Date("2026-10-07T10:00:00.000Z"),
+        },
+        {
+          id: "m-primary",
+          threadId: "thread-primary",
+          seq: 4,
+          role: "bot",
+          botId: "bot-1",
+          runId: null,
+          blocks: [{ kind: "text", text: "Primary thread reply." }],
+          createdAt: new Date("2026-10-05T10:00:00.000Z"),
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          threadId: "thread-primary",
+          blocks: [{ kind: "text", text: "Check beam design calcs" }],
+        },
+      ]);
     const prisma = {
       bot: { findFirst: vi.fn(async () => makeBotRecord()) },
       thread: { findMany: vi.fn(async () => [olderExtra, newerExtra]) },
       message: {
-        findMany: vi.fn(async () => [
-          {
-            id: "m-new",
-            threadId: "thread-extra-new",
-            seq: 1,
-            role: "bot",
-            botId: "bot-1",
-            runId: null,
-            blocks: [{ kind: "text", text: "Here is the summary." }],
-            createdAt: new Date("2026-10-07T10:00:00.000Z"),
-          },
-          {
-            id: "m-primary",
-            threadId: "thread-primary",
-            seq: 4,
-            role: "bot",
-            botId: "bot-1",
-            runId: null,
-            blocks: [{ kind: "text", text: "Primary thread reply." }],
-            createdAt: new Date("2026-10-05T10:00:00.000Z"),
-          },
-        ]),
+        findMany: messageFindMany,
       },
       run: {
         findMany: vi.fn(async () => []),
@@ -168,15 +176,14 @@ describe("bot-chats CRUD and safety", () => {
 
     const chats = await listBotChats(prisma, actor, "bot-1");
     expect(chats.map((c) => c.id)).toEqual([
-      "thread-primary",
       "thread-extra-new",
+      "thread-primary",
       "thread-extra-old",
     ]);
-    expect(chats[0]?.isPrimary).toBe(true);
-    expect(chats[0]?.preview).toBe("Primary thread reply.");
-    expect(chats[1]?.isPrimary).toBe(false);
-    expect(chats[1]?.unread).toBe(true);
-    expect(chats[1]?.preview).toBe("Here is the summary.");
+    expect(chats[0]?.unread).toBe(true);
+    expect(chats[0]?.preview).toBe("Here is the summary.");
+    expect(chats[1]?.title).toBe("Check beam design calcs");
+    expect(chats[1]?.preview).toBe("Primary thread reply.");
   });
 
   it("renames a thread belonging to the bot and resets blank title to null", async () => {
@@ -211,15 +218,93 @@ describe("bot-chats CRUD and safety", () => {
     expect(result.title).toBe("");
   });
 
-  it("refuses to delete the primary conversation", async () => {
+  it("deletes the default conversation by promoting the newest remaining chat without losing bot state", async () => {
+    const threadDelete = vi.fn(async () => undefined);
+    const threadUpdate = vi.fn(async () => ({ id: "thread-extra-2" }));
+    const threadFindFirst = vi
+      .fn()
+      .mockResolvedValueOnce({ id: "thread-primary", botId: "bot-1" })
+      .mockResolvedValueOnce({ id: "thread-extra-2" });
+    const tx = {
+      thread: {
+        findFirst: threadFindFirst,
+        delete: threadDelete,
+        update: threadUpdate,
+        create: vi.fn(),
+      },
+      run: { findMany: vi.fn(async () => []), updateManyAndReturn: vi.fn(async () => []) },
+      attempt: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      task: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      message: { findMany: vi.fn(async () => []) },
+      secret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      runSecret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      steeringMessage: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      computerExecutionLease: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      chatFileIndex: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      chatFileIndexEntry: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      conversationDeletion: { createMany: vi.fn(async () => ({ count: 1 })) },
+    };
     const prisma = {
       bot: { findFirst: vi.fn(async () => makeBotRecord()) },
+      $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
     } as unknown as PrismaClient;
     const jobs = { cancel: vi.fn(async () => undefined) };
 
-    await expect(
-      deleteBotChat({ prisma, jobs } as never, actor, "bot-1", "thread-primary"),
-    ).rejects.toBeInstanceOf(ORPCError);
+    const result = await deleteBotChat({ prisma, jobs } as never, actor, "bot-1", "thread-primary");
+    expect(threadDelete).toHaveBeenCalledWith({ where: { id: "thread-primary" } });
+    expect(threadUpdate).toHaveBeenCalledWith({
+      where: { id: "thread-extra-2" },
+      data: { botId: "bot-1", chatBotId: null },
+    });
+    expect(result).toEqual({ nextThreadId: "thread-extra-2" });
+  });
+
+  it("deletes the sole remaining conversation by replacing it with a fresh blank thread", async () => {
+    const threadDelete = vi.fn(async () => undefined);
+    const threadCreate = vi.fn(async () => ({ id: "thread-fresh" }));
+    const threadFindFirst = vi
+      .fn()
+      .mockResolvedValueOnce({ id: "thread-primary", botId: "bot-1" })
+      .mockResolvedValueOnce(null);
+    const tx = {
+      thread: {
+        findFirst: threadFindFirst,
+        delete: threadDelete,
+        update: vi.fn(),
+        create: threadCreate,
+      },
+      run: { findMany: vi.fn(async () => []), updateManyAndReturn: vi.fn(async () => []) },
+      attempt: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      task: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      externalEffect: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      message: { findMany: vi.fn(async () => []) },
+      secret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      runSecret: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      steeringMessage: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+      computerExecutionLease: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      chatFileIndex: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      chatFileIndexEntry: { updateMany: vi.fn(async () => ({ count: 0 })) },
+      conversationDeletion: { createMany: vi.fn(async () => ({ count: 1 })) },
+    };
+    const prisma = {
+      bot: { findFirst: vi.fn(async () => makeBotRecord()) },
+      $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx)),
+    } as unknown as PrismaClient;
+    const jobs = { cancel: vi.fn(async () => undefined) };
+
+    const result = await deleteBotChat({ prisma, jobs } as never, actor, "bot-1", "thread-primary");
+    expect(threadDelete).toHaveBeenCalledWith({ where: { id: "thread-primary" } });
+    expect(threadCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          spaceId: actor.spaceId,
+          userId: actor.userId,
+          botId: "bot-1",
+        }),
+      }),
+    );
+    expect(result).toEqual({ nextThreadId: "thread-fresh" });
   });
 
   it("deletes an extra chat cleanly, cancelling runs, retiring file indexes, and recording deletion", async () => {
@@ -233,7 +318,10 @@ describe("bot-chats CRUD and safety", () => {
 
     const tx = {
       thread: {
-        findFirst: vi.fn(async () => ({ id: "thread-extra-1" })),
+        findFirst: vi
+          .fn()
+          .mockResolvedValueOnce({ id: "thread-extra-1", botId: null })
+          .mockResolvedValueOnce({ id: "thread-primary" }),
         delete: threadDelete,
       },
       run: {

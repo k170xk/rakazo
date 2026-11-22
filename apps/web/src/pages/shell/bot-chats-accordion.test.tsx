@@ -78,7 +78,7 @@ afterEach(() => {
 const primaryChat: BotChatSummary = {
   id: "thread-main",
   botId: "bot-1",
-  title: "",
+  title: "Initial Review",
   isPrimary: true,
   preview: "Main chat preview",
   unread: false,
@@ -118,7 +118,7 @@ const populatedExtraChat: BotChatSummary = {
 };
 
 function makeFixture(chats: BotChatSummary[]) {
-  const deleteChat = vi.fn(async () => ({ ok: true as const }));
+  const deleteChat = vi.fn(async () => ({ ok: true as const, nextThreadId: "thread-topic" }));
   const renameChat = vi.fn(async ({ threadId, title }: { threadId: string; title: string }) => ({
     chat: {
       ...(chats.find((c) => c.id === threadId) ?? primaryChat),
@@ -179,17 +179,17 @@ it("renders Main chat without a delete button, lets users switch, and deletes bl
     "Conversations with Document Reviewer",
   );
 
-  // Primary row has NO delete button, only rename
+  // Every chat is treated equally: no "Main" badge, and every chat has both rename and delete
   const mainRow = container.querySelector('[data-bot-chat-id="thread-main"]')!;
-  expect(mainRow.textContent).toContain("Main chat");
-  expect(mainRow.textContent).toContain("Main");
-  expect(mainRow.querySelector('button[aria-label^="Delete"]')).toBeNull();
+  expect(mainRow.textContent).toContain("Initial Review");
+  expect(mainRow.textContent).not.toContain("Main");
+  expect(mainRow.querySelector('button[aria-label^="Delete"]')).not.toBeNull();
   expect(mainRow.querySelector('button[aria-label^="Rename"]')).not.toBeNull();
 
-  // Clicking Main row selects primary (threadId = undefined)
+  // Clicking any chat selects it by its thread ID
   const mainSelectBtn = mainRow.querySelector("button")!;
   act(() => mainSelectBtn.click());
-  expect(onSelectChat).toHaveBeenCalledWith("space-1", "bot-1", undefined);
+  expect(onSelectChat).toHaveBeenCalledWith("space-1", "bot-1", "thread-main");
 
   // Blank extra chat deletes immediately without confirmation modal
   const blankRow = container.querySelector('[data-bot-chat-id="thread-blank"]')!;
@@ -197,9 +197,12 @@ it("renders Main chat without a delete button, lets users switch, and deletes bl
   await act(async () => blankDeleteBtn.click());
   expect(container.querySelector('[role="alertdialog"]')).toBeNull();
   expect(deleteChat).toHaveBeenCalledWith({ botId: "bot-1", threadId: "thread-blank" });
-  expect(onChatDeleted).toHaveBeenCalledWith("bot-1", "thread-blank");
+  expect(onChatDeleted).toHaveBeenCalledWith("bot-1", "thread-blank", {
+    wasDefault: false,
+    nextThreadId: "thread-topic",
+  });
 
-  // Populated extra chat opens confirmation dialog before deleting
+  // Populated chat opens confirmation dialog before deleting
   const topicRow = container.querySelector('[data-bot-chat-id="thread-topic"]')!;
   const topicDeleteBtn = topicRow.querySelector('button[aria-label^="Delete"]') as HTMLButtonElement;
   act(() => topicDeleteBtn.click());
@@ -214,7 +217,10 @@ it("renders Main chat without a delete button, lets users switch, and deletes bl
   ) as HTMLButtonElement;
   await act(async () => confirmBtn.click());
   expect(deleteChat).toHaveBeenCalledWith({ botId: "bot-1", threadId: "thread-topic" });
-  expect(onChatDeleted).toHaveBeenCalledWith("bot-1", "thread-topic");
+  expect(onChatDeleted).toHaveBeenCalledWith("bot-1", "thread-topic", {
+    wasDefault: false,
+    nextThreadId: "thread-topic",
+  });
 });
 
 it("supports inline renaming a chat and saving via form submit", async () => {

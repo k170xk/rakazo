@@ -378,6 +378,8 @@ export function userTurnInstructions(parts: {
   followUpsOffered?: boolean;
   /** The run has the Evolve plugin tools (see evolvePluginsOffered). */
   evolvePluginsOffered?: boolean;
+  /** True on the opening turn of a brand-new direct chat thread (no earlier messages in this thread). */
+  freshDirectConversation?: boolean;
   userComputer?: UserComputerState;
 }): (string | undefined)[] {
   return [
@@ -468,6 +470,9 @@ export function userTurnInstructions(parts: {
     userComputerInstruction(parts.userComputer),
     parts.groupContext,
     parts.messagingContext,
+    parts.freshDirectConversation
+      ? "This is a brand-new conversation thread with no earlier messages yet. Respond directly to the user's message here as a fresh topic. Your durable memory and open scratchpad items below are background reference only — do not proactively follow up on or bring up work from other conversations unless the user asks about it."
+      : undefined,
     parts.redactedMemoryContext,
     parts.redactedScratchpadContext,
     parts.redactedTicketContext,

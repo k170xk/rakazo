@@ -868,8 +868,8 @@ export function threadsRoutes(ctx: RouterContext) {
         };
       }),
       deleteChat: authed.threads.deleteChat.handler(async ({ context, input }) => {
-        await deleteBotChat(deps, context.actor, input.botId, input.threadId);
-        return { ok: true as const };
+        const result = await deleteBotChat(deps, context.actor, input.botId, input.threadId);
+        return { ok: true as const, ...(result.nextThreadId ? { nextThreadId: result.nextThreadId } : {}) };
       }),
     },
     externalConversations: {

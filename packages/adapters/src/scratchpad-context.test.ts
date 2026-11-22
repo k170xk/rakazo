@@ -50,6 +50,7 @@ describe("scratchpad prompt context", () => {
     expect(result).toContain("[open] Ship scratchpad — link PR (id: a)");
     expect(result).toContain("[parked] Parked idea (id: b)");
     expect(result).toContain("not a scheduler");
+    expect(result).toContain("don't bring up unrelated items unprompted");
     expect(result?.endsWith("</scratchpad_open>")).toBe(true);
     expect(result).not.toContain("[done]");
   });

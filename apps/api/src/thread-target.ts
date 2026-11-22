@@ -1014,7 +1014,12 @@ export async function sendThreadMessage(
           replyQuote,
           clientNonce: input.clientNonce,
         });
-        if (target.isPrimaryThread === false && !target.threadTitle) {
+        if (
+          target.kind === "bot" &&
+          !target.threadTitle &&
+          (message.seq === 0 || target.isPrimaryThread === false) &&
+          typeof tx.thread?.updateMany === "function"
+        ) {
           const derivedTitle = deriveChatTitleFromText(input.text);
           if (derivedTitle) {
             await tx.thread.updateMany({

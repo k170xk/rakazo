@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { runJobKey } from "@rakazo/adapter-kit";
 import type { Actor, BotChatSummary, MessageBlock } from "@rakazo/contracts";
 import {
@@ -107,7 +106,10 @@ async function buildChatSummaries(
 ): Promise<BotChatSummary[]> {
   if (threads.length === 0) return [];
   const threadIds = threads.map((thread) => thread.id);
-  const [recentMessages, activeRuns, latestRuns] = await Promise.all([
+  const untitledThreadIds = threads
+    .filter((thread) => !thread.title?.trim() && thread.nextMessageSeq > 0)
+    .map((thread) => thread.id);
+  const [recentMessages, earliestUserMessages, activeRuns, latestRuns] = await Promise.all([
     prisma.message.findMany({
       where: { threadId: { in: threadIds } },
       orderBy: [{ seq: "desc" }],
@@ -123,6 +125,14 @@ async function buildChatSummaries(
         createdAt: true,
       },
     }),
+    untitledThreadIds.length > 0
+      ? prisma.message.findMany({
+          where: { threadId: { in: untitledThreadIds }, role: "user" },
+          orderBy: [{ seq: "asc" }],
+          distinct: ["threadId"],
+          select: { threadId: true, blocks: true },
+        })
+      : Promise.resolve([]),
     prisma.run.findMany({
       where: {
         botId,
@@ -169,6 +179,9 @@ async function buildChatSummaries(
     messagesByThread.set(message.threadId, list);
   }
   const latestRunByThread = new Map(latestRuns.map((run) => [run.threadId, run]));
+  const earliestUserByThread = new Map(
+    earliestUserMessages.map((message) => [message.threadId, message.blocks as MessageBlock[]]),
+  );
 
   return threads.map((thread) => {
     const messages = messagesByThread.get(thread.id) ?? [];
@@ -194,10 +207,20 @@ async function buildChatSummaries(
     const status = threadRunStatus(threadActiveRuns, thread.id);
     const runErrorId = runErrorIdForThread(latestRunByThread.get(thread.id), activeRun);
     const newestCreatedAt = messages[0]?.createdAt ?? thread.updatedAt ?? thread.createdAt;
+    const explicitTitle = thread.title?.trim() ?? "";
+    const fallbackTitle =
+      explicitTitle ||
+      deriveChatTitleFromText(
+        earliestUserByThread.has(thread.id)
+          ? previewFromBlocks(earliestUserByThread.get(thread.id)!)
+          : undefined,
+      ) ||
+      deriveChatTitleFromText(preview) ||
+      "";
     return {
       id: thread.id,
       botId,
-      title: thread.title?.trim() ?? "",
+      title: fallbackTitle,
       isPrimary: thread.botId === botId,
       preview,
       unread: thread.unread,
@@ -210,7 +233,7 @@ async function buildChatSummaries(
   });
 }
 
-/** Lists the agent's primary conversation first, followed by additional conversations newest-active first. */
+/** Lists all conversations belonging to an agent, newest-active first. */
 export async function listBotChats(
   prisma: PrismaClient,
   actor: Actor,
@@ -236,11 +259,9 @@ export async function listBotChats(
     },
   });
   const summaries = await buildChatSummaries(prisma, bot.id, [bot.thread, ...extraThreads]);
-  const primary = summaries.find((item) => item.isPrimary);
-  const extras = summaries
-    .filter((item) => !item.isPrimary)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  return primary ? [primary, ...extras] : extras;
+  return summaries.sort(
+    (a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.createdAt.localeCompare(a.createdAt),
+  );
 }
 
 /** Creates a brand-new blank conversation under an agent. */
@@ -322,60 +343,113 @@ export async function renameBotChat(
   return summary;
 }
 
-/** Deletes an additional conversation under an agent. Never deletes the primary conversation. */
+/**
+ * Deletes any conversation belonging to an agent while keeping the agent's
+ * memories, routines, instructions, skills, and computer intact.
+ * If the deleted conversation held the agent's default `botId` slot, either
+ * the most recently active remaining conversation is promoted into that slot
+ * or a fresh blank thread is created so routines/webhooks always have a target.
+ */
 export async function deleteBotChat(
   deps: Pick<RouterDeps, "prisma" | "jobs">,
   actor: Actor,
   botId: string,
   threadId: string,
-): Promise<void> {
+): Promise<{ nextThreadId?: string }> {
   const bot = await requireOwnedBot(deps.prisma, actor, botId);
-  if (bot.thread.id === threadId) {
-    throw new ORPCError("BAD_REQUEST", {
-      message: "The main conversation cannot be deleted. You can clear it instead.",
-    });
-  }
-  const cancelledRunIds = await deps.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const thread = await tx.thread.findFirst({
-      where: {
-        id: threadId,
-        spaceId: actor.spaceId,
-        userId: actor.userId,
-        chatBotId: bot.id,
-      },
-      select: { id: true },
-    });
-    if (!thread) throw new IsolationError();
-    const now = new Date();
-    const activeRuns = await tx.run.findMany({
-      where: {
-        spaceId: actor.spaceId,
-        threadId: thread.id,
-        status: { in: [...ACTIVE_RUN_STATUSES] },
-      },
-      select: { id: true, taskId: true, userId: true, spaceId: true },
-    });
-    const runIds = (await cancelRunsInTransaction(tx, activeRuns, now)).map((run) => run.id);
-    if (runIds.length > 0) {
-      await expireComputerExecutionLeases(tx, { runId: { in: runIds } });
-    }
-    const retiredIndex = `${thread.id}:deleted:${now.getTime()}`;
-    await tx.chatFileIndex.updateMany({
-      where: { threadId: thread.id },
-      data: { threadId: retiredIndex },
-    });
-    await tx.chatFileIndexEntry.updateMany({
-      where: { threadId: thread.id },
-      data: { threadId: retiredIndex },
-    });
-    await tx.conversationDeletion.createMany({
-      data: [{ spaceId: bot.spaceId, userId: bot.userId, threadId: thread.id }],
-      skipDuplicates: true,
-    });
-    await tx.thread.delete({ where: { id: thread.id } });
-    return runIds;
-  });
+  const { cancelledRunIds, nextThreadId } = await deps.prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      const thread = await tx.thread.findFirst({
+        where: {
+          id: threadId,
+          spaceId: actor.spaceId,
+          userId: actor.userId,
+          OR: [{ botId: bot.id }, { chatBotId: bot.id }],
+        },
+        select: { id: true, botId: true },
+      });
+      if (!thread) throw new IsolationError();
+      const now = new Date();
+      const activeRuns = await tx.run.findMany({
+        where: {
+          spaceId: actor.spaceId,
+          threadId: thread.id,
+          status: { in: [...ACTIVE_RUN_STATUSES] },
+        },
+        select: { id: true, taskId: true, userId: true, spaceId: true },
+      });
+      const runIds = (await cancelRunsInTransaction(tx, activeRuns, now)).map((run) => run.id);
+      if (runIds.length > 0) {
+        await expireComputerExecutionLeases(tx, { runId: { in: runIds } });
+      }
+      const retiredIndex = `${thread.id}:deleted:${now.getTime()}`;
+      await tx.chatFileIndex.updateMany({
+        where: { threadId: thread.id },
+        data: { threadId: retiredIndex },
+      });
+      await tx.chatFileIndexEntry.updateMany({
+        where: { threadId: thread.id },
+        data: { threadId: retiredIndex },
+      });
+      await tx.conversationDeletion.createMany({
+        data: [{ spaceId: bot.spaceId, userId: bot.userId, threadId: thread.id }],
+        skipDuplicates: true,
+      });
+
+      const wasDefaultThread = thread.botId === bot.id;
+      const replacement = wasDefaultThread
+        ? await tx.thread.findFirst({
+            where: {
+              spaceId: actor.spaceId,
+              userId: actor.userId,
+              chatBotId: bot.id,
+              id: { not: thread.id },
+            },
+            orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+            select: { id: true },
+          })
+        : null;
+
+      await tx.thread.delete({ where: { id: thread.id } });
+
+      let nextId: string | undefined;
+      if (wasDefaultThread) {
+        if (replacement) {
+          await tx.thread.update({
+            where: { id: replacement.id },
+            data: { botId: bot.id, chatBotId: null },
+          });
+          nextId = replacement.id;
+        } else {
+          const fresh = await tx.thread.create({
+            data: {
+              spaceId: bot.spaceId,
+              userId: bot.userId,
+              botId: bot.id,
+              updatedAt: now,
+            },
+            select: { id: true },
+          });
+          nextId = fresh.id;
+        }
+      } else {
+        const remaining = await tx.thread.findFirst({
+          where: {
+            spaceId: actor.spaceId,
+            userId: actor.userId,
+            OR: [{ botId: bot.id }, { chatBotId: bot.id }],
+          },
+          orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+          select: { id: true },
+        });
+        nextId = remaining?.id;
+      }
+
+      return { cancelledRunIds: runIds, nextThreadId: nextId };
+    },
+  );
   if (cancelledRunIds.length > 0) {
     await Promise.allSettled(cancelledRunIds.map((runId) => deps.jobs.cancel(runJobKey(runId))));
   }
+  return { nextThreadId };
 }

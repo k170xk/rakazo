@@ -463,7 +463,7 @@ export function useThreadSync({
           const blocks = (event.payload.blocks as Array<{ kind?: string }>) ?? [];
           relistPagesForBlocks(queries, queryClient, blocks);
           void invalidateBotChats().catch(() => undefined);
-          if (targetThreadId && !snapshotRef.current?.threadTitle) {
+          if (!snapshotRef.current?.threadTitle) {
             void snapshotRefresh.invalidate().catch(() => undefined);
           }
           if (blocks.some((block) => block.kind === "child_bot")) {

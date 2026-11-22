@@ -674,14 +674,27 @@ function SpaceShell() {
     ],
   );
   const handleBotChatDeleted = useCallback(
-    (targetBotId: string, deletedThreadId: string) => {
+    (
+      targetBotId: string,
+      deletedThreadId: string,
+      info: { wasDefault: boolean; nextThreadId?: string },
+    ) => {
       invalidateBotChats(targetBotId);
       void refreshBots().catch(() => undefined);
-      if (activeBotId.current === targetBotId && activeThreadIdRef.current === deletedThreadId) {
-        navigateKeepingDocument(`/app/${targetBotId}`);
+      if (activeBotId.current !== targetBotId) return;
+      const deletingOpenThread =
+        activeThreadIdRef.current === deletedThreadId ||
+        (!activeThreadIdRef.current && info.wasDefault);
+      if (!deletingOpenThread) return;
+      if (activeThreadIdRef.current) {
+        navigateKeepingDocument(
+          info.nextThreadId ? `/app/${targetBotId}/c/${info.nextThreadId}` : `/app/${targetBotId}`,
+        );
+      } else {
+        void refreshThreadRef.current(targetBotId).catch(() => undefined);
       }
     },
-    [invalidateBotChats, navigateKeepingDocument, refreshBots],
+    [invalidateBotChats, navigateKeepingDocument, refreshBots, refreshThreadRef],
   );
   const handleBotChatsMutated = useCallback(
     (targetBotId: string) => {

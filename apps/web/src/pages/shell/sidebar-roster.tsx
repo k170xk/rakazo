@@ -111,7 +111,11 @@ export function SidebarRoster({
   toggleBotChats: (botId: string) => void;
   creatingChatBotId: string | null;
   onCreateBotChat: (botId: string) => void;
-  onBotChatDeleted: (botId: string, threadId: string) => void;
+  onBotChatDeleted: (
+    botId: string,
+    threadId: string,
+    info: { wasDefault: boolean; nextThreadId?: string },
+  ) => void;
   onBotChatsMutated: (botId: string) => void;
   botsSidebarDensity: BotsSidebarDensity;
   dismissedRunErrorIds: ReadonlySet<string>;

@@ -1204,14 +1204,14 @@ export const appContract = {
         }),
       )
       .output(z.object({ chat: BotChatSummarySchema })),
-    /** Deletes an additional conversation under an agent (the main conversation cannot be deleted). */
+    /** Deletes any conversation under an agent without affecting its memories, routines, or settings. */
     deleteChat: oc
       .input(
         botId.safeExtend({
           threadId: Id,
         }),
       )
-      .output(z.object({ ok: z.literal(true) })),
+      .output(z.object({ ok: z.literal(true), nextThreadId: Id.optional() })),
   },
   computer: {
     status: oc.input(botId).output(ComputerStatusSchema),

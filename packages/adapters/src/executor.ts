@@ -2441,6 +2441,12 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 offeredFleetTools: offeredFleetTools(strategicBuiltins),
                 followUpsOffered: followUpsOffered(strategicBuiltins, ownerStartedRun),
                 evolvePluginsOffered: evolvePluginsOffered(strategicBuiltins),
+                freshDirectConversation:
+                  !sharedConversation &&
+                  !thread.groupId &&
+                  run.trigger === "user" &&
+                  historicalContext.length === 0 &&
+                  !history.some((entry) => entry.id !== run.sourceMessageId),
                 userComputer,
               })
                 .filter((instruction): instruction is string => Boolean(instruction))
