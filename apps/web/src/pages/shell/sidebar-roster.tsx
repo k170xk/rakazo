@@ -14,8 +14,19 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
   GroupAvatar,
+  Spinner,
 } from "@rakazo/ui-web";
-import { ChevronDown, CircleAlert, Lock, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  CircleAlert,
+  Lock,
+  MessagesSquare,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Star,
+  Trash2,
+} from "lucide-react";
 import type { Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 import { Suspense } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
@@ -55,7 +66,7 @@ export function SidebarRoster({
   active,
   activeThreadId,
   activeGroup,
-  expandedBotIds,
+  collapsedBotIds,
   toggleBotChats,
   creatingChatBotId,
   onCreateBotChat,
@@ -96,7 +107,7 @@ export function SidebarRoster({
   active: Pick<Bot, "id"> | undefined;
   activeThreadId?: string;
   activeGroup: Pick<Group, "id"> | undefined;
-  expandedBotIds: ReadonlySet<string>;
+  collapsedBotIds: ReadonlySet<string>;
   toggleBotChats: (botId: string) => void;
   creatingChatBotId: string | null;
   onCreateBotChat: (botId: string) => void;
@@ -290,7 +301,9 @@ export function SidebarRoster({
                 const canExpandChats =
                   !mini && item.kind === "bot" && item.chat.spaceId === bootstrapMe?.spaceId;
                 const extraChatCount = item.kind === "bot" ? (item.chat.extraChatCount ?? 0) : 0;
-                const chatsExpanded = canExpandChats && expandedBotIds.has(item.chat.id);
+                const hasChatTree =
+                  canExpandChats && (extraChatCount > 0 || (selected && Boolean(activeThreadId)));
+                const chatsExpanded = hasChatTree && !collapsedBotIds.has(item.chat.id);
                 const selectedInSubChat =
                   selected && item.kind === "bot" && Boolean(activeThreadId);
                 const compact = botsSidebarDensity === "compact";
@@ -427,14 +440,14 @@ export function SidebarRoster({
                         ? "mx-auto size-12 justify-center rounded-xl"
                         : compact
                           ? `w-full min-h-11 gap-2 rounded-xl ps-2.5 ${
-                              canExpandChats ? (extraChatCount > 0 ? "pe-11" : "pe-8") : "pe-2.5"
+                              canExpandChats ? (hasChatTree ? "pe-[68px]" : "pe-8") : "pe-2.5"
                             } ${modelName ? "py-1" : "py-1.5"}`
                           : modelName
                             ? `w-full gap-3 rounded-xl ps-2.5 ${
-                                canExpandChats ? (extraChatCount > 0 ? "pe-11" : "pe-8") : "pe-2.5"
+                                canExpandChats ? (hasChatTree ? "pe-[68px]" : "pe-8") : "pe-2.5"
                               } py-1.5`
                             : `w-full gap-3 rounded-xl ps-2.5 ${
-                                canExpandChats ? (extraChatCount > 0 ? "pe-11" : "pe-8") : "pe-2.5"
+                                canExpandChats ? (hasChatTree ? "pe-[68px]" : "pe-8") : "pe-2.5"
                               } py-[10px]`
                     } text-start ${
                       item.kind === "bot" ? "cursor-grab active:cursor-grabbing" : ""
@@ -639,49 +652,63 @@ export function SidebarRoster({
                         ) : null}
                       </ContextMenu>
                       {canExpandChats && item.kind === "bot" ? (
-                        <IconTooltip
-                          label={
-                            chatsExpanded
-                              ? t`Hide chats for ${item.chat.name}`
-                              : t`Show chats for ${item.chat.name}`
-                          }
-                        >
-                          <button
-                            type="button"
-                            data-testid={`bot-chats-toggle-${item.chat.id}`}
-                            aria-expanded={chatsExpanded}
-                            aria-label={
-                              chatsExpanded
-                                ? t`Hide chats for ${item.chat.name}`
-                                : t`Show chats for ${item.chat.name}`
-                            }
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              toggleBotChats(item.chat.id);
-                            }}
-                            className={`absolute end-1.5 top-1/2 -translate-y-1/2 inline-flex items-center justify-center gap-0.5 rounded-md transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring ${
-                              extraChatCount > 0
-                                ? "h-6 bg-sidebar-border/45 px-1.5 text-[11px] font-medium tabular-nums text-muted-foreground hover:bg-sidebar-border/80 hover:text-foreground"
-                                : `size-6 text-muted-foreground hover:bg-sidebar-border/60 hover:text-foreground ${
-                                    chatsExpanded
-                                      ? "opacity-100"
-                                      : selected
-                                        ? "opacity-75 hover:opacity-100"
-                                        : "opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-70"
-                                  }`
-                            }`}
-                          >
-                            {extraChatCount > 0 ? <span>{extraChatCount + 1}</span> : null}
-                            <ChevronDown
-                              size={13}
-                              strokeWidth={2}
-                              aria-hidden="true"
-                              className={`transition-transform duration-150 ${
-                                chatsExpanded ? "rotate-180" : ""
+                        <div className="absolute end-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                          {hasChatTree ? (
+                            <IconTooltip
+                              label={
+                                chatsExpanded
+                                  ? t`Collapse conversations for ${item.chat.name}`
+                                  : t`Expand conversations for ${item.chat.name}`
+                              }
+                            >
+                              <button
+                                type="button"
+                                data-testid={`bot-chats-toggle-${item.chat.id}`}
+                                aria-expanded={chatsExpanded}
+                                aria-label={
+                                  chatsExpanded
+                                    ? t`Collapse conversations for ${item.chat.name}`
+                                    : t`Expand conversations for ${item.chat.name}`
+                                }
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleBotChats(item.chat.id);
+                                }}
+                                className={`inline-flex h-6 items-center justify-center gap-1 rounded-md px-1.5 text-[11px] font-medium tabular-nums transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring ${
+                                  chatsExpanded
+                                    ? "bg-sidebar-border/45 text-foreground/80 hover:bg-sidebar-border/80 hover:text-foreground"
+                                    : "bg-sidebar-border/60 text-muted-foreground hover:bg-sidebar-border/90 hover:text-foreground"
+                                }`}
+                              >
+                                <MessagesSquare size={11} strokeWidth={2} aria-hidden="true" />
+                                <span>{Math.max(extraChatCount + 1, 2)}</span>
+                              </button>
+                            </IconTooltip>
+                          ) : null}
+                          <IconTooltip label={t`New chat with ${item.chat.name}`}>
+                            <button
+                              type="button"
+                              disabled={creatingChatBotId === item.chat.id}
+                              data-testid={`bot-new-chat-${item.chat.id}`}
+                              aria-label={t`New chat with ${item.chat.name}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onCreateBotChat(item.chat.id);
+                              }}
+                              className={`inline-flex size-6 items-center justify-center rounded-md border border-transparent transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-60 ${
+                                selected || hasChatTree
+                                  ? "text-muted-foreground hover:border-sidebar-border hover:bg-sidebar-border/60 hover:text-foreground"
+                                  : "text-muted-foreground/60 hover:border-sidebar-border hover:bg-sidebar-border/60 hover:text-foreground group-hover/row:text-muted-foreground"
                               }`}
-                            />
-                          </button>
-                        </IconTooltip>
+                            >
+                              {creatingChatBotId === item.chat.id ? (
+                                <Spinner className="size-3" aria-label={t`Creating chat`} />
+                              ) : (
+                                <Plus size={14} strokeWidth={2} aria-hidden="true" />
+                              )}
+                            </button>
+                          </IconTooltip>
+                        </div>
                       ) : null}
                     </div>
                     {chatsExpanded && item.kind === "bot" ? (
@@ -691,18 +718,17 @@ export function SidebarRoster({
                         botId={item.chat.id}
                         botName={item.chat.name}
                         spaceId={item.chat.spaceId}
+                        compact={compact}
                         isActiveBot={!inGroup && active?.id === item.chat.id}
                         activeThreadId={
                           !inGroup && active?.id === item.chat.id ? activeThreadId : undefined
                         }
-                        creatingChat={creatingChatBotId === item.chat.id}
                         onSelectChat={(chatSpaceId, targetBotId, threadId) => {
                           openSpaceChat(
                             chatSpaceId,
                             threadId ? `/app/${targetBotId}/c/${threadId}` : `/app/${targetBotId}`,
                           );
                         }}
-                        onCreateChat={onCreateBotChat}
                         onChatDeleted={onBotChatDeleted}
                         onChatsMutated={onBotChatsMutated}
                       />

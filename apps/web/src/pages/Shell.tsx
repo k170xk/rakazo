@@ -386,14 +386,19 @@ function SpaceShell() {
   activeThreadIdRef.current = activeThreadId;
   const activeGroupId = useRef<string | undefined>(groupId);
   activeGroupId.current = groupId;
-  const [expandedBotIds, setExpandedBotIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [collapsedBotIds, setCollapsedBotIds] = useState<ReadonlySet<string>>(() => new Set());
   const [creatingChatBotId, setCreatingChatBotId] = useState<string | null>(null);
   useEffect(() => {
     if (!active || !activeThreadId) return;
-    setExpandedBotIds((prev) => (prev.has(active.id) ? prev : new Set(prev).add(active.id)));
+    setCollapsedBotIds((prev) => {
+      if (!prev.has(active.id)) return prev;
+      const next = new Set(prev);
+      next.delete(active.id);
+      return next;
+    });
   }, [active?.id, activeThreadId]);
   const toggleBotChats = useCallback((id: string) => {
-    setExpandedBotIds((prev) => {
+    setCollapsedBotIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -641,9 +646,12 @@ function SpaceShell() {
       setCreatingChatBotId(targetBotId);
       try {
         const { chat } = await rpc.threads.createChat({ botId: targetBotId });
-        setExpandedBotIds((prev) =>
-          prev.has(targetBotId) ? prev : new Set(prev).add(targetBotId),
-        );
+        setCollapsedBotIds((prev) => {
+          if (!prev.has(targetBotId)) return prev;
+          const next = new Set(prev);
+          next.delete(targetBotId);
+          return next;
+        });
         invalidateBotChats(targetBotId);
         void refreshBots().catch(() => undefined);
         setMobileSidebarOpen(false);
@@ -1358,7 +1366,7 @@ function SpaceShell() {
             active={active}
             activeThreadId={activeThreadId}
             activeGroup={activeGroup}
-            expandedBotIds={expandedBotIds}
+            collapsedBotIds={collapsedBotIds}
             toggleBotChats={toggleBotChats}
             creatingChatBotId={creatingChatBotId}
             onCreateBotChat={(id) => void createBotChat(id)}

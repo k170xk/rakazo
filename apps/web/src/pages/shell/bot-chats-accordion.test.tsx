@@ -142,14 +142,13 @@ function makeFixture(chats: BotChatSummary[]) {
   return { rpc, queries, deleteChat, renameChat };
 }
 
-it("renders Main chat without a delete button, lets users create, switch, and delete blank chats immediately", async () => {
+it("renders Main chat without a delete button, lets users switch, and deletes blank chats immediately", async () => {
   const { rpc, queries, deleteChat } = makeFixture([
     primaryChat,
     blankExtraChat,
     populatedExtraChat,
   ]);
   const onSelectChat = vi.fn();
-  const onCreateChat = vi.fn();
   const onChatDeleted = vi.fn();
   const onChatsMutated = vi.fn();
 
@@ -164,9 +163,7 @@ it("renders Main chat without a delete button, lets users create, switch, and de
           spaceId="space-1"
           isActiveBot
           activeThreadId="thread-topic"
-          creatingChat={false}
           onSelectChat={onSelectChat}
-          onCreateChat={onCreateChat}
           onChatDeleted={onChatDeleted}
           onChatsMutated={onChatsMutated}
         />
@@ -177,11 +174,10 @@ it("renders Main chat without a delete button, lets users create, switch, and de
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 
-  // + New chat button works
-  const newChatBtn = container.querySelector('[data-testid="bot-new-chat-bot-1"]') as HTMLButtonElement;
-  expect(newChatBtn).not.toBeNull();
-  act(() => newChatBtn.click());
-  expect(onCreateChat).toHaveBeenCalledWith("bot-1");
+  // Tree group renders with accessible label
+  expect(container.querySelector('[role="group"]')?.getAttribute("aria-label")).toBe(
+    "Conversations with Document Reviewer",
+  );
 
   // Primary row has NO delete button, only rename
   const mainRow = container.querySelector('[data-bot-chat-id="thread-main"]')!;
@@ -236,9 +232,7 @@ it("supports inline renaming a chat and saving via form submit", async () => {
           spaceId="space-1"
           isActiveBot
           activeThreadId="thread-topic"
-          creatingChat={false}
           onSelectChat={vi.fn()}
-          onCreateChat={vi.fn()}
           onChatDeleted={vi.fn()}
           onChatsMutated={onChatsMutated}
         />

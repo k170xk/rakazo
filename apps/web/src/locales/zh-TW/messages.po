@@ -3745,6 +3745,11 @@ msgstr ""
 msgid "Collapse {0}"
 msgstr "摺疊 {0}"
 
+#. placeholder {0}: item.chat.name
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Collapse conversations for {0}"
+msgstr ""
+
 #: src/components/apps/AppSettingsPanel.tsx
 #: src/components/apps/TemplateAppButton.tsx
 msgid "Colleagues add their own"
@@ -4328,6 +4333,10 @@ msgstr "使用 <0/> 繼續"
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
 msgstr "對話"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Conversations with {botName}"
+msgstr ""
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/ImageLightbox.tsx
@@ -5617,8 +5626,8 @@ msgstr ""
 msgid "Creates a finished OCSC document from a short brief, on the company template"
 msgstr ""
 
-#: src/pages/shell/bot-chats-accordion.tsx
 #: src/pages/shell/chat-header.tsx
+#: src/pages/shell/sidebar-roster.tsx
 msgid "Creating chat"
 msgstr ""
 
@@ -7291,6 +7300,11 @@ msgstr "展開"
 msgid "Expand {0}"
 msgstr "展開 {0}"
 
+#. placeholder {0}: item.chat.name
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Expand conversations for {0}"
+msgstr ""
+
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
 msgstr "展開表格"
@@ -8138,11 +8152,6 @@ msgstr "放映時隱藏"
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Hide"
 msgstr "隱藏"
-
-#. placeholder {0}: item.chat.name
-#: src/pages/shell/sidebar-roster.tsx
-msgid "Hide chats for {0}"
-msgstr ""
 
 #: src/components/office/slides/SlideRail.tsx
 msgid "Hide in slideshow"
@@ -10271,7 +10280,9 @@ msgid "New chat"
 msgstr ""
 
 #. placeholder {0}: active.name
+#. placeholder {0}: item.chat.name
 #: src/pages/Shell.tsx
+#: src/pages/shell/sidebar-roster.tsx
 msgid "New chat with {0}"
 msgstr ""
 
@@ -14535,11 +14546,6 @@ msgstr "顯示全部"
 
 #: src/components/office/planner/PlannerToolbar.tsx
 msgid "Show baselines"
-msgstr ""
-
-#. placeholder {0}: item.chat.name
-#: src/pages/shell/sidebar-roster.tsx
-msgid "Show chats for {0}"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx

@@ -3749,6 +3749,11 @@ msgstr "Code changes"
 msgid "Collapse {0}"
 msgstr "Collapse {0}"
 
+#. placeholder {0}: item.chat.name
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Collapse conversations for {0}"
+msgstr "Collapse conversations for {0}"
+
 #: src/components/apps/AppSettingsPanel.tsx
 #: src/components/apps/TemplateAppButton.tsx
 msgid "Colleagues add their own"
@@ -4332,6 +4337,10 @@ msgstr "Continue with <0/>"
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Conversations"
 msgstr "Conversations"
+
+#: src/pages/shell/bot-chats-accordion.tsx
+msgid "Conversations with {botName}"
+msgstr "Conversations with {botName}"
 
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/ImageLightbox.tsx
@@ -5621,8 +5630,8 @@ msgstr "Created once, when you first file into a new project."
 msgid "Creates a finished OCSC document from a short brief, on the company template"
 msgstr "Creates a finished OCSC document from a short brief, on the company template"
 
-#: src/pages/shell/bot-chats-accordion.tsx
 #: src/pages/shell/chat-header.tsx
+#: src/pages/shell/sidebar-roster.tsx
 msgid "Creating chat"
 msgstr "Creating chat"
 
@@ -7303,6 +7312,11 @@ msgstr "Expand"
 msgid "Expand {0}"
 msgstr "Expand {0}"
 
+#. placeholder {0}: item.chat.name
+#: src/pages/shell/sidebar-roster.tsx
+msgid "Expand conversations for {0}"
+msgstr "Expand conversations for {0}"
+
 #: src/components/markdown-copy.tsx
 msgid "Expand table"
 msgstr "Expand table"
@@ -8150,11 +8164,6 @@ msgstr "Hidden in the slide show"
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Hide"
 msgstr "Hide"
-
-#. placeholder {0}: item.chat.name
-#: src/pages/shell/sidebar-roster.tsx
-msgid "Hide chats for {0}"
-msgstr "Hide chats for {0}"
 
 #: src/components/office/slides/SlideRail.tsx
 msgid "Hide in slideshow"
@@ -10288,7 +10297,9 @@ msgid "New chat"
 msgstr "New chat"
 
 #. placeholder {0}: active.name
+#. placeholder {0}: item.chat.name
 #: src/pages/Shell.tsx
+#: src/pages/shell/sidebar-roster.tsx
 msgid "New chat with {0}"
 msgstr "New chat with {0}"
 
@@ -14553,11 +14564,6 @@ msgstr "Show all"
 #: src/components/office/planner/PlannerToolbar.tsx
 msgid "Show baselines"
 msgstr "Show baselines"
-
-#. placeholder {0}: item.chat.name
-#: src/pages/shell/sidebar-roster.tsx
-msgid "Show chats for {0}"
-msgstr "Show chats for {0}"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Show everything (admins)"

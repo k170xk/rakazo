@@ -16,7 +16,7 @@ import {
   toast,
 } from "@rakazo/ui-web";
 import { useQuery } from "@tanstack/react-query";
-import { Check, MessageSquare, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, MessageSquare, Pencil, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { SpaceQueries } from "../../lib/query";
 import { queryClient } from "../../lib/query";
@@ -29,11 +29,10 @@ export function BotChatsAccordion({
   botId,
   botName,
   spaceId,
+  compact = false,
   isActiveBot,
   activeThreadId,
-  creatingChat,
   onSelectChat,
-  onCreateChat,
   onChatDeleted,
   onChatsMutated,
 }: {
@@ -42,11 +41,10 @@ export function BotChatsAccordion({
   botId: string;
   botName: string;
   spaceId: string;
+  compact?: boolean;
   isActiveBot: boolean;
   activeThreadId: string | undefined;
-  creatingChat: boolean;
   onSelectChat: (spaceId: string, botId: string, threadId?: string) => void;
-  onCreateChat: (botId: string) => void;
   onChatDeleted: (botId: string, threadId: string) => void;
   onChatsMutated: (botId: string) => void;
 }) {
@@ -132,183 +130,206 @@ export function BotChatsAccordion({
   };
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: groups sidebar conversation branches under an agent.
     <div
+      role="group"
+      aria-label={t`Conversations with ${botName}`}
       data-testid={`bot-chats-accordion-${botId}`}
-      className="ms-[22px] mt-0.5 mb-1.5 flex flex-col gap-0.5 border-s border-sidebar-border/80 ps-2.5 pt-0.5"
+      className={`relative mb-1.5 flex flex-col ps-3.5 ${compact ? "ms-[22px]" : "ms-[26px]"}`}
     >
-      <button
-        type="button"
-        disabled={creatingChat}
-        data-testid={`bot-new-chat-${botId}`}
-        onClick={() => onCreateChat(botId)}
-        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-start text-[12.5px] font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60"
-      >
-        {creatingChat ? (
-          <Spinner className="size-3.5 shrink-0" aria-label={t`Creating chat`} />
-        ) : (
-          <Plus size={14} strokeWidth={2} className="shrink-0" aria-hidden="true" />
-        )}
-        <span className="truncate">{t`New chat`}</span>
-      </button>
-
       {isLoading && chats.length === 0 ? (
-        <div className="flex items-center gap-2 px-2 py-1.5 text-[12px] text-muted-foreground">
-          <Spinner className="size-3 shrink-0" aria-label={t`Loading chats`} />
-          <span>{t`Loading chats…`}</span>
+        <div className="relative py-[1px]">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -start-3.5 -top-1 h-[20px] w-3 rounded-bl-[7px] border-b border-s border-sidebar-border/90"
+          />
+          <div className="flex items-center gap-2 px-2 py-1.5 text-[12px] text-muted-foreground">
+            <Spinner className="size-3 shrink-0" aria-label={t`Loading chats`} />
+            <span>{t`Loading chats…`}</span>
+          </div>
         </div>
       ) : (
-        chats.map((chat) => {
+        chats.map((chat, index) => {
+          const isFirst = index === 0;
+          const isLast = index === chats.length - 1;
           const isSelected =
             isActiveBot && (chat.isPrimary ? !activeThreadId : activeThreadId === chat.id);
           const working = isRunWorking(chat.status);
           const isEditing = editingId === chat.id;
           const displayTitle = chat.title || (chat.isPrimary ? t`Main chat` : t`New chat`);
 
+          const branchGuides = (
+            <>
+              {!isLast ? (
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute -start-3.5 bottom-0 w-px bg-sidebar-border/90 ${
+                    isFirst ? "-top-1" : "top-0"
+                  }`}
+                />
+              ) : null}
+              <span
+                aria-hidden="true"
+                className={`pointer-events-none absolute -start-3.5 w-3 rounded-bl-[7px] border-b border-s border-sidebar-border/90 ${
+                  isFirst ? "-top-1 h-[20px]" : "top-0 h-[16px]"
+                }`}
+              />
+            </>
+          );
+
           if (isEditing) {
             return (
-              <form
-                key={chat.id}
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void commitRename(chat);
-                }}
-                className="flex items-center gap-1 rounded-lg bg-sidebar-accent px-1.5 py-1"
-              >
-                <input
-                  ref={editInputRef}
-                  type="text"
-                  value={draftTitle}
-                  maxLength={120}
-                  disabled={savingId === chat.id}
-                  placeholder={chat.isPrimary ? t`Main chat` : t`Chat title`}
-                  aria-label={t`Chat title`}
-                  onChange={(event) => setDraftTitle(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") {
-                      event.preventDefault();
-                      cancelEditing();
-                    }
+              <div key={chat.id} className="relative py-[1px]">
+                {branchGuides}
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void commitRename(chat);
                   }}
-                  onBlur={() => void commitRename(chat)}
-                  className="min-w-0 flex-1 rounded bg-background px-1.5 py-0.5 text-[12.5px] text-foreground outline-none ring-1 ring-ring"
-                />
-                <button
-                  type="submit"
-                  disabled={savingId === chat.id}
-                  aria-label={t`Save chat name`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+                  className="flex items-center gap-1 rounded-lg bg-sidebar-accent px-1.5 py-1"
                 >
-                  <Check size={13} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  disabled={savingId === chat.id}
-                  aria-label={t`Cancel rename`}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={cancelEditing}
-                  className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
-                >
-                  <X size={13} aria-hidden="true" />
-                </button>
-              </form>
+                  <input
+                    ref={editInputRef}
+                    type="text"
+                    value={draftTitle}
+                    maxLength={120}
+                    disabled={savingId === chat.id}
+                    placeholder={chat.isPrimary ? t`Main chat` : t`Chat title`}
+                    aria-label={t`Chat title`}
+                    onChange={(event) => setDraftTitle(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        event.preventDefault();
+                        cancelEditing();
+                      }
+                    }}
+                    onBlur={() => void commitRename(chat)}
+                    className="min-w-0 flex-1 rounded bg-background px-1.5 py-0.5 text-[12.5px] text-foreground outline-none ring-1 ring-ring"
+                  />
+                  <button
+                    type="submit"
+                    disabled={savingId === chat.id}
+                    aria-label={t`Save chat name`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+                  >
+                    <Check size={13} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingId === chat.id}
+                    aria-label={t`Cancel rename`}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={cancelEditing}
+                    className="inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background hover:text-foreground"
+                  >
+                    <X size={13} aria-hidden="true" />
+                  </button>
+                </form>
+              </div>
             );
           }
 
           return (
-            <div
-              key={chat.id}
-              data-bot-chat-id={chat.id}
-              className={`group/chat relative flex items-center rounded-lg transition-colors ${
-                isSelected ? "bg-sidebar-accent" : "hover:bg-accent"
-              }`}
-            >
-              <button
-                type="button"
-                aria-current={isSelected ? "page" : undefined}
-                onClick={() => onSelectChat(spaceId, botId, chat.isPrimary ? undefined : chat.id)}
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 pe-14 text-start"
+            <div key={chat.id} className="relative py-[1px]">
+              {branchGuides}
+              <div
+                data-bot-chat-id={chat.id}
+                className={`group/chat relative flex items-center rounded-lg transition-colors ${
+                  isSelected ? "bg-sidebar-accent" : "hover:bg-accent"
+                }`}
               >
-                {working ? (
-                  <span
-                    aria-label={t`Working`}
-                    className="size-2 shrink-0 animate-pulse rounded-full bg-status-working"
-                  />
-                ) : (
-                  <MessageSquare
-                    size={13}
-                    strokeWidth={1.8}
-                    aria-hidden="true"
-                    className={`shrink-0 ${
-                      isSelected ? "text-foreground/80" : "text-muted-foreground/75"
-                    }`}
-                  />
-                )}
-                <span
-                  dir="auto"
-                  className={`min-w-0 flex-1 truncate text-[12.5px] ${
-                    isSelected || chat.unread ? "font-medium text-foreground" : "text-foreground/80"
-                  }`}
-                >
-                  {displayTitle}
-                </span>
-                {chat.isPrimary ? (
-                  <span className="shrink-0 rounded bg-sidebar-border/70 px-1 py-px text-[9.5px] font-medium text-muted-foreground">
-                    {t`Main`}
-                  </span>
-                ) : null}
-              </button>
-
-              <div className="pointer-events-none absolute end-1.5 flex items-center gap-1">
-                {chat.unread ? (
-                  <span
-                    aria-label={t`Unread`}
-                    className="size-1.5 rounded-full bg-unread group-hover/chat:hidden"
-                  />
-                ) : null}
-                <span className="text-[10.5px] text-faint-foreground tabular-nums group-hover/chat:hidden group-focus-within/chat:hidden">
-                  {formatShortChatTime(chat.updatedAt)}
-                </span>
-              </div>
-
-              <div className="absolute end-1 flex items-center gap-0.5 opacity-0 transition-opacity group-hover/chat:opacity-100 group-focus-within/chat:opacity-100 [@media(hover:none)]:opacity-100">
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={t`Rename ${displayTitle}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    startEditing(chat);
-                  }}
-                  className="size-6 rounded-md text-muted-foreground hover:bg-sidebar-border/60 hover:text-foreground"
+                  aria-current={isSelected ? "page" : undefined}
+                  onClick={() =>
+                    onSelectChat(spaceId, botId, chat.isPrimary ? undefined : chat.id)
+                  }
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 pe-14 text-start"
                 >
-                  <Pencil size={12} aria-hidden="true" />
-                </Button>
-                {!chat.isPrimary ? (
+                  {working ? (
+                    <span
+                      aria-label={t`Working`}
+                      className="size-2 shrink-0 animate-pulse rounded-full bg-status-working"
+                    />
+                  ) : (
+                    <MessageSquare
+                      size={12}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                      className={`shrink-0 ${
+                        isSelected ? "text-foreground/80" : "text-muted-foreground/70"
+                      }`}
+                    />
+                  )}
+                  <span
+                    dir="auto"
+                    className={`min-w-0 flex-1 truncate text-[12.5px] ${
+                      isSelected || chat.unread
+                        ? "font-medium text-foreground"
+                        : "text-foreground/80"
+                    }`}
+                  >
+                    {displayTitle}
+                  </span>
+                  {chat.isPrimary ? (
+                    <span className="shrink-0 rounded bg-sidebar-border/70 px-1 py-px text-[9.5px] font-medium text-muted-foreground">
+                      {t`Main`}
+                    </span>
+                  ) : null}
+                </button>
+
+                <div className="pointer-events-none absolute end-1.5 flex items-center gap-1">
+                  {chat.unread ? (
+                    <span
+                      aria-label={t`Unread`}
+                      className="size-1.5 rounded-full bg-unread group-hover/chat:hidden"
+                    />
+                  ) : null}
+                  <span className="text-[10.5px] text-faint-foreground tabular-nums group-hover/chat:hidden group-focus-within/chat:hidden">
+                    {formatShortChatTime(chat.updatedAt)}
+                  </span>
+                </div>
+
+                <div className="absolute end-1 flex items-center gap-0.5 opacity-0 transition-opacity group-hover/chat:opacity-100 group-focus-within/chat:opacity-100 [@media(hover:none)]:opacity-100">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    disabled={deletingId === chat.id}
-                    aria-label={t`Delete ${displayTitle}`}
+                    aria-label={t`Rename ${displayTitle}`}
                     onClick={(event) => {
                       event.stopPropagation();
-                      if (chat.messageCount === 0) {
-                        void performDelete(chat);
-                      } else {
-                        setDeleteTarget(chat);
-                      }
+                      startEditing(chat);
                     }}
-                    className="size-6 rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                    className="size-6 rounded-md text-muted-foreground hover:bg-sidebar-border/60 hover:text-foreground"
                   >
-                    {deletingId === chat.id ? (
-                      <Spinner className="size-3" aria-label={t`Deleting`} />
-                    ) : (
-                      <Trash2 size={12} aria-hidden="true" />
-                    )}
+                    <Pencil size={12} aria-hidden="true" />
                   </Button>
-                ) : null}
+                  {!chat.isPrimary ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      disabled={deletingId === chat.id}
+                      aria-label={t`Delete ${displayTitle}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (chat.messageCount === 0) {
+                          void performDelete(chat);
+                        } else {
+                          setDeleteTarget(chat);
+                        }
+                      }}
+                      className="size-6 rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                    >
+                      {deletingId === chat.id ? (
+                        <Spinner className="size-3" aria-label={t`Deleting`} />
+                      ) : (
+                        <Trash2 size={12} aria-hidden="true" />
+                      )}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
           );
