@@ -59,7 +59,7 @@ export function PlannerHealthView({
   const tasks = plan.tasks ?? [];
   const workItems = useMemo(() => boardTasks(tasks), [tasks]);
 
-  const audit = useMemo(() => auditScheduleIntegrity(tasks, critical), [tasks, critical]);
+  const audit = useMemo(() => auditScheduleIntegrity(workItems, critical), [workItems, critical]);
   const evm = useMemo(() => calculateEVM(workItems), [workItems]);
   const baseline = useMemo(() => computeBaselineVariance(plan), [plan]);
 

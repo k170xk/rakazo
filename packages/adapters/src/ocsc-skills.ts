@@ -371,6 +371,12 @@ Adapt depth and stages to the brief (Irish CWMF Stages 1–5 / RIAI / RIBA Stage
 - Structural: GI & foundation design -> Enabling / demolition / temporary works & shoring -> Piling / foundations / basement -> Frame / RC cores / structural steelwork -> Floor slabs & stairs -> Secondary steel & roof structure -> Envelope / cladding / weathertight.
 - Mechanical & Electrical (MEP): Load assessments & utility applications (start early — long lead!) -> Stage 3/4 MEP design & plantroom coordination -> Builderswork drawings (must precede slab pours and blockwork!) -> Long-lead procurement (switchgear, transformers, generators, chillers/heat pumps, AHUs, lifts, BMS) -> Containment & First Fix (SS + lag behind structure/partitions) -> Plantroom installation -> Second Fix & Energisation (Power-On milestone) -> Pre-commissioning, flushing, balancing, BMS integration, fire & life-safety cause-and-effect witness testing -> Seasonal commissioning, O&M manuals, client training & handover.
 
+5. MULTI-YEAR & COMPLEX PROGRAMMES (1–5+ YEARS, 40–150+ TASKS)
+When asked for a detailed, complex or multi-year master programme:
+- Use multi-level WBS phases and sub-phases: "outlineLevel": 1 with "summary": true for top phases (e.g. 1. Feasibility & Surveys, 2. Concept & Statutory, 3. Detailed Design & BIM, 4. Tender & Procurement, 5. Enabling & Civil Infrastructure, 6. Substructure & Superstructure, 7. Envelope & Fit-Out, 8. MEP & Long-Lead Plant, 9. Commissioning, BCAR & Handover), "outlineLevel": 2 with "summary": true for discipline/zone sub-phases where helpful, and "outlineLevel": 2 or 3 for leaf activities and convergence milestones.
+- Use realistic multi-year durations and lead times (months/quarters, not toy 3-day bars): Planning 12–16 wks, Fire Safety & DAC 8–12 wks, ESB / Uisce Éireann / UK DNO connections 6–12 months, MV switchgear / transformers / chillers / AHUs / lifts 20–40 wks, substructure/piling, floor-by-floor RC frame/steelwork, staggered MEP First/Second Fix via SS + lag, and coordinated close-out / BCAR / O&Ms via FF. Account for Christmas / builder's holiday breaks on multi-year construction schedules.
+- Use concise, systematic IDs (p1, p1.1, c01, s01, m01, e01, ms01) so every dependsOn link is crystal clear and error-free. For very large schedules (>100 tasks), you may build the skeleton or first phases with ocsc-plan new and append remaining phases with ocsc-plan edit (add_task / link_tasks), then run ocsc-plan audit to confirm zero warnings, criticalLinks > 0 and Grade A before attaching.
+
 CREATE
 1. Write a spec for work/<short-name>.json with categories, WBS phases (summary rows), linked leaf tasks and milestones, for example:
 {"title":"HEL18 Construction Programme",
@@ -788,7 +794,8 @@ export const OCSC_SKILLS: OcscSkill[] = [
   },
   {
     name: "ocsc-plan",
-    description: "Any project programme, Gantt or MS Project plan (.jantt): ocsc-plan",
+    description:
+      "Any project programme, Gantt chart, critical-path schedule, construction/design timeline or MS Project plan (.jantt): ocsc-plan",
     body: PLAN_INSTRUCTIONS,
   },
   {

@@ -55,20 +55,24 @@ describe("OCSC programs an admin switched off", () => {
   });
 
   it("leaves the program out of the ocsc tool offered to a run", () => {
-    expect(offeredPrograms()).toEqual(["word", "pptx", "xlsx", "pdf", "video"]);
+    expect(offeredPrograms()).toEqual(["word", "pptx", "xlsx", "pdf", "plan", "video"]);
     setCompanyPolicy({ tools: { ...DEFAULT_COMPANY_TOOLS, disabledSkills: ["ocsc-video"] } });
-    expect(offeredPrograms()).toEqual(["word", "pptx", "xlsx", "pdf"]);
+    expect(offeredPrograms()).toEqual(["word", "pptx", "xlsx", "pdf", "plan"]);
   });
 
   it("names only the files the ocsc tool still makes", () => {
-    expect(ocscFileKinds(new Set())).toBe("Word, PowerPoint, Excel, PDF and video files");
-    expect(ocscFileKinds(new Set(["video"]))).toBe("Word, PowerPoint, Excel and PDF files");
-    expect(ocscFileKinds(new Set(["word", "pptx", "xlsx", "video"]))).toBe("PDF files");
+    expect(ocscFileKinds(new Set())).toBe(
+      "Word, PowerPoint, Excel, PDF, Project plan and video files",
+    );
+    expect(ocscFileKinds(new Set(["video"]))).toBe(
+      "Word, PowerPoint, Excel, PDF and Project plan files",
+    );
+    expect(ocscFileKinds(new Set(["word", "pptx", "xlsx", "plan", "video"]))).toBe("PDF files");
   });
 
   it("drops the ocsc tool when every program is off", () => {
     const tools = [{ name: "ocsc" }, { name: "shell" }];
-    const all = new Set(["word", "pptx", "xlsx", "pdf", "video"]);
+    const all = new Set(["word", "pptx", "xlsx", "pdf", "plan", "video"]);
     expect(withOcscProgramsOffered(tools, all).map((tool) => tool.name)).toEqual(["shell"]);
   });
 });

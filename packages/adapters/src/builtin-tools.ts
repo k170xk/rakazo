@@ -536,11 +536,11 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "ocsc",
     description:
-      'Run one OCSC document command (Word, PowerPoint, Excel, PDF or video) in this agent\'s document folder via the company document runners. Does not need a full computer (no shell, screen or browser). args are its command-line words, one per item, e.g. program word, args ["new", "--spec", "work/spec.json", "--out", "outputs/Report.docx"]. Paths are relative to the agent\'s folder. Use this, not shell, for OCSC commands. For new or edit, give the spec JSON as spec here, not via write_file; it is saved at --spec.',
+      'Run one OCSC document command (Word, PowerPoint, Excel, PDF, Project plan or video) in this agent\'s document folder via the company document runners. Does not need a full computer (no shell, screen or browser). args are its command-line words, one per item, e.g. program word, args ["new", "--spec", "work/spec.json", "--out", "outputs/Report.docx"]. Paths are relative to the agent\'s folder. Use this, not shell, for OCSC commands. For new or edit, give the spec JSON as spec here, not via write_file; it is saved at --spec.',
     inputSchema: {
       type: "object",
       properties: {
-        program: { type: "string", enum: ["word", "pptx", "xlsx", "pdf", "video"] },
+        program: { type: "string", enum: ["word", "pptx", "xlsx", "pdf", "plan", "video"] },
         args: { type: "array", items: { type: "string" }, maxItems: 64 },
         spec: { type: "string" },
       },

@@ -5,7 +5,6 @@
  */
 import {
   auditScheduleIntegrity,
-  calculateCriticalPath,
   getTaskDependencies,
   resolveSchedule,
 } from "@jantt/core";
@@ -128,12 +127,325 @@ function parseDepEntries(task) {
   return out;
 }
 
+function addIsoDays(dateStr, delta) {
+  const ms = Date.parse(dateStr);
+  if (Number.isNaN(ms)) return dateStr;
+  const d = new Date(ms);
+  d.setUTCDate(d.getUTCDate() + (Number.isFinite(delta) ? Math.round(delta) : 0));
+  return d.toISOString().slice(0, 10);
+}
+
+function taskGapDays(task, defaultGapDays = 0) {
+  if (task?.gapDays !== undefined && task?.gapDays !== null) return task.gapDays;
+  if (task?.minGapDays !== undefined && task?.minGapDays !== null) return task.minGapDays;
+  return defaultGapDays;
+}
+
 /**
- * Jantt's CPM engine checks `pred.earlyFinish + (task.gapDays ?? 0) === task.earlyStart` to mark a
- * link critical. In normal engineering programmes, a Finish-to-Start successor starts the next day
- * (+1 calendar day, or +3 from Friday to Monday) or after an explicit FS lag. Setting `gapDays` on
- * those tight FS transitions keeps Jantt's Critical Path continuous with red arrows across the
- * entire driving chain instead of breaking at every next-day or weekend boundary.
+ * Full Precedence Diagram Method (PDM) Critical Path Method calculation supporting all four
+ * engineering dependency types (FS, SS, FF, SF) plus per-edge lag days, while excluding unlinked
+ * WBS summary/phase rows. Matches our patched @jantt/core CPM engine identically.
+ */
+export function calculatePdmCriticalPath(tasks, options = {}) {
+  const criticalTaskIds = new Set();
+  const criticalDepKeys = new Set();
+  const nearCriticalTaskIds = new Set();
+  const metrics = new Map();
+  const criticalPaths = [];
+  const raw = (tasks ?? []).filter((t) => !t?._deleted);
+  if (raw.length === 0) {
+    return {
+      criticalTaskIds,
+      criticalDepKeys,
+      nearCriticalTaskIds,
+      projectEarlyFinish: "",
+      projectLateFinish: "",
+      projectTotalFloat: 0,
+      criticalPaths,
+      metrics,
+    };
+  }
+
+  const allById = new Map(raw.map((t) => [t.id, t]));
+  const linkedIds = new Set();
+  for (const t of raw) {
+    for (const rel of parseDepEntries(t)) {
+      if (allById.has(rel.id) && rel.id !== t.id) {
+        linkedIds.add(rel.id);
+        linkedIds.add(t.id);
+      }
+    }
+  }
+  const filtered = raw.filter((t) => !isSummaryTask(t) || linkedIds.has(t.id));
+  const active = filtered.length > 0 ? filtered : raw;
+
+  const byId = new Map();
+  const inRels = new Map();
+  const outRels = new Map();
+  const inDeg = new Map();
+  const duration = new Map();
+
+  for (const t of active) {
+    byId.set(t.id, t);
+    inRels.set(t.id, []);
+    outRels.set(t.id, []);
+    inDeg.set(t.id, 0);
+    duration.set(t.id, Math.max(0, signedDiffDays(t.start, t.end) || 0));
+  }
+
+  for (const t of active) {
+    const seen = new Set();
+    const predIds = new Set();
+    const rels = [];
+    for (const rel of parseDepEntries(t)) {
+      if (!byId.has(rel.id) || rel.id === t.id) continue;
+      const type = (rel.type || "FS").toUpperCase();
+      const lag = Number.isFinite(rel.lag) ? rel.lag : 0;
+      const key = `${rel.id}:${type}:${lag}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      rels.push({ id: rel.id, type, lag });
+      predIds.add(rel.id);
+      outRels.get(rel.id).push({ to: t.id, type, lag });
+    }
+    inRels.set(t.id, rels);
+    inDeg.set(t.id, predIds.size);
+  }
+
+  const queue = [];
+  for (const [id, deg] of inDeg.entries()) {
+    if (deg === 0) queue.push(id);
+  }
+  const order = [];
+  const remDeg = new Map(inDeg);
+  while (queue.length > 0) {
+    const id = queue.shift();
+    order.push(id);
+    const seenSucc = new Set();
+    for (const edge of outRels.get(id) ?? []) {
+      if (seenSucc.has(edge.to)) continue;
+      seenSucc.add(edge.to);
+      const deg = remDeg.get(edge.to) - 1;
+      remDeg.set(edge.to, deg);
+      if (deg === 0) queue.push(edge.to);
+    }
+  }
+  if (order.length < active.length) {
+    const seen = new Set(order);
+    for (const t of active) {
+      if (!seen.has(t.id)) order.push(t.id);
+    }
+  }
+
+  const defaultGap = typeof options.defaultGapDays === "number" ? options.defaultGapDays : 0;
+  const edgeLag = (rel, succTask) =>
+    rel.type === "FS" && rel.lag === 0 ? taskGapDays(succTask, defaultGap) : rel.lag;
+
+  const earlyStart = new Map();
+  const earlyFinish = new Map();
+  const drivingPreds = new Map();
+
+  for (const id of order) {
+    const task = byId.get(id);
+    const rels = inRels.get(id) ?? [];
+    const dur = duration.get(id) ?? 0;
+    let es = task.start;
+    if (rels.length > 0) {
+      let maxCand = null;
+      for (const rel of rels) {
+        const pred = byId.get(rel.id);
+        const pES = earlyStart.get(rel.id) ?? pred.start;
+        const pEF = earlyFinish.get(rel.id) ?? pred.end;
+        const L = edgeLag(rel, task);
+        let cand;
+        if (rel.type === "SS") cand = addIsoDays(pES, L);
+        else if (rel.type === "FF") cand = addIsoDays(pEF, L - dur);
+        else if (rel.type === "SF") cand = addIsoDays(pES, L - dur);
+        else cand = addIsoDays(pEF, L);
+        if (!maxCand || signedDiffDays(maxCand, cand) > 0) maxCand = cand;
+      }
+      if (maxCand && signedDiffDays(es, maxCand) > 0) es = maxCand;
+    }
+    const drivers = [];
+    const pushed = new Set();
+    for (const rel of rels) {
+      const pred = byId.get(rel.id);
+      const pES = earlyStart.get(rel.id) ?? pred.start;
+      const pEF = earlyFinish.get(rel.id) ?? pred.end;
+      const L = edgeLag(rel, task);
+      let cand;
+      if (rel.type === "SS") cand = addIsoDays(pES, L);
+      else if (rel.type === "FF") cand = addIsoDays(pEF, L - dur);
+      else if (rel.type === "SF") cand = addIsoDays(pES, L - dur);
+      else cand = addIsoDays(pEF, L);
+      if (signedDiffDays(cand, es) === 0 && !pushed.has(rel.id)) {
+        pushed.add(rel.id);
+        drivers.push(rel.id);
+      }
+    }
+    earlyStart.set(id, es);
+    earlyFinish.set(id, addIsoDays(es, dur));
+    drivingPreds.set(id, drivers);
+  }
+
+  let projectEarlyFinish = earlyFinish.get(active[0].id) ?? active[0].end;
+  for (const t of active) {
+    const ef = earlyFinish.get(t.id) ?? t.end;
+    if (signedDiffDays(projectEarlyFinish, ef) > 0) projectEarlyFinish = ef;
+  }
+  const projectLateFinish =
+    typeof options.targetDate === "string" && options.targetDate.trim()
+      ? options.targetDate.trim()
+      : projectEarlyFinish;
+
+  const lateFinish = new Map();
+  const lateStart = new Map();
+  for (const id of [...order].reverse()) {
+    const edges = outRels.get(id) ?? [];
+    const dur = duration.get(id) ?? 0;
+    if (edges.length === 0) {
+      lateFinish.set(id, projectLateFinish);
+    } else {
+      let minLf = projectLateFinish;
+      for (const edge of edges) {
+        const succ = byId.get(edge.to);
+        const sLS = lateStart.get(edge.to);
+        const sLF = lateFinish.get(edge.to);
+        const L = edgeLag(edge, succ);
+        let bound;
+        if (edge.type === "SS") bound = addIsoDays(sLS, -L + dur);
+        else if (edge.type === "FF") bound = addIsoDays(sLF, -L);
+        else if (edge.type === "SF") bound = addIsoDays(sLF, -L + dur);
+        else bound = addIsoDays(sLS, -L);
+        if (signedDiffDays(bound, minLf) > 0) minLf = bound;
+      }
+      lateFinish.set(id, minLf);
+    }
+    lateStart.set(id, addIsoDays(lateFinish.get(id), -dur));
+  }
+
+  const totalFloat = new Map();
+  const freeFloat = new Map();
+  let minTotalFloat = Infinity;
+  for (const t of active) {
+    const es = earlyStart.get(t.id);
+    const ls = lateStart.get(t.id);
+    const ef = earlyFinish.get(t.id);
+    const tf = signedDiffDays(es, ls);
+    totalFloat.set(t.id, tf);
+    if (tf < minTotalFloat) minTotalFloat = tf;
+
+    const edges = outRels.get(t.id) ?? [];
+    if (edges.length === 0) {
+      freeFloat.set(t.id, tf);
+    } else {
+      let minFf = Infinity;
+      for (const edge of edges) {
+        const succ = byId.get(edge.to);
+        const sES = earlyStart.get(edge.to);
+        const sEF = earlyFinish.get(edge.to);
+        const L = edgeLag(edge, succ);
+        let ff;
+        if (edge.type === "SS") ff = signedDiffDays(es, addIsoDays(sES, -L));
+        else if (edge.type === "FF") ff = signedDiffDays(ef, addIsoDays(sEF, -L));
+        else if (edge.type === "SF") ff = signedDiffDays(es, addIsoDays(sEF, -L));
+        else ff = signedDiffDays(ef, addIsoDays(sES, -L));
+        if (ff < minFf) minFf = ff;
+      }
+      freeFloat.set(t.id, Math.max(0, Math.min(tf, minFf)));
+    }
+  }
+
+  const projectTotalFloat = minTotalFloat === Infinity ? 0 : minTotalFloat;
+  const nearThr = options.nearCriticalThresholdDays ?? 3;
+  for (const t of active) {
+    const tf = totalFloat.get(t.id);
+    const isCrit = tf <= 0 || tf === minTotalFloat;
+    const isNear = !isCrit && tf - Math.min(0, minTotalFloat) <= nearThr;
+    if (isCrit) criticalTaskIds.add(t.id);
+    else if (isNear) nearCriticalTaskIds.add(t.id);
+    let slackLabel = `${tf}d buffer`;
+    if (tf < 0) slackLabel = `Overdue by ${Math.abs(tf)}d`;
+    else if (tf === 0) slackLabel = "0d (Critical)";
+    metrics.set(t.id, {
+      taskId: t.id,
+      earlyStart: earlyStart.get(t.id),
+      earlyFinish: earlyFinish.get(t.id),
+      lateStart: lateStart.get(t.id),
+      lateFinish: lateFinish.get(t.id),
+      totalFloat: tf,
+      freeFloat: freeFloat.get(t.id),
+      isCritical: isCrit,
+      isNearCritical: isNear,
+      drivingPredecessors: drivingPreds.get(t.id) ?? [],
+      slackLabel,
+    });
+  }
+
+  for (const t of active) {
+    if (!criticalTaskIds.has(t.id)) continue;
+    const vES = earlyStart.get(t.id);
+    const vEF = earlyFinish.get(t.id);
+    for (const rel of inRels.get(t.id) ?? []) {
+      if (!criticalTaskIds.has(rel.id)) continue;
+      const pES = earlyStart.get(rel.id);
+      const pEF = earlyFinish.get(rel.id);
+      const L = edgeLag(rel, t);
+      let tight = false;
+      if (rel.type === "SS") tight = signedDiffDays(addIsoDays(pES, L), vES) === 0;
+      else if (rel.type === "FF") tight = signedDiffDays(addIsoDays(pEF, L), vEF) === 0;
+      else if (rel.type === "SF") tight = signedDiffDays(addIsoDays(pES, L), vEF) === 0;
+      else tight = signedDiffDays(addIsoDays(pEF, L), vES) === 0;
+      if (tight) criticalDepKeys.add(`${rel.id}->${t.id}`);
+    }
+  }
+
+  const critIn = new Map();
+  const critOut = new Map();
+  for (const id of criticalTaskIds) {
+    critIn.set(id, 0);
+    critOut.set(id, []);
+  }
+  for (const key of criticalDepKeys) {
+    const [from, to] = key.split("->");
+    if (critIn.has(to)) critIn.set(to, critIn.get(to) + 1);
+    if (critOut.has(from)) critOut.get(from).push(to);
+  }
+  const walk = (id, chain) => {
+    const nexts = critOut.get(id) ?? [];
+    if (nexts.length === 0) {
+      criticalPaths.push([...chain]);
+      return;
+    }
+    for (const nxt of nexts) {
+      if (chain.includes(nxt)) continue;
+      chain.push(nxt);
+      walk(nxt, chain);
+      chain.pop();
+    }
+  };
+  for (const [id, deg] of critIn.entries()) {
+    if (deg === 0) walk(id, [id]);
+  }
+
+  return {
+    criticalTaskIds,
+    criticalDepKeys,
+    nearCriticalTaskIds,
+    projectEarlyFinish,
+    projectLateFinish,
+    projectTotalFloat,
+    criticalPaths,
+    metrics,
+  };
+}
+
+/**
+ * In normal engineering programmes, a zero-lag Finish-to-Start successor starts the next working
+ * day (+1 calendar day, or +3 from Friday to Monday / +2 from Saturday to Monday). Setting
+ * `gapDays` on those tight zero-lag FS transitions keeps Jantt's Critical Path continuous with red
+ * arrows across the entire driving chain instead of breaking at every next-day or weekend boundary,
+ * while explicit FS/SS/FF/SF lags are evaluated per-edge by the PDM CPM engine.
  */
 export function syncContiguousGapDays(tasks) {
   const byId = new Map(tasks.map((task) => [task.id, task]));
@@ -141,13 +453,12 @@ export function syncContiguousGapDays(tasks) {
     if (isSummaryTask(task) || task.gapDays != null || task.minGapDays != null) return task;
     const deps = parseDepEntries(task).filter((d) => byId.has(d.id) && d.id !== task.id);
     if (deps.length === 0) return task;
-    const fsDeps = deps.filter((d) => d.type === "FS");
-    if (fsDeps.length !== deps.length) return task;
+    const fsZeroLagDeps = deps.filter((d) => d.type === "FS" && d.lag === 0);
+    if (fsZeroLagDeps.length === 0) return task;
 
     let tightestDiff = Infinity;
     let tightestPred = null;
-    let explicitLag = 0;
-    for (const dep of fsDeps) {
+    for (const dep of fsZeroLagDeps) {
       const pred = byId.get(dep.id);
       if (!pred || !isDate(pred.end) || !isDate(task.start)) continue;
       const d = signedDiffDays(pred.end, task.start);
@@ -155,7 +466,6 @@ export function syncContiguousGapDays(tasks) {
       if (d < tightestDiff) {
         tightestDiff = d;
         tightestPred = pred;
-        explicitLag = dep.lag > 0 ? dep.lag : 0;
       }
     }
     if (!tightestPred || !Number.isFinite(tightestDiff) || tightestDiff === 0) return task;
@@ -165,9 +475,8 @@ export function syncContiguousGapDays(tasks) {
     const isNextDay = tightestDiff === 1;
     const isWeekendJump =
       taskDay === 1 && ((predDay === 5 && tightestDiff === 3) || (predDay === 6 && tightestDiff === 2));
-    const matchesExplicitLag = explicitLag > 0 && tightestDiff === explicitLag;
 
-    if (isNextDay || isWeekendJump || matchesExplicitLag) {
+    if (isNextDay || isWeekendJump) {
       return { ...task, gapDays: tightestDiff };
     }
     return task;
@@ -733,6 +1042,7 @@ export function applyEdits(plan, edits) {
 
   validateDependencies(tasks);
   people = prunePeople(people, tasks);
+  if (meta.defaultGapDays === undefined) meta.defaultGapDays = 0;
   const gapDays = typeof meta.defaultGapDays === "number" ? meta.defaultGapDays : 0;
   const resolved = rollupSummaryTasks(syncContiguousGapDays(resolveSchedule(tasks, gapDays)));
   const { people: _people, ...rest } = plan;
@@ -761,8 +1071,8 @@ export function analyzeSchedule(plan) {
   const milestones = leafTasks.filter((task) => Boolean(task.milestone));
 
   const gapDays = typeof plan.meta?.defaultGapDays === "number" ? plan.meta.defaultGapDays : 0;
-  const critical = calculateCriticalPath(tasks, { defaultGapDays: gapDays });
-  const leafCritical = calculateCriticalPath(leafTasks, { defaultGapDays: gapDays });
+  const critical = calculatePdmCriticalPath(tasks, { defaultGapDays: gapDays });
+  const leafCritical = calculatePdmCriticalPath(leafTasks, { defaultGapDays: gapDays });
   const audit = auditScheduleIntegrity(leafTasks, leafCritical);
 
   const predecessorsMap = new Map(tasks.map((task) => [task.id, []]));
@@ -892,14 +1202,19 @@ export function analyzeSchedule(plan) {
 /** Compact schedule summary included in `new` and `edit` responses so the AI verifies CPM immediately. */
 export function compactScheduleSummary(plan) {
   const analysis = analyzeSchedule(plan);
+  const criticalChainLimit = 60;
   return {
     projectStart: analysis.projectStart,
     projectFinish: analysis.projectFinish,
     durationDays: analysis.durationDays,
+    leafTaskCount: analysis.logic.leafTaskCount,
     dependencyCount: analysis.logic.dependencyCount,
     criticalCount: analysis.criticalPath.count,
     criticalLinks: analysis.criticalPath.criticalLinks,
-    criticalChain: analysis.criticalPath.tasks.slice(0, 20).map((t) => `${t.id}: ${t.label} (${t.start} → ${t.end})`),
+    criticalChain: analysis.criticalPath.tasks
+      .slice(0, criticalChainLimit)
+      .map((t) => `${t.id}: ${t.label} (${t.start} → ${t.end})`),
+    ...(analysis.criticalPath.tasks.length > criticalChainLimit ? { criticalChainTruncated: true } : {}),
     healthGrade: analysis.health.grade,
     healthScore: analysis.health.score,
     ...(analysis.logic.unlinkedLeafTasks.length ? { unlinkedLeafTasks: analysis.logic.unlinkedLeafTasks.slice(0, 15) } : {}),

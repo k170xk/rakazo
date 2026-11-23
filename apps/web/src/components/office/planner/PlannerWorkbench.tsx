@@ -24,6 +24,7 @@ import { ASSIGN_ATTR, decorateAssignees, type AssigneeLabels } from "./assignee-
 import { QuickAssignPopover } from "./QuickAssignPopover";
 import {
   activePlanNotes,
+  boardTasks,
   createNewTask,
   EMPTY_FILTERS,
   filterPlanTasks,
@@ -190,9 +191,23 @@ export function PlannerWorkbench({
   }, []);
 
   const chartWindow = useMemo(() => programmeWindow(plan.tasks ?? []), [plan.tasks]);
+  const defaultScale = useMemo<"month" | "quarter" | "year">(() => {
+    const list = plan.tasks ?? [];
+    let minStart = "";
+    let maxEnd = "";
+    for (const task of list) {
+      if (task.start && (!minStart || task.start < minStart)) minStart = task.start;
+      if (task.end && (!maxEnd || task.end > maxEnd)) maxEnd = task.end;
+    }
+    if (!minStart || !maxEnd) return "month";
+    const spanDays = Math.round((Date.parse(maxEnd) - Date.parse(minStart)) / 86_400_000);
+    if (spanDays > 1095) return "year";
+    if (spanDays > 540) return "quarter";
+    return "month";
+  }, [plan.tasks]);
   const viewport = useMemo<ViewportOptions>(
     () => ({
-      scale: "month",
+      scale: defaultScale,
       // Fit mode sets overflow-y:hidden so large programmes cannot scroll — use fixed rows.
       rowHeightMode: "custom",
       // Jantt's slider minimum; its bars bottom out at 18px there, still enough for the 12px task text.
@@ -206,14 +221,20 @@ export function PlannerWorkbench({
       ...view,
       ...chartWindow,
     }),
-    [compact, view, chartWindow],
+    [compact, defaultScale, view, chartWindow],
   );
 
   const tasks = plan.tasks ?? [];
-  const critical = useMemo(() => calculateCriticalPath(tasks), [tasks]);
+  const workItems = useMemo(() => boardTasks(tasks), [tasks]);
+  const defaultGapDays =
+    typeof plan.meta?.defaultGapDays === "number" ? plan.meta.defaultGapDays : 0;
+  const critical = useMemo(
+    () => calculateCriticalPath(tasks, { defaultGapDays }),
+    [tasks, defaultGapDays],
+  );
   const healthGrade = useMemo(
-    () => (tasks.length > 0 ? auditScheduleIntegrity(tasks, critical).grade : null),
-    [tasks, critical],
+    () => (workItems.length > 0 ? auditScheduleIntegrity(workItems, critical).grade : null),
+    [workItems, critical],
   );
   const notesCount = useMemo(() => activePlanNotes(plan).length, [plan]);
   const filtersActive = hasActiveFilters(filters);

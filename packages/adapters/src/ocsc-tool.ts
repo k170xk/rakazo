@@ -122,7 +122,15 @@ const STALE_RUNNING_MS = 45 * 60_000;
 const STALE_QUEUED_MS = 5 * 60_000;
 const SLOT_LOCK = 7_342_119;
 /** Steps that only look at existing work, so they still run when storage is full. */
-const READ_ONLY_STEPS: ReadonlySet<string> = new Set(["status", "wait", "cancel", "read", "help"]);
+const READ_ONLY_STEPS: ReadonlySet<string> = new Set([
+  "status",
+  "wait",
+  "cancel",
+  "read",
+  "inspect",
+  "audit",
+  "help",
+]);
 
 function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;

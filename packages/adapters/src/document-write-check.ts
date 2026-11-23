@@ -84,6 +84,52 @@ export function annotateDocumentWriteResult(
     );
   }
 
+  // Enforce closed Critical Path Method logic on AI-created/edited programmes so unlinked bars,
+  // summary-row links or broken critical chains are repaired before the programme is presented.
+  if (program === "plan" && (step === "new" || step === "edit") && printed?.ok === true) {
+    const schedule =
+      printed.schedule && typeof printed.schedule === "object"
+        ? (printed.schedule as Record<string, unknown>)
+        : null;
+    if (schedule) {
+      const depCount = typeof schedule.dependencyCount === "number" ? schedule.dependencyCount : 0;
+      const critCount = typeof schedule.criticalCount === "number" ? schedule.criticalCount : 0;
+      const critLinks = typeof schedule.criticalLinks === "number" ? schedule.criticalLinks : 0;
+      const taskCount =
+        typeof schedule.leafTaskCount === "number"
+          ? schedule.leafTaskCount
+          : typeof printed.taskCount === "number"
+            ? printed.taskCount
+            : 0;
+      const unlinked = Array.isArray(schedule.unlinkedLeafTasks)
+        ? schedule.unlinkedLeafTasks.filter((id): id is string => typeof id === "string")
+        : [];
+      const summaryLinks = Array.isArray(schedule.summaryLinkWarnings)
+        ? schedule.summaryLinkWarnings.filter((item): item is string => typeof item === "string")
+        : [];
+      if (depCount === 0 && (taskCount > 1 || unlinked.length > 0)) {
+        problems.push(
+          "Programme has zero predecessor links (dependsOn) — the critical path cannot be calculated. Link tasks with dependsOn or link_tasks.",
+        );
+      }
+      if (unlinked.length > 0) {
+        problems.push(
+          `Programme has ${unlinked.length} unlinked leaf task(s) with no predecessors or successors (${unlinked.slice(0, 8).join(", ")}${unlinked.length > 8 ? ", …" : ""}) — connect them into the logic network.`,
+        );
+      }
+      if (summaryLinks.length > 0) {
+        problems.push(
+          `Programme has ${summaryLinks.length} dependency link(s) attached to summary/phase rows (${summaryLinks.slice(0, 5).join(", ")}) — move those links onto leaf tasks or milestones.`,
+        );
+      }
+      if (depCount > 0 && critCount > 1 && critLinks === 0) {
+        problems.push(
+          "Programme critical tasks are not connected by any critical links — close the logic chain driving the project finish date.",
+        );
+      }
+    }
+  }
+
   if (problems.length === 0) return result;
   return {
     ...result,

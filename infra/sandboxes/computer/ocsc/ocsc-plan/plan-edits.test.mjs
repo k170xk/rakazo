@@ -260,3 +260,37 @@ test("ocsc-plan CLI returns critical path and health audit on new, edit and audi
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("multi-year CSME programme computes accurate PDM critical path across FS, SS+lag and FF without summary pollution", () => {
+  const plan = preparePlan({
+    meta: { title: "3-Year Hospital Wing CSME Programme", defaultGapDays: 0 },
+    tasks: [
+      { id: "p1", label: "1. Design & Statutory", wbs: "1", outlineLevel: 1, summary: true, start: "2026-01-05", end: "2026-01-05" },
+      { id: "m0", label: "Kick-Off", wbs: "1.1", outlineLevel: 2, milestone: true, start: "2026-01-05", end: "2026-01-05" },
+      { id: "t1", label: "Site & GI Surveys", wbs: "1.2", outlineLevel: 2, start: "2026-01-06", end: "2026-02-27", dependsOn: "m0" },
+      { id: "t2", label: "Civil Drainage Design", wbs: "1.3", outlineLevel: 2, start: "2026-03-02", end: "2026-05-01", dependsOn: "t1" },
+      { id: "t3", label: "Structural Scheme", wbs: "1.4", outlineLevel: 2, start: "2026-03-02", end: "2026-05-15", dependsOn: "t1" },
+      { id: "m1", label: "Planning Submission", wbs: "1.5", outlineLevel: 2, milestone: true, start: "2026-05-15", end: "2026-05-15", dependsOn: ["t2", "t3"] },
+
+      { id: "p2", label: "2. Construction & MEP", wbs: "2", outlineLevel: 1, summary: true, start: "2026-05-18", end: "2026-05-18" },
+      { id: "t4", label: "Planning & Tender (17d holiday break)", wbs: "2.1", outlineLevel: 2, start: "2026-06-01", end: "2027-03-19", dependsOn: { id: "m1", type: "FS", lag: 17 } },
+      { id: "t5", label: "RC Frame & Envelope", wbs: "2.2", outlineLevel: 2, start: "2027-03-22", end: "2028-04-28", dependsOn: "t4" },
+      { id: "t6", label: "MEP First Fix (SS+42d behind Frame)", wbs: "2.3", outlineLevel: 2, start: "2027-05-03", end: "2028-06-30", dependsOn: { id: "t5", type: "SS", lag: 42 } },
+      { id: "t7", label: "Parallel External Works (non-critical SS+30d)", wbs: "2.4", outlineLevel: 2, start: "2027-04-21", end: "2028-01-14", dependsOn: { id: "t5", type: "SS", lag: 30 } },
+      { id: "t8", label: "Commissioning & Witness Tests", wbs: "2.5", outlineLevel: 2, start: "2028-07-03", end: "2029-01-26", dependsOn: ["t6", "t7"] },
+      { id: "t9", label: "O&Ms, As-Built BIM & BCAR Certs (FF)", wbs: "2.6", outlineLevel: 2, start: "2028-11-20", end: "2029-01-26", dependsOn: { id: "t8", type: "FF", lag: 0 } },
+      { id: "m2", label: "Practical Completion & Handover", wbs: "2.7", outlineLevel: 2, milestone: true, start: "2029-01-26", end: "2029-01-26", dependsOn: ["t8", "t9"] },
+    ],
+  });
+
+  const analysis = analyzeSchedule(plan);
+  assert.equal(analysis.projectStart, "2026-01-05");
+  assert.equal(analysis.projectFinish, "2029-01-26");
+  assert.equal(analysis.warnings.length, 0);
+  assert.equal(analysis.health.grade, "A");
+  const critIds = analysis.criticalPath.tasks.map((t) => t.id);
+  // Summary rows (p1, p2) and non-critical parallel branches (t2, t7) must NOT be critical.
+  assert.deepEqual(critIds, ["m0", "t1", "t3", "m1", "t4", "t5", "t6", "t8", "t9", "m2"]);
+  // Every critical edge including FS+17 (m1->t4), SS+42 (t5->t6), FF (t8->t9), and both t8->m2 & t9->m2 is critical.
+  assert.equal(analysis.criticalPath.criticalLinks, 10);
+});

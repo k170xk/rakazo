@@ -231,7 +231,9 @@ export async function exportProgrammePdf(
   };
   const sheetId = pickProgrammeSheetSize({ taskCount: Math.max(1, tasks.length), spanDays: span.days });
   const sheet = PROGRAMME_SHEETS[sheetId];
-  const critical = calculateCriticalPath(tasks);
+  const critical = calculateCriticalPath(tasks, {
+    defaultGapDays: typeof plan.meta?.defaultGapDays === "number" ? plan.meta.defaultGapDays : 0,
+  });
   const criticalIds = critical.criticalTaskIds;
 
   const [headerArt, headerFillArt, footerArt] = await Promise.all([

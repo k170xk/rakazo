@@ -124,6 +124,71 @@ describe("annotateDocumentWriteResult", () => {
     const running = { stdout: "", stderr: "", code: null, running: true };
     expect(annotateDocumentWriteResult("word", ["edit"], running)).toEqual(running);
   });
+
+  it("enforces closed critical-path logic on ocsc-plan new and edit", () => {
+    const unlinked = {
+      stdout: JSON.stringify({
+        ok: true,
+        path: "outputs/p.jantt",
+        taskCount: 4,
+        schedule: {
+          leafTaskCount: 3,
+          dependencyCount: 0,
+          criticalCount: 1,
+          criticalLinks: 0,
+          unlinkedLeafTasks: ["t1", "t2", "t3"],
+        },
+      }),
+      code: 0,
+    };
+    expect(annotateDocumentWriteResult("plan", ["new"], unlinked)).toMatchObject({
+      ok: false,
+      documentCheck: "problems",
+      problems: expect.arrayContaining([
+        expect.stringContaining("zero predecessor links"),
+        expect.stringContaining("3 unlinked leaf task"),
+      ]),
+      next: FIX_DOCUMENT_BEFORE_READY,
+    });
+
+    const summaryLinked = {
+      stdout: JSON.stringify({
+        ok: true,
+        path: "outputs/p.jantt",
+        taskCount: 3,
+        schedule: {
+          leafTaskCount: 2,
+          dependencyCount: 1,
+          criticalCount: 2,
+          criticalLinks: 1,
+          summaryLinkWarnings: ["p1 → t2"],
+        },
+      }),
+      code: 0,
+    };
+    expect(annotateDocumentWriteResult("plan", ["edit"], summaryLinked)).toMatchObject({
+      ok: false,
+      documentCheck: "problems",
+      problems: [expect.stringContaining("summary/phase rows")],
+      next: FIX_DOCUMENT_BEFORE_READY,
+    });
+
+    const valid = {
+      stdout: JSON.stringify({
+        ok: true,
+        path: "outputs/p.jantt",
+        taskCount: 5,
+        schedule: {
+          leafTaskCount: 4,
+          dependencyCount: 4,
+          criticalCount: 3,
+          criticalLinks: 2,
+        },
+      }),
+      code: 0,
+    };
+    expect(annotateDocumentWriteResult("plan", ["new"], valid)).toEqual(valid);
+  });
 });
 
 describe("annotateOfficeAttachFailure", () => {
