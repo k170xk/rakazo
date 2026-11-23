@@ -294,3 +294,99 @@ test("multi-year CSME programme computes accurate PDM critical path across FS, S
   // Every critical edge including FS+17 (m1->t4), SS+42 (t5->t6), FF (t8->t9), and both t8->m2 & t9->m2 is critical.
   assert.equal(analysis.criticalPath.criticalLinks, 10);
 });
+
+test("preparePlan auto-schedules working-day durations across weekends and holiday blackouts while keeping CPM continuous", () => {
+  const plan = preparePlan({
+    meta: {
+      title: "Holiday-Aware CSME Programme",
+      defaultGapDays: 0,
+      projectStart: "2026-12-07",
+      targetFinish: "2027-03-19",
+      holidays: [{ start: "2026-12-21", end: "2027-01-03", label: "Christmas / Builder's Holidays" }],
+    },
+    categories: {
+      design: { label: "Design & Statutory", color: "#76BF43" },
+      mep: { label: "MEP", color: "#F59E0B" },
+      handover: { label: "Handover", color: "#8B5CF6" },
+    },
+    tasks: [
+      { id: "p1", label: "1. Design & Statutory", wbs: "1", outlineLevel: 1, summary: true, category: "design" },
+      // 2 weeks (10 working days) from Mon 2026-12-07 -> Fri 2026-12-18
+      { id: "t1", label: "Preliminary Design", wbs: "1.1", outlineLevel: 2, category: "design", durationWeeks: 2 },
+      // Zero-lag FS after t1 (Fri Dec 18) jumps Christmas blackout (Dec 21..Jan 3) -> starts Mon 2027-01-04, 4w -> Fri 2027-01-29
+      { id: "t2", label: "Detailed Design", wbs: "1.2", outlineLevel: 2, category: "design", durationWeeks: 4, dependsOn: "t1" },
+      // SS + 7d parallel MEP builderswork (starts Mon 2027-01-11, 2w -> Fri 2027-01-22, non-critical)
+      { id: "t3", label: "MEP Builderswork", wbs: "1.3", outlineLevel: 2, category: "mep", durationWeeks: 2, dependsOn: { id: "t2", type: "SS", lag: 7 } },
+      // Dateless convergence milestone -> snaps to max(pred.end) = 2027-01-29
+      { id: "m1", label: "Design Freeze", wbs: "1.4", outlineLevel: 2, milestone: true, category: "design", dependsOn: ["t2", "t3"] },
+      // Statutory 14-calendar-day standstill/notice (Sat Jan 30 .. Fri Feb 12)
+      { id: "t4", label: "Statutory Standstill (14d)", wbs: "1.5", outlineLevel: 2, category: "design", durationDays: 14, dependsOn: "m1" },
+      // 3 weeks (15 working days) starting Mon Feb 15 -> Fri Mar 05
+      { id: "t5", label: "Commissioning & Testing", wbs: "1.6", outlineLevel: 2, category: "mep", durationWeeks: 3, dependsOn: "t4" },
+      // FF + 0d close-out aligned to finish with t5 on Fri Mar 05 (10 working days back -> Mon Feb 22)
+      { id: "t6", label: "O&M Manuals & BCAR Certs", wbs: "1.7", outlineLevel: 2, category: "handover", durationWorkDays: 10, dependsOn: { id: "t5", type: "FF", lag: 0 } },
+      { id: "m2", label: "Practical Completion", wbs: "1.8", outlineLevel: 2, milestone: true, category: "handover", dependsOn: ["t5", "t6"] },
+    ],
+  });
+
+  const byId = new Map(plan.tasks.map((t) => [t.id, t]));
+  assert.equal(byId.get("t1").start, "2026-12-07");
+  assert.equal(byId.get("t1").end, "2026-12-18");
+  assert.equal(byId.get("t2").start, "2027-01-04");
+  assert.equal(byId.get("t2").end, "2027-01-29");
+  assert.equal(byId.get("t2").gapDays, 17); // Bridges Fri Dec 18 -> Mon Jan 4 so CPM stays 0d tight!
+  assert.equal(byId.get("t3").start, "2027-01-11");
+  assert.equal(byId.get("t3").end, "2027-01-22");
+  assert.equal(byId.get("m1").start, "2027-01-29");
+  assert.equal(byId.get("m1").end, "2027-01-29");
+  assert.equal(byId.get("t4").start, "2027-01-30");
+  assert.equal(byId.get("t4").end, "2027-02-12");
+  assert.equal(byId.get("t5").start, "2027-02-15");
+  assert.equal(byId.get("t5").end, "2027-03-05");
+  assert.equal(byId.get("t6").start, "2027-02-22");
+  assert.equal(byId.get("t6").end, "2027-03-05");
+  assert.equal(byId.get("m2").start, "2027-03-05");
+  assert.equal(byId.get("p1").start, "2026-12-07");
+  assert.equal(byId.get("p1").end, "2027-03-05");
+
+  const summary = compactScheduleSummary(plan);
+  assert.equal(summary.targetFinish, "2027-03-19");
+  assert.equal(summary.finishVarianceDays, -14); // 14 days early / terminal float
+  assert.equal(summary.onTarget, true);
+  assert.equal(summary.healthGrade, "A");
+  assert.equal(summary.warnings, undefined);
+  assert.ok(summary.criticalLinks >= 7);
+});
+
+test("targetFinish flags overrun variance and applyEdits duration updates bring schedule back on target", () => {
+  const initial = preparePlan({
+    meta: {
+      title: "Deadline Reconciliation Test",
+      defaultGapDays: 0,
+      projectStart: "2026-05-04",
+      targetFinish: "2026-06-12", // 6 weeks exact (Mon May 4 -> Fri Jun 12)
+    },
+    tasks: [
+      { id: "t1", label: "Surveys", durationWeeks: 3 },
+      { id: "t2", label: "Design", durationWeeks: 5, dependsOn: "t1" }, // 8w total -> overruns by 2 weeks!
+      { id: "m1", label: "Issue", milestone: true, dependsOn: "t2" },
+    ],
+  });
+
+  const before = compactScheduleSummary(initial);
+  assert.equal(before.projectFinish, "2026-06-26");
+  assert.equal(before.onTarget, false);
+  assert.equal(before.finishVarianceDays, 14);
+  assert.ok(before.warnings?.some((w) => /14 calendar days PAST targetFinish/.test(w)));
+
+  // Tighten Design to 3 weeks via applyEdits + verify SNET pin on a separate task
+  const { plan: tightened } = applyEdits(initial, [
+    { op: "update_task", id: "t2", durationWeeks: 3 },
+    { op: "update_task", id: "m1", milestone: true, dependsOn: "t2" },
+  ]);
+  const after = compactScheduleSummary(tightened);
+  assert.equal(after.projectFinish, "2026-06-12");
+  assert.equal(after.finishVarianceDays, 0);
+  assert.equal(after.onTarget, true);
+  assert.equal(after.warnings, undefined);
+});

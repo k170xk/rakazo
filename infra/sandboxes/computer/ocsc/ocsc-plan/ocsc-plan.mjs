@@ -228,11 +228,24 @@ async function main(argv) {
   if (command === "new") {
     const spec = flags.spec ? readJson(flags.spec, "--spec").value : {};
     const title = spec.title || spec.meta?.title || "Untitled plan";
-    const { title: _dropTitle, ...specRest } = spec;
+    const {
+      title: _dropTitle,
+      projectStart,
+      targetFinish,
+      holidays,
+      ...specRest
+    } = spec;
     const rawPlan = ensurePlan({
       ...blankPlan(title),
       ...specRest,
-      meta: { ...blankPlan(title).meta, ...(spec.meta ?? {}), title },
+      meta: {
+        ...blankPlan(title).meta,
+        ...(spec.meta ?? {}),
+        title,
+        ...(projectStart !== undefined ? { projectStart } : {}),
+        ...(targetFinish !== undefined ? { targetFinish } : {}),
+        ...(holidays !== undefined ? { holidays } : {}),
+      },
       tasks: Array.isArray(spec.tasks) ? spec.tasks : [],
       categories: spec.categories ?? blankPlan(title).categories,
     });

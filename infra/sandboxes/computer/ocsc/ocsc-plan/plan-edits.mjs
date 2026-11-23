@@ -68,6 +68,9 @@ const EDIT_ONLY_KEYS = new Set([
   "evolveProfileId",
   "jobTitle",
   "role",
+  "durationWeeks",
+  "durationWorkDays",
+  "durationDays",
 ]);
 
 const nameKey = (name) => String(name ?? "").trim().toLowerCase();
@@ -133,6 +136,299 @@ function addIsoDays(dateStr, delta) {
   const d = new Date(ms);
   d.setUTCDate(d.getUTCDate() + (Number.isFinite(delta) ? Math.round(delta) : 0));
   return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Normalize holiday / blackout periods (`"YYYY-MM-DD"` or `{ start, end, label? }`).
+ */
+export function normalizeHolidays(raw, context = "holidays") {
+  if (raw == null) return [];
+  if (!Array.isArray(raw)) {
+    throw new UsageError(`${context}: must be an array of { start, end, label? } or YYYY-MM-DD dates.`);
+  }
+  const out = [];
+  for (const [idx, entry] of raw.entries()) {
+    if (typeof entry === "string") {
+      if (!isDate(entry)) {
+        throw new UsageError(`${context}[${idx}]: date must be YYYY-MM-DD.`);
+      }
+      out.push({ start: entry, end: entry });
+    } else if (entry && typeof entry === "object") {
+      const start = String(entry.start ?? "").trim();
+      const end = String(entry.end ?? start).trim();
+      if (!isDate(start) || !isDate(end) || end < start) {
+        throw new UsageError(`${context}[${idx}]: requires valid start/end YYYY-MM-DD with end >= start.`);
+      }
+      out.push({
+        start,
+        end,
+        ...(entry.label ? { label: String(entry.label).trim() } : {}),
+      });
+    } else {
+      throw new UsageError(`${context}[${idx}]: must be a date string or { start, end, label? }.`);
+    }
+  }
+  return out;
+}
+
+function isNonWorkingDay(dateStr, holidays) {
+  const dow = utcWeekday(dateStr);
+  if (dow === 0 || dow === 6) return true;
+  for (const h of holidays) {
+    if (dateStr >= h.start && dateStr <= h.end) return true;
+  }
+  return false;
+}
+
+function nextWorkingDay(dateStr, holidays) {
+  let cur = dateStr;
+  for (let guard = 0; guard < 400; guard += 1) {
+    if (!isNonWorkingDay(cur, holidays)) return cur;
+    cur = addIsoDays(cur, 1);
+  }
+  return cur;
+}
+
+function prevWorkingDay(dateStr, holidays) {
+  let cur = dateStr;
+  for (let guard = 0; guard < 400; guard += 1) {
+    if (!isNonWorkingDay(cur, holidays)) return cur;
+    cur = addIsoDays(cur, -1);
+  }
+  return cur;
+}
+
+function nextWorkingDayAfter(dateStr, holidays) {
+  return nextWorkingDay(addIsoDays(dateStr, 1), holidays);
+}
+
+function addWorkingDaysInclusive(startStr, workDays, holidays) {
+  const start = nextWorkingDay(startStr, holidays);
+  if (workDays <= 1) return { start, end: start };
+  let cur = start;
+  let remaining = Math.round(workDays) - 1;
+  for (let guard = 0; guard < 5000 && remaining > 0; guard += 1) {
+    cur = addIsoDays(cur, 1);
+    if (!isNonWorkingDay(cur, holidays)) remaining -= 1;
+  }
+  return { start, end: cur };
+}
+
+function subWorkingDaysInclusive(endStr, workDays, holidays) {
+  const end = prevWorkingDay(endStr, holidays);
+  if (workDays <= 1) return { start: end, end };
+  let cur = end;
+  let remaining = Math.round(workDays) - 1;
+  for (let guard = 0; guard < 5000 && remaining > 0; guard += 1) {
+    cur = addIsoDays(cur, -1);
+    if (!isNonWorkingDay(cur, holidays)) remaining -= 1;
+  }
+  return { start: cur, end };
+}
+
+function extractDurationSpec(raw, n) {
+  const hasWeeks = raw?.durationWeeks !== undefined && raw?.durationWeeks !== null;
+  const hasWork = raw?.durationWorkDays !== undefined && raw?.durationWorkDays !== null;
+  const hasCal = raw?.durationDays !== undefined && raw?.durationDays !== null;
+  if (!hasWeeks && !hasWork && !hasCal) {
+    // A milestone without explicit start/end is also auto-scheduled from its predecessors.
+    if (raw?.milestone && !raw?.start && !raw?.end) {
+      return { mode: "milestone", value: 0, hasStartPin: false };
+    }
+    return null;
+  }
+  if (raw?.milestone) {
+    return { mode: "milestone", value: 0, hasStartPin: isDate(raw?.start) };
+  }
+  if (hasWeeks) {
+    const w = Number(raw.durationWeeks);
+    if (!Number.isFinite(w) || w < 0) throw new UsageError(`Task ${n}: durationWeeks must be 0 or more.`);
+    return { mode: "work", value: Math.max(0, Math.round(w * 5)), hasStartPin: isDate(raw?.start) };
+  }
+  if (hasWork) {
+    const wd = Number(raw.durationWorkDays);
+    if (!Number.isFinite(wd) || wd < 0) throw new UsageError(`Task ${n}: durationWorkDays must be 0 or more.`);
+    return { mode: "work", value: Math.max(0, Math.round(wd)), hasStartPin: isDate(raw?.start) };
+  }
+  const cd = Number(raw.durationDays);
+  if (!Number.isFinite(cd) || cd < 0) throw new UsageError(`Task ${n}: durationDays must be 0 or more.`);
+  return { mode: "calendar", value: Math.max(0, Math.round(cd)), hasStartPin: isDate(raw?.start) };
+}
+
+/**
+ * Deterministic PDM forward-pass scheduler for tasks specifying `durationWeeks`,
+ * `durationWorkDays`, `durationDays`, or dateless milestones.
+ *
+ * - Respects Mon–Fri working days and any `meta.holidays` blackout periods for working-day tasks.
+ * - Evaluates all four PDM dependency types (`FS`, `SS`, `FF`, `SF`) + per-edge `lag`.
+ * - Treats an explicit `start` alongside a duration as a Start-No-Earlier-Than (SNET) constraint.
+ * - Sets `gapDays` when a binding zero-lag `FS` transition bridges a weekend or holiday blackout so
+ *   both `ocsc-plan` and Jantt keep the Critical Path continuous with red dependency arrows.
+ * - Preserves tasks that specify explicit `start` and `end` with no duration spec untouched.
+ */
+export function autoScheduleDurationTasks(tasks, durationSpecs, meta = {}) {
+  if (!durationSpecs || durationSpecs.size === 0) return tasks;
+  const holidays = normalizeHolidays(meta.holidays, "meta.holidays");
+  const fallbackStart = isDate(meta.projectStart)
+    ? meta.projectStart
+    : isDate(meta.createdAt)
+      ? meta.createdAt
+      : today();
+
+  const next = tasks.map((t) => ({ ...t }));
+  const byId = new Map(next.map((t) => [t.id, t]));
+
+  // Topological order (Kahn's algorithm; validateDependencies already verified acyclicity).
+  const inDeg = new Map();
+  const out = new Map();
+  for (const t of next) {
+    inDeg.set(t.id, 0);
+    out.set(t.id, []);
+  }
+  for (const t of next) {
+    const seen = new Set();
+    for (const rel of parseDepEntries(t)) {
+      if (!byId.has(rel.id) || rel.id === t.id || seen.has(rel.id)) continue;
+      seen.add(rel.id);
+      inDeg.set(t.id, (inDeg.get(t.id) ?? 0) + 1);
+      out.get(rel.id).push(t.id);
+    }
+  }
+  const queue = next.filter((t) => (inDeg.get(t.id) ?? 0) === 0).map((t) => t.id);
+  const topo = [];
+  for (let i = 0; i < queue.length; i += 1) {
+    const id = queue[i];
+    topo.push(id);
+    for (const succ of out.get(id) ?? []) {
+      const d = (inDeg.get(succ) ?? 1) - 1;
+      inDeg.set(succ, d);
+      if (d === 0) queue.push(succ);
+    }
+  }
+  for (const t of next) {
+    if (!topo.includes(t.id)) topo.push(t.id);
+  }
+
+  for (const id of topo) {
+    const spec = durationSpecs.get(id);
+    if (!spec) continue;
+    const task = byId.get(id);
+    if (!task || isSummaryTask(task)) continue;
+
+    const deps = parseDepEntries(task).filter((d) => byId.has(d.id) && d.id !== id);
+    let earliestStart = spec.hasStartPin && isDate(task.start) ? task.start : null;
+    let earliestEnd = null;
+    // Track the binding zero-lag FS predecessor candidate so weekend/holiday bridges keep CPM tight.
+    let bindingZeroLagFsPredEnd = null;
+    let bindingZeroLagFsStart = null;
+
+    const considerStart = (candidate, zeroLagFsPredEnd = null) => {
+      if (!isDate(candidate)) return;
+      if (!earliestStart || candidate > earliestStart) {
+        earliestStart = candidate;
+        bindingZeroLagFsPredEnd = zeroLagFsPredEnd;
+        bindingZeroLagFsStart = zeroLagFsPredEnd ? candidate : null;
+      } else if (candidate === earliestStart && zeroLagFsPredEnd) {
+        if (!bindingZeroLagFsPredEnd || zeroLagFsPredEnd > bindingZeroLagFsPredEnd) {
+          bindingZeroLagFsPredEnd = zeroLagFsPredEnd;
+          bindingZeroLagFsStart = candidate;
+        }
+      }
+    };
+
+    const considerEnd = (candidate) => {
+      if (!isDate(candidate)) return;
+      if (!earliestEnd || candidate > earliestEnd) earliestEnd = candidate;
+    };
+
+    for (const dep of deps) {
+      const pred = byId.get(dep.id);
+      if (!pred || !isDate(pred.start) || !isDate(pred.end)) continue;
+      const lag = dep.lag ?? 0;
+      if (dep.type === "SS") {
+        considerStart(addIsoDays(pred.start, lag));
+      } else if (dep.type === "FF") {
+        considerEnd(addIsoDays(pred.end, lag));
+      } else if (dep.type === "SF") {
+        considerEnd(addIsoDays(pred.start, lag));
+      } else {
+        // FS
+        if (lag === 0) {
+          if (spec.mode === "milestone") {
+            considerStart(pred.end, pred.end);
+          } else if (spec.mode === "calendar") {
+            considerStart(addIsoDays(pred.end, 1), pred.end);
+          } else {
+            considerStart(nextWorkingDayAfter(pred.end, holidays), pred.end);
+          }
+        } else {
+          considerStart(addIsoDays(pred.end, lag));
+        }
+      }
+    }
+
+    if (!earliestStart && !earliestEnd) {
+      earliestStart = fallbackStart;
+    }
+
+    let start;
+    let end;
+    if (spec.mode === "milestone" || spec.value === 0) {
+      const anchor = earliestStart && earliestEnd
+        ? (earliestEnd > earliestStart ? earliestEnd : earliestStart)
+        : (earliestStart || earliestEnd || fallbackStart);
+      start = anchor;
+      end = anchor;
+    } else if (spec.mode === "calendar") {
+      const calSpan = Math.max(0, spec.value - 1);
+      if (earliestStart) {
+        start = earliestStart;
+        end = addIsoDays(start, calSpan);
+      } else {
+        end = earliestEnd;
+        start = addIsoDays(end, -calSpan);
+      }
+      if (earliestEnd && earliestEnd > end) {
+        end = earliestEnd;
+        const backStart = addIsoDays(end, -calSpan);
+        start = earliestStart && earliestStart > backStart ? earliestStart : backStart;
+      }
+    } else {
+      // Working-day duration (Mon–Fri excluding meta.holidays)
+      if (earliestStart) {
+        const span = addWorkingDaysInclusive(earliestStart, spec.value, holidays);
+        start = span.start;
+        end = span.end;
+      } else {
+        const span = subWorkingDaysInclusive(earliestEnd, spec.value, holidays);
+        start = span.start;
+        end = span.end;
+      }
+      if (earliestEnd && earliestEnd > end) {
+        const span = subWorkingDaysInclusive(earliestEnd, spec.value, holidays);
+        end = earliestEnd;
+        start = earliestStart && earliestStart > span.start ? nextWorkingDay(earliestStart, holidays) : span.start;
+      }
+    }
+
+    task.start = start;
+    task.end = end;
+
+    // If a zero-lag FS transition bridged a weekend or holiday blackout, record gapDays so CPM stays 0d tight.
+    if (
+      bindingZeroLagFsPredEnd &&
+      bindingZeroLagFsStart === start &&
+      task.gapDays == null &&
+      task.minGapDays == null
+    ) {
+      const bridge = signedDiffDays(bindingZeroLagFsPredEnd, start);
+      if (Number.isFinite(bridge) && bridge > 0) {
+        task.gapDays = bridge;
+      }
+    }
+  }
+
+  return next;
 }
 
 function taskGapDays(task, defaultGapDays = 0) {
@@ -810,6 +1106,15 @@ export function rollupSummaryTasks(tasks) {
  */
 export function preparePlan(plan, { reschedule = true } = {}) {
   const meta = { ...(plan.meta ?? {}) };
+  if (meta.projectStart != null) {
+    if (!isDate(meta.projectStart)) throw new UsageError("projectStart must be a date like 2026-05-04.");
+  }
+  if (meta.targetFinish != null) {
+    if (!isDate(meta.targetFinish)) throw new UsageError("targetFinish must be a date like 2028-04-28.");
+  }
+  if (meta.holidays != null) {
+    meta.holidays = normalizeHolidays(meta.holidays, "holidays");
+  }
   const categories = { default: DEFAULT_CATEGORY, ...(plan.categories ?? {}) };
   const resolveCategory = (raw) => {
     if (raw.category == null) return raw;
@@ -826,15 +1131,23 @@ export function preparePlan(plan, { reschedule = true } = {}) {
   };
 
   const normalizedTasks = [];
+  const durationSpecs = new Map();
   for (const [index, raw] of (plan.tasks ?? []).entries()) {
     if (!raw || typeof raw !== "object") {
       throw new UsageError(`Task ${index + 1}: must be a JSON object.`);
     }
-    normalizedTasks.push(newTask(resolveCategory(raw), normalizedTasks, meta, index + 1));
+    const task = newTask(resolveCategory(raw), normalizedTasks, meta, index + 1);
+    const durSpec = extractDurationSpec(raw, index + 1);
+    if (durSpec) durationSpecs.set(task.id, durSpec);
+    normalizedTasks.push(task);
   }
   validateDependencies(normalizedTasks);
   const gapDays = typeof meta.defaultGapDays === "number" ? meta.defaultGapDays : 0;
-  const scheduled = reschedule ? resolveSchedule(normalizedTasks, gapDays) : normalizedTasks;
+  const autoScheduled =
+    reschedule && durationSpecs.size > 0
+      ? autoScheduleDurationTasks(normalizedTasks, durationSpecs, meta)
+      : normalizedTasks;
+  const scheduled = reschedule ? resolveSchedule(autoScheduled, gapDays) : autoScheduled;
   const aligned = syncContiguousGapDays(scheduled);
   const rolled = rollupSummaryTasks(aligned);
   return withCategories({
@@ -865,6 +1178,7 @@ export function applyEdits(plan, edits) {
   const categories = { default: DEFAULT_CATEGORY, ...(plan.categories ?? {}) };
   let people = [...(plan.people ?? [])];
   const summary = [];
+  const durationSpecs = new Map();
   const resolveCategory = (raw, n) => {
     if (raw.category == null) return raw;
     const key = findCategory(categories, raw.category);
@@ -884,14 +1198,20 @@ export function applyEdits(plan, edits) {
     if (op === "add_task") {
       const { op: _op, before, after, index: _index, ...raw } = edit;
       const task = newTask(resolveCategory(raw, n), tasks, meta, n);
+      const durSpec = extractDurationSpec(raw, n);
+      if (durSpec) durationSpecs.set(task.id, durSpec);
       placeTask(tasks, task, edit, n);
       summary.push(`added ${taskLabel(task)}`);
     } else if (op === "set_tasks") {
       if (!Array.isArray(edit.tasks)) throw new UsageError(`Edit ${n}: set_tasks needs tasks array.`);
+      durationSpecs.clear();
       const next = [];
       for (const raw of edit.tasks) {
         if (!raw || typeof raw !== "object") throw new UsageError(`Edit ${n}: task ${next.length + 1} invalid.`);
-        next.push(newTask(resolveCategory(raw, n), next, meta, n));
+        const task = newTask(resolveCategory(raw, n), next, meta, n);
+        const durSpec = extractDurationSpec(raw, n);
+        if (durSpec) durationSpecs.set(task.id, durSpec);
+        next.push(task);
       }
       tasks = next;
       summary.push(`set ${tasks.length} tasks`);
@@ -899,7 +1219,16 @@ export function applyEdits(plan, edits) {
       const ids = targetIds(edit, tasks, n, op);
       const { op: _op, id: _id, ids: _ids, ...raw } = edit;
       const fields = resolveCategory(raw, n);
-      tasks = tasks.map((task) => (ids.includes(task.id) ? withTaskFields(task, fields, n) : task));
+      const durSpec = extractDurationSpec(raw, n);
+      tasks = tasks.map((task) => {
+        if (!ids.includes(task.id)) return task;
+        const updated = withTaskFields(task, fields, n);
+        if (durSpec) {
+          durationSpecs.set(task.id, durSpec);
+          if (raw.gapDays === undefined && raw.minGapDays === undefined) delete updated.gapDays;
+        }
+        return updated;
+      });
       summary.push(`updated ${ids.length === 1 ? taskLabel(tasks.find((task) => task.id === ids[0])) : `${ids.length} tasks`}`);
     } else if (op === "move_task") {
       const [id] = targetIds(edit, tasks, n, op);
@@ -1016,6 +1345,17 @@ export function applyEdits(plan, edits) {
         if (!isDate(edit.today)) throw new UsageError(`Edit ${n}: today must be a date like 2026-03-02.`);
         meta.today = edit.today;
       }
+      for (const dateKey of ["projectStart", "targetFinish"]) {
+        if (edit[dateKey] === null) delete meta[dateKey];
+        else if (edit[dateKey] != null) {
+          if (!isDate(edit[dateKey])) throw new UsageError(`Edit ${n}: ${dateKey} must be a date like 2026-05-04.`);
+          meta[dateKey] = edit[dateKey];
+        }
+      }
+      if (edit.holidays === null) delete meta.holidays;
+      else if (edit.holidays != null) {
+        meta.holidays = normalizeHolidays(edit.holidays, `Edit ${n}: holidays`);
+      }
       if (edit.defaultGapDays === null) delete meta.defaultGapDays;
       else if (edit.defaultGapDays != null) {
         const gap = Number(edit.defaultGapDays);
@@ -1044,7 +1384,9 @@ export function applyEdits(plan, edits) {
   people = prunePeople(people, tasks);
   if (meta.defaultGapDays === undefined) meta.defaultGapDays = 0;
   const gapDays = typeof meta.defaultGapDays === "number" ? meta.defaultGapDays : 0;
-  const resolved = rollupSummaryTasks(syncContiguousGapDays(resolveSchedule(tasks, gapDays)));
+  const autoScheduled =
+    durationSpecs.size > 0 ? autoScheduleDurationTasks(tasks, durationSpecs, meta) : tasks;
+  const resolved = rollupSummaryTasks(syncContiguousGapDays(resolveSchedule(autoScheduled, gapDays)));
   const { people: _people, ...rest } = plan;
   return {
     plan: {
@@ -1159,10 +1501,26 @@ export function analyzeSchedule(plan) {
     );
   }
 
+  const targetFinish = isDate(plan.meta?.targetFinish) ? plan.meta.targetFinish : null;
+  const finishVarianceDays =
+    targetFinish && projectFinish ? signedDiffDays(targetFinish, projectFinish) : null;
+  if (targetFinish && finishVarianceDays != null && finishVarianceDays > 0) {
+    warnings.push(
+      `Programme finishes on ${projectFinish}, which is ${finishVarianceDays} calendar day${finishVarianceDays === 1 ? "" : "s"} PAST targetFinish (${targetFinish}). Review critical path overlaps (SS + lag) and long-lead procurement, or flag the overrun clearly to the user.`,
+    );
+  }
+
   return {
     projectStart,
     projectFinish,
     durationDays: projectStart && projectFinish ? diffDays(projectStart, projectFinish) : 0,
+    ...(targetFinish
+      ? {
+          targetFinish,
+          finishVarianceDays,
+          onTarget: finishVarianceDays != null ? finishVarianceDays <= 0 : null,
+        }
+      : {}),
     criticalPath: {
       count: criticalTasks.length,
       criticalLinks: leafCritical.criticalDepKeys.size,
@@ -1207,6 +1565,13 @@ export function compactScheduleSummary(plan) {
     projectStart: analysis.projectStart,
     projectFinish: analysis.projectFinish,
     durationDays: analysis.durationDays,
+    ...(analysis.targetFinish
+      ? {
+          targetFinish: analysis.targetFinish,
+          finishVarianceDays: analysis.finishVarianceDays,
+          onTarget: analysis.onTarget,
+        }
+      : {}),
     leafTaskCount: analysis.logic.leafTaskCount,
     dependencyCount: analysis.logic.dependencyCount,
     criticalCount: analysis.criticalPath.count,

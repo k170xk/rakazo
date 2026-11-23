@@ -339,8 +339,13 @@ const PLAN_INSTRUCTIONS = `Use this whenever the person wants a project programm
 
 Use the ocsc tool (document runners; no full computer needed): every ocsc-plan command below runs as the ocsc tool with program plan and the rest of the command as args, one item per word. Always use ocsc-plan. Never invent a schedule another way. ${INLINE_SPEC_NOTE}
 
-STEP 0 — MANDATORY DEEP-DIVE OF UPLOADED DOCUMENTS & MISSING-DATA CHECK (DO THIS BEFORE WRITING ANY SPEC)
-Never build a generic template programme when the person has uploaded ITTs, tender packs, Employer's Requirements, briefs, spreadsheets or addenda, and NEVER silently invent missing contractual dates or programme lengths.
+THREE-STAGE SENIOR PLANNER PROCESS (MANDATORY FOR EVERY NEW PROGRAMME)
+Never produce a quick-and-dirty generic bar chart. Every new programme (or full rebuild) MUST follow this deliberate three-stage engineering process so nothing important from the user's documents or engineering reality is ever missed:
+
+═══════════════════════════════════════════════════════════════════════════════
+STAGE 1 — DEEP-DIVE EXTRACTION & ENGINEERING PLANNING DOSSIER (BEFORE .JANTT)
+═══════════════════════════════════════════════════════════════════════════════
+Do ALL extraction, missing-data checks, and WBS/task planning BEFORE touching ocsc-plan new! (For small targeted edits to an already-built .jantt, skip the dossier and go straight to INSPECT & EDIT.)
 
 A. INVENTORY & INTERROGATE EVERY UPLOADED DOCUMENT THOROUGHLY
 1. Check every file in the conversation first: use list_conversation_files (if more files may exist than shown), list_files, and fetch_file for any earlier attachment not yet on disk. If an Evolve job number or project name is mentioned (or linked in meta.evolve), also check mcp__evolve__search_project_datasheets for real project context.
@@ -356,74 +361,85 @@ A. INVENTORY & INTERROGATE EVERY UPLOADED DOCUMENT THOROUGHLY
    - Excel / CSV (.xlsx / .csv): run ocsc-xlsx read --in <path> across ALL sheets (--sheet, --from) — ITT milestone tables, fee stage breakdowns and pricing schedules often live in Excel.
    - PowerPoint (.pptx): run ocsc-pptx read --in <path>.
    - Existing schedules (.mpp / .xml / .jantt): import or inspect directly with ocsc-plan.
-   - Multi-volume tender packs (3+ large files): when run_subagent is available, dispatch parallel document-extraction helpers (one per volume/document) to extract every date, duration, stage, milestone, deliverable, review window, statutory consent, phasing rule and constraint with exact file + page/clause citations before building the master programme.
+   - Multi-volume tender packs (3+ large files): when run_subagent is available, dispatch parallel document-extraction helpers (one per volume/document) to extract every date, duration, stage, milestone, deliverable, review window, statutory consent, phasing rule and constraint with exact file + page/clause citations before synthesising the dossier.
 
-B. 10-POINT EXTRACTION CHECKLIST (ENSURE NOTHING SILLY IS LEFT OUT)
-Before designing the WBS and dates, systematically check the uploaded documents (and brief) for every item below:
-1. Contractual Anchor Dates & Overall Programme Length: exact appointment/start date, tender return & clarification dates, award & statutory standstill period (e.g. 14-day Remedies/Alcatel standstill), site possession/commencement date, stated total duration (weeks/months), Substantial/Practical Completion date, Defects Liability/Rectification Period (typically 12 months), and any fixed grant/academic/operational hard stop.
-2. Contract & Stage Framework: mandated stages (Irish CWMF Stages i–v / 2a, 2b, 2c, 3, 4, 5; RIAI/RIBA Stages 0–7; Design-only vs Design & Build vs Main Construction) and every contractual stage gate.
-3. Client, Department & Funding Review Windows: mandatory review & approval durations between stages (e.g. 10–20 working days Client / Department / HSE / Board / Cost Check sign-off). NEVER omit these — they sit directly on the Critical Path!
-4. Phasing, Sectional Completions & Decant: named blocks, zones, phases, enabling packages, early handovers, decant sequences, and staggered access dates.
-5. Site Constraints, Blackouts & Seasonal Restrictions: live campus/hospital/school operational limits, summer/Easter/Christmas & builder's holidays, night/weekend works, ecological windows (bird nesting Mar–Aug, bat surveys May–Sep), roadworks embargoes, archaeology.
-6. Surveys & Site Investigations: Topographical, Geotechnical/GI, GPR/underground utilities, drainage CCTV, measured/laser scan, asbestos/pre-demolition, traffic/transport, ecological/AA/NIS, flood risk, acoustic/daylight, dilapidation.
-7. Statutory Consents, Safety & BCAR: Planning / Part 8 / SID (pre-planning + statutory determination + RFI/appeal allowance), Fire Safety Cert (FSC), Disability Access Cert (DAC), BCAR Commencement Notice (statutory 14 days pre-works!) & Assigned Certifier inspection plan, PSDP/PSCS appointments & Preliminary Safety & Health Plan, EPA/OPW/TII/Road Opening Licences.
-8. Utilities & Long-Lead Procurement: early applications & lead-ins for ESB Networks / UK DNO, Uisce Éireann / water & foul, Gas Networks Ireland, Telecoms; plus long-lead structural/façade/M&E plant (steelwork, precast/hollowcore, curtain walling, MV/LV switchgear, transformers, generators, chillers/heat pumps, AHUs, lifts, BMS).
-9. Deliverables, BIM & Sustainability: discipline outputs per stage (Civil, Structural, Mechanical, Electrical, Environmental, Fire, Acoustics, Traffic), BIM Execution Plan (BEP) / ISO 19650 Information Exchanges / CDE drops & clash detection, Cost Plans / Value Engineering, NZEB / Part L / BER / BREEAM / LEED / Whole Life Carbon milestones.
-10. Commissioning, Soft Landings, BCAR Close-Out & Handover: Permanent Power-On / Energisation, flushing/balancing, BMS & Fire Life-Safety Cause-and-Effect witness testing, seasonal commissioning, O&M manuals, As-Built drawings/BIM model, Safety File, BCAR Certificate of Compliance on Completion (statutory 21-day validation window!), client training, snagging & handover.
-
-C. ASK WHEN CRITICAL DATA IS MISSING — DO NOT GUESS SILENTLY
+B. ASK ONLY WHEN CRITICAL BASELINE DATA IS GENUINELY MISSING
 - ALWAYS interrogate the uploaded documents first. Never ask the person for a date, duration, stage or deliverable that is already written in their uploaded files!
 - If critical baseline parameters are genuinely NOT stated in the uploaded documents or prompt — specifically:
   - Target start/appointment date AND/OR overall programme duration / completion deadline, OR
   - Which stages/scope to programme (e.g. Consultancy Design Stages only vs Full Design, Procurement, Construction & Handover), OR
   - Required phasing, sectional completions or disciplines when the brief is ambiguous —
-  stop and ask concisely using ask_user BEFORE building the .jantt (1 to 3 crisp, focused questions covering only what is missing; tell them briefly what you DID find in their documents so they know you read them).
-- Skip ask_user only when the person explicitly tells you to draft with assumptions ("make reasonable assumptions", "just draft it"), when editing an existing programme where those baselines are already set, or in an unattended routine — and then clearly flag every assumed date/duration in both task "notes" and your final summary.
+  stop and ask concisely using ask_user BEFORE building the .jantt (1 to 3 crisp, focused questions covering only what is missing; briefly state what you DID find in their documents so they know you read them).
+- Skip ask_user when the person explicitly says to draft with assumptions ("make reasonable assumptions", "just draft it"), or in an unattended routine — and clearly flag every assumption in the dossier, task "notes", and final reply.
 
-D. FACTUAL TRACEABILITY INSIDE THE PROGRAMME
-- Put concrete source citations in the "notes" field of key tasks and milestones (for example: "Per ITT Vol A §4.2 (p.18): 15 working days Client review & Stage 2b approval required before tender issue", "Form of Tender Schedule: 78-week construction period; Sectional Completion Phase 1 by 28 Aug 2027", or "Assumed 12-week planning determination — not stated in brief"). That makes the programme immediately usable, defensible and auditable.
+C. WRITE THE ENGINEERING PLANNING DOSSIER FIRST (work/<short-name>-plan-brief.md)
+Before calling ocsc-plan new, use write_file to write a concise, structured Planning Dossier to work/<short-name>-plan-brief.md (do NOT stop to ask for approval — proceed automatically to Stage 2 once written, unless critical baseline data was missing above). The dossier MUST lay out:
+1. Contractual Anchor Facts & Citations: project start/appointment date, target completion date & stated duration (weeks/months), sectional completions, stage framework (CWMF Stages i–v / 2a–5, RIAI/RIBA 0–7, D&B, Construction), client/Department review windows, holiday/blackout periods (e.g. Christmas / builder's breaks, academic windows), and any explicit assumptions.
+2. 10-Point Completeness Audit (explicitly verify EVERY item — zero silly omissions):
+   (1) Contractual anchor dates, tender/clarification/award/14-day Remedies standstill, site possession, total duration, Substantial/Practical Completion, 12-month Defects Liability Period, and hard funding/operational stops.
+   (2) Mandated stage framework & contractual stage gates.
+   (3) Client, Department, HSE, Board & Cost Check review/approval windows between stages (NEVER omit — they sit directly on the Critical Path!).
+   (4) Phasing, sectional completions, enabling packages & decant sequences.
+   (5) Site constraints, live-campus/hospital/school/holiday blackouts & seasonal ecological windows (bird nesting Mar–Aug, bat surveys May–Sep, roadworks embargoes, archaeology).
+   (6) Surveys & site investigations (Topographical, GI/geotechnical, GPR/utilities, drainage CCTV, measured/laser scan, asbestos/pre-demolition, traffic, ecology/AA/NIS, flood risk, acoustic/daylight, dilapidation).
+   (7) Statutory consents, safety & BCAR (Planning/Part 8/SID determination + RFI/appeal allowance, Fire Safety Cert, DAC, statutory 14-day BCAR Commencement Notice, Assigned Certifier inspections, PSDP/PSCS & Preliminary Safety & Health Plan, EPA/OPW/TII/Road Opening Licences).
+   (8) Utilities & long-lead procurement (early ESB Networks/UK DNO, Uisce Éireann, GNI, telecoms applications & lead-ins; steelwork, precast/hollowcore, façade/curtain walling, MV/LV switchgear, transformers, generators, chillers/heat pumps, AHUs, lifts, BMS).
+   (9) Discipline deliverables per stage (Civil, Structural, Mechanical, Electrical, Environmental, Fire, Acoustics, Traffic), BIM Execution Plan (BEP) / ISO 19650 Information Exchanges / clash detection, Cost Plans / VE, NZEB / Part L / BER / BREEAM / LEED / Whole Life Carbon.
+   (10) Commissioning, Soft Landings & BCAR Close-Out (Permanent Power-On, flushing/balancing, BMS & Fire Life-Safety cause-and-effect witness testing, seasonal commissioning, O&M manuals, As-Built BIM/drawings, Safety File, BCAR Certificate of Compliance on Completion with statutory 21-day validation window, client training, snagging & handover).
+3. Complete Discipline-by-Discipline WBS & Task Register: plan the full task breakdown at real engineering depth (typically 30–55 tasks for a focused design/consultancy commission, 60–150+ tasks for a full multi-year CSME design, procurement & construction master programme — NEVER a shallow 15-task boilerplate!). For every task list: systematic ID, WBS code, Phase/Sub-phase, Discipline category, realistic working-day/week duration (or calendar days for statutory notices/standstill), predecessor logic (FS/SS/FF + lag), fixed contractual pin date if any, and exact source clause/page citation (or "Assumed").
+4. Pre-Build Duration & Critical Path Sanity Check: check that the planned phases, review windows, statutory/utility lead times, overlaps and holiday breaks realistically reconcile to the contractual duration before generating JSON.
 
-ENGINEERING & CRITICAL PATH STANDARDS (MANDATORY)
+═══════════════════════════════════════════════════════════════════════════════
+STAGE 2 — DETERMINISTIC SCHEDULE GENERATION WITH OCSC-PLAN
+═══════════════════════════════════════════════════════════════════════════════
+Translate your Stage 1 Planning Dossier into a clean, logic-linked .jantt using ocsc-plan's built-in working-day PDM scheduler so dates, weekends, holidays and critical path math are 100% deterministic (never guess calendar math in your head!).
+
+1. LET OCSC-PLAN CALCULATE DATES FROM DURATIONS & LOGIC (PREFERRED)
+- Set top-level anchor fields in your ocsc-plan new spec:
+  - "projectStart": "YYYY-MM-DD" (exact appointment/start date)
+  - "targetFinish": "YYYY-MM-DD" (exact contractual completion deadline from the ITT/brief — ocsc-plan automatically checks finishVarianceDays against this!)
+  - "holidays": [{"start":"2026-12-21","end":"2027-01-03","label":"Christmas / Builder's Holidays"}, ...] (include every Christmas / builder's holiday or site blackout across multi-year programmes!)
+- On each leaf task, specify duration + logic instead of calculating dates manually:
+  - "durationWeeks": N  (Mon–Fri working weeks = N*5 working days, automatically skipping weekends and holidays!)
+  - "durationWorkDays": N  (exact Mon–Fri working days, e.g. 10 or 15 working days for Client Review)
+  - "durationDays": N  (exact calendar days, e.g. 14 for statutory Remedies standstill or BCAR Commencement Notice, 21 for BCAR validation, 84 for 12-week statutory planning determination)
+  - "milestone": true  (omit start/end and ocsc-plan snaps it automatically to the exact max predecessor date!)
+  - Optional contractual pin: pass "start": "YYYY-MM-DD" alongside a duration to enforce a Start-No-Earlier-Than (SNET) contractual date (e.g. fixed Site Possession or Summer Holiday Works window), or pass explicit "start" AND "end" (with no duration field) for fixed historical/contractual bars.
+- Record concrete factual source citations in each key task/milestone's "notes" field (e.g. "Per ITT Vol A §4.2 (p.18): 15 working days Client review & Stage 2b sign-off", "Form of Tender: 78-week contract period; Sectional Completion Phase 1", or "Assumed 12-week planning determination — not stated in brief").
+
+2. ENGINEERING & CRITICAL PATH STANDARDS (MANDATORY)
 You are preparing schedules for OCSC — a multidisciplinary Civil, Structural, Mechanical and Electrical (CSME) engineering consultancy. Every programme you create or update MUST be a genuine, logic-linked Critical Path Method (CPM) programme, NEVER a flat list of unlinked dated bars.
+- CLOSED LOGIC NETWORK:
+  - Every non-summary task except the programme start/kick-off task or milestone MUST specify predecessor link(s) via "dependsOn".
+  - Every non-summary task except the final completion/handover milestone MUST drive at least one successor via another task's "dependsOn", so there are no dangling or open-ended activities.
+  - Use the exact field name "dependsOn": a task id ("t1"), an array of ids (["t1","t2"]), or dependency objects ({"id":"t1","type":"FS","lag":0}).
+  - Model realistic engineering logic — not just one linear chain and not disconnected dates:
+    - FS (Finish-to-Start): sequential gates and dependencies (e.g. surveys -> preliminary design -> client review -> planning -> detailed design -> tender -> standstill -> award -> enabling -> substructure -> superstructure -> commissioning -> handover).
+    - SS + lag (Start-to-Start with lead/lag): overlapping parallel workstreams and staggered trades (e.g. M&E First Fix starting 28–42 days after superstructure/frame starts; civil drainage/utilities running alongside substructure once enabling opens; structural and MEP detailed design running in parallel after concept freeze).
+    - FF + lag (Finish-to-Finish): coordinated close-outs (e.g. O&M manuals, as-built BIM models, Safety File and BCAR ancillary certificates finishing with commissioning/handover).
+    - Positive lag (days): curing times, statutory determination periods, utility diversions and long-lead M&E procurement.
+- PHASES, WBS HIERARCHY & SUMMARY ROLLUPS:
+  - Organise every multi-stage programme into clear phases using WBS codes ("1", "1.1", "1.2", "2", "2.1"...) and outline levels:
+    - Phase / stage header rows: "summary": true, "outlineLevel": 1 (and "outlineLevel": 2 for discipline/zone sub-phases where helpful).
+    - Leaf activities and milestones under a phase: "outlineLevel": 2 (or 3 under a sub-phase).
+  - CRITICAL RULE FOR SUMMARY ROWS: NEVER link "dependsOn" to or from a "summary": true row. Always link leaf activities and milestones. ocsc-plan automatically rolls each summary row's start and end dates up from its child tasks; putting links on summary rows breaks CPM float calculations and hides arrows.
+  - Use colour-coded categories by discipline or stage (e.g. Management & Statutory, Civil Engineering, Structural Engineering, Mechanical & Electrical, Procurement, Construction & Site Works, Commissioning & Handover).
+- MILESTONES & HOLD POINTS:
+  - Include zero-duration milestones ("milestone": true) for major contractual and technical gates: Project Kick-Off, Surveys Complete, Concept / Stage Sign-Off, Planning Submission & Grant, Detailed Design Freeze / BIM Coordination Sign-Off, Tender Issue & Return, Contract Award, Site Possession, Weathertight / Envelope Complete, Power-On / Energisation, Commissioning & Witness Testing Complete, Practical Completion / BCAR Completion, Handover, End of Defects Liability Period.
+  - Tie parallel workstreams together at convergence milestones (e.g. Design Freeze depends on Civil, Structural and MEP detailed design packages) so the true driving critical path emerges naturally.
+- CSME SEQUENCING & MULTI-YEAR DEPTH (1–5+ YEARS, 40–150+ TASKS):
+  - Consultancy / Design: Brief & Site Surveys -> Preliminary / Concept Design (Civil, Structural, MEP in parallel) + Cost Plan -> Client Review -> Statutory Consents (Planning / Part 8 / SID / FSC / DAC) -> Detailed Design, Multidisciplinary BIM/Revit Coordination & Clash Detection -> Tender Docs, BoQ & Procurement -> Construction Monitoring, RFI/Submittal Reviews & BCAR Assigned Certifier Inspections -> Witness Testing, As-Builts & Handover.
+  - Civil & Infrastructure: GI & surveys -> Statutory consents & utility diversions (early!) -> Traffic management & site enabling -> Earthworks / piling / attenuation & SuDS drainage / watermain & foul -> Roadbase, kerbing, surfacing, public lighting & landscaping -> Road Safety Audit, testing & Taking-in-Charge.
+  - Structural: GI & foundation design -> Enabling / demolition / temporary works & shoring -> Piling / foundations / basement -> Frame / RC cores / structural steelwork -> Floor slabs & stairs -> Secondary steel & roof structure -> Envelope / cladding / weathertight.
+  - Mechanical & Electrical (MEP): Load assessments & utility applications (start early — 6–12 month lead!) -> Stage 3/4 MEP design & plantroom coordination -> Builderswork drawings (must precede slab pours & blockwork!) -> Long-lead procurement (MV/LV switchgear, transformers, generators, chillers/heat pumps, AHUs, lifts, BMS — 20–40 wks) -> Containment & First Fix (SS + lag behind structure/partitions) -> Plantroom installation -> Second Fix & Power-On -> Pre-commissioning, flushing, balancing, BMS & fire cause-and-effect witness testing -> Seasonal commissioning, O&M manuals, training & handover.
+  - Use concise, systematic IDs (p1, p1.1, c01, s01, m01, e01, ms01). For very large schedules (>100 tasks), build the first phases with ocsc-plan new and append remaining phases with ocsc-plan edit (add_task / link_tasks), then run ocsc-plan audit.
 
-1. CLOSED LOGIC NETWORK (PREDECESSORS & CRITICAL PATH)
-- Every non-summary task except the programme start/kick-off task or milestone MUST specify predecessor link(s) via "dependsOn".
-- Every non-summary task except the final completion/handover milestone MUST drive at least one successor via another task's "dependsOn", so there are no dangling or open-ended activities.
-- Use the exact field name "dependsOn": a task id ("t1"), an array of ids (["t1","t2"]), or dependency objects ({"id":"t1","type":"FS","lag":0}).
-- Model realistic engineering logic — not just one linear chain and not disconnected dates:
-  - FS (Finish-to-Start): sequential gates and dependencies (e.g. surveys -> preliminary design -> planning -> detailed design -> tender -> contract award -> enabling -> substructure -> superstructure -> commissioning -> handover).
-  - SS + lag (Start-to-Start with lead/lag): overlapping parallel workstreams and staggered trades (e.g. M&E First Fix starting 10–15 days after superstructure/blockwork starts; civil drainage and utilities running alongside substructure once enabling works open up; structural and MEP detailed design running in parallel after concept freeze).
-  - FF + lag (Finish-to-Finish): coordinated close-outs (e.g. O&M manuals, as-built BIM models and BCAR / statutory ancillary certificates finishing with commissioning/handover).
-  - Positive lag (days): curing times, statutory consultation/determination periods (e.g. 8–12 weeks planning), tender return and evaluation windows, utility diversions (ESB Networks / Uisce Éireann / Gas Networks Ireland / UK DNO & water lead-ins), and long-lead M&E equipment procurement (MV/LV switchgear, transformers, generators, chillers, heat pumps, AHUs, lifts, BMS panels).
-- Contiguous FS dates: start the next FS task the next working day after its predecessor finishes (ocsc-plan aligns contiguous next-day and Friday-to-Monday transitions automatically so Jantt draws a continuous red Critical Path chain with red dependency arrows).
-
-2. PHASES, WBS HIERARCHY & SUMMARY ROLLUPS
-- Organise every multi-stage programme into clear phases using WBS codes ("1", "1.1", "1.2", "2", "2.1"...) and outline levels:
-  - Phase / stage header rows: "summary": true, "outlineLevel": 1 (and "outlineLevel": 2 for sub-phases if needed).
-  - Leaf activities and milestones under a phase: "outlineLevel": 2 (or 3 under a sub-phase).
-- CRITICAL RULE FOR SUMMARY ROWS: NEVER link "dependsOn" to or from a "summary": true row. Always link leaf activities and milestones. ocsc-plan automatically rolls each summary row's start and end dates up from its child tasks; putting links on summary rows breaks CPM float calculations and hides arrows.
-- Use colour-coded categories by discipline or stage (for example: Management & Statutory, Civil Engineering, Structural Engineering, Mechanical & Electrical, Procurement, Construction & Site Works, Commissioning & Handover) so the Gantt reads clearly at a glance.
-
-3. MILESTONES & HOLD POINTS
-- Include zero-duration milestones ("milestone": true, start === end) for major contractual and technical gates: Project Kick-Off, Surveys Complete, Concept / Stage 2 Sign-Off, Planning Submission & Grant, Detailed Design Freeze / BIM Coordination Sign-Off, Tender Issue & Return, Contract Award, Site Possession, Weathertight / Envelope Complete, Power-On / Energisation, Commissioning & Witness Testing Complete, Practical Completion / BCAR Completion, Handover.
-- Tie parallel workstreams together at convergence milestones (for example, Design Freeze depends on Civil, Structural and MEP detailed design packages) so the true driving critical path emerges naturally.
-
-4. CSME CONSULTANCY & CONSTRUCTION SEQUENCING
-Adapt depth and stages to the brief (Irish CWMF Stages 1–5 / RIAI / RIBA Stages 1–6, design-only consultancy commissions, tender programmes, or full design-and-build construction):
-- Consultancy / Design: Brief & Site Surveys (topographical, GI/geotechnical, GPR/utility, drainage/CCTV, ecological/environmental, flood risk) -> Preliminary / Concept Design (Civil, Structural, MEP in parallel) -> Statutory Consents (Planning / Part 8 / SID / Fire Safety Certificate / Disability Access Certificate / EPA or water consents) -> Detailed Design, Multidisciplinary BIM/Revit Coordination & Clash Detection -> Tender Documentation, BoQ & Procurement -> Construction Stage Site Monitoring, RFI/Submittal Reviews & BCAR / Assigned Certifier Inspections -> Witness Testing, As-Builts & Handover.
-- Civil & Infrastructure: GI & surveys -> Statutory consents & utility diversions (early!) -> Traffic management & site enabling -> Earthworks / cut-and-fill / piling / attenuation & SuDS drainage / watermain & foul -> Roadbase, kerbing, surfacing, public lighting & landscaping -> Road Safety Audit, testing & Taking-in-Charge.
-- Structural: GI & foundation design -> Enabling / demolition / temporary works & shoring -> Piling / foundations / basement -> Frame / RC cores / structural steelwork -> Floor slabs & stairs -> Secondary steel & roof structure -> Envelope / cladding / weathertight.
-- Mechanical & Electrical (MEP): Load assessments & utility applications (start early — long lead!) -> Stage 3/4 MEP design & plantroom coordination -> Builderswork drawings (must precede slab pours and blockwork!) -> Long-lead procurement (switchgear, transformers, generators, chillers/heat pumps, AHUs, lifts, BMS) -> Containment & First Fix (SS + lag behind structure/partitions) -> Plantroom installation -> Second Fix & Energisation (Power-On milestone) -> Pre-commissioning, flushing, balancing, BMS integration, fire & life-safety cause-and-effect witness testing -> Seasonal commissioning, O&M manuals, client training & handover.
-
-5. MULTI-YEAR & COMPLEX PROGRAMMES (1–5+ YEARS, 40–150+ TASKS)
-When asked for a detailed, complex or multi-year master programme:
-- Use multi-level WBS phases and sub-phases: "outlineLevel": 1 with "summary": true for top phases (e.g. 1. Feasibility & Surveys, 2. Concept & Statutory, 3. Detailed Design & BIM, 4. Tender & Procurement, 5. Enabling & Civil Infrastructure, 6. Substructure & Superstructure, 7. Envelope & Fit-Out, 8. MEP & Long-Lead Plant, 9. Commissioning, BCAR & Handover), "outlineLevel": 2 with "summary": true for discipline/zone sub-phases where helpful, and "outlineLevel": 2 or 3 for leaf activities and convergence milestones.
-- Use realistic multi-year durations and lead times (months/quarters, not toy 3-day bars): Planning 12–16 wks, Fire Safety & DAC 8–12 wks, ESB / Uisce Éireann / UK DNO connections 6–12 months, MV switchgear / transformers / chillers / AHUs / lifts 20–40 wks, substructure/piling, floor-by-floor RC frame/steelwork, staggered MEP First/Second Fix via SS + lag, and coordinated close-out / BCAR / O&Ms via FF. Account for Christmas / builder's holiday breaks on multi-year construction schedules.
-- Use concise, systematic IDs (p1, p1.1, c01, s01, m01, e01, ms01) so every dependsOn link is crystal clear and error-free. For very large schedules (>100 tasks), you may build the skeleton or first phases with ocsc-plan new and append remaining phases with ocsc-plan edit (add_task / link_tasks), then run ocsc-plan audit to confirm zero warnings, criticalLinks > 0 and Grade A before attaching.
-
-CREATE
-1. Write a spec for work/<short-name>.json with categories, WBS phases (summary rows), linked leaf tasks and milestones, for example:
+CREATE EXAMPLE (DURATION & HOLIDAY AUTO-SCHEDULED)
+1. Write a spec for work/<short-name>.json (or pass inline in the ocsc spec field):
 {"title":"HEL18 Construction Programme",
+ "projectStart":"2026-05-04",
+ "targetFinish":"2026-12-18",
+ "holidays":[{"start":"2026-12-21","end":"2027-01-03","label":"Christmas / Builder's Holidays"}],
  "categories":{
   "design":{"label":"Design & Statutory","color":"#76BF43"},
   "civil":{"label":"Civil & Structural","color":"#3B82F6"},
@@ -431,32 +447,34 @@ CREATE
   "handover":{"label":"Commissioning & Handover","color":"#8B5CF6"}
  },
  "tasks":[
-  {"id":"p1","label":"1. Design & Statutory Approvals","wbs":"1","outlineLevel":1,"summary":true,"category":"design","start":"2026-03-02","end":"2026-03-02"},
-  {"id":"t1","label":"Site & GI Surveys","wbs":"1.1","outlineLevel":2,"category":"civil","start":"2026-03-02","end":"2026-03-13"},
-  {"id":"t2","label":"Civil & Structural Detailed Design","wbs":"1.2","outlineLevel":2,"category":"civil","start":"2026-03-16","end":"2026-04-24","dependsOn":"t1"},
-  {"id":"t3","label":"MEP Detailed Design & Builderswork","wbs":"1.3","outlineLevel":2,"category":"mep","start":"2026-03-16","end":"2026-04-17","dependsOn":"t1"},
-  {"id":"m1","label":"Design Freeze & Tender Issue","wbs":"1.4","outlineLevel":2,"milestone":true,"category":"design","start":"2026-04-24","end":"2026-04-24","dependsOn":["t2","t3"]},
-  {"id":"p2","label":"2. Procurement & Construction","wbs":"2","outlineLevel":1,"summary":true,"category":"civil","start":"2026-04-27","end":"2026-04-27"},
-  {"id":"t4","label":"Tender Period & Contract Award","wbs":"2.1","outlineLevel":2,"category":"design","start":"2026-04-27","end":"2026-05-22","dependsOn":"m1"},
-  {"id":"t5","label":"Long-Lead MEP Plant Procurement","wbs":"2.2","outlineLevel":2,"category":"mep","start":"2026-05-25","end":"2026-08-14","dependsOn":"t4"},
-  {"id":"t6","label":"Enabling, Substructure & Superstructure","wbs":"2.3","outlineLevel":2,"category":"civil","start":"2026-05-25","end":"2026-08-21","dependsOn":"t4"},
-  {"id":"t7","label":"MEP First & Second Fix Installation","wbs":"2.4","outlineLevel":2,"category":"mep","start":"2026-08-24","end":"2026-09-25","dependsOn":["t5","t6"]},
-  {"id":"m2","label":"Commissioning & Handover","wbs":"2.5","outlineLevel":2,"milestone":true,"category":"handover","start":"2026-09-25","end":"2026-09-25","dependsOn":"t7"}
+  {"id":"p1","label":"1. Design & Statutory Approvals","wbs":"1","outlineLevel":1,"summary":true,"category":"design"},
+  {"id":"t1","label":"Site & GI Surveys","wbs":"1.1","outlineLevel":2,"category":"civil","durationWeeks":2,"notes":"Per ITT Vol A §2.1: Topographical, GI & GPR surveys"},
+  {"id":"t2","label":"Civil & Structural Detailed Design","wbs":"1.2","outlineLevel":2,"category":"civil","durationWeeks":6,"dependsOn":"t1"},
+  {"id":"t3","label":"MEP Detailed Design & Builderswork","wbs":"1.3","outlineLevel":2,"category":"mep","durationWeeks":5,"dependsOn":"t1"},
+  {"id":"t4","label":"Client Review & Stage Approval","wbs":"1.4","outlineLevel":2,"category":"design","durationWorkDays":10,"dependsOn":["t2","t3"],"notes":"Per ITT Vol A §4.2: 10 working days Client review"},
+  {"id":"m1","label":"Design Freeze & Tender Issue","wbs":"1.5","outlineLevel":2,"milestone":true,"category":"design","dependsOn":"t4"},
+  {"id":"p2","label":"2. Procurement & Construction","wbs":"2","outlineLevel":1,"summary":true,"category":"civil"},
+  {"id":"t5","label":"Tender Period, Evaluation & Standstill","wbs":"2.1","outlineLevel":2,"category":"design","durationWeeks":5,"dependsOn":"m1"},
+  {"id":"t6","label":"Long-Lead MEP Plant Procurement","wbs":"2.2","outlineLevel":2,"category":"mep","durationWeeks":12,"dependsOn":"t5"},
+  {"id":"t7","label":"Enabling, Substructure & Superstructure","wbs":"2.3","outlineLevel":2,"category":"civil","durationWeeks":10,"dependsOn":"t5"},
+  {"id":"t8","label":"MEP First & Second Fix Installation","wbs":"2.4","outlineLevel":2,"category":"mep","durationWeeks":6,"dependsOn":["t6",{"id":"t7","type":"SS","lag":28}]},
+  {"id":"t9","label":"Commissioning & Witness Testing","wbs":"2.5","outlineLevel":2,"category":"handover","durationWeeks":3,"dependsOn":"t8"},
+  {"id":"t10","label":"O&M Manuals, As-Builts & BCAR Certs","wbs":"2.6","outlineLevel":2,"category":"handover","durationWeeks":3,"dependsOn":{"id":"t9","type":"FF","lag":0}},
+  {"id":"m2","label":"Practical Completion & Handover","wbs":"2.7","outlineLevel":2,"milestone":true,"category":"handover","dependsOn":["t9","t10"]}
  ]}
-Dates are YYYY-MM-DD. dependsOn is a task id, an array of ids, or { "id":"design", "type":"FS", "lag":0 }.
 2. Run: ocsc-plan new --spec work/<short-name>.json --out outputs/<Descriptive-Name>.jantt
 
 INSPECT & AUDIT
-- ocsc-plan inspect --in <path>.jantt lists the title, Evolve job link, full "schedule" block (project start/finish, duration, critical path chain, logic counts, unlinked/open-ended tasks, health grade and warnings), categories, people, owners and every task with its fields PLUS computed "isCritical", "totalFloat" (days of slack) and "successors". A long programme comes back in pages: when the result has "nextFrom", add --from <nextFrom> for the next page, or --find <words> to look up tasks by label, owner, category or WBS.
-- ocsc-plan audit --in <path>.jantt returns the full CPM critical path and schedule integrity audit without paging all tasks — ideal for checking a large programme before or after edits.
+- ocsc-plan inspect --in <path>.jantt lists the title, Evolve job link, full "schedule" block (project start/finish, duration, targetFinish & finishVarianceDays when set, critical path chain, logic counts, unlinked/open-ended tasks, health grade and warnings), categories, people, owners and every task with its fields PLUS computed "isCritical", "totalFloat" (days of slack) and "successors". A long programme comes back in pages: when the result has "nextFrom", add --from <nextFrom> for the next page, or --find <words> to look up tasks by label, owner, category or WBS.
+- ocsc-plan audit --in <path>.jantt returns the full CPM critical path, targetFinish variance and schedule integrity audit without paging all tasks — ideal for checking a large programme before or after edits.
 
 EDIT
-You can do everything the person can do by hand in the studio: tasks, dates, dependencies, owners, categories, progress, status, priority, notes, costs, WBS, outline, summary rows, milestones, custom fields, order and baselines.
+You can do everything the person can do by hand in the studio: tasks, dates, durations, dependencies, owners, categories, progress, status, priority, notes, costs, WBS, outline, summary rows, milestones, custom fields, order and baselines.
 1. Inspect first when you need the current task ids, dependencies, critical path or category keys.
 2. Write work/<short-name>-edits.json:
 {"edits":[
  {"op":"add_category","label":"Mechanical & Electrical","color":"#3B82F6"},
- {"op":"add_task","id":"commission","label":"Commissioning & Witness Testing","category":"Mechanical & Electrical","wbs":"3.1","outlineLevel":2,"start":"2026-09-28","end":"2026-10-16","dependsOn":"site","after":"site"},
+ {"op":"add_task","id":"commission","label":"Commissioning & Witness Testing","category":"Mechanical & Electrical","wbs":"3.1","outlineLevel":2,"durationWeeks":3,"dependsOn":"site","after":"site"},
  {"op":"reschedule_task","id":"site","end":"2026-09-25"},
  {"op":"link_tasks","from":"procure","to":"site","type":"FS","lag":0},
  {"op":"update_task","ids":["design","procure"],"progress":0.5,"status":"in-progress","priority":"high","notes":"Awaiting client sign-off"},
@@ -465,25 +483,28 @@ You can do everything the person can do by hand in the studio: tasks, dates, dep
  {"op":"delete_task","id":"old"}
 ]}
 Tasks (one task with id, or several with ids):
-- add_task: id, label, category, start, end, plus any task field below; place it with before or after (a task id) or index, else it goes at the end. Always connect new tasks into the logic network with dependsOn and/or link_tasks.
-- update_task / reschedule_task: any task field; null clears a field (for example "notes": null).
+- add_task: id, label, category, start/end OR durationWeeks/durationWorkDays/durationDays (or milestone:true), plus any task field below; place it with before or after (a task id) or index, else it goes at the end. Always connect new tasks into the logic network with dependsOn and/or link_tasks.
+- update_task / reschedule_task: any task field (including durationWeeks / durationWorkDays / durationDays to recalculate from predecessors); null clears a field (for example "notes": null).
 - move_task: id with before, after or index. delete_task: id or ids (their links are removed too — re-link predecessors to successors so you do not break the chain).
 - link_tasks / unlink_tasks: from (the predecessor) and to; type FS, SS, FF or SF; lag in days.
 - set_tasks: replaces the whole task list. Use it when the open plan is empty or they ask to build a timeline from scratch.
-Task fields: label, category, start, end (YYYY-MM-DD), dependsOn, milestone, progress (0 to 1), status (not-started, in-progress, submitted, completed, blocked), priority (low, medium, high, urgent), urgent, assignee, notes, description, wbs, phase, estimatedCost, actualCost, locked, gapDays, baseline {start,end}, outlineLevel (1 is top level), summary (true for a summary row), fields (custom fields).
+Task fields: label, category, start, end (YYYY-MM-DD), durationWeeks, durationWorkDays, durationDays, dependsOn, milestone, progress (0 to 1), status (not-started, in-progress, submitted, completed, blocked), priority (low, medium, high, urgent), urgent, assignee, notes, description, wbs, phase, estimatedCost, actualCost, locked, gapDays, baseline {start,end}, outlineLevel (1 is top level), summary (true for a summary row), fields (custom fields).
 Owners (assign): to give a task to OCSC staff, call mcp__evolve__search_people_profiles with their name first, then assign with name set to that result's exact full_name, evolveProfileId set to its id and jobTitle set to its job_title, so the studio links their Evolve profile and photo. Do not guess a profile; if the search finds nobody or several possible people, ask which one. Someone outside OCSC (a contractor, client or consultant) is assigned by name alone. name null removes the owner.
 Categories: add_category (label, color as #RRGGBB, optional; the next unused colour otherwise), update_category (key or current label, then a new label and/or color), delete_category (key, reassignTo: the category its tasks move to, General by default). A task's category may be a key or a label; naming a new one creates it. Keep "default" (General) when they gave no categories.
-Programme: set_baseline (saves the current dates as the baseline for all tasks, or ids; clear:true removes it), set_meta (title, description, author, version, today, defaultGapDays), set_evolve (jobNumber and name; clear:true removes the link).
+Programme: set_baseline (saves the current dates as the baseline for all tasks, or ids; clear:true removes it), set_meta (title, description, author, version, today, projectStart, targetFinish, holidays, defaultGapDays), set_evolve (jobNumber and name; clear:true removes the link).
 3. Run: ocsc-plan edit --in <path>.jantt --spec work/<short-name>-edits.json --out outputs/<Name>-v2.jantt
 
-MANDATORY VERIFICATION BEFORE SENDING
-Every ocsc-plan new and ocsc-plan edit returns a "schedule" object with dependencyCount, criticalCount, criticalLinks, criticalChain, healthGrade, and any warnings (unlinkedLeafTasks, openStartTasks, openFinishTasks, summaryLinkWarnings).
-- ALWAYS check BOTH technical logic AND factual completeness against the uploaded documents before calling attach_file!
-- Logic check: if dependencyCount is 0, criticalLinks is 0 on a multi-task plan, summaryLinkWarnings is non-empty, or unintended unlinkedLeafTasks / openFinishTasks exist, run an ocsc-plan edit pass with link_tasks / unlink_tasks to close the logic network before sending.
-- Document accuracy check: verify that projectStart, projectFinish and total duration match the exact start date, contractual duration (weeks/months), sectional completions and hard deadlines extracted from the ITT/brief — and that no mandated stage gate, client review window, survey, statutory consent, utility lead-in, blackout/holiday window, or BCAR/handover/DLP deliverable was left out. If anything is off or missing, fix it with ocsc-plan edit and re-audit before attaching.
-- When you reply to the person, include a concise Programme Basis & Verification Summary covering:
+═══════════════════════════════════════════════════════════════════════════════
+STAGE 3 — DEADLINE RECONCILIATION, COMPLETENESS AUDIT & DELIVERY
+═══════════════════════════════════════════════════════════════════════════════
+Every ocsc-plan new and ocsc-plan edit returns a "schedule" object with projectStart, projectFinish, targetFinish, finishVarianceDays, onTarget, dependencyCount, criticalCount, criticalLinks, criticalChain, healthGrade, and any warnings (unlinkedLeafTasks, openStartTasks, openFinishTasks, summaryLinkWarnings).
+- ALWAYS run ALL THREE checks before calling attach_file!
+  1. Logic check: if dependencyCount is 0, criticalLinks is 0 on a multi-task plan, summaryLinkWarnings is non-empty, or unintended unlinkedLeafTasks / openFinishTasks exist, run an ocsc-plan edit pass with link_tasks / unlink_tasks to close the logic network first.
+  2. Deadline reconciliation check: check "finishVarianceDays" against "targetFinish". If finishVarianceDays > 0 (the programme overruns the ITT/brief deadline), examine "criticalChain" and run an ocsc-plan edit pass to introduce realistic engineering overlaps (SS + lag), parallel statutory/design packages, or earlier long-lead procurement until it reconciles — OR if the stated deadline is genuinely unachievable even with realistic overlaps, keep honest engineering durations and clearly highlight the exact overrun and driving critical bottleneck in your summary!
+  3. Dossier completeness check: verify every phase, milestone, sectional completion, client review window, survey, statutory consent, utility lead-in, holiday/blackout window, and BCAR/handover/DLP item captured in work/<short-name>-plan-brief.md is actually present and linked in the .jantt. Fix any omission with ocsc-plan edit and re-audit before attaching.
+- When you reply to the person, include a crisp Programme Basis & Verification Summary covering:
   1. Source documents reviewed (file names and key clauses/pages extracted),
-  2. Programme span (Start -> Completion, total duration) and confirmation against ITT/brief target dates,
+  2. Programme span (Start -> Completion, total duration) and variance against ITT/brief target dates,
   3. Driving Critical Path, key contractual milestones & sectional completions,
   4. Schedule health grade, logic counts, and key float/risk pinch points,
   5. Any assumptions made or missing items not found in the uploaded documents for the person to confirm.
