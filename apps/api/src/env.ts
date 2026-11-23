@@ -48,6 +48,8 @@ export interface AppEnv {
   authSecret: string;
   authUrl: string;
   webOrigin: string;
+  /** Additional web origins allowed for CORS, Better Auth, and SSO (e.g. a shared Legal Studio subdomain). */
+  extraWebOrigins?: string[];
   /** `<TEAM_ID>.<bundle id>` of iOS apps that may use this domain's passkeys. */
   passkeyAppleAppIds: string[];
   /** SHA-256 signing certificate fingerprints of Android apps that may use this domain's passkeys. */
@@ -246,6 +248,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     authSecret,
     authUrl: resolveWebOrigin(source.BETTER_AUTH_URL, webOrigin, "BETTER_AUTH_URL"),
     webOrigin,
+    extraWebOrigins: resolveExtraWebOrigins(source.EXTRA_WEB_ORIGINS),
     passkeyAppleAppIds: list(source.PASSKEY_APPLE_APP_IDS),
     passkeyAndroidCertFingerprints: androidCertFingerprints(source.PASSKEY_ANDROID_CERT_SHA256),
     privacyPolicyUrl: optional(source.PRIVACY_POLICY_URL),
@@ -397,6 +400,30 @@ function resolveWebOrigin(value: string | undefined, fallback: string, name: str
     throw new Error(`${name} must be an absolute http(s) URL`);
   }
   return origin;
+}
+
+function resolveExtraWebOrigins(value: string | undefined): string[] {
+  const entries = (value ?? "")
+    .split(/[\s,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  const origins: string[] = [];
+  for (const entry of entries) {
+    let url: URL;
+    try {
+      url = new URL(entry);
+    } catch {
+      throw new Error(`EXTRA_WEB_ORIGINS entry must be an absolute http(s) origin: ${entry}`);
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error(`EXTRA_WEB_ORIGINS entry must be an absolute http(s) origin: ${entry}`);
+    }
+    if (url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
+      throw new Error(`EXTRA_WEB_ORIGINS entry must be a bare origin with no path: ${entry}`);
+    }
+    origins.push(url.origin);
+  }
+  return [...new Set(origins)];
 }
 
 function required(source: NodeJS.ProcessEnv, key: string): string {

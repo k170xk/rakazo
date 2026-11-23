@@ -48,6 +48,15 @@ describe("CORS origins", () => {
     expect(isTrustedOrigin("http://localhost:5173", envWithSlash)).toBe(true);
   });
 
+  it("accepts configured extraWebOrigins such as a shared studio subdomain", () => {
+    const envWithExtra = {
+      ...env,
+      extraWebOrigins: ["https://legal-studio.ocsc.me"],
+    };
+    expect(isTrustedOrigin("https://legal-studio.ocsc.me", envWithExtra)).toBe(true);
+    expect(isTrustedOrigin("https://other.ocsc.me", envWithExtra)).toBe(false);
+  });
+
   it("rejects any other loopback port and any public origin", () => {
     for (const origin of [
       "http://127.0.0.1:9",

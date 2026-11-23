@@ -640,7 +640,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
               headers,
             )
         : undefined,
-    extraOrigins: MOBILE_AUTH_ORIGINS,
+    extraOrigins: [...MOBILE_AUTH_ORIGINS, ...(env.extraWebOrigins ?? [])],
     androidAppCertFingerprints: env.passkeyAndroidCertFingerprints,
     accountDeletionAllowed: () => companyFeatures().accountData,
     beforeDeleteUser: async (userId) => {
@@ -1735,9 +1735,11 @@ async function handleEvolveSso(c: Context, env: AppEnv, prisma: PrismaClient): P
       ...(secure ? { prefix: "secure" as const } : {}),
     });
     // Deep-link straight into a dedicated Evolve legal contract agent when the SSO token carries one.
+    // Relative redirects keep the browser on whichever trusted hostname (e.g. computer.ocsc.me or
+    // legal-studio.ocsc.me) received the host-only session cookie.
     if (session.contractId) {
       const target = `/app/evolve-contract/${encodeURIComponent(session.contractId)}${session.embed ? "?embed=1" : ""}`;
-      return c.redirect(`${env.webOrigin}${target}`, 302);
+      return c.redirect(target, 302);
     }
     // A colleague added to someone's group lands in it instead of setting up bots of their own.
     const invited =
@@ -1746,20 +1748,26 @@ async function handleEvolveSso(c: Context, env: AppEnv, prisma: PrismaClient): P
         prisma.chatGroupInvite.count({ where: { email: session.email } }),
       )) > 0;
     const next = invited ? "/onboarding?after=shared" : session.created ? "/onboarding" : "/app";
-    return c.redirect(`${env.webOrigin}${next}`, 302);
+    return c.redirect(next, 302);
   } catch {
-    return c.redirect(`${env.webOrigin}/sign-in?error=evolve_sso`, 302);
+    return c.redirect("/sign-in?error=evolve_sso", 302);
   }
 }
 
 export function isTrustedOrigin(
   origin: string,
-  env: Pick<AppEnv, "webOrigin" | "apiUrl" | "authUrl">,
+  env: Pick<AppEnv, "webOrigin" | "apiUrl" | "authUrl" | "extraWebOrigins">,
 ) {
   if (!origin) return true;
   if (origin.startsWith("rakazo://")) return true;
   const allowed = new Set(
-    [env.webOrigin, env.apiUrl, env.authUrl, ...MOBILE_AUTH_ORIGINS].flatMap(originVariants),
+    [
+      env.webOrigin,
+      env.apiUrl,
+      env.authUrl,
+      ...(env.extraWebOrigins ?? []),
+      ...MOBILE_AUTH_ORIGINS,
+    ].flatMap(originVariants),
   );
   return allowed.has(origin);
 }
