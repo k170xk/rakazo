@@ -1734,6 +1734,11 @@ async function handleEvolveSso(c: Context, env: AppEnv, prisma: PrismaClient): P
       maxAge,
       ...(secure ? { prefix: "secure" as const } : {}),
     });
+    // Deep-link straight into a dedicated Evolve legal contract agent when the SSO token carries one.
+    if (session.contractId) {
+      const target = `/app/evolve-contract/${encodeURIComponent(session.contractId)}${session.embed ? "?embed=1" : ""}`;
+      return c.redirect(`${env.webOrigin}${target}`, 302);
+    }
     // A colleague added to someone's group lands in it instead of setting up bots of their own.
     const invited =
       session.created &&

@@ -77,6 +77,7 @@ import { requireCompanyFeature } from "../company-admin.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
 import type { RouterDeps } from "../router.js";
 import { loadMessagePage } from "../thread-message-pages.js";
+import { openEvolveContract } from "./evolve-contracts.js";
 import type { RouterContext } from "./context.js";
 import {
   computerContext,
@@ -368,6 +369,9 @@ export function botsRoutes(ctx: RouterContext) {
           return [];
         }
       }),
+      openEvolveContract: authed.bots.openEvolveContract.handler(async ({ context, input }) =>
+        openEvolveContract(ctx, context.actor, input.contractId),
+      ),
       create: authed.bots.create.handler(async ({ context, input }) => {
         let bot: Bot;
         try {

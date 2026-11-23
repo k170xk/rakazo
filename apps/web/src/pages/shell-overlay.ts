@@ -127,7 +127,7 @@ export function shellOverlaySearch(params: URLSearchParams): string {
 }
 
 /** Routes under `/app` that are not a chat, so a chat move must not treat them as one. */
-const SHELL_CHAT_RESERVED = new Set(["artifacts", "board", "x"]);
+const SHELL_CHAT_RESERVED = new Set(["artifacts", "board", "x", "evolve-contract"]);
 
 /** A shell chat: `/app`, `/app/:botId`, `/app/:botId/c/:threadId`, or `/app/g/:groupId`. The board, files and plugin pages are not. */
 export function isShellChatPath(pathname: string): boolean {

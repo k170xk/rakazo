@@ -71,6 +71,7 @@ import {
   DocumentCreatedSchema,
   DocumentCreateInput,
   DocumentDetailSchema,
+  DocumentFormatSchema,
   DocumentListInput,
   DocumentRefInput,
   DocumentRevisionInput,
@@ -837,6 +838,20 @@ export const appContract = {
     create: oc.input(CreateBotInput).output(BotSchema),
     /** Evolve chat assistants this person may start a bot from; empty when Evolve is not linked. */
     evolveAssistants: oc.output(z.array(EvolveAssistantSchema)),
+    /** Provision or reuse a dedicated per-user agent for an Evolve legal contract, syncing files & Clause Library. */
+    openEvolveContract: oc
+      .input(z.object({ contractId: z.string().uuid() }))
+      .output(
+        z.object({
+          botId: Id,
+          created: z.boolean(),
+          contractTitle: z.string(),
+          primaryDocArtifactId: Id.nullable(),
+          primaryDocFormat: DocumentFormatSchema.nullable(),
+          syncedFilesCount: z.number().int().min(0),
+          clauseCount: z.number().int().min(0),
+        }),
+      ),
     importPreview: oc.input(AgentImportPreviewInput).output(AgentImportPlanSchema),
     importCreate: oc.input(AgentImportCreateInput).output(BotSchema),
     importSetupState: oc.input(AgentImportSetupStateInput).output(AgentImportSetupStateSchema),

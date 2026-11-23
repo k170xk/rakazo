@@ -108,6 +108,7 @@ const loose = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
 /** The phrases an edit quotes, and how ocsc-word looks each one up. */
 const QUOTED: Record<string, ReadonlyArray<readonly [field: string, exact: boolean]>> = {
   replace_text: [["find", true]],
+  add_comment: [["find", true]],
   format_text: [["find", false]],
   replace_paragraphs: [
     ["from", false],

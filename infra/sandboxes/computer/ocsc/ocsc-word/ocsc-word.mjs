@@ -38,6 +38,13 @@ import { infographicXml, wordStyle } from "./docx-infographic.mjs";
 import { applyWordPageSetup, formatWordDocument, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
 import { firstElement, firstRunProps, mapParagraphs, xmlTagsBalanced } from "./word-paragraphs.mjs";
 import { paginateWordOutline } from "./read-pagination.mjs";
+import {
+  WordCommentStore,
+  anchorCommentOnBlocks,
+  anchorCommentOnParagraph,
+  ensureCommentsPartsRegistered,
+  extractComments,
+} from "./word-comments.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_DIR = process.env.OCSC_WORD_TEMPLATES || join(HERE, "templates");
@@ -366,6 +373,9 @@ class Doc {
       (await doc.zip.file("word/styles.xml")?.async("string")) ?? null;
     doc.numbering =
       (await doc.zip.file("word/numbering.xml")?.async("string")) ?? null;
+    doc.commentsXml =
+      (await doc.zip.file("word/comments.xml")?.async("string")) ?? null;
+    doc._comments = null;
     doc.rels = await doc.zip
       .file("word/_rels/document.xml.rels")
       .async("string");
@@ -854,8 +864,31 @@ class Doc {
     };
   }
 
-  replaceText(find, replacement, all = true, rev = null) {
+  commentStore() {
+    if (!this._comments) {
+      this._comments = new WordCommentStore(this.commentsXml, { author: AUTHOR });
+    }
+    return this._comments;
+  }
+
+  addCommentToText(find, commentText, all = false) {
+    const clean = String(commentText ?? "").trim();
+    if (!clean) return 0;
     let count = 0;
+    this.xml = mapParagraphs(this.xml, (p) => {
+      if (!all && count) return p;
+      const t = textOf(p);
+      if (!t.includes(find)) return p;
+      const id = this.commentStore().add(clean);
+      count += 1;
+      return anchorCommentOnParagraph(p, id);
+    });
+    return count;
+  }
+
+  replaceText(find, replacement, all = true, rev = null, commentText = null) {
+    let count = 0;
+    const cleanComment = typeof commentText === "string" ? commentText.trim() : "";
     this.xml = mapParagraphs(this.xml, (p) => {
       if (!all && count) return p;
       const t = textOf(p);
@@ -865,9 +898,14 @@ class Doc {
       const next = all
         ? t.split(find).join(replacement)
         : t.replace(find, replacement);
-      if (rev) return rev.replaceInParagraph(p, find, replacement, all, next);
-      // Within one paragraph, text split across runs is joined, edited, and put back in the first run.
-      return rewriteParagraphText(p, next);
+      let edited = rev
+        ? rev.replaceInParagraph(p, find, replacement, all, next)
+        : rewriteParagraphText(p, next);
+      if (cleanComment) {
+        const cid = this.commentStore().add(cleanComment);
+        edited = anchorCommentOnParagraph(edited, cid);
+      }
+      return edited;
     });
     return count;
   }
@@ -1467,6 +1505,17 @@ class Doc {
   }
 
   async save(outFull) {
+    if (this._comments?.addedCount > 0) {
+      this.commentsXml = this._comments.xml;
+      this.zip.file("word/comments.xml", this.commentsXml);
+      const reg = ensureCommentsPartsRegistered({
+        types: this.types,
+        rels: this.rels,
+        nextRelId: () => this.newRelId(),
+      });
+      this.types = reg.types;
+      this.rels = reg.rels;
+    }
     this.zip.file("word/document.xml", this.xml);
     if (this.styles) this.zip.file("word/styles.xml", this.styles);
     if (this.numbering) this.zip.file("word/numbering.xml", this.numbering);
@@ -2251,6 +2300,7 @@ async function cmdRead(o) {
   const outline = outlineOf(doc);
   const pictures = doc.listPictures();
   const changes = listChanges(doc.xml);
+  const comments = extractComments(doc.commentsXml);
   let paginated;
   try {
     paginated = paginateWordOutline(outline, {
@@ -2268,6 +2318,7 @@ async function cmdRead(o) {
     subtitle,
     ...paginated,
     ...(pictures.length ? { pictures } : {}),
+    ...(comments.length ? { comments } : {}),
     ...(changes.length
       ? {
           tracked_changes: changes,
@@ -2298,6 +2349,12 @@ async function cmdEdit(o) {
   // Tracked by default, so the person sees every change in Word; --clean edits silently.
   const rev = o.clean ? null : new Revisions(doc.xml);
   const added = (xml) => (rev ? rev.inserted(xml) : xml);
+  const maybeComment = (xml, commentText) => {
+    const clean = typeof commentText === "string" ? commentText.trim() : "";
+    if (!clean) return xml;
+    const cid = doc.commentStore().add(clean);
+    return anchorCommentOnBlocks(xml, cid);
+  };
   const report = [];
   for (const [i, op] of ops.entries()) {
     const n = i + 1;
@@ -2350,6 +2407,7 @@ async function cmdEdit(o) {
           String(op.replace ?? ""),
           op.all !== false,
           rev,
+          typeof op.comment === "string" ? op.comment : null,
         );
         if (!c)
           throw new UsageError(
@@ -2358,7 +2416,26 @@ async function cmdEdit(o) {
         report.push({
           op: op.op,
           changed: c,
+          ...(op.comment ? { commented: true } : {}),
           summary: `Replaced "${clip(op.find)}" with "${clip(op.replace ?? "")}" (${c}×)`,
+        });
+        break;
+      }
+      case "add_comment": {
+        if (!op.find)
+          throw new UsageError(`Edit ${n}: add_comment needs "find".`);
+        const text = typeof op.comment === "string" ? op.comment.trim() : typeof op.text === "string" ? op.text.trim() : "";
+        if (!text)
+          throw new UsageError(`Edit ${n}: add_comment needs "comment".`);
+        const c = doc.addCommentToText(String(op.find), text, op.all === true);
+        if (!c)
+          throw new UsageError(
+            `Edit ${n}: text not found: ${JSON.stringify(op.find)}. Run "ocsc-word read" to see the exact wording.`,
+          );
+        report.push({
+          op: op.op,
+          commented: c,
+          summary: `Commented on "${clip(op.find)}" (${c}×)`,
         });
         break;
       }
@@ -2397,13 +2474,15 @@ async function cmdEdit(o) {
       case "add_to_section": {
         const s = doc.section(op.heading);
         const at = op.op === "insert_after_heading" ? s.bodyStart : s.end;
+        const insertedXml = maybeComment(added(doc.blocks(op.blocks)), op.comment);
         doc.xml =
           doc.xml.slice(0, at) +
-          added(doc.blocks(op.blocks)) +
+          insertedXml +
           doc.xml.slice(at);
         report.push({
           op: op.op,
           heading: op.heading,
+          ...(op.comment ? { commented: true } : {}),
           summary: `Added to "${clip(op.heading)}"`,
         });
         break;
@@ -2414,26 +2493,33 @@ async function cmdEdit(o) {
         doc.tableStyle = doc.tableStyleIn(old) ?? tableStyle;
         const next = doc.blocks(op.blocks);
         doc.tableStyle = tableStyle;
+        const replacementXml = maybeComment(
+          rev ? rev.deleted(old) + rev.inserted(next) : next,
+          op.comment,
+        );
         doc.xml =
           doc.xml.slice(0, s.bodyStart) +
-          (rev ? rev.deleted(old) + rev.inserted(next) : next) +
+          replacementXml +
           doc.xml.slice(s.end);
         report.push({
           op: op.op,
           heading: op.heading,
+          ...(op.comment ? { commented: true } : {}),
           summary: `Rewrote "${clip(op.heading)}"`,
         });
         break;
       }
       case "delete_section": {
         const s = doc.section(op.heading);
+        const deletedXml = rev ? maybeComment(rev.deleted(doc.xml.slice(s.start, s.end)), op.comment) : "";
         doc.xml =
           doc.xml.slice(0, s.start) +
-          (rev ? rev.deleted(doc.xml.slice(s.start, s.end)) : "") +
+          deletedXml +
           doc.xml.slice(s.end);
         report.push({
           op: op.op,
           heading: op.heading,
+          ...(op.comment && rev ? { commented: true } : {}),
           summary: `Deleted "${clip(op.heading)}"`,
         });
         break;
@@ -2454,13 +2540,18 @@ async function cmdEdit(o) {
           old,
         );
         doc.tableStyle = tableStyle;
+        const replacementXml = maybeComment(
+          rev ? rev.deleted(old) + (next ? rev.inserted(next) : "") : next,
+          op.comment,
+        );
         doc.xml =
           doc.xml.slice(0, r.start) +
-          (rev ? rev.deleted(old) + (next ? rev.inserted(next) : "") : next) +
+          replacementXml +
           doc.xml.slice(r.end);
         report.push({
           op: op.op,
           removed: r.count,
+          ...(op.comment ? { commented: true } : {}),
           summary: `${next ? "Replaced" : "Removed"} ${r.count} paragraph(s) from "${clip(op.from)}"`,
         });
         break;
@@ -2523,7 +2614,7 @@ async function cmdEdit(o) {
       }
       default:
         throw new UsageError(
-          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, format_text, page_setup, fill_fields, append, insert_after_heading, add_to_section, replace_section, delete_section, replace_paragraphs or replace_image.`,
+          `Edit ${n} has unknown op ${JSON.stringify(op?.op)}. Use set_title, set_subtitle, set_office, replace_text, add_comment, format_text, page_setup, fill_fields, append, insert_after_heading, add_to_section, replace_section, delete_section, replace_paragraphs or replace_image.`,
         );
     }
   }
@@ -2548,7 +2639,14 @@ async function cmdEdit(o) {
   doc.tidyLayout();
   await doc.refreshToc();
   await doc.save(out.full);
-  return { ok: true, tracked: !!rev, edits: report, ...downloadLink(out.rel) };
+  const commentsAdded = doc._comments?.addedCount ?? 0;
+  return {
+    ok: true,
+    tracked: !!rev,
+    ...(commentsAdded ? { comments_added: commentsAdded } : {}),
+    edits: report,
+    ...downloadLink(out.rel),
+  };
 }
 
 /** Header and footer fields only: the body was already filled, tracked, by replace_text. */

@@ -97,6 +97,7 @@ export {
   previewEvolveChangeAs,
 } from "./evolve-change-card.js";
 export * from "./evolve-company-tools.js";
+export * from "./evolve-contracts.js";
 export * from "./evolve-history.js";
 export * from "./evolve-learning.js";
 export * from "./evolve-person-context.js";

@@ -36,12 +36,17 @@ export interface EvolveComputerSsoClaims {
   email: string;
   evolve_profile_id: number;
   full_name?: string | null;
+  contract_id?: string | null;
+  embed?: boolean;
   aud: string;
   iss: string;
   exp: number;
   iat: number;
   jti: string;
 }
+
+const EVOLVE_CONTRACT_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface SignEvolveComputerSsoInput {
   email: string;
@@ -135,10 +140,17 @@ export function verifyEvolveComputerSsoToken(
   // A token that lives longer than Evolve ever signs one for was not made for a single sign-in.
   if (payload.exp * 1000 > Date.now() + (EVOLVE_SSO_TTL_SEC + CLOCK_SKEW_SEC) * 1000) return null;
 
+  const contractId =
+    typeof payload.contract_id === "string" && EVOLVE_CONTRACT_UUID_RE.test(payload.contract_id.trim())
+      ? payload.contract_id.trim()
+      : null;
+
   return {
     ...payload,
     email: payload.email.trim().toLowerCase(),
     sub: (payload.sub ?? payload.email).trim().toLowerCase(),
+    contract_id: contractId,
+    embed: payload.embed === true,
   };
 }
 
@@ -149,7 +161,14 @@ export async function exchangeEvolveSso(input: {
   signupsEnabled: string | undefined;
   signupAllowlist: string | undefined;
   companyWorkspace?: string | null;
-}): Promise<{ token: string; expiresAt: Date; created: boolean; email: string }> {
+}): Promise<{
+  token: string;
+  expiresAt: Date;
+  created: boolean;
+  email: string;
+  contractId: string | null;
+  embed: boolean;
+}> {
   const claims = verifyEvolveComputerSsoToken(input.secret, input.token);
   if (!claims) throw new EvolveSsoInvalidTokenError();
 
@@ -213,5 +232,12 @@ export async function exchangeEvolveSso(input: {
     },
   });
 
-  return { token: sessionToken, expiresAt, created, email };
+  return {
+    token: sessionToken,
+    expiresAt,
+    created,
+    email,
+    contractId: claims.contract_id ?? null,
+    embed: claims.embed === true,
+  };
 }

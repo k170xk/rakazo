@@ -83,6 +83,9 @@ const SharedChatsPage = lazyComponent(() =>
 const NavLinkPage = lazyComponent(() =>
   import("./pages/NavLinkPage").then((module) => module.NavLinkPage),
 );
+const EvolveContractLaunchPage = lazyComponent(() =>
+  import("./pages/EvolveContractLaunch").then((module) => module.EvolveContractLaunchPage),
+);
 
 function SsoCallbackPage() {
   useEffect(() => {
@@ -357,6 +360,7 @@ function SessionApp() {
                 }
               >
                 <Route path="/app" element={<ShellPage />} />
+                <Route path="/app/evolve-contract/:contractId" element={<EvolveContractLaunchPage />} />
                 <Route path="/app/g/:groupId" element={<ShellPage />} />
                 <Route path="/app/:botId/c/:threadId" element={<ShellPage />} />
                 <Route path="/app/:botId" element={<ShellPage />} />

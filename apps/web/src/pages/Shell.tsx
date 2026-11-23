@@ -257,6 +257,7 @@ function SpaceShell() {
     () => false,
   );
   const rightPanel = useRightPanel({ searchParams, setSearchParams });
+  const embeddedMode = searchParams.get("embed") === "1";
   const { panel, setPanel, modelFocusRequest, setModelFocusRequest } = rightPanel;
   const lastBotTab = useRef<Panel>("routines");
   if (
@@ -1335,6 +1336,7 @@ function SpaceShell() {
       {bootstrapMe !== undefined ? (
         <HostComputerPrompt initialMe={bootstrapMe ?? undefined} onMeUpdated={setBootstrapMe} />
       ) : null}
+      {!embeddedMode ? (
       <ShellSidebar
         isMobile={isMobileSidebar}
         mobileOpen={mobileSidebarOpen}
@@ -1428,6 +1430,7 @@ function SpaceShell() {
         }}
         openSpaceChat={openSpaceChat}
       />
+      ) : null}
 
       {/* Keep the composer's z-index inside the chat so phone overlays like the side panel cover it. */}
       <main
@@ -1573,6 +1576,53 @@ function SpaceShell() {
             {recordingSkill ? (
               <div className="pointer-events-auto bg-background px-6 pb-2 text-center text-[13px] text-destructive">
                 <Trans>Teaching in progress. Stop teaching before sending a new message.</Trans>
+              </div>
+            ) : null}
+            {!inGroup &&
+            active?.spawnKey?.startsWith("contract:") &&
+            !sending &&
+            !recordingSkill &&
+            !activeSnapshot?.messages?.some((m) => m.role === "user") ? (
+              <div className="pointer-events-auto mx-auto flex w-full max-w-3xl flex-wrap items-center gap-2 px-4 pb-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    void composer.sendMessage(
+                      "Run a full Clause Library & Legal Risk red-pen review of this contract. Audit every clause against OCSC's Clause Library AND flag wider legal/commercial risks, then apply all red-pen amendments to the Word contract with real Tracked Changes AND Word Margin Comments explaining each change, and provide an executive risk summary table.",
+                      [],
+                      crypto.randomUUID(),
+                    )
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#76BF43] px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#66ad36]"
+                >
+                  Run Full Clause Library Red-Pen Review
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void composer.sendMessage(
+                      "Read all attached contract documents and give me a concise executive summary of key risks, missing protections, and deviations from the OCSC Clause Library (without editing the Word file yet).",
+                      [],
+                      crypto.randomUUID(),
+                    )
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-accent"
+                >
+                  Quick Risk Summary
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    void composer.sendMessage(
+                      "Check specifically the liability cap, PI insurance, collateral warranties, net contribution, intellectual property, and payment/termination clauses against the OCSC Clause Library.",
+                      [],
+                      crypto.randomUUID(),
+                    )
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-accent"
+                >
+                  Check Liability, PI &amp; Warranties
+                </button>
               </div>
             ) : null}
             <Composer
