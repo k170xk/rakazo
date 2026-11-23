@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { exportProgrammePdf, pickProgrammeSheetSize } from "./export-programme-pdf";
+import {
+  exportProgrammePdf,
+  PROGRAMME_PDF_COLORS,
+  pickProgrammeSheetSize,
+} from "./export-programme-pdf";
 import {
   saveBaselineSnapshot,
   setTaskPriority,
@@ -71,5 +75,11 @@ describe("exportProgrammePdf", () => {
     expect(result.pages).toBe(1);
     const bytes = new Uint8Array(await result.blob.arrayBuffer());
     expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe("%PDF-");
+  });
+
+  it("uses OCSC brand green for programme bars and progress overlay", () => {
+    expect(PROGRAMME_PDF_COLORS.task).toBe("#76BF43");
+    expect(PROGRAMME_PDF_COLORS.progress).toBe("#4B8A22");
+    expect(PROGRAMME_PDF_COLORS.summaryBg).toBe("#E9F5DF");
   });
 });

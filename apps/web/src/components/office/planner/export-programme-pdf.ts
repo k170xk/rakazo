@@ -65,20 +65,22 @@ function chromeSize(sheet: { w: number; h: number }) {
   };
 }
 
-const COLORS = {
+export const PROGRAMME_PDF_COLORS = {
   text: "#1F2937",
   muted: "#6B7280",
   line: "#D1D5DB",
-  summaryBg: "#D6E6F5",
+  summaryBg: "#E9F5DF",
   summaryBar: "#1F2937",
-  task: "#5B9BD5",
+  task: "#76BF43",
   critical: "#DC2626",
-  progress: "#1E3A5F",
+  progress: "#4B8A22",
   milestone: "#111827",
   weekend: "#F3F4F6",
-  headerBand: "#EEF2F7",
+  headerBand: "#F2F6EE",
   white: "#FFFFFF",
 };
+
+const COLORS = PROGRAMME_PDF_COLORS;
 
 /** Minimum row height that still keeps ~7pt labels readable on large sheets. */
 const MIN_ROW_MM = 2.5;
