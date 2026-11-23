@@ -94,6 +94,48 @@ body .jantt-hover-card {
   display: none;
 }
 
+.planner-workbench .planner-range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
+  accent-color: var(--primary);
+  cursor: pointer;
+  outline: none;
+}
+
+.planner-workbench .planner-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: var(--primary);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.planner-workbench .planner-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.planner-workbench .planner-range-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: var(--primary);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.planner-workbench .planner-range-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring, var(--primary)) 45%, transparent);
+}
+
 /* Lossless Gantt filtering: dim non-matching tasks without mutating Jantt's underlying schedule. */
 .planner-workbench .jantt-label-row.is-filter-muted {
   opacity: 0.24 !important;

@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { LinkRoutingStyle, RowHeightMode, TimeScale, ViewportOptions } from "@jantt/core";
-import { SCALE_DAY_WIDTHS } from "@jantt/core";
+import { getScaleFromDayWidth, SCALE_DAY_WIDTHS } from "@jantt/core";
 import {
   Button,
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
 } from "@rakazo/ui-web";
 import {
   Activity,
+  ArrowUpDown,
   BookmarkCheck,
   Calendar,
   ChevronDown,
@@ -28,6 +29,7 @@ import {
   SlidersHorizontal,
   StickyNote,
   X,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -124,6 +126,16 @@ export function PlannerToolbar({
 
   const categories = Object.entries(plan.categories ?? {});
   const showActionRow = viewMode === "gantt" || viewMode === "kanban" || viewMode === "tasks";
+
+  const setDayWidth = (next: number) => {
+    const clamped = Math.min(80, Math.max(1.2, Math.round(next * 10) / 10));
+    onViewportPatch({ dayWidth: clamped, scale: getScaleFromDayWidth(clamped) });
+  };
+
+  const setRowHeight = (next: number) => {
+    const clamped = Math.min(140, Math.max(26, Math.round(next)));
+    onViewportPatch({ rowHeightMode: "custom", rowHeight: clamped });
+  };
 
   const statusLabel = (status: KanbanStatus) => {
     switch (status) {
@@ -374,7 +386,133 @@ export function PlannerToolbar({
             ) : null}
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {viewMode === "gantt" ? (
+              <>
+                {/* Horizontal Timeline Zoom slider */}
+                <div
+                  data-testid="planner-zoom-strip"
+                  title={t`Timeline zoom (or Ctrl + Scroll on chart)`}
+                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-foreground/[0.08] bg-background px-2"
+                >
+                  <button
+                    type="button"
+                    aria-label={t`Zoom out`}
+                    title={t`Zoom out`}
+                    onClick={() => setDayWidth(currentDayWidth / 1.25)}
+                    className="grid size-5 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+                  >
+                    <Minus className="size-3" strokeWidth={2.2} aria-hidden="true" />
+                  </button>
+                  <input
+                    type="range"
+                    min={1.2}
+                    max={80}
+                    step={0.1}
+                    value={currentDayWidth}
+                    aria-label={t`Timeline zoom`}
+                    data-testid="planner-zoom-slider"
+                    onChange={(event) => {
+                      const next = Number.parseFloat(event.target.value);
+                      if (!Number.isNaN(next) && next > 0) setDayWidth(next);
+                    }}
+                    className="planner-range-slider w-20"
+                  />
+                  <button
+                    type="button"
+                    aria-label={t`Zoom in`}
+                    title={t`Zoom in`}
+                    onClick={() => setDayWidth(currentDayWidth * 1.25)}
+                    className="grid size-5 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+                  >
+                    <Plus className="size-3" strokeWidth={2.2} aria-hidden="true" />
+                  </button>
+                  <span className="min-w-[30px] text-right text-[11px] font-medium tabular-nums text-muted-foreground">
+                    {Math.round(currentDayWidth)}px
+                  </span>
+                </div>
+
+                {/* Vertical Row Height slider + Fit toggle */}
+                <div
+                  data-testid="planner-rowheight-strip"
+                  title={t`Task row height (vertical zoom)`}
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-foreground/[0.08] bg-background px-2"
+                >
+                  <ArrowUpDown
+                    className="size-3.5 shrink-0 text-muted-foreground"
+                    strokeWidth={1.9}
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="range"
+                    min={26}
+                    max={140}
+                    step={2}
+                    value={currentRowHeight}
+                    aria-label={t`Row height`}
+                    data-testid="planner-rowheight-slider"
+                    onChange={(event) => {
+                      const next = Number.parseInt(event.target.value, 10);
+                      if (!Number.isNaN(next)) setRowHeight(next);
+                    }}
+                    className={`planner-range-slider w-20 ${currentRowMode === "fit" ? "opacity-50" : ""}`}
+                  />
+                  <span className="min-w-[30px] text-right text-[11px] font-medium tabular-nums text-muted-foreground">
+                    {currentRowMode === "fit" ? t`Fit` : `${currentRowHeight}px`}
+                  </span>
+                  <span className="h-3.5 w-px bg-border" aria-hidden="true" />
+                  <button
+                    type="button"
+                    data-testid="planner-rowheight-fit"
+                    aria-pressed={currentRowMode === "fit"}
+                    title={t`Fit all tasks without vertical scrolling`}
+                    onClick={() =>
+                      onViewportPatch(
+                        currentRowMode === "fit"
+                          ? { rowHeightMode: "custom", rowHeight: currentRowHeight }
+                          : { rowHeightMode: "fit" },
+                      )
+                    }
+                    className={`inline-flex h-6 items-center rounded-full px-2 text-[11px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      currentRowMode === "fit"
+                        ? "bg-primary/15 text-primary"
+                        : "text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+                    }`}
+                  >
+                    <Trans>Fit</Trans>
+                  </button>
+                </div>
+
+                {/* Critical Path toggle button */}
+                <button
+                  type="button"
+                  data-testid="planner-critical-toggle"
+                  aria-pressed={showCritical}
+                  title={t`Highlight the critical chain of dependent tasks controlling project duration`}
+                  onClick={() => onViewportPatch({ showCriticalPath: !showCritical })}
+                  className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[12px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    showCritical
+                      ? "border-destructive/30 bg-destructive/12 text-destructive hover:bg-destructive/16"
+                      : "border-foreground/[0.08] bg-background text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+                  }`}
+                >
+                  <Zap className="size-3.5 shrink-0" strokeWidth={2} aria-hidden="true" />
+                  <span>
+                    <Trans>Critical Path</Trans>
+                  </span>
+                  <span
+                    className={`rounded-full px-1.5 py-0 text-[10px] font-semibold tabular-nums ${
+                      showCritical
+                        ? "bg-destructive/15 text-destructive"
+                        : "bg-foreground/[0.07] text-muted-foreground"
+                    }`}
+                  >
+                    {criticalCount}
+                  </span>
+                </button>
+              </>
+            ) : null}
+
             {/* Filters Popover */}
             <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
               <PopoverTrigger
@@ -612,14 +750,7 @@ export function PlannerToolbar({
                             <button
                               type="button"
                               aria-label={t`Zoom out`}
-                              onClick={() =>
-                                onViewportPatch({
-                                  dayWidth: Math.max(
-                                    1.2,
-                                    Math.round((currentDayWidth / 1.25) * 10) / 10,
-                                  ),
-                                })
-                              }
+                              onClick={() => setDayWidth(currentDayWidth / 1.25)}
                               className="grid size-6 place-items-center rounded-full hover:bg-background"
                             >
                               <Minus className="size-3" />
@@ -630,14 +761,7 @@ export function PlannerToolbar({
                             <button
                               type="button"
                               aria-label={t`Zoom in`}
-                              onClick={() =>
-                                onViewportPatch({
-                                  dayWidth: Math.min(
-                                    80,
-                                    Math.round(currentDayWidth * 1.25 * 10) / 10,
-                                  ),
-                                })
-                              }
+                              onClick={() => setDayWidth(currentDayWidth * 1.25)}
                               className="grid size-6 place-items-center rounded-full hover:bg-background"
                             >
                               <Plus className="size-3" />

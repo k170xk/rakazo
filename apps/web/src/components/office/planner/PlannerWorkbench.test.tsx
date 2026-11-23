@@ -216,6 +216,66 @@ describe("PlannerWorkbench chrome and views", () => {
     expect(janttSeen.mounts).toBe(1);
   });
 
+  it("exposes horizontal zoom slider, vertical row-height slider, Fit toggle and Critical Path button on the Gantt toolbar", async () => {
+    await act(async () => {
+      root.render(<PlannerWorkbench plan={SAMPLE_PLAN} onCommit={vi.fn()} />);
+    });
+
+    const zoomSlider = host.querySelector<HTMLInputElement>('[data-testid="planner-zoom-slider"]')!;
+    const rowSlider = host.querySelector<HTMLInputElement>(
+      '[data-testid="planner-rowheight-slider"]',
+    )!;
+    const fitBtn = host.querySelector<HTMLButtonElement>('[data-testid="planner-rowheight-fit"]')!;
+    const criticalBtn = host.querySelector<HTMLButtonElement>(
+      '[data-testid="planner-critical-toggle"]',
+    )!;
+    expect(zoomSlider).not.toBeNull();
+    expect(rowSlider).not.toBeNull();
+    expect(fitBtn).not.toBeNull();
+    expect(criticalBtn).not.toBeNull();
+    expect(criticalBtn.getAttribute("aria-pressed")).toBe("true");
+
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+
+    // Dragging the horizontal zoom slider updates dayWidth and syncs the matching time scale.
+    await act(async () => {
+      setValue.call(zoomSlider, "36");
+      zoomSlider.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(janttSeen.lastViewport?.dayWidth).toBe(36);
+    expect(janttSeen.lastViewport?.scale).toBe("day");
+
+    // Clicking Fit switches rowHeightMode to "fit"; dragging the vertical slider switches back to custom.
+    await act(async () => {
+      fitBtn.click();
+    });
+    expect(janttSeen.lastViewport?.rowHeightMode).toBe("fit");
+    expect(fitBtn.getAttribute("aria-pressed")).toBe("true");
+
+    await act(async () => {
+      setValue.call(rowSlider, "64");
+      rowSlider.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(janttSeen.lastViewport?.rowHeightMode).toBe("custom");
+    expect(janttSeen.lastViewport?.rowHeight).toBe(64);
+    expect(fitBtn.getAttribute("aria-pressed")).toBe("false");
+
+    // Clicking the Critical Path button toggles showCriticalPath directly.
+    await act(async () => {
+      criticalBtn.click();
+    });
+    expect(janttSeen.lastViewport?.showCriticalPath).toBe(false);
+    expect(criticalBtn.getAttribute("aria-pressed")).toBe("false");
+
+    // Switching to Kanban hides the Gantt-only sliders and Critical Path button.
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('[data-testid="planner-tab-kanban"]')!.click();
+    });
+    expect(host.querySelector('[data-testid="planner-zoom-slider"]')).toBeNull();
+    expect(host.querySelector('[data-testid="planner-rowheight-slider"]')).toBeNull();
+    expect(host.querySelector('[data-testid="planner-critical-toggle"]')).toBeNull();
+  });
+
   it("hides mutating actions in readOnly mode", async () => {
     await act(async () => {
       root.render(<PlannerWorkbench plan={SAMPLE_PLAN} readOnly onCommit={vi.fn()} />);

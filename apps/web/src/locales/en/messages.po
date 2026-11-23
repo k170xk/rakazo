@@ -5701,6 +5701,10 @@ msgid "Critical path"
 msgstr "Critical path"
 
 #: src/components/office/planner/PlannerToolbar.tsx
+msgid "Critical Path"
+msgstr "Critical Path"
+
+#: src/components/office/planner/PlannerToolbar.tsx
 msgid "Critical path only"
 msgstr "Critical path only"
 
@@ -7663,6 +7667,14 @@ msgstr "Finished."
 msgid "Finishing MCP connection…"
 msgstr "Finishing MCP connection…"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Fit"
+msgstr "Fit"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Fit all tasks without vertical scrolling"
+msgstr "Fit all tasks without vertical scrolling"
+
 #: src/components/ImageLightbox.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Fit to screen"
@@ -8257,6 +8269,10 @@ msgstr "Highlight a paragraph, table or image and ask for a change. The assistan
 #: src/components/office/word/WordRibbon.tsx
 msgid "Highlight colours"
 msgstr "Highlight colours"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Highlight the critical chain of dependent tasks controlling project duration"
+msgstr "Highlight the critical chain of dependent tasks controlling project duration"
 
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/apps/AppStudio.tsx
@@ -13675,6 +13691,10 @@ msgstr "Row"
 msgid "Row density"
 msgstr "Row density"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Row height"
+msgstr "Row height"
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Rows"
 msgstr "Rows"
@@ -15650,6 +15670,10 @@ msgstr "Task"
 msgid "Task owner"
 msgstr "Task owner"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Task row height (vertical zoom)"
+msgstr "Task row height (vertical zoom)"
+
 #: src/components/office/planner/PlannerJsonDialog.tsx
 msgid "tasks"
 msgstr "tasks"
@@ -16548,6 +16572,10 @@ msgstr "Timeline scale"
 #: src/components/office/planner/PlannerToolbar.tsx
 msgid "Timeline zoom"
 msgstr "Timeline zoom"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Timeline zoom (or Ctrl + Scroll on chart)"
+msgstr "Timeline zoom (or Ctrl + Scroll on chart)"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Timezone"

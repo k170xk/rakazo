@@ -5696,6 +5696,10 @@ msgid "Critical path"
 msgstr ""
 
 #: src/components/office/planner/PlannerToolbar.tsx
+msgid "Critical Path"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
 msgid "Critical path only"
 msgstr ""
 
@@ -7650,6 +7654,14 @@ msgstr "Завершено."
 msgid "Finishing MCP connection…"
 msgstr "Завершение подключения MCP…"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Fit"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Fit all tasks without vertical scrolling"
+msgstr ""
+
 #: src/components/ImageLightbox.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Fit to screen"
@@ -8244,6 +8256,10 @@ msgstr "Выделите абзац, таблицу или изображени�
 #: src/components/office/word/WordRibbon.tsx
 msgid "Highlight colours"
 msgstr "Цвета выделения"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Highlight the critical chain of dependent tasks controlling project duration"
+msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/apps/AppStudio.tsx
@@ -13657,6 +13673,10 @@ msgstr "Строка"
 msgid "Row density"
 msgstr ""
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Row height"
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Rows"
 msgstr "Строки"
@@ -15632,6 +15652,10 @@ msgstr ""
 msgid "Task owner"
 msgstr ""
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Task row height (vertical zoom)"
+msgstr ""
+
 #: src/components/office/planner/PlannerJsonDialog.tsx
 msgid "tasks"
 msgstr ""
@@ -16526,6 +16550,10 @@ msgstr ""
 
 #: src/components/office/planner/PlannerToolbar.tsx
 msgid "Timeline zoom"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Timeline zoom (or Ctrl + Scroll on chart)"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx

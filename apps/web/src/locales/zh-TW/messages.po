@@ -5697,6 +5697,10 @@ msgid "Critical path"
 msgstr ""
 
 #: src/components/office/planner/PlannerToolbar.tsx
+msgid "Critical Path"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
 msgid "Critical path only"
 msgstr ""
 
@@ -7651,6 +7655,14 @@ msgstr "已完成。"
 msgid "Finishing MCP connection…"
 msgstr "正在完成 MCP 連線…"
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Fit"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Fit all tasks without vertical scrolling"
+msgstr ""
+
 #: src/components/ImageLightbox.tsx
 #: src/components/render-studio/RenderStudioDialog.tsx
 msgid "Fit to screen"
@@ -8245,6 +8257,10 @@ msgstr "選取一個段落、表格或圖片，然後提出修改要求。助理
 #: src/components/office/word/WordRibbon.tsx
 msgid "Highlight colours"
 msgstr "醒目提示色彩"
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Highlight the critical chain of dependent tasks controlling project duration"
+msgstr ""
 
 #: src/components/apps/AppHistoryPanel.tsx
 #: src/components/apps/AppStudio.tsx
@@ -13658,6 +13674,10 @@ msgstr "列"
 msgid "Row density"
 msgstr ""
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Row height"
+msgstr ""
+
 #: src/components/office/sheet/SheetRibbon.tsx
 msgid "Rows"
 msgstr "列"
@@ -15633,6 +15653,10 @@ msgstr ""
 msgid "Task owner"
 msgstr ""
 
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Task row height (vertical zoom)"
+msgstr ""
+
 #: src/components/office/planner/PlannerJsonDialog.tsx
 msgid "tasks"
 msgstr ""
@@ -16527,6 +16551,10 @@ msgstr ""
 
 #: src/components/office/planner/PlannerToolbar.tsx
 msgid "Timeline zoom"
+msgstr ""
+
+#: src/components/office/planner/PlannerToolbar.tsx
+msgid "Timeline zoom (or Ctrl + Scroll on chart)"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
