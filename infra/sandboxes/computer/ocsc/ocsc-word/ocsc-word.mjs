@@ -37,6 +37,7 @@ import JSZip from "jszip";
 import { infographicXml, wordStyle } from "./docx-infographic.mjs";
 import { applyWordPageSetup, formatWordDocument, hasStyle, styleFrom, stylePhrase } from "./format-edits.mjs";
 import { firstElement, firstRunProps, mapParagraphs, xmlTagsBalanced } from "./word-paragraphs.mjs";
+import { paginateWordOutline } from "./read-pagination.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_DIR = process.env.OCSC_WORD_TEMPLATES || join(HERE, "templates");
@@ -2250,12 +2251,22 @@ async function cmdRead(o) {
   const outline = outlineOf(doc);
   const pictures = doc.listPictures();
   const changes = listChanges(doc.xml);
+  let paginated;
+  try {
+    paginated = paginateWordOutline(outline, {
+      file: src.rel,
+      from: o.from,
+      find: o.find,
+    });
+  } catch (error) {
+    throw new UsageError(error.message);
+  }
   return {
     ok: true,
     path: src.rel,
     title,
     subtitle,
-    outline,
+    ...paginated,
     ...(pictures.length ? { pictures } : {}),
     ...(changes.length
       ? {
@@ -2695,7 +2706,7 @@ async function main() {
       return cmdCompare(o);
     default:
       throw new UsageError(
-        "Usage: ocsc-word templates | fetch-template --url <link> [--name CODE] | new --spec s.json --out outputs/X.docx [--template NAME|uploads/T.docx] | read --in X.docx | edit --in X.docx --spec e.json [--out Y.docx] [--clean] | accept --in X.docx [--out Y.docx] | compare --old A.docx --new B.docx",
+        "Usage: ocsc-word templates | fetch-template --url <link> [--name CODE] | new --spec s.json --out outputs/X.docx [--template NAME|uploads/T.docx] | read --in X.docx [--from N] [--find \"keywords\"] | edit --in X.docx --spec e.json [--out Y.docx] [--clean] | accept --in X.docx [--out Y.docx] | compare --old A.docx --new B.docx",
       );
   }
 }

@@ -31,6 +31,7 @@ import {
 } from "node:path";
 import { pathToFileURL } from "node:url";
 import { escapeHtml, kindOf, renderPreview, showOnScreen } from "./screen.mjs";
+import { paginatePdfPages } from "./read-pagination.mjs";
 
 const WORKSPACE =
   process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
@@ -264,47 +265,57 @@ async function cmdRead(o) {
     await page.setContent(
       `<!doctype html><title>${escapeHtml(src.rel)}</title>`,
     );
+    const extracted = await page.evaluate(
+      async ({ pdfjs, worker, data }) => {
+        const blob = (b64, type) => {
+          const raw = atob(b64);
+          const buf = new Uint8Array(raw.length);
+          for (let i = 0; i < raw.length; i += 1) buf[i] = raw.charCodeAt(i);
+          return new Blob([buf], { type });
+        };
+        const lib = await import(
+          URL.createObjectURL(blob(pdfjs, "text/javascript"))
+        );
+        lib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
+          blob(worker, "text/javascript"),
+        );
+        const doc = await lib.getDocument({
+          data: new Uint8Array(await blob(data).arrayBuffer()),
+          isEvalSupported: false,
+        }).promise;
+        const pages = [];
+        for (let n = 1; n <= Math.min(doc.numPages, 300); n += 1) {
+          const content = await (await doc.getPage(n)).getTextContent();
+          pages.push(
+            content.items
+              .map((item) => item.str + (item.hasEOL ? "\n" : ""))
+              .join("")
+              .trim(),
+          );
+        }
+        return {
+          totalPages: doc.numPages,
+          pages,
+        };
+      },
+      { pdfjs, worker, data },
+    );
+    let paginated;
+    try {
+      paginated = paginatePdfPages(extracted.pages, {
+        totalPages: extracted.totalPages,
+        file: src.rel,
+        from: o.from,
+        to: o.to,
+        find: o.find,
+      });
+    } catch (error) {
+      throw new UsageError(error.message);
+    }
     return {
       ok: true,
       file: src.rel,
-      ...(await page.evaluate(
-        async ({ pdfjs, worker, data }) => {
-          const blob = (b64, type) => {
-            const raw = atob(b64);
-            const buf = new Uint8Array(raw.length);
-            for (let i = 0; i < raw.length; i += 1) buf[i] = raw.charCodeAt(i);
-            return new Blob([buf], { type });
-          };
-          const lib = await import(
-            URL.createObjectURL(blob(pdfjs, "text/javascript"))
-          );
-          lib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-            blob(worker, "text/javascript"),
-          );
-          const doc = await lib.getDocument({
-            data: new Uint8Array(await blob(data).arrayBuffer()),
-            isEvalSupported: false,
-          }).promise;
-          const pages = [];
-          for (let n = 1; n <= Math.min(doc.numPages, 200); n += 1) {
-            const content = await (await doc.getPage(n)).getTextContent();
-            pages.push(
-              content.items
-                .map((item) => item.str + (item.hasEOL ? "\n" : ""))
-                .join("")
-                .trim(),
-            );
-          }
-          return {
-            pages: doc.numPages,
-            text: pages
-              .map((t, i) => `--- Page ${i + 1} ---\n${t}`)
-              .join("\n\n")
-              .slice(0, 200_000),
-          };
-        },
-        { pdfjs, worker, data },
-      )),
+      ...paginated,
     };
   } finally {
     await b.close();
@@ -312,7 +323,7 @@ async function cmdRead(o) {
 }
 
 const USAGE = `ocsc-pdf convert --in outputs/X.docx|.xlsx|.pptx|.csv|.png|.txt|.html [--out outputs/X.pdf] [--show-changes]
-ocsc-pdf read --in X.pdf`;
+ocsc-pdf read --in X.pdf [--from N] [--to M] [--find "keywords"]`;
 
 async function main() {
   const [command, ...rest] = process.argv.slice(2);
