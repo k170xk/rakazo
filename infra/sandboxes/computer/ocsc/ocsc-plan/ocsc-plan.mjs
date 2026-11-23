@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * OCSC Project Planner: create, inspect and edit Jantt JSON programmes (.jantt).
+ * OCSC Project Planner: create, inspect, audit and edit Jantt JSON programmes (.jantt).
  *
  *   ocsc-plan new --spec plan.json --out outputs/Programme.jantt
  *   ocsc-plan inspect --in outputs/Programme.jantt
+ *   ocsc-plan audit --in outputs/Programme.jantt
  *   ocsc-plan edit --in outputs/Programme.jantt --spec edits.json [--out outputs/Programme-v2.jantt]
  *   ocsc-plan import-csv --in schedule.csv --out outputs/Programme.jantt
  *   ocsc-plan import-xml --in programme.xml --out outputs/Programme.jantt
@@ -26,7 +27,17 @@ import {
   importMsProjectXml,
   importSpreadsheetCsv,
 } from "@jantt/interop";
-import { UsageError, applyEdits, describePlan, withCategories } from "./plan-edits.mjs";
+import {
+  UsageError,
+  analyzeSchedule,
+  applyEdits,
+  compactScheduleSummary,
+  describePlan,
+  preparePlan,
+  rollupSummaryTasks,
+  syncContiguousGapDays,
+  withCategories,
+} from "./plan-edits.mjs";
 
 const WORKSPACE = process.env.WORKSPACE_DIR || process.env.HOME || process.cwd();
 const INSPECT_MAX_CHARS = 14_000;
@@ -86,6 +97,7 @@ function blankPlan(title) {
     meta: {
       title: String(title || "Untitled plan").trim() || "Untitled plan",
       createdAt: new Date().toISOString().slice(0, 10),
+      defaultGapDays: 0,
     },
     categories: { default: { label: "General", color: "#76BF43" } },
     tasks: [],
@@ -109,10 +121,14 @@ function writePlan(outPath, plan, { reschedule = true } = {}) {
       `Plan failed validation: ${(checked.errors ?? []).map((e) => e.message || String(e)).join("; ") || "invalid"}`,
     );
   }
-  // Imports keep MS Project's stored dates; edits may re-cascade from dependencies.
-  const tasks = reschedule ? resolveSchedule(normalized.tasks ?? []) : normalized.tasks ?? [];
-  writeFileSync(dest.full, `${JSON.stringify({ ...normalized, tasks }, null, 2)}\n`);
-  return dest;
+  const gapDays = typeof normalized.meta?.defaultGapDays === "number" ? normalized.meta.defaultGapDays : 0;
+  // Imports keep MS Project's stored dates; edits and new plans cascade from dependencies and roll up summaries.
+  const tasks = reschedule
+    ? rollupSummaryTasks(syncContiguousGapDays(resolveSchedule(normalized.tasks ?? [], gapDays)))
+    : normalized.tasks ?? [];
+  const written = { ...normalized, tasks };
+  writeFileSync(dest.full, `${JSON.stringify(written, null, 2)}\n`);
+  return { dest, plan: written };
 }
 
 /** Outline / summary / milestone flags from MSPDI XML, keyed by UID. */
@@ -212,16 +228,41 @@ async function main(argv) {
   if (command === "new") {
     const spec = flags.spec ? readJson(flags.spec, "--spec").value : {};
     const title = spec.title || spec.meta?.title || "Untitled plan";
-    const plan = ensurePlan({
+    const { title: _dropTitle, ...specRest } = spec;
+    const rawPlan = ensurePlan({
       ...blankPlan(title),
-      ...spec,
+      ...specRest,
       meta: { ...blankPlan(title).meta, ...(spec.meta ?? {}), title },
       tasks: Array.isArray(spec.tasks) ? spec.tasks : [],
       categories: spec.categories ?? blankPlan(title).categories,
     });
     if (!flags.out) throw new UsageError("--out is required.");
-    const dest = writePlan(flags.out, plan);
-    print({ ok: true, path: dest.rel, ...downloadLink(dest.rel), tasks: plan.tasks.length });
+    const prepared = preparePlan(rawPlan);
+    const { dest, plan } = writePlan(flags.out, prepared);
+    print({
+      ok: true,
+      path: dest.rel,
+      ...downloadLink(dest.rel),
+      tasks: plan.tasks.length,
+      schedule: compactScheduleSummary(plan),
+    });
+    return;
+  }
+  if (command === "audit") {
+    if (!flags.in) throw new UsageError("--in is required.");
+    const src = readJson(flags.in, "--in");
+    const plan = ensurePlan(src.value);
+    const checked = validate(plan);
+    const { _internal, ...schedule } = analyzeSchedule(plan);
+    print({
+      ok: true,
+      path: src.rel,
+      title: plan.meta?.title ?? null,
+      valid: checked.valid,
+      errors: checked.errors ?? [],
+      taskCount: plan.tasks.length,
+      schedule,
+    });
     return;
   }
   if (command === "inspect") {
@@ -261,13 +302,14 @@ async function main(argv) {
     if (!edits) throw new UsageError("--spec must be { edits: [...] }.");
     const { plan: next, summary } = applyEdits(plan, edits);
     const out = flags.out || flags.in;
-    const dest = writePlan(out, next);
+    const { dest, plan: written } = writePlan(out, next);
     print({
       ok: true,
       path: dest.rel,
       ...downloadLink(dest.rel),
-      tasks: next.tasks.length,
+      tasks: written.tasks.length,
       summary: summary.join("; "),
+      schedule: compactScheduleSummary(written),
     });
     return;
   }
@@ -275,16 +317,28 @@ async function main(argv) {
     if (!flags.in || !flags.out) throw new UsageError("--in and --out are required.");
     const src = readText(flags.in, "--in");
     const plan = withCategories(ensurePlan(importSpreadsheetCsv(src.value)));
-    const dest = writePlan(flags.out, plan, { reschedule: false });
-    print({ ok: true, path: dest.rel, ...downloadLink(dest.rel), tasks: plan.tasks.length });
+    const { dest, plan: written } = writePlan(flags.out, plan, { reschedule: false });
+    print({
+      ok: true,
+      path: dest.rel,
+      ...downloadLink(dest.rel),
+      tasks: written.tasks.length,
+      schedule: compactScheduleSummary(written),
+    });
     return;
   }
   if (command === "import-xml") {
     if (!flags.in || !flags.out) throw new UsageError("--in and --out are required.");
     const src = readText(flags.in, "--in");
     const plan = planFromXml(src.value, src.rel);
-    const dest = writePlan(flags.out, plan, { reschedule: false });
-    print({ ok: true, path: dest.rel, ...downloadLink(dest.rel), tasks: plan.tasks.length });
+    const { dest, plan: written } = writePlan(flags.out, plan, { reschedule: false });
+    print({
+      ok: true,
+      path: dest.rel,
+      ...downloadLink(dest.rel),
+      tasks: written.tasks.length,
+      schedule: compactScheduleSummary(written),
+    });
     return;
   }
   if (command === "import-mpp") {
@@ -293,8 +347,14 @@ async function main(argv) {
     if (!existsSync(src.full)) throw new UsageError(`${src.rel} does not exist.`);
     const xml = await mppFileToXml(src.full);
     const plan = planFromXml(xml, src.rel);
-    const dest = writePlan(flags.out, plan, { reschedule: false });
-    print({ ok: true, path: dest.rel, ...downloadLink(dest.rel), tasks: plan.tasks.length });
+    const { dest, plan: written } = writePlan(flags.out, plan, { reschedule: false });
+    print({
+      ok: true,
+      path: dest.rel,
+      ...downloadLink(dest.rel),
+      tasks: written.tasks.length,
+      schedule: compactScheduleSummary(written),
+    });
     return;
   }
   if (command === "export-csv") {
@@ -324,7 +384,7 @@ async function main(argv) {
     return;
   }
   throw new UsageError(
-    "Usage: ocsc-plan new|inspect|edit|import-csv|import-xml|import-mpp|export-csv|export-xml …",
+    "Usage: ocsc-plan new|inspect|audit|edit|import-csv|import-xml|import-mpp|export-csv|export-xml …",
   );
 }
 

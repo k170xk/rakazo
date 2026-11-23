@@ -3,7 +3,12 @@
  * drawer, category picker and owner picker can do, and store each change in the same shape the
  * studio writes, so an AI edit looks and restores exactly like a manual one.
  */
-import { resolveSchedule } from "@jantt/core";
+import {
+  auditScheduleIntegrity,
+  calculateCriticalPath,
+  getTaskDependencies,
+  resolveSchedule,
+} from "@jantt/core";
 
 export class UsageError extends Error {}
 
@@ -52,13 +57,121 @@ const TASK_KEYS = [
   "calendar",
   "fields",
 ];
-const EDIT_ONLY_KEYS = new Set(["op", "id", "ids", "name", "outlineLevel", "summary", "evolveProfileId", "jobTitle", "role"]);
+const EDIT_ONLY_KEYS = new Set([
+  "op",
+  "id",
+  "ids",
+  "name",
+  "dependencies",
+  "predecessors",
+  "outlineLevel",
+  "summary",
+  "evolveProfileId",
+  "jobTitle",
+  "role",
+]);
 
 const nameKey = (name) => String(name ?? "").trim().toLowerCase();
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function taskLabel(task) {
   return (task.label ?? task.name ?? task.id ?? "").toString().trim() || task.id;
+}
+
+export function isSummaryTask(task) {
+  return Boolean(task?.fields?.summary === true || task?.summary === true);
+}
+
+function outlineLevelOf(task) {
+  const raw = task?.fields?.outlineLevel ?? task?.outlineLevel;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : null;
+}
+
+function diffDays(start, end) {
+  const a = Date.parse(start);
+  const b = Date.parse(end);
+  if (Number.isNaN(a) || Number.isNaN(b)) return 0;
+  return Math.max(0, Math.round((b - a) / 86_400_000));
+}
+
+function signedDiffDays(start, end) {
+  const a = Date.parse(start);
+  const b = Date.parse(end);
+  if (Number.isNaN(a) || Number.isNaN(b)) return NaN;
+  return Math.round((b - a) / 86_400_000);
+}
+
+function utcWeekday(dateStr) {
+  const ms = Date.parse(dateStr);
+  return Number.isNaN(ms) ? -1 : new Date(ms).getUTCDay();
+}
+
+function parseDepEntries(task) {
+  const raw = task?.dependsOn;
+  if (!raw) return [];
+  const list = Array.isArray(raw) ? raw : [raw];
+  const out = [];
+  for (const dep of list) {
+    if (typeof dep === "string") {
+      const m = dep.trim().match(/^([a-zA-Z0-9_\-.]+)(?::(FS|SS|FF|SF)(?:([+-]\d+)(?:d|days?)?)?)?$/i);
+      if (m) out.push({ id: m[1], type: (m[2] || "FS").toUpperCase(), lag: m[3] ? Number.parseInt(m[3], 10) : 0 });
+      else if (dep.trim()) out.push({ id: dep.trim(), type: "FS", lag: 0 });
+    } else if (dep && typeof dep === "object" && dep.id) {
+      out.push({
+        id: String(dep.id).trim(),
+        type: String(dep.type || "FS").toUpperCase(),
+        lag: Number(dep.lag ?? dep.lagDays ?? 0) || 0,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Jantt's CPM engine checks `pred.earlyFinish + (task.gapDays ?? 0) === task.earlyStart` to mark a
+ * link critical. In normal engineering programmes, a Finish-to-Start successor starts the next day
+ * (+1 calendar day, or +3 from Friday to Monday) or after an explicit FS lag. Setting `gapDays` on
+ * those tight FS transitions keeps Jantt's Critical Path continuous with red arrows across the
+ * entire driving chain instead of breaking at every next-day or weekend boundary.
+ */
+export function syncContiguousGapDays(tasks) {
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+  return tasks.map((task) => {
+    if (isSummaryTask(task) || task.gapDays != null || task.minGapDays != null) return task;
+    const deps = parseDepEntries(task).filter((d) => byId.has(d.id) && d.id !== task.id);
+    if (deps.length === 0) return task;
+    const fsDeps = deps.filter((d) => d.type === "FS");
+    if (fsDeps.length !== deps.length) return task;
+
+    let tightestDiff = Infinity;
+    let tightestPred = null;
+    let explicitLag = 0;
+    for (const dep of fsDeps) {
+      const pred = byId.get(dep.id);
+      if (!pred || !isDate(pred.end) || !isDate(task.start)) continue;
+      const d = signedDiffDays(pred.end, task.start);
+      if (Number.isNaN(d) || d < 0) continue;
+      if (d < tightestDiff) {
+        tightestDiff = d;
+        tightestPred = pred;
+        explicitLag = dep.lag > 0 ? dep.lag : 0;
+      }
+    }
+    if (!tightestPred || !Number.isFinite(tightestDiff) || tightestDiff === 0) return task;
+
+    const predDay = utcWeekday(tightestPred.end);
+    const taskDay = utcWeekday(task.start);
+    const isNextDay = tightestDiff === 1;
+    const isWeekendJump =
+      taskDay === 1 && ((predDay === 5 && tightestDiff === 3) || (predDay === 6 && tightestDiff === 2));
+    const matchesExplicitLag = explicitLag > 0 && tightestDiff === explicitLag;
+
+    if (isNextDay || isWeekendJump || matchesExplicitLag) {
+      return { ...task, gapDays: tightestDiff };
+    }
+    return task;
+  });
 }
 
 /** A key for a new category from its label, unique among `taken` (as in the studio). */
@@ -125,13 +238,32 @@ function isDate(value) {
 
 function cleanDependsOn(value, n) {
   const list = Array.isArray(value) ? value : [value];
-  return list.map((dep) => {
-    if (typeof dep === "string") return dep;
-    if (!dep || typeof dep !== "object" || !dep.id) throw new UsageError(`Edit ${n}: each dependency is a task id or { id, type, lag }.`);
+  const cleaned = [];
+  for (const dep of list) {
+    if (dep == null || dep === "") continue;
+    if (typeof dep === "string") {
+      const trimmed = dep.trim();
+      if (trimmed) cleaned.push(trimmed);
+      continue;
+    }
+    if (typeof dep !== "object" || !dep.id) {
+      throw new UsageError(`Edit ${n}: each dependency is a task id or { id, type, lag }.`);
+    }
     const type = dep.type ? String(dep.type).toUpperCase() : undefined;
-    if (type && !DEPENDENCY_TYPES.includes(type)) throw new UsageError(`Edit ${n}: dependency type must be FS, SS, FF or SF.`);
-    return { id: String(dep.id), ...(type ? { type } : {}), ...(dep.lag != null ? { lag: Number(dep.lag) } : {}) };
-  });
+    if (type && !DEPENDENCY_TYPES.includes(type)) {
+      throw new UsageError(`Edit ${n}: dependency type must be FS, SS, FF or SF.`);
+    }
+    const rawLag = dep.lag ?? dep.lagDays;
+    if (rawLag != null && !Number.isFinite(Number(rawLag))) {
+      throw new UsageError(`Edit ${n}: dependency lag must be a number of days.`);
+    }
+    cleaned.push({
+      id: String(dep.id).trim(),
+      ...(type ? { type } : {}),
+      ...(rawLag != null ? { lag: Number(rawLag) } : {}),
+    });
+  }
+  return cleaned;
 }
 
 /** A field value in the shape the studio stores, or throws on a value the studio can't show. */
@@ -189,6 +321,11 @@ function withTaskFields(task, edit, n) {
   const next = { ...task };
   const source = { ...edit };
   if (source.label === undefined && source.name !== undefined) source.label = source.name;
+  // Accept common dependency aliases so AI specs never silently drop schedule links.
+  if (source.dependsOn === undefined) {
+    if (source.dependencies !== undefined) source.dependsOn = source.dependencies;
+    else if (source.predecessors !== undefined) source.dependsOn = source.predecessors;
+  }
   const unknown = Object.keys(source).filter((key) => !TASK_KEYS.includes(key) && !EDIT_ONLY_KEYS.has(key));
   if (unknown.length) {
     throw new UsageError(`Edit ${n}: unknown task field${unknown.length > 1 ? "s" : ""} ${unknown.join(", ")}.`);
@@ -199,7 +336,9 @@ function withTaskFields(task, edit, n) {
       if (key === "label" || key === "start" || key === "end") throw new UsageError(`Edit ${n}: ${key} cannot be cleared.`);
       delete next[key];
     } else {
-      next[key] = cleanValue(key, source[key], n);
+      const cleaned = cleanValue(key, source[key], n);
+      if (key === "dependsOn" && Array.isArray(cleaned) && cleaned.length === 0) delete next.dependsOn;
+      else next[key] = cleaned;
     }
   }
   if (source.outlineLevel !== undefined || source.summary !== undefined) {
@@ -223,7 +362,10 @@ function withoutDependency(task, id) {
   const deps = task.dependsOn;
   if (!deps) return task;
   const all = Array.isArray(deps) ? deps : [deps];
-  const list = all.filter((dep) => (typeof dep === "string" ? dep !== id : dep?.id !== id));
+  const list = all.filter((dep) => {
+    if (typeof dep === "string") return dep.split(":")[0].replace(/[+-]\d+(?:d|days?)?$/i, "") !== id;
+    return dep?.id !== id;
+  });
   if (list.length === all.length) return task;
   const { dependsOn: _drop, ...rest } = task;
   return list.length ? { ...rest, dependsOn: list } : rest;
@@ -259,8 +401,139 @@ function newTask(raw, tasks, meta, n) {
   const id = String(raw.id || nextTaskId(tasks)).trim();
   if (tasks.some((task) => task.id === id)) throw new UsageError(`Edit ${n}: task ${id} already exists.`);
   const start = raw.start || meta.createdAt || today();
-  const base = { id, label: String(raw.label || raw.name || id), category: "default", start, end: raw.end || start };
-  return withTaskFields(base, { ...raw, start, end: raw.end || start }, n);
+  const end = raw.milestone ? raw.end || start : raw.end || start;
+  const base = { id, label: String(raw.label || raw.name || id), category: "default", start, end };
+  return withTaskFields(base, { ...raw, start, end }, n);
+}
+
+/**
+ * Validate that every dependency points to an existing task and that there are no circular loops.
+ */
+export function validateDependencies(tasks) {
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+  for (const task of tasks) {
+    for (const depId of getTaskDependencies(task)) {
+      if (depId === task.id) {
+        throw new UsageError(`${taskLabel(task)} (${task.id}) cannot depend on itself.`);
+      }
+      if (!byId.has(depId)) {
+        throw new UsageError(`${taskLabel(task)} depends on task ${depId}, which does not exist.`);
+      }
+    }
+  }
+  // Cycle detection via 3-colour DFS.
+  const state = new Map();
+  const stack = [];
+  const visit = (id) => {
+    state.set(id, 1);
+    stack.push(id);
+    const task = byId.get(id);
+    for (const depId of getTaskDependencies(task)) {
+      const seen = state.get(depId) ?? 0;
+      if (seen === 1) {
+        const startAt = stack.indexOf(depId);
+        const loop = [...stack.slice(startAt), depId].join(" → ");
+        throw new UsageError(`Circular dependency detected: ${loop}.`);
+      }
+      if (seen === 0) visit(depId);
+    }
+    stack.pop();
+    state.set(id, 2);
+  };
+  for (const task of tasks) {
+    if ((state.get(task.id) ?? 0) === 0) visit(task.id);
+  }
+}
+
+/**
+ * Roll up summary row start/end dates from their child tasks (bottom-up), using outlineLevel
+ * hierarchy when present, falling back to WBS dot-prefix matching (e.g. "1" -> "1.1", "1.2").
+ */
+export function rollupSummaryTasks(tasks) {
+  if (!Array.isArray(tasks) || tasks.length === 0) return [];
+  const next = tasks.map((task) => ({ ...task }));
+  const summaryIndices = [];
+  for (let i = 0; i < next.length; i += 1) {
+    if (isSummaryTask(next[i])) summaryIndices.push(i);
+  }
+  // Process deeper summary levels first so nested phases roll up accurately.
+  summaryIndices.sort((a, b) => (outlineLevelOf(next[b]) ?? 1) - (outlineLevelOf(next[a]) ?? 1));
+
+  for (const idx of summaryIndices) {
+    const parent = next[idx];
+    const parentLevel = outlineLevelOf(parent);
+    const parentWbs = typeof parent.wbs === "string" ? parent.wbs.trim() : "";
+    const children = [];
+
+    if (parentLevel != null) {
+      for (let j = idx + 1; j < next.length; j += 1) {
+        const level = outlineLevelOf(next[j]);
+        if (level != null && level <= parentLevel) break;
+        if (level != null && level > parentLevel) children.push(next[j]);
+        else if (level == null && !isSummaryTask(next[j])) children.push(next[j]);
+        else if (isSummaryTask(next[j])) break;
+      }
+    } else if (parentWbs) {
+      const prefix = `${parentWbs}.`;
+      for (let j = idx + 1; j < next.length; j += 1) {
+        const wbs = typeof next[j].wbs === "string" ? next[j].wbs.trim() : "";
+        if (wbs.startsWith(prefix)) children.push(next[j]);
+      }
+    }
+
+    if (children.length === 0) continue;
+    let minStart = null;
+    let maxEnd = null;
+    for (const child of children) {
+      if (isDate(child.start) && (!minStart || child.start < minStart)) minStart = child.start;
+      if (isDate(child.end) && (!maxEnd || child.end > maxEnd)) maxEnd = child.end;
+    }
+    if (minStart && maxEnd && maxEnd >= minStart) {
+      next[idx] = { ...parent, start: minStart, end: maxEnd };
+    }
+  }
+  return next;
+}
+
+/**
+ * Normalize a fresh task array (used by `ocsc-plan new`), validating categories, fields,
+ * dependencies, cycles, schedule cascade and summary rollups.
+ */
+export function preparePlan(plan, { reschedule = true } = {}) {
+  const meta = { ...(plan.meta ?? {}) };
+  const categories = { default: DEFAULT_CATEGORY, ...(plan.categories ?? {}) };
+  const resolveCategory = (raw) => {
+    if (raw.category == null) return raw;
+    const key = findCategory(categories, raw.category);
+    if (key) return { ...raw, category: key };
+    const label = String(raw.category).trim();
+    if (!label) return { ...raw, category: "default" };
+    const created = categoryKey(label, Object.keys(categories));
+    categories[created] = {
+      label: /[A-Z\s]/.test(label) ? label : readableLabel(label),
+      color: nextCategoryColour(categories),
+    };
+    return { ...raw, category: created };
+  };
+
+  const normalizedTasks = [];
+  for (const [index, raw] of (plan.tasks ?? []).entries()) {
+    if (!raw || typeof raw !== "object") {
+      throw new UsageError(`Task ${index + 1}: must be a JSON object.`);
+    }
+    normalizedTasks.push(newTask(resolveCategory(raw), normalizedTasks, meta, index + 1));
+  }
+  validateDependencies(normalizedTasks);
+  const gapDays = typeof meta.defaultGapDays === "number" ? meta.defaultGapDays : 0;
+  const scheduled = reschedule ? resolveSchedule(normalizedTasks, gapDays) : normalizedTasks;
+  const aligned = syncContiguousGapDays(scheduled);
+  const rolled = rollupSummaryTasks(aligned);
+  return withCategories({
+    ...plan,
+    meta,
+    categories,
+    tasks: rolled,
+  });
 }
 
 /** Inserts `task` before or after another task, or at an index, else at the end. */
@@ -340,8 +613,9 @@ export function applyEdits(plan, edits) {
       if (at < 0) throw new UsageError(`Edit ${n}: task ${to} not found.`);
       if (!tasks.some((task) => task.id === from)) throw new UsageError(`Edit ${n}: task ${from} not found.`);
       if (from === to) throw new UsageError(`Edit ${n}: a task cannot depend on itself.`);
+      const rawLag = edit.lag ?? edit.lagDays;
       const [dep] = cleanDependsOn(
-        edit.type || edit.lag != null ? { id: from, type: edit.type || "FS", lag: edit.lag } : from,
+        edit.type || rawLag != null ? { id: from, type: edit.type || "FS", ...(rawLag != null ? { lag: rawLag } : {}) } : from,
         n,
       );
       const rest = withoutDependency(tasks[at], from);
@@ -433,6 +707,12 @@ export function applyEdits(plan, edits) {
         if (!isDate(edit.today)) throw new UsageError(`Edit ${n}: today must be a date like 2026-03-02.`);
         meta.today = edit.today;
       }
+      if (edit.defaultGapDays === null) delete meta.defaultGapDays;
+      else if (edit.defaultGapDays != null) {
+        const gap = Number(edit.defaultGapDays);
+        if (!Number.isFinite(gap) || gap < 0) throw new UsageError(`Edit ${n}: defaultGapDays must be 0 or more.`);
+        meta.defaultGapDays = gap;
+      }
       summary.push("updated programme details");
     } else if (op === "set_evolve") {
       if (edit.clear || edit.jobNumber == null) {
@@ -451,14 +731,10 @@ export function applyEdits(plan, edits) {
     }
   }
 
-  const ids = new Set(tasks.map((task) => task.id));
-  for (const task of tasks) {
-    for (const dep of task.dependsOn == null ? [] : Array.isArray(task.dependsOn) ? task.dependsOn : [task.dependsOn]) {
-      const id = typeof dep === "string" ? dep : dep?.id;
-      if (!ids.has(id)) throw new UsageError(`${taskLabel(task)} depends on task ${id}, which does not exist.`);
-    }
-  }
+  validateDependencies(tasks);
   people = prunePeople(people, tasks);
+  const gapDays = typeof meta.defaultGapDays === "number" ? meta.defaultGapDays : 0;
+  const resolved = rollupSummaryTasks(syncContiguousGapDays(resolveSchedule(tasks, gapDays)));
   const { people: _people, ...rest } = plan;
   return {
     plan: {
@@ -466,19 +742,184 @@ export function applyEdits(plan, edits) {
       meta,
       categories,
       ...(people.length ? { people } : {}),
-      tasks: resolveSchedule(tasks),
+      tasks: resolved,
     },
     summary,
   };
 }
 
 /**
- * Everything the AI needs to edit a programme by id: categories, people and each task's fields.
+ * Full Critical Path Method (CPM) and schedule logic audit for a programme.
+ * Gives the AI immediate visibility into the driving critical chain, float, unlinked/open-ended
+ * tasks, summary-row link mistakes, and Jantt's schedule health grade.
+ */
+export function analyzeSchedule(plan) {
+  const tasks = (plan.tasks ?? []).filter((task) => !task?._deleted);
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+  const leafTasks = tasks.filter((task) => !isSummaryTask(task));
+  const summaryTasks = tasks.filter((task) => isSummaryTask(task));
+  const milestones = leafTasks.filter((task) => Boolean(task.milestone));
+
+  const gapDays = typeof plan.meta?.defaultGapDays === "number" ? plan.meta.defaultGapDays : 0;
+  const critical = calculateCriticalPath(tasks, { defaultGapDays: gapDays });
+  const leafCritical = calculateCriticalPath(leafTasks, { defaultGapDays: gapDays });
+  const audit = auditScheduleIntegrity(leafTasks, leafCritical);
+
+  const predecessorsMap = new Map(tasks.map((task) => [task.id, []]));
+  const successorsMap = new Map(tasks.map((task) => [task.id, []]));
+  let dependencyCount = 0;
+  const summaryLinkWarnings = [];
+
+  for (const task of tasks) {
+    const preds = getTaskDependencies(task).filter((depId) => byId.has(depId) && depId !== task.id);
+    predecessorsMap.set(task.id, preds);
+    dependencyCount += preds.length;
+    for (const predId of preds) {
+      successorsMap.get(predId)?.push(task.id);
+      if (isSummaryTask(task) || isSummaryTask(byId.get(predId))) {
+        summaryLinkWarnings.push(`${predId} → ${task.id}`);
+      }
+    }
+  }
+
+  let projectStart = null;
+  let projectFinish = null;
+  for (const task of leafTasks.length ? leafTasks : tasks) {
+    if (isDate(task.start) && (!projectStart || task.start < projectStart)) projectStart = task.start;
+    if (isDate(task.end) && (!projectFinish || task.end > projectFinish)) projectFinish = task.end;
+  }
+
+  const unlinkedLeafTasks = [];
+  const openStartTasks = [];
+  const openFinishTasks = [];
+  if (leafTasks.length > 1) {
+    for (const task of leafTasks) {
+      const preds = predecessorsMap.get(task.id) ?? [];
+      const succs = successorsMap.get(task.id) ?? [];
+      if (preds.length === 0 && succs.length === 0) {
+        unlinkedLeafTasks.push(task.id);
+      } else {
+        if (preds.length === 0 && task.start !== projectStart) openStartTasks.push(task.id);
+        if (succs.length === 0 && task.end !== projectFinish) openFinishTasks.push(task.id);
+      }
+    }
+  }
+
+  const criticalTasks = leafTasks
+    .filter((task) => leafCritical.criticalTaskIds.has(task.id))
+    .sort((a, b) => String(a.start).localeCompare(String(b.start)) || String(a.end).localeCompare(String(b.end)))
+    .map((task) => ({
+      id: task.id,
+      label: taskLabel(task),
+      start: task.start,
+      end: task.end,
+      durationDays: diffDays(task.start, task.end),
+      ...(task.milestone ? { milestone: true } : {}),
+    }));
+
+  const warnings = [];
+  if (leafTasks.length > 1 && dependencyCount === 0) {
+    warnings.push(
+      `Zero dependencies defined across ${leafTasks.length} tasks — the critical path will not link. Add dependsOn links between predecessors and successors.`,
+    );
+  }
+  if (unlinkedLeafTasks.length > 0) {
+    warnings.push(
+      `${unlinkedLeafTasks.length} unlinked leaf task${unlinkedLeafTasks.length === 1 ? "" : "s"} (${unlinkedLeafTasks.slice(0, 8).join(", ")}${unlinkedLeafTasks.length > 8 ? ", …" : ""}) have neither predecessors nor successors.`,
+    );
+  }
+  if (openStartTasks.length > 0) {
+    warnings.push(
+      `${openStartTasks.length} task${openStartTasks.length === 1 ? "" : "s"} start after project kick-off with no predecessor (${openStartTasks.slice(0, 8).join(", ")}${openStartTasks.length > 8 ? ", …" : ""}).`,
+    );
+  }
+  if (openFinishTasks.length > 0) {
+    warnings.push(
+      `${openFinishTasks.length} task${openFinishTasks.length === 1 ? "" : "s"} finish before project completion with no successor (${openFinishTasks.slice(0, 8).join(", ")}${openFinishTasks.length > 8 ? ", …" : ""}).`,
+    );
+  }
+  if (summaryLinkWarnings.length > 0) {
+    warnings.push(
+      `${summaryLinkWarnings.length} link${summaryLinkWarnings.length === 1 ? "" : "s"} attach to a summary row (${summaryLinkWarnings.slice(0, 5).join(", ")}) — move logic links onto leaf tasks or milestones.`,
+    );
+  }
+  if (leafTasks.length > 1 && dependencyCount > 0 && leafCritical.criticalDepKeys.size === 0 && criticalTasks.length > 1) {
+    warnings.push(
+      "Critical tasks are not connected by critical links — check whether parallel or unlinked tasks are driving the finish date instead of a continuous logic chain.",
+    );
+  }
+
+  return {
+    projectStart,
+    projectFinish,
+    durationDays: projectStart && projectFinish ? diffDays(projectStart, projectFinish) : 0,
+    criticalPath: {
+      count: criticalTasks.length,
+      criticalLinks: leafCritical.criticalDepKeys.size,
+      tasks: criticalTasks,
+    },
+    logic: {
+      leafTaskCount: leafTasks.length,
+      summaryTaskCount: summaryTasks.length,
+      milestoneCount: milestones.length,
+      dependencyCount,
+      unlinkedLeafTasks,
+      openStartTasks,
+      openFinishTasks,
+      summaryLinkWarnings,
+    },
+    health: {
+      grade: audit.grade,
+      score: audit.healthScore,
+      summary: audit.summary,
+      issueCount: audit.issues.length,
+      issues: audit.issues.slice(0, 12).map((issue) => ({
+        type: issue.type,
+        severity: issue.severity,
+        taskId: issue.taskId,
+        message: issue.message,
+      })),
+    },
+    warnings,
+    _internal: {
+      criticalTaskIds: leafCritical.criticalTaskIds.size ? leafCritical.criticalTaskIds : critical.criticalTaskIds,
+      metrics: leafCritical.metrics.size ? leafCritical.metrics : critical.metrics,
+      successorsMap,
+    },
+  };
+}
+
+/** Compact schedule summary included in `new` and `edit` responses so the AI verifies CPM immediately. */
+export function compactScheduleSummary(plan) {
+  const analysis = analyzeSchedule(plan);
+  return {
+    projectStart: analysis.projectStart,
+    projectFinish: analysis.projectFinish,
+    durationDays: analysis.durationDays,
+    dependencyCount: analysis.logic.dependencyCount,
+    criticalCount: analysis.criticalPath.count,
+    criticalLinks: analysis.criticalPath.criticalLinks,
+    criticalChain: analysis.criticalPath.tasks.slice(0, 20).map((t) => `${t.id}: ${t.label} (${t.start} → ${t.end})`),
+    healthGrade: analysis.health.grade,
+    healthScore: analysis.health.score,
+    ...(analysis.logic.unlinkedLeafTasks.length ? { unlinkedLeafTasks: analysis.logic.unlinkedLeafTasks.slice(0, 15) } : {}),
+    ...(analysis.logic.openStartTasks.length ? { openStartTasks: analysis.logic.openStartTasks.slice(0, 15) } : {}),
+    ...(analysis.logic.openFinishTasks.length ? { openFinishTasks: analysis.logic.openFinishTasks.slice(0, 15) } : {}),
+    ...(analysis.logic.summaryLinkWarnings.length ? { summaryLinkWarnings: analysis.logic.summaryLinkWarnings.slice(0, 10) } : {}),
+    ...(analysis.warnings.length ? { warnings: analysis.warnings } : {}),
+  };
+}
+
+/**
+ * Everything the AI needs to edit a programme by id: categories, people, critical path, schedule
+ * health and each task's fields (including float, critical flag and successors).
  * `find` keeps tasks whose label, id, owner, category or WBS contains every word; `from` and
  * `limit` page through what is left.
  */
 export function describePlan(plan, { from = 0, limit, find } = {}) {
   const tasks = plan.tasks ?? [];
+  const analysis = analyzeSchedule(plan);
+  const { _internal, ...schedule } = analysis;
   const words = nameKey(find).split(/\s+/).filter(Boolean);
   const categoryLabel = (task) => plan.categories?.[task.category || "default"]?.label ?? "";
   const matching = words.length
@@ -491,6 +932,7 @@ export function describePlan(plan, { from = 0, limit, find } = {}) {
   return {
     title: plan.meta?.title ?? null,
     meta: plan.meta ?? {},
+    schedule,
     categories: Object.entries(plan.categories ?? {}).map(([key, category]) => ({
       key,
       label: category?.label ?? key,
@@ -520,6 +962,13 @@ export function describePlan(plan, { from = 0, limit, find } = {}) {
         Object.entries(task.fields ?? {}).filter(([key]) => key !== "outlineLevel" && key !== "summary"),
       );
       if (Object.keys(custom).length) out.fields = custom;
+      if (!isSummaryTask(task)) {
+        if (_internal.criticalTaskIds.has(task.id)) out.isCritical = true;
+        const m = _internal.metrics.get(task.id);
+        if (m && typeof m.totalFloat === "number") out.totalFloat = m.totalFloat;
+      }
+      const succs = _internal.successorsMap.get(task.id);
+      if (succs?.length) out.successors = succs;
       return out;
     }),
   };

@@ -335,31 +335,78 @@ ${SCREEN_NOTE}
 STYLE
 Sheet names under 31 characters. File names like outputs/HEL18-Cost-Plan.xlsx, with no spaces. UK and Irish English.`;
 
-const PLAN_INSTRUCTIONS = `Use this whenever the person wants a project programme, Gantt chart, construction programme, MS Project plan, or any .jantt plan, or wants one changed. Also use it when they upload a tender, Excel programme or MS Project XML and ask you to turn it into a schedule.
+const PLAN_INSTRUCTIONS = `Use this whenever the person wants a project programme, Gantt chart, construction programme, design/consultancy schedule, MS Project plan, or any .jantt plan, or wants one changed, audited or rescheduled. Also use it when they upload a tender, Excel programme, CSV or MS Project (.mpp / .xml) file and ask you to turn it into a schedule.
 
 Use the ocsc tool (document runners; no full computer needed): every ocsc-plan command below runs as the ocsc tool with program plan and the rest of the command as args, one item per word. Always use ocsc-plan. Never invent a schedule another way. ${INLINE_SPEC_NOTE}
 
+ENGINEERING & CRITICAL PATH STANDARDS (MANDATORY)
+You are preparing schedules for OCSC — a multidisciplinary Civil, Structural, Mechanical and Electrical (CSME) engineering consultancy. Every programme you create or update MUST be a genuine, logic-linked Critical Path Method (CPM) programme, NEVER a flat list of unlinked dated bars.
+
+1. CLOSED LOGIC NETWORK (PREDECESSORS & CRITICAL PATH)
+- Every non-summary task except the programme start/kick-off task or milestone MUST specify predecessor link(s) via "dependsOn".
+- Every non-summary task except the final completion/handover milestone MUST drive at least one successor via another task's "dependsOn", so there are no dangling or open-ended activities.
+- Use the exact field name "dependsOn": a task id ("t1"), an array of ids (["t1","t2"]), or dependency objects ({"id":"t1","type":"FS","lag":0}).
+- Model realistic engineering logic — not just one linear chain and not disconnected dates:
+  - FS (Finish-to-Start): sequential gates and dependencies (e.g. surveys -> preliminary design -> planning -> detailed design -> tender -> contract award -> enabling -> substructure -> superstructure -> commissioning -> handover).
+  - SS + lag (Start-to-Start with lead/lag): overlapping parallel workstreams and staggered trades (e.g. M&E First Fix starting 10–15 days after superstructure/blockwork starts; civil drainage and utilities running alongside substructure once enabling works open up; structural and MEP detailed design running in parallel after concept freeze).
+  - FF + lag (Finish-to-Finish): coordinated close-outs (e.g. O&M manuals, as-built BIM models and BCAR / statutory ancillary certificates finishing with commissioning/handover).
+  - Positive lag (days): curing times, statutory consultation/determination periods (e.g. 8–12 weeks planning), tender return and evaluation windows, utility diversions (ESB Networks / Uisce Éireann / Gas Networks Ireland / UK DNO & water lead-ins), and long-lead M&E equipment procurement (MV/LV switchgear, transformers, generators, chillers, heat pumps, AHUs, lifts, BMS panels).
+- Contiguous FS dates: start the next FS task the next working day after its predecessor finishes (ocsc-plan aligns contiguous next-day and Friday-to-Monday transitions automatically so Jantt draws a continuous red Critical Path chain with red dependency arrows).
+
+2. PHASES, WBS HIERARCHY & SUMMARY ROLLUPS
+- Organise every multi-stage programme into clear phases using WBS codes ("1", "1.1", "1.2", "2", "2.1"...) and outline levels:
+  - Phase / stage header rows: "summary": true, "outlineLevel": 1 (and "outlineLevel": 2 for sub-phases if needed).
+  - Leaf activities and milestones under a phase: "outlineLevel": 2 (or 3 under a sub-phase).
+- CRITICAL RULE FOR SUMMARY ROWS: NEVER link "dependsOn" to or from a "summary": true row. Always link leaf activities and milestones. ocsc-plan automatically rolls each summary row's start and end dates up from its child tasks; putting links on summary rows breaks CPM float calculations and hides arrows.
+- Use colour-coded categories by discipline or stage (for example: Management & Statutory, Civil Engineering, Structural Engineering, Mechanical & Electrical, Procurement, Construction & Site Works, Commissioning & Handover) so the Gantt reads clearly at a glance.
+
+3. MILESTONES & HOLD POINTS
+- Include zero-duration milestones ("milestone": true, start === end) for major contractual and technical gates: Project Kick-Off, Surveys Complete, Concept / Stage 2 Sign-Off, Planning Submission & Grant, Detailed Design Freeze / BIM Coordination Sign-Off, Tender Issue & Return, Contract Award, Site Possession, Weathertight / Envelope Complete, Power-On / Energisation, Commissioning & Witness Testing Complete, Practical Completion / BCAR Completion, Handover.
+- Tie parallel workstreams together at convergence milestones (for example, Design Freeze depends on Civil, Structural and MEP detailed design packages) so the true driving critical path emerges naturally.
+
+4. CSME CONSULTANCY & CONSTRUCTION SEQUENCING
+Adapt depth and stages to the brief (Irish CWMF Stages 1–5 / RIAI / RIBA Stages 1–6, design-only consultancy commissions, tender programmes, or full design-and-build construction):
+- Consultancy / Design: Brief & Site Surveys (topographical, GI/geotechnical, GPR/utility, drainage/CCTV, ecological/environmental, flood risk) -> Preliminary / Concept Design (Civil, Structural, MEP in parallel) -> Statutory Consents (Planning / Part 8 / SID / Fire Safety Certificate / Disability Access Certificate / EPA or water consents) -> Detailed Design, Multidisciplinary BIM/Revit Coordination & Clash Detection -> Tender Documentation, BoQ & Procurement -> Construction Stage Site Monitoring, RFI/Submittal Reviews & BCAR / Assigned Certifier Inspections -> Witness Testing, As-Builts & Handover.
+- Civil & Infrastructure: GI & surveys -> Statutory consents & utility diversions (early!) -> Traffic management & site enabling -> Earthworks / cut-and-fill / piling / attenuation & SuDS drainage / watermain & foul -> Roadbase, kerbing, surfacing, public lighting & landscaping -> Road Safety Audit, testing & Taking-in-Charge.
+- Structural: GI & foundation design -> Enabling / demolition / temporary works & shoring -> Piling / foundations / basement -> Frame / RC cores / structural steelwork -> Floor slabs & stairs -> Secondary steel & roof structure -> Envelope / cladding / weathertight.
+- Mechanical & Electrical (MEP): Load assessments & utility applications (start early — long lead!) -> Stage 3/4 MEP design & plantroom coordination -> Builderswork drawings (must precede slab pours and blockwork!) -> Long-lead procurement (switchgear, transformers, generators, chillers/heat pumps, AHUs, lifts, BMS) -> Containment & First Fix (SS + lag behind structure/partitions) -> Plantroom installation -> Second Fix & Energisation (Power-On milestone) -> Pre-commissioning, flushing, balancing, BMS integration, fire & life-safety cause-and-effect witness testing -> Seasonal commissioning, O&M manuals, client training & handover.
+
 CREATE
-1. Write a spec for work/<short-name>.json, for example:
+1. Write a spec for work/<short-name>.json with categories, WBS phases (summary rows), linked leaf tasks and milestones, for example:
 {"title":"HEL18 Construction Programme",
+ "categories":{
+  "design":{"label":"Design & Statutory","color":"#76BF43"},
+  "civil":{"label":"Civil & Structural","color":"#3B82F6"},
+  "mep":{"label":"Mechanical & Electrical","color":"#F59E0B"},
+  "handover":{"label":"Commissioning & Handover","color":"#8B5CF6"}
+ },
  "tasks":[
-  {"id":"design","label":"Detailed design","category":"default","start":"2026-03-02","end":"2026-04-24"},
-  {"id":"procure","label":"Procurement","category":"default","start":"2026-04-27","end":"2026-05-22","dependsOn":"design"},
-  {"id":"site","label":"Site works","category":"default","start":"2026-05-25","end":"2026-09-18","dependsOn":"procure"}
+  {"id":"p1","label":"1. Design & Statutory Approvals","wbs":"1","outlineLevel":1,"summary":true,"category":"design","start":"2026-03-02","end":"2026-03-02"},
+  {"id":"t1","label":"Site & GI Surveys","wbs":"1.1","outlineLevel":2,"category":"civil","start":"2026-03-02","end":"2026-03-13"},
+  {"id":"t2","label":"Civil & Structural Detailed Design","wbs":"1.2","outlineLevel":2,"category":"civil","start":"2026-03-16","end":"2026-04-24","dependsOn":"t1"},
+  {"id":"t3","label":"MEP Detailed Design & Builderswork","wbs":"1.3","outlineLevel":2,"category":"mep","start":"2026-03-16","end":"2026-04-17","dependsOn":"t1"},
+  {"id":"m1","label":"Design Freeze & Tender Issue","wbs":"1.4","outlineLevel":2,"milestone":true,"category":"design","start":"2026-04-24","end":"2026-04-24","dependsOn":["t2","t3"]},
+  {"id":"p2","label":"2. Procurement & Construction","wbs":"2","outlineLevel":1,"summary":true,"category":"civil","start":"2026-04-27","end":"2026-04-27"},
+  {"id":"t4","label":"Tender Period & Contract Award","wbs":"2.1","outlineLevel":2,"category":"design","start":"2026-04-27","end":"2026-05-22","dependsOn":"m1"},
+  {"id":"t5","label":"Long-Lead MEP Plant Procurement","wbs":"2.2","outlineLevel":2,"category":"mep","start":"2026-05-25","end":"2026-08-14","dependsOn":"t4"},
+  {"id":"t6","label":"Enabling, Substructure & Superstructure","wbs":"2.3","outlineLevel":2,"category":"civil","start":"2026-05-25","end":"2026-08-21","dependsOn":"t4"},
+  {"id":"t7","label":"MEP First & Second Fix Installation","wbs":"2.4","outlineLevel":2,"category":"mep","start":"2026-08-24","end":"2026-09-25","dependsOn":["t5","t6"]},
+  {"id":"m2","label":"Commissioning & Handover","wbs":"2.5","outlineLevel":2,"milestone":true,"category":"handover","start":"2026-09-25","end":"2026-09-25","dependsOn":"t7"}
  ]}
 Dates are YYYY-MM-DD. dependsOn is a task id, an array of ids, or { "id":"design", "type":"FS", "lag":0 }.
 2. Run: ocsc-plan new --spec work/<short-name>.json --out outputs/<Descriptive-Name>.jantt
 
-INSPECT
-ocsc-plan inspect --in <path>.jantt lists the title, Evolve job link, categories (key, label, colour, task count), people, owners and every task with its fields (id, label, category, dates, dependsOn, assignee, progress, status, priority, notes, wbs, costs, baseline, outlineLevel, summary, custom fields). A long programme comes back in pages: when the result has "nextFrom", add --from <nextFrom> for the next page, or --find <words> to look up tasks by label, owner, category or WBS.
+INSPECT & AUDIT
+- ocsc-plan inspect --in <path>.jantt lists the title, Evolve job link, full "schedule" block (project start/finish, duration, critical path chain, logic counts, unlinked/open-ended tasks, health grade and warnings), categories, people, owners and every task with its fields PLUS computed "isCritical", "totalFloat" (days of slack) and "successors". A long programme comes back in pages: when the result has "nextFrom", add --from <nextFrom> for the next page, or --find <words> to look up tasks by label, owner, category or WBS.
+- ocsc-plan audit --in <path>.jantt returns the full CPM critical path and schedule integrity audit without paging all tasks — ideal for checking a large programme before or after edits.
 
 EDIT
-You can do everything the person can do by hand in the studio: tasks, dates, dependencies, owners, categories, progress, status, priority, notes, costs, WBS, outline, custom fields, order and baselines.
-1. Inspect first when you need the current task ids or category keys.
+You can do everything the person can do by hand in the studio: tasks, dates, dependencies, owners, categories, progress, status, priority, notes, costs, WBS, outline, summary rows, milestones, custom fields, order and baselines.
+1. Inspect first when you need the current task ids, dependencies, critical path or category keys.
 2. Write work/<short-name>-edits.json:
 {"edits":[
  {"op":"add_category","label":"Mechanical & Electrical","color":"#3B82F6"},
- {"op":"add_task","id":"commission","label":"Commissioning","category":"Mechanical & Electrical","start":"2026-09-21","end":"2026-10-09","dependsOn":"site","after":"site"},
+ {"op":"add_task","id":"commission","label":"Commissioning & Witness Testing","category":"Mechanical & Electrical","wbs":"3.1","outlineLevel":2,"start":"2026-09-28","end":"2026-10-16","dependsOn":"site","after":"site"},
  {"op":"reschedule_task","id":"site","end":"2026-09-25"},
  {"op":"link_tasks","from":"procure","to":"site","type":"FS","lag":0},
  {"op":"update_task","ids":["design","procure"],"progress":0.5,"status":"in-progress","priority":"high","notes":"Awaiting client sign-off"},
@@ -368,24 +415,31 @@ You can do everything the person can do by hand in the studio: tasks, dates, dep
  {"op":"delete_task","id":"old"}
 ]}
 Tasks (one task with id, or several with ids):
-- add_task: id, label, category, start, end, plus any task field below; place it with before or after (a task id) or index, else it goes at the end.
+- add_task: id, label, category, start, end, plus any task field below; place it with before or after (a task id) or index, else it goes at the end. Always connect new tasks into the logic network with dependsOn and/or link_tasks.
 - update_task / reschedule_task: any task field; null clears a field (for example "notes": null).
-- move_task: id with before, after or index. delete_task: id or ids (their links are removed too).
+- move_task: id with before, after or index. delete_task: id or ids (their links are removed too — re-link predecessors to successors so you do not break the chain).
 - link_tasks / unlink_tasks: from (the predecessor) and to; type FS, SS, FF or SF; lag in days.
 - set_tasks: replaces the whole task list. Use it when the open plan is empty or they ask to build a timeline from scratch.
-Task fields: label, category, start, end (YYYY-MM-DD), dependsOn, milestone, progress (0 to 1), status (not-started, in-progress, submitted, completed, blocked), priority (low, medium, high, urgent), urgent, assignee, notes, description, wbs, phase, estimatedCost, actualCost, locked, baseline {start,end}, outlineLevel (1 is top level), summary (true for a summary row), fields (custom fields).
+Task fields: label, category, start, end (YYYY-MM-DD), dependsOn, milestone, progress (0 to 1), status (not-started, in-progress, submitted, completed, blocked), priority (low, medium, high, urgent), urgent, assignee, notes, description, wbs, phase, estimatedCost, actualCost, locked, gapDays, baseline {start,end}, outlineLevel (1 is top level), summary (true for a summary row), fields (custom fields).
 Owners (assign): to give a task to OCSC staff, call mcp__evolve__search_people_profiles with their name first, then assign with name set to that result's exact full_name, evolveProfileId set to its id and jobTitle set to its job_title, so the studio links their Evolve profile and photo. Do not guess a profile; if the search finds nobody or several possible people, ask which one. Someone outside OCSC (a contractor, client or consultant) is assigned by name alone. name null removes the owner.
 Categories: add_category (label, color as #RRGGBB, optional; the next unused colour otherwise), update_category (key or current label, then a new label and/or color), delete_category (key, reassignTo: the category its tasks move to, General by default). A task's category may be a key or a label; naming a new one creates it. Keep "default" (General) when they gave no categories.
-Programme: set_baseline (saves the current dates as the baseline for all tasks, or ids; clear:true removes it), set_meta (title, description, author, version, today), set_evolve (jobNumber and name; clear:true removes the link).
+Programme: set_baseline (saves the current dates as the baseline for all tasks, or ids; clear:true removes it), set_meta (title, description, author, version, today, defaultGapDays), set_evolve (jobNumber and name; clear:true removes the link).
 3. Run: ocsc-plan edit --in <path>.jantt --spec work/<short-name>-edits.json --out outputs/<Name>-v2.jantt
-The result's "summary" says what changed; tell the person in those terms. Save each round as a new version unless they ask you to overwrite. If a run returns "ok": false, fix the spec and retry — do not invent a new plan file unless they asked for a separate one. In a studio, every attach_file is a new version in the document's History, so the person can compare and restore any earlier version.
+
+MANDATORY VERIFICATION BEFORE SENDING
+Every ocsc-plan new and ocsc-plan edit returns a "schedule" object with dependencyCount, criticalCount, criticalLinks, criticalChain, healthGrade, and any warnings (unlinkedLeafTasks, openStartTasks, openFinishTasks, summaryLinkWarnings).
+- ALWAYS check "schedule" before calling attach_file!
+- If dependencyCount is 0, criticalLinks is 0 on a multi-task plan, summaryLinkWarnings is non-empty, or unintended unlinkedLeafTasks / openFinishTasks exist, run an ocsc-plan edit pass with link_tasks / unlink_tasks to close the logic network before sending.
+- When you reply to the person, use "summary" to say what changed AND briefly report: total duration / completion date, the driving Critical Path, key milestones, schedule health grade, and any key float or risk pinch points.
+Save each round as a new version unless they ask you to overwrite. If a run returns "ok": false, fix the spec and retry — do not invent a new plan file unless they asked for a separate one. In a studio, every attach_file is a new version in the document's History, so the person can compare and restore any earlier version.
 
 FROM A TENDER OR SPREADSHEET
-When they attach a tender PDF/Word, an Excel programme or a CSV of activities: read that file first, extract the activities, durations and dependencies, then either:
-- build a new plan with ocsc-plan new, or
+When they attach a tender PDF/Word, an Excel programme or a CSV of activities: read that file first, extract the activities, durations, phases, milestones and dependencies, then either:
+- build a new logic-linked plan with ocsc-plan new (or edit with set_tasks when a blank studio plan is open), or
 - import CSV with ocsc-plan import-csv --in <file>.csv --out outputs/<Name>.jantt, or
 - import Microsoft Project XML with ocsc-plan import-xml --in <file>.xml --out outputs/<Name>.jantt, or
 - import binary Microsoft Project with ocsc-plan import-mpp --in <file>.mpp --out outputs/<Name>.jantt
+After importing a CSV or spreadsheet that lacked dependencies, inspect/audit it and offer or apply logical predecessor links so the critical path works.
 When an Evolve job is linked on the open plan (studio note or meta.evolve), use that job number with Evolve project search tools for context; do not invent job data.
 
 EXPORT

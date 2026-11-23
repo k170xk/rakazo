@@ -669,6 +669,12 @@ body .jantt-hover-card {
   opacity: 0.4;
 }
 
+.planner-workbench .jantt-show-critical .jantt-dep-path.is-critical {
+  stroke: var(--jantt-critical);
+  stroke-width: 2.2px;
+  opacity: 1 !important;
+}
+
 /* Tasks the assistant just added or changed (live draft, or the version it saved). */
 .planner-workbench .jantt-task-bar.is-ai-changed {
   opacity: 1 !important;
@@ -744,18 +750,23 @@ body .jantt-hover-card {
 }
 
 .planner-workbench .jantt-link-port-right {
-  right: -17px;
+  right: -15px;
+  opacity: 0.45;
 }
 
 .planner-workbench .jantt-link-port-left {
-  left: -17px;
+  left: -15px;
 }
 
-.planner-workbench .jantt-task-bar.is-selected .jantt-link-port-right {
-  opacity: 0.7;
+.planner-workbench .jantt-task-bar:hover .jantt-link-port,
+.planner-workbench .jantt-milestone:hover .jantt-link-port,
+.planner-workbench .jantt-task-bar.is-selected .jantt-link-port,
+.planner-workbench.is-linking .jantt-link-port-left {
+  opacity: 1;
 }
 
 .planner-workbench .jantt-link-port:hover {
+  opacity: 1;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
