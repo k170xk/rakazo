@@ -534,8 +534,49 @@ export function calculatePdmCriticalPath(tasks, options = {}) {
   }
 
   const defaultGap = typeof options.defaultGapDays === "number" ? options.defaultGapDays : 0;
-  const edgeLag = (rel, succTask) =>
-    rel.type === "FS" && rel.lag === 0 ? taskGapDays(succTask, defaultGap) : rel.lag;
+  const shiftWorkDays = (iso, n) => {
+    let cur = iso;
+    let rem = Math.abs(n);
+    const step = n >= 0 ? 1 : -1;
+    while (rem > 0) {
+      cur = addIsoDays(cur, step);
+      const wd = utcWeekday(cur);
+      if (wd !== 0 && wd !== 6) rem -= 1;
+    }
+    return cur;
+  };
+  const nextWeekdayAfter = (iso) => {
+    let cur = addIsoDays(iso, 1);
+    while (utcWeekday(cur) === 0 || utcWeekday(cur) === 6) cur = addIsoDays(cur, 1);
+    return cur;
+  };
+  const edgeLag = (rel, predTask, succTask) => {
+    if (rel.type === "FS") {
+      if (rel.lag === 0) {
+        if (
+          (succTask?.gapDays !== undefined && succTask?.gapDays !== null) ||
+          (succTask?.minGapDays !== undefined && succTask?.minGapDays !== null)
+        ) {
+          return taskGapDays(succTask, defaultGap);
+        }
+        if (defaultGap !== 0) return defaultGap;
+        const d = predTask && succTask ? signedDiffDays(predTask.end, succTask.start) : NaN;
+        if (d === 1) return 1;
+        const pd = predTask ? utcWeekday(predTask.end) : -1;
+        const sd = succTask ? utcWeekday(succTask.start) : -1;
+        if (sd === 1 && ((pd === 5 && d === 3) || (pd === 6 && d === 2))) return d;
+        return 0;
+      }
+      if (rel.lag > 0 && predTask && succTask && isDate(predTask.end) && isDate(succTask.start)) {
+        const d = signedDiffDays(predTask.end, succTask.start);
+        const wEnd = shiftWorkDays(predTask.end, rel.lag);
+        const c1 = signedDiffDays(predTask.end, wEnd);
+        const c2 = signedDiffDays(predTask.end, nextWeekdayAfter(wEnd));
+        if (d === c1 || d === c2) return d;
+      }
+    }
+    return rel.lag;
+  };
 
   const earlyStart = new Map();
   const earlyFinish = new Map();
@@ -552,7 +593,7 @@ export function calculatePdmCriticalPath(tasks, options = {}) {
         const pred = byId.get(rel.id);
         const pES = earlyStart.get(rel.id) ?? pred.start;
         const pEF = earlyFinish.get(rel.id) ?? pred.end;
-        const L = edgeLag(rel, task);
+        const L = edgeLag(rel, pred, task);
         let cand;
         if (rel.type === "SS") cand = addIsoDays(pES, L);
         else if (rel.type === "FF") cand = addIsoDays(pEF, L - dur);
@@ -568,7 +609,7 @@ export function calculatePdmCriticalPath(tasks, options = {}) {
       const pred = byId.get(rel.id);
       const pES = earlyStart.get(rel.id) ?? pred.start;
       const pEF = earlyFinish.get(rel.id) ?? pred.end;
-      const L = edgeLag(rel, task);
+      const L = edgeLag(rel, pred, task);
       let cand;
       if (rel.type === "SS") cand = addIsoDays(pES, L);
       else if (rel.type === "FF") cand = addIsoDays(pEF, L - dur);
@@ -597,6 +638,7 @@ export function calculatePdmCriticalPath(tasks, options = {}) {
   const lateFinish = new Map();
   const lateStart = new Map();
   for (const id of [...order].reverse()) {
+    const pred = byId.get(id);
     const edges = outRels.get(id) ?? [];
     const dur = duration.get(id) ?? 0;
     if (edges.length === 0) {
@@ -607,7 +649,7 @@ export function calculatePdmCriticalPath(tasks, options = {}) {
         const succ = byId.get(edge.to);
         const sLS = lateStart.get(edge.to);
         const sLF = lateFinish.get(edge.to);
-        const L = edgeLag(edge, succ);
+        const L = edgeLag(edge, pred, succ);
         let bound;
         if (edge.type === "SS") bound = addIsoDays(sLS, -L + dur);
         else if (edge.type === "FF") bound = addIsoDays(sLF, -L);
@@ -640,7 +682,7 @@ export function calculatePdmCriticalPath(tasks, options = {}) {
         const succ = byId.get(edge.to);
         const sES = earlyStart.get(edge.to);
         const sEF = earlyFinish.get(edge.to);
-        const L = edgeLag(edge, succ);
+        const L = edgeLag(edge, t, succ);
         let ff;
         if (edge.type === "SS") ff = signedDiffDays(es, addIsoDays(sES, -L));
         else if (edge.type === "FF") ff = signedDiffDays(ef, addIsoDays(sEF, -L));
@@ -684,9 +726,10 @@ export function calculatePdmCriticalPath(tasks, options = {}) {
     const vEF = earlyFinish.get(t.id);
     for (const rel of inRels.get(t.id) ?? []) {
       if (!criticalTaskIds.has(rel.id)) continue;
+      const pred = byId.get(rel.id);
       const pES = earlyStart.get(rel.id);
       const pEF = earlyFinish.get(rel.id);
-      const L = edgeLag(rel, t);
+      const L = edgeLag(rel, pred, t);
       let tight = false;
       if (rel.type === "SS") tight = signedDiffDays(addIsoDays(pES, L), vES) === 0;
       else if (rel.type === "FF") tight = signedDiffDays(addIsoDays(pEF, L), vEF) === 0;

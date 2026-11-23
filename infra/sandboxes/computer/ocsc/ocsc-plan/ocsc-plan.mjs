@@ -122,10 +122,11 @@ function writePlan(outPath, plan, { reschedule = true } = {}) {
     );
   }
   const gapDays = typeof normalized.meta?.defaultGapDays === "number" ? normalized.meta.defaultGapDays : 0;
-  // Imports keep MS Project's stored dates; edits and new plans cascade from dependencies and roll up summaries.
+  // Imports keep MS Project's stored dates (only annotating contiguous working-day gapDays for CPM);
+  // edits and new plans cascade from dependencies and roll up summaries.
   const tasks = reschedule
     ? rollupSummaryTasks(syncContiguousGapDays(resolveSchedule(normalized.tasks ?? [], gapDays)))
-    : normalized.tasks ?? [];
+    : syncContiguousGapDays(normalized.tasks ?? []);
   const written = { ...normalized, tasks };
   writeFileSync(dest.full, `${JSON.stringify(written, null, 2)}\n`);
   return { dest, plan: written };

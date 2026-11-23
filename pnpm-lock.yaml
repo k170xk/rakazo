@@ -19,7 +19,7 @@ overrides:
 
 patchedDependencies:
   '@jantt/core@1.1.0':
-    hash: itchsqla7dgbbd2x3s5sagegcu
+    hash: csmbo72a6fthbojog77y2mg63e
     path: patches/@jantt__core@1.1.0.patch
   app-builder-lib@26.15.3:
     hash: etbhenc3wnsl43rdtwvgrimboq
@@ -377,7 +377,7 @@ importers:
         version: 6.43.15
       '@jantt/core':
         specifier: 1.1.0
-        version: 1.1.0(patch_hash=itchsqla7dgbbd2x3s5sagegcu)
+        version: 1.1.0(patch_hash=csmbo72a6fthbojog77y2mg63e)
       '@jantt/interop':
         specifier: 1.1.0
         version: 1.1.0
@@ -15366,17 +15366,17 @@ snapshots:
 
   '@isaacs/ttlcache@1.4.1': {}
 
-  '@jantt/core@1.1.0(patch_hash=itchsqla7dgbbd2x3s5sagegcu)':
+  '@jantt/core@1.1.0(patch_hash=csmbo72a6fthbojog77y2mg63e)':
     dependencies:
       fflate: 0.8.3
 
   '@jantt/interop@1.1.0':
     dependencies:
-      '@jantt/core': 1.1.0(patch_hash=itchsqla7dgbbd2x3s5sagegcu)
+      '@jantt/core': 1.1.0(patch_hash=csmbo72a6fthbojog77y2mg63e)
 
   '@jantt/react@1.1.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@jantt/core': 1.1.0(patch_hash=itchsqla7dgbbd2x3s5sagegcu)
+      '@jantt/core': 1.1.0(patch_hash=csmbo72a6fthbojog77y2mg63e)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 

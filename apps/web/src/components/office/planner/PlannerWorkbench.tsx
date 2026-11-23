@@ -247,7 +247,14 @@ export function PlannerWorkbench({
     [filtersActive, filteredTasks],
   );
 
-  const chartData = useMemo(() => withDirectoryPeople(plan, people), [plan, people]);
+  const chartData = useMemo(() => {
+    const enriched = withDirectoryPeople(plan, people);
+    if (typeof enriched.meta?.defaultGapDays === "number") return enriched;
+    return {
+      ...enriched,
+      meta: { ...(enriched.meta ?? {}), defaultGapDays: 0 },
+    };
+  }, [plan, people]);
   const newCategories = useRef(new Map<string, PlanCategory>());
   const commit = useCallback(
     (next: PlanDocument) =>

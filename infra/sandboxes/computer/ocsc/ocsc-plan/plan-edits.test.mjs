@@ -390,3 +390,28 @@ test("targetFinish flags overrun variance and applyEdits duration updates bring 
   assert.equal(after.onTarget, true);
   assert.equal(after.warnings, undefined);
 });
+
+test("CPM traces end-to-end across inclusive next-day, Fri->Mon weekend, and working-day FS lags without gapDays", () => {
+  // Mirrors an imported MS Project schedule where bars use inclusive dates (Tue->Wed +1, Fri->Mon +3, FS+3 working days)
+  const imported = {
+    meta: { title: "Imported MS Project Schedule" },
+    tasks: [
+      { id: "t1", label: "Tender Period", start: "2026-10-12", end: "2026-11-10" }, // Tue
+      { id: "t2", label: "Review Submissions", start: "2026-11-11", end: "2026-11-12", dependsOn: "t1" }, // Wed->Thu (+1)
+      { id: "t3", label: "Assessment Report", start: "2026-11-13", end: "2026-11-17", dependsOn: "t2" }, // Fri->Tue (+1)
+      { id: "t4", label: "Draft Letters", start: "2026-11-18", end: "2026-11-18", dependsOn: "t3" }, // Wed (+1)
+      { id: "t5", label: "Issue Letters", start: "2026-11-20", end: "2026-11-20", dependsOn: { id: "t4", type: "FS", lag: 2 } }, // Fri (+2wd)
+      { id: "t6", label: "Clarifications", start: "2026-11-26", end: "2026-11-26", dependsOn: { id: "t5", type: "FS", lag: 3 } }, // Thu (+3wd across weekend + next day)
+      { id: "t7", label: "Minutes", start: "2026-11-27", end: "2026-11-27", dependsOn: "t6" }, // Fri (+1)
+      { id: "t8", label: "Cost Report", start: "2026-11-30", end: "2026-11-30", dependsOn: "t7" }, // Mon (Fri->Mon +3)
+      { id: "t9", label: "Completion", start: "2026-11-30", end: "2026-11-30", milestone: true, dependsOn: "t8" },
+    ],
+  };
+
+  const analysis = analyzeSchedule(imported);
+  assert.deepEqual(
+    analysis.criticalPath.tasks.map((t) => t.id),
+    ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"],
+  );
+  assert.equal(analysis.criticalPath.criticalLinks, 8);
+});
